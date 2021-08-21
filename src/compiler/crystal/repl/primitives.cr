@@ -6,7 +6,7 @@ require "./compiler"
 # (for example `caller`, or doing a fiber context switch.)
 
 class Crystal::Repl::Compiler
-  private def visit_primitive(node, body)
+  private def visit_primitive(node, body, wants_struct_pointer = false)
     obj = node.obj
 
     case body.name
@@ -34,8 +34,6 @@ class Crystal::Repl::Compiler
       pointer_malloc(element_size, node: node)
       pop(aligned_sizeof_type(scope_type), node: nil) unless @wants_value
     when "pointer_realloc"
-      raise_if_wants_struct_pointer(node, body)
-
       obj ? request_value(obj) : put_self(node: node)
       request_value(node.args.first)
 
@@ -48,8 +46,6 @@ class Crystal::Repl::Compiler
       pointer_realloc(element_size, node: node)
       pop(aligned_sizeof_type(scope_type), node: nil) unless @wants_value
     when "pointer_set"
-      raise_if_wants_struct_pointer(node, body)
-
       # Accept in reverse order so that it's easier for the interpreter
       obj = obj.not_nil!
       element_type = obj.type.as(PointerInstanceType).element_type
@@ -65,17 +61,10 @@ class Crystal::Repl::Compiler
     when "pointer_get"
       element_type = obj.not_nil!.type.as(PointerInstanceType).element_type
 
-      if @wants_struct_pointer
-        # If we have `pointer.value`, we actually want `pointer`.
-        # But first put some zeros for the value that will be popped.
-        push_zeros aligned_sizeof_type(element_type), node: nil
-        accept_call_members(node)
-      else
-        accept_call_members(node)
-        return unless @wants_value
+      accept_call_members(node)
+      return unless @wants_value
 
-        pointer_get(inner_sizeof_type(element_type), node: node)
-      end
+      pointer_get(inner_sizeof_type(element_type), node: node)
     when "pointer_address"
       accept_call_members(node)
       return unless @wants_value
@@ -120,8 +109,6 @@ class Crystal::Repl::Compiler
 
       put_i32 type_id(type.instance_type), node: node
     when "allocate"
-      raise_if_wants_struct_pointer(node, body)
-
       type =
         if obj
           discard_value(obj)
@@ -163,9 +150,7 @@ class Crystal::Repl::Compiler
       end
     when "tuple_indexer_known_index"
       obj = obj.not_nil!
-      dont_request_struct_pointer do
-        obj.accept self
-      end
+      obj.accept self
 
       return unless @wants_value
 
@@ -194,8 +179,6 @@ class Crystal::Repl::Compiler
       else
         node.raise "BUG: missing handling of primitive #{body.name} for #{type}"
       end
-
-      put_stack_top_pointer_if_needed(node)
     when "enum_value"
       accept_call_members(node)
     when "enum_new"
@@ -211,8 +194,6 @@ class Crystal::Repl::Compiler
 
       pointer_address(node: node)
     when "proc_call"
-      raise_if_wants_struct_pointer(node, body)
-
       node.args.each { |arg| request_value(arg) }
 
       obj ? request_value(obj) : put_self(node: node)
@@ -253,8 +234,6 @@ class Crystal::Repl::Compiler
 
       cmpxchg(element_size, node: node)
     when "external_var_get"
-      raise_if_wants_struct_pointer(node, body)
-
       return unless @wants_value
 
       lib_type = node.obj.not_nil!.type.as(LibType)
@@ -268,8 +247,6 @@ class Crystal::Repl::Compiler
       # Read from the pointer
       pointer_get(inner_sizeof_type(node), node: node)
     when "external_var_set"
-      raise_if_wants_struct_pointer(node, body)
-
       lib_type = node.obj.not_nil!.type.as(LibType)
       external = node.target_def.as(External)
 
@@ -286,8 +263,6 @@ class Crystal::Repl::Compiler
       # Set the pointer's value
       pointer_set(inner_sizeof_type(node), node: node)
     when "struct_or_union_set"
-      raise_if_wants_struct_pointer(node, body)
-
       obj = obj.not_nil!
       arg = node.args.first
 
@@ -338,7 +313,7 @@ class Crystal::Repl::Compiler
       end
 
       # With this we get a pointer to the struct
-      compile_struct_call_receiver(obj, obj.type)
+      compile_pointerof_node(obj, obj.type)
 
       # Shift the pointer to the offset, if needed
       if ivar_offset > 0
@@ -536,9 +511,7 @@ class Crystal::Repl::Compiler
   end
 
   private def accept_call_args(node : Call)
-    dont_request_struct_pointer do
-      node.args.each { |arg| request_value(arg) }
-    end
+    node.args.each { |arg| request_value(arg) }
   end
 
   private def primitive_convert(node : ASTNode, body : Primitive, checked : Bool)

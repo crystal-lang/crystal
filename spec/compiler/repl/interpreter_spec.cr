@@ -2276,6 +2276,215 @@ describe Crystal::Repl::Interpreter do
         foo.x
       CODE
     end
+
+    it "inlines call that returns self (2)" do
+      interpret(<<-CODE).should eq(10)
+        struct Foo
+          def initialize
+            @x = 0
+          end
+
+          def mutate
+            @x = 10
+          end
+
+          def x
+            @x
+          end
+
+          def mutate_itself
+            self.itself.mutate
+          end
+
+          def itself
+            self
+          end
+        end
+
+        foo = Foo.new
+        foo.mutate_itself
+        foo.x
+      CODE
+    end
+
+    it "mutates through pointer (1)" do
+      interpret(<<-CODE).should eq(10)
+        struct Foo
+          def initialize
+            @x = 0
+          end
+
+          def ptr
+            pointerof(@x)
+          end
+
+          def mutate
+            @x = 10
+            self
+          end
+
+          def x
+            @x
+          end
+        end
+
+        def foo
+          Foo.allocate
+        end
+
+        foo.mutate.ptr.value
+      CODE
+    end
+
+    it "mutates through pointer (2)" do
+      interpret(<<-CODE).should eq(10)
+        struct Foo
+          def initialize
+            @x = 0
+          end
+
+          def ptr
+            pointerof(@x)
+          end
+
+          def mutate
+            @x = 10
+            self
+          end
+
+          def x
+            @x
+          end
+        end
+
+        def foo
+          Foo.allocate
+        end
+
+        x = foo.mutate.ptr
+        x.value
+      CODE
+    end
+
+    it "mutates through pointer (3)" do
+      interpret(<<-CODE).should eq(10)
+        struct Foo
+          def initialize
+            @x = 0
+          end
+
+          def mutate
+            @x = 10
+          end
+
+          def x
+            @x
+          end
+        end
+
+        ptr = Pointer(Foo).malloc(1_u64)
+        ptr.value = Foo.new
+        ptr.value.mutate
+        ptr.value.x
+      CODE
+    end
+
+    it "mutates through read instance var" do
+      interpret(<<-CODE).should eq(10)
+        struct Foo
+          def initialize
+            @bar = Bar.new
+          end
+
+          def bar
+            @bar
+          end
+        end
+
+        struct Bar
+          def initialize
+            @z = 0
+          end
+
+          def z=(@z)
+          end
+
+          def z
+            @z
+          end
+        end
+
+        foo = Foo.new
+        foo.@bar.z = 10
+        foo.bar.z
+      CODE
+    end
+
+    it "mutates through inlined instance var with receiver" do
+      interpret(<<-CODE).should eq(10)
+        struct Foo
+          def initialize
+            @bar = Bar.new
+          end
+
+          def bar
+            @bar
+          end
+        end
+
+        struct Bar
+          def initialize
+            @z = 0
+          end
+
+          def z=(@z)
+          end
+
+          def z
+            @z
+          end
+        end
+
+        foo = Foo.new
+        foo.bar.z = 10
+        foo.bar.z
+      CODE
+    end
+
+    it "mutates through inlined instance var without receiver" do
+      interpret(<<-CODE).should eq(10)
+        struct Foo
+          def initialize
+            @bar = Bar.new
+          end
+
+          def bar
+            @bar
+          end
+
+          def mutate
+            bar.z = 10
+          end
+        end
+
+        struct Bar
+          def initialize
+            @z = 0
+          end
+
+          def z=(@z)
+          end
+
+          def z
+            @z
+          end
+        end
+
+        foo = Foo.new
+        foo.mutate
+        foo.bar.z
+      CODE
+    end
   end
 
   context "multidispatch" do
@@ -4869,6 +5078,14 @@ describe Crystal::Repl::Interpreter do
         id2 = attrs["id2"].content.to_i
         id + id2
         CODE
+    end
+
+    it "does String#includes?" do
+      interpret(<<-CODE, prelude: "prelude").should be_true
+        a = "Negative array size: -1"
+        b = "Negative array size"
+        a.includes?(b)
+      CODE
     end
   end
 end

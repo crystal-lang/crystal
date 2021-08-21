@@ -1064,6 +1064,7 @@ class Crystal::Repl::Interpreter
           whereami(a_def, location)
           next
         when "disassemble"
+          puts compiled_def.local_vars
           puts Disassembler.disassemble(@context, compiled_def)
           next
         end

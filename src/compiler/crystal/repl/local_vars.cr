@@ -72,7 +72,7 @@ class Crystal::Repl::LocalVars
     @name_to_index.keys.map(&.name)
   end
 
-  def declare(name : String, type : Type) : Nil
+  def declare(name : String, type : Type) : Int32?
     is_self = name == "self"
     return if is_self && type.is_a?(Program)
 
@@ -90,6 +90,8 @@ class Crystal::Repl::LocalVars
     end
 
     @max_bytesize = @bytesize if @bytesize > @max_bytesize
+
+    index
   end
 
   def name_to_index(name : String, block_level : Int32) : Int32

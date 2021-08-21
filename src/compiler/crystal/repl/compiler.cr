@@ -136,48 +136,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # (this is in intermediary nodes of `Expressions`) but
     # this is less efficient.
     @wants_value = true
-
-    # Do we want to produce a struct pointer instead of a struct
-    # value?
-    #
-    # This is needed because a struct call receiver is actually
-    # passed as a pointer, which becomes `self`. Then through
-    # this pointer struct mutation is possible.
-    #
-    # For code like:
-    #
-    # ```
-    # @foo.bar
-    # ```
-    #
-    # this is handled by checking whether the receiver is an InstanceVar,
-    # and if so, we load a pointer to the instance var.
-    #
-    # But what if it's something like this:
-    #
-    # ```
-    # (cond ? @foo : @bar).bar
-    # ```
-    #
-    # Assuming `@foo` and `@bar` have the same type, and `bar` mutates
-    # them, we'd like to pass a pointer to them here too.
-    # In this case we set `@wants_struct_pointer` to true, and then
-    # when an instance variable is visited, we put the pointer instead
-    # of the value. In this particular case we actually put some zeros
-    # (the size of the struct) before the pointer because we don't know
-    # whether other branches of the `if` (or expressions, in general)
-    # will actually put a full struct followed by a pointer. For example:
-    #
-    # ```
-    # (cond ? @foo : some_call).bar
-    # ```
-    #
-    # In this case `some_call` returns a struct, and we'll push it to the
-    # stack, and then we'll push a pointer to it. After `bar` is done
-    # we remove the extra struct before the pointer. So in the case of
-    # `@foo`, it must also produce something that's like `struct - pointer`
-    # so that the struct is popped uniformly.
-    @wants_struct_pointer = false
   end
 
   def self.new(
@@ -555,16 +513,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : Expressions)
     old_wants_value = @wants_value
-    old_wants_struct_pointer = @wants_struct_pointer
 
     node.expressions.each_with_index do |expression, i|
       @wants_value = old_wants_value && i == node.expressions.size - 1
-      @wants_struct_pointer = old_wants_struct_pointer && i == node.expressions.size - 1
       expression.accept self
     end
 
     @wants_value = old_wants_value
-    @wants_struct_pointer = old_wants_struct_pointer
 
     false
   end
@@ -573,14 +528,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     target = node.target
     case target
     when Var
-      dont_request_struct_pointer do
-        request_value(node.value)
-      end
+      request_value(node.value)
 
       # If it's the case of `x = a = 1` then we need to preserve the value
       # of 1 in the stack because it will be assigned to `x` too
       # (set_local removes the value from the stack)
-      if @wants_value && !@wants_struct_pointer
+      if @wants_value
         dup(aligned_sizeof_type(node.value), node: nil)
       end
 
@@ -598,12 +551,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     when InstanceVar
       if inside_method?
-        dont_request_struct_pointer do
-          request_value(node.value)
-        end
+        request_value(node.value)
 
         # Why we dup: check the Var case (it's similar)
-        if @wants_value && !@wants_struct_pointer
+        if @wants_value
           dup(aligned_sizeof_type(node.value), node: nil)
         end
 
@@ -639,19 +590,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
           set_self_ivar ivar_offset, ivar_size, node: node
         end
-
-        # If this assignment is part of a call that needs a struct pointer, produce it now
-        if @wants_struct_pointer
-          push_zeros aligned_sizeof_type(node), node: nil
-          compile_pointerof_ivar(node, target.name)
-
-          # In case the instance variable is a union, offset the pointer
-          # to where the union value is
-          if ivar.type.is_a?(MixedUnionType)
-            put_i32 sizeof(Void*), node: nil
-            pointer_add 1, node: nil
-          end
-        end
       else
         node.type = @context.program.nil_type
         put_nil node: nil if @wants_value
@@ -664,12 +602,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           initialize_class_var_if_needed(target.var, index, compiled_def)
         end
 
-        dont_request_struct_pointer do
-          request_value(node.value)
-        end
+        request_value(node.value)
 
         # Why we dup: check the Var case (it's similar)
-        if @wants_value && !@wants_struct_pointer
+        if @wants_value
           dup(aligned_sizeof_type(node.value), node: nil)
         end
 
@@ -678,19 +614,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         upcast node.value, node.value.type, var.type
 
         set_class_var index, aligned_sizeof_type(var), node: node
-
-        # If this assignment is part of a call that needs a struct pointer, produce it now
-        if @wants_struct_pointer
-          push_zeros aligned_sizeof_type(node), node: nil
-          pointerof_class_var(index, node: node)
-
-          # In case the class variable is a union, offset the pointer
-          # to where the union value is
-          if var.type.is_a?(MixedUnionType)
-            put_i32 sizeof(Void*), node: nil
-            pointer_add 1, node: nil
-          end
-        end
       else
         # TODO: eagerly initialize the class var?
         node.type = @context.program.nil_type
@@ -737,15 +660,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # Before assigning to the var we must potentially box inside a union
       upcast node, value_type, type
       set_local index, aligned_sizeof_type(type), node: node
-
-      # If this assignment is part of a call that needs a struct pointer, produce it now
-      if @wants_struct_pointer
-        push_zeros aligned_sizeof_type(node), node: nil
-        pointerof_var index, node: node
-      end
     in ClosuredVar
-      raise_if_wants_struct_pointer(node)
-
       # Before assigning to the var we must potentially box inside a union
       upcast node, value_type, var.type
 
@@ -771,37 +686,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       index, type = local_var.index, local_var.type
 
       if is_self && type.passed_by_value?
-        if @wants_struct_pointer
-          push_zeros aligned_sizeof_type(scope), node: nil
-          put_self(node: node)
-          return false
-        else
-          # Load the entire self from the pointer that's self
-          get_self_ivar 0, aligned_sizeof_type(type), node: node
-        end
+        # Load the entire self from the pointer that's self
+        get_self_ivar 0, aligned_sizeof_type(type), node: node
       else
-        if @wants_struct_pointer
-          push_zeros aligned_sizeof_type(node), node: nil
-          pointerof_var index, node: node
-        else
-          get_local index, aligned_sizeof_type(type), node: node
-        end
+        get_local index, aligned_sizeof_type(type), node: node
       end
 
       downcast node, type, node.type
     in ClosuredVar
       if is_self && local_var.type.passed_by_value?
-        if @wants_struct_pointer
-          node.raise "BUG: missing interpret read closured var with self wants_struct_pointer"
-        else
-          node.raise "BUG: missing interpret read closured var with self"
-        end
+        node.raise "BUG: missing interpret read closured var with self"
       else
-        if @wants_struct_pointer
-          node.raise "BUG: missing interpret read closured var with wants_struct_pointer"
-        else
-          read_from_closured_var(local_var, node: node)
-        end
+        read_from_closured_var(local_var, node: node)
       end
     end
 
@@ -1043,36 +939,31 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private def compile_instance_var(node : InstanceVar)
     return false unless @wants_value
 
-    if @wants_struct_pointer
-      push_zeros aligned_sizeof_type(node), node: nil
-      compile_pointerof_ivar(node, node.name)
-    else
-      closure_self = lookup_closured_var?("self")
-      if closure_self
-        ivar_offset = ivar_offset(closure_self.type, node.name)
-        ivar_size = inner_sizeof_type(closure_self.type.lookup_instance_var(node.name))
+    closure_self = lookup_closured_var?("self")
+    if closure_self
+      ivar_offset = ivar_offset(closure_self.type, node.name)
+      ivar_size = inner_sizeof_type(closure_self.type.lookup_instance_var(node.name))
 
-        if closure_self.type.passed_by_value?
-          node.raise "BUG: missing interpret read closured instance var of pass-by-value"
-        else
-          # Read self pointer
-          read_from_closured_var(closure_self, node: node)
-
-          # Now offset it to reach the instance var
-          if ivar_offset > 0
-            put_i32 ivar_offset, node: node
-            pointer_add 1, node: node
-          end
-
-          # Finally read it
-          pointer_get ivar_size, node: node
-        end
+      if closure_self.type.passed_by_value?
+        node.raise "BUG: missing interpret read closured instance var of pass-by-value"
       else
-        ivar_offset = ivar_offset(scope, node.name)
-        ivar_size = inner_sizeof_type(scope.lookup_instance_var(node.name))
+        # Read self pointer
+        read_from_closured_var(closure_self, node: node)
 
-        get_self_ivar ivar_offset, ivar_size, node: node
+        # Now offset it to reach the instance var
+        if ivar_offset > 0
+          put_i32 ivar_offset, node: node
+          pointer_add 1, node: node
+        end
+
+        # Finally read it
+        pointer_get ivar_size, node: node
       end
+    else
+      ivar_offset = ivar_offset(scope, node.name)
+      ivar_size = inner_sizeof_type(scope.lookup_instance_var(node.name))
+
+      get_self_ivar ivar_offset, ivar_size, node: node
     end
 
     false
@@ -1087,12 +978,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       initialize_class_var_if_needed(node.var, index, compiled_def)
     end
 
-    if @wants_struct_pointer
-      push_zeros aligned_sizeof_type(node), node: nil
-      pointerof_class_var(index, node: node)
-    else
-      get_class_var index, aligned_sizeof_type(node.var), node: node
-    end
+    get_class_var index, aligned_sizeof_type(node.var), node: node
 
     false
   end
@@ -1162,65 +1048,48 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     ivar_offset = ivar_offset(type, name)
     ivar_size = inner_sizeof_type(ivar)
 
-    unless @wants_struct_pointer
-      obj.accept self
+    obj.accept self
 
-      if type.passed_by_value?
-        # We have the struct in the stack, now we need to keep a part of it
+    if type.passed_by_value?
+      # We have the struct in the stack, now we need to keep a part of it
 
-        # If it's an extern struct with a Proc field, we need to convert
-        # the FFI::Closure object into a Crystal Proc
-        if type.extern? && ivar.type.proc?
-          get_struct_ivar ivar_offset, sizeof(Void*), aligned_sizeof_type(obj), node: node
-          c_fun_to_proc node: node
-        else
-          get_struct_ivar ivar_offset, ivar_size, aligned_sizeof_type(obj), node: node
-        end
+      # If it's an extern struct with a Proc field, we need to convert
+      # the FFI::Closure object into a Crystal Proc
+      if type.extern? && ivar.type.proc?
+        get_struct_ivar ivar_offset, sizeof(Void*), aligned_sizeof_type(obj), node: node
+        c_fun_to_proc node: node
       else
-        get_class_ivar ivar_offset, ivar_size, node: node
+        get_struct_ivar ivar_offset, ivar_size, aligned_sizeof_type(obj), node: node
       end
-
-      return false
-    end
-
-    # @wants_struct_pointer is true
-
-    # Remember to pad the pointer because it will be popped later on
-    push_zeros(aligned_sizeof_type(node), node: nil)
-
-    unless type.passed_by_value?
-      dont_request_struct_pointer do
-        obj.accept self
-      end
-
-      # At this point, for class types, we have a pointer on the stack,
-      # so we just need to offset it
-      put_i32 ivar_offset, node: nil
-      pointer_add 1, node: nil
-
-      return false
-    end
-
-    # At this point the obj tye is a pass-by-value type so we can't just
-    # put it on the stack to get a pointer to it.
-    # We need to get a pointer to it and then offset it.
-    pop_obj = compile_struct_call_receiver(obj, obj.type)
-
-    # Now offset it
-    put_i32 ivar_offset, node: nil
-    pointer_add 1, node: nil
-
-    # And finally we need to pop the padding that was introduced by `compile_struct_call_receiver`, if any
-    if pop_obj
-      pop_from_offset aligned_sizeof_type(pop_obj), aligned_sizeof_type(node), node: nil
+    else
+      get_class_ivar ivar_offset, ivar_size, node: node
     end
 
     false
   end
 
-  def visit(node : UninitializedVar)
-    raise_if_wants_struct_pointer(node)
+  private def compile_pointerof_read_instance_var(node, obj, name)
+    type = obj.type
 
+    ivar = type.lookup_instance_var(name)
+    ivar_offset = ivar_offset(type, name)
+    ivar_size = inner_sizeof_type(ivar)
+
+    # Get a pointer to the object
+    if type.passed_by_value?
+      compile_pointerof_node(obj, obj.type)
+    else
+      request_value(obj)
+    end
+
+    # Now offset it
+    put_i32 ivar_offset, node: nil
+    pointer_add 1, node: nil
+
+    false
+  end
+
+  def visit(node : UninitializedVar)
     case var = node.var
     when Var
       var.accept self
@@ -1252,9 +1121,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       return false
     end
 
-    dont_request_struct_pointer do
-      request_value(node.cond)
-    end
+    request_value(node.cond)
 
     value_to_bool(node.cond, node.cond.type)
 
@@ -1286,8 +1153,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : While)
-    raise_if_wants_struct_pointer(node)
-
     # Jump directly to the condition
     jump 0, node: nil
     cond_jump_location = patch_location
@@ -1340,8 +1205,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Return)
-    raise_if_wants_struct_pointer(node)
-
     exp = node.exp
 
     exp_type =
@@ -1405,12 +1268,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         argv_unsafe(node: node)
       else
         index = initialize_const_if_needed(const)
-        if @wants_struct_pointer
-          push_zeros(aligned_sizeof_type(const.value), node: nil)
-          get_const_pointer index, node: node
-        else
-          get_const index, aligned_sizeof_type(const.value), node: node
-        end
+        get_const index, aligned_sizeof_type(const.value), node: node
       end
     elsif replacement = node.syntax_replacement
       replacement.accept self
@@ -1527,8 +1385,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Cast)
-    raise_if_wants_struct_pointer(node)
-
     node.obj.accept self
 
     obj_type = node.obj.type
@@ -1723,7 +1579,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if body.is_a?(InstanceVar)
       # Inline the call, so that it also works fine when wanting to take a pointer through things
-      # (this is how the read Crystal works too
+      # (this is how compiled Crystal works too
       if obj
         compile_read_instance_var(node, obj, body.name)
       else
@@ -1758,6 +1614,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       return false
     end
 
+    # First compile the call args, then compile the def.
+    # The reason is that compiling the call args might introduce
+    # new temporary local variables, and if want to have those
+    # in place before compiling any block (otherwise the block
+    # variables' space would conflict with the temporary space)
+    compile_call_args(node, target_def)
+
     compiled_def = @context.defs[target_def]? ||
                    begin
                      create_compiled_def(node, target_def)
@@ -1765,28 +1628,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
                      node.raise ex, inner: ex
                    end
 
-    pop_obj = dont_request_struct_pointer do
-      compile_call_args(node, target_def)
-    end
-
     if (block = node.block) && !block.fun_literal
       call_with_block compiled_def, node: node
     else
       call compiled_def, node: node
     end
 
-    if @wants_value
-      # Pop the struct that's on the stack, if any, if obj was a struct
-      # (but the struct is after the call's value, so we must
-      # remove it past that value)
-      pop_from_offset aligned_sizeof_type(pop_obj), aligned_sizeof_type(node), node: nil if pop_obj
-      put_stack_top_pointer_if_needed(node)
-    else
-      if pop_obj
-        pop aligned_sizeof_type(node) + aligned_sizeof_type(pop_obj), node: nil
-      else
-        pop aligned_sizeof_type(node), node: nil
-      end
+    unless @wants_value
+      pop aligned_sizeof_type(node), node: nil
     end
 
     false
@@ -1799,37 +1648,35 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     args_bytesizes = [] of Int32
     args_ffi_types = [] of FFI::Type
 
-    dont_request_struct_pointer do
-      node.args.each_with_index do |arg, i|
-        arg_type = arg.type
+    node.args.each_with_index do |arg, i|
+      arg_type = arg.type
 
-        if arg.is_a?(NilLiteral)
-          # Nil is used to mean Pointer.null
-          put_i64 0, node: arg
-        else
-          request_value(arg)
-        end
-        # TODO: upcast?
+      if arg.is_a?(NilLiteral)
+        # Nil is used to mean Pointer.null
+        put_i64 0, node: arg
+      else
+        request_value(arg)
+      end
+      # TODO: upcast?
 
-        if arg_type.is_a?(ProcInstanceType)
-          external_arg = external.args[i]
-          args_bytesizes << sizeof(Void*)
+      if arg_type.is_a?(ProcInstanceType)
+        external_arg = external.args[i]
+        args_bytesizes << sizeof(Void*)
+        args_ffi_types << FFI::Type.pointer
+
+        proc_to_c_fun external_arg.type.as(ProcInstanceType).ffi_call_interface, node: nil
+      else
+        case arg
+        when NilLiteral
+          args_bytesizes << sizeof(Pointer(Void))
           args_ffi_types << FFI::Type.pointer
-
-          proc_to_c_fun external_arg.type.as(ProcInstanceType).ffi_call_interface, node: nil
+        when Out
+          # TODO: this out handling is bad. Why is out's type not a pointer already?
+          args_bytesizes << sizeof(Pointer(Void))
+          args_ffi_types << FFI::Type.pointer
         else
-          case arg
-          when NilLiteral
-            args_bytesizes << sizeof(Pointer(Void))
-            args_ffi_types << FFI::Type.pointer
-          when Out
-            # TODO: this out handling is bad. Why is out's type not a pointer already?
-            args_bytesizes << sizeof(Pointer(Void))
-            args_ffi_types << FFI::Type.pointer
-          else
-            args_bytesizes << aligned_sizeof_type(arg)
-            args_ffi_types << arg.type.ffi_type
-          end
+          args_bytesizes << aligned_sizeof_type(arg)
+          args_ffi_types << arg.type.ffi_type
         end
       end
     end
@@ -1863,9 +1710,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     lib_call(lib_function, node: node)
 
-    if @wants_value
-      put_stack_top_pointer_if_needed(node)
-    else
+    unless @wants_value
       pop aligned_sizeof_type(node), node: nil
     end
 
@@ -2030,10 +1875,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiled_block
   end
 
-  private def compile_call_args(node : Call, target_def : Def)
-    # Self for structs is passed by reference
-    pop_obj = nil
-
+  private def compile_call_args(node : Call, target_def : Def) : Nil
     obj = node.obj
     with_scope = node.with_scope
 
@@ -2043,7 +1885,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if obj
       if obj.type.passed_by_value?
-        pop_obj = compile_struct_call_receiver(obj, target_def.owner)
+        compile_pointerof_node(obj, target_def.owner)
       else
         request_value(obj)
       end
@@ -2115,8 +1957,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if fun_literal = node.block.try(&.fun_literal)
       request_value fun_literal
     end
-
-    pop_obj
   end
 
   private def compile_call_arg(arg, arg_type, target_def_var_type)
@@ -2162,68 +2002,132 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     upcast arg, arg_type, target_def_var_type
   end
 
-  private def compile_struct_call_receiver(obj : ASTNode, owner : Type)
-    case obj
-    when Var
-      if obj.name == "self"
-        self_type = @def.not_nil!.vars.not_nil!["self"].type
-        if self_type == owner
-          put_self(node: obj)
-        else
-          # It might happen that self's type was narrowed down,
-          # so we need to accept it regularly and downcast it.
-          # TODO: how to handle needs_struct_pointer?
-          request_value(obj)
-
-          # Then take a pointer to it (this is self inside the method)
-          put_stack_top_pointer(aligned_sizeof_type(obj), node: nil)
-
-          # We must remember to later pop the struct that's still on the stack
-          pop_obj = obj
-        end
+  private def compile_pointerof_node(obj : Var, owner : Type) : Nil
+    if obj.name == "self"
+      self_type = @def.not_nil!.vars.not_nil!["self"].type
+      if self_type == owner
+        put_self(node: obj)
       else
-        var = lookup_closured_var_or_local_var(obj.name)
-        var_type = var.type
-
-        if obj.type == var_type
-          pointerof_local_var_or_closured_var(var, node: obj)
-        elsif var_type.is_a?(MixedUnionType) && obj.type.struct?
-          # Get pointer of var
-          pointerof_local_var_or_closured_var(var, node: obj)
-
-          # Add 8 to it, to reach the union value
-          put_i64 8_i64, node: nil
-          pointer_add 1_i64, node: nil
-        elsif var_type.is_a?(MixedUnionType) && obj.type.is_a?(MixedUnionType)
-          pointerof_local_var_or_closured_var(var, node: obj)
-        else
-          obj.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type} (#{var_type.class} to #{obj.type.class})"
-        end
+        assign_to_temporary_and_return_pointer(obj)
       end
-    when InstanceVar
-      compile_pointerof_ivar(obj, obj.name)
-    when ClassVar
-      compile_pointerof_class_var(obj, obj)
-    when Path
-      const = obj.target_const.not_nil!
-      index = initialize_const_if_needed(const)
-      get_const_pointer index, node: obj
-    else
-      if needs_struct_pointer?(obj.type)
-        request_struct_pointer(obj)
-      else
-        # For a struct, we first put it on the stack
-        request_value(obj)
-
-        # Then take a pointer to it (this is self inside the method)
-        put_stack_top_pointer(aligned_sizeof_type(obj), node: nil)
-      end
-
-      # We must remember to later pop the struct that's still on the stack
-      pop_obj = obj
+      return
     end
 
-    pop_obj
+    var = lookup_closured_var_or_local_var(obj.name)
+    var_type = var.type
+
+    if obj.type == var_type
+      pointerof_local_var_or_closured_var(var, node: obj)
+    elsif var_type.is_a?(MixedUnionType) && obj.type.struct?
+      # Get pointer of var
+      pointerof_local_var_or_closured_var(var, node: obj)
+
+      # Add 8 to it, to reach the union value
+      put_i64 8_i64, node: nil
+      pointer_add 1_i64, node: nil
+    elsif var_type.is_a?(MixedUnionType) && obj.type.is_a?(MixedUnionType)
+      pointerof_local_var_or_closured_var(var, node: obj)
+    else
+      obj.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type} (#{var_type.class} to #{obj.type.class})"
+    end
+  end
+
+  private def compile_pointerof_node(obj : InstanceVar, owner : Type) : Nil
+    compile_pointerof_ivar(obj, obj.name)
+  end
+
+  private def compile_pointerof_node(obj : ClassVar, owner : Type) : Nil
+    compile_pointerof_class_var(obj, obj)
+  end
+
+  private def compile_pointerof_node(obj : Path, owner : Type) : Nil
+    const = obj.target_const.not_nil!
+    index = initialize_const_if_needed(const)
+    get_const_pointer index, node: obj
+  end
+
+  private def compile_pointerof_node(obj : ReadInstanceVar, owner : Type) : Nil
+    compile_pointerof_read_instance_var(obj, obj.obj, obj.name)
+  end
+
+  private def compile_pointerof_node(call : Call, owner : Type) : Nil
+    call_obj = call.obj
+    with_scope = call.with_scope
+
+    if !call_obj && with_scope && call.uses_with_scope?
+      call_obj = Var.new(WITH_SCOPE, with_scope)
+    end
+
+    target_defs = call.target_defs
+    unless target_defs
+      call.raise "BUG: no target defs"
+    end
+
+    unless target_defs.size == 1
+      assign_to_temporary_and_return_pointer(call)
+      return
+    end
+
+    target_def = target_defs.first
+    body = target_def.body
+
+    if body.is_a?(Primitive) && body.name == "pointer_get"
+      # We don't want pointer.value to return a copy of something
+      # if we are calling through it
+      call_obj = call_obj.not_nil!
+
+      element_type = call_obj.type.as(PointerInstanceType).element_type
+
+      request_value(call_obj)
+      return
+    end
+
+    if body.is_a?(InstanceVar)
+      # Inline the call, so that it also works fine when wanting to
+      # take a pointer through things (this is how compiled Crystal works too
+      if call_obj
+        compile_pointerof_read_instance_var(call, call_obj, body.name)
+      else
+        compile_pointerof_ivar(body, body.name)
+      end
+
+      # We still have to accept the call arguments, but discard their values
+      call.args.each { |arg| discard_value(arg) }
+      return
+    end
+
+    if body.is_a?(Var) && body.name == "self"
+      # We also inline calls that simply return "self"
+      if call_obj
+        compile_pointerof_node(call_obj, owner)
+      else
+        put_self(node: call)
+      end
+
+      # We still have to accept the call arguments, but discard their values
+      call.args.each { |arg| discard_value(arg) }
+      return
+    end
+
+    assign_to_temporary_and_return_pointer(call)
+  end
+
+  private def compile_pointerof_node(obj : ASTNode, owner : Type) : Nil
+    assign_to_temporary_and_return_pointer(obj)
+  end
+
+  # Assigns the object's value to a temporary
+  # local variable, and then produces a pointer to that local variable.
+  # In this way we make sure that the memory the pointer is pointing
+  # to remains available, at least in this call frame.
+  private def assign_to_temporary_and_return_pointer(obj : ASTNode)
+    temp_var_name = @context.program.new_temp_var_name
+    temp_var_index = @local_vars.declare(temp_var_name, obj.type).not_nil!
+
+    request_value(obj)
+
+    set_local temp_var_index, aligned_sizeof_type(obj), node: obj
+    pointerof_var(temp_var_index, node: obj)
   end
 
   private def declare_local_vars(vars_owner, local_vars : LocalVars, owner = vars_owner)
@@ -2341,15 +2245,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def accept_call_members(node : Call)
-    dont_request_struct_pointer do
-      if obj = node.obj
-        obj.accept(self)
-      else
-        put_self(node: node) unless scope.is_a?(Program)
-      end
-
-      node.args.each &.accept(self)
+    if obj = node.obj
+      obj.accept(self)
+    else
+      put_self(node: node) unless scope.is_a?(Program)
     end
+
+    node.args.each &.accept(self)
   end
 
   def visit(node : Out)
@@ -2476,8 +2378,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Break)
-    raise_if_wants_struct_pointer(node)
-
     exp = node.exp
 
     exp_type =
@@ -2514,8 +2414,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Next)
-    raise_if_wants_struct_pointer(node)
-
     exp = node.exp
 
     if @while
@@ -2572,9 +2470,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
        block.args.size > 1
       # Accept the tuple
       exp = node.exps.first
-      dont_request_struct_pointer do
-        request_value exp
-      end
+      request_value exp
 
       # We need to cast to the block var, not arg
       # (the var might have more types in it if it's assigned other values)
@@ -2589,9 +2485,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     else
       node.exps.each_with_index do |exp, i|
         if i < block.args.size
-          dont_request_struct_pointer do
-            request_value(exp)
-          end
+          request_value(exp)
 
           # We need to cast to the block var, not arg
           # (the var might have more types in it if it's assigned other values)
@@ -2609,7 +2503,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if @wants_value
       pop_from_offset aligned_sizeof_type(pop_obj), aligned_sizeof_type(node), node: nil if pop_obj
-      put_stack_top_pointer_if_needed(node)
     else
       if pop_obj
         pop aligned_sizeof_type(node) + aligned_sizeof_type(pop_obj), node: nil
@@ -2765,9 +2658,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def discard_value(node : ASTNode)
-    dont_request_struct_pointer do
-      accept_with_wants_value node, false
-    end
+    accept_with_wants_value node, false
   end
 
   private def accept_with_wants_value(node : ASTNode, wants_value)
@@ -2775,43 +2666,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @wants_value = wants_value
     node.accept self
     @wants_value = old_wants_value
-  end
-
-  private def request_struct_pointer(node : ASTNode)
-    old_wants_stuct_pointer = @wants_struct_pointer
-    @wants_struct_pointer = true
-    request_value node
-    @wants_struct_pointer = old_wants_stuct_pointer
-  end
-
-  private def dont_request_struct_pointer
-    old_wants_stuct_pointer = @wants_struct_pointer
-    @wants_struct_pointer = false
-    value = yield
-    @wants_struct_pointer = old_wants_stuct_pointer
-    value
-  end
-
-  private def put_stack_top_pointer_if_needed(value)
-    if @wants_struct_pointer
-      put_stack_top_pointer(aligned_sizeof_type(value), node: nil)
-    end
-  end
-
-  private def raise_if_wants_struct_pointer(node : ASTNode, body : Primitive)
-    # We'll slowly handle these cases, but they are probably very uncommon.
-    # We still want to know where they happen!
-    if @wants_struct_pointer
-      node.raise "BUG: missing handling of @wants_struct_pointer for #{body}"
-    end
-  end
-
-  private def raise_if_wants_struct_pointer(node : ASTNode)
-    # We'll slowly handle these cases, but they are probably very uncommon.
-    # We still want to know where they happen!
-    if @wants_struct_pointer
-      node.raise "BUG: missing handling of @wants_struct_pointer for #{node.class}"
-    end
   end
 
   # TODO: block.break shouldn't exist: the type should be merged in target_def
@@ -3005,36 +2859,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def type_id(type : Type)
     @context.type_id(type)
-  end
-
-  # The only types that we want to put a struct pointer for
-  # (for @wants_struct_pointer) are mutable types that are not
-  # inside a union. The reason is that if they are inside a union,
-  # they are already copied, so passing a perfect pointer is useless.
-  private def needs_struct_pointer?(type : Type)
-    case type
-    when PrimitiveType, PointerInstanceType, ProcInstanceType,
-         TupleInstanceType, NamedTupleInstanceType, MixedUnionType
-      false
-    when StaticArrayInstanceType
-      true
-    when VirtualType
-      type.struct?
-    when NonGenericModuleType
-      type.including_types.try { |t| needs_struct_pointer?(t) }
-    when GenericModuleInstanceType
-      type.including_types.try { |t| needs_struct_pointer?(t) }
-    when GenericClassInstanceType
-      needs_struct_pointer?(type.generic_type)
-    when TypeDefType
-      needs_struct_pointer?(type.typedef)
-    when AliasType
-      needs_struct_pointer?(type.aliased_type)
-    when ClassType
-      type.struct?
-    else
-      false
-    end
   end
 
   private macro nop
