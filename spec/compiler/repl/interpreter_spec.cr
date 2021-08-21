@@ -3924,6 +3924,18 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "casts nil to Void*" do
+      interpret(<<-CODE).should eq(0)
+        module Moo
+          def self.moo(r)
+            r.as(Void*)
+          end
+        end
+
+        Moo.moo(nil).address
+      CODE
+    end
   end
 
   context "constants" do

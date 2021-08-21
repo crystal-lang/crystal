@@ -1373,6 +1373,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Cast)
     node.obj.accept self
 
+    # TODO: check @wants_value in these branches
+
     obj_type = node.obj.type
     to_type = node.to.type.virtual_type
 
@@ -1383,6 +1385,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     elsif obj_type.pointer? && to_type.pointer?
       # Cast between pointers is nop
       nop
+    elsif obj_type.nil_type? && to_type.pointer?
+      # Cast from nil to Void* produces a null pointer
+      if @wants_value
+        pop aligned_sizeof_type(obj_type), node: nil
+        put_i64 0, node: nil
+      end
     elsif obj_type.pointer? && to_type.reference_like?
       # Cast from pointer to reference is nop
       nop
