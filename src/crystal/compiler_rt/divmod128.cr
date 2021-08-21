@@ -1,4 +1,4 @@
-# This file includes an implementation of (U)Int128 modulo/division operations on 32-bit systems.
+# This file includes an implementation of (U)Int128 modulo/division operations
 
 # :nodoc:
 fun __divti3(a : Int128, b : Int128) : Int128
