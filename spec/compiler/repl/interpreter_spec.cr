@@ -444,6 +444,10 @@ describe Crystal::Repl::Interpreter do
       interpret("1_i8 + 2_i8").should eq(3)
     end
 
+    it "interprets UInt64 & Int32" do
+      interpret("604_u64 & 4095").should eq(604)
+    end
+
     it "discards math" do
       interpret("1 + 2; 4").should eq(4)
     end
