@@ -1681,9 +1681,9 @@ module Crystal
           @token.type = :NUMBER
           @token.number_kind = :i32
           @token.value = case first_byte
-                         when '+'; "+0"
-                         when '-'; "-0"
-                         else      "0"
+                         when '+' then "+0"
+                         when '-' then "-0"
+                         else          "0"
                          end
           set_token_raw_from_start(start)
         end
