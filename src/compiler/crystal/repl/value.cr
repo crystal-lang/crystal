@@ -55,7 +55,7 @@ struct Crystal::Repl::Value
       @pointer.as(UInt8**).value.unsafe_as(String)
     when PointerInstanceType
       @pointer.as(UInt8**).value
-    when MetaclassType, GenericClassInstanceMetaclassType
+    when MetaclassType, GenericClassInstanceMetaclassType, VirtualMetaclassType
       type_id = @pointer.as(Int32*).value
       context.type_from_id(type_id)
     else

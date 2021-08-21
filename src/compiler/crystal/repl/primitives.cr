@@ -81,9 +81,22 @@ class Crystal::Repl::Compiler
 
       pointer_add(inner_sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
     when "class"
-      return unless @wants_value
+      obj = obj.not_nil!
+      type = obj.type
 
-      put_type obj.not_nil!.type, node: node
+      if type.is_a?(VirtualType)
+        obj.accept self
+        return unless @wants_value
+
+        # We have a pointer to a class instance on the stack:
+        # read the type ID from it
+        pointer_get(sizeof(Int32), node: node)
+      else
+        discard_value obj
+        return unless @wants_value
+
+        put_type type, node: node
+      end
     when "object_crystal_type_id"
       type =
         if obj

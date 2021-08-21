@@ -1595,6 +1595,32 @@ describe Crystal::Repl::Interpreter do
       repl_value.value.should eq(program.int32)
     end
 
+    it "discards class for non-union type" do
+      interpret("1.class; 2").should eq(2)
+    end
+
+    it "interprets class for virtual_type type" do
+      program, repl_value = interpret_with_program(<<-CODE)
+          class Foo; end
+          class Bar < Foo; end
+
+          bar = Bar.new || Foo.new
+          bar.class
+        CODE
+      repl_value.value.should eq(program.types["Bar"])
+    end
+
+    it "discards class for virtual_type type" do
+      interpret(<<-CODE).should eq(2)
+          class Foo; end
+          class Bar < Foo; end
+
+          bar = Bar.new || Foo.new
+          bar.class
+          2
+        CODE
+    end
+
     it "interprets crystal_type_id for nil" do
       interpret("nil.crystal_type_id").should eq(0)
     end
