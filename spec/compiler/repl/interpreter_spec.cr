@@ -3848,6 +3848,35 @@ describe Crystal::Repl::Interpreter do
         a
       CODE
     end
+
+    it "interprets block with splat" do
+      interpret(<<-CODE).should eq((((1 - 2) * 3) - 4) * 5)
+        def foo
+          yield 1, 2, 3, 4, 5
+        end
+
+        a = 0
+        foo do |x1, *x, x5|
+          a = (((x1 - x[0]) * x[1]) - x[2]) * x5
+        end
+        a
+      CODE
+    end
+
+    it "interprets yield with splat, block with splat" do
+      interpret(<<-CODE).should eq((((1 - 2) * 3) - 4) * 5)
+        def foo
+          t = {1, 2, 3}
+          yield *t, 4, 5
+        end
+
+        a = 0
+        foo do |x1, *x, x5|
+          a = (((x1 - x[0]) * x[1]) - x[2]) * x5
+        end
+        a
+      CODE
+    end
   end
 
   context "casts" do

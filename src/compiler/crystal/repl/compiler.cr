@@ -1814,6 +1814,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def create_compiled_block(block : Block, target_def : Def)
+    rewrite_block_with_splat(block)
+
     bytesize_before_block_local_vars = @local_vars.current_bytesize
 
     @local_vars.push_block
@@ -1876,6 +1878,76 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     compiled_block
+  end
+
+  private def rewrite_block_with_splat(node : Block)
+    splat_index = node.splat_index
+    return unless splat_index
+
+    # If the block has a splat index, we rewrite it to something simpler.
+    #
+    # For example, assuming `y` is a tuple of 3 elements, we rewrite:
+    #
+    # ```
+    # foo do |x, *y, z|
+    #   p! x, y, z
+    # end
+    # ```
+    #
+    # to:
+    #
+    # ```
+    # foo do |x, temp1, temp2, temp3, z|
+    #   y = {temp1, temp2, temp3}
+    #   p! x, y, z
+    # end
+    # ```
+    #
+    # TODO: consider doing this in CleanupTransformer to also simplify
+    # compiled Crystal and any other future backend.
+    splat_arg = node.args[splat_index]
+    tuple_type = splat_arg.type.as(TupleInstanceType)
+
+    temp_var_names = tuple_type.tuple_types.map do
+      @context.program.new_temp_var_name
+    end
+
+    # Go from |x, *y, z| to |x, temp1, temp2, temp3|
+    node.args[splat_index..splat_index] = temp_var_names.map_with_index do |temp_var_name, i|
+      Var.new(temp_var_name, type: tuple_type.tuple_types[i])
+    end
+
+    # Create y = {temp1, temp2, temp3}
+    assign_var = Var.new(splat_arg.name, type: tuple_type)
+    tuple_vars = temp_var_names.map_with_index do |temp_var_name, i|
+      Var.new(temp_var_name, type: tuple_type.tuple_types[i]).as(ASTNode)
+    end
+    tuple_literal = TupleLiteral.new(tuple_vars)
+    tuple_literal.type = tuple_type
+
+    assign = Assign.new(assign_var, tuple_literal)
+    assign.type = tuple_type
+
+    # Replace the block body
+    block_body = node.body
+    unless block_body
+      block_body = NilLiteral.new
+      block_body.type = @context.program.nil_type
+    end
+
+    exps = Expressions.new([assign, block_body] of ASTNode)
+    exps.type = block_body.type
+    node.body = exps
+
+    # Remove the fact that the block has a splat
+    node.splat_index = nil
+
+    # We also need to declare the vars in the block
+    temp_var_names.each_with_index do |temp_var_name, i|
+      meta_var = MetaVar.new(temp_var_name, tuple_type.tuple_types[i])
+      meta_var.context = node
+      node.vars.not_nil![temp_var_name] = meta_var
+    end
   end
 
   private def compile_call_args(node : Call, target_def : Def) : Nil
@@ -2453,7 +2525,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     splat_index = block.splat_index
     if splat_index
-      node.raise "BUG: block with splat not yet supported"
+      node.raise "BUG: block with splat should have been rewritten to one withone one"
     end
 
     with_scope = node.scope
