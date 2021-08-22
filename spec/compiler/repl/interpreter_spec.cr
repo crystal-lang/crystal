@@ -436,6 +436,10 @@ describe Crystal::Repl::Interpreter do
       interpret("1 + 2.5").should eq(3.5)
     end
 
+    it "interprets Float32 + Float64" do
+      interpret("1.0_f32 + 0.0").should eq(1.0_f32)
+    end
+
     it "interprets Float64 + Int32" do
       interpret("2.5 + 1").should eq(3.5)
     end

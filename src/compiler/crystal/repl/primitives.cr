@@ -819,6 +819,10 @@ class Crystal::Repl::Compiler
     end
 
     primitive_binary_op_math(node, kind, op)
+
+    if kind != left_type.kind
+      primitive_convert(node, kind, left_type.kind, checked: false)
+    end
   end
 
   private def primitive_binary_op_math(node : ASTNode, kind : Symbol, op : String)
