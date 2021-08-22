@@ -1442,9 +1442,9 @@ require "./repl"
         push:       true,
         code:       begin
           if zero_is_undef
-            LibIntrinsics.countleading8(src, false)
-          else
             LibIntrinsics.countleading8(src, true)
+          else
+            LibIntrinsics.countleading8(src, false)
           end
         end,
       },
@@ -1453,9 +1453,9 @@ require "./repl"
         push:       true,
         code:       begin
           if zero_is_undef
-            LibIntrinsics.countleading16(src, false)
-          else
             LibIntrinsics.countleading16(src, true)
+          else
+            LibIntrinsics.countleading16(src, false)
           end
         end,
       },
@@ -1464,9 +1464,9 @@ require "./repl"
         push:       true,
         code:       begin
           if zero_is_undef
-            LibIntrinsics.countleading32(src, false)
-          else
             LibIntrinsics.countleading32(src, true)
+          else
+            LibIntrinsics.countleading32(src, false)
           end
         end,
       },
@@ -1475,9 +1475,9 @@ require "./repl"
         push:       true,
         code:       begin
           if zero_is_undef
-            LibIntrinsics.countleading64(src, false)
-          else
             LibIntrinsics.countleading64(src, true)
+          else
+            LibIntrinsics.countleading64(src, false)
           end
         end,
       },
@@ -1486,9 +1486,9 @@ require "./repl"
         push:       true,
         code:       begin
           if zero_is_undef
-            LibIntrinsics.counttrailing8(src, false)
-          else
             LibIntrinsics.counttrailing8(src, true)
+          else
+            LibIntrinsics.counttrailing8(src, false)
           end
         end,
       },
@@ -1497,9 +1497,9 @@ require "./repl"
         push:       true,
         code:       begin
           if zero_is_undef
-            LibIntrinsics.counttrailing16(src, false)
-          else
             LibIntrinsics.counttrailing16(src, true)
+          else
+            LibIntrinsics.counttrailing16(src, false)
           end
         end,
       },
@@ -1508,9 +1508,9 @@ require "./repl"
         push:       true,
         code:       begin
           if zero_is_undef
-            LibIntrinsics.counttrailing32(src, false)
-          else
             LibIntrinsics.counttrailing32(src, true)
+          else
+            LibIntrinsics.counttrailing32(src, false)
           end
         end,
       },
@@ -1519,9 +1519,9 @@ require "./repl"
         push:       true,
         code:       begin
           if zero_is_undef
-            LibIntrinsics.counttrailing64(src, false)
-          else
             LibIntrinsics.counttrailing64(src, true)
+          else
+            LibIntrinsics.counttrailing64(src, false)
           end
         end,
       },

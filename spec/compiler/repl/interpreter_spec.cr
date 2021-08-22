@@ -5034,6 +5034,12 @@ describe Crystal::Repl::Interpreter do
         foo
       CODE
     end
+
+    it "does leading zeros" do
+      interpret(<<-CODE, prelude: "prelude").should eq(8)
+        0_i8.leading_zeros_count
+      CODE
+    end
   end
 
   context "integration" do
