@@ -4,11 +4,11 @@
 fun __divti3(a : Int128, b : Int128) : Int128
   # Ported from llvm/compiler-rt:/lib/builtins/divti3.c
 
-  s_a = a >> 127 # s_a = a < 0 ? -1 : 0
-  s_b = b >> 127 # s_b = b < 0 ? -1 : 0
+  s_a = a >> 127       # s_a = a < 0 ? -1 : 0
+  s_b = b >> 127       # s_b = b < 0 ? -1 : 0
   a = (a ^ s_a) &- s_a # negate if s_a == -1
   b = (b ^ s_b) &- s_b # negate if s_b == -1
-  s_a ^= s_b # sign of quotient
+  s_a ^= s_b           # sign of quotient
   quo, _ = _u128_div_rem(a.to_u128!, b.to_u128!)
   ((quo ^ s_a) &- s_a).to_i128! # negate if s_a == -1
 end
@@ -17,9 +17,9 @@ end
 fun __modti3(a : Int128, b : Int128) : Int128
   # Ported from llvm/compiler-rt:/lib/builtins/modti3.c
 
-  s = b >> 127# s = b < 0 ? -1 : 0
+  s = b >> 127     # s = b < 0 ? -1 : 0
   b = (b ^ s) &- s # negate if s == -1
-  s = a >> 127 # s = a < 0 ? -1 : 0
+  s = a >> 127     # s = a < 0 ? -1 : 0
   a = (a ^ s) &- s # negate if s == -1
   _, rem = _u128_div_rem(a.to_u128!, b.to_u128!)
   (rem.to_i128! ^ s) &- s # negate if s == -1
@@ -143,12 +143,12 @@ def _u128_div_rem(duo : UInt128, div : UInt128) : Tuple(UInt128, UInt128)
   # Undersubtracting long division algorithm.
 
   quo : UInt128 = 0
-  div_extra = 96 - div_lz # Number of lesser significant bits that aren't part of div_sig_32
-  div_sig_32 = (div >> div_extra).to_u32! # Most significant 32 bits of div
+  div_extra = 96 - div_lz                  # Number of lesser significant bits that aren't part of div_sig_32
+  div_sig_32 = (div >> div_extra).to_u32!  # Most significant 32 bits of div
   div_sig_32_add1 = div_sig_32.to_u64! + 1 # This must be a UInt64 because this can overflow
 
   loop do
-    duo_extra = 64 - duo_lz # Number of lesser significant bits that aren't part of duo_sig_n
+    duo_extra = 64 - duo_lz                # Number of lesser significant bits that aren't part of duo_sig_n
     duo_sig_n = (duo >> duo_extra).to_u64! # Most significant 64 bits of duo
 
     # The two possibility algorithm requires that the difference between most significant bits is less than 32
