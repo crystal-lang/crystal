@@ -697,7 +697,7 @@ class Crystal::Repl::Compiler
       primitive_binary_op_math(node, body, node.name)
     when "<", "<=", ">", ">=", "==", "!="
       primitive_binary_op_cmp(node, body, node.name)
-    when "/"
+    when "/", "fdiv"
       primitive_binary_float_div(node, body)
     else
       node.raise "BUG: missing handling of binary op #{node.name}"
