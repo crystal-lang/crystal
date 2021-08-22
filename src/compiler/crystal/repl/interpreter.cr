@@ -300,31 +300,49 @@ class Crystal::Repl::Interpreter
                 {{ pop.var }} = stack_pop({{pop.type}})
               {% end %}
 
-              {% if instruction[:overflow] %}
-                {{ "begin".id }}
-              {% end %}
+              begin
+                {% if instruction[:overflow] %}
+                  {{ "begin".id }}
+                {% end %}
 
-              # Execute the instruction and push the value to the stack, if needed
-              {% if instruction[:push] %}
-                stack_push({{instruction[:code]}})
-              {% else %}
-                {{instruction[:code]}}
-              {% end %}
+                # Execute the instruction and push the value to the stack, if needed
+                {% if instruction[:push] %}
+                  stack_push({{instruction[:code]}})
+                {% else %}
+                  {{instruction[:code]}}
+                {% end %}
 
-              {% if instruction[:overflow] %}
-                {{ "rescue OverflowError".id }}
-                  # Adjust ip so it's correct for backtrace.
-                  # The ip has to end after the opcode and sizeof(Void*)
-                  # bytes after that, because backtrace will assume it was a call.
-                  {% for operand in operands %}
-                    ip -= sizeof({{operand.type}})
-                  {% end %}
-                  ip += sizeof(Void*)
+                {% if instruction[:overflow] %}
+                  {{ "rescue OverflowError".id }}
+                    # Adjust ip so it's correct for backtrace.
+                    # The ip has to end after the opcode and sizeof(Void*)
+                    # bytes after that, because backtrace will assume it was a call.
+                    {% for operand in operands %}
+                      ip -= sizeof({{operand.type}})
+                    {% end %}
+                    ip += sizeof(Void*)
 
-                  # On overflow, directly call __crystal_raise_overflow
-                  call(crystal_raise_overflow_compiled_def)
-                {{ "end".id }}
-              {% end %}
+                    # On overflow, directly call __crystal_raise_overflow
+                    call(crystal_raise_overflow_compiled_def)
+                  {{ "end".id }}
+                {% end %}
+              rescue escaping_exception : EscapingException
+                raise escaping_exception
+              rescue exception : Exception
+                {% for operand in operands %}
+                  ip -= sizeof({{operand.type}})
+                {% end %}
+                ip -= sizeof(OpCode)
+
+                call_frame = @call_stack.last
+                a_def = call_frame.compiled_def.def
+                offset = (ip - instructions.instructions.to_unsafe).to_i32
+                puts "In: #{a_def.owner}##{a_def.name}"
+                node = instructions.nodes[offset]?
+                puts "Node: #{node}" if node
+
+                raise exception
+              end
           {% end %}
         end
       {% end %}

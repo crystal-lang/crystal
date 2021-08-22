@@ -2456,10 +2456,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       node.raise "BUG: block with splat not yet supported"
     end
 
-    if node.exps.any?(Splat)
-      node.raise "BUG: splat inside yield not yet supported"
-    end
-
     with_scope = node.scope
     if with_scope
       request_value(with_scope)
@@ -2469,6 +2465,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # Check if tuple unpacking is needed
     if node.exps.size == 1 &&
+       !node.exps.first.is_a?(Splat) &&
        (tuple_type = node.exps.first.type).is_a?(TupleInstanceType) &&
        block.args.size > 1
       # Accept the tuple
@@ -2486,18 +2483,52 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # We need to discard the tuple value that comes before the unpacked values
       pop_obj = tuple_type
     else
-      node.exps.each_with_index do |exp, i|
-        if i < block.args.size
-          request_value(exp)
+      block_arg_index = 0
 
-          # We need to cast to the block var, not arg
-          # (the var might have more types in it if it's assigned other values)
-          block_arg = block.args[i]
-          block_var = block.vars.not_nil![block_arg.name]
+      node.exps.each do |exp|
+        if exp.is_a?(Splat)
+          tuple_type = exp.exp.type.as(TupleInstanceType)
 
-          upcast exp, exp.type, block_var.type
+          # First accept the tuple
+          request_value(exp.exp)
+
+          # Compute which block var types we need to unpack to,
+          # and what's their total size
+          block_var_types = [] of Type
+          block_var_types_size = 0
+
+          tuple_element_index = 0
+          while block_arg_index < block.args.size && tuple_element_index < tuple_type.tuple_types.size
+            block_arg = block.args[block_arg_index]
+            block_var = block.vars.not_nil![block_arg.name]
+            block_var_type = block_var.type
+
+            block_var_types << block_var_type
+            block_var_types_size += aligned_sizeof_type(block_var_type)
+
+            block_arg_index += 1
+            tuple_element_index += 1
+          end
+
+          unpack_tuple exp, tuple_type, block_var_types
+
+          # Now we need to pop the tuple
+          pop_from_offset aligned_sizeof_type(tuple_type), block_var_types_size, node: nil
         else
-          discard_value(exp)
+          if block_arg_index < block.args.size
+            request_value(exp)
+
+            # We need to cast to the block var, not arg
+            # (the var might have more types in it if it's assigned other values)
+            block_arg = block.args[block_arg_index]
+            block_var = block.vars.not_nil![block_arg.name]
+
+            upcast exp, exp.type, block_var.type
+          else
+            discard_value(exp)
+          end
+
+          block_arg_index += 1
         end
       end
     end
