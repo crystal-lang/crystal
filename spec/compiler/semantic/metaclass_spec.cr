@@ -39,7 +39,7 @@ describe "Semantic: metaclass" do
       class Bar < Foo; end
       )).program
 
-    bar_class = mod.types["Bar"].metaclass.should be_a(MetaclassType)
+    bar_class = mod.types["Bar"].metaclass.as(MetaclassType)
     bar_class.superclass.should eq(mod.types["Foo"].metaclass)
   end
 
