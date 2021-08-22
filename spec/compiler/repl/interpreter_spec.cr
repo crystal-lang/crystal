@@ -3847,6 +3847,15 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "casts from nilable type to mixed union type (2)" do
+      interpret(<<-CODE).should eq(true)
+        y = 1 == 1 ? "a" : nil
+        x = true
+        x = y
+        x.is_a?(String)
+      CODE
+    end
+
     it "casts from mixed union type to primitive type" do
       interpret(<<-CODE).should eq(2)
         x = 1 == 1 ? 2 : nil

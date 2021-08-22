@@ -951,7 +951,7 @@ require "./repl"
             stack_push(pointer)
 
             # Fill with zeros until we reach union_size
-            remaining = union_size - sizeof(Pointer(Void))
+            remaining = union_size - sizeof(Pointer(Void)) - type_id_bytesize
             stack_grow_by(remaining) if remaining > 0
           end
         end,
