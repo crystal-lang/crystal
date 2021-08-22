@@ -52,6 +52,10 @@ class Crystal::Repl::LocalVars
   end
 
   def pop_block : Nil
+    # Undefine variables that belong to the current block
+    @types.reject! { |key, type| key.block_level == @block_level }
+    @name_to_index.reject! { |key, index| key.block_level == @block_level }
+
     @block_level -= 1
     @bytesize = @bytesize_per_block_level.pop
   end

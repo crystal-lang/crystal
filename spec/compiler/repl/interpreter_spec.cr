@@ -5001,6 +5001,30 @@ describe Crystal::Repl::Interpreter do
         }.call
       CODE
     end
+
+    it "doesn't override local variable value with block var with the same name" do
+      interpret(<<-CODE).should eq(0)
+        def block
+          yield 1
+        end
+
+        def block2
+          yield 10
+        end
+
+        def foo
+          block do |i|
+          end
+
+          i = 0
+          block2 do |x|
+            i
+          end
+        end
+
+        foo
+      CODE
+    end
   end
 
   context "integration" do
