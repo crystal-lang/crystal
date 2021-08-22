@@ -84,6 +84,18 @@ describe Crystal::Repl::Interpreter do
     it "interprets a String literal" do
       interpret(%("Hello world!")).should eq("Hello world!")
     end
+
+    it "uses a string pool" do
+      interpret(<<-CODE).should eq(true)
+        "a".object_id == "a".object_id
+      CODE
+    end
+
+    it "precomputes string literal length" do
+      interpret(<<-CODE).should eq(1)
+        "旅".@length
+      CODE
+    end
   end
 
   context "local variables" do

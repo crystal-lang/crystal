@@ -331,8 +331,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : StringLiteral)
     return false unless @wants_value
 
-    # TODO: use a string pool?
-    put_string node.value, node: node
+    string = @context.program.string_pool.get(node.value)
+
+    # Compute size so that it's also available on the program.
+    # TODO: maybe we shouldn't use these strings for the interpreted
+    # program and instead put memory for them somehow that would
+    # match their actual memory representation (for example the TYPE_ID
+    # might not match)
+    string.size
+
+    put_string string, node: node
+
     false
   end
 
