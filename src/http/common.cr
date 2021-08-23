@@ -412,16 +412,16 @@ module HTTP
   def self.quote_string(string, io) : Nil
     # Escaping rules: https://evolvis.org/pipermail/evolvis-platfrm-discuss/2014-November/000675.html
 
-    string.each_byte do |byte|
-      case byte
-      when '\t'.ord, ' '.ord, '"'.ord, '\\'.ord
+    string.each_char do |char|
+      case char
+      when '\t', ' ', '"', '\\'
         io << '\\'
-      when 0x00..0x1F, 0x7F
-        raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+      when '\u{00}'..'\u{1F}', '\u{7F}'
+        raise ArgumentError.new("String contained invalid character #{char.inspect}")
       else
         # output byte as is
       end
-      io.write_byte byte
+      io << char
     end
   end
 
