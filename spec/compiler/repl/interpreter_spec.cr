@@ -555,6 +555,14 @@ describe Crystal::Repl::Interpreter do
       interpret("2.5 / 2.1").should eq(2.5 / 2.1)
     end
 
+    it "interprets Float32 fdiv Float64" do
+      interpret("2.5_f32.fdiv(2.1_f64)").should eq(2.5_f32.fdiv(2.1_f64))
+    end
+
+    it "interprets Float64 fdiv Float32" do
+      interpret("2.5_f64.fdiv(2.1_f32)").should eq(2.5_f64.fdiv(2.1_f32))
+    end
+
     it "interprets Int32 == Float64 (true)" do
       interpret("1 == 1.0").should be_true
     end

@@ -1120,13 +1120,15 @@ class Crystal::Repl::Compiler
     arg_kind = integer_or_float_kind(arg_type).not_nil!
 
     obj.accept self
-    if obj_type.is_a?(IntegerType) && arg_type.is_a?(FloatType)
+    if (obj_type.is_a?(IntegerType) && arg_type.is_a?(FloatType)) ||
+       (obj_type.is_a?(FloatType) && arg_type.is_a?(FloatType) && obj_type.rank < arg_type.rank)
       primitive_convert(obj, obj_kind, arg_kind, checked: false)
       obj_kind = arg_kind
     end
 
     arg.accept self
-    if obj_type.is_a?(FloatType) && arg_type.is_a?(IntegerType)
+    if (obj_type.is_a?(FloatType) && arg_type.is_a?(IntegerType)) ||
+       (obj_type.is_a?(FloatType) && arg_type.is_a?(FloatType) && obj_type.rank > arg_type.rank)
       primitive_convert(arg, arg_kind, obj_kind, checked: false)
       arg_kind = obj_kind
     end
@@ -1138,6 +1140,10 @@ class Crystal::Repl::Compiler
       div_f64(node: node)
     else
       node.raise "BUG: missing handling of binary float div with types #{obj_type} and #{arg_type}"
+    end
+
+    if obj_type.is_a?(FloatType) && arg_type.is_a?(FloatType) && obj_type.rank < arg_type.rank
+      primitive_convert(node, :f64, :f32, checked: false)
     end
   end
 
