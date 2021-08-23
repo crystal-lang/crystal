@@ -1,5 +1,6 @@
 require "spec"
 require "uuid"
+require "../support/string"
 
 describe "UUID" do
   describe "#==" do
@@ -66,18 +67,18 @@ describe "UUID" do
   end
 
   describe "initialize with String" do
-    it "works with static array only" do
+    it "works with string only" do
       subject = UUID.new("00000000-0000-0000-0000-000000000000")
       subject.to_s.should eq "00000000-0000-0000-0000-000000000000"
     end
 
-    it "works with static array and variant" do
+    it "works with string and variant" do
       subject = UUID.new("00000000-0000-0000-0000-000000000000", variant: UUID::Variant::Future)
       subject.to_s.should eq "00000000-0000-0000-e000-000000000000"
       subject.variant.should eq UUID::Variant::Future
     end
 
-    it "works with static array and version" do
+    it "works with string and version" do
       subject = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V5)
       subject.to_s.should eq "00000000-0000-5000-0000-000000000000"
       subject.version.should eq UUID::Version::V5
@@ -110,7 +111,7 @@ describe "UUID" do
 
   describe "supports different string formats" do
     it "normal output" do
-      UUID.new("ee843b2656d8472bb3430b94ed9077ff").to_s.should eq "ee843b26-56d8-472b-b343-0b94ed9077ff"
+      assert_prints UUID.new("ee843b2656d8472bb3430b94ed9077ff").to_s, "ee843b26-56d8-472b-b343-0b94ed9077ff"
     end
 
     it "hexstring" do

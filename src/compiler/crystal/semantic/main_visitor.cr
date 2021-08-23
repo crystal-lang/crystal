@@ -87,6 +87,7 @@ module Crystal
     property last_block_kind : Symbol?
     property? inside_ensure : Bool = false
     property? inside_constant = false
+    property file_module : FileModule?
 
     @unreachable = false
     @is_initialize = false
@@ -99,7 +100,6 @@ module Crystal
     @found_self_in_initialize_call : Array(ASTNode)?
     @used_ivars_in_calls_in_initialize : Hash(String, Array(ASTNode))?
     @block_context : Block?
-    @file_module : FileModule?
     @while_vars : MetaVars?
 
     # Type filters for `exp` in `!exp`, used after a `while`
@@ -1060,6 +1060,7 @@ module Crystal
       block_visitor.parent = self
       block_visitor.with_scope = node.scope || with_scope
       block_visitor.exception_handler_vars = @exception_handler_vars
+      block_visitor.file_module = @file_module
 
       block_scope = @scope
       block_scope ||= current_type.metaclass unless current_type.is_a?(Program)

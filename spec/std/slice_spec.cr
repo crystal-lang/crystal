@@ -1,5 +1,6 @@
 require "spec"
 require "spec/helpers/iterate"
+require "../support/string"
 
 private class BadSortingClass
   include Comparable(self)
@@ -359,7 +360,8 @@ describe "Slice" do
   end
 
   it "does hexdump" do
-    ascii_table = <<-EOF
+    slice = Bytes.new(96) { |i| i.to_u8 + 32 }
+    assert_prints slice.hexdump, <<-EOF
       00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
       00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
       00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
@@ -368,10 +370,8 @@ describe "Slice" do
       00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.\n
       EOF
 
-    slice = Bytes.new(96) { |i| i.to_u8 + 32 }
-    slice.hexdump.should eq(ascii_table)
-
-    ascii_table_plus = <<-EOF
+    plus = Bytes.new(101) { |i| i.to_u8 + 32 }
+    assert_prints plus.hexdump, <<-EOF
       00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
       00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
       00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
@@ -381,55 +381,10 @@ describe "Slice" do
       00000060  80 81 82 83 84                                    .....\n
       EOF
 
-    plus = Bytes.new(101) { |i| i.to_u8 + 32 }
-    plus.hexdump.should eq(ascii_table_plus)
-
-    ascii_table_num = <<-EOF
+    num = Bytes.new(10) { |i| i.to_u8 + 48 }
+    assert_prints num.hexdump, <<-EOF
       00000000  30 31 32 33 34 35 36 37  38 39                    0123456789\n
       EOF
-
-    num = Bytes.new(10) { |i| i.to_u8 + 48 }
-    num.hexdump.should eq(ascii_table_num)
-  end
-
-  it "does hexdump to IO" do
-    ascii_table = <<-EOF
-      00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
-      00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
-      00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
-      00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
-      00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
-      00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.\n
-      EOF
-
-    slice = Bytes.new(96) { |i| i.to_u8 + 32 }
-    io = IO::Memory.new
-    slice.hexdump(io).should eq(ascii_table.bytesize)
-    io.to_s.should eq(ascii_table)
-
-    ascii_table_plus = <<-EOF
-      00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
-      00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
-      00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
-      00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
-      00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
-      00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.
-      00000060  80 81 82 83 84                                    .....\n
-      EOF
-
-    plus = Bytes.new(101) { |i| i.to_u8 + 32 }
-    io = IO::Memory.new
-    plus.hexdump(io).should eq(ascii_table_plus.bytesize)
-    io.to_s.should eq(ascii_table_plus)
-
-    ascii_table_num = <<-EOF
-      00000000  30 31 32 33 34 35 36 37  38 39                    0123456789\n
-      EOF
-
-    num = Bytes.new(10) { |i| i.to_u8 + 48 }
-    io = IO::Memory.new
-    num.hexdump(io).should eq(ascii_table_num.bytesize)
-    io.to_s.should eq(ascii_table_num)
   end
 
   it_iterates "#each", [1, 2, 3], Slice[1, 2, 3].each
@@ -632,59 +587,49 @@ describe "Slice" do
   end
 
   describe "sort" do
-    [true, false].each do |stable|
-      describe "stable: #{stable}" do
-        it "sort without block" do
+    {% for sort in ["sort".id, "unstable_sort".id] %}
+      describe {{ "##{sort}" }} do
+        it "without block" do
           slice = Slice[3, 4, 1, 2, 5, 6]
-          sorted_slice = slice.sort(stable: stable)
+          sorted_slice = slice.{{ sort }}
           sorted_slice.to_a.should eq([1, 2, 3, 4, 5, 6])
           slice.should_not eq(sorted_slice)
         end
 
-        it "sort with a block" do
+        it "with a block" do
           a = Slice["foo", "a", "hello"]
-          b = a.sort(stable: stable) { |x, y| x.size <=> y.size }
+          b = a.{{ sort }} { |x, y| x.size <=> y.size }
           b.to_a.should eq(["a", "foo", "hello"])
           a.should_not eq(b)
         end
+
+        {% if sort == "sort" %}
+          it "stable sort without a block" do
+            is_stable_sort(mutable: false, &.sort)
+          end
+
+          it "stable sort with a block" do
+            is_stable_sort(mutable: false, &.sort { |a, b| a.value <=> b.value })
+          end
+        {% end %}
       end
-    end
 
-    it "stable sort without block" do
-      is_stable_sort(mutable: false, &.sort(stable: true))
-    end
-
-    it "stable sort with a block" do
-      is_stable_sort(mutable: false, &.sort(stable: true) { |a, b| a.value <=> b.value })
-    end
-
-    it "default is stable (without block)" do
-      is_stable_sort(mutable: false, &.sort)
-    end
-
-    it "default is stable (with a block)" do
-      is_stable_sort(mutable: false, &.sort { |a, b| a.value <=> b.value })
-    end
-  end
-
-  describe "sort!" do
-    [true, false].each do |stable|
-      describe "stable: #{stable}" do
-        it "sort! without block" do
+      describe {{ "##{sort}!" }} do
+        it "without block" do
           a = [3, 4, 1, 2, 5, 6]
-          a.sort!(stable: stable)
+          a.{{ sort }}!
           a.should eq([1, 2, 3, 4, 5, 6])
         end
 
-        it "sort! with a block" do
+        it "with a block" do
           a = ["foo", "a", "hello"]
-          a.sort!(stable: stable) { |x, y| x.size <=> y.size }
+          a.{{ sort }}! { |x, y| x.size <=> y.size }
           a.should eq(["a", "foo", "hello"])
         end
 
         it "sorts with invalid block (#4379)" do
           a = [1] * 17
-          b = a.sort(stable: stable) { -1 }
+          b = a.{{ sort }} { -1 }
           a.should eq(b)
         end
 
@@ -696,7 +641,7 @@ describe "Slice" do
             Spaceship.new(3),
           ]
 
-          spaceships.sort!(stable: stable)
+          spaceships.{{ sort }}!
           4.times do |i|
             spaceships[i].value.should eq(i)
           end
@@ -709,81 +654,63 @@ describe "Slice" do
           ]
 
           expect_raises(ArgumentError) do
-            spaceships.sort!(stable: stable)
+            spaceships.{{ sort }}!
           end
         end
 
         it "raises if sort! block returns nil" do
           expect_raises(ArgumentError) do
-            Slice[1, 2].sort!(stable: stable) { nil }
+            Slice[1, 2].{{ sort }}! { nil }
           end
         end
+
+        {% if sort == "sort" %}
+          it "stable sort without a block" do
+            is_stable_sort(mutable: true, &.sort!)
+          end
+
+          it "stable sort with a block" do
+            is_stable_sort(mutable: true, &.sort! { |a, b| a.value <=> b.value })
+          end
+        {% end %}
       end
-    end
 
-    it "stable sort! without block" do
-      is_stable_sort(mutable: true, &.sort!(stable: true))
-    end
-
-    it "stable sort! with a block" do
-      is_stable_sort(mutable: true, &.sort!(stable: true) { |a, b| a.value <=> b.value })
-    end
-
-    it "default is stable (without block)" do
-      is_stable_sort(mutable: true, &.sort!)
-    end
-
-    it "default is stable (with a block)" do
-      is_stable_sort(mutable: true, &.sort! { |a, b| a.value <=> b.value })
-    end
-  end
-
-  describe "sort_by" do
-    [true, false].each do |stable|
-      describe "stable: #{stable}" do
-        it "sorts by" do
+      describe {{ "##{sort}_by" }} do
+        it "sorts" do
           a = Slice["foo", "a", "hello"]
-          b = a.sort_by(stable: stable, &.size)
+          b = a.{{ sort }}_by(&.size)
           b.to_a.should eq(["a", "foo", "hello"])
           a.should_not eq(b)
         end
+
+        {% if sort == "sort" %}
+          it "stable sort" do
+            is_stable_sort(mutable: false, &.sort_by(&.value))
+          end
+        {% end %}
       end
-    end
 
-    it "stable sort by" do
-      is_stable_sort(mutable: false, &.sort_by(stable: true, &.value))
-    end
-
-    it "default is stable" do
-      is_stable_sort(mutable: false, &.sort_by(&.value))
-    end
-  end
-
-  describe "sort_by!" do
-    [true, false].each do |stable|
-      describe "stable: #{stable}" do
-        it "sorts by!" do
+      describe {{ "##{sort}_by" }} do
+        it "sorts" do
           a = Slice["foo", "a", "hello"]
-          a.sort_by!(stable: stable, &.size)
+          a.{{ sort }}_by!(&.size)
           a.to_a.should eq(["a", "foo", "hello"])
         end
 
         it "calls given block exactly once for each element" do
           calls = Hash(String, Int32).new(0)
           a = Slice["foo", "a", "hello"]
-          a.sort_by!(stable: stable) { |e| calls[e] += 1; e.size }
+          a.{{ sort }}_by! { |e| calls[e] += 1; e.size }
           calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
         end
+
+        {% if sort == "sort" %}
+          it "stable sort" do
+            is_stable_sort(mutable: true, &.sort_by!(&.value))
+          end
+        {% end %}
       end
-    end
-
-    it "stable sort by!" do
-      is_stable_sort(mutable: true, &.sort_by!(stable: true, &.value))
-    end
-
-    it "default is stable" do
-      is_stable_sort(mutable: true, &.sort_by!(&.value))
-    end
+    {% end %}
   end
 
   describe "<=>" do

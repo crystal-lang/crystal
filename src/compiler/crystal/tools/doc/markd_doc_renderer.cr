@@ -1,37 +1,57 @@
-require "./*"
-
-class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
-  def self.new(obj : Constant | Macro | Method, io)
-    new obj.type, io
+class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
+  def initialize(@type : Crystal::Doc::Type, options)
+    super(options)
   end
 
-  @type : Crystal::Doc::Type
-
-  def initialize(@type : Crystal::Doc::Type, io)
-    super(io)
-
-    @inside_inline_code = false
-    @code_buffer = IO::Memory.new
-    @inside_code = false
-    @inside_link = false
+  def self.new(obj : Constant | Macro | Method, options)
+    new obj.type, options
   end
 
-  # For inline code we search if there's a method with that name in
-  # the current type (it's usual to refer to these as `method`).
-  #
-  # If there is a match, we output the link without the <code>...</code>
-  # tag (looks better). If there isn't a match, we want to preserve the code tag.
-  def begin_inline_code
-    super
-    @inside_inline_code = true
-    @code_buffer.clear
+  def heading(node : Markd::Node, entering : Bool)
+    tag_name = HEADINGS[node.data["level"].as(Int32) - 1]
+    if entering
+      anchor = collect_text(node)
+        .underscore                # Underscore the string
+        .gsub(/[^\w\d\s\-.~]/, "") # Delete unsafe URL characters
+        .strip                     # Strip leading/trailing whitespace
+        .gsub(/[\s_-]+/, '-')      # Replace `_` and leftover whitespace with `-`
+
+      tag(tag_name, attrs(node))
+      literal Crystal::Doc.anchor_link(anchor)
+    else
+      tag(tag_name, end_tag: true)
+      newline
+    end
   end
 
-  def end_inline_code
-    @inside_inline_code = false
+  def collect_text(main)
+    String.build do |io|
+      walker = main.walker
+      while item = walker.next
+        node, entering = item
+        if entering && (text = node.text)
+          io << text
+        end
+      end
+    end
+  end
 
-    @io << expand_code_links(@code_buffer.to_s)
-    super
+  def code(node : Markd::Node, entering : Bool)
+    tag("code") do
+      if in_link?(node)
+        output(node.text)
+      else
+        literal(expand_code_links(node.text))
+      end
+    end
+  end
+
+  def in_link?(node)
+    parent = node.parent?
+    return false unless parent
+    return true if parent.type.link?
+
+    in_link?(parent)
   end
 
   def expand_code_links(text : String) : String
@@ -87,71 +107,50 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
     end
   end
 
-  def begin_code(language = nil)
+  def code_block(node : Markd::Node, entering : Bool)
+    languages = node.fence_language ? node.fence_language.split : nil
+    code_tag_attrs = attrs(node)
+    pre_tag_attrs = if @options.prettyprint
+                      {"class" => "prettyprint"}
+                    else
+                      nil
+                    end
+
+    language = languages.try &.first?.try &.strip
+    language = nil if language.try &.empty?
+
     if language.nil? || language == "cr"
       language = "crystal"
     end
 
-    super
-
-    if language == "crystal"
-      @inside_code = true
-      @code_buffer.clear
-    end
-  end
-
-  def end_code
-    if @inside_code
-      text = Highlighter.highlight(@code_buffer.to_s)
-      @io << text
+    if language
+      code_tag_attrs ||= {} of String => String
+      code_tag_attrs["class"] = "language-#{escape(language)}"
     end
 
-    @inside_code = false
-
-    super
-  end
-
-  def begin_link(url)
-    @io << %(<a href=")
-    @io << url
-    @io << %(">)
-
-    @inside_link = true
-  end
-
-  def end_link
-    super
-    @inside_link = false
-  end
-
-  def text(text)
-    if @inside_code
-      @code_buffer << text
-      return
+    newline
+    tag("pre", pre_tag_attrs) do
+      tag("code", code_tag_attrs) do
+        code = node.text.chomp
+        if language == "crystal"
+          literal(Highlighter.highlight code)
+        else
+          output(code)
+        end
+      end
     end
-
-    if @inside_link
-      super
-      return
-    end
-
-    if @inside_inline_code
-      @code_buffer << text
-      return
-    end
-
-    super(text)
+    newline
   end
 
-  def type_link(type, text)
+  private def type_link(type, text)
     %(<a href="#{type.path_from(@type)}">#{text}</a>)
   end
 
-  def method_link(method, text)
+  private def method_link(method, text)
     %(<a href="#{method.type.path_from(@type)}#{method.anchor}">#{text}</a>)
   end
 
-  def lookup_method(type, name, args, kind = nil)
+  private def lookup_method(type, name, args, kind = nil)
     case args
     when ""
       args_count = nil

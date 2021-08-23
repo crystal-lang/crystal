@@ -4991,7 +4991,7 @@ class String
 
   # Appends `self` to *io*.
   def to_s(io : IO) : Nil
-    io.write_utf8(to_slice)
+    io.write_string(to_slice)
   end
 
   # Returns the underlying bytes of this String.
