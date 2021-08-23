@@ -320,7 +320,7 @@ module HTTP
 
       it "sets future expiration_time with max-age" do
         cookie = parse_set_cookie("bla=1; max-age=1")
-        (cookie.expiration_time.not_nil!).should be > Time.utc
+        cookie.expiration_time.not_nil!.should be > Time.utc
       end
 
       it "sets future expiration_time with max-age and future cookie creation time" do
