@@ -13,6 +13,12 @@ module Crystal
     end
   end
 
+  class BoolType
+    def ffi_type : FFI::Type
+      FFI::Type.uint8
+    end
+  end
+
   class IntegerType
     def ffi_type : FFI::Type
       case kind
