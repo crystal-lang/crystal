@@ -815,4 +815,45 @@ describe "Codegen: is_a?" do
       Sub.new.is_a?(Mod(Sup))
       )).to_b.should be_true
   end
+
+  it "restricts metaclass against virtual metaclass type" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      x = B || A
+      if x.is_a?(B.class)
+        1
+      elsif x.is_a?(A.class)
+        2
+      else
+        3
+      end
+      )).to_i.should eq(1)
+  end
+
+  it "restricts metaclass against virtual metaclass type" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      class C < B
+      end
+
+      x = B || A
+      if x.is_a?(B.class)
+        1
+      elsif x.is_a?(A.class)
+        2
+      else
+        3
+      end
+      )).to_i.should eq(1)
+  end
 end
