@@ -90,7 +90,7 @@ module Crystal
     end
 
     def self.common_descendent(type1 : VirtualMetaclassType, type2 : VirtualMetaclassType)
-      restricted = common_descendent(type1.instance_type.base_type, type2.instance_type.base_type)
+      restricted = common_descendent(type1.instance_type, type2.instance_type.base_type)
       restricted.try(&.virtual_type.metaclass)
     end
 
