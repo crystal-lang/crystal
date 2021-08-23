@@ -33,11 +33,11 @@ struct Number
 
     start = int_size % group
     start += group if start == 0
-    io.write integer.to_slice[0, start]
+    io.write_string integer.to_slice[0, start]
 
     while start < int_size
       io << delimiter
-      io.write integer.to_slice[start, group]
+      io.write_string integer.to_slice[start, group]
       start += group
     end
 

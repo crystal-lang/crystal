@@ -134,8 +134,8 @@ describe Crystal::CrystalPath do
     it "./foo.cr" do
       assert_iterates_yielding [
         "x/./foo.cr",
-        "x/./foo/foo.cr",
-      ], path.each_file_expansion("./foo", "x")
+        "x/./foo.cr/foo.cr.cr",
+      ], path.each_file_expansion("./foo.cr", "x")
     end
 
     it "foo/bar" do
