@@ -988,7 +988,7 @@ require "./repl"
       },
       # >>> Unions (5)
 
-      # <<< is_a? (2)
+      # <<< is_a? (3)
       reference_is_a: {
         operands:   [filter_type_id : Int32],
         pop_values: [pointer : Pointer(UInt8)],
@@ -1004,6 +1004,19 @@ require "./repl"
 
             !!type.filter_by(filter_type)
           end
+        end,
+        disassemble: {
+          filter_type_id: context.type_from_id(filter_type_id),
+        },
+      },
+      metaclass_is_a: {
+        operands:   [filter_type_id : Int32],
+        pop_values: [metaclass_id : Int32],
+        push:       true,
+        code:       begin
+          type = type_from_type_id(metaclass_id)
+          filter_type = type_from_type_id(filter_type_id)
+          !!type.filter_by(filter_type)
         end,
         disassemble: {
           filter_type_id: context.type_from_id(filter_type_id),
@@ -1025,7 +1038,7 @@ require "./repl"
           filter_type_id: context.type_from_id(filter_type_id),
         },
       },
-      # >>> is_a? (2)
+      # >>> is_a? (3)
 
       # <<< Tuples (1)
       tuple_indexer_known_index: {

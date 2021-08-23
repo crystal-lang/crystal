@@ -2792,6 +2792,57 @@ describe Crystal::Repl::Interpreter do
         b || 10
       CODE
     end
+
+    it "does multidispatch on virtual metaclass type (1)" do
+      interpret(<<-CODE).should eq("BB")
+        class Class
+          def lt(other : T.class) : String forall T
+            {% @type %}
+            other.gt(self)
+          end
+
+          def gt(other : T.class) forall T
+            {{ @type.stringify + T.stringify }}
+          end
+        end
+
+        class A
+        end
+
+        class B < A
+        end
+
+        t = B || A
+        t.lt(t)
+      CODE
+    end
+
+    it "does multidispatch on virtual metaclass type (2)" do
+      interpret(<<-CODE).should eq("BB")
+        class Class
+          def lt(other : T.class) : String forall T
+            {% @type %}
+            other.gt(self)
+          end
+
+          def gt(other : T.class) forall T
+            {{ @type.stringify + T.stringify }}
+          end
+        end
+
+        class A
+        end
+
+        class B < A
+        end
+
+        class C < B
+        end
+
+        t = B || A
+        t.lt(t)
+      CODE
+    end
   end
 
   context "classes" do
@@ -4034,6 +4085,34 @@ describe Crystal::Repl::Interpreter do
 
         Moo.moo(nil).address
       CODE
+    end
+
+    it "..." do
+      interpret(<<-CODE).should eq(1)
+        class A
+          def self.a
+            2
+          end
+        end
+
+        class B < A
+          def self.b
+            1
+          end
+        end
+
+        class C < B
+        end
+
+        x = B || A
+        if x.is_a?(B.class)
+          x.b
+        elsif x.is_a?(A.class)
+          x.a
+        else
+          0
+        end
+        CODE
     end
   end
 

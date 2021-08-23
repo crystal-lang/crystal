@@ -192,6 +192,10 @@ class Crystal::Repl::Compiler
     # TODO: not tested
   end
 
+  private def upcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : VirtualMetaclassType)
+    # TODO: not tested
+  end
+
   private def upcast_distinct(node : ASTNode, from : Type, to : Type)
     node.raise "BUG: missing upcast_distinct from #{from} to #{to} (#{from.class} to #{to.class})"
   end
@@ -263,6 +267,14 @@ class Crystal::Repl::Compiler
 
   private def downcast_distinct(node : ASTNode, from : VirtualType, to : VirtualType)
     # TODO: not tested
+    # Nothing to do
+  end
+
+  private def downcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : MetaclassType)
+    # Nothing to do
+  end
+
+  private def downcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : VirtualMetaclassType)
     # Nothing to do
   end
 

@@ -1550,6 +1550,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       else
         node.raise "BUG: missing filter type from #{type} to #{filtered_type} (#{type.class} to #{filtered_type.class})"
       end
+    when VirtualMetaclassType
+      case filtered_type
+      when MetaclassType
+        metaclass_is_a(type_id(filtered_type), node: node)
+      when VirtualMetaclassType
+        metaclass_is_a(type_id(filtered_type), node: node)
+      else
+        node.raise "BUG: missing filter type from #{type} to #{filtered_type} (#{type.class} to #{filtered_type.class})"
+      end
     else
       node.raise "BUG: missing filter type from #{type} to #{filtered_type} (#{type.class} to #{filtered_type.class})"
     end
