@@ -514,7 +514,10 @@ class HTTP::Server
 
     @processor.process(io, io)
   ensure
-    io.close rescue IO::Error
+    begin
+      io.close
+    rescue IO::Error
+    end
   end
 
   # This method handles exceptions raised at `Socket#accept?`.

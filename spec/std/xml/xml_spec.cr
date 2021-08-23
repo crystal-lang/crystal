@@ -1,5 +1,6 @@
 require "spec"
 require "xml"
+require "../../support/string"
 
 describe XML do
   it "parses" do
@@ -405,7 +406,7 @@ describe XML do
     root.text = "<foo>"
     root.text.should eq("<foo>")
 
-    root.to_xml.should eq(%(<name>&lt;foo&gt;</name>))
+    assert_prints root.to_xml, %(<name>&lt;foo&gt;</name>)
   end
 
   it "escapes content HTML fragment" do
@@ -417,7 +418,7 @@ describe XML do
     node.text = "<foo>"
     node.text.should eq("<foo>")
 
-    node.to_xml.should eq(%(<p>&lt;foo&gt;</p>))
+    assert_prints node.to_xml, %(<p>&lt;foo&gt;</p>)
   end
 
   it "gets empty content" do
