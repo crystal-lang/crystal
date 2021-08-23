@@ -1,9 +1,10 @@
 require "spec"
 require "big"
+require "../../support/string"
 
 private def it_converts_to_s(value : BigFloat, str, *, file = __FILE__, line = __LINE__)
   it "converts to #{str}", file: file, line: line do
-    value.to_s.should eq(str), file: file, line: line
+    assert_prints value.to_s, str, file: file, line: line
     str.to_big_f.should eq(value), file: file, line: line
   end
 end
@@ -279,13 +280,13 @@ describe "BigFloat" do
     # since Float64-to-BigFloat conversion is always exact, but GMP floats have
     # a *minimum* precision equal to the machine word size, we cannot assume the
     # shortest round-trip property for Float64s converted this way
-    it { (0.1).to_big_f.to_s.should eq("0.100000000000000005551") }
-    it { Float64::MAX.to_big_f.to_s.should eq("1.79769313486231570815e+308") }
-    it { Float64::MIN_POSITIVE.to_big_f.to_s.should eq("2.22507385850720138309e-308") }
+    it { assert_prints (0.1).to_big_f.to_s, "0.100000000000000005551" }
+    it { assert_prints Float64::MAX.to_big_f.to_s, "1.79769313486231570815e+308" }
+    it { assert_prints Float64::MIN_POSITIVE.to_big_f.to_s, "2.22507385850720138309e-308" }
   end
 
   describe "#inspect" do
-    it { "2.3".to_big_f.inspect.should eq("2.3") }
+    it { assert_prints "2.3".to_big_f.inspect, "2.3" }
   end
 
   describe "#round" do
