@@ -1179,6 +1179,12 @@ describe "Enumerable" do
     end
   end
 
+  describe "tally_by" do
+    it "returns a hash with counts according to the value returned by the block" do
+      %w[a A b B c C C].tally_by(&.downcase).should eq({"a" => 2, "b" => 2, "c" => 3})
+    end
+  end
+
   describe "tally" do
     it "returns a hash with counts according to the value" do
       %w[1 2 3 3 3 2].tally.should eq({"1" => 1, "2" => 2, "3" => 3})
