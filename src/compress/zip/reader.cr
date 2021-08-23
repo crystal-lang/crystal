@@ -101,7 +101,7 @@ class Compress::Zip::Reader
   end
 
   # Closes this zip reader.
-  def close
+  def close : Nil
     return if @closed
     @closed = true
     @io.close if @sync_close
