@@ -402,11 +402,11 @@ struct BigDecimal < Number
     # add integer part digits
     if decimal_exponent > 0 && !exp_mode
       # whole number but not big enough to be exp form
-      io.write_utf8 buffer[0, {decimal_exponent, length}.min]
+      io.write_string buffer[0, {decimal_exponent, length}.min]
       buffer = buffer[{decimal_exponent, length}.min...]
       (point - length).times { io << '0' }
     elsif point > 0
-      io.write_utf8 buffer[0, point]
+      io.write_string buffer[0, point]
       buffer = buffer[point...]
     end
 
@@ -423,7 +423,7 @@ struct BigDecimal < Number
     end
 
     # add fractional part digits
-    io.write_utf8 buffer
+    io.write_string buffer
 
     # print trailing 0 if whole number or exp notation of power of ten
     if (decimal_exponent >= length && !exp_mode) || (exp != point && length == 1)
