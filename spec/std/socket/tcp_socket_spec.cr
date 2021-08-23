@@ -1,6 +1,6 @@
 require "./spec_helper"
 
-describe TCPSocket do
+describe TCPSocket, tags: "network" do
   describe "#connect" do
     each_ip_family do |family, address|
       it "connects to server" do

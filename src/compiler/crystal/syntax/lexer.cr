@@ -55,6 +55,7 @@ module Crystal
     def initialize(string, string_pool : StringPool? = nil)
       @reader = Char::Reader.new(string)
       @token = Token.new
+      @temp_token = Token.new
       @line_number = 1
       @column_number = 1
       @filename = ""
@@ -636,6 +637,8 @@ module Crystal
       when '~'
         next_char :"~"
       when '.'
+        line = @line_number
+        column = @column_number
         case next_char
         when '.'
           case next_char
@@ -644,6 +647,8 @@ module Crystal
           else
             @token.type = :".."
           end
+        when .ascii_number?
+          raise ".1 style number literal is not supported, put 0 before dot", line, column
         else
           @token.type = :"."
         end
@@ -1643,6 +1648,10 @@ module Crystal
       raise "#{string_value} doesn't fit in an #{type}", @token, (current_pos - start)
     end
 
+    def raise_value_restricted_by(type, restricted_by_type, string_value, start)
+      raise "#{string_value} doesn't fit in an #{restricted_by_type}. #{type} literals that don't fit in an #{restricted_by_type} are currently not supported", @token, (current_pos - start)
+    end
+
     def scan_zero_number(start, negative = false)
       case peek_next_char
       when 'x'
@@ -2382,14 +2391,23 @@ module Crystal
       @token
     end
 
-    def lookahead
-      old_pos = @reader.pos
-      old_line_number, old_column_number = @line_number, @column_number
+    def lookahead(preserve_token_on_fail = false)
+      old_pos, old_line, old_column = current_pos, @line_number, @column_number
+      @temp_token.copy_from(@token) if preserve_token_on_fail
 
       result = yield
       unless result
-        @reader.pos = old_pos
-        @line_number, @column_number = old_line_number, old_column_number
+        self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
+        @token.copy_from(@temp_token) if preserve_token_on_fail
+      end
+      result
+    end
+
+    def peek_ahead
+      result = uninitialized typeof(yield)
+      lookahead(preserve_token_on_fail: true) do
+        result = yield
+        nil
       end
       result
     end
