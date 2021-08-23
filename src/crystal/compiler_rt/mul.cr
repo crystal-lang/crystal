@@ -1,5 +1,5 @@
 # :nodoc:
-macro __mul_impl(name, type, n)
+private macro __mul_impl(name, type, n)
   # :nodoc:
   fun {{name}}(a : {{type}}, b : {{type}}, overflow : Int32*) : {{type}}
     n = {{n}}
