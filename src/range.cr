@@ -233,7 +233,7 @@ struct Range(B, E)
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    {% if B <= Steppable %}
+    {% if B < Steppable %}
       current.step(to: @end, by: by, exclusive: @exclusive) do |x|
         yield x
       end
@@ -263,7 +263,7 @@ struct Range(B, E)
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    {% if B <= Steppable %}
+    {% if B < Steppable %}
       start.step(to: @end, by: by, exclusive: @exclusive)
     {% else %}
       StepIterator(self, B, typeof(by)).new(self, by)
