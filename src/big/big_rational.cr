@@ -186,7 +186,7 @@ struct BigRational < Number
   # ```
   def **(other : Int) : BigRational
     if other < 0
-      return (self ** -other).inv
+      return (self ** other.abs).inv
     end
     BigRational.new(numerator ** other, denominator ** other)
   end
@@ -259,7 +259,7 @@ struct BigRational < Number
 
   def to_s(io : IO, base : Int = 10) : Nil
     str = to_cstr(base)
-    io.write_utf8 Slice.new(str, LibC.strlen(str))
+    io.write_string Slice.new(str, LibC.strlen(str))
   end
 
   def inspect : String

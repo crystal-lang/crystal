@@ -157,11 +157,11 @@ module Crystal::System::FileDescriptor
     overlapped.union.offset.offsetHigh = LibC::DWORD.new(offset >> 32)
     if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
       error = WinError.value
-      return 0 if error == WinError::ERROR_HANDLE_EOF
+      return 0_i64 if error == WinError::ERROR_HANDLE_EOF
       raise IO::Error.from_winerror "Error reading file", error
     end
 
-    bytes_read
+    bytes_read.to_i64
   end
 
   def self.from_stdio(fd)
