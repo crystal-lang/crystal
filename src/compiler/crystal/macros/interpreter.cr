@@ -549,6 +549,8 @@ module Crystal
         @last = TypeNode.new(@program)
       when "@def"
         @last = @def || NilLiteral.new
+      when "@block"
+        @last = @block || NilLiteral.new
       else
         node.raise "unknown macro instance var: '#{node.name}'"
       end
