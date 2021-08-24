@@ -323,7 +323,7 @@ class Crystal::Repl::Interpreter
                     ip += sizeof(Void*)
 
                     # On overflow, directly call __crystal_raise_overflow
-                    call(crystal_raise_overflow_compiled_def)
+                    call(@context.crystal_raise_overflow_compiled_def)
                   {{ "end".id }}
                 {% end %}
               rescue escaping_exception : EscapingException
@@ -357,18 +357,6 @@ class Crystal::Repl::Interpreter
     end
 
     Value.new(self, return_value, node_type)
-  end
-
-  # This returns the CompiledDef that correspnds to __crystal_raise_overflow
-  private getter(crystal_raise_overflow_compiled_def : CompiledDef) do
-    call = Call.new(nil, "__crystal_raise_overflow", global: true)
-    @context.program.semantic(call)
-
-    local_vars = LocalVars.new(@context)
-    compiler = Compiler.new(@context, local_vars)
-    compiler.compile(call)
-
-    @context.defs[call.target_def]
   end
 
   private def migrate_local_vars(current_local_vars, next_meta_vars)
