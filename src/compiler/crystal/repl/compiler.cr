@@ -331,16 +331,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : StringLiteral)
     return false unless @wants_value
 
-    string = @context.program.string_pool.get(node.value)
-
-    # Compute size so that it's also available on the program.
-    # TODO: maybe we shouldn't use these strings for the interpreted
-    # program and instead put memory for them somehow that would
-    # match their actual memory representation (for example the TYPE_ID
-    # might not match)
-    string.size
-
-    put_string string, node: node
+    put_string node.value, node: node
 
     false
   end
@@ -2831,7 +2822,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def put_string(value : String, *, node : ASTNode?)
-    put_i64 value.object_id.unsafe_as(Int64), node: node
+    cached_string = @context.program.string_pool.get(value)
+
+    # Compute size so that it's also available on the program.
+    # TODO: maybe we shouldn't use these strings for the interpreted
+    # program and instead put memory for them somehow that would
+    # match their actual memory representation (for example the TYPE_ID
+    # might not match)
+    cached_string.size
+
+    put_i64 cached_string.object_id.unsafe_as(Int64), node: node
   end
 
   private def put_type(type : Type, *, node : ASTNode?)
