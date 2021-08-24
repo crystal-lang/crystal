@@ -472,6 +472,34 @@ module Crystal::Macros
     def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
     end
 
+    # Parses `self` into a `Path` or `Generic` (also used for unions).
+    # The `Path#resolve` or `Generic#resolve` method could then be used,
+    # with the return value depending on what the string represents.
+    #
+    # A compile time error is raised if the type/constant does not actually exist,
+    # or if a required generic argument was not provided.
+    #
+    # ```
+    # class Foo; end
+    #
+    # struct Some::Namespace::Foo; end
+    #
+    # module Bar(T); end
+    #
+    # MY_CONST = 1234
+    #
+    # {{ "Foo".parse_type_name.resolve.class? }}                                   # => true
+    # {{ "Some::Namespace::Foo".parse_type_name.resolve.struct? }}                 # => true
+    # {{ "Foo|Some::Namespace::Foo".parse_type_name.resolve.union_types.size }}    # => 2
+    # {{ "Bar(Int32)|Foo".parse_type_name.resolve.union_types[0].type_vars.size }} # => 1
+    # {{ "MY_CONST".parse_type_name.resolve }}                                     # => 1234
+    #
+    # {{ "MissingType".parse_type_name }} # => Error: undefined constant MissingType
+    # {{ "Bar".parse_type_name.resolve }} # => Error: undefined constant T
+    # ```
+    def parse_type_name : TypeNode
+    end
+
     # Similar to `String#size`.
     def size : NumberLiteral
     end

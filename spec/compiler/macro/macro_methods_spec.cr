@@ -496,6 +496,24 @@ module Crystal
         assert_macro "", %({{"spice".includes?("b")}}), [] of ASTNode, %(false)
         assert_macro "", %({{"spice".includes?("spice ")}}), [] of ASTNode, %(false)
       end
+
+      describe "#parse_type_name" do
+        it "path" do
+          assert_type(%[class Bar; end; {{ "Bar".parse_type_name.is_a?(Path) ? 1 : 'a'}}]) { int32 }
+        end
+
+        it "generic" do
+          assert_type(%[class Foo(A, B); end; {{ "Foo(Int32, String)".parse_type_name.resolve.type_vars.size == 2 ? 1 : 'a'}}]) { int32 }
+        end
+
+        it "union - |" do
+          assert_type(%[class Foo; end; class Bar; end; {{ "Foo|Bar".parse_type_name.resolve.union_types.size == 2 ? 1 : 'a'}}]) { int32 }
+        end
+
+        it "union - Union" do
+          assert_type(%[class Foo; end; class Bar; end; {{ "Union(Foo,Bar)".parse_type_name.resolve.union_types.size == 2 ? 1 : 'a'}}]) { int32 }
+        end
+      end
     end
 
     describe "macro id methods" do

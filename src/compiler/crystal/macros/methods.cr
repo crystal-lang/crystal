@@ -798,6 +798,17 @@ module Crystal
         interpret_argless_method(method, args) { StringLiteral.new(@value.underscore) }
       when "upcase"
         interpret_argless_method(method, args) { StringLiteral.new(@value.upcase) }
+      when "parse_type_name"
+        interpret_argless_method(method, args) do
+          type_name = if @value.includes? '|'
+                        # Rewrite `Type1|Type2` to `Union(Type1, Type2)`
+                        %(Union(#{@value.gsub '|', ','}))
+                      else
+                        @value
+                      end
+
+          Crystal::Parser.parse type_name
+        end
       else
         super
       end
