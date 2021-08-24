@@ -800,6 +800,8 @@ module Crystal
         interpret_argless_method(method, args) { StringLiteral.new(@value.upcase) }
       when "parse_type_name"
         interpret_argless_method(method, args) do
+          raise "StringLiteral#parse_type_name cannot be called on an empty string" if @value.blank?
+
           parser = Crystal::Parser.new @value
           parser.next_token_skip_statement_end
           parser.parse_bare_proc_type

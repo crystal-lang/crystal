@@ -517,6 +517,12 @@ module Crystal
         it "union - in generic" do
           assert_type(%[{{ "Array(Int32 | String)".parse_type_name.resolve.type_vars[0].union_types.size == 2 ? 1 : 'a'}}]) { int32 }
         end
+
+        it "raises on empty string" do
+          expect_raises(Crystal::TypeException, "StringLiteral#parse_type_name cannot be called on an empty string") do
+            assert_macro "", %({{"".parse_type_name}}), [] of ASTNode, %(nil)
+          end
+        end
       end
     end
 
