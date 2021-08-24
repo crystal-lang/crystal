@@ -460,8 +460,21 @@ abstract class IO
     nil
   end
 
-  # Writes a slice of UTF-8 encoded bytes to this `IO`, using the current encoding.
-  def write_utf8(slice : Bytes) : Nil
+  # Writes the contents of *slice*, interpreted as a sequence of UTF-8 or ASCII
+  # characters, into this `IO`. The contents are transcoded into this `IO`'s
+  # current encoding.
+  #
+  # ```
+  # bytes = "你".to_slice # => Bytes[228, 189, 160]
+  #
+  # io = IO::Memory.new
+  # io.set_encoding("GB2312")
+  # io.write_string(bytes)
+  # io.to_slice # => Bytes[196, 227]
+  #
+  # "你".encode("GB2312") # => Bytes[196, 227]
+  # ```
+  def write_string(slice : Bytes) : Nil
     if encoder = encoder()
       encoder.write(self, slice)
     else
@@ -469,6 +482,12 @@ abstract class IO
     end
 
     nil
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#write_string` instead.")]
+  def write_utf8(slice : Bytes) : Nil
+    write_string(slice)
   end
 
   private def encoder
@@ -1007,10 +1026,7 @@ abstract class IO
   # String operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
   # `printf`) will use this encoding.
   def set_encoding(encoding : String, invalid : Symbol? = nil) : Nil
-    if invalid != :skip && (
-         encoding.compare("UTF-8", case_insensitive: true) == 0 ||
-         encoding.compare("UTF8", case_insensitive: true) == 0
-       )
+    if utf8_encoding?(encoding, invalid)
       @encoding = nil
     else
       @encoding = EncodingOptions.new(encoding, invalid)
@@ -1025,6 +1041,13 @@ abstract class IO
   # Returns this `IO`'s encoding. The default is `UTF-8`.
   def encoding : String
     @encoding.try(&.name) || "UTF-8"
+  end
+
+  private def utf8_encoding?(encoding : String, invalid : Symbol? = nil) : Bool
+    invalid.nil? && (
+      encoding.compare("UTF-8", case_insensitive: true) == 0 ||
+        encoding.compare("UTF8", case_insensitive: true) == 0
+    )
   end
 
   # :nodoc:

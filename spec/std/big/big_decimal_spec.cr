@@ -212,6 +212,12 @@ describe BigDecimal do
     result.to_s.should eq("286138.1721051424")
   end
 
+  it "exponentiates with negative powers" do
+    result = "2.0".to_big_d ** -1
+    result.should be_a(BigDecimal)
+    result.to_s.should eq("0.5")
+  end
+
   it "can be converted from other types" do
     1.to_big_d.should eq (BigDecimal.new(1))
     "1.5".to_big_d.should eq (BigDecimal.new(15, 1))
@@ -312,6 +318,7 @@ describe BigDecimal do
     BigDecimal.new(0).to_s.should eq "0"
     BigDecimal.new(1).to_s.should eq "1"
     BigDecimal.new(-1).to_s.should eq "-1"
+    BigDecimal.new("8.5").to_s.should eq "8.5"
     BigDecimal.new("-0.35").to_s.should eq "-0.35"
     BigDecimal.new("-.35").to_s.should eq "-0.35"
     BigDecimal.new("0.01").to_s.should eq "0.01"

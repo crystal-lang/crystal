@@ -382,6 +382,10 @@ module Crystal
         end
       when "!"
         BoolLiteral.new(!truthy?)
+      when "nil?"
+        interpret_argless_method("nil?", args) do
+          BoolLiteral.new(is_a?(NilLiteral) || is_a?(Nop))
+        end
       else
         raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
       end
@@ -502,6 +506,8 @@ module Crystal
         end
       when "kind"
         SymbolLiteral.new(kind.to_s)
+      when "to_number"
+        MacroId.new(to_number.to_s)
       else
         super
       end

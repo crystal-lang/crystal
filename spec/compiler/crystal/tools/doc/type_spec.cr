@@ -127,25 +127,45 @@ describe Doc::Type do
       node = Generic.new("NamedTuple".path(global: true), [] of ASTNode, named_args: [NamedArgument.new("x", "Foo".path), NamedArgument.new("y", "Bar".path)])
       foo.node_to_html(node).should eq(%(NamedTuple(x: <a href="Foo.html">Foo</a>, y: <a href="Bar.html">Bar</a>)))
     end
+  end
 
-    it "ASTNode has no superclass" do
-      program = semantic(<<-CODE).program
-        module Crystal
-          module Macros
-            class ASTNode
-            end
-            class Arg < ASTNode
-            end
+  it "ASTNode has no superclass" do
+    program = semantic(<<-CODE).program
+      module Crystal
+        module Macros
+          class ASTNode
+          end
+          class Arg < ASTNode
           end
         end
-        CODE
+      end
+      CODE
 
-      generator = Doc::Generator.new program, [""]
-      macros_module = program.types["Crystal"].types["Macros"]
-      astnode = generator.type(macros_module.types["ASTNode"])
-      astnode.superclass.should eq(nil)
-      # Sanity check: subclasses of ASTNode has the right superclass
-      generator.type(macros_module.types["Arg"]).superclass.should eq(astnode)
-    end
+    generator = Doc::Generator.new program, [""]
+    macros_module = program.types["Crystal"].types["Macros"]
+    astnode = generator.type(macros_module.types["ASTNode"])
+    astnode.superclass.should eq(nil)
+    # Sanity check: subclasses of ASTNode has the right superclass
+    generator.type(macros_module.types["Arg"]).superclass.should eq(astnode)
+  end
+
+  it "ASTNode has no ancestors" do
+    program = semantic(<<-CODE).program
+      module Crystal
+        module Macros
+          class ASTNode
+          end
+          class Arg < ASTNode
+          end
+        end
+      end
+      CODE
+
+    generator = Doc::Generator.new program, [""]
+    macros_module = program.types["Crystal"].types["Macros"]
+    astnode = generator.type(macros_module.types["ASTNode"])
+    astnode.ancestors.empty?.should be_true
+    # Sanity check: subclasses of ASTNode has the right ancestors
+    generator.type(macros_module.types["Arg"]).ancestors.should eq([astnode])
   end
 end
