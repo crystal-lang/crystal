@@ -3994,7 +3994,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "casts from mixed union type to primitive type" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CODE, prelude: "prelude").should eq(2)
         x = 1 == 1 ? 2 : nil
         x.as(Int32)
       CODE
@@ -4017,7 +4017,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "upcasts between tuple types" do
-      interpret(<<-CODE).should eq(1 + 'a'.ord)
+      interpret(<<-CODE, prelude: "prelude").should eq(1 + 'a'.ord)
         a =
           if 1 == 1
             {1, 'a'}
@@ -4121,6 +4121,26 @@ describe Crystal::Repl::Interpreter do
           0
         end
         CODE
+    end
+
+    it "discards cast" do
+      interpret(<<-CODE, prelude: "prelude").should eq(10)
+        x = 1 || 'a'
+        x.as(Int32)
+        10
+      CODE
+    end
+
+    it "raises when as fails" do
+      interpret(<<-CODE, prelude: "prelude").to_s.should contain("cast from Int32 to Char failed")
+        x = 1 || 'a'
+        begin
+          x.as(Char)
+          ""
+        rescue ex : TypeCastError
+          ex.message.not_nil!
+        end
+      CODE
     end
   end
 

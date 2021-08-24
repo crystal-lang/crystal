@@ -1371,7 +1371,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Cast)
-    node.obj.accept self
+    request_value node.obj
 
     # TODO: check @wants_value in these branches
 
@@ -1409,11 +1409,38 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       cond_jump_location = patch_location
 
       # Otherwise we need to raise
-      # TODO: actually raise
-      unreachable "BUG: missing handling of `.as(...)` when it fails", node: nil
+      put_string to_type.devirtualize.to_s, node: nil
+      put_string node.location.to_s, node: nil
+
+      call = Call.new(
+        nil,
+        "__crystal_raise_cast_failed",
+        [
+          TypeNode.new(obj_type),
+          TypeNode.new(@context.program.string),
+          TypeNode.new(@context.program.string),
+        ] of ASTNode,
+        global: true,
+      )
+      @context.program.semantic(call)
+
+      target_def = call.target_def
+
+      compiled_def = @context.defs[target_def]? ||
+                     begin
+                       create_compiled_def(call, target_def)
+                     rescue ex : Crystal::TypeException
+                       node.raise ex, inner: ex
+                     end
+      call compiled_def, node: node
 
       patch_jump(cond_jump_location)
-      downcast node.obj, obj_type, to_type
+
+      if @wants_value
+        downcast node.obj, obj_type, to_type
+      else
+        pop aligned_sizeof_type(obj_type), node: nil
+      end
     end
 
     false
