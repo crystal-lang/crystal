@@ -8,7 +8,7 @@ class XML::NodeSet
     new doc, LibXML.xmlXPathNodeSetCreate(nil)
   end
 
-  def [](index : Int)
+  def [](index : Int) : XML::Node
     index += size if index < 0
 
     unless 0 <= index < size
@@ -24,7 +24,7 @@ class XML::NodeSet
     end
   end
 
-  def empty?
+  def empty? : Bool
     size == 0
   end
 
@@ -37,7 +37,7 @@ class XML::NodeSet
     io << ']'
   end
 
-  def size
+  def size : Int32
     @set.value.node_nr
   end
 

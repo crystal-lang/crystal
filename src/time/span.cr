@@ -383,12 +383,42 @@ struct Time::Span
     end
   end
 
+  # Creates a new `Time::Span` representing a span of zero time.
   def self.zero : Time::Span
     ZERO
   end
 
+  # Returns `true` if `self` represents a span of zero time.
+  #
+  # ```
+  # 2.hours.zero?  # => false
+  # 0.days.zero?   # => true
+  # 1.second.zero? # => false
+  # ```
   def zero? : Bool
-    to_i == 0 && nanoseconds == 0
+    self == ZERO
+  end
+
+  # Returns `true` if `self` represents a positive time span.
+  #
+  # ```
+  # 2.hours.positive? # => true
+  # 0.days.positive?  # => false
+  # -3.days.positive? # => false
+  # ```
+  def positive? : Bool
+    self > ZERO
+  end
+
+  # Returns `true` if `self` represents a negative time span.
+  #
+  # ```
+  # 2.hours.negative? # => false
+  # 0.days.negative?  # => false
+  # -3.days.negative? # => true
+  # ```
+  def negative? : Bool
+    self < ZERO
   end
 end
 

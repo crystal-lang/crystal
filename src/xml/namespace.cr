@@ -7,15 +7,15 @@ class XML::Namespace
   # See `Object#hash(hasher)`
   def_hash object_id
 
-  def href
+  def href : String?
     @ns.value.href ? String.new(@ns.value.href) : nil
   end
 
-  def object_id
+  def object_id : UInt64
     @ns.address
   end
 
-  def prefix
+  def prefix : String?
     @ns.value.prefix ? String.new(@ns.value.prefix) : nil
   end
 

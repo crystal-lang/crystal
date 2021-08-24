@@ -378,10 +378,8 @@ def sprintf(format_string, args : Array | Tuple) : String
   end
 end
 
-# Prints objects to `STDOUT`, each followed by a newline.
-#
-# If the string representation of an object ends with a newline, no additional
-# newline is printed for that object.
+# Prints *objects* to `STDOUT`, each followed by a newline character unless
+# the object is a `String` and already ends with a newline.
 #
 # See also: `IO#puts`.
 def puts(*objects) : Nil

@@ -1092,14 +1092,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     stripped_doc = node.doc.try &.strip
     if stripped_doc == ":ditto:"
       node.doc = @last_doc
-    elsif stripped_doc == "ditto"
-      # TODO: remove after 0.34.0
-      if location
-        # Show one line above to highlight the ditto line
-        location = Location.new(location.filename, location.line_number - 1, location.column_number)
-      end
-      @program.report_warning_at location, "`ditto` is no longer supported. Use `:ditto:` instead"
-      node.doc = @last_doc
     else
       @last_doc = node.doc
     end

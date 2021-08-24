@@ -290,9 +290,15 @@ struct Path
   #
   # If *suffix* is given, it is stripped from the end.
   #
+  # In case the last component is the empty string (i.e. the path has a trailing
+  # separator), the second to last component is returned.
+  # For a path that only consists of an anchor, or an empty path, the base name
+  # is equivalent to the full path.
+  #
   # ```
   # Path["/foo/bar/file.cr"].basename # => "file.cr"
   # Path["/foo/bar/"].basename        # => "bar"
+  # Path["/foo/bar/."].basename       # => "."
   # Path["/"].basename                # => "/"
   # Path[""].basename                 # => ""
   # ```
@@ -399,7 +405,7 @@ struct Path
   # Path["file.tar.gz"].stem # => "file.tar"
   # Path["foo/file.cr"].stem # => "file"
   # ```
-  def stem
+  def stem : String
     basename(extension)
   end
 
@@ -681,7 +687,7 @@ struct Path
   # Converts this path to the given *kind*.
   #
   # See `#to_windows` and `#to_posix` for details.
-  def to_kind(kind)
+  def to_kind(kind) : Path
     if kind.posix?
       to_posix
     else
@@ -793,6 +799,16 @@ struct Path
   # Path["foo/"].join("/bar")   # => Path["foo/bar"]
   # Path["/foo/"].join("/bar/") # => Path["/foo/bar/"]
   # ```
+  #
+  # Joining an empty string (`""`) appends a trailing path separator.
+  # In case the path already ends with a trailing separator, no additional
+  # separator is added.
+  #
+  # ```
+  # Path["a/b"].join("")   # => Path["a/b/"]
+  # Path["a/b/"].join("")  # => Path["a/b/"]
+  # Path["a/b/"].join("c") # => Path["a/b/c"]
+  # ```
   def join(part) : Path
     # If we are joining a single part we can use `String.new` instead of
     # `String.build` which avoids an extra allocation.
@@ -862,6 +878,8 @@ struct Path
   # Path["foo/"].join("/bar/", "/baz")   # => Path["foo/bar/baz"]
   # Path["/foo/"].join("/bar/", "/baz/") # => Path["/foo/bar/baz/"]
   # ```
+  #
+  # See `join(part)` for details.
   def join(*parts) : Path
     join parts
   end
@@ -880,6 +898,8 @@ struct Path
   # Path.posix("foo/bar").join(Path.windows("baz\\baq")) # => Path.posix("foo/bar/baz/baq")
   # Path.windows("foo\\bar").join(Path.posix("baz/baq")) # => Path.windows("foo\\bar\\baz/baq")
   # ```
+  #
+  # See `join(part)` for details.
   def join(parts : Enumerable) : Path
     if parts.is_a?(Indexable)
       return self if parts.empty?
@@ -952,6 +972,8 @@ struct Path
   # Path["foo"] / "bar" / "baz"     # => Path["foo/bar/baz"]
   # Path["foo/"] / Path["/bar/baz"] # => Path["foo/bar/baz"]
   # ```
+  #
+  # See `join(part)` for details.
   def /(part : Path | String) : Path
     join(part)
   end
@@ -959,7 +981,7 @@ struct Path
   # Resolves path *name* in this path's parent directory.
   #
   # Raises `Path::Error` if `#parent` is `nil`.
-  def sibling(name : Path | String) : Path?
+  def sibling(name : Path | String) : Path
     if parent = self.parent
       parent.join(name)
     else
@@ -1063,12 +1085,14 @@ struct Path
   # Compares this path to *other*.
   #
   # The comparison is performed strictly lexically: `foo` and `./foo` are *not*
-  # treated as equal. To compare paths semantically, they need to be normalized
-  # and converted to the same kind.
+  # treated as equal. Nor are paths of different `kind`.
+  # To compare paths semantically, they need to be normalized and converted to
+  # the same kind.
   #
   # ```
   # Path["foo"] <=> Path["foo"]               # => 0
   # Path["foo"] <=> Path["./foo"]             # => 1
+  # Path["foo"] <=> Path["foo/"]              # => 1
   # Path.posix("foo") <=> Path.windows("foo") # => -1
   # ```
   #
@@ -1086,6 +1110,27 @@ struct Path
     @kind <=> other.@kind
   end
 
+  # Returns `true` if this path is considered equivalent to *other*.
+  #
+  # The comparison is performed strictly lexically: `foo` and `./foo` are *not*
+  # treated as equal. Nor are paths of different `kind`.
+  # To compare paths semantically, they need to be normalized and converted to
+  # the same kind.
+  #
+  # ```
+  # Path["foo"] == Path["foo"]               # => true
+  # Path["foo"] == Path["./foo"]             # => false
+  # Path["foo"] == Path["foo/"]              # => false
+  # Path.posix("foo") == Path.windows("foo") # => false
+  # ```
+  #
+  # Comparison is case-sensitive for POSIX paths and case-insensitive for
+  # Windows paths.
+  #
+  # ```
+  # Path.posix("foo") == Path.posix("FOO")     # => false
+  # Path.windows("foo") == Path.windows("FOO") # => true
+  # ```
   def ==(other : self)
     return false if @kind != other.@kind
 
@@ -1284,7 +1329,7 @@ struct Path
     Path.separators(@kind)
   end
 
-  def ends_with_separator?
+  def ends_with_separator? : Bool
     ends_with_separator?(@name)
   end
 

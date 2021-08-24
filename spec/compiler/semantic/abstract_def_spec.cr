@@ -1014,4 +1014,23 @@ describe "Semantic: abstract def" do
       end
     ), "abstract `def Foo#foo(*, foo : Int32)` must be implemented by Bar"
   end
+
+  it "doesn't error if free var in arg restriction shadows another type (#10153)" do
+    assert_no_errors %(
+      module Foo
+        abstract def foo(x : Int32, y : Array(Int32))
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Quux, y : Array(Quux)) forall Quux
+          x
+        end
+      end
+
+      class Quux
+      end
+      )
+  end
 end

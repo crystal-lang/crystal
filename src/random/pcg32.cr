@@ -50,11 +50,11 @@ class Random::PCG32
     new_seed(initstate, initseq)
   end
 
-  def new_seed
+  def new_seed : UInt32
     new_seed(Random::Secure.rand(UInt64::MIN..UInt64::MAX), Random::Secure.rand(UInt64::MIN..UInt64::MAX))
   end
 
-  def new_seed(initstate : UInt64, initseq = 0_u64)
+  def new_seed(initstate : UInt64, initseq = 0_u64) : UInt32
     @state = 0_u64
     @inc = (initseq << 1) | 1
     next_u
@@ -62,7 +62,7 @@ class Random::PCG32
     next_u
   end
 
-  def next_u
+  def next_u : UInt32
     oldstate = @state
     @state = oldstate &* PCG_DEFAULT_MULTIPLIER_64 &+ @inc
     xorshifted = UInt32.new!(((oldstate >> 18) ^ oldstate) >> 27)

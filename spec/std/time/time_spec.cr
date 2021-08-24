@@ -1,5 +1,5 @@
 require "./spec_helper"
-require "../../support/iterate"
+require "spec/helpers/iterate"
 
 CALENDAR_WEEK_TEST_DATA = [
   { {1981, 1, 1}, {1981, 1, 4} },
@@ -449,6 +449,11 @@ describe Time do
       zone = Time::Location.fixed(7 * 3600)
 
       Time.local(2020, 2, 5, 0, 13, location: zone).shift(months: 3).should eq Time.local(2020, 5, 5, 0, 13, location: zone)
+    end
+
+    it "covers date boundaries with zone offset (#10869)" do
+      location = Time::Location.fixed(2 * 3600)
+      Time.local(2021, 7, 1, location: location).shift(months: 1).should eq Time.local(2021, 8, 1, location: location)
     end
   end
 

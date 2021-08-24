@@ -988,7 +988,8 @@ class Crystal::Call
 
       # Similar to above: we check that the block's type matches the block arg specification,
       # and we delay it if possible.
-      if output
+      # If the return type is an underscore, we just ignore any return type checking.
+      if output && !output.is_a?(Underscore)
         if !block.type?
           if !match.def.free_var?(output) && output.is_a?(ASTNode) && !output.is_a?(Underscore)
             begin
@@ -1023,8 +1024,9 @@ class Crystal::Call
               end
             end
           end
+
+          block.freeze_type = block_type
         end
-        block.freeze_type = block_type
       end
     end
 

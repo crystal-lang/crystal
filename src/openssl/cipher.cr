@@ -1,6 +1,42 @@
 require "random/secure"
 require "openssl"
 
+# A class which can be used to encrypt and decrypt data using a specified cipher.
+#
+# ```
+# require "random/secure"
+#
+# key = Random::Secure.random_bytes(64) # You can also use OpenSSL::Cipher#random_key to do this same thing
+# iv = Random::Secure.random_bytes(32)  # You can also use OpenSSL::Cipher#random_iv to do this same thing
+#
+# def encrypt(data)
+#   cipher = OpenSSL::Cipher.new("aes-256-cbc")
+#   cipher.encrypt
+#   cipher.key = key
+#   cipher.iv = iv
+#
+#   io = IO::Memory.new
+#   io.write(cipher.update(data))
+#   io.write(cipher.final)
+#   io.rewind
+#
+#   io.to_slice
+# end
+#
+# def decrypt(data)
+#   cipher = OpenSSL::Cipher.new("aes-256-cbc")
+#   cipher.decrypt
+#   cipher.key = key
+#   cipher.iv = iv
+#
+#   io = IO::Memory.new
+#   io.write(cipher.update(data))
+#   io.write(cipher.final)
+#   io.rewind
+#
+#   io.gets_to_end
+# end
+# ```
 class OpenSSL::Cipher
   class Error < OpenSSL::Error
   end
@@ -17,11 +53,13 @@ class OpenSSL::Cipher
     cipherinit cipher: cipher, key: "\0" * LibCrypto::EVP_MAX_KEY_LENGTH
   end
 
-  def encrypt
+  # Sets this cipher to encryption mode.
+  def encrypt : Nil
     cipherinit enc: 1
   end
 
-  def decrypt
+  # Sets this cipher to decryption mode.
+  def decrypt : Nil
     cipherinit enc: 0
   end
 
@@ -37,20 +75,24 @@ class OpenSSL::Cipher
     iv
   end
 
+  # Sets the key using `Random::Secure`.
   def random_key
     key = Random::Secure.random_bytes key_len
     self.key = key
   end
 
+  # Sets the iv using `Random::Secure`.
   def random_iv
     iv = Random::Secure.random_bytes iv_len
     self.iv = iv
   end
 
+  # Resets the encrypt/decrypt mode.
   def reset
     cipherinit
   end
 
+  # Add the data to be encypted or decrypted to this cipher's buffer.
   def update(data)
     slice = data.to_slice
     buffer_length = slice.size + block_size
@@ -62,7 +104,8 @@ class OpenSSL::Cipher
     buffer[0, buffer_length]
   end
 
-  def final
+  # Outputs the decrypted or encrypted buffer.
+  def final : Bytes
     buffer_length = block_size
     buffer = Bytes.new(buffer_length)
 
@@ -81,21 +124,23 @@ class OpenSSL::Cipher
     pad
   end
 
-  def name
+  def name : String
     nid = LibCrypto.evp_cipher_nid cipher
     sn = LibCrypto.obj_nid2sn nid
     String.new sn
   end
 
-  def block_size
+  def block_size : Int32
     LibCrypto.evp_cipher_block_size cipher
   end
 
-  def key_len
+  # How many bytes the key should be.
+  def key_len : Int32
     LibCrypto.evp_cipher_key_length cipher
   end
 
-  def iv_len
+  # How many bytes the iv should be.
+  def iv_len : Int32
     LibCrypto.evp_cipher_iv_length cipher
   end
 
@@ -104,7 +149,7 @@ class OpenSSL::Cipher
     @ctx = typeof(@ctx).null
   end
 
-  def authenticated?
+  def authenticated? : Bool
     LibCrypto.evp_cipher_flags(cipher).includes?(LibCrypto::CipherFlags::EVP_CIPH_FLAG_AEAD_CIPHER)
   end
 

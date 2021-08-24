@@ -115,23 +115,23 @@ struct BigFloat < Float
     end
   end
 
-  def -
+  def - : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_neg(mpf, self) }
   end
 
-  def +(other : Number)
+  def +(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_add(mpf, self, other.to_big_f) }
   end
 
-  def -(other : Number)
+  def -(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_sub(mpf, self, other.to_big_f) }
   end
 
-  def *(other : Number)
+  def *(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_mul(mpf, self, other.to_big_f) }
   end
 
-  def /(other : BigFloat)
+  def /(other : BigFloat) : BigFloat
     # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
     raise DivisionByZeroError.new if other == 0
     BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, other) }
@@ -141,79 +141,80 @@ struct BigFloat < Float
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 
-  def **(other : Int)
+  def **(other : Int) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, other.to_u64) }
   end
 
-  def abs
+  def abs : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_abs(mpf, self) }
   end
 
-  def ceil
+  def ceil : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_ceil(mpf, self) }
   end
 
-  def floor
+  def floor : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_floor(mpf, self) }
   end
 
-  def trunc
+  def trunc : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_trunc(mpf, self) }
   end
 
-  def to_f64
+  def to_f64 : Float64
     LibGMP.mpf_get_d(self)
   end
 
-  def to_f32
+  def to_f32 : Float32
     to_f64.to_f32
   end
 
-  def to_f
+  def to_f : Float64
     to_f64
   end
 
-  def to_f32!
+  def to_f32! : Float32
     to_f64.to_f32!
   end
 
-  def to_f64!
+  def to_f64! : Float64
     to_f64
   end
 
-  def to_f!
+  def to_f! : Float64
     to_f64!
   end
 
-  def to_big_f
+  def to_big_f : BigFloat
     self
   end
 
-  def to_big_i
+  def to_big_i : BigInt
     BigInt.new { |mpz| LibGMP.set_f(mpz, mpf) }
   end
 
   def to_i64
+    raise OverflowError.new unless LibGMP::Long::MIN <= self <= LibGMP::Long::MAX
     LibGMP.mpf_get_si(self)
   end
 
-  def to_i32
+  def to_i32 : Int32
     to_i64.to_i32
   end
 
-  def to_i16
+  def to_i16 : Int16
     to_i64.to_i16
   end
 
-  def to_i8
+  def to_i8 : Int8
     to_i64.to_i8
   end
 
-  def to_i
+  def to_i : Int32
     to_i32
   end
 
-  def to_i!
+  def to_i! : Int32
     to_i32!
   end
 
@@ -225,7 +226,7 @@ struct BigFloat < Float
     LibGMP.mpf_get_si(self).to_i16!
   end
 
-  def to_i32!
+  def to_i32! : Int32
     LibGMP.mpf_get_si(self).to_i32!
   end
 
@@ -234,27 +235,27 @@ struct BigFloat < Float
   end
 
   def to_u64
-    raise OverflowError.new if self < 0
+    raise OverflowError.new unless 0 <= self <= LibGMP::ULong::MAX
     LibGMP.mpf_get_ui(self)
   end
 
-  def to_u32
+  def to_u32 : UInt32
     to_u64.to_u32
   end
 
-  def to_u16
+  def to_u16 : UInt16
     to_u64.to_u16
   end
 
-  def to_u8
+  def to_u8 : UInt8
     to_u64.to_u8
   end
 
-  def to_u
+  def to_u : UInt32
     to_u32
   end
 
-  def to_u!
+  def to_u! : UInt32
     to_u32!
   end
 
@@ -266,7 +267,7 @@ struct BigFloat < Float
     LibGMP.mpf_get_ui(self).to_u16!
   end
 
-  def to_u32!
+  def to_u32! : UInt32
     LibGMP.mpf_get_ui(self).to_u32!
   end
 
@@ -309,6 +310,43 @@ struct BigFloat < Float
     self
   end
 
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds towards the even neighbor (Banker's rounding).
+  def round_even : self
+    if self >= 0
+      halfway = self + 0.5
+    else
+      halfway = self - 0.5
+    end
+    if halfway.integer?
+      if halfway == (halfway / 2).trunc * 2
+        halfway
+      else
+        halfway - sign
+      end
+    else
+      if self >= 0
+        halfway.floor
+      else
+        halfway.ceil
+      end
+    end
+  end
+
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds away from zero.
+  def round_away : self
+    if self >= 0
+      (self + 0.5).floor
+    else
+      (self - 0.5).ceil
+    end
+  end
+
+  protected def integer?
+    !LibGMP.mpf_integer_p(mpf).zero?
+  end
+
   private def mpf
     pointerof(@mpf)
   end
@@ -329,15 +367,15 @@ struct Number
     to_big_f - other
   end
 
-  def *(other : BigFloat)
+  def *(other : BigFloat) : BigFloat
     other * self
   end
 
-  def /(other : BigFloat)
+  def /(other : BigFloat) : BigFloat
     to_big_f / other
   end
 
-  def to_big_f
+  def to_big_f : BigFloat
     BigFloat.new(self)
   end
 end
@@ -349,14 +387,14 @@ class String
   # require "big"
   # "1234.0".to_big_f
   # ```
-  def to_big_f
+  def to_big_f : BigFloat
     BigFloat.new(self)
   end
 end
 
 module Math
   # Decomposes the given floating-point *value* into a normalized fraction and an integral power of two.
-  def frexp(value : BigFloat)
+  def frexp(value : BigFloat) : {BigFloat, Int32 | Int64}
     LibGMP.mpf_get_d_2exp(out exp, value) # we need BigFloat frac, so will skip Float64 one.
     frac = BigFloat.new do |mpf|
       if exp >= 0
@@ -375,7 +413,7 @@ module Math
   #
   # Math.sqrt(1_000_000_000_000.to_big_f * 1_000_000_000_000.to_big_f) # => 1000000000000.0
   # ```
-  def sqrt(value : BigFloat)
+  def sqrt(value : BigFloat) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_sqrt(mpf, value) }
   end
 end
