@@ -5365,6 +5365,15 @@ describe Crystal::Repl::Interpreter do
         a.includes?(b)
       CODE
     end
+
+    it "does IO.pipe (checks that StaticArray is passed correctly to C calls)" do
+      interpret(<<-CODE, prelude: "prelude").should eq("hello")
+        IO.pipe do |r, w|
+          w.puts "hello"
+          r.gets.not_nil!
+        end
+      CODE
+    end
   end
 end
 

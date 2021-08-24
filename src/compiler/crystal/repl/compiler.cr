@@ -1684,6 +1684,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       if arg.is_a?(NilLiteral)
         # Nil is used to mean Pointer.null
         put_i64 0, node: arg
+      elsif arg_type.is_a?(StaticArrayInstanceType)
+        # Static arrays are passed as pointers to C
+        compile_pointerof_struct_to_be_passed_as_self(arg, arg.type)
       else
         request_value(arg)
       end
@@ -1695,6 +1698,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         args_ffi_types << FFI::Type.pointer
 
         proc_to_c_fun external_arg.type.as(ProcInstanceType).ffi_call_interface, node: nil
+      elsif arg_type.is_a?(StaticArrayInstanceType)
+        # Static arrays are passed as pointers to C
+        args_bytesizes << sizeof(Void*)
+        args_ffi_types << FFI::Type.pointer
       else
         case arg
         when NilLiteral

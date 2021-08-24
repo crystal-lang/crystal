@@ -11,6 +11,11 @@ module Crystal
     def ffi_type : FFI::Type
       raise "BUG: missing ffi_type for #{self} (#{self.class})"
     end
+
+    # Returns an FFI::Type to be used as a C function argument.
+    def ffi_arg_type : FFI::Type
+      ffi_type
+    end
   end
 
   class BoolType
@@ -70,7 +75,7 @@ module Crystal
     getter(ffi_call_interface : FFI::CallInterface) do
       FFI::CallInterface.new(
         abi: FFI::ABI::DEFAULT,
-        args: arg_types.map(&.ffi_type),
+        args: arg_types.map(&.ffi_arg_type),
         return_type: return_type.ffi_type,
       )
     end
@@ -109,6 +114,10 @@ module Crystal
       FFI::Type.struct(
         Array.new(size.as(NumberLiteral).value.to_i, element_ffi_type)
       )
+    end
+
+    def ffi_arg_type : FFI::Type
+      FFI::Type.pointer
     end
   end
 end
