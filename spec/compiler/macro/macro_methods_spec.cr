@@ -523,6 +523,18 @@ module Crystal
             assert_macro "", %({{"".parse_type_name}}), [] of ASTNode, %(nil)
           end
         end
+
+        it "raises on extra unparsed tokens before the type" do
+          expect_raises(Crystal::TypeException, "Invalid type name: 100Foo") do
+            assert_macro "", %({{"100Foo".parse_type_name}}), [] of ASTNode, %(nil)
+          end
+        end
+
+        it "raises on extra unparsed tokens after the type" do
+          expect_raises(Crystal::TypeException, "Invalid type name: Foo(Int32)100") do
+            assert_macro "", %({{"Foo(Int32)100".parse_type_name}}), [] of ASTNode, %(nil)
+          end
+        end
       end
     end
 

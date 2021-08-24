@@ -804,7 +804,11 @@ module Crystal
 
           parser = Crystal::Parser.new @value
           parser.next_token_skip_statement_end
-          parser.parse_bare_proc_type
+          type = parser.parse_bare_proc_type
+          parser.check :EOF
+          type
+        rescue ex : Crystal::SyntaxException
+          raise "Invalid type name: #{@value}"
         end
       else
         super
