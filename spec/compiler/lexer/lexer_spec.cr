@@ -309,10 +309,6 @@ describe "Lexer" do
   assert_syntax_error "-170141183460469231731687303715884105729", "-170141183460469231731687303715884105729 doesn't fit in an Int128"
   assert_syntax_error "-999999999999999999999999999999999999999", "-999999999999999999999999999999999999999 doesn't fit in an Int128"
 
-  assert_syntax_error "9223372036854775808_i128", "9223372036854775808 doesn't fit in an Int64. Int128 literals that don't fit in an Int64 are currently not supported"
-  assert_syntax_error "-9223372036854775809_i128", "-9223372036854775809 doesn't fit in an Int64. Int128 literals that don't fit in an Int64 are currently not supported"
-  assert_syntax_error "118446744073709551616_u128", "118446744073709551616 doesn't fit in an UInt64. UInt128 literals that don't fit in an UInt64 are currently not supported"
-  assert_syntax_error "18446744073709551616_u128", "18446744073709551616 doesn't fit in an UInt64. UInt128 literals that don't fit in an UInt64 are currently not supported"
   assert_syntax_error "-1_u128", "Invalid negative value -1 for UInt128"
 
   assert_syntax_error "0xFF_i8", "255 doesn't fit in an Int8"
