@@ -58,7 +58,7 @@ class Dir
     record DirectoriesOnly
     record ConstantEntry, path : String
     record EntryMatch, pattern : String do
-      def matches?(string)
+      def matches?(string) : Bool
         File.match?(pattern, string)
       end
     end
@@ -66,7 +66,7 @@ class Dir
     record ConstantDirectory, path : String
     record RootDirectory
     record DirectoryMatch, pattern : String do
-      def matches?(string)
+      def matches?(string) : Bool
         File.match?(pattern, string)
       end
     end

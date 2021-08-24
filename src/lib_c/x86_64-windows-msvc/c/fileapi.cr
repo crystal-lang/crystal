@@ -1,5 +1,6 @@
 require "c/winnt"
 require "c/basetsd"
+require "c/wtypesbase"
 
 lib LibC
   fun GetFullPathNameW(lpFileName : LPWSTR, nBufferLength : DWORD, lpBuffer : LPWSTR, lpFilePart : LPWSTR*) : DWORD
@@ -11,6 +12,15 @@ lib LibC
   FILE_TYPE_UNKNOWN = DWORD.new(0x0)
 
   fun GetFileType(hFile : HANDLE) : DWORD
+
+  struct WIN32_FILE_ATTRIBUTE_DATA
+    dwFileAttributes : DWORD
+    ftCreationTime : FILETIME
+    ftLastAccessTime : FILETIME
+    ftLastWriteTime : FILETIME
+    nFileSizeHigh : DWORD
+    nFileSizeLow : DWORD
+  end
 
   struct BY_HANDLE_FILE_INFORMATION
     dwFileAttributes : DWORD

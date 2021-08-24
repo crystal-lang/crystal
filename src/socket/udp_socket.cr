@@ -68,7 +68,7 @@ class UDPSocket < IPSocket
   def receive(max_message_size = 512) : {String, IPAddress}
     address = nil
     message = String.new(max_message_size) do |buffer|
-      bytes_read, sockaddr, addrlen = recvfrom(Slice.new(buffer, max_message_size))
+      bytes_read, sockaddr, addrlen = system_receive(Slice.new(buffer, max_message_size))
       address = IPAddress.from(sockaddr, addrlen)
       {bytes_read, 0}
     end
@@ -87,13 +87,13 @@ class UDPSocket < IPSocket
   # bytes_read, client_addr = server.receive(message)
   # ```
   def receive(message : Bytes) : {Int32, IPAddress}
-    bytes_read, sockaddr, addrlen = recvfrom(message)
+    bytes_read, sockaddr, addrlen = system_receive(message)
     {bytes_read, IPAddress.from(sockaddr, addrlen)}
   end
 
   # Reports whether transmitted multicast packets should be copied and sent
   # back to the originator.
-  def multicast_loopback?
+  def multicast_loopback? : Bool
     case @family
     when Family::INET
       getsockopt_bool LibC::IP_MULTICAST_LOOP, LibC::IPPROTO_IP
@@ -122,7 +122,7 @@ class UDPSocket < IPSocket
   # Multicast datagrams with a `hoplimit` of `0` will not be transmitted on any
   # network, but may be delivered locally if the sending host belongs to the
   # destination group and multicast loopback is enabled.
-  def multicast_hops
+  def multicast_hops : Int32
     case @family
     when Family::INET
       getsockopt LibC::IP_MULTICAST_TTL, 0, LibC::IPPROTO_IP

@@ -195,4 +195,21 @@ describe "Semantic: pointer" do
       ),
       "type must be Moo(Char | Int32), not Foo(Int32)"
   end
+
+  it "errors with non-matching generic value with value=, union of generic types (#10544)" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      class Bar1
+      end
+
+      class Bar2
+      end
+
+      ptr = Pointer(Foo(Char | Int32)).malloc(1_u64)
+      ptr.value = Foo(Int32).new || Foo(Char | Int32).new
+      ),
+      "type must be Foo(Char | Int32), not (Foo(Char | Int32) | Foo(Int32))"
+  end
 end

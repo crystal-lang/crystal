@@ -23,7 +23,7 @@ module Random::Secure
     Crystal::System::Random.next_u
   end
 
-  def random_bytes(buf : Bytes)
+  def random_bytes(buf : Bytes) : Nil
     Crystal::System::Random.random_bytes(buf)
   end
 

@@ -62,7 +62,7 @@ struct Float::Printer::DiyFP
   # must be greater than the *other*.
   #
   # NOTE: This result is not normalized.
-  def -(other : DiyFP)
+  def -(other : DiyFP) : self
     self.class.new(frac - other.frac, exp)
   end
 
@@ -76,7 +76,7 @@ struct Float::Printer::DiyFP
   # bits.
   #
   # NOTE: This result is not normalized.
-  def *(other : DiyFP)
+  def *(other : DiyFP) : self
     a = frac >> 32
     b = frac & MASK32
     c = other.frac >> 32
@@ -95,7 +95,7 @@ struct Float::Printer::DiyFP
     self.class.new(f, e)
   end
 
-  def normalize
+  def normalize : DiyFP
     f = frac
     e = exp
 
@@ -118,13 +118,13 @@ struct Float::Printer::DiyFP
     DiyFP.new(f, e)
   end
 
-  def self.from_f(d : Float64 | Float32)
+  def self.from_f(d : Float64 | Float32) : self
     frac, exp = IEEE.frac_and_exp(d)
     new(frac, exp)
   end
 
   # Normalize such that the most significant bit of `frac` is set.
-  def self.from_f_normalized(v : Float64 | Float32)
+  def self.from_f_normalized(v : Float64 | Float32) : self
     pre_normalized = from_f(v)
     f = pre_normalized.frac
     e = pre_normalized.exp

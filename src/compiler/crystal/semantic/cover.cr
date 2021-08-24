@@ -63,7 +63,7 @@ module Crystal
         end
 
         signature.named_args.try &.each_with_index do |named_arg, i|
-          arg = match.def.args.find(&.name.==(named_arg.name))
+          arg = match.def.args.find(&.external_name.==(named_arg.name))
           if arg && (arg.type? || arg.restriction)
             indices[args_size + i] = true
           end

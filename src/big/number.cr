@@ -8,7 +8,7 @@ struct BigFloat
     self.class.new(self / other)
   end
 
-  def /(other : UInt8 | UInt16 | UInt32 | UInt64)
+  def /(other : UInt8 | UInt16 | UInt32 | UInt64) : BigFloat
     # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
     raise DivisionByZeroError.new if other == 0
     if other.is_a?(UInt8 | UInt16 | UInt32) || (LibGMP::ULong == UInt64 && other.is_a?(UInt64))
