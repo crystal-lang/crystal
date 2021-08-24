@@ -118,7 +118,12 @@ struct Number
     %array
   end
 
-  # :ditto:
+  # Performs a `#step` in the direction of the _limit_. For instance:
+  #
+  # ```
+  # 10.step(to: 5).to_a # => [10, 9, 8, 7, 6, 5]
+  # 5.step(to: 10).to_a # => [5, 6, 7, 8, 9, 10]
+  # ```
   def step(*, to limit = nil, exclusive : Bool = false, &) : Nil
     if limit
       direction = limit <=> self

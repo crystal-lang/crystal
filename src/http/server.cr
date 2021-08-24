@@ -480,7 +480,7 @@ class HTTP::Server
 
   # Gracefully terminates the server. It will process currently accepted
   # requests, but it won't accept new connections.
-  def close
+  def close : Nil
     raise "Can't close server, it's already closed" if closed?
 
     @closed = true
@@ -514,7 +514,10 @@ class HTTP::Server
 
     @processor.process(io, io)
   ensure
-    io.close rescue IO::Error
+    begin
+      io.close
+    rescue IO::Error
+    end
   end
 
   # This method handles exceptions raised at `Socket#accept?`.
