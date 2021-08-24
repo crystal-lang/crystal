@@ -111,7 +111,7 @@ class IO::Delimited < IO
     raise IO::Error.new "Can't write to IO::Delimited"
   end
 
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 
