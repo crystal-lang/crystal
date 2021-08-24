@@ -808,7 +808,7 @@ module Crystal
           parser.check :EOF
           type
         rescue ex : Crystal::SyntaxException
-          raise "Invalid type name: #{@value}"
+          raise "Invalid type name: #{@value.inspect}"
         end
       else
         super
