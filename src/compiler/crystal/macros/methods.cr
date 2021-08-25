@@ -1310,7 +1310,7 @@ module Crystal
       when "return_type"
         interpret_check_args { @return_type || Nop.new }
       when "free_vars"
-        interpret_argless_method(method, args) do
+        interpret_check_args do
           if (free_vars = @free_vars) && !free_vars.empty?
             ArrayLiteral.map(free_vars) { |free_var| MacroId.new(free_var) }
           else
@@ -1326,7 +1326,7 @@ module Crystal
           visibility_to_symbol(@visibility)
         end
       when "abstract?"
-        interpret_argless_method(method, args) { BoolLiteral.new(@abstract) }
+        interpret_check_args { BoolLiteral.new(@abstract) }
       when "annotation"
         fetch_annotation(self, method, args, named_args, block) do |type|
           self.annotation(type)
@@ -1893,7 +1893,7 @@ module Crystal
       when "block_arg"
         interpret_check_args { self.block_arg || Nop.new }
       when "global?"
-        interpret_argless_method(method, args) { BoolLiteral.new(@global) }
+        interpret_check_args { BoolLiteral.new(@global) }
       else
         super
       end
@@ -1946,7 +1946,7 @@ module Crystal
       when "else"
         interpret_check_args { self.else || Nop.new }
       when "exhaustive?"
-        interpret_argless_method(method, args) { BoolLiteral.new(@exhaustive) }
+        interpret_check_args { BoolLiteral.new(@exhaustive) }
       else
         super
       end
@@ -1961,7 +1961,7 @@ module Crystal
       when "body"
         interpret_check_args { body }
       when "exhaustive?"
-        interpret_argless_method(method, args) { BoolLiteral.new(@exhaustive) }
+        interpret_check_args { BoolLiteral.new(@exhaustive) }
       else
         super
       end
@@ -2150,7 +2150,7 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "name"
-        interpret_argless_method(method, args) { @path }
+        interpret_check_args { @path }
       when "[]"
         interpret_check_args do |arg|
           case arg
