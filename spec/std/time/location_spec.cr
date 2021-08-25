@@ -213,6 +213,15 @@ class Time::Location
           end
         end
       end
+
+      {% if flag?(:win32) %}
+        it "loads time zone information from registry" do
+          location = Location.load_local
+          location.zones.size.should eq 2
+          zone_names = {location.zones[0].name, location.zones[1].name}
+          Crystal::System::Time::WINDOWS_ZONE_NAMES.key_for?(zone_names).should_not be_nil
+        end
+      {% end %}
     end
 
     describe ".fixed" do
