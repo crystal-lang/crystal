@@ -13,6 +13,8 @@ require "c/string"
 # "hello world"
 # ```
 #
+# See [`String` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/string.html) in the language reference.
+#
 # A backslash can be used to denote some characters inside the string:
 #
 # ```
@@ -367,7 +369,7 @@ class String
 
   # Same as `#to_i` but returns an `Int8` or the block's value.
   def to_i8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ i8, 127, 128
+    gen_to_ Int8, UInt8, 127, 128
   end
 
   # Same as `#to_i` but returns an `UInt8`.
@@ -382,7 +384,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt8` or the block's value.
   def to_u8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ u8, 255
+    gen_to_ UInt8, UInt8
   end
 
   # Same as `#to_i` but returns an `Int16`.
@@ -397,7 +399,7 @@ class String
 
   # Same as `#to_i` but returns an `Int16` or the block's value.
   def to_i16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ i16, 32767, 32768
+    gen_to_ Int16, UInt16, 32767, 32768
   end
 
   # Same as `#to_i` but returns an `UInt16`.
@@ -412,7 +414,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt16` or the block's value.
   def to_u16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ u16, 65535
+    gen_to_ UInt16, UInt16
   end
 
   # Same as `#to_i`.
@@ -427,7 +429,7 @@ class String
 
   # Same as `#to_i`.
   def to_i32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ i32, 2147483647, 2147483648
+    gen_to_ Int32, UInt32, 2147483647, 2147483648
   end
 
   # Same as `#to_i` but returns an `UInt32`.
@@ -442,7 +444,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt32` or the block's value.
   def to_u32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ u32, 4294967295
+    gen_to_ UInt32, UInt32
   end
 
   # Same as `#to_i` but returns an `Int64`.
@@ -457,7 +459,7 @@ class String
 
   # Same as `#to_i` but returns an `Int64` or the block's value.
   def to_i64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ i64, 9223372036854775807, 9223372036854775808
+    gen_to_ Int64, UInt64, 9223372036854775807, 9223372036854775808
   end
 
   # Same as `#to_i` but returns an `UInt64`.
@@ -472,7 +474,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt64` or the block's value.
   def to_u64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ u64
+    gen_to_ UInt64, UInt64
   end
 
   # :nodoc:
@@ -498,20 +500,21 @@ class String
   end
 
   # :nodoc:
-  record ToU64Info,
-    value : UInt64,
+  record ToUnsignedInfo(T),
+    value : T,
     negative : Bool,
     invalid : Bool
 
-  private macro gen_to_(method, max_positive = nil, max_negative = nil)
-    info = to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{max_negative == nil}})
+  private macro gen_to_(int_class, unsigned_int_class, max_positive = nil, max_negative = nil)
+    {% unsigned = int_class == unsigned_int_class %}
+    info = to_unsigned_info({{unsigned_int_class}}, base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{unsigned}})
 
     return yield if info.invalid
 
     if info.negative
       {% if max_negative %}
         return yield if info.value > {{max_negative}}
-        (~info.value &+ 1).unsafe_as(Int64).to_{{method}}
+        (~info.value &+ 1).unsafe_as({{int_class}})
       {% else %}
         return yield
       {% end %}
@@ -519,11 +522,11 @@ class String
       {% if max_positive %}
         return yield if info.value > {{max_positive}}
       {% end %}
-      info.value.to_{{method}}
+      {{int_class}}.new(info.value)
     end
   end
 
-  private def to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned)
+  private def to_unsigned_info(int_class, base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned)
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
 
     ptr = to_unsafe
@@ -539,7 +542,7 @@ class String
     case ptr.value.unsafe_chr
     when '-'
       if unsigned
-        return ToU64Info.new 0, true, true
+        return ToUnsignedInfo.new(value: int_class.new(0), negative: true, invalid: true)
       end
       negative = true
       ptr += 1
@@ -581,8 +584,8 @@ class String
       end
     end
 
-    value = 0_u64
-    mul_overflow = ~0_u64 // base
+    value = int_class.new(0)
+    mul_overflow = ~(int_class.new(0)) // base
     last_is_underscore = true
     invalid = false
 
@@ -633,7 +636,7 @@ class String
       invalid = true
     end
 
-    ToU64Info.new value, negative, invalid
+    ToUnsignedInfo.new(value: value, negative: negative, invalid: invalid)
   end
 
   # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
@@ -710,18 +713,18 @@ class String
     unless v.finite?
       startptr = to_unsafe
       if whitespace
-        while startptr.value.chr.ascii_whitespace?
+        while startptr.value.unsafe_chr.ascii_whitespace?
           startptr += 1
         end
       end
-      if startptr.value.chr.in?('+', '-')
+      if startptr.value.unsafe_chr.in?('+', '-')
         startptr += 1
       end
 
       if v.nan?
-        return unless startptr.value.chr.in?('n', 'N')
+        return unless startptr.value.unsafe_chr.in?('n', 'N')
       else
-        return unless startptr.value.chr.in?('i', 'I')
+        return unless startptr.value.unsafe_chr.in?('i', 'I')
       end
     end
 
@@ -732,7 +735,7 @@ class String
 
     if strict
       if whitespace
-        while endptr < string_end && endptr.value.chr.ascii_whitespace?
+        while endptr < string_end && endptr.value.unsafe_chr.ascii_whitespace?
           endptr += 1
         end
       end
@@ -741,7 +744,7 @@ class String
     else
       ptr = to_unsafe
       if whitespace
-        while ptr < string_end && ptr.value.chr.ascii_whitespace?
+        while ptr < string_end && ptr.value.unsafe_chr.ascii_whitespace?
           ptr += 1
         end
       end
@@ -815,7 +818,7 @@ class String
   # s[-2..-4] # => ""
   # s[-2..1]  # => ""
   # s[3..-4]  # => ""
-  # ``` : String
+  # ```
   def [](range : Range) : String
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
@@ -842,26 +845,19 @@ class String
   end
 
   # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of bounds.
-  def []?(start : Int, count : Int) : String?
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
+  def []?(start : Int, count : Int)
     return byte_slice?(start, count) if single_byte_optimizable?
 
-    start += size if start < 0
+    start, count = Indexable.normalize_start_and_count(start, count, size) { return nil }
+    return "" if count == 0
+    return self if count == size
 
-    start_pos, end_pos, end_index = find_start_end_and_index(start, count)
+    start_pos, end_pos = find_start_and_end(start, count)
+    byte_count = end_pos - start_pos
 
-    if start_pos
-      return "" if count == 0
-
-      count = end_pos - start_pos
-      return self if count == bytesize
-
-      String.new(count) do |buffer|
-        buffer.copy_from(to_unsafe + start_pos, count)
-        {count, 0}
-      end
-    elsif start == end_index
-      ""
+    String.new(byte_count) do |buffer|
+      buffer.copy_from(to_unsafe + start_pos, byte_count)
+      {byte_count, 0}
     end
   end
 
@@ -1033,14 +1029,7 @@ class String
   # "abcd".delete_at(4, 3) # => "abcd"
   # ```
   def delete_at(index : Int, count : Int) : String
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
-
-    index += size if index < 0
-    unless 0 <= index <= size
-      raise IndexError.new
-    end
-
-    count = Math.min(count, size - index)
+    index, count = Indexable.normalize_start_and_count(index, count, size)
 
     case count
     when 0
@@ -1073,16 +1062,11 @@ class String
   end
 
   private def unicode_delete_at(start, count)
-    start_pos, end_pos, _ = find_start_end_and_index(start, count)
-
-    # That start is in bounds was already verified in `delete_at`
-    start_pos = start_pos.not_nil!
-
-    byte_count = end_pos - start_pos.not_nil!
-    byte_delete_at(start_pos, count, byte_count)
+    start_pos, end_pos = find_start_and_end(start, count)
+    byte_delete_at(start_pos, count, end_pos - start_pos)
   end
 
-  private def find_start_end_and_index(start, count)
+  private def find_start_and_end(start, count)
     start_pos = nil
     end_pos = nil
 
@@ -1100,9 +1084,9 @@ class String
       i += 1
     end
 
-    end_pos ||= reader.pos
+    end_pos = reader.pos if i == start + count
 
-    {start_pos, end_pos, i}
+    {start_pos.not_nil!, end_pos.not_nil!}
   end
 
   # Returns a new string built from *count* bytes starting at *start* byte.
@@ -1152,23 +1136,16 @@ class String
   # "hello".byte_slice?(0, -2)  # raises ArgumentError
   # ```
   def byte_slice?(start : Int, count : Int) : String | Nil
-    raise ArgumentError.new "Negative count" if count < 0
+    start, count = Indexable.normalize_start_and_count(start, count, bytesize) { return nil }
+    return "" if count == 0
+    return self if count == bytesize
 
-    start += bytesize if start < 0
     single_byte_optimizable = single_byte_optimizable?
 
-    if 0 <= start < bytesize
-      count = bytesize - start if start + count > bytesize
-      return "" if count == 0
-      return self if count == bytesize
-
-      String.new(count) do |buffer|
-        buffer.copy_from(to_unsafe + start, count)
-        slice_size = single_byte_optimizable ? count : 0
-        {count, slice_size}
-      end
-    elsif start == bytesize
-      ""
+    String.new(count) do |buffer|
+      buffer.copy_from(to_unsafe + start, count)
+      slice_size = single_byte_optimizable ? count : 0
+      {count, slice_size}
     end
   end
 
@@ -3059,7 +3036,7 @@ class String
   def index(search : Char, offset = 0) : Int32?
     # If it's ASCII we can delegate to slice
     if search.ascii? && single_byte_optimizable?
-      return to_slice.index(search.ord.to_u8, offset)
+      return to_slice.fast_index(search.ord.to_u8, offset)
     end
 
     offset += size if offset < 0
@@ -3075,7 +3052,7 @@ class String
   end
 
   # :ditto:
-  def index(search : String, offset = 0) : Int32?
+  def index(search : String, offset = 0)
     offset += size if offset < 0
     return if offset < 0
 
@@ -3151,7 +3128,7 @@ class String
   # "Hello, World".rindex("o", 5) # => 4
   # "Hello, World".rindex("W", 2) # => nil
   # ```
-  def rindex(search : Char, offset = size - 1) : Int32?
+  def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
     if search.ascii? && single_byte_optimizable?
       return to_slice.rindex(search.ord.to_u8, offset)
@@ -4982,7 +4959,7 @@ class String
 
   # Appends `self` to *io*.
   def to_s(io : IO) : Nil
-    io.write_utf8(to_slice)
+    io.write_string(to_slice)
   end
 
   # Returns the underlying bytes of this String.
@@ -5034,7 +5011,7 @@ class String
   # Raises an `ArgumentError` if `self` has null bytes. Returns `self` otherwise.
   #
   # This method should sometimes be called before passing a `String` to a C function.
-  def check_no_null_byte(name = nil) : String
+  def check_no_null_byte(name = nil) : self
     if byte_index(0)
       name = "`#{name}` " if name
       raise ArgumentError.new("String #{name}contains null byte")

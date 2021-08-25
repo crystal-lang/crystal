@@ -27,6 +27,23 @@ class HTTP::Request
     # will have a format like "IP:port", but this format is not guaranteed.
     # Middlewares can overwrite this value.
     #
+    # Example:
+    #
+    # ```
+    # class ForwarderHandler
+    #   include HTTP::Handler
+    #
+    #   def call(context)
+    #     if ip = context.request.headers["X-Real-IP"]? # When using a reverse proxy that guarantees this field.
+    #       context.request.remote_address = Socket::IPAddress.new(ip, 0)
+    #     end
+    #     call_next(context)
+    #   end
+    # end
+    #
+    # server = HTTP::Server.new([ForwarderHandler.new, HTTP::LogHandler.new])
+    # ```
+    #
     # This property is not used by `HTTP::Client`.
     property remote_address : Socket::Address?
 

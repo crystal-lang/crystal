@@ -276,7 +276,6 @@ module Crystal
     template EditorconfigView, "editorconfig.ecr", ".editorconfig"
     template LicenseView, "license.ecr", "LICENSE"
     template ReadmeView, "readme.md.ecr", "README.md"
-    template TravisView, "travis.yml.ecr", ".travis.yml"
     template ShardView, "shard.yml.ecr", "shard.yml"
 
     template SrcExampleView, "example.cr.ecr", "src/#{config.name}.cr"

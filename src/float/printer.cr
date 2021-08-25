@@ -47,7 +47,7 @@ module Float::Printer
         LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%g", v.to_f64)
       end
       len = LibC.strlen(buffer)
-      io.write_utf8 buffer.to_slice[0, len]
+      io.write_string buffer.to_slice[0, len]
       return
     end
 
@@ -65,11 +65,11 @@ module Float::Printer
     # add integer part digits
     if decimal_exponent > 0 && !exp_mode
       # whole number but not big enough to be exp form
-      io.write_utf8 buffer.to_slice[i, length - i]
+      io.write_string buffer.to_slice[i, length - i]
       i = length
       (point - length).times { io << '0' }
     elsif i < point
-      io.write_utf8 buffer.to_slice[i, point - i]
+      io.write_string buffer.to_slice[i, point - i]
       i = point
     end
 
@@ -81,7 +81,7 @@ module Float::Printer
     end
 
     # add fractional part digits
-    io.write_utf8 buffer.to_slice[i, length - i]
+    io.write_string buffer.to_slice[i, length - i]
     i = length
 
     # print trailing 0 if whole number or exp notation of power of ten

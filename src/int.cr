@@ -55,6 +55,8 @@
 # 0xFE012D # == 16646445
 # 0xfe012d # == 16646445
 # ```
+#
+# See [`Integer` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/integers.html) in the language reference.
 struct Int
   alias Signed = Int8 | Int16 | Int32 | Int64 | Int128
   alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64 | UInt128
@@ -62,14 +64,15 @@ struct Int
 
   # Returns a `Char` that has the unicode codepoint of `self`.
   #
-  # Raises `ArgumentError` if this integer's value doesn't fit a char's range (`0..0x10ffff`).
+  # Raises `ArgumentError` if this integer's value doesn't fit a char's range
+  # (`0..0xd7ff` and `0xe000..0x10ffff`).
   #
   # ```
   # 97.chr # => 'a'
   # ```
   def chr : Char
-    unless 0 <= self <= Char::MAX_CODEPOINT
-      raise ArgumentError.new("#{self} out of char range")
+    unless 0 <= self <= 0xd7ff || 0xe000 <= self <= Char::MAX_CODEPOINT
+      raise ArgumentError.new("0x#{self.to_s(16)} out of char range")
     end
     unsafe_chr
   end
@@ -614,41 +617,115 @@ struct Int
   private DIGITS_UPCASE   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   private DIGITS_BASE62   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-  def to_s(base : Int = 10, *, upcase : Bool = false) : String
+  # Returns a string representation of this integer.
+  #
+  # *base* specifies the radix of the returned string, and must be either 62 or
+  # a number between 2 and 36. By default, digits above 9 are represented by
+  # ASCII lowercase letters (`a` for 10, `b` for 11, etc.), but uppercase
+  # letters may be used if *upcase* is `true`, unless base 62 is used. In that
+  # case, lowercase letters are used for 10 to 35, and uppercase ones for 36 to
+  # 61, and *upcase* must be `false`.
+  #
+  # *precision* specifies the minimum number of digits in the returned string.
+  # If there are fewer digits than this number, the string is left-padded by
+  # zeros. If `self` and *precision* are both zero, returns an empty string.
+  #
+  # ```
+  # 1234.to_s                   # => "1234"
+  # 1234.to_s(2)                # => "10011010010"
+  # 1234.to_s(16)               # => "4d2"
+  # 1234.to_s(16, upcase: true) # => "4D2"
+  # 1234.to_s(36)               # => "ya"
+  # 1234.to_s(62)               # => "jU"
+  # 1234.to_s(precision: 2)     # => "1234"
+  # 1234.to_s(precision: 6)     # => "001234"
+  # ```
+  def to_s(base : Int = 10, *, precision : Int = 1, upcase : Bool = false) : String
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
+    raise ArgumentError.new("Precision must be non-negative") unless precision >= 0
 
-    case self
-    when 0
+    case {self, precision}
+    when {0, 0}
+      ""
+    when {0, 1}
       "0"
-    when 1
+    when {1, 1}
       "1"
     else
-      internal_to_s(base, upcase) do |ptr, count|
-        String.new(ptr, count, count)
+      internal_to_s(base, precision, upcase) do |ptr, count, negative|
+        # reuse the `chars` buffer in `internal_to_s` if possible
+        if precision <= count || precision <= 128
+          if precision > count
+            difference = precision - count
+            ptr -= difference
+            Intrinsics.memset(ptr, '0'.ord.to_u8, difference, false)
+            count += difference
+          end
+
+          if negative
+            ptr -= 1
+            ptr.value = '-'.ord.to_u8
+            count += 1
+          end
+
+          String.new(ptr, count, count)
+        else
+          len = precision + (negative ? 1 : 0)
+          String.new(len) do |buffer|
+            if negative
+              buffer.value = '-'.ord.to_u8
+              buffer += 1
+            end
+
+            Intrinsics.memset(buffer, '0'.ord.to_u8, precision - count, false)
+            ptr.copy_to(buffer + precision - count, count)
+            {len, len}
+          end
+        end
       end
     end
   end
 
-  def to_s(io : IO, base : Int = 10, *, upcase : Bool = false) : Nil
+  # Appends a string representation of this integer to the given *io*.
+  #
+  # *base* specifies the radix of the written string, and must be either 62 or
+  # a number between 2 and 36. By default, digits above 9 are represented by
+  # ASCII lowercase letters (`a` for 10, `b` for 11, etc.), but uppercase
+  # letters may be used if *upcase* is `true`, unless base 62 is used. In that
+  # case, lowercase letters are used for 10 to 35, and uppercase ones for 36 to
+  # 61, and *upcase* must be `false`.
+  #
+  # *precision* specifies the minimum number of digits in the written string.
+  # If there are fewer digits than this number, the string is left-padded by
+  # zeros. If `self` and *precision* are both zero, returns an empty string.
+  def to_s(io : IO, base : Int = 10, *, precision : Int = 1, upcase : Bool = false) : Nil
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
+    raise ArgumentError.new("Precision must be non-negative") unless precision >= 0
 
-    case self
-    when 0
+    case {self, precision}
+    when {0, 0}
+      # do nothing
+    when {0, 1}
       io << '0'
-    when 1
+    when {1, 1}
       io << '1'
     else
-      internal_to_s(base, upcase) do |ptr, count|
-        io.write_utf8 Slice.new(ptr, count)
+      internal_to_s(base, precision, upcase) do |ptr, count, negative|
+        io << '-' if negative
+        if precision > count
+          (precision - count).times { io << '0' }
+        end
+        io.write_string Slice.new(ptr, count)
       end
     end
   end
 
-  private def internal_to_s(base, upcase = false)
+  private def internal_to_s(base, precision, upcase = false)
     # Given sizeof(self) <= 128 bits, we need at most 128 bytes for a base 2
-    # representation, plus one byte for the trailing 0.
+    # representation, plus one byte for the negative sign (possibly used by the
+    # string-returning overload).
     chars = uninitialized UInt8[129]
     ptr_end = chars.to_unsafe + 128
     ptr = ptr_end
@@ -664,13 +741,8 @@ struct Int
       num = num.tdiv(base)
     end
 
-    if neg
-      ptr -= 1
-      ptr.value = '-'.ord.to_u8
-    end
-
     count = (ptr_end - ptr).to_i32
-    yield ptr, count
+    yield ptr, count, neg
   end
 
   # Writes this integer to the given *io* in the given *format*.
