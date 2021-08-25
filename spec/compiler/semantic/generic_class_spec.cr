@@ -123,6 +123,29 @@ describe "Semantic: generic class" do
       )) { int32 }
   end
 
+  it "doesn't compute generic instance var initializers in formal superclass's context (#4753)" do
+    assert_type(%(
+      class Foo(T)
+        @foo = T.new
+
+        def foo
+          @foo
+        end
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz
+        def baz
+          1
+        end
+      end
+
+      Bar(Baz).new.foo.baz
+      ), inject_primitives: false) { int32 }
+  end
+
   it "inherits non-generic to generic (1)" do
     assert_type(%(
       class Foo(T)
@@ -1227,5 +1250,24 @@ describe "Semantic: generic class" do
 
       foo(Gen(Int32).new)
       )) { generic_class "Gen", int32 }
+  end
+
+  it "replaces type parameters in virtual metaclasses (#10691)" do
+    assert_type(%(
+      class Parent(T)
+      end
+
+      class Child < Parent(Int32)
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(T)
+        @foo = Foo(Parent(T).class).new
+      end
+
+      Bar(Int32).new.@foo
+      ), inject_primitives: false) { generic_class("Foo", generic_class("Parent", int32).virtual_type.metaclass) }
   end
 end

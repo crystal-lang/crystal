@@ -294,8 +294,8 @@ module Crystal
       end
     end
 
-    def filter_by(other_type)
-      restrict other_type, MatchContext.new(self, self, strict: true)
+    def filter_by(other_type : Type)
+      Type.common_descendent(self, other_type)
     end
 
     def filter_by_responds_to(name)
@@ -939,15 +939,21 @@ module Crystal
     end
 
     def include(mod)
-      if mod == self
+      generic_module = mod.is_a?(GenericModuleInstanceType) ? mod.generic_type : mod
+
+      if generic_module == self
         raise TypeException.new "cyclic include detected"
-      elsif mod.ancestors.includes?(self)
-        raise TypeException.new "cyclic include detected"
-      else
-        unless parents.includes?(mod)
-          parents.insert 0, mod
-          mod.add_including_type(self)
+      end
+
+      generic_module.ancestors.each do |ancestor|
+        if ancestor == self || ancestor.is_a?(GenericModuleInstanceType) && ancestor.generic_type == self
+          raise TypeException.new "cyclic include detected"
         end
+      end
+
+      unless parents.includes?(mod)
+        parents.insert 0, mod
+        mod.add_including_type(self)
       end
     end
 
@@ -1598,6 +1604,8 @@ module Crystal
     end
 
     def run_instance_var_initializer(initializer, instance : GenericClassInstanceType | NonGenericClassType)
+      return if instance.unbound?
+
       meta_vars = MetaVars.new
       visitor = MainVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
       visitor.scope = instance.metaclass
@@ -3147,6 +3155,9 @@ module Crystal
     property? used = false
     property? visited = false
 
+    # Was this const's value cleaned up by CleanupTransformer yet?
+    property? cleaned_up = false
+
     # Is this constant accessed with pointerof(...)?
     property? pointer_read = false
 
@@ -3333,6 +3344,10 @@ module Crystal
     delegate base_type, to: instance_type
 
     delegate lookup_first_def, to: instance_type.metaclass
+
+    def replace_type_parameters(instance)
+      base_type.replace_type_parameters(instance).virtual_type.metaclass
+    end
 
     def each_concrete_type
       instance_type.subtypes.each do |type|

@@ -335,7 +335,7 @@ describe "Semantic: proc" do
       ") { proc_of(int32, int32) }
   end
 
-  it "allows new on proc type with less block args" do
+  it "allows new on proc type with less block params" do
     assert_type("
       #{proc_new}
 
@@ -344,7 +344,7 @@ describe "Semantic: proc" do
       ") { proc_of(int32, int32) }
   end
 
-  it "says wrong number of block args in new on proc type" do
+  it "says wrong number of block params in new on proc type" do
     assert_error "
       #{proc_new}
 

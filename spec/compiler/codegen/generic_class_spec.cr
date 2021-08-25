@@ -142,6 +142,29 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(1)
   end
 
+  it "doesn't run generic instance var initializers in formal superclass's context (#4753)" do
+    run(%(
+      class Foo(T)
+        @foo = T.new
+
+        def foo
+          @foo
+        end
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz
+        def baz
+          7
+        end
+      end
+
+      Bar(Baz).new.foo.baz
+      )).to_i.should eq(7)
+  end
+
   it "codegens static array size after instantiating" do
     run(%(
       struct StaticArray(T, N)

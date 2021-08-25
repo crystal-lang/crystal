@@ -331,7 +331,7 @@ end
     struct {{int.id}}
       # Returns a `Char` that has the unicode codepoint of `self`,
       # without checking if this integer is in the range valid for
-      # chars (`0..0x10ffff`).
+      # chars (`0..0xd7ff` and `0xe000..0x10ffff`).
       #
       # You should never use this method unless `chr` turns out to
       # be a bottleneck.
