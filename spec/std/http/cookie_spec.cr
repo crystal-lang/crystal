@@ -162,6 +162,13 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key%3Dvalue=value")
       end
 
+      it %(parses key="value") do
+        cookie = parse_first_cookie(%(key="value"))
+        cookie.name.should eq("key")
+        cookie.value.should eq("value")
+        cookie.to_set_cookie_header.should eq("key=value")
+      end
+
       it "parses multiple cookies" do
         cookies = Cookie::Parser.parse_cookies("foo=bar; foobar=baz")
         cookies.size.should eq(2)

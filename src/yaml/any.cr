@@ -312,7 +312,7 @@ struct YAML::Any
     raw.to_yaml(io)
   end
 
-  def to_json(builder : JSON::Builder)
+  def to_json(builder : JSON::Builder) : Nil
     if (raw = self.raw).is_a?(Slice)
       raise "Can't serialize #{raw.class} to JSON"
     else
