@@ -72,7 +72,7 @@ module Crystal::Macros
   # {{ parse_type("MissingType").resolve }}   # => Error: undefined constant MissingType
   # {{ parse_type("UNKNOWN_CONST").resolve }} # => Error: undefined constant UNKNOWN_CONST
   # ```
-  def parse_type(type_name : StringLiteral | SymbolLiteral | MacroId) : Path | Generic
+  def parse_type(type_name : StringLiteral) : Path | Generic
   end
 
   # Prints AST nodes at compile-time. Useful for debugging macros.

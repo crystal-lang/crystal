@@ -159,7 +159,11 @@ module Crystal
     def interpret_parse_type(node)
       interpret_check_args_toplevel do |arg|
         arg.accept self
-        type_name = @last.to_macro_id
+        type_name = case last = @last
+                    when StringLiteral then last.value
+                    else
+                      arg.raise "argument to parse_type must be a StringLiteral, not #{last.class_desc}"
+                    end
 
         arg.raise "argument to parse_type cannot be an empty value" if type_name.blank?
 

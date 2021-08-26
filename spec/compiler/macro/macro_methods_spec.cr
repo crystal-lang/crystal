@@ -2652,13 +2652,11 @@ module Crystal
     describe "#parse_type" do
       it "path" do
         assert_type(%[class Bar; end; {{ parse_type("Bar").is_a?(Path) ? 1 : 'a'}}]) { int32 }
-        assert_type(%[class Bar; end; {{ parse_type(:Bar).is_a?(Path) ? 1 : 'a'}}]) { int32 }
-        assert_type(%[class Foo::Bar; end; {{ parse_type(:"Foo::Bar").is_a?(Path) ? 1 : 'a'}}]) { int32 }
+        assert_type(%[class Bar; end; {{ parse_type(:Bar.id.stringify).is_a?(Path) ? 1 : 'a'}}]) { int32 }
       end
 
       it "generic" do
         assert_type(%[class Foo(A, B); end; {{ parse_type("Foo(Int32, String)").resolve.type_vars.size == 2 ? 1 : 'a' }}]) { int32 }
-        assert_type(%[class Foo(A, B); end; {{ parse_type("Foo(Int32, String)".id).resolve.type_vars.size == 2 ? 1 : 'a' }}]) { int32 }
       end
 
       it "union - |" do
@@ -2688,6 +2686,12 @@ module Crystal
       it "raises on extra unparsed tokens after the type" do
         expect_raises(Crystal::TypeException, %(Invalid type name: "Foo(Int32)100")) do
           assert_macro "", %({{parse_type "Foo(Int32)100" }}), [] of ASTNode, %(nil)
+        end
+      end
+
+      it "raises on non StringLiteral arguments" do
+        expect_raises(Crystal::TypeException, "argument to parse_type must be a StringLiteral, not SymbolLiteral") do
+          assert_macro "", %({{parse_type :Foo }}), [] of ASTNode, %(nil)
         end
       end
     end
