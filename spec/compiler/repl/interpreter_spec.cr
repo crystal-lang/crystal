@@ -4696,15 +4696,15 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
-    it "closures def argument" do
-      interpret(<<-CODE).should eq(42)
-          def foo(a)
-            proc = -> { a += 1 }
+    it "closures def arguments" do
+      interpret(<<-CODE).should eq((41 + 1) - (10 + 2))
+          def foo(a, b)
+            proc = -> { a += 1; b += 2 }
             proc.call
-            a
+            a - b
           end
 
-          foo(41)
+          foo(41, 10)
         CODE
     end
 
@@ -4983,6 +4983,23 @@ describe Crystal::Repl::Interpreter do
         proc = ->{ foo.inc }
         proc.call
         foo.x
+      CODE
+    end
+
+    it "doesn't mix local vars with closured vars" do
+      interpret(<<-CODE).should eq(20)
+        def foo(x)
+          yield x
+        end
+
+        foo(10) do |i|
+          ->{
+            a = i
+            foo(20) do |i|
+              i
+            end
+          }.call
+        end
       CODE
     end
   end

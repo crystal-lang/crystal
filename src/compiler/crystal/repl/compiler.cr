@@ -216,7 +216,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.args.each do |arg|
       var = node.vars.not_nil![arg.name]
       if var.type? && var.closure_in?(node)
-        local_var = lookup_local_var(var.name)
+        local_var = lookup_local_var("^#{var.name}")
         closured_var = lookup_closured_var(var.name)
 
         get_local local_var.index, aligned_sizeof_type(local_var.type), node: nil
@@ -652,7 +652,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def assign_to_var(name : String, value_type : Type, *, node : ASTNode?)
-    var = lookup_closured_var_or_local_var(name)
+    var = lookup_local_var_or_closured_var(name)
     case var
     in LocalVar
       index, type = var.index, var.type
@@ -680,7 +680,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       return
     end
 
-    local_var = lookup_closured_var_or_local_var(node.name)
+    local_var = lookup_local_var_or_closured_var(node.name)
     case local_var
     in LocalVar
       index, type = local_var.index, local_var.type
@@ -704,9 +704,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  def lookup_closured_var_or_local_var(name : String) : LocalVar | ClosuredVar
-    lookup_closured_var?(name) ||
-      lookup_local_var?(name) ||
+  def lookup_local_var_or_closured_var(name : String) : LocalVar | ClosuredVar
+    lookup_local_var?(name) ||
+      lookup_closured_var?(name) ||
       raise("BUG: can't find closured var or local var #{name}")
   end
 
@@ -1333,7 +1333,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def compile_pointerof_var(node : ASTNode, name : String)
-    var = lookup_closured_var_or_local_var(name)
+    var = lookup_local_var_or_closured_var(name)
     case var
     in LocalVar
       index, type = var.index, var.type
@@ -1870,6 +1870,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
         if var.closure_in?(block)
           needs_closure_context = true
+          next
         end
 
         next if var.context != block
@@ -2122,7 +2123,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       return
     end
 
-    var = lookup_closured_var_or_local_var(obj.name)
+    var = lookup_local_var_or_closured_var(obj.name)
     var_type = var.type
 
     if obj.type == var_type
@@ -2262,6 +2263,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
         if var.closure_in?(owner)
           needs_closure_context = true
+
+          # Declare a local variable with a different name because
+          # we don't want to find it when doing local var lookups,
+          # but we'll need to copy it from the def args to the closure
+          local_vars.declare("^#{arg.name}", var_type)
+          next
         end
 
         local_vars.declare(var.name, var_type)
@@ -2289,6 +2296,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # but we need to be careful to support def args being closured
       if var.closure_in?(owner)
         needs_closure_context = true
+        next
       end
 
       local_vars.declare(name, var_type)
@@ -2366,7 +2374,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Out)
     case exp = node.exp
     when Var
-      local_var = lookup_closured_var_or_local_var(exp.name)
+      local_var = lookup_local_var_or_closured_var(exp.name)
       case local_var
       in LocalVar
         index, type = local_var.index, local_var.type
@@ -2422,6 +2430,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       var_type = var.type?
       next unless var_type
 
+      if var.closure_in?(target_def)
+        # Declare a local variable with a different name because
+        # we don't want to find it when doing local var lookups,
+        # but we'll need to copy it from the def args to the closure
+        compiled_def.local_vars.declare("^#{arg.name}", var_type)
+        next
+      end
+
       compiled_def.local_vars.declare(arg.name, var_type)
     end
 
@@ -2445,6 +2461,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       if var.closure_in?(target_def)
         needs_closure_context = true
+        next
       end
 
       # Skip arg because it was already declared above
