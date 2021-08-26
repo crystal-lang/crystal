@@ -302,6 +302,43 @@ module Crystal
       node
     end
 
+    def transform(node : MultiAssign)
+      if @program.has_flag?("preview_multi_assign")
+        if node.values.size == 1
+          # `temp = {{ node.values.first }}`
+          temp_var = node.expanded.as(Expressions).expressions.first
+          target_count = node.targets.size
+
+          case type = temp_var.type
+          when UnionType
+            sizes = type.union_types.map { |union_type| constant_size(union_type) }
+            if sizes.none? &.in?(target_count, nil)
+              node.values.first.raise "cannot assign #{type} to #{target_count} targets"
+            end
+          else
+            if size = constant_size(type)
+              unless size == target_count
+                node.values.first.raise "cannot assign #{type} to #{target_count} targets"
+              end
+            end
+          end
+        end
+      end
+
+      if expanded = node.expanded
+        return expanded.transform self
+      end
+
+      node
+    end
+
+    private def constant_size(type)
+      case type
+      when TupleInstanceType
+        type.size
+      end
+    end
+
     def transform(node : Path)
       # Some constants might not have been cleaned up at this point because
       # they don't have an explicit `Assign` node. One example is regex

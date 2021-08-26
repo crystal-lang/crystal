@@ -650,13 +650,30 @@ module Crystal
       #     temp = [1, 2]
       #     a = temp[0]
       #     b = temp[1]
+      #
+      # If the flag "preview_multi_assign" is present, requires `temp`'s size to
+      # match the number of assign targets exactly: (it must respond to `#size`)
+      #
+      #     temp = [1, 2]
+      #     if temp.size != 2
+      #       ::raise "Multiple assignment count mismatch"
+      #     end
+      #     a = temp[0]
+      #     b = temp[1]
       if node.values.size == 1
+        raise_on_count_mismatch = @program.has_flag?("preview_multi_assign")
+
         value = node.values[0]
 
         temp_var = new_temp_var
 
-        assigns = Array(ASTNode).new(node.targets.size + 1)
+        assigns = Array(ASTNode).new(node.targets.size + (raise_on_count_mismatch ? 2 : 1))
         assigns << Assign.new(temp_var.clone, value).at(value)
+        if raise_on_count_mismatch
+          count_check = Call.new(Call.new(temp_var.clone, "size"), "!=", args: [NumberLiteral.new(node.targets.size)] of ASTNode)
+          raise_exp = Call.new(nil, "raise", args: [StringLiteral.new("Multiple assignment count mismatch")] of ASTNode, global: true).at(value)
+          assigns << If.new(count_check, raise_exp)
+        end
         node.targets.each_with_index do |target, i|
           call = Call.new(temp_var.clone, "[]", NumberLiteral.new(i)).at(value)
           assigns << transform_multi_assign_target(target, call)
