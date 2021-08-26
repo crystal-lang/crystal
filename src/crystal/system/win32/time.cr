@@ -2,7 +2,7 @@ require "c/winbase"
 require "c/timezoneapi"
 require "c/windows"
 require "./zone_names"
-require "./registry"
+require "./windows_registry"
 
 module Crystal::System::Time
   # Win32 epoch is 1601-01-01 00:00:00 UTC
@@ -182,12 +182,12 @@ module Crystal::System::Time
   # Searches the registry for an English name of a time zone named *stdname* or *dstname*
   # and returns the English name.
   private def self.translate_zone_name(stdname, dstname)
-    Registry.open?(LibC::HKEY_LOCAL_MACHINE, REGISTRY_TIME_ZONES) do |key_handle|
-      Registry.each_name(key_handle) do |name|
-        Registry.open?(key_handle, name) do |sub_handle|
+    WindowsRegistry.open?(LibC::HKEY_LOCAL_MACHINE, REGISTRY_TIME_ZONES) do |key_handle|
+      WindowsRegistry.each_name(key_handle) do |name|
+        WindowsRegistry.open?(key_handle, name) do |sub_handle|
           # TODO: Implement reading MUI
-          std = Registry.get_string(sub_handle, Std)
-          dlt = Registry.get_string(sub_handle, Dlt)
+          std = WindowsRegistry.get_string(sub_handle, Std)
+          dlt = WindowsRegistry.get_string(sub_handle, Dlt)
 
           if std == stdname || dlt == dstname
             return String.from_utf16(name)

@@ -1,7 +1,7 @@
 require "c/winreg"
 require "c/regapix"
 
-module Crystal::System::Registry
+module Crystal::System::WindowsRegistry
   # Opens a subkey at path *name* and returns the new key handle or `nil` if it
   # does not exist.
   #
@@ -21,7 +21,7 @@ module Crystal::System::Registry
   end
 
   def self.open?(handle : LibC::HKEY, name : Slice(UInt16), sam = LibC::REGSAM::READ)
-    key_handle = Registry.open?(handle, name, sam)
+    key_handle = open?(handle, name, sam)
 
     return unless key_handle
 
