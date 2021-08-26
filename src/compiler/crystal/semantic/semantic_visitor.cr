@@ -25,25 +25,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     @in_is_a = false
   end
 
-  def backup
-    old_current_type = @current_type
-    old_scope = @scope
-    old_exp_nest = @exp_nest
-    old_in_lib = @in_lib
-    old_in_c_struct_or_union = @in_c_struct_or_union
-    old_in_is_a = @in_is_a
-    begin
-      yield
-    ensure
-      @current_type = old_current_type
-      @scope = old_scope
-      @exp_nest = old_exp_nest
-      @in_lib = old_in_lib
-      @in_c_struct_or_union = old_in_c_struct_or_union
-      @in_is_a = old_in_is_a
-    end
-  end
-
   # Transform require to its source code.
   # The source code can be a Nop if the file was already required.
   def visit(node : Require)
