@@ -221,9 +221,7 @@ class Time::Location
           LibC.SetTimeZoneInformation(pointerof(info))
 
           location = Location.load_local
-          location.zones.size.should eq 2
-          zone_names = {location.zones[0].name, location.zones[1].name}
-          Crystal::System::Time::WINDOWS_ZONE_NAMES.key_for?(zone_names).should_not be_nil
+          location.zones.should eq [Time::Location::Zone.new("CET", 3600, false), Time::Location::Zone.new("CEST", 7200, true)]
         end
       {% end %}
     end
