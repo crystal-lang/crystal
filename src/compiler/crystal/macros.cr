@@ -46,6 +46,35 @@ module Crystal::Macros
   def host_flag?(name) : BoolLiteral
   end
 
+  # Parses `self` into a `Path` or `Generic` (also used for unions).
+  # The `Path#resolve` or `Generic#resolve` method could then be used
+  # to resolve the value into a `TypeNode`, if the *type_name* represents a type,
+  # otherwise the value of the constant.
+  #
+  # A compile time error is raised if the type/constant does not actually exist,
+  # or if a required generic argument was not provided.
+  #
+  # ```
+  # class Foo; end
+  #
+  # struct Some::Namespace::Foo; end
+  #
+  # module Bar(T); end
+  #
+  # MY_CONST = 1234
+  #
+  # {{ parse_type("Foo").resolve.class? }}                                   # => true
+  # {{ parse_type("Some::Namespace::Foo").resolve.struct? }}                 # => true
+  # {{ parse_type("Foo|Some::Namespace::Foo").resolve.union_types.size }}    # => 2
+  # {{ parse_type("Bar(Int32)|Foo").resolve.union_types[0].type_vars.size }} # => 1
+  # {{ parse_type("MY_CONST").resolve }}                                     # => 1234
+  #
+  # {{ parse_type("MissingType").resolve }}   # => Error: undefined constant MissingType
+  # {{ parse_type("UNKNOWN_CONST").resolve }} # => Error: undefined constant UNKNOWN_CONST
+  # ```
+  def parse_type(type_name : StringLiteral | SymbolLiteral | MacroId) : Path | Generic
+  end
+
   # Prints AST nodes at compile-time. Useful for debugging macros.
   def puts(*expressions) : Nop
   end
@@ -470,34 +499,6 @@ module Crystal::Macros
 
     # Similar to `String#includes?`.
     def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
-    end
-
-    # Parses `self` into a `Path` or `Generic` (also used for unions).
-    # The `Path#resolve` or `Generic#resolve` method could then be used,
-    # with the return value depending on what the string represents.
-    #
-    # A compile time error is raised if the type/constant does not actually exist,
-    # or if a required generic argument was not provided.
-    #
-    # ```
-    # class Foo; end
-    #
-    # struct Some::Namespace::Foo; end
-    #
-    # module Bar(T); end
-    #
-    # MY_CONST = 1234
-    #
-    # {{ "Foo".parse_type_name.resolve.class? }}                                   # => true
-    # {{ "Some::Namespace::Foo".parse_type_name.resolve.struct? }}                 # => true
-    # {{ "Foo|Some::Namespace::Foo".parse_type_name.resolve.union_types.size }}    # => 2
-    # {{ "Bar(Int32)|Foo".parse_type_name.resolve.union_types[0].type_vars.size }} # => 1
-    # {{ "MY_CONST".parse_type_name.resolve }}                                     # => 1234
-    #
-    # {{ "MissingType".parse_type_name }} # => Error: undefined constant MissingType
-    # {{ "Bar".parse_type_name.resolve }} # => Error: undefined constant T
-    # ```
-    def parse_type_name : TypeNode
     end
 
     # Similar to `String#size`.

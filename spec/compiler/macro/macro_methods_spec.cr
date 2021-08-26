@@ -496,46 +496,6 @@ module Crystal
         assert_macro "", %({{"spice".includes?("b")}}), [] of ASTNode, %(false)
         assert_macro "", %({{"spice".includes?("spice ")}}), [] of ASTNode, %(false)
       end
-
-      describe "#parse_type_name" do
-        it "path" do
-          assert_type(%[class Bar; end; {{ "Bar".parse_type_name.is_a?(Path) ? 1 : 'a'}}]) { int32 }
-        end
-
-        it "generic" do
-          assert_type(%[class Foo(A, B); end; {{ "Foo(Int32, String)".parse_type_name.resolve.type_vars.size == 2 ? 1 : 'a'}}]) { int32 }
-        end
-
-        it "union - |" do
-          assert_type(%[class Foo; end; class Bar; end; {{ "Foo|Bar".parse_type_name.resolve.union_types.size == 2 ? 1 : 'a'}}]) { int32 }
-        end
-
-        it "union - Union" do
-          assert_type(%[class Foo; end; class Bar; end; {{ "Union(Foo,Bar)".parse_type_name.resolve.union_types.size == 2 ? 1 : 'a'}}]) { int32 }
-        end
-
-        it "union - in generic" do
-          assert_type(%[{{ "Array(Int32 | String)".parse_type_name.resolve.type_vars[0].union_types.size == 2 ? 1 : 'a'}}]) { int32 }
-        end
-
-        it "raises on empty string" do
-          expect_raises(Crystal::TypeException, "StringLiteral#parse_type_name cannot be called on an empty string") do
-            assert_macro "", %({{"".parse_type_name}}), [] of ASTNode, %(nil)
-          end
-        end
-
-        it "raises on extra unparsed tokens before the type" do
-          expect_raises(Crystal::TypeException, %(Invalid type name: "100Foo")) do
-            assert_macro "", %({{"100Foo".parse_type_name}}), [] of ASTNode, %(nil)
-          end
-        end
-
-        it "raises on extra unparsed tokens after the type" do
-          expect_raises(Crystal::TypeException, %(Invalid type name: "Foo(Int32)100")) do
-            assert_macro "", %({{"Foo(Int32)100".parse_type_name}}), [] of ASTNode, %(nil)
-          end
-        end
-      end
     end
 
     describe "macro id methods" do
@@ -2687,6 +2647,49 @@ module Crystal
 
     it "compares versions" do
       assert_macro "", %({{compare_versions("1.10.3", "1.2.3")}}), [] of ASTNode, %(1)
+    end
+
+    describe "#parse_type" do
+      it "path" do
+        assert_type(%[class Bar; end; {{ parse_type("Bar").is_a?(Path) ? 1 : 'a'}}]) { int32 }
+        assert_type(%[class Bar; end; {{ parse_type(:Bar).is_a?(Path) ? 1 : 'a'}}]) { int32 }
+        assert_type(%[class Foo::Bar; end; {{ parse_type(:"Foo::Bar").is_a?(Path) ? 1 : 'a'}}]) { int32 }
+      end
+
+      it "generic" do
+        assert_type(%[class Foo(A, B); end; {{ parse_type("Foo(Int32, String)").resolve.type_vars.size == 2 ? 1 : 'a' }}]) { int32 }
+        assert_type(%[class Foo(A, B); end; {{ parse_type("Foo(Int32, String)".id).resolve.type_vars.size == 2 ? 1 : 'a' }}]) { int32 }
+      end
+
+      it "union - |" do
+        assert_type(%[class Foo; end; class Bar; end; {{ parse_type("Foo|Bar").resolve.union_types.size == 2 ? 1 : 'a' }}]) { int32 }
+      end
+
+      it "union - Union" do
+        assert_type(%[class Foo; end; class Bar; end; {{ parse_type("Union(Foo,Bar)").resolve.union_types.size == 2 ? 1 : 'a' }}]) { int32 }
+      end
+
+      it "union - in generic" do
+        assert_type(%[{{ parse_type("Array(Int32 | String)").resolve.type_vars[0].union_types.size == 2 ? 1 : 'a' }}]) { int32 }
+      end
+
+      it "raises on empty string" do
+        expect_raises(Crystal::TypeException, "argument to parse_type cannot be an empty value") do
+          assert_macro "", %({{parse_type ""}}), [] of ASTNode, %(nil)
+        end
+      end
+
+      it "raises on extra unparsed tokens before the type" do
+        expect_raises(Crystal::TypeException, %(Invalid type name: "100Foo")) do
+          assert_macro "", %({{parse_type "100Foo" }}), [] of ASTNode, %(nil)
+        end
+      end
+
+      it "raises on extra unparsed tokens after the type" do
+        expect_raises(Crystal::TypeException, %(Invalid type name: "Foo(Int32)100")) do
+          assert_macro "", %({{parse_type "Foo(Int32)100" }}), [] of ASTNode, %(nil)
+        end
+      end
     end
 
     describe "printing" do

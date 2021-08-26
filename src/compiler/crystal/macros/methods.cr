@@ -55,6 +55,8 @@ module Crystal
         interpret_env(node)
       when "flag?", "host_flag?"
         interpret_flag?(node)
+      when "parse_type"
+        interpret_parse_type(node)
       when "puts"
         interpret_puts(node)
       when "p", "pp"
@@ -151,6 +153,23 @@ module Crystal
                   raise "Bug: unexpected macro method #{node.name}"
                 end
         @last = BoolLiteral.new(flags.includes?(flag_name))
+      end
+    end
+
+    def interpret_parse_type(node)
+      interpret_check_args_toplevel do |arg|
+        arg.accept self
+        type_name = @last.to_macro_id
+
+        arg.raise "argument to parse_type cannot be an empty value" if type_name.blank?
+
+        parser = Crystal::Parser.new type_name
+        parser.next_token_skip_statement_end
+        type = parser.parse_bare_proc_type
+        parser.check :EOF
+        @last = type
+      rescue ex : Crystal::SyntaxException
+        arg.raise "Invalid type name: #{type_name.inspect}"
       end
     end
 
@@ -756,18 +775,6 @@ module Crystal
         interpret_check_args { StringLiteral.new(@value.underscore) }
       when "upcase"
         interpret_check_args { StringLiteral.new(@value.upcase) }
-      when "parse_type_name"
-        interpret_check_args do
-          raise "StringLiteral#parse_type_name cannot be called on an empty string" if @value.blank?
-
-          parser = Crystal::Parser.new @value
-          parser.next_token_skip_statement_end
-          type = parser.parse_bare_proc_type
-          parser.check :EOF
-          type
-        rescue ex : Crystal::SyntaxException
-          raise "Invalid type name: #{@value.inspect}"
-        end
       else
         super
       end
