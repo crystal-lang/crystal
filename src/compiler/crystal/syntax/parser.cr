@@ -3220,7 +3220,15 @@ module Crystal
           vars = [] of Var
 
           while true
-            vars << Var.new(check_ident).at(@token.location)
+            var = case @token.type
+                  when :UNDERSCORE
+                    "_"
+                  when :IDENT
+                    @token.value.to_s
+                  else
+                    unexpected_token msg: "expecting ident or underscore"
+                  end
+            vars << Var.new(var).at(@token.location)
 
             next_token_skip_space
             if @token.type == :","
