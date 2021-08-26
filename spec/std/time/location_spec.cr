@@ -217,7 +217,8 @@ class Time::Location
       {% if flag?(:win32) %}
         it "loads time zone information from registry" do
           LibC.GetTimeZoneInformation(out info)
-          info.standardName.to_slice.copy_from "Central European Summertime".to_utf16
+          info.standardName.to_slice.copy_from "Central Europe Standard Time".to_utf16
+          info.daylightName.to_slice.copy_from "Central Europe Summer Time".to_utf16
           LibC.SetTimeZoneInformation(pointerof(info))
 
           location = Location.load_local
