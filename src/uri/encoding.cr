@@ -191,7 +191,7 @@ class URI
   def self.decode(string : String, io : IO, *, plus_to_space : Bool = false, &block) : Nil
     i = 0
     bytesize = string.bytesize
-    buffer = IO::Memory.new
+    buffer = IO::Memory.new(bytesize)
 
     while i < bytesize
       byte = string.unsafe_byte_at(i)
