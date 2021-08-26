@@ -85,7 +85,7 @@ class Crystal::Repl
         value = interpret(node)
 
         print "=> "
-        puts value
+        puts SyntaxHighlighter.highlight(value.to_s)
       rescue ex : EscapingException
         @nest = 0
         @buffer = ""
