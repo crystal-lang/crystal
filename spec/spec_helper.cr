@@ -135,22 +135,25 @@ def assert_warning(code, message, *, file = __FILE__, line = __LINE__)
   warning_failures[0].should start_with(message), file: file, line: line
 end
 
-def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)
-  assert_macro(macro_args, macro_body, expected, expected_pragmas, flags, file: file, line: line) { call_args }
+def assert_macro(macro_body, expected, args = nil, *, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)
+  assert_macro(macro_body, expected, expected_pragmas: expected_pragmas, flags: flags, file: file, line: line) { args }
 end
 
-def assert_macro(macro_args, macro_body, expected, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)
+def assert_macro(macro_body, expected, *, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__, &)
   program = new_program
   program.flags.concat(flags.split) if flags
-  sub_node = yield program
-  assert_macro_internal program, sub_node, macro_args, macro_body, expected, expected_pragmas, file: file, line: line
+  args = yield program
+
+  macro_params = args.try &.keys.join(", ")
+  call_args = args ? [*args.values] of ASTNode : [] of ASTNode
+  assert_macro_internal program, call_args, macro_params, macro_body, expected, expected_pragmas, file: file, line: line
 end
 
-def assert_macro_internal(program, sub_node, macro_args, macro_body, expected, expected_pragmas, file = __FILE__, line = __LINE__)
-  macro_def = "macro foo(#{macro_args});#{macro_body};end"
+def assert_macro_internal(program, call_args, macro_params, macro_body, expected, expected_pragmas, file = __FILE__, line = __LINE__)
+  macro_def = "macro foo(#{macro_params});#{macro_body};end"
   a_macro = Parser.parse(macro_def).as(Macro)
 
-  call = Call.new(nil, "", sub_node)
+  call = Call.new(nil, "", call_args)
   result, result_pragmas = program.expand_macro a_macro, call, program, program
   result = result.chomp(';')
   result.should eq(expected), file: file, line: line
