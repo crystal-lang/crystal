@@ -18,4 +18,5 @@ lib LibC
   TIME_ZONE_ID_DAYLIGHT =          2_u32
 
   fun GetTimeZoneInformation(tz_info : TIME_ZONE_INFORMATION*) : DWORD
+  fun SetTimeZoneInformation(tz_info : TIME_ZONE_INFORMATION*) : BOOL
 end

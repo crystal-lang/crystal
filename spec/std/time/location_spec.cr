@@ -216,17 +216,14 @@ class Time::Location
 
       {% if flag?(:win32) %}
         it "loads time zone information from registry" do
+          LibC.GetTimeZoneInformation(out info)
+          info.standardName.to_slice.copy_from "Central European Summertime".to_utf16
+          LibC.SetTimeZoneInformation(pointerof(info))
+
           location = Location.load_local
-          p! location, location.zones
           location.zones.size.should eq 2
           zone_names = {location.zones[0].name, location.zones[1].name}
           Crystal::System::Time::WINDOWS_ZONE_NAMES.key_for?(zone_names).should_not be_nil
-        end
-
-        Crystal::System::WindowsRegistry.open?(LibC::HKEY_LOCAL_MACHINE, %q(SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones).to_utf16) do |key_handle|
-          Crystal::System::WindowsRegistry.each_name(key_handle) do |name|
-            puts String.from_utf16(name)
-          end
         end
       {% end %}
     end
