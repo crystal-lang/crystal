@@ -140,24 +140,36 @@ def assert_macro(macro_body, expected, args = nil, *, expected_pragmas = nil, fl
 end
 
 def assert_macro(macro_body, expected, *, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__, &)
+  program, a_macro, call = prepare_macro_call(macro_body, flags) { |program| yield program }
+  result, result_pragmas = program.expand_macro(a_macro, call, program, program)
+  result = result.chomp(';')
+  result.should eq(expected), file: file, line: line
+  result_pragmas.should eq(expected_pragmas), file: file, line: line if expected_pragmas
+end
+
+def assert_macro_error(macro_body, message = nil, args = nil, *, flags = nil, file = __FILE__, line = __LINE__)
+  assert_macro_error(macro_body, message, flags: flags, file: file, line: line) { args }
+end
+
+def assert_macro_error(macro_body, message = nil, *, flags = nil, file = __FILE__, line = __LINE__, &)
+  program, a_macro, call = prepare_macro_call(macro_body, flags) { |program| yield program }
+  expect_raises(Crystal::TypeException, message, file: file, line: line) do
+    program.expand_macro(a_macro, call, program, program)
+  end
+end
+
+def prepare_macro_call(macro_body, flags = nil)
   program = new_program
   program.flags.concat(flags.split) if flags
   args = yield program
 
   macro_params = args.try &.keys.join(", ")
   call_args = args ? [*args.values] of ASTNode : [] of ASTNode
-  assert_macro_internal program, call_args, macro_params, macro_body, expected, expected_pragmas, file: file, line: line
-end
 
-def assert_macro_internal(program, call_args, macro_params, macro_body, expected, expected_pragmas, file = __FILE__, line = __LINE__)
-  macro_def = "macro foo(#{macro_params});#{macro_body};end"
-  a_macro = Parser.parse(macro_def).as(Macro)
-
+  a_macro = Parser.parse("macro foo(#{macro_params});#{macro_body};end").as(Macro)
   call = Call.new(nil, "", call_args)
-  result, result_pragmas = program.expand_macro a_macro, call, program, program
-  result = result.chomp(';')
-  result.should eq(expected), file: file, line: line
-  result_pragmas.should eq(expected_pragmas) if expected_pragmas
+
+  {program, a_macro, call}
 end
 
 def codegen(code, inject_primitives = true, debug = Crystal::Debug::None, filename = __FILE__)

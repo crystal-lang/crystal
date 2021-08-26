@@ -445,9 +445,7 @@ module Crystal
       end
 
       it "executes camelcase with invalid lower arg type" do
-        expect_raises(Crystal::TypeException, "named argument 'lower' to StringLiteral#camelcase must be a bool, not NumberLiteral") do
-          assert_macro %({{"foo_bar".camelcase(lower: 99)}}), ""
-        end
+        assert_macro_error %({{"foo_bar".camelcase(lower: 99)}}), "named argument 'lower' to StringLiteral#camelcase must be a bool, not NumberLiteral"
       end
 
       it "executes underscore" do
@@ -992,9 +990,7 @@ module Crystal
       end
 
       it "executes [] with invalid key type" do
-        expect_raises(Crystal::TypeException, "argument to [] must be a symbol or string, not BoolLiteral") do
-          assert_macro %({{{a: 1}[true]}}), ""
-        end
+        assert_macro_error %({{{a: 1}[true]}}), "argument to [] must be a symbol or string, not BoolLiteral"
       end
 
       it "executes keys" do
@@ -1472,10 +1468,8 @@ module Crystal
 
           describe "with an invalid type argument" do
             it "should raise the proper exception" do
-              expect_raises(Crystal::TypeException, "named argument 'generic_args' to TypeNode#name must be a bool, not NumberLiteral") do
-                assert_macro("{{x.name(generic_args: 99)}}", "String") do |program|
-                  {x: TypeNode.new(program.string)}
-                end
+              assert_macro_error("{{x.name(generic_args: 99)}}", "named argument 'generic_args' to TypeNode#name must be a bool, not NumberLiteral") do |program|
+                {x: TypeNode.new(program.string)}
               end
             end
           end
@@ -2463,13 +2457,8 @@ module Crystal
       it "executes resolve" do
         assert_macro %({{x.resolve}}), %(Array(String)), {x: Generic.new("Array".path, ["String".path] of ASTNode)}
 
-        expect_raises(Crystal::TypeException, "undefined constant Foo") do
-          assert_macro %({{x.resolve}}), %(Foo(String)), {x: Generic.new("Foo".path, ["String".path] of ASTNode)}
-        end
-
-        expect_raises(Crystal::TypeException, "undefined constant Foo") do
-          assert_macro %({{x.resolve}}), %(Array(foo)), {x: Generic.new("Array".path, ["Foo".path] of ASTNode)}
-        end
+        assert_macro_error %({{x.resolve}}), "undefined constant Foo", {x: Generic.new("Foo".path, ["String".path] of ASTNode)}
+        assert_macro_error %({{x.resolve}}), "undefined constant Foo", {x: Generic.new("Array".path, ["Foo".path] of ASTNode)}
       end
 
       it "executes resolve?" do
@@ -2549,9 +2538,7 @@ module Crystal
       it "executes resolve" do
         assert_macro %({{x.resolve}}), %(String), {x: Path.new("String")}
 
-        expect_raises(Crystal::TypeException, "undefined constant Foo") do
-          assert_macro %({{x.resolve}}), %(Foo), {x: Path.new("Foo")}
-        end
+        assert_macro_error %({{x.resolve}}), "undefined constant Foo", {x: Path.new("Foo")}
       end
 
       it "executes resolve?" do
@@ -2594,12 +2581,10 @@ module Crystal
       end
 
       it "executes [] with other ASTNode, but raises an error" do
-        expect_raises(Crystal::TypeException, "argument to [] must be a number, symbol or string, not BoolLiteral") do
-          assert_macro %({{x[y]}}), "", {
-            x: Annotation.new(Path.new("Foo"), [] of ASTNode),
-            y: true.bool,
-          }
-        end
+        assert_macro_error %({{x[y]}}), "argument to [] must be a number, symbol or string, not BoolLiteral", {
+          x: Annotation.new(Path.new("Foo"), [] of ASTNode),
+          y: true.bool,
+        }
       end
     end
 
@@ -2730,51 +2715,34 @@ module Crystal
 
   describe "error reporting" do
     it "reports wrong number of arguments" do
-      expect_raises(Crystal::TypeException, "wrong number of arguments for macro 'ArrayLiteral#push' (given 0, expected 1)") do
-        assert_macro %({{[1, 2, 3].push}}), ""
-      end
+      assert_macro_error %({{[1, 2, 3].push}}), "wrong number of arguments for macro 'ArrayLiteral#push' (given 0, expected 1)"
     end
 
     it "reports wrong number of arguments, with optional parameters" do
-      expect_raises(Crystal::TypeException, "wrong number of arguments for macro 'NumberLiteral#+' (given 2, expected 0..1)") do
-        assert_macro %({{1.+(2, 3)}}), ""
-      end
-
-      expect_raises(Crystal::TypeException, "wrong number of arguments for macro 'ArrayLiteral#[]' (given 0, expected 1..2)") do
-        assert_macro %({{[1][]}}), ""
-      end
+      assert_macro_error %({{1.+(2, 3)}}), "wrong number of arguments for macro 'NumberLiteral#+' (given 2, expected 0..1)"
+      assert_macro_error %({{[1][]}}), "wrong number of arguments for macro 'ArrayLiteral#[]' (given 0, expected 1..2)"
     end
 
     it "reports unexpected block" do
-      expect_raises(Crystal::TypeException, "macro 'ArrayLiteral#shuffle' is not expected to be invoked with a block, but a block was given") do
-        assert_macro %({{[1, 2, 3].shuffle { |x| }}}), ""
-      end
+      assert_macro_error %({{[1, 2, 3].shuffle { |x| }}}), "macro 'ArrayLiteral#shuffle' is not expected to be invoked with a block, but a block was given"
     end
 
     it "reports missing block" do
-      expect_raises(Crystal::TypeException, "macro 'ArrayLiteral#reduce' is expected to be invoked with a block, but no block was given") do
-        assert_macro %({{[1, 2, 3].reduce}}), ""
-      end
+      assert_macro_error %({{[1, 2, 3].reduce}}), "macro 'ArrayLiteral#reduce' is expected to be invoked with a block, but no block was given"
     end
 
     it "reports unexpected named argument" do
-      expect_raises(Crystal::TypeException, "named arguments are not allowed here") do
-        assert_macro %({{"".starts_with?(other: "")}}), ""
-      end
+      assert_macro_error %({{"".starts_with?(other: "")}}), "named arguments are not allowed here"
     end
 
     it "reports unexpected named argument (2)" do
-      expect_raises(Crystal::TypeException, "no named parameter 'foo'") do
-        assert_macro %({{"".camelcase(foo: "")}}), ""
-      end
+      assert_macro_error %({{"".camelcase(foo: "")}}), "no named parameter 'foo'"
     end
 
     # there are no macro methods with required named parameters
 
     it "uses correct name for top-level macro methods" do
-      expect_raises(Crystal::TypeException, "wrong number of arguments for top-level macro 'flag?' (given 0, expected 1)") do
-        assert_macro %({{flag?}}), ""
-      end
+      assert_macro_error %({{flag?}}), "wrong number of arguments for top-level macro 'flag?' (given 0, expected 1)"
     end
   end
 end
