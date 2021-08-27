@@ -835,7 +835,7 @@ describe "Codegen: is_a?" do
       )).to_i.should eq(1)
   end
 
-  it "restricts metaclass against virtual metaclass type" do
+  it "restricts virtual metaclass against virtual metaclass type" do
     run(%(
       class A
       end

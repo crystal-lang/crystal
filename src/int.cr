@@ -64,14 +64,15 @@ struct Int
 
   # Returns a `Char` that has the unicode codepoint of `self`.
   #
-  # Raises `ArgumentError` if this integer's value doesn't fit a char's range (`0..0x10ffff`).
+  # Raises `ArgumentError` if this integer's value doesn't fit a char's range
+  # (`0..0xd7ff` and `0xe000..0x10ffff`).
   #
   # ```
   # 97.chr # => 'a'
   # ```
   def chr : Char
-    unless 0 <= self <= Char::MAX_CODEPOINT
-      raise ArgumentError.new("#{self} out of char range")
+    unless 0 <= self <= 0xd7ff || 0xe000 <= self <= Char::MAX_CODEPOINT
+      raise ArgumentError.new("0x#{self.to_s(16)} out of char range")
     end
     unsafe_chr
   end
