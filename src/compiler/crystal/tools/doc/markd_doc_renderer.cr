@@ -1,4 +1,6 @@
 class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
+  @anchor_map = Hash(String, Int32).new(0)
+
   def initialize(@type : Crystal::Doc::Type, options)
     super(options)
   end
@@ -15,6 +17,12 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
         .gsub(/[^\w\d\s\-.~]/, "") # Delete unsafe URL characters
         .strip                     # Strip leading/trailing whitespace
         .gsub(/[\s_-]+/, '-')      # Replace `_` and leftover whitespace with `-`
+
+      seen_count = @anchor_map[anchor] += 1
+
+      if seen_count > 1
+        anchor += "-#{seen_count - 1}"
+      end
 
       tag(tag_name, attrs(node))
       literal Crystal::Doc.anchor_link(anchor)

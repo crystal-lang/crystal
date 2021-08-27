@@ -325,6 +325,25 @@ describe Doc::MarkdDocRenderer do
       </svg>
     </a>Foo Bar</h2>
     HTML
+
+    it_renders nil, "## Foo Bar\n### Sub\n## Bar Baz\n### Sub", <<-HTML
+    <h2><a id="foo-bar" class="anchor" href="#foo-bar">  <svg class="octicon-link" aria-hidden="true">
+        <use href="#octicon-link"/>
+      </svg>
+    </a>Foo Bar</h2>
+    <h3><a id="sub" class="anchor" href="#sub">\n  <svg class="octicon-link" aria-hidden="true">
+        <use href="#octicon-link"/>
+      </svg>
+    </a>Sub</h3>
+    <h2><a id="bar-baz" class="anchor" href="#bar-baz">\n  <svg class="octicon-link" aria-hidden="true">
+        <use href="#octicon-link"/>
+      </svg>
+    </a>Bar Baz</h2>
+    <h3><a id="sub-1" class="anchor" href="#sub-1">\n  <svg class="octicon-link" aria-hidden="true">
+        <use href="#octicon-link"/>
+      </svg>
+    </a>Sub</h3>
+    HTML
   end
 
   describe "renders html" do
