@@ -70,7 +70,7 @@ describe "Semantic: hooks" do
       ") { int32 }
   end
 
-  it "does not invoke 'method_added' hook recusively" do
+  it "does not invoke 'method_added' hook recursively" do
     assert_type("
       class Foo
         macro method_added(d)
@@ -227,5 +227,25 @@ describe "Semantic: hooks" do
       a2 = A2.new(1)
       {a1.x, a2.y}
       ), inject_primitives: false) { tuple_of([string, int32]) }
+  end
+
+  it "does inherited macro through generic instance type (#9693)" do
+    assert_type("
+      class Foo(X)
+        macro inherited
+          def self.{{@type.name.downcase.id}}
+            1
+          end
+        end
+      end
+
+      class Bar < Foo(Int32)
+      end
+
+      class Baz < Bar
+      end
+
+      Baz.baz
+      ") { int32 }
   end
 end

@@ -321,7 +321,7 @@ describe "Semantic: lib" do
       "'static' link argument must be a Bool"
   end
 
-  it "errors if foruth argument is not a bool" do
+  it "errors if fourth argument is not a bool" do
     assert_error %(
       @[Link("foo", "bar", true, 1)]
       lib LibFoo
@@ -345,7 +345,7 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
+      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config' and 'framework')"
   end
 
   it "errors if lib already specified with positional argument" do
@@ -366,7 +366,7 @@ describe "Semantic: lib" do
       "'lib' link argument must be a String"
   end
 
-  it "clears attributes after lib" do
+  it "clears annotations after lib" do
     assert_type(%(
       @[Link("foo")]
       lib LibFoo
@@ -374,6 +374,24 @@ describe "Semantic: lib" do
       end
       1
       )) { int32 }
+  end
+
+  it "warns if @[Link(static: true)] is specified" do
+    assert_warning <<-CR,
+      @[Link("foo", static: true)]
+      lib Foo
+      end
+      CR
+      "warning in line 1\nWarning: specifying static linking for individual libraries is deprecated"
+  end
+
+  it "warns if Link annotations use positional arguments" do
+    assert_warning <<-CR,
+      @[Link("foo", "bar")]
+      lib Foo
+      end
+      CR
+      "warning in line 1\nWarning: using non-named arguments for Link annotations is deprecated"
   end
 
   it "allows invoking lib call without obj inside lib" do
@@ -404,15 +422,16 @@ describe "Semantic: lib" do
       "lib fun call is not supported in dispatch"
   end
 
-  it "allows passing nil or pointer to arg expecting pointer" do
-    assert_type(%(
+  it "disallows passing nil or pointer to arg expecting pointer" do
+    assert_error %(
       lib Foo
         fun foo(x : Int32*) : Int64
       end
 
       a = 1 == 1 ? nil : Pointer(Int32).malloc(1_u64)
       Foo.foo(a)
-      )) { int64 }
+      ),
+      "argument 'x' of 'Foo#foo' must be Pointer(Int32), not (Pointer(Int32) | Nil)"
   end
 
   it "correctly attached link flags if there's a macro if" do
@@ -476,7 +495,7 @@ describe "Semantic: lib" do
       "can't define method in lib LibC"
   end
 
-  it "reopens lib and adds more link attributes" do
+  it "reopens lib and adds more link annotations" do
     result = semantic(%(
       @[Link("SDL")]
       lib LibSDL
@@ -496,7 +515,7 @@ describe "Semantic: lib" do
     attrs[1].lib.should eq("SDLMain")
   end
 
-  it "reopens lib and adds same link attributes" do
+  it "reopens lib and adds same link annotations" do
     result = semantic(%(
       @[Link("SDL")]
       lib LibSDL
@@ -515,7 +534,7 @@ describe "Semantic: lib" do
     attrs[0].lib.should eq("SDL")
   end
 
-  it "gathers link attributes from macro expression" do
+  it "gathers link annotations from macro expression" do
     result = semantic(%(
       {% begin %}
         @[Link("SDL")]

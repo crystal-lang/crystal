@@ -1,5 +1,6 @@
 require "c/winbase"
-require "winerror"
+require "c/timezoneapi"
+require "c/windows"
 require "./zone_names"
 
 module Crystal::System::Time
@@ -33,6 +34,15 @@ module Crystal::System::Time
   def self.from_filetime(filetime) : ::Time
     seconds, nanoseconds = filetime_to_seconds_and_nanoseconds(filetime)
     ::Time.utc(seconds: seconds, nanoseconds: nanoseconds)
+  end
+
+  def self.to_filetime(time : ::Time) : LibC::FILETIME
+    span = time - ::Time.utc(seconds: WINDOWS_EPOCH_IN_SECONDS, nanoseconds: 0)
+    ticks = span.to_i.to_u64 * FILETIME_TICKS_PER_SECOND + span.nanoseconds // NANOSECONDS_PER_FILETIME_TICK
+    filetime = uninitialized LibC::FILETIME
+    filetime.dwHighDateTime = (ticks >> 32).to_u32
+    filetime.dwLowDateTime = ticks.to_u32!
+    filetime
   end
 
   def self.filetime_to_f64secs(filetime) : Float64

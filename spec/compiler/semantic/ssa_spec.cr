@@ -465,7 +465,7 @@ describe "Semantic: ssa" do
       ") { nilable char }
   end
 
-  it "types while with break doesn't infect initial vas" do
+  it "types while with break doesn't infect initial vars" do
     assert_type("
       a = 1
       b = 1
@@ -481,6 +481,26 @@ describe "Semantic: ssa" do
 
       b
       ") { int32 }
+  end
+
+  it "types a var that is declared in a while condition with break before re-assignment" do
+    assert_type(%(
+      while a = 'a'
+        break if 1 == 1
+        a = "hello"
+      end
+      a
+      )) { char }
+  end
+
+  it "types a var that is declared in a while condition with break after re-assignment" do
+    assert_type(%(
+      while a = 'a'
+        a = "hello"
+        break if 1 == 1
+      end
+      a
+      )) { union_of(char, string) }
   end
 
   it "types while with next" do

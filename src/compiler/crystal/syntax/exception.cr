@@ -1,7 +1,7 @@
 require "../exception"
 
 module Crystal
-  class SyntaxException < Exception
+  class SyntaxException < CodeError
     include ErrorFormat
 
     getter line_number : Int32

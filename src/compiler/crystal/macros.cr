@@ -175,6 +175,14 @@ module Crystal::Macros
 
   # Executes a system command and returns the output as a `MacroId`.
   # Gives a compile-time error if the command failed to execute.
+  #
+  # It is impossible to call this method with any regular call syntax. There is an associated literal type which calls the method with the literal content as command:
+  #
+  # ```
+  # {{ `echo hi` }} # => "hi\n"
+  # ```
+  #
+  # See [`Command` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/command.html) in the language reference.
   def `(command) : MacroId
   end
 
@@ -371,6 +379,24 @@ module Crystal::Macros
     # highlight this node in the error message.
     def raise(message) : NoReturn
     end
+
+    # Returns `true` if this node's type is the given *type* or any of its
+    # subclasses.
+    #
+    # *type* always refers to an AST node type, never a type in the program.
+    #
+    # ```
+    # {{ 1.is_a?(NumberLiteral) }} # => true
+    # {{ 1.is_a?(BoolLiteral) }}   # => false
+    # {{ 1.is_a?(ASTNode) }}       # => true
+    # {{ 1.is_a?(Int32) }}         # => false
+    # ```
+    def __crystal_pseudo_is_a?(type : TypeNode) : BoolLiteral
+    end
+
+    # Returns `true` if this node is a `NilLiteral` or `Nop`.
+    def __crystal_pseudo_nil? : BoolLiteral
+    end
   end
 
   # The empty node. Similar to a `NilLiteral` but its textual representation
@@ -473,6 +499,10 @@ module Crystal::Macros
 
     # The type of the literal: `:i32`, `:u16`, `:f32`, `:f64`, etc.
     def kind : SymbolLiteral
+    end
+
+    # Returns the value of this number without a type suffix.
+    def to_number : MacroId
     end
   end
 
@@ -616,7 +646,7 @@ module Crystal::Macros
     end
 
     # Similar to `Array#[]=`.
-    def []=(index : NumberLiteral, value : ASTNode)
+    def []=(index : NumberLiteral, value : ASTNode) : ASTNode
     end
 
     # Similar to `Array#unshift`.
@@ -687,7 +717,7 @@ module Crystal::Macros
     end
 
     # Similar to `Hash#[]=`
-    def []=(key : ASTNode) : ASTNode
+    def []=(key : ASTNode, value : ASTNode) : ASTNode
     end
 
     # Returns the type specified at the end of the Hash literal, if any.
@@ -762,7 +792,7 @@ module Crystal::Macros
     end
 
     # Adds or replaces a key.
-    def []=(key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
+    def []=(key : SymbolLiteral | StringLiteral | MacroId, value : ASTNode) : ASTNode
     end
   end
 
@@ -1178,14 +1208,22 @@ module Crystal::Macros
   class Out < UnaryExpression
   end
 
+  # A splat expression: `*exp`.
+  class Splat < UnaryExpression
+  end
+
+  # A double splat expression: `**exp`.
+  class DoubleSplat < UnaryExpression
+  end
+
   # An `offsetof` expression.
   class OffsetOf < ASTNode
     # Returns the type that has been used in this `offsetof` expression.
     def type : ASTNode
     end
 
-    # Returns the instance variable used in this `offsetof` expression.
-    def instance_var : ASTNode
+    # Returns the offset argument used in this `offsetof` expression.
+    def offset : ASTNode
     end
   end
 
@@ -1275,6 +1313,11 @@ module Crystal::Macros
 
     # Returns `true` if this is a global path (starts with `::`)
     def global? : BoolLiteral
+    end
+
+    # Returns `true` if this is a global path (starts with `::`)
+    @[Deprecated("Use `#global?` instead")]
+    def global : BoolLiteral
     end
 
     # Resolves this path to a `TypeNode` if it denotes a type, to
@@ -1508,9 +1551,6 @@ module Crystal::Macros
   # class TypeOf < ASTNode
   # end
 
-  # class Attribute < ASTNode
-  # end
-
   # A macro expression,
   # surrounded by {{ ... }} (output = true)
   # or by {% ... %} (output = false)
@@ -1532,22 +1572,15 @@ module Crystal::Macros
   # class Underscore < ASTNode
   # end
 
-  # A splat expression: `*exp`.
-  class Splat < ASTNode
-    # Returns the splatted expression.
-    def exp : ASTNode
-    end
-  end
-
   # class MagicConstant < ASTNode
   # end
 
-  # A fictitious node representing an idenfitifer like, `foo`, `Bar` or `something_else`.
+  # A fictitious node representing an identifier like, `foo`, `Bar` or `something_else`.
   #
-  # The parser doesn't create this nodes. Instead, you create them by invoking `id`
+  # The parser doesn't create these nodes. Instead, you create them by invoking `id`
   # on some nodes. For example, invoking `id` on a `StringLiteral` returns a `MacroId`
   # for the string's content. Similarly, invoking ID on a `SymbolLiteral`, `Call`, `Var` and `Path`
-  # return MacroIds for the node's content.
+  # returns a MacroId for the node's content.
   #
   # This allows you to treat strings, symbols, variables and calls uniformly. For example:
   #
@@ -1572,7 +1605,7 @@ module Crystal::Macros
   # end
   # ```
   #
-  # If we hand't use `id`, the generated code would have been this:
+  # If we hadn't used `id`, the generated code would have been this:
   #
   # ```text
   # def unicorns
@@ -1773,12 +1806,6 @@ module Crystal::Macros
     # (the name you pass to this method is `"default_options"` or `:default_options`
     # in this cases).
     def has_method?(name : StringLiteral | SymbolLiteral) : BoolLiteral
-    end
-
-    # Returns `true` if this type has an attribute. For example `@[Flags]`
-    # or `@[Packed]` (the name you pass to this method is `"Flags"` or `"Packed"`
-    # in these cases).
-    def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
     # Returns the last `Annotation` with the given `type`

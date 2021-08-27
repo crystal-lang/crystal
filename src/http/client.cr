@@ -19,14 +19,14 @@
 #
 # ### Parameters
 #
-# Parameters can be added to any request with the `HTTP::Params#encode` method, which
+# Parameters can be added to any request with the `URI::Params.encode` method, which
 # converts a `Hash` or `NamedTuple` to a URL encoded HTTP query.
 #
 # ```
 # require "http/client"
 #
-# params = HTTP::Params.encode({"author" => "John Doe", "offset" => "20"}) # => author=John+Doe&offset=20
-# response = HTTP::Client.get "http://www.example.com?" + params
+# params = URI::Params.encode({"author" => "John Doe", "offset" => "20"}) # => "author=John+Doe&offset=20"
+# response = HTTP::Client.get URI.new("http", "www.example.com", query: params)
 # response.status_code # => 200
 # ```
 #
@@ -105,21 +105,21 @@ class HTTP::Client
   # ```
   {% if flag?(:without_openssl) %}
     getter! tls : Nil
-    @socket : TCPSocket | Nil
     alias TLSContext = Bool | Nil
   {% else %}
     getter! tls : OpenSSL::SSL::Context::Client
-    @socket : TCPSocket | OpenSSL::SSL::Socket | Nil
     alias TLSContext = OpenSSL::SSL::Context::Client | Bool | Nil
   {% end %}
 
   # Whether automatic compression/decompression is enabled.
   property? compress : Bool = true
 
+  @io : IO?
   @dns_timeout : Float64?
   @connect_timeout : Float64?
   @read_timeout : Float64?
   @write_timeout : Float64?
+  @reconnect = true
 
   # Creates a new HTTP client with the given *host*, *port* and *tls*
   # configurations. If no port is given, the default one will
@@ -146,6 +146,16 @@ class HTTP::Client
     {% end %}
 
     @port = (port || (@tls ? 443 : 80)).to_i
+  end
+
+  # Creates a new HTTP client bound to an existing `IO`.
+  # *host* and *port* can be specified and they will be used
+  # to conform the `Host` header on each request.
+  # Instances created with this constructor cannot be reconnected. Once
+  # `close` is called explicitly or if the connection doesn't support keep-alive,
+  # the next call to make a request will raise an exception.
+  def initialize(@io : IO, @host = "", @port = 80)
+    @reconnect = false
   end
 
   private def check_host_only(string : String)
@@ -249,7 +259,7 @@ class HTTP::Client
 
   # Configures this client to perform basic authentication in every
   # request.
-  def basic_auth(username, password)
+  def basic_auth(username, password) : Nil
     header = "Basic #{Base64.strict_encode("#{username}:#{password}")}"
     before_request do |request|
       request.headers["Authorization"] = header
@@ -388,7 +398,7 @@ class HTTP::Client
   # end
   # client.get "/"
   # ```
-  def before_request(&callback : HTTP::Request ->)
+  def before_request(&callback : HTTP::Request ->) : Nil
     before_request = @before_request ||= [] of (HTTP::Request ->)
     before_request << callback
   end
@@ -499,7 +509,7 @@ class HTTP::Client
     # response = client.{{method.id}} "/", form: {"foo" => "bar"}
     # ```
     def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple) : HTTP::Client::Response
-      body = HTTP::Params.encode(form)
+      body = URI::Params.encode(form)
       {{method.id}} path, form: body, headers: headers
     end
 
@@ -516,7 +526,7 @@ class HTTP::Client
     # end
     # ```
     def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple)
-      body = HTTP::Params.encode(form)
+      body = URI::Params.encode(form)
       {{method.id}}(path, form: body, headers: headers) do |response|
         yield response
       end
@@ -567,7 +577,9 @@ class HTTP::Client
   # response.body # => "..."
   # ```
   def exec(request : HTTP::Request) : HTTP::Client::Response
-    exec_internal(request)
+    around_exec(request) do
+      exec_internal(request)
+    end
   end
 
   private def exec_internal(request)
@@ -585,7 +597,7 @@ class HTTP::Client
 
   private def exec_internal_single(request)
     decompress = send_request(request)
-    HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress)
+    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress)
   end
 
   private def handle_response(response)
@@ -605,8 +617,10 @@ class HTTP::Client
   # end
   # ```
   def exec(request : HTTP::Request, &block)
-    exec_internal(request) do |response|
-      yield response
+    around_exec(request) do
+      exec_internal(request) do |response|
+        yield response
+      end
     end
   end
 
@@ -632,7 +646,7 @@ class HTTP::Client
 
   private def exec_internal_single(request)
     decompress = send_request(request)
-    HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress) do |response|
+    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
       yield response
     end
   end
@@ -647,8 +661,8 @@ class HTTP::Client
   private def send_request(request)
     decompress = set_defaults request
     run_before_request_callbacks(request)
-    request.to_io(socket)
-    socket.flush
+    request.to_io(io)
+    io.flush
     decompress
   end
 
@@ -745,30 +759,33 @@ class HTTP::Client
   end
 
   # Closes this client. If used again, a new connection will be opened.
-  def close
-    @socket.try &.close
-    @socket = nil
+  def close : Nil
+    @io.try &.close
+    @io = nil
   end
 
   private def new_request(method, path, headers, body : BodyType)
     HTTP::Request.new(method, path, headers, body)
   end
 
-  private def socket
-    socket = @socket
-    return socket if socket
+  private def io
+    io = @io
+    return io if io
+    unless @reconnect
+      raise "This HTTP::Client cannot be reconnected"
+    end
 
     hostname = @host.starts_with?('[') && @host.ends_with?(']') ? @host[1..-2] : @host
-    socket = TCPSocket.new hostname, @port, @dns_timeout, @connect_timeout
-    socket.read_timeout = @read_timeout if @read_timeout
-    socket.write_timeout = @write_timeout if @write_timeout
-    socket.sync = false
+    io = TCPSocket.new hostname, @port, @dns_timeout, @connect_timeout
+    io.read_timeout = @read_timeout if @read_timeout
+    io.write_timeout = @write_timeout if @write_timeout
+    io.sync = false
 
     {% if !flag?(:without_openssl) %}
       if tls = @tls
-        tcp_socket = socket
+        tcp_socket = io
         begin
-          socket = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host)
+          io = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host)
         rescue exc
           # don't leak the TCP socket when the SSL connection failed
           tcp_socket.close
@@ -777,7 +794,7 @@ class HTTP::Client
       end
     {% end %}
 
-    @socket = socket
+    @io = io
   end
 
   private def host_header
@@ -838,15 +855,49 @@ class HTTP::Client
     host = validate_host(uri)
 
     port = uri.port
-    path = uri.full_path
+    path = uri.request_target
     user = uri.user
     password = uri.password
 
-    HTTP::Client.new(host, port, tls) do |client|
+    new(host, port, tls) do |client|
       if user && password
         client.basic_auth(user, password)
       end
       yield client, path
+    end
+  end
+
+  # This method is called when executing the request. Although it can be
+  # redefined, it is recommended to use the `def_around_exec` macro to be
+  # able to add new behaviors without loosing prior existing ones.
+  protected def around_exec(request)
+    yield
+  end
+
+  # This macro allows injecting code to be run before and after the execution
+  # of the request. It should return the yielded value. It must be called with 1
+  # block argument that will be used to pass the `HTTP::Request`.
+  #
+  # ```
+  # class HTTP::Client
+  #   def_around_exec do |request|
+  #     # do something before exec
+  #     res = yield
+  #     # do something after exec
+  #     res
+  #   end
+  # end
+  # ```
+  macro def_around_exec(&block)
+    protected def around_exec(%request)
+      previous_def do
+        {% if block.args.size != 1 %}
+          {% raise "Wrong number of block arguments (given #{block.args.size}, expected: 1)" %}
+        {% end %}
+
+        {{ block.args.first.id }} = %request
+        {{ block.body }}
+      end
     end
   end
 end

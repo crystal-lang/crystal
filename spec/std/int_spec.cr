@@ -2,15 +2,15 @@ require "./spec_helper"
 {% unless flag?(:win32) %}
   require "big"
 {% end %}
+require "spec/helpers/iterate"
 
-private def to_s_with_io(num)
-  String.build { |io| num.to_s(io) }
-end
-
-private def to_s_with_io(num, base, upcase = false)
-  String.build { |io| num.to_s(io, base, upcase: upcase) }
-  # Test deprecated overload:
-  String.build { |io| num.to_s(base, io, upcase) }
+private macro it_converts_to_s(num, str, **opts)
+  it {{ "converts #{num} to #{str}" }} do
+    num = {{ num }}
+    str = {{ str }}
+    num.to_s({{ opts.double_splat }}).should eq(str)
+    String.build { |io| num.to_s(io, {{ opts.double_splat }}) }.should eq(str)
+  end
 end
 
 describe "Int" do
@@ -163,82 +163,120 @@ describe "Int" do
     it { 4.lcm(6).should eq(12) }
     it { 0.lcm(2).should eq(0) }
     it { 2.lcm(0).should eq(0) }
+
+    it "doesn't silently overflow" { 2_000_000.lcm(3_000_000).should eq(6_000_000) }
   end
 
-  describe "to_s in base" do
-    it { 12.to_s(2).should eq("1100") }
-    it { -12.to_s(2).should eq("-1100") }
-    it { -123456.to_s(2).should eq("-11110001001000000") }
-    it { 1234.to_s(16).should eq("4d2") }
-    it { -1234.to_s(16).should eq("-4d2") }
-    it { 1234.to_s(36).should eq("ya") }
-    it { -1234.to_s(36).should eq("-ya") }
-    it { 1234.to_s(16, upcase: true).should eq("4D2") }
-    it { 1234.to_s(16, true).should eq("4D2") } # Deprecated test
-    it { -1234.to_s(16, upcase: true).should eq("-4D2") }
-    it { 1234.to_s(36, upcase: true).should eq("YA") }
-    it { -1234.to_s(36, upcase: true).should eq("-YA") }
-    it { 0.to_s(2).should eq("0") }
-    it { 0.to_s(16).should eq("0") }
-    it { 1.to_s(2).should eq("1") }
-    it { 1.to_s(16).should eq("1") }
-    it { 0.to_s(62).should eq("0") }
-    it { 1.to_s(62).should eq("1") }
-    it { 10.to_s(62).should eq("a") }
-    it { 35.to_s(62).should eq("z") }
-    it { 36.to_s(62).should eq("A") }
-    it { 61.to_s(62).should eq("Z") }
-    it { 62.to_s(62).should eq("10") }
-    it { 97.to_s(62).should eq("1z") }
-    it { 3843.to_s(62).should eq("ZZ") }
+  describe "#to_s" do
+    it_converts_to_s 0, "0"
+    it_converts_to_s 1, "1"
 
-    it "raises on base 1" do
-      expect_raises(ArgumentError, "Invalid base 1") { 123.to_s(1) }
+    context "extrema for various int sizes" do
+      it_converts_to_s 127_i8, "127"
+      it_converts_to_s -128_i8, "-128"
+
+      it_converts_to_s 32767_i16, "32767"
+      it_converts_to_s -32768_i16, "-32768"
+
+      it_converts_to_s 2147483647, "2147483647"
+      it_converts_to_s -2147483648, "-2147483648"
+
+      it_converts_to_s 9223372036854775807_i64, "9223372036854775807"
+      it_converts_to_s -9223372036854775808_i64, "-9223372036854775808"
+
+      it_converts_to_s 255_u8, "255"
+      it_converts_to_s 65535_u16, "65535"
+      it_converts_to_s 4294967295_u32, "4294967295"
+      it_converts_to_s 18446744073709551615_u64, "18446744073709551615"
     end
 
-    it "raises on base 37" do
-      expect_raises(ArgumentError, "Invalid base 37") { 123.to_s(37) }
+    context "base and upcase parameters" do
+      it_converts_to_s 12, "1100", base: 2
+      it_converts_to_s -12, "-1100", base: 2
+      it_converts_to_s -123456, "-11110001001000000", base: 2
+      it_converts_to_s 1234, "4d2", base: 16
+      it_converts_to_s -1234, "-4d2", base: 16
+      it_converts_to_s 1234, "ya", base: 36
+      it_converts_to_s -1234, "-ya", base: 36
+      it_converts_to_s 1234, "4D2", base: 16, upcase: true
+      it_converts_to_s -1234, "-4D2", base: 16, upcase: true
+      it_converts_to_s 1234, "YA", base: 36, upcase: true
+      it_converts_to_s -1234, "-YA", base: 36, upcase: true
+      it_converts_to_s 0, "0", base: 2
+      it_converts_to_s 0, "0", base: 16
+      it_converts_to_s 1, "1", base: 2
+      it_converts_to_s 1, "1", base: 16
+      it_converts_to_s 0, "0", base: 62
+      it_converts_to_s 1, "1", base: 62
+      it_converts_to_s 10, "a", base: 62
+      it_converts_to_s 35, "z", base: 62
+      it_converts_to_s 36, "A", base: 62
+      it_converts_to_s 61, "Z", base: 62
+      it_converts_to_s 62, "10", base: 62
+      it_converts_to_s 97, "1z", base: 62
+      it_converts_to_s 3843, "ZZ", base: 62
+
+      it "raises on base 1" do
+        expect_raises(ArgumentError, "Invalid base 1") { 123.to_s(1) }
+        expect_raises(ArgumentError, "Invalid base 1") { 123.to_s(IO::Memory.new, 1) }
+      end
+
+      it "raises on base 37" do
+        expect_raises(ArgumentError, "Invalid base 37") { 123.to_s(37) }
+        expect_raises(ArgumentError, "Invalid base 37") { 123.to_s(IO::Memory.new, 37) }
+      end
+
+      it "raises on base 62 with upcase" do
+        expect_raises(ArgumentError, "upcase must be false for base 62") { 123.to_s(62, upcase: true) }
+        expect_raises(ArgumentError, "upcase must be false for base 62") { 123.to_s(IO::Memory.new, 62, upcase: true) }
+      end
     end
 
-    it "raises on base 62 with upcase" do
-      expect_raises(ArgumentError, "upcase must be false for base 62") { 123.to_s(62, upcase: true) }
-    end
+    context "precision parameter" do
+      it_converts_to_s 0, "", precision: 0
+      it_converts_to_s 0, "0", precision: 1
+      it_converts_to_s 0, "00", precision: 2
+      it_converts_to_s 0, "00000", precision: 5
+      it_converts_to_s 0, "0" * 200, precision: 200
 
-    it { to_s_with_io(12, 2).should eq("1100") }
-    it { to_s_with_io(-12, 2).should eq("-1100") }
-    it { to_s_with_io(-123456, 2).should eq("-11110001001000000") }
-    it { to_s_with_io(1234, 16).should eq("4d2") }
-    it { to_s_with_io(-1234, 16).should eq("-4d2") }
-    it { to_s_with_io(1234, 36).should eq("ya") }
-    it { to_s_with_io(-1234, 36).should eq("-ya") }
-    it { to_s_with_io(1234, 16, upcase: true).should eq("4D2") }
-    it { to_s_with_io(-1234, 16, upcase: true).should eq("-4D2") }
-    it { to_s_with_io(1234, 36, upcase: true).should eq("YA") }
-    it { to_s_with_io(-1234, 36, upcase: true).should eq("-YA") }
-    it { to_s_with_io(0, 2).should eq("0") }
-    it { to_s_with_io(0, 16).should eq("0") }
-    it { to_s_with_io(1, 2).should eq("1") }
-    it { to_s_with_io(1, 16).should eq("1") }
-    it { to_s_with_io(0, 62).should eq("0") }
-    it { to_s_with_io(1, 62).should eq("1") }
-    it { to_s_with_io(10, 62).should eq("a") }
-    it { to_s_with_io(35, 62).should eq("z") }
-    it { to_s_with_io(36, 62).should eq("A") }
-    it { to_s_with_io(61, 62).should eq("Z") }
-    it { to_s_with_io(62, 62).should eq("10") }
-    it { to_s_with_io(97, 62).should eq("1z") }
-    it { to_s_with_io(3843, 62).should eq("ZZ") }
+      it_converts_to_s 1, "1", precision: 0
+      it_converts_to_s 1, "1", precision: 1
+      it_converts_to_s 1, "01", precision: 2
+      it_converts_to_s 1, "00001", precision: 5
+      it_converts_to_s 1, "#{"0" * 199}1", precision: 200
 
-    it "raises on base 1 with io" do
-      expect_raises(ArgumentError, "Invalid base 1") { to_s_with_io(123, 1) }
-    end
+      it_converts_to_s 2, "2", precision: 0
+      it_converts_to_s 2, "2", precision: 1
+      it_converts_to_s 2, "02", precision: 2
+      it_converts_to_s 2, "00002", precision: 5
+      it_converts_to_s 2, "#{"0" * 199}2", precision: 200
 
-    it "raises on base 37 with io" do
-      expect_raises(ArgumentError, "Invalid base 37") { to_s_with_io(123, 37) }
-    end
+      it_converts_to_s -1, "-1", precision: 0
+      it_converts_to_s -1, "-1", precision: 1
+      it_converts_to_s -1, "-01", precision: 2
+      it_converts_to_s -1, "-00001", precision: 5
+      it_converts_to_s -1, "-#{"0" * 199}1", precision: 200
 
-    it "raises on base 62 with upcase with io" do
-      expect_raises(ArgumentError, "upcase must be false for base 62") { to_s_with_io(12, 62, upcase: true) }
+      it_converts_to_s 123, "123", precision: 0
+      it_converts_to_s 123, "123", precision: 1
+      it_converts_to_s 123, "123", precision: 2
+      it_converts_to_s 123, "00123", precision: 5
+      it_converts_to_s 123, "#{"0" * 197}123", precision: 200
+
+      it_converts_to_s 9223372036854775807_i64, "#{"1" * 63}", base: 2, precision: 62
+      it_converts_to_s 9223372036854775807_i64, "#{"1" * 63}", base: 2, precision: 63
+      it_converts_to_s 9223372036854775807_i64, "0#{"1" * 63}", base: 2, precision: 64
+      it_converts_to_s 9223372036854775807_i64, "#{"0" * 137}#{"1" * 63}", base: 2, precision: 200
+
+      it_converts_to_s -9223372036854775808_i64, "-1#{"0" * 63}", base: 2, precision: 63
+      it_converts_to_s -9223372036854775808_i64, "-1#{"0" * 63}", base: 2, precision: 64
+      it_converts_to_s -9223372036854775808_i64, "-01#{"0" * 63}", base: 2, precision: 65
+      it_converts_to_s -9223372036854775808_i64, "-#{"0" * 136}1#{"0" * 63}", base: 2, precision: 200
+
+      it "raises on negative precision" do
+        expect_raises(ArgumentError, "Precision must be non-negative") { 123.to_s(precision: -1) }
+        expect_raises(ArgumentError, "Precision must be non-negative") { 123.to_s(IO::Memory.new, precision: -1) }
+      end
     end
   end
 
@@ -345,7 +383,7 @@ describe "Int" do
       a.should eq(6)
     end
 
-    it "does downards" do
+    it "does downwards" do
       a = 0
       4.to(2) { |i| a += i }.should be_nil
       a.should eq(9)
@@ -358,54 +396,6 @@ describe "Int" do
     end
   end
 
-  describe "to_s" do
-    it "does to_s for various int sizes" do
-      0.to_s.should eq("0")
-      1.to_s.should eq("1")
-
-      127_i8.to_s.should eq("127")
-      -128_i8.to_s.should eq("-128")
-
-      32767_i16.to_s.should eq("32767")
-      -32768_i16.to_s.should eq("-32768")
-
-      2147483647.to_s.should eq("2147483647")
-      -2147483648.to_s.should eq("-2147483648")
-
-      9223372036854775807_i64.to_s.should eq("9223372036854775807")
-      -9223372036854775808_i64.to_s.should eq("-9223372036854775808")
-
-      255_u8.to_s.should eq("255")
-      65535_u16.to_s.should eq("65535")
-      4294967295_u32.to_s.should eq("4294967295")
-
-      18446744073709551615_u64.to_s.should eq("18446744073709551615")
-    end
-
-    it "does to_s for various int sizes with IO" do
-      to_s_with_io(0).should eq("0")
-      to_s_with_io(1).should eq("1")
-
-      to_s_with_io(127_i8).should eq("127")
-      to_s_with_io(-128_i8).should eq("-128")
-
-      to_s_with_io(32767_i16).should eq("32767")
-      to_s_with_io(-32768_i16).should eq("-32768")
-
-      to_s_with_io(2147483647).should eq("2147483647")
-      to_s_with_io(-2147483648).should eq("-2147483648")
-
-      to_s_with_io(9223372036854775807_i64).should eq("9223372036854775807")
-      to_s_with_io(-9223372036854775808_i64).should eq("-9223372036854775808")
-
-      to_s_with_io(255_u8).should eq("255")
-      to_s_with_io(65535_u16).should eq("65535")
-      to_s_with_io(4294967295_u32).should eq("4294967295")
-
-      to_s_with_io(18446744073709551615_u64).should eq("18446744073709551615")
-    end
-  end
-
   describe "step" do
     it "steps through limit" do
       passed = false
@@ -414,30 +404,82 @@ describe "Int" do
     end
   end
 
-  it "casts" do
-    Int8.new(1).should be_a(Int8)
-    Int8.new(1).should eq(1)
+  describe ".new" do
+    it "String overload" do
+      Int8.new("1").should be_a(Int8)
+      Int8.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Int8.new(" 1 ", whitespace: false)
+      end
 
-    Int16.new(1).should be_a(Int16)
-    Int16.new(1).should eq(1)
+      Int16.new("1").should be_a(Int16)
+      Int16.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Int16.new(" 1 ", whitespace: false)
+      end
 
-    Int32.new(1).should be_a(Int32)
-    Int32.new(1).should eq(1)
+      Int32.new("1").should be_a(Int32)
+      Int32.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Int32.new(" 1 ", whitespace: false)
+      end
 
-    Int64.new(1).should be_a(Int64)
-    Int64.new(1).should eq(1)
+      Int64.new("1").should be_a(Int64)
+      Int64.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Int64.new(" 1 ", whitespace: false)
+      end
 
-    UInt8.new(1).should be_a(UInt8)
-    UInt8.new(1).should eq(1)
+      UInt8.new("1").should be_a(UInt8)
+      UInt8.new("1").should eq(1)
+      expect_raises ArgumentError do
+        UInt8.new(" 1 ", whitespace: false)
+      end
 
-    UInt16.new(1).should be_a(UInt16)
-    UInt16.new(1).should eq(1)
+      UInt16.new("1").should be_a(UInt16)
+      UInt16.new("1").should eq(1)
+      expect_raises ArgumentError do
+        UInt16.new(" 1 ", whitespace: false)
+      end
 
-    UInt32.new(1).should be_a(UInt32)
-    UInt32.new(1).should eq(1)
+      UInt32.new("1").should be_a(UInt32)
+      UInt32.new("1").should eq(1)
+      expect_raises ArgumentError do
+        UInt32.new(" 1 ", whitespace: false)
+      end
 
-    UInt64.new(1).should be_a(UInt64)
-    UInt64.new(1).should eq(1)
+      UInt64.new("1").should be_a(UInt64)
+      UInt64.new("1").should eq(1)
+      expect_raises ArgumentError do
+        UInt64.new(" 1 ", whitespace: false)
+      end
+    end
+
+    it "fallback overload" do
+      Int8.new(1).should be_a(Int8)
+      Int8.new(1).should eq(1)
+
+      Int16.new(1).should be_a(Int16)
+      Int16.new(1).should eq(1)
+
+      Int32.new(1).should be_a(Int32)
+      Int32.new(1).should eq(1)
+
+      Int64.new(1).should be_a(Int64)
+      Int64.new(1).should eq(1)
+
+      UInt8.new(1).should be_a(UInt8)
+      UInt8.new(1).should eq(1)
+
+      UInt16.new(1).should be_a(UInt16)
+      UInt16.new(1).should eq(1)
+
+      UInt32.new(1).should be_a(UInt32)
+      UInt32.new(1).should eq(1)
+
+      UInt64.new(1).should be_a(UInt64)
+      UInt64.new(1).should eq(1)
+    end
   end
 
   describe "arithmetic division /" do
@@ -529,32 +571,8 @@ describe "Int" do
     (53 % 532_000_782_588_491_410).should eq(53)
   end
 
-  it "does times" do
-    i = sum = 0
-    3.times do |n|
-      i += 1
-      sum += n
-    end.should be_nil
-    i.should eq(3)
-    sum.should eq(3)
-  end
-
-  it "gets times iterator" do
-    iter = 3.times
-    iter.next.should eq(0)
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "gets times iterator for UInt32 (#5019)" do
-    iter = 4_u32.times
-    iter.next.should be_a(UInt32)
-
-    ary = 4_u32.times.to_a
-    ary.should be_a(Array(UInt32))
-    ary.should eq([0, 1, 2, 3])
-  end
+  it_iterates "#times", [0, 1, 2], 3.times
+  it_iterates "#times for UInt32 (#5019)", [0_u32, 1_u32, 2_u32, 3_u32], 4_u32.times
 
   it "does %" do
     (7 % 5).should eq(2)
@@ -771,8 +789,16 @@ describe "Int" do
   it "#chr" do
     65.chr.should eq('A')
 
-    expect_raises(ArgumentError, "#{0x10ffff + 1} out of char range") do
+    expect_raises(ArgumentError, "0x110000 out of char range") do
       (0x10ffff + 1).chr
+    end
+
+    expect_raises(ArgumentError, "0xd800 out of char range") do
+      0xd800.chr
+    end
+
+    expect_raises(ArgumentError, "0xdfff out of char range") do
+      0xdfff.chr
     end
   end
 
@@ -782,7 +808,7 @@ describe "Int" do
   end
 
   describe "#bit_length" do
-    it "for primitve integers" do
+    it "for primitive integers" do
       0.bit_length.should eq(0)
       0b1.bit_length.should eq(1)
       0b1001.bit_length.should eq(4)
@@ -797,6 +823,45 @@ describe "Int" do
       (10.to_big_i ** 20).bit_length.should eq(67)
       (10.to_big_i ** 309).bit_length.should eq(1027)
       (10.to_big_i ** 3010).bit_length.should eq(10000)
+    end
+  end
+
+  describe "#digits" do
+    it "works for positive numbers or zero" do
+      0.digits.should eq([0])
+      1.digits.should eq([1])
+      10.digits.should eq([0, 1])
+      123.digits.should eq([3, 2, 1])
+      123456789.digits.should eq([9, 8, 7, 6, 5, 4, 3, 2, 1])
+    end
+
+    it "works for maximums" do
+      Int32::MAX.digits.should eq(Int32::MAX.to_s.chars.map(&.to_i).reverse)
+      Int64::MAX.digits.should eq(Int64::MAX.to_s.chars.map(&.to_i).reverse)
+      UInt64::MAX.digits.should eq(UInt64::MAX.to_s.chars.map(&.to_i).reverse)
+    end
+
+    it "works for non-Int32" do
+      digits = 123_i64.digits
+      digits.should eq([3, 2, 1])
+    end
+
+    it "works with a base" do
+      123.digits(16).should eq([11, 7])
+    end
+
+    it "raises for invalid base" do
+      [1, 0, -1].each do |base|
+        expect_raises(ArgumentError, "Invalid base #{base}") do
+          123.digits(base)
+        end
+      end
+    end
+
+    it "raises for negative numbers" do
+      expect_raises(ArgumentError, "Can't request digits of negative number") do
+        -123.digits
+      end
     end
   end
 end

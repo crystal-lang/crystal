@@ -1,5 +1,9 @@
 require "./lib_llvm"
-@[Link(ldflags: "#{__DIR__}/ext/llvm_ext.o")]
+{% if flag?(:win32) %}
+  @[Link(ldflags: "#{__DIR__}/ext/llvm_ext.obj")]
+{% else %}
+  @[Link(ldflags: "#{__DIR__}/ext/llvm_ext.o")]
+{% end %}
 lib LibLLVMExt
   alias Char = LibC::Char
   alias Int = LibC::Int
@@ -140,16 +144,16 @@ lib LibLLVMExt
                                                               input : LibLLVM::ValueRef*,
                                                               num_input : LibC::UInt) : LibLLVMExt::OperandBundleDefRef
 
-  fun build_call = LLVMExtBuildCall(builder : LibLLVM::BuilderRef, fn : LibLLVM::ValueRef,
-                                    args : LibLLVM::ValueRef*, arg_count : LibC::UInt,
-                                    bundle : LibLLVMExt::OperandBundleDefRef,
-                                    name : LibC::Char*) : LibLLVM::ValueRef
+  fun build_call2 = LLVMExtBuildCall2(builder : LibLLVM::BuilderRef, ty : LibLLVM::TypeRef, fn : LibLLVM::ValueRef,
+                                      args : LibLLVM::ValueRef*, arg_count : LibC::UInt,
+                                      bundle : LibLLVMExt::OperandBundleDefRef,
+                                      name : LibC::Char*) : LibLLVM::ValueRef
 
-  fun build_invoke = LLVMExtBuildInvoke(builder : LibLLVM::BuilderRef, fn : LibLLVM::ValueRef,
-                                        args : LibLLVM::ValueRef*, arg_count : LibC::UInt,
-                                        then : LibLLVM::BasicBlockRef, catch : LibLLVM::BasicBlockRef,
-                                        bundle : LibLLVMExt::OperandBundleDefRef,
-                                        name : LibC::Char*) : LibLLVM::ValueRef
+  fun build_invoke2 = LLVMExtBuildInvoke2(builder : LibLLVM::BuilderRef, ty : LibLLVM::TypeRef, fn : LibLLVM::ValueRef,
+                                          args : LibLLVM::ValueRef*, arg_count : LibC::UInt,
+                                          then : LibLLVM::BasicBlockRef, catch : LibLLVM::BasicBlockRef,
+                                          bundle : LibLLVMExt::OperandBundleDefRef,
+                                          name : LibC::Char*) : LibLLVM::ValueRef
 
   {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
     fun write_bitcode_with_summary_to_file = LLVMExtWriteBitcodeWithSummaryToFile(module : LibLLVM::ModuleRef, path : UInt8*) : Void
@@ -158,4 +162,12 @@ lib LibLLVMExt
   fun normalize_target_triple = LLVMExtNormalizeTargetTriple(triple : Char*) : Char*
   fun basic_block_name = LLVMExtBasicBlockName(basic_block : LibLLVM::BasicBlockRef) : Char*
   fun di_builder_get_or_create_array_subrange = LLVMExtDIBuilderGetOrCreateArraySubrange(builder : DIBuilder, lo : UInt64, count : UInt64) : Metadata
+
+  fun target_machine_enable_global_isel = LLVMExtTargetMachineEnableGlobalIsel(machine : LibLLVM::TargetMachineRef, enable : Bool)
+  fun create_mc_jit_compiler_for_module = LLVMExtCreateMCJITCompilerForModule(jit : LibLLVM::ExecutionEngineRef*, m : LibLLVM::ModuleRef, options : LibLLVM::JITCompilerOptions*, options_length : UInt32, enable_global_isel : Bool, error : UInt8**) : Int32
+
+  {% unless LibLLVM::IS_38 %}
+    # LLVMCreateTypeAttribute is implemented in LLVM 13, but needed in 12
+    fun create_type_attribute = LLVMExtCreateTypeAttribute(ctx : LibLLVM::ContextRef, kind_id : LibC::UInt, ty : LibLLVM::TypeRef) : LibLLVM::AttributeRef
+  {% end %}
 end

@@ -189,8 +189,6 @@ module Crystal
         @personality_name = "__crystal_personality"
       end
 
-      emit_main_def_debug_metadata(@main, "??") unless @debug.none?
-
       @context = Context.new @main, @program
       @context.return_type = @main_ret_type
 
@@ -206,6 +204,8 @@ module Crystal
       @main_module_info = ModuleInfo.new(@main_mod, @main_llvm_typer, @builder)
       @modules = {"" => @main_module_info} of String => ModuleInfo
       @types_to_modules = {} of Type => ModuleInfo
+
+      set_internal_fun_debug_location(@main, MAIN_NAME, nil)
 
       @alloca_block, @entry_block = new_entry_block_chain "alloca", "entry"
 
@@ -245,7 +245,7 @@ module Crystal
       # to avoid some memory being allocated with plain malloc.
       codgen_well_known_functions @node
 
-      initialize_argv_and_argc
+      initialize_predefined_constants
 
       if @debug.line_numbers?
         set_current_debug_location Location.new(@program.filename || "(no name)", 1, 1)
@@ -309,8 +309,6 @@ module Crystal
              @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME,
              ONCE_INIT, ONCE
           @codegen.accept node
-        else
-          # go on
         end
 
         false
@@ -478,10 +476,35 @@ module Crystal
     def visit(node : TupleLiteral)
       request_value do
         type = node.type.as(TupleInstanceType)
-        @last = allocate_tuple(type) do |tuple_type, i|
-          exp = node.elements[i]
-          accept exp
-          {exp.type, @last}
+
+        if node.elements.any?(Splat)
+          tuple_size = node.elements.sum do |exp|
+            exp.is_a?(Splat) ? exp.type.as(TupleInstanceType).tuple_types.size : 1
+          end
+          exp_values = Array({Type, LLVM::Value}).new(tuple_size)
+
+          node.elements.each do |exp|
+            accept exp
+
+            if exp.is_a?(Splat)
+              tuple_type = exp.type.as(TupleInstanceType)
+              tuple_type.tuple_types.each_with_index do |subtype, j|
+                exp_values << {subtype, codegen_tuple_indexer(tuple_type, @last, j)}
+              end
+            else
+              exp_values << {exp.type, @last}
+            end
+          end
+
+          @last = allocate_tuple(type) do |_, i|
+            exp_values[i]
+          end
+        else
+          @last = allocate_tuple(type) do |tuple_type, i|
+            exp = node.elements[i]
+            accept exp
+            {exp.type, @last}
+          end
         end
       end
       false
@@ -514,7 +537,7 @@ module Crystal
                 end
                 get_global class_var_global_name(node_exp.var), node_exp.type, node_exp.var
               when Global
-                get_global node_exp.name, node_exp.type, node_exp.var
+                node.raise "BUG: there should be no use of global variables other than $~ and $?"
               when Path
                 # Make sure the constant is initialized before taking a pointer of it
                 const = node_exp.target_const.not_nil!
@@ -551,6 +574,7 @@ module Crystal
       the_fun = codegen_fun fun_literal_name, node.def, context.type, fun_module_info: @main_module_info, is_fun_literal: true, is_closure: is_closure
       the_fun = check_main_fun fun_literal_name, the_fun
 
+      set_current_debug_location(node) if @debug.line_numbers?
       fun_ptr = bit_cast(the_fun, llvm_context.void_pointer)
       if is_closure
         ctx_ptr = bit_cast(context.closure_ptr.not_nil!, llvm_context.void_pointer)
@@ -563,7 +587,7 @@ module Crystal
     end
 
     def fun_literal_name(node : ProcLiteral)
-      location = node.location.try &.original_location
+      location = node.location.try &.expanded_location
       if location && (type = node.type?)
         proc_name = true
         filename = location.filename.as(String)
@@ -592,14 +616,7 @@ module Crystal
 
       if obj = node.obj
         accept obj
-
-        # If obj is a primitive like an integer we need to pass
-        # the variable as is (without loading it)
-        if obj.is_a?(Var) && obj.type.is_a?(PrimitiveType)
-          call_self = context.vars[obj.name].pointer
-        else
-          call_self = @last
-        end
+        call_self = @last
       elsif owner.passed_as_self?
         call_self = llvm_self
       end
@@ -805,37 +822,57 @@ module Crystal
       set_ensure_exception_handler(node)
 
       with_cloned_context do
-        while_block, body_block, exit_block = new_blocks "while", "body", "exit"
+        cond = node.cond.single_expression
+        endless_while = cond.true_literal?
 
-        context.while_block = while_block
-        context.while_exit_block = exit_block
-        context.break_phi = nil
-        context.next_phi = nil
+        if endless_while
+          while_block = new_block "while"
 
-        br while_block
+          Phi.open(self, node, @needs_value) do |phi|
+            context.while_block = while_block
+            context.break_phi = phi
+            context.next_phi = nil
 
-        position_at_end while_block
+            br while_block
 
-        request_value do
-          set_current_debug_location node.cond if @debug.line_numbers?
-          codegen_cond_branch node.cond, body_block, exit_block
-        end
+            position_at_end while_block
 
-        position_at_end body_block
-
-        request_value(false) do
-          accept node.body
-        end
-        br while_block
-
-        position_at_end exit_block
-
-        if node.no_returns?
-          unreachable
+            request_value(false) do
+              accept node.body
+            end
+            br while_block
+          end
         else
-          @last = llvm_nil
+          while_block, body_block, fail_block = new_blocks "while", "body", "fail"
+
+          Phi.open(self, node, @needs_value) do |phi|
+            context.while_block = while_block
+            context.break_phi = phi
+            context.next_phi = nil
+
+            br while_block
+
+            position_at_end while_block
+
+            request_value do
+              set_current_debug_location node.cond if @debug.line_numbers?
+              codegen_cond_branch node.cond, body_block, fail_block
+            end
+
+            position_at_end body_block
+
+            request_value(false) do
+              accept node.body
+            end
+            br while_block
+
+            position_at_end fail_block
+
+            phi.add llvm_nil, @program.nil, last: true
+          end
         end
       end
+
       false
     end
 
@@ -863,20 +900,28 @@ module Crystal
       set_current_debug_location(node) if @debug.line_numbers?
       node_type = accept_control_expression(node)
 
-      if break_phi = context.break_phi
-        old_last = @last
-        execute_ensures_until(node.target.as(Call))
-        @last = old_last
+      case target = node.target
+      when Call
+        if break_phi = context.break_phi
+          old_last = @last
+          execute_ensures_until(target)
+          @last = old_last
 
-        break_phi.add @last, node_type
-      elsif while_exit_block = context.while_exit_block
-        execute_ensures_until(node.target.as(While))
-        br while_exit_block
-      else
-        node.raise "BUG: unknown exit for break"
+          break_phi.add @last, node_type
+          return false
+        end
+      when While
+        if break_phi = context.break_phi
+          old_last = @last
+          execute_ensures_until(target)
+          @last = old_last
+
+          break_phi.add @last, node_type
+          return false
+        end
       end
 
-      false
+      node.raise "BUG: unknown exit for break"
     end
 
     def visit(node : Next)
@@ -887,7 +932,7 @@ module Crystal
       when Block
         if next_phi = context.next_phi
           old_last = @last
-          execute_ensures_until(target.as(Block))
+          execute_ensures_until(target)
           @last = old_last
 
           next_phi.add @last, node_type
@@ -895,7 +940,7 @@ module Crystal
         end
       when While
         if while_block = context.while_block
-          execute_ensures_until(target.as(While))
+          execute_ensures_until(target)
           br while_block
           return false
         end
@@ -973,7 +1018,7 @@ module Crystal
             when InstanceVar
               instance_var_ptr context.type, target.name, llvm_self_ptr
             when Global
-              get_global target.name, target_type, target.var
+              node.raise "BUG: there should be no use of global variables other than $~ and $?"
             when ClassVar
               read_class_var_ptr(target)
             when Var
@@ -1075,6 +1120,7 @@ module Crystal
       unless thread_local_fun
         thread_local_fun = in_main do
           define_main_function(fun_name, [llvm_type(type).pointer.pointer], llvm_context.void) do |func|
+            set_internal_fun_debug_location(func, fun_name, real_var.location)
             builder.store get_global_var(name, type, real_var), func.params[0]
             builder.ret
           end
@@ -1099,20 +1145,10 @@ module Crystal
           codegen_assign(var, value, node)
         end
       when Global
-        if value = node.value
-          request_value do
-            accept value
-          end
-
-          ptr = get_global var.name, var.type, var.var
-          assign ptr, var.type, value.type, @last
-          return false
-        end
+        node.raise "BUG: there should be no use of global variables other than $~ and $?"
       when ClassVar
         # This is the case of a class var initializer
         initialize_class_var(var)
-      else
-        # go on
       end
 
       @last = llvm_nil
@@ -1166,16 +1202,11 @@ module Crystal
     end
 
     def visit(node : Global)
-      read_global node.name.to_s, node.type, node.var
+      node.raise "BUG: there should be no use of global variables other than $~ and $?"
     end
 
     def visit(node : ClassVar)
       @last = read_class_var(node)
-    end
-
-    def read_global(name, type, real_var)
-      @last = get_global name, type, real_var
-      @last = to_lhs @last, type
     end
 
     def visit(node : InstanceVar)
@@ -1183,10 +1214,36 @@ module Crystal
     end
 
     def end_visit(node : ReadInstanceVar)
-      read_instance_var node.type, node.obj.type, node.name, @last
+      obj_type = node.obj.type
+      if obj_type.is_a?(UnionType)
+        union_ptr = @last
+        union_type_id = type_id(union_ptr, obj_type)
+
+        Phi.open(self, node, @needs_value) do |phi|
+          obj_type.union_types.each do |union_type|
+            id_matches = match_type_id(node.type, union_type, union_type_id)
+
+            current_match_label, next_match_label = new_blocks "current_match", "next_match"
+            cond id_matches, current_match_label, next_match_label
+            position_at_end current_match_label
+
+            value_ptr = downcast union_ptr, union_type, obj_type, true
+            ivar_type = union_type.lookup_instance_var(node.name).type
+            read_instance_var ivar_type, union_type, node.name, value_ptr
+
+            phi.add @last, ivar_type
+
+            position_at_end next_match_label
+          end
+          unreachable
+        end
+      else
+        read_instance_var node.type, node.obj.type, node.name, @last
+      end
     end
 
     def read_instance_var(node_type, type, name, value)
+      type = type.remove_typedef
       ivar = type.lookup_instance_var(name)
       ivar_ptr = instance_var_ptr type, name, value
       @last = downcast ivar_ptr, node_type, ivar.type, false
@@ -1305,7 +1362,7 @@ module Crystal
       ] of ASTNode
 
       if location = node.location
-        pieces << StringLiteral.new(", at #{location.original_location}:#{location.line_number}").at(node)
+        pieces << StringLiteral.new(", at #{location.expanded_location}:#{location.line_number}").at(node)
       end
 
       ex = Call.new(Path.global("TypeCastError").at(node), "new", StringInterpolation.new(pieces).at(node)).at(node)
@@ -1462,7 +1519,7 @@ module Crystal
           block.args.each_with_index do |arg, i|
             block_var = block_context.vars[arg.name]
             if i == splat_index
-              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do |tuple_type|
+              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do
                 exp_value2, exp_type = exp_values[j]
                 j += 1
                 {exp_type, exp_value2}
@@ -1502,12 +1559,11 @@ module Crystal
 
       Phi.open(self, block, @needs_value) do |phi|
         with_cloned_context(block_context) do |old|
-          # Reset those vars that are declared inside the block and are nilable.
-          reset_block_vars block
+          # Reset vars that are declared inside the block and are nilable
+          reset_nilable_vars block
 
           context.break_phi = old.return_phi
           context.next_phi = phi
-          context.while_exit_block = nil
           context.closure_parent_context = block_context.closure_parent_context
 
           @needs_value = true
@@ -1541,6 +1597,8 @@ module Crystal
     def create_check_proc_is_not_closure_fun(fun_name)
       in_main do
         define_main_function(fun_name, [llvm_typer.proc_type], llvm_context.void_pointer) do |func|
+          set_internal_fun_debug_location(func, fun_name)
+
           param = func.params.first
 
           fun_ptr = extract_value param, 0
@@ -1639,6 +1697,16 @@ module Crystal
       end
     end
 
+    # used for generated internal functions like `~metaclass` and `~match`
+    def set_internal_fun_debug_location(func, name, location = nil)
+      return if @debug.none?
+      location ||= UNKNOWN_LOCATION
+      emit_fun_debug_metadata(func, name, location)
+      set_current_debug_location(location) if @debug.line_numbers?
+    end
+
+    private UNKNOWN_LOCATION = Location.new("??", 0, 0)
+
     def llvm_self(type = context.type)
       self_var = context.vars["self"]?
       if self_var
@@ -1703,14 +1771,14 @@ module Crystal
       names.map { |name| new_block name }
     end
 
-    def alloca_vars(vars, obj = nil, args = nil, parent_context = nil)
+    def alloca_vars(vars, obj = nil, args = nil, parent_context = nil, reset_nilable_vars = true)
       self_closured = obj.is_a?(Def) && obj.self_closured?
       closured_vars = closured_vars(vars, obj)
-      alloca_non_closured_vars(vars, obj, args)
+      alloca_non_closured_vars(vars, obj, args, reset_nilable_vars)
       malloc_closure closured_vars, context, parent_context, self_closured
     end
 
-    def alloca_non_closured_vars(vars, obj = nil, args = nil)
+    def alloca_non_closured_vars(vars, obj = nil, args = nil, reset_nilable_vars = true)
       return unless vars
 
       in_alloca_block do
@@ -1747,7 +1815,7 @@ module Crystal
             context.vars[name] = LLVMVar.new(ptr, var_type, debug_variable_created: debug_variable_created)
 
             # Assign default nil for variables that are bound to the nil variable
-            if bound_to_mod_nil?(var)
+            if reset_nilable_vars && bound_to_mod_nil?(var)
               assign ptr, var_type, @program.nil, llvm_nil
             end
           else
@@ -1827,12 +1895,13 @@ module Crystal
       end
     end
 
-    def reset_block_vars(block)
-      vars = block.vars
+    # Sets to nil any variable in node that is nilable.
+    def reset_nilable_vars(node)
+      vars = node.vars
       return unless vars
 
       vars.each do |name, var|
-        if var.context == block && bound_to_mod_nil?(var)
+        if var.context == node && bound_to_mod_nil?(var)
           context_var = context.vars[name]
           assign context_var.pointer, context_var.type, @program.nil, llvm_nil
         end
@@ -1922,17 +1991,10 @@ module Crystal
       struct_type
     end
 
-    def run_instance_vars_initializers(real_type, type : GenericClassInstanceType, type_ptr)
-      run_instance_vars_initializers(real_type, type.generic_type, type_ptr)
-      run_instance_vars_initializers_non_recursive real_type, type, type_ptr
-    end
-
-    def run_instance_vars_initializers(real_type, type : ClassType | GenericClassType, type_ptr)
+    def run_instance_vars_initializers(real_type, type : ClassType | GenericClassInstanceType, type_ptr)
       if superclass = type.superclass
         run_instance_vars_initializers(real_type, superclass, type_ptr)
       end
-
-      return if type.is_a?(GenericClassType)
 
       run_instance_vars_initializers_non_recursive real_type, type, type_ptr
     end
@@ -2036,7 +2098,7 @@ module Crystal
       if raise_overflow_fun = @raise_overflow_fun
         check_main_fun RAISE_OVERFLOW_NAME, raise_overflow_fun
       else
-        raise "BUG: __crystal_raise_overflow is not defined"
+        raise Error.new("Missing __crystal_raise_overflow function, either use std-lib's prelude or define it")
       end
     end
 
@@ -2194,7 +2256,7 @@ module Crystal
     end
 
     def visit(node : ExpandableNode)
-      raise "BUG: #{node} at #{node.location} should have been expanded"
+      raise "BUG: #{node} (#{node.class}) at #{node.location} should have been expanded"
     end
 
     def visit(node : ASTNode)

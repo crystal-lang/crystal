@@ -54,15 +54,27 @@ describe "Semantic: proc" do
     assert_type("a = Pointer(Int32 -> Int64).malloc(1_u64)") { pointer_of(proc_of(int32, int64)) }
   end
 
-  it "allows passing proc type if it is typedefed" do
+  it "allows passing proc type if it is a lib alias" do
     assert_type("
       lib LibC
-        type Callback = Int32 -> Int32
+        alias Callback = Int32 -> Int32
         fun foo(x : Callback) : Float64
       end
 
       f = ->(x : Int32) { x + 1 }
       LibC.foo f
+      ") { float64 }
+  end
+
+  it "allows passing proc type if it is typedef'd" do
+    assert_type("
+      lib LibC
+        type Callback = Int32 -> Int32
+        fun foo : Callback
+        fun bar(x : Callback) : Float64
+      end
+
+      LibC.bar LibC.foo
       ") { float64 }
   end
 
@@ -165,11 +177,11 @@ describe "Semantic: proc" do
       "no overload matches"
   end
 
-  it "allows passing nil as proc callback" do
+  it "allows passing nil as proc callback if it is a lib alias" do
     assert_type("
       lib LibC
-        type Cb = Int32 ->
-        fun bla(Cb) : Int32
+        alias Cb = Int32 ->
+        fun bla(x : Cb) : Int32
       end
 
       LibC.bla(nil)
@@ -304,38 +316,48 @@ describe "Semantic: proc" do
 
   it "allows new on proc type" do
     assert_type("
+      #{proc_new}
+
       alias Func = Int32 -> Int32
       Func.new { |x| x + 1 }
       ") { proc_of(int32, int32) }
   end
 
-  it "allows new on proc type that is a typedef" do
+  it "allows new on proc type that is a lib alias" do
     assert_type("
+      #{proc_new}
+
       lib LibC
-        type F = Int32 -> Int32
+        alias F = Int32 -> Int32
       end
 
       LibC::F.new { |x| x + 1 }
       ") { proc_of(int32, int32) }
   end
 
-  it "allows new on proc type with less block args" do
+  it "allows new on proc type with less block params" do
     assert_type("
+      #{proc_new}
+
       alias Func = Int32 -> Int32
       Func.new { 1 }
       ") { proc_of(int32, int32) }
   end
 
-  it "says wrong number of block args in new on proc type" do
+  it "says wrong number of block params in new on proc type" do
     assert_error "
+      #{proc_new}
+
       alias Alias = Int32 -> Int32
       Alias.new { |x, y| }
       ",
-      "wrong number of block arguments for Proc(Int32, Int32)#new (given 2, expected 1)"
+      "wrong number of block parameters (given 2, expected 1)"
   end
 
   it "says wrong return type in new on proc type" do
     assert_error "
+      #{proc_new}
+
       alias Alias = Int32 -> Int32
       Alias.new &.to_f
       ",
@@ -711,12 +733,12 @@ describe "Semantic: proc" do
       )) { int32 }
   end
 
-  %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
+  %w(Object Value Reference Number Int Float Struct Proc Tuple Enum StaticArray Pointer).each do |type|
     it "disallows #{type} in procs" do
       assert_error %(
         ->(x : #{type}) { }
         ),
-        "as a Proc argument type"
+        "can't use #{type} as a Proc argument type"
     end
 
     it "disallows #{type} in captured block" do
@@ -726,7 +748,7 @@ describe "Semantic: proc" do
 
         foo {}
         ),
-        "as a Proc argument type"
+        "can't use #{type} as a Proc argument type"
     end
 
     it "disallows #{type} in proc pointer" do
@@ -736,7 +758,39 @@ describe "Semantic: proc" do
 
         ->foo(#{type})
         ),
-        "as a Proc argument type"
+        "can't use #{type} as a Proc argument type"
+    end
+  end
+
+  describe "Class" do
+    # FIXME: Class reports as Object type in two of these examples.
+    # This should be fixed and the specs inlined with the above.
+    # See https://github.com/crystal-lang/crystal/pull/10688#issuecomment-852931558
+    it "disallows Class in procs" do
+      assert_error %(
+        ->(x : Class) { }
+        ),
+        "can't use Object as a Proc argument type"
+    end
+
+    it "disallows Class in captured block" do
+      assert_error %(
+        def foo(&block : Class ->)
+        end
+
+        foo {}
+        ),
+        "can't use Class as a Proc argument type"
+    end
+
+    it "disallows Class in proc pointer" do
+      assert_error %(
+        def foo(x)
+        end
+
+        ->foo(Class)
+        ),
+        "can't use Object as a Proc argument type"
     end
   end
 
@@ -763,8 +817,22 @@ describe "Semantic: proc" do
 
   it "sets proc type as void if explicitly told so, when using new" do
     assert_type(%(
+      #{proc_new}
+
       Proc(Int32, Void).new { 1 }
       )) { proc_of(int32, nil_type) }
+  end
+
+  it "unpacks tuple but doesn't override local variables, when using new (#9813)" do
+    assert_type(%(
+      #{proc_new}
+
+      i = 1
+      Proc(Tuple(Char), Nil).new do |(x)|
+
+      end.call({'a'})
+      i
+      )) { int32 }
   end
 
   it "accesses T and R" do
@@ -887,6 +955,18 @@ describe "Semantic: proc" do
       b = ->(x : Int32) { nil }
       a || b
       )) { union_of proc_of(int32, int32), proc_of(int32, nil_type) }
+  end
+
+  it "*doesn't* merge Proc that returns NoReturn with another one that returns something else (#9971)" do
+    assert_type(%(
+      lib LibC
+        fun exit : NoReturn
+      end
+
+      a = ->(x : Int32) { 1 }
+      b = ->(x : Int32) { LibC.exit }
+      a || b
+      )) { union_of proc_of(int32, int32), proc_of(int32, no_return) }
   end
 
   it "merges return type" do
@@ -1069,4 +1149,52 @@ describe "Semantic: proc" do
       foo
       )) { proc_of nil_type }
   end
+
+  it "can use @ivar as pointer syntax receiver (#9239)" do
+    assert_type(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar
+        @foo = Foo.new
+
+        def foo
+          ->@foo.foo
+        end
+      end
+
+      Bar.new.foo
+    )) { proc_of int32 }
+  end
+
+  it "can use @@cvar as pointer syntax receiver (#9239)" do
+    assert_type(%(
+      class Foo
+        @@foo = new
+
+        def self.foo
+          ->@@foo.foo
+        end
+
+        def foo
+          1
+        end
+      end
+
+      Foo.foo
+    )) { proc_of int32 }
+  end
+end
+
+private def proc_new
+  <<-CODE
+  struct Proc
+    def self.new(&block : self)
+      block
+    end
+  end
+  CODE
 end

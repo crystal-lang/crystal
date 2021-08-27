@@ -1,3 +1,4 @@
+# Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi.rs
 abstract class LLVM::ABI
   getter target_data : TargetData
   getter? osx : Bool
@@ -14,7 +15,7 @@ abstract class LLVM::ABI
   abstract def size(type : Type)
   abstract def align(type : Type)
 
-  def size(type : Type, pointer_size)
+  def size(type : Type, pointer_size) : Int32
     case type.kind
     when Type::Kind::Integer
       (type.int_width + 7) // 8
@@ -42,12 +43,12 @@ abstract class LLVM::ABI
     end
   end
 
-  def align_offset(offset, type)
+  def align_offset(offset, type) : Int32
     align = align(type)
     (offset + align - 1) // align * align
   end
 
-  def align(type : Type, pointer_size)
+  def align(type : Type, pointer_size) : Int32
     case type.kind
     when Type::Kind::Integer
       (type.int_width + 7) // 8
@@ -89,11 +90,11 @@ abstract class LLVM::ABI
       new ArgKind::Direct, type, cast, pad, attr
     end
 
-    def self.indirect(type, attr)
+    def self.indirect(type, attr) : self
       new ArgKind::Indirect, type, attr: attr
     end
 
-    def self.ignore(type)
+    def self.ignore(type) : self
       new ArgKind::Ignore, type
     end
 

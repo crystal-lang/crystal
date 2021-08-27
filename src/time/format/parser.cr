@@ -33,11 +33,26 @@ struct Time::Format
       @second = 0
       @nanosecond = 0
       @pm = false
+      @hour_is_12 = false
       @nanosecond_offset = 0_i64
     end
 
-    def time(location : Location? = nil)
-      @hour += 12 if @pm
+    def time(location : Location? = nil) : Time
+      if @hour_is_12
+        if @hour > 12
+          raise ArgumentError.new("Invalid hour for 12-hour clock")
+        end
+
+        if @pm
+          @hour += 12 unless @hour == 12
+        else
+          if @hour == 0
+            raise ArgumentError.new("Invalid hour for 12-hour clock")
+          end
+
+          @hour = 0 if @hour == 12
+        end
+      end
 
       if unix_seconds = @unix_seconds
         return Time.unix(unix_seconds)
@@ -203,18 +218,22 @@ struct Time::Format
     end
 
     def hour_24_zero_padded
+      @hour_is_12 = false
       @hour = consume_number(2)
     end
 
     def hour_24_blank_padded
+      @hour_is_12 = false
       @hour = consume_number_blank_padded(2)
     end
 
     def hour_12_zero_padded
       hour_24_zero_padded
+      @hour_is_12 = true
     end
 
     def hour_12_blank_padded
+      @hour_is_12 = true
       @hour = consume_number_blank_padded(2)
     end
 
@@ -269,7 +288,7 @@ struct Time::Format
       string = consume_string
       case string.downcase
       when "am"
-        # skip
+        @pm = false
       when "pm"
         @pm = true
       else
@@ -439,6 +458,25 @@ struct Time::Format
 
     def time_zone_gmt_or_rfc2822(**options)
       time_zone_rfc2822
+    end
+
+    def time_zone_name(zone = false)
+      case char = current_char
+      when '-', '+'
+        time_zone_offset
+      else
+        start_pos = @reader.pos
+        while @reader.has_next? && (!current_char.whitespace? || current_char == Char::ZERO)
+          next_char
+        end
+        zone_name = @reader.string.byte_slice(start_pos, @reader.pos - start_pos)
+
+        if zone_name.in?("Z", "UTC")
+          @location = Time::Location::UTC
+        else
+          @location = Time::Location.load(zone_name)
+        end
+      end
     end
 
     def char?(char, *alternatives)

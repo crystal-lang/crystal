@@ -318,8 +318,6 @@ describe "Semantic: class" do
 
   it "types virtual method of generic class" do
     assert_type("
-      require \"char\"
-
       class Object
         def foo
           bar
@@ -526,6 +524,25 @@ describe "Semantic: class" do
       "can't use instance variables inside primitive types (at Int32)"
   end
 
+  it "reads an object instance var from a union type" do
+    assert_type(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+      end
+
+      class Bar
+        def initialize(@y : Int32, @x : Char)
+        end
+      end
+
+      foo = Foo.new(1)
+      bar = Bar.new(2, 'a')
+      union = foo || bar
+      union.@x
+      )) { union_of(int32, char) }
+  end
+
   it "says that instance vars are not allowed in metaclass" do
     assert_error %(
       module Foo
@@ -648,6 +665,28 @@ describe "Semantic: class" do
       "wrong number of arguments for 'Foo.new' (given 0, expected 1)"
   end
 
+  it "can't reopen as struct" do
+    assert_error %(
+      class Foo
+      end
+
+      struct Foo
+      end
+      ),
+      "Foo is not a struct, it's a class"
+  end
+
+  it "can't reopen as module" do
+    assert_error %(
+      class Foo
+      end
+
+      module Foo
+      end
+      ),
+      "Foo is not a module, it's a class"
+  end
+
   it "errors if reopening non-generic class as generic" do
     assert_error %(
       class Foo
@@ -679,6 +718,39 @@ describe "Semantic: class" do
       end
       ),
       "type vars must be A, B, not C"
+  end
+
+  it "errors if reopening generic class with different splat index" do
+    assert_error %(
+      class Foo(A)
+      end
+
+      class Foo(*A)
+      end
+      ),
+      "type var must be A, not *A"
+  end
+
+  it "errors if reopening generic class with different splat index (2)" do
+    assert_error %(
+      class Foo(*A)
+      end
+
+      class Foo(A)
+      end
+      ),
+      "type var must be *A, not A"
+  end
+
+  it "errors if reopening generic class with different splat index (3)" do
+    assert_error %(
+      class Foo(*A, B)
+      end
+
+      class Foo(A, *B)
+      end
+      ),
+      "type vars must be *A, B, not A, *B"
   end
 
   it "allows declaring a variable in an initialize and using it" do
@@ -716,7 +788,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "cant't use implicit initialize if defined in parent" do
+  it "can't use implicit initialize if defined in parent" do
     assert_error %(
       class Foo
         def initialize(x)
@@ -1074,22 +1146,6 @@ describe "Semantic: class" do
 
       { {{ Foo::Bar.superclass }}, {{ Foo::Baz.superclass }} }
     )) { tuple_of [types["Foo"].metaclass, types["Foo"].metaclass] }
-  end
-
-  it "errors if reading instance var of union type (#7187)" do
-    assert_error %(
-      class Foo
-        @x = 1
-      end
-
-      class Bar
-        @x = 1
-      end
-
-      z = Foo.new || Bar.new
-      z.@x
-      ),
-      "can't read instance variables of union types (@x of (Bar | Foo))"
   end
 
   it "types as no return if calling method on abstract class with all abstract subclasses (#6996)" do

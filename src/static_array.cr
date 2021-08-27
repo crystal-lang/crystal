@@ -156,21 +156,33 @@ struct StaticArray(T, N)
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
   # array.size # => 3
   # ```
-  def size
+  def size : Int32
     N
   end
 
-  # Fills the array by substituting all elements with the given value.
+  # Replaces every element in `self` with the given *value*. Returns `self`.
   #
   # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 }
-  # array.[]= 2 # => nil
-  # array       # => StaticArray[2, 2, 2]
+  # array = StaticArray(Int32, 3).new 0 # => StaticArray[0, 0, 0]
+  # array.fill(2)                       # => StaticArray[2, 2, 2]
+  # array                               # => StaticArray[2, 2, 2]
   # ```
-  def []=(value : T)
-    size.times do |i|
-      to_unsafe[i] = value
-    end
+  def fill(value : T) : self
+    to_slice.fill(value)
+    self
+  end
+
+  # Yields each index of `self` to the given block and then assigns
+  # the block's value in that position. Returns `self`.
+  #
+  # ```
+  # array = StaticArray[2, 1, 1, 1]
+  # array.fill { |i| i * i } # => StaticArray[0, 1, 4, 9]
+  # array                    # => StaticArray[0, 1, 4, 9]
+  # ```
+  def fill(& : Int32 -> T) : self
+    to_slice.fill { |i| yield i }
+    self
   end
 
   # Modifies `self` by randomizing the order of elements in the array
@@ -245,7 +257,7 @@ struct StaticArray(T, N)
   # slice[0] = 3
   # array # => StaticArray[3, 2, 2]
   # ```
-  def to_slice
+  def to_slice : Slice(T)
     Slice.new(to_unsafe, size)
   end
 

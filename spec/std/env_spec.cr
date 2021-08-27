@@ -20,6 +20,23 @@ describe "ENV" do
     ENV.delete("FOO")
   end
 
+  {% if flag?(:win32) %}
+    it "sets and gets case-insensitive" do
+      (ENV["FOO"] = "1").should eq("1")
+      ENV["Foo"].should eq("1")
+      ENV["foo"]?.should eq("1")
+    ensure
+      ENV.delete("FOO")
+    end
+  {% else %}
+    it "sets and gets case-sensitive" do
+      ENV["FOO"] = "1"
+      ENV["foo"]?.should be_nil
+    ensure
+      ENV.delete("FOO")
+    end
+  {% end %}
+
   it "sets to nil (same as delete)" do
     ENV["FOO"] = "1"
     ENV["FOO"]?.should_not be_nil
@@ -56,6 +73,12 @@ describe "ENV" do
   ensure
     ENV.delete("FOO")
     ENV.delete("BAR")
+  end
+
+  it "does not have an empty key" do
+    # Setting an empty key is invalid on both POSIX and Windows. So reporting an empty key
+    # would always be a bug. And there *was* a bug - see win32/ Crystal::System::Env.each
+    ENV.keys.should_not contain("")
   end
 
   it "does .values" do

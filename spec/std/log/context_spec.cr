@@ -2,7 +2,7 @@ require "spec"
 require "log"
 
 private def m(value)
-  Log::Metadata.new(value)
+  Log::Metadata.build(value)
 end
 
 describe "Log.context" do
@@ -12,12 +12,6 @@ describe "Log.context" do
 
   after_each do
     Log.context.clear
-  end
-
-  it "validates hash" do
-    expect_raises(ArgumentError, "Expected hash context, not Int32") do
-      Log.context = m(1)
-    end
   end
 
   it "can be set and cleared" do
@@ -86,13 +80,6 @@ describe "Log.context" do
   it "is assignable from a hash with symbol keys" do
     Log.context.set a: 1
     extra = {:b => 2}
-    Log.context.set extra
-    Log.context.metadata.should eq(m({a: 1, b: 2}))
-  end
-
-  it "is assignable from a hash with string keys" do
-    Log.context.set a: 1
-    extra = {"b" => 2}
     Log.context.set extra
     Log.context.metadata.should eq(m({a: 1, b: 2}))
   end

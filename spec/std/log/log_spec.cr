@@ -6,7 +6,7 @@ private def s(value : Log::Severity)
 end
 
 private def m(value)
-  Log::Metadata.new(value)
+  Log::Metadata.build(value)
 end
 
 describe Log do
@@ -114,7 +114,7 @@ describe Log do
 
     log.info { "info message" }
 
-    backend.entries.first.context.should eq(Log::Metadata.new({a: 1}))
+    backend.entries.first.context.should eq(Log::Metadata.build({a: 1}))
   end
 
   it "context can be changed within the block, yet it's not restored" do
@@ -125,8 +125,8 @@ describe Log do
 
     log.info { Log.context.set(b: 2); "info message" }
 
-    backend.entries.first.context.should eq(Log::Metadata.new({a: 1, b: 2}))
-    Log.context.metadata.should eq(Log::Metadata.new({a: 1, b: 2}))
+    backend.entries.first.context.should eq(Log::Metadata.build({a: 1, b: 2}))
+    Log.context.metadata.should eq(Log::Metadata.build({a: 1, b: 2}))
   end
 
   describe "emitter dsl" do
@@ -159,7 +159,7 @@ describe Log do
       entry.exception.should eq(ex)
     end
 
-    it "can be used with message and metada explicitly" do
+    it "can be used with message and metadata explicitly" do
       backend = Log::MemoryBackend.new
       log = Log.new("a", backend, :notice)
 
@@ -256,15 +256,6 @@ describe Log do
       entry.message.should eq("")
       entry.data.should eq(m({a: 1}))
       entry.exception.should be_nil
-    end
-
-    it "validates hash" do
-      expect_raises(ArgumentError, "Expected hash data, not Int32") do
-        backend = Log::MemoryBackend.new
-        log = Log.new("a", backend, :notice)
-
-        log.notice &.emit(m(1))
-      end
     end
   end
 end

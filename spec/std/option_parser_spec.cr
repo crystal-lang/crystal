@@ -222,10 +222,47 @@ describe "OptionParser" do
       USAGE
   end
 
+  it "does to_s with multi line description (#5832)" do
+    parser = OptionParser.parse([] of String) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("--very_long_option_kills=formatter", "long flag with\nmultiline description") do
+      end
+      opts.on("-f", "--flag", "some flag with\nmultiline description") do
+      end
+      opts.on("-g[FLAG]", "some other flag") do
+      end
+    end
+    parser.to_s.should eq <<-USAGE
+      Usage: foo
+          --very_long_option_kills=formatter
+                                           long flag with
+                                           multiline description
+          -f, --flag                       some flag with
+                                           multiline description
+          -g[FLAG]                         some other flag
+      USAGE
+  end
+
   it "raises on invalid option" do
     expect_raises OptionParser::InvalidOption, "Invalid option: -j" do
       OptionParser.parse(["-f", "-j"]) do |opts|
         opts.on("-f", "some flag") { }
+      end
+    end
+  end
+
+  it "raises on invalid option if value is given to none value handler (short flag, #9553) " do
+    expect_raises OptionParser::InvalidOption, "Invalid option: -foo" do
+      OptionParser.parse(["-foo"]) do |opts|
+        opts.on("-f", "some flag") { }
+      end
+    end
+  end
+
+  it "raises on invalid option if value is given to none value handler (long flag, #9553)" do
+    expect_raises OptionParser::InvalidOption, "Invalid option: --foo=bar" do
+      OptionParser.parse(["--foo=bar"]) do |opts|
+        opts.on("-foo", "some flag") { }
       end
     end
   end
@@ -570,6 +607,16 @@ describe "OptionParser" do
           --help                           Help
           -f, --foo                        Foo
       USAGE
+  end
+
+  it "handles subcommands with hyphen" do
+    subcommand = false
+    OptionParser.parse(%w(sub-command)) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("sub-command", "Subcommand description") { subcommand = true }
+    end
+
+    subcommand.should be_true
   end
 
   it "stops when asked" do

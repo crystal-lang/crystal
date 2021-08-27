@@ -181,6 +181,16 @@ describe "Semantic: def" do
       "can't restrict Char to Int64"
   end
 
+  it "errors when default value is incompatible with non-type restriction" do
+    assert_error "
+      def foo(x : Tuple(_) = 'a')
+      end
+
+      foo
+      ",
+      "can't restrict Char to Tuple(_)"
+  end
+
   it "types call with global scope" do
     assert_type("
       def bar
@@ -272,7 +282,7 @@ describe "Semantic: def" do
 
       foo
       ),
-      "method must return Int32 but it is returning Char"
+      "method top-level foo must return Int32 but it is returning Char"
   end
 
   it "errors if return type doesn't match on instance method" do
@@ -285,7 +295,7 @@ describe "Semantic: def" do
 
       Foo.new.foo
       ),
-      "method must return Int32 but it is returning Char"
+      "method Foo#foo must return Int32 but it is returning Char"
   end
 
   it "errors if return type doesn't match on class method" do
@@ -298,7 +308,7 @@ describe "Semantic: def" do
 
       Foo.foo
       ),
-      "method must return Int32 but it is returning Char"
+      "method Foo.foo must return Int32 but it is returning Char"
   end
 
   it "is ok if returns Int32? with explicit return" do
@@ -475,6 +485,21 @@ describe "Semantic: def" do
 
       foo(1)
       )) { int32.metaclass }
+  end
+
+  it "shows free variables if no overload matches" do
+    assert_error %(
+      class Foo(T)
+        def foo(x : T, y : U, z : V) forall U, V
+        end
+      end
+
+      Foo(Int32).new.foo("", "", "")
+      ),
+      <<-ERROR
+      Overloads are:
+       - Foo(T)#foo(x : T, y : U, z : V) forall U, V
+      ERROR
   end
 
   it "can't use self in toplevel method" do

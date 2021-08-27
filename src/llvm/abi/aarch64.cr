@@ -3,17 +3,17 @@ require "../abi"
 # Based on
 # https://github.com/rust-lang/rust/blob/master/src/librustc_trans/cabi_aarch64.rs
 class LLVM::ABI::AArch64 < LLVM::ABI
-  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
+  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context) : LLVM::ABI::FunctionType
     ret_ty = compute_return_type(rty, ret_def, context)
     arg_tys = atys.map { |aty| compute_arg_type(aty, context) }
     FunctionType.new(arg_tys, ret_ty)
   end
 
-  def align(type : Type)
+  def align(type : Type) : Int32
     align(type, 8)
   end
 
-  def size(type : Type)
+  def size(type : Type) : Int32
     size(type, 8)
   end
 
@@ -27,8 +27,6 @@ class LLVM::ABI::AArch64 < LLVM::ABI
                   check_array(type)
                 when Type::Kind::Struct
                   check_struct(type)
-                else
-                  # go on
                 end
 
     # Ensure we have at most four uniquely addressable members
@@ -61,7 +59,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
     elements.each do |element|
       opt_homog_agg = homogeneous_aggregate?(element)
 
-      # field isn't itself oan HFA, so we aren't either
+      # field isn't itself an HFA, so we aren't either
       return unless opt_homog_agg
       field_type, field_members = opt_homog_agg
 
@@ -136,12 +134,12 @@ class LLVM::ABI::AArch64 < LLVM::ABI
                end
         ArgType.direct(aty, cast)
       else
-        ArgType.indirect(aty, LLVM::Attribute::ByVal)
+        ArgType.indirect(aty, nil)
       end
     end
   end
 
-  def register?(type)
+  def register?(type) : Bool
     case type.kind
     when Type::Kind::Integer,
          Type::Kind::Float,

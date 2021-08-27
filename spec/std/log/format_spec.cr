@@ -24,17 +24,17 @@ class Log
       end
       io = IO::Memory.new
       ShortFormat.format(entry, io)
-      io.to_s.should match(/^[\d\-.:TZ]+\s* INFO - source: message -- {"a" => 1, "b" => 2}$/)
+      io.to_s.should match(/^[\d\-.:TZ]+\s* INFO - source: message -- a: 1, b: 2$/)
     end
 
     it "shows context and entry data" do
       entry = Log.with_context do
         Log.context.set a: 1, b: 2
-        Entry.new("source", :info, "message", Log::Metadata.new({c: 3, d: 4}), nil)
+        Entry.new("source", :info, "message", Log::Metadata.build({c: 3, d: 4}), nil)
       end
       io = IO::Memory.new
       ShortFormat.format(entry, io)
-      io.to_s.should match(/^[\d\-.:TZ]+\s* INFO - source: message -- {"c" => 3, "d" => 4} -- {"a" => 1, "b" => 2}$/)
+      io.to_s.should match(/^[\d\-.:TZ]+\s* INFO - source: message -- c: 3, d: 4 -- a: 1, b: 2$/)
     end
 
     it "appends the exception" do
@@ -79,7 +79,7 @@ class Log
       TestFormatter.format(Entry.new("source", :error, "Oh, no", Log::Metadata.empty, exception), io)
       io.rewind
 
-      io.gets.should eq("  INFO [source] test message ({\"a\" => 1, \"b\" => 2})")
+      io.gets.should eq("  INFO [source] test message (a: 1, b: 2)")
       io.gets.should eq("  INFO test message")
       io.gets.should eq(" ERROR [source] test Oh, no")
       io.gets_to_end.should eq(exception.inspect_with_backtrace)

@@ -1250,7 +1250,7 @@ describe "Block inference" do
         {x, y, z, w}
       end
       ),
-      "too many block arguments (given 3+, expected maximum 1+)"
+      "too many block arguments (given 3+, expected maximum 1)"
   end
 
   it "errors if splat argument becomes a union" do
@@ -1304,7 +1304,59 @@ describe "Block inference" do
       )) { int32 }
   end
 
-  it "doesn't auto-unpacks tuple, more args" do
+  it "auto-unpacks tuple, captured block" do
+    assert_type(%(
+      def foo(&block : {Int32, Char} -> _)
+        tup = {1, 'a'}
+        block.call tup
+      end
+
+      foo do |x, y|
+        {x, y}
+      end
+      )) { tuple_of([int32, char]) }
+  end
+
+  it "auto-unpacks tuple, captured empty block" do
+    semantic(%(
+      def foo(&block : {Int32, Char} -> _)
+        tup = {1, 'a'}
+        block.call tup
+      end
+
+      foo do |x, y|
+      end
+      ))
+  end
+
+  it "auto-unpacks tuple, captured block with multiple statements" do
+    assert_type(%(
+      def foo(&block : {Float64, Int32} -> _)
+        tup = {1.0, 3}
+        block.call tup
+      end
+
+      foo do |x, y|
+        z = x < y
+        {x, y, z}
+      end
+      )) { tuple_of([float64, int32, bool]) }
+  end
+
+  it "auto-unpacks tuple, less than max, captured block" do
+    assert_type(%(
+      def foo(&block : {Int32, Char, Bool} -> _)
+        tup = {1, 'a', true}
+        block.call tup
+      end
+
+      foo do |x, y|
+        {x, y}
+      end
+      )) { tuple_of([int32, char]) }
+  end
+
+  it "doesn't auto-unpack tuple, more args" do
     assert_error %(
       def foo
         tup = {1, 'a'}
@@ -1328,6 +1380,19 @@ describe "Block inference" do
       end
       ),
       "too many block arguments (given 3, expected maximum 2)"
+  end
+
+  it "auto-unpacks tuple, too many args, captured block" do
+    assert_error %(
+      def foo(&block : {Int32, Char} -> _)
+        tup = {1, 'a'}
+        block.call tup
+      end
+
+      foo do |x, y, z|
+      end
+      ),
+      "too many block parameters (given 3, expected maximum 2)"
   end
 
   it "doesn't crash on #2531" do
@@ -1441,6 +1506,54 @@ describe "Block inference" do
       foo do
         typeof(bar)
       end
+      ))
+  end
+
+  it "respects block arg restriction when block has a splat parameter (#6473)" do
+    assert_type(%(
+      def foo(&block : Int32 ->)
+        yield 1
+      end
+
+      def bar(x)
+        x
+      end
+
+      foo do |*x|
+        bar(*x)
+      end
+      )) { int32 }
+  end
+
+  it "respects block arg restriction when block has a splat parameter (2) (#9524)" do
+    assert_type(%(
+      def foo(&block : {Int32, Int32} ->)
+        yield({1, 2})
+      end
+
+      def bar(x)
+        x
+      end
+
+      foo do |*x|
+        bar(*x)
+      end
+      )) { tuple_of([int32, int32]) }
+  end
+
+  it "allows underscore in block return type even if the return type can't be computed" do
+    semantic(%(
+      def foo(& : -> _)
+        yield
+      end
+
+      def recursive
+        if true
+          foo { recursive }
+        end
+      end
+
+      recursive
       ))
   end
 end

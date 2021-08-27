@@ -6,6 +6,8 @@ require "ini"
 require "spec"
 require "yaml"
 require "../../../support/tempfile"
+require "../../../support/env"
+require "../../../support/win32"
 
 private def exec_init(project_name, project_dir = nil, type = "lib", force = false, skip_existing = false)
   args = [type, project_name]
@@ -41,6 +43,24 @@ end
 
 module Crystal
   describe Init::InitProject do
+    it "correctly uses git config" do
+      within_temporary_directory do
+        File.write(".gitconfig", <<-CONTENT)
+        [user]
+          email = dorian@dorianmarie.fr
+          name = Dorian Marié
+        CONTENT
+
+        with_env("GIT_CONFIG": "#{FileUtils.pwd}/.gitconfig") do
+          exec_init("example", "example", "app")
+        end
+
+        with_file "example/LICENSE" do |file|
+          file.should contain("Dorian Marié")
+        end
+      end
+    end
+
     it "has proper contents" do
       within_temporary_directory do
         run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith")
@@ -149,12 +169,6 @@ module Crystal
           parsed["targets"].should eq({"example_app" => {"main" => "src/example_app.cr"}})
         end
 
-        with_file "example/.travis.yml" do |travis|
-          parsed = YAML.parse(travis)
-
-          parsed["language"].should eq("crystal")
-        end
-
         with_file "example/src/example.cr" do |example|
           example.should eq(<<-EOF
         # TODO: Write documentation for `Example`
@@ -201,6 +215,16 @@ module Crystal
   end
 
   describe "Init invocation" do
+    it "produces valid yaml file" do
+      within_temporary_directory do
+        exec_init("example", "example", "app")
+
+        with_file "example/shard.yml" do |file|
+          YAML.parse(file)
+        end
+      end
+    end
+
     it "prints error if a file is already present" do
       within_temporary_directory do
         existing_file = "existing-file"
@@ -280,7 +304,7 @@ module Crystal
       config.expanded_dir.should eq ::Path[Dir.current, "foo", "bar"]
     end
 
-    it "DIR (relative to home)" do
+    pending_win32 "DIR (relative to home)" do
       path = ::Path["~", "foo"].to_s
       config = Crystal::Init.parse_args(["lib", path])
       config.name.should eq "foo"

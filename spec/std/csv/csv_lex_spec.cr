@@ -4,16 +4,16 @@ require "csv"
 class CSV::Lexer
   def expect_cell(value, file = __FILE__, line = __LINE__)
     token = next_token
-    token.kind.should eq(CSV::Token::Kind::Cell), file, line
-    token.value.should eq(value), file, line
+    token.kind.should eq(CSV::Token::Kind::Cell), file: file, line: line
+    token.value.should eq(value), file: file, line: line
   end
 
   def expect_eof(file = __FILE__, line = __LINE__)
-    next_token.kind.should eq(CSV::Token::Kind::Eof), file, line
+    next_token.kind.should eq(CSV::Token::Kind::Eof), file: file, line: line
   end
 
   def expect_newline(file = __FILE__, line = __LINE__)
-    next_token.kind.should eq(CSV::Token::Kind::Newline), file, line
+    next_token.kind.should eq(CSV::Token::Kind::Newline), file: file, line: line
   end
 end
 
@@ -122,21 +122,21 @@ describe CSV do
     end
 
     it "raises if single quote in the middle" do
-      expect_raises CSV::MalformedCSVError, "Unexpected quote at 1:4" do
+      expect_raises CSV::MalformedCSVError, "Unexpected quote at line 1, column 4" do
         lexer = CSV::Lexer.new %(hel"lo)
         lexer.next_token
       end
     end
 
     it "raises if command, newline or end doesn't follow quote" do
-      expect_raises CSV::MalformedCSVError, "Expecting comma, newline or end, not 'a' at 1:6" do
+      expect_raises CSV::MalformedCSVError, "Expecting comma, newline or end, not 'a' at line 1, column 6" do
         lexer = CSV::Lexer.new %("hel"a)
         lexer.next_token
       end
     end
 
     it "raises on unclosed quote" do
-      expect_raises CSV::MalformedCSVError, "Unclosed quote at 1:5" do
+      expect_raises CSV::MalformedCSVError, "Unclosed quote at line 1, column 5" do
         lexer = CSV::Lexer.new %("foo)
         lexer.next_token
       end

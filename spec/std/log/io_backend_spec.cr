@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 require "log"
 
 private def s(value : Log::Severity)
@@ -14,6 +14,13 @@ private def io_logger(*, stdout : IO, config = nil, source : String = "")
 end
 
 describe Log::IOBackend do
+  pending_win32 "creates with defaults" do
+    backend = Log::IOBackend.new
+    backend.io.should eq(STDOUT)
+    backend.formatter.should eq(Log::ShortFormat)
+    backend.dispatcher.should be_a(Log::AsyncDispatcher)
+  end
+
   it "logs messages" do
     IO.pipe do |r, w|
       logger = io_logger(stdout: w)
@@ -43,7 +50,7 @@ describe Log::IOBackend do
         logger.info { "info:show" }
       end
 
-      r.gets.should match(/info:show -- {"foo" => "bar"}/)
+      r.gets.should match(/info:show -- foo: "bar"/)
     end
   end
 

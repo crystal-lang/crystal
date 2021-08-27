@@ -43,10 +43,15 @@ module Crystal
       end
 
     status = Crystal::AtExitHandlers.run status, ex
+
+    if ex
+      STDERR.print "Unhandled exception: "
+      ex.inspect_with_backtrace(STDERR)
+    end
+
     ignore_stdio_errors { STDOUT.flush }
     ignore_stdio_errors { STDERR.flush }
 
-    raise ex if ex
     status
   end
 
@@ -79,7 +84,7 @@ module Crystal
   #
   # ```
   # fun main(argc : Int32, argv : UInt8**) : Int32
-  #   LibFoo.init_foo_and_invoke_main(argc, argv, ->Crystal.main)
+  #   LibFoo.init_foo_and_invoke_main(argc, argv, ->Crystal.main(Int32, UInt8**))
   # end
   # ```
   #

@@ -206,10 +206,6 @@ module Crystal
       get_debug_type(type.not_nil_type, original_type)
     end
 
-    def create_debug_type(type : NilablePointerType, original_type : Type)
-      get_debug_type(type.pointer_type, original_type)
-    end
-
     def create_debug_type(type : StaticArrayInstanceType, original_type : Type)
       debug_type = get_debug_type(type.element_type)
       return unless debug_type
@@ -318,7 +314,7 @@ module Crystal
     end
 
     private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil)
-      location = location.try &.original_location
+      location = location.try &.expanded_location
       return false unless location
 
       file, dir = file_and_dir(location.filename)
@@ -393,7 +389,7 @@ module Crystal
         when LLVM::Value    then value
         when LLVM::Function then value.to_value
         when Nil            then LLVM::Value.null
-        else                     raise "Unsuported value type: #{value.class}"
+        else                     raise "Unsupported value type: #{value.class}"
         end
       end
       llvm_context.md_node(values)
@@ -435,7 +431,7 @@ module Crystal
     end
 
     def set_current_debug_location(location)
-      location = location.try &.original_location
+      location = location.try &.expanded_location
       return unless location
 
       @current_debug_location = location
@@ -455,25 +451,25 @@ module Crystal
       builder.set_current_debug_location(0, 0, nil)
     end
 
-    def emit_main_def_debug_metadata(main_fun, filename)
+    def emit_fun_debug_metadata(func, fun_name, location, *, debug_types = [] of LibLLVMExt::Metadata, is_optimized = false)
+      filename = location.try(&.original_filename) || "??"
+      line_number = location.try(&.line_number) || 0
+
       file, dir = file_and_dir(filename)
       scope = di_builder.create_file(file, dir)
-      fn_metadata = di_builder.create_function(scope, MAIN_NAME, MAIN_NAME, scope,
-        0, fun_metadata_type, true, true, 0, LLVM::DIFlags::Zero, false, main_fun)
-      fun_metadatas[main_fun] = [FunMetadata.new(filename || "??", fn_metadata)]
+      fn_metadata = di_builder.create_function(scope, fun_name, fun_name, scope,
+        line_number, fun_metadata_type(debug_types), true, true,
+        line_number, LLVM::DIFlags::Zero, is_optimized, func)
+      fun_metadatas[func] = [FunMetadata.new(filename, fn_metadata)]
     end
 
     def emit_def_debug_metadata(target_def)
-      location = target_def.location.try &.original_location
+      location = target_def.location.try &.expanded_location
       return unless location
 
-      file, dir = file_and_dir(location.filename)
-      scope = di_builder.create_file(file, dir)
-      is_optimised = !@debug.variables?
-      fn_metadata = di_builder.create_function(scope, target_def.name, target_def.name, scope,
-        location.line_number, fun_metadata_type(context.fun_debug_params), true, true,
-        location.line_number, LLVM::DIFlags::Zero, is_optimised, context.fun)
-      fun_metadatas[context.fun] = [FunMetadata.new(location.original_filename || "??", fn_metadata)]
+      emit_fun_debug_metadata(context.fun, target_def.name, location,
+        debug_types: context.fun_debug_params,
+        is_optimized: !@debug.variables?)
     end
 
     def declare_debug_for_function_argument(arg_name, arg_type, arg_no, alloca, location)

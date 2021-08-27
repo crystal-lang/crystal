@@ -84,7 +84,7 @@ describe File do
       file.try &.delete
     end
 
-    pending_win32 "fails in unwritable folder" do
+    pending_win32 "fails in nonwriteable folder" do
       expect_raises(File::NotFoundError, "Error creating temporary file: '#{datapath("non-existing-folder")}/") do
         File.tempfile dir: datapath("non-existing-folder")
       end

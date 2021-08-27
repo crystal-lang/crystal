@@ -19,9 +19,17 @@ end
 
 # :nodoc:
 struct Exception::CallStack
+  # Compute current directory at the beginning so filenames
+  # are always shown relative to the *starting* working directory.
+  CURRENT_DIR = begin
+    dir = Process::INITIAL_PWD
+    dir += File::SEPARATOR unless dir.ends_with?(File::SEPARATOR)
+    dir
+  end
+
   @@skip = [] of String
 
-  def self.skip(filename)
+  def self.skip(filename) : Nil
     @@skip << filename
   end
 
@@ -34,7 +42,7 @@ struct Exception::CallStack
     @callstack = CallStack.unwind
   end
 
-  def printable_backtrace
+  def printable_backtrace : Array(String)
     @backtrace ||= decode_backtrace
   end
 
@@ -98,7 +106,7 @@ struct Exception::CallStack
     end
   end
 
-  def self.print_backtrace
+  def self.print_backtrace : Nil
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
       last_frame = data.as(RepeatedFrame*)
 
@@ -123,6 +131,21 @@ struct Exception::CallStack
   end
 
   private def self.print_frame(repeated_frame)
+    {% if flag?(:debug) %}
+      if @@dwarf_loaded &&
+         (name = decode_function_name(repeated_frame.ip.address))
+        file, line, column = Exception::CallStack.decode_line_number(repeated_frame.ip.address)
+        if file && file != "??"
+          if repeated_frame.count == 0
+            Crystal::System.print_error "[0x%lx] %s at %s:%ld:%i\n", repeated_frame.ip, name, file, line, column
+          else
+            Crystal::System.print_error "[0x%lx] %s at %s:%ld:%i (%ld times)\n", repeated_frame.ip, name, file, line, column, repeated_frame.count + 1
+          end
+          return
+        end
+      end
+    {% end %}
+
     frame = decode_frame(repeated_frame.ip)
     if frame
       offset, sname = frame
@@ -152,7 +175,7 @@ struct Exception::CallStack
         next if @@skip.includes?(file)
 
         # Turn to relative to the current dir, if possible
-        file = Path.new(file).relative_to(Process::INITIAL_PWD)
+        file = file.lchop(CURRENT_DIR)
 
         file_line_column = "#{file}:#{line}:#{column}"
       end

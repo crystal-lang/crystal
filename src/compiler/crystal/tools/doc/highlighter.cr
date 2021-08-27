@@ -7,22 +7,33 @@ module Crystal::Doc::Highlighter
     lexer.count_whitespace = true
     lexer.wants_raw = true
 
-    String.build do |io|
-      begin
-        highlight_normal_state lexer, io
-      rescue Crystal::SyntaxException
-      end
+    begin
+      String.build { |io| highlight_normal_state lexer, io }
+    rescue
+      code
     end
   end
 
   private def highlight_normal_state(lexer, io, break_on_rcurly = false)
     last_is_def = false
+    heredoc_stack = [] of Token
 
     while true
       token = lexer.next_token
       case token.type
       when :NEWLINE
         io.puts
+        heredoc_stack.each_with_index do |token, i|
+          highlight_delimiter_state lexer, token, io, heredoc: true
+          unless i == heredoc_stack.size - 1
+            # Next token to heredoc's end is either NEWLINE or EOF.
+            if lexer.next_token.type == :EOF
+              raise "Unterminated heredoc"
+            end
+            io.puts
+          end
+        end
+        heredoc_stack.clear
       when :SPACE
         io << token.value
       when :COMMENT
@@ -36,7 +47,12 @@ module Crystal::Doc::Highlighter
       when :CONST, :"::"
         highlight token, "t", io
       when :DELIMITER_START
-        highlight_delimiter_state lexer, token, io
+        if token.delimiter_state.kind == :heredoc
+          highlight HTML.escape(token.raw), "s", io
+          heredoc_stack << token.dup
+        else
+          highlight_delimiter_state lexer, token, io
+        end
       when :STRING_ARRAY_START, :SYMBOL_ARRAY_START
         highlight_string_array lexer, token, io
       when :EOF
@@ -53,7 +69,7 @@ module Crystal::Doc::Highlighter
                :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
                :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
                :alias, :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
-               :undef, :with, :self, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
+               :with, :self, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
                :annotation, :verbatim
             highlight token, "k", io
           when :true, :false, :nil
@@ -73,6 +89,8 @@ module Crystal::Doc::Highlighter
         else
           io << token
         end
+      when :UNDERSCORE
+        io << '_'
       else
         io << token
       end
@@ -83,17 +101,16 @@ module Crystal::Doc::Highlighter
     end
   end
 
-  private def highlight_delimiter_state(lexer, token, io)
+  private def highlight_delimiter_state(lexer, token, io, heredoc = false)
     start_highlight_class "s", io
 
-    HTML.escape(token.raw, io)
+    HTML.escape(token.raw, io) unless heredoc
 
     while true
       token = lexer.next_string_token(token.delimiter_state)
       case token.type
       when :DELIMITER_END
         HTML.escape(token.raw, io)
-        end_highlight_class io
         break
       when :INTERPOLATION_START
         end_highlight_class io
@@ -101,12 +118,12 @@ module Crystal::Doc::Highlighter
         highlight_normal_state lexer, io, break_on_rcurly: true
         highlight "}", "i", io
         start_highlight_class "s", io
-      when :EOF
-        break
       else
         HTML.escape(token.raw, io)
       end
     end
+
+    end_highlight_class io
   end
 
   private def highlight_string_array(lexer, token, io)
@@ -123,7 +140,11 @@ module Crystal::Doc::Highlighter
         end_highlight_class io
         break
       when :EOF
-        raise "Unterminated symbol array literal"
+        if token.delimiter_state.kind == :string_array
+          raise "Unterminated string array literal"
+        else # == :symbol_array
+          raise "Unterminated symbol array literal"
+        end
       else
         raise "Bug: shouldn't happen"
       end

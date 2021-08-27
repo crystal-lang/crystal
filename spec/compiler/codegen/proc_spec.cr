@@ -393,6 +393,12 @@ describe "Code gen: proc" do
 
   it "does new on proc type" do
     run("
+      struct Proc
+        def self.new(&block : self)
+          block
+        end
+      end
+
       alias Func = Int32 -> Int32
 
       a = 2
@@ -845,6 +851,123 @@ describe "Code gen: proc" do
       fun a(a : Void* -> Void*)
         pointerof(a).value.call(Pointer(Void).new(0_u64))
       end
+    ))
+  end
+
+  it "closures var on ->var.call (#8584)" do
+    run(%(
+      def bar(x)
+        x
+      end
+
+      struct Foo
+        def initialize
+          @value = 1
+        end
+
+        def value
+          bar(@value)
+          @value
+        end
+      end
+
+      def get_proc_a
+        foo = Foo.new
+        ->foo.value
+      end
+
+      def get_proc_b
+        foo = Foo.new
+        ->{ foo.value }
+      end
+
+      proc_a = get_proc_a
+      proc_b = get_proc_b
+      proc_b.call
+      proc_a.call
+      )).to_i.should eq(1)
+  end
+
+  # FIXME: JIT compilation of this spec is broken, forcing normal compilation (#10961)
+  it "doesn't crash when taking a proc pointer to a virtual type (#9823)" do
+    run(%(
+      abstract struct Parent
+        abstract def work(a : Int32, b : Int32)
+
+        def get
+          ->work(Int32, Int32)
+        end
+      end
+
+      struct Child1 < Parent
+        def work(a : Int32, b : Int32)
+          a &+ b
+        end
+      end
+
+      struct Child2 < Parent
+        def work(a : Int32, b : Int32)
+          a &- b
+        end
+      end
+
+      Child1.new.as(Parent).get
+    ), flags: [] of String)
+  end
+
+  it "doesn't crash when taking a proc pointer that multidispatches on the top-level (#3822)" do
+    run(%(
+      class Foo
+        def initialize(@proc : Proc(Bar, Nil))
+        end
+      end
+
+      module Bar
+      end
+
+      class Baz
+        include Bar
+      end
+
+      def test(bar : Bar)
+        if bar.is_a? Baz
+          test bar
+        end
+      end
+
+      def test(baz : Baz)
+      end
+
+      Foo.new(->test(Bar))
+    ))
+  end
+
+  it "doesn't crash when taking a proc pointer that multidispatches on a module (#3822)" do
+    run(%(
+      class Foo
+        def initialize(@proc : Proc(Bar, Nil))
+        end
+      end
+
+      module Bar
+      end
+
+      class Baz
+        include Bar
+      end
+
+      module Moo
+        def self.test(bar : Bar)
+          if bar.is_a? Baz
+            test bar
+          end
+        end
+
+        def self.test(baz : Baz)
+        end
+      end
+
+      Foo.new(->Moo.test(Bar))
     ))
   end
 end

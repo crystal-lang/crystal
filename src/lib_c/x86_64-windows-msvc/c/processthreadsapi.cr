@@ -1,6 +1,9 @@
 require "./basetsd"
+require "c/wtypesbase"
 
 lib LibC
+  CREATE_UNICODE_ENVIRONMENT = 0x00000400
+
   struct PROCESS_INFORMATION
     hProcess : HANDLE
     hThread : HANDLE

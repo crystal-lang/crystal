@@ -1,6 +1,6 @@
 require "./uri/uri_parser"
 require "./uri/encoding"
-require "./http/params"
+require "./uri/params"
 
 # This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
 # (URI): Generic Syntax](https://www.ietf.org/rfc/rfc3986.txt).
@@ -31,7 +31,7 @@ require "./http/params"
 # For hierarchical URIs, the path of the original is resolved against the path of the base
 # and then normalized. See `#resolve` for examples.
 #
-# *Relativization* is the inverse of resolution as that it procudes an URI that
+# *Relativization* is the inverse of resolution as that it procures an URI that
 # resolves to the original when resolved against the base.
 #
 # For normalized URIs, the following is true:
@@ -66,7 +66,7 @@ require "./http/params"
 # (see `.reserved?`), while `.encode` does not. The decode methods are
 # identical except for the handling of `+` characters.
 #
-# NOTE: `HTTP::Params` provides a higher-level API for handling `x-www-form-urlencoded`
+# NOTE: `URI::Params` provides a higher-level API for handling `x-www-form-urlencoded`
 # serialized data.
 class URI
   class Error < Exception
@@ -171,7 +171,8 @@ class URI
 
   def_equals_and_hash scheme, host, port, path, query, user, password, fragment
 
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", @query = nil, @user = nil, @password = nil, @fragment = nil)
+  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", query : String | Params | Nil = nil, @user = nil, @password = nil, @fragment = nil)
+    @query = query.try(&.to_s)
   end
 
   # Returns the host part of the URI and unwrap brackets for IPv6 addresses.
@@ -182,21 +183,49 @@ class URI
   # URI.parse("http://[::1]/bar").hostname # => "::1"
   # URI.parse("http://[::1]/bar").host     # => "[::1]"
   # ```
-  def hostname
-    host.try { |host| host.starts_with?('[') && host.ends_with?(']') ? host[1..-2] : host }
+  def hostname : String?
+    host.try { |host| self.class.unwrap_ipv6(host) }
   end
 
-  # Returns the full path of this URI.
+  # Unwraps IPv6 address wrapped in square brackets.
+  #
+  # Everything that is not wrapped in square brackets is returned unchanged.
+  #
+  # ```
+  # URI.unwrap_ipv6("[::1]")       # => "::1"
+  # URI.unwrap_ipv6("127.0.0.1")   # => "127.0.0.1"
+  # URI.unwrap_ipv6("example.com") # => "example.com"
+  # ```
+  def self.unwrap_ipv6(host) : String
+    if host.starts_with?('[') && host.ends_with?(']')
+      host.byte_slice(1, host.bytesize - 2)
+    else
+      host
+    end
+  end
+
+  # Returns the concatenation of `path` and `query` as it would be used as a
+  # request target in an HTTP request.
+  #
+  # If `path` is empty in an hierarchical URI, `"/"` is used.
   #
   # ```
   # require "uri"
   #
-  # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
-  # uri.full_path # => "/posts?id=30&limit=5"
+  # uri = URI.parse "http://example.com/posts?id=30&limit=5#time=1305298413"
+  # uri.request_target # => "/posts?id=30&limit=5"
+  #
+  # uri = URI.new(path: "", query: "foo=bar")
+  # uri.request_target # => "/?foo=bar"
   # ```
-  def full_path : String
+  def request_target : String
     String.build do |str|
-      str << (@path.empty? ? '/' : @path)
+      if @path.empty?
+        str << "/" unless opaque?
+      else
+        str << @path
+      end
+
       if (query = @query) && !query.empty?
         str << '?' << query
       end
@@ -221,16 +250,65 @@ class URI
     !@scheme.nil? && @host.nil? && !@path.starts_with?('/')
   end
 
-  # Returns a `HTTP::Params` of the URI#query.
+  # Returns a `URI::Params` of the URI#query.
   #
   # ```
   # require "uri"
   #
   # uri = URI.parse "http://foo.com?id=30&limit=5#time=1305298413"
-  # uri.query_params # => HTTP::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
+  # uri.query_params # => URI::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
   # ```
-  def query_params : HTTP::Params
-    HTTP::Params.parse(@query || "")
+  def query_params : URI::Params
+    URI::Params.parse(@query || "")
+  end
+
+  # Sets `query` to stringified *params*.
+  #
+  # ```
+  # require "uri"
+  #
+  # uri = URI.new
+  # uri.query_params = URI::Params.parse("foo=bar&foo=baz")
+  # uri.to_s # => "?foo=bar&foo=baz"
+  # ```
+  def query_params=(params : URI::Params)
+    self.query = params.to_s
+  end
+
+  # Returns the authority component of this URI.
+  # It is formatted as `user:pass@host:port` with missing parts being omitted.
+  #
+  # If the URI does not have any authority information, the result is `nil`.
+  #
+  # ```
+  # uri = URI.parse "http://user:pass@example.com:80/path?query"
+  # uri.authority # => "user:pass@example.com:80"
+  #
+  # uri = URI.parse("/relative")
+  # uri.authority # => nil
+  # ```
+  def authority : String?
+    return unless @host || @user || @port
+
+    String.build do |io|
+      authority(io)
+    end
+  end
+
+  # :ditto:
+  def authority(io : IO) : Nil
+    if user = @user
+      userinfo(user, io)
+      io << '@'
+    end
+
+    if host = @host
+      URI.encode(host, io)
+    end
+
+    if port = @port
+      io << ':' << port
+    end
   end
 
   def to_s(io : IO) : Nil
@@ -239,20 +317,11 @@ class URI
       io << ':'
     end
 
-    authority = @user || @host || @port
-    io << "//" if authority
-    if user = @user
-      userinfo(user, io)
-      io << '@'
-    end
-    if host = @host
-      URI.encode(host, io)
-    end
-    if port = @port
-      io << ':' << port
-    end
+    has_authority = @host || @user || @port
+    io << "//" if has_authority
+    authority(io)
 
-    if authority
+    if has_authority
       if !@path.empty? && !@path.starts_with?('/')
         io << '/'
       end
@@ -285,7 +354,7 @@ class URI
   # * `scheme` is lowercased.
   # * `host` is lowercased.
   # * `port` is removed if it is the `.default_port?` of the scheme.
-  # * `path` is resolved to a minimal, semantical equivalent representation removing
+  # * `path` is resolved to a minimal, semantic equivalent representation removing
   #    dot segments `/.` and `/..`.
   #
   # ```
@@ -488,7 +557,7 @@ class URI
   # ```
   #
   # The return value is URL encoded (see `#encode_www_form`).
-  def userinfo
+  def userinfo : String?
     if user = @user
       String.build { |io| userinfo(user, io) }
     end

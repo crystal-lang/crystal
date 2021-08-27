@@ -9,7 +9,7 @@ describe "Semantic: reflection" do
     assert_type("Class") { types["Class"] }
   end
 
-  it "types Object and Class metaclases" do
+  it "types Object and Class metaclasses" do
     assert_type("Object.class") { types["Class"] }
     assert_type("Class.class") { types["Class"] }
   end

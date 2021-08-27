@@ -33,11 +33,11 @@ struct Number
 
     start = int_size % group
     start += group if start == 0
-    io.write integer.to_slice[0, start]
+    io.write_string integer.to_slice[0, start]
 
     while start < int_size
       io << delimiter
-      io.write integer.to_slice[start, group]
+      io.write_string integer.to_slice[start, group]
       start += group
     end
 
@@ -64,7 +64,7 @@ struct Number
   SI_PREFIXES = { {'y', 'z', 'a', 'f', 'p', 'n', 'µ', 'm'}, {nil, 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'} }
 
   # SI prefixes used by `#humanize`. Equal to `SI_PREFIXES` but prepends the
-  # prefix with a space charater.
+  # prefix with a space character.
   SI_PREFIXES_PADDED = ->(magnitude : Int32, _number : Float64) do
     magnitude = Number.prefix_index(magnitude)
     {magnitude, (magnitude == 0 ? " " : si_prefix(magnitude))}
@@ -82,7 +82,7 @@ struct Number
   end
 
   # :nodoc:
-  def self.prefix_index(i, group = 3)
+  def self.prefix_index(i : Int32, group : Int32 = 3) : Int32
     ((i - (i > 0 ? 1 : 0)) // group) * group
   end
 
@@ -239,7 +239,7 @@ struct Number
   end
 
   # :ditto:
-  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Proc) : Nil
+  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Proc) : String
     String.build do |io|
       humanize(io, precision, separator, delimiter, base: base, significant: significant, prefixes: prefixes)
     end

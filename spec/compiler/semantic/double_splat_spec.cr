@@ -230,4 +230,32 @@ describe "Semantic: double splat" do
       {bar(x: 1, y: 2), bar(x: 'a', y: 1)}
       )) { tuple_of([int32, string]) }
   end
+
+  it "orders overloads: unnamed splat vs double splat (1) (#5328)" do
+    assert_type(%(
+      def foo(*, x : Nil)
+        1
+      end
+
+      def foo(**options)
+        :symbol
+      end
+
+      foo(x: nil)
+      ), inject_primitives: false) { int32 }
+  end
+
+  it "orders overloads: unnamed splat vs double splat (2) (#5328)" do
+    assert_type(%(
+      def foo(**options)
+        :symbol
+      end
+
+      def foo(*, x : Nil)
+        1
+      end
+
+      foo(x: nil)
+      ), inject_primitives: false) { int32 }
+  end
 end

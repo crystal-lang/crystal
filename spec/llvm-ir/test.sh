@@ -38,5 +38,8 @@ test memset.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empt
 test memcpy.cr "--cross-compile --target x86_64-apple-darwin --prelude=empty" X64
 test memcpy.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty" X64
 
+test cast-unions.cr "--cross-compile --target x86_64-apple-darwin --prelude=empty" X64
+test assign-unions.cr "--cross-compile --target x86_64-apple-darwin --prelude=empty" X64
+
 popd >/dev/null
 

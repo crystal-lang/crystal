@@ -64,7 +64,7 @@ module Crystal::System::FileDescriptor
 
     if file_type == LibC::FILE_TYPE_UNKNOWN
       error = WinError.value
-      raise IO::Error.from_winerror("Unable to get info", error) unless error == WinError::ERROR_SUCCESS
+      raise IO::Error.from_os_error("Unable to get info", error) unless error == WinError::ERROR_SUCCESS
     end
 
     if file_type == LibC::FILE_TYPE_DISK
@@ -97,7 +97,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    {% if LibC.methods.includes? "dup3".id %}
+    {% if LibC.has_method?("dup3") %}
       # dup doesn't copy the CLOEXEC flag, so copy it manually using dup3
       flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
       if LibC.dup3(other.fd, self.fd, flags) == -1
@@ -157,11 +157,11 @@ module Crystal::System::FileDescriptor
     overlapped.union.offset.offsetHigh = LibC::DWORD.new(offset >> 32)
     if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
       error = WinError.value
-      return 0 if error == WinError::ERROR_HANDLE_EOF
+      return 0_i64 if error == WinError::ERROR_HANDLE_EOF
       raise IO::Error.from_winerror "Error reading file", error
     end
 
-    bytes_read
+    bytes_read.to_i64
   end
 
   def self.from_stdio(fd)

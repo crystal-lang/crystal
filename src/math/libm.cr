@@ -1,4 +1,4 @@
-{% if flag?(:linux) || flag?(:freebsd) || flag?(:openbsd) || flag?(:dragonfly) %}
+{% if flag?(:linux) || flag?(:bsd) %}
   @[Link("m")]
 {% end %}
 
@@ -34,6 +34,8 @@ lib LibM
   {% end %}
   fun round_f32 = "llvm.round.f32"(value : Float32) : Float32
   fun round_f64 = "llvm.round.f64"(value : Float64) : Float64
+  fun rint_f32 = "llvm.rint.f32"(value : Float32) : Float32
+  fun rint_f64 = "llvm.rint.f64"(value : Float64) : Float64
   fun sin_f32 = "llvm.sin.f32"(value : Float32) : Float32
   fun sin_f64 = "llvm.sin.f64"(value : Float64) : Float64
   fun sqrt_f32 = "llvm.sqrt.f32"(value : Float32) : Float32
@@ -92,6 +94,8 @@ lib LibM
   fun log1p_f64 = log1p(value : Float64) : Float64
   fun logb_f32 = logbf(value : Float32) : Float32
   fun logb_f64 = logb(value : Float64) : Float64
+  fun nextafter_f32 = nextafterf(from : Float32, to : Float32) : Float32
+  fun nextafter_f64 = nextafter(from : Float64, to : Float64) : Float64
   fun scalbln_f32 = scalblnf(value1 : Float32, value2 : Int64) : Float32
   fun scalbln_f64 = scalbln(value1 : Float64, value2 : Int64) : Float64
   fun scalbn_f32 = scalbnf(value1 : Float32, value2 : Int32) : Float32

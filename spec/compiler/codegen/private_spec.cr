@@ -14,11 +14,9 @@ describe "Codegen: private" do
     ]
     compiler.prelude = "empty"
 
-    output_filename = File.tempname("crystal-spec-output")
-
-    compiler.compile sources, output_filename
-  ensure
-    File.delete(output_filename) if output_filename
+    with_temp_executable "crystal-spec-output" do |output_filename|
+      compiler.compile sources, output_filename
+    end
   end
 
   it "codegens overloaded private def in same file" do
@@ -39,11 +37,9 @@ describe "Codegen: private" do
     ]
     compiler.prelude = "empty"
 
-    output_filename = File.tempname("crystal-spec-output")
-
-    compiler.compile sources, output_filename
-  ensure
-    File.delete(output_filename) if output_filename
+    with_temp_executable "crystal-spec-output" do |output_filename|
+      compiler.compile sources, output_filename
+    end
   end
 
   it "doesn't include filename for private types" do

@@ -69,12 +69,12 @@ module Compress::Zip::FileInfo
   end
 
   # Returns `true` if this entry is a directory.
-  def dir?
+  def dir? : Bool
     filename.ends_with?('/')
   end
 
   # Returns `true` if this entry is a file.
-  def file?
+  def file? : Bool
     !dir?
   end
 

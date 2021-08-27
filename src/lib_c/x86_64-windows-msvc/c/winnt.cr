@@ -1,6 +1,9 @@
+require "c/int_safe"
+
 lib LibC
   alias BOOLEAN = BYTE
   alias LONG = Int32
+  alias LARGE_INTEGER = Int64
 
   alias CHAR = UChar
   alias WCHAR = UInt16
@@ -16,7 +19,8 @@ lib LibC
   FILE_ATTRIBUTE_READONLY      =   0x1
   FILE_ATTRIBUTE_REPARSE_POINT = 0x400
 
-  FILE_READ_ATTRIBUTES = 0x80
+  FILE_READ_ATTRIBUTES  =   0x80
+  FILE_WRITE_ATTRIBUTES = 0x0100
 
   # Memory protection constants
   PAGE_READWRITE = 0x04

@@ -359,4 +359,29 @@ describe "Semantic: cast" do
       x.foo if x
       )) { nil_type }
   end
+
+  it "considers else to be unreachable (#9658)" do
+    assert_type(%(
+      case 1
+      in Int32
+        v = 1
+      end
+      v
+      )) { int32 }
+  end
+
+  it "casts uninstantiated generic class to itself (#10882)" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar(T) < Foo
+      end
+
+      x = Foo.new.as(Foo)
+      if x.is_a?(Bar)
+        x.as(Bar)
+      end
+      )) { nilable types["Bar"] }
+  end
 end

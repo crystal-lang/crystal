@@ -297,6 +297,60 @@ describe "Semantic: instance var" do
       )) { static_array_of(uint8, 3) }
   end
 
+  it "declares instance var of generic type, with splat" do
+    assert_type(%(
+      class Gen(*T)
+      end
+
+      class Foo(*T)
+        @x : Gen(*T)
+
+        def initialize(@x : Gen(*T))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(Gen(Int32, String).new).x
+      )) { generic_class "Gen", int32, string }
+  end
+
+  it "declares instance var of generic type, with splat inside Tuple" do
+    assert_type(%(
+      class Foo(*T)
+        @x : Tuple(*T)
+
+        def initialize(@x : Tuple(*T))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new({1, ""}).x
+      )) { tuple_of([int32, string]) }
+  end
+
+  it "declares instance var of generic type, with splat inside Proc" do
+    assert_type(%(
+      class Foo(R, *T)
+        @x : Proc(*T, R)
+
+        def initialize(@x : Proc(*T, R))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(->(x : Int32, y : String) { true }).x
+      )) { proc_of([int32, string, bool]) }
+  end
+
   it "declares instance var with self, on generic" do
     assert_type(%(
       class Foo(T)
@@ -2001,6 +2055,34 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
+  it "doesn't error if not initializing variables but calling super and previous_def" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+
+        def initialize
+          @x = 1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar < Foo
+        def initialize(x)
+          super()
+        end
+
+        def initialize(x)
+          previous_def(x)
+        end
+      end
+
+      Bar.new(10).x
+      )) { int32 }
+  end
+
   it "doesn't error if not initializing variables but calling previous_def (2) (#3210)" do
     assert_type(%(
       class Some
@@ -2582,7 +2664,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "errors on udefined instance var and subclass calling super" do
+  it "errors on undefined instance var and subclass calling super" do
     assert_error %(
       class Foo
         def initialize(@x)
@@ -3106,7 +3188,7 @@ describe "Semantic: instance var" do
       "this 'initialize' doesn't initialize instance variable '@x', rendering it nilable"
   end
 
-  it "doesn't complain if not initliazed in one initialize, but has initializer (#2465)" do
+  it "doesn't complain if not initialized in one initialize, but has initializer (#2465)" do
     assert_type(%(
       class Foo
         @x = 1
@@ -4591,7 +4673,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "doesn't error if not initiliazed in macro def but outside it" do
+  it "doesn't error if not initialized in macro def but outside it" do
     assert_type(%(
       class Foo
         @x = 1
@@ -4921,7 +5003,7 @@ describe "Semantic: instance var" do
       )) { types["Baz"] }
   end
 
-  it "can guess the type from splat argument with splated type" do
+  it "can guess the type from splat argument with splatted type" do
     assert_type(%(
       class Foo
         def initialize(*@foo : *{Int32})
@@ -4936,7 +5018,7 @@ describe "Semantic: instance var" do
     )) { tuple_of([int32]) }
   end
 
-  it "can guess the type from splat argument with splated type variable" do
+  it "can guess the type from splat argument with splatted type variable" do
     assert_type(%(
       class Foo(T)
         def initialize(*@foo : *T)
@@ -4951,7 +5033,7 @@ describe "Semantic: instance var" do
     )) { tuple_of([int32, int32]) }
   end
 
-  it "cannot guess the type from splat argument with not splated type" do
+  it "cannot guess the type from splat argument with not splatted type" do
     assert_error %(
       class Foo
         def initialize(*@foo : Int32)
@@ -4967,7 +5049,7 @@ describe "Semantic: instance var" do
       "can't infer the type of instance variable '@foo' of Foo"
   end
 
-  it "can guess the type from double-splat argument with double-splated type" do
+  it "can guess the type from double-splat argument with double-splatted type" do
     assert_type(%(
       class Foo
         def initialize(**@foo : **{foo: Int32})
@@ -4982,7 +5064,7 @@ describe "Semantic: instance var" do
     )) { named_tuple_of({"foo": int32}) }
   end
 
-  it "can guess the type from double-splat argument with double-splated type variable" do
+  it "can guess the type from double-splat argument with double-splatted type variable" do
     assert_type(%(
       class Foo(T)
         def initialize(**@foo : **T)
@@ -4997,7 +5079,7 @@ describe "Semantic: instance var" do
     )) { named_tuple_of({"foo": int32, "bar": int32}) }
   end
 
-  it "cannot guess the type from double-splat argument with not double-splated type" do
+  it "cannot guess the type from double-splat argument with not double-splatted type" do
     assert_error %(
       class Foo
         def initialize(**@foo : Int32)
@@ -5042,7 +5124,7 @@ describe "Semantic: instance var" do
 
       Foo.new
       ),
-      "method must return Gen(T) but it is returning Nil"
+      "method Gen(T).new must return Gen(T) but it is returning Nil"
   end
 
   it "guesses virtual array type (1) (#5342)" do
@@ -5246,5 +5328,47 @@ describe "Semantic: instance var" do
       Foo.new
       ),
       "can't infer the type parameter T for the generic class Gen(T)"
+  end
+
+  it "doesn't infer unbound generic type on generic method called from generic's subclass" do
+    assert_error %(
+      class Gen(T)
+        def self.new(x : T)
+          Gen(T).build
+        end
+
+        def self.build : self
+          new
+        end
+      end
+
+      class Foo < Gen(Int32)
+        def initialize
+          @x = Gen.new('a')
+        end
+      end
+
+      Foo.new
+      ),
+      "can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "doesn't infer unbound generic type on generic method called from generic's subclass, metaclass context" do
+    assert_error %(
+      class Gen(T)
+        def self.new(x : T)
+          Gen(T).build
+        end
+
+        def self.build : self
+          new
+        end
+      end
+
+      class Foo < Gen(Int32)
+        @x = Gen.new('a')
+      end
+      ),
+      "can't infer the type of instance variable '@x' of Foo"
   end
 end

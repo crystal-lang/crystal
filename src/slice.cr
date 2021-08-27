@@ -83,7 +83,7 @@ struct Slice(T)
   # slice # => Bytes[0, 0, 0]
   # ```
   def self.new(size : Int, *, read_only = false)
-    {% unless T <= Int::Primitive || T <= Float::Primitive %}
+    {% unless Number::Primitive.union_types.includes?(T) %}
       {% raise "Can only use primitive integers and floats with Slice.new(size), not #{T}" %}
     {% end %}
 
@@ -150,7 +150,7 @@ struct Slice(T)
   # slice = Slice(UInt8).empty
   # slice.size # => 0
   # ```
-  def self.empty
+  def self.empty : self
     new(Pointer(T).null, 0)
   end
 
@@ -163,7 +163,7 @@ struct Slice(T)
   # slice2 = slice + 2
   # slice2 # => Slice[12, 13, 14]
   # ```
-  def +(offset : Int)
+  def +(offset : Int) : Slice(T)
     check_size(offset)
 
     Slice.new(@pointer + offset, @size - offset, read_only: @read_only)
@@ -186,11 +186,7 @@ struct Slice(T)
   def []=(index : Int, value : T)
     check_writable
 
-    index += size if index < 0
-    unless 0 <= index < size
-      raise IndexError.new
-    end
-
+    index = check_index_out_of_bounds(index)
     @pointer[index] = value
   end
 
@@ -206,7 +202,7 @@ struct Slice(T)
   # slice[1, 3]?  # => Slice[11, 12, 13]
   # slice[1, 33]? # => nil
   # ```
-  def []?(start : Int, count : Int)
+  def []?(start : Int, count : Int) : Slice(T)?
     return unless 0 <= start <= @size
     return unless 0 <= count <= @size - start
 
@@ -225,7 +221,7 @@ struct Slice(T)
   # slice[1, 3]  # => Slice[11, 12, 13]
   # slice[1, 33] # raises IndexError
   # ```
-  def [](start : Int, count : Int)
+  def [](start : Int, count : Int) : Slice(T)
     self[start, count]? || raise IndexError.new
   end
 
@@ -245,11 +241,24 @@ struct Slice(T)
   # slice[1..33]? # => nil
   # ```
   def []?(range : Range)
-    start, count = Indexable.range_to_index_and_count(range, size)
+    start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
     self[start, count]?
   end
 
   # Returns a new slice with the elements in the given range.
+  #
+  # The first element in the returned slice is `self[range.begin]` followed
+  # by the next elements up to index `range.end` (or `self[range.end - 1]` if
+  # the range is exclusive).
+  # If there are fewer elements in `self`, the returned slice is shorter than
+  # `range.size`.
+  #
+  # ```
+  # a = Slice["a", "b", "c", "d", "e"]
+  # a[1..3] # => Slice["b", "c", "d"]
+  # # range.end > array.size
+  # a[3..7] # => Slice["d", "e"]
+  # ```
   #
   # Negative indices count backward from the end of the slice (`-1` is the last
   # element). Additionally, an empty slice is returned when the starting index
@@ -264,18 +273,18 @@ struct Slice(T)
   # slice[1..3]  # => Slice[11, 12, 13]
   # slice[1..33] # raises IndexError
   # ```
-  def [](range : Range)
-    start, count = Indexable.range_to_index_and_count(range, size)
+  def [](range : Range) : Slice(T)
+    start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
     self[start, count]
   end
 
   @[AlwaysInline]
-  def unsafe_fetch(index : Int)
+  def unsafe_fetch(index : Int) : T
     @pointer[index]
   end
 
   # Reverses in-place all the elements of `self`.
-  def reverse!
+  def reverse! : self
     check_writable
 
     return self if size <= 1
@@ -342,6 +351,53 @@ struct Slice(T)
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i], offset + i }
   end
 
+  # Replaces every element in `self` with the given *value*. Returns `self`.
+  #
+  # ```
+  # slice = Slice[1, 2, 3, 4]
+  # slice.fill(2) # => Slice[2, 2, 2, 2]
+  # slice         # => Slice[2, 2, 2, 2]
+  # ```
+  def fill(value : T) : self
+    check_writable
+
+    {% if T == UInt8 %}
+      Intrinsics.memset(to_unsafe.as(Void*), value, size, false)
+      self
+    {% else %}
+      {% if Number::Primitive.union_types.includes?(T) %}
+        if value == 0
+          to_unsafe.clear(size)
+          return self
+        end
+      {% end %}
+
+      fill { value }
+    {% end %}
+  end
+
+  # Yields each index of `self` to the given block and then assigns
+  # the block's value in that position. Returns `self`.
+  #
+  # Accepts an optional *offset* parameter, which tells the block to start
+  # counting from there.
+  #
+  # ```
+  # slice = Slice[2, 1, 1, 1]
+  # slice.fill { |i| i * i }            # => Slice[0, 1, 4, 9]
+  # slice                               # => Slice[0, 1, 4, 9]
+  # slice.fill(offset: 3) { |i| i * i } # => Slice[9, 16, 25, 36]
+  # slice                               # => Slice[9, 16, 25, 36]
+  # ```
+  def fill(*, offset : Int = 0, & : Int32 -> T) : self
+    check_writable
+
+    size.times do |i|
+      to_unsafe[i] = yield offset + i
+    end
+    self
+  end
+
   def copy_from(source : Pointer(T), count)
     check_writable
     check_size(count)
@@ -357,7 +413,7 @@ struct Slice(T)
 
   # Copies the contents of this slice into *target*.
   #
-  # Raises `IndexError` if the desination slice cannot fit the data being transferred
+  # Raises `IndexError` if the destination slice cannot fit the data being transferred
   # e.g. dest.size < self.size.
   #
   # ```
@@ -376,7 +432,7 @@ struct Slice(T)
 
   # Copies the contents of *source* into this slice.
   #
-  # Raises `IndexError` if the desination slice cannot fit the data being transferred.
+  # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
   def copy_from(source : self)
     source.copy_to(self)
@@ -396,7 +452,7 @@ struct Slice(T)
   # Moves the contents of this slice into *target*. *target* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
   #
-  # Raises `IndexError` if the desination slice cannot fit the data being transferred
+  # Raises `IndexError` if the destination slice cannot fit the data being transferred
   # e.g. `dest.size < self.size`.
   #
   # ```
@@ -418,7 +474,7 @@ struct Slice(T)
   # Moves the contents of *source* into this slice. *source* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
   #
-  # Raises `IndexError` if the desination slice cannot fit the data being transferred.
+  # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
   def move_from(source : self)
     source.move_to(self)
@@ -435,7 +491,7 @@ struct Slice(T)
   # slice = UInt8.slice(97, 62, 63, 8, 255)
   # slice.hexstring # => "613e3f08ff"
   # ```
-  def hexstring
+  def hexstring : String
     self.as(Slice(UInt8))
 
     str_size = size * 2
@@ -446,7 +502,7 @@ struct Slice(T)
   end
 
   # :nodoc:
-  def hexstring(buffer)
+  def hexstring(buffer) : Nil
     self.as(Slice(UInt8))
 
     offset = 0
@@ -465,75 +521,121 @@ struct Slice(T)
   #
   # ```
   # slice = UInt8.slice(97, 62, 63, 8, 255)
-  # slice.hexdump # => "00000000  61 3e 3f 08 ff                                    a>?.."
+  # slice.hexdump # => "00000000  61 3e 3f 08 ff                                    a>?..\n"
   # ```
-  def hexdump
+  def hexdump : String
     self.as(Slice(UInt8))
 
     return "" if empty?
 
     full_lines, leftover = size.divmod(16)
     if leftover == 0
-      str_size = full_lines * 77 - 1
-      lines = full_lines
+      str_size = full_lines * 77
     else
-      str_size = (full_lines + 1) * 77 - (16 - leftover) - 1
-      lines = full_lines + 1
+      str_size = (full_lines + 1) * 77 - (16 - leftover)
     end
 
     String.new(str_size) do |buf|
-      index_offset = 0
-      hex_offset = 10
-      ascii_offset = 60
+      pos = 0
+      offset = 0
 
-      # Ensure we don't write outside the buffer:
-      # slower, but safer (speed is not very important when hexdump is used)
-      buffer = Slice.new(buf, str_size)
-
-      each_with_index do |v, i|
-        if i % 16 == 0
-          0.upto(7) do |j|
-            buffer[index_offset + 7 - j] = to_hex((i >> (4 * j)) & 0xf)
-          end
-          buffer[index_offset + 8] = ' '.ord.to_u8
-          buffer[index_offset + 9] = ' '.ord.to_u8
-          index_offset += 77
-        end
-
-        buffer[hex_offset] = to_hex(v >> 4)
-        buffer[hex_offset + 1] = to_hex(v & 0x0f)
-        buffer[hex_offset + 2] = ' '.ord.to_u8
-        hex_offset += 3
-
-        buffer[ascii_offset] = (v > 31 && v < 127) ? v : '.'.ord.to_u8
-        ascii_offset += 1
-
-        if i % 8 == 7
-          buffer[hex_offset] = ' '.ord.to_u8
-          hex_offset += 1
-        end
-
-        if i % 16 == 15 && ascii_offset < str_size
-          buffer[ascii_offset] = '\n'.ord.to_u8
-          hex_offset += 27
-          ascii_offset += 61
-        end
-      end
-
-      while hex_offset % 77 < 60
-        buffer[hex_offset] = ' '.ord.to_u8
-        hex_offset += 1
+      while pos < size
+        # Ensure we don't write outside the buffer:
+        # slower, but safer (speed is not very important when hexdump is used)
+        hexdump_line(Slice.new(buf + offset, {77, str_size - offset}.min), pos)
+        pos += 16
+        offset += 77
       end
 
       {str_size, str_size}
     end
   end
 
+  # Writes a hexdump of this slice, assuming it's a `Slice(UInt8)`, to the given *io*.
+  # This method is specially useful for debugging binary data and
+  # incoming/outgoing data in protocols.
+  #
+  # Returns the number of bytes written to *io*.
+  #
+  # ```
+  # slice = UInt8.slice(97, 62, 63, 8, 255)
+  # slice.hexdump(STDOUT)
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # 00000000  61 3e 3f 08 ff                                    a>?..
+  # ```
+  def hexdump(io : IO)
+    self.as(Slice(UInt8))
+
+    return 0 if empty?
+
+    line = uninitialized UInt8[77]
+    line_slice = line.to_slice
+    count = 0
+
+    pos = 0
+    while pos < size
+      line_bytes = hexdump_line(line_slice, pos)
+      io.write_string(line_slice[0, line_bytes])
+      count += line_bytes
+      pos += 16
+    end
+
+    io.flush
+    count
+  end
+
+  private def hexdump_line(line, start_pos)
+    hex_offset = 10
+    ascii_offset = 60
+
+    0.upto(7) do |j|
+      line[7 - j] = to_hex((start_pos >> (4 * j)) & 0xf)
+    end
+    line[8] = 0x20_u8
+    line[9] = 0x20_u8
+
+    pos = start_pos
+    16.times do |i|
+      break if pos >= size
+      v = unsafe_fetch(pos)
+      pos += 1
+
+      line[hex_offset] = to_hex(v >> 4)
+      line[hex_offset + 1] = to_hex(v & 0x0f)
+      line[hex_offset + 2] = 0x20_u8
+      hex_offset += 3
+
+      if i == 7
+        line[hex_offset] = 0x20_u8
+        hex_offset += 1
+      end
+
+      line[ascii_offset] = 0x20_u8 <= v <= 0x7e_u8 ? v : 0x2e_u8
+      ascii_offset += 1
+    end
+
+    while hex_offset < 60
+      line[hex_offset] = 0x20_u8
+      hex_offset += 1
+    end
+
+    if ascii_offset < line.size
+      line[ascii_offset] = 0x0a_u8
+      ascii_offset += 1
+    end
+
+    ascii_offset
+  end
+
   private def to_hex(c)
     ((c < 10 ? 48_u8 : 87_u8) + c)
   end
 
-  def bytesize
+  def bytesize : Int32
     sizeof(T) * size
   end
 
@@ -588,7 +690,7 @@ struct Slice(T)
     {% end %}
   end
 
-  def to_slice
+  def to_slice : self
     self
   end
 
@@ -639,6 +741,14 @@ struct Slice(T)
     dup.sort!
   end
 
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort : Slice(T)
+    dup.unstable_sort!
+  end
+
   # Returns a new slice with all elements sorted based on the comparator in the
   # given block.
   #
@@ -661,6 +771,18 @@ struct Slice(T)
     dup.sort! &block
   end
 
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort(&block : T, T -> U) : Slice(T) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    dup.unstable_sort!(&block)
+  end
+
   # Modifies `self` by sorting all elements based on the return value of their
   # comparison method `<=>`
   #
@@ -670,7 +792,18 @@ struct Slice(T)
   # a # => Slice[1, 2, 3]
   # ```
   def sort! : Slice(T)
+    Slice.merge_sort!(self)
+
+    self
+  end
+
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort! : Slice(T)
     Slice.intro_sort!(to_unsafe, size)
+
     self
   end
 
@@ -692,7 +825,22 @@ struct Slice(T)
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
+    Slice.merge_sort!(self, block)
+
+    self
+  end
+
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort!(&block : T, T -> U) : Slice(T) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
     Slice.intro_sort!(to_unsafe, size, block)
+
     self
   end
 
@@ -708,6 +856,14 @@ struct Slice(T)
   # ```
   def sort_by(&block : T -> _) : Slice(T)
     dup.sort_by! { |e| yield(e) }
+  end
+
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort_by(&block : T -> _) : Slice(T)
+    dup.unstable_sort_by! { |e| yield(e) }
   end
 
   # Modifies `self` by sorting all elements. The given block is called for
@@ -727,6 +883,18 @@ struct Slice(T)
     self
   end
 
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort_by!(&block : T -> _) : Slice(T)
+    sorted = map { |e| {e, yield(e)} }.unstable_sort! { |x, y| x[1] <=> y[1] }
+    size.times do |i|
+      to_unsafe[i] = sorted.to_unsafe[i][0]
+    end
+    self
+  end
+
   # :nodoc:
   def index(object, offset : Int = 0)
     # Optimize for the case of looking for a byte in a byte slice
@@ -739,16 +907,12 @@ struct Slice(T)
   end
 
   # :nodoc:
-  def fast_index(object, offset)
-    offset += size if offset < 0
-    if 0 <= offset < size
-      result = LibC.memchr(to_unsafe + offset, object, size - offset)
-      if result
-        return (result - to_unsafe.as(Void*)).to_i32
-      end
+  def fast_index(object, offset) : Int32?
+    offset = check_index_out_of_bounds(offset) { return nil }
+    result = LibC.memchr(to_unsafe + offset, object, size - offset)
+    if result
+      return (result - to_unsafe.as(Void*)).to_i32
     end
-
-    nil
   end
 
   # See `Object#hash(hasher)`

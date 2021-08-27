@@ -43,16 +43,32 @@ describe MIME do
     MIME.from_extension?(".fooobar").should be_nil
   end
 
-  it ".from_filename" do
-    MIME.init
-    MIME.from_filename("test.html").should eq MIME.from_extension(".html")
-    MIME.from_filename("foo/bar.not-exists", "foo/bar-exist").should eq "foo/bar-exist"
-    MIME.from_filename("foo/bar.not-exists") { "foo/bar-exist" }.should eq "foo/bar-exist"
+  describe ".from_filename" do
+    it String do
+      MIME.init
+      MIME.from_filename("test.html").should eq MIME.from_extension(".html")
+      MIME.from_filename("foo/bar.not-exists", "foo/bar-exist").should eq "foo/bar-exist"
+      MIME.from_filename("foo/bar.not-exists") { "foo/bar-exist" }.should eq "foo/bar-exist"
+    end
+
+    it Path do
+      MIME.init
+      MIME.from_filename(Path["test.html"]).should eq MIME.from_extension(".html")
+      MIME.from_filename(Path["foo/bar.not-exists"], "foo/bar-exist").should eq "foo/bar-exist"
+      MIME.from_filename(Path["foo/bar.not-exists"]) { "foo/bar-exist" }.should eq "foo/bar-exist"
+    end
   end
 
-  it ".from_filename" do
-    MIME.init
-    MIME.from_filename?("test.html").should eq MIME.from_extension(".html")
+  describe ".from_filename?" do
+    it String do
+      MIME.init
+      MIME.from_filename?("test.html").should eq MIME.from_extension(".html")
+    end
+
+    it Path do
+      MIME.init
+      MIME.from_filename?(Path["test.html"]).should eq MIME.from_extension(".html")
+    end
   end
 
   describe ".register" do

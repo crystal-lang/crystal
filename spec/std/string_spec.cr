@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "spec/helpers/iterate"
 
 describe "String" do
   describe "[]" do
@@ -97,7 +98,7 @@ describe "String" do
     end
 
     it "gets with start and count with negative start" do
-      "こんいちは"[-3, 2].should eq("いち")
+      "こんにちは"[-3, 2].should eq("にち")
     end
 
     it "raises if index out of bounds" do
@@ -108,7 +109,7 @@ describe "String" do
 
     it "raises if index out of bounds with utf-8" do
       expect_raises(IndexError) do
-        "こんいちは"[6, 1]
+        "こんにちは"[6, 1]
       end
     end
 
@@ -120,7 +121,7 @@ describe "String" do
 
     it "raises if count is negative with utf-8" do
       expect_raises(ArgumentError) do
-        "こんいちは"[3, -1]
+        "こんにちは"[3, -1]
       end
     end
 
@@ -182,6 +183,8 @@ describe "String" do
     it "gets with range" do
       "hello"[1..2]?.should eq "el"
       "hello"[6..-1]?.should be_nil
+      "hello"[-6..-1]?.should be_nil
+      "hello"[-6..]?.should be_nil
     end
 
     it "gets with start and count" do
@@ -247,6 +250,7 @@ describe "String" do
     it { "   -1234   ".to_i.should eq(-1234) }
     it { "   +1234   ".to_i.should eq(1234) }
     it { "   -00001234".to_i.should eq(-1234) }
+    it { "\u00A01234\u00A0".to_i.should eq(1234) }
     it { "1_234".to_i(underscore: true).should eq(1234) }
     it { "1101".to_i(base: 2).should eq(13) }
     it { "12ab".to_i(16).should eq(4779) }
@@ -429,6 +433,15 @@ describe "String" do
     "x1.2".to_f64?.should be_nil
     expect_raises(ArgumentError) { "x1.2".to_f64(strict: false) }
     "x1.2".to_f64?(strict: false).should be_nil
+    "1#{Float64::MAX}".to_f?.should be_nil
+    "-1#{Float64::MAX}".to_f?.should be_nil
+    " NaN".to_f?.try(&.nan?).should be_true
+    "NaN".to_f?.try(&.nan?).should be_true
+    "-NaN".to_f?.try(&.nan?).should be_true
+    " INF".to_f?.should eq Float64::INFINITY
+    "INF".to_f?.should eq Float64::INFINITY
+    "-INF".to_f?.should eq -Float64::INFINITY
+    " +INF".to_f?.should eq Float64::INFINITY
   end
 
   it "does to_f32" do
@@ -457,6 +470,15 @@ describe "String" do
     "x1.2".to_f32?.should be_nil
     expect_raises(ArgumentError) { "x1.2".to_f32(strict: false) }
     "x1.2".to_f32?(strict: false).should be_nil
+    "1#{Float32::MAX}".to_f32?.should be_nil
+    "-1#{Float32::MAX}".to_f32?.should be_nil
+    " NaN".to_f32?.try(&.nan?).should be_true
+    "NaN".to_f32?.try(&.nan?).should be_true
+    "-NaN".to_f32?.try(&.nan?).should be_true
+    " INF".to_f32?.should eq Float32::INFINITY
+    "INF".to_f32?.should eq Float32::INFINITY
+    "-INF".to_f32?.should eq -Float32::INFINITY
+    " +INF".to_f32?.should eq Float32::INFINITY
   end
 
   it "does to_f64" do
@@ -485,6 +507,15 @@ describe "String" do
     "x1.2".to_f64?.should be_nil
     expect_raises(ArgumentError) { "x1.2".to_f64(strict: false) }
     "x1.2".to_f64?(strict: false).should be_nil
+    "1#{Float64::MAX}".to_f64?.should be_nil
+    "-1#{Float64::MAX}".to_f64?.should be_nil
+    " NaN".to_f64?.try(&.nan?).should be_true
+    "NaN".to_f64?.try(&.nan?).should be_true
+    "-NaN".to_f64?.try(&.nan?).should be_true
+    " INF".to_f64?.should eq Float64::INFINITY
+    "INF".to_f64?.should eq Float64::INFINITY
+    "-INF".to_f64?.should eq -Float64::INFINITY
+    " +INF".to_f64?.should eq Float64::INFINITY
   end
 
   it "compares strings: different size" do
@@ -699,6 +730,7 @@ describe "String" do
 
   describe "rchop?" do
     it { "".rchop?.should be_nil }
+    it { "\n".rchop?.should eq("") }
     it { "foo".rchop?.should eq("fo") }
     it { "foo\n".rchop?.should eq("foo") }
     it { "foo\r".rchop?.should eq("foo") }
@@ -726,6 +758,7 @@ describe "String" do
     it { "".strip.should eq("") }
     it { "\n".strip.should eq("") }
     it { "\n\t  ".strip.should eq("") }
+    it { "\u00A0".strip.should eq("") }
 
     # TODO: add spec tags so this can be run with tag:slow
     # it { (" " * 167772160).strip.should eq("") }
@@ -807,7 +840,7 @@ describe "String" do
     it { "hello".presence.should eq("hello") }
   end
 
-  describe "index" do
+  describe "#index" do
     describe "by char" do
       it { "foo".index('o').should eq(1) }
       it { "foo".index('g').should be_nil }
@@ -822,6 +855,12 @@ describe "String" do
         it { "foo".index('g', 1).should be_nil }
         it { "foo".index('g', -20).should be_nil }
         it { "日本語日本語".index('本', 2).should eq(4) }
+
+        # Check offset type
+        it { "foobarbaz".index('a', 5_i64).should eq(7) }
+        it { "foobarbaz".index('a', 5_i64).should be_a(Int32) }
+        it { "日本語日本語".index('本', 2_i64).should eq(4) }
+        it { "日本語日本語".index('本', 2_i64).should be_a(Int32) }
       end
     end
 
@@ -831,6 +870,8 @@ describe "String" do
       it { "foo".index("").should eq(0) }
       it { "foo".index("foo").should eq(0) }
       it { "日本語日本語".index("本語").should eq(1) }
+      it { "\xFF\xFFcrystal".index("crystal").should eq(2) }
+      it { "\xFD\x9A\xAD\x50NG".index("PNG").should eq(3) }
 
       describe "with offset" do
         it { "foobarbaz".index("ba", 4).should eq(6) }
@@ -840,6 +881,16 @@ describe "String" do
         it { "foo".index("", 3).should eq(3) }
         it { "foo".index("", 4).should be_nil }
         it { "日本語日本語".index("本語", 2).should eq(4) }
+        it { "\xFD\x9A\xAD\x50NG".index("PNG", 2).should eq(3) }
+        it { "\xFD\x9A\xAD\x50NG".index("PNG", 4).should be_nil }
+
+        # Check offset type
+        it { "foobarbaz".index("a", 5_i64).should eq(7) }
+        it { "foobarbaz".index("a", 5_i64).should be_a(Int32) }
+        it { "日本語日本語".index("本", 2_i64).should eq(4) }
+        it { "日本語日本語".index("本", 2_i64).should be_a(Int32) }
+        it { "日本語日本語".index("", 2_i64).should eq 2 }
+        it { "日本語日本語".index("", 2_i64).should be_a(Int64) }
       end
     end
 
@@ -862,7 +913,7 @@ describe "String" do
     end
   end
 
-  describe "rindex" do
+  describe "#rindex" do
     describe "by char" do
       it { "bbbb".rindex('b').should eq(3) }
       it { "foobar".rindex('a').should eq(4) }
@@ -881,6 +932,12 @@ describe "String" do
         it { "faobar".rindex('a', 3).should eq(1) }
         it { "faobarbaz".rindex('a', -3).should eq(4) }
         it { "日本語日本語".rindex('本', 3).should eq(1) }
+
+        # Check offset type
+        it { "bbbb".rindex('b', 2_i64).should eq(2) }
+        it { "bbbb".rindex('b', 2_i64).should be_a(Int64) }
+        it { "日本語日本語".rindex('本', 3_i64).should eq(1) }
+        it { "日本語日本語".rindex('本', 3_i64).should be_a(Int64) }
       end
     end
 
@@ -902,6 +959,14 @@ describe "String" do
         it { "foo".rindex("", 3).should eq(3) }
         it { "foo".rindex("", 4).should eq(3) }
         it { "日本語日本語".rindex("日本", 2).should eq(0) }
+
+        # Check offset type
+        it { "bbbb".rindex("b", 2_i64).should eq(2) }
+        it { "bbbb".rindex("b", 2_i64).should be_a(Int32) }
+        it { "日本語日本語".rindex("本", 3_i64).should eq(1) }
+        it { "日本語日本語".rindex("本", 3_i64).should be_a(Int32) }
+        it { "日本語日本語".rindex("", 3_i64).should eq(3) }
+        it { "日本語日本語".rindex("", 3_i64).should be_a(Int32) }
       end
     end
 
@@ -909,6 +974,12 @@ describe "String" do
       it { "bbbb".rindex(/b/).should eq(3) }
       it { "a43b53".rindex(/\d+/).should eq(4) }
       it { "bbbb".rindex(/\d/).should be_nil }
+
+      describe "which matches empty string" do
+        it { "foo".rindex(/o*/).should eq(3) }
+        it { "foo".rindex(//).should eq(3) }
+        it { "foo".rindex(/\b/).should eq(3) }
+      end
 
       describe "with offset" do
         it { "bbbb".rindex(/b/, 2).should eq(2) }
@@ -924,57 +995,57 @@ describe "String" do
 
   describe "partition" do
     describe "by char" do
-      "hello".partition('h').should eq ({"", "h", "ello"})
-      "hello".partition('o').should eq ({"hell", "o", ""})
-      "hello".partition('l').should eq ({"he", "l", "lo"})
-      "hello".partition('x').should eq ({"hello", "", ""})
+      it { "hello".partition('h').should eq ({"", "h", "ello"}) }
+      it { "hello".partition('o').should eq ({"hell", "o", ""}) }
+      it { "hello".partition('l').should eq ({"he", "l", "lo"}) }
+      it { "hello".partition('x').should eq ({"hello", "", ""}) }
     end
 
     describe "by string" do
-      "hello".partition("h").should eq ({"", "h", "ello"})
-      "hello".partition("o").should eq ({"hell", "o", ""})
-      "hello".partition("l").should eq ({"he", "l", "lo"})
-      "hello".partition("ll").should eq ({"he", "ll", "o"})
-      "hello".partition("x").should eq ({"hello", "", ""})
+      it { "hello".partition("h").should eq ({"", "h", "ello"}) }
+      it { "hello".partition("o").should eq ({"hell", "o", ""}) }
+      it { "hello".partition("l").should eq ({"he", "l", "lo"}) }
+      it { "hello".partition("ll").should eq ({"he", "ll", "o"}) }
+      it { "hello".partition("x").should eq ({"hello", "", ""}) }
     end
 
     describe "by regex" do
-      "hello".partition(/h/).should eq ({"", "h", "ello"})
-      "hello".partition(/o/).should eq ({"hell", "o", ""})
-      "hello".partition(/l/).should eq ({"he", "l", "lo"})
-      "hello".partition(/ll/).should eq ({"he", "ll", "o"})
-      "hello".partition(/.l/).should eq ({"h", "el", "lo"})
-      "hello".partition(/.h/).should eq ({"hello", "", ""})
-      "hello".partition(/h./).should eq ({"", "he", "llo"})
-      "hello".partition(/o./).should eq ({"hello", "", ""})
-      "hello".partition(/.o/).should eq ({"hel", "lo", ""})
-      "hello".partition(/x/).should eq ({"hello", "", ""})
+      it { "hello".partition(/h/).should eq ({"", "h", "ello"}) }
+      it { "hello".partition(/o/).should eq ({"hell", "o", ""}) }
+      it { "hello".partition(/l/).should eq ({"he", "l", "lo"}) }
+      it { "hello".partition(/ll/).should eq ({"he", "ll", "o"}) }
+      it { "hello".partition(/.l/).should eq ({"h", "el", "lo"}) }
+      it { "hello".partition(/.h/).should eq ({"hello", "", ""}) }
+      it { "hello".partition(/h./).should eq ({"", "he", "llo"}) }
+      it { "hello".partition(/o./).should eq ({"hello", "", ""}) }
+      it { "hello".partition(/.o/).should eq ({"hel", "lo", ""}) }
+      it { "hello".partition(/x/).should eq ({"hello", "", ""}) }
     end
   end
 
   describe "rpartition" do
     describe "by char" do
-      "hello".rpartition('l').should eq ({"hel", "l", "o"})
-      "hello".rpartition('o').should eq ({"hell", "o", ""})
-      "hello".rpartition('h').should eq ({"", "h", "ello"})
+      it { "hello".rpartition('l').should eq ({"hel", "l", "o"}) }
+      it { "hello".rpartition('o').should eq ({"hell", "o", ""}) }
+      it { "hello".rpartition('h').should eq ({"", "h", "ello"}) }
     end
 
     describe "by string" do
-      "hello".rpartition("l").should eq ({"hel", "l", "o"})
-      "hello".rpartition("x").should eq ({"", "", "hello"})
-      "hello".rpartition("o").should eq ({"hell", "o", ""})
-      "hello".rpartition("h").should eq ({"", "h", "ello"})
-      "hello".rpartition("ll").should eq ({"he", "ll", "o"})
-      "hello".rpartition("lo").should eq ({"hel", "lo", ""})
-      "hello".rpartition("he").should eq ({"", "he", "llo"})
+      it { "hello".rpartition("l").should eq ({"hel", "l", "o"}) }
+      it { "hello".rpartition("x").should eq ({"", "", "hello"}) }
+      it { "hello".rpartition("o").should eq ({"hell", "o", ""}) }
+      it { "hello".rpartition("h").should eq ({"", "h", "ello"}) }
+      it { "hello".rpartition("ll").should eq ({"he", "ll", "o"}) }
+      it { "hello".rpartition("lo").should eq ({"hel", "lo", ""}) }
+      it { "hello".rpartition("he").should eq ({"", "he", "llo"}) }
     end
 
     describe "by regex" do
-      "hello".rpartition(/.l/).should eq ({"he", "ll", "o"})
-      "hello".rpartition(/ll/).should eq ({"he", "ll", "o"})
-      "hello".rpartition(/.o/).should eq ({"hel", "lo", ""})
-      "hello".rpartition(/.e/).should eq ({"", "he", "llo"})
-      "hello".rpartition(/l./).should eq ({"hel", "lo", ""})
+      it { "hello".rpartition(/.l/).should eq ({"he", "ll", "o"}) }
+      it { "hello".rpartition(/ll/).should eq ({"he", "ll", "o"}) }
+      it { "hello".rpartition(/.o/).should eq ({"hel", "lo", ""}) }
+      it { "hello".rpartition(/.e/).should eq ({"", "he", "llo"}) }
+      it { "hello".rpartition(/l./).should eq ({"hel", "lo", ""}) }
     end
   end
 
@@ -1020,6 +1091,8 @@ describe "String" do
       it { "   foo   bar\n\t  baz   ".split(1).should eq(["   foo   bar\n\t  baz   "]) }
       it { "   foo   bar\n\t  baz   ".split(2).should eq(["foo", "bar\n\t  baz   "]) }
       it { "日本語 \n\t 日本 \n\n 語".split.should eq(["日本語", "日本", "語"]) }
+
+      it { " foo\u00A0bar baz".split.should eq(["foo", "bar", "baz"]) }
     end
 
     describe "by char" do
@@ -1171,7 +1244,7 @@ describe "String" do
   end
 
   it "reverses utf-8 string" do
-    "こんいちは".reverse.should eq("はちいんこ")
+    "こんにちは".reverse.should eq("はちにんこ")
   end
 
   it "reverses taking grapheme clusters into account" do
@@ -1711,17 +1784,31 @@ describe "String" do
     ("%+i" % -123).should eq("-123")
     ("% i" % 123).should eq(" 123")
     ("%20d" % 123).should eq("                 123")
+    ("%20d" % -123).should eq("                -123")
+    ("%20d" % 0).should eq("                   0")
     ("%+20d" % 123).should eq("                +123")
     ("%+20d" % -123).should eq("                -123")
+    ("%+20d" % 0).should eq("                  +0")
     ("% 20d" % 123).should eq("                 123")
     ("%020d" % 123).should eq("00000000000000000123")
+    ("%020d" % -123).should eq("0000000000000000-123")
+    ("%020d" % 0).should eq("00000000000000000000")
     ("%+020d" % 123).should eq("+0000000000000000123")
+    ("%+020d" % -123).should eq("-0000000000000000123")
+    ("%+020d" % 0).should eq("+0000000000000000000")
     ("% 020d" % 123).should eq(" 0000000000000000123")
+    ("% 020d" % 0).should eq(" 0000000000000000000")
     ("%-d" % 123).should eq("123")
+    ("%-d" % 0).should eq("0")
     ("%-20d" % 123).should eq("123                 ")
+    ("%-20d" % -123).should eq("-123                ")
+    ("%-20d" % 0).should eq("0                   ")
     ("%-+20d" % 123).should eq("+123                ")
     ("%-+20d" % -123).should eq("-123                ")
+    ("%-+20d" % 0).should eq("+0                  ")
     ("%- 20d" % 123).should eq(" 123                ")
+    ("%- 20d" % -123).should eq("-123                ")
+    ("%- 20d" % 0).should eq(" 0                  ")
     ("%s" % 'a').should eq("a")
     ("%-s" % 'a').should eq("a")
     ("%20s" % 'a').should eq("                   a")
@@ -1851,16 +1938,40 @@ describe "String" do
     "ぜんぶ".chars.should eq(['ぜ', 'ん', 'ぶ'])
   end
 
-  it "allows creating a string with zeros" do
-    p = Pointer(UInt8).malloc(3)
-    p[0] = 'a'.ord.to_u8
-    p[1] = '\0'.ord.to_u8
-    p[2] = 'b'.ord.to_u8
-    s = String.new(p, 3)
-    s[0].should eq('a')
-    s[1].should eq('\0')
-    s[2].should eq('b')
-    s.bytesize.should eq(3)
+  describe "creating from a pointer" do
+    it "allows creating a string with zeros" do
+      p = Pointer(UInt8).malloc(3)
+      p[0] = 'a'.ord.to_u8
+      p[1] = '\0'.ord.to_u8
+      p[2] = 'b'.ord.to_u8
+      s = String.new(p, 3)
+      s[0].should eq('a')
+      s[1].should eq('\0')
+      s[2].should eq('b')
+      s.bytesize.should eq(3)
+    end
+
+    it "raises an exception when creating a string with a null pointer and no size" do
+      expect_raises ArgumentError do
+        String.new(Pointer(UInt8).null)
+      end
+    end
+
+    it "raises when creating from a null pointer with a nonzero size" do
+      expect_raises ArgumentError, "Cannot create a string with a null pointer and a non-zero (3) bytesize" do
+        String.new(Pointer(UInt8).null, 3)
+      end
+    end
+
+    it "doesn't raise creating from a null pointer with size 0" do
+      String.new(Pointer(UInt8).null, 0).should eq ""
+    end
+  end
+
+  describe "creating from a slice" do
+    it "allows creating from an empty slice" do
+      String.new(Bytes.empty).should eq("")
+    end
   end
 
   describe "tr" do
@@ -1966,25 +2077,31 @@ describe "String" do
     end
   end
 
-  it "answers ascii_only?" do
-    "a".ascii_only?.should be_true
-    "あ".ascii_only?.should be_false
+  describe "ascii_only?" do
+    it "answers ascii_only?" do
+      "a".ascii_only?.should be_true
+      "あ".ascii_only?.should be_false
 
-    str = String.new(1) do |buffer|
-      buffer.value = 'a'.ord.to_u8
-      {1, 0}
-    end
-    str.ascii_only?.should be_true
-
-    str = String.new(4) do |buffer|
-      count = 0
-      'あ'.each_byte do |byte|
-        buffer[count] = byte
-        count += 1
+      str = String.new(1) do |buffer|
+        buffer.value = 'a'.ord.to_u8
+        {1, 0}
       end
-      {count, 0}
+      str.ascii_only?.should be_true
+
+      str = String.new(4) do |buffer|
+        count = 0
+        'あ'.each_byte do |byte|
+          buffer[count] = byte
+          count += 1
+        end
+        {count, 0}
+      end
+      str.ascii_only?.should be_false
     end
-    str.ascii_only?.should be_false
+
+    it "broken UTF-8 is not ascii_only" do
+      "\xED\xA0\x80\xED\xBF\xBF".ascii_only?.should be_false
+    end
   end
 
   describe "scan" do
@@ -2105,13 +2222,6 @@ describe "String" do
       it { String.build { |io| "12".ljust(io, 7, '-') }.should eq("12-----") }
       it { String.build { |io| "12".ljust(io, 7, 'あ') }.should eq("12あああああ") }
     end
-
-    describe "to io (deprecated)" do
-      it { String.build { |io| "123".ljust(2, io) }.should eq("123") }
-      it { String.build { |io| "123".ljust(5, io) }.should eq("123  ") }
-      it { String.build { |io| "12".ljust(7, '-', io) }.should eq("12-----") }
-      it { String.build { |io| "12".ljust(7, 'あ', io) }.should eq("12あああああ") }
-    end
   end
 
   describe "rjust" do
@@ -2126,13 +2236,6 @@ describe "String" do
       it { String.build { |io| "12".rjust(io, 7, '-') }.should eq("-----12") }
       it { String.build { |io| "12".rjust(io, 7, 'あ') }.should eq("あああああ12") }
     end
-
-    describe "to io (deprecated)" do
-      it { String.build { |io| "123".rjust(2, io) }.should eq("123") }
-      it { String.build { |io| "123".rjust(5, io) }.should eq("  123") }
-      it { String.build { |io| "12".rjust(7, '-', io) }.should eq("-----12") }
-      it { String.build { |io| "12".rjust(7, 'あ', io) }.should eq("あああああ12") }
-    end
   end
 
   describe "center" do
@@ -2146,13 +2249,6 @@ describe "String" do
       it { String.build { |io| "123".center(io, 5) }.should eq(" 123 ") }
       it { String.build { |io| "12".center(io, 7, '-') }.should eq("--12---") }
       it { String.build { |io| "12".center(io, 7, 'あ') }.should eq("ああ12あああ") }
-    end
-
-    describe "to io (deprecated)" do
-      it { String.build { |io| "123".center(2, io) }.should eq("123") }
-      it { String.build { |io| "123".center(5, io) }.should eq(" 123 ") }
-      it { String.build { |io| "12".center(7, '-', io) }.should eq("--12---") }
-      it { String.build { |io| "12".center(7, 'あ', io) }.should eq("ああ12あああ") }
     end
   end
 
@@ -2213,6 +2309,8 @@ describe "String" do
 
   pending_win32 "formats floats (#1562)" do
     sprintf("%12.2f %12.2f %6.2f %.2f" % {2.0, 3.0, 4.0, 5.0}).should eq("        2.00         3.00   4.00 5.00")
+
+    sprintf("%f", 1e15).should eq("1000000000000000.000000")
   end
 
   it "does each_char" do
@@ -2252,53 +2350,9 @@ describe "String" do
     values.should eq([{'a', 10}, {'b', 11}, {'c', 12}])
   end
 
-  it "gets each_char iterator" do
-    iter = "abc".each_char
-    iter.next.should eq('a')
-    iter.next.should eq('b')
-    iter.next.should eq('c')
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "gets each_char with empty string" do
-    iter = "".each_char
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "cycles chars" do
-    "abc".each_char.cycle.first(8).join.should eq("abcabcab")
-  end
-
-  it "does each_byte" do
-    s = "abc"
-    i = 0
-    s.each_byte do |b|
-      case i
-      when 0
-        b.should eq('a'.ord)
-      when 1
-        b.should eq('b'.ord)
-      when 2
-        b.should eq('c'.ord)
-      else
-        fail "shouldn't happen"
-      end
-      i += 1
-    end.should be_nil
-    i.should eq(3)
-  end
-
-  it "gets each_byte iterator" do
-    iter = "abc".each_byte
-    iter.next.should eq('a'.ord)
-    iter.next.should eq('b'.ord)
-    iter.next.should eq('c'.ord)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "cycles bytes" do
-    "abc".each_byte.cycle.first(8).join.should eq("9798999798999798")
-  end
+  it_iterates "#each_char", ['a', 'b', 'c'], "abc".each_char
+  it_iterates "#each_char with empty string", [] of Char, "".each_char
+  it_iterates "#each_byte", ['a'.ord.to_u8, 'b'.ord.to_u8, 'c'.ord.to_u8], "abc".each_byte
 
   it "gets lines" do
     "".lines.should eq([] of String)
@@ -2334,36 +2388,10 @@ describe "String" do
     lines.should eq(["foo\n", "\n", "bar\r\n", "baz\r\n"])
   end
 
-  it "gets each_line iterator" do
-    iter = "foo\nbar\r\nbaz\r\n".each_line
-    iter.next.should eq("foo")
-    iter.next.should eq("bar")
-    iter.next.should eq("baz")
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each_line", ["foo", "bar", "baz"], "foo\nbar\r\nbaz\r\n".each_line
+  it_iterates "#each_line(chomp: false)", ["foo\n", "bar\r\n", "baz\r\n"], "foo\nbar\r\nbaz\r\n".each_line(chomp: false)
 
-  it "gets each_line iterator with chomp = false" do
-    iter = "foo\nbar\nbaz\n".each_line(chomp: false)
-    iter.next.should eq("foo\n")
-    iter.next.should eq("bar\n")
-    iter.next.should eq("baz\n")
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "has yields to each_codepoint" do
-    codepoints = [] of Int32
-    "ab☃".each_codepoint do |codepoint|
-      codepoints << codepoint
-    end.should be_nil
-    codepoints.should eq [97, 98, 9731]
-  end
-
-  it "has the each_codepoint iterator" do
-    iter = "ab☃".each_codepoint
-    iter.next.should eq 97
-    iter.next.should eq 98
-    iter.next.should eq 9731
-  end
+  it_iterates "#each_codepoint", [97, 98, 9731], "ab☃".each_codepoint
 
   it "has codepoints" do
     "ab☃".codepoints.should eq [97, 98, 9731]
@@ -2447,7 +2475,7 @@ describe "String" do
       end
     end
 
-    pending_win32 "applies formatting to %<...> placeholder" do
+    it "applies formatting to %<...> placeholder" do
       res = "change %<this>.2f" % {"this" => 23.456}
       res.should eq "change 23.46"
 
@@ -2689,9 +2717,9 @@ describe "String" do
 
     it "scrubs" do
       string = String.new(Bytes[255, 129, 97, 255, 97])
-      string.scrub.bytes.should eq([239, 191, 189, 97, 239, 191, 189, 97])
+      string.scrub.bytes.should eq([239, 191, 189, 239, 191, 189, 97, 239, 191, 189, 97])
 
-      string.scrub("?").should eq("?a?a")
+      string.scrub("?").should eq("??a?a")
 
       "hello".scrub.should eq("hello")
     end
@@ -2722,6 +2750,71 @@ describe "String" do
 
     it "of multiple possibly non-strings" do
       String.interpolation("a", 123, "b", 456, "cde").should eq("a123b456cde")
+    end
+  end
+
+  describe "delete_at" do
+    describe "char" do
+      it { "abcde".delete_at(0).should eq("bcde") }
+      it { "abcde".delete_at(1).should eq("acde") }
+      it { "abcde".delete_at(2).should eq("abde") }
+      it { "abcde".delete_at(4).should eq("abcd") }
+      it { "abcde".delete_at(-2).should eq("abce") }
+      it { expect_raises(IndexError) { "abcde".delete_at(5) } }
+      it { expect_raises(IndexError) { "abcde".delete_at(-6) } }
+
+      it { "二ノ国".delete_at(0).should eq("ノ国") }
+      it { "二ノ国".delete_at(1).should eq("二国") }
+      it { "二ノ国".delete_at(2).should eq("二ノ") }
+      it { "二ノ国".delete_at(-2).should eq("二国") }
+      it { expect_raises(IndexError) { "二ノ国".delete_at(3) } }
+      it { expect_raises(IndexError) { "二ノ国".delete_at(-4) } }
+    end
+
+    describe "start, count" do
+      it { "abcdefg".delete_at(0, 2).should eq("cdefg") }
+      it { "abcdefg".delete_at(1, 2).should eq("adefg") }
+      it { "abcdefg".delete_at(3, 10).should eq("abc") }
+      it { "abcdefg".delete_at(-3, 2).should eq("abcdg") }
+      it { "abcdefg".delete_at(7, 10).should eq("abcdefg") }
+      it { expect_raises(IndexError) { "abcdefg".delete_at(8, 1) } }
+      it { expect_raises(IndexError) { "abcdefg".delete_at(-8, 1) } }
+
+      it "raises on negative count" do
+        expect_raises(ArgumentError, "Negative count: -1") {
+          "abcdefg".delete_at(1, -1)
+        }
+      end
+
+      it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(4, 6).should eq("セキロ：ダイ トゥワイス") }
+      it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(0, 4).should eq("シャドウズ ダイ トゥワイス") }
+      it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(3, 20).should eq("セキロ") }
+      it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(-14, 6).should eq("セキロ：ダイ トゥワイス") }
+      it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(18, 3).should eq("セキロ：シャドウズ ダイ トゥワイス") }
+      it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(19, 1) } }
+      it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(-19, 1) } }
+
+      it "raises on negative count" do
+        expect_raises(ArgumentError, "Negative count: -1") {
+          "セキロ：シャドウズ ダイ トゥワイス".delete_at(1, -1)
+        }
+      end
+    end
+
+    describe "range" do
+      it { "abcdefg".delete_at(0..1).should eq("cdefg") }
+      it { "abcdefg".delete_at(0...2).should eq("cdefg") }
+      it { "abcdefg".delete_at(1..3).should eq("aefg") }
+      it { "abcdefg".delete_at(3..10).should eq("abc") }
+      it { "abcdefg".delete_at(-3..-2).should eq("abcdg") }
+      it { "abcdefg".delete_at(3..).should eq("abc") }
+      it { "abcdefg".delete_at(..-3).should eq("fg") }
+      it { expect_raises(IndexError) { "abcdefg".delete_at(8..1) } }
+      it { expect_raises(IndexError) { "abcdefg".delete_at(-8..1) } }
+
+      it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(4...10).should eq("セキロ：ダイ トゥワイス") }
+      it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(19..1) } }
+      it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(-19..1) } }
     end
   end
 end

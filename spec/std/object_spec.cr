@@ -154,6 +154,20 @@ private class HashedTestObject
   def_hash :a, :b
 end
 
+private struct NonReflexive
+  def ==(other)
+    false
+  end
+end
+
+private class DefEquals
+  def initialize
+    @x = NonReflexive.new
+  end
+
+  def_equals @x
+end
+
 describe Object do
   describe "delegate" do
     it "delegates" do
@@ -495,5 +509,14 @@ describe Object do
 
   it "applies annotation to lazy property (#9139)" do
     TestObject.test_annotation_count.should eq(1)
+  end
+
+  describe "def_equals" do
+    it "compares by reference" do
+      x = DefEquals.new
+      y = DefEquals.new
+      (x == x).should be_true
+      (x == y).should be_false
+    end
   end
 end

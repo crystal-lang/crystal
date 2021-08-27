@@ -8,23 +8,23 @@ private struct LEBReader
   def initialize(@data : UInt8*)
   end
 
-  def data
+  def data : UInt8*
     @data
   end
 
-  def read_uint8
+  def read_uint8 : UInt8
     value = @data.value
     @data += 1
     value
   end
 
-  def read_uint32
+  def read_uint32 : UInt32
     value = @data.as(UInt32*).value
     @data += 4
     value
   end
 
-  def read_uleb128
+  def read_uleb128 : UInt64
     result = 0_u64
     shift = 0
     while true
@@ -103,7 +103,7 @@ end
   # Raises the *exception*.
   #
   # This will set the exception's callstack if it hasn't been already.
-  # Re-raising a previously catched exception won't replace the callstack.
+  # Re-raising a previously caught exception won't replace the callstack.
   def raise(exception : Exception) : NoReturn
     {% if flag?(:debug_raise) %}
       STDERR.puts
@@ -195,6 +195,7 @@ end
     ret = LibUnwind.raise_exception(unwind_ex)
     Crystal::System.print_error "Failed to raise an exception: %s\n", ret.to_s
     Exception::CallStack.print_backtrace
+    Crystal::System.print_exception("\nTried to raise:", unwind_ex.value.exception_object.as(Exception))
     LibC.exit(ret)
   end
 
@@ -206,7 +207,7 @@ end
   # Raises the *exception*.
   #
   # This will set the exception's callstack if it hasn't been already.
-  # Re-raising a previously catched exception won't replace the callstack.
+  # Re-raising a previously caught exception won't replace the callstack.
   def raise(exception : Exception) : NoReturn
     {% if flag?(:debug_raise) %}
       STDERR.puts

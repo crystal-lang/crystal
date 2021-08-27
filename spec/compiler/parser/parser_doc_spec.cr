@@ -14,7 +14,7 @@ describe "Parser doc" do
     {"enum def", "enum Foo\nend"},
     {"constant assign", "A = 1"},
     {"alias", "alias Foo = Bar"},
-    {"attribute", "@[Some]"},
+    {"annotation", "@[Some]"},
     {"private def", "private def foo\nend"},
   ].each do |(desc, code)|
     it "includes doc for #{desc}" do

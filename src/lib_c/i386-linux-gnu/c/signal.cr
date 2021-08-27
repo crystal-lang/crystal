@@ -36,6 +36,8 @@ lib LibC
   SIGSTKFLT = 16
   SIGUNUSED = 31
 
+  SIGSTKSZ = 8192
+
   SIG_SETMASK = 2
 
   alias SighandlerT = Int ->
@@ -46,9 +48,37 @@ lib LibC
     val : ULong[32] # (1024 / (8 * sizeof(long)))
   end
 
+  SA_ONSTACK = 0x08000000
+  SA_SIGINFO = 0x00000004
+
+  struct SiginfoT
+    si_signo : Int
+    si_errno : Int
+    si_code : Int
+    si_addr : Void*              # Assuming the sigfault form of siginfo_t
+    __pad : StaticArray(Int, 25) # __SI_PAD_SIZE (29) - sizeof(void*) (4) = 25
+  end
+
+  alias SigactionHandlerT = (Int, SiginfoT*, Void*) ->
+
+  struct Sigaction
+    sa_sigaction : SigactionHandlerT
+    sa_mask : SigsetT
+    sa_flags : Int
+    sa_restorer : Void*
+  end
+
+  struct StackT
+    ss_sp : Void*
+    ss_flags : Int
+    ss_size : SizeT
+  end
+
   fun kill(pid : PidT, sig : Int) : Int
   fun pthread_sigmask(Int, SigsetT*, SigsetT*) : Int
   fun signal(sig : Int, handler : Int -> Void) : Int -> Void
+  fun sigaction(x0 : Int, x1 : Sigaction*, x2 : Sigaction*) : Int
+  fun sigaltstack(x0 : StackT*, x1 : StackT*) : Int
   fun sigemptyset(SigsetT*) : Int
   fun sigfillset(SigsetT*) : Int
   fun sigaddset(SigsetT*, Int) : Int

@@ -16,9 +16,7 @@ class Crystal::CodeGenVisitor
       return false
     end
 
-    check_call_to_deprecated_method node
-
-    owner = node.name == "super" ? node.scope : node.target_def.owner
+    owner = node.super? ? node.scope : node.target_def.owner
 
     call_args, has_out = prepare_call_args node, owner
 
@@ -27,7 +25,7 @@ class Crystal::CodeGenVisitor
     return false if @builder.end
 
     if block = node.block
-      # A block might turn into a proc literal but not be used if it particpates in a dispatch
+      # A block might turn into a proc literal but not be used if it participates in a dispatch
       if (fun_literal = block.fun_literal) && node.target_def.uses_block_arg?
         codegen_call_with_block_as_fun_literal(node, fun_literal, owner, call_args)
       else
@@ -69,7 +67,7 @@ class Crystal::CodeGenVisitor
     obj = node.obj
 
     # Always accept obj: even if it's not passed as self this might
-    # involve intermerdiate calls with side effects.
+    # involve intermediate calls with side effects.
     if obj
       @needs_value = true
       accept obj
@@ -168,6 +166,8 @@ class Crystal::CodeGenVisitor
       call_args << sret_value
     end
 
+    target_def_args_size = target_def.args.size
+
     node.args.each_with_index do |arg, i|
       if arg.is_a?(Out)
         has_out = true
@@ -217,15 +217,28 @@ class Crystal::CodeGenVisitor
 
       abi_arg_type = abi_info.arg_types[i]
       case abi_arg_type.kind
-      when LLVM::ABI::ArgKind::Direct
+      in .direct?
         call_arg = codegen_direct_abi_call(call_arg, abi_arg_type) unless arg.type.nil_type?
-        call_args << call_arg
-      when LLVM::ABI::ArgKind::Indirect
+      in .indirect?
         # Pass argument as is (will be passed byval)
-        call_args << call_arg
-      when LLVM::ABI::ArgKind::Ignore
+      in .ignore?
         # Ignore
+        next
       end
+
+      # If we are passing variadic arguments there are some special rules
+      if i >= target_def_args_size
+        arg_type = arg.type.remove_indirection
+        if arg_type.is_a?(FloatType) && arg_type.kind == :f32
+          # Floats must be passed as doubles (there are no float varargs)
+          call_arg = extend_float @program.float64, call_arg
+        elsif arg_type.is_a?(IntegerType) && arg_type.kind.in?(:i8, :u8, :i16, :u16)
+          # Integer with a size less that `int` must be converted to `int`
+          call_arg = extend_int arg_type, @program.int32, call_arg
+        end
+      end
+
+      call_args << call_arg
     end
 
     @needs_value = old_needs_value
@@ -279,11 +292,17 @@ class Crystal::CodeGenVisitor
         set_ensure_exception_handler(target_def)
 
         args_base_index = create_local_copy_of_block_self(self_type, call_args)
-        alloca_vars target_def.vars, target_def
+
+        # Don't reset nilable vars here because we do it right before inlining the method body
+        alloca_vars target_def.vars, target_def, reset_nilable_vars: false
+
         create_local_copy_of_block_args(target_def, self_type, call_args, args_base_index)
 
         Phi.open(self, node) do |phi|
           context.return_phi = phi
+
+          # Reset vars that are declared inside the def and are nilable
+          reset_nilable_vars(target_def)
 
           request_value do
             accept target_def.body
@@ -344,7 +363,7 @@ class Crystal::CodeGenVisitor
     call.uses_with_scope = node.uses_with_scope?
     call.name_location = node.name_location
 
-    is_super = node.name == "super"
+    is_super = node.super?
 
     with_cloned_context do
       context.vars = new_vars
@@ -509,7 +528,7 @@ class Crystal::CodeGenVisitor
       else
         abi_return = abi_info(external).return_type
         case abi_return.kind
-        when LLVM::ABI::ArgKind::Direct
+        in .direct?
           if cast = abi_return.cast
             cast1 = alloca cast
             store @last, cast1
@@ -522,9 +541,9 @@ class Crystal::CodeGenVisitor
             memcpy(final_value_casted, cast2, size, align, int1(0))
             @last = final_value
           end
-        when LLVM::ABI::ArgKind::Indirect
+        in .indirect?
           @last = @sret_value.not_nil!
-        when LLVM::ABI::ArgKind::Ignore
+        in .ignore?
           # Nothing
         end
       end
@@ -540,8 +559,6 @@ class Crystal::CodeGenVisitor
         else
           @last = llvm_nil
         end
-      else
-        # go on
       end
     end
 
@@ -569,12 +586,12 @@ class Crystal::CodeGenVisitor
 
       abi_arg_type = abi_info.arg_types[i]?
       if abi_arg_type && (attr = abi_arg_type.attr)
-        @last.add_instruction_attribute(i + arg_offset, attr, llvm_context)
+        @last.add_instruction_attribute(i + arg_offset, attr, llvm_context, abi_arg_type.type)
       end
     end
 
     if sret
-      @last.add_instruction_attribute(1, LLVM::Attribute::StructRet, llvm_context)
+      @last.add_instruction_attribute(1, LLVM::Attribute::StructRet, llvm_context, abi_info.return_type.type)
     end
   end
 
@@ -588,7 +605,7 @@ class Crystal::CodeGenVisitor
     arg_types = fun_type.try(&.arg_types) || target_def.try &.args.map &.type
     arg_types.try &.each_with_index do |arg_type, i|
       if abi_info && (abi_arg_type = abi_info.arg_types[i]?) && (attr = abi_arg_type.attr)
-        @last.add_instruction_attribute(i + arg_offset, attr, llvm_context)
+        @last.add_instruction_attribute(i + arg_offset, attr, llvm_context, abi_arg_type.type)
       end
     end
   end

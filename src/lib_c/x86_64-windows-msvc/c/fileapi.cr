@@ -1,5 +1,6 @@
 require "c/winnt"
 require "c/basetsd"
+require "c/wtypesbase"
 
 lib LibC
   fun GetFullPathNameW(lpFileName : LPWSTR, nBufferLength : DWORD, lpBuffer : LPWSTR, lpFilePart : LPWSTR*) : DWORD
@@ -11,6 +12,15 @@ lib LibC
   FILE_TYPE_UNKNOWN = DWORD.new(0x0)
 
   fun GetFileType(hFile : HANDLE) : DWORD
+
+  struct WIN32_FILE_ATTRIBUTE_DATA
+    dwFileAttributes : DWORD
+    ftCreationTime : FILETIME
+    ftLastAccessTime : FILETIME
+    ftLastWriteTime : FILETIME
+    nFileSizeHigh : DWORD
+    nFileSizeLow : DWORD
+  end
 
   struct BY_HANDLE_FILE_INFORMATION
     dwFileAttributes : DWORD
@@ -32,6 +42,7 @@ lib LibC
 
   OPEN_EXISTING = 3
 
+  FILE_ATTRIBUTE_NORMAL      =       0x80
   FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
 
   FILE_SHARE_READ   = 0x1
@@ -79,4 +90,7 @@ lib LibC
   fun FindFirstFileW(lpFileName : LPWSTR, lpFindFileData : WIN32_FIND_DATAW*) : HANDLE
   fun FindNextFileW(hFindFile : HANDLE, lpFindFileData : WIN32_FIND_DATAW*) : BOOL
   fun FindClose(hFindFile : HANDLE) : BOOL
+
+  fun SetFileTime(hFile : HANDLE, lpCreationTime : FILETIME*,
+                  lpLastAccessTime : FILETIME*, lpLastWriteTime : FILETIME*) : BOOL
 end
