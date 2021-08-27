@@ -719,10 +719,6 @@ module Crystal
       (yield self) ? true : false
     end
 
-    def always_falsey?
-      remove_indirection.is_a?(NilType)
-    end
-
     def to_s(*, generic_args : Bool = true)
       String.build do |io|
         to_s_with_options io, generic_args: generic_args
