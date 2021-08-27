@@ -342,7 +342,20 @@ describe Crystal::Formatter do
     assert_format "#{keyword}  1", "#{keyword} 1"
     assert_format "#{keyword}( 1 , 2 )", "#{keyword}(1, 2)"
     assert_format "#{keyword}  1 ,  2", "#{keyword} 1, 2"
-    assert_format "#{keyword} { 1 ,  2 }", "#{keyword} {1, 2}" unless keyword == "yield"
+    assert_format "#{keyword}  *1", "#{keyword} *1"
+    assert_format "#{keyword}  1  , *2", "#{keyword} 1, *2"
+    assert_format "#{keyword}  *1  ,2", "#{keyword} *1, 2"
+    assert_format "#{keyword}  *1  , *2", "#{keyword} *1, *2"
+    assert_format "#{keyword}( *1  , *2 )", "#{keyword}(*1, *2)"
+
+    unless keyword == "yield"
+      assert_format "#{keyword} { 1 ,  2 }", "#{keyword} {1, 2}"
+      assert_format "#{keyword} {1, 2}, 3"
+      assert_format "#{keyword} 1, {2, 3}"
+      assert_format "#{keyword} {1, 2}, {3, 4}"
+      assert_format "#{keyword} { {1, 2}, {3, 4} }"
+      assert_format "#{keyword} { {1, 2}, {3, 4} }, 5"
+    end
   end
 
   assert_format "yield 1\n2", "yield 1\n2"

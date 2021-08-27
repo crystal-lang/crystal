@@ -55,6 +55,7 @@ module Crystal
     def initialize(string, string_pool : StringPool? = nil)
       @reader = Char::Reader.new(string)
       @token = Token.new
+      @temp_token = Token.new
       @line_number = 1
       @column_number = 1
       @filename = ""
@@ -636,6 +637,8 @@ module Crystal
       when '~'
         next_char :"~"
       when '.'
+        line = @line_number
+        column = @column_number
         case next_char
         when '.'
           case next_char
@@ -644,6 +647,8 @@ module Crystal
           else
             @token.type = :".."
           end
+        when .ascii_number?
+          raise ".1 style number literal is not supported, put 0 before dot", line, column
         else
           @token.type = :"."
         end
@@ -1575,9 +1580,13 @@ module Crystal
       set_token_raw_from_start(start)
     end
 
-    macro gen_check_int_fits_in_size(type, method, size)
+    macro gen_check_int_fits_in_size(type, method, size, *, actual_type = nil)
       if num_size >= 20
-        raise_value_doesnt_fit_in "{{type}}", string_value, start
+        {% if actual_type.nil? %}
+          raise_value_doesnt_fit_in "{{type}}", string_value, start
+        {% else %}
+          raise_value_restricted_by "{{actual_type}}", "{{type}}", string_value, start
+        {% end %}
       end
       if num_size >= {{size}}
         int_value = absolute_integer_value(string_value, negative)
@@ -1585,7 +1594,11 @@ module Crystal
         max += 1 if negative
 
         if int_value > max
-          raise_value_doesnt_fit_in "{{type}}", string_value, start
+          {% if actual_type.nil? %}
+            raise_value_doesnt_fit_in "{{type}}", string_value, start
+          {% else %}
+            raise_value_restricted_by "{{actual_type}}", "{{type}}", string_value, start
+          {% end %}
         end
       end
     end
@@ -1627,8 +1640,14 @@ module Crystal
         end
 
         check_value_fits_in_uint64 string_value, num_size, start
-      else
-        # TODO: handle i128 and u128
+      when :i128
+        gen_check_int_fits_in_size Int64, to_u64, 19, actual_type: Int128
+      when :u128
+        if negative
+          raise "Invalid negative value #{string_value} for UInt128"
+        end
+
+        check_value_fits_in_uint64 string_value, num_size, start, actual_type: UInt128
       end
     end
 
@@ -1683,9 +1702,13 @@ module Crystal
       end
     end
 
-    def check_value_fits_in_uint64(string_value, num_size, start)
+    def check_value_fits_in_uint64(string_value, num_size, start, actual_type = UInt64)
       if num_size > 20
-        raise_value_doesnt_fit_in "UInt64", string_value, start
+        if actual_type == UInt64
+          raise_value_doesnt_fit_in "UInt64", string_value, start
+        else
+          raise_value_restricted_by actual_type, "UInt64", string_value, start
+        end
       end
 
       if num_size == 20
@@ -1693,7 +1716,11 @@ module Crystal
         "18446744073709551615".each_byte do |byte|
           string_byte = string_value.byte_at(i)
           if string_byte > byte
-            raise_value_doesnt_fit_in "UInt64", string_value, start
+            if actual_type == UInt64
+              raise_value_doesnt_fit_in "UInt64", string_value, start
+            else
+              raise_value_restricted_by actual_type, "UInt64", string_value, start
+            end
           elsif string_byte < byte
             break
           end
@@ -1704,6 +1731,10 @@ module Crystal
 
     def raise_value_doesnt_fit_in(type, string_value, start)
       raise "#{string_value} doesn't fit in an #{type}", @token, (current_pos - start)
+    end
+
+    def raise_value_restricted_by(type, restricted_by_type, string_value, start)
+      raise "#{string_value} doesn't fit in an #{restricted_by_type}. #{type} literals that don't fit in an #{restricted_by_type} are currently not supported", @token, (current_pos - start)
     end
 
     def scan_zero_number(start, negative = false)
@@ -2527,14 +2558,23 @@ module Crystal
       @token
     end
 
-    def lookahead
-      old_pos = @reader.pos
-      old_line_number, old_column_number = @line_number, @column_number
+    def lookahead(preserve_token_on_fail = false)
+      old_pos, old_line, old_column = current_pos, @line_number, @column_number
+      @temp_token.copy_from(@token) if preserve_token_on_fail
 
       result = yield
       unless result
-        @reader.pos = old_pos
-        @line_number, @column_number = old_line_number, old_column_number
+        self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
+        @token.copy_from(@temp_token) if preserve_token_on_fail
+      end
+      result
+    end
+
+    def peek_ahead
+      result = uninitialized typeof(yield)
+      lookahead(preserve_token_on_fail: true) do
+        result = yield
+        nil
       end
       result
     end
