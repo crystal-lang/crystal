@@ -16,14 +16,6 @@ private macro def_string_methods(klass)
   def =~(range : RegexLiteral) : BoolLiteral
   end
 
-  # Similar to `String#>`
-  def >(other : StringLiteral | MacroId) : BoolLiteral
-  end
-
-  # Similar to `String#<`
-  def <(other : StringLiteral | MacroId) : BoolLiteral
-  end
-
   # Similar to `String#+`.
   def +(other : StringLiteral | CharLiteral) : {{klass}}
   end
@@ -494,6 +486,14 @@ module Crystal::Macros
   # A string literal.
   class StringLiteral < ASTNode
     def_string_methods StringLiteral
+
+    # Similar to `String#>`
+    def >(other : StringLiteral | MacroId) : BoolLiteral
+    end
+
+    # Similar to `String#<`
+    def <(other : StringLiteral | MacroId) : BoolLiteral
+    end
   end
 
   # An interpolated string like `"Hello, #{name}!"`.
@@ -1591,6 +1591,14 @@ module Crystal::Macros
   # The last two definitions are invalid and so will give a compile-time error.
   class MacroId < ASTNode
     def_string_methods MacroId
+
+    # Similar to `String#>`
+    def >(other : StringLiteral | MacroId) : BoolLiteral
+    end
+
+    # Similar to `String#<`
+    def <(other : StringLiteral | MacroId) : BoolLiteral
+    end
   end
 
   # Represents a type in the program, like `Int32` or `String`.
