@@ -444,10 +444,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     value = arg.value
 
-    unless node.body.is_a?(Nop)
-      node.raise "method marked as Primitive must have an empty body"
-    end
-
     primitive = Primitive.new(value)
     primitive.location = node.location
 
