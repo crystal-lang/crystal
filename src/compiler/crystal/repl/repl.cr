@@ -3,7 +3,7 @@ require "../../../crystal/readline"
 class Crystal::Repl
   property prelude : String = "prelude"
   getter program : Program
-  private getter context
+  getter context : Context
 
   def initialize
     @program = Program.new

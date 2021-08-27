@@ -30,15 +30,10 @@ module Crystal
 
     def initialize(program)
       @ids = {} of Type => {Int32, Int32}
-      @id_to_type = {} of Int32 => Type
       @id_to_metaclass = {} of Int32 => Int32
       @next_id = 0
       assign_id(program.object)
       assign_id_to_metaclass(program.object)
-    end
-
-    def type_from_id(id : Int32)
-      @id_to_type[id]
     end
 
     def type_id(type : TypeDefType)
@@ -161,7 +156,6 @@ module Crystal
     end
 
     private def put_id(type, min, max)
-      @id_to_type[max] = type
       @ids[type] = {min, max}
     end
 

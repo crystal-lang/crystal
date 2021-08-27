@@ -86,8 +86,16 @@ class Crystal::Repl::Context
     @stacks = [] of UInt8*
     @stacks_index = 0
 
+    # Mapping of types to numeric ids
+    @type_to_id = {} of Type => Int32
+    @id_to_type = [] of Type
+
     @constants = Constants.new(self)
     @class_vars = ClassVars.new(self)
+
+    # Nil has type id 0, String has type id 1
+    type_id(@program.nil_type)
+    type_id(@program.string)
   end
 
   # Many reference values we create when compiling nodes to bytecode
@@ -337,11 +345,17 @@ class Crystal::Repl::Context
   end
 
   def type_id(type : Type) : Int32
-    @program.llvm_id.type_id(type)
+    id = @type_to_id[type]?
+    unless id
+      id = @id_to_type.size
+      @id_to_type << type
+      @type_to_id[type] = id
+    end
+    id
   end
 
   def type_from_id(id : Int32) : Type
-    @program.llvm_id.type_from_id(id)
+    @id_to_type[id]
   end
 
   def c_function(lib_type : LibType, name : String)

@@ -1600,23 +1600,23 @@ describe Crystal::Repl::Interpreter do
 
   context "types" do
     it "interprets path to type" do
-      program, repl_value = interpret_with_program("String")
-      repl_value.value.should eq(program.string.metaclass)
+      context, repl_value = interpret_with_context("String")
+      repl_value.value.should eq(context.program.string.metaclass)
     end
 
     it "interprets typeof instance type" do
-      program, repl_value = interpret_with_program("typeof(1)")
-      repl_value.value.should eq(program.int32.metaclass)
+      context, repl_value = interpret_with_context("typeof(1)")
+      repl_value.value.should eq(context.program.int32.metaclass)
     end
 
     it "interprets typeof metaclass type" do
-      program, repl_value = interpret_with_program("typeof(Int32)")
-      repl_value.value.should eq(program.class_type)
+      context, repl_value = interpret_with_context("typeof(Int32)")
+      repl_value.value.should eq(context.program.class_type)
     end
 
     it "interprets class for non-union type" do
-      program, repl_value = interpret_with_program("1.class")
-      repl_value.value.should eq(program.int32)
+      context, repl_value = interpret_with_context("1.class")
+      repl_value.value.should eq(context.program.int32)
     end
 
     it "discards class for non-union type" do
@@ -1624,14 +1624,14 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets class for virtual_type type" do
-      program, repl_value = interpret_with_program(<<-CODE)
+      context, repl_value = interpret_with_context(<<-CODE)
           class Foo; end
           class Bar < Foo; end
 
           bar = Bar.new || Foo.new
           bar.class
         CODE
-      repl_value.value.should eq(program.types["Bar"])
+      repl_value.value.should eq(context.program.types["Bar"])
     end
 
     it "discards class for virtual_type type" do
@@ -1650,8 +1650,8 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets crystal_type_id for non-nil" do
-      program, repl_value = interpret_with_program("1.crystal_type_id")
-      repl_value.value.should eq(program.llvm_id.type_id(program.int32))
+      context, repl_value = interpret_with_context("1.crystal_type_id")
+      repl_value.value.should eq(context.type_id(context.program.int32))
     end
 
     it "interprets class_crystal_instance_type_id" do
@@ -5395,11 +5395,11 @@ describe Crystal::Repl::Interpreter do
 end
 
 private def interpret(code, *, prelude = "primitives")
-  program, value = interpret_with_program(code, prelude: prelude)
+  context, value = interpret_with_context(code, prelude: prelude)
   value.value
 end
 
-private def interpret_with_program(code, *, prelude = "primitives")
+private def interpret_with_context(code, *, prelude = "primitives")
   repl = Crystal::Repl.new
   repl.prelude = prelude
 
@@ -5414,5 +5414,5 @@ private def interpret_with_program(code, *, prelude = "primitives")
   code = "GC.disable\n#{code}" if prelude == "prelude"
 
   value = repl.run_code(code)
-  {repl.program, value}
+  {repl.context, value}
 end
