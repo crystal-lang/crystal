@@ -1,6 +1,18 @@
 require "../../spec_helper"
 
 describe "Semantic: multi assign" do
+  context "without preview_multi_assign" do
+    it "doesn't error if assigning tuple to fewer targets" do
+      assert_type(%(
+        require "prelude"
+
+        x = {1, 2, ""}
+        a, b = x
+        {a, b}
+        )) { tuple_of [int32, int32] }
+    end
+  end
+
   context "preview_multi_assign" do
     it "errors if assigning tuple to fewer targets" do
       assert_error %(
