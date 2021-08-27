@@ -723,22 +723,6 @@ module Crystal
       remove_indirection.is_a?(NilType)
     end
 
-    def always_truthy?
-      type = remove_indirection
-      case type
-      when NilType
-        false
-      when BoolType
-        false
-      when PointerInstanceType
-        false
-      when UnionType
-        type.union_types.all? &.always_truthy?
-      else
-        true
-      end
-    end
-
     def to_s(*, generic_args : Bool = true)
       String.build do |io|
         to_s_with_options io, generic_args: generic_args
@@ -2627,7 +2611,7 @@ module Crystal
     end
 
     delegate remove_typedef, pointer?, defs,
-      macros, reference_link?, parents, always_truthy?, always_falsey?, to: typedef
+      macros, reference_link?, parents, to: typedef
 
     def remove_indirection
       self
@@ -2654,7 +2638,7 @@ module Crystal
     end
 
     delegate lookup_defs, lookup_defs_with_modules, lookup_first_def,
-      lookup_macro, lookup_macros, always_truthy?, always_falsey?, to: aliased_type
+      lookup_macro, lookup_macros, to: aliased_type
 
     def types?
       process_value
