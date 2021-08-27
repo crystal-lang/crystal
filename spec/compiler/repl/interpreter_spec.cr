@@ -4494,6 +4494,7 @@ describe Crystal::Repl::Interpreter do
       interpret(<<-CODE, prelude: "prelude").should eq(2)
           x = 1
 
+          begin
             begin
               1
             rescue
@@ -4503,6 +4504,8 @@ describe Crystal::Repl::Interpreter do
             ensure
               x += 1
             end
+          rescue
+          end
 
           x
         CODE

@@ -688,6 +688,12 @@ class Crystal::Repl::Interpreter
 
       if %handlers
         %index = ip - instructions.instructions.to_unsafe
+
+        # Go back one byte because otherwise we are right at the
+        # beginning of the next instructions, which isn't where the
+        # exception was raised.
+        %index -= 1
+
         %exception_type_id = %exception.as(Int32*).value
         %exception_type = @context.type_from_id(%exception_type_id)
 
@@ -698,7 +704,7 @@ class Crystal::Repl::Interpreter
           # That is, if the instruction index/offset is within the handler's range,
           # and if there are no specific exception types to rescue (this is an ensure clause)
           # or if the raised exception is any of the exceptions to handle.
-          if handler.start_index <= %index <= handler.end_index &&
+          if handler.start_index <= %index < handler.end_index &&
             (!%exception_types || %exception_types.any? { |ex_type| %exception_type.implements?(ex_type) })
 
             # Push the exception so that it can be assigned to the rescue variable,

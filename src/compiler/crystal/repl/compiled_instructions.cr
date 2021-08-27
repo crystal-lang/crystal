@@ -17,11 +17,15 @@ class Crystal::Repl::CompiledInstructions
   getter exception_handlers : Array(ExceptionHandler)?
 
   def add_rescue(start_index : Int32, end_index : Int32, exception_types : Array(Type), jump_index : Int32)
+    return if start_index == end_index
+
     exception_handlers = @exception_handlers ||= [] of ExceptionHandler
     exception_handlers << ExceptionHandler.new(start_index, end_index, exception_types, jump_index)
   end
 
   def add_ensure(start_index : Int32, end_index : Int32, jump_index : Int32)
+    return if start_index == end_index
+
     exception_handlers = @exception_handlers ||= [] of ExceptionHandler
     exception_handlers << ExceptionHandler.new(start_index, end_index, nil, jump_index)
   end

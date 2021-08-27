@@ -428,9 +428,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     jump_location = patch_location
 
     # Assume we have only rescue for now
-    rescue_locations = [] of Int32
+    rescue_jump_locations = [] of Int32
+    rescue_indexes = [] of {Int32, Int32}
 
     rescues.try &.each do |a_rescue|
+      rescue_start_index = instructions_index
+
       name = a_rescue.name
       types = a_rescue.types
       if types
@@ -443,7 +446,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         body_start_index,
         body_end_index,
         exception_types,
-        jump_index: instructions_index)
+        jump_index: rescue_start_index)
 
       if name
         # The exception is in the stack, so we copy it to the corresponding local variable
@@ -458,20 +461,32 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       a_rescue.body.accept self
       upcast a_rescue.body, a_rescue.body.type, node.type if @wants_value
 
+      rescue_end_index = instructions_index
+      rescue_indexes << {rescue_start_index, rescue_end_index}
+
       jump 0, node: nil
-      rescue_locations << patch_location
+      rescue_jump_locations << patch_location
     end
 
     if node_ensure
       # If there's an ensure block we also generate another ensure
       # clause to be executed when an exception is raised inside the body
       # or any of the rescue clauses, which does the ensure, then reraises
-      ensure_index = instructions_index - 8 # Exclude the last jump
+      ensure_index = instructions_index
 
       instructions.add_ensure(
         body_start_index,
-        ensure_index,
-        jump_index: ensure_index)
+        body_end_index,
+        jump_index: ensure_index,
+      )
+
+      rescue_indexes.each do |rescue_start_index, rescue_end_index|
+        instructions.add_ensure(
+          rescue_start_index,
+          rescue_end_index,
+          jump_index: ensure_index,
+        )
+      end
 
       discard_value node_ensure
 
@@ -502,7 +517,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # Now comes the ensure part.
     # We jump here from all the rescue blocks.
-    rescue_locations.each do |location|
+    rescue_jump_locations.each do |location|
       patch_jump(location)
     end
 
