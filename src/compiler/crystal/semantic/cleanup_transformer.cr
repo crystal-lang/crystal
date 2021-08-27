@@ -305,11 +305,13 @@ module Crystal
     def transform(node : MultiAssign)
       if @program.has_flag?("preview_multi_assign")
         if node.values.size == 1
-          # `temp = {{ node.values.first }}`
-          temp_var = node.expanded.as(Expressions).expressions.first
+          # the expanded node always starts with `temp = {{ node.values[0] }}`;
+          # this is the whole Assign node and its deduced type is equal to the
+          # original RHS's type
+          temp_assign = node.expanded.as(Expressions).expressions.first
           target_count = node.targets.size
 
-          case type = temp_var.type
+          case type = temp_assign.type
           when UnionType
             sizes = type.union_types.map { |union_type| constant_size(union_type) }
             if sizes.none? &.in?(target_count, nil)
