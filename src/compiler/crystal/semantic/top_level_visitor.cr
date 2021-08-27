@@ -880,6 +880,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     process_def_annotations(external, annotations) do |annotation_type, ann|
       if annotation_type == @program.call_convention_annotation
         call_convention = parse_call_convention(ann, call_convention)
+      elsif annotation_type == @program.primitive_annotation
+        process_primitive_annotation(external, ann)
       else
         ann.raise "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention"
       end
