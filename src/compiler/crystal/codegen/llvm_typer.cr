@@ -362,7 +362,7 @@ module Crystal
     end
 
     private def create_llvm_struct_type(type : Type, wants_size)
-      raise "BUG: called llvm_struct_type for #{type} (#{type.class})"
+      raise "BUG: called llvm_struct_type for #{type}"
     end
 
     def llvm_embedded_type(type, wants_size = false)

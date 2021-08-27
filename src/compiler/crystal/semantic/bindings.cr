@@ -10,7 +10,7 @@ module Crystal
     @type : Type?
 
     def type
-      type? || ::raise "BUG: `#{self}` (#{self.class}) at #{self.location} has no type"
+      type? || ::raise "BUG: `#{self}` at #{self.location} has no type"
     end
 
     def type?
