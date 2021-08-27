@@ -4510,6 +4510,43 @@ describe Crystal::Repl::Interpreter do
           x
         CODE
     end
+
+    it "does ensure with explicit return" do
+      interpret(<<-CODE).should eq(22)
+        module Global
+          @@property = 0
+
+          def self.property
+            @@property
+          end
+
+          def self.property=(@@property)
+          end
+        end
+
+        def foo
+          x = 1
+
+          begin
+            begin
+              x += 1
+              if x == 2
+                return x
+              end
+            ensure
+              Global.property = 10
+            end
+          ensure
+            Global.property *= 2
+          end
+
+          0
+        end
+
+        x = foo
+        Global.property + x
+      CODE
+    end
   end
 
   context "extern" do

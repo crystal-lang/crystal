@@ -136,6 +136,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # (this is in intermediary nodes of `Expressions`) but
     # this is less efficient.
     @wants_value = true
+
+    # Stack of ensures that will be inlined when a `return`
+    # is done inside an ensure.
+    @ensure_stack = [] of ASTNode
   end
 
   def self.new(
@@ -414,12 +418,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # Accept the body, recording where it starts and ends
     body_start_index = instructions_index
 
+    @ensure_stack.push node_ensure if node_ensure
+
     if node_else
       discard_value node.body
     else
       node.body.accept self
       upcast node.body, node.body.type, node.type if @wants_value
     end
+
+    @ensure_stack.pop if node_ensure
 
     body_end_index = instructions_index
 
@@ -1239,6 +1247,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     upcast node, exp_type, def_type
+
+    # If this return happens inside a begin/ensure block,
+    # inline any ensure right now.
+    @ensure_stack.reverse_each do |an_ensure|
+      discard_value(an_ensure)
+    end
 
     if @compiling_block
       leave_def aligned_sizeof_type(def_type), node: node
