@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 require "iterator"
 
 struct StructIter
