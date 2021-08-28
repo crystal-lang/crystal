@@ -4581,6 +4581,85 @@ describe Crystal::Repl::Interpreter do
         Global.property + x
       CODE
     end
+
+    it "excutes ensure when returning from a block (2)" do
+      interpret(<<-CODE).should eq(21)
+        module Global
+          @@property = 0
+
+          def self.property
+            @@property
+          end
+
+          def self.property=(@@property)
+          end
+        end
+
+        def block
+          yield
+        ensure
+          Global.property *= 2
+        end
+
+        def another_block
+          yield
+        end
+
+        def something
+          another_block do
+            return
+          end
+        end
+
+        def foo
+          block do
+            return 1
+          ensure
+            something
+            Global.property = 10
+          end
+
+          0
+        end
+
+        x = foo
+        Global.property + x
+      CODE
+    end
+
+    it "excutes ensure when breaking from a block" do
+      interpret(<<-CODE).should eq(18)
+        module Global
+          @@property = 0
+
+          def self.property
+            @@property
+          end
+
+          def self.property=(@@property)
+          end
+        end
+
+        def block
+          yield
+        ensure
+          Global.property *= 2
+        end
+
+        def foo
+          x = block do
+            break 1
+          ensure
+            Global.property = 10
+          end
+
+          x - 3
+        end
+
+        x = foo
+        Global.property + x
+      CODE
+    end
   end
 
   context "extern" do

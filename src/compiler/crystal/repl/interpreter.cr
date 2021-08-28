@@ -598,21 +598,18 @@ class Crystal::Repl::Interpreter
   end
 
   private macro break_block(size)
-    # Remember the point the stack reached
-    %old_stack = stack
-
-    # Exiting the current frame...
-    @call_stack.pop
-
-    # ...we'll find the method that was given a block
-    %frame_that_yielded = @call_stack.last
-
-    # We go to the call frame that called the block
-    until @call_stack.size - 1 == %frame_that_yielded.block_caller_frame_index
-      @call_stack.pop
-    end
-
-    leave_after_pop_call_frame(%old_stack, %frame_that_yielded, {{size}})
+    # TODO: avoid allocating memory here
+    %throw_value_memory = Pointer(Void).malloc({{size}}).as(UInt8*)
+    %throw_value_memory.copy_from(stack - {{size}}, {{size}})
+    %throw_value = ReturnedValue.new(
+      %throw_value_memory,
+      {{size}},
+      # Exiting the current frame... (-1)
+      # ...we'll find the method that was given a block (-2)
+      # We go to the call frame that called the block (+1)
+      @call_stack[-2].block_caller_frame_index + 1,
+      )
+    throw_value(%throw_value)
   end
 
   private macro leave_after_pop_call_frame(old_stack, previous_call_frame, size)
