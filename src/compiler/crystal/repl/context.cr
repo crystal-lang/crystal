@@ -83,8 +83,7 @@ class Crystal::Repl::Context
     @pkg_config_path = Process.find_executable("pkg-config")
 
     # This is a stack pool, for checkout_stack.
-    @stacks = [] of UInt8*
-    @stacks_index = 0
+    @stack_pool = [] of UInt8*
 
     # Mapping of types to numeric ids
     @type_to_id = {} of Type => Int32
@@ -111,19 +110,19 @@ class Crystal::Repl::Context
   # Once the block returns, the stack is returned to the pool.
   # The stack is not cleared after or before it's used.
   def checkout_stack(& : UInt8* -> _)
-    if @stacks_index < @stacks.size
-      stack = @stacks[@stacks_index]
-    else
+    if @stack_pool.empty?
       stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
-      @stacks << stack
+      # puts "Created new stack: #{stack}"
+    else
+      stack = @stack_pool.pop
+      # puts "Checked out stack: #{stack}"
     end
-
-    @stacks_index += 1
 
     begin
       yield stack
     ensure
-      @stacks_index -= 1
+      # puts "Returned stack: #{stack}"
+      @stack_pool.push(stack)
     end
   end
 
