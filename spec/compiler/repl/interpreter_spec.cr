@@ -4660,6 +4660,45 @@ describe Crystal::Repl::Interpreter do
         Global.property + x
       CODE
     end
+
+    it "excutes ensure when returning a big value from a block" do
+      interpret(<<-CODE, prelude: "prelude").should eq(32405)
+        module Global
+          @@property = 0
+
+          def self.property
+            @@property
+          end
+
+          def self.property=(@@property)
+          end
+        end
+
+        def block
+          yield
+        ensure
+          Global.property *= 2
+        end
+
+        def foo
+          block do
+            static_array = StaticArray(Int32, 255).new { |i| i }
+            return static_array
+          ensure
+            Global.property = 10
+          end
+
+          nil
+        end
+
+        x = foo
+        if x
+          Global.property + x.sum
+        else
+          0
+        end
+      CODE
+    end
   end
 
   context "extern" do

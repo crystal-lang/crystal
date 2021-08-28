@@ -64,12 +64,25 @@ class Crystal::Repl::Interpreter
   # Values for `argv`, set when using `crystal i file.cr arg1 arg2 ...`.
   property argv : Array(String)
 
+  SMALL_RETURN_VALUE_MAX_SIZE = 48
+
   # This is a value that's being returned from inside a block.
   # The tricky part here is that we need to return from a method, but we also
   # need to execute any ensures. So, we store the returned value in this struct
   # and start going up the call stack.
   # `target_frame_index` is the frame index where we must stop.
-  record ReturnedValue, value : Pointer(UInt8), size : Int32, target_frame_index : Int32
+  alias ReturnedValue = SmallReturnedValue | BigReturnedValue
+
+  # This is a returned value that fits in 48 bytes.
+  # Most return values will fit here, so we avoid allocating memory for this.
+  record SmallReturnedValue, value : StaticArray(UInt8, SMALL_RETURN_VALUE_MAX_SIZE), size : Int32, target_frame_index : Int32 do
+    def pointer
+      @value.to_unsafe
+    end
+  end
+
+  # When the return value is bigger than 48 bytes we use this struct.
+  record BigReturnedValue, pointer : Pointer(UInt8), size : Int32, target_frame_index : Int32
 
   # This is an exception that's being raised.
   # Here we also need to go up the call stack.
@@ -590,26 +603,32 @@ class Crystal::Repl::Interpreter
   end
 
   private macro leave_def(size)
-    # TODO: avoid allocating memory here
-    %throw_value_memory = Pointer(Void).malloc({{size}}).as(UInt8*)
-    %throw_value_memory.copy_from(stack - {{size}}, {{size}})
-    %throw_value = ReturnedValue.new(%throw_value_memory, {{size}}, @call_stack.last.real_frame_index)
+    %throw_value = new_returned_value(stack, {{size}}, @call_stack.last.real_frame_index)
     throw_value(%throw_value)
   end
 
   private macro break_block(size)
-    # TODO: avoid allocating memory here
-    %throw_value_memory = Pointer(Void).malloc({{size}}).as(UInt8*)
-    %throw_value_memory.copy_from(stack - {{size}}, {{size}})
-    %throw_value = ReturnedValue.new(
-      %throw_value_memory,
+    %throw_value = new_returned_value(
+      stack,
       {{size}},
       # Exiting the current frame... (-1)
       # ...we'll find the method that was given a block (-2)
       # We go to the call frame that called the block (+1)
       @call_stack[-2].block_caller_frame_index + 1,
-      )
+    )
     throw_value(%throw_value)
+  end
+
+  private def new_returned_value(stack, size, target_frame_index)
+    if size <= SMALL_RETURN_VALUE_MAX_SIZE
+      static_array = StaticArray(UInt8, SMALL_RETURN_VALUE_MAX_SIZE).new(0)
+      static_array.to_unsafe.copy_from(stack - size, size)
+      SmallReturnedValue.new(static_array, size, target_frame_index)
+    else
+      pointer = Pointer(Void).malloc(size).as(UInt8*)
+      pointer.copy_from(stack - size, size)
+      BigReturnedValue.new(pointer, size, target_frame_index)
+    end
   end
 
   private macro leave_after_pop_call_frame(old_stack, previous_call_frame, size)
@@ -781,7 +800,7 @@ class Crystal::Repl::Interpreter
       %previous_call_frame = @call_stack.pop
 
       if @call_stack.size == %throw_value.target_frame_index
-        %old_stack.copy_from(%throw_value.value, %throw_value.size)
+        %old_stack.copy_from(%throw_value.pointer, %throw_value.size)
         %old_stack += %throw_value.size
         leave_after_pop_call_frame(%old_stack, %previous_call_frame, %throw_value.size)
         break

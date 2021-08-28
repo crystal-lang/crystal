@@ -191,7 +191,7 @@ class Crystal::Repl
 
     begin
       Interpreter.interpret(@context, exps) do |stack|
-        stack.as(Void**).value = exception.exception_pointer
+        stack.as(UInt8**).value = exception.exception_pointer
       end
     rescue ex
       puts "Error while calling Crystal.exit: #{ex.message}"
