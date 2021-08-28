@@ -218,14 +218,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # If any def argument is closured, we need to store it in the closure
     node.args.each do |arg|
-      var = node.vars.not_nil![arg.name]
-      if var.type? && var.closure_in?(node)
-        local_var = lookup_local_var("^#{var.name}")
-        closured_var = lookup_closured_var(var.name)
+      move_arg_to_closure_if_closured(node, arg.name)
+    end
 
-        get_local local_var.index, aligned_sizeof_type(local_var.type), node: nil
-        assign_to_closured_var(closured_var, node: nil)
-      end
+    # Same for the block arg
+    if node.uses_block_arg?
+      move_arg_to_closure_if_closured(node, node.block_arg.not_nil!.name)
     end
 
     node.body.accept self
@@ -256,6 +254,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     leave aligned_sizeof_type(final_type), node: Nop.new.at(node.end_location)
 
     @instructions
+  end
+
+  private def move_arg_to_closure_if_closured(node : Def, arg_name : String)
+    var = node.vars.not_nil![arg_name]
+    return unless var.type?
+    return unless var.closure_in?(node)
+
+    local_var = lookup_local_var(closured_arg_name(var.name))
+    closured_var = lookup_closured_var(var.name)
+
+    get_local local_var.index, aligned_sizeof_type(local_var.type), node: nil
+    assign_to_closured_var(closured_var, node: nil)
   end
 
   private def inside_method?
@@ -419,10 +429,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # any raised exception that needs to be re-raised.
     # Declare it now in case the body has a block, because otherwise it
     # will overwrite this variable.
-    if node_ensure
-      temp_var_name = @context.program.new_temp_var_name
-      temp_var_index = @local_vars.declare(temp_var_name, @context.throw_value_type).not_nil!
-    end
+    # if node_ensure
+    #   temp_var_name = @context.program.new_temp_var_name
+    #   temp_var_index = @local_vars.declare(temp_var_name, @context.throw_value_type).not_nil!
+    # end
 
     # Accept the body, recording where it starts and ends
     body_start_index = instructions_index
@@ -505,13 +515,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         )
       end
 
-      temp_var_index = temp_var_index.not_nil!
+      # temp_var_index = temp_var_index.not_nil!
 
-      set_local temp_var_index, sizeof(Interpreter::ThrowValue), node: nil
+      # set_local temp_var_index, sizeof(Interpreter::ThrowValue), node: nil
 
       discard_value node_ensure
 
-      get_local temp_var_index, sizeof(Interpreter::ThrowValue), node: nil
+      # get_local temp_var_index, sizeof(Interpreter::ThrowValue), node: nil
 
       throw node: nil
     end
@@ -2311,11 +2321,28 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           # Declare a local variable with a different name because
           # we don't want to find it when doing local var lookups,
           # but we'll need to copy it from the def args to the closure
-          local_vars.declare("^#{arg.name}", var_type)
+          local_vars.declare(closured_arg_name(arg.name), var_type)
           next
         end
 
         local_vars.declare(var.name, var_type)
+      end
+
+      # We also need to declare the block arg with a different name
+      # if it's closured.
+      if owner.uses_block_arg?
+        block_arg = owner.block_arg.not_nil!
+
+        var = owner.vars.not_nil![block_arg.name]
+        var_type = var.type?
+        if var_type && var.closure_in?(owner)
+          needs_closure_context = true
+
+          # Declare a local variable with a different name because
+          # we don't want to find it when doing local var lookups,
+          # but we'll need to copy it from the def args to the closure
+          local_vars.declare(closured_arg_name(block_arg.name), var_type)
+        end
       end
     end
 
@@ -2351,6 +2378,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if needs_closure_context
       local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
     end
+  end
+
+  private def closured_arg_name(name : String)
+    "^#{name}"
   end
 
   private def initialize_const_if_needed(const)
@@ -2478,7 +2509,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         # Declare a local variable with a different name because
         # we don't want to find it when doing local var lookups,
         # but we'll need to copy it from the def args to the closure
-        compiled_def.local_vars.declare("^#{arg.name}", var_type)
+        compiled_def.local_vars.declare(closured_arg_name(arg.name), var_type)
         next
       end
 

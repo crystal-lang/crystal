@@ -5194,6 +5194,18 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "closures block arg" do
+      interpret(<<-CODE).should eq(1)
+        def foo(&block : -> Int32)
+          ->{ block.call }.call
+        end
+
+        foo do
+          1
+        end
+      CODE
+    end
   end
 
   context "struct set" do
