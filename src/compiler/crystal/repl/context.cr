@@ -112,16 +112,13 @@ class Crystal::Repl::Context
   def checkout_stack(& : UInt8* -> _)
     if @stack_pool.empty?
       stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
-      # puts "Created new stack: #{stack}"
     else
       stack = @stack_pool.pop
-      # puts "Checked out stack: #{stack}"
     end
 
     begin
       yield stack
     ensure
-      # puts "Returned stack: #{stack}"
       @stack_pool.push(stack)
     end
   end
