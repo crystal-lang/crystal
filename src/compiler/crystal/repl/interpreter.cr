@@ -64,6 +64,22 @@ class Crystal::Repl::Interpreter
   # Values for `argv`, set when using `crystal i file.cr arg1 arg2 ...`.
   property argv : Array(String)
 
+  # This is a value that's being returned from inside a block.
+  # The tricky part here is that we need to return from a method, but we also
+  # need to execute any ensures. So, we store the returned value in this struct
+  # and start going up the call stack.
+  # `target_frame_index` is the frame index where we must stop.
+  record ReturnedValue, value : Pointer(UInt8), size : Int32, target_frame_index : Int32
+
+  # This is an exception that's being raised.
+  # Here we also need to go up the call stack.
+  record RaisedException, exception : Pointer(UInt8)
+
+  # An alias for either a returned value or a raised exception.
+  # When an ensure handler is executed because an exception was raised
+  # or because a value was returned, we abstract any of those in this type.
+  alias ThrowValue = ReturnedValue | RaisedException
+
   def initialize(
     @context : Context,
     # TODO: what if the stack is exhausted?
@@ -574,15 +590,11 @@ class Crystal::Repl::Interpreter
   end
 
   private macro leave_def(size)
-    # Remember the point the stack reached
-    %old_stack = stack
-    %previous_call_frame = @call_stack.pop
-
-    until @call_stack.size == %previous_call_frame.real_frame_index
-      @call_stack.pop
-    end
-
-    leave_after_pop_call_frame(%old_stack, %previous_call_frame, {{size}})
+    # TODO: avoid allocating memory here
+    %throw_value_memory = Pointer(Void).malloc({{size}}).as(UInt8*)
+    %throw_value_memory.copy_from(stack - {{size}}, {{size}})
+    %throw_value = ReturnedValue.new(%throw_value_memory, {{size}}, @call_stack.last.real_frame_index)
+    throw_value(%throw_value)
   end
 
   private macro break_block(size)
@@ -702,7 +714,14 @@ class Crystal::Repl::Interpreter
 
             # Push the exception so that it can be assigned to the rescue variable,
             # or thrown in an ensure handler.
-            stack_push(%exception)
+            if %exception_types
+              stack_push(%exception)
+            else
+              # In the case of an ensure we make the exception be a ThrowValue,
+              # because ensure work both for exceptions and returned values.
+              %throw_value = RaisedException.new(%exception).as(ThrowValue)
+              stack_push(%throw_value)
+            end
 
             # Jump to the handler's logic
             set_ip(handler.jump_index)
@@ -726,9 +745,63 @@ class Crystal::Repl::Interpreter
     end
   end
 
+  private macro throw_value(throw_value)
+    %throw_value = {{throw_value}}
+
+    while true
+      %handlers = instructions.exception_handlers
+      %found_handler = false
+
+      if %handlers
+        %index = ip - instructions.instructions.to_unsafe
+
+        # Go back one byte because otherwise we are right at the
+        # beginning of the next instructions, which isn't where the
+        # exception was raised.
+        %index -= 1
+
+        # Check if any handler should handle the current exception
+        %handlers.each do |handler|
+          next if handler.exception_types
+
+          # That is, if it's an ensure handler (no exceptions)
+          # and the instruction index/offset is within the handler's range
+          if !handler.exception_types && handler.start_index <= %index < handler.end_index
+            stack_push(%throw_value.as(ThrowValue))
+
+            # Jump to the handler's logic
+            set_ip(handler.jump_index)
+
+            %found_handler = true
+            break
+          end
+        end
+      end
+
+      break if %found_handler
+
+      %old_stack = stack
+      %previous_call_frame = @call_stack.pop
+
+      if @call_stack.size == %throw_value.target_frame_index
+        %old_stack.copy_from(%throw_value.value, %throw_value.size)
+        %old_stack += %throw_value.size
+        leave_after_pop_call_frame(%old_stack, %previous_call_frame, %throw_value.size)
+        break
+      else
+        leave_after_pop_call_frame(%old_stack, %previous_call_frame, 0)
+      end
+    end
+  end
+
   private macro throw
-    %exception = stack_pop(Pointer(Void))
-    raise_exception(%exception)
+    %throw_value = stack_pop(ThrowValue)
+    case %throw_value
+    in ReturnedValue
+      throw_value(%throw_value)
+    in RaisedException
+      raise_exception(%throw_value.exception)
+    end
   end
 
   private macro set_ip(ip)

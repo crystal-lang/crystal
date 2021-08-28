@@ -1226,7 +1226,7 @@ require "./repl"
         code:       backtrace,
       },
       interpreter_raise_without_backtrace: {
-        pop_values: [exception : Void*],
+        pop_values: [exception : UInt8*],
         code:       raise_exception(exception),
       },
       throw: {

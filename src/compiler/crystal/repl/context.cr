@@ -97,6 +97,10 @@ class Crystal::Repl::Context
     type_id(@program.string)
   end
 
+  getter(throw_value_type : Type) do
+    @program.static_array_of(@program.uint8, sizeof(Interpreter::ThrowValue))
+  end
+
   # Many reference values we create when compiling nodes to bytecode
   # must not be collected by the GC. Ideally they should be referenced
   # in the bytecode itself. The problem is that the bytecode isn't

@@ -1,9 +1,9 @@
 require "./repl"
 
 class Crystal::Repl::EscapingException < Exception
-  getter exception_pointer : Void*
+  getter exception_pointer : UInt8*
 
-  def initialize(@interpreter : Interpreter, @exception_pointer : Void*)
+  def initialize(@interpreter : Interpreter, @exception_pointer : UInt8*)
   end
 
   def to_s(io : IO)
@@ -16,7 +16,7 @@ class Crystal::Repl::EscapingException < Exception
 
     begin
       Interpreter.interpret(context, exps) do |stack|
-        stack.as(Void**).value = @exception_pointer
+        stack.as(UInt8**).value = @exception_pointer
       end
     rescue ex
       io.puts "Error while calling inspect_with_backtrace on exception: #{ex.message}"

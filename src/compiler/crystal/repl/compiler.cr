@@ -421,7 +421,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # will overwrite this variable.
     if node_ensure
       temp_var_name = @context.program.new_temp_var_name
-      temp_var_index = @local_vars.declare(temp_var_name, @context.program.pointer_of(@context.program.void)).not_nil!
+      temp_var_index = @local_vars.declare(temp_var_name, @context.throw_value_type).not_nil!
     end
 
     # Accept the body, recording where it starts and ends
@@ -507,11 +507,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       temp_var_index = temp_var_index.not_nil!
 
-      set_local temp_var_index, sizeof(Void*), node: nil
+      set_local temp_var_index, sizeof(Interpreter::ThrowValue), node: nil
 
       discard_value node_ensure
 
-      get_local temp_var_index, sizeof(Void*), node: nil
+      get_local temp_var_index, sizeof(Interpreter::ThrowValue), node: nil
 
       throw node: nil
     end
@@ -1260,15 +1260,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     upcast node, exp_type, def_type
 
-    # If this return happens inside a begin/ensure block,
-    # inline any ensure right now.
-    @ensure_stack.reverse_each do |an_ensure|
-      discard_value(an_ensure)
-    end
-
     if @compiling_block
       leave_def aligned_sizeof_type(def_type), node: node
     else
+      # If this return happens inside a begin/ensure block,
+      # inline any ensure right now.
+      @ensure_stack.reverse_each do |an_ensure|
+        discard_value(an_ensure)
+      end
+
       leave aligned_sizeof_type(def_type), node: node
     end
 
