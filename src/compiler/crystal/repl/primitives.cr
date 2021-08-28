@@ -326,7 +326,7 @@ class Crystal::Repl::Compiler
       end
 
       # With this we get a pointer to the struct
-      compile_pointerof_struct_to_be_passed_as_self(obj, obj.type)
+      compile_pointerof_node(obj, obj.type)
 
       # Shift the pointer to the offset, if needed
       if ivar_offset > 0
