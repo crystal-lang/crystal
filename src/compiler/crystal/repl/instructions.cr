@@ -1229,8 +1229,8 @@ require "./repl"
         pop_values: [exception : Void*],
         code:       raise_exception(exception),
       },
-      reraise: {
-        code:       raise_exception(last_exception),
+      throw: {
+        code:       throw,
       },
       interpreter_current_fiber: {
         push:       true,

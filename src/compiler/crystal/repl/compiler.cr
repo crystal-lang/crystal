@@ -415,6 +415,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node_ensure = node.ensure
     node_else = node.else
 
+    # If there's an ensure we declare a local variable to capture
+    # any raised exception that needs to be re-raised.
+    # Declare it now in case the body has a block, because otherwise it
+    # will overwrite this variable.
+    if node_ensure
+      temp_var_name = @context.program.new_temp_var_name
+      temp_var_index = @local_vars.declare(temp_var_name, @context.program.pointer_of(@context.program.void)).not_nil!
+    end
+
     # Accept the body, recording where it starts and ends
     body_start_index = instructions_index
 
@@ -496,12 +505,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         )
       end
 
+      temp_var_index = temp_var_index.not_nil!
+
+      set_local temp_var_index, sizeof(Void*), node: nil
+
       discard_value node_ensure
 
-      # TODO: instead of having a reraise instruction and storing the exception
-      # in a global variable (like in Ruby), we could have a dedicated local
-      # variable slot for it.
-      reraise node: nil
+      get_local temp_var_index, sizeof(Void*), node: nil
+
+      throw node: nil
     end
 
     # Now we are at the exit

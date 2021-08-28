@@ -64,10 +64,6 @@ class Crystal::Repl::Interpreter
   # Values for `argv`, set when using `crystal i file.cr arg1 arg2 ...`.
   property argv : Array(String)
 
-  # Last exception thrown. Useful to do a re-raise on an `ensure`
-  # that needs to re-raise the last exception.
-  getter! last_exception : Void*
-
   def initialize(
     @context : Context,
     # TODO: what if the stack is exhausted?
@@ -679,9 +675,6 @@ class Crystal::Repl::Interpreter
   private macro raise_exception(exception)
     %exception = {{exception}}
 
-    # Store exception in case it's needed in a re-raise
-    @last_exception = %exception
-
     while true
       %handlers = instructions.exception_handlers
       %found_handler = false
@@ -708,8 +701,8 @@ class Crystal::Repl::Interpreter
             (!%exception_types || %exception_types.any? { |ex_type| %exception_type.implements?(ex_type) })
 
             # Push the exception so that it can be assigned to the rescue variable,
-            # but don't push it for `ensure` handlers.
-            stack_push(%exception) if %exception_types
+            # or thrown in an ensure handler.
+            stack_push(%exception)
 
             # Jump to the handler's logic
             set_ip(handler.jump_index)
@@ -731,6 +724,11 @@ class Crystal::Repl::Interpreter
 
       leave_after_pop_call_frame(%old_stack, %previous_call_frame, 0)
     end
+  end
+
+  private macro throw
+    %exception = stack_pop(Pointer(Void))
+    raise_exception(%exception)
   end
 
   private macro set_ip(ip)
