@@ -1453,7 +1453,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     else
       # Check if obj is a `to_type`
       dup aligned_sizeof_type(node.obj), node: nil
-      is_a(node, obj_type, to_type)
+      filtered_type = is_a(node, obj_type, to_type)
 
       # If so, branch
       branch_if 0, node: nil
@@ -1488,7 +1488,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       patch_jump(cond_jump_location)
 
       if @wants_value
-        downcast node.obj, obj_type, to_type
+        downcast node.obj, obj_type, filtered_type
       else
         pop aligned_sizeof_type(obj_type), node: nil
       end
@@ -1561,6 +1561,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     filtered_type = type.filter_by(target_type).not_nil!
 
     filter_type(node, type, filtered_type)
+
+    filtered_type
   end
 
   private def responds_to(node : ASTNode, type : Type, name : String)

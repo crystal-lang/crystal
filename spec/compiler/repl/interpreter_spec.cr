@@ -4142,6 +4142,12 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "casts to filtered type, not type in as(...)" do
+      interpret(<<-CODE, prelude: "prelude").should eq(1)
+        ({1} || 2).as(Tuple)[0]
+      CODE
+    end
   end
 
   context "constants" do
