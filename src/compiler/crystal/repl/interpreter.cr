@@ -549,20 +549,23 @@ class Crystal::Repl::Interpreter
     ip = copied_call_frame.ip
     stack_bottom = copied_call_frame.stack_bottom
 
-    %offset_to_clear = {{compiled_block}}.locals_bytesize_start + {{compiled_block}}.args_bytesize
     %size_to_clear = {{compiled_block}}.locals_bytesize_end - {{compiled_block}}.locals_bytesize_start - {{compiled_block}}.args_bytesize
-    if %size_to_clear < 0
-      raise "OH NO, size to clear BLOCK is: #{ %size_to_clear }"
-    end
 
-    # Clear the portion after the block args and upto the block local vars
-    # because it might contain garbage data from previous block calls or
-    # method calls.
-    #
-    # stack ... locals ... locals_bytesize_start ... args_bytesize ... locals_bytesize_end
-    #                                                            [ ..................... ]
-    #                                                                   delete this
-    (stack_bottom + %offset_to_clear).clear(%size_to_clear)
+    # The size to clear might not always be greater than zero.
+    # For example, if all block variables are closured then the only
+    # block var is the closure itself.
+    if %size_to_clear > 0
+      %offset_to_clear = {{compiled_block}}.locals_bytesize_start + {{compiled_block}}.args_bytesize
+
+      # Clear the portion after the block args and upto the block local vars
+      # because it might contain garbage data from previous block calls or
+      # method calls.
+      #
+      # stack ... locals ... locals_bytesize_start ... args_bytesize ... locals_bytesize_end
+      #                                                            [ ..................... ]
+      #                                                                   delete this
+      (stack_bottom + %offset_to_clear).clear(%size_to_clear)
+    end
   end
 
   private macro lib_call(lib_function)

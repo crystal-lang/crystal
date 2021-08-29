@@ -5195,7 +5195,7 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "closures block arg" do
+    it "closures closured block arg" do
       interpret(<<-CODE).should eq(1)
         def foo(&block : -> Int32)
           ->{ block.call }.call
@@ -5203,6 +5203,18 @@ describe Crystal::Repl::Interpreter do
 
         foo do
           1
+        end
+      CODE
+    end
+
+    it "closures block args after 8 bytes (the closure var)" do
+      interpret(<<-CODE).should eq(6)
+        def foo
+          yield({1, 2, 3})
+        end
+
+        foo do |x, y, z|
+          ->{ x + y + z }.call
         end
       CODE
     end
