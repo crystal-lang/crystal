@@ -118,9 +118,11 @@ class Crystal::Repl::LocalVars
     return if @max_bytesize == 0
 
     io << "local table (bytesize: " << @max_bytesize << ")\n"
-    @name_to_index.each do |name, index|
+    @name_to_index.each do |key, index|
       io << "\t" unless index == 0
-      io << name << '@' << index
+      io << key.name << '@' << index
+      io << 'B' << key.block_level if key.block_level > 0
+      io << ':' << @types[key]
     end
   end
 
