@@ -210,9 +210,13 @@ module Crystal
       else
         node.expressions.each_with_index do |exp, i|
           unless exp.nop?
-            append_indent
+            append_indent unless parens
             exp.accept self
-            newline unless parens && i == node.expressions.size - 1
+            if parens
+              @str << "; " unless i == node.expressions.size - 1
+            else
+              newline
+            end
           end
         end
       end
@@ -1551,10 +1555,12 @@ module Crystal
     end
 
     def accept_with_indent(node : Expressions)
+      parens = node.keyword == :"("
       with_indent do
+        append_indent if parens
         node.accept self
       end
-      newline if node.keyword == :"("
+      newline if parens
     end
 
     def accept_with_indent(node : Nop)
