@@ -1182,9 +1182,12 @@ class Crystal::Repl::Interpreter
         when "whereami"
           whereami(a_def, location)
           next
-        when "disassemble"
+        when "*d"
           puts compiled_def.local_vars
           puts Disassembler.disassemble(@context, compiled_def)
+          next
+        when "*s"
+          puts Slice.new(@stack, stack - @stack).hexdump
           next
         end
 
