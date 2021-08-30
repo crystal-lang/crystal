@@ -163,13 +163,13 @@ class Crystal::Repl::Compiler
       end
     when "tuple_indexer_known_index"
       obj = obj.not_nil!
-      obj.accept self
-
-      return unless @wants_value
 
       type = obj.type
       case type
       when TupleInstanceType
+        obj.accept self
+        return unless @wants_value
+
         index = body.as(TupleIndexer).index
         case index
         when Int32
@@ -180,6 +180,9 @@ class Crystal::Repl::Compiler
           node.raise "BUG: missing handling of primitive #{body.name} with range"
         end
       when NamedTupleInstanceType
+        obj.accept self
+        return unless @wants_value
+
         index = body.as(TupleIndexer).index
         case index
         when Int32
@@ -190,7 +193,30 @@ class Crystal::Repl::Compiler
           node.raise "BUG: missing handling of primitive #{body.name} with range"
         end
       else
-        node.raise "BUG: missing handling of primitive #{body.name} for #{type}"
+        discard_value obj
+        return unless @wants_value
+
+        type = type.instance_type
+        case type
+        when TupleInstanceType
+          index = body.as(TupleIndexer).index
+          case index
+          when Int32
+            put_type(type.tuple_types[index].as(Type).metaclass, node: node)
+          else
+            node.raise "BUG: missing handling of primitive #{body.name} with range"
+          end
+        when NamedTupleInstanceType
+          index = body.as(TupleIndexer).index
+          case index
+          when Int32
+            put_type(type.entries[index].type.as(Type).metaclass, node: node)
+          else
+            node.raise "BUG: missing handling of primitive #{body.name} with range"
+          end
+        else
+          node.raise "BUG: missing handling of primitive #{body.name} for #{type}"
+        end
       end
     when "enum_value"
       accept_call_members(node)

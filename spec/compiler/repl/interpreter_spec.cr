@@ -3340,6 +3340,19 @@ describe Crystal::Repl::Interpreter do
         end
         CODE
     end
+
+    it "interprets tuple metaclass indexer" do
+      interpret(<<-CODE).should eq(2)
+        struct Int32
+          def self.foo
+            2
+          end
+        end
+
+        a = {1, 'a'}
+        a.class[0].foo
+      CODE
+    end
   end
 
   context "named tuple" do
@@ -3347,6 +3360,19 @@ describe Crystal::Repl::Interpreter do
       interpret(<<-CODE).should eq(6)
         a = {a: 1, b: 2, c: 3}
         a[:a] + a[:b] + a[:c]
+      CODE
+    end
+
+    it "interprets named tuple metaclass indexer" do
+      interpret(<<-CODE).should eq(2)
+        struct Int32
+          def self.foo
+            2
+          end
+        end
+
+        a = {a: 1, b: 'a'}
+        a.class[:a].foo
       CODE
     end
   end
