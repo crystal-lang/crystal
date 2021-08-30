@@ -22,7 +22,7 @@ describe "Block inference" do
     input.last.as(Call).block.not_nil!.body.type.should eq(result.program.int32)
   end
 
-  it "infer type of block argument" do
+  it "infer type of block parameter" do
     input = parse("
       def foo
         yield 1
@@ -71,7 +71,7 @@ describe "Block inference" do
     ") { union_of(array_of(int32), array_of(float64)) }
   end
 
-  it "uses block arg, too many arguments" do
+  it "uses block arg, too many parameters" do
     assert_error %(
       def foo
         yield
@@ -81,7 +81,7 @@ describe "Block inference" do
         x
       end
       ),
-      "too many block arguments (given 1, expected maximum 0)"
+      "too many block parameters (given 1, expected maximum 0)"
   end
 
   it "yields with different types" do
@@ -334,7 +334,7 @@ describe "Block inference" do
       "expected block to return Foo, not Int32"
   end
 
-  it "errors when using local variable with block argument name" do
+  it "errors when using local variable with block parameter name" do
     assert_error "def foo; yield 1; end; foo { |a| }; a",
       "undefined local variable or method 'a'"
   end
@@ -1019,7 +1019,7 @@ describe "Block inference" do
       )) { union_of(int32, char).metaclass }
   end
 
-  it "binds block return type free variable even if there are no block arguments (#1797)" do
+  it "binds block return type free variable even if there are no block parameters (#1797)" do
     assert_type(%(
       def yielder(&block : -> U) forall U
         yield
@@ -1216,7 +1216,7 @@ describe "Block inference" do
       )) { tuple_of([nilable(char), union_of(int32, bool)]) }
   end
 
-  it "uses splat in block argument" do
+  it "uses splat in block parameter" do
     assert_type(%(
       def foo
         yield 1, 'a'
@@ -1228,7 +1228,7 @@ describe "Block inference" do
       )) { tuple_of([int32, char]) }
   end
 
-  it "uses splat in block argument, many args" do
+  it "uses splat in block parameter, many args" do
     assert_type(%(
       def foo
         yield 1, 'a', true, nil, 1.5, "hello"
@@ -1240,7 +1240,7 @@ describe "Block inference" do
       )) { tuple_of([int32, tuple_of([char, bool, nil_type]), float64, string]) }
   end
 
-  it "uses splat in block argument, but not enough yield expressions" do
+  it "uses splat in block parameter, but not enough yield expressions" do
     assert_error %(
       def foo
         yield 1
@@ -1250,10 +1250,10 @@ describe "Block inference" do
         {x, y, z, w}
       end
       ),
-      "too many block arguments (given 3+, expected maximum 1)"
+      "too many block parameters (given 3+, expected maximum 1)"
   end
 
-  it "errors if splat argument becomes a union" do
+  it "errors if splat parameter becomes a union" do
     assert_error %(
       def foo
         yield 1
@@ -1263,7 +1263,7 @@ describe "Block inference" do
       foo do |*args|
       end
       ),
-      "block splat argument must be a tuple type"
+      "yield argument to block splat parameter must be a Tuple"
   end
 
   it "auto-unpacks tuple" do
@@ -1366,7 +1366,7 @@ describe "Block inference" do
       foo do |x, y, z|
       end
       ),
-      "too many block arguments (given 3, expected maximum 2)"
+      "too many block parameters (given 3, expected maximum 2)"
   end
 
   it "auto-unpacks tuple, too many args" do
@@ -1379,7 +1379,7 @@ describe "Block inference" do
       foo do |x, y, z|
       end
       ),
-      "too many block arguments (given 3, expected maximum 2)"
+      "too many block parameters (given 3, expected maximum 2)"
   end
 
   it "auto-unpacks tuple, too many args, captured block" do

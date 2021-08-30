@@ -88,31 +88,31 @@ describe "Semantic: hooks" do
       ") { int32 }
   end
 
-  it "errors if wrong inherited args size" do
+  it "errors if wrong inherited params size" do
     assert_error %(
       class Foo
         macro inherited(x)
         end
       end
-      ), "macro 'inherited' must not have arguments"
+      ), "wrong number of parameters for macro 'inherited' (given 1, expected 0)"
   end
 
-  it "errors if wrong included args size" do
+  it "errors if wrong included params size" do
     assert_error %(
       module Foo
         macro included(x)
         end
       end
-      ), "macro 'included' must not have arguments"
+      ), "wrong number of parameters for macro 'included' (given 1, expected 0)"
   end
 
-  it "errors if wrong extended args size" do
+  it "errors if wrong extended params size" do
     assert_error %(
       module Foo
         macro extended(x)
         end
       end
-      ), "macro 'extended' must not have arguments"
+      ), "wrong number of parameters for macro 'extended' (given 1, expected 0)"
   end
 
   it "types initializer in inherited" do
@@ -140,13 +140,13 @@ describe "Semantic: hooks" do
       )) { string }
   end
 
-  it "errors if wrong extended args length" do
+  it "errors if wrong extended params length" do
     assert_error %(
       class Foo
         macro method_added
         end
       end
-      ), "macro 'method_added' must have a argument"
+      ), "wrong number of parameters for macro 'method_added' (given 0, expected 1)"
   end
 
   it "includes error message in included hook (#889)" do
@@ -199,6 +199,15 @@ describe "Semantic: hooks" do
 
       Klass.method
       )) { int32 }
+  end
+
+  it "errors if wrong finished params length" do
+    assert_error %(
+      class Foo
+        macro finished(x)
+        end
+      end
+      ), "wrong number of parameters for macro 'finished' (given 1, expected 0)"
   end
 
   it "types macro finished hook bug regarding initialize (#3964)" do
