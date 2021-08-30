@@ -619,8 +619,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
             # Now offset it to reach the instance var
             if ivar_offset > 0
-              put_i32 ivar_offset, node: nil
-              pointer_add 1, node: nil
+              pointer_add_constant ivar_offset, node: nil
             end
 
             # Finally set it
@@ -731,8 +730,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       index, type = local_var.index, local_var.type
 
       if is_self && type.passed_by_value?
-        # Load the entire self from the pointer that's self
-        get_self_ivar 0, aligned_sizeof_type(type), node: node
+        if in_multidispatch?
+          # Inside a multidispatch "self" is already a pointer
+          get_local index, sizeof(Void*), node: node
+          pointer_get aligned_sizeof_type(type), node: node
+        else
+          # Load the entire self from the pointer that's self
+          get_self_ivar 0, aligned_sizeof_type(type), node: node
+        end
       else
         get_local index, aligned_sizeof_type(type), node: node
       end
@@ -862,8 +867,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # Offset pointer to reach self pointer
       closure_self_index = closure_context.bytesize - aligned_sizeof_type(closure_self_type)
       if closure_self_index > 0
-        put_i32 closure_self_index, node: nil
-        pointer_add 1, node: nil
+        pointer_add_constant closure_self_index, node: nil
       end
 
       # Store self in closure
@@ -942,13 +946,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         # We reached the context where the var is.
         # No need to offset if index is 0
         if index > 0
-          put_i32 index, node: nil
-          pointer_add 1, node: nil
+          pointer_add_constant index, node: nil
         end
       else
         # The var is in the parent context, so load that first
-        put_i32 index, node: nil
-        pointer_add 1, node: nil
+        pointer_add_constant index, node: nil
         pointer_get sizeof(Void*), node: nil
       end
     end
@@ -997,8 +999,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
         # Now offset it to reach the instance var
         if ivar_offset > 0
-          put_i32 ivar_offset, node: node
-          pointer_add 1, node: node
+          pointer_add_constant ivar_offset, node: node
         end
 
         # Finally read it
@@ -1128,8 +1129,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     # Now offset it
-    put_i32 ivar_offset, node: nil
-    pointer_add 1, node: nil
+    pointer_add_constant ivar_offset, node: nil
 
     false
   end
@@ -2171,7 +2171,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private def compile_pointerof_node(obj : Var, owner : Type) : Nil
     if obj.name == "self"
       self_type = @def.not_nil!.vars.not_nil!["self"].type
-      if self_type == owner
+      if self_type.passed_by_value? && in_multidispatch?
+        # Inside a multidispatch "self" is already a pointer.
+        get_local 0, sizeof(Void*), node: obj
+        # If it's a union type we need to reach the union's value
+        pointer_add_constant 8, node: obj if self_type.is_a?(MixedUnionType)
+      elsif self_type == owner
         put_self(node: obj)
       else
         assign_to_temporary_and_return_pointer(obj)
@@ -2189,8 +2194,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       pointerof_local_var_or_closured_var(var, node: obj)
 
       # Add 8 to it, to reach the union value
-      put_i64 8_i64, node: nil
-      pointer_add 1_i64, node: nil
+      pointer_add_constant 8, node: obj
     elsif var_type.is_a?(MixedUnionType) && obj.type.is_a?(MixedUnionType)
       pointerof_local_var_or_closured_var(var, node: obj)
     else
@@ -2987,6 +2991,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   end
 
+  private def pointer_add_constant(bytes : Int32, *, node : ASTNode?)
+    put_i32 bytes, node: node
+    pointer_add 1, node: node
+  end
+
   private def append(op_code : OpCode)
     append op_code.value
   end
@@ -3102,6 +3111,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def type_id(type : Type)
     @context.type_id(type)
+  end
+
+  private def in_multidispatch?
+    a_def = @def
+    return false unless a_def
+
+    first_arg = a_def.args.first?
+    return false unless first_arg
+
+    first_arg.name == "self"
   end
 
   private macro nop

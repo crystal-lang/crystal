@@ -2850,6 +2850,53 @@ describe Crystal::Repl::Interpreter do
         t.lt(t)
       CODE
     end
+
+    it "passes self as pointer when doing multidispatch" do
+      interpret(<<-CODE).should eq(10)
+        struct Foo
+          def initialize(@x : Int32)
+          end
+
+          def x
+            @x
+          end
+
+          def to_unsafe
+            pointerof(@x)
+          end
+        end
+
+        struct Bar
+          def initialize(@x : Int32)
+          end
+
+          def x
+            @x
+          end
+
+          def to_unsafe
+            pointerof(@x)
+          end
+        end
+
+        foo = Foo.new(0) || Bar.new(1)
+        foo.to_unsafe.value = 10
+        foo.x
+      CODE
+    end
+
+    it "passes self as pointer when doing multidispatch (2)" do
+      interpret(<<-CODE).should be_true
+        struct Tuple
+          def ==(other)
+            false
+          end
+        end
+
+        a = 1.as(Int32 | Tuple(Int64, Int64))
+        a == 1
+      CODE
+    end
   end
 
   context "classes" do
