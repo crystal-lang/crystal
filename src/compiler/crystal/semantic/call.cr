@@ -803,7 +803,7 @@ class Crystal::Call
 
         if splat_index = block.splat_index
           if yield_types.size < block.args.size - 1
-            block.raise "too many block arguments (given #{block.args.size - 1}+, expected maximum #{yield_types.size})"
+            block.raise "too many block parameters (given #{block.args.size - 1}+, expected maximum #{yield_types.size})"
           end
           splat_range = (splat_index..splat_index - block.args.size)
           yield_types[splat_range] = program.tuple_of(yield_types[splat_range])
@@ -1037,18 +1037,18 @@ class Crystal::Call
     call_block_arg_types = call_block_arg.type.as(ProcInstanceType).arg_types
     if yield_vars
       if yield_vars.size != call_block_arg_types.size
-        wrong_number_of "block argument's arguments", call_block_arg_types.size, yield_vars.size
+        wrong_number_of "block argument's parameters", call_block_arg_types.size, yield_vars.size
       end
 
       i = 1
       yield_vars.zip(call_block_arg_types) do |yield_var, call_block_arg_type|
         if yield_var.type != call_block_arg_type
-          raise "expected block argument's argument ##{i} to be #{yield_var.type}, not #{call_block_arg_type}"
+          raise "expected block argument's parameter ##{i} to be #{yield_var.type}, not #{call_block_arg_type}"
         end
         i += 1
       end
     elsif call_block_arg_types.size != 0
-      wrong_number_of "block argument's arguments", call_block_arg_types.size, 0
+      wrong_number_of "block argument's parameters", call_block_arg_types.size, 0
     end
   end
 

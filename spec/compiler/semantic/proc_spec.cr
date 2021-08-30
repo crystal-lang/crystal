@@ -366,7 +366,7 @@ describe "Semantic: proc" do
 
   it "errors if missing argument type in proc literal" do
     assert_error "->(x) { x }",
-      "function argument 'x' must have a type"
+      "parameter 'x' of Proc literal must have a type"
   end
 
   it "allows passing function to LibC without specifying types" do

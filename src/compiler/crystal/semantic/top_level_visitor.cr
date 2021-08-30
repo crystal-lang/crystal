@@ -330,6 +330,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.set_type @program.nil
 
     if node.name == "finished"
+      unless node.args.empty?
+        node.raise "wrong number of parameters for macro '#{node.name}' (given #{node.args.size}, expected 0)"
+      end
       @finished_hooks << FinishedHook.new(current_type, node)
       return false
     end

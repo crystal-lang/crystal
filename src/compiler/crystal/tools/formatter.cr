@@ -3116,7 +3116,7 @@ module Crystal
             when :UNDERSCORE
               underscore = true
             else
-              raise "expecting block argument name, not #{@token.type}"
+              raise "expecting block parameter name, not #{@token.type}"
             end
 
             write(underscore ? "_" : @token.value)

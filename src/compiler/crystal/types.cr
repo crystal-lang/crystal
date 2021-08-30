@@ -903,9 +903,7 @@ module Crystal
       when "method_added"
         return add_hook :method_added, a_macro, args_size: 1
       when "method_missing"
-        if a_macro.args.size != 1
-          raise TypeException.new "macro 'method_missing' expects 1 argument (call)"
-        end
+        check_macro_param_count(a_macro, 1)
       else
         # normal macro
       end
@@ -924,19 +922,16 @@ module Crystal
     end
 
     def add_hook(kind, a_macro, args_size = 0)
-      if a_macro.args.size != args_size
-        case args_size
-        when 0
-          raise TypeException.new "macro '#{kind}' must not have arguments"
-        when 1
-          raise TypeException.new "macro '#{kind}' must have a argument"
-        else
-          raise TypeException.new "macro '#{kind}' must have #{args_size} arguments"
-        end
-      end
-
+      check_macro_param_count(a_macro, args_size)
       hooks = @hooks ||= [] of Hook
       hooks << Hook.new(kind, a_macro)
+    end
+
+    private def check_macro_param_count(a_macro, expected_count)
+      param_count = a_macro.args.size
+      if param_count != expected_count
+        raise TypeException.new "wrong number of parameters for macro '#{a_macro.name}' (given #{param_count}, expected #{expected_count})"
+      end
     end
 
     def filter_by_responds_to(name)
@@ -2954,7 +2949,7 @@ module Crystal
     def instantiate(type_vars)
       types = type_vars.map do |type_var|
         unless type_var.is_a?(Type)
-          type_var.raise "argument to Proc must be a type, not #{type_var}"
+          type_var.raise "argument to Union must be a type, not #{type_var}"
         end
         # There's no need for types to be virtual because at the end
         # `type_merge` will take care of that.

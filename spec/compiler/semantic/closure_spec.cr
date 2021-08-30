@@ -369,7 +369,7 @@ describe "Semantic: closure" do
       ") { float64 }
   end
 
-  it "transforms block to proc literal without arguments" do
+  it "transforms block to proc literal without parameters" do
     assert_type("
       def foo(&block : -> U) forall U
         block.call
@@ -423,7 +423,7 @@ describe "Semantic: closure" do
       ") { proc_of(int32, float64) }
   end
 
-  it "errors if forwarding block arg doesn't match input type" do
+  it "errors if forwarding block param doesn't match input type" do
     assert_error "
       def foo(&block : Int32 -> U)
         block
@@ -432,10 +432,10 @@ describe "Semantic: closure" do
       f = ->(x : Int64) { x + 1 }
       foo &f
       ",
-      "expected block argument's argument #1 to be Int32, not Int64"
+      "expected block argument's parameter #1 to be Int32, not Int64"
   end
 
-  it "errors if forwarding block arg doesn't match input type size" do
+  it "errors if forwarding block param doesn't match input type size" do
     assert_error "
       def foo(&block : Int32, Int32 -> U)
         block
@@ -444,7 +444,7 @@ describe "Semantic: closure" do
       f = ->(x : Int32) { x + 1 }
       foo &f
       ",
-      "wrong number of block argument's arguments (given 1, expected 2)"
+      "wrong number of block argument's parameters (given 1, expected 2)"
   end
 
   it "lookups return type in correct scope" do
