@@ -88,9 +88,7 @@ class Crystal::Repl::Compiler
         obj.accept self
         return unless @wants_value
 
-        # We have a pointer to a class instance on the stack:
-        # read the type ID from it
-        pointer_get(sizeof(Int32), node: node)
+        put_metaclass node: node
       else
         discard_value obj
         return unless @wants_value

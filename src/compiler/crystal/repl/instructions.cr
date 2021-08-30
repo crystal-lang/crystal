@@ -890,7 +890,7 @@ require "./repl"
       },
       # >>> Calls (4)
 
-      # <<< Allocate (2)
+      # <<< Classes (2)
       allocate_class: {
         operands:   [size : Int32, type_id : Int32],
         push:       true,
@@ -898,6 +898,14 @@ require "./repl"
           ptr = Pointer(Void).malloc(size).as(UInt8*)
           ptr.as(Int32*).value = type_id
           ptr
+        end,
+      },
+      put_metaclass: {
+        pop_values: [reference : Void*],
+        push:       true,
+        code:       begin
+          type = context.type_from_id(reference.as(Int32*).value)
+          context.type_id(type.metaclass)
         end,
       },
       # >>> Allocate (2)

@@ -1624,14 +1624,13 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets class for virtual_type type" do
-      context, repl_value = interpret_with_context(<<-CODE)
+      interpret(<<-CODE, prelude: "prelude").should eq("Bar")
           class Foo; end
           class Bar < Foo; end
 
           bar = Bar.new || Foo.new
-          bar.class
+          bar.class.to_s
         CODE
-      repl_value.value.should eq(context.program.types["Bar"])
     end
 
     it "discards class for virtual_type type" do
