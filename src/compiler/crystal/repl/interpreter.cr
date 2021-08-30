@@ -35,7 +35,18 @@ class Crystal::Repl::Interpreter
     # With `real_frame_index` we know where that frame is actually
     # in the call stack (the original, not the copy) and we can
     # go back to just before that frame when a `return` happens.
-    real_frame_index : Int32
+    real_frame_index : Int32,
+    # This is a bit hacky, but...
+    # Right now, when we produce an OverflowError we do it directly
+    # in the instruction that potentitally produces the overflow.
+    # When we do that, the backtrace that is produced in that case
+    # is incorrect because the backtrace computing logic assumes
+    # an all call frames are, well, calls. But in this case it could
+    # be an `add_i32` instruction which has a different layout.
+    # To solve this, we have an optional `overflow_offset` that
+    # we put on a frame to indicate that the caller frame must
+    # add to get the correct backtrace location.
+    overflow_offset : Int32
 
   getter context : Context
 
@@ -276,6 +287,7 @@ class Crystal::Repl::Interpreter
       stack_bottom: stack_bottom,
       block_caller_frame_index: -1,
       real_frame_index: 0,
+      overflow_offset: 0,
     )
 
     while true
@@ -339,16 +351,15 @@ class Crystal::Repl::Interpreter
 
                 {% if instruction[:overflow] %}
                   {{ "rescue OverflowError".id }}
-                    # Adjust ip so it's correct for backtrace.
-                    # The ip has to end after the opcode and sizeof(Void*)
-                    # bytes after that, because backtrace will assume it was a call.
+                    # Compute the overflow offset to make it look like a call
+                    overflow_offset = 0
                     {% for operand in operands %}
-                      ip -= sizeof({{operand.type}})
+                      overflow_offset -= sizeof({{operand.type}})
                     {% end %}
-                    ip += sizeof(Void*)
+                    overflow_offset += sizeof(Void*)
 
                     # On overflow, directly call __crystal_raise_overflow
-                    call(@context.crystal_raise_overflow_compiled_def)
+                    call(@context.crystal_raise_overflow_compiled_def, overflow_offset: overflow_offset)
                   {{ "end".id }}
                 {% end %}
               rescue escaping_exception : EscapingException
@@ -475,7 +486,8 @@ class Crystal::Repl::Interpreter
   # not sure.
 
   private macro call(compiled_def,
-                     block_caller_frame_index = -1)
+                     block_caller_frame_index = -1,
+                     overflow_offset = 0)
     # At the point of a call like:
     #
     #     foo(x, y)
@@ -513,6 +525,7 @@ class Crystal::Repl::Interpreter
       stack_bottom: %stack_before_call_args,
       block_caller_frame_index: {{block_caller_frame_index}},
       real_frame_index: @call_stack.size,
+      overflow_offset: {{overflow_offset}},
     )
 
     @call_stack << %call_frame
@@ -677,6 +690,11 @@ class Crystal::Repl::Interpreter
           call_frame.ip - sizeof(Void*) - sizeof(OpCode)
         end
 
+      if index < @call_stack.size - 1
+        # Add any overflow offset if necessary
+        call_frame_ip += @call_stack[index + 1].overflow_offset
+      end
+
       call_frame_index = call_frame_ip - call_frame_instructions.to_unsafe
       node = call_frame_nodes[call_frame_index]?
       if node && (location = node.location)
@@ -730,7 +748,6 @@ class Crystal::Repl::Interpreter
           # or if the raised exception is any of the exceptions to handle.
           if handler.start_index <= %index < handler.end_index &&
             (!%exception_types || %exception_types.any? { |ex_type| %exception_type.implements?(ex_type) })
-
             # Push the exception so that it can be assigned to the rescue variable,
             # or thrown in an ensure handler.
             if %exception_types
