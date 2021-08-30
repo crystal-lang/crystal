@@ -986,25 +986,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private def compile_instance_var(node : InstanceVar)
     return false unless @wants_value
 
-    closure_self = lookup_closured_var?("self")
-    if closure_self
-      ivar_offset = ivar_offset(closure_self.type, node.name)
-      ivar_size = inner_sizeof_type(closure_self.type.lookup_instance_var(node.name))
-
-      if closure_self.type.passed_by_value?
-        node.raise "BUG: missing interpret read closured instance var of pass-by-value"
-      else
-        # Read self pointer
-        read_from_closured_var(closure_self, node: node)
-
-        # Now offset it to reach the instance var
-        if ivar_offset > 0
-          pointer_add_constant ivar_offset, node: node
-        end
-
-        # Finally read it
-        pointer_get ivar_size, node: node
-      end
+    closured_self = lookup_closured_var?("self")
+    if closured_self
+      ivar_offset, ivar_size = get_closured_self_pointer(closured_self, node.name, node: node)
+      pointer_get ivar_size, node: node
     else
       ivar_offset = ivar_offset(scope, node.name)
       ivar_size = inner_sizeof_type(scope.lookup_instance_var(node.name))
@@ -1013,6 +998,25 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     false
+  end
+
+  private def get_closured_self_pointer(closured_self : ClosuredVar, name : String, *, node : ASTNode?)
+    ivar_offset = ivar_offset(closured_self.type, name)
+    ivar_size = inner_sizeof_type(closured_self.type.lookup_instance_var(name))
+
+    if closured_self.type.passed_by_value?
+      node.raise "BUG: missing interpret read closured instance var of pass-by-value"
+    else
+      # Read self pointer
+      read_from_closured_var(closured_self, node: node)
+
+      # Now offset it to reach the instance var
+      if ivar_offset > 0
+        pointer_add_constant ivar_offset, node: node
+      end
+    end
+
+    {ivar_offset, ivar_size}
   end
 
   def visit(node : ClassVar)
@@ -1395,6 +1399,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def compile_pointerof_ivar(node : ASTNode, name : String)
+    closure_self = lookup_closured_var?("self")
+    if closure_self
+      get_closured_self_pointer(closure_self, name, node: node)
+      return
+    end
+
     index = scope.index_of_instance_var(name).not_nil!
     offset = if scope.struct?
                @context.offset_of(scope, index)

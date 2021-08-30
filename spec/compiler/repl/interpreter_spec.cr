@@ -5296,6 +5296,28 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "passes closured struct instance var as self" do
+      interpret(<<-CODE).should eq(10)
+        struct Bar
+          def bar
+            10
+          end
+        end
+
+        class Foo
+          def initialize
+            @bar = Bar.new
+          end
+
+          def foo
+            ->{ @bar.bar }.call
+          end
+        end
+
+        Foo.new.foo
+      CODE
+    end
   end
 
   context "struct set" do
