@@ -116,12 +116,10 @@ module IO::Overlapped
 
     get_overlapped_result(socket, operation) do |error|
       case error
-      when .wsaeconnrefused?
+      when .wsa_io_incomplete?, .wsaeconnrefused?
         return ::Socket::ConnectError.from_os_error(method, error)
       when .error_operation_aborted?
         # FIXME: Not sure why this is necessary
-        return ::Socket::ConnectError.from_os_error(method, error)
-      when .wsa_io_incomplete?
         return ::Socket::ConnectError.from_os_error(method, error)
       end
     end
