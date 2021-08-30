@@ -102,7 +102,7 @@ abstract class Digest
     # end
     # # => "C+7Hteo/D9vJXQ3UfzxbwnXaijM="
     # ```
-    def base64digest(& : self -> _) : String
+    def base64digest(& : self ->) : String
       hashsum = digest do |ctx|
         yield ctx
       end

@@ -40,14 +40,14 @@ class Dir
   # If *match_hidden* is `true` the pattern will match hidden files and folders.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.glob(*patterns : Path | String, match_hidden = false, follow_symlinks = false, &block : String -> _)
+  def self.glob(*patterns : Path | String, match_hidden = false, follow_symlinks = false, &block : String ->)
     glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |path|
       yield path
     end
   end
 
   # :ditto:
-  def self.glob(patterns : Enumerable, match_hidden = false, follow_symlinks = false, &block : String -> _)
+  def self.glob(patterns : Enumerable, match_hidden = false, follow_symlinks = false, &block : String ->)
     Globber.glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |path|
       yield path
     end
@@ -72,7 +72,7 @@ class Dir
     end
     alias PatternType = DirectoriesOnly | ConstantEntry | EntryMatch | RecursiveDirectories | ConstantDirectory | RootDirectory | DirectoryMatch
 
-    def self.glob(patterns : Enumerable, *, match_hidden, follow_symlinks, &block : String -> _)
+    def self.glob(patterns : Enumerable, *, match_hidden, follow_symlinks, &block : String ->)
       patterns.each do |pattern|
         if pattern.is_a?(Path)
           pattern = pattern.to_posix.to_s
@@ -147,7 +147,7 @@ class Dir
       true
     end
 
-    private def self.run(sequence, match_hidden, follow_symlinks, &block : String -> _)
+    private def self.run(sequence, match_hidden, follow_symlinks, &block : String ->)
       return if sequence.empty?
 
       path_stack = [] of Tuple(Int32, String?, Crystal::System::Dir::Entry?)
