@@ -73,7 +73,10 @@ module Crystal::Repl::Multidispatch
     obj = node.obj
     obj_type = obj.try(&.type) || node.scope
 
-    a_def = Def.new(node.name).at(node)
+    # Give the multidispatch a different name.
+    # This isn't strictly necessary, but for "initialize" if we name it like
+    # that the compiler would do some extra checks that we don't really need to do.
+    a_def = Def.new("*#{node.name}").at(node)
 
     unless obj_type.is_a?(Program)
       self_arg = Arg.new("self").at(node)
@@ -138,6 +141,7 @@ module Crystal::Repl::Multidispatch
         end
 
       call = Call.new(call_obj, node.name, call_args)
+      call.skip_visibility_check = true
       calls << call
 
       if block

@@ -612,6 +612,8 @@ class Crystal::Call
   end
 
   def check_visibility(match)
+    return if skip_visibility_check?
+
     case match.def.visibility
     when .private?
       if obj = @obj

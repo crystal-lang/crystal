@@ -2897,6 +2897,28 @@ describe Crystal::Repl::Interpreter do
         a == 1
       CODE
     end
+
+    it "initialize multidispatch" do
+      interpret(<<-CODE).should eq(1)
+        struct Foo
+          def initialize(x : Int64)
+            initialize(x, 1 || 'a')
+          end
+
+          def initialize(@x : Int64, y : Int32)
+          end
+
+          def initialize(@x : Int64, y : Char)
+          end
+
+          def x
+            @x
+          end
+        end
+
+        Foo.new(1_i64).x
+      CODE
+    end
   end
 
   context "classes" do
