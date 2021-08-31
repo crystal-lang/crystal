@@ -544,10 +544,10 @@ class Crystal::Call
         index = a_macro.args.index { |arg| arg.external_name == named_arg.name }
         if index
           if index < args.size
-            raise "argument '#{named_arg.name}' already specified"
+            raise "argument for parameter '#{named_arg.name}' already specified"
           end
         else
-          raise "no argument named '#{named_arg.name}'"
+          raise "no parameter named '#{named_arg.name}'"
         end
       end
 
@@ -585,13 +585,13 @@ class Crystal::Call
       if found_index
         min_size = arg_types.size
         if found_index < min_size
-          raise "argument '#{named_arg.name}' already specified"
+          raise "argument for parameter '#{named_arg.name}' already specified"
         end
       elsif !a_def.double_splat
         similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.external_name))
 
         msg = String.build do |str|
-          str << "no argument named '"
+          str << "no parameter named '"
           str << named_arg.name
           str << '\''
           if similar_name
