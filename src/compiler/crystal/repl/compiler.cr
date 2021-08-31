@@ -1091,26 +1091,24 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compile_read_instance_var(node, node.obj, node.name)
   end
 
-  private def compile_read_instance_var(node, obj, name)
+  private def compile_read_instance_var(node, obj, name, owner = obj.type)
     unless @wants_value
       discard_value(obj)
       return false
     end
 
-    type = obj.type
-
-    ivar = type.lookup_instance_var(name)
-    ivar_offset = ivar_offset(type, name)
+    ivar = owner.lookup_instance_var(name)
+    ivar_offset = ivar_offset(owner, name)
     ivar_size = inner_sizeof_type(ivar)
 
     obj.accept self
 
-    if type.passed_by_value?
+    if owner.passed_by_value?
       # We have the struct in the stack, now we need to keep a part of it
 
       # If it's an extern struct with a Proc field, we need to convert
       # the FFI::Closure object into a Crystal Proc
-      if type.extern? && ivar.type.proc?
+      if owner.extern? && ivar.type.proc?
         get_struct_ivar ivar_offset, sizeof(Void*), aligned_sizeof_type(obj), node: node
         c_fun_to_proc node: node
       else
@@ -1682,7 +1680,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # Inline the call, so that it also works fine when wanting to take a pointer through things
       # (this is how compiled Crystal works too
       if obj
-        compile_read_instance_var(node, obj, body.name)
+        compile_read_instance_var(node, obj, body.name, owner: target_def.owner)
       else
         compile_instance_var(body)
       end

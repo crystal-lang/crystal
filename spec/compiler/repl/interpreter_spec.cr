@@ -2265,6 +2265,25 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "inlines method that just reads an instance var (2)" do
+      interpret(<<-CODE).should eq(2)
+        abstract class Abstract
+        end
+
+        class Concrete < Abstract
+          def initialize(@x : Int32)
+          end
+
+          def x
+            @x
+          end
+        end
+
+        original = Concrete.new(2).as(Abstract)
+        original.x
+      CODE
+    end
+
     it "puts struct pointer after tuple indexer" do
       interpret(<<-CODE).should eq(1)
         struct Point
