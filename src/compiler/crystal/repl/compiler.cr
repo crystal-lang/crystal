@@ -1750,10 +1750,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.args.each_with_index do |arg, i|
       arg_type = arg.type
 
-      if arg.is_a?(NilLiteral)
+      case arg_type
+      when NilType
         # Nil is used to mean Pointer.null
+        discard_value(arg)
         put_i64 0, node: arg
-      elsif arg_type.is_a?(StaticArrayInstanceType)
+      when StaticArrayInstanceType
         # Static arrays are passed as pointers to C
         compile_pointerof_node(arg, arg.type)
       else
@@ -1761,21 +1763,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
       # TODO: upcast?
 
-      if arg_type.is_a?(ProcInstanceType)
+      case arg_type
+      when NilType
+        args_bytesizes << sizeof(Pointer(Void))
+        args_ffi_types << FFI::Type.pointer
+      when ProcInstanceType
         external_arg = external.args[i]
         args_bytesizes << sizeof(Void*)
         args_ffi_types << FFI::Type.pointer
 
         proc_to_c_fun external_arg.type.as(ProcInstanceType).ffi_call_interface, node: nil
-      elsif arg_type.is_a?(StaticArrayInstanceType)
+      when StaticArrayInstanceType
         # Static arrays are passed as pointers to C
         args_bytesizes << sizeof(Void*)
         args_ffi_types << FFI::Type.pointer
       else
         case arg
-        when NilLiteral
-          args_bytesizes << sizeof(Pointer(Void))
-          args_ffi_types << FFI::Type.pointer
         when Out
           # TODO: this out handling is bad. Why is out's type not a pointer already?
           args_bytesizes << sizeof(Pointer(Void))
