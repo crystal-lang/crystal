@@ -202,7 +202,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     node.body.accept self
-    upcast node.body, node.body.type, node.type
+
+    if node.type.no_return?
+      # Nothing to do, the body never returns so there's nothing to upcast
+    else
+      upcast node.body, node.body.type, node.type
+    end
 
     # Use a dummy node so that pry stops at `end`
     leave aligned_sizeof_type(node), node: Nop.new.at(node.end_location)
