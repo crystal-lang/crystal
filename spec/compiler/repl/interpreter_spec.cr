@@ -4237,7 +4237,7 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "..." do
+    it "does is_a? with virtual metaclass" do
       interpret(<<-CODE).should eq(1)
         class A
           def self.a
@@ -4289,6 +4289,41 @@ describe Crystal::Repl::Interpreter do
       interpret(<<-CODE, prelude: "prelude").should eq(1)
         ({1} || 2).as(Tuple)[0]
       CODE
+    end
+
+    it "does is_a? with virtual type (struct)" do
+      interpret(<<-CODE).should eq(10)
+        abstract struct Foo
+        end
+
+        struct Bar < Foo
+          def initialize(@x : Int32)
+          end
+
+          def bar
+            @x
+          end
+        end
+
+        struct Baz < Foo
+          def initialize(@x : Int32)
+          end
+
+          def baz
+            @x
+          end
+        end
+
+        a = (Bar.new(10) || Baz.new(20)).as(Foo)
+        case a
+        when Bar
+          a.bar
+        when Baz
+          a.baz
+        else
+          0
+        end
+        CODE
     end
   end
 
@@ -5626,6 +5661,34 @@ describe Crystal::Repl::Interpreter do
     it "does leading zeros" do
       interpret(<<-CODE, prelude: "prelude").should eq(8)
         0_i8.leading_zeros_count
+      CODE
+    end
+
+    it "does multidispatch on virtual struct" do
+      interpret(<<-CODE).should eq(true)
+        abstract struct Base
+        end
+
+        struct Foo < Base
+          @x : Int32 | Char
+
+          def initialize
+            @x = 0
+          end
+
+          def foo
+            @x.is_a?(Int32)
+          end
+        end
+
+        struct Bar < Base
+          def foo
+            false
+          end
+        end
+
+        address = Foo.new.as(Base)
+        address.foo
       CODE
     end
   end
