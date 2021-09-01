@@ -65,7 +65,7 @@ module Crystal::System::FileDescriptor
 
   private def system_info
     {% begin %}
-      {% if flag?(:interpreted) %}
+      {% if flag?(:interpreted) && LibC.has_method?("__fxstat") %}
         ret = LibC.__fxstat(1, fd, out stat)
       {% else %}
         ret = LibC.fstat(fd, out stat)
