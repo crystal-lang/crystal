@@ -1598,12 +1598,7 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
-  context "types" do
-    it "interprets path to type" do
-      context, repl_value = interpret_with_context("String")
-      repl_value.value.should eq(context.program.string.metaclass)
-    end
-
+  context "typeof" do
     it "interprets typeof instance type" do
       context, repl_value = interpret_with_context("typeof(1)")
       repl_value.value.should eq(context.program.int32.metaclass)
@@ -1612,6 +1607,29 @@ describe Crystal::Repl::Interpreter do
     it "interprets typeof metaclass type" do
       context, repl_value = interpret_with_context("typeof(Int32)")
       repl_value.value.should eq(context.program.class_type)
+    end
+
+    it "interprets typeof virtual type" do
+      interpret(<<-CODE, prelude: "prelude").should eq("Foo")
+        abstract class Foo
+        end
+
+        class Bar < Foo
+        end
+
+        class Baz < Foo
+        end
+
+        foo = Baz.new.as(Foo)
+        typeof(foo).to_s
+      CODE
+    end
+  end
+
+  context "types" do
+    it "interprets path to type" do
+      context, repl_value = interpret_with_context("String")
+      repl_value.value.should eq(context.program.string.metaclass)
     end
 
     it "interprets class for non-union type" do

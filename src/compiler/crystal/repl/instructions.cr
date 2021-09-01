@@ -1024,7 +1024,14 @@ require "./repl"
         code:       begin
           type = type_from_type_id(metaclass_id)
           filter_type = type_from_type_id(filter_type_id)
-          !!type.filter_by(filter_type)
+          if type.is_a?(VirtualMetaclassType)
+            # This can happen when using `typeof`.
+            # In this case we only match a `Foo+.class` to `Foo.class`,
+            # never to subtypes of `Foo.class`.
+            type.devirtualize == filter_type
+          else
+            !!type.filter_by(filter_type)
+          end
         end,
         disassemble: {
           filter_type_id: context.type_from_id(filter_type_id),
