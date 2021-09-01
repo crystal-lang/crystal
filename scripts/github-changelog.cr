@@ -14,8 +14,7 @@
 #   scripts/github-changelog.cr <milestone>
 #
 # Environment variables:
-#
-# * GITHUB_TOKEN: Access token for GitHub API (required)
+#   GITHUB_TOKEN: Access token for the GitHub API (required)
 require "http/client"
 require "json"
 
@@ -107,9 +106,15 @@ record PullRequest,
   end
 
   def <=>(other : self)
-    return -1 if labels.includes?("breaking-change") && !other.labels.includes?("breaking-change")
-    return -1 if labels.includes?("security") && !other.labels.includes?("security")
-    return -1 if labels.includes?("performance") && !other.labels.includes?("performance")
+    x = (other.labels.includes?("security") ? 1 : 0) <=> (labels.includes?("security") ? 1 : 0)
+    return x unless x.zero?
+    x = (other.labels.includes?("breaking-change") ? 1 : 0) <=> (labels.includes?("breaking-change") ? 1 : 0)
+    return x unless x.zero?
+
+    if (mergedAt = self.mergedAt) && (otherMergedAt = other.mergedAt)
+      mergedAt <=> otherMergedAt
+    end
+
     0
   end
 end
