@@ -6,7 +6,7 @@
 # Pull requests that are already referenced in CHANGELOG.md are omitted, which
 # makes it easy to incrementally add entries.
 #
-# Entries are grouped by topic (based on topic labels) and ordered by date.
+# Entries are grouped by topic (based on topic labels) and ordered by merge date.
 # Some annotations are automatically added based on labels.
 #
 # Usage:
