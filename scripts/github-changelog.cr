@@ -38,9 +38,9 @@ query = <<-GRAPHQL
                 login
               }
               labels(first: 10) {
-              nodes {
-                name
-              }
+                nodes {
+                  name
+                }
               }
             }
           }
@@ -52,12 +52,17 @@ query = <<-GRAPHQL
 
 owner, _, name = repository.partition("/")
 variables = {
-  owner: owner,
+  owner:      owner,
   repository: name,
-  milestone: milestone,
+  milestone:  milestone,
 }
 
-response = HTTP::Client.post("https://api.github.com/graphql", body: {query: query, variables: variables}.to_json, headers: HTTP::Headers{"Authorization" => "bearer #{api_token}"})
+response = HTTP::Client.post("https://api.github.com/graphql",
+  body: {query: query, variables: variables}.to_json,
+  headers: HTTP::Headers{
+    "Authorization" => "bearer #{api_token}",
+  }
+)
 
 module LabelNameConverter
   def self.from_json(pull : JSON::PullParser)
