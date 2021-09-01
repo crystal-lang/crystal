@@ -471,8 +471,14 @@ class Crystal::Repl::Context
 
     return unless path && name
 
-    # TODO: obviously support other platforms than darwin
-    lib_path = File.join(path, "lib#{name}.dylib")
+    lib_path : String?
+    {% if flag?(:darwin) %}
+      lib_path = File.join(path, "lib#{name}.dylib")
+    {% elsif flag?(:unix) %}
+      lib_path = File.join(path, "lib#{name}.so")
+    {% else %}
+      {% raise "Can't load dynamic libraries" %}
+    {% end %}
     return unless File.exists?(lib_path)
 
     handle = LibC.dlopen(lib_path, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
