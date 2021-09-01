@@ -88,7 +88,7 @@ class Crystal::Repl::Compiler
         obj.accept self
         return unless @wants_value
 
-        put_metaclass node: node
+        put_metaclass aligned_sizeof_type(type), type.struct?, node: node
       else
         discard_value obj
         return unless @wants_value

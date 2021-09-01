@@ -901,10 +901,17 @@ require "./repl"
         end,
       },
       put_metaclass: {
-        pop_values: [reference : Void*],
+        operands:   [size : Int32, struct_type : Bool],
         push:       true,
         code:       begin
-          type = context.type_from_id(reference.as(Int32*).value)
+          type_id =
+            if struct_type
+              (stack - size).as(Int32*).value
+            else
+              (stack - size).as(Void**).value.as(Int32*).value
+            end
+          stack_shrink_by(size)
+          type = context.type_from_id(type_id)
           context.type_id(type.metaclass)
         end,
       },

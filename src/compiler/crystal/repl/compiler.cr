@@ -3077,6 +3077,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   end
 
+  private def append(value : Bool)
+    append(value ? 1_u8 : 0_u8)
+  end
+
   private def append(value : UInt8)
     @instructions.instructions << value
   end

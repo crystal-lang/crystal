@@ -1651,6 +1651,17 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "interprets class for virtual_type type (struct)" do
+      interpret(<<-CODE, prelude: "prelude").should eq("Baz")
+          abstract struct Foo; end
+          struct Bar < Foo; end
+          struct Baz < Foo; end
+
+          baz = Baz.new || Bar.new
+          baz.class.to_s
+        CODE
+    end
+
     it "discards class for virtual_type type" do
       interpret(<<-CODE).should eq(2)
           class Foo; end
