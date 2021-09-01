@@ -2482,8 +2482,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when InstanceVar
       compile_pointerof_ivar(node, exp.name)
     when Underscore
-      node.raise "BUG: missing interpret out with underscore"
-      # Nothing to do
+      # Allocate a temporary variable just for the underscore, then get a pointer to it
+      temp_var_name = @context.program.new_temp_var_name
+      temp_var_index = @local_vars.declare(temp_var_name, node.type).not_nil!
+
+      pointerof_var temp_var_index, node: node
     else
       node.raise "BUG: unexpected out exp: #{exp}"
     end
