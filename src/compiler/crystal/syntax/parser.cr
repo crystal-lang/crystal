@@ -2419,10 +2419,11 @@ module Crystal
           end
 
           while @token.type != :"}"
+            key_loc = @token.location
             key = parse_op_assign_no_control
             skip_space_or_newline
             if @token.type == :":" && key.is_a?(StringLiteral)
-              # Nothing: it's a string key
+              raise "can't use 'key: value' syntax in a hash literal", key_loc
             else
               check :"=>"
             end
