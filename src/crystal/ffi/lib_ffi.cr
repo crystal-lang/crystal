@@ -66,6 +66,7 @@ module Crystal
       atypes : Type**
     ) : FFI::Status
 
+    @[Raises]
     fun call = ffi_call(
       cif : Cif*,
       fn : Void*,

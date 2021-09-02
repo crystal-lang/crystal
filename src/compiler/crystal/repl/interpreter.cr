@@ -599,15 +599,19 @@ class Crystal::Repl::Interpreter
       %i -= 1
     end
 
-    %cif.call(%fn, %pointers.to_unsafe, stack.as(Void*))
+    begin
+      %cif.call(%fn, %pointers.to_unsafe, stack.as(Void*))
+    rescue ex : EscapingException
+      raise_exception(ex.exception_pointer)
+    else
+      %return_bytesize = inner_sizeof_type(%target_def.type)
+      %aligned_return_bytesize = align(%return_bytesize)
 
-    %return_bytesize = inner_sizeof_type(%target_def.type)
-    %aligned_return_bytesize = align(%return_bytesize)
+      (stack - %offset).move_from(stack, %return_bytesize)
+      stack = stack - %offset + %return_bytesize
 
-    (stack - %offset).move_from(stack, %return_bytesize)
-    stack = stack - %offset + %return_bytesize
-
-    stack_grow_by(%aligned_return_bytesize - %return_bytesize)
+      stack_grow_by(%aligned_return_bytesize - %return_bytesize)
+    end
   end
 
   private macro leave(size)
