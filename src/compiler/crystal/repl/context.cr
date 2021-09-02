@@ -366,7 +366,7 @@ class Crystal::Repl::Context
 
     fn = LibC.dlsym(handle, name)
     if fn.null?
-      raise "dlsym failed for lib: #{lib_type}, name: #{name.inspect}"
+      raise "dlsym failed for lib: #{lib_type}, name: #{name.inspect}: #{String.new(LibC.dlerror)}"
     end
     fn
   end
