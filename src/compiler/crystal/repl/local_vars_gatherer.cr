@@ -57,20 +57,26 @@ class Crystal::Repl::LocalVarsGatherer < Crystal::Visitor
     @def.body.accept self
   end
 
+  def visit(node : Rescue)
+    location = node.location
+    if location && location.line_number >= @location.line_number
+      return false
+    end
+
+    if name = node.name
+      add_var(name)
+    end
+
+    true
+  end
+
   def visit(node : Var)
     location = node.location
     if location && location.line_number >= @location.line_number
       return false
     end
 
-    var =
-      if block = @block
-        block.vars.try &.[node.name]?
-      else
-        @def.vars.try &.[node.name]?
-      end
-
-    @meta_vars[var.name] = var.clone if var
+    add_var(node.name)
 
     false
   end
@@ -97,5 +103,16 @@ class Crystal::Repl::LocalVarsGatherer < Crystal::Visitor
 
   def visit(node : ASTNode)
     true
+  end
+
+  private def add_var(name : String)
+    var =
+      if block = @block
+        block.vars.try &.[name]?
+      else
+        @def.vars.try &.[name]?
+      end
+
+    @meta_vars[var.name] = var.clone if var
   end
 end
