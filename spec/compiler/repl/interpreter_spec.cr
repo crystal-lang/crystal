@@ -4963,6 +4963,21 @@ describe Crystal::Repl::Interpreter do
           foo.proc.call(2) + foo.field
         CODE
     end
+
+    it "sets struct field through pointer" do
+      interpret(<<-CODE).should eq(20)
+          lib LibFoo
+            struct Foo
+              x : Int32
+            end
+          end
+
+          foo = LibFoo::Foo.new
+          ptr = pointerof(foo)
+          ptr.value.x = 20
+          foo.x
+        CODE
+    end
   end
 
   context "autocast" do

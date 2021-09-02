@@ -313,18 +313,6 @@ class Crystal::Repl::Compiler
         arg = call
       end
 
-      case obj
-      when Var, InstanceVar, ClassVar
-        # all good
-      else
-        # we'll need to accept obj, but at that pointer modifying
-        # the struct will be pointless, so we just ignore setting
-        # a value altogether.
-        discard_value(obj)
-        arg.accept self
-        return
-      end
-
       type = obj.type.as(NonGenericClassType)
 
       ivar_name = '@' + node.name.rchop # remove the '=' suffix
