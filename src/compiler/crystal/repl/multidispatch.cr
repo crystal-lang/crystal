@@ -73,10 +73,7 @@ module Crystal::Repl::Multidispatch
     obj = node.obj
     obj_type = obj.try(&.type) || node.scope
 
-    # Give the multidispatch a different name.
-    # This isn't strictly necessary, but for "initialize" if we name it like
-    # that the compiler would do some extra checks that we don't really need to do.
-    a_def = Def.new("*#{node.name}").at(node)
+    a_def = Def.new(node.name).at(node)
 
     unless obj_type.is_a?(Program)
       self_arg = Arg.new("self").at(node)
@@ -103,7 +100,8 @@ module Crystal::Repl::Multidispatch
 
     main_if = nil
     current_if = nil
-    calls = [] of Call
+
+    blocks = [] of Block
 
     target_defs.each do |target_def|
       i = 0
@@ -141,15 +139,18 @@ module Crystal::Repl::Multidispatch
         end
 
       call = Call.new(call_obj, node.name, call_args)
-      call.skip_visibility_check = true
-      calls << call
+      call.target_defs = [target_def]
+      call.type = target_def.type
 
       if block
-        block_args = block.args.map_with_index { |arg, i| Var.new("barg#{i}") }
+        block_args = block.args.map_with_index { |arg, i| Var.new("barg#{i}", arg.type) }
         yield_args = Array(ASTNode).new(block_args.size)
-        block.args.each_index { |i| yield_args << Var.new("barg#{i}") }
+        block.args.each_index { |i| yield_args << Var.new("barg#{i}", block.args[i].type) }
 
-        call.block = Block.new(block_args, body: Yield.new(yield_args))
+        inner_block = Block.new(block_args, body: Yield.new(yield_args))
+        blocks << inner_block
+
+        call.block = inner_block
       end
 
       exps = call
@@ -209,9 +210,11 @@ module Crystal::Repl::Multidispatch
       i += 1
     end
 
-    visitor = MainVisitor.new(context.program, def_args, a_def)
+    visitor = MultidispatchMainVisitor.new(context.program, def_args, a_def)
     visitor.untyped_def = a_def
     visitor.call = node
+
+    # puts a_def
 
     # visitor.scope = obj_type
     # visitor.yield_vars = yield_vars
@@ -220,14 +223,9 @@ module Crystal::Repl::Multidispatch
     # visitor.path_lookup = match.context.defining_type
     a_def.body.accept visitor
 
-    # Let the calls resolve to each target def.
-    # This is needed because otherwise it's a dispatch on a virtual type,
-    # calling `self.method` as the last dispatch branch would resolve
-    # to the same dispatch, recursively.
-    target_defs.zip(calls) do |target_def, call|
-      call.target_defs = [target_def]
-      call.type = target_def.type
-    end
+    # Because we skipped recalculating calls, the blocks weren't visited.
+    # We do this now.
+    blocks.each &.accept visitor
 
     a_def.bind_to(a_def.body)
 
@@ -248,5 +246,27 @@ module Crystal::Repl::Multidispatch
       end
     end
     condition
+  end
+
+  # We use a special version of MainVisitor that doesn't resolve calls
+  # nor do some checks. This is because in a multidispatch we already know
+  # what the calls resolve to.
+  class MultidispatchMainVisitor < MainVisitor
+    def recalculate_call(node : Call)
+      # Define special vars (this is copied from the last bits of Call#recalculate)
+      target_def = node.target_def
+      target_def.special_vars.try &.each do |special_var_name|
+        special_var = target_def.vars.not_nil![special_var_name]
+        define_special_var(special_var_name, special_var)
+      end
+    end
+
+    def check_super_or_previous_def_in_initialize(node)
+      # Nothing
+    end
+
+    def check_call_in_initialize(node)
+      # Nothing
+    end
   end
 end

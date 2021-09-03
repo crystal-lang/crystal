@@ -2967,6 +2967,18 @@ describe Crystal::Repl::Interpreter do
         Foo.new(1_i64).x
       CODE
     end
+
+    it "does multidispatch with mandatory named arguments" do
+      interpret(<<-CODE).should eq(1)
+        class Object
+          def foo(obj, *, file = "")
+            obj
+          end
+        end
+
+        ("" || nil).foo 1, file: ""
+      CODE
+    end
   end
 
   context "classes" do

@@ -12,7 +12,6 @@ class Crystal::Call
   property expanded_macro : Macro?
   property? uses_with_scope = false
   getter? raises = false
-  property? skip_visibility_check = false
 
   class RetryLookupWithLiterals < ::Exception
   end

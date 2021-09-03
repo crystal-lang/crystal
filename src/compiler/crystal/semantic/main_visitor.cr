@@ -1320,7 +1320,7 @@ module Crystal
         end
       end
 
-      node.recalculate
+      recalculate_call(node)
 
       check_call_in_initialize node
 
@@ -1338,6 +1338,10 @@ module Crystal
       end
       node.with_scope = with_scope
       node.parent_visitor = self
+    end
+
+    def recalculate_call(node : Call)
+      node.recalculate
     end
 
     def call_needs_splat_expansion?(node)
