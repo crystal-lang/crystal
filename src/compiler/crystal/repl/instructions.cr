@@ -157,6 +157,134 @@ require "./repl"
         push:       true,
         code:       value.to_f64,
       },
+      i128_to_i8: {
+        pop_values: [value : Int128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i8,
+      },
+      i128_to_i16: {
+        pop_values: [value : Int128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i16,
+      },
+      i128_to_i32: {
+        pop_values: [value : Int128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i32,
+      },
+      i128_to_i64: {
+        pop_values: [value : Int128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i64,
+      },
+      i128_to_u8: {
+        pop_values: [value : Int128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u8,
+      },
+      i128_to_u16: {
+        pop_values: [value : Int128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u16,
+      },
+      i128_to_u32: {
+        pop_values: [value : Int128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u32,
+      },
+      i128_to_u64: {
+        pop_values: [value : Int128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u64,
+      },
+      i128_to_u128: {
+        pop_values: [value : Int128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u128,
+      },
+      i128_to_f32: {
+        pop_values: [value : Int128],
+        push:       true,
+        code:       value.to_f32,
+      },
+      i128_to_f64: {
+        pop_values: [value : Int128],
+        push:       true,
+        code:       value.to_f64,
+      },
+      u128_to_i8: {
+        pop_values: [value : UInt128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i8,
+      },
+      u128_to_i16: {
+        pop_values: [value : UInt128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i16,
+      },
+      u128_to_i32: {
+        pop_values: [value : UInt128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i32,
+      },
+      u128_to_i64: {
+        pop_values: [value : UInt128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i64,
+      },
+      u128_to_i128: {
+        pop_values: [value : UInt128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i128,
+      },
+      u128_to_u8: {
+        pop_values: [value : UInt128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u8,
+      },
+      u128_to_u16: {
+        pop_values: [value : UInt128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u16,
+      },
+      u128_to_u32: {
+        pop_values: [value : UInt128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u32,
+      },
+      u128_to_u64: {
+        pop_values: [value : UInt128],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u64,
+      },
+      u128_to_f32: {
+        pop_values: [value : UInt128],
+        push:       true,
+        code:       value.to_f32,
+      },
+      u128_to_f64: {
+        pop_values: [value : UInt128],
+        push:       true,
+        code:       value.to_f64,
+      },
       f32_to_f64: {
         pop_values: [value : Float32],
         push:       true,
@@ -185,6 +313,23 @@ require "./repl"
         push:       true,
         overflow:   true,
         code:       value.to_i64,
+      },
+      f64_to_i128: {
+        pop_values: [value : Float64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i128,
+      },
+      f64_to_i128_bang: {
+        pop_values: [value : Float64],
+        push:       true,
+        code:       value.to_i128!,
+      },
+      f64_to_u128: {
+        pop_values: [value : Float64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u128,
       },
       f64_to_u8: {
         pop_values: [value : Float64],
@@ -232,6 +377,9 @@ require "./repl"
       sign_extend: {
         operands:   [amount : Int32],
         code:       begin
+          # This is for 128 bits
+          stack_grow_by(8) if amount >= 8
+
           if (stack - amount - 1).as(Int8*).value < 0
             Intrinsics.memset((stack - amount).as(Void*), 255_u8, amount, false)
           else
@@ -243,7 +391,12 @@ require "./repl"
       # Extend an unsigned number by filling it with zeros.
       zero_extend: {
         operands:   [amount : Int32],
-        code:       (stack - amount).clear(amount),
+        code:       begin
+          # This is for 128 bits
+          stack_grow_by(8) if amount >= 8
+
+          (stack - amount).clear(amount)
+        end,
       },
       # >>> Conversions (21)
 
@@ -331,6 +484,7 @@ require "./repl"
       mul_u32: {
         pop_values: [a : UInt32, b : UInt32],
         push:       true,
+        overflow:   true,
         code:       a * b,
       },
       unsafe_shr_u32: {
@@ -449,6 +603,107 @@ require "./repl"
         push:       true,
         code:       a.unsafe_mod(b),
       },
+      add_i128: {
+        pop_values: [a : Int128, b : Int128],
+        push:       true,
+        overflow:   true,
+        code:       a + b,
+      },
+      add_wrap_i128: {
+        pop_values: [a : Int128, b : Int128],
+        push:       true,
+        code:       a &+ b,
+      },
+      sub_i128: {
+        pop_values: [a : Int128, b : Int128],
+        push:       true,
+        overflow:   true,
+        code:       a - b,
+      },
+      sub_wrap_i128: {
+        pop_values: [a : Int128, b : Int128],
+        push:       true,
+        code:       a &- b,
+      },
+      mul_i128: {
+        pop_values: [a : Int128, b : Int128],
+        push:       true,
+        overflow:   true,
+        code:       a * b,
+      },
+      mul_wrap_i128: {
+        pop_values: [a : Int128, b : Int128],
+        push:       true,
+        code:       a &* b,
+      },
+      xor_i128: {
+        pop_values: [a : Int128, b : Int128],
+        push:       true,
+        code:       a ^ b,
+      },
+      or_i128: {
+        pop_values: [a : Int128, b : Int128],
+        push:       true,
+        code:       a | b,
+      },
+      and_i128: {
+        pop_values: [a : Int128, b : Int128],
+        push:       true,
+        code:       a & b,
+      },
+      unsafe_shr_i128: {
+        pop_values: [a : Int128, b : Int128],
+        push:       true,
+        code:       a.unsafe_shr(b),
+      },
+      unsafe_shl_i128: {
+        pop_values: [a : Int128, b : Int128],
+        push:       true,
+        code:       a.unsafe_shl(b),
+      },
+      unsafe_div_i128: {
+        pop_values: [a : Int128, b : Int128],
+        push:       true,
+        code:       a.unsafe_div(b),
+      },
+      unsafe_mod_i128: {
+        pop_values: [a : Int128, b : Int128],
+        push:       true,
+        code:       a.unsafe_mod(b),
+      },
+      add_u128: {
+        pop_values: [a : UInt128, b : UInt128],
+        push:       true,
+        overflow:   true,
+        code:       a + b,
+      },
+      sub_u128: {
+        pop_values: [a : UInt128, b : UInt128],
+        push:       true,
+        overflow:   true,
+        code:       a - b,
+      },
+      mul_u128: {
+        pop_values: [a : UInt128, b : UInt128],
+        push:       true,
+        overflow:   true,
+        code:       a * b,
+      },
+      unsafe_shr_u128: {
+        pop_values: [a : UInt128, b : UInt128],
+        push:       true,
+        code:       a.unsafe_shr(b),
+      },
+      unsafe_div_u128: {
+        pop_values: [a : UInt128, b : UInt128],
+        push:       true,
+        code:       a.unsafe_div(b),
+      },
+      unsafe_mod_u128: {
+        pop_values: [a : UInt128, b : UInt128],
+        push:       true,
+        code:       a.unsafe_mod(b),
+      },
       add_f32: {
         pop_values: [a : Float32, b : Float32],
         push:       true,
@@ -489,69 +744,69 @@ require "./repl"
         push:       true,
         code:       a / b,
       },
-      add_u64_i64: {
-        pop_values: [a : UInt64, b : Int64],
+      add_u128_i128: {
+        pop_values: [a : UInt128, b : Int128],
         push:       true,
         overflow:   true,
         code:       a + b,
       },
-      sub_u64_i64: {
-        pop_values: [a : UInt64, b : Int64],
+      sub_u128_i128: {
+        pop_values: [a : UInt128, b : Int128],
         push:       true,
         overflow:   true,
         code:       a - b,
       },
-      mul_u64_i64: {
-        pop_values: [a : UInt64, b : Int64],
+      mul_u128_i128: {
+        pop_values: [a : UInt128, b : Int128],
         push:       true,
         overflow:   true,
         code:       a * b,
       },
-      unsafe_shr_u64_i64: {
-        pop_values: [a : UInt64, b : Int64],
+      unsafe_shr_u128_i128: {
+        pop_values: [a : UInt128, b : Int128],
         push:       true,
         code:       a.unsafe_shr(b),
       },
-      unsafe_div_u64_i64: {
-        pop_values: [a : UInt64, b : Int64],
+      unsafe_div_u128_i128: {
+        pop_values: [a : UInt128, b : Int128],
         push:       true,
         code:       a.unsafe_div(b),
       },
-      unsafe_mod_u64_i64: {
-        pop_values: [a : UInt64, b : Int64],
+      unsafe_mod_u128_i128: {
+        pop_values: [a : UInt128, b : Int128],
         push:       true,
         code:       a.unsafe_mod(b),
       },
-      add_i64_u64: {
-        pop_values: [a : Int64, b : UInt64],
+      add_i128_u128: {
+        pop_values: [a : Int128, b : UInt128],
         push:       true,
         overflow:   true,
         code:       a + b,
       },
-      sub_i64_u64: {
-        pop_values: [a : Int64, b : UInt64],
+      sub_i128_u128: {
+        pop_values: [a : Int128, b : UInt128],
         push:       true,
         overflow:   true,
         code:       a - b,
       },
-      mul_i64_u64: {
-        pop_values: [a : Int64, b : UInt64],
+      mul_i128_u128: {
+        pop_values: [a : Int128, b : UInt128],
         push:       true,
         overflow:   true,
         code:       a * b,
       },
-      unsafe_shr_i64_u64: {
-        pop_values: [a : Int64, b : UInt64],
+      unsafe_shr_i128_u128: {
+        pop_values: [a : Int128, b : UInt128],
         push:       true,
         code:       a.unsafe_shr(b),
       },
-      unsafe_div_i64_u64: {
-        pop_values: [a : Int64, b : UInt64],
+      unsafe_div_i128_u128: {
+        pop_values: [a : Int128, b : UInt128],
         push:       true,
         code:       a.unsafe_div(b),
       },
-      unsafe_mod_i64_u64: {
-        pop_values: [a : Int64, b : UInt64],
+      unsafe_mod_i128_u128: {
+        pop_values: [a : Int128, b : UInt128],
         push:       true,
         code:       a.unsafe_mod(b),
       },
@@ -578,13 +833,23 @@ require "./repl"
         push:       true,
         code:       a == b ? 0 : (a < b ? -1 : 1),
       },
-      cmp_u64_i64: {
-        pop_values: [a : UInt64, b : Int64],
+      cmp_i128: {
+        pop_values: [a : Int128, b : Int128],
         push:       true,
         code:       a == b ? 0 : (a < b ? -1 : 1),
       },
-      cmp_i64_u64: {
-        pop_values: [a : Int64, b : UInt64],
+      cmp_u128: {
+        pop_values: [a : UInt128, b : UInt128],
+        push:       true,
+        code:       a == b ? 0 : (a < b ? -1 : 1),
+      },
+      cmp_u128_i128: {
+        pop_values: [a : UInt128, b : Int128],
+        push:       true,
+        code:       a == b ? 0 : (a < b ? -1 : 1),
+      },
+      cmp_i128_u128: {
+        pop_values: [a : Int128, b : UInt128],
         push:       true,
         code:       a == b ? 0 : (a < b ? -1 : 1),
       },
