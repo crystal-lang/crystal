@@ -1169,21 +1169,4 @@ class Crystal::Repl::Compiler
       nil
     end
   end
-
-  private def collect_instance_vars_initializers(type : ClassType | GenericClassInstanceType, collected)
-    if superclass = type.superclass
-      collect_instance_vars_initializers superclass, collected
-    end
-
-    collect_instance_vars_initializers_non_recursive type, collected
-  end
-
-  private def collect_instance_vars_initializers(type : Type, collected)
-    # Nothing to do
-  end
-
-  private def collect_instance_vars_initializers_non_recursive(type : Type, collected)
-    initializers = type.instance_vars_initializers
-    collected.concat initializers if initializers
-  end
 end
