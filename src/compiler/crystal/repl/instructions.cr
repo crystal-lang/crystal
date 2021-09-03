@@ -26,7 +26,7 @@ require "./repl"
 {% begin %}
   Crystal::Repl::Instructions =
     {
-      # <<< Put (2)
+      # <<< Put (3)
 
       # Puts a nil value at the top of the stack.
       # In reality, this doesn't push anything to the stack because
@@ -43,7 +43,13 @@ require "./repl"
         push:       true,
         code:       value,
       },
-      # >>> Put (2)
+      # Puts an Int128 at the top of the stack.
+      put_i128: {
+        operands:   [value : Int128],
+        push:       true,
+        code:       value,
+      },
+      # >>> Put (3)
 
       # <<< Conversions (21)
       # These convert a value in the stack into another value.

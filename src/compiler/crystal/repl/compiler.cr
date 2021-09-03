@@ -331,6 +331,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       put_i64 value.to_i64, node: node
     when :u64
       put_u64 value.to_u64, node: node
+    when :i128
+      # TODO: implement String#to_i128 and use it
+      put_i128 value.to_i64.to_i128!, node: node
+    when :u128
+      # TODO: implement String#to_i128 and use it
+      put_u128 value.to_u64.to_u128!, node: node
     when :f32
       put_i32 value.to_f32.unsafe_as(Int32), node: node
     when :f64
@@ -2972,6 +2978,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     put_i64 value.to_i64!, node: node
   end
 
+  private def put_u128(value : UInt128, *, node : ASTNode?)
+    put_i128 value.to_i128!, node: node
+  end
+
   private def put_string(value : String, *, node : ASTNode?)
     cached_string = @context.program.string_pool.get(value)
 
@@ -3041,6 +3051,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def append(string : String)
     append(string.object_id.unsafe_as(Int64))
+  end
+
+  private def append(value : Int128)
+    value.unsafe_as(StaticArray(UInt8, 16)).each do |byte|
+      append byte
+    end
   end
 
   private def append(value : Int64)

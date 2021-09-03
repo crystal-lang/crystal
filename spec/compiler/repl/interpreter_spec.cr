@@ -69,6 +69,14 @@ describe Crystal::Repl::Interpreter do
       interpret("123_u64").should eq(123_u64)
     end
 
+    it "interprets an Int128" do
+      interpret("123_i128").should eq(123_i128)
+    end
+
+    it "interprets an UInt128" do
+      interpret("123_u128").should eq(123_u128)
+    end
+
     it "interprets a Float32" do
       interpret("1.5_f32").should eq(1.5_f32)
     end

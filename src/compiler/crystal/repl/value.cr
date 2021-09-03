@@ -39,6 +39,10 @@ struct Crystal::Repl::Value
         @pointer.as(Int64*).value
       when :u64
         @pointer.as(UInt64*).value
+      when :i128
+        @pointer.as(Int128*).value
+      when :u128
+        @pointer.as(UInt128*).value
       else
         raise "BUG: missing handling of Repl value for #{type}"
       end
@@ -120,6 +124,10 @@ struct Crystal::Repl::Value
         io << @pointer.as(Int64*).value
       when :u64
         io << @pointer.as(UInt64*).value
+      when :i128
+        io << @pointer.as(Int128*).value
+      when :u128
+        io << @pointer.as(UInt128*).value
       else
         raise "BUG: missing handling of Repl::Value#to_s(io) for #{type}"
       end
