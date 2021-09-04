@@ -2196,8 +2196,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       if self_type.passed_by_value? && in_multidispatch?
         # Inside a multidispatch "self" is already a pointer.
         get_local 0, sizeof(Void*), node: obj
-        # If it's a union type we need to reach the union's value
-        pointer_add_constant 8, node: obj if self_type.remove_indirection.is_a?(MixedUnionType)
+
+        # If the self that we need to pass is a union but the actual type of `obj`
+        # is not a union, we need to reach the union's value.
+        if self_type.remove_indirection.is_a?(MixedUnionType) && !obj.type.remove_indirection.is_a?(MixedUnionType)
+          pointer_add_constant 8, node: obj
+        end
       elsif self_type == owner
         put_self(node: obj)
       else

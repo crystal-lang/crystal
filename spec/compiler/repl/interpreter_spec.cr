@@ -5738,6 +5738,54 @@ describe Crystal::Repl::Interpreter do
         address.foo
       CODE
     end
+
+    it "correctly puts virtual metaclass type in union" do
+      interpret(<<-CODE).should eq("Bar")
+        abstract struct Foo
+        end
+
+        struct Bar < Foo
+        end
+
+        struct Baz < Foo
+        end
+
+        class Class
+          def name : String
+            {{ @type.name.stringify }}
+          end
+        end
+
+        foo = Bar.new.as(Foo)
+        foo2 = foo || nil
+        foo2.class.name
+      CODE
+    end
+
+    it "does multidispatch on virtual struct union nil" do
+      interpret(<<-CODE).should eq(true)
+        abstract struct Foo
+          @value = 1
+        end
+
+        struct Bar < Foo
+        end
+
+        struct Baz < Foo
+        end
+
+        class Object
+          def itself
+            a = 1
+            self
+          end
+        end
+
+        foo = Bar.new.as(Foo)
+        bar = (foo || nil).itself
+        bar.is_a?(Bar)
+     CODE
+    end
   end
 
   context "integration" do
