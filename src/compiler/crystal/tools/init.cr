@@ -207,7 +207,7 @@ module Crystal
       end
 
       def module_name
-        config.name.gsub(/-([0-9]+)/, "\\1").split('-').map(&.camelcase).join("::")
+        config.name.gsub(/[-_]([^a-z])/i, "\\1").split('-').compact_map { |name| name.camelcase if name[0]?.try(&.ascii_letter?) }.join("::")
       end
 
       abstract def path
