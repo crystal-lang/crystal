@@ -651,24 +651,24 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     when ClassVar
       if inside_method?
-        index, compiled_def = class_var_index_and_compiled_def(target)
+        dispatch_class_var(target) do |class_var|
+          index, compiled_def = class_var_index_and_compiled_def(class_var, node: target)
 
-        if compiled_def
-          initialize_class_var_if_needed(target.var, index, compiled_def)
+          if compiled_def
+            initialize_class_var_if_needed(class_var, index, compiled_def)
+          end
+
+          request_value(node.value)
+
+          # Why we dup: check the Var case (it's similar)
+          if @wants_value
+            dup(aligned_sizeof_type(node.value), node: nil)
+          end
+
+          upcast node.value, node.value.type, class_var.type
+
+          set_class_var index, aligned_sizeof_type(class_var), node: node
         end
-
-        request_value(node.value)
-
-        # Why we dup: check the Var case (it's similar)
-        if @wants_value
-          dup(aligned_sizeof_type(node.value), node: nil)
-        end
-
-        var = target.var
-
-        upcast node.value, node.value.type, var.type
-
-        set_class_var index, aligned_sizeof_type(var), node: node
       else
         # TODO: eagerly initialize the class var?
         node.type = @context.program.nil_type
@@ -1033,25 +1033,73 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : ClassVar)
     return false unless @wants_value
 
-    index, compiled_def = class_var_index_and_compiled_def(node)
+    dispatch_class_var(node) do |class_var|
+      index, compiled_def = class_var_index_and_compiled_def(class_var, node: node)
 
-    if compiled_def
-      initialize_class_var_if_needed(node.var, index, compiled_def)
+      if compiled_def
+        initialize_class_var_if_needed(class_var, index, compiled_def)
+      end
+
+      get_class_var index, aligned_sizeof_type(class_var), node: node
     end
-
-    get_class_var index, aligned_sizeof_type(node.var), node: node
 
     false
   end
 
-  private def class_var_index_and_compiled_def(node : ClassVar) : {Int32, CompiledDef?}
+  private def dispatch_class_var(node : ClassVar)
     var = node.var
+    owner = var.owner
 
+    case owner
+    when VirtualType
+      dispatch_class_var(owner.base_type, metaclass: false, node: node) do |var|
+        yield var
+      end
+    when VirtualMetaclassType
+      dispatch_class_var(owner.base_type.instance_type, metaclass: true, node: node) do |var|
+        yield var
+      end
+    else
+      yield var
+    end
+  end
+
+  private def dispatch_class_var(owner : Type, metaclass : Bool, node : ASTNode)
+    types = owner.all_subclasses.select { |t| t.is_a?(ClassVarContainer) }
+    types.push(owner)
+    types.sort_by! { |type| -type.depth }
+
+    last_patch_location = nil
+    jump_locations = [] of Int32
+
+    types.each do |type|
+      patch_jump(last_patch_location) if last_patch_location
+
+      put_self node: node
+      is_a(node, scope, metaclass ? type.metaclass : type)
+      branch_unless 0, node: node
+      last_patch_location = patch_location
+
+      yield type.lookup_class_var(node.name)
+
+      jump 0, node: node
+      jump_locations << patch_location
+    end
+
+    patch_jump(last_patch_location.not_nil!)
+    unreachable "BUG: didn't find class var type match", node: node
+
+    jump_locations.each do |jump_location|
+      patch_jump(jump_location)
+    end
+  end
+
+  private def class_var_index_and_compiled_def(var : MetaTypeVar, *, node : ASTNode) : {Int32, CompiledDef?}
     case var.owner
     when VirtualType
-      node.raise "BUG: missing interpret class var for virtual type"
+      node.raise "BUG: shouldn't be calling this method with a virtual type"
     when VirtualMetaclassType
-      node.raise "BUG: missing interpret class var for virtual metaclass type"
+      node.raise "BUG: shouldn't be calling this method with a virtual metaclass type"
     end
 
     index_and_compiled_def = @context.class_var_index_and_compiled_def(var.owner, var.name)
@@ -1424,9 +1472,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def compile_pointerof_class_var(node : ASTNode, exp : ClassVar)
-    index, compiled_def = class_var_index_and_compiled_def(exp)
-    initialize_class_var_if_needed(exp.var, index, compiled_def) if compiled_def
-    pointerof_class_var(index, node: node)
+    dispatch_class_var(exp) do |class_var|
+      index, compiled_def = class_var_index_and_compiled_def(class_var, node: node)
+      initialize_class_var_if_needed(class_var, index, compiled_def) if compiled_def
+      pointerof_class_var(index, node: node)
+    end
   end
 
   def visit(node : Not)

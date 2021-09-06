@@ -4471,6 +4471,70 @@ describe Crystal::Repl::Interpreter do
         a
       CODE
     end
+
+    it "interprets class var for virtual type" do
+      interpret(<<-CODE).should eq(30)
+        class Foo
+          @@x = 1
+
+          def set(@@x)
+          end
+
+          def get
+            @@x
+          end
+        end
+
+        class Bar < Foo
+        end
+
+        foo = Foo.new
+        bar = Bar.new
+
+        foobar = foo || bar
+        foobar.set(10)
+
+        barfoo = bar || foo
+        barfoo.set(20)
+
+        a = 0
+        a += foobar.get
+        a += barfoo.get
+        a
+      CODE
+    end
+
+    it "interprets class var for virtual metaclass type" do
+      interpret(<<-CODE).should eq(30)
+        class Foo
+          @@x = 1
+
+          def self.set(@@x)
+          end
+
+          def self.get
+            @@x
+          end
+        end
+
+        class Bar < Foo
+        end
+
+        foo = Foo
+        bar = Bar
+
+        foobar = foo || bar
+        foobar.set(10)
+
+        barfoo = bar || foo
+        barfoo.set(20)
+
+        a = 0
+        a += foobar.get
+        a += barfoo.get
+        a
+      CODE
+    end
   end
 
   context "procs" do
