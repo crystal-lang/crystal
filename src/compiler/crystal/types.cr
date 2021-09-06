@@ -2946,7 +2946,7 @@ module Crystal
     @splat_index = 0
     @struct = true
 
-    def instantiate(type_vars)
+    def instantiate(type_vars, type_merge_union_of = false)
       types = type_vars.map do |type_var|
         unless type_var.is_a?(Type)
           type_var.raise "argument to Union must be a type, not #{type_var}"
@@ -2957,7 +2957,12 @@ module Crystal
         # and not T+ (which might lead to some inconsistencies).
         type_var.devirtualize.as(Type)
       end
-      program.type_merge(types) || program.no_return
+
+      if type_merge_union_of
+        program.type_merge_union_of(types) || program.no_return
+      else
+        program.type_merge(types) || program.no_return
+      end
     end
 
     def new_generic_instance(program, generic_type, type_vars)

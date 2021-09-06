@@ -220,6 +220,7 @@ module Crystal
 
     def visit(node : Generic)
       node.in_type_args = @in_type_args > 0
+      node.inside_is_a = @inside_is_a
       node.scope = @scope
 
       node.name.accept self

@@ -856,4 +856,42 @@ describe "Codegen: is_a?" do
       end
       )).to_i.should eq(1)
   end
+
+  it "does is_a? with union type, don't resolve to virtual type (#10244)" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      class C < A
+      end
+
+      class D < A
+      end
+
+      x = D.new || C.new
+      x.is_a?(B | C)
+    )).to_b.should be_false
+  end
+
+  it "does is_a? with union type as Union(X, Y), don't resolve to virtual type (#10244)" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      class C < A
+      end
+
+      class D < A
+      end
+
+      x = D.new || C.new
+      x.is_a?(Union(B, C))
+    )).to_b.should be_false
+  end
 end

@@ -161,7 +161,7 @@ module Crystal
       types = type2.union_types.compact_map do |t|
         common_descendent(type1, t)
       end
-      type1.program.type_merge types
+      type1.program.type_merge_union_of types
     end
 
     def self.common_descendent(type1 : VirtualType, type2 : Type)
