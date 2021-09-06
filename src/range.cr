@@ -10,6 +10,8 @@
 # ...y  # a beginless exclusive range, in mathematics: < y
 # ```
 #
+# See [`Range` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/range.html) in the language reference.
+#
 # An easy way to remember which one is inclusive and which one is exclusive it
 # to think of the extra dot as if it pushes *y* further away, thus leaving it outside of the range.
 #
@@ -231,11 +233,11 @@ struct Range(B, E)
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    if current.is_a?(Steppable)
+    {% if B < Steppable %}
       current.step(to: @end, by: by, exclusive: @exclusive) do |x|
         yield x
       end
-    else
+    {% else %}
       end_value = @end
       while end_value.nil? || current < end_value
         yield current
@@ -251,7 +253,7 @@ struct Range(B, E)
         end
       end
       yield current if !@exclusive && current == @end
-    end
+    {% end %}
   end
 
   # :ditto:
@@ -261,11 +263,11 @@ struct Range(B, E)
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    if start.is_a?(Steppable)
+    {% if B < Steppable %}
       start.step(to: @end, by: by, exclusive: @exclusive)
-    else
+    {% else %}
       StepIterator(self, B, typeof(by)).new(self, by)
-    end
+    {% end %}
   end
 
   # Returns `true` if this range excludes the *end* element.

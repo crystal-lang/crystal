@@ -150,7 +150,7 @@ module Crystal
 
   class UnionType
     def expand_union_types
-      if union_types.any?(&.is_a?(NonGenericModuleType))
+      if union_types.any?(NonGenericModuleType)
         types = [] of Type
         union_types.each &.append_to_expand_union_types(types)
         types

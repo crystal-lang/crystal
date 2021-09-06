@@ -203,6 +203,8 @@ module Crystal
       has_paren = false
       has_begin = false
 
+      empty_expressions = node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
+
       if node.keyword == :"(" && @token.type == :"("
         write "("
         next_needs_indent = false
@@ -223,7 +225,7 @@ module Crystal
         next_token
         # Corner case: an empty `begin ... end`.
         # In this case, we should not skip space because it will do in the below loop.
-        unless node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
+        unless empty_expressions
           skip_space_or_newline
           if @token.type == :";"
             next_token_skip_space_or_newline
@@ -313,7 +315,7 @@ module Crystal
 
       @indent = old_indent
 
-      if has_newline && !last_found_comment
+      if has_newline && !last_found_comment && (!@wrote_newline || empty_expressions)
         write_line
         write_indent
       end
@@ -2335,6 +2337,8 @@ module Crystal
         write " "
         skip_space_or_newline
         accept output
+      else
+        skip_space
       end
 
       check_close_paren
@@ -3112,7 +3116,7 @@ module Crystal
             when :UNDERSCORE
               underscore = true
             else
-              raise "expecting block argument name, not #{@token.type}"
+              raise "expecting block parameter name, not #{@token.type}"
             end
 
             write(underscore ? "_" : @token.value)
@@ -3564,7 +3568,16 @@ module Crystal
         write " " unless has_parentheses
         skip_space
 
-        if exp.is_a?(TupleLiteral) && @token.type != :"{"
+        # If the number of consecutive `{`s starting a tuple literal is 1 less
+        # than the level of tuple nesting in the actual AST node, this means the
+        # parser synthesized a TupleLiteral from multiple expressions, e.g.
+        #
+        #     return {1, 2}, 3, 4
+        #     return { {1, 2}, 3, 4 }
+        #
+        # The tuple depth is 2 in both cases but only 1 leading curly brace is
+        # present on the first return.
+        if exp.is_a?(TupleLiteral) && opening_curly_brace_count < leading_tuple_depth(exp)
           format_args(exp.elements, has_parentheses)
           skip_space if has_parentheses
         else
@@ -3576,6 +3589,26 @@ module Crystal
       write_token :")" if has_parentheses
 
       false
+    end
+
+    def opening_curly_brace_count
+      @lexer.peek_ahead do
+        count = 0
+        while @lexer.token.type == :"{"
+          count += 1
+          @lexer.next_token_skip_space_or_newline
+        end
+        count
+      end
+    end
+
+    def leading_tuple_depth(exp)
+      count = 0
+      while exp.is_a?(TupleLiteral)
+        count += 1
+        exp = exp.elements.first?
+      end
+      count
     end
 
     def visit(node : Yield)
@@ -4752,7 +4785,7 @@ module Crystal
       result = to_s.rstrip
 
       lines = result.split('\n')
-      fix_heredocs(lines, @heredoc_fixes)
+      fix_heredocs(lines)
       align_infos(lines, @when_infos)
       align_infos(lines, @hash_infos)
       align_infos(lines, @assign_infos)
@@ -4775,15 +4808,26 @@ module Crystal
       result
     end
 
-    def fix_heredocs(lines, @heredoc_fixes)
+    def fix_heredocs(lines)
       @heredoc_fixes.each do |fix|
+        min_difference = (fix.start_line..fix.end_line).min_of do |line_number|
+          leading_space_count(lines[line_number], fix.difference)
+        end
+        indent_before_start = leading_space_count(lines[fix.start_line - 1], fix.difference)
+        min_difference = Math.max(min_difference - indent_before_start, 0)
+
         fix.start_line.upto(fix.end_line) do |line_number|
           line = lines[line_number]
-          if (0...fix.difference).all? { |index| line[index]?.try &.ascii_whitespace? }
-            lines[line_number] = line[fix.difference..-1]
-          end
+          lines[line_number] = line[min_difference..]
         end
       end
+    end
+
+    def leading_space_count(line, max_count)
+      max_count.times do |index|
+        return index unless line.byte_at?(index) == 0x20 # ' '
+      end
+      max_count
     end
 
     # Align series of successive inline when/else (in a case),

@@ -88,7 +88,7 @@ class Socket
 
       @[Deprecated("Use `.from_os_error` instead")]
       def self.new(error_code : Int32, message, domain)
-        from_os_error(message, Errno.new(error_code), domain: domain)
+        from_os_error(message, Errno.new(error_code), domain: domain, type: nil, service: nil, protocol: nil)
       end
 
       @[Deprecated("Use `.from_os_error` instead")]
