@@ -139,9 +139,13 @@ class Crystal::Repl::Context
     defs[call.target_def]
   end
 
+  record InstanceVarInitializer,
+    initializer : InstanceVarInitializerContainer::InstanceVarInitializer,
+    owner : Type
+
   def type_instance_var_initializers(type : Type)
     @type_instance_var_initializers[type] ||= begin
-      initializers = [] of InstanceVarInitializerContainer::InstanceVarInitializer
+      initializers = [] of InstanceVarInitializer
       collect_instance_vars_initializers(type, initializers)
 
       initializers.map do |initializer|
@@ -150,7 +154,7 @@ class Crystal::Repl::Context
         compiled_def = CompiledDef.new(self, a_def, a_def.owner, sizeof(Pointer(Void)))
         compiled_def.local_vars.declare("self", type)
 
-        initializer.meta_vars.each do |name, var|
+        initializer.initializer.meta_vars.each do |name, var|
           var_type = var.type?
           next unless var_type
 
@@ -185,14 +189,16 @@ class Crystal::Repl::Context
 
   private def collect_instance_vars_initializers_non_recursive(type : Type, collected) : Nil
     initializers = type.instance_vars_initializers
-    collected.concat initializers if initializers
+    initializers.try &.each do |initializer|
+      collected << InstanceVarInitializer.new(initializer, type)
+    end
   end
 
-  private def create_instance_var_initializer_def(type : Type, initializer : InstanceVarInitializerContainer::InstanceVarInitializer)
-    a_def = Def.new("initialize_#{initializer.name}", args: [Arg.new("self")])
+  private def create_instance_var_initializer_def(type : Type, initializer : InstanceVarInitializer)
+    a_def = Def.new("initialize_#{initializer.initializer.name}", args: [Arg.new("self")])
     a_def.body = Assign.new(
-      InstanceVar.new(initializer.name),
-      initializer.value.clone,
+      InstanceVar.new(initializer.initializer.name),
+      initializer.initializer.value.clone,
     )
 
     a_def = program.normalize(a_def)
@@ -204,7 +210,7 @@ class Crystal::Repl::Context
     visitor = MainVisitor.new(program, def_args, a_def)
     visitor.untyped_def = a_def
     visitor.scope = type
-    visitor.path_lookup = type
+    visitor.path_lookup = initializer.owner
     # visitor.yield_vars = yield_vars
     # visitor.match_context = match.context
     # visitor.call = self
