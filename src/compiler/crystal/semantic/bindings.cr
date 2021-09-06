@@ -500,6 +500,7 @@ module Crystal
     property! instance_type : GenericType
     property scope : Type?
     property? in_type_args = false
+    property? inside_is_a = false
 
     def update(from = nil)
       instance_type = self.instance_type
@@ -585,7 +586,16 @@ module Crystal
         end
 
         begin
-          generic_type = instance_type.as(GenericType).instantiate(type_vars_types)
+          generic_instance_type = instance_type.as(GenericType)
+          generic_type =
+            if generic_instance_type.is_a?(GenericUnionType) && inside_is_a?
+              # In the case of `exp.is_a?(Union(X, Y))` we make it work exactly
+              # like `exp.is_a?(X | Y)`, which won't resolve `X | Y` to the virtual
+              # parent type.
+              generic_instance_type.instantiate(type_vars_types, type_merge_union_of: true)
+            else
+              generic_instance_type.instantiate(type_vars_types)
+            end
         rescue ex : Crystal::CodeError
           raise ex.message, ex
         end
