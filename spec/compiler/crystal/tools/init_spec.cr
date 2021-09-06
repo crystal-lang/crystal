@@ -65,6 +65,7 @@ module Crystal
       within_temporary_directory do
         run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith")
         run_init_project("app", "example_app", "John Smith", "john@smith.com", "jsmith")
+        run_init_project("app", "num-followed-hyphen-1", "John Smith", "john@smith.com", "jsmith")
         run_init_project("lib", "example-lib", "John Smith", "john@smith.com", "jsmith")
         run_init_project("lib", "camel_example-camel_lib", "John Smith", "john@smith.com", "jsmith")
         run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith", dir: "other-example-directory")
@@ -75,6 +76,10 @@ module Crystal
 
         with_file "camel_example-camel_lib/src/camel_example-camel_lib.cr" do |file|
           file.should contain("CamelExample::CamelLib")
+        end
+
+        with_file "num-followed-hyphen-1/src/num-followed-hyphen-1.cr" do |file|
+          file.should contain("Num::Followed::Hyphen1")
         end
 
         with_file "example/.gitignore" do |gitignore|
