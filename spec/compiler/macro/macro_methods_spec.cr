@@ -816,6 +816,10 @@ module Crystal
         assert_macro "", %({{ [1, 2] + [3, 4, 5] }}), [] of ASTNode, %([1, 2, 3, 4, 5])
       end
 
+      it "executes -" do
+        assert_macro "", %({{ [1, 2, 3, 4, 5] - [3, 4, 5] }}), [] of ASTNode, %([1, 2])
+      end
+
       it "executes [] with range" do
         assert_macro "", %({{ [1, 2, 3, 4][1...-1] }}), [] of ASTNode, %([2, 3])
       end
