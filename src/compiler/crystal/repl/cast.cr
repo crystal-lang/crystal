@@ -220,6 +220,17 @@ class Crystal::Repl::Compiler
   end
 
   private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : MixedUnionType)
+    # It might happen that some types inside the union `from_type` are not inside `to_type`,
+    # for example with named tuple of same keys with different order. In that case we need cast
+    # those value to the correct type before finally storing them in the target union.
+    needs_union_value_cast = from.union_types.any? do |from_element|
+      needs_value_cast_inside_union?(from_element, to)
+    end
+
+    if needs_union_value_cast # Compute the values that need a cast
+      node.raise "BUG: missing downcast from #{from} to #{to}"
+    end
+
     difference = aligned_sizeof_type(from) - aligned_sizeof_type(to)
 
     if difference > 0
