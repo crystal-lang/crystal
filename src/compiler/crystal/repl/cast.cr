@@ -81,6 +81,15 @@ class Crystal::Repl::Compiler
     # Nothing to do: both are represented as pointers which already carry the type ID
   end
 
+  private def upcast_distinct(node : ASTNode, from : NonGenericClassType, to : VirtualType)
+    # Nothing: both are represented as pointers
+  end
+
+  private def upcast_distinct(node : ASTNode, from : GenericClassInstanceType, to : VirtualType)
+    # TODO: not tested
+    # Nothing to do: both are represented as pointers which already carry the type ID
+  end
+
   private def upcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : MixedUnionType)
     # TODO: not tested
     put_reference_type_in_union(aligned_sizeof_type(to), node: nil)
@@ -111,10 +120,6 @@ class Crystal::Repl::Compiler
   end
 
   private def upcast_distinct(node : ASTNode, from : Type, to : ReferenceUnionType)
-    # Nothing: both are represented as pointers
-  end
-
-  private def upcast_distinct(node : ASTNode, from : NonGenericClassType, to : VirtualType)
     # Nothing: both are represented as pointers
   end
 
