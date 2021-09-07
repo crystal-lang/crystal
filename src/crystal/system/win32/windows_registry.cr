@@ -80,7 +80,7 @@ module Crystal::System::WindowsRegistry
       elsif small_buf && length > 0
         next length
       else
-        raise "RegQueryValueExW retry buffer"
+        raise RuntimeError.new("RegQueryValueExW retry buffer")
       end
     end
   end
@@ -98,7 +98,7 @@ module Crystal::System::WindowsRegistry
     when .error_more_data?
       {valtype, length}
     else
-      raise "RegQueryValueExW"
+      raise RuntimeError.from_os_error("RegQueryValueExW", status)
     end
   end
 end
