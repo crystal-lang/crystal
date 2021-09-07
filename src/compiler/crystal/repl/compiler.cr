@@ -699,10 +699,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def assign_to_var(name : String, value_type : Type, *, node : ASTNode?)
     var = lookup_local_var_or_closured_var(name)
-    
+
     # Before assigning to the var we must potentially box inside a union
     upcast node, value_type, var.type
-      
+
     case var
     in LocalVar
       set_local var.index, aligned_sizeof_type(var.type), node: node
@@ -1100,7 +1100,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # It seems class variables initializers aren't cleaned up...
       value = @context.program.cleanup(value)
 
-      def_name = "#{var.owner}::#{var.name}}"
+      def_name = "#{var.owner}::#{var.name}"
 
       fake_def = Def.new(def_name)
       fake_def.owner = var.owner
