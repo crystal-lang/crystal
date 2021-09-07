@@ -393,4 +393,16 @@ module Crystal
       Crystal::Init.validate_name("grüß-gott")
     end
   end
+
+  describe "View#module_name" do
+    it "namespace is divided by hyphen" do
+      Crystal::Init::View.module_name("my-proj-name").should eq "My::Proj::Name"
+    end
+    it "hyphen follwed by non-ascii letter is replaced by its character" do
+      Crystal::Init::View.module_name("my-proj-1").should eq "My::Proj1"
+    end
+    it "unserscore is ignored" do
+      Crystal::Init::View.module_name("my-proj_name").should eq "My::ProjName"
+    end
+  end
 end
