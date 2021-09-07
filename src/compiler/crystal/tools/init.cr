@@ -214,7 +214,7 @@ module Crystal
         name
           .gsub(/[-_]([^a-z])/i, "\\1")
           .split('-')
-          .compact_map do |name| 
+          .compact_map do |name|
             name.camelcase if name[0]?.try(&.ascii_letter?)
           end
           .join("::")
