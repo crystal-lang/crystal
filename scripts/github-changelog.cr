@@ -138,22 +138,43 @@ end
 changelog = File.read("CHANGELOG.md")
 array.select! { |pr| pr.mergedAt && !changelog.index(pr.permalink) }
 sections = array.group_by { |pr|
-  case pr.labels
-  when .any? &.starts_with?("topic:lang")
-    "Language"
-  when .any? &.starts_with?("topic:compiler")
-    "Compiler"
-  when .any? &.starts_with?("topic:tools")
-    "Tools"
-  when .any? &.starts_with?("topic:stdlib")
-    "Standard Library"
-  else
-    "Other"
-  end
+  pr.labels.each do |label|
+    case label
+    when .starts_with?("topic:lang")
+      break "Language"
+    when .starts_with?("topic:compiler")
+      break "Compiler"
+    when .starts_with?("topic:tools")
+      break "Tools"
+    when .starts_with?("topic:stdlib")
+      if label == "topic:stdlib"
+        break "Standard Library"
+      else
+        break "Standard Library: #{label.lchop("topic:stdlib:").titleize}"
+      end
+    else
+      next
+    end
+  end || "Other"
 }
 
-sections.each do |name, prs|
-  puts "## #{name}"
+titles = sections.keys.sort!
+last_title1 = nil
+
+titles.each do |title|
+  prs = sections[title]
+  title1, _, title2 = title.partition(": ")
+  if title2.presence
+    if title1 != last_title1
+      puts "## #{title1}"
+      puts
+    end
+    puts "### #{title2}"
+  else
+    puts "## #{title1}"
+  end
+  last_title1 = title1
+
   puts
   prs.sort!
   prs.each do |pr|
