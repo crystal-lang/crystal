@@ -18,6 +18,9 @@
 require "http/client"
 require "json"
 
+abort "Missing GITHUB_TOKEN env variable" unless ENV["GITHUB_TOKEN"]?
+abort "Missing <milestone> argument" unless ARGV.first?
+
 api_token = ENV["GITHUB_TOKEN"]
 repository = "crystal-lang/crystal"
 milestone = ARGV.first
