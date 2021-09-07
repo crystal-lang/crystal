@@ -109,16 +109,11 @@ record PullRequest,
   end
 
   def <=>(other : self)
-    x = (other.labels.includes?("security") ? 1 : 0) <=> (labels.includes?("security") ? 1 : 0)
-    return x unless x.zero?
-    x = (other.labels.includes?("breaking-change") ? 1 : 0) <=> (labels.includes?("breaking-change") ? 1 : 0)
-    return x unless x.zero?
+    sort_tuple <=> other.sort_tuple
+  end
 
-    if (mergedAt = self.mergedAt) && (otherMergedAt = other.mergedAt)
-      mergedAt <=> otherMergedAt
-    end
-
-    0
+  def sort_tuple
+    {labels.includes?("security") ? 0 : 1, labels.includes?("breaking-change") ? 0 : 1, labels.includes?("kind:bug") ? 0 : 1, mergedAt || Time.unix(0)}
   end
 end
 
