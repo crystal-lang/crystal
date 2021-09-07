@@ -26,7 +26,7 @@ repository = "crystal-lang/crystal"
 milestone = ARGV.first
 
 query = <<-GRAPHQL
-  query($milestone: String) {
+  query($milestone: String, $owner: String!, $repository: String!) {
     repository(owner: $owner, name: $repository) {
       milestones(query: $milestone, first: 1) {
         nodes {
