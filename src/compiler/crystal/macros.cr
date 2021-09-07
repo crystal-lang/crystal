@@ -1752,6 +1752,7 @@ module Crystal::Macros
     end
 
     # Returns the instance variables of this type.
+    # Can only be called from within methods (not top-level code), otherwise will return an empty list.
     def instance_vars : ArrayLiteral(MetaVar)
     end
 

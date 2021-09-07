@@ -1859,4 +1859,17 @@ describe Crystal::Formatter do
       2
     }
     CODE
+
+  # #11079
+  assert_format <<-CODE
+    foo = [1, [2,
+               3],
+           4]
+    CODE
+
+  assert_format <<-CODE
+    foo = {1, {2,
+               3},
+           4}
+    CODE
 end
