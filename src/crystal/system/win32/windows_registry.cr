@@ -15,6 +15,8 @@ module Crystal::System::WindowsRegistry
     when .error_success?
       sub_handle
     when .error_file_not_found?
+      # key does not exist
+      nil
     else
       raise RuntimeError.from_os_error("RegOpenKeyExW", status)
     end
