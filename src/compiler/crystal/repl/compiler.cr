@@ -699,17 +699,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def assign_to_var(name : String, value_type : Type, *, node : ASTNode?)
     var = lookup_local_var_or_closured_var(name)
+    
+    # Before assigning to the var we must potentially box inside a union
+    upcast node, value_type, var.type
+      
     case var
     in LocalVar
-      index, type = var.index, var.type
-
-      # Before assigning to the var we must potentially box inside a union
-      upcast node, value_type, type
-      set_local index, aligned_sizeof_type(type), node: node
+      set_local var.index, aligned_sizeof_type(var.type), node: node
     in ClosuredVar
-      # Before assigning to the var we must potentially box inside a union
-      upcast node, value_type, var.type
-
       assign_to_closured_var(var, node: node)
     end
   end
