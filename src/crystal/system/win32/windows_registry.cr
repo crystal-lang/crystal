@@ -69,6 +69,7 @@ module Crystal::System::WindowsRegistry
     end
   end
 
+  # Reads a raw value into a buffer and creates a string from it.
   def self.get_string(handle : LibC::HKEY, name : Slice(UInt16))
     Crystal::System.retry_wstr_buffer do |buffer, small_buf|
       raw = get_raw(handle, name, Bytes.new(buffer.to_unsafe.as(UInt8*), buffer.bytesize)) || return
@@ -84,6 +85,7 @@ module Crystal::System::WindowsRegistry
     end
   end
 
+  # Reads a raw value into a buffer.
   def self.get_raw(handle : LibC::HKEY, name : Slice(UInt16), buffer : Slice(UInt8))
     length = buffer.size.to_u32
     status = LibC.RegQueryValueExW(handle, name, nil, out valtype, buffer, pointerof(length))
