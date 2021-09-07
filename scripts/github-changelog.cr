@@ -113,7 +113,12 @@ record PullRequest,
   end
 
   def sort_tuple
-    {labels.includes?("security") ? 0 : 1, labels.includes?("breaking-change") ? 0 : 1, labels.includes?("kind:bug") ? 0 : 1, mergedAt || Time.unix(0)}
+    {
+      labels.includes?("security") ? 0 : 1,
+      labels.includes?("breaking-change") ? 0 : 1,
+      labels.includes?("kind:bug") ? 0 : 1,
+      mergedAt || Time.unix(0),
+    }
   end
 end
 
