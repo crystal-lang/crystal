@@ -218,7 +218,7 @@ module Crystal
       when Call
         !exp.has_parentheses? && (
           (exp.args.empty? && !exp.named_args) ||
-            (exp.name[0].ascii_letter? && exp.name.ends_with?('=')) ||
+            Lexer.setter?(exp.name) ||
             exp.name == "[]" || exp.name == "[]="
         )
       else

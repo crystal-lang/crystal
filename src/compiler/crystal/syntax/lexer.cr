@@ -1304,7 +1304,7 @@ module Crystal
           end
           @token.type = :CONST
           @token.value = string_range_from_pool(start)
-        elsif current_char.ascii_lowercase? || current_char == '_' || current_char.ord > 0x9F
+        elsif ident_start?(current_char)
           next_char
           scan_ident(start)
         else
@@ -3177,13 +3177,23 @@ module Crystal
       Slice.new(@reader.string.to_unsafe + start_pos, end_pos - start_pos)
     end
 
-    def ident_start?(char)
+    def self.ident_start?(char)
       char.ascii_letter? || char == '_' || char.ord > 0x9F
     end
 
-    def ident_part?(char)
+    def self.ident_part?(char)
       ident_start?(char) || char.ascii_number?
     end
+
+    def self.ident?(name)
+      !!name[0]?.try { |char| ident_start?(char) }
+    end
+
+    def self.setter?(name)
+      ident?(name) && name.ends_with?('=')
+    end
+
+    private delegate ident_start?, ident_part?, to: Lexer
 
     def ident_part_or_end?(char)
       ident_part?(char) || char == '?' || char == '!'
