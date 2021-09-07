@@ -744,6 +744,72 @@ require "./repl"
         push:       true,
         code:       a / b,
       },
+      add_u64_i64: {
+        pop_values: [a : UInt64, b : Int64],
+        push:       true,
+        overflow:   true,
+        code:       a + b,
+      },
+      sub_u64_i64: {
+        pop_values: [a : UInt64, b : Int64],
+        push:       true,
+        overflow:   true,
+        code:       a - b,
+      },
+      mul_u64_i64: {
+        pop_values: [a : UInt64, b : Int64],
+        push:       true,
+        overflow:   true,
+        code:       a * b,
+      },
+      unsafe_shr_u64_i64: {
+        pop_values: [a : UInt64, b : Int64],
+        push:       true,
+        code:       a.unsafe_shr(b),
+      },
+      unsafe_div_u64_i64: {
+        pop_values: [a : UInt64, b : Int64],
+        push:       true,
+        code:       a.unsafe_div(b),
+      },
+      unsafe_mod_u64_i64: {
+        pop_values: [a : UInt64, b : Int64],
+        push:       true,
+        code:       a.unsafe_mod(b),
+      },
+      add_i64_u64: {
+        pop_values: [a : Int64, b : UInt64],
+        push:       true,
+        overflow:   true,
+        code:       a + b,
+      },
+      sub_i64_u64: {
+        pop_values: [a : Int64, b : UInt64],
+        push:       true,
+        overflow:   true,
+        code:       a - b,
+      },
+      mul_i64_u64: {
+        pop_values: [a : Int64, b : UInt64],
+        push:       true,
+        overflow:   true,
+        code:       a * b,
+      },
+      unsafe_shr_i64_u64: {
+        pop_values: [a : Int64, b : UInt64],
+        push:       true,
+        code:       a.unsafe_shr(b),
+      },
+      unsafe_div_i64_u64: {
+        pop_values: [a : Int64, b : UInt64],
+        push:       true,
+        code:       a.unsafe_div(b),
+      },
+      unsafe_mod_i64_u64: {
+        pop_values: [a : Int64, b : UInt64],
+        push:       true,
+        code:       a.unsafe_mod(b),
+      },
       add_u128_i128: {
         pop_values: [a : UInt128, b : Int128],
         push:       true,
@@ -840,6 +906,16 @@ require "./repl"
       },
       cmp_u128: {
         pop_values: [a : UInt128, b : UInt128],
+        push:       true,
+        code:       a == b ? 0 : (a < b ? -1 : 1),
+      },
+      cmp_u64_i64: {
+        pop_values: [a : UInt64, b : Int64],
+        push:       true,
+        code:       a == b ? 0 : (a < b ? -1 : 1),
+      },
+      cmp_i64_u64: {
+        pop_values: [a : Int64, b : UInt64],
         push:       true,
         code:       a == b ? 0 : (a < b ? -1 : 1),
       },

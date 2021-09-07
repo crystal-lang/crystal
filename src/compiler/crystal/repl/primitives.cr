@@ -772,65 +772,124 @@ class Crystal::Repl::Compiler
 
   private def primitive_binary_op_math(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
     kind = extend_int(left_type, right_type, left_node, right_node, node)
-    if kind
+    case kind
+    when :mixed_64
+      if left_type.rank > right_type.rank
+        # It's UInt64 op X where X is a signed integer
+        left_node ? left_node.accept(self) : put_self(node: node)
+        right_node.accept self
+
+        # TODO: do we need to check for overflow here?
+        primitive_convert(node, right_type.kind, :i64, checked: false)
+
+        case node.name
+        when "+"          then add_u64_i64(node: node)
+        when "&+"         then add_wrap_i64(node: node)
+        when "-"          then sub_u64_i64(node: node)
+        when "&-"         then sub_wrap_i64(node: node)
+        when "*"          then mul_u64_i64(node: node)
+        when "&*"         then mul_wrap_i64(node: node)
+        when "^"          then xor_i64(node: node)
+        when "|"          then or_i64(node: node)
+        when "&"          then and_i64(node: node)
+        when "unsafe_shl" then unsafe_shl_i64(node: node)
+        when "unsafe_shr" then unsafe_shr_u64_i64(node: node)
+        when "unsafe_div" then unsafe_div_u64_i64(node: node)
+        when "unsafe_mod" then unsafe_mod_u64_i64(node: node)
+        else
+          node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+        end
+
+        kind = :u64
+      else
+        # It's X op UInt64 where X is a signed integer
+        left_node ? left_node.accept(self) : put_self(node: node)
+
+        # TODO: do we need to check for overflow here?
+        primitive_convert(node, left_type.kind, :i64, checked: false)
+        right_node.accept self
+
+        case node.name
+        when "+"          then add_i64_u64(node: node)
+        when "&+"         then add_wrap_i64(node: node)
+        when "-"          then sub_i64_u64(node: node)
+        when "&-"         then sub_wrap_i64(node: node)
+        when "*"          then mul_i64_u64(node: node)
+        when "&*"         then mul_wrap_i64(node: node)
+        when "^"          then xor_i64(node: node)
+        when "|"          then or_i64(node: node)
+        when "&"          then and_i64(node: node)
+        when "unsafe_shl" then unsafe_shl_i64(node: node)
+        when "unsafe_shr" then unsafe_shr_i64_u64(node: node)
+        when "unsafe_div" then unsafe_div_i64_u64(node: node)
+        when "unsafe_mod" then unsafe_mod_i64_u64(node: node)
+        else
+          node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+        end
+
+        kind = :i64
+      end
+    when :mixed_128
+      if left_type.rank > right_type.rank
+        # It's UInt128 op X where X is a signed integer
+        left_node ? left_node.accept(self) : put_self(node: node)
+        right_node.accept self
+
+        # TODO: do we need to check for overflow here?
+        primitive_convert(node, right_type.kind, :i128, checked: false)
+
+        case node.name
+        when "+"          then add_u128_i128(node: node)
+        when "&+"         then add_wrap_i128(node: node)
+        when "-"          then sub_u128_i128(node: node)
+        when "&-"         then sub_wrap_i128(node: node)
+        when "*"          then mul_u128_i128(node: node)
+        when "&*"         then mul_wrap_i128(node: node)
+        when "^"          then xor_i128(node: node)
+        when "|"          then or_i128(node: node)
+        when "&"          then and_i128(node: node)
+        when "unsafe_shl" then unsafe_shl_i128(node: node)
+        when "unsafe_shr" then unsafe_shr_u128_i128(node: node)
+        when "unsafe_div" then unsafe_div_u128_i128(node: node)
+        when "unsafe_mod" then unsafe_mod_u128_i128(node: node)
+        else
+          node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+        end
+
+        kind = :u128
+      else
+        # It's X op UInt128 where X is a signed integer
+        left_node ? left_node.accept(self) : put_self(node: node)
+
+        # TODO: do we need to check for overflow here?
+        primitive_convert(node, left_type.kind, :i128, checked: false)
+        right_node.accept self
+
+        case node.name
+        when "+"          then add_i128_u128(node: node)
+        when "&+"         then add_wrap_i128(node: node)
+        when "-"          then sub_i128_u128(node: node)
+        when "&-"         then sub_wrap_i128(node: node)
+        when "*"          then mul_i128_u128(node: node)
+        when "&*"         then mul_wrap_i128(node: node)
+        when "^"          then xor_i128(node: node)
+        when "|"          then or_i128(node: node)
+        when "&"          then and_i128(node: node)
+        when "unsafe_shl" then unsafe_shl_i128(node: node)
+        when "unsafe_shr" then unsafe_shr_i128_u128(node: node)
+        when "unsafe_div" then unsafe_div_i128_u128(node: node)
+        when "unsafe_mod" then unsafe_mod_i128_u128(node: node)
+        else
+          node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+        end
+
+        kind = :i128
+      end
+    else
       # Go on
       return false unless @wants_value
 
       primitive_binary_op_math(node, kind, op)
-    elsif left_type.rank > right_type.rank
-      # It's UInt128 op X where X is a signed integer
-      left_node ? left_node.accept(self) : put_self(node: node)
-      right_node.accept self
-
-      # TODO: do we need to check for overflow here?
-      primitive_convert(node, right_type.kind, :i128, checked: false)
-
-      case node.name
-      when "+"          then add_u128_i128(node: node)
-      when "&+"         then add_wrap_i128(node: node)
-      when "-"          then sub_u128_i128(node: node)
-      when "&-"         then sub_wrap_i128(node: node)
-      when "*"          then mul_u128_i128(node: node)
-      when "&*"         then mul_wrap_i128(node: node)
-      when "^"          then xor_i128(node: node)
-      when "|"          then or_i128(node: node)
-      when "&"          then and_i128(node: node)
-      when "unsafe_shl" then unsafe_shl_i128(node: node)
-      when "unsafe_shr" then unsafe_shr_u128_i128(node: node)
-      when "unsafe_div" then unsafe_div_u128_i128(node: node)
-      when "unsafe_mod" then unsafe_mod_u128_i128(node: node)
-      else
-        node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
-      end
-
-      kind = :u128
-    else
-      # It's X op UInt128 where X is a signed integer
-      left_node ? left_node.accept(self) : put_self(node: node)
-
-      # TODO: do we need to check for overflow here?
-      primitive_convert(node, left_type.kind, :i128, checked: false)
-      right_node.accept self
-
-      case node.name
-      when "+"          then add_i128_u128(node: node)
-      when "&+"         then add_wrap_i128(node: node)
-      when "-"          then sub_i128_u128(node: node)
-      when "&-"         then sub_wrap_i128(node: node)
-      when "*"          then mul_i128_u128(node: node)
-      when "&*"         then mul_wrap_i128(node: node)
-      when "^"          then xor_i128(node: node)
-      when "|"          then or_i128(node: node)
-      when "&"          then and_i128(node: node)
-      when "unsafe_shl" then unsafe_shl_i128(node: node)
-      when "unsafe_shr" then unsafe_shr_i128_u128(node: node)
-      when "unsafe_div" then unsafe_div_i128_u128(node: node)
-      when "unsafe_mod" then unsafe_mod_i128_u128(node: node)
-      else
-        node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
-      end
-
-      kind = :i128
     end
 
     if kind != left_type.kind
@@ -1053,7 +1112,54 @@ class Crystal::Repl::Compiler
 
   private def primitive_binary_op_cmp(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : String)
     kind = extend_int(left_type, right_type, left_node, right_node, node)
-    if kind
+    case kind
+    when :mixed_64
+      if left_type.rank > right_type.rank
+        # It's UInt64 == X where X is a signed integer.
+
+        # We first extend right to left
+        left_node.accept self
+        right_node.accept self
+
+        # TODO: do we need to check for overflow here?
+        primitive_convert right_node, right_type.kind, :i64, checked: false
+
+        cmp_u64_i64(node: node)
+      else
+        # It's X < UInt64 where X is a signed integer
+        left_node.accept self
+
+        # TODO: do we need to check for overflow here?
+        primitive_convert left_node, left_type.kind, :i64, checked: false
+
+        right_node.accept self
+
+        cmp_i64_u64(node: node)
+      end
+    when :mixed_128
+      if left_type.rank > right_type.rank
+        # It's UInt128 == X where X is a signed integer.
+
+        # We first extend right to left
+        left_node.accept self
+        right_node.accept self
+
+        # TODO: do we need to check for overflow here?
+        primitive_convert right_node, right_type.kind, :i128, checked: false
+
+        cmp_u128_i128(node: node)
+      else
+        # It's X < UInt128 where X is a signed integer
+        left_node.accept self
+
+        # TODO: do we need to check for overflow here?
+        primitive_convert left_node, left_type.kind, :i128, checked: false
+
+        right_node.accept self
+
+        cmp_i128_u128(node: node)
+      end
+    else
       case kind
       when :i32  then cmp_i32(node: node)
       when :u32  then cmp_u32(node: node)
@@ -1064,27 +1170,6 @@ class Crystal::Repl::Compiler
       else
         node.raise "BUG: missing handling of binary #{op} for #{kind}"
       end
-    elsif left_type.rank > right_type.rank
-      # It's UInt128 == X where X is a signed integer.
-
-      # We first extend right to left
-      left_node.accept self
-      right_node.accept self
-
-      # TODO: do we need to check for overflow here?
-      primitive_convert right_node, right_type.kind, :i128, checked: false
-
-      cmp_u128_i128(node: node)
-    else
-      # It's X < UInt128 where X is a signed integer
-      left_node.accept self
-
-      # TODO: do we need to check for overflow here?
-      primitive_convert left_node, left_type.kind, :i128, checked: false
-
-      right_node.accept self
-
-      cmp_i128_u128(node: node)
     end
 
     primitive_binary_op_cmp_op(node, op)
@@ -1197,6 +1282,8 @@ class Crystal::Repl::Compiler
       primitive_convert(right_node, right_type.kind, :i64, checked: false) if right_type.rank < 7
 
       :i64
+    elsif left_type.rank <= 8 && right_type.rank <= 8
+      :mixed_64
     elsif left_type.rank <= 9 && right_type.rank <= 9
       # If both fit in an Int128
       # Convert them to Int128 first, then do the comparison
@@ -1208,7 +1295,7 @@ class Crystal::Repl::Compiler
 
       :i128
     else
-      nil
+      :mixed_128
     end
   end
 
