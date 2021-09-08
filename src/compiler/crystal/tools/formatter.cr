@@ -1107,7 +1107,7 @@ module Crystal
         next_token_skip_space_or_newline
       end
 
-      if node.question?
+      if node.suffix.question?
         node.type_vars[0].accept self
         skip_space
         write_token :"?"
@@ -1115,7 +1115,7 @@ module Crystal
       end
 
       # Check if it's T* instead of Pointer(T)
-      if first_name == "Pointer" && @token.value != "Pointer"
+      if node.suffix.asterisk?
         type_var = node.type_vars.first
         accept type_var
         skip_space_or_newline
@@ -1136,7 +1136,7 @@ module Crystal
       end
 
       # Check if it's T[N] instead of StaticArray(T, N)
-      if first_name == "StaticArray" && @token.value != "StaticArray"
+      if node.suffix.bracket?
         accept node.type_vars[0]
         skip_space_or_newline
         write_token :"["

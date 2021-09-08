@@ -5038,16 +5038,20 @@ module Crystal
 
     def make_nilable_expression(type)
       type = Generic.new(Path.global("Union").at(type), [type, Path.global("Nil").at(type)]).at(type)
-      type.question = true
+      type.suffix = :question
       type
     end
 
     def make_pointer_type(type)
-      Generic.new(Path.global("Pointer").at(type), [type] of ASTNode).at(type)
+      type = Generic.new(Path.global("Pointer").at(type), [type] of ASTNode).at(type)
+      type.suffix = :asterisk
+      type
     end
 
     def make_static_array_type(type, size)
-      Generic.new(Path.global("StaticArray").at(type), [type, size] of ASTNode).at(type)
+      type = Generic.new(Path.global("StaticArray").at(type), [type, size] of ASTNode).at(type)
+      type.suffix = :bracket
+      type
     end
 
     def make_tuple_type(types)
