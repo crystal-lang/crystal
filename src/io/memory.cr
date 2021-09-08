@@ -353,7 +353,7 @@ class IO::Memory < IO
 
     old_writeable = @writeable
     old_resizeable = @resizeable
-    io = IO::Memory.new(to_slice[offset, bytesize], writeable: false)
+    io = IO::Memory.new(to_unsafe_slice[offset, bytesize], writeable: false)
     begin
       @writeable = false
       @resizeable = false
@@ -405,15 +405,35 @@ class IO::Memory < IO
   # io = IO::Memory.new
   # io.print "hello"
   #
-  # io.to_slice # => Bytes[104, 101, 108, 108, 111]
+  # io.to_unsafe_slice # => Bytes[104, 101, 108, 108, 111]
   # ```
-  def to_slice : Bytes
+  #
+  # WARNING: The returned slice points to the current internal buffer of this
+  # `IO::Memory` instance. It becomes invalid when the buffer is reallocated for
+  # a resize. Use `Slice#dup` to duplicate the slice for safe access.
+  #
+  # ```
+  # io = IO::Memory.new(64)
+  # io.print "." * 64 # fill the buffer to capacity
+  # original_slice = io.to_slice
+  # io.print "." # writing another byte requires the buffer to reallocate
+  # # The content of `original_slice` is now garbage.
+  # It points to a different memory location than the buffer is at now:
+  # original_slice.to_unsafe == io.to_slice.to_unsafe # => false
+  # ```
+  def to_unsafe_slice : Bytes
     Slice.new(@buffer, @bytesize, read_only: !@writeable)
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#to_unsafe_slice` instead.")]
+  def to_slice : Bytes
+    to_unsafe_slice
   end
 
   # Appends this internal buffer to the given `IO`.
   def to_s(io : IO) : Nil
-    io.write(to_slice)
+    io.write(to_unsafe_slice)
   end
 
   private def check_writeable

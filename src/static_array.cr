@@ -168,7 +168,7 @@ struct StaticArray(T, N)
   # array                               # => StaticArray[2, 2, 2]
   # ```
   def fill(value : T) : self
-    to_slice.fill(value)
+    to_unsafe_slice.fill(value)
     self
   end
 
@@ -181,7 +181,7 @@ struct StaticArray(T, N)
   # array                    # => StaticArray[0, 1, 4, 9]
   # ```
   def fill(& : Int32 -> T) : self
-    to_slice.fill { |i| yield i }
+    to_unsafe_slice.fill { |i| yield i }
     self
   end
 
@@ -194,7 +194,7 @@ struct StaticArray(T, N)
   # a                                           # => StaticArray[3, 2, 1]
   # ```
   def shuffle!(random = Random::DEFAULT)
-    to_slice.shuffle!(random)
+    to_unsafe_slice.shuffle!(random)
     self
   end
 
@@ -244,7 +244,7 @@ struct StaticArray(T, N)
   # array.reverse! # => StaticArray[3, 2, 1]
   # ```
   def reverse!
-    to_slice.reverse!
+    to_unsafe_slice.reverse!
     self
   end
 
@@ -253,12 +253,34 @@ struct StaticArray(T, N)
   #
   # ```
   # array = StaticArray(Int32, 3).new(2)
-  # slice = array.to_slice # => Slice[2, 2, 2]
+  # slice = array.to_unsafe_slice # => Slice[2, 2, 2]
   # slice[0] = 3
   # array # => StaticArray[3, 2, 2]
   # ```
-  def to_slice : Slice(T)
+  #
+  # WARNING: The slice that this method returns points to stack memory. It
+  # becomes invalid when execution leaves the context where the `StaticArray` is
+  # stored. Use `Slice#dup` to duplicate the slice on the heap for safe access.
+  #
+  # ```
+  # def foo
+  #   # allocates on the stack
+  #   ary = StaticArray[1, 2, 3]
+  #   # create a slice pointing to stack
+  #   ary.to_slice
+  #   # at the end of the method the stack pointer becomes invalid
+  # end
+  #
+  # foo # the stack pointer slice is now garbage
+  # ```
+  def to_unsafe_slice : Slice(T)
     Slice.new(to_unsafe, size)
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#to_unsafe_slice` instead.")]
+  def to_slice : Slice(T)
+    to_unsafe_slice
   end
 
   # Returns a pointer to this static array's data.
@@ -288,7 +310,7 @@ struct StaticArray(T, N)
     # value and for big static arrays that seems to make
     # LLVM really slow.
     # TODO: investigate why, maybe report a bug to LLVM?
-    pp.list("StaticArray[", to_slice, "]")
+    pp.list("StaticArray[", to_unsafe_slice, "]")
   end
 
   # Returns a new `StaticArray` where each element is cloned from elements in `self`.
@@ -305,7 +327,7 @@ struct StaticArray(T, N)
     # Optimize for the case of looking for a byte in a byte slice
     if T.is_a?(UInt8.class) &&
        (object.is_a?(UInt8) || (object.is_a?(Int) && 0 <= object < 256))
-      return to_slice.fast_index(object, offset)
+      return to_unsafe_slice.fast_index(object, offset)
     end
 
     super
