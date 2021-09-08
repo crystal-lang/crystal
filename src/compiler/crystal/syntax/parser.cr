@@ -20,11 +20,11 @@ module Crystal
     getter? wants_doc : Bool
     @block_arg_name : String?
 
-    def self.parse(str, string_pool : StringPool? = nil, def_vars = [Set(String).new]) : ASTNode
-      new(str, string_pool, def_vars).parse
+    def self.parse(str, string_pool : StringPool? = nil, var_scopes = [Set(String).new]) : ASTNode
+      new(str, string_pool, var_scopes).parse
     end
 
-    def initialize(str, string_pool : StringPool? = nil, @def_vars = [Set(String).new])
+    def initialize(str, string_pool : StringPool? = nil, @var_scopes = [Set(String).new])
       super(str, string_pool)
       @unclosed_stack = [] of Unclosed
       @calls_super = false
@@ -377,32 +377,31 @@ module Crystal
               needs_new_scope = false
             end
 
-            push_def if needs_new_scope
-
-            if @token.keyword?(:uninitialized) && (
-                 atomic.is_a?(Var) || atomic.is_a?(InstanceVar) ||
-                 atomic.is_a?(ClassVar) || atomic.is_a?(Global)
-               )
-              push_var atomic
-              next_token_skip_space
-              type = parse_bare_proc_type
-              atomic = UninitializedVar.new(atomic, type).at(location)
-              return atomic
-            else
-              if atomic.is_a?(Var) && !var?(atomic.name)
-                @assigned_vars.push atomic.name
-                value = parse_op_assign_no_control
-                @assigned_vars.pop
+            atomic_value = with_isolated_var_scope(needs_new_scope) do
+              if @token.keyword?(:uninitialized) && (
+                   atomic.is_a?(Var) || atomic.is_a?(InstanceVar) ||
+                   atomic.is_a?(ClassVar) || atomic.is_a?(Global)
+                 )
+                push_var atomic
+                next_token_skip_space
+                type = parse_bare_proc_type
+                atomic = UninitializedVar.new(atomic, type).at(location)
+                return atomic
               else
-                value = parse_op_assign_no_control
+                if atomic.is_a?(Var) && !var?(atomic.name)
+                  @assigned_vars.push atomic.name
+                  value = parse_op_assign_no_control
+                  @assigned_vars.pop
+                  value
+                else
+                  parse_op_assign_no_control
+                end
               end
             end
 
-            pop_def if needs_new_scope
-
             push_var atomic
 
-            atomic = Assign.new(atomic, value).at(location)
+            atomic = Assign.new(atomic, atomic_value).at(location)
             atomic.doc = doc
             atomic
           end
@@ -420,7 +419,7 @@ module Crystal
             raise "can't change the value of self", location
           end
 
-          if atomic.is_a?(Call) && atomic.name != "[]" && !@def_vars.last.includes?(atomic.name)
+          if atomic.is_a?(Call) && atomic.name != "[]" && !var_in_scope?(atomic.name)
             raise "'#{@token.type}' before definition of '#{atomic.name}'"
           end
 
@@ -1794,32 +1793,30 @@ module Crystal
         next_token_skip_space_or_newline
       end
 
-      current_vars = @def_vars.last.dup
-      push_def current_vars
-      push_vars args
+      with_lexical_var_scope do
+        push_vars args
 
-      end_location = nil
+        end_location = nil
 
-      if @token.keyword?(:do)
-        next_token_skip_statement_end
-        check_not_pipe_before_proc_literal_body
-        body = parse_expressions
-        body, end_location = parse_exception_handler body, implicit: true
-      elsif @token.type == :"{"
-        next_token_skip_statement_end
-        check_not_pipe_before_proc_literal_body
-        body = preserve_stop_on_do { parse_expressions }
-        end_location = token_end_location
-        check :"}"
-        next_token_skip_space
-      else
-        unexpected_token
+        if @token.keyword?(:do)
+          next_token_skip_statement_end
+          check_not_pipe_before_proc_literal_body
+          body = parse_expressions
+          body, end_location = parse_exception_handler body, implicit: true
+        elsif @token.type == :"{"
+          next_token_skip_statement_end
+          check_not_pipe_before_proc_literal_body
+          body = preserve_stop_on_do { parse_expressions }
+          end_location = token_end_location
+          check :"}"
+          next_token_skip_space
+        else
+          unexpected_token
+        end
+
+        a_def = Def.new("->", args, body).at(location).at_end(end_location)
+        ProcLiteral.new(a_def).at(location).at_end(end_location)
       end
-
-      pop_def
-
-      a_def = Def.new("->", args, body).at(location).at_end(end_location)
-      ProcLiteral.new(a_def).at(location).at_end(end_location)
     end
 
     def check_not_pipe_before_proc_literal_body
@@ -1872,7 +1869,7 @@ module Crystal
         if consume_def_equals_sign_skip_space
           name = "#{name}="
         elsif @token.type == :"."
-          if name != "self" && !@def_vars.last.includes?(name)
+          if name != "self" && !var_in_scope?(name)
             raise "undefined variable '#{name}'", location.line_number, location.column_number
           end
           obj = Var.new(name)
@@ -2928,7 +2925,9 @@ module Crystal
       doc ||= @token.doc
 
       prepare_parse_def
-      a_def = parse_def_helper is_abstract: is_abstract
+      a_def = with_isolated_var_scope do
+        parse_def_helper is_abstract: is_abstract
+      end
 
       a_def.calls_super = @calls_super
       a_def.calls_initialize = @calls_initialize
@@ -2965,102 +2964,100 @@ module Crystal
       # here must be treated as method names.
       name = consume_def_or_macro_name
 
-      push_def
+      with_isolated_var_scope do
+        name_location = @token.location
 
-      name_location = @token.location
-
-      case @token.type
-      when :CONST
-        raise "macro can't have a receiver"
-      when :IDENT
-        check_valid_def_name
-        name = "#{name}=" if consume_def_equals_sign_skip_space
-      else
-        check_valid_def_op_name
-        next_token_skip_space
-      end
-
-      args = [] of Arg
-
-      found_default_value = false
-      found_splat = false
-      found_double_splat = nil
-
-      splat_index = nil
-      double_splat = nil
-      index = 0
-
-      case @token.type
-      when :"("
-        next_token_skip_space_or_newline
-        while @token.type != :")"
-          extras = parse_arg(args,
-            extra_assigns: nil,
-            parentheses: true,
-            found_default_value: found_default_value,
-            found_splat: found_splat,
-            found_double_splat: found_double_splat,
-            allow_restrictions: false)
-          if !found_default_value && extras.default_value
-            found_default_value = true
-          end
-          if !splat_index && extras.splat
-            splat_index = index
-            found_splat = true
-          end
-          if extras.double_splat
-            double_splat = args.pop
-            found_double_splat = double_splat
-          end
-          if block_arg = extras.block_arg
-            check :")"
-            break
-          elsif @token.type == :","
-            next_token_skip_space_or_newline
-          else
-            skip_space_or_newline
-            check :")"
-          end
-          index += 1
-        end
-
-        if splat_index == args.size - 1 && args.last.name.empty?
-          raise "named parameters must follow bare *", args.last.location.not_nil!
-        end
-
-        next_token
-      when :IDENT, :"*"
-        if @token.keyword?(:end)
-          unexpected_token @token.to_s, "expected ';' or newline"
+        case @token.type
+        when :CONST
+          raise "macro can't have a receiver"
+        when :IDENT
+          check_valid_def_name
+          name = "#{name}=" if consume_def_equals_sign_skip_space
         else
-          unexpected_token @token.to_s, "parentheses are mandatory for macro parameters"
+          check_valid_def_op_name
+          next_token_skip_space
         end
-      when :";", :"NEWLINE"
-        # Skip
-      when :"."
-        raise "macro can't have a receiver"
-      else
-        unexpected_token
+
+        args = [] of Arg
+
+        found_default_value = false
+        found_splat = false
+        found_double_splat = nil
+
+        splat_index = nil
+        double_splat = nil
+        index = 0
+
+        case @token.type
+        when :"("
+          next_token_skip_space_or_newline
+          while @token.type != :")"
+            extras = parse_arg(args,
+              extra_assigns: nil,
+              parentheses: true,
+              found_default_value: found_default_value,
+              found_splat: found_splat,
+              found_double_splat: found_double_splat,
+              allow_restrictions: false)
+            if !found_default_value && extras.default_value
+              found_default_value = true
+            end
+            if !splat_index && extras.splat
+              splat_index = index
+              found_splat = true
+            end
+            if extras.double_splat
+              double_splat = args.pop
+              found_double_splat = double_splat
+            end
+            if block_arg = extras.block_arg
+              check :")"
+              break
+            elsif @token.type == :","
+              next_token_skip_space_or_newline
+            else
+              skip_space_or_newline
+              check :")"
+            end
+            index += 1
+          end
+
+          if splat_index == args.size - 1 && args.last.name.empty?
+            raise "named parameters must follow bare *", args.last.location.not_nil!
+          end
+
+          next_token
+        when :IDENT, :"*"
+          if @token.keyword?(:end)
+            unexpected_token @token.to_s, "expected ';' or newline"
+          else
+            unexpected_token @token.to_s, "parentheses are mandatory for macro parameters"
+          end
+        when :";", :"NEWLINE"
+          # Skip
+        when :"."
+          raise "macro can't have a receiver"
+        else
+          unexpected_token
+        end
+
+        end_location = nil
+
+        if @token.keyword?(:end)
+          end_location = token_end_location
+          body = Expressions.new
+          next_token_skip_space
+        else
+          body, end_location = parse_macro_body(name_location)
+        end
+
+        node = Macro.new name, args, body, block_arg, splat_index, double_splat: double_splat
+        node.name_location = name_location
+        node.doc = doc
+        node.end_location = end_location
+        set_visibility node
+        node
       end
-
-      end_location = nil
-
-      if @token.keyword?(:end)
-        end_location = token_end_location
-        body = Expressions.new
-        next_token_skip_space
-      else
-        body, end_location = parse_macro_body(name_location)
-      end
-
-      pop_def
-
-      node = Macro.new name, args, body, block_arg, splat_index, double_splat: double_splat
-      node.name_location = name_location
-      node.doc = doc
-      node.end_location = end_location
-      set_visibility node
-      node
     end
 
     def parse_macro_body(start_location, macro_state = Token::MacroState.default)
@@ -3383,7 +3380,6 @@ module Crystal
     DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
 
     def parse_def_helper(is_abstract = false)
-      push_def
       @doc_enabled = false
       @def_nest += 1
 
@@ -3577,7 +3573,6 @@ module Crystal
 
       @def_nest -= 1
       @doc_enabled = !!@wants_doc
-      pop_def
 
       node = Def.new name, args, body, receiver, block_arg, return_type, @is_macro_def, @yields, is_abstract, splat_index, double_splat: double_splat, free_vars: free_vars
       node.name_location = name_location
@@ -4341,28 +4336,25 @@ module Crystal
         skip_statement_end
       end
 
-      current_vars = @def_vars.last.dup
-      push_def current_vars
-      push_vars block_args
+      with_lexical_var_scope do
+        push_vars block_args
 
-      block_body = parse_expressions
+        block_body = parse_expressions
 
-      if extra_assigns
-        exps = [] of ASTNode
-        exps.concat extra_assigns
-        if block_body.is_a?(Expressions)
-          exps.concat block_body.expressions
-        else
-          exps.push block_body
+        if extra_assigns
+          exps = [] of ASTNode
+          exps.concat extra_assigns
+          if block_body.is_a?(Expressions)
+            exps.concat block_body.expressions
+          else
+            exps.push block_body
+          end
+          block_body = Expressions.from(exps).at(block_body)
         end
-        block_body = Expressions.from(exps).at(block_body)
+
+        block_body, end_location = yield block_body
+        Block.new(block_args, block_body, splat_index).at(location).at_end(end_location)
       end
-
-      block_body, end_location = yield block_body
-
-      pop_def
-
-      Block.new(block_args, block_body, splat_index).at(location).at_end(end_location)
     end
 
     record CallArgs,
@@ -5155,21 +5147,23 @@ module Crystal
         raise "missing typeof argument"
       end
 
-      exps = [] of ASTNode
-      while @token.type != :")"
-        exps << parse_op_assign
-        if @token.type == :","
-          next_token_skip_space_or_newline
-        else
-          skip_space_or_newline
-          check :")"
+      with_lexical_var_scope do
+        exps = [] of ASTNode
+        while @token.type != :")"
+          exps << parse_op_assign
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          else
+            skip_space_or_newline
+            check :")"
+          end
         end
+
+        end_location = token_end_location
+        next_token_skip_space
+
+        TypeOf.new(exps).at(location).at_end(end_location)
       end
-
-      end_location = token_end_location
-      next_token_skip_space
-
-      TypeOf.new(exps).at(location).at_end(end_location)
     end
 
     def parse_visibility_modifier(modifier)
@@ -5468,107 +5462,105 @@ module Crystal
       location = @token.location
       doc = @token.doc
 
-      push_def if require_body
-
-      next_token_skip_space_or_newline
-
-      name = if top_level
-               check_ident
-             else
-               check IdentOrConst
-               @token.value.to_s
-             end
-
-      next_token_skip_space_or_newline
-
-      if @token.type == :"="
+      with_isolated_var_scope(require_body) do
         next_token_skip_space_or_newline
-        case @token.type
-        when :IDENT, :CONST
-          real_name = @token.value.to_s
+
+        name = if top_level
+                 check_ident
+               else
+                 check IdentOrConst
+                 @token.value.to_s
+               end
+
+        next_token_skip_space_or_newline
+
+        if @token.type == :"="
           next_token_skip_space_or_newline
-        when :DELIMITER_START
-          real_name = parse_string_without_interpolation("fun name")
-          skip_space
+          case @token.type
+          when :IDENT, :CONST
+            real_name = @token.value.to_s
+            next_token_skip_space_or_newline
+          when :DELIMITER_START
+            real_name = parse_string_without_interpolation("fun name")
+            skip_space
+          else
+            unexpected_token
+          end
         else
-          unexpected_token
+          real_name = name
         end
-      else
-        real_name = name
-      end
 
-      args = [] of Arg
-      varargs = false
+        args = [] of Arg
+        varargs = false
 
-      if @token.type == :"("
-        next_token_skip_space_or_newline
-        while @token.type != :")"
-          if @token.type == :"..."
-            varargs = true
-            next_token_skip_space_or_newline
-            check :")"
-            break
+        if @token.type == :"("
+          next_token_skip_space_or_newline
+          while @token.type != :")"
+            if @token.type == :"..."
+              varargs = true
+              next_token_skip_space_or_newline
+              check :")"
+              break
+            end
+
+            if @token.type == :IDENT
+              arg_name = @token.value.to_s
+              arg_location = @token.location
+
+              next_token_skip_space_or_newline
+              check :":"
+              next_token_skip_space_or_newline
+              arg_type = parse_bare_proc_type
+              skip_space_or_newline
+
+              args << Arg.new(arg_name, nil, arg_type).at(arg_location)
+
+              push_var_name arg_name if require_body
+            else
+              arg_type = parse_union_type
+              args << Arg.new("", nil, arg_type).at(arg_type.location)
+            end
+
+            if @token.type == :","
+              next_token_skip_space_or_newline
+            else
+              skip_space_or_newline
+              check :")"
+              break
+            end
           end
-
-          if @token.type == :IDENT
-            arg_name = @token.value.to_s
-            arg_location = @token.location
-
-            next_token_skip_space_or_newline
-            check :":"
-            next_token_skip_space_or_newline
-            arg_type = parse_bare_proc_type
-            skip_space_or_newline
-
-            args << Arg.new(arg_name, nil, arg_type).at(arg_location)
-
-            push_var_name arg_name if require_body
-          else
-            arg_type = parse_union_type
-            args << Arg.new("", nil, arg_type).at(arg_type.location)
-          end
-
-          if @token.type == :","
-            next_token_skip_space_or_newline
-          else
-            skip_space_or_newline
-            check :")"
-            break
-          end
+          next_token_skip_statement_end
         end
-        next_token_skip_statement_end
-      end
 
-      if @token.type == :":"
-        next_token_skip_space_or_newline
-        return_type = parse_bare_proc_type
-      end
+        if @token.type == :":"
+          next_token_skip_space_or_newline
+          return_type = parse_bare_proc_type
+        end
 
-      skip_statement_end
+        skip_statement_end
 
-      if require_body
-        @fun_nest += 1
+        if require_body
+          @fun_nest += 1
 
-        if @token.keyword?(:end)
-          body = Nop.new
+          if @token.keyword?(:end)
+            body = Nop.new
+            end_location = token_end_location
+            next_token
+          else
+            body = parse_expressions
+            body, end_location = parse_exception_handler body, implicit: true
+          end
+
+          @fun_nest -= 1
+        else
+          body = nil
           end_location = token_end_location
-          next_token
-        else
-          body = parse_expressions
-          body, end_location = parse_exception_handler body, implicit: true
         end
 
-        @fun_nest -= 1
-      else
-        body = nil
-        end_location = token_end_location
+        fun_def = FunDef.new name, args, return_type, varargs, body, real_name
+        fun_def.doc = doc
+        fun_def.at(location).at_end(end_location)
       end
-
-      pop_def if require_body
-
-      fun_def = FunDef.new name, args, return_type, varargs, body, real_name
-      fun_def.doc = doc
-      fun_def.at(location).at_end(end_location)
     end
 
     def parse_alias
@@ -5940,23 +5932,28 @@ module Crystal
       end
     end
 
-    def push_def
-      @def_vars.push(Set(String).new)
+    # If *create_scope* is true, creates an isolated variable scope and returns
+    # the yield result, resetting the scope afterwards. Otherwise simply returns
+    # the yield result without touching the scopes.
+    def with_isolated_var_scope(create_scope = true)
+      return yield unless create_scope
+
+      begin
+        @var_scopes.push(Set(String).new)
+        yield
+      ensure
+        @var_scopes.pop
+      end
     end
 
-    def pop_def
-      @def_vars.pop
-    end
-
-    def push_def(args)
-      push_def(Set.new(args.map &.name))
-      ret = yield
-      pop_def
-      ret
-    end
-
-    def push_def(set)
-      @def_vars.push(set)
+    # Creates a new variable scope with the same variables as the current scope,
+    # and then returns the yield result, resetting the scope afterwards.
+    def with_lexical_var_scope
+      current_scope = @var_scopes.last.dup
+      @var_scopes.push current_scope
+      yield
+    ensure
+      @var_scopes.pop
     end
 
     def push_vars(vars)
@@ -5982,11 +5979,15 @@ module Crystal
     end
 
     def push_var_name(name)
-      @def_vars.last.add name
+      @var_scopes.last.add name
     end
 
     def push_var(node)
       # Nothing
+    end
+
+    def var_in_scope?(name)
+      @var_scopes.last.includes? name
     end
 
     def open(symbol, location = @token.location)
@@ -6067,7 +6068,7 @@ module Crystal
       return true if @in_macro_expression
 
       name = name.to_s
-      name == "self" || @def_vars.last.includes?(name)
+      name == "self" || var_in_scope?(name)
     end
 
     def push_visibility

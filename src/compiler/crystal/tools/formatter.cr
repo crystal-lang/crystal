@@ -2181,7 +2181,7 @@ module Crystal
         mode = Parser::ParseMode::Normal
       end
 
-      parser = Parser.new(source, def_vars: @vars.clone)
+      parser = Parser.new(source, var_scopes: @vars.clone)
       # parser.filename = formatter.filename
       nodes = parser.parse(mode)
 

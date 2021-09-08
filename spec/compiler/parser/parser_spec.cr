@@ -1327,6 +1327,9 @@ module Crystal
 
     it_parses "typeof(1)", TypeOf.new([1.int32] of ASTNode)
 
+    # #10521
+    it_parses "typeof(a = 1); a", [TypeOf.new([Assign.new("a".var, 1.int32)] of ASTNode), "a".call]
+
     it_parses "puts ~1", Call.new(nil, "puts", Call.new(1.int32, "~"))
 
     it_parses "foo\n.bar", Call.new("foo".call, "bar")
