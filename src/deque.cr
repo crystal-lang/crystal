@@ -99,19 +99,6 @@ class Deque(T)
     Deque(T).new(array.size) { |i| array[i] }
   end
 
-  # Returns `true` if it is passed a `Deque` and `equals?` returns `true`
-  # for both deques, the caller and the argument.
-  #
-  # ```
-  # deq = Deque{2, 3}
-  # deq.unshift 1
-  # deq == Deque{1, 2, 3} # => true
-  # deq == Deque{2, 3}    # => false
-  # ```
-  def ==(other : Deque)
-    equals?(other) { |x, y| x == y }
-  end
-
   # Concatenation. Returns a new `Deque` built by concatenating
   # two deques together to create a third. The type of the new deque
   # is the union of the types of both the other deques.

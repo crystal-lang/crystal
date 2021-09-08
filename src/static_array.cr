@@ -85,34 +85,6 @@ struct StaticArray(T, N)
   private def initialize
   end
 
-  # Equality. Returns `true` if each element in `self` is equal to each
-  # corresponding element in *other*.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new 0  # => StaticArray[0, 0, 0]
-  # array2 = StaticArray(Int32, 3).new 0 # => StaticArray[0, 0, 0]
-  # array3 = StaticArray(Int32, 3).new 1 # => StaticArray[1, 1, 1]
-  # array == array2                      # => true
-  # array == array3                      # => false
-  # ```
-  def ==(other : StaticArray)
-    return false unless size == other.size
-    each_with_index do |e, i|
-      return false unless e == other[i]
-    end
-    true
-  end
-
-  # Equality with another object. Always returns `false`.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new 0 # => StaticArray[0, 0, 0]
-  # array == nil                        # => false
-  # ```
-  def ==(other)
-    false
-  end
-
   @[AlwaysInline]
   def unsafe_fetch(index : Int)
     to_unsafe[index]

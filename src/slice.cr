@@ -12,7 +12,6 @@ require "slice/sort"
 # `String#to_slice` is read-only.
 struct Slice(T)
   include Indexable(T)
-  include Comparable(Slice)
 
   # Creates a new `Slice` with the given *args*. The type of the
   # slice will be the union of the type of the given *args*.

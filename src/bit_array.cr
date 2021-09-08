@@ -295,13 +295,6 @@ struct BitArray
     Slice.new(@bits.as(Pointer(UInt8)), bytesize)
   end
 
-  # See `Object#hash(hasher)`
-  def hash(hasher)
-    hasher = size.hash(hasher)
-    hasher = to_slice.hash(hasher)
-    hasher
-  end
-
   # Returns a new `BitArray` with all of the same elements.
   def dup
     bit_array = BitArray.new(@size)

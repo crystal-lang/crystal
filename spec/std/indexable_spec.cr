@@ -19,12 +19,12 @@ private class SafeStringIndexable
 
   property size
 
-  def initialize(@size : Int32)
+  def initialize(@size : Int32, @offset = 0)
   end
 
   def unsafe_fetch(i)
     raise IndexError.new unless 0 <= i < size
-    i.to_s
+    (i + @offset).to_s
   end
 end
 
@@ -281,6 +281,58 @@ describe Indexable do
       indexable.fetch(2) { |k| k * 3 }.should eq(2)
       indexable.fetch(3) { |k| k * 3 }.should eq(9)
       a.should eq([0, 1, 2])
+    end
+  end
+
+  describe "#==" do
+    it "equal" do
+      a = SafeStringIndexable.new(3)
+      b = SafeMixedIndexable.new(3)
+      c = SafeMixedIndexable.new(4)
+
+      a.should eq b
+      b.should eq a
+
+      a.should_not eq c
+      c.should_not eq a
+    end
+  end
+
+  describe "#hash" do
+    a = SafeStringIndexable.new(3)
+    b = SafeMixedIndexable.new(3)
+    c = SafeMixedIndexable.new(4)
+
+    a.hash.should eq b.hash
+    b.hash.should eq a.hash
+
+    a.hash.should_not eq c.hash
+    c.hash.should_not eq a.hash
+  end
+
+  describe "#<=>" do
+    it "equal" do
+      a = SafeStringIndexable.new(3)
+      b = SafeMixedIndexable.new(3)
+
+      (a <=> b).should eq 0
+      (b <=> a).should eq 0
+    end
+
+    it "different elements" do
+      a = SafeStringIndexable.new(3, 1)
+      b = SafeMixedIndexable.new(3)
+
+      (a <=> b).should eq 1
+      (b <=> a).should eq -1
+    end
+
+    it "different size" do
+      a = SafeStringIndexable.new(3)
+      b = SafeMixedIndexable.new(4)
+
+      (a <=> b).should eq -1
+      (b <=> a).should eq 1
     end
   end
 
