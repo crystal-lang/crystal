@@ -1017,11 +1017,15 @@ class Crystal::Call
                 end
               end
             else
-              if output.is_a?(Self)
-                raise "expected block to return #{match.context.instantiated_type}, not #{block_type}"
-              else
-                raise "expected block to return #{output}, not #{block_type}"
-              end
+              output_name = case output
+                when Self
+                  match.context.instantiated_type
+                when Crystal::Path
+                  match.context.defining_type.lookup_path(output)
+                else
+                  output
+                end
+              raise "expected block to return #{output_name}, not #{block_type}"
             end
           end
 
