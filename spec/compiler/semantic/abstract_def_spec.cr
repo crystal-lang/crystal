@@ -383,6 +383,19 @@ describe "Semantic: abstract def" do
       )
   end
 
+  it "doesn't error if implements a NoReturn param" do
+    assert_no_errors %(
+      abstract class Foo
+        abstract def foo(x : NoReturn)
+      end
+
+      class Bar < Foo
+        def foo(x : Int32)
+        end
+      end
+      )
+  end
+
   it "finds implements in included module in disorder (#4052)" do
     semantic %(
       module B
@@ -680,6 +693,18 @@ describe "Semantic: abstract def" do
         end
       end
     ))
+  end
+
+  it "error shows full signature of block parameter" do
+    assert_error(<<-CR, "abstract `def Moo#each(& : (Int32 -> _))` must be implemented by Foo")
+      module Moo
+        abstract def each(& : Int32 -> _)
+      end
+
+      class Foo
+        include Moo
+      end
+      CR
   end
 
   it "doesn't error if implementation have default value" do
@@ -1000,5 +1025,24 @@ describe "Semantic: abstract def" do
         end
       end
     ), "abstract `def Foo#foo(*, foo : Int32)` must be implemented by Bar"
+  end
+
+  it "doesn't error if free var in arg restriction shadows another type (#10153)" do
+    assert_no_errors %(
+      module Foo
+        abstract def foo(x : Int32, y : Array(Int32))
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Quux, y : Array(Quux)) forall Quux
+          x
+        end
+      end
+
+      class Quux
+      end
+      )
   end
 end

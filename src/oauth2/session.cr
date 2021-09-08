@@ -18,7 +18,7 @@ class OAuth2::Session
   # Authenticates an `HTTP::Client`, refreshing the access token if it is expired.
   #
   # Invoke this method on an `HTTP::Client` before executing an HTTP request.
-  def authenticate(http_client)
+  def authenticate(http_client) : Nil
     check_refresh_token
     @access_token.authenticate http_client
   end

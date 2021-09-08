@@ -136,7 +136,7 @@ module Crystal
     private def assign_id_to_metaclass(type : GenericClassType)
       assign_id_to_metaclass(type, type.metaclass)
       type.each_instantiated_type do |instance|
-        assign_id_to_metaclass(instance)
+        assign_id_to_metaclass(instance) unless instance.unbound?
       end
       type.subclasses.each do |subclass|
         assign_id_to_metaclass(subclass)
@@ -164,7 +164,7 @@ module Crystal
     end
 
     private def subclasses_of(type)
-      type.subclasses.reject(&.is_a?(GenericInstanceType))
+      type.subclasses.reject(GenericInstanceType)
     end
   end
 end

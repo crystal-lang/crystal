@@ -13,6 +13,18 @@ describe "Semantic: tuples" do
     assert_type("{1}; {1, 2}") { tuple_of([int32, int32] of TypeVar) }
   end
 
+  it "types tuple with splats inside" do
+    assert_type("{1, *{2.5, 'a'}, true}") { tuple_of([int32, float64, char, bool] of TypeVar) }
+  end
+
+  it "errors if non-tuple is splatted inside tuple" do
+    assert_error "{*1}", "argument to splat must be a tuple, not Int32"
+  end
+
+  it "errors if non-tuple is splatted inside tuple (2)" do
+    assert_error "{*{1} || {2, 3}}", "argument to splat must be a tuple, not (Tuple(Int32) | Tuple(Int32, Int32))"
+  end
+
   describe "#[](NumberLiteral)" do
     it "types, inbound index" do
       assert_type("{1, 'a'}[0]") { int32 }

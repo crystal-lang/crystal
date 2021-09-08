@@ -134,18 +134,18 @@ class String
       if byte < 0xd800 || byte >= 0xe000
         # One byte
         codepoint = byte
-      elsif 0xd800 <= byte < 0xdc00 &&
+      elsif byte < 0xdc00 &&
             (i + 1) < slice.size &&
             0xdc00 <= slice[i + 1] <= 0xdfff
         # Surrogate pair
-        codepoint = ((byte - 0xd800) << 10) + (slice[i + 1] - 0xdc00) + 0x10000
+        codepoint = (byte << 10) &+ slice[i + 1] &- 0x35fdc00
         i += 1
       else
         # Invalid byte
         codepoint = 0xfffd
       end
 
-      yield codepoint.chr
+      yield codepoint.unsafe_chr
 
       i += 1
     end
@@ -160,17 +160,17 @@ class String
       if byte < 0xd800 || byte >= 0xe000
         # One byte
         codepoint = byte
-      elsif 0xd800 <= byte < 0xdc00 &&
+      elsif byte < 0xdc00 &&
             0xdc00 <= (pointer + 1).value <= 0xdfff
         # Surrogate pair
         pointer = pointer + 1
-        codepoint = ((byte - 0xd800) << 10) + (pointer.value - 0xdc00) + 0x10000
+        codepoint = (byte << 10) &+ pointer.value &- 0x35fdc00
       else
         # Invalid byte
         codepoint = 0xfffd
       end
 
-      yield codepoint.chr
+      yield codepoint.unsafe_chr
 
       pointer = pointer + 1
     end

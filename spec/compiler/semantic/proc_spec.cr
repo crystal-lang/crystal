@@ -335,7 +335,7 @@ describe "Semantic: proc" do
       ") { proc_of(int32, int32) }
   end
 
-  it "allows new on proc type with less block args" do
+  it "allows new on proc type with less block params" do
     assert_type("
       #{proc_new}
 
@@ -344,14 +344,14 @@ describe "Semantic: proc" do
       ") { proc_of(int32, int32) }
   end
 
-  it "says wrong number of block args in new on proc type" do
+  it "says wrong number of block params in new on proc type" do
     assert_error "
       #{proc_new}
 
       alias Alias = Int32 -> Int32
       Alias.new { |x, y| }
       ",
-      "wrong number of block arguments (given 2, expected 1)"
+      "wrong number of block parameters (given 2, expected 1)"
   end
 
   it "says wrong return type in new on proc type" do
@@ -366,7 +366,7 @@ describe "Semantic: proc" do
 
   it "errors if missing argument type in proc literal" do
     assert_error "->(x) { x }",
-      "function argument 'x' must have a type"
+      "parameter 'x' of Proc literal must have a type"
   end
 
   it "allows passing function to LibC without specifying types" do
@@ -733,12 +733,12 @@ describe "Semantic: proc" do
       )) { int32 }
   end
 
-  %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
+  %w(Object Value Reference Number Int Float Struct Proc Tuple Enum StaticArray Pointer).each do |type|
     it "disallows #{type} in procs" do
       assert_error %(
         ->(x : #{type}) { }
         ),
-        "as a Proc argument type"
+        "can't use #{type} as a Proc argument type"
     end
 
     it "disallows #{type} in captured block" do
@@ -748,7 +748,7 @@ describe "Semantic: proc" do
 
         foo {}
         ),
-        "as a Proc argument type"
+        "can't use #{type} as a Proc argument type"
     end
 
     it "disallows #{type} in proc pointer" do
@@ -758,7 +758,39 @@ describe "Semantic: proc" do
 
         ->foo(#{type})
         ),
-        "as a Proc argument type"
+        "can't use #{type} as a Proc argument type"
+    end
+  end
+
+  describe "Class" do
+    # FIXME: Class reports as Object type in two of these examples.
+    # This should be fixed and the specs inlined with the above.
+    # See https://github.com/crystal-lang/crystal/pull/10688#issuecomment-852931558
+    it "disallows Class in procs" do
+      assert_error %(
+        ->(x : Class) { }
+        ),
+        "can't use Object as a Proc argument type"
+    end
+
+    it "disallows Class in captured block" do
+      assert_error %(
+        def foo(&block : Class ->)
+        end
+
+        foo {}
+        ),
+        "can't use Class as a Proc argument type"
+    end
+
+    it "disallows Class in proc pointer" do
+      assert_error %(
+        def foo(x)
+        end
+
+        ->foo(Class)
+        ),
+        "can't use Object as a Proc argument type"
     end
   end
 

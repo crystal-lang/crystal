@@ -166,7 +166,7 @@ abstract class OpenSSL::SSL::Context
     # unidirectionally, the server connects, then sends a ticket
     # after the connect handshake, the ticket send can fail with Broken Pipe.
     # So if you have that kind of behavior (clients that never read) call this method.
-    def disable_session_resume_tickets
+    def disable_session_resume_tickets : Nil
       add_options(OpenSSL::SSL::Options::NO_TICKET) # TLS v1.2 and below
       {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
         ret = LibSSL.ssl_ctx_set_num_tickets(self, 0) # TLS v1.3
@@ -336,7 +336,7 @@ abstract class OpenSSL::SSL::Context
 
   # Adds a temporary ECDH key curve to the TLS context. This is required to
   # enable the EECDH cipher suites. By default the prime256 curve will be used.
-  def set_tmp_ecdh_key(curve = LibCrypto::NID_X9_62_prime256v1)
+  def set_tmp_ecdh_key(curve = LibCrypto::NID_X9_62_prime256v1) : Nil
     key = LibCrypto.ec_key_new_by_curve_name(curve)
     raise OpenSSL::Error.new("ec_key_new_by_curve_name") if key.null?
     LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_SET_TMP_ECDH, 0, key)
@@ -344,7 +344,7 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Returns the current modes set on the TLS context.
-  def modes
+  def modes : LibSSL::Modes
     OpenSSL::SSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_MODE, 0, nil)
   end
 
@@ -359,7 +359,7 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Returns the current options set on the TLS context.
-  def options
+  def options : LibSSL::Options
     opts = {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
              LibSSL.ssl_ctx_get_options(@handle)
            {% else %}
@@ -403,7 +403,7 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Returns the current verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.
-  def verify_mode
+  def verify_mode : LibSSL::VerifyMode
     LibSSL.ssl_ctx_get_verify_mode(@handle)
   end
 
@@ -455,9 +455,9 @@ abstract class OpenSSL::SSL::Context
       raise OpenSSL::Error.new("SSL_CTX_set1_param") unless ret == 1
     end
 
-    # Sets the given `OpenSSL::X509VerifyFlags` in this context, additionally to
+    # Sets the given `OpenSSL::SSL::X509VerifyFlags` in this context, additionally to
     # the already set ones.
-    def add_x509_verify_flags(flags : OpenSSL::X509VerifyFlags)
+    def add_x509_verify_flags(flags : OpenSSL::SSL::X509VerifyFlags)
       param = LibSSL.ssl_ctx_get0_param(@handle)
       ret = LibCrypto.x509_verify_param_set_flags(param, flags)
       raise OpenSSL::Error.new("X509_VERIFY_PARAM_set_flags)") unless ret == 1

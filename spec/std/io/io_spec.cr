@@ -1,5 +1,6 @@
 require "../spec_helper"
 require "../../support/channel"
+require "spec/helpers/iterate"
 
 {% unless flag?(:win32) %}
   require "socket"
@@ -71,10 +72,6 @@ private class SimpleIOMemory < IO
     self
   end
 
-  private def check_needs_resize
-    resize_to_capacity(@capacity * 2) if @bytesize == @capacity
-  end
-
   private def resize_to_capacity(capacity)
     @capacity = capacity
     @buffer = @buffer.realloc(@capacity)
@@ -120,41 +117,11 @@ describe IO do
     end
   end
 
-  describe "IO iterators" do
-    it "iterates by line" do
-      io = SimpleIOMemory.new("hello\nbye\n")
-      lines = io.each_line
-      lines.next.should eq("hello")
-      lines.next.should eq("bye")
-      lines.next.should be_a(Iterator::Stop)
-    end
+  it_iterates "#each_line", ["hello", "bye"], SimpleIOMemory.new("hello\nbye\n").each_line
+  it_iterates "#each_line(chomp: false)", ["hello\n", "bye\n"], SimpleIOMemory.new("hello\nbye\n").each_line(chomp: false)
 
-    it "iterates by line with chomp false" do
-      io = SimpleIOMemory.new("hello\nbye\n")
-      lines = io.each_line(chomp: false)
-      lines.next.should eq("hello\n")
-      lines.next.should eq("bye\n")
-      lines.next.should be_a(Iterator::Stop)
-    end
-
-    it "iterates by char" do
-      io = SimpleIOMemory.new("abあぼ")
-      chars = io.each_char
-      chars.next.should eq('a')
-      chars.next.should eq('b')
-      chars.next.should eq('あ')
-      chars.next.should eq('ぼ')
-      chars.next.should be_a(Iterator::Stop)
-    end
-
-    it "iterates by byte" do
-      io = SimpleIOMemory.new("ab")
-      bytes = io.each_byte
-      bytes.next.should eq('a'.ord)
-      bytes.next.should eq('b'.ord)
-      bytes.next.should be_a(Iterator::Stop)
-    end
-  end
+  it_iterates "#char", ['a', 'b', 'あ', 'ぼ'], SimpleIOMemory.new("abあぼ").each_char
+  it_iterates "#char", ['a'.ord.to_u8, 'b'.ord.to_u8], SimpleIOMemory.new("ab").each_byte
 
   it "copies" do
     string = "abあぼ"
@@ -314,15 +281,29 @@ describe IO do
       io.read_char.should eq('界')
       io.read_char.should be_nil
 
-      io.write Bytes[0xf8, 0xff, 0xff, 0xff]
-      expect_raises(InvalidByteSequenceError) do
-        io.read_char
-      end
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc4, 0x70]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc4, 0x70, 0x00, 0x00]).read_char }
 
-      io.write_byte 0x81_u8
-      expect_raises(InvalidByteSequenceError) do
-        io.read_char
-      end
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf8]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf8, 0x00, 0x00, 0x00]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0x81]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0x81, 0x00, 0x00, 0x00]).read_char }
+
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xa0, 0x80]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xa0, 0x80, 0x00]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xbf, 0xbf]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xbf, 0xbf, 0x00]).read_char }
+
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc0, 0x80]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc0, 0x80, 0x00, 0x00]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc1, 0xbf]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc1, 0xbf, 0x00, 0x00]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x80, 0x80]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x80, 0x80, 0x00]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x9f, 0xbf]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x9f, 0xbf, 0x00]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf0, 0x80, 0x80, 0x80]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf0, 0x8f, 0xbf, 0xbf]).read_char }
     end
 
     it "reads byte" do
