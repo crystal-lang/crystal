@@ -967,6 +967,7 @@ module Crystal
     it_parses "abstract def foo(x) : Int32", Def.new("foo", args: ["x".arg], return_type: "Int32".path, abstract: true)
 
     it_parses "{% for x in y %}body{% end %}", MacroFor.new(["x".var], "y".var, "body".macro_literal)
+    it_parses "{% for _, x, _ in y %}body{% end %}", MacroFor.new(["_".var, "x".var, "_".var], "y".var, "body".macro_literal)
     it_parses "{% if x %}body{% end %}", MacroIf.new("x".var, "body".macro_literal)
     it_parses "{% begin %}{% if true %}if true{% end %}\n{% if true %}end{% end %}{% end %}", MacroIf.new(true.bool, [MacroIf.new(true.bool, "if true".macro_literal), "\n".macro_literal, MacroIf.new(true.bool, "end".macro_literal)] of ASTNode)
     it_parses "{{ foo }}", MacroExpression.new("foo".var)
