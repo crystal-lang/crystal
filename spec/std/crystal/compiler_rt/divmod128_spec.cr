@@ -5,6 +5,7 @@ require "spec"
 private def make_ti(a : Int128, b : Int128)
   (a << 64) + b
 end
+
 private def make_tu(a : UInt128, b : UInt128)
   (a << 64) + b
 end
