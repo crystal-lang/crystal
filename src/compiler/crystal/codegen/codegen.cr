@@ -368,6 +368,30 @@ module Crystal
         # release mode, once we reach 1.0.
         mod.verify
       end
+
+      dump_type_id if ENV["CRYSTAL_DUMP_TYPE_ID"]? == "1"
+    end
+
+    private def dump_type_id
+      ids = @program.llvm_id.@ids.to_a
+      ids.sort_by! { |_, (min, max)| {min, -max} }
+
+      puts "CRYSTAL_DUMP_TYPE_ID"
+      parent_ids = [] of {Int32, Int32}
+      ids.each do |type, (min, max)|
+        while parent_id = parent_ids.last?
+          break if min >= parent_id[0] && max <= parent_id[1]
+          parent_ids.pop
+        end
+        indent = " " * (2 * parent_ids.size)
+
+        show_generic_args = type.is_a?(GenericInstanceType) ||
+                            type.is_a?(GenericClassInstanceMetaclassType) ||
+                            type.is_a?(GenericModuleInstanceMetaclassType)
+        puts "#{indent}{#{min} - #{max}}: #{type.to_s(generic_args: show_generic_args)}"
+        parent_ids << {min, max}
+      end
+      puts
     end
 
     def visit(node : Annotation)

@@ -82,7 +82,16 @@ module Crystal
       return nil if type1.instance_type.module?
 
       restricted = common_descendent(type1.instance_type, type2.instance_type.base_type)
-      restricted ? type1 : nil
+      restricted.try(&.virtual_type.metaclass)
+    end
+
+    def self.common_descendent(type1 : VirtualMetaclassType, type2 : MetaclassType)
+      common_descendent(type2, type1)
+    end
+
+    def self.common_descendent(type1 : VirtualMetaclassType, type2 : VirtualMetaclassType)
+      restricted = common_descendent(type1.instance_type, type2.instance_type.base_type)
+      restricted.try(&.virtual_type.metaclass)
     end
 
     def self.common_descendent(type1 : GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType, type2 : MetaclassType)
@@ -152,7 +161,7 @@ module Crystal
       types = type2.union_types.compact_map do |t|
         common_descendent(type1, t)
       end
-      type1.program.type_merge types
+      type1.program.type_merge_union_of types
     end
 
     def self.common_descendent(type1 : VirtualType, type2 : Type)

@@ -724,14 +724,12 @@ struct Char
       yield (0xe0 | (c >> 12)).to_u8
       yield (0x80 | ((c >> 6) & 0x3f)).to_u8
       yield (0x80 | (c & 0x3f)).to_u8
-    elsif c <= MAX_CODEPOINT
+    else
       # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
       yield (0xf0 | (c >> 18)).to_u8
       yield (0x80 | ((c >> 12) & 0x3f)).to_u8
       yield (0x80 | ((c >> 6) & 0x3f)).to_u8
       yield (0x80 | (c & 0x3f)).to_u8
-    else
-      raise InvalidByteSequenceError.new("Invalid char value #{dump}")
     end
   end
 
@@ -754,11 +752,9 @@ struct Char
     elsif c <= 0xffff
       # 1110xxxx  10xxxxxx  10xxxxxx
       3
-    elsif c <= MAX_CODEPOINT
+    else
       # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
       4
-    else
-      raise InvalidByteSequenceError.new("Invalid char value #{dump}")
     end
   end
 

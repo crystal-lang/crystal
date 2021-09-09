@@ -813,8 +813,16 @@ describe "Int" do
   it "#chr" do
     65.chr.should eq('A')
 
-    expect_raises(ArgumentError, "#{0x10ffff + 1} out of char range") do
+    expect_raises(ArgumentError, "0x110000 out of char range") do
       (0x10ffff + 1).chr
+    end
+
+    expect_raises(ArgumentError, "0xd800 out of char range") do
+      0xd800.chr
+    end
+
+    expect_raises(ArgumentError, "0xdfff out of char range") do
+      0xdfff.chr
     end
   end
 
