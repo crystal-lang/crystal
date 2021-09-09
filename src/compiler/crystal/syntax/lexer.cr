@@ -1558,7 +1558,7 @@ module Crystal
       end_pos = current_pos - suffix_size
 
       if end_pos - start == 1
-        # For numbers such as 0, 1, 2, 3, etc., we use a string from the poll
+        # For numbers such as 0, 1, 2, 3, etc., we use a string from the pool
         string_value = string_range_from_pool(start, end_pos)
       else
         string_value = string_range(start, end_pos)
@@ -1580,153 +1580,68 @@ module Crystal
       set_token_raw_from_start(start)
     end
 
-    macro gen_check_int_fits_in_size(type, method, size, *, actual_type = nil)
-      if num_size >= 20
-        {% if actual_type.nil? %}
-          raise_value_doesnt_fit_in "{{type}}", string_value, start
-        {% else %}
-          raise_value_restricted_by "{{actual_type}}", "{{type}}", string_value, start
-        {% end %}
-      end
-      if num_size >= {{size}}
-        int_value = absolute_integer_value(string_value, negative)
-        max = {{type}}::MAX.{{method}}
-        max += 1 if negative
-
-        if int_value > max
-          {% if actual_type.nil? %}
-            raise_value_doesnt_fit_in "{{type}}", string_value, start
-          {% else %}
-            raise_value_restricted_by "{{actual_type}}", "{{type}}", string_value, start
-          {% end %}
+    macro gen_check_int_fits_in_size(unsigned, type, method, size)
+      {% if unsigned %}
+        if negative
+          raise "Invalid negative value #{string_value} for {{type}}"
         end
-      end
-    end
+      {% end %}
 
-    macro gen_check_uint_fits_in_size(type, size)
-      if negative
-        raise "Invalid negative value #{string_value} for {{type}}"
-      end
-      if num_size >= 20
+      if num_size > {{size}} || (num_size == {{size}} && string_value.to_{{method.id}}? == nil)
         raise_value_doesnt_fit_in "{{type}}", string_value, start
-      end
-      if num_size >= {{size}}
-        int_value = absolute_integer_value(string_value, negative)
-        if int_value > {{type}}::MAX
-          raise_value_doesnt_fit_in "{{type}}", string_value, start
-        end
       end
     end
 
     def check_integer_literal_fits_in_size(string_value, num_size, negative, start)
       case @token.number_kind
       when :i8
-        gen_check_int_fits_in_size Int8, to_u8, 3
+        gen_check_int_fits_in_size false, Int8, i8, 3
       when :u8
-        gen_check_uint_fits_in_size UInt8, 3
+        gen_check_int_fits_in_size true, UInt8, u8, 3
       when :i16
-        gen_check_int_fits_in_size Int16, to_u16, 5
+        gen_check_int_fits_in_size false, Int16, i16, 5
       when :u16
-        gen_check_uint_fits_in_size UInt16, 5
+        gen_check_int_fits_in_size true, UInt16, u16, 5
       when :i32
-        gen_check_int_fits_in_size Int32, to_u32, 10
+        gen_check_int_fits_in_size false, Int32, i32, 10
       when :u32
-        gen_check_uint_fits_in_size UInt32, 10
+        gen_check_int_fits_in_size true, UInt32, u32, 10
       when :i64
-        gen_check_int_fits_in_size Int64, to_u64, 19
+        gen_check_int_fits_in_size false, Int64, i64, 19
       when :u64
-        if negative
-          raise "Invalid negative value #{string_value} for UInt64"
-        end
-
-        check_value_fits_in_uint64 string_value, num_size, start
+        gen_check_int_fits_in_size true, UInt64, u64, 20
       when :i128
-        gen_check_int_fits_in_size Int64, to_u64, 19, actual_type: Int128
+        gen_check_int_fits_in_size false, Int128, i128, 39
       when :u128
-        if negative
-          raise "Invalid negative value #{string_value} for UInt128"
-        end
-
-        check_value_fits_in_uint64 string_value, num_size, start, actual_type: UInt128
+        gen_check_int_fits_in_size true, UInt128, u128, 39
       end
     end
 
     def deduce_integer_kind(string_value, num_size, negative, start)
-      if negative
-        check_negative_value_fits_in_int64 string_value, num_size, start
-      else
-        check_value_fits_in_uint64 string_value, num_size, start
-      end
-
-      if num_size >= 10
-        int_value = absolute_integer_value(string_value, negative)
-
-        int64max = Int64::MAX.to_u64
-        int64max += 1 if negative
-
-        int32max = Int32::MAX.to_u32
-        int32max += 1 if negative
-
-        if int_value > int64max
-          @token.number_kind = :u64
-        elsif int_value > int32max
-          @token.number_kind = :i64
-        end
-      end
-    end
-
-    def absolute_integer_value(string_value, negative)
-      if negative
-        string_value[1..-1].to_u64
-      else
-        string_value.to_u64
-      end
-    end
-
-    def check_negative_value_fits_in_int64(string_value, num_size, start)
-      if num_size > 19
-        raise_value_doesnt_fit_in "Int64", string_value, start
-      end
-
-      if num_size == 19
-        i = 1 # skip '-'
-        "9223372036854775808".each_byte do |byte|
-          string_byte = string_value.byte_at(i)
-          if string_byte > byte
-            raise_value_doesnt_fit_in "Int64", string_value, start
-          elsif string_byte < byte
-            break
-          end
-          i += 1
-        end
-      end
-    end
-
-    def check_value_fits_in_uint64(string_value, num_size, start, actual_type = UInt64)
-      if num_size > 20
-        if actual_type == UInt64
-          raise_value_doesnt_fit_in "UInt64", string_value, start
-        else
-          raise_value_restricted_by actual_type, "UInt64", string_value, start
-        end
-      end
-
-      if num_size == 20
-        i = 0
-        "18446744073709551615".each_byte do |byte|
-          string_byte = string_value.byte_at(i)
-          if string_byte > byte
-            if actual_type == UInt64
-              raise_value_doesnt_fit_in "UInt64", string_value, start
-            else
-              raise_value_restricted_by actual_type, "UInt64", string_value, start
-            end
-          elsif string_byte < byte
-            break
-          end
-          i += 1
-        end
-      end
+      @token.number_kind = case num_size
+                           when 0..9 # Keep as i32
+                             :i32
+                           when 10
+                             string_value.to_i32? ? :i32 : :i64
+                           when 11..18
+                             :i64
+                           when 19
+                             string_value.to_i64? ? :i64 : (negative ? :i128 : :u64)
+                           when 20
+                             string_value.to_u64? ? :u64 : :i128
+                           when 20..38
+                             :i128
+                           when 39
+                             if string_value.to_i128?
+                               :i128
+                             else
+                               raise_value_doesnt_fit_in(Int128, string_value, start) if negative
+                               raise_value_doesnt_fit_in(UInt128, string_value, start) unless string_value.to_u128?
+                               :u128
+                             end
+                           else
+                             raise_value_doesnt_fit_in Int128, string_value, start
+                           end
     end
 
     def raise_value_doesnt_fit_in(type, string_value, start)
@@ -1740,11 +1655,11 @@ module Crystal
     def scan_zero_number(start, negative = false)
       case peek_next_char
       when 'x'
-        scan_hex_number(start, negative)
+        scan_base_npow2_number(4, start, negative)
       when 'o'
-        scan_octal_number(start, negative)
+        scan_base_npow2_number(3, start, negative)
       when 'b'
-        scan_bin_number(start, negative)
+        scan_base_npow2_number(1, start, negative)
       when '.'
         scan_number(start)
       when 'i'
@@ -1771,78 +1686,54 @@ module Crystal
         if next_char.ascii_number?
           raise "octal constants should be prefixed with 0o"
         else
-          finish_scan_prefixed_number 0_u64, false, start
+          first_byte = @reader.string.byte_at(start)
+          @token.type = :NUMBER
+          @token.number_kind = :i32
+          @token.value = case first_byte
+                         when '+' then "+0"
+                         when '-' then "-0"
+                         else          "0"
+                         end
+          set_token_raw_from_start(start)
         end
       end
     end
 
-    def scan_bin_number(start, negative)
+    def scan_base_npow2_number(bits_per_character, start, negative)
       next_char
 
-      num = 0_u64
-      while true
-        case next_char
-        when '0'
-          num *= 2
-        when '1'
-          num = num * 2 + 1
-        when '_'
-          # Nothing
-        else
-          break
-        end
-      end
-
-      finish_scan_prefixed_number num, negative, start
-    end
-
-    def scan_octal_number(start, negative)
-      next_char
-
-      num = 0_u64
+      digits = String::CHAR_TO_DIGIT.to_unsafe
+      digit_count = 0
+      base = 2 ** bits_per_character
+      start_pos = current_pos
 
       while true
         char = next_char
-        if '0' <= char <= '7'
-          num = num * 8 + (char - '0')
-        elsif char == '_'
-        else
-          break
-        end
+        next if char == '_'
+        digit = digits[char.ord]
+        break if digit > base || digit < 0
+        digit_count += 1
       end
 
-      finish_scan_prefixed_number num, negative, start
-    end
+      string = string_range(start_pos + 1, current_pos)
+      string_value = nil
 
-    def scan_hex_number(start, negative = false)
-      next_char
-
-      num = 0_u64
-      while true
-        char = next_char
-        if char == '_'
-        else
-          hex_value = char_to_hex(char) { nil }
-          if hex_value
-            num = num * 16 + hex_value
-          else
-            break
-          end
-        end
-      end
-
-      finish_scan_prefixed_number num, negative, start
-    end
-
-    def finish_scan_prefixed_number(num, negative, start)
-      if negative
-        string_value = (num.to_i64 * -1).to_s
+      case digit_count * bits_per_character
+      when 0
+        raise "numbers cannot end with a prefix"
+      when 1..32
+        string_value = string.to_u32(base: base, underscore: true).to_s
+      when 33..64
+        string_value = string.to_u64(base: base, underscore: true).to_s
+      when 65..128
+        string_value = string.to_u128(base: base, underscore: true).to_s
       else
-        string_value = num.to_s
+        raise_value_doesnt_fit_in "Int128", string, start
       end
 
+      string_value = string_value.not_nil!
       name_size = string_value.size
-      name_size -= 1 if negative
+      string_value = "-#{string_value}" if negative
 
       case current_char
       when 'i'
@@ -1857,11 +1748,7 @@ module Crystal
       end
 
       first_byte = @reader.string.byte_at(start)
-      if first_byte === '+'
-        string_value = "+#{string_value}"
-      elsif first_byte === '-' && num == 0
-        string_value = "-0"
-      end
+      string_value = "+#{string_value}" if first_byte === '+'
 
       @token.type = :NUMBER
       @token.value = string_value
@@ -1869,114 +1756,60 @@ module Crystal
     end
 
     def consume_int_suffix
-      case next_char
-      when '8'
-        next_char
-        @token.number_kind = :i8
-        2
-      when '1'
-        case next_char
-        when '2'
-          if next_char == '8'
-            next_char
-            @token.number_kind = :i128
-            4
-          else
-            raise "invalid int suffix"
-          end
-        when '6'
-          next_char
-          @token.number_kind = :i16
-          3
-        else
-          raise "invalid int suffix"
-        end
-      when '3'
-        if next_char == '2'
-          next_char
-          @token.number_kind = :i32
-          3
-        else
-          raise "invalid int suffix"
-        end
-      when '6'
-        if next_char == '4'
-          next_char
-          @token.number_kind = :i64
-          3
-        else
-          raise "invalid int suffix"
-        end
-      else
-        raise "invalid int suffix"
-      end
+      suffix_info = case next_char
+                    when '1'
+                      case next_char
+                      when '2'
+                        {:i128, 4} if next_char == '8'
+                      when '6'
+                        {:i16, 3}
+                      end
+                    when '3'
+                      {:i32, 3} if next_char == '2'
+                    when '6'
+                      {:i64, 3} if next_char == '4'
+                    when '8'
+                      {:i8, 2}
+                    end
+      raise "invalid int suffix" unless suffix_info
+      next_char
+      @token.number_kind = suffix_info[0]
+      suffix_info[1]
     end
 
     def consume_uint_suffix
-      case next_char
-      when '8'
-        next_char
-        @token.number_kind = :u8
-        2
-      when '1'
-        case next_char
-        when '2'
-          if next_char == '8'
-            next_char
-            @token.number_kind = :u128
-            4
-          else
-            raise "invalid uint suffix"
-          end
-        when '6'
-          next_char
-          @token.number_kind = :u16
-          3
-        else
-          raise "invalid uint suffix"
-        end
-      when '3'
-        if next_char == '2'
-          next_char
-          @token.number_kind = :u32
-          3
-        else
-          raise "invalid uint suffix"
-        end
-      when '6'
-        if next_char == '4'
-          next_char
-          @token.number_kind = :u64
-          3
-        else
-          raise "invalid uint suffix"
-        end
-      else
-        raise "invalid uint suffix"
-      end
+      suffix_info = case next_char
+                    when '1'
+                      case next_char
+                      when '2'
+                        {:u128, 4} if next_char == '8'
+                      when '6'
+                        {:u16, 3}
+                      end
+                    when '3'
+                      {:u32, 3} if next_char == '2'
+                    when '6'
+                      {:u64, 3} if next_char == '4'
+                    when '8'
+                      {:u8, 2}
+                    end
+      raise "invalid uint suffix" unless suffix_info
+      next_char
+      @token.number_kind = suffix_info[0]
+      suffix_info[1]
     end
 
     def consume_float_suffix
-      case next_char
-      when '3'
-        if next_char == '2'
-          next_char
-          @token.number_kind = :f32
-          3
-        else
-          raise "invalid float suffix"
-        end
-      when '6'
-        if next_char == '4'
-          next_char
-          @token.number_kind = :f64
-          3
-        else
-          raise "invalid float suffix"
-        end
-      else
-        raise "invalid float suffix"
-      end
+      suffix_info = case next_char
+                    when '3'
+                      {:f32, 3} if next_char == '2'
+                    when '6'
+                      {:f64, 3} if next_char == '4'
+                    end
+      raise "invalid float suffix" unless suffix_info
+      next_char
+      @token.number_kind = suffix_info[0]
+      suffix_info[1]
     end
 
     def next_string_token(delimiter_state)
