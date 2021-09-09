@@ -66,8 +66,6 @@ class Crystal::Repl::Context
 
     @ffi_closure_contexts = {} of {UInt64, UInt64} => FFIClosureContext
 
-    # TODO: finish porting all of LibM instrinsics
-
     @constants_memory = Pointer(Void).malloc(1).as(UInt8*)
     @class_vars_memory = Pointer(Void).malloc(1).as(UInt8*)
 
