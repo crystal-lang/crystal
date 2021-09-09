@@ -251,8 +251,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     elsif final_type.no_return?
       # Nothing to do, the body never returns so there's nothing to upcast
-    else
+    elsif node.body.type?
       upcast node.body, node.body.type, final_type
+    else
+      # Nothing to do, the body has no type
     end
 
     # Use a dummy node so that pry stops at `end`
