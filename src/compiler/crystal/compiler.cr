@@ -363,12 +363,10 @@ module Crystal
 
         {cmd, nil}
       else
-        cc = CC
-        
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
 
-        { %(#{cc} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names }
+        { %(#{CC} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names }
       end
     end
 
