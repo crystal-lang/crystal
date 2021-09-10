@@ -1113,6 +1113,8 @@ describe Crystal::Formatter do
 
   # #11179
   assert_format "foo : Pointer(Foo)*"
+  assert_format "foo : Foo*****"
+  assert_format "foo : Foo * * * * *", "foo : Foo*****"
   assert_format "foo : StaticArray(Foo, 12)[34]"
 
   assert_format "def   foo(x   :  (A | B)) \n  end", "def foo(x : (A | B))\nend"
