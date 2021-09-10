@@ -155,6 +155,14 @@ class Crystal::Repl::Compiler
     pop_from_offset aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil
   end
 
+  private def upcast_distinct(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType)
+    # If we are here it means the tuples are different
+    unpack_named_tuple(node, from, to)
+
+    # Finally, we must pop the original tuple that was casted
+    pop_from_offset aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil
+  end
+
   # Unpacks a tuple into a series of types.
   # Each of the tuple elements is upcasted to the corresponding type in `to_types`.
   # It's the caller's responsibility to pop the original, unpacked tuple, from the
@@ -190,6 +198,44 @@ class Crystal::Repl::Compiler
       offset += aligned_sizeof_type(to_element_type)
       # But we need to access the next tuple member, so we move forward
       offset -= next_offset - current_offset
+    end
+  end
+
+  private def unpack_named_tuple(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType)
+    offset = aligned_sizeof_type(from)
+
+    to.entries.each_with_index do |to_entry, i|
+      from_entry = nil
+      from_entry_index = nil
+
+      from.entries.each_with_index do |other_entry, j|
+        if other_entry.name == to_entry.name
+          from_entry = other_entry
+          from_entry_index = j
+          break
+        end
+      end
+
+      from_entry = from_entry.not_nil!
+      from_entry_index = from_entry_index.not_nil!
+
+      from_element_type = from_entry.type
+      to_element_type = to_entry.type
+
+      from_inner_size = inner_sizeof_type(from_element_type)
+
+      from_element_offset = @context.offset_of(from, from_entry_index)
+
+      # Copy inner size bytes from the tuple.
+      # The interpreter will make sure to align this value.
+      # Go back `offset`, but then move forward (subtracting) to reach the element in `from`.
+      copy_from(offset - from_element_offset, from_inner_size, node: nil)
+
+      # Then upcast it to the target tuple element type
+      upcast node, from_element_type, to_element_type
+
+      # Now we have element_type in front of the tuple so we must skip it
+      offset += aligned_sizeof_type(to_element_type)
     end
   end
 

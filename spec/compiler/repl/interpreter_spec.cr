@@ -4203,6 +4203,32 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "upcasts between named tuple types, same order" do
+      interpret(<<-CODE, prelude: "prelude").should eq(1 + 'a'.ord)
+        a =
+          if 1 == 1
+            {a: 1, b: 'a'}
+          else
+            {a: true, b: 3}
+          end
+
+        a[:a].as(Int32) + a[:b].as(Char).ord
+      CODE
+    end
+
+    it "upcasts between named tuple types, different order" do
+      interpret(<<-CODE, prelude: "prelude").should eq(1 + 'a'.ord)
+        a =
+          if 1 == 1
+            {a: 1, b: 'a'}
+          else
+            {b:3, a: true}
+          end
+
+        a[:a].as(Int32) + a[:b].as(Char).ord
+      CODE
+    end
+
     it "upcasts to module type" do
       interpret(<<-CODE).should eq(1)
         module Moo
