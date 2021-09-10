@@ -94,7 +94,7 @@ class Crystal::Repl::Compiler
     # Nothing to do: both are represented as pointers which already carry the type ID
   end
 
-  private def upcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : NilType)
+  private def upcast_distinct(node : ASTNode, from : NilableType | NilableReferenceUnionType, to : NilType)
     # TODO: not tested
     # TODO: this is actually a downcast so it's not right, but this is also present
     # in the main compiler so something should be fixed there first
