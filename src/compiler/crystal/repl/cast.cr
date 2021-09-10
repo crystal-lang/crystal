@@ -15,6 +15,10 @@ class Crystal::Repl::Compiler
     upcast_distinct(node, from, to)
   end
 
+  private def upcast_distinct(node : ASTNode, from : TypeDefType, to : Type)
+    upcast_distinct node, from.typedef, to
+  end
+
   private def upcast_distinct(node : ASTNode, from : NilableType, to : MixedUnionType)
     put_nilable_type_in_union(aligned_sizeof_type(to), node: nil)
   end
@@ -263,6 +267,10 @@ class Crystal::Repl::Compiler
     return if from == to
 
     downcast_distinct(node, from, to)
+  end
+
+  private def downcast_distinct(node : ASTNode, from : Type, to : TypeDefType)
+    downcast_distinct node, from, to.typedef
   end
 
   private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : MixedUnionType)
