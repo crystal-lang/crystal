@@ -1,5 +1,6 @@
 # :nodoc:
 private macro __mul_impl(name, type, n)
+  # Ported from llvm/compiler-rt:/lib/builtins/muloti4.c / mulodi4.c / mulosi4.c
   # :nodoc:
   fun {{name}}(a : {{type}}, b : {{type}}, overflow : Int32*) : {{type}}
     overflow.value = 0
