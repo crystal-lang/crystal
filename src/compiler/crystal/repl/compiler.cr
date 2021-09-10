@@ -691,7 +691,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         dup(aligned_sizeof_type(const.value.type), node: nil) if @wants_value
         set_const index, aligned_sizeof_type(const.value), node: nil
       elsif @wants_value
-        node.raise "BUG: missing interprter assign constant that isn't 'used'"
+        # This is probably the last constant defined in a file, and it's a throw-away value
+        put_nil node: node
       end
     else
       node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
