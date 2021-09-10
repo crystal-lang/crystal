@@ -33,7 +33,7 @@
 # doesn't specify a type but a size. Its value can be an `Int32` literal or
 # constant.
 struct StaticArray(T, N)
-  include Indexable(T)
+  include Indexable::Mutable(T)
 
   # Creates a new `StaticArray` with the given *args*. The type of the
   # static array will be the union of the type of the given *args*,
@@ -114,40 +114,13 @@ struct StaticArray(T, N)
   end
 
   @[AlwaysInline]
-  def unsafe_fetch(index : Int)
+  def unsafe_fetch(index : Int) : T
     to_unsafe[index]
   end
 
-  # Sets the given value at the given *index*.
-  #
-  # Negative indices can be used to start counting from the end of the array.
-  # Raises `IndexError` if trying to set an element outside the array's range.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 } # => StaticArray[1, 2, 3]
-  # array[2] = 2                                    # => 2
-  # array                                           # => StaticArray[1, 2, 2]
-  # array[4] = 4                                    # raises IndexError
-  # ```
   @[AlwaysInline]
-  def []=(index : Int, value : T)
-    index = check_index_out_of_bounds index
+  def unsafe_put(index : Int, value : T)
     to_unsafe[index] = value
-  end
-
-  # Yields the current element at the given index and updates the value
-  # at the given *index* with the block's value.
-  # Raises `IndexError` if trying to set an element outside the array's range.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 } # => StaticArray[1, 2, 3]
-  # array.update(1) { |x| x * 2 }                   # => 4
-  # array                                           # => StaticArray[1, 4, 3]
-  # array.update(5) { |x| x * 2 }                   # raises IndexError
-  # ```
-  def update(index : Int)
-    index = check_index_out_of_bounds index
-    to_unsafe[index] = yield to_unsafe[index]
   end
 
   # Returns the size of `self`
@@ -160,53 +133,10 @@ struct StaticArray(T, N)
     N
   end
 
-  # Replaces every element in `self` with the given *value*. Returns `self`.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new 0 # => StaticArray[0, 0, 0]
-  # array.fill(2)                       # => StaticArray[2, 2, 2]
-  # array                               # => StaticArray[2, 2, 2]
-  # ```
+  # :inherit:
   def fill(value : T) : self
+    # enable memset optimization
     to_slice.fill(value)
-    self
-  end
-
-  # Yields each index of `self` to the given block and then assigns
-  # the block's value in that position. Returns `self`.
-  #
-  # ```
-  # array = StaticArray[2, 1, 1, 1]
-  # array.fill { |i| i * i } # => StaticArray[0, 1, 4, 9]
-  # array                    # => StaticArray[0, 1, 4, 9]
-  # ```
-  def fill(& : Int32 -> T) : self
-    to_slice.fill { |i| yield i }
-    self
-  end
-
-  # Modifies `self` by randomizing the order of elements in the array
-  # using the given *random* number generator. Returns `self`.
-  #
-  # ```
-  # a = StaticArray(Int32, 3).new { |i| i + 1 } # => StaticArray[1, 2, 3]
-  # a.shuffle!(Random.new(42))                  # => StaticArray[3, 2, 1]
-  # a                                           # => StaticArray[3, 2, 1]
-  # ```
-  def shuffle!(random = Random::DEFAULT)
-    to_slice.shuffle!(random)
-    self
-  end
-
-  # Invokes the given block for each element of `self`, replacing the element
-  # with the value returned by the block. Returns `self`.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 }
-  # array.map! { |x| x*x } # => StaticArray[1, 4, 9]
-  # ```
-  def map!
-    to_unsafe.map!(size) { |e| yield e }
     self
   end
 
@@ -220,32 +150,12 @@ struct StaticArray(T, N)
     StaticArray(U, N).new { |i| yield to_unsafe[i] }
   end
 
-  # Like `map!`, but the block gets passed both the element and its index.
-  #
-  # Accepts an optional *offset* parameter, which tells it to start counting
-  # from there.
-  def map_with_index!(offset = 0, &block : (T, Int32) -> T)
-    to_unsafe.map_with_index!(size) { |e, i| yield e, offset + i }
-    self
-  end
-
   # Like `map`, but the block gets passed both the element and its index.
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
   def map_with_index(offset = 0, &block : (T, Int32) -> U) forall U
     StaticArray(U, N).new { |i| yield to_unsafe[i], offset + i }
-  end
-
-  # Reverses the elements of this array in-place, then returns `self`.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 }
-  # array.reverse! # => StaticArray[3, 2, 1]
-  # ```
-  def reverse!
-    to_slice.reverse!
-    self
   end
 
   # Returns a slice that points to the elements of this static array.

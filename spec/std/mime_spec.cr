@@ -198,4 +198,12 @@ describe MIME do
       MIME.from_extension?(".foo").should eq "foo/bar"
     end
   end
+
+  {% if flag?(:win32) %}
+    it "loads MIME data from registry" do
+      MIME.register(".wma", "non-initialized")
+      MIME.init
+      MIME.from_extension?(".wma").should eq "audio/x-ms-wma"
+    end
+  {% end %}
 end

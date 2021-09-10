@@ -167,6 +167,8 @@ module Crystal
     it_parses "@a, b = 1, 2", MultiAssign.new(["@a".instance_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "@@a, b = 1, 2", MultiAssign.new(["@@a".class_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
+    it_parses "あ.い, う.え.お = 1, 2", MultiAssign.new([Call.new("あ".call, "い"), Call.new(Call.new("う".call, "え"), "お")] of ASTNode, [1.int32, 2.int32] of ASTNode)
+
     assert_syntax_error "b? = 1", "unexpected token: ="
     assert_syntax_error "b! = 1", "unexpected token: ="
     assert_syntax_error "a, B = 1, 2", "can't assign to constant in multiple assignment"
@@ -965,6 +967,7 @@ module Crystal
     it_parses "abstract def foo(x) : Int32", Def.new("foo", args: ["x".arg], return_type: "Int32".path, abstract: true)
 
     it_parses "{% for x in y %}body{% end %}", MacroFor.new(["x".var], "y".var, "body".macro_literal)
+    it_parses "{% for _, x, _ in y %}body{% end %}", MacroFor.new(["_".var, "x".var, "_".var], "y".var, "body".macro_literal)
     it_parses "{% if x %}body{% end %}", MacroIf.new("x".var, "body".macro_literal)
     it_parses "{% begin %}{% if true %}if true{% end %}\n{% if true %}end{% end %}{% end %}", MacroIf.new(true.bool, [MacroIf.new(true.bool, "if true".macro_literal), "\n".macro_literal, MacroIf.new(true.bool, "end".macro_literal)] of ASTNode)
     it_parses "{{ foo }}", MacroExpression.new("foo".var)
@@ -1115,6 +1118,7 @@ module Crystal
 
     it_parses "{1 => 2, 3 => 4}", HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32), HashLiteral::Entry.new(3.int32, 4.int32)])
     it_parses %({A::B => 1, C::D => 2}), HashLiteral.new([HashLiteral::Entry.new(Path.new(["A", "B"]), 1.int32), HashLiteral::Entry.new(Path.new(["C", "D"]), 2.int32)])
+    assert_syntax_error %({"foo" => 1, "bar": 2}), "can't use 'key: value' syntax in a hash literal"
 
     it_parses "{a: 1}", NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("a", 1.int32)])
     it_parses "{a: 1, b: 2}", NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("a", 1.int32), NamedTupleLiteral::Entry.new("b", 2.int32)])
@@ -1324,6 +1328,9 @@ module Crystal
     it_parses "as?(Bar)", NilableCast.new(Var.new("self"), "Bar".path)
 
     it_parses "typeof(1)", TypeOf.new([1.int32] of ASTNode)
+
+    # #10521
+    it_parses "typeof(a = 1); a", [TypeOf.new([Assign.new("a".var, 1.int32)] of ASTNode), "a".call]
 
     it_parses "puts ~1", Call.new(nil, "puts", Call.new(1.int32, "~"))
 

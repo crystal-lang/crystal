@@ -2181,7 +2181,7 @@ module Crystal
         mode = Parser::ParseMode::Normal
       end
 
-      parser = Parser.new(source, def_vars: @vars.clone)
+      parser = Parser.new(source, var_scopes: @vars.clone)
       # parser.filename = formatter.filename
       nodes = parser.parse(mode)
 
@@ -2610,7 +2610,7 @@ module Crystal
         return false
       end
 
-      assignment = node.name.ends_with?('=') && node.name.chars.any?(&.ascii_letter?)
+      assignment = Lexer.setter?(node.name)
 
       if assignment
         write node.name.rchop

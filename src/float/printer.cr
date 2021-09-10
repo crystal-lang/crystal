@@ -13,7 +13,10 @@ module Float::Printer
   #
   # It is used by `Float64#to_s` and it is probably not necessary to use
   # this directly.
-  def print(v : Float64 | Float32, io : IO) : Nil
+  #
+  # *point_range* designates the boundaries of scientific notation which is used
+  # for all values whose decmial point position is outside that range.
+  def print(v : Float64 | Float32, io : IO, *, point_range = -3..15) : Nil
     d = IEEE.to_uint(v)
 
     if IEEE.sign(d) < 0
@@ -30,11 +33,11 @@ module Float::Printer
         io << "NaN"
       end
     else
-      internal(v, io)
+      internal(v, io, point_range)
     end
   end
 
-  private def internal(v : Float64 | Float32, io : IO)
+  private def internal(v : Float64 | Float32, io : IO, point_range)
     buffer = StaticArray(UInt8, BUFFER_SIZE).new(0_u8)
     success, decimal_exponent, length = Grisu3.grisu3(v, buffer.to_unsafe)
 
@@ -54,7 +57,7 @@ module Float::Printer
     point = decimal_exponent + length
 
     exp = point
-    exp_mode = point > 15 || point < -3
+    exp_mode = !point_range.includes?(point)
     point = 1 if exp_mode
 
     # add leading zero

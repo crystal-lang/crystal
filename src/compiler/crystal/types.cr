@@ -3075,6 +3075,10 @@ module Crystal
       program.type_merge(new_union_types) || program.no_return
     end
 
+    def unbound?
+      union_types.any? &.unbound?
+    end
+
     def all?
       union_types.all? { |union_type| yield union_type }
     end
