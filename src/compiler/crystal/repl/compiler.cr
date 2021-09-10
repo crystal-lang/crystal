@@ -1428,6 +1428,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compile_pointerof_class_var(node, exp)
     when ReadInstanceVar
       compile_pointerof_read_instance_var(exp.obj, exp.name)
+    when Call
+      # lib external var
+      external = exp.dependencies.first.as(External)
+      lib_type = external.owner.as(LibType)
+      fn = @context.c_function(lib_type, external.real_name)
+
+      # Put the symbol address, which is a pointer
+      put_u64 fn.address, node: node
     else
       node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
     end
