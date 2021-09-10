@@ -28,7 +28,7 @@ class Crystal::Repl::Compiler
     end
 
     if needs_union_value_cast # Compute the values that need a cast
-      node.raise "BUG: missing upcast from #{from} to #{to}"
+      node.raise "BUG: missing mixed union upcast from #{from} to #{to}"
     end
 
     # Putting a smaller union type inside a bigger one is just extending the value
@@ -228,7 +228,7 @@ class Crystal::Repl::Compiler
     end
 
     if needs_union_value_cast # Compute the values that need a cast
-      node.raise "BUG: missing downcast from #{from} to #{to}"
+      node.raise "BUG: missing mixed union downcast from #{from} to #{to}"
     end
 
     difference = aligned_sizeof_type(from) - aligned_sizeof_type(to)
