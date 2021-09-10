@@ -185,7 +185,7 @@ describe "Int" do
       it_converts_to_s -9223372036854775808_i64, "-9223372036854775808"
       
       it_converts_to_s Int128::MAX, "170141183460469231731687303715884105727"
-      it_converts_to_s -Int128::MIN, "-170141183460469231731687303715884105728"
+      it_converts_to_s Int128::MIN, "-170141183460469231731687303715884105728"
 
       it_converts_to_s 255_u8, "255"
       it_converts_to_s 65535_u16, "65535"
