@@ -313,8 +313,42 @@ struct Slice(T)
   # Raises if this slice is read-only.
   def rotate!(n : Int = 1) : self
     check_writable
-    super
+
+    return self if size == 0
+    n %= size
+
+    if n == 0
+    elsif n == 1
+      tmp = self[0]
+      @pointer.move_from(@pointer + n, size - n)
+      self[-1] = tmp
+    elsif n == (size - 1)
+      tmp = self[-1]
+      (@pointer + size - n).move_from(@pointer, n)
+      self[0] = tmp
+    elsif n <= SMALL_SLICE_SIZE
+      tmp_buffer = uninitialized T[SMALL_SLICE_SIZE]
+      tmp_buffer.to_unsafe.copy_from(@pointer, n)
+      @pointer.move_from(@pointer + n, size - n)
+      (@pointer + size - n).copy_from(tmp_buffer.to_unsafe, n)
+    elsif size - n <= SMALL_SLICE_SIZE
+      tmp_buffer = uninitialized T[SMALL_SLICE_SIZE]
+      tmp_buffer.to_unsafe.copy_from(@pointer + n, size - n)
+      (@pointer + size - n).move_from(@pointer, n)
+      @pointer.copy_from(tmp_buffer.to_unsafe, size - n)
+    elsif n <= size // 2
+      tmp = self[...n].dup
+      @pointer.move_from(@pointer + n, size - n)
+      (@pointer + size - n).copy_from(tmp.to_unsafe, n)
+    else
+      tmp = self[n..].dup
+      (@pointer + size - n).move_from(@pointer, n)
+      @pointer.copy_from(tmp.to_unsafe, size - n)
+    end
+    self
   end
+
+  private SMALL_SLICE_SIZE = 16 # same as Array::SMALL_ARRAY_SIZE
 
   # :inherit:
   #
