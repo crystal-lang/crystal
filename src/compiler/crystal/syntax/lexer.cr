@@ -1580,8 +1580,8 @@ module Crystal
       set_token_raw_from_start(start)
     end
 
-    macro gen_check_int_fits_in_size(unsigned, type, method, size)
-      {% if unsigned %}
+    macro gen_check_int_fits_in_size(type, method, size)
+      {% if type.stringify.starts_with? "U" %}
         if negative
           raise "Invalid negative value #{string_value} for {{type}}"
         end
@@ -1595,25 +1595,25 @@ module Crystal
     def check_integer_literal_fits_in_size(string_value, num_size, negative, start)
       case @token.number_kind
       when :i8
-        gen_check_int_fits_in_size false, Int8, i8, 3
+        gen_check_int_fits_in_size Int8, i8, 3
       when :u8
-        gen_check_int_fits_in_size true, UInt8, u8, 3
+        gen_check_int_fits_in_size UInt8, u8, 3
       when :i16
-        gen_check_int_fits_in_size false, Int16, i16, 5
+        gen_check_int_fits_in_size Int16, i16, 5
       when :u16
-        gen_check_int_fits_in_size true, UInt16, u16, 5
+        gen_check_int_fits_in_size UInt16, u16, 5
       when :i32
-        gen_check_int_fits_in_size false, Int32, i32, 10
+        gen_check_int_fits_in_size Int32, i32, 10
       when :u32
-        gen_check_int_fits_in_size true, UInt32, u32, 10
+        gen_check_int_fits_in_size UInt32, u32, 10
       when :i64
-        gen_check_int_fits_in_size false, Int64, i64, 19
+        gen_check_int_fits_in_size Int64, i64, 19
       when :u64
-        gen_check_int_fits_in_size true, UInt64, u64, 20
+        gen_check_int_fits_in_size UInt64, u64, 20
       when :i128
-        gen_check_int_fits_in_size false, Int128, i128, 39
+        gen_check_int_fits_in_size Int128, i128, 39
       when :u128
-        gen_check_int_fits_in_size true, UInt128, u128, 39
+        gen_check_int_fits_in_size UInt128, u128, 39
       end
     end
 
