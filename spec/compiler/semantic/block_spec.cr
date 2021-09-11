@@ -1556,4 +1556,33 @@ describe "Block inference" do
       recursive
       ))
   end
+
+  it "doesn't fail with 'already had enclosing call' (#11200)" do
+    semantic(%(
+      def capture(&block)
+        block
+      end
+
+      abstract class Foo
+      end
+
+      class Bar(Input) < Foo
+        def method
+        end
+
+        def foo
+          capture do
+            self.method
+            Baz(Input)
+          end
+        end
+      end
+
+      class Baz(Input) < Bar(Input)
+      end
+
+      foo = Bar(Bool).new.as(Foo)
+      foo.foo
+      ))
+  end
 end
