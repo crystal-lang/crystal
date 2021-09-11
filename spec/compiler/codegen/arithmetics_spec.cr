@@ -6,6 +6,15 @@ SupportedIntsConversions = {
   to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64, to_u128: UInt128,
 }
 
+# Int128 and UInt128 specs do not pass on win32 because of missing symbols
+{% if flag?(:win32) %}
+  SupportedInts            = [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64]
+  SupportedIntsConversions = {
+    to_i8: Int8, to_i16: Int16, to_i32: Int32, to_i64: Int64,
+    to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64,
+  }
+{% end %}
+
 describe "Code gen: arithmetic primitives" do
   describe "&+ addition" do
     {% for type in SupportedInts %}
