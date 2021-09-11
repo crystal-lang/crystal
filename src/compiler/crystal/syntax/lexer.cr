@@ -1778,7 +1778,7 @@ module Crystal
 
     def consume_uint_suffix
       suffix_info = case next_char
-                      # This order was chosen to optimize for the most common uint suffix (u8)
+                    # This order was chosen to optimize for the most common uint suffix (u8)
                     when '8'
                       {:u8, 2}
                     when '1'
