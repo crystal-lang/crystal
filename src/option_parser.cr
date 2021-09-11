@@ -368,18 +368,28 @@ class OptionParser
         if (handler = @handlers[flag]?) && !(handler.value_type.none? && value)
           handled_args << arg_index
 
-          # Pull in the next argument if we don't already have it and an argument
-          # is taken (i.e. not FlagValue::None)
-          if !value && !handler.value_type.none?
-            value = args[arg_index + 1]?
-            if value
-              handled_args << arg_index + 1
-              arg_index += 1
+          if !value
+            case handler.value_type
+            in FlagValue::Required
+              value = args[arg_index + 1]?
+              if value
+                handled_args << arg_index + 1
+                arg_index += 1
+              else
+                @missing_option.call(flag)
+              end
+            in FlagValue::Optional
+              value = args[arg_index + 1]?
+              if value && !@handlers.has_key?(value)
+                handled_args << arg_index + 1
+                arg_index += 1
+              else
+                value = nil
+              end
+            in FlagValue::None
+              # do nothing
             end
           end
-
-          # If we require a value and we don't have one, call missing option
-          @missing_option.call(flag) if handler.value_type.required? && value.nil?
 
           # If this is a subcommand (flag not starting with -), delete all
           # subcommands since they are no longer valid.
