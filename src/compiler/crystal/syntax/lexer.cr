@@ -1757,6 +1757,9 @@ module Crystal
 
     def consume_int_suffix
       suffix_info = case next_char
+                    # This order was chosen to optimize for the most common int suffix (i8)
+                    when '8'
+                      {:i8, 2}
                     when '1'
                       case next_char
                       when '2'
@@ -1768,8 +1771,6 @@ module Crystal
                       {:i32, 3} if next_char == '2'
                     when '6'
                       {:i64, 3} if next_char == '4'
-                    when '8'
-                      {:i8, 2}
                     end
       raise "invalid int suffix" unless suffix_info
       next_char
@@ -1779,6 +1780,9 @@ module Crystal
 
     def consume_uint_suffix
       suffix_info = case next_char
+                      # This order was chosen to optimize for the most common uint suffix (u8)
+                    when '8'
+                      {:u8, 2}
                     when '1'
                       case next_char
                       when '2'
@@ -1790,8 +1794,6 @@ module Crystal
                       {:u32, 3} if next_char == '2'
                     when '6'
                       {:u64, 3} if next_char == '4'
-                    when '8'
-                      {:u8, 2}
                     end
       raise "invalid uint suffix" unless suffix_info
       next_char
