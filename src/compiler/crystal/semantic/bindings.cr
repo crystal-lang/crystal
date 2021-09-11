@@ -178,17 +178,15 @@ module Crystal
     def set_enclosing_call(enclosing_call)
       current_enclosing_call = @enclosing_call
       if current_enclosing_call
-        if current_enclosing_call.same?(enclosing_call)
-          # This can happen when a block is typed, and meanwhile a new
-          # generic instance type is created that triggers the block to
-          # be typed again, potentially analyzing a call twice.
-          return
-        else
+        # This can happen when a block is typed, and meanwhile a new
+        # generic instance type is created that triggers the block to
+        # be typed again, potentially analyzing a call twice.
+        unless current_enclosing_call.same?(enclosing_call)
           raise "BUG: already had a different enclosing call"
         end
+      else
+        @enclosing_call = enclosing_call
       end
-
-      @enclosing_call = enclosing_call
     end
 
     def remove_enclosing_call(enclosing_call)
