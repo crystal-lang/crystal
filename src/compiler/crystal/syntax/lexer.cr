@@ -1716,22 +1716,20 @@ module Crystal
       end
 
       string = string_range(start_pos + 1, current_pos)
-      string_value = nil
 
-      case digit_count * bits_per_character
-      when 0
-        raise "numbers cannot end with a prefix"
-      when 1..32
-        string_value = string.to_u32(base: base, underscore: true).to_s
-      when 33..64
-        string_value = string.to_u64(base: base, underscore: true).to_s
-      when 65..128
-        string_value = string.to_u128(base: base, underscore: true).to_s
-      else
-        raise_value_doesnt_fit_in "Int128", string, start
-      end
+      string_value = case digit_count * bits_per_character
+                     when 0
+                       raise "numbers cannot end with a prefix"
+                     when 1..32
+                       string.to_u32(base: base, underscore: true).to_s
+                     when 33..64
+                       string.to_u64(base: base, underscore: true).to_s
+                     when 65..128
+                       string.to_u128(base: base, underscore: true).to_s
+                     else
+                       raise_value_doesnt_fit_in "Int128", string, start
+                     end
 
-      string_value = string_value.not_nil!
       name_size = string_value.size
       string_value = "-#{string_value}" if negative
 
