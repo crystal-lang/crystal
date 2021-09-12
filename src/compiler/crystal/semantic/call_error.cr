@@ -425,6 +425,7 @@ class Crystal::Call
 
   def append_matches(defs, arg_types, str, *, matched_def = nil, argument_name = nil)
     defs.each do |a_def|
+      next if a_def.abstract?
       str << "\n - "
       append_def_full_name a_def.owner, a_def, arg_types, str
       if defs.size > 1 && a_def.same?(matched_def)
@@ -496,14 +497,19 @@ class Crystal::Call
       printed = true
     end
 
-    if block_arg = a_def.block_arg
+    if a_def.yields
       str << ", " if printed
-      str << '&' << block_arg.name
-    elsif a_def.yields
-      str << ", " if printed
-      str << "&block"
+      str << '&'
+      if block_arg = a_def.block_arg
+        str << block_arg
+      end
     end
     str << ')'
+
+    if free_vars = a_def.free_vars
+      str << " forall "
+      free_vars.join(str, ", ")
+    end
   end
 
   def raise_matches_not_found_for_virtual_metaclass_new(owner)
@@ -538,10 +544,10 @@ class Crystal::Call
         index = a_macro.args.index { |arg| arg.external_name == named_arg.name }
         if index
           if index < args.size
-            raise "argument '#{named_arg.name}' already specified"
+            raise "argument for parameter '#{named_arg.name}' already specified"
           end
         else
-          raise "no argument named '#{named_arg.name}'"
+          raise "no parameter named '#{named_arg.name}'"
         end
       end
 
@@ -579,13 +585,13 @@ class Crystal::Call
       if found_index
         min_size = arg_types.size
         if found_index < min_size
-          raise "argument '#{named_arg.name}' already specified"
+          raise "argument for parameter '#{named_arg.name}' already specified"
         end
       elsif !a_def.double_splat
         similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.external_name))
 
         msg = String.build do |str|
-          str << "no argument named '"
+          str << "no parameter named '"
           str << named_arg.name
           str << '\''
           if similar_name

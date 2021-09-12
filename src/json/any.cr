@@ -14,7 +14,8 @@
 # `Int32`, etc., use the `as_` methods, such as `#as_s`, `#as_i`, which perform
 # a type check against the raw underlying value. This means that invoking `#as_s`
 # when the underlying value is not a String will raise: the value won't automatically
-# be converted (parsed) to a `String`.
+# be converted (parsed) to a `String`. There are also nil-able variants (`#as_i?`, `#as_s?`, ...),
+# which return `nil` when the underlying value type won't match.
 struct JSON::Any
   # All possible JSON types.
   alias Type = Nil | Bool | Int64 | Float64 | String | Array(Any) | Hash(String, Any)
@@ -278,7 +279,7 @@ struct JSON::Any
     raw.to_json(json)
   end
 
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     raw.to_yaml(yaml)
   end
 

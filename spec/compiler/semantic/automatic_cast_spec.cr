@@ -616,4 +616,18 @@ describe "Semantic: automatic cast" do
       Bar.new
       ))
   end
+
+  it "errors when autocast default value doesn't match enum member" do
+    assert_error <<-CR,
+      enum Foo
+        FOO
+      end
+
+      def foo(foo : Foo = :bar)
+      end
+
+      foo
+      CR
+      "can't autocast :bar to Foo: no matching enum member"
+  end
 end

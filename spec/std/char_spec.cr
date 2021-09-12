@@ -1,5 +1,6 @@
 require "spec"
 require "unicode"
+require "spec/helpers/iterate"
 
 describe "Char" do
   describe "upcase" do
@@ -258,6 +259,11 @@ describe "Char" do
     ('b' <=> 'a').should be > 0
   end
 
+  describe "#step" do
+    it_iterates "basic", ['a', 'b', 'c', 'd', 'e'], 'a'.step(to: 'e')
+    it_iterates "basic by", ['a', 'c', 'e'], 'a'.step(to: 'e', by: 2)
+  end
+
   describe "+" do
     it "does for both ascii" do
       str = 'f' + "oo"
@@ -279,12 +285,6 @@ describe "Char" do
 
     it "does for unicode" do
       '青'.bytesize.should eq(3)
-    end
-
-    it "raises on codepoint bigger than 0x10ffff" do
-      expect_raises InvalidByteSequenceError do
-        (0x10ffff + 1).unsafe_chr.bytesize
-      end
     end
   end
 
@@ -329,12 +329,6 @@ describe "Char" do
       expect_raises(ArgumentError, "Invalid range c-a") do
         'a'.in_set?("c-a")
       end
-    end
-  end
-
-  it "raises on codepoint bigger than 0x10ffff when doing each_byte" do
-    expect_raises InvalidByteSequenceError do
-      (0x10ffff + 1).unsafe_chr.each_byte { |b| }
     end
   end
 

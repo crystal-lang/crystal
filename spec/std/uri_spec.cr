@@ -204,21 +204,6 @@ describe "URI" do
     it { URI.new(scheme: "scheme", path: "/path").authority.should be_nil }
   end
 
-  describe "#full_path" do
-    it { URI.new(path: "/foo").full_path.should eq("/foo") }
-    it { URI.new.full_path.should eq("/") }
-    it { URI.new(path: "/foo", query: "q=1").full_path.should eq("/foo?q=1") }
-    it { URI.new(path: "/", query: "q=1").full_path.should eq("/?q=1") }
-    it { URI.new(query: "q=1").full_path.should eq("/?q=1") }
-    it { URI.new(path: "/a%3Ab").full_path.should eq("/a%3Ab") }
-
-    it "does not add '?' to the end if the query params are empty" do
-      uri = URI.parse("http://www.example.com/foo")
-      uri.query = ""
-      uri.full_path.should eq("/foo")
-    end
-  end
-
   describe "#request_target" do
     it { URI.new(path: "/foo").request_target.should eq("/foo") }
     it { URI.new.request_target.should eq("/") }

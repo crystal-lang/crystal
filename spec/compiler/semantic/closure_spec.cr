@@ -369,7 +369,7 @@ describe "Semantic: closure" do
       ") { float64 }
   end
 
-  it "transforms block to proc literal without arguments" do
+  it "transforms block to proc literal without parameters" do
     assert_type("
       def foo(&block : -> U) forall U
         block.call
@@ -391,7 +391,7 @@ describe "Semantic: closure" do
         x.to_f
       end
       ",
-      "wrong number of block arguments (given 1, expected 0)"
+      "wrong number of block parameters (given 1, expected 0)"
   end
 
   it "allows giving less block args when transforming block to proc literal" do
@@ -423,7 +423,7 @@ describe "Semantic: closure" do
       ") { proc_of(int32, float64) }
   end
 
-  it "errors if forwarding block arg doesn't match input type" do
+  it "errors if forwarding block param doesn't match input type" do
     assert_error "
       def foo(&block : Int32 -> U)
         block
@@ -432,10 +432,10 @@ describe "Semantic: closure" do
       f = ->(x : Int64) { x + 1 }
       foo &f
       ",
-      "expected block argument's argument #1 to be Int32, not Int64"
+      "expected block argument's parameter #1 to be Int32, not Int64"
   end
 
-  it "errors if forwarding block arg doesn't match input type size" do
+  it "errors if forwarding block param doesn't match input type size" do
     assert_error "
       def foo(&block : Int32, Int32 -> U)
         block
@@ -444,7 +444,7 @@ describe "Semantic: closure" do
       f = ->(x : Int32) { x + 1 }
       foo &f
       ",
-      "wrong number of block argument's arguments (given 1, expected 2)"
+      "wrong number of block argument's parameters (given 1, expected 2)"
   end
 
   it "lookups return type in correct scope" do
@@ -517,12 +517,36 @@ describe "Semantic: closure" do
 
   it "says can't send closure to C with new notation" do
     assert_error %(
+      struct Proc
+        def self.new(&block : self)
+          block
+        end
+      end
+
       lib LibC
         fun foo(x : ->)
       end
 
       a = 1
       LibC.foo(Proc(Void).new do
+        a
+      end)
+      ),
+      "can't send closure to C function (closured vars: a)"
+  end
+
+  it "says can't send closure to C with captured block" do
+    assert_error %(
+      def capture(&block : -> Int32)
+        block
+      end
+
+      lib LibC
+        fun foo(x : ->)
+      end
+
+      a = 1
+      LibC.foo(capture do
         a
       end)
       ),

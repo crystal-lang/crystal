@@ -551,23 +551,23 @@ describe "Semantic: lib" do
     attrs[0].lib.should eq("SDL")
   end
 
-  it "errors if using void as argument (related to #508)" do
+  it "errors if using void as parameter (related to #508)" do
     assert_error %(
       lib LibFoo
         fun foo(x : Void)
       end
       ),
-      "can't use Void as argument type"
+      "can't use Void as parameter type"
   end
 
-  it "errors if using void via typedef as argument (related to #508)" do
+  it "errors if using void via typedef as parameter (related to #508)" do
     assert_error %(
       lib LibFoo
         type Foo = Void
         fun foo(x : Foo)
       end
       ),
-      "can't use Void as argument type"
+      "can't use Void as parameter type"
   end
 
   it "can use tuple as fun return" do
@@ -694,7 +694,7 @@ describe "Semantic: lib" do
 
       LibFoo.foo(out x)
       ),
-      "can't use out with Void* (argument 'x' of LibFoo.foo is Void*)"
+      "can't use out with Void* (parameter 'x' of LibFoo.foo is Void*)"
   end
 
   it "errors if using out with void pointer through type" do
@@ -706,7 +706,7 @@ describe "Semantic: lib" do
 
       LibFoo.foo(out x)
       ),
-      "can't use out with Void* (argument 'x' of LibFoo.foo is Void*)"
+      "can't use out with Void* (parameter 'x' of LibFoo.foo is Void*)"
   end
 
   it "errors if using out with non-pointer" do
@@ -717,7 +717,7 @@ describe "Semantic: lib" do
 
       LibFoo.foo(out x)
       ),
-      "argument 'x' of LibFoo.foo cannot be passed as 'out' because it is not a pointer"
+      "parameter 'x' of LibFoo.foo cannot be passed as 'out' because it is not a pointer"
   end
 
   it "errors if redefining fun with different signature (#2468)" do
@@ -742,7 +742,7 @@ describe "Semantic: lib" do
       "can't use named args with variadic function"
   end
 
-  it "errors if using unknown named arg" do
+  it "errors if using unknown named param" do
     assert_error %(
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
@@ -750,10 +750,10 @@ describe "Semantic: lib" do
 
       LibC.foo y: 1_u8, x: 1, z: 2
       ),
-      "no argument named 'z'"
+      "no parameter named 'z'"
   end
 
-  it "errors if argument already specified" do
+  it "errors if parameter already specified" do
     assert_error %(
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
@@ -761,7 +761,7 @@ describe "Semantic: lib" do
 
       LibC.foo 1, x: 2
       ),
-      "argument 'x' already specified"
+      "argument for parameter 'x' already specified"
   end
 
   it "errors if missing argument" do

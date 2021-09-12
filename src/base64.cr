@@ -203,7 +203,9 @@ module Base64
     bytes = chars.to_unsafe
     size = data.size
     cstr = data.to_unsafe
-    endcstr = cstr + size - size % 3
+    endcstr = cstr + size - size % 3 - 3
+
+    # process bunch of full triples
     while cstr < endcstr
       n = Intrinsics.bswap32(cstr.as(UInt32*).value)
       yield bytes[(n >> 26) & 63]
@@ -213,6 +215,17 @@ module Base64
       cstr += 3
     end
 
+    # process last full triple manually, because reading UInt32 not correct for guarded memory
+    if size >= 3
+      n = (cstr.value.to_u32 << 16) | ((cstr + 1).value.to_u32 << 8) | (cstr + 2).value
+      yield bytes[(n >> 18) & 63]
+      yield bytes[(n >> 12) & 63]
+      yield bytes[(n >> 6) & 63]
+      yield bytes[(n) & 63]
+      cstr += 3
+    end
+
+    # process last partial triple
     pd = size % 3
     if pd == 1
       n = (cstr.value.to_u32 << 16)

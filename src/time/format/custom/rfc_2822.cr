@@ -18,7 +18,7 @@ struct Time::Format
     end
 
     # Formats a `Time` into a `String`.
-    def self.format(time : Time)
+    def self.format(time : Time) : String
       String.build do |io|
         format(time, io)
       end

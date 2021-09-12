@@ -10,7 +10,7 @@
 # This Deque is implemented with a [dynamic array](http://en.wikipedia.org/wiki/Dynamic_array) used as a
 # [circular buffer](https://en.wikipedia.org/wiki/Circular_buffer).
 class Deque(T)
-  include Indexable(T)
+  include Indexable::Mutable(T)
 
   # This Deque is based on a circular buffer. It works like a normal array, but when an item is removed from the left
   # side, instead of shifting all the items, only the start position is shifted. This can lead to configurations like:
@@ -136,23 +136,16 @@ class Deque(T)
     push(value)
   end
 
-  # Sets the given value at the given *index*.
-  #
-  # Raises `IndexError` if the deque had no previous value at the given *index*.
-  def []=(index : Int, value : T)
-    index += @size if index < 0
-    unless 0 <= index < @size
-      raise IndexError.new
-    end
-    index += @start
-    index -= @capacity if index >= @capacity
-    @buffer[index] = value
-  end
-
-  def unsafe_fetch(index : Int)
+  def unsafe_fetch(index : Int) : T
     index += @start
     index -= @capacity if index >= @capacity
     @buffer[index]
+  end
+
+  def unsafe_put(index : Int, value : T)
+    index += @start
+    index -= @capacity if index >= @capacity
+    @buffer[index] = value
   end
 
   # Removes all elements from `self`.
@@ -199,7 +192,7 @@ class Deque(T)
   # a.delete("b") # => true
   # a             # => Deque{"a", "c"}
   # ```
-  def delete(obj)
+  def delete(obj) : Bool
     match = internal_delete { |i| i == obj }
     !match.nil?
   end
@@ -228,7 +221,7 @@ class Deque(T)
   # ```
   #
   # See also: `Deque#select`.
-  def select!(pattern)
+  def select!(pattern) : self
     self.select! { |elem| pattern === elem }
   end
 
@@ -257,7 +250,7 @@ class Deque(T)
   # ```
   #
   # See also: `Deque#reject`.
-  def reject!(pattern)
+  def reject!(pattern) : self
     reject! { |elem| pattern === elem }
     self
   end
@@ -288,7 +281,7 @@ class Deque(T)
   # a.delete_at(1) # => 2
   # a              # => Deque{1, 3}
   # ```
-  def delete_at(index : Int)
+  def delete_at(index : Int) : T
     if index < 0
       index += @size
     end
@@ -360,7 +353,7 @@ class Deque(T)
   # a = Deque{0, 1, 2}
   # a.insert(1, 7) # => Deque{0, 7, 1, 2}
   # ```
-  def insert(index : Int, value : T)
+  def insert(index : Int, value : T) : self
     if index < 0
       index += @size + 1
     end
@@ -429,7 +422,7 @@ class Deque(T)
   # ```
   # Deque{:foo, :bar}.size # => 2
   # ```
-  def size
+  def size : Int32
     @size
   end
 
@@ -440,7 +433,7 @@ class Deque(T)
   # a.pop # => 3
   # a     # => Deque{1, 2}
   # ```
-  def pop
+  def pop : T
     pop { raise IndexError.new }
   end
 
@@ -460,12 +453,12 @@ class Deque(T)
   end
 
   # Removes and returns the last item, if not empty, otherwise `nil`.
-  def pop?
+  def pop? : T?
     pop { nil }
   end
 
   # Removes the last *n* (at most) items in the deque.
-  def pop(n : Int)
+  def pop(n : Int) : Nil
     if n < 0
       raise ArgumentError.new("Can't pop negative count")
     end
@@ -489,11 +482,8 @@ class Deque(T)
     self
   end
 
-  # Rotates this deque in place so that the element at *n* becomes first.
-  #
-  # * For positive *n*, equivalent to `n.times { push(shift) }`.
-  # * For negative *n*, equivalent to `(-n).times { unshift(pop) }`.
-  def rotate!(n : Int = 1)
+  # :inherit:
+  def rotate!(n : Int = 1) : Nil
     return if @size <= 1
     if @size == @capacity
       @start = (@start + n) % @capacity
@@ -546,19 +536,13 @@ class Deque(T)
   end
 
   # Removes the first *n* (at most) items in the deque.
-  def shift(n : Int)
+  def shift(n : Int) : Nil
     if n < 0
       raise ArgumentError.new("Can't shift negative count")
     end
     n = Math.min(n, @size)
     n.times { shift }
     nil
-  end
-
-  # Swaps the items at the indices *i* and *j*.
-  def swap(i, j)
-    self[i], self[j] = self[j], self[i]
-    self
   end
 
   def to_s(io : IO) : Nil
@@ -571,7 +555,7 @@ class Deque(T)
   # a = Deque{1, 2}
   # a.unshift 0 # => Deque{0, 1, 2}
   # ```
-  def unshift(value : T)
+  def unshift(value : T) : self
     increase_capacity if @size >= @capacity
     @start -= 1
     @start += @capacity if @start < 0
