@@ -177,10 +177,10 @@ describe "StaticArray" do
   describe "rotate!" do
     it do
       a = StaticArray[1, 2, 3]
-      a.rotate!.to_unsafe.should eq(a.to_unsafe); a.should eq(StaticArray[2, 3, 1])
-      a.rotate!.to_unsafe.should eq(a.to_unsafe); a.should eq(StaticArray[3, 1, 2])
-      a.rotate!.to_unsafe.should eq(a.to_unsafe); a.should eq(StaticArray[1, 2, 3])
-      a.rotate!.to_unsafe.should eq(a.to_unsafe); a.should eq(StaticArray[2, 3, 1])
+      a.rotate!; a.should eq(StaticArray[2, 3, 1])
+      a.rotate!; a.should eq(StaticArray[3, 1, 2])
+      a.rotate!; a.should eq(StaticArray[1, 2, 3])
+      a.rotate!; a.should eq(StaticArray[2, 3, 1])
     end
 
     it { a = StaticArray[1, 2, 3]; a.rotate!(0); a.should eq(StaticArray[1, 2, 3]) }
