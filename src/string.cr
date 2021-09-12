@@ -713,18 +713,18 @@ class String
     unless v.finite?
       startptr = to_unsafe
       if whitespace
-        while startptr.value.chr.ascii_whitespace?
+        while startptr.value.unsafe_chr.ascii_whitespace?
           startptr += 1
         end
       end
-      if startptr.value.chr.in?('+', '-')
+      if startptr.value.unsafe_chr.in?('+', '-')
         startptr += 1
       end
 
       if v.nan?
-        return unless startptr.value.chr.in?('n', 'N')
+        return unless startptr.value.unsafe_chr.in?('n', 'N')
       else
-        return unless startptr.value.chr.in?('i', 'I')
+        return unless startptr.value.unsafe_chr.in?('i', 'I')
       end
     end
 
@@ -735,7 +735,7 @@ class String
 
     if strict
       if whitespace
-        while endptr < string_end && endptr.value.chr.ascii_whitespace?
+        while endptr < string_end && endptr.value.unsafe_chr.ascii_whitespace?
           endptr += 1
         end
       end
@@ -744,7 +744,7 @@ class String
     else
       ptr = to_unsafe
       if whitespace
-        while ptr < string_end && ptr.value.chr.ascii_whitespace?
+        while ptr < string_end && ptr.value.unsafe_chr.ascii_whitespace?
           ptr += 1
         end
       end

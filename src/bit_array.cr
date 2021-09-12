@@ -16,7 +16,7 @@
 # ba[2] # => true
 # ```
 struct BitArray
-  include Indexable(Bool)
+  include Indexable::Mutable(Bool)
 
   # The number of bits the BitArray stores
   getter size : Int32
@@ -44,23 +44,24 @@ struct BitArray
     (@bits[bit_index] & (1 << sub_index)) > 0
   end
 
-  # Sets the bit at the given *index*.
-  # Negative indices can be used to start counting from the end of the array.
-  # Raises `IndexError` if trying to access a bit outside the array's range.
-  #
-  # ```
-  # require "bit_array"
-  #
-  # ba = BitArray.new(5)
-  # ba[3] = true
-  # ```
-  def []=(index, value : Bool)
+  def unsafe_put(index : Int, value : Bool)
+    bit_index, sub_index = index.divmod(32)
+    if value
+      @bits[bit_index] |= 1 << sub_index
+    else
+      @bits[bit_index] &= ~(1 << sub_index)
+    end
+  end
+
+  # :inherit:
+  def []=(index : Int, value : Bool) : Bool
     bit_index, sub_index = bit_index_and_sub_index(index)
     if value
       @bits[bit_index] |= 1 << sub_index
     else
       @bits[bit_index] &= ~(1 << sub_index)
     end
+    value
   end
 
   # Returns all elements that are within the given range.

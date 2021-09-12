@@ -351,7 +351,9 @@ module Crystal
       return if @debug.none?
       in_alloca_block do
         vars.each do |name, var|
-          llvm_var = context.vars[name]
+          # If a variable is deduced to have type `NoReturn` it might not be
+          # allocated at all
+          next unless (llvm_var = context.vars[name]?)
           next if llvm_var.debug_variable_created
           set_current_debug_location var.location
           declare_variable name, var.type, llvm_var.pointer, var.location, alloca_block

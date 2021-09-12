@@ -512,14 +512,27 @@ describe "Slice" do
 
   it "creates read-only slice" do
     slice = Slice.new(3, 0, read_only: true)
+    slice.read_only?.should be_true
     expect_raises(Exception, "Can't write to read-only Slice") { slice[0] = 1 }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.update(0, &.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.swap(0, 1) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.reverse! }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(&.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(offset: 0, &.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.map!(&.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.map_with_index! { |v, i| v } }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.map_with_index!(offset: 0) { |v, i| v } }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.shuffle! }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.rotate!(0) }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.copy_from(slice) }
 
     subslice = slice[0, 1]
+    subslice.read_only?.should be_true
     expect_raises(Exception, "Can't write to read-only Slice") { subslice[0] = 1 }
 
     slice = Bytes[1, 2, 3, read_only: true]
+    slice.read_only?.should be_true
     expect_raises(Exception, "Can't write to read-only Slice") { slice[0] = 0_u8 }
   end
 
