@@ -1199,7 +1199,7 @@ class Crystal::Repl::Interpreter
           parser = Parser.new(
             line,
             string_pool: @context.program.string_pool,
-            def_vars: [interpreter.local_vars.names.to_set],
+            var_scopes: [interpreter.local_vars.names.to_set],
           )
           line_node = parser.parse
 
