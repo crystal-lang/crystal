@@ -477,6 +477,67 @@ describe "Semantic: module" do
       ", "cyclic include detected"
   end
 
+  it "gives error when including self, generic module" do
+    assert_error "
+      module Foo(T)
+        include self
+      end
+      ", "cyclic include detected"
+  end
+
+  it "gives error when including instantiation of self, generic module" do
+    assert_error "
+      module Foo(T)
+        include Foo(Int32)
+      end
+      ", "cyclic include detected"
+  end
+
+  it "gives error with cyclic include, generic module" do
+    assert_error "
+      module Foo(T)
+      end
+
+      module Bar(T)
+        include Foo(T)
+      end
+
+      module Foo(T)
+        include Bar(T)
+      end
+      ", "cyclic include detected"
+  end
+
+  it "gives error with cyclic include between non-generic and generic module" do
+    assert_error "
+      module Foo
+      end
+
+      module Bar(T)
+        include Foo
+      end
+
+      module Foo
+        include Bar(Int32)
+      end
+      ", "cyclic include detected"
+  end
+
+  it "gives error with cyclic include between non-generic and generic module (2)" do
+    assert_error "
+      module Bar(T)
+      end
+
+      module Foo
+        include Bar(Int32)
+      end
+
+      module Bar(T)
+        include Foo
+      end
+      ", "cyclic include detected"
+  end
+
   it "finds types close to included module" do
     assert_type("
       module Foo
@@ -1419,18 +1480,122 @@ describe "Semantic: module" do
   it "errors when extending module that defines instance vars (#4065)" do
     assert_error %(
       module Foo
-        @foo : Int32?
-
-        def foo
-          @foo
-        end
+        @x = 0
       end
 
-      class Bar
+      module Bar
         extend Foo
       end
       ),
-      "can't declare instance variables in Bar.class"
+      "can't declare instance variables in Foo because Bar extends it"
+  end
+
+  it "errors when extending module that defines instance vars (2) (#4065)" do
+    assert_error %(
+      module Foo
+        @x : Int32?
+      end
+
+      module Bar
+        extend Foo
+      end
+      ),
+      "can't declare instance variables in Foo because Bar extends it"
+  end
+
+  it "errors when extending generic module that defines instance vars" do
+    assert_error %(
+      module Foo(T)
+        @x = 0
+      end
+
+      module Bar(T)
+        extend Foo(T)
+      end
+      ),
+      "can't declare instance variables in Foo(T) because Bar(T) extends it"
+  end
+
+  it "errors when extending generic module that defines instance vars (2)" do
+    assert_error %(
+      module Foo(T)
+        @x : T?
+      end
+
+      module Bar(T)
+        extend Foo(T)
+      end
+      ),
+      "can't declare instance variables in Foo(T) because Bar(T) extends it"
+  end
+
+  it "errors when recursively extending module that defines instance vars" do
+    assert_error %(
+      module Foo
+        @x = 0
+      end
+
+      module Bar
+        include Foo
+      end
+
+      module Baz
+        extend Bar
+      end
+      ),
+      "can't declare instance variables in Foo because Baz extends it"
+  end
+
+  it "errors when recursively extending module that defines instance vars (2)" do
+    assert_error %(
+      module Foo
+        @x : Int32?
+      end
+
+      module Bar
+        include Foo
+      end
+
+      module Baz
+        extend Bar
+      end
+      ),
+      "can't declare instance variables in Foo because Baz extends it"
+  end
+
+  it "errors when extending self and self defines instance vars (#9568)" do
+    assert_error %(
+      module Foo
+        extend self
+
+        @x = 0
+      end
+      ),
+      "can't declare instance variables in Foo because Foo extends it"
+  end
+
+  it "errors when extending self and self defines instance vars (2) (#9568)" do
+    assert_error %(
+      module Foo
+        extend self
+
+        @x : Int32?
+      end
+      ),
+      "can't declare instance variables in Foo because Foo extends it"
+  end
+
+  it "errors when extending self and self defines instance vars (3) (#9568)" do
+    assert_error %(
+      module Foo
+        extend self
+
+        def initialize
+          @x = 0
+        end
+      end
+      ),
+      "can't declare instance variables in Foo because Foo extends it"
   end
 
   it "can't pass module class to virtual metaclass (#6113)" do

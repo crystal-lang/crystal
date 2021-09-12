@@ -679,4 +679,30 @@ describe "Semantic: ssa" do
       end
       ") { int32 }
   end
+
+  it "errors if accessing variable declared inside typeof" do
+    assert_error %(
+      typeof(x = 1)
+      x
+      ),
+      "undefined local variable or method 'x'"
+  end
+
+  it "doesn't error if same variable is declared in multiple typeofs" do
+    assert_type(%(
+      typeof((x = uninitialized Int32; x))
+      typeof((x = uninitialized Char; x))
+      )) { char.metaclass }
+  end
+
+  it "doesn't error if same variable is used in multiple arguments of same typeof" do
+    assert_type(%(
+      def foo(x : String)
+        'a'
+      end
+
+      x = 1
+      typeof(x = "", x = foo(x))
+      )) { union_of(string, char).metaclass }
+  end
 end

@@ -84,6 +84,7 @@ class Crystal::CodeGenVisitor
       needs_body = !target_def.is_a?(External) || is_exported_fun
       if needs_body
         emit_def_debug_metadata target_def unless @debug.none?
+        set_current_debug_location target_def if @debug.line_numbers?
 
         context.fun.add_attribute LLVM::Attribute::UWTable
         if @program.has_flag?("darwin")
