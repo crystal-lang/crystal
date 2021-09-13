@@ -291,7 +291,7 @@ module Base64
   # The first argument (raise_error) determines if the macro raises an error when an invalid character is processed.
   # The second argument (chunk_pos) is only used for the resulting error message.
   # The resulting bytes are then each yielded to the given block, using the variable `byte`.
-  private macro yield_decoded_chunk_bytes(bytes*, chunk_pos)
+  private macro yield_decoded_chunk_bytes(*bytes, chunk_pos)
     %buffer = 0_u32
     {% for byte, i in bytes %}
       %decoded = DECODE_TABLE.unsafe_fetch({{byte}})
