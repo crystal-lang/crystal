@@ -7,7 +7,7 @@ env:
   CI_NIX_SHELL: true
 
 jobs:
-  test_macos:
+  x86_64-macos-test:
     runs-on: macos-latest
     steps:
       - name: Download Crystal source
