@@ -1568,6 +1568,7 @@ module Crystal
       # No special checks needed for floating values
       if is_decimal
         @token.number_kind = :f64 if suffix_size == 0
+        set_token_raw_from_start(start)
         return
       end
 
@@ -1609,6 +1610,7 @@ module Crystal
         when :u128 then gen_check_int_fits_in_size(UInt128, :u128, 39)
         end
       end
+      set_token_raw_from_start(start)
     end
 
     private def consume_int_suffix : Tuple(Symbol, Int32)
