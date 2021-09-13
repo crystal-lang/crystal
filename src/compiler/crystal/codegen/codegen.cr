@@ -770,7 +770,9 @@ module Crystal
     end
 
     def visit(node : TypeOf)
-      @last = type_id(node.type)
+      # convert virtual metaclasses to non-virtual ones, because only the
+      # non-virtual type IDs are needed
+      @last = type_id(node.type.devirtualize)
       false
     end
 
