@@ -200,46 +200,42 @@ describe "Code gen: C ABI" do
       ), &.to_i.should eq(6))
   end
 
-  {% if flag?(:win32) || flag?(:aarch64) %}
-    pending "accepts large struct in a callback (for real) (#9533)"
-  {% else %}
-    it "accepts large struct in a callback (for real)" do
-      test_c(
-        %(
-          struct s {
-              long long x, y, z;
-          };
+  it "accepts large struct in a callback (for real)" do
+    test_c(
+      %(
+        struct s {
+            long long x, y, z;
+        };
 
-          void ccaller(void (*func)(struct s)) {
-              struct s v = {1, 2, 3};
-              func(v);
-          }
-        ),
-        %(
-          lib LibFoo
-            struct S
-              x : Int64
-              y : Int64
-              z : Int64
-            end
-
-            fun ccaller(func : (S) ->)
+        void ccaller(void (*func)(struct s)) {
+            struct s v = {1, 2, 3};
+            func(v);
+        }
+      ),
+      %(
+        lib LibFoo
+          struct S
+            x : Int64
+            y : Int64
+            z : Int64
           end
 
-          module Global
-            class_property x = 0i64
-          end
+          fun ccaller(func : (S) ->)
+        end
 
-          fun callback(v : LibFoo::S)
-            Global.x = v.x &+ v.y &+ v.z
-          end
+        module Global
+          class_property x = 0i64
+        end
 
-          LibFoo.ccaller(->callback)
+        fun callback(v : LibFoo::S)
+          Global.x = v.x &+ v.y &+ v.z
+        end
 
-          Global.x
-        ), &.to_string.should eq("6"))
-    end
-  {% end %}
+        LibFoo.ccaller(->callback)
+
+        Global.x
+      ), &.to_string.should eq("6"))
+  end
 
   it "promotes variadic args (float to double)" do
     test_c(

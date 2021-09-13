@@ -506,11 +506,17 @@ class Crystal::CodeGenVisitor
       # If it's an extern struct on a def that must be codegened with C ABI
       # compatibility, and it's not passed byval, we must cast the value
       if target_def.c_calling_convention? && arg.type.extern? && !context.fun.attributes(index + 1).by_val?
-        pointer = alloca(llvm_type(var_type), arg.name)
-        casted_pointer = bit_cast pointer, value.type.pointer
-        store value, casted_pointer
-        pointer = declare_debug_for_function_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
-        context.vars[arg.name] = LLVMVar.new(pointer, var_type)
+        # ... unless it's passed indirectly (ie. as a pointer to memory allocated by the caller)
+        if target_def.abi_info? && abi_info(target_def).arg_types[index].kind.indirect?
+          value = declare_debug_for_function_argument(arg.name, var_type, index + 1, value, location) unless target_def.naked?
+          context.vars[arg.name] = LLVMVar.new(value, var_type)
+        else
+          pointer = alloca(llvm_type(var_type), arg.name)
+          casted_pointer = bit_cast pointer, value.type.pointer
+          store value, casted_pointer
+          pointer = declare_debug_for_function_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
+          context.vars[arg.name] = LLVMVar.new(pointer, var_type)
+        end
         return
       elsif arg.special_var?
         value = declare_debug_for_function_argument(arg.name, var_type, index + 1, value, location) unless target_def.naked?
