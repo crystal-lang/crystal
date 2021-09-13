@@ -1,6 +1,6 @@
 require "spec"
 
-# TODO: Remove these helpers in PR part 2
+# TODO: Replace helper methods with literals once possible
 
 private def make_ti(a : Int128, b : Int128)
   (a << 64) + b
