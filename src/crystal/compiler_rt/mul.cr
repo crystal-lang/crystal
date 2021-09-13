@@ -1,0 +1,42 @@
+# :nodoc:
+private macro __mul_impl(name, type, n)
+  # Ported from llvm/compiler-rt:/lib/builtins/muloti4.c / mulodi4.c / mulosi4.c
+  # :nodoc:
+  fun {{name}}(a : {{type}}, b : {{type}}, overflow : Int32*) : {{type}}
+    overflow.value = 0
+    result = a &* b
+    if a == {{type}}::MIN
+      if b != 0 && b != 1
+        overflow.value = 1
+      end
+      return result
+    end
+    if b == {{type}}::MIN
+      if a != 0 && a != 1
+        overflow.value = 1
+      end
+      return result
+    end
+    sa = a >> {{n - 1}}
+    abs_a = (a ^ sa) &- sa
+    sb = b >> {{n - 1}}
+    abs_b = (b ^ sb) &- sb
+    if abs_a < 2 || abs_b < 2
+      return result
+    end
+    if sa == sb
+      if abs_a > ({{type}}::MAX // abs_b)
+        overflow.value = 1
+      end
+    else
+      if abs_a > ({{type}}::MIN // -abs_b)
+        overflow.value = 1
+      end
+    end
+    return result
+  end
+end
+
+__mul_impl(__mulosi4, Int32, 32)
+__mul_impl(__mulodi4, Int64, 64)
+__mul_impl(__muloti4, Int128, 128)
