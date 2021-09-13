@@ -266,11 +266,7 @@ module Base64
       end
       break if bytes > fin
 
-      yield_decoded_chunk_bytes(
-        raise_error: true,
-        chunk_pos: bytes - bytes_begin,
-        bytes: {bytes[0], bytes[1], bytes[2], bytes[3]}
-      )
+      yield_decoded_chunk_bytes(bytes[0], bytes[1], bytes[2], bytes[3], chunk_pos: bytes - bytes_begin)
       bytes += 4
     end
 
@@ -285,17 +281,9 @@ module Base64
     when 1
       raise Base64::Error.new("Wrong size")
     when 2
-      yield_decoded_chunk_bytes(
-        raise_error: true,
-        chunk_pos: bytes - bytes_begin,
-        bytes: {bytes[0], bytes[1]}
-      )
+      yield_decoded_chunk_bytes(bytes[0], bytes[1], chunk_pos: bytes - bytes_begin)
     when 3
-      yield_decoded_chunk_bytes(
-        raise_error: true,
-        chunk_pos: bytes - bytes_begin,
-        bytes: {bytes[0], bytes[1], bytes[2]}
-      )
+      yield_decoded_chunk_bytes(bytes[0], bytes[1], bytes[2], chunk_pos: bytes - bytes_begin)
     end
   end
 
@@ -303,14 +291,12 @@ module Base64
   # The first argument (raise_error) determines if the macro raises an error when an invalid character is processed.
   # The second argument (chunk_pos) is only used for the resulting error message.
   # The resulting bytes are then each yielded to the given block, using the variable `byte`.
-  private macro yield_decoded_chunk_bytes(raise_error, chunk_pos, bytes, &block)
+  private macro yield_decoded_chunk_bytes(bytes*, chunk_pos)
     %buffer = 0_u32
     {% for byte, i in bytes %}
       %decoded = DECODE_TABLE.unsafe_fetch({{byte}})
       %buffer = (%buffer << 6) + %decoded
-      {% if raise_error == true %}
-        raise Base64::Error.new("Unexpected byte 0x#{{{byte}}.to_s(16)} at #{{{chunk_pos}} + {{i}}}") if %decoded == 255_u8
-      {% end %}
+      raise Base64::Error.new("Unexpected byte 0x#{{{byte}}.to_s(16)} at #{{{chunk_pos}} + {{i}}}") if %decoded == 255_u8
     {% end %}
 
     # Each byte in the buffer is shifted to rightmost position of the buffer, then casted to a UInt8
