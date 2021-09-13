@@ -1,7 +1,36 @@
+require "c/ioapiset"
 require "crystal/system/print_error"
 
 module Crystal::EventLoop
   @@queue = Deque(Fiber).new
+
+  # Returns the base IO Completion Port
+  class_getter iocp : LibC::HANDLE do
+    create_completion_port(LibC::INVALID_HANDLE_VALUE, nil)
+  end
+
+  def self.create_completion_port(handle : LibC::HANDLE, parent : LibC::HANDLE? = iocp)
+    iocp = LibC.CreateIoCompletionPort(handle, parent, nil, 0)
+    if iocp.null?
+      raise IO::Error.from_winerror("CreateIoCompletionPort")
+    end
+    iocp
+  end
+
+  # This is a temporary stub as a stand in for fiber swapping required for concurrency
+  def self.wait_completion(timeout = nil)
+    result = LibC.GetQueuedCompletionStatusEx(iocp, out io_entry, 1, out removed, timeout, false)
+    if result == 0
+      error = WinError.value
+      if timeout && error.wait_timeout?
+        return false
+      else
+        raise IO::Error.from_os_error("GetQueuedCompletionStatusEx", error)
+      end
+    end
+
+    true
+  end
 
   # Runs the event loop.
   def self.run_once : Nil
