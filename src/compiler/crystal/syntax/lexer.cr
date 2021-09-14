@@ -1485,9 +1485,6 @@ module Crystal
           raise "octal constants should be prefixed with 0o" if next_char.in? '0'..'9'
           last_is_underscore = true
           underscore_count = 1
-        else
-          # Go back to '0' character to properly process characters 'e', 'u', 'i', 'f' (or to return "0")
-          self.current_pos -= 1
         end
 
         # Skip prefix (b, o, x)
