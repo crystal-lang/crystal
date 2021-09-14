@@ -2,7 +2,7 @@ require "c/ioapiset"
 require "crystal/system/print_error"
 
 module Crystal::EventLoop
-  @@queue = Deque(Fiber).new
+  @@queue = Deque(Event).new
 
   # Returns the base IO Completion Port
   class_getter iocp : LibC::HANDLE do
@@ -34,10 +34,18 @@ module Crystal::EventLoop
 
   # Runs the event loop.
   def self.run_once : Nil
-    next_fiber = @@queue.pop?
+    next_event = @@queue.min_by { |e| e.wake_at }
 
-    if next_fiber
-      Crystal::Scheduler.enqueue next_fiber
+    if next_event
+      sleep_time = next_event.wake_at - Time.monotonic
+
+      if sleep_time > Time::Span.zero
+        LibC.Sleep(sleep_time.total_milliseconds)
+      end
+
+      dequeue next_event
+
+      Crystal::Scheduler.enqueue next_event.fiber
     else
       Crystal::System.print_error "Warning: No runnables in scheduler. Exiting program.\n"
       ::exit
@@ -48,20 +56,18 @@ module Crystal::EventLoop
   def self.after_fork : Nil
   end
 
-  def self.enqueue(fiber : Fiber)
-    unless @@queue.includes?(fiber)
-      @@queue << fiber
+  def self.enqueue(event : Event)
+    unless @@queue.includes?(event)
+      @@queue << event
     end
   end
 
-  def self.dequeue(fiber : Fiber)
-    @@queue.delete(fiber)
+  def self.dequeue(event : Event)
+    @@queue.delete(event)
   end
 
   # Create a new resume event for a fiber.
   def self.create_resume_event(fiber : Fiber) : Crystal::Event
-    enqueue(fiber)
-
     Crystal::Event.new(fiber)
   end
 
@@ -77,15 +83,20 @@ module Crystal::EventLoop
 end
 
 struct Crystal::Event
+  getter fiber
+  getter wake_at
+
   def initialize(@fiber : Fiber)
+    @wake_at = Time.monotonic
   end
 
   # Frees the event
   def free : Nil
-    Crystal::EventLoop.dequeue(@fiber)
+    Crystal::EventLoop.dequeue(self)
   end
 
-  def add(time_span : Time::Span?) : Nil
-    Crystal::EventLoop.enqueue(@fiber)
+  def add(time_span : Time::Span) : Nil
+    @wake_at = Time.monotonic + time_span
+    Crystal::EventLoop.enqueue(self)
   end
 end
