@@ -13,7 +13,7 @@ private def test__muloti4(a : Int128, b : Int128, expected : Int128, expected_ov
   end
 end
 
-# TODO: Remove this helper in PR part 2
+# TODO: Replace helper methods with literals once possible
 
 private def make_ti(a : Int128, b : Int128)
   (a << 64) + b
