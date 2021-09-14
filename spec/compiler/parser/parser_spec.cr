@@ -167,6 +167,8 @@ module Crystal
     it_parses "@a, b = 1, 2", MultiAssign.new(["@a".instance_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "@@a, b = 1, 2", MultiAssign.new(["@@a".class_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
+    it_parses "あ.い, う.え.お = 1, 2", MultiAssign.new([Call.new("あ".call, "い"), Call.new(Call.new("う".call, "え"), "お")] of ASTNode, [1.int32, 2.int32] of ASTNode)
+
     assert_syntax_error "b? = 1", "unexpected token: ="
     assert_syntax_error "b! = 1", "unexpected token: ="
     assert_syntax_error "a, B = 1, 2", "can't assign to constant in multiple assignment"
@@ -195,10 +197,10 @@ module Crystal
     assert_syntax_error "def foo?=(x); end", "unexpected token: ?"
 
     # #5856
-    assert_syntax_error "def foo=(a,b); end", "setter method 'foo=' cannot have more than one argument"
-    assert_syntax_error "def foo=(a = 1, b = 2); end", "setter method 'foo=' cannot have more than one argument"
-    assert_syntax_error "def foo=(*args); end", "setter method 'foo=' cannot have more than one argument"
-    assert_syntax_error "def foo=(**kwargs); end", "setter method 'foo=' cannot have more than one argument"
+    assert_syntax_error "def foo=(a,b); end", "setter method 'foo=' cannot have more than one parameter"
+    assert_syntax_error "def foo=(a = 1, b = 2); end", "setter method 'foo=' cannot have more than one parameter"
+    assert_syntax_error "def foo=(*args); end", "setter method 'foo=' cannot have more than one parameter"
+    assert_syntax_error "def foo=(**kwargs); end", "setter method 'foo=' cannot have more than one parameter"
     assert_syntax_error "def foo=(&block); end", "setter method 'foo=' cannot have a block"
     assert_syntax_error "def []=(&block); end", "setter method '[]=' cannot have a block"
     assert_syntax_error "f.[]= do |a| end", "setter method '[]=' cannot be called with a block"
@@ -213,14 +215,14 @@ module Crystal
       instance_sizeof offsetof typeof private protected asm out
       end self in
     ).each do |kw|
-      assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as an argument name", 1, 9
-      assert_syntax_error "def foo(foo #{kw}); end", "cannot use '#{kw}' as an argument name", 1, 13
+      assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as a parameter name", 1, 9
+      assert_syntax_error "def foo(foo #{kw}); end", "cannot use '#{kw}' as a parameter name", 1, 13
       it_parses "def foo(#{kw} foo); end", Def.new("foo", [Arg.new("foo", external_name: kw.to_s)])
       it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
       it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
 
-      assert_syntax_error "foo { |#{kw})| }", "cannot use '#{kw}' as a block argument name", 1, 8
-      assert_syntax_error "foo { |(#{kw}))| }", "cannot use '#{kw}' as a block argument name", 1, 9
+      assert_syntax_error "foo { |#{kw})| }", "cannot use '#{kw}' as a block parameter name", 1, 8
+      assert_syntax_error "foo { |(#{kw}))| }", "cannot use '#{kw}' as a block parameter name", 1, 9
     end
 
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
@@ -238,7 +240,7 @@ module Crystal
     it_parses "def foo; x { |a| a }; end", Def.new("foo", body: [Call.new(nil, "x", block: Block.new(["a".var], ["a".var] of ASTNode))] of ASTNode)
     it_parses "def foo; x { |_| 1 }; end", Def.new("foo", body: [Call.new(nil, "x", block: Block.new(["_".var], [1.int32] of ASTNode))] of ASTNode)
     it_parses "def foo; x { |a, *b| b }; end", Def.new("foo", body: [Call.new(nil, "x", block: Block.new(["a".var, "b".var], ["b".var] of ASTNode, splat_index: 1))] of ASTNode)
-    assert_syntax_error "x { |*a, *b| }", "splat block argument already specified"
+    assert_syntax_error "x { |*a, *b| }", "splat block parameter already specified"
 
     it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int32)])
     it_parses "def foo(var : Int); end", Def.new("foo", [Arg.new("var", restriction: "Int".path)])
@@ -294,11 +296,11 @@ module Crystal
     it_parses "def foo(x, *args, y = 2); 1; end", Def.new("foo", args: ["x".arg, "args".arg, Arg.new("y", default_value: 2.int32)], body: 1.int32, splat_index: 1)
     it_parses "def foo(x, *args, y = 2, w, z = 3); 1; end", Def.new("foo", args: ["x".arg, "args".arg, Arg.new("y", default_value: 2.int32), "w".arg, Arg.new("z", default_value: 3.int32)], body: 1.int32, splat_index: 1)
     it_parses "def foo(x, *, y); 1; end", Def.new("foo", args: ["x".arg, "".arg, "y".arg], body: 1.int32, splat_index: 1)
-    assert_syntax_error "def foo(x, *); 1; end", "named arguments must follow bare *"
+    assert_syntax_error "def foo(x, *); 1; end", "named parameters must follow bare *"
     it_parses "def foo(x, *, y, &); 1; end", Def.new("foo", args: ["x".arg, "".arg, "y".arg], body: 1.int32, splat_index: 1, block_arg: Arg.new(""), yields: 0)
 
-    assert_syntax_error "def foo(var = 1 : Int32); end", "the syntax for an argument with a default value V and type T is `arg : T = V`"
-    assert_syntax_error "def foo(var = x : Int); end", "the syntax for an argument with a default value V and type T is `arg : T = V`"
+    assert_syntax_error "def foo(var = 1 : Int32); end", "the syntax for a parameter with a default value V and type T is `arg : T = V`"
+    assert_syntax_error "def foo(var = x : Int); end", "the syntax for a parameter with a default value V and type T is `arg : T = V`"
 
     it_parses "def foo(**args)\n1\nend", Def.new("foo", body: 1.int32, double_splat: "args".arg)
     it_parses "def foo(x, **args)\n1\nend", Def.new("foo", body: 1.int32, args: ["x".arg], double_splat: "args".arg)
@@ -308,9 +310,9 @@ module Crystal
     it_parses "def foo(**args : Foo)\n1\nend", Def.new("foo", body: 1.int32, double_splat: Arg.new("args", restriction: "Foo".path))
     it_parses "def foo(**args : **Foo)\n1\nend", Def.new("foo", body: 1.int32, double_splat: Arg.new("args", restriction: DoubleSplat.new("Foo".path)))
 
-    assert_syntax_error "def foo(**args, **args2); end", "only block argument is allowed after double splat"
-    assert_syntax_error "def foo(**args, x); end", "only block argument is allowed after double splat"
-    assert_syntax_error "def foo(**args, *x); end", "only block argument is allowed after double splat"
+    assert_syntax_error "def foo(**args, **args2); end", "only block parameter is allowed after double splat"
+    assert_syntax_error "def foo(**args, x); end", "only block parameter is allowed after double splat"
+    assert_syntax_error "def foo(**args, *x); end", "only block parameter is allowed after double splat"
 
     it_parses "def foo(x y); y; end", Def.new("foo", args: [Arg.new("y", external_name: "x")], body: "y".var)
     it_parses "def foo(x @var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
@@ -329,22 +331,22 @@ module Crystal
 
     it_parses "macro foo(**args)\n1\nend", Macro.new("foo", body: MacroLiteral.new("1\n"), double_splat: "args".arg)
 
-    assert_syntax_error "macro foo(x, *); 1; end", "named arguments must follow bare *"
-    assert_syntax_error "macro foo(**x, **y)", "only block argument is allowed after double splat"
-    assert_syntax_error "macro foo(**x, y)", "only block argument is allowed after double splat"
+    assert_syntax_error "macro foo(x, *); 1; end", "named parameters must follow bare *"
+    assert_syntax_error "macro foo(**x, **y)", "only block parameter is allowed after double splat"
+    assert_syntax_error "macro foo(**x, y)", "only block parameter is allowed after double splat"
 
     it_parses "abstract def foo", Def.new("foo", abstract: true)
     it_parses "abstract def foo; 1", [Def.new("foo", abstract: true), 1.int32]
     it_parses "abstract def foo\n1", [Def.new("foo", abstract: true), 1.int32]
     it_parses "abstract def foo(x)", Def.new("foo", ["x".arg], abstract: true)
 
-    assert_syntax_error "def foo var; end", "parentheses are mandatory for def arguments"
-    assert_syntax_error "def foo var\n end", "parentheses are mandatory for def arguments"
-    assert_syntax_error "def foo &block ; end", "parentheses are mandatory for def arguments"
-    assert_syntax_error "def foo &block : Int -> Double ; end", "parentheses are mandatory for def arguments"
-    assert_syntax_error "def foo @var, &block; end", "parentheses are mandatory for def arguments"
-    assert_syntax_error "def foo @@var, &block; end", "parentheses are mandatory for def arguments"
-    assert_syntax_error "def foo *y; 1; end", "parentheses are mandatory for def arguments"
+    assert_syntax_error "def foo var; end", "parentheses are mandatory for def parameters"
+    assert_syntax_error "def foo var\n end", "parentheses are mandatory for def parameters"
+    assert_syntax_error "def foo &block ; end", "parentheses are mandatory for def parameters"
+    assert_syntax_error "def foo &block : Int -> Double ; end", "parentheses are mandatory for def parameters"
+    assert_syntax_error "def foo @var, &block; end", "parentheses are mandatory for def parameters"
+    assert_syntax_error "def foo @@var, &block; end", "parentheses are mandatory for def parameters"
+    assert_syntax_error "def foo *y; 1; end", "parentheses are mandatory for def parameters"
 
     it_parses "def foo(x : U) forall U; end", Def.new("foo", args: [Arg.new("x", restriction: "U".path)], free_vars: %w(U))
     it_parses "def foo(x : U) forall T, U; end", Def.new("foo", args: [Arg.new("x", restriction: "U".path)], free_vars: %w(T U))
@@ -552,7 +554,7 @@ module Crystal
     it_parses "module Foo(*T); end", ModuleDef.new("Foo".path, type_vars: ["T"], splat_index: 0)
     it_parses "class Foo(*T); end", ClassDef.new("Foo".path, type_vars: ["T"], splat_index: 0)
     it_parses "class Foo(T, *U); end", ClassDef.new("Foo".path, type_vars: ["T", "U"], splat_index: 1)
-    assert_syntax_error "class Foo(*T, *U); end", "splat type argument already specified"
+    assert_syntax_error "class Foo(*T, *U); end", "splat type parameter already specified"
 
     it_parses "x : Foo(A, *B, C)", TypeDeclaration.new("x".var, Generic.new("Foo".path, ["A".path, "B".path.splat, "C".path] of ASTNode))
     it_parses "x : *T -> R", TypeDeclaration.new("x".var, ProcNotation.new(["T".path.splat] of ASTNode, "R".path))
@@ -706,6 +708,11 @@ module Crystal
       it_parses "#{keyword} {1 => 2}", klass.new(HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32)]))
       it_parses "#{keyword} 1 if true", If.new(true.bool, klass.new(1.int32))
       it_parses "#{keyword} if true", If.new(true.bool, klass.new)
+
+      it_parses "#{keyword} *1", klass.new(TupleLiteral.new([1.int32.splat] of ASTNode))
+      it_parses "#{keyword} *1, 2", klass.new(TupleLiteral.new([1.int32.splat, 2.int32]))
+      it_parses "#{keyword} 1, *2", klass.new(TupleLiteral.new([1.int32, 2.int32.splat]))
+      it_parses "#{keyword} *{1, 2}", klass.new(TupleLiteral.new([TupleLiteral.new([1.int32, 2.int32] of ASTNode).splat] of ASTNode))
 
       assert_syntax_error "a = #{keyword}", "void value expression"
       assert_syntax_error "a = 1; a += #{keyword}", "void value expression"
@@ -960,6 +967,7 @@ module Crystal
     it_parses "abstract def foo(x) : Int32", Def.new("foo", args: ["x".arg], return_type: "Int32".path, abstract: true)
 
     it_parses "{% for x in y %}body{% end %}", MacroFor.new(["x".var], "y".var, "body".macro_literal)
+    it_parses "{% for _, x, _ in y %}body{% end %}", MacroFor.new(["_".var, "x".var, "_".var], "y".var, "body".macro_literal)
     it_parses "{% if x %}body{% end %}", MacroIf.new("x".var, "body".macro_literal)
     it_parses "{% begin %}{% if true %}if true{% end %}\n{% if true %}end{% end %}{% end %}", MacroIf.new(true.bool, [MacroIf.new(true.bool, "if true".macro_literal), "\n".macro_literal, MacroIf.new(true.bool, "end".macro_literal)] of ASTNode)
     it_parses "{{ foo }}", MacroExpression.new("foo".var)
@@ -1110,6 +1118,7 @@ module Crystal
 
     it_parses "{1 => 2, 3 => 4}", HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32), HashLiteral::Entry.new(3.int32, 4.int32)])
     it_parses %({A::B => 1, C::D => 2}), HashLiteral.new([HashLiteral::Entry.new(Path.new(["A", "B"]), 1.int32), HashLiteral::Entry.new(Path.new(["C", "D"]), 2.int32)])
+    assert_syntax_error %({"foo" => 1, "bar": 2}), "can't use 'key: value' syntax in a hash literal"
 
     it_parses "{a: 1}", NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("a", 1.int32)])
     it_parses "{a: 1, b: 2}", NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("a", 1.int32), NamedTupleLiteral::Entry.new("b", 2.int32)])
@@ -1319,6 +1328,9 @@ module Crystal
     it_parses "as?(Bar)", NilableCast.new(Var.new("self"), "Bar".path)
 
     it_parses "typeof(1)", TypeOf.new([1.int32] of ASTNode)
+
+    # #10521
+    it_parses "typeof(a = 1); a", [TypeOf.new([Assign.new("a".var, 1.int32)] of ASTNode), "a".call]
 
     it_parses "puts ~1", Call.new(nil, "puts", Call.new(1.int32, "~"))
 
@@ -1664,7 +1676,7 @@ module Crystal
     end
 
     assert_syntax_error "def foo(x = 1, y); end",
-      "argument must have a default value"
+      "parameter must have a default value"
 
     assert_syntax_error " [1, 2, 3 end"
     assert_syntax_error " {1 => end"
@@ -1687,28 +1699,30 @@ module Crystal
 
     assert_syntax_error %<{"x": [] of Int32,\n}\n1.foo(>, "unterminated call", 3, 6
 
-    assert_syntax_error "def foo x y; end", "parentheses are mandatory for def arguments"
+    assert_syntax_error "def foo x y; end", "parentheses are mandatory for def parameters"
     assert_syntax_error "macro foo(x y z); end"
-    assert_syntax_error "macro foo x y; end", "parentheses are mandatory for macro arguments"
-    assert_syntax_error "macro foo *y;end", "parentheses are mandatory for macro arguments"
-    assert_syntax_error %(macro foo x; 1 + 2; end), "parentheses are mandatory for macro arguments"
-    assert_syntax_error %(macro foo x\n 1 + 2; end), "parentheses are mandatory for macro arguments"
+    assert_syntax_error "macro foo x y; end", "parentheses are mandatory for macro parameters"
+    assert_syntax_error "macro foo *y;end", "parentheses are mandatory for macro parameters"
+    assert_syntax_error %(macro foo x; 1 + 2; end), "parentheses are mandatory for macro parameters"
+    assert_syntax_error %(macro foo x\n 1 + 2; end), "parentheses are mandatory for macro parameters"
 
     assert_syntax_error "1 2", "unexpected token: 2"
     assert_syntax_error "macro foo(*x, *y); end", "unexpected token: *"
 
     assert_syntax_error "foo x: 1, x: 1", "duplicated named argument: x", 1, 11
-    assert_syntax_error "def foo(x, x); end", "duplicated argument name: x", 1, 12
-    assert_syntax_error "class Foo(T, T); end", "duplicated type var name: T", 1, 14
-    assert_syntax_error "->(x : Int32, x : Int32) {}", "duplicated argument name: x", 1, 15
-    assert_syntax_error "foo { |x, x| }", "duplicated block argument name: x", 1, 11
-    assert_syntax_error "foo { |x, (x)| }", "duplicated block argument name: x", 1, 12
-    assert_syntax_error "foo { |(x, x)| }", "duplicated block argument name: x", 1, 12
 
-    assert_syntax_error "def foo(*x, **x); end", "duplicated argument name: x"
-    assert_syntax_error "def foo(*x, &x); end", "duplicated argument name: x"
-    assert_syntax_error "def foo(**x, &x); end", "duplicated argument name: x"
-    assert_syntax_error "def foo(x, **x); end", "duplicated argument name: x"
+    assert_syntax_error "def foo(x, x); end", "duplicated def parameter name: x", 1, 12
+    assert_syntax_error "def foo(x y, x z); end", "duplicated def parameter external name: x", 1, 14
+    assert_syntax_error "class Foo(T, T); end", "duplicated type parameter name: T", 1, 14
+    assert_syntax_error "->(x : Int32, x : Int32) {}", "duplicated proc literal parameter name: x", 1, 15
+    assert_syntax_error "foo { |x, x| }", "duplicated block parameter name: x", 1, 11
+    assert_syntax_error "foo { |x, (x)| }", "duplicated block parameter name: x", 1, 12
+    assert_syntax_error "foo { |(x, x)| }", "duplicated block parameter name: x", 1, 12
+
+    assert_syntax_error "def foo(*x, **x); end", "duplicated def parameter name: x"
+    assert_syntax_error "def foo(*x, &x); end", "duplicated def parameter name: x"
+    assert_syntax_error "def foo(**x, &x); end", "duplicated def parameter name: x"
+    assert_syntax_error "def foo(x, **x); end", "duplicated def parameter name: x"
 
     assert_syntax_error "Set {1, 2, 3} of Int32"
     assert_syntax_error "Hash {foo: 1} of Int32 => Int32"
@@ -1837,8 +1851,8 @@ module Crystal
 
     assert_syntax_error "'''", "invalid empty char literal"
 
-    assert_syntax_error "def foo(*args = 1); end", "splat argument can't have default value"
-    assert_syntax_error "def foo(**args = 1); end", "double splat argument can't have default value"
+    assert_syntax_error "def foo(*args = 1); end", "splat parameter can't have default value"
+    assert_syntax_error "def foo(**args = 1); end", "double splat parameter can't have default value"
 
     assert_syntax_error "require 1", "expected string literal for require"
     assert_syntax_error %(def foo("bar \#{1} qux" y); y; end), "interpolation not allowed in external name"
@@ -1866,7 +1880,7 @@ module Crystal
 
     assert_syntax_error "1 ? : 2 : 3"
 
-    assert_syntax_error %(def foo("bar");end), "expected argument internal name"
+    assert_syntax_error %(def foo("bar");end), "expected parameter internal name"
 
     it_parses "{[] of Foo, Bar::Baz.new}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "new")] of ASTNode)
     it_parses "{[] of Foo, ::Bar::Baz.new}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz], global: true), "new")] of ASTNode)

@@ -668,14 +668,26 @@ module Enumerable(T)
   # For each element in the collection the block is passed an accumulator value (*memo*) and the element. The
   # result becomes the new value for *memo*. At the end of the iteration, the final value of *memo* is
   # the return value for the method. The initial value for the accumulator is the first element in the collection.
+  # If the collection has only one element, that element is returned.
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
   #
   # ```
   # [1, 2, 3, 4, 5].reduce { |acc, i| acc + i } # => 15
+  # [1].reduce { |acc, i| acc + i }             # => 1
+  # ([] of Int32).reduce { |acc, i| acc + i }   # raises Enumerable::EmptyError
+  # ```
+  #
+  # The block is not required to return a `T`, in which case the accumulator's
+  # type includes whatever the block returns.
+  #
+  # ```
+  # # `acc` is an `Int32 | String`
+  # [1, 2, 3, 4, 5].reduce { |acc, i| "#{acc}-#{i}" } # => "1-2-3-4-5"
+  # [1].reduce { |acc, i| "#{acc}-#{i}" }             # => 1
   # ```
   def reduce
-    memo = uninitialized T
+    memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
     each do |elem|
@@ -706,7 +718,7 @@ module Enumerable(T)
   # ([] of Int32).reduce? { |acc, i| acc + i } # => nil
   # ```
   def reduce?
-    memo = uninitialized T
+    memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
     each do |elem|
@@ -1686,20 +1698,28 @@ module Enumerable(T)
 
   # Tallies the collection.  Returns a hash where the keys are the
   # elements and the values are numbers of elements in the collection
+  # that correspond to the key after transformation by the given block.
+  #
+  # ```
+  # ["a", "A", "b", "B"].tally_by(&.downcase) # => {"a" => 2, "b" => 2}
+  # ```
+  def tally_by(& : T -> U) : Hash(U, Int32) forall U
+    each_with_object(Hash(U, Int32).new) do |item, hash|
+      value = yield item
+      count = hash[value]?
+      hash[value] = count ? count + 1 : 1
+    end
+  end
+
+  # Tallies the collection.  Returns a hash where the keys are the
+  # elements and the values are numbers of elements in the collection
   # that correspond to the key.
   #
   # ```
   # ["a", "b", "c", "b"].tally # => {"a"=>1, "b"=>2, "c"=>1}
   # ```
   def tally : Hash(T, Int32)
-    each_with_object(Hash(T, Int32).new) do |item, hash|
-      count = hash[item]?
-      if count
-        hash[item] = count + 1
-      else
-        hash[item] = 1
-      end
-    end
+    tally_by { |item| item }
   end
 
   # Returns an `Array` with all the elements in the collection.

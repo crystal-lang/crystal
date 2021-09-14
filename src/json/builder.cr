@@ -126,7 +126,7 @@ class JSON::Builder
         when '\t'
           escape = "\\t"
         when .ascii_control?
-          io.write string.to_slice[start_pos, reader.pos - start_pos]
+          io.write_string string.to_slice[start_pos, reader.pos - start_pos]
           io << "\\u"
           ord = char.ord
           io << '0' if ord < 0x1000
@@ -141,13 +141,13 @@ class JSON::Builder
           next
         end
 
-        io.write string.to_slice[start_pos, reader.pos - start_pos]
+        io.write_string string.to_slice[start_pos, reader.pos - start_pos]
         io << escape
         reader.next_char
         start_pos = reader.pos
       end
 
-      io.write string.to_slice[start_pos, reader.pos - start_pos]
+      io.write_string string.to_slice[start_pos, reader.pos - start_pos]
 
       io << '"'
     end

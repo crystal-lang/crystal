@@ -183,10 +183,10 @@ require "./std/set_spec.cr"
 require "./std/slice_spec.cr"
 require "./std/socket/address_spec.cr"
 require "./std/socket/addrinfo_spec.cr"
-# require "./std/socket/socket_spec.cr" (failed codegen)
-# require "./std/socket/tcp_server_spec.cr" (failed codegen)
-# require "./std/socket/tcp_socket_spec.cr" (failed codegen)
-# require "./std/socket/udp_socket_spec.cr" (failed codegen)
+require "./std/socket/socket_spec.cr"
+require "./std/socket/tcp_server_spec.cr"
+require "./std/socket/tcp_socket_spec.cr"
+require "./std/socket/udp_socket_spec.cr"
 # require "./std/socket/unix_server_spec.cr" (failed codegen)
 # require "./std/socket/unix_socket_spec.cr" (failed codegen)
 require "./std/spec/context_spec.cr"

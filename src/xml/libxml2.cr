@@ -165,7 +165,7 @@ lib LibXML
     xmlCharEncodingHandlerPtr : Void*
     buffer : Void*
     conv : Void*
-    writter : Int
+    written : Int
     error : Int
   end
 

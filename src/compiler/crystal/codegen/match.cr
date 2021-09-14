@@ -73,15 +73,6 @@ class Crystal::CodeGenVisitor
     )
   end
 
-  private def create_match_fun_body(type : VirtualMetaclassType, type_id)
-    result = equal? type_id(type), type_id
-    type.each_concrete_type do |sub_type|
-      sub_type_cond = equal? type_id(sub_type), type_id
-      result = or(result, sub_type_cond)
-    end
-    ret result
-  end
-
   private def create_match_fun_body(type, type_id)
     result = nil
     type.each_concrete_type do |sub_type|

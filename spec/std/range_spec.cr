@@ -458,6 +458,9 @@ describe "Range" do
     it_iterates "begin.succ == end inclusive", [1, 2] of Int32, (1..2).step(1)
     it_iterates "begin.succ == end exclusive", [1] of Int32, (1...2).step(1)
 
+    it_iterates "Float step", [1.0, 1.5, 2.0, 2.5, 3.0], (1..3).step(by: 0.5)
+    it_iterates "Time::Span step", [1.minutes, 2.minutes, 3.minutes], (1.minutes..3.minutes).step(by: 1.minutes)
+
     describe "with #succ type" do
       range_basic = RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5)
       it_iterates "basic", [1, 2, 3, 4, 5].map(&->RangeSpecIntWrapper.new(Int32)), range_basic.step

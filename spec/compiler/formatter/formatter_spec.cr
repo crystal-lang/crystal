@@ -342,6 +342,11 @@ describe Crystal::Formatter do
     assert_format "#{keyword}  1", "#{keyword} 1"
     assert_format "#{keyword}( 1 , 2 )", "#{keyword}(1, 2)"
     assert_format "#{keyword}  1 ,  2", "#{keyword} 1, 2"
+    assert_format "#{keyword}  *1", "#{keyword} *1"
+    assert_format "#{keyword}  1  , *2", "#{keyword} 1, *2"
+    assert_format "#{keyword}  *1  ,2", "#{keyword} *1, 2"
+    assert_format "#{keyword}  *1  , *2", "#{keyword} *1, *2"
+    assert_format "#{keyword}( *1  , *2 )", "#{keyword}(*1, *2)"
 
     unless keyword == "yield"
       assert_format "#{keyword} { 1 ,  2 }", "#{keyword} {1, 2}"
@@ -638,9 +643,11 @@ describe Crystal::Formatter do
   assert_format "pointerof( @a )", "pointerof(@a)"
 
   assert_format "_ = 1"
+  assert_format "あ.い = 1"
 
   assert_format "a , b  = 1  ,  2", "a, b = 1, 2"
   assert_format "a[1] , b[2] = 1  ,  2", "a[1], b[2] = 1, 2"
+  assert_format "あ.い, う.え.お = 1, 2"
 
   assert_format "begin\n1\nensure\n2\nend", "begin\n  1\nensure\n  2\nend"
   assert_format "begin\n1\nrescue\n3\nensure\n2\nend", "begin\n  1\nrescue\n  3\nensure\n  2\nend"
@@ -1853,5 +1860,18 @@ describe Crystal::Formatter do
     ) {
       2
     }
+    CODE
+
+  # #11079
+  assert_format <<-CODE
+    foo = [1, [2,
+               3],
+           4]
+    CODE
+
+  assert_format <<-CODE
+    foo = {1, {2,
+               3},
+           4}
     CODE
 end

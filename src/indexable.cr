@@ -1088,3 +1088,5 @@ end
 private def dup_as_array(a)
   a.is_a?(Array) ? a.dup : a.to_a
 end
+
+require "./indexable/*"
