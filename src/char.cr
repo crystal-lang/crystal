@@ -122,6 +122,12 @@ struct Char
     self - other
   end
 
+  # Performs a `#step` in the direction of the _limit_. For instance:
+  #
+  # ```
+  # 'd'.step(to: 'a').to_a # => ['d', 'c', 'b', 'a']
+  # 'a'.step(to: 'd').to_a # => ['a', 'b', 'c', 'd']
+  # ```
   def step(*, to limit = nil, exclusive : Bool = false, &)
     if limit
       direction = limit <=> self
@@ -133,6 +139,7 @@ struct Char
     end
   end
 
+  # :ditto:
   def step(*, to limit = nil, exclusive : Bool = false)
     if limit
       direction = limit <=> self
@@ -717,14 +724,12 @@ struct Char
       yield (0xe0 | (c >> 12)).to_u8
       yield (0x80 | ((c >> 6) & 0x3f)).to_u8
       yield (0x80 | (c & 0x3f)).to_u8
-    elsif c <= MAX_CODEPOINT
+    else
       # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
       yield (0xf0 | (c >> 18)).to_u8
       yield (0x80 | ((c >> 12) & 0x3f)).to_u8
       yield (0x80 | ((c >> 6) & 0x3f)).to_u8
       yield (0x80 | (c & 0x3f)).to_u8
-    else
-      raise InvalidByteSequenceError.new("Invalid char value #{dump}")
     end
   end
 
@@ -747,11 +752,9 @@ struct Char
     elsif c <= 0xffff
       # 1110xxxx  10xxxxxx  10xxxxxx
       3
-    elsif c <= MAX_CODEPOINT
+    else
       # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
       4
-    else
-      raise InvalidByteSequenceError.new("Invalid char value #{dump}")
     end
   end
 
@@ -792,7 +795,7 @@ struct Char
 
       # Optimization: writing a slice is much slower than writing a byte
       if io.has_non_utf8_encoding?
-        io.write_utf8 Slice.new(pointerof(byte), 1)
+        io.write_string Slice.new(pointerof(byte), 1)
       else
         io.write_byte byte
       end
@@ -803,7 +806,7 @@ struct Char
         chars[i] = byte
         i += 1
       end
-      io.write_utf8 chars.to_slice[0, i]
+      io.write_string chars.to_slice[0, i]
     end
   end
 

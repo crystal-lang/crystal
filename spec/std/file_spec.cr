@@ -1327,6 +1327,7 @@ describe "File" do
 
   describe ".match?" do
     it "matches basics" do
+      File.match?("abc", Path["abc"]).should be_true
       File.match?("abc", "abc").should be_true
       File.match?("*", "abc").should be_true
       File.match?("*c", "abc").should be_true

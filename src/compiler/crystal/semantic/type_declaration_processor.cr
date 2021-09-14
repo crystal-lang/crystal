@@ -118,6 +118,10 @@ struct Crystal::TypeDeclarationProcessor
     # Types whose initialize methods are all macro defs
     @has_macro_def = Set(Type).new
 
+    # Types that are not extended by any other types, used to speed up detection
+    # of instance vars in extended modules
+    @has_no_extenders = Set(Type).new
+
     @type_decl_visitor = TypeDeclarationVisitor.new(@program, @explicit_instance_vars)
 
     @type_guess_visitor = TypeGuessVisitor.new(@program, @explicit_instance_vars,
@@ -254,7 +258,11 @@ struct Crystal::TypeDeclarationProcessor
     # set from uninstantiated generic types
     return if owner.is_a?(GenericInstanceType)
 
-    if owner.metaclass?
+    if owner.is_a?(NonGenericModuleType) || owner.is_a?(GenericModuleType)
+      if extender = find_extending_type(owner)
+        raise TypeException.new("can't declare instance variables in #{owner} because #{extender} extends it", type_decl.location)
+      end
+    elsif owner.metaclass?
       raise TypeException.new("can't declare instance variables in #{owner}", type_decl.location)
     end
 
@@ -297,6 +305,26 @@ struct Crystal::TypeDeclarationProcessor
         end
       end
     end
+  end
+
+  private def find_extending_type(mod)
+    return nil if @has_no_extenders.includes?(mod)
+
+    mod.raw_including_types.try &.each do |includer|
+      case includer
+      when .metaclass?
+        return includer.instance_type
+      when NonGenericModuleType
+        type = find_extending_type(includer)
+        return type if type
+      when GenericModuleInstanceType
+        type = find_extending_type(includer.generic_type.as(GenericModuleType))
+        return type if type
+      end
+    end
+
+    @has_no_extenders << mod
+    nil
   end
 
   private def check_non_nilable_for_generic_module(owner, name, type_decl)
@@ -343,6 +371,14 @@ struct Crystal::TypeDeclarationProcessor
     # Generic instances already have their instance vars
     # set from uninstantiated generic types
     return if owner.is_a?(GenericInstanceType)
+
+    if owner.is_a?(NonGenericModuleType) || owner.is_a?(GenericModuleType)
+      if extender = find_extending_type(owner)
+        raise TypeException.new("can't declare instance variables in #{owner} because #{extender} extends it", type_info.location)
+      end
+    elsif owner.metaclass?
+      raise TypeException.new("can't declare instance variables in #{owner}", type_info.location)
+    end
 
     # If a superclass already defines this variable we ignore
     # the guessed type information for subclasses

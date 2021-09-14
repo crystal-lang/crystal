@@ -123,7 +123,7 @@ module Crystal
       #
       # An individual compressed sequence.
       struct Sequence
-        property! offset : LibC::OffT
+        property! offset : Int64
         property! unit_length : UInt32
         property! version : UInt16
         property! header_length : UInt32 # FIXME: UInt64 for DWARF64 (uncommon)
@@ -166,7 +166,7 @@ module Crystal
       # reduce the memory usage of repeating a String many times.
       getter matrix : Array(Array(Row))
 
-      @offset : LibC::OffT
+      @offset : Int64
 
       def initialize(@io : IO::FileDescriptor, size, @base_address : LibC::SizeT = 0)
         @offset = @io.tell

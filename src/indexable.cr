@@ -532,7 +532,7 @@ module Indexable(T)
   # [1, 2, 3, 2, 3].rindex(2)            # => 3
   # [1, 2, 3, 2, 3].rindex(2, offset: 2) # => 1
   # ```
-  def rindex(value, offset = size - 1) : Int32?
+  def rindex(value, offset = size - 1)
     rindex(offset) { |elem| elem == value }
   end
 
@@ -1088,3 +1088,5 @@ end
 private def dup_as_array(a)
   a.is_a?(Array) ? a.dup : a.to_a
 end
+
+require "./indexable/*"

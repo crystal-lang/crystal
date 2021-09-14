@@ -16,7 +16,7 @@ module Spec::Methods
   # ```
   #
   # If `focus` is `true`, only this `describe`, and others marked with `focus: true`, will run.
-  def describe(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+  def describe(description = nil, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
     Spec.root_context.describe(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
@@ -27,7 +27,7 @@ module Spec::Methods
   # It is functionally equivalent to `#describe`.
   #
   # If `focus` is `true`, only this `context`, and others marked with `focus: true`, will run.
-  def context(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+  def context(description = nil, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
     describe(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
