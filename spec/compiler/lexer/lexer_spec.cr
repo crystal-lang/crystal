@@ -164,7 +164,7 @@ describe "Lexer" do
                 ["+1.0f32", "+1.0"], ["-1.0f32", "-1.0"], ["-0.0f32", "-0.0"], ["1_234.567_890_f32", "1234.567890"]]
   it_lexes_f64 ["1.0", ["1.0hello", "1.0"], "+1.0", "-1.0", ["1_234.567_890", "1234.567890"]]
   it_lexes_f32 [["1e+23_f32", "1e+23"], ["1.2e+23_f32", "1.2e+23"]]
-  it_lexes_f64 ["1e23", "1e-23", "1e+23", "1.2e+23", ["1e23f64", "1e23"], ["1.2e+23_f64", "1.2e+23"]]
+  it_lexes_f64 ["1e23", "1e-23", "1e+23", "1.2e+23", ["1e23f64", "1e23"], ["1.2e+23_f64", "1.2e+23"], "0e40"]
 
   it_lexes_number :i8, ["1i8", "1"]
   it_lexes_number :i8, ["1_i8", "1"]
@@ -225,6 +225,7 @@ describe "Lexer" do
   it_lexes_number :u64, ["10000000000000000000_u64", "10000000000000000000"]
 
   it_lexes_i64 [["0x3fffffffffffffff", "4611686018427387903"]]
+  it_lexes_i64 [["-0x8000000000000000_i64", "-9223372036854775808"]]
   it_lexes_i64 ["-9223372036854775808", "9223372036854775807"]
   it_lexes_u64 [["0xffffffffffffffff", "18446744073709551615"]]
 
@@ -295,6 +296,8 @@ describe "Lexer" do
   assert_syntax_error "118446744073709551616_u64", "118446744073709551616 doesn't fit in an UInt64"
   assert_syntax_error "18446744073709551616_u64", "18446744073709551616 doesn't fit in an UInt64"
   assert_syntax_error "-1_u64", "Invalid negative value -1 for UInt64"
+  assert_syntax_error "-0_u64", "Invalid negative value -0 for UInt64"
+  assert_syntax_error "-0u64", "Invalid negative value -0 for UInt64"
 
   assert_syntax_error "18446744073709551616_i32", "18446744073709551616 doesn't fit in an Int32"
   assert_syntax_error "9999999999999999999_i32", "9999999999999999999 doesn't fit in an Int32"
@@ -310,6 +313,15 @@ describe "Lexer" do
   assert_syntax_error "118446744073709551616_u128", "118446744073709551616 doesn't fit in an UInt64. UInt128 literals that don't fit in an UInt64 are currently not supported"
   assert_syntax_error "18446744073709551616_u128", "18446744073709551616 doesn't fit in an UInt64. UInt128 literals that don't fit in an UInt64 are currently not supported"
   assert_syntax_error "-1_u128", "Invalid negative value -1 for UInt128"
+
+  assert_syntax_error "0_12", "octal constants should be prefixed with 0o"
+  assert_syntax_error "1__1", "trailing '_' in number"
+  assert_syntax_error "-3_", "trailing '_' in number"
+  assert_syntax_error "0b_10", "numeric literal without digits"
+  assert_syntax_error "10_e10", "trailing '_' in number"
+  assert_syntax_error "1_.1", "trailing '_' in number"
+  assert_syntax_error "-0_e12", "trailing '_' in number"
+  assert_syntax_error "0x7239057902438759279340759872947597435385728934759", "integer literal too large"
 
   assert_syntax_error "0xFF_i8", "255 doesn't fit in an Int8"
   assert_syntax_error "0o200_i8", "128 doesn't fit in an Int8"
