@@ -318,6 +318,7 @@ describe BigDecimal do
     BigDecimal.new(0).to_s.should eq "0"
     BigDecimal.new(1).to_s.should eq "1"
     BigDecimal.new(-1).to_s.should eq "-1"
+    BigDecimal.new("8.5").to_s.should eq "8.5"
     BigDecimal.new("-0.35").to_s.should eq "-0.35"
     BigDecimal.new("-.35").to_s.should eq "-0.35"
     BigDecimal.new("0.01").to_s.should eq "0.01"

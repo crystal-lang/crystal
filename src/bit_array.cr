@@ -16,7 +16,7 @@
 # ba[2] # => true
 # ```
 struct BitArray
-  include Indexable(Bool)
+  include Indexable::Mutable(Bool)
 
   # The number of bits the BitArray stores
   getter size : Int32
@@ -44,23 +44,24 @@ struct BitArray
     (@bits[bit_index] & (1 << sub_index)) > 0
   end
 
-  # Sets the bit at the given *index*.
-  # Negative indices can be used to start counting from the end of the array.
-  # Raises `IndexError` if trying to access a bit outside the array's range.
-  #
-  # ```
-  # require "bit_array"
-  #
-  # ba = BitArray.new(5)
-  # ba[3] = true
-  # ```
-  def []=(index, value : Bool)
+  def unsafe_put(index : Int, value : Bool)
+    bit_index, sub_index = index.divmod(32)
+    if value
+      @bits[bit_index] |= 1 << sub_index
+    else
+      @bits[bit_index] &= ~(1 << sub_index)
+    end
+  end
+
+  # :inherit:
+  def []=(index : Int, value : Bool) : Bool
     bit_index, sub_index = bit_index_and_sub_index(index)
     if value
       @bits[bit_index] |= 1 << sub_index
     else
       @bits[bit_index] &= ~(1 << sub_index)
     end
+    value
   end
 
   # Returns all elements that are within the given range.
@@ -121,7 +122,7 @@ struct BitArray
       bits = @bits[0]
 
       bits >>= start
-      bits &= (1 << count) - 1
+      bits &= ~(UInt32::MAX << count)
 
       BitArray.new(count).tap { |ba| ba.@bits[0] = bits }
     elsif size <= 64
@@ -129,10 +130,10 @@ struct BitArray
       bits = @bits.as(UInt64*)[0]
 
       bits >>= start
-      bits &= (1 << count) - 1
+      bits &= ~(UInt64::MAX << count)
 
       if count <= 32
-        BitArray.new(count).tap { |ba| ba.@bits[0] = bits.to_u32 }
+        BitArray.new(count).tap { |ba| ba.@bits[0] = bits.to_u32! }
       else
         BitArray.new(count).tap { |ba| ba.@bits.as(UInt64*)[0] = bits }
       end
@@ -150,7 +151,7 @@ struct BitArray
         bits = @bits[start_bit_index + i + 1]
 
         high_bits = bits
-        high_bits &= (1 << start_sub_index) - 1
+        high_bits &= ~(UInt32::MAX << start_sub_index)
         high_bits <<= 32 - start_sub_index
 
         ba.@bits[i] = low_bits | high_bits
@@ -323,7 +324,7 @@ struct BitArray
   protected def clear_unused_bits
     # There are no unused bits if `size` is a multiple of 32.
     bit_index, sub_index = @size.divmod(32)
-    @bits[bit_index] &= (1 << sub_index) - 1 unless sub_index == 0
+    @bits[bit_index] &= ~(UInt32::MAX << sub_index) unless sub_index == 0
   end
 
   private def bytesize

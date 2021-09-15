@@ -676,6 +676,18 @@ describe "Semantic: abstract def" do
     ))
   end
 
+  it "error shows full signature of block parameter" do
+    assert_error(<<-CR, "abstract `def Moo#each(& : (Int32 -> _))` must be implemented by Foo")
+      module Moo
+        abstract def each(& : Int32 -> _)
+      end
+
+      class Foo
+        include Moo
+      end
+      CR
+  end
+
   it "doesn't error if implementation have default value" do
     semantic %(
       abstract class Foo

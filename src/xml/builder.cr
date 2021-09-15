@@ -15,7 +15,7 @@ class XML::Builder
     @box = Box.box(io)
     buffer = LibXML.xmlOutputBufferCreateIO(
       ->(ctx, buffer, len) {
-        Box(IO).unbox(ctx).write(Slice.new(buffer, len))
+        Box(IO).unbox(ctx).write_string(Slice.new(buffer, len))
         len
       },
       ->(ctx) {

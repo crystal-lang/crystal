@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   linux-job:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:1.1.0-build
+    container: crystallang/crystal:1.1.1-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
@@ -189,6 +189,9 @@ jobs:
       - name: Build stdlib specs executable
         run: |
           bin\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Dwithout_openssl -Di_know_what_im_doing
+      - name: Run socket specs
+        run: |
+          .\std_spec.exe --verbose -e TCPSocket
       - name: Run stdlib specs
         run: |
           .\std_spec.exe
