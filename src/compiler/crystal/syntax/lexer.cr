@@ -1519,9 +1519,10 @@ module Crystal
         when 'e', 'E'
           raise("trailing '_' in number", @token, (current_pos - start)) if last_is_underscore
           break if is_e_notation || base != 10
-          is_e_notation = last_is_underscore = is_decimal = true
+          is_e_notation = is_decimal = true
           underscore_count += 1
           next_char if peek_next_char.in?({'+', '-'})
+          raise("trailing '_' in number", @token, (current_pos - start)) if peek_next_char == '_'
         when 'i'
           break if is_decimal
           @token.number_kind, suffix_size = consume_int_suffix
