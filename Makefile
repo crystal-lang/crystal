@@ -44,7 +44,7 @@ EXPORTS_BUILD := \
 SHELL = sh
 LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
 LLVM_EXT_DIR = src/llvm/ext
-LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
+LLVM_EXT_OBJ = $(O)/llvm_ext.o
 DEPS = $(LLVM_EXT_OBJ)
 CXXFLAGS += $(if $(debug),-g -O0)
 CRYSTAL_VERSION ?= $(shell cat src/VERSION)
@@ -122,6 +122,7 @@ $(O)/crystal: $(DEPS) $(SOURCES)
 	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
+	@mkdir -p $(shell dirname $(LLVM_EXT_OBJ))
 	$(CXX) -c $(CXXFLAGS) -o $@ $< $(shell $(LLVM_CONFIG) --cxxflags)
 
 .PHONY: clean
