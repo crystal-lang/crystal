@@ -1613,7 +1613,11 @@ class Array(T)
   # b # => [3, 2, 1]
   # a # => [3, 1, 2]
   # ```
-  def sort(&block : T, T -> Int32?) : Array(T)
+  def sort(&block : T, T -> U) : Array(T) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
     dup.sort! &block
   end
 
