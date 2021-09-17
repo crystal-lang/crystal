@@ -58,23 +58,24 @@ class Socket
     # an `Exception` (e.g. a `Socket` or `nil`).
     def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil)
       getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
-        error = nil
-
         loop do
           value = yield addrinfo.not_nil!
 
           if value.is_a?(Exception)
-            error = value
+            unless addrinfo = addrinfo.try(&.next?)
+              if value.is_a?(Socket::ConnectError)
+                raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", value.os_error)
+              else
+                {% if flag?(:win32) %}
+                  # FIXME: Workardound for https://github.com/crystal-lang/crystal/issues/11047
+                  array = StaticArray(UInt8, 0).new(0)
+                {% end %}
+
+                raise value
+              end
+            end
           else
             return value
-          end
-
-          unless addrinfo = addrinfo.try(&.next?)
-            if error.is_a?(Socket::ConnectError)
-              raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", error.os_error)
-            else
-              raise error if error
-            end
           end
         end
       end
@@ -88,7 +89,7 @@ class Socket
 
       @[Deprecated("Use `.from_os_error` instead")]
       def self.new(error_code : Int32, message, domain)
-        from_os_error(message, Errno.new(error_code), domain: domain)
+        from_os_error(message, Errno.new(error_code), domain: domain, type: nil, service: nil, protocol: nil)
       end
 
       @[Deprecated("Use `.from_os_error` instead")]
@@ -146,6 +147,11 @@ class Socket
         if (service == 0 || service == nil) && (hints.ai_flags & LibC::AI_NUMERICSERV)
           hints.ai_flags |= LibC::AI_NUMERICSERV
           service = "00"
+        end
+      {% end %}
+      {% if flag?(:win32) %}
+        if service.is_a?(Int) && service < 0
+          raise Error.from_os_error(nil, WinError::WSATYPE_NOT_FOUND, domain: domain, type: type, protocol: protocol, service: service)
         end
       {% end %}
 
