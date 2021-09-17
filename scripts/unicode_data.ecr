@@ -152,6 +152,56 @@ module Unicode
     data
   end
 
+  # Used to quickly determine whether a codepoint may appear under Normalization
+  # Form C (yes if absent in this table).
+  # Here we store: {low, high, result (no or maybe)}
+  private class_getter nfc_quick_check : Array({Int32, Int32, QuickCheckResult}) do
+    <%- quick_check = quick_checks[Unicode::NormalizationForm::NFC] -%>
+    data = Array({Int32, Int32, QuickCheckResult}).new(<%= quick_check.size %>)
+    <%- quick_check.each do |range| -%>
+      put(data, <%= range.low %>, <%= range.high %>, QuickCheckResult::<%= range.result %>)
+    <%- end -%>
+    data
+  end
+
+  # Used to quickly determine whether a codepoint may appear under Normalization
+  # Form KC (yes if absent in this table).
+  # Here we store: {low, high, result (no or maybe)}
+  private class_getter nfkc_quick_check : Array({Int32, Int32, QuickCheckResult}) do
+    <%- quick_check = quick_checks[Unicode::NormalizationForm::NFKC] -%>
+    data = Array({Int32, Int32, QuickCheckResult}).new(<%= quick_check.size %>)
+    <%- quick_check.each do |range| -%>
+      put(data, <%= range.low %>, <%= range.high %>, QuickCheckResult::<%= range.result %>)
+    <%- end -%>
+    data
+  end
+
+  # Used to quickly determine whether a codepoint may appear under Normalization
+  # Form D (yes if absent in this table). There are no "maybe" values;
+  # codepoints contained here may not appear under NFD.
+  # Here we store: {low, high}
+  private class_getter nfd_quick_check : Array({Int32, Int32}) do
+    <%- quick_check = quick_checks[Unicode::NormalizationForm::NFD] -%>
+    data = Array({Int32, Int32}).new(<%= quick_check.size %>)
+    <%- quick_check.each do |range| -%>
+      put(data, <%= range.low %>, <%= range.high %>)
+    <%- end -%>
+    data
+  end
+
+  # Used to quickly determine whether a codepoint may appear under Normalization
+  # Form KD (yes if absent in this table). There are no "maybe" values;
+  # codepoints contained here may not appear under NFKD.
+  # Here we store: {low, high}
+  private class_getter nfkd_quick_check : Array({Int32, Int32}) do
+    <%- quick_check = quick_checks[Unicode::NormalizationForm::NFKD] -%>
+    data = Array({Int32, Int32}).new(<%= quick_check.size %>)
+    <%- quick_check.each do |range| -%>
+      put(data, <%= range.low %>, <%= range.high %>)
+    <%- end -%>
+    data
+  end
+
   # TODO: this is needed to avoid generating lots of allocas
   # in LLVM, which makes LLVM really slow. The compiler should
   # try to avoid/reuse temporary allocas.

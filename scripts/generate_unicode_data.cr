@@ -34,6 +34,7 @@ record CaseRange, low : Int32, high : Int32, delta : Int32
 record AlternateRange, low : Int32, high : Int32
 record Stride, low : Int32, high : Int32, stride : Int32
 record CanonicalCombiningClassRange, low : Int32, high : Int32, ccc : UInt8
+record QuickCheckRange, low : Int32, high : Int32, result : Unicode::QuickCheckResult
 
 def case_ranges(entries, &block)
   ranges = [] of CaseRange
@@ -151,6 +152,7 @@ special_cases_casefold = [] of SpecialCase
 casefold_mapping = Hash(Int32, Int32).new
 canonical_combining_classes = [] of CanonicalCombiningClassRange
 full_composition_exclusions = Set(Int32).new
+quick_checks = Unicode::NormalizationForm.values.to_h { |kind| {kind, Array(QuickCheckRange).new} }
 
 url = "#{UCD_ROOT}CaseFolding.txt"
 body = HTTP::Client.get(url).body
@@ -244,17 +246,12 @@ body = HTTP::Client.get(url).body
 body.each_line do |line|
   line = line.strip
 
-  if m = line.match(/^([0-9A-F]+)\.\.([0-9A-F]+)\s*;\s*(\d+)/)
+  if m = line.match(/^([0-9A-F]+)(?:\.\.([0-9A-F]+))?\s*;\s*(\d+)/)
     ccc = m[3].to_u8
     next if ccc == 0
     low = m[1].to_i(16)
-    high = m[2].to_i(16)
+    high = m[2]?.try(&.to_i(16)) || low
     canonical_combining_classes << CanonicalCombiningClassRange.new(low, high, ccc)
-  elsif m = line.match(/^([0-9A-F]+)\s*;\s*(\d+)/)
-    ccc = m[2].to_u8
-    next if ccc == 0
-    codepoint = m[1].to_i(16)
-    canonical_combining_classes << CanonicalCombiningClassRange.new(codepoint, codepoint, ccc)
   end
 end
 
@@ -262,14 +259,18 @@ url = "#{UCD_ROOT}DerivedNormalizationProps.txt"
 body = HTTP::Client.get(url).body
 body.each_line do |line|
   line = line.strip
+  break if line.starts_with?("# Derived Property: Expands_On_NFD")
 
-  if m = line.match(/^([0-9A-F]+)\.\.([0-9A-F]+)\s*;\s*Full_Composition_Exclusion/)
+  if m = line.match(/^([0-9A-F]+)(?:\.\.([0-9A-F]+))?\s*;\s*Full_Composition_Exclusion/)
     low = m[1].to_i(16)
-    high = m[2].to_i(16)
+    high = m[2]?.try(&.to_i(16)) || low
     (low..high).each { |codepoint| full_composition_exclusions << codepoint }
-  elsif m = line.match(/^([0-9A-F]+)\s*;\s*Full_Composition_Exclusion/)
-    codepoint = m[1].to_i(16)
-    full_composition_exclusions << codepoint
+  elsif m = line.match(/^([0-9A-F]+)(?:\.\.([0-9A-F]+))?\s*;\s*(NFC|NFD|NFKC|NFKD)_QC\s*;\s*(N|M)/)
+    low = m[1].to_i(16)
+    high = m[2]?.try(&.to_i(16)) || low
+    quick_check = quick_checks[Unicode::NormalizationForm.parse(m[3])]
+    result = m[4] == "M" ? Unicode::QuickCheckResult::Maybe : Unicode::QuickCheckResult::No
+    quick_check << QuickCheckRange.new(low, high, result)
   end
 end
 
@@ -328,6 +329,8 @@ canonical_compositions = canonical_decompositions.compact_map do |codepoint, fir
   next if second == 0 || full_composition_exclusions.includes?(codepoint)
   {(first.to_i64 << 21) | second, codepoint}
 end
+
+quick_checks.each_value &.sort_by! &.low
 
 output = ECR.render "#{__DIR__}/unicode_data.ecr"
 output = Crystal.format(output)

@@ -35,6 +35,13 @@ module Unicode
   end
 
   # :nodoc:
+  enum QuickCheckResult
+    Yes
+    No
+    Maybe
+  end
+
+  # :nodoc:
   def self.upcase(char : Char, options : CaseOptions) : Char
     result = check_upcase_ascii(char, options)
     return result if result
@@ -319,7 +326,7 @@ module Unicode
   private def self.canonical_compose!(codepoints : Slice(Int32), & : Int32 ->)
     l_pos = 0
     l = codepoints.unsafe_fetch(l_pos)
-    l_ccc = 0
+    l_ccc = 0_u8
 
     (1...codepoints.size).each do |c_pos|
       c = codepoints.unsafe_fetch(c_pos)
@@ -338,7 +345,7 @@ module Unicode
           yield l unless l == -1
         end
         l = c
-        l_ccc = 0
+        l_ccc = 0_u8
       else
         l_ccc = c_ccc
       end
@@ -351,6 +358,38 @@ module Unicode
       l = codepoints.unsafe_fetch(l_pos)
       yield l unless l == -1
     end
+  end
+
+  # :nodoc:
+  def self.quick_check_normalized(str : String, form : NormalizationForm) : QuickCheckResult
+    result = QuickCheckResult::Yes
+    return result if str.ascii_only?
+    last_ccc = 0_u8
+
+    str.each_codepoint do |codepoint|
+      ccc = canonical_combining_class(codepoint)
+      return QuickCheckResult::No if last_ccc > ccc && ccc != 0
+
+      allowed = case form
+                in .nfc?
+                  search_ranges(nfc_quick_check, codepoint) { |x| x[2] }
+                in .nfd?
+                  search_ranges(nfd_quick_check, codepoint) { QuickCheckResult::No }
+                in .nfkc?
+                  search_ranges(nfkc_quick_check, codepoint) { |x| x[2] }
+                in .nfkd?
+                  search_ranges(nfkd_quick_check, codepoint) { QuickCheckResult::No }
+                end
+
+      if allowed
+        return QuickCheckResult::No if allowed.no?
+        result = QuickCheckResult::Maybe if allowed.maybe?
+      end
+
+      last_ccc = ccc
+    end
+
+    result
   end
 
   private def self.canonical_combining_class(codepoint : Int32) : UInt8

@@ -1413,19 +1413,19 @@ class String
   # str.unicode_normalize(:nfkd).codepoints # => [0x0073, 0x0323, 0x0307]
   # ```
   def unicode_normalize(form : Unicode::NormalizationForm = :nfc) : String
-    return self if ascii_only?
-    String.build { |io| unicode_normalize(io, form) }
+    return self if Unicode.quick_check_normalized(self, form).yes?
+    String.build { |io| do_unicode_normalize(io, form) }
   end
 
   # Normalizes this `String` according to the given
   # [Unicode normalization form](https://unicode.org/reports/tr15/) and
   # writes the result to the given *io*.
   def unicode_normalize(io : IO, form : Unicode::NormalizationForm = :nfc) : Nil
-    if ascii_only?
-      io << self
-      return
-    end
+    return io << self if Unicode.quick_check_normalized(self, form).yes?
+    do_unicode_normalize(io, form)
+  end
 
+  private def do_unicode_normalize(io, form)
     codepoints = [] of Int32
 
     each_char do |char|
@@ -1460,7 +1460,14 @@ class String
   # bar.unicode_normalized?(:nfd) # => true
   # ```
   def unicode_normalized?(form : Unicode::NormalizationForm = :nfc) : Bool
-    self == unicode_normalize(form)
+    case Unicode.quick_check_normalized(self, form)
+    in .yes?
+      true
+    in .no?
+      false
+    in .maybe?
+      self == String.build { |io| do_unicode_normalize(io, form) }
+    end
   end
 
   # Returns a new `String` with the last carriage return removed (that is, it
