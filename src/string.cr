@@ -1402,6 +1402,45 @@ class String
     end
   end
 
+  # Returns the result of normalizing this `String` according to the given
+  # [Unicode normalization form](https://unicode.org/reports/tr15/).
+  #
+  # ```
+  # str = "\u{1E9B}\u{0323}"                # => "ẛ̣"
+  # str.unicode_normalize.codepoints        # => [0x1E9B, 0x0323]
+  # str.unicode_normalize(:nfd).codepoints  # => [0x017F, 0x0323, 0x0307]
+  # str.unicode_normalize(:nfkc).codepoints # => [0x1E69]
+  # str.unicode_normalize(:nfkd).codepoints # => [0x0073, 0x0323, 0x0307]
+  # ```
+  def unicode_normalize(form : Unicode::NormalizationForm = :nfc) : String
+    String.build { |io| unicode_normalize(io, form) }
+  end
+
+  # Normalizes this `String` according to the given
+  # [Unicode normalization form](https://unicode.org/reports/tr15/) and
+  # writes the result to the given *io*.
+  def unicode_normalize(io : IO, form : Unicode::NormalizationForm = :nfc) : Nil
+    codepoints = [] of Int32
+
+    each_char do |char|
+      case form
+      in .nfc?, .nfd?
+        Unicode.canonical_decompose(codepoints, char)
+      in .nfkc?, .nfkd?
+        Unicode.compatibility_decompose(codepoints, char)
+      end
+    end
+
+    Unicode.canonical_order!(codepoints)
+
+    case form
+    in .nfc?, .nfkc?
+      Unicode.canonical_compose!(codepoints) { |char| io << char }
+    in .nfd?, .nfkd?
+      codepoints.each { |codepoint| io << codepoint.unsafe_chr }
+    end
+  end
+
   # Returns a new `String` with the last carriage return removed (that is, it
   # will remove \n, \r, and \r\n).
   #
