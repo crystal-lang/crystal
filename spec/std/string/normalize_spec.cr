@@ -57,7 +57,36 @@ private macro assert_prints_codepoints(call, str, desc, *, file = __FILE__, line
   {% end %}
 end
 
+private def assert_normalized(source, target, form : Unicode::NormalizationForm, *, file = __FILE__, line = __LINE__)
+  normalized = source.unicode_normalized?(form)
+  equal = (source == target)
+  return if normalized == equal
+
+  got = source.codepoints.join(", ") { |x| "U+%04X" % x }
+  kind = form.to_s.upcase
+  if equal # !normalized
+    fail <<-ERROR, file: file, line: line
+      Expected: is#{kind}(str) == false
+           got: str == to#{kind}(str)
+                str == [#{got}]"
+      ERROR
+  else # !equal && normalized
+    expected = target.codepoints.join(", ") { |x| "U+%04X" % x }
+    fail <<-ERROR, file: file, line: line
+      Expected: is#{kind}(str) == true
+           got: str != to#{kind}(str)
+                str == [#{got}]
+                to#{kind}(str) == [#{expected}]"
+      ERROR
+  end
+end
+
 private def assert_normalizes(source, nfc_str, nfd_str, nfkc_str, nfkd_str, *, file = __FILE__, line = __LINE__)
+  assert_normalized source, nfc_str, :nfc, file: file, line: line
+  assert_normalized source, nfd_str, :nfd, file: file, line: line
+  assert_normalized source, nfkc_str, :nfkc, file: file, line: line
+  assert_normalized source, nfkd_str, :nfkd, file: file, line: line
+
   assert_prints_codepoints source.unicode_normalize(:nfc), nfc_str, "c2 == toNFC(c1)", file: file, line: line
   assert_prints_codepoints nfc_str.unicode_normalize(:nfc), nfc_str, "c2 == toNFC(c2)", file: file, line: line
   assert_prints_codepoints nfd_str.unicode_normalize(:nfc), nfc_str, "c2 == toNFC(c3)", file: file, line: line
