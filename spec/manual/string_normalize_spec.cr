@@ -1,6 +1,6 @@
 require "spec"
 require "http/client"
-require "../../support/string"
+require "../support/string"
 
 UCD_ROOT = "http://www.unicode.org/Public/13.0.0/ucd/"
 
