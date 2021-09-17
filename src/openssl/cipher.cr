@@ -92,7 +92,7 @@ class OpenSSL::Cipher
     cipherinit
   end
 
-  # Add the data to be encypted or decrypted to this cipher's buffer.
+  # Add the data to be encrypted or decrypted to this cipher's buffer.
   def update(data)
     slice = data.to_slice
     buffer_length = slice.size + block_size

@@ -26,10 +26,6 @@ module Crystal
     # All symbols (:foo, :bar) found in the program
     getter symbols = Set(String).new
 
-    # All global variables in the program ($foo, $bar), indexed by their name.
-    # The names includes the `$` sign.
-    getter global_vars = {} of String => MetaTypeVar
-
     # Hash that prevents recursive splat expansions. For example:
     #
     # ```
@@ -123,7 +119,7 @@ module Crystal
     property compiler : Compiler?
 
     def initialize
-      super(self, self, "top_level")
+      super(self, self, "main")
 
       # Every crystal program comes with some predefined types that we initialize here,
       # like Object, Value, Reference, etc.
