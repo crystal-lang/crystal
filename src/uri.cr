@@ -552,34 +552,6 @@ class URI
     URI::Parser.new(raw_url).run.uri
   end
 
-  # Deserializes a URI from JSON, represented as a string.
-  #
-  # ```
-  # require "uri"
-  # require "json"
-  #
-  # uri = URI.from_json(%("http://crystal-lang.org")) # => #<URI:0x1068a7e40 @scheme="http", @host="crystal-lang.org", ... >
-  # uri.scheme                                        # => "http"
-  # uri.host                                          # => "crystal-lang.org"
-  # ```
-  def self.new(parser : JSON::PullParser)
-    parse parser.read_string
-  end
-
-  # Deserializes a URI from YAML, represented as a string.
-  #
-  # ```
-  # require "uri"
-  # require "yaml"
-  #
-  # uri = URI.from_yaml(%("http://crystal-lang.org")) # => #<URI:0x1068a7e40 @scheme="http", @host="crystal-lang.org", ... >
-  # uri.scheme                                        # => "http"
-  # uri.host                                          # => "crystal-lang.org"
-  # ```
-  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-    parse String.new(ctx, node)
-  end
-
   # Returns the user-information component containing
   # the provided username and password.
   #
@@ -746,29 +718,5 @@ class URI
   # its *scheme*.
   private def default_port?
     (scheme = @scheme) && (port = @port) && port == URI.default_port(scheme)
-  end
-
-  # Serializes this URI to JSON, represented as a string.
-  #
-  # ```
-  # require "uri"
-  # require "json"
-  #
-  # URI.parse("http://example.com").to_json # => "http://example.com"
-  # ```
-  def to_json(builder : JSON::Builder)
-    builder.string to_s
-  end
-
-  # Serializes this URI to YAML, represented as a string.
-  #
-  # ```
-  # require "uri"
-  # require "yaml"
-  #
-  # URI.parse("http://example.com").to_yaml # => "http://example.com"
-  # ```
-  def to_yaml(yaml : YAML::Nodes::Builder)
-    yaml.scalar to_s
   end
 end

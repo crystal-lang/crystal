@@ -1,7 +1,7 @@
 require "spec"
 require "uri"
-require "json"
-require "yaml"
+require "uri/json"
+require "uri/yaml"
 
 private def assert_uri(string, file = __FILE__, line = __LINE__, **args)
   it "`#{string}`", file, line do
