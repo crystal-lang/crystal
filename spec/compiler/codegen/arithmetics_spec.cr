@@ -265,6 +265,23 @@ describe "Code gen: arithmetic primitives" do
           end
         {% end %}
 
+        {% if [Int64, Int128, UInt64, UInt128].includes?(type) || ([Int32, UInt32].includes?(type) && float_type == Float32) %}
+          it "raises overflow if equal to {{type}}::MAX (from {{float_type}})" do
+            run(%(
+              require "prelude"
+
+              v = {{float_type}}.new({{type}}::MAX)
+
+              begin
+                v.{{method}}
+                0
+              rescue OverflowError
+                1
+              end
+            )).to_i.should eq(1)
+          end
+        {% end %}
+
         it "raises overflow if lower than {{type}}::MIN (from {{float_type}})" do
           run(%(
             require "prelude"
@@ -280,6 +297,29 @@ describe "Code gen: arithmetic primitives" do
           )).to_i.should eq(1)
         end
       {% end %}
+    {% end %}
+
+    {% begin %}
+      it "raises overflow if not a number" do
+        run(%(
+          require "prelude"
+
+          results = 0_u64
+
+          {% for float_type in [Float32, Float64] %}
+            {% for method, path_type in SupportedIntsConversions %}
+              results <<= 1
+              begin
+                {{float_type}}::NAN.{{method}}
+                results |= 1
+              rescue OverflowError
+              end
+            {% end %}
+          {% end %}
+
+          results
+          )).to_u64.should eq(0)
+      end
     {% end %}
   end
 

@@ -263,13 +263,30 @@ class Crystal::CodeGenVisitor
     if arg_type.kind == :f32 && target_type.kind == :u128
       # since Float32::MAX < UInt128::MAX
       # the range checking is replaced by a positive check only
-      builder.fcmp(LLVM::RealPredicate::OLT, arg, llvm_type(arg_type).const_float(0))
+      # (we allow the comparison to be unordered so that NaNs are caught)
+      builder.fcmp(LLVM::RealPredicate::ULT, arg, float(0, arg_type))
     else
       min_value, max_value = target_type.range
-      # arg < min_value || arg > max_value
+      if arg_type.bytes <= target_type.bytes
+        # if the float type has fewer bits of precision than the integer type
+        # (although we use the number of bytes instead the results are the same)
+        # then the upper bound would mistakenly allow values near the upper
+        # limit, e.g. 2147483647_i32 -> 2147483648_f32, because the bound itself
+        # is rounded to the nearest even-significand number; we choose the
+        # immediately preceding upper bound, i.e. 2147483520_f32
+        #
+        # TODO: use `prev_float` once 1.2.0 is out
+        if arg_type.kind == :f32
+          max_value = max_value.to_f32.unsafe_as(Int32).pred.unsafe_as(Float32)
+        else
+          max_value = max_value.to_f64.unsafe_as(Int64).pred.unsafe_as(Float64)
+        end
+      end
+
+      # !(arg >= min_value) || arg > max_value
       or(
-        builder.fcmp(LLVM::RealPredicate::OLT, arg, int_to_float(target_type, arg_type, int(min_value, target_type))),
-        builder.fcmp(LLVM::RealPredicate::OGT, arg, int_to_float(target_type, arg_type, int(max_value, target_type)))
+        builder.fcmp(LLVM::RealPredicate::ULT, arg, float(min_value, arg_type)),
+        builder.fcmp(LLVM::RealPredicate::OGT, arg, float(max_value, arg_type))
       )
     end
   end
