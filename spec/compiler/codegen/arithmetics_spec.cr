@@ -329,4 +329,51 @@ describe "Code gen: arithmetic primitives" do
       )).to_i.should eq(1)
     end
   end
+
+  describe "floating-point comparisons" do
+    {% for conv, float_type in {to_f32: Float32, to_f64: Float64} %}
+      {% for op in %w(== != < <= > >=) %}
+        {% unequal = op == "!=" %}
+
+        it "returns {{ unequal }} for {{ float_type }}::NAN {{ op.id }} {{ float_type }}::NAN" do
+          run(%(
+            nan = 0.{{ conv.id }} / 0.{{ conv.id }}
+            nan {{ op.id }} nan
+            )).to_b.should be_{{ unequal }}
+        end
+
+        {% for conv2, num2 in SupportedIntsConversions %}
+          it "returns {{ unequal }} for {{ float_type }}::NAN {{ op.id }} {{ num2 }}.zero" do
+            run(%(
+              nan = 0.{{ conv.id }} / 0.{{ conv.id }}
+              nan {{ op.id }} 0.{{ conv2.id }}!
+              )).to_b.should be_{{ unequal }}
+          end
+
+          it "returns {{ unequal }} for {{ num2 }}.zero {{ op.id }} {{ float_type }}::NAN" do
+            run(%(
+              nan = 0.{{ conv.id }} / 0.{{ conv.id }}
+              0.{{ conv2.id }}! {{ op.id }} nan
+              )).to_b.should be_{{ unequal }}
+          end
+        {% end %}
+
+        {% for conv2, num2 in {to_f32: Float32, to_f64: Float64} %}
+          it "returns {{ unequal }} for {{ float_type }}::NAN {{ op.id }} {{ num2 }}.zero" do
+            run(%(
+              nan = 0.{{ conv.id }} / 0.{{ conv.id }}
+              nan {{ op.id }} 0.{{ conv2.id }}!
+              )).to_b.should be_{{ unequal }}
+          end
+
+          it "returns {{ unequal }} for {{ num2 }}.zero {{ op.id }} {{ float_type }}::NAN" do
+            run(%(
+              nan = 0.{{ conv.id }} / 0.{{ conv.id }}
+              0.{{ conv2.id }}! {{ op.id }} nan
+              )).to_b.should be_{{ unequal }}
+          end
+        {% end %}
+      {% end %}
+    {% end %}
+  end
 end

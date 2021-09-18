@@ -318,7 +318,8 @@ end
                              ">"  => "greater than",
                              ">=" => "greater than or equal to",
                            } %}
-          # Returns `true` if `self` is {{desc.id}} *other*.
+          # Returns `true` if `self` is {{desc.id}} *other*{% if op == "!=" && (!ints.includes?(num) || !ints.includes?(num2)) %}
+          # or if `self` and *other* are unordered{% end %}.
           @[Primitive(:binary)]
           def {{op.id}}(other : {{num2.id}}) : Bool
           end
