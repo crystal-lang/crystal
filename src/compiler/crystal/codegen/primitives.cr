@@ -275,21 +275,7 @@ class Crystal::CodeGenVisitor
         # is rounded to the nearest even-significand number; we choose the
         # immediately preceding upper bound, i.e. 2147483520_f32, and ensure
         # this bound is exact when converted back to an integer
-        #
-        # TODO: use `prev_float` once 1.2.0 is out
-        if arg_type.kind == :f32
-          max_value = max_value.class.new(max_value.to_f32.unsafe_as(Int32).pred.unsafe_as(Float32))
-        else
-          # TODO: windows lacks definitions for `__floattisf`, `__floatuntisf`,
-          # `__floattidf`, and `__floatuntidf`
-          {% if flag?(:windows) %}
-            if !max_value.is_a?(Int128) && !max_value.is_a?(UInt128)
-              max_value = max_value.class.new(max_value.to_f64.unsafe_as(Int64).pred.unsafe_as(Float64))
-            end
-          {% else %}
-            max_value = max_value.class.new(max_value.to_f64.unsafe_as(Int64).pred.unsafe_as(Float64))
-          {% end %}
-        end
+        max_value = arg_type.kind == :f32 ? float32_upper_bound(max_value) : float64_upper_bound(max_value)
       end
 
       # !(arg >= min_value) || arg > max_value
@@ -298,6 +284,32 @@ class Crystal::CodeGenVisitor
         builder.fcmp(LLVM::RealPredicate::OGT, arg, int_to_float(target_type, arg_type, int(max_value, target_type)))
       )
     end
+  end
+
+  private def float32_upper_bound(max_value)
+    {% begin %}
+      case max_value
+      when Int32, UInt32, Int64, UInt64 {% unless flag?(:windows) %}, Int128, UInt128 {% end %}
+        # TODO: use `prev_float` once 1.2.0 is out
+        # TODO: windows lacks definitions for `__floattisf` and `__floatuntisf`
+        max_value.class.new(max_value.to_f32.unsafe_as(Int32).pred.unsafe_as(Float32))
+      else
+        max_value
+      end
+    {% end %}
+  end
+
+  private def float64_upper_bound(max_value)
+    {% begin %}
+      case max_value
+      when Int32, UInt32, Int64, UInt64 {% unless flag?(:windows) %}, Int128, UInt128 {% end %}
+        # TODO: use `prev_float` once 1.2.0 is out
+        # TODO: windows lacks definitions for `__floattidf` and `__floatuntidf`
+        max_value.class.new(max_value.to_f64.unsafe_as(Int64).pred.unsafe_as(Float64))
+      else
+        max_value
+      end
+    {% end %}
   end
 
   private def codegen_out_of_range(target_type : FloatType, arg_type : IntegerType, arg)
