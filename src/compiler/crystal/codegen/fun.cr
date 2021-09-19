@@ -413,6 +413,15 @@ class Crystal::CodeGenVisitor
       context.fun.add_attribute LLVM::Attribute::NoInline
       context.fun.linkage = LLVM::Linkage::External
     end
+
+    # TODO: crystal should support __chkstk/__chkstk_ms for windows.
+    if @program.has_flag?("unix")
+      if @program.has_flag?("i386") || @program.has_flag?("x86_64")
+        context.fun.add_target_dependent_attribute "probe-stack", "__crystal_probe_stack"
+      else
+        # currnetly LLVM does not support probe-stack for other architectures.
+      end
+    end
   end
 
   def setup_closure_vars(def_vars, closure_vars, context = self.context, closure_ptr = fun_literal_closure_ptr)
