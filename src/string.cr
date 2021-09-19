@@ -1239,6 +1239,7 @@ class String
   end
 
   # Returns the byte at the given *index* without bounds checking.
+  @[Deprecated("Use `to_unsafe[index]` instead.")]
   def unsafe_byte_at(index : Int) : UInt8
     to_unsafe[index]
   end
@@ -1254,7 +1255,7 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
+          buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
         end
         {@bytesize, @length}
       end
@@ -1289,7 +1290,7 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
+          buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
         end
         {@bytesize, @length}
       end
@@ -1326,9 +1327,9 @@ class String
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
           byte = if i.zero?
-                   unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
+                   to_unsafe[i].unsafe_chr.upcase.ord.to_u8
                  else
-                   unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
+                   to_unsafe[i].unsafe_chr.downcase.ord.to_u8
                  end
 
           buffer[i] = byte
@@ -1373,7 +1374,7 @@ class String
 
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          char = unsafe_byte_at(i).unsafe_chr
+          char = to_unsafe[i].unsafe_chr
           replaced_char = upcase_next ? char.upcase : char.downcase
           buffer[i] = replaced_char.ord.to_u8
           upcase_next = char.whitespace?
@@ -2029,7 +2030,7 @@ class String
     return delete(from) if to.empty?
 
     if from.bytesize == 1
-      return gsub(from.unsafe_byte_at(0).unsafe_chr, to[0])
+      return gsub(from.to_unsafe[0].unsafe_chr, to[0])
     end
 
     multi = nil
@@ -2447,7 +2448,7 @@ class String
   # ```
   def gsub(char : Char, replacement) : String
     if replacement.is_a?(String) && replacement.bytesize == 1
-      return gsub(char, replacement.unsafe_byte_at(0).unsafe_chr)
+      return gsub(char, replacement.to_unsafe[0].unsafe_chr)
     end
 
     if includes?(char)
@@ -2557,7 +2558,7 @@ class String
   # ```
   def gsub(string : String, replacement) : String
     if string.bytesize == 1
-      gsub(string.unsafe_byte_at(0).unsafe_chr, replacement)
+      gsub(string.to_unsafe[0].unsafe_chr, replacement)
     else
       gsub(string) { replacement }
     end
