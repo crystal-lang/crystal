@@ -34,10 +34,6 @@ describe "Code gen: primitives" do
       )).to_i.should eq(1)
   end
 
-  it "skips bounds checking when to_i produces same type" do
-    run("1.to_i32").to_i.should eq(1)
-  end
-
   it "codegens char" do
     run("'a'").to_i.should eq('a'.ord)
   end
@@ -58,44 +54,69 @@ describe "Code gen: primitives" do
     run(%("foo")).to_string.should eq("foo")
   end
 
-  it "codegens 1 + 2" do
-    run(%(require "prelude"; 1 + 2)).to_i.should eq(3)
-  end
+  describe "arithmetic primitives" do
+    # see also std_spec tests tagged with "primitives" for more detailed tests
+    # (e.g. spec/std/int_spec.cr, spec/std/float_spec.cr)
 
-  it "codegens 1 &+ 2" do
-    run(%(1 &+ 2)).to_i.should eq(3)
-  end
+    it "codegens 1 + 2" do
+      run(%(require "prelude"; 1 + 2)).to_i.should eq(3)
+    end
 
-  it "codegens 1 - 2" do
-    run(%(require "prelude"; 1 - 2)).to_i.should eq(-1)
-  end
+    it "codegens 1 &+ 2" do
+      run(%(1 &+ 2)).to_i.should eq(3)
+    end
 
-  it "codegens 1 &- 2" do
-    run(%(1 &- 2)).to_i.should eq(-1)
-  end
+    it "codegens 1 - 2" do
+      run(%(require "prelude"; 1 - 2)).to_i.should eq(-1)
+    end
 
-  it "codegens 2 * 3" do
-    run(%(require "prelude"; 2 * 3)).to_i.should eq(6)
-  end
+    it "codegens 1 &- 2" do
+      run(%(1 &- 2)).to_i.should eq(-1)
+    end
 
-  it "codegens 2 &* 3" do
-    run(%(2 &* 3)).to_i.should eq(6)
-  end
+    it "codegens 2 * 3" do
+      run(%(require "prelude"; 2 * 3)).to_i.should eq(6)
+    end
 
-  it "codegens 8.unsafe_div 3" do
-    run(%(8.unsafe_div 3)).to_i.should eq(2)
-  end
+    it "codegens 2 &* 3" do
+      run(%(2 &* 3)).to_i.should eq(6)
+    end
 
-  it "codegens 8.unsafe_mod 3" do
-    run(%(10.unsafe_mod 3)).to_i.should eq(1)
-  end
+    it "codegens 8.unsafe_div 3" do
+      run(%(8.unsafe_div 3)).to_i.should eq(2)
+    end
 
-  it "codegens 16.unsafe_shr 2" do
-    run(%(16.unsafe_shr 2)).to_i.should eq(4)
-  end
+    it "codegens 8.unsafe_mod 3" do
+      run(%(10.unsafe_mod 3)).to_i.should eq(1)
+    end
 
-  it "codegens 16.unsafe_shl 2" do
-    run(%(16.unsafe_shl 2)).to_i.should eq(64)
+    it "codegens 16.unsafe_shr 2" do
+      run(%(16.unsafe_shr 2)).to_i.should eq(4)
+    end
+
+    it "codegens 16.unsafe_shl 2" do
+      run(%(16.unsafe_shl 2)).to_i.should eq(64)
+    end
+
+    it "codegens 1.to_i16!" do
+      run("1.to_i16!").to_i.should eq(1)
+    end
+
+    it "codegens 1.to_i16" do
+      run(%(require "prelude"; 1.to_i16)).to_i.should eq(1)
+    end
+
+    it "codegens 1.to_f!" do
+      run("1.to_f!").to_f64.should eq(1.0)
+    end
+
+    it "codegens 1.to_f" do
+      run(%(require "prelude"; 1.to_f)).to_f64.should eq(1.0)
+    end
+
+    it "skips bounds checking when to_i produces same type" do
+      run("1.to_i32").to_i.should eq(1)
+    end
   end
 
   it "defined method that calls primitive (bug)" do
