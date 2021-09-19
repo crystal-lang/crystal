@@ -391,17 +391,17 @@ struct Tuple
   # typeof(t3) # => Tuple(Int32, Int32, String, String)
   # ```
   def +(other : Tuple)
-    plus_implementation(other)
+    other.prepend_impl(self)
   end
 
-  private def plus_implementation(other : U) forall U
+  protected def prepend_impl(other : U) forall U
     {% begin %}
       Tuple.new(
-        {% for i in 0...@type.size %}
-          self[{{i}}],
-        {% end %}
         {% for i in 0...U.size %}
-          other[{{i}}],
+          other[{{ i }}],
+        {% end %}
+        {% for i in 0...@type.size %}
+          self[{{ i }}],
         {% end %}
       )
     {% end %}

@@ -396,6 +396,12 @@ describe "NamedTuple" do
     a.merge(b).merge(four: "Four").merge(NamedTuple.new).should eq({one: 1, two: "Two", three: true, four: "Four", five: 5, "new one": "ok", "im \"string": "works"})
   end
 
+  it "merges with union of named tuples" do
+    a = {x: 1}.merge({y: true} || {z: ""})
+    a.should eq({x: 1, y: true})
+    typeof(a).should eq(NamedTuple(x: Int32, y: Bool) | NamedTuple(x: Int32, z: String))
+  end
+
   it "does types" do
     tuple = {a: 1, b: 'a', c: "hello"}
     tuple.class.types.to_s.should eq("{a: Int32, b: Char, c: String}")

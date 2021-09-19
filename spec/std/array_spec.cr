@@ -102,6 +102,18 @@ describe "Array" do
       a2 = (33..96).to_a
       (a1 & a2).should eq((33..64).to_a)
     end
+
+    it "disjoint types" do
+      a = [1] & ['a']
+      a.should eq([] of Int32 | Char)
+      typeof(a).should eq(Array(Int32))
+    end
+
+    it "union of arrays" do
+      a = [1, 'a'] & ([1, 1.0] || ['a', ""])
+      a.should eq([1])
+      typeof(a).should eq(Array(Int32 | Char))
+    end
   end
 
   describe "|" do
@@ -117,19 +129,43 @@ describe "Array" do
       b = [4, 5, 6] * 10
       (a | b).should eq([1, 2, 3, 4, 5, 6])
     end
+
+    it "disjoint types" do
+      a = [1] | ['a']
+      a.should eq([1, 'a'])
+      typeof(a).should eq(Array(Int32 | Char))
+    end
+
+    it "union of arrays" do
+      a = [1, 'a'] | ([1, true] || [1, ""])
+      a.should eq([1, 'a', true])
+      typeof(a).should eq(Array(Int32 | Char | Bool | String))
+    end
   end
 
-  it "does +" do
-    a = [1, 2, 3]
-    b = [4, 5]
-    c = a + b
-    c.size.should eq(5)
-    0.upto(4) { |i| c[i].should eq(i + 1) }
-  end
+  describe "+" do
+    it "same element type" do
+      a = [1, 2, 3] + [4, 5]
+      a.should eq([1, 2, 3, 4, 5])
+      typeof(a).should eq(Array(Int32))
+    end
 
-  it "does + with empty tuple converted to array (#909)" do
-    ([1, 2] + Tuple.new.to_a).should eq([1, 2])
-    (Tuple.new.to_a + [1, 2]).should eq([1, 2])
+    it "different types" do
+      a = [1, 2, 3] + ['a', 'b']
+      a.should eq([1, 2, 3, 'a', 'b'])
+      typeof(a).should eq(Array(Int32 | Char))
+    end
+
+    it "NoReturn (#909)" do
+      ([1, 2] + Array(NoReturn).new).should eq([1, 2])
+      (Array(NoReturn).new + [1, 2]).should eq([1, 2])
+    end
+
+    it "union of arrays" do
+      a = [1, 'a'] + ([1, true] || [1, ""])
+      a.should eq([1, 'a', 1, true])
+      typeof(a).should eq(Array(Int32 | Char | Bool | String))
+    end
   end
 
   describe "-" do
@@ -143,6 +179,18 @@ describe "Array" do
 
     it "does with even larger arrays" do
       ((1..64).to_a - (1..32).to_a).should eq((33..64).to_a)
+    end
+
+    it "different types" do
+      a = [1, 'a'] - ['a', true]
+      a.should eq([1])
+      typeof(a).should eq(Array(Int32 | Char))
+    end
+
+    it "union of arrays" do
+      a = [1, 'a'] - ([1, true] || [1, ""])
+      a.should eq(['a'])
+      typeof(a).should eq(Array(Int32 | Char))
     end
   end
 
@@ -1053,14 +1101,22 @@ describe "Array" do
     end
   end
 
-  it "does product with block" do
-    r = [] of Int32
-    [1, 2, 3].product([5, 6]) { |a, b| r << a; r << b }
-    r.should eq([1, 5, 1, 6, 2, 5, 2, 6, 3, 5, 3, 6])
-  end
+  describe "product" do
+    it "with block" do
+      r = [] of Int32
+      [1, 2, 3].product([5, 6]) { |a, b| r << a; r << b }
+      r.should eq([1, 5, 1, 6, 2, 5, 2, 6, 3, 5, 3, 6])
+    end
 
-  it "does product without block" do
-    [1, 2, 3].product(['a', 'b']).should eq([{1, 'a'}, {1, 'b'}, {2, 'a'}, {2, 'b'}, {3, 'a'}, {3, 'b'}])
+    it "without block" do
+      [1, 2, 3].product(['a', 'b']).should eq([{1, 'a'}, {1, 'b'}, {2, 'a'}, {2, 'b'}, {3, 'a'}, {3, 'b'}])
+    end
+
+    it "union of arrays" do
+      a = [1, 2].product(['a', 'b'] || ["c", "d"])
+      a.should eq([{1, 'a'}, {1, 'b'}, {2, 'a'}, {2, 'b'}])
+      typeof(a).should eq(Array({Int32, Char | String}))
+    end
   end
 
   describe "push" do

@@ -207,6 +207,18 @@ describe "Tuple" do
 
   it_iterates "#each", [1, 2, 3], {1, 2, 3}.each
 
+  it "does +" do
+    tuple = {1, 'a'} + {true, 2}
+    tuple.should eq({1, 'a', true, 2})
+    typeof(tuple).should eq(Tuple(Int32, Char, Bool, Int32))
+  end
+
+  it "does + with union of tuples" do
+    tuple = {1} + ({'a'} || {"", ""})
+    tuple.should eq({1, 'a'})
+    typeof(tuple).should eq(Tuple(Int32, Char) | Tuple(Int32, String, String))
+  end
+
   it "does map" do
     tuple = {1, 2.5, "a"}
     tuple2 = tuple.map &.to_s

@@ -247,7 +247,7 @@ class Array(T)
   # ```
   #
   # See also: `#uniq`.
-  def &(other : Array(U)) forall U
+  def &(other : Array)
     return Array(T).new if self.empty? || other.empty?
 
     # Heuristic: for small arrays we do a linear scan, which is usually
@@ -285,11 +285,11 @@ class Array(T)
   # ```
   #
   # See also: `#uniq`.
-  def |(other : Array(U)) forall U
+  def |(other : Array)
     # Heuristic: if the combined size is small we just do a linear scan
     # instead of using a Hash for lookup.
     if size + other.size <= SMALL_ARRAY_SIZE
-      ary = Array(T | U).new
+      ary = Array(T | typeof(other.first)).new
       each do |elem|
         ary << elem unless ary.includes?(elem)
       end
@@ -299,8 +299,8 @@ class Array(T)
       return ary
     end
 
-    Array(T | U).build(size + other.size) do |buffer|
-      hash = Hash(T, Bool).new
+    Array(T | typeof(other.first)).build(size + other.size) do |buffer|
+      hash = Hash(T | typeof(other.first), Bool).new
       i = 0
       each do |obj|
         unless hash.has_key?(obj)
@@ -327,9 +327,9 @@ class Array(T)
   # [1, 2] + ["a"]  # => [1,2,"a"] of (Int32 | String)
   # [1, 2] + [2, 3] # => [1,2,2,3]
   # ```
-  def +(other : Array(U)) forall U
+  def +(other : Array)
     new_size = size + other.size
-    Array(T | U).build(new_size) do |buffer|
+    Array(T | typeof(other.first)).build(new_size) do |buffer|
       buffer.copy_from(@buffer, size)
       (buffer + size).copy_from(other.to_unsafe, other.size)
       new_size
@@ -349,7 +349,7 @@ class Array(T)
   # ```
   # [1, 2, 3] - [2, 1] # => [3]
   # ```
-  def -(other : Array(U)) forall U
+  def -(other : Array)
     # Heuristic: if any of the arrays is small we just do a linear scan
     # instead of using a Hash for lookup.
     if size <= SMALL_ARRAY_SIZE || other.size <= SMALL_ARRAY_SIZE
@@ -1342,8 +1342,8 @@ class Array(T)
     pop { nil }
   end
 
-  def product(ary : Array(U)) forall U
-    result = Array({T, U}).new(size * ary.size)
+  def product(ary : Array)
+    result = Array({T, typeof(ary.first)}).new(size * ary.size)
     product(ary) do |x, y|
       result << {x, y}
     end

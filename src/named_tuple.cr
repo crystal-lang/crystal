@@ -230,16 +230,26 @@ struct NamedTuple
   # a.merge(b) # => {foo: "Hello", bar: "New", baz: "Bye"}
   # ```
   def merge(other : NamedTuple)
-    merge(**other)
+    other.prepend_impl(self)
   end
 
   # :ditto:
   def merge(**other : **U) forall U
+    other.prepend_impl(self)
+  end
+
+  protected def prepend_impl(other : U) forall U
     {% begin %}
-    {
-      {% for k in T %} {% unless U.keys.includes?(k) %} {{k.stringify}}: self[{{k.symbolize}}],{% end %} {% end %}
-      {% for k in U %} {{k.stringify}}: other[{{k.symbolize}}], {% end %}
-    }
+      NamedTuple.new(
+        {% for k in U %}
+          {% unless T.keys.includes?(k) %}
+            {{ k.stringify }}: other[{{ k.symbolize }}],
+          {% end %}
+        {% end %}
+        {% for k in T %}
+          {{ k.stringify }}: self[{{ k.symbolize }}],
+        {% end %}
+      )
     {% end %}
   end
 

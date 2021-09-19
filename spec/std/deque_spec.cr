@@ -171,6 +171,12 @@ describe "Deque" do
       a += Deque{"hello"}
       a.should eq(Deque{1, 2, 3, "hello"})
     end
+
+    it "does + with union of deques" do
+      a = Deque{1} + (Deque{'a'} || Deque{""})
+      a.should eq(Deque{1, 'a'})
+      typeof(a).should eq(Deque(Int32 | Char | String))
+    end
   end
 
   describe "[]" do

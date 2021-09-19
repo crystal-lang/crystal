@@ -224,8 +224,8 @@ struct Set(T)
   # ```
   #
   # See also: `#concat` to add elements from a set to `self`.
-  def |(other : Set(U)) forall U
-    set = Set(T | U).new(Math.max(size, other.size))
+  def |(other : Set)
+    set = Set(T | typeof(other.first)).new(Math.max(size, other.size))
     each { |value| set.add value }
     other.each { |value| set.add value }
     set
@@ -236,7 +236,7 @@ struct Set(T)
   # ```
   # Set{1, 1, 2, 3} + Set{3, 4, 5} # => Set{1, 2, 3, 4, 5}
   # ```
-  def +(other : Set(U)) forall U
+  def +(other : Set)
     self | other
   end
 
@@ -280,8 +280,8 @@ struct Set(T)
   # Set{1, 2, 3, 4, 5} ^ Set{2, 4, 6}            # => Set{1, 3, 5, 6}
   # Set{'a', 'b', 'b', 'z'} ^ Set{'a', 'b', 'c'} # => Set{'z', 'c'}
   # ```
-  def ^(other : Set(U)) forall U
-    set = Set(T | U).new
+  def ^(other : Set)
+    set = Set(T | typeof(other.first)).new
     each do |value|
       set.add value unless other.includes?(value)
     end
@@ -298,8 +298,8 @@ struct Set(T)
   # Set{1, 2, 3, 4, 5} ^ [2, 4, 6]            # => Set{1, 3, 5, 6}
   # Set{'a', 'b', 'b', 'z'} ^ ['a', 'b', 'c'] # => Set{'z', 'c'}
   # ```
-  def ^(other : Enumerable(U)) forall U
-    set = Set(T | U).new(self)
+  def ^(other : Enumerable)
+    set = Set(T | typeof(Enumerable.element_type(other))).new(self)
     other.each do |value|
       if includes?(value)
         set.delete value
