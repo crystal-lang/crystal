@@ -35,7 +35,7 @@ jobs:
       - name: Run stdlib specs
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
-          args: make std_spec
+          args: make std_spec primitives_specs=1
   musl-test-compiler:
     needs: musl-build
     runs-on: [linux, ARM64]
@@ -86,7 +86,7 @@ jobs:
       - name: Run stdlib specs
         uses: docker://jhass/crystal:1.0.0-build
         with:
-          args: make std_spec
+          args: make std_spec primitives_specs=1
   gnu-test-compiler:
     needs: gnu-build
     runs-on: [linux, ARM64]
