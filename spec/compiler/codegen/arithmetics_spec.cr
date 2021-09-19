@@ -246,10 +246,26 @@ describe "Code gen: arithmetic primitives" do
       {% end %}
 
       {% for float_type in [Float32, Float64] %}
-        {% if type != UInt128 || float_type != Float32 %}
-          # skip for type == UInt128 && float_type == Float32
-          # since Float32::MAX < UInt128::MAX
-          it "raises overflow if greater than {{type}}::MAX (from {{float_type}})" do
+        it "raises overflow if greater than {{type}}::MAX (from {{float_type}})", focus: true do
+          {% if type == UInt128 && float_type == Float32 %}
+            # since `Float32::MAX < UInt128::MAX`, we have to ensure that the
+            # former does not overflow while positive infinity does
+            run(%(
+              require "prelude"
+
+              begin
+                Float32::INFINITY.to_u128
+                0
+              rescue OverflowError
+                begin
+                  Float32::MAX.to_u128
+                  1
+                rescue OverflowError
+                  2
+                end
+              end
+            )).to_i.should eq(1)
+          {% else %}
             run(%(
               require "prelude"
 
@@ -262,8 +278,8 @@ describe "Code gen: arithmetic primitives" do
                 1
               end
             )).to_i.should eq(1)
-          end
-        {% end %}
+          {% end %}
+        end
 
         {% if [Int64, Int128, UInt64].includes?(type) ||
                 (type == UInt128 && float_type == Float64) ||

@@ -260,11 +260,15 @@ class Crystal::CodeGenVisitor
   end
 
   private def codegen_out_of_range(target_type : IntegerType, arg_type : FloatType, arg)
+    # we allow one comparison to be unordered so that NaNs are caught
     if arg_type.kind == :f32 && target_type.kind == :u128
-      # since Float32::MAX < UInt128::MAX
-      # the range checking is replaced by a positive check only
-      # (we allow the comparison to be unordered so that NaNs are caught)
-      builder.fcmp(LLVM::RealPredicate::ULT, arg, float(0, arg_type))
+      # since `Float32::MAX < UInt128::MAX`, we cannot make the upper bound
+      # equal to `UInt128::MAX.to_f32` there is still an overflow if
+      # `arg` is positive infinity
+      or(
+        builder.fcmp(LLVM::RealPredicate::ULT, arg, float(0, arg_type)),
+        builder.fcmp(LLVM::RealPredicate::OGT, arg, float(Float32::MAX, arg_type))
+      )
     else
       min_value, max_value = target_type.range
       if arg_type.bytes <= target_type.bytes
@@ -273,8 +277,8 @@ class Crystal::CodeGenVisitor
         # then the upper bound would mistakenly allow values near the upper
         # limit, e.g. 2147483647_i32 -> 2147483648_f32, because the bound itself
         # is rounded to the nearest even-significand number; we choose the
-        # immediately preceding upper bound, i.e. 2147483520_f32, and ensure
-        # this bound is exact when converted back to an integer
+        # predecessor as the upper bound, i.e. 2147483520_f32, ensuring it is
+        # exact when converted back to an integer
         max_value = arg_type.kind == :f32 ? float32_upper_bound(max_value) : float64_upper_bound(max_value)
       end
 
