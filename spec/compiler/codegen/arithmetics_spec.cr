@@ -265,7 +265,9 @@ describe "Code gen: arithmetic primitives" do
           end
         {% end %}
 
-        {% if [Int64, Int128, UInt64, UInt128].includes?(type) || ([Int32, UInt32].includes?(type) && float_type == Float32) %}
+        {% if [Int64, Int128, UInt64].includes?(type) ||
+                (type == UInt128 && float_type == Float64) ||
+                ([Int32, UInt32].includes?(type) && float_type == Float32) %}
           it "raises overflow if equal to {{type}}::MAX (from {{float_type}})" do
             run(%(
               require "prelude"
