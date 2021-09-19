@@ -246,7 +246,7 @@ describe "Code gen: arithmetic primitives" do
       {% end %}
 
       {% for float_type in [Float32, Float64] %}
-        it "raises overflow if greater than {{type}}::MAX (from {{float_type}})", focus: true do
+        it "raises overflow if greater than {{type}}::MAX (from {{float_type}})" do
           {% if type == UInt128 && float_type == Float32 %}
             # since `Float32::MAX < UInt128::MAX`, we have to ensure that the
             # former does not overflow while positive infinity does
