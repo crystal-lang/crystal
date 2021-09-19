@@ -2,6 +2,7 @@
 
 require "big"
 require "spec"
+require "../support/number"
 
 {% for i in Int::Signed.union_types %}
   struct {{i}}
@@ -37,15 +38,9 @@ macro run_op_tests(t, u, op)
   end
 end
 
-{% if flag?(:darwin) %}
-  private OVERFLOW_TEST_TYPES = [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128]
-{% else %}
-  private OVERFLOW_TEST_TYPES = [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64]
-{% end %}
-
 describe "overflow" do
-  {% for t in OVERFLOW_TEST_TYPES %}
-    {% for u in OVERFLOW_TEST_TYPES %}
+  {% for t in BUILTIN_INTEGER_TYPES %}
+    {% for u in BUILTIN_INTEGER_TYPES %}
       run_op_tests {{t}}, {{u}}, :+
       run_op_tests {{t}}, {{u}}, :-
       run_op_tests {{t}}, {{u}}, :*

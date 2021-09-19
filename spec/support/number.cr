@@ -8,6 +8,11 @@ require "spec/helpers/iterate"
     [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128]
   BUILTIN_INTEGER_TYPES_128 =
     [Int128, UInt128]
+  BUILTIN_INT_CONVERSIONS = {
+    to_i: Int32, to_u: UInt32,
+    to_i8: Int8, to_i16: Int16, to_i32: Int32, to_i64: Int64, to_i128: Int128,
+    to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64, to_u128: UInt128,
+  }
 {% else %}
   BUILTIN_NUMBER_TYPES =
     [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Float32, Float64]
@@ -15,6 +20,11 @@ require "spec/helpers/iterate"
     [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64]
   BUILTIN_INTEGER_TYPES_128 =
     [] of Int.class
+  BUILTIN_INT_CONVERSIONS = {
+    to_i: Int32, to_u: UInt32,
+    to_i8: Int8, to_i16: Int16, to_i32: Int32, to_i64: Int64,
+    to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64,
+  }
 {% end %}
 BUILTIN_NUMBER_TYPES_LTE_64 =
   [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Float32, Float64]

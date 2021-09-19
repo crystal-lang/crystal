@@ -3,6 +3,7 @@ require "./spec_helper"
   require "big"
 {% end %}
 require "spec/helpers/iterate"
+require "../support/number"
 
 private macro it_converts_to_s(num, str, **opts)
   it {{ "converts #{num} to #{str}" }} do
@@ -14,6 +15,69 @@ private macro it_converts_to_s(num, str, **opts)
 end
 
 describe "Int" do
+  describe "primitives", tags: "primitives" do
+    describe "#&+" do
+      {% for int in BUILTIN_INTEGER_TYPES %}
+        it "wraps around for {{ int }}" do
+          ({{ int }}::MAX &+ {{ int }}.new(1)).should eq({{ int }}::MIN)
+          ({{ int }}::MAX &+ 1_i64).should eq({{ int }}::MIN)
+        end
+      {% end %}
+    end
+
+    describe "#&-" do
+      {% for int in BUILTIN_INTEGER_TYPES %}
+        it "wraps around for {{ int }}" do
+          ({{ int }}::MIN &- {{ int }}.new(1)).should eq({{ int }}::MAX)
+          ({{ int }}::MIN &- 1_i64).should eq({{ int }}::MAX)
+        end
+      {% end %}
+    end
+
+    describe "#&*" do
+      {% for int in BUILTIN_INTEGER_TYPES %}
+        it "wraps around for {{ int }}" do
+          %val{int} = {{ int }}::MAX // {{ int }}.new(2) &+ {{ int }}.new(1)
+          (%val{int} &* {{ int }}.new(2)).should eq({{ int }}::MIN)
+          (%val{int} &* 2_i64).should eq({{ int }}::MIN)
+        end
+      {% end %}
+    end
+
+    # overflow tests for `#+` / `#-` / `#*` are placed in overflow_spec.cr
+
+    describe "#to_i" do
+      {% for int1 in BUILTIN_INTEGER_TYPES %}
+        {% for method, int2 in BUILTIN_INT_CONVERSIONS %}
+          {% if int1 != int2 %}
+            it {{ "raises on overflow for #{int1}##{method}" }} do
+              if {{ int1 }}::MAX > {{ int2 }}::MAX
+                expect_raises(OverflowError) do
+                  ({{ int1 }}.new!({{ int2 }}::MAX) &+ 1).{{ method }}
+                end
+              end
+
+              if {{ int1 }}::MIN < {{ int2 }}::MIN
+                expect_raises(OverflowError) do
+                  ({{ int1 }}.new!({{ int2 }}::MIN) &- 1).{{ method }}
+                end
+              end
+            end
+          {% end %}
+        {% end %}
+      {% end %}
+    end
+
+    describe "#to_f" do
+      {% if BUILTIN_INTEGER_TYPES.includes?(UInt128) %}
+        it "raises on overflow for UInt128#to_f32" do
+          expect_raises(OverflowError) { UInt128::MAX.to_f32 }
+          expect_raises(OverflowError) { (UInt128::MAX // 2).to_f32 }
+        end
+      {% end %}
+    end
+  end
+
   describe "**" do
     it "with positive Int32" do
       x = 2 ** 2
