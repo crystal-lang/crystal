@@ -1,9 +1,81 @@
 <ul>
   <% types.each do |type| %>
-  <li class="<%= (type.program? || type.types.empty?) ? "" : ("parent" + (type.current?(current_type) || type.parents_of?(current_type) ? " open" : "")) %> <%= type.current?(current_type) ? "current" : "" %>" data-id="<%= type.html_id %>" data-name="<%= type.full_name.downcase %>">
-      <a href="<%= type.path_from(current_type) %>"><%= type.name %></a>
-      <% unless type.program? || type.types.empty? %>
-        <%= ListItemsTemplate.new(type.types, current_type) %>
+    <% child_types = type.types %>
+    <% constants = type.constants %>
+    <% constructors = type.constructors %>
+    <% class_methods = type.class_methods %>
+    <% instance_methods = type.instance_methods %>
+    <% path = type.path_from(current_type) %>
+    <% empty = child_types.empty? && constants.empty? && constructors.empty? && class_methods.empty? && instance_methods.empty? %>
+
+    <li class="<%= empty ? "" : ("parent" + (type.current?(current_type) || type.parents_of?(current_type) ? " open" : "")) %> <%= type.current?(current_type) ? "current" : "" %>" data-id="<%= type.html_id %>" data-name="<%= type.full_name.downcase %>">
+      <a href="<%= path %>"><%= type.name %></a>
+      <% unless type.program? || child_types.empty? %>
+        <%= ListItemsTemplate.new(child_types, current_type) %>
+      <% end %>
+
+      <% unless empty %>
+        <ul style="margin: 0.25rem 0">
+          <% unless constants.empty? %>
+            <li class="parent hide-toggle" data-id="<%= type.html_id %>__constants">
+              <h3>Constants</h3>
+              <ul class="blockquote">
+                <% constants.each do |constant| %>
+                  <li>
+                    <a href="<%= path %>#constant-summary">
+                      <%= constant.name %>
+                    </a>
+                  </li>
+                <% end %>
+              </ul>
+            </li>
+          <% end %>
+
+          <% unless constructors.empty? %>
+            <li class="parent hide-toggle" data-id="<%= type.html_id %>__constructors">
+              <h3>Constructors</h3>
+              <ul class="blockquote">
+                <% constructors.each do |constructor| %>
+                  <li>
+                    <a href="<%= path %>#<%= constructor.html_id %>">
+                      <%= constructor.name %><%= constructor.args_to_html abbr: true %>
+                    </a>
+                  </li>
+                <% end %>
+              </ul>
+            </li>
+          <% end %>
+
+          <% unless class_methods.empty? %>
+            <li class="parent hide-toggle" data-id="<%= type.html_id %>__class_methods">
+              <h3>Class Methods</h3>
+              <ul class="blockquote">
+                <% class_methods.each do |method| %>
+                  <li>
+                    <a href="<%= path %>#<%= method.html_id %>">
+                      <%= method.name %><%= method.args_to_html abbr: true %>
+                    </a>
+                  </li>
+                <% end %>
+              </ul>
+            </li>
+          <% end %>
+
+          <% unless instance_methods.empty? %>
+            <li class="parent hide-toggle" data-id="<%= type.html_id %>__instance_methods">
+              <h3>Instance Methods</h3>
+              <ul class="blockquote">
+                <% instance_methods.each do |method| %>
+                  <li>
+                    <a href="<%= path %>#<%= method.html_id %>">
+                      <%= method.name %><%= method.args_to_html abbr: true %>
+                    </a>
+                  </li>
+                <% end %>
+              </ul>
+            </li>
+          <% end %>
+        </ul>
       <% end %>
     </li>
   <% end %>

@@ -107,6 +107,16 @@ body {
   text-indent: 2px;
 }
 
+.sidebar h3 {
+  margin: 0;
+  padding: 0.25rem 0;
+  color: #866BA6;
+  font-size: 0.8rem;
+  font-weight: 400;
+  user-select: none;
+  cursor: pointer;
+}
+
 .project-summary {
   padding: 9px 15px 30px 30px;
 }
@@ -205,11 +215,11 @@ body {
   transition: 1s ease-in-out;
 }
 
-.types-list li.parent {
+.types-list li.parent:not(.hide-toggle) {
   padding-left: 30px;
 }
 
-.types-list li.parent::before {
+.types-list li.parent:not(.hide-toggle)::before {
   box-sizing: border-box;
   content: "▼";
   display: block;
@@ -230,6 +240,7 @@ body {
 
 .types-list li.parent > a {
   padding-left: 0;
+  user-select: none;
 }
 
 .types-list li.parent.open::before {
@@ -239,6 +250,30 @@ body {
 .types-list li.open > ul {
   height: auto;
   max-height: 1000em;
+}
+
+.types-list ul.blockquote {
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.types-list ul.blockquote > li {
+  position: relative;
+}
+
+.types-list ul.blockquote > li::before {
+  content: '';
+  display: block;
+  position: absolute;
+  width: 2px;
+  height: 100%;
+  left: 3px;
+  top: 0;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.types-list ul.blockquote > li > a {
+  padding: 2px 15px;
 }
 
 .main-content {
