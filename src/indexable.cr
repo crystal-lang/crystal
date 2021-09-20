@@ -133,40 +133,42 @@ module Indexable(T)
   end
 
   # By using binary search, returns the first element
-  # for which the passed block returns `true`.
+  # for which the passed block returns a truthy value.
   #
-  # If the block returns `false`, the finding element exists
-  # behind. If the block returns `true`, the finding element
-  # is itself or exists in front.
+  # If the block returns a falsey value, the element to be found lies
+  # behind. If the block returns a truthy value, the element to be found
+  # is itself or lies in front.
   #
-  # Binary search needs sorted array, so `self` has to be sorted.
+  # Binary search needs the collection to be sorted in regards to the search
+  # criterion.
   #
-  # Returns `nil` if the block didn't return `true` for any element.
+  # Returns `nil` if the block didn't return a truthy value for any element.
   #
   # ```
   # [2, 5, 7, 10].bsearch { |x| x >= 4 } # => 5
   # [2, 5, 7, 10].bsearch { |x| x > 10 } # => nil
   # ```
-  def bsearch(&block : T -> Bool)
+  def bsearch(&block : T -> _)
     bsearch_index { |value| yield value }.try { |index| unsafe_fetch(index) }
   end
 
   # By using binary search, returns the index of the first element
-  # for which the passed block returns `true`.
+  # for which the passed block returns a truthy value.
   #
-  # If the block returns `false`, the finding element exists
-  # behind. If the block returns `true`, the finding element
-  # is itself or exists in front.
+  # If the block returns a falsey value, the element to be found lies
+  # behind. If the block returns a truthy value, the element to be found
+  # is itself or lies in front.
   #
-  # Binary search needs sorted array, so `self` has to be sorted.
+  # Binary search needs the collection to be sorted in regards to the search
+  # criterion.
   #
-  # Returns `nil` if the block didn't return `true` for any element.
+  # Returns `nil` if the block didn't return a truthy value for any element.
   #
   # ```
   # [2, 5, 7, 10].bsearch_index { |x, i| x >= 4 } # => 1
   # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
   # ```
-  def bsearch_index(&block : T, Int32 -> Bool)
+  def bsearch_index(&block : T, Int32 -> _)
     (0...size).bsearch { |index| yield unsafe_fetch(index), index }
   end
 
