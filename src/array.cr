@@ -153,7 +153,7 @@ class Array(T)
   # ary[0][0] = 2
   # ary # => [[2], [1], [1]]
   # ```
-  def self.new(size : Int, &block : Int32 -> T)
+  def self.new(size : Int, & : Int32 -> T)
     Array(T).build(size) do |buffer|
       size.to_i.times do |i|
         buffer[i] = yield i
@@ -173,7 +173,7 @@ class Array(T)
   #   LibSome.fill_buffer_and_return_number_of_elements_filled(buffer)
   # end
   # ```
-  def self.build(capacity : Int) : self
+  def self.build(capacity : Int, & : Pointer(T) ->) : self
     ary = Array(T).new(capacity)
     ary.size = (yield ary.to_unsafe).to_i
     ary
@@ -1048,7 +1048,7 @@ class Array(T)
   end
 
   # Optimized version of `Enumerable#map`.
-  def map(&block : T -> U) forall U
+  def map(& : T -> U) forall U
     Array(U).new(size) { |i| yield @buffer[i] }
   end
 
@@ -1062,7 +1062,7 @@ class Array(T)
   # ```
   #
   # See also: `Array#select`.
-  def select!
+  def select!(& : T ->) : self
     reject! { |elem| !yield(elem) }
   end
 
@@ -1090,7 +1090,7 @@ class Array(T)
   # ```
   #
   # See also: `Array#reject`.
-  def reject!
+  def reject!(& : T ->) : self
     internal_delete { |e| yield e }
     self
   end
@@ -1151,7 +1151,7 @@ class Array(T)
   # results = gems.map_with_index { |gem, i| "#{i}: #{gem}" }
   # results # => ["0: crystal", "1: pearl", "2: diamond"]
   # ```
-  def map_with_index(offset = 0, &block : T, Int32 -> U) forall U
+  def map_with_index(offset = 0, & : T, Int32 -> U) forall U
     Array(U).new(size) { |i| yield @buffer[i], offset + i }
   end
 
@@ -1350,7 +1350,7 @@ class Array(T)
     result
   end
 
-  def product(enumerable : Enumerable, &block)
+  def product(enumerable : Enumerable(U), & : T, U ->) forall U
     self.each { |a| enumerable.each { |b| yield a, b } }
   end
 
@@ -1874,7 +1874,7 @@ class Array(T)
   # a.uniq { |s| s[0] } # => [{"student", "sam"}, {"teacher", "matz"}]
   # a                   # => [{"student", "sam"}, {"student", "george"}, {"teacher", "matz"}]
   # ```
-  def uniq(&block : T -> _)
+  def uniq(& : T ->)
     if size <= 1
       dup
     else
@@ -1915,7 +1915,7 @@ class Array(T)
   # a.uniq! { |s| s[0] } # => [{"student", "sam"}, {"teacher", "matz"}]
   # a                    # => [{"student", "sam"}, {"teacher", "matz"}]
   # ```
-  def uniq!
+  def uniq!(& : T ->) : self
     if size <= 1
       return self
     end
@@ -2150,7 +2150,7 @@ class Array(T)
     to_lookup_hash { |elem| elem }
   end
 
-  protected def to_lookup_hash(&block : T -> U) forall U
+  protected def to_lookup_hash(& : T -> U) forall U
     each_with_object(Hash(U, T).new) do |o, h|
       key = yield o
       unless h.has_key?(key)

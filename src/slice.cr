@@ -330,7 +330,7 @@ struct Slice(T)
   # slice = Slice[1, 2.5, "a"]
   # slice.map &.to_s # => Slice["1", "2.5", "a"]
   # ```
-  def map(*, read_only = false, &block : T -> U) forall U
+  def map(*, read_only = false, & : T -> U) forall U
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i] }
   end
 
@@ -346,7 +346,7 @@ struct Slice(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0, *, read_only = false, &block : (T, Int32) -> U) forall U
+  def map_with_index(offset = 0, *, read_only = false, & : (T, Int32) -> U) forall U
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i], offset + i }
   end
 

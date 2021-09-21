@@ -62,7 +62,7 @@ struct StaticArray(T, N)
   # ```
   # StaticArray(Int32, 3).new { |i| i * 2 } # => StaticArray[0, 2, 4]
   # ```
-  def self.new(&block : Int32 -> T)
+  def self.new(& : Int32 -> T)
     array = uninitialized self
     N.times do |i|
       array.to_unsafe[i] = yield i
@@ -146,7 +146,7 @@ struct StaticArray(T, N)
   # array = StaticArray[1, 2.5, "a"]
   # array.map &.to_s # => StaticArray["1", "2.5", "a"]
   # ```
-  def map(&block : T -> U) forall U
+  def map(&block : T -> U) : StaticArray(U, N) forall U
     StaticArray(U, N).new { |i| yield to_unsafe[i] }
   end
 
@@ -154,7 +154,7 @@ struct StaticArray(T, N)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0, &block : (T, Int32) -> U) forall U
+  def map_with_index(offset = 0, &block : (T, Int32) -> U) : StaticArray(U, N) forall U
     StaticArray(U, N).new { |i| yield to_unsafe[i], offset + i }
   end
 

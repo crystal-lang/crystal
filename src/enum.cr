@@ -303,7 +303,7 @@ struct Enum
   #   # yield IOMode::Async, 3
   # end
   # ```
-  def each
+  def each(& : self ->)
     {% if @type.annotation(Flags) %}
       return if value == 0
       {% for member in @type.constants %}
@@ -468,7 +468,7 @@ struct Enum
   #   # yield IOMode::Async, 3
   # end
   # ```
-  def self.each
+  def self.each(& : self ->)
     {% for member in @type.constants %}
       {% unless @type.annotation(Flags) && %w(none all).includes?(member.stringify.downcase) %}
         yield new({{@type.constant(member)}}), {{@type.constant(member)}}
