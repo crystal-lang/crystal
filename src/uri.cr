@@ -303,7 +303,12 @@ class URI
     end
 
     if host = @host
-      URI.encode(host, io)
+      # https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2
+      #
+      # host        = IP-literal / IPv4address / reg-name
+      #
+      # The valid characters include unreserved, sub-delims, ':', '[', ']' (IPv6-Adress)
+      URI.encode(host, io) { |byte| URI.unreserved?(byte) || URI.sub_delim?(byte) || byte.unsafe_chr.in?(':', '[', ']') }
     end
 
     if port = @port

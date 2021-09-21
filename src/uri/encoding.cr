@@ -212,18 +212,30 @@ class URI
   end
 
   # Returns whether given byte is reserved character defined in
-  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
+  # [RFC 3986 §2.2](https://datatracker.ietf.org/doc/html/rfc3986#section-2.2).
   #
   # Reserved characters are ':', '/', '?', '#', '[', ']', '@', '!',
   # '$', '&', "'", '(', ')', '*', '+', ',', ';' and '='.
   def self.reserved?(byte) : Bool
+    sub_delim?(byte) || gen_delim?(byte)
+  end
+
+  # :nodoc:
+  # Returns `true` if the byte is URI gen-delims (https://datatracker.ietf.org/doc/html/rfc3986#section-2.2).
+  def self.gen_delim?(byte)
+    byte.unsafe_chr.in?('#', '/', ':', '?', '@', '[', ']')
+  end
+
+  # :nodoc:
+  # Returns `true` if the byte is URI sub-delims (https://datatracker.ietf.org/doc/html/rfc3986#section-2.2).
+  def self.sub_delim?(byte) : Bool
     char = byte.unsafe_chr
     '&' <= char <= ',' ||
-      char.in?('!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '=')
+      char.in?('!', '$', ';', '=')
   end
 
   # Returns whether given byte is unreserved character defined in
-  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
+  # [RFC 3986 §2.3](https://datatracker.ietf.org/doc/html/rfc3986#section-2.3).
   #
   # Unreserved characters are ASCII letters, ASCII digits, `_`, `.`, `-` and `~`.
   def self.unreserved?(byte) : Bool
