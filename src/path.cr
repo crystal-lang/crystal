@@ -1092,7 +1092,7 @@ struct Path
   # ```
   # Path["foo"] <=> Path["foo"]               # => 0
   # Path["foo"] <=> Path["./foo"]             # => 1
-  # Path["foo"] <=> Path["foo/"]              # => 1
+  # Path["foo"] <=> Path["foo/"]              # => -1
   # Path.posix("foo") <=> Path.windows("foo") # => -1
   # ```
   #

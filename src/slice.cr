@@ -244,8 +244,6 @@ struct Slice(T)
   # ```
   # a = Slice["a", "b", "c", "d", "e"]
   # a[1..3] # => Slice["b", "c", "d"]
-  # # range.end > array.size
-  # a[3..7] # => Slice["d", "e"]
   # ```
   #
   # Negative indices count backward from the end of the slice (`-1` is the last
