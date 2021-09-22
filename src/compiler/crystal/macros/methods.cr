@@ -67,6 +67,8 @@ module Crystal
         interpret_system(node)
       when "raise"
         interpret_raise(node)
+      when "file_exists?"
+        interpret_file_exists?(node)
       when "read_file"
         interpret_read_file(node)
       when "read_file?"
@@ -217,6 +219,15 @@ module Crystal
 
     def interpret_raise(node)
       macro_raise(node, node.args, self)
+    end
+
+    def interpret_file_exists?(node)
+      interpret_check_args_toplevel do |arg|
+        arg.accept self
+        filename = @last.to_macro_id
+
+        @last = BoolLiteral.new(File.exists?(filename))
+      end
     end
 
     def interpret_read_file(node, nilable = false)
