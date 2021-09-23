@@ -116,6 +116,7 @@ describe "IO::Delimited" do
         io = IO::Memory.new("")
         delimited = IO::Delimited.new(io, read_delimiter: "zr")
 
+        delimited.peek.should eq("".to_slice)
         delimited.gets_to_end.should eq("")
         io.gets_to_end.should eq("")
       end
@@ -124,6 +125,7 @@ describe "IO::Delimited" do
         io = IO::Memory.new("abcderzzrfgzr")
         delimited = IO::Delimited.new(io, read_delimiter: "zr")
 
+        delimited.peek.should eq("abcderz".to_slice)
         delimited.gets_to_end.should eq("abcderz")
         io.gets_to_end.should eq("fgzr")
       end
@@ -132,6 +134,7 @@ describe "IO::Delimited" do
         io = IO::Memory.new("abcderzzrfgzr")
         delimited = IO::Delimited.new(io, read_delimiter: "f")
 
+        delimited.peek.should eq("abcderzzr".to_slice)
         delimited.gets_to_end.should eq("abcderzzr")
         io.gets_to_end.should eq("gzr")
       end
@@ -160,6 +163,7 @@ describe "IO::Delimited" do
         io = IO::Memory.new("ab12312")
         delimited = IO::Delimited.new(io, read_delimiter: "12345")
 
+        delimited.peek.should eq("ab123".to_slice)
         delimited.gets_to_end.should eq("ab12312")
       end
 
@@ -167,6 +171,7 @@ describe "IO::Delimited" do
         io = IO::Memory.new("ab12312")
         delimited = IO::Delimited.new(io, read_delimiter: "ab1")
 
+        delimited.peek.should eq(Bytes.empty)
         delimited.read_char.should eq(nil)
       end
 
@@ -174,6 +179,7 @@ describe "IO::Delimited" do
         io = IO::Memory.new("ab12312z")
         delimited = IO::Delimited.new(io, read_delimiter: "z")
 
+        delimited.peek.should eq("ab12312".to_slice)
         delimited.gets_to_end.should eq("ab12312")
       end
 
@@ -181,6 +187,7 @@ describe "IO::Delimited" do
         io = IO::Memory.new("ab12312")
         delimited = IO::Delimited.new(io, read_delimiter: "122")
 
+        delimited.peek.should eq("ab123".to_slice)
         delimited.gets_to_end.should eq("ab12312")
       end
 
@@ -188,6 +195,7 @@ describe "IO::Delimited" do
         io = IO::Memory.new("abab1234abcdefgh")
         delimited = IO::Delimited.new(io, read_delimiter: "abcdefgh")
 
+        delimited.peek.should eq("abab1234".to_slice)
         delimited.gets_to_end.should eq("abab1234")
       end
 
@@ -200,6 +208,7 @@ describe "IO::Delimited" do
         io.peek_size = 7
         delimited = IO::Delimited.new(io, read_delimiter: "fgh")
 
+        delimited.peek.should eq("abcde".to_slice)
         delimited.gets_to_end.should eq("abcdefwhi")
         delimited.gets_to_end.should eq("")
         io.gets_to_end.should eq("")
@@ -214,6 +223,7 @@ describe "IO::Delimited" do
         io.peek_size = 7
         delimited = IO::Delimited.new(io, read_delimiter: "fgh")
 
+        delimited.peek.should eq("abcde".to_slice)
         delimited.gets_to_end.should eq("abcde")
         delimited.gets_to_end.should eq("")
         io.gets_to_end.should eq("ijk")
@@ -228,6 +238,7 @@ describe "IO::Delimited" do
         io.peek_size = 7
         delimited = IO::Delimited.new(io, read_delimiter: "fgh")
 
+        delimited.peek.should eq("abcde".to_slice)
         delimited.gets_to_end.should eq("abcdefgwijk")
         delimited.gets_to_end.should eq("")
         io.gets_to_end.should eq("hello")
@@ -242,9 +253,18 @@ describe "IO::Delimited" do
         io.peek_size = 7
         delimited = IO::Delimited.new(io, read_delimiter: "fghijklmnopq")
 
+        delimited.peek.should eq("abcde".to_slice)
         delimited.gets_to_end.should eq("abcde")
         delimited.gets_to_end.should eq("")
         io.gets_to_end.should eq("rst")
+      end
+
+      it "peeks, everything matches but we can't know what will happen after that" do
+        io = MemoryIOWithFixedPeek.new("fgh")
+        io.peek_size = 2
+        delimited = IO::Delimited.new(io, read_delimiter: "fgh")
+
+        delimited.peek.should be_nil
       end
     end
   end

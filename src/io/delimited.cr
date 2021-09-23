@@ -266,6 +266,53 @@ class IO::Delimited < IO
     raise IO::Error.new "Can't write to IO::Delimited"
   end
 
+  def peek : Bytes?
+    peek = @io.peek
+    return nil unless peek
+    return peek if peek.empty?
+    return Bytes.empty if @finished
+
+    # See if we can find the first byte
+    first_byte = @read_delimiter[0]
+
+    offset = 0
+    loop do
+      index = peek.index(first_byte, offset: offset)
+
+      # If we can't find it, the entire underlying peek buffer is visible
+      unless index
+        return peek
+      end
+
+      # If the delimiter is just one byte, we found it!
+      if @read_delimiter.size == 1
+        return peek[0, index]
+      end
+
+      # If the delimiter fits the rest of the peek buffer,
+      # we can check it right now.
+      if index + @delimiter_buffer.size <= peek.size
+        # If we found the delimiter, we are done
+        if peek[index, @delimiter_buffer.size] == @read_delimiter
+          return peek[0, index]
+        else
+          offset = index + 1
+          next
+        end
+      else
+        # Otherwise we can't know without reading further,
+        # return what we have so far
+        if index == 0
+          # If this happens right at the beginning of the peek buffer,
+          # we can't return an empty slice because that means EOF
+          return nil
+        else
+          return peek[0, index]
+        end
+      end
+    end
+  end
+
   def close : Nil
     return if @closed
     @closed = true
