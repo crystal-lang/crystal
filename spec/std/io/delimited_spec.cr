@@ -21,76 +21,231 @@ private class PartialReaderIO < IO
   end
 end
 
+private class MemoryIOWithoutPeek < IO::Memory
+  def peek
+    nil
+  end
+end
+
+private class MemoryIOWithFixedPeek < IO::Memory
+  property peek_size = 0
+
+  def peek
+    Slice.new(@buffer + @pos, {@bytesize - @pos, peek_size}.min)
+  end
+end
+
 describe "IO::Delimited" do
   describe "#read" do
-    it "doesn't read past the limit" do
-      io = IO::Memory.new("abcderzzrfgzr")
-      delimited = IO::Delimited.new(io, read_delimiter: "zr")
+    context "without peeking" do
+      it "doesn't read past the limit" do
+        io = MemoryIOWithoutPeek.new("abcderzzrfgzr")
+        delimited = IO::Delimited.new(io, read_delimiter: "zr")
 
-      delimited.gets_to_end.should eq("abcderz")
-      io.gets_to_end.should eq("fgzr")
+        delimited.gets_to_end.should eq("abcderz")
+        io.gets_to_end.should eq("fgzr")
+      end
+
+      it "doesn't read past the limit (char-by-char)" do
+        io = MemoryIOWithoutPeek.new("abcderzzrfg")
+        delimited = IO::Delimited.new(io, read_delimiter: "zr")
+
+        delimited.read_char.should eq('a')
+        delimited.read_char.should eq('b')
+        delimited.read_char.should eq('c')
+        delimited.read_char.should eq('d')
+        delimited.read_char.should eq('e')
+        delimited.read_char.should eq('r')
+        delimited.read_char.should eq('z')
+        delimited.read_char.should eq(nil)
+        delimited.read_char.should eq(nil)
+        delimited.read_char.should eq(nil)
+        delimited.read_char.should eq(nil)
+
+        io.read_char.should eq('f')
+        io.read_char.should eq('g')
+      end
+
+      it "doesn't clobber active_delimiter_buffer" do
+        io = MemoryIOWithoutPeek.new("ab12312")
+        delimited = IO::Delimited.new(io, read_delimiter: "12345")
+
+        delimited.gets_to_end.should eq("ab12312")
+      end
+
+      it "handles the delimiter at the start" do
+        io = MemoryIOWithoutPeek.new("ab12312")
+        delimited = IO::Delimited.new(io, read_delimiter: "ab1")
+
+        delimited.read_char.should eq(nil)
+      end
+
+      it "handles the delimiter at the end" do
+        io = MemoryIOWithoutPeek.new("ab12312z")
+        delimited = IO::Delimited.new(io, read_delimiter: "z")
+
+        delimited.gets_to_end.should eq("ab12312")
+      end
+
+      it "handles nearly a delimiter at the end" do
+        io = MemoryIOWithoutPeek.new("ab12312")
+        delimited = IO::Delimited.new(io, read_delimiter: "122")
+
+        delimited.gets_to_end.should eq("ab12312")
+      end
+
+      it "doesn't clobber the buffer on closely-offset partial matches" do
+        io = MemoryIOWithoutPeek.new("abab1234abcdefgh")
+        delimited = IO::Delimited.new(io, read_delimiter: "abcdefgh")
+
+        delimited.gets_to_end.should eq("abab1234")
+      end
     end
 
-    it "doesn't read past the limit (char-by-char)" do
-      io = IO::Memory.new("abcderzzrfg")
-      delimited = IO::Delimited.new(io, read_delimiter: "zr")
+    context "with partial read" do
+      it "handles partial reads" do
+        io = PartialReaderIO.new("abab1234abcdefgh")
+        delimited = IO::Delimited.new(io, read_delimiter: "abcdefgh")
 
-      delimited.read_char.should eq('a')
-      delimited.read_char.should eq('b')
-      delimited.read_char.should eq('c')
-      delimited.read_char.should eq('d')
-      delimited.read_char.should eq('e')
-      delimited.read_char.should eq('r')
-      delimited.read_char.should eq('z')
-      delimited.read_char.should eq(nil)
-      delimited.read_char.should eq(nil)
-      delimited.read_char.should eq(nil)
-      delimited.read_char.should eq(nil)
-
-      io.read_char.should eq('f')
-      io.read_char.should eq('g')
+        delimited.gets_to_end.should eq("abab1234")
+      end
     end
 
-    it "doesn't clobber active_delimiter_buffer" do
-      io = IO::Memory.new("ab12312")
-      delimited = IO::Delimited.new(io, read_delimiter: "12345")
+    context "with peeking" do
+      it "returns empty when there's no data" do
+        io = IO::Memory.new("")
+        delimited = IO::Delimited.new(io, read_delimiter: "zr")
 
-      delimited.gets_to_end.should eq("ab12312")
-    end
+        delimited.gets_to_end.should eq("")
+        io.gets_to_end.should eq("")
+      end
 
-    it "handles the delimiter at the start" do
-      io = IO::Memory.new("ab12312")
-      delimited = IO::Delimited.new(io, read_delimiter: "ab1")
+      it "doesn't read past the limit" do
+        io = IO::Memory.new("abcderzzrfgzr")
+        delimited = IO::Delimited.new(io, read_delimiter: "zr")
 
-      delimited.read_char.should eq(nil)
-    end
+        delimited.gets_to_end.should eq("abcderz")
+        io.gets_to_end.should eq("fgzr")
+      end
 
-    it "handles the delimiter at the end" do
-      io = IO::Memory.new("ab12312z")
-      delimited = IO::Delimited.new(io, read_delimiter: "z")
+      it "doesn't read past the limit, single byte" do
+        io = IO::Memory.new("abcderzzrfgzr")
+        delimited = IO::Delimited.new(io, read_delimiter: "f")
 
-      delimited.gets_to_end.should eq("ab12312")
-    end
+        delimited.gets_to_end.should eq("abcderzzr")
+        io.gets_to_end.should eq("gzr")
+      end
 
-    it "handles nearly a delimiter at the end" do
-      io = IO::Memory.new("ab12312")
-      delimited = IO::Delimited.new(io, read_delimiter: "122")
+      it "doesn't read past the limit (char-by-char)" do
+        io = IO::Memory.new("abcderzzrfg")
+        delimited = IO::Delimited.new(io, read_delimiter: "zr")
 
-      delimited.gets_to_end.should eq("ab12312")
-    end
+        delimited.read_char.should eq('a')
+        delimited.read_char.should eq('b')
+        delimited.read_char.should eq('c')
+        delimited.read_char.should eq('d')
+        delimited.read_char.should eq('e')
+        delimited.read_char.should eq('r')
+        delimited.read_char.should eq('z')
+        delimited.read_char.should eq(nil)
+        delimited.read_char.should eq(nil)
+        delimited.read_char.should eq(nil)
+        delimited.read_char.should eq(nil)
 
-    it "doesn't clobber the buffer on closely-offset partial matches" do
-      io = IO::Memory.new("abab1234abcdefgh")
-      delimited = IO::Delimited.new(io, read_delimiter: "abcdefgh")
+        io.read_char.should eq('f')
+        io.read_char.should eq('g')
+      end
 
-      delimited.gets_to_end.should eq("abab1234")
-    end
+      it "doesn't clobber active_delimiter_buffer" do
+        io = IO::Memory.new("ab12312")
+        delimited = IO::Delimited.new(io, read_delimiter: "12345")
 
-    it "handles partial reads" do
-      io = PartialReaderIO.new("abab1234abcdefgh")
-      delimited = IO::Delimited.new(io, read_delimiter: "abcdefgh")
+        delimited.gets_to_end.should eq("ab12312")
+      end
 
-      delimited.gets_to_end.should eq("abab1234")
+      it "handles the delimiter at the start" do
+        io = IO::Memory.new("ab12312")
+        delimited = IO::Delimited.new(io, read_delimiter: "ab1")
+
+        delimited.read_char.should eq(nil)
+      end
+
+      it "handles the delimiter at the end" do
+        io = IO::Memory.new("ab12312z")
+        delimited = IO::Delimited.new(io, read_delimiter: "z")
+
+        delimited.gets_to_end.should eq("ab12312")
+      end
+
+      it "handles nearly a delimiter at the end" do
+        io = IO::Memory.new("ab12312")
+        delimited = IO::Delimited.new(io, read_delimiter: "122")
+
+        delimited.gets_to_end.should eq("ab12312")
+      end
+
+      it "doesn't clobber the buffer on closely-offset partial matches" do
+        io = IO::Memory.new("abab1234abcdefgh")
+        delimited = IO::Delimited.new(io, read_delimiter: "abcdefgh")
+
+        delimited.gets_to_end.should eq("abab1234")
+      end
+
+      it "handles the case of peek matching first byte, not having enough room, but rest not matching" do
+        #                                 not a delimiter
+        #                                    ---
+        io = MemoryIOWithFixedPeek.new("abcdefwhi")
+        #                               -------
+        #                                peek
+        io.peek_size = 7
+        delimited = IO::Delimited.new(io, read_delimiter: "fgh")
+
+        delimited.gets_to_end.should eq("abcdefwhi")
+        delimited.gets_to_end.should eq("")
+        io.gets_to_end.should eq("")
+      end
+
+      it "handles the case of peek matching first byte, not having enough room, but later matching" do
+        #                                  delimiter
+        #                                    ---
+        io = MemoryIOWithFixedPeek.new("abcdefghijk")
+        #                               -------
+        #                                peek
+        io.peek_size = 7
+        delimited = IO::Delimited.new(io, read_delimiter: "fgh")
+
+        delimited.gets_to_end.should eq("abcde")
+        delimited.gets_to_end.should eq("")
+        io.gets_to_end.should eq("ijk")
+      end
+
+      it "handles the case of peek matching first byte, not having enough room, but later not matching" do
+        #                                 not a delimiter
+        #                                    ---
+        io = MemoryIOWithFixedPeek.new("abcdefgwijkfghhello")
+        #                               -------    ---
+        #                                peek    delimiter
+        io.peek_size = 7
+        delimited = IO::Delimited.new(io, read_delimiter: "fgh")
+
+        delimited.gets_to_end.should eq("abcdefgwijk")
+        delimited.gets_to_end.should eq("")
+        io.gets_to_end.should eq("hello")
+      end
+
+      it "handles the case of peek matching first byte, not having enough room, later only partially matching" do
+        #                                  delimiter
+        #                                    ------------
+        io = MemoryIOWithFixedPeek.new("abcdefghijklmnopqrst")
+        #                               -------~~~~~~~
+        #                                peek   peek
+        io.peek_size = 7
+        delimited = IO::Delimited.new(io, read_delimiter: "fghijklmnopq")
+
+        delimited.gets_to_end.should eq("abcde")
+        delimited.gets_to_end.should eq("")
+        io.gets_to_end.should eq("rst")
+      end
     end
   end
 
