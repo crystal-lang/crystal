@@ -110,13 +110,27 @@ class IO::Delimited < IO
     end
 
     first_byte = @read_delimiter[0]
-    index = peek.index(first_byte)
+
+    index =
+      if slice.size == 1
+        # For a size of 1, this is much faster
+        first_byte == peek[0] ? 0 : nil
+      elsif slice.size < peek.size
+        peek[0, slice.size].index(first_byte)
+      else
+        peek.index(first_byte)
+      end
 
     # If we can't find the delimiter's first byte we can just read from peek
     unless index
       # If we have more in peek than what we need to read, read all of that
       if peek.size >= slice.size
-        slice.copy_from(peek[0, slice.size])
+        if slice.size == 1
+          # For a size of 1, this is much faster
+          slice[0] = peek[0]
+        else
+          slice.copy_from(peek[0, slice.size])
+        end
         @io.skip(slice.size)
         return slice.size
       else
