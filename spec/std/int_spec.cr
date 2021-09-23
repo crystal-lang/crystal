@@ -13,15 +13,6 @@ private macro it_converts_to_s(num, str, **opts)
   end
 end
 
-private macro pending_win32_converts_to_s(num, str, **opts)
-  pending_win32 {{ "converts #{num} to #{str}" }} do
-    num = {{ num }}
-    str = {{ str }}
-    num.to_s({{ opts.double_splat }}).should eq(str)
-    String.build { |io| num.to_s(io, {{ opts.double_splat }}) }.should eq(str)
-  end
-end
-
 describe "Int" do
   describe "**" do
     it "with positive Int32" do
@@ -193,14 +184,17 @@ describe "Int" do
       it_converts_to_s 9223372036854775807_i64, "9223372036854775807"
       it_converts_to_s -9223372036854775808_i64, "-9223372036854775808"
 
-      pending_win32_converts_to_s Int128::MAX, "170141183460469231731687303715884105727"
-      pending_win32_converts_to_s Int128::MIN, "-170141183460469231731687303715884105728"
-
       it_converts_to_s 255_u8, "255"
       it_converts_to_s 65535_u16, "65535"
       it_converts_to_s 4294967295_u32, "4294967295"
+
       it_converts_to_s 18446744073709551615_u64, "18446744073709551615"
-      pending_win32_converts_to_s UInt128::MAX, "340282366920938463463374607431768211455"
+
+      {% unless flag?(:win32) %}
+        it_converts_to_s UInt128::MAX, "340282366920938463463374607431768211455"
+        it_converts_to_s Int128::MAX, "170141183460469231731687303715884105727"
+        it_converts_to_s Int128::MIN, "-170141183460469231731687303715884105728"
+      {% end %}
     end
 
     context "base and upcase parameters" do
