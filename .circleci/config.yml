@@ -509,72 +509,91 @@ jobs:
 
 workflows:
   version: 2
-  tagged_release:
+  release:
     jobs:
       - test_linux:
-          filters: &per_tag
+          filters: &release
+            branches:
+              only:
+                - /release\/.+/
+                - /.*\bci\b.*/
+            tags:
+              only: /.*/
+      - test_linux32_std:
+          filters: *release
+      - test_alpine:
+          filters: *release
+      # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
+      #     filters: *release
+      - test_preview_mt:
+          filters: *release
+      - prepare_common:
+          filters: *release
+      - prepare_maintenance:
+          filters: &maintenance
+            branches:
+              only:
+                - /release\/.+/
+                - /.*\bci\b.*/
+          requires:
+            - prepare_common
+      - prepare_tagged:
+          filters: &tagged
             branches:
               ignore: /.*/
             tags:
               only: /.*/
-      - test_linux32_std:
-          filters: *per_tag
-      - test_alpine:
-          filters: *per_tag
-      # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
-      #     filters: *per_tag
-      - test_preview_mt:
-          filters: *per_tag
-      - prepare_common:
-          filters: *per_tag
-      - prepare_tagged:
-          filters: *per_tag
           requires:
             - prepare_common
       - dist_linux:
-          filters: *per_tag
+          filters: *release
           requires:
+            - prepare_maintenance
             - prepare_tagged
       - dist_linux32:
-          filters: *per_tag
+          filters: *release
           requires:
+            - prepare_maintenance
             - prepare_tagged
       - dist_darwin:
-          filters: *per_tag
+          filters: *release
           requires:
+            - prepare_maintenance
             - prepare_tagged
       - dist_docker:
-          filters: *per_tag
+          filters: *release
           requires:
             - dist_linux
       - dist_docker32:
-          filters: *per_tag
+          filters: *release
           requires:
             - dist_linux32
       - dist_snap:
-          filters: *per_tag
+          filters: *release
           requires:
             - dist_linux
       - publish_snap:
-          filters: *per_tag
+          filters: *release
           requires:
             - dist_snap
       - test_dist_linux_on_docker:
-          filters: *per_tag
+          filters: *release
           requires:
             - dist_docker
       - test_dist_linux32_std_on_docker:
-          filters: *per_tag
+          filters: *release
           requires:
             - dist_docker32
-      # Tagged release do not publish docker images since they are unsigned
-      # publish_docker:
+      - publish_docker:
+          filters: *maintenance
+          requires:
+            - dist_docker
       - dist_docs:
-          filters: *per_tag
+          filters: *release
           requires:
             - dist_docker
       - dist_artifacts:
-          filters: *per_tag
+          filters: *release
           requires:
             - dist_linux
             - dist_linux32
@@ -639,81 +658,6 @@ workflows:
           requires:
             - dist_docker
       - dist_artifacts:
-          requires:
-            - dist_linux
-            - dist_linux32
-            - dist_darwin
-            - dist_snap
-            - dist_docs
-
-  maintenance_release:
-    jobs:
-      - test_linux:
-          filters: &maintenance
-            branches:
-              only:
-                - /release\/.+/
-                - /.*\bci\b.*/
-      - test_linux32_std:
-          filters: *maintenance
-      - test_alpine:
-          filters: *maintenance
-      # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
-      #     filters: *maintenance
-      - test_preview_mt:
-          filters: *maintenance
-      - prepare_common:
-          filters: *maintenance
-      - prepare_maintenance:
-          filters: *maintenance
-          requires:
-            - prepare_common
-      - dist_linux:
-          filters: *maintenance
-          requires:
-            - prepare_maintenance
-      - dist_linux32:
-          filters: *maintenance
-          requires:
-            - prepare_maintenance
-      - dist_darwin:
-          filters: *maintenance
-          requires:
-            - prepare_maintenance
-      - dist_docker:
-          filters: *maintenance
-          requires:
-            - dist_linux
-      - dist_docker32:
-          filters: *maintenance
-          requires:
-            - dist_linux32
-      - dist_snap:
-          filters: *maintenance
-          requires:
-            - dist_linux
-      - publish_snap:
-          filters: *maintenance
-          requires:
-            - dist_snap
-      - test_dist_linux_on_docker:
-          filters: *maintenance
-          requires:
-            - dist_docker
-      - test_dist_linux32_std_on_docker:
-          filters: *maintenance
-          requires:
-            - dist_docker32
-      - publish_docker:
-          filters: *maintenance
-          requires:
-            - dist_docker
-      - dist_docs:
-          filters: *maintenance
-          requires:
-            - dist_docker
-      - dist_artifacts:
-          filters: *maintenance
           requires:
             - dist_linux
             - dist_linux32
