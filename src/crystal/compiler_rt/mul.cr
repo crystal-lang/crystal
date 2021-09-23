@@ -1,6 +1,6 @@
 # :nodoc:
 private macro __mul_impl(name, type, n)
-  # Ported from https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/builtins/int_mulo_impl.inc
+  # Ported from https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/lib/builtins/int_mulo_impl.inc
   # :nodoc:
   fun {{name}}(a : {{type}}, b : {{type}}, overflow : Int32*) : {{type}}
     overflow.value = 0

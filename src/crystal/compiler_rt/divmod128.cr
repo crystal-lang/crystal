@@ -2,7 +2,7 @@
 
 # :nodoc:
 fun __divti3(a : Int128, b : Int128) : Int128
-  # Ported from https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/builtins/int_div_impl.inc
+  # Ported from https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/lib/builtins/int_div_impl.inc
 
   s_a = a >> 127       # s_a = a < 0 ? -1 : 0
   s_b = b >> 127       # s_b = b < 0 ? -1 : 0
@@ -15,7 +15,7 @@ end
 
 # :nodoc:
 fun __modti3(a : Int128, b : Int128) : Int128
-  # Ported from https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/builtins/int_div_impl.inc
+  # Ported from https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/lib/builtins/int_div_impl.inc
 
   s = b >> 127     # s = b < 0 ? -1 : 0
   b = (b ^ s) &- s # negate if s == -1
@@ -27,7 +27,7 @@ end
 
 # :nodoc:
 fun __udivti3(a : UInt128, b : UInt128) : UInt128
-  # Ported from https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/builtins/int_div_impl.inc
+  # Ported from https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/lib/builtins/int_div_impl.inc
 
   quo, _ = _u128_div_rem(a, b)
   quo
@@ -35,7 +35,7 @@ end
 
 # :nodoc:
 fun __umodti3(a : UInt128, b : UInt128) : UInt128
-  # Ported from https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/builtins/int_div_impl.inc
+  # Ported from https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/lib/builtins/int_div_impl.inc
 
   _, rem = _u128_div_rem(a, b)
   rem
@@ -43,7 +43,7 @@ end
 
 # :nodoc:
 def _carrying_mul(lhs : UInt64, rhs : UInt64) : Tuple(UInt64, UInt64)
-  # Ported from https://github.com/rust-lang/compiler-builtins/blob/master/src/int/specialized_div_rem/trifecta.rs
+  # Ported from https://github.com/rust-lang/compiler-builtins/blob/2be2bc086bd9b3c0fc8eb8d2dc7df025e6ffd318/src/int/specialized_div_rem/trifecta.rs
 
   tmp = lhs.to_u128! &* rhs.to_u128!
   {tmp.to_u64!, (tmp >> 64).to_u64!}
@@ -51,7 +51,7 @@ end
 
 # :nodoc:
 def _carrying_mul_add(lhs : UInt64, mul : UInt64, add : UInt64) : Tuple(UInt64, UInt64)
-  # Ported from https://github.com/rust-lang/compiler-builtins/blob/master/src/int/specialized_div_rem/trifecta.rs
+  # Ported from https://github.com/rust-lang/compiler-builtins/blob/2be2bc086bd9b3c0fc8eb8d2dc7df025e6ffd318/src/int/specialized_div_rem/trifecta.rs
 
   tmp = lhs.to_u128!
   tmp &*= mul.to_u128!
@@ -61,7 +61,7 @@ end
 
 # :nodoc:
 def _u128_div_rem(duo : UInt128, div : UInt128) : Tuple(UInt128, UInt128)
-  # Ported from https://github.com/rust-lang/compiler-builtins/blob/master/src/int/specialized_div_rem/trifecta.rs
+  # Ported from https://github.com/rust-lang/compiler-builtins/blob/2be2bc086bd9b3c0fc8eb8d2dc7df025e6ffd318/src/int/specialized_div_rem/trifecta.rs
 
   # Rust also has another algorithm for 128-bit integer division
   # for microarchitectures that have slow hardware integer division.

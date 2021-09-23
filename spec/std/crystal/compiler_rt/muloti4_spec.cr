@@ -1,6 +1,6 @@
 require "spec"
 
-# Ported from https://github.com/llvm/llvm-project/blob/main/compiler-rt/test/builtins/Unit/muloti4_test.c
+# Ported from https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/test/builtins/Unit/muloti4_test.c
 
 private def test__muloti4(a : Int128, b : Int128, expected : Int128, expected_overflow : Int32, file = __FILE__, line = __LINE__)
   it "passes compiler-rt builtins unit tests" do
