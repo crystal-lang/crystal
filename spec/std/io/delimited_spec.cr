@@ -269,6 +269,24 @@ describe "IO::Delimited" do
     end
   end
 
+  describe "#gets with peeking when can't peek" do
+    it "works" do
+      io = MemoryIOWithFixedPeek.new("abcdefghel")
+      io.peek_size = 7
+
+      delimited = IO::Delimited.new(io, read_delimiter: "hello")
+
+      # We first peek "abcdefg".
+      # The delimiter's first byte isn't there so we read everything.
+      # Next we peek "hel". It matches the delimiter's beginning
+      # but `peek` can't tell whether there's more content or not
+      # after that, and it can't return an empty buffer because that
+      # means EOF. So it must return `nil`. So `IO#gets` should
+      # handle this case where `peek` becomes `nil`.
+      delimited.gets.should eq("abcdefghel")
+    end
+  end
+
   describe "#write" do
     it "raises" do
       delimited = IO::Delimited.new(IO::Memory.new, read_delimiter: "zr")

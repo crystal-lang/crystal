@@ -44,7 +44,11 @@ class IO::Delimited < IO
 
   def read(slice : Bytes) : Int32
     check_open
-    return 0 if @finished
+
+    if @finished
+      # We might still have stuff to read from @active_delimiter_buffer
+      return read_from_active_delimited_buffer(slice)
+    end
 
     read_internal(slice)
   end
@@ -68,8 +72,7 @@ class IO::Delimited < IO
         # If we have something in the active delimiter buffer,
         # but we don't have any more data to read, that wasn't
         # the delimiter so we must include it in the slice.
-        slice.copy_from(@active_delimiter_buffer)
-        return @active_delimiter_buffer.size
+        return read_from_active_delimited_buffer(slice)
       end
     end
 
@@ -88,6 +91,7 @@ class IO::Delimited < IO
         if peek.size >= delimiter_remaining.size
           # We found the delimiter!
           @io.skip(min_size)
+          @active_delimiter_buffer = Bytes.empty
           @finished = true
           return 0
         else
@@ -197,7 +201,18 @@ class IO::Delimited < IO
 
     @io.skip(peek.size)
 
-    index
+    index + read_internal(slice)
+  end
+
+  private def read_from_active_delimited_buffer(slice : Bytes) : Int32
+    if @active_delimiter_buffer.empty?
+      return 0
+    end
+
+    available = Math.min(@active_delimiter_buffer.size, slice.size)
+    slice.copy_from(@active_delimiter_buffer[0, available])
+    @active_delimiter_buffer += available
+    available
   end
 
   private def read_without_peek(slice : Bytes) : Int32
@@ -248,6 +263,7 @@ class IO::Delimited < IO
 
         if buffer == @read_delimiter
           @finished = true
+          @active_delimiter_buffer = Bytes.empty
           return read_bytes
         end
 
