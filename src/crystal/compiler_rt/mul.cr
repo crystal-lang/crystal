@@ -29,7 +29,7 @@ private macro __mul_impl(name, type, n)
         overflow.value = 1
       end
     else
-      if abs_a > ({{type}}::MIN // -abs_b)
+      if abs_a > ({{type}}::MIN // ({{type}}.new(0) &- abs_b))
         overflow.value = 1
       end
     end
