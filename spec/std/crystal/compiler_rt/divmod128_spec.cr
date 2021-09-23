@@ -10,7 +10,11 @@ private def make_tu(a : UInt128, b : UInt128)
   (a << 64) + b
 end
 
-# Specs ported from compiler-rt
+# Ported from:
+# - https://github.com/llvm/llvm-project/blob/main/compiler-rt/test/builtins/Unit/umodti3_test.c
+# - https://github.com/llvm/llvm-project/blob/main/compiler-rt/test/builtins/Unit/udivti3_test.c
+# - https://github.com/llvm/llvm-project/blob/main/compiler-rt/test/builtins/Unit/modti3_test.c
+# - https://github.com/llvm/llvm-project/blob/main/compiler-rt/test/builtins/Unit/divti3_test.c
 
 private def test__divti3(a : Int128, b : Int128, expected : Int128, file = __FILE__, line = __LINE__)
   it "passes compiler-rt builtins unit tests" do
