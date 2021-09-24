@@ -276,9 +276,34 @@ describe "IO::Delimited" do
         io.peek_size = 2
         delimited = IO::Delimited.new(io, read_delimiter: "aab")
 
+        delimited.peek.should be_nil
         delimited.gets_to_end.should eq("a")
         delimited.gets_to_end.should eq("")
         io.gets_to_end.should eq("cde")
+      end
+
+      it "can peek if first byte found but doesn't fully match, and there's that first byte again in the peek buffer" do
+        #                                 delimiter
+        #                                   -----
+        io = MemoryIOWithFixedPeek.new("holhhello")
+        #                               ----
+        #                               peek
+        io.peek_size = 4
+        delimited = IO::Delimited.new(io, read_delimiter: "hello")
+
+        delimited.peek.should eq("hol".to_slice)
+      end
+
+      it "can peek if first byte found but doesn't fully match, and the byte isn't there in the peek buffer" do
+        #                                 delimiter
+        #                                   -----
+        io = MemoryIOWithFixedPeek.new("holahello")
+        #                               ----
+        #                               peek
+        io.peek_size = 4
+        delimited = IO::Delimited.new(io, read_delimiter: "hello")
+
+        delimited.peek.should eq("hola".to_slice)
       end
     end
   end

@@ -332,9 +332,18 @@ class IO::Delimited < IO
         # Otherwise we can't know without reading further,
         # return what we have so far
         if index == 0
-          # If this happens right at the beginning of the peek buffer,
-          # we can't return an empty slice because that means EOF
-          return nil
+          # Check if whatever remains in peek actually matches the delimiter.
+          min_size = Math.min(@read_delimiter.size, peek.size)
+          if @read_delimiter[0, min_size] == peek[0, min_size]
+            # The entire peek buffer partially matches the delimiter,
+            # but we don't know what will happen next. We can't peek.
+            return nil
+          else
+            # It didn't fully match, so we can at least return
+            # the part up to the next match
+            next_index = peek.index(first_byte, 1)
+            return peek[0, next_index || peek.size]
+          end
         else
           return peek[0, index]
         end
