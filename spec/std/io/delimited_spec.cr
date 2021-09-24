@@ -266,6 +266,20 @@ describe "IO::Delimited" do
 
         delimited.peek.should be_nil
       end
+
+      it "handles the case of the active delimited buffer including the delimiter" do
+        #                              delimiter
+        #                                ---
+        io = MemoryIOWithFixedPeek.new("aaabcde")
+        #                               --
+        #                              peek
+        io.peek_size = 2
+        delimited = IO::Delimited.new(io, read_delimiter: "aab")
+
+        delimited.gets_to_end.should eq("a")
+        delimited.gets_to_end.should eq("")
+        io.gets_to_end.should eq("cde")
+      end
     end
   end
 

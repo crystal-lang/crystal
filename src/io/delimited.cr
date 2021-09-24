@@ -76,6 +76,8 @@ class IO::Delimited < IO
       end
     end
 
+    first_byte = @read_delimiter[0]
+
     # If we have something in the active delimiter buffer
     unless @active_delimiter_buffer.empty?
       # This is the rest of the delimiter we have to match
@@ -104,16 +106,19 @@ class IO::Delimited < IO
           return read_internal(slice)
         end
       else
-        # No match: just copy from the active delimiter
-        read_bytes = @active_delimiter_buffer.size
-        slice.copy_from(@active_delimiter_buffer)
+        # No match.
+        # We first need to check if the delimiter could actually start in this active buffer.
+        next_index = @active_delimiter_buffer.index(first_byte, 1)
+
+        # We read up to that new match, if any, or the entire buffer
+        read_bytes = next_index || @active_delimiter_buffer.size
+
+        slice.copy_from(@active_delimiter_buffer[0, read_bytes])
         slice += read_bytes
-        @active_delimiter_buffer = Bytes.empty
+        @active_delimiter_buffer += read_bytes
         return read_bytes + read_internal(slice)
       end
     end
-
-    first_byte = @read_delimiter[0]
 
     index =
       if slice.size == 1
