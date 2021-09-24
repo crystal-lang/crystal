@@ -288,13 +288,9 @@ class IO::Delimited < IO
 
   def peek : Bytes?
     if @finished
-      if @active_delimiter_buffer.empty?
-        return Bytes.empty
-      else
-        # Prefer to return `nil` over dupping the active
-        # delimited buffer for performance reasons.
-        return nil
-      end
+      # It's fine to return this internal buffer because peek
+      # clients aren't supposed to write to that buffer.
+      return @active_delimiter_buffer
     end
 
     peek = @io.peek

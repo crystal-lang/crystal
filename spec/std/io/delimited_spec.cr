@@ -332,13 +332,7 @@ describe "IO::Delimited" do
       delimited = IO::Delimited.new(io, read_delimiter: "hello")
       delimited.read(Bytes.new(1))
 
-      # "el" in still in the active buffer, and the peek buffer
-      # is empty. We could make IO::Delimited return that, but
-      # it would need to be a copy so that could be expensive.
-      # Instead, we return `nil`. The peeker will have to use
-      # a slower path, but they will probably not need to allocate
-      # memory.
-      delimited.peek.should be_nil
+      delimited.peek.should eq("el".to_slice)
     end
   end
 
