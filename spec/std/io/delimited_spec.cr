@@ -270,7 +270,7 @@ describe "IO::Delimited" do
   end
 
   describe "#gets with peeking when can't peek" do
-    it "works" do
+    it "gets" do
       io = MemoryIOWithFixedPeek.new("abcdefghel")
       io.peek_size = 7
 
@@ -284,6 +284,22 @@ describe "IO::Delimited" do
       # means EOF. So it must return `nil`. So `IO#gets` should
       # handle this case where `peek` becomes `nil`.
       delimited.gets.should eq("abcdefghel")
+    end
+
+    it "peeks" do
+      io = MemoryIOWithFixedPeek.new("hel")
+      io.peek_size = 1
+
+      delimited = IO::Delimited.new(io, read_delimiter: "hello")
+      delimited.read(Bytes.new(1))
+
+      # "el" in still in the active buffer, and the peek buffer
+      # is empty. We could make IO::Delimited return that, but
+      # it would need to be a copy so that could be expensive.
+      # Instead, we return `nil`. The peeker will have to use
+      # a slower path, but they will probably not need to allocate
+      # memory.
+      delimited.peek.should be_nil
     end
   end
 

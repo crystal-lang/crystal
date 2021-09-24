@@ -282,10 +282,19 @@ class IO::Delimited < IO
   end
 
   def peek : Bytes?
+    if @finished
+      if @active_delimiter_buffer.empty?
+        return Bytes.empty
+      else
+        # Prefer to return `nil` over dupping the active
+        # delimited buffer for performance reasons.
+        return nil
+      end
+    end
+
     peek = @io.peek
     return nil unless peek
     return peek if peek.empty?
-    return Bytes.empty if @finished
 
     # See if we can find the first byte
     first_byte = @read_delimiter[0]
