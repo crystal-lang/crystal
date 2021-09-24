@@ -141,7 +141,6 @@ class IO::Delimited < IO
         # Otherwise, read from peek for now
         slice.copy_from(peek)
         @io.skip(peek.size)
-        slice += peek.size
         return peek.size
       end
     end
