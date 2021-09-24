@@ -208,7 +208,6 @@ class Array(T)
     equals?(other) { |x, y| x == y }
   end
 
-  # :nodoc:
   def ==(other)
     false
   end
@@ -1023,7 +1022,6 @@ class Array(T)
     self
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     to_s io
   end
@@ -2159,7 +2157,6 @@ class Array(T)
     end
   end
 
-  # :nodoc:
   def index(object, offset : Int = 0)
     # Optimize for the case of looking for a byte in a byte slice
     if T.is_a?(UInt8.class) &&

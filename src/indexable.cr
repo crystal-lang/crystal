@@ -574,7 +574,11 @@ module Indexable(T)
     unsafe_fetch(random.rand(size))
   end
 
-  # :nodoc:
+  # :inherit:
+  #
+  # If `self` is not empty and `n` is equal to 1, calls `sample(random)` exactly
+  # once. Thus, *random* will be left in a different state compared to the
+  # implementation in `Enumerable`.
   def sample(n : Int, random = Random::DEFAULT) : Array(T)
     return super unless n == 1
 

@@ -248,7 +248,6 @@ struct Enum
     value <=> other.value
   end
 
-  # :nodoc:
   def ==(other)
     false
   end
