@@ -82,7 +82,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: "11.1.0"
+      xcode: 12.4.0
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
@@ -144,7 +144,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout 85028bd13d6f9f80499a0aa9fa18fda7bd398f49
+          git checkout 613311673a83dbce963cad6f8af219b71fe3a0d2
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -155,7 +155,7 @@ jobs:
           echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
 
           # Which previous version use
-          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/1.0.0/crystal-1.0.0-1"
+          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/1.1.1/crystal-1.1.1-1"
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX32_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-i686.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-x86_64.tar.gz" >> build.env
@@ -294,7 +294,7 @@ jobs:
 
   dist_darwin:
     macos:
-      xcode: "11.1.0"
+      xcode: 12.4.0
     shell: /bin/bash --login -eo pipefail
     steps:
       - restore_cache:
@@ -305,7 +305,7 @@ jobs:
           command: |
             brew unlink python@2 || true
 
-            ruby-install ruby 2.5.6
+            ruby-install ruby 2.7.3
 
             brew install pkgconfig libtool
 
@@ -318,7 +318,7 @@ jobs:
       - run:
           no_output_timeout: 40m
           command: |
-            echo "2.5.6" > /tmp/workspace/distribution-scripts/.ruby-version
+            echo "2.7.3" > /tmp/workspace/distribution-scripts/.ruby-version
             cd /tmp/workspace/distribution-scripts
             source build.env
             cd omnibus

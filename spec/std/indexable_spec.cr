@@ -8,9 +8,9 @@ private class SafeIndexable
   def initialize(@size : Int32, @offset = 0_i32)
   end
 
-  def unsafe_fetch(i)
+  def unsafe_fetch(i) : Int32
     raise IndexError.new unless 0 <= i < size
-    i + @offset
+    (i + @offset).to_i
   end
 end
 
@@ -22,7 +22,7 @@ private class SafeStringIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_fetch(i)
+  def unsafe_fetch(i) : String
     raise IndexError.new unless 0 <= i < size
     i.to_s
   end
@@ -36,7 +36,7 @@ private class SafeMixedIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_fetch(i)
+  def unsafe_fetch(i) : String | Int32
     raise IndexError.new unless 0 <= i < size
     i.to_s
   end
@@ -50,7 +50,7 @@ private class SafeRecursiveIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_fetch(i)
+  def unsafe_fetch(i) : SafeRecursiveIndexable | Int32
     raise IndexError.new unless 0 <= i < size
     if (i % 2) == 0
       SafeRecursiveIndexable.new(i)
@@ -61,24 +61,40 @@ private class SafeRecursiveIndexable
 end
 
 describe Indexable do
-  it "does index with big negative offset" do
-    indexable = SafeIndexable.new(3)
-    indexable.index(0, -100).should be_nil
+  describe "#index" do
+    it "does index with big negative offset" do
+      indexable = SafeIndexable.new(3)
+      indexable.index(0, -100).should be_nil
+    end
+
+    it "does index with big offset" do
+      indexable = SafeIndexable.new(3)
+      indexable.index(0, 100).should be_nil
+    end
+
+    it "offset type" do
+      indexable = SafeIndexable.new(3)
+      indexable.index(1, 0_i64).should eq 1
+      indexable.index(1, 0_i64).should be_a(Int64)
+    end
   end
 
-  it "does index with big offset" do
-    indexable = SafeIndexable.new(3)
-    indexable.index(0, 100).should be_nil
-  end
+  describe "#rindex" do
+    it "does rindex with big negative offset" do
+      indexable = SafeIndexable.new(3)
+      indexable.rindex(0, -100).should be_nil
+    end
 
-  it "does rindex with big negative offset" do
-    indexable = SafeIndexable.new(3)
-    indexable.rindex(0, -100).should be_nil
-  end
+    it "does rindex with big offset" do
+      indexable = SafeIndexable.new(3)
+      indexable.rindex(0, 100).should be_nil
+    end
 
-  it "does rindex with big offset" do
-    indexable = SafeIndexable.new(3)
-    indexable.rindex(0, 100).should be_nil
+    it "offset type" do
+      indexable = SafeIndexable.new(3)
+      indexable.rindex(1, 2_i64).should eq 1
+      indexable.rindex(1, 2_i64).should be_a(Int64)
+    end
   end
 
   it "does each" do

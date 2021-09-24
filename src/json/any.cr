@@ -246,12 +246,10 @@ struct JSON::Any
     as_h if @raw.is_a?(Hash)
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     @raw.inspect(io)
   end
 
-  # :nodoc:
   def to_s(io : IO) : Nil
     @raw.to_s(io)
   end
