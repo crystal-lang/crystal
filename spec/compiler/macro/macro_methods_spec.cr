@@ -283,6 +283,14 @@ module Crystal
         assert_macro "", "{{ 2147483648.to_number }}", [] of ASTNode, "2147483648"
         assert_macro "", "{{ 1_f32.to_number }}", [] of ASTNode, "1.0"
       end
+
+      it "executes zero?" do
+        assert_macro "", "{{0.zero?}}", [] of ASTNode, "true"
+        assert_macro "", "{{1.zero?}}", [] of ASTNode, "false"
+
+        assert_macro "", "{{0.0.zero?}}", [] of ASTNode, "true"
+        assert_macro "", "{{0.1.zero?}}", [] of ASTNode, "false"
+      end
     end
 
     describe "string methods" do
