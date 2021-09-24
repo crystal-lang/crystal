@@ -1695,7 +1695,7 @@ module Crystal
 
     def self.includers(type)
       case type
-      when NonGenericModuleType, GenericModuleType
+      when NonGenericModuleType, GenericModuleType, GenericModuleInstanceType
         types = type.raw_including_types
         return empty_no_return_array unless types
         ArrayLiteral.map(types) do |including_type|

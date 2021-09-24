@@ -1374,7 +1374,7 @@ module Crystal
 
     describe TypeNode do
       describe "#includers" do
-        it "returns an array of types `self` is included in" do
+        it "returns an array of types `self` is directly included in" do
           assert_type(%(
             module Foo
             end
@@ -1419,14 +1419,18 @@ module Crystal
             end
 
             class ChildT(T) < SubT(T)
+              include Enumt(T)
             end
 
-          {% if Baz.includers.map(&.stringify) == ["Baz::Tar", "Enumt(T)", "Bar", "Str", "Gen(T)", "AStr", "ACla", "SubT(T)"] && Enumt.includers.map(&.stringify) == ["Str"]  %}
-            1
-          {% else %}
-            'a'
-          {% end %}
-        )) { int32 }
+            class Witness < ChildT(String)
+            end
+
+            {
+              {% if Baz.includers.map(&.stringify).sort == %w(ACla AStr Bar Baz::Tar Enumt(T) Gen(T) Str SubT(T)) %} 1 {% else %} 'a' {% end %},
+              {% if Enumt.includers.map(&.stringify).sort == %w(ChildT(String) ChildT(T) Str) %} 1 {% else %} 'a' {% end %},
+              {% if Enumt(String).includers.map(&.stringify).sort == %w(ChildT(String) Str) %} 1 {% else %} 'a' {% end %},
+            }
+            )) { tuple_of([int32, int32, int32]) }
         end
       end
 
