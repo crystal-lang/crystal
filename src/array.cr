@@ -1348,7 +1348,7 @@ class Array(T)
     result
   end
 
-  def product(enumerable : Enumerable(U), & : T, U ->) forall U
+  def product(enumerable : Enumerable, &)
     self.each { |a| enumerable.each { |b| yield a, b } }
   end
 

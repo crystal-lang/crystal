@@ -410,7 +410,7 @@ module Indexable(T)
   end
 
   # Optimized version of `equals?` used when `other` is also an `Indexable`.
-  def equals?(other : Indexable(U), & : T, U ->) : Bool forall U
+  def equals?(other : Indexable, &) : Bool
     return false if size != other.size
     each_with_index do |item, i|
       return false unless yield(item, other.unsafe_fetch(i))
