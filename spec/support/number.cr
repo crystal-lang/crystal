@@ -1,7 +1,8 @@
 require "spec/helpers/iterate"
 
 # Helper methods to describe the behavior of numbers of different types
-{% if flag?(:darwin) %}
+# Int128 and UInt128 are excluded from win32 because of missing compiler-rt symbols
+{% unless flag?(:win32) %}
   BUILTIN_NUMBER_TYPES =
     [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128, Float32, Float64]
   BUILTIN_INTEGER_TYPES =

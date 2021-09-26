@@ -1,5 +1,8 @@
 # Provides the `Unicode::CaseOptions` enum for special case conversions like Turkic.
 module Unicode
+  # The currently supported [Unicode](https://home.unicode.org) version.
+  VERSION = "14.0.0"
+
   # Case options to pass to various `Char` and `String` methods such as `upcase` or `downcase`.
   @[Flags]
   enum CaseOptions

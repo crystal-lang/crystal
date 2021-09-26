@@ -194,6 +194,10 @@ module Crystal::Macros
   def raise(message) : NoReturn
   end
 
+  # Returns `true` if the given *filename* exists, `false` otherwise.
+  def file_exists?(filename) : BoolLiteral
+  end
+
   # Reads a file and returns a `StringLiteral` with its contents.
   #
   # Gives a compile-time error if the file doesn't exist or if

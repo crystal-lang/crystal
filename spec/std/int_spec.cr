@@ -251,7 +251,14 @@ describe "Int" do
       it_converts_to_s 255_u8, "255"
       it_converts_to_s 65535_u16, "65535"
       it_converts_to_s 4294967295_u32, "4294967295"
+
       it_converts_to_s 18446744073709551615_u64, "18446744073709551615"
+
+      {% unless flag?(:win32) %}
+        it_converts_to_s UInt128::MAX, "340282366920938463463374607431768211455"
+        it_converts_to_s Int128::MAX, "170141183460469231731687303715884105727"
+        it_converts_to_s Int128::MIN, "-170141183460469231731687303715884105728"
+      {% end %}
     end
 
     context "base and upcase parameters" do
@@ -532,6 +539,9 @@ describe "Int" do
       Int64.new(1).should be_a(Int64)
       Int64.new(1).should eq(1)
 
+      Int128.new(1).should be_a(Int128)
+      Int128.new(1).should eq(1)
+
       UInt8.new(1).should be_a(UInt8)
       UInt8.new(1).should eq(1)
 
@@ -543,6 +553,9 @@ describe "Int" do
 
       UInt64.new(1).should be_a(UInt64)
       UInt64.new(1).should eq(1)
+
+      UInt128.new(1).should be_a(UInt128)
+      UInt128.new(1).should eq(1)
     end
   end
 
@@ -571,11 +584,25 @@ describe "Int" do
 
       (UInt8::MIN / -1).should eq(0)
     end
+
+    pending_win32 "divides Int128::MIN by -1" do
+      (Int128::MIN / -1).should eq(-(Int128::MIN.to_f64))
+    end
   end
 
   describe "floor division //" do
     it "preserves type of lhs" do
       {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64] %}
+        ({{type}}.new(7) // 2).should be_a({{type}})
+        ({{type}}.new(7) // 2.0).should be_a({{type}})
+        ({{type}}.new(7) // 2.0_f32).should be_a({{type}})
+      {% end %}
+    end
+
+    # Missing symbols: __floattidf, __floatuntidf, __fixdfti, __fixsfti, __fixunsdfti, __fixunssfti, __floatuntisf, __floattisf
+    # These symbols are all required to convert U/Int128s to Floats
+    pending_win32 "preserves type of lhs (128-bit)" do
+      {% for type in [UInt128, Int128] %}
         ({{type}}.new(7) // 2).should be_a({{type}})
         ({{type}}.new(7) // 2.0).should be_a({{type}})
         ({{type}}.new(7) // 2.0_f32).should be_a({{type}})
@@ -622,6 +649,7 @@ describe "Int" do
     expect_raises(ArgumentError) { Int16::MIN // -1 }
     expect_raises(ArgumentError) { Int32::MIN // -1 }
     expect_raises(ArgumentError) { Int64::MIN // -1 }
+    expect_raises(ArgumentError) { Int128::MIN // -1 }
 
     (UInt8::MIN // -1).should eq(0)
   end
@@ -647,8 +675,8 @@ describe "Int" do
   end
 
   it "returns 0 when doing IntN::MIN % -1 (#8306)" do
-    {% for n in [8, 16, 32, 64] %}
-      (Int{{n}}::MIN % -1_i{{n}}).should eq(0)
+    {% for n in [8, 16, 32, 64, 128] %}
+      (Int{{n}}::MIN % -1.to_i{{n}}).should eq(0)
     {% end %}
   end
 
@@ -661,8 +689,8 @@ describe "Int" do
   end
 
   it "returns 0 when doing IntN::MIN.remainder(-1) (#8306)" do
-    {% for n in [8, 16, 32, 64] %}
-      (Int{{n}}::MIN.remainder(-1_i{{n}})).should eq(0)
+    {% for n in [8, 16, 32, 64, 128] %}
+      (Int{{n}}::MIN.remainder(-1.to_i{{n}})).should eq(0)
     {% end %}
   end
 
@@ -798,27 +826,31 @@ describe "Int" do
     it { 5_i64.popcount.should eq(2) }
     it { 9223372036854775807_i64.popcount.should eq(63) }
     it { 18446744073709551615_u64.popcount.should eq(64) }
+
+    it { 0_i128.popcount.should eq(0) }
+    it { Int128::MAX.popcount.should eq(127) }
+    it { UInt128::MAX.popcount.should eq(128) }
   end
 
   describe "#leading_zeros_count" do
-    {% for width in %w(8 16 32 64).map(&.id) %}
-      it { -1_i{{width}}.leading_zeros_count.should eq(0) }
-      it { 0_i{{width}}.leading_zeros_count.should eq({{width}}) }
-      it { 0_u{{width}}.leading_zeros_count.should eq({{width}}) }
+    {% for width in %w(8 16 32 64 128).map(&.id) %}
+      it { -1.to_i{{width}}.leading_zeros_count.should eq(0) }
+      it { 0.to_i{{width}}.leading_zeros_count.should eq({{width}}) }
+      it { 0.to_u{{width}}.leading_zeros_count.should eq({{width}}) }
     {% end %}
   end
 
   describe "#trailing_zeros_count" do
-    {% for width in %w(8 16 32 64).map(&.id) %}
-      it { -2_i{{width}}.trailing_zeros_count.should eq(1) }
-      it { 2_i{{width}}.trailing_zeros_count.should eq(1) }
-      it { 2_u{{width}}.trailing_zeros_count.should eq(1) }
+    {% for width in %w(8 16 32 64 128).map(&.id) %}
+      it { -2.to_i{{width}}.trailing_zeros_count.should eq(1) }
+      it { 2.to_i{{width}}.trailing_zeros_count.should eq(1) }
+      it { 2.to_u{{width}}.trailing_zeros_count.should eq(1) }
     {% end %}
   end
 
   pending_win32 "compares signed vs. unsigned integers" do
-    signed_ints = [Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, 0_i8, 0_i16, 0_i32, 0_i64]
-    unsigned_ints = [UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, 0_u8, 0_u16, 0_u32, 0_u64]
+    signed_ints = [Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int128::MAX, Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, Int128::MIN, 0_i8, 0_i16, 0_i32, 0_i64, 0_i128]
+    unsigned_ints = [UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, UInt128::MAX, 0_u8, 0_u16, 0_u32, 0_u64, 0_u128]
 
     big_signed_ints = signed_ints.map &.to_big_i
     big_unsigned_ints = unsigned_ints.map &.to_big_i
@@ -845,7 +877,7 @@ describe "Int" do
   end
 
   it "clones" do
-    [1_u8, 2_u16, 3_u32, 4_u64, 5_i8, 6_i16, 7_i32, 8_i64].each do |value|
+    [1_u8, 2_u16, 3_u32, 4_u64, 5.to_u128, 6_i8, 7_i16, 8_i32, 9_i64, 10.to_i128].each do |value|
       value.clone.should eq(value)
     end
   end
@@ -903,6 +935,12 @@ describe "Int" do
       Int32::MAX.digits.should eq(Int32::MAX.to_s.chars.map(&.to_i).reverse)
       Int64::MAX.digits.should eq(Int64::MAX.to_s.chars.map(&.to_i).reverse)
       UInt64::MAX.digits.should eq(UInt64::MAX.to_s.chars.map(&.to_i).reverse)
+    end
+
+    # Missing symbol __floatuntidf on windows
+    pending_win32 "works for u/int128 maximums" do
+      Int128::MAX.digits.should eq(Int128::MAX.to_s.chars.map(&.to_i).reverse)
+      UInt128::MAX.digits.should eq(UInt128::MAX.to_s.chars.map(&.to_i).reverse)
     end
 
     it "works for non-Int32" do

@@ -84,12 +84,12 @@ class CSV::Builder
   def quote_cell(value : String)
     append_cell do
       @io << @quote_char
-      value.each_byte do |byte|
-        case byte
+      value.each_char do |char|
+        case char
         when @quote_char
           @io << @quote_char << @quote_char
         else
-          @io.write_byte byte
+          @io << char
         end
       end
       @io << @quote_char

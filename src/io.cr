@@ -755,6 +755,9 @@ abstract class IO
 
         buffer << char2
         total += char_bytesize2
+        break if total >= limit
+
+        next
       elsif char == delimiter
         buffer << char unless chomp
         break

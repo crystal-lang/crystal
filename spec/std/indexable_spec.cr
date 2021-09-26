@@ -8,9 +8,9 @@ private class SafeIndexable
   def initialize(@size : Int32, @offset = 0_i32)
   end
 
-  def unsafe_fetch(i)
+  def unsafe_fetch(i) : Int32
     raise IndexError.new unless 0 <= i < size
-    i + @offset
+    (i + @offset).to_i
   end
 end
 
@@ -22,7 +22,7 @@ private class SafeStringIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_fetch(i)
+  def unsafe_fetch(i) : String
     raise IndexError.new unless 0 <= i < size
     i.to_s
   end
@@ -36,7 +36,7 @@ private class SafeMixedIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_fetch(i)
+  def unsafe_fetch(i) : String | Int32
     raise IndexError.new unless 0 <= i < size
     i.to_s
   end
@@ -50,7 +50,7 @@ private class SafeRecursiveIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_fetch(i)
+  def unsafe_fetch(i) : SafeRecursiveIndexable | Int32
     raise IndexError.new unless 0 <= i < size
     if (i % 2) == 0
       SafeRecursiveIndexable.new(i)

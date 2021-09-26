@@ -244,8 +244,6 @@ struct Slice(T)
   # ```
   # a = Slice["a", "b", "c", "d", "e"]
   # a[1..3] # => Slice["b", "c", "d"]
-  # # range.end > array.size
-  # a[3..7] # => Slice["d", "e"]
   # ```
   #
   # Negative indices count backward from the end of the slice (`-1` is the last
@@ -330,7 +328,7 @@ struct Slice(T)
   # slice = Slice[1, 2.5, "a"]
   # slice.map &.to_s # => Slice["1", "2.5", "a"]
   # ```
-  def map(*, read_only = false, &block : T -> U) forall U
+  def map(*, read_only = false, & : T -> U) forall U
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i] }
   end
 
@@ -346,7 +344,7 @@ struct Slice(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0, *, read_only = false, &block : (T, Int32) -> U) forall U
+  def map_with_index(offset = 0, *, read_only = false, & : (T, Int32) -> U) forall U
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i], offset + i }
   end
 
@@ -876,7 +874,6 @@ struct Slice(T)
     self
   end
 
-  # :nodoc:
   def index(object, offset : Int = 0)
     # Optimize for the case of looking for a byte in a byte slice
     if T.is_a?(UInt8.class) &&
