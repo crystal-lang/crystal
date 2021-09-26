@@ -903,9 +903,7 @@ module Crystal
       when "method_added"
         return add_hook :method_added, a_macro, args_size: 1
       when "method_missing"
-        if a_macro.args.size != 1
-          raise TypeException.new "macro 'method_missing' expects 1 argument (call)"
-        end
+        check_macro_param_count(a_macro, 1)
       else
         # normal macro
       end
@@ -924,19 +922,16 @@ module Crystal
     end
 
     def add_hook(kind, a_macro, args_size = 0)
-      if a_macro.args.size != args_size
-        case args_size
-        when 0
-          raise TypeException.new "macro '#{kind}' must not have arguments"
-        when 1
-          raise TypeException.new "macro '#{kind}' must have a argument"
-        else
-          raise TypeException.new "macro '#{kind}' must have #{args_size} arguments"
-        end
-      end
-
+      check_macro_param_count(a_macro, args_size)
       hooks = @hooks ||= [] of Hook
       hooks << Hook.new(kind, a_macro)
+    end
+
+    private def check_macro_param_count(a_macro, expected_count)
+      param_count = a_macro.args.size
+      if param_count != expected_count
+        raise TypeException.new "wrong number of parameters for macro '#{a_macro.name}' (given #{param_count}, expected #{expected_count})"
+      end
     end
 
     def filter_by_responds_to(name)
@@ -944,15 +939,21 @@ module Crystal
     end
 
     def include(mod)
-      if mod == self
+      generic_module = mod.is_a?(GenericModuleInstanceType) ? mod.generic_type : mod
+
+      if generic_module == self
         raise TypeException.new "cyclic include detected"
-      elsif mod.ancestors.includes?(self)
-        raise TypeException.new "cyclic include detected"
-      else
-        unless parents.includes?(mod)
-          parents.insert 0, mod
-          mod.add_including_type(self)
+      end
+
+      generic_module.ancestors.each do |ancestor|
+        if ancestor == self || ancestor.is_a?(GenericModuleInstanceType) && ancestor.generic_type == self
+          raise TypeException.new "cyclic include detected"
         end
+      end
+
+      unless parents.includes?(mod)
+        parents.insert 0, mod
+        mod.add_including_type(self)
       end
     end
 
@@ -1603,6 +1604,8 @@ module Crystal
     end
 
     def run_instance_var_initializer(initializer, instance : GenericClassInstanceType | NonGenericClassType)
+      return if instance.unbound?
+
       meta_vars = MetaVars.new
       visitor = MainVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
       visitor.scope = instance.metaclass
@@ -2943,10 +2946,10 @@ module Crystal
     @splat_index = 0
     @struct = true
 
-    def instantiate(type_vars)
+    def instantiate(type_vars, type_merge_union_of = false)
       types = type_vars.map do |type_var|
         unless type_var.is_a?(Type)
-          type_var.raise "argument to Proc must be a type, not #{type_var}"
+          type_var.raise "argument to Union must be a type, not #{type_var}"
         end
         # There's no need for types to be virtual because at the end
         # `type_merge` will take care of that.
@@ -2954,7 +2957,12 @@ module Crystal
         # and not T+ (which might lead to some inconsistencies).
         type_var.devirtualize.as(Type)
       end
-      program.type_merge(types) || program.no_return
+
+      if type_merge_union_of
+        program.type_merge_union_of(types) || program.no_return
+      else
+        program.type_merge(types) || program.no_return
+      end
     end
 
     def new_generic_instance(program, generic_type, type_vars)
@@ -3065,6 +3073,10 @@ module Crystal
         end
       end
       program.type_merge(new_union_types) || program.no_return
+    end
+
+    def unbound?
+      union_types.any? &.unbound?
     end
 
     def all?
@@ -3341,6 +3353,10 @@ module Crystal
     delegate base_type, to: instance_type
 
     delegate lookup_first_def, to: instance_type.metaclass
+
+    def replace_type_parameters(instance)
+      base_type.replace_type_parameters(instance).virtual_type.metaclass
+    end
 
     def each_concrete_type
       instance_type.subtypes.each do |type|

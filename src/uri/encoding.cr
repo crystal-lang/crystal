@@ -191,12 +191,15 @@ class URI
   def self.decode(string : String, io : IO, *, plus_to_space : Bool = false, &block) : Nil
     i = 0
     bytesize = string.bytesize
+    buffer = IO::Memory.new(bytesize)
+
     while i < bytesize
-      byte = string.unsafe_byte_at(i)
+      byte = string.to_unsafe[i]
       char = byte.unsafe_chr
-      i = decode_one(string, bytesize, i, byte, char, io, plus_to_space) { |byte| yield byte }
+      i = decode_one(string, bytesize, i, byte, char, buffer, plus_to_space) { |byte| yield byte }
     end
-    io
+
+    io.write_string(buffer.to_slice)
   end
 
   # URL-encodes *string* and writes the result to an `IO`.
@@ -216,12 +219,12 @@ class URI
     string.each_byte do |byte|
       char = byte.unsafe_chr
       if char == ' ' && space_to_plus
-        io.write_byte '+'.ord.to_u8
+        io << '+'
       elsif char.ascii? && yield(byte) && (!space_to_plus || char != '+')
-        io.write_byte byte
+        io << char
       else
-        io.write_byte '%'.ord.to_u8
-        io.write_byte '0'.ord.to_u8 if byte < 16
+        io << '%'
+        io << '0' if byte < 16
         byte.to_s(io, 16, upcase: true)
       end
     end
@@ -244,7 +247,7 @@ class URI
 
     if char == '%' && i < bytesize - 2
       i += 1
-      first = string.unsafe_byte_at(i)
+      first = string.to_unsafe[i]
       first_num = first.unsafe_chr.to_i? 16
       unless first_num
         io.write_byte byte
@@ -252,7 +255,7 @@ class URI
       end
 
       i += 1
-      second = string.unsafe_byte_at(i)
+      second = string.to_unsafe[i]
       second_num = second.unsafe_chr.to_i? 16
       unless second_num
         io.write_byte byte

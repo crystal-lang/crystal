@@ -183,4 +183,7 @@ describe "ASTNode#to_s" do
   expect_to_s "macro foo\n  123\nend"
   expect_to_s "if true\n(  1)\nend"
   expect_to_s "begin\n(  1)\nrescue\nend"
+  expect_to_s %[他.说("你好")]
+  expect_to_s %[他.说 = "你好"]
+  expect_to_s %[あ.い, う.え.お = 1, 2]
 end

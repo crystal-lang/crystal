@@ -133,40 +133,42 @@ module Indexable(T)
   end
 
   # By using binary search, returns the first element
-  # for which the passed block returns `true`.
+  # for which the passed block returns a truthy value.
   #
-  # If the block returns `false`, the finding element exists
-  # behind. If the block returns `true`, the finding element
-  # is itself or exists in front.
+  # If the block returns a falsey value, the element to be found lies
+  # behind. If the block returns a truthy value, the element to be found
+  # is itself or lies in front.
   #
-  # Binary search needs sorted array, so `self` has to be sorted.
+  # Binary search needs the collection to be sorted in regards to the search
+  # criterion.
   #
-  # Returns `nil` if the block didn't return `true` for any element.
+  # Returns `nil` if the block didn't return a truthy value for any element.
   #
   # ```
   # [2, 5, 7, 10].bsearch { |x| x >= 4 } # => 5
   # [2, 5, 7, 10].bsearch { |x| x > 10 } # => nil
   # ```
-  def bsearch(&block : T -> Bool)
+  def bsearch(& : T -> _)
     bsearch_index { |value| yield value }.try { |index| unsafe_fetch(index) }
   end
 
   # By using binary search, returns the index of the first element
-  # for which the passed block returns `true`.
+  # for which the passed block returns a truthy value.
   #
-  # If the block returns `false`, the finding element exists
-  # behind. If the block returns `true`, the finding element
-  # is itself or exists in front.
+  # If the block returns a falsey value, the element to be found lies
+  # behind. If the block returns a truthy value, the element to be found
+  # is itself or lies in front.
   #
-  # Binary search needs sorted array, so `self` has to be sorted.
+  # Binary search needs the collection to be sorted in regards to the search
+  # criterion.
   #
-  # Returns `nil` if the block didn't return `true` for any element.
+  # Returns `nil` if the block didn't return a truthy value for any element.
   #
   # ```
   # [2, 5, 7, 10].bsearch_index { |x, i| x >= 4 } # => 1
   # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
   # ```
-  def bsearch_index(&block : T, Int32 -> Bool)
+  def bsearch_index(& : T, Int32 -> _)
     (0...size).bsearch { |index| yield unsafe_fetch(index), index }
   end
 
@@ -478,7 +480,7 @@ module Indexable(T)
   # ```text
   # a -- b -- c --
   # ```
-  def each
+  def each(& : T ->)
     each_index do |i|
       yield unsafe_fetch(i)
     end
@@ -518,7 +520,7 @@ module Indexable(T)
   # ```text
   # b -- c -- d --
   # ```
-  def each(*, start : Int, count : Int)
+  def each(*, start : Int, count : Int, & : T ->)
     each_index(start: start, count: count) do |i|
       yield unsafe_fetch(i)
     end
@@ -539,7 +541,7 @@ module Indexable(T)
   # ```text
   # b -- c -- d --
   # ```
-  def each(*, within range : Range)
+  def each(*, within range : Range, & : T ->)
     start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
     each(start: start, count: count) { |element| yield element }
   end
@@ -557,7 +559,7 @@ module Indexable(T)
   # ```text
   # 0 -- 1 -- 2 --
   # ```
-  def each_index : Nil
+  def each_index(& : Int32 ->) : Nil
     i = 0
     while i < size
       yield i
@@ -703,7 +705,7 @@ module Indexable(T)
   end
 
   # Optimized version of `equals?` used when `other` is also an `Indexable`.
-  def equals?(other : Indexable)
+  def equals?(other : Indexable(U), & : T, U ->) : Bool forall U
     return false if size != other.size
     each_with_index do |item, i|
       return false unless yield(item, other.unsafe_fetch(i))
@@ -763,7 +765,7 @@ module Indexable(T)
   # ```
   # [1, 2, 3, 1, 2, 3].index(offset: 2) { |x| x < 2 } # => 3
   # ```
-  def index(offset : Int = 0)
+  def index(offset : Int = 0, & : T ->)
     offset += size if offset < 0
     return nil if offset < 0
 
@@ -806,7 +808,7 @@ module Indexable(T)
   end
 
   # Same as `#each`, but works in reverse.
-  def reverse_each(&block) : Nil
+  def reverse_each(& : T ->) : Nil
     (size - 1).downto(0) do |i|
       yield unsafe_fetch(i)
     end
@@ -842,7 +844,7 @@ module Indexable(T)
   # [1, 2, 3, 2, 3].rindex { |x| x < 3 }            # => 3
   # [1, 2, 3, 2, 3].rindex(offset: 2) { |x| x < 3 } # => 1
   # ```
-  def rindex(offset = size - 1)
+  def rindex(offset = size - 1, & : T ->)
     offset += size if offset < 0
     return nil if offset >= size
 
@@ -867,7 +869,11 @@ module Indexable(T)
     unsafe_fetch(random.rand(size))
   end
 
-  # :nodoc:
+  # :inherit:
+  #
+  # If `self` is not empty and `n` is equal to 1, calls `sample(random)` exactly
+  # once. Thus, *random* will be left in a different state compared to the
+  # implementation in `Enumerable`.
   def sample(n : Int, random = Random::DEFAULT) : Array(T)
     return super unless n == 1
 
@@ -1383,3 +1389,5 @@ end
 private def dup_as_array(a)
   a.is_a?(Array) ? a.dup : a.to_a
 end
+
+require "./indexable/*"

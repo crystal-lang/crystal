@@ -31,13 +31,16 @@ SPEC_SOURCES := $(shell find spec -name '*.cr')
 override FLAGS += $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
-CRYSTAL_CONFIG_LIBRARY_PATH := $(shell bin/crystal env CRYSTAL_LIBRARY_PATH 2> /dev/null)
+CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD 2> /dev/null)
+CRYSTAL_CONFIG_PATH := '$$ORIGIN/../share/crystal/src'
 SOURCE_DATE_EPOCH := $(shell (git show -s --format=%ct HEAD || stat -c "%Y" Makefile || stat -f "%m" Makefile) 2> /dev/null)
 EXPORTS := \
-  CRYSTAL_CONFIG_LIBRARY_PATH="$(CRYSTAL_CONFIG_LIBRARY_PATH)" \
   CRYSTAL_CONFIG_BUILD_COMMIT="$(CRYSTAL_CONFIG_BUILD_COMMIT)" \
+	CRYSTAL_CONFIG_PATH=$(CRYSTAL_CONFIG_PATH) \
 	SOURCE_DATE_EPOCH="$(SOURCE_DATE_EPOCH)"
+EXPORTS_BUILD := \
+	CRYSTAL_CONFIG_LIBRARY_PATH=$(CRYSTAL_CONFIG_LIBRARY_PATH)
 SHELL = sh
 LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
 LLVM_EXT_DIR = src/llvm/ext
@@ -45,6 +48,14 @@ LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
 DEPS = $(LLVM_EXT_OBJ)
 CXXFLAGS += $(if $(debug),-g -O0)
 CRYSTAL_VERSION ?= $(shell cat src/VERSION)
+
+DESTDIR ?=
+PREFIX ?= /usr/local
+BINDIR ?= $(DESTDIR)$(PREFIX)/bin
+MANDIR ?= $(DESTDIR)$(PREFIX)/share/man
+LIBDIR ?= $(DESTDIR)$(PREFIX)/lib
+DATADIR ?= $(DESTDIR)$(PREFIX)/share/crystal
+INSTALL ?= /usr/bin/install
 
 ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
   EXPORT_CC ?= CC="cc -fuse-ld=lld"
@@ -102,6 +113,44 @@ crystal: $(O)/crystal ## Build the compiler
 deps: $(DEPS) ## Build dependencies
 llvm_ext: $(LLVM_EXT_OBJ)
 
+.PHONY: install
+install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
+	$(INSTALL) -D -m 0755 "$(O)/crystal" "$(BINDIR)/crystal"
+
+	$(INSTALL) -d -m 0755 $(DATADIR)
+	cp -av src "$(DATADIR)/src"
+	rm -rf "$(DATADIR)/$(LLVM_EXT_OBJ)" # Don't install llvm_ext.o
+
+	$(INSTALL) -D -m 644 man/crystal.1.gz "$(MANDIR)/man1/crystal.1.gz"
+	$(INSTALL) -D -m 644 LICENSE "$(DESTDIR)$(PREFIX)/share/licenses/crystal/LICENSE"
+
+	$(INSTALL) -D -m 644 etc/completion.bash "$(DESTDIR)$(PREFIX)/share/bash-completion/completions/crystal"
+	$(INSTALL) -D -m 644 etc/completion.zsh "$(DESTDIR)$(PREFIX)/share/zsh/site-functions/_crystal"
+
+.PHONY: uninstall
+uninstall: ## Uninstall the compiler from DESTDIR
+	rm -f "$(BINDIR)/crystal"
+
+	rm -rf "$(DATADIR)/src"
+
+	rm -f "$(MANDIR)/man1/crystal.1.gz"
+	rm -f "$(DESTDIR)$(PREFIX)/share/licenses/crystal/LICENSE"
+
+	rm -f "$(DESTDIR)$(PREFIX)/share/bash-completion/completions/crystal"
+	rm -f "$(DESTDIR)$(PREFIX)/share/zsh/site-functions/_crystal"
+
+.PHONY: install_docs
+install_docs: docs ## Install docs at DESTDIR
+	$(INSTALL) -d -m 0755 $(DATADIR)
+
+	cp -av docs "$(DATADIR)/docs"
+	cp -av samples "$(DATADIR)/examples"
+
+.PHONY: uninstall_docs
+uninstall_docs: ## Uninstall docs from DESTDIR
+	rm -rf "$(DATADIR)/docs"
+	rm -rf "$(DATADIR)/examples"
+
 $(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/all_spec.cr
@@ -116,10 +165,13 @@ $(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 
 $(O)/crystal: $(DEPS) $(SOURCES)
 	@mkdir -p $(O)
-	$(EXPORTS) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
+	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 	$(CXX) -c $(CXXFLAGS) -o $@ $< $(shell $(LLVM_CONFIG) --cxxflags)
+
+man/%.gz: man/%
+	gzip -c -9 $< > $@
 
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
