@@ -494,16 +494,16 @@ module MIME
 
     # :nodoc:
     def self.quote_string(string, io) : Nil
-      string.each_byte do |byte|
-        case byte
-        when '"'.ord, '\\'.ord
+      string.each_char do |char|
+        case char
+        when '"', '\\'
           io << '\\'
-        when 0x00..0x1F, 0x7F
-          raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+        when '\u{00}'..'\u{1F}', '\u{7F}'
+          raise ArgumentError.new("String contained invalid character #{char.inspect}")
         else
           # leave the byte as is
         end
-        io.write_byte byte
+        io << char
       end
     end
   end

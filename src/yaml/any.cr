@@ -279,12 +279,10 @@ struct YAML::Any
     @raw.as?(Bytes)
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     @raw.inspect(io)
   end
 
-  # :nodoc:
   def to_s(io : IO) : Nil
     @raw.to_s(io)
   end
