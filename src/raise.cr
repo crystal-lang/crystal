@@ -8,23 +8,23 @@ private struct LEBReader
   def initialize(@data : UInt8*)
   end
 
-  def data
+  def data : UInt8*
     @data
   end
 
-  def read_uint8
+  def read_uint8 : UInt8
     value = @data.value
     @data += 1
     value
   end
 
-  def read_uint32
+  def read_uint32 : UInt32
     value = @data.as(UInt32*).value
     @data += 4
     value
   end
 
-  def read_uleb128
+  def read_uleb128 : UInt64
     result = 0_u64
     shift = 0
     while true

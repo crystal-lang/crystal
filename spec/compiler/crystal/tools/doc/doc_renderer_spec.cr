@@ -1,25 +1,27 @@
 require "../../../spec_helper"
 
 private def assert_code_link(obj, before, after = before)
-  renderer = Doc::Markdown::DocRenderer.new(obj, IO::Memory.new)
+  renderer = Doc::MarkdDocRenderer.new(obj, Markd::Options.new)
   renderer.expand_code_links(before).should eq(after)
 end
 
 private def it_renders(context, input, output, file = __FILE__, line = __LINE__)
   it "renders #{input.inspect}", file, line do
-    String.build do |io|
-      c = context
-      c ||= begin
-        program = Program.new
-        generator = Doc::Generator.new(program, [""])
-        generator.type(program)
-      end
-      Doc::Markdown.parse input, Doc::Markdown::DocRenderer.new(c, io)
-    end.should eq(output), file, line
+    c = context
+    c ||= begin
+      program = Program.new
+      generator = Doc::Generator.new(program, [""])
+      generator.type(program)
+    end
+    options = Markd::Options.new
+    document = Markd::Parser.parse(input, options)
+    renderer = Doc::MarkdDocRenderer.new(c, options)
+
+    renderer.render(document).chomp.should eq(output), file: file, line: line
   end
 end
 
-describe Doc::Markdown::DocRenderer do
+describe Doc::MarkdDocRenderer do
   describe "expand_code_links" do
     program = semantic("
       class Base
@@ -300,9 +302,51 @@ describe Doc::Markdown::DocRenderer do
     end
   end
 
-  describe "renders" do
+  describe "renders code blocks" do
     it_renders nil, "```crystal\nHello\nWorld\n```", %(<pre><code class="language-crystal"><span class="t">Hello</span>\n<span class="t">World</span></code></pre>)
     it_renders nil, "```cr\nHello\nWorld\n```", %(<pre><code class="language-crystal"><span class="t">Hello</span>\n<span class="t">World</span></code></pre>)
     it_renders nil, "```\nHello\nWorld\n```", %(<pre><code class="language-crystal"><span class="t">Hello</span>\n<span class="t">World</span></code></pre>)
+  end
+
+  describe "renders links" do
+    it_renders nil, "[foo](http://example.com/foo)", %(<p><a href="http://example.com/foo">foo</a></p>)
+
+    program = semantic("class Foo; end", wants_doc: true).program
+    it_renders Doc::Generator.new(program, [""]).type(program), "[`Foo`](http://example.com/foo)", %(<p><a href="http://example.com/foo"><code>Foo</code></a></p>)
+
+    it_renders nil, %([filter](https://docs.celestine.dev/Celestine/Meta/Context.html#filter(&block:Celestine::Filter-%3ECelestine::Filter)-instance-method)),
+      %(<p><a href="https://docs.celestine.dev/Celestine/Meta/Context.html#filter(&amp;block:Celestine::Filter-%3ECelestine::Filter)-instance-method">filter</a></p>)
+  end
+
+  describe "renders headline" do
+    it_renders nil, "## Foo Bar", <<-HTML
+    <h2><a id="foo-bar" class="anchor" href="#foo-bar">  <svg class="octicon-link" aria-hidden="true">
+        <use href="#octicon-link"/>
+      </svg>
+    </a>Foo Bar</h2>
+    HTML
+
+    it_renders nil, "## Foo Bar\n### Sub\n## Bar Baz\n### Sub", <<-HTML
+    <h2><a id="foo-bar" class="anchor" href="#foo-bar">  <svg class="octicon-link" aria-hidden="true">
+        <use href="#octicon-link"/>
+      </svg>
+    </a>Foo Bar</h2>
+    <h3><a id="sub" class="anchor" href="#sub">\n  <svg class="octicon-link" aria-hidden="true">
+        <use href="#octicon-link"/>
+      </svg>
+    </a>Sub</h3>
+    <h2><a id="bar-baz" class="anchor" href="#bar-baz">\n  <svg class="octicon-link" aria-hidden="true">
+        <use href="#octicon-link"/>
+      </svg>
+    </a>Bar Baz</h2>
+    <h3><a id="sub-1" class="anchor" href="#sub-1">\n  <svg class="octicon-link" aria-hidden="true">
+        <use href="#octicon-link"/>
+      </svg>
+    </a>Sub</h3>
+    HTML
+  end
+
+  describe "renders html" do
+    it_renders nil, %(<h1 align="center">Foo</h1>), %(<h1 align="center">Foo</h1>)
   end
 end

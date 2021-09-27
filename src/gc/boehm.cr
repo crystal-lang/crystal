@@ -120,7 +120,7 @@ module GC
     LibGC.realloc(ptr, size)
   end
 
-  def self.init
+  def self.init : Nil
     {% unless flag?(:win32) %}
       LibGC.set_handle_fork(1)
     {% end %}
@@ -147,11 +147,11 @@ module GC
     LibGC.disable
   end
 
-  def self.free(pointer : Void*)
+  def self.free(pointer : Void*) : Nil
     LibGC.free(pointer)
   end
 
-  def self.add_finalizer(object : Reference)
+  def self.add_finalizer(object : Reference) : Nil
     add_finalizer_impl(object)
   end
 
@@ -221,7 +221,7 @@ module GC
     # :nodoc:
     def self.pthread_join(thread : LibC::PthreadT) : Void*
       ret = LibGC.pthread_join(thread, out value)
-      raise RuntimeError.from_errno("pthread_join", Errno.new(ret)) unless ret == 0
+      raise RuntimeError.from_os_error("pthread_join", Errno.new(ret)) unless ret == 0
       value
     end
 
@@ -283,12 +283,12 @@ module GC
   end
 
   # :nodoc:
-  def self.push_stack(stack_top, stack_bottom)
+  def self.push_stack(stack_top, stack_bottom) : Nil
     LibGC.push_all_eager(stack_top, stack_bottom)
   end
 
   # :nodoc:
-  def self.before_collect(&block)
+  def self.before_collect(&block) : Nil
     @@curr_push_other_roots = block
     @@prev_push_other_roots = LibGC.get_push_other_roots
 

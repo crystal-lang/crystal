@@ -31,18 +31,19 @@ module Crystal
       name_node = StringLiteral.new(signature.name)
       args_nodes = [] of ASTNode
       named_args_nodes = nil
-      args_nodes_names = Set(String).new
+      args_nodes_names = [] of {String?, String} # external <-> internal name
       signature.arg_types.each_index do |index|
         arg_node_name = "_arg#{index}"
         args_nodes << MacroId.new(arg_node_name)
-        args_nodes_names << arg_node_name
+        args_nodes_names << {nil, arg_node_name}
       end
       if named_args = signature.named_args
-        args_nodes_names << ""
-        named_args.each do |named_arg|
+        args_nodes_names << {nil, ""}
+        named_args.each_with_index do |named_arg, index|
+          named_arg_node_name = "_named_arg#{index}"
           named_args_nodes ||= [] of NamedArgument
-          named_args_nodes << NamedArgument.new(named_arg.name, MacroId.new(named_arg.name))
-          args_nodes_names << named_arg.name
+          named_args_nodes << NamedArgument.new(named_arg.name, MacroId.new(named_arg_node_name))
+          args_nodes_names << {named_arg.name, named_arg_node_name}
         end
       end
       if block = signature.block
@@ -56,7 +57,7 @@ module Crystal
         block_node = Nop.new
       end
 
-      a_def = Def.new(signature.name, args_nodes_names.map { |name| Arg.new(name) })
+      a_def = Def.new(signature.name, args_nodes_names.map { |ext_name, name| Arg.new(name, external_name: ext_name) })
       a_def.splat_index = signature.arg_types.size if signature.named_args
 
       call = Call.new(nil, signature.name,
@@ -70,9 +71,11 @@ module Crystal
       # Check if the expanded macro is a def. We do this
       # by just lexing the result and seeing if the first
       # token is `def`
+      macro_vars = Set(String).new
+      args_nodes_names.each { |_, name| macro_vars << name }
       expands_to_def = starts_with_def?(expanded_macro)
       generated_nodes =
-        program.parse_macro_source(expanded_macro, macro_expansion_pragmas, method_missing, method_missing, args_nodes_names) do |parser|
+        program.parse_macro_source(expanded_macro, macro_expansion_pragmas, method_missing, method_missing, macro_vars) do |parser|
           if expands_to_def
             parser.parse
           else

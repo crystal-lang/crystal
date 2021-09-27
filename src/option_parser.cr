@@ -115,11 +115,6 @@ class OptionParser
     parser
   end
 
-  @[Deprecated("Use `parse` instead.")]
-  def self.parse! : self
-    parse(ARGV) { |parser| yield parser }
-  end
-
   # Creates a new parser.
   def initialize
     @flags = [] of String
@@ -225,7 +220,7 @@ class OptionParser
   # before, and the flags registered after the call.
   #
   # This way, you can group the different options in an easier to read way.
-  def separator(message = "")
+  def separator(message = "") : Nil
     @flags << message.to_s
   end
 
@@ -264,7 +259,7 @@ class OptionParser
   # Stops the current parse and returns immediately, leaving the remaining flags
   # unparsed. This is treated identically to `--` being inserted *behind* the
   # current parsed flag.
-  def stop
+  def stop : Nil
     @stop = true
   end
 
@@ -319,7 +314,7 @@ class OptionParser
   end
 
   # Parses the passed *args* (defaults to `ARGV`), running the handlers associated to each option.
-  def parse(args = ARGV)
+  def parse(args = ARGV) : Nil
     with_preserved_state do
       # List of indexes in `args` which have been handled and must be deleted
       handled_args = [] of Int32
@@ -446,10 +441,5 @@ class OptionParser
         end
       end
     end
-  end
-
-  @[Deprecated("Use `parse` instead.")]
-  def parse!
-    parse
   end
 end

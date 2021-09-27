@@ -42,7 +42,7 @@ class YAML::Builder
     LibYAML.yaml_emitter_set_unicode(@emitter, 1)
     LibYAML.yaml_emitter_set_output(@emitter, ->(data, buffer, size) {
       data_io = Box(IO).unbox(data)
-      data_io.write(Slice.new(buffer, size))
+      data_io.write_string(Slice.new(buffer, size))
       1
     }, @box)
   end
@@ -53,15 +53,6 @@ class YAML::Builder
   def self.build(io : IO, & : self ->) : Nil
     builder = new(io)
     yield builder ensure builder.close
-    io.flush
-  end
-
-  # :ditto:
-  @[Deprecated("Use .build instead")]
-  def self.new(io : IO, & : self ->) : Nil
-    build(io) do |builder|
-      yield builder
-    end
   end
 
   # Starts a YAML stream.
@@ -70,9 +61,9 @@ class YAML::Builder
   end
 
   # Ends a YAML stream.
-  def end_stream
+  def end_stream : Nil
     emit stream_end
-    @io.flush
+    flush
   end
 
   # Starts a YAML stream, invokes the block, and ends it.
@@ -105,14 +96,14 @@ class YAML::Builder
   end
 
   # Starts a sequence.
-  def start_sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY)
+  def start_sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY) : Nil
     implicit = tag ? 0 : 1
     emit sequence_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
     increase_nesting
   end
 
   # Ends a sequence.
-  def end_sequence
+  def end_sequence : Nil
     emit sequence_end
     decrease_nesting
   end
@@ -124,14 +115,14 @@ class YAML::Builder
   end
 
   # Starts a mapping.
-  def start_mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY)
+  def start_mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY) : Nil
     implicit = tag ? 0 : 1
     emit mapping_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
     increase_nesting
   end
 
   # Ends a mapping.
-  def end_mapping
+  def end_mapping : Nil
     emit mapping_end
     decrease_nesting
   end
@@ -194,7 +185,7 @@ class YAML::Builder
   end
 
   # Closes the builder, freeing up resources.
-  def close
+  def close : Nil
     finalize
     @closed = true
   end

@@ -21,7 +21,7 @@ abstract class Digest
   # The modules adds convenient class methods as `Digest::MD5.digest`, `Digest::MD5.hexdigest`.
   module ClassMethods
     # Returns the hash of *data*. *data* must respond to `#to_slice`.
-    def digest(data)
+    def digest(data) : Bytes
       digest do |ctx|
         ctx.update(data.to_slice)
       end

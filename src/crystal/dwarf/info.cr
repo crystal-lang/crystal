@@ -11,8 +11,8 @@ module Crystal
       property! abbreviations : Array(Abbrev)
 
       property dwarf64 : Bool
-      @offset : LibC::OffT
-      @ref_offset : LibC::OffT
+      @offset : Int64
+      @ref_offset : Int64
 
       def initialize(@io : IO::FileDescriptor, @offset)
         @ref_offset = offset

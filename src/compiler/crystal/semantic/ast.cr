@@ -4,7 +4,6 @@ module Crystal
   def self.check_type_can_be_stored(node, type, msg)
     return if type.can_be_stored?
 
-    type = type.union_types.find { |t| !t.can_be_stored? } if type.is_a?(UnionType)
     node.raise "#{msg} yet, use a more specific type"
   end
 
@@ -57,9 +56,9 @@ module Crystal
 
   # Fictitious node to represent a tuple indexer
   class TupleIndexer < Primitive
-    getter index : Int32
+    getter index : TupleInstanceType::Index
 
-    def initialize(@index : Int32)
+    def initialize(@index)
       super("tuple_indexer_known_index")
     end
 
@@ -792,7 +791,7 @@ module Crystal
     def initialize(@name, @type)
     end
 
-    def class_desc
+    def self.class_desc
       "MetaVar"
     end
 

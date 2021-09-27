@@ -52,6 +52,20 @@ describe "IO::Sized" do
       String.new(slice).should eq("12345\0\0\0\0\0")
     end
 
+    it "allows extending the size" do
+      io = IO::Memory.new("1234567890")
+      sized = IO::Sized.new(io, read_size: 5)
+      slice = Bytes.new(10)
+
+      sized.read(slice).should eq(5)
+      String.new(slice).should eq("12345\0\0\0\0\0")
+
+      sized.read_remaining = 5
+
+      sized.read(slice).should eq(5)
+      String.new(slice).should eq("67890\0\0\0\0\0")
+    end
+
     it "raises on negative numbers" do
       io = IO::Memory.new
       expect_raises(ArgumentError, "Negative read_size") do

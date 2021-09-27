@@ -190,7 +190,7 @@ class Crystal::Command
   private def hierarchy
     config, result = compile_no_codegen "tool hierarchy", hierarchy: true, top_level: true
     @progress_tracker.stage("Tool (hierarchy)") do
-      Crystal.print_hierarchy result.program, config.hierarchy_exp, config.output_format
+      Crystal.print_hierarchy result.program, STDOUT, config.hierarchy_exp, config.output_format
     end
   end
 
@@ -332,12 +332,6 @@ class Crystal::Command
         opts.on("--no-debug", "Skip any symbolic debug info") do
           compiler.debug = Crystal::Debug::None
         end
-        {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-          opts.on("--lto=FLAG", "Use ThinLTO --lto=thin") do |flag|
-            error "--lto=thin is the only lto supported option" unless flag == "thin"
-            compiler.thin_lto = true
-          end
-        {% end %}
       end
 
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
