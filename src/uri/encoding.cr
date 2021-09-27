@@ -281,7 +281,7 @@ class URI
   # as `+` and `+` is encoded as `%2B`.
   #
   # This method enables some customization, but typical use cases can be implemented
-  # by either `.encode(string : String, *, space_to_plus : Bool = false) : String` or
+  # by either `.encode_path(string : String) : String`, `.encode_path_segment(string : String) : String` or
   # `.encode_www_form(string : String, *, space_to_plus : Bool = true) : String`.
   def self.encode(string : String, io : IO, space_to_plus : Bool = false, &block) : Nil
     string.each_byte do |byte|
