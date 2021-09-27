@@ -29,7 +29,7 @@ class URI
   # replacing special characters (including `/`) with URI escape sequences as needed.
   #
   # Unreserved characters such as ASCII letters, digits, and the characters
-  # `_.-~` are not encoded ([RFC 3986 §3.3](https://datatracker.ietf.org/doc/html/rfc3986#section-3.3)).
+  # `_.-~` are not encoded (see `.unreserved?`).
   #
   # ```
   # require "uri"
