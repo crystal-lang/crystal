@@ -2416,10 +2416,11 @@ module Crystal
           end
 
           while @token.type != :"}"
+            key_loc = @token.location
             key = parse_op_assign_no_control
             skip_space_or_newline
             if @token.type == :":" && key.is_a?(StringLiteral)
-              # Nothing: it's a string key
+              raise "can't use 'key: value' syntax in a hash literal", key_loc
             else
               check :"=>"
             end
@@ -3217,7 +3218,15 @@ module Crystal
           vars = [] of Var
 
           while true
-            vars << Var.new(check_ident).at(@token.location)
+            var = case @token.type
+                  when :UNDERSCORE
+                    "_"
+                  when :IDENT
+                    @token.value.to_s
+                  else
+                    unexpected_token msg: "expecting ident or underscore"
+                  end
+            vars << Var.new(var).at(@token.location)
 
             next_token_skip_space
             if @token.type == :","

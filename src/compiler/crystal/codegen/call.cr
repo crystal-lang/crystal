@@ -220,7 +220,7 @@ class Crystal::CodeGenVisitor
       in .direct?
         call_arg = codegen_direct_abi_call(call_arg, abi_arg_type) unless arg.type.nil_type?
       in .indirect?
-        # Pass argument as is (will be passed byval)
+        call_arg = codegen_indirect_abi_call(call_arg, abi_arg_type) unless arg.type.nil_type?
       in .ignore?
         # Ignore
         next
@@ -260,6 +260,19 @@ class Crystal::CodeGenVisitor
       # Keep same call arg
     end
     call_arg
+  end
+
+  # For an indirect argument we need to make a copy of the value in the stack
+  # and *replace* the call argument by a pointer to the allocated memory
+  def codegen_indirect_abi_call(call_arg, abi_arg_type)
+    final_value = alloca abi_arg_type.type
+    final_value_casted = bit_cast final_value, llvm_context.void_pointer
+    call_arg_casted = bit_cast call_arg, llvm_context.void_pointer
+    size = @abi.size(abi_arg_type.type)
+    size = @program.bits64? ? int64(size) : int32(size)
+    align = @abi.align(abi_arg_type.type)
+    memcpy(final_value_casted, call_arg_casted, size, align, int1(0))
+    final_value
   end
 
   def codegen_call_with_block(node, block, self_type, call_args)

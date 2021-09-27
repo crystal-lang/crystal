@@ -456,6 +456,7 @@ describe "Array" do
   it "find the element by using binary search" do
     [2, 5, 7, 10].bsearch { |x| x >= 4 }.should eq 5
     [2, 5, 7, 10].bsearch { |x| x > 10 }.should be_nil
+    [2, 5, 7, 10].bsearch { |x| x >= 4 ? 1 : nil }.should eq 5
   end
 
   it "find the index by using binary search" do

@@ -173,6 +173,11 @@ describe IO do
       io.gets.should be_nil
     end
 
+    it "does gets with \\r\\n, chomp true goes past \\r" do
+      io = SimpleIOMemory.new("hello\rworld\r\nfoo\rbar\n")
+      io.gets(chomp: true, limit: 8).should eq("hello\rwo")
+    end
+
     it "does gets with chomp false" do
       io = SimpleIOMemory.new("hello\nworld\n")
       io.gets(chomp: false).should eq("hello\n")
