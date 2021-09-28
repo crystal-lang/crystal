@@ -219,4 +219,175 @@ module Indexable::Mutable(T)
 
     self
   end
+
+  # Sorts all elements in `self` based on the return value of the comparison
+  # method `T#<=>` (see `Comparable#<=>`), using a stable sort algorithm.
+  #
+  # ```
+  # a = [3, 1, 2]
+  # a.sort!
+  # a # => [1, 2, 3]
+  # ```
+  #
+  # This sort operation modifies `self`. See `#sort` for a non-modifying option
+  # that allocates a new instance.
+  #
+  # See `Slice#sort!` for details on the implementation.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
+  def sort! : self
+    slice = Slice.new(size) { |i| unsafe_fetch(i) }.sort!
+    each_index do |i|
+      unsafe_put(i, slice.unsafe_fetch(i))
+    end
+    self
+  end
+
+  # Sorts all elements in `self` based on the return value of the comparison
+  # method `T#<=>` (see `Comparable#<=>`), using an unstable sort algorithm.
+  #
+  # ```
+  # a = [3, 1, 2]
+  # a.unstable_sort!
+  # a # => [1, 2, 3]
+  # ```
+  #
+  # This sort operation modifies `self`. See `#unstable_sort` for a non-modifying
+  # option that allocates a new instance.
+  #
+  # See `Slice#unstable_sort!` for details on the implementation.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
+  def unstable_sort! : self
+    slice = Slice.new(size) { |i| unsafe_fetch(i) }.unstable_sort!
+    each_index do |i|
+      unsafe_put(i, slice.unsafe_fetch(i))
+    end
+    self
+  end
+
+  # Sorts all elements in `self` based on the comparator in the given block, using
+  # a stable sort algorithm.
+  #
+  # The block must implement a comparison between two elements *a* and *b*,
+  # where `a < b` returns `-1`, `a == b` returns `0`, and `a > b` returns `1`.
+  # The comparison operator `<=>` can be used for this.
+  #
+  # ```
+  # a = [3, 1, 2]
+  # # This is a reverse sort (forward sort would be `a <=> b`)
+  # a.sort! { |a, b| b <=> a }
+  # a # => [3, 2, 1]
+  # ```
+  #
+  # This sort operation modifies `self`. See `#sort(&block : T, T -> U)` for a
+  # non-modifying option that allocates a new instance.
+  #
+  # See `Slice#sort!(&block : T, T -> U)` for details on the implementation.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
+  def sort!(&block : T, T -> U) : self forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    slice = Slice.new(size) { |i| unsafe_fetch(i) }.sort!(&block)
+    each_index do |i|
+      unsafe_put(i, slice.unsafe_fetch(i))
+    end
+    self
+  end
+
+  # Sorts all elements in `self` based on the comparator in the given block,
+  # using an unstable sort algorithm.
+  #
+  # The block must implement a comparison between two elements *a* and *b*,
+  # where `a < b` returns `-1`, `a == b` returns `0`, and `a > b` returns `1`.
+  # The comparison operator `<=>` can be used for this.
+  #
+  # ```
+  # a = [3, 1, 2]
+  # # This is a reverse sort (forward sort would be `a <=> b`)
+  # a.unstable_sort! { |a, b| b <=> a }
+  # a # => [3, 2, 1]
+  # ```
+  #
+  # This sort operation modifies `self`. See `#unstable_sort(&block : T, T -> U)`
+  # for a non-modifying option that allocates a new instance.
+  #
+  # See `Slice#unstable_sort!(&block : T, T -> U)` for details on the implementation.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
+  def unstable_sort!(&block : T, T -> U) : self forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    slice = Slice.new(size) { |i| unsafe_fetch(i) }.unstable_sort!(&block)
+    each_index do |i|
+      unsafe_put(i, slice.unsafe_fetch(i))
+    end
+    self
+  end
+
+  # Sorts all elements in `self` by the output value of the
+  # block. The output values are compared via the comparison method `#<=>`
+  # (see `Comparable#<=>`), using a stable sort algorithm.
+  #
+  # ```
+  # a = %w(apple pear fig)
+  # a.sort_by! { |word| word.size }
+  # a # => ["fig", "pear", "apple"]
+  # ```
+  #
+  # This sort operation modifies `self`. See `#sort_by(&block : T -> _)` for a
+  # non-modifying option that allocates a new instance.
+  #
+  # If stability is expendable, `#unstable_sort_by!(&block : T -> _)` provides a
+  # performance advantage over stable sort.
+  #
+  # See `#sort!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
+  def sort_by!(&block : T -> _) : self
+    slice = Slice.new(size) do |i|
+      elem = unsafe_fetch(i)
+      {elem, (yield elem)}
+    end.sort! { |x, y| x[1] <=> y[1] }
+
+    each_index do |i|
+      unsafe_put(i, slice.unsafe_fetch(i)[0])
+    end
+    self
+  end
+
+  # Sorts all elements in `self` by the output value of the
+  # block. The output values are compared via the comparison method `#<=>`
+  # (see `Comparable#<=>`), using an unstable sort algorithm.
+  #
+  # ```
+  # a = %w(apple pear fig)
+  # a.usntable_sort_by! { |word| word.size }
+  # a # => ["fig", "pear", "apple"]
+  # ```
+  #
+  # This sort operation modifies `self`. See `#unstable_sort_by(&block : T -> _)`
+  # for a non-modifying option that allocates a new instance.
+  #
+  # If stability is necessary, use  `#sort_by!(&block : T -> _)` instead.
+  #
+  # See `#unstable_sort!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
+  def unstable_sort_by!(&block : T -> _) : self
+    slice = Slice.new(size) do |i|
+      elem = unsafe_fetch(i)
+      {elem, (yield elem)}
+    end.unstable_sort! { |x, y| x[1] <=> y[1] }
+
+    each_index do |i|
+      unsafe_put(i, slice.unsafe_fetch(i)[0])
+    end
+    self
+  end
 end
