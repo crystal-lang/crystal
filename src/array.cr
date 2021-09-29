@@ -1186,57 +1186,32 @@ class Array(T)
     FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
   end
 
+  # Returns an `Array` of all ordered combinations of elements taken from each
+  # of the *arrays* as `Array`s.
+  # Traversal of elements starts from the last given array.
+  @[Deprecated("Use `Indexable.cartesian_product(indexables : Indexable(Indexable))` instead")]
   def self.product(arrays : Array(Array))
-    result = [] of Array(typeof(Enumerable.element_type Enumerable.element_type arrays))
-    each_product(arrays) do |product|
-      result << product
-    end
-    result
+    Indexable.cartesian_product(arrays)
   end
 
+  # :ditto:
+  @[Deprecated("Use `Indexable.cartesian_product(indexables : Indexable(Indexable))` instead")]
   def self.product(*arrays : Array)
-    product(arrays.to_a)
+    Indexable.cartesian_product(arrays)
   end
 
+  # Yields each ordered combination of the elements taken from each of the
+  # *arrays* as `Array`s.
+  # Traversal of elements starts from the last given array.
+  @[Deprecated("Use `Indexable.each_cartesian(indexables : Indexable(Indexable), reuse = false, &block)` instead")]
   def self.each_product(arrays : Array(Array), reuse = false)
-    lens = arrays.map &.size
-    return if lens.any? &.==(0)
-
-    pool = arrays.map &.first
-
-    n = arrays.size
-    indices = Array.new(n, 0)
-
-    if reuse
-      unless reuse.is_a?(Array)
-        reuse = typeof(pool).new(n)
-      end
-    else
-      reuse = nil
-    end
-
-    yield pool_slice(pool, n, reuse)
-
-    while true
-      i = n - 1
-      indices[i] += 1
-
-      while indices[i] >= lens[i]
-        indices[i] = 0
-        pool[i] = arrays[i][indices[i]]
-        i -= 1
-        return if i < 0
-        indices[i] += 1
-      end
-      pool[i] = arrays[i][indices[i]]
-      yield pool_slice(pool, n, reuse)
-    end
+    Indexable.each_cartesian(arrays, reuse: reuse) { |r| yield r }
   end
 
+  # :ditto:
+  @[Deprecated("Use `Indexable.each_cartesian(indexables : Indexable(Indexable), reuse = false, &block)` instead")]
   def self.each_product(*arrays : Array, reuse = false)
-    each_product(arrays.to_a, reuse: reuse) do |result|
-      yield result
-    end
+    Indexable.each_cartesian(arrays, reuse: reuse) { |r| yield r }
   end
 
   def repeated_permutations(size : Int = self.size) : Array(Array(T))
@@ -1255,7 +1230,7 @@ class Array(T)
     if size == 0
       yield([] of T)
     else
-      Array.each_product(Array.new(size, self), reuse: reuse) { |r| yield r }
+      Indexable.each_cartesian(Array.new(size, self), reuse: reuse) { |r| yield r }
     end
   end
 
@@ -1340,14 +1315,18 @@ class Array(T)
     pop { nil }
   end
 
+  # Returns an `Array` of all ordered combinations of elements taken from each
+  # of `self` and *ary* as `Tuple`s.
+  # Traversal of elements starts from *ary*.
+  @[Deprecated("Use `Indexable#cartesian_product(*others : Indexable)` instead")]
   def product(ary : Array(U)) forall U
-    result = Array({T, U}).new(size * ary.size)
-    product(ary) do |x, y|
-      result << {x, y}
-    end
-    result
+    cartesian_product(ary)
   end
 
+  # Yields each ordered combination of the elements taken from each of `self`
+  # and *enumerable* as a `Tuple`.
+  # Traversal of elements starts from *enumerable*.
+  @[Deprecated("Use `Indexable#each_cartesian(*others : Indexable, &block)` instead")]
   def product(enumerable : Enumerable, &)
     self.each { |a| enumerable.each { |b| yield a, b } }
   end
@@ -1410,38 +1389,8 @@ class Array(T)
   end
 
   # :inherit:
-  def rotate!(n = 1) : self
-    return self if size == 0
-    n %= size
-
-    if n == 0
-    elsif n == 1
-      tmp = self[0]
-      @buffer.move_from(@buffer + n, size - n)
-      self[-1] = tmp
-    elsif n == (size - 1)
-      tmp = self[-1]
-      (@buffer + size - n).move_from(@buffer, n)
-      self[0] = tmp
-    elsif n <= SMALL_ARRAY_SIZE
-      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
-      tmp_buffer.to_unsafe.copy_from(@buffer, n)
-      @buffer.move_from(@buffer + n, size - n)
-      (@buffer + size - n).copy_from(tmp_buffer.to_unsafe, n)
-    elsif size - n <= SMALL_ARRAY_SIZE
-      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
-      tmp_buffer.to_unsafe.copy_from(@buffer + n, size - n)
-      (@buffer + size - n).move_from(@buffer, n)
-      @buffer.copy_from(tmp_buffer.to_unsafe, size - n)
-    elsif n <= size // 2
-      tmp = self[0..n]
-      @buffer.move_from(@buffer + n, size - n)
-      (@buffer + size - n).copy_from(tmp.to_unsafe, n)
-    else
-      tmp = self[n..-1]
-      (@buffer + size - n).move_from(@buffer, n)
-      @buffer.copy_from(tmp.to_unsafe, size - n)
-    end
+  def rotate!(n : Int = 1) : self
+    to_unsafe_slice.rotate!(n)
     self
   end
 
@@ -2200,15 +2149,5 @@ class Array(T)
         ary
       end
     end
-  end
-end
-
-private def pool_slice(pool, size, reuse)
-  if reuse
-    reuse.clear
-    size.times { |i| reuse << pool[i] }
-    reuse
-  else
-    pool[0, size]
   end
 end

@@ -1980,11 +1980,10 @@ describe "Array" do
   describe "rotate" do
     it "rotate!" do
       a = [1, 2, 3]
-      a.rotate!; a.should eq([2, 3, 1])
-      a.rotate!; a.should eq([3, 1, 2])
-      a.rotate!; a.should eq([1, 2, 3])
-      a.rotate!; a.should eq([2, 3, 1])
-      a.rotate!.should eq(a)
+      a.rotate!.should be(a); a.should eq([2, 3, 1])
+      a.rotate!.should be(a); a.should eq([3, 1, 2])
+      a.rotate!.should be(a); a.should eq([1, 2, 3])
+      a.rotate!.should be(a); a.should eq([2, 3, 1])
     end
 
     it "rotate" do
