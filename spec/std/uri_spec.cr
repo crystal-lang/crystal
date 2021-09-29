@@ -1,5 +1,8 @@
 require "spec"
 require "uri"
+require "uri/json"
+require "uri/yaml"
+require "../support/string"
 
 private def assert_uri(string, file = __FILE__, line = __LINE__, **args)
   it "`#{string}`", file, line do
@@ -8,45 +11,22 @@ private def assert_uri(string, file = __FILE__, line = __LINE__, **args)
   end
 end
 
-private def it_encodes(string, expected_result, file = __FILE__, line = __LINE__, **options)
-  it "encodes #{string.inspect}", file, line do
-    URI.encode(string, **options).should eq(expected_result), file: file, line: line
-
-    String.build do |io|
-      URI.encode(string, io, **options)
-    end.should eq(expected_result), file: file, line: line
+# rearrange parameters for `assert_prints`
+{% for method in %w(encode encode_www_form decode decode_www_form) %}
+  private def uri_{{ method.id }}(string, **options)
+    URI.{{ method.id }}(string, **options)
   end
-end
 
-private def it_decodes(string, expected_result, file = __FILE__, line = __LINE__, **options)
-  it "decodes #{string.inspect}", file, line do
-    URI.decode(string, **options).should eq(expected_result), file: file, line: line
-
-    String.build do |io|
-      URI.decode(string, io, **options)
-    end.should eq(expected_result), file: file, line: line
+  private def uri_{{ method.id }}(io : IO, string, **options)
+    URI.{{ method.id }}(string, io, **options)
   end
-end
 
-private def it_encodes_www_form(string, expected_result, file = __FILE__, line = __LINE__, **options)
-  it "encodes #{string.inspect}", file, line do
-    URI.encode_www_form(string, **options).should eq(expected_result), file: file, line: line
-
-    String.build do |io|
-      URI.encode_www_form(string, io, **options)
-    end.should eq(expected_result), file: file, line: line
+  private def it_{{ method.gsub(/code/, "codes").id }}(string, expected_result, file = __FILE__, line = __LINE__, **options)
+    it "{{ method[0...6].id }}s #{string.inspect}", file: file, line: line do
+      assert_prints uri_{{ method.id }}(string, **options), expected_result, file: file, line: line
+    end
   end
-end
-
-private def it_decodes_www_form(string, expected_result, file = __FILE__, line = __LINE__, **options)
-  it "decodes #{string.inspect}", file, line do
-    URI.decode_www_form(string, **options).should eq(expected_result), file: file, line: line
-
-    String.build do |io|
-      URI.decode_www_form(string, io, **options)
-    end.should eq(expected_result), file: file, line: line
-  end
-end
+{% end %}
 
 # This helper method is used in the specs for #relativize and also ensures the
 # reversibility of #relativize and #resolve.
@@ -311,39 +291,39 @@ describe "URI" do
   end
 
   describe "#to_s" do
-    it { URI.new("http", "www.example.com").to_s.should eq("http://www.example.com") }
-    it { URI.new("http", "www.example.com", 80).to_s.should eq("http://www.example.com:80") }
-    it { URI.new("http", "www.example.com", user: "alice").to_s.should eq("http://alice@www.example.com") }
-    it { URI.new("http", "www.example.com", user: "alice", password: "s3cr3t").to_s.should eq("http://alice:s3cr3t@www.example.com") }
-    it { URI.new("http", "www.example.com", user: ":D").to_s.should eq("http://%3AD@www.example.com") }
-    it { URI.new("http", "www.example.com", user: ":D", password: "@_@").to_s.should eq("http://%3AD:%40_%40@www.example.com") }
-    it { URI.new("http", "www.example.com", user: "@al:ce", password: "s/cr3t").to_s.should eq("http://%40al%3Ace:s%2Fcr3t@www.example.com") }
-    it { URI.new("http", "www.example.com", fragment: "top").to_s.should eq("http://www.example.com#top") }
-    it { URI.new("http", "www.example.com", 80, "/hello").to_s.should eq("http://www.example.com:80/hello") }
-    it { URI.new("http", "www.example.com", 80, "/hello", "a=1").to_s.should eq("http://www.example.com:80/hello?a=1") }
-    it { URI.new("mailto", path: "foo@example.com").to_s.should eq("mailto:foo@example.com") }
-    it { URI.new("file", path: "/foo.html").to_s.should eq("file:/foo.html") }
-    it { URI.new("file", path: "foo.html").to_s.should eq("file:foo.html") }
-    it { URI.new("file", host: "host", path: "foo.html").to_s.should eq("file://host/foo.html") }
-    it { URI.new(path: "//foo").to_s.should eq("/.//foo") }
-    it { URI.new(host: "host", path: "//foo").to_s.should eq("//host//foo") }
+    it { assert_prints URI.new("http", "www.example.com").to_s, "http://www.example.com" }
+    it { assert_prints URI.new("http", "www.example.com", 80).to_s, "http://www.example.com:80" }
+    it { assert_prints URI.new("http", "www.example.com", user: "alice").to_s, "http://alice@www.example.com" }
+    it { assert_prints URI.new("http", "www.example.com", user: "alice", password: "s3cr3t").to_s, "http://alice:s3cr3t@www.example.com" }
+    it { assert_prints URI.new("http", "www.example.com", user: ":D").to_s, "http://%3AD@www.example.com" }
+    it { assert_prints URI.new("http", "www.example.com", user: ":D", password: "@_@").to_s, "http://%3AD:%40_%40@www.example.com" }
+    it { assert_prints URI.new("http", "www.example.com", user: "@al:ce", password: "s/cr3t").to_s, "http://%40al%3Ace:s%2Fcr3t@www.example.com" }
+    it { assert_prints URI.new("http", "www.example.com", fragment: "top").to_s, "http://www.example.com#top" }
+    it { assert_prints URI.new("http", "www.example.com", 80, "/hello").to_s, "http://www.example.com:80/hello" }
+    it { assert_prints URI.new("http", "www.example.com", 80, "/hello", "a=1").to_s, "http://www.example.com:80/hello?a=1" }
+    it { assert_prints URI.new("mailto", path: "foo@example.com").to_s, "mailto:foo@example.com" }
+    it { assert_prints URI.new("file", path: "/foo.html").to_s, "file:/foo.html" }
+    it { assert_prints URI.new("file", path: "foo.html").to_s, "file:foo.html" }
+    it { assert_prints URI.new("file", host: "host", path: "foo.html").to_s, "file://host/foo.html" }
+    it { assert_prints URI.new(path: "//foo").to_s, "/.//foo" }
+    it { assert_prints URI.new(host: "host", path: "//foo").to_s, "//host//foo" }
 
     it "preserves non-default port" do
-      URI.new("http", "www.example.com", 1234).to_s.should eq("http://www.example.com:1234")
-      URI.new("https", "www.example.com", 1234).to_s.should eq("https://www.example.com:1234")
-      URI.new("ftp", "www.example.com", 1234).to_s.should eq("ftp://www.example.com:1234")
-      URI.new("sftp", "www.example.com", 1234).to_s.should eq("sftp://www.example.com:1234")
-      URI.new("ldap", "www.example.com", 1234).to_s.should eq("ldap://www.example.com:1234")
-      URI.new("ldaps", "www.example.com", 1234).to_s.should eq("ldaps://www.example.com:1234")
+      assert_prints URI.new("http", "www.example.com", 1234).to_s, "http://www.example.com:1234"
+      assert_prints URI.new("https", "www.example.com", 1234).to_s, "https://www.example.com:1234"
+      assert_prints URI.new("ftp", "www.example.com", 1234).to_s, "ftp://www.example.com:1234"
+      assert_prints URI.new("sftp", "www.example.com", 1234).to_s, "sftp://www.example.com:1234"
+      assert_prints URI.new("ldap", "www.example.com", 1234).to_s, "ldap://www.example.com:1234"
+      assert_prints URI.new("ldaps", "www.example.com", 1234).to_s, "ldaps://www.example.com:1234"
     end
 
     it "preserves port for unknown scheme" do
-      URI.new("xyz", "www.example.com").to_s.should eq("xyz://www.example.com")
-      URI.new("xyz", "www.example.com", 1234).to_s.should eq("xyz://www.example.com:1234")
+      assert_prints URI.new("xyz", "www.example.com").to_s, "xyz://www.example.com"
+      assert_prints URI.new("xyz", "www.example.com", 1234).to_s, "xyz://www.example.com:1234"
     end
 
     it "preserves port for nil scheme" do
-      URI.new(nil, "www.example.com", 1234).to_s.should eq("//www.example.com:1234")
+      assert_prints URI.new(nil, "www.example.com", 1234).to_s, "//www.example.com:1234"
     end
   end
 
@@ -776,5 +756,21 @@ describe "URI" do
     URI.unwrap_ipv6("127.0.0.1").should eq("127.0.0.1")
     URI.unwrap_ipv6("example.com").should eq("example.com")
     URI.unwrap_ipv6("[1234:5678::1]").should eq "1234:5678::1"
+  end
+
+  it ".from_json" do
+    URI.from_json(%("https://example.com")).should eq URI.new(scheme: "https", host: "example.com")
+  end
+
+  it "#to_json" do
+    URI.new(scheme: "https", host: "example.com").to_json.should eq %("https://example.com")
+  end
+
+  it ".from_yaml" do
+    URI.from_yaml(%("https://example.com")).should eq URI.new(scheme: "https", host: "example.com")
+  end
+
+  it "#to_yaml" do
+    URI.new(scheme: "https", host: "example.com").to_yaml.rchop("...\n").should eq %(--- https://example.com\n)
   end
 end

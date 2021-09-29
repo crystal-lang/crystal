@@ -233,11 +233,11 @@ struct Range(B, E)
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    if current.is_a?(Steppable)
+    {% if B < Steppable %}
       current.step(to: @end, by: by, exclusive: @exclusive) do |x|
         yield x
       end
-    else
+    {% else %}
       end_value = @end
       while end_value.nil? || current < end_value
         yield current
@@ -253,7 +253,7 @@ struct Range(B, E)
         end
       end
       yield current if !@exclusive && current == @end
-    end
+    {% end %}
   end
 
   # :ditto:
@@ -263,11 +263,11 @@ struct Range(B, E)
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    if start.is_a?(Steppable)
+    {% if B < Steppable %}
       start.step(to: @end, by: by, exclusive: @exclusive)
-    else
+    {% else %}
       StepIterator(self, B, typeof(by)).new(self, by)
-    end
+    {% end %}
   end
 
   # Returns `true` if this range excludes the *end* element.
@@ -327,14 +327,12 @@ struct Range(B, E)
     includes?(value)
   end
 
-  # :nodoc:
   def to_s(io : IO) : Nil
     @begin.try &.inspect(io)
     io << (@exclusive ? "..." : "..")
     @end.try &.inspect(io)
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     to_s(io)
   end
@@ -387,7 +385,11 @@ struct Range(B, E)
     {% end %}
   end
 
-  # :nodoc:
+  # :inherit:
+  #
+  # If `self` is not empty and `n` is equal to 1, calls `sample(random)` exactly
+  # once. Thus, *random* will be left in a different state compared to the
+  # implementation in `Enumerable`.
   def sample(n : Int, random = Random::DEFAULT)
     {% if B == Nil || E == Nil %}
       {% raise "Can't sample an open range" %}
@@ -411,7 +413,6 @@ struct Range(B, E)
     Range.new(@begin.clone, @end.clone, @exclusive)
   end
 
-  # :nodoc:
   def map(&block : B -> U) forall U
     b = self.begin
     e = self.end
@@ -427,7 +428,15 @@ struct Range(B, E)
     end
   end
 
-  # :nodoc:
+  # Returns the number of values in this range.
+  #
+  # If both the beginning and the end of this range are `Int`s, runs in constant
+  # time instead of linear.
+  #
+  # ```
+  # (3..8).size  # => 5
+  # (3...8).size # => 6
+  # ```
   def size
     {% if B == Nil || E == Nil %}
       {% raise "Can't calculate size of an open range" %}

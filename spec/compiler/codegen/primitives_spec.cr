@@ -288,4 +288,28 @@ describe "Code gen: primitives" do
       end
     {% end %}
   end
+
+  it "allows @[Primitive] on method that has body" do
+    run(%(
+      module Moo
+        @[Primitive(:symbol_to_s)]
+        def self.symbol_to_s(symbol : Symbol) : String
+          untyped
+        end
+      end
+
+      Moo.symbol_to_s(:hello)
+      )).to_string.should eq("hello")
+  end
+
+  it "allows @[Primitive] on fun declarations" do
+    run(%(
+      lib LibFoo
+        @[Primitive(:enum_value)]
+        fun enum_value(x : Int32) : Int32
+      end
+
+      LibFoo.enum_value(1)
+      )).to_i.should eq(1)
+  end
 end
