@@ -1389,38 +1389,8 @@ class Array(T)
   end
 
   # :inherit:
-  def rotate!(n = 1) : self
-    return self if size == 0
-    n %= size
-
-    if n == 0
-    elsif n == 1
-      tmp = self[0]
-      @buffer.move_from(@buffer + n, size - n)
-      self[-1] = tmp
-    elsif n == (size - 1)
-      tmp = self[-1]
-      (@buffer + size - n).move_from(@buffer, n)
-      self[0] = tmp
-    elsif n <= SMALL_ARRAY_SIZE
-      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
-      tmp_buffer.to_unsafe.copy_from(@buffer, n)
-      @buffer.move_from(@buffer + n, size - n)
-      (@buffer + size - n).copy_from(tmp_buffer.to_unsafe, n)
-    elsif size - n <= SMALL_ARRAY_SIZE
-      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
-      tmp_buffer.to_unsafe.copy_from(@buffer + n, size - n)
-      (@buffer + size - n).move_from(@buffer, n)
-      @buffer.copy_from(tmp_buffer.to_unsafe, size - n)
-    elsif n <= size // 2
-      tmp = self[0..n]
-      @buffer.move_from(@buffer + n, size - n)
-      (@buffer + size - n).copy_from(tmp.to_unsafe, n)
-    else
-      tmp = self[n..-1]
-      (@buffer + size - n).move_from(@buffer, n)
-      @buffer.copy_from(tmp.to_unsafe, size - n)
-    end
+  def rotate!(n : Int = 1) : self
+    to_unsafe_slice.rotate!(n)
     self
   end
 

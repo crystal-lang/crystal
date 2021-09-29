@@ -200,6 +200,7 @@ module Indexable::Mutable(T)
   def rotate!(n : Int = 1) : self
     return self if size <= 1
     n %= size
+    return self if n == 0
 
     # juggling algorithm
     size.gcd(n).times do |i|
