@@ -288,7 +288,7 @@ describe Doc::MarkdDocRenderer do
     it "finds multiple kinds of things" do
       {base, base_foo}.each do |obj|
         assert_code_link(obj, "Base#foo2(a, a) and #foo3 and Base",
-          %(<a href="Base.html#foo2%28a%2Cb%29-instance-method">Base#foo2(a, a)</a> and <a href="Base.html#foo33%28a%2Cb%2Cc%29-instance-method">#foo3</a> and <a href="Base.html">Base</a>))
+          %(<a href="Base.html#foo2%28a%2Cb%29-instance-method">Base#foo2(a, a)</a> and <a href="Base.html#foo3%28a%2Cb%2Cc%29-instance-method">#foo3</a> and <a href="Base.html">Base</a>))
       end
     end
 
