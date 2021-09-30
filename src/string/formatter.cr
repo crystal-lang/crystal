@@ -245,7 +245,7 @@ struct String::Formatter(A)
     if flags.sharp && int < 0
       @io << '-'
       write_base_prefix(flags)
-      @io.write_utf8 base_str.unsafe_byte_slice(1)
+      @io.write_string base_str.unsafe_byte_slice(1)
     else
       write_base_prefix(flags) if flags.sharp && int != 0
       @io << base_str
