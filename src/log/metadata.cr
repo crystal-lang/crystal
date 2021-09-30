@@ -175,7 +175,6 @@ class Log::Metadata
     true
   end
 
-  # :nodoc:
   def ==(other)
     false
   end

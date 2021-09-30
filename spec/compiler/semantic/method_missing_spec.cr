@@ -20,13 +20,13 @@ describe "Semantic: method_missing" do
       ), "undefined method 'lala' for Baz"
   end
 
-  it "does error in method_missing if wrong number of args" do
+  it "does error in method_missing if wrong number of params" do
     assert_error %(
       class Foo
         macro method_missing(call, foo)
         end
       end
-      ), "macro 'method_missing' expects 1 argument (call)"
+      ), "wrong number of parameters for macro 'method_missing' (given 2, expected 1)"
   end
 
   it "does method missing for generic type" do

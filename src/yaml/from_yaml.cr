@@ -209,13 +209,13 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
 
     {% for key, type in T %}
       if %var{key.id}.nil? && !%found{key.id} && !{{type.nilable?}}
-        node.raise "Missing yaml attribute: {{key}}"
+        node.raise "Missing yaml attribute: #{{{key.id.stringify}}}"
       end
     {% end %}
 
     {
       {% for key, type in T %}
-        {{key}}: (%var{key.id}).as({{type}}),
+        {{key.id.stringify}}: (%var{key.id}).as({{type}}),
       {% end %}
     }
   {% end %}
