@@ -1384,13 +1384,8 @@ class Hash(K, V)
   # hash.merge!({"baz" => "qux"})
   # hash # => {"foo" => "bar", "baz" => "qux"}
   # ```
-  def merge!(other : Hash(L, W)) : self forall L, W
-    {% unless W <= V && L <= K %}
-      {% raise "Hash(#{L}, #{W}) can't be merged into Hash(#{K}, #{V})" %}
-    {% end %}
-    other.each do |k, v|
-      self[k] = v
-    end
+  def merge!(other : Hash) : self
+    other.merge_into!(self)
     self
   end
 
@@ -1404,19 +1399,33 @@ class Hash(K, V)
   # hash.merge!(other) { |key, v1, v2| v1 + v2 }
   # hash # => {"a" => 100, "b" => 454, "c" => 300}
   # ```
-  def merge!(other : Hash(L, W), & : L, V, W -> V) : self forall L, W
-    {% unless W <= V && L <= K %}
-      {% raise "Hash(#{L}, #{W}) can't be merged into Hash(#{K}, #{V})" %}
+  def merge!(other : Hash, &) : self
+    other.merge_into!(self) { |k, v1, v2| yield k, v1, v2 }
+    self
+  end
+
+  protected def merge_into!(other : Hash(K2, V2)) forall K2, V2
+    {% unless K2 >= K && V2 >= V %}
+      {% raise "#{Hash(K, V)} can't be merged into #{Hash(K2, V2)}" %}
     {% end %}
 
-    other.each do |k, v|
-      if self.has_key?(k)
-        self[k] = yield k, self[k], v
+    each do |k, v|
+      other[k] = v
+    end
+  end
+
+  protected def merge_into!(other : Hash(K2, V2), & : K, V2, V -> V2) forall K2, V2
+    {% unless K2 >= K && V2 >= V %}
+      {% raise "#{Hash(K, V)} can't be merged into #{Hash(K2, V2)}" %}
+    {% end %}
+
+    each do |k, v|
+      if other.has_key?(k)
+        other[k] = yield k, other[k], v
       else
-        self[k] = v
+        other[k] = v
       end
     end
-    self
   end
 
   # Returns a new hash consisting of entries for which the block returns `true`.

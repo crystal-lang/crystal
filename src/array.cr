@@ -1327,7 +1327,7 @@ class Array(T)
   # and *enumerable* as a `Tuple`.
   # Traversal of elements starts from *enumerable*.
   @[Deprecated("Use `Indexable#each_cartesian(*others : Indexable, &block)` instead")]
-  def product(enumerable : Enumerable, &block)
+  def product(enumerable : Enumerable, &)
     self.each { |a| enumerable.each { |b| yield a, b } }
   end
 
