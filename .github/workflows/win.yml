@@ -56,13 +56,6 @@ jobs:
           repository: ivmai/bdwgc
           ref: v8.2.0
           path: bdwgc
-      - name: Download libatomic_ops
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v2
-        with:
-          repository: ivmai/libatomic_ops
-          ref: v7.6.10
-          path: bdwgc/libatomic_ops
       - name: Build libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./bdwgc
