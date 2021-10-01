@@ -1046,8 +1046,8 @@ class Array(T)
   end
 
   # Optimized version of `Enumerable#map`.
-  def map(& : T -> U) forall U
-    Array(U).new(size) { |i| yield @buffer[i] }
+  def map(& : T -> _)
+    Array.new(size) { |i| yield @buffer[i] }
   end
 
   # Modifies `self`, keeping only the elements in the collection for which the
@@ -1149,8 +1149,8 @@ class Array(T)
   # results = gems.map_with_index { |gem, i| "#{i}: #{gem}" }
   # results # => ["0: crystal", "1: pearl", "2: diamond"]
   # ```
-  def map_with_index(offset = 0, & : T, Int32 -> U) forall U
-    Array(U).new(size) { |i| yield @buffer[i], offset + i }
+  def map_with_index(offset = 0, & : T, Int32 -> _)
+    Array.new(size) { |i| yield @buffer[i], offset + i }
   end
 
   # Returns an `Array` with the first *count* elements removed
