@@ -93,8 +93,8 @@ module Crystal
 
     def next_token
       # Check previous token:
-      if @token.type == :NEWLINE
-        # 1) After a newline, a following comment can be a doc comment
+      if @token.type == :NEWLINE || @token.type == :EOF
+        # 1) After a newline or at the start of the stream (:EOF), a following comment can be a doc comment
         @comment_is_doc = true
       elsif @token.type != :SPACE
         # 2) Any non-space token prevents a following comment from being a doc
