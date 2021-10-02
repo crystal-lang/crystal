@@ -57,7 +57,7 @@
 # p.copy_with x: 3   # => #<Point(@x=3, @y=2)>
 # p                  # => #<Point(@x=0, @y=2)>
 # ```
-macro record(name, *properties)
+macro record(name, *properties, &block)
   struct {{name.id}}
     {% for property in properties %}
       {% if property.is_a?(Assign) %}
@@ -76,7 +76,7 @@ macro record(name, *properties)
                    }})
     end
 
-    {{yield}}
+    {{ block.body unless block.is_a?(Nop) }}
 
     def copy_with({{
                     *properties.map do |property|

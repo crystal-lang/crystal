@@ -245,20 +245,146 @@ describe "Semantic: macro" do
       CR
   end
 
-  it "expands macro with block and argument to yield" do
-    assert_type(<<-CR) { int32 }
-      macro foo
-        {{yield 1}}
-      end
-
-      foo do |value|
-        def bar
-          {{value}}
+  describe "yield" do
+    it "expands macro expression in def body in block" do
+      assert_type(<<-CR) { int32 }
+        macro foo
+          {{yield 1}}
         end
-      end
 
-      bar
-      CR
+        foo do |value|
+          def bar
+            {{value}}
+          end
+        end
+
+        bar
+        CR
+    end
+
+    it "expands macro expression with call" do
+      assert_type <<-CR { string }
+        macro foo
+          {{ yield "foo" }}
+        end
+
+        foo {|x| {{ x.upcase }} }
+        CR
+    end
+
+    it "returns ASTNode" do
+      assert_type <<-CR { string }
+        macro foo
+          {{ (yield "foo").downcase }}
+        end
+
+        foo {|x| {{ x.upcase }} }
+        CR
+    end
+
+    it "return value gets assigned to macro variable" do
+      assert_type <<-CR { uint8 }
+        macro foo
+          {% x = yield "1" %}
+          {{ x }}
+        end
+
+        # FIXME: The macro begin...end is a general workaround, not related to yield
+        foo {|x| {% begin %}{{ x.id }}_u8{% end %} }
+        CR
+    end
+
+    it "parses regex with string interpolation in macro literal" do
+      assert_type <<-'CR' { string }
+        macro filter
+          {{ yield.stringify }}
+        end
+
+        foo = ""
+
+        filter do
+          /#{foo}/
+        end
+        CR
+    end
+
+    it "assigns to macro var" do
+      assert_type <<-CR { int32 }
+        macro foo
+          {% x = yield "1" %}
+          {{ x }}
+        end
+
+        foo {|x| {{ x.id }} }
+        CR
+    end
+
+    it "assign block argument to macro var" do
+      assert_type <<-CR { int32 }
+        macro foo
+          {% x = yield "1" %}
+          {{ x }}
+        end
+
+        foo do |x|
+          {% y = x %}
+          {{ y.to_i }}
+        end
+        CR
+    end
+
+    it "block arguments stay in scope" do
+      assert_type <<-CR { int32 }
+        macro foo
+          {% x = 1 %}
+          {{ yield "foo" }}
+          {{ x }}
+        end
+
+        foo {|x| }
+        CR
+    end
+
+    it "inner macro vars stay in scope" do
+      assert_type <<-CR { int32 }
+        macro foo
+          {% x = 1 %}
+          {{ yield }}
+          {{ x }}
+        end
+
+        foo { {% x = "" %} }
+        CR
+    end
+
+    it "does not have access to outer macro vars" do
+      assert_error <<-CR, "undefined macro variable 'x'"
+        macro foo
+          {% x = 1 %}
+          {{ yield }}
+        end
+
+        foo { {{ x }} }
+        CR
+    end
+
+    it "doesn't get confused by potential macro end token" do
+      assert_type <<-CR { int32 }
+        macro foo
+          {{ yield }}
+        end
+
+        def bar(end a)
+          a
+        end
+
+        foo do
+          bar(
+            end: 1
+          )
+        end
+        CR
+    end
   end
 
   it "errors if find macros but wrong arguments" do

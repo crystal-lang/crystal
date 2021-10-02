@@ -447,7 +447,7 @@ class Object
 
           def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
-              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+              {{var_prefix}}\{{name.var.id}} = begin;\{{ block.body }};end
             else
               value
             end
@@ -455,7 +455,7 @@ class Object
         \{% else %}
           def {{method_prefix}}\{{name.id}}
             if (value = {{var_prefix}}\{{name.id}}).nil?
-              {{var_prefix}}\{{name.id}} = \{{yield}}
+              {{var_prefix}}\{{name.id}} = begin;\{{ block.body }};end
             else
               value
             end
@@ -678,7 +678,7 @@ class Object
 
           def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
-              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+              {{var_prefix}}\{{name.var.id}} = begin;\{{ block.body }};end
             else
               value
             end
@@ -686,7 +686,7 @@ class Object
         \{% else %}
           def {{method_prefix}}\{{name.id}}?
             if (value = {{var_prefix}}\{{name.id}}).nil?
-              {{var_prefix}}\{{name.id}} = \{{yield}}
+              {{var_prefix}}\{{name.id}} = begin;\{{ block.body }};end
             else
               value
             end
@@ -960,7 +960,7 @@ class Object
 
           def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
-              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+              {{var_prefix}}\{{name.var.id}} = begin;\{{ block.body }};end
             else
               value
             end
@@ -971,7 +971,7 @@ class Object
         \{% else %}
           def {{method_prefix}}\{{name.id}}
             if (value = {{var_prefix}}\{{name.id}}).nil?
-              {{var_prefix}}\{{name.id}} = \{{yield}}
+              {{var_prefix}}\{{name.id}} = begin;\{{ block.body }};end
             else
               value
             end
@@ -1206,7 +1206,7 @@ class Object
 
           def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
-              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+              {{var_prefix}}\{{name.var.id}} = begin;\{{ block.body }};end
             else
               value
             end
@@ -1217,7 +1217,7 @@ class Object
         \{% else %}
           def {{method_prefix}}\{{name.id}}?
             if (value = {{var_prefix}}\{{name.id}}).nil?
-              {{var_prefix}}\{{name.id}} = \{{yield}}
+              {{var_prefix}}\{{name.id}} = begin;\{{ block.body }};end
             else
               value
             end
