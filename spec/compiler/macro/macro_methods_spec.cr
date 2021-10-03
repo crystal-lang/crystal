@@ -771,6 +771,7 @@ module Crystal
 
       it "executes is_a?" do
         assert_macro "", %({{[1, 2, 3].is_a?(ArrayLiteral)}}), [] of ASTNode, "true"
+        assert_macro "", %({{[1, 2, 3].is_a?(ASTNode)}}), [] of ASTNode, "true"
         assert_macro "", %({{[1, 2, 3].is_a?(NumberLiteral)}}), [] of ASTNode, "false"
       end
 
@@ -883,6 +884,7 @@ module Crystal
 
       it "executes is_a?" do
         assert_macro "", %({{{:a => 1}.is_a?(HashLiteral)}}), [] of ASTNode, "true"
+        assert_macro "", %({{{:a => 1}.is_a?(ASTNode)}}), [] of ASTNode, "true"
         assert_macro "", %({{{:a => 1}.is_a?(RangeLiteral)}}), [] of ASTNode, "false"
       end
 
@@ -1018,6 +1020,7 @@ module Crystal
 
       it "executes is_a?" do
         assert_macro "", %({{{a: 1}.is_a?(NamedTupleLiteral)}}), [] of ASTNode, "true"
+        assert_macro "", %({{{a: 1}.is_a?(ASTNode)}}), [] of ASTNode, "true"
         assert_macro "", %({{{a: 1}.is_a?(RangeLiteral)}}), [] of ASTNode, "false"
       end
 
@@ -1264,6 +1267,7 @@ module Crystal
 
       it "executes is_a?" do
         assert_macro "", %({{ {1, 2, 3}.is_a?(TupleLiteral) }}), [] of ASTNode, "true"
+        assert_macro "", %({{ {1, 2, 3}.is_a?(ASTNode) }}), [] of ASTNode, "true"
         assert_macro "", %({{ {1, 2, 3}.is_a?(ArrayLiteral) }}), [] of ASTNode, "false"
       end
 
@@ -1370,7 +1374,7 @@ module Crystal
 
     describe TypeNode do
       describe "#includers" do
-        it "returns an array of types `self` is included in" do
+        it "returns an array of types `self` is directly included in" do
           assert_type(%(
             module Foo
             end
@@ -1415,14 +1419,18 @@ module Crystal
             end
 
             class ChildT(T) < SubT(T)
+              include Enumt(T)
             end
 
-          {% if Baz.includers.map(&.stringify) == ["Baz::Tar", "Enumt(T)", "Bar", "Str", "Gen(T)", "AStr", "ACla", "SubT(T)"] && Enumt.includers.map(&.stringify) == ["Str"]  %}
-            1
-          {% else %}
-            'a'
-          {% end %}
-        )) { int32 }
+            class Witness < ChildT(String)
+            end
+
+            {
+              {% if Baz.includers.map(&.stringify).sort == %w(ACla AStr Bar Baz::Tar Enumt(T) Gen(T) Str SubT(T)) %} 1 {% else %} 'a' {% end %},
+              {% if Enumt.includers.map(&.stringify).sort == %w(ChildT(String) ChildT(T) Str) %} 1 {% else %} 'a' {% end %},
+              {% if Enumt(String).includers.map(&.stringify).sort == %w(ChildT(String) Str) %} 1 {% else %} 'a' {% end %},
+            }
+            )) { tuple_of([int32, int32, int32]) }
         end
       end
 
@@ -2189,6 +2197,14 @@ module Crystal
       it "executes exp" do
         assert_macro "x", %({{x.exp}}), [Not.new("some_call".call)] of ASTNode, "some_call"
       end
+
+      it "executes is_a?" do
+        assert_macro "x", %({{ x.is_a?(Not) }}), [Not.new("some_call".call)] of ASTNode, "true"
+        assert_macro "x", %({{ x.is_a?(Splat) }}), [Not.new("some_call".call)] of ASTNode, "false"
+        assert_macro "x", %({{ x.is_a?(UnaryExpression) }}), [Not.new("some_call".call)] of ASTNode, "true"
+        assert_macro "x", %({{ x.is_a?(ASTNode) }}), [Not.new("some_call".call)] of ASTNode, "true"
+        assert_macro "x", %({{ x.is_a?(TypeNode) }}), [Not.new("some_call".call)] of ASTNode, "false"
+      end
     end
 
     describe "offsetof methods" do
@@ -2685,6 +2701,36 @@ module Crystal
     end
   end
 
+  describe "file_exists?" do
+    context "with absolute path" do
+      it "returns true if file exists" do
+        run(%q<
+          {{file_exists?("#{__DIR__}/../data/build")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(10)
+      end
+
+      it "returns false if file doesn't exist" do
+        run(%q<
+          {{file_exists?("#{__DIR__}/../data/build_foo")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(20)
+      end
+    end
+
+    context "with relative path" do
+      it "reads file (exists)" do
+        run(%q<
+          {{file_exists?("spec/compiler/data/build")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(10)
+      end
+
+      it "reads file (doesn't exist)" do
+        run(%q<
+          {{file_exists?("spec/compiler/data/build_foo")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(20)
+      end
+    end
+  end
+
   describe "read_file" do
     context "with absolute path" do
       it "reads file (exists)" do
@@ -2731,6 +2777,56 @@ module Crystal
         run(%q<
           {{read_file?("spec/compiler/data/build_foo")}} ? 10 : 20
           >, filename = __FILE__).to_i.should eq(20)
+      end
+    end
+  end
+
+  describe "error reporting" do
+    it "reports wrong number of arguments" do
+      expect_raises(Crystal::TypeException, "wrong number of arguments for macro 'ArrayLiteral#push' (given 0, expected 1)") do
+        assert_macro "", %({{[1, 2, 3].push}}), [] of ASTNode, ""
+      end
+    end
+
+    it "reports wrong number of arguments, with optional parameters" do
+      expect_raises(Crystal::TypeException, "wrong number of arguments for macro 'NumberLiteral#+' (given 2, expected 0..1)") do
+        assert_macro "", %({{1.+(2, 3)}}), [] of ASTNode, ""
+      end
+
+      expect_raises(Crystal::TypeException, "wrong number of arguments for macro 'ArrayLiteral#[]' (given 0, expected 1..2)") do
+        assert_macro "", %({{[1][]}}), [] of ASTNode, ""
+      end
+    end
+
+    it "reports unexpected block" do
+      expect_raises(Crystal::TypeException, "macro 'ArrayLiteral#shuffle' is not expected to be invoked with a block, but a block was given") do
+        assert_macro "", %({{[1, 2, 3].shuffle { |x| }}}), [] of ASTNode, ""
+      end
+    end
+
+    it "reports missing block" do
+      expect_raises(Crystal::TypeException, "macro 'ArrayLiteral#reduce' is expected to be invoked with a block, but no block was given") do
+        assert_macro "", %({{[1, 2, 3].reduce}}), [] of ASTNode, ""
+      end
+    end
+
+    it "reports unexpected named argument" do
+      expect_raises(Crystal::TypeException, "named arguments are not allowed here") do
+        assert_macro "", %({{"".starts_with?(other: "")}}), [] of ASTNode, ""
+      end
+    end
+
+    it "reports unexpected named argument (2)" do
+      expect_raises(Crystal::TypeException, "no named parameter 'foo'") do
+        assert_macro "", %({{"".camelcase(foo: "")}}), [] of ASTNode, ""
+      end
+    end
+
+    # there are no macro methods with required named parameters
+
+    it "uses correct name for top-level macro methods" do
+      expect_raises(Crystal::TypeException, "wrong number of arguments for top-level macro 'flag?' (given 0, expected 1)") do
+        assert_macro "", %({{flag?}}), [] of ASTNode, ""
       end
     end
   end

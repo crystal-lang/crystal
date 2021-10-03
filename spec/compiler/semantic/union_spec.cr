@@ -314,4 +314,31 @@ describe "Semantic: union" do
       Union(Foo)
       )) { types["Foo"].metaclass }
   end
+
+  it "doesn't run virtual lookup on unbound unions (#9173)" do
+    assert_type(%(
+      class Object
+        def foo
+          self
+        end
+      end
+
+      abstract class Parent
+      end
+
+      class Child(T) < Parent
+        @buffer = uninitialized T
+
+        def bar
+          @buffer.foo
+        end
+      end
+
+      class Foo(U)
+        @x = Child(U | Char).new
+      end
+
+      Child(Int32).new.as(Parent).bar
+      )) { int32 }
+  end
 end

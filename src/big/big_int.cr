@@ -410,39 +410,131 @@ struct BigInt < Int
   # TODO: check hash equality for numbers >= 2**63
   def_hash to_i64!
 
-  # Returns a string representation of self.
-  #
-  # ```
-  # require "big"
-  #
-  # BigInt.new("123456789101101987654321").to_s # => 123456789101101987654321
-  # ```
-  def to_s : String
-    String.new(to_cstr)
+  def to_s(base : Int = 10, *, precision : Int = 1, upcase : Bool = false) : String
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
+    raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
+    raise ArgumentError.new("Precision must be non-negative") unless precision >= 0
+
+    case {self, precision}
+    when {0, 0}
+      ""
+    when {0, 1}
+      "0"
+    when {1, 1}
+      "1"
+    else
+      count = LibGMP.sizeinbase(self, base).to_i
+      negative = self < 0
+
+      if precision <= count
+        len = count + (negative ? 1 : 0)
+        String.new(len + 1) do |buffer| # null terminator required by GMP
+          buffer[len - 1] = 0
+          LibGMP.get_str(buffer, upcase ? -base : base, self)
+
+          # `sizeinbase` may be 1 greater than the exact value
+          if buffer[len - 1] == 0
+            if precision == count
+              # In this case the exact `count` is `precision - 1`, i.e. one zero
+              # should be inserted at the beginning of the number
+              # e.g. precision = 3, count = 3, exact count = 2
+              # "85\0\0" -> "085\0" for positive
+              # "-85\0\0" -> "-085\0" for negative
+              start = buffer + (negative ? 1 : 0)
+              start.move_to(start + 1, count - 1)
+              start.value = '0'.ord.to_u8
+            else
+              len -= 1
+            end
+          end
+
+          base62_swapcase(Slice.new(buffer, len)) if base == 62
+          {len, len}
+        end
+      else
+        len = precision + (negative ? 1 : 0)
+        String.new(len + 1) do |buffer|
+          # e.g. precision = 13, count = 8
+          # "_____12345678\0" for positive
+          # "_____-12345678\0" for negative
+          buffer[len - 1] = 0
+          start = buffer + precision - count
+          LibGMP.get_str(start, upcase ? -base : base, self)
+
+          # `sizeinbase` may be 1 greater than the exact value
+          if buffer[len - 1] == 0
+            # e.g. precision = 7, count = 3, exact count = 2
+            # "____85\0\0" -> "____885\0" for positive
+            # "____-85\0\0" -> "____-885\0" for negative
+            # `start` will be zero-filled later
+            count -= 1
+            start += 1 if negative
+            start.move_to(start + 1, count)
+          end
+
+          base62_swapcase(Slice.new(buffer + len - count, count)) if base == 62
+
+          if negative
+            buffer.value = '-'.ord.to_u8
+            buffer += 1
+          end
+          Slice.new(buffer, precision - count).fill('0'.ord.to_u8)
+
+          {len, len}
+        end
+      end
+    end
   end
 
-  # :ditto:
-  def to_s(io : IO) : Nil
-    str = to_cstr
-    io.write_utf8 Slice.new(str, LibC.strlen(str))
+  def to_s(io : IO, base : Int = 10, *, precision : Int = 1, upcase : Bool = false) : Nil
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
+    raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
+    raise ArgumentError.new("Precision must be non-negative") unless precision >= 0
+
+    case {self, precision}
+    when {0, 0}
+      # do nothing
+    when {0, 1}
+      io << '0'
+    when {1, 1}
+      io << '1'
+    else
+      count = LibGMP.sizeinbase(self, base).to_i
+      ptr = LibGMP.get_str(nil, upcase ? -base : base, self)
+      negative = self < 0
+
+      # `sizeinbase` may be 1 greater than the exact value
+      count -= 1 if ptr[count + (negative ? 0 : -1)] == 0
+
+      if precision <= count
+        buffer = Slice.new(ptr, count + (negative ? 1 : 0))
+      else
+        if negative
+          io << '-'
+          ptr += 1 # this becomes the absolute value
+        end
+
+        (precision - count).times { io << '0' }
+        buffer = Slice.new(ptr, count)
+      end
+
+      base62_swapcase(buffer) if base == 62
+      io.write_string buffer
+    end
   end
 
-  # Returns a string containing the representation of big radix base (2 through 36).
-  #
-  # ```
-  # require "big"
-  #
-  # BigInt.new("123456789101101987654321").to_s(8)  # => "32111154373025463465765261"
-  # BigInt.new("123456789101101987654321").to_s(16) # => "1a249b1f61599cd7eab1"
-  # BigInt.new("123456789101101987654321").to_s(36) # => "k3qmt029k48nmpd"
-  # ```
-  def to_s(base : Int) : String
-    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36
-    cstr = LibGMP.get_str(nil, base, self)
-    String.new(cstr)
+  private def base62_swapcase(buffer)
+    buffer.map! do |x|
+      # for ASCII integers as returned by GMP the only possible characters are
+      # '\0', '-', '0'..'9', 'A'..'Z', and 'a'..'z'
+      if x & 0x40 != 0 # 'A'..'Z', 'a'..'z'
+        x ^ 0x20
+      else # '\0', '-', '0'..'9'
+        x
+      end
+    end
   end
 
-  # :nodoc:
   def digits(base = 10) : Array(Int32)
     if self < 0
       raise ArgumentError.new("Can't request digits of negative number")
@@ -604,10 +696,6 @@ struct BigInt < Int
 
   private def mpz
     pointerof(@mpz)
-  end
-
-  private def to_cstr
-    LibGMP.get_str(nil, 10, mpz)
   end
 
   def to_unsafe

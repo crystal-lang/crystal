@@ -82,8 +82,33 @@ module Crystal
       self.is_a?(BoolLiteral) && !self.value
     end
 
-    def class_desc : String
+    def self.class_desc : String
       {{@type.name.split("::").last.id.stringify}}
+    end
+
+    def class_desc
+      self.class.class_desc
+    end
+
+    def class_desc_is_a?(name)
+      # e.g. for `Splat < UnaryExpression < ASTNode` this produces:
+      #
+      # ```
+      # name.in?({class_desc, UnaryExpression.class_desc, ASTNode.class_desc})
+      # ```
+      #
+      # this assumes the macro AST node hierarchy matches exactly that of the
+      # compiler internal node types
+      {% begin %}
+        name.in?({
+          class_desc,
+          {% for t in @type.ancestors %}
+            {% if t <= Crystal::ASTNode %}
+              {{ t }}.class_desc,
+            {% end %}
+          {% end %}
+        })
+      {% end %}
     end
 
     def pretty_print(pp)
@@ -1456,10 +1481,16 @@ module Crystal
     property type_vars : Array(ASTNode)
     property named_args : Array(NamedArgument)?
 
-    # `true` if this Generic was parsed from `T?`
-    property? question = false
+    property suffix : Suffix
 
-    def initialize(@name, @type_vars : Array, @named_args = nil)
+    enum Suffix
+      None
+      Question # T?
+      Asterisk # T*
+      Bracket  # T[N]
+    end
+
+    def initialize(@name, @type_vars : Array, @named_args = nil, @suffix = Suffix::None)
     end
 
     def self.new(name, type_var : ASTNode)
@@ -1473,8 +1504,7 @@ module Crystal
     end
 
     def clone_without_location
-      generic = Generic.new(@name.clone, @type_vars.clone, @named_args.clone)
-      generic.question = question?
+      generic = Generic.new(@name.clone, @type_vars.clone, @named_args.clone, @suffix)
       generic
     end
 

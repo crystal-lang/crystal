@@ -369,7 +369,7 @@ class String
 
   # Same as `#to_i` but returns an `Int8` or the block's value.
   def to_i8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ i8, 127, 128
+    gen_to_ Int8, UInt8, 127, 128
   end
 
   # Same as `#to_i` but returns an `UInt8`.
@@ -384,7 +384,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt8` or the block's value.
   def to_u8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ u8, 255
+    gen_to_ UInt8, UInt8
   end
 
   # Same as `#to_i` but returns an `Int16`.
@@ -399,7 +399,7 @@ class String
 
   # Same as `#to_i` but returns an `Int16` or the block's value.
   def to_i16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ i16, 32767, 32768
+    gen_to_ Int16, UInt16, 32767, 32768
   end
 
   # Same as `#to_i` but returns an `UInt16`.
@@ -414,7 +414,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt16` or the block's value.
   def to_u16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ u16, 65535
+    gen_to_ UInt16, UInt16
   end
 
   # Same as `#to_i`.
@@ -429,7 +429,7 @@ class String
 
   # Same as `#to_i`.
   def to_i32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ i32, 2147483647, 2147483648
+    gen_to_ Int32, UInt32, 2147483647, 2147483648
   end
 
   # Same as `#to_i` but returns an `UInt32`.
@@ -444,7 +444,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt32` or the block's value.
   def to_u32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ u32, 4294967295
+    gen_to_ UInt32, UInt32
   end
 
   # Same as `#to_i` but returns an `Int64`.
@@ -459,7 +459,7 @@ class String
 
   # Same as `#to_i` but returns an `Int64` or the block's value.
   def to_i64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ i64, 9223372036854775807, 9223372036854775808
+    gen_to_ Int64, UInt64, 9223372036854775807, 9223372036854775808
   end
 
   # Same as `#to_i` but returns an `UInt64`.
@@ -474,7 +474,37 @@ class String
 
   # Same as `#to_i` but returns an `UInt64` or the block's value.
   def to_u64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ u64
+    gen_to_ UInt64, UInt64
+  end
+
+  # Same as `#to_i` but returns an `Int128`.
+  def to_i128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int128
+    to_i128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int128: #{self}") }
+  end
+
+  # Same as `#to_i` but returns an `Int128` or `nil`.
+  def to_i128?(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int128?
+    to_i128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { nil }
+  end
+
+  # Same as `#to_i` but returns an `Int128` or the block's value.
+  def to_i128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+    gen_to_ Int128, UInt128, Int128::MAX, (UInt128.new(Int128::MAX) + 1)
+  end
+
+  # Same as `#to_i` but returns an `UInt128`.
+  def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt128
+    to_u128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt128: #{self}") }
+  end
+
+  # Same as `#to_i` but returns an `UInt128` or `nil`.
+  def to_u128?(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt128?
+    to_u128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { nil }
+  end
+
+  # Same as `#to_i` but returns an `UInt128` or the block's value.
+  def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+    gen_to_ UInt128, UInt128
   end
 
   # :nodoc:
@@ -500,20 +530,21 @@ class String
   end
 
   # :nodoc:
-  record ToU64Info,
-    value : UInt64,
+  record ToUnsignedInfo(T),
+    value : T,
     negative : Bool,
     invalid : Bool
 
-  private macro gen_to_(method, max_positive = nil, max_negative = nil)
-    info = to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{max_negative == nil}})
+  private macro gen_to_(int_class, unsigned_int_class, max_positive = nil, max_negative = nil)
+    {% unsigned = int_class == unsigned_int_class %}
+    info = to_unsigned_info({{unsigned_int_class}}, base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{unsigned}})
 
     return yield if info.invalid
 
     if info.negative
       {% if max_negative %}
         return yield if info.value > {{max_negative}}
-        (~info.value &+ 1).unsafe_as(Int64).to_{{method}}
+        (~info.value &+ 1).unsafe_as({{int_class}})
       {% else %}
         return yield
       {% end %}
@@ -521,11 +552,11 @@ class String
       {% if max_positive %}
         return yield if info.value > {{max_positive}}
       {% end %}
-      info.value.to_{{method}}
+      {{int_class}}.new(info.value)
     end
   end
 
-  private def to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned)
+  private def to_unsigned_info(int_class, base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned)
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
 
     ptr = to_unsafe
@@ -541,7 +572,7 @@ class String
     case ptr.value.unsafe_chr
     when '-'
       if unsigned
-        return ToU64Info.new 0, true, true
+        return ToUnsignedInfo.new(value: int_class.new(0), negative: true, invalid: true)
       end
       negative = true
       ptr += 1
@@ -583,8 +614,8 @@ class String
       end
     end
 
-    value = 0_u64
-    mul_overflow = ~0_u64 // base
+    value = int_class.new(0)
+    mul_overflow = ~(int_class.new(0)) // base
     last_is_underscore = true
     invalid = false
 
@@ -635,7 +666,7 @@ class String
       invalid = true
     end
 
-    ToU64Info.new value, negative, invalid
+    ToUnsignedInfo.new(value: value, negative: negative, invalid: invalid)
   end
 
   # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
@@ -712,18 +743,18 @@ class String
     unless v.finite?
       startptr = to_unsafe
       if whitespace
-        while startptr.value.chr.ascii_whitespace?
+        while startptr.value.unsafe_chr.ascii_whitespace?
           startptr += 1
         end
       end
-      if startptr.value.chr.in?('+', '-')
+      if startptr.value.unsafe_chr.in?('+', '-')
         startptr += 1
       end
 
       if v.nan?
-        return unless startptr.value.chr.in?('n', 'N')
+        return unless startptr.value.unsafe_chr.in?('n', 'N')
       else
-        return unless startptr.value.chr.in?('i', 'I')
+        return unless startptr.value.unsafe_chr.in?('i', 'I')
       end
     end
 
@@ -734,7 +765,7 @@ class String
 
     if strict
       if whitespace
-        while endptr < string_end && endptr.value.chr.ascii_whitespace?
+        while endptr < string_end && endptr.value.unsafe_chr.ascii_whitespace?
           endptr += 1
         end
       end
@@ -743,7 +774,7 @@ class String
     else
       ptr = to_unsafe
       if whitespace
-        while ptr < string_end && ptr.value.chr.ascii_whitespace?
+        while ptr < string_end && ptr.value.unsafe_chr.ascii_whitespace?
           ptr += 1
         end
       end
@@ -1238,6 +1269,7 @@ class String
   end
 
   # Returns the byte at the given *index* without bounds checking.
+  @[Deprecated("Use `to_unsafe[index]` instead.")]
   def unsafe_byte_at(index : Int) : UInt8
     to_unsafe[index]
   end
@@ -1253,7 +1285,7 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
+          buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
         end
         {@bytesize, @length}
       end
@@ -1288,7 +1320,7 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
+          buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
         end
         {@bytesize, @length}
       end
@@ -1325,9 +1357,9 @@ class String
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
           byte = if i.zero?
-                   unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
+                   to_unsafe[i].unsafe_chr.upcase.ord.to_u8
                  else
-                   unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
+                   to_unsafe[i].unsafe_chr.downcase.ord.to_u8
                  end
 
           buffer[i] = byte
@@ -1372,7 +1404,7 @@ class String
 
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          char = unsafe_byte_at(i).unsafe_chr
+          char = to_unsafe[i].unsafe_chr
           replaced_char = upcase_next ? char.upcase : char.downcase
           buffer[i] = replaced_char.ord.to_u8
           upcase_next = char.whitespace?
@@ -2028,7 +2060,7 @@ class String
     return delete(from) if to.empty?
 
     if from.bytesize == 1
-      return gsub(from.unsafe_byte_at(0).unsafe_chr, to[0])
+      return gsub(from.to_unsafe[0].unsafe_chr, to[0])
     end
 
     multi = nil
@@ -2446,7 +2478,7 @@ class String
   # ```
   def gsub(char : Char, replacement) : String
     if replacement.is_a?(String) && replacement.bytesize == 1
-      return gsub(char, replacement.unsafe_byte_at(0).unsafe_chr)
+      return gsub(char, replacement.to_unsafe[0].unsafe_chr)
     end
 
     if includes?(char)
@@ -2556,7 +2588,7 @@ class String
   # ```
   def gsub(string : String, replacement) : String
     if string.bytesize == 1
-      gsub(string.unsafe_byte_at(0).unsafe_chr, replacement)
+      gsub(string.to_unsafe[0].unsafe_chr, replacement)
     else
       gsub(string) { replacement }
     end
@@ -4958,7 +4990,7 @@ class String
 
   # Appends `self` to *io*.
   def to_s(io : IO) : Nil
-    io.write_utf8(to_slice)
+    io.write_string(to_slice)
   end
 
   # Returns the underlying bytes of this String.

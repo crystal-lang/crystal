@@ -61,7 +61,7 @@ module Base64
   def encode(data, io : IO)
     count = 0
     encode_with_new_lines(data.to_slice) do |byte|
-      io.write_byte byte
+      io << byte.unsafe_chr
       count += 1
     end
     io.flush
@@ -123,7 +123,7 @@ module Base64
     count = 0
     to_base64(data.to_slice, alphabet, pad: pad) do |byte|
       count += 1
-      io.write_byte byte
+      io << byte.unsafe_chr
     end
     io.flush
     count

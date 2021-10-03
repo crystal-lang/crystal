@@ -33,7 +33,7 @@ jobs:
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run stdlib specs
-        uses: docker://jhass/crystal:0.35.0-alpine-build
+        uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
           args: make std_spec
   musl-test-compiler:

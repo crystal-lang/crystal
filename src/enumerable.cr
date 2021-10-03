@@ -34,7 +34,7 @@ module Enumerable(T)
   end
 
   # Must yield this collection's elements to the block.
-  abstract def each(&block : T -> _)
+  abstract def each(& : T ->)
 
   # Returns `true` if the passed block returns a value other than `false` or `nil`
   # for all elements of the collection.
@@ -43,7 +43,7 @@ module Enumerable(T)
   # ["ant", "bear", "cat"].all? { |word| word.size >= 3 } # => true
   # ["ant", "bear", "cat"].all? { |word| word.size >= 4 } # => false
   # ```
-  def all?
+  def all?(& : T ->) : Bool
     each { |e| return false unless yield e }
     true
   end
@@ -78,7 +78,7 @@ module Enumerable(T)
   # ["ant", "bear", "cat"].any? { |word| word.size >= 4 } # => true
   # ["ant", "bear", "cat"].any? { |word| word.size > 4 }  # => false
   # ```
-  def any?
+  def any?(& : T ->) : Bool
     each { |e| return true if yield e }
     false
   end
@@ -221,8 +221,8 @@ module Enumerable(T)
   # ["Alice", "Bob"].map { |name| name.match(/^A./) }         # => [Regex::MatchData("Al"), nil]
   # ["Alice", "Bob"].compact_map { |name| name.match(/^A./) } # => [Regex::MatchData("Al")]
   # ```
-  def compact_map
-    ary = [] of typeof((yield first).not_nil!)
+  def compact_map(& : T -> _)
+    ary = [] of typeof((yield Enumerable.element_type(self)).not_nil!)
     each do |e|
       v = yield e
       unless v.is_a?(Nil)
@@ -238,7 +238,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4].count { |i| i % 2 == 0 } # => 2
   # ```
-  def count(& : T -> _) : Int32
+  def count(& : T ->) : Int32
     count = 0
     each { |e| count += 1 if yield e }
     count
@@ -254,12 +254,12 @@ module Enumerable(T)
   end
 
   # Calls the given block for each element in this enumerable forever.
-  def cycle
+  def cycle(& : T ->) : Nil
     loop { each { |x| yield x } }
   end
 
   # Calls the given block for each element in this enumerable *n* times.
-  def cycle(n)
+  def cycle(n, & : T ->) : Nil
     n.times { each { |x| yield x } }
   end
 
@@ -338,7 +338,7 @@ module Enumerable(T)
   # Chunks of more than two items can be iterated using `#each_cons`.
   # This method is just an optimized implementation for the special case of
   # `size == 2` to avoid heap allocations.
-  def each_cons_pair(& : (T, T) -> _) : Nil
+  def each_cons_pair(& : (T, T) ->) : Nil
     last_elem = uninitialized T
     first_iteration = true
     each do |elem|
@@ -455,7 +455,7 @@ module Enumerable(T)
   # end
   # hash # => {"Alice" => 5, "Bob" => 3}
   # ```
-  def each_with_object(obj)
+  def each_with_object(obj : U, & : T, U ->) : U forall U
     each do |elem|
       yield elem, obj
     end
@@ -472,7 +472,7 @@ module Enumerable(T)
   # [1, 2, 3, 4].find { |i| i > 8 }     # => nil
   # [1, 2, 3, 4].find(-1) { |i| i > 8 } # => -1
   # ```
-  def find(if_none = nil)
+  def find(if_none = nil, & : T ->)
     each do |elem|
       return elem if yield elem
     end
@@ -486,7 +486,7 @@ module Enumerable(T)
   # ([1, 2, 3]).first { 4 }   # => 1
   # ([] of Int32).first { 4 } # => 4
   # ```
-  def first
+  def first(& : ->)
     each { |e| return e }
     yield
   end
@@ -524,8 +524,8 @@ module Enumerable(T)
   # end
   # array # => ['A', 'l', 'i', 'c', 'e', 'B', 'o', 'b']
   # ```
-  def flat_map(&block : T -> _)
-    ary = [] of typeof(flat_map_type(yield first))
+  def flat_map(& : T -> _)
+    ary = [] of typeof(flat_map_type(yield Enumerable.element_type(self)))
     each do |e|
       case v = yield e
       when Array, Iterator
@@ -553,7 +553,7 @@ module Enumerable(T)
   # ```
   # ["Alice", "Bob", "Ary"].group_by { |name| name.size } # => {5 => ["Alice"], 3 => ["Bob", "Ary"]}
   # ```
-  def group_by(&block : T -> U) forall U
+  def group_by(& : T -> U) forall U
     h = Hash(U, Array(T)).new
     each do |e|
       v = yield e
@@ -598,7 +598,7 @@ module Enumerable(T)
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def in_groups_of(size : Int, filled_up_with : U = nil, reuse = false, &block) forall U
+  def in_groups_of(size : Int, filled_up_with : U = nil, reuse = false, & : Array(T | U) ->) forall U
     raise ArgumentError.new("Size must be positive") if size <= 0
 
     each_slice_internal(size, Array(T | U), reuse) do |slice|
@@ -624,7 +624,7 @@ module Enumerable(T)
   # ```
   #
   # Returns `nil` if the block didn't return `true` for any element.
-  def index(& : T -> _) : Int32?
+  def index(& : T ->) : Int32?
     each_with_index do |e, i|
       return i if yield e
     end
@@ -654,7 +654,7 @@ module Enumerable(T)
   # ["Anna", "Ary", "Alice", "Bob"].index_by { |e| e.size }
   # # => {4 => "Anna", 3 => "Bob", 5 => "Alice"}
   # ```
-  def index_by(&block : T -> U) : Hash(U, T) forall U
+  def index_by(& : T -> U) : Hash(U, T) forall U
     hash = {} of U => T
     each do |elem|
       hash[yield elem] = elem
@@ -668,14 +668,26 @@ module Enumerable(T)
   # For each element in the collection the block is passed an accumulator value (*memo*) and the element. The
   # result becomes the new value for *memo*. At the end of the iteration, the final value of *memo* is
   # the return value for the method. The initial value for the accumulator is the first element in the collection.
+  # If the collection has only one element, that element is returned.
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
   #
   # ```
   # [1, 2, 3, 4, 5].reduce { |acc, i| acc + i } # => 15
+  # [1].reduce { |acc, i| acc + i }             # => 1
+  # ([] of Int32).reduce { |acc, i| acc + i }   # raises Enumerable::EmptyError
+  # ```
+  #
+  # The block is not required to return a `T`, in which case the accumulator's
+  # type includes whatever the block returns.
+  #
+  # ```
+  # # `acc` is an `Int32 | String`
+  # [1, 2, 3, 4, 5].reduce { |acc, i| "#{acc}-#{i}" } # => "1-2-3-4-5"
+  # [1].reduce { |acc, i| "#{acc}-#{i}" }             # => 1
   # ```
   def reduce
-    memo = uninitialized T
+    memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
     each do |elem|
@@ -706,7 +718,7 @@ module Enumerable(T)
   # ([] of Int32).reduce? { |acc, i| acc + i } # => nil
   # ```
   def reduce?
-    memo = uninitialized T
+    memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
     each do |elem|
@@ -888,7 +900,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3].map { |i| i * 10 } # => [10, 20, 30]
   # ```
-  def map(&block : T -> U) forall U
+  def map(& : T -> U) : Array(U) forall U
     ary = [] of U
     each { |e| ary << yield e }
     ary
@@ -903,7 +915,7 @@ module Enumerable(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0, &block : T, Int32 -> U) forall U
+  def map_with_index(offset = 0, & : T, Int32 -> U) : Array(U) forall U
     ary = [] of U
     each_with_index(offset) { |e, i| ary << yield e, i }
     ary
@@ -937,19 +949,19 @@ module Enumerable(T)
   # ```
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
-  def max_by(&block : T -> U) forall U
+  def max_by(& : T -> U) : T forall U
     found, value = max_by_internal { |value| yield value }
     raise Enumerable::EmptyError.new unless found
     value
   end
 
   # Like `max_by` but returns `nil` if the collection is empty.
-  def max_by?(&block : T -> U) forall U
+  def max_by?(& : T -> U) : T? forall U
     found, value = max_by_internal { |value| yield value }
     found ? value : nil
   end
 
-  private def max_by_internal(&block : T -> U) forall U
+  private def max_by_internal(& : T -> U) forall U
     max = uninitialized U
     obj = uninitialized T
     found = false
@@ -971,19 +983,19 @@ module Enumerable(T)
   # ```
   # ["Alice", "Bob"].max_of { |name| name.size } # => 5 (Alice's size)
   # ```
-  def max_of(&block : T -> U) forall U
+  def max_of(& : T -> U) : U forall U
     found, value = max_of_internal { |value| yield value }
     raise Enumerable::EmptyError.new unless found
     value
   end
 
   # Like `max_of` but returns `nil` if the collection is empty.
-  def max_of?(&block : T -> U) forall U
+  def max_of?(& : T -> U) : U? forall U
     found, value = max_of_internal { |value| yield value }
     found ? value : nil
   end
 
-  private def max_of_internal(&block : T -> U) forall U
+  private def max_of_internal(& : T -> U) forall U
     max = uninitialized U
     found = false
 
@@ -1026,19 +1038,19 @@ module Enumerable(T)
   # ```
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
-  def min_by(&block : T -> U) forall U
+  def min_by(& : T -> U) : T forall U
     found, value = min_by_internal { |value| yield value }
     raise Enumerable::EmptyError.new unless found
     value
   end
 
   # Like `min_by` but returns `nil` if the collection is empty.
-  def min_by?(&block : T -> U) forall U
+  def min_by?(& : T -> U) : T? forall U
     found, value = min_by_internal { |value| yield value }
     found ? value : nil
   end
 
-  private def min_by_internal(&block : T -> U) forall U
+  private def min_by_internal(& : T -> U) forall U
     min = uninitialized U
     obj = uninitialized T
     found = false
@@ -1060,19 +1072,19 @@ module Enumerable(T)
   # ```
   # ["Alice", "Bob"].min_of { |name| name.size } # => 3 (Bob's size)
   # ```
-  def min_of(&block : T -> U) forall U
+  def min_of(& : T -> U) : U forall U
     found, value = min_of_internal { |value| yield value }
     raise Enumerable::EmptyError.new unless found
     value
   end
 
   # Like `min_of` but returns `nil` if the collection is empty.
-  def min_of?(&block : T -> U) forall U
+  def min_of?(& : T -> U) : U? forall U
     found, value = min_of_internal { |value| yield value }
     found ? value : nil
   end
 
-  private def min_of_internal(&block : T -> U) forall U
+  private def min_of_internal(& : T -> U) forall U
     min = uninitialized U
     found = false
 
@@ -1110,19 +1122,19 @@ module Enumerable(T)
   # ```
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
-  def minmax_by(&block : T -> U) forall U
+  def minmax_by(& : T -> U) : {T, T} forall U
     found, value = minmax_by_internal { |value| yield value }
     raise Enumerable::EmptyError.new unless found
     value
   end
 
   # Like `minmax_by` but returns `{nil, nil}` if the collection is empty.
-  def minmax_by?(&block : T -> U) forall U
+  def minmax_by?(& : T -> U) : {T, T} | {Nil, Nil} forall U
     found, value = minmax_by_internal { |value| yield value }
     found ? value : {nil, nil}
   end
 
-  private def minmax_by_internal(&block : T -> U) forall U
+  private def minmax_by_internal(& : T -> U) forall U
     min = uninitialized U
     max = uninitialized U
     objmin = uninitialized T
@@ -1153,19 +1165,19 @@ module Enumerable(T)
   # ```
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
-  def minmax_of(&block : T -> U) forall U
+  def minmax_of(& : T -> U) : {U, U} forall U
     found, value = minmax_of_internal { |value| yield value }
     raise Enumerable::EmptyError.new unless found
     value
   end
 
   # Like `minmax_of` but returns `{nil, nil}` if the collection is empty.
-  def minmax_of?(&block : T -> U) forall U
+  def minmax_of?(& : T -> U) : {U, U} | {Nil, Nil} forall U
     found, value = minmax_of_internal { |value| yield value }
     found ? value : {nil, nil}
   end
 
-  private def minmax_of_internal(&block : T -> U) forall U
+  private def minmax_of_internal(& : T -> U) forall U
     min = uninitialized U
     max = uninitialized U
     found = false
@@ -1196,7 +1208,7 @@ module Enumerable(T)
   # ```
   #
   # It's the opposite of `all?`.
-  def none?
+  def none?(& : T ->) : Bool
     each { |e| return false if yield(e) }
     true
   end
@@ -1232,7 +1244,7 @@ module Enumerable(T)
   # [1, 2, 3].one? { |i| i > 2 } # => true
   # [1, 2, 3].one? { |i| i > 1 } # => false
   # ```
-  def one?
+  def one?(& : T ->) : Bool
     c = 0
     each do |e|
       c += 1 if yield(e)
@@ -1273,7 +1285,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4, 5, 6].partition { |i| i % 2 == 0 } # => {[2, 4, 6], [1, 3, 5]}
   # ```
-  def partition
+  def partition(& : T ->) : {Array(T), Array(T)}
     a, b = [] of T, [] of T
     each do |e|
       value = yield(e)
@@ -1288,7 +1300,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4, 5, 6].reject { |i| i % 2 == 0 } # => [1, 3, 5]
   # ```
-  def reject(&block : T ->)
+  def reject(& : T ->)
     ary = [] of T
     each { |e| ary << e unless yield e }
     ary
@@ -1304,7 +1316,7 @@ module Enumerable(T)
   # ```
   def reject(type : U.class) forall U
     ary = [] of typeof(begin
-      e = first
+      e = Enumerable.element_type(self)
       e.is_a?(U) ? raise("") : e
     end)
     each { |e| ary << e unless e.is_a?(U) }
@@ -1391,7 +1403,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4, 5, 6].select { |i| i % 2 == 0 } # => [2, 4, 6]
   # ```
-  def select(&block : T ->)
+  def select(& : T ->)
     ary = [] of T
     each { |e| ary << e if yield e }
     ary
@@ -1405,7 +1417,7 @@ module Enumerable(T)
   # ints         # => [1, 3]
   # typeof(ints) # => Array(Int32)
   # ```
-  def select(type : U.class) forall U
+  def select(type : U.class) : Array(U) forall U
     ary = [] of U
     each { |e| ary << e if e.is_a?(U) }
     ary
@@ -1467,7 +1479,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4, 5, 0].skip_while { |i| i < 3 } # => [3, 4, 5, 0]
   # ```
-  def skip_while
+  def skip_while(& : T ->) : Array(T)
     result = Array(T).new
     block_returned_false = false
     each do |x|
@@ -1550,8 +1562,8 @@ module Enumerable(T)
   # ```
   # ([] of Int32).sum { |x| x + 1 } # => 0
   # ```
-  def sum(&block)
-    sum(additive_identity(Reflect(typeof(yield first)))) do |value|
+  def sum(& : T ->)
+    sum(additive_identity(Reflect(typeof(yield Enumerable.element_type(self))))) do |value|
       yield value
     end
   end
@@ -1569,7 +1581,7 @@ module Enumerable(T)
   # ```
   # ([] of String).sum(1) { |name| name.size } # => 1
   # ```
-  def sum(initial, &block)
+  def sum(initial, & : T ->)
     reduce(initial) { |memo, e| memo + (yield e) }
   end
 
@@ -1629,8 +1641,8 @@ module Enumerable(T)
   # ```
   # ([] of Int32).product { |x| x + 1 } # => 1
   # ```
-  def product(&block)
-    product(Reflect(typeof(yield first)).first.multiplicative_identity) do |value|
+  def product(& : T -> _)
+    product(Reflect(typeof(yield Enumerable.element_type(self))).first.multiplicative_identity) do |value|
       yield value
     end
   end
@@ -1649,7 +1661,7 @@ module Enumerable(T)
   # ```
   # ([] of String).product(1) { |name| name.size } # => 1
   # ```
-  def product(initial : Number, &block)
+  def product(initial : Number, & : T ->)
     reduce(initial) { |memo, e| memo * (yield e) }
   end
 
@@ -1675,7 +1687,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4, 5, 0].take_while { |i| i < 3 } # => [1, 2]
   # ```
-  def take_while
+  def take_while(& : T ->) : Array(T)
     result = Array(T).new
     each do |x|
       break unless yield x
@@ -1686,20 +1698,28 @@ module Enumerable(T)
 
   # Tallies the collection.  Returns a hash where the keys are the
   # elements and the values are numbers of elements in the collection
+  # that correspond to the key after transformation by the given block.
+  #
+  # ```
+  # ["a", "A", "b", "B"].tally_by(&.downcase) # => {"a" => 2, "b" => 2}
+  # ```
+  def tally_by(& : T -> U) : Hash(U, Int32) forall U
+    each_with_object(Hash(U, Int32).new) do |item, hash|
+      value = yield item
+      count = hash[value]?
+      hash[value] = count ? count + 1 : 1
+    end
+  end
+
+  # Tallies the collection.  Returns a hash where the keys are the
+  # elements and the values are numbers of elements in the collection
   # that correspond to the key.
   #
   # ```
   # ["a", "b", "c", "b"].tally # => {"a"=>1, "b"=>2, "c"=>1}
   # ```
   def tally : Hash(T, Int32)
-    each_with_object(Hash(T, Int32).new) do |item, hash|
-      count = hash[item]?
-      if count
-        hash[item] = count + 1
-      else
-        hash[item] = 1
-      end
-    end
+    tally_by { |item| item }
   end
 
   # Returns an `Array` with all the elements in the collection.
@@ -1721,7 +1741,7 @@ module Enumerable(T)
   # Tuple.new({:a, 1}, {:c, 2}).to_h # => {:a => 1, :c => 2}
   # ```
   def to_h
-    each_with_object(Hash(typeof(first[0]), typeof(first[1])).new) do |item, hash|
+    each_with_object(Hash(typeof(Enumerable.element_type(self)[0]), typeof(Enumerable.element_type(self)[1])).new) do |item, hash|
       hash[item[0]] = item[1]
     end
   end
@@ -1731,7 +1751,7 @@ module Enumerable(T)
   # ```
   # (1..3).to_h { |i| {i, i ** 2} } # => {1 => 1, 2 => 4, 3 => 9}
   # ```
-  def to_h(&block : T -> Tuple(K, V)) forall K, V
+  def to_h(& : T -> Tuple(K, V)) forall K, V
     each_with_object({} of K => V) do |item, hash|
       key, value = yield item
       hash[key] = value
@@ -1773,7 +1793,7 @@ module Enumerable(T)
   # 2 -- 5 -- 8
   # 3 -- 6 -- 9
   # ```
-  def zip(*others : Indexable | Iterable | Iterator, &block)
+  def zip(*others : Indexable | Iterable | Iterator, &)
     Enumerable.zip(self, others) do |elems|
       yield elems
     end
@@ -1880,7 +1900,7 @@ module Enumerable(T)
   end
 
   # :nodoc:
-  def self.zip(main, others : U, &block) forall U
+  def self.zip(main, others : U, &) forall U
     {% begin %}
       {% for type, type_index in U %}
         other{{type_index}} = others[{{type_index}}]
@@ -1925,7 +1945,7 @@ module Enumerable(T)
   end
 
   # :nodoc:
-  def self.zip?(main, others : U, &block) forall U
+  def self.zip?(main, others : U, &) forall U
     {% begin %}
       {% for type, type_index in U %}
         other{{type_index}} = others[{{type_index}}]

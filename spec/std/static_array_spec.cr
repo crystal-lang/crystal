@@ -80,18 +80,24 @@ describe "StaticArray" do
     a.to_s.should eq("StaticArray[1, 2, 3]")
   end
 
-  it "does #fill, without block" do
-    a = StaticArray(Int32, 3).new { |i| i + 1 }
-    a.fill(0).should eq(StaticArray[0, 0, 0])
-    a.should eq(StaticArray[0, 0, 0])
-    a.fill(2).should eq(StaticArray[2, 2, 2])
-    a.should eq(StaticArray[2, 2, 2])
-  end
+  describe "#fill" do
+    it "replaces all values, without block" do
+      a = StaticArray(Int32, 3).new { |i| i + 1 }
+      expected = StaticArray[0, 0, 0]
+      a.fill(0).should eq(expected)
+      a.should eq(expected)
 
-  it "does #fill, with block" do
-    a = StaticArray(Int32, 4).new { |i| i + 1 }
-    a.fill { |i| i * i }.should eq(StaticArray[0, 1, 4, 9])
-    a.should eq(StaticArray[0, 1, 4, 9])
+      expected = StaticArray[2, 2, 2]
+      a.fill(2).should eq(expected)
+      a.should eq(expected)
+    end
+
+    it "replaces all values, with block" do
+      a = StaticArray(Int32, 4).new { |i| i + 1 }
+      expected = StaticArray[0, 1, 4, 9]
+      a.fill { |i| i * i }.should eq(expected)
+      a.should eq(expected)
+    end
   end
 
   it "shuffles" do
@@ -166,6 +172,49 @@ describe "StaticArray" do
     a[1].should eq(22)
     a[2].should eq(24)
     a.should be_a(StaticArray(Int32, 3))
+  end
+
+  describe "rotate!" do
+    it do
+      a = StaticArray[1, 2, 3]
+      a.rotate!; a.should eq(StaticArray[2, 3, 1])
+      a.rotate!; a.should eq(StaticArray[3, 1, 2])
+      a.rotate!; a.should eq(StaticArray[1, 2, 3])
+      a.rotate!; a.should eq(StaticArray[2, 3, 1])
+    end
+
+    it { a = StaticArray[1, 2, 3]; a.rotate!(0); a.should eq(StaticArray[1, 2, 3]) }
+    it { a = StaticArray[1, 2, 3]; a.rotate!(1); a.should eq(StaticArray[2, 3, 1]) }
+    it { a = StaticArray[1, 2, 3]; a.rotate!(2); a.should eq(StaticArray[3, 1, 2]) }
+    it { a = StaticArray[1, 2, 3]; a.rotate!(3); a.should eq(StaticArray[1, 2, 3]) }
+    it { a = StaticArray[1, 2, 3]; a.rotate!(4); a.should eq(StaticArray[2, 3, 1]) }
+    it { a = StaticArray[1, 2, 3]; a.rotate!(3001); a.should eq(StaticArray[2, 3, 1]) }
+    it { a = StaticArray[1, 2, 3]; a.rotate!(-1); a.should eq(StaticArray[3, 1, 2]) }
+    it { a = StaticArray[1, 2, 3]; a.rotate!(-3001); a.should eq(StaticArray[3, 1, 2]) }
+
+    it do
+      a = StaticArray(Int32, 50).new { |i| i }
+      a.rotate!(5)
+      a.should eq(StaticArray[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4])
+    end
+
+    it do
+      a = StaticArray(Int32, 50).new { |i| i }
+      a.rotate!(-5)
+      a.should eq(StaticArray[45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44])
+    end
+
+    it do
+      a = StaticArray(Int32, 50).new { |i| i }
+      a.rotate!(20)
+      a.should eq(StaticArray[20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    end
+
+    it do
+      a = StaticArray(Int32, 50).new { |i| i }
+      a.rotate!(-20)
+      a.should eq(StaticArray[30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+    end
   end
 
   it "updates value" do

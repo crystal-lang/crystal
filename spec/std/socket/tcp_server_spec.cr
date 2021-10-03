@@ -1,6 +1,7 @@
 require "./spec_helper"
+require "../../support/win32"
 
-describe TCPServer do
+describe TCPServer, tags: "network" do
   describe ".new" do
     each_ip_family do |family, address|
       it "listens on local address" do
@@ -39,11 +40,11 @@ describe TCPServer do
         error = expect_raises(Socket::Addrinfo::Error) do
           TCPServer.new(address, -12)
         end
-        error.error_code.should eq({% if flag?(:linux) %}LibC::EAI_SERVICE{% else %}LibC::EAI_NONAME{% end %})
+        error.os_error.should eq({% if flag?(:linux) %}Errno.new(LibC::EAI_SERVICE){% elsif flag?(:win32) %}WinError::WSATYPE_NOT_FOUND{% else %}Errno.new(LibC::EAI_NONAME){% end %})
       end
 
       describe "reuse_port" do
-        it "raises when port is in use" do
+        pending_win32 "raises when port is in use" do
           TCPServer.open(address, 0) do |server|
             expect_raises(Socket::BindError, "Could not bind to '#{address}:#{server.local_address.port}': ") do
               TCPServer.open(address, server.local_address.port) { }
@@ -51,7 +52,7 @@ describe TCPServer do
           end
         end
 
-        it "raises when not binding with reuse_port" do
+        pending_win32 "raises when not binding with reuse_port" do
           TCPServer.open(address, 0, reuse_port: true) do |server|
             expect_raises(Socket::BindError) do
               TCPServer.open(address, server.local_address.port) { }
@@ -59,7 +60,7 @@ describe TCPServer do
           end
         end
 
-        it "raises when port is not ready to be reused" do
+        pending_win32 "raises when port is not ready to be reused" do
           TCPServer.open(address, 0) do |server|
             expect_raises(Socket::BindError) do
               TCPServer.open(address, server.local_address.port, reuse_port: true) { }
@@ -67,7 +68,7 @@ describe TCPServer do
           end
         end
 
-        it "binds to used port with reuse_port = true" do
+        pending_win32 "binds to used port with reuse_port = true" do
           TCPServer.open(address, 0, reuse_port: true) do |server|
             TCPServer.open(address, server.local_address.port, reuse_port: true) { }
           end
@@ -82,15 +83,17 @@ describe TCPServer do
       end
 
       it "raises when host doesn't exist" do
-        expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed: No address found") do
+        err = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPServer.new("doesnotexist.example.org.", 12345)
         end
+        err.os_error.should eq({% if flag?(:win32) %}WinError::WSAHOST_NOT_FOUND{% else %}Errno.new(LibC::EAI_NONAME){% end %})
       end
 
       it "raises (rather than segfault on darwin) when host doesn't exist and port is 0" do
-        expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed: No address found") do
+        err = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPServer.new("doesnotexist.example.org.", 0)
         end
+        err.os_error.should eq({% if flag?(:win32) %}WinError::WSAHOST_NOT_FOUND{% else %}Errno.new(LibC::EAI_NONAME){% end %})
       end
     end
 

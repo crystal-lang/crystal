@@ -335,7 +335,7 @@ describe "Semantic: proc" do
       ") { proc_of(int32, int32) }
   end
 
-  it "allows new on proc type with less block args" do
+  it "allows new on proc type with less block params" do
     assert_type("
       #{proc_new}
 
@@ -344,14 +344,14 @@ describe "Semantic: proc" do
       ") { proc_of(int32, int32) }
   end
 
-  it "says wrong number of block args in new on proc type" do
+  it "says wrong number of block params in new on proc type" do
     assert_error "
       #{proc_new}
 
       alias Alias = Int32 -> Int32
       Alias.new { |x, y| }
       ",
-      "wrong number of block arguments (given 2, expected 1)"
+      "wrong number of block parameters (given 2, expected 1)"
   end
 
   it "says wrong return type in new on proc type" do
@@ -366,7 +366,7 @@ describe "Semantic: proc" do
 
   it "errors if missing argument type in proc literal" do
     assert_error "->(x) { x }",
-      "function argument 'x' must have a type"
+      "parameter 'x' of Proc literal must have a type"
   end
 
   it "allows passing function to LibC without specifying types" do

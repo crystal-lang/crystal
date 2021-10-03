@@ -253,18 +253,16 @@ module Crystal
     #
     #     /regex/flags
     #
-    # To:
+    # To declaring a constant with this value (if not already declared):
     #
-    #     if temp_var = $some_global
-    #       temp_var
-    #     else
-    #       $some_global = Regex.new("regex", Regex::Options.new(flags))
-    #     end
+    # ```
+    # Regex.new("regex", Regex::Options.new(flags))
+    # ```
     #
-    # That is, cache the regex in a global variable.
+    # and then reading from that constant.
+    # That is, we cache regex literals to avoid recompiling them all of the time.
     #
     # Only do this for regex literals that don't contain interpolation.
-    #
     # If there's an interpolation, expand to: Regex.new(interpolation, flags)
     def expand(node : RegexLiteral)
       node_value = node.value
@@ -273,30 +271,19 @@ module Crystal
         string = node_value.value
 
         key = {string, node.options}
-        index = @regexes.index key
-        unless index
-          index = @regexes.size
+        index = @regexes.index(key) || @regexes.size
+        const_name = "$Regex:#{index}"
+
+        if index == @regexes.size
           @regexes << key
+
+          const_value = regex_new_call(node, StringLiteral.new(string).at(node))
+          const = Const.new(@program, @program, const_name, const_value)
+
+          @program.types[const_name] = const
         end
 
-        global_name = "$Regex:#{index}"
-        temp_name = @program.new_temp_var_name
-
-        global_var = MetaTypeVar.new(global_name)
-        global_var.owner = @program
-        type = @program.nilable(@program.regex)
-        global_var.freeze_type = type
-        global_var.type = type
-
-        # TODO: need to bind with nil_var for codegen, but shouldn't be needed
-        global_var.bind_to(@program.nil_var)
-
-        @program.global_vars[global_name] = global_var
-
-        first_assign = Assign.new(Var.new(temp_name).at(node), Global.new(global_name).at(node)).at(node)
-        regex = regex_new_call(node, StringLiteral.new(string).at(node))
-        second_assign = Assign.new(Global.new(global_name).at(node), regex).at(node)
-        If.new(first_assign, Var.new(temp_name).at(node), second_assign).at(node)
+        Path.new(const_name)
       else
         regex_new_call(node, node_value)
       end
@@ -830,7 +817,7 @@ module Crystal
       end
 
       body = Call.new(obj, node.name, call_args).at(node)
-      proc_literal = ProcLiteral.new(Def.new("->", def_args, body)).at(node)
+      proc_literal = ProcLiteral.new(Def.new("->", def_args, body).at(node)).at(node)
       proc_literal.proc_pointer = node
 
       if assign
