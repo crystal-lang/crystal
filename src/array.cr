@@ -1046,7 +1046,7 @@ class Array(T)
   end
 
   # Optimized version of `Enumerable#map`.
-  def map(& : T -> _)
+  def map(& : T -> U) forall U
     Array.new(size) { |i| yield @buffer[i] }
   end
 
