@@ -305,6 +305,9 @@ jobs:
           command: |
             brew unlink python@2 || true
 
+            # We need ruby-install >= 0.8.3
+            brew install ruby-install
+
             ruby-install ruby 2.7.3
 
             brew install pkgconfig libtool
