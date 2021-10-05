@@ -154,6 +154,10 @@ prepare_build() {
   if [ `uname` = "Darwin" ]; then
     on_nix_shell "brew install bash"
   fi
+
+  # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11279
+  nix-channel --update
+
   # initialize nix environment
   on_nix_shell nix-shell
 
