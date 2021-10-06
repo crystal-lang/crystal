@@ -158,14 +158,18 @@ struct StaticArray(T, N)
     StaticArray(U, N).new { |i| yield to_unsafe[i], offset + i }
   end
 
-  # Returns a new `StaticArray` with all elements sorted based on the return
-  # value of their comparison method `<=>`.
+  # Returns a new instance with all elements sorted based on the return value of
+  # their comparison method `T#<=>` (see `Comparable#<=>`), using a stable sort algorithm.
   #
   # ```
   # a = StaticArray[3, 1, 2]
   # a.sort # => StaticArray[1, 2, 3]
   # a      # => StaticArray[3, 1, 2]
   # ```
+  #
+  # See `Indexable::Mutable#sort!` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
   def sort : StaticArray(T, N)
     # the return value of `dup` must be assigned to a variable first, otherwise
     # `self` will be mutated if the `sort!` call is chained directly
@@ -173,21 +177,25 @@ struct StaticArray(T, N)
     ary.sort!
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted based on the return value of
+  # their comparison method `T#<=>` (see `Comparable#<=>`), using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # ```
+  # a = StaticArray[3, 1, 2]
+  # a.unstable_sort # => StaticArray[1, 2, 3]
+  # a               # => StaticArray[3, 1, 2]
+  # ```
+  #
+  # See `Indexable::Mutable#unstable_sort!` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
   def unstable_sort : StaticArray(T, N)
     ary = dup
     ary.unstable_sort!
   end
 
-  # Returns a new `StaticArray` with all elements sorted based on the comparator
-  # in the given block.
-  #
-  # The block must implement a comparison between two elements *a* and *b*,
-  # where `a < b` returns `-1`, `a == b` returns `0`, and `a > b` returns `1`.
-  # The comparison operator `<=>` can be used for this.
+  # Returns a new instance with all elements sorted based on the comparator in the
+  # given block, using a stable sort algorithm.
   #
   # ```
   # a = StaticArray[3, 1, 2]
@@ -196,6 +204,10 @@ struct StaticArray(T, N)
   # b # => StaticArray[3, 2, 1]
   # a # => StaticArray[3, 1, 2]
   # ```
+  #
+  # See `Indexable::Mutable#sort!(&block : T, T -> U)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.=
   def sort(&block : T, T -> U) : StaticArray(T, N) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
@@ -205,10 +217,20 @@ struct StaticArray(T, N)
     ary.sort!(&block)
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted based on the comparator in the
+  # given block, using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # ```
+  # a = StaticArray[3, 1, 2]
+  # b = a.unstable_sort { |a, b| b <=> a }
+  #
+  # b # => StaticArray[3, 2, 1]
+  # a # => StaticArray[3, 1, 2]
+  # ```
+  #
+  # See `Indexable::Mutable#unstable_sort!(&block : T, T -> U)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : StaticArray(T, N) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
@@ -218,41 +240,19 @@ struct StaticArray(T, N)
     ary.unstable_sort!(&block)
   end
 
-  # Modifies `self` by sorting all elements based on the return value of their
-  # comparison method `<=>`.
-  #
-  # ```
-  # a = StaticArray[3, 1, 2]
-  # a.sort!
-  # a # => StaticArray[1, 2, 3]
-  # ```
+  # :inherit:
   def sort! : self
     to_slice.sort!
     self
   end
 
-  # :ditto:
-  #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # :inherit:
   def unstable_sort! : self
     to_slice.unstable_sort!
     self
   end
 
-  # Modifies `self` by sorting all elements based on the comparator in the given
-  # block.
-  #
-  # The given block must implement a comparison between two elements
-  # *a* and *b*, where `a < b` returns `-1`, `a == b` returns `0`,
-  # and `a > b` returns `1`.
-  # The comparison operator `<=>` can be used for this.
-  #
-  # ```
-  # a = StaticArray[3, 1, 2]
-  # a.sort! { |a, b| b <=> a }
-  # a # => StaticArray[3, 2, 1]
-  # ```
+  # :inherit:
   def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
@@ -262,10 +262,7 @@ struct StaticArray(T, N)
     self
   end
 
-  # :ditto:
-  #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # :inherit:
   def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
@@ -275,9 +272,9 @@ struct StaticArray(T, N)
     self
   end
 
-  # Returns a new `StaticArray` with all elements sorted. The given block is
-  # called for each element, then the comparison method `#<=>` is called on the
-  # object returned from the block to determine sort order.
+  # Returns a new instance with all elements sorted by the output value of the
+  # block. The output values are compared via the comparison method `T#<=>`
+  # (see `Comparable#<=>`), using a stable sort algorithm.
   #
   # ```
   # a = StaticArray["apple", "pear", "fig"]
@@ -285,29 +282,40 @@ struct StaticArray(T, N)
   # b # => StaticArray["fig", "pear", "apple"]
   # a # => StaticArray["apple", "pear", "fig"]
   # ```
+  #
+  # If stability is expendable, `#unstable_sort_by(&block : T -> _)` provides a
+  # performance advantage over stable sort.
+  #
+  # See `Indexable::Mutable#sort_by!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
   def sort_by(&block : T -> _) : StaticArray(T, N)
     ary = dup
     ary.sort_by! { |e| yield(e) }
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted by the output value of the
+  # block. The output values are compared via the comparison method `#<=>`
+  # (see `Comparable#<=>`), using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # ```
+  # a = StaticArray["apple", "pear", "fig"]
+  # b = a.unstable_sort_by { |word| word.size }
+  # b # => StaticArray["fig", "pear", "apple"]
+  # a # => StaticArray["apple", "pear", "fig"]
+  # ```
+  #
+  # If stability is necessary, use `#sort_by(&block : T -> _)` instead.
+  #
+  # See `Indexable::Mutable#unstable_sort!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
   def unstable_sort_by(&block : T -> _) : StaticArray(T, N)
     ary = dup
     ary.unstable_sort_by! { |e| yield(e) }
   end
 
-  # Modifies `self` by sorting all elements. The given block is called for
-  # each element, then the comparison method `#<=>` is called on the object
-  # returned from the block to determine sort order.
-  #
-  # ```
-  # a = StaticArray["apple", "pear", "fig"]
-  # a.sort_by! { |word| word.size }
-  # a # => StaticArray["fig", "pear", "apple"]
-  # ```
+  # :inherit:
   def sort_by!(&block : T -> _) : self
     sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
     N.times do |i|
@@ -316,10 +324,7 @@ struct StaticArray(T, N)
     self
   end
 
-  # :ditto:
-  #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # :inherit:
   def unstable_sort_by!(&block : T -> _) : self
     sorted = map { |e| {e, yield(e)} }.unstable_sort! { |x, y| x[1] <=> y[1] }
     N.times do |i|

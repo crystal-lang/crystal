@@ -763,8 +763,8 @@ struct Slice(T)
   #
   # ```
   # a = Slice[3, 1, 2]
-  # a.sort # => Slice[1, 2, 3]
-  # a      # => Slice[3, 1, 2]
+  # a.unstable_sort # => Slice[1, 2, 3]
+  # a               # => Slice[3, 1, 2]
   # ```
   #
   # See `Indexable::Mutable#unstable_sort!` for details on the sorting mechanism.
