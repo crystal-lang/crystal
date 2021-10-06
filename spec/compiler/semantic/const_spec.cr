@@ -319,7 +319,7 @@ describe "Semantic: const" do
    "1 + 2", "1 + ZED", "ZED - 1", "ZED * 2", "ZED // 2",
    "1 &+ ZED", "ZED &- 1", "ZED &* 2"].each do |node|
     it "doesn't errors if constant depends on another one defined later through method, but constant is simple (#{node})" do
-      semantic(%(
+      assert_no_errors <<-CR
         ZED = 10
 
         struct Int32
@@ -337,7 +337,7 @@ describe "Semantic: const" do
         end
 
         CONST1
-        ))
+        CR
     end
   end
 

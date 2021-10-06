@@ -110,8 +110,8 @@ def assert_error(str, message = nil, *, inject_primitives = true, file = __FILE_
   end
 end
 
-def assert_no_errors(*args)
-  semantic(*args)
+def assert_no_errors(*args, **opts)
+  semantic(*args, **opts)
 end
 
 def warnings_result(code, *, file = __FILE__)
