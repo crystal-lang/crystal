@@ -1526,32 +1526,40 @@ class Array(T)
     dup.shuffle!(random)
   end
 
-  # Returns a new array with all elements sorted based on the return value of
-  # their comparison method `#<=>`
+  # Returns a new instance with all elements sorted based on the return value of
+  # their comparison method `T#<=>` (see `Comparable#<=>`), using a stable sort algorithm.
   #
   # ```
   # a = [3, 1, 2]
   # a.sort # => [1, 2, 3]
   # a      # => [3, 1, 2]
   # ```
+  #
+  # See `Indexable::Mutable#sort!` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
   def sort : Array(T)
     dup.sort!
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted based on the return value of
+  # their comparison method `T#<=>` (see `Comparable#<=>`), using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # ```
+  # a = [3, 1, 2]
+  # a.sort # => [1, 2, 3]
+  # a      # => [3, 1, 2]
+  # ```
+  #
+  # See `Indexable::Mutable#unstable_sort!` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
   def unstable_sort : Array(T)
     dup.unstable_sort!
   end
 
-  # Returns a new array with all elements sorted based on the comparator in the
-  # given block.
-  #
-  # The block must implement a comparison between two elements *a* and *b*,
-  # where `a < b` returns `-1`, `a == b` returns `0`, and `a > b` returns `1`.
-  # The comparison operator `<=>` can be used for this.
+  # Returns a new instance with all elements sorted based on the comparator in the
+  # given block, using a stable sort algorithm.
   #
   # ```
   # a = [3, 1, 2]
@@ -1560,6 +1568,10 @@ class Array(T)
   # b # => [3, 2, 1]
   # a # => [3, 1, 2]
   # ```
+  #
+  # See `Indexable::Mutable#sort!(&block : T, T -> U)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort(&block : T, T -> U) : Array(T) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
@@ -1568,10 +1580,20 @@ class Array(T)
     dup.sort! &block
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted based on the comparator in the
+  # given block, using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # ```
+  # a = [3, 1, 2]
+  # b = a.unstable_sort { |a, b| b <=> a }
+  #
+  # b # => [3, 2, 1]
+  # a # => [3, 1, 2]
+  # ```
+  #
+  # See `Indexable::Mutable#unstable_sort!(&block : T, T -> U)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : Array(T) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
@@ -1580,42 +1602,20 @@ class Array(T)
     dup.unstable_sort!(&block)
   end
 
-  # Modifies `self` by sorting all elements based on the return value of their
-  # comparison method `#<=>`
-  #
-  # ```
-  # a = [3, 1, 2]
-  # a.sort!
-  # a # => [1, 2, 3]
-  # ```
+  # :inherit:
   def sort! : Array(T)
     to_unsafe_slice.sort!
     self
   end
 
-  # :ditto:
-  #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort! : Array(T)
+  # :inherit:
+  def unstable_sort! : self
     to_unsafe_slice.unstable_sort!
     self
   end
 
-  # Modifies `self` by sorting all elements based on the comparator in the given
-  # block.
-  #
-  # The given block must implement a comparison between two elements
-  # *a* and *b*, where `a < b` returns `-1`, `a == b` returns `0`,
-  # and `a > b` returns `1`.
-  # The comparison operator `<=>` can be used for this.
-  #
-  # ```
-  # a = [3, 1, 2]
-  # a.sort! { |a, b| b <=> a }
-  # a # => [3, 2, 1]
-  # ```
-  def sort!(&block : T, T -> U) : Array(T) forall U
+  # :inherit:
+  def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
@@ -1624,11 +1624,8 @@ class Array(T)
     self
   end
 
-  # :ditto:
-  #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort!(&block : T, T -> U) : Array(T) forall U
+  # :inherit:
+  def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
@@ -1637,9 +1634,9 @@ class Array(T)
     self
   end
 
-  # Returns a new array with all elements sorted. The given block is called for
-  # each element, then the comparison method #<=> is called on the object
-  # returned from the block to determine sort order.
+  # Returns a new instance with all elements sorted by the output value of the
+  # block. The output values are compared via the comparison method `T#<=>`
+  # (see `Comparable#<=>`), using a stable sort algorithm.
   #
   # ```
   # a = %w(apple pear fig)
@@ -1647,27 +1644,38 @@ class Array(T)
   # b # => ["fig", "pear", "apple"]
   # a # => ["apple", "pear", "fig"]
   # ```
+  #
+  # If stability is expendable, `#unstable_sort_by(&block : T -> _)` provides a
+  # performance advantage over stable sort.
+  #
+  # See `Indexable::Mutable#sort_by!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
   def sort_by(&block : T -> _) : Array(T)
     dup.sort_by! { |e| yield(e) }
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted by the output value of the
+  # block. The output values are compared via the comparison method `#<=>`
+  # (see `Comparable#<=>`), using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # ```
+  # a = %w(apple pear fig)
+  # b = a.unstable_sort_by { |word| word.size }
+  # b # => ["fig", "pear", "apple"]
+  # a # => ["apple", "pear", "fig"]
+  # ```
+  #
+  # If stability is necessary, use `#sort_by(&block : T -> _)` instead.
+  #
+  # See `Indexable::Mutable#unstable_sort!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
   def unstable_sort_by(&block : T -> _) : Array(T)
     dup.unstable_sort_by! { |e| yield(e) }
   end
 
-  # Modifies `self` by sorting all elements. The given block is called for
-  # each element, then the comparison method #<=> is called on the object
-  # returned from the block to determine sort order.
-  #
-  # ```
-  # a = %w(apple pear fig)
-  # a.sort_by! { |word| word.size }
-  # a # => ["fig", "pear", "apple"]
-  # ```
+  # :inherit:
   def sort_by!(&block : T -> _) : Array(T)
     sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
     @size.times do |i|
@@ -1676,10 +1684,7 @@ class Array(T)
     self
   end
 
-  # :ditto:
-  #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # :inherit:
   def unstable_sort_by!(&block : T -> _) : Array(T)
     sorted = map { |e| {e, yield(e)} }.unstable_sort! { |x, y| x[1] <=> y[1] }
     @size.times do |i|
