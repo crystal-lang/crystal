@@ -82,7 +82,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: "11.1.0"
+      xcode: 12.4.0
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
@@ -144,7 +144,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout 8bc01e26291dc518390129e15df8f757d687871c
+          git checkout 613311673a83dbce963cad6f8af219b71fe3a0d2
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -294,7 +294,7 @@ jobs:
 
   dist_darwin:
     macos:
-      xcode: "11.1.0"
+      xcode: 12.4.0
     shell: /bin/bash --login -eo pipefail
     steps:
       - restore_cache:
@@ -305,7 +305,10 @@ jobs:
           command: |
             brew unlink python@2 || true
 
-            ruby-install ruby 2.5.6
+            # We need ruby-install >= 0.8.3
+            brew install ruby-install
+
+            ruby-install ruby 2.7.3
 
             brew install pkgconfig libtool
 
@@ -318,7 +321,7 @@ jobs:
       - run:
           no_output_timeout: 40m
           command: |
-            echo "2.5.6" > /tmp/workspace/distribution-scripts/.ruby-version
+            echo "2.7.3" > /tmp/workspace/distribution-scripts/.ruby-version
             cd /tmp/workspace/distribution-scripts
             source build.env
             cd omnibus
@@ -720,33 +723,3 @@ workflows:
             - dist_darwin
             - dist_snap
             - dist_docs
-
-  package_build:
-    jobs:
-      - prepare_common:
-          filters: &package
-            branches:
-              only:
-                - /package\/.+/
-      - prepare_maintenance:
-          filters: *package
-          requires:
-            - prepare_common
-      - dist_linux:
-          filters: *package
-          requires:
-            - prepare_maintenance
-      - dist_linux32:
-          filters: *package
-          requires:
-            - prepare_maintenance
-      - dist_darwin:
-          filters: *package
-          requires:
-            - prepare_maintenance
-      - dist_artifacts:
-          filters: *package
-          requires:
-            - dist_linux
-            - dist_linux32
-            - dist_darwin
