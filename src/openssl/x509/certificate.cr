@@ -78,6 +78,7 @@ module OpenSSL::X509
     # Returns the digest of the certificate using *algorithm_name*
     #
     # ```
+    # cert = OpenSSL::X509::Certificate.new
     # cert.digest("SHA1").hexstring   # => "6f608752059150c9b3450a9fe0a0716b4f3fa0ca"
     # cert.digest("SHA256").hexstring # => "51d80c865cc717f181cd949f0b23b5e1e82c93e01db53f0836443ec908b83748"
     # ```

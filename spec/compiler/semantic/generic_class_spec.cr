@@ -476,6 +476,13 @@ describe "Semantic: generic class" do
       "argument to Tuple must be a type, not 32"
   end
 
+  it "errors if passing integer literal to Union as generic argument" do
+    assert_error %(
+      Union(32)
+      ),
+      "argument to Union must be a type, not 32"
+  end
+
   it "disallow using a non-instantiated generic type as a generic type argument" do
     assert_error %(
       class Foo(T)

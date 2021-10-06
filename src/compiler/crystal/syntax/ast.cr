@@ -1481,10 +1481,16 @@ module Crystal
     property type_vars : Array(ASTNode)
     property named_args : Array(NamedArgument)?
 
-    # `true` if this Generic was parsed from `T?`
-    property? question = false
+    property suffix : Suffix
 
-    def initialize(@name, @type_vars : Array, @named_args = nil)
+    enum Suffix
+      None
+      Question # T?
+      Asterisk # T*
+      Bracket  # T[N]
+    end
+
+    def initialize(@name, @type_vars : Array, @named_args = nil, @suffix = Suffix::None)
     end
 
     def self.new(name, type_var : ASTNode)
@@ -1498,8 +1504,7 @@ module Crystal
     end
 
     def clone_without_location
-      generic = Generic.new(@name.clone, @type_vars.clone, @named_args.clone)
-      generic.question = question?
+      generic = Generic.new(@name.clone, @type_vars.clone, @named_args.clone, @suffix)
       generic
     end
 

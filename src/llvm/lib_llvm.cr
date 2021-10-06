@@ -20,6 +20,7 @@ end
 {% begin %}
   lib LibLLVM
     IS_120 = {{LibLLVM::VERSION.starts_with?("12.0")}}
+    IS_111 = {{LibLLVM::VERSION.starts_with?("11.1")}}
     IS_110 = {{LibLLVM::VERSION.starts_with?("11.0")}}
     IS_100 = {{LibLLVM::VERSION.starts_with?("10.0")}}
     IS_90 = {{LibLLVM::VERSION.starts_with?("9.0")}}
@@ -37,7 +38,7 @@ end
     IS_LT_90 = IS_LT_80 || IS_80
     IS_LT_100 = IS_LT_90 || IS_90
     IS_LT_110 = IS_LT_100 || IS_100
-    IS_LT_120 = IS_LT_110 || IS_110
+    IS_LT_120 = IS_LT_110 || IS_110 || IS_111
   end
 {% end %}
 

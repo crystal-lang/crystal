@@ -1352,7 +1352,7 @@ module Crystal
 
     describe TypeNode do
       describe "#includers" do
-        it "returns an array of types `self` is included in" do
+        it "returns an array of types `self` is directly included in" do
           assert_type(%(
             module Foo
             end
@@ -1397,14 +1397,18 @@ module Crystal
             end
 
             class ChildT(T) < SubT(T)
+              include Enumt(T)
             end
 
-          {% if Baz.includers.map(&.stringify) == ["Baz::Tar", "Enumt(T)", "Bar", "Str", "Gen(T)", "AStr", "ACla", "SubT(T)"] && Enumt.includers.map(&.stringify) == ["Str"]  %}
-            1
-          {% else %}
-            'a'
-          {% end %}
-        )) { int32 }
+            class Witness < ChildT(String)
+            end
+
+            {
+              {% if Baz.includers.map(&.stringify).sort == %w(ACla AStr Bar Baz::Tar Enumt(T) Gen(T) Str SubT(T)) %} 1 {% else %} 'a' {% end %},
+              {% if Enumt.includers.map(&.stringify).sort == %w(ChildT(String) ChildT(T) Str) %} 1 {% else %} 'a' {% end %},
+              {% if Enumt(String).includers.map(&.stringify).sort == %w(ChildT(String) Str) %} 1 {% else %} 'a' {% end %},
+            }
+            )) { tuple_of([int32, int32, int32]) }
         end
       end
 
@@ -2659,6 +2663,36 @@ module Crystal
             {foo: "bar".string}
           end
         end.should eq %(foo # => "bar"\n)
+      end
+    end
+  end
+
+  describe "file_exists?" do
+    context "with absolute path" do
+      it "returns true if file exists" do
+        run(%q<
+          {{file_exists?("#{__DIR__}/../data/build")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(10)
+      end
+
+      it "returns false if file doesn't exist" do
+        run(%q<
+          {{file_exists?("#{__DIR__}/../data/build_foo")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(20)
+      end
+    end
+
+    context "with relative path" do
+      it "reads file (exists)" do
+        run(%q<
+          {{file_exists?("spec/compiler/data/build")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(10)
+      end
+
+      it "reads file (doesn't exist)" do
+        run(%q<
+          {{file_exists?("spec/compiler/data/build_foo")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(20)
       end
     end
   end

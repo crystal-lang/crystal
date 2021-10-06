@@ -344,7 +344,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if implements with parent class" do
-    semantic %(
+    assert_no_errors %(
       class Parent; end
       class Child < Parent; end
 
@@ -359,8 +359,64 @@ describe "Semantic: abstract def" do
       )
   end
 
+  it "doesn't error if implements with generic parent class instance" do
+    assert_no_errors %(
+      class Parent(T); end
+      class Child(T) < Parent(T); end
+
+      abstract class Foo
+        abstract def foo(x : Child(Int32))
+      end
+
+      class Bar < Foo
+        def foo(x : Parent(Int32))
+        end
+      end
+      )
+  end
+
+  it "doesn't error if implements with included module" do
+    assert_no_errors %(
+      module Moo
+      end
+
+      module Moo2
+        include Moo
+      end
+
+      abstract class Foo
+        abstract def foo(x : Moo2)
+      end
+
+      class Bar < Foo
+        def foo(x : Moo)
+        end
+      end
+      )
+  end
+
+  it "doesn't error if implements with generic included module instance" do
+    assert_no_errors %(
+      module Moo(T)
+      end
+
+      module Moo2(T)
+        include Moo(T)
+      end
+
+      abstract class Foo
+        abstract def foo(x : Moo2(Int32))
+      end
+
+      class Bar < Foo
+        def foo(x : Moo(Int32))
+        end
+      end
+      )
+  end
+
   it "doesn't error if implements with parent module" do
-    semantic %(
+    assert_no_errors %(
       module Moo
       end
 
@@ -604,25 +660,6 @@ describe "Semantic: abstract def" do
       "can't resolve return type Unknown"
   end
 
-  it "doesn't crash when abstract method is implemented by supertype (#8031)" do
-    semantic(%(
-      module Base(T)
-        def size
-        end
-      end
-
-      module Child(T)
-        include Base(T)
-
-        abstract def size
-      end
-
-      class Foo
-        include Child(Int32)
-      end
-    ))
-  end
-
   it "implements through extend (considers original type for generic lookup) (#8096)" do
     semantic(%(
       module ICallable(T)
@@ -693,6 +730,18 @@ describe "Semantic: abstract def" do
         end
       end
     ))
+  end
+
+  it "error shows full signature of block parameter" do
+    assert_error(<<-CR, "abstract `def Moo#each(& : (Int32 -> _))` must be implemented by Foo")
+      module Moo
+        abstract def each(& : Int32 -> _)
+      end
+
+      class Foo
+        include Moo
+      end
+      CR
   end
 
   it "doesn't error if implementation have default value" do
@@ -1032,5 +1081,75 @@ describe "Semantic: abstract def" do
       class Quux
       end
       )
+  end
+
+  describe "implementation is not inherited from supertype" do
+    it "nongeneric class" do
+      assert_error <<-CR, "abstract `def Abstract#foo()` must be implemented by Concrete", inject_primitives: false
+        class Supertype
+          def foo; end
+        end
+
+        abstract class Abstract < Supertype
+          abstract def foo
+        end
+
+        class Concrete < Abstract
+        end
+        CR
+    end
+
+    it "generic class" do
+      assert_error <<-CR, "abstract `def Abstract(T)#foo()` must be implemented by Concrete", inject_primitives: false
+        class Supertype(T)
+          def foo; end
+        end
+
+        abstract class Abstract(T) < Supertype(T)
+          abstract def foo
+        end
+
+        class Concrete(T) < Abstract(T)
+        end
+        CR
+    end
+
+    it "nongeneric module" do
+      assert_error <<-CR, "abstract `def Abstract#size()` must be implemented by Concrete", inject_primitives: false
+        module Supertype
+          def size
+          end
+        end
+
+        module Abstract
+          include Supertype
+
+          abstract def size
+        end
+
+        class Concrete
+          include Abstract
+        end
+        CR
+    end
+
+    it "generic module" do
+      assert_error <<-CR, "abstract `def Abstract(T)#size()` must be implemented by Concrete(T)", inject_primitives: false
+        module Supertype(T)
+          def size
+          end
+        end
+
+        module Abstract(T)
+          include Supertype(T)
+
+          abstract def size
+        end
+
+        class Concrete(T)
+          include Abstract(T)
+        end
+        CR
+    end
   end
 end
