@@ -126,10 +126,12 @@ module GC
     {% end %}
     LibGC.init
 
-    LibGC.set_warn_proc ->(_msg, _v) {}
     LibGC.set_start_callback ->do
       GC.lock_write
     end
+    # By default the GC warns on big allocations/reallocations. This
+    # is of limited use and pollutes program output with warnings.
+    LibGC.set_warn_proc ->(_msg, _v) {}
   end
 
   def self.collect
