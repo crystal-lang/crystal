@@ -209,9 +209,16 @@ jobs:
       - run: |
           cd /tmp/workspace/distribution-scripts
 
-          # How to brand it
-          export VERSION=${CIRCLE_BRANCH/release\//}
-          export VERSION=${VERSION//\//-}-dev
+          # The version is based on the branch name.
+          VERSION=$CIRCLE_BRANCH
+
+          # We need to sanitize it because there are restrictions on some places
+          # where the version is use (Mac pkg names, snap branch).
+          VERSION=${VERSION/release\//}
+          VERSION=${VERSION//_/-}
+          VERSION=${VERSION//\//-}-dev
+
+          export VERSION
           echo "export CRYSTAL_VERSION=$VERSION" >> build.env
           echo "export DOCKER_TAG=$VERSION" >> build.env
 
