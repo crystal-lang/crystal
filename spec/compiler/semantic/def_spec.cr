@@ -517,8 +517,7 @@ describe "Semantic: def" do
       1.
         foobar
       CODE
-      "undefined method",
-      inject_primitives: false
+      "undefined method"
     ex.line_number.should eq(2)
     ex.column_number.should eq(3)
     ex.size.should eq(6)

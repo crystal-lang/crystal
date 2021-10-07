@@ -244,7 +244,7 @@ describe "Semantic: if" do
       end
 
       test
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 
   it "restricts || else (1) (#3266)" do
@@ -256,7 +256,7 @@ describe "Semantic: if" do
       else
         {a, b}
       end
-      ), inject_primitives: false) { tuple_of([int32, int32]) }
+      )) { tuple_of([int32, int32]) }
   end
 
   it "restricts || else (2) (#3266)" do
@@ -267,7 +267,7 @@ describe "Semantic: if" do
       else
         a
       end
-      ), inject_primitives: false) { union_of char, int32 }
+      )) { union_of char, int32 }
   end
 
   it "restricts || else (3) (#3266)" do
@@ -278,7 +278,7 @@ describe "Semantic: if" do
       else
         a
       end
-      ), inject_primitives: false) { union_of char, int32 }
+      )) { union_of char, int32 }
   end
 
   it "doesn't restrict || else in sub && (right)" do
@@ -420,7 +420,7 @@ describe "Semantic: if" do
       end
 
       foo
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 
   it "includes pointer types in falsey branch" do

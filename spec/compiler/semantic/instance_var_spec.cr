@@ -4530,7 +4530,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ), inject_primitives: false) { types["Foo"] }
+      )) { types["Foo"] }
   end
 
   it "is more permissive with macro def initialize, bug with named args" do
@@ -4565,7 +4565,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ), inject_primitives: false) { types["Foo"] }
+      )) { types["Foo"] }
   end
 
   it "is more permissive with macro def initialize, multiple" do

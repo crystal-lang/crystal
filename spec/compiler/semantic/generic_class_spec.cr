@@ -50,7 +50,7 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.t
-      ), inject_primitives: false) { int32.metaclass }
+      )) { int32.metaclass }
   end
 
   it "inherits from generic with forwarding (2)" do
@@ -143,7 +143,7 @@ describe "Semantic: generic class" do
       end
 
       Bar(Baz).new.foo.baz
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 
   it "inherits non-generic to generic (1)" do
@@ -655,7 +655,7 @@ describe "Semantic: generic class" do
   end
 
   it "doesn't duplicate overload on generic class class method (#2385)" do
-    error = assert_error <<-CR,
+    error = assert_error <<-CR
       class Foo(T)
         def self.foo(x : Int32)
         end
@@ -663,7 +663,6 @@ describe "Semantic: generic class" do
 
       Foo(String).foo(35.7)
       CR
-      inject_primitives: false
 
     error.to_s.lines.count(" - Foo(T).foo(x : Int32)").should eq(1)
   end
@@ -1020,7 +1019,7 @@ describe "Semantic: generic class" do
       end
 
       Foo::Bar.new(:a).a
-      ), inject_primitives: false) { symbol }
+      )) { symbol }
   end
 
   it "restricts virtual generic instance type against generic (#3351)" do
@@ -1268,6 +1267,6 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.@foo
-      ), inject_primitives: false) { generic_class("Foo", generic_class("Parent", int32).virtual_type.metaclass) }
+      )) { generic_class("Foo", generic_class("Parent", int32).virtual_type.metaclass) }
   end
 end

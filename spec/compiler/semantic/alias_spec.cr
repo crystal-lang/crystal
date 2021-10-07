@@ -348,6 +348,6 @@ describe "Semantic: alias" do
       end
 
       foo(1)
-     ), inject_primitives: false) { int32 }
+     )) { int32 }
   end
 end

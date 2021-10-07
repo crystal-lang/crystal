@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
 private def assert_commutes(str, *, file = __FILE__, line = __LINE__, &)
-  result = semantic(str, inject_primitives: false)
+  result = semantic(str)
   program = result.program
   type1, type2, expected = with program yield program
   union1 = program.type_merge([type1, type2])

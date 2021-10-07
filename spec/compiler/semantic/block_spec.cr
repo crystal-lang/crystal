@@ -1490,7 +1490,7 @@ describe "Block inference" do
 
       end
       i
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 
   it "can infer block type given that the method has a return type (#7160)" do

@@ -111,7 +111,7 @@ describe "Semantic: closure" do
           x
         end
       end
-      ", inject_primitives: false) { int32 }
+      ") { int32 }
     node = result.node.as(Expressions)
     call = node[1].as(Call)
     block = call.block.not_nil!
@@ -466,7 +466,7 @@ describe "Semantic: closure" do
   it "passes #227" do
     result = assert_type(%(
       ->{ a = 1; ->{ a } }
-      ), inject_primitives: false) { proc_of(proc_of(int32)) }
+      )) { proc_of(proc_of(int32)) }
     fn = result.node.as(ProcLiteral)
     fn.def.closure?.should be_false
   end
