@@ -448,7 +448,7 @@ describe "Semantic: macro" do
   end
 
   it "can return virtual class type in macro def" do
-    assert_type(<<-CR) { types["Foo"].metaclass.virtual_type }
+    assert_type(<<-CR, inject_primitives: true) { types["Foo"].metaclass.virtual_type }
       class Foo
       end
 
@@ -1050,7 +1050,7 @@ describe "Semantic: macro" do
   end
 
   it "works inside proc literal (#2984)" do
-    assert_type(<<-CR) { int32 }
+    assert_type(<<-CR, inject_primitives: true) { int32 }
       macro foo
         1
       end
@@ -1060,7 +1060,7 @@ describe "Semantic: macro" do
   end
 
   it "finds var in proc for macros" do
-    assert_type(<<-CR) { int32 }
+    assert_type(<<-CR, inject_primitives: true) { int32 }
       macro foo(x)
         {{x}}
       end

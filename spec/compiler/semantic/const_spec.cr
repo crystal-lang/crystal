@@ -337,7 +337,7 @@ describe "Semantic: const" do
         end
 
         CONST1
-        ))
+        ), inject_primitives: true)
     end
   end
 
@@ -461,7 +461,7 @@ describe "Semantic: const" do
 
       Foo::A
       ),
-      "can't return from constant"
+      "can't return from constant", inject_primitives: true
   end
 
   it "errors if constant has NoReturn type (#6139)" do

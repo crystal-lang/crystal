@@ -269,7 +269,7 @@ describe "Semantic: private" do
       end
 
       Foo.new(10).foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "can use class var initializer in private type" do

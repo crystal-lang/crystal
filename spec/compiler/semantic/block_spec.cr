@@ -443,7 +443,7 @@ describe "Block inference" do
         end
         false
       end
-    ") { union_of(int32, bool) }
+    ", inject_primitives: true) { union_of(int32, bool) }
   end
 
   it "ignores block parameter if not used" do
@@ -455,7 +455,7 @@ describe "Block inference" do
       foo do |x|
         x + 1
       end
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "allows yielding multiple types when a union is expected" do
@@ -494,7 +494,7 @@ describe "Block inference" do
         a + 1
       end
       foo.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "passes #233: block with initialize with default args" do
@@ -658,7 +658,7 @@ describe "Block inference" do
       foo do |x|
         x + 1
       end
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if alias is not a fun type" do
@@ -736,7 +736,7 @@ describe "Block inference" do
       end
 
       extra
-      )) { nilable(int32) }
+      ), inject_primitives: true) { nilable(int32) }
   end
 
   it "ignores void return type (#427)" do
@@ -817,7 +817,7 @@ describe "Block inference" do
       foo = Foo.new(100)
       block = f.call(foo)
       block.call
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "uses block var with same name as local var" do
@@ -925,7 +925,7 @@ describe "Block inference" do
       end
 
       bar &->foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if declares class inside captured block" do
@@ -1041,7 +1041,7 @@ describe "Block inference" do
       }
 
       foo.call
-      )) { union_of int32, float64 }
+      ), inject_primitives: true) { union_of int32, float64 }
   end
 
   it "errors if returns from captured block" do
@@ -1103,7 +1103,7 @@ describe "Block inference" do
       end
 
       f.call
-      )) { union_of int32, float64 }
+      ), inject_primitives: true) { union_of int32, float64 }
   end
 
   it "sets captured block type to that of restriction" do
@@ -1301,7 +1301,7 @@ describe "Block inference" do
       foo do |x, y|
         x + y
       end
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "auto-unpacks tuple, captured block" do
@@ -1314,7 +1314,7 @@ describe "Block inference" do
       foo do |x, y|
         {x, y}
       end
-      )) { tuple_of([int32, char]) }
+      ), inject_primitives: true) { tuple_of([int32, char]) }
   end
 
   it "auto-unpacks tuple, captured empty block" do
@@ -1326,7 +1326,7 @@ describe "Block inference" do
 
       foo do |x, y|
       end
-      ))
+      ), inject_primitives: true)
   end
 
   it "auto-unpacks tuple, captured block with multiple statements" do
@@ -1340,7 +1340,7 @@ describe "Block inference" do
         z = x < y
         {x, y, z}
       end
-      )) { tuple_of([float64, int32, bool]) }
+      ), inject_primitives: true) { tuple_of([float64, int32, bool]) }
   end
 
   it "auto-unpacks tuple, less than max, captured block" do
@@ -1353,7 +1353,7 @@ describe "Block inference" do
       foo do |x, y|
         {x, y}
       end
-      )) { tuple_of([int32, char]) }
+      ), inject_primitives: true) { tuple_of([int32, char]) }
   end
 
   it "doesn't auto-unpack tuple, more args" do

@@ -2,15 +2,15 @@ require "../../spec_helper"
 
 describe "Semantic: if" do
   it "types an if without else" do
-    assert_type("if 1 == 1; 1; end") { nilable int32 }
+    assert_type("if 1 == 1; 1; end", inject_primitives: true) { nilable int32 }
   end
 
   it "types an if with else of same type" do
-    assert_type("if 1 == 1; 1; else; 2; end") { int32 }
+    assert_type("if 1 == 1; 1; else; 2; end", inject_primitives: true) { int32 }
   end
 
   it "types an if with else of different type" do
-    assert_type("if 1 == 1; 1; else; 'a'; end") { union_of(int32, char) }
+    assert_type("if 1 == 1; 1; else; 'a'; end", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types and if with and and assignment" do
@@ -31,7 +31,7 @@ describe "Semantic: if" do
       end
 
       Foo.new.coco
-      ") { nilable int32 }
+      ", inject_primitives: true) { nilable int32 }
   end
 
   it "can invoke method on var that is declared on the right hand side of an and" do
@@ -39,7 +39,7 @@ describe "Semantic: if" do
       if 1 == 2 && (b = 1)
         b + 1
       end
-      ") { nilable int32 }
+      ", inject_primitives: true) { nilable int32 }
   end
 
   it "errors if requires inside if" do
@@ -85,28 +85,28 @@ describe "Semantic: if" do
     assert_type(%(
       n = 3 || "foobar"
       n.is_a?(String) || (n + 1 == 2)
-      )) { bool }
+      ), inject_primitives: true) { bool }
   end
 
   it "restricts type with !var and ||" do
     assert_type(%(
       a = 1 == 1 ? 1 : nil
       !a || a + 2
-      )) { union_of bool, int32 }
+      ), inject_primitives: true) { union_of bool, int32 }
   end
 
   it "restricts type with !var.is_a?(...) and ||" do
     assert_type(%(
       a = 1 == 1 ? 1 : nil
       !a.is_a?(Int32) || a + 2
-      )) { union_of bool, int32 }
+      ), inject_primitives: true) { union_of bool, int32 }
   end
 
   it "restricts type with !var.is_a?(...) and &&" do
     assert_type(%(
       a = 1 == 1 ? 1 : ""
       !a.is_a?(String) && a + 2
-      )) { union_of bool, int32 }
+      ), inject_primitives: true) { union_of bool, int32 }
   end
 
   it "restricts with || (#2464)" do

@@ -62,7 +62,7 @@ describe "Semantic: abstract def" do
       p.value = Bar.new
       p.value = Baz.new
       p.value.foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if using abstract def on subclass that also defines it as abstract" do
