@@ -126,6 +126,7 @@ module GC
     {% end %}
     LibGC.init
 
+    LibGC.set_warn_proc ->(_msg, _v) {}
     LibGC.set_start_callback ->do
       GC.lock_write
     end
