@@ -48,29 +48,6 @@ jobs:
           paths:
             - docs
 
-  test_linux32_std:
-    machine: true
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: linux
-      ARCH: i386
-      ARCH_CMD: linux32
-    steps:
-      - checkout
-      - run: bin/ci prepare_system
-      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
-      - run: bin/ci prepare_build
-      - run: bin/ci with_build_env 'make std_spec threads=1 junit_output=.junit/std_spec.xml'
-      - run:
-          when: always
-          command: |
-            mkdir -p ~/test-results/spec
-            cp .junit/*.xml ~/test-results/spec/
-      - store_test_results:
-          path: ~/test-results
-      - store_artifacts:
-          path: ~/test-results/spec
-
   test_alpine:
     machine: true
     environment:
@@ -144,7 +121,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout 613311673a83dbce963cad6f8af219b71fe3a0d2
+          git checkout f3c231807b05c0b76ee78ec013e5f98e70a592e8
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -157,7 +134,6 @@ jobs:
           # Which previous version use
           export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/1.1.1/crystal-1.1.1-1"
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
-          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX32_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-i686.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-x86_64.tar.gz" >> build.env
 
           cat build.env
@@ -272,26 +248,6 @@ jobs:
           paths:
             - build
 
-  dist_linux32:
-    machine: true
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run:
-          no_output_timeout: 20m
-          command: |
-            cd /tmp/workspace/distribution-scripts
-            source build.env
-            cd linux
-            make all32 release=true
-      - store_artifacts:
-          path: /tmp/workspace/distribution-scripts/linux/build
-          destination: build
-      - persist_to_workspace:
-          root: /tmp/workspace/distribution-scripts/linux/
-          paths:
-            - build
-
   dist_darwin:
     macos:
       xcode: 12.4.0
@@ -304,6 +260,9 @@ jobs:
           name: Setup environment
           command: |
             brew unlink python@2 || true
+
+            # We need ruby-install >= 0.8.3
+            brew install ruby-install
 
             ruby-install ruby 2.7.3
 
@@ -362,21 +321,6 @@ jobs:
           source build.env
           cd docker
           make all64 CRYSTAL_DEB=/tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb CRYSTAL_TARGZ=/tmp/workspace/build/crystal-$CRYSTAL_VERSION-1-linux-x86_64.tar.gz
-      - persist_to_workspace:
-          root: /tmp/workspace/distribution-scripts/docker/
-          paths:
-            - build
-
-  dist_docker32:
-    machine: true
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-          source build.env
-          cd docker
-          make all32 CRYSTAL_DEB=/tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_i386.deb
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/docker/
           paths:
@@ -486,27 +430,6 @@ jobs:
       - run: bin/ci prepare_build
       - run: bin/ci build
 
-  test_dist_linux32_std_on_docker:
-    machine: true
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: linux
-      ARCH: i386
-      ARCH_CMD: linux32
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-          source ./build.env
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-i386.tar.gz | docker image load
-          export DOCKER_TEST_PREFIX="crystallang/crystal:$DOCKER_TAG-i386" >> $BASH_ENV
-      - checkout
-      - run: bin/ci prepare_system
-      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
-      - run: bin/ci prepare_build
-      - run: bin/ci with_build_env 'make std_spec threads=1'
-
 workflows:
   version: 2
   release:
@@ -519,8 +442,6 @@ workflows:
                 - /.*\bci\b.*/
             tags:
               only: /.*/
-      - test_linux32_std:
-          filters: *release
       - test_alpine:
           filters: *release
       # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
@@ -550,11 +471,6 @@ workflows:
           requires:
             - prepare_maintenance
             - prepare_tagged
-      - dist_linux32:
-          filters: *release
-          requires:
-            - prepare_maintenance
-            - prepare_tagged
       - dist_darwin:
           filters: *release
           requires:
@@ -564,10 +480,6 @@ workflows:
           filters: *release
           requires:
             - dist_linux
-      - dist_docker32:
-          filters: *release
-          requires:
-            - dist_linux32
       - dist_snap:
           filters: *release
           requires:
@@ -580,10 +492,6 @@ workflows:
           filters: *release
           requires:
             - dist_docker
-      - test_dist_linux32_std_on_docker:
-          filters: *release
-          requires:
-            - dist_docker32
       - publish_docker:
           filters: *maintenance
           requires:
@@ -596,7 +504,6 @@ workflows:
           filters: *release
           requires:
             - dist_linux
-            - dist_linux32
             - dist_darwin
             - dist_snap
             - dist_docs
@@ -611,7 +518,6 @@ workflows:
                 - master
     jobs:
       - test_linux
-      - test_linux32_std
       - test_alpine
       # - test_darwin # See https://github.com/crystal-lang/crystal/pull/9763
       - test_preview_mt
@@ -622,23 +528,16 @@ workflows:
       - dist_linux:
           requires:
             - prepare_nightly
-      - dist_linux32:
-          requires:
-            - prepare_nightly
       - dist_darwin:
           requires:
             - prepare_nightly
       - push_obs_nightly:
           requires:
             - dist_linux
-            - dist_linux32
             - dist_docs
       - dist_docker:
           requires:
             - dist_linux
-      - dist_docker32:
-          requires:
-            - dist_linux32
       - dist_snap:
           requires:
             - dist_linux
@@ -648,9 +547,6 @@ workflows:
       - test_dist_linux_on_docker:
           requires:
             - dist_docker
-      - test_dist_linux32_std_on_docker:
-          requires:
-            - dist_docker32
       - publish_docker:
           requires:
             - dist_docker
@@ -660,7 +556,6 @@ workflows:
       - dist_artifacts:
           requires:
             - dist_linux
-            - dist_linux32
             - dist_darwin
             - dist_snap
             - dist_docs

@@ -742,32 +742,40 @@ struct Slice(T)
     @pointer
   end
 
-  # Returns a new slice with all elements sorted based on the return value of
-  # their comparison method `<=>`
+  # Returns a new instance with all elements sorted based on the return value of
+  # their comparison method `T#<=>` (see `Comparable#<=>`), using a stable sort algorithm.
   #
   # ```
   # a = Slice[3, 1, 2]
   # a.sort # => Slice[1, 2, 3]
   # a      # => Slice[3, 1, 2]
   # ```
-  def sort : Slice(T)
+  #
+  # See `#sort!` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
+  def sort : self
     dup.sort!
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted based on the return value of
+  # their comparison method `T#<=>` (see `Comparable#<=>`), using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort : Slice(T)
+  # ```
+  # a = Slice[3, 1, 2]
+  # a.sort # => Slice[1, 2, 3]
+  # a      # => Slice[3, 1, 2]
+  # ```
+  #
+  # See `Indexable::Mutable#unstable_sort!` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
+  def unstable_sort : self
     dup.unstable_sort!
   end
 
-  # Returns a new slice with all elements sorted based on the comparator in the
-  # given block.
-  #
-  # The block must implement a comparison between two elements *a* and *b*,
-  # where `a < b` returns `-1`, `a == b` returns `0`, and `a > b` returns `1`.
-  # The comparison operator `<=>` can be used for this.
+  # Returns a new instance with all elements sorted based on the comparator in the
+  # given block, using a stable sort algorithm.
   #
   # ```
   # a = Slice[3, 1, 2]
@@ -776,7 +784,11 @@ struct Slice(T)
   # b # => Slice[3, 2, 1]
   # a # => Slice[3, 1, 2]
   # ```
-  def sort(&block : T, T -> U) : Slice(T) forall U
+  #
+  # See `Indexable::Mutable#sort!(&block : T, T -> U)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
+  def sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
@@ -784,11 +796,21 @@ struct Slice(T)
     dup.sort! &block
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted based on the comparator in the
+  # given block, using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort(&block : T, T -> U) : Slice(T) forall U
+  # ```
+  # a = Slice[3, 1, 2]
+  # b = a.unstable_sort { |a, b| b <=> a }
+  #
+  # b # => Slice[3, 2, 1]
+  # a # => Slice[3, 1, 2]
+  # ```
+  #
+  # See `Indexable::Mutable#unstable_sort!(&block : T, T -> U)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
+  def unstable_sort(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
@@ -796,44 +818,100 @@ struct Slice(T)
     dup.unstable_sort!(&block)
   end
 
-  # Modifies `self` by sorting all elements based on the return value of their
-  # comparison method `<=>`
+  # Sorts all elements in `self` based on the return value of the comparison
+  # method `T#<=>` (see `Comparable#<=>`), using a stable sort algorithm.
   #
   # ```
-  # a = Slice[3, 1, 2]
-  # a.sort!
-  # a # => Slice[1, 2, 3]
+  # slice = Slice[3, 1, 2]
+  # slice.sort!
+  # slice # => Slice[1, 2, 3]
   # ```
-  def sort! : Slice(T)
+  #
+  # This sort operation modifies `self`. See `#sort` for a non-modifying option
+  # that allocates a new instance.
+  #
+  # The sort mechanism is implemented as [*merge sort*](https://en.wikipedia.org/wiki/Merge_sort).
+  # It is stable, which is typically a good default.
+  #
+  # Stablility means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # keep their original relation. Stable sort guarantees that `[a, b].sort!`
+  # always results in `[a, b]` (given they compare equal). With unstable sort,
+  # the result could also be `[b, a]`.
+  #
+  # If stability is expendable, `#unstable_sort!` provides a performance
+  # advantage over stable sort.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
+  def sort! : self
     Slice.merge_sort!(self)
 
     self
   end
 
-  # :ditto:
+  # Sorts all elements in `self` based on the return value of the comparison
+  # method `T#<=>` (see `Comparable#<=>`), using an unstable sort algorithm..
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort! : Slice(T)
+  # ```
+  # slice = Slice[3, 1, 2]
+  # slice.unstable_sort!
+  # slice # => Slice[1, 2, 3]
+  # ```
+  #
+  # This sort operation modifies `self`. See `#unstable_sort` for a non-modifying
+  # option that allocates a new instance.
+  #
+  # The sort mechanism is implemented as [*introsort*](https://en.wikipedia.org/wiki/Introsort).
+  # It does not guarantee stability between equally comparing elements.
+  # This offers higher performance but may be unexpected in some situations.
+  #
+  # Stablility means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # keep their original relation. Stable sort guarantees that `[a, b].sort!`
+  # always results in `[a, b]` (given they compare equal). With unstable sort,
+  # the result could also be `[b, a]`.
+  #
+  # If stability is necessary, use  `#sort!` instead.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
+  def unstable_sort! : self
     Slice.intro_sort!(to_unsafe, size)
 
     self
   end
 
-  # Modifies `self` by sorting all elements based on the comparator in the given
-  # block.
-  #
-  # The given block must implement a comparison between two elements
-  # *a* and *b*, where `a < b` returns `-1`, `a == b` returns `0`,
-  # and `a > b` returns `1`.
-  # The comparison operator `<=>` can be used for this.
+  # Sorts all elements in `self` based on the comparator in the given block, using
+  # a stable sort algorithm.
   #
   # ```
-  # a = Slice[3, 1, 2]
-  # a.sort! { |a, b| b <=> a }
-  # a # => Slice[3, 2, 1]
+  # slice = Slice[3, 1, 2]
+  # # This is a reverse sort (forward sort would be `a <=> b`)
+  # slice.sort! { |a, b| b <=> a }
+  # slice # => Slice[3, 2, 1]
   # ```
-  def sort!(&block : T, T -> U) : Slice(T) forall U
+  #
+  # The block must implement a comparison between two elements *a* and *b*,
+  # where `a < b` outputs a negative value, `a == b` outputs `0`, and `a > b`
+  # outputs a positive value.
+  # The comparison operator (`Comparable#<=>`) can be used for this.
+  #
+  # The block's output type must be `<= Int32?`, but returning an actual `nil`
+  # value is an error.
+  #
+  # This sort operation modifies `self`. See `#sort(&block : T, T -> U)` for a
+  # non-modifying option that allocates a new instance.
+  #
+  # The sort mechanism is implemented as [*merge sort*](https://en.wikipedia.org/wiki/Merge_sort).
+  # It is stable, which is typically a good default.
+  #
+  # Stablility means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # keep their original relation. Stable sort guarantees that `[a, b].sort!`
+  # always results in `[a, b]` (given they compare equal). With unstable sort,
+  # the result could also be `[b, a]`.
+  #
+  # If stability is expendable, `#unstable_sort!(&block : T, T -> U)` provides a
+  # performance advantage over stable sort.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
+  def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
@@ -843,11 +921,40 @@ struct Slice(T)
     self
   end
 
-  # :ditto:
+  # Sorts all elements in `self` based on the comparator in the given block,
+  # using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort!(&block : T, T -> U) : Slice(T) forall U
+  # ```
+  # slice = Slice[3, 1, 2]
+  # # This is a reverse sort (forward sort would be `a <=> b`)
+  # slice.unstable_sort! { |a, b| b <=> a }
+  # slice # => Slice[3, 2, 1]
+  # ```
+  #
+  # The block must implement a comparison between two elements *a* and *b*,
+  # where `a < b` outputs a negative value, `a == b` outputs `0`, and `a > b`
+  # outputs a positive value.
+  # The comparison operator (`Comparable#<=>`) can be used for this.
+  #
+  # The block's output type must be `<= Int32?`, but returning an actual `nil`
+  # value is an error.
+  #
+  # This sort operation modifies `self`. See `#unstable_sort(&block : T, T -> U)`
+  # for a non-modifying option that allocates a new instance.
+  #
+  # The sort mechanism is implemented as [*introsort*](https://en.wikipedia.org/wiki/Introsort).
+  # It does not guarantee stability between equally comparing elements.
+  # This offers higher performance but may be unexpected in some situations.
+  #
+  # Stablility means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # keep their original relation. Stable sort guarantees that `[a, b].sort!`
+  # always results in `[a, b]` (given they compare equal). With unstable sort,
+  # the result could also be `[b, a]`.
+  #
+  # If stability is necessary, use  `#sort!(&block : T, T -> U)` instead.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
+  def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
@@ -857,9 +964,9 @@ struct Slice(T)
     self
   end
 
-  # Returns a new array with all elements sorted. The given block is called for
-  # each element, then the comparison method `<=>` is called on the object
-  # returned from the block to determine sort order.
+  # Returns a new instance with all elements sorted by the output value of the
+  # block. The output values are compared via the comparison method `T#<=>`
+  # (see `Comparable#<=>`), using a stable sort algorithm.
   #
   # ```
   # a = Slice["apple", "pear", "fig"]
@@ -867,15 +974,34 @@ struct Slice(T)
   # b # => Slice["fig", "pear", "apple"]
   # a # => Slice["apple", "pear", "fig"]
   # ```
-  def sort_by(&block : T -> _) : Slice(T)
+  #
+  # If stability is expendable, `#unstable_sort_by(&block : T -> _)` provides a
+  # performance advantage over stable sort.
+  #
+  # See `Indexable::Mutable#sort_by!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
+  def sort_by(&block : T -> _) : self
     dup.sort_by! { |e| yield(e) }
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted by the output value of the
+  # block. The output values are compared via the comparison method `#<=>`
+  # (see `Comparable#<=>`), using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort_by(&block : T -> _) : Slice(T)
+  # ```
+  # a = Slice["apple", "pear", "fig"]
+  # b = a.unstable_sort_by { |word| word.size }
+  # b # => Slice["fig", "pear", "apple"]
+  # a # => Slice["apple", "pear", "fig"]
+  # ```
+  #
+  # If stability is necessary, use `#sort_by(&block : T -> _)` instead.
+  #
+  # See `Indexable::Mutable#unstable_sort!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
+  def unstable_sort_by(&block : T -> _) : self
     dup.unstable_sort_by! { |e| yield(e) }
   end
 
