@@ -1,7 +1,7 @@
 # These jobs are smoke tests for platforms where we don't rund full tests.
-# They ensure that std_spec, compiler_spec and the compiler itself at least
-# compile for the target with --cross-compile. But the binaries are not linked
-# and executed. So this does not validate correct behaviour.
+# They ensure that std_spec, compiler_spec, primitives_spec, and the compiler
+# itself at least compile for the target with --cross-compile. But the binaries
+# are not linked and executed. So this does not validate correct behaviour.
 #
 # The list of supported platforms is extracted from the lib_c bindings:
 #

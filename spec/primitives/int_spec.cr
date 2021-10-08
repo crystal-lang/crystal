@@ -1,0 +1,126 @@
+require "spec"
+require "../support/number"
+{% unless flag?(:win32) %}
+  require "big"
+{% end %}
+
+{% for i in Int::Signed.union_types %}
+  struct {{i}}
+    TEST_CASES = [MIN, MIN &+ 1, MIN &+ 2, -1, 0, 1, MAX &- 2, MAX &- 1, MAX] of {{i}}
+  end
+{% end %}
+
+{% for i in Int::Unsigned.union_types %}
+  struct {{i}}
+    TEST_CASES = [MIN, MIN &+ 1, MIN &+ 2, MAX &- 2, MAX &- 1, MAX] of {{i}}
+  end
+{% end %}
+
+macro run_op_tests(t, u, op)
+  it "overflow test #{{{t}}} #{{{op}}} #{{{u}}}" do
+    {{t}}::TEST_CASES.each do |lhs|
+      {{u}}::TEST_CASES.each do |rhs|
+        result = lhs.to_big_i {{op.id}} rhs.to_big_i
+        passes = {{t}}::MIN <= result <= {{t}}::MAX
+        begin
+          if passes
+            (lhs {{op.id}} rhs).should eq(lhs &{{op.id}} rhs)
+          else
+            expect_raises(OverflowError) { lhs {{op.id}} rhs }
+          end
+        rescue e : Spec::AssertionFailed
+          raise Spec::AssertionFailed.new("#{e.message}: #{lhs} #{{{op}}} #{rhs}", e.file, e.line)
+        rescue e : OverflowError
+          raise OverflowError.new("#{e.message}: #{lhs} #{{{op}}} #{rhs}")
+        end
+      end
+    end
+  end
+end
+
+describe "Primitives: Int" do
+  describe "#&+" do
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it "wraps around for {{ int }}" do
+        ({{ int }}::MAX &+ {{ int }}.new(1)).should eq({{ int }}::MIN)
+        ({{ int }}::MAX &+ 1_i64).should eq({{ int }}::MIN)
+      end
+    {% end %}
+  end
+
+  describe "#&-" do
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it "wraps around for {{ int }}" do
+        ({{ int }}::MIN &- {{ int }}.new(1)).should eq({{ int }}::MAX)
+        ({{ int }}::MIN &- 1_i64).should eq({{ int }}::MAX)
+      end
+    {% end %}
+  end
+
+  describe "#&*" do
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it "wraps around for {{ int }}" do
+        %val{int} = {{ int }}::MAX // {{ int }}.new(2) &+ {{ int }}.new(1)
+        (%val{int} &* {{ int }}.new(2)).should eq({{ int }}::MIN)
+        (%val{int} &* 2_i64).should eq({{ int }}::MIN)
+      end
+    {% end %}
+  end
+
+  {% unless flag?(:win32) %}
+    describe "#+" do
+      {% for int1 in BUILTIN_INTEGER_TYPES %}
+        {% for int2 in BUILTIN_INTEGER_TYPES %}
+          run_op_tests {{ int1 }}, {{ int2 }}, :+
+        {% end %}
+      {% end %}
+    end
+
+    describe "#-" do
+      {% for int1 in BUILTIN_INTEGER_TYPES %}
+        {% for int2 in BUILTIN_INTEGER_TYPES %}
+          run_op_tests {{ int1 }}, {{ int2 }}, :-
+        {% end %}
+      {% end %}
+    end
+
+    describe "#*" do
+      {% for int1 in BUILTIN_INTEGER_TYPES %}
+        {% for int2 in BUILTIN_INTEGER_TYPES %}
+          run_op_tests {{ int1 }}, {{ int2 }}, :*
+        {% end %}
+      {% end %}
+    end
+  {% end %}
+
+  describe "#to_i" do
+    {% for int1 in BUILTIN_INTEGER_TYPES %}
+      {% for method, int2 in BUILTIN_INT_CONVERSIONS %}
+        {% if int1 != int2 %}
+          it {{ "raises on overflow for #{int1}##{method}" }} do
+            if {{ int1 }}::MAX > {{ int2 }}::MAX
+              expect_raises(OverflowError) do
+                ({{ int1 }}.new!({{ int2 }}::MAX) &+ 1).{{ method }}
+              end
+            end
+
+            if {{ int1 }}::MIN < {{ int2 }}::MIN
+              expect_raises(OverflowError) do
+                ({{ int1 }}.new!({{ int2 }}::MIN) &- 1).{{ method }}
+              end
+            end
+          end
+        {% end %}
+      {% end %}
+    {% end %}
+  end
+
+  describe "#to_f" do
+    {% if BUILTIN_INTEGER_TYPES.includes?(UInt128) %}
+      it "raises on overflow for UInt128#to_f32" do
+        expect_raises(OverflowError) { UInt128::MAX.to_f32 }
+        expect_raises(OverflowError) { (UInt128::MAX // 2).to_f32 }
+      end
+    {% end %}
+  end
+end

@@ -188,7 +188,7 @@ jobs:
 
       - name: Build stdlib specs executable
         run: |
-          bin\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Dwithout_openssl -Di_know_what_im_doing
+          bin\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std -Dwithout_openssl -Di_know_what_im_doing
       - name: Run socket specs
         run: |
           .\std_spec.exe --verbose -e TCPSocket
@@ -198,7 +198,14 @@ jobs:
 
       - name: Build compiler specs executable
         run: |
-          bin\crystal.exe build spec/compiler_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Dwithout_playground -Di_know_what_im_doing
+          bin\crystal.exe build spec/compiler_spec.cr --exclude-warnings spec/compiler -Dwithout_playground -Di_know_what_im_doing
       - name: Run compiler specs
         run: |
           .\compiler_spec.exe
+
+      - name: Build primitives specs executable
+        run: |
+          bin\crystal.exe build spec/primitives_spec.cr --exclude-warnings spec/primitives -Dwithout_playground -Di_know_what_im_doing
+      - name: Run primitives specs
+        run: |
+          .\primitives_spec.exe
