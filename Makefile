@@ -104,7 +104,7 @@ primitives_spec: $(O)/primitives_spec ## Run primitives specs
 	$(O)/primitives_spec $(SPEC_FLAGS)
 
 .PHONY: smoke_test ## Build specs as a smoke test
-smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/primitives_spec $(O)/crystal
+smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal
 
 .PHONY: docs
 docs: ## Generate standard library documentation
