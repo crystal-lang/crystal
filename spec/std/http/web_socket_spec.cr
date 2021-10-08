@@ -240,6 +240,22 @@ describe HTTP::WebSocket do
       end
     end
 
+    it "sends less data than the frame size if necessary" do
+      io = IO::Memory.new
+      ws = HTTP::WebSocket::Protocol.new(io)
+      ws.stream do |io| # default frame size of 1024
+        io.write("hello world".to_slice)
+      end
+
+      bytes = io.to_slice
+      bytes.size.should eq(2 + 11) # one frame with 1 byte header, 1 byte size, "hello world" bytes content in total
+      first_frame = bytes
+      (first_frame[0] & 0x80).should_not eq(0) # FINAL bit set
+      (first_frame[0] & 0x0f).should eq(0x2)   # BINARY frame
+      first_frame[1].should eq(11)             # non-extended size
+      (bytes + 2).should eq "hello world".to_slice
+    end
+
     it "sets opcode of first frame to binary if stream is called with binary = true" do
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
@@ -546,4 +562,63 @@ describe HTTP::WebSocket do
   typeof(HTTP::WebSocket.new("localhost", "/"))
   typeof(HTTP::WebSocket.new("ws://localhost"))
   typeof(HTTP::WebSocket.new(URI.parse("ws://localhost"), headers: HTTP::Headers{"X-TEST_HEADER" => "some-text"}))
+end
+
+private def integration_setup
+  bin_ch = Channel(Bytes).new
+  txt_ch = Channel(String).new
+  ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+    ws.on_binary { |bytes| bin_ch.send bytes }
+    ws.on_message { |bytes| txt_ch.send bytes }
+  end
+  server = HTTP::Server.new [ws_handler]
+  address = server.bind_unused_port
+  spawn server.listen
+  wsoc = HTTP::WebSocket.new("http://#{address}")
+
+  yield wsoc, bin_ch, txt_ch
+ensure
+  server.close if server
+end
+
+describe "Websocket integration tests" do
+  # default frame size is 1024, but be explicit here in case the default changes in the future
+
+  it "streams less than the buffer frame size" do
+    integration_setup do |wsoc, bin_ch, _|
+      bytes = "hello test world".to_slice
+      wsoc.stream(frame_size: 1024) { |io| io.write bytes }
+      received = bin_ch.receive
+      received.should eq bytes
+    end
+  end
+
+  it "streams single messages more than the buffer frame size" do
+    integration_setup do |wsoc, bin_ch, _|
+      bytes = ("hello test world" * 80).to_slice
+      bytes.size.should be > 1024
+      wsoc.stream(frame_size: 1024) { |io| io.write bytes }
+      received = bin_ch.receive
+      received.should eq bytes
+    end
+  end
+
+  it "streams single messages made up of multiple parts that eventually become more than the buffer frame size" do
+    integration_setup do |wsoc, bin_ch, _|
+      bytes = "hello test world".to_slice
+      wsoc.stream(frame_size: 1024) { |io| 80.times { io.write bytes } }
+      received = bin_ch.receive
+      received.size.should be > 1024
+      received.should eq ("hello test world" * 80).to_slice
+    end
+  end
+
+  it "sends single text messages" do
+    integration_setup do |wsoc, _, txt_ch|
+      wsoc.send "hello text"
+      wsoc.send "hello again"
+      txt_ch.receive.should eq "hello text"
+      txt_ch.receive.should eq "hello again"
+    end
+  end
 end
