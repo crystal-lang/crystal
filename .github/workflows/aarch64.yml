@@ -35,7 +35,15 @@ jobs:
       - name: Run stdlib specs
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
-          args: make std_spec primitives_spec
+          args: make std_spec
+      - name: Build primitives specs
+        uses: docker://jhass/crystal:1.0.0-alpine-build
+        with:
+          args: ./bin/crystal build --exclude-warnings spec/primitives -o .build/primitives_spec spec/primitives_spec.cr
+      - name: Run primitives specs
+        uses: docker://jhass/crystal:1.0.0-alpine-build
+        with:
+          args: .build/primitives_spec
   musl-test-compiler:
     needs: musl-build
     runs-on: [linux, ARM64]
@@ -87,6 +95,14 @@ jobs:
         uses: docker://jhass/crystal:1.0.0-build
         with:
           args: make std_spec primitives_spec
+      - name: Build primitives specs
+        uses: docker://jhass/crystal:1.0.0-build
+        with:
+          args: ./bin/crystal build --exclude-warnings spec/primitives -o .build/primitives_spec spec/primitives_spec.cr
+      - name: Run primitives specs
+        uses: docker://jhass/crystal:1.0.0-build
+        with:
+          args: .build/primitives_spec
   gnu-test-compiler:
     needs: gnu-build
     runs-on: [linux, ARM64]
