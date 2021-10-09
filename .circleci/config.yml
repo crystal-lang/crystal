@@ -121,7 +121,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout 98551b94efaa4c967405f45eb80837fe010a673d
+          git checkout a935490bc873cfbf158f65d292700f97e2a871f0
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -315,7 +315,6 @@ jobs:
             packages/obs-setup.sh
             packages/obs-push.sh devel:languages:crystal:nightly ${CRYSTAL_VERSION%-*} $(date '+%Y%m%d') $CRYSTAL_SHA1 \
                 /tmp/workspace/build/crystal-*-linux-x86_64.tar.gz \
-                /tmp/workspace/build/crystal-*-linux-i686.tar.gz \
                 /tmp/workspace/build/crystal-*-docs.tar.gz
 
   dist_docker:
