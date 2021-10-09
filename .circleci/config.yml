@@ -315,7 +315,6 @@ jobs:
             packages/obs-setup.sh
             packages/obs-push.sh devel:languages:crystal:nightly ${CRYSTAL_VERSION%-*} $(date '+%Y%m%d') $CRYSTAL_SHA1 \
                 /tmp/workspace/build/crystal-*-linux-x86_64.tar.gz \
-                /tmp/workspace/build/crystal-*-linux-i686.tar.gz \
                 /tmp/workspace/build/crystal-*-docs.tar.gz
 
   dist_docker:
