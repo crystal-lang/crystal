@@ -156,7 +156,7 @@ describe HTTP::WebSocket do
     it "read very long packet" do
       data = Bytes.new(10 + 0x010000)
 
-      header = Bytes[0x82, 127_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x0]
+      header = Bytes[0x82, 127_u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00]
       data.copy_from(header)
 
       io = IO::Memory.new(data)
@@ -219,9 +219,9 @@ describe HTTP::WebSocket do
       bytes = io.to_slice
       bytes.size.should eq(4 * 2 + 512 * 3) # two frames with 2 bytes header, 2 bytes size, 3 * 512 bytes content in total
       first_frame, second_frame = {bytes[0, (4 + 1024)], bytes + (4 + 1024)}
-      (first_frame[0] & 0x80).should eq(0)   # FINAL bit unset
-      (first_frame[0] & 0x0f).should eq(0x2) # BINARY frame
-      first_frame[1].should eq(126)          # extended size
+      (first_frame[0] & 0x80).should eq(0x00) # FINAL bit unset
+      (first_frame[0] & 0x0f).should eq(0x02) # BINARY frame
+      first_frame[1].should eq(126)           # extended size
       received_size = 0
       2.times { |i| received_size <<= 8; received_size += first_frame[2 + i] }
       received_size.should eq(1024)
@@ -229,9 +229,9 @@ describe HTTP::WebSocket do
         bytes[4 + i].should eq('a'.ord)
       end
 
-      (second_frame[0] & 0x80).should_not eq(0) # FINAL bit set
-      (second_frame[0] & 0x0f).should eq(0x0)   # CONTINUATION frame
-      second_frame[1].should eq(126)            # extended size
+      (second_frame[0] & 0x80).should_not eq(0x00) # FINAL bit set
+      (second_frame[0] & 0x0f).should eq(0x00)     # CONTINUATION frame
+      second_frame[1].should eq(126)               # extended size
       received_size = 0
       2.times { |i| received_size <<= 8; received_size += second_frame[2 + i] }
       received_size.should eq(512)
@@ -250,9 +250,9 @@ describe HTTP::WebSocket do
       bytes = io.to_slice
       bytes.size.should eq(2 + 11) # one frame with 1 byte header, 1 byte size, "hello world" bytes content in total
       first_frame = bytes
-      (first_frame[0] & 0x80).should_not eq(0) # FINAL bit set
-      (first_frame[0] & 0x0f).should eq(0x2)   # BINARY frame
-      first_frame[1].should eq(11)             # non-extended size
+      (first_frame[0] & 0x80).should_not eq(0x00) # FINAL bit set
+      (first_frame[0] & 0x0f).should eq(0x02)     # BINARY frame
+      first_frame[1].should eq(11)                # non-extended size
       (bytes + 2).should eq "hello world".to_slice
     end
 
@@ -262,7 +262,7 @@ describe HTTP::WebSocket do
       ws.stream(binary: true) { |io| }
 
       bytes = io.to_slice
-      (bytes[0] & 0x0f).should eq(0x2) # BINARY frame
+      (bytes[0] & 0x0f).should eq(0x02) # BINARY frame
     end
   end
 
@@ -308,8 +308,8 @@ describe HTTP::WebSocket do
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.close(4020)
       bytes = io.to_slice
-      (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
-      bytes[1].should eq(2)            # 2 bytes code
+      (bytes[0] & 0x0f).should eq(0x08) # CLOSE frame
+      bytes[1].should eq(0x02)          # 2 bytes code
       bytes[2].should eq(0x0f)
       bytes[3].should eq(0xb4)
     end
@@ -320,8 +320,8 @@ describe HTTP::WebSocket do
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.close(nil, message)
       bytes = io.to_slice
-      (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
-      bytes[1].should eq(5)            # 2 + message.bytesize
+      (bytes[0] & 0x0f).should eq(0x08) # CLOSE frame
+      bytes[1].should eq(0x05)          # 2 + message.bytesize
       bytes[2].should eq(0x03)
       bytes[3].should eq(0xe8)
       String.new(bytes[4..6]).should eq(message)
@@ -333,8 +333,8 @@ describe HTTP::WebSocket do
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.close(4020, message)
       bytes = io.to_slice
-      (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
-      bytes[1].should eq(6)            # 2 + message.bytesize
+      (bytes[0] & 0x0f).should eq(0x08) # CLOSE frame
+      bytes[1].should eq(0x06)          # 2 + message.bytesize
       bytes[2].should eq(0x0f)
       bytes[3].should eq(0xb4)
       String.new(bytes[4..7]).should eq(message)
@@ -345,8 +345,8 @@ describe HTTP::WebSocket do
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.close
       bytes = io.to_slice
-      (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
-      bytes[1].should eq(0)
+      (bytes[0] & 0x0f).should eq(0x08) # CLOSE frame
+      bytes[1].should eq(0x00)
     end
   end
 
