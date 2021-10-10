@@ -11,9 +11,11 @@ module Crystal
 
     record FunMetadata, filename : String, metadata : LibLLVMExt::Metadata
 
+    alias DebugFilename = Crystal::VirtualFile | String?
+
     @current_debug_location : Location?
-    @debug_files = {} of Crystal::VirtualFile | String? => LibLLVMExt::Metadata
-    @current_debug_file : LibLLVMExt::Metadata?
+    @debug_files_per_module = {} of LLVM::Module => Hash(DebugFilename, LibLLVMExt::Metadata)
+    @debug_types_per_module = {} of LLVM::Module => Hash(Type, LibLLVMExt::Metadata?)
 
     def di_builder(llvm_module = @llvm_mod || @main_mod)
       di_builders = @di_builders ||= {} of LLVM::Module => LLVM::DIBuilder
@@ -56,11 +58,22 @@ module Crystal
     def debug_type_cache
       # We must cache debug types per module so metadata of a type
       # from one module isn't incorrectly used in another module.
-      debug_types_per_module =
-        @debug_types_per_module ||=
-          {} of LLVM::Module => Hash(Type, LibLLVMExt::Metadata?)
+      @debug_types_per_module[@llvm_mod] ||= {} of Type => LibLLVMExt::Metadata?
+    end
 
-      debug_types_per_module[@llvm_mod] ||= {} of Type => LibLLVMExt::Metadata?
+    def debug_files_cache
+      # We must cache debug files per module so metadata of a type
+      # from one module isn't incorrectly used in another module.
+      @debug_files_per_module[@llvm_mod] ||= {} of DebugFilename => LibLLVMExt::Metadata
+    end
+
+    def current_debug_file
+      if location = @current_debug_location
+        debug_files_cache[location.filename || "??"] ||= begin
+          file, dir = file_and_dir(location.filename)
+          di_builder.create_file(file, dir)
+        end
+      end
     end
 
     def get_debug_type(type, original_type : Type)
@@ -115,7 +128,7 @@ module Crystal
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_struct_type(type)
 
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1, llvm_context)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
       debug_type_cache[original_type] = tmp_debug_type
 
       ivars.each_with_index do |(name, ivar), idx|
@@ -153,7 +166,7 @@ module Crystal
       struct_type_size = @program.target_machine.data_layout.size_in_bits(struct_type)
       is_struct = struct_type.struct_element_types.size == 1
 
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1, llvm_context)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
       debug_type_cache[original_type] = tmp_debug_type
 
       type.expand_union_types.each do |ivar_type|
@@ -169,7 +182,7 @@ module Crystal
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type.struct_element_types[is_struct ? 0 : 1])
       offset = @program.target_machine.data_layout.offset_of_element(struct_type, 1) * 8u64
-      debug_type = di_builder.create_union_type(nil, nil, @current_debug_file.not_nil!, 1, size, size, LLVM::DIFlags::Zero, di_builder.get_or_create_type_array(element_types))
+      debug_type = di_builder.create_union_type(nil, nil, current_debug_file.not_nil!, 1, size, size, LLVM::DIFlags::Zero, di_builder.get_or_create_type_array(element_types))
       unless is_struct
         element_types.clear
         element_types << di_builder.create_member_type(nil, "type_id", nil, 1, 32, 32, 0, LLVM::DIFlags::Zero, get_debug_type(@program.uint32))
@@ -183,7 +196,7 @@ module Crystal
     def create_debug_type(type : NilableReferenceUnionType | ReferenceUnionType, original_type : Type)
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_type(type)
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1, llvm_context)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
       debug_type_cache[original_type] = tmp_debug_type
 
       type.expand_union_types.each do |ivar_type|
@@ -197,7 +210,7 @@ module Crystal
       end
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
-      debug_type = di_builder.create_union_type(nil, original_type.to_s, @current_debug_file.not_nil!, 1, size, size, LLVM::DIFlags::Zero, di_builder.get_or_create_type_array(element_types))
+      debug_type = di_builder.create_union_type(nil, original_type.to_s, current_debug_file.not_nil!, 1, size, size, LLVM::DIFlags::Zero, di_builder.get_or_create_type_array(element_types))
       di_builder.replace_temporary(tmp_debug_type, debug_type)
       debug_type
     end
@@ -222,7 +235,7 @@ module Crystal
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_struct_type(type)
 
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1, llvm_context)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
       debug_type_cache[original_type] = tmp_debug_type
 
       ivars.each_with_index do |ivar_type, idx|
@@ -250,7 +263,7 @@ module Crystal
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_struct_type(type)
 
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1, llvm_context)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
       debug_type_cache[original_type] = tmp_debug_type
 
       ivars.each_with_index do |ivar, idx|
@@ -318,7 +331,7 @@ module Crystal
       return false unless location
 
       file, dir = file_and_dir(location.filename)
-      @current_debug_file = file = @debug_files[location.filename] ||= di_builder.create_file(file, dir)
+      file = debug_files_cache[location.filename] ||= di_builder.create_file(file, dir)
 
       debug_type = get_debug_type(type)
       return false unless debug_type
