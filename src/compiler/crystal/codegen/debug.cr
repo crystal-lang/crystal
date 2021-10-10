@@ -33,11 +33,11 @@ module Crystal
       # than OS X currently understands. Android has the same problem.
       if @program.has_flag?("osx") || @program.has_flag?("android")
         mod.add_named_metadata_operand("llvm.module.flags",
-          metadata([LLVM::ModuleFlag::Warning.value, "Dwarf Version", 2]))
+          metadata([LLVM::ModuleFlag::Warning.value, "Dwarf Version", 2], context: mod.context))
       end
 
       mod.add_named_metadata_operand("llvm.module.flags",
-        metadata([LLVM::ModuleFlag::Warning.value, "Debug Info Version", LLVM::DEBUG_METADATA_VERSION]))
+        metadata([LLVM::ModuleFlag::Warning.value, "Debug Info Version", LLVM::DEBUG_METADATA_VERSION], context: mod.context))
     end
 
     def fun_metadatas
@@ -381,11 +381,11 @@ module Crystal
       }
     end
 
-    def metadata(args)
+    def metadata(args, context = llvm_context)
       values = args.map do |value|
         case value
-        when String         then llvm_context.md_string(value.to_s)
-        when Symbol         then llvm_context.md_string(value.to_s)
+        when String         then context.md_string(value.to_s)
+        when Symbol         then context.md_string(value.to_s)
         when Number         then int32(value)
         when Bool           then int1(value ? 1 : 0)
         when LLVM::Value    then value
@@ -394,7 +394,7 @@ module Crystal
         else                     raise "Unsupported value type: #{value.class}"
         end
       end
-      llvm_context.md_node(values)
+      context.md_node(values)
     end
 
     def set_current_debug_location(node : ASTNode)
