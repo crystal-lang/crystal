@@ -307,7 +307,9 @@ lib LibLLVM
   fun abi_alignment_of_type = LLVMABIAlignmentOfType(td : TargetDataRef, ty : TypeRef) : UInt32
   fun get_target_machine_target = LLVMGetTargetMachineTarget(t : TargetMachineRef) : TargetRef
   fun const_inline_asm = LLVMConstInlineAsm(t : TypeRef, asm_string : UInt8*, constraints : UInt8*, has_side_effects : Int32, is_align_stack : Int32) : ValueRef
-  {% unless LibLLVM::IS_LT_70 %}
+  {% if !LibLLVM::IS_LT_130 %}
+    fun get_inline_asm = LLVMGetInlineAsm(t : TypeRef, asm_string : UInt8*, asm_string_len : LibC::SizeT, constraints : UInt8*, constraints_len : LibC::SizeT, has_side_effects : Int32, is_align_stack : Int32, dialect : InlineAsmDialect, can_throw : Int32) : ValueRef
+  {% elsif !LibLLVM::IS_LT_70 %}
     fun get_inline_asm = LLVMGetInlineAsm(t : TypeRef, asm_string : UInt8*, asm_string_len : LibC::SizeT, constraints : UInt8*, constraints_len : LibC::SizeT, has_side_effects : Int32, is_align_stack : Int32, dialect : InlineAsmDialect) : ValueRef
   {% end %}
   fun create_context = LLVMContextCreate : ContextRef
