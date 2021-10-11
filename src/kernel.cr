@@ -93,7 +93,7 @@ ARGF = IO::ARGF.new(ARGV, STDIN)
 EOL = {% if flag?(:win32) %}
         "\r\n"
       {% else %}
-        '\n'
+        "\n"
       {% end %}
 
 # Repeatedly executes the block.
