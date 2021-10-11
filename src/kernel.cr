@@ -89,6 +89,13 @@ ARGV = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
 # ```
 ARGF = IO::ARGF.new(ARGV, STDIN)
 
+# The newline constant
+EOL = {% if flag?(:win32) %}
+        "\r\n"
+      {% else %}
+        '\n'
+      {% end %}
+
 # Repeatedly executes the block.
 #
 # ```
