@@ -54,6 +54,18 @@ class File < IO::FileDescriptor
   # The file/directory separator string. `"/"` on all platforms.
   SEPARATOR_STRING = "/"
 
+  PATH_SEPARATOR = {% if flag?(:win32) %}
+                     ';'
+                   {% else %}
+                     ':'
+                   {% end %}
+
+  PATH_SEPARATOR_STRING = {% if flag?(:win32) %}
+                            ";"
+                          {% else %}
+                            ":"
+                          {% end %}
+
   # :nodoc:
   DEFAULT_CREATE_PERMISSIONS = File::Permissions.new(0o644)
 
