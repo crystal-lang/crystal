@@ -90,7 +90,7 @@
 - Implement `Enumerable#tally_by` ([#10922](https://github.com/crystal-lang/crystal/pull/10922), thanks @caspiano)
 - Add the `Indexable::Mutable(T)` module ([#11059](https://github.com/crystal-lang/crystal/pull/11059), thanks @HertzDevil)
 - Remove restriction of bsearch block output type ([#11212](https://github.com/crystal-lang/crystal/pull/11212), thanks @straight-shoota)
-- Add and improve type restrictions of block arguments ([#10467](https://github.com/crystal-lang/crystal/pull/10467), [#11246](https://github.com/crystal-lang/crystal/pull/11246), thanks @straight-shoota, thanks @HertzDevil)
+- Add and improve type restrictions of block arguments ([#10467](https://github.com/crystal-lang/crystal/pull/10467), [#11246](https://github.com/crystal-lang/crystal/pull/11246), [#11267](https://github.com/crystal-lang/crystal/pull/11267, thanks @straight-shoota, thanks @HertzDevil, thanks @beta-ziliani)
 - **(performance)** Optimize `#rotate!` ([#11198](https://github.com/crystal-lang/crystal/pull/11198), thanks @HertzDevil)
 
 ### Concurrency
@@ -205,6 +205,10 @@
 - PR template ([#10894](https://github.com/crystal-lang/crystal/pull/10894), thanks @beta-ziliani)
 - Add github-changelog script ([#11155](https://github.com/crystal-lang/crystal/pull/11155), thanks @straight-shoota)
 - Add `make install` ([#10878](https://github.com/crystal-lang/crystal/pull/10878), thanks @straight-shoota)
+- [CI] Sanitize version from branch name ([#11294](https://github.com/crystal-lang/crystal/pull/11294), thanks @straight-shoota)
+- Update libgc to 8.2.0 ([#11293](https://github.com/crystal-lang/crystal/pull/11293), thanks @straight-shoota)
+- [CI] Unify `maintenance_release` and `tagged_release` workflows ([#11273](https://github.com/crystal-lang/crystal/pull/11273), thanks @straight-shoota)
+- [CI] Update distribution-scripts (make install) ([#11307](https://github.com/crystal-lang/crystal/pull/11307), thanks @straight-shoota)
 
 # 1.1.1 (2021-07-26)
 
