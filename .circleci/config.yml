@@ -499,7 +499,7 @@ workflows:
           requires:
             - dist_docker
       - publish_docker:
-          filters: *maintenance
+          filters: *release
           requires:
             - dist_docker
       - dist_docs:
