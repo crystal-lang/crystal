@@ -33,6 +33,7 @@ function test() {
 pushd $BUILD_DIR >/dev/null
 
 test proc-pointer-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
+test pass-closure-to-c-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 
 test memset.cr "--cross-compile --target i386-apple-darwin --prelude=empty --no-debug" X32
 test memset.cr "--cross-compile --target i386-unknown-linux-gnu --prelude=empty --no-debug" X32
