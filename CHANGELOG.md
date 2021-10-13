@@ -3,6 +3,7 @@
 
 ## Compiler
 
+- Fix variance checks between generic instances for `Proc#call` and abstract defs. ([#10899](https://github.com/crystal-lang/crystal/pull/10899), thanks @HertzDevil)
 - Fix `proc_spec` forcing normal compilation instead of JIT ([#10964](https://github.com/crystal-lang/crystal/pull/10964), thanks @straight-shoota)
 - Fix `ProcNotation#to_s` remove whitespace for nil output type ([#10935](https://github.com/crystal-lang/crystal/pull/10935), thanks @straight-shoota)
 - Compiler: carry FileModule information inside Block ([#11039](https://github.com/crystal-lang/crystal/pull/11039), thanks @asterite)
@@ -211,6 +212,10 @@
 - [CI] Update distribution-scripts (make install) ([#11307](https://github.com/crystal-lang/crystal/pull/11307), thanks @straight-shoota)
 - [CI] Enable publish docker images on tagged release ([#11309](https://github.com/crystal-lang/crystal/pull/11309), thanks @straight-shoota)
 - [CI] Update distribution-scripts (fix for libgc in alpine Docker image) ([#11310](https://github.com/crystal-lang/crystal/pull/11310), thanks @straight-shoota)
+- [CI] Pin macOS runner to 10.15 ([#11282](https://github.com/crystal-lang/crystal/pull/11282), thanks @straight-shoota)
+- [CI] Fix `push_obs_nightly` ([#11301](https://github.com/crystal-lang/crystal/pull/11301), thanks @straight-shoota)
+- [CI] Update distribution-scripts ([#11285](https://github.com/crystal-lang/crystal/pull/11285), thanks @straight-shoota)
+- [CI] Remove i386 builds ([#11287](https://github.com/crystal-lang/crystal/pull/11287), thanks @straight-shoota)
 
 # 1.1.1 (2021-07-26)
 
@@ -387,7 +392,7 @@
 
 - Add support for type var splats inside `Tuple` during generic parameter substitution. ([#10232](https://github.com/crystal-lang/crystal/pull/10232), thanks @HertzDevil)
 - Fix: consider free vars in parameters of abstract def implementations before existing types, in particular fixing the creation of empty types. ([#10503](https://github.com/crystal-lang/crystal/pull/10503), thanks @HertzDevil)
-- Fix variance checks between generic instances for `Proc#call` and abstract defs. ([#10507](https://github.com/crystal-lang/crystal/pull/10507), [#10899](https://github.com/crystal-lang/crystal/pull/10899), thanks @HertzDevil)
+- Replace `Crystal::Type#covariant?` with `#implements?` ([#10507](https://github.com/crystal-lang/crystal/pull/10507), thanks @HertzDevil)
 - Fix error message when default parameter value doesn't match non-type restriction. ([#10515](https://github.com/crystal-lang/crystal/pull/10515), thanks @HertzDevil)
 - Fix type restriction logic for generic module instances. ([#10519](https://github.com/crystal-lang/crystal/pull/10519), thanks @HertzDevil)
 - Fix logic for subclass restricted against uninstantiated nested generic superclass. ([#10522](https://github.com/crystal-lang/crystal/pull/10522), [#10560](https://github.com/crystal-lang/crystal/pull/10560), thanks @HertzDevil)
