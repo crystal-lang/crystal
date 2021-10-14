@@ -935,7 +935,10 @@ module Crystal
     end
 
     def visit(node : Metaclass)
+      needs_parens = node.name.is_a?(Union)
+      @str << '(' if needs_parens
       node.name.accept self
+      @str << ')' if needs_parens
       @str << '.'
       @str << keyword("class")
       false
