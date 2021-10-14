@@ -32,6 +32,7 @@ function test() {
 
 pushd $BUILD_DIR >/dev/null
 
+test argless-initialize-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 test proc-pointer-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 
 test memset.cr "--cross-compile --target i386-apple-darwin --prelude=empty --no-debug" X32
