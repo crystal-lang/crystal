@@ -216,6 +216,22 @@ describe "Regex::MatchData" do
     end
   end
 
+  describe "#mark" do
+    it "returns the mark if found and matched" do
+      /X(*:A)Y|X(*:B)Z/.match("XY").not_nil!.mark.should eq "A"
+    end
+
+    it "returns nil if the match does not have a mark" do
+      match = /X(*:A)Y|X(*:B)Z|YZ/.match("YZ").should_not be_nil
+      match.mark.should be_nil
+    end
+
+    it "returns nil if the regex does not have a mark" do
+      match = /YZ/.match("YZ").should_not be_nil
+      match.mark.should be_nil
+    end
+  end
+
   describe "#named_captures" do
     it "gets a hash of named captures" do
       "Crystal".match(/(?<name1>Cr)y/).not_nil!.named_captures.should eq({"name1" => "Cr"})

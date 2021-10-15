@@ -39,8 +39,17 @@ class Regex
     # ```
     getter string : String
 
+    # Returns the name of the matched `(*MARK)` verb if any, otherwise `nil`.
+    #
+    # ```
+    # "XZ".match(/X(*:A)Y|X(*:B)Z/).not_nil!.mark # => B
+    # "XY".match(/X(*:A)Y|X(*:B)Z/).not_nil!.mark # => A
+    # "foo".match(/foo/).not_nil!.mark            # => nil
+    # ```
+    getter mark : String?
+
     # :nodoc:
-    def initialize(@regex : Regex, @code : LibPCRE::Pcre, @string : String, @pos : Int32, @ovector : Int32*, @group_size : Int32)
+    def initialize(@regex : Regex, @code : LibPCRE::Pcre, @string : String, @pos : Int32, @ovector : Int32*, @group_size : Int32, @mark : String?)
     end
 
     # Returns the number of elements in this match object.

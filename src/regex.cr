@@ -242,6 +242,8 @@ class Regex
   # ```
   getter source : String
 
+  @mark : UInt8* = Pointer(UInt8).null
+
   # Creates a new `Regex` out of the given source `String`.
   #
   # ```
@@ -259,7 +261,17 @@ class Regex
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
     @extra = LibPCRE.study(@re, 0, out studyerrptr)
     raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.null? && studyerrptr
+
+    unless @extra.null?
+      @extra.value.flags = @extra.value.flags | LibPCRE::EXTRA_MARK
+      @extra.value.mark = pointerof(@mark)
+    end
+
     LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
+  end
+
+  def finalize
+    LibPCRE.free_study @extra
   end
 
   # Determines Regex's source validity. If it is, `nil` is returned.
@@ -491,7 +503,7 @@ class Regex
     ovector_size = (@captures + 1) * 3
     ovector = Pointer(Int32).malloc(ovector_size)
     if internal_matches?(str, byte_index, options, ovector, ovector_size)
-      match = MatchData.new(self, @re, str, byte_index, ovector, @captures)
+      match = MatchData.new(self, @re, str, byte_index, ovector, @captures, @mark.null? ? nil : String.new(@mark))
     else
       match = nil
     end
