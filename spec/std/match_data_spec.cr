@@ -5,27 +5,36 @@ describe "Regex::MatchData" do
     /f(o)(x)/.match("the fox").inspect.should eq(%(Regex::MatchData("fox" 1:"o" 2:"x")))
     /f(o)(x)?/.match("the fort").inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
     /fox/.match("the fox").inspect.should eq(%(Regex::MatchData("fox")))
+    /(X(*:A)Y)|X(*:B)Z/.match("XY").to_s.should eq %(Regex::MatchData("XY" 1:"XY" MARK:"A"))
   end
 
   it "does to_s" do
     /f(o)(x)/.match("the fox").to_s.should eq(%(Regex::MatchData("fox" 1:"o" 2:"x")))
     /f(?<lettero>o)(?<letterx>x)/.match("the fox").to_s.should eq(%(Regex::MatchData("fox" lettero:"o" letterx:"x")))
     /fox/.match("the fox").to_s.should eq(%(Regex::MatchData("fox")))
+    /(X(*:A)Y)|X(*:B)Z/.match("XY").to_s.should eq %(Regex::MatchData("XY" 1:"XY" MARK:"A"))
   end
 
-  it "does pretty_print" do
-    /f(o)(x)?/.match("the fo").pretty_inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
+  describe "#pretty_print" do
+    it "without mark" do
+      /f(o)(x)?/.match("the fo").pretty_inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
 
-    expected = <<-REGEX
+      expected = <<-REGEX
       Regex::MatchData("foooo"
        first:"f"
        second:"oooo"
        third:"ooo"
        fourth:"oo"
-       fifth:"o")
+       fifth:"o"
+       MARK:"FOO")
       REGEX
 
-    /(?<first>f)(?<second>o(?<third>o(?<fourth>o(?<fifth>o))))/.match("fooooo").pretty_inspect.should eq(expected)
+      /(?<first>f)(?<second>o(?<third>o(?<fourth>o(?<fifth>o(*:FOO)))))/.match("fooooo").pretty_inspect.should eq(expected)
+    end
+
+    it "with mark" do
+      /(X(*:A)Y)|X(*:B)Z/.match("XY").pretty_inspect.should eq %(Regex::MatchData("XY" 1:"XY" MARK:"A"))
+    end
   end
 
   it "does size" do

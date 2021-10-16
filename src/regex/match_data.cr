@@ -369,6 +369,12 @@ class Regex
         io << ' ' << name_table.fetch(i, i) << ':' if i > 0
         self[i]?.inspect(io)
       end
+
+      if @mark
+        io << " MARK:"
+        self.mark.inspect io
+      end
+
       io << ')'
     end
 
@@ -389,6 +395,12 @@ class Regex
               end
             end
           end
+        end
+
+        if @mark
+          pp.breakable
+          pp.text "MARK:"
+          @mark.pretty_print pp
         end
       end
     end
