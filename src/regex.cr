@@ -257,9 +257,13 @@ class Regex
 
     @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
-    @extra = LibPCRE.study(@re, 0, out studyerrptr)
+    @extra = LibPCRE.study(@re, LibPCRE::STUDY_JIT_COMPILE, out studyerrptr)
     raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.null? && studyerrptr
     LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
+  end
+
+  def finalize
+    LibPCRE.free_study @extra
   end
 
   # Determines Regex's source validity. If it is, `nil` is returned.
