@@ -14,6 +14,8 @@ module Crystal
     alias DebugFilename = Crystal::VirtualFile | String?
 
     @current_debug_location : Location?
+
+    # We cache these either for performance, memory use, or protection from the GC
     @debug_files_per_module = {} of LLVM::Module => Hash(DebugFilename, LibLLVMExt::Metadata)
     @debug_types_per_module = {} of LLVM::Module => Hash(Type, LibLLVMExt::Metadata?)
 
@@ -34,12 +36,12 @@ module Crystal
       # DebugInfo generation in LLVM by default uses a higher version of dwarf
       # than OS X currently understands. Android has the same problem.
       if @program.has_flag?("osx") || @program.has_flag?("android")
-        mod.add_named_metadata_operand("llvm.module.flags",
-          metadata([LLVM::ModuleFlag::Warning.value, "Dwarf Version", 2], context: mod.context))
+        dwarf_version = metadata([LLVM::ModuleFlag::Warning.value, "Dwarf Version", 2], context: mod.context)
+        mod.metadata_operands.add("llvm.module.flags", dwarf_version)
       end
 
-      mod.add_named_metadata_operand("llvm.module.flags",
-        metadata([LLVM::ModuleFlag::Warning.value, "Debug Info Version", LLVM::DEBUG_METADATA_VERSION], context: mod.context))
+      di_info_version = metadata([LLVM::ModuleFlag::Warning.value, "Debug Info Version", LLVM::DEBUG_METADATA_VERSION], context: mod.context)
+      mod.metadata_operands.add("llvm.module.flags", di_info_version)
     end
 
     def fun_metadatas

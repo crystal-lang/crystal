@@ -55,6 +55,10 @@ class LLVM::Module
     GlobalCollection.new(self)
   end
 
+  def metadata_operands
+    MetadataOperandCollection.new(self)
+  end
+
   def write_bitcode_to_file(filename : String)
     LibLLVM.write_bitcode_to_file self, filename
   end
@@ -93,10 +97,6 @@ class LLVM::Module
 
   def new_function_pass_manager
     FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
-  end
-
-  def add_named_metadata_operand(name : String, value : Value) : Nil
-    LibLLVM.add_named_metadata_operand(self, name, value)
   end
 
   def ==(other : self)
