@@ -6,6 +6,9 @@ class LLVM::Module
 
   getter context : Context
 
+  # Same deal with metadata
+  @metadata_operands : MetadataOperandCollection?
+
   {% if LibLLVM::IS_38 %}
     def initialize(@unwrap : LibLLVM::ModuleRef, @name : String, @context : Context)
       @owned = false
@@ -56,7 +59,7 @@ class LLVM::Module
   end
 
   def metadata_operands
-    MetadataOperandCollection.new(self)
+    @metadata_operands ||= MetadataOperandCollection.new(self)
   end
 
   def write_bitcode_to_file(filename : String)
