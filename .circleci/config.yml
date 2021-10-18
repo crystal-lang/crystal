@@ -28,6 +28,7 @@ jobs:
       TRAVIS_OS_NAME: linux
       ARCH: x86_64
       ARCH_CMD: linux64
+    resource_class: large
     steps:
       - checkout
       - run: bin/ci prepare_system
@@ -55,6 +56,7 @@ jobs:
       TRAVIS_OS_NAME: linux
       ARCH: x86_64-musl
       ARCH_CMD: linux64
+    resource_class: large
     steps: *ci_steps
 
   test_darwin:
@@ -422,6 +424,7 @@ jobs:
       TRAVIS_OS_NAME: linux
       ARCH: x86_64
       ARCH_CMD: linux64
+    resource_class: large
     steps:
       - attach_workspace:
           at: /tmp/workspace
