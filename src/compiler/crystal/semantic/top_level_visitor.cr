@@ -1090,12 +1090,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def check_ditto(node : Def | Assign | FunDef | Const | Macro, location : Location?) : Nil
     return if !@program.wants_doc?
-    stripped_doc = node.doc.try &.strip
-    if stripped_doc == ":ditto:"
-      node.doc = @last_doc
-    else
-      @last_doc = node.doc
+
+    if stripped_doc = node.doc.try &.strip
+      if stripped_doc == ":ditto:"
+        node.doc = @last_doc
+        return
+      elsif stripped_doc.starts_with?(":ditto:\n")
+        node.doc = "#{@last_doc}\n\n#{stripped_doc.lchop(":ditto:\n").lchop("\n")}"
+        return
+      end
     end
+
+    @last_doc = node.doc
   end
 
   def annotations_doc(annotations)

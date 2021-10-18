@@ -108,6 +108,71 @@ describe "Semantic: doc" do
       bar2 = program.lookup_macros("bar2").as(Array(Macro)).first
       bar2.doc.should eq("Hello")
     end
+
+    it "amend previous doc" do
+      result = semantic %(
+        class Foo
+          # Hello
+          def bar
+          end
+
+          # :ditto:
+          #
+          # World
+          def bar2
+          end
+        end
+      ), wants_doc: true
+      program = result.program
+      foo = program.types["Foo"]
+      bar = foo.lookup_defs("bar2").first
+      bar.doc.should eq("Hello\n\nWorld")
+    end
+
+    it "amend previous doc (without empty line)" do
+      result = semantic %(
+        class Foo
+          # Hello
+          def bar
+          end
+
+          # :ditto:
+          # World
+          def bar2
+          end
+        end
+      ), wants_doc: true
+      program = result.program
+      foo = program.types["Foo"]
+      bar = foo.lookup_defs("bar2").first
+      bar.doc.should eq("Hello\n\nWorld")
+    end
+
+    it ":ditto: references last non-ditto doc" do
+      result = semantic %(
+        class Foo
+          # Hello
+          def bar
+          end
+
+          # :ditto:
+          #
+          # World
+          def bar2
+          end
+
+          # :ditto:
+          #
+          # Crystal
+          def bar3
+          end
+        end
+      ), wants_doc: true
+      program = result.program
+      foo = program.types["Foo"]
+      bar = foo.lookup_defs("bar3").first
+      bar.doc.should eq("Hello\n\nCrystal")
+    end
   end
 
   it "stores doc for def with visibility" do
