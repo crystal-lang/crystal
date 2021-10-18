@@ -6,9 +6,6 @@ class LLVM::Module
 
   getter context : Context
 
-  # Same deal with metadata
-  @metadata_operands : MetadataOperandCollection?
-
   {% if LibLLVM::IS_38 %}
     def initialize(@unwrap : LibLLVM::ModuleRef, @name : String, @context : Context)
       @owned = false
@@ -58,8 +55,24 @@ class LLVM::Module
     GlobalCollection.new(self)
   end
 
-  def metadata_operands
-    @metadata_operands ||= MetadataOperandCollection.new(self)
+  def add_flag(module_flag : ModuleFlag, key : String, val : Value)
+    {% if LibLLVM::IS_LT_70 %}
+      values = [
+        context.int32.const_int(module_flag.value),
+        context.md_string(key.to_s),
+        val
+      ]
+      md_node = context.md_node(values)
+      LibLLVM.add_named_metadata_operand(self, "llvm.module.flags", md_node)
+    {% else %}
+      LibLLVM.add_module_flag(
+        self,
+        module_flag,
+        key,
+        key.bytesize,
+        LibLLVM.metadata_as_value(val.to_unsafe)
+      )
+    {% end %}
   end
 
   def write_bitcode_to_file(filename : String)

@@ -9,15 +9,15 @@ module Crystal
     #
     CPP_LANG_DEBUG_IDENTIFIER = 0x0004_u32
 
-    record FunMetadata, filename : String, metadata : LibLLVMExt::Metadata
+    record FunMetadata, filename : String, metadata : LibLLVM::MetadataRef
 
     alias DebugFilename = Crystal::VirtualFile | String?
 
     @current_debug_location : Location?
 
     # We cache these either for performance, memory use, or protection from the GC
-    @debug_files_per_module = {} of LLVM::Module => Hash(DebugFilename, LibLLVMExt::Metadata)
-    @debug_types_per_module = {} of LLVM::Module => Hash(Type, LibLLVMExt::Metadata?)
+    @debug_files_per_module = {} of LLVM::Module => Hash(DebugFilename, LibLLVM::MetadataRef)
+    @debug_types_per_module = {} of LLVM::Module => Hash(Type, LibLLVM::MetadataRef?)
 
     def di_builder(llvm_module = @llvm_mod || @main_mod)
       di_builders = @di_builders ||= {} of LLVM::Module => LLVM::DIBuilder
@@ -36,19 +36,25 @@ module Crystal
       # DebugInfo generation in LLVM by default uses a higher version of dwarf
       # than OS X currently understands. Android has the same problem.
       if @program.has_flag?("osx") || @program.has_flag?("android")
-        dwarf_version = metadata([LLVM::ModuleFlag::Warning.value, "Dwarf Version", 2], context: mod.context)
-        mod.metadata_operands.add("llvm.module.flags", dwarf_version)
+        mod.add_flag(
+          LLVM::ModuleFlag::Warning,
+          "Dwarf Version",
+          mod.context.int32.const_int(2)
+        )
       end
 
-      di_info_version = metadata([LLVM::ModuleFlag::Warning.value, "Debug Info Version", LLVM::DEBUG_METADATA_VERSION], context: mod.context)
-      mod.metadata_operands.add("llvm.module.flags", di_info_version)
+      mod.add_flag(
+        LLVM::ModuleFlag::Warning,
+        "Debug Info Version",
+        mod.context.int32.const_int(LLVM::DEBUG_METADATA_VERSION)
+      )
     end
 
     def fun_metadatas
       @fun_metadatas ||= {} of LLVM::Function => Array(FunMetadata)
     end
 
-    def fun_metadata_type(debug_types = [] of LibLLVMExt::Metadata)
+    def fun_metadata_type(debug_types = [] of LibLLVM::MetadataRef)
       if debug_types.empty?
         int = di_builder.create_basic_type("int", 32, 32, LLVM::DwarfTypeEncoding::Signed)
         debug_types << int
@@ -60,13 +66,13 @@ module Crystal
     def debug_type_cache
       # We must cache debug types per module so metadata of a type
       # from one module isn't incorrectly used in another module.
-      @debug_types_per_module[@llvm_mod] ||= {} of Type => LibLLVMExt::Metadata?
+      @debug_types_per_module[@llvm_mod] ||= {} of Type => LibLLVM::MetadataRef?
     end
 
     def debug_files_cache
       # We must cache debug files per module so metadata of a type
       # from one module isn't incorrectly used in another module.
-      @debug_files_per_module[@llvm_mod] ||= {} of DebugFilename => LibLLVMExt::Metadata
+      @debug_files_per_module[@llvm_mod] ||= {} of DebugFilename => LibLLVM::MetadataRef
     end
 
     def current_debug_file
@@ -127,7 +133,7 @@ module Crystal
 
     def create_debug_type(type : InstanceVarContainer, original_type : Type)
       ivars = type.all_instance_vars
-      element_types = [] of LibLLVMExt::Metadata
+      element_types = [] of LibLLVM::MetadataRef
       struct_type = llvm_struct_type(type)
 
       tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
@@ -163,7 +169,7 @@ module Crystal
     end
 
     def create_debug_type(type : MixedUnionType, original_type : Type)
-      element_types = [] of LibLLVMExt::Metadata
+      element_types = [] of LibLLVM::MetadataRef
       struct_type = llvm_type(type)
       struct_type_size = @program.target_machine.data_layout.size_in_bits(struct_type)
       is_struct = struct_type.struct_element_types.size == 1
@@ -196,7 +202,7 @@ module Crystal
     end
 
     def create_debug_type(type : NilableReferenceUnionType | ReferenceUnionType, original_type : Type)
-      element_types = [] of LibLLVMExt::Metadata
+      element_types = [] of LibLLVM::MetadataRef
       struct_type = llvm_type(type)
       tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
       debug_type_cache[original_type] = tmp_debug_type
@@ -234,7 +240,7 @@ module Crystal
 
     def create_debug_type(type : TupleInstanceType, original_type : Type)
       ivars = type.tuple_types
-      element_types = [] of LibLLVMExt::Metadata
+      element_types = [] of LibLLVM::MetadataRef
       struct_type = llvm_struct_type(type)
 
       tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
@@ -262,7 +268,7 @@ module Crystal
 
     def create_debug_type(type : NamedTupleInstanceType, original_type : Type)
       ivars = type.entries
-      element_types = [] of LibLLVMExt::Metadata
+      element_types = [] of LibLLVM::MetadataRef
       struct_type = llvm_struct_type(type)
 
       tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
@@ -396,22 +402,6 @@ module Crystal
       }
     end
 
-    def metadata(args, context = llvm_context)
-      values = args.map do |value|
-        case value
-        when String         then context.md_string(value.to_s)
-        when Symbol         then context.md_string(value.to_s)
-        when Number         then int32(value)
-        when Bool           then int1(value ? 1 : 0)
-        when LLVM::Value    then value
-        when LLVM::Function then value.to_value
-        when Nil            then LLVM::Value.null
-        else                     raise "Unsupported value type: #{value.class}"
-        end
-      end
-      context.md_node(values)
-    end
-
     def set_current_debug_location(node : ASTNode)
       location = node.location
       if location
@@ -423,7 +413,7 @@ module Crystal
 
     def get_current_debug_scope(location)
       if context.fun.name == MAIN_NAME
-        main_scopes = (@main_scopes ||= {} of {String, String} => LibLLVMExt::Metadata)
+        main_scopes = (@main_scopes ||= {} of {String, String} => LibLLVM::MetadataRef)
         file, dir = file_and_dir(location.filename)
         main_scope = main_scopes[{file, dir}] ||= begin
           di_builder = di_builder(@main_mod)
@@ -468,7 +458,7 @@ module Crystal
       builder.set_current_debug_location(0, 0, nil)
     end
 
-    def emit_fun_debug_metadata(func, fun_name, location, *, debug_types = [] of LibLLVMExt::Metadata, is_optimized = false)
+    def emit_fun_debug_metadata(func, fun_name, location, *, debug_types = [] of LibLLVM::MetadataRef, is_optimized = false)
       filename = location.try(&.original_filename) || "??"
       line_number = location.try(&.line_number) || 0
 

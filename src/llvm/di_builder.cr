@@ -13,7 +13,7 @@ struct LLVM::DIBuilder
     LibLLVMExt.di_builder_create_basic_type(self, name, size_in_bits, align_in_bits, encoding.value)
   end
 
-  def get_or_create_type_array(types : Array(LibLLVMExt::Metadata))
+  def get_or_create_type_array(types : Array(LibLLVM::MetadataRef))
     LibLLVMExt.di_builder_get_or_create_type_array(self, types, types.size)
   end
 
@@ -55,7 +55,7 @@ struct LLVM::DIBuilder
     LibLLVMExt.di_builder_insert_declare_at_end(self, storage, var_info, expr, dl, block)
   end
 
-  def get_or_create_array(elements : Array(LibLLVMExt::Metadata))
+  def get_or_create_array(elements : Array(LibLLVM::MetadataRef))
     LibLLVMExt.di_builder_get_or_create_array(self, elements, elements.size)
   end
 

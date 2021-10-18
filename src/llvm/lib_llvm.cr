@@ -51,6 +51,7 @@ lib LibLLVM
 
   type ContextRef = Void*
   type ModuleRef = Void*
+  type MetadataRef = Void*
   type TypeRef = Void*
   type ValueRef = Void*
   type BasicBlockRef = Void*
@@ -84,6 +85,9 @@ lib LibLLVM
   fun add_function = LLVMAddFunction(module : ModuleRef, name : UInt8*, type : TypeRef) : ValueRef
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : UInt8*) : ValueRef
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef*, count : Int32)
+  {% unless LibLLVM::IS_LT_70 %}
+    fun add_module_flag = LLVMAddModuleFlag(mod : ModuleRef, behavior : ModuleFlag, key : UInt8*, len : LibC::SizeT, val : MetadataRef)
+  {% end %}
   fun add_named_metadata_operand = LLVMAddNamedMetadataOperand(mod : ModuleRef, name : UInt8*, val : ValueRef)
   fun add_target_dependent_function_attr = LLVMAddTargetDependentFunctionAttr(fn : ValueRef, a : LibC::Char*, v : LibC::Char*)
   fun array_type = LLVMArrayType(element_type : TypeRef, count : UInt32) : TypeRef
@@ -390,6 +394,10 @@ lib LibLLVM
   fun get_md_kind_id_in_context = LLVMGetMDKindIDInContext(c : ContextRef, name : UInt8*, slen : UInt32) : UInt32
   fun md_node_in_context = LLVMMDNodeInContext(c : ContextRef, values : ValueRef*, count : Int32) : ValueRef
   fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : UInt8*, length : Int32) : ValueRef
+
+  {% unless LibLLVM::IS_LT_70 %}
+    fun metadata_as_value = LLVMMetadataAsValue(c : ContextRef, md : MetadataRef) : ValueRef
+  {% end %}
 
   fun append_basic_block_in_context = LLVMAppendBasicBlockInContext(ctx : ContextRef, fn : ValueRef, name : UInt8*) : BasicBlockRef
   fun create_builder_in_context = LLVMCreateBuilderInContext(c : ContextRef) : BuilderRef
