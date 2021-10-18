@@ -62,35 +62,52 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for const when using ditto" do
-    result = semantic %(
-      # A number
-      ONE = 1
+  describe ":ditto:" do
+    it "stores doc for const" do
+      result = semantic %(
+        # A number
+        ONE = 1
 
-      # :ditto:
-      TWO = 2
-    ), wants_doc: true
-    program = result.program
-    program.types["ONE"].doc.should eq "A number"
-    program.types["TWO"].doc.should eq "A number"
-  end
+        # :ditto:
+        TWO = 2
+      ), wants_doc: true
+      program = result.program
+      program.types["ONE"].doc.should eq "A number"
+      program.types["TWO"].doc.should eq "A number"
+    end
 
-  it "stores doc for def when using ditto" do
-    result = semantic %(
-      class Foo
+    it "stores doc for def" do
+      result = semantic %(
+        class Foo
+          # Hello
+          def bar
+          end
+
+          # :ditto:
+          def bar2
+          end
+        end
+      ), wants_doc: true
+      program = result.program
+      foo = program.types["Foo"]
+      bar = foo.lookup_defs("bar2").first
+      bar.doc.should eq("Hello")
+    end
+
+    it "stores doc for macro" do
+      result = semantic %(
         # Hello
-        def bar
+        macro bar
         end
 
         # :ditto:
-        def bar2
+        macro bar2
         end
-      end
-    ), wants_doc: true
-    program = result.program
-    foo = program.types["Foo"]
-    bar = foo.lookup_defs("bar2").first
-    bar.doc.should eq("Hello")
+      ), wants_doc: true
+      program = result.program
+      bar2 = program.lookup_macros("bar2").as(Array(Macro)).first
+      bar2.doc.should eq("Hello")
+    end
   end
 
   it "stores doc for def with visibility" do
@@ -146,21 +163,6 @@ describe "Semantic: doc" do
     foo = program.types["Foo"]
     bar = foo.lookup_defs("bar").first
     bar.doc.should eq("Hello")
-  end
-
-  it "stores doc for macro when using ditto" do
-    result = semantic %(
-      # Hello
-      macro bar
-      end
-
-      # :ditto:
-      macro bar2
-      end
-    ), wants_doc: true
-    program = result.program
-    bar2 = program.lookup_macros("bar2").as(Array(Macro)).first
-    bar2.doc.should eq("Hello")
   end
 
   {% for def_type in %w[def macro].map &.id %}
