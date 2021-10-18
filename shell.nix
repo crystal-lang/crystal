@@ -53,12 +53,12 @@ let
   latestCrystalBinary = genericBinary ({
     x86_64-darwin = {
       url = "https://github.com/crystal-lang/crystal/releases/download/1.2.0/crystal-1.2.0-1-darwin-universal.tar.gz";
-      sha256 = "sha256:0amx2ggcycg9sqacfiq7b7w00cjras17sh466y3k645r8gp09zby";
+      sha256 = "sha256:00bc2i0qnx7x1z8qqx3x5fsgzcij4b61vsibgddddvwpzk1qhaaj";
     };
 
     x86_64-linux = {
       url = "https://github.com/crystal-lang/crystal/releases/download/1.2.0/crystal-1.2.0-1-linux-x86_64.tar.gz";
-      sha256 = "sha256:13ask28zqvg8vawldy5axc9y1ijsd7ggah5kzmnk7jxhf3z1ambx";
+      sha256 = "sha256:0whz250ki9l8dw7kwk0wh27vn2p9n5w7007wqb8sd3hm38a2mdha";
     };
   }.${pkgs.stdenv.system});
 
