@@ -1095,8 +1095,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       if stripped_doc == ":ditto:"
         node.doc = @last_doc
         return
-      elsif stripped_doc.starts_with?(":ditto:\n")
-        node.doc = "#{@last_doc}\n\n#{stripped_doc.lchop(":ditto:\n").lchop("\n")}"
+      elsif appendix = stripped_doc.lchop?(":ditto:\n")
+        node.doc = "#{@last_doc}\n\n#{appendix.lchop('\n')}"
         return
       end
     end
