@@ -60,7 +60,7 @@ class LLVM::Module
       values = [
         context.int32.const_int(module_flag.value),
         context.md_string(key.to_s),
-        val
+        val,
       ]
       md_node = context.md_node(values)
       LibLLVM.add_named_metadata_operand(self, "llvm.module.flags", md_node)
