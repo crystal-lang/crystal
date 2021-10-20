@@ -176,6 +176,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(asm("nop" :::: "volatile"))
   expect_to_s %(asm("nop" :: "a"(1) :: "volatile"))
   expect_to_s %(asm("nop" ::: "e" : "volatile"))
+  expect_to_s %(asm("bl trap" :::: "unwind"))
   expect_to_s %[(1..)]
   expect_to_s %[..3]
   expect_to_s "offsetof(Foo, @bar)"
