@@ -1492,7 +1492,7 @@ module Crystal
         @str << ' '
       end
       @str << ":"
-      if node.volatile? || node.alignstack? || node.intel?
+      if node.volatile? || node.alignstack? || node.intel? || node.can_throw?
         @str << ' '
         comma = false
         if node.volatile?
@@ -1508,6 +1508,10 @@ module Crystal
           @str << ", " if comma
           @str << %("intel")
           comma = true
+        end
+        if node.can_throw?
+          @str << ", " if comma
+          @str << %("unwind")
         end
       end
       @str << ')'
