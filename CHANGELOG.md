@@ -10,7 +10,7 @@
 
 ### Runtime
 
-- Move the nodoc flags to the right place to hide the __mul* functions. ([#11326](https://github.com/crystal-lang/crystal/pull/11326), thanks @wyhaines)
+- Move the `:nodoc:` flags to the right place to hide the `__mul*` functions. ([#11326](https://github.com/crystal-lang/crystal/pull/11326), thanks @wyhaines)
 
 ## Tools
 
