@@ -1,3 +1,20 @@
+# 1.2.1 (2021-10-21)
+
+## Compiler
+
+- Adding location to the Path returned by the literal expander for regex ([#11334](https://github.com/crystal-lang/crystal/pull/11334), thanks @beta-ziliani)
+
+## Standard Library
+
+- Add support for LLVM 13 ([#11302](https://github.com/crystal-lang/crystal/pull/11302), thanks @maxfierke)
+
+### Runtime
+
+- Move the nodoc flags to the right place to hide the __mul* functions. ([#11326](https://github.com/crystal-lang/crystal/pull/11326), thanks @wyhaines)
+
+## Tools
+
+- Update markd subtree to v0.4.2 ([#11338](https://github.com/crystal-lang/crystal/pull/11338), thanks @straight-shoota)
 
 # 1.2.0 (2021-10-13)
 
