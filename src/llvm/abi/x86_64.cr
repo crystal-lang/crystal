@@ -3,8 +3,8 @@ require "../abi"
 # Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi_x86_64.rs
 # See also, section 3.2.3 of the System V Application Binary Interface AMD64 Architecture Processor Supplement
 class LLVM::ABI::X86_64 < LLVM::ABI
-  MAX_INT_REGS = 6   # %rdi, %rsi, %rdx, %rcx, %r8, %r9
-  MAX_SSE_REGS = 8   # %xmm0-%xmm7
+  MAX_INT_REGS = 6 # %rdi, %rsi, %rdx, %rcx, %r8, %r9
+  MAX_SSE_REGS = 8 # %xmm0-%xmm7
 
   def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context) : LLVM::ABI::FunctionType
     # registers available to pass arguments directly: int_regs can hold integers
