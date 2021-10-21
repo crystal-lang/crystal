@@ -43,8 +43,8 @@ macro assert_prints(call, str, *, file = __FILE__, line = __LINE__)
   String.build do |io|
     {% if call.receiver %}{{ call.receiver }}.{% end %}{{ call.name }}(
       io,
-      {% for arg in call.args %} ({{ arg }}), {% end %}
-      {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: ({{ narg.value }}), {% end %} {% end %}
+      {% for arg in call.args %} {{ arg }}, {% end %}
+      {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: {{ narg.value }}, {% end %} {% end %}
     ) {{ call.block }}
   end.should eq(%str), file: %file, line: %line
 
@@ -52,8 +52,8 @@ macro assert_prints(call, str, *, file = __FILE__, line = __LINE__)
     string_build_via_utf16 do |io|
       {% if call.receiver %}{{ call.receiver }}.{% end %}{{ call.name }}(
         io,
-        {% for arg in call.args %} ({{ arg }}), {% end %}
-        {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: ({{ narg.value }}), {% end %} {% end %}
+        {% for arg in call.args %} {{ arg }}, {% end %}
+        {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: {{ narg.value }}, {% end %} {% end %}
       ) {{ call.block }}
     end.should eq(%str), file: %file, line: %line
   {% end %}

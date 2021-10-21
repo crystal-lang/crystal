@@ -19,6 +19,7 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_130 = {{LibLLVM::VERSION.starts_with?("13.0")}}
     IS_120 = {{LibLLVM::VERSION.starts_with?("12.0")}}
     IS_111 = {{LibLLVM::VERSION.starts_with?("11.1")}}
     IS_110 = {{LibLLVM::VERSION.starts_with?("11.0")}}
@@ -39,6 +40,7 @@ end
     IS_LT_100 = IS_LT_90 || IS_90
     IS_LT_110 = IS_LT_100 || IS_100
     IS_LT_120 = IS_LT_110 || IS_110 || IS_111
+    IS_LT_130 = IS_LT_120 || IS_120
   end
 {% end %}
 
@@ -49,6 +51,7 @@ lib LibLLVM
 
   type ContextRef = Void*
   type ModuleRef = Void*
+  type MetadataRef = Void*
   type TypeRef = Void*
   type ValueRef = Void*
   type BasicBlockRef = Void*
@@ -82,6 +85,9 @@ lib LibLLVM
   fun add_function = LLVMAddFunction(module : ModuleRef, name : UInt8*, type : TypeRef) : ValueRef
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : UInt8*) : ValueRef
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef*, count : Int32)
+  {% unless LibLLVM::IS_LT_70 %}
+    fun add_module_flag = LLVMAddModuleFlag(mod : ModuleRef, behavior : ModuleFlag, key : UInt8*, len : LibC::SizeT, val : MetadataRef)
+  {% end %}
   fun add_named_metadata_operand = LLVMAddNamedMetadataOperand(mod : ModuleRef, name : UInt8*, val : ValueRef)
   fun add_target_dependent_function_attr = LLVMAddTargetDependentFunctionAttr(fn : ValueRef, a : LibC::Char*, v : LibC::Char*)
   fun array_type = LLVMArrayType(element_type : TypeRef, count : UInt32) : TypeRef
@@ -305,7 +311,9 @@ lib LibLLVM
   fun abi_alignment_of_type = LLVMABIAlignmentOfType(td : TargetDataRef, ty : TypeRef) : UInt32
   fun get_target_machine_target = LLVMGetTargetMachineTarget(t : TargetMachineRef) : TargetRef
   fun const_inline_asm = LLVMConstInlineAsm(t : TypeRef, asm_string : UInt8*, constraints : UInt8*, has_side_effects : Int32, is_align_stack : Int32) : ValueRef
-  {% unless LibLLVM::IS_LT_70 %}
+  {% if !LibLLVM::IS_LT_130 %}
+    fun get_inline_asm = LLVMGetInlineAsm(t : TypeRef, asm_string : UInt8*, asm_string_len : LibC::SizeT, constraints : UInt8*, constraints_len : LibC::SizeT, has_side_effects : Int32, is_align_stack : Int32, dialect : InlineAsmDialect, can_throw : Int32) : ValueRef
+  {% elsif !LibLLVM::IS_LT_70 %}
     fun get_inline_asm = LLVMGetInlineAsm(t : TypeRef, asm_string : UInt8*, asm_string_len : LibC::SizeT, constraints : UInt8*, constraints_len : LibC::SizeT, has_side_effects : Int32, is_align_stack : Int32, dialect : InlineAsmDialect) : ValueRef
   {% end %}
   fun create_context = LLVMContextCreate : ContextRef
@@ -386,6 +394,10 @@ lib LibLLVM
   fun get_md_kind_id_in_context = LLVMGetMDKindIDInContext(c : ContextRef, name : UInt8*, slen : UInt32) : UInt32
   fun md_node_in_context = LLVMMDNodeInContext(c : ContextRef, values : ValueRef*, count : Int32) : ValueRef
   fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : UInt8*, length : Int32) : ValueRef
+
+  {% unless LibLLVM::IS_LT_70 %}
+    fun metadata_as_value = LLVMMetadataAsValue(c : ContextRef, md : MetadataRef) : ValueRef
+  {% end %}
 
   fun append_basic_block_in_context = LLVMAppendBasicBlockInContext(ctx : ContextRef, fn : ValueRef, name : UInt8*) : BasicBlockRef
   fun create_builder_in_context = LLVMCreateBuilderInContext(c : ContextRef) : BuilderRef

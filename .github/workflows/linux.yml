@@ -11,7 +11,11 @@ jobs:
     env:
       ARCH: x86_64
       ARCH_CMD: linux64
+      DOCKER_TEST_PREFIX: crystallang/crystal:${{ matrix.crystal_bootstrap_version }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        crystal_bootstrap_version: [1.0.0, 1.1.1]
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
