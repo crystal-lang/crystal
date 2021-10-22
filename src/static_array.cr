@@ -158,6 +158,12 @@ struct StaticArray(T, N)
     StaticArray(U, N).new { |i| yield to_unsafe[i], offset + i }
   end
 
+  # :inherit:
+  def rotate!(n : Int = 1) : self
+    to_slice.rotate!(n)
+    self
+  end
+
   # Returns a slice that points to the elements of this static array.
   # Changes made to the returned slice also affect this static array.
   #

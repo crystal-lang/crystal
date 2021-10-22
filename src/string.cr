@@ -477,6 +477,36 @@ class String
     gen_to_ UInt64, UInt64
   end
 
+  # Same as `#to_i` but returns an `Int128`.
+  def to_i128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int128
+    to_i128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int128: #{self}") }
+  end
+
+  # Same as `#to_i` but returns an `Int128` or `nil`.
+  def to_i128?(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int128?
+    to_i128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { nil }
+  end
+
+  # Same as `#to_i` but returns an `Int128` or the block's value.
+  def to_i128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+    gen_to_ Int128, UInt128, Int128::MAX, (UInt128.new(Int128::MAX) + 1)
+  end
+
+  # Same as `#to_i` but returns an `UInt128`.
+  def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt128
+    to_u128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt128: #{self}") }
+  end
+
+  # Same as `#to_i` but returns an `UInt128` or `nil`.
+  def to_u128?(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt128?
+    to_u128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { nil }
+  end
+
+  # Same as `#to_i` but returns an `UInt128` or the block's value.
+  def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+    gen_to_ UInt128, UInt128
+  end
+
   # :nodoc:
   CHAR_TO_DIGIT = begin
     table = StaticArray(Int8, 256).new(-1_i8)

@@ -1,5 +1,7 @@
 require "spec"
 require "uri"
+require "uri/json"
+require "uri/yaml"
 require "../support/string"
 
 private def assert_uri(string, file = __FILE__, line = __LINE__, **args)
@@ -426,6 +428,42 @@ describe "URI" do
     end
   end
 
+  it ".encode_path_segment" do
+    assert_prints URI.encode_path_segment("hello"), "hello"
+    assert_prints URI.encode_path_segment("hello world"), "hello%20world"
+    assert_prints URI.encode_path_segment("hello%"), "hello%25"
+    assert_prints URI.encode_path_segment("hello%2"), "hello%252"
+    assert_prints URI.encode_path_segment("hello+"), "hello%2B"
+    assert_prints URI.encode_path_segment("hello+world"), "hello%2Bworld"
+    assert_prints URI.encode_path_segment("hello%2+world"), "hello%252%2Bworld"
+    assert_prints URI.encode_path_segment("なな"), "%E3%81%AA%E3%81%AA"
+    assert_prints URI.encode_path_segment(" !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~qй"), "%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F%3A%3B%3C%3D%3E%3F%40%5B%5C%5D%5E_%60%7B%7C%7D~q%D0%B9"
+    assert_prints URI.encode_path_segment("'Stop!' said Fred"), "%27Stop%21%27%20said%20Fred"
+    assert_prints URI.encode_path_segment("\n"), "%0A"
+    assert_prints URI.encode_path_segment("https://en.wikipedia.org/wiki/Crystal (programming language)"), "https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FCrystal%20%28programming%20language%29"
+    assert_prints URI.encode_path_segment("\xFF"), "%FF" # escapes invalid UTF-8 character
+    assert_prints URI.encode_path_segment("foo;bar;baz"), "foo%3Bbar%3Bbaz"
+    assert_prints URI.encode_path_segment("foo/bar/baz"), "foo%2Fbar%2Fbaz"
+    assert_prints URI.encode_path_segment("foo,bar,baz"), "foo%2Cbar%2Cbaz"
+  end
+
+  it ".encode_path" do
+    assert_prints URI.encode_path("hello"), "hello"
+    assert_prints URI.encode_path("hello world"), "hello%20world"
+    assert_prints URI.encode_path("hello%"), "hello%25"
+    assert_prints URI.encode_path("hello%2"), "hello%252"
+    assert_prints URI.encode_path("hello+"), "hello%2B"
+    assert_prints URI.encode_path("hello+world"), "hello%2Bworld"
+    assert_prints URI.encode_path("hello%2+world"), "hello%252%2Bworld"
+    assert_prints URI.encode_path("なな"), "%E3%81%AA%E3%81%AA"
+    assert_prints URI.encode_path(" !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~qй"), "%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-./%3A%3B%3C%3D%3E%3F%40%5B%5C%5D%5E_%60%7B%7C%7D~q%D0%B9"
+    assert_prints URI.encode_path("'Stop!' said Fred"), "%27Stop%21%27%20said%20Fred"
+    assert_prints URI.encode_path("\n"), "%0A"
+    assert_prints URI.encode_path("https://en.wikipedia.org/wiki/Crystal (programming language)"), "https%3A//en.wikipedia.org/wiki/Crystal%20%28programming%20language%29"
+    assert_prints URI.encode_path("\xFF"), "%FF" # escapes invalid UTF-8 character
+    assert_prints URI.encode_path("foo/bar/baz"), "foo/bar/baz"
+  end
+
   describe ".encode" do
     it_encodes("hello", "hello")
     it_encodes("hello world", "hello%20world")
@@ -754,5 +792,21 @@ describe "URI" do
     URI.unwrap_ipv6("127.0.0.1").should eq("127.0.0.1")
     URI.unwrap_ipv6("example.com").should eq("example.com")
     URI.unwrap_ipv6("[1234:5678::1]").should eq "1234:5678::1"
+  end
+
+  it ".from_json" do
+    URI.from_json(%("https://example.com")).should eq URI.new(scheme: "https", host: "example.com")
+  end
+
+  it "#to_json" do
+    URI.new(scheme: "https", host: "example.com").to_json.should eq %("https://example.com")
+  end
+
+  it ".from_yaml" do
+    URI.from_yaml(%("https://example.com")).should eq URI.new(scheme: "https", host: "example.com")
+  end
+
+  it "#to_yaml" do
+    URI.new(scheme: "https", host: "example.com").to_yaml.rchop("...\n").should eq %(--- https://example.com\n)
   end
 end

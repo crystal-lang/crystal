@@ -1,4 +1,58 @@
 class URI
+  # Encodes *string* so it can be safely placed as a potentially multi-segmented
+  # URI path, replacing special characters with URI escape sequences as needed.
+  #
+  # Unreserved characters such as ASCII letters, digits, and the characters
+  # `_.-~` are not encoded, as well as the character `/` which represent a
+  # segment separator in hierarchical paths ([RFC 3986 §3.3](https://datatracker.ietf.org/doc/html/rfc3986#section-3.3)).
+  #
+  # ```
+  # require "uri"
+  #
+  # URI.encode_path("foo/bar/baz")  # => "foo/bar/baz"
+  # URI.encode_path("hello world!") # => "hello%20world%21"
+  # URI.encode_path("put: it+й")    # => "put%3A%20it%2B%D0%B9"
+  # ```
+  #
+  # * `.decode` is the reverse operation.
+  # * `.encode_path_segment` encodes a single path segment, escaping `/`.
+  def self.encode_path(string : String) : String
+    String.build { |io| encode_path(io, string) }
+  end
+
+  # :ditto:
+  def self.encode_path(io : IO, string : String) : Nil
+    self.encode(string, io) { |byte| URI.unreserved?(byte) || '/' === byte }
+  end
+
+  # Encodes *string* so it can be safely placed inside a URI path segment,
+  # replacing special characters (including `/`) with URI escape sequences as needed.
+  #
+  # Unreserved characters such as ASCII letters, digits, and the characters
+  # `_.-~` are not encoded (see `.unreserved?`).
+  #
+  # ```
+  # require "uri"
+  #
+  # URI.encode_path_segment("foo;bar;baz")  # => "foo%3Bbar%3Bbaz"
+  # URI.encode_path_segment("foo/bar/baz")  # => "foo%2Fbar%2Fbaz"
+  # URI.encode_path_segment("foo,bar,baz")  # => "foo%2Cbar%2Cbaz"
+  # URI.encode_path_segment("hello world!") # => "hello%20world%21"
+  # URI.encode_path_segment("put: it+й")    # => "put%3A%20it%2B%D0%B9"
+  # ```
+  #
+  # * `.decode` is the reverse operation.
+  # * `.encode_path` encodes a path consisting of multiple segments, not escaping `/`.
+  # * `.encode_www_form` escapes space character as `+`.
+  def self.encode_path_segment(string : String) : String
+    String.build { |io| encode_path_segment(io, string) }
+  end
+
+  # :ditto:
+  def self.encode_path_segment(io : IO, string : String) : Nil
+    self.encode(string, io) { |byte| URI.unreserved?(byte) }
+  end
+
   # URL-decodes *string*.
   #
   # ```
@@ -60,6 +114,7 @@ class URI
   #
   # * `.decode` is the reverse operation.
   # * `.encode_www_form` also escapes reserved characters.
+  @[Deprecated("Use `.encode_path` instead.")]
   def self.encode(string : String, *, space_to_plus : Bool = false) : String
     String.build { |io| encode(string, io, space_to_plus: space_to_plus) }
   end
@@ -67,6 +122,7 @@ class URI
   # URL-encodes *string* and writes the result to *io*.
   #
   # See `.encode(string : String, *, space_to_plus : Bool = false) : String` for details.
+  @[Deprecated("Use `.encode_path` instead.")]
   def self.encode(string : String, io : IO, *, space_to_plus : Bool = false) : Nil
     self.encode(string, io, space_to_plus: space_to_plus) { |byte| URI.reserved?(byte) || URI.unreserved?(byte) }
   end
@@ -137,7 +193,7 @@ class URI
   # ```
   #
   # * `.decode_www_form` is the reverse operation.
-  # * `.encode` does not escape reserved characters.
+  # * `.encode_path` escapes space character as `%20`.
   def self.encode_www_form(string : String, *, space_to_plus : Bool = true) : String
     String.build do |io|
       encode_www_form(string, io, space_to_plus: space_to_plus)
@@ -156,18 +212,30 @@ class URI
   end
 
   # Returns whether given byte is reserved character defined in
-  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
+  # [RFC 3986 §2.2](https://datatracker.ietf.org/doc/html/rfc3986#section-2.2).
   #
   # Reserved characters are ':', '/', '?', '#', '[', ']', '@', '!',
   # '$', '&', "'", '(', ')', '*', '+', ',', ';' and '='.
   def self.reserved?(byte) : Bool
+    sub_delim?(byte) || gen_delim?(byte)
+  end
+
+  # :nodoc:
+  # Returns `true` if the byte is URI gen-delims (https://datatracker.ietf.org/doc/html/rfc3986#section-2.2).
+  def self.gen_delim?(byte)
+    byte.unsafe_chr.in?('#', '/', ':', '?', '@', '[', ']')
+  end
+
+  # :nodoc:
+  # Returns `true` if the byte is URI sub-delims (https://datatracker.ietf.org/doc/html/rfc3986#section-2.2).
+  def self.sub_delim?(byte) : Bool
     char = byte.unsafe_chr
     '&' <= char <= ',' ||
-      char.in?('!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '=')
+      char.in?('!', '$', ';', '=')
   end
 
   # Returns whether given byte is unreserved character defined in
-  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
+  # [RFC 3986 §2.3](https://datatracker.ietf.org/doc/html/rfc3986#section-2.3).
   #
   # Unreserved characters are ASCII letters, ASCII digits, `_`, `.`, `-` and `~`.
   def self.unreserved?(byte) : Bool
@@ -213,7 +281,7 @@ class URI
   # as `+` and `+` is encoded as `%2B`.
   #
   # This method enables some customization, but typical use cases can be implemented
-  # by either `.encode(string : String, *, space_to_plus : Bool = false) : String` or
+  # by either `.encode_path(string : String) : String`, `.encode_path_segment(string : String) : String` or
   # `.encode_www_form(string : String, *, space_to_plus : Bool = true) : String`.
   def self.encode(string : String, io : IO, space_to_plus : Bool = false, &block) : Nil
     string.each_byte do |byte|

@@ -14,6 +14,20 @@ private class SafeIndexable
   end
 end
 
+private class SafeNestedIndexable
+  include Indexable(Indexable(Int32))
+
+  property size
+
+  def initialize(@size : Int32, @inner_size : Int32)
+  end
+
+  def unsafe_fetch(i)
+    raise IndexError.new unless 0 <= i < size
+    SafeIndexable.new(@inner_size)
+  end
+end
+
 private class SafeStringIndexable
   include Indexable(String)
 
@@ -281,6 +295,195 @@ describe Indexable do
       indexable.fetch(2) { |k| k * 3 }.should eq(2)
       indexable.fetch(3) { |k| k * 3 }.should eq(9)
       a.should eq([0, 1, 2])
+    end
+  end
+
+  describe "#cartesian_product" do
+    it "does with 1 other Indexable" do
+      elems = SafeIndexable.new(2).cartesian_product(SafeIndexable.new(3))
+      elems.should eq([{0, 0}, {0, 1}, {0, 2}, {1, 0}, {1, 1}, {1, 2}])
+
+      elems = SafeIndexable.new(2).cartesian_product(SafeIndexable.new(0))
+      elems.empty?.should be_true
+
+      elems = SafeIndexable.new(0).cartesian_product(SafeIndexable.new(3))
+      elems.empty?.should be_true
+    end
+
+    it "does with >1 other Indexables" do
+      elems = SafeIndexable.new(2).cartesian_product(SafeStringIndexable.new(2), SafeIndexable.new(2))
+      elems.should eq([
+        {0, "0", 0}, {0, "0", 1}, {0, "1", 0}, {0, "1", 1},
+        {1, "0", 0}, {1, "0", 1}, {1, "1", 0}, {1, "1", 1},
+      ])
+    end
+  end
+
+  describe ".cartesian_product" do
+    it "does with an Indexable of Indexables" do
+      elems = Indexable.cartesian_product(SafeNestedIndexable.new(2, 3))
+      elems.should eq([[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]])
+
+      elems = Indexable.cartesian_product(SafeNestedIndexable.new(2, 0))
+      elems.empty?.should be_true
+
+      elems = Indexable.cartesian_product(SafeNestedIndexable.new(0, 3))
+      elems.should eq([[] of Int32])
+
+      elems = Indexable.cartesian_product(SafeNestedIndexable.new(0, 0))
+      elems.should eq([[] of Int32])
+    end
+
+    it "does with a Tuple of Tuples with mixed types" do
+      elems = Indexable.cartesian_product({ {1, 'a'}, {"", 4}, {5, 6} })
+      elems.should be_a(Array(Array(Int32 | Char | String)))
+      elems.should eq([[1, "", 5], [1, "", 6], [1, 4, 5], [1, 4, 6], ['a', "", 5], ['a', "", 6], ['a', 4, 5], ['a', 4, 6]])
+    end
+  end
+
+  describe "#each_cartesian" do
+    it "does with 1 other Indexable, with block" do
+      r = [] of Int32 | String
+      indexable = SafeIndexable.new(3)
+      indexable.each_cartesian(SafeStringIndexable.new(2)) { |a, b| r << a; r << b }
+      r.should eq([0, "0", 0, "1", 1, "0", 1, "1", 2, "0", 2, "1"])
+
+      r = [] of Int32 | String
+      indexable = SafeIndexable.new(3)
+      indexable.each_cartesian(SafeStringIndexable.new(0)) { |a, b| r << a; r << b }
+      r.empty?.should be_true
+
+      r = [] of Int32 | String
+      indexable = SafeIndexable.new(0)
+      indexable.each_cartesian(SafeStringIndexable.new(2)) { |a, b| r << a; r << b }
+      r.empty?.should be_true
+    end
+
+    it "does with 1 other Indexable, without block" do
+      iter = SafeIndexable.new(3).each_cartesian(SafeStringIndexable.new(2))
+      iter.next.should eq({0, "0"})
+      iter.next.should eq({0, "1"})
+      iter.next.should eq({1, "0"})
+      iter.next.should eq({1, "1"})
+      iter.next.should eq({2, "0"})
+      iter.next.should eq({2, "1"})
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "does with >1 other Indexables, with block" do
+      r = [] of Int32 | String
+      i1 = SafeIndexable.new(2)
+      i2 = SafeIndexable.new(3)
+      i3 = SafeIndexable.new(4)
+      i1.each_cartesian(i2, i3) { |a, b, c| r << a + b + c }
+      r.should eq([0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6])
+    end
+
+    it "does with >1 other Indexables, without block" do
+      i1 = SafeStringIndexable.new(2)
+      i2 = SafeStringIndexable.new(2)
+      i3 = SafeIndexable.new(2)
+      iter = i1.each_cartesian(i2, i3)
+      iter.next.should eq({"0", "0", 0})
+      iter.next.should eq({"0", "0", 1})
+      iter.next.should eq({"0", "1", 0})
+      iter.next.should eq({"0", "1", 1})
+      iter.next.should eq({"1", "0", 0})
+      iter.next.should eq({"1", "0", 1})
+      iter.next.should eq({"1", "1", 0})
+      iter.next.should eq({"1", "1", 1})
+      iter.next.should be_a(Iterator::Stop)
+    end
+  end
+
+  describe ".each_cartesian" do
+    it "does with an Indexable of Indexables, with block" do
+      r = [] of Int32
+      Indexable.each_cartesian(SafeNestedIndexable.new(3, 2)) { |v| r.concat(v) }
+      r.should eq([0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1])
+
+      r = [] of Int32
+      Indexable.each_cartesian(SafeNestedIndexable.new(3, 0)) { |v| r.concat(v) }
+      r.empty?.should be_true
+
+      r = [] of Int32
+      Indexable.each_cartesian(SafeNestedIndexable.new(0, 2)) { |v| r.concat(v) }
+      r.empty?.should be_true
+
+      r = [] of Int32
+      Indexable.each_cartesian(SafeNestedIndexable.new(0, 0)) { |v| r.concat(v) }
+      r.empty?.should be_true
+    end
+
+    it "does with reuse = true, with block" do
+      r = [] of Int32
+      object_ids = Set(UInt64).new
+      indexables = SafeNestedIndexable.new(3, 2)
+
+      Indexable.each_cartesian(indexables, reuse: true) do |v|
+        object_ids << v.object_id
+        r.concat(v)
+      end
+
+      r.should eq([0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1])
+      object_ids.size.should eq(1)
+    end
+
+    it "does with reuse = array, with block" do
+      r = [] of Int32
+      buf = [] of Int32
+      indexables = SafeNestedIndexable.new(3, 2)
+
+      Indexable.each_cartesian(indexables, reuse: buf) do |v|
+        v.should be(buf)
+        r.concat(v)
+      end
+
+      r.should eq([0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1])
+    end
+
+    it "does with an Indexable of Indexables, without block" do
+      iter = Indexable.each_cartesian(SafeNestedIndexable.new(2, 3))
+      iter.next.should eq([0, 0])
+      iter.next.should eq([0, 1])
+      iter.next.should eq([0, 2])
+      iter.next.should eq([1, 0])
+      iter.next.should eq([1, 1])
+      iter.next.should eq([1, 2])
+      iter.next.should eq([2, 0])
+      iter.next.should eq([2, 1])
+      iter.next.should eq([2, 2])
+      iter.next.should be_a(Iterator::Stop)
+
+      iter = Indexable.each_cartesian(SafeNestedIndexable.new(0, 3))
+      iter.next.should eq([] of Int32)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "does with reuse = true, without block" do
+      iter = Indexable.each_cartesian(SafeNestedIndexable.new(2, 2), reuse: true)
+      buf = iter.next
+      buf.should eq([0, 0])
+      iter.next.should be(buf)
+      buf.should eq([0, 1])
+      iter.next.should be(buf)
+      buf.should eq([1, 0])
+      iter.next.should be(buf)
+      buf.should eq([1, 1])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "does with reuse = array, without block" do
+      buf = [] of Int32
+      iter = Indexable.each_cartesian(SafeNestedIndexable.new(2, 2), reuse: buf)
+      iter.next.should be(buf)
+      buf.should eq([0, 0])
+      iter.next.should be(buf)
+      buf.should eq([0, 1])
+      iter.next.should be(buf)
+      buf.should eq([1, 0])
+      iter.next.should be(buf)
+      buf.should eq([1, 1])
     end
   end
 

@@ -198,7 +198,7 @@ class Crystal::Doc::Method
   end
 
   def anchor
-    "#" + URI.encode(id)
+    "#" + URI.encode_path(id)
   end
 
   def to_s(io : IO) : Nil
