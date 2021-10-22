@@ -232,6 +232,62 @@ describe "StaticArray" do
     b[0].should_not be(a[0])
   end
 
+  {% for sort in ["sort".id, "unstable_sort".id] %}
+    describe {{ "##{sort}" }} do
+      it "sort without block" do
+        a = StaticArray[3, 4, 1, 2, 5, 6]
+        b = a.{{ sort }}
+        b.should eq(StaticArray[1, 2, 3, 4, 5, 6])
+        a.should_not eq(b)
+      end
+
+      it "sort with a block" do
+        a = StaticArray["foo", "a", "hello"]
+        b = a.{{ sort }} { |x, y| x.size <=> y.size }
+        b.should eq(StaticArray["a", "foo", "hello"])
+        a.should_not eq(b)
+      end
+    end
+
+    describe {{ "##{sort}!" }} do
+      it "sort! without block" do
+        a = StaticArray[3, 4, 1, 2, 5, 6]
+        a.{{ sort }}!
+        a.should eq(StaticArray[1, 2, 3, 4, 5, 6])
+      end
+
+      it "sort! with a block" do
+        a = StaticArray["foo", "a", "hello"]
+        a.{{ sort }}! { |x, y| x.size <=> y.size }
+        a.should eq(StaticArray["a", "foo", "hello"])
+      end
+    end
+
+    describe "{{ sort }}_by" do
+      it "sorts by" do
+        a = StaticArray["foo", "a", "hello"]
+        b = a.{{ sort }}_by(&.size)
+        b.should eq(StaticArray["a", "foo", "hello"])
+        a.should_not eq(b)
+      end
+    end
+
+    describe "{{ sort }}_by!" do
+      it "sorts by!" do
+        a = StaticArray["foo", "a", "hello"]
+        a.{{ sort }}_by!(&.size)
+        a.should eq(StaticArray["a", "foo", "hello"])
+      end
+
+      it "calls given block exactly once for each element" do
+        calls = Hash(String, Int32).new(0)
+        a = StaticArray["foo", "a", "hello"]
+        a.{{ sort }}_by! { |e| calls[e] += 1; e.size }
+        calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+      end
+    end
+  {% end %}
+
   it_iterates "#each", [1, 2, 3], StaticArray[1, 2, 3].each
   it_iterates "#reverse_each", [3, 2, 1], StaticArray[1, 2, 3].reverse_each
   it_iterates "#each_index", [0, 1, 2], StaticArray[1, 2, 3].each_index

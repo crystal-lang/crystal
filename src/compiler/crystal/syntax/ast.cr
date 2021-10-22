@@ -2254,8 +2254,9 @@ module Crystal
     property? volatile : Bool
     property? alignstack : Bool
     property? intel : Bool
+    property? can_throw : Bool
 
-    def initialize(@text, @outputs = nil, @inputs = nil, @clobbers = nil, @volatile = false, @alignstack = false, @intel = false)
+    def initialize(@text, @outputs = nil, @inputs = nil, @clobbers = nil, @volatile = false, @alignstack = false, @intel = false, @can_throw = false)
     end
 
     def accept_children(visitor)
@@ -2264,10 +2265,10 @@ module Crystal
     end
 
     def clone_without_location
-      Asm.new(@text, @outputs.clone, @inputs.clone, @clobbers, @volatile, @alignstack, @intel)
+      Asm.new(@text, @outputs.clone, @inputs.clone, @clobbers, @volatile, @alignstack, @intel, @can_throw)
     end
 
-    def_equals_and_hash text, outputs, inputs, clobbers, volatile?, alignstack?, intel?
+    def_equals_and_hash text, outputs, inputs, clobbers, volatile?, alignstack?, intel?, can_throw?
   end
 
   class AsmOperand < ASTNode

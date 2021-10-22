@@ -51,7 +51,7 @@ module Indexable::Mutable(T)
   # array                         # => [1, 4, 3]
   # array.update(5) { |x| x * 2 } # raises IndexError
   # ```
-  def update(index : Int, & : T -> T) : T
+  def update(index : Int, & : T -> _) : T
     index = check_index_out_of_bounds index
     value = yield unsafe_fetch(index)
     unsafe_put(index, value)
@@ -142,12 +142,18 @@ module Indexable::Mutable(T)
   # a.map! { |x| x * x }
   # a # => [1, 4, 9]
   # ```
-  def map!(& : T -> T) : self
+  {% begin %}
+  {% if compare_versions(Crystal::VERSION, "1.1.1") >= 0 %} # TODO: add as constant
+  def map!(& : T -> _) : self
+  {% else %}
+  def map!(&) # it doesn't compile with the type annotation in the 1.0.0 compiler
+  {% end %}
     each_index do |i|
       unsafe_put(i, yield unsafe_fetch(i))
     end
     self
   end
+  {% end %}
 
   # Like `#map!`, but the block gets passed both the element and its index.
   #
@@ -159,7 +165,7 @@ module Indexable::Mutable(T)
   # gems.map_with_index! { |gem, i| "#{i}: #{gem}" }
   # gems # => ["0: crystal", "1: pearl", "2: diamond"]
   # ```
-  def map_with_index!(offset = 0, & : T, Int32 -> T) : self
+  def map_with_index!(offset = 0, & : T, Int32 -> _) : self
     each_index do |i|
       unsafe_put(i, yield(unsafe_fetch(i), offset + i))
     end

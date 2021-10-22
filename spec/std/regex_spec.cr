@@ -75,6 +75,14 @@ describe "Regex" do
     ("foo\n<bar\n>baz" =~ /<bar.*?>/m).should eq(4)
   end
 
+  it "matches unicode char against [[:print:]] (#11262)" do
+    ("\n☃" =~ /[[:print:]]/).should eq(1)
+  end
+
+  it "matches unicode char against [[:alnum:]] (#4704)" do
+    /[[:alnum:]]/x.match("à").should_not be_nil
+  end
+
   it "matches with =~ and captures" do
     ("fooba" =~ /f(o+)(bar?)/).should eq(0)
     $~.group_size.should eq(2)
