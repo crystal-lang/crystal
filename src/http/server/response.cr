@@ -27,11 +27,19 @@ class HTTP::Server
     property output : IO
 
     # :nodoc:
-    setter version : String
+    def version=(version : String)
+      check_headers
+      @version = version
+    end
 
     # The status code of this response, which must be set before writing the response
     # body. If not set, the default value is 200 (OK).
-    property status : HTTP::Status
+    getter status : HTTP::Status
+
+    def status=(status : HTTP::Status)
+      check_headers
+      @status = status
+    end
 
     # :nodoc:
     property upgrade_handler : (IO ->)?
@@ -60,11 +68,13 @@ class HTTP::Server
 
     # Convenience method to set the `Content-Type` header.
     def content_type=(content_type : String)
+      check_headers
       headers["Content-Type"] = content_type
     end
 
     # Convenience method to set the `Content-Length` header.
     def content_length=(content_length : Int)
+      check_headers
       headers["Content-Length"] = content_length.to_s
     end
 
