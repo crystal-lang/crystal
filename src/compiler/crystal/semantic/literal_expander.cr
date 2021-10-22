@@ -281,9 +281,11 @@ module Crystal
           const = Const.new(@program, @program, const_name, const_value)
 
           @program.types[const_name] = const
+        else
+          const = @program.types[const_name].as(Const)
         end
 
-        Path.new(const_name)
+        Path.new(const_name).at(const.value)
       else
         regex_new_call(node, node_value)
       end

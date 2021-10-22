@@ -277,7 +277,7 @@ struct Slice(T)
   # :inherit:
   #
   # Raises if this slice is read-only.
-  def update(index : Int, & : T -> T) : T
+  def update(index : Int, & : T -> _) : T
     check_writable
     super { |elem| yield elem }
   end
@@ -351,7 +351,7 @@ struct Slice(T)
   # :inherit:
   #
   # Raises if this slice is read-only.
-  def map!(& : T -> T) : self
+  def map!(& : T -> _) : self
     check_writable
     super { |elem| yield elem }
   end
@@ -362,14 +362,14 @@ struct Slice(T)
   # slice = Slice[1, 2.5, "a"]
   # slice.map &.to_s # => Slice["1", "2.5", "a"]
   # ```
-  def map(*, read_only = false, & : T -> U) forall U
+  def map(*, read_only = false, & : T -> _)
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i] }
   end
 
   # :inherit:
   #
   # Raises if this slice is read-only.
-  def map_with_index!(offset = 0, & : T, Int32 -> T) : self
+  def map_with_index!(offset = 0, & : T, Int32 -> _) : self
     check_writable
     super { |elem, i| yield elem, i }
   end
@@ -378,7 +378,7 @@ struct Slice(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0, *, read_only = false, & : (T, Int32) -> U) forall U
+  def map_with_index(offset = 0, *, read_only = false, & : (T, Int32) -> _)
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i], offset + i }
   end
 
