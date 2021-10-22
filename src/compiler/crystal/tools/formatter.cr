@@ -4269,7 +4269,7 @@ module Crystal
 
       skip_space_or_newline
 
-      if node.volatile? || node.alignstack? || node.intel?
+      if node.volatile? || node.alignstack? || node.intel? || node.can_throw?
         expected_parts = 4
       elsif node.clobbers
         expected_parts = 3
@@ -4315,7 +4315,7 @@ module Crystal
             end
           end
         when 4
-          parts = [node.volatile?, node.alignstack?, node.intel?].select(&.itself)
+          parts = [node.volatile?, node.alignstack?, node.intel?, node.can_throw?].select(&.itself)
           visit_asm_parts parts, colon_column do
             accept StringLiteral.new("")
           end

@@ -1149,8 +1149,8 @@ class Array(T)
   # results = gems.map_with_index { |gem, i| "#{i}: #{gem}" }
   # results # => ["0: crystal", "1: pearl", "2: diamond"]
   # ```
-  def map_with_index(offset = 0, & : T, Int32 -> U) forall U
-    Array(U).new(size) { |i| yield @buffer[i], offset + i }
+  def map_with_index(offset = 0, & : T, Int32 -> _)
+    Array.new(size) { |i| yield @buffer[i], offset + i }
   end
 
   # Returns an `Array` with the first *count* elements removed
@@ -1547,8 +1547,8 @@ class Array(T)
   #
   # ```
   # a = [3, 1, 2]
-  # a.sort # => [1, 2, 3]
-  # a      # => [3, 1, 2]
+  # a.unstable_sort # => [1, 2, 3]
+  # a               # => [3, 1, 2]
   # ```
   #
   # See `Indexable::Mutable#unstable_sort!` for details on the sorting mechanism.
