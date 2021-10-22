@@ -5202,6 +5202,7 @@ module Crystal
       volatile = false
       alignstack = false
       intel = false
+      can_throw = false
 
       part_index = 0
       until @token.type == :")"
@@ -5230,7 +5231,7 @@ module Crystal
           end
         when 4
           if @token.type == :DELIMITER_START
-            volatile, alignstack, intel = parse_asm_options
+            volatile, alignstack, intel, can_throw = parse_asm_options
           end
         else break
         end
@@ -5240,7 +5241,7 @@ module Crystal
 
       next_token_skip_space
 
-      Asm.new(text, outputs, inputs, clobbers, volatile, alignstack, intel)
+      Asm.new(text, outputs, inputs, clobbers, volatile, alignstack, intel, can_throw)
     end
 
     def parse_asm_operands
@@ -5282,6 +5283,7 @@ module Crystal
       volatile = false
       alignstack = false
       intel = false
+      can_throw = false
       while true
         location = @token.location
         option = parse_string_without_interpolation("asm option")
@@ -5293,6 +5295,8 @@ module Crystal
           alignstack = true
         when "intel"
           intel = true
+        when "unwind"
+          can_throw = true
         else
           raise "unknown asm option: #{option}", location
         end
@@ -5302,7 +5306,7 @@ module Crystal
         end
         break unless @token.type == :DELIMITER_START
       end
-      {volatile, alignstack, intel}
+      {volatile, alignstack, intel, can_throw}
     end
 
     def parse_yield_with_scope

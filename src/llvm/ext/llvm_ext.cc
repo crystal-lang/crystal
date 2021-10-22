@@ -384,8 +384,21 @@ LLVMAttributeRef LLVMExtCreateTypeAttribute(
 LLVMValueRef LLVMExtBuildCmpxchg(
     LLVMBuilderRef B, LLVMValueRef PTR, LLVMValueRef Cmp, LLVMValueRef New,
     LLVMAtomicOrdering SuccessOrdering, LLVMAtomicOrdering FailureOrdering) {
+#if LLVM_VERSION_GE(13, 0)
+  return wrap(
+    unwrap(B)->CreateAtomicCmpXchg(
+      unwrap(PTR),
+      unwrap(Cmp),
+      unwrap(New),
+      llvm::MaybeAlign(),
+      (llvm::AtomicOrdering)SuccessOrdering,
+      (llvm::AtomicOrdering)FailureOrdering
+    )
+  );
+#else
   return wrap(unwrap(B)->CreateAtomicCmpXchg(unwrap(PTR), unwrap(Cmp), unwrap(New),
     (llvm::AtomicOrdering)SuccessOrdering, (llvm::AtomicOrdering)FailureOrdering));
+#endif
 }
 
 void LLVMExtSetOrdering(LLVMValueRef MemAccessInst, LLVMAtomicOrdering Ordering) {
@@ -495,7 +508,11 @@ void LLVMExtWriteBitcodeWithSummaryToFile(LLVMModuleRef mref, const char *File) 
   Module *m = unwrap(mref);
 
   std::error_code EC;
+#if LLVM_VERSION_GE(13, 0)
+  raw_fd_ostream OS(File, EC, sys::fs::OF_None);
+#else
   raw_fd_ostream OS(File, EC, sys::fs::F_None);
+#endif
   if (EC) return;
 
   llvm::ModuleSummaryIndex moduleSummaryIndex = llvm::buildModuleSummaryIndex(*m, nullptr, nullptr);
