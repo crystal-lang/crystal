@@ -12,7 +12,7 @@ require "./regex/*"
 # /y/.match("haystack") # => Regex::MatchData("y")
 # ```
 #
-# See [`Range` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/range.html) in the language reference.
+# See [`Regex` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/regex.html) in the language reference.
 #
 # Interpolation works in regular expression literals just as it does in string
 # literals. Be aware that using this feature will cause an exception to be
@@ -225,6 +225,8 @@ class Regex
     NO_UTF8_CHECK = 0x00002000
     # :nodoc:
     DUPNAMES = 0x00080000
+    # :nodoc:
+    UCP = 0x20000000
   end
 
   # Returns a `Regex::Options` representing the optional flags applied to this `Regex`.
@@ -255,7 +257,7 @@ class Regex
     source = source.gsub('\u{0}', "\\0")
     @source = source
 
-    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
+    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES | Options::UCP), out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
     @extra = LibPCRE.study(@re, 0, out studyerrptr)
     raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.null? && studyerrptr

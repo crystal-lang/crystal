@@ -1233,6 +1233,10 @@ module Crystal
     it_parses "@a : Foo = 1", TypeDeclaration.new("@a".instance_var, "Foo".path, 1.int32)
     it_parses "@@a : Foo = 1", TypeDeclaration.new("@@a".class_var, "Foo".path, 1.int32)
 
+    it_parses "Foo?", Generic.new("Union".path(global: true), ["Foo".path, "Nil".path(global: true)] of ASTNode)
+    it_parses "a : Foo*", TypeDeclaration.new("a".var, Generic.new("Pointer".path(global: true), ["Foo".path] of ASTNode, suffix: Generic::Suffix::Asterisk))
+    it_parses "a : Foo[12]", TypeDeclaration.new("a".var, Generic.new("StaticArray".path(global: true), ["Foo".path, 12.int32] of ASTNode, suffix: Generic::Suffix::Bracket))
+
     it_parses "a = uninitialized Foo; a", [UninitializedVar.new("a".var, "Foo".path), "a".var]
     it_parses "@a = uninitialized Foo", UninitializedVar.new("@a".instance_var, "Foo".path)
     it_parses "@@a = uninitialized Foo", UninitializedVar.new("@@a".class_var, "Foo".path)
@@ -1591,6 +1595,7 @@ module Crystal
     it_parses %(asm("nop" :: "b"(1), "c"(2) : "eax", "ebx" : "volatile", "alignstack", "intel")), Asm.new("nop", inputs: [AsmOperand.new("b", 1.int32), AsmOperand.new("c", 2.int32)], clobbers: %w(eax ebx), volatile: true, alignstack: true, intel: true)
     it_parses %(asm("nop" :: "b"(1), "c"(2) : "eax", "ebx"\n: "volatile", "alignstack"\n,\n"intel"\n)), Asm.new("nop", inputs: [AsmOperand.new("b", 1.int32), AsmOperand.new("c", 2.int32)], clobbers: %w(eax ebx), volatile: true, alignstack: true, intel: true)
     it_parses %(asm("nop" :::: "volatile")), Asm.new("nop", volatile: true)
+    it_parses %(asm("bl trap" :::: "unwind")), Asm.new("bl trap", can_throw: true)
 
     assert_syntax_error %q(asm("nop" ::: "#{foo}")), "interpolation not allowed in asm clobber"
     assert_syntax_error %q(asm("nop" :::: "#{volatile}")), "interpolation not allowed in asm option"
@@ -1913,6 +1918,8 @@ module Crystal
         FOO
       end
       CR
+
+    it_parses "macro foo; bar class: 1; end", Macro.new("foo", body: MacroLiteral.new(" bar class: 1; "))
 
     describe "end locations" do
       assert_end_location "nil"

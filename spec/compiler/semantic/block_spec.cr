@@ -1456,6 +1456,29 @@ describe "Block inference" do
       )) { tuple_of([tuple_of([int32, int32]), tuple_of([int32, int32]).metaclass]) }
   end
 
+  it "reports mismatch with generic argument type in output type" do
+    assert_error(<<-CR, "expected block to return String, not Int32")
+      class Foo(T)
+        def foo(&block : -> T)
+        end
+      end
+
+      Foo(String).new.foo { 1 }
+      CR
+  end
+
+  it "reports mismatch with generic argument type in input type" do
+    assert_error(<<-CR, "argument #1 of yield expected to be String, not Int32")
+      class Foo(T)
+        def foo(&block : T -> )
+          yield 1
+        end
+      end
+
+      Foo(String).new.foo {}
+      CR
+  end
+
   it "correctly types unpacked tuple block arg after block (#3339)" do
     assert_type(%(
       def foo
@@ -1554,6 +1577,35 @@ describe "Block inference" do
       end
 
       recursive
+      ))
+  end
+
+  it "doesn't fail with 'already had enclosing call' (#11200)" do
+    semantic(%(
+      def capture(&block)
+        block
+      end
+
+      abstract class Foo
+      end
+
+      class Bar(Input) < Foo
+        def method
+        end
+
+        def foo
+          capture do
+            self.method
+            Baz(Input)
+          end
+        end
+      end
+
+      class Baz(Input) < Bar(Input)
+      end
+
+      foo = Bar(Bool).new.as(Foo)
+      foo.foo
       ))
   end
 end

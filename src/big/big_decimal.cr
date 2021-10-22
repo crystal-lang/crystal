@@ -161,7 +161,7 @@ struct BigDecimal < Number
     end
   end
 
-  def +(other : Int) : BigDecimal
+  def +(other : Number) : BigDecimal
     self + BigDecimal.new(other)
   end
 
@@ -177,7 +177,7 @@ struct BigDecimal < Number
     end
   end
 
-  def -(other : Int) : BigDecimal
+  def -(other : Number) : BigDecimal
     self - BigDecimal.new(other)
   end
 
@@ -185,7 +185,7 @@ struct BigDecimal < Number
     BigDecimal.new(@value * other.value, @scale + other.scale)
   end
 
-  def *(other : Int) : BigDecimal
+  def *(other : Number) : BigDecimal
     self * BigDecimal.new(other)
   end
 
