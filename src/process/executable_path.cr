@@ -19,7 +19,7 @@ class Process
   # will be expanded).
   #
   # Returns `nil` if the file can't be found.
-  def self.executable_path
+  def self.executable_path : String?
     if executable = executable_path_impl
       begin
         File.real_path(executable)

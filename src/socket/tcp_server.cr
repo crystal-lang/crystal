@@ -36,7 +36,7 @@ class TCPServer < TCPSocket
       self.reuse_address = true
       self.reuse_port = true if reuse_port
 
-      if errno = bind(addrinfo, "#{host}:#{port}") { |errno| errno }
+      if errno = system_bind(addrinfo, "#{host}:#{port}") { |errno| errno }
         close
         next errno
       end
@@ -49,7 +49,7 @@ class TCPServer < TCPSocket
   end
 
   # Creates a TCPServer from an already configured raw file descriptor
-  def initialize(*, fd : Int32, family : Family = Family::INET)
+  def initialize(*, fd : Handle, family : Family = Family::INET)
     super(fd: fd, family: family)
   end
 
@@ -104,7 +104,7 @@ class TCPServer < TCPSocket
   # end
   # ```
   def accept? : TCPSocket?
-    if client_fd = accept_impl
+    if client_fd = system_accept
       sock = TCPSocket.new(fd: client_fd, family: family, type: type, protocol: protocol)
       sock.sync = sync?
       sock

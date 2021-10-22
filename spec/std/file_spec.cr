@@ -946,8 +946,13 @@ describe "File" do
       file.read_at(6, 100) do |io|
         io.gets_to_end.should eq("World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello Worl")
       end
+
       file.read_at(0, 240) do |io|
         io.gets_to_end.should eq(File.read(filename))
+      end
+
+      file.read_at(6_i64, 5_i64) do |io|
+        io.gets_to_end.should eq("World")
       end
     end
   end
@@ -1310,6 +1315,7 @@ describe "File" do
 
   describe ".match?" do
     it "matches basics" do
+      File.match?("abc", Path["abc"]).should be_true
       File.match?("abc", "abc").should be_true
       File.match?("*", "abc").should be_true
       File.match?("*c", "abc").should be_true

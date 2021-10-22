@@ -89,11 +89,3 @@ end
 enum Signal
   KILL = 0
 end
-
-def sleep(seconds : Number)
-  sleep(seconds.seconds)
-end
-
-def sleep(time : Time::Span)
-  LibC.Sleep(time.total_milliseconds)
-end

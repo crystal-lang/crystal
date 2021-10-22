@@ -1,3 +1,5 @@
+require "../../../../../lib/markd/src/markd"
+
 class Crystal::Doc::Generator
   getter program : Program
 
@@ -8,6 +10,7 @@ class Crystal::Doc::Generator
   FLAG_COLORS = {
     "BUG"          => "red",
     "DEPRECATED"   => "red",
+    "WARNING"      => "yellow",
     "EXPERIMENTAL" => "lime",
     "FIXME"        => "yellow",
     "NOTE"         => "purple",
@@ -90,7 +93,7 @@ class Crystal::Doc::Generator
 
   def generate_sitemap(types)
     if sitemap_base_url = @sitemap_base_url
-      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, "1.0", "never")
+      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, @sitemap_priority, @sitemap_changefreq)
     end
   end
 
@@ -309,10 +312,15 @@ class Crystal::Doc::Generator
   def doc(context, string)
     string = isolate_flag_lines string
     string += build_flag_lines_from_annotations context
-    markdown = String.build do |io|
-      Markdown.parse string, Markdown::DocRenderer.new(context, io)
-    end
+    markdown = render_markdown(context, string)
     generate_flags markdown
+  end
+
+  private def render_markdown(context, source)
+    options = ::Markd::Options.new
+    document = ::Markd::Parser.parse(source, options)
+    renderer = MarkdDocRenderer.new(context, options)
+    renderer.render(document).chomp
   end
 
   def fetch_doc_lines(doc : String) : String
@@ -382,9 +390,7 @@ class Crystal::Doc::Generator
       filename = location.filename
       next unless filename
 
-      url = project_info.source_url(location)
-      next unless url
-      location.url = url
+      location.url = project_info.source_url(location)
 
       # Prevent identical link generation in the "Defined in:" section in the docs because of macros
       next if locations.includes?(location)

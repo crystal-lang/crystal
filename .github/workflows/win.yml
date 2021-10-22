@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   linux-job:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:0.36.1-build
+    container: crystallang/crystal:1.2.0-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
@@ -47,7 +47,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: ivmai/bdwgc
-          ref: 2fd48a92b8bff3afb64b3528ad78b63f033f0436  # master @ 2020-02-13
+          ref: v8.2.0
           path: bdwgc
       - name: Download libatomic_ops
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -168,7 +168,7 @@ jobs:
           cl /MT /c src\llvm\ext\llvm_ext.cc -I llvm\include /Fosrc\llvm\ext\llvm_ext.obj
       - name: Link Crystal executable
         run: |
-          Invoke-Expression "cl crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib advapi32.lib libcmt.lib legacy_stdio_definitions.lib /F10000000"
+          Invoke-Expression "cl crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib legacy_stdio_definitions.lib /F10000000"
 
       - name: Re-build Crystal
         run: |
@@ -189,6 +189,9 @@ jobs:
       - name: Build stdlib specs executable
         run: |
           bin\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Dwithout_openssl -Di_know_what_im_doing
+      - name: Run socket specs
+        run: |
+          .\std_spec.exe --verbose -e TCPSocket
       - name: Run stdlib specs
         run: |
           .\std_spec.exe

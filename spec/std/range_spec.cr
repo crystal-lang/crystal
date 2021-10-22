@@ -1,5 +1,6 @@
 require "./spec_helper"
-require "../support/iterate"
+require "spec/helpers/iterate"
+
 {% unless flag?(:win32) %}
   require "big"
 {% end %}
@@ -58,6 +59,19 @@ describe "Range" do
     r.begin.should eq(1)
     r.end.should eq(5)
     r.excludes_end?.should be_true
+  end
+
+  it "#==" do
+    ((1..1) == (1..1)).should be_true
+    ((1...1) == (1..1)).should be_false
+    ((1...1) == (1...1)).should be_true
+    ((1..1) == (1...1)).should be_false
+
+    ((1..nil) == (1..nil)).should be_true
+
+    (1..1).should eq Range(Int32?, Int32?).new(1, 1)
+    ((1..1) == Range(Int32?, Int32?).new(1, 1)).should be_true
+    ((1.0..1.0) == (1..1)).should be_true
   end
 
   it "includes?" do
@@ -130,6 +144,8 @@ describe "Range" do
       (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq nil
       (0...ary.size).bsearch { |i| true }.should eq 0
       (0...ary.size).bsearch { |i| false }.should eq nil
+
+      (0...ary.size).bsearch { |i| ary[i] >= 10 ? 1 : nil }.should eq 4
 
       ary = [0, 100, 100, 100, 200]
       (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq 1
@@ -443,6 +459,9 @@ describe "Range" do
     it_iterates "begin == end exclusive", [] of Int32, (1...1).step(1)
     it_iterates "begin.succ == end inclusive", [1, 2] of Int32, (1..2).step(1)
     it_iterates "begin.succ == end exclusive", [1] of Int32, (1...2).step(1)
+
+    it_iterates "Float step", [1.0, 1.5, 2.0, 2.5, 3.0], (1..3).step(by: 0.5)
+    it_iterates "Time::Span step", [1.minutes, 2.minutes, 3.minutes], (1.minutes..3.minutes).step(by: 1.minutes)
 
     describe "with #succ type" do
       range_basic = RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5)
