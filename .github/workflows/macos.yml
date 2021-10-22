@@ -1,4 +1,4 @@
-sname: macOS CI
+name: macOS CI
 
 on: [push, pull_request]
 
