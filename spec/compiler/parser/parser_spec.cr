@@ -1919,6 +1919,8 @@ module Crystal
       end
       CR
 
+    it_parses "macro foo; bar class: 1; end", Macro.new("foo", body: MacroLiteral.new(" bar class: 1; "))
+
     describe "end locations" do
       assert_end_location "nil"
       assert_end_location "false"
