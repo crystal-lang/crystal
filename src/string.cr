@@ -1029,7 +1029,7 @@ class String
   end
 
   # Returns a new string that results from deleting *count* characters
-  # starting at *index*.
+  # starting at *start*.
   #
   # ```
   # "abcdefg".delete_at(1, 3) # => "aefg"
@@ -1042,7 +1042,7 @@ class String
   # "abcdefg".delete_at(3, 10) # => "abc"
   # ```
   #
-  # A negative *index* counts from the end of the string:
+  # A negative *start* counts from the end of the string:
   #
   # ```
   # "abcdefg".delete_at(-3, 2) # => "abcdg"
@@ -1050,16 +1050,16 @@ class String
   #
   # If *count* is negative, `ArgumentError` is raised.
   #
-  # If *index* is outside the bounds of the string, `ArgumentError`
+  # If *start* is outside the bounds of the string, `ArgumentError`
   # is raised.
   #
-  # However, *index* can be the position that is exactly the end of the string:
+  # However, *start* can be the position that is exactly the end of the string:
   #
   # ```
   # "abcd".delete_at(4, 3) # => "abcd"
   # ```
-  def delete_at(index : Int, count : Int) : String
-    index, count = Indexable.normalize_start_and_count(index, count, size)
+  def delete_at(start : Int, count : Int) : String
+    start, count = Indexable.normalize_start_and_count(start, count, size)
 
     case count
     when 0
@@ -1068,11 +1068,17 @@ class String
       return ""
     else
       if single_byte_optimizable?
-        byte_delete_at(index, count, count)
+        byte_delete_at(start, count, count)
       else
-        unicode_delete_at(index, count)
+        unicode_delete_at(start, count)
       end
     end
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#delete_at(start, count)` instead")]
+  def delete_at(count : Int, *, index start : Int) : String
+    delete_at(start, count)
   end
 
   private def byte_delete_at(start, count, byte_count)
@@ -2375,15 +2381,15 @@ class String
   end
 
   private def sub_range(range, replacement)
-    from, size = Indexable.range_to_index_and_count(range, self.size) || raise IndexError.new
+    start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
 
-    from_index = char_index_to_byte_index(from)
+    from_index = char_index_to_byte_index(start)
     raise IndexError.new unless from_index
 
-    if size == 0
+    if count == 0
       to_index = from_index
     else
-      to_index = char_index_to_byte_index(from + size)
+      to_index = char_index_to_byte_index(start + count)
       raise IndexError.new unless to_index
     end
 
