@@ -22,6 +22,22 @@ private def it_parses(string, expected_node, file = __FILE__, line = __LINE__)
   end
 end
 
+private def location_to_index(string, location)
+  index = 0
+  line = 1
+  while line != location.line_number
+    index = string.index('\n', index).not_nil! + 1
+    line += 1
+  end
+  index + location.column_number - 1
+end
+
+private def source_between(string, loc, end_loc)
+  beginning = location_to_index(string, loc.not_nil!)
+  ending = location_to_index(string, end_loc.not_nil!)
+  string[beginning..ending]
+end
+
 private def assert_end_location(source, line_number = 1, column_number = source.size, file = __FILE__, line = __LINE__)
   it "gets corrects end location for #{source.inspect}", file, line do
     parser = Parser.new("#{source}; 1")
@@ -2267,6 +2283,12 @@ module Crystal
         node.else_location.not_nil!.line_number.should eq(3)
         node.ensure_location.not_nil!.line_number.should eq(4)
         node.end_location.not_nil!.line_number.should eq(5)
+      end
+
+      it "sets correct location of call name" do
+        source = "foo(bar)"
+        node = Parser.new(source).parse.as(Call)
+        source_between(source, node.name_location, node.name_end_location).should eq ("foo")
       end
 
       it "doesn't override yield with macro yield" do

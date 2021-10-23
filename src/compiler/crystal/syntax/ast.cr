@@ -691,7 +691,7 @@ module Crystal
       loc = @name_location
       return unless loc
 
-      Location.new(loc.filename, loc.line_number, loc.column_number + name_size)
+      Location.new(loc.filename, loc.line_number, loc.column_number + name_size - 1)
     end
 
     def_equals_and_hash obj, name, args, block, block_arg, named_args, global?
