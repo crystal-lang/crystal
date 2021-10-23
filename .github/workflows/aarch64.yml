@@ -17,7 +17,9 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: crystal-aarch64-musl
-          path: .build/crystal
+          path: |
+            .build/crystal
+            src/llvm/ext/llvm_ext.o
   musl-test-stdlib:
     needs: musl-build
     runs-on: [linux, ARM64]
@@ -29,7 +31,7 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: crystal-aarch64-musl
-          path: .build/
+          path: ./
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run stdlib specs
@@ -47,9 +49,9 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: crystal-aarch64-musl
-          path: .build/
+          path: ./
       - name: Mark downloaded compiler as executable
-        run: chmod +x .build/crystal && touch .build/crystal
+        run: chmod +x .build/crystal
       - name: Run compiler specs
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
@@ -68,7 +70,9 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: crystal-aarch64-gnu
-          path: .build/crystal
+          path: |
+            .build/crystal
+            src/llvm/ext/llvm_ext.o
   gnu-test-stdlib:
     needs: gnu-build
     runs-on: [linux, ARM64]
@@ -80,7 +84,7 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: crystal-aarch64-gnu
-          path: .build/
+          path: ./
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run stdlib specs
@@ -98,9 +102,9 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: crystal-aarch64-gnu
-          path: .build/
+          path: ./
       - name: Mark downloaded compiler as executable
-        run: chmod +x .build/crystal && touch .build/crystal
+        run: chmod +x .build/crystal
       - name: Run compiler specs
         uses: docker://jhass/crystal:1.0.0-build
         with:
