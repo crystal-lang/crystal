@@ -49,7 +49,7 @@ jobs:
           name: crystal-aarch64-musl
           path: .build/
       - name: Mark downloaded compiler as executable
-        run: chmod +x .build/crystal
+        run: chmod +x .build/crystal && touch .build/crystal
       - name: Run compiler specs
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
@@ -100,7 +100,7 @@ jobs:
           name: crystal-aarch64-gnu
           path: .build/
       - name: Mark downloaded compiler as executable
-        run: chmod +x .build/crystal
+        run: chmod +x .build/crystal && touch .build/crystal
       - name: Run compiler specs
         uses: docker://jhass/crystal:1.0.0-build
         with:
