@@ -164,7 +164,8 @@ def prepare_macro_call(macro_body, flags = nil)
   args = yield program
 
   macro_params = args.try &.keys.join(", ")
-  call_args = args ? [*args.values] of ASTNode : [] of ASTNode
+  call_args = [] of ASTNode
+  call_args.concat(args.values) if args
 
   a_macro = Parser.parse("macro foo(#{macro_params});#{macro_body};end").as(Macro)
   call = Call.new(nil, "", call_args)
