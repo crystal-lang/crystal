@@ -79,7 +79,8 @@ require "./regex/*"
 # have their own language for describing strings.
 #
 # Many programming languages and tools implement their own regular expression
-# language, but Crystal uses [PCRE](http://www.pcre.org/), a popular C library
+# language, but Crystal uses [PCRE](http://www.pcre.org/), a popular C library, with
+# [JIT complication](http://www.pcre.org/original/doc/html/pcrejit.html) enabled
 # for providing regular expressions. Here give a brief summary of the most
 # basic features of regular expressions - grouping, repetition, and
 # alternation - but the feature set of PCRE extends far beyond these, and we
