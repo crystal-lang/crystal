@@ -414,7 +414,7 @@ describe "Visibility modifiers" do
   end
 
   it "handles virtual types (#8561)" do
-    semantic %(
+    assert_no_errors <<-CR
       module Namespace
         class Foo
           protected def foo
@@ -439,6 +439,6 @@ describe "Visibility modifiers" do
       end
 
       Namespace::Baz.new.bar
-    )
+      CR
   end
 end

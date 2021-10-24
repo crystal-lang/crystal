@@ -135,8 +135,8 @@ describe "Semantic: virtual" do
   end
 
   it "works with restriction alpha" do
-    nodes = parse("
-      require \"prelude\"
+    assert_no_errors <<-CR
+      require "prelude"
 
       class Foo
       end
@@ -154,8 +154,7 @@ describe "Semantic: virtual" do
 
       a = [nil, Foo.new, Bar.new, Baz.new]
       a.push(Baz.new || Ban.new)
-      ")
-    semantic nodes
+      CR
   end
 
   it "doesn't check cover for subclasses" do
