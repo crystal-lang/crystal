@@ -439,6 +439,11 @@ describe "Enumerable" do
     it { SpecEmptyEnumerable.new.empty?.should be_true }
   end
 
+  describe "not_empty?" do
+    it { SpecEnumerable.new.not_empty?.should be_true }
+    it { SpecEmptyEnumerable.new.not_empty?.should be_false }
+  end
+
   describe "find" do
     it "finds" do
       [1, 2, 3].find { |x| x > 2 }.should eq(3)
@@ -564,6 +569,16 @@ describe "Enumerable" do
 
     it "is false if the object is not part of the collection" do
       [1, 2, 3].includes?(5).should be_false
+    end
+  end
+
+  describe "not_includes?" do
+    it "is true if the object does not exists in the collection" do
+      [1, 2, 3].not_includes?(5).should be_true
+    end
+
+    it "is false if the object exists in the collection" do
+      [1, 2, 3].not_includes?(2).should be_false
     end
   end
 

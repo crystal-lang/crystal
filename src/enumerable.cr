@@ -617,6 +617,16 @@ module Enumerable(T)
     any? { |e| e == obj }
   end
 
+  # Returns `true` if the collection does not contains *obj*, `false` otherwise.
+  #
+  # ```
+  # [1, 2, 3].not_includes?(5) # => true
+  # [1, 2, 3].not_includes?(2) # => false
+  # ```
+  def not_includes?(obj) : Bool
+    !includes?(obj)
+  end
+
   # Returns the index of the first element for which the passed block returns `true`.
   #
   # ```
@@ -1452,6 +1462,16 @@ module Enumerable(T)
   def empty? : Bool
     each { return false }
     true
+  end
+
+  # Returns `true` if `self` is not empty, `false` otherwise.
+  #
+  # ```
+  # ([1]).not_empty?         # => true
+  # ([] of Int32).not_empty? # => false
+  # ```
+  def not_empty? : Bool
+    !empty?
   end
 
   # Returns an `Array` with the first *count* elements removed

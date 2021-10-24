@@ -704,6 +704,16 @@ module Indexable(T)
     size == 0
   end
 
+  # Returns `true` if `self` is not empty, `false` otherwise.
+  #
+  # ```
+  # ([1]).not_empty?         # => true
+  # ([] of Int32).not_empty? # => false
+  # ```
+  def not_empty? : Bool
+    !empty?
+  end
+
   # Optimized version of `equals?` used when `other` is also an `Indexable`.
   def equals?(other : Indexable, &) : Bool
     return false if size != other.size
