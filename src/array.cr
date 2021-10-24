@@ -471,7 +471,7 @@ class Array(T)
 
   # :ditto:
   @[Deprecated("Use `#[]=(start, count, value)` instead")]
-  def []=(count : Int, value : T, *, index start : Int)
+  def []=(value : T, *, index start : Int, count : Int)
     self[start, count] = value
   end
 
@@ -536,7 +536,7 @@ class Array(T)
 
   # :ditto:
   @[Deprecated("Use `#[]=(start, count, values)` instead")]
-  def []=(count : Int, values : Array(T), *, index start : Int)
+  def []=(values : Array(T), *, index start : Int, count : Int)
     self[start, count] = values
   end
 
@@ -852,7 +852,7 @@ class Array(T)
 
   # :ditto:
   @[Deprecated("Use `#delete_at(start, count)` instead")]
-  def delete_at(count : Int, *, index start : Int) : self
+  def delete_at(*, index start : Int, count : Int) : self
     delete_at(start, count)
   end
 
@@ -933,7 +933,7 @@ class Array(T)
 
   # :ditto:
   @[Deprecated("Use `#fill(start, count, &)` instead")]
-  def fill(count : Int, *, from start : Int, & : Int32 -> T) : self
+  def fill(*, from start : Int, count : Int, & : Int32 -> T) : self
     fill(start, count) { |i| yield i }
   end
 
@@ -975,6 +975,8 @@ class Array(T)
     self
   end
 
+  # :ditto:
+  @[Deprecated("Use `#fill(value, start)` instead")]
   def fill(value : T, *, from start : Int) : self
     fill(value, start)
   end
@@ -1002,7 +1004,7 @@ class Array(T)
 
   # :ditto:
   @[Deprecated("Use `#fill(value, start, count)` instead")]
-  def fill(value : T, count : Int, *, from start : Int) : self
+  def fill(value : T, *, from start : Int, count : Int) : self
     fill(value, start, count)
   end
 

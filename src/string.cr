@@ -1077,7 +1077,7 @@ class String
 
   # :ditto:
   @[Deprecated("Use `#delete_at(start, count)` instead")]
-  def delete_at(count : Int, *, index start : Int) : String
+  def delete_at(*, index start : Int, count : Int) : String
     delete_at(start, count)
   end
 
