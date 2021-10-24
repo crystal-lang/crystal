@@ -263,8 +263,8 @@ describe "StaticArray" do
       end
     end
 
-    {% unless flag?(:aarch64) && (flag?(:musl) || flag?(:darwin)) %}
     # Deactivated due to https://github.com/crystal-lang/crystal/issues/11358
+    {% unless flag?(:aarch64) && (flag?(:musl) || flag?(:darwin)) %}
       describe "{{ sort }}_by" do
         it "sorts by" do
           a = StaticArray["foo", "a", "hello"]
