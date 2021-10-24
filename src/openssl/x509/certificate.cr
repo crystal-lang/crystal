@@ -87,7 +87,7 @@ module OpenSSL::X509
       raise ArgumentError.new "Could not find digest for #{algorithm_name.inspect}" if algo_type.null?
       hash = Bytes.new(64) # EVP_MAX_MD_SIZE for SHA512
       result = LibCrypto.x509_digest(@cert, algo_type, hash, out size)
-      raise "Could not generate certificate hash" unless result == 1
+      raise Error.new "Could not generate certificate hash" unless result == 1
 
       hash[0, size]
     end
