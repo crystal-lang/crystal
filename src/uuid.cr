@@ -210,12 +210,7 @@ struct UUID
   end
 
   def <=>(other : UUID) : Int32
-    other_bytes = other.bytes
-    cmp = 0
-    @bytes.each_index do |i|
-      cmp = @bytes[i] <=> other_bytes[i] if cmp == 0
-    end
-    cmp
+    @bytes.to_slice <=> other.bytes.to_slice
   end
 
   class Error < Exception
