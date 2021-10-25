@@ -4,56 +4,40 @@ class Crystal::SyntaxHighlighter::HTML < Crystal::SyntaxHighlighter
   def initialize(@io : IO)
   end
 
-  def visit_token(token : Token, last_is_def)
-    case token.type
-    when :NEWLINE
-      @io.puts
-    when :SPACE
-      @io << token.value
+  def render(type, value)
+    case type
     when :COMMENT
-      span "c", ::HTML.escape(token.value.to_s)
+      span "c", ::HTML.escape(value)
     when :NUMBER
-      span "n", token.raw
+      span "n", value
     when :CHAR
-      span "s", ::HTML.escape(token.raw)
+      span "s", ::HTML.escape(value)
     when :SYMBOL
-      span "n", ::HTML.escape(token.raw)
-    when :CONST, :"::"
-      span "t", token
-    when :DELIMITER_START
-      span "s", ::HTML.escape(token.raw)
+      span "n", ::HTML.escape(value)
+    when :CONST
+      span "t", value
+    when :STRING
+      span "s", ::HTML.escape(value)
     when :IDENT
-      if last_is_def
-        span "m", token
-      else
-        case token.value
-        when :def, :if, :else, :elsif, :end,
-             :class, :module, :include, :extend,
-             :while, :until, :do, :yield, :return, :unless, :next, :break, :begin,
-             :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
-             :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
-             :alias, :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
-             :with, :self, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
-             :annotation, :verbatim
-          span "k", token
-        when :true, :false, :nil
-          span "n", token
-        else
-          @io << token
-        end
-      end
-    when :+, :-, :*, :&+, :&-, :&*, :/, ://,
-         :"=", :==, :<, :<=, :>, :>=, :!, :!=, :=~, :!~,
-         :&, :|, :^, :~, :**, :>>, :<<, :%,
-         :[], :[]?, :[]=, :<=>, :===
-      span "o", ::HTML.escape(token.to_s)
-    when :"}"
-      @io << token
-    when :UNDERSCORE
-      @io << '_'
+      span "m", value
+    when :KEYWORD, :SELF
+      span "k", value
+    when :PRIMITIVE_LITERAL
+      span "n", value
+    when :OPERATOR
+      span "o", ::HTML.escape(value)
+    when :DELIMITER_START, :DELIMITED_TOKEN, :DELIMITER_END,
+         :STRING_ARRAY_START, :STRING_ARRAY_TOKEN, :STRING_ARRAY_END
+      ::HTML.escape(value, @io)
     else
-      @io << token
+      @io << value
     end
+  end
+
+  def visit_delimiter(&)
+    span_start "s"
+    yield
+    span_end
   end
 
   def visit_interpolation(&)
@@ -64,28 +48,10 @@ class Crystal::SyntaxHighlighter::HTML < Crystal::SyntaxHighlighter
     span_start "s"
   end
 
-  def visit_delimiter(&)
-    span_start "s"
-    yield
-    span_end
-  end
-
-  def visit_delimiter_token(token)
-    ::HTML.escape(token.raw, @io)
-  end
-
-  def visit_whitespace(char)
-    @io << char
-  end
-
   def visit_string_array(&)
     span_start "s"
     yield
     span_end
-  end
-
-  def visit_string_array_token(token)
-    ::HTML.escape(token.raw, @io)
   end
 
   private def span(klass, token)

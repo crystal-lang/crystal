@@ -37,10 +37,10 @@ class Crystal::SyntaxHighlighter
       when '\n'
         lexer.next_char
         lexer.incr_line_number 1
-        visit_whitespace char
+        render :NEWLINE, "\n"
       when .ascii_whitespace?
         lexer.next_char
-        visit_whitespace char
+        render :SPACE, char.to_s
       else
         break
       end
@@ -58,7 +58,7 @@ class Crystal::SyntaxHighlighter
       when :DELIMITER_START
         if token.delimiter_state.kind == :heredoc
           heredoc_stack << token.dup
-          visit_token token, last_is_def
+          highlight_token token, last_is_def
         else
           highlight_delimiter_state lexer, token
         end
@@ -69,7 +69,7 @@ class Crystal::SyntaxHighlighter
       when :EOF
         break
       else
-        visit_token token, last_is_def
+        highlight_token token, last_is_def
       end
 
       case token.type
@@ -84,7 +84,7 @@ class Crystal::SyntaxHighlighter
             when :EOF
               raise "Unterminated heredoc"
             else
-              visit_token token, last_is_def
+              highlight_token token, last_is_def
             end
           end
         end
@@ -101,21 +101,67 @@ class Crystal::SyntaxHighlighter
     end
   end
 
+  def highlight_token(token : Token, last_is_def)
+    case token.type
+    when :NEWLINE
+      render token.type, "\n"
+    when :SPACE, :COMMENT
+      render token.type, token.value.to_s
+    when :NUMBER, :CHAR, :SYMBOL
+      render token.type, token.raw
+    when :DELIMITER_START
+      render :STRING, token.raw
+    when :CONST, :"::"
+      render :CONST, token.to_s
+    when :IDENT
+      if last_is_def
+        render :IDENT, token.to_s
+      else
+        case token.value
+        when :def, :if, :else, :elsif, :end,
+             :class, :module, :include, :extend,
+             :while, :until, :do, :yield, :return, :unless, :next, :break, :begin,
+             :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
+             :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
+             :alias, :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
+             :with, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
+             :annotation, :verbatim
+          render :KEYWORD, token.to_s
+        when :true, :false, :nil
+          render :PRIMITIVE_LITERAL, token.to_s
+        when :self
+          render :SELF, token.to_s
+        else
+          render :PLAIN, token.to_s
+        end
+      end
+    when :+, :-, :*, :&+, :&-, :&*, :/, ://,
+         :"=", :==, :<, :<=, :>, :>=, :!, :!=, :=~, :!~,
+         :&, :|, :^, :~, :**, :>>, :<<, :%,
+         :[], :[]?, :[]=, :<=>, :===
+      render :OPERATOR, token.to_s
+    when :UNDERSCORE
+      render token.type, "_"
+    else
+      render token.type, token.to_s
+    end
+  end
+
   private def highlight_delimiter_state(lexer, token, *, heredoc = false)
     visit_delimiter do
-      visit_delimiter_token(token) unless heredoc
+      render :DELIMITER_START, token.raw unless heredoc
       while true
         token = lexer.next_string_token(token.delimiter_state)
         case token.type
         when :DELIMITER_END
-          visit_delimiter_token(token)
+          render :DELIMITER_END, token.raw
           break
         when :INTERPOLATION_START
           visit_interpolation do
             highlight_normal_state lexer, break_on_rcurly: true
           end
         else
-          visit_delimiter_token(token)
+          render :DELIMITED_TOKEN, token.raw
         end
       end
     end
@@ -123,15 +169,15 @@ class Crystal::SyntaxHighlighter
 
   private def highlight_string_array(lexer, token)
     visit_string_array do
-      visit_string_array_token(token)
+      render :STRING_ARRAY_START, token.raw
       while true
         consume_space_or_newline(lexer)
         token = lexer.next_string_array_token
         case token.type
         when :STRING
-          visit_string_array_token(token)
+          render :STRING_ARRAY_TOKEN, token.raw
         when :STRING_ARRAY_END
-          visit_string_array_token(token)
+          render :STRING_ARRAY_END, token.raw
           break
         when :EOF
           if token.delimiter_state.kind == :string_array
@@ -146,5 +192,3 @@ class Crystal::SyntaxHighlighter
     end
   end
 end
-
-require "./syntax_highlighter/html"
