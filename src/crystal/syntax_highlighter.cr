@@ -1,5 +1,5 @@
 require "html"
-require "compiler/crystal/**"
+require "compiler/crystal/syntax/**"
 
 abstract class Crystal::SyntaxHighlighter
   def highlight(code : String)
