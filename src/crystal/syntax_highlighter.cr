@@ -43,93 +43,112 @@ module Crystal::SyntaxHighlighter
     end
   end
 
+  private def highlight_normal_state(lexer, io, break_on_rcurly = false)
+    last_is_def = false
+    heredoc_stack = [] of Token
+
+    while true
+      token = lexer.next_token
+
+      case token.type
+      when :DELIMITER_START
+        if token.delimiter_state.kind == :heredoc
+          heredoc_stack << token.dup
+          visit_token io, token, last_is_def
+        else
+          highlight_delimiter_state lexer, token, io
+        end
+      when :STRING_ARRAY_START, :SYMBOL_ARRAY_START
+        highlight_string_array lexer, token, io
+      when :"}"
+        break if break_on_rcurly
+      when :EOF
+        break
+      else
+        visit_token io, token, last_is_def
+      end
+
+      case token.type
+      when :NEWLINE
+        heredoc_stack.each_with_index do |token, i|
+          highlight_delimiter_state lexer, token, io, heredoc: true
+          unless i == heredoc_stack.size - 1
+            # Next token to heredoc's end is either NEWLINE or EOF.
+            token = lexer.next_token
+
+            case token.type
+            when :EOF
+              raise "Unterminated heredoc"
+            else
+              visit_token io, token, last_is_def
+            end
+          end
+        end
+        heredoc_stack.clear
+      when :IDENT
+        if last_is_def
+          last_is_def = false
+        end
+      end
+
+      unless token.type == :SPACE
+        last_is_def = token.keyword? :def
+      end
+    end
+  end
+
   module HTML
     extend SyntaxHighlighter
 
-    private def self.highlight_normal_state(lexer, io, break_on_rcurly = false)
-      last_is_def = false
-      heredoc_stack = [] of Token
-
-      while true
-        token = lexer.next_token
-        case token.type
-        when :NEWLINE
-          io.puts
-          heredoc_stack.each_with_index do |token, i|
-            highlight_delimiter_state lexer, token, io, heredoc: true
-            unless i == heredoc_stack.size - 1
-              # Next token to heredoc's end is either NEWLINE or EOF.
-              if lexer.next_token.type == :EOF
-                raise "Unterminated heredoc"
-              end
-              io.puts
-            end
-          end
-          heredoc_stack.clear
-        when :SPACE
-          io << token.value
-        when :COMMENT
-          highlight ::HTML.escape(token.value.to_s), "c", io
-        when :NUMBER
-          highlight token.raw, "n", io
-        when :CHAR
-          highlight ::HTML.escape(token.raw), "s", io
-        when :SYMBOL
-          highlight ::HTML.escape(token.raw), "n", io
-        when :CONST, :"::"
-          highlight token, "t", io
-        when :DELIMITER_START
-          if token.delimiter_state.kind == :heredoc
-            highlight ::HTML.escape(token.raw), "s", io
-            heredoc_stack << token.dup
-          else
-            highlight_delimiter_state lexer, token, io
-          end
-        when :STRING_ARRAY_START, :SYMBOL_ARRAY_START
-          highlight_string_array lexer, token, io
-        when :EOF
-          break
-        when :IDENT
-          if last_is_def
-            last_is_def = false
-            highlight token, "m", io
-          else
-            case token.value
-            when :def, :if, :else, :elsif, :end,
-                 :class, :module, :include, :extend,
-                 :while, :until, :do, :yield, :return, :unless, :next, :break, :begin,
-                 :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
-                 :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
-                 :alias, :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
-                 :with, :self, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
-                 :annotation, :verbatim
-              highlight token, "k", io
-            when :true, :false, :nil
-              highlight token, "n", io
-            else
-              io << token
-            end
-          end
-        when :+, :-, :*, :&+, :&-, :&*, :/, ://,
-             :"=", :==, :<, :<=, :>, :>=, :!, :!=, :=~, :!~,
-             :&, :|, :^, :~, :**, :>>, :<<, :%,
-             :[], :[]?, :[]=, :<=>, :===
-          highlight ::HTML.escape(token.to_s), "o", io
-        when :"}"
-          if break_on_rcurly
-            break
+    def self.visit_token(io : IO, token : Token, last_is_def)
+      case token.type
+      when :NEWLINE
+        io.puts
+      when :SPACE
+        io << token.value
+      when :COMMENT
+        highlight ::HTML.escape(token.value.to_s), "c", io
+      when :NUMBER
+        highlight token.raw, "n", io
+      when :CHAR
+        highlight ::HTML.escape(token.raw), "s", io
+      when :SYMBOL
+        highlight ::HTML.escape(token.raw), "n", io
+      when :CONST, :"::"
+        highlight token, "t", io
+      when :DELIMITER_START
+        highlight ::HTML.escape(token.raw), "s", io
+      when :IDENT
+        if last_is_def
+          highlight token, "m", io
+        else
+          case token.value
+          when :def, :if, :else, :elsif, :end,
+               :class, :module, :include, :extend,
+               :while, :until, :do, :yield, :return, :unless, :next, :break, :begin,
+               :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
+               :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
+               :alias, :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
+               :with, :self, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
+               :annotation, :verbatim
+            highlight token, "k", io
+          when :true, :false, :nil
+            highlight token, "n", io
           else
             io << token
           end
-        when :UNDERSCORE
-          io << '_'
-        else
-          io << token
         end
-
-        unless token.type == :SPACE
-          last_is_def = token.keyword? :def
-        end
+      when :+, :-, :*, :&+, :&-, :&*, :/, ://,
+           :"=", :==, :<, :<=, :>, :>=, :!, :!=, :=~, :!~,
+           :&, :|, :^, :~, :**, :>>, :<<, :%,
+           :[], :[]?, :[]=, :<=>, :===
+        highlight ::HTML.escape(token.to_s), "o", io
+      when :"}"
+        io << token
+      when :UNDERSCORE
+        io << '_'
+      else
+        io << token
       end
     end
 
