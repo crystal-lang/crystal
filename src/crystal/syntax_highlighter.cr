@@ -1,6 +1,7 @@
 require "html"
+require "compiler/crystal/**"
 
-class Crystal::SyntaxHighlighter
+abstract class Crystal::SyntaxHighlighter
   def highlight(code : String)
     lexer = Lexer.new(code)
     lexer.comments_enabled = true
@@ -37,6 +38,7 @@ class Crystal::SyntaxHighlighter
     DELIMITER_START
     DELIMITED_TOKEN
     DELIMITER_END
+    INTERPOLATION
     STRING_ARRAY_START
     STRING_ARRAY_TOKEN
     STRING_ARRAY_END

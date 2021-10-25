@@ -1,5 +1,5 @@
 require "xml"
-require "crystal/syntax_highlighter"
+require "crystal/syntax_highlighter/html"
 require "spec"
 
 private def it_highlights(code, expected, file = __FILE__, line = __LINE__)
