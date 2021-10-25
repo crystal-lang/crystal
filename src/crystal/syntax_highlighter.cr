@@ -37,10 +37,10 @@ class Crystal::SyntaxHighlighter
       when '\n'
         lexer.next_char
         lexer.incr_line_number 1
-        @io.puts
+        visit_whitespace char
       when .ascii_whitespace?
         lexer.next_char
-        @io << char
+        visit_whitespace char
       else
         break
       end
@@ -101,6 +101,51 @@ class Crystal::SyntaxHighlighter
     end
   end
 
+  private def highlight_delimiter_state(lexer, token, *, heredoc = false)
+    visit_delimiter do
+      visit_delimiter_token(token) unless heredoc
+      while true
+        token = lexer.next_string_token(token.delimiter_state)
+        case token.type
+        when :DELIMITER_END
+          visit_delimiter_token(token)
+          break
+        when :INTERPOLATION_START
+          visit_interpolation do
+            highlight_normal_state lexer, break_on_rcurly: true
+          end
+        else
+          visit_delimiter_token(token)
+        end
+      end
+    end
+  end
+
+  private def highlight_string_array(lexer, token)
+    visit_string_array do
+      visit_string_array_token(token)
+      while true
+        consume_space_or_newline(lexer)
+        token = lexer.next_string_array_token
+        case token.type
+        when :STRING
+          visit_string_array_token(token)
+        when :STRING_ARRAY_END
+          visit_string_array_token(token)
+          break
+        when :EOF
+          if token.delimiter_state.kind == :string_array
+            raise "Unterminated string array literal"
+          else # == :symbol_array
+            raise "Unterminated symbol array literal"
+          end
+        else
+          raise "Bug: shouldn't happen"
+        end
+      end
+    end
+  end
+
   class HTML < SyntaxHighlighter
     def initialize(@io : IO)
     end
@@ -157,54 +202,36 @@ class Crystal::SyntaxHighlighter
       end
     end
 
-    private def highlight_delimiter_state(lexer, token, heredoc = false)
+    def visit_interpolation(&)
+      span_end
+      span "i", "\#{"
+      yield
+      span "i", "}"
       span_start "s"
+    end
 
-      ::HTML.escape(token.raw, @io) unless heredoc
-
-      while true
-        token = lexer.next_string_token(token.delimiter_state)
-        case token.type
-        when :DELIMITER_END
-          ::HTML.escape(token.raw, @io)
-          break
-        when :INTERPOLATION_START
-          span_end
-          span "i", "\#{"
-          highlight_normal_state lexer, break_on_rcurly: true
-          span "i", "}"
-          span_start "s"
-        else
-          ::HTML.escape(token.raw, @io)
-        end
-      end
-
+    def visit_delimiter(&)
+      span_start "s"
+      yield
       span_end
     end
 
-    private def highlight_string_array(lexer, token)
-      span_start "s"
+    def visit_delimiter_token(token)
       ::HTML.escape(token.raw, @io)
-      while true
-        consume_space_or_newline(lexer)
-        token = lexer.next_string_array_token
-        case token.type
-        when :STRING
-          ::HTML.escape(token.raw, @io)
-        when :STRING_ARRAY_END
-          ::HTML.escape(token.raw, @io)
-          span_end
-          break
-        when :EOF
-          if token.delimiter_state.kind == :string_array
-            raise "Unterminated string array literal"
-          else # == :symbol_array
-            raise "Unterminated symbol array literal"
-          end
-        else
-          raise "Bug: shouldn't happen"
-        end
-      end
+    end
+
+    def visit_whitespace(char)
+      @io << char
+    end
+
+    def visit_string_array(&)
+      span_start "s"
+      yield
+      span_end
+    end
+
+    def visit_string_array_token(token)
+      ::HTML.escape(token.raw, @io)
     end
 
     private def span(klass, token)
