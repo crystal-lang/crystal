@@ -13,7 +13,7 @@ end
 
 private def it_does_not_highlight(code, file = __FILE__, line = __LINE__)
   it "does not highlight #{code.inspect} due to error", file, line do
-    highlighted = Crystal::SyntaxHighlighter::HTML.highlight code
+    highlighted = Crystal::SyntaxHighlighter::HTML.highlight! code
     highlighted.should eq(code), file: file, line: line
   end
 end
@@ -98,18 +98,20 @@ describe "Crystal::SyntaxHighlighter::HTML#highlight" do
       BAR</span>
     HTML
 
-  it_does_not_highlight <<-CR
-    foo, bar = <<-FOO, <<-BAR
-      foo
-      FOO
-    CR
+  describe "#highlight!" do
+    it_does_not_highlight <<-CR
+      foo, bar = <<-FOO, <<-BAR
+        foo
+        FOO
+      CR
 
-  it_does_not_highlight <<-CR
-    foo, bar = <<-FOO, <<-BAR
-      foo
-    CR
+    it_does_not_highlight <<-CR
+      foo, bar = <<-FOO, <<-BAR
+        foo
+      CR
 
-  it_does_not_highlight "\"foo"
-  it_does_not_highlight "%w[foo"
-  it_does_not_highlight "%i[foo"
+    it_does_not_highlight "\"foo"
+    it_does_not_highlight "%w[foo"
+    it_does_not_highlight "%i[foo"
+  end
 end

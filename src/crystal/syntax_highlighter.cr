@@ -1,17 +1,29 @@
 require "html"
 
 module Crystal::SyntaxHighlighter
-  def highlight(code)
+  def highlight(io : IO, code : String)
     lexer = Lexer.new(code)
     lexer.comments_enabled = true
     lexer.count_whitespace = true
     lexer.wants_raw = true
 
-    begin
-      String.build { |io| highlight_normal_state lexer, io }
-    rescue
-      code
+    highlight_normal_state lexer, io
+  end
+
+  def highlight(code : String)
+    String.build do |io|
+      highlight(io, code)
     end
+  end
+
+  # Highlights *code* or returns unhighlighted *code* on error.
+  #
+  # Same as `#highlight(code : String)` except that any error is rescued and
+  # returns unhighlighted source code.
+  def highlight!(code : String)
+    highlight(code)
+  rescue
+    code
   end
 
   private def consume_space_or_newline(lexer, io)
