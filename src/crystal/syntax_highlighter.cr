@@ -1,6 +1,6 @@
 require "html"
 
-module Crystal::SyntaxHighlighter
+class Crystal::SyntaxHighlighter
   def highlight(io : IO, code : String)
     lexer = Lexer.new(code)
     lexer.comments_enabled = true
@@ -10,7 +10,11 @@ module Crystal::SyntaxHighlighter
     highlight_normal_state lexer, io
   end
 
-  def highlight(code : String)
+  def self.highlight(io : IO, code : String)
+    new.highlight(io, code)
+  end
+
+  def self.highlight(code : String)
     String.build do |io|
       highlight(io, code)
     end
@@ -18,9 +22,9 @@ module Crystal::SyntaxHighlighter
 
   # Highlights *code* or returns unhighlighted *code* on error.
   #
-  # Same as `#highlight(code : String)` except that any error is rescued and
+  # Same as `.highlight(code : String)` except that any error is rescued and
   # returns unhighlighted source code.
-  def highlight!(code : String)
+  def self.highlight!(code : String)
     highlight(code)
   rescue
     code
@@ -97,10 +101,9 @@ module Crystal::SyntaxHighlighter
     end
   end
 
-  module HTML
-    extend SyntaxHighlighter
+  class HTML < SyntaxHighlighter
 
-    def self.visit_token(io : IO, token : Token, last_is_def)
+    def visit_token(io : IO, token : Token, last_is_def)
       case token.type
       when :NEWLINE
         io.puts
@@ -152,7 +155,7 @@ module Crystal::SyntaxHighlighter
       end
     end
 
-    private def self.highlight_delimiter_state(lexer, token, io, heredoc = false)
+    private def highlight_delimiter_state(lexer, token, io, heredoc = false)
       start_highlight_class "s", io
 
       ::HTML.escape(token.raw, io) unless heredoc
@@ -177,7 +180,7 @@ module Crystal::SyntaxHighlighter
       end_highlight_class io
     end
 
-    private def self.highlight_string_array(lexer, token, io)
+    private def highlight_string_array(lexer, token, io)
       start_highlight_class "s", io
       ::HTML.escape(token.raw, io)
       while true
@@ -202,19 +205,19 @@ module Crystal::SyntaxHighlighter
       end
     end
 
-    private def self.highlight(token, klass, io)
+    private def highlight(token, klass, io)
       start_highlight_class klass, io
       io << token
       end_highlight_class io
     end
 
-    private def self.start_highlight_class(klass, io)
+    private def start_highlight_class(klass, io)
       io << %(<span class=")
       io << klass
       io << %(">)
     end
 
-    private def self.end_highlight_class(io)
+    private def end_highlight_class(io)
       io << %(</span>)
     end
   end
