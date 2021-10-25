@@ -517,7 +517,7 @@ describe "Semantic: private" do
   end
 
   it "doesn't inherit visibility from class node in macro hook (#8794)" do
-    assert_no_errors <<-CR, inject_primitives: false
+    assert_no_errors <<-CR
       module M1
         macro included
           include M2
