@@ -4,33 +4,30 @@ class Crystal::SyntaxHighlighter::HTML < Crystal::SyntaxHighlighter
   def initialize(@io : IO)
   end
 
-  def render(type, value)
+  def render(type : TokenType, value)
     case type
-    when :COMMENT
+    when .comment?
       span "c", ::HTML.escape(value)
-    when :NUMBER
+    when .number?
       span "n", value
-    when :CHAR
+    when .char?
       span "s", ::HTML.escape(value)
-    when :SYMBOL
+    when .symbol?
       span "n", ::HTML.escape(value)
-    when :CONST
+    when .const?
       span "t", value
-    when :STRING
+    when .string?
       span "s", ::HTML.escape(value)
-    when :IDENT
+    when .ident?
       span "m", value
-    when :KEYWORD, :SELF
+    when .keyword?, .self?
       span "k", value
-    when :PRIMITIVE_LITERAL
+    when .primitive_literal?
       span "n", value
-    when :OPERATOR
+    when .operator?
       span "o", ::HTML.escape(value)
-    when :DELIMITER_START, :DELIMITED_TOKEN, :DELIMITER_END,
-         :STRING_ARRAY_START, :STRING_ARRAY_TOKEN, :STRING_ARRAY_END
-      ::HTML.escape(value, @io)
     else
-      @io << value
+      ::HTML.escape(value, @io)
     end
   end
 

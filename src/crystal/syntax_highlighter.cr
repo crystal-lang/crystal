@@ -20,6 +20,30 @@ class Crystal::SyntaxHighlighter
     end
   end
 
+  enum TokenType
+    NEWLINE
+    SPACE
+    COMMENT
+    NUMBER
+    CHAR
+    SYMBOL
+    CONST
+    STRING
+    IDENT
+    KEYWORD
+    SELF
+    PRIMITIVE_LITERAL
+    OPERATOR
+    DELIMITER_START
+    DELIMITED_TOKEN
+    DELIMITER_END
+    STRING_ARRAY_START
+    STRING_ARRAY_TOKEN
+    STRING_ARRAY_END
+    UNDERSCORE
+    UNKNOWN
+  end
+
   # Highlights *code* or returns unhighlighted *code* on error.
   #
   # Same as `.highlight(code : String)` except that any error is rescued and
@@ -104,11 +128,17 @@ class Crystal::SyntaxHighlighter
   def highlight_token(token : Token, last_is_def)
     case token.type
     when :NEWLINE
-      render token.type, "\n"
-    when :SPACE, :COMMENT
-      render token.type, token.value.to_s
-    when :NUMBER, :CHAR, :SYMBOL
-      render token.type, token.raw
+      render :NEWLINE, "\n"
+    when :SPACE
+      render :SPACE, token.value.to_s
+    when :COMMENT
+      render :COMMENT, token.value.to_s
+    when :NUMBER
+      render :NUMBER, token.raw
+    when :CHAR
+      render :CHAR, token.raw
+    when :SYMBOL
+      render :SYMBOL, token.raw
     when :DELIMITER_START
       render :STRING, token.raw
     when :CONST, :"::"
@@ -132,7 +162,7 @@ class Crystal::SyntaxHighlighter
         when :self
           render :SELF, token.to_s
         else
-          render :PLAIN, token.to_s
+          render :UNKNOWN, token.to_s
         end
       end
     when :+, :-, :*, :&+, :&-, :&*, :/, ://,
@@ -141,9 +171,9 @@ class Crystal::SyntaxHighlighter
          :[], :[]?, :[]=, :<=>, :===
       render :OPERATOR, token.to_s
     when :UNDERSCORE
-      render token.type, "_"
+      render :UNDERSCORE, "_"
     else
-      render token.type, token.to_s
+      render :UNKNOWN, token.to_s
     end
   end
 
