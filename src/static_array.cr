@@ -33,6 +33,7 @@
 # doesn't specify a type but a size. Its value can be an `Int32` literal or
 # constant.
 struct StaticArray(T, N)
+  include Comparable(StaticArray)
   include Indexable::Mutable(T)
 
   # Creates a new `StaticArray` with the given *args*. The type of the
@@ -111,6 +112,10 @@ struct StaticArray(T, N)
   # ```
   def ==(other)
     false
+  end
+
+  def <=>(other : StaticArray)
+    to_slice <=> other.to_slice
   end
 
   @[AlwaysInline]
