@@ -672,7 +672,7 @@ describe "Semantic: exception" do
   end
 
   it "gets a non-nilable type if all rescue are unreachable (#8751)" do
-    semantic(%(
+    assert_no_errors <<-CR, inject_primitives: true
       while true
         begin
           foo = 1
@@ -684,6 +684,6 @@ describe "Semantic: exception" do
 
         foo &+ 2
       end
-      ), inject_primitives: true)
+      CR
   end
 end

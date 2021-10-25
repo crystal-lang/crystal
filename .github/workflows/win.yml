@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   linux-job:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:1.1.1-build
+    container: crystallang/crystal:1.2.0-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
@@ -47,7 +47,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: ivmai/bdwgc
-          ref: 2fd48a92b8bff3afb64b3528ad78b63f033f0436  # master @ 2020-02-13
+          ref: v8.2.0
           path: bdwgc
       - name: Download libatomic_ops
         if: steps.cache-libs.outputs.cache-hit != 'true'

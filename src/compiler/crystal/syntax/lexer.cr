@@ -3200,7 +3200,7 @@ module Crystal
     end
 
     def peek_not_ident_part_or_end_next_char
-      !ident_part_or_end?(peek_next_char) && next_char
+      !ident_part_or_end?(peek_next_char) && peek_next_char != ':' && next_char
     end
 
     def closing_char(char = current_char)

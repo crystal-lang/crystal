@@ -156,7 +156,7 @@ describe "Semantic: pointer" do
   end
 
   it "can assign pointerof virtual type (#8216)" do
-    semantic(%(
+    assert_no_errors <<-CR
       class Base
       end
 
@@ -167,7 +167,7 @@ describe "Semantic: pointer" do
 
       x : Pointer(Base)
       x = pointerof(u)
-    ))
+      CR
   end
 
   it "errors with non-matching generic value with value= (#10211)" do

@@ -190,7 +190,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if abstract method is implemented by subclass" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo
       end
@@ -199,11 +199,11 @@ describe "Semantic: abstract def" do
         def foo
         end
       end
-      )
+      CR
   end
 
   it "doesn't error if abstract method with args is implemented by subclass" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo(x, y)
       end
@@ -212,11 +212,11 @@ describe "Semantic: abstract def" do
         def foo(x, y)
         end
       end
-      )
+      CR
   end
 
   it "doesn't error if abstract method with args is implemented by subclass (restriction -> no restriction)" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo(x, y : Int32)
       end
@@ -225,11 +225,11 @@ describe "Semantic: abstract def" do
         def foo(x, y)
         end
       end
-      )
+      CR
   end
 
   it "doesn't error if abstract method with args is implemented by subclass (don't check subclasses)" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo
       end
@@ -241,7 +241,7 @@ describe "Semantic: abstract def" do
 
       class Baz < Bar
       end
-      )
+      CR
   end
 
   it "errors if abstract method is not implemented by subclass of subclass" do
@@ -260,7 +260,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if abstract method is implemented by subclass via module inclusion" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo
       end
@@ -273,7 +273,7 @@ describe "Semantic: abstract def" do
       class Bar < Foo
         include Moo
       end
-      )
+      CR
   end
 
   it "errors if abstract method is not implemented by including class" do
@@ -290,7 +290,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if abstract method is implemented by including class" do
-    semantic %(
+    assert_no_errors <<-CR
       module Foo
         abstract def foo
       end
@@ -301,11 +301,11 @@ describe "Semantic: abstract def" do
         def foo
         end
       end
-      )
+      CR
   end
 
   it "doesn't error if abstract method is not implemented by including module" do
-    semantic %(
+    assert_no_errors <<-CR
       module Foo
         abstract def foo
       end
@@ -313,7 +313,7 @@ describe "Semantic: abstract def" do
       module Bar
         include Foo
       end
-      )
+      CR
   end
 
   it "errors if abstract method is not implemented by subclass (nested in module)" do
@@ -331,7 +331,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if abstract method with args is implemented by subclass (with one default arg)" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo(x)
       end
@@ -340,7 +340,7 @@ describe "Semantic: abstract def" do
         def foo(x, y = 1)
         end
       end
-      )
+      CR
   end
 
   it "doesn't error if implements with parent class" do
@@ -453,7 +453,7 @@ describe "Semantic: abstract def" do
   end
 
   it "finds implements in included module in disorder (#4052)" do
-    semantic %(
+    assert_no_errors <<-CR
       module B
         abstract def x
       end
@@ -468,7 +468,7 @@ describe "Semantic: abstract def" do
         include C
         include B
       end
-      )
+      CR
   end
 
   it "errors if missing return type" do
@@ -528,7 +528,7 @@ describe "Semantic: abstract def" do
   end
 
   it "matches instantiated generic types" do
-    semantic(%(
+    assert_no_errors <<-CR
       abstract class Foo(T)
         abstract def foo(x : T)
       end
@@ -540,11 +540,11 @@ describe "Semantic: abstract def" do
         def foo(x : Int32)
         end
       end
-    ))
+      CR
   end
 
   it "matches generic types" do
-    semantic(%(
+    assert_no_errors <<-CR
       abstract class Foo(T)
         abstract def foo(x : T)
       end
@@ -553,11 +553,11 @@ describe "Semantic: abstract def" do
         def foo(x : U)
         end
       end
-    ))
+      CR
   end
 
   it "matches instantiated generic module" do
-    semantic(%(
+    assert_no_errors <<-CR
       module Foo(T)
         abstract def foo(x : T)
       end
@@ -568,11 +568,11 @@ describe "Semantic: abstract def" do
         def foo(x : Int32)
         end
       end
-      ))
+      CR
   end
 
   it "matches generic module" do
-    semantic(%(
+    assert_no_errors <<-CR
       module Foo(T)
         abstract def foo(x : T)
       end
@@ -583,11 +583,11 @@ describe "Semantic: abstract def" do
         def foo(x : U)
         end
       end
-      ))
+      CR
   end
 
   it "matches generic module (a bit more complex)" do
-    semantic(%(
+    assert_no_errors <<-CR
       class Gen(T)
       end
 
@@ -601,11 +601,11 @@ describe "Semantic: abstract def" do
         def foo(x : Gen(Int32))
         end
       end
-      ))
+      CR
   end
 
   it "matches generic return type" do
-    semantic(%(
+    assert_no_errors <<-CR
       abstract class Foo(T)
         abstract def foo : T
       end
@@ -615,7 +615,7 @@ describe "Semantic: abstract def" do
           1
         end
       end
-    ))
+      CR
   end
 
   it "errors if missing a return type in subclass of generic subclass" do
@@ -661,7 +661,7 @@ describe "Semantic: abstract def" do
   end
 
   it "implements through extend (considers original type for generic lookup) (#8096)" do
-    semantic(%(
+    assert_no_errors <<-CR
       module ICallable(T)
         abstract def call(foo : T)
       end
@@ -675,11 +675,11 @@ describe "Semantic: abstract def" do
         extend ICallable(Int32)
         extend Moo
       end
-    ))
+      CR
   end
 
   it "implements through extend (considers original type for generic lookup) (2) (#8096)" do
-    semantic(%(
+    assert_no_errors <<-CR
       module ICallable(T)
         abstract def call(foo : T)
       end
@@ -691,11 +691,11 @@ describe "Semantic: abstract def" do
         def call(foo : Int32)
         end
       end
-    ))
+      CR
   end
 
   it "can implement even if yield comes later in macro code" do
-    semantic(%(
+    assert_no_errors <<-CR
       module Moo
         abstract def each(& : Int32 -> _)
       end
@@ -711,11 +711,11 @@ describe "Semantic: abstract def" do
           {% end %}
         end
       end
-    ))
+      CR
   end
 
   it "can implement by block signature even if yield comes later in macro code" do
-    semantic(%(
+    assert_no_errors <<-CR
       module Moo
         abstract def each(& : Int32 -> _)
       end
@@ -729,7 +729,7 @@ describe "Semantic: abstract def" do
           {% end %}
         end
       end
-    ))
+      CR
   end
 
   it "error shows full signature of block parameter" do
@@ -745,7 +745,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if implementation have default value" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo(x)
       end
@@ -754,7 +754,7 @@ describe "Semantic: abstract def" do
         def foo(x = 1)
         end
       end
-      )
+      CR
   end
 
   it "errors if implementation doesn't have default value" do
@@ -827,7 +827,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if implementation matches keyword argument" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo(*, x)
       end
@@ -836,7 +836,7 @@ describe "Semantic: abstract def" do
         def foo(*, x)
         end
       end
-      )
+      CR
   end
 
   it "errors if implementation doesn't match keyword argument type" do
@@ -854,7 +854,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if implementation have keyword arguments in different order" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo(*, x : Int32, y : String)
       end
@@ -863,7 +863,7 @@ describe "Semantic: abstract def" do
         def foo(*, y : String, x : Int32)
         end
       end
-      )
+      CR
   end
 
   it "errors if implementation has more keyword arguments" do
@@ -881,7 +881,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if implementation has more keyword arguments with default values" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo(*, x)
       end
@@ -890,7 +890,7 @@ describe "Semantic: abstract def" do
         def foo(*, x, y = 1)
         end
       end
-      )
+      CR
   end
 
   it "errors if implementation doesn't have a splat" do
@@ -922,7 +922,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error with splat" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo(*args)
       end
@@ -931,11 +931,11 @@ describe "Semantic: abstract def" do
         def foo(*args)
         end
       end
-    )
+      CR
   end
 
   it "doesn't error with splat and args with default value" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo(*args)
       end
@@ -944,11 +944,11 @@ describe "Semantic: abstract def" do
         def foo(a = 1, *args)
         end
       end
-    )
+      CR
   end
 
   it "allows arguments to be collapsed into splat" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo(a : Int32, b : String)
       end
@@ -957,7 +957,7 @@ describe "Semantic: abstract def" do
         def foo(*args : Int32 | String)
         end
       end
-    )
+      CR
   end
 
   it "errors if keyword argument doesn't have the same default value" do
@@ -974,7 +974,7 @@ describe "Semantic: abstract def" do
   end
 
   it "allow double splat argument" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo(**kargs)
       end
@@ -983,11 +983,11 @@ describe "Semantic: abstract def" do
         def foo(**kargs)
         end
       end
-    )
+      CR
   end
 
   it "allow double splat when abstract doesn't have it" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo
       end
@@ -996,7 +996,7 @@ describe "Semantic: abstract def" do
         def foo(**kargs)
         end
       end
-    )
+      CR
   end
 
   it "errors if implementation misses the double splat" do
@@ -1026,7 +1026,7 @@ describe "Semantic: abstract def" do
   end
 
   it "allow splat instead of keyword argument" do
-    semantic %(
+    assert_no_errors <<-CR
       abstract class Foo
         abstract def foo(*, foo)
       end
@@ -1035,7 +1035,7 @@ describe "Semantic: abstract def" do
         def foo(**kargs)
         end
       end
-    )
+      CR
   end
 
   it "extra keyword arguments must have compatible type to double splat" do

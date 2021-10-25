@@ -1318,7 +1318,7 @@ describe "Block inference" do
   end
 
   it "auto-unpacks tuple, captured empty block" do
-    semantic(%(
+    assert_no_errors <<-CR, inject_primitives: true
       def foo(&block : {Int32, Char} -> _)
         tup = {1, 'a'}
         block.call tup
@@ -1326,7 +1326,7 @@ describe "Block inference" do
 
       foo do |x, y|
       end
-      ), inject_primitives: true)
+      CR
   end
 
   it "auto-unpacks tuple, captured block with multiple statements" do
@@ -1522,14 +1522,14 @@ describe "Block inference" do
   end
 
   it "doesn't crash on cleaning up typeof node without dependencies (#8669)" do
-    semantic(%(
+    assert_no_errors <<-CR
       def foo(&)
       end
 
       foo do
         typeof(bar)
       end
-      ))
+      CR
   end
 
   it "respects block arg restriction when block has a splat parameter (#6473)" do
@@ -1565,7 +1565,7 @@ describe "Block inference" do
   end
 
   it "allows underscore in block return type even if the return type can't be computed" do
-    semantic(%(
+    assert_no_errors <<-CR
       def foo(& : -> _)
         yield
       end
@@ -1577,11 +1577,11 @@ describe "Block inference" do
       end
 
       recursive
-      ))
+      CR
   end
 
   it "doesn't fail with 'already had enclosing call' (#11200)" do
-    semantic(%(
+    assert_no_errors <<-CR
       def capture(&block)
         block
       end
@@ -1606,6 +1606,6 @@ describe "Block inference" do
 
       foo = Bar(Bool).new.as(Foo)
       foo.foo
-      ))
+      CR
   end
 end
