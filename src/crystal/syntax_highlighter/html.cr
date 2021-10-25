@@ -5,7 +5,7 @@ class Crystal::SyntaxHighlighter
     def initialize(@io : IO)
     end
 
-    def render(type : TokenType, value)
+    def render(type : TokenType, value : String)
       case type
       when .comment?
         span "c" { ::HTML.escape(value, @io) }
@@ -32,13 +32,13 @@ class Crystal::SyntaxHighlighter
       end
     end
 
-    def visit_delimiter(&)
+    def render_delimiter(&)
       span "s" do
         yield
       end
     end
 
-    def visit_interpolation(&)
+    def render_interpolation(&)
       span_end
       span "i", &.print "\#{"
       yield
@@ -46,7 +46,7 @@ class Crystal::SyntaxHighlighter
       span_start "s"
     end
 
-    def visit_string_array(&)
+    def render_string_array(&)
       span "s" do
         yield
       end

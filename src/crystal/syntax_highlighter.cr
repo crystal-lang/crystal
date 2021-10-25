@@ -21,6 +21,21 @@ abstract class Crystal::SyntaxHighlighter
     end
   end
 
+  # Highlights *code* or returns unhighlighted *code* on error.
+  #
+  # Same as `.highlight(code : String)` except that any error is rescued and
+  # returns unhighlighted source code.
+  def self.highlight!(code : String)
+    highlight(code)
+  rescue
+    code
+  end
+
+  abstract def render(type : TokenType, value : String)
+  abstract def render_delimiter(&)
+  abstract def render_interpolation(&)
+  abstract def render_string_array(&)
+
   enum TokenType
     NEWLINE
     SPACE
@@ -44,16 +59,6 @@ abstract class Crystal::SyntaxHighlighter
     STRING_ARRAY_END
     UNDERSCORE
     UNKNOWN
-  end
-
-  # Highlights *code* or returns unhighlighted *code* on error.
-  #
-  # Same as `.highlight(code : String)` except that any error is rescued and
-  # returns unhighlighted source code.
-  def self.highlight!(code : String)
-    highlight(code)
-  rescue
-    code
   end
 
   private def consume_space_or_newline(lexer)
@@ -180,7 +185,7 @@ abstract class Crystal::SyntaxHighlighter
   end
 
   private def highlight_delimiter_state(lexer, token, *, heredoc = false)
-    visit_delimiter do
+    render_delimiter do
       render :DELIMITER_START, token.raw unless heredoc
       while true
         token = lexer.next_string_token(token.delimiter_state)
@@ -189,7 +194,7 @@ abstract class Crystal::SyntaxHighlighter
           render :DELIMITER_END, token.raw
           break
         when :INTERPOLATION_START
-          visit_interpolation do
+          render_interpolation do
             highlight_normal_state lexer, break_on_rcurly: true
           end
         else
@@ -200,7 +205,7 @@ abstract class Crystal::SyntaxHighlighter
   end
 
   private def highlight_string_array(lexer, token)
-    visit_string_array do
+    render_string_array do
       render :STRING_ARRAY_START, token.raw
       while true
         consume_space_or_newline(lexer)

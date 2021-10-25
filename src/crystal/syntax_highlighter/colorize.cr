@@ -21,23 +21,23 @@ class Crystal::SyntaxHighlighter
       TokenType::SELF              => ::Colorize::ColorANSI::Blue,
     } of TokenType => ::Colorize::Color
 
-    def render(type : TokenType, value)
+    def render(type : TokenType, value : String)
       colorize(type, value)
     end
 
-    def visit_delimiter(&)
+    def render_delimiter(&)
       ::Colorize.with.fore(colors[TokenType::STRING]).surround(@io) do
         yield
       end
     end
 
-    def visit_interpolation(&)
+    def render_interpolation(&)
       colorize :INTERPOLATION, "\#{"
       yield
       colorize :INTERPOLATION, "}"
     end
 
-    def visit_string_array(&)
+    def render_string_array(&)
       ::Colorize.with.fore(colors[TokenType::STRING]).surround(@io) do
         yield
       end
