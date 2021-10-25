@@ -1,7 +1,9 @@
-module Crystal::Doc::Highlighter
+require "html"
+
+module Crystal::SyntaxHighlighter::HTML
   extend self
 
-  def highlight(code)
+  def self.highlight(code)
     lexer = Lexer.new(code)
     lexer.comments_enabled = true
     lexer.count_whitespace = true
@@ -37,18 +39,18 @@ module Crystal::Doc::Highlighter
       when :SPACE
         io << token.value
       when :COMMENT
-        highlight HTML.escape(token.value.to_s), "c", io
+        highlight ::HTML.escape(token.value.to_s), "c", io
       when :NUMBER
         highlight token.raw, "n", io
       when :CHAR
-        highlight HTML.escape(token.raw), "s", io
+        highlight ::HTML.escape(token.raw), "s", io
       when :SYMBOL
-        highlight HTML.escape(token.raw), "n", io
+        highlight ::HTML.escape(token.raw), "n", io
       when :CONST, :"::"
         highlight token, "t", io
       when :DELIMITER_START
         if token.delimiter_state.kind == :heredoc
-          highlight HTML.escape(token.raw), "s", io
+          highlight ::HTML.escape(token.raw), "s", io
           heredoc_stack << token.dup
         else
           highlight_delimiter_state lexer, token, io
@@ -82,7 +84,7 @@ module Crystal::Doc::Highlighter
            :"=", :==, :<, :<=, :>, :>=, :!, :!=, :=~, :!~,
            :&, :|, :^, :~, :**, :>>, :<<, :%,
            :[], :[]?, :[]=, :<=>, :===
-        highlight HTML.escape(token.to_s), "o", io
+        highlight ::HTML.escape(token.to_s), "o", io
       when :"}"
         if break_on_rcurly
           break
@@ -104,13 +106,13 @@ module Crystal::Doc::Highlighter
   private def highlight_delimiter_state(lexer, token, io, heredoc = false)
     start_highlight_class "s", io
 
-    HTML.escape(token.raw, io) unless heredoc
+    ::HTML.escape(token.raw, io) unless heredoc
 
     while true
       token = lexer.next_string_token(token.delimiter_state)
       case token.type
       when :DELIMITER_END
-        HTML.escape(token.raw, io)
+        ::HTML.escape(token.raw, io)
         break
       when :INTERPOLATION_START
         end_highlight_class io
@@ -119,7 +121,7 @@ module Crystal::Doc::Highlighter
         highlight "}", "i", io
         start_highlight_class "s", io
       else
-        HTML.escape(token.raw, io)
+        ::HTML.escape(token.raw, io)
       end
     end
 
@@ -128,15 +130,15 @@ module Crystal::Doc::Highlighter
 
   private def highlight_string_array(lexer, token, io)
     start_highlight_class "s", io
-    HTML.escape(token.raw, io)
+    ::HTML.escape(token.raw, io)
     while true
       consume_space_or_newline(lexer, io)
       token = lexer.next_string_array_token
       case token.type
       when :STRING
-        HTML.escape(token.raw, io)
+        ::HTML.escape(token.raw, io)
       when :STRING_ARRAY_END
-        HTML.escape(token.raw, io)
+        ::HTML.escape(token.raw, io)
         end_highlight_class io
         break
       when :EOF

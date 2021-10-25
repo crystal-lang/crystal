@@ -571,7 +571,7 @@ class Crystal::Doc::Type
 
   def node_to_html(node, io, html : HTMLOption = :all)
     if html.highlight?
-      io << Highlighter.highlight(node.to_s)
+      io << SyntaxHighlighter::HTML.highlight(node.to_s)
     else
       io << node
     end

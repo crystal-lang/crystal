@@ -1,10 +1,10 @@
 require "xml"
-require "html"
-require "../../../../spec_helper"
+require "crystal/syntax_highlighter"
+require "spec"
 
 private def it_highlights(code, expected, file = __FILE__, line = __LINE__)
   it "highlights #{code.inspect}", file, line do
-    highlighted = Crystal::Doc::Highlighter.highlight code
+    highlighted = Crystal::SyntaxHighlighter::HTML.highlight code
     highlighted.should eq(expected), file: file, line: line
     doc = XML.parse_html highlighted
     doc.content.should eq(code), file: file, line: line
@@ -13,12 +13,12 @@ end
 
 private def it_does_not_highlight(code, file = __FILE__, line = __LINE__)
   it "does not highlight #{code.inspect} due to error", file, line do
-    highlighted = Crystal::Doc::Highlighter.highlight code
+    highlighted = Crystal::SyntaxHighlighter::HTML.highlight code
     highlighted.should eq(code), file: file, line: line
   end
 end
 
-describe "Crystal::Doc::Highlighter#highlight" do
+describe "Crystal::SyntaxHighlighter::HTML#highlight" do
   it_highlights "foo", "foo"
   it_highlights "foo bar", "foo bar"
   it_highlights "foo\nbar", "foo\nbar"
