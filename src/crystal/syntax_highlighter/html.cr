@@ -7,53 +7,53 @@ class Crystal::SyntaxHighlighter::HTML < Crystal::SyntaxHighlighter
   def render(type : TokenType, value)
     case type
     when .comment?
-      span "c", ::HTML.escape(value)
+      span "c" { ::HTML.escape(value, @io) }
     when .number?
-      span "n", value
+      span "n", &.print value
     when .char?
-      span "s", ::HTML.escape(value)
+      span "s" { ::HTML.escape(value, @io) }
     when .symbol?
-      span "n", ::HTML.escape(value)
+      span "n" { ::HTML.escape(value, @io) }
     when .const?
-      span "t", value
+      span "t", &.print value
     when .string?
-      span "s", ::HTML.escape(value)
+      span "s" { ::HTML.escape(value, @io) }
     when .ident?
-      span "m", value
+      span "m", &.print value
     when .keyword?, .self?
-      span "k", value
+      span "k", &.print value
     when .primitive_literal?
-      span "n", value
+      span "n", &.print value
     when .operator?
-      span "o", ::HTML.escape(value)
+      span "o" { ::HTML.escape(value, @io) }
     else
       ::HTML.escape(value, @io)
     end
   end
 
   def visit_delimiter(&)
-    span_start "s"
-    yield
-    span_end
+    span "s" do
+      yield
+    end
   end
 
   def visit_interpolation(&)
     span_end
-    span "i", "\#{"
+    span "i", &.print "\#{"
     yield
-    span "i", "}"
+    span "i", &.print "}"
     span_start "s"
   end
 
   def visit_string_array(&)
-    span_start "s"
-    yield
-    span_end
+    span "s" do
+      yield
+    end
   end
 
-  private def span(klass, token)
+  private def span(klass, &)
     span_start klass
-    @io << token
+    yield @io
     span_end
   end
 
