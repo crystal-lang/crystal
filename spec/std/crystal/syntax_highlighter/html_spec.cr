@@ -19,6 +19,8 @@ private def it_does_not_highlight(code, file = __FILE__, line = __LINE__)
 end
 
 describe "Crystal::SyntaxHighlighter::HTML#highlight" do
+it_highlights %(foo = bar("baz\#{PI + 1}") # comment), "foo <span class=\"o\">=</span> bar(<span class=\"s\">&quot;baz</span><span class=\"i\">\#{</span><span class=\"t\">PI</span> <span class=\"o\">+</span> <span class=\"n\">1</span><span class=\"i\">}</span><span class=\"s\">&quot;</span>) <span class=\"c\"># comment</span>"
+
   it_highlights "foo", "foo"
   it_highlights "foo bar", "foo bar"
   it_highlights "foo\nbar", "foo\nbar"

@@ -2,6 +2,7 @@ require "html"
 require "compiler/crystal/syntax/**"
 
 abstract class Crystal::SyntaxHighlighter
+  # Parses *code* as Crystal source code and highlights it.
   def highlight(code : String)
     lexer = Lexer.new(code)
     lexer.comments_enabled = true
@@ -11,31 +12,19 @@ abstract class Crystal::SyntaxHighlighter
     highlight_normal_state lexer
   end
 
-  def self.highlight(io : IO, code : String)
-    new(io).highlight(code)
-  end
-
-  def self.highlight(code : String)
-    String.build do |io|
-      highlight(io, code)
-    end
-  end
-
-  # Highlights *code* or returns unhighlighted *code* on error.
-  #
-  # Same as `.highlight(code : String)` except that any error is rescued and
-  # returns unhighlighted source code.
-  def self.highlight!(code : String)
-    highlight(code)
-  rescue
-    code
-  end
-
+  # Renders *token* with text *value*.
   abstract def render(type : TokenType, value : String)
+
+  # Renders a delimiter sequence.
   abstract def render_delimiter(&)
+
+  # Renders an interpolation sequence.
   abstract def render_interpolation(&)
+
+  # Renders a string array sequence.
   abstract def render_string_array(&)
 
+  # Describes the type of a highlighter token.
   enum TokenType
     NEWLINE
     SPACE
@@ -132,7 +121,7 @@ abstract class Crystal::SyntaxHighlighter
     end
   end
 
-  def highlight_token(token : Token, last_is_def)
+  private def highlight_token(token : Token, last_is_def)
     case token.type
     when :NEWLINE
       render :NEWLINE, "\n"

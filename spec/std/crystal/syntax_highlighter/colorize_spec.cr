@@ -5,7 +5,7 @@ private def it_highlights(code, expected, file = __FILE__, line = __LINE__)
   it "highlights #{code.inspect}", file, line do
     highlighted = Crystal::SyntaxHighlighter::Colorize.highlight code
     highlighted.should eq(expected), file: file, line: line
-    extracted_code = highlighted.gsub(/\e\[\d+m/, "")
+    extracted_code = highlighted.gsub(/\e\[(?:\d+;)?\d+m/, "")
     extracted_code.should eq(code), file: file, line: line
   end
 end
@@ -19,6 +19,8 @@ end
 
 describe Crystal::SyntaxHighlighter::Colorize do
   describe "#highlight" do
+    it_highlights %(foo = bar("baz\#{PI + 1}") # comment), "foo \e[91m=\e[0m bar(\e[93m\"baz\#{\e[0;36mPI\e[0;93m \e[0;91m+\e[0;93m \e[0;35m1\e[0;93m}\"\e[0m) \e[90m# comment\e[0m"
+
     it_highlights "foo", "foo"
     it_highlights "foo bar", "foo bar"
     it_highlights "foo\nbar", "foo\nbar"

@@ -1,7 +1,36 @@
 require "colorize"
 require "../syntax_highlighter"
 
+# A syntax highlighter that renders Crystal source code with ANSI escape codes
+# suitable for terminal highlighting.
+#
+# ```
+# code = %(foo = bar("baz\#{PI + 1}") # comment)
+# html = Crystal::SyntaxHighlighter::Colorize.highlight(code)
+# colorized # => "foo \e[91m=\e[0m bar(\e[93m\"baz\#{\e[0;36mPI\e[0;93m \e[0;91m+\e[0;93m \e[0;35m1\e[0;93m}\"\e[0m) \e[90m# comment\e[0m"
+# ```
 class Crystal::SyntaxHighlighter::Colorize < Crystal::SyntaxHighlighter
+  # Highlights *code* and writes the result to *io*.
+  def self.highlight(io : IO, code : String)
+    new(io).highlight(code)
+  end
+  # Highlights *code* and returns the result.
+  def self.highlight(code : String)
+    String.build do |io|
+      highlight(io, code)
+    end
+  end
+
+  # Highlights *code* or returns unhighlighted *code* on error.
+  #
+  # Same as `.highlight(code : String)` except that any error is rescued and
+  # returns unhighlighted source code.
+  def self.highlight!(code : String)
+    highlight(code)
+  rescue
+    code
+  end
+
   def initialize(@io : IO)
   end
 
