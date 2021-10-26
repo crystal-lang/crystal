@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 
 describe "Regex" do
   it "compare to other instances" do
@@ -103,14 +103,19 @@ describe "Regex" do
     $2.should eq("ba")
   end
 
-  describe "matches?" do
+  describe "#matches?" do
     it "matches but create no MatchData" do
-      /f(o+)(bar?)/.matches?("fooba").should eq(true)
-      /f(o+)(bar?)/.matches?("barfo").should eq(false)
+      /f(o+)(bar?)/.matches?("fooba").should be_true
+      /f(o+)(bar?)/.matches?("barfo").should be_false
     end
 
     it "can specify initial position of matching" do
-      /f(o+)(bar?)/.matches?("fooba", 1).should eq(false)
+      /f(o+)(bar?)/.matches?("fooba", 1).should be_false
+    end
+
+    it "matches a large single line string" do
+      str = File.read(datapath("large_single_line_string.txt"))
+      str.matches?(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/).should be_false
     end
   end
 
