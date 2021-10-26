@@ -36,18 +36,18 @@ class Crystal::SyntaxHighlighter::Colorize < Crystal::SyntaxHighlighter
   end
 
   property colors : Hash(TokenType, ::Colorize::Color) = {
-    TokenType::COMMENT           => ::Colorize::ColorANSI::DarkGray,
-    TokenType::NUMBER            => ::Colorize::ColorANSI::Magenta,
-    TokenType::CHAR              => ::Colorize::ColorANSI::LightYellow,
-    TokenType::SYMBOL            => ::Colorize::ColorANSI::Magenta,
-    TokenType::STRING            => ::Colorize::ColorANSI::LightYellow,
-    TokenType::INTERPOLATION     => ::Colorize::ColorANSI::LightYellow,
-    TokenType::CONST             => ::Colorize::ColorANSI::Cyan,
-    TokenType::OPERATOR          => ::Colorize::ColorANSI::LightRed,
-    TokenType::IDENT             => ::Colorize::ColorANSI::LightGreen,
-    TokenType::KEYWORD           => ::Colorize::ColorANSI::LightRed,
-    TokenType::PRIMITIVE_LITERAL => ::Colorize::ColorANSI::Magenta,
-    TokenType::SELF              => ::Colorize::ColorANSI::Blue,
+    :comment           => :dark_gray,
+    :number            => :magenta,
+    :char              => :light_yellow,
+    :symbol            => :magenta,
+    :string            => :light_yellow,
+    :interpolation     => :light_yellow,
+    :const             => :cyan,
+    :operator          => :light_red,
+    :ident             => :light_green,
+    :keyword           => :light_red,
+    :primitive_literal => :magenta,
+    :self              => :blue,
   } of TokenType => ::Colorize::Color
 
   def render(type : TokenType, value : String)
