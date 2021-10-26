@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private def expect_overflow
   expect_raises ArgumentError, "Time::Span too big or too small" do
@@ -148,6 +149,10 @@ describe Time::Span do
     (t1 == t1).should be_true
     (t1 == t2).should be_false
     (t1 == "hello").should be_false
+  end
+
+  describe "#step" do
+    it_iterates "basic", [1.day, 2.days, 3.days, 4.days, 5.days], 1.days.step(to: 5.days, by: 1.day)
   end
 
   it "test int extension methods" do
@@ -305,9 +310,22 @@ describe Time::Span do
     [1.second, 5.seconds].sum.should eq(6.seconds)
   end
 
-  it "test zero?" do
-    Time::Span::ZERO.zero?.should eq true
-    Time::Span.new(nanoseconds: 123456789).zero?.should eq false
+  it "#zero?" do
+    Time::Span.zero.zero?.should be_true
+    Time::Span::ZERO.zero?.should be_true
+    Time::Span.new(nanoseconds: 123456789).zero?.should be_false
+  end
+
+  it "#positive?" do
+    Time::Span.new(nanoseconds: 123456789).positive?.should be_true
+    Time::Span.zero.positive?.should be_false
+    Time::Span.new(nanoseconds: -123456789).positive?.should be_false
+  end
+
+  it "#negative?" do
+    Time::Span.new(nanoseconds: 123456789).negative?.should be_false
+    Time::Span.zero.negative?.should be_false
+    Time::Span.new(nanoseconds: -123456789).negative?.should be_true
   end
 
   it "converts units" do

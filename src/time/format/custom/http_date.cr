@@ -37,7 +37,7 @@ struct Time::Format
     # Formats a `Time` into a `String`.
     #
     # *time* is always converted to UTC.
-    def self.format(time : Time)
+    def self.format(time : Time) : String
       String.build do |io|
         format(time, io)
       end
@@ -45,7 +45,7 @@ struct Time::Format
   end
 
   struct Parser
-    def http_date
+    def http_date : Time::Location
       ansi_c_format = http_date_short_day_name_with_comma?
 
       if ansi_c_format
@@ -74,7 +74,7 @@ struct Time::Format
       time_zone_gmt_or_rfc2822
     end
 
-    def http_date_ansi_c
+    def http_date_ansi_c : Time::Location
       short_month_name
       whitespace
       day_of_month_blank_padded
@@ -94,7 +94,7 @@ struct Time::Format
       !ansi_c_format && current_char.ascii_whitespace?
     end
 
-    def http_date_short_day_name_with_comma?
+    def http_date_short_day_name_with_comma? : Bool?
       return unless current_char.ascii_letter?
 
       short_day_name

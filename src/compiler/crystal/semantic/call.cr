@@ -803,7 +803,7 @@ class Crystal::Call
 
         if splat_index = block.splat_index
           if yield_types.size < block.args.size - 1
-            block.raise "too many block arguments (given #{block.args.size - 1}+, expected maximum #{yield_types.size})"
+            block.raise "too many block parameters (given #{block.args.size - 1}+, expected maximum #{yield_types.size})"
           end
           splat_range = (splat_index..splat_index - block.args.size)
           yield_types[splat_range] = program.tuple_of(yield_types[splat_range])
@@ -831,16 +831,19 @@ class Crystal::Call
 
     if yield_vars
       # Check if tuple unpacking is needed
-      if yield_vars.size == 1 &&
-         (yield_var_type = yield_vars.first.type).is_a?(TupleInstanceType) &&
-         block.args.size > 1
-        yield_var_type.tuple_types.each_with_index do |tuple_type, i|
+      yield_var_type = yield_vars.first?.try &.type.as?(TupleInstanceType)
+      auto_unpack_needed = yield_vars.size == 1 &&
+                           yield_var_type &&
+                           block.args.size > 1 &&
+                           !block.splat_index
+
+      if auto_unpack_needed
+        yield_var_type.not_nil!.tuple_types.each_with_index do |tuple_type, i|
           arg = block.args[i]?
           arg.type = tuple_type if arg
         end
       else
         yield_vars.each_with_index do |yield_var, i|
-          yield_var_type = yield_var.type
           arg = block.args[i]?
           arg.bind_to(yield_var || program.nil_var) if arg
         end
@@ -851,9 +854,13 @@ class Crystal::Call
     if match.def.uses_block_arg?
       # Create the arguments of the function literal
       if yield_vars
-        fun_args = yield_vars.map_with_index do |var, i|
-          arg_name = block.args[i]?.try(&.name) || program.new_temp_var_name
-          Arg.new(arg_name, type: var.type)
+        if auto_unpack_needed
+          fun_args = [Arg.new(program.new_temp_var_name, type: yield_vars.first.type)]
+        else
+          fun_args = yield_vars.map_with_index do |var, i|
+            arg_name = block.args[i]?.try(&.name) || program.new_temp_var_name
+            Arg.new(arg_name, type: var.type)
+          end
         end
       else
         fun_args = [] of Arg
@@ -880,12 +887,45 @@ class Crystal::Call
           fun_literal = call_block_arg
         else
           # Otherwise, we create a ProcLiteral and type it
-          if block.args.size > fun_args.size
-            wrong_number_of "block arguments", block.args.size, fun_args.size
-          end
+          if auto_unpack_needed
+            yield_var_type = yield_var_type.not_nil!
+            if block.args.size > yield_var_type.tuple_types.size
+              block.raise "too many block parameters (given #{block.args.size}, expected maximum #{yield_var_type.tuple_types.size})"
+            end
 
-          a_def = Def.new("->", fun_args, block.body).at(block)
-          a_def.captured_block = true
+            unpack_exps = [] of ASTNode
+            tuple_name = fun_args.first.name
+            yield_var_type.tuple_types.each_with_index do |tuple_type, i|
+              if arg = block.args[i]?
+                call = Call.new(Var.new(tuple_name), "[]", NumberLiteral.new(i))
+                unpack_exps << Assign.new(Var.new(arg.name), call)
+              end
+            end
+
+            case old_body = block.body
+            when Nop
+              # do nothing
+              new_body = old_body
+            when Expressions
+              # multiple statements
+              new_body = old_body
+              new_body.expressions[0...0] = unpack_exps
+            else
+              # single statement
+              unpack_exps << old_body
+              new_body = Expressions.new(unpack_exps)
+            end
+
+            a_def = Def.new("->", fun_args, new_body).at(block)
+            a_def.captured_block = true
+          else
+            if block.args.size > fun_args.size
+              wrong_number_of "block parameters", block.args.size, fun_args.size
+            end
+
+            a_def = Def.new("->", fun_args, block.body).at(block)
+            a_def.captured_block = true
+          end
 
           fun_literal = ProcLiteral.new(a_def).at(self)
           fun_literal.expected_return_type = output_type if output_type
@@ -948,7 +988,8 @@ class Crystal::Call
 
       # Similar to above: we check that the block's type matches the block arg specification,
       # and we delay it if possible.
-      if output
+      # If the return type is an underscore, we just ignore any return type checking.
+      if output && !output.is_a?(Underscore)
         if !block.type?
           if !match.def.free_var?(output) && output.is_a?(ASTNode) && !output.is_a?(Underscore)
             begin
@@ -976,15 +1017,20 @@ class Crystal::Call
                 end
               end
             else
-              if output.is_a?(Self)
-                raise "expected block to return #{match.context.instantiated_type}, not #{block_type}"
-              else
-                raise "expected block to return #{output}, not #{block_type}"
-              end
+              output_name = case output
+                            when Self
+                              match.context.instantiated_type
+                            when Crystal::Path
+                              match.context.defining_type.lookup_path(output)
+                            else
+                              output
+                            end
+              raise "expected block to return #{output_name}, not #{block_type}"
             end
           end
+
+          block.freeze_type = block_type
         end
-        block.freeze_type = block_type
       end
     end
 
@@ -995,18 +1041,18 @@ class Crystal::Call
     call_block_arg_types = call_block_arg.type.as(ProcInstanceType).arg_types
     if yield_vars
       if yield_vars.size != call_block_arg_types.size
-        wrong_number_of "block argument's arguments", call_block_arg_types.size, yield_vars.size
+        wrong_number_of "block argument's parameters", call_block_arg_types.size, yield_vars.size
       end
 
       i = 1
       yield_vars.zip(call_block_arg_types) do |yield_var, call_block_arg_type|
         if yield_var.type != call_block_arg_type
-          raise "expected block argument's argument ##{i} to be #{yield_var.type}, not #{call_block_arg_type}"
+          raise "expected block argument's parameter ##{i} to be #{yield_var.type}, not #{call_block_arg_type}"
         end
         i += 1
       end
     elsif call_block_arg_types.size != 0
-      wrong_number_of "block argument's arguments", call_block_arg_types.size, 0
+      wrong_number_of "block argument's parameters", call_block_arg_types.size, 0
     end
   end
 
@@ -1117,13 +1163,13 @@ class Crystal::Call
         when "proc_call"
           owner = owner.as(ProcInstanceType)
           proc_arg_type = owner.arg_types[index]
-          unless type.covariant?(proc_arg_type)
+          unless type.implements?(proc_arg_type)
             self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
           end
         when "pointer_set"
           owner = owner.remove_typedef.as(PointerInstanceType)
           pointer_type = owner.var.type
-          unless type.filter_by(pointer_type)
+          unless (type.nil_type? && pointer_type.void?) || type.implements?(pointer_type)
             self.args[index].raise "type must be #{pointer_type}, not #{type}"
           end
         end

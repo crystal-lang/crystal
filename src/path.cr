@@ -192,40 +192,40 @@ struct Path
   # Path["/foo/bar/file.cr"].dirname # => "/foo/bar"
   # ```
   def dirname : String
-    reader = Char::Reader.new(at_end: @name)
-    separators = self.separators
-    # skip trailing separators
-    while separators.includes?(reader.current_char) && reader.pos > 0
-      reader.previous_char
-    end
+    return "." if @name.empty?
+    slice = @name.to_slice
+    sep = self.separators.map &.ord
+    pos = slice.size - 1
+    stage = 0
 
-    # skip last component
-    while !separators.includes?(reader.current_char) && reader.pos > 0
-      reader.previous_char
-    end
-
-    if reader.pos == 0 && !separators.includes?(reader.current_char)
-      if windows? && windows_drive?
-        return anchor.to_s
-      else
-        return "."
+    slice.reverse_each do |byte|
+      is_separator = byte.in? sep
+      # The stages are ordered like this to improve performance
+      # Trailing separators are possible but unlikely (stage 0)
+      # There will probably only be one separator between filename and dirname (stage 2)
+      # There will probably be multiple characters in the filename which need to be skipped (stage 1)
+      case stage
+      when 1 # Wait until separator
+        stage += 1 if is_separator
+      when 2 # Remove trailing separators
+        break unless is_separator
+      when 0 # Wait until past trailing separators
+        stage += 1 unless is_separator
       end
+      pos -= 1
     end
 
-    # strip trailing separators
-    while separators.includes?(reader.current_char) && reader.pos > 0
-      reader.previous_char
+    case stage
+    when 0 # Path only consists of separators
+      String.new(slice[0, 1])
+    when 1 # Path has no parent (ex. "hello/", "C:/", "crystal")
+      return anchor.to_s if windows? && windows_drive?
+      "."
+    else # Path has a parent (ex. "a/a", "/home/user//", "C://Users/mmm")
+      return String.new(slice[0, 1]) if pos == -1
+      return anchor.to_s if windows? && pos == 1 && slice.unsafe_fetch(pos) === ':' && (anchor = self.anchor)
+      String.new(slice[0, pos + 1])
     end
-
-    if reader.pos == 0
-      return reader.current_char.to_s
-    end
-
-    if windows? && reader.current_char == ':' && reader.pos == 1 && (anchor = self.anchor)
-      return anchor.to_s
-    end
-
-    @name.byte_slice(0, reader.pos + reader.current_char_width)
   end
 
   # Returns the parent path of this path.
@@ -290,9 +290,15 @@ struct Path
   #
   # If *suffix* is given, it is stripped from the end.
   #
+  # In case the last component is the empty string (i.e. the path has a trailing
+  # separator), the second to last component is returned.
+  # For a path that only consists of an anchor, or an empty path, the base name
+  # is equivalent to the full path.
+  #
   # ```
   # Path["/foo/bar/file.cr"].basename # => "file.cr"
   # Path["/foo/bar/"].basename        # => "bar"
+  # Path["/foo/bar/."].basename       # => "."
   # Path["/"].basename                # => "/"
   # Path[""].basename                 # => ""
   # ```
@@ -345,49 +351,31 @@ struct Path
   # Path["foo.tar.gz"].extension # => ".gz"
   # ```
   def extension : String
+    return "" if @name.bytesize < 3
     bytes = @name.to_slice
-
-    return "" if bytes.empty?
-
-    slice_end = bytes.size
-    current = slice_end - 1
-
     separators = self.separators.map &.ord
 
-    # ignore trailing separators
-    while separators.includes?(bytes[current]) && current > 0
-      current -= 1
-      slice_end -= 1
+    # Ignore trailing separators
+    offset = bytes.size - 1
+    while bytes.unsafe_fetch(offset).in? separators
+      return "" if offset == 0
+      offset -= 1
     end
 
-    # if the pattern is `foo.`, it has no extension
-    return "" if bytes[current] == '.'.ord
+    # Get the first occurrence of a separator or a '.' past the trailing separators
+    dot_index = bytes.rindex(offset: offset) { |byte| byte === '.' || byte.in? separators }
 
-    # position the reader at the last `.` or SEPARATOR
-    # that is not the first char
-    while !separators.includes?(bytes[current]) &&
-          bytes[current] != '.'.ord &&
-          current > 0
-      current -= 1
-    end
+    # Return "" if '.' is the first character (ex. ".dotfile"),
+    # or if the '.' character follows after a separator (ex. "pathto/.dotfile")
+    # or if the character at the returned index is a separator (ex. "no/extension")
+    # or if the filename ends with a '.'
+    return "" unless dot_index
+    return "" if dot_index == 0
+    return "" if dot_index == offset
+    return "" if bytes.unsafe_fetch(dot_index - 1).in?(separators)
+    return "" if bytes.unsafe_fetch(dot_index).in?(separators)
 
-    # if we are the beginning of the string there is no extension
-    # `/foo` and `.foo` have no extension
-    return "" unless current > 0
-
-    # otherwise we are not at the beginning, and there is a previous char.
-    # if current is '/', then the pattern is prefix/foo and has no extension
-    return "" if separators.includes?(bytes[current])
-
-    # otherwise the current_char is '.'
-    # if previous is '/', then the pattern is `prefix/.foo`  and has no extension
-    return "" if separators.includes?(bytes[current - 1])
-
-    # So the current char is '.',
-    # we are not at the beginning,
-    # the previous char is not a '/',
-    # and we have an extension
-    String.new(bytes[current, slice_end - current])
+    String.new(bytes[dot_index, offset - dot_index + 1])
   end
 
   # Returns the last component of this path without the extension.
@@ -399,7 +387,7 @@ struct Path
   # Path["file.tar.gz"].stem # => "file.tar"
   # Path["foo/file.cr"].stem # => "file"
   # ```
-  def stem
+  def stem : String
     basename(extension)
   end
 
@@ -681,7 +669,7 @@ struct Path
   # Converts this path to the given *kind*.
   #
   # See `#to_windows` and `#to_posix` for details.
-  def to_kind(kind)
+  def to_kind(kind) : Path
     if kind.posix?
       to_posix
     else
@@ -793,6 +781,16 @@ struct Path
   # Path["foo/"].join("/bar")   # => Path["foo/bar"]
   # Path["/foo/"].join("/bar/") # => Path["/foo/bar/"]
   # ```
+  #
+  # Joining an empty string (`""`) appends a trailing path separator.
+  # In case the path already ends with a trailing separator, no additional
+  # separator is added.
+  #
+  # ```
+  # Path["a/b"].join("")   # => Path["a/b/"]
+  # Path["a/b/"].join("")  # => Path["a/b/"]
+  # Path["a/b/"].join("c") # => Path["a/b/c"]
+  # ```
   def join(part) : Path
     # If we are joining a single part we can use `String.new` instead of
     # `String.build` which avoids an extra allocation.
@@ -862,6 +860,8 @@ struct Path
   # Path["foo/"].join("/bar/", "/baz")   # => Path["foo/bar/baz"]
   # Path["/foo/"].join("/bar/", "/baz/") # => Path["/foo/bar/baz/"]
   # ```
+  #
+  # See `join(part)` for details.
   def join(*parts) : Path
     join parts
   end
@@ -880,6 +880,8 @@ struct Path
   # Path.posix("foo/bar").join(Path.windows("baz\\baq")) # => Path.posix("foo/bar/baz/baq")
   # Path.windows("foo\\bar").join(Path.posix("baz/baq")) # => Path.windows("foo\\bar\\baz/baq")
   # ```
+  #
+  # See `join(part)` for details.
   def join(parts : Enumerable) : Path
     if parts.is_a?(Indexable)
       return self if parts.empty?
@@ -952,6 +954,8 @@ struct Path
   # Path["foo"] / "bar" / "baz"     # => Path["foo/bar/baz"]
   # Path["foo/"] / Path["/bar/baz"] # => Path["foo/bar/baz"]
   # ```
+  #
+  # See `join(part)` for details.
   def /(part : Path | String) : Path
     join(part)
   end
@@ -959,7 +963,7 @@ struct Path
   # Resolves path *name* in this path's parent directory.
   #
   # Raises `Path::Error` if `#parent` is `nil`.
-  def sibling(name : Path | String) : Path?
+  def sibling(name : Path | String) : Path
     if parent = self.parent
       parent.join(name)
     else
@@ -1063,12 +1067,14 @@ struct Path
   # Compares this path to *other*.
   #
   # The comparison is performed strictly lexically: `foo` and `./foo` are *not*
-  # treated as equal. To compare paths semantically, they need to be normalized
-  # and converted to the same kind.
+  # treated as equal. Nor are paths of different `kind`.
+  # To compare paths semantically, they need to be normalized and converted to
+  # the same kind.
   #
   # ```
   # Path["foo"] <=> Path["foo"]               # => 0
   # Path["foo"] <=> Path["./foo"]             # => 1
+  # Path["foo"] <=> Path["foo/"]              # => -1
   # Path.posix("foo") <=> Path.windows("foo") # => -1
   # ```
   #
@@ -1086,6 +1092,27 @@ struct Path
     @kind <=> other.@kind
   end
 
+  # Returns `true` if this path is considered equivalent to *other*.
+  #
+  # The comparison is performed strictly lexically: `foo` and `./foo` are *not*
+  # treated as equal. Nor are paths of different `kind`.
+  # To compare paths semantically, they need to be normalized and converted to
+  # the same kind.
+  #
+  # ```
+  # Path["foo"] == Path["foo"]               # => true
+  # Path["foo"] == Path["./foo"]             # => false
+  # Path["foo"] == Path["foo/"]              # => false
+  # Path.posix("foo") == Path.windows("foo") # => false
+  # ```
+  #
+  # Comparison is case-sensitive for POSIX paths and case-insensitive for
+  # Windows paths.
+  #
+  # ```
+  # Path.posix("foo") == Path.posix("FOO")     # => false
+  # Path.windows("foo") == Path.windows("FOO") # => true
+  # ```
   def ==(other : self)
     return false if @kind != other.@kind
 
@@ -1284,7 +1311,7 @@ struct Path
     Path.separators(@kind)
   end
 
-  def ends_with_separator?
+  def ends_with_separator? : Bool
     ends_with_separator?(@name)
   end
 

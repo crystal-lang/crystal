@@ -536,8 +536,7 @@ module Crystal
     def visit(node : IsA)
       node.obj.accept self
       const_name = node.const.to_s
-      obj_class_desc = @last.class_desc
-      @last = BoolLiteral.new(@last.class_desc == const_name)
+      @last = BoolLiteral.new(@last.class_desc_is_a?(const_name))
       false
     end
 
@@ -546,6 +545,8 @@ module Crystal
       when "@type"
         target = @scope == @program.class_type ? @scope : @scope.instance_type
         @last = TypeNode.new(target.devirtualize)
+      when "@top_level"
+        @last = TypeNode.new(@program)
       when "@def"
         @last = @def || NilLiteral.new
       else
