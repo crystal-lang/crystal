@@ -262,7 +262,7 @@ module Random
     unless max > 0
       raise ArgumentError.new "Invalid bound for rand: #{max}"
     end
-    max_prec = 1u32 << 22 # Float32, excluding mantissa, has 2^22 values
+    max_prec = 1u32 << 24 # Float32, excluding mantissa, has 2^24 values
     rand(max_prec) / max_prec.to_f32 * max
   end
 
