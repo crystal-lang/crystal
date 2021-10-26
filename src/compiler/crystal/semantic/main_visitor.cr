@@ -1220,12 +1220,12 @@ module Crystal
         node.raise "undefined fun '#{node.name}' for #{obj_type}" unless matching_fun
 
         call.args = matching_fun.args.map_with_index do |arg, i|
-          Var.new("arg#{i}", arg.type.instance_type).as(ASTNode)
+          Var.new("arg#{i}", arg.type).as(ASTNode)
         end
       else
         call.args = node.args.map_with_index do |arg, i|
           arg.accept self
-          arg_type = arg.type.instance_type
+          arg_type = arg.type
           MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
           Var.new("arg#{i}", arg_type.virtual_type).as(ASTNode)
         end
