@@ -7,7 +7,7 @@ require "../../../support/channel"
 # TODO: replace with `HTTP::Client` once it supports connecting to Unix socket (#2735)
 private def unix_request(path)
   UNIXSocket.open(path) do |io|
-    request = HTTP::Request.new("GET", "/", HTTP::Headers{"X-Unix-Socket" => path})
+    request = HTTP::Request.new("GET", "/")
     request.to_io(io)
 
     HTTP::Client::Response.from_io(io).body
@@ -97,7 +97,7 @@ describe HTTP::Server do
 
   it "binds to different ports" do
     server = HTTP::Server.new do |context|
-      context.response.print "Test Server (#{context.request.headers["Host"]?})"
+      context.response.print "Test Server (#{context.request.local_address})"
     end
 
     tcp_server = TCPServer.new("127.0.0.1", 0)
@@ -302,7 +302,7 @@ describe HTTP::Server do
   describe "#bind_tls" do
     it "binds SSL server context" do
       server = HTTP::Server.new do |context|
-        context.response.puts "Test Server (#{context.request.headers["Host"]?})"
+        context.response.puts "Test Server (#{context.request.local_address})"
         context.response.close
       end
 
@@ -355,8 +355,7 @@ describe HTTP::Server do
 
         begin
           server = HTTP::Server.new do |context|
-            # TODO: Replace custom header with local_address (#5784)
-            context.response.print "Test Server (#{context.request.headers["X-Unix-Socket"]?})"
+            context.response.print "Test Server (#{context.request.local_address})"
             context.response.close
           end
 
