@@ -1,8 +1,8 @@
 require "llvm"
-require "../exception"
+require "../error"
 
 class Crystal::Codegen::Target
-  class Error < Crystal::LocationlessException
+  class Error < Crystal::Error
   end
 
   getter architecture : String
@@ -19,12 +19,14 @@ class Crystal::Codegen::Target
     end
     @architecture, @vendor, @environment = target_triple.split('-', 3)
 
-    # Perform additional normalisation and parsing
+    # Perform additional normalization and parsing
     case @architecture
     when "i486", "i586", "i686"
       @architecture = "i386"
     when "amd64"
       @architecture = "x86_64"
+    when "arm64"
+      @architecture = "aarch64"
     when .starts_with?("arm")
       @architecture = "arm"
     else
@@ -55,6 +57,8 @@ class Crystal::Codegen::Target
       "dragonfly"
     when .openbsd?
       "openbsd"
+    when .netbsd?
+      "netbsd"
     else
       environment
     end
@@ -84,12 +88,16 @@ class Crystal::Codegen::Target
     @environment.starts_with?("openbsd")
   end
 
+  def netbsd?
+    @environment.starts_with?("netbsd")
+  end
+
   def linux?
     @environment.starts_with?("linux")
   end
 
   def bsd?
-    freebsd? || openbsd? || dragonfly?
+    freebsd? || netbsd? || openbsd? || dragonfly?
   end
 
   def unix?
@@ -143,7 +151,14 @@ class Crystal::Codegen::Target
     opt_level = release ? LLVM::CodeGenOptLevel::Aggressive : LLVM::CodeGenOptLevel::None
 
     target = LLVM::Target.from_triple(self.to_s)
-    target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level, code_model: code_model).not_nil!
+    machine = target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level, code_model: code_model).not_nil!
+    # We need to disable global isel until https://reviews.llvm.org/D80898 is released,
+    # or we fixed generating values for 0 sized types.
+    # When removing this, also remove it from the ABI specs and jit compiler.
+    # See https://github.com/crystal-lang/crystal/issues/9297#issuecomment-636512270
+    # for background info
+    machine.enable_global_isel = false
+    machine
   end
 
   def to_s(io : IO) : Nil

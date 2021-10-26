@@ -1,4 +1,5 @@
 require "comparable"
+require "steppable"
 
 # A `Char` represents a [Unicode](http://en.wikipedia.org/wiki/Unicode) [code point](http://en.wikipedia.org/wiki/Code_point).
 # It occupies 32 bits.
@@ -37,8 +38,11 @@ require "comparable"
 # ```
 # '\u{41}' # == 'A'
 # ```
+#
+# See [`Char` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/char.html) in the language reference.
 struct Char
   include Comparable(Char)
+  include Steppable
 
   # The character representing the end of a C string.
   ZERO = '\0'
@@ -59,7 +63,7 @@ struct Char
   # 'b' - 'a' # => 1
   # 'c' - 'a' # => 2
   # ```
-  def -(other : Char)
+  def -(other : Char) : Int32
     ord - other.ord
   end
 
@@ -68,7 +72,7 @@ struct Char
   # ```
   # 'f' + "oo" # => "foo"
   # ```
-  def +(str : String)
+  def +(str : String) : String
     bytesize = str.bytesize + self.bytesize
     String.new(bytesize) do |buffer|
       count = 0
@@ -118,9 +122,36 @@ struct Char
     self - other
   end
 
+  # Performs a `#step` in the direction of the _limit_. For instance:
+  #
+  # ```
+  # 'd'.step(to: 'a').to_a # => ['d', 'c', 'b', 'a']
+  # 'a'.step(to: 'd').to_a # => ['a', 'b', 'c', 'd']
+  # ```
+  def step(*, to limit = nil, exclusive : Bool = false, &)
+    if limit
+      direction = limit <=> self
+    end
+    step = direction.try(&.sign) || 1
+
+    step(to: limit, by: step, exclusive: exclusive) do |x|
+      yield x
+    end
+  end
+
+  # :ditto:
+  def step(*, to limit = nil, exclusive : Bool = false)
+    if limit
+      direction = limit <=> self
+    end
+    step = direction.try(&.sign) || 1
+
+    step(to: limit, by: step, exclusive: exclusive)
+  end
+
   # Returns `true` if this char is an ASCII character
   # (codepoint is in (0..127))
-  def ascii?
+  def ascii? : Bool
     ord < 128
   end
 
@@ -133,7 +164,7 @@ struct Char
   # 'z'.ascii_number?     # => false
   # 'z'.ascii_number?(36) # => true
   # ```
-  def ascii_number?(base : Int = 10)
+  def ascii_number?(base : Int = 10) : Bool
     !!to_i?(base)
   end
 
@@ -143,7 +174,7 @@ struct Char
   # '1'.number? # => true
   # 'a'.number? # => false
   # ```
-  def number?
+  def number? : Bool
     ascii? ? ascii_number? : Unicode.number?(self)
   end
 
@@ -155,7 +186,7 @@ struct Char
   # 'G'.ascii_lowercase? # => false
   # '.'.ascii_lowercase? # => false
   # ```
-  def ascii_lowercase?
+  def ascii_lowercase? : Bool
     'a' <= self <= 'z'
   end
 
@@ -167,7 +198,7 @@ struct Char
   # 'G'.lowercase? # => false
   # '.'.lowercase? # => false
   # ```
-  def lowercase?
+  def lowercase? : Bool
     ascii? ? ascii_lowercase? : Unicode.lowercase?(self)
   end
 
@@ -179,7 +210,7 @@ struct Char
   # 'c'.ascii_uppercase? # => false
   # '.'.ascii_uppercase? # => false
   # ```
-  def ascii_uppercase?
+  def ascii_uppercase? : Bool
     'A' <= self <= 'Z'
   end
 
@@ -191,7 +222,7 @@ struct Char
   # 'c'.uppercase? # => false
   # '.'.uppercase? # => false
   # ```
-  def uppercase?
+  def uppercase? : Bool
     ascii? ? ascii_uppercase? : Unicode.uppercase?(self)
   end
 
@@ -202,7 +233,7 @@ struct Char
   # 'á'.ascii_letter? # => false
   # '8'.ascii_letter? # => false
   # ```
-  def ascii_letter?
+  def ascii_letter? : Bool
     ascii_lowercase? || ascii_uppercase?
   end
 
@@ -213,7 +244,7 @@ struct Char
   # 'á'.letter? # => true
   # '8'.letter? # => false
   # ```
-  def letter?
+  def letter? : Bool
     ascii? ? ascii_letter? : Unicode.letter?(self)
   end
 
@@ -224,7 +255,7 @@ struct Char
   # '8'.ascii_alphanumeric? # => true
   # '.'.ascii_alphanumeric? # => false
   # ```
-  def ascii_alphanumeric?
+  def ascii_alphanumeric? : Bool
     ascii_letter? || ascii_number?
   end
 
@@ -235,7 +266,7 @@ struct Char
   # '8'.alphanumeric? # => true
   # '.'.alphanumeric? # => false
   # ```
-  def alphanumeric?
+  def alphanumeric? : Bool
     letter? || number?
   end
 
@@ -246,7 +277,7 @@ struct Char
   # '\t'.ascii_whitespace? # => true
   # 'b'.ascii_whitespace?  # => false
   # ```
-  def ascii_whitespace?
+  def ascii_whitespace? : Bool
     self == ' ' || 9 <= ord <= 13
   end
 
@@ -257,7 +288,7 @@ struct Char
   # '\t'.whitespace? # => true
   # 'b'.whitespace?  # => false
   # ```
-  def whitespace?
+  def whitespace? : Bool
     ascii? ? ascii_whitespace? : Unicode.whitespace?(self)
   end
 
@@ -269,7 +300,7 @@ struct Char
   # 'F'.hex? # => true
   # 'g'.hex? # => false
   # ```
-  def hex?
+  def hex? : Bool
     ascii_number? 16
   end
 
@@ -300,7 +331,7 @@ struct Char
   # '\\'.in_set? "\\A"   # => false
   # '\\'.in_set? "X-\\w" # => true
   # ```
-  def in_set?(*sets : String)
+  def in_set?(*sets : String) : Bool
     if sets.size > 1
       return sets.all? { |set| in_set?(set) }
     end
@@ -331,8 +362,6 @@ struct Char
         else # at the beginning of the set or escaped
           return not_negated if self == char
         end
-      else
-        # go on
       end
 
       if range && previous
@@ -368,7 +397,7 @@ struct Char
   # 'x'.downcase # => 'x'
   # '.'.downcase # => '.'
   # ```
-  def downcase(options = Unicode::CaseOptions::None)
+  def downcase(options = Unicode::CaseOptions::None) : Char
     Unicode.downcase(self, options)
   end
 
@@ -395,7 +424,7 @@ struct Char
   # 'X'.upcase # => 'X'
   # '.'.upcase # => '.'
   # ```
-  def upcase(options = Unicode::CaseOptions::None)
+  def upcase(options = Unicode::CaseOptions::None) : Char
     Unicode.upcase(self, options)
   end
 
@@ -426,7 +455,7 @@ struct Char
   # ```
   #
   # This method allows creating a `Range` of chars.
-  def succ
+  def succ : Char
     (ord + 1).chr
   end
 
@@ -436,7 +465,7 @@ struct Char
   # 'b'.pred # => 'a'
   # 'ぃ'.pred # => 'あ'
   # ```
-  def pred
+  def pred : Char
     (ord - 1).chr
   end
 
@@ -451,17 +480,17 @@ struct Char
   #   char.control? # => true
   # end
   # ```
-  def ascii_control?
+  def ascii_control? : Bool
     ord < 0x20 || (0x7F <= ord <= 0x9F)
   end
 
   # Returns `true` if this char is a control character according to unicode.
-  def control?
+  def control? : Bool
     ascii? ? ascii_control? : Unicode.control?(self)
   end
 
   # Returns `true` if this is char is a mark character according to unicode.
-  def mark?
+  def mark? : Bool
     Unicode.mark?(self)
   end
 
@@ -501,7 +530,7 @@ struct Char
   # 'あ'.dump      # => "'\\u{3042}'"
   # '\u0012'.dump # => "'\\u{12}'"
   # ```
-  def dump
+  def dump : String
     dump_or_inspect do |io|
       if ascii_control? || ord >= 0x80
         io << "\\u{"
@@ -617,7 +646,7 @@ struct Char
   # '8'.to_f # => 8.0
   # 'c'.to_f # raises ArgumentError
   # ```
-  def to_f
+  def to_f : Float64
     to_f64
   end
 
@@ -629,27 +658,27 @@ struct Char
   # '8'.to_f? # => 8.0
   # 'c'.to_f? # => nil
   # ```
-  def to_f?
+  def to_f? : Float64?
     to_f64?
   end
 
   # See also: `to_f`.
-  def to_f32
+  def to_f32 : Float32
     to_i.to_f32
   end
 
   # See also: `to_f?`.
-  def to_f32?
+  def to_f32? : Float32?
     to_i?.try &.to_f32
   end
 
   # Same as `to_f`.
-  def to_f64
+  def to_f64 : Float64
     to_i.to_f64
   end
 
   # Same as `to_f?`.
-  def to_f64?
+  def to_f64? : Float64?
     to_i?.try &.to_f64
   end
 
@@ -695,14 +724,12 @@ struct Char
       yield (0xe0 | (c >> 12)).to_u8
       yield (0x80 | ((c >> 6) & 0x3f)).to_u8
       yield (0x80 | (c & 0x3f)).to_u8
-    elsif c <= MAX_CODEPOINT
+    else
       # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
       yield (0xf0 | (c >> 18)).to_u8
       yield (0x80 | ((c >> 12) & 0x3f)).to_u8
       yield (0x80 | ((c >> 6) & 0x3f)).to_u8
       yield (0x80 | (c & 0x3f)).to_u8
-    else
-      raise InvalidByteSequenceError.new("Invalid char value #{dump}")
     end
   end
 
@@ -712,7 +739,7 @@ struct Char
   # 'a'.bytesize # => 1
   # '好'.bytesize # => 3
   # ```
-  def bytesize
+  def bytesize : Int32
     # See http://en.wikipedia.org/wiki/UTF-8#Sample_code
 
     c = ord
@@ -725,11 +752,9 @@ struct Char
     elsif c <= 0xffff
       # 1110xxxx  10xxxxxx  10xxxxxx
       3
-    elsif c <= MAX_CODEPOINT
+    else
       # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
       4
-    else
-      raise InvalidByteSequenceError.new("Invalid char value #{dump}")
     end
   end
 
@@ -739,7 +764,7 @@ struct Char
   # 'a'.bytes # => [97]
   # 'あ'.bytes # => [227, 129, 130]
   # ```
-  def bytes
+  def bytes : Array(UInt8)
     bytes = [] of UInt8
     each_byte do |byte|
       bytes << byte
@@ -770,7 +795,7 @@ struct Char
 
       # Optimization: writing a slice is much slower than writing a byte
       if io.has_non_utf8_encoding?
-        io.write_utf8 Slice.new(pointerof(byte), 1)
+        io.write_string Slice.new(pointerof(byte), 1)
       else
         io.write_byte byte
       end
@@ -781,7 +806,7 @@ struct Char
         chars[i] = byte
         i += 1
       end
-      io.write_utf8 chars.to_slice[0, i]
+      io.write_string chars.to_slice[0, i]
     end
   end
 

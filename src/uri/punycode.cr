@@ -26,11 +26,11 @@ class URI
       k + (((BASE - TMIN + 1) * delta) // (delta + SKEW))
     end
 
-    def self.encode(string)
+    def self.encode(string) : String
       String.build { |io| encode string, io }
     end
 
-    def self.encode(string, io)
+    def self.encode(string, io) : Nil
       others = [] of Char
 
       string.each_char do |c|
@@ -87,7 +87,7 @@ class URI
       end
     end
 
-    def self.decode(string)
+    def self.decode(string) : String
       output, _, rest = string.rpartition(DELIMITER)
       output = output.chars
 
@@ -138,7 +138,7 @@ class URI
       output.join
     end
 
-    def self.to_ascii(string)
+    def self.to_ascii(string) : String
       return string if string.ascii_only?
 
       String.build do |io|

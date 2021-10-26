@@ -26,7 +26,7 @@ describe "Code gen: lib" do
     ")
   end
 
-  it "allows passing type to LibC if it has a coverter with to_unsafe" do
+  it "allows passing type to LibC if it has a converter with to_unsafe" do
     codegen("
       lib LibC
         fun foo(x : Int32) : Int32
@@ -42,7 +42,7 @@ describe "Code gen: lib" do
       ")
   end
 
-  it "allows passing type to LibC if it has a coverter with to_unsafe (bug)" do
+  it "allows passing type to LibC if it has a converter with to_unsafe (bug)" do
     codegen(%(
       require "prelude"
 

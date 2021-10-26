@@ -28,5 +28,5 @@ lib LibC
   end
 
   fun fcntl(fd : Int, cmd : Int, ...) : Int
-  fun open(file : Char*, oflag : Int, ...) : Int
+  fun open = open64(file : Char*, oflag : Int, ...) : Int
 end

@@ -11,7 +11,7 @@ end
 {% if flag?(:unix) %}
   require "./system/unix/hostname"
 
-  {% if flag?(:freebsd) || flag?(:openbsd) || flag?(:dragonfly) %}
+  {% if flag?(:bsd) %}
     require "./system/unix/sysctl_cpucount"
   {% else %}
     require "./system/unix/sysconf_cpucount"

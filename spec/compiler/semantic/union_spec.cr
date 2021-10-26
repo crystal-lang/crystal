@@ -1,16 +1,142 @@
 require "../../spec_helper"
 
+private def assert_commutes(str, *, file = __FILE__, line = __LINE__, &)
+  result = semantic(str)
+  program = result.program
+  type1, type2, expected = with program yield program
+  union1 = program.type_merge([type1, type2])
+  union2 = program.type_merge([type2, type1])
+  union1.should eq(expected), file: file, line: line
+  union2.should eq(expected), file: file, line: line
+end
+
 describe "Semantic: union" do
+  context "commutativity" do
+    it "module v.s. including module" do
+      assert_commutes(%(
+        module A
+        end
+
+        module B
+          include A
+        end
+        )) { [types["A"], types["B"], types["A"]] }
+    end
+
+    it "module v.s. including generic module instance" do
+      assert_commutes(%(
+        class Cxx
+        end
+
+        module A
+        end
+
+        module B(T)
+          include A
+        end
+        )) { [types["A"], generic_module("B", types["Cxx"]), types["A"]] }
+    end
+
+    it "generic module instance v.s. including module" do
+      assert_commutes(%(
+        class Cxx
+        end
+
+        module A(T)
+        end
+
+        module B
+          include A(Cxx)
+        end
+        )) { [generic_module("A", types["Cxx"]), types["B"], generic_module("A", types["Cxx"])] }
+    end
+
+    it "generic module instance v.s. including generic module instance" do
+      assert_commutes(%(
+        class Cxx
+        end
+
+        module A(T)
+        end
+
+        module B(T)
+          include A(T)
+        end
+        )) { [generic_module("A", types["Cxx"]), generic_module("B", types["Cxx"]), generic_module("A", types["Cxx"])] }
+    end
+
+    it "module v.s. extending generic module instance metaclass" do
+      assert_commutes(%(
+        class Cxx
+        end
+
+        module A
+        end
+
+        module B(T)
+          extend A
+        end
+        )) { [types["A"], generic_module("B", types["Cxx"]).metaclass, types["A"]] }
+    end
+
+    it "generic module instance v.s. extending generic module instance metaclass" do
+      assert_commutes(%(
+        class Cxx
+        end
+
+        module A(T)
+        end
+
+        module B(T)
+          extend A(T)
+        end
+        )) { [generic_module("A", types["Cxx"]), generic_module("B", types["Cxx"]).metaclass, generic_module("A", types["Cxx"])] }
+    end
+
+    it "virtual metaclass v.s. generic subclass instance metaclass" do
+      assert_commutes(%(
+        class Cxx
+        end
+
+        class A
+        end
+
+        class B(T) < A
+        end
+        )) { [types["A"].virtual_type!.metaclass, generic_class("B", types["Cxx"]).metaclass, types["A"].virtual_type!.metaclass] }
+    end
+
+    it "superclass v.s. uninstantiated generic subclass" do
+      assert_commutes(%(
+        class A
+        end
+
+        class B(T) < A
+        end
+        )) { [types["A"], types["B"], types["A"].virtual_type!] }
+    end
+
+    it "uninstantiated generic super-metaclass v.s. uninstantiated generic sub-metaclass" do
+      assert_commutes(%(
+        class A(T)
+        end
+
+        class B(T) < A(T)
+        end
+        )) { [types["A"].metaclass, types["B"].metaclass, types["A"].metaclass.virtual_type!] }
+    end
+  end
+
   it "types union when obj is union" do
-    assert_type("struct Char; def +(other); self; end; end; a = 1 || 'a'; a + 1") { union_of(int32, char) }
+    assert_type("struct Char; def +(other); self; end; end; a = 1 || 'a'; a + 1", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types union when arg is union" do
-    assert_type("struct Int; def +(x : Char); x; end; end; a = 1 || 'a'; 1 + a") { union_of(int32, char) }
+    assert_type("struct Int; def +(x : Char); x; end; end; a = 1 || 'a'; 1 + a", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types union when both obj and arg are union" do
-    assert_type("struct Char; def +(other); self; end; end; struct Int; def +(x : Char); x; end; end; a = 1 || 'a'; a + a") { union_of(int32, char) }
+    assert_type("struct Char; def +(other); self; end; end; struct Int; def +(x : Char); x; end; end; a = 1 || 'a'; a + a", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types union of classes" do
@@ -187,5 +313,32 @@ describe "Semantic: union" do
 
       Union(Foo)
       )) { types["Foo"].metaclass }
+  end
+
+  it "doesn't run virtual lookup on unbound unions (#9173)" do
+    assert_type(%(
+      class Object
+        def foo
+          self
+        end
+      end
+
+      abstract class Parent
+      end
+
+      class Child(T) < Parent
+        @buffer = uninitialized T
+
+        def bar
+          @buffer.foo
+        end
+      end
+
+      class Foo(U)
+        @x = Child(U | Char).new
+      end
+
+      Child(Int32).new.as(Parent).bar
+      )) { int32 }
   end
 end

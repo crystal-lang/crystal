@@ -323,6 +323,11 @@ module Crystal
       false
     end
 
+    def visit(node : MultiAssign)
+      @program.literal_expander.expand(node).accept(self)
+      false
+    end
+
     def visit(node : And)
       node.left.accept self
       if @last.truthy?
@@ -371,10 +376,10 @@ module Crystal
         named_args = node.named_args.try &.to_h { |arg| {arg.name, accept arg.value} }
 
         begin
-          @last = receiver.interpret(node.name, args, named_args, node.block, self)
+          @last = receiver.interpret(node.name, args, named_args, node.block, self, node.name_location)
         rescue ex : MacroRaiseException
           raise ex
-        rescue ex : Crystal::Exception
+        rescue ex : Crystal::CodeError
           node.raise ex.message, inner: ex
         rescue ex
           node.raise ex.message
@@ -468,8 +473,6 @@ module Crystal
               return NamedTupleLiteral.new(entries)
             when UnionType
               return TupleLiteral.map(matched_type.union_types) { |t| TypeNode.new(t) }
-            else
-              # go on
             end
           end
         end
@@ -489,7 +492,7 @@ module Crystal
 
     def resolve?(node : Generic)
       resolve(node)
-    rescue Crystal::Exception
+    rescue Crystal::CodeError
       nil
     end
 
@@ -520,21 +523,20 @@ module Crystal
 
     def visit(node : Splat)
       node.exp.accept self
-      @last = @last.interpret("splat", [] of ASTNode, nil, nil, self)
+      @last = @last.interpret("splat", [] of ASTNode, nil, nil, self, node.location)
       false
     end
 
     def visit(node : DoubleSplat)
       node.exp.accept self
-      @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self)
+      @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self, node.location)
       false
     end
 
     def visit(node : IsA)
       node.obj.accept self
       const_name = node.const.to_s
-      obj_class_desc = @last.class_desc
-      @last = BoolLiteral.new(@last.class_desc == const_name)
+      @last = BoolLiteral.new(@last.class_desc_is_a?(const_name))
       false
     end
 
@@ -543,6 +545,8 @@ module Crystal
       when "@type"
         target = @scope == @program.class_type ? @scope : @scope.instance_type
         @last = TypeNode.new(target.devirtualize)
+      when "@top_level"
+        @last = TypeNode.new(@program)
       when "@def"
         @last = @def || NilLiteral.new
       else

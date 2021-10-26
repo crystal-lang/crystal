@@ -107,7 +107,7 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for def with attribute" do
+  it "stores doc for def with annotation" do
     result = semantic %(
       class Foo
         # Hello
@@ -122,7 +122,7 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for def with attribute" do
+  it "stores doc for def with annotation" do
     result = semantic %(
       # Hello
       @[AlwaysInline]
@@ -238,8 +238,9 @@ describe "Semantic: doc" do
       end
     ), wants_doc: true
     program = result.program
+    ann = program.types["Flags"]
     foo = program.types["Foo"]
-    foo.has_attribute?("Flags").should be_true
+    foo.annotation(ann).should_not be_nil
     foo.doc.should eq("Hello")
     foo.locations.not_nil!.size.should eq(1)
   end
@@ -344,9 +345,24 @@ describe "Semantic: doc" do
 
       # Hello
       foo
-    ), wants_doc: true, inject_primitives: false
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
+    foo.doc.should eq("Hello")
+  end
+
+  it "stores doc for macro defined in macro call" do
+    result = semantic <<-CR, wants_doc: true
+      macro def_foo
+        macro foo
+        end
+      end
+
+      # Hello
+      def_foo
+      CR
+    program = result.program
+    foo = program.macros.not_nil!["foo"].first
     foo.doc.should eq("Hello")
   end
 
@@ -412,6 +428,21 @@ describe "Semantic: doc" do
     ), wants_doc: true
     program = result.program
     type = program.types["MyClass1"]
+    type.doc.should eq("Some description")
+  end
+
+  it "attaches doc to annotation in macro expansion (#9628)" do
+    result = semantic %(
+      macro ann
+        annotation MyAnnotation
+        end
+      end
+
+      # Some description
+      ann
+    ), wants_doc: true
+    program = result.program
+    type = program.types["MyAnnotation"]
     type.doc.should eq("Some description")
   end
 

@@ -5,15 +5,15 @@ describe "MacroExpander" do
     assert_macro "", "1 + 2", [] of ASTNode, "1 + 2"
   end
 
-  it "expands macro with string sustitution" do
+  it "expands macro with string substitution" do
     assert_macro "x", "{{x}}", ["hello".string] of ASTNode, %("hello")
   end
 
-  it "expands macro with symbol sustitution" do
+  it "expands macro with symbol substitution" do
     assert_macro "x", "{{x}}", ["hello".symbol] of ASTNode, ":hello"
   end
 
-  it "expands macro with argument-less call sustitution" do
+  it "expands macro with argument-less call substitution" do
     assert_macro "x", "{{x}}", ["hello".call] of ASTNode, "hello"
   end
 
@@ -61,7 +61,7 @@ describe "MacroExpander" do
     assert_macro "", "{{ \"hello\#{1 == 1}world\" }}", [] of ASTNode, %("hellotrueworld")
   end
 
-  it "expands macro with var sustitution" do
+  it "expands macro with var substitution" do
     assert_macro "x", "{{x}}", ["hello".var] of ASTNode, "hello"
   end
 

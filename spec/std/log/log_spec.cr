@@ -174,7 +174,7 @@ describe Log do
       entry.exception.should eq(ex)
     end
 
-    it "can be used with message and metada explicitly" do
+    it "can be used with message and metadata explicitly" do
       backend = Log::MemoryBackend.new
       log = Log.new("a", backend, :notice)
 

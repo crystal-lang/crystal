@@ -9,6 +9,7 @@ private def abi
   triple = LLVM.default_target_triple.gsub(/^(.+?)-/, "x86_64-")
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
+  machine.enable_global_isel = false
   LLVM::ABI::X86_64.new(machine)
 end
 

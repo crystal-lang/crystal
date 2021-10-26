@@ -1,3 +1,5 @@
+require "../../../../../lib/markd/src/markd"
+
 class Crystal::Doc::Generator
   getter program : Program
 
@@ -8,6 +10,7 @@ class Crystal::Doc::Generator
   FLAG_COLORS = {
     "BUG"          => "red",
     "DEPRECATED"   => "red",
+    "WARNING"      => "yellow",
     "EXPERIMENTAL" => "lime",
     "FIXME"        => "yellow",
     "NOTE"         => "purple",
@@ -90,7 +93,7 @@ class Crystal::Doc::Generator
 
   def generate_sitemap(types)
     if sitemap_base_url = @sitemap_base_url
-      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, "1.0", "never")
+      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, @sitemap_priority, @sitemap_changefreq)
     end
   end
 
@@ -129,8 +132,13 @@ class Crystal::Doc::Generator
 
   def must_include?(type : Crystal::Type)
     return false if type.private?
-    return false if nodoc?(type, type.locations.try(&.first?))
+    return false if nodoc? type
     return true if crystal_builtin?(type)
+
+    # Don't include types whose namespace is :nodoc:
+    type.each_namespace do |ns|
+      return false if nodoc? ns
+    end
 
     # Don't include lib types or types inside a lib type
     return false if type.is_a?(Crystal::LibType) || type.namespace.is_a?(LibType)
@@ -145,7 +153,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_def : Crystal::Def)
-    return false if nodoc?(a_def, a_def.location)
+    return false if nodoc? a_def
 
     must_include? a_def.location
   end
@@ -155,7 +163,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_macro : Crystal::Macro)
-    return false if nodoc?(a_macro, a_macro.location)
+    return false if nodoc? a_macro
 
     must_include? a_macro.location
   end
@@ -165,7 +173,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(const : Crystal::Const)
-    return false if nodoc?(const, const.locations.try(&.first?))
+    return false if nodoc? const
     return true if crystal_builtin?(const)
 
     const.locations.try &.any? { |location| must_include? location }
@@ -195,32 +203,13 @@ class Crystal::Doc::Generator
     toplevel_items.any? { |item| must_include? item }
   end
 
-  # TODO: remove after 0.34.0
-  # Needed because there are multiple passes while generating docs
-  # and we want to avoid duplicate warnings per location
-  @nodoc_warnings_locations = Set(String).new
-
-  def nodoc?(str : String?, location : Location?) : Bool
+  def nodoc?(str : String?) : Bool
     return false if !str || !@program.wants_doc?
-
-    # TODO: remove after 0.34.0
-    if str.starts_with?("nodoc")
-      if location
-        # Show one line above to highlight the nodoc line
-        location = Location.new(location.filename, location.line_number - 1, location.column_number)
-      end
-
-      if !location || @nodoc_warnings_locations.add?(location.to_s)
-        @program.report_warning_at location, "`nodoc` is no longer supported. Use `:nodoc:` instead"
-      end
-      return true
-    end
-
     str.starts_with?(":nodoc:")
   end
 
-  def nodoc?(obj, location : Location?)
-    nodoc? obj.doc.try(&.strip), location
+  def nodoc?(obj)
+    nodoc? obj.doc.try &.strip
   end
 
   def crystal_builtin?(type)
@@ -323,10 +312,15 @@ class Crystal::Doc::Generator
   def doc(context, string)
     string = isolate_flag_lines string
     string += build_flag_lines_from_annotations context
-    markdown = String.build do |io|
-      Markdown.parse string, Markdown::DocRenderer.new(context, io)
-    end
+    markdown = render_markdown(context, string)
     generate_flags markdown
+  end
+
+  private def render_markdown(context, source)
+    options = ::Markd::Options.new
+    document = ::Markd::Parser.parse(source, options)
+    renderer = MarkdDocRenderer.new(context, options)
+    renderer.render(document).chomp
   end
 
   def fetch_doc_lines(doc : String) : String
@@ -381,13 +375,12 @@ class Crystal::Doc::Generator
     end
   end
 
-  def source_link(node)
+  def relative_location(node)
     location = RelativeLocation.from(node, @base_dir)
     return unless location
-    project_info.source_url(location)
+    location.url = project_info.source_url(location)
+    location
   end
-
-  SRC_SEP = "src#{File::SEPARATOR}"
 
   def relative_locations(type)
     locations = [] of RelativeLocation
@@ -397,9 +390,7 @@ class Crystal::Doc::Generator
       filename = location.filename
       next unless filename
 
-      url = project_info.source_url(location)
-      next unless url
-      location.url = url
+      location.url = project_info.source_url(location)
 
       # Prevent identical link generation in the "Defined in:" section in the docs because of macros
       next if locations.includes?(location)

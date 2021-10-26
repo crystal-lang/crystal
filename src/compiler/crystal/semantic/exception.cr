@@ -2,11 +2,11 @@ require "../exception"
 require "../types"
 
 module Crystal
-  class TypeException < Exception
+  class TypeException < CodeError
     include ErrorFormat
 
     getter node
-    property inner : Exception?
+    property inner : CodeError?
     getter line_number : Int32?
     getter column_number : Int32
     getter size : Int32
@@ -171,7 +171,7 @@ module Crystal
     end
   end
 
-  class MethodTraceException < Exception
+  class MethodTraceException < CodeError
     def initialize(@owner : Type?, @trace : Array(ASTNode), @nil_reason : NilReason?, @show : Bool)
       super(nil)
     end
@@ -314,25 +314,6 @@ module Crystal
   end
 
   class Program
-    def undefined_global_variable(node, similar_name)
-      common = String.build do |str|
-        str << "can't infer the type of global variable '#{node.name}'"
-        if similar_name
-          str << '\n'
-          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
-        end
-      end
-
-      msg = String.build do |str|
-        str << common
-        str << "\n\n"
-        str << undefined_variable_message("global", node.name)
-        str << "\n\n"
-        str << common
-      end
-      node.raise msg
-    end
-
     def undefined_class_variable(node, owner, similar_name)
       common = String.build do |str|
         str << "can't infer the type of class variable '#{node.name}' of #{owner.devirtualize}"
@@ -345,7 +326,7 @@ module Crystal
       msg = String.build do |str|
         str << common
         str << "\n\n"
-        str << undefined_variable_message("class", node.name)
+        str << undefined_variable_message("a class variable", node.name)
         str << "\n\n"
         str << common
       end
@@ -364,7 +345,7 @@ module Crystal
       msg = String.build do |str|
         str << common
         str << "\n\n"
-        str << undefined_variable_message("instance", node.name)
+        str << undefined_variable_message("an instance variable", node.name)
         str << "\n\n"
         str << common
       end
@@ -373,7 +354,7 @@ module Crystal
 
     def undefined_variable_message(kind, example_name)
       <<-MSG
-      The type of a #{kind} variable, if not declared explicitly with
+      The type of #{kind}, if not declared explicitly with
       `#{example_name} : Type`, is inferred from assignments to it across
       the whole program.
 

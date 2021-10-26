@@ -144,6 +144,113 @@ module Iterator(T)
   # are no more elements.
   abstract def next
 
+  # Returns an iterator that returns the prefix sums of the original iterator's
+  # elements.
+  #
+  # Expects `T` to respond to the `#+` method.
+  #
+  # ```
+  # iter = (3..6).each.accumulate
+  # iter.next # => 3
+  # iter.next # => 7
+  # iter.next # => 12
+  # iter.next # => 18
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def accumulate
+    accumulate { |x, y| x + y }
+  end
+
+  # Returns an iterator that returns *initial* and its prefix sums with the
+  # original iterator's elements.
+  #
+  # Expects `U` to respond to the `#+` method.
+  #
+  # ```
+  # iter = (3..6).each.accumulate(7)
+  # iter.next # => 7
+  # iter.next # => 10
+  # iter.next # => 14
+  # iter.next # => 19
+  # iter.next # => 25
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def accumulate(initial : U) forall U
+    accumulate(initial) { |x, y| x + y }
+  end
+
+  # Returns an iterator that accumulates the original iterator's elements by
+  # the given *block*.
+  #
+  # For each element of the original iterator the block is passed an accumulator
+  # value and the element. The result becomes the new value for the accumulator
+  # and is then returned. The initial value for the accumulator is the first
+  # element of the original iterator.
+  #
+  # ```
+  # iter = %w(the quick brown fox).each.accumulate { |x, y| "#{x}, #{y}" }
+  # iter.next # => "the"
+  # iter.next # => "the, quick"
+  # iter.next # => "the, quick, brown"
+  # iter.next # => "the, quick, brown, fox"
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def accumulate(&block : T, T -> T)
+    Accumulate(typeof(self), T).new(self, block)
+  end
+
+  # Returns an iterator that accumulates *initial* with the original iterator's
+  # elements by the given *block*.
+  #
+  # Similar to `#accumulate(&block : T, T -> T)`, except the initial value is
+  # provided by an argument and needs not have the same type as the elements of
+  # the original iterator. This initial value is returned first.
+  #
+  # ```
+  # iter = [4, 3, 2].each.accumulate("X") { |x, y| x * y }
+  # iter.next # => "X"
+  # iter.next # => "XXXX"
+  # iter.next # => "XXXXXXXXXXXX"
+  # iter.next # => "XXXXXXXXXXXXXXXXXXXXXXXX"
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def accumulate(initial : U, &block : U, T -> U) forall U
+    AccumulateInit(typeof(self), T, U).new(self, initial, block)
+  end
+
+  private class AccumulateInit(I, T, U)
+    include Iterator(U)
+
+    @acc : U | Iterator::Stop
+
+    def initialize(@iterator : I, @acc : U, @func : U, T -> U)
+    end
+
+    def next
+      old_acc = @acc
+      return old_acc if old_acc.is_a?(Iterator::Stop)
+      elem = @iterator.next
+      @acc = elem.is_a?(Iterator::Stop) ? elem : @func.call(old_acc, elem)
+      old_acc
+    end
+  end
+
+  private class Accumulate(I, T)
+    include Iterator(T)
+    include IteratorWrapper
+
+    @acc : T | Iterator::Stop = Iterator::Stop::INSTANCE
+
+    def initialize(@iterator : I, @func : T, T -> T)
+    end
+
+    def next
+      elem = wrapped_next
+      old_acc = @acc
+      @acc = old_acc.is_a?(Iterator::Stop) ? elem : @func.call(old_acc, elem)
+    end
+  end
+
   # Returns an iterator that returns elements from the original iterator until
   # it is exhausted and then returns the elements of the second iterator.
   # Compared to `.chain(Iterator(Iter))`, it has better performance when the quantity of
@@ -274,7 +381,7 @@ module Iterator(T)
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   #
-  # Chunks oo two items can be iterated using `#cons_pair`, an optimized
+  # Chunks of two items can be iterated using `#cons_pair`, an optimized
   # implementation for the special case of `size == 2` which avoids heap
   # allocations.
   def cons(n : Int, reuse = false)
@@ -338,18 +445,17 @@ module Iterator(T)
     def initialize(@iterator : I)
     end
 
-    def next
+    def next : {T, T} | Iterator::Stop
       elem = wrapped_next
-      return elem if elem.is_a?(Iterator::Stop)
+      last_elem = @last_elem
 
-      if @last_elem.is_a?(Iterator::Stop)
+      if last_elem.is_a?(Iterator::Stop)
         @last_elem = elem
-
         self.next
       else
+        value = {last_elem, elem}
         @last_elem, elem = elem, @last_elem
-
-        {elem, @last_elem}
+        value
       end
     end
   end
@@ -484,7 +590,7 @@ module Iterator(T)
   # iter = ["a", "b", "c"].each
   # iter.each { |x| print x, " " } # Prints "a b c"
   # ```
-  def each : Nil
+  def each(& : T ->) : Nil
     while true
       value = self.next
       break if value.is_a?(Stop)
@@ -538,23 +644,26 @@ module Iterator(T)
     @generators : Array(I)
 
     def initialize(@iterator)
-      @generators = [@iterator]
+      @generators = [] of I
       @stopped = [] of I
     end
 
     def next
-      case value = @generators.last.next
+      case value = @iterator.next
       when Iterator
-        @generators.push value
+        @generators.push @iterator
+        @iterator = value
         self.next
       when Array
-        @generators.push value.each
+        @generators.push @iterator
+        @iterator = value.each
         self.next
       when Stop
-        if @generators.size == 1
+        @stopped << @iterator
+        if @generators.empty?
           stop
         else
-          @stopped << @generators.pop
+          @iterator = @generators.pop
           self.next
         end
       else
@@ -588,8 +697,9 @@ module Iterator(T)
   end
 
   # Returns a new iterator with the concatenated results of running the block
-  # (which is expected to return arrays or iterators)
   # once for every element in the collection.
+  # Only `Array` and `Iterator` results are concatenated; every other value is
+  # returned once in the new iterator.
   #
   # ```
   # iter = [1, 2, 3].each.flat_map { |x| [x, x] }
@@ -602,8 +712,8 @@ module Iterator(T)
   #
   # iter.to_a # => [1, 1, 2, 2, 3, 3]
   # ```
-  def flat_map(&func : T -> Array(U) | Iterator(U) | U) forall U
-    FlatMap(typeof(self), U, typeof(FlatMap.iterator_type(self, func)), typeof(func)).new self, func
+  def flat_map(&func : T -> _)
+    FlatMap(typeof(self), typeof(FlatMap.element_type(self, func)), typeof(FlatMap.iterator_type(self, func)), typeof(func)).new self, func
   end
 
   private class FlatMap(I0, T, I, F)
@@ -641,6 +751,18 @@ module Iterator(T)
         else
           value
         end
+      end
+    end
+
+    def self.element_type(iter, func)
+      value = iter.next
+      raise "" if value.is_a?(Stop)
+
+      case value = func.call value
+      when Array, Iterator
+        value.first
+      else
+        value
       end
     end
 
@@ -1226,6 +1348,14 @@ module Iterator(T)
     WithObject(typeof(self), T, typeof(obj)).new(self, obj)
   end
 
+  # Yields each element in this iterator together with *obj*. Returns that object.
+  def with_object(obj, &)
+    each do |value|
+      yield value, obj
+    end
+    obj
+  end
+
   private struct WithObject(I, T, O)
     include Iterator({T, O})
     include IteratorWrapper
@@ -1239,36 +1369,54 @@ module Iterator(T)
     end
   end
 
-  # Returns an iterator that returns the elements of this iterator and the given
-  # one pairwise as `Tuple`s.
+  # Returns an iterator that returns the elements of this iterator and *others*
+  # traversed in tandem as `Tuple`s.
+  #
+  # Iteration stops when any of the iterators runs out of elements.
   #
   # ```
   # iter1 = [4, 5, 6].each
   # iter2 = [7, 8, 9].each
-  # iter = iter1.zip(iter2)
-  # iter.next # => {4, 7}
-  # iter.next # => {5, 8}
-  # iter.next # => {6, 9}
+  # iter3 = ['a', 'b', 'c', 'd'].each
+  # iter = iter1.zip(iter2, iter3)
+  # iter.next # => {4, 7, 'a'}
+  # iter.next # => {5, 8, 'b'}
+  # iter.next # => {6, 9, 'c'}
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
-  def zip(other : Iterator(U)) forall U
-    Zip(typeof(self), typeof(other), T, U).new(self, other)
+  def zip(*others : Iterator) : Iterator
+    Iterator.zip_impl(self, *others)
   end
 
-  private struct Zip(I1, I2, T1, T2)
-    include Iterator({T1, T2})
+  protected def self.zip_impl(*iterators : *U) forall U
+    {% begin %}
+      Zip(U, Tuple(
+        {% for i in 0...U.size %}
+          typeof(iterators[{{ i }}].first),
+        {% end %}
+      )).new(iterators)
+    {% end %}
+  end
 
-    def initialize(@iterator1 : I1, @iterator2 : I2)
+  private struct Zip(Is, Ts)
+    include Iterator(Ts)
+
+    def initialize(@iterators : Is)
     end
 
     def next
-      v1 = @iterator1.next
-      return stop if v1.is_a?(Stop)
+      {% begin %}
+        {% for i in 0...Is.size %}
+          %v{i} = @iterators[{{ i }}].next
+          return stop if %v{i}.is_a?(Stop)
+        {% end %}
 
-      v2 = @iterator2.next
-      return stop if v2.is_a?(Stop)
-
-      {v1, v2}
+        Tuple.new(
+          {% for i in 0...Is.size %}
+            %v{i},
+          {% end %}
+        )
+      {% end %}
     end
   end
 

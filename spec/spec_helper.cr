@@ -35,7 +35,7 @@ record SemanticResult,
   program : Program,
   node : ASTNode
 
-def assert_type(str, *, inject_primitives = true, flags = nil, file = __FILE__, line = __LINE__)
+def assert_type(str, *, inject_primitives = false, flags = nil, file = __FILE__, line = __LINE__)
   result = semantic(str, flags: flags, inject_primitives: inject_primitives)
   program = result.program
   expected_type = with program yield program
@@ -47,7 +47,7 @@ def assert_type(str, *, inject_primitives = true, flags = nil, file = __FILE__, 
   result
 end
 
-def semantic(code : String, wants_doc = false, inject_primitives = true, flags = nil, filename = nil)
+def semantic(code : String, wants_doc = false, inject_primitives = false, flags = nil, filename = nil)
   node = parse(code, wants_doc: wants_doc, filename: filename)
   node = inject_primitives(node) if inject_primitives
   semantic node, wants_doc: wants_doc, flags: flags
@@ -104,14 +104,14 @@ def assert_expand_third(from : String, to, *, file = __FILE__, line = __LINE__)
   assert_expand node, to, file: file, line: line
 end
 
-def assert_error(str, message, *, inject_primitives = true, file = __FILE__, line = __LINE__)
+def assert_error(str, message = nil, *, inject_primitives = false, file = __FILE__, line = __LINE__)
   expect_raises TypeException, message, file, line do
     semantic str, inject_primitives: inject_primitives
   end
 end
 
-def assert_no_errors(*args)
-  semantic(*args)
+def assert_no_errors(*args, **opts)
+  semantic(*args, **opts)
 end
 
 def warnings_result(code, *, file = __FILE__)
@@ -131,8 +131,8 @@ end
 
 def assert_warning(code, message, *, file = __FILE__, line = __LINE__)
   warning_failures = warnings_result(code, file: file)
-  warning_failures.size.should eq(1), file, line
-  warning_failures[0].should start_with(message), file, line
+  warning_failures.size.should eq(1), file: file, line: line
+  warning_failures[0].should start_with(message), file: file, line: line
 end
 
 def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)

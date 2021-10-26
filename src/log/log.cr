@@ -48,7 +48,7 @@ class Log
         dsl.emit(result.to_s)
       end
 
-    backend.write entry
+    backend.dispatch entry
   end
 
   {% for severity in %i[trace debug info notice warn error fatal] %}

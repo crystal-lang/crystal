@@ -183,8 +183,6 @@ class Program
         open_count += 1
       when ']'
         open_count -= 1
-      else
-        # go on
       end
 
       if open_count == 0

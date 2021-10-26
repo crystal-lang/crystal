@@ -14,7 +14,7 @@ module Crystal
         define_default_new(file_module)
       end
 
-      # Once we are done with the expansions we mark `initialze` methods
+      # Once we are done with the expansions we mark `initialize` methods
       # without an explicit visibility as `protected`.
       new_expansions.each do |expansion|
         original = expansion[:original]
@@ -71,7 +71,7 @@ module Crystal
         has_self_initialize_methods = !self_initialize_methods.empty?
         if !has_self_initialize_methods
           is_generic = type.is_a?(GenericClassType)
-          inherits_from_generic = type.ancestors.any?(&.is_a?(GenericClassInstanceType))
+          inherits_from_generic = type.ancestors.any?(GenericClassInstanceType)
           if is_generic || inherits_from_generic
             has_default_self_new = self_new_methods.any? do |a_def|
               a_def.args.empty? && !a_def.yields
@@ -224,7 +224,7 @@ module Crystal
         init.block_arg = Var.new(block_arg.name).at(self)
       end
 
-      self.body = Expressions.from(exps).at(self)
+      self.body = Expressions.from(exps).at(self.body)
     end
 
     def self.argless_new(instance_type)

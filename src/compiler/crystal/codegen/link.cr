@@ -81,12 +81,20 @@ module Crystal
   end
 
   class CrystalLibraryPath
+    def self.default_paths : Array(String)
+      paths = ENV.fetch("CRYSTAL_LIBRARY_PATH", Crystal::Config.library_path).split(Process::PATH_DELIMITER, remove_empty: true)
+
+      CrystalPath.expand_paths(paths)
+
+      paths
+    end
+
     def self.default_path : String
-      ENV.fetch("CRYSTAL_LIBRARY_PATH", Crystal::Config.library_path)
+      default_paths.join(Process::PATH_DELIMITER)
     end
 
     class_getter paths : Array(String) do
-      default_path.split(Process::PATH_DELIMITER, remove_empty: true)
+      default_paths
     end
   end
 
@@ -155,7 +163,7 @@ module Crystal
     # pkg-config is not installed, or the module does not exist.
     private def pkg_config(mod, static = false) : String?
       return unless pkg_config_path = PKG_CONFIG_PATH
-      return unless Process.run(pkg_config_path, {mod}).success?
+      return unless (Process.run(pkg_config_path, {mod}).success? rescue nil)
 
       args = ["--libs"]
       args << "--static" if static

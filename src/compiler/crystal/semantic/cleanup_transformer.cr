@@ -4,15 +4,19 @@ require "../types"
 
 module Crystal
   class Program
+    getter(cleanup_transformer : CleanupTransformer) do
+      CleanupTransformer.new(self)
+    end
+
     def cleanup(node)
-      transformer = CleanupTransformer.new(self)
+      transformer = self.cleanup_transformer
       node = node.transform(transformer)
       puts node if ENV["AFTER"]? == "1"
       node
     end
 
     def cleanup_types
-      transformer = CleanupTransformer.new(self)
+      transformer = self.cleanup_transformer
 
       after_inference_types.each do |type|
         cleanup_type type, transformer
@@ -28,7 +32,7 @@ module Crystal
       when GenericClassInstanceType
         cleanup_single_type(type, transformer)
       when GenericClassType
-        type.generic_types.each_value do |instance|
+        type.each_instantiated_type do |instance|
           cleanup_type instance, transformer
         end
       when ClassType
@@ -211,7 +215,7 @@ module Crystal
 
     def has_enum_type?(type)
       if type.is_a?(UnionType)
-        type.union_types.any? &.is_a?(EnumType)
+        type.union_types.any?(EnumType)
       else
         type.is_a?(EnumType)
       end
@@ -265,7 +269,7 @@ module Crystal
 
       if target.is_a?(Path)
         const = target.target_const.not_nil!
-        return node unless const.used?
+        return node if !const.used? || const.cleaned_up?
 
         unless const.value.type?
           node.raise "can't infer type of constant #{const} (maybe the constant refers to itself?)"
@@ -285,6 +289,7 @@ module Crystal
       if target.is_a?(Path)
         const = const.not_nil!
         const.value = const.value.transform self
+        const.cleaned_up = true
       end
 
       if node.target == node.value
@@ -296,6 +301,18 @@ module Crystal
         if node.value.type?.try &.no_return?
           return node.value
         end
+      end
+
+      node
+    end
+
+    def transform(node : Path)
+      # Some constants might not have been cleaned up at this point because
+      # they don't have an explicit `Assign` node. One example is regex
+      # literals: a constant is created for them, but there's no `Assign` node.
+      if (const = node.target_const) && const.used? && !const.cleaned_up?
+        const.value = const.value.transform self
+        const.cleaned_up = true
       end
 
       node
@@ -315,7 +332,7 @@ module Crystal
 
     def transform(node : Global)
       if expanded = node.expanded
-        return expanded
+        return expanded.transform self
       end
 
       node
@@ -337,6 +354,8 @@ module Crystal
       transform_many node.args
 
       if (node_block = node.block) && !node_block.fun_literal
+        # TODO: if the block isn't used in any of the target defs we could
+        # avoid transforming it, because it probably isn't typed **at all**
         node.block = node_block.transform(self)
       end
 
@@ -393,7 +412,7 @@ module Crystal
         end
       end
 
-      # Check if the block has its type freezed and it doesn't match the current type
+      # Check if the block has its type frozen and it doesn't match the current type
       if block && (freeze_type = block.freeze_type) && (block_type = block.type?)
         unless block_type.implements?(freeze_type)
           freeze_type = freeze_type.base_type if freeze_type.is_a?(VirtualType)
@@ -500,33 +519,87 @@ module Crystal
 
     def check_args_are_not_closure(node, message)
       node.args.each do |arg|
-        case arg
-        when ProcLiteral
-          if arg.def.closure?
-            vars = ClosuredVarsCollector.collect arg.def
-            unless vars.empty?
-              message += " (closured vars: #{vars.join ", "})"
-            end
+        check_arg_is_not_closure(node, message, arg)
+      end
+    end
 
-            arg.raise message
-          end
-        when ProcPointer
-          if arg.obj.try &.type?.try &.passed_as_self?
+    def check_arg_is_not_closure(node, message, arg)
+      case arg
+      when Expressions
+        arg.expressions.each do |exp|
+          check_arg_is_not_closure(node, message, exp)
+        end
+      when Call
+        # If the call simply returns its captured block unchanged, we can detect
+        # closured vars inside the block during compile-time
+        if target_def_is_captured_block?(arg)
+          check_arg_is_not_closure(node, message, arg.block.not_nil!.fun_literal)
+        end
+      when ProcLiteral
+        if proc_pointer = arg.proc_pointer
+          case proc_pointer.obj
+          when Var
+            arg.raise "#{message} (closured vars: #{proc_pointer.obj})"
+          when InstanceVar
             arg.raise "#{message} (closured vars: self)"
           end
+        end
 
-          owner = arg.call.target_def.owner
-          if owner.passed_as_self?
-            arg.raise "#{message} (closured vars: self)"
+        if arg.def.closure?
+          vars = ClosuredVarsCollector.collect arg.def
+          if vars.empty?
+            message += " (closured vars: self)"
+          else
+            message += " (closured vars: #{vars.join ", "})"
           end
-        else
-          # nothing to do
+
+          arg.raise message
+        end
+      when ProcPointer
+        if expanded = arg.expanded
+          return check_arg_is_not_closure(node, message, expanded)
+        end
+
+        if arg.obj.try &.type?.try &.passed_as_self?
+          arg.raise "#{message} (closured vars: self)"
+        end
+
+        owner = arg.call.target_def.owner
+        if owner.passed_as_self?
+          arg.raise "#{message} (closured vars: self)"
         end
       end
     end
 
+    # Checks whether *arg*'s target def has the following definition:
+    #
+    # ```
+    # def f(&block)
+    #   block
+    # end
+    # ```
+    #
+    # That is, the def returns its captured block and does nothing else. An
+    # example is Proc.new(&block).
+    def target_def_is_captured_block?(arg : Call)
+      a_def = arg.target_defs.try &.first
+      return false unless a_def
+
+      block_arg = a_def.block_arg
+      return false unless block_arg
+
+      body_var = a_def.body.as?(Var)
+      return false unless body_var && body_var.name == block_arg.name
+
+      true
+    end
+
     def transform(node : ProcPointer)
       super
+
+      if expanded = node.expanded
+        return transform(expanded)
+      end
 
       if call = node.call?
         result = call.transform(self)
@@ -662,10 +735,13 @@ module Crystal
       super
       reset_last_status
       if replacement = node.syntax_replacement
-        replacement.transform(self)
-      else
-        transform_is_a_or_responds_to node, &.filter_by(node.const.type)
+        return replacement.transform(self)
       end
+
+      const_type = node.const.type?
+      return untyped_expression(node) unless const_type
+
+      transform_is_a_or_responds_to node, &.filter_by(const_type)
     end
 
     def transform(node : RespondsTo)
@@ -792,7 +868,7 @@ module Crystal
       end
 
       if expanded = node.expanded
-        return expanded
+        return expanded.transform self
       end
 
       node

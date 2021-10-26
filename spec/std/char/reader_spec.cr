@@ -1,10 +1,10 @@
 require "spec"
 require "char/reader"
 
-private def assert_invalid_byte_sequence(bytes, width)
+private def assert_invalid_byte_sequence(bytes)
   reader = Char::Reader.new(String.new bytes)
   reader.current_char.should eq(Char::REPLACEMENT)
-  reader.current_char_width.should eq(width)
+  reader.current_char_width.should eq(1)
   reader.error.should eq(bytes[0])
 end
 
@@ -130,51 +130,51 @@ describe "Char::Reader" do
   end
 
   it "errors if 0x80 <= first_byte < 0xC2" do
-    assert_invalid_byte_sequence Bytes[0x80], 1
-    assert_invalid_byte_sequence Bytes[0xC1], 1
+    assert_invalid_byte_sequence Bytes[0x80]
+    assert_invalid_byte_sequence Bytes[0xC1]
   end
 
   it "errors if (second_byte & 0xC0) != 0x80" do
-    assert_invalid_byte_sequence Bytes[0xd0], 1
+    assert_invalid_byte_sequence Bytes[0xd0]
   end
 
   it "errors if first_byte == 0xE0 && second_byte < 0xA0" do
-    assert_invalid_byte_sequence Bytes[0xe0, 0x9F, 0xA0], 3
+    assert_invalid_byte_sequence Bytes[0xe0, 0x9F, 0xA0]
   end
 
   it "errors if first_byte == 0xED && second_byte >= 0xA0" do
-    assert_invalid_byte_sequence Bytes[0xed, 0xB0, 0xA0], 3
+    assert_invalid_byte_sequence Bytes[0xed, 0xB0, 0xA0]
   end
 
   it "errors if first_byte < 0xF0 && (third_byte & 0xC0) != 0x80" do
-    assert_invalid_byte_sequence Bytes[0xe0, 0xA0, 0], 2
+    assert_invalid_byte_sequence Bytes[0xe0, 0xA0, 0]
   end
 
   it "errors if first_byte == 0xF0 && second_byte < 0x90" do
-    assert_invalid_byte_sequence Bytes[0xf0, 0x8F, 0xA0], 3
+    assert_invalid_byte_sequence Bytes[0xf0, 0x8F, 0xA0]
   end
 
   it "errors if first_byte == 0xF4 && second_byte >= 0x90" do
-    assert_invalid_byte_sequence Bytes[0xf4, 0x90, 0xA0], 3
+    assert_invalid_byte_sequence Bytes[0xf4, 0x90, 0xA0]
   end
 
   it "errors if first_byte < 0xF5 && (fourth_byte & 0xC0) != 0x80" do
-    assert_invalid_byte_sequence Bytes[0xf4, 0x8F, 0xA0, 0], 4
+    assert_invalid_byte_sequence Bytes[0xf4, 0x8F, 0xA0, 0]
   end
 
   it "errors if first_byte >= 0xF5" do
-    assert_invalid_byte_sequence Bytes[0xf5, 0x8F, 0xA0, 0xA0], 4
+    assert_invalid_byte_sequence Bytes[0xf5, 0x8F, 0xA0, 0xA0]
   end
 
   it "errors if second_byte is out of bounds" do
-    assert_invalid_byte_sequence Bytes[0xf4], 1
+    assert_invalid_byte_sequence Bytes[0xf4]
   end
 
   it "errors if third_byte is out of bounds" do
-    assert_invalid_byte_sequence Bytes[0xf4, 0x8f], 2
+    assert_invalid_byte_sequence Bytes[0xf4, 0x8f]
   end
 
   it "errors if fourth_byte is out of bounds" do
-    assert_invalid_byte_sequence Bytes[0xf4, 0x8f, 0xa0], 3
+    assert_invalid_byte_sequence Bytes[0xf4, 0x8f, 0xa0]
   end
 end

@@ -31,7 +31,7 @@ module IO::Buffered
   abstract def unbuffered_rewind
 
   # Return the buffer size used
-  def buffer_size
+  def buffer_size : Int32
     @buffer_size
   end
 
@@ -66,7 +66,7 @@ module IO::Buffered
   end
 
   # Buffered implementation of `IO#read(slice)`.
-  def read(slice : Bytes)
+  def read(slice : Bytes) : Int32
     check_open
 
     count = slice.size
@@ -188,7 +188,7 @@ module IO::Buffered
   end
 
   # Determines if this `IO` does write buffering. If `true`, no buffering is done.
-  def sync?
+  def sync? : Bool
     @sync
   end
 
@@ -198,7 +198,7 @@ module IO::Buffered
   end
 
   # Determines whether this `IO` buffers reads.
-  def read_buffering?
+  def read_buffering? : Bool
     @read_buffering
   end
 
@@ -208,7 +208,7 @@ module IO::Buffered
   end
 
   # Determines if this `IO` flushes automatically when a newline is written.
-  def flush_on_newline?
+  def flush_on_newline? : Bool
     @flush_on_newline
   end
 

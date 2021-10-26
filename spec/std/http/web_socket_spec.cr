@@ -393,6 +393,7 @@ describe HTTP::WebSocket do
 
           ws.on_message do |str|
             ws.send("pong #{str}")
+            ws.close
           end
 
           ws.on_close do
@@ -415,11 +416,30 @@ describe HTTP::WebSocket do
       random = Random::Secure.hex
       ws2.on_message do |str|
         str.should eq("pong #{random}")
-        ws2.close
       end
       ws2.send(random)
 
       ws2.run
+    end
+  end
+
+  it "sends correct HTTP basic auth header" do
+    ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+      ws.send ctx.request.headers["Authorization"]
+      ws.close
+    end
+    http_server = HTTP::Server.new([ws_handler])
+    address = http_server.bind_unused_port
+
+    run_server(http_server) do
+      client = HTTP::WebSocket.new("ws://test_username:test_password@#{address}")
+      message = nil
+      client.on_message do |msg|
+        message = msg
+      end
+      client.run
+      message.should eq(
+        "Basic #{Base64.strict_encode("test_username:test_password")}")
     end
   end
 
@@ -450,6 +470,30 @@ describe HTTP::WebSocket do
 
     run_server(http_server) do
       client = HTTP::WebSocket.new("ws://#{address}")
+      message = nil
+      client.on_message do |msg|
+        message = msg
+        client.close
+      end
+      client.send "hello"
+      client.run
+      message.should eq("hello")
+    end
+  end
+
+  it "doesn't compress upgrade response body" do
+    compress_handler = HTTP::CompressHandler.new
+    ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+      ws.on_message do |str|
+        ws.send(str)
+      end
+    end
+    http_server = HTTP::Server.new([compress_handler, ws_handler])
+
+    address = http_server.bind_unused_port
+
+    run_server(http_server) do
+      client = HTTP::WebSocket.new("ws://#{address}", headers: HTTP::Headers{"Accept-Encoding" => "gzip"})
       message = nil
       client.on_message do |msg|
         message = msg
