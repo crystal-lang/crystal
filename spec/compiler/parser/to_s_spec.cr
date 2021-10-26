@@ -188,4 +188,6 @@ describe "ASTNode#to_s" do
   expect_to_s %[他.说("你好")]
   expect_to_s %[他.说 = "你好"]
   expect_to_s %[あ.い, う.え.お = 1, 2]
+  expect_to_s "-> : Int32 do\nend"
+  expect_to_s "->(x : Int32, y : Bool) : Char do\n  'a'\nend"
 end
