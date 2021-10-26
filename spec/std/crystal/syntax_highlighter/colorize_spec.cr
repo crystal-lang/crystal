@@ -1,8 +1,8 @@
 require "crystal/syntax_highlighter/colorize"
 require "spec"
 
-private def it_highlights(code, expected, file = __FILE__, line = __LINE__)
-  it "highlights #{code.inspect}", file, line do
+private def it_highlights(code, expected, *, file = __FILE__, line = __LINE__)
+  it code.inspect, file, line do
     highlighted = Crystal::SyntaxHighlighter::Colorize.highlight code
     highlighted.should eq(expected), file: file, line: line
     extracted_code = highlighted.gsub(/\e\[(?:\d+;)?\d+m/, "")
@@ -10,15 +10,17 @@ private def it_highlights(code, expected, file = __FILE__, line = __LINE__)
   end
 end
 
-private def it_does_not_highlight(code, file = __FILE__, line = __LINE__)
-  it "does not highlight #{code.inspect} due to error", file, line do
+private def it_highlights!(code, expected = code, *, file = __FILE__, line = __LINE__)
+  it code.inspect, file, line do
     highlighted = Crystal::SyntaxHighlighter::Colorize.highlight! code
-    highlighted.should eq(code), file: file, line: line
+    highlighted.should eq(expected), file: file, line: line
+    extracted_code = highlighted.gsub(/\e\[(?:\d+;)?\d+m/, "")
+    extracted_code.should eq(code), file: file, line: line
   end
 end
 
 describe Crystal::SyntaxHighlighter::Colorize do
-  describe "#highlight" do
+  describe ".highlight" do
     it_highlights %(foo = bar("baz\#{PI + 1}") # comment), "foo \e[91m=\e[0m bar(\e[93m\"baz\#{\e[0;36mPI\e[0;93m \e[0;91m+\e[0;93m \e[0;35m1\e[0;93m}\"\e[0m) \e[90m# comment\e[0m"
 
     it_highlights "foo", "foo"
@@ -105,20 +107,22 @@ describe Crystal::SyntaxHighlighter::Colorize do
     end
   end
 
-  describe "#highlight!" do
-    it_does_not_highlight <<-CR
+  describe ".highlight!" do
+    it_highlights! %(foo = bar("baz\#{PI + 1}") # comment), "foo \e[91m=\e[0m bar(\e[93m\"baz\#{\e[0;36mPI\e[0;93m \e[0;91m+\e[0;93m \e[0;35m1\e[0;93m}\"\e[0m) \e[90m# comment\e[0m"
+
+    it_highlights! <<-CR
       foo, bar = <<-FOO, <<-BAR
         foo
         FOO
       CR
 
-    it_does_not_highlight <<-CR
+    it_highlights! <<-CR
       foo, bar = <<-FOO, <<-BAR
         foo
       CR
 
-    it_does_not_highlight "\"foo"
-    it_does_not_highlight "%w[foo"
-    it_does_not_highlight "%i[foo"
+    it_highlights! "\"foo"
+    it_highlights! "%w[foo"
+    it_highlights! "%i[foo"
   end
 end

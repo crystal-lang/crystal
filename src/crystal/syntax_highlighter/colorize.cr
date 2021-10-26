@@ -14,6 +14,7 @@ class Crystal::SyntaxHighlighter::Colorize < Crystal::SyntaxHighlighter
   def self.highlight(io : IO, code : String)
     new(io).highlight(code)
   end
+
   # Highlights *code* and returns the result.
   def self.highlight(code : String)
     String.build do |io|
