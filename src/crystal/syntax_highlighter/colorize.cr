@@ -74,7 +74,7 @@ class Crystal::SyntaxHighlighter::Colorize < Crystal::SyntaxHighlighter
 
   private def colorize(type : TokenType, token)
     if color = colors[type]?
-      @io << token.colorize(color)
+      @io << token.colorize(color).toggle(true)
     else
       @io << token
     end
