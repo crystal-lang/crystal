@@ -755,7 +755,7 @@ describe "Semantic: proc" do
       )) { int32 }
   end
 
-  %w(Object Value Reference Number Int Float Struct Proc Tuple Enum StaticArray Pointer).each do |type|
+  %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
     it "disallows #{type} in procs" do
       assert_error %(
         ->(x : #{type}) { }
@@ -784,36 +784,39 @@ describe "Semantic: proc" do
     end
   end
 
-  describe "Class" do
-    # FIXME: Class reports as Object type in two of these examples.
-    # This should be fixed and the specs inlined with the above.
-    # See https://github.com/crystal-lang/crystal/pull/10688#issuecomment-852931558
-    it "disallows Class in procs" do
-      assert_error %(
-        ->(x : Class) { }
-        ),
-        "can't use Object as a Proc argument type"
-    end
+  it "allows metaclass in procs" do
+    assert_type(<<-CR) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+      class Foo
+      end
 
-    it "disallows Class in captured block" do
-      assert_error %(
-        def foo(&block : Class ->)
-        end
+      ->(x : Foo.class) { x.new }
+      CR
+  end
 
-        foo {}
-        ),
-        "can't use Class as a Proc argument type"
-    end
+  it "allows metaclass in captured block" do
+    assert_type(<<-CR) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+      class Foo
+      end
 
-    it "disallows Class in proc pointer" do
-      assert_error %(
-        def foo(x)
-        end
+      def foo(&block : Foo.class -> Foo)
+        block
+      end
 
-        ->foo(Class)
-        ),
-        "can't use Object as a Proc argument type"
-    end
+      foo { |x| x.new }
+      CR
+  end
+
+  it "allows metaclass in proc pointer" do
+    assert_type(<<-CR) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+      class Foo
+      end
+
+      def foo(x : Foo.class)
+        x.new
+      end
+
+      ->foo(Foo.class)
+      CR
   end
 
   it "..." do
