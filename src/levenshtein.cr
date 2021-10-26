@@ -20,11 +20,10 @@ module Levenshtein
       string1, string2 = string2, string1
       l_size, s_size = s_size, l_size
     end
-    
+
     return l_size if s_size == 0
 
     myers(string1, string2)
-
   end
 
   # Finds the closest string to a given string amongst many strings.
@@ -122,56 +121,54 @@ module Levenshtein
     m = string1.size
     n = string2.size
     rmax = (m / w).ceil.to_i
-    hna = Array(Int32).new(n,0)
-    hpa = Array(Int32).new(n,0)
+    hna = Array(Int32).new(n, 0)
+    hpa = Array(Int32).new(n, 0)
 
-    lpos = 1 << ((m-1) % w)
+    lpos = 1 << ((m - 1) % w)
     score = m
     ascii = string1.ascii_only? && string2.ascii_only?
 
-    pmr = ascii ? StaticArray(UInt32, 128).new(0) : Hash(Int32,UInt32).new(w) {0.to_u32}
-    
+    pmr = ascii ? StaticArray(UInt32, 128).new(0) : Hash(Int32, UInt32).new(w) { 0.to_u32 }
+
     rmax.times do |r|
       vp = UInt32::MAX
       vn = 0
 
-      #prepare char bit vector
-      s = string1[r*w,w]
-      s.each_char_with_index do |c,i|
+      # prepare char bit vector
+      s = string1[r*w, w]
+      s.each_char_with_index do |c, i|
         pmr[c.ord] |= 1 << i
       end
-      
-      string2.each_char_with_index do |c,i|
+
+      string2.each_char_with_index do |c, i|
         hn0 = hna[i]
         hp0 = hpa[i]
         pm = pmr[c.ord] | hn0
         d0 = (((pm & vp) &+ vp) ^ vp) | pm | vn
-        hp = vn | ~ (d0 | vp)
+        hp = vn | ~(d0 | vp)
         hn = d0 & vp
-        if (r == rmax-1) && ((hp & lpos) != 0)
+        if (r == rmax - 1) && ((hp & lpos) != 0)
           score += 1
-        elsif (r == rmax-1) && ((hn & lpos) != 0)
+        elsif (r == rmax - 1) && ((hn & lpos) != 0)
           score -= 1
         end
         hnx = (hn << 1) | hn0
         hpx = (hp << 1) | hp0
-        hna[i] = (hn >> (w-1)).to_i32
-        hpa[i] = (hp >> (w-1)).to_i32
+        hna[i] = (hn >> (w - 1)).to_i32
+        hpa[i] = (hp >> (w - 1)).to_i32
         nc = (r == 0) ? 1 : 0
-        vp = hnx | ~ (d0 | hpx | nc)
+        vp = hnx | ~(d0 | hpx | nc)
         vn = d0 & (hpx | nc)
       end
 
-      #Clear char bit vector
+      # Clear char bit vector
       case pmr
       when StaticArray
-        pmr.map!{0.to_u32}
+        pmr.map! { 0.to_u32 }
       when Hash
         pmr.clear
       end
-      
     end
     score
   end
-
 end
