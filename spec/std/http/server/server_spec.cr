@@ -4,13 +4,10 @@ require "http/client/response"
 require "../../../support/ssl"
 require "../../../support/channel"
 
-# TODO: replace with `HTTP::Client` once it supports connecting to Unix socket (#2735)
+# TODO: replace with `HTTP::Client.get` once it supports connecting to Unix socket (#2735)
 private def unix_request(path)
   UNIXSocket.open(path) do |io|
-    request = HTTP::Request.new("GET", "/")
-    request.to_io(io)
-
-    HTTP::Client::Response.from_io(io).body
+    HTTP::Client.new(io).get(path).body
   end
 end
 
