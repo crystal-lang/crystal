@@ -56,7 +56,7 @@ describe OpenSSL::SSL::Context do
     context.should be_a(OpenSSL::SSL::Context::Client)
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 || compare_versions(LibSSL::LIBRESSL_VERSION, "3.2.0") >= 0 %}
       context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
     {% else %}
       context.modes.should eq(OpenSSL::SSL::Modes::None)
@@ -70,7 +70,7 @@ describe OpenSSL::SSL::Context do
     context.should be_a(OpenSSL::SSL::Context::Server)
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 || compare_versions(LibSSL::LIBRESSL_VERSION, "3.2.0") >= 0 %}
       context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
     {% else %}
       context.modes.should eq(OpenSSL::SSL::Modes::None)
@@ -137,7 +137,12 @@ describe OpenSSL::SSL::Context do
     context = OpenSSL::SSL::Context::Client.new
     level = context.security_level
     context.security_level = level + 1
-    context.security_level.should eq(level + 1)
+    # SSL_CTX_get_security_level is not supported by libressl
+    {% if LibSSL::OPENSSL_VERSION != "0.0.0" %}
+      context.security_level.should eq(level + 1)
+    {% else %}
+      context.security_level.should eq 0
+    {% end %}
   end
 
   it "adds temporary ecdh curve (P-256)" do
@@ -239,15 +244,13 @@ describe OpenSSL::SSL::Context do
       expect_raises(ArgumentError, "missing private key") do
         OpenSSL::SSL::Context::Client.from_hash({} of String => String)
       end
-      expect_raises(OpenSSL::Error,
-        {{ compare_versions(LibSSL::OPENSSL_VERSION, "3.0.0") >= 0 ? "SSL_CTX_use_PrivateKey_file: error:80000002:system library::No such file or directory" : "SSL_CTX_use_PrivateKey_file: error:02001002:system library:fopen:No such file or directory" }}) do
+      expect_raises(OpenSSL::Error, /SSL_CTX_use_PrivateKey_file: error:.*:No such file or directory/) do
         OpenSSL::SSL::Context::Client.from_hash({"key" => nonexistent})
       end
       expect_raises(ArgumentError, "missing certificate") do
         OpenSSL::SSL::Context::Client.from_hash({"key" => private_key})
       end
-      expect_raises(OpenSSL::Error,
-        {{ compare_versions(LibSSL::OPENSSL_VERSION, "3.0.0") >= 0 ? "SSL_CTX_use_certificate_chain_file: error:80000002:system library::No such file or directory" : "SSL_CTX_use_certificate_chain_file: error:02001002:system library:fopen:No such file or directory" }}) do
+      expect_raises(OpenSSL::Error, /SSL_CTX_use_certificate_chain_file: error:.*:No such file or directory/) do
         OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => nonexistent})
       end
       expect_raises(ArgumentError, "Invalid SSL context: missing CA certificate") do
@@ -259,8 +262,7 @@ describe OpenSSL::SSL::Context do
       expect_raises(ArgumentError, "Invalid SSL context: missing CA certificate") do
         OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "verify_mode" => "peer"})
       end
-      expect_raises(OpenSSL::Error,
-        {{ compare_versions(LibSSL::OPENSSL_VERSION, "3.0.0") >= 0 ? "SSL_CTX_load_verify_locations: error:80000002:system library::No such file or directory" : "SSL_CTX_load_verify_locations: error:02001002:system library:fopen:No such file or directory" }}) do
+      expect_raises(OpenSSL::Error, /SSL_CTX_load_verify_locations: error:.*:No such file or directory/) do
         OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "ca" => nonexistent})
       end
     end

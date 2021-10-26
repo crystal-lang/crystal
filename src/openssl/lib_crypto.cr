@@ -131,7 +131,7 @@ lib LibCrypto
   fun obj_obj2nid = OBJ_obj2nid(obj : ASN1_OBJECT) : Int
   fun obj_ln2nid = OBJ_ln2nid(ln : Char*) : Int
   fun obj_sn2nid = OBJ_sn2nid(sn : Char*) : Int
-  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 || compare_versions(LIBRESSL_VERSION, "0.0.0") > 0 %}
     fun obj_find_sigid_algs = OBJ_find_sigid_algs(sigid : Int32, pdig_nid : Int32*, ppkey_nid : Int32*) : Int32
   {% end %}
 
@@ -303,7 +303,7 @@ lib LibCrypto
   fun x509_get_ext = X509_get_ext(x : X509, idx : Int) : X509_EXTENSION
   fun x509_get_ext_count = X509_get_ext_count(x : X509) : Int
   fun x509_get_ext_d2i = X509_get_ext_d2i(x : X509, nid : Int, crit : Int*, idx : Int*) : Void*
-  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 || compare_versions(LIBRESSL_VERSION, "0.0.0") > 0 %}
     fun x509_get_signature_nid = X509_get_signature_nid(x509 : X509) : Int32
   {% end %}
 
