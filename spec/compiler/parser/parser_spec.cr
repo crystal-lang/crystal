@@ -2162,6 +2162,14 @@ module Crystal
         name_location.column_number.should eq(12)
       end
 
+      it "sets correct location of proc literal" do
+        parser = Parser.new("->(\n  x : Int32,\n  y : String\n) { }")
+        node = parser.parse.as(ProcLiteral)
+        loc = node.location.not_nil!
+        loc.line_number.should eq(1)
+        loc.column_number.should eq(1)
+      end
+
       it "doesn't override yield with macro yield" do
         parser = Parser.new("def foo; yield 1; {% begin %} yield 1 {% end %}; end")
         a_def = parser.parse.as(Def)
