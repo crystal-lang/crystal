@@ -49,7 +49,7 @@ class Log
   at_exit { @@builder.close }
 
   # Returns the default `Log::Builder` used for `Log.for` calls.
-  def self.builder
+  def self.builder : Log::Builder
     @@builder
   end
 
@@ -120,7 +120,7 @@ class Log
     # Log.context.clear
     # Log.info { "message with empty context" }
     # ```
-    def clear
+    def clear : Nil
       Fiber.current.logging_context = @metadata = Log::Metadata.empty
     end
 
@@ -142,7 +142,7 @@ class Log
     end
 
     # :ditto:
-    def set(values)
+    def set(values) : Nil
       extend_fiber_context(Fiber.current, values)
     end
 

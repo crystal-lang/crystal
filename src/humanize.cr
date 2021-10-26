@@ -23,7 +23,34 @@ struct Number
     if decimal_places
       number = number.round(decimal_places)
     end
-    string = number.abs.to_s
+
+    if number.is_a?(Float)
+      if number.infinite?
+        if number < 0
+          io << '-'
+        end
+        io << "Infinity"
+        return
+      elsif number.nan?
+        io << "NaN"
+        return
+      end
+
+      if decimal_places && decimal_places >= 0
+        string = "%.*f" % {decimal_places, number.abs}
+      else
+        string = String.build do |io|
+          # Make sure to avoid scientific notation of default Float#to_s
+          Float::Printer.print(number.abs, io, point_range: ..)
+        end
+        _, _, decimals = string.partition(".")
+        integer, _, _ = ("%f" % number.abs).partition(".")
+        string = "#{integer}.#{decimals}"
+      end
+    else
+      string = number.abs.to_s
+    end
+
     integer, _, decimals = string.partition('.')
 
     int_size = integer.size
@@ -33,19 +60,27 @@ struct Number
 
     start = int_size % group
     start += group if start == 0
-    io.write integer.to_slice[0, start]
+    io.write_string integer.to_slice[0, start]
 
     while start < int_size
       io << delimiter
-      io.write integer.to_slice[start, group]
+      io.write_string integer.to_slice[start, group]
       start += group
     end
 
     decimal_places ||= dec_size
 
     if decimal_places > 0
-      io << separator << decimals
-      unless only_significant
+      io << separator
+      if only_significant
+        decimals = decimals.rstrip('0')
+        if decimals.empty?
+          io << '0'
+        else
+          io << decimals
+        end
+      else
+        io << decimals
         (decimal_places - dec_size).times do
           io << '0'
         end
@@ -82,7 +117,7 @@ struct Number
   end
 
   # :nodoc:
-  def self.prefix_index(i, group = 3)
+  def self.prefix_index(i : Int32, group : Int32 = 3) : Int32
     ((i - (i > 0 ? 1 : 0)) // group) * group
   end
 
@@ -239,7 +274,7 @@ struct Number
   end
 
   # :ditto:
-  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Proc) : Nil
+  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Proc) : String
     String.build do |io|
       humanize(io, precision, separator, delimiter, base: base, significant: significant, prefixes: prefixes)
     end

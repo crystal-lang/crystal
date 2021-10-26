@@ -156,7 +156,7 @@ describe "Semantic: pointer" do
   end
 
   it "can assign pointerof virtual type (#8216)" do
-    semantic(%(
+    assert_no_errors <<-CR
       class Base
       end
 
@@ -167,7 +167,7 @@ describe "Semantic: pointer" do
 
       x : Pointer(Base)
       x = pointerof(u)
-    ))
+      CR
   end
 
   it "errors with non-matching generic value with value= (#10211)" do
@@ -194,5 +194,22 @@ describe "Semantic: pointer" do
       ptr.value = Foo(Int32).new
       ),
       "type must be Moo(Char | Int32), not Foo(Int32)"
+  end
+
+  it "errors with non-matching generic value with value=, union of generic types (#10544)" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      class Bar1
+      end
+
+      class Bar2
+      end
+
+      ptr = Pointer(Foo(Char | Int32)).malloc(1_u64)
+      ptr.value = Foo(Int32).new || Foo(Char | Int32).new
+      ),
+      "type must be Foo(Char | Int32), not (Foo(Char | Int32) | Foo(Int32))"
   end
 end

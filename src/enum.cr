@@ -185,7 +185,7 @@ struct Enum
   # Color::Red + 2 # => Color::Blue
   # Color::Red + 3 # => Color.new(3)
   # ```
-  def +(other : Int)
+  def +(other : Int) : self
     self.class.new(value + other)
   end
 
@@ -197,7 +197,7 @@ struct Enum
   # Color::Blue - 2 # => Color::Red
   # Color::Blue - 3 # => Color.new(-1)
   # ```
-  def -(other : Int)
+  def -(other : Int) : self
     self.class.new(value - other)
   end
 
@@ -208,7 +208,7 @@ struct Enum
   # ```
   # (IOMode::Read | IOMode::Async) # => IOMode::Read | IOMode::Async
   # ```
-  def |(other : self)
+  def |(other : self) : self
     self.class.new(value | other.value)
   end
 
@@ -219,20 +219,20 @@ struct Enum
   # ```
   # (IOMode::Read | IOMode::Async) & IOMode::Read # => IOMode::Read
   # ```
-  def &(other : self)
+  def &(other : self) : self
     self.class.new(value & other.value)
   end
 
   # Returns the enum member that results from applying a logical
   # "xor" operation between this enum member's value and *other*.
   # This is mostly useful with flag enums.
-  def ^(other : self)
+  def ^(other : self) : self
     self.class.new(value ^ other.value)
   end
 
   # Returns the enum member that results from applying a logical
   # "not" operation of this enum member's value.
-  def ~
+  def ~ : self
     self.class.new(~value)
   end
 
@@ -248,7 +248,6 @@ struct Enum
     value <=> other.value
   end
 
-  # :nodoc:
   def ==(other)
     false
   end
@@ -276,7 +275,7 @@ struct Enum
   # mode.includes?(IOMode::Read)  # => true
   # mode.includes?(IOMode::Async) # => false
   # ```
-  def includes?(other : self)
+  def includes?(other : self) : Bool
     (value & other.value) != 0
   end
 
@@ -303,7 +302,7 @@ struct Enum
   #   # yield IOMode::Async, 3
   # end
   # ```
-  def each
+  def each(& : self ->)
     {% if @type.annotation(Flags) %}
       return if value == 0
       {% for member in @type.constants %}
@@ -468,7 +467,7 @@ struct Enum
   #   # yield IOMode::Async, 3
   # end
   # ```
-  def self.each
+  def self.each(& : self ->)
     {% for member in @type.constants %}
       {% unless @type.annotation(Flags) && %w(none all).includes?(member.stringify.downcase) %}
         yield new({{@type.constant(member)}}), {{@type.constant(member)}}

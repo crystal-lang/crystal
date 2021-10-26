@@ -93,7 +93,7 @@ module Intrinsics
     LibIntrinsics.read_cycle_counter
   end
 
-  def self.bswap32(id)
+  def self.bswap32(id) : UInt32
     LibIntrinsics.bswap32(id)
   end
 
@@ -101,19 +101,19 @@ module Intrinsics
     LibIntrinsics.bswap16(id)
   end
 
-  def self.popcount8(src)
+  def self.popcount8(src) : Int8
     LibIntrinsics.popcount8(src)
   end
 
-  def self.popcount16(src)
+  def self.popcount16(src) : Int16
     LibIntrinsics.popcount16(src)
   end
 
-  def self.popcount32(src)
+  def self.popcount32(src) : Int32
     LibIntrinsics.popcount32(src)
   end
 
-  def self.popcount64(src)
+  def self.popcount64(src) : Int64
     LibIntrinsics.popcount64(src)
   end
 

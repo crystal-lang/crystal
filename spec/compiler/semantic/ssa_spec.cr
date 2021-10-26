@@ -483,6 +483,26 @@ describe "Semantic: ssa" do
       ") { int32 }
   end
 
+  it "types a var that is declared in a while condition with break before re-assignment" do
+    assert_type(%(
+      while a = 'a'
+        break if 1 == 1
+        a = "hello"
+      end
+      a
+      )) { char }
+  end
+
+  it "types a var that is declared in a while condition with break after re-assignment" do
+    assert_type(%(
+      while a = 'a'
+        a = "hello"
+        break if 1 == 1
+      end
+      a
+      )) { union_of(char, string) }
+  end
+
   it "types while with next" do
     assert_type("
       a = 1
@@ -658,5 +678,31 @@ describe "Semantic: ssa" do
         1
       end
       ") { int32 }
+  end
+
+  it "errors if accessing variable declared inside typeof" do
+    assert_error %(
+      typeof(x = 1)
+      x
+      ),
+      "undefined local variable or method 'x'"
+  end
+
+  it "doesn't error if same variable is declared in multiple typeofs" do
+    assert_type(%(
+      typeof((x = uninitialized Int32; x))
+      typeof((x = uninitialized Char; x))
+      )) { char.metaclass }
+  end
+
+  it "doesn't error if same variable is used in multiple arguments of same typeof" do
+    assert_type(%(
+      def foo(x : String)
+        'a'
+      end
+
+      x = 1
+      typeof(x = "", x = foo(x))
+      )) { union_of(string, char).metaclass }
   end
 end

@@ -65,6 +65,7 @@ module Crystal
       within_temporary_directory do
         run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith")
         run_init_project("app", "example_app", "John Smith", "john@smith.com", "jsmith")
+        run_init_project("app", "num-followed-hyphen-1", "John Smith", "john@smith.com", "jsmith")
         run_init_project("lib", "example-lib", "John Smith", "john@smith.com", "jsmith")
         run_init_project("lib", "camel_example-camel_lib", "John Smith", "john@smith.com", "jsmith")
         run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith", dir: "other-example-directory")
@@ -75,6 +76,10 @@ module Crystal
 
         with_file "camel_example-camel_lib/src/camel_example-camel_lib.cr" do |file|
           file.should contain("CamelExample::CamelLib")
+        end
+
+        with_file "num-followed-hyphen-1/src/num-followed-hyphen-1.cr" do |file|
+          file.should contain("Num::Followed::Hyphen1")
         end
 
         with_file "example/.gitignore" do |gitignore|
@@ -167,12 +172,6 @@ module Crystal
         with_file "example_app/shard.yml" do |shard_yml|
           parsed = YAML.parse(shard_yml)
           parsed["targets"].should eq({"example_app" => {"main" => "src/example_app.cr"}})
-        end
-
-        with_file "example/.travis.yml" do |travis|
-          parsed = YAML.parse(travis)
-
-          parsed["language"].should eq("crystal")
         end
 
         with_file "example/src/example.cr" do |example|
@@ -392,6 +391,18 @@ module Crystal
         Crystal::Init.validate_name("foo\abar")
       end
       Crystal::Init.validate_name("grüß-gott")
+    end
+  end
+
+  describe "View#module_name" do
+    it "namespace is divided by hyphen" do
+      Crystal::Init::View.module_name("my-proj-name").should eq "My::Proj::Name"
+    end
+    it "hyphen follwed by non-ascii letter is replaced by its character" do
+      Crystal::Init::View.module_name("my-proj-1").should eq "My::Proj1"
+    end
+    it "underscore is ignored" do
+      Crystal::Init::View.module_name("my-proj_name").should eq "My::ProjName"
     end
   end
 end
