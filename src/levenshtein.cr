@@ -14,57 +14,17 @@ module Levenshtein
     return 0 if string1 == string2
 
     s_size = string1.size
-    t_size = string2.size
+    l_size = string2.size
 
-    return t_size if s_size == 0
-    return s_size if t_size == 0
-
-    # This is to allocate less memory
-    if t_size > s_size
+    if l_size < s_size
       string1, string2 = string2, string1
-      t_size, s_size = s_size, t_size
+      l_size, s_size = s_size, l_size
     end
+    
+    return l_size if s_size == 0
 
-    costs = Slice(Int32).new(t_size + 1) { |i| i }
-    last_cost = 0
+    myers(string1, string2)
 
-    if string1.single_byte_optimizable? && string2.single_byte_optimizable?
-      s = string1.to_unsafe
-      t = string2.to_unsafe
-
-      s_size.times do |i|
-        last_cost = i + 1
-
-        t_size.times do |j|
-          sub_cost = s[i] == t[j] ? 0 : 1
-          cost = Math.min(Math.min(last_cost + 1, costs[j + 1] + 1), costs[j] + sub_cost)
-          costs[j] = last_cost
-          last_cost = cost
-        end
-        costs[t_size] = last_cost
-      end
-
-      last_cost
-    else
-      reader = Char::Reader.new(string1)
-
-      # Use an array instead of a reader to decode the second string only once
-      chars = string2.chars
-
-      reader.each_with_index do |char1, i|
-        last_cost = i + 1
-
-        chars.each_with_index do |char2, j|
-          sub_cost = char1 == char2 ? 0 : 1
-          cost = Math.min(Math.min(last_cost + 1, costs[j + 1] + 1), costs[j] + sub_cost)
-          costs[j] = last_cost
-          last_cost = cost
-        end
-        costs[t_size] = last_cost
-      end
-
-      last_cost
-    end
   end
 
   # Finds the closest string to a given string amongst many strings.
@@ -155,4 +115,63 @@ module Levenshtein
   def self.find(name, all_names, tolerance = nil)
     Finder.find(name, all_names, tolerance)
   end
+
+  # Myers algorithm to solve Levenshtein distance
+  private def self.myers(string1 : String, string2 : String) : Int32
+    w = 32
+    m = string1.size
+    n = string2.size
+    rmax = (m / w).ceil.to_i
+    hna = Array(Int32).new(n,0)
+    hpa = Array(Int32).new(n,0)
+
+    lpos = 1 << ((m-1) % w)
+    score = m
+    ascii = string1.ascii_only? && string2.ascii_only?
+
+    pmr = ascii ? StaticArray(UInt32, 128).new(0) : Hash(Int32,UInt32).new(w) {0.to_u32}
+    
+    rmax.times do |r|
+      vp = UInt32::MAX
+      vn = 0
+
+      #prepare char bit vector
+      s = string1[r*w,w]
+      s.each_char_with_index do |c,i|
+        pmr[c.ord] |= 1 << i
+      end
+      
+      string2.each_char_with_index do |c,i|
+        hn0 = hna[i]
+        hp0 = hpa[i]
+        pm = pmr[c.ord] | hn0
+        d0 = (((pm & vp) &+ vp) ^ vp) | pm | vn
+        hp = vn | ~ (d0 | vp)
+        hn = d0 & vp
+        if (r == rmax-1) && ((hp & lpos) != 0)
+          score += 1
+        elsif (r == rmax-1) && ((hn & lpos) != 0)
+          score -= 1
+        end
+        hnx = (hn << 1) | hn0
+        hpx = (hp << 1) | hp0
+        hna[i] = (hn >> (w-1)).to_i32
+        hpa[i] = (hp >> (w-1)).to_i32
+        nc = (r == 0) ? 1 : 0
+        vp = hnx | ~ (d0 | hpx | nc)
+        vn = d0 & (hpx | nc)
+      end
+
+      #Clear char bit vector
+      case pmr
+      when StaticArray
+        pmr.map!{0.to_u32}
+      when Hash
+        pmr.clear
+      end
+      
+    end
+    score
+  end
+
 end
