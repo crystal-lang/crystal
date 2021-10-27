@@ -192,7 +192,7 @@ module Levenshtein
 
       # prepare char bit vector
       start = r*w
-      count = (r == rmax-1) && ((m % w) != 0) ? (m % w) : w
+      count = (r == rmax - 1) && ((m % w) != 0) ? (m % w) : w
       count.times do |i|
         pmr[s1[start + i]] |= 1 << i
       end
