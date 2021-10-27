@@ -129,6 +129,14 @@ module GC
     LibGC.set_start_callback ->do
       GC.lock_write
     end
+    # By default the GC warns on big allocations/reallocations. This
+    # is of limited use and pollutes program output with warnings.
+    LibGC.set_warn_proc ->(msg, v) do
+      format_string = String.new(msg)
+      unless format_string.starts_with?("GC Warning: Repeated allocation of very large block")
+        LibC.printf format_string, v
+      end
+    end
   end
 
   def self.collect

@@ -588,7 +588,7 @@ describe "Semantic: class" do
       klass = 1 == 1 ? Foo : Bar
       klass.new(1)
       ),
-      "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)"
+      "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)", inject_primitives: true
   end
 
   it "errors if using underscore in generic class" do
@@ -767,7 +767,7 @@ describe "Semantic: class" do
       end
 
       Foo.new.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "allows using self in class scope" do
@@ -821,7 +821,7 @@ describe "Semantic: class" do
       ptr.value = Bar
       bar = ptr.value.new(1)
       bar.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "says no overload matches for class new" do
@@ -1004,7 +1004,7 @@ describe "Semantic: class" do
       end
 
       a
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "doesn't mix classes on definition (#2352)" do
