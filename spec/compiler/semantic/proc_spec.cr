@@ -782,6 +782,14 @@ describe "Semantic: proc" do
         ),
         "can't use #{type} as a Proc argument type"
     end
+
+    it "disallows #{type} in proc notation parameter type" do
+      assert_error "x : #{type} ->", "can't use #{type} as a Proc argument type"
+    end
+
+    it "disallows #{type} in proc notation return type" do
+      assert_error "x : -> #{type}", "can't use #{type} as a Proc argument type"
+    end
   end
 
   describe "Class" do
@@ -814,6 +822,30 @@ describe "Semantic: proc" do
         ),
         "can't use Object as a Proc argument type"
     end
+
+    it "disallows Class in proc notation parameter type" do
+      assert_error "x : Class ->", "can't use Class as a Proc argument type"
+    end
+
+    it "disallows Class in proc notation return type" do
+      assert_error "x : -> Class", "can't use Class as a Proc argument type"
+    end
+  end
+
+  it "allows metaclass in proc notation parameter type" do
+    assert_type(<<-CR) { proc_of(int32.metaclass, nil_type) }
+      #{proc_new}
+
+      x : Int32.class -> = Proc(Int32.class, Nil).new { }
+      x
+      CR
+  end
+
+  it "allows metaclass in proc notation return type" do
+    assert_type(<<-CR) { proc_of(int32.metaclass) }
+      x : -> Int32.class = ->{ Int32 }
+      x
+      CR
   end
 
   it "..." do
