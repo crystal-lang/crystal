@@ -171,30 +171,35 @@ module Levenshtein
   end
 
   # faster ASCII only implementation using StaticArray
+  {% begin %}
   private def self.myers_ascii(string1 : String, string2 : String) : Int32
-    w = 32
+    {% width = flag?(:bits64) ? 64 : 32 %}
+    w = {{ width }}
+    one = 1_u{{ width }}
+    zero = 0_u{{ width }}
+    
     m = string1.size
     n = string2.size
     rmax = (m / w).ceil.to_i
-    hna = Array(Int32).new(n, 0)
-    hpa = Array(Int32).new(n, 0)
+    hna = Array(UInt{{ width }}).new(n, zero)
+    hpa = Array(UInt{{ width }}).new(n, zero)
 
     lpos = 1 << ((m - 1) % w)
     score = m
     s1 = string1.to_unsafe
     s2 = string2.to_unsafe
 
-    pmr = StaticArray(UInt32, 128).new(0)
+    pmr = StaticArray(UInt{{ width }}, 128).new(zero)
 
     rmax.times do |r|
-      vp = UInt32::MAX
-      vn = 0
+      vp = UInt{{ width }}::MAX
+      vn = zero
 
       # prepare char bit vector
       start = r*w
       count = (r == rmax - 1) && ((m % w) != 0) ? (m % w) : w
       count.times do |i|
-        pmr[s1[start + i]] |= 1 << i
+        pmr[s1[start + i]] |= one << i
       end
 
       n.times do |i|
@@ -211,14 +216,15 @@ module Levenshtein
         end
         hnx = (hn << 1) | hn0
         hpx = (hp << 1) | hp0
-        hna[i] = (hn >> (w - 1)).to_i32!
-        hpa[i] = (hp >> (w - 1)).to_i32!
-        nc = (r == 0) ? 1 : 0
+        hna[i] = (hn >> (w - 1))
+        hpa[i] = (hp >> (w - 1))
+        nc = (r == 0) ? one : zero
         vp = hnx | ~(d0 | hpx | nc)
         vn = d0 & (hpx | nc)
       end
-      pmr.fill(0)
+      pmr.fill(zero)
     end
     score
   end
+    {% end %}
 end
