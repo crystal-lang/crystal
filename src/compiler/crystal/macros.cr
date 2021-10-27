@@ -1098,6 +1098,16 @@ module Crystal::Macros
     # Returns the output type, or nil if there is no return type.
     def output : ASTNode | NilLiteral
     end
+
+    # Resolves this proc notation to a `TypeNode` if it denotes a type,
+    # or otherwise gives a compile-time error.
+    def resolve : ASTNode
+    end
+
+    # Resolves this proc notation to a `TypeNode` if it denotes a type,
+    # or otherwise returns a `NilLiteral`.
+    def resolve? : ASTNode | NilLiteral
+    end
   end
 
   # A method definition.

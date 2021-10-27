@@ -2077,6 +2077,24 @@ module Crystal
       it "gets empty output" do
         assert_macro "x", %({{x.output}}), [ProcNotation.new([Path.new("SomeType")] of ASTNode)] of ASTNode, "nil"
       end
+
+      it "executes resolve" do
+        assert_macro "x", %({{x.resolve}}), [ProcNotation.new(([Path.new("Int32")] of ASTNode), Path.new("String"))] of ASTNode, %(Proc(Int32, String))
+
+        expect_raises(Crystal::TypeException, "undefined constant Foo") do
+          assert_macro "x", %({{x.resolve}}), [ProcNotation.new(([Path.new("Foo")] of ASTNode))] of ASTNode, %()
+        end
+
+        expect_raises(Crystal::TypeException, "undefined constant Foo") do
+          assert_macro "x", %({{x.resolve}}), [ProcNotation.new(([] of ASTNode), Path.new("Foo"))] of ASTNode, %()
+        end
+      end
+
+      it "executes resolve?" do
+        assert_macro "x", %({{x.resolve?}}), [ProcNotation.new(([Path.new("Int32")] of ASTNode), Path.new("String"))] of ASTNode, %(Proc(Int32, String))
+        assert_macro "x", %({{x.resolve?}}), [ProcNotation.new(([Path.new("Foo")] of ASTNode))] of ASTNode, %(nil)
+        assert_macro "x", %({{x.resolve?}}), [ProcNotation.new(([] of ASTNode), Path.new("Foo"))] of ASTNode, %(nil)
+      end
     end
 
     describe "proc literal methods" do
