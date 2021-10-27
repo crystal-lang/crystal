@@ -485,12 +485,12 @@ module Crystal
       end
     end
 
-    def resolve(node : Generic)
+    def resolve(node : Generic | Metaclass)
       type = @path_lookup.lookup_type(node, self_type: @scope, free_vars: @free_vars)
       TypeNode.new(type)
     end
 
-    def resolve?(node : Generic)
+    def resolve?(node : Generic | Metaclass)
       resolve(node)
     rescue Crystal::CodeError
       nil

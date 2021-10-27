@@ -1395,6 +1395,21 @@ module Crystal
     end
   end
 
+  class Metaclass
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "instance"
+        interpret_check_args { @name }
+      when "resolve"
+        interpret_check_args { interpreter.resolve(self) }
+      when "resolve?"
+        interpret_check_args { interpreter.resolve?(self) || NilLiteral.new }
+      else
+        super
+      end
+    end
+  end
+
   class VisibilityModifier
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method

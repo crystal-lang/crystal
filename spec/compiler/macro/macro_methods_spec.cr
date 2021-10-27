@@ -2253,6 +2253,29 @@ module Crystal
       end
     end
 
+    describe "metaclass methods" do
+      node = Metaclass.new(Path.new("Int32"))
+
+      it "executes instance" do
+        assert_macro "x", %({{x.instance}}), [node] of ASTNode, "Int32"
+      end
+
+      it "executes resolve" do
+        assert_macro "x", %({{x.resolve}}), [node] of ASTNode, %(Int32.class)
+        assert_macro "x", %({{x.resolve}}), [Metaclass.new(Path.new("Array"))] of ASTNode, %(Array(T).class)
+
+        expect_raises(Crystal::TypeException, "undefined constant Foo") do
+          assert_macro "x", %({{x.resolve}}), [Metaclass.new(Path.new("Foo"))] of ASTNode, %()
+        end
+      end
+
+      it "executes resolve?" do
+        assert_macro "x", %({{x.resolve?}}), [node] of ASTNode, %(Int32.class)
+        assert_macro "x", %({{x.resolve?}}), [Metaclass.new(Path.new("Array"))] of ASTNode, %(Array(T).class)
+        assert_macro "x", %({{x.resolve?}}), [Metaclass.new(Path.new("Foo"))] of ASTNode, %(nil)
+      end
+    end
+
     describe "require methods" do
       it "executes path" do
         assert_macro "x", %({{x.path}}), [Require.new("json")] of ASTNode, %("json")
