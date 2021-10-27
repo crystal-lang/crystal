@@ -55,7 +55,7 @@ class Crystal::SyntaxHighlighter::Colorize < Crystal::SyntaxHighlighter
   end
 
   def render_delimiter(&)
-    ::Colorize.with.fore(colors[TokenType::STRING]).surround(@io) do
+    ::Colorize.with.toggle(true).fore(colors[TokenType::STRING]).surround(@io) do
       yield
     end
   end
@@ -67,7 +67,7 @@ class Crystal::SyntaxHighlighter::Colorize < Crystal::SyntaxHighlighter
   end
 
   def render_string_array(&)
-    ::Colorize.with.fore(colors[TokenType::STRING]).surround(@io) do
+    ::Colorize.with.toggle(true).fore(colors[TokenType::STRING]).surround(@io) do
       yield
     end
   end
