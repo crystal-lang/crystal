@@ -210,7 +210,7 @@ struct UUID
   end
 
   def <=>(other : UUID) : Int32
-    @bytes.to_slice <=> other.bytes.to_slice
+    @bytes <=> other.bytes
   end
 
   class Error < Exception
