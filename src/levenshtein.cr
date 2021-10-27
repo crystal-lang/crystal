@@ -23,7 +23,11 @@ module Levenshtein
 
     return l_size if s_size == 0
 
-    myers(string1, string2)
+    if string1.ascii_only? && string2.ascii_only?
+      myers_ascii(string1, string2)
+    else
+      myers(string1, string2)
+    end
   end
 
   # Finds the closest string to a given string amongst many strings.
@@ -126,9 +130,8 @@ module Levenshtein
 
     lpos = 1 << ((m - 1) % w)
     score = m
-    ascii = string1.ascii_only? && string2.ascii_only?
 
-    pmr = ascii ? StaticArray(UInt32, 128).new(0) : Hash(Int32, UInt32).new(w) { 0.to_u32 }
+    pmr = Hash(Int32, UInt32).new(w) { 0.to_u32 }
 
     rmax.times do |r|
       vp = UInt32::MAX
@@ -154,20 +157,67 @@ module Levenshtein
         end
         hnx = (hn << 1) | hn0
         hpx = (hp << 1) | hp0
-        hna[i] = (hn >> (w - 1)).to_i32
-        hpa[i] = (hp >> (w - 1)).to_i32
+        hna[i] = (hn >> (w - 1)).to_i32!
+        hpa[i] = (hp >> (w - 1)).to_i32!
         nc = (r == 0) ? 1 : 0
         vp = hnx | ~(d0 | hpx | nc)
         vn = d0 & (hpx | nc)
       end
 
       # Clear char bit vector
-      case pmr
-      when StaticArray
-        pmr.map! { 0.to_u32 }
-      when Hash
-        pmr.clear
+      pmr.clear
+    end
+    score
+  end
+
+  # faster ASCII only implementation using StaticArray
+  private def self.myers_ascii(string1 : String, string2 : String) : Int32
+    w = 32
+    m = string1.size
+    n = string2.size
+    rmax = (m / w).ceil.to_i
+    hna = Array(Int32).new(n, 0)
+    hpa = Array(Int32).new(n, 0)
+
+    lpos = 1 << ((m - 1) % w)
+    score = m
+    s1 = string1.to_unsafe
+    s2 = string2.to_unsafe
+
+    pmr = StaticArray(UInt32, 128).new(0)
+
+    rmax.times do |r|
+      vp = UInt32::MAX
+      vn = 0
+
+      # prepare char bit vector
+      start = r*w
+      count = (r == rmax-1) && ((m % w) != 0) ? (m % w) : w
+      count.times do |i|
+        pmr[s1[start + i]] |= 1 << i
       end
+
+      n.times do |i|
+        hn0 = hna[i]
+        hp0 = hpa[i]
+        pm = pmr[s2[i]] | hn0
+        d0 = (((pm & vp) &+ vp) ^ vp) | pm | vn
+        hp = vn | ~(d0 | vp)
+        hn = d0 & vp
+        if (r == rmax - 1) && ((hp & lpos) != 0)
+          score += 1
+        elsif (r == rmax - 1) && ((hn & lpos) != 0)
+          score -= 1
+        end
+        hnx = (hn << 1) | hn0
+        hpx = (hp << 1) | hp0
+        hna[i] = (hn >> (w - 1)).to_i32!
+        hpa[i] = (hp >> (w - 1)).to_i32!
+        nc = (r == 0) ? 1 : 0
+        vp = hnx | ~(d0 | hpx | nc)
+        vn = d0 & (hpx | nc)
+      end
+      pmr.map! { 0.to_u32 }
     end
     score
   end
