@@ -217,7 +217,7 @@ module Levenshtein
         vp = hnx | ~(d0 | hpx | nc)
         vn = d0 & (hpx | nc)
       end
-      pmr.map! { 0.to_u32 }
+      pmr.fill(0)
     end
     score
   end
