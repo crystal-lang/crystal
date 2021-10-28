@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
 def assert_stricter(params1, params2, args, *, file = __FILE__, line = __LINE__)
-  assert_type(%(
+  assert_type(<<-CR, file: file, line: line, flags: "preview_overload_order") { tuple_of([int32, int32]) }
     def foo(#{params1}); 1; end
     def foo(#{params2}); 'x'; end
 
@@ -11,7 +11,21 @@ def assert_stricter(params1, params2, args, *, file = __FILE__, line = __LINE__)
     a = foo(#{args})
     b = bar(#{args})
     {a, b}
-    ), inject_primitives: false, file: file, line: line) { tuple_of([int32, int32]) }
+    CR
+end
+
+def assert_unordered(params1, params2, args, *, file = __FILE__, line = __LINE__)
+  assert_type(<<-CR, file: file, line: line, flags: "preview_overload_order") { tuple_of([int32, int32]) }
+    def foo(#{params1}); 1; end
+    def foo(#{params2}); 'x'; end
+
+    def bar(#{params2}); 1; end
+    def bar(#{params1}); 'x'; end
+
+    a = foo(#{args})
+    b = bar(#{args})
+    {a, b}
+    CR
 end
 
 describe "Semantic: def overload" do
@@ -135,18 +149,18 @@ describe "Semantic: def overload" do
       it "named parameter with restriction vs double splat (#5328)" do
         assert_stricter(
           "*, x : Int32",
-          "**options",
+          "**opts",
           "x: 1")
 
         assert_stricter(
           "*, x : Int32 = 0",
-          "**options",
+          "**opts",
           "")
       end
 
       it "named parameter vs double splat with restriction" do
         assert_stricter(
-          "**options : Int32",
+          "**opts : Int32",
           "*, x",
           "x: 1")
       end
@@ -154,22 +168,363 @@ describe "Semantic: def overload" do
       it "named parameter with stricter restriction vs double splat with restriction" do
         assert_stricter(
           "*, x : Int32",
-          "**options : Int",
+          "**opts : Int",
           "x: 1")
       end
 
       it "named parameter with restriction vs double splat with stricter restriction" do
         assert_stricter(
-          "**options : Int32",
+          "**opts : Int32",
           "*, x : Int",
           "x: 1")
       end
     end
 
-    context "subsumption / specificity conflicts" do
+    context "subsumption conflicts" do
+      it "positional vs positional" do
+        assert_unordered(
+          "x : Int32, y : Int",
+          "x : Int, y : Int32",
+          "1, 2")
+      end
+
+      it "positional vs single splat" do
+        assert_unordered(
+          "x : Int32, *args : Int",
+          "x : Int, *args : Int32",
+          "1, 2, 3, 4")
+
+        assert_unordered(
+          "x : Int32, *args : Number",
+          "*args : Int",
+          "1, 2, 3, 4")
+      end
+
+      it "positional vs named" do
+        assert_unordered(
+          "x : Int32, *, y : Int",
+          "x : Int, *, y : Int32",
+          "1, y: 2")
+      end
+
+      it "positional vs double splat" do
+        assert_unordered(
+          "x : Int32, **opts : Int",
+          "x : Int, **opts : Int32",
+          "1, y: 2, z: 3, w: 4")
+      end
+
+      it "single splat vs named" do
+        assert_unordered(
+          "*args : Int32, y : Int",
+          "*args : Int, y : Int32",
+          "1, 2, 3, y: 4")
+      end
+
+      it "single splat vs double splat" do
+        assert_unordered(
+          "*args : Int32, **opts : Int",
+          "*args : Int, **opts : Int32",
+          "1, 2, 3, y: 4, z: 5, w: 6")
+      end
+
+      it "named vs named" do
+        assert_unordered(
+          "*, x : Int32, y : Int",
+          "*, x : Int, y : Int32",
+          "x: 1, y: 2")
+      end
+
+      it "named vs double splat" do
+        assert_unordered(
+          "*, x : Int32, **opts : Int",
+          "*, x : Int, **opts : Int32",
+          "x: 1, y: 2, z: 3, w: 4")
+
+        assert_unordered(
+          "*, x : Int32, **opts : Number",
+          "**opts : Int",
+          "x: 1, y: 2, z: 3, w: 4")
+      end
     end
 
-    context "specificity conflicts" do
+    context "subsumption has higher precedence over specificity" do
+      it "same positional parameter, required > optional" do
+        assert_stricter(
+          "x : Int32 = 0",
+          "x : Int",
+          "1")
+      end
+
+      it "same positional parameter, required > single splat" do
+        assert_stricter(
+          "*x : Int32",
+          "x : Int",
+          "1")
+      end
+
+      it "same positional parameter, optional > single splat" do
+        assert_stricter(
+          "*x : Int32",
+          "x : Int = 0",
+          "1")
+      end
+
+      it "positional vs (required positional > optional positional)" do
+        assert_stricter(
+          "x : Int32, y = 0",
+          "x : Int, y",
+          "1, 2")
+      end
+
+      it "positional vs (required positional > single splat)" do
+        assert_stricter(
+          "x : Int32, *args",
+          "x : Int, y",
+          "1, 2")
+      end
+
+      it "positional vs (optional positional > single splat)" do
+        assert_stricter(
+          "x : Int32, *args",
+          "x : Int, y = 0",
+          "1, 2")
+      end
+
+      it "positional vs (required named > optional named)" do
+        assert_stricter(
+          "x : Int32, *, y = 0",
+          "x : Int, *, y",
+          "1, y: 2")
+      end
+
+      it "positional vs (required named > double splat)" do
+        assert_stricter(
+          "x : Int32, **opts",
+          "x : Int, *, y",
+          "1, y: 2")
+      end
+
+      it "positional vs (optional named > double splat)" do
+        assert_stricter(
+          "x : Int32, **opts",
+          "x : Int, *, y = 0",
+          "1, y: 2")
+      end
+
+      it "single splat vs (required named > optional named)" do
+        assert_stricter(
+          "*args : Int32, y = 0",
+          "*args : Int, y",
+          "1, 2, 3, y: 4")
+      end
+
+      it "single splat vs (required named > double splat)" do
+        assert_stricter(
+          "*args : Int32, **opts",
+          "*args : Int, y",
+          "1, 2, 3, y: 4")
+      end
+
+      it "single splat vs (optional named > double splat)" do
+        assert_stricter(
+          "*args : Int32, **opts",
+          "*args : Int, y = 0",
+          "1, 2, 3, y: 4")
+      end
+
+      it "same named parameter, required > optional" do
+        assert_stricter(
+          "*, x : Int32 = 0",
+          "*, x : Int",
+          "x: 1")
+      end
+
+      it "same named parameter, required > double splat" do
+        assert_stricter(
+          "**opts : Int32",
+          "*, x : Int",
+          "x: 1")
+      end
+
+      it "same named parameter, optional > double splat" do
+        assert_stricter(
+          "**opts : Int32",
+          "*, x : Int = 0",
+          "x: 1")
+      end
+
+      it "named vs (required positional > optional positional)" do
+        assert_stricter(
+          "x = 0, *, y : Int32",
+          "x, *, y : Int",
+          "1, y: 2")
+      end
+
+      it "named vs (required positional > single splat)" do
+        assert_stricter(
+          "*args, y : Int32",
+          "x, *, y : Int",
+          "1, y: 2")
+      end
+
+      it "named vs (optional positional > single splat)" do
+        assert_stricter(
+          "*args, y : Int32",
+          "x = 0, *, y : Int",
+          "1, y: 2")
+      end
+
+      it "named vs (required named > optional named)" do
+        assert_stricter(
+          "*, x : Int32, y = 0",
+          "*, x : Int, y",
+          "x: 1, y: 2")
+      end
+
+      it "named vs (required named > double splat)" do
+        assert_stricter(
+          "*, x : Int32, **opts",
+          "*, x : Int, y",
+          "x: 1, y: 2")
+      end
+
+      it "named vs (optional named > double splat)" do
+        assert_stricter(
+          "*, x : Int32, **opts",
+          "*, x : Int, y = 0",
+          "x: 1, y: 2")
+      end
+
+      it "double splat vs (required positional > optional positional)" do
+        assert_stricter(
+          "x = 0, **opts : Int32",
+          "x, **opts : Int",
+          "1, y: 2, z: 3, w: 4")
+      end
+
+      it "double splat vs (required positional > single splat)" do
+        assert_stricter(
+          "*args, **opts : Int32",
+          "x, **opts : Int",
+          "1, y: 2, z: 3, w: 4")
+      end
+
+      it "double splat vs (optional positional > single splat)" do
+        assert_stricter(
+          "*args, **opts : Int32",
+          "x = 0, **opts : Int",
+          "1, y: 2, z: 3, w: 4")
+      end
+    end
+
+    context "specificity conflicts, positional vs named" do
+      it "(required > optional) vs (required > optional)" do
+        assert_unordered(
+          "x, *, y = 0",
+          "x = 0, *, y",
+          "1, y: 2")
+      end
+
+      it "(required > optional) vs (required > splat)" do
+        assert_unordered(
+          "x, **opts",
+          "x = 0, *, y",
+          "1, y: 2")
+      end
+
+      it "(required > optional) vs (optional > splat)" do
+        assert_unordered(
+          "x, **opts",
+          "x = 0, *, y = 0",
+          "1, y: 2")
+      end
+
+      it "(required > splat) vs (required > optional)" do
+        assert_unordered(
+          "x, *, y = 0",
+          "*x, y",
+          "1, y: 2")
+      end
+
+      it "(required > splat) vs (required > splat)" do
+        assert_unordered(
+          "x, **opts",
+          "*x, y",
+          "1, y: 2")
+      end
+
+      it "(required > splat) vs (optional > splat)" do
+        assert_unordered(
+          "x, **opts",
+          "*x, y = 0",
+          "1, y: 2")
+      end
+
+      it "(optional > splat) vs (required > optional)" do
+        assert_unordered(
+          "x = 0, *, y = 0",
+          "*x, y",
+          "1, y: 2")
+      end
+
+      it "(optional > splat) vs (required > splat)" do
+        assert_unordered(
+          "x = 0, **opts",
+          "*x, y",
+          "1, y: 2")
+      end
+
+      it "(optional > splat) vs (optional > splat)" do
+        assert_unordered(
+          "x = 0, **opts",
+          "*x, y = 0",
+          "1, y: 2")
+      end
+    end
+
+    context "specificity conflicts, named vs named" do
+      it "(required > optional) vs (required > optional)" do
+        assert_unordered(
+          "*, x, y = 0",
+          "*, y, x = 0",
+          "x: 1, y: 2")
+      end
+
+      it "(required > optional) vs (required > splat)" do
+        assert_unordered(
+          "*, x, **opts",
+          "*, y, x = 0",
+          "x: 1, y: 2")
+      end
+
+      it "(required > optional) vs (optional > splat)" do
+        assert_unordered(
+          "*, x, **opts",
+          "*, y = 0, x = 0",
+          "x: 1, y: 2")
+      end
+
+      it "(required > splat) vs (required > splat)" do
+        assert_unordered(
+          "*, x, **opts",
+          "*, y, **opts",
+          "x: 1, y: 2")
+      end
+
+      it "(required > splat) vs (optional > splat)" do
+        assert_unordered(
+          "*, x, **opts",
+          "*, y = 0, **opts",
+          "x: 1, y: 2")
+      end
+
+      it "(optional > splat) vs (optional > splat)" do
+        assert_unordered(
+          "*, x = 0, **opts",
+          "*, y = 0, **opts",
+          "x: 1, y: 2")
+      end
     end
   end
 
