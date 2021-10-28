@@ -397,45 +397,73 @@ describe "Slice" do
     end
   end
 
-  it "does hexstring" do
-    slice = Bytes.new(4) { |i| i.to_u8 + 1 }
-    slice.hexstring.should eq("01020304")
+  describe "#hexstring" do
+    it "works for Bytes" do
+      slice = Bytes.new(4) { |i| i.to_u8 + 1 }
+      slice.hexstring.should eq("01020304")
+    end
+
+    it "works for other element types" do
+      slice = Slice[0x01020304, -0x01020304]
+
+      {% if IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian %}
+        slice.hexstring.should eq("04030201fcfcfdfe")
+      {% else %}
+        slice.hexstring.should eq("01020304fefdfcfc")
+      {% end %}
+    end
   end
 
-  it "does hexdump for empty slice" do
-    Bytes.empty.hexdump.should eq("")
+  describe "#hexdump" do
+    it "works for empty slice" do
+      Bytes.empty.hexdump.should eq("")
 
-    io = IO::Memory.new
-    Bytes.empty.hexdump(io).should eq(0)
-    io.to_s.should eq("")
-  end
+      io = IO::Memory.new
+      Bytes.empty.hexdump(io).should eq(0)
+      io.to_s.should eq("")
+    end
 
-  it "does hexdump" do
-    slice = Bytes.new(96) { |i| i.to_u8 + 32 }
-    assert_prints slice.hexdump, <<-EOF
-      00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
-      00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
-      00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
-      00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
-      00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
-      00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.\n
-      EOF
+    it "works for Bytes" do
+      slice = Bytes.new(96) { |i| i.to_u8 + 32 }
+      assert_prints slice.hexdump, <<-EOF
+        00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
+        00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
+        00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
+        00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
+        00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
+        00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.\n
+        EOF
 
-    plus = Bytes.new(101) { |i| i.to_u8 + 32 }
-    assert_prints plus.hexdump, <<-EOF
-      00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
-      00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
-      00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
-      00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
-      00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
-      00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.
-      00000060  80 81 82 83 84                                    .....\n
-      EOF
+      plus = Bytes.new(101) { |i| i.to_u8 + 32 }
+      assert_prints plus.hexdump, <<-EOF
+        00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
+        00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
+        00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
+        00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
+        00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
+        00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.
+        00000060  80 81 82 83 84                                    .....\n
+        EOF
 
-    num = Bytes.new(10) { |i| i.to_u8 + 48 }
-    assert_prints num.hexdump, <<-EOF
-      00000000  30 31 32 33 34 35 36 37  38 39                    0123456789\n
-      EOF
+      num = Bytes.new(10) { |i| i.to_u8 + 48 }
+      assert_prints num.hexdump, <<-EOF
+        00000000  30 31 32 33 34 35 36 37  38 39                    0123456789\n
+        EOF
+    end
+
+    it "works for other element types" do
+      slice = Slice[0x31323334, 0x61626364]
+
+      {% if IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian %}
+        assert_prints slice.hexdump, <<-EOF
+          00000000  34 33 32 31 64 63 62 61                           4321dcba\n
+          EOF
+      {% else %}
+        assert_prints slice.hexdump, <<-EOF
+          00000000  31 32 33 34 61 62 63 64                           1234abcd\n
+          EOF
+      {% end %}
+    end
   end
 
   it_iterates "#each", [1, 2, 3], Slice[1, 2, 3].each
