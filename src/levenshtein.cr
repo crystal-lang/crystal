@@ -189,8 +189,10 @@ module Levenshtein
             end
             hnx = (hn << 1) | hn0
             hpx = (hp << 1) | hp0
-            hna[i] = (hn >> (w-1)) == 1
-            hpa[i] = (hp >> (w-1)) == 1
+            if (r < rmax-1)
+              hna[i] = (hn >> (w-1)) == 1
+              hpa[i] = (hp >> (w-1)) == 1
+            end
             nc = (r == 0) ? one : zero
             vp = hnx | ~ (d0 | hpx | nc)
             vn = d0 & (hpx | nc)
