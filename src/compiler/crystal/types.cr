@@ -2824,6 +2824,10 @@ module Crystal
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << @name
     end
+
+    def type_desc
+      "metaclass"
+    end
   end
 
   # The metaclass of a generic class instance type, like `Array(String).class`
@@ -2894,6 +2898,10 @@ module Crystal
       instance_type.to_s(io)
       io << ".class"
     end
+
+    def type_desc
+      "metaclass"
+    end
   end
 
   # The metaclass of a generic module instance type, like `Enumerable(Int32).class`
@@ -2943,6 +2951,10 @@ module Crystal
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       instance_type.to_s(io)
       io << ".class"
+    end
+
+    def type_desc
+      "metaclass"
     end
   end
 
@@ -3408,6 +3420,10 @@ module Crystal
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       instance_type.to_s_with_options(io, codegen: codegen)
       io << ".class"
+    end
+
+    def type_desc
+      "metaclass"
     end
   end
 end
