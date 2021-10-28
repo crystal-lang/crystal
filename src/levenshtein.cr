@@ -1,3 +1,5 @@
+require "bit_array"
+
 # Levenshtein distance methods.
 module Levenshtein
   # Computes the [levenshtein distance](http://en.wikipedia.org/wiki/Levenshtein_distance) of two strings.
@@ -135,8 +137,8 @@ module Levenshtein
         m = string1.size
         n = string2.size
         rmax = (m / w).ceil.to_i
-        hna = Array(UInt{{ width }}).new(n,zero)
-        hpa = Array(UInt{{ width }}).new(n,zero)
+        hna = BitArray.new(n)
+        hpa = BitArray.new(n)
 
         lpos = one << ((m-1) % w)
         score = m
@@ -169,8 +171,8 @@ module Levenshtein
           end
 
           n.times do |i|
-            hn0 = hna[i]
-            hp0 = hpa[i]
+            hn0 = hna[i].to_unsafe
+            hp0 = hpa[i].to_unsafe
             # find char in dictionary
             {% if enc == "ascii" %}
               pm = pmr[s2[i]] | hn0
@@ -187,8 +189,8 @@ module Levenshtein
             end
             hnx = (hn << 1) | hn0
             hpx = (hp << 1) | hp0
-            hna[i] = (hn >> (w-1))
-            hpa[i] = (hp >> (w-1))
+            hna[i] = (hn >> (w-1)) == 1
+            hpa[i] = (hp >> (w-1)) == 1
             nc = (r == 0) ? one : zero
             vp = hnx | ~ (d0 | hpx | nc)
             vn = d0 & (hpx | nc)
