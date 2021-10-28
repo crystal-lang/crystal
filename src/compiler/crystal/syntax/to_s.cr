@@ -329,6 +329,8 @@ module Crystal
       visit_call node
     end
 
+    UNARY_OPERATORS = {"+", "-", "~", "&+", "&-"}
+
     def visit_call(node, ignore_obj = false)
       if node.name == "`"
         visit_backtick(node.args[0])
@@ -336,13 +338,18 @@ module Crystal
       end
 
       node_obj = ignore_obj ? nil : node.obj
+      block = node.block
 
       need_parens = need_parens(node_obj)
       call_args_need_parens = false
 
       @str << "::" if node.global?
+      if node_obj.is_a?(ImplicitObj)
+        @str << '.'
+        node_obj = nil
+      end
 
-      if node_obj && (node.name == "[]" || node.name == "[]?")
+      if node_obj && (node.name == "[]" || node.name == "[]?") && !block
         in_parenthesis(need_parens, node_obj)
 
         @str << decorate_call(node, "[")
@@ -352,7 +359,7 @@ module Crystal
         else
           @str << decorate_call(node, "]?")
         end
-      elsif node_obj && node.name == "[]="
+      elsif node_obj && node.name == "[]=" && !node.args.empty? && !block
         in_parenthesis(need_parens, node_obj)
 
         @str << decorate_call(node, "[")
@@ -362,38 +369,23 @@ module Crystal
         @str << decorate_call(node, "=")
         @str << ' '
         node.args.last.accept self
-      elsif node_obj && !letter_or_underscore?(node.name) && node.args.size == 0
-        if node.name == "+" || node.name == "-" || node.name == "~" || node.name == "&+" || node.name == "&-"
-          @str << decorate_call(node, node.name)
-          in_parenthesis(need_parens, node_obj)
-        else
-          # It is for something like `foo.%` and `foo.*`.
-          in_parenthesis(need_parens, node_obj)
-          @str << '.'
-          @str << node.name
-        end
-      elsif node_obj && !letter_or_underscore?(node.name) && node.args.size == 1
+      elsif node_obj && node.name.in?(UNARY_OPERATORS) && node.args.empty? && !node.named_args && !node.block_arg && !block
+        @str << decorate_call(node, node.name)
+        in_parenthesis(need_parens, node_obj)
+      elsif node_obj && !Lexer.ident?(node.name) && node.name != "~" && node.args.size == 1 && !node.named_args && !node.block_arg && !block
         in_parenthesis(need_parens, node_obj)
 
         arg = node.args[0]
-        if node.name == "~" # it is `foo.~(bar)` case.
-          @str << '.'
-          @str << node.name
-          @str << '('
-          arg.accept self
-          @str << ')'
-        else
-          @str << ' '
-          @str << decorate_call(node, node.name)
-          @str << ' '
-          in_parenthesis(need_parens(arg), arg)
-        end
+        @str << ' '
+        @str << decorate_call(node, node.name)
+        @str << ' '
+        in_parenthesis(need_parens(arg), arg)
       else
         if node_obj
           in_parenthesis(need_parens, node_obj)
           @str << '.'
         end
-        if node.name.ends_with?('=') && node.name[0].ascii_letter?
+        if Lexer.setter?(node.name)
           @str << decorate_call(node, node.name.rchop)
           @str << " = "
           node.args.join(@str, ", ", &.accept self)
@@ -406,8 +398,6 @@ module Crystal
           visit_args(node)
         end
       end
-
-      block = node.block
 
       if block
         # Check if this is foo &.bar
@@ -471,7 +461,7 @@ module Crystal
       when Call
         case obj.args.size
         when 0
-          !letter_or_underscore?(obj.name)
+          !Lexer.ident?(obj.name)
         else
           case obj.name
           when "[]", "[]?", "<", "<=", ">", ">="
@@ -564,14 +554,6 @@ module Crystal
 
     def decorate_class_var(node, str)
       str
-    end
-
-    def letter?(string)
-      string[0].ascii_letter?
-    end
-
-    def letter_or_underscore?(string)
-      string[0].ascii_letter? || string[0] == '_'
     end
 
     def visit(node : Assign)
@@ -858,8 +840,9 @@ module Crystal
         inputs.join(@str, ", ", &.accept self)
         @str << ' '
       end
-      @str << "-> "
+      @str << "->"
       if output = node.output
+        @str << ' '
         output.accept self
       end
       @str << ')'
@@ -952,7 +935,10 @@ module Crystal
     end
 
     def visit(node : Metaclass)
+      needs_parens = node.name.is_a?(Union)
+      @str << '(' if needs_parens
       node.name.accept self
+      @str << ')' if needs_parens
       @str << '.'
       @str << keyword("class")
       false
@@ -1108,6 +1094,7 @@ module Crystal
     end
 
     def visit(node : Not)
+      @str << '.' if node.exp.is_a?(ImplicitObj)
       @str << '!'
       need_parens = need_parens(node.exp)
       in_parenthesis(need_parens, node.exp)
@@ -1508,7 +1495,7 @@ module Crystal
         @str << ' '
       end
       @str << ":"
-      if node.volatile? || node.alignstack? || node.intel?
+      if node.volatile? || node.alignstack? || node.intel? || node.can_throw?
         @str << ' '
         comma = false
         if node.volatile?
@@ -1524,6 +1511,10 @@ module Crystal
           @str << ", " if comma
           @str << %("intel")
           comma = true
+        end
+        if node.can_throw?
+          @str << ", " if comma
+          @str << %("unwind")
         end
       end
       @str << ')'

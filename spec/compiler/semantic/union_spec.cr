@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
 private def assert_commutes(str, *, file = __FILE__, line = __LINE__, &)
-  result = semantic(str, inject_primitives: false)
+  result = semantic(str)
   program = result.program
   type1, type2, expected = with program yield program
   union1 = program.type_merge([type1, type2])
@@ -115,18 +115,28 @@ describe "Semantic: union" do
         end
         )) { [types["A"], types["B"], types["A"].virtual_type!] }
     end
+
+    it "uninstantiated generic super-metaclass v.s. uninstantiated generic sub-metaclass" do
+      assert_commutes(%(
+        class A(T)
+        end
+
+        class B(T) < A(T)
+        end
+        )) { [types["A"].metaclass, types["B"].metaclass, types["A"].metaclass.virtual_type!] }
+    end
   end
 
   it "types union when obj is union" do
-    assert_type("struct Char; def +(other); self; end; end; a = 1 || 'a'; a + 1") { union_of(int32, char) }
+    assert_type("struct Char; def +(other); self; end; end; a = 1 || 'a'; a + 1", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types union when arg is union" do
-    assert_type("struct Int; def +(x : Char); x; end; end; a = 1 || 'a'; 1 + a") { union_of(int32, char) }
+    assert_type("struct Int; def +(x : Char); x; end; end; a = 1 || 'a'; 1 + a", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types union when both obj and arg are union" do
-    assert_type("struct Char; def +(other); self; end; end; struct Int; def +(x : Char); x; end; end; a = 1 || 'a'; a + a") { union_of(int32, char) }
+    assert_type("struct Char; def +(other); self; end; end; struct Int; def +(x : Char); x; end; end; a = 1 || 'a'; a + a", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types union of classes" do
@@ -303,5 +313,32 @@ describe "Semantic: union" do
 
       Union(Foo)
       )) { types["Foo"].metaclass }
+  end
+
+  it "doesn't run virtual lookup on unbound unions (#9173)" do
+    assert_type(%(
+      class Object
+        def foo
+          self
+        end
+      end
+
+      abstract class Parent
+      end
+
+      class Child(T) < Parent
+        @buffer = uninitialized T
+
+        def bar
+          @buffer.foo
+        end
+      end
+
+      class Foo(U)
+        @x = Child(U | Char).new
+      end
+
+      Child(Int32).new.as(Parent).bar
+      )) { int32 }
   end
 end

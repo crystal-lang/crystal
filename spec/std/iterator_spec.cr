@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 require "iterator"
 
 struct StructIter
@@ -41,6 +42,92 @@ describe Iterator do
       end
       iter.should be_a(Iterator(Int32))
       iter.first(10).to_a.should eq([1, 2, 3, 4, 5])
+    end
+  end
+
+  describe "#accumulate" do
+    context "prefix sums" do
+      it "returns prefix sums" do
+        iter = (1..4).each.accumulate
+        iter.next.should eq(1)
+        iter.next.should eq(3)
+        iter.next.should eq(6)
+        iter.next.should eq(10)
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "empty iterator stops immediately" do
+        (1..0).each.accumulate.next.should be_a(Iterator::Stop)
+      end
+    end
+
+    context "prefix sums, with init" do
+      it "returns prefix sums" do
+        iter = (1..4).each.accumulate(5)
+        iter.next.should eq(5)
+        iter.next.should eq(6)
+        iter.next.should eq(8)
+        iter.next.should eq(11)
+        iter.next.should eq(15)
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "preserves initial type" do
+        iter = {'a', 'b', 'c'}.each.accumulate("def")
+        iter.next.should eq("def")
+        iter.next.should eq("defa")
+        iter.next.should eq("defab")
+        iter.next.should eq("defabc")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "empty iterator returns only initial value" do
+        iter = (1..0).each.accumulate(7)
+        iter.next.should eq(7)
+        iter.next.should be_a(Iterator::Stop)
+      end
+    end
+
+    context "generic cumulative fold" do
+      it "accumulates values" do
+        iter = (4..7).each.accumulate { |x, y| x * 10 + y }
+        iter.next.should eq(4)
+        iter.next.should eq(45)
+        iter.next.should eq(456)
+        iter.next.should eq(4567)
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "empty iterator stops immediately" do
+        (1..0).each.accumulate { raise "" }.next.should be_a(Iterator::Stop)
+      end
+    end
+
+    context "generic cumulative fold, with init" do
+      it "accumulates values" do
+        iter = (4..7).each.accumulate(8) { |x, y| x * 10 + y }
+        iter.next.should eq(8)
+        iter.next.should eq(84)
+        iter.next.should eq(845)
+        iter.next.should eq(8456)
+        iter.next.should eq(84567)
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "preserves initial type" do
+        iter = {4, 3, 2}.each.accumulate("X") { |x, y| x * y }
+        iter.next.should eq("X")
+        iter.next.should eq("XXXX")
+        iter.next.should eq("XXXXXXXXXXXX")
+        iter.next.should eq("XXXXXXXXXXXXXXXXXXXXXXXX")
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "empty iterator returns only initial value" do
+        iter = (1..0).each.accumulate(7) { raise "" }
+        iter.next.should eq(7)
+        iter.next.should be_a(Iterator::Stop)
+      end
     end
   end
 

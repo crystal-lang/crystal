@@ -15,7 +15,7 @@ class XML::Builder
     @box = Box.box(io)
     buffer = LibXML.xmlOutputBufferCreateIO(
       ->(ctx, buffer, len) {
-        Box(IO).unbox(ctx).write(Slice.new(buffer, len))
+        Box(IO).unbox(ctx).write_string(Slice.new(buffer, len))
         len
       },
       ->(ctx) {
@@ -247,7 +247,7 @@ class XML::Builder
 
   # Forces content written to this writer to be flushed to
   # this writer's `IO`.
-  def flush
+  def flush : Nil
     call Flush
 
     @io.flush

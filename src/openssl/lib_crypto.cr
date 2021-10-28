@@ -130,6 +130,9 @@ lib LibCrypto
   fun obj_obj2nid = OBJ_obj2nid(obj : ASN1_OBJECT) : Int
   fun obj_ln2nid = OBJ_ln2nid(ln : Char*) : Int
   fun obj_sn2nid = OBJ_sn2nid(sn : Char*) : Int
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
+    fun obj_find_sigid_algs = OBJ_find_sigid_algs(sigid : Int32, pdig_nid : Int32*, ppkey_nid : Int32*) : Int32
+  {% end %}
 
   fun asn1_object_free = ASN1_OBJECT_free(obj : ASN1_OBJECT)
   fun asn1_string_data = ASN1_STRING_data(x : ASN1_STRING) : Char*
@@ -165,6 +168,7 @@ lib LibCrypto
   fun hmac_final = HMAC_Final(ctx : HMAC_CTX, md : UInt8*, len : UInt32*) : Int32
   fun hmac_ctx_copy = HMAC_CTX_copy(dst : HMAC_CTX, src : HMAC_CTX) : Int32
 
+  fun x509_digest = X509_digest(x509 : X509, evp_md : EVP_MD, hash : UInt8*, len : Int32*) : Int32
   fun evp_get_digestbyname = EVP_get_digestbyname(name : UInt8*) : EVP_MD
   fun evp_digestinit_ex = EVP_DigestInit_ex(ctx : EVP_MD_CTX, type : EVP_MD, engine : Void*) : Int32
   fun evp_digestupdate = EVP_DigestUpdate(ctx : EVP_MD_CTX, data : UInt8*, count : LibC::SizeT) : Int32
@@ -282,6 +286,9 @@ lib LibCrypto
   fun x509_get_ext = X509_get_ext(x : X509, idx : Int) : X509_EXTENSION
   fun x509_get_ext_count = X509_get_ext_count(x : X509) : Int
   fun x509_get_ext_d2i = X509_get_ext_d2i(x : X509, nid : Int, crit : Int*, idx : Int*) : Void*
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
+    fun x509_get_signature_nid = X509_get_signature_nid(x509 : X509) : Int32
+  {% end %}
 
   MBSTRING_UTF8 = 0x1000
 

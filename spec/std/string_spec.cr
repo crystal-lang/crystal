@@ -396,6 +396,30 @@ describe "String" do
       it { "18446744073709551616".to_u64 { 0 }.should eq(0) }
     end
 
+    describe "to_i128" do
+      pending_win32 { "170141183460469231731687303715884105727".to_i128.should eq(Int128::MAX) }
+      pending_win32 { "-170141183460469231731687303715884105728".to_i128.should eq(Int128::MIN) }
+      pending_win32 { expect_raises(ArgumentError) { "170141183460469231731687303715884105728".to_i128 } }
+      pending_win32 { expect_raises(ArgumentError) { "-170141183460469231731687303715884105729".to_i128 } }
+
+      pending_win32 { "170141183460469231731687303715884105727".to_i128?.should eq(Int128::MAX) }
+      pending_win32 { "170141183460469231731687303715884105728".to_i128?.should be_nil }
+      pending_win32 { "170141183460469231731687303715884105728".to_i128 { 0 }.should eq(0) }
+
+      pending_win32 { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_i128 } }
+    end
+
+    describe "to_u128" do
+      pending_win32 { "340282366920938463463374607431768211455".to_u128.should eq(UInt128::MAX) }
+      pending_win32 { "0".to_u128.should eq(0) }
+      pending_win32 { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_u128 } }
+      pending_win32 { expect_raises(ArgumentError) { "-1".to_u128 } }
+
+      pending_win32 { "340282366920938463463374607431768211455".to_u128?.should eq(UInt128::MAX) }
+      pending_win32 { "340282366920938463463374607431768211456".to_u128?.should be_nil }
+      pending_win32 { "340282366920938463463374607431768211456".to_u128 { 0 }.should eq(0) }
+    end
+
     it { "1234".to_i32.should eq(1234) }
     it { "1234123412341234".to_i64.should eq(1234123412341234_i64) }
     it { "9223372036854775808".to_u64.should eq(9223372036854775808_u64) }
@@ -840,7 +864,7 @@ describe "String" do
     it { "hello".presence.should eq("hello") }
   end
 
-  describe "index" do
+  describe "#index" do
     describe "by char" do
       it { "foo".index('o').should eq(1) }
       it { "foo".index('g').should be_nil }
@@ -855,6 +879,12 @@ describe "String" do
         it { "foo".index('g', 1).should be_nil }
         it { "foo".index('g', -20).should be_nil }
         it { "日本語日本語".index('本', 2).should eq(4) }
+
+        # Check offset type
+        it { "foobarbaz".index('a', 5_i64).should eq(7) }
+        it { "foobarbaz".index('a', 5_i64).should be_a(Int32) }
+        it { "日本語日本語".index('本', 2_i64).should eq(4) }
+        it { "日本語日本語".index('本', 2_i64).should be_a(Int32) }
       end
     end
 
@@ -877,6 +907,14 @@ describe "String" do
         it { "日本語日本語".index("本語", 2).should eq(4) }
         it { "\xFD\x9A\xAD\x50NG".index("PNG", 2).should eq(3) }
         it { "\xFD\x9A\xAD\x50NG".index("PNG", 4).should be_nil }
+
+        # Check offset type
+        it { "foobarbaz".index("a", 5_i64).should eq(7) }
+        it { "foobarbaz".index("a", 5_i64).should be_a(Int32) }
+        it { "日本語日本語".index("本", 2_i64).should eq(4) }
+        it { "日本語日本語".index("本", 2_i64).should be_a(Int32) }
+        it { "日本語日本語".index("", 2_i64).should eq 2 }
+        it { "日本語日本語".index("", 2_i64).should be_a(Int64) }
       end
     end
 
@@ -899,7 +937,7 @@ describe "String" do
     end
   end
 
-  describe "rindex" do
+  describe "#rindex" do
     describe "by char" do
       it { "bbbb".rindex('b').should eq(3) }
       it { "foobar".rindex('a').should eq(4) }
@@ -918,6 +956,12 @@ describe "String" do
         it { "faobar".rindex('a', 3).should eq(1) }
         it { "faobarbaz".rindex('a', -3).should eq(4) }
         it { "日本語日本語".rindex('本', 3).should eq(1) }
+
+        # Check offset type
+        it { "bbbb".rindex('b', 2_i64).should eq(2) }
+        it { "bbbb".rindex('b', 2_i64).should be_a(Int64) }
+        it { "日本語日本語".rindex('本', 3_i64).should eq(1) }
+        it { "日本語日本語".rindex('本', 3_i64).should be_a(Int64) }
       end
     end
 
@@ -939,6 +983,14 @@ describe "String" do
         it { "foo".rindex("", 3).should eq(3) }
         it { "foo".rindex("", 4).should eq(3) }
         it { "日本語日本語".rindex("日本", 2).should eq(0) }
+
+        # Check offset type
+        it { "bbbb".rindex("b", 2_i64).should eq(2) }
+        it { "bbbb".rindex("b", 2_i64).should be_a(Int32) }
+        it { "日本語日本語".rindex("本", 3_i64).should eq(1) }
+        it { "日本語日本語".rindex("本", 3_i64).should be_a(Int32) }
+        it { "日本語日本語".rindex("", 3_i64).should eq(3) }
+        it { "日本語日本語".rindex("", 3_i64).should be_a(Int32) }
       end
     end
 

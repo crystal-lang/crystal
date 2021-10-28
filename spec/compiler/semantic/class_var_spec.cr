@@ -79,7 +79,7 @@ describe "Semantic: class var" do
         f = -> { @@foo }
       end
       f.call
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "allows self.class as type var in class body (#537)" do
@@ -508,6 +508,6 @@ describe "Semantic: class var" do
       end
 
       Foo(Int32).inc
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 end

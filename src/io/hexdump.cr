@@ -27,7 +27,7 @@ class IO::Hexdump < IO
   end
 
   def read(buf : Bytes) : Int32
-    @io.read(buf).tap do |read_bytes|
+    @io.read(buf).to_i32.tap do |read_bytes|
       buf[0, read_bytes].hexdump(@output) if @read && read_bytes
     end
   end
