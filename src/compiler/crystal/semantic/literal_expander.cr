@@ -281,9 +281,11 @@ module Crystal
           const = Const.new(@program, @program, const_name, const_value)
 
           @program.types[const_name] = const
+        else
+          const = @program.types[const_name].as(Const)
         end
 
-        Path.new(const_name)
+        Path.new(const_name).at(const.value)
       else
         regex_new_call(node, node_value)
       end
@@ -817,7 +819,7 @@ module Crystal
       end
 
       body = Call.new(obj, node.name, call_args).at(node)
-      proc_literal = ProcLiteral.new(Def.new("->", def_args, body)).at(node)
+      proc_literal = ProcLiteral.new(Def.new("->", def_args, body).at(node)).at(node)
       proc_literal.proc_pointer = node
 
       if assign

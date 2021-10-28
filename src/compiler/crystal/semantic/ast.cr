@@ -794,7 +794,7 @@ module Crystal
     def initialize(@name, @type)
     end
 
-    def class_desc
+    def self.class_desc
       "MetaVar"
     end
 

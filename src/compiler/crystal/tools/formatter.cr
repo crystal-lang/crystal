@@ -857,13 +857,12 @@ module Crystal
           indent(offset, element)
         end
         element_lines = @line - start_line
-        next_offset = element_lines == 0 ? start_column : offset
 
         has_heredoc_in_line = !@lexer.heredocs.empty?
 
         last = last?(i, elements)
 
-        found_comment = skip_space(next_offset, write_comma: (last || has_heredoc_in_line) && has_newlines)
+        found_comment = skip_space(offset, write_comma: (last || has_heredoc_in_line) && has_newlines)
 
         if @token.type == :","
           if !found_comment && (!last || has_heredoc_in_line)
@@ -873,7 +872,7 @@ module Crystal
 
           slash_is_regex!
           next_token
-          found_comment = skip_space(element_lines == 0 ? start_column : offset, write_comma: last && has_newlines)
+          found_comment = skip_space(offset, write_comma: last && has_newlines)
           if @token.type == :NEWLINE
             if last && !found_comment && !wrote_comma
               write ","
@@ -883,14 +882,14 @@ module Crystal
             skip_space_or_newline
             next_needs_indent = true
             has_newlines = true
-            offset = next_offset if element_lines == 0
+            offset = start_column
           else
             if !last && !found_comment
               write " "
               next_needs_indent = false
             elsif found_comment
               next_needs_indent = true
-              offset = next_offset if element_lines == 0
+              offset = start_column
             end
           end
         end
@@ -1108,7 +1107,7 @@ module Crystal
         next_token_skip_space_or_newline
       end
 
-      if node.question?
+      if node.suffix.question?
         node.type_vars[0].accept self
         skip_space
         write_token :"?"
@@ -1116,28 +1115,35 @@ module Crystal
       end
 
       # Check if it's T* instead of Pointer(T)
-      if first_name == "Pointer" && @token.value != "Pointer"
+      if node.suffix.asterisk?
+        # Count nesting asterisk
+        asterisks = 1
+        while (type_var = node.type_vars.first) && type_var.is_a?(Generic) && type_var.suffix.asterisk?
+          node = type_var
+          asterisks += 1
+        end
+
         type_var = node.type_vars.first
         accept type_var
         skip_space_or_newline
 
-        # Another case is T** instead of Pointer(Pointer(T))
-        if @token.type == :"**"
-          if type_var.is_a?(Generic)
+        while asterisks > 0
+          skip_space
+          if @token.type == :"**" && asterisks >= 2
             write "**"
             next_token
+            asterisks -= 2
           else
-            # Skip
+            write_token :"*"
+            asterisks -= 1
           end
-        else
-          write_token :"*"
         end
 
         return false
       end
 
       # Check if it's T[N] instead of StaticArray(T, N)
-      if first_name == "StaticArray" && @token.value != "StaticArray"
+      if node.suffix.bracket?
         accept node.type_vars[0]
         skip_space_or_newline
         write_token :"["
@@ -2182,7 +2188,7 @@ module Crystal
         mode = Parser::ParseMode::Normal
       end
 
-      parser = Parser.new(source, def_vars: @vars.clone)
+      parser = Parser.new(source, var_scopes: @vars.clone)
       # parser.filename = formatter.filename
       nodes = parser.parse(mode)
 
@@ -2611,7 +2617,7 @@ module Crystal
         return false
       end
 
-      assignment = node.name.ends_with?('=') && node.name.chars.any?(&.ascii_letter?)
+      assignment = Lexer.setter?(node.name)
 
       if assignment
         write node.name.rchop
@@ -3116,7 +3122,7 @@ module Crystal
             when :UNDERSCORE
               underscore = true
             else
-              raise "expecting block argument name, not #{@token.type}"
+              raise "expecting block parameter name, not #{@token.type}"
             end
 
             write(underscore ? "_" : @token.value)
@@ -3568,7 +3574,16 @@ module Crystal
         write " " unless has_parentheses
         skip_space
 
-        if exp.is_a?(TupleLiteral) && @token.type != :"{"
+        # If the number of consecutive `{`s starting a tuple literal is 1 less
+        # than the level of tuple nesting in the actual AST node, this means the
+        # parser synthesized a TupleLiteral from multiple expressions, e.g.
+        #
+        #     return {1, 2}, 3, 4
+        #     return { {1, 2}, 3, 4 }
+        #
+        # The tuple depth is 2 in both cases but only 1 leading curly brace is
+        # present on the first return.
+        if exp.is_a?(TupleLiteral) && opening_curly_brace_count < leading_tuple_depth(exp)
           format_args(exp.elements, has_parentheses)
           skip_space if has_parentheses
         else
@@ -3580,6 +3595,26 @@ module Crystal
       write_token :")" if has_parentheses
 
       false
+    end
+
+    def opening_curly_brace_count
+      @lexer.peek_ahead do
+        count = 0
+        while @lexer.token.type == :"{"
+          count += 1
+          @lexer.next_token_skip_space_or_newline
+        end
+        count
+      end
+    end
+
+    def leading_tuple_depth(exp)
+      count = 0
+      while exp.is_a?(TupleLiteral)
+        count += 1
+        exp = exp.elements.first?
+      end
+      count
     end
 
     def visit(node : Yield)
@@ -4234,7 +4269,7 @@ module Crystal
 
       skip_space_or_newline
 
-      if node.volatile? || node.alignstack? || node.intel?
+      if node.volatile? || node.alignstack? || node.intel? || node.can_throw?
         expected_parts = 4
       elsif node.clobbers
         expected_parts = 3
@@ -4280,7 +4315,7 @@ module Crystal
             end
           end
         when 4
-          parts = [node.volatile?, node.alignstack?, node.intel?].select(&.itself)
+          parts = [node.volatile?, node.alignstack?, node.intel?, node.can_throw?].select(&.itself)
           visit_asm_parts parts, colon_column do
             accept StringLiteral.new("")
           end

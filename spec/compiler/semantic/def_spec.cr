@@ -54,15 +54,15 @@ describe "Semantic: def" do
   end
 
   it "types simple recursion" do
-    assert_type("def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)") { int32 }
+    assert_type("def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)", inject_primitives: true) { int32 }
   end
 
   it "types simple recursion 2" do
-    assert_type("def foo(x); if x > 0; 1 + foo(x - 1); else; 1; end; end; foo(5)") { int32 }
+    assert_type("def foo(x); if x > 0; 1 + foo(x - 1); else; 1; end; end; foo(5)", inject_primitives: true) { int32 }
   end
 
   it "types mutual recursion" do
-    assert_type("def foo(x); if 1 == 1; bar(x); else; 1; end; end; def bar(x); foo(x); end; foo(5)") { int32 }
+    assert_type("def foo(x); if 1 == 1; bar(x); else; 1; end; end; def bar(x); foo(x); end; foo(5)", inject_primitives: true) { int32 }
   end
 
   it "types empty body def" do
@@ -259,7 +259,7 @@ describe "Semantic: def" do
 
       a = Pointer(Node).new(0_u64)
       foo a
-      ), "no overload matches"
+      ), "no overload matches", inject_primitives: true
   end
 
   it "says can only defined def on types and self" do
@@ -321,7 +321,7 @@ describe "Semantic: def" do
       end
 
       foo
-      )) { nilable int32 }
+      ), inject_primitives: true) { nilable int32 }
   end
 
   it "says compile-time type on error" do
@@ -517,8 +517,7 @@ describe "Semantic: def" do
       1.
         foobar
       CODE
-      "undefined method",
-      inject_primitives: false
+      "undefined method"
     ex.line_number.should eq(2)
     ex.column_number.should eq(3)
     ex.size.should eq(6)

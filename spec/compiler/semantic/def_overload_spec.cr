@@ -1213,7 +1213,7 @@ describe "Semantic: def overload" do
 			end
 
 			do_something value: 7.as(Int32 | Char)
-			)) { union_of float64, bool }
+			), inject_primitives: true) { union_of float64, bool }
   end
 
   it "resets free vars after a partial match is rejected (#10270)" do

@@ -176,6 +176,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(asm("nop" :::: "volatile"))
   expect_to_s %(asm("nop" :: "a"(1) :: "volatile"))
   expect_to_s %(asm("nop" ::: "e" : "volatile"))
+  expect_to_s %(asm("bl trap" :::: "unwind"))
   expect_to_s %[(1..)]
   expect_to_s %[..3]
   expect_to_s "offsetof(Foo, @bar)"
@@ -183,4 +184,7 @@ describe "ASTNode#to_s" do
   expect_to_s "macro foo\n  123\nend"
   expect_to_s "if true\n(  1)\nend"
   expect_to_s "begin\n(  1)\nrescue\nend"
+  expect_to_s %[他.说("你好")]
+  expect_to_s %[他.说 = "你好"]
+  expect_to_s %[あ.い, う.え.お = 1, 2]
 end

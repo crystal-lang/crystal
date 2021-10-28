@@ -345,14 +345,14 @@ describe "Semantic: doc" do
 
       # Hello
       foo
-    ), wants_doc: true, inject_primitives: false
+    ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
   end
 
   it "stores doc for macro defined in macro call" do
-    result = semantic <<-CR, wants_doc: true, inject_primitives: false
+    result = semantic <<-CR, wants_doc: true
       macro def_foo
         macro foo
         end
