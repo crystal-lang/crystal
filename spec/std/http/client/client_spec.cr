@@ -179,6 +179,64 @@ module HTTP
       end
     end
 
+    it "will retry a broken socket" do
+      server = HTTP::Server.new do |context|
+        context.response.output.print "foo"
+        context.response.output.close
+        io = context.response.@io.as(Socket)
+        io.linger = 0 # with linger 0 the socket will be RST on close
+        io.close
+      end
+      address = server.bind_unused_port "127.0.0.1"
+
+      run_server(server) do
+        client = HTTP::Client.new("127.0.0.1", address.port)
+        client.get(path: "/").body.should eq "foo"
+        client.get(path: "/").body.should eq "foo"
+        client.get(path: "/") do |resp|
+          resp.body_io.gets_to_end.should eq "foo"
+        end
+      end
+    end
+
+    it "will retry once on connection error" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        io = context.response.@io.as(Socket)
+        io.linger = 0 # with linger 0 the socket will be RST on close
+        io.close
+      end
+      address = server.bind_unused_port "127.0.0.1"
+
+      run_server(server) do
+        client = HTTP::Client.new("127.0.0.1", address.port)
+        expect_raises(IO::Error) do
+          client.get(path: "/")
+        end
+        requests.should eq 2
+      end
+    end
+
+    it "will not retry if IO::Error in request handling" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        context.response.puts "foo"
+      end
+      address = server.bind_unused_port "127.0.0.1"
+
+      run_server(server) do
+        client = HTTP::Client.new("127.0.0.1", address.port)
+        expect_raises(IO::Error) do
+          client.get(path: "/") do
+            raise IO::Error.new
+          end
+        end
+        requests.should eq 1
+      end
+    end
+
     it "doesn't read the body if request was HEAD" do
       resp_get = test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)

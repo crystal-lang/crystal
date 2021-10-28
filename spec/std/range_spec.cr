@@ -145,6 +145,8 @@ describe "Range" do
       (0...ary.size).bsearch { |i| true }.should eq 0
       (0...ary.size).bsearch { |i| false }.should eq nil
 
+      (0...ary.size).bsearch { |i| ary[i] >= 10 ? 1 : nil }.should eq 4
+
       ary = [0, 100, 100, 100, 200]
       (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq 1
 

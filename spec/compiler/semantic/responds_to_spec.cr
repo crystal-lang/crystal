@@ -27,7 +27,7 @@ describe "Semantic: responds_to?" do
       else
         a.ord
       end
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "restricts in assignment" do

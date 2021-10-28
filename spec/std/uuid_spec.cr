@@ -4,8 +4,10 @@ require "../support/string"
 
 describe "UUID" do
   describe "#==" do
-    UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93")
-    UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash.should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash
+    it "matches identical UUIDs" do
+      UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93")
+      UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash.should eq UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").hash
+    end
   end
 
   describe "random initialize" do

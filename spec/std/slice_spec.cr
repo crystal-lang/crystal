@@ -505,6 +505,49 @@ describe "Slice" do
     a.to_unsafe.should eq(b.to_unsafe)
   end
 
+  describe "rotate!" do
+    it do
+      a = Slice[1, 2, 3]
+      a.rotate!.to_unsafe.should eq(a.to_unsafe); a.should eq(Slice[2, 3, 1])
+      a.rotate!.to_unsafe.should eq(a.to_unsafe); a.should eq(Slice[3, 1, 2])
+      a.rotate!.to_unsafe.should eq(a.to_unsafe); a.should eq(Slice[1, 2, 3])
+      a.rotate!.to_unsafe.should eq(a.to_unsafe); a.should eq(Slice[2, 3, 1])
+    end
+
+    it { a = Slice[1, 2, 3]; a.rotate!(0); a.should eq(Slice[1, 2, 3]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(1); a.should eq(Slice[2, 3, 1]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(2); a.should eq(Slice[3, 1, 2]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(3); a.should eq(Slice[1, 2, 3]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(4); a.should eq(Slice[2, 3, 1]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(3001); a.should eq(Slice[2, 3, 1]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(-1); a.should eq(Slice[3, 1, 2]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(-3001); a.should eq(Slice[3, 1, 2]) }
+
+    it do
+      a = Slice(Int32).new(50) { |i| i }
+      a.rotate!(5)
+      a.should eq(Slice[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4])
+    end
+
+    it do
+      a = Slice(Int32).new(50) { |i| i }
+      a.rotate!(-5)
+      a.should eq(Slice[45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44])
+    end
+
+    it do
+      a = Slice(Int32).new(50) { |i| i }
+      a.rotate!(20)
+      a.should eq(Slice[20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    end
+
+    it do
+      a = Slice(Int32).new(50) { |i| i }
+      a.rotate!(-20)
+      a.should eq(Slice[30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+    end
+  end
+
   it "creates empty slice" do
     slice = Slice(Int32).empty
     slice.empty?.should be_true
@@ -512,14 +555,27 @@ describe "Slice" do
 
   it "creates read-only slice" do
     slice = Slice.new(3, 0, read_only: true)
+    slice.read_only?.should be_true
     expect_raises(Exception, "Can't write to read-only Slice") { slice[0] = 1 }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.update(0, &.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.swap(0, 1) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.reverse! }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(&.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(offset: 0, &.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.map!(&.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.map_with_index! { |v, i| v } }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.map_with_index!(offset: 0) { |v, i| v } }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.shuffle! }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.rotate!(0) }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.copy_from(slice) }
 
     subslice = slice[0, 1]
+    subslice.read_only?.should be_true
     expect_raises(Exception, "Can't write to read-only Slice") { subslice[0] = 1 }
 
     slice = Bytes[1, 2, 3, read_only: true]
+    slice.read_only?.should be_true
     expect_raises(Exception, "Can't write to read-only Slice") { slice[0] = 0_u8 }
   end
 
