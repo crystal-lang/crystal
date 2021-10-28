@@ -366,6 +366,16 @@ describe "BitArray" do
       ary.toggle(30..35)
       ary[24..].should eq(from_int(16, 0b00110000_10100101))
     end
+
+    it "toggles zero bits correctly" do
+      ary = BitArray.new(32)
+      ary.toggle(0, 0)
+      ary.none?.should be_true
+      ary.toggle(32, 0)
+      ary.none?.should be_true
+      ary.toggle(32, 2)
+      ary.none?.should be_true
+    end
   end
 
   it "inverts all bits" do
