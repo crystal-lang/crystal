@@ -26,9 +26,17 @@ module Levenshtein
     return l_size if s_size == 0
 
     if string1.ascii_only? && string2.ascii_only?
-      myers_ascii(string1, string2)
+      if l_size < 32
+        myers32_ascii(string1, string2)
+      else
+        myers_ascii(string1, string2)
+      end
     else
-      myers_unicode(string1, string2)
+      if l_size < 64
+        dynamic_matrix(string1, string2)
+      else
+        myers_unicode(string1, string2)
+      end
     end
   end
 
@@ -121,6 +129,100 @@ module Levenshtein
     Finder.find(name, all_names, tolerance)
   end
 
+  # Measures Levenshtein distance by filling Dynamic Programming Matrix
+  private def self.dynamic_matrix(string1 : String, string2 : String) : Int32
+    s_size = string1.size
+    l_size = string2.size
+
+    costs = Slice(Int32).new(s_size + 1) { |i| i }
+    last_cost = 0
+
+    if string1.single_byte_optimizable? && string2.single_byte_optimizable?
+      s = string1.to_unsafe
+      l = string2.to_unsafe
+
+      l_size.times do |i|
+        last_cost = i + 1
+
+        s_size.times do |j|
+          sub_cost = l[i] == s[j] ? 0 : 1
+          cost = Math.min(Math.min(last_cost + 1, costs[j + 1] + 1), costs[j] + sub_cost)
+          costs[j] = last_cost
+          last_cost = cost
+        end
+        costs[s_size] = last_cost
+      end
+
+      last_cost
+    else
+      reader = Char::Reader.new(string2)
+
+      # Use an array instead of a reader to decode the second string only once
+      chars = string1.chars
+
+      reader.each_with_index do |char1, i|
+        last_cost = i + 1
+
+        chars.each_with_index do |char2, j|
+          sub_cost = char1 == char2 ? 0 : 1
+          cost = Math.min(Math.min(last_cost + 1, costs[j + 1] + 1), costs[j] + sub_cost)
+          costs[j] = last_cost
+          last_cost = cost
+        end
+        costs[s_size] = last_cost
+      end
+
+      last_cost
+    end
+  end
+
+  # Myers Algorithm for ascii strings less than 32 bits in length
+  #
+  # This implmentation runs much faster than others for strings less
+  # than 32 bits in length.
+  private def self.myers32_ascii(string1 : String, string2 : String) : Int32
+    w = 32
+    one = 1_u32
+    zero = 0_u32
+
+    m = string1.size
+    n = string2.size
+    lpos = one << (m - 1)
+    score = m
+
+    # Setup char->bit-vector dictionary
+    pmr = StaticArray(UInt32, 128).new(zero)
+    s1 = string1.to_unsafe
+    s2 = string2.to_unsafe
+
+    vp = UInt32::MAX
+    vn = zero
+
+    # populate dictionary
+    count = m
+    count.times do |i|
+      pmr[s1[i]] |= one << i
+    end
+
+    n.times do |i|
+      # find char in dictionary
+      pm = pmr[s2[i]]
+      d0 = (((pm & vp) &+ vp) ^ vp) | pm | vn
+      hp = vn | ~(d0 | vp)
+      hn = d0 & vp
+      if ((hp & lpos) != 0)
+        score += 1
+      elsif ((hn & lpos) != 0)
+        score -= 1
+      end
+      hnx = (hn << 1)
+      hpx = (hp << 1)
+      vp = hnx | ~(d0 | hpx | one)
+      vn = d0 & (hpx | one)
+    end
+    score
+  end
+
   # Myers Algorithm for ASCII and Unicode
   #
   # The algorithm uses uses a dictionary to store string char location as bits
@@ -189,6 +291,7 @@ module Levenshtein
             end
             hnx = (hn << 1) | hn0
             hpx = (hp << 1) | hp0
+            # Horizontal arrays don't need to be saved on last run
             if (r < rmax-1)
               hna[i] = (hn >> (w-1)) == 1
               hpa[i] = (hp >> (w-1)) == 1
