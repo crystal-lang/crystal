@@ -246,7 +246,8 @@ module Levenshtein
         hpa = BitArray.new(n)
 
         cutoff = tolerance || m+n
-
+        # assign here so compiler guarantees int as return
+        score = m
         # Setup char->bit-vector dictionary
         {% if enc == "ascii" %}
           pmr = StaticArray(UInt{{ width }}, 128).new(zero) 
@@ -303,7 +304,9 @@ module Levenshtein
             vp = hnx | ~ (d0 | hpx | nc)
             vn = d0 & (hpx | nc)
           end
-          return score if score-(m-((r+1)*w)) > cutoff
+          if score-(m-((r+1)*w)) > cutoff || last_r
+            return score
+          end
           # clear dictionary
           {% if enc == "ascii" %}
             pmr.fill(zero)
