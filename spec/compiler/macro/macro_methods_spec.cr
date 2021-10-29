@@ -2055,21 +2055,21 @@ module Crystal
       end
 
       it "executes resolve" do
-        assert_macro "x", %({{x.resolve}}), [ProcNotation.new(([Path.new("Int32")] of ASTNode), Path.new("String"))] of ASTNode, %(Proc(Int32, String))
+        assert_macro %({{x.resolve}}), "Proc(Int32, String)", {x: ProcNotation.new(([Path.new("Int32")] of ASTNode), Path.new("String"))}
 
-        expect_raises(Crystal::TypeException, "undefined constant Foo") do
-          assert_macro "x", %({{x.resolve}}), [ProcNotation.new(([Path.new("Foo")] of ASTNode))] of ASTNode, %()
+        assert_macro_error(%({{x.resolve}}), "undefined constant Foo") do
+          {x: ProcNotation.new(([Path.new("Foo")] of ASTNode))}
         end
 
-        expect_raises(Crystal::TypeException, "undefined constant Foo") do
-          assert_macro "x", %({{x.resolve}}), [ProcNotation.new(([] of ASTNode), Path.new("Foo"))] of ASTNode, %()
+        assert_macro_error(%({{x.resolve}}), "undefined constant Foo") do
+          {x: ProcNotation.new(([] of ASTNode), Path.new("Foo"))}
         end
       end
 
       it "executes resolve?" do
-        assert_macro "x", %({{x.resolve?}}), [ProcNotation.new(([Path.new("Int32")] of ASTNode), Path.new("String"))] of ASTNode, %(Proc(Int32, String))
-        assert_macro "x", %({{x.resolve?}}), [ProcNotation.new(([Path.new("Foo")] of ASTNode))] of ASTNode, %(nil)
-        assert_macro "x", %({{x.resolve?}}), [ProcNotation.new(([] of ASTNode), Path.new("Foo"))] of ASTNode, %(nil)
+        assert_macro %({{x.resolve?}}), "Proc(Int32, String)", {x: ProcNotation.new(([Path.new("Int32")] of ASTNode), Path.new("String"))}
+        assert_macro %({{x.resolve?}}), "nil", {x: ProcNotation.new(([Path.new("Foo")] of ASTNode))}
+        assert_macro %({{x.resolve?}}), "nil", {x: ProcNotation.new(([] of ASTNode), Path.new("Foo"))}
       end
     end
 
