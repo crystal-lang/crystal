@@ -12,6 +12,8 @@ module Levenshtein
   # Levenshtein.distance("こんにちは", "こんちは")           # => 1
   # Levenshtein.distance("hey", "hey")              # => 0
   # ```
+  # If *cutoff* is given then the method is allowed to end once the loweset
+  # possible bound is greater than *cutoff* and return that lower bound.
   def self.distance(string1 : String, string2 : String, cutoff : Int? = nil) : Int32
     return 0 if string1 == string2
 
@@ -306,7 +308,7 @@ module Levenshtein
             vn = d0 & (hpx | nc)
           end
           if score-(m-((r+1)*w)) > cutoff || last_r
-            return score
+            return score-(m-((r+1)*w))
           end
           # clear dictionary
           {% if enc == "ascii" %}
