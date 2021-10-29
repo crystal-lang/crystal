@@ -642,7 +642,13 @@ module Crystal
 
     # Transform a multi assign into many assigns.
     def expand(node : MultiAssign)
-      lhs_has_splat = node.targets.any?(Splat)
+      splat_index = nil
+      node.targets.each_with_index do |target, i|
+        if target.is_a?(Splat)
+          raise "BUG: splat assignment already specified" if splat_index
+          splat_index = i
+        end
+      end
 
       # From:
       #
@@ -669,15 +675,16 @@ module Crystal
       #     d = temp[-1]
       if node.values.size == 1
         value = node.values[0]
+        middle_splat = splat_index && (0 < splat_index < node.targets.size - 1)
 
         temp_var = new_temp_var
 
         # temp = ...
-        assigns = Array(ASTNode).new(node.targets.size + (lhs_has_splat ? 2 : 1))
+        assigns = Array(ASTNode).new(node.targets.size + (middle_splat ? 2 : 1))
         assigns << Assign.new(temp_var.clone, value).at(value)
 
         # raise ... if temp.size < ...
-        if lhs_has_splat
+        if middle_splat
           size_call = Call.new(temp_var.clone, "size").at(value)
           size_comp = Call.new(size_call, "<", NumberLiteral.new(node.targets.size - 1)).at(value)
           index_error = Call.new(Path.global("IndexError"), "new", StringLiteral.new("Multiple assignment count mismatch")).at(value)
@@ -688,18 +695,14 @@ module Crystal
         # ... = temp[...]
         found_splat = false
         node.targets.each_with_index do |target, i|
-          if target.is_a?(Splat)
-            raise "BUG: splat assignment already specified" if found_splat
-            found_splat = true
+          if i == splat_index
             indexer = RangeLiteral.new(
               NumberLiteral.new(i),
               NumberLiteral.new(i - node.targets.size),
               false,
             ).at(value)
-          elsif found_splat
-            indexer = NumberLiteral.new(i - node.targets.size)
           else
-            indexer = NumberLiteral.new(i)
+            indexer = NumberLiteral.new(splat_index && i > splat_index ? i - node.targets.size : i)
           end
           call = Call.new(temp_var.clone, "[]", indexer).at(value)
           assigns << transform_multi_assign_target(target, call)
@@ -731,29 +734,24 @@ module Crystal
         #     b = temp2
         #     c = temp3
       else
-        if lhs_has_splat
+        if splat_index
           raise "BUG: multiple assignment count mismatch" if node.targets.size - 1 > node.values.size
         else
           raise "BUG: multiple assignment count mismatch" if node.targets.size != node.values.size
         end
 
-        temp_vars = node.targets.map { new_temp_var }
-
         assign_to_temps = Array(ASTNode).new(node.targets.size * 2)
         assign_from_temps = Array(ASTNode).new(node.targets.size)
 
-        found_splat = false
-        temp_vars.each_with_index do |temp_var_2, i|
-          target = node.targets[i]
-          if target.is_a?(Splat)
-            raise "BUG: splat assignment already specified" if found_splat
-            found_splat = true
+        node.targets.each_with_index do |target, i|
+          temp_var = new_temp_var
+          if i == splat_index
             value = Call.new(Path.global("Tuple").at(node), "new", node.values[i..i - node.targets.size])
           else
-            value = node.values[found_splat ? i - node.targets.size : i]
+            value = node.values[splat_index && i > splat_index ? i - node.targets.size : i]
           end
-          assign_to_temps << Assign.new(temp_var_2.clone, value).at(node)
-          assign_from_temps << transform_multi_assign_target(target, temp_var_2.clone)
+          assign_to_temps << Assign.new(temp_var.clone, value).at(node)
+          assign_from_temps << transform_multi_assign_target(target, temp_var.clone)
         end
 
         exps = Expressions.new(assign_to_temps.concat(assign_from_temps))

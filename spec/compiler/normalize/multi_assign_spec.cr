@@ -91,4 +91,24 @@ describe "Normalize: multi assign" do
       f = __temp_1[-1]
       CR
   end
+
+  it "normalizes 1 to n, with splat on left-hand side, splat before other targets" do
+    assert_expand "*a, b, c, d = 3", <<-CR
+      __temp_1 = 3
+      a = __temp_1[0..-4]
+      b = __temp_1[-3]
+      c = __temp_1[-2]
+      d = __temp_1[-1]
+      CR
+  end
+
+  it "normalizes 1 to n, with splat on left-hand side, splat after other targets" do
+    assert_expand "a, b, c, *d = 3", <<-CR
+      __temp_1 = 3
+      a = __temp_1[0]
+      b = __temp_1[1]
+      c = __temp_1[2]
+      d = __temp_1[3..-1]
+      CR
+  end
 end
