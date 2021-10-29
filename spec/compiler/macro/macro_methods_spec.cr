@@ -1439,34 +1439,34 @@ module Crystal
               {klass: TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))}
             end
 
-            assert_macro("klass", "{{klass.name}}", "SomeType(A, B)") do |program|
-              [TypeNode.new(GenericModuleType.new(program, program, "SomeType", ["A", "B"]))] of ASTNode
+            assert_macro("{{klass.name}}", "SomeType(A, B)") do |program|
+              {klass: TypeNode.new(GenericModuleType.new(program, program, "SomeType", ["A", "B"]))}
             end
 
-            assert_macro("klass", "{{klass.class.name}}", "SomeType(A, B).class") do |program|
-              [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
+            assert_macro("{{klass.class.name}}", "SomeType(A, B).class") do |program|
+              {klass: TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))}
             end
 
-            assert_macro("klass", "{{klass.class.name}}", "SomeType(A, B):Module") do |program|
-              [TypeNode.new(GenericModuleType.new(program, program, "SomeType", ["A", "B"]))] of ASTNode
+            assert_macro("{{klass.class.name}}", "SomeType(A, B):Module") do |program|
+              {klass: TypeNode.new(GenericModuleType.new(program, program, "SomeType", ["A", "B"]))}
             end
           end
 
           it "includes the generic_args of the instantiated type by default" do
-            assert_macro("", "{{Array(Int32).name}}", [] of ASTNode, "Array(Int32)")
-            assert_macro("", "{{Tuple(Int32).name}}", [] of ASTNode, "Tuple(Int32)")
-            assert_macro("", "{{Proc(Int32).name}}", [] of ASTNode, "Proc(Int32)")
-            assert_macro("", "{{NamedTuple(a: Int32).name}}", [] of ASTNode, "NamedTuple(a: Int32)")
-            assert_macro("", "{{Array(Int32).class.name}}", [] of ASTNode, "Array(Int32).class")
+            assert_macro "{{Array(Int32).name}}", "Array(Int32)"
+            assert_macro "{{Tuple(Int32).name}}", "Tuple(Int32)"
+            assert_macro "{{Proc(Int32).name}}", "Proc(Int32)"
+            assert_macro "{{NamedTuple(a: Int32).name}}", "NamedTuple(a: Int32)"
+            assert_macro "{{Array(Int32).class.name}}", "Array(Int32).class"
 
-            assert_macro("mod", "{{mod.name}}", "SomeType(Int32, String)") do |program|
+            assert_macro("{{mod.name}}", "SomeType(Int32, String)") do |program|
               generic_module = GenericModuleType.new(program, program, "SomeType", ["A", "B"])
-              [TypeNode.new(generic_module.instantiate([program.int32, program.string] of TypeVar))] of ASTNode
+              {mod: TypeNode.new(generic_module.instantiate([program.int32, program.string] of TypeVar))}
             end
 
-            assert_macro("mod", "{{mod.class.name}}", "SomeType(Int32, String).class") do |program|
+            assert_macro("{{mod.class.name}}", "SomeType(Int32, String).class") do |program|
               generic_module = GenericModuleType.new(program, program, "SomeType", ["A", "B"])
-              [TypeNode.new(generic_module.instantiate([program.int32, program.string] of TypeVar))] of ASTNode
+              {mod: TypeNode.new(generic_module.instantiate([program.int32, program.string] of TypeVar))}
             end
           end
         end
@@ -1478,34 +1478,34 @@ module Crystal
                 {klass: TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))}
               end
 
-              assert_macro("klass", "{{klass.name(generic_args: true)}}", "SomeType(A, B)") do |program|
-                [TypeNode.new(GenericModuleType.new(program, program, "SomeType", ["A", "B"]))] of ASTNode
+              assert_macro("{{klass.name(generic_args: true)}}", "SomeType(A, B)") do |program|
+                {klass: TypeNode.new(GenericModuleType.new(program, program, "SomeType", ["A", "B"]))}
               end
 
-              assert_macro("klass", "{{klass.class.name(generic_args: true)}}", "SomeType(A, B).class") do |program|
-                [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
+              assert_macro("{{klass.class.name(generic_args: true)}}", "SomeType(A, B).class") do |program|
+                {klass: TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))}
               end
 
-              assert_macro("klass", "{{klass.class.name(generic_args: true)}}", "SomeType(A, B):Module") do |program|
-                [TypeNode.new(GenericModuleType.new(program, program, "SomeType", ["A", "B"]))] of ASTNode
+              assert_macro("{{klass.class.name(generic_args: true)}}", "SomeType(A, B):Module") do |program|
+                {klass: TypeNode.new(GenericModuleType.new(program, program, "SomeType", ["A", "B"]))}
               end
             end
 
             it "includes the generic_args of the instantiated type" do
-              assert_macro("", "{{Array(Int32).name(generic_args: true)}}", [] of ASTNode, "Array(Int32)")
-              assert_macro("", "{{Tuple(Int32).name(generic_args: true)}}", [] of ASTNode, "Tuple(Int32)")
-              assert_macro("", "{{Proc(Int32).name(generic_args: true)}}", [] of ASTNode, "Proc(Int32)")
-              assert_macro("", "{{NamedTuple(a: Int32).name(generic_args: true)}}", [] of ASTNode, "NamedTuple(a: Int32)")
-              assert_macro("", "{{Array(Int32).class.name(generic_args: true)}}", [] of ASTNode, "Array(Int32).class")
+              assert_macro "{{Array(Int32).name(generic_args: true)}}", "Array(Int32)"
+              assert_macro "{{Tuple(Int32).name(generic_args: true)}}", "Tuple(Int32)"
+              assert_macro "{{Proc(Int32).name(generic_args: true)}}", "Proc(Int32)"
+              assert_macro "{{NamedTuple(a: Int32).name(generic_args: true)}}", "NamedTuple(a: Int32)"
+              assert_macro "{{Array(Int32).class.name(generic_args: true)}}", "Array(Int32).class"
 
-              assert_macro("mod", "{{mod.name(generic_args: true)}}", "SomeType(Int32, String)") do |program|
+              assert_macro("{{mod.name(generic_args: true)}}", "SomeType(Int32, String)") do |program|
                 generic_module = GenericModuleType.new(program, program, "SomeType", ["A", "B"])
-                [TypeNode.new(generic_module.instantiate([program.int32, program.string] of TypeVar))] of ASTNode
+                {mod: TypeNode.new(generic_module.instantiate([program.int32, program.string] of TypeVar))}
               end
 
-              assert_macro("mod", "{{mod.class.name(generic_args: true)}}", "SomeType(Int32, String).class") do |program|
+              assert_macro("{{mod.class.name(generic_args: true)}}", "SomeType(Int32, String).class") do |program|
                 generic_module = GenericModuleType.new(program, program, "SomeType", ["A", "B"])
-                [TypeNode.new(generic_module.instantiate([program.int32, program.string] of TypeVar))] of ASTNode
+                {mod: TypeNode.new(generic_module.instantiate([program.int32, program.string] of TypeVar))}
               end
             end
           end
@@ -1516,34 +1516,34 @@ module Crystal
                 {klass: TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))}
               end
 
-              assert_macro("klass", "{{klass.name(generic_args: false)}}", "SomeType") do |program|
-                [TypeNode.new(GenericModuleType.new(program, program, "SomeType", ["A", "B"]))] of ASTNode
+              assert_macro("{{klass.name(generic_args: false)}}", "SomeType") do |program|
+                {klass: TypeNode.new(GenericModuleType.new(program, program, "SomeType", ["A", "B"]))}
               end
 
-              assert_macro("klass", "{{klass.class.name(generic_args: false)}}", "SomeType.class") do |program|
-                [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
+              assert_macro("{{klass.class.name(generic_args: false)}}", "SomeType.class") do |program|
+                {klass: TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))}
               end
 
-              assert_macro("klass", "{{klass.class.name(generic_args: false)}}", "SomeType:Module") do |program|
-                [TypeNode.new(GenericModuleType.new(program, program, "SomeType", ["A", "B"]))] of ASTNode
+              assert_macro("{{klass.class.name(generic_args: false)}}", "SomeType:Module") do |program|
+                {klass: TypeNode.new(GenericModuleType.new(program, program, "SomeType", ["A", "B"]))}
               end
             end
 
             it "does not include the generic_args of the instantiated type" do
-              assert_macro("", "{{Array(Int32).name(generic_args: false)}}", [] of ASTNode, "Array")
-              assert_macro("", "{{Tuple(Int32).name(generic_args: false)}}", [] of ASTNode, "Tuple")
-              assert_macro("", "{{Proc(Int32).name(generic_args: false)}}", [] of ASTNode, "Proc")
-              assert_macro("", "{{NamedTuple(a: Int32).name(generic_args: false)}}", [] of ASTNode, "NamedTuple")
-              assert_macro("", "{{Array(Int32).class.name(generic_args: false)}}", [] of ASTNode, "Array.class")
+              assert_macro "{{Array(Int32).name(generic_args: false)}}", "Array"
+              assert_macro "{{Tuple(Int32).name(generic_args: false)}}", "Tuple"
+              assert_macro "{{Proc(Int32).name(generic_args: false)}}", "Proc"
+              assert_macro "{{NamedTuple(a: Int32).name(generic_args: false)}}", "NamedTuple"
+              assert_macro "{{Array(Int32).class.name(generic_args: false)}}", "Array.class"
 
-              assert_macro("mod", "{{mod.name(generic_args: false)}}", "SomeType") do |program|
+              assert_macro("{{mod.name(generic_args: false)}}", "SomeType") do |program|
                 generic_module = GenericModuleType.new(program, program, "SomeType", ["A", "B"])
-                [TypeNode.new(generic_module.instantiate([program.int32, program.string] of TypeVar))] of ASTNode
+                {mod: TypeNode.new(generic_module.instantiate([program.int32, program.string] of TypeVar))}
               end
 
-              assert_macro("mod", "{{mod.class.name(generic_args: false)}}", "SomeType.class") do |program|
+              assert_macro("{{mod.class.name(generic_args: false)}}", "SomeType.class") do |program|
                 generic_module = GenericModuleType.new(program, program, "SomeType", ["A", "B"])
-                [TypeNode.new(generic_module.instantiate([program.int32, program.string] of TypeVar))] of ASTNode
+                {mod: TypeNode.new(generic_module.instantiate([program.int32, program.string] of TypeVar))}
               end
             end
           end
