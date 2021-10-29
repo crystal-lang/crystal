@@ -14,6 +14,20 @@ module Levenshtein
   # ```
   # If *cutoff* is given then the method is allowed to end once the loweset
   # possible bound is greater than *cutoff* and return that lower bound.
+  # This can improve performance in cases when values over *cutoff*
+  # don't need to be exact.
+  #
+  # ```
+  # require "levenshtein"
+  #
+  # string1 = File.read("file_with_really_long_string")
+  # string2 = File.read("another_file_with_long_string")
+  #
+  # Levenshtein.distance(string1, string2, 1000) # => 1275
+  # Levenshtein.distance(string1, string2)       # => 2543
+  # ```
+  # In this example the first call to *distance* will return
+  # a result faster than the second.
   def self.distance(string1 : String, string2 : String, cutoff : Int? = nil) : Int32
     return 0 if string1 == string2
 
