@@ -141,7 +141,9 @@ struct Exception::CallStack
         next if @@skip.includes?(file)
 
         # Turn to relative to the current dir, if possible
-        file = file.lchop(CURRENT_DIR)
+        if current_dir = CURRENT_DIR
+          file = file.lchop(current_dir)
+        end
 
         file_line_column = "#{file}:#{line}:#{column}"
       end
