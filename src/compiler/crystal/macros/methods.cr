@@ -1967,13 +1967,13 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "body"
-        interpret_argless_method(method, args) { @body }
+        interpret_check_args { @body }
       when "rescues"
-        interpret_argless_method(method, args) { (rescues = @rescues) ? ArrayLiteral.map(rescues, &.itself) : NilLiteral.new }
+        interpret_check_args { (rescues = @rescues) ? ArrayLiteral.map(rescues, &.itself) : NilLiteral.new }
       when "else"
-        interpret_argless_method(method, args) { @else || Nop.new }
+        interpret_check_args { @else || Nop.new }
       when "ensure"
-        interpret_argless_method(method, args) { @ensure || Nop.new }
+        interpret_check_args { @ensure || Nop.new }
       else
         super
       end
@@ -1984,11 +1984,11 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "body"
-        interpret_argless_method(method, args) { body }
+        interpret_check_args { body }
       when "types"
-        interpret_argless_method(method, args) { (types = @types) ? ArrayLiteral.map(types, &.itself) : NilLiteral.new }
+        interpret_check_args { (types = @types) ? ArrayLiteral.map(types, &.itself) : NilLiteral.new }
       when "name"
-        interpret_argless_method(method, args) { (name = @name) ? MacroId.new(name) : Nop.new }
+        interpret_check_args { (name = @name) ? MacroId.new(name) : Nop.new }
       else
         super
       end
@@ -1999,7 +1999,7 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "exp"
-        interpret_argless_method(method, args) { exp || Nop.new }
+        interpret_check_args { exp || Nop.new }
       else
         super
       end
@@ -2010,9 +2010,9 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "expressions"
-        interpret_argless_method(method, args) { ArrayLiteral.map(@exps, &.itself) }
+        interpret_check_args { ArrayLiteral.map(@exps, &.itself) }
       when "scope"
-        interpret_argless_method(method, args) { scope || Nop.new }
+        interpret_check_args { scope || Nop.new }
       else
         super
       end
