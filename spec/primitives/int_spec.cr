@@ -115,6 +115,26 @@ describe "Primitives: Int" do
     {% end %}
   end
 
+  describe "#to_i!" do
+    it "works from negative values to unsigned types" do
+      x = (-1).to_u!
+      x.should be_a(UInt32)
+      x.should eq(4294967295_u32)
+    end
+
+    it "works from greater values to smaller types" do
+      x = 47866.to_i8!
+      x.should be_a(Int8)
+      x.should eq(-6_i8)
+    end
+
+    it "preserves negative sign" do
+      x = (-1_i8).to_i!
+      x.should be_a(Int32)
+      x.should eq(-1_i32)
+    end
+  end
+
   describe "#to_f" do
     {% if BUILTIN_INTEGER_TYPES.includes?(UInt128) %}
       it "raises on overflow for UInt128#to_f32" do
