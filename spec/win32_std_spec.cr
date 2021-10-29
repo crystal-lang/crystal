@@ -34,7 +34,9 @@ require "./std/crypto/bcrypt/password_spec.cr"
 require "./std/crypto/bcrypt_spec.cr"
 require "./std/crypto/blowfish_spec.cr"
 require "./std/crypto/subtle_spec.cr"
+# require "./std/crystal/compiler_rt/muloti4_spec.cr" (failed to run)
 require "./std/crystal/compiler_rt/mulodi4_spec.cr"
+require "./std/crystal/compiler_rt/mulosi4_spec.cr"
 require "./std/crystal/digest/md5_spec.cr"
 require "./std/crystal/digest/sha1_spec.cr"
 require "./std/crystal/hasher_spec.cr"
@@ -183,10 +185,10 @@ require "./std/set_spec.cr"
 require "./std/slice_spec.cr"
 require "./std/socket/address_spec.cr"
 require "./std/socket/addrinfo_spec.cr"
-# require "./std/socket/socket_spec.cr" (failed codegen)
-# require "./std/socket/tcp_server_spec.cr" (failed codegen)
-# require "./std/socket/tcp_socket_spec.cr" (failed codegen)
-# require "./std/socket/udp_socket_spec.cr" (failed codegen)
+require "./std/socket/socket_spec.cr"
+require "./std/socket/tcp_server_spec.cr"
+require "./std/socket/tcp_socket_spec.cr"
+require "./std/socket/udp_socket_spec.cr"
 # require "./std/socket/unix_server_spec.cr" (failed codegen)
 # require "./std/socket/unix_socket_spec.cr" (failed codegen)
 require "./std/spec/context_spec.cr"

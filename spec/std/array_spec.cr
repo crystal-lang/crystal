@@ -456,6 +456,7 @@ describe "Array" do
   it "find the element by using binary search" do
     [2, 5, 7, 10].bsearch { |x| x >= 4 }.should eq 5
     [2, 5, 7, 10].bsearch { |x| x > 10 }.should be_nil
+    [2, 5, 7, 10].bsearch { |x| x >= 4 ? 1 : nil }.should eq 5
   end
 
   it "find the index by using binary search" do
@@ -1979,11 +1980,10 @@ describe "Array" do
   describe "rotate" do
     it "rotate!" do
       a = [1, 2, 3]
-      a.rotate!; a.should eq([2, 3, 1])
-      a.rotate!; a.should eq([3, 1, 2])
-      a.rotate!; a.should eq([1, 2, 3])
-      a.rotate!; a.should eq([2, 3, 1])
-      a.rotate!.should eq(a)
+      a.rotate!.should be(a); a.should eq([2, 3, 1])
+      a.rotate!.should be(a); a.should eq([3, 1, 2])
+      a.rotate!.should be(a); a.should eq([1, 2, 3])
+      a.rotate!.should be(a); a.should eq([2, 3, 1])
     end
 
     it "rotate" do

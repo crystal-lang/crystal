@@ -419,7 +419,7 @@ describe "Semantic: automatic cast" do
       a = 1 || Zed.new
       a + 2
       ),
-      "no overload matches"
+      "no overload matches", inject_primitives: true
   end
 
   it "doesn't say 'ambiguous call' when there's an exact match for symbol (#6601)" do

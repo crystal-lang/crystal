@@ -535,7 +535,6 @@ struct BigInt < Int
     end
   end
 
-  # :nodoc:
   def digits(base = 10) : Array(Int32)
     if self < 0
       raise ArgumentError.new("Can't request digits of negative number")

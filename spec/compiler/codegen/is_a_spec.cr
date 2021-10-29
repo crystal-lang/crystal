@@ -815,4 +815,83 @@ describe "Codegen: is_a?" do
       Sub.new.is_a?(Mod(Sup))
       )).to_b.should be_true
   end
+
+  it "restricts metaclass against virtual metaclass type" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      x = B || A
+      if x.is_a?(B.class)
+        1
+      elsif x.is_a?(A.class)
+        2
+      else
+        3
+      end
+      )).to_i.should eq(1)
+  end
+
+  it "restricts virtual metaclass against virtual metaclass type" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      class C < B
+      end
+
+      x = B || A
+      if x.is_a?(B.class)
+        1
+      elsif x.is_a?(A.class)
+        2
+      else
+        3
+      end
+      )).to_i.should eq(1)
+  end
+
+  it "does is_a? with union type, don't resolve to virtual type (#10244)" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      class C < A
+      end
+
+      class D < A
+      end
+
+      x = D.new || C.new
+      x.is_a?(B | C)
+    )).to_b.should be_false
+  end
+
+  it "does is_a? with union type as Union(X, Y), don't resolve to virtual type (#10244)" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      class C < A
+      end
+
+      class D < A
+      end
+
+      x = D.new || C.new
+      x.is_a?(Union(B, C))
+    )).to_b.should be_false
+  end
 end
