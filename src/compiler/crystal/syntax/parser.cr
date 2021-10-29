@@ -830,12 +830,14 @@ module Crystal
         type = parse_bare_proc_type
         skip_space_or_newline
         check :")"
+        end_location = token_end_location
         next_token_skip_space
       else
         type = parse_union_type
+        end_location = type.end_location
       end
 
-      IsA.new(atomic, type)
+      IsA.new(atomic, type).at_end(end_location)
     end
 
     def parse_as(atomic, klass = Cast)
@@ -1782,10 +1784,10 @@ module Crystal
       if @token.type == :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          location = @token.location
-          arg = parse_fun_literal_arg.at(location)
+          param_location = @token.location
+          arg = parse_fun_literal_arg.at(param_location)
           if args.any? &.name.==(arg.name)
-            raise "duplicated proc literal parameter name: #{arg.name}", location
+            raise "duplicated proc literal parameter name: #{arg.name}", param_location
           end
 
           args << arg

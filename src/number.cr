@@ -223,12 +223,9 @@ struct Number
     if digits < 0
       raise ArgumentError.new "digits should be non-negative"
     end
+    return self if zero?
 
     x = self.to_f
-
-    if x == 0
-      return x
-    end
 
     if base == 10
       log = Math.log10(self.abs)

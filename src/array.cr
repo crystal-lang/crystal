@@ -411,12 +411,12 @@ class Array(T)
   end
 
   # Replaces a subrange with a single value. All elements in the range
-  # `index...index+count` are removed and replaced by a single element
+  # `start...start+count` are removed and replaced by a single element
   # *value*.
   #
-  # If *count* is zero, *value* is inserted at *index*.
+  # If *count* is zero, *value* is inserted at *start*.
   #
-  # Negative values of *index* count from the end of the array.
+  # Negative values of *start* count from the end of the array.
   #
   # ```
   # a = [1, 2, 3, 4, 5]
@@ -427,18 +427,18 @@ class Array(T)
   # a[1, 0] = 6
   # a # => [1, 6, 2, 3, 4, 5]
   # ```
-  def []=(index : Int, count : Int, value : T)
-    index, count = normalize_start_and_count(index, count)
+  def []=(start : Int, count : Int, value : T)
+    start, count = normalize_start_and_count(start, count)
 
     case count
     when 0
-      insert index, value
+      insert start, value
     when 1
-      @buffer[index] = value
+      @buffer[start] = value
     else
       diff = count - 1
 
-      # If index is 0 we can avoid a memcpy by doing a shift.
+      # If *start* is 0 we can avoid a memcpy by doing a shift.
       # For example if we have:
       #
       #    a = ['a', 'b', 'c', 'd']
@@ -453,20 +453,26 @@ class Array(T)
       #           ^
       #
       # (we also have to clear the elements before that)
-      if index == 0
+      if start == 0
         @buffer.clear(diff)
         shift_buffer_by(diff)
         @buffer.value = value
       else
-        (@buffer + index + 1).move_from(@buffer + index + count, size - index - count)
+        (@buffer + start + 1).move_from(@buffer + start + count, size - start - count)
         (@buffer + @size - diff).clear(diff)
-        @buffer[index] = value
+        @buffer[start] = value
       end
 
       @size -= diff
     end
 
     value
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#[]=(start, count, value)` instead")]
+  def []=(value : T, *, index start : Int, count : Int)
+    self[start, count] = value
   end
 
   # Replaces a subrange with a single value.
@@ -503,29 +509,35 @@ class Array(T)
   # a[1, 3] = [6, 7, 8, 9, 10]
   # a # => [1, 6, 7, 8, 9, 10, 5]
   # ```
-  def []=(index : Int, count : Int, values : Array(T))
-    index, count = normalize_start_and_count(index, count)
+  def []=(start : Int, count : Int, values : Array(T))
+    start, count = normalize_start_and_count(start, count)
     diff = values.size - count
 
     if diff == 0
       # Replace values directly
-      (@buffer + index).copy_from(values.to_unsafe, values.size)
+      (@buffer + start).copy_from(values.to_unsafe, values.size)
     elsif diff < 0
       # Need to shrink
       diff = -diff
-      (@buffer + index).copy_from(values.to_unsafe, values.size)
-      (@buffer + index + values.size).move_from(@buffer + index + count, size - index - count)
+      (@buffer + start).copy_from(values.to_unsafe, values.size)
+      (@buffer + start + values.size).move_from(@buffer + start + count, size - start - count)
       (@buffer + @size - diff).clear(diff)
       @size -= diff
     else
       # Need to grow
       resize_to_capacity(Math.pw2ceil(@size + diff))
-      (@buffer + index + values.size).move_from(@buffer + index + count, size - index - count)
-      (@buffer + index).copy_from(values.to_unsafe, values.size)
+      (@buffer + start + values.size).move_from(@buffer + start + count, size - start - count)
+      (@buffer + start).copy_from(values.to_unsafe, values.size)
       @size += diff
     end
 
     values
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#[]=(start, count, values)` instead")]
+  def []=(values : Array(T), *, index start : Int, count : Int)
+    self[start, count] = values
   end
 
   # Replaces a subrange with the elements of the given array.
@@ -814,14 +826,13 @@ class Array(T)
   # a.delete_at(99..100) # raises IndexError
   # ```
   def delete_at(range : Range) : self
-    index, count = Indexable.range_to_index_and_count(range, self.size) || raise IndexError.new
-    delete_at(index, count)
+    delete_at(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
   end
 
-  # Removes *count* elements from `self` starting at *index*.
+  # Removes *count* elements from `self` starting at *start*.
   # If the size of `self` is less than *count*, removes values to the end of the array without error.
   # Returns an array of the removed elements with the original order of `self` preserved.
-  # Raises `IndexError` if *index* is out of range.
+  # Raises `IndexError` if *start* is out of range.
   #
   # ```
   # a = ["ant", "bat", "cat", "dog"]
@@ -829,14 +840,20 @@ class Array(T)
   # a                  # => ["ant", "dog"]
   # a.delete_at(99, 1) # raises IndexError
   # ```
-  def delete_at(index : Int, count : Int) : self
-    index, count = normalize_start_and_count(index, count)
+  def delete_at(start : Int, count : Int) : self
+    start, count = normalize_start_and_count(start, count)
 
-    val = self[index, count]
-    (@buffer + index).move_from(@buffer + index + count, size - index - count)
+    val = self[start, count]
+    (@buffer + start).move_from(@buffer + start + count, size - start - count)
     @size -= count
     (@buffer + @size).clear(count)
     val
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#delete_at(start, count)` instead")]
+  def delete_at(*, index start : Int, count : Int) : self
+    delete_at(start, count)
   end
 
   # Returns a new `Array` that has exactly `self`'s elements.
@@ -862,33 +879,39 @@ class Array(T)
     end
   end
 
-  # Yields each index of `self`, starting at *from*, to the given block and then assigns
+  # Yields each index of `self`, starting at *start*, to the given block and then assigns
   # the block's value in that position. Returns `self`.
   #
-  # Negative values of *from* count from the end of the array.
+  # Negative values of *start* count from the end of the array.
   #
-  # Raises `IndexError` if *from* is outside the array range.
+  # Raises `IndexError` if *start* is outside the array range.
   #
   # ```
   # a = [1, 2, 3, 4]
   # a.fill(2) { |i| i * i } # => [1, 2, 4, 9]
   # ```
-  def fill(from : Int, & : Int32 -> T) : self
-    from += size if from < 0
+  def fill(start : Int, & : Int32 -> T) : self
+    start += size if start < 0
 
-    raise IndexError.new unless 0 <= from < size
+    raise IndexError.new unless 0 <= start < size
 
-    to_unsafe_slice(from, size - from).fill(offset: from) { |i| yield i }
+    to_unsafe_slice(start, size - start).fill(offset: start) { |i| yield i }
 
     self
   end
 
-  # Yields each index of `self`, starting at *from* and just *count* times,
+  # :ditto:
+  @[Deprecated("Use `#fill(start, &)` instead")]
+  def fill(*, from start : Int, & : Int32 -> T) : self
+    fill(start) { |i| yield i }
+  end
+
+  # Yields each index of `self`, starting at *start* and just *count* times,
   # to the given block and then assigns the block's value in that position. Returns `self`.
   #
-  # Negative values of *from* count from the end of the array.
+  # Negative values of *start* count from the end of the array.
   #
-  # Raises `IndexError` if *from* is outside the array range.
+  # Raises `IndexError` if *start* is outside the array range.
   #
   # Has no effect if *count* is zero or negative.
   #
@@ -896,16 +919,22 @@ class Array(T)
   # a = [1, 2, 3, 4, 5, 6]
   # a.fill(2, 2) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
   # ```
-  def fill(from : Int, count : Int, & : Int32 -> T) : self
+  def fill(start : Int, count : Int, & : Int32 -> T) : self
     return self if count <= 0
 
-    from += size if from < 0
+    start += size if start < 0
 
-    raise IndexError.new unless 0 <= from < size && from + count <= size
+    raise IndexError.new unless 0 <= start < size && start + count <= size
 
-    to_unsafe_slice(from, count).fill(offset: from) { |i| yield i }
+    to_unsafe_slice(start, count).fill(offset: start) { |i| yield i }
 
     self
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#fill(start, count, &)` instead")]
+  def fill(*, from start : Int, count : Int, & : Int32 -> T) : self
+    fill(start, count) { |i| yield i }
   end
 
   # Yields each index of `self`, in the given *range*, to the given block and then assigns
@@ -928,43 +957,55 @@ class Array(T)
     self
   end
 
-  # Replaces every element in `self`, starting at *from*, with the given *value*. Returns `self`.
+  # Replaces every element in `self`, starting at *start*, with the given *value*. Returns `self`.
   #
-  # Negative values of *from* count from the end of the array.
+  # Negative values of *start* count from the end of the array.
   #
   # ```
   # a = [1, 2, 3, 4, 5]
   # a.fill(9, 2) # => [1, 2, 9, 9, 9]
   # ```
-  def fill(value : T, from : Int) : self
-    from += size if from < 0
+  def fill(value : T, start : Int) : self
+    start += size if start < 0
 
-    raise IndexError.new unless 0 <= from < size
+    raise IndexError.new unless 0 <= start < size
 
-    to_unsafe_slice(from, size - from).fill(value)
+    to_unsafe_slice(start, size - start).fill(value)
 
     self
   end
 
-  # Replaces every element in `self`, starting at *from* and only *count* times,
+  # :ditto:
+  @[Deprecated("Use `#fill(value, start)` instead")]
+  def fill(value : T, *, from start : Int) : self
+    fill(value, start)
+  end
+
+  # Replaces every element in `self`, starting at *start* and only *count* times,
   # with the given *value*. Returns `self`.
   #
-  # Negative values of *from* count from the end of the array.
+  # Negative values of *start* count from the end of the array.
   #
   # ```
   # a = [1, 2, 3, 4, 5]
   # a.fill(9, 2, 2) # => [1, 2, 9, 9, 5]
   # ```
-  def fill(value : T, from : Int, count : Int) : self
+  def fill(value : T, start : Int, count : Int) : self
     return self if count <= 0
 
-    from += size if from < 0
+    start += size if start < 0
 
-    raise IndexError.new unless 0 <= from < size && from + count <= size
+    raise IndexError.new unless 0 <= start < size && start + count <= size
 
-    to_unsafe_slice(from, count).fill(value)
+    to_unsafe_slice(start, count).fill(value)
 
     self
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#fill(value, start, count)` instead")]
+  def fill(value : T, *, from start : Int, count : Int) : self
+    fill(value, start, count)
   end
 
   # Replaces every element in *range* with *value*. Returns `self`.
@@ -2093,9 +2134,9 @@ class Array(T)
     Slice.new(@buffer, size)
   end
 
-  private def to_unsafe_slice(index : Int, count : Int)
-    index, count = normalize_start_and_count(index, count)
-    Slice.new(@buffer + index, count)
+  private def to_unsafe_slice(start : Int, count : Int)
+    start, count = normalize_start_and_count(start, count)
+    Slice.new(@buffer + start, count)
   end
 
   protected def to_lookup_hash

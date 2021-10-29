@@ -63,6 +63,16 @@ describe "StaticArray" do
     end
   end
 
+  describe "<=>" do
+    it "correctly compares two static arrays" do
+      array1 = StaticArray(Int32, 3).new(5)
+      array2 = StaticArray(Int32, 3).new(7)
+      (array1 <=> array2).should be < 0
+      (array2 <=> array1).should be > 0
+      (array1 <=> array1).should eq 0
+    end
+  end
+
   describe "values_at" do
     it "returns the given indexes" do
       StaticArray(Int32, 4).new { |i| i + 1 }.values_at(1, 0, 2).should eq({2, 1, 3})
@@ -263,29 +273,37 @@ describe "StaticArray" do
       end
     end
 
-    describe "{{ sort }}_by" do
-      it "sorts by" do
-        a = StaticArray["foo", "a", "hello"]
-        b = a.{{ sort }}_by(&.size)
-        b.should eq(StaticArray["a", "foo", "hello"])
-        a.should_not eq(b)
-      end
-    end
-
-    describe "{{ sort }}_by!" do
-      it "sorts by!" do
-        a = StaticArray["foo", "a", "hello"]
-        a.{{ sort }}_by!(&.size)
-        a.should eq(StaticArray["a", "foo", "hello"])
+    # StaticArray#sort_by and #sort_by! don't compile on aarch64-darwin and
+    # aarch64-linux-musl due to a codegen error caused by LLVM < 13.0.0.
+    # See https://github.com/crystal-lang/crystal/issues/11358 for details.
+    {% unless compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 && flag?(:aarch64) && (flag?(:musl) || flag?(:darwin)) %}
+      describe "{{ sort }}_by" do
+        it "sorts by" do
+          a = StaticArray["foo", "a", "hello"]
+          b = a.{{ sort }}_by(&.size)
+          b.should eq(StaticArray["a", "foo", "hello"])
+          a.should_not eq(b)
+        end
       end
 
-      it "calls given block exactly once for each element" do
-        calls = Hash(String, Int32).new(0)
-        a = StaticArray["foo", "a", "hello"]
-        a.{{ sort }}_by! { |e| calls[e] += 1; e.size }
-        calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+      describe "{{ sort }}_by!" do
+        it "sorts by!" do
+          a = StaticArray["foo", "a", "hello"]
+          a.{{ sort }}_by!(&.size)
+          a.should eq(StaticArray["a", "foo", "hello"])
+        end
+
+        it "calls given block exactly once for each element" do
+          calls = Hash(String, Int32).new(0)
+          a = StaticArray["foo", "a", "hello"]
+          a.{{ sort }}_by! { |e| calls[e] += 1; e.size }
+          calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+        end
       end
-    end
+    {% else %}
+      pending "{{ sort }}_by"
+      pending "{{ sort }}_by!"
+    {% end %}
   {% end %}
 
   it_iterates "#each", [1, 2, 3], StaticArray[1, 2, 3].each

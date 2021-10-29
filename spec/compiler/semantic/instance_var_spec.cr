@@ -807,7 +807,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "infers type from as?" do
@@ -823,7 +823,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable int32 }
+      ), inject_primitives: true) { nilable int32 }
   end
 
   it "infers type from argument restriction" do
@@ -973,7 +973,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { union_of(int32, bool) }
+      ), inject_primitives: true) { union_of(int32, bool) }
   end
 
   it "infers type from case" do
@@ -1016,7 +1016,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { union_of(int32, bool) }
+      ), inject_primitives: true) { union_of(int32, bool) }
   end
 
   it "infers type from begin" do
@@ -1702,7 +1702,7 @@ describe "Semantic: instance var" do
       end
 
       Gen(Bar).new.x
-      )) { union_of(types["Foo"], types["Bar"]) }
+      ), inject_primitives: true) { union_of(types["Foo"], types["Bar"]) }
   end
 
   it "infers type for generic class, with case" do
@@ -1733,7 +1733,7 @@ describe "Semantic: instance var" do
       end
 
       Gen(Bar).new.x
-      )) { union_of(types["Foo"], types["Bar"]) }
+      ), inject_primitives: true) { union_of(types["Foo"], types["Bar"]) }
   end
 
   it "infers type for generic class, with assign (1)" do
@@ -2106,7 +2106,7 @@ describe "Semantic: instance var" do
       end
 
       Some.new.a + Some.new.b
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if not initializing super variables" do
@@ -2305,7 +2305,7 @@ describe "Semantic: instance var" do
 
       a = Foo.new
       a.a + a.b
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "ignores super module initialize (#456)" do
@@ -2335,7 +2335,7 @@ describe "Semantic: instance var" do
 
       a = Foo.new
       a.a + a.b
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "obeys super module initialize (#456)" do
@@ -2365,7 +2365,7 @@ describe "Semantic: instance var" do
 
       b = Foo.new
       b.a + b.b
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "doesn't error if initializing var in superclass, and then empty initialize" do
@@ -2516,7 +2516,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   pending "doesn't infer type to be nilable if using self.class in call in assign" do
@@ -2585,7 +2585,7 @@ describe "Semantic: instance var" do
 
       foo = Foo.new
       foo.x + foo.y
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "infers from another instance var" do
@@ -3060,7 +3060,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { pointer_of(int32) }
+      ), inject_primitives: true) { pointer_of(int32) }
   end
 
   it "infers from Pointer.malloc with two arguments" do
@@ -3112,7 +3112,7 @@ describe "Semantic: instance var" do
       end
 
       Foo(Int32).new.x
-      )) { pointer_of(int32) }
+      ), inject_primitives: true) { pointer_of(int32) }
   end
 
   it "infers from Pointer.null in generic type" do
@@ -3632,7 +3632,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { nilable int32 }
+      ), inject_primitives: true) { nilable int32 }
   end
 
   it "doesn't infer from class method with multiple statements and return, on non-easy return" do
@@ -3659,7 +3659,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo", inject_primitives: true
   end
 
   it "doesn't infer from class method with multiple statements and return, on non-easy return (2)" do
@@ -3687,7 +3687,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo", inject_primitives: true
   end
 
   it "infer from class method where new is redefined" do
@@ -4530,7 +4530,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ), inject_primitives: false) { types["Foo"] }
+      )) { types["Foo"] }
   end
 
   it "is more permissive with macro def initialize, bug with named args" do
@@ -4565,7 +4565,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new
-      ), inject_primitives: false) { types["Foo"] }
+      )) { types["Foo"] }
   end
 
   it "is more permissive with macro def initialize, multiple" do
@@ -4724,7 +4724,7 @@ describe "Semantic: instance var" do
       end
 
       Foo.new.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "types generic instance as virtual type if generic type has subclasses (#3805)" do
@@ -4747,7 +4747,7 @@ describe "Semantic: instance var" do
 
       Bar(Int32).new
       Qux.new
-      )) { types["Qux"] }
+      ), inject_primitives: true) { types["Qux"] }
   end
 
   it "errors if unknown ivar through macro (#4050)" do
@@ -4786,7 +4786,7 @@ describe "Semantic: instance var" do
 
       Foo.new
       ),
-      "can't infer the type of instance variable '@baz' of Foo"
+      "can't infer the type of instance variable '@baz' of Foo", inject_primitives: true
   end
 
   it "instance variables initializers are used in class variables initialized objects (#3988)" do
