@@ -231,7 +231,7 @@ module Levenshtein
   {% begin %}
     {% width = flag?(:bits64) ? 64 : 32 %}
     {% for enc in ["ascii", "unicode"] %}
-      private def self.myers_{{ enc.id }}(string1 : String, string2 : String) : Int32
+      private def self.myers_{{ enc.id }}(string1 : String, string2 : String, tolerance : Int? = nil) : Int32
         w = {{ width }}
         one = 1_u{{ width }}
         zero = 0_u{{ width }}
@@ -242,8 +242,7 @@ module Levenshtein
         hna = BitArray.new(n)
         hpa = BitArray.new(n)
 
-        lpos = one << ((m-1) % w)
-        score = m
+        cutoff = tolerance || m+n
 
         # Setup char->bit-vector dictionary
         {% if enc == "ascii" %}
@@ -260,9 +259,13 @@ module Levenshtein
           vp = UInt{{ width }}::MAX
           vn = zero
 
+          last_r = (r == rmax-1)
+          score = last_r ? m : (r+1)*w
+          lpos = last_r ? ((m-1) % w) : w-1
+
           # populate dictionary
           start = r*w
-          count = (r == rmax-1) && ((m % w) != 0) ? (m % w) : w
+          count = last_r && ((m % w) != 0) ? (m % w) : w
           count.times do |i|
             {% if enc == "ascii" %}
               pmr[s1[start+i]] |= one << i
@@ -284,15 +287,12 @@ module Levenshtein
             d0 = (((pm & vp) &+ vp) ^ vp) | pm | vn
             hp = vn | ~ (d0 | vp)
             hn = d0 & vp
-            if (r == rmax-1) && ((hp & lpos) != 0)
-              score += 1
-            elsif (r == rmax-1) && ((hn & lpos) != 0)
-              score -= 1
-            end
+            score += (hp >> lpos) & one
+            score -= (hn >> lpos) & one
             hnx = (hn << 1) | hn0
             hpx = (hp << 1) | hp0
             # Horizontal arrays don't need to be saved on last run
-            if (r < rmax-1)
+            unless (last_r)
               hna[i] = (hn >> (w-1)) == 1
               hpa[i] = (hp >> (w-1)) == 1
             end
@@ -300,6 +300,7 @@ module Levenshtein
             vp = hnx | ~ (d0 | hpx | nc)
             vn = d0 & (hpx | nc)
           end
+          return score if score-(m-((r+1)*w)) > cutoff
           # clear dictionary
           {% if enc == "ascii" %}
             pmr.fill(zero)
