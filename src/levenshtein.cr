@@ -12,7 +12,7 @@ module Levenshtein
   # Levenshtein.distance("こんにちは", "こんちは")           # => 1
   # Levenshtein.distance("hey", "hey")              # => 0
   # ```
-  def self.distance(string1 : String, string2 : String) : Int32
+  def self.distance(string1 : String, string2 : String, tolerance : Int? = nil) : Int32
     return 0 if string1 == string2
 
     s_size = string1.size
@@ -24,18 +24,21 @@ module Levenshtein
     end
 
     return l_size if s_size == 0
+    if tolerance && tolerance < l_size - s_size
+      return l_size - s_size
+    end
 
     if string1.ascii_only? && string2.ascii_only?
       if l_size < 32
         myers32_ascii(string1, string2)
       else
-        myers_ascii(string1, string2)
+        myers_ascii(string1, string2, tolerance)
       end
     else
       if l_size < 64
         dynamic_matrix(string1, string2)
       else
-        myers_unicode(string1, string2)
+        myers_unicode(string1, string2, tolerance)
       end
     end
   end
