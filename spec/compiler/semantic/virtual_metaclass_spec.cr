@@ -148,4 +148,17 @@ describe "Semantic: virtual metaclass" do
       foo(Bar)
       ") { types["Bar"].metaclass }
   end
+
+  it "restricts virtual metaclass to Class (#11376)" do
+    assert_type(<<-CR) { nilable types["Foo"].virtual_type.metaclass }
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      x = Foo || Bar
+      x if x.is_a?(Class)
+      CR
+  end
 end
