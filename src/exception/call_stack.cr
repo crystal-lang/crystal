@@ -13,9 +13,10 @@ struct Exception::CallStack
   # Compute current directory at the beginning so filenames
   # are always shown relative to the *starting* working directory.
   CURRENT_DIR = begin
-    dir = Process::INITIAL_PWD
-    dir += File::SEPARATOR unless dir.ends_with?(File::SEPARATOR)
-    dir
+    if dir = Process::INITIAL_PWD
+      dir += File::SEPARATOR unless dir.ends_with?(File::SEPARATOR)
+      dir
+    end
   end
 
   @@skip = [] of String

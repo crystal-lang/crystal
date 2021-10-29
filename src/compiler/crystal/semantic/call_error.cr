@@ -663,6 +663,10 @@ class Crystal::Call
     case owner
     when Program
       method_name
+    when owner.program.class_type
+      # Class's instance_type is Object, not Class, so we cannot treat it like
+      # other metaclasses
+      "#{owner}##{method_name}"
     when .metaclass?
       "#{owner.instance_type}.#{method_name}"
     else

@@ -1784,10 +1784,10 @@ module Crystal
       if @token.type == :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          location = @token.location
-          arg = parse_fun_literal_arg.at(location)
+          param_location = @token.location
+          arg = parse_fun_literal_arg.at(param_location)
           if args.any? &.name.==(arg.name)
-            raise "duplicated proc literal parameter name: #{arg.name}", location
+            raise "duplicated proc literal parameter name: #{arg.name}", param_location
           end
 
           args << arg
