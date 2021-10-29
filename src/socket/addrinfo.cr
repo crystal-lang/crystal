@@ -160,7 +160,7 @@ class Socket
         {% if flag?(:unix) %}
           # EAI_SYSTEM is not defined on win32
           if ret == LibC::EAI_SYSTEM
-            raise Error.from_errno nil, domain: domain
+            raise Error.from_errno nil, Errno.value, domain: domain
           end
         {% end %}
 
