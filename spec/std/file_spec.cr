@@ -314,24 +314,43 @@ describe "File" do
     File.extname("").should eq("")
   end
 
-  # TODO: these specs are redundant with path_spec.cr
-  pending_win32 "constructs a path from parts" do
-    File.join(["///foo", "bar"]).should eq("///foo/bar")
-    File.join(["///foo", "//bar"]).should eq("///foo//bar")
-    File.join(["/foo/", "/bar"]).should eq("/foo/bar")
-    File.join(["foo", "bar", "baz"]).should eq("foo/bar/baz")
-    File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
-    File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
-    File.join(["", "foo"]).should eq("foo")
-    File.join(["foo", ""]).should eq("foo/")
-    File.join(["", "", "foo"]).should eq("foo")
-    File.join(["foo", "", "bar"]).should eq("foo/bar")
-    File.join(["foo", "", "", "bar"]).should eq("foo/bar")
-    File.join(["foo", "/", "bar"]).should eq("foo/bar")
-    File.join(["foo", "/", "/", "bar"]).should eq("foo/bar")
-    File.join(["/", "/foo", "/", "bar/", "/"]).should eq("/foo/bar/")
-    File.join(["foo"]).should eq("foo")
-    File.join("foo").should eq("foo")
+  # There are more detailled specs for `Path#join` in path_spec.cr
+  it "constructs a path from parts" do
+    {% if flag?(:win32) %}
+      File.join(["///foo", "bar"]).should eq("///foo\\bar")
+      File.join(["///foo", "//bar"]).should eq("///foo//bar")
+      File.join(["/foo/", "/bar"]).should eq("/foo/bar")
+      File.join(["foo", "bar", "baz"]).should eq("foo\\bar\\baz")
+      File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
+      File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
+      File.join(["", "foo"]).should eq("foo")
+      File.join(["foo", ""]).should eq("foo\\")
+      File.join(["", "", "foo"]).should eq("foo")
+      File.join(["foo", "", "bar"]).should eq("foo\\bar")
+      File.join(["foo", "", "", "bar"]).should eq("foo\\bar")
+      File.join(["foo", "/", "bar"]).should eq("foo/bar")
+      File.join(["foo", "/", "/", "bar"]).should eq("foo/bar")
+      File.join(["/", "/foo", "/", "bar/", "/"]).should eq("/foo/bar/")
+      File.join(["foo"]).should eq("foo")
+      File.join("foo").should eq("foo")
+    {% else %}
+      File.join(["///foo", "bar"]).should eq("///foo/bar")
+      File.join(["///foo", "//bar"]).should eq("///foo//bar")
+      File.join(["/foo/", "/bar"]).should eq("/foo/bar")
+      File.join(["foo", "bar", "baz"]).should eq("foo/bar/baz")
+      File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
+      File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
+      File.join(["", "foo"]).should eq("foo")
+      File.join(["foo", ""]).should eq("foo/")
+      File.join(["", "", "foo"]).should eq("foo")
+      File.join(["foo", "", "bar"]).should eq("foo/bar")
+      File.join(["foo", "", "", "bar"]).should eq("foo/bar")
+      File.join(["foo", "/", "bar"]).should eq("foo/bar")
+      File.join(["foo", "/", "/", "bar"]).should eq("foo/bar")
+      File.join(["/", "/foo", "/", "bar/", "/"]).should eq("/foo/bar/")
+      File.join(["foo"]).should eq("foo")
+      File.join("foo").should eq("foo")
+    {% end %}
   end
 
   it "chown" do
