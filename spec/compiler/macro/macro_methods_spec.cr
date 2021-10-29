@@ -2233,22 +2233,22 @@ module Crystal
       node = Metaclass.new(Path.new("Int32"))
 
       it "executes instance" do
-        assert_macro "x", %({{x.instance}}), [node] of ASTNode, "Int32"
+        assert_macro %({{x.instance}}), "Int32", {x: node}
       end
 
       it "executes resolve" do
-        assert_macro "x", %({{x.resolve}}), [node] of ASTNode, %(Int32.class)
-        assert_macro "x", %({{x.resolve}}), [Metaclass.new(Path.new("Array"))] of ASTNode, %(Array(T).class)
+        assert_macro %({{x.resolve}}), %(Int32.class), {x: node}
+        assert_macro %({{x.resolve}}), %(Array(T).class), {x: Metaclass.new(Path.new("Array"))}
 
-        expect_raises(Crystal::TypeException, "undefined constant Foo") do
-          assert_macro "x", %({{x.resolve}}), [Metaclass.new(Path.new("Foo"))] of ASTNode, %()
+        assert_macro_error(%({{x.resolve}}), "undefined constant Foo") do
+          {x: Metaclass.new(Path.new("Foo"))}
         end
       end
 
       it "executes resolve?" do
-        assert_macro "x", %({{x.resolve?}}), [node] of ASTNode, %(Int32.class)
-        assert_macro "x", %({{x.resolve?}}), [Metaclass.new(Path.new("Array"))] of ASTNode, %(Array(T).class)
-        assert_macro "x", %({{x.resolve?}}), [Metaclass.new(Path.new("Foo"))] of ASTNode, %(nil)
+        assert_macro %({{x.resolve?}}), %(Int32.class), {x: node}
+        assert_macro %({{x.resolve?}}), %(Array(T).class), {x: Metaclass.new(Path.new("Array"))}
+        assert_macro %({{x.resolve?}}), %(nil), {x: Metaclass.new(Path.new("Foo"))}
       end
     end
 
