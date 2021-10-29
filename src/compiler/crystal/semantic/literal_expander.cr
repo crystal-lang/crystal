@@ -680,7 +680,8 @@ module Crystal
         if lhs_has_splat
           size_call = Call.new(temp_var.clone, "size").at(value)
           size_comp = Call.new(size_call, "<", NumberLiteral.new(node.targets.size - 1)).at(value)
-          raise_call = Call.new(nil, "raise", args: [StringLiteral.new("BUG: multiple assignment count mismatch")] of ASTNode, global: true).at(value)
+          index_error = Call.new(Path.global("IndexError"), "new", StringLiteral.new("Multiple assignment count mismatch")).at(value)
+          raise_call = Call.global("raise", index_error).at(value)
           assigns << If.new(size_comp, raise_call).at(value)
         end
 

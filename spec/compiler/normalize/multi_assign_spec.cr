@@ -81,7 +81,7 @@ describe "Normalize: multi assign" do
     assert_expand_third "c = 1; d = 2; a, b, *c.foo, d[0], e, f = 3", <<-CR
       __temp_1 = 3
       if __temp_1.size < 5
-        ::raise("BUG: multiple assignment count mismatch")
+        ::raise(::IndexError.new("Multiple assignment count mismatch"))
       end
       a = __temp_1[0]
       b = __temp_1[1]
