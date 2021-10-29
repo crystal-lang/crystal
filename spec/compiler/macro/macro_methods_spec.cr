@@ -357,12 +357,12 @@ module Crystal
       end
 
       it "executes [] with incomplete range" do
-        assert_macro "", %({{"hello"[1..]}}), [] of ASTNode, %("ello")
-        assert_macro "", %({{"hello"[1..nil]}}), [] of ASTNode, %("ello")
-        assert_macro "", %({{"hello"[...3]}}), [] of ASTNode, %("hel")
-        assert_macro "", %({{"hello"[nil...3]}}), [] of ASTNode, %("hel")
-        assert_macro "", %({{"hello"[..]}}), [] of ASTNode, %("hello")
-        assert_macro "", %({{"hello"[nil..nil]}}), [] of ASTNode, %("hello")
+        assert_macro %({{"hello"[1..]}}), %("ello")
+        assert_macro %({{"hello"[1..nil]}}), %("ello")
+        assert_macro %({{"hello"[...3]}}), %("hel")
+        assert_macro %({{"hello"[nil...3]}}), %("hel")
+        assert_macro %({{"hello"[..]}}), %("hello")
+        assert_macro %({{"hello"[nil..nil]}}), %("hello")
       end
 
       it "executes string chomp" do
@@ -827,12 +827,12 @@ module Crystal
       end
 
       it "executes [] with incomplete range" do
-        assert_macro "", %({{ [1, 2, 3, 4][1..] }}), [] of ASTNode, %([2, 3, 4])
-        assert_macro "", %({{ [1, 2, 3, 4][1..nil] }}), [] of ASTNode, %([2, 3, 4])
-        assert_macro "", %({{ [1, 2, 3, 4][...2] }}), [] of ASTNode, %([1, 2])
-        assert_macro "", %({{ [1, 2, 3, 4][nil...2] }}), [] of ASTNode, %([1, 2])
-        assert_macro "", %({{ [1, 2, 3, 4][..] }}), [] of ASTNode, %([1, 2, 3, 4])
-        assert_macro "", %({{ [1, 2, 3, 4][nil..nil] }}), [] of ASTNode, %([1, 2, 3, 4])
+        assert_macro %({{ [1, 2, 3, 4][1..] }}), %([2, 3, 4])
+        assert_macro %({{ [1, 2, 3, 4][1..nil] }}), %([2, 3, 4])
+        assert_macro %({{ [1, 2, 3, 4][...2] }}), %([1, 2])
+        assert_macro %({{ [1, 2, 3, 4][nil...2] }}), %([1, 2])
+        assert_macro %({{ [1, 2, 3, 4][..] }}), %([1, 2, 3, 4])
+        assert_macro %({{ [1, 2, 3, 4][nil..nil] }}), %([1, 2, 3, 4])
       end
 
       it "executes [] with two numbers" do
@@ -1107,20 +1107,20 @@ module Crystal
       end
 
       it "executes [] with range" do
-        assert_macro "", %({{ {1, 2, 3, 4}[1...-1] }}), [] of ASTNode, %({2, 3})
+        assert_macro %({{ {1, 2, 3, 4}[1...-1] }}), %({2, 3})
       end
 
       it "executes [] with computed range" do
-        assert_macro "", %({{ {1, 2, 3, 4}[[1].size...-1] }}), [] of ASTNode, %({2, 3})
+        assert_macro %({{ {1, 2, 3, 4}[[1].size...-1] }}), %({2, 3})
       end
 
       it "executes [] with incomplete range" do
-        assert_macro "", %({{ {1, 2, 3, 4}[1..] }}), [] of ASTNode, %({2, 3, 4})
-        assert_macro "", %({{ {1, 2, 3, 4}[1..nil] }}), [] of ASTNode, %({2, 3, 4})
-        assert_macro "", %({{ {1, 2, 3, 4}[...2] }}), [] of ASTNode, %({1, 2})
-        assert_macro "", %({{ {1, 2, 3, 4}[nil...2] }}), [] of ASTNode, %({1, 2})
-        assert_macro "", %({{ {1, 2, 3, 4}[..] }}), [] of ASTNode, %({1, 2, 3, 4})
-        assert_macro "", %({{ {1, 2, 3, 4}[nil..nil] }}), [] of ASTNode, %({1, 2, 3, 4})
+        assert_macro %({{ {1, 2, 3, 4}[1..] }}), %({2, 3, 4})
+        assert_macro %({{ {1, 2, 3, 4}[1..nil] }}), %({2, 3, 4})
+        assert_macro %({{ {1, 2, 3, 4}[...2] }}), %({1, 2})
+        assert_macro %({{ {1, 2, 3, 4}[nil...2] }}), %({1, 2})
+        assert_macro %({{ {1, 2, 3, 4}[..] }}), %({1, 2, 3, 4})
+        assert_macro %({{ {1, 2, 3, 4}[nil..nil] }}), %({1, 2, 3, 4})
       end
 
       it "executes size" do
