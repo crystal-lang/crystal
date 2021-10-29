@@ -173,6 +173,11 @@ describe IO do
       io.gets.should be_nil
     end
 
+    it "does gets with \\r\\n, chomp true goes past \\r" do
+      io = SimpleIOMemory.new("hello\rworld\r\nfoo\rbar\n")
+      io.gets(chomp: true, limit: 8).should eq("hello\rwo")
+    end
+
     it "does gets with chomp false" do
       io = SimpleIOMemory.new("hello\nworld\n")
       io.gets(chomp: false).should eq("hello\n")
@@ -281,15 +286,29 @@ describe IO do
       io.read_char.should eq('界')
       io.read_char.should be_nil
 
-      io.write Bytes[0xf8, 0xff, 0xff, 0xff]
-      expect_raises(InvalidByteSequenceError) do
-        io.read_char
-      end
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc4, 0x70]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc4, 0x70, 0x00, 0x00]).read_char }
 
-      io.write_byte 0x81_u8
-      expect_raises(InvalidByteSequenceError) do
-        io.read_char
-      end
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf8]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf8, 0x00, 0x00, 0x00]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0x81]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0x81, 0x00, 0x00, 0x00]).read_char }
+
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xa0, 0x80]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xa0, 0x80, 0x00]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xbf, 0xbf]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xed, 0xbf, 0xbf, 0x00]).read_char }
+
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc0, 0x80]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc0, 0x80, 0x00, 0x00]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc1, 0xbf]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xc1, 0xbf, 0x00, 0x00]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x80, 0x80]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x80, 0x80, 0x00]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x9f, 0xbf]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xe0, 0x9f, 0xbf, 0x00]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf0, 0x80, 0x80, 0x80]).read_char }
+      expect_raises(InvalidByteSequenceError) { SimpleIOMemory.new(Bytes[0xf0, 0x8f, 0xbf, 0xbf]).read_char }
     end
 
     it "reads byte" do
