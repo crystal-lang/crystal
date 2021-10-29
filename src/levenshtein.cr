@@ -12,7 +12,7 @@ module Levenshtein
   # Levenshtein.distance("こんにちは", "こんちは")           # => 1
   # Levenshtein.distance("hey", "hey")              # => 0
   # ```
-  def self.distance(string1 : String, string2 : String, tolerance : Int? = nil) : Int32
+  def self.distance(string1 : String, string2 : String, cutoff : Int? = nil) : Int32
     return 0 if string1 == string2
 
     s_size = string1.size
@@ -24,7 +24,7 @@ module Levenshtein
     end
 
     return l_size if s_size == 0
-    if tolerance && tolerance < l_size - s_size
+    if cutoff && cutoff < l_size - s_size
       return l_size - s_size
     end
 
@@ -32,13 +32,13 @@ module Levenshtein
       if l_size < 32
         myers32_ascii(string1, string2)
       else
-        myers_ascii(string1, string2, tolerance)
+        myers_ascii(string1, string2, cutoff)
       end
     else
       if l_size < 64
         dynamic_matrix(string1, string2)
       else
-        myers_unicode(string1, string2, tolerance)
+        myers_unicode(string1, string2, cutoff)
       end
     end
   end
@@ -68,7 +68,7 @@ module Levenshtein
     end
 
     def test(name : String, value : String = name)
-      distance = Levenshtein.distance(@target, name)
+      distance = Levenshtein.distance(@target, name, @tolerance)
       if distance <= @tolerance
         if best_entry = @best_entry
           if distance < best_entry.distance
@@ -234,7 +234,7 @@ module Levenshtein
   {% begin %}
     {% width = flag?(:bits64) ? 64 : 32 %}
     {% for enc in ["ascii", "unicode"] %}
-      private def self.myers_{{ enc.id }}(string1 : String, string2 : String, tolerance : Int? = nil) : Int32
+      private def self.myers_{{ enc.id }}(string1 : String, string2 : String, cutoff : Int? = nil) : Int32
         w = {{ width }}
         one = 1_u{{ width }}
         zero = 0_u{{ width }}
@@ -245,7 +245,7 @@ module Levenshtein
         hna = BitArray.new(n)
         hpa = BitArray.new(n)
 
-        cutoff = tolerance || m+n
+        cutoff = cutoff || m+n
         # assign here so compiler guarantees int as return
         score = m
         # Setup char->bit-vector dictionary
