@@ -265,6 +265,119 @@ struct BitArray
     clear_unused_bits
   end
 
+  # :inherit:
+  def reverse! : self
+    return self if size <= 1
+
+    if size <= 32
+      @bits.value = Intrinsics.bitreverse32(@bits.value) >> (32 - size)
+    elsif size <= 64
+      more_bits = @bits.as(UInt64*)
+      more_bits.value = Intrinsics.bitreverse64(more_bits.value) >> (64 - size)
+    else
+      # 3 or more groups of bits
+      offset = (-size) % 32
+      if offset != 0
+        # left-shifting, followed by bit-reversing in each group
+        # simplified bit pattern example using a group size of 8: (offset = 3)
+        #
+        #     hgfedcba ponmlkji 000utsrq
+        #     hgfedcba ponmlkji utsrqpon
+        #     hgfedcba ponmlkji nopqrstu
+        #     hgfedcba mlkjihgf nopqrstu
+        #     hgfedcba fghijklm nopqrstu
+        (malloc_size - 1).downto(1) do |i|
+          @bits[i] = Intrinsics.bitreverse32((@bits[i] << offset) | (@bits[i - 1] >> (32 - offset)))
+        end
+
+        # last group:
+        #
+        #     edcba000 fghijklm nopqrstu
+        #     000abcde fghijklm nopqrstu
+        @bits[0] = Intrinsics.bitreverse32(@bits[0] << offset)
+      else
+        # no padding; do only the bit reverses
+        Slice.new(@bits, malloc_size).map! { |x| Intrinsics.bitreverse32(x) }
+      end
+
+      # reversing all groups themselves:
+      #
+      #     nopqrstu fghijklm 000abcde
+      Slice.new(@bits, malloc_size).reverse!
+    end
+
+    self
+  end
+
+  # :inherit:
+  def rotate!(n : Int = 1) : self
+    return self if size <= 1
+    n %= size
+    return self if n == 0
+
+    if size % 8 == 0 && n % 8 == 0
+      to_slice.rotate!(n // 8)
+    elsif size <= 32
+      @bits[0] = (@bits[0] >> n) | (@bits[0] << (size - n))
+      clear_unused_bits
+    elsif n <= 32
+      temp = @bits[0]
+      malloc_size = self.malloc_size
+      (malloc_size - 1).times do |i|
+        @bits[i] = (@bits[i] >> n) | (@bits[i + 1] << (32 - n))
+      end
+
+      end_sub_index = (size - 1) % 32 + 1
+      if n <= end_sub_index
+        # n = 3: (bit patterns here are little-endian)
+        #
+        #     ........ ........ ........ .....CBA -> ........ ........ ........ ........
+        #     ........ ........ ........ ........ -> cba..... ........ ........ ........
+        #     00000000 00000000 00000000 000edcba -> 00000000 00000000 00000000 000CBAed
+        @bits[malloc_size - 1] = (@bits[malloc_size - 1] >> n) | (temp << (end_sub_index - n))
+      else
+        # n = 7:
+        #
+        #     ........ ........ ........ .GFEDCBA -> ........ ........ ........ ........
+        #     ........ ........ ........ ........ -> BAedcba. ........ ........ ........
+        #     00000000 00000000 00000000 000edcba -> 00000000 00000000 00000000 000GFEDC
+        @bits[malloc_size - 2] |= temp << (32 + end_sub_index - n)
+        @bits[malloc_size - 1] = temp << (end_sub_index - n)
+      end
+
+      clear_unused_bits
+    elsif n >= size - 32
+      n = size - n
+      malloc_size = self.malloc_size
+
+      end_sub_index = (size - 1) % 32 + 1
+      if n <= end_sub_index
+        # n = 3:
+        #
+        #     ........ ........ ........ ........ -> ........ ........ ........ .....CBA
+        #     00000000 00000000 00000000 000CBA.. -> 00000000 00000000 00000000 000.....
+        temp = @bits[malloc_size - 1] >> (end_sub_index - n)
+      else
+        # n = 7:
+        #
+        #     BA...... ........ ........ ........ -> ........ ........ ........ .GFEDCBA
+        #     00000000 00000000 00000000 000GFEDC -> 00000000 00000000 00000000 000.....
+        temp = (@bits[malloc_size - 1] << (n - end_sub_index)) | (@bits[malloc_size - 2] >> (32 + end_sub_index - n))
+      end
+
+      (malloc_size - 1).downto(1) do |i|
+        @bits[i] = (@bits[i] << n) | (@bits[i - 1] >> (32 - n))
+      end
+      @bits[0] = (@bits[0] << n) | temp
+
+      clear_unused_bits
+    else
+      super
+    end
+
+    self
+  end
+
   # Creates a string representation of self.
   #
   # ```

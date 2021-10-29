@@ -1,5 +1,7 @@
 # Represents a UUID (Universally Unique IDentifier).
 struct UUID
+  include Comparable(UUID)
+
   # Variants with 16 bytes.
   enum Variant
     # Unknown (i.e. custom, your own).
@@ -205,6 +207,10 @@ struct UUID
       str << "urn:uuid:"
       to_s(str)
     end
+  end
+
+  def <=>(other : UUID) : Int32
+    @bytes <=> other.bytes
   end
 
   class Error < Exception

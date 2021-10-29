@@ -25,6 +25,11 @@ lib LibIntrinsics
   {% end %}
 
   fun read_cycle_counter = "llvm.readcyclecounter" : UInt64
+
+  fun bitreverse64 = "llvm.bitreverse.i64"(id : UInt64) : UInt64
+  fun bitreverse32 = "llvm.bitreverse.i32"(id : UInt32) : UInt32
+  fun bitreverse16 = "llvm.bitreverse.i16"(id : UInt16) : UInt16
+
   fun bswap32 = "llvm.bswap.i32"(id : UInt32) : UInt32
   fun bswap16 = "llvm.bswap.i16"(id : UInt16) : UInt16
 
@@ -91,6 +96,18 @@ module Intrinsics
 
   def self.read_cycle_counter
     LibIntrinsics.read_cycle_counter
+  end
+
+  def self.bitreverse64(id) : UInt64
+    LibIntrinsics.bitreverse64(id)
+  end
+
+  def self.bitreverse32(id) : UInt32
+    LibIntrinsics.bitreverse32(id)
+  end
+
+  def self.bitreverse16(id) : UInt16
+    LibIntrinsics.bitreverse16(id)
   end
 
   def self.bswap32(id) : UInt32

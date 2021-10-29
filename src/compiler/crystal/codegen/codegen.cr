@@ -151,7 +151,6 @@ module Crystal
     @main_ret_type : Type
     @argc : LLVM::Value
     @argv : LLVM::Value
-    @empty_md_list : LLVM::Value
     @rescue_block : LLVM::BasicBlock?
     @catch_pad : LLVM::Value?
     @malloc_fun : LLVM::Function?
@@ -235,7 +234,6 @@ module Crystal
       # are not going to be used.
       @needs_value = true
 
-      @empty_md_list = metadata([] of Int32)
       @unused_fun_defs = [] of FunDef
       @proc_counts = Hash(String, Int32).new(0)
 
@@ -770,7 +768,9 @@ module Crystal
     end
 
     def visit(node : TypeOf)
-      @last = type_id(node.type)
+      # convert virtual metaclasses to non-virtual ones, because only the
+      # non-virtual type IDs are needed
+      @last = type_id(node.type.devirtualize)
       false
     end
 

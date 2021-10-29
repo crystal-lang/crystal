@@ -852,12 +852,14 @@ module Crystal
         type = parse_bare_proc_type
         skip_space_or_newline
         check :")"
+        end_location = token_end_location
         next_token_skip_space
       else
         type = parse_union_type
+        end_location = type.end_location
       end
 
-      IsA.new(atomic, type)
+      IsA.new(atomic, type).at_end(end_location)
     end
 
     def parse_as(atomic, klass = Cast)
@@ -1804,10 +1806,10 @@ module Crystal
       if @token.type == :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          location = @token.location
-          arg = parse_fun_literal_arg.at(location)
+          param_location = @token.location
+          arg = parse_fun_literal_arg.at(param_location)
           if args.any? &.name.==(arg.name)
-            raise "duplicated proc literal parameter name: #{arg.name}", location
+            raise "duplicated proc literal parameter name: #{arg.name}", param_location
           end
 
           args << arg
@@ -5069,16 +5071,20 @@ module Crystal
 
     def make_nilable_expression(type)
       type = Generic.new(Path.global("Union").at(type), [type, Path.global("Nil").at(type)]).at(type)
-      type.question = true
+      type.suffix = :question
       type
     end
 
     def make_pointer_type(type)
-      Generic.new(Path.global("Pointer").at(type), [type] of ASTNode).at(type)
+      type = Generic.new(Path.global("Pointer").at(type), [type] of ASTNode).at(type)
+      type.suffix = :asterisk
+      type
     end
 
     def make_static_array_type(type, size)
-      Generic.new(Path.global("StaticArray").at(type), [type, size] of ASTNode).at(type)
+      type = Generic.new(Path.global("StaticArray").at(type), [type, size] of ASTNode).at(type)
+      type.suffix = :bracket
+      type
     end
 
     def make_tuple_type(types)
@@ -5220,6 +5226,7 @@ module Crystal
       volatile = false
       alignstack = false
       intel = false
+      can_throw = false
 
       part_index = 0
       until @token.type == :")"
@@ -5248,7 +5255,7 @@ module Crystal
           end
         when 4
           if @token.type == :DELIMITER_START
-            volatile, alignstack, intel = parse_asm_options
+            volatile, alignstack, intel, can_throw = parse_asm_options
           end
         else break
         end
@@ -5258,7 +5265,7 @@ module Crystal
 
       next_token_skip_space
 
-      Asm.new(text, outputs, inputs, clobbers, volatile, alignstack, intel)
+      Asm.new(text, outputs, inputs, clobbers, volatile, alignstack, intel, can_throw)
     end
 
     def parse_asm_operands
@@ -5300,6 +5307,7 @@ module Crystal
       volatile = false
       alignstack = false
       intel = false
+      can_throw = false
       while true
         location = @token.location
         option = parse_string_without_interpolation("asm option")
@@ -5311,6 +5319,8 @@ module Crystal
           alignstack = true
         when "intel"
           intel = true
+        when "unwind"
+          can_throw = true
         else
           raise "unknown asm option: #{option}", location
         end
@@ -5320,7 +5330,7 @@ module Crystal
         end
         break unless @token.type == :DELIMITER_START
       end
-      {volatile, alignstack, intel}
+      {volatile, alignstack, intel, can_throw}
     end
 
     def parse_yield_with_scope

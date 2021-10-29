@@ -196,12 +196,22 @@ describe "BigFloat" do
   end
 
   describe "#to_i64" do
+    it "basic" do
+      1.to_big_f.to_i64.should eq 1
+      1.to_big_f.to_i64.should be_a(Int64)
+    end
+
     it { expect_raises(OverflowError) { (2.0 ** 63).to_big_f.to_i64 } }
     it { expect_raises(OverflowError) { (BigFloat.new(2.0 ** 63, precision: 128) - 0.9999).to_i64 } }
     it { expect_raises(OverflowError) { (-9.223372036854778e+18).to_big_f.to_i64 } } # (-(2.0 ** 63)).prev_float
   end
 
   describe "#to_i64!" do
+    it "basic" do
+      1.to_big_f.to_i64!.should eq 1
+      1.to_big_f.to_i64!.should be_a(Int64)
+    end
+
     it "doesn't raise on overflow" do
       (2.0 ** 63).to_big_f.to_i64!
       (BigFloat.new(2.0 ** 63, precision: 128) - 0.9999).to_i64!
@@ -225,12 +235,22 @@ describe "BigFloat" do
   end
 
   describe "#to_u64" do
+    it "basic" do
+      1.to_big_f.to_u64.should eq 1
+      1.to_big_f.to_u64.should be_a(UInt64)
+    end
+
     it { expect_raises(OverflowError) { (2.0 ** 64).to_big_f.to_u64 } }
     it { expect_raises(OverflowError) { (-1).to_big_f.to_u64 } }
     it { expect_raises(OverflowError) { (-0.0001).to_big_f.to_u64 } }
   end
 
   describe "#to_u64!" do
+    it "basic" do
+      1.to_big_f.to_u64!.should eq 1
+      1.to_big_f.to_u64!.should be_a(UInt64)
+    end
+
     it "doesn't raise on overflow" do
       (2.0 ** 64).to_big_f.to_u64!
       (-1).to_big_f.to_u64!
