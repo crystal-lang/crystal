@@ -307,7 +307,9 @@ module Levenshtein
             vp = hnx | ~ (d0 | hpx | nc)
             vn = d0 & (hpx | nc)
           end
-          if score-(m-((r+1)*w)) > cutoff || last_r
+          if last_r
+            return score
+          elsif score-(m-((r+1)*w)) > cutoff
             return score-(m-((r+1)*w))
           end
           # clear dictionary
