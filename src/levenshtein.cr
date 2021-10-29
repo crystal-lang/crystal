@@ -265,7 +265,8 @@ module Levenshtein
 
           last_r = (r == rmax-1)
           score = last_r ? m : (r+1)*w
-          lpos = last_r ? ((m-1) % w) : w-1
+          hmax = last_r ? ((m-1) % w) : w-1
+          lpos = one << hmax
 
           # populate dictionary
           start = r*w
@@ -291,8 +292,8 @@ module Levenshtein
             d0 = (((pm & vp) &+ vp) ^ vp) | pm | vn
             hp = vn | ~ (d0 | vp)
             hn = d0 & vp
-            score += (hp >> lpos) & one
-            score -= (hn >> lpos) & one
+            score += 1 if ((hp & lpos) != 0)
+            score -= 1 if ((hn & lpos) != 0)
             hnx = (hn << 1) | hn0
             hpx = (hp << 1) | hp0
             # Horizontal arrays don't need to be saved on last run
