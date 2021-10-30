@@ -639,7 +639,7 @@ describe "Semantic: virtual" do
       class Bar < Foo; end
 
       Pointer(Foo).malloc(1_u64)
-      ") { pointer_of(types["Foo"].virtual_type) }
+      ", inject_primitives: true) { pointer_of(types["Foo"].virtual_type) }
   end
 
   it "types instance var as virtual when using type declaration and has subclasses" do

@@ -62,7 +62,7 @@ describe "Semantic: abstract def" do
       p.value = Bar.new
       p.value = Baz.new
       p.value.foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if using abstract def on subclass that also defines it as abstract" do
@@ -1085,7 +1085,7 @@ describe "Semantic: abstract def" do
 
   describe "implementation is not inherited from supertype" do
     it "nongeneric class" do
-      assert_error <<-CR, "abstract `def Abstract#foo()` must be implemented by Concrete", inject_primitives: false
+      assert_error <<-CR, "abstract `def Abstract#foo()` must be implemented by Concrete"
         class Supertype
           def foo; end
         end
@@ -1100,7 +1100,7 @@ describe "Semantic: abstract def" do
     end
 
     it "generic class" do
-      assert_error <<-CR, "abstract `def Abstract(T)#foo()` must be implemented by Concrete", inject_primitives: false
+      assert_error <<-CR, "abstract `def Abstract(T)#foo()` must be implemented by Concrete"
         class Supertype(T)
           def foo; end
         end
@@ -1115,7 +1115,7 @@ describe "Semantic: abstract def" do
     end
 
     it "nongeneric module" do
-      assert_error <<-CR, "abstract `def Abstract#size()` must be implemented by Concrete", inject_primitives: false
+      assert_error <<-CR, "abstract `def Abstract#size()` must be implemented by Concrete"
         module Supertype
           def size
           end
@@ -1134,7 +1134,7 @@ describe "Semantic: abstract def" do
     end
 
     it "generic module" do
-      assert_error <<-CR, "abstract `def Abstract(T)#size()` must be implemented by Concrete(T)", inject_primitives: false
+      assert_error <<-CR, "abstract `def Abstract(T)#size()` must be implemented by Concrete(T)"
         module Supertype(T)
           def size
           end

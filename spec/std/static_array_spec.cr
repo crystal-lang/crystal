@@ -63,6 +63,16 @@ describe "StaticArray" do
     end
   end
 
+  describe "<=>" do
+    it "correctly compares two static arrays" do
+      array1 = StaticArray(Int32, 3).new(5)
+      array2 = StaticArray(Int32, 3).new(7)
+      (array1 <=> array2).should be < 0
+      (array2 <=> array1).should be > 0
+      (array1 <=> array1).should eq 0
+    end
+  end
+
   describe "values_at" do
     it "returns the given indexes" do
       StaticArray(Int32, 4).new { |i| i + 1 }.values_at(1, 0, 2).should eq({2, 1, 3})
