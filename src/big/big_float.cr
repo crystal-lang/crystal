@@ -193,9 +193,9 @@ struct BigFloat < Float
     BigInt.new { |mpz| LibGMP.set_f(mpz, mpf) }
   end
 
-  def to_i64
+  def to_i64 : Int64
     raise OverflowError.new unless LibGMP::Long::MIN <= self <= LibGMP::Long::MAX
-    LibGMP.mpf_get_si(self)
+    LibGMP.mpf_get_si(self).to_i64!
   end
 
   def to_i32 : Int32
@@ -218,11 +218,11 @@ struct BigFloat < Float
     to_i32!
   end
 
-  def to_i8!
+  def to_i8! : Int8
     LibGMP.mpf_get_si(self).to_i8!
   end
 
-  def to_i16!
+  def to_i16! : Int16
     LibGMP.mpf_get_si(self).to_i16!
   end
 
@@ -230,13 +230,13 @@ struct BigFloat < Float
     LibGMP.mpf_get_si(self).to_i32!
   end
 
-  def to_i64!
-    LibGMP.mpf_get_si(self)
+  def to_i64! : Int64
+    LibGMP.mpf_get_si(self).to_i64!
   end
 
-  def to_u64
+  def to_u64 : UInt64
     raise OverflowError.new unless 0 <= self <= LibGMP::ULong::MAX
-    LibGMP.mpf_get_ui(self)
+    LibGMP.mpf_get_ui(self).to_u64!
   end
 
   def to_u32 : UInt32
@@ -259,11 +259,11 @@ struct BigFloat < Float
     to_u32!
   end
 
-  def to_u8!
+  def to_u8! : UInt8
     LibGMP.mpf_get_ui(self).to_u8!
   end
 
-  def to_u16!
+  def to_u16! : UInt16
     LibGMP.mpf_get_ui(self).to_u16!
   end
 
@@ -271,8 +271,8 @@ struct BigFloat < Float
     LibGMP.mpf_get_ui(self).to_u32!
   end
 
-  def to_u64!
-    LibGMP.mpf_get_ui(self)
+  def to_u64! : UInt64
+    LibGMP.mpf_get_ui(self).to_u64!
   end
 
   def to_unsafe
@@ -421,7 +421,7 @@ end
 
 module Math
   # Decomposes the given floating-point *value* into a normalized fraction and an integral power of two.
-  def frexp(value : BigFloat) : {BigFloat, Int32 | Int64}
+  def frexp(value : BigFloat) : {BigFloat, Int64}
     LibGMP.mpf_get_d_2exp(out exp, value) # we need BigFloat frac, so will skip Float64 one.
     frac = BigFloat.new do |mpf|
       if exp >= 0
@@ -430,7 +430,7 @@ module Math
         LibGMP.mpf_mul_2exp(mpf, value, -exp)
       end
     end
-    {frac, exp}
+    {frac, exp.to_i64}
   end
 
   # Calculates the square root of *value*.

@@ -15,6 +15,18 @@ private def assert_no_unused_bits(ba : BitArray, *, file = __FILE__, line = __LI
   end
 end
 
+private def assert_rotates!(from : BitArray, n : Int, to : BitArray, *, file = __FILE__, line = __LINE__)
+  from.rotate!(n).should eq(from), file: file, line: line
+  from.should eq(to), file: file, line: line
+  assert_no_unused_bits from, file: file, line: line
+end
+
+private def assert_rotates!(from : BitArray, to : BitArray, *, file = __FILE__, line = __LINE__)
+  from.rotate!.should eq(from), file: file, line: line
+  from.should eq(to), file: file, line: line
+  assert_no_unused_bits from, file: file, line: line
+end
+
 describe "BitArray" do
   it "has size" do
     ary = BitArray.new(100)
@@ -370,6 +382,142 @@ describe "BitArray" do
 
     ary.invert
     ary.count { |b| b }.should eq(2)
+  end
+
+  describe "#reverse!" do
+    it "reverses empty BitArray" do
+      ba = from_int(0, 0)
+      ba.reverse!
+      ba.should eq(from_int(0, 0))
+    end
+
+    it "reverses short BitArray" do
+      ba = from_int(5, 0b01011)
+      ba.reverse!
+      ba.should eq(from_int(5, 0b11010))
+      assert_no_unused_bits ba
+
+      ba = from_int(8, 0b11101001)
+      ba.reverse!
+      ba.should eq(from_int(8, 0b10010111))
+      assert_no_unused_bits ba
+
+      ba = from_int(20, 0b1010_00110011_00001111)
+      ba.reverse!
+      ba.should eq(from_int(20, 0b1111_00001100_11000101))
+      assert_no_unused_bits ba
+
+      ba = from_int(32, 0b11000101_00011111_11000001_00011101_u32)
+      ba.reverse!
+      ba.should eq(from_int(32, 0b10111000_10000011_11111000_10100011_u32))
+    end
+
+    it "reverses medium BitArray" do
+      ba = from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64)
+      ba.reverse!
+      ba.should eq(from_int(45, 0b00010_01011100_00000000_00000000_00000010_01011100_u64))
+      assert_no_unused_bits ba
+
+      ba = from_int(64, 0b11001100_00101001_01111010_10110001_10111111_00100101_11101100_10101010_u64)
+      ba.reverse!
+      ba.should eq(from_int(64, 0b01010101_00110111_10100100_11111101_10001101_01011110_10010100_00110011_u64))
+    end
+
+    it "reverses large BitArray" do
+      ba = BitArray.new(200)
+      ba[0] = ba[2] = ba[5] = ba[11] = ba[64] = ba[103] = ba[193] = ba[194] = true
+      ba.reverse!
+      ba2 = BitArray.new(200)
+      ba2[199] = ba2[197] = ba2[194] = ba2[188] = ba2[135] = ba2[96] = ba2[6] = ba2[5] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba = BitArray.new(256)
+      ba[0] = ba[2] = ba[5] = ba[11] = ba[64] = ba[103] = ba[193] = ba[194] = true
+      ba.reverse!
+      ba2 = BitArray.new(256)
+      ba2[255] = ba2[253] = ba2[250] = ba2[244] = ba2[191] = ba2[152] = ba2[62] = ba2[61] = true
+      ba.should eq(ba2)
+    end
+  end
+
+  describe "#rotate!" do
+    it "rotates empty BitArray" do
+      assert_rotates! from_int(0, 0), from_int(0, 0)
+      assert_rotates! from_int(0, 0), 0, from_int(0, 0)
+      assert_rotates! from_int(0, 0), 1, from_int(0, 0)
+      assert_rotates! from_int(0, 0), -1, from_int(0, 0)
+    end
+
+    it "rotates short BitArray" do
+      assert_rotates! from_int(5, 0b10011), from_int(5, 0b00111)
+      assert_rotates! from_int(5, 0b10011), 0, from_int(5, 0b10011)
+      assert_rotates! from_int(5, 0b10011), 1, from_int(5, 0b00111)
+      assert_rotates! from_int(5, 0b10011), 2, from_int(5, 0b01110)
+      assert_rotates! from_int(5, 0b10011), 3, from_int(5, 0b11100)
+      assert_rotates! from_int(5, 0b10011), 4, from_int(5, 0b11001)
+      assert_rotates! from_int(5, 0b10011), 5, from_int(5, 0b10011)
+      assert_rotates! from_int(5, 0b10011), 6, from_int(5, 0b00111)
+      assert_rotates! from_int(5, 0b10011), -1, from_int(5, 0b11001)
+      assert_rotates! from_int(5, 0b10011), -2, from_int(5, 0b11100)
+      assert_rotates! from_int(5, 0b10011), -3, from_int(5, 0b01110)
+      assert_rotates! from_int(5, 0b10011), -4, from_int(5, 0b00111)
+
+      ba = from_int(5, 0b10011)
+      assert_rotates! ba, from_int(5, 0b00111)
+      assert_rotates! ba, from_int(5, 0b01110)
+      assert_rotates! ba, 2, from_int(5, 0b11001)
+
+      ba = from_int(32, 0b11000101_00011111_11000001_00011101_u32)
+      assert_rotates! ba, 5, from_int(32, 0b10100011_11111000_00100011_10111000_u32)
+      assert_rotates! ba, -8, from_int(32, 0b10111000_10100011_11111000_00100011_u32)
+      assert_rotates! ba, 45, from_int(32, 0b01111111_00000100_01110111_00010100_u32)
+    end
+
+    it "rotates medium BitArray" do
+      ba = from_int(64, 0b11001100_00101001_01111010_10110001_10111111_00100101_11101100_10101010_u64)
+      assert_rotates! ba, from_int(64, 0b10011000_01010010_11110101_01100011_01111110_01001011_11011001_01010101_u64)
+      assert_rotates! ba, 10, from_int(64, 0b01001011_11010101_10001101_11111001_00101111_01100101_01010110_01100001_u64)
+      assert_rotates! ba, 51, from_int(64, 0b10110011_00001010_01011110_10101100_01101111_11001001_01111011_00101010_u64)
+      assert_rotates! ba, -40, from_int(64, 0b10101100_01101111_11001001_01111011_00101010_10110011_00001010_01011110_u64)
+      assert_rotates! ba, 128, from_int(64, 0b10101100_01101111_11001001_01111011_00101010_10110011_00001010_01011110_u64)
+      assert_rotates! ba, 97, from_int(64, 0b01010101_01100110_00010100_10111101_01011000_11011111_10010010_11110110_u64)
+    end
+
+    it "rotates large BitArray" do
+      ba = BitArray.new(200)
+      ba[0] = ba[2] = ba[5] = ba[11] = ba[64] = ba[103] = ba[193] = ba[194] = true
+
+      ba.rotate!
+      ba2 = BitArray.new(200)
+      ba2[199] = ba2[1] = ba2[4] = ba2[10] = ba2[63] = ba2[102] = ba2[192] = ba2[193] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba.rotate!(21)
+      ba2 = BitArray.new(200)
+      ba2[178] = ba2[180] = ba2[183] = ba2[189] = ba2[42] = ba2[81] = ba2[171] = ba2[172] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba.rotate!(192)
+      ba2 = BitArray.new(200)
+      ba2[186] = ba2[188] = ba2[191] = ba2[197] = ba2[50] = ba2[89] = ba2[179] = ba2[180] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba.rotate!(50)
+      ba2 = BitArray.new(200)
+      ba2[136] = ba2[138] = ba2[141] = ba2[147] = ba2[0] = ba2[39] = ba2[129] = ba2[130] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba.rotate!(123)
+      ba2 = BitArray.new(200)
+      ba2[13] = ba2[15] = ba2[18] = ba2[24] = ba2[77] = ba2[116] = ba2[6] = ba2[7] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+    end
   end
 
   it "raises when out of bounds" do

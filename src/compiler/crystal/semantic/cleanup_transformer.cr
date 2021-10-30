@@ -4,15 +4,19 @@ require "../types"
 
 module Crystal
   class Program
+    getter(cleanup_transformer : CleanupTransformer) do
+      CleanupTransformer.new(self)
+    end
+
     def cleanup(node)
-      transformer = CleanupTransformer.new(self)
+      transformer = self.cleanup_transformer
       node = node.transform(transformer)
       puts node if ENV["AFTER"]? == "1"
       node
     end
 
     def cleanup_types
-      transformer = CleanupTransformer.new(self)
+      transformer = self.cleanup_transformer
 
       after_inference_types.each do |type|
         cleanup_type type, transformer

@@ -32,7 +32,18 @@ module Crystal::System::File
     if follow_symlinks
       ret = LibC.stat(path.check_no_null_byte, pointerof(stat))
     else
-      ret = LibC.lstat(path.check_no_null_byte, pointerof(stat))
+      # On some systems, the symbols `fstat` and `lstat` are not part of the GNU
+      # shared library `libc.so` and instead provided by `libc_noshared.a`.
+      # That makes them unavailable for dynamic runtime symbol lookup via `dlsym`
+      # which we use for interpreted mode.
+      # See https://github.com/crystal-lang/crystal/issues/11157#issuecomment-949640034 for details.
+      # Linking against the internal counterparts `__fxstat` and `__lxstat` directly
+      # should work in both interpreted and compiled mode.
+      {% if LibC.has_method?(:__lxstat) %}
+        ret = LibC.__lxstat(1, path.check_no_null_byte, pointerof(stat))
+      {% else %}
+        ret = LibC.lstat(path.check_no_null_byte, pointerof(stat))
+      {% end %}
     end
 
     if ret == 0

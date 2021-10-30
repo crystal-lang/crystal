@@ -411,4 +411,16 @@ describe "Code gen: cast" do
       x.foo
       )).to_i.should eq(1)
   end
+
+  it "can cast to metaclass (#11121)" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      A.as(A.class)
+      ))
+  end
 end

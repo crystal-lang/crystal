@@ -62,7 +62,7 @@ module OpenSSL::X509
 
     # Returns the name of the signature algorithm.
     def signature_algorithm : String
-      {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+      {% if LibCrypto.has_method?(:obj_find_sigid_algs) %}
         sigid = LibCrypto.x509_get_signature_nid(@cert)
         result = LibCrypto.obj_find_sigid_algs(sigid, out algo_nid, nil)
         raise "Could not determine certificate signature algorithm" if result == 0
@@ -78,6 +78,7 @@ module OpenSSL::X509
     # Returns the digest of the certificate using *algorithm_name*
     #
     # ```
+    # cert = OpenSSL::X509::Certificate.new
     # cert.digest("SHA1").hexstring   # => "6f608752059150c9b3450a9fe0a0716b4f3fa0ca"
     # cert.digest("SHA256").hexstring # => "51d80c865cc717f181cd949f0b23b5e1e82c93e01db53f0836443ec908b83748"
     # ```

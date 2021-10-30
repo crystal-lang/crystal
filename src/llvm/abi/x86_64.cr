@@ -1,39 +1,84 @@
 require "../abi"
 
 # Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi_x86_64.rs
+# See also, section 3.2.3 of the System V Application Binary Interface AMD64 Architecture Processor Supplement
 class LLVM::ABI::X86_64 < LLVM::ABI
+  MAX_INT_REGS = 6 # %rdi, %rsi, %rdx, %rcx, %r8, %r9
+  MAX_SSE_REGS = 8 # %xmm0-%xmm7
+
   def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context) : LLVM::ABI::FunctionType
-    arg_tys = Array(LLVM::Type).new(atys.size)
-    arg_tys = atys.map do |arg_type|
-      x86_64_type(arg_type, Attribute::ByVal, context) { |cls| pass_by_val?(cls) }
-    end
+    # registers available to pass arguments directly: int_regs can hold integers
+    # and pointers, sse_regs can hold floats and doubles
+    available_int_regs = MAX_INT_REGS
+    available_sse_regs = MAX_SSE_REGS
 
     if ret_def
-      ret_ty = x86_64_type(rty, Attribute::StructRet, context) { |cls| sret?(cls) }
+      ret_ty, _, _ = x86_64_type(rty, Attribute::StructRet, context) { |cls| sret?(cls) }
+      if ret_ty.kind.indirect?
+        # return value is a caller-allocated struct which is passed in %rdi,
+        # so we have 1 less register available for passing arguments
+        available_int_regs -= 1
+      end
     else
       ret_ty = ArgType.direct(context.void)
+    end
+
+    arg_tys = Array(LLVM::Type).new(atys.size)
+    arg_tys = atys.map do |arg_type|
+      abi_type, needed_int_regs, needed_sse_regs = x86_64_type(arg_type, Attribute::ByVal, context) { |cls| pass_by_val?(cls) }
+      if available_int_regs >= needed_int_regs && available_sse_regs >= needed_sse_regs
+        available_int_regs -= needed_int_regs
+        available_sse_regs -= needed_sse_regs
+        abi_type
+      elsif !register?(arg_type)
+        # no available registers to pass the argument, but only mark aggregates
+        # as indirect byval types because LLVM will automatically pass register
+        # types in the stack
+        ArgType.indirect(arg_type, Attribute::ByVal)
+      else
+        abi_type
+      end
     end
 
     FunctionType.new arg_tys, ret_ty
   end
 
-  def x86_64_type(type, ind_attr, context)
-    if register?(type)
+  # returns the LLVM type (with attributes) and the number of integer and SSE
+  # registers needed to pass this value directly (ie. not using the stack)
+  def x86_64_type(type, ind_attr, context) : Tuple(ArgType, Int32, Int32)
+    if int_register?(type)
       attr = type == context.int1 ? Attribute::ZExt : nil
-      ArgType.direct(type, attr: attr)
+      {ArgType.direct(type, attr: attr), 1, 0}
+    elsif sse_register?(type)
+      {ArgType.direct(type), 0, 1}
     else
       cls = classify(type)
       if yield cls
-        ArgType.indirect(type, ind_attr)
+        {ArgType.indirect(type, ind_attr), 0, 0}
       else
-        ArgType.direct(type, llreg(context, cls))
+        needed_int_regs = cls.count(&.int?)
+        needed_sse_regs = cls.count(&.sse?)
+        {ArgType.direct(type, llreg(context, cls)), needed_int_regs, needed_sse_regs}
       end
     end
   end
 
   def register?(type) : Bool
+    int_register?(type) || sse_register?(type)
+  end
+
+  def int_register?(type) : Bool
     case type.kind
-    when Type::Kind::Integer, Type::Kind::Float, Type::Kind::Double, Type::Kind::Pointer
+    when Type::Kind::Integer, Type::Kind::Pointer
+      true
+    else
+      false
+    end
+  end
+
+  def sse_register?(type) : Bool
+    case type.kind
+    when Type::Kind::Float, Type::Kind::Double
       true
     else
       false
