@@ -570,6 +570,9 @@ describe "Lexer" do
       assert_syntax_error %(%i(#{char})), "Invalid unicode control character: #{char.dump}"
       assert_syntax_error %(##{char}), "Invalid unicode control character: #{char.dump}"
       assert_syntax_error %(macro foo\n##{char}\nend), "Invalid unicode control character: #{char.dump}"
+
+      it_lexes_string char.to_s.dump, char.to_s
+      it_lexes_char char.dump, char
     end
   end
 end
