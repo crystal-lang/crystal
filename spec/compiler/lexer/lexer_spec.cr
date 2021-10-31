@@ -558,4 +558,16 @@ describe "Lexer" do
   assert_syntax_error %("\\x1z"), "invalid hex escape"
 
   assert_syntax_error %("hi\\)
+
+  # CVE-2021-42574
+  describe "trojan source" do
+    ['\u202A', '\u202B', '\u202C', '\u202D', '\u202E', '\u2066', '\u2067', '\u2068', '\u2069'].each do |char|
+      assert_syntax_error %("#{char}"), "Invalid unicode control character: #{char.dump}"
+      assert_syntax_error %(%w(#{char})), "Invalid unicode control character: #{char.dump}"
+      assert_syntax_error %(:#{char}), "Invalid unicode control character: #{char.dump}"
+      assert_syntax_error %(%i(#{char})), "Invalid unicode control character: #{char.dump}"
+      assert_syntax_error %(##{char}), "Invalid unicode control character: #{char.dump}"
+      assert_syntax_error %(macro foo\n##{char}\nend), "Invalid unicode control character: #{char.dump}"
+    end
+  end
 end

@@ -130,7 +130,7 @@ class Crystal::ASTNode
 end
 
 def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile = __FILE__, metaline = __LINE__, metaendline = __END_LINE__)
-  it "says syntax error on #{str.inspect}", metafile, metaline, metaendline do
+  it "says syntax error on #{str.dump}", metafile, metaline, metaendline do
     begin
       parse str
       fail "Expected SyntaxException to be raised", metafile, metaline

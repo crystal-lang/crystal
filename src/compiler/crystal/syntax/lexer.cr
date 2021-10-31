@@ -1349,9 +1349,7 @@ module Crystal
         start_pos = current_pos
       end
 
-      while char != '\n' && char != '\0'
-        char = next_char_no_column_increment
-      end
+      skip_comment
 
       if doc_buffer = @token.doc_buffer
         doc_buffer << '\n'
@@ -1365,6 +1363,7 @@ module Crystal
     def skip_comment
       char = current_char
       while char != '\n' && char != '\0'
+        ensure_no_unicode_control
         char = next_char_no_column_increment
       end
     end
@@ -2166,6 +2165,7 @@ module Crystal
             current_char != '#' &&
             current_char != '\r' &&
             current_char != '\n'
+        ensure_no_unicode_control
         next_char
       end
 
@@ -2338,6 +2338,7 @@ module Crystal
           when '\0'
             raise "unterminated macro"
           else
+            ensure_no_unicode_control
             char = next_char
           end
         end
@@ -2909,6 +2910,7 @@ module Crystal
           sub_start = current_pos + 1
         end
 
+        ensure_no_unicode_control
         next_char
       end
 
@@ -3233,6 +3235,12 @@ module Crystal
 
     def unknown_token
       raise "unknown token: #{current_char.inspect}", @line_number, @column_number
+    end
+
+    def ensure_no_unicode_control
+      if current_char.in?('\u202A', '\u202B', '\u202C', '\u202D', '\u202E', '\u2066', '\u2067', '\u2068', '\u2069')
+        raise "Invalid unicode control character: #{current_char.dump}"
+      end
     end
 
     def set_token_raw_from_start(start)
