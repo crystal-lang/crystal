@@ -6,7 +6,7 @@ require "../syntax_highlighter"
 #
 # ```
 # code = %(foo = bar("baz\#{PI + 1}") # comment)
-# html = Crystal::SyntaxHighlighter::Colorize.highlight(code)
+# colorized = Crystal::SyntaxHighlighter::Colorize.highlight(code)
 # colorized # => "foo \e[91m=\e[0m bar(\e[93m\"baz\#{\e[0;36mPI\e[0;93m \e[0;91m+\e[0;93m \e[0;35m1\e[0;93m}\"\e[0m) \e[90m# comment\e[0m"
 # ```
 class Crystal::SyntaxHighlighter::Colorize < Crystal::SyntaxHighlighter
