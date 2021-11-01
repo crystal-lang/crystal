@@ -216,7 +216,7 @@ module Crystal
           sequence.version = @io.read_bytes(UInt16)
 
           if sequence.version < 2 || sequence.version > 5
-            # return Error.new("unknown line table version: #{version}")
+            raise Error.new("unknown line table version: #{version}")
           end
 
           if sequence.version >= 5
@@ -237,14 +237,14 @@ module Crystal
           end
 
           if sequence.maximum_operations_per_instruction == 0
-            # return Error.new("invalid maximum operations per instruction: 0")
+            raise Error.new("invalid maximum operations per instruction: 0")
           end
 
           sequence.default_is_stmt = @io.read_byte == 1
           sequence.line_base = @io.read_bytes(Int8).to_i
           sequence.line_range = @io.read_bytes(UInt8).to_i
           if sequence.line_range == 0
-            # return Error.new("invalid line range: 0")
+            raise Error.new("invalid line range: 0")
           end
 
           sequence.opcode_base = @io.read_bytes(UInt8).to_i
@@ -272,7 +272,6 @@ module Crystal
           if @io.tell - @offset < sequence.offset + sequence.total_length
             read_statement_program(sequence)
           end
-          # @io.pos = sequence.offset + sequence.total_length + @offset
         end
       end
 
