@@ -113,8 +113,7 @@ module Crystal
       record Row,
         address : UInt64,
         op_index : UInt32,
-        directory : String,
-        file : String,
+        path : String,
         line : Int32,
         column : Int32,
         end_sequence : Bool
@@ -142,16 +141,19 @@ module Crystal
 
         # An array of directory names. Starts at 1; 0 means that the information
         # is missing.
-        getter include_directories
+        property! include_directories : Array(String)
+
+        record FileEntry,
+          path : String,
+          mtime : UInt64,
+          size : UInt64
 
         # An array of file names. Starts at 1; 0 means that the information is
         # missing.
-        getter file_names
+        property! file_names : Array(FileEntry)
 
         def initialize
           @maximum_operations_per_instruction = 1_u8
-          @include_directories = [""]
-          @file_names = [{"", 0, 0, 0}]
           @standard_opcode_lengths = [0_u8]
         end
 
@@ -251,22 +253,16 @@ module Crystal
           read_opcodes(sequence)
 
           if sequence.version < 5
-            read_directory_table(sequence)
-            read_filename_table(sequence)
+            sequence.include_directories = read_directory_table(sequence)
+            sequence.file_names = read_filename_table(sequence)
           else
             dir_format = read_lnct_format
             count = DWARF.read_unsigned_leb128(@io)
-            count.times do
-              dir, _, _ = read_lnct(sequence, dir_format)
-              sequence.include_directories << dir
-            end
+            sequence.include_directories = Array.new(count) { read_lnct(sequence, dir_format).path }
 
             file_format = read_lnct_format
             count = DWARF.read_unsigned_leb128(@io)
-            count.times do
-              name, mtime, size = read_lnct(sequence, file_format)
-              sequence.file_names << {name, mtime.to_i, size.to_i, 0}
-            end
+            sequence.file_names = Array.new(count) { read_lnct(sequence, file_format) }
           end
 
           if @io.tell - @offset < sequence.offset + sequence.total_length
@@ -309,9 +305,10 @@ module Crystal
 
       private def read_lnct(sequence, formats)
         dir = ""
-        path : String = ""
-        mtime : UInt64 = 0_u64
-        size : UInt64 = 0_u64
+        path = ""
+        mtime = 0_u64
+        size = 0_u64
+
         formats.each do |format|
           str = nil
           val = 0_u64
@@ -376,26 +373,35 @@ module Crystal
           path = File.join(dir, path)
         end
 
-        return path, mtime, size
+        Sequence::FileEntry.new(path, mtime, size)
       end
 
       private def read_directory_table(sequence)
+        ary = [""]
         loop do
           name = @io.gets('\0', chomp: true).to_s
           break if name.empty?
-          sequence.include_directories << name
+          ary << name
         end
+        ary
       end
 
       private def read_filename_table(sequence)
+        ary = [Sequence::FileEntry.new("", 0, 0)]
         loop do
           name = @io.gets('\0', chomp: true).to_s
           break if name.empty?
           dir = DWARF.read_unsigned_leb128(@io)
           time = DWARF.read_unsigned_leb128(@io)
           length = DWARF.read_unsigned_leb128(@io)
-          sequence.file_names << {name, dir.to_i, time.to_i, length.to_i}
+
+          dir = sequence.include_directories[dir]
+          if(name != "" && dir != "")
+            name = File.join(dir, name)
+          end
+          ary << Sequence::FileEntry.new(name, time.to_u64, length.to_u64)
         end
+        ary
       end
 
       private macro increment_address_and_op_index(operation_advance)
@@ -501,14 +507,12 @@ module Crystal
         # but some operations within macros seem to be useful and marked as !is_stmt
         # so attempt to include them also
         if registers.is_stmt || (registers.line.to_i > 0 && registers.column.to_i > 0)
-          file = sequence.file_names[registers.file]
-          path = sequence.include_directories[file[1]]
+          path = sequence.file_names[registers.file].path
 
           row = Row.new(
             registers.address + @base_address,
             registers.op_index,
             path,
-            file[0],
             registers.line.to_i,
             registers.column.to_i,
             registers.end_sequence

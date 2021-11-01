@@ -29,8 +29,7 @@ struct Exception::CallStack
     load_dwarf
     if ln = @@dwarf_line_numbers
       if row = ln.find(pc)
-        path = "#{row.directory}/#{row.file}"
-        return {path, row.line, row.column}
+        return {row.path, row.line, row.column}
       end
     end
     {"??", 0, 0}
