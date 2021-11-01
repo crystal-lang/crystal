@@ -216,7 +216,7 @@ module Crystal
           sequence.version = @io.read_bytes(UInt16)
 
           if sequence.version < 2 || sequence.version > 5
-            raise "unknown line table version: #{version}"
+            raise "unknown line table version: #{sequence.version}"
           end
 
           if sequence.version >= 5
