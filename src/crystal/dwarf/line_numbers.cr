@@ -285,6 +285,10 @@ module Crystal
         lnct : LNCT,
         format : FORM
 
+      # :nodoc:
+      #
+      # DWARF-defined content type codes
+      # New in DWARF 5 § 6.2.4.1
       enum LNCT : UInt32
         PATH            = 0x01
         DIRECTORY_INDEX = 0x02
