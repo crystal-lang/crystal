@@ -55,7 +55,7 @@ struct OpenSSL::BIO
             when LibCrypto::CTRL_FLUSH
               io.flush
               1
-            when LibCrypto::CTRL_PUSH, LibCrypto::CTRL_POP
+            when LibCrypto::CTRL_PUSH, LibCrypto::CTRL_POP, LibCrypto::CTRL_EOF
               0
             else
               STDERR.puts "WARNING: Unsupported BIO ctrl call (#{cmd})"
