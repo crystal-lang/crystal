@@ -225,6 +225,7 @@ struct BitArray
   # ```
   def toggle(start : Int, count : Int)
     start, count = normalize_start_and_count(start, count)
+    return if count == 0
 
     start_bit_index, start_sub_index = start.divmod(32)
     end_bit_index, end_sub_index = (start + count - 1).divmod(32)
