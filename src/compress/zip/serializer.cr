@@ -86,7 +86,7 @@ class Compress::Zip::Serializer
     extra_fields_io.rewind
 
     write_uint16_le(io, extra_fields_io.size) # extra field length              2 bytes
-    io.write(filename.encode("utf-8"))        # file name (variable size)
+    io.write(filename.to_slice)               # file name (variable size)
     IO.copy(extra_fields_io, io)              # extra fields content (variable size)
   end
 
@@ -137,11 +137,11 @@ class Compress::Zip::Serializer
     entry_header_offset = add_zip64 ? UInt32::MAX : local_file_header_location
     write_uint32_le(io, entry_header_offset) # relative offset of local header 4 bytes
 
-    io.write(filename.encode("utf-8")) # file name (variable size)
+    io.write(filename.to_slice) # file name (variable size)
 
     IO.copy(extra_fields_io, io) # extra field (variable size)
 
-    io.write(comment.encode("utf-8")) # file comment (variable size)
+    io.write(comment.to_slice) # file comment (variable size)
   end
 
   def write_end_of_central_directory(io : IO, start_of_central_directory_location : ZipLocation, central_directory_size : ZipLocation, num_files_in_archive : ZipLocation, comment : String = "")
@@ -193,7 +193,7 @@ class Compress::Zip::Serializer
 
     # Sneak in the default comment
     write_uint16_le(io, comment.bytesize) # .ZIP file comment length        2 bytes
-    io.write(comment.encode("utf-8"))     # .ZIP file comment       (variable size)
+    io.write(comment.to_slice)            # .ZIP file comment       (variable size)
   end
 
   def write_data_descriptor(io : IO, compressed_size : ZipFilesize, uncompressed_size : ZipFilesize, crc32 : ZipCRC32)
