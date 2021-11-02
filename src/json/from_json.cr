@@ -98,6 +98,14 @@ end
   end
 {% end %}
 
+def UInt64.new(pull : JSON::PullParser)
+  pull.read_uint
+end
+
+def UInt64.from_json_object_key?(key : String)
+  key.to_u64?
+end
+
 def Float32.new(pull : JSON::PullParser)
   case pull.kind
   when .int?

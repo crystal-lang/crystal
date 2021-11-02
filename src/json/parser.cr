@@ -18,7 +18,13 @@ class JSON::Parser
   private def parse_value
     case token.kind
     when .int?
-      value_and_next_token token.int_value
+      value = if token.negative_int?
+                token.int_value
+              else
+                token_uint_value = token.uint_value
+                token_uint_value <= Int64::MAX ? token_uint_value.to_i64 : token_uint_value
+              end
+      value_and_next_token value
     when .float?
       value_and_next_token token.float_value
     when .string?

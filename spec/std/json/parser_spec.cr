@@ -22,6 +22,9 @@ describe JSON::Parser do
   it_parses "true", true
   it_parses "false", false
   it_parses "null", nil
+  it_parses UInt64::MAX.to_s, UInt64::MAX
+  it_parses Int64::MAX.to_s, Int64::MAX
+  it_parses Int64::MIN.to_s, Int64::MIN
 
   it_parses "[]", [] of Int32
   it_parses "[1]", [1]

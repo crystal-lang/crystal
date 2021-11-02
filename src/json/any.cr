@@ -18,7 +18,7 @@
 # which return `nil` when the underlying value type won't match.
 struct JSON::Any
   # All possible JSON types.
-  alias Type = Nil | Bool | Int64 | Float64 | String | Array(Any) | Hash(String, Any)
+  alias Type = Nil | Bool | Int64 | UInt64 | Float64 | String | Array(Any) | Hash(String, Any)
 
   # Reads a `JSON::Any` value from the given pull parser.
   def self.new(pull : JSON::PullParser)
