@@ -126,13 +126,15 @@ module Crystal
         property! offset : Int64
         property! unit_length : UInt32
         property! version : UInt16
+        property! address_size : Int32
+        property! segment_selector_size : Int32
         property! header_length : UInt32 # FIXME: UInt64 for DWARF64 (uncommon)
-        property! minimum_instruction_length : UInt8
-        property maximum_operations_per_instruction : UInt8
+        property! minimum_instruction_length : Int32
+        property! maximum_operations_per_instruction : Int32
         property! default_is_stmt : Bool
-        property! line_base : Int8
-        property! line_range : UInt8
-        property! opcode_base : UInt8
+        property! line_base : Int32
+        property! line_range : Int32
+        property! opcode_base : Int32
 
         # An array of how many args an array. Starts at 1 because 0 means an
         # extended opcode.
@@ -168,7 +170,7 @@ module Crystal
 
       @offset : Int64
 
-      def initialize(@io : IO::FileDescriptor, size, @base_address : LibC::SizeT = 0)
+      def initialize(@io : IO::FileDescriptor, size, @base_address : LibC::SizeT = 0, @strings : Strings? = nil, @line_strings : Strings? = nil)
         @offset = @io.tell
         @matrix = Array(Array(Row)).new
         decode_sequences(size)
@@ -212,25 +214,65 @@ module Crystal
           sequence.offset = offset
           sequence.unit_length = @io.read_bytes(UInt32)
           sequence.version = @io.read_bytes(UInt16)
-          sequence.header_length = @io.read_bytes(UInt32)
-          sequence.minimum_instruction_length = @io.read_byte.not_nil!
 
-          if sequence.version >= 4
-            sequence.maximum_operations_per_instruction = @io.read_byte.not_nil!
+          if sequence.version < 2 || sequence.version > 5
+            # return Error.new("unknown line table version: #{version}")
           end
 
-          sequence.default_is_stmt = @io.read_byte.not_nil! == 1
-          sequence.line_base = @io.read_bytes(Int8)
-          sequence.line_range = @io.read_byte.not_nil!
-          sequence.opcode_base = @io.read_byte.not_nil!
+          if sequence.version >= 5
+            sequence.address_size = @io.read_bytes(UInt8).to_i
+            sequence.segment_selector_size = @io.read_bytes(UInt8).to_i
+          else
+            sequence.address_size = {{ flag?(:bits64) ? 8 : 4 }}
+            sequence.segment_selector_size = 0
+          end
 
+          sequence.header_length = @io.read_bytes(UInt32)
+          sequence.minimum_instruction_length = @io.read_bytes(UInt8).to_i
+
+          if sequence.version >= 4
+            sequence.maximum_operations_per_instruction = @io.read_bytes(UInt8).to_i
+          else
+            sequence.maximum_operations_per_instruction = 1
+          end
+
+          if sequence.maximum_operations_per_instruction == 0
+            # return Error.new("invalid maximum operations per instruction: 0")
+          end
+
+          sequence.default_is_stmt = @io.read_byte == 1
+          sequence.line_base = @io.read_bytes(Int8).to_i
+          sequence.line_range = @io.read_bytes(UInt8).to_i
+          if sequence.line_range == 0
+            # return Error.new("invalid line range: 0")
+          end
+
+          sequence.opcode_base = @io.read_bytes(UInt8).to_i
           read_opcodes(sequence)
-          read_directory_table(sequence)
-          read_filename_table(sequence)
+
+          if sequence.version < 5
+            read_directory_table(sequence)
+            read_filename_table(sequence)
+          else
+            dir_format = read_lnct_format
+            count = DWARF.read_unsigned_leb128(@io)
+            count.times do
+              dir, _, _ = read_lnct(sequence, dir_format)
+              sequence.include_directories << dir
+            end
+
+            file_format = read_lnct_format
+            count = DWARF.read_unsigned_leb128(@io)
+            count.times do
+              name, mtime, size = read_lnct(sequence, file_format)
+              sequence.file_names << {name, mtime.to_i, size.to_i, 0}
+            end
+          end
 
           if @io.tell - @offset < sequence.offset + sequence.total_length
             read_statement_program(sequence)
           end
+          # @io.pos = sequence.offset + sequence.total_length + @offset
         end
       end
 
@@ -238,6 +280,100 @@ module Crystal
         1.upto(sequence.opcode_base - 1) do
           sequence.standard_opcode_lengths << @io.read_byte.not_nil!
         end
+      end
+
+      record LNCTFormat,
+        lnct : LNCT,
+        format : FORM
+
+      enum LNCT : UInt32
+        PATH            = 0x01
+        DIRECTORY_INDEX = 0x02
+        TIMESTAMP       = 0x03
+        SIZE            = 0x04
+        MD5             = 0x05
+      end
+
+      private def read_lnct_format
+        count = @io.read_bytes(UInt8)
+        Array(LNCTFormat).new(count) do
+          LNCTFormat.new(
+            lnct: LNCT.new(DWARF.read_unsigned_leb128(@io)),
+            format: FORM.new(DWARF.read_unsigned_leb128(@io))
+          )
+        end
+      end
+
+      private def read_lnct(sequence, formats)
+        dir = ""
+        path : String = ""
+        mtime : UInt64 = 0_u64
+        size : UInt64 = 0_u64
+        formats.each do |format|
+          str = nil
+          val = 0_u64
+
+          case format.format
+          when .string?
+            str = @io.gets('\0', chomp: true) # .to_s
+          when .line_strp?
+            offset = @io.read_bytes(UInt32)
+            str = @line_strings.try &.decode(offset)
+          when .strp?
+            offset = @io.read_bytes(UInt32)
+            str = @strings.try &.decode(offset)
+          when .strp_sup?
+            @io.read_bytes(UInt32)
+          when .strx?
+            # .debug_line.dwo sections not yet supported.
+            DWARF.read_unsigned_leb128(@io)
+          when .strx1?
+            @io.read_bytes(UInt8)
+          when .strx2?
+            @io.read_bytes(UInt16)
+          when .strx3?
+            @io.skip 3
+          when .strx4?
+            @io.read_bytes(UInt32)
+          when .data1?
+            val = @io.read_bytes(UInt8).to_u64
+          when .data2?
+            val = @io.read_bytes(UInt16).to_u64
+          when .data4?
+            val = @io.read_bytes(UInt32).to_u64
+          when .data8?
+            val = @io.read_bytes(UInt64)
+          when .data16?
+            @io.skip(16)
+          when .block?
+            @io.skip(DWARF.read_unsigned_leb128(@io))
+          when .udata?
+            val = DWARF.read_unsigned_leb128(@io)
+          else
+            raise "Unexpected encoding format: #{format.format}"
+          end
+
+          case format.lnct
+          in .path?
+            path = str if str
+          in .directory_index?
+            if val
+              dir = sequence.include_directories[val]
+            end
+          in .timestamp?
+            mtime = val.to_u64
+          in .size?
+            size = val.to_u64
+          in .md5?
+            # ignore
+          end
+        end
+
+        if dir != "" && path != ""
+          path = File.join(dir, path)
+        end
+
+        return path, mtime, size
       end
 
       private def read_directory_table(sequence)

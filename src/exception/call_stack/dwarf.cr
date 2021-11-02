@@ -45,7 +45,7 @@ struct Exception::CallStack
     end
   end
 
-  protected def self.parse_function_names_from_dwarf(info, strings)
+  protected def self.parse_function_names_from_dwarf(info, strings, line_strings)
     info.each do |code, abbrev, attributes|
       next unless abbrev && abbrev.tag.subprogram?
       name = low_pc = high_pc = nil
@@ -54,6 +54,7 @@ struct Exception::CallStack
         case at
         when Crystal::DWARF::AT::DW_AT_name
           value = strings.try(&.decode(value.as(UInt32 | UInt64))) if form.strp?
+          value = line_strings.try(&.decode(value.as(UInt32 | UInt64))) if form.line_strp?
           name = value.as(String)
         when Crystal::DWARF::AT::DW_AT_low_pc
           low_pc = value.as(LibC::SizeT)
