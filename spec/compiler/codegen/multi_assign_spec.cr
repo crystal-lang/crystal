@@ -86,6 +86,8 @@ describe "Code gen: multi assign" do
 
   it "supports 1 to n assignment, with splat on left-hand side (2)" do
     run(<<-CR).to_i.should eq(12345)
+      #{range_new}
+
       *a, b, c = {1, 2, 3, 4, 5}
       a[0] &* 10000 &+ a[1] &* 1000 &+ a[2] &* 100 &+ b &* 10 &+ c
       CR
@@ -93,6 +95,8 @@ describe "Code gen: multi assign" do
 
   it "supports 1 to n assignment, with splat on left-hand side (3)" do
     run(<<-CR).to_i.should eq(12345)
+      #{range_new}
+
       a, b, *c = {1, 2, 3, 4, 5}
       a &* 10000 &+ b &* 1000 &+ c[0] &* 100 &+ c[1] &* 10 &+ c[2]
       CR
@@ -109,6 +113,9 @@ describe "Code gen: multi assign" do
 
   it "supports 1 to n assignment, splat is empty (2)" do
     run(<<-CR).to_b.should be_true
+      #{tuple_new}
+      #{range_new}
+
       *x, _, _ = {1, 2}
       x.is_a?(Tuple(*typeof(Tuple.new)))
       CR
@@ -116,6 +123,9 @@ describe "Code gen: multi assign" do
 
   it "supports 1 to n assignment, splat is empty (3)" do
     run(<<-CR).to_b.should be_true
+      #{tuple_new}
+      #{range_new}
+
       _, _, *x = {1, 2}
       x.is_a?(Tuple(*typeof(Tuple.new)))
       CR
@@ -126,7 +136,7 @@ describe "Code gen: multi assign" do
       require "prelude"
 
       begin
-        a, *b, c = {1}
+        a, *b, c = [1]
         false
       rescue ex : IndexError
         ex.message == "Multiple assignment count mismatch"
@@ -139,7 +149,7 @@ describe "Code gen: multi assign" do
       require "prelude"
 
       begin
-        *a, b, c = {1}
+        *a, b, c = [1]
         false
       rescue ex : IndexError
         true
@@ -152,7 +162,7 @@ describe "Code gen: multi assign" do
       require "prelude"
 
       begin
-        a, b, *c = {1}
+        a, b, *c = [1]
         false
       rescue ex : IndexError
         true
@@ -166,6 +176,15 @@ private def tuple_new
     struct Tuple
       def self.new(*args)
         args
+      end
+    end
+  CR
+end
+
+private def range_new
+  <<-CR
+    struct Range(B, E)
+      def initialize(@begin : B, @end : E, @exclusive : Bool = false)
       end
     end
   CR
