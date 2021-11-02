@@ -785,7 +785,7 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "expressions"
-        interpret_check_args { ArrayLiteral.new(expressions) }
+        interpret_check_args { ArrayLiteral.map(expressions, &.itself) }
       else
         super
       end
@@ -1172,7 +1172,13 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "inputs"
-        interpret_check_args { ArrayLiteral.new(@inputs || [] of ASTNode) }
+        interpret_check_args do
+          if inputs = @inputs
+            ArrayLiteral.map(inputs, &.itself)
+          else
+            ArrayLiteral.new
+          end
+        end
       when "output"
         interpret_check_args { @output || NilLiteral.new }
       else
@@ -1200,7 +1206,7 @@ module Crystal
       when "name"
         interpret_check_args { MacroId.new(@name) }
       when "args"
-        interpret_check_args { ArrayLiteral.new(@args) }
+        interpret_check_args { ArrayLiteral.map(@args, &.itself) }
       else
         super
       end
@@ -1277,7 +1283,7 @@ module Crystal
       when "resolve?"
         interpret_check_args { interpreter.resolve?(self) || NilLiteral.new }
       when "types"
-        interpret_check_args { ArrayLiteral.new(@types) }
+        interpret_check_args { ArrayLiteral.map(@types, &.itself) }
       else
         super
       end
@@ -1954,7 +1960,7 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "conds"
-        interpret_check_args { ArrayLiteral.new(conds) }
+        interpret_check_args { ArrayLiteral.map(conds, &.itself) }
       when "body"
         interpret_check_args { body }
       else
@@ -1980,9 +1986,9 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "targets"
-        interpret_check_args { ArrayLiteral.new(targets) }
+        interpret_check_args { ArrayLiteral.map(targets, &.itself) }
       when "values"
-        interpret_check_args { ArrayLiteral.new(values) }
+        interpret_check_args { ArrayLiteral.map(values, &.itself) }
       else
         super
       end
@@ -2120,7 +2126,7 @@ module Crystal
       when "name"
         interpret_check_args { name }
       when "type_vars"
-        interpret_check_args { ArrayLiteral.new(type_vars) }
+        interpret_check_args { ArrayLiteral.map(type_vars, &.itself) }
       when "named_args"
         interpret_check_args do
           if named_args = @named_args
@@ -2164,7 +2170,7 @@ module Crystal
         end
       when "args"
         interpret_check_args do
-          TupleLiteral.new self.args
+          TupleLiteral.map self.args, &.itself
         end
       when "named_args"
         interpret_check_args do
