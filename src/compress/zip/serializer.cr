@@ -90,7 +90,7 @@ class Compress::Zip::Serializer
     IO.copy(extra_fields_io, io)              # extra fields content (variable size)
   end
 
-  def write_central_directory_file_header(io : IO, filename : String, compressed_size : ZipFilesize, uncompressed_size : ZipFilesize, crc32 : ZipCRC32, gp_flags : ZipGpFlags, mtime : Time, storage_mode : ZipStorageMode, local_file_header_location : ZipLocation, additional_extra_fields : Bytes = Bytes.empty)
+  def write_central_directory_file_header(io : IO, filename : String, compressed_size : ZipFilesize, uncompressed_size : ZipFilesize, crc32 : ZipCRC32, gp_flags : ZipGpFlags, mtime : Time, storage_mode : ZipStorageMode, local_file_header_location : ZipLocation, additional_extra_fields : Bytes = Bytes.empty, comment : String = "")
     # At this point if the header begins somewhere beyound 0xFFFFFFFF we _have_ to record the offset
     # of the local file header as a zip64 extra field, so we give up, give in, you loose, love will always win...
     add_zip64 = (local_file_header_location > UInt32::MAX) || (compressed_size > UInt32::MAX) || (uncompressed_size > UInt32::MAX)
@@ -118,9 +118,9 @@ class Compress::Zip::Serializer
     write_uint32_le(io, add_zip64 ? UInt32::MAX : uncompressed_size)
 
     # Filename should not be longer than 0xFFFF otherwise this wont fit here
-    write_uint16_le(io, filename.bytesize)    # file name length                2 bytes
-    write_uint16_le(io, extra_fields_io.size) # extra field length              2 bytes
-    write_uint16_le(io, 0)                    # file comment length             2 bytes
+    write_uint16_le(io, filename.bytesize)       # file name length                2 bytes
+    write_uint16_le(io, extra_fields_io.size)    # extra field length              2 bytes
+    write_uint16_le(io, comment.bytesize.to_u16) # file comment length             2 bytes
 
     # For The Unarchiver < 3.11.1 this field has to be set to the overflow value if zip64 is used
     # because otherwise it does not properly advance the pointer when reading the Zip64 extra field
@@ -140,7 +140,8 @@ class Compress::Zip::Serializer
     io.write(filename.encode("utf-8")) # file name (variable size)
 
     IO.copy(extra_fields_io, io) # extra field (variable size)
-    # (empty)                                          # file comment (variable size)
+
+    io.write(comment.encode("utf-8")) # file comment (variable size)
   end
 
   def write_end_of_central_directory(io : IO, start_of_central_directory_location : ZipLocation, central_directory_size : ZipLocation, num_files_in_archive : ZipLocation, comment : String = "")

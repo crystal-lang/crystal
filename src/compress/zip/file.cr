@@ -174,7 +174,7 @@ class Compress::Zip::File
       end
     end
 
-    private getter(data_offset : UInt32) do
+    private getter(data_offset : UInt64) do
       # Apparently a zip entry might have different extra bytes
       # in the local file header and central directory header,
       # so to know the data offset we must read them again.

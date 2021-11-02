@@ -25,7 +25,7 @@ require "digest/crc32"
 # any `IO`.
 #
 # NOTE: only compression methods 0 (STORED) and 8 (DEFLATED) are
-# supported. Additionally, ZIP64 is not yet supported.
+# supported.
 module Compress::Zip
   VERSION                                   =     20_u16
   CENTRAL_DIRECTORY_HEADER_SIGNATURE        = 0x02014b50

@@ -91,11 +91,6 @@ class Compress::Zip::Writer
     # must be written as 0 in the local entry header
     entry.general_purpose_bit_flag |= (1 << 3)
 
-    # These three fields have to be set to 0
-    entry.crc32 = 0_u32
-    entry.compressed_size = 0_u64
-    entry.uncompressed_size = 0_u64
-
     add(entry) # Without the block it will write out the local file header only
 
     # For the compressed data length (how much data goes into the archive for
@@ -196,9 +191,33 @@ class Compress::Zip::Writer
 
     central_directory_at = @written.to_u64
     write_central_directory
-    write_end_of_central_directory(central_directory_at, @written.to_u64 - central_directory_at)
 
+    write_end_of_central_directory(central_directory_at, @written.to_u64 - central_directory_at)
     @io.close if @sync_close
+  end
+
+  private def write_central_directory
+    @entries.each do |entry|
+      @serializer.write_central_directory_file_header(io: @io,
+        filename: entry.filename,
+        compressed_size: entry.compressed_size,
+        uncompressed_size: entry.uncompressed_size,
+        crc32: entry.crc32,
+        gp_flags: entry.general_purpose_bit_flag,
+        mtime: entry.time,
+        storage_mode: entry.compression_method.to_i,
+        local_file_header_location: entry.offset,
+        additional_extra_fields: entry.extra,
+        comment: entry.comment)
+    end
+  end
+
+  private def write_end_of_central_directory(offset, size)
+    @serializer.write_end_of_central_directory(io: @io,
+      start_of_central_directory_location: offset,
+      central_directory_size: size,
+      num_files_in_archive: @entries.size,
+      comment: @comment)
   end
 
   # Advance the internal offset by a number of bytes.
@@ -212,28 +231,6 @@ class Compress::Zip::Writer
   # How many bytes have been written into the destination IO so far
   def written
     @written.to_u64
-  end
-
-  private def write_central_directory
-    @entries.each do |entry|
-      @serializer.write_central_directory_file_header(io: @io,
-        filename: entry.filename,
-        compressed_size: entry.compressed_size,
-        uncompressed_size: entry.uncompressed_size,
-        crc32: entry.crc32,
-        gp_flags: entry.general_purpose_bit_flag,
-        mtime: Time.utc,
-        storage_mode: entry.compression_method.to_i,
-        local_file_header_location: entry.offset,
-        additional_extra_fields: entry.extra)
-    end
-  end
-
-  private def write_end_of_central_directory(offset, size)
-    @serializer.write_end_of_central_directory(io: @io,
-      start_of_central_directory_location: offset,
-      central_directory_size: size,
-      num_files_in_archive: @entries.size)
   end
 
   # An entry to write into a `Zip::Writer`.

@@ -79,9 +79,6 @@ describe Compress::Zip do
 
     io.rewind
 
-    # This currently fails because the reader is actually not able to
-    # deal with data descriptors correctly, as straight-ahead ZIP reading
-    # using data descriptors is very unreliable
     Compress::Zip::Reader.open(io) do |zip|
       entry = zip.next_entry.not_nil!
       entry.filename.should eq("foo.txt")
@@ -107,8 +104,8 @@ describe Compress::Zip do
       entry = Compress::Zip::Writer::Entry.new("foo.txt")
       entry.compression_method = Compress::Zip::CompressionMethod::STORED
       entry.crc32 = crc32
-      # entry.compressed_size = text.bytesize.to_u32
-      # entry.uncompressed_size = text.bytesize.to_u32
+      entry.compressed_size = text.bytesize.to_u64
+      entry.uncompressed_size = text.bytesize.to_u64
       zip.add entry, &.print(text)
     end
 
@@ -197,8 +194,8 @@ describe Compress::Zip do
 
   it "raises a DuplicateEntryFilename when trying to add the same filename twice" do
     io = IO::Memory.new
-    expect_raises(Zip::Writer::DuplicateEntryFilename) do
-      Zip::Writer.open(io) do |zip|
+    expect_raises(Compress::Zip::Writer::DuplicateEntryFilename) do
+      Compress::Zip::Writer.open(io) do |zip|
         zip.add "foo.txt", "The first foo"
         zip.add "foo.txt", "The second foo"
       end
