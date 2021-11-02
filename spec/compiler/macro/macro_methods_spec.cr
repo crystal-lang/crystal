@@ -2053,6 +2053,24 @@ module Crystal
       it "gets empty output" do
         assert_macro %({{x.output}}), "nil", {x: ProcNotation.new([Path.new("SomeType")] of ASTNode)}
       end
+
+      it "executes resolve" do
+        assert_macro %({{x.resolve}}), "Proc(Int32, String)", {x: ProcNotation.new(([Path.new("Int32")] of ASTNode), Path.new("String"))}
+
+        assert_macro_error(%({{x.resolve}}), "undefined constant Foo") do
+          {x: ProcNotation.new(([Path.new("Foo")] of ASTNode))}
+        end
+
+        assert_macro_error(%({{x.resolve}}), "undefined constant Foo") do
+          {x: ProcNotation.new(([] of ASTNode), Path.new("Foo"))}
+        end
+      end
+
+      it "executes resolve?" do
+        assert_macro %({{x.resolve?}}), "Proc(Int32, String)", {x: ProcNotation.new(([Path.new("Int32")] of ASTNode), Path.new("String"))}
+        assert_macro %({{x.resolve?}}), "nil", {x: ProcNotation.new(([Path.new("Foo")] of ASTNode))}
+        assert_macro %({{x.resolve?}}), "nil", {x: ProcNotation.new(([] of ASTNode), Path.new("Foo"))}
+      end
     end
 
     describe "proc literal methods" do

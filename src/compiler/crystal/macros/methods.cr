@@ -1175,6 +1175,10 @@ module Crystal
         interpret_check_args { ArrayLiteral.new(@inputs || [] of ASTNode) }
       when "output"
         interpret_check_args { @output || NilLiteral.new }
+      when "resolve"
+        interpret_check_args { interpreter.resolve(self) }
+      when "resolve?"
+        interpret_check_args { interpreter.resolve?(self) || NilLiteral.new }
       else
         super
       end
