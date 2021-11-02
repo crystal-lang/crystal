@@ -85,7 +85,12 @@ end
                        } %}
   def {{type.id}}.new(pull : JSON::PullParser)
     location = pull.location
-    value = pull.read_int
+    value =
+      {% if type == "UInt64" %}
+        pull.read_raw
+      {% else %}
+        pull.read_int
+      {% end %}
     begin
       value.to_{{method.id}}
     rescue ex : OverflowError
@@ -97,14 +102,6 @@ end
     key.to_{{method.id}}?
   end
 {% end %}
-
-def UInt64.new(pull : JSON::PullParser)
-  pull.read_uint
-end
-
-def UInt64.from_json_object_key?(key : String)
-  key.to_u64?
-end
 
 def Float32.new(pull : JSON::PullParser)
   case pull.kind

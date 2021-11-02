@@ -31,6 +31,10 @@ describe "JSON serialization" do
       Path.from_json(%("foo/bar")).should eq(Path.new("foo/bar"))
     end
 
+    it "does UInt64.from_json" do
+      UInt64.from_json(UInt64::MAX.to_s).should eq(UInt64::MAX)
+    end
+
     it "does Array(Nil)#from_json" do
       Array(Nil).from_json("[null, null]").should eq([nil, nil])
     end

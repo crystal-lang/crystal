@@ -26,16 +26,6 @@ class JSON::Token
     end
   end
 
-  def uint_value : UInt64
-    value = raw_value.to_u64
-  rescue exc : ArgumentError
-    raise ParseException.new(exc.message, line_number, column_number)
-  end
-
-  def negative_int? : Bool
-    kind.int? && raw_value.starts_with?('-')
-  end
-
   def float_value : Float64
     begin
       raw_value.to_f64
