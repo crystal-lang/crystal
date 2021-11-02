@@ -2383,6 +2383,91 @@ module Crystal
       end
     end
 
+    describe "control expression methods" do
+      it "executes exp" do
+        assert_macro %({{x.exp}}), "1", {x: Break.new(1.int32)}
+        assert_macro %({{x.exp}}), "1", {x: Next.new(1.int32)}
+        assert_macro %({{x.exp}}), "1", {x: Return.new(1.int32)}
+      end
+
+      it "executes exp (nop)" do
+        assert_macro %({{x.exp}}), "", {x: Break.new}
+        assert_macro %({{x.exp}}), "", {x: Next.new}
+        assert_macro %({{x.exp}}), "", {x: Return.new}
+      end
+    end
+
+    describe "yield methods" do
+      it "executes expressions" do
+        assert_macro %({{x.expressions}}), "[]", {x: Yield.new}
+        assert_macro %({{x.expressions}}), "[1]", {x: Yield.new([1.int32] of ASTNode)}
+        assert_macro %({{x.expressions}}), "[1, 2]", {x: Yield.new([1.int32, 2.int32] of ASTNode)}
+      end
+
+      it "executes scope" do
+        assert_macro %({{x.scope}}), "1", {x: Yield.new(scope: 1.int32)}
+        assert_macro %({{x.scope}}), "nil", {x: Yield.new(scope: NilLiteral.new)}
+      end
+
+      it "executes scope (nop)" do
+        assert_macro %({{x.scope}}), "", {x: Yield.new}
+      end
+    end
+
+    describe "exception handler methods" do
+      # begin
+      #   1
+      # rescue ex : Int32
+      #   2
+      # rescue Char | String
+      # else
+      #   3
+      # ensure
+      #   4
+      # end
+      begin_node = ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Int32".path] of ASTNode, "ex"), Rescue.new(Nop.new, ["Char".path, "String".path] of ASTNode)], 3.int32, 4.int32)
+
+      it "executes body" do
+        assert_macro %({{x.body}}), "1", {x: begin_node}
+      end
+
+      it "executes rescues" do
+        assert_macro %({{x.rescues}}), "[rescue ex : Int32\n  2\n, rescue Char | String\n]", {x: begin_node}
+      end
+
+      it "executes rescue body" do
+        assert_macro %({{x.rescues[0].body}}), "2", {x: begin_node}
+        assert_macro %({{x.rescues[1].body}}), "", {x: begin_node}
+      end
+
+      it "executes rescue types" do
+        assert_macro %({{x.rescues[0].types}}), "[Int32]", {x: begin_node}
+        assert_macro %({{x.rescues[1].types}}), "[Char, String]", {x: begin_node}
+        assert_macro %({{x.types}}), "nil", {x: Rescue.new(1.int32)}
+      end
+
+      it "executes rescue name" do
+        assert_macro %({{x.rescues[0].name}}), "ex", {x: begin_node}
+        assert_macro %({{x.rescues[1].name}}), "", {x: begin_node}
+      end
+
+      it "executes else" do
+        assert_macro %({{x.else}}), "3", {x: begin_node}
+      end
+
+      it "executes else (nop)" do
+        assert_macro %({{x.else}}), "", {x: ExceptionHandler.new(Nop.new)}
+      end
+
+      it "executes ensure" do
+        assert_macro %({{x.ensure}}), "4", {x: begin_node}
+      end
+
+      it "executes ensure (nop)" do
+        assert_macro %({{x.ensure}}), "", {x: ExceptionHandler.new(Nop.new)}
+      end
+    end
+
     describe "assign methods" do
       it "executes target" do
         assert_macro %({{x.target}}), "foo", {x: Assign.new("foo".var, 2.int32)}

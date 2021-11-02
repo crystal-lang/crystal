@@ -1963,6 +1963,62 @@ module Crystal
     end
   end
 
+  class ExceptionHandler
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "body"
+        interpret_check_args { @body }
+      when "rescues"
+        interpret_check_args { (rescues = @rescues) ? ArrayLiteral.map(rescues, &.itself) : NilLiteral.new }
+      when "else"
+        interpret_check_args { @else || Nop.new }
+      when "ensure"
+        interpret_check_args { @ensure || Nop.new }
+      else
+        super
+      end
+    end
+  end
+
+  class Rescue
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "body"
+        interpret_check_args { body }
+      when "types"
+        interpret_check_args { (types = @types) ? ArrayLiteral.map(types, &.itself) : NilLiteral.new }
+      when "name"
+        interpret_check_args { (name = @name) ? MacroId.new(name) : Nop.new }
+      else
+        super
+      end
+    end
+  end
+
+  class ControlExpression
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "exp"
+        interpret_check_args { exp || Nop.new }
+      else
+        super
+      end
+    end
+  end
+
+  class Yield
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "expressions"
+        interpret_check_args { ArrayLiteral.map(@exps, &.itself) }
+      when "scope"
+        interpret_check_args { scope || Nop.new }
+      else
+        super
+      end
+    end
+  end
+
   class Assign
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
