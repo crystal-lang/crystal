@@ -261,7 +261,7 @@ module Levenshtein
         hna = BitArray.new(n)
         hpa = BitArray.new(n)
 
-        cutoff = cutoff || m+n
+        cutoff = cutoff || n
         # assign here so compiler guarantees int as return
         score = m
         # Setup char->bit-vector dictionary
