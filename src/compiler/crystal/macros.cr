@@ -1098,6 +1098,16 @@ module Crystal::Macros
     # Returns the output type, or nil if there is no return type.
     def output : ASTNode | NilLiteral
     end
+
+    # Resolves this proc notation to a `TypeNode` if it denotes a type,
+    # or otherwise gives a compile-time error.
+    def resolve : ASTNode
+    end
+
+    # Resolves this proc notation to a `TypeNode` if it denotes a type,
+    # or otherwise returns a `NilLiteral`.
+    def resolve? : ASTNode | NilLiteral
+    end
   end
 
   # A method definition.
@@ -1422,11 +1432,39 @@ module Crystal::Macros
     end
   end
 
-  # class Rescue < ASTNode
-  # end
+  # A `rescue` clause inside an exception handler.
+  class Rescue < ASTNode
+    # Returns this `rescue` clause's body.
+    def body : ASTNode
+    end
 
-  # class ExceptionHandler < ASTNode
-  # end
+    # Returns this `rescue` clause's exception types, if any.
+    def types : ArrayLiteral | NilLiteral
+    end
+
+    # Returns the variable name of the rescued exception, if any.
+    def name : MacroId | Nop
+    end
+  end
+
+  # A `begin ... end` expression with `rescue`, `else` and `ensure` clauses.
+  class ExceptionHandler < ASTNode
+    # Returns this exception handler's main body.
+    def body : ASTNode
+    end
+
+    # Returns this exception handler's `rescue` clauses, if any.
+    def rescues : ArrayLiteral(Rescue) | NilLiteral
+    end
+
+    # Returns this exception handler's `else` clause body, if any.
+    def else : ASTNode | Nop
+    end
+
+    # Returns this exception handler's `ensure` clause body, if any.
+    def ensure : ASTNode | Nop
+    end
+  end
 
   # A proc method, written like:
   # ```
@@ -1479,20 +1517,40 @@ module Crystal::Macros
   # class Self < ASTNode
   # end
 
-  # abstract class ControlExpression < ASTNode
-  # end
+  # The base class of control expressions.
+  abstract class ControlExpression < ASTNode
+    # Returns the argument to this control expression, if any.
+    #
+    # If multiple arguments are present, they are wrapped inside a single
+    # `TupleLiteral`.
+    def exp : ASTNode | Nop
+    end
+  end
 
-  # class Return < ControlExpression
-  # end
+  # A `return` expression.
+  class Return < ControlExpression
+  end
 
-  # class Break < ControlExpression
-  # end
+  # A `break` expression.
+  class Break < ControlExpression
+  end
 
-  # class Next < ControlExpression
-  # end
+  # A `next` expression.
+  class Next < ControlExpression
+  end
 
-  # class Yield < ASTNode
-  # end
+  # A `yield` expression.
+  class Yield < ASTNode
+    # Returns the arguments to this `yield`.
+    def expressions : ArrayLiteral
+    end
+
+    # Returns the scope of this `yield`, if any.
+    #
+    # This refers to the part after `with` in a `with ... yield` expression.
+    def scope : ASTNode | Nop
+    end
+  end
 
   # class Include < ASTNode
   # end
