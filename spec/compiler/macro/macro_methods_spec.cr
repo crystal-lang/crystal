@@ -2081,6 +2081,11 @@ module Crystal
       it "executes args" do
         assert_macro %({{x.args}}), "[z]", {x: ProcLiteral.new(Def.new("->", [Arg.new("z")]))}
       end
+
+      it "executes return_type" do
+        assert_macro %({{x.return_type}}), "Int32", {x: ProcLiteral.new(Def.new("->", return_type: "Int32".path))}
+        assert_macro %({{x.return_type}}), "", {x: ProcLiteral.new(Def.new("->"))}
+      end
     end
 
     describe "proc pointer methods" do
