@@ -1148,6 +1148,17 @@ module Crystal
         meta_vars[arg.name] = meta_var
       end
 
+      if return_type = node.def.return_type
+        @in_type_args += 1
+        return_type.accept self
+        @in_type_args -= 1
+        check_not_a_constant(return_type)
+
+        def_type = return_type.type
+        MainVisitor.check_type_allowed_as_proc_argument(node, def_type)
+        node.expected_return_type = def_type.virtual_type
+      end
+
       node.bind_to node.def
       node.def.bind_to node.def.body
       node.def.vars = meta_vars
