@@ -1,0 +1,32 @@
+name: OpenSSL CI
+
+on: [push, pull_request]
+
+jobs:
+  openssl3:
+    runs-on: ubuntu-latest
+    name: "OpenSSL 3.0"
+    container: crystallang/crystal:1.2.1-alpine
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+      - name: Install openssl 3.0
+        run: apk add "openssl-dev=~3.0" --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
+      - name: Check OpenSSL version
+        run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
+      - name: Run OpenSSL specs
+        run: bin/crystal spec spec/std/openssl/
+  openssl111:
+    runs-on: ubuntu-latest
+    name: "OpenSSL 1.1.1"
+    container: crystallang/crystal:1.2.1-alpine
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+      - name: Install openssl 1.1.1
+        run: apk add "openssl-dev=~1.1.1"
+      - name: Check OpenSSL version
+        run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
+      - name: Run OpenSSL specs
+        run: bin/crystal spec spec/std/openssl/
+
