@@ -643,10 +643,12 @@ module Crystal
     # Transform a multi assign into many assigns.
     def expand(node : MultiAssign)
       splat_index = nil
+      splat_underscore = false
       node.targets.each_with_index do |target, i|
         if target.is_a?(Splat)
           raise "BUG: splat assignment already specified" if splat_index
           splat_index = i
+          splat_underscore = true if target.exp.is_a?(Underscore)
         end
       end
 
@@ -673,6 +675,9 @@ module Crystal
       #     b = temp[1..-3]
       #     c = temp[-2]
       #     d = temp[-1]
+      #
+      # Except any assignments to *_, including the indexing call, are omitted
+      # altogether.
       if node.values.size == 1
         value = node.values[0]
         middle_splat = splat_index && (0 < splat_index < node.targets.size - 1)
@@ -680,7 +685,7 @@ module Crystal
         temp_var = new_temp_var
 
         # temp = ...
-        assigns = Array(ASTNode).new(node.targets.size + (middle_splat ? 2 : 1))
+        assigns = Array(ASTNode).new(node.targets.size + (splat_underscore ? 0 : 1) + (middle_splat ? 1 : 0))
         assigns << Assign.new(temp_var.clone, value).at(value)
 
         # raise ... if temp.size < ...
@@ -693,9 +698,9 @@ module Crystal
         end
 
         # ... = temp[...]
-        found_splat = false
         node.targets.each_with_index do |target, i|
           if i == splat_index
+            next if splat_underscore
             indexer = RangeLiteral.new(
               NumberLiteral.new(i),
               NumberLiteral.new(i - node.targets.size),
@@ -733,6 +738,10 @@ module Crystal
         #     a = temp1
         #     b = temp2
         #     c = temp3
+        #
+        # Except values assigned to `*_` are evaluated directly where the
+        # `Tuple` would normally be constructed, and no assignments to `_` would
+        # actually take place.
       else
         if splat_index
           raise "BUG: multiple assignment count mismatch" if node.targets.size - 1 > node.values.size
@@ -740,16 +749,26 @@ module Crystal
           raise "BUG: multiple assignment count mismatch" if node.targets.size != node.values.size
         end
 
-        assign_to_temps = Array(ASTNode).new(node.targets.size * 2)
-        assign_from_temps = Array(ASTNode).new(node.targets.size)
+        assign_to_count = splat_underscore ? node.values.size : node.targets.size
+        assign_from_count = node.targets.size - (splat_underscore ? 1 : 0)
+        assign_to_temps = Array(ASTNode).new(assign_to_count)
+        assign_from_temps = Array(ASTNode).new(assign_from_count)
 
         node.targets.each_with_index do |target, i|
-          temp_var = new_temp_var
           if i == splat_index
+            if splat_underscore
+              node.values.each(within: i..i - node.targets.size) do |value|
+                assign_to_temps << value
+              end
+              next
+            end
+            value_exps = node.values[i..i - node.targets.size]
             value = Call.new(Path.global("Tuple").at(node), "new", node.values[i..i - node.targets.size])
           else
             value = node.values[splat_index && i > splat_index ? i - node.targets.size : i]
           end
+
+          temp_var = new_temp_var
           assign_to_temps << Assign.new(temp_var.clone, value).at(node)
           assign_from_temps << transform_multi_assign_target(target, temp_var.clone)
         end

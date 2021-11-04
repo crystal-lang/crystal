@@ -77,6 +77,45 @@ describe "Normalize: multi assign" do
       CR
   end
 
+  it "normalizes m to n, with *_ on left-hand side (1)" do
+    assert_expand "a, *_, b, c = 1, 2, 3, 4, 5", <<-CR
+      __temp_1 = 1
+      2
+      3
+      __temp_2 = 4
+      __temp_3 = 5
+      a = __temp_1
+      b = __temp_2
+      c = __temp_3
+      CR
+  end
+
+  it "normalizes m to n, with *_ on left-hand side (2)" do
+    assert_expand "*_, a, b, c = 1, 2, 3, 4, 5", <<-CR
+      1
+      2
+      __temp_1 = 3
+      __temp_2 = 4
+      __temp_3 = 5
+      a = __temp_1
+      b = __temp_2
+      c = __temp_3
+      CR
+  end
+
+  it "normalizes m to n, with *_ on left-hand side (3)" do
+    assert_expand "a, b, c, *_ = 1, 2, 3, 4, 5", <<-CR
+      __temp_1 = 1
+      __temp_2 = 2
+      __temp_3 = 3
+      4
+      5
+      a = __temp_1
+      b = __temp_2
+      c = __temp_3
+      CR
+  end
+
   it "normalizes 1 to n, with splat on left-hand side" do
     assert_expand_third "c = 1; d = 2; a, b, *c.foo, d[0], e, f = 3", <<-CR
       __temp_1 = 3
@@ -109,6 +148,36 @@ describe "Normalize: multi assign" do
       b = __temp_1[1]
       c = __temp_1[2]
       d = __temp_1[3..-1]
+      CR
+  end
+
+  it "normalizes 1 to n, with *_ on left-hand side (1)" do
+    assert_expand "a, *_, b, c = 1", <<-CR
+      __temp_1 = 1
+      if __temp_1.size < 3
+        ::raise(::IndexError.new("Multiple assignment count mismatch"))
+      end
+      a = __temp_1[0]
+      b = __temp_1[-2]
+      c = __temp_1[-1]
+      CR
+  end
+
+  it "normalizes 1 to n, with *_ on left-hand side (2)" do
+    assert_expand "*_, a, b, c = 1", <<-CR
+      __temp_1 = 1
+      a = __temp_1[-3]
+      b = __temp_1[-2]
+      c = __temp_1[-1]
+      CR
+  end
+
+  it "normalizes 1 to n, with *_ on left-hand side (3)" do
+    assert_expand "a, b, c, *_ = 1", <<-CR
+      __temp_1 = 1
+      a = __temp_1[0]
+      b = __temp_1[1]
+      c = __temp_1[2]
       CR
   end
 end
