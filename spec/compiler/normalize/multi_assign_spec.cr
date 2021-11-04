@@ -180,4 +180,33 @@ describe "Normalize: multi assign" do
       c = __temp_1[2]
       CR
   end
+
+  it "normalizes n to splat on left-hand side" do
+    assert_expand "*a = 1, 2, 3, 4", <<-CR
+      __temp_1 = ::Tuple.new(1, 2, 3, 4)
+      a = __temp_1
+      CR
+  end
+
+  it "normalizes n to *_ on left-hand side" do
+    assert_expand "*_ = 1, 2, 3, 4", <<-CR
+      1
+      2
+      3
+      4
+      CR
+  end
+
+  it "normalizes 1 to splat on left-hand side" do
+    assert_expand "*a = 1", <<-CR
+      __temp_1 = 1
+      a = __temp_1[0..-1]
+      CR
+  end
+
+  it "normalizes 1 to *_ on left-hand side" do
+    assert_expand "*_ = 1", <<-CR
+      __temp_1 = 1
+      CR
+  end
 end
