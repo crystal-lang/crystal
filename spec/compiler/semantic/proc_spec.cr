@@ -1125,14 +1125,14 @@ describe "Semantic: proc" do
       def foo
         if true
           begin
-             ->(){""}
+            ->{""}
           rescue
-            return ->(){}
+            return ->{}
           end
         end
       end
 
-      foo.not_nil!
-    )) { proc_of string, nil_type }
+      foo
+    )) { union_of proc_of(string), proc_of(nil_type), nil_type }
   end
 end
