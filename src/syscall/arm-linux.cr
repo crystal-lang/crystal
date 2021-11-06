@@ -403,6 +403,9 @@ module Syscall
     LANDLOCK_CREATE_RULESET      = 444
     LANDLOCK_ADD_RULE            = 445
     LANDLOCK_RESTRICT_SELF       = 446
+    MEMFD_SECRET                 = 447
+    PROCESS_MRELEASE             = 448
+    FUTEX_WAITV                  = 449
   end
 
   private macro def_syscall(name, return_type, *args)
