@@ -18,7 +18,9 @@ require "./tcp_socket"
 # ```
 #
 # Options:
-# - *backlog* to specify how many pending connections are allowed;
+# - *host* local interface to bind on, or `::` to bind on all local interfaces.
+# - *port* specific port to bind on, or 0 to receive an "ephemeral" (free, assigned by kernel) port.
+# - *backlog* to specify how many pending connections are allowed.
 # - *reuse_port* to enable multiple processes to bind to the same port (`SO_REUSEPORT`).
 class TCPServer < TCPSocket
   include Socket::Server
