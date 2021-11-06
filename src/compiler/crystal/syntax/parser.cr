@@ -5425,7 +5425,7 @@ module Crystal
         if args.size == 1 && !args.first.is_a?(Splat)
           node = klass.new(args.first)
         else
-          tuple = TupleLiteral.new(args).at(args.last)
+          tuple = TupleLiteral.new(args).at(args.first).at_end(args.last)
           node = klass.new(tuple)
         end
       else

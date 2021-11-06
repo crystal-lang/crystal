@@ -2291,6 +2291,12 @@ module Crystal
         source_between(source, node.name_location, node.name_end_location).should eq ("foo")
       end
 
+      it "sets correct location of implicit tuple literal of multi-return" do
+        source = "def foo; return 1, 2; end"
+        node = Parser.new(source).parse.as(Def).body.as(Return).exp.not_nil!
+        source_between(source, node.location, node.end_location).should eq ("1, 2")
+      end
+
       it "doesn't override yield with macro yield" do
         parser = Parser.new("def foo; yield 1; {% begin %} yield 1 {% end %}; end")
         a_def = parser.parse.as(Def)
