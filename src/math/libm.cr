@@ -85,7 +85,9 @@ lib LibM
   fun erf_f64 = erf(value : Float64) : Float64
   fun expm1_f32 = expm1f(value : Float32) : Float32
   fun expm1_f64 = expm1(value : Float64) : Float64
-  fun frexp_f32 = frexpf(value : Float32, exp : Int32*) : Float32
+  {% unless flag?(:win32) %}
+    fun frexp_f32 = frexpf(value : Float32, exp : Int32*) : Float32
+  {% end %}
   fun frexp_f64 = frexp(value : Float64, exp : Int32*) : Float64
   fun gamma_f32 = lgammaf(value : Float32) : Float32
   fun gamma_f64 = lgamma(value : Float64) : Float64

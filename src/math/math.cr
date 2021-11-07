@@ -656,8 +656,14 @@ module Math
 
   # Decomposes the given floating-point *value* into a normalized fraction and an integral power of two.
   def frexp(value : Float32) : {Float32, Int32}
-    frac = LibM.frexp_f32(value, out exp)
-    {frac, exp}
+    {% if flag?(:win32) %}
+      # libucrt does not export `frexpf` and instead defines it like this
+      frac = LibM.frexp_f64(value, out exp)
+      {frac.to_f32, exp}
+    {% else %}
+      frac = LibM.frexp_f32(value, out exp)
+      {frac, exp}
+    {% end %}
   end
 
   # :ditto:

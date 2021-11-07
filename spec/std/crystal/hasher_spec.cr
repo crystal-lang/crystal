@@ -1,10 +1,7 @@
 require "spec"
 require "bit_array"
 require "../spec_helper"
-
-{% unless flag?(:win32) %}
-  require "big"
-{% end %}
+require "big"
 require "random/secure"
 
 struct Crystal::Hasher
@@ -252,15 +249,15 @@ describe "Crystal::Hasher" do
       1_i32.hash.should eq(1_f64.hash)
     end
 
-    pending_win32 "should 1_f32 and 1.to_big_f hashes equal" do
+    it "should 1_f32 and 1.to_big_f hashes equal" do
       1_f32.hash.should eq(1.to_big_f.hash)
     end
 
-    pending_win32 "should 1_f32 and 1.to_big_r hashes equal" do
+    it "should 1_f32 and 1.to_big_r hashes equal" do
       1_f32.hash.should eq(1.to_big_r.hash)
     end
 
-    pending_win32 "should 1_f32 and 1.to_big_i hashes equal" do
+    it "should 1_f32 and 1.to_big_i hashes equal" do
       1_f32.hash.should eq(1.to_big_i.hash)
     end
   end

@@ -4,8 +4,8 @@ require "spec/helpers/iterate"
 
 {% unless flag?(:win32) %}
   require "socket"
-  require "big"
 {% end %}
+require "big"
 require "base64"
 
 # This is a non-optimized version of IO::Memory so we can test
