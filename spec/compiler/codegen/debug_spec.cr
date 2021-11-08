@@ -16,6 +16,31 @@ describe "Code gen: debug" do
       ), debug: Crystal::Debug::All)
   end
 
+  it "codegens abstract struct with module include (#11385)" do
+    codegen(%(
+      module FooInterface
+      end
+
+      class Foo
+        include FooInterface
+      end
+
+      abstract struct Bar
+        include FooInterface
+
+        @a : FooInterface
+
+        def initialize(@a : FooInterface); end
+      end
+
+      class Baz
+        @b : FooInterface = Foo.new
+      end
+
+      Baz.new
+      ), debug: Crystal::Debug::All)
+  end
+
   it "inlines instance var access through getter in debug mode" do
     run(%(
       struct Bar
