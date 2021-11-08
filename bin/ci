@@ -123,6 +123,7 @@ build() {
   esac
 
   with_build_env 'make samples'
+  with_build_env 'CRYSTAL_OPTS=--debug make samples'
 }
 
 format() {
