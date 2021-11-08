@@ -126,8 +126,7 @@ build() {
 }
 
 format() {
-  with_build_env 'make clean crystal threads=1'
-  with_build_env './bin/crystal tool format --check samples spec src'
+  with_build_env 'make clean crystal format threads=1 check=1'
 }
 
 prepare_build() {

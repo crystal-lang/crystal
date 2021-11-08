@@ -113,6 +113,10 @@ crystal: $(O)/crystal ## Build the compiler
 deps: $(DEPS) ## Build dependencies
 llvm_ext: $(LLVM_EXT_OBJ)
 
+.PHONY: format
+format: ## Format sources
+	./bin/crystal tool format$(if $(check), --check) src spec samples
+
 .PHONY: install
 install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -D -m 0755 "$(O)/crystal" "$(BINDIR)/crystal"
