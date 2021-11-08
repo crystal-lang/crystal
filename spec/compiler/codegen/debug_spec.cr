@@ -257,7 +257,18 @@ describe "Code gen: debug" do
     codegen(%(
       require "prelude"
 
-      STDERR.puts "false"
+      class Foo
+        def foo
+        end
+      end
+
+      def a_foo
+        Foo.new
+      end
+
+      THE_FOO.foo
+
+      THE_FOO = a_foo
       ), debug: Crystal::Debug::All)
   end
 end
