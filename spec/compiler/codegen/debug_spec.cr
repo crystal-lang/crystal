@@ -252,4 +252,12 @@ describe "Code gen: debug" do
       LibFoo.foo = ->{ }
       ), debug: Crystal::Debug::All)
   end
+
+  it "doesn't fail on constant read calls (#11416)" do
+    codegen(%(
+      require "prelude"
+
+      STDERR.puts "false"
+      ), debug: Crystal::Debug::All)
+  end
 end
