@@ -93,9 +93,6 @@ jobs:
           repository: BrianGladman/mpir
           ref: d9c9a842be6475bef74324f367ce2c5a78c55d06  # master @ 2021-10-14
           path: mpir
-      - name: Add MSBuild to PATH
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: microsoft/setup-msbuild@v1.1
       - name: Build mpir
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./mpir
