@@ -3,17 +3,23 @@
 #
 # For more details about Linux system calls, refer to
 # [https://man7.org/linux/man-pages/man2/syscalls.2.html](https://man7.org/linux/man-pages/man2/syscalls.2.html).
+#
+# To define system calls reopen this module and use the `def_syscall` macro. Pass in the system call name,
+# the return type and its arguments. For example:
+#
+#   module Syscall
+#     def_syscall pipe2, Int32, pipefd : Int32[2]*, flags : Int32
+#     def_syscall write, Int32, fd : Int32, buf : UInt8*, count : LibC::SizeT
+#     def_syscall read, Int32, fd : Int32, buf : UInt8*, count : LibC::SizeT
+#     def_syscall close, Int32, fd : Int32
+#   end
+#
+# They can then be called as methods from the `Syscall` module:
+#
+#   Syscall.write(1, "Hello!\n".to_unsafe, 7)
+#
 @[Experimental]
 module Syscall
-  # Use this macro to define a system call method. Pass in the system call name, the return type and its arguments.
-  # For example:
-  #
-  #   module Syscall
-  #     def_syscall pipe2, Int32, pipefd : Int32[2]*, flags : Int32
-  #     def_syscall write, Int32, fd : Int32, buf : UInt8*, count : LibC::SizeT
-  #     def_syscall read, Int32, fd : Int32, buf : UInt8*, count : LibC::SizeT
-  #     def_syscall close, Int32, fd : Int32
-  #   end
   private macro def_syscall(name, return_type, *args)
     {% raise "The Syscall module is not supported on this target. It's only available for Linux." %}
   end
