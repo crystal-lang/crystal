@@ -140,16 +140,9 @@ describe "BigFloat" do
   end
 
   describe "#**" do
-    # neither GMP nor MPIR provides accuracy guarantees for floats
-    {% if flag?(:win32) %}
-      it { ("1.34".to_big_f ** 2).should be_close("1.7956".to_big_f, 1e-12) }
-      it { ("-0.05".to_big_f ** 10).should be_close("0.00000000000009765625".to_big_f, 1e-12) }
-      it { (0.1234567890.to_big_f ** 3).should be_close("0.001881676371789154860897069".to_big_f, 1e-12) }
-    {% else %}
-      it { ("1.34".to_big_f ** 2).to_s.should eq("1.79559999999999999994") }
-      it { ("-0.05".to_big_f ** 10).to_s.should eq("0.00000000000009765625") }
-      it { (0.1234567890.to_big_f ** 3).to_s.should eq("0.00188167637178915473909") }
-    {% end %}
+    it { ("1.34".to_big_f ** 2).should be_close("1.7956".to_big_f, 1e-12) }
+    it { ("-0.05".to_big_f ** 10).should be_close("0.00000000000009765625".to_big_f, 1e-12) }
+    it { (0.1234567890.to_big_f ** 3).should be_close("0.001881676371789154860897069".to_big_f, 1e-12) }
   end
 
   describe "#abs" do

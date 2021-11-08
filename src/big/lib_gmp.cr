@@ -11,7 +11,7 @@ lib LibGMP
   # MPIR uses its own `mpir_si` and `mpir_ui` typedefs in places where GMP uses
   # the LibC types, when the function name has `si` or `ui`; we follow this
   # distinction
-  {% if flag?(:win32) && flag?(:x86_64) %}
+  {% if flag?(:win32) && flag?(:bits64) %}
     alias SI = LibC::LongLong
     alias UI = LibC::ULongLong
   {% else %}
@@ -27,10 +27,10 @@ lib LibGMP
   alias IntPrimitiveUnsigned = UInt8 | UInt16 | UInt32 | LibC::ULong
   alias IntPrimitive = IntPrimitiveSigned | IntPrimitiveUnsigned
 
-  {% if flag?(:win32) && flag?(:x86_64) %}
+  {% if flag?(:win32) && flag?(:bits64) %}
     alias MpExp = LibC::Long
     alias MpLimb = LibC::ULongLong
-  {% elsif flag?(:x86_64) || flag?(:aarch64) %}
+  {% elsif flag?(:bits64) %}
     alias MpExp = Int64
     alias MpLimb = LibC::ULong
   {% else %}
