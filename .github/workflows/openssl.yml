@@ -10,8 +10,10 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
+      - name: Uninstall openssl 1.1
+        run: apk del openssl-dev
       - name: Install openssl 3.0
-        run: apk add "openssl-dev=~3.0" --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
+        run: apk add "openssl3-dev" --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
       - name: Check LibSSL version
         run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
       - name: Run OpenSSL specs
