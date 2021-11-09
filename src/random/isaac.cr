@@ -29,7 +29,7 @@ class Random::ISAAC
     init_by_array(seeds)
   end
 
-  def next_u
+  def next_u : UInt32
     if (@counter -= 1) == -1
       isaac
       @counter = 255

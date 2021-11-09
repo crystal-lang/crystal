@@ -77,6 +77,7 @@ class Crystal::Command
       options.shift
       {% if flag?(:without_playground) %}
         puts "Crystal was compiled without playground support"
+        puts "Try the online code evaluation and sharing tool at https://play.crystal-lang.org"
         exit 1
       {% else %}
         playground
@@ -121,11 +122,7 @@ class Crystal::Command
         error "unknown command: #{command}"
       end
     end
-  rescue ex : Crystal::LocationlessException
-    report_warnings
-
-    error ex.message
-  rescue ex : Crystal::Exception
+  rescue ex : Crystal::CodeError
     report_warnings
 
     ex.color = @color
@@ -136,6 +133,10 @@ class Crystal::Command
       STDERR.puts ex
     end
     exit 1
+  rescue ex : Crystal::Error
+    report_warnings
+
+    error ex.message
   rescue ex : OptionParser::Exception
     error ex.message
   rescue ex
@@ -189,7 +190,7 @@ class Crystal::Command
   private def hierarchy
     config, result = compile_no_codegen "tool hierarchy", hierarchy: true, top_level: true
     @progress_tracker.stage("Tool (hierarchy)") do
-      Crystal.print_hierarchy result.program, config.hierarchy_exp, config.output_format
+      Crystal.print_hierarchy result.program, STDOUT, config.hierarchy_exp, config.output_format
     end
   end
 
@@ -331,12 +332,6 @@ class Crystal::Command
         opts.on("--no-debug", "Skip any symbolic debug info") do
           compiler.debug = Crystal::Debug::None
         end
-        {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-          opts.on("--lto=FLAG", "Use ThinLTO --lto=thin") do |flag|
-            error "--lto=thin is the only lto supported option" unless flag == "thin"
-            compiler.thin_lto = true
-          end
-        {% end %}
       end
 
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
@@ -386,7 +381,11 @@ class Crystal::Command
           link_flags << some_link_flags
         end
         opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
-          compiler.mcpu = cpu
+          if cpu == "native"
+            compiler.mcpu = LLVM.host_cpu_name
+          else
+            compiler.mcpu = cpu
+          end
         end
         opts.on("--mattr CPU", "Target specific features") do |features|
           compiler.mattr = features
@@ -622,7 +621,7 @@ class Crystal::Command
   private def use_crystal_opts
     @options = Process.parse_arguments(ENV.fetch("CRYSTAL_OPTS", "")).concat(options)
   rescue ex
-    raise LocationlessException.new("Failed to parse CRYSTAL_OPTS: #{ex.message}")
+    raise Error.new("Failed to parse CRYSTAL_OPTS: #{ex.message}")
   end
 
   private def new_compiler

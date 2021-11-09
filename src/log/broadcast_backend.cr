@@ -15,17 +15,17 @@ class Log::BroadcastBackend < Log::Backend
     super(:direct)
   end
 
-  def append(backend : Log::Backend, level : Severity)
+  def append(backend : Log::Backend, level : Severity) : Nil
     @backends[backend] = level
   end
 
-  def write(entry : Entry)
+  def write(entry : Entry) : Nil
     @backends.each do |backend, level|
       backend.dispatch(entry) if (@level || level) <= entry.severity
     end
   end
 
-  def close
+  def close : Nil
     @backends.each_key &.close
   end
 
@@ -47,7 +47,7 @@ class Log::BroadcastBackend < Log::Backend
   end
 
   # :nodoc:
-  def remove(backend : Log::Backend)
+  def remove(backend : Log::Backend) : Nil
     @backends.delete(backend)
   end
 end

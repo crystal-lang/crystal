@@ -37,18 +37,18 @@ class IO::MultiWriter < IO
     @writers.each { |writer| writer.write(slice) }
   end
 
-  def read(slice : Bytes)
+  def read(slice : Bytes) : NoReturn
     raise IO::Error.new("Can't read from IO::MultiWriter")
   end
 
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 
     @writers.each { |writer| writer.close } if sync_close?
   end
 
-  def flush
+  def flush : Nil
     @writers.each(&.flush)
   end
 end

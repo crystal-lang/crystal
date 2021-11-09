@@ -1,4 +1,5 @@
 require "lib_z"
+require "./digest"
 
 # Implements the CRC32 checksum algorithm.
 module Digest::CRC32

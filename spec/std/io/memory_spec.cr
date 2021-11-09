@@ -281,6 +281,15 @@ describe IO::Memory do
     end
   end
 
+  it "creates from read-only slice" do
+    slice = Slice.new(6, read_only: true) { |i| ('a'.ord + i).to_u8 }
+    io = IO::Memory.new slice
+
+    expect_raises(IO::Error, "Read-only stream") do
+      io.print 'z'
+    end
+  end
+
   it "writes past end" do
     io = IO::Memory.new
     io.pos = 1000
@@ -349,6 +358,16 @@ describe IO::Memory do
 
     io.skip_to_end
     io.peek.should eq(Bytes.empty)
+  end
+
+  it "peek readonly" do
+    str = "hello world"
+    io = IO::Memory.new(str)
+
+    slice = io.peek
+    expect_raises(Exception) do
+      slice[0] = 0
+    end
   end
 
   it "skips" do

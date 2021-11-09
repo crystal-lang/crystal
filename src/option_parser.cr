@@ -58,7 +58,7 @@
 #     welcome = true
 #     parser.banner = "Usage: example welcome"
 #   end
-#   parser.on("-v", "--verbose", "Enabled servose output") { verbose = true }
+#   parser.on("-v", "--verbose", "Enabled verbose output") { verbose = true }
 #   parser.on("-h", "--help", "Show this help") do
 #     puts parser
 #     exit
@@ -113,11 +113,6 @@ class OptionParser
     yield parser
     parser.parse(args)
     parser
-  end
-
-  @[Deprecated("Use `parse` instead.")]
-  def self.parse! : self
-    parse(ARGV) { |parser| yield parser }
   end
 
   # Creates a new parser.
@@ -221,11 +216,11 @@ class OptionParser
   end
 
   # Adds a separator, with an optional header message, that will be used to
-  # print the help. The seperator is placed between the flags registered (`#on`)
+  # print the help. The separator is placed between the flags registered (`#on`)
   # before, and the flags registered after the call.
   #
   # This way, you can group the different options in an easier to read way.
-  def separator(message = "")
+  def separator(message = "") : Nil
     @flags << message.to_s
   end
 
@@ -264,7 +259,7 @@ class OptionParser
   # Stops the current parse and returns immediately, leaving the remaining flags
   # unparsed. This is treated identically to `--` being inserted *behind* the
   # current parsed flag.
-  def stop
+  def stop : Nil
     @stop = true
   end
 
@@ -278,8 +273,10 @@ class OptionParser
   end
 
   private def append_flag(flag, description)
+    indent = " " * 37
+    description = description.gsub("\n", "\n#{indent}")
     if flag.size >= 33
-      @flags << "    #{flag}\n#{" " * 37}#{description}"
+      @flags << "    #{flag}\n#{indent}#{description}"
     else
       @flags << "    #{flag}#{" " * (33 - flag.size)}#{description}"
     end
@@ -317,7 +314,7 @@ class OptionParser
   end
 
   # Parses the passed *args* (defaults to `ARGV`), running the handlers associated to each option.
-  def parse(args = ARGV)
+  def parse(args = ARGV) : Nil
     with_preserved_state do
       # List of indexes in `args` which have been handled and must be deleted
       handled_args = [] of Int32
@@ -366,7 +363,9 @@ class OptionParser
           value = nil
         end
 
-        if handler = @handlers[flag]?
+        # Fetch handler of the flag.
+        # If value is given even though handler does not take value, it is invalid, then it is skipped.
+        if (handler = @handlers[flag]?) && !(handler.value_type.none? && value)
           handled_args << arg_index
 
           # Pull in the next argument if we don't already have it and an argument
@@ -442,10 +441,5 @@ class OptionParser
         end
       end
     end
-  end
-
-  @[Deprecated("Use `parse` instead.")]
-  def parse!
-    parse
   end
 end

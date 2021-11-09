@@ -43,7 +43,7 @@ struct Pointer(T)
       @pointer += 1
     end
 
-    def size
+    def size : Int64
       @pointer - @start
     end
 
@@ -63,7 +63,7 @@ struct Pointer(T)
   # b = Pointer(Int32).new(0)
   # b.null? # => true
   # ```
-  def null?
+  def null? : Bool
     address == 0
   end
 
@@ -282,7 +282,7 @@ struct Pointer(T)
   # ptr2.memcmp(ptr1, 4) # => 10
   # ptr1.memcmp(ptr1, 4) # => 0
   # ```
-  def memcmp(other : Pointer(T), count : Int)
+  def memcmp(other : Pointer(T), count : Int) : Int32
     LibC.memcmp(self.as(Void*), (other.as(Void*)), (count * sizeof(T)))
   end
 
@@ -376,7 +376,7 @@ struct Pointer(T)
   # ptr.map!(4) { |value| value * 2 }
   # ptr # [2, 4, 6, 8]
   # ```
-  def map!(count : Int)
+  def map!(count : Int, & : T -> T)
     count.times do |i|
       self[i] = yield self[i]
     end
@@ -413,7 +413,7 @@ struct Pointer(T)
   # ptr.address # => 5678
   # ```
   def self.new(address : Int)
-    new address.to_u64
+    new address.to_u64!
   end
 
   # Allocates `size * sizeof(T)` bytes from the system's heap initialized
@@ -473,14 +473,14 @@ struct Pointer(T)
   # ptr[2] # => 12
   # ptr[3] # => 13
   # ```
-  def self.malloc(size : Int, &block : Int32 -> T)
+  def self.malloc(size : Int, & : Int32 -> T)
     ptr = Pointer(T).malloc(size)
     size.times { |i| ptr[i] = yield i }
     ptr
   end
 
   # Returns a `Pointer::Appender` for this pointer.
-  def appender
+  def appender : Pointer::Appender
     Pointer::Appender.new(self)
   end
 
@@ -491,7 +491,7 @@ struct Pointer(T)
   # slice = ptr.to_slice(4)                # => Slice[10, 11, 12, 13]
   # slice.class                            # => Slice(Int32)
   # ```
-  def to_slice(size)
+  def to_slice(size) : Slice(T)
     Slice.new(self, size)
   end
 

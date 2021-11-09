@@ -1,7 +1,7 @@
 require "../spec_helper"
 
 describe "Backtrace" do
-  pending_win32 "prints file line:colunm" do
+  pending_win32 "prints file line:column" do
     source_file = datapath("backtrace_sample")
 
     # CallStack tries to make files relative to the current dir,
@@ -13,16 +13,31 @@ describe "Backtrace" do
     _, output, _ = compile_and_run_file(source_file)
 
     # resolved file line:column
-    output.should match(/#{source_file}:3:10 in 'callee1'/)
-
-    unless output =~ /#{source_file}:13:5 in 'callee3'/
-      fail "didn't find callee3 in the backtrace"
-    end
+    output.should match(/^#{source_file}:3:10 in 'callee1'/m)
+    output.should match(/^#{source_file}:13:5 in 'callee3'/m)
 
     # skipped internal details
-    output.should_not match(/src\/callstack\.cr/)
-    output.should_not match(/src\/exception\.cr/)
-    output.should_not match(/src\/raise\.cr/)
+    output.should_not contain("src/callstack.cr")
+    output.should_not contain("src/exception.cr")
+    output.should_not contain("src/raise.cr")
+  end
+
+  pending_win32 "doesn't relativize paths outside of current dir (#10169)" do
+    with_tempfile("source_file") do |source_file|
+      source_path = Path.new(source_file)
+      source_path.absolute?.should be_true
+
+      File.write source_file, <<-EOF
+        def callee1
+          puts caller.join('\n')
+        end
+
+        callee1
+        EOF
+      _, output, _ = compile_and_run_file(source_file)
+
+      output.should match /\A(#{source_path}):/
+    end
   end
 
   it "prints exception backtrace to stderr" do
@@ -41,5 +56,22 @@ describe "Backtrace" do
 
     output.to_s.empty?.should be_true
     error.to_s.should contain("Invalid memory access")
+  end
+
+  pending_win32 "print exception with non-existing PWD" do
+    source_file = datapath("blank_test_file.txt")
+    compile_file(source_file) do |executable_file|
+      output, error = IO::Memory.new, IO::Memory.new
+      with_tempfile("non-existent") do |path|
+        Dir.mkdir path
+        Dir.cd(path) do
+          # on win32 it seems not possible to remove the directory while we're cd'ed into it
+          Dir.delete(path)
+          status = Process.run executable_file
+
+          status.success?.should be_true
+        end
+      end
+    end
   end
 end

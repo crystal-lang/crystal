@@ -62,15 +62,33 @@ module Crystal
     end
 
     def transform(node : Call)
-      # Copy enclosing def's args to super/previous_def without parenthesis
-      case node.name
-      when "super", "previous_def"
-        if node.args.empty? && !node.has_parentheses?
+      # Copy enclosing def's parameters to super/previous_def without parenthesis
+      case node
+      when .super?, .previous_def?
+        named_args = node.named_args
+        if node.args.empty? && (!named_args || named_args.empty?) && !node.has_parentheses?
           if current_def = @current_def
+            splat_index = current_def.splat_index
             current_def.args.each_with_index do |arg, i|
-              arg = Var.new(arg.name)
-              arg = Splat.new(arg) if i == current_def.splat_index
-              node.args.push arg
+              if splat_index && i > splat_index
+                # Past the splat index we must pass arguments as named arguments
+                named_args = node.named_args ||= Array(NamedArgument).new
+                named_args.push NamedArgument.new(arg.external_name, Var.new(arg.name))
+              elsif i == splat_index
+                # At the splat index we must use a splat, except the bare splat
+                # parameter will be skipped
+                unless arg.external_name.empty?
+                  node.args.push Splat.new(Var.new(arg.name))
+                end
+              else
+                # Otherwise it's just a regular argument
+                node.args.push Var.new(arg.name)
+              end
+            end
+
+            # Copy also the double splat
+            if arg = current_def.double_splat
+              node.args.push DoubleSplat.new(Var.new(arg.name))
             end
           end
           node.has_parentheses = true

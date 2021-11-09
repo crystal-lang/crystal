@@ -419,7 +419,7 @@ describe "Semantic: automatic cast" do
       a = 1 || Zed.new
       a + 2
       ),
-      "no overload matches"
+      "no overload matches", inject_primitives: true
   end
 
   it "doesn't say 'ambiguous call' when there's an exact match for symbol (#6601)" do
@@ -661,7 +661,7 @@ describe "Semantic: automatic cast" do
       "ambiguous call, implicit cast of 255 matches all of UInt64, Int64"
   end
 
-  it "casts integer variable to float type (#9565)" do
+  it "autocasts integer variable to float type (#9565)" do
     assert_type(%(
       def foo(x : Float64)
         x
@@ -672,7 +672,7 @@ describe "Semantic: automatic cast" do
       )) { float64 }
   end
 
-  it "casts float32 variable to float64 type (#9565)" do
+  it "autocasts float32 variable to float64 type (#9565)" do
     assert_type(%(
       def foo(x : Float64)
         x
@@ -681,5 +681,39 @@ describe "Semantic: automatic cast" do
       x = 1.0_f32
       foo(x)
       )) { float64 }
+  end
+
+  it "autocasts nested type from non-nested type (#10315)" do
+    assert_no_errors(%(
+      module Moo
+        enum Color
+          Red
+        end
+
+        abstract class Foo
+          def initialize(color : Color = :red)
+          end
+        end
+      end
+
+      class Bar < Moo::Foo
+      end
+
+      Bar.new
+      ))
+  end
+
+  it "errors when autocast default value doesn't match enum member" do
+    assert_error <<-CR,
+      enum Foo
+        FOO
+      end
+
+      def foo(foo : Foo = :bar)
+      end
+
+      foo
+      CR
+      "can't autocast :bar to Foo: no matching enum member"
   end
 end

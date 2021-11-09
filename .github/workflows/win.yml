@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   linux-job:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:0.35.1-build
+    container: crystallang/crystal:1.2.0-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
@@ -18,7 +18,7 @@ jobs:
           LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground
 
       - name: Upload Crystal object file
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: objs
           path: crystal.obj
@@ -31,14 +31,14 @@ jobs:
         run: |
           git config --global core.autocrlf false
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@1eed9c12159dd2d2f8804980fbba1abe36ff77d2
+        uses: ilammy/msvc-dev-cmd@ed94116c4d30d2091601b81f339a2eaa1c2ba0a6
 
       - name: Download Crystal source
         uses: actions/checkout@v2
 
       - name: Cache libraries
         id: cache-libs
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: libs
           key: win-libs-${{ hashFiles('.github/workflows/win.yml') }}
@@ -47,7 +47,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: ivmai/bdwgc
-          ref: 2fd48a92b8bff3afb64b3528ad78b63f033f0436  # master @ 2020-02-13
+          ref: v8.2.0
           path: bdwgc
       - name: Download libatomic_ops
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -123,7 +123,7 @@ jobs:
 
       - name: Cache LLVM
         id: cache-llvm
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: llvm
           key: llvm-libs-10.0.0
@@ -134,6 +134,11 @@ jobs:
           7z x llvm.tar.xz
           7z x llvm.tar
           mv llvm-* llvm-src
+      - name: Patch LLVM for VS 2019 16.7.0
+        working-directory: ./llvm-src
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        run: |
+          sed -i 's/#ifdef HAVE_STD_IS_TRIVIALLY_COPYABLE/#if 0/' include/llvm/Support/type_traits.h
       - name: Build LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         working-directory: ./llvm-src
@@ -148,14 +153,14 @@ jobs:
 
       - name: Set up environment
         run: |
-          echo "::set-env name=CRYSTAL_PATH::$(pwd)\src"
-          echo "::set-env name=LIB::${env:LIB};$(pwd)\libs"
-          echo "::set-env name=TERM::dumb"
-          echo "::set-env name=LLVM_CONFIG::$(pwd)\llvm\bin\llvm-config.exe"
-          echo "::set-env name=SOURCE_DATE_EPOCH::$(Get-Date -Millisecond 0 -UFormat %s)"
+          echo "CRYSTAL_PATH=$(pwd)\src" >> ${env:GITHUB_ENV}
+          echo "LIB=${env:LIB};$(pwd)\libs" >> ${env:GITHUB_ENV}
+          echo "TERM=dumb" >> ${env:GITHUB_ENV}
+          echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
+          echo "SOURCE_DATE_EPOCH=$(Get-Date -Millisecond 0 -UFormat %s)" >> ${env:GITHUB_ENV}
 
       - name: Download Crystal object file
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: objs
       - name: Build LLVM extensions
@@ -163,7 +168,7 @@ jobs:
           cl /MT /c src\llvm\ext\llvm_ext.cc -I llvm\include /Fosrc\llvm\ext\llvm_ext.obj
       - name: Link Crystal executable
         run: |
-          Invoke-Expression "cl objs\crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib advapi32.lib libcmt.lib legacy_stdio_definitions.lib /F10000000"
+          Invoke-Expression "cl crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib legacy_stdio_definitions.lib /F10000000"
 
       - name: Re-build Crystal
         run: |
@@ -176,7 +181,7 @@ jobs:
           cp bin/crystal.exe crystal/
           cp libs/* crystal/
       - name: Upload Crystal binaries
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: crystal
           path: crystal
@@ -184,6 +189,9 @@ jobs:
       - name: Build stdlib specs executable
         run: |
           bin\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Dwithout_openssl -Di_know_what_im_doing
+      - name: Run socket specs
+        run: |
+          .\std_spec.exe --verbose -e TCPSocket
       - name: Run stdlib specs
         run: |
           .\std_spec.exe
