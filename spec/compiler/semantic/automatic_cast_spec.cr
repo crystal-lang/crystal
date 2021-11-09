@@ -606,7 +606,7 @@ describe "Semantic: automatic cast" do
       end
 
       def bar
-        1_i64
+        1_i32
       end
 
       foo(bar)
