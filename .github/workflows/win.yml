@@ -65,7 +65,7 @@ jobs:
       - name: Download libpcre
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
-          iwr https://ftp.pcre.org/pub/pcre/pcre-8.43.zip -OutFile pcre.zip
+          iwr https://cs.stanford.edu/pub/exim/pcre/pcre-8.43.zip -OutFile pcre.zip
           7z x pcre.zip
           mv pcre-* pcre
       - name: Build libpcre
