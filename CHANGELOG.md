@@ -1,10 +1,12 @@
-# 1.2.2 (2021-11-02)
+# 1.2.2 (2021-11-09)
 
 ## Compiler
 
 - x86_64 ABI: pass structs indirectly if there are no more available registers ([#11344](https://github.com/crystal-lang/crystal/pull/11344), thanks @ggiraldez)
 - Add parentheses around type name for metaclasses of unions ([#11315](https://github.com/crystal-lang/crystal/pull/11315), thanks @HertzDevil)
-- Restrict virtual metaclasses to themselves against `Class` ([#11377](https://github.com/crystal-lang/crystal/pull/11377), thanks @HertzDevil)
+- **(regression)** Restrict virtual metaclasses to themselves against `Class` ([#11377](https://github.com/crystal-lang/crystal/pull/11377), thanks @HertzDevil)
+- Add fallback for union debug type if current debug file is not set ([#11390](https://github.com/crystal-lang/crystal/pull/11390), thanks @maxfierke)
+- **(regression)** Add missing debug locations to constant / class variable read calls ([#11417](https://github.com/crystal-lang/crystal/pull/11417), thanks @HertzDevil)
 
 ## Standard Library
 
@@ -15,6 +17,17 @@
 ### Crypto
 
 - Update for OpenSSL 3.0.0 ([#11360](https://github.com/crystal-lang/crystal/pull/11360), thanks @straight-shoota)
+- Restore libressl support and add CI for that ([#11400](https://github.com/crystal-lang/crystal/pull/11400), thanks @straight-shoota)
+
+### Runtime
+
+- Add support for DWARF 5 ([#11399](https://github.com/crystal-lang/crystal/pull/11399), thanks @straight-shoota)
+- Retrieve filename of shared libs, use in stacktraces ([#11408](https://github.com/crystal-lang/crystal/pull/11408), thanks @rdp)
+
+## Other
+- [CI] Fix enable nix-command as experimental feature ([#11398](https://github.com/crystal-lang/crystal/pull/11398), thanks @straight-shoota)
+- [CI] Fix OpenSSL 3 apk package name ([#11418](https://github.com/crystal-lang/crystal/pull/11418), thanks @straight-shoota)
+- Update distribution-scripts ([#11404](https://github.com/crystal-lang/crystal/pull/11404), thanks @straight-shoota)
 
 # 1.2.1 (2021-10-21)
 
