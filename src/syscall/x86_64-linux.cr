@@ -367,7 +367,7 @@ module Syscall
     FUTEX_WAITV             = 449
   end
 
-  private macro def_syscall(name, return_type, *args)
+  macro def_syscall(name, return_type, *args)
     @[AlwaysInline]
     def self.{{name.id}}({{*args}}) : {{return_type}}
       ret = uninitialized {{return_type}}

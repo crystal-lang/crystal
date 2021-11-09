@@ -1,11 +1,7 @@
 {% skip_file unless flag?(:linux) %}
 
 require "c/unistd"
-require "syscall"
-
-module Syscall
-  def_syscall getrandom, LibC::SSizeT, buf : UInt8*, buflen : LibC::SizeT, flags : UInt32
-end
+require "./syscall"
 
 module Crystal::System::Random
   @@initialized = false
