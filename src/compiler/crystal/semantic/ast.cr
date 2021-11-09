@@ -36,17 +36,21 @@ module Crystal
       when NumberLiteral, SymbolLiteral
         true
       else
-        case self_type = self.type?
-        when IntegerType
-          case self_type.kind
-          when :i8, :u8, :i16, :u16, :i32, :u32, :i64, :u64
-            true
-          else
-            false
+        {% if flag?(:number_autocast) %}
+          case self_type = self.type?
+          when IntegerType
+            case self_type.kind
+            when :i8, :u8, :i16, :u16, :i32, :u32, :i64, :u64
+              true
+            else
+              false
+            end
+          when FloatType
+            self_type.kind == :f32
           end
-        when FloatType
-          self_type.kind == :f32
-        end
+        {% else %}
+          false
+        {% end %}
       end
     end
 
