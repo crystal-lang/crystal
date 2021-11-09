@@ -500,14 +500,12 @@ struct Char
   # 'a'.inspect      # => "'a'"
   # '\t'.inspect     # => "'\\t'"
   # 'あ'.inspect      # => "'あ'"
-  # '\u0012'.inspect # => "'\\u{12}'"
+  # '\u0012'.inspect # => "'\\u0012'"
   # ```
   def inspect : String
     dump_or_inspect do |io|
       if ascii_control?
-        io << "\\u{"
-        ord.to_s(io, 16)
-        io << '}'
+        unicode_escape(io)
       else
         to_s(io)
       end
@@ -527,15 +525,13 @@ struct Char
   # ```
   # 'a'.dump      # => "'a'"
   # '\t'.dump     # => "'\\t'"
-  # 'あ'.dump      # => "'\\u{3042}'"
-  # '\u0012'.dump # => "'\\u{12}'"
+  # 'あ'.dump      # => "'\\u3042'"
+  # '\u0012'.dump # => "'\\u0012'"
   # ```
   def dump : String
     dump_or_inspect do |io|
       if ascii_control? || ord >= 0x80
-        io << "\\u{"
-        ord.to_s(io, 16)
-        io << '}'
+        unicode_escape(io)
       else
         to_s(io)
       end
@@ -546,9 +542,7 @@ struct Char
   #
   # See also: `#dump`.
   def dump(io)
-    io << '\''
     io << dump
-    io << '\''
   end
 
   private def dump_or_inspect
@@ -563,6 +557,7 @@ struct Char
     when '\r' then "'\\r'"
     when '\t' then "'\\t'"
     when '\v' then "'\\v'"
+    when '\0' then "'\\0'"
     else
       String.build do |io|
         io << '\''
@@ -570,6 +565,33 @@ struct Char
         io << '\''
       end
     end
+  end
+
+  # Returns the Unicode escape sequence representing this character.
+  #
+  # This is like `#dump` except that it escapes any character.
+  #
+  # ```
+  # 'a'.unicode_escape      # => "\\u00E1"
+  # '\t'.unicode_escape     # => "\\u0009"
+  # 'あ'.unicode_escape      # => "\\u3042"
+  # '\u0012'.unicode_escape # => "\\u0012"
+  # ```
+  def unicode_escape : String
+    String.build do |io|
+      unicode_escape(io)
+    end
+  end
+
+  # :ditto:
+  def unicode_escape(io : IO) : Nil
+    io << "\\u"
+    io << '{' if ord > 0xFFFF
+    io << '0' if ord < 0x1000
+    io << '0' if ord < 0x0100
+    io << '0' if ord < 0x0010
+    ord.to_s(io, 16, upcase: true)
+    io << '}' if ord > 0xFFFF
   end
 
   # Returns the integer value of this char if it's an ASCII char denoting a digit
