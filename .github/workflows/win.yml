@@ -65,7 +65,7 @@ jobs:
       - name: Download libpcre
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
-          iwr http://ftp.cs.stanford.edu/pub/exim/pcre/pcre-8.43.zip -OutFile pcre.zip
+          iwr https://cs.stanford.edu/pub/exim/pcre/pcre-8.43.zip -OutFile pcre.zip
           7z x pcre.zip
           mv pcre-* pcre
       - name: Build libpcre
@@ -97,7 +97,8 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./mpir
         run: |
-          MSBuild.exe /p:Platform=x64 /p:Configuration=Release /p:DefineConstants=MSC_BUILD_DLL .\msvc\vs19\lib_mpir_gc\lib_mpir_gc.vcxproj
+          $VsVersion = "vs$((& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -property displayName) -replace '.*\b\d\d(\d\d)\b.*', '$1')"
+          MSBuild.exe /p:Platform=x64 /p:Configuration=Release /p:DefineConstants=MSC_BUILD_DLL ".\msvc\$VsVersion\lib_mpir_gc\lib_mpir_gc.vcxproj"
       - name: Download libyaml
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
@@ -130,7 +131,7 @@ jobs:
           mv pcre/Release/pcre.lib libs/
           mv bdwgc/Release/gc.lib libs/
           mv zlib/Release/zlibstatic.lib libs/z.lib
-          mv mpir/lib/x64/Release/mpir.lib libs/mpir.lib
+          mv mpir/lib/x64/Release/mpir.lib libs/
           mv libyaml/Release/yaml.lib libs/
           mv libxml2/Release/libxml2s.lib libs/xml2.lib
 
