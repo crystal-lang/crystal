@@ -1621,7 +1621,7 @@ module Crystal
       instance_var = instance.lookup_instance_var(initializer.name)
 
       # Check if automatic cast can be done
-      if instance_var.type != value.type && value.supports_autocast?
+      if instance_var.type != value.type && value.supports_autocast?(@program.has_flag?("number_autocast"))
         if casted_value = MainVisitor.check_automatic_cast(@program, value, instance_var.type)
           value = casted_value
         end

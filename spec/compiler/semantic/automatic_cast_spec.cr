@@ -585,7 +585,8 @@ describe "Semantic: automatic cast" do
 
       x = 1
       foo(x)
-      )) { int64 }
+      ),
+        flags: "number_autocast") { int64 }
     end
 
     it "casts integer variable to larger type (Int64 to Int128) (#9565)" do
@@ -596,7 +597,8 @@ describe "Semantic: automatic cast" do
 
       x = 1_i64
       foo(x)
-      )) { int128 }
+      ),
+        flags: "number_autocast") { int128 }
     end
 
     it "casts integer expression to larger type (#9565)" do
@@ -610,7 +612,8 @@ describe "Semantic: automatic cast" do
       end
 
       foo(bar)
-      )) { int64 }
+      ),
+        flags: "number_autocast") { int64 }
     end
 
     it "says ambiguous call for integer var to larger type (#9565)" do
@@ -626,7 +629,8 @@ describe "Semantic: automatic cast" do
       x = 1_u8
       foo(x)
       ),
-        "ambiguous call, implicit cast of UInt8 matches all of Int32, Int64"
+        "ambiguous call, implicit cast of UInt8 matches all of Int32, Int64",
+        flags: "number_autocast"
     end
 
     it "can't cast integer to another type when it doesn't fit (#9565)" do
@@ -638,7 +642,20 @@ describe "Semantic: automatic cast" do
       x = 1_i64
       foo(x)
       ),
-        "no overload matches 'foo' with type Int64"
+        "no overload matches 'foo' with type Int64",
+        flags: "number_autocast"
+    end
+  {% else %}
+    it "doesn't cast integer variable to larger type (not #9565)" do
+      assert_error %(
+      def foo(x : Int64)
+        x
+      end
+
+      x = 1
+      foo(x)
+      ),
+        "no overload matches 'foo' with type Int32"
     end
   {% end %}
 
@@ -672,7 +689,8 @@ describe "Semantic: automatic cast" do
 
       x = 1
       foo(x)
-      )) { float64 }
+      ),
+        flags: "number_autocast") { float64 }
     end
 
     it "autocasts float32 variable to float64 type (#9565)" do
@@ -683,7 +701,8 @@ describe "Semantic: automatic cast" do
 
       x = 1.0_f32
       foo(x)
-      )) { float64 }
+      ),
+        flags: "number_autocast") { float64 }
     end
   {% end %}
 

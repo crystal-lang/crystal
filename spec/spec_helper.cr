@@ -104,9 +104,9 @@ def assert_expand_third(from : String, to, *, file = __FILE__, line = __LINE__)
   assert_expand node, to, file: file, line: line
 end
 
-def assert_error(str, message = nil, *, inject_primitives = false, file = __FILE__, line = __LINE__)
+def assert_error(str, message = nil, *, inject_primitives = false, file = __FILE__, line = __LINE__, flags = nil)
   expect_raises TypeException, message, file, line do
-    semantic str, inject_primitives: inject_primitives
+    semantic str, inject_primitives: inject_primitives, flags: flags
   end
 end
 

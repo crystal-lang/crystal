@@ -31,12 +31,13 @@ module Crystal
       end
     end
 
-    def supports_autocast?
+    # `number_autocast` defines if the feature in #9565 is present
+    def supports_autocast?(number_autocast : Bool = false)
       case self
       when NumberLiteral, SymbolLiteral
         true
       else
-        {% if flag?(:number_autocast) %}
+        if number_autocast
           case self_type = self.type?
           when IntegerType
             case self_type.kind
@@ -48,9 +49,9 @@ module Crystal
           when FloatType
             self_type.kind == :f32
           end
-        {% else %}
+        else
           false
-        {% end %}
+        end
       end
     end
 
