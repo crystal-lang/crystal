@@ -31,7 +31,7 @@ module Crystal
       end
     end
 
-    # `number_autocast` defines if the feature in #9565 is present
+    # `number_autocast` defines if casting numeric expressions to larger ones is enabled
     def supports_autocast?(number_autocast : Bool = false)
       case self
       when NumberLiteral, SymbolLiteral
@@ -68,10 +68,10 @@ module Crystal
         # Float64 mantissa has 52 bits
         case self_type.kind
         when :i8, :u8, :i16, :u16
-          # Less than 23 bits, so convertable to Float32 and Float64 without precission loss
+          # Less than 23 bits, so convertable to Float32 and Float64 without precision loss
           true
         when :i32, :u32
-          # Less than 52 bits, so convertable to Float64 without precission loss
+          # Less than 52 bits, so convertable to Float64 without precision loss
           other_type.kind == :f64
         else
           false

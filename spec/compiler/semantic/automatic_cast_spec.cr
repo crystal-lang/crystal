@@ -576,21 +576,20 @@ describe "Semantic: automatic cast" do
     )) { int64 }
   end
 
-  {% if flag?(:number_autocast) %}
-    it "casts integer variable to larger type (#9565)" do
-      assert_type(%(
+  it "casts integer variable to larger type (#9565)" do
+    assert_type(%(
       def foo(x : Int64)
         x
       end
 
-      x = 1
+      x = 1_i32
       foo(x)
       ),
-        flags: "number_autocast") { int64 }
-    end
+      flags: "number_autocast") { int64 }
+  end
 
-    it "casts integer variable to larger type (Int64 to Int128) (#9565)" do
-      assert_type(%(
+  it "casts integer variable to larger type (Int64 to Int128) (#9565)" do
+    assert_type(%(
       def foo(x : Int128)
         x
       end
@@ -598,11 +597,11 @@ describe "Semantic: automatic cast" do
       x = 1_i64
       foo(x)
       ),
-        flags: "number_autocast") { int128 }
-    end
+      flags: "number_autocast") { int128 }
+  end
 
-    it "casts integer expression to larger type (#9565)" do
-      assert_type(%(
+  it "casts integer expression to larger type (#9565)" do
+    assert_type(%(
       def foo(x : Int64)
         x
       end
@@ -613,11 +612,11 @@ describe "Semantic: automatic cast" do
 
       foo(bar)
       ),
-        flags: "number_autocast") { int64 }
-    end
+      flags: "number_autocast") { int64 }
+  end
 
-    it "says ambiguous call for integer var to larger type (#9565)" do
-      assert_error %(
+  it "says ambiguous call for integer var to larger type (#9565)" do
+    assert_error %(
       def foo(x : Int32)
         x
       end
@@ -629,12 +628,12 @@ describe "Semantic: automatic cast" do
       x = 1_u8
       foo(x)
       ),
-        "ambiguous call, implicit cast of UInt8 matches all of Int32, Int64",
-        flags: "number_autocast"
-    end
+      "ambiguous call, implicit cast of UInt8 matches all of Int32, Int64",
+      flags: "number_autocast"
+  end
 
-    it "can't cast integer to another type when it doesn't fit (#9565)" do
-      assert_error %(
+  it "can't cast integer to another type when it doesn't fit (#9565)" do
+    assert_error %(
       def foo(x : Int32)
         x
       end
@@ -642,22 +641,21 @@ describe "Semantic: automatic cast" do
       x = 1_i64
       foo(x)
       ),
-        "no overload matches 'foo' with type Int64",
-        flags: "number_autocast"
-    end
-  {% else %}
-    it "doesn't cast integer variable to larger type (not #9565)" do
-      assert_error %(
+      "no overload matches 'foo' with type Int64",
+      flags: "number_autocast"
+  end
+
+  it "doesn't cast integer variable to larger type (not #9565)" do
+    assert_error %(
       def foo(x : Int64)
         x
       end
 
-      x = 1
+      x = 1_i32
       foo(x)
       ),
-        "no overload matches 'foo' with type Int32"
-    end
-  {% end %}
+      "no overload matches 'foo' with type Int32"
+  end
 
   it "doesn't autocast number on union (#8655)" do
     assert_type(%(
@@ -680,21 +678,20 @@ describe "Semantic: automatic cast" do
       "ambiguous call, implicit cast of 255 matches all of UInt64, Int64"
   end
 
-  {% if flag?(:number_autocast) %}
-    it "autocasts integer variable to float type (#9565)" do
-      assert_type(%(
+  it "autocasts integer variable to float type (#9565)" do
+    assert_type(%(
       def foo(x : Float64)
         x
       end
 
-      x = 1
+      x = 1_i32
       foo(x)
       ),
-        flags: "number_autocast") { float64 }
-    end
+      flags: "number_autocast") { float64 }
+  end
 
-    it "autocasts float32 variable to float64 type (#9565)" do
-      assert_type(%(
+  it "autocasts float32 variable to float64 type (#9565)" do
+    assert_type(%(
       def foo(x : Float64)
         x
       end
@@ -702,9 +699,8 @@ describe "Semantic: automatic cast" do
       x = 1.0_f32
       foo(x)
       ),
-        flags: "number_autocast") { float64 }
-    end
-  {% end %}
+      flags: "number_autocast") { float64 }
+  end
 
   it "autocasts nested type from non-nested type (#10315)" do
     assert_no_errors(%(
