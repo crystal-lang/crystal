@@ -1,7 +1,7 @@
 require "c/ioapiset"
 require "crystal/system/print_error"
 
-module Crystal::EventLoop
+class Crystal::EventLoop
   @@queue = Deque(Event).new
 
   # Returns the base IO Completion Port
@@ -72,21 +72,21 @@ module Crystal::EventLoop
 
   # Create a new resume event for a fiber.
   def self.create_resume_event(fiber : Fiber) : Crystal::Event
-    Crystal::Event.new(fiber)
+    Crystal::IocpEvent.new(fiber)
   end
 
   # Creates a write event for a file descriptor.
   def self.create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
-    Crystal::Event.new(Fiber.current)
+    Crystal::IocpEvent.new(Fiber.current)
   end
 
   # Creates a read event for a file descriptor.
   def self.create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
-    Crystal::Event.new(Fiber.current)
+    Crystal::IocpEvent.new(Fiber.current)
   end
 end
 
-struct Crystal::Event
+struct Crystal::IocpEvent < Crystal::Event
   getter fiber
   getter wake_at
 
@@ -99,8 +99,8 @@ struct Crystal::Event
     Crystal::EventLoop.dequeue(self)
   end
 
-  def add(time_span : Time::Span) : Nil
-    @wake_at = Time.monotonic + time_span
+  def add(time_span : Time::Span?) : Nil
+    @wake_at = time_span ? Time.monotonic + time_span : Time.monotonic
     Crystal::EventLoop.enqueue(self)
   end
 end
