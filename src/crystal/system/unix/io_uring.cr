@@ -1,6 +1,6 @@
 {% skip_file unless flag?(:linux) %}
 
-require "./io_uring_syscalls"
+require "./syscall"
 
 class Fiber
   # :nodoc:
