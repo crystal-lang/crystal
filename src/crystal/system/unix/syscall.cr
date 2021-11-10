@@ -86,6 +86,8 @@ module Crystal::System::Syscall
     RENAMEAT
     UNLINKAT
     MKDIRAT
+    SYMLINKAT
+    LINKAT
   end
 
   @[Flags]
@@ -109,6 +111,13 @@ module Crystal::System::Syscall
     UNREGISTER_PERSONALITY
     REGISTER_RESTRICTIONS
     REGISTER_ENABLE_RINGS
+    IORING_REGISTER_FILES2
+    IORING_REGISTER_FILES_UPDATE2
+    IORING_REGISTER_BUFFERS2
+    IORING_REGISTER_BUFFERS_UPDATE
+    IORING_REGISTER_IOWQ_AFF
+    IORING_UNREGISTER_IOWQ_AFF
+    IORING_REGISTER_IOWQ_MAX_WORKERS
   end
 
   @[Flags]
@@ -198,18 +207,19 @@ module Crystal::System::Syscall
   struct IoUringSqeInnerFlags
     property rw_flags = RwFlag::None
     property poll_events = PollEvent::None
-    # property fsync_flags = 0u32
-    # property sync_range_flags = 0u32
-    # property msg_flags = 0u32
-    # property timeout_flags = 0u32
-    # property accept_flags = 0u32
-    # property cancel_flags = 0u32
-    # property open_flags = 0u32
-    # property statx_flags = 0u32
-    # property fadvise_advice = 0u32
-    # property splice_flags = 0u32
-    # property rename_flags = 0u32
-    # property unlink_flags = 0u32
+    property fsync_flags = 0u32
+    property sync_range_flags = 0u32
+    property msg_flags = 0u32
+    property timeout_flags = 0u32
+    property accept_flags = 0u32
+    property cancel_flags = 0u32
+    property open_flags = 0u32
+    property statx_flags = 0u32
+    property fadvise_advice = 0u32
+    property splice_flags = 0u32
+    property rename_flags = 0u32
+    property unlink_flags = 0u32
+    property hardlink_flags = 0u32
   end
 
   @[Extern]
