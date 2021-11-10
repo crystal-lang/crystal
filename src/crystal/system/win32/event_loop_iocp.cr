@@ -106,8 +106,8 @@ struct Crystal::IocpEvent < Crystal::Event
     @iocp.dequeue(self)
   end
 
-  def add(time_span : Time::Span) : Nil
-    @wake_at = Time.monotonic + time_span
+  def add(time_span : Time::Span?) : Nil
+    @wake_at = time_span ? Time.monotonic + time_span : Time.monotonic
     @iocp.enqueue(self)
   end
 end
