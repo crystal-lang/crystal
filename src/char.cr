@@ -496,9 +496,9 @@ struct Char
 
   # Returns `true` if this char is a printable character.
   #
-  # There is no universal definition of printable charactesr in Unicode.
+  # There is no universal definition of printable characters in Unicode.
   # For the purpose of this method, all characters with a visible glyph and the
-  # ASCII whitesapce (` `) are considered printable.
+  # ASCII whitespace (` `) are considered printable.
   #
   # This means characters which are `control?` or `whitespace?` (except for ` `)
   # are non-printable.
