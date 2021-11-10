@@ -10,17 +10,20 @@ module Syscall
   # To define system calls open a module and use the `def_syscall` macro. Pass in the system call name,
   # the return type and its arguments. For example:
   #
-  #   module YourSyscalls
-  #     Syscall.def_syscall pipe2, Int32, pipefd : Int32[2]*, flags : Int32
-  #     Syscall.def_syscall write, Int32, fd : Int32, buf : UInt8*, count : LibC::SizeT
-  #     Syscall.def_syscall read, Int32, fd : Int32, buf : UInt8*, count : LibC::SizeT
-  #     Syscall.def_syscall close, Int32, fd : Int32
-  #   end
+  # ```
+  # module YourSyscalls
+  #   Syscall.def_syscall pipe2, Int32, pipefd : Int32[2]*, flags : Int32
+  #   Syscall.def_syscall write, Int32, fd : Int32, buf : UInt8*, count : LibC::SizeT
+  #   Syscall.def_syscall read, Int32, fd : Int32, buf : UInt8*, count : LibC::SizeT
+  #   Syscall.def_syscall close, Int32, fd : Int32
+  # end
+  # ```
   #
   # They can then be called as methods from the `Syscall` module:
   #
-  #   YourSyscalls.write(1, "Hello!\n".to_unsafe, 7)
-  #
+  # ```
+  # YourSyscalls.write(1, "Hello!\n".to_unsafe, 7)
+  # ```
   macro def_syscall(name, return_type, *args)
     {% raise "The Syscall module is not supported on this target. It's only available for Linux." %}
   end
