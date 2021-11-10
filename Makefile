@@ -102,6 +102,10 @@ compiler_spec: $(O)/compiler_spec ## Run compiler specs
 .PHONY: smoke_test ## Build specs as a smoke test
 smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal
 
+.PHONY: samples ## Build example programs
+samples:
+	$(MAKE) -C samples
+
 .PHONY: docs
 docs: ## Generate standard library documentation
 	./bin/crystal docs src/docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION) --source-refname=$(CRYSTAL_CONFIG_BUILD_COMMIT)
