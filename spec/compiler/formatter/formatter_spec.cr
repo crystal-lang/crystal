@@ -647,6 +647,8 @@ describe Crystal::Formatter do
 
   assert_format "a , b  = 1  ,  2", "a, b = 1, 2"
   assert_format "a[1] , b[2] = 1  ,  2", "a[1], b[2] = 1, 2"
+  assert_format " * a = 1 ", "*a = 1"
+  assert_format " _ , *_ ,\na.foo  ,a.bar  =  1  ,  2,3", "_, *_, a.foo, a.bar = 1, 2, 3"
   assert_format "あ.い, う.え.お = 1, 2"
 
   assert_format "begin\n1\nensure\n2\nend", "begin\n  1\nensure\n  2\nend"
