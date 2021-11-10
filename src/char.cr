@@ -489,9 +489,21 @@ struct Char
     ascii? ? ascii_control? : Unicode.control?(self)
   end
 
-  # Returns `true` if this is char is a mark character according to unicode.
+  # Returns `true` if this char is a mark character according to unicode.
   def mark? : Bool
     Unicode.mark?(self)
+  end
+
+  # Returns `true` if this char is a printable character.
+  #
+  # There is no universal definition of printable charactesr in Unicode.
+  # For the purpose of this method, all characters with a visible glyph and the
+  # ASCII whitesapce (` `) are considered printable.
+  #
+  # This means characters which are `control?` or `whitespace?` (except for ` `)
+  # are non-printable.
+  def printable?
+    !control? && (!whitespace? || self == ' ')
   end
 
   # Returns this char as a string that contains a char literal.
