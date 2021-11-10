@@ -14,7 +14,7 @@ require "crystal/system/thread"
 class Crystal::Scheduler
   protected getter event_loop = Crystal::EventLoop.create
 
-  def self.event_loop : Crystal::EventLoop
+  def self.event_loop
     Thread.current.scheduler.@event_loop
   end
 
