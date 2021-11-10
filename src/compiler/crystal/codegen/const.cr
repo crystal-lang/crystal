@@ -190,7 +190,7 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def read_const(const)
+  def read_const(const, node)
     # We inline constants. Otherwise we use an LLVM const global.
     @last =
       case value = const.compile_time_value
@@ -205,6 +205,7 @@ class Crystal::CodeGenVisitor
       when UInt32 then int32(value)
       when UInt64 then int64(value)
       else
+        set_current_debug_location node if @debug.line_numbers?
         last = read_const_pointer(const)
         to_lhs last, const.value.type
       end
