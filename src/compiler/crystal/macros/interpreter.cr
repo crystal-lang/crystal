@@ -485,12 +485,12 @@ module Crystal
       end
     end
 
-    def resolve(node : Generic)
+    def resolve(node : Generic | ProcNotation)
       type = @path_lookup.lookup_type(node, self_type: @scope, free_vars: @free_vars)
       TypeNode.new(type)
     end
 
-    def resolve?(node : Generic)
+    def resolve?(node : Generic | ProcNotation)
       resolve(node)
     rescue Crystal::CodeError
       nil
@@ -536,8 +536,7 @@ module Crystal
     def visit(node : IsA)
       node.obj.accept self
       const_name = node.const.to_s
-      obj_class_desc = @last.class_desc
-      @last = BoolLiteral.new(@last.class_desc == const_name)
+      @last = BoolLiteral.new(@last.class_desc_is_a?(const_name))
       false
     end
 

@@ -15,12 +15,16 @@ struct Exception::CallStack
 
   protected def self.read_dwarf_sections
     locate_dsym_bundle do |mach_o|
-      mach_o.read_section?("__debug_line") do |sh, io|
-        @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, sh.size)
+      line_strings = mach_o.read_section?("__debug_line_str") do |sh, io|
+        Crystal::DWARF::Strings.new(io, sh.offset, sh.size)
       end
 
       strings = mach_o.read_section?("__debug_str") do |sh, io|
         Crystal::DWARF::Strings.new(io, sh.offset, sh.size)
+      end
+
+      mach_o.read_section?("__debug_line") do |sh, io|
+        @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, sh.size, strings: strings, line_strings: line_strings)
       end
 
       mach_o.read_section?("__debug_info") do |sh, io|
@@ -33,7 +37,7 @@ struct Exception::CallStack
             info.read_abbreviations(io)
           end
 
-          parse_function_names_from_dwarf(info, strings) do |low_pc, high_pc, name|
+          parse_function_names_from_dwarf(info, strings, line_strings) do |low_pc, high_pc, name|
             names << {low_pc, high_pc, name}
           end
         end

@@ -149,7 +149,7 @@ class Crystal::Scheduler
   protected def reschedule : Nil
     loop do
       if runnable = @lock.sync { @runnables.shift? }
-        unless runnable == Fiber.current
+        unless runnable == @current
           runnable.resume
         end
         break

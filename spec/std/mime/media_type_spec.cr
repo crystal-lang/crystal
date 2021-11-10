@@ -1,5 +1,6 @@
 require "../spec_helper"
 require "mime/media_type"
+require "../../support/string"
 
 private def parse(string)
   type = MIME::MediaType.parse(string)
@@ -8,7 +9,7 @@ private def parse(string)
 end
 
 private def assert_format(string, format = string, file = __FILE__, line = __LINE__)
-  MIME::MediaType.parse(string).to_s.should eq(format), file: file, line: line
+  assert_prints MIME::MediaType.parse(string).to_s, format, file: file, line: line
 end
 
 describe MIME::MediaType do
