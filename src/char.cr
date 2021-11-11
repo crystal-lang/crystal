@@ -496,12 +496,18 @@ struct Char
 
   # Returns this char as a string that contains a char literal.
   #
+  # ASCII control characters are escaped.
+  #
   # ```
   # 'a'.inspect      # => "'a'"
   # '\t'.inspect     # => "'\\t'"
   # 'あ'.inspect      # => "'あ'"
   # '\u0012'.inspect # => "'\\u0012'"
+  # '😀'.inspect     # => "'\u{1F600}'"
   # ```
+  #
+  # See `#unicode_escape` for the format used to escape charactes without a
+  # special escape sequence.
   def inspect : String
     dump_or_inspect do |io|
       if ascii_control?
@@ -520,14 +526,19 @@ struct Char
   end
 
   # Returns this char as a string that contains a char literal as written in Crystal,
-  # with characters with a codepoint greater than `0x79` written as `\u{...}`.
+  # with all non-ASCII characters (codepoint greater than `0x79`) as well as
+  # ASCII control characters escaped.
   #
   # ```
   # 'a'.dump      # => "'a'"
   # '\t'.dump     # => "'\\t'"
   # 'あ'.dump      # => "'\\u3042'"
   # '\u0012'.dump # => "'\\u0012'"
+  # '😀'.dump     # => "'\\u{1F600}'"
   # ```
+  #
+  # See `#unicode_escape` for the format used to escape charactes without a
+  # special escape sequence.
   def dump : String
     dump_or_inspect do |io|
       if ascii_control? || ord >= 0x80
@@ -569,13 +580,17 @@ struct Char
 
   # Returns the Unicode escape sequence representing this character.
   #
-  # This is like `#dump` except that it escapes any character.
+  # The codepoints are expressed as hexadecimal digits with uppercase letters.
+  # Unicode escapes always use the four digit style for codepoints `U+FFFF`
+  # and lower, adding leading zeros when necessary. Higher codepoints have their
+  # digits wrapped in curly braces and no leading zeros.
   #
   # ```
   # 'a'.unicode_escape      # => "\\u00E1"
   # '\t'.unicode_escape     # => "\\u0009"
   # 'あ'.unicode_escape      # => "\\u3042"
   # '\u0012'.unicode_escape # => "\\u0012"
+  # '😀'.unicode_escape     # => "\\u{1F600}"
   # ```
   def unicode_escape : String
     String.build do |io|
