@@ -632,6 +632,19 @@ describe "Semantic: automatic cast" do
       flags: "number_autocast"
   end
 
+  it "says ambiguous call for integer var to union type (#9565)" do
+    assert_error %(
+      def foo(x : Int32 | UInt32)
+        x
+      end
+
+      x = 1_u8
+      foo(x)
+      ),
+      "ambiguous call, implicit cast of UInt8 matches all of Int32, UInt32",
+      flags: "number_autocast"
+  end
+
   it "can't cast integer to another type when it doesn't fit (#9565)" do
     assert_error %(
       def foo(x : Int32)
