@@ -102,8 +102,8 @@ class Crystal::Loader
     File.each_line(path) do |line|
       next if line.empty? || line.starts_with?("#")
 
-      if line.starts_with?("include ")
-        glob = ::Path[line.lchop("include ")]
+      if include_path = line.lchop?("include ")
+        glob = ::Path[include_path]
 
         # expand glob path relative to current config file
         glob = glob.expand(File.dirname(path))
