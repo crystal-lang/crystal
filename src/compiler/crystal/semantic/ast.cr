@@ -55,7 +55,7 @@ module Crystal
       end
     end
 
-    def can_be_autocast_to?(other_type)
+    def can_autocast_to?(other_type)
       self_type = self.type
 
       case {self_type, other_type}
@@ -853,7 +853,7 @@ module Crystal
   end
 
   class NumberLiteral
-    def can_be_autocast_to?(other_type)
+    def can_autocast_to?(other_type)
       case {self.type, other_type}
       when {IntegerType, IntegerType}
         min, max = other_type.range

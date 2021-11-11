@@ -1356,7 +1356,7 @@ module Crystal
         if literal.type == other
           set_exact_match(other)
           other
-        elsif !exact_match? && literal.can_be_autocast_to?(other)
+        elsif !exact_match? && literal.can_autocast_to?(other)
           add_match(other)
           other
         else
@@ -1373,7 +1373,7 @@ module Crystal
     end
 
     def compatible_with?(type)
-      literal.type == type || literal.can_be_autocast_to?(type)
+      literal.type == type || literal.can_autocast_to?(type)
     end
   end
 
