@@ -4,7 +4,7 @@ require "../support/string"
   require "big"
 {% end %}
 
-# rearrange parameters for `sprintf` and `IO#printf`
+# use same name for `sprintf` and `IO#printf`
 private def fprintf(format, *args)
   sprintf(format, *args)
 end
