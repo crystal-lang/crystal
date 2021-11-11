@@ -4,16 +4,19 @@ require "../support/string"
   require "big"
 {% end %}
 
+# rearrange parameters for `sprintf` and `IO#printf`
+private def fprintf(format, *args)
+  sprintf(format, *args)
+end
+
+private def fprintf(io : IO, format, *args)
+  io.printf(format, *args)
+end
+
 private def assert_sprintf(format, *args_and_result, file = __FILE__, line = __LINE__)
   args = args_and_result[..-2]
   result = args_and_result[-1]
-
-  sprintf(format, *args).should eq(result), file: file, line: line
-  String.build { |io| io.printf(format, *args) }.should eq(result), file: file, line: line
-
-  {% unless flag?(:win32) %}
-    string_build_via_utf16 { |io| io.printf(format, *args) }.should eq(result), file: file, line: line
-  {% end %}
+  assert_prints fprintf(format, *args), result, file: file, line: line
 end
 
 describe "::sprintf" do
