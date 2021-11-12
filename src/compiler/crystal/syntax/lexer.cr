@@ -1780,12 +1780,17 @@ module Crystal
       next_char
 
       num = 0_u64
+      num_size = 0
       while true
         case next_char
         when '0'
-          num *= 2
+          num = num << 1
+          if num_size > 0
+            num_size += 1
+          end
         when '1'
-          num = num * 2 + 1
+          num = (num << 1) + 1
+          num_size += 1
         when '_'
           # Nothing
         else
@@ -1793,6 +1798,9 @@ module Crystal
         end
       end
 
+      if num_size > 64
+        raise_value_doesnt_fit_in "UInt64", string_range_from_pool(start), start
+      end
       finish_scan_prefixed_number num, negative, start
     end
 
@@ -1800,17 +1808,28 @@ module Crystal
       next_char
 
       num = 0_u64
-
+      num_size = 0
       while true
         char = next_char
         if '0' <= char <= '7'
-          num = num * 8 + (char - '0')
+          num = (num << 3) | (char - '0')
+          # First digit, if it's 2 through 9, adds a fake increment to the size.
+          if num_size == 0 && char > '1'
+            num_size += 1
+          end
+          if num_size > 0 || char != '0'
+            num_size += 1
+          end
         elsif char == '_'
         else
           break
         end
       end
 
+      # 0o177777_77777777_77777777 is the largest UInt64.
+      if num_size > 22 # or > 21 with first digit being 2 through 9
+        raise_value_doesnt_fit_in "UInt64", string_range_from_pool(start), start
+      end
       finish_scan_prefixed_number num, negative, start
     end
 
@@ -1818,19 +1837,27 @@ module Crystal
       next_char
 
       num = 0_u64
+      num_size = 0
       while true
         char = next_char
         if char == '_'
         else
           hex_value = char_to_hex(char) { nil }
           if hex_value
-            num = num * 16 + hex_value
+            num = (num << 4) | hex_value
+            if num_size > 0 || char != '0'
+              num_size += 1
+            end
           else
             break
           end
         end
       end
 
+      # 0xFFFF_FFFF_FFFF_FFFF is the longest UInt64.
+      if num_size > 16
+        raise_value_doesnt_fit_in "UInt64", string_range_from_pool(start), start
+      end
       finish_scan_prefixed_number num, negative, start
     end
 
