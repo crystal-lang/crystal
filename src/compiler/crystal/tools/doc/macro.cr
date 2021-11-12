@@ -148,8 +148,8 @@ class Crystal::Doc::Macro
     builder.object do
       builder.field "html_id", id
       builder.field "name", name
-      builder.field "doc", doc
-      builder.field "summary", formatted_summary
+      builder.field "doc", doc unless doc.nil?
+      builder.field "summary", formatted_summary unless formatted_summary.nil?
       builder.field "abstract", abstract?
       builder.field "args", args unless args.empty?
       builder.field "args_string", args_to_s unless args.empty?

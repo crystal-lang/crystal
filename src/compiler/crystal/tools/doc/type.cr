@@ -786,7 +786,7 @@ class Crystal::Doc::Type
       builder.field "full_name", full_name
       builder.field "name", name
       builder.field "abstract", abstract?
-      builder.field "superclass" { (s = superclass) ? s.to_json_simple(builder) : builder.null }
+      builder.field "superclass" { superclass.try &.to_json_simple(builder) } unless superclass.nil?
       builder.field "ancestors" do
         builder.array do
           ancestors.each &.to_json_simple(builder)
@@ -822,8 +822,8 @@ class Crystal::Doc::Type
         end
       end unless including_types.empty?
       builder.field "namespace" { (n = namespace) ? n.to_json_simple(builder) : builder.null }
-      builder.field "doc", doc
-      builder.field "summary", formatted_summary
+      builder.field "doc", doc unless doc.nil?
+      builder.field "summary", formatted_summary unless formatted_summary.nil?
       builder.field "class_methods", class_methods unless class_methods.empty?
       builder.field "constructors", constructors unless constructors.empty?
       builder.field "instance_methods", instance_methods unless instance_methods.empty?
