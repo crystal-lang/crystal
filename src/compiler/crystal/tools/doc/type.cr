@@ -791,7 +791,7 @@ class Crystal::Doc::Type
         builder.array do
           ancestors.each &.to_json_simple(builder)
         end
-      end
+      end unless ancestors.empty?
       builder.field "locations", locations
       builder.field "repository_name", @generator.project_info.name
       builder.field "program", program?
@@ -800,7 +800,7 @@ class Crystal::Doc::Type
       builder.field "aliased", alias_definition.to_s if alias?
       builder.field "aliased_html", formatted_alias_definition if alias?
       builder.field "const", const?
-      builder.field "constants", constants
+      builder.field "constants", constants unless constants.empty?
       builder.field "included_modules" do
         builder.array do
           included_modules.each &.to_json_simple(builder)
