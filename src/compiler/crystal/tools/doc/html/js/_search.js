@@ -41,23 +41,22 @@ CrystalDocs.runQuery = function(query) {
       });
     }
 
-    type.instance_methods.forEach(function(method) {
+    type.instance_methods?.forEach(function(method) {
       searchMethod(method, type, "instance_method", query, results);
     })
-    type.class_methods.forEach(function(method) {
+    type.class_methods?.forEach(function(method) {
       searchMethod(method, type, "class_method", query, results);
     })
-    type.constructors.forEach(function(constructor) {
+    type.constructors?.forEach(function(constructor) {
       searchMethod(constructor, type, "constructor", query, results);
     })
-    type.macros.forEach(function(macro) {
+    type.macros?.forEach(function(macro) {
       searchMethod(macro, type, "macro", query, results);
     })
-    type.constants.forEach(function(constant){
+    type.constants?.forEach(function(constant){
       searchConstant(constant, type, query, results);
     });
-
-    type.types.forEach(function(subtype){
+    type.types?.forEach(function(subtype){
       searchType(subtype, query, results);
     });
   };
@@ -71,7 +70,7 @@ CrystalDocs.runQuery = function(query) {
       matchedFields.push("name");
     }
 
-    method.args.forEach(function(arg){
+    method.args?.forEach(function(arg){
       var argMatches = query.matches(arg.external_name);
       if (argMatches) {
         matches = matches.concat(argMatches);

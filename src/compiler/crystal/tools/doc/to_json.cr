@@ -30,7 +30,7 @@ class Crystal::Macro
   def to_json(builder : JSON::Builder)
     builder.object do
       builder.field "name", name
-      builder.field "args", args
+      builder.field "args", args unless args.empty?
       builder.field "double_splat", double_splat unless double_splat.nil?
       builder.field "splat_index", splat_index unless splat_index.nil?
       builder.field "block_arg", block_arg unless block_arg.nil?

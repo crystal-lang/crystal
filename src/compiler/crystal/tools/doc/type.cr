@@ -805,30 +805,30 @@ class Crystal::Doc::Type
         builder.array do
           included_modules.each &.to_json_simple(builder)
         end
-      end
+      end unless included_modules.empty?
       builder.field "extended_modules" do
         builder.array do
           extended_modules.each &.to_json_simple(builder)
         end
-      end
+      end unless extended_modules.empty?
       builder.field "subclasses" do
         builder.array do
           subclasses.each &.to_json_simple(builder)
         end
-      end
+      end unless subclasses.empty?
       builder.field "including_types" do
         builder.array do
           including_types.each &.to_json_simple(builder)
         end
-      end
+      end unless including_types.empty?
       builder.field "namespace" { (n = namespace) ? n.to_json_simple(builder) : builder.null }
       builder.field "doc", doc
       builder.field "summary", formatted_summary
-      builder.field "class_methods", class_methods
-      builder.field "constructors", constructors
-      builder.field "instance_methods", instance_methods
-      builder.field "macros", macros
-      builder.field "types", types
+      builder.field "class_methods", class_methods unless class_methods.empty?
+      builder.field "constructors", constructors unless constructors.empty?
+      builder.field "instance_methods", instance_methods unless instance_methods.empty?
+      builder.field "macros", macros unless macros.empty?
+      builder.field "types", types unless types.empty?
     end
   end
 
