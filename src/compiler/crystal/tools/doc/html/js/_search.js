@@ -82,13 +82,15 @@ CrystalDocs.runQuery = function(query) {
       matchedFields.push("name");
     }
 
-    method.args?.forEach(function(arg){
-      var argMatches = query.matches(arg.external_name ?? arg.name);
-      if (argMatches) {
-        matches = matches.concat(argMatches);
-        matchedFields.push("args");
-      }
-    });
+    if (method.args) {
+      method.args.forEach(function(arg){
+        var argMatches = query.matches(arg.external_name);
+        if (argMatches) {
+          matches = matches.concat(argMatches);
+          matchedFields.push("args");
+        }
+      });
+    }
 
     var docMatches = query.matches(type.doc);
     if(docMatches){
