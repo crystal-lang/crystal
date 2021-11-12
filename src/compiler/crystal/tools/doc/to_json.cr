@@ -4,7 +4,7 @@ class Crystal::Arg
       builder.field "name", name
       builder.field "doc", doc unless doc.nil?
       builder.field "default_value", default_value.to_s unless default_value.nil?
-      builder.field "external_name", external_name.to_s
+      builder.field "external_name", external_name unless external_name == name
       builder.field "restriction", restriction.to_s
     end
   end

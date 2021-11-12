@@ -71,7 +71,7 @@ CrystalDocs.runQuery = function(query) {
     }
 
     method.args?.forEach(function(arg){
-      var argMatches = query.matches(arg.external_name);
+      var argMatches = query.matches(arg.external_name ?? arg.name);
       if (argMatches) {
         matches = matches.concat(argMatches);
         matchedFields.push("args");
