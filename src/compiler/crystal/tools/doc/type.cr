@@ -793,7 +793,7 @@ class Crystal::Doc::Type
             ancestors.each &.to_json_simple(builder)
           end
         end
-      end unless ancestors.empty?
+      end
       builder.field "locations", locations
       builder.field "repository_name", @generator.project_info.name
       builder.field "program", program?
