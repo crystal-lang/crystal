@@ -134,7 +134,7 @@ require "./std/log/io_backend_spec.cr"
 require "./std/log/log_spec.cr"
 require "./std/log/main_spec.cr"
 require "./std/match_data_spec.cr"
-# require "./std/math_spec.cr" (failed linking)
+require "./std/math_spec.cr"
 require "./std/mime/media_type_spec.cr"
 require "./std/mime/multipart/builder_spec.cr"
 require "./std/mime/multipart/parser_spec.cr"
