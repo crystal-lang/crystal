@@ -528,7 +528,17 @@ describe "Int" do
 
   describe "floor division //" do
     it "preserves type of lhs" do
-      {% for type in [UInt8, UInt16, UInt32, UInt64, UInt128, Int8, Int16, Int32, Int64, Int128] %}
+      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64] %}
+        ({{type}}.new(7) // 2).should be_a({{type}})
+        ({{type}}.new(7) // 2.0).should be_a({{type}})
+        ({{type}}.new(7) // 2.0_f32).should be_a({{type}})
+      {% end %}
+    end
+
+    # Missing symbols: __floattidf, __floatuntidf, __fixdfti, __fixsfti, __fixunsdfti, __fixunssfti, __floatuntisf, __floattisf
+    # These symbols are all required to convert U/Int128s to Floats
+    pending_win32 "preserves type of lhs (128-bit)" do
+      {% for type in [UInt128, Int128] %}
         ({{type}}.new(7) // 2).should be_a({{type}})
         ({{type}}.new(7) // 2.0).should be_a({{type}})
         ({{type}}.new(7) // 2.0_f32).should be_a({{type}})
@@ -861,6 +871,10 @@ describe "Int" do
       Int32::MAX.digits.should eq(Int32::MAX.to_s.chars.map(&.to_i).reverse)
       Int64::MAX.digits.should eq(Int64::MAX.to_s.chars.map(&.to_i).reverse)
       UInt64::MAX.digits.should eq(UInt64::MAX.to_s.chars.map(&.to_i).reverse)
+    end
+
+    # Missing symbol __floatuntidf on windows
+    pending_win32 "works for u/int128 maximums" do
       Int128::MAX.digits.should eq(Int128::MAX.to_s.chars.map(&.to_i).reverse)
       UInt128::MAX.digits.should eq(UInt128::MAX.to_s.chars.map(&.to_i).reverse)
     end
