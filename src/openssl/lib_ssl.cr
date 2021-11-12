@@ -41,7 +41,7 @@ require "./lib_crypto"
   @[Link("crypt32")] # CertOpenStore, ...
   @[Link("user32")]  # GetProcessWindowStation, GetUserObjectInformationW, _MessageBoxW
 {% else %}
-  @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
+  @[Link("ssl", pkg_config: "libssl")]
 {% end %}
 lib LibSSL
   alias Int = LibC::Int

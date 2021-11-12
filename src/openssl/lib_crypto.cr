@@ -34,7 +34,7 @@
   @[Link("crypt32")] # CertOpenStore, ...
   @[Link("user32")]  # GetProcessWindowStation, GetUserObjectInformationW, _MessageBoxW
 {% else %}
-  @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s '-lcrypto'`")]
+  @[Link("crypto", pkg_config: "libcrypto")]
 {% end %}
 lib LibCrypto
   alias Char = LibC::Char
