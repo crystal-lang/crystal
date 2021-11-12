@@ -787,11 +787,13 @@ class Crystal::Doc::Type
       builder.field "name", name
       builder.field "abstract", abstract?
       builder.field "superclass" { superclass.try &.to_json_simple(builder) } unless superclass.nil?
-      builder.field "ancestors" do
-        builder.array do
-          ancestors.each &.to_json_simple(builder)
+      unless ancestors.empty?
+        builder.field "ancestors" do
+          builder.array do
+            ancestors.each &.to_json_simple(builder)
+          end
         end
-      end unless ancestors.empty?
+      end
       builder.field "locations", locations
       builder.field "repository_name", @generator.project_info.name
       builder.field "program", program?
@@ -801,21 +803,27 @@ class Crystal::Doc::Type
       builder.field "aliased_html", formatted_alias_definition if alias?
       builder.field "const", const?
       builder.field "constants", constants unless constants.empty?
-      builder.field "included_modules" do
-        builder.array do
-          included_modules.each &.to_json_simple(builder)
+      unless included_modules.empty?
+        builder.field "included_modules" do
+          builder.array do
+            included_modules.each &.to_json_simple(builder)
+          end
         end
-      end unless included_modules.empty?
-      builder.field "extended_modules" do
-        builder.array do
-          extended_modules.each &.to_json_simple(builder)
+      end
+      unless extended_modules.empty?
+        builder.field "extended_modules" do
+          builder.array do
+            extended_modules.each &.to_json_simple(builder)
+          end
         end
-      end unless extended_modules.empty?
-      builder.field "subclasses" do
-        builder.array do
-          subclasses.each &.to_json_simple(builder)
+      end
+      unless subclasses.empty?
+        builder.field "subclasses" do
+          builder.array do
+            subclasses.each &.to_json_simple(builder)
+          end
         end
-      end unless subclasses.empty?
+      end
       builder.field "including_types" do
         builder.array do
           including_types.each &.to_json_simple(builder)
