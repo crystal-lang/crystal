@@ -1889,4 +1889,12 @@ describe Crystal::Formatter do
       (1 + 2) / 3
     end
     CODE
+  
+  # #10943
+  assert_format <<-CODE
+    foo do # a
+      # b
+      bar
+    end
+    CODE
 end
