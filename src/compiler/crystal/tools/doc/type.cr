@@ -797,8 +797,8 @@ class Crystal::Doc::Type
       builder.field "program", program?
       builder.field "enum", enum?
       builder.field "alias", alias?
-      builder.field "aliased", alias? ? alias_definition.to_s : nil
-      builder.field "aliased_html", alias? ? formatted_alias_definition : nil
+      builder.field "aliased", alias_definition.to_s if alias?
+      builder.field "aliased_html", formatted_alias_definition if alias?
       builder.field "const", const?
       builder.field "constants", constants
       builder.field "included_modules" do
