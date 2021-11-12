@@ -2019,6 +2019,7 @@ module Crystal
         if delimiter_state.allow_escapes
           if delimiter_state.kind == :regex
             char = next_char
+            raise_unterminated_quoted delimiter_state if char == '\0'
             next_char
             @token.type = :STRING
             if char == '/' || char.ascii_whitespace?
