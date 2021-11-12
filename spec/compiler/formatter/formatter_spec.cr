@@ -1882,4 +1882,11 @@ describe Crystal::Formatter do
                3},
            4}
     CODE
+
+  # #10817
+  assert_format <<-CODE
+    def func # comment
+      (1 + 2) / 3
+    end
+    CODE
 end

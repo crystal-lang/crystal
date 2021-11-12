@@ -1466,7 +1466,8 @@ module Crystal
       write node.name
 
       indent do
-        next_token_skip_space
+        next_token
+        skip_space consume_newline: false
         next_token_skip_space if @token.type == :"="
       end
 
