@@ -503,7 +503,7 @@ struct Char
   # '\t'.inspect     # => "'\\t'"
   # 'あ'.inspect      # => "'あ'"
   # '\u0012'.inspect # => "'\\u0012'"
-  # '😀'.inspect     # => "'\u{1F600}'"
+  # '😀'.inspect      # => "'\u{1F600}'"
   # ```
   #
   # See `#unicode_escape` for the format used to escape charactes without a
@@ -534,7 +534,7 @@ struct Char
   # '\t'.dump     # => "'\\t'"
   # 'あ'.dump      # => "'\\u3042'"
   # '\u0012'.dump # => "'\\u0012'"
-  # '😀'.dump     # => "'\\u{1F600}'"
+  # '😀'.dump      # => "'\\u{1F600}'"
   # ```
   #
   # See `#unicode_escape` for the format used to escape charactes without a
@@ -590,7 +590,7 @@ struct Char
   # '\t'.unicode_escape     # => "\\u0009"
   # 'あ'.unicode_escape      # => "\\u3042"
   # '\u0012'.unicode_escape # => "\\u0012"
-  # '😀'.unicode_escape     # => "\\u{1F600}"
+  # '😀'.unicode_escape      # => "\\u{1F600}"
   # ```
   def unicode_escape : String
     String.build do |io|
