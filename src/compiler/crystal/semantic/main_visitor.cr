@@ -617,7 +617,7 @@ module Crystal
          !@vars.has_key?(node.name) &&
          !scope.has_instance_var_initializer?(node.name)
         ivar = scope.lookup_instance_var(node.name)
-        ivar.nil_reason ||= NilReason.new(node.name, NilReason::Reason::UsedBeforeInitialized, [node] of ASTNode)
+        ivar.nil_reason ||= NilReason.new(node.name, :used_before_initialized, [node] of ASTNode)
         ivar.bind_to program.nil_var
       end
     end
@@ -851,9 +851,9 @@ module Crystal
              (@block_nest > 0)
             ivar = scope.lookup_instance_var(var_name)
             if found_self
-              ivar.nil_reason = NilReason.new(var_name, NilReason::Reason::UsedSelfBeforeInitialized, found_self)
+              ivar.nil_reason = NilReason.new(var_name, :used_self_before_initialized, found_self)
             else
-              ivar.nil_reason = NilReason.new(var_name, NilReason::Reason::UsedBeforeInitialized, used_ivars_node)
+              ivar.nil_reason = NilReason.new(var_name, :used_before_initialized, used_ivars_node)
             end
             ivar.bind_to program.nil_var
           end
@@ -1414,7 +1414,7 @@ module Crystal
 
           # If a variable was used before this supercall, it becomes nilable
           if @used_ivars_in_calls_in_initialize.try &.has_key?(name)
-            instance_var.nil_reason ||= NilReason.new(name, NilReason::Reason::UsedBeforeInitialized, [node] of ASTNode)
+            instance_var.nil_reason ||= NilReason.new(name, :used_before_initialized, [node] of ASTNode)
             instance_var.bind_to @program.nil_var
           else
             # Otherwise, declare it as a "local" variable
@@ -2648,7 +2648,7 @@ module Crystal
             if name.starts_with?('@')
               ivar = scope.lookup_instance_var(name)
               unless ivar.type.includes_type?(@program.nil_var)
-                ivar.nil_reason = NilReason.new(name, NilReason::Reason::InitializedInRescue)
+                ivar.nil_reason = NilReason.new(name, :initialized_in_rescue)
                 ivar.bind_to @program.nil_var
               end
             end

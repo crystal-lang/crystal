@@ -715,7 +715,7 @@ module Crystal
     getter nodes : Array(ASTNode)?
     getter scope : Type?
 
-    def initialize(@name, @reason, @nodes = nil, @scope = nil)
+    def initialize(@name, @reason : Reason, @nodes = nil, @scope = nil)
     end
   end
 
