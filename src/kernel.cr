@@ -536,20 +536,13 @@ end
   Signal.setup_segfault_handler
 {% end %}
 
-{% if flag?(:win32) %}
-  Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
-  # TODO: figure out when to call SymCleanup (it cannot be done in `at_exit`
-  # because unhandled exceptions in `main_user_code` are printed after those
-  # handlers)
-{% else %}
-  # load dwarf on start up of the program is executed with CRYSTAL_LOAD_DWARF=1
-  # this will make dwarf available on print_frame that is used by Crystal's segfault handler
-  #
-  # - CRYSTAL_LOAD_DWARF=0 will never use dwarf information (See Exception::CallStack.load_dwarf)
-  # - CRYSTAL_LOAD_DWARF=1 will load dwarf on startup
-  # - Other values will load dwarf on demand: when the backtrace of the first exception is generated
-  Exception::CallStack.load_dwarf if ENV["CRYSTAL_LOAD_DWARF"]? == "1"
-{% end %}
+# load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
+# this will make debug info available on print_frame that is used by Crystal's segfault handler
+#
+# - CRYSTAL_LOAD_DEBUG_INFO=0 will never use debug info (See Exception::CallStack.load_debug_info)
+# - CRYSTAL_LOAD_DEBUG_INFO=1 will load debug info on startup
+# - Other values will load debug info on demand: when the backtrace of the first exception is generated
+Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
 
 {% if flag?(:preview_mt) %}
   Crystal::Scheduler.init_workers

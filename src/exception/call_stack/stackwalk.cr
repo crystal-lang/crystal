@@ -6,7 +6,6 @@ struct Exception::CallStack
 
   @@sym_loaded = false
 
-  # :nodoc:
   def self.load_debug_info
     return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
 
@@ -21,6 +20,9 @@ struct Exception::CallStack
   end
 
   private def self.load_debug_info_impl
+    # TODO: figure out if and when to call SymCleanup (it cannot be done in
+    # `at_exit` because unhandled exceptions in `main_user_code` are printed
+    # after those handlers)
     if LibC.SymInitializeW(LibC.GetCurrentProcess, nil, 1) == 0
       raise RuntimeError.from_errno("SymInitializeW")
     end
@@ -75,57 +77,6 @@ struct Exception::CallStack
     stack
   end
 
-  private def decode_backtrace
-    show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
-
-    @callstack.compact_map do |ip|
-      pc = decode_address(ip)
-
-      file, line_number, _ = CallStack.decode_line_number(pc)
-
-      if file && file != "??"
-        next if @@skip.includes?(file)
-
-        # Turn to relative to the current dir, if possible
-        if current_dir = CURRENT_DIR
-          if rel = Path[file].relative_to?(current_dir)
-            rel = rel.to_s
-            file = rel unless rel.starts_with?("..")
-          end
-        end
-
-        file_line = "#{file}:#{line_number}" unless line_number == "??"
-      end
-
-      if name = CallStack.decode_function_name(pc)
-        function = name
-      elsif frame = CallStack.decode_frame(ip)
-        _, function, file = frame
-        # Crystal methods (their mangled name) start with `*`, so
-        # we remove that to have less clutter in the output.
-        function = function.lchop('*')
-      else
-        function = "??"
-      end
-
-      if file_line
-        line = "#{file_line} in '#{function}'"
-      else
-        if file == "??" && function == "??"
-          line = "???"
-        else
-          line = "#{file} in '#{function}'"
-        end
-      end
-
-      if show_full_info
-        line = "#{line} at 0x#{ip.address.to_s(16)}"
-      end
-
-      line
-    end
-  end
-
   protected def self.decode_line_number(pc)
     load_debug_info
 
@@ -173,7 +124,7 @@ struct Exception::CallStack
   protected def self.decode_frame(pc)
   end
 
-  private def decode_address(ip)
+  protected def self.decode_address(ip)
     ip.address
   end
 end

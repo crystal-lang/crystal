@@ -129,59 +129,6 @@ struct Exception::CallStack
     end
   end
 
-  private def decode_backtrace
-    show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
-
-    @callstack.compact_map do |ip|
-      pc = CallStack.decode_address(ip)
-
-      file, line, column = CallStack.decode_line_number(pc)
-
-      if file && file != "??"
-        next if @@skip.includes?(file)
-
-        # Turn to relative to the current dir, if possible
-        if current_dir = CURRENT_DIR
-          file = file.lchop(current_dir)
-        end
-
-        file_line_column = "#{file}:#{line}:#{column}"
-      end
-
-      if name = CallStack.decode_function_name(pc)
-        function = name
-      elsif frame = CallStack.decode_frame(ip)
-        _, function, file = frame
-        # Crystal methods (their mangled name) start with `*`, so
-        # we remove that to have less clutter in the output.
-        function = function.lchop('*')
-      else
-        function = "??"
-      end
-
-      if file_line_column
-        if show_full_info && (frame = CallStack.decode_frame(ip))
-          _, sname, _ = frame
-          line = "#{file_line_column} in '#{sname}'"
-        else
-          line = "#{file_line_column} in '#{function}'"
-        end
-      else
-        if file == "??" && function == "??"
-          line = "???"
-        else
-          line = "#{file} in '#{function}'"
-        end
-      end
-
-      if show_full_info
-        line = "#{line} at 0x#{ip.address.to_s(16)}"
-      end
-
-      line
-    end
-  end
-
   protected def self.decode_frame(ip, original_ip = ip)
     if LibC.dladdr(ip, out info) != 0
       offset = original_ip - info.dli_saddr
