@@ -1886,7 +1886,14 @@ describe Crystal::Formatter do
   # 10499
   assert_format <<-CODE
     case nil
-    else nil; nil #
+    else nil; nil # comment
+    end
+    CODE
+
+  assert_format <<-CODE
+    case nil
+    else nil; nil
+    # comment
     end
     CODE
 end
