@@ -536,7 +536,12 @@ end
   Signal.setup_segfault_handler
 {% end %}
 
-{% if !flag?(:win32) %}
+{% if flag?(:win32) %}
+  Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
+  # TODO: figure out when to call SymCleanup (it cannot be done in `at_exit`
+  # because unhandled exceptions in `main_user_code` are printed after those
+  # handlers)
+{% else %}
   # load dwarf on start up of the program is executed with CRYSTAL_LOAD_DWARF=1
   # this will make dwarf available on print_frame that is used by Crystal's segfault handler
   #

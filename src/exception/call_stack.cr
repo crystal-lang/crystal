@@ -1,6 +1,8 @@
-{% skip_file if flag?(:win32) %}
-
-require "./call_stack/libunwind"
+{% if flag?(:win32) %}
+  require "./call_stack/stackwalk"
+{% else %}
+  require "./call_stack/libunwind"
+{% end %}
 
 # Returns the current execution stack as an array containing strings
 # usually in the form file:line:column or file:line:column in 'method'.
@@ -14,8 +16,7 @@ struct Exception::CallStack
   # are always shown relative to the *starting* working directory.
   CURRENT_DIR = begin
     if dir = Process::INITIAL_PWD
-      dir += File::SEPARATOR unless dir.ends_with?(File::SEPARATOR)
-      dir
+      Path[dir]
     end
   end
 
