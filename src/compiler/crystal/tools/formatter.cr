@@ -3675,8 +3675,9 @@ module Crystal
           @when_infos << AlignInfo.new(node.object_id, @line, @column, @column, @column, false)
           write " "
           accept a_else
+          wrote_newline = @wrote_newline
           found_comment = skip_space_or_newline
-          write_line unless found_comment
+          write_line unless found_comment || wrote_newline
         end
       end
 

@@ -1882,4 +1882,11 @@ describe Crystal::Formatter do
                3},
            4}
     CODE
+
+  # 10499
+  assert_format <<-CODE
+    case nil
+    else nil; nil #
+    end
+    CODE
 end
