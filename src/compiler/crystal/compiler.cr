@@ -346,7 +346,7 @@ module Crystal
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
 
-        args = %(/nologo #{object_arg} #{output_arg} /link #{lib_flags} #{@link_flags}).gsub("\n", " ")
+        args = %(/nologo #{object_arg} #{output_arg} /link #{lib_flags} #{@link_flags} #{"/DEBUG:FULL" unless debug.none?}).gsub("\n", " ")
         cmd = "#{CL} #{args}"
 
         if cmd.to_utf16.size > 32000
