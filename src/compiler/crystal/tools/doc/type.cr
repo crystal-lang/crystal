@@ -860,13 +860,6 @@ class Crystal::Doc::Type
       builder.field "full_name", full_name
       builder.field "name", name
       builder.field "constants", constants unless constants.empty?
-      unless included_modules.empty?
-        builder.field "included_modules" do
-          builder.array do
-            included_modules.each &.to_json_simple(builder)
-          end
-        end
-      end
 
       unless instance_methods.empty?
         builder.field "instance_methods" do

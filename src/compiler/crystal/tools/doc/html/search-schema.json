@@ -115,22 +115,6 @@
           "type": "array",
           "items": { "$ref": "#/definitions/Constant" }
         },
-        "included_modules": {
-          "type": "array",
-          "items": { "$ref": "#/definitions/SimpleType" }
-        },
-        "extended_modules": {
-          "type": "array",
-          "items": { "$ref": "#/definitions/SimpleType" }
-        },
-        "subclasses": {
-          "type": "array",
-          "items": { "$ref": "#/definitions/SimpleType" }
-        },
-        "including_types": {
-          "type": "array",
-          "items": { "$ref": "#/definitions/SimpleType" }
-        },
         "namespace": {
           "$ref": "#/definitions/SimpleType"
         },
