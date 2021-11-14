@@ -62,8 +62,16 @@ describe "Random" do
     x.should be <= 1
   end
 
-  it "limited float number" do
-    x = rand(3.5)
+  it "limited Float32 number" do
+    x = rand(3.5_f32)
+    x.should be_a Float32
+    x.should be >= 0
+    x.should be < 3.5
+  end
+
+  it "limited Float64 number" do
+    x = rand(3.5_f64)
+    x.should be_a Float64
     x.should be >= 0
     x.should be < 3.5
   end

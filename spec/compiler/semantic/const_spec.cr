@@ -319,7 +319,7 @@ describe "Semantic: const" do
    "1 + 2", "1 + ZED", "ZED - 1", "ZED * 2", "ZED // 2",
    "1 &+ ZED", "ZED &- 1", "ZED &* 2"].each do |node|
     it "doesn't errors if constant depends on another one defined later through method, but constant is simple (#{node})" do
-      semantic(%(
+      assert_no_errors <<-CR, inject_primitives: true
         ZED = 10
 
         struct Int32
@@ -337,7 +337,7 @@ describe "Semantic: const" do
         end
 
         CONST1
-        ))
+        CR
     end
   end
 
@@ -461,7 +461,7 @@ describe "Semantic: const" do
 
       Foo::A
       ),
-      "can't return from constant"
+      "can't return from constant", inject_primitives: true
   end
 
   it "errors if constant has NoReturn type (#6139)" do

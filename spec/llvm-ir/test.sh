@@ -32,8 +32,15 @@ function test() {
 
 pushd $BUILD_DIR >/dev/null
 
+test argless-initialize-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 test proc-pointer-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 test pass-closure-to-c-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
+
+# #11416
+test const-read-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
+test class-var-read-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
+test virtual-class-var-read-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
+test virtual-metaclass-var-read-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 
 test memset.cr "--cross-compile --target i386-apple-darwin --prelude=empty --no-debug" X32
 test memset.cr "--cross-compile --target i386-unknown-linux-gnu --prelude=empty --no-debug" X32
