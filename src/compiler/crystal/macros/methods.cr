@@ -1175,6 +1175,10 @@ module Crystal
         interpret_check_args { ArrayLiteral.new(@inputs || [] of ASTNode) }
       when "output"
         interpret_check_args { @output || NilLiteral.new }
+      when "resolve"
+        interpret_check_args { interpreter.resolve(self) }
+      when "resolve?"
+        interpret_check_args { interpreter.resolve?(self) || NilLiteral.new }
       else
         super
       end
@@ -1957,6 +1961,62 @@ module Crystal
         interpret_check_args { ArrayLiteral.new(conds) }
       when "body"
         interpret_check_args { body }
+      else
+        super
+      end
+    end
+  end
+
+  class ExceptionHandler
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "body"
+        interpret_check_args { @body }
+      when "rescues"
+        interpret_check_args { (rescues = @rescues) ? ArrayLiteral.map(rescues, &.itself) : NilLiteral.new }
+      when "else"
+        interpret_check_args { @else || Nop.new }
+      when "ensure"
+        interpret_check_args { @ensure || Nop.new }
+      else
+        super
+      end
+    end
+  end
+
+  class Rescue
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "body"
+        interpret_check_args { body }
+      when "types"
+        interpret_check_args { (types = @types) ? ArrayLiteral.map(types, &.itself) : NilLiteral.new }
+      when "name"
+        interpret_check_args { (name = @name) ? MacroId.new(name) : Nop.new }
+      else
+        super
+      end
+    end
+  end
+
+  class ControlExpression
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "exp"
+        interpret_check_args { exp || Nop.new }
+      else
+        super
+      end
+    end
+  end
+
+  class Yield
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "expressions"
+        interpret_check_args { ArrayLiteral.map(@exps, &.itself) }
+      when "scope"
+        interpret_check_args { scope || Nop.new }
       else
         super
       end

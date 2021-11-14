@@ -1470,7 +1470,7 @@ module Crystal
 
     def visit(node : Path)
       if const = node.target_const
-        read_const(const)
+        read_const(const, node)
       elsif replacement = node.syntax_replacement
         accept replacement
       else

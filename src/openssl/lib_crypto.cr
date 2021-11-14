@@ -51,6 +51,7 @@ lib LibCrypto
   EVP_MAX_KEY_LENGTH = 32
   EVP_MAX_IV_LENGTH  = 16
 
+  CTRL_EOF   =  2
   CTRL_PUSH  =  6
   CTRL_POP   =  7
   CTRL_FLUSH = 11
@@ -130,7 +131,7 @@ lib LibCrypto
   fun obj_obj2nid = OBJ_obj2nid(obj : ASN1_OBJECT) : Int
   fun obj_ln2nid = OBJ_ln2nid(ln : Char*) : Int
   fun obj_sn2nid = OBJ_sn2nid(sn : Char*) : Int
-  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 || LIBRESSL_VERSION != "0.0.0" %}
     fun obj_find_sigid_algs = OBJ_find_sigid_algs(sigid : Int32, pdig_nid : Int32*, ppkey_nid : Int32*) : Int32
   {% end %}
 
@@ -174,8 +175,15 @@ lib LibCrypto
   fun evp_digestupdate = EVP_DigestUpdate(ctx : EVP_MD_CTX, data : UInt8*, count : LibC::SizeT) : Int32
   fun evp_md_ctx_copy = EVP_MD_CTX_copy(dst : EVP_MD_CTX, src : EVP_MD_CTX) : Int32
   fun evp_md_ctx_md = EVP_MD_CTX_md(ctx : EVP_MD_CTX) : EVP_MD
-  fun evp_md_size = EVP_MD_size(md : EVP_MD) : Int32
-  fun evp_md_block_size = EVP_MD_block_size(md : EVP_MD) : LibC::Int
+
+  {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
+    fun evp_md_size = EVP_MD_get_size(md : EVP_MD) : Int32
+    fun evp_md_block_size = EVP_MD_get_block_size(md : EVP_MD) : LibC::Int
+  {% else %}
+    fun evp_md_size = EVP_MD_size(md : EVP_MD) : Int32
+    fun evp_md_block_size = EVP_MD_block_size(md : EVP_MD) : LibC::Int
+  {% end %}
+
   fun evp_digestfinal_ex = EVP_DigestFinal_ex(ctx : EVP_MD_CTX, md : UInt8*, size : UInt32*) : Int32
 
   {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
@@ -187,11 +195,22 @@ lib LibCrypto
   {% end %}
 
   fun evp_get_cipherbyname = EVP_get_cipherbyname(name : UInt8*) : EVP_CIPHER
-  fun evp_cipher_name = EVP_CIPHER_name(cipher : EVP_CIPHER) : UInt8*
-  fun evp_cipher_nid = EVP_CIPHER_nid(cipher : EVP_CIPHER) : Int32
-  fun evp_cipher_block_size = EVP_CIPHER_block_size(cipher : EVP_CIPHER) : Int32
-  fun evp_cipher_key_length = EVP_CIPHER_key_length(cipher : EVP_CIPHER) : Int32
-  fun evp_cipher_iv_length = EVP_CIPHER_iv_length(cipher : EVP_CIPHER) : Int32
+
+  {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
+    fun evp_cipher_name = EVP_CIPHER_get_name(cipher : EVP_CIPHER) : UInt8*
+    fun evp_cipher_nid = EVP_CIPHER_get_nid(cipher : EVP_CIPHER) : Int32
+    fun evp_cipher_block_size = EVP_CIPHER_get_block_size(cipher : EVP_CIPHER) : Int32
+    fun evp_cipher_key_length = EVP_CIPHER_get_key_length(cipher : EVP_CIPHER) : Int32
+    fun evp_cipher_iv_length = EVP_CIPHER_get_iv_length(cipher : EVP_CIPHER) : Int32
+    fun evp_cipher_flags = EVP_CIPHER_get_flags(ctx : EVP_CIPHER_CTX) : CipherFlags
+  {% else %}
+    fun evp_cipher_name = EVP_CIPHER_name(cipher : EVP_CIPHER) : UInt8*
+    fun evp_cipher_nid = EVP_CIPHER_nid(cipher : EVP_CIPHER) : Int32
+    fun evp_cipher_block_size = EVP_CIPHER_block_size(cipher : EVP_CIPHER) : Int32
+    fun evp_cipher_key_length = EVP_CIPHER_key_length(cipher : EVP_CIPHER) : Int32
+    fun evp_cipher_iv_length = EVP_CIPHER_iv_length(cipher : EVP_CIPHER) : Int32
+    fun evp_cipher_flags = EVP_CIPHER_flags(ctx : EVP_CIPHER_CTX) : CipherFlags
+  {% end %}
 
   fun evp_cipher_ctx_new = EVP_CIPHER_CTX_new : EVP_CIPHER_CTX
   fun evp_cipher_ctx_free = EVP_CIPHER_CTX_free(ctx : EVP_CIPHER_CTX)
@@ -212,8 +231,6 @@ lib LibCrypto
     EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK = 0x400000
     EVP_CIPH_FLAG_PIPELINE          = 0x800000
   end
-
-  fun evp_cipher_flags = EVP_CIPHER_flags(ctx : EVP_CIPHER_CTX) : CipherFlags
 
   fun hmac = HMAC(evp : EVP_MD, key : Char*, key_len : Int,
                   d : Char*, n : SizeT, md : Char*, md_len : UInt*) : Char*
@@ -286,7 +303,7 @@ lib LibCrypto
   fun x509_get_ext = X509_get_ext(x : X509, idx : Int) : X509_EXTENSION
   fun x509_get_ext_count = X509_get_ext_count(x : X509) : Int
   fun x509_get_ext_d2i = X509_get_ext_d2i(x : X509, nid : Int, crit : Int*, idx : Int*) : Void*
-  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 || LIBRESSL_VERSION != "0.0.0" %}
     fun x509_get_signature_nid = X509_get_signature_nid(x509 : X509) : Int32
   {% end %}
 
