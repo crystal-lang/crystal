@@ -33,7 +33,7 @@
         "summary": { "type": "string" },
         "args": {
           "type": "array",
-          "items": { "$ref": "#/definitions/Arg" }
+          "items": { "type": "string" }
         },
         "args_string": { "type": "string" }
       },
@@ -41,16 +41,6 @@
         "html_id",
         "name"
       ]
-    },
-    "Arg": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "name": { "type": "string" },
-        "doc": { "type": "string" },
-        "external_name": { "type": "string" }
-      },
-      "required": ["external_name", "name"]
     },
     "Constant": {
       "type": "object",

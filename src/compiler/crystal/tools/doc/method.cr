@@ -339,15 +339,7 @@ class Crystal::Doc::Method
       builder.field "name", name
       builder.field "doc", doc unless doc.nil?
       builder.field "summary", formatted_summary unless formatted_summary.nil?
-
-      unless args.empty?
-        builder.field "args" do
-          builder.array do
-            args.each &.to_json_search(builder)
-          end
-        end
-      end
-
+      builder.field "args", args.map &.external_name unless args.empty?
       builder.field "args_string", args_to_s unless args.empty?
     end
   end
