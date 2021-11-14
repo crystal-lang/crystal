@@ -390,6 +390,15 @@ describe "Char" do
     '酒'.ascii?.should be_false
   end
 
+  it "#printable?" do
+    ' '.printable?.should be_true
+    'a'.printable?.should be_true
+    '酒'.printable?.should be_true
+    '\n'.printable?.should be_false
+    '\e'.printable?.should be_false
+    '\uF8FF'.printable?.should be_false
+  end
+
   describe "clone" do
     it { 'a'.clone.should eq('a') }
   end
