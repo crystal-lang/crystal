@@ -35,11 +35,9 @@
           "type": "array",
           "items": { "$ref": "#/definitions/Arg" }
         },
-        "args_string": { "type": "string" },
-        "def": { "$ref": "#/definitions/Def" }
+        "args_string": { "type": "string" }
       },
       "required": [
-        "def",
         "html_id",
         "name"
       ]
@@ -49,45 +47,9 @@
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string" },
-        "doc": { "type": "string" },
-        "default_value": { "type": "string" },
-        "external_name": { "type": "string" },
-        "restriction": { "type": "string" }
+        "external_name": { "type": "string" }
       },
-      "required": ["external_name", "name", "restriction"]
-    },
-    "Def": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "name": { "type": "string" },
-        "args": {
-          "type": "array",
-          "items": { "$ref": "#/definitions/Arg" }
-        },
-        "double_splat": { "$ref": "#/definitions/Arg" },
-        "splat_index": { "type": "integer" },
-        "yields": { "type": "integer" },
-        "block_arg": { "$ref": "#/definitions/Arg" },
-        "return_type": { "type": "string" },
-        "visibility": { "$ref": "#/definitions/Visibility" },
-        "body": { "type": "string" }
-      },
-      "required": [
-        "body",
-        "name",
-        "visibility"
-      ]
-    },
-    "Location": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "filename": { "type": "string" },
-        "line_number": { "type": "integer" },
-        "url": { "type": "string" }
-      },
-      "required": ["filename", "line_number", "url"]
+      "required": ["external_name", "name"]
     },
     "Constant": {
       "type": "object",
@@ -152,10 +114,6 @@
     "Kind": {
       "type": "string",
       "enum": ["module", "class", "struct", "alias", "annotation", "enum"]
-    },
-    "Visibility": {
-      "type": "string",
-      "enum": ["Public", "Protected", "Private"]
     }
   }
 }
