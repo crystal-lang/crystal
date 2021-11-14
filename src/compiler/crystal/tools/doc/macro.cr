@@ -159,6 +159,17 @@ class Crystal::Doc::Macro
     end
   end
 
+  def to_json_search(builder : JSON::Builder)
+    builder.object do
+      builder.field "html_id", id
+      builder.field "name", name
+      builder.field "doc", doc unless doc.nil?
+      builder.field "summary", formatted_summary unless formatted_summary.nil?
+      builder.field "args", args unless args.empty?
+      builder.field "args_string", args_to_s unless args.empty?
+    end
+  end
+
   def annotations(annotation_type)
     @macro.annotations(annotation_type)
   end

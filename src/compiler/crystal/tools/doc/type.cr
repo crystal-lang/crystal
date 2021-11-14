@@ -851,7 +851,6 @@ class Crystal::Doc::Type
     end
   end
 
-
   def to_json_search(builder : JSON::Builder)
     builder.object do
       builder.field "html_id", html_id
@@ -893,10 +892,17 @@ class Crystal::Doc::Type
         end
       end
 
+      unless macros.empty?
+        builder.field "macros" do
+          builder.array do
+            macros.each &.to_json_search(builder)
+          end
+        end
+      end
+
       builder.field "namespace" { namespace.try &.to_json_simple(builder) } unless namespace.nil?
       builder.field "doc", doc unless doc.nil?
       builder.field "summary", formatted_summary unless formatted_summary.nil?
-      builder.field "macros", macros unless macros.empty?
     end
   end
 
