@@ -12,17 +12,6 @@
       },
       "required": ["body", "program", "repository_name"]
     },
-    "SimpleType": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "html_id": { "type": "string" },
-        "kind": { "$ref": "#/definitions/Kind" },
-        "full_name": { "type": "string" },
-        "name": { "type": "string" }
-      },
-      "required": ["full_name", "html_id", "kind", "name"]
-    },
     "Method": {
       "type": "object",
       "additionalProperties": false,
@@ -67,9 +56,6 @@
         "constants": {
           "type": "array",
           "items": { "$ref": "#/definitions/Constant" }
-        },
-        "namespace": {
-          "$ref": "#/definitions/SimpleType"
         },
         "doc": { "type": "string" },
         "summary": { "type": "string" },
