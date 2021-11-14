@@ -12,7 +12,7 @@ module Crystal::Doc
 
     def to_jsonp(io : IO)
       io << "crystal_doc_search_index_callback("
-      to_json(io)
+      JSON.build(io) { |json| to_json_search json }
       io << ')'
     end
 
@@ -22,6 +22,18 @@ module Crystal::Doc
         builder.field "body", body
         builder.field "program", program
       end
+    end
+
+    def to_json_search(builder : JSON::Builder)
+      builder.object do
+        builder.field "repository_name", project_info.name
+        builder.field "body", body
+        builder.field "program" { program.to_json_search builder }
+      end
+    end
+
+    def to_json_search
+      JSON.build { |json| to_json_search json }
     end
   end
 end

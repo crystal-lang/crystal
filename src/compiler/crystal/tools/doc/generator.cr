@@ -89,6 +89,7 @@ class Crystal::Doc::Generator
 
     main_index = Main.new(raw_body, Type.new(self, @program), project_info)
     File.write File.join(@output_dir, "index.json"), main_index
+    File.write File.join(@output_dir, "search-index.json"), main_index.to_json_search
     File.write File.join(@output_dir, "search-index.js"), main_index.to_jsonp
 
     File.write File.join(@output_dir, "404.html"), MainTemplate.new(Error404Template.new.to_s, types, project_info)

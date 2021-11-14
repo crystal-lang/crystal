@@ -333,6 +333,21 @@ class Crystal::Doc::Method
     end
   end
 
+  def to_json_search(builder : JSON::Builder)
+    builder.object do
+      builder.field "html_id", id
+      builder.field "name", name
+      builder.field "doc", doc unless doc.nil?
+      builder.field "summary", formatted_summary unless formatted_summary.nil?
+      builder.field "abstract", abstract?
+      builder.field "args", args unless args.empty?
+      builder.field "args_string", args_to_s unless args.empty?
+      builder.field "args_html", args_to_html unless args.empty?
+      builder.field "location", location unless location.nil?
+      builder.field "def", self.def
+    end
+  end
+
   def annotations(annotation_type)
     @def.annotations(annotation_type)
   end

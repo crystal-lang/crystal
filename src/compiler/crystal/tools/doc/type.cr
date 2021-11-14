@@ -851,6 +851,97 @@ class Crystal::Doc::Type
     end
   end
 
+
+  def to_json_search(builder : JSON::Builder)
+    builder.object do
+      builder.field "html_id", html_id
+      builder.field "path", path
+      builder.field "kind", kind
+      builder.field "full_name", full_name
+      builder.field "name", name
+      builder.field "abstract", abstract?
+      builder.field "superclass" { superclass.try &.to_json_simple(builder) } unless superclass.nil?
+      unless ancestors.empty?
+        builder.field "ancestors" do
+          builder.array do
+            ancestors.each &.to_json_simple(builder)
+          end
+        end
+      end
+
+      builder.field "locations", locations
+      builder.field "repository_name", @generator.project_info.name
+      builder.field "program", program?
+      builder.field "enum", enum?
+      builder.field "alias", alias?
+      builder.field "aliased", alias_definition.to_s if alias?
+      builder.field "aliased_html", formatted_alias_definition if alias?
+      builder.field "const", const?
+      builder.field "constants", constants unless constants.empty?
+      unless included_modules.empty?
+        builder.field "included_modules" do
+          builder.array do
+            included_modules.each &.to_json_simple(builder)
+          end
+        end
+      end
+
+      unless extended_modules.empty?
+        builder.field "extended_modules" do
+          builder.array do
+            extended_modules.each &.to_json_simple(builder)
+          end
+        end
+      end
+
+      unless subclasses.empty?
+        builder.field "subclasses" do
+          builder.array do
+            subclasses.each &.to_json_simple(builder)
+          end
+        end
+      end
+
+      unless including_types.empty?
+        builder.field "including_types" do
+          builder.array do
+            including_types.each &.to_json_simple(builder)
+          end
+        end
+      end
+
+      unless instance_methods.empty?
+        builder.field "instance_methods" do
+          builder.array do
+            instance_methods.each &.to_json_search(builder)
+          end
+        end
+      end
+
+      unless constructors.empty?
+        builder.field "constructors" do
+          builder.array do
+            constructors.each &.to_json_search(builder)
+          end
+        end
+      end
+
+      unless class_methods.empty?
+        builder.field "class_methods" do
+          builder.array do
+            class_methods.each &.to_json_search(builder)
+          end
+        end
+      end
+
+      builder.field "namespace" { namespace.try &.to_json_simple(builder) } unless namespace.nil?
+      builder.field "doc", doc unless doc.nil?
+      builder.field "summary", formatted_summary unless formatted_summary.nil?
+      builder.field "macros", macros unless macros.empty?
+      builder.field "types", types unless types.empty?
+    end
+  end
+
   def annotations(annotation_type)
     @type.annotations(annotation_type)
   end
