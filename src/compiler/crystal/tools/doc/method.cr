@@ -341,7 +341,6 @@ class Crystal::Doc::Method
       builder.field "summary", formatted_summary unless formatted_summary.nil?
       builder.field "args", args unless args.empty?
       builder.field "args_string", args_to_s unless args.empty?
-      builder.field "def", self.def
     end
   end
 

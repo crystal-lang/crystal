@@ -8,6 +8,14 @@ class Crystal::Arg
       builder.field "restriction", restriction.to_s
     end
   end
+
+  def to_json_search(builder : JSON::Builder)
+    builder.object do
+      builder.field "name", name
+      builder.field "doc", doc unless doc.nil?
+      builder.field "external_name", external_name.to_s
+    end
+  end
 end
 
 class Crystal::Def
