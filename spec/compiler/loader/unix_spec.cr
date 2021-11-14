@@ -133,6 +133,38 @@ describe Crystal::Loader do
           loader.close_all if loader
         end
       {% end %}
+
+      it "lookup in order" do
+        build_c_dynlib(compiler_datapath("loader", "foo2.c"))
+
+        help_loader1 = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
+        help_loader1.load_library("foo")
+        foo_address = help_loader1.find_symbol?("foo").should_not be_nil
+
+        help_loader2 = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
+        help_loader2.load_library("foo2")
+        foo2_address = help_loader2.find_symbol?("foo").should_not be_nil
+
+        foo_address.should_not eq foo2_address
+
+        loader1 = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
+        loader1.load_library("foo")
+        loader1.load_library("foo2")
+
+        loader1.find_symbol?("foo").should eq foo_address
+
+        loader2 = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
+        loader2.load_library("foo2")
+        loader2.load_library("foo")
+
+        loader2.find_symbol?("foo").should eq foo2_address
+      ensure
+        help_loader1.try &.close_all
+        help_loader2.try &.close_all
+
+        loader1.try &.close_all
+        loader2.try &.close_all
+      end
     end
 
     it "does not find global symbols" do
