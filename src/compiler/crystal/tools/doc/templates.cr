@@ -96,4 +96,8 @@ module Crystal::Doc
   record SitemapTemplate, types : Array(Type), base_url : String, priority : String, changefreq : String do
     ECR.def_to_s "#{__DIR__}/html/sitemap.xml"
   end
+
+  struct SchemaTemplate
+    ECR.def_to_s "#{__DIR__}/html/schema.json"
+  end
 end
