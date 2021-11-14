@@ -829,7 +829,7 @@ class Crystal::Doc::Type
           including_types.each &.to_json_simple(builder)
         end
       end unless including_types.empty?
-      builder.field "namespace" { (n = namespace) ? n.to_json_simple(builder) : builder.null }
+      builder.field "namespace" { namespace.try &.to_json_simple(builder) } unless namespace.nil?
       builder.field "doc", doc unless doc.nil?
       builder.field "summary", formatted_summary unless formatted_summary.nil?
       builder.field "class_methods", class_methods unless class_methods.empty?

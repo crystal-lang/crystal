@@ -154,7 +154,7 @@ class Crystal::Doc::Macro
       builder.field "args", args unless args.empty?
       builder.field "args_string", args_to_s unless args.empty?
       builder.field "args_html", args_to_html unless args.empty?
-      builder.field "location", location
+      builder.field "location", location unless location.nil?
       builder.field "def", self.macro
     end
   end
