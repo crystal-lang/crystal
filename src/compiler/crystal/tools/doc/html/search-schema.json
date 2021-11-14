@@ -47,6 +47,7 @@
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string" },
+        "doc": { "type": "string" },
         "external_name": { "type": "string" }
       },
       "required": ["external_name", "name"]
