@@ -128,6 +128,7 @@ describe "Char" do
     assert_prints '\u202A'.dump, %('\\u202A')
     assert_prints '\u{81}'.dump, %('\\u0081')
     assert_prints '\u{110BD}'.dump, %('\\u{110BD}')
+    assert_prints '\u{1F48E}'.dump, %('\\u{1F48E}')
     assert_prints '\u00AD'.dump, %('\\u00AD')
   end
 
@@ -147,11 +148,12 @@ describe "Char" do
     assert_prints '\v'.inspect, %('\\v')
     assert_prints '\f'.inspect, %('\\f')
     assert_prints 'á'.inspect, %('á')
-    assert_prints '\uF8FF'.inspect, %('\uF8FF')
-    assert_prints '\u202A'.inspect, %('\u202A')
+    assert_prints '\uF8FF'.inspect, %('\\uF8FF')
+    assert_prints '\u202A'.inspect, %('\\u202A')
     assert_prints '\u{81}'.inspect, %('\\u0081')
-    assert_prints '\u{110BD}'.inspect, %('\u{110BD}')
-    assert_prints '\u00AD'.inspect, %('\u00AD')
+    assert_prints '\u{110BD}'.inspect, %('\\u{110BD}')
+    assert_prints '\u{1F48E}'.inspect, %('\u{1F48E}')
+    assert_prints '\u00AD'.inspect, %('\\u00AD')
   end
 
   it "#unicode_escape" do

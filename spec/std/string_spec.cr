@@ -1746,11 +1746,11 @@ describe "String" do
     assert_prints "á".inspect, %("á")
     assert_prints "\u{81}".inspect, %("\\u0081")
     assert_prints "\u{1F48E}".inspect, %("\u{1F48E}")
-    assert_prints "\uF8FF".inspect, %("\uF8FF")       # private use character (Co)
-    assert_prints "\u202A".inspect, %("\u202A")       # bidi control character (Cf)
-    assert_prints "\u{110BD}".inspect, %("\u{110BD}") # Format character > U+FFFF (Cf)
-    assert_prints "\u00A0".inspect, %("\u00A0")       # white space (Zs)
-    assert_prints "\u200D".inspect, %("\u200D")       # format character (Cf)
+    assert_prints "\uF8FF".dump, %("\\uF8FF")       # private use character (Co)
+    assert_prints "\u202A".dump, %("\\u202A")       # bidi control character (Cf)
+    assert_prints "\u{110BD}".dump, %("\\u{110BD}") # Format character > U+FFFF (Cf)
+    assert_prints "\u00A0".dump, %("\\u00A0")       # white space (Zs)
+    assert_prints "\u200D".dump, %("\\u200D")       # format character (Cf)
     assert_prints " ".inspect, %(" ")
   end
 
