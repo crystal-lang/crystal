@@ -165,7 +165,15 @@ class Crystal::Doc::Macro
       builder.field "name", name
       builder.field "doc", doc unless doc.nil?
       builder.field "summary", formatted_summary unless formatted_summary.nil?
-      builder.field "args", args unless args.empty?
+
+      unless args.empty?
+        builder.field "args" do
+          builder.array do
+            args.each &.to_json_search(builder)
+          end
+        end
+      end
+
       builder.field "args_string", args_to_s unless args.empty?
     end
   end
