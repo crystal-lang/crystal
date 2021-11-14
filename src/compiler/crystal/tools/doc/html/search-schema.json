@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/definitions/Crystal",
+  "definitions": {
+    "Crystal": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository_name": { "type": "string" },
+        "body": { "type": "string" },
+        "program": { "$ref": "#/definitions/Type" }
+      },
+      "required": ["body", "program", "repository_name"]
+    },
+    "SimpleType": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "html_id": { "type": "string" },
+        "kind": { "$ref": "#/definitions/Kind" },
+        "full_name": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "required": ["full_name", "html_id", "kind", "name"]
+    },
+    "Method": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "html_id": { "type": "string" },
+        "name": { "type": "string" },
+        "doc": { "type": "string" },
+        "summary": { "type": "string" },
+        "args": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Arg" }
+        },
+        "args_string": { "type": "string" },
+        "def": { "$ref": "#/definitions/Def" }
+      },
+      "required": [
+        "def",
+        "html_id",
+        "name"
+      ]
+    },
+    "Arg": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "doc": { "type": "string" },
+        "default_value": { "type": "string" },
+        "external_name": { "type": "string" },
+        "restriction": { "type": "string" }
+      },
+      "required": ["external_name", "name", "restriction"]
+    },
+    "Def": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "args": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Arg" }
+        },
+        "double_splat": { "$ref": "#/definitions/Arg" },
+        "splat_index": { "type": "integer" },
+        "yields": { "type": "integer" },
+        "block_arg": { "$ref": "#/definitions/Arg" },
+        "return_type": { "type": "string" },
+        "visibility": { "$ref": "#/definitions/Visibility" },
+        "body": { "type": "string" }
+      },
+      "required": [
+        "body",
+        "name",
+        "visibility"
+      ]
+    },
+    "Location": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "filename": { "type": "string" },
+        "line_number": { "type": "integer" },
+        "url": { "type": "string" }
+      },
+      "required": ["filename", "line_number", "url"]
+    },
+    "Constant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "value": { "type": "string" },
+        "doc": { "type": "string" },
+        "summary": { "type": "string" }
+      },
+      "required": ["id", "name", "value"],
+      "title": "Constant"
+    },
+    "Type": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "html_id": { "type": "string" },
+        "path": { "type": "string" },
+        "kind": { "$ref": "#/definitions/Kind" },
+        "full_name": { "type": "string" },
+        "name": { "type": "string" },
+        "constants": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Constant" }
+        },
+        "included_modules": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/SimpleType" }
+        },
+        "extended_modules": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/SimpleType" }
+        },
+        "subclasses": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/SimpleType" }
+        },
+        "including_types": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/SimpleType" }
+        },
+        "namespace": {
+          "$ref": "#/definitions/SimpleType"
+        },
+        "doc": { "type": "string" },
+        "summary": { "type": "string" },
+        "class_methods": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Method" }
+        },
+        "constructors": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Method" }
+        },
+        "instance_methods": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Method" }
+        },
+        "macros": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Method" }
+        },
+        "types": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Type" }
+        }
+      },
+      "required": [
+        "full_name",
+        "html_id",
+        "kind",
+        "name",
+        "path"
+      ]
+    },
+    "Kind": {
+      "type": "string",
+      "enum": ["module", "class", "struct", "alias", "annotation", "enum"]
+    },
+    "Visibility": {
+      "type": "string",
+      "enum": ["Public", "Protected", "Private"]
+    }
+  }
+}
