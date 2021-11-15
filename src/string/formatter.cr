@@ -307,6 +307,7 @@ struct String::Formatter(A)
     capacity = 3 # percent + type + \0
     capacity += flags.width_size
     capacity += flags.precision_size + 1 # size + .
+    capacity += 1 if flags.sharp
     capacity += 1 if flags.plus
     capacity += 1 if flags.minus
     capacity += 1 if flags.zero

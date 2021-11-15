@@ -375,6 +375,7 @@ describe "::sprintf" do
       assert_sprintf "%a", 12345678.45, "0x1.78c29ce666666p+23"
       assert_sprintf "%A", 12345678.45, "0X1.78C29CE666666P+23"
       assert_sprintf "%100.50g", 123.45, "                                                  123.4500000000000028421709430404007434844970703125"
+      assert_sprintf "%#.12g", 12345.0, "12345.0000000"
 
       assert_sprintf "%.2f", 2.536_f32, "2.54"
       assert_sprintf "%0*.*f", [10, 2, 2.536_f32], "0000002.54"
