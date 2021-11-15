@@ -4,7 +4,7 @@ require "../support/string"
   require "big"
 {% end %}
 
-# use same name for `sprintf` and `IO#printf`
+# use same name for `sprintf` and `IO#printf` so that `assert_prints` can be leveraged
 private def fprintf(format, *args)
   sprintf(format, *args)
 end
@@ -13,18 +13,21 @@ private def fprintf(io : IO, format, *args)
   io.printf(format, *args)
 end
 
-private def assert_sprintf(format, *args_and_result, file = __FILE__, line = __LINE__)
-  args = args_and_result[..-2]
-  result = args_and_result[-1]
-  assert_prints fprintf(format, *args), result, file: file, line: line
+private def assert_sprintf(format, args, result, *, file = __FILE__, line = __LINE__)
+  assert_prints fprintf(format, args), result, file: file, line: line
 end
 
 describe "::sprintf" do
   it "works" do
-    assert_sprintf "foo", 1, "foo"
     assert_sprintf "Hello %d world", 123, "Hello 123 world"
     assert_sprintf "Hello %d world", [123], "Hello 123 world"
     assert_sprintf "foo %d bar %s baz %d goo", [1, "hello", 2], "foo 1 bar hello baz 2 goo"
+  end
+
+  it "accepts multiple positional arguments" do
+    assert_prints fprintf("%d %d %d", 1, 23, 456), "1 23 456"
+    assert_prints fprintf("%*.*d,%*s", 10, 6, 123, 10, "foo"), "    000123,       foo"
+    assert_prints fprintf("foo"), "foo"
   end
 
   it "doesn't format %%" do
@@ -384,7 +387,7 @@ describe "::sprintf" do
         sprintf("%*f", ["not a number", 2.536_f32])
       end
 
-      assert_sprintf "%12.2f %12.2f %6.2f %.2f", {2.0, 3.0, 4.0, 5.0}, "        2.00         3.00   4.00 5.00"
+      assert_sprintf "%12.2f %12.2f %6.2f %.2f", [2.0, 3.0, 4.0, 5.0], "        2.00         3.00   4.00 5.00"
 
       assert_sprintf "%f", 1e15, "1000000000000000.000000"
     end
