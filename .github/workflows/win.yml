@@ -172,7 +172,7 @@ jobs:
 
       - name: Re-build Crystal
         run: |
-          .\crystal-cross.exe build src/compiler/crystal.cr -Di_know_what_im_doing -Dwithout_playground --link-flags=/F10000000
+          .\crystal-cross.exe build src/compiler/crystal.cr -Di_know_what_im_doing -Dwithout_playground --link-flags=/STACK:10000000
           mv crystal.exe bin/
 
       - name: Gather Crystal binaries
