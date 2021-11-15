@@ -1188,7 +1188,7 @@ module Crystal
   class ProcLiteral
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
-      when "args", "body"
+      when "args", "body", "return_type"
         @def.interpret(method, args, named_args, block, interpreter, location)
       else
         super
@@ -1324,6 +1324,14 @@ module Crystal
         interpret_check_args { BoolLiteral.new(@yields != nil) }
       when "return_type"
         interpret_check_args { @return_type || Nop.new }
+      when "free_vars"
+        interpret_check_args do
+          if (free_vars = @free_vars) && !free_vars.empty?
+            ArrayLiteral.map(free_vars) { |free_var| MacroId.new(free_var) }
+          else
+            empty_no_return_array
+          end
+        end
       when "body"
         interpret_check_args { @body }
       when "receiver"
@@ -1332,6 +1340,8 @@ module Crystal
         interpret_check_args do
           visibility_to_symbol(@visibility)
         end
+      when "abstract?"
+        interpret_check_args { BoolLiteral.new(@abstract) }
       when "annotation"
         fetch_annotation(self, method, args, named_args, block) do |type|
           self.annotation(type)
@@ -1897,6 +1907,8 @@ module Crystal
         interpret_check_args { self.block || Nop.new }
       when "block_arg"
         interpret_check_args { self.block_arg || Nop.new }
+      when "global?"
+        interpret_check_args { BoolLiteral.new(@global) }
       else
         super
       end
@@ -1948,6 +1960,8 @@ module Crystal
         interpret_check_args { ArrayLiteral.map whens, &.itself }
       when "else"
         interpret_check_args { self.else || Nop.new }
+      when "exhaustive?"
+        interpret_check_args { BoolLiteral.new(@exhaustive) }
       else
         super
       end
@@ -1961,6 +1975,8 @@ module Crystal
         interpret_check_args { ArrayLiteral.new(conds) }
       when "body"
         interpret_check_args { body }
+      when "exhaustive?"
+        interpret_check_args { BoolLiteral.new(@exhaustive) }
       else
         super
       end
@@ -2204,6 +2220,8 @@ module Crystal
   class Annotation
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
+      when "name"
+        interpret_check_args { @path }
       when "[]"
         interpret_check_args do |arg|
           case arg

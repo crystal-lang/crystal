@@ -133,6 +133,11 @@ module Crystal
     def parse_multi_assign
       location = @token.location
 
+      if @token.type == :"*"
+        lhs_splat_index = 0
+        next_token_skip_space
+      end
+
       last = parse_expression
       skip_space
 
@@ -141,14 +146,17 @@ module Crystal
       case @token.type
       when :","
         unless last_is_target
+          unexpected_token if lhs_splat_index
           raise "Multiple assignment is not allowed for constants" if last.is_a?(Path)
           unexpected_token
         end
       when :NEWLINE, :";"
-        return last
+        unexpected_token if lhs_splat_index && !multi_assign_middle?(last)
+        return last unless lhs_splat_index
       else
         if end_token?
-          return last
+          unexpected_token if lhs_splat_index && !multi_assign_middle?(last)
+          return last unless lhs_splat_index
         else
           unexpected_token
         end
@@ -168,6 +176,12 @@ module Crystal
         i += 1
 
         next_token_skip_space_or_newline
+        if @token.type == :"*"
+          raise "splat assignment already specified" if lhs_splat_index
+          lhs_splat_index = i
+          next_token_skip_space
+        end
+
         last = parse_op_assign(allow_ops: false)
         if assign_index == -1 && !multi_assign_target?(last)
           unexpected_token
@@ -202,9 +216,17 @@ module Crystal
         raise "BUG: multiassign index expression can only be Assign or Call"
       end
 
+      if lhs_splat_index
+        targets[lhs_splat_index] = Splat.new(targets[lhs_splat_index])
+      end
+
       values.concat exps[assign_index + 1..-1]
-      if values.size != 1 && targets.size != values.size
-        raise "Multiple assignment count mismatch", location
+      if values.size != 1
+        if lhs_splat_index
+          raise "Multiple assignment count mismatch", location if targets.size - 1 > values.size
+        else
+          raise "Multiple assignment count mismatch", location if targets.size != values.size
+        end
       end
 
       multi = MultiAssign.new(targets, values).at(location)
@@ -1776,8 +1798,14 @@ module Crystal
 
       next_token_skip_space_or_newline
 
-      unless @token.type == :"{" || @token.type == :"(" || @token.keyword?(:do)
-        return parse_fun_pointer
+      case @token.type
+      when :SYMBOL
+        # -> :T { }
+        raise "a space is mandatory between ':' and return type", @token
+      when :"{", :"(", :":"
+        # do nothing
+      else
+        return parse_fun_pointer unless @token.keyword?(:do)
       end
 
       args = [] of Arg
@@ -1793,6 +1821,16 @@ module Crystal
           args << arg
         end
         next_token_skip_space_or_newline
+      end
+
+      case @token.type
+      when :SYMBOL
+        # ->() :T { }
+        raise "a space is mandatory between ':' and return type", @token
+      when :":"
+        next_token_skip_space_or_newline
+        return_type = parse_bare_proc_type
+        skip_space_or_newline
       end
 
       with_lexical_var_scope do
@@ -1816,7 +1854,7 @@ module Crystal
           unexpected_token
         end
 
-        a_def = Def.new("->", args, body).at(location).at_end(end_location)
+        a_def = Def.new("->", args, body, return_type: return_type).at(location).at_end(end_location)
         ProcLiteral.new(a_def).at(location).at_end(end_location)
       end
     end
