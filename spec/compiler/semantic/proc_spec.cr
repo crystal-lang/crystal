@@ -820,6 +820,15 @@ describe "Semantic: proc" do
       CR
   end
 
+  it "allows metaclass in proc return types" do
+    assert_type(<<-CR) { proc_of(types["Foo"].metaclass) }
+      class Foo
+      end
+
+      -> : Foo.class { Foo }
+      CR
+  end
+
   it "allows metaclass in captured block" do
     assert_type(<<-CR) { proc_of(types["Foo"].metaclass, types["Foo"]) }
       class Foo
