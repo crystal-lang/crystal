@@ -568,20 +568,7 @@ module Crystal
         interpret_check_args do |arg|
           case arg
           when RangeLiteral
-            from, to = arg.from, arg.to
-            from = interpreter.accept(from)
-            to = interpreter.accept(to)
-
-            unless from.is_a?(NumberLiteral)
-              raise "range from in StringLiteral#[] must be a number, not #{from.class_desc}: #{from}"
-            end
-
-            unless to.is_a?(NumberLiteral)
-              raise "range to in StringLiteral#[] must be a number, not #{to.class_desc}: #{from}"
-            end
-
-            from, to = from.to_number.to_i, to = to.to_number.to_i
-            range = Range.new(from, to, arg.exclusive?)
+            range = arg.interpret_to_nilable_range(interpreter)
             StringLiteral.new(@value[range])
           else
             raise "wrong argument for StringLiteral#[] (#{arg.class_desc}): #{arg}"
@@ -1068,24 +1055,47 @@ module Crystal
     end
 
     def interpret_to_range(interpreter)
-      from = self.from
-      to = self.to
+      node = interpreter.accept(self.from)
+      from = case node
+             when NumberLiteral
+               node.to_number.to_i
+             else
+               raise "range begin must be a NumberLiteral, not #{node.class_desc}"
+             end
 
-      from = interpreter.accept(from)
-      to = interpreter.accept(to)
+      node = interpreter.accept(self.to)
+      to = case node
+           when NumberLiteral
+             node.to_number.to_i
+           else
+             raise "range end must be a NumberLiteral, not #{node.class_desc}"
+           end
 
-      unless from.is_a?(NumberLiteral)
-        raise "range begin must be a NumberLiteral, not #{from.class_desc}"
-      end
+      Range.new(from, to, self.exclusive?)
+    end
 
-      unless to.is_a?(NumberLiteral)
-        raise "range end must be a NumberLiteral, not #{to.class_desc}"
-      end
+    def interpret_to_nilable_range(interpreter)
+      node = interpreter.accept(self.from)
+      from = case node
+             when NumberLiteral
+               node.to_number.to_i
+             when NilLiteral, Nop
+               nil
+             else
+               raise "range begin must be a NumberLiteral | NilLiteral | Nop, not #{node.class_desc}"
+             end
 
-      from = from.to_number.to_i
-      to = to.to_number.to_i
+      node = interpreter.accept(self.to)
+      to = case node
+           when NumberLiteral
+             node.to_number.to_i
+           when NilLiteral, Nop
+             nil
+           else
+             raise "range end must be a NumberLiteral | NilLiteral | Nop, not #{node.class_desc}"
+           end
 
-      self.exclusive? ? (from...to) : (from..to)
+      Range.new(from, to, self.exclusive?)
     end
   end
 
@@ -2434,7 +2444,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
           index = arg.to_number.to_i
           value = object.elements[index]? || Crystal::NilLiteral.new
         when Crystal::RangeLiteral
-          range = arg.interpret_to_range(interpreter)
+          range = arg.interpret_to_nilable_range(interpreter)
           begin
             klass.new(object.elements[range])
           rescue ex
