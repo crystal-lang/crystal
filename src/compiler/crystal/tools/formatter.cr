@@ -4131,7 +4131,15 @@ module Crystal
         next_token_skip_space_or_newline
       end
 
-      write " " unless a_def.args.empty?
+      if return_type = a_def.return_type
+        check :":"
+        write " : "
+        next_token_skip_space_or_newline
+        accept return_type
+        next_token_skip_space_or_newline
+      end
+
+      write " " unless a_def.args.empty? && !return_type
 
       is_do = false
       if @token.keyword?(:do)

@@ -929,6 +929,7 @@ class Crystal::Call
 
           fun_literal = ProcLiteral.new(a_def).at(self)
           fun_literal.expected_return_type = output_type if output_type
+          fun_literal.from_block = true
           fun_literal.force_nil = true unless output
           fun_literal.accept parent_visitor
         end

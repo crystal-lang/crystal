@@ -225,6 +225,7 @@ struct BitArray
   # ```
   def toggle(start : Int, count : Int)
     start, count = normalize_start_and_count(start, count)
+    return if count == 0
 
     start_bit_index, start_sub_index = start.divmod(32)
     end_bit_index, end_sub_index = (start + count - 1).divmod(32)
@@ -263,6 +264,50 @@ struct BitArray
       @bits[i] = ~@bits[i]
     end
     clear_unused_bits
+  end
+
+  # :inherit:
+  def reverse! : self
+    return self if size <= 1
+
+    if size <= 32
+      @bits.value = Intrinsics.bitreverse32(@bits.value) >> (32 - size)
+    elsif size <= 64
+      more_bits = @bits.as(UInt64*)
+      more_bits.value = Intrinsics.bitreverse64(more_bits.value) >> (64 - size)
+    else
+      # 3 or more groups of bits
+      offset = (-size) % 32
+      if offset != 0
+        # left-shifting, followed by bit-reversing in each group
+        # simplified bit pattern example using a group size of 8: (offset = 3)
+        #
+        #     hgfedcba ponmlkji 000utsrq
+        #     hgfedcba ponmlkji utsrqpon
+        #     hgfedcba ponmlkji nopqrstu
+        #     hgfedcba mlkjihgf nopqrstu
+        #     hgfedcba fghijklm nopqrstu
+        (malloc_size - 1).downto(1) do |i|
+          @bits[i] = Intrinsics.bitreverse32((@bits[i] << offset) | (@bits[i - 1] >> (32 - offset)))
+        end
+
+        # last group:
+        #
+        #     edcba000 fghijklm nopqrstu
+        #     000abcde fghijklm nopqrstu
+        @bits[0] = Intrinsics.bitreverse32(@bits[0] << offset)
+      else
+        # no padding; do only the bit reverses
+        Slice.new(@bits, malloc_size).map! { |x| Intrinsics.bitreverse32(x) }
+      end
+
+      # reversing all groups themselves:
+      #
+      #     nopqrstu fghijklm 000abcde
+      Slice.new(@bits, malloc_size).reverse!
+    end
+
+    self
   end
 
   # :inherit:
