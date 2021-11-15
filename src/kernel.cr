@@ -221,8 +221,10 @@ end
 #          | (numeric fmt) | flag is also given.
 # ---------+---------------+-----------------------------------------
 # #        | boxX          | Use an alternative format.
-#          | aAeEfgG       | For o, x, X, b, prefix any non-zero result with
-#          |               | 0o, 0x, 0X, or 0b respectively.
+#          | aAeEfgG       | For x, X, b, prefix any non-zero result with
+#          |               | 0x, 0X, or 0b respectively.
+#          |               | For o, prefix any non-zero result with 0o. Note
+#          |               | that this prefix is different from C and Ruby.
 #          |               | For a, A, e, E, f, g, G,
 #          |               | force a decimal point to be added,
 #          |               | even if no digits follow.

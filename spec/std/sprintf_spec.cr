@@ -273,7 +273,7 @@ describe "::sprintf" do
         assert_sprintf "% 020d", 0, " 0000000000000000000"
       end
 
-      it "is ignored if string is right-justified" do
+      it "is ignored if string is left-justified" do
         assert_sprintf "%-020d", 123, "123                 "
         assert_sprintf "%-020d", -123, "-123                "
         assert_sprintf "%-020d", 0, "0                   "
