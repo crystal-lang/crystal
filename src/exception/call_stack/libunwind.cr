@@ -114,11 +114,11 @@ struct Exception::CallStack
 
     frame = decode_frame(repeated_frame.ip)
     if frame
-      offset, sname = frame
+      offset, sname, fname = frame
       if repeated_frame.count == 0
-        Crystal::System.print_error "[0x%lx] %s +%ld\n", repeated_frame.ip, sname, offset
+        Crystal::System.print_error "[0x%lx] %s +%ld in %s\n", repeated_frame.ip, sname, offset, fname
       else
-        Crystal::System.print_error "[0x%lx] %s +%ld (%ld times)\n", repeated_frame.ip, sname, offset, repeated_frame.count + 1
+        Crystal::System.print_error "[0x%lx] %s +%ld in %s (%ld times)\n", repeated_frame.ip, sname, offset, fname, repeated_frame.count + 1
       end
     else
       if repeated_frame.count == 0
@@ -141,7 +141,9 @@ struct Exception::CallStack
         next if @@skip.includes?(file)
 
         # Turn to relative to the current dir, if possible
-        file = file.lchop(CURRENT_DIR)
+        if current_dir = CURRENT_DIR
+          file = file.lchop(current_dir)
+        end
 
         file_line_column = "#{file}:#{line}:#{column}"
       end
@@ -149,25 +151,27 @@ struct Exception::CallStack
       if name = CallStack.decode_function_name(pc)
         function = name
       elsif frame = CallStack.decode_frame(ip)
-        _, sname = frame
-        function = String.new(sname)
-
+        _, function, file = frame
         # Crystal methods (their mangled name) start with `*`, so
         # we remove that to have less clutter in the output.
         function = function.lchop('*')
       else
-        function = "???"
+        function = "??"
       end
 
       if file_line_column
         if show_full_info && (frame = CallStack.decode_frame(ip))
-          _, sname = frame
-          line = "#{file_line_column} in '#{String.new(sname)}'"
+          _, sname, _ = frame
+          line = "#{file_line_column} in '#{sname}'"
         else
           line = "#{file_line_column} in '#{function}'"
         end
       else
-        line = function
+        if file == "??" && function == "??"
+          line = "???"
+        else
+          line = "#{file} in '#{function}'"
+        end
       end
 
       if show_full_info
@@ -185,10 +189,18 @@ struct Exception::CallStack
       if offset == 0
         return decode_frame(ip - 1, original_ip)
       end
-
-      unless info.dli_sname.null?
-        {offset, info.dli_sname}
+      return if info.dli_sname.null? && info.dli_fname.null?
+      if info.dli_sname.null?
+        symbol = "??"
+      else
+        symbol = String.new(info.dli_sname)
       end
+      if info.dli_fname.null?
+        file = "??"
+      else
+        file = String.new(info.dli_fname)
+      end
+      {offset, symbol, file}
     end
   end
 end

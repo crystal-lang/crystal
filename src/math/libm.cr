@@ -29,8 +29,13 @@ lib LibM
   fun pow_f32 = "llvm.pow.f32"(value : Float32, power : Float32) : Float32
   fun pow_f64 = "llvm.pow.f64"(value : Float64, power : Float64) : Float64
   {% unless flag?(:win32) %}
-    fun powi_f32 = "llvm.powi.f32"(value : Float32, power : Int32) : Float32
-    fun powi_f64 = "llvm.powi.f64"(value : Float64, power : Int32) : Float64
+    {% if compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 %}
+      fun powi_f32 = "llvm.powi.f32"(value : Float32, power : Int32) : Float32
+      fun powi_f64 = "llvm.powi.f64"(value : Float64, power : Int32) : Float64
+    {% else %}
+      fun powi_f32 = "llvm.powi.f32.i32"(value : Float32, power : Int32) : Float32
+      fun powi_f64 = "llvm.powi.f64.i32"(value : Float64, power : Int32) : Float64
+    {% end %}
   {% end %}
   fun round_f32 = "llvm.round.f32"(value : Float32) : Float32
   fun round_f64 = "llvm.round.f64"(value : Float64) : Float64

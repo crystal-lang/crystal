@@ -10,7 +10,7 @@ describe "Semantic: return" do
   end
 
   it "infers return type with many returns (2)" do
-    assert_type("def foo; if 1 == 1; return 1; end; 'a'; end; foo") { union_of(int32, char) }
+    assert_type("def foo; if 1 == 1; return 1; end; 'a'; end; foo", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "errors on return in top level" do
@@ -179,7 +179,7 @@ describe "Semantic: return" do
         x.to_f
       end
       z
-      )) { float64 }
+      ), inject_primitives: true) { float64 }
   end
 
   it "forms a tuple from multiple return values" do

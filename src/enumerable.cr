@@ -598,7 +598,7 @@ module Enumerable(T)
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def in_groups_of(size : Int, filled_up_with : U = nil, reuse = false, & : Array(T | U) ->) forall U
+  def in_groups_of(size : Int, filled_up_with : U = nil, reuse = false, &) forall U
     raise ArgumentError.new("Size must be positive") if size <= 0
 
     each_slice_internal(size, Array(T | U), reuse) do |slice|

@@ -57,4 +57,21 @@ describe "Backtrace" do
     output.to_s.empty?.should be_true
     error.to_s.should contain("Invalid memory access")
   end
+
+  pending_win32 "print exception with non-existing PWD" do
+    source_file = datapath("blank_test_file.txt")
+    compile_file(source_file) do |executable_file|
+      output, error = IO::Memory.new, IO::Memory.new
+      with_tempfile("non-existent") do |path|
+        Dir.mkdir path
+        Dir.cd(path) do
+          # on win32 it seems not possible to remove the directory while we're cd'ed into it
+          Dir.delete(path)
+          status = Process.run executable_file
+
+          status.success?.should be_true
+        end
+      end
+    end
+  end
 end
