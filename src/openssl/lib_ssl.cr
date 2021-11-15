@@ -202,7 +202,11 @@ lib LibSSL
   fun ssl_ctx_set_default_verify_paths = SSL_CTX_set_default_verify_paths(ctx : SSLContext) : Int
   fun ssl_ctx_ctrl = SSL_CTX_ctrl(ctx : SSLContext, cmd : Int, larg : ULong, parg : Void*) : ULong
 
-  fun ssl_get_peer_certificate = SSL_get_peer_certificate(handle : SSL) : LibCrypto::X509
+  {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
+    fun ssl_get_peer_certificate = SSL_get1_peer_certificate(handle : SSL) : LibCrypto::X509
+  {% else %}
+    fun ssl_get_peer_certificate = SSL_get_peer_certificate(handle : SSL) : LibCrypto::X509
+  {% end %}
 
   {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
     fun ssl_ctx_get_options = SSL_CTX_get_options(ctx : SSLContext) : ULong

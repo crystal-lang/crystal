@@ -33,6 +33,7 @@
 # doesn't specify a type but a size. Its value can be an `Int32` literal or
 # constant.
 struct StaticArray(T, N)
+  include Comparable(StaticArray)
   include Indexable::Mutable(T)
 
   # Creates a new `StaticArray` with the given *args*. The type of the
@@ -113,6 +114,10 @@ struct StaticArray(T, N)
     false
   end
 
+  def <=>(other : StaticArray)
+    to_slice <=> other.to_slice
+  end
+
   @[AlwaysInline]
   def unsafe_fetch(index : Int) : T
     to_unsafe[index]
@@ -137,6 +142,18 @@ struct StaticArray(T, N)
   def fill(value : T) : self
     # enable memset optimization
     to_slice.fill(value)
+    self
+  end
+
+  # :inherit:
+  def fill(value : T, start : Int, count : Int) : self
+    to_slice.fill(value, start, count)
+    self
+  end
+
+  # :inherit:
+  def fill(value : T, range : Range) : self
+    to_slice.fill(value, range)
     self
   end
 

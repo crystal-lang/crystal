@@ -166,6 +166,7 @@ class Crystal::CodeGenVisitor
   end
 
   def read_class_var(node : ClassVar)
+    set_current_debug_location node if @debug.line_numbers?
     read_class_var(node.var)
   end
 

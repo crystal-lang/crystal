@@ -63,6 +63,16 @@ describe "StaticArray" do
     end
   end
 
+  describe "<=>" do
+    it "correctly compares two static arrays" do
+      array1 = StaticArray(Int32, 3).new(5)
+      array2 = StaticArray(Int32, 3).new(7)
+      (array1 <=> array2).should be < 0
+      (array2 <=> array1).should be > 0
+      (array1 <=> array1).should eq 0
+    end
+  end
+
   describe "values_at" do
     it "returns the given indexes" do
       StaticArray(Int32, 4).new { |i| i + 1 }.values_at(1, 0, 2).should eq({2, 1, 3})
@@ -81,22 +91,34 @@ describe "StaticArray" do
   end
 
   describe "#fill" do
-    it "replaces all values, without block" do
-      a = StaticArray(Int32, 3).new { |i| i + 1 }
-      expected = StaticArray[0, 0, 0]
-      a.fill(0).should eq(expected)
-      a.should eq(expected)
+    it "replaces values in a subrange" do
+      a = StaticArray[0, 1, 2, 3, 4]
+      a.fill(7)
+      a.should eq(StaticArray[7, 7, 7, 7, 7])
 
-      expected = StaticArray[2, 2, 2]
-      a.fill(2).should eq(expected)
-      a.should eq(expected)
-    end
+      a = StaticArray[0, 1, 2, 3, 4]
+      a.fill(7, 1, 2)
+      a.should eq(StaticArray[0, 7, 7, 3, 4])
 
-    it "replaces all values, with block" do
-      a = StaticArray(Int32, 4).new { |i| i + 1 }
-      expected = StaticArray[0, 1, 4, 9]
-      a.fill { |i| i * i }.should eq(expected)
-      a.should eq(expected)
+      a = StaticArray[0, 1, 2, 3, 4]
+      a.fill(7, 2..3)
+      a.should eq(StaticArray[0, 1, 7, 7, 4])
+
+      a = StaticArray[0, 0, 0, 0, 0]
+      a.fill { |i| i + 7 }
+      a.should eq(StaticArray[7, 8, 9, 10, 11])
+
+      a = StaticArray[0, 0, 0, 0, 0]
+      a.fill(offset: 2) { |i| i * i }
+      a.should eq(StaticArray[4, 9, 16, 25, 36])
+
+      a = StaticArray[0, 0, 0, 0, 0]
+      a.fill(1, 2) { |i| i + 7 }
+      a.should eq(StaticArray[0, 8, 9, 0, 0])
+
+      a = StaticArray[0, 0, 0, 0, 0]
+      a.fill(2..3) { |i| i + 7 }
+      a.should eq(StaticArray[0, 0, 9, 10, 0])
     end
   end
 

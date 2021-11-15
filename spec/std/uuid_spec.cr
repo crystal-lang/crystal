@@ -10,6 +10,16 @@ describe "UUID" do
     end
   end
 
+  describe "#<=>" do
+    it "correctly compares two UUIDs" do
+      uuid_1 = UUID.new("00330000-0000-0000-0000-000000000000")
+      uuid_2 = UUID.new("00000011-0000-0000-5500-000099000000")
+      (uuid_1 <=> uuid_2).should be > 0
+      (uuid_2 <=> uuid_1).should be < 0
+      (uuid_1 <=> uuid_1).should eq 0
+    end
+  end
+
   describe "random initialize" do
     it "works with no options" do
       subject = UUID.random

@@ -406,9 +406,43 @@ struct Slice(T)
   # :inherit:
   #
   # Raises if this slice is read-only.
+  def fill(value : T, start : Int, count : Int) : self
+    # since `#[]` requires exactly *count* elements but we allow fewer here, we
+    # must normalize the indices beforehand
+    start, count = normalize_start_and_count(start, count)
+    self[start, count].fill(value)
+    self
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def fill(value : T, range : Range) : self
+    fill(value, *Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
   def fill(*, offset : Int = 0, & : Int32 -> T) : self
     check_writable
     super { |i| yield i }
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def fill(start : Int, count : Int, & : Int32 -> T) : self
+    check_writable
+    super(start, count) { |i| yield i }
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def fill(range : Range, & : Int32 -> T) : self
+    check_writable
+    super(range) { |i| yield i }
   end
 
   def copy_from(source : Pointer(T), count)
