@@ -1480,6 +1480,10 @@ module Crystal::Macros
     # Returns the body of this proc.
     def body : ASTNode
     end
+
+    # Returns the return type of this proc, if specified.
+    def return_type : ASTNode | Nop
+    end
   end
 
   # A proc pointer, like `->my_var.some_method(String)`

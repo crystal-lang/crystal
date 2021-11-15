@@ -1188,7 +1188,7 @@ module Crystal
   class ProcLiteral
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
-      when "args", "body"
+      when "args", "body", "return_type"
         @def.interpret(method, args, named_args, block, interpreter, location)
       else
         super

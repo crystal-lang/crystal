@@ -465,6 +465,7 @@ module Crystal
   class ProcLiteral
     property? force_nil = false
     property expected_return_type : Type?
+    property? from_block = false
 
     def update(from = nil)
       return unless self.def.args.all? &.type?
@@ -475,7 +476,7 @@ module Crystal
 
       expected_return_type = @expected_return_type
       if expected_return_type && !expected_return_type.nil_type? && !return_type.implements?(expected_return_type)
-        raise "expected block to return #{expected_return_type.devirtualize}, not #{return_type}"
+        raise "expected #{from_block? ? "block" : "Proc"} to return #{expected_return_type.devirtualize}, not #{return_type}"
       end
 
       types << (expected_return_type || return_type)
