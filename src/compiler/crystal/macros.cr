@@ -884,6 +884,10 @@ module Crystal::Macros
 
   # An annotation on top of a type or variable.
   class Annotation < ASTNode
+    # Returns the name of this annotation.
+    def name : Path
+    end
+
     # Returns the value of a positional argument,
     # or NilLiteral if out of bounds.
     def [](index : NumberLiteral) : ASTNode
@@ -945,6 +949,10 @@ module Crystal::Macros
 
     # Returns this call's receiver, if any.
     def receiver : ASTNode | Nop
+    end
+
+    # Returns `true` if this call refers to a global method (starts with `::`).
+    def global? : BoolLiteral
     end
 
     # Returns this call's arguments.
@@ -1140,6 +1148,11 @@ module Crystal::Macros
     def return_type : ASTNode | Nop
     end
 
+    # Returns the free variables of this method, or an empty `ArrayLiteral` if
+    # there are none.
+    def free_vars : ArrayLiteral(MacroId)
+    end
+
     # Returns the body of this method.
     def body : ASTNode
     end
@@ -1147,6 +1160,10 @@ module Crystal::Macros
     # Returns the receiver (for example `self`) of this method definition,
     # or `Nop` if not specified.
     def receiver : ASTNode | Nop
+    end
+
+    # Returns `true` is this method is declared as abstract, `false` otherwise.
+    def abstract? : BoolLiteral
     end
 
     # Returns the visibility of this def: `:public`, `:protected` or `:private`.
@@ -1281,7 +1298,7 @@ module Crystal::Macros
     end
   end
 
-  # A `when` inside a `case`.
+  # A `when` or `in` inside a `case`.
   class When < ASTNode
     # Returns the conditions of this `when`.
     def conds : ArrayLiteral
@@ -1289,6 +1306,10 @@ module Crystal::Macros
 
     # Returns the body of this `when`.
     def body : ASTNode
+    end
+
+    # Returns `true` if this is an `in`, or `false` if this is a `when`.
+    def exhaustive? : BoolLiteral
     end
   end
 
@@ -1304,6 +1325,10 @@ module Crystal::Macros
 
     # Returns the `else` of this `case`.
     def else : ArrayLiteral(When)
+    end
+
+    # Returns whether this `case` is exhaustive (`case ... in`).
+    def exhaustive? : BoolLiteral
     end
   end
 
