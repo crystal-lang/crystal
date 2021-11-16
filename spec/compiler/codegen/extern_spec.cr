@@ -167,7 +167,7 @@ describe "Codegen: extern struct" do
   # These specs *should* also work for 32 bits, but for now we'll
   # make sure they work in 64 bits (they probably work in 32 bits too,
   # it's just that the specs need to be a bit different)
-  {% if flag?(:x86_64) %}
+  {% if flag?(:bits64) %}
     it "codegens proc that takes an extern struct with C ABI" do
       test_c(
         %(
