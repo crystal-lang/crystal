@@ -13,7 +13,7 @@ input = ARGV[0]
 bin = File.join(tmp_build_dir, "debug_test_case")
 debugger_script = File.join(tmp_build_dir, "./debugger.script")
 
-`#{repo_base_dir}/bin/crystal build --debug #{input} -o #{bin}`
+Process.run(ENV["SPEC_COMPILER"]? || "#{repo_base_dir}/bin/crystal", ["build", "--debug", input, "-o", bin])
 
 File.open(debugger_script, "w") do |script|
   lldb_crystal_formatters = File.expand_path(File.join(repo_base_dir, "etc", "lldb", "crystal_formatters.py"))

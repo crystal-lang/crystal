@@ -77,7 +77,8 @@ end
 
 def compile_file(source_file, flags = %w(), file = __FILE__)
   with_temp_executable("executable_file", file: file) do |executable_file|
-    Process.run("bin/crystal", ["build"] + flags + ["-o", executable_file, source_file])
+    compiler = ENV["SPEC_COMPILER"]? || "bin/crystal"
+    Process.run(compiler, ["build"] + flags + ["-o", executable_file, source_file])
     File.exists?(executable_file).should be_true
 
     yield executable_file

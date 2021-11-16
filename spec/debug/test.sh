@@ -25,10 +25,10 @@ SCRIPT_PATH="$(realpath "$0")"
 SCRIPT_ROOT="$(dirname "$SCRIPT_PATH")"
 
 BUILD_DIR=$SCRIPT_ROOT/../../.build
-crystal=$SCRIPT_ROOT/../../bin/crystal
+crystal=${SPEC_COMPILER:-$SCRIPT_ROOT/../../bin/crystal}
 driver=$BUILD_DIR/debug_driver
 mkdir -p $BUILD_DIR
-$crystal build $SCRIPT_ROOT/driver.cr -o $driver
+"$crystal" build $SCRIPT_ROOT/driver.cr -o $driver
 
 $driver $SCRIPT_ROOT/top_level.cr
 $driver $SCRIPT_ROOT/strings.cr
