@@ -52,13 +52,13 @@ let
   # Hashes obtained using `nix-prefetch-url --unpack <url>`
   latestCrystalBinary = genericBinary ({
     x86_64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.2.0/crystal-1.2.0-1-darwin-universal.tar.gz";
-      sha256 = "sha256:00bc2i0qnx7x1z8qqx3x5fsgzcij4b61vsibgddddvwpzk1qhaaj";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.2.2/crystal-1.2.2-1-darwin-universal.tar.gz";
+      sha256 = "sha256:1y7bcwl6jybg28sdd9xrgkxbz3ysdqn1jlgapi50avc47h30kgbb";
     };
 
     x86_64-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.2.0/crystal-1.2.0-1-linux-x86_64.tar.gz";
-      sha256 = "sha256:0whz250ki9l8dw7kwk0wh27vn2p9n5w7007wqb8sd3hm38a2mdha";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.2.2/crystal-1.2.2-1-linux-x86_64.tar.gz";
+      sha256 = "sha256:1cxkyq7n2xw6h9c99h28c2ssf3viiw1vigb0w6l2rpnw4f55fbqz";
     };
   }.${pkgs.stdenv.system});
 
