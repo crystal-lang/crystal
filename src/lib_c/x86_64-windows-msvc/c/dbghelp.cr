@@ -62,7 +62,7 @@ lib LibC
     reserved : DWORD
   end
 
-  fun SymInitializeW(hProcess : HANDLE, userSearchPath : CHAR*, fInvadeProcess : BOOL) : BOOL
+  fun SymInitializeW(hProcess : HANDLE, userSearchPath : LPWSTR, fInvadeProcess : BOOL) : BOOL
   fun SymCleanup(hProcess : HANDLE) : BOOL
   fun SymGetOptions : DWORD
   fun SymSetOptions(symOptions : DWORD) : DWORD
