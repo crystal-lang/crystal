@@ -20,8 +20,8 @@ class Crystal::System::IoUring
   # Obtains runtime information about what io_uring features and operations are available.
   struct Probe
     property has_io_uring = false
-    property features = Syscall::IoUringFeatures::None
-    property operations = Syscall::IoUringOpAsFlag::None
+    property features = 0u32
+    @operations = StaticArray(Bool, 256).new(false)
 
     # This method should never raise exceptions
     def initialize
@@ -32,18 +32,21 @@ class Crystal::System::IoUring
       @has_io_uring = true
       @features = params.features
 
-      probe = Syscall::IoUringProbe(255).new
-      ret = Syscall.io_uring_register(fd, Syscall::IoUringRegisterOp::REGISTER_PROBE, pointerof(probe).as(Void*), 255)
+      probe = Syscall::IoUringProbe.new
+      ret = Syscall.io_uring_register(fd, Syscall::IORING_REGISTER_PROBE, pointerof(probe).as(Void*), 256)
       LibC.close(fd)
       return if ret < 0
 
-      {probe.ops_len, 64}.min.times do |i|
+      probe.ops_len.times do |i|
         operation = probe.ops[i]
-        next unless operation.flags.supported?
-        flag = Syscall::IoUringOpAsFlag.from_value?(1u64 << operation.op)
-        next unless flag
-        @operations |= flag
+        if operation.flags & Syscall::IO_URING_OP_SUPPORTED != 0
+          @operations[operation.op] = true
+        end
       end
+    end
+
+    def supports_op?(op : UInt8)
+      @operations.unsafe_fetch(op)
     end
   end
 
@@ -63,9 +66,9 @@ class Crystal::System::IoUring
 
     # This should return `true` on Linux 5.6+ unless it was built with io_uring disabled
     @@available = probe.has_io_uring &&
-                  probe.operations.nop? &&
-                  probe.operations.timeout? &&
-                  probe.operations.poll_add?
+                  probe.supports_op?(Syscall::IORING_OP_NOP) &&
+                  probe.supports_op?(Syscall::IORING_OP_TIMEOUT) &&
+                  probe.supports_op?(Syscall::IORING_OP_POLL_ADD)
   end
 
   enum CancelablePollStatus
@@ -109,7 +112,7 @@ class Crystal::System::IoUring
     @canceled_userdata = Set(UInt64).new
 
     # Since Linux 5.4 both queues can be mapped in a single call to `mmap`.
-    if @params.features.single_mmap?
+    if @params.features & Syscall::IORING_FEAT_SINGLE_MMAP != 0
       mem = LibC.mmap(Pointer(Void).null, {sq_size, cq_size}.max,
         LibC::PROT_READ | LibC::PROT_WRITE, LibC::MAP_SHARED | LibC::MAP_POPULATE,
         @fd, Syscall::IORING_OFF_SQ_RING)
@@ -218,7 +221,7 @@ class Crystal::System::IoUring
   # more. This check is only needed before the NODROP feature was implemented (Linux 5.5+)
   private def get_free_index : UInt32
     # If there are too many in flight events, wait for some completions.
-    until @params.features.nodrop? || @inflight < @params.cq_entries
+    until @params.features & Syscall::IORING_FEAT_NODROP != 0 || @inflight < @params.cq_entries
       process_completion_events(blocking: true)
     end
 
@@ -240,7 +243,7 @@ class Crystal::System::IoUring
   # event arrives the current Fiber will be enqueued for execution.
   # The caller of this method MUST either reschedule the current Fiber or
   # resume into another Fiber.
-  private def submit(opcode : Syscall::IoUringOp, user_data : UInt64, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
+  private def submit(opcode : UInt8, user_data : UInt64, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
     # The submission queue just stores indices into the `submission_entries` array.
     sqe = @submission_entries + index
 
@@ -264,16 +267,16 @@ class Crystal::System::IoUring
       sqe_timeout.value.addr = (@timeval_entries.to_unsafe + index_timeout).address
       sqe_timeout.value.len = 1u32
 
-      if IoUring.probe.operations.link_timeout?
-        sqe_timeout.value.opcode = Syscall::IoUringOp::LINK_TIMEOUT
-        sqe.value.flags = sqe.value.flags | Syscall::IoUringSqeFlags::IO_LINK
+      if IoUring.probe.supports_op? Syscall::IORING_OP_LINK_TIMEOUT
+        sqe_timeout.value.opcode = Syscall::IORING_OP_LINK_TIMEOUT
+        sqe.value.flags = sqe.value.flags | Syscall::IOSQE_IO_LINK
       else
         id = @next_cancelable_poll_info_id
         @next_cancelable_poll_info_id += 1
         @cancelable_poll_info[id] = CancelablePollInfo.new(user_data, CancelablePollStatus::Running)
 
         sqe.value.user_data = (id << 2) + 2
-        sqe_timeout.value.opcode = Syscall::IoUringOp::TIMEOUT
+        sqe_timeout.value.opcode = Syscall::IORING_OP_TIMEOUT
         sqe_timeout.value.user_data = (id << 2) + 3
       end
 
@@ -285,20 +288,20 @@ class Crystal::System::IoUring
   end
 
   # This will block the current fiber until the request completes and return the completion result.
-  private def submit_and_wait(opcode : Syscall::IoUringOp, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
+  private def submit_and_wait(opcode : UInt8, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
     user_data = ::Fiber.current.object_id
     submit(opcode, user_data, index: index, timeout: timeout) { |sqe| yield sqe }
     Crystal::Scheduler.reschedule # The completion event will wake up this fiber.
     ::Fiber.current.iouring_result
   end
 
-  private def submit_and_callback(opcode : Syscall::IoUringOp, callback : Void*, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
+  private def submit_and_callback(opcode : UInt8, callback : Void*, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
     # Heap allocated objects are always word-aligned. Use the last bit to store if it's a Fiber or a Proc.
     user_data = callback.address + 1
     submit(opcode, user_data, index: index, timeout: timeout) { |sqe| yield sqe }
   end
 
-  private def submit_and_forget(opcode : Syscall::IoUringOp, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
+  private def submit_and_forget(opcode : UInt8, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
     submit(opcode, 0, index: index, timeout: timeout) { |sqe| yield sqe }
   end
 
@@ -372,16 +375,16 @@ class Crystal::System::IoUring
 
     # Request the kernel to process events. If we want to block, wait for at least one to complete.
     ret = if blocking
-            Syscall.io_uring_enter(@fd, @submission_queue.size, 1, Syscall::IoUringEnterFlags::GETEVENTS, Pointer(LibC::SigsetT).null, 0)
+            Syscall.io_uring_enter(@fd, @submission_queue.size, 1, Syscall::IORING_ENTER_GETEVENTS, Pointer(LibC::SigsetT).null, 0)
           else
-            Syscall.io_uring_enter(@fd, @submission_queue.size, 0, Syscall::IoUringEnterFlags::None, Pointer(LibC::SigsetT).null, 0)
+            Syscall.io_uring_enter(@fd, @submission_queue.size, 0, 0, Pointer(LibC::SigsetT).null, 0)
           end
 
     if ret < 0
       err = Errno.new(-ret)
 
       # - EBUSY indicates that there are so many events being completed right now that the completion queue
-      #   is already full and there are more events being stored in a backlog. The kernel  is refusing to accept
+      #   is already full and there are more events being stored in a backlog. The kernel is refusing to accept
       #   any new submission until we consume the completion queue. Just repeat and consume it.
       # - EINTR indicates that a signal arrived to the current process while it was processing io_uring_enter.
       #   It is safe to try again.
@@ -555,18 +558,18 @@ class Crystal::System::IoUring
 
   # Submits a NOP operation. It will complete as soon as possible. Useful for Fiber.yield.
   def nop
-    submit_and_wait :nop do |sqe|
+    submit_and_wait Syscall::IORING_OP_NOP do |sqe|
     end
   end
 
   # Submits a NOP operation. You must must suspend the current Fiber.
   def submit_nop
-    submit(:nop) do |sqe|
+    submit Syscall::IORING_OP_NOP do |sqe|
     end
   end
 
   def nop(callback : Void*, *, timeout : ::Time::Span? = nil)
-    submit_and_callback :nop, callback, timeout: timeout do |sqe|
+    submit_and_callback Syscall::IORING_OP_NOP, callback, timeout: timeout do |sqe|
     end
   end
 
@@ -580,7 +583,7 @@ class Crystal::System::IoUring
       vec.iov_len = slice.size.to_u64
       vec
     end
-    submit_and_wait :writev, timeout: timeout do |sqe|
+    submit_and_wait Syscall::IORING_OP_WRITEV, timeout: timeout do |sqe|
       sqe.value.fd = fd
       sqe.value.addr = iov.to_unsafe.address
       sqe.value.len = slices.size.to_u
@@ -596,7 +599,7 @@ class Crystal::System::IoUring
       vec.iov_len = slice.size.to_u64
       vec
     end
-    submit_and_wait :writev, timeout: timeout do |sqe|
+    submit_and_wait Syscall::IORING_OP_WRITEV, timeout: timeout do |sqe|
       sqe.value.fd = fd
       sqe.value.addr = pointerof(iov).address
       sqe.value.len = slices.size.to_u
@@ -606,8 +609,8 @@ class Crystal::System::IoUring
 
   # Writes a slice of data to fd at the position `offset`, by default the current position.
   def write(fd : Int32, slice : Bytes, offset : UInt64 = -1.to_u64!, *, timeout : ::Time::Span? = nil)
-    if IoUring.probe.operations.write?
-      submit_and_wait :write, timeout: timeout do |sqe|
+    if IoUring.probe.supports_op? Syscall::IORING_OP_WRITE
+      submit_and_wait Syscall::IORING_OP_WRITE, timeout: timeout do |sqe|
         sqe.value.fd = fd
         sqe.value.addr = slice.to_unsafe.address
         sqe.value.len = slice.size.to_u
@@ -628,7 +631,7 @@ class Crystal::System::IoUring
       vec.iov_len = slice.size.to_u64
       vec
     end
-    submit_and_wait :readv, timeout: timeout do |sqe|
+    submit_and_wait Syscall::IORING_OP_READV, timeout: timeout do |sqe|
       sqe.value.fd = fd
       sqe.value.addr = iov.to_unsafe.address
       sqe.value.len = slices.size.to_u
@@ -644,7 +647,7 @@ class Crystal::System::IoUring
       vec.iov_len = slice.size.to_u64
       vec
     end
-    submit_and_wait :readv, timeout: timeout do |sqe|
+    submit_and_wait Syscall::IORING_OP_READV, timeout: timeout do |sqe|
       sqe.value.fd = fd
       sqe.value.addr = pointerof(iov).address
       sqe.value.len = slices.size.to_u
@@ -654,8 +657,8 @@ class Crystal::System::IoUring
 
   # Read a slice of data to fd from the position `offset`, by default the current position.
   def read(fd : Int32, slice : Bytes, offset : UInt64 = -1.to_u64!, *, timeout : ::Time::Span? = nil)
-    if IoUring.probe.operations.read?
-      submit_and_wait :read, timeout: timeout do |sqe|
+    if IoUring.probe.supports_op? Syscall::IORING_OP_READ
+      submit_and_wait Syscall::IORING_OP_READ, timeout: timeout do |sqe|
         sqe.value.fd = fd
         sqe.value.addr = slice.to_unsafe.address
         sqe.value.len = slice.size.to_u
@@ -667,11 +670,11 @@ class Crystal::System::IoUring
   end
 
   def send(fd : Int32, slice : Bytes, *, timeout : ::Time::Span? = nil)
-    unless IoUring.probe.operations.send?
+    unless IoUring.probe.supports_op? Syscall::IORING_OP_SEND
       return write(fd, slice, timeout: timeout)
     end
 
-    submit_and_wait :send, timeout: timeout do |sqe|
+    submit_and_wait Syscall::IORING_OP_SEND, timeout: timeout do |sqe|
       sqe.value.fd = fd
       sqe.value.addr = slice.to_unsafe.address
       sqe.value.len = slice.size.to_u
@@ -679,11 +682,11 @@ class Crystal::System::IoUring
   end
 
   def recv(fd : Int32, slice : Bytes, *, timeout : ::Time::Span? = nil)
-    unless IoUring.probe.operations.recv?
+    unless IoUring.probe.supports_op? Syscall::IORING_OP_RECV
       return read(fd, slice, timeout: timeout)
     end
 
-    submit_and_wait :recv, timeout: timeout do |sqe|
+    submit_and_wait Syscall::IORING_OP_RECV, timeout: timeout do |sqe|
       sqe.value.fd = fd
       sqe.value.addr = slice.to_unsafe.address
       sqe.value.len = slice.size.to_u
@@ -693,7 +696,7 @@ class Crystal::System::IoUring
   def timeout(time : ::Time::Span)
     timeval = make_timeval(time)
 
-    submit_and_wait :timeout do |sqe|
+    submit_and_wait Syscall::IORING_OP_TIMEOUT do |sqe|
       sqe.value.addr = pointerof(timeval).address
       sqe.value.len = 1u32
     end
@@ -703,22 +706,22 @@ class Crystal::System::IoUring
     # This callback might have been reused from a previous timeout that was attempted to be canceled,
     # but that completed before the cancelation order was inserted. Ensure that this new submission
     # won't born canceled already.
-    unless IoUring.probe.operations.timeout_remove?
+    unless IoUring.probe.supports_op? Syscall::IORING_OP_TIMEOUT_REMOVE
       @canceled_userdata.delete(callback.address + 1)
     end
 
     index = get_free_index
     @timeval_entries[index] = make_timeval(time)
 
-    submit_and_callback :timeout, callback, index: index do |sqe|
+    submit_and_callback Syscall::IORING_OP_TIMEOUT, callback, index: index do |sqe|
       sqe.value.addr = (@timeval_entries.to_unsafe + index).address
       sqe.value.len = 1u32
     end
   end
 
   def timeout_remove(callback : Void*)
-    if IoUring.probe.operations.timeout_remove?
-      submit_and_forget :timeout_remove do |sqe|
+    if IoUring.probe.supports_op? Syscall::IORING_OP_TIMEOUT_REMOVE
+      submit_and_forget Syscall::IORING_OP_TIMEOUT_REMOVE do |sqe|
         sqe.value.addr = callback.address + 1
       end
     else
@@ -727,11 +730,11 @@ class Crystal::System::IoUring
   end
 
   def accept(fd : Int32, addr : LibC::Sockaddr* = Pointer(LibC::Sockaddr).null, addr_len : LibC::SocklenT* = Pointer(LibC::SocklenT).null, *, timeout : ::Time::Span? = nil)
-    unless IoUring.probe.operations.accept?
+    unless IoUring.probe.supports_op? Syscall::IORING_OP_ACCEPT
       raise RuntimeError.new("IoUring's 'accept' operation is not supported by current kernel. Needs Linux 5.5 or newer.")
     end
 
-    submit_and_wait :accept, timeout: timeout do |sqe|
+    submit_and_wait Syscall::IORING_OP_ACCEPT, timeout: timeout do |sqe|
       sqe.value.addr = addr.address
       sqe.value.off = addr_len.address
       sqe.value.fd = fd
@@ -739,11 +742,11 @@ class Crystal::System::IoUring
   end
 
   def connect(fd : Int32, addr : LibC::Sockaddr*, addr_len : Int, *, timeout : ::Time::Span? = nil)
-    unless IoUring.probe.operations.connect?
+    unless IoUring.probe.supports_op? Syscall::IORING_OP_CONNECT
       raise RuntimeError.new("IoUring's 'connect' operation is not supported by current kernel. Needs Linux 5.5 or newer.")
     end
 
-    submit_and_wait :connect, timeout: timeout do |sqe|
+    submit_and_wait Syscall::IORING_OP_CONNECT, timeout: timeout do |sqe|
       sqe.value.addr = addr.address
       sqe.value.off = addr_len.to_u64
       sqe.value.fd = fd
@@ -751,30 +754,30 @@ class Crystal::System::IoUring
   end
 
   def wait_readable(fd : Int32, *, timeout : ::Time::Span? = nil)
-    submit_and_wait :poll_add, timeout: timeout do |sqe|
+    submit_and_wait Syscall::IORING_OP_POLL_ADD, timeout: timeout do |sqe|
       sqe.value.fd = fd
-      sqe.value.inner_flags.poll_events = Syscall::PollEvent::IN
+      sqe.value.inner_flags.poll_events = Syscall::POLLIN
     end
   end
 
   def wait_readable(fd : Int32, callback : Void*, *, timeout : ::Time::Span? = nil)
-    submit_and_callback :poll_add, callback, timeout: timeout do |sqe|
+    submit_and_callback Syscall::IORING_OP_POLL_ADD, callback, timeout: timeout do |sqe|
       sqe.value.fd = fd
-      sqe.value.inner_flags.poll_events = Syscall::PollEvent::IN
+      sqe.value.inner_flags.poll_events = Syscall::POLLIN
     end
   end
 
   def wait_writable(fd : Int32, *, timeout : ::Time::Span? = nil)
-    submit_and_wait :poll_add, timeout: timeout do |sqe|
+    submit_and_wait Syscall::IORING_OP_POLL_ADD, timeout: timeout do |sqe|
       sqe.value.fd = fd
-      sqe.value.inner_flags.poll_events = Syscall::PollEvent::OUT
+      sqe.value.inner_flags.poll_events = Syscall::POLLOUT
     end
   end
 
   def wait_writable(fd : Int32, callback : Void*, *, timeout : ::Time::Span? = nil)
-    submit_and_callback :poll_add, callback, timeout: timeout do |sqe|
+    submit_and_callback Syscall::IORING_OP_POLL_ADD, callback, timeout: timeout do |sqe|
       sqe.value.fd = fd
-      sqe.value.inner_flags.poll_events = Syscall::PollEvent::OUT
+      sqe.value.inner_flags.poll_events = Syscall::POLLOUT
     end
   end
 end

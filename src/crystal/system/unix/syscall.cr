@@ -7,128 +7,81 @@ module Crystal::System::Syscall
   ::Syscall.def_syscall getrandom, LibC::SSizeT, buf : UInt8*, buflen : LibC::SizeT, flags : UInt32
 
   ::Syscall.def_syscall io_uring_setup, Int32, entries : UInt32, params : IoUringParams*
-  ::Syscall.def_syscall io_uring_enter, Int32, fd : Int32, to_submit : UInt32, min_complete : UInt32, flags : IoUringEnterFlags, sig : LibC::SigsetT*, sigsz : LibC::SizeT
-  ::Syscall.def_syscall io_uring_register, Int32, fd : Int32, op : IoUringRegisterOp, arg : Void*, nr_args : UInt32
+  ::Syscall.def_syscall io_uring_enter, Int32, fd : Int32, to_submit : UInt32, min_complete : UInt32, flags : UInt32, sig : LibC::SigsetT*, sigsz : LibC::SizeT
+  ::Syscall.def_syscall io_uring_register, Int32, fd : Int32, op : UInt32, arg : Void*, nr_args : UInt32
 
   IORING_OFF_SQ_RING = LibC::OffT.new(0)
   IORING_OFF_CQ_RING = LibC::OffT.new(0x8000000)
   IORING_OFF_SQES    = LibC::OffT.new(0x10000000)
 
-  @[Flags]
-  enum IoUringFlags : UInt32
-    IOPOLL     # io_context is polled
-    SQPOLL     # SQ poll thread
-    SQ_AFF     # sq_thread_cpu is valid
-    CQSIZE     # app   CQ = si_u32e
-    CLAMP      # clamp SQ/CQ ring sizes
-    ATTACH_WQ  # attach to existing wq
-    R_DISABLED # start with ring disabled
-  end
+  IORING_OP_NOP             =  0u8
+  IORING_OP_READV           =  1u8
+  IORING_OP_WRITEV          =  2u8
+  IORING_OP_FSYNC           =  3u8
+  IORING_OP_READ_FIXED      =  4u8
+  IORING_OP_WRITE_FIXED     =  5u8
+  IORING_OP_POLL_ADD        =  6u8
+  IORING_OP_POLL_REMOVE     =  7u8
+  IORING_OP_SYNC_FILE_RANGE =  8u8
+  IORING_OP_SENDMSG         =  9u8
+  IORING_OP_RECVMSG         = 10u8
+  IORING_OP_TIMEOUT         = 11u8
+  IORING_OP_TIMEOUT_REMOVE  = 12u8
+  IORING_OP_ACCEPT          = 13u8
+  IORING_OP_ASYNC_CANCEL    = 14u8
+  IORING_OP_LINK_TIMEOUT    = 15u8
+  IORING_OP_CONNECT         = 16u8
+  IORING_OP_FALLOCATE       = 17u8
+  IORING_OP_OPENAT          = 18u8
+  IORING_OP_CLOSE           = 19u8
+  IORING_OP_FILES_UPDATE    = 20u8
+  IORING_OP_STATX           = 21u8
+  IORING_OP_READ            = 22u8
+  IORING_OP_WRITE           = 23u8
+  IORING_OP_FADVISE         = 24u8
+  IORING_OP_MADVISE         = 25u8
+  IORING_OP_SEND            = 26u8
+  IORING_OP_RECV            = 27u8
+  IORING_OP_OPENAT2         = 28u8
+  IORING_OP_EPOLL_CTL       = 29u8
+  IORING_OP_SPLICE          = 30u8
+  IORING_OP_PROVIDE_BUFFERS = 31u8
+  IORING_OP_REMOVE_BUFFERS  = 32u8
+  IORING_OP_TEE             = 33u8
+  IORING_OP_SHUTDOWN        = 34u8
+  IORING_OP_RENAMEAT        = 35u8
+  IORING_OP_UNLINKAT        = 36u8
+  IORING_OP_MKDIRAT         = 37u8
+  IORING_OP_SYMLINKAT       = 38u8
+  IORING_OP_LINKAT          = 39u8
 
-  @[Flags]
-  enum IoUringEnterFlags
-    GETEVENTS
-    SQ_WAKEUP
-    SQ_WAIT
-    EXT_ARG
-  end
+  # io_uring_enter() flags
+  IORING_ENTER_GETEVENTS = 1u32 << 0
+  IORING_ENTER_SQ_WAKEUP = 1u32 << 1
+  IORING_ENTER_SQ_WAIT   = 1u32 << 2
+  IORING_ENTER_EXT_ARG   = 1u32 << 3
 
-  @[Flags]
-  enum IoUringFeatures : UInt32
-    SINGLE_MMAP
-    NODROP
-    SUBMIT_STABLE
-    RW_CUR_POS
-    CUR_PERSONALITY
-    FAST_POLL
-    POLL_32BITS
-    SQPOLL_NONFIXED
-    EXT_ARG
-    NATIVE_WORKERS
-  end
-
-  enum IoUringOp : UInt8
-    NOP
-    READV
-    WRITEV
-    FSYNC
-    READ_FIXED
-    WRITE_FIXED
-    POLL_ADD
-    POLL_REMOVE
-    SYNC_FILE_RANGE
-    SENDMSG
-    RECVMSG
-    TIMEOUT
-    TIMEOUT_REMOVE
-    ACCEPT
-    ASYNC_CANCEL
-    LINK_TIMEOUT
-    CONNECT
-    FALLOCATE
-    OPENAT
-    CLOSE
-    FILES_UPDATE
-    STATX
-    READ
-    WRITE
-    FADVISE
-    MADVISE
-    SEND
-    RECV
-    OPENAT2
-    EPOLL_CTL
-    SPLICE
-    PROVIDE_BUFFERS
-    REMOVE_BUFFERS
-    TEE
-    SHUTDOWN
-    RENAMEAT
-    UNLINKAT
-    MKDIRAT
-    SYMLINKAT
-    LINKAT
-  end
-
-  @[Flags]
-  enum IoUringOpAsFlag : UInt64
-    {% for op in IoUringOp.constants %}
-        {{ op }}
-      {% end %}
-  end
-
-  enum IoUringRegisterOp : UInt32
-    REGISTER_BUFFERS
-    UNREGISTER_BUFFERS
-    REGISTER_FILES
-    UNREGISTER_FILES
-    REGISTER_EVENTFD
-    UNREGISTER_EVENTFD
-    REGISTER_FILES_UPDATE
-    REGISTER_EVENTFD_ASYNC
-    REGISTER_PROBE
-    REGISTER_PERSONALITY
-    UNREGISTER_PERSONALITY
-    REGISTER_RESTRICTIONS
-    REGISTER_ENABLE_RINGS
-    IORING_REGISTER_FILES2
-    IORING_REGISTER_FILES_UPDATE2
-    IORING_REGISTER_BUFFERS2
-    IORING_REGISTER_BUFFERS_UPDATE
-    IORING_REGISTER_IOWQ_AFF
-    IORING_UNREGISTER_IOWQ_AFF
-    IORING_REGISTER_IOWQ_MAX_WORKERS
-  end
-
-  @[Flags]
-  enum IoUringSqeFlags : UInt8
-    FIXED_FILE    # use fixed fileset
-    IO_DRAIN      # issue after inflight IO
-    IO_LINK       # links next sqe
-    IO_HARDLINK   # like LINK, but stronger
-    ASYNC         # always go async
-    BUFFER_SELECT # select buffer from sqe->buf_group
-  end
+  # io_uring_register() opcodes
+  IORING_REGISTER_BUFFERS          =  0u32
+  IORING_UNREGISTER_BUFFERS        =  1u32
+  IORING_REGISTER_FILES            =  2u32
+  IORING_UNREGISTER_FILES          =  3u32
+  IORING_REGISTER_EVENTFD          =  4u32
+  IORING_UNREGISTER_EVENTFD        =  5u32
+  IORING_REGISTER_FILES_UPDATE     =  6u32
+  IORING_REGISTER_EVENTFD_ASYNC    =  7u32
+  IORING_REGISTER_PROBE            =  8u32
+  IORING_REGISTER_PERSONALITY      =  9u32
+  IORING_UNREGISTER_PERSONALITY    = 10u32
+  IORING_REGISTER_RESTRICTIONS     = 11u32
+  IORING_REGISTER_ENABLE_RINGS     = 12u32
+  IORING_REGISTER_FILES2           = 13u32
+  IORING_REGISTER_FILES_UPDATE2    = 14u32
+  IORING_REGISTER_BUFFERS2         = 15u32
+  IORING_REGISTER_BUFFERS_UPDATE   = 16u32
+  IORING_REGISTER_IOWQ_AFF         = 17u32
+  IORING_UNREGISTER_IOWQ_AFF       = 18u32
+  IORING_REGISTER_IOWQ_MAX_WORKERS = 19u32
 
   @[Extern]
   struct IoSqringOffsets
@@ -160,15 +113,37 @@ module Crystal::System::Syscall
   struct IoUringParams
     property sq_entries = 0u32
     property cq_entries = 0u32
-    property flags = IoUringFlags::None
+    property flags = 0u32
     property sq_thread_cpu = 0u32
     property sq_thread_idle = 0u32
-    property features = IoUringFeatures::None
+    property features = 0u32
     property wq_fd = 0u32
     property resv = StaticArray(UInt32, 3).new(0)
     property sq_off = IoSqringOffsets.new
     property cq_off = IoCqringOffsets.new
   end
+
+  # IoUringParams#flags
+  IORING_SETUP_IOPOLL     = 1u32 << 0 # io_context is polled
+  IORING_SETUP_SQPOLL     = 1u32 << 1 # SQ poll thread
+  IORING_SETUP_SQ_AFF     = 1u32 << 2 # sq_thread_cpu is valid
+  IORING_SETUP_CQSIZE     = 1u32 << 3 # app defines CQ size
+  IORING_SETUP_CLAMP      = 1u32 << 4 # clamp SQ/CQ ring sizes
+  IORING_SETUP_ATTACH_WQ  = 1u32 << 5 # attach to existing wq
+  IORING_SETUP_R_DISABLED = 1u32 << 6 # start with ring disabled
+
+  # IoUringParams#features
+  IORING_FEAT_SINGLE_MMAP     = 1u32 << 0
+  IORING_FEAT_NODROP          = 1u32 << 1
+  IORING_FEAT_SUBMIT_STABLE   = 1u32 << 2
+  IORING_FEAT_RW_CUR_POS      = 1u32 << 3
+  IORING_FEAT_CUR_PERSONALITY = 1u32 << 4
+  IORING_FEAT_FAST_POLL       = 1u32 << 5
+  IORING_FEAT_POLL_32BITS     = 1u32 << 6
+  IORING_FEAT_SQPOLL_NONFIXED = 1u32 << 7
+  IORING_FEAT_EXT_ARG         = 1u32 << 8
+  IORING_FEAT_NATIVE_WORKERS  = 1u32 << 9
+  IORING_FEAT_RSRC_TAGS       = 1u32 << 10
 
   @[Extern]
   struct IoUringCqe
@@ -177,36 +152,10 @@ module Crystal::System::Syscall
     property flags = 0u32
   end
 
-  @[Flags]
-  enum RwFlag : UInt32
-    HIPRI
-    DSYNC
-    SYNC
-    NOWAIT
-    APPEND
-  end
-
-  @[Flags]
-  enum PollEvent : UInt32
-    IN     = 0x0001
-    PRI    = 0x0002
-    OUT    = 0x0004
-    ERR    = 0x0008
-    HUP    = 0x0010
-    NVAL   = 0x0020
-    RDNORM = 0x0040
-    RDBAND = 0x0080
-    WRNORM = 0x0100
-    WRBAND = 0x0200
-    MSG    = 0x0400
-    REMOVE = 0x1000
-    RDHUP  = 0x2000
-  end
-
   @[Extern(union: true)]
   struct IoUringSqeInnerFlags
-    property rw_flags = RwFlag::None
-    property poll_events = PollEvent::None
+    property rw_flags = 0u32
+    property poll_events = 0u32
     property fsync_flags = 0u32
     property sync_range_flags = 0u32
     property msg_flags = 0u32
@@ -222,15 +171,30 @@ module Crystal::System::Syscall
     property hardlink_flags = 0u32
   end
 
+  # IoUringSqeInnerFlags#poll_events
+  POLLIN     = 0x0001u32
+  POLLPRI    = 0x0002u32
+  POLLOUT    = 0x0004u32
+  POLLERR    = 0x0008u32
+  POLLHUP    = 0x0010u32
+  POLLNVAL   = 0x0020u32
+  POLLRDNORM = 0x0040u32
+  POLLRDBAND = 0x0080u32
+  POLLWRNORM = 0x0100u32
+  POLLWRBAND = 0x0200u32
+  POLLMSG    = 0x0400u32
+  POLLREMOVE = 0x1000u32
+  POLLRDHUP  = 0x2000u32
+
   @[Extern]
   struct IoUringSqe
-    property opcode = IoUringOp::NOP       # type of operation for this sqe
-    property flags = IoUringSqeFlags::None # flags
-    property ioprio = 0u16                 # ioprio for the request
-    property fd = 0i32                     # file descriptor to do IO on
-    property off = 0u64                    # offset into file
-    property addr = 0u64                   # pointer to buffer or iovecs
-    property len = 0u32                    # buffer size or number of iovecs
+    property opcode = 0u8  # type of operation for this sqe
+    property flags = 0u8   # flags
+    property ioprio = 0u16 # ioprio for the request
+    property fd = 0i32     # file descriptor to do IO on
+    property off = 0u64    # offset into file
+    property addr = 0u64   # pointer to buffer or iovecs
+    property len = 0u32    # buffer size or number of iovecs
     property inner_flags = IoUringSqeInnerFlags.new
     property user_data = 0u64          # data to be passed back at completion time
     property buf_index_or_group = 0u16 # index into fixed buffers, if used, or for grouped buffer selection
@@ -240,25 +204,31 @@ module Crystal::System::Syscall
     property pad2 = 0u64
   end
 
-  @[Flags]
-  enum IoUringProbeOpFlags : UInt16
-    SUPPORTED
-  end
+  # IoUringSqe#flags
+  IOSQE_FIXED_FILE    = 1u8 << 0 # use fixed fileset
+  IOSQE_IO_DRAIN      = 1u8 << 1 # issue after inflight IO
+  IOSQE_IO_LINK       = 1u8 << 2 # links next sqe
+  IOSQE_IO_HARDLINK   = 1u8 << 3 # like LINK, but stronger
+  IOSQE_ASYNC         = 1u8 << 4 # always go async
+  IOSQE_BUFFER_SELECT = 1u8 << 5 # select buffer from sqe->buf_group
 
   @[Extern]
   struct IoUringProbeOp
     property op = 0u8
     property resv = 0u8
-    property flags = IoUringProbeOpFlags::None
+    property flags = 0u16
     property resv2 = 0u32
   end
 
+  # IoUringProbeOp#flags
+  IO_URING_OP_SUPPORTED = 1u16 << 0
+
   @[Extern]
-  struct IoUringProbe(N)
+  struct IoUringProbe
     property last_op = 0u8 # last opcode supported
     property ops_len = 0u8 # length of ops[] array below
     property resv = 0u16
     property resv2 = StaticArray(UInt32, 3).new(0)
-    property ops = StaticArray(IoUringProbeOp, N).new(IoUringProbeOp.new)
+    property ops = StaticArray(IoUringProbeOp, 256).new(IoUringProbeOp.new)
   end
 end
