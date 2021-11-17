@@ -301,10 +301,6 @@ class Crystal::System::IoUring
     submit(opcode, user_data, index: index, timeout: timeout) { |sqe| yield sqe }
   end
 
-  private def submit_and_forget(opcode : UInt8, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
-    submit(opcode, 0, index: index, timeout: timeout) { |sqe| yield sqe }
-  end
-
   # Enters the kernel to process events. This can be called either by the event loop when no fiber has
   # work to do (most likely all of them are waiting for completion events) or when the submission queue
   # is full and we are trying to submit more requests. The `blocking` parameter dictates if it should
@@ -721,7 +717,7 @@ class Crystal::System::IoUring
 
   def timeout_remove(callback : Void*)
     if IoUring.probe.supports_op? Syscall::IORING_OP_TIMEOUT_REMOVE
-      submit_and_forget Syscall::IORING_OP_TIMEOUT_REMOVE do |sqe|
+      submit_and_wait Syscall::IORING_OP_TIMEOUT_REMOVE do |sqe|
         sqe.value.addr = callback.address + 1
       end
     else
