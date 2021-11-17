@@ -118,7 +118,7 @@ class JSON::Parser
   end
 
   private def unexpected_token
-    parse_exception "unexpected token '#{token}'"
+    parse_exception "unexpected token #{token.inspect}"
   end
 
   private def parse_exception(msg)

@@ -378,7 +378,7 @@ module Crystal
             end
 
             if atomic.is_a?(Call) && (atomic.name.ends_with?('?') || atomic.name.ends_with?('!'))
-              raise "unexpected token: =", location
+              raise "unexpected token: '='", location
             end
 
             atomic = Var.new(atomic.name).at(atomic) if atomic.is_a?(Call)
@@ -1865,7 +1865,7 @@ module Crystal
         next_token_skip_space
 
         msg = String.build do |msg|
-          msg << "unexpected token '|', proc literals specify their parameters like this: ->("
+          msg << "unexpected token: '|', proc literals specify their parameters like this: ->("
           if @token.type == :IDENT
             msg << @token.value.to_s << " : Type"
             next_token_skip_space_or_newline
@@ -3934,14 +3934,14 @@ module Crystal
       else
         if external_name
           if found_string_literal
-            raise "unexpected token: #{@token}, expected parameter internal name"
+            raise "unexpected token: #{@token.inspect}, expected parameter internal name"
           end
           if invalid_internal_name
             raise "cannot use '#{invalid_internal_name}' as a parameter name", invalid_internal_name
           end
           arg_name = external_name
         else
-          raise "unexpected token: #{@token}"
+          raise "unexpected token: #{@token.inspect}"
         end
       end
 
@@ -6107,9 +6107,9 @@ module Crystal
 
     def unexpected_token(token = @token.to_s, msg = nil)
       if msg
-        raise "unexpected token: #{token} (#{msg})", @token
+        raise "unexpected token: #{token.inspect} (#{msg})", @token
       else
-        raise "unexpected token: #{token}", @token
+        raise "unexpected token: #{token.inspect}", @token
       end
     end
 
