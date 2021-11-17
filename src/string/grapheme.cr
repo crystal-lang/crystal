@@ -1,14 +1,17 @@
 require "./grapheme/grapheme"
 
 class String
-  # Returns an array of all Unicode extended grapheme clusters, specified in the Unicode Standard Annex #29. Grapheme clusters correspond to
-  # "user-perceived characters". These characters often consist of multiple code points (e.g. the "woman kissing woman" emoji consists of 8 code points:
-  # woman + ZWJ + heavy black heart (2 code points) + ZWJ + kiss mark + ZWJ + woman) and the rules described in Annex #29 must be applied to group those
-  # code points into clusters perceived by the user as one character.
+  # Returns this string split into Unicode extended grapheme clusters.
+  #
+  # `Grapheme` clusters correspond to "user-perceived characters" and are defined
+  # in [Unicode Standard Annex #29](https://unicode.org/reports/tr29/). A cluster
+  # can consist of multiple code points which together form a single glyph.
   #
   # ```
-  # "🧙‍♂️💈".graphemes # => [String::Grapheme::Cluster(@cluster="🧙‍♂️"), String::Grapheme::Cluster(@cluster='💈')]
+  # "a👍🏼à".graphemes # => [String::Grapheme('a'), String::Grapheme("👍🏼"), String::Grapheme("à")]
   # ```
+  #
+  # * `#each_grapheme` iterates the grapheme clusters without allocating an array
   def graphemes : Array(Grapheme)
     graphemes = [] of Grapheme
     each_grapheme do |grapheme|
@@ -17,13 +20,19 @@ class String
     graphemes
   end
 
-  # Yields each Unicode extended grapheme cluster in the string to the block.
+  # Yields each Unicode extended grapheme cluster in this string.
+  #
+  # `Grapheme` clusters correspond to "user-perceived characters" and are defined
+  # in [Unicode Standard Annex #29](https://unicode.org/reports/tr29/). A cluster
+  # can consist of multiple code points which together form a single glyph.
   #
   # ```
-  # "🧙‍♂️💈".each_grapheme do |cluster|
+  # "a👍🏼à".each_grapheme do |cluster|
   #   p! cluster
   # end
   # ```
+  #
+  # * `#graphemes` collects all grapheme clusters in an array
   def each_grapheme(& : Grapheme -> _) : Nil
     each_grapheme_boundary do |range, last_char|
       yield Grapheme.new(self, range, last_char)
@@ -38,11 +47,17 @@ class String
     size
   end
 
-  # Returns an iterator of the grapheme clusters in this string.
+  # Returns an iterator of this string split into Unicode extended grapheme clusters.
+  #
+  # `Grapheme` clusters correspond to "user-perceived characters" and are defined
+  # in [Unicode Standard Annex #29](https://unicode.org/reports/tr29/). A cluster
+  # can consist of multiple code points which together form a single glyph.
   #
   # ```
-  # "🔮👍🏼!".each_grapheme.to_a # => [String::Grapheme('\u{1f52e}'), String::Grapheme("\u{1F44D}\u{1F3FC}"), String::Grapheme('!')]
+  # "a👍🏼à".each_grapheme.to_a # => [String::Grapheme('a'), String::Grapheme("👍🏼"), String::Grapheme("à")]
   # ```
+  #
+  # * `#graphemes` collects all grapheme clusters in an array
   def each_grapheme : Iterator(Grapheme)
     GraphemeIterator.new(self)
   end

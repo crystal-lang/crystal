@@ -1,7 +1,11 @@
 require "./properties"
 
 class String
-  private def each_grapheme_boundary
+  # Iterates the grapheme boundaries in this string and yields for each grapheme
+  # cluster the byte index of the first character and the first character of the
+  # cluster, as well as the last character of the grapheme (which can be used
+  # to avoid multiple decoding in single-char graphemes).
+  private def each_grapheme_boundary(& : Range(Int32, Int32), Char -> Nil) : Nil
     state = Grapheme::Property::Start
 
     reader = Char::Reader.new(self)
@@ -71,7 +75,7 @@ class String
   # functional unit of a writing system. This is also called a *user-perceived character*.
   #
   # In the latin alphabet, most graphemes consist of a single Unicode codepoint
-  # (equivalent to `Char`). But a grapheme can also consiste of a sequence of codepoints,
+  # (equivalent to `Char`). But a grapheme can also consist of a sequence of codepoints,
   # which combine into a single unit.
   #
   # For example, the string `"e\u0301"` consists of two characters, the latin small letter `e`
@@ -88,16 +92,29 @@ class String
   # "é".grapheme_size       # => 1
   # ```
   #
+  # This combination of codepoints is common in some non-latin scripts. It's also
+  # often used with emojies to create customized combination. For example, the
+  # thumbs up sign `👍` (`U+1F44D`) combined with an emoji modifier such as
+  # `U+1F3FC` assign a colour to the emoji.
+  #
   # Instances of this type can be acquired via `String#each_grapheme` or `String#graphemes`.
   #
   # The algorithm to determine boundaries between grapheme clusters is specified
   # in the [Unicode Standard Annex #29](https://www.unicode.org/reports/tr29/tr29-37.html#Grapheme_Cluster_Boundaries),
   # and implemented in Version Unicode 13.0.0.
   struct Grapheme
+    # For efficency reasons we avoid allocating a string for graphemes consisting
+    # of only a single character.
+    # As a trade-off, this leads to multi dispatch on this ivar. But that's
+    # acceptable compared to the allocation overhead.
+    #
+    # Graphemes consisting of a single character are always represented as
+    # `Char`, never as `String` to simplify comparability. This invariant is
+    # protected by the constructor.
     @cluster : Char | String
 
     # :nodoc:
-    def self.new(string : String, range : Range(Int32, Int32), char : Char)
+    def self.new(string : String, range : Range(Int32, Int32), char : Char) : self
       if char.bytesize == range.size
         new(char)
       else
@@ -109,10 +126,12 @@ class String
     def initialize(@cluster)
     end
 
+    # Appends the characters in this grapheme cluster to *io*.
     def to_s(io : IO) : Nil
       io << @cluster
     end
 
+    # Returns the characters in this grapheme cluster.
     def to_s : String
       case cluster = @cluster
       in Char
@@ -122,13 +141,15 @@ class String
       end
     end
 
+    # Appends a representation of this grapheme cluster to *io*.
     def inspect(io : IO) : Nil
       io << "String::Grapheme("
       @cluster.inspect(io)
       io << ")"
     end
 
-    def size
+    # Returns the number of characters in this grapheme cluster.
+    def size : Int32
       case cluster = @cluster
       in Char
         1
@@ -137,16 +158,21 @@ class String
       end
     end
 
-    def bytesize
+    # Returns the number of bytes in the UTF-8 representation of this grapheme cluster.
+    def bytesize : Int32
       @cluster.bytesize
     end
 
-    def ==(other : self)
+    # Returns `true` if *other* is equivalent to `self`.
+    #
+    # Two graphemes are considered equivalent if they contain the same sequence
+    # of codepoints.
+    def ==(other : self) : Bool
       @cluster == other.@cluster
     end
 
     # :nodoc:
-    def self.break?(c1 : Char, c2 : Char)
+    def self.break?(c1 : Char, c2 : Char) : Bool
       break?(Property.from(c1), Property.from(c2))
     end
 
@@ -160,10 +186,10 @@ class String
     # an E_Modifier class codepoint and an incorrectly missing break between two
     # REGIONAL_INDICATOR class code points if such support does not exist in the caller.
     #
-    # The rules are graphically displayed in a tyble on https://www.unicode.org/Public/13.0.0/ucd/auxiliary/GraphemeBreakTest.html
+    # The rules are graphically displayed in a table on https://www.unicode.org/Public/13.0.0/ucd/auxiliary/GraphemeBreakTest.html
     #
     # The implementation is insipred by https://github.com/JuliaStrings/utf8proc/blob/462093b3924c7491defc67fda4bc7a27baf9b088/utf8proc.c#L261
-    def self.break?(lbc : Property, tbc : Property)
+    def self.break?(lbc : Property, tbc : Property) : Bool
       return true if lbc.start?                                                   # GB1
       return false if lbc.cr? && tbc.lf?                                          # GB3
       return true if lbc.cr? || lbc.lf? || lbc.control?                           # GB4
@@ -180,7 +206,7 @@ class String
     end
 
     # :nodoc:
-    def self.break?(c1 : Char, c2 : Char, state : Pointer(Property))
+    def self.break?(c1 : Char, c2 : Char, state : Pointer(Property)) : Bool
       break?(Property.from(c1), Property.from(c2), state)
     end
 
@@ -193,7 +219,7 @@ class String
     # which is accounted for in the state argument.
     #
     # The implementation is inspired by https://github.com/JuliaStrings/utf8proc/blob/462093b3924c7491defc67fda4bc7a27baf9b088/utf8proc.c#L291
-    def self.break?(lbc : Property, tbc : Property, state : Pointer(Property))
+    def self.break?(lbc : Property, tbc : Property, state : Pointer(Property)) : Bool
       if state
         if state.value.start?
           state.value = lbc_override = lbc

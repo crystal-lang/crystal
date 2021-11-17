@@ -1,5 +1,5 @@
 require "spec"
-require "../../support/iterate"
+require "spec/helpers/iterate"
 
 def it_iterates_graphemes(string, graphemes)
   graphemes = graphemes.map { |grapheme| String::Grapheme.new(grapheme) }
