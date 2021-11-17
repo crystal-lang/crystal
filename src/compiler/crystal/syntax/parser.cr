@@ -5377,7 +5377,7 @@ module Crystal
         @yields = args.size
       end
 
-      Yield.new(args || [] of ASTNode, scope).at(location).at_end(end_location)
+      Yield.new(args || [] of ASTNode, scope, !! call_args.try(&.has_parentheses)).at(location).at_end(end_location)
     end
 
     def parse_break

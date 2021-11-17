@@ -290,6 +290,7 @@ module Crystal
     it_parses "def foo; yield; end", Def.new("foo", body: Yield.new, yields: 0)
     it_parses "def foo; yield 1; end", Def.new("foo", body: Yield.new([1.int32] of ASTNode), yields: 1)
     it_parses "def foo; yield 1; yield; end", Def.new("foo", body: [Yield.new([1.int32] of ASTNode), Yield.new] of ASTNode, yields: 1)
+    it_parses "def foo; yield(1); end", Def.new("foo", body: [Yield.new([1.int32] of ASTNode, has_parentheses: true)] of ASTNode, yields: 1)
     it_parses "def foo(a, b = a); end", Def.new("foo", [Arg.new("a"), Arg.new("b", "a".var)])
     it_parses "def foo(&block); end", Def.new("foo", block_arg: Arg.new("block"), yields: 0)
     it_parses "def foo(&); end", Def.new("foo", block_arg: Arg.new(""), yields: 0)
