@@ -8,7 +8,7 @@ SCRIPT_ROOT="$(dirname "$SCRIPT_PATH")"
 BUILD_DIR=$SCRIPT_ROOT/../../.build
 LLVM_CONFIG="$(basename $($SCRIPT_ROOT/../../src/llvm/ext/find-llvm-config))"
 FILE_CHECK=FileCheck-"${LLVM_CONFIG#llvm-config-}"
-crystal=${SPEC_COMPILER:-$SCRIPT_ROOT/../../bin/crystal}
+crystal=${CRYSTAL_SPEC_COMPILER_BIN:-$SCRIPT_ROOT/../../bin/crystal}
 
 mkdir -p $BUILD_DIR
 
