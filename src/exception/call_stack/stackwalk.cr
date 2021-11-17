@@ -32,6 +32,15 @@ struct Exception::CallStack
   def self.unwind
     load_debug_info
 
+    machine_type = {% if flag?(:x86_64) %}
+                     LibC::IMAGE_FILE_MACHINE_AMD64
+                   {% elsif flag?(:i386) %}
+                     # TODO: use WOW64_CONTEXT in place of CONTEXT
+                     {% raise "x86 not supported" %}
+                   {% else %}
+                     {% raise "architecture not supported" %}
+                   {% end %}
+
     # TODO: use stack if possible (must be 16-byte aligned)
     context = Pointer(LibC::CONTEXT).malloc(1)
     context.value.contextFlags = LibC::CONTEXT_FULL
@@ -42,19 +51,9 @@ struct Exception::CallStack
     stack_frame.addrFrame.mode = LibC::ADDRESS_MODE::AddrModeFlat
     stack_frame.addrStack.mode = LibC::ADDRESS_MODE::AddrModeFlat
 
-    machine_type = LibC::IMAGE_FILE_MACHINE_AMD64
-    {% if flag?(:x86_64) %}
-      stack_frame.addrPC.offset = context.value.rip
-      stack_frame.addrFrame.offset = context.value.rbp
-      stack_frame.addrStack.offset = context.value.rsp
-    {% elsif flag?(:i386) %}
-      machine_type = LibC::IMAGE_FILE_MACHINE_I386
-      stack_frame.addrPC.offset = context.value.eip
-      stack_frame.addrFrame.offset = context.value.ebp
-      stack_frame.addrStack.offset = context.value.esp
-    {% else %}
-      {% raise "architecture not supported" %}
-    {% end %}
+    stack_frame.addrPC.offset = context.value.rip
+    stack_frame.addrFrame.offset = context.value.rbp
+    stack_frame.addrStack.offset = context.value.rsp
 
     stack = [] of Void*
 
@@ -97,7 +96,8 @@ struct Exception::CallStack
 
       if LibC.SymGetModuleInfoW64(LibC.GetCurrentProcess, pc, module_info) != 0
         mod_displacement = pc - LibC.SymGetModuleBase64(LibC.GetCurrentProcess, pc)
-        file_name = "#{String.from_utf16(module_info.value.loadedImageName.to_unsafe)[0]}+0x#{mod_displacement.to_s(16)}"
+        image_name = String.from_utf16(module_info.value.loadedImageName.to_unsafe)[0]
+        file_name = "#{image_name} +#{mod_displacement}"
       else
         file_name = "??"
       end
