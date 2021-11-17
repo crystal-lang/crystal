@@ -3182,7 +3182,7 @@ module Crystal
         when :"}"
           break
         else
-          unexpected_token @token, "expecting ',' or '}'"
+          unexpected_token msg: "expecting ',' or '}'"
         end
       end
       exps
@@ -6105,11 +6105,19 @@ module Crystal
       @token.value.to_s
     end
 
-    def unexpected_token(token = @token.to_s, msg = nil)
+    def unexpected_token(token : String, msg = nil)
       if msg
         raise "unexpected token: #{token.inspect} (#{msg})", @token
       else
         raise "unexpected token: #{token.inspect}", @token
+      end
+    end
+
+    def unexpected_token(*, msg = nil)
+      if msg
+        raise "unexpected token: #{@token.type == :EOF ? "EOF" : token.to_s.inspect} (#{msg})", @token
+      else
+        raise "unexpected token: #{@token.type == :EOF ? "EOF" : token.to_s.inspect}", @token
       end
     end
 
