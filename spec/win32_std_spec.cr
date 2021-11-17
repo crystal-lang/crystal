@@ -5,11 +5,11 @@ require "./std/array_spec.cr"
 require "./std/atomic_spec.cr"
 require "./std/base64_spec.cr"
 require "./std/benchmark_spec.cr"
-# require "./std/big/big_decimal_spec.cr" (failed linking)
-# require "./std/big/big_float_spec.cr" (failed linking)
-# require "./std/big/big_int_spec.cr" (failed linking)
-# require "./std/big/big_rational_spec.cr" (failed linking)
-# require "./std/big/number_spec.cr" (failed linking)
+require "./std/big/big_decimal_spec.cr"
+require "./std/big/big_float_spec.cr"
+require "./std/big/big_int_spec.cr"
+require "./std/big/big_rational_spec.cr"
+require "./std/big/number_spec.cr"
 require "./std/bit_array_spec.cr"
 require "./std/bool_spec.cr"
 require "./std/box_spec.cr"
@@ -149,7 +149,7 @@ require "./std/mime/multipart_spec.cr"
 require "./std/mime_spec.cr"
 # require "./std/mutex_spec.cr" (failed codegen)
 require "./std/named_tuple_spec.cr"
-# require "./std/number_spec.cr" (failed linking)
+require "./std/number_spec.cr"
 # require "./std/oauth/access_token_spec.cr" (failed codegen)
 # require "./std/oauth/authorization_header_spec.cr" (failed codegen)
 # require "./std/oauth/consumer_spec.cr" (failed codegen)
@@ -171,7 +171,7 @@ require "./std/object_spec.cr"
 # require "./std/openssl/x509/certificate_spec.cr" (failed codegen)
 # require "./std/openssl/x509/name_spec.cr" (failed codegen)
 require "./std/option_parser_spec.cr"
-# require "./std/overflow_spec.cr" (failed linking)
+require "./std/overflow_spec.cr"
 require "./std/path_spec.cr"
 require "./std/pointer_spec.cr"
 require "./std/pp_spec.cr"
