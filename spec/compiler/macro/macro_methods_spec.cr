@@ -1558,15 +1558,15 @@ module Crystal
         end
       end
 
-      it "executes instance_vars on symbol literal" do
+      it "executes instance_vars on symbol type" do
         assert_macro("{{x.instance_vars.map &.stringify}}", %([])) do |program|
-          {x: TypeNode.new(SymbolLiteralType.new(program, "foo".symbol))}
+          {x: TypeNode.new(program.symbol)}
         end
       end
 
-      it "executes class_vars on symbol literal" do
+      it "executes class_vars on symbol type" do
         assert_macro("{{x.class_vars.map &.stringify}}", %([])) do |program|
-          {x: TypeNode.new(SymbolLiteralType.new(program, "foo".symbol))}
+          {x: TypeNode.new(program.symbol)}
         end
       end
 
