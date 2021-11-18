@@ -4697,7 +4697,7 @@ class String
     if error
       dump_hex(error, io)
     elsif yield
-      dump_unicode(char, io)
+      char.unicode_escape(io)
     else
       io << char
     end
@@ -4707,16 +4707,6 @@ class String
     io << "\\x"
     io << '0' if char < 0x0F
     char.to_s(io, 16, upcase: true)
-  end
-
-  private def dump_unicode(char, io)
-    io << "\\u"
-    io << '{' if char.ord > 0xFFFF
-    io << '0' if char.ord < 0x1000
-    io << '0' if char.ord < 0x0100
-    io << '0' if char.ord < 0x0010
-    char.ord.to_s(io, 16, upcase: true)
-    io << '}' if char.ord > 0xFFFF
   end
 
   # Returns `true` if this string starts with the given *str*.

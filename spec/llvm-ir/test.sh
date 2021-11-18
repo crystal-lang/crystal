@@ -34,9 +34,10 @@ pushd $BUILD_DIR >/dev/null
 
 test argless-initialize-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 test proc-pointer-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
-test const-read-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
+test pass-closure-to-c-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 
 # #11416
+test const-read-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 test class-var-read-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 test virtual-class-var-read-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
 test virtual-metaclass-var-read-debug-loc.cr "--cross-compile --target x86_64-unknown-linux-gnu --prelude=empty"
