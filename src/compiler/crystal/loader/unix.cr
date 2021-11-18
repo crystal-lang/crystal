@@ -12,7 +12,7 @@
 #   loaded in the compiler program itself may provide symbols to libraries
 #   loaded with `Crystal::Loader`. Symbols may be available without explicitly
 #   mentioning their libraries. It might be impossible to link against other
-#   verions of the libraries that the compiler is linked against.
+#   version of the libraries that the compiler is linked against.
 # * A fully statically linked compiler may help dealing with the previous
 #   issue. But using `libdl` in a non-dynamically loaded executable might cause
 #   other issues.
@@ -45,9 +45,7 @@ class Crystal::Loader
   def find_symbol?(name : String) : Handle?
     @handles.each do |handle|
       address = LibC.dlsym(handle, name)
-      if address
-        return address
-      end
+      return address if address
     end
   end
 
@@ -68,7 +66,7 @@ class Crystal::Loader
     end
   end
 
-  # Returns a list of directors used as the default search paths
+  # Returns a list of directories used as the default search paths
   def self.default_search_paths : Array(String)
     default_search_paths = [] of String
 
