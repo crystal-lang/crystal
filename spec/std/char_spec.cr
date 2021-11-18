@@ -435,10 +435,12 @@ describe "Char" do
     'a'.number?.should be_false
   end
 
-  it "does ascii_control?" do
+  it "#ascii_control?" do
     'ù'.ascii_control?.should be_false
     'a'.ascii_control?.should be_false
     '\u0019'.ascii_control?.should be_true
+    '\u007F'.ascii_control?.should be_true
+    '\u0080'.ascii_control?.should be_false
   end
 
   it "does mark?" do
