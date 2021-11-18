@@ -599,22 +599,6 @@ class Crystal::System::IoUring
     end
   end
 
-  # :ditto:
-  def writev(fd : Int32, slices : Tuple(Bytes), offset : UInt64 = -1.to_u64!, *, timeout : ::Time::Span? = nil)
-    iov = slices.map do |slice|
-      vec = LibC::IoVec.new
-      vec.iov_base = slice.to_unsafe
-      vec.iov_len = slice.size.to_u64
-      vec
-    end
-    submit_and_wait Syscall::IORING_OP_WRITEV, timeout: timeout do |sqe|
-      sqe.value.fd = fd
-      sqe.value.addr = pointerof(iov).address
-      sqe.value.len = slices.size.to_u
-      sqe.value.off = offset
-    end
-  end
-
   # Writes a slice of data to fd at the position `offset`, by default the current position.
   def write(fd : Int32, slice : Bytes, offset : UInt64 = -1.to_u64!, *, timeout : ::Time::Span? = nil)
     if IoUring.probe.supports_op? Syscall::IORING_OP_WRITE
@@ -625,7 +609,16 @@ class Crystal::System::IoUring
         sqe.value.off = offset
       end
     else
-      writev(fd, {slice}, offset, timeout: timeout)
+      vec = LibC::IoVec.new
+      vec.iov_base = slice.to_unsafe
+      vec.iov_len = slice.size.to_u64
+
+      submit_and_wait Syscall::IORING_OP_WRITEV, timeout: timeout do |sqe|
+        sqe.value.fd = fd
+        sqe.value.addr = pointerof(vec).address
+        sqe.value.len = 1u32
+        sqe.value.off = offset
+      end
     end
   end
 
@@ -647,22 +640,6 @@ class Crystal::System::IoUring
     end
   end
 
-  # :ditto:
-  def readv(fd : Int32, slices : Tuple(Bytes), offset : UInt64 = -1.to_u64!, *, timeout : ::Time::Span? = nil)
-    iov = slices.map do |slice|
-      vec = LibC::IoVec.new
-      vec.iov_base = slice.to_unsafe
-      vec.iov_len = slice.size.to_u64
-      vec
-    end
-    submit_and_wait Syscall::IORING_OP_READV, timeout: timeout do |sqe|
-      sqe.value.fd = fd
-      sqe.value.addr = pointerof(iov).address
-      sqe.value.len = slices.size.to_u
-      sqe.value.off = offset
-    end
-  end
-
   # Read a slice of data to fd from the position `offset`, by default the current position.
   def read(fd : Int32, slice : Bytes, offset : UInt64 = -1.to_u64!, *, timeout : ::Time::Span? = nil)
     if IoUring.probe.supports_op? Syscall::IORING_OP_READ
@@ -673,7 +650,16 @@ class Crystal::System::IoUring
         sqe.value.off = offset
       end
     else
-      readv(fd, {slice}, offset, timeout: timeout)
+      vec = LibC::IoVec.new
+      vec.iov_base = slice.to_unsafe
+      vec.iov_len = slice.size.to_u64
+
+      submit_and_wait Syscall::IORING_OP_READV, timeout: timeout do |sqe|
+        sqe.value.fd = fd
+        sqe.value.addr = pointerof(vec).address
+        sqe.value.len = 1u32
+        sqe.value.off = offset
+      end
     end
   end
 
