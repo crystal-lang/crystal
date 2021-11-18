@@ -20,6 +20,12 @@
 class Crystal::Loader
   alias Handle = Void*
 
+  SHARED_LIBRARY_EXTENSION = {% if flag?(:darwin) %}
+                               ".dylib"
+                             {% else %}
+                               ".so"
+                             {% end %}
+
   # Parses linker arguments in the style of `ld`.
   def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths) : self
     libnames = [] of String

@@ -98,16 +98,6 @@ class Crystal::Loader
   def finalize
     close_all
   end
-
-  SHARED_LIBRARY_EXTENSION = {% if flag?(:darwin) %}
-                               ".dylib"
-                             {% elsif flag?(:unix) %}
-                               ".so"
-                             {% elsif flag?(:windows) %}
-                               ".dll"
-                             {% else %}
-      {% raise "Can't load dynamic libraries" %}
-    {% end %}
 end
 
 {% if flag?(:unix) %}
