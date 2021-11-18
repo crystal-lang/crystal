@@ -94,6 +94,10 @@ class Crystal::System::IoUring
   @cancelable_poll_info = {} of UInt64 => CancelablePollInfo
   @next_cancelable_poll_info_id = 1u64
 
+  # Buffers and pointers sent to the kernel are stored here to ensure they are never garbage
+  # collected while the kernel is using them.
+  @keep_alive = {} of UInt64 => {Void*, Void*}
+
   # Creates a new io_uring instance with room for at least `sq_entries_hint`. This value is just
   # a hint. It will be rounded up to the nearest power of two and it will max at 32768.
   def initialize(sq_entries_hint : UInt32 = 128)
@@ -290,7 +294,10 @@ class Crystal::System::IoUring
   # This will block the current fiber until the request completes and return the completion result.
   private def submit_and_wait(opcode : UInt8, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
     user_data = ::Fiber.current.object_id
-    submit(opcode, user_data, index: index, timeout: timeout) { |sqe| yield sqe }
+    submit(opcode, user_data, index: index, timeout: timeout) do |sqe|
+      yield sqe
+      @keep_alive[user_data] = {Pointer(Void).new(user_data), Pointer(Void).new(sqe.value.addr)}
+    end
     Crystal::Scheduler.reschedule # The completion event will wake up this fiber.
     ::Fiber.current.iouring_result
   end
@@ -298,7 +305,10 @@ class Crystal::System::IoUring
   private def submit_and_callback(opcode : UInt8, callback : Void*, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
     # Heap allocated objects are always word-aligned. Use the last bit to store if it's a Fiber or a Proc.
     user_data = callback.address + 1
-    submit(opcode, user_data, index: index, timeout: timeout) { |sqe| yield sqe }
+    submit(opcode, user_data, index: index, timeout: timeout) do |sqe|
+      yield sqe
+      @keep_alive[user_data] = {callback, Pointer(Void).new(sqe.value.addr)}
+    end
   end
 
   # Enters the kernel to process events. This can be called either by the event loop when no fiber has
@@ -364,6 +374,8 @@ class Crystal::System::IoUring
           fatal_error("Exception inside io_uring callback: #{ex}")
         end
       end
+
+      @keep_alive.delete(cqe.user_data)
     end
 
     # If we consumed at least one event, then there are fibers with work to do.
