@@ -616,6 +616,10 @@ module Crystal
         node.def.args.join(@str, ", ", &.accept self)
         @str << ')'
       end
+      if return_type = node.def.return_type
+        @str << " : "
+        return_type.accept self
+      end
       @str << ' '
       @str << keyword("do")
       newline

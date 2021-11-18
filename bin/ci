@@ -122,7 +122,8 @@ build() {
       ;;
   esac
 
-  with_build_env 'find samples -name "*.cr" | xargs -tn 1 ./bin/crystal build --no-codegen'
+  with_build_env 'make samples'
+  with_build_env 'CRYSTAL_OPTS=--debug make samples'
 }
 
 format() {

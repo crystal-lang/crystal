@@ -344,16 +344,25 @@ module Crystal
         assert_macro %({{"hello".empty?}}), "false"
       end
 
-      it "executes string [Range] inclusive" do
+      it "executes [] with inclusive range" do
         assert_macro %({{"hello"[1..-2]}}), %("ell")
       end
 
-      it "executes string [Range] exclusive" do
+      it "executes [] with exclusive range" do
         assert_macro %({{"hello"[1...-2]}}), %("el")
       end
 
-      it "executes string [Range] inclusive (computed)" do
+      it "executes [] with computed range" do
         assert_macro %({{"hello"[[1].size..-2]}}), %("ell")
+      end
+
+      it "executes [] with incomplete range" do
+        assert_macro %({{"hello"[1..]}}), %("ello")
+        assert_macro %({{"hello"[1..nil]}}), %("ello")
+        assert_macro %({{"hello"[...3]}}), %("hel")
+        assert_macro %({{"hello"[nil...3]}}), %("hel")
+        assert_macro %({{"hello"[..]}}), %("hello")
+        assert_macro %({{"hello"[nil..nil]}}), %("hello")
       end
 
       it "executes string chomp" do
@@ -817,6 +826,15 @@ module Crystal
         assert_macro %({{ [1, 2, 3, 4][[1].size...-1] }}), %([2, 3])
       end
 
+      it "executes [] with incomplete range" do
+        assert_macro %({{ [1, 2, 3, 4][1..] }}), %([2, 3, 4])
+        assert_macro %({{ [1, 2, 3, 4][1..nil] }}), %([2, 3, 4])
+        assert_macro %({{ [1, 2, 3, 4][...2] }}), %([1, 2])
+        assert_macro %({{ [1, 2, 3, 4][nil...2] }}), %([1, 2])
+        assert_macro %({{ [1, 2, 3, 4][..] }}), %([1, 2, 3, 4])
+        assert_macro %({{ [1, 2, 3, 4][nil..nil] }}), %([1, 2, 3, 4])
+      end
+
       it "executes [] with two numbers" do
         assert_macro %({{ [1, 2, 3, 4, 5][1, 3] }}), %([2, 3, 4])
       end
@@ -1076,16 +1094,33 @@ module Crystal
     end
 
     describe TupleLiteral do
-      it "executes index 0" do
+      it "executes [] with 0" do
         assert_macro %({{ {1, 2, 3}[0] }}), "1"
       end
 
-      it "executes index 1" do
+      it "executes [] with 1" do
         assert_macro %({{ {1, 2, 3}[1] }}), "2"
       end
 
-      it "executes index out of bounds" do
+      it "executes [] out of bounds" do
         assert_macro %({{ {1, 2, 3}[3] }}), "nil"
+      end
+
+      it "executes [] with range" do
+        assert_macro %({{ {1, 2, 3, 4}[1...-1] }}), %({2, 3})
+      end
+
+      it "executes [] with computed range" do
+        assert_macro %({{ {1, 2, 3, 4}[[1].size...-1] }}), %({2, 3})
+      end
+
+      it "executes [] with incomplete range" do
+        assert_macro %({{ {1, 2, 3, 4}[1..] }}), %({2, 3, 4})
+        assert_macro %({{ {1, 2, 3, 4}[1..nil] }}), %({2, 3, 4})
+        assert_macro %({{ {1, 2, 3, 4}[...2] }}), %({1, 2})
+        assert_macro %({{ {1, 2, 3, 4}[nil...2] }}), %({1, 2})
+        assert_macro %({{ {1, 2, 3, 4}[..] }}), %({1, 2, 3, 4})
+        assert_macro %({{ {1, 2, 3, 4}[nil..nil] }}), %({1, 2, 3, 4})
       end
 
       it "executes size" do
@@ -2081,6 +2116,11 @@ module Crystal
       it "executes args" do
         assert_macro %({{x.args}}), "[z]", {x: ProcLiteral.new(Def.new("->", [Arg.new("z")]))}
       end
+
+      it "executes return_type" do
+        assert_macro %({{x.return_type}}), "Int32", {x: ProcLiteral.new(Def.new("->", return_type: "Int32".path))}
+        assert_macro %({{x.return_type}}), "", {x: ProcLiteral.new(Def.new("->"))}
+      end
     end
 
     describe "proc pointer methods" do
@@ -2143,8 +2183,19 @@ module Crystal
         assert_macro %({{x.return_type}}), "", {x: Def.new("some_def")}
       end
 
+      it "executes free_vars" do
+        assert_macro %({{x.free_vars}}), "[] of ::NoReturn", {x: Def.new("some_def")}
+        assert_macro %({{x.free_vars}}), "[T]", {x: Def.new("some_def", free_vars: %w(T))}
+        assert_macro %({{x.free_vars}}), "[T, U, V]", {x: Def.new("some_def", free_vars: %w(T U V))}
+      end
+
       it "executes receiver" do
         assert_macro %({{x.receiver}}), "self", {x: Def.new("some_def", receiver: Var.new("self"))}
+      end
+
+      it "executes abstract?" do
+        assert_macro %({{x.abstract?}}), "false", {x: Def.new("some_def")}
+        assert_macro %({{x.abstract?}}), "true", {x: Def.new("some_def", abstract: true)}
       end
 
       it "executes visibility" do
@@ -2289,6 +2340,11 @@ module Crystal
       it "executes named args value" do
         assert_macro %({{x.named_args[0].value}}), "1", {x: Call.new(1.int32, "some_call", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])}
       end
+
+      it "executes global?" do
+        assert_macro %({{x.global?}}), "false", {x: Call.new(1.int32, "some_call")}
+        assert_macro %({{x.global?}}), "true", {x: Call.new(nil, "some_call", global: true)}
+      end
     end
 
     describe "arg methods" do
@@ -2355,8 +2411,16 @@ module Crystal
           assert_macro %({{x.whens[0].body}}), "4", {x: case_node}
         end
 
+        it "executes when exhaustive?" do
+          assert_macro %({{x.whens[0].exhaustive?}}), "false", {x: case_node}
+        end
+
         it "executes else" do
           assert_macro %({{x.else}}), "5", {x: case_node}
+        end
+
+        it "executes exhaustive?" do
+          assert_macro %({{x.exhaustive?}}), "false", {x: case_node}
         end
       end
 
@@ -2365,6 +2429,14 @@ module Crystal
 
         it "executes whens" do
           assert_macro %({{x.whens}}), "[in 2, 3\n  4\n]", {x: case_node}
+        end
+
+        it "executes when exhaustive?" do
+          assert_macro %({{x.whens[0].exhaustive?}}), "true", {x: case_node}
+        end
+
+        it "executes exhaustive?" do
+          assert_macro %({{x.exhaustive?}}), "true", {x: case_node}
         end
       end
     end
@@ -2659,6 +2731,11 @@ module Crystal
     end
 
     describe "annotation methods" do
+      it "executes name" do
+        assert_macro %({{x.name}}), %(Foo), {x: Annotation.new(Path.new("Foo"))}
+        assert_macro %({{x.name}}), %(Foo::Bar), {x: Annotation.new(Path.new(["Foo", "Bar"]))}
+      end
+
       it "executes [] with NumberLiteral" do
         assert_macro %({{x[y]}}), %(42), {
           x: Annotation.new(Path.new("Foo"), [42.int32] of ASTNode),
