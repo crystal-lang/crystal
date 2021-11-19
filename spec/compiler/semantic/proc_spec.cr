@@ -21,6 +21,18 @@ describe "Semantic: proc" do
     assert_type("f = ->(x : Int32) { x }; f.call(1)", inject_primitives: true) { int32 }
   end
 
+  it "types proc literal with return type (1)" do
+    assert_type("->(x : Int32) : Int32 { x }") { proc_of(int32, int32) }
+  end
+
+  it "types proc literal with return type (2)" do
+    assert_type("-> : Int32 | String { 1 }") { proc_of(union_of int32, string) }
+  end
+
+  it "types proc call with return type" do
+    assert_type("x = -> : Int32 | String { 1 }; x.call()", inject_primitives: true) { union_of int32, string }
+  end
+
   it "types proc pointer" do
     assert_type("def foo; 1; end; ->foo") { proc_of(int32) }
   end
@@ -225,6 +237,14 @@ describe "Semantic: proc" do
       f.as(Float64 -> Float64)
       ",
       "can't cast Proc(Int32, Float64) to Proc(Float64, Float64)", inject_primitives: true
+  end
+
+  it "errors if inferred return type doesn't match return type restriction (1)" do
+    assert_error "-> : Int32 { true }", "expected Proc to return Int32, not Bool"
+  end
+
+  it "errors if inferred return type doesn't match return type restriction (2)" do
+    assert_error "->(x : Int32) : Int32 { x || 'a' }", "expected Proc to return Int32, not (Char | Int32)"
   end
 
   it "types proc literal hard type inference (1)" do
@@ -763,6 +783,13 @@ describe "Semantic: proc" do
         "can't use #{type} as a Proc argument type"
     end
 
+    it "disallows #{type} in proc return types" do
+      assert_error %(
+        -> : #{type} { }
+        ),
+        "can't use #{type} as a Proc argument type"
+    end
+
     it "disallows #{type} in captured block" do
       assert_error %(
         def foo(&block : #{type} ->)
@@ -793,6 +820,13 @@ describe "Semantic: proc" do
         ->(x : Class) { }
         ),
         "can't use Object as a Proc argument type"
+    end
+
+    it "disallows Class in proc return types" do
+      assert_error %(
+        -> : Class { }
+        ),
+        "can't use Class as a Proc argument type"
     end
 
     it "disallows Class in captured block" do

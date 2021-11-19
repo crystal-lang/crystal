@@ -58,20 +58,24 @@ describe "Backtrace" do
     error.to_s.should contain("Invalid memory access")
   end
 
-  pending_win32 "print exception with non-existing PWD" do
-    source_file = datapath("blank_test_file.txt")
-    compile_file(source_file) do |executable_file|
-      output, error = IO::Memory.new, IO::Memory.new
-      with_tempfile("non-existent") do |path|
-        Dir.mkdir path
-        Dir.cd(path) do
-          # on win32 it seems not possible to remove the directory while we're cd'ed into it
-          Dir.delete(path)
-          status = Process.run executable_file
+  {% unless flag?(:win32) %}
+    # In windows, the current working directory of the process cannot be
+    # removed. So we probably don't need to test that.
+    # https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/rmdir-wrmdir?view=msvc-170#remarks
+    it "print exception with non-existing PWD" do
+      source_file = datapath("blank_test_file.txt")
+      compile_file(source_file) do |executable_file|
+        output, error = IO::Memory.new, IO::Memory.new
+        with_tempfile("non-existent") do |path|
+          Dir.mkdir path
+          Dir.cd(path) do
+            Dir.delete(path)
+            status = Process.run executable_file
 
-          status.success?.should be_true
+            status.success?.should be_true
+          end
         end
       end
     end
-  end
+  {% end %}
 end

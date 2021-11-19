@@ -922,7 +922,7 @@ module Crystal
 
     def self.check_automatic_cast(program, value, var_type, assign = nil)
       if value.is_a?(NumberLiteral) && value.type != var_type
-        literal_type = NumberLiteralType.new(program, value)
+        literal_type = NumberAutocastType.new(program, value)
         restricted = literal_type.restrict(var_type, MatchContext.new(value.type, value.type))
         if restricted.is_a?(IntegerType) || restricted.is_a?(FloatType)
           value.type = restricted
@@ -931,7 +931,7 @@ module Crystal
           return value
         end
       elsif value.is_a?(SymbolLiteral) && value.type != var_type
-        literal_type = SymbolLiteralType.new(program, value)
+        literal_type = SymbolAutocastType.new(program, value)
         restricted = literal_type.restrict(var_type, MatchContext.new(value.type, value.type))
         if restricted.is_a?(EnumType)
           member = restricted.find_member(value.value).not_nil!
@@ -1146,6 +1146,17 @@ module Crystal
         meta_var = new_meta_var(arg.name, context: node.def)
         meta_var.bind_to fun_var
         meta_vars[arg.name] = meta_var
+      end
+
+      if return_type = node.def.return_type
+        @in_type_args += 1
+        return_type.accept self
+        @in_type_args -= 1
+        check_not_a_constant(return_type)
+
+        def_type = return_type.type
+        MainVisitor.check_type_allowed_as_proc_argument(node, def_type)
+        node.expected_return_type = def_type.virtual_type
       end
 
       node.bind_to node.def

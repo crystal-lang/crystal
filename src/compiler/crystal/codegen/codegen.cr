@@ -1402,8 +1402,7 @@ module Crystal
 
     def cant_pass_closure_to_c_exception_call
       @cant_pass_closure_to_c_exception_call ||= begin
-        location = Location.new(@program.filename, 1, 1)
-        call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(location)
+        call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(UNKNOWN_LOCATION)
         @program.visit_main call
         call.raise "::raise must be of NoReturn return type!" unless call.type.is_a?(NoReturnType)
         call

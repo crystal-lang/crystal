@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   linux-job:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:1.2.0-build
+    container: crystallang/crystal:1.2.2-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
@@ -66,6 +66,7 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
           iwr https://cs.stanford.edu/pub/exim/pcre/pcre-8.43.zip -OutFile pcre.zip
+          (Get-FileHash -Algorithm SHA256 .\pcre.zip).hash -eq "ae236dc25d7e0e738a94e103218e0085eb02ff9bd98f637b6e061a48decdb433"
           7z x pcre.zip
           mv pcre-* pcre
       - name: Build libpcre
@@ -78,6 +79,7 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
           iwr https://github.com/madler/zlib/archive/v1.2.11.zip -OutFile zlib.zip
+          (Get-FileHash -Algorithm SHA256 .\zlib.zip).hash -eq "f5cc4ab910db99b2bdbba39ebbdc225ffc2aa04b4057bc2817f1b94b6978cfc3"
           7z x zlib.zip
           mv zlib-* zlib
       - name: Build zlib
@@ -86,10 +88,24 @@ jobs:
         run: |
           cmake . -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
           cmake --build . --config Release
+      - name: Download mpir
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: BrianGladman/mpir
+          ref: d9c9a842be6475bef74324f367ce2c5a78c55d06  # master @ 2021-10-14
+          path: mpir
+      - name: Build mpir
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        working-directory: ./mpir
+        run: |
+          $VsVersion = "vs$((& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -property displayName) -replace '.*\b\d\d(\d\d)\b.*', '$1')"
+          MSBuild.exe /p:Platform=x64 /p:Configuration=Release /p:DefineConstants=MSC_BUILD_DLL ".\msvc\$VsVersion\lib_mpir_gc\lib_mpir_gc.vcxproj"
       - name: Download libyaml
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
           iwr https://github.com/yaml/libyaml/archive/0.2.4.zip -OutFile libyaml.zip
+          (Get-FileHash -Algorithm SHA256 .\libyaml.zip).hash -eq "5882285b8265096d045ecebbee651b73bef6cead34e439b63e86bf393c936793"
           7z x libyaml.zip
           mv libyaml-* libyaml
       - name: Build libyaml
@@ -118,6 +134,7 @@ jobs:
           mv pcre/Release/pcre.lib libs/
           mv bdwgc/Release/gc.lib libs/
           mv zlib/Release/zlibstatic.lib libs/z.lib
+          mv mpir/lib/x64/Release/mpir.lib libs/
           mv libyaml/Release/yaml.lib libs/
           mv libxml2/Release/libxml2s.lib libs/xml2.lib
 
@@ -131,6 +148,7 @@ jobs:
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |
           iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/llvm-10.0.0.src.tar.xz -OutFile llvm.tar.xz
+          (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "df83a44b3a9a71029049ec101fb0077ecbbdf5fe41e395215025779099a98fdf"
           7z x llvm.tar.xz
           7z x llvm.tar
           mv llvm-* llvm-src
@@ -172,7 +190,7 @@ jobs:
 
       - name: Re-build Crystal
         run: |
-          .\crystal-cross.exe build src/compiler/crystal.cr -Di_know_what_im_doing -Dwithout_playground --link-flags=/F10000000
+          .\crystal-cross.exe build src/compiler/crystal.cr -Di_know_what_im_doing -Dwithout_playground --link-flags=/STACK:10000000
           mv crystal.exe bin/
 
       - name: Gather Crystal binaries

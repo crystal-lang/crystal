@@ -1318,6 +1318,15 @@ module Crystal
     it_parses "x = 1; ->{ x }", [Assign.new("x".var, 1.int32), ProcLiteral.new(Def.new("->", body: "x".var))]
     it_parses "f ->{ a do\n end\n }", Call.new(nil, "f", ProcLiteral.new(Def.new("->", body: Call.new(nil, "a", block: Block.new))))
 
+    it_parses "-> : Int32 { }", ProcLiteral.new(Def.new("->", return_type: "Int32".path))
+    it_parses "->\n:\nInt32\n{\n}", ProcLiteral.new(Def.new("->", return_type: "Int32".path))
+    it_parses "->() : Int32 { }", ProcLiteral.new(Def.new("->", return_type: "Int32".path))
+    it_parses "->() : Int32 do end", ProcLiteral.new(Def.new("->", return_type: "Int32".path))
+    it_parses "->(x : Int32) : Int32 { }", ProcLiteral.new(Def.new("->", [Arg.new("x", restriction: "Int32".path)], return_type: "Int32".path))
+
+    assert_syntax_error "-> :Int32 { }", "a space is mandatory between ':' and return type"
+    assert_syntax_error "->() :Int32 { }", "a space is mandatory between ':' and return type"
+
     %w(foo foo= foo? foo!).each do |method|
       it_parses "->#{method}", ProcPointer.new(nil, method)
       it_parses "foo = 1; ->foo.#{method}", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, method)]
