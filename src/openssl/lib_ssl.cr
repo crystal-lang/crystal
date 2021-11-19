@@ -20,8 +20,8 @@ require "./lib_crypto"
       {% ssl_version ||= "0.0.0" %}
     {% else %}
       {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
-                        (`test -f $(pkg-config --silence-errors --variable=includedir libssl)/openssl/opensslv.h || printf %s false` != "false") &&
-                        (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libssl || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
+                         (`test -f $(pkg-config --silence-errors --variable=includedir libssl)/openssl/opensslv.h || printf %s false` != "false") &&
+                         (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libssl || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
       {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
     {% end %}
 
@@ -39,7 +39,7 @@ require "./lib_crypto"
   @[Link("ssl")]
   @[Link("crypto")]
   @[Link("crypt32")] # CertOpenStore, ...
-  @[Link("user32")] # GetProcessWindowStation, GetUserObjectInformationW, _MessageBoxW
+  @[Link("user32")]  # GetProcessWindowStation, GetUserObjectInformationW, _MessageBoxW
 {% else %}
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
 {% end %}
