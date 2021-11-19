@@ -1,6 +1,6 @@
 require "c/stdlib"
 require "c/string"
-{% unless flag?(:win32) %}
+{% unless flag?(:without_iconv) %}
   require "crystal/iconv"
 {% end %}
 
