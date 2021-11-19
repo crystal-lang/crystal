@@ -1798,9 +1798,7 @@ module Crystal
         end
       end
 
-      if num_size > 64
-        raise_value_doesnt_fit_in "UInt64", string_range_from_pool(start), start
-      end
+      num = nil if num_size > 64
       finish_scan_prefixed_number num, negative, start
     end
 
@@ -1827,9 +1825,7 @@ module Crystal
       end
 
       # 0o177777_77777777_77777777 is the largest UInt64.
-      if num_size > 22 # or > 21 with first digit being 2 through 9
-        raise_value_doesnt_fit_in "UInt64", string_range_from_pool(start), start
-      end
+      num = nil if num_size > 22 # or > 21 with first digit being 2 through 9
       finish_scan_prefixed_number num, negative, start
     end
 
@@ -1855,13 +1851,32 @@ module Crystal
       end
 
       # 0xFFFF_FFFF_FFFF_FFFF is the longest UInt64.
-      if num_size > 16
-        raise_value_doesnt_fit_in "UInt64", string_range_from_pool(start), start
-      end
+      num = nil if num_size > 16
       finish_scan_prefixed_number num, negative, start
     end
 
-    def finish_scan_prefixed_number(num, negative, start)
+    def finish_scan_prefixed_number(num : Int?, negative : Bool, start : Int32)
+      if num.nil? # Doesn't even fit in UInt64
+        string_value = string_range_from_pool(start).gsub("_", "")
+        case current_char
+        when 'i'
+          consume_int_suffix
+        when 'u'
+          consume_uint_suffix
+        else
+          @token.number_kind = :u64
+        end
+        case @token.number_kind
+        when :i8, :i16, :i32, :i64, :i128
+          type_name = "Int" + @token.number_kind.to_s[1..]
+        when :u8, :u16, :u32, :u64, :u128
+          type_name = "UInt" + @token.number_kind.to_s[1..]
+        else
+          raise "BUG: Expecting an integer token, got #{@token.number_kind}"
+        end
+        raise_value_doesnt_fit_in type_name, string_value, start
+      end
+
       if negative
         string_value = (num.to_i64 * -1).to_s
       else
