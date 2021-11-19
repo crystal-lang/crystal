@@ -82,6 +82,22 @@ describe "Char" do
     it { ' '.ascii_letter?.should be_false }
   end
 
+  it "#letter?" do
+    'A'.letter?.should be_true # Unicode General Category Lu
+    'a'.letter?.should be_true # Unicode General Category Ll
+    'ǅ'.letter?.should be_true # Unicode General Category Lt
+    'ʰ'.letter?.should be_true # Unicode General Category Lm
+    'か'.letter?.should be_true # Unicode General Category Lo
+
+    'ः'.letter?.should be_false  # Unicode General Category M
+    '1'.letter?.should be_false  # Unicode General Category Nd
+    'Ⅰ'.letter?.should be_false  # Unicode General Category Nl
+    '_'.letter?.should be_false  # Unicode General Category P
+    '$'.letter?.should be_false  # Unicode General Category S
+    ' '.letter?.should be_false  # Unicode General Category Z
+    '\n'.letter?.should be_false # Unicode General Category C
+  end
+
   describe "alphanumeric?" do
     it { 'a'.alphanumeric?.should be_true }
     it { 'A'.alphanumeric?.should be_true }
