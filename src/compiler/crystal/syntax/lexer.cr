@@ -1811,7 +1811,7 @@ module Crystal
         char = next_char
         if '0' <= char <= '7'
           num = (num << 3) | (char - '0')
-          # First digit, if it's 2 through 9, adds a fake increment to the size.
+          # First digit, if it's 2 through 7, adds a fake increment to the size.
           if num_size == 0 && char > '1'
             num_size += 1
           end
@@ -1825,7 +1825,7 @@ module Crystal
       end
 
       # 0o177777_77777777_77777777 is the largest UInt64.
-      num = nil if num_size > 22 # or > 21 with first digit being 2 through 9
+      num = nil if num_size > 22 # or > 21 with first digit being 2 through 7
       finish_scan_prefixed_number num, negative, start
     end
 
