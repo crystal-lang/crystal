@@ -824,11 +824,13 @@ class Crystal::Doc::Type
           end
         end
       end
-      builder.field "including_types" do
-        builder.array do
-          including_types.each &.to_json_simple(builder)
+      unless including_types.empty?
+        builder.field "including_types" do
+          builder.array do
+            including_types.each &.to_json_simple(builder)
+          end
         end
-      end unless including_types.empty?
+      end
       builder.field "namespace" { namespace.try &.to_json_simple(builder) } unless namespace.nil?
       builder.field "doc", doc unless doc.nil?
       builder.field "summary", formatted_summary unless formatted_summary.nil?
