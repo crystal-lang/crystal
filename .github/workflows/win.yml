@@ -151,7 +151,6 @@ jobs:
           path: |
             libs/crypto.lib
             libs/ssl.lib
-            libs/openssl_VERSION
           key: win-openssl-libs-3.0.0
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
@@ -176,7 +175,9 @@ jobs:
         run: |
           cp openssl/libcrypto.lib libs/crypto.lib
           cp openssl/libssl.lib libs/ssl.lib
-          [IO.File]::WriteAllLines("libs/openssl_VERSION", "3.0.0")
+      - name: Set OpenSSL version
+        run: |
+          echo "CRYSTAL_OPENSSL_VERSION=3.0.0" >> ${env:GITHUB_ENV}
 
       - name: Cache LLVM
         id: cache-llvm

@@ -2,16 +2,8 @@
   lib LibCrypto
     {% if flag?(:win32) %}
       {% from_libressl = false %}
-      {% ssl_version = nil %}
-      {% for dir in Crystal::LIBRARY_PATH.split(';') %}
-        {% unless ssl_version %}
-          {% config_path = "#{dir.id}\\openssl_VERSION" %}
-          {% if config_version = read_file?(config_path) %}
-            {% ssl_version = config_version.chomp %}
-          {% end %}
-        {% end %}
-      {% end %}
-      {% ssl_version ||= "0.0.0" %}
+      {% ssl_version = env("CRYSTAL_OPENSSL_VERSION") %}
+      {% raise "Cannot determine OpenSSL version, make sure the environment variable `CRYSTAL_OPENSSL_VERSION` is set" unless ssl_version %}
     {% else %}
       {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
                          (`test -f $(pkg-config --silence-errors --variable=includedir libcrypto)/openssl/opensslv.h || printf %s false` != "false") &&
