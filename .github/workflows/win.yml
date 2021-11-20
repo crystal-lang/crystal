@@ -154,7 +154,7 @@ jobs:
           key: win-openssl-libs-3.0.0
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
-        uses: ilammy/setup-nasm@v1.2.1
+        uses: ilammy/setup-nasm@e2335e5fc95548c09cd2deea2768793e0e8f0941 # v1.2.1
       - name: Download OpenSSL
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         run: |
