@@ -1806,16 +1806,15 @@ module Crystal
       next_char
 
       num = 0_u64
-      num_size = 0
+      num_size = first_digit = 0
       while true
         char = next_char
         if '0' <= char <= '7'
           num = (num << 3) | (char - '0')
-          # First digit, if it's 2 through 7, adds a fake increment to the size.
-          if num_size == 0 && char > '1'
-            num_size += 1
-          end
-          if num_size > 0 || char != '0'
+          if num_size == 0
+            first_digit = num
+            num_size += 1 if char != '0'
+          else
             num_size += 1
           end
         elsif char == '_'
@@ -1825,7 +1824,7 @@ module Crystal
       end
 
       # 0o177777_77777777_77777777 is the largest UInt64.
-      num = nil if num_size > 22 # or > 21 with first digit being 2 through 7
+      num = nil if {num_size, first_digit} > {22, 0o1}
       finish_scan_prefixed_number num, negative, start
     end
 
