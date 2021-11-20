@@ -1857,7 +1857,6 @@ module Crystal
 
     def finish_scan_prefixed_number(num : Int?, negative : Bool, start : Int32)
       if num.nil? # Doesn't even fit in UInt64
-        string_value = string_range_from_pool(start).gsub("_", "")
         case current_char
         when 'i'
           consume_int_suffix
@@ -1874,7 +1873,7 @@ module Crystal
         else
           raise "BUG: Expecting an integer token, got #{@token.number_kind}"
         end
-        raise_value_doesnt_fit_in type_name, string_value, start
+        raise_value_doesnt_fit_in type_name, string_range_from_pool(start), start
       end
 
       if negative
