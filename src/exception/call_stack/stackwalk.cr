@@ -24,9 +24,9 @@ struct Exception::CallStack
     # `at_exit` because unhandled exceptions in `main_user_code` are printed
     # after those handlers)
     if LibC.SymInitializeW(LibC.GetCurrentProcess, nil, 1) == 0
-      raise RuntimeError.from_errno("SymInitializeW")
+      raise RuntimeError.from_winerror("SymInitializeW")
     end
-    LibC.SymSetOptions(LibC.SymGetOptions | LibC::SYMOPT_LOAD_LINES | LibC::SYMOPT_FAIL_CRITICAL_ERRORS | LibC::SYMOPT_NO_PROMPTS)
+    LibC.SymSetOptions(LibC.SymGetOptions | LibC::SYMOPT_UNDNAME | LibC::SYMOPT_LOAD_LINES | LibC::SYMOPT_FAIL_CRITICAL_ERRORS | LibC::SYMOPT_NO_PROMPTS)
   end
 
   def self.unwind
@@ -82,8 +82,7 @@ struct Exception::CallStack
     line_info = uninitialized LibC::IMAGEHLP_LINEW64
     line_info.sizeOfStruct = sizeof(LibC::IMAGEHLP_LINEW64)
 
-    displacement = uninitialized LibC::DWORD
-    if LibC.SymGetLineFromAddrW64(LibC.GetCurrentProcess, pc, pointerof(displacement), pointerof(line_info)) != 0
+    if LibC.SymGetLineFromAddrW64(LibC.GetCurrentProcess, pc, out displacement, pointerof(line_info)) != 0
       file_name = String.from_utf16(line_info.fileName)[0]
       line_number = line_info.lineNumber
     else
@@ -116,8 +115,7 @@ struct Exception::CallStack
 
     sym_displacement = LibC::DWORD64.zero
     if LibC.SymFromAddrW(LibC.GetCurrentProcess, pc, pointerof(sym_displacement), symbol) != 0
-      String.from_utf16(symbol.value.name.to_unsafe)[0]
-      # UnDecorateSymbolNameW
+      String.from_utf16(symbol.value.name.to_unsafe.to_slice(symbol.value.nameLen))
     end
   end
 
