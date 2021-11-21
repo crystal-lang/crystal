@@ -15,7 +15,7 @@ private module HexFloatConverter(F, U)
   # Converts `str`, a hexadecimal floating-point literal, to an `F`. Truncates
   # all unused bits in the mantissa.
   def self.to_f(str : String) : F
-    m = str.match(/^(-?)0x([0-9A-Fa-f]+)(?:\.([0-9A-Fa-f]+))?p([+-]?)([0-9]+)#{ "_?f32" if F == Float32 }$/).not_nil!
+    m = str.match(/^(-?)0x([0-9A-Fa-f]+)(?:\.([0-9A-Fa-f]+))?p([+-]?)([0-9]+)#{"_?f32" if F == Float32}$/).not_nil!
 
     total_bits = F == Float32 ? 32 : 64
     mantissa_bits = F::MANT_DIGITS - 1
