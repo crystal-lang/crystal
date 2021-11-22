@@ -156,6 +156,36 @@ module Crystal
     it_parses "a = 1", Assign.new("a".var, 1.int32)
     it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int32))
 
+    describe "identifiers" do
+      it_parses "_a = 1", Assign.new("_a".var, 1.int32)
+      it_parses "ä = 1", Assign.new("ä".var, 1.int32)
+      it_parses "ä = 1", Assign.new("ä".var, 1.int32)
+      it_parses "a\u0300 = 1", Assign.new("a\u0300".var, 1.int32) # Mn
+      it_parses "a\u0903 = 1", Assign.new("aः".var, 1.int32) # Mc
+      it_parses "a\u0660 = 1", Assign.new("a٠".var, 1.int32) # Nd
+      it_parses "a\uFF3F = 1", Assign.new("a＿".var, 1.int32) # Pc
+      it_parses "\u2167 = 1", Assign.new("Ⅷ".var, 1.int32) # Nl
+      it_parses "a\u2167 = 1", Assign.new("aⅧ".var, 1.int32) # Nl
+
+      assert_syntax_error "\u200B = 1", "unknown token: '\\u200B'"
+      assert_syntax_error "ident\u200B = 1", "unknown token: '\\u200B'"
+      assert_syntax_error ":\u200B", %(unexpected token: ":")
+      assert_syntax_error ":ident\u200B", "unknown token: '\\u200B'"
+    end
+
+    # check control characters: They're allowed inside literals, but not in identifiers.
+    ['\u200B', '\u202A', '\u202B', '\u202C', '\u202D', '\u202E', '\u2066', '\u2067', '\u2068', '\u2069'].each do |char|
+      it_parses %('#{char}'), CharLiteral.new(char)
+      assert_syntax_error %(ident#{char}), "unknown token: #{char.inspect}"
+      it_parses %("#{char}"), StringLiteral.new("#{char}")
+      it_parses %(%w(#{char})), ArrayLiteral.new([StringLiteral.new "#{char}"] of ASTNode, of: Path.new("String", global: true))
+      assert_syntax_error %(:#{char}), %(unexpected token: ":")
+      it_parses %(:"#{char}"), SymbolLiteral.new "#{char}"
+      it_parses %(%i(#{char})), ArrayLiteral.new([SymbolLiteral.new "#{char}"] of ASTNode, of: Path.new("Symbol", global: true))
+      it_parses %(##{char}), Nop.new
+      it_parses %(macro foo\n##{char}\nend), Macro.new("foo", body: MacroLiteral.new("##{char}\n"))
+    end
+
     it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32] of ASTNode)
     it_parses "_, _ = 1, 2", MultiAssign.new([Underscore.new, Underscore.new] of ASTNode, [1.int32, 2.int32] of ASTNode)

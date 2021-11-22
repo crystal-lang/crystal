@@ -3178,11 +3178,14 @@ module Crystal
     end
 
     def self.ident_start?(char)
-      char.ascii_letter? || char == '_' || char.ord > 0x9F
+      char.letter? || char == '_' || Unicode.number_letter?(char)
     end
 
     def self.ident_part?(char)
-      ident_start?(char) || char.ascii_number?
+      ident_start?(char) ||
+        Unicode.mark_nonspacing?(char) || Unicode.mark_spacing_combining?(char) ||
+        Unicode.number_digit?(char) ||
+        Unicode.punctuation_connector?(char)
     end
 
     def self.ident?(name)
