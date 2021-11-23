@@ -2029,6 +2029,18 @@ class Array(T)
     @capacity - @offset_to_buffer
   end
 
+  # Resizes the internal buffer to hold `capacity - @offset_to_buffer` items.
+  # This method is intended for expert users that needs to manually grow or
+  # shrink arrays.
+  def resize(capacity) : self
+    if capacity - @offset_to_buffer >= @size
+      resize_to_capacity capacity
+    else
+      raise ArgumentError.new("Insufficient capacity: #{capacity} cannot hold #{@size} elements with an offset of #{@offset_to_buffer}")
+    end
+    self
+  end
+
   private def double_capacity
     resize_to_capacity(@capacity == 0 ? 3 : (@capacity * 2))
   end

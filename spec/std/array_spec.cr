@@ -2041,4 +2041,18 @@ describe "Array" do
       ary.skip(-1)
     end
   end
+
+  it "#resize" do
+    ary = [1, 2, 3]
+    ary.resize(3).should eq([1, 2, 3])
+    ary.resize(4).should eq([1, 2, 3])
+    ary.remaining_capacity.should eq(4)
+    ary.shift
+    ary.resize(3).should eq([2, 3])
+    ary.remaining_capacity.should eq(2)
+
+    expect_raises(ArgumentError, "Insufficient capacity: 2 cannot hold 2 elements with an offset of 1") do
+      ary.resize(2)
+    end
+  end
 end
