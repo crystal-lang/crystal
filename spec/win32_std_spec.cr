@@ -49,11 +49,11 @@ require "./std/csv/csv_spec.cr"
 require "./std/deque_spec.cr"
 require "./std/digest/adler32_spec.cr"
 require "./std/digest/crc32_spec.cr"
-# require "./std/digest/io_digest_spec.cr" (failed codegen)
-# require "./std/digest/md5_spec.cr" (failed codegen)
-# require "./std/digest/sha1_spec.cr" (failed codegen)
-# require "./std/digest/sha256_spec.cr" (failed codegen)
-# require "./std/digest/sha512_spec.cr" (failed codegen)
+require "./std/digest/io_digest_spec.cr"
+require "./std/digest/md5_spec.cr"
+require "./std/digest/sha1_spec.cr"
+require "./std/digest/sha256_spec.cr"
+require "./std/digest/sha512_spec.cr"
 require "./std/dir_spec.cr"
 require "./std/double_spec.cr"
 require "./std/ecr/ecr_lexer_spec.cr"
@@ -150,26 +150,26 @@ require "./std/mime_spec.cr"
 # require "./std/mutex_spec.cr" (failed codegen)
 require "./std/named_tuple_spec.cr"
 require "./std/number_spec.cr"
-# require "./std/oauth/access_token_spec.cr" (failed codegen)
-# require "./std/oauth/authorization_header_spec.cr" (failed codegen)
-# require "./std/oauth/consumer_spec.cr" (failed codegen)
-# require "./std/oauth/params_spec.cr" (failed codegen)
-# require "./std/oauth/request_token_spec.cr" (failed codegen)
-# require "./std/oauth/signature_spec.cr" (failed codegen)
-# require "./std/oauth2/access_token_spec.cr" (failed codegen)
+require "./std/oauth/access_token_spec.cr"
+require "./std/oauth/authorization_header_spec.cr"
+require "./std/oauth/consumer_spec.cr"
+require "./std/oauth/params_spec.cr"
+require "./std/oauth/request_token_spec.cr"
+require "./std/oauth/signature_spec.cr"
+require "./std/oauth2/access_token_spec.cr"
 # require "./std/oauth2/client_spec.cr" (failed codegen)
 # require "./std/oauth2/session_spec.cr" (failed codegen)
 require "./std/object_spec.cr"
-# require "./std/openssl/cipher_spec.cr" (failed codegen)
-# require "./std/openssl/digest_spec.cr" (failed codegen)
-# require "./std/openssl/hmac_spec.cr" (failed codegen)
-# require "./std/openssl/pkcs5_spec.cr" (failed codegen)
-# require "./std/openssl/ssl/context_spec.cr" (failed codegen)
-# require "./std/openssl/ssl/hostname_validation_spec.cr" (failed codegen)
+require "./std/openssl/cipher_spec.cr"
+require "./std/openssl/digest_spec.cr"
+require "./std/openssl/hmac_spec.cr"
+require "./std/openssl/pkcs5_spec.cr"
+require "./std/openssl/ssl/context_spec.cr"
+require "./std/openssl/ssl/hostname_validation_spec.cr"
 # require "./std/openssl/ssl/server_spec.cr" (failed codegen)
 # require "./std/openssl/ssl/socket_spec.cr" (failed codegen)
-# require "./std/openssl/x509/certificate_spec.cr" (failed codegen)
-# require "./std/openssl/x509/name_spec.cr" (failed codegen)
+require "./std/openssl/x509/certificate_spec.cr"
+require "./std/openssl/x509/name_spec.cr"
 require "./std/option_parser_spec.cr"
 require "./std/overflow_spec.cr"
 require "./std/path_spec.cr"
