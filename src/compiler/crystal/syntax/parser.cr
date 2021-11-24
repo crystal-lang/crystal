@@ -1331,7 +1331,7 @@ module Crystal
       slash_is_regex!
       next_token_skip_statement_end
       exps = parse_expressions
-      node, end_location = parse_exception_handler exps
+      node, end_location = parse_exception_handler exps, begin_location: begin_location
       node.end_location = end_location
       if !node.is_a?(ExceptionHandler) && (!node.is_a?(Expressions) || node.keyword)
         node = Expressions.new([node]).at(begin_location).at_end(end_location)
@@ -1340,11 +1340,11 @@ module Crystal
       node
     end
 
-    def parse_exception_handler(exp, implicit = false)
+    def parse_exception_handler(exp, implicit = false, begin_location = nil)
       rescues = nil
       a_else = nil
       a_ensure = nil
-      begin_location = exp.location
+      begin_location ||= exp.location
 
       if @token.keyword?(:rescue)
         rescues = [] of Rescue
@@ -1373,6 +1373,7 @@ module Crystal
           raise "'else' is useless without 'rescue'", @token, 4
         end
 
+        else_location = @token.location
         begin_location ||= @token.location
         next_token_skip_statement_end
         a_else = parse_expressions
@@ -1380,6 +1381,7 @@ module Crystal
       end
 
       if @token.keyword?(:ensure)
+        ensure_location = @token.location
         begin_location ||= @token.location
         next_token_skip_statement_end
         a_ensure = parse_expressions
@@ -1393,9 +1395,10 @@ module Crystal
       next_token_skip_space
 
       if rescues || a_ensure
-        ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at(exp).at_end(end_location)
-        ex.at(begin_location)
+        ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at(begin_location).at_end(end_location)
         ex.implicit = true if implicit
+        ex.else_location = else_location
+        ex.ensure_location = ensure_location
         {ex, end_location}
       else
         exp

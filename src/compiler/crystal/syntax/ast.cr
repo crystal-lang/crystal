@@ -1616,6 +1616,12 @@ module Crystal
     property implicit = false
     property suffix = false
 
+    # The location of the `else` keyword if present.
+    property else_location : Location?
+
+    # The location of the `ensure` keyword if present.
+    property ensure_location : Location?
+
     def initialize(body = nil, @rescues = nil, @else = nil, @ensure = nil)
       @body = Expressions.from body
     end
