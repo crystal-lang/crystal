@@ -2029,15 +2029,33 @@ class Array(T)
     @capacity - @offset_to_buffer
   end
 
-  # Resizes the internal buffer to hold `capacity - @offset_to_buffer` items.
-  # This method is intended for expert users that needs to manually grow or
-  # shrink arrays.
-  def resize(capacity) : self
+  private def rewind
+    root_buffer.copy_from(@buffer, @size)
+    shift_buffer_by -@offset_to_buffer
+  end
+
+  # Enusures that the internal buffer has at least `capacity` elements. If
+  # `rewind` is truthy, then the internal buffer is rewind first: the
+  # elements are copied to the front of the array.
+  def ensure_capacity(capacity : Int32, rewind = true) : self
+    rewind() if rewind
+
     if capacity - @offset_to_buffer >= @size
       resize_to_capacity capacity
     else
-      raise ArgumentError.new("Insufficient capacity: #{capacity} cannot hold #{@size} elements with an offset of #{@offset_to_buffer}")
+      err = "Insufficient capacity: #{capacity} cannot hold #{@size} elements"
+      err += " with an offset of #{@offset_to_buffer}" if @offset_to_buffer > 0
+      raise ArgumentError.new(err)
     end
+    self
+  end
+
+  # Reduces the internal buffer to exactly fit the number of elements in the
+  # array. If `rewind` is truthy it moves the elements in the internal array to the front.
+  def trim_to_size(rewind = true) : self
+    rewind() if rewind
+
+    resize_to_capacity (@size + @offset_to_buffer)
     self
   end
 

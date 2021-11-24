@@ -2042,17 +2042,76 @@ describe "Array" do
     end
   end
 
-  it "#resize" do
-    ary = [1, 2, 3]
-    ary.resize(3).should eq([1, 2, 3])
-    ary.resize(4).should eq([1, 2, 3])
-    ary.remaining_capacity.should eq(4)
-    ary.shift
-    ary.resize(3).should eq([2, 3])
-    ary.remaining_capacity.should eq(2)
+  describe "#ensure_capacity" do
+    it "does nothing if fits" do
+      ary = [1, 2, 3]
+      capacity1 = ary.remaining_capacity
+      ary.ensure_capacity(3)
+      ary.should eq([1, 2, 3])
+      ary.remaining_capacity.should eq(capacity1)
+    end
 
-    expect_raises(ArgumentError, "Insufficient capacity: 2 cannot hold 2 elements with an offset of 1") do
-      ary.resize(2)
+    it "grows the array if it doesn't fit" do
+      ary = [1, 2, 3]
+      ary.ensure_capacity(4).should eq([1, 2, 3])
+      ary.remaining_capacity.should eq(4)
+    end
+
+    it "rewinds by default the array" do
+      ary = [1, 2, 3]
+      ary.shift
+      ary.ensure_capacity(3).should eq([2, 3])
+      ary.remaining_capacity.should eq(3)
+    end
+
+    it "doesn't rewind when asked not to" do
+      ary = [1, 2, 3]
+      ary.shift
+      ary.ensure_capacity(3, false).should eq([2, 3])
+      ary.remaining_capacity.should eq(2)
+    end
+
+    it "raises if not enough capacity" do
+      expect_raises(ArgumentError, "Insufficient capacity: 2 cannot hold 3 elements") do
+        ary = [1, 2, 3]
+        ary.ensure_capacity(2)
+      end
+    end
+
+    it "raises if not enough capacity considering the offset" do
+      expect_raises(ArgumentError, "Insufficient capacity: 2 cannot hold 2 elements with an offset of 1") do
+        ary = [1, 2, 3]
+        ary.shift
+        ary.ensure_capacity(2, false)
+      end
+    end
+  end
+
+  describe "trim_to_size" do
+    it "trims" do
+      a = Array(Int32).new(10)
+      a << 1 << 2 << 3
+      a.trim_to_size.should eq([1, 2, 3])
+      a.remaining_capacity.should eq(3)
+    end
+
+    it "rewinding" do
+      a = Array(Int32).new(10)
+      a << 1 << 2 << 3
+      a.shift
+      a.trim_to_size.should eq([2, 3])
+      a.remaining_capacity.should eq(2)
+    end
+
+    it "not rewinding" do
+      a = Array(Int32).new(10)
+      a << 1 << 2 << 3
+      a.shift
+      a.trim_to_size(false).should eq([2, 3])
+      p1 = a.to_unsafe
+      a.remaining_capacity.should eq(2)
+      a.unshift 1
+      a.to_unsafe.should eq(p1 - 1)
     end
   end
 end
