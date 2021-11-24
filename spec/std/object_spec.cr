@@ -519,4 +519,24 @@ describe Object do
       (x == y).should be_false
     end
   end
+
+  describe "#tap" do
+    it "yields self" do
+      "foo".tap { |v| v.should be("foo") }
+    end
+
+    it "always returns self" do
+      "foo".tap { "bar" }.should be("foo")
+    end
+  end
+
+  describe "#then" do
+    it "yields self" do
+      "foo".then { |v| v.should be("foo") }
+    end
+
+    it "returns yielded block" do
+      "foo".then { "bar" }.should be("bar")
+    end
+  end
 end

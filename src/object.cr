@@ -188,6 +188,36 @@ class Object
     self
   end
 
+  # Yields `self` to the block and returns the result of the block.
+  # It’s akin to the pipe operator known from F# and Elixir.
+  #
+  # ```
+  # # Pretty typical code that reads `data.csv` file, parses it and sums one of the columns.
+  #
+  # CSV.parse(File.read(File.expand_path("data.csv"), __DIR__))
+  #   .map { |row| row[1].to_i }
+  #   .sum
+  #
+  # # Such a code usually takes a few secs to understand.
+  # # Mainly because we read it left-to-right but it runs right-to-left.
+  #
+  # # The same code rewritten using `then`:
+  #
+  # "data.csv"
+  #   .then { |name| File.expand_path(name, __DIR__) }
+  #   .then { |path| File.read(path) }
+  #   .then { |body| CSV.parse(body) }
+  #   .map { |row| row[1].to_i }
+  #   .sum
+  #
+  # # We can name some benefits:
+  # # - There’s a clear flow, from top to the bottom
+  # # - The code is open for additions. Adding more steps to the flow shouldn’t hurt the readability.
+  # ```
+  def then
+    yield self
+  end
+
   # Yields `self`. `Nil` overrides this method and doesn't yield.
   #
   # This method is useful for dealing with nilable types, to safely
