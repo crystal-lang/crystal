@@ -345,6 +345,7 @@ module Crystal
     def parse_op_assign(allow_ops = true, allow_suffix = true)
       doc = @token.doc
       location = @token.location
+      start_token = @token
 
       atomic = parse_question_colon
 
@@ -378,7 +379,7 @@ module Crystal
             end
 
             if atomic.is_a?(Call) && (atomic.name.ends_with?('?') || atomic.name.ends_with?('!'))
-              raise %(unexpected token: "="), location
+              unexpected_token token: start_token
             end
 
             atomic = Var.new(atomic.name).at(atomic) if atomic.is_a?(Call)
@@ -3934,14 +3935,14 @@ module Crystal
       else
         if external_name
           if found_string_literal
-            raise "unexpected token: #{@token.inspect}, expected parameter internal name"
+            unexpected_token "expected parameter internal name"
           end
           if invalid_internal_name
             raise "cannot use '#{invalid_internal_name}' as a parameter name", invalid_internal_name
           end
           arg_name = external_name
         else
-          raise "unexpected token: #{@token.inspect}"
+          unexpected_token
         end
       end
 
