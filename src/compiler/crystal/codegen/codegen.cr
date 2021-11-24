@@ -28,6 +28,8 @@ module Crystal
 
     def evaluate(node, debug = Debug::Default)
       llvm_mod = codegen(node, single_module: true, debug: debug)[""].mod
+      llvm_mod.target = target_machine.triple
+
       main = llvm_mod.functions[MAIN_NAME]
 
       main_return_type = main.return_type

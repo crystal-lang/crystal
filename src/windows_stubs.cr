@@ -1,11 +1,5 @@
 require "c/synchapi"
 
-struct Exception::CallStack
-  def self.skip(*args)
-    # do nothing
-  end
-end
-
 abstract class IO
   private class Encoder
     def initialize(@encoding_options : EncodingOptions)

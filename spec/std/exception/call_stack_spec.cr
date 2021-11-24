@@ -1,7 +1,7 @@
 require "../spec_helper"
 
 describe "Backtrace" do
-  pending_win32 "prints file line:column" do
+  it "prints file line:column" do
     source_file = datapath("backtrace_sample")
 
     # CallStack tries to make files relative to the current dir,
@@ -12,9 +12,15 @@ describe "Backtrace" do
 
     _, output, _ = compile_and_run_file(source_file)
 
-    # resolved file line:column
-    output.should match(/^#{source_file}:3:10 in 'callee1'/m)
-    output.should match(/^#{source_file}:13:5 in 'callee3'/m)
+    # resolved file:line:column (no column for windows PDB because of poor
+    # support in general)
+    {% if flag?(:win32) %}
+      output.should match(/^#{Regex.escape(source_file)}:3 in 'callee1'/m)
+      output.should match(/^#{Regex.escape(source_file)}:13 in 'callee3'/m)
+    {% else %}
+      output.should match(/^#{Regex.escape(source_file)}:3:10 in 'callee1'/m)
+      output.should match(/^#{Regex.escape(source_file)}:13:5 in 'callee3'/m)
+    {% end %}
 
     # skipped internal details
     output.should_not contain("src/callstack.cr")
@@ -22,7 +28,7 @@ describe "Backtrace" do
     output.should_not contain("src/raise.cr")
   end
 
-  pending_win32 "doesn't relativize paths outside of current dir (#10169)" do
+  it "doesn't relativize paths outside of current dir (#10169)" do
     with_tempfile("source_file") do |source_file|
       source_path = Path.new(source_file)
       source_path.absolute?.should be_true
@@ -36,7 +42,7 @@ describe "Backtrace" do
         EOF
       _, output, _ = compile_and_run_file(source_file)
 
-      output.should match /\A(#{source_path}):/
+      output.should match /\A(#{Regex.escape(source_path.to_s)}):/
     end
   end
 
