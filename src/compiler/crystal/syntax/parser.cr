@@ -898,7 +898,7 @@ module Crystal
         name = parse_responds_to_name
         next_token_skip_space
       else
-        unexpected_token msg: "expected space or '('"
+        unexpected_token "expected space or '('"
       end
 
       RespondsTo.new(atomic, name)
@@ -906,7 +906,7 @@ module Crystal
 
     def parse_responds_to_name
       if @token.type != :SYMBOL
-        unexpected_token msg: "expected symbol"
+        unexpected_token "expected symbol"
       end
 
       @token.value.to_s
@@ -1786,7 +1786,7 @@ module Crystal
         end
       end
 
-      unexpected_token "(" if @token.type == :"("
+      unexpected_token if @token.type == :"("
 
       node = Expressions.new(exps)
       node.keyword = :"("
@@ -2739,10 +2739,10 @@ module Crystal
             next_token
             break
           else
-            unexpected_token @token.to_s, "expecting when, else or end"
+            unexpected_token "expecting when, else or end"
           end
         else
-          unexpected_token @token.to_s, "expecting when, else or end"
+          unexpected_token "expecting when, else or end"
         end
       end
 
@@ -2820,7 +2820,7 @@ module Crystal
           skip_statement_end
           return true
         else
-          unexpected_token @token.to_s, "expecting ',', ';' or '\n'"
+          unexpected_token "expecting ',', ';' or '\n'"
         end
       end
       false
@@ -2876,7 +2876,7 @@ module Crystal
 
             skip_space
             unless when_expression_end
-              unexpected_token @token.to_s, "expecting then, ';' or newline"
+              unexpected_token "expecting then, ';' or newline"
             end
             skip_statement_end
 
@@ -2886,7 +2886,7 @@ module Crystal
             whens << Select::When.new(condition, body)
           when :else
             if whens.size == 0
-              unexpected_token @token.to_s, "expecting when"
+              unexpected_token "expecting when"
             end
             slash_is_regex!
             next_token_skip_statement_end
@@ -2897,15 +2897,15 @@ module Crystal
             break
           when :end
             if whens.empty?
-              unexpected_token @token.to_s, "expecting when, else or end"
+              unexpected_token "expecting when, else or end"
             end
             next_token
             break
           else
-            unexpected_token @token.to_s, "expecting when, else or end"
+            unexpected_token "expecting when, else or end"
           end
         else
-          unexpected_token @token.to_s, "expecting when, else or end"
+          unexpected_token "expecting when, else or end"
         end
       end
 
@@ -3070,9 +3070,9 @@ module Crystal
           next_token
         when :IDENT, :"*"
           if @token.keyword?(:end)
-            unexpected_token @token.to_s, "expected ';' or newline"
+            unexpected_token "expected ';' or newline"
           else
-            unexpected_token @token.to_s, "parentheses are mandatory for macro parameters"
+            unexpected_token "parentheses are mandatory for macro parameters"
           end
         when :";", :"NEWLINE"
           # Skip
@@ -3182,7 +3182,7 @@ module Crystal
         when :"}"
           break
         else
-          unexpected_token msg: %(expecting "," or "}")
+          unexpected_token %(expecting "," or "}")
         end
       end
       exps
@@ -3264,7 +3264,7 @@ module Crystal
                   when :IDENT
                     @token.value.to_s
                   else
-                    unexpected_token msg: "expecting ident or underscore"
+                    unexpected_token "expecting ident or underscore"
                   end
             vars << Var.new(var).at(@token.location)
 
@@ -3561,16 +3561,16 @@ module Crystal
         end
       when :IDENT, :INSTANCE_VAR, :CLASS_VAR, :"*", :"**"
         if @token.keyword?(:end)
-          unexpected_token @token.to_s, %(expected ";" or newline)
+          unexpected_token %(expected ";" or newline)
         else
-          unexpected_token @token.to_s, "parentheses are mandatory for def parameters"
+          unexpected_token "parentheses are mandatory for def parameters"
         end
       when :";", :"NEWLINE"
         # Skip
       when :":"
         # Skip
       when :"&"
-        unexpected_token @token.to_s, "parentheses are mandatory for def parameters"
+        unexpected_token "parentheses are mandatory for def parameters"
       when :SYMBOL
         raise "a space is mandatory between ':' and return type", @token
       else
@@ -6105,19 +6105,12 @@ module Crystal
       @token.value.to_s
     end
 
-    def unexpected_token(token : String, msg = nil)
+    def unexpected_token(msg : String? = nil, token : Token = @token)
+      token_str = token.type == :EOF ? "EOF" : token.to_s.inspect
       if msg
-        raise "unexpected token: #{token.inspect} (#{msg})", @token
+        raise "unexpected token: #{token_str} (#{msg})", @token
       else
-        raise "unexpected token: #{token.inspect}", @token
-      end
-    end
-
-    def unexpected_token(*, msg = nil)
-      if msg
-        raise "unexpected token: #{@token.type == :EOF ? "EOF" : token.to_s.inspect} (#{msg})", @token
-      else
-        raise "unexpected token: #{@token.type == :EOF ? "EOF" : token.to_s.inspect}", @token
+        raise "unexpected token: #{token_str}", @token
       end
     end
 
