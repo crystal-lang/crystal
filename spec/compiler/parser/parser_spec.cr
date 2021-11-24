@@ -184,8 +184,8 @@ module Crystal
 
     it_parses "あ.い, う.え.お = 1, 2", MultiAssign.new([Call.new("あ".call, "い"), Call.new(Call.new("う".call, "え"), "お")] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
-    assert_syntax_error "b? = 1", "unexpected token: '='"
-    assert_syntax_error "b! = 1", "unexpected token: '='"
+    assert_syntax_error "b? = 1", %(unexpected token: "=")
+    assert_syntax_error "b! = 1", %(unexpected token: "=")
     assert_syntax_error "a, B = 1, 2", "can't assign to constant in multiple assignment"
 
     assert_syntax_error "1 == 2, a = 4"
@@ -1805,8 +1805,8 @@ module Crystal
     assert_syntax_error "/foo)/", "invalid regex"
     assert_syntax_error "def =\nend"
     assert_syntax_error "def foo; A = 1; end", "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
-    assert_syntax_error "{1, ->{ |x| x } }", "unexpected token: '|'"
-    assert_syntax_error "{1, ->do\n|x| x\end }", "unexpected token: '|'"
+    assert_syntax_error "{1, ->{ |x| x } }", %(unexpected token: "|")
+    assert_syntax_error "{1, ->do\n|x| x\end }", %(unexpected token: "|")
 
     assert_syntax_error "1 while 3", "trailing `while` is not supported"
     assert_syntax_error "1 until 3", "trailing `until` is not supported"
@@ -1825,7 +1825,7 @@ module Crystal
     assert_syntax_error "def foo(x: Int32); end", "space required before colon in type restriction"
     assert_syntax_error "def foo(x :Int32); end", "space required after colon in type restriction"
 
-    assert_syntax_error "def f end", %(unexpected token: "end" (expected ';' or newline))
+    assert_syntax_error "def f end", %(unexpected token: "end" (expected ";" or newline))
 
     assert_syntax_error "fun foo\nclass", "can't define class inside fun"
     assert_syntax_error "fun foo\nFoo = 1", "dynamic constant assignment"

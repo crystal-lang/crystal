@@ -378,7 +378,7 @@ module Crystal
             end
 
             if atomic.is_a?(Call) && (atomic.name.ends_with?('?') || atomic.name.ends_with?('!'))
-              raise "unexpected token: '='", location
+              raise %(unexpected token: "="), location
             end
 
             atomic = Var.new(atomic.name).at(atomic) if atomic.is_a?(Call)
@@ -1865,7 +1865,7 @@ module Crystal
         next_token_skip_space
 
         msg = String.build do |msg|
-          msg << "unexpected token: '|', proc literals specify their parameters like this: ->("
+          msg << %[unexpected token: "|", proc literals specify their parameters like this: ->(]
           if @token.type == :IDENT
             msg << @token.value.to_s << " : Type"
             next_token_skip_space_or_newline
@@ -3182,7 +3182,7 @@ module Crystal
         when :"}"
           break
         else
-          unexpected_token msg: "expecting ',' or '}'"
+          unexpected_token msg: %(expecting "," or "}")
         end
       end
       exps
@@ -3561,7 +3561,7 @@ module Crystal
         end
       when :IDENT, :INSTANCE_VAR, :CLASS_VAR, :"*", :"**"
         if @token.keyword?(:end)
-          unexpected_token @token.to_s, "expected ';' or newline"
+          unexpected_token @token.to_s, %(expected ";" or newline)
         else
           unexpected_token @token.to_s, "parentheses are mandatory for def parameters"
         end
