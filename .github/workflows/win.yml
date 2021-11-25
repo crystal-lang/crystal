@@ -243,7 +243,7 @@ jobs:
           cp bin/crystal.exe crystal/
           cp libs/* crystal/lib/
           cp src/* crystal/src -Recurse
-          rm crystal/share/crystal/src/llvm/ext/llvm_ext.obj
+          rm crystal/src/llvm/ext/llvm_ext.obj
       - name: Upload Crystal binaries
         uses: actions/upload-artifact@v2
         with:
