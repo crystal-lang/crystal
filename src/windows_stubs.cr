@@ -1,11 +1,5 @@
 require "c/synchapi"
 
-struct Exception::CallStack
-  def self.skip(*args)
-    # do nothing
-  end
-end
-
 class Mutex
   enum Protection
     Checked

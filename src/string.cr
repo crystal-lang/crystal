@@ -3024,7 +3024,7 @@ class String
       return ""
     elsif bytesize == 1
       return String.new(times) do |buffer|
-        Intrinsics.memset(buffer.as(Void*), to_unsafe[0], times, false)
+        Slice.new(buffer, times).fill(to_unsafe[0])
         {times, times}
       end
     end
@@ -4220,7 +4220,7 @@ class String
     String.new(new_bytesize) do |buffer|
       if leftpadding > 0
         if count == 1
-          Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, leftpadding.to_u32, false)
+          Slice.new(buffer, leftpadding).fill(char.ord.to_u8)
           buffer += leftpadding
         else
           leftpadding.times do
@@ -4233,7 +4233,7 @@ class String
       buffer += bytesize
       if rightpadding > 0
         if count == 1
-          Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, rightpadding.to_u32, false)
+          Slice.new(buffer, rightpadding).fill(char.ord.to_u8)
         else
           rightpadding.times do
             buffer.copy_from(bytes.to_unsafe, count)

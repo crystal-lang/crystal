@@ -40,7 +40,14 @@ jobs:
         id: cache-libs
         uses: actions/cache@v2
         with:
-          path: libs
+          path: | # openssl and llvm take much longer to build so they are cached separately
+            libs/pcre.lib
+            libs/iconv.lib
+            libs/gc.lib
+            libs/z.lib
+            libs/mpir.lib
+            libs/yaml.lib
+            libs/xml2.lib
           key: win-libs-${{ hashFiles('.github/workflows/win.yml') }}
       - name: Download libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -152,6 +159,41 @@ jobs:
           mv libyaml/Release/yaml.lib libs/
           mv libxml2/Release/libxml2s.lib libs/xml2.lib
 
+      - name: Cache OpenSSL
+        id: cache-openssl
+        uses: actions/cache@v2
+        with:
+          path: |
+            libs/crypto.lib
+            libs/ssl.lib
+          key: win-openssl-libs-3.0.0
+      - name: Set up NASM
+        if: steps.cache-openssl.outputs.cache-hit != 'true'
+        uses: ilammy/setup-nasm@e2335e5fc95548c09cd2deea2768793e0e8f0941 # v1.2.1
+      - name: Download OpenSSL
+        if: steps.cache-openssl.outputs.cache-hit != 'true'
+        run: |
+          iwr https://www.openssl.org/source/openssl-3.0.0.tar.gz -OutFile openssl.tar.gz
+          (Get-FileHash -Algorithm SHA256 .\openssl.tar.gz).hash -eq "59eedfcb46c25214c9bd37ed6078297b4df01d012267fe9e9eee31f61bc70536"
+          7z x openssl.tar.gz
+          7z x openssl.tar
+          del pax_global_header
+          mv openssl-* openssl
+      - name: Build OpenSSL
+        if: steps.cache-openssl.outputs.cache-hit != 'true'
+        working-directory: ./openssl
+        run: |
+          perl Configure VC-WIN64A /MT -static no-tests --with-zlib-lib=..\zlib\Release --with-zlib-include=..\zlib
+          nmake
+      - name: Gather OpenSSL
+        if: steps.cache-openssl.outputs.cache-hit != 'true'
+        run: |
+          cp openssl/libcrypto.lib libs/crypto.lib
+          cp openssl/libssl.lib libs/ssl.lib
+      - name: Set OpenSSL version
+        run: |
+          echo "CRYSTAL_OPENSSL_VERSION=3.0.0" >> ${env:GITHUB_ENV}
+
       - name: Cache LLVM
         id: cache-llvm
         uses: actions/cache@v2
@@ -186,6 +228,7 @@ jobs:
       - name: Set up environment
         run: |
           echo "CRYSTAL_PATH=$(pwd)\src" >> ${env:GITHUB_ENV}
+          echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
           echo "LIB=${env:LIB};$(pwd)\libs" >> ${env:GITHUB_ENV}
           echo "TERM=dumb" >> ${env:GITHUB_ENV}
           echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
@@ -200,7 +243,7 @@ jobs:
           cl /MT /c src\llvm\ext\llvm_ext.cc -I llvm\include /Fosrc\llvm\ext\llvm_ext.obj
       - name: Link Crystal executable
         run: |
-          Invoke-Expression "cl crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib legacy_stdio_definitions.lib /F10000000"
+          Invoke-Expression "cl crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib dbghelp.lib legacy_stdio_definitions.lib /F10000000"
 
       - name: Re-build Crystal
         run: |
@@ -220,7 +263,7 @@ jobs:
 
       - name: Build stdlib specs executable
         run: |
-          bin\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Dwithout_openssl -Di_know_what_im_doing
+          bin\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Di_know_what_im_doing
       - name: Run socket specs
         run: |
           .\std_spec.exe --verbose -e TCPSocket

@@ -239,6 +239,9 @@ struct Char
 
   # Returns `true` if this char is a letter.
   #
+  # All codepoints in the Unicode General Category `L` (Letter) are considered
+  # a letter.
+  #
   # ```
   # 'c'.letter? # => true
   # 'á'.letter? # => true
