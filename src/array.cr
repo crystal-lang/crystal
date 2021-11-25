@@ -2033,14 +2033,12 @@ class Array(T)
   end
 
   private def calculate_new_capacity
-    if @capacity == 0
-      3
+    return 3 if @capacity == 0
+
+    if @capacity < CAPACITY_THRESHOLD
+      @capacity * 2
     else
-      if @capacity < CAPACITY_THRESHOLD
-        @capacity * 2
-      else
-        (@capacity + 3 * CAPACITY_THRESHOLD) // 4
-      end
+      @capacity + (@capacity + 3 * CAPACITY_THRESHOLD) // 4
     end
   end
 
