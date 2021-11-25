@@ -212,9 +212,10 @@ jobs:
 
       - name: Set up environment
         run: |
-          echo "CRYSTAL_PATH=$(pwd)\src" >> ${env:GITHUB_ENV}
+          echo "CRYSTAL_PATH=lib;$(pwd)\src" >> ${env:GITHUB_ENV}
           echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
-          echo "LIB=${env:LIB};$(pwd)\libs" >> ${env:GITHUB_ENV}
+          echo 'CRYSTAL_CONFIG_PATH=$ORIGIN\..\share\crystal\src' >> ${env:GITHUB_ENV}
+          echo 'CRYSTAL_CONFIG_LIBRARY_PATH=$ORIGIN\..\lib\crystal' >> ${env:GITHUB_ENV}
           echo "TERM=dumb" >> ${env:GITHUB_ENV}
           echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
           echo "SOURCE_DATE_EPOCH=$(Get-Date -Millisecond 0 -UFormat %s)" >> ${env:GITHUB_ENV}
@@ -228,7 +229,7 @@ jobs:
           cl /MT /c src\llvm\ext\llvm_ext.cc -I llvm\include /Fosrc\llvm\ext\llvm_ext.obj
       - name: Link Crystal executable
         run: |
-          Invoke-Expression "cl crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib dbghelp.lib legacy_stdio_definitions.lib /F10000000"
+          Invoke-Expression "cl crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib dbghelp.lib legacy_stdio_definitions.lib /link /LIBPATH:$(pwd)\libs /STACK:10000000"
 
       - name: Re-build Crystal
         run: |
@@ -237,9 +238,13 @@ jobs:
 
       - name: Gather Crystal binaries
         run: |
-          mkdir crystal
-          cp bin/crystal.exe crystal/
-          cp libs/* crystal/
+          mkdir crystal/bin
+          mkdir crystal/lib/crystal
+          mkdir crystal/share/crystal/src
+          cp bin/crystal.exe crystal/bin/
+          cp libs/* crystal/lib/crystal/
+          cp src/* crystal/share/crystal/src -Recurse
+          rm crystal/share/crystal/src/llvm/ext/llvm_ext.obj
       - name: Upload Crystal binaries
         uses: actions/upload-artifact@v2
         with:
