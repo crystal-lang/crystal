@@ -93,7 +93,7 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./libiconv
         run: |
-          [IO.File]::WriteAllLines("$pwd\libiconv.vcxproj", (Get-Content "libiconv.vcxproj").Replace("MultiThreadedDLL", "MultiThreaded"))
+          sed -i 's/MultiThreadedDLL/MultiThreaded/' libiconv.vcxproj
           MSBuild.exe /p:Platform=x64 /p:Configuration=ReleaseStatic libiconv.vcxproj
       - name: Download zlib
         if: steps.cache-libs.outputs.cache-hit != 'true'
