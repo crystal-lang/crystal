@@ -2071,19 +2071,10 @@ describe "Array" do
       ary.remaining_capacity.should eq(2)
     end
 
-    it "raises if not enough capacity" do
-      expect_raises(ArgumentError, "Insufficient capacity: 2 cannot hold 3 elements") do
-        ary = [1, 2, 3]
-        ary.ensure_capacity(2)
-      end
-    end
-
-    it "raises if not enough capacity considering the offset" do
-      expect_raises(ArgumentError, "Insufficient capacity: 2 cannot hold 2 elements with an offset of 1") do
-        ary = [1, 2, 3]
-        ary.shift
-        ary.ensure_capacity(2, false)
-      end
+    it "does nothing if not enough capacity" do
+      ary = [1, 2, 3]
+      ary.ensure_capacity(2).should eq([1, 2, 3])
+      ary.remaining_capacity.should eq(3)
     end
   end
 

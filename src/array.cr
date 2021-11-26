@@ -2042,10 +2042,6 @@ class Array(T)
 
     if capacity - @offset_to_buffer >= @size
       resize_to_capacity capacity
-    else
-      err = "Insufficient capacity: #{capacity} cannot hold #{@size} elements"
-      err += " with an offset of #{@offset_to_buffer}" if @offset_to_buffer > 0
-      raise ArgumentError.new(err)
     end
     self
   end
