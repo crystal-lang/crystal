@@ -2604,54 +2604,56 @@ describe "String" do
     end
   end
 
-  pending_win32 describe: "encode" do
-    it "encodes" do
-      bytes = "Hello".encode("UCS-2LE")
-      bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
-    end
+  {% unless flag?(:without_iconv) %}
+    describe "encode" do
+      it "encodes" do
+        bytes = "Hello".encode("UCS-2LE")
+        bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
+      end
 
-    it "raises if wrong encoding" do
-      expect_raises ArgumentError, "Invalid encoding: FOO" do
-        "Hello".encode("FOO")
+      it "raises if wrong encoding" do
+        expect_raises ArgumentError, "Invalid encoding: FOO" do
+          "Hello".encode("FOO")
+        end
+      end
+
+      it "raises if wrong encoding with skip" do
+        expect_raises ArgumentError, "Invalid encoding: FOO" do
+          "Hello".encode("FOO", invalid: :skip)
+        end
+      end
+
+      it "raises if illegal byte sequence" do
+        expect_raises ArgumentError, "Invalid multibyte sequence" do
+          "\xff".encode("EUC-JP")
+        end
+      end
+
+      it "doesn't raise on invalid byte sequence" do
+        "好\xff是".encode("EUC-JP", invalid: :skip).to_a.should eq([185, 165, 192, 167])
+      end
+
+      it "raises if incomplete byte sequence" do
+        expect_raises ArgumentError, "Incomplete multibyte sequence" do
+          "好".byte_slice(0, 1).encode("EUC-JP")
+        end
+      end
+
+      it "doesn't raise if incomplete byte sequence" do
+        ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).to_a.should eq([192, 167])
+      end
+
+      it "decodes" do
+        bytes = "Hello".encode("UTF-16LE")
+        String.new(bytes, "UTF-16LE").should eq("Hello")
+      end
+
+      it "decodes with skip" do
+        bytes = Bytes[186, 195, 255, 202, 199]
+        String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
       end
     end
-
-    it "raises if wrong encoding with skip" do
-      expect_raises ArgumentError, "Invalid encoding: FOO" do
-        "Hello".encode("FOO", invalid: :skip)
-      end
-    end
-
-    it "raises if illegal byte sequence" do
-      expect_raises ArgumentError, "Invalid multibyte sequence" do
-        "\xff".encode("EUC-JP")
-      end
-    end
-
-    it "doesn't raise on invalid byte sequence" do
-      "好\xff是".encode("EUC-JP", invalid: :skip).to_a.should eq([185, 165, 192, 167])
-    end
-
-    it "raises if incomplete byte sequence" do
-      expect_raises ArgumentError, "Incomplete multibyte sequence" do
-        "好".byte_slice(0, 1).encode("EUC-JP")
-      end
-    end
-
-    it "doesn't raise if incomplete byte sequence" do
-      ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).to_a.should eq([192, 167])
-    end
-
-    it "decodes" do
-      bytes = "Hello".encode("UTF-16LE")
-      String.new(bytes, "UTF-16LE").should eq("Hello")
-    end
-
-    it "decodes with skip" do
-      bytes = Bytes[186, 195, 255, 202, 199]
-      String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
-    end
-  end
+  {% end %}
 
   it "inserts" do
     "bar".insert(0, "foo").should eq("foobar")

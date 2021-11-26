@@ -15,7 +15,7 @@ jobs:
           make deps
       - name: Cross-compile Crystal
         run: |
-          LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground
+          LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground -Dwithout_iconv
 
       - name: Upload Crystal object file
         uses: actions/upload-artifact@v2
@@ -42,6 +42,7 @@ jobs:
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
             libs/pcre.lib
+            libs/iconv.lib
             libs/gc.lib
             libs/z.lib
             libs/mpir.lib
@@ -81,6 +82,19 @@ jobs:
         run: |
           cmake . -DBUILD_SHARED_LIBS=OFF -DPCRE_SUPPORT_UNICODE_PROPERTIES=ON -DPCRE_SUPPORT_JIT=ON -DPCRE_STATIC_RUNTIME=ON -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
           cmake --build . --config Release
+      - name: Download libiconv
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: pffang/libiconv-for-Windows
+          ref: 9b7aba8da6e125ef33912fa4412779279f204003 # master @ 2021-08-24
+          path: libiconv
+      - name: Build libiconv
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        working-directory: ./libiconv
+        run: |
+          sed -i 's/MultiThreadedDLL/MultiThreaded/' libiconv.vcxproj
+          MSBuild.exe /p:Platform=x64 /p:Configuration=ReleaseStatic libiconv.vcxproj
       - name: Download zlib
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
@@ -138,6 +152,7 @@ jobs:
         run: |
           mkdir libs
           mv pcre/Release/pcre.lib libs/
+          mv libiconv/lib64/libiconvStatic.lib libs/iconv.lib
           mv bdwgc/Release/gc.lib libs/
           mv zlib/Release/zlibstatic.lib libs/z.lib
           mv mpir/lib/x64/Release/mpir.lib libs/
