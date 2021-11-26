@@ -66,7 +66,7 @@ int sum_variadic(int count, ...)
 
 struct test_struct make_struct(char b, short s, int i, long long j, float f, double d, void *p)
 {
-    static struct test_struct t;
+    struct test_struct t;
     t.b = b;
     t.s = s;
     t.i = i;
