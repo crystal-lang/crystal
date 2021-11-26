@@ -330,6 +330,26 @@ class IO::Memory < IO
     @pos = value.to_i
   end
 
+  # Truncates the file to the specified *size*. Requires that the current IO is writable.
+  def truncate(size = 0) : Nil
+    if bytesize >= size # Shrink
+      check_open
+      check_resizeable
+      @bytesize = size
+    else # Extend
+      if size > @capacity
+        check_resizeable
+        resize_to_capacity(Math.pw2ceil(size))
+      end
+
+      if @pos > @bytesize
+        (@buffer + @bytesize).clear(@pos - @bytesize)
+      end
+
+      @bytesize = size
+    end
+  end
+
   # Yields an `IO::Memory` to read a section of this `IO`'s buffer.
   #
   # During the block duration `self` becomes read-only,
