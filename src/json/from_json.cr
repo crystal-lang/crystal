@@ -93,7 +93,7 @@ end
       {% end %}
     begin
       value.to_{{method.id}}
-    rescue ex : OverflowError
+    rescue ex : OverflowError | ArgumentError
       raise JSON::ParseException.new("Can't read {{type.id}}", *location, ex)
     end
   end

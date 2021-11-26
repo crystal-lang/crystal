@@ -35,6 +35,12 @@ describe "JSON serialization" do
       UInt64.from_json(UInt64::MAX.to_s).should eq(UInt64::MAX)
     end
 
+    it "raises ParserException for overflow UInt64.from_json" do
+      expect_raises(JSON::ParseException, "Can't read UInt64 at line 0, column 0") do
+        UInt64.from_json("1#{UInt64::MAX}").should eq(UInt64::MAX)
+      end
+    end
+
     it "does Array(Nil)#from_json" do
       Array(Nil).from_json("[null, null]").should eq([nil, nil])
     end
