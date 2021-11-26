@@ -166,35 +166,6 @@ describe Crystal::FFI::CallInterface do
     ensure
       loader.try &.close_all
     end
-
-    it "array" do
-      call_interface = Crystal::FFI::CallInterface.new Crystal::FFI::Type.sint32, [
-        Crystal::FFI::Type.struct([
-          Crystal::FFI::Type.sint32,
-          Crystal::FFI::Type.sint32,
-          Crystal::FFI::Type.sint32,
-          Crystal::FFI::Type.sint32,
-        ]),
-      ] of Crystal::FFI::Type
-
-      loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH])
-      loader.load_library "sum"
-      function_pointer = loader.find_symbol("sum_array")
-
-      return_value = 0_i32
-
-      ary = [1, 2, 3, 4]
-
-      arg_pointers = StaticArray[
-        Pointer.malloc(1, ary.to_unsafe).as(Void*),
-        Pointer(Void).null,
-      ]
-
-      call_interface.call(function_pointer, arg_pointers.to_unsafe, pointerof(return_value).as(Void*))
-      return_value.should eq 10
-    ensure
-      loader.try &.close_all
-    end
   end
 
   describe ".variadic" do

@@ -38,16 +38,6 @@ int sum_struct(struct test_struct s)
     return *s.p;
 }
 
-int sum_array(int ary[4])
-{
-    int sum = 0;
-    for (int i = 0; i < 5; i++)
-    {
-        sum += ary[i];
-    }
-    return sum;
-}
-
 int sum_variadic(int count, ...)
 {
     va_list ap;
