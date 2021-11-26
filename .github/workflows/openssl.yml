@@ -12,6 +12,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Uninstall openssl 1.1
         run: apk del openssl-dev
+      - name: Upgrade alpine-keys
+        run: apk upgrade alpine-keys
       - name: Install openssl 3.0
         run: apk add "openssl3-dev" --repository=http://dl-cdn.alpinelinux.org/alpine/v3.15/main
       - name: Check LibSSL version
@@ -55,6 +57,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Uninstall openssl
         run: apk del openssl-dev openssl-libs-static
+      - name: Upgrade alpine-keys
+        run: apk upgrade alpine-keys
       - name: Install libressl 3.4
         run: apk add "libressl-dev=~3.4" --repository=http://dl-cdn.alpinelinux.org/alpine/v3.15/community
       # We need a recent libc which include reallocarray
