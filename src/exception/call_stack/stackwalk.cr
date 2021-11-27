@@ -23,7 +23,9 @@ struct Exception::CallStack
     # TODO: figure out if and when to call SymCleanup (it cannot be done in
     # `at_exit` because unhandled exceptions in `main_user_code` are printed
     # after those handlers)
-    if LibC.SymInitializeW(LibC.GetCurrentProcess, nil, 1) == 0
+    executable_path = Process.executable_path
+    executable_path_ptr = executable_path ? File.dirname(executable_path).to_utf16.to_unsafe : Pointer(LibC::WCHAR).null
+    if LibC.SymInitializeW(LibC.GetCurrentProcess, executable_path_ptr, 1) == 0
       raise RuntimeError.from_winerror("SymInitializeW")
     end
     LibC.SymSetOptions(LibC.SymGetOptions | LibC::SYMOPT_UNDNAME | LibC::SYMOPT_LOAD_LINES | LibC::SYMOPT_FAIL_CRITICAL_ERRORS | LibC::SYMOPT_NO_PROMPTS)
