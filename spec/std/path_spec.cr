@@ -2,6 +2,7 @@ require "spec"
 require "./spec_helper"
 require "../support/env"
 
+private HOME_ENV_KEY = {% if flag?(:win32) %} "USERPROFILE" {% else %} "HOME" {% end %}
 private BASE_POSIX   = "/default/base"
 private BASE_WINDOWS = "\\default\\base"
 private HOME_WINDOWS = "C:\\Users\\Crystal"
@@ -13,15 +14,9 @@ end
 
 private def it_expands_path(path, posix, windows = posix, *, base = nil, env_home = nil, expand_base = false, home = false, file = __FILE__, line = __LINE__)
   assert_paths(path, posix, windows, %((base: "#{base}")), file, line) do |path|
-    prev_home = ENV["HOME"]?
-
-    begin
-      ENV["HOME"] = env_home || (path.windows? ? HOME_WINDOWS : HOME_POSIX)
-
+    with_env({HOME_ENV_KEY => env_home || (path.windows? ? HOME_WINDOWS : HOME_POSIX)}) do
       base_arg = base || (path.windows? ? BASE_WINDOWS : BASE_POSIX)
       path.expand(base_arg.not_nil!, expand_base: !!expand_base, home: home)
-    ensure
-      ENV["HOME"] = prev_home
     end
   end
 end
@@ -585,7 +580,7 @@ describe Path do
     describe "converts a pathname to an absolute pathname" do
       it_expands_path("", BASE_POSIX, BASE_WINDOWS)
       it_expands_path("a", {BASE_POSIX, "a"}, {BASE_WINDOWS, "a"})
-      it_expands_path("a", {BASE_POSIX, "a"}, {BASE_WINDOWS, "a"})
+      it_expands_path("a", {BASE_POSIX, "a"}, {BASE_WINDOWS, "a"}, base: nil)
     end
 
     describe "converts a pathname to an absolute pathname, Ruby-Talk:18512" do
@@ -626,7 +621,7 @@ describe Path do
       it_expands_path("/some////path", "/some/path", "\\some\\path")
     end
 
-    describe "expand path with" do
+    describe "expand path with .." do
       it_expands_path("../../bin", "/bin", "\\bin", base: "/tmp/x")
       it_expands_path("../../bin", "/bin", "\\bin", base: "/tmp")
       it_expands_path("../../bin", "/bin", "\\bin", base: "/")
@@ -892,22 +887,17 @@ describe Path do
   end
 
   describe ".home" do
-    {% if flag?(:win32) %}
-      it "returns %USERPROFILE% if set" do
-        with_env("USERPROFILE": "foo/bar") do
-          Path.home.should eq(Path.new("foo/bar"))
-        end
+    it "uses home from environment variable if set" do
+      with_env({HOME_ENV_KEY => "foo/bar"}) do
+        Path.home.should eq(Path.new("foo/bar"))
       end
+    end
 
-      it "doesn't raise if %USERPROFILE% is missing" do
-        with_env("USERPROFILE": nil) do
+    # TODO: check that this is the home of the current user
+    {% if flag?(:win32) %}
+      it "doesn't raise if environment variable is missing" do
+        with_env({HOME_ENV_KEY => nil}) do
           Path.home
-        end
-      end
-    {% else %}
-      it "returns $HOME if set" do
-        with_env("HOME": "foo/bar") do
-          Path.home.should eq(Path.new("foo/bar"))
         end
       end
     {% end %}
