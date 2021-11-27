@@ -95,7 +95,8 @@ jobs:
         run: |
           $VsVersion = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property catalog_productLineVersion
           $Subdir = "build-VS$VsVersion-MT"
-          sed -i 's/ProgramDatabase/None/' "$Subdir\_props\vs_common.props"
+          sed -i 's/<DebugInformationFormat>ProgramDatabase/<DebugInformationFormat>None/' "$Subdir\_props\vs_common.props"
+          sed -i 's/<WholeProgramOptimization>true/<WholeProgramOptimization>false/' "$Subdir\libiconv-static\libiconv-static.vcxproj"
           MSBuild.exe /p:Platform=x64 /p:Configuration=Release "$Subdir\libiconv-static\libiconv-static.vcxproj"
           mv "$Subdir\libiconv-static\x64\Release\libiconv-static.lib" iconv.lib
       - name: Download zlib
