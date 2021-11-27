@@ -1,5 +1,6 @@
 require "spec"
 require "./spec_helper"
+require "../support/env"
 
 private BASE_POSIX   = "/default/base"
 private BASE_WINDOWS = "\\default\\base"
@@ -888,5 +889,27 @@ describe Path do
     assert_paths_raw("foo./", "foo.", &.stem)
     assert_paths_raw("foo.txt./", "foo.txt.", &.stem)
     assert_paths_raw("foo..txt/", "foo.", &.stem)
+  end
+
+  describe ".home" do
+    {% if flag?(:win32) %}
+      it "returns %USERPROFILE% if set" do
+        with_env("USERPROFILE": "foo/bar") do
+          Path.home.should eq(Path.new("foo/bar"))
+        end
+      end
+
+      it "doesn't raise if %USERPROFILE% is missing" do
+        with_env("USERPROFILE": nil) do
+          Path.home
+        end
+      end
+    {% else %}
+      it "returns $HOME if set" do
+        with_env("HOME": "foo/bar") do
+          Path.home.should eq(Path.new("foo/bar"))
+        end
+      end
+    {% end %}
   end
 end
