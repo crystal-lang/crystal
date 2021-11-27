@@ -3,17 +3,6 @@ require "crystal/compiler_rt/multi3"
 
 # Ported from https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/test/builtins/Unit/multi3_test.c
 
-private def test__mulodi4(a : Int64, b : Int64, expected : Int64, expected_overflow : Int32, file = __FILE__, line = __LINE__)
-  it "passes compiler-rt builtins unit tests" do
-    actual_overflow : Int32 = 0
-    actual = __mulodi4(a, b, pointerof(actual_overflow))
-    actual_overflow.should eq(expected_overflow), file: file, line: line
-    if !expected_overflow
-      actual.should eq(expected), file: file, line: line
-    end
-  end
-end
-
 # TODO: Replace helper methods with literals once possible
 
 private def make_ti(a : Int128, b : Int128)
