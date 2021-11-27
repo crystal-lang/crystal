@@ -52,6 +52,9 @@ class Array(T)
   # Size of an Array that we consider small to do linear scans or other optimizations.
   private SMALL_ARRAY_SIZE = 16
 
+  # The initial capacity reserved for new arrays; just a lucky number
+  private INITIAL_CAPACITY = 3
+
   # The capacity threshold before we stop doubling array during resize.
   private CAPACITY_THRESHOLD = 256
 
@@ -2033,7 +2036,7 @@ class Array(T)
   end
 
   private def calculate_new_capacity
-    return 3 if @capacity == 0
+    return INITIAL_CAPACITY if @capacity == 0
 
     if @capacity < CAPACITY_THRESHOLD
       @capacity * 2
