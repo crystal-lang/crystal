@@ -86,15 +86,18 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         uses: actions/checkout@v2
         with:
-          repository: pffang/libiconv-for-Windows
-          ref: 9b7aba8da6e125ef33912fa4412779279f204003 # master @ 2021-08-24
+          repository: kiyolee/libiconv-win-build
+          ref: e20fd7f0289d184e524fd8a47ec99302963796b3 # master @ 2021-07-25
           path: libiconv
       - name: Build libiconv
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./libiconv
         run: |
-          sed -i 's/MultiThreadedDLL/MultiThreaded/' libiconv.vcxproj
-          MSBuild.exe /p:Platform=x64 /p:Configuration=ReleaseStatic libiconv.vcxproj
+          $VsVersion = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property catalog_productLineVersion
+          $Subdir = "build-VS$VsVersion-MT"
+          sed -i 's/ProgramDatabase/None/' "$Subdir\_props\vs_common.props"
+          MSBuild.exe /p:Platform=x64 /p:Configuration=Release "$Subdir\libiconv-static\libiconv-static.vcxproj"
+          mv "$Subdir\libiconv-static\x64\Release\libiconv-static.lib" iconv.lib
       - name: Download zlib
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
@@ -119,7 +122,7 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./mpir
         run: |
-          $VsVersion = "vs$((& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -property displayName) -replace '.*\b\d\d(\d\d)\b.*', '$1')"
+          $VsVersion = (& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property catalog_productLineVersion) -replace '^..', 'vs'
           MSBuild.exe /p:Platform=x64 /p:Configuration=Release /p:DefineConstants=MSC_BUILD_DLL ".\msvc\$VsVersion\lib_mpir_gc\lib_mpir_gc.vcxproj"
       - name: Download libyaml
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -152,7 +155,7 @@ jobs:
         run: |
           mkdir libs
           mv pcre/Release/pcre.lib libs/
-          mv libiconv/lib64/libiconvStatic.lib libs/iconv.lib
+          mv libiconv/iconv.lib libs/
           mv bdwgc/Release/gc.lib libs/
           mv zlib/Release/zlibstatic.lib libs/z.lib
           mv mpir/lib/x64/Release/mpir.lib libs/
