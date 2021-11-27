@@ -375,7 +375,7 @@ module Crystal
           end
         {% end %}
 
-        link_args << "/DEBUG:FULL" unless debug.none?
+        link_args << "/DEBUG:FULL /PDBALTPATH:%_PDB%" unless debug.none?
         link_args << lib_flags
         @link_flags.try { |flags| link_args << flags }
 
