@@ -123,12 +123,10 @@ module Crystal::System::VisualStudio
           begin
             bstr = uninitialized LibC::BSTR
             next unless com_call(curr_instance.getInstallationPath(pointerof(bstr))) == 0
-            directory = String.from_utf16(bstr)[0]
-            LibC.SysFreeString(bstr)
+            directory = acquire_bstr(bstr)
 
             next unless com_call(curr_instance.getInstallationVersion(pointerof(bstr))) == 0
-            version = String.from_utf16(bstr)[0].split('.').map(&.to_i)
-            LibC.SysFreeString(bstr)
+            version = acquire_bstr(bstr).split('.').map(&.to_i)
 
             installations ||= [] of Installation
             installations << Installation.new(directory, version)
@@ -144,5 +142,11 @@ module Crystal::System::VisualStudio
     end
 
     installations
+  end
+
+  private def self.acquire_bstr(bstr : LibC::BSTR)
+    crystal_str = String.from_utf16(Slice.new(bstr, LibC.SysStringLen(bstr)))
+    LibC.SysFreeString(bstr)
+    crystal_str
   end
 end
