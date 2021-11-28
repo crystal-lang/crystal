@@ -558,6 +558,7 @@ describe "File" do
     end
   end
 
+  # There are more detailled specs for `Path#expand` in path_spec.cr
   describe ".expand_path" do
     it "converts a pathname to an absolute pathname" do
       File.expand_path("a/b").should eq(Path.new("a/b").expand(Dir.current).to_s)
