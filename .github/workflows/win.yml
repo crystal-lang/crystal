@@ -95,7 +95,7 @@ jobs:
         run: |
           echo '<Project>
             <PropertyGroup>
-              <ForceImportAfterCppProps>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppProps>
+              <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
             </PropertyGroup>
           </Project>' > 'Directory.Build.props'
 
