@@ -323,9 +323,9 @@ describe "Lexer" do
   assert_syntax_error "4f65", "invalid float suffix"
   assert_syntax_error "4f22", "invalid float suffix"
   # Tests for #8782
-  assert_syntax_error "4F32", "unexpected token: F32"
-  assert_syntax_error "4F64", "unexpected token: F64"
-  assert_syntax_error "0F32", "unexpected token: F32"
+  assert_syntax_error "4F32", %(unexpected token: "F32")
+  assert_syntax_error "4F64", %(unexpected token: "F64")
+  assert_syntax_error "0F32", %(unexpected token: "F32")
 
   assert_syntax_error ".42", ".1 style number literal is not supported, put 0 before dot"
   assert_syntax_error "-.42", ".1 style number literal is not supported, put 0 before dot"

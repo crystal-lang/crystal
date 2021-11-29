@@ -1,9 +1,15 @@
 {% begin %}
   lib LibCrypto
-    {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
-                       (`test -f $(pkg-config --silence-errors --variable=includedir libcrypto)/openssl/opensslv.h || printf %s false` != "false") &&
-                       (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libcrypto || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
-    {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libcrypto || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
+    {% if flag?(:win32) %}
+      {% from_libressl = false %}
+      {% ssl_version = env("CRYSTAL_OPENSSL_VERSION") %}
+      {% raise "Cannot determine OpenSSL version, make sure the environment variable `CRYSTAL_OPENSSL_VERSION` is set" unless ssl_version %}
+    {% else %}
+      {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
+                         (`test -f $(pkg-config --silence-errors --variable=includedir libcrypto)/openssl/opensslv.h || printf %s false` != "false") &&
+                         (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libcrypto || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
+      {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libcrypto || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
+    {% end %}
 
     {% if from_libressl %}
       LIBRESSL_VERSION = {{ ssl_version }}
@@ -15,7 +21,13 @@
   end
 {% end %}
 
-@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s '-lcrypto'`")]
+{% if flag?(:win32) %}
+  @[Link("crypto")]
+  @[Link("crypt32")] # CertOpenStore, ...
+  @[Link("user32")]  # GetProcessWindowStation, GetUserObjectInformationW, _MessageBoxW
+{% else %}
+  @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s '-lcrypto'`")]
+{% end %}
 lib LibCrypto
   alias Char = LibC::Char
   alias Int = LibC::Int
@@ -131,7 +143,7 @@ lib LibCrypto
   fun obj_obj2nid = OBJ_obj2nid(obj : ASN1_OBJECT) : Int
   fun obj_ln2nid = OBJ_ln2nid(ln : Char*) : Int
   fun obj_sn2nid = OBJ_sn2nid(sn : Char*) : Int
-  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 || LIBRESSL_VERSION != "0.0.0" %}
     fun obj_find_sigid_algs = OBJ_find_sigid_algs(sigid : Int32, pdig_nid : Int32*, ppkey_nid : Int32*) : Int32
   {% end %}
 
@@ -303,7 +315,7 @@ lib LibCrypto
   fun x509_get_ext = X509_get_ext(x : X509, idx : Int) : X509_EXTENSION
   fun x509_get_ext_count = X509_get_ext_count(x : X509) : Int
   fun x509_get_ext_d2i = X509_get_ext_d2i(x : X509, nid : Int, crit : Int*, idx : Int*) : Void*
-  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 || LIBRESSL_VERSION != "0.0.0" %}
     fun x509_get_signature_nid = X509_get_signature_nid(x509 : X509) : Int32
   {% end %}
 

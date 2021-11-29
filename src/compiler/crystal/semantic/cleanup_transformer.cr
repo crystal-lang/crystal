@@ -861,8 +861,8 @@ module Crystal
       exp_type = node.exp.type?
 
       if exp_type
-        instance_type = exp_type.instance_type.devirtualize
-        if instance_type.struct? || instance_type.module? || instance_type.is_a?(UnionType)
+        instance_type = exp_type.devirtualize
+        if instance_type.struct? || instance_type.module? || instance_type.metaclass? || instance_type.is_a?(UnionType)
           node.exp.raise "instance_sizeof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
         end
       end
