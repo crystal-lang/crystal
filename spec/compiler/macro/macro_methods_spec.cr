@@ -2959,4 +2959,51 @@ module Crystal
       assert_macro_error %({{flag?}}), "wrong number of arguments for top-level macro 'flag?' (given 0, expected 1)"
     end
   end
+
+  describe "immutability of returned container literals (#10818)" do
+    it "Annotation#args" do
+      node = Annotation.new(Path.new("Foo"), [42.int32, "a".string] of ASTNode)
+      assert_macro %({{ (x.args << "a"; x.args.size) }}), "2", {x: node}
+    end
+
+    it "Generic#type_vars" do
+      node = Generic.new("Foo".path, ["Bar".path, "Int32".path] of ASTNode)
+      assert_macro %({{ (x.type_vars << "a"; x.type_vars.size) }}), "2", {x: node}
+    end
+
+    it "MultiAssign#targets" do
+      node = MultiAssign.new(["foo".var, "bar".var] of ASTNode, [2.int32, "a".string] of ASTNode)
+      assert_macro %({{ (x.targets << "a"; x.targets.size) }}), "2", {x: node}
+    end
+
+    it "MultiAssign#values" do
+      node = MultiAssign.new(["foo".var, "bar".var] of ASTNode, [2.int32, "a".string] of ASTNode)
+      assert_macro %({{ (x.values << "a"; x.values.size) }}), "2", {x: node}
+    end
+
+    it "ProcNotation#inputs" do
+      node = ProcNotation.new([Path.new("SomeType"), Path.new("OtherType")] of ASTNode)
+      assert_macro %({{ (x.inputs << "a"; x.inputs.size) }}), "2", {x: node}
+    end
+
+    it "ProcPointer#args" do
+      node = ProcPointer.new(Var.new("some_object"), "method", [Path.new("SomeType"), Path.new("OtherType")] of ASTNode)
+      assert_macro %({{ (x.args << "a"; x.args.size) }}), "2", {x: node}
+    end
+
+    it "StringInterpolation#expressions" do
+      node = StringInterpolation.new(["fo".string, 1.int32, "o".string] of ASTNode)
+      assert_macro %({{ (x.expressions << "a"; x.expressions.size) }}), "3", {x: node}
+    end
+
+    it "Union#types" do
+      node = Crystal::Union.new(["Int32".path, "String".path] of ASTNode)
+      assert_macro %({{ (x.types << "a"; x.types.size) }}), "2", {x: node}
+    end
+
+    it "When#conds" do
+      node = When.new([2.int32, 3.int32] of ASTNode, 4.int32)
+      assert_macro %({{ (x.conds << "a"; x.conds.size) }}), "2", {x: node}
+    end
+  end
 end
