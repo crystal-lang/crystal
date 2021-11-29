@@ -365,12 +365,12 @@ struct BigInt < Int
   # :nodoc:
   # returns `{reduced, count}` such that `self % (number ** count) == 0`,
   # `self % (number ** (count + 1)) != 0`, and `reduced == self / (number ** count)`
-  def factor_by(number : Int) : {BigInt, LibGMP::ULong}
-    return {self, LibGMP::ULong.zero} unless divisible_by?(number)
+  def factor_by(number : Int) : {BigInt, UInt64}
+    return {self, 0_u64} unless divisible_by?(number)
 
     reduced = BigInt.new
     count = LibGMP.remove(reduced, self, number.to_big_i)
-    {reduced, count}
+    {reduced, count.to_u64}
   end
 
   def ~ : BigInt
