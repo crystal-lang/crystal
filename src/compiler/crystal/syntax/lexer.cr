@@ -1484,9 +1484,9 @@ module Crystal
         when 'b'      then base = 2
         when 'o'      then base = 8
         when 'x'      then base = 16
-        when '0'..'9' then raise "octal constants should be prefixed with 0o"
+        when '0'..'9' then raise("octal constants should be prefixed with 0o", @token, (current_pos - start))
         when '_'
-          raise "octal constants should be prefixed with 0o" if next_char.in? '0'..'9'
+          raise("octal constants should be prefixed with 0o", @token, (current_pos - start)) if next_char.in? '0'..'9'
           last_is_underscore = true
           underscore_count = 1
         end
