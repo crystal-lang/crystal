@@ -1495,8 +1495,8 @@ module Crystal
         unless base == 10
           next_char
           pos_after_prefix = current_pos
-          # Disallow underscore after prefix
-          raise("numeric literal without digits", @token, (current_pos - start)) if current_char == '_'
+          # Enforce number after prefix (disallow ex. "0x", "0x_1")
+          raise("numeric literal without digits", @token, (current_pos - start)) unless String::CHAR_TO_DIGIT[current_char.ord] < base
         end
       end
 
@@ -1557,7 +1557,6 @@ module Crystal
               ret = string_range(pos_after_prefix, end_pos)
               required_bytes = base.trailing_zeros_count * (ret.size - underscore_count)
               tmp_str = case required_bytes
-                        when 0      then raise("numeric literal without digits", @token, (current_pos - start))
                         when 1..32  then ret.to_u32(base: base, underscore: true).to_s
                         when 33..64 then ret.to_u64(base: base, underscore: true).to_s
                           # TODO: Add 128-bit literal conversion
