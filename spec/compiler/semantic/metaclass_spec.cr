@@ -246,4 +246,28 @@ describe "Semantic: metaclass" do
       bar_class.implements?(foo_class).should be_false
     end
   end
+
+  it "can't reopen as struct" do
+    assert_error <<-CR, "Bar is not a struct, it's a metaclass"
+      class Foo
+      end
+
+      alias Bar = Foo.class
+
+      struct Bar
+      end
+      CR
+  end
+
+  it "can't reopen as module" do
+    assert_error <<-CR, "Bar is not a module, it's a metaclass"
+      class Foo
+      end
+
+      alias Bar = Foo.class
+
+      module Bar
+      end
+      CR
+  end
 end
