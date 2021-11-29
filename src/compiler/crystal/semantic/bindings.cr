@@ -17,17 +17,22 @@ module Crystal
       @type || @freeze_type
     end
 
-    def type(*, with_literals = false)
+    def type(*, with_autocast = false)
       type = self.type
 
-      if with_literals
+      if with_autocast
         case self
         when NumberLiteral
-          NumberLiteralType.new(type.program, self)
+          NumberAutocastType.new(type.program, self)
         when SymbolLiteral
-          SymbolLiteralType.new(type.program, self)
+          SymbolAutocastType.new(type.program, self)
         else
-          type
+          case type
+          when IntegerType, FloatType
+            NumberAutocastType.new(type.program, self)
+          else
+            type
+          end
         end
       else
         type
@@ -465,6 +470,7 @@ module Crystal
   class ProcLiteral
     property? force_nil = false
     property expected_return_type : Type?
+    property? from_block = false
 
     def update(from = nil)
       return unless self.def.args.all? &.type?
@@ -475,7 +481,7 @@ module Crystal
 
       expected_return_type = @expected_return_type
       if expected_return_type && !expected_return_type.nil_type? && !return_type.implements?(expected_return_type)
-        raise "expected block to return #{expected_return_type.devirtualize}, not #{return_type}"
+        raise "expected #{from_block? ? "block" : "Proc"} to return #{expected_return_type.devirtualize}, not #{return_type}"
       end
 
       types << (expected_return_type || return_type)

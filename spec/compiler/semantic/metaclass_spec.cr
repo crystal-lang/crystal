@@ -62,27 +62,27 @@ describe "Semantic: metaclass" do
   end
 
   it "types Object and Class metaclasses" do
-    assert_type("Object.class") { class_type }
-    assert_type("Class.class") { class_type }
+    assert_type("Object.class", inject_primitives: true) { class_type }
+    assert_type("Class.class", inject_primitives: true) { class_type }
   end
 
   it "types Reference metaclass" do
     assert_type("Reference") { program.reference.metaclass }
-    assert_type("Reference.class") { class_type }
+    assert_type("Reference.class", inject_primitives: true) { class_type }
   end
 
   it "types generic class metaclass" do
     assert_type("Pointer") { pointer.metaclass }
-    assert_type("Pointer.class") { class_type }
+    assert_type("Pointer.class", inject_primitives: true) { class_type }
     assert_type("Pointer(Int32)") { pointer_of(int32).metaclass }
-    assert_type("Pointer(Int32).class") { class_type }
+    assert_type("Pointer(Int32).class", inject_primitives: true) { class_type }
   end
 
   it "types generic module metaclass" do
     assert_type("module Foo(T); end; Foo") { types["Foo"].metaclass }
-    assert_type("module Foo(T); end; Foo.class") { class_type }
+    assert_type("module Foo(T); end; Foo.class", inject_primitives: true) { class_type }
     assert_type("module Foo(T); end; Foo(Int32)") { generic_module("Foo", int32).metaclass }
-    assert_type("module Foo(T); end; Foo(Int32).class") { class_type }
+    assert_type("module Foo(T); end; Foo(Int32).class", inject_primitives: true) { class_type }
   end
 
   it "types metaclass superclass" do
@@ -255,5 +255,29 @@ describe "Semantic: metaclass" do
     foo_int32_class = mod.generic_module("Foo", mod.int32).metaclass
     foo_int32_class.parents.should eq([mod.class_type])
     foo_int32_class.ancestors.should eq([mod.class_type, mod.value, mod.object])
+  end
+
+  it "can't reopen as struct" do
+    assert_error <<-CR, "Bar is not a struct, it's a metaclass"
+      class Foo
+      end
+
+      alias Bar = Foo.class
+
+      struct Bar
+      end
+      CR
+  end
+
+  it "can't reopen as module" do
+    assert_error <<-CR, "Bar is not a module, it's a metaclass"
+      class Foo
+      end
+
+      alias Bar = Foo.class
+
+      module Bar
+      end
+      CR
   end
 end

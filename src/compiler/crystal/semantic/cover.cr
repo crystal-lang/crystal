@@ -277,7 +277,7 @@ module Crystal
     delegate cover, cover_size, to: aliased_type
   end
 
-  class LiteralType
+  class AutocastType
     delegate cover, cover_size, to: (@match || literal.type)
   end
 end

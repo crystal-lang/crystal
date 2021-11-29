@@ -2392,7 +2392,7 @@ module Crystal
           beginning_of_line = false
           case next_char
           when 'd'
-            if whitespace && !ident_part_or_end?(peek_next_char)
+            if whitespace && !ident_part_or_end?(peek_next_char) && peek_next_char != ':'
               if nest == 0 && control_nest == 0
                 next_char
                 @token.type = :MACRO_END
@@ -3200,7 +3200,7 @@ module Crystal
     end
 
     def peek_not_ident_part_or_end_next_char
-      !ident_part_or_end?(peek_next_char) && next_char
+      !ident_part_or_end?(peek_next_char) && peek_next_char != ':' && next_char
     end
 
     def closing_char(char = current_char)

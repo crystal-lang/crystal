@@ -234,14 +234,12 @@ module Crystal
 
     def print_nil_reason(nil_reason, io)
       case nil_reason.reason
-      when :used_before_initialized
+      in .used_before_initialized?
         io << "Instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
-      when :used_self_before_initialized
+      in .used_self_before_initialized?
         io << "'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable"
-      when :initialized_in_rescue
+      in .initialized_in_rescue?
         io << "Instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued"
-      else
-        # TODO: we should probably change nil_reason to be an enum so we don't need this else branch
       end
     end
 
