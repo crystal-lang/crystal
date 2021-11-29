@@ -2034,24 +2034,23 @@ class Array(T)
     shift_buffer_by -@offset_to_buffer
   end
 
-  # Enusures that the internal buffer has at least `capacity` elements. If
-  # `rewind` is truthy, then the internal buffer is rewind first: the
-  # elements are copied to the front of the array.
-  def ensure_capacity(capacity : Int32, rewind = true) : self
-    rewind() if rewind
+  # Enusures that the internal buffer has at least `capacity` elements.
+  def ensure_capacity(capacity : Int32) : self
+    rewind
 
-    if capacity - @offset_to_buffer >= @size
+    if capacity >= @size
       resize_to_capacity capacity
     end
     self
   end
 
   # Reduces the internal buffer to exactly fit the number of elements in the
-  # array. If `rewind` is truthy it moves the elements in the internal array to the front.
-  def trim_to_size(rewind = true) : self
-    rewind() if rewind
+  # array, plus `extra` elements.
+  def trim_to_size(extra : Int32 = 0) : self
+    raise ArgumentError.new("Negative extra capacity: #{extra}") if extra < 0
 
-    resize_to_capacity (@size + @offset_to_buffer)
+    rewind
+    resize_to_capacity (@size + extra)
     self
   end
 

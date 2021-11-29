@@ -2057,18 +2057,11 @@ describe "Array" do
       ary.remaining_capacity.should eq(4)
     end
 
-    it "rewinds by default the array" do
+    it "rewinds the array" do
       ary = [1, 2, 3]
       ary.shift
       ary.ensure_capacity(3).should eq([2, 3])
       ary.remaining_capacity.should eq(3)
-    end
-
-    it "doesn't rewind when asked not to" do
-      ary = [1, 2, 3]
-      ary.shift
-      ary.ensure_capacity(3, false).should eq([2, 3])
-      ary.remaining_capacity.should eq(2)
     end
 
     it "does nothing if not enough capacity" do
@@ -2086,23 +2079,19 @@ describe "Array" do
       a.remaining_capacity.should eq(3)
     end
 
-    it "rewinding" do
+    it "trims with extra capacity" do
+      a = Array(Int32).new(10)
+      a << 1 << 2 << 3
+      a.trim_to_size(2).should eq([1, 2, 3])
+      a.remaining_capacity.should eq(5)
+    end
+
+    it "rewinds the array" do
       a = Array(Int32).new(10)
       a << 1 << 2 << 3
       a.shift
       a.trim_to_size.should eq([2, 3])
       a.remaining_capacity.should eq(2)
-    end
-
-    it "not rewinding" do
-      a = Array(Int32).new(10)
-      a << 1 << 2 << 3
-      a.shift
-      a.trim_to_size(false).should eq([2, 3])
-      p1 = a.to_unsafe
-      a.remaining_capacity.should eq(2)
-      a.unshift 1
-      a.to_unsafe.should eq(p1 - 1)
     end
   end
 end
