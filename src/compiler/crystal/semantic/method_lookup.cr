@@ -8,13 +8,13 @@ require "../types"
 # overloads because the exact match will prevent them from being considered.
 #
 # If no matches are found we try again but this time with autocasting enabled.
-# In `semantic/call.cr` this is when `with_literals` is `true`, and this is when
+# In `semantic/call.cr` this is when `with_autocast` is `true`, and this is when
 # `analyze_all` will be `true` here.
 #
 # 2. Lookup is done with autocasting enabled.
 #
 # In this mode the types for NumberLiteral and SymbolLiteral are not the usual
-# types but instead the special NumberLiteralType and SymbolLiteralType.
+# types but instead the special NumberAutocastType and SymbolAutocastType.
 #
 # In this mode we also need to stop as soon as we find an exact match
 # (which just means when the first overload matches with autocasting, which
@@ -52,9 +52,9 @@ require "../types"
 
 module Crystal
   record NamedArgumentType, name : String, type : Type do
-    def self.from_args(named_args : Array(NamedArgument)?, with_literals = false)
+    def self.from_args(named_args : Array(NamedArgument)?, with_autocast = false)
       named_args.try &.map do |named_arg|
-        new(named_arg.name, named_arg.value.type(with_literals: with_literals))
+        new(named_arg.name, named_arg.value.type(with_autocast: with_autocast))
       end
     end
   end

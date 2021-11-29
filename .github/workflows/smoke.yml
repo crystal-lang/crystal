@@ -46,6 +46,7 @@ jobs:
           - aarch64-darwin
           - arm-linux-gnueabihf
           - i386-linux-musl
+          - i386-linux-gnu
           - x86_64-dragonfly
           - x86_64-freebsd
           - x86_64-netbsd

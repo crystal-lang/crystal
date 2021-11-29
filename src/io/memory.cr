@@ -169,7 +169,6 @@ class IO::Memory < IO
     string
   end
 
-  # :nodoc:
   def read_byte : UInt8?
     check_open
 
@@ -184,7 +183,6 @@ class IO::Memory < IO
     end
   end
 
-  # :nodoc:
   def peek : Bytes
     check_open
 
@@ -203,14 +201,12 @@ class IO::Memory < IO
     end
   end
 
-  # :nodoc:
   def skip_to_end : Nil
     check_open
 
     @pos = @bytesize
   end
 
-  # :nodoc:
   def gets_to_end : String
     return super if @encoding
 
@@ -242,7 +238,7 @@ class IO::Memory < IO
   # io = IO::Memory.new "hello"
   # io.clear # raises IO::Error
   # ```
-  def clear
+  def clear : Nil
     check_open
     check_resizeable
     @bytesize = 0
@@ -372,7 +368,7 @@ class IO::Memory < IO
   # io.close
   # io.gets_to_end # raises IO::Error (closed stream)
   # ```
-  def close
+  def close : Nil
     @closed = true
   end
 

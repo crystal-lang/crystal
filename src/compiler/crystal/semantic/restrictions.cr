@@ -1349,7 +1349,7 @@ module Crystal
     end
   end
 
-  class LiteralType
+  class AutocastType
     # Returns `true` if this literal denotes a value of the *other* type.
     abstract def matches_exactly?(other : Type)
 
@@ -1500,17 +1500,17 @@ module Crystal
     end
   end
 
-  class NumberLiteralType
+  class NumberAutocastType
     def matches_exactly?(other : Type)
       literal.type == other
     end
 
     def matches_partially?(other : Type)
-      literal.can_be_autocast_to?(other)
+      literal.can_autocast_to?(other)
     end
   end
 
-  class SymbolLiteralType
+  class SymbolAutocastType
     def matches_exactly?(other : Type)
       other.is_a?(SymbolType)
     end

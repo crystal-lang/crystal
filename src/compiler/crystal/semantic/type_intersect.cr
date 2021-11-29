@@ -81,8 +81,20 @@ module Crystal
       # A module class can't be restricted into a class
       return nil if type1.instance_type.module?
 
+      # `T+.class` is always a subtype of `Class`
+      return type2 if type1 == type1.program.class_type
+
       restricted = common_descendent(type1.instance_type, type2.instance_type.base_type)
-      restricted ? type1 : nil
+      restricted.try(&.metaclass)
+    end
+
+    def self.common_descendent(type1 : VirtualMetaclassType, type2 : MetaclassType)
+      common_descendent(type2, type1)
+    end
+
+    def self.common_descendent(type1 : VirtualMetaclassType, type2 : VirtualMetaclassType)
+      restricted = common_descendent(type1.instance_type, type2.instance_type)
+      restricted.try(&.metaclass)
     end
 
     def self.common_descendent(type1 : GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType, type2 : MetaclassType)
@@ -152,7 +164,7 @@ module Crystal
       types = type2.union_types.compact_map do |t|
         common_descendent(type1, t)
       end
-      type1.program.type_merge types
+      type1.program.type_merge_union_of types
     end
 
     def self.common_descendent(type1 : VirtualType, type2 : Type)

@@ -87,6 +87,7 @@ module Crystal
     property last_block_kind : Symbol?
     property? inside_ensure : Bool = false
     property? inside_constant = false
+    property file_module : FileModule?
 
     @unreachable = false
     @is_initialize = false
@@ -99,7 +100,6 @@ module Crystal
     @found_self_in_initialize_call : Array(ASTNode)?
     @used_ivars_in_calls_in_initialize : Hash(String, Array(ASTNode))?
     @block_context : Block?
-    @file_module : FileModule?
     @while_vars : MetaVars?
 
     # Type filters for `exp` in `!exp`, used after a `while`
@@ -220,6 +220,7 @@ module Crystal
 
     def visit(node : Generic)
       node.in_type_args = @in_type_args > 0
+      node.inside_is_a = @inside_is_a
       node.scope = @scope
 
       node.name.accept self
@@ -296,23 +297,28 @@ module Crystal
     end
 
     def visit(node : ProcNotation)
+      types = [] of Type
       @in_type_args += 1
-      node.inputs.try &.each &.accept(self)
-      node.output.try &.accept(self)
-      @in_type_args -= 1
 
-      if inputs = node.inputs
-        types = inputs.map &.type.instance_type.virtual_type
-      else
-        types = [] of Type
+      node.inputs.try &.each do |input|
+        input.accept self
+        input_type = input.type
+        check_not_a_constant(input)
+        MainVisitor.check_type_allowed_as_proc_argument(input, input_type)
+        types << input_type.virtual_type
       end
 
       if output = node.output
-        types << output.type.instance_type.virtual_type
+        output.accept self
+        output_type = output.type
+        check_not_a_constant(output)
+        MainVisitor.check_type_allowed_as_proc_argument(output, output_type)
+        types << output_type.virtual_type
       else
         types << program.void
       end
 
+      @in_type_args -= 1
       node.type = program.proc_of(types)
 
       false
@@ -921,7 +927,7 @@ module Crystal
 
     def self.check_automatic_cast(program, value, var_type, assign = nil)
       if value.is_a?(NumberLiteral) && value.type != var_type
-        literal_type = NumberLiteralType.new(program, value)
+        literal_type = NumberAutocastType.new(program, value)
         context = MatchContext.new(value.type, value.type, autocast_allowed: true)
         restricted = literal_type.restrict(var_type, context)
         if restricted && var_type
@@ -936,7 +942,7 @@ module Crystal
           return value
         end
       elsif value.is_a?(SymbolLiteral) && value.type != var_type
-        literal_type = SymbolLiteralType.new(program, value)
+        literal_type = SymbolAutocastType.new(program, value)
         context = MatchContext.new(value.type, value.type, autocast_allowed: true)
         restricted = literal_type.restrict(var_type, context)
         if restricted && var_type
@@ -1072,6 +1078,7 @@ module Crystal
       block_visitor.parent = self
       block_visitor.with_scope = node.scope || with_scope
       block_visitor.exception_handler_vars = @exception_handler_vars
+      block_visitor.file_module = @file_module
 
       block_scope = @scope
       block_scope ||= current_type.metaclass unless current_type.is_a?(Program)
@@ -1147,7 +1154,7 @@ module Crystal
           MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
           arg.type = arg_type.virtual_type
         elsif !arg.type?
-          arg.raise "function argument '#{arg.name}' must have a type"
+          arg.raise "parameter '#{arg.name}' of Proc literal must have a type"
         end
 
         fun_var = MetaVar.new(arg.name, arg.type)
@@ -1156,6 +1163,17 @@ module Crystal
         meta_var = new_meta_var(arg.name, context: node.def)
         meta_var.bind_to fun_var
         meta_vars[arg.name] = meta_var
+      end
+
+      if return_type = node.def.return_type
+        @in_type_args += 1
+        return_type.accept self
+        @in_type_args -= 1
+        check_not_a_constant(return_type)
+
+        def_type = return_type.type
+        MainVisitor.check_type_allowed_as_proc_argument(node, def_type)
+        node.expected_return_type = def_type.virtual_type
       end
 
       node.bind_to node.def
@@ -2464,6 +2482,8 @@ module Crystal
       # A typeof shouldn't change the type of variables:
       # so we keep the ones before it and restore them at the end
       old_vars = @vars.dup
+      old_meta_vars = @meta_vars
+      @meta_vars = old_meta_vars.dup
 
       node.in_type_args = @in_type_args > 0
 
@@ -2481,6 +2501,7 @@ module Crystal
       node.bind_to node.expressions
 
       @vars = old_vars
+      @meta_vars = old_meta_vars
 
       false
     end
@@ -2525,7 +2546,7 @@ module Crystal
       # Try to resolve the instance_sizeof right now to a number literal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
-      if type && type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
+      if type && type.devirtualize.class? && !type.metaclass? && !node.exp.is_a?(TypeOf)
         expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded

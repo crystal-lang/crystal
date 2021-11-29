@@ -233,6 +233,17 @@ struct BigRational < Number
 
   delegate to_i8, to_i16, to_i32, to_i64, to_u8, to_u16, to_u32, to_u64, to: to_f64
 
+  # Returns `self`.
+  #
+  # ```
+  # require "big"
+  #
+  # BigRational.new(4, 5).to_big_r # => 4/5
+  # ```
+  def to_big_r : BigRational
+    self
+  end
+
   def to_big_f : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_set_q(mpf, mpq) }
   end
@@ -259,7 +270,7 @@ struct BigRational < Number
 
   def to_s(io : IO, base : Int = 10) : Nil
     str = to_cstr(base)
-    io.write_utf8 Slice.new(str, LibC.strlen(str))
+    io.write_string Slice.new(str, LibC.strlen(str))
   end
 
   def inspect : String

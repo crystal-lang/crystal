@@ -30,6 +30,58 @@ module Crystal
         false
       end
     end
+
+    # `number_autocast` defines if casting numeric expressions to larger ones is enabled
+    def supports_autocast?(number_autocast : Bool = false)
+      case self
+      when NumberLiteral, SymbolLiteral
+        true
+      else
+        if number_autocast
+          case self_type = self.type?
+          when IntegerType
+            case self_type.kind
+            when :i8, :u8, :i16, :u16, :i32, :u32, :i64, :u64
+              true
+            else
+              false
+            end
+          when FloatType
+            self_type.kind == :f32
+          end
+        else
+          false
+        end
+      end
+    end
+
+    def can_autocast_to?(other_type)
+      self_type = self.type
+
+      case {self_type, other_type}
+      when {IntegerType, IntegerType}
+        self_min, self_max = self_type.range
+        other_min, other_max = other_type.range
+        other_min <= self_min && self_max <= other_max
+      when {IntegerType, FloatType}
+        # Float32 mantissa has 23 bits,
+        # Float64 mantissa has 52 bits
+        case self_type.kind
+        when :i8, :u8, :i16, :u16
+          # Less than 23 bits, so convertable to Float32 and Float64 without precision loss
+          true
+        when :i32, :u32
+          # Less than 52 bits, so convertable to Float64 without precision loss
+          other_type.kind == :f64
+        else
+          false
+        end
+      when {FloatType, FloatType}
+        self_type.kind == :f32 && other_type.kind == :f64
+      else
+        false
+      end
+    end
   end
 
   class Var
@@ -704,12 +756,18 @@ module Crystal
   end
 
   class NilReason
+    enum Reason
+      UsedBeforeInitialized
+      UsedSelfBeforeInitialized
+      InitializedInRescue
+    end
+
     getter name : String
-    getter reason : Symbol
+    getter reason : Reason
     getter nodes : Array(ASTNode)?
     getter scope : Type?
 
-    def initialize(@name, @reason, @nodes = nil, @scope = nil)
+    def initialize(@name, @reason : Reason, @nodes = nil, @scope = nil)
     end
   end
 
@@ -791,7 +849,7 @@ module Crystal
     def initialize(@name, @type)
     end
 
-    def class_desc
+    def self.class_desc
       "MetaVar"
     end
 
@@ -801,7 +859,7 @@ module Crystal
   end
 
   class NumberLiteral
-    def can_be_autocast_to?(other_type)
+    def can_autocast_to?(other_type)
       case {self.type, other_type}
       when {IntegerType, IntegerType}
         min, max = other_type.range

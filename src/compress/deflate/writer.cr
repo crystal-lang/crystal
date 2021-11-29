@@ -54,7 +54,7 @@ class Compress::Deflate::Writer < IO
   end
 
   # See `IO#flush`.
-  def flush
+  def flush : Nil
     return if @closed
 
     consume_output LibZ::Flush::SYNC_FLUSH
@@ -62,7 +62,7 @@ class Compress::Deflate::Writer < IO
   end
 
   # Closes this writer. Must be invoked after all data has been written.
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 
@@ -81,7 +81,6 @@ class Compress::Deflate::Writer < IO
     @closed
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     to_s(io)
   end
