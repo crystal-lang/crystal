@@ -1,5 +1,6 @@
 require "./spec_helper"
 require "spec/helpers/iterate"
+require "../support/string"
 
 describe "String" do
   describe "[]" do
@@ -394,6 +395,30 @@ describe "String" do
       it { "18446744073709551615".to_u64?.should eq(18446744073709551615) }
       it { "18446744073709551616".to_u64?.should be_nil }
       it { "18446744073709551616".to_u64 { 0 }.should eq(0) }
+    end
+
+    describe "to_i128" do
+      pending_win32 { "170141183460469231731687303715884105727".to_i128.should eq(Int128::MAX) }
+      pending_win32 { "-170141183460469231731687303715884105728".to_i128.should eq(Int128::MIN) }
+      pending_win32 { expect_raises(ArgumentError) { "170141183460469231731687303715884105728".to_i128 } }
+      pending_win32 { expect_raises(ArgumentError) { "-170141183460469231731687303715884105729".to_i128 } }
+
+      pending_win32 { "170141183460469231731687303715884105727".to_i128?.should eq(Int128::MAX) }
+      pending_win32 { "170141183460469231731687303715884105728".to_i128?.should be_nil }
+      pending_win32 { "170141183460469231731687303715884105728".to_i128 { 0 }.should eq(0) }
+
+      pending_win32 { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_i128 } }
+    end
+
+    describe "to_u128" do
+      pending_win32 { "340282366920938463463374607431768211455".to_u128.should eq(UInt128::MAX) }
+      pending_win32 { "0".to_u128.should eq(0) }
+      pending_win32 { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_u128 } }
+      pending_win32 { expect_raises(ArgumentError) { "-1".to_u128 } }
+
+      pending_win32 { "340282366920938463463374607431768211455".to_u128?.should eq(UInt128::MAX) }
+      pending_win32 { "340282366920938463463374607431768211456".to_u128?.should be_nil }
+      pending_win32 { "340282366920938463463374607431768211456".to_u128 { 0 }.should eq(0) }
     end
 
     it { "1234".to_i32.should eq(1234) }
@@ -840,7 +865,7 @@ describe "String" do
     it { "hello".presence.should eq("hello") }
   end
 
-  describe "index" do
+  describe "#index" do
     describe "by char" do
       it { "foo".index('o').should eq(1) }
       it { "foo".index('g').should be_nil }
@@ -855,6 +880,12 @@ describe "String" do
         it { "foo".index('g', 1).should be_nil }
         it { "foo".index('g', -20).should be_nil }
         it { "日本語日本語".index('本', 2).should eq(4) }
+
+        # Check offset type
+        it { "foobarbaz".index('a', 5_i64).should eq(7) }
+        it { "foobarbaz".index('a', 5_i64).should be_a(Int32) }
+        it { "日本語日本語".index('本', 2_i64).should eq(4) }
+        it { "日本語日本語".index('本', 2_i64).should be_a(Int32) }
       end
     end
 
@@ -877,6 +908,14 @@ describe "String" do
         it { "日本語日本語".index("本語", 2).should eq(4) }
         it { "\xFD\x9A\xAD\x50NG".index("PNG", 2).should eq(3) }
         it { "\xFD\x9A\xAD\x50NG".index("PNG", 4).should be_nil }
+
+        # Check offset type
+        it { "foobarbaz".index("a", 5_i64).should eq(7) }
+        it { "foobarbaz".index("a", 5_i64).should be_a(Int32) }
+        it { "日本語日本語".index("本", 2_i64).should eq(4) }
+        it { "日本語日本語".index("本", 2_i64).should be_a(Int32) }
+        it { "日本語日本語".index("", 2_i64).should eq 2 }
+        it { "日本語日本語".index("", 2_i64).should be_a(Int64) }
       end
     end
 
@@ -899,7 +938,7 @@ describe "String" do
     end
   end
 
-  describe "rindex" do
+  describe "#rindex" do
     describe "by char" do
       it { "bbbb".rindex('b').should eq(3) }
       it { "foobar".rindex('a').should eq(4) }
@@ -918,6 +957,12 @@ describe "String" do
         it { "faobar".rindex('a', 3).should eq(1) }
         it { "faobarbaz".rindex('a', -3).should eq(4) }
         it { "日本語日本語".rindex('本', 3).should eq(1) }
+
+        # Check offset type
+        it { "bbbb".rindex('b', 2_i64).should eq(2) }
+        it { "bbbb".rindex('b', 2_i64).should be_a(Int64) }
+        it { "日本語日本語".rindex('本', 3_i64).should eq(1) }
+        it { "日本語日本語".rindex('本', 3_i64).should be_a(Int64) }
       end
     end
 
@@ -939,6 +984,14 @@ describe "String" do
         it { "foo".rindex("", 3).should eq(3) }
         it { "foo".rindex("", 4).should eq(3) }
         it { "日本語日本語".rindex("日本", 2).should eq(0) }
+
+        # Check offset type
+        it { "bbbb".rindex("b", 2_i64).should eq(2) }
+        it { "bbbb".rindex("b", 2_i64).should be_a(Int32) }
+        it { "日本語日本語".rindex("本", 3_i64).should eq(1) }
+        it { "日本語日本語".rindex("本", 3_i64).should be_a(Int32) }
+        it { "日本語日本語".rindex("", 3_i64).should eq(3) }
+        it { "日本語日本語".rindex("", 3_i64).should be_a(Int32) }
       end
     end
 
@@ -1640,59 +1693,73 @@ describe "String" do
   end
 
   it "#dump" do
-    "a".dump.should eq %("a")
-    "\\".dump.should eq %("\\\\")
-    "\"".dump.should eq %("\\"")
-    "\a".dump.should eq %("\\a")
-    "\b".dump.should eq %("\\b")
-    "\e".dump.should eq %("\\e")
-    "\f".dump.should eq %("\\f")
-    "\n".dump.should eq %("\\n")
-    "\r".dump.should eq %("\\r")
-    "\t".dump.should eq %("\\t")
-    "\v".dump.should eq %("\\v")
-    "\#{".dump.should eq %("\\\#{")
-    "á".dump.should eq %("\\u00E1")
-    "\u{81}".dump.should eq %("\\u0081")
-    "\u{1F48E}".dump.should eq %("\\u{1F48E}")
-    "\u{1f48e}".dump.should eq %("\\u{1F48E}")
+    assert_prints "a".dump, %("a")
+    assert_prints "\\".dump, %("\\\\")
+    assert_prints "\"".dump, %("\\"")
+    assert_prints "\0".inspect, %("\\u0000")
+    assert_prints "\x01".inspect, %("\\u0001")
+    assert_prints "\xFF".inspect, %("\\xFF")
+    assert_prints "\a".dump, %("\\a")
+    assert_prints "\b".dump, %("\\b")
+    assert_prints "\e".dump, %("\\e")
+    assert_prints "\f".dump, %("\\f")
+    assert_prints "\n".dump, %("\\n")
+    assert_prints "\r".dump, %("\\r")
+    assert_prints "\t".dump, %("\\t")
+    assert_prints "\v".dump, %("\\v")
+    assert_prints "\#{".dump, %("\\\#{")
+    assert_prints "á".dump, %("\\u00E1")
+    assert_prints "\u{81}".dump, %("\\u0081")
+    assert_prints "\u{1F48E}".dump, %("\\u{1F48E}")
+    assert_prints "\uF8FF".dump, %("\\uF8FF")       # private use character (Co)
+    assert_prints "\u202A".dump, %("\\u202A")       # bidi control character (Cf)
+    assert_prints "\u{110BD}".dump, %("\\u{110BD}") # Format character > U+FFFF (Cf)
+    assert_prints "\u00A0".dump, %("\\u00A0")       # white space (Zs)
+    assert_prints "\u200D".dump, %("\\u200D")       # format character (Cf)
+    assert_prints " ".dump, %(" ")
   end
 
   it "#dump_unquoted" do
-    "a".dump_unquoted.should eq %(a)
-    "\\".dump_unquoted.should eq %(\\\\)
-    "á".dump_unquoted.should eq %(\\u00E1)
-    "\u{81}".dump_unquoted.should eq %(\\u0081)
-    "\u{1F48E}".dump_unquoted.should eq %(\\u{1F48E})
-    "\u{1f48e}".dump_unquoted.should eq %(\\u{1F48E})
+    assert_prints "a".dump_unquoted, %(a)
+    assert_prints "\\".dump_unquoted, %(\\\\)
+    assert_prints "á".dump_unquoted, %(\\u00E1)
+    assert_prints "\u{81}".dump_unquoted, %(\\u0081)
+    assert_prints "\u{1F48E}".dump_unquoted, %(\\u{1F48E})
   end
 
   it "#inspect" do
-    "a".inspect.should eq %("a")
-    "\\".inspect.should eq %("\\\\")
-    "\"".inspect.should eq %("\\"")
-    "\a".inspect.should eq %("\\a")
-    "\b".inspect.should eq %("\\b")
-    "\e".inspect.should eq %("\\e")
-    "\f".inspect.should eq %("\\f")
-    "\n".inspect.should eq %("\\n")
-    "\r".inspect.should eq %("\\r")
-    "\t".inspect.should eq %("\\t")
-    "\v".inspect.should eq %("\\v")
-    "\#{".inspect.should eq %("\\\#{")
-    "á".inspect.should eq %("á")
-    "\u{81}".inspect.should eq %("\\u0081")
-    "\u{1F48E}".inspect.should eq %("\u{1F48E}")
-    "\u{1f48e}".inspect.should eq %("\u{1F48E}")
+    assert_prints "a".inspect, %("a")
+    assert_prints "\\".inspect, %("\\\\")
+    assert_prints "\"".inspect, %("\\"")
+    assert_prints "\0".inspect, %("\\u0000")
+    assert_prints "\x01".inspect, %("\\u0001")
+    assert_prints "\xFF".inspect, %("\\xFF")
+    assert_prints "\a".inspect, %("\\a")
+    assert_prints "\b".inspect, %("\\b")
+    assert_prints "\e".inspect, %("\\e")
+    assert_prints "\f".inspect, %("\\f")
+    assert_prints "\n".inspect, %("\\n")
+    assert_prints "\r".inspect, %("\\r")
+    assert_prints "\t".inspect, %("\\t")
+    assert_prints "\v".inspect, %("\\v")
+    assert_prints "\#{".inspect, %("\\\#{")
+    assert_prints "á".inspect, %("á")
+    assert_prints "\u{81}".inspect, %("\\u0081")
+    assert_prints "\u{1F48E}".inspect, %("\u{1F48E}")
+    assert_prints "\uF8FF".dump, %("\\uF8FF")       # private use character (Co)
+    assert_prints "\u202A".dump, %("\\u202A")       # bidi control character (Cf)
+    assert_prints "\u{110BD}".dump, %("\\u{110BD}") # Format character > U+FFFF (Cf)
+    assert_prints "\u00A0".dump, %("\\u00A0")       # white space (Zs)
+    assert_prints "\u200D".dump, %("\\u200D")       # format character (Cf)
+    assert_prints " ".inspect, %(" ")
   end
 
   it "#inspect_unquoted" do
-    "a".inspect_unquoted.should eq %(a)
-    "\\".inspect_unquoted.should eq %(\\\\)
-    "á".inspect_unquoted.should eq %(á)
-    "\u{81}".inspect_unquoted.should eq %(\\u0081)
-    "\u{1F48E}".inspect_unquoted.should eq %(\u{1F48E})
-    "\u{1f48e}".inspect_unquoted.should eq %(\u{1F48E})
+    assert_prints "a".inspect_unquoted, %(a)
+    assert_prints "\\".inspect_unquoted, %(\\\\)
+    assert_prints "á".inspect_unquoted, %(á)
+    assert_prints "\u{81}".inspect_unquoted, %(\\u0081)
+    assert_prints "\u{1F48E}".inspect_unquoted, %(\u{1F48E})
   end
 
   it "does pretty_inspect" do
@@ -2537,54 +2604,56 @@ describe "String" do
     end
   end
 
-  pending_win32 describe: "encode" do
-    it "encodes" do
-      bytes = "Hello".encode("UCS-2LE")
-      bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
-    end
+  {% unless flag?(:without_iconv) %}
+    describe "encode" do
+      it "encodes" do
+        bytes = "Hello".encode("UCS-2LE")
+        bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
+      end
 
-    it "raises if wrong encoding" do
-      expect_raises ArgumentError, "Invalid encoding: FOO" do
-        "Hello".encode("FOO")
+      it "raises if wrong encoding" do
+        expect_raises ArgumentError, "Invalid encoding: FOO" do
+          "Hello".encode("FOO")
+        end
+      end
+
+      it "raises if wrong encoding with skip" do
+        expect_raises ArgumentError, "Invalid encoding: FOO" do
+          "Hello".encode("FOO", invalid: :skip)
+        end
+      end
+
+      it "raises if illegal byte sequence" do
+        expect_raises ArgumentError, "Invalid multibyte sequence" do
+          "\xff".encode("EUC-JP")
+        end
+      end
+
+      it "doesn't raise on invalid byte sequence" do
+        "好\xff是".encode("EUC-JP", invalid: :skip).to_a.should eq([185, 165, 192, 167])
+      end
+
+      it "raises if incomplete byte sequence" do
+        expect_raises ArgumentError, "Incomplete multibyte sequence" do
+          "好".byte_slice(0, 1).encode("EUC-JP")
+        end
+      end
+
+      it "doesn't raise if incomplete byte sequence" do
+        ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).to_a.should eq([192, 167])
+      end
+
+      it "decodes" do
+        bytes = "Hello".encode("UTF-16LE")
+        String.new(bytes, "UTF-16LE").should eq("Hello")
+      end
+
+      it "decodes with skip" do
+        bytes = Bytes[186, 195, 255, 202, 199]
+        String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
       end
     end
-
-    it "raises if wrong encoding with skip" do
-      expect_raises ArgumentError, "Invalid encoding: FOO" do
-        "Hello".encode("FOO", invalid: :skip)
-      end
-    end
-
-    it "raises if illegal byte sequence" do
-      expect_raises ArgumentError, "Invalid multibyte sequence" do
-        "\xff".encode("EUC-JP")
-      end
-    end
-
-    it "doesn't raise on invalid byte sequence" do
-      "好\xff是".encode("EUC-JP", invalid: :skip).to_a.should eq([185, 165, 192, 167])
-    end
-
-    it "raises if incomplete byte sequence" do
-      expect_raises ArgumentError, "Incomplete multibyte sequence" do
-        "好".byte_slice(0, 1).encode("EUC-JP")
-      end
-    end
-
-    it "doesn't raise if incomplete byte sequence" do
-      ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).to_a.should eq([192, 167])
-    end
-
-    it "decodes" do
-      bytes = "Hello".encode("UTF-16LE")
-      String.new(bytes, "UTF-16LE").should eq("Hello")
-    end
-
-    it "decodes with skip" do
-      bytes = Bytes[186, 195, 255, 202, 199]
-      String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
-    end
-  end
+  {% end %}
 
   it "inserts" do
     "bar".insert(0, "foo").should eq("foobar")

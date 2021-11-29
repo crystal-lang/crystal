@@ -12,7 +12,7 @@ abstract class OpenSSL::SSL::Socket < IO
             hostname.to_unsafe.as(Pointer(Void))
           )
 
-          {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+          {% if LibSSL.has_method?(:ssl_get0_param) %}
             param = LibSSL.ssl_get0_param(@ssl)
 
             if ::Socket.ip?(hostname)
@@ -47,6 +47,11 @@ abstract class OpenSSL::SSL::Socket < IO
       ensure
         socket.close
       end
+    end
+
+    # Returns the `OpenSSL::X509::Certificate` the peer presented.
+    def peer_certificate : OpenSSL::X509::Certificate
+      super.not_nil!
     end
   end
 
@@ -146,18 +151,20 @@ abstract class OpenSSL::SSL::Socket < IO
     end
   end
 
-  def unbuffered_flush
+  def unbuffered_flush : Nil
     @bio.io.flush
   end
 
-  {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
-    # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
-    # negotiated.
-    def alpn_protocol
+  # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
+  # negotiated.
+  def alpn_protocol
+    {% if LibSSL.has_method?(:ssl_get0_alpn_selected) %}
       LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
       String.new(protocol, len) unless protocol.null?
-    end
-  {% end %}
+    {% else %}
+      raise NotImplementedError.new("LibSSL.ssl_get0_alpn_selected")
+    {% end %}
+  end
 
   def unbuffered_close : Nil
     return if @closed
@@ -256,5 +263,18 @@ abstract class OpenSSL::SSL::Socket < IO
     else
       raise NotImplementedError.new("#{io.class}#write_timeout=")
     end
+  end
+
+  # Returns the `OpenSSL::X509::Certificate` the peer presented, if a
+  # connection was esablished.
+  #
+  # NOTE: Due to the protocol definition, a TLS/SSL server will always send a
+  # certificate, if present. A client will only send a certificate when
+  # explicitly requested to do so by the server (see `SSL_CTX_set_verify(3)`). If
+  # an anonymous cipher is used, no certificates are sent. That a certificate
+  # is returned does not indicate information about the verification state.
+  def peer_certificate : OpenSSL::X509::Certificate?
+    cert = LibSSL.ssl_get_peer_certificate(@ssl)
+    OpenSSL::X509::Certificate.new cert if cert
   end
 end

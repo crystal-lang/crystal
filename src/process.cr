@@ -424,11 +424,14 @@ end
 # Standard input, and error are inherited.
 # The special `$?` variable is set to a `Process::Status` associated with this execution.
 #
-# Example:
+# It is impossible to call this method with any regular call syntax. There is an associated literal type which calls the method with the literal content as command:
 #
 # ```
-# `echo hi` # => "hi\n"
+# `echo hi`   # => "hi\n"
+# $?.success? # => true
 # ```
+#
+# See [`Command` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/command.html) in the language reference.
 def `(command) : String
   process = Process.new(command, shell: true, input: Process::Redirect::Inherit, output: Process::Redirect::Pipe, error: Process::Redirect::Inherit)
   output = process.output.gets_to_end

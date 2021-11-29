@@ -2,13 +2,13 @@ require "../../spec_helper"
 
 describe "Semantic: macro" do
   it "types macro" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       macro foo
         1
       end
 
       foo
-    )) { int32 }
+      CR
   end
 
   it "errors if macro uses undefined variable" do
@@ -17,7 +17,7 @@ describe "Semantic: macro" do
   end
 
   it "types macro def" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       class Foo
         def foo : Int32
           {{ @type }}
@@ -26,11 +26,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-      )) { int32 }
+      CR
   end
 
   it "errors if macro def type not found" do
-    assert_error %(
+    assert_error <<-CR, "undefined constant Foo"
       class Baz
         def foo : Foo
           {{ @type }}
@@ -38,12 +38,11 @@ describe "Semantic: macro" do
       end
 
       Baz.new.foo
-      ),
-      "undefined constant Foo"
+      CR
   end
 
   it "errors if macro def type doesn't match found" do
-    assert_error %(
+    assert_error <<-CR, "method Foo#foo must return Int32 but it is returning Char"
       class Foo
         def foo : Int32
           {{ @type}}
@@ -52,8 +51,7 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-      ),
-      "method Foo#foo must return Int32 but it is returning Char"
+      CR
   end
 
   it "allows subclasses of return type for macro def" do
@@ -129,7 +127,7 @@ describe "Semantic: macro" do
       Baz.new.foobar.foo
     }).to_i.should eq(2)
 
-    assert_error %{
+    assert_error(<<-CR, "method Bar#bar must return Foo(String) but it is returning Foo(Int32)")
       class Foo(T)
         def initialize(@foo : T)
         end
@@ -143,12 +141,11 @@ describe "Semantic: macro" do
       end
 
       Bar.new.bar
-    }, "method Bar#bar must return Foo(String) but it is returning Foo(Int32)",
-      inject_primitives: false
+      CR
   end
 
   it "allows union return types for macro def" do
-    assert_type(%{
+    assert_type(<<-CR) { int32 }
       class Foo
         def foo : String | Int32
           {{ @type }}
@@ -157,11 +154,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-    }) { int32 }
+      CR
   end
 
   it "types macro def that calls another method" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       def bar_baz
         1
       end
@@ -176,11 +173,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-      )) { int32 }
+      CR
   end
 
   it "types macro def that calls another method inside a class" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       class Foo
         def bar_baz
           1
@@ -195,11 +192,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-      )) { int32 }
+      CR
   end
 
   it "types macro def that calls another method inside a class" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       class Foo
         def foo : Int32
           {{ @type }}
@@ -216,11 +213,11 @@ describe "Semantic: macro" do
       end
 
       Bar.new.foo
-      )) { int32 }
+      CR
   end
 
   it "types macro def with argument" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       class Foo
         def foo(x) : Int32
           {{ @type }}
@@ -229,11 +226,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo(1)
-      )) { int32 }
+      CR
   end
 
   it "expands macro with block" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       macro foo
         {{yield}}
       end
@@ -245,11 +242,11 @@ describe "Semantic: macro" do
       end
 
       bar
-      )) { int32 }
+      CR
   end
 
   it "expands macro with block and argument to yield" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       macro foo
         {{yield 1}}
       end
@@ -261,56 +258,56 @@ describe "Semantic: macro" do
       end
 
       bar
-      )) { int32 }
+      CR
   end
 
   it "errors if find macros but wrong arguments" do
-    assert_error %(
+    assert_error(<<-CR, "wrong number of arguments for macro 'foo' (given 1, expected 0)", inject_primitives: true)
       macro foo
         1
       end
 
       foo(1)
-      ), "wrong number of arguments for macro 'foo' (given 1, expected 0)"
+      CR
   end
 
   it "executes raise inside macro" do
-    ex = assert_error %(
+    ex = assert_error(<<-CR, "OH NO")
       macro foo
         {{ raise "OH NO" }}
       end
 
       foo
-      ), "OH NO"
+      CR
 
     ex.to_s.should_not contain("expanding macro")
   end
 
   it "executes raise inside macro, with node (#5669)" do
-    ex = assert_error %(
+    ex = assert_error(<<-CR, "OH")
       macro foo(x)
         {{ x.raise "OH\nNO" }}
       end
 
       foo(1)
-      ), "OH"
+      CR
 
     ex.to_s.should contain "NO"
     ex.to_s.should_not contain("expanding macro")
   end
 
   it "executes raise inside macro, with empty message (#8631)" do
-    assert_error %(
+    assert_error(<<-CR, "")
       macro foo
         {{ raise "" }}
       end
 
       foo
-      ), ""
+      CR
   end
 
   it "can specify tuple as return type" do
-    assert_type(%(
+    assert_type(<<-CR) { tuple_of([int32, int32] of Type) }
       class Foo
         def foo : {Int32, Int32}
           {{ @type }}
@@ -319,11 +316,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-      )) { tuple_of([int32, int32] of Type) }
+      CR
   end
 
   it "allows specifying self as macro def return type" do
-    assert_type(%(
+    assert_type(<<-CR) { types["Foo"] }
       class Foo
         def foo : self
           {{ @type }}
@@ -332,11 +329,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-      )) { types["Foo"] }
+      CR
   end
 
   it "allows specifying self as macro def return type (2)" do
-    assert_type(%(
+    assert_type(<<-CR) { types["Bar"] }
       class Foo
         def foo : self
           {{ @type }}
@@ -348,33 +345,31 @@ describe "Semantic: macro" do
       end
 
       Bar.new.foo
-      )) { types["Bar"] }
+      CR
   end
 
   it "errors if non-existent named arg" do
-    assert_error %(
+    assert_error(<<-CR, "no parameter named 'y'")
       macro foo(x = 1)
         {{x}} + 1
       end
 
       foo y: 2
-      ),
-      "no argument named 'y'"
+      CR
   end
 
   it "errors if named arg already specified" do
-    assert_error %(
+    assert_error(<<-CR, "argument for parameter 'x' already specified")
       macro foo(x = 1)
         {{x}} + 1
       end
 
       foo 2, x: 2
-      ),
-      "argument 'x' already specified"
+      CR
   end
 
   it "finds macro in included module" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       module Moo
         macro bar
           1
@@ -390,11 +385,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-      )) { int32 }
+      CR
   end
 
   it "errors when trying to define def inside def with macro expansion" do
-    assert_error %(
+    assert_error(<<-CR, "can't define def inside def")
       macro foo
         def bar; end
       end
@@ -404,12 +399,11 @@ describe "Semantic: macro" do
       end
 
       baz
-      ),
-      "can't define def inside def"
+      CR
   end
 
   it "gives precise location info when doing yield inside macro" do
-    assert_error %(
+    assert_error(<<-CR, "in line 6")
       macro foo
         {{yield}}
       end
@@ -417,12 +411,11 @@ describe "Semantic: macro" do
       foo do
         1 + 'a'
       end
-      ),
-      "in line 7"
+      CR
   end
 
   it "transforms with {{yield}} and call" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       macro foo
         bar({{yield}})
       end
@@ -431,14 +424,18 @@ describe "Semantic: macro" do
         value
       end
 
-      foo do
-        1 + 2
+      def baz
+        1
       end
-      )) { int32 }
+
+      foo do
+        baz
+      end
+      CR
   end
 
   it "can return class type in macro def" do
-    assert_type(%(
+    assert_type(<<-CR) { types["Int32"].metaclass }
       class Foo
         def foo : Int32.class
           {{ @type }}
@@ -447,11 +444,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-      )) { types["Int32"].metaclass }
+      CR
   end
 
   it "can return virtual class type in macro def" do
-    assert_type(%(
+    assert_type(<<-CR, inject_primitives: true) { types["Foo"].metaclass.virtual_type }
       class Foo
       end
 
@@ -466,11 +463,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-      )) { types["Foo"].metaclass.virtual_type }
+      CR
   end
 
   it "can't define new variables (#466)" do
-    error = assert_error <<-CR,
+    error = assert_error <<-CR
       macro foo
         hello = 1
       end
@@ -478,12 +475,12 @@ describe "Semantic: macro" do
       foo
       hello
       CR
-      inject_primitives: false
+
     error.to_s.should_not contain("did you mean")
   end
 
   it "finds macro in included generic module" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       module Moo(T)
         macro moo
           1
@@ -499,11 +496,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-      )) { int32 }
+      CR
   end
 
   it "finds macro in inherited generic class" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       class Moo(T)
         macro moo
           1
@@ -517,21 +514,21 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-      )) { int32 }
+      CR
   end
 
   it "doesn't die on && inside if (bug)" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       macro foo
         1 && 2
       end
 
       foo ? 3 : 4
-      )) { int32 }
+      CR
   end
 
   it "checks if macro expansion returns (#821)" do
-    assert_type(%(
+    assert_type(<<-CR) { nilable symbol }
       macro pass
         return :pass
       end
@@ -542,44 +539,43 @@ describe "Semantic: macro" do
       end
 
       me
-      )) { nilable symbol }
+      CR
   end
 
   it "errors if declares macro inside if" do
-    assert_error %(
+    assert_error(<<-CR, "can't declare macro dynamically")
       if 1 == 2
         macro foo; end
       end
-      ),
-      "can't declare macro dynamically"
+      CR
   end
 
   it "allows declaring class with macro if" do
-    assert_type(%(
+    assert_type(<<-CR) { types["Foo"] }
       {% if true %}
         class Foo; end
       {% end %}
 
       Foo.new
-      )) { types["Foo"] }
+      CR
   end
 
   it "allows declaring class with macro for" do
-    assert_type(%(
+    assert_type(<<-CR) { types["Foo"] }
       {% for i in 0..0 %}
         class Foo; end
       {% end %}
 
       Foo.new
-      )) { types["Foo"] }
+      CR
   end
 
   it "allows declaring class with inline macro expression (#1333)" do
-    assert_type(%(
+    assert_type(<<-CR) { types["Foo"] }
       {{ "class Foo; end".id }}
 
       Foo.new
-      )) { types["Foo"] }
+      CR
   end
 
   it "errors if requires inside class through macro expansion" do
@@ -598,7 +594,7 @@ describe "Semantic: macro" do
   end
 
   it "errors if requires inside if through macro expansion" do
-    assert_error %(
+    assert_error(<<-CR, "can't require dynamically")
       macro req
         require "bar"
       end
@@ -606,12 +602,11 @@ describe "Semantic: macro" do
       if 1 == 2
         req
       end
-      ),
-      "can't require dynamically"
+      CR
   end
 
   it "can define constant via macro included" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       module Mod
         macro included
           CONST = 1
@@ -620,13 +615,12 @@ describe "Semantic: macro" do
 
       include Mod
 
-
       CONST
-      )) { int32 }
+      CR
   end
 
   it "errors if applying protected modifier to macro" do
-    assert_error %(
+    assert_error(<<-CR, "can only use 'private' for macros")
       class Foo
         protected macro foo
           1
@@ -634,11 +628,11 @@ describe "Semantic: macro" do
       end
 
       Foo.foo
-    ), "can only use 'private' for macros"
+      CR
   end
 
   it "expands macro with break inside while (#1852)" do
-    assert_type(%(
+    assert_type(<<-CR) { nil_type }
       macro test
         foo = "bar"
         break
@@ -647,11 +641,11 @@ describe "Semantic: macro" do
       while true
         test
       end
-      )) { nil_type }
+      CR
   end
 
   it "can access variable inside macro expansion (#2057)" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       macro foo
         x
       end
@@ -663,11 +657,11 @@ describe "Semantic: macro" do
       method do |x|
         foo
       end
-      )) { int32 }
+      CR
   end
 
   it "declares variable for macro with out" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       lib LibFoo
         fun foo(x : Int32*)
       end
@@ -678,49 +672,44 @@ describe "Semantic: macro" do
 
       LibFoo.foo(out z)
       some_macro
-      )) { int32 }
+      CR
   end
 
   it "show macro trace in errors (1)" do
-    ex = assert_error %(
+    ex = assert_error(<<-CR, "Error: expanding macro")
       macro foo
         Bar
       end
 
       foo
-    ),
-      "Error: expanding macro",
-      inject_primitives: false
+      CR
 
-    ex.to_s.should contain "error in line 6"
+    ex.to_s.should contain "error in line 5"
   end
 
   it "show macro trace in errors (2)" do
-    ex = assert_error %(
+    ex = assert_error(<<-CR, "Error: expanding macro")
       {% begin %}
         Bar
       {% end %}
-    ),
-      "Error: expanding macro",
-      inject_primitives: false
+      CR
 
-    ex.to_s.should contain "error in line 2"
+    ex.to_s.should contain "error in line 1"
   end
 
   it "errors if using macro that is defined later" do
-    assert_error %(
+    assert_error(<<-CR, "macro 'foo' must be defined before this point but is defined later")
       class Bar
         foo
       end
 
       macro foo
       end
-      ),
-      "macro 'foo' must be defined before this point but is defined later"
+      CR
   end
 
   it "looks up argument types in macro owner, not in subclass (#2395)" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       struct Nil
         def method(x : Problem)
           0
@@ -749,11 +738,11 @@ describe "Semantic: macro" do
       end
 
       Moo::Bar.new.method(Problem.new)
-      )) { int32 }
+      CR
   end
 
   it "doesn't error when adding macro call to constant (#2457)" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       macro foo
       end
 
@@ -767,82 +756,133 @@ describe "Semantic: macro" do
       coco do
         foo
       end
-      )) { int32 }
+      CR
   end
 
-  it "errors if named arg matches single splat argument" do
-    assert_error %(
+  it "errors if named arg matches single splat parameter" do
+    assert_error(<<-CR, "no parameter named 'x'")
       macro foo(*y)
       end
 
       foo x: 1, y: 2
-      ),
-      "no argument named 'x'"
+      CR
   end
 
-  it "errors if named arg matches splat argument" do
-    assert_error %(
+  it "errors if named arg matches splat parameter" do
+    assert_error(<<-CR, "wrong number of arguments for macro 'foo' (given 0, expected 1+)")
       macro foo(x, *y)
       end
 
       foo x: 1, y: 2
-      ),
-      "wrong number of arguments for macro 'foo' (given 0, expected 1+)"
+      CR
   end
 
   it "says missing argument because positional args don't match past splat" do
-    assert_error %(
+    assert_error(<<-CR, "missing argument: z")
       macro foo(x, *y, z)
       end
 
       foo 1, 2
-      ),
-      "missing argument: z"
+      CR
   end
 
   it "allows named args after splat" do
-    assert_type(%(
+    assert_type(<<-CR) { tuple_of([tuple_of([int32]), char]) }
       macro foo(*y, x)
         { {{y}}, {{x}} }
       end
 
       foo 1, x: 'a'
-      )) { tuple_of([tuple_of([int32]), char]) }
+      CR
   end
 
   it "errors if missing one argument" do
-    assert_error %(
+    assert_error(<<-CR, "missing argument: z")
       macro foo(x, y, z)
       end
 
       foo x: 1, y: 2
-      ),
-      "missing argument: z"
+      CR
   end
 
   it "errors if missing two arguments" do
-    assert_error %(
+    assert_error(<<-CR, "missing arguments: x, z")
       macro foo(x, y, z)
       end
 
       foo y: 2
-      ),
-      "missing arguments: x, z"
+      CR
   end
 
-  it "doesn't include arguments with default values in missing arguments error" do
-    assert_error %(
-
+  it "doesn't include parameters with default values in missing arguments error" do
+    assert_error(<<-CR, "missing argument: z")
       macro foo(x, z, y = 1)
       end
 
       foo(x: 1)
-      ),
-      "missing argument: z"
+      CR
+  end
+
+  it "solves macro expression arguments before macro expansion (type)" do
+    assert_type(<<-CR) { int32 }
+      macro foo(x)
+        {% if x.is_a?(TypeNode) && x.name == "String" %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      end
+
+      foo({{ String }})
+      CR
+  end
+
+  it "solves macro expression arguments before macro expansion (constant)" do
+    assert_type(<<-CR) { int32 }
+      macro foo(x)
+        {% if x.is_a?(NumberLiteral) && x == 1 %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      end
+
+      CONST = 1
+      foo({{ CONST }})
+      CR
+  end
+
+  it "solves named macro expression arguments before macro expansion (type) (#2423)" do
+    assert_type(<<-CR) { int32 }
+      macro foo(x)
+        {% if x.is_a?(TypeNode) && x.name == "String" %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      end
+
+      foo(x: {{ String }})
+      CR
+  end
+
+  it "solves named macro expression arguments before macro expansion (constant) (#2423)" do
+    assert_type(<<-CR) { int32 }
+      macro foo(x)
+        {% if x.is_a?(NumberLiteral) && x == 1 %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      end
+
+      CONST = 1
+      foo(x: {{ CONST }})
+      CR
   end
 
   it "finds generic type argument of included module" do
-    assert_type(%(
+    assert_type(<<-CR) { int32.metaclass }
       module Bar(T)
         def t
           {{ T }}
@@ -854,11 +894,11 @@ describe "Semantic: macro" do
       end
 
       Foo(Int32).new.t
-      )) { int32.metaclass }
+      CR
   end
 
   it "finds generic type argument of included module with self" do
-    assert_type(%(
+    assert_type(<<-CR) { generic_class("Foo", int32).metaclass }
       module Bar(T)
         def t
           {{ T }}
@@ -870,11 +910,11 @@ describe "Semantic: macro" do
       end
 
       Foo(Int32).new.t
-      )) { generic_class("Foo", int32).metaclass }
+      CR
   end
 
   it "finds free type vars" do
-    assert_type(%(
+    assert_type(<<-CR) { tuple_of([int32.metaclass, string.metaclass]) }
       module Foo(T)
         def self.foo(foo : U) forall U
           { {{ T }}, {{ U }} }
@@ -882,41 +922,41 @@ describe "Semantic: macro" do
       end
 
       Foo(Int32).foo("foo")
-    )) { tuple_of([int32.metaclass, string.metaclass]) }
+      CR
   end
 
   it "gets named arguments in double splat" do
-    assert_type(%(
+    assert_type(<<-CR) { named_tuple_of({"x": string, "y": bool}) }
       macro foo(**options)
         {{options}}
       end
 
       foo x: "foo", y: true
-      )) { named_tuple_of({"x": string, "y": bool}) }
+      CR
   end
 
   it "uses splat and double splat" do
-    assert_type(%(
+    assert_type(<<-CR) { tuple_of([tuple_of([int32, char]), named_tuple_of({"x": string, "y": bool})]) }
       macro foo(*args, **options)
         { {{args}}, {{options}} }
       end
 
       foo 1, 'a', x: "foo", y: true
-      )) { tuple_of([tuple_of([int32, char]), named_tuple_of({"x": string, "y": bool})]) }
+      CR
   end
 
   it "double splat and regular args" do
-    assert_type(%(
+    assert_type(<<-CR) { tuple_of([int32, bool, named_tuple_of({"w": char, "z": string})]) }
       macro foo(x, y, **options)
         { {{x}}, {{y}}, {{options}} }
       end
 
       foo 1, w: 'a', y: true, z: "z"
-      )) { tuple_of([int32, bool, named_tuple_of({"w": char, "z": string})]) }
+      CR
   end
 
   it "declares multi-assign vars for macro" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       macro id(x, y)
         {{x}}
         {{y}}
@@ -925,11 +965,11 @@ describe "Semantic: macro" do
       a, b = 1, 2
       id(a, b)
       1
-      )) { int32 }
+      CR
   end
 
   it "declares rescue variable inside for macro" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       macro id(x)
         {{x}}
       end
@@ -940,51 +980,49 @@ describe "Semantic: macro" do
       end
 
       1
-      )) { int32 }
+      CR
   end
 
   it "matches with default value after splat" do
-    assert_type(%(
+    assert_type(<<-CR) { tuple_of([int32, tuple_of([char]), bool]) }
       macro foo(x, *y, z = true)
         { {{x}}, {{y}}, {{z}} }
       end
 
       foo 1, 'a'
-      )) { tuple_of([int32, tuple_of([char]), bool]) }
+      CR
   end
 
   it "uses bare *" do
-    assert_type(%(
+    assert_type(<<-CR) { tuple_of([int32, char]) }
       macro foo(x, *, y)
         { {{x}}, {{y}} }
       end
 
       foo 10, y: 'a'
-      )) { tuple_of([int32, char]) }
+      CR
   end
 
   it "uses bare *, doesn't let more args" do
-    assert_error %(
+    assert_error(<<-CR, "wrong number of arguments for macro 'foo' (given 2, expected 1)")
       macro foo(x, *, y)
       end
 
       foo 10, 20, y: 30
-      ),
-      "wrong number of arguments for macro 'foo' (given 2, expected 1)"
+      CR
   end
 
   it "uses bare *, doesn't let more args" do
-    assert_error %(
+    assert_error(<<-CR, "no overload matches")
       def foo(x, *, y)
       end
 
       foo 10, 20, y: 30
-      ),
-      "no overload matches"
+      CR
   end
 
   it "finds macro through alias (#2706)" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       module Moo
         macro bar
           1
@@ -994,11 +1032,11 @@ describe "Semantic: macro" do
       alias Foo = Moo
 
       Foo.bar
-      )) { int32 }
+      CR
   end
 
   it "can override macro (#2773)" do
-    assert_type(%(
+    assert_type(<<-CR) { char }
       macro foo
         1
       end
@@ -1008,31 +1046,31 @@ describe "Semantic: macro" do
       end
 
       foo
-      )) { char }
+      CR
   end
 
   it "works inside proc literal (#2984)" do
-    assert_type(%(
+    assert_type(<<-CR, inject_primitives: true) { int32 }
       macro foo
         1
       end
 
       ->{ foo }.call
-      )) { int32 }
+      CR
   end
 
   it "finds var in proc for macros" do
-    assert_type(%(
+    assert_type(<<-CR, inject_primitives: true) { int32 }
       macro foo(x)
         {{x}}
       end
 
       ->(x : Int32) { foo(x) }.call(1)
-      )) { int32 }
+      CR
   end
 
   it "applies visibility modifier only to first level" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       macro foo
         class Foo
           def self.foo
@@ -1044,11 +1082,11 @@ describe "Semantic: macro" do
       private foo
 
       Foo.foo
-      ), inject_primitives: false) { int32 }
+      CR
   end
 
   it "gives correct error when method is invoked but macro exists at the same scope" do
-    assert_error %(
+    assert_error(<<-CR, "undefined method 'foo'")
       macro foo(x)
       end
 
@@ -1056,24 +1094,23 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-      ),
-      "undefined method 'foo'"
+      CR
   end
 
   it "uses uninitialized variable with macros" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       macro foo(x)
         {{x}}
       end
 
       a = uninitialized Int32
       foo(a)
-      )) { int32 }
+      CR
   end
 
   describe "skip_file macro directive" do
     it "skips expanding the rest of the current file" do
-      res = semantic(%(
+      res = semantic(<<-CR)
         class A
         end
 
@@ -1081,14 +1118,14 @@ describe "Semantic: macro" do
 
         class B
         end
-      ))
+        CR
 
       res.program.types.has_key?("A").should be_true
       res.program.types.has_key?("B").should be_false
     end
 
     it "skips file inside an if macro expression" do
-      res = semantic(%(
+      res = semantic(<<-CR)
         class A
         end
 
@@ -1100,7 +1137,7 @@ describe "Semantic: macro" do
 
         class B
         end
-      ))
+        CR
 
       res.program.types.has_key?("A").should be_true
       res.program.types.has_key?("B").should be_false
@@ -1110,7 +1147,7 @@ describe "Semantic: macro" do
   end
 
   it "finds method before macro (#236)" do
-    assert_type(%(
+    assert_type(<<-CR) { char }
       macro global
         1
       end
@@ -1126,11 +1163,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.bar
-      )) { char }
+      CR
   end
 
   it "finds macro and method at the same scope" do
-    assert_type(%(
+    assert_type(<<-CR) { tuple_of [int32, char] }
       macro global(x)
         1
       end
@@ -1140,11 +1177,11 @@ describe "Semantic: macro" do
       end
 
       {global(1), global(1, 2)}
-      )) { tuple_of [int32, char] }
+      CR
   end
 
   it "finds macro and method at the same scope inside included module" do
-    assert_type(%(
+    assert_type(<<-CR) { tuple_of [int32, char] }
       module Moo
         macro global(x)
           1
@@ -1164,11 +1201,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.main
-      )) { tuple_of [int32, char] }
+      CR
   end
 
   it "finds macro in included module at class level (#4639)" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       module Moo
         macro foo
           def self.bar
@@ -1184,11 +1221,11 @@ describe "Semantic: macro" do
       end
 
       Foo.bar
-      ), inject_primitives: false) { int32 }
+      CR
   end
 
   it "finds macro in module in Object" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       class Object
         macro foo
           def self.bar
@@ -1202,11 +1239,11 @@ describe "Semantic: macro" do
       end
 
       Moo.bar
-      ), inject_primitives: false) { int32 }
+      CR
   end
 
   it "finds metaclass instance of instance method (#4739)" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       class Parent
         macro foo
           def self.bar
@@ -1225,11 +1262,11 @@ describe "Semantic: macro" do
       end
 
       GrandChild.bar
-    )) { int32 }
+      CR
   end
 
   it "finds metaclass instance of instance method (#4639)" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       module Include
         macro foo
           def foo
@@ -1249,11 +1286,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.foo
-    )) { int32 }
+      CR
   end
 
   it "can lookup type parameter when macro is called inside class (#5343)" do
-    assert_type(%(
+    assert_type(<<-CR) { int32.metaclass }
       class Foo(T)
         macro foo
           {{T}}
@@ -1269,11 +1306,11 @@ describe "Semantic: macro" do
       end
 
       Bar.foo
-    )) { int32.metaclass }
+      CR
   end
 
   it "cannot lookup type defined in caller class" do
-    assert_error %(
+    assert_error(<<-CR, "undefined constant Baz")
       class Foo
         macro foo
           {{Baz}}
@@ -1290,12 +1327,11 @@ describe "Semantic: macro" do
       end
 
       Bar.foo
-      ),
-      "undefined constant Baz"
+      CR
   end
 
   it "clones default value before expanding" do
-    assert_type(%(
+    assert_type(<<-CR) { nil_type }
       FOO = {} of String => String?
 
       macro foo(x = {} of String => String)
@@ -1306,11 +1342,11 @@ describe "Semantic: macro" do
       foo
       foo
       {{ FOO["foo"] }}
-    )) { nil_type }
+      CR
   end
 
   it "does macro verbatim inside macro" do
-    assert_type(%(
+    assert_type(<<-CR) { types["Bar"].metaclass }
       class Foo
         macro inherited
           {% verbatim do %}
@@ -1325,19 +1361,19 @@ describe "Semantic: macro" do
       end
 
       Bar.new.foo
-      )) { types["Bar"].metaclass }
+      CR
   end
 
   it "does macro verbatim outside macro" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       {% verbatim do %}
         1
       {% end %}
-      )) { int32 }
+      CR
   end
 
   it "evaluates yield expression (#2924)" do
-    assert_type(%(
+    assert_type(<<-CR) { string }
       macro a(b)
         {{yield b}}
       end
@@ -1345,19 +1381,19 @@ describe "Semantic: macro" do
       a("foo") do |c|
         {{c}}
       end
-      )) { string }
+      CR
   end
 
   it "finds generic in macro code" do
-    assert_type(%(
+    assert_type(<<-CR) { array_of(string).metaclass }
       {% begin %}
         {{ Array(String) }}
       {% end %}
-      )) { array_of(string).metaclass }
+      CR
   end
 
   it "finds generic in macro code using free var" do
-    assert_type(%(
+    assert_type(<<-CR) { array_of(int32).metaclass }
       class Foo(T)
         def self.foo
           {% begin %}
@@ -1367,11 +1403,11 @@ describe "Semantic: macro" do
       end
 
       Foo(Int32).foo
-      )) { array_of(int32).metaclass }
+      CR
   end
 
   it "expands multiline macro expression in verbatim (#6643)" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       {% verbatim do %}
         {{
           if true
@@ -1381,11 +1417,11 @@ describe "Semantic: macro" do
           end
         }}
       {% end %}
-    )) { int32 }
+      CR
   end
 
   it "can use macro in instance var initializer (#7666)" do
-    assert_type(%(
+    assert_type(<<-CR) { string }
       class Foo
         macro m
           "test"
@@ -1399,11 +1435,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.x
-      )) { string }
+      CR
   end
 
   it "can use macro in instance var initializer (just assignment) (#7666)" do
-    assert_type(%(
+    assert_type(<<-CR) { string }
       class Foo
         macro m
           "test"
@@ -1417,11 +1453,11 @@ describe "Semantic: macro" do
       end
 
       Foo.new.x
-      )) { string }
+      CR
   end
 
   it "shows correct error message in macro expansion (#7083)" do
-    assert_error %(
+    assert_error(<<-CR, "can't instantiate abstract class Foo")
       abstract class Foo
         {% begin %}
           def self.new
@@ -1431,20 +1467,19 @@ describe "Semantic: macro" do
       end
 
       Foo.new
-      ),
-      "can't instantiate abstract class Foo"
+      CR
   end
 
   it "doesn't crash on syntax error inside macro (regression, #8038)" do
     expect_raises(Crystal::SyntaxException, "unterminated array literal") do
-      semantic(%(
+      semantic(<<-CR)
         {% begin %}[{% end %}
-        ))
+        CR
     end
   end
 
   it "has correct location after expanding assignment after instance var" do
-    result = semantic <<-CR, inject_primitives: false
+    result = semantic <<-CR
       macro foo(x)       #  1
         @{{x}}           #  2
                          #  3
@@ -1462,7 +1497,7 @@ describe "Semantic: macro" do
   end
 
   it "executes OpAssign (#9356)" do
-    assert_type(%(
+    assert_type(<<-CR) { int32 }
       {% begin %}
         {% a = nil %}
         {% a ||= 1 %}
@@ -1472,25 +1507,25 @@ describe "Semantic: macro" do
           'a'
         {% end %}
       {% end %}
-      )) { int32 }
+      CR
   end
 
   it "executes MultiAssign" do
-    assert_type(%(
+    assert_type(<<-CR) { tuple_of([int32, int32] of Type) }
       {% begin %}
         {% a, b = 1, 2 %}
         { {{a}}, {{b}} }
       {% end %}
-      )) { tuple_of([int32, int32] of Type) }
+      CR
   end
 
   it "executes MultiAssign with ArrayLiteral value" do
-    assert_type(%(
+    assert_type(<<-CR) { tuple_of([int32, int32] of Type) }
       {% begin %}
         {% xs = [1, 2] %}
         {% a, b = xs %}
         { {{a}}, {{b}} }
       {% end %}
-      )) { tuple_of([int32, int32] of Type) }
+      CR
   end
 end

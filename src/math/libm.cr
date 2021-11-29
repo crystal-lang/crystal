@@ -29,8 +29,13 @@ lib LibM
   fun pow_f32 = "llvm.pow.f32"(value : Float32, power : Float32) : Float32
   fun pow_f64 = "llvm.pow.f64"(value : Float64, power : Float64) : Float64
   {% unless flag?(:win32) %}
-    fun powi_f32 = "llvm.powi.f32"(value : Float32, power : Int32) : Float32
-    fun powi_f64 = "llvm.powi.f64"(value : Float64, power : Int32) : Float64
+    {% if compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 %}
+      fun powi_f32 = "llvm.powi.f32"(value : Float32, power : Int32) : Float32
+      fun powi_f64 = "llvm.powi.f64"(value : Float64, power : Int32) : Float64
+    {% else %}
+      fun powi_f32 = "llvm.powi.f32.i32"(value : Float32, power : Int32) : Float32
+      fun powi_f64 = "llvm.powi.f64.i32"(value : Float64, power : Int32) : Float64
+    {% end %}
   {% end %}
   fun round_f32 = "llvm.round.f32"(value : Float32) : Float32
   fun round_f64 = "llvm.round.f64"(value : Float64) : Float64
@@ -58,18 +63,27 @@ lib LibM
   fun atan_f64 = atan(value : Float64) : Float64
   fun atanh_f32 = atanhf(value : Float32) : Float32
   fun atanh_f64 = atanh(value : Float64) : Float64
-  fun besselj0_f32 = j0f(value : Float32) : Float32
-  fun besselj0_f64 = j0(value : Float64) : Float64
-  fun besselj1_f32 = j1f(value : Float32) : Float32
-  fun besselj1_f64 = j1(value : Float64) : Float64
-  fun besselj_f32 = jnf(value1 : Int32, value2 : Float32) : Float32
-  fun besselj_f64 = jn(value1 : Int32, value2 : Float64) : Float64
-  fun bessely0_f32 = y0f(value : Float32) : Float32
-  fun bessely0_f64 = y0(value : Float64) : Float64
-  fun bessely1_f32 = y1f(value : Float32) : Float32
-  fun bessely1_f64 = y1(value : Float64) : Float64
-  fun bessely_f32 = ynf(value1 : Int32, value2 : Float32) : Float32
-  fun bessely_f64 = yn(value1 : Int32, value2 : Float64) : Float64
+  {% if flag?(:win32) %}
+    fun besselj0_f64 = _j0(value : Float64) : Float64
+    fun besselj1_f64 = _j1(value : Float64) : Float64
+    fun besselj_f64 = _jn(value1 : Int32, value2 : Float64) : Float64
+    fun bessely0_f64 = _y0(value : Float64) : Float64
+    fun bessely1_f64 = _y1(value : Float64) : Float64
+    fun bessely_f64 = _yn(value1 : Int32, value2 : Float64) : Float64
+  {% else %}
+    fun besselj0_f32 = j0f(value : Float32) : Float32
+    fun besselj0_f64 = j0(value : Float64) : Float64
+    fun besselj1_f32 = j1f(value : Float32) : Float32
+    fun besselj1_f64 = j1(value : Float64) : Float64
+    fun besselj_f32 = jnf(value1 : Int32, value2 : Float32) : Float32
+    fun besselj_f64 = jn(value1 : Int32, value2 : Float64) : Float64
+    fun bessely0_f32 = y0f(value : Float32) : Float32
+    fun bessely0_f64 = y0(value : Float64) : Float64
+    fun bessely1_f32 = y1f(value : Float32) : Float32
+    fun bessely1_f64 = y1(value : Float64) : Float64
+    fun bessely_f32 = ynf(value1 : Int32, value2 : Float32) : Float32
+    fun bessely_f64 = yn(value1 : Int32, value2 : Float64) : Float64
+  {% end %}
   fun cbrt_f32 = cbrtf(value : Float32) : Float32
   fun cbrt_f64 = cbrt(value : Float64) : Float64
   fun cosh_f32 = coshf(value : Float32) : Float32
@@ -80,7 +94,9 @@ lib LibM
   fun erf_f64 = erf(value : Float64) : Float64
   fun expm1_f32 = expm1f(value : Float32) : Float32
   fun expm1_f64 = expm1(value : Float64) : Float64
-  fun frexp_f32 = frexpf(value : Float32, exp : Int32*) : Float32
+  {% unless flag?(:win32) %}
+    fun frexp_f32 = frexpf(value : Float32, exp : Int32*) : Float32
+  {% end %}
   fun frexp_f64 = frexp(value : Float64, exp : Int32*) : Float64
   fun gamma_f32 = lgammaf(value : Float32) : Float32
   fun gamma_f64 = lgamma(value : Float64) : Float64
@@ -94,6 +110,8 @@ lib LibM
   fun log1p_f64 = log1p(value : Float64) : Float64
   fun logb_f32 = logbf(value : Float32) : Float32
   fun logb_f64 = logb(value : Float64) : Float64
+  fun nextafter_f32 = nextafterf(from : Float32, to : Float32) : Float32
+  fun nextafter_f64 = nextafter(from : Float64, to : Float64) : Float64
   fun scalbln_f32 = scalblnf(value1 : Float32, value2 : Int64) : Float32
   fun scalbln_f64 = scalbln(value1 : Float64, value2 : Int64) : Float64
   fun scalbn_f32 = scalbnf(value1 : Float32, value2 : Int32) : Float32

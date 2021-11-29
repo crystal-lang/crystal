@@ -151,12 +151,27 @@ describe HTTP::Server::Response do
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
   end
 
+  it "sets content type after headers sent" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.print("Hello")
+    response.flush
+    expect_raises(IO::Error, "Headers already sent") do
+      response.content_type = "text/plain"
+    end
+  end
+
   it "sets status code" do
     io = IO::Memory.new
     response = Response.new(io)
     return_value = response.status_code = 201
     return_value.should eq 201
     response.status.should eq HTTP::Status::CREATED
+    response.print("Hello")
+    response.flush
+    expect_raises(IO::Error, "Headers already sent") do
+      response.status_code = 201
+    end
   end
 
   it "retrieves status code" do
@@ -173,6 +188,19 @@ describe HTTP::Server::Response do
     response.version = "HTTP/1.0"
     response.close
     io.to_s.should eq("HTTP/1.0 404 Not Found\r\nContent-Length: 0\r\n\r\n")
+  end
+
+  it "changes status and others after headers sent" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.print("Foo")
+    response.flush
+    expect_raises(IO::Error, "Headers already sent") do
+      response.status = :not_found
+    end
+    expect_raises(IO::Error, "Headers already sent") do
+      response.version = "HTTP/1.0"
+    end
   end
 
   it "flushes" do

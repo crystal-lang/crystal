@@ -12,6 +12,8 @@
 # ->(x : Int32, y : Int32) { x + y } # Proc(Int32, Int32, Int32)
 # ```
 #
+# See [`Proc` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/proc.html) in the language reference.
+#
 # The types of the arguments (`T`) are mandatory, except when directly
 # sending a proc literal to a lib fun in C bindings.
 #

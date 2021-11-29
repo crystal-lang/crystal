@@ -87,6 +87,7 @@ module Crystal
     property last_block_kind : Symbol?
     property? inside_ensure : Bool = false
     property? inside_constant = false
+    property file_module : FileModule?
 
     @unreachable = false
     @is_initialize = false
@@ -99,7 +100,6 @@ module Crystal
     @found_self_in_initialize_call : Array(ASTNode)?
     @used_ivars_in_calls_in_initialize : Hash(String, Array(ASTNode))?
     @block_context : Block?
-    @file_module : FileModule?
     @while_vars : MetaVars?
 
     # Type filters for `exp` in `!exp`, used after a `while`
@@ -220,6 +220,7 @@ module Crystal
 
     def visit(node : Generic)
       node.in_type_args = @in_type_args > 0
+      node.inside_is_a = @inside_is_a
       node.scope = @scope
 
       node.name.accept self
@@ -296,23 +297,28 @@ module Crystal
     end
 
     def visit(node : ProcNotation)
+      types = [] of Type
       @in_type_args += 1
-      node.inputs.try &.each &.accept(self)
-      node.output.try &.accept(self)
-      @in_type_args -= 1
 
-      if inputs = node.inputs
-        types = inputs.map &.type.instance_type.virtual_type
-      else
-        types = [] of Type
+      node.inputs.try &.each do |input|
+        input.accept self
+        input_type = input.type
+        check_not_a_constant(input)
+        MainVisitor.check_type_allowed_as_proc_argument(input, input_type)
+        types << input_type.virtual_type
       end
 
       if output = node.output
-        types << output.type.instance_type.virtual_type
+        output.accept self
+        output_type = output.type
+        check_not_a_constant(output)
+        MainVisitor.check_type_allowed_as_proc_argument(output, output_type)
+        types << output_type.virtual_type
       else
         types << program.void
       end
 
+      @in_type_args -= 1
       node.type = program.proc_of(types)
 
       false
@@ -423,22 +429,6 @@ module Crystal
         class_var = lookup_class_var(var)
         var.var = class_var
         class_var.thread_local = true if thread_local
-      when Global
-        if @untyped_def
-          node.raise "declaring the type of a global variable must be done at the class level"
-        end
-
-        thread_local = check_class_var_annotations
-        if thread_local
-          global_var = @program.global_vars[var.name]
-          global_var.thread_local = true
-        end
-
-        if value = node.value
-          type_assign(var, value, node)
-          node.bind_to(var)
-          return false
-        end
       else
         raise "Bug: unexpected var type: #{var.class}"
       end
@@ -586,37 +576,10 @@ module Crystal
         node.bind_to expanded
         node.expanded = expanded
       else
-        visit_global node
+        node.raise "BUG: there should be no use of global variables other than $~ and $?"
       end
 
       false
-    end
-
-    def visit_global(node)
-      var = lookup_global_variable(node)
-
-      if first_time_accessing_meta_type_var?(var)
-        var_type = var.type?
-        if var_type && !var_type.includes_type?(program.nil)
-          node.raise "global variable '#{node.name}' is read here before it was initialized, rendering it nilable, but its type is #{var_type}"
-        end
-        var.bind_to program.nil_var
-      end
-
-      node.bind_to var
-      node.var = var
-      var
-    end
-
-    def lookup_global_variable(node)
-      var = program.global_vars[node.name]?
-      undefined_global_variable(node) unless var
-      var
-    end
-
-    def undefined_global_variable(node)
-      similar_name = lookup_similar_global_variable_name(node)
-      program.undefined_global_variable(node, similar_name)
     end
 
     def undefined_instance_variable(owner, node)
@@ -633,14 +596,6 @@ module Crystal
           owner.all_instance_vars.each_key do |name|
             finder.test(name)
           end
-        end
-      end
-    end
-
-    def lookup_similar_global_variable_name(node)
-      Levenshtein.find(node.name) do |finder|
-        program.global_vars.each_key do |name|
-          finder.test(name)
         end
       end
     end
@@ -924,26 +879,7 @@ module Crystal
     end
 
     def type_assign(target : Global, value, node)
-      thread_local = check_class_var_annotations
-
-      value.accept self
-
-      var = lookup_global_variable(target)
-
-      # If we are assigning to a global inside a method, make it nilable
-      # if this is the first time we are assigning to it, because
-      # the method might be called conditionally
-      if @typed_def && first_time_accessing_meta_type_var?(var)
-        var.bind_to program.nil_var
-      end
-
-      var.thread_local = true if thread_local
-      target.var = var
-
-      target.bind_to var
-
-      node.bind_to value
-      var.bind_to value
+      node.raise "BUG: there should be no use of global variables other than $~ and $?"
     end
 
     def type_assign(target : ClassVar, value, node)
@@ -991,7 +927,7 @@ module Crystal
 
     def self.check_automatic_cast(program, value, var_type, assign = nil)
       if value.is_a?(NumberLiteral) && value.type != var_type
-        literal_type = NumberLiteralType.new(program, value)
+        literal_type = NumberAutocastType.new(program, value)
         restricted = literal_type.restrict(var_type, MatchContext.new(value.type, value.type))
         if restricted.is_a?(IntegerType) || restricted.is_a?(FloatType)
           value.type = restricted
@@ -1000,7 +936,7 @@ module Crystal
           return value
         end
       elsif value.is_a?(SymbolLiteral) && value.type != var_type
-        literal_type = SymbolLiteralType.new(program, value)
+        literal_type = SymbolAutocastType.new(program, value)
         restricted = literal_type.restrict(var_type, MatchContext.new(value.type, value.type))
         if restricted.is_a?(EnumType)
           member = restricted.find_member(value.value).not_nil!
@@ -1130,6 +1066,7 @@ module Crystal
       block_visitor.parent = self
       block_visitor.with_scope = node.scope || with_scope
       block_visitor.exception_handler_vars = @exception_handler_vars
+      block_visitor.file_module = @file_module
 
       block_scope = @scope
       block_scope ||= current_type.metaclass unless current_type.is_a?(Program)
@@ -1205,7 +1142,7 @@ module Crystal
           MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
           arg.type = arg_type.virtual_type
         elsif !arg.type?
-          arg.raise "function argument '#{arg.name}' must have a type"
+          arg.raise "parameter '#{arg.name}' of Proc literal must have a type"
         end
 
         fun_var = MetaVar.new(arg.name, arg.type)
@@ -1214,6 +1151,17 @@ module Crystal
         meta_var = new_meta_var(arg.name, context: node.def)
         meta_var.bind_to fun_var
         meta_vars[arg.name] = meta_var
+      end
+
+      if return_type = node.def.return_type
+        @in_type_args += 1
+        return_type.accept self
+        @in_type_args -= 1
+        check_not_a_constant(return_type)
+
+        def_type = return_type.type
+        MainVisitor.check_type_allowed_as_proc_argument(node, def_type)
+        node.expected_return_type = def_type.virtual_type
       end
 
       node.bind_to node.def
@@ -1239,7 +1187,7 @@ module Crystal
     end
 
     def self.check_type_allowed_as_proc_argument(node, type)
-      Crystal.check_type_can_be_stored(node, type, "cannot be used as a Proc argument type")
+      Crystal.check_type_can_be_stored(node, type, "can't use #{type.to_s(generic_args: false)} as a Proc argument type")
     end
 
     def visit(node : ProcPointer)
@@ -1464,7 +1412,7 @@ module Crystal
       end
 
       exps << expanded
-      expansion = Expressions.from(exps)
+      expansion = Expressions.from(exps).at(expanded)
       expansion.accept self
       node.expanded = expansion
       node.bind_to(expanded)
@@ -2490,7 +2438,7 @@ module Crystal
       when ClassVar
         visit_class_var exp
       when Global
-        visit_global exp
+        node.raise "BUG: there should be no use of global variables other than $~ and $?"
       when Path
         exp.accept self
         if const = exp.target_const
@@ -2522,6 +2470,8 @@ module Crystal
       # A typeof shouldn't change the type of variables:
       # so we keep the ones before it and restore them at the end
       old_vars = @vars.dup
+      old_meta_vars = @meta_vars
+      @meta_vars = old_meta_vars.dup
 
       node.in_type_args = @in_type_args > 0
 
@@ -2539,6 +2489,7 @@ module Crystal
       node.bind_to node.expressions
 
       @vars = old_vars
+      @meta_vars = old_meta_vars
 
       false
     end
@@ -2583,7 +2534,7 @@ module Crystal
       # Try to resolve the instance_sizeof right now to a number literal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
-      if type && type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
+      if type && type.devirtualize.class? && !type.metaclass? && !node.exp.is_a?(TypeOf)
         expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded

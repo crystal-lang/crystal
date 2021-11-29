@@ -1,5 +1,7 @@
 # Represents a UUID (Universally Unique IDentifier).
 struct UUID
+  include Comparable(UUID)
+
   # Variants with 16 bytes.
   enum Variant
     # Unknown (i.e. custom, your own).
@@ -193,7 +195,7 @@ struct UUID
     slice[8, 2].hexstring(buffer_ptr + 19)
     slice[10, 6].hexstring(buffer_ptr + 24)
 
-    io.write(buffer.to_slice)
+    io.write_string(buffer.to_slice)
   end
 
   def hexstring : String
@@ -205,6 +207,10 @@ struct UUID
       str << "urn:uuid:"
       to_s(str)
     end
+  end
+
+  def <=>(other : UUID) : Int32
+    @bytes <=> other.bytes
   end
 
   class Error < Exception

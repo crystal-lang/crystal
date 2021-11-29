@@ -4,15 +4,19 @@ require "../types"
 
 module Crystal
   class Program
+    getter(cleanup_transformer : CleanupTransformer) do
+      CleanupTransformer.new(self)
+    end
+
     def cleanup(node)
-      transformer = CleanupTransformer.new(self)
+      transformer = self.cleanup_transformer
       node = node.transform(transformer)
       puts node if ENV["AFTER"]? == "1"
       node
     end
 
     def cleanup_types
-      transformer = CleanupTransformer.new(self)
+      transformer = self.cleanup_transformer
 
       after_inference_types.each do |type|
         cleanup_type type, transformer
@@ -211,7 +215,7 @@ module Crystal
 
     def has_enum_type?(type)
       if type.is_a?(UnionType)
-        type.union_types.any? &.is_a?(EnumType)
+        type.union_types.any?(EnumType)
       else
         type.is_a?(EnumType)
       end
@@ -265,7 +269,7 @@ module Crystal
 
       if target.is_a?(Path)
         const = target.target_const.not_nil!
-        return node unless const.used?
+        return node if !const.used? || const.cleaned_up?
 
         unless const.value.type?
           node.raise "can't infer type of constant #{const} (maybe the constant refers to itself?)"
@@ -285,6 +289,7 @@ module Crystal
       if target.is_a?(Path)
         const = const.not_nil!
         const.value = const.value.transform self
+        const.cleaned_up = true
       end
 
       if node.target == node.value
@@ -296,6 +301,18 @@ module Crystal
         if node.value.type?.try &.no_return?
           return node.value
         end
+      end
+
+      node
+    end
+
+    def transform(node : Path)
+      # Some constants might not have been cleaned up at this point because
+      # they don't have an explicit `Assign` node. One example is regex
+      # literals: a constant is created for them, but there's no `Assign` node.
+      if (const = node.target_const) && const.used? && !const.cleaned_up?
+        const.value = const.value.transform self
+        const.cleaned_up = true
       end
 
       node
@@ -844,8 +861,8 @@ module Crystal
       exp_type = node.exp.type?
 
       if exp_type
-        instance_type = exp_type.instance_type.devirtualize
-        if instance_type.struct? || instance_type.module? || instance_type.is_a?(UnionType)
+        instance_type = exp_type.devirtualize
+        if instance_type.struct? || instance_type.module? || instance_type.metaclass? || instance_type.is_a?(UnionType)
           node.exp.raise "instance_sizeof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
         end
       end

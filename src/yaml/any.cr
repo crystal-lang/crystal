@@ -279,12 +279,10 @@ struct YAML::Any
     @raw.as?(Bytes)
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     @raw.inspect(io)
   end
 
-  # :nodoc:
   def to_s(io : IO) : Nil
     @raw.to_s(io)
   end
@@ -312,7 +310,7 @@ struct YAML::Any
     raw.to_yaml(io)
   end
 
-  def to_json(builder : JSON::Builder)
+  def to_json(builder : JSON::Builder) : Nil
     if (raw = self.raw).is_a?(Slice)
       raise "Can't serialize #{raw.class} to JSON"
     else

@@ -1,5 +1,6 @@
 require "spec"
 require "spec/helpers/iterate"
+require "../support/string"
 
 private class BadSortingClass
   include Comparable(self)
@@ -19,6 +20,27 @@ private class Spaceship
     return nil if @return_nil
 
     value <=> other.value
+  end
+end
+
+private def is_stable_sort(mutable, &block)
+  n = 42
+  # [Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(0), ..., Spaceship.new(n - 1)]
+  slice = Slice.new(n * 2) { |i| Spaceship.new((i % n).to_f) }
+  # [Spaceship.new(0), Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(n - 1)]
+  expected = Slice.new(n * 2) { |i| slice[i % 2 * n + i // 2] }
+
+  if mutable
+    yield slice
+    result = slice
+  else
+    result = yield slice
+    result.should_not eq(slice)
+  end
+
+  result.size.should eq(expected.size)
+  expected.zip(result) do |exp, res|
+    res.should be(exp) # reference-equality is necessary to check sorting is stable.
   end
 end
 
@@ -125,6 +147,58 @@ describe "Slice" do
   it "does to_s for bytes" do
     slice = Bytes[1, 2, 3]
     slice.to_s.should eq("Bytes[1, 2, 3]")
+  end
+
+  describe "#fill" do
+    it "replaces values in a subrange" do
+      slice = Slice[0, 1, 2, 3, 4]
+      slice.fill(7)
+      slice.should eq(Slice[7, 7, 7, 7, 7])
+
+      slice = Slice[0, 1, 2, 3, 4]
+      slice.fill(7, 1, 2)
+      slice.should eq(Slice[0, 7, 7, 3, 4])
+      slice.fill(8, 4, 10)
+      slice.should eq(Slice[0, 7, 7, 3, 8])
+
+      slice = Slice[0, 1, 2, 3, 4]
+      slice.fill(7, 2..3)
+      slice.should eq(Slice[0, 1, 7, 7, 4])
+      slice.fill(8, -2..10)
+      slice.should eq(Slice[0, 1, 7, 8, 8])
+
+      slice = Slice[0, 0, 0, 0, 0]
+      slice.fill { |i| i + 7 }
+      slice.should eq(Slice[7, 8, 9, 10, 11])
+
+      slice = Slice[0, 0, 0, 0, 0]
+      slice.fill(offset: 2) { |i| i * i }
+      slice.should eq(Slice[4, 9, 16, 25, 36])
+
+      slice = Slice[0, 0, 0, 0, 0]
+      slice.fill(1, 2) { |i| i + 7 }
+      slice.should eq(Slice[0, 8, 9, 0, 0])
+
+      slice = Slice[0, 0, 0, 0, 0]
+      slice.fill(2..3) { |i| i + 7 }
+      slice.should eq(Slice[0, 0, 9, 10, 0])
+      slice.fill(-2..10, &.itself)
+      slice.should eq(Slice[0, 0, 9, 3, 4])
+    end
+
+    it "works for bytes" do
+      slice = Bytes[0, 1, 2, 3, 4]
+      slice.fill(7)
+      slice.should eq(Bytes[7, 7, 7, 7, 7])
+
+      slice = Bytes[0, 1, 2, 3, 4]
+      slice.fill(7, 1, 2)
+      slice.should eq(Bytes[0, 7, 7, 3, 4])
+
+      slice = Bytes[0, 1, 2, 3, 4]
+      slice.fill(7, 2..3)
+      slice.should eq(Bytes[0, 1, 7, 7, 4])
+    end
   end
 
   it "does copy_from pointer" do
@@ -287,7 +361,8 @@ describe "Slice" do
   end
 
   it "does hexdump" do
-    ascii_table = <<-EOF
+    slice = Bytes.new(96) { |i| i.to_u8 + 32 }
+    assert_prints slice.hexdump, <<-EOF
       00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
       00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
       00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
@@ -296,10 +371,8 @@ describe "Slice" do
       00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.\n
       EOF
 
-    slice = Bytes.new(96) { |i| i.to_u8 + 32 }
-    slice.hexdump.should eq(ascii_table)
-
-    ascii_table_plus = <<-EOF
+    plus = Bytes.new(101) { |i| i.to_u8 + 32 }
+    assert_prints plus.hexdump, <<-EOF
       00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
       00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
       00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
@@ -309,55 +382,10 @@ describe "Slice" do
       00000060  80 81 82 83 84                                    .....\n
       EOF
 
-    plus = Bytes.new(101) { |i| i.to_u8 + 32 }
-    plus.hexdump.should eq(ascii_table_plus)
-
-    ascii_table_num = <<-EOF
+    num = Bytes.new(10) { |i| i.to_u8 + 48 }
+    assert_prints num.hexdump, <<-EOF
       00000000  30 31 32 33 34 35 36 37  38 39                    0123456789\n
       EOF
-
-    num = Bytes.new(10) { |i| i.to_u8 + 48 }
-    num.hexdump.should eq(ascii_table_num)
-  end
-
-  it "does hexdump to IO" do
-    ascii_table = <<-EOF
-      00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
-      00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
-      00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
-      00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
-      00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
-      00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.\n
-      EOF
-
-    slice = Bytes.new(96) { |i| i.to_u8 + 32 }
-    io = IO::Memory.new
-    slice.hexdump(io).should eq(ascii_table.bytesize)
-    io.to_s.should eq(ascii_table)
-
-    ascii_table_plus = <<-EOF
-      00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
-      00000010  30 31 32 33 34 35 36 37  38 39 3a 3b 3c 3d 3e 3f  0123456789:;<=>?
-      00000020  40 41 42 43 44 45 46 47  48 49 4a 4b 4c 4d 4e 4f  @ABCDEFGHIJKLMNO
-      00000030  50 51 52 53 54 55 56 57  58 59 5a 5b 5c 5d 5e 5f  PQRSTUVWXYZ[\\]^_
-      00000040  60 61 62 63 64 65 66 67  68 69 6a 6b 6c 6d 6e 6f  `abcdefghijklmno
-      00000050  70 71 72 73 74 75 76 77  78 79 7a 7b 7c 7d 7e 7f  pqrstuvwxyz{|}~.
-      00000060  80 81 82 83 84                                    .....\n
-      EOF
-
-    plus = Bytes.new(101) { |i| i.to_u8 + 32 }
-    io = IO::Memory.new
-    plus.hexdump(io).should eq(ascii_table_plus.bytesize)
-    io.to_s.should eq(ascii_table_plus)
-
-    ascii_table_num = <<-EOF
-      00000000  30 31 32 33 34 35 36 37  38 39                    0123456789\n
-      EOF
-
-    num = Bytes.new(10) { |i| i.to_u8 + 48 }
-    io = IO::Memory.new
-    num.hexdump(io).should eq(ascii_table_num.bytesize)
-    io.to_s.should eq(ascii_table_num)
   end
 
   it_iterates "#each", [1, 2, 3], Slice[1, 2, 3].each
@@ -478,6 +506,49 @@ describe "Slice" do
     a.to_unsafe.should eq(b.to_unsafe)
   end
 
+  describe "rotate!" do
+    it do
+      a = Slice[1, 2, 3]
+      a.rotate!.to_unsafe.should eq(a.to_unsafe); a.should eq(Slice[2, 3, 1])
+      a.rotate!.to_unsafe.should eq(a.to_unsafe); a.should eq(Slice[3, 1, 2])
+      a.rotate!.to_unsafe.should eq(a.to_unsafe); a.should eq(Slice[1, 2, 3])
+      a.rotate!.to_unsafe.should eq(a.to_unsafe); a.should eq(Slice[2, 3, 1])
+    end
+
+    it { a = Slice[1, 2, 3]; a.rotate!(0); a.should eq(Slice[1, 2, 3]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(1); a.should eq(Slice[2, 3, 1]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(2); a.should eq(Slice[3, 1, 2]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(3); a.should eq(Slice[1, 2, 3]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(4); a.should eq(Slice[2, 3, 1]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(3001); a.should eq(Slice[2, 3, 1]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(-1); a.should eq(Slice[3, 1, 2]) }
+    it { a = Slice[1, 2, 3]; a.rotate!(-3001); a.should eq(Slice[3, 1, 2]) }
+
+    it do
+      a = Slice(Int32).new(50) { |i| i }
+      a.rotate!(5)
+      a.should eq(Slice[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4])
+    end
+
+    it do
+      a = Slice(Int32).new(50) { |i| i }
+      a.rotate!(-5)
+      a.should eq(Slice[45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44])
+    end
+
+    it do
+      a = Slice(Int32).new(50) { |i| i }
+      a.rotate!(20)
+      a.should eq(Slice[20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    end
+
+    it do
+      a = Slice(Int32).new(50) { |i| i }
+      a.rotate!(-20)
+      a.should eq(Slice[30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+    end
+  end
+
   it "creates empty slice" do
     slice = Slice(Int32).empty
     slice.empty?.should be_true
@@ -485,13 +556,31 @@ describe "Slice" do
 
   it "creates read-only slice" do
     slice = Slice.new(3, 0, read_only: true)
+    slice.read_only?.should be_true
     expect_raises(Exception, "Can't write to read-only Slice") { slice[0] = 1 }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.update(0, &.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.swap(0, 1) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.reverse! }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0, 0, 0) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0, 0..0) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(&.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(offset: 0, &.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0, 0, &.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0..0, &.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.map!(&.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.map_with_index! { |v, i| v } }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.map_with_index!(offset: 0) { |v, i| v } }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.shuffle! }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.rotate!(0) }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.copy_from(slice) }
 
     subslice = slice[0, 1]
+    subslice.read_only?.should be_true
     expect_raises(Exception, "Can't write to read-only Slice") { subslice[0] = 1 }
 
     slice = Bytes[1, 2, 3, read_only: true]
+    slice.read_only?.should be_true
     expect_raises(Exception, "Can't write to read-only Slice") { slice[0] = 0_u8 }
   end
 
@@ -559,94 +648,130 @@ describe "Slice" do
   end
 
   describe "sort" do
-    it "sort without block" do
-      slice = Slice[3, 4, 1, 2, 5, 6]
-      sorted_slice = slice.sort
-      sorted_slice.to_a.should eq([1, 2, 3, 4, 5, 6])
-      slice.should_not eq(sorted_slice)
-    end
+    {% for sort in ["sort".id, "unstable_sort".id] %}
+      describe {{ "##{sort}" }} do
+        it "without block" do
+          slice = Slice[3, 4, 1, 2, 5, 6]
+          sorted_slice = slice.{{ sort }}
+          sorted_slice.to_a.should eq([1, 2, 3, 4, 5, 6])
+          slice.should_not eq(sorted_slice)
+        end
 
-    it "sort with a block" do
-      a = Slice["foo", "a", "hello"]
-      b = a.sort { |x, y| x.size <=> y.size }
-      b.to_a.should eq(["a", "foo", "hello"])
-      a.should_not eq(b)
-    end
-  end
+        it "with a block" do
+          a = Slice["foo", "a", "hello"]
+          b = a.{{ sort }} { |x, y| x.size <=> y.size }
+          b.to_a.should eq(["a", "foo", "hello"])
+          a.should_not eq(b)
+        end
 
-  describe "sort!" do
-    it "sort! without block" do
-      a = [3, 4, 1, 2, 5, 6]
-      a.sort!
-      a.should eq([1, 2, 3, 4, 5, 6])
-    end
+        {% if sort == "sort" %}
+          it "stable sort without a block" do
+            is_stable_sort(mutable: false, &.sort)
+          end
 
-    it "sort! with a block" do
-      a = ["foo", "a", "hello"]
-      a.sort! { |x, y| x.size <=> y.size }
-      a.should eq(["a", "foo", "hello"])
-    end
-
-    it "sorts with invalid block (#4379)" do
-      a = [1] * 17
-      b = a.sort { -1 }
-      a.should eq(b)
-    end
-
-    it "can sort! just by using <=> (#6608)" do
-      spaceships = Slice[
-        Spaceship.new(2),
-        Spaceship.new(0),
-        Spaceship.new(1),
-        Spaceship.new(3),
-      ]
-
-      spaceships.sort!
-      4.times do |i|
-        spaceships[i].value.should eq(i)
+          it "stable sort with a block" do
+            is_stable_sort(mutable: false, &.sort { |a, b| a.value <=> b.value })
+          end
+        {% end %}
       end
-    end
 
-    it "raises if <=> returns nil" do
-      spaceships = Slice[
-        Spaceship.new(2, return_nil: true),
-        Spaceship.new(0, return_nil: true),
-      ]
+      describe {{ "##{sort}!" }} do
+        it "without block" do
+          a = [3, 4, 1, 2, 5, 6]
+          a.{{ sort }}!
+          a.should eq([1, 2, 3, 4, 5, 6])
+        end
 
-      expect_raises(ArgumentError) do
-        spaceships.sort!
+        it "with a block" do
+          a = ["foo", "a", "hello"]
+          a.{{ sort }}! { |x, y| x.size <=> y.size }
+          a.should eq(["a", "foo", "hello"])
+        end
+
+        it "sorts with invalid block (#4379)" do
+          a = [1] * 17
+          b = a.{{ sort }} { -1 }
+          a.should eq(b)
+        end
+
+        it "can sort! just by using <=> (#6608)" do
+          spaceships = Slice[
+            Spaceship.new(2),
+            Spaceship.new(0),
+            Spaceship.new(1),
+            Spaceship.new(3),
+          ]
+
+          spaceships.{{ sort }}!
+          4.times do |i|
+            spaceships[i].value.should eq(i)
+          end
+        end
+
+        it "raises if <=> returns nil" do
+          spaceships = Slice[
+            Spaceship.new(2, return_nil: true),
+            Spaceship.new(0, return_nil: true),
+          ]
+
+          expect_raises(ArgumentError) do
+            spaceships.{{ sort }}!
+          end
+        end
+
+        it "raises if sort! block returns nil" do
+          expect_raises(ArgumentError) do
+            Slice[1, 2].{{ sort }}! { nil }
+          end
+        end
+
+        {% if sort == "sort" %}
+          it "stable sort without a block" do
+            is_stable_sort(mutable: true, &.sort!)
+          end
+
+          it "stable sort with a block" do
+            is_stable_sort(mutable: true, &.sort! { |a, b| a.value <=> b.value })
+          end
+        {% end %}
       end
-    end
 
-    it "raises if sort! block returns nil" do
-      expect_raises(ArgumentError) do
-        Slice[1, 2].sort! { nil }
+      describe {{ "##{sort}_by" }} do
+        it "sorts" do
+          a = Slice["foo", "a", "hello"]
+          b = a.{{ sort }}_by(&.size)
+          b.to_a.should eq(["a", "foo", "hello"])
+          a.should_not eq(b)
+        end
+
+        {% if sort == "sort" %}
+          it "stable sort" do
+            is_stable_sort(mutable: false, &.sort_by(&.value))
+          end
+        {% end %}
       end
-    end
-  end
 
-  describe "sort_by" do
-    it "sorts by" do
-      a = Slice["foo", "a", "hello"]
-      b = a.sort_by &.size
-      b.to_a.should eq(["a", "foo", "hello"])
-      a.should_not eq(b)
-    end
-  end
+      describe {{ "##{sort}_by" }} do
+        it "sorts" do
+          a = Slice["foo", "a", "hello"]
+          a.{{ sort }}_by!(&.size)
+          a.to_a.should eq(["a", "foo", "hello"])
+        end
 
-  describe "sort_by!" do
-    it "sorts by!" do
-      a = Slice["foo", "a", "hello"]
-      a.sort_by! &.size
-      a.to_a.should eq(["a", "foo", "hello"])
-    end
+        it "calls given block exactly once for each element" do
+          calls = Hash(String, Int32).new(0)
+          a = Slice["foo", "a", "hello"]
+          a.{{ sort }}_by! { |e| calls[e] += 1; e.size }
+          calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+        end
 
-    it "calls given block exactly once for each element" do
-      calls = Hash(String, Int32).new(0)
-      a = Slice["foo", "a", "hello"]
-      a.sort_by! { |e| calls[e] += 1; e.size }
-      calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
-    end
+        {% if sort == "sort" %}
+          it "stable sort" do
+            is_stable_sort(mutable: true, &.sort_by!(&.value))
+          end
+        {% end %}
+      end
+    {% end %}
   end
 
   describe "<=>" do
