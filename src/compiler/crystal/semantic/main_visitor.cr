@@ -297,23 +297,28 @@ module Crystal
     end
 
     def visit(node : ProcNotation)
+      types = [] of Type
       @in_type_args += 1
-      node.inputs.try &.each &.accept(self)
-      node.output.try &.accept(self)
-      @in_type_args -= 1
 
-      if inputs = node.inputs
-        types = inputs.map &.type.instance_type.virtual_type
-      else
-        types = [] of Type
+      node.inputs.try &.each do |input|
+        input.accept self
+        input_type = input.type
+        check_not_a_constant(input)
+        MainVisitor.check_type_allowed_as_proc_argument(input, input_type)
+        types << input_type.virtual_type
       end
 
       if output = node.output
-        types << output.type.instance_type.virtual_type
+        output.accept self
+        output_type = output.type
+        check_not_a_constant(output)
+        MainVisitor.check_type_allowed_as_proc_argument(output, output_type)
+        types << output_type.virtual_type
       else
         types << program.void
       end
 
+      @in_type_args -= 1
       node.type = program.proc_of(types)
 
       false
