@@ -6,10 +6,16 @@ require "./lib_crypto"
 
 {% begin %}
   lib LibSSL
-    {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
-                       (`test -f $(pkg-config --silence-errors --variable=includedir libssl)/openssl/opensslv.h || printf %s false` != "false") &&
-                       (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libssl || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
-    {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
+    {% if flag?(:win32) %}
+      {% from_libressl = false %}
+      {% ssl_version = env("CRYSTAL_OPENSSL_VERSION") %}
+      {% raise "Cannot determine OpenSSL version, make sure the environment variable `CRYSTAL_OPENSSL_VERSION` is set" unless ssl_version %}
+    {% else %}
+      {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
+                         (`test -f $(pkg-config --silence-errors --variable=includedir libssl)/openssl/opensslv.h || printf %s false` != "false") &&
+                         (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libssl || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
+      {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
+    {% end %}
 
     {% if from_libressl %}
       LIBRESSL_VERSION = {{ ssl_version }}
@@ -21,7 +27,14 @@ require "./lib_crypto"
   end
 {% end %}
 
-@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
+{% if flag?(:win32) %}
+  @[Link("ssl")]
+  @[Link("crypto")]
+  @[Link("crypt32")] # CertOpenStore, ...
+  @[Link("user32")]  # GetProcessWindowStation, GetUserObjectInformationW, _MessageBoxW
+{% else %}
+  @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
+{% end %}
 lib LibSSL
   alias Int = LibC::Int
   alias Char = LibC::Char

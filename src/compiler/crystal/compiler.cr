@@ -338,7 +338,7 @@ module Crystal
     end
 
     private def linker_command(program : Program, object_names, output_filename, output_dir, expand = false)
-      if program.has_flag? "windows"
+      if program.has_flag? "msvc"
         lib_flags = program.lib_flags
         # Execute and expand `subcommands`.
         lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` } if expand
@@ -346,7 +346,12 @@ module Crystal
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
 
-        args = %(/nologo #{object_arg} #{output_arg} #{lib_flags} #{@link_flags})
+        link_args = [] of String
+        link_args << "/DEBUG:FULL /PDBALTPATH:%_PDB%" unless debug.none?
+        link_args << lib_flags
+        @link_flags.try { |flags| link_args << flags }
+
+        args = %(/nologo #{object_arg} #{output_arg} /link #{link_args.join(' ')}).gsub("\n", " ")
         cmd = "#{CL} #{args}"
 
         if cmd.to_utf16.size > 32000

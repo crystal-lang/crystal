@@ -33,9 +33,16 @@ module Crystal
     def push_debug_info_metadata(mod)
       di_builder(mod).end
 
-      # DebugInfo generation in LLVM by default uses a higher version of dwarf
-      # than OS X currently understands. Android has the same problem.
-      if @program.has_flag?("osx") || @program.has_flag?("android")
+      if @program.has_flag?("windows")
+        # Windows uses CodeView instead of DWARF
+        mod.add_flag(
+          LLVM::ModuleFlag::Warning,
+          "CodeView",
+          mod.context.int32.const_int(1)
+        )
+      elsif @program.has_flag?("osx") || @program.has_flag?("android")
+        # DebugInfo generation in LLVM by default uses a higher version of dwarf
+        # than OS X currently understands. Android has the same problem.
         mod.add_flag(
           LLVM::ModuleFlag::Warning,
           "Dwarf Version",

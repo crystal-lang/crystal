@@ -965,6 +965,9 @@ module Crystal
     it_parses %(macro foo\n"\\'"\nend), Macro.new("foo", body: Expressions.from([%("\\'"\n).macro_literal] of ASTNode))
     it_parses %(macro foo\n"\\\\"\nend), Macro.new("foo", body: Expressions.from([%("\\\\"\n).macro_literal] of ASTNode))
 
+    it_parses "macro foo;bar(end: 1);end", Macro.new("foo", body: Expressions.from(["bar(".macro_literal, "end: 1);".macro_literal] of ASTNode))
+    it_parses "def foo;bar(end: 1);end", Def.new("foo", body: Expressions.from([Call.new(nil, "bar", named_args: [NamedArgument.new("end", 1.int32)])] of ASTNode))
+
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
 
@@ -1317,6 +1320,15 @@ module Crystal
     it_parses "->(x) { x }", ProcLiteral.new(Def.new("->", [Arg.new("x")], "x".var))
     it_parses "x = 1; ->{ x }", [Assign.new("x".var, 1.int32), ProcLiteral.new(Def.new("->", body: "x".var))]
     it_parses "f ->{ a do\n end\n }", Call.new(nil, "f", ProcLiteral.new(Def.new("->", body: Call.new(nil, "a", block: Block.new))))
+
+    it_parses "-> : Int32 { }", ProcLiteral.new(Def.new("->", return_type: "Int32".path))
+    it_parses "->\n:\nInt32\n{\n}", ProcLiteral.new(Def.new("->", return_type: "Int32".path))
+    it_parses "->() : Int32 { }", ProcLiteral.new(Def.new("->", return_type: "Int32".path))
+    it_parses "->() : Int32 do end", ProcLiteral.new(Def.new("->", return_type: "Int32".path))
+    it_parses "->(x : Int32) : Int32 { }", ProcLiteral.new(Def.new("->", [Arg.new("x", restriction: "Int32".path)], return_type: "Int32".path))
+
+    assert_syntax_error "-> :Int32 { }", "a space is mandatory between ':' and return type"
+    assert_syntax_error "->() :Int32 { }", "a space is mandatory between ':' and return type"
 
     %w(foo foo= foo? foo!).each do |method|
       it_parses "->#{method}", ProcPointer.new(nil, method)

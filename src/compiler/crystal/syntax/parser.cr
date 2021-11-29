@@ -1798,8 +1798,14 @@ module Crystal
 
       next_token_skip_space_or_newline
 
-      unless @token.type == :"{" || @token.type == :"(" || @token.keyword?(:do)
-        return parse_fun_pointer
+      case @token.type
+      when :SYMBOL
+        # -> :T { }
+        raise "a space is mandatory between ':' and return type", @token
+      when :"{", :"(", :":"
+        # do nothing
+      else
+        return parse_fun_pointer unless @token.keyword?(:do)
       end
 
       args = [] of Arg
@@ -1815,6 +1821,16 @@ module Crystal
           args << arg
         end
         next_token_skip_space_or_newline
+      end
+
+      case @token.type
+      when :SYMBOL
+        # ->() :T { }
+        raise "a space is mandatory between ':' and return type", @token
+      when :":"
+        next_token_skip_space_or_newline
+        return_type = parse_bare_proc_type
+        skip_space_or_newline
       end
 
       with_lexical_var_scope do
@@ -1838,7 +1854,7 @@ module Crystal
           unexpected_token
         end
 
-        a_def = Def.new("->", args, body).at(location).at_end(end_location)
+        a_def = Def.new("->", args, body, return_type: return_type).at(location).at_end(end_location)
         ProcLiteral.new(a_def).at(location).at_end(end_location)
       end
     end
