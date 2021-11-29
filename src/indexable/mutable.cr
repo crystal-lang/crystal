@@ -43,7 +43,8 @@ module Indexable::Mutable(T)
   # Yields the current element at the given *index* and updates the value
   # at that *index* with the block's value. Returns the new value.
   #
-  # Raises `IndexError` if trying to set an element outside the array's range.
+  # Raises `IndexError` if trying to set an element outside the container's
+  # range.
   #
   # ```
   # array = [1, 2, 3]
@@ -51,7 +52,7 @@ module Indexable::Mutable(T)
   # array                         # => [1, 4, 3]
   # array.update(5) { |x| x * 2 } # raises IndexError
   # ```
-  def update(index : Int, & : T -> T) : T
+  def update(index : Int, & : T -> _) : T
     index = check_index_out_of_bounds index
     value = yield unsafe_fetch(index)
     unsafe_put(index, value)
@@ -114,6 +115,44 @@ module Indexable::Mutable(T)
     self
   end
 
+  # Replaces *count* or less (if there aren't enough) elements starting at the
+  # given *start* index with *value*. Returns `self`.
+  #
+  # Negative values of *start* count from the end of the container.
+  #
+  # Raises `IndexError` if the *start* index is out of range.
+  #
+  # Raises `ArgumentError` if *count* is negative.
+  #
+  # ```
+  # array = [1, 2, 3, 4, 5]
+  # array.fill(9, 2, 2) # => [1, 2, 9, 9, 5]
+  # array               # => [1, 2, 9, 9, 5]
+  # ```
+  def fill(value : T, start : Int, count : Int) : self
+    return self if count <= 0
+    start, count = normalize_start_and_count(start, count)
+    count.times do |i|
+      unsafe_put(start + i, value)
+    end
+    self
+  end
+
+  # Replaces the elements within the given *range* with *value*. Returns `self`.
+  #
+  # Negative indices count backward from the end of the container.
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # array = [1, 2, 3, 4, 5]
+  # array.fill(9, 2..3) # => [1, 2, 9, 9, 5]
+  # array               # => [1, 2, 9, 9, 5]
+  # ```
+  def fill(value : T, range : Range) : self
+    fill(value, *Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
+  end
+
   # Yields each index of `self` to the given block and then assigns
   # the block's value in that position. Returns `self`.
   #
@@ -134,6 +173,47 @@ module Indexable::Mutable(T)
     self
   end
 
+  # Yields each index of `self`, starting at *start* and for *count* times (or
+  # less if there aren't enough elements), to the given block and then assigns
+  # the block's value in that position. Returns `self`.
+  #
+  # Negative values of *start* count from the end of the container.
+  #
+  # Has no effect if *count* is zero or negative.
+  #
+  # Raises `IndexError` if *start* is outside the array range.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5, 6]
+  # a.fill(2, 3) { |i| i * i * i } # => [1, 2, 8, 27, 125, 6]
+  # ```
+  def fill(start : Int, count : Int, & : Int32 -> T) : self
+    return self if count <= 0
+    start, count = normalize_start_and_count(start, count)
+    count.times do |i|
+      unsafe_put(start + i, yield start + i)
+    end
+    self
+  end
+
+  # Yields each index of `self`, in the given *range*, to the given block and
+  # then assigns the block's value in that position. Returns `self`.
+  #
+  # Negative indices count backward from the end of the container.
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5, 6]
+  # a.fill(2..4) { |i| i * i * i } # => [1, 2, 8, 27, 125, 6]
+  # ```
+  def fill(range : Range, & : Int32 -> T) : self
+    fill(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new) do |i|
+      yield i
+    end
+  end
+
+  {% begin %}
   # Invokes the given block for each element of `self`, replacing the element
   # with the value returned by the block. Returns `self`.
   #
@@ -142,12 +222,17 @@ module Indexable::Mutable(T)
   # a.map! { |x| x * x }
   # a # => [1, 4, 9]
   # ```
-  def map!(& : T -> T) : self
+  {% if compare_versions(Crystal::VERSION, "1.1.1") >= 0 %}
+  def map!(& : T -> _) : self # TODO: add as constant
+  {% else %}
+  def map!(&) # it doesn't compile with the type annotation in the 1.0.0 compiler
+  {% end %}
     each_index do |i|
       unsafe_put(i, yield unsafe_fetch(i))
     end
     self
   end
+  {% end %}
 
   # Like `#map!`, but the block gets passed both the element and its index.
   #
@@ -159,7 +244,7 @@ module Indexable::Mutable(T)
   # gems.map_with_index! { |gem, i| "#{i}: #{gem}" }
   # gems # => ["0: crystal", "1: pearl", "2: diamond"]
   # ```
-  def map_with_index!(offset = 0, & : T, Int32 -> T) : self
+  def map_with_index!(offset = 0, & : T, Int32 -> _) : self
     each_index do |i|
       unsafe_put(i, yield(unsafe_fetch(i), offset + i))
     end

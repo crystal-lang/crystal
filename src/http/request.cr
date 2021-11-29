@@ -1,6 +1,7 @@
 require "./common"
 require "uri"
 require "http/params"
+require "socket"
 
 # An HTTP request.
 #
@@ -20,47 +21,40 @@ class HTTP::Request
   @query_params : URI::Params?
   @uri : URI?
 
-  {% unless flag?(:win32) %}
-    # The network address that sent the request to an HTTP server.
-    #
-    # `HTTP::Server` will try to fill this property, and its value
-    # will have a format like "IP:port", but this format is not guaranteed.
-    # Middlewares can overwrite this value.
-    #
-    # Example:
-    #
-    # ```
-    # class ForwarderHandler
-    #   include HTTP::Handler
-    #
-    #   def call(context)
-    #     if ip = context.request.headers["X-Real-IP"]? # When using a reverse proxy that guarantees this field.
-    #       context.request.remote_address = Socket::IPAddress.new(ip, 0)
-    #     end
-    #     call_next(context)
-    #   end
-    # end
-    #
-    # server = HTTP::Server.new([ForwarderHandler.new, HTTP::LogHandler.new])
-    # ```
-    #
-    # This property is not used by `HTTP::Client`.
-    property remote_address : Socket::Address?
+  # The network address that sent the request to an HTTP server.
+  #
+  # `HTTP::Server` will try to fill this property, and its value
+  # will have a format like "IP:port", but this format is not guaranteed.
+  # Middlewares can overwrite this value.
+  #
+  # Example:
+  #
+  # ```
+  # class ForwarderHandler
+  #   include HTTP::Handler
+  #
+  #   def call(context)
+  #     if ip = context.request.headers["X-Real-IP"]? # When using a reverse proxy that guarantees this field.
+  #       context.request.remote_address = Socket::IPAddress.new(ip, 0)
+  #     end
+  #     call_next(context)
+  #   end
+  # end
+  #
+  # server = HTTP::Server.new([ForwarderHandler.new, HTTP::LogHandler.new])
+  # ```
+  #
+  # This property is not used by `HTTP::Client`.
+  property remote_address : Socket::Address?
 
-    # The network address of the HTTP server.
-    #
-    # `HTTP::Server` will try to fill this property, and its value
-    # will have a format like "IP:port", but this format is not guaranteed.
-    # Middlewares can overwrite this value.
-    #
-    # This property is not used by `HTTP::Client`.
-    property local_address : Socket::Address?
-  {% else %}
-    # TODO: Remove this once `Socket` is working on Windows
-
-    property remote_address : Nil
-    property local_address : Nil
-  {% end %}
+  # The network address of the HTTP server.
+  #
+  # `HTTP::Server` will try to fill this property, and its value
+  # will have a format like "IP:port", but this format is not guaranteed.
+  # Middlewares can overwrite this value.
+  #
+  # This property is not used by `HTTP::Client`.
+  property local_address : Socket::Address?
 
   def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version = "HTTP/1.1")
     # Duplicate headers to prevent the request from modifying data that the user might hold.
@@ -291,9 +285,7 @@ class HTTP::Request
       host = header
     else
       port = port.to_i?(whitespace: false)
-      # TODO: Remove temporal fix when Socket::IPAddress has been ported to
-      # win32
-      unless port && {% if flag?(:win32) %}port.in?(0..UInt16::MAX){% else %}Socket::IPAddress.valid_port?(port){% end %}
+      unless port && Socket::IPAddress.valid_port?(port)
         # what we identified as port is not valid, so use the entire header
         host = header
       end

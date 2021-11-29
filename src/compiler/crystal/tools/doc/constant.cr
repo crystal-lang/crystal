@@ -34,8 +34,8 @@ class Crystal::Doc::Constant
       builder.field "id", id
       builder.field "name", name
       builder.field "value", value.try(&.to_s)
-      builder.field "doc", doc
-      builder.field "summary", formatted_summary
+      builder.field "doc", doc unless doc.nil?
+      builder.field "summary", formatted_summary unless formatted_summary.nil?
     end
   end
 

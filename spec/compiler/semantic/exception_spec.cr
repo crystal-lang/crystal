@@ -127,7 +127,7 @@ describe "Semantic: exception" do
       rescue
       end
       a
-      ") { nilable int32 }
+      ", inject_primitives: true) { nilable int32 }
   end
 
   it "types var as nilable if previously nilable (2)" do
@@ -141,7 +141,7 @@ describe "Semantic: exception" do
         a = 2
       end
       a
-      ") { nilable int32 }
+      ", inject_primitives: true) { nilable int32 }
   end
 
   it "errors if caught exception is not a subclass of Exception" do
@@ -628,7 +628,7 @@ describe "Semantic: exception" do
           end
         end
       end
-    )) { nil_type }
+    ), inject_primitives: true) { nil_type }
   end
 
   it "can use next inside block inside ensure (#4470)" do
@@ -672,7 +672,7 @@ describe "Semantic: exception" do
   end
 
   it "gets a non-nilable type if all rescue are unreachable (#8751)" do
-    semantic(%(
+    assert_no_errors <<-CR, inject_primitives: true
       while true
         begin
           foo = 1
@@ -684,6 +684,6 @@ describe "Semantic: exception" do
 
         foo &+ 2
       end
-      ))
+      CR
   end
 end

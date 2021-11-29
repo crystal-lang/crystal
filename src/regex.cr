@@ -79,7 +79,8 @@ require "./regex/*"
 # have their own language for describing strings.
 #
 # Many programming languages and tools implement their own regular expression
-# language, but Crystal uses [PCRE](http://www.pcre.org/), a popular C library
+# language, but Crystal uses [PCRE](http://www.pcre.org/), a popular C library, with
+# [JIT complication](http://www.pcre.org/original/doc/html/pcrejit.html) enabled
 # for providing regular expressions. Here give a brief summary of the most
 # basic features of regular expressions - grouping, repetition, and
 # alternation - but the feature set of PCRE extends far beyond these, and we
@@ -225,6 +226,8 @@ class Regex
     NO_UTF8_CHECK = 0x00002000
     # :nodoc:
     DUPNAMES = 0x00080000
+    # :nodoc:
+    UCP = 0x20000000
   end
 
   # Returns a `Regex::Options` representing the optional flags applied to this `Regex`.
@@ -255,11 +258,15 @@ class Regex
     source = source.gsub('\u{0}', "\\0")
     @source = source
 
-    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
+    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES | Options::UCP), out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
-    @extra = LibPCRE.study(@re, 0, out studyerrptr)
+    @extra = LibPCRE.study(@re, LibPCRE::STUDY_JIT_COMPILE, out studyerrptr)
     raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.null? && studyerrptr
     LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
+  end
+
+  def finalize
+    LibPCRE.free_study @extra
   end
 
   # Determines Regex's source validity. If it is, `nil` is returned.

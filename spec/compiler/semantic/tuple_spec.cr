@@ -56,11 +56,11 @@ describe "Semantic: tuples" do
     end
 
     it "types, metaclass index" do
-      assert_type("{1, 'a'}.class[0]") { int32.metaclass }
-      assert_type("{1, 'a'}.class[1]") { char.metaclass }
+      assert_type("{1, 'a'}.class[0]", inject_primitives: true) { int32.metaclass }
+      assert_type("{1, 'a'}.class[1]", inject_primitives: true) { char.metaclass }
 
-      assert_type("{1, 'a'}.class[-1]") { char.metaclass }
-      assert_type("{1, 'a'}.class[-2]") { int32.metaclass }
+      assert_type("{1, 'a'}.class[-1]", inject_primitives: true) { char.metaclass }
+      assert_type("{1, 'a'}.class[-2]", inject_primitives: true) { int32.metaclass }
     end
 
     it "gives error when indexing out of range" do
@@ -279,11 +279,11 @@ describe "Semantic: tuples" do
     end
 
     it "types, metaclass index" do
-      assert_type(%(#{range_new}; {1, 'a'}.class[0..1])) { tuple_of([int32, char]).metaclass }
-      assert_type(%(#{range_new}; {1, 'a'}.class[1..2])) { tuple_of([char]).metaclass }
-      assert_type(%(#{range_new}; {1, 'a'}.class[1..-2])) { tuple_of([] of Type).metaclass }
-      assert_type(%(#{range_new}; {1, 'a'}.class[-2..-1])) { tuple_of([int32, char]).metaclass }
-      assert_type(%(#{range_new}; {1, 'a'}.class[-1..0])) { tuple_of([] of Type).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[0..1]), inject_primitives: true) { tuple_of([int32, char]).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[1..2]), inject_primitives: true) { tuple_of([char]).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[1..-2]), inject_primitives: true) { tuple_of([] of Type).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[-2..-1]), inject_primitives: true) { tuple_of([int32, char]).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[-1..0]), inject_primitives: true) { tuple_of([] of Type).metaclass }
     end
 
     it "gives error when begin index is out of range" do
@@ -414,7 +414,7 @@ describe "Semantic: tuples" do
       end
 
       foo
-      )) { tuple_of [string, nilable(int32)] }
+      ), inject_primitives: true) { tuple_of [string, nilable(int32)] }
   end
 
   it "accept tuple in type restriction" do

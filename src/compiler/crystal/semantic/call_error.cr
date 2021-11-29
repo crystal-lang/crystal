@@ -37,7 +37,7 @@ class Crystal::Path
 end
 
 class Crystal::Call
-  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_literals = false)
+  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_autocast = false, number_autocast = false)
     obj = @obj
     with_scope = @with_scope
 
@@ -135,8 +135,8 @@ class Crystal::Call
 
     # If we made a lookup without the special rule for literals,
     # and we have literals in the call, try again with that special rule.
-    if with_literals == false && (args.any? { |arg| arg.is_a?(NumberLiteral) || arg.is_a?(SymbolLiteral) } ||
-       named_args.try &.any? { |arg| arg.value.is_a?(NumberLiteral) || arg.value.is_a?(SymbolLiteral) })
+    if with_autocast == false && (args.any?(&.supports_autocast? number_autocast) ||
+       named_args.try &.any? &.value.supports_autocast? number_autocast)
       ::raise RetryLookupWithLiterals.new
     end
 
@@ -663,6 +663,10 @@ class Crystal::Call
     case owner
     when Program
       method_name
+    when owner.program.class_type
+      # Class's instance_type is Object, not Class, so we cannot treat it like
+      # other metaclasses
+      "#{owner}##{method_name}"
     when .metaclass?
       "#{owner.instance_type}.#{method_name}"
     else
