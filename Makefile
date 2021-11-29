@@ -61,11 +61,12 @@ ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
   EXPORT_CC ?= CC="cc -fuse-ld=lld"
 endif
 
-ifeq (${LLVM_CONFIG},)
-  $(error Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG. Compatible versions: $(shell cat src/llvm/ext/llvm-versions.txt))
-else
-  $(shell echo $(shell printf '\033[33m')Using $(LLVM_CONFIG) [version=$(shell $(LLVM_CONFIG) --version)]$(shell printf '\033[0m') >&2)
-endif
+.PHONY: LLVM_CONFIG
+LLVM_CONFIG:
+	@test ! -z "$(LLVM_CONFIG)" -a ! -z "$$($(LLVM_CONFIG) --version 2> /dev/null)" || \
+		(echo >&2 "\033[33mCould not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG. Compatible versions: $(shell cat src/llvm/ext/llvm-versions.txt)\033[0m" && false)
+
+	@echo >&2 "\033[33mUsing $(LLVM_CONFIG) [version=$$($(LLVM_CONFIG) --version)]\033[0m"
 
 .PHONY: all
 all: crystal ## Build all files (currently crystal only) [default]
@@ -102,8 +103,12 @@ compiler_spec: $(O)/compiler_spec ## Run compiler specs
 .PHONY: smoke_test ## Build specs as a smoke test
 smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal
 
+.PHONY: samples ## Build example programs
+samples:
+	$(MAKE) -C samples
+
 .PHONY: docs
-docs: ## Generate standard library documentation
+docs: LLVM_CONFIG ## Generate standard library documentation
 	./bin/crystal docs src/docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION) --source-refname=$(CRYSTAL_CONFIG_BUILD_COMMIT)
 
 .PHONY: crystal
@@ -151,23 +156,23 @@ uninstall_docs: ## Uninstall docs from DESTDIR
 	rm -rf "$(DATADIR)/docs"
 	rm -rf "$(DATADIR)/examples"
 
-$(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES) LLVM_CONFIG
 	@mkdir -p $(O)
 	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/all_spec.cr
 
-$(O)/std_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/std_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES) LLVM_CONFIG
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/std_spec.cr
 
-$(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+$(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES) LLVM_CONFIG
 	@mkdir -p $(O)
 	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr
 
-$(O)/crystal: $(DEPS) $(SOURCES)
+$(O)/crystal: $(DEPS) $(SOURCES) LLVM_CONFIG
 	@mkdir -p $(O)
 	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
 
-$(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
+$(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc LLVM_CONFIG
 	$(CXX) -c $(CXXFLAGS) -o $@ $< $(shell $(LLVM_CONFIG) --cxxflags)
 
 man/%.gz: man/%

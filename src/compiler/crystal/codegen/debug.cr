@@ -33,9 +33,16 @@ module Crystal
     def push_debug_info_metadata(mod)
       di_builder(mod).end
 
-      # DebugInfo generation in LLVM by default uses a higher version of dwarf
-      # than OS X currently understands. Android has the same problem.
-      if @program.has_flag?("osx") || @program.has_flag?("android")
+      if @program.has_flag?("windows")
+        # Windows uses CodeView instead of DWARF
+        mod.add_flag(
+          LLVM::ModuleFlag::Warning,
+          "CodeView",
+          mod.context.int32.const_int(1)
+        )
+      elsif @program.has_flag?("osx") || @program.has_flag?("android")
+        # DebugInfo generation in LLVM by default uses a higher version of dwarf
+        # than OS X currently understands. Android has the same problem.
         mod.add_flag(
           LLVM::ModuleFlag::Warning,
           "Dwarf Version",
@@ -76,11 +83,10 @@ module Crystal
     end
 
     def current_debug_file
-      if location = @current_debug_location
-        debug_files_cache[location.filename || "??"] ||= begin
-          file, dir = file_and_dir(location.filename)
-          di_builder.create_file(file, dir)
-        end
+      filename = @current_debug_location.try(&.filename) || "??"
+      debug_files_cache[filename] ||= begin
+        file, dir = file_and_dir(filename)
+        di_builder.create_file(file, dir)
       end
     end
 
@@ -190,7 +196,7 @@ module Crystal
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type.struct_element_types[is_struct ? 0 : 1])
       offset = @program.target_machine.data_layout.offset_of_element(struct_type, 1) * 8u64
-      debug_type = di_builder.create_union_type(nil, nil, current_debug_file.not_nil!, 1, size, size, LLVM::DIFlags::Zero, di_builder.get_or_create_type_array(element_types))
+      debug_type = di_builder.create_union_type(nil, nil, current_debug_file, 1, size, size, LLVM::DIFlags::Zero, di_builder.get_or_create_type_array(element_types))
       unless is_struct
         element_types.clear
         element_types << di_builder.create_member_type(nil, "type_id", nil, 1, 32, 32, 0, LLVM::DIFlags::Zero, get_debug_type(@program.uint32))
@@ -218,7 +224,7 @@ module Crystal
       end
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
-      debug_type = di_builder.create_union_type(nil, original_type.to_s, current_debug_file.not_nil!, 1, size, size, LLVM::DIFlags::Zero, di_builder.get_or_create_type_array(element_types))
+      debug_type = di_builder.create_union_type(nil, original_type.to_s, current_debug_file, 1, size, size, LLVM::DIFlags::Zero, di_builder.get_or_create_type_array(element_types))
       di_builder.replace_temporary(tmp_debug_type, debug_type)
       debug_type
     end

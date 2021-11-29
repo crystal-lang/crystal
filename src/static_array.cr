@@ -145,6 +145,18 @@ struct StaticArray(T, N)
     self
   end
 
+  # :inherit:
+  def fill(value : T, start : Int, count : Int) : self
+    to_slice.fill(value, start, count)
+    self
+  end
+
+  # :inherit:
+  def fill(value : T, range : Range) : self
+    to_slice.fill(value, range)
+    self
+  end
+
   # Returns a new static array where elements are mapped by the given block.
   #
   # ```

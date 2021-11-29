@@ -649,6 +649,10 @@ module Crystal::Macros
     def [](index : NumberLiteral) : ASTNode
     end
 
+    # Similar to `Array#[]`.
+    def [](index : RangeLiteral) : ArrayLiteral(ASTNode)
+    end
+
     # Similar to `Array#[]=`.
     def []=(index : NumberLiteral, value : ASTNode) : ASTNode
     end
@@ -884,6 +888,10 @@ module Crystal::Macros
 
   # An annotation on top of a type or variable.
   class Annotation < ASTNode
+    # Returns the name of this annotation.
+    def name : Path
+    end
+
     # Returns the value of a positional argument,
     # or NilLiteral if out of bounds.
     def [](index : NumberLiteral) : ASTNode
@@ -945,6 +953,10 @@ module Crystal::Macros
 
     # Returns this call's receiver, if any.
     def receiver : ASTNode | Nop
+    end
+
+    # Returns `true` if this call refers to a global method (starts with `::`).
+    def global? : BoolLiteral
     end
 
     # Returns this call's arguments.
@@ -1098,6 +1110,16 @@ module Crystal::Macros
     # Returns the output type, or nil if there is no return type.
     def output : ASTNode | NilLiteral
     end
+
+    # Resolves this proc notation to a `TypeNode` if it denotes a type,
+    # or otherwise gives a compile-time error.
+    def resolve : ASTNode
+    end
+
+    # Resolves this proc notation to a `TypeNode` if it denotes a type,
+    # or otherwise returns a `NilLiteral`.
+    def resolve? : ASTNode | NilLiteral
+    end
   end
 
   # A method definition.
@@ -1130,6 +1152,11 @@ module Crystal::Macros
     def return_type : ASTNode | Nop
     end
 
+    # Returns the free variables of this method, or an empty `ArrayLiteral` if
+    # there are none.
+    def free_vars : ArrayLiteral(MacroId)
+    end
+
     # Returns the body of this method.
     def body : ASTNode
     end
@@ -1137,6 +1164,10 @@ module Crystal::Macros
     # Returns the receiver (for example `self`) of this method definition,
     # or `Nop` if not specified.
     def receiver : ASTNode | Nop
+    end
+
+    # Returns `true` is this method is declared as abstract, `false` otherwise.
+    def abstract? : BoolLiteral
     end
 
     # Returns the visibility of this def: `:public`, `:protected` or `:private`.
@@ -1271,7 +1302,7 @@ module Crystal::Macros
     end
   end
 
-  # A `when` inside a `case`.
+  # A `when` or `in` inside a `case`.
   class When < ASTNode
     # Returns the conditions of this `when`.
     def conds : ArrayLiteral
@@ -1279,6 +1310,10 @@ module Crystal::Macros
 
     # Returns the body of this `when`.
     def body : ASTNode
+    end
+
+    # Returns `true` if this is an `in`, or `false` if this is a `when`.
+    def exhaustive? : BoolLiteral
     end
   end
 
@@ -1294,6 +1329,10 @@ module Crystal::Macros
 
     # Returns the `else` of this `case`.
     def else : ArrayLiteral(When)
+    end
+
+    # Returns whether this `case` is exhaustive (`case ... in`).
+    def exhaustive? : BoolLiteral
     end
   end
 
@@ -1422,11 +1461,39 @@ module Crystal::Macros
     end
   end
 
-  # class Rescue < ASTNode
-  # end
+  # A `rescue` clause inside an exception handler.
+  class Rescue < ASTNode
+    # Returns this `rescue` clause's body.
+    def body : ASTNode
+    end
 
-  # class ExceptionHandler < ASTNode
-  # end
+    # Returns this `rescue` clause's exception types, if any.
+    def types : ArrayLiteral | NilLiteral
+    end
+
+    # Returns the variable name of the rescued exception, if any.
+    def name : MacroId | Nop
+    end
+  end
+
+  # A `begin ... end` expression with `rescue`, `else` and `ensure` clauses.
+  class ExceptionHandler < ASTNode
+    # Returns this exception handler's main body.
+    def body : ASTNode
+    end
+
+    # Returns this exception handler's `rescue` clauses, if any.
+    def rescues : ArrayLiteral(Rescue) | NilLiteral
+    end
+
+    # Returns this exception handler's `else` clause body, if any.
+    def else : ASTNode | Nop
+    end
+
+    # Returns this exception handler's `ensure` clause body, if any.
+    def ensure : ASTNode | Nop
+    end
+  end
 
   # A proc method, written like:
   # ```
@@ -1441,6 +1508,10 @@ module Crystal::Macros
 
     # Returns the body of this proc.
     def body : ASTNode
+    end
+
+    # Returns the return type of this proc, if specified.
+    def return_type : ASTNode | Nop
     end
   end
 
@@ -1479,20 +1550,40 @@ module Crystal::Macros
   # class Self < ASTNode
   # end
 
-  # abstract class ControlExpression < ASTNode
-  # end
+  # The base class of control expressions.
+  abstract class ControlExpression < ASTNode
+    # Returns the argument to this control expression, if any.
+    #
+    # If multiple arguments are present, they are wrapped inside a single
+    # `TupleLiteral`.
+    def exp : ASTNode | Nop
+    end
+  end
 
-  # class Return < ControlExpression
-  # end
+  # A `return` expression.
+  class Return < ControlExpression
+  end
 
-  # class Break < ControlExpression
-  # end
+  # A `break` expression.
+  class Break < ControlExpression
+  end
 
-  # class Next < ControlExpression
-  # end
+  # A `next` expression.
+  class Next < ControlExpression
+  end
 
-  # class Yield < ASTNode
-  # end
+  # A `yield` expression.
+  class Yield < ASTNode
+    # Returns the arguments to this `yield`.
+    def expressions : ArrayLiteral
+    end
+
+    # Returns the scope of this `yield`, if any.
+    #
+    # This refers to the part after `with` in a `with ... yield` expression.
+    def scope : ASTNode | Nop
+    end
+  end
 
   # class Include < ASTNode
   # end

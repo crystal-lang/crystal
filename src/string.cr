@@ -1,6 +1,6 @@
 require "c/stdlib"
 require "c/string"
-{% unless flag?(:win32) %}
+{% unless flag?(:without_iconv) %}
   require "crystal/iconv"
 {% end %}
 
@@ -3024,7 +3024,7 @@ class String
       return ""
     elsif bytesize == 1
       return String.new(times) do |buffer|
-        Intrinsics.memset(buffer.as(Void*), to_unsafe[0], times, false)
+        Slice.new(buffer, times).fill(to_unsafe[0])
         {times, times}
       end
     end
@@ -4220,7 +4220,7 @@ class String
     String.new(new_bytesize) do |buffer|
       if leftpadding > 0
         if count == 1
-          Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, leftpadding.to_u32, false)
+          Slice.new(buffer, leftpadding).fill(char.ord.to_u8)
           buffer += leftpadding
         else
           leftpadding.times do
@@ -4233,7 +4233,7 @@ class String
       buffer += bytesize
       if rightpadding > 0
         if count == 1
-          Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, rightpadding.to_u32, false)
+          Slice.new(buffer, rightpadding).fill(char.ord.to_u8)
         else
           rightpadding.times do
             buffer.copy_from(bytes.to_unsafe, count)
@@ -4561,74 +4561,108 @@ class String
     end
   end
 
-  # Returns a representation of `self` using character escapes for special characters and wrapped in quotes.
+  # Returns a representation of `self` as a Crystal string literal, wrapped in
+  # double quotes.
+  #
+  # Non-printable characters (see `Char#printable?`) are escaped.
   #
   # ```
   # "\u{1f48e} - à la carte\n".inspect # => %("\u{1F48E} - à la carte\\n")
   # ```
+  #
+  # See `Char#unicode_escape` for the format used to escape charactes without a
+  # special escape sequence.
+  #
+  # * `#inspect_unquoted` omits the delimiters.
+  # * `#dump` additionally escapes all non-ASCII characters.
   def inspect : String
     super
   end
 
-  # Appends `self` to the given `IO` object using character escapes for special characters and wrapped in double quotes.
+  # :ditto:
   def inspect(io : IO) : Nil
     dump_or_inspect(io) do |char, error|
       inspect_char(char, error, io)
     end
   end
 
-  # Returns a representation of `self` using character escapes for special characters but not wrapped in quotes.
+  # Returns a representation of `self` as the content of a Crystal string literal
+  # without delimiters.
+  #
+  # Non-printable characters (see `Char#printable?`) are escaped.
   #
   # ```
   # "\u{1f48e} - à la carte\n".inspect_unquoted # => %(\u{1F48E} - à la carte\\n)
   # ```
+  #
+  # See `Char#unicode_escape` for the format used to escape charactes without a
+  # special escape sequence.
+  #
+  # * `#inspect` wraps the content in double quotes.
+  # * `#dump_unquoted` additionally escapes all non-ASCII characters.
   def inspect_unquoted : String
     String.build do |io|
       inspect_unquoted(io)
     end
   end
 
-  # Appends `self` to the given `IO` object using character escapes for special characters but not wrapped in quotes.
+  # :ditto:
   def inspect_unquoted(io : IO) : Nil
     dump_or_inspect_unquoted(io) do |char, error|
       inspect_char(char, error, io)
     end
   end
 
-  # Returns a representation of `self` using character escapes for special characters
-  # and non-ascii characters (unicode codepoints > 128), wrapped in quotes.
+  # Returns a representation of `self` as an ASCII-compatible Crystal string
+  # literal, wrapped in double quotes.
+  #
+  # Non-printable characters (see `Char#printable?`) and non-ASCII characters
+  # (codepoints larger `U+007F`) are escaped.
   #
   # ```
   # "\u{1f48e} - à la carte\n".dump # => %("\\u{1F48E} - \\u00E0 la carte\\n")
   # ```
+  #
+  # See `Char#unicode_escape` for the format used to escape charactes without a
+  # special escape sequence.
+  #
+  # * `#dump_unquoted` omits the delimiters.
+  # * `#inspect` only escapes non-printable characters.
   def dump : String
     String.build do |io|
       dump io
     end
   end
 
-  # Appends `self` to the given `IO` object using character escapes for special characters
-  # and non-ascii characters (unicode codepoints > 128), wrapped in quotes.
+  # :ditto:
   def dump(io : IO) : Nil
     dump_or_inspect(io) do |char, error|
       dump_char(char, error, io)
     end
   end
 
-  # Returns a representation of `self` using character escapes for special characters
-  # and non-ascii characters (unicode codepoints > 128), but not wrapped in quotes.
+  # Returns a representation of `self` as the content of an ASCII-compatible
+  # Crystal string literal without delimiters.
+  #
+  # Non-printable characters (see `Char#printable?`) and non-ASCII characters
+  # (codepoints larger `U+007F`) are escaped.
   #
   # ```
   # "\u{1f48e} - à la carte\n".dump_unquoted # => %(\\u{1F48E} - \\u00E0 la carte\\n)
   # ```
+  #
+  # See `Char#unicode_escape` for the format used to escape charactes without a
+  # special escape sequence.
+  #
+  # * `#dump` wraps the content in double quotes.
+  # * `#inspect_unquoted` only escapes non-printable characters.
   def dump_unquoted : String
     String.build do |io|
       dump_unquoted(io)
     end
   end
 
-  # Appends `self` to the given `IO` object using character escapes for special characters
-  # and non-ascii characters (unicode codepoints > 128), but not wrapped in quotes.
+  # :nodoc:
   def dump_unquoted(io : IO) : Nil
     dump_or_inspect_unquoted(io) do |char, error|
       dump_char(char, error, io)
@@ -4683,13 +4717,15 @@ class String
 
   private def inspect_char(char, error, io)
     dump_or_inspect_char char, error, io do
-      char.ascii_control?
+      !char.printable?
     end
   end
 
   private def dump_char(char, error, io)
     dump_or_inspect_char char, error, io do
-      char.ascii_control? || char.ord >= 0x80
+      # Technically, the condition would be `!char.ascii? || !char.printable?` but
+      # all non-printable ASCII characters are control characters, so we can simplify.
+      !char.ascii? || char.ascii_control?
     end
   end
 
@@ -4697,7 +4733,7 @@ class String
     if error
       dump_hex(error, io)
     elsif yield
-      dump_unicode(char, io)
+      char.unicode_escape(io)
     else
       io << char
     end
@@ -4707,16 +4743,6 @@ class String
     io << "\\x"
     io << '0' if char < 0x0F
     char.to_s(io, 16, upcase: true)
-  end
-
-  private def dump_unicode(char, io)
-    io << "\\u"
-    io << '{' if char.ord > 0xFFFF
-    io << '0' if char.ord < 0x1000
-    io << '0' if char.ord < 0x0100
-    io << '0' if char.ord < 0x0010
-    char.ord.to_s(io, 16, upcase: true)
-    io << '}' if char.ord > 0xFFFF
   end
 
   # Returns `true` if this string starts with the given *str*.
