@@ -1122,7 +1122,7 @@ module Crystal
     it_parses "$~ = 1", Assign.new("$~".var, 1.int32)
 
     assert_syntax_error "$2147483648"
-    assert_syntax_error "$99999999999999999999999?", "Regex capture index 99999999999999999999999 doesn't fit in an Int32"
+    assert_syntax_error "$99999999999999999999999?", "Index $99999999999999999999999 doesn't fit in an Int32"
 
     it_parses "foo /a/", Call.new(nil, "foo", regex("a"))
     it_parses "foo(/a/)", Call.new(nil, "foo", regex("a"))

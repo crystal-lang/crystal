@@ -998,7 +998,7 @@ module Crystal
         end
         location = @token.location
         index = value.to_i?
-        raise "Regex capture index #{value} doesn't fit in an Int32" unless index
+        raise "Index $#{value} doesn't fit in an Int32" unless index
         node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(index))
       when :__LINE__
         node_and_next_token MagicConstant.expand_line_node(@token.location)
