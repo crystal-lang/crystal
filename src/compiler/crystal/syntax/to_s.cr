@@ -616,6 +616,10 @@ module Crystal
         node.def.args.join(@str, ", ", &.accept self)
         @str << ')'
       end
+      if return_type = node.def.return_type
+        @str << " : "
+        return_type.accept self
+      end
       @str << ' '
       @str << keyword("do")
       newline
@@ -935,7 +939,10 @@ module Crystal
     end
 
     def visit(node : Metaclass)
+      needs_parens = node.name.is_a?(Union)
+      @str << '(' if needs_parens
       node.name.accept self
+      @str << ')' if needs_parens
       @str << '.'
       @str << keyword("class")
       false
@@ -1492,7 +1499,7 @@ module Crystal
         @str << ' '
       end
       @str << ":"
-      if node.volatile? || node.alignstack? || node.intel?
+      if node.volatile? || node.alignstack? || node.intel? || node.can_throw?
         @str << ' '
         comma = false
         if node.volatile?
@@ -1508,6 +1515,10 @@ module Crystal
           @str << ", " if comma
           @str << %("intel")
           comma = true
+        end
+        if node.can_throw?
+          @str << ", " if comma
+          @str << %("unwind")
         end
       end
       @str << ')'

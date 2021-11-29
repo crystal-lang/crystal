@@ -242,7 +242,7 @@ describe "Semantic: double splat" do
       end
 
       foo(x: nil)
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 
   it "orders overloads: unnamed splat vs double splat (2) (#5328)" do
@@ -256,6 +256,6 @@ describe "Semantic: double splat" do
       end
 
       foo(x: nil)
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 end
