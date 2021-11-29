@@ -11,12 +11,13 @@ struct Exception::CallStack
   @@dwarf_function_names : Array(Tuple(LibC::SizeT, LibC::SizeT, String))?
 
   # :nodoc:
-  def self.load_dwarf
+  def self.load_debug_info
+    return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
+
     unless @@dwarf_loaded
       @@dwarf_loaded = true
       begin
-        return if ENV["CRYSTAL_LOAD_DWARF"]? == "0"
-        load_dwarf_impl
+        load_debug_info_impl
       rescue ex
         @@dwarf_line_numbers = nil
         @@dwarf_function_names = nil
@@ -26,7 +27,7 @@ struct Exception::CallStack
   end
 
   protected def self.decode_line_number(pc)
-    load_dwarf
+    load_debug_info
     if ln = @@dwarf_line_numbers
       if row = ln.find(pc)
         return {row.path, row.line, row.column}
@@ -36,7 +37,7 @@ struct Exception::CallStack
   end
 
   protected def self.decode_function_name(pc)
-    load_dwarf
+    load_debug_info
     if fn = @@dwarf_function_names
       fn.each do |(low_pc, high_pc, function_name)|
         return function_name if low_pc <= pc <= high_pc

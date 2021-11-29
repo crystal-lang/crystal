@@ -809,6 +809,14 @@ describe "Semantic: proc" do
         ),
         "can't use #{type} as a Proc argument type"
     end
+
+    it "disallows #{type} in proc notation parameter type" do
+      assert_error "x : #{type} ->", "can't use #{type} as a Proc argument type"
+    end
+
+    it "disallows #{type} in proc notation return type" do
+      assert_error "x : -> #{type}", "can't use #{type} as a Proc argument type"
+    end
   end
 
   it "allows metaclass in procs" do
@@ -852,6 +860,27 @@ describe "Semantic: proc" do
       end
 
       ->foo(Foo.class)
+      CR
+  end
+
+  it "allows metaclass in proc notation parameter type" do
+    assert_type(<<-CR) { proc_of(types["Foo"].metaclass, nil_type) }
+      class Foo
+      end
+
+      #{proc_new}
+
+      x : Foo.class -> = Proc(Foo.class, Nil).new { }
+      x
+      CR
+  end
+
+  it "allows metaclass in proc notation return type" do
+    assert_type(<<-CR) { proc_of(types["Foo"].metaclass) }
+      class Foo
+      end
+      x : -> Foo.class = ->{ Foo }
+      x
       CR
   end
 

@@ -344,16 +344,25 @@ module Crystal
         assert_macro %({{"hello".empty?}}), "false"
       end
 
-      it "executes string [Range] inclusive" do
+      it "executes [] with inclusive range" do
         assert_macro %({{"hello"[1..-2]}}), %("ell")
       end
 
-      it "executes string [Range] exclusive" do
+      it "executes [] with exclusive range" do
         assert_macro %({{"hello"[1...-2]}}), %("el")
       end
 
-      it "executes string [Range] inclusive (computed)" do
+      it "executes [] with computed range" do
         assert_macro %({{"hello"[[1].size..-2]}}), %("ell")
+      end
+
+      it "executes [] with incomplete range" do
+        assert_macro %({{"hello"[1..]}}), %("ello")
+        assert_macro %({{"hello"[1..nil]}}), %("ello")
+        assert_macro %({{"hello"[...3]}}), %("hel")
+        assert_macro %({{"hello"[nil...3]}}), %("hel")
+        assert_macro %({{"hello"[..]}}), %("hello")
+        assert_macro %({{"hello"[nil..nil]}}), %("hello")
       end
 
       it "executes string chomp" do
@@ -817,6 +826,15 @@ module Crystal
         assert_macro %({{ [1, 2, 3, 4][[1].size...-1] }}), %([2, 3])
       end
 
+      it "executes [] with incomplete range" do
+        assert_macro %({{ [1, 2, 3, 4][1..] }}), %([2, 3, 4])
+        assert_macro %({{ [1, 2, 3, 4][1..nil] }}), %([2, 3, 4])
+        assert_macro %({{ [1, 2, 3, 4][...2] }}), %([1, 2])
+        assert_macro %({{ [1, 2, 3, 4][nil...2] }}), %([1, 2])
+        assert_macro %({{ [1, 2, 3, 4][..] }}), %([1, 2, 3, 4])
+        assert_macro %({{ [1, 2, 3, 4][nil..nil] }}), %([1, 2, 3, 4])
+      end
+
       it "executes [] with two numbers" do
         assert_macro %({{ [1, 2, 3, 4, 5][1, 3] }}), %([2, 3, 4])
       end
@@ -1076,16 +1094,33 @@ module Crystal
     end
 
     describe TupleLiteral do
-      it "executes index 0" do
+      it "executes [] with 0" do
         assert_macro %({{ {1, 2, 3}[0] }}), "1"
       end
 
-      it "executes index 1" do
+      it "executes [] with 1" do
         assert_macro %({{ {1, 2, 3}[1] }}), "2"
       end
 
-      it "executes index out of bounds" do
+      it "executes [] out of bounds" do
         assert_macro %({{ {1, 2, 3}[3] }}), "nil"
+      end
+
+      it "executes [] with range" do
+        assert_macro %({{ {1, 2, 3, 4}[1...-1] }}), %({2, 3})
+      end
+
+      it "executes [] with computed range" do
+        assert_macro %({{ {1, 2, 3, 4}[[1].size...-1] }}), %({2, 3})
+      end
+
+      it "executes [] with incomplete range" do
+        assert_macro %({{ {1, 2, 3, 4}[1..] }}), %({2, 3, 4})
+        assert_macro %({{ {1, 2, 3, 4}[1..nil] }}), %({2, 3, 4})
+        assert_macro %({{ {1, 2, 3, 4}[...2] }}), %({1, 2})
+        assert_macro %({{ {1, 2, 3, 4}[nil...2] }}), %({1, 2})
+        assert_macro %({{ {1, 2, 3, 4}[..] }}), %({1, 2, 3, 4})
+        assert_macro %({{ {1, 2, 3, 4}[nil..nil] }}), %({1, 2, 3, 4})
       end
 
       it "executes size" do
@@ -1523,15 +1558,15 @@ module Crystal
         end
       end
 
-      it "executes instance_vars on symbol literal" do
+      it "executes instance_vars on symbol type" do
         assert_macro("{{x.instance_vars.map &.stringify}}", %([])) do |program|
-          {x: TypeNode.new(SymbolLiteralType.new(program, "foo".symbol))}
+          {x: TypeNode.new(program.symbol)}
         end
       end
 
-      it "executes class_vars on symbol literal" do
+      it "executes class_vars on symbol type" do
         assert_macro("{{x.class_vars.map &.stringify}}", %([])) do |program|
-          {x: TypeNode.new(SymbolLiteralType.new(program, "foo".symbol))}
+          {x: TypeNode.new(program.symbol)}
         end
       end
 

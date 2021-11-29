@@ -1889,4 +1889,33 @@ describe Crystal::Formatter do
                3},
            4}
     CODE
+
+  # #10817
+  assert_format <<-CODE
+    def func # comment
+      (1 + 2) / 3
+    end
+    CODE
+
+  # #10943
+  assert_format <<-CODE
+    foo do # a
+      # b
+      bar
+    end
+    CODE
+
+  # #10499
+  assert_format <<-CODE
+    case nil
+    else nil; nil # comment
+    end
+    CODE
+
+  assert_format <<-CODE
+    case nil
+    else nil; nil
+    # comment
+    end
+    CODE
 end

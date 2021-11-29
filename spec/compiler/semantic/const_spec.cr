@@ -451,6 +451,22 @@ describe "Semantic: const" do
       "A is not a type, it's a constant"
   end
 
+  it "errors if using const in proc notation parameter type" do
+    assert_error <<-CR, "A is not a type, it's a constant"
+      A = 1
+
+      x : A ->
+      CR
+  end
+
+  it "errors if using const in proc notation return type" do
+    assert_error <<-CR, "A is not a type, it's a constant"
+      A = 1
+
+      x : -> A
+      CR
+  end
+
   it "errors if using return inside constant value (#5391)" do
     assert_error %(
       class Foo

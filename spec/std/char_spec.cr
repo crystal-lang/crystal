@@ -82,6 +82,22 @@ describe "Char" do
     it { ' '.ascii_letter?.should be_false }
   end
 
+  it "#letter?" do
+    'A'.letter?.should be_true # Unicode General Category Lu
+    'a'.letter?.should be_true # Unicode General Category Ll
+    'ǅ'.letter?.should be_true # Unicode General Category Lt
+    'ʰ'.letter?.should be_true # Unicode General Category Lm
+    'か'.letter?.should be_true # Unicode General Category Lo
+
+    'ः'.letter?.should be_false  # Unicode General Category M
+    '1'.letter?.should be_false  # Unicode General Category Nd
+    'Ⅰ'.letter?.should be_false  # Unicode General Category Nl
+    '_'.letter?.should be_false  # Unicode General Category P
+    '$'.letter?.should be_false  # Unicode General Category S
+    ' '.letter?.should be_false  # Unicode General Category Z
+    '\n'.letter?.should be_false # Unicode General Category C
+  end
+
   describe "alphanumeric?" do
     it { 'a'.alphanumeric?.should be_true }
     it { 'A'.alphanumeric?.should be_true }
@@ -128,6 +144,7 @@ describe "Char" do
     assert_prints '\u202A'.dump, %('\\u202A')
     assert_prints '\u{81}'.dump, %('\\u0081')
     assert_prints '\u{110BD}'.dump, %('\\u{110BD}')
+    assert_prints '\u{1F48E}'.dump, %('\\u{1F48E}')
     assert_prints '\u00AD'.dump, %('\\u00AD')
   end
 
@@ -147,11 +164,12 @@ describe "Char" do
     assert_prints '\v'.inspect, %('\\v')
     assert_prints '\f'.inspect, %('\\f')
     assert_prints 'á'.inspect, %('á')
-    assert_prints '\uF8FF'.inspect, %('\uF8FF')
-    assert_prints '\u202A'.inspect, %('\u202A')
+    assert_prints '\uF8FF'.inspect, %('\\uF8FF')
+    assert_prints '\u202A'.inspect, %('\\u202A')
     assert_prints '\u{81}'.inspect, %('\\u0081')
-    assert_prints '\u{110BD}'.inspect, %('\u{110BD}')
-    assert_prints '\u00AD'.inspect, %('\u00AD')
+    assert_prints '\u{110BD}'.inspect, %('\\u{110BD}')
+    assert_prints '\u{1F48E}'.inspect, %('\u{1F48E}')
+    assert_prints '\u00AD'.inspect, %('\\u00AD')
   end
 
   it "#unicode_escape" do
