@@ -20,14 +20,26 @@ describe "Char" do
     it { 'Ń'.downcase(Unicode::CaseOptions::Fold).should eq('ń') }
   end
 
-  describe "succ" do
-    it { 'a'.succ.should eq('b') }
-    it { 'あ'.succ.should eq('ぃ') }
+  it "#succ" do
+    'a'.succ.should eq('b')
+    'あ'.succ.should eq('ぃ')
+
+    '\uD7FF'.succ.should eq '\uE000'
+
+    expect_raises OverflowError, "Out of Char range" do
+      Char::MAX.succ
+    end
   end
 
-  describe "pred" do
-    it { 'b'.pred.should eq('a') }
-    it { 'ぃ'.pred.should eq('あ') }
+  it "#pred" do
+    'b'.pred.should eq('a')
+    'ぃ'.pred.should eq('あ')
+
+    '\uE000'.pred.should eq '\uD7FF'
+
+    expect_raises OverflowError, "Out of Char range" do
+      Char::ZERO.pred
+    end
   end
 
   describe "+" do
