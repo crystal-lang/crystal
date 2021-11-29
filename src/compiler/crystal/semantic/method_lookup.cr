@@ -255,8 +255,8 @@ module Crystal
         matched_arg_types.push match_arg_type
         mandatory_args[arg_index] = true if mandatory_args
 
-        if arg_type.is_a?(LiteralType)
-          matched_literals ||= [] of {LiteralType, ASTNode}
+        if arg_type.is_a?(AutocastType)
+          matched_literals ||= [] of {AutocastType, ASTNode}
           matched_literals << {arg_type, arg}
         end
       end
@@ -307,8 +307,8 @@ module Crystal
             matched_named_arg_types ||= [] of NamedArgumentType
             matched_named_arg_types << NamedArgumentType.new(named_arg.name, match_arg_type)
 
-            if named_arg_type.is_a?(LiteralType)
-              matched_literals ||= [] of {LiteralType, ASTNode}
+            if named_arg_type.is_a?(AutocastType)
+              matched_literals ||= [] of {AutocastType, ASTNode}
               matched_literals << {named_arg_type, a_def.args[found_index]}
             end
           else
@@ -323,8 +323,8 @@ module Crystal
                 match_arg_type = named_arg_type.restrict(double_splat_restriction, context)
                 return nil unless match_arg_type
 
-                if named_arg_type.is_a?(LiteralType)
-                  matched_literals ||= [] of {LiteralType, ASTNode}
+                if named_arg_type.is_a?(AutocastType)
+                  matched_literals ||= [] of {AutocastType, ASTNode}
                   matched_literals << {named_arg_type, double_splat}
                 end
               end
