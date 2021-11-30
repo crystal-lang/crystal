@@ -1,8 +1,10 @@
 require "./spec_helper"
+require "../../support/tempfile"
+require "../../support/win32"
 
-describe Socket do
+describe Socket, tags: "network" do
   describe ".unix" do
-    it "creates a unix socket" do
+    pending_win32 "creates a unix socket" do
       sock = Socket.unix
       sock.should be_a(Socket)
       sock.family.should eq(Socket::Family::UNIX)
@@ -13,7 +15,7 @@ describe Socket do
     end
   end
 
-  it ".accept" do
+  pending_win32 ".accept" do
     client_done = Channel(Nil).new
     server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
 
@@ -53,7 +55,7 @@ describe Socket do
     expect_raises(IO::TimeoutError) { server.accept? }
   end
 
-  it "sends messages" do
+  pending_win32 "sends messages" do
     port = unused_local_port
     server = Socket.tcp(Socket::Family::INET)
     server.bind("127.0.0.1", port)
@@ -73,6 +75,20 @@ describe Socket do
   ensure
     socket.try &.close
     server.try &.close
+  end
+
+  pending_win32 "sends datagram over unix socket" do
+    with_tempfile("datagram_unix") do |path|
+      server = Socket.unix(Socket::Type::DGRAM)
+      server.bind Socket::UNIXAddress.new(path)
+
+      client = Socket.unix(Socket::Type::DGRAM)
+      client.connect Socket::UNIXAddress.new(path)
+      client.send "foo"
+
+      message, _ = server.receive
+      message.should eq "foo"
+    end
   end
 
   describe "#bind" do

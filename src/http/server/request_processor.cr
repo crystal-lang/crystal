@@ -18,11 +18,11 @@ class HTTP::Server::RequestProcessor
     @wants_close = false
   end
 
-  def close
+  def close : Nil
     @wants_close = true
   end
 
-  def process(input, output)
+  def process(input, output) : Nil
     response = Response.new(output)
 
     begin
@@ -36,13 +36,14 @@ class HTTP::Server::RequestProcessor
         # EOF
         break unless request
 
+        response.reset
+
         if request.is_a?(HTTP::Status)
           response.respond_with_status(request)
           return
         end
 
         response.version = request.version
-        response.reset
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
         context = Context.new(request, response)
 
@@ -88,8 +89,6 @@ class HTTP::Server::RequestProcessor
         when ChunkedContent
           # Close the connection if the IO has still bytes to read.
           break unless body.closed?
-        else
-          # Nothing to do
         end
       end
     rescue IO::Error

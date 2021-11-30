@@ -1,4 +1,5 @@
 require "c/processthreadsapi"
+require "c/handleapi"
 require "process/shell"
 
 struct Crystal::System::Process
@@ -130,9 +131,9 @@ struct Crystal::System::Process
       error = WinError.value
       case error.to_errno
       when Errno::EACCES, Errno::ENOENT
-        raise ::File::Error.from_winerror("Error executing process", error, file: command_args)
+        raise ::File::Error.from_os_error("Error executing process", error, file: command_args)
       else
-        raise IO::Error.from_winerror("Error executing process: '#{command_args}'", error)
+        raise IO::Error.from_os_error("Error executing process: '#{command_args}'", error)
       end
     end
 

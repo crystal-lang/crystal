@@ -14,7 +14,7 @@ class Log
     end
 
     # :nodoc:
-    def self.for(mode : DispatchMode)
+    def self.for(mode : DispatchMode) : self
       case mode
       in .sync?
         SyncDispatcher.new
@@ -51,7 +51,7 @@ class Log
       spawn write_logs
     end
 
-    def dispatch(entry : Entry, backend : Backend)
+    def dispatch(entry : Entry, backend : Backend) : Nil
       @channel.send({entry, backend})
     end
 
@@ -64,12 +64,16 @@ class Log
       @done.send nil
     end
 
-    def close
+    def close : Nil
       # TODO: this might fail if being closed from different threads
       unless @channel.closed?
         @channel.close
         @done.receive
       end
+    end
+
+    def finalize
+      close
     end
   end
 

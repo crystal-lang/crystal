@@ -164,7 +164,7 @@ describe "Lexer: location" do
     (loc3 == loc1).should be_true
   end
 
-  it "locations with virtual files shoud be comparable" do
+  it "locations with virtual files should be comparable" do
     loc1 = Location.new("file1", 1, 1)
     loc2 = Location.new(VirtualFile.new(Macro.new("macro", [] of Arg, Nop.new), "", Location.new("f", 1, 1)), 2, 1)
     (loc1 < loc2).should be_false

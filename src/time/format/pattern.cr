@@ -82,6 +82,8 @@ struct Time::Format
           year
         when 'z'
           time_zone
+        when 'Z'
+          time_zone_name
         when '_'
           case char = reader.next_char
           when 'm'
@@ -112,6 +114,8 @@ struct Time::Format
             short_month_name_upcase
           when 'B'
             month_name_upcase
+          when 'Z'
+            time_zone_name(zone: true)
           else
             char '%'
             char '^'

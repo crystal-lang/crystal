@@ -8,13 +8,13 @@ require "../types"
 # overloads because the exact match will prevent them from being considered.
 #
 # If no matches are found we try again but this time with autocasting enabled.
-# In `semantic/call.cr` this is when `with_literals` is `true`, and this is when
+# In `semantic/call.cr` this is when `with_autocast` is `true`, and this is when
 # `analyze_all` will be `true` here.
 #
 # 2. Lookup is done with autocasting enabled.
 #
 # In this mode the types for NumberLiteral and SymbolLiteral are not the usual
-# types but instead the special NumberLiteralType and SymbolLiteralType.
+# types but instead the special NumberAutocastType and SymbolAutocastType.
 #
 # In this mode we also need to stop as soon as we find an exact match
 # (which just means when the first overload matches with autocasting, which
@@ -52,9 +52,9 @@ require "../types"
 
 module Crystal
   record NamedArgumentType, name : String, type : Type do
-    def self.from_args(named_args : Array(NamedArgument)?, with_literals = false)
+    def self.from_args(named_args : Array(NamedArgument)?, with_autocast = false)
       named_args.try &.map do |named_arg|
-        new(named_arg.name, named_arg.value.type(with_literals: with_literals))
+        new(named_arg.name, named_arg.value.type(with_autocast: with_autocast))
       end
     end
   end
@@ -121,6 +121,7 @@ module Crystal
           macro_owner = item.def.macro_owner?
           context.defining_type = macro_owner if macro_owner
           context.def_free_vars = item.def.free_vars
+          context.free_vars.try &.clear
 
           match = signature.match(item, context)
 
@@ -143,6 +144,7 @@ module Crystal
           else
             context.defining_type = path_lookup if macro_owner
             context.def_free_vars = nil
+            context.free_vars.try &.clear
           end
         end
 
@@ -262,6 +264,9 @@ module Crystal
         unless match_arg_type
           return nil
         end
+
+        matched_arg_types ||= [] of Type
+        matched_arg_types.concat(splat_arg_types)
       end
 
       found_unmatched_named_arg = false
@@ -301,7 +306,7 @@ module Crystal
             matched_named_arg_types ||= [] of NamedArgumentType
             matched_named_arg_types << NamedArgumentType.new(named_arg.name, match_arg_type)
           else
-            # If there's a double splat it's ok, the named arg will be put there
+            # If there's a double splat it's OK, the named arg will be put there
             if a_def.double_splat
               match_arg_type = named_arg.type
 
@@ -361,7 +366,7 @@ module Crystal
       Match.new(a_def, (matched_arg_types || arg_types), context, matched_named_arg_types)
     end
 
-    def matches_exactly?(match : Match, *, with_literals : Bool = false)
+    def matches_exactly?(match : Match, *, with_autocast : Bool = false)
       arg_types_equal = self.arg_types.equals?(match.arg_types) do |x, y|
         x.compatible_with?(y)
       end

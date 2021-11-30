@@ -93,10 +93,10 @@ describe "Semantic: static array" do
       SIZE = OTHER * 20 // 2
       x = StaticArray(Char, SIZE).new
       x
-      )) { static_array_of(char, 100) }
+      ), inject_primitives: true) { static_array_of(char, 100) }
   end
 
-  it "types staic array new with size being a computed constant, and use N (bug)" do
+  it "types static array new with size being a computed constant, and use N (bug)" do
     assert_type(%(
       struct StaticArray(T, N)
         def size
@@ -108,7 +108,7 @@ describe "Semantic: static array" do
       x = uninitialized UInt8[SIZE]
       x.size
       a = 1
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "doesn't crash on restriction (#584)" do

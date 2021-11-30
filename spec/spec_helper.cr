@@ -35,7 +35,7 @@ record SemanticResult,
   program : Program,
   node : ASTNode
 
-def assert_type(str, *, inject_primitives = true, flags = nil, file = __FILE__, line = __LINE__)
+def assert_type(str, *, inject_primitives = false, flags = nil, file = __FILE__, line = __LINE__)
   result = semantic(str, flags: flags, inject_primitives: inject_primitives)
   program = result.program
   expected_type = with program yield program
@@ -47,7 +47,7 @@ def assert_type(str, *, inject_primitives = true, flags = nil, file = __FILE__, 
   result
 end
 
-def semantic(code : String, wants_doc = false, inject_primitives = true, flags = nil, filename = nil)
+def semantic(code : String, wants_doc = false, inject_primitives = false, flags = nil, filename = nil)
   node = parse(code, wants_doc: wants_doc, filename: filename)
   node = inject_primitives(node) if inject_primitives
   semantic node, wants_doc: wants_doc, flags: flags
@@ -104,14 +104,14 @@ def assert_expand_third(from : String, to, *, file = __FILE__, line = __LINE__)
   assert_expand node, to, file: file, line: line
 end
 
-def assert_error(str, message, *, inject_primitives = true, file = __FILE__, line = __LINE__)
+def assert_error(str, message = nil, *, inject_primitives = false, file = __FILE__, line = __LINE__, flags = nil)
   expect_raises TypeException, message, file, line do
-    semantic str, inject_primitives: inject_primitives
+    semantic str, inject_primitives: inject_primitives, flags: flags
   end
 end
 
-def assert_no_errors(*args)
-  semantic(*args)
+def assert_no_errors(*args, **opts)
+  semantic(*args, **opts)
 end
 
 def warnings_result(code, *, file = __FILE__)
@@ -131,30 +131,46 @@ end
 
 def assert_warning(code, message, *, file = __FILE__, line = __LINE__)
   warning_failures = warnings_result(code, file: file)
-  warning_failures.size.should eq(1), file, line
-  warning_failures[0].should start_with(message), file, line
+  warning_failures.size.should eq(1), file: file, line: line
+  warning_failures[0].should start_with(message), file: file, line: line
 end
 
-def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)
-  assert_macro(macro_args, macro_body, expected, expected_pragmas, flags, file: file, line: line) { call_args }
+def assert_macro(macro_body, expected, args = nil, *, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)
+  assert_macro(macro_body, expected, expected_pragmas: expected_pragmas, flags: flags, file: file, line: line) { args }
 end
 
-def assert_macro(macro_args, macro_body, expected, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)
-  program = new_program
-  program.flags.concat(flags.split) if flags
-  sub_node = yield program
-  assert_macro_internal program, sub_node, macro_args, macro_body, expected, expected_pragmas, file: file, line: line
-end
-
-def assert_macro_internal(program, sub_node, macro_args, macro_body, expected, expected_pragmas, file = __FILE__, line = __LINE__)
-  macro_def = "macro foo(#{macro_args});#{macro_body};end"
-  a_macro = Parser.parse(macro_def).as(Macro)
-
-  call = Call.new(nil, "", sub_node)
-  result, result_pragmas = program.expand_macro a_macro, call, program, program
+def assert_macro(macro_body, expected, *, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__, &)
+  program, a_macro, call = prepare_macro_call(macro_body, flags) { |program| yield program }
+  result, result_pragmas = program.expand_macro(a_macro, call, program, program)
   result = result.chomp(';')
   result.should eq(expected), file: file, line: line
-  result_pragmas.should eq(expected_pragmas) if expected_pragmas
+  result_pragmas.should eq(expected_pragmas), file: file, line: line if expected_pragmas
+end
+
+def assert_macro_error(macro_body, message = nil, args = nil, *, flags = nil, file = __FILE__, line = __LINE__)
+  assert_macro_error(macro_body, message, flags: flags, file: file, line: line) { args }
+end
+
+def assert_macro_error(macro_body, message = nil, *, flags = nil, file = __FILE__, line = __LINE__, &)
+  program, a_macro, call = prepare_macro_call(macro_body, flags) { |program| yield program }
+  expect_raises(Crystal::TypeException, message, file: file, line: line) do
+    program.expand_macro(a_macro, call, program, program)
+  end
+end
+
+def prepare_macro_call(macro_body, flags = nil)
+  program = new_program
+  program.flags.concat(flags.split) if flags
+  args = yield program
+
+  macro_params = args.try &.keys.join(", ")
+  call_args = [] of ASTNode
+  call_args.concat(args.values) if args
+
+  a_macro = Parser.parse("macro foo(#{macro_params});#{macro_body};end").as(Macro)
+  call = Call.new(nil, "", call_args)
+
+  {program, a_macro, call}
 end
 
 def codegen(code, inject_primitives = true, debug = Crystal::Debug::None, filename = __FILE__)
@@ -205,7 +221,7 @@ class Crystal::SpecRunOutput
     @output
   end
 
-  delegate to_i, to_u64, to_f, to_f32, to_f64, to: @output
+  delegate to_i, to_i64, to_u64, to_f, to_f32, to_f64, to: @output
 
   def to_b
     @output == "true"

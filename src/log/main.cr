@@ -49,7 +49,7 @@ class Log
   at_exit { @@builder.close }
 
   # Returns the default `Log::Builder` used for `Log.for` calls.
-  def self.builder
+  def self.builder : Log::Builder
     @@builder
   end
 
@@ -120,7 +120,7 @@ class Log
     # Log.context.clear
     # Log.info { "message with empty context" }
     # ```
-    def clear
+    def clear : Nil
       Fiber.current.logging_context = @metadata = Log::Metadata.empty
     end
 
@@ -142,7 +142,7 @@ class Log
     end
 
     # :ditto:
-    def set(values)
+    def set(values) : Nil
       extend_fiber_context(Fiber.current, values)
     end
 
@@ -161,10 +161,10 @@ class Log
     # Emits a logs entry with a message, and data attached to
     #
     # ```
-    # Log.info &.emit("Program started")                          # No data, same as Log.info { "Program started" }
-    # Log.info &.emit("User logged in", user_id: 42)              # With entry data
-    # Log.info &.emit(action: "Logged in", user_id: 42)           # Empty string message, only data
-    # Log.error exception: ex, &.emit("Oopps", account: {id: 42}) # With data and exception
+    # Log.info &.emit("Program started")                         # No data, same as Log.info { "Program started" }
+    # Log.info &.emit("User logged in", user_id: 42)             # With entry data
+    # Log.info &.emit(action: "Logged in", user_id: 42)          # Empty string message, only data
+    # Log.error exception: ex, &.emit("Oops", account: {id: 42}) # With data and exception
     # ```
     def emit(message : String) : Entry
       emit(message, Metadata.empty)

@@ -1,15 +1,13 @@
 require "../../spec_helper"
 
-{% if flag?(:darwin) %}
+# Int128 and UInt128 specs do not pass on win32 because of missing compiler-rt symbols
+{% unless flag?(:win32) %}
   SupportedInts            = [UInt8, UInt16, UInt32, UInt64, UInt128, Int8, Int16, Int32, Int64, Int128]
   SupportedIntsConversions = {
     to_i8: Int8, to_i16: Int16, to_i32: Int32, to_i64: Int64, to_i128: Int128,
     to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64, to_u128: UInt128,
   }
 {% else %}
-  # Skip Int128 and UInt128 on linux platforms due to compiler-rt dependency.
-  # PreviewOverflowFlags includes compiler_rt flag to support Int64 overflow
-  # detection in 32 bits platforms.
   SupportedInts            = [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64]
   SupportedIntsConversions = {
     to_i8: Int8, to_i16: Int16, to_i32: Int32, to_i64: Int64,
@@ -17,7 +15,7 @@ require "../../spec_helper"
   }
 {% end %}
 
-describe "Code gen: arithmetics primitives" do
+describe "Code gen: arithmetic primitives" do
   describe "&+ addition" do
     {% for type in SupportedInts %}
       it "wrap around for {{type}}" do
@@ -200,6 +198,23 @@ describe "Code gen: arithmetics primitives" do
             require "prelude"
 
             v = Int64.new({{type}}::MIN) - 1_i64
+
+            begin
+              v.{{method}}
+              0
+            rescue OverflowError
+              1
+            end
+          )).to_i.should eq(1)
+        end
+      {% end %}
+
+      {% if [UInt16, UInt32, UInt64].includes?(type) %}
+        it "raises overflow if lower than {{type}}::MIN (#9997)" do
+          run(%(
+            require "prelude"
+
+            v = -1_i8
 
             begin
               v.{{method}}

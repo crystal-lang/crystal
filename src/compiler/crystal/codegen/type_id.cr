@@ -39,10 +39,6 @@ class Crystal::CodeGenVisitor
     phi llvm_context.int32, phi_table
   end
 
-  private def type_id_impl(value, type : NilablePointerType)
-    builder.select null_pointer?(value), type_id(@program.nil), type_id(type.pointer_type)
-  end
-
   private def type_id_impl(value, type : NilableProcType)
     fun_ptr = extract_value value, 0
     builder.select null_pointer?(fun_ptr), type_id(@program.nil), type_id(type.proc_type)

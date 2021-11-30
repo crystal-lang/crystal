@@ -21,7 +21,19 @@ private module ReferenceSpec
 
     def initialize
       @x = 1
+      @y = "y"
+    end
+
+    def_clone
+  end
+
+  class DupCloneRecursiveClass
+    getter x, y, z
+
+    def initialize
+      @x = 1
       @y = [1, 2, 3]
+      @z = self
     end
 
     def_clone
@@ -113,8 +125,16 @@ describe "Reference" do
     clone = original.clone
     clone.should_not be(original)
     clone.x.should eq(original.x)
+  end
+
+  it "clones with def_clone (recursive type)" do
+    original = ReferenceSpec::DupCloneRecursiveClass.new
+    clone = original.clone
+    clone.should_not be(original)
+    clone.x.should eq(original.x)
     clone.y.should_not be(original.y)
     clone.y.should eq(original.y)
+    clone.z.should be(clone)
   end
 
   it "pretty_print" do

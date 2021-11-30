@@ -143,20 +143,31 @@ end
 #
 # Within the format string, any characters other than format specifiers
 # (specifiers beginning with `%`) are copied to the result.
+# The formatter supports positional format specifiers (`%.1f`),
+# formatted substitution (`%<name>.1f`) and plain substitution (`%{name}`).
 #
-# The syntax for a format specifier is:
+# Substitutions expect the first argument to be a `Hash` or `NamedTuple` to
+# resolve substitution names.
+# Positional specifiers correspond to the positional values in the method
+# arguments, or the array supplied as first argument.
+#
+# A simple format specifier consists of a percent sign, followed by optional flags,
+# width, and precision indicators, then terminated with a field type
+# character.
 #
 # ```text
 # %[flags][width][.precision]type
 # ```
 #
-# A format specifier consists of a percent sign, followed by optional flags,
-# width, and precision indicators, then terminated with a field type
-# character.
+# A formatted substitution is similar but after the percent sign follows the
+# mandatory name of the substitution wrapped in angle brackets.
 #
-# The field type controls how the corresponding
-# `sprintf` argument is to be interpreted, while the flags
-# modify that interpretation.
+# ```text
+# %<name>[flags][width][.precision]type
+# ```
+#
+# The field type controls how the corresponding argument value is to be
+# interpreted, while the flags modify that interpretation.
 #
 # The field type characters are:
 #
@@ -367,10 +378,8 @@ def sprintf(format_string, args : Array | Tuple) : String
   end
 end
 
-# Prints objects to `STDOUT`, each followed by a newline.
-#
-# If the string representation of an object ends with a newline, no additional
-# newline is printed for that object.
+# Prints *objects* to `STDOUT`, each followed by a newline character unless
+# the object is a `String` and already ends with a newline.
 #
 # See also: `IO#puts`.
 def puts(*objects) : Nil
@@ -524,8 +533,16 @@ end
   end
 
   Signal.setup_default_handlers
-  LibExt.setup_sigfault_handler
+  Signal.setup_segfault_handler
 {% end %}
+
+# load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
+# this will make debug info available on print_frame that is used by Crystal's segfault handler
+#
+# - CRYSTAL_LOAD_DEBUG_INFO=0 will never use debug info (See Exception::CallStack.load_debug_info)
+# - CRYSTAL_LOAD_DEBUG_INFO=1 will load debug info on startup
+# - Other values will load debug info on demand: when the backtrace of the first exception is generated
+Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
 
 {% if flag?(:preview_mt) %}
   Crystal::Scheduler.init_workers

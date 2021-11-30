@@ -13,7 +13,12 @@ module Crystal::System::Dir
     Errno.value = Errno::NONE
     if entry = LibC.readdir(dir)
       name = String.new(entry.value.d_name.to_unsafe)
-      dir = entry.value.d_type == LibC::DT_DIR
+
+      dir = case entry.value.d_type
+            when LibC::DT_DIR                    then true
+            when LibC::DT_UNKNOWN, LibC::DT_LINK then nil
+            else                                      false
+            end
       Entry.new(name, dir)
     elsif Errno.value != Errno::NONE
       raise ::File::Error.from_errno("Error reading directory entries", file: path)

@@ -1,6 +1,13 @@
 require "spec"
 require "big"
 
+private def it_converts_to_s(num, str, *, file = __FILE__, line = __LINE__, **opts)
+  it file: file, line: line do
+    num.to_s(**opts).should eq(str), file: file, line: line
+    String.build { |io| num.to_s(io, **opts) }.should eq(str), file: file, line: line
+  end
+end
+
 describe "BigInt" do
   it "creates with a value of zero" do
     BigInt.new.to_s.should eq("0")
@@ -328,14 +335,102 @@ describe "BigInt" do
     result.to_s.should eq("10715086071862673209484250490600018105614048117055336074437503883703510511249361224931983788156958581275946729175531468251871452856923140435984577574698574803934567774824230985421074605062371141877954182153046474983581941267398767559165543946077062914571196477686542167660429831652624386837205668069376")
   end
 
-  it "does to_s in the given base" do
-    a = BigInt.new("1234567890123456789")
-    b = "1000100100010000100001111010001111101111010011000000100010101"
-    c = "112210f47de98115"
-    d = "128gguhuuj08l"
-    a.to_s(2).should eq(b)
-    a.to_s(16).should eq(c)
-    a.to_s(32).should eq(d)
+  describe "#to_s" do
+    context "base and upcase parameters" do
+      a = BigInt.new("1234567890123456789")
+      it_converts_to_s a, "1000100100010000100001111010001111101111010011000000100010101", base: 2
+      it_converts_to_s a, "112210f47de98115", base: 16
+      it_converts_to_s a, "112210F47DE98115", base: 16, upcase: true
+      it_converts_to_s a, "128gguhuuj08l", base: 32
+      it_converts_to_s a, "128GGUHUUJ08L", base: 32, upcase: true
+      it_converts_to_s a, "1tckI1NfUnH", base: 62
+
+      # ensure case is same as for primitive integers
+      it_converts_to_s 10.to_big_i, 10.to_s(62), base: 62
+
+      it_converts_to_s (-a), "-1000100100010000100001111010001111101111010011000000100010101", base: 2
+      it_converts_to_s (-a), "-112210f47de98115", base: 16
+      it_converts_to_s (-a), "-112210F47DE98115", base: 16, upcase: true
+      it_converts_to_s (-a), "-128gguhuuj08l", base: 32
+      it_converts_to_s (-a), "-128GGUHUUJ08L", base: 32, upcase: true
+      it_converts_to_s (-a), "-1tckI1NfUnH", base: 62
+
+      it_converts_to_s 16.to_big_i ** 1000, "1#{"0" * 1000}", base: 16
+
+      it "raises on base 1" do
+        expect_raises(ArgumentError, "Invalid base 1") { a.to_s(1) }
+        expect_raises(ArgumentError, "Invalid base 1") { a.to_s(IO::Memory.new, 1) }
+      end
+
+      it "raises on base 37" do
+        expect_raises(ArgumentError, "Invalid base 37") { a.to_s(37) }
+        expect_raises(ArgumentError, "Invalid base 37") { a.to_s(IO::Memory.new, 37) }
+      end
+
+      it "raises on base 62 with upcase" do
+        expect_raises(ArgumentError, "upcase must be false for base 62") { a.to_s(62, upcase: true) }
+        expect_raises(ArgumentError, "upcase must be false for base 62") { a.to_s(IO::Memory.new, 62, upcase: true) }
+      end
+    end
+
+    context "precision parameter" do
+      it_converts_to_s 0.to_big_i, "", precision: 0
+      it_converts_to_s 0.to_big_i, "0", precision: 1
+      it_converts_to_s 0.to_big_i, "00", precision: 2
+      it_converts_to_s 0.to_big_i, "00000", precision: 5
+      it_converts_to_s 0.to_big_i, "0" * 200, precision: 200
+
+      it_converts_to_s 1.to_big_i, "1", precision: 0
+      it_converts_to_s 1.to_big_i, "1", precision: 1
+      it_converts_to_s 1.to_big_i, "01", precision: 2
+      it_converts_to_s 1.to_big_i, "00001", precision: 5
+      it_converts_to_s 1.to_big_i, "#{"0" * 199}1", precision: 200
+
+      it_converts_to_s 2.to_big_i, "2", precision: 0
+      it_converts_to_s 2.to_big_i, "2", precision: 1
+      it_converts_to_s 2.to_big_i, "02", precision: 2
+      it_converts_to_s 2.to_big_i, "00002", precision: 5
+      it_converts_to_s 2.to_big_i, "#{"0" * 199}2", precision: 200
+
+      it_converts_to_s (-1).to_big_i, "-1", precision: 0
+      it_converts_to_s (-1).to_big_i, "-1", precision: 1
+      it_converts_to_s (-1).to_big_i, "-01", precision: 2
+      it_converts_to_s (-1).to_big_i, "-00001", precision: 5
+      it_converts_to_s (-1).to_big_i, "-#{"0" * 199}1", precision: 200
+
+      it_converts_to_s 85.to_big_i, "85", precision: 0
+      it_converts_to_s 85.to_big_i, "85", precision: 1
+      it_converts_to_s 85.to_big_i, "85", precision: 2
+      it_converts_to_s 85.to_big_i, "085", precision: 3
+      it_converts_to_s 85.to_big_i, "0085", precision: 4
+      it_converts_to_s 85.to_big_i, "00085", precision: 5
+      it_converts_to_s 85.to_big_i, "#{"0" * 198}85", precision: 200
+
+      it_converts_to_s (-85).to_big_i, "-85", precision: 0
+      it_converts_to_s (-85).to_big_i, "-85", precision: 1
+      it_converts_to_s (-85).to_big_i, "-85", precision: 2
+      it_converts_to_s (-85).to_big_i, "-085", precision: 3
+      it_converts_to_s (-85).to_big_i, "-0085", precision: 4
+      it_converts_to_s (-85).to_big_i, "-00085", precision: 5
+      it_converts_to_s (-85).to_big_i, "-#{"0" * 198}85", precision: 200
+
+      it_converts_to_s 123.to_big_i, "123", precision: 0
+      it_converts_to_s 123.to_big_i, "123", precision: 1
+      it_converts_to_s 123.to_big_i, "123", precision: 2
+      it_converts_to_s 123.to_big_i, "00123", precision: 5
+      it_converts_to_s 123.to_big_i, "#{"0" * 197}123", precision: 200
+
+      a = 2.to_big_i ** 1024 - 1
+      it_converts_to_s a, "#{"1" * 1024}", base: 2, precision: 1023
+      it_converts_to_s a, "#{"1" * 1024}", base: 2, precision: 1024
+      it_converts_to_s a, "0#{"1" * 1024}", base: 2, precision: 1025
+      it_converts_to_s a, "#{"0" * 976}#{"1" * 1024}", base: 2, precision: 2000
+
+      it_converts_to_s (-a), "-#{"1" * 1024}", base: 2, precision: 1023
+      it_converts_to_s (-a), "-#{"1" * 1024}", base: 2, precision: 1024
+      it_converts_to_s (-a), "-0#{"1" * 1024}", base: 2, precision: 1025
+      it_converts_to_s (-a), "-#{"0" * 976}#{"1" * 1024}", base: 2, precision: 2000
+    end
   end
 
   it "does to_big_f" do
@@ -362,9 +457,15 @@ describe "BigInt" do
 
     (a_17).gcd(17).should eq(17)
     (-a_17).gcd(17).should eq(17)
+    (17).gcd(a_17).should eq(17)
+    (17).gcd(-a_17).should eq(17)
+
+    (a_17).lcm(17).should eq(a_17)
+    (-a_17).lcm(17).should eq(a_17)
+    (17).lcm(a_17).should eq(a_17)
+    (17).lcm(-a_17).should eq(a_17)
 
     (a_17).gcd(17).should be_a(Int::Unsigned)
-    (a_17).lcm(17).should eq(a_17)
   end
 
   it "calculates the modulo inverse" do
@@ -400,12 +501,79 @@ describe "BigInt" do
     u64.should be_a(UInt64)
   end
 
-  {% if flag?(:x86_64) %}
-    # For 32 bits libgmp can't seem to be able to do it
-    it "can cast UInt64::MAX to UInt64 (#2264)" do
-      BigInt.new(UInt64::MAX).to_u64.should eq(UInt64::MAX)
+  context "conversion to 64-bit" do
+    it "above 64 bits" do
+      big = BigInt.new("9" * 20)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(7766279631452241919) # 99999999999999999999 - 5*(2**64)
+      big.to_u64!.should eq(7766279631452241919)
+
+      big = BigInt.new("9" * 32)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(-8814407033341083649) # 99999999999999999999999999999999 - 5421010862428*(2**64)
+      big.to_u64!.should eq(9632337040368467967)  # 99999999999999999999999999999999 - 5421010862427*(2**64)
     end
-  {% end %}
+
+    it "between 63 and 64 bits" do
+      big = BigInt.new(i = 9999999999999999999)
+      expect_raises(OverflowError) { big.to_i64 }
+      big.to_u64.should eq(i)
+      big.to_i64!.should eq(-8446744073709551617) # 9999999999999999999 - 2**64
+      big.to_u64!.should eq(i)
+    end
+
+    it "between 32 and 63 bits" do
+      big = BigInt.new(i = 9999999999999)
+      big.to_i64.should eq(i)
+      big.to_u64.should eq(i)
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(i)
+    end
+
+    it "negative under 32 bits" do
+      big = BigInt.new(i = -9999)
+      big.to_i64.should eq(i)
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(18446744073709541617) # -9999 + 2**64
+    end
+
+    it "negative between 32 and 63 bits" do
+      big = BigInt.new(i = -9999999999999)
+      big.to_i64.should eq(i)
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(18446734073709551617) # -9999999999999 + 2**64
+    end
+
+    it "negative between 63 and 64 bits" do
+      big = BigInt.new("-9999999999999999999")
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(8446744073709551617) # -9999999999999999999 + 2**64
+      big.to_u64!.should eq(8446744073709551617)
+    end
+
+    it "negative above 64 bits" do
+      big = BigInt.new("-" + "9" * 20)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(-7766279631452241919) # -9999999999999999999 + 5*(2**64)
+      big.to_u64!.should eq(10680464442257309697) # -9999999999999999999 + 6*(2**64)
+
+      big = BigInt.new("-" + "9" * 32)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(8814407033341083649) # -99999999999999999999999999999999 + 5421010862428*(2**64)
+      big.to_u64!.should eq(8814407033341083649)
+    end
+  end
+
+  it "can cast UInt64::MAX to UInt64 (#2264)" do
+    BigInt.new(UInt64::MAX).to_u64.should eq(UInt64::MAX)
+  end
 
   it "does String#to_big_i" do
     "123456789123456789".to_big_i.should eq(BigInt.new("123456789123456789"))
@@ -423,10 +591,12 @@ describe "BigInt" do
   it "#hash" do
     b1 = 5.to_big_i
     b2 = 5.to_big_i
-    b3 = 6.to_big_i
+    b3 = -6.to_big_i
 
     b1.hash.should eq(b2.hash)
     b1.hash.should_not eq(b3.hash)
+
+    b3.hash.should eq((-6).hash)
   end
 
   it "clones" do
@@ -475,5 +645,9 @@ end
 describe "BigInt Math" do
   it "sqrt" do
     Math.sqrt(BigInt.new("1" + "0"*48)).should eq(BigFloat.new("1" + "0"*24))
+  end
+
+  it "isqrt" do
+    Math.isqrt(BigInt.new("1" + "0"*48)).should eq(BigInt.new("1" + "0"*24))
   end
 end

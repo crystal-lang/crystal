@@ -222,6 +222,27 @@ describe "OptionParser" do
       USAGE
   end
 
+  it "does to_s with multi line description (#5832)" do
+    parser = OptionParser.parse([] of String) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("--very_long_option_kills=formatter", "long flag with\nmultiline description") do
+      end
+      opts.on("-f", "--flag", "some flag with\nmultiline description") do
+      end
+      opts.on("-g[FLAG]", "some other flag") do
+      end
+    end
+    parser.to_s.should eq <<-USAGE
+      Usage: foo
+          --very_long_option_kills=formatter
+                                           long flag with
+                                           multiline description
+          -f, --flag                       some flag with
+                                           multiline description
+          -g[FLAG]                         some other flag
+      USAGE
+  end
+
   it "raises on invalid option" do
     expect_raises OptionParser::InvalidOption, "Invalid option: -j" do
       OptionParser.parse(["-f", "-j"]) do |opts|

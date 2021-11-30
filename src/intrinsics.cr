@@ -25,6 +25,11 @@ lib LibIntrinsics
   {% end %}
 
   fun read_cycle_counter = "llvm.readcyclecounter" : UInt64
+
+  fun bitreverse64 = "llvm.bitreverse.i64"(id : UInt64) : UInt64
+  fun bitreverse32 = "llvm.bitreverse.i32"(id : UInt32) : UInt32
+  fun bitreverse16 = "llvm.bitreverse.i16"(id : UInt16) : UInt16
+
   fun bswap32 = "llvm.bswap.i32"(id : UInt32) : UInt32
   fun bswap16 = "llvm.bswap.i16"(id : UInt16) : UInt16
 
@@ -93,7 +98,19 @@ module Intrinsics
     LibIntrinsics.read_cycle_counter
   end
 
-  def self.bswap32(id)
+  def self.bitreverse64(id) : UInt64
+    LibIntrinsics.bitreverse64(id)
+  end
+
+  def self.bitreverse32(id) : UInt32
+    LibIntrinsics.bitreverse32(id)
+  end
+
+  def self.bitreverse16(id) : UInt16
+    LibIntrinsics.bitreverse16(id)
+  end
+
+  def self.bswap32(id) : UInt32
     LibIntrinsics.bswap32(id)
   end
 
@@ -101,19 +118,19 @@ module Intrinsics
     LibIntrinsics.bswap16(id)
   end
 
-  def self.popcount8(src)
+  def self.popcount8(src) : Int8
     LibIntrinsics.popcount8(src)
   end
 
-  def self.popcount16(src)
+  def self.popcount16(src) : Int16
     LibIntrinsics.popcount16(src)
   end
 
-  def self.popcount32(src)
+  def self.popcount32(src) : Int32
     LibIntrinsics.popcount32(src)
   end
 
-  def self.popcount64(src)
+  def self.popcount64(src) : Int64
     LibIntrinsics.popcount64(src)
   end
 

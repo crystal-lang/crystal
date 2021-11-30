@@ -74,22 +74,22 @@ Status labels attempt to capture the lifecycle of an issue:
 
 ### The documentation
 
-We use [GitBook](https://www.gitbook.com/) for the [language documentation](https://crystal-lang.org/docs/).
-See the repository at [crystal-lang/crystal-book](https://github.com/crystal-lang/crystal-book) for how to contribute to it.
+The language reference is available at https://crystal-lang.org/reference/.
+See the repository at [crystal-lang/crystal-book](https://github.com/crystal-lang/crystal-book) for contributing to it.
 
 The [standard library documentation](https://crystal-lang.org/api/) is on the code itself, in this repository.
 There is a version updated with every push to the master branch [here](https://crystal-lang.org/api/master/).
 It uses a subset of [Markdown](http://daringfireball.net/projects/markdown/). You can [use Ruby as a source
 of inspiration](https://twitter.com/yukihiro_matz/status/549317901002342400) whenever applicable. To generate
 the docs execute `make docs`. Please follow the guidelines described in our
-[language documentation](https://crystal-lang.org/docs/conventions/documenting_code.html), like the use of the third person.
+[language documentation](https://crystal-lang.org/reference/conventions/documenting_code.html), like the use of the third person.
+
+Additionally, all official documentation can be found on [the Crystal website](https://crystal-lang.org/docs/).
 
 ### The standard library
 
 1. Fork it ( https://github.com/crystal-lang/crystal/fork )
 2. Clone it
-
-Be sure to execute `make libcrystal` inside the cloned repository.
 
 Once in the cloned directory, and once you [installed Crystal](https://crystal-lang.org/install/),
 you can execute `bin/crystal` instead of `crystal`. This is a wrapper that will use the cloned repository
@@ -103,7 +103,7 @@ You can use `make help` for a list of available make targets.
 Note: at this point you might get long compile error that include "library not found for: ...". This means
 you are [missing some libraries](https://github.com/crystal-lang/crystal/wiki/All-required-libraries).
 
-Make sure that your changes follow the recommended [Coding Style](https://crystal-lang.org/docs/conventions/coding_style.html).
+Make sure that your changes follow the recommended [Coding Style](https://crystal-lang.org/reference/conventions/coding_style.html).
 You can run `crystal tool format` to automate this.
 
 Then push your changes and create a pull request.
@@ -114,60 +114,61 @@ If you want to add/change something in the compiler,
 the first thing you will need to do is to [install the compiler](https://crystal-lang.org/install/).
 
 Once you have a compiler up and running, check that executing `crystal` on the command line prints its usage.
-Now you can setup your environment to compile Crystal itself, which is itself written in Crystal. Check out
-the `install` and `before_install` sections found in [.travis.yml](https://github.com/crystal-lang/crystal/blob/master/.travis.yml).
-These set-up LLVM 3.6 and its required libraries.
+Now you can setup your environment to compile Crystal itself, which is itself written in Crystal.
 
-Next, executing `make clean crystal spec` should compile a compiler and using that compiler compile and execute
-the specs. All specs should pass. You can use `make help` for a list of available make targets.
+The compiler needs [LLVM](https://llvm.org) and some other libraries. See [list of all required libraries](https://github.com/crystal-lang/crystal/wiki/All-required-libraries).
+
+Executing `make crystal` builds the compiler into `.build/compiler` and you can run it using the wrapper script at `bin/crystal`.
+The script sets up the proper environment variables that the compiler can find the standard library source files in `src/`.
+
+`make compiler_spec` runs the compiler specs. `make std_spec` runs the standard library specs.
+You can use `make help` for a list of available make targets.
 
 ## This guide
 
 If this guide is not clear and it needs improvements, please send pull requests against it. Thanks! :-)
 
-
 ## Making good pull requests
 
 The commit history should consist of commits that transform the codebase from one state into another one, motivated by something that
 should change, be it a bugfix, a new feature or some ground work to support a new feature, like changing an existing API or introducing
-a new isolated class that is later used in the same pull request. It should not show development history ("Start work on X",
-"More work on X", "Finish X") nor review history ("Fix comment A", "Fix comment B"). Review fixes should be squashed into the commits
-that introduced them. If your change fits well into a single commit, simply keep editing it with `git commit --amend`. Partial staging and
-committing with `git add -p` and `git commit -p` respectively are also very useful. Another good tool is `git stash` to put changes aside while
-switching to another commit. But Git's most useful tool towards this goal is the interactive rebase.
+a new isolated class that is later used in the same pull request.
 
-### Doing an interactive rebase
+Review history should be preserved in a pull request. If you need to push a change to an open pull request (for example
+because specs broke and required a fix, or for applying a review suggestion) these changes should be added as individual
+fixup commits. Please do not amend previous commits and force push to the PR branch. This makes reviews much harder
+because reference to previous state is hidden.
 
-First let's make sure we have a clean reference to rebase upon:
+If changes introduced to `master` branch result in conflicts, it should be merged with a merge commit (`git fetch upstream/master; git merge upstream/master`).
 
-```sh
-git remote add upstream https://github.com/crystal-lang/crystal.git
-```
+### Minimum requirements
 
-That only needs to be done once per clone. Next, let's fetch the latest state and start the rebase
+1. Describe reasons and result of the change in the pull request comment.
+2. Do not force push to a pull request. The development history should be easily traceable.
+3. Any change to a public API requires appropriate documentation: params (and particularly interesting combinations of them if the method is complex), results, interesting, self-contained examples.
+4. Any change to behaviour needs to be reflected and validated with specs.
+5. Any change affecting the compiler or performance-critical features in the standard library
+   should be checked with benchmarks how it affects performance.
 
-```sh
-git fetch upstream
-git checkout my_feature_branch
-git rebase -i upstream/master
-```
+### Approval Process
 
-Now you should be presented with a list of commits in your editor, with the first commit you made on your branch at the top. Always keep the first
-entry at `pick`; however you can reorder the entries. `squash` and `fix` will combine a commit into the one above it, `edit` will pause the
-rebase so you can edit the commit with `git commit --amend`. In case of conflicts `git mergetool` can be useful to resolve them. To resume a
-paused rebase, either because of a conflict or `edit`, use `git rebase --continue`. Don't worry, you can at any point use `git rebase --abort`
-to return to where you were before the rebase and start from scratch.
+1. To be accepted, a pull request requires recent approvals from at least two core team members; if the author is a core team
+   member, this counts as one approval. Approvals only count when based on the current code version (except for minor changes like fixing a typo).
+2. When the required approvals are given and CI is satisfied, a core team member can add the pull request to the
+   current development milestone. This signals that it is scheduled to be merged soon and gives another chance for final reviews.
+3. The wait time in this state depends on the gravity of the change and the activity of the previous discussion,
+   but it should at least be a full business day after the milestone was added.
+4. Before merging, make sure the pull request is properly labeled and its title appropriately describes the change.
+4. Finally, the pull request can be merged. Use squash merge to not pollute the version history of the main branch with
+   details of the pull request process. For non-trivial changes, the merge commit should contain a short description.
 
-Other useful flags to `git commit` are `--fixup` and `--squash`, combined with `git rebase -i --autosquash upstream/master`. Those will create commits that
-are then automatically reordered and marked with `fix` or `squash` respectively.
+This process is a guideline and not a strict rule so there might be occasional exceptions within reason.
+Urgent infrastructure fixes for example can be expected to skip the line.
 
-Once you have a clean history, you can update an existing pull request simply by force pushing to the branch you opened it from. Force pushing is necessary
-since a rebase rewrites history, effectively creating new commits with the same changes. However, never do that in the main integration branches (`master`) of
-your own projects; a not so clean history is to prefer once a commit landed there. Assuming `origin` is your fork on Github, simply:
+### For maintainers with push access
 
-```sh
-git push -f origin my_feature_branch
-```
+1. Do not directly commit to the `master` branch. Always create a feature branch and pull request.
+2. Feature branches should typically be created in your fork. The main repo should only contain essential branches.
 
 ## Git pre-commit hook
 

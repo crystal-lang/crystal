@@ -34,6 +34,10 @@ describe "Code gen: primitives" do
       )).to_i.should eq(1)
   end
 
+  it "skips bounds checking when to_i produces same type" do
+    run("1.to_i32").to_i.should eq(1)
+  end
+
   it "codegens char" do
     run("'a'").to_i.should eq('a'.ord)
   end
@@ -114,7 +118,7 @@ describe "Code gen: primitives" do
       ", inject_primitives: false).to_i.should eq(3)
   end
 
-  it "codeges crystal_type_id with union type" do
+  it "codegens crystal_type_id with union type" do
     run("
       class Foo
       end
@@ -221,10 +225,10 @@ describe "Code gen: primitives" do
   it "uses built-in llvm function that returns a tuple" do
     run(%(
       lib Intrinsics
-        fun sadd_i32_with_overlow = "llvm.sadd.with.overflow.i32"(a : Int32, b : Int32) : {Int32, Bool}
+        fun sadd_i32_with_overflow = "llvm.sadd.with.overflow.i32"(a : Int32, b : Int32) : {Int32, Bool}
       end
 
-      x, o = Intrinsics.sadd_i32_with_overlow(1, 2)
+      x, o = Intrinsics.sadd_i32_with_overflow(1, 2)
       x
       )).to_i.should eq(3)
   end
@@ -283,5 +287,29 @@ describe "Code gen: primitives" do
           ), &.to_i.should eq(6))
       end
     {% end %}
+  end
+
+  it "allows @[Primitive] on method that has body" do
+    run(%(
+      module Moo
+        @[Primitive(:symbol_to_s)]
+        def self.symbol_to_s(symbol : Symbol) : String
+          untyped
+        end
+      end
+
+      Moo.symbol_to_s(:hello)
+      )).to_string.should eq("hello")
+  end
+
+  it "allows @[Primitive] on fun declarations" do
+    run(%(
+      lib LibFoo
+        @[Primitive(:enum_value)]
+        fun enum_value(x : Int32) : Int32
+      end
+
+      LibFoo.enum_value(1)
+      )).to_i.should eq(1)
   end
 end

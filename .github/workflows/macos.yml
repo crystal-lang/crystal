@@ -8,13 +8,17 @@ env:
 
 jobs:
   test_macos:
-    runs-on: macos-latest
+    runs-on: macos-10.15
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
 
-      - uses: cachix/install-nix-action@v10
-      - uses: cachix/cachix-action@v6
+      - uses: cachix/install-nix-action@v14
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.4/install
+          extra_nix_config: |
+            experimental-features = nix-command
+      - uses: cachix/cachix-action@v10
         with:
           name: crystal-ci
           signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'

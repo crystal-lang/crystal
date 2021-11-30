@@ -314,24 +314,43 @@ describe "File" do
     File.extname("").should eq("")
   end
 
-  # TODO: these specs are redundant with path_spec.cr
-  pending_win32 "constructs a path from parts" do
-    File.join(["///foo", "bar"]).should eq("///foo/bar")
-    File.join(["///foo", "//bar"]).should eq("///foo//bar")
-    File.join(["/foo/", "/bar"]).should eq("/foo/bar")
-    File.join(["foo", "bar", "baz"]).should eq("foo/bar/baz")
-    File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
-    File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
-    File.join(["", "foo"]).should eq("foo")
-    File.join(["foo", ""]).should eq("foo/")
-    File.join(["", "", "foo"]).should eq("foo")
-    File.join(["foo", "", "bar"]).should eq("foo/bar")
-    File.join(["foo", "", "", "bar"]).should eq("foo/bar")
-    File.join(["foo", "/", "bar"]).should eq("foo/bar")
-    File.join(["foo", "/", "/", "bar"]).should eq("foo/bar")
-    File.join(["/", "/foo", "/", "bar/", "/"]).should eq("/foo/bar/")
-    File.join(["foo"]).should eq("foo")
-    File.join("foo").should eq("foo")
+  # There are more detailled specs for `Path#join` in path_spec.cr
+  it "constructs a path from parts" do
+    {% if flag?(:win32) %}
+      File.join(["///foo", "bar"]).should eq("///foo\\bar")
+      File.join(["///foo", "//bar"]).should eq("///foo//bar")
+      File.join(["/foo/", "/bar"]).should eq("/foo/bar")
+      File.join(["foo", "bar", "baz"]).should eq("foo\\bar\\baz")
+      File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
+      File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
+      File.join(["", "foo"]).should eq("foo")
+      File.join(["foo", ""]).should eq("foo\\")
+      File.join(["", "", "foo"]).should eq("foo")
+      File.join(["foo", "", "bar"]).should eq("foo\\bar")
+      File.join(["foo", "", "", "bar"]).should eq("foo\\bar")
+      File.join(["foo", "/", "bar"]).should eq("foo/bar")
+      File.join(["foo", "/", "/", "bar"]).should eq("foo/bar")
+      File.join(["/", "/foo", "/", "bar/", "/"]).should eq("/foo/bar/")
+      File.join(["foo"]).should eq("foo")
+      File.join("foo").should eq("foo")
+    {% else %}
+      File.join(["///foo", "bar"]).should eq("///foo/bar")
+      File.join(["///foo", "//bar"]).should eq("///foo//bar")
+      File.join(["/foo/", "/bar"]).should eq("/foo/bar")
+      File.join(["foo", "bar", "baz"]).should eq("foo/bar/baz")
+      File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
+      File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
+      File.join(["", "foo"]).should eq("foo")
+      File.join(["foo", ""]).should eq("foo/")
+      File.join(["", "", "foo"]).should eq("foo")
+      File.join(["foo", "", "bar"]).should eq("foo/bar")
+      File.join(["foo", "", "", "bar"]).should eq("foo/bar")
+      File.join(["foo", "/", "bar"]).should eq("foo/bar")
+      File.join(["foo", "/", "/", "bar"]).should eq("foo/bar")
+      File.join(["/", "/foo", "/", "bar/", "/"]).should eq("/foo/bar/")
+      File.join(["foo"]).should eq("foo")
+      File.join("foo").should eq("foo")
+    {% end %}
   end
 
   it "chown" do
@@ -499,7 +518,7 @@ describe "File" do
     end
 
     it "raises when file doesn't exist" do
-      with_tempfile("nonexistant_file.txt") do |path|
+      with_tempfile("nonexistent_file.txt") do |path|
         expect_raises(File::NotFoundError, "Error deleting file: '#{path.inspect_unquoted}'") do
           File.delete(path)
         end
@@ -946,8 +965,13 @@ describe "File" do
       file.read_at(6, 100) do |io|
         io.gets_to_end.should eq("World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello Worl")
       end
+
       file.read_at(0, 240) do |io|
         io.gets_to_end.should eq(File.read(filename))
+      end
+
+      file.read_at(6_i64, 5_i64) do |io|
+        io.gets_to_end.should eq("World")
       end
     end
   end
@@ -1098,47 +1122,48 @@ describe "File" do
     end
   end
 
-  # TODO: these specs don't compile on win32 because iconv isn't implemented
-  describe "encoding" do
-    pending_win32 "writes with encoding" do
-      with_tempfile("encoding-write.txt") do |path|
-        File.write(path, "hello", encoding: "UCS-2LE")
-        File.read(path).to_slice.should eq("hello".encode("UCS-2LE"))
+  {% unless flag?(:without_iconv) %}
+    describe "encoding" do
+      it "writes with encoding" do
+        with_tempfile("encoding-write.txt") do |path|
+          File.write(path, "hello", encoding: "UCS-2LE")
+          File.read(path).to_slice.should eq("hello".encode("UCS-2LE"))
+        end
       end
-    end
 
-    pending_win32 "reads with encoding" do
-      with_tempfile("encoding-read.txt") do |path|
-        File.write(path, "hello", encoding: "UCS-2LE")
-        File.read(path, encoding: "UCS-2LE").should eq("hello")
+      it "reads with encoding" do
+        with_tempfile("encoding-read.txt") do |path|
+          File.write(path, "hello", encoding: "UCS-2LE")
+          File.read(path, encoding: "UCS-2LE").should eq("hello")
+        end
       end
-    end
 
-    pending_win32 "opens with encoding" do
-      with_tempfile("encoding-open.txt") do |path|
-        File.write(path, "hello", encoding: "UCS-2LE")
-        File.open(path, encoding: "UCS-2LE") do |file|
-          file.gets_to_end.should eq("hello")
+      it "opens with encoding" do
+        with_tempfile("encoding-open.txt") do |path|
+          File.write(path, "hello", encoding: "UCS-2LE")
+          File.open(path, encoding: "UCS-2LE") do |file|
+            file.gets_to_end.should eq("hello")
+          end
+        end
+      end
+
+      it "does each line with encoding" do
+        with_tempfile("encoding-each_line.txt") do |path|
+          File.write(path, "hello", encoding: "UCS-2LE")
+          File.each_line(path, encoding: "UCS-2LE") do |line|
+            line.should eq("hello")
+          end
+        end
+      end
+
+      it "reads lines with encoding" do
+        with_tempfile("encoding-read_lines.txt") do |path|
+          File.write(path, "hello", encoding: "UCS-2LE")
+          File.read_lines(path, encoding: "UCS-2LE").should eq(["hello"])
         end
       end
     end
-
-    pending_win32 "does each line with encoding" do
-      with_tempfile("encoding-each_line.txt") do |path|
-        File.write(path, "hello", encoding: "UCS-2LE")
-        File.each_line(path, encoding: "UCS-2LE") do |line|
-          line.should eq("hello")
-        end
-      end
-    end
-
-    pending_win32 "reads lines with encoding" do
-      with_tempfile("encoding-read_lines.txt") do |path|
-        File.write(path, "hello", encoding: "UCS-2LE")
-        File.read_lines(path, encoding: "UCS-2LE").should eq(["hello"])
-      end
-    end
-  end
+  {% end %}
 
   describe "closed stream" do
     it "raises if writing on a closed stream" do
@@ -1180,7 +1205,7 @@ describe "File" do
     end
   end
 
-  describe "touch" do
+  describe ".touch" do
     it "creates file if it doesn't exist" do
       with_tempfile("touch-create.txt") do |path|
         File.exists?(path).should be_false
@@ -1209,14 +1234,44 @@ describe "File" do
     end
 
     it "raises if path contains non-existent directory" do
-      with_tempfile(File.join("nonexistant-dir", "touch.txt")) do |path|
+      with_tempfile(File.join("nonexistent-dir", "touch.txt")) do |path|
         expect_raises(File::NotFoundError, "Error opening file with mode 'a': '#{path.inspect_unquoted}'") do
           File.touch(path)
         end
       end
     end
 
-    # TODO: there is no file which is reliably unwritable on windows
+    describe "touches existing" do
+      it "file" do
+        with_tempfile("touch-file") do |path|
+          File.write(path, "")
+
+          File.touch(path, Time.utc(2021, 1, 23))
+          info = File.info(path)
+          info.modification_time.should eq Time.utc(2021, 1, 23)
+
+          File.touch(path)
+          info = File.info(path)
+          info.modification_time.should be_close(Time.utc, 1.second)
+        end
+      end
+
+      it "directory" do
+        with_tempfile("touch-directory") do |path|
+          Dir.mkdir(path)
+
+          File.touch(path, Time.utc(2021, 1, 23))
+          info = File.info(path)
+          info.modification_time.should eq Time.utc(2021, 1, 23)
+
+          File.touch(path)
+          info = File.info(path)
+          info.modification_time.should be_close(Time.utc, 1.second)
+        end
+      end
+    end
+
+    # TODO: there is no file which is reliably nonwriteable on windows
     pending_win32 "raises if file cannot be accessed" do
       expect_raises(File::Error, "Error setting time on file: '/bin/ls'") do
         File.touch("/bin/ls")
@@ -1280,6 +1335,7 @@ describe "File" do
 
   describe ".match?" do
     it "matches basics" do
+      File.match?("abc", Path["abc"]).should be_true
       File.match?("abc", "abc").should be_true
       File.match?("*", "abc").should be_true
       File.match?("*c", "abc").should be_true
