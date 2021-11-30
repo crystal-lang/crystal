@@ -152,13 +152,13 @@ describe "Lexer" do
                      :annotation, :verbatim]
   it_lexes_idents ["ident", "something", "with_underscores", "_start_underscore", "with_1", "foo?", "bar!", "fooBar"]
   it_lexes_idents [
-    "ä", # L
+    "ä",       # L
     "a\u0300", # Mn
-    "aः", # Mc
-    "a٠", # Nd
-    "a＿", # Pc
-    "Ⅷ" ,# Nl
-    "aⅧ" # Nl
+    "aः",      # Mc
+    "a٠",      # Nd
+    "a＿",      # Pc
+    "Ⅷ",       # Nl
+    "aⅧ",      # Nl
   ]
 
   assert_syntax_error "\u200B", "unknown token: '\\u200B'"
