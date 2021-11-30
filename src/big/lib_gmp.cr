@@ -139,7 +139,7 @@ lib LibGMP
   fun gcd_ui = __gmpz_gcd_ui(rop : MPZ*, op1 : MPZ*, op2 : UI) : UI
   fun lcm = __gmpz_lcm(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun lcm_ui = __gmpz_lcm_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
-  fun mod_invert = __gmpz_invert(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
+  fun invert = __gmpz_invert(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
 
   # MPQ
   struct MPQ
