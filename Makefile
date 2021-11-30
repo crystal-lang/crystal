@@ -64,7 +64,7 @@ endif
 check_llvm_config = $(eval check_llvm_config := $(if $(shell $(LLVM_CONFIG) --version),\
 	$(shell echo >&2 "\033[33mUsing $(LLVM_CONFIG) [version=$$($(LLVM_CONFIG) --version)]\033[0m"),\
 	$(error "Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG. Compatible versions: $(shell cat src/llvm/ext/llvm-versions.txt)))\
-	)$(check_llvm_config)
+	)
 
 .PHONY: all
 all: crystal ## Build all files (currently crystal only) [default]
