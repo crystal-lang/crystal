@@ -181,6 +181,7 @@ jobs:
           path: |
             libs/crypto.lib
             libs/ssl.lib
+            libs/openssl_VERSION
           key: win-openssl-libs-3.0.0
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
@@ -198,6 +199,7 @@ jobs:
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         working-directory: ./openssl
         run: |
+          sed -i 's|/debug|/debug:none|' Configurations/10-main.conf
           perl Configure VC-WIN64A /MT -static no-tests --with-zlib-lib=..\zlib\Release --with-zlib-include=..\zlib
           nmake
       - name: Gather OpenSSL
@@ -205,9 +207,7 @@ jobs:
         run: |
           cp openssl/libcrypto.lib libs/crypto.lib
           cp openssl/libssl.lib libs/ssl.lib
-      - name: Set OpenSSL version
-        run: |
-          echo "CRYSTAL_OPENSSL_VERSION=3.0.0" >> ${env:GITHUB_ENV}
+          [IO.File]::WriteAllLines("libs/openssl_VERSION", "3.0.0")
 
       - name: Cache LLVM
         id: cache-llvm
