@@ -1496,7 +1496,7 @@ module Crystal
           next_char
           pos_after_prefix = current_pos
           # Enforce number after prefix (disallow ex. "0x", "0x_1")
-          raise("numeric literal without digits", @token, (current_pos - start)) unless String::CHAR_TO_DIGIT[current_char.ord] < base
+          raise("numeric literal without digits", @token, (current_pos - start)) unless String::CHAR_TO_DIGIT[current_char.ord].to_u8! < base
         end
       end
 
