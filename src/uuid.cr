@@ -1,5 +1,7 @@
 # Represents a UUID (Universally Unique IDentifier).
 struct UUID
+  include Comparable(UUID)
+
   # Variants with 16 bytes.
   enum Variant
     # Unknown (i.e. custom, your own).
@@ -129,12 +131,12 @@ struct UUID
     new(new_bytes, variant, version)
   end
 
-  def self.empty
+  def self.empty : self
     new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
   end
 
   # Returns UUID variant.
-  def variant
+  def variant : UUID::Variant
     case
     when @bytes[8] & 0x80 == 0x00
       Variant::NCS
@@ -150,7 +152,7 @@ struct UUID
   end
 
   # Returns version based on RFC4122 format. See also `#variant`.
-  def version
+  def version : UUID::Version
     case @bytes[6] >> 4
     when 1 then Version::V1
     when 2 then Version::V2
@@ -171,10 +173,7 @@ struct UUID
     @bytes.to_unsafe
   end
 
-  # Returns `true` if `other` UUID represents the same UUID, `false` otherwise.
-  def ==(other : UUID)
-    @bytes == other.@bytes
-  end
+  def_equals_and_hash @bytes
 
   # Convert to `String` in literal format.
   def inspect(io : IO) : Nil
@@ -196,18 +195,22 @@ struct UUID
     slice[8, 2].hexstring(buffer_ptr + 19)
     slice[10, 6].hexstring(buffer_ptr + 24)
 
-    io.write(buffer.to_slice)
+    io.write_string(buffer.to_slice)
   end
 
-  def hexstring
+  def hexstring : String
     @bytes.to_slice.hexstring
   end
 
-  def urn
+  def urn : String
     String.build(45) do |str|
       str << "urn:uuid:"
       to_s(str)
     end
+  end
+
+  def <=>(other : UUID) : Int32
+    @bytes <=> other.bytes
   end
 
   class Error < Exception

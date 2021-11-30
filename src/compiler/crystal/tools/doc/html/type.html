@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <%= HeadTemplate.new(project_info, type.path_to "") %>
-  <meta id="repository-name" content="<%= project_info.name %>">
+  <%= HeadTemplate.new(project_info, type) %>
+  <meta name="repository-name" content="<%= project_info.name %>">
   <title><%= type.full_name %> - <%= project_info.name %> <%= project_info.version %></title>
   <script type="text/javascript">
     CrystalDocs.base_path = "<%= type.path_to "" %>";
@@ -10,6 +10,7 @@
 </head>
 <body>
 
+<%= Crystal::Doc::SVG_DEFS %>
 <%= SidebarTemplate.new(project_info, types, type) %>
 
 <div class="main-content">

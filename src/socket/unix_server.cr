@@ -23,7 +23,7 @@ class UNIXServer < UNIXSocket
 
   # Creates a named UNIX socket, listening on a filesystem pathname.
   #
-  # Always deletes any existing filesystam pathname first, in order to cleanup
+  # Always deletes any existing filesystem pathname first, in order to cleanup
   # any leftover socket file.
   #
   # The server is of stream type by default, but this can be changed for
@@ -34,11 +34,12 @@ class UNIXServer < UNIXSocket
   def initialize(@path : String, type : Type = Type::STREAM, backlog : Int = 128)
     super(Family::UNIX, type)
 
-    bind(UNIXAddress.new(path), path) do |error|
+    system_bind(UNIXAddress.new(path), path) do |error|
       close(delete: false)
       raise error
     end
 
+    return if type == Type::DGRAM
     listen(backlog) do |error|
       close
       raise error
@@ -46,7 +47,7 @@ class UNIXServer < UNIXSocket
   end
 
   # Creates a UNIXServer from an already configured raw file descriptor
-  def initialize(*, fd : Int32, type : Type = Type::STREAM, @path : String? = nil)
+  def initialize(*, fd : Handle, type : Type = Type::STREAM, @path : String? = nil)
     super(fd: fd, type: type, path: @path)
   end
 
@@ -68,7 +69,7 @@ class UNIXServer < UNIXSocket
   # Returns the client socket or `nil` if the server is closed after invoking
   # this method.
   def accept? : UNIXSocket?
-    if client_fd = accept_impl
+    if client_fd = system_accept
       sock = UNIXSocket.new(fd: client_fd, type: type, path: @path)
       sock.sync = sync?
       sock
@@ -76,7 +77,7 @@ class UNIXServer < UNIXSocket
   end
 
   # Closes the socket, then deletes the filesystem pathname if it exists.
-  def close(delete = true)
+  def close(delete = true) : Nil
     super()
   ensure
     if delete && (path = @path)

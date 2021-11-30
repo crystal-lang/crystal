@@ -15,7 +15,7 @@ describe "codegen: previous_def" do
       )).to_i.should eq(2)
   end
 
-  it "codeges previous def when inside fun and forwards args" do
+  it "codegens previous def when inside fun and forwards args" do
     run(%(
       def foo(z)
         z &+ 1

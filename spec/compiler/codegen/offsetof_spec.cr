@@ -32,4 +32,11 @@ describe "Code gen: offsetof" do
 
     run(code).to_b.should be_true
   end
+
+  it "returns offset allowing manual access of tuple items" do
+    code = "foo = {1, 2_i8, 3}
+            (pointerof(foo).as(Void*) + offsetof({Int32,Int8,Int32}, 2).to_i64).as(Int32*).value == 3"
+
+    run(code).to_b.should be_true
+  end
 end

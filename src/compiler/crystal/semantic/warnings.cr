@@ -169,7 +169,8 @@ module Crystal
       compiler = @compiler
       return unless compiler
 
-      program = compiler.program
+      program = compiler.program?
+      return unless program
       return if program.warning_failures.empty?
 
       program.warning_failures.each do |message|

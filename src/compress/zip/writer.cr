@@ -129,11 +129,11 @@ class Compress::Zip::Writer
 
     if entry.compression_method.stored?
       if entry.crc32 != crc32
-        raise Error.new("Entry CRC32 mistmacth (#{entry.crc32} given but was #{crc32})")
+        raise Error.new("Entry CRC32 mismatch (#{entry.crc32} given but was #{crc32})")
       end
 
       if entry.uncompressed_size != uncompressed_size
-        raise Error.new("Entry uncompressed size mistmatch (#{entry.uncompressed_size} given but was #{uncompressed_size})")
+        raise Error.new("Entry uncompressed size mismatch (#{entry.uncompressed_size} given but was #{uncompressed_size})")
       end
     else
       entry.crc32 = crc32
@@ -151,14 +151,14 @@ class Compress::Zip::Writer
   end
 
   # Adds an entry that will have *string* as its contents.
-  def add(filename_or_entry : String | Entry, string : String)
+  def add(filename_or_entry : String | Entry, string : String) : Nil
     add(filename_or_entry) do |io|
       io << string
     end
   end
 
   # Adds an entry that will have *bytes* as its contents.
-  def add(filename_or_entry : String | Entry, bytes : Bytes)
+  def add(filename_or_entry : String | Entry, bytes : Bytes) : Nil
     add(filename_or_entry) do |io|
       io.write(bytes)
     end
@@ -167,7 +167,7 @@ class Compress::Zip::Writer
   # Adds an entry that will have its data copied from the given *data*.
   # If the given *data* is a `::File`, it is automatically closed
   # after data is copied from it.
-  def add(filename_or_entry : String | Entry, data : IO)
+  def add(filename_or_entry : String | Entry, data : IO) : Nil
     add(filename_or_entry) do |io|
       IO.copy(data, io)
       data.close if data.is_a?(::File)
@@ -175,13 +175,13 @@ class Compress::Zip::Writer
   end
 
   # Adds a directory entry that will have the given *name*.
-  def add_dir(name)
+  def add_dir(name) : Nil
     name = name + '/' unless name.ends_with?('/')
     add(Entry.new(name)) { }
   end
 
   # Closes this zip writer.
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 

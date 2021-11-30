@@ -281,6 +281,15 @@ describe IO::Memory do
     end
   end
 
+  it "creates from read-only slice" do
+    slice = Slice.new(6, read_only: true) { |i| ('a'.ord + i).to_u8 }
+    io = IO::Memory.new slice
+
+    expect_raises(IO::Error, "Read-only stream") do
+      io.print 'z'
+    end
+  end
+
   it "writes past end" do
     io = IO::Memory.new
     io.pos = 1000
@@ -351,6 +360,16 @@ describe IO::Memory do
     io.peek.should eq(Bytes.empty)
   end
 
+  it "peek readonly" do
+    str = "hello world"
+    io = IO::Memory.new(str)
+
+    slice = io.peek
+    expect_raises(Exception) do
+      slice[0] = 0
+    end
+  end
+
   it "skips" do
     io = IO::Memory.new("hello")
     io.skip(2)
@@ -373,44 +392,46 @@ describe IO::Memory do
     io.gets_to_end.should eq("")
   end
 
-  pending_win32 describe: "encoding" do
-    describe "decode" do
-      it "gets_to_end" do
-        str = "Hello world" * 200
-        io = IO::Memory.new(str.encode("UCS-2LE"))
-        io.set_encoding("UCS-2LE")
-        io.gets_to_end.should eq(str)
-      end
-
-      it "gets" do
-        str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
-        io = IO::Memory.new(str.encode("UCS-2LE"))
-        io.set_encoding("UCS-2LE")
-        io.gets(chomp: false).should eq("Hello world\n")
-        io.gets(chomp: false).should eq("Foo\n")
-        io.gets(chomp: false).should eq("Bar\n")
-      end
-
-      it "gets with chomp = false" do
-        str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
-        io = IO::Memory.new(str.encode("UCS-2LE"))
-        io.set_encoding("UCS-2LE")
-        io.gets.should eq("Hello world")
-        io.gets.should eq("Foo")
-        io.gets.should eq("Bar")
-      end
-
-      it "reads char" do
-        str = "x\nHello world" + ("1234567890" * 1000)
-        io = IO::Memory.new(str.encode("UCS-2LE"))
-        io.set_encoding("UCS-2LE")
-        io.gets(chomp: false).should eq("x\n")
-        str = str[2..-1]
-        str.each_char do |char|
-          io.read_char.should eq(char)
+  {% unless flag?(:without_iconv) %}
+    describe "encoding" do
+      describe "decode" do
+        it "gets_to_end" do
+          str = "Hello world" * 200
+          io = IO::Memory.new(str.encode("UCS-2LE"))
+          io.set_encoding("UCS-2LE")
+          io.gets_to_end.should eq(str)
         end
-        io.read_char.should be_nil
+
+        it "gets" do
+          str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
+          io = IO::Memory.new(str.encode("UCS-2LE"))
+          io.set_encoding("UCS-2LE")
+          io.gets(chomp: false).should eq("Hello world\n")
+          io.gets(chomp: false).should eq("Foo\n")
+          io.gets(chomp: false).should eq("Bar\n")
+        end
+
+        it "gets with chomp = false" do
+          str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
+          io = IO::Memory.new(str.encode("UCS-2LE"))
+          io.set_encoding("UCS-2LE")
+          io.gets.should eq("Hello world")
+          io.gets.should eq("Foo")
+          io.gets.should eq("Bar")
+        end
+
+        it "reads char" do
+          str = "x\nHello world" + ("1234567890" * 1000)
+          io = IO::Memory.new(str.encode("UCS-2LE"))
+          io.set_encoding("UCS-2LE")
+          io.gets(chomp: false).should eq("x\n")
+          str = str[2..-1]
+          str.each_char do |char|
+            io.read_char.should eq(char)
+          end
+          io.read_char.should be_nil
+        end
       end
     end
-  end
+  {% end %}
 end

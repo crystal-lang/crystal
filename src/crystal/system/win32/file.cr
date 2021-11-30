@@ -4,6 +4,7 @@ require "c/fileapi"
 require "c/sys/utime"
 require "c/sys/stat"
 require "c/winbase"
+require "c/handleapi"
 
 module Crystal::System::File
   def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : LibC::Int
@@ -51,7 +52,7 @@ module Crystal::System::File
     if NOT_FOUND_ERRORS.includes? error
       return nil
     else
-      raise ::File::Error.from_winerror(message, error, file: path)
+      raise ::File::Error.from_os_error(message, error, file: path)
     end
   end
 
@@ -179,7 +180,7 @@ module Crystal::System::File
     end
 
     unless exists? real_path
-      raise ::File::Error.from_errno("Error resolving real path", Errno::ENOENT, file: path)
+      raise ::File::Error.from_os_error("Error resolving real path", Errno::ENOENT, file: path)
     end
 
     real_path
@@ -187,14 +188,14 @@ module Crystal::System::File
 
   def self.link(old_path : String, new_path : String) : Nil
     if LibC.CreateHardLinkW(to_windows_path(new_path), to_windows_path(old_path), nil) == 0
-      raise ::File::Error.from_winerror("Error creating hard link", file: old_path, other: new_path)
+      raise ::File::Error.from_winerror("Error creating link", file: old_path, other: new_path)
     end
   end
 
   def self.symlink(old_path : String, new_path : String) : Nil
     # TODO: support directory symlinks (copy Go's stdlib logic here)
     if LibC.CreateSymbolicLinkW(to_windows_path(new_path), to_windows_path(old_path), LibC::SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE) == 0
-      raise ::File::Error.from_winerror("Error creating symbolic link", file: old_path, other: new_path)
+      raise ::File::Error.from_winerror("Error creating symlink", file: old_path, other: new_path)
     end
   end
 
@@ -202,9 +203,9 @@ module Crystal::System::File
     raise NotImplementedError.new("readlink")
   end
 
-  def self.rename(old_path : String, new_path : String) : Nil
+  def self.rename(old_path : String, new_path : String) : ::File::Error?
     if LibC.MoveFileExW(to_windows_path(old_path), to_windows_path(new_path), LibC::MOVEFILE_REPLACE_EXISTING) == 0
-      raise ::File::Error.from_winerror("Error renaming file", file: old_path, other: new_path)
+      ::File::Error.from_winerror("Error renaming file", file: old_path, other: new_path)
     end
   end
 
@@ -217,7 +218,7 @@ module Crystal::System::File
       LibC::FILE_SHARE_READ | LibC::FILE_SHARE_WRITE | LibC::FILE_SHARE_DELETE,
       nil,
       LibC::OPEN_EXISTING,
-      LibC::FILE_ATTRIBUTE_NORMAL,
+      LibC::FILE_FLAG_BACKUP_SEMANTICS,
       LibC::HANDLE.null
     )
     if handle == LibC::INVALID_HANDLE_VALUE

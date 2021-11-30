@@ -55,6 +55,7 @@ module Crystal
     def initialize(string, string_pool : StringPool? = nil)
       @reader = Char::Reader.new(string)
       @token = Token.new
+      @temp_token = Token.new
       @line_number = 1
       @column_number = 1
       @filename = ""
@@ -636,6 +637,8 @@ module Crystal
       when '~'
         next_char :"~"
       when '.'
+        line = @line_number
+        column = @column_number
         case next_char
         when '.'
           case next_char
@@ -644,6 +647,8 @@ module Crystal
           else
             @token.type = :".."
           end
+        when .ascii_number?
+          raise ".1 style number literal is not supported, put 0 before dot", line, column
         else
           @token.type = :"."
         end
@@ -1299,7 +1304,7 @@ module Crystal
           end
           @token.type = :CONST
           @token.value = string_range_from_pool(start)
-        elsif current_char.ascii_lowercase? || current_char == '_' || current_char.ord > 0x9F
+        elsif ident_start?(current_char)
           next_char
           scan_ident(start)
         else
@@ -1575,9 +1580,13 @@ module Crystal
       set_token_raw_from_start(start)
     end
 
-    macro gen_check_int_fits_in_size(type, method, size)
+    macro gen_check_int_fits_in_size(type, method, size, *, actual_type = nil)
       if num_size >= 20
-        raise_value_doesnt_fit_in "{{type}}", string_value, start
+        {% if actual_type.nil? %}
+          raise_value_doesnt_fit_in "{{type}}", string_value, start
+        {% else %}
+          raise_value_restricted_by "{{actual_type}}", "{{type}}", string_value, start
+        {% end %}
       end
       if num_size >= {{size}}
         int_value = absolute_integer_value(string_value, negative)
@@ -1585,7 +1594,11 @@ module Crystal
         max += 1 if negative
 
         if int_value > max
-          raise_value_doesnt_fit_in "{{type}}", string_value, start
+          {% if actual_type.nil? %}
+            raise_value_doesnt_fit_in "{{type}}", string_value, start
+          {% else %}
+            raise_value_restricted_by "{{actual_type}}", "{{type}}", string_value, start
+          {% end %}
         end
       end
     end
@@ -1627,8 +1640,14 @@ module Crystal
         end
 
         check_value_fits_in_uint64 string_value, num_size, start
-      else
-        # TODO: handle i128 and u128
+      when :i128
+        gen_check_int_fits_in_size Int64, to_u64, 19, actual_type: Int128
+      when :u128
+        if negative
+          raise "Invalid negative value #{string_value} for UInt128"
+        end
+
+        check_value_fits_in_uint64 string_value, num_size, start, actual_type: UInt128
       end
     end
 
@@ -1683,9 +1702,13 @@ module Crystal
       end
     end
 
-    def check_value_fits_in_uint64(string_value, num_size, start)
+    def check_value_fits_in_uint64(string_value, num_size, start, actual_type = UInt64)
       if num_size > 20
-        raise_value_doesnt_fit_in "UInt64", string_value, start
+        if actual_type == UInt64
+          raise_value_doesnt_fit_in "UInt64", string_value, start
+        else
+          raise_value_restricted_by actual_type, "UInt64", string_value, start
+        end
       end
 
       if num_size == 20
@@ -1693,7 +1716,11 @@ module Crystal
         "18446744073709551615".each_byte do |byte|
           string_byte = string_value.byte_at(i)
           if string_byte > byte
-            raise_value_doesnt_fit_in "UInt64", string_value, start
+            if actual_type == UInt64
+              raise_value_doesnt_fit_in "UInt64", string_value, start
+            else
+              raise_value_restricted_by actual_type, "UInt64", string_value, start
+            end
           elsif string_byte < byte
             break
           end
@@ -1704,6 +1731,10 @@ module Crystal
 
     def raise_value_doesnt_fit_in(type, string_value, start)
       raise "#{string_value} doesn't fit in an #{type}", @token, (current_pos - start)
+    end
+
+    def raise_value_restricted_by(type, restricted_by_type, string_value, start)
+      raise "#{string_value} doesn't fit in an #{restricted_by_type}. #{type} literals that don't fit in an #{restricted_by_type} are currently not supported", @token, (current_pos - start)
     end
 
     def scan_zero_number(start, negative = false)
@@ -1749,12 +1780,17 @@ module Crystal
       next_char
 
       num = 0_u64
+      num_size = 0
       while true
         case next_char
         when '0'
-          num *= 2
+          num = num << 1
+          if num_size > 0
+            num_size += 1
+          end
         when '1'
-          num = num * 2 + 1
+          num = (num << 1) + 1
+          num_size += 1
         when '_'
           # Nothing
         else
@@ -1762,6 +1798,7 @@ module Crystal
         end
       end
 
+      num = nil if num_size > 64
       finish_scan_prefixed_number num, negative, start
     end
 
@@ -1769,17 +1806,25 @@ module Crystal
       next_char
 
       num = 0_u64
-
+      num_size = first_digit = 0
       while true
         char = next_char
         if '0' <= char <= '7'
-          num = num * 8 + (char - '0')
+          num = (num << 3) | (char - '0')
+          if num_size == 0
+            first_digit = num
+            num_size += 1 if char != '0'
+          else
+            num_size += 1
+          end
         elsif char == '_'
         else
           break
         end
       end
 
+      # 0o177777_77777777_77777777 is the largest UInt64.
+      num = nil if {num_size, first_digit} > {22, 0o1}
       finish_scan_prefixed_number num, negative, start
     end
 
@@ -1787,23 +1832,49 @@ module Crystal
       next_char
 
       num = 0_u64
+      num_size = 0
       while true
         char = next_char
         if char == '_'
         else
           hex_value = char_to_hex(char) { nil }
           if hex_value
-            num = num * 16 + hex_value
+            num = (num << 4) | hex_value
+            if num_size > 0 || char != '0'
+              num_size += 1
+            end
           else
             break
           end
         end
       end
 
+      # 0xFFFF_FFFF_FFFF_FFFF is the longest UInt64.
+      num = nil if num_size > 16
       finish_scan_prefixed_number num, negative, start
     end
 
-    def finish_scan_prefixed_number(num, negative, start)
+    def finish_scan_prefixed_number(num : Int?, negative : Bool, start : Int32)
+      if num.nil? # Doesn't even fit in UInt64
+        case current_char
+        when 'i'
+          consume_int_suffix
+        when 'u'
+          consume_uint_suffix
+        else
+          @token.number_kind = :u64
+        end
+        case @token.number_kind
+        when :i8, :i16, :i32, :i64, :i128
+          type_name = "Int" + @token.number_kind.to_s[1..]
+        when :u8, :u16, :u32, :u64, :u128
+          type_name = "UInt" + @token.number_kind.to_s[1..]
+        else
+          raise "BUG: Expecting an integer token, got #{@token.number_kind}"
+        end
+        raise_value_doesnt_fit_in type_name, string_range_from_pool(start), start
+      end
+
       if negative
         string_value = (num.to_i64 * -1).to_s
       else
@@ -2202,6 +2273,7 @@ module Crystal
       delimiter_state = macro_state.delimiter_state
       beginning_of_line = macro_state.beginning_of_line
       comment = macro_state.comment
+      heredocs = macro_state.heredocs
       yields = false
 
       if skip_whitespace
@@ -2224,7 +2296,7 @@ module Crystal
         next_char
         start = current_pos
         if next_char == '%'
-          while (char = next_char).ascii_whitespace?
+          while (char = next_char_check_line).ascii_whitespace?
           end
 
           case char
@@ -2250,7 +2322,7 @@ module Crystal
 
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         set_token_raw_from_start(start)
         return @token
       end
@@ -2261,7 +2333,7 @@ module Crystal
         next_char
         @token.type = :MACRO_LITERAL
         @token.value = "%"
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         @token.raw = "%"
         return @token
       end
@@ -2272,13 +2344,13 @@ module Crystal
           beginning_of_line = false
           next_char
           @token.type = :MACRO_EXPRESSION_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         when '%'
           beginning_of_line = false
           next_char
           @token.type = :MACRO_CONTROL_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         else
           # Make sure to decrease the '}' count if inside an interpolation
@@ -2311,7 +2383,7 @@ module Crystal
         end
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         set_token_raw_from_start(start)
         return @token
       end
@@ -2321,6 +2393,22 @@ module Crystal
         if char == 'q' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
           next_char
           delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+          next_char
+        elsif char == 'Q' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+          next_char
+          delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+          next_char
+        elsif char == 'i' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+          next_char
+          delimiter_state = Token::DelimiterState.new(:symbol_array, char, closing_char, 1)
+          next_char
+        elsif char == 'w' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+          next_char
+          delimiter_state = Token::DelimiterState.new(:string_array, char, closing_char, 1)
+          next_char
+        elsif char == 'x' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+          next_char
+          delimiter_state = Token::DelimiterState.new(:command, char, closing_char, 1)
           next_char
         elsif char == 'r' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
           next_char
@@ -2334,7 +2422,7 @@ module Crystal
           beginning_of_line = false
           @token.type = :MACRO_VAR
           @token.value = string_range_from_pool(start)
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         end
       end
@@ -2344,7 +2432,7 @@ module Crystal
           beginning_of_line = false
           case next_char
           when 'd'
-            if whitespace && !ident_part_or_end?(peek_next_char)
+            if whitespace && !ident_part_or_end?(peek_next_char) && peek_next_char != ':'
               if nest == 0 && control_nest == 0
                 next_char
                 @token.type = :MACRO_END
@@ -2379,10 +2467,25 @@ module Crystal
           incr_line_number 0
           whitespace = true
           beginning_of_line = true
+          char = next_char
+
+          if !delimiter_state && heredocs && !heredocs.empty?
+            delimiter_state = heredocs.shift
+          end
+
+          if delimiter_state && delimiter_state.kind == :heredoc && check_heredoc_end(delimiter_state)
+            char = current_char
+            delimiter_state = heredocs.try &.shift?
+          end
+
+          next
         when '\\'
           char = next_char
           if delimiter_state
-            if char == '"'
+            case char
+            when delimiter_state.end
+              char = next_char
+            when '\\'
               char = next_char
             end
             whitespace = false
@@ -2437,6 +2540,13 @@ module Crystal
             end
             @macro_curly_count -= 1
           end
+        when '<'
+          if !delimiter_state && @delimiter_state_stack.empty? && (heredoc_delimiter_state = lookahead { check_heredoc_start })
+            heredocs ||= [] of Token::DelimiterState
+            heredocs << heredoc_delimiter_state
+            char = current_char
+            next
+          end
         else
           if !delimiter_state && whitespace && lookahead { char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(peek_next_char) }
             yields = true
@@ -2462,8 +2572,6 @@ module Crystal
                 if delimiter_state.open_count == 0
                   delimiter_state = nil
                 end
-              else
-                # Nothing to do
               end
             end
 
@@ -2484,20 +2592,29 @@ module Crystal
 
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
-      @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+      @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
       set_token_raw_from_start(start)
 
       @token
     end
 
-    def lookahead
-      old_pos = @reader.pos
-      old_line_number, old_column_number = @line_number, @column_number
+    def lookahead(preserve_token_on_fail = false)
+      old_pos, old_line, old_column = current_pos, @line_number, @column_number
+      @temp_token.copy_from(@token) if preserve_token_on_fail
 
       result = yield
       unless result
-        @reader.pos = old_pos
-        @line_number, @column_number = old_line_number, old_column_number
+        self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
+        @token.copy_from(@temp_token) if preserve_token_on_fail
+      end
+      result
+    end
+
+    def peek_ahead
+      result = uninitialized typeof(yield)
+      lookahead(preserve_token_on_fail: true) do
+        result = yield
+        nil
       end
       result
     end
@@ -2586,6 +2703,64 @@ module Crystal
       end
     end
 
+    def check_heredoc_start
+      return nil unless current_char == '<' && next_char == '<' && next_char == '-'
+
+      has_single_quote = false
+      found_closing_single_quote = false
+
+      char = next_char
+      start_here = current_pos
+
+      if char == '\''
+        has_single_quote = true
+        char = next_char
+        start_here = current_pos
+      end
+
+      return nil unless ident_part?(char)
+
+      end_here = 0
+
+      while true
+        char = next_char
+        case
+        when char == '\r'
+          if peek_next_char == '\n'
+            end_here = current_pos
+            next_char
+            break
+          else
+            return nil
+          end
+        when char == '\n'
+          end_here = current_pos
+          break
+        when ident_part?(char)
+          # ok
+        when char == '\0'
+          return nil
+        else
+          if char == '\'' && has_single_quote
+            found_closing_single_quote = true
+            end_here = current_pos
+            next_char
+            break
+          elsif has_single_quote
+            # wait until another quote
+          else
+            end_here = current_pos
+            break
+          end
+        end
+      end
+
+      return nil if has_single_quote && !found_closing_single_quote
+
+      here = string_range(start_here, end_here)
+      Token::DelimiterState.new(:heredoc, here, here, allow_escapes: !has_single_quote)
+    end
+
     def consume_octal_escape(char)
       value = char - '0'
       count = 1
@@ -2647,6 +2822,9 @@ module Crystal
         hex_value = char_to_hex(next_char) { expected_hexacimal_character_in_unicode_escape }
         codepoint = 16 * codepoint + hex_value
       end
+      if 0xD800 <= codepoint <= 0xDFFF
+        raise "invalid unicode codepoint (surrogate half)"
+      end
       codepoint
     end
 
@@ -2681,6 +2859,8 @@ module Crystal
         expected_hexacimal_character_in_unicode_escape
       elsif codepoint > 0x10FFFF
         raise "invalid unicode codepoint (too large)"
+      elsif 0xD800 <= codepoint <= 0xDFFF
+        raise "invalid unicode codepoint (surrogate half)"
       end
 
       unless found_space
@@ -2951,7 +3131,7 @@ module Crystal
       if char == '\n'
         incr_line_number
       else
-        incr_column_number = 1
+        incr_column_number
       end
       char
     end
@@ -3037,20 +3217,30 @@ module Crystal
       Slice.new(@reader.string.to_unsafe + start_pos, end_pos - start_pos)
     end
 
-    def ident_start?(char)
+    def self.ident_start?(char)
       char.ascii_letter? || char == '_' || char.ord > 0x9F
     end
 
-    def ident_part?(char)
+    def self.ident_part?(char)
       ident_start?(char) || char.ascii_number?
     end
+
+    def self.ident?(name)
+      !!name[0]?.try { |char| ident_start?(char) }
+    end
+
+    def self.setter?(name)
+      ident?(name) && name.ends_with?('=')
+    end
+
+    private delegate ident_start?, ident_part?, to: Lexer
 
     def ident_part_or_end?(char)
       ident_part?(char) || char == '?' || char == '!'
     end
 
     def peek_not_ident_part_or_end_next_char
-      !ident_part_or_end?(peek_next_char) && next_char
+      !ident_part_or_end?(peek_next_char) && peek_next_char != ':' && next_char
     end
 
     def closing_char(char = current_char)

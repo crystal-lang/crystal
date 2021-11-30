@@ -64,11 +64,26 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_info
-    if LibC.fstat(fd, out stat) != 0
-      raise IO::Error.from_errno("Unable to get info")
-    end
+    {% begin %}
+      # On some systems, the symbols `fstat` and `lstat` are not part of the GNU
+      # shared library `libc.so` and instead provided by `libc_noshared.a`.
+      # That makes them unavailable for dynamic runtime symbol lookup via `dlsym`
+      # which we use for interpreted mode.
+      # See https://github.com/crystal-lang/crystal/issues/11157#issuecomment-949640034 for details.
+      # Linking against the internal counterparts `__fxstat` and `__lxstat` directly
+      # should work in both interpreted and compiled mode.
+      {% if LibC.has_method?(:__fxstat) %}
+        ret = LibC.__fxstat(1, fd, out stat)
+      {% else %}
+        ret = LibC.fstat(fd, out stat)
+      {% end %}
 
-    FileInfo.new(stat)
+      if ret != 0
+        raise IO::Error.from_errno("Unable to get info")
+      end
+
+      FileInfo.new(stat)
+    {% end %}
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
@@ -80,7 +95,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_pos
-    pos = LibC.lseek(fd, 0, IO::Seek::Current)
+    pos = LibC.lseek(fd, 0, IO::Seek::Current).to_i64
     raise IO::Error.from_errno "Unable to tell" if pos == -1
     pos
   end
@@ -122,7 +137,7 @@ module Crystal::System::FileDescriptor
     file_descriptor_close
   end
 
-  def file_descriptor_close
+  def file_descriptor_close : Nil
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
     _fd = @volatile_fd.swap(-1)
@@ -153,7 +168,7 @@ module Crystal::System::FileDescriptor
   end
 
   def self.pread(fd, buffer, offset)
-    bytes_read = LibC.pread(fd, buffer, buffer.size, offset)
+    bytes_read = LibC.pread(fd, buffer, buffer.size, offset).to_i64
 
     if bytes_read == -1
       raise IO::Error.from_errno "Error reading file"
