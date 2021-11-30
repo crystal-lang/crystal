@@ -401,7 +401,7 @@ struct BigInt < Int
   def gcd_ext(other : BigInt) : {BigInt, BigInt, BigInt}
     a = BigInt.new
     b = BigInt.new
-    {BigInt.new { |mpz| LibGMP.gcd_ext(mpz, a, b, self, other) }, a, b}
+    {BigInt.new { |mpz| LibGMP.gcdext(mpz, a, b, self, other) }, a, b}
   end
 
   # Returns the least common multiple of `self` and *other*.
