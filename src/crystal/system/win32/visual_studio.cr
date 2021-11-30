@@ -17,8 +17,7 @@ module Crystal::System::VisualStudio
     # ported from https://github.com/microsoft/vswhere/wiki/Find-VC
     # Copyright (C) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
     if vs_installations = get_vs_installations
-      vs_installations.sort_by! &.version.split('.').map(&.to_i)
-      vs_installations.reverse_each do |installation|
+      vs_installations.each do |installation|
         version_path = ::File.join(installation.directory, "VC", "Auxiliary", "Build", "Microsoft.VCToolsVersion.default.txt")
         next unless ::File.file?(version_path)
 
@@ -32,7 +31,7 @@ module Crystal::System::VisualStudio
 
   private def self.get_vs_installations : Array(Installation)?
     if vswhere_path = find_vswhere
-      vc_install_json = `#{::Process.quote(vswhere_path)} -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json`.chomp
+      vc_install_json = `#{::Process.quote(vswhere_path)} -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -sort -format json`.chomp
       return if !$?.success? || vc_install_json.empty?
 
       Array(Installation).from_json(vc_install_json)
