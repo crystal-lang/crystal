@@ -36,6 +36,28 @@ describe "Log.context" do
     Log.context.metadata.should eq(m({a: 1, b: 2, c: 3}))
   end
 
+  it "is restored after with_context with arguments" do
+    Log.context.set a: 1
+    Log.with_context(b: 2) do
+      Log.context.set c: 3
+      Log.context.metadata.should eq(m({a: 1, b: 2, c: 3}))
+    end
+
+    Log.context.metadata.should eq(m({a: 1}))
+  end
+
+  it "is restored after with_context of Log instance with arguments" do
+    Log.context.set a: 1
+    log = Log.for("temp")
+
+    log.with_context(b: 2) do
+      log.context.set c: 3
+      log.context.metadata.should eq(m({a: 1, b: 2, c: 3}))
+    end
+
+    log.context.metadata.should eq(m({a: 1}))
+  end
+
   it "is restored after with_context" do
     Log.context.set a: 1
 

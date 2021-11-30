@@ -82,18 +82,20 @@ class Log
   end
 
   # Method to save and restore the current logging context.
+  # You can add temporary context via arguments
   #
   # ```
   # Log.context.set a: 1
   # Log.info { %(message with {"a" => 1} context) }
-  # Log.with_context do
-  #   Log.context.set b: 2
-  #   Log.info { %(message with {"a" => 1, "b" => 2} context) }
+  # Log.with_context(b: 2) do
+  #   Log.context.set c: 3
+  #   Log.info { %(message with {"a" => 1, "b" => 2, "c" => 3} context) }
   # end
   # Log.info { %(message with {"a" => 1} context) }
   # ```
-  def self.with_context
+  def self.with_context(**kwargs)
     previous = Log.context
+    Log.context.set(**kwargs) unless kwargs.empty?
     begin
       yield
     ensure
@@ -102,8 +104,8 @@ class Log
   end
 
   # :ditto:
-  def with_context
-    self.class.with_context do
+  def with_context(**kwargs)
+    self.class.with_context(**kwargs) do
       yield
     end
   end
