@@ -359,18 +359,18 @@ module Crystal
         {% if flag?(:msvc) %}
           if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
             if win_sdk_libpath = Crystal::System::WindowsSDK.find_win10_sdk_libpath
-              host_bits = {{ flag?(:bits64) ? "Hostx64" : "Hostx86" }}
+              host_bits = {{ flag?(:bits64) ? "x64" : "x86" }}
               target_bits = program.has_flag?("bits64") ? "x64" : "x86"
 
               # MSVC build tools and Windows SDK found; recreate `LIB` environment variable
               # that is normally expected on the MSVC developer command prompt
-              link_args << Process.quote_windows("/LIBPATH:#{msvc_path}\\atlmfc\\lib\\#{target_bits}")
-              link_args << Process.quote_windows("/LIBPATH:#{msvc_path}\\lib\\#{target_bits}")
-              link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath}\\ucrt\\#{target_bits}")
-              link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath}\\um\\#{target_bits}")
+              link_args << Process.quote_windows("/LIBPATH:#{msvc_path.join("atlmfc", "lib", target_bits)}")
+              link_args << Process.quote_windows("/LIBPATH:#{msvc_path.join("lib", target_bits)}")
+              link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath.join("ucrt", target_bits)}")
+              link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath.join("um", target_bits)}")
 
               # use exact path for compiler instead of relying on `PATH`
-              cl = Process.quote_windows("#{msvc_path}\\bin\\#{host_bits}\\#{target_bits}\\cl.exe")
+              cl = Process.quote_windows(msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s)
             end
           end
         {% end %}
@@ -391,7 +391,7 @@ module Crystal
 
           args_filename = "#{output_dir}/linker_args.txt"
           File.write(args_filename, args_bytes)
-          cmd = "#{CL} #{Process.quote_windows("@" + args_filename)}"
+          cmd = "#{cl} #{Process.quote_windows("@" + args_filename)}"
         end
 
         {cmd, nil}
