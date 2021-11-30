@@ -1522,19 +1522,11 @@ module Crystal
           is_e_notation = is_decimal = true
           next_char if peek_next_char.in?({'+', '-'})
           raise("trailing '_' in number", @token, (current_pos - start)) if peek_next_char == '_'
-        when 'i'
-          break if is_decimal
-          @token.number_kind, suffix_size = consume_int_suffix
+        when 'i', 'u', 'f'
+          before_prefix_pos = current_pos
+          @token.number_kind = consume_number_suffix
           next_char
-          break
-        when 'u'
-          break if is_decimal
-          @token.number_kind, suffix_size = consume_uint_suffix
-          next_char
-          break
-        when 'f'
-          @token.number_kind, suffix_size = consume_float_suffix
-          next_char
+          suffix_size = current_pos - before_prefix_pos
           break
         else
           raise("trailing '_' in number", @token, (current_pos - start)) if last_is_underscore
@@ -1567,9 +1559,9 @@ module Crystal
             end
       @token.value = str
 
-      # No special checks needed for floating values
       if is_decimal
         @token.number_kind = :f64 if suffix_size == 0
+        raise("Invalid suffix #{@token.number_kind} for decimal number", @token, (current_pos - start)) unless @token.number_kind.in?({:f32, :f64})
         return
       end
 
@@ -1612,40 +1604,40 @@ module Crystal
       end
     end
 
-    private def consume_int_suffix : Tuple(Symbol, Int32)
-      case next_char
-      when '8' then return {:i8, 2}
-      when '1'
+    private def consume_number_suffix : Symbol
+      case current_char
+      when 'i'
         case next_char
-        when '2' then return {:i128, 4} if next_char == '8'
-        when '6' then return {:i16, 3}
+        when '8' then return :i8
+        when '1'
+          case next_char
+          when '2' then return :i128 if next_char == '8'
+          when '6' then return :i16
+          end
+        when '3' then return :i32 if next_char == '2'
+        when '6' then return :i64 if next_char == '4'
         end
-      when '3' then return {:i32, 3} if next_char == '2'
-      when '6' then return {:i64, 3} if next_char == '4'
-      end
-      raise "invalid int suffix"
-    end
-
-    private def consume_uint_suffix : Tuple(Symbol, Int32)
-      case next_char
-      when '8' then return {:u8, 2}
-      when '1'
+        raise "invalid int suffix"
+      when 'u'
         case next_char
-        when '2' then return {:u128, 4} if next_char == '8'
-        when '6' then return {:u16, 3}
+        when '8' then return :u8
+        when '1'
+          case next_char
+          when '2' then return :u128 if next_char == '8'
+          when '6' then return :u16
+          end
+        when '3' then return :u32 if next_char == '2'
+        when '6' then return :u64 if next_char == '4'
         end
-      when '3' then return {:u32, 3} if next_char == '2'
-      when '6' then return {:u64, 3} if next_char == '4'
+        raise "invalid uint suffix"
+      when 'f'
+        case next_char
+        when '3' then return :f32 if next_char == '2'
+        when '6' then return :f64 if next_char == '4'
+        end
+        raise "invalid float suffix"
       end
-      raise "invalid uint suffix"
-    end
-
-    private def consume_float_suffix : Tuple(Symbol, Int32)
-      case next_char
-      when '3' then return {:f32, 3} if next_char == '2'
-      when '6' then return {:f64, 3} if next_char == '4'
-      end
-      raise "invalid float suffix"
+      raise "invalid suffix"
     end
 
     def next_string_token(delimiter_state)
