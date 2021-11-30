@@ -504,7 +504,7 @@ workflows:
       - publish_docker:
           filters: *release
           requires:
-            - dist_docker
+            - test_dist_linux_on_docker
       - dist_docs:
           filters: *release
           requires:
