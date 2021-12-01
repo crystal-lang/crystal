@@ -39,6 +39,9 @@ class String
     end
   end
 
+  # Returns the number of Unicode extended graphemes clusters in this string.
+  #
+  # * `#each_grapheme` iterates the grapheme clusters.
   def grapheme_size : Int32
     size = 0
     each_grapheme_boundary do

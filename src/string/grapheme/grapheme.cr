@@ -2,9 +2,11 @@ require "./properties"
 
 class String
   # Iterates the grapheme boundaries in this string and yields for each grapheme
-  # cluster the byte index of the first character and the first character of the
-  # cluster, as well as the last character of the grapheme (which can be used
-  # to avoid multiple decoding in single-char graphemes).
+  # cluster the byte index of the first character and the byte index of the last
+  # byte of the last character in the cluster. That is the byte span of the
+  # respective grapheme cluster in the entire string.
+  # The third input value is the last character itself, which can be used
+  # to avoid multiple decoding in single-char graphemes.
   private def each_grapheme_boundary(& : Range(Int32, Int32), Char -> Nil) : Nil
     state = Grapheme::Property::Start
 
