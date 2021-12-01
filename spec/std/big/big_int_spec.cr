@@ -466,7 +466,7 @@ describe "BigInt" do
     (17).lcm(-a_17).should eq(a_17)
 
     (a_17).gcd(17).should be_a(Int::Unsigned)
-    
+
     g, s, t = a.gcd_ext(b)
     g.should eq(1)
     (s*a + t*b).should eq(1)
