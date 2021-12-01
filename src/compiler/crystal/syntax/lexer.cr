@@ -1452,14 +1452,14 @@ module Crystal
 
     macro gen_check_int_fits_in_size(type, method, size, actual_type = nil)
       {% if type.stringify.starts_with? "U" %}
-        raise "Invalid negative value #{str} for {{type}}", @token, (current_pos - start) if negative
+        raise "Invalid negative value #{error_number_string} for {{type}}", @token, (current_pos - start) if negative
       {% end %}
 
-      if num_size > {{size}} || (num_size == {{size}} && str.to_{{method.id}}? == nil)
+      if number_size > {{size}} || (number_size == {{size}} && raw_number_string.to_{{method.id}}? == nil)
         {% if actual_type.nil? %}
-          raise_value_doesnt_fit_in "{{type}}", str, start
+          raise_value_doesnt_fit_in "{{type}}", error_number_string, start
         {% else %}
-          raise("#{str} doesn't fit in an {{actual_type}}. {{type}} literals that don't fit in an {{actual_type}} are currently not supported", @token, current_pos - start)
+          raise("#{error_number_string} doesn't fit in an {{actual_type}}. {{type}} literals that don't fit in an {{actual_type}} are currently not supported", @token, current_pos - start)
         {% end %}
       end
     end
@@ -1471,10 +1471,11 @@ module Crystal
     private def scan_number(start, negative = false)
       @token.type = :NUMBER
       base = 10
+      number_size = 0
       suffix_size = 0
       is_decimal = false
       is_e_notation = false
-      underscore_count = 0
+      has_underscores = false
       last_is_underscore = false
       pos_after_prefix = start
 
@@ -1487,8 +1488,7 @@ module Crystal
         when '0'..'9' then raise("octal constants should be prefixed with 0o", @token, (current_pos - start))
         when '_'
           raise("octal constants should be prefixed with 0o", @token, (current_pos - start)) if next_char.in? '0'..'9'
-          last_is_underscore = true
-          underscore_count = 1
+          has_underscores = last_is_underscore = true
         end
 
         # Skip prefix (b, o, x)
@@ -1503,6 +1503,7 @@ module Crystal
       # Consume number
       loop do
         while String::CHAR_TO_DIGIT[current_char.ord].to_u8! < base
+          number_size += 1 unless number_size == 0 && current_char == '0'
           next_char
           last_is_underscore = false
         end
@@ -1511,7 +1512,7 @@ module Crystal
         when '_'
           raise("consecutive underscores in numbers aren't allowed", @token, (current_pos - start)) if last_is_underscore
           last_is_underscore = true
-          underscore_count += 1
+          has_underscores = last_is_underscore = true
         when '.'
           raise("trailing '_' in number", @token, (current_pos - start)) if last_is_underscore
           break if is_decimal || base != 10 || !peek_next_char.in?('0'..'9')
@@ -1527,6 +1528,7 @@ module Crystal
           @token.number_kind = consume_number_suffix
           next_char
           suffix_size = current_pos - before_prefix_pos
+          suffix_size += 1 if last_is_underscore
           break
         else
           raise("trailing '_' in number", @token, (current_pos - start)) if last_is_underscore
@@ -1539,25 +1541,21 @@ module Crystal
       set_token_raw_from_start(start)
 
       # Sanitize string (or convert to decimal unless number is in base 10)
-      end_pos = current_pos - suffix_size
-      str = if base == 10
-              ret = string_range(start, end_pos)
-              ret = ret.delete('_') if underscore_count > 0
-              ret
-            else
-              ret = string_range(pos_after_prefix, end_pos)
-              required_bytes = base.trailing_zeros_count * (ret.size - underscore_count)
-              tmp_str = case required_bytes
-                        when 1..32  then ret.to_u32(base: base, underscore: true).to_s
-                        when 33..64 then ret.to_u64(base: base, underscore: true).to_s
-                          # TODO: Add 128-bit literal conversion
-                        else raise("integer literal too large", @token, (current_pos - start))
-                        end
-              first_byte = @reader.string.byte_at(start).chr
-              tmp_str = first_byte + tmp_str if first_byte.in?({'+', '-'})
-              tmp_str
-            end
-      @token.value = str
+      pos_before_suffix = current_pos - suffix_size
+      raw_number_string = string_range(pos_after_prefix, pos_before_suffix)
+      error_number_string = string_range(start, pos_before_suffix)
+      if base == 10
+        raw_number_string = raw_number_string.delete('_') if has_underscores
+        @token.value = raw_number_string
+      else
+        base10_number_string = raw_number_string.to_u64?(base: base, underscore: true).try &.to_s
+        if base10_number_string
+          number_size = base10_number_string.size
+          first_byte = @reader.string.byte_at(start).chr
+          base10_number_string = first_byte + base10_number_string if first_byte.in?({'+', '-'})
+          @token.value = raw_number_string = base10_number_string
+        end
+      end
 
       if is_decimal
         @token.number_kind = :f64 if suffix_size == 0
@@ -1566,27 +1564,27 @@ module Crystal
       end
 
       # Check or determine suffix
-      num_size = negative ? str.size - 1 : str.size
       if suffix_size == 0
-        @token.number_kind = case num_size
+        raise_value_doesnt_fit_in(negative ? Int64 : UInt64, error_number_string, start) unless @token.value
+        @token.number_kind = case number_size
                              when 0..9   then :i32
-                             when 10     then str.to_i32? ? :i32 : :i64
+                             when 10     then raw_number_string.to_i32? ? :i32 : :i64
                              when 11..18 then :i64
                              when 19
-                               if str.to_i64?
+                               if raw_number_string.to_i64?
                                  :i64
                                elsif negative
-                                 raise_value_doesnt_fit_in(Int64, str, start)
+                                 raise_value_doesnt_fit_in(Int64, error_number_string, start)
                                else
                                  :u64
                                end
                              when 20
-                               raise_value_doesnt_fit_in(Int64, str, start) if negative
-                               raise_value_doesnt_fit_in(UInt64, str, start) unless str.to_u64?
+                               raise_value_doesnt_fit_in(Int64, error_number_string, start) if negative
+                               raise_value_doesnt_fit_in(UInt64, error_number_string, start) unless raw_number_string.to_u64?
                                :u64
                              else
-                               raise_value_doesnt_fit_in(Int64, str, start) if negative
-                               raise_value_doesnt_fit_in(UInt64, str, start)
+                               raise_value_doesnt_fit_in(Int64, error_number_string, start) if negative
+                               raise_value_doesnt_fit_in(UInt64, error_number_string, start)
                              end
       else
         case @token.number_kind
