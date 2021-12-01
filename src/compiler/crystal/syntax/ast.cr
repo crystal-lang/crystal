@@ -1735,8 +1735,9 @@ module Crystal
   class Yield < ASTNode
     property exps : Array(ASTNode)
     property scope : ASTNode?
+    property? has_parentheses = false
 
-    def initialize(@exps = [] of ASTNode, @scope = nil)
+    def initialize(@exps = [] of ASTNode, @scope = nil, @has_parentheses = false)
     end
 
     def accept_children(visitor)
@@ -1745,14 +1746,14 @@ module Crystal
     end
 
     def clone_without_location
-      Yield.new(@exps.clone, @scope.clone)
+      Yield.new(@exps.clone, @scope.clone, @has_parentheses)
     end
 
     def end_location
       @end_location || @exps.last?.try(&.end_location)
     end
 
-    def_equals_and_hash @exps, @scope
+    def_equals_and_hash @exps, @scope, @has_parentheses
   end
 
   class Include < ASTNode
