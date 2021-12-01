@@ -19,7 +19,7 @@ class String
     while reader.has_next?
       char = reader.next_char
       property = Grapheme::Property.from(char)
-      boundary = Grapheme.break?(last_property, property, pointerof(state))
+      boundary, state = Grapheme.break?(last_property, property, state)
 
       if boundary
         index = reader.pos
@@ -54,7 +54,7 @@ class String
 
       while char = @reader.next_char
         property = Grapheme::Property.from(char)
-        boundary = Grapheme.break?(@last_property, property, pointerof(@state))
+        boundary, @state = Grapheme.break?(@last_property, property, @state)
 
         last_char = @last_char
         @last_char = char
@@ -218,43 +218,41 @@ class String
     #
     # Please note that evaluation of GB10 (grapheme breaks between emoji zwj sequences)
     # and GB 12/13 (regional indicator code points) require knowledge of previous characters
-    # which is accounted for in the state argument.
+    # which is accounted for in the state argument. The caller is expected to
+    # store the returned state and pass it when calling this method the next time.
+    # The initial value is `Property::Start`.
     #
     # The implementation is inspired by https://github.com/JuliaStrings/utf8proc/blob/462093b3924c7491defc67fda4bc7a27baf9b088/utf8proc.c#L291
-    def self.break?(lbc : Property, tbc : Property, state : Pointer(Property)) : Bool
-      if state
-        if state.value.start?
-          state.value = lbc_override = lbc
-        else
-          lbc_override = state.value
-        end
-
-        break_permitted = break?(lbc_override, tbc)
-
-        # Special support for GB 12/13 made possible by GB999. After two RI
-        # class codepoints we want to force a break. Do this by resetting the
-        # second RI's bound class to UTF8PROC_BOUNDCLASS_OTHER, to force a break
-        # after that character according to GB999 (unless of course such a break is
-        # forbidden by a different rule such as GB9).
-        if state.value == tbc && tbc.regional_indicator?
-          state.value = :any
-          # Special support for GB11 (emoji extend* zwj / emoji)
-        elsif state.value.extended_pictographic?
-          if tbc.extend? # fold EXTEND codepoints into emoji
-            state.value = :extended_pictographic
-          elsif tbc.zwj?
-            state.value = :extended_plus_zero_width # state to record emoji+zwg combo
-          else
-            state.value = tbc
-          end
-        else
-          state.value = tbc
-        end
-
-        break_permitted
+    def self.break?(lbc : Property, tbc : Property, state : Property) : {Bool, Property}
+      if state.start?
+        state = lbc_override = lbc
       else
-        break?(lbc, tbc)
+        lbc_override = state
       end
+
+      break_permitted = break?(lbc_override, tbc)
+
+      # Special support for GB 12/13 made possible by GB999. After two RI
+      # class codepoints we want to force a break. Do this by resetting the
+      # second RI's bound class to UTF8PROC_BOUNDCLASS_OTHER, to force a break
+      # after that character according to GB999 (unless of course such a break is
+      # forbidden by a different rule such as GB9).
+      if state == tbc && tbc.regional_indicator?
+        state = Property::Any
+        # Special support for GB11 (emoji extend* zwj / emoji)
+      elsif state.extended_pictographic?
+        if tbc.extend? # fold EXTEND codepoints into emoji
+          state = Property::ExtendedPictographic
+        elsif tbc.zwj?
+          state = Property::ExtendedPlusZeroWidth # state to record emoji+zwg combo
+        else
+          state = tbc
+        end
+      else
+        state = tbc
+      end
+
+      {break_permitted, state}
     end
   end
 end
