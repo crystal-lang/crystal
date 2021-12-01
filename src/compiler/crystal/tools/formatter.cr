@@ -2662,6 +2662,15 @@ module Crystal
       # so we remove the space between "as" and "(".
       skip_space if special_call
 
+      # If the call has a single argument which is a prenthesized Expressions,
+      # we skip whitespace between the method name and the arg. The parenthesized
+      # arg is transformed into a call with parenthesis: `foo (a)` becomes `foo(a)`.
+      if node.args.size == 1 &&
+         !node.named_args && !node.block_arg && !node.block &&
+         node.args[0].as?(Expressions).try(&.keyword) == :"("
+        skip_space
+      end
+
       if @token.type == :"("
         slash_is_regex!
         next_token
