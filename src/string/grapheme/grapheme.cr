@@ -182,7 +182,7 @@ class String
     #
     # Please note that evaluation of GB10 (grapheme breaks between emoji zwj sequences)
     # and GB 12/13 (regional indicator code points) require knowledge of previous characters
-    # which is not handled by this oberload. This may result in an incorrect break before
+    # which is not handled by this overload. This may result in an incorrect break before
     # an E_Modifier class codepoint and an incorrectly missing break between two
     # REGIONAL_INDICATOR class code points if such support does not exist in the caller.
     #
