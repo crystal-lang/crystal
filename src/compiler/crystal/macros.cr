@@ -1,3 +1,110 @@
+# Defines string related macro methods.
+#
+# Many `StringLiteral` methods can be called from `SymbolLiteral` and `MacroId`,
+# because they are delegated to `StringLiteral`.
+# So, their documentations should be shared between `StringLiteral` and others.
+private macro def_string_methods(klass)
+  # Returns a `MacroId` for this string's contents.
+  def id : MacroId
+  end
+
+  # Similar to `String#[]`.
+  def [](range : RangeLiteral) : {{klass}}
+  end
+
+  # Similar to `String#=~`.
+  def =~(range : RegexLiteral) : BoolLiteral
+  end
+
+  # Similar to `String#+`.
+  def +(other : StringLiteral | CharLiteral) : {{klass}}
+  end
+
+  # Similar to `String#camelcase`.
+  def camelcase(*, lower : BoolLiteral = false) : {{klass}}
+  end
+
+  # Similar to `String#capitalize`.
+  def capitalize : {{klass}}
+  end
+
+  # Similar to `String#chars`.
+  def chars : ArrayLiteral(CharLiteral)
+  end
+
+  # Similar to `String#chomp`.
+  def chomp : {{klass}}
+  end
+
+  # Similar to `String#count`.
+  def count(other : CharLiteral) : NumberLiteral
+  end
+
+  # Similar to `String#downcase`.
+  def downcase : {{klass}}
+  end
+
+  # Similar to `String#empty?`.
+  def empty? : BoolLiteral
+  end
+
+  # Similar to `String#ends_with?`.
+  def ends_with?(other : StringLiteral | CharLiteral) : BoolLiteral
+  end
+
+  # Similar to `String#gsub`.
+  def gsub(regex : RegexLiteral, replacement : StringLiteral) : {{klass}}
+  end
+
+  # Similar to `String#includes?`.
+  def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
+  end
+
+  # Similar to `String#size`.
+  def size : NumberLiteral
+  end
+
+  # Similar to `String#lines`.
+  def lines : ArrayLiteral(StringLiteral)
+  end
+
+  # Similar to `String#split`.
+  def split : ArrayLiteral(StringLiteral)
+  end
+
+  # Similar to `String#split`.
+  def split(node : ASTNode) : ArrayLiteral(StringLiteral)
+  end
+
+  # Similar to `String#starts_with?`.
+  def starts_with?(other : StringLiteral | CharLiteral) : BoolLiteral
+  end
+
+  # Similar to `String#strip`.
+  def strip : {{klass}}
+  end
+
+  # Similar to `String#titleize`.
+  def titleize : {{klass}}
+  end
+
+  # Similar to `String#to_i`.
+  def to_i(base = 10)
+  end
+
+  # Similar to `String#tr`.
+  def tr(from : StringLiteral, to : StringLiteral) : {{klass}}
+  end
+
+  # Similar to `String#underscore`.
+  def underscore : {{klass}}
+  end
+
+  # Similar to `String#upcase`.
+  def upcase : {{klass}}
+  end
+end
+
 # The `Macros` module is a fictitious module used to document macros
 # and macro methods.
 #
@@ -114,6 +221,10 @@ module Crystal::Macros
 
   # Gives a compile-time error with the given *message*.
   def raise(message) : NoReturn
+  end
+
+  # Returns `true` if the given *filename* exists, `false` otherwise.
+  def file_exists?(filename) : BoolLiteral
   end
 
   # Reads a file and returns a `StringLiteral` with its contents.
@@ -437,17 +548,7 @@ module Crystal::Macros
 
   # A string literal.
   class StringLiteral < ASTNode
-    # Returns a `MacroId` for this string's contents.
-    def id : MacroId
-    end
-
-    # Similar to `String#[]`.
-    def [](range : RangeLiteral) : StringLiteral
-    end
-
-    # Similar to `String#=~`.
-    def =~(range : RegexLiteral) : BoolLiteral
-    end
+    def_string_methods StringLiteral
 
     # Similar to `String#>`
     def >(other : StringLiteral | MacroId) : BoolLiteral
@@ -455,94 +556,6 @@ module Crystal::Macros
 
     # Similar to `String#<`
     def <(other : StringLiteral | MacroId) : BoolLiteral
-    end
-
-    # Similar to `String#+`.
-    def +(other : StringLiteral | CharLiteral) : StringLiteral
-    end
-
-    # Similar to `String#camelcase`.
-    def camelcase(*, lower : BoolLiteral = false) : StringLiteral
-    end
-
-    # Similar to `String#capitalize`.
-    def capitalize : StringLiteral
-    end
-
-    # Similar to `String#chars`.
-    def chars : ArrayLiteral(CharLiteral)
-    end
-
-    # Similar to `String#chomp`.
-    def chomp : StringLiteral
-    end
-
-    # Similar to `String#count`.
-    def count(other : CharLiteral) : NumberLiteral
-    end
-
-    # Similar to `String#downcase`.
-    def downcase : StringLiteral
-    end
-
-    # Similar to `String#empty?`.
-    def empty? : BoolLiteral
-    end
-
-    # Similar to `String#ends_with?`.
-    def ends_with?(other : StringLiteral | CharLiteral) : BoolLiteral
-    end
-
-    # Similar to `String#gsub`.
-    def gsub(regex : RegexLiteral, replacement : StringLiteral) : StringLiteral
-    end
-
-    # Similar to `String#includes?`.
-    def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
-    end
-
-    # Similar to `String#size`.
-    def size : NumberLiteral
-    end
-
-    # Similar to `String#lines`.
-    def lines : ArrayLiteral(StringLiteral)
-    end
-
-    # Similar to `String#split`.
-    def split : ArrayLiteral(StringLiteral)
-    end
-
-    # Similar to `String#split`.
-    def split(node : ASTNode) : ArrayLiteral(StringLiteral)
-    end
-
-    # Similar to `String#starts_with?`.
-    def starts_with?(other : StringLiteral | CharLiteral) : BoolLiteral
-    end
-
-    # Similar to `String#strip`.
-    def strip : StringLiteral
-    end
-
-    # Similar to `String#titleize`.
-    def titleize : StringLiteral
-    end
-
-    # Similar to `String#to_i`.
-    def to_i(base = 10)
-    end
-
-    # Similar to `String#tr`.
-    def tr(from : StringLiteral, to : StringLiteral) : StringLiteral
-    end
-
-    # Similar to `String#underscore`.
-    def underscore : StringLiteral
-    end
-
-    # Similar to `String#upcase`.
-    def upcase : StringLiteral
     end
   end
 
@@ -558,89 +571,7 @@ module Crystal::Macros
 
   # A symbol literal.
   class SymbolLiteral < ASTNode
-    # Returns a `MacroId` for this symbol's contents.
-    def id : MacroId
-    end
-
-    # Similar to `String#[]`.
-    def [](range : RangeLiteral) : SymbolLiteral
-    end
-
-    # Similar to `String#=~`.
-    def =~(range : RegexLiteral) : BoolLiteral
-    end
-
-    # Similar to `String#+`.
-    def +(other : StringLiteral | CharLiteral) : SymbolLiteral
-    end
-
-    # Similar to `String#capitalize`.
-    def capitalize : SymbolLiteral
-    end
-
-    # Similar to `String#chars`.
-    def chars : ArrayLiteral(CharLiteral)
-    end
-
-    # Similar to `String#chomp`.
-    def chomp : SymbolLiteral
-    end
-
-    # Similar to `String#downcase`.
-    def downcase : SymbolLiteral
-    end
-
-    # Similar to `String#empty?`.
-    def empty? : BoolLiteral
-    end
-
-    # Similar to `String#ends_with?`.
-    def ends_with?(other : StringLiteral | CharLiteral) : BoolLiteral
-    end
-
-    # Similar to `String#gsub`.
-    def gsub(regex : RegexLiteral, replacement : StringLiteral) : SymbolLiteral
-    end
-
-    # Similar to `String#includes?`.
-    def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
-    end
-
-    # Similar to `String#size`.
-    def size : NumberLiteral
-    end
-
-    # Similar to `String#lines`.
-    def lines : ArrayLiteral(StringLiteral)
-    end
-
-    # Similar to `String#split`.
-    def split : ArrayLiteral(StringLiteral)
-    end
-
-    # Similar to `String#split`.
-    def split(node : ASTNode) : ArrayLiteral(StringLiteral)
-    end
-
-    # Similar to `String#starts_with?`.
-    def starts_with?(other : StringLiteral | CharLiteral) : BoolLiteral
-    end
-
-    # Similar to `String#strip`.
-    def strip : SymbolLiteral
-    end
-
-    # Similar to `String#titleize`.
-    def titleize : SymbolLiteral
-    end
-
-    # Similar to `String#tr`.
-    def tr(from : StringLiteral, to : StringLiteral) : SymbolLiteral
-    end
-
-    # Similar to `String#upcase`.
-    def upcase : SymbolLiteral
-    end
+    def_string_methods SymbolLiteral
   end
 
   # An array literal.
@@ -747,6 +678,10 @@ module Crystal::Macros
     def [](index : NumberLiteral) : ASTNode
     end
 
+    # Similar to `Array#[]`.
+    def [](index : RangeLiteral) : ArrayLiteral(ASTNode)
+    end
+
     # Similar to `Array#[]=`.
     def []=(index : NumberLiteral, value : ASTNode) : ASTNode
     end
@@ -814,7 +749,7 @@ module Crystal::Macros
     def map : ArrayLiteral
     end
 
-    # Similar to `Hash#[]`
+    # Similar to `Hash#[]?`
     def [](key : ASTNode) : ASTNode
     end
 
@@ -982,6 +917,10 @@ module Crystal::Macros
 
   # An annotation on top of a type or variable.
   class Annotation < ASTNode
+    # Returns the name of this annotation.
+    def name : Path
+    end
+
     # Returns the value of a positional argument,
     # or NilLiteral if out of bounds.
     def [](index : NumberLiteral) : ASTNode
@@ -1043,6 +982,10 @@ module Crystal::Macros
 
     # Returns this call's receiver, if any.
     def receiver : ASTNode | Nop
+    end
+
+    # Returns `true` if this call refers to a global method (starts with `::`).
+    def global? : BoolLiteral
     end
 
     # Returns this call's arguments.
@@ -1196,6 +1139,16 @@ module Crystal::Macros
     # Returns the output type, or nil if there is no return type.
     def output : ASTNode | NilLiteral
     end
+
+    # Resolves this proc notation to a `TypeNode` if it denotes a type,
+    # or otherwise gives a compile-time error.
+    def resolve : ASTNode
+    end
+
+    # Resolves this proc notation to a `TypeNode` if it denotes a type,
+    # or otherwise returns a `NilLiteral`.
+    def resolve? : ASTNode | NilLiteral
+    end
   end
 
   # A method definition.
@@ -1228,6 +1181,11 @@ module Crystal::Macros
     def return_type : ASTNode | Nop
     end
 
+    # Returns the free variables of this method, or an empty `ArrayLiteral` if
+    # there are none.
+    def free_vars : ArrayLiteral(MacroId)
+    end
+
     # Returns the body of this method.
     def body : ASTNode
     end
@@ -1235,6 +1193,10 @@ module Crystal::Macros
     # Returns the receiver (for example `self`) of this method definition,
     # or `Nop` if not specified.
     def receiver : ASTNode | Nop
+    end
+
+    # Returns `true` is this method is declared as abstract, `false` otherwise.
+    def abstract? : BoolLiteral
     end
 
     # Returns the visibility of this def: `:public`, `:protected` or `:private`.
@@ -1369,7 +1331,7 @@ module Crystal::Macros
     end
   end
 
-  # A `when` inside a `case`.
+  # A `when` or `in` inside a `case`.
   class When < ASTNode
     # Returns the conditions of this `when`.
     def conds : ArrayLiteral
@@ -1377,6 +1339,10 @@ module Crystal::Macros
 
     # Returns the body of this `when`.
     def body : ASTNode
+    end
+
+    # Returns `true` if this is an `in`, or `false` if this is a `when`.
+    def exhaustive? : BoolLiteral
     end
   end
 
@@ -1392,6 +1358,10 @@ module Crystal::Macros
 
     # Returns the `else` of this `case`.
     def else : ArrayLiteral(When)
+    end
+
+    # Returns whether this `case` is exhaustive (`case ... in`).
+    def exhaustive? : BoolLiteral
     end
   end
 
@@ -1520,11 +1490,39 @@ module Crystal::Macros
     end
   end
 
-  # class Rescue < ASTNode
-  # end
+  # A `rescue` clause inside an exception handler.
+  class Rescue < ASTNode
+    # Returns this `rescue` clause's body.
+    def body : ASTNode
+    end
 
-  # class ExceptionHandler < ASTNode
-  # end
+    # Returns this `rescue` clause's exception types, if any.
+    def types : ArrayLiteral | NilLiteral
+    end
+
+    # Returns the variable name of the rescued exception, if any.
+    def name : MacroId | Nop
+    end
+  end
+
+  # A `begin ... end` expression with `rescue`, `else` and `ensure` clauses.
+  class ExceptionHandler < ASTNode
+    # Returns this exception handler's main body.
+    def body : ASTNode
+    end
+
+    # Returns this exception handler's `rescue` clauses, if any.
+    def rescues : ArrayLiteral(Rescue) | NilLiteral
+    end
+
+    # Returns this exception handler's `else` clause body, if any.
+    def else : ASTNode | Nop
+    end
+
+    # Returns this exception handler's `ensure` clause body, if any.
+    def ensure : ASTNode | Nop
+    end
+  end
 
   # A proc method, written like:
   # ```
@@ -1539,6 +1537,10 @@ module Crystal::Macros
 
     # Returns the body of this proc.
     def body : ASTNode
+    end
+
+    # Returns the return type of this proc, if specified.
+    def return_type : ASTNode | Nop
     end
   end
 
@@ -1577,20 +1579,40 @@ module Crystal::Macros
   # class Self < ASTNode
   # end
 
-  # abstract class ControlExpression < ASTNode
-  # end
+  # The base class of control expressions.
+  abstract class ControlExpression < ASTNode
+    # Returns the argument to this control expression, if any.
+    #
+    # If multiple arguments are present, they are wrapped inside a single
+    # `TupleLiteral`.
+    def exp : ASTNode | Nop
+    end
+  end
 
-  # class Return < ControlExpression
-  # end
+  # A `return` expression.
+  class Return < ControlExpression
+  end
 
-  # class Break < ControlExpression
-  # end
+  # A `break` expression.
+  class Break < ControlExpression
+  end
 
-  # class Next < ControlExpression
-  # end
+  # A `next` expression.
+  class Next < ControlExpression
+  end
 
-  # class Yield < ASTNode
-  # end
+  # A `yield` expression.
+  class Yield < ASTNode
+    # Returns the arguments to this `yield`.
+    def expressions : ArrayLiteral
+    end
+
+    # Returns the scope of this `yield`, if any.
+    #
+    # This refers to the part after `with` in a `with ... yield` expression.
+    def scope : ASTNode | Nop
+    end
+  end
 
   # class Include < ASTNode
   # end
@@ -1625,8 +1647,22 @@ module Crystal::Macros
   # class Alias < ASTNode
   # end
 
-  # class Metaclass < ASTNode
-  # end
+  # A metaclass in a type expression: `T.class`
+  class Metaclass < ASTNode
+    # Returns the node representing the instance type of this metaclass.
+    def instance : ASTNode
+    end
+
+    # Resolves this metaclass to a `TypeNode` if it denotes a type,
+    # or otherwise gives a compile-time error.
+    def resolve : ASTNode
+    end
+
+    # Resolves this metaclass to a `TypeNode` if it denotes a type,
+    # or otherwise returns a `NilLiteral`.
+    def resolve? : ASTNode | NilLiteral
+    end
+  end
 
   # A cast call: `obj.as(to)`
   class Cast < ASTNode
@@ -1725,88 +1761,14 @@ module Crystal::Macros
   #
   # The last two definitions are invalid and so will give a compile-time error.
   class MacroId < ASTNode
-    # Returns self.
-    def id : MacroId
+    def_string_methods MacroId
+
+    # Similar to `String#>`
+    def >(other : StringLiteral | MacroId) : BoolLiteral
     end
 
-    # Similar to `String#[]`.
-    def [](range : RangeLiteral) : MacroId
-    end
-
-    # Similar to `String#=~`.
-    def =~(range : RegexLiteral) : BoolLiteral
-    end
-
-    # Similar to `String#+`.
-    def +(other : StringLiteral | CharLiteral) : MacroId
-    end
-
-    # Similar to `String#capitalize`.
-    def capitalize : MacroId
-    end
-
-    # Similar to `String#chars`.
-    def chars : ArrayLiteral(CharLiteral)
-    end
-
-    # Similar to `String#chomp`.
-    def chomp : MacroId
-    end
-
-    # Similar to `String#downcase`.
-    def downcase : MacroId
-    end
-
-    # Similar to `String#empty?`.
-    def empty? : BoolLiteral
-    end
-
-    # Similar to `String#ends_with?`.
-    def ends_with?(other : StringLiteral | CharLiteral) : BoolLiteral
-    end
-
-    # Similar to `String#gsub`.
-    def gsub(regex : RegexLiteral, replacement : StringLiteral) : MacroId
-    end
-
-    # Similar to `String#includes?`.
-    def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
-    end
-
-    # Similar to `String#size`.
-    def size : NumberLiteral
-    end
-
-    # Similar to `String#lines`.
-    def lines : ArrayLiteral(StringLiteral)
-    end
-
-    # Similar to `String#split`.
-    def split : ArrayLiteral(StringLiteral)
-    end
-
-    # Similar to `String#split`.
-    def split(node : ASTNode) : ArrayLiteral(StringLiteral)
-    end
-
-    # Similar to `String#starts_with?`.
-    def starts_with?(other : StringLiteral | CharLiteral) : BoolLiteral
-    end
-
-    # Similar to `String#strip`.
-    def strip : MacroId
-    end
-
-    # Similar to `String#titleize`.
-    def titleize : MacroId
-    end
-
-    # Similar to `String#tr`.
-    def tr(from : StringLiteral, to : StringLiteral) : MacroId
-    end
-
-    # Similar to `String#upcase`.
-    def upcase : MacroId
+    # Similar to `String#<`
+    def <(other : StringLiteral | MacroId) : BoolLiteral
     end
   end
 
@@ -1928,6 +1890,7 @@ module Crystal::Macros
     end
 
     # Returns the instance variables of this type.
+    # Can only be called from within methods (not top-level code), otherwise will return an empty list.
     def instance_vars : ArrayLiteral(MetaVar)
     end
 

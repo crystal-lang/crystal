@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        crystal: [ '1.0.0', 'latest', 'nightly' ]
+        crystal: [ '1.0.0', '1.1.0', '1.2.0', 'latest', 'nightly' ]
     name: Crystal ${{ matrix.crystal }} tests
     steps:
     - uses: actions/checkout@master

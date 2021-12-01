@@ -220,7 +220,7 @@ class Crystal::CodeGenVisitor
       in .direct?
         call_arg = codegen_direct_abi_call(call_arg, abi_arg_type) unless arg.type.nil_type?
       in .indirect?
-        # Pass argument as is (will be passed byval)
+        call_arg = codegen_indirect_abi_call(call_arg, abi_arg_type) unless arg.type.nil_type?
       in .ignore?
         # Ignore
         next
@@ -260,6 +260,19 @@ class Crystal::CodeGenVisitor
       # Keep same call arg
     end
     call_arg
+  end
+
+  # For an indirect argument we need to make a copy of the value in the stack
+  # and *replace* the call argument by a pointer to the allocated memory
+  def codegen_indirect_abi_call(call_arg, abi_arg_type)
+    final_value = alloca abi_arg_type.type
+    final_value_casted = bit_cast final_value, llvm_context.void_pointer
+    call_arg_casted = bit_cast call_arg, llvm_context.void_pointer
+    size = @abi.size(abi_arg_type.type)
+    size = @program.bits64? ? int64(size) : int32(size)
+    align = @abi.align(abi_arg_type.type)
+    memcpy(final_value_casted, call_arg_casted, size, align, int1(0))
+    final_value
   end
 
   def codegen_call_with_block(node, block, self_type, call_args)
@@ -379,7 +392,13 @@ class Crystal::CodeGenVisitor
           end
           node.args.each_with_index do |node_arg, i|
             a_def_arg = a_def.args[i]
-            if autocast_literal?(node_arg)
+            if node_arg.supports_autocast?(@program.has_flag?("number_autocast"))
+              # If a call argument is a literal like 1 or :foo then
+              # it will match all the multidispatch overloads because
+              # it has a single type and there's no way some overload
+              # (from the ones we decided that match) won't match,
+              # because if it doesn't match then we wouldn't have included
+              # it in the match list.
               # Matches, so nothing to do
             else
               result = and(result, match_type_id(node_arg.type, a_def_arg.type, arg_type_ids[i]))
@@ -412,16 +431,6 @@ class Crystal::CodeGenVisitor
     end
 
     @needs_value = old_needs_value
-  end
-
-  def autocast_literal?(call_arg)
-    # If a call argument is a literal like 1 or :foo then
-    # it will match all the multidispatch overloads because
-    # it has a single type and there's no way some overload
-    # (from the ones we decided that match) won't match,
-    # because if it doesn't match then we wouldn't have included
-    # it in the match list.
-    call_arg.is_a?(NumberLiteral) || call_arg.is_a?(SymbolLiteral)
   end
 
   def codegen_call(node, target_def, self_type, call_args)

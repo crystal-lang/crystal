@@ -171,6 +171,12 @@ describe "Code gen: debug" do
       ), debug: Crystal::Debug::All)
   end
 
+  it "doesn't emit debug info for unused variable declarations (#9882)" do
+    codegen(%(
+      x : Int32
+      ), debug: Crystal::Debug::All)
+  end
+
   it "stores and restores debug location after jumping to main (#6920)" do
     codegen(%(
       require "prelude"
@@ -219,6 +225,25 @@ describe "Code gen: debug" do
       end
 
       LibFoo.foo = ->{ }
+      ), debug: Crystal::Debug::All)
+  end
+
+  it "doesn't fail on constant read calls (#11416)" do
+    codegen(%(
+      require "prelude"
+
+      class Foo
+        def foo
+        end
+      end
+
+      def a_foo
+        Foo.new
+      end
+
+      THE_FOO.foo
+
+      THE_FOO = a_foo
       ), debug: Crystal::Debug::All)
   end
 end

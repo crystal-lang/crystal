@@ -150,9 +150,6 @@ module Crystal
     # Whether to link statically
     property? static = false
 
-    # Whether to use llvm ThinLTO for linking
-    property thin_lto = false
-
     # Program that was created for the last compilation.
     property! program : Program
 
@@ -267,7 +264,7 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, single_module: @single_module || (!@thin_lto && @release) || @cross_compile || @emit
+        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || @emit
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
@@ -341,7 +338,7 @@ module Crystal
     end
 
     private def linker_command(program : Program, object_names, output_filename, output_dir, expand = false)
-      if program.has_flag? "windows"
+      if program.has_flag? "msvc"
         lib_flags = program.lib_flags
         # Execute and expand `subcommands`.
         lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` } if expand
@@ -349,7 +346,12 @@ module Crystal
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
 
-        args = %(/nologo #{object_arg} #{output_arg} #{lib_flags} #{@link_flags})
+        link_args = [] of String
+        link_args << "/DEBUG:FULL /PDBALTPATH:%_PDB%" unless debug.none?
+        link_args << lib_flags
+        @link_flags.try { |flags| link_args << flags }
+
+        args = %(/nologo #{object_arg} #{output_arg} /link #{link_args.join(' ')}).gsub("\n", " ")
         cmd = "#{CL} #{args}"
 
         if cmd.to_utf16.size > 32000
@@ -366,23 +368,10 @@ module Crystal
 
         {cmd, nil}
       else
-        if thin_lto
-          clang = ENV["CLANG"]? || "clang"
-          lto_cache_dir = "#{output_dir}/lto.cache"
-          Dir.mkdir_p(lto_cache_dir)
-          {% if flag?(:darwin) %}
-            cc = ENV["CC"]? || "#{clang} -flto=thin -Wl,-mllvm,-threads=#{n_threads},-cache_path_lto,#{lto_cache_dir},#{@release ? "-mllvm,-O2" : "-mllvm,-O0"}"
-          {% else %}
-            cc = ENV["CC"]? || "#{clang} -flto=thin -Wl,-plugin-opt,jobs=#{n_threads},-plugin-opt,cache-dir=#{lto_cache_dir} #{@release ? "-O2" : "-O0"}"
-          {% end %}
-        else
-          cc = CC
-        end
-
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
 
-        { %(#{cc} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names }
+        { %(#{CC} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names }
       end
     end
 
@@ -648,23 +637,7 @@ module Crystal
       end
 
       def compile
-        if compiler.thin_lto
-          compile_to_thin_lto
-        else
-          compile_to_object
-        end
-      end
-
-      private def compile_to_thin_lto
-        {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-          # Here too, we first compile to a temporary file and then rename it
-          llvm_mod.write_bitcode_with_summary_to_file(temporary_object_name)
-          File.rename(temporary_object_name, object_name)
-          @reused_previous_compilation = false
-          dump_llvm_ir
-        {% else %}
-          raise {{ "ThinLTO is not available in LLVM #{LibLLVM::VERSION}".stringify }}
-        {% end %}
+        compile_to_object
       end
 
       private def compile_to_object

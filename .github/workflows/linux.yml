@@ -11,7 +11,11 @@ jobs:
     env:
       ARCH: x86_64
       ARCH_CMD: linux64
+      DOCKER_TEST_PREFIX: crystallang/crystal:${{ matrix.crystal_bootstrap_version }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        crystal_bootstrap_version: [1.0.0, 1.1.1, 1.2.2]
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
@@ -24,24 +28,6 @@ jobs:
 
       - name: Test
         run: bin/ci build
-
-  test_linux_32:
-    env:
-      ARCH: i386
-      ARCH_CMD: linux32
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Crystal source
-        uses: actions/checkout@v2
-
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
-      - name: Test
-        run: bin/ci with_build_env 'make std_spec threads=1'
 
   test_alpine:
     env:

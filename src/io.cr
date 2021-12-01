@@ -755,6 +755,9 @@ abstract class IO
 
         buffer << char2
         total += char_bytesize2
+        break if total >= limit
+
+        next
       elsif char == delimiter
         buffer << char unless chomp
         break
@@ -785,7 +788,7 @@ abstract class IO
 
     # One byte: use gets(Char)
     if delimiter.bytesize == 1
-      return gets(delimiter.unsafe_byte_at(0).unsafe_chr, chomp: chomp)
+      return gets(delimiter.to_unsafe[0].unsafe_chr, chomp: chomp)
     end
 
     # One char: use gets(Char)

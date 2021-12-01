@@ -71,6 +71,7 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x : T = 1)\nend"
   expect_to_s "def foo(x : X, y : Y) forall X, Y\nend"
   expect_to_s %(foo : A | (B -> C))
+  expect_to_s %(foo : (A | B).class)
   expect_to_s %[%("\#{foo}")], %["\\"\#{foo}\\""]
   expect_to_s "class Foo\n  private def bar\n  end\nend"
   expect_to_s "foo(&.==(2))"
@@ -176,6 +177,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(asm("nop" :::: "volatile"))
   expect_to_s %(asm("nop" :: "a"(1) :: "volatile"))
   expect_to_s %(asm("nop" ::: "e" : "volatile"))
+  expect_to_s %(asm("bl trap" :::: "unwind"))
   expect_to_s %[(1..)]
   expect_to_s %[..3]
   expect_to_s "offsetof(Foo, @bar)"
@@ -183,4 +185,9 @@ describe "ASTNode#to_s" do
   expect_to_s "macro foo\n  123\nend"
   expect_to_s "if true\n(  1)\nend"
   expect_to_s "begin\n(  1)\nrescue\nend"
+  expect_to_s %[他.说("你好")]
+  expect_to_s %[他.说 = "你好"]
+  expect_to_s %[あ.い, う.え.お = 1, 2]
+  expect_to_s "-> : Int32 do\nend"
+  expect_to_s "->(x : Int32, y : Bool) : Char do\n  'a'\nend"
 end

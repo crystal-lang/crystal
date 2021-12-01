@@ -111,6 +111,7 @@ end
       exception.inspect_with_backtrace(STDERR)
     {% end %}
 
+    exception.callstack ||= Exception::CallStack.new
     LibC._CxxThrowException(pointerof(exception).as(Void*), throw_info)
   end
 

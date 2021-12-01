@@ -1,5 +1,5 @@
 require "spec"
-require "socket/address"
+require "socket"
 require "../../support/win32"
 
 describe Socket::Address do
@@ -153,7 +153,7 @@ describe Socket::IPAddress do
   end
 end
 
-{% unless flag?(:win32) %}
+{% if flag?(:unix) %}
   describe Socket::UNIXAddress do
     it "transforms into a C struct and back" do
       path = "unix_address.sock"

@@ -514,10 +514,12 @@ class HTTP::Server
 
     @processor.process(io, io)
   ensure
-    begin
-      io.close
-    rescue IO::Error
-    end
+    {% begin %}
+      begin
+        io.close
+      rescue IO::Error{% unless flag?(:without_openssl) %} | OpenSSL::SSL::Error{% end %}
+      end
+    {% end %}
   end
 
   # This method handles exceptions raised at `Socket#accept?`.
