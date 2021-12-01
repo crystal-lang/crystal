@@ -2844,27 +2844,37 @@ module Crystal
         assert_type(%[{{ parse_type("Array(Int32 | String)").resolve.type_vars[0].union_types.size == 2 ? 1 : 'a' }}]) { int32 }
       end
 
+      it "proc" do
+        assert_type(%[{{ parse_type("String, Int32 -> Bool").inputs.size == 2 ? 1 : 'a' }}]) { int32 }
+        assert_type(%[{{ parse_type("String, Int32 -> Bool").output.resolve == Bool ? 1 : 'a' }}]) { int32 }
+      end
+
+      it "metaclass" do
+        assert_type(%[{{ parse_type("Int32.class").resolve == Int32.class ? 1 : 'a' }}]) { int32 }
+        assert_type(%[{{ parse_type("Int32").resolve == Int32.instance ? 1 : 'a' }}]) { int32 }
+      end
+
       it "raises on empty string" do
         expect_raises(Crystal::TypeException, "argument to parse_type cannot be an empty value") do
-          assert_macro "", %({{parse_type ""}}), [] of ASTNode, %(nil)
+          assert_macro %({{parse_type ""}}), %(nil)
         end
       end
 
       it "raises on extra unparsed tokens before the type" do
         expect_raises(Crystal::TypeException, %(Invalid type name: "100Foo")) do
-          assert_macro "", %({{parse_type "100Foo" }}), [] of ASTNode, %(nil)
+          assert_macro %({{parse_type "100Foo" }}), %(nil)
         end
       end
 
       it "raises on extra unparsed tokens after the type" do
         expect_raises(Crystal::TypeException, %(Invalid type name: "Foo(Int32)100")) do
-          assert_macro "", %({{parse_type "Foo(Int32)100" }}), [] of ASTNode, %(nil)
+          assert_macro %({{parse_type "Foo(Int32)100" }}), %(nil)
         end
       end
 
       it "raises on non StringLiteral arguments" do
         expect_raises(Crystal::TypeException, "argument to parse_type must be a StringLiteral, not SymbolLiteral") do
-          assert_macro "", %({{parse_type :Foo }}), [] of ASTNode, %(nil)
+          assert_macro %({{parse_type :Foo }}), %(nil)
         end
       end
     end
