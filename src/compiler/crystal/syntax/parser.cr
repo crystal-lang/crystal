@@ -998,7 +998,9 @@ module Crystal
           method = "[]"
         end
         location = @token.location
-        node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(value.to_i))
+        index = value.to_i?
+        raise "Index $#{value} doesn't fit in an Int32" unless index
+        node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(index))
       when :__LINE__
         node_and_next_token MagicConstant.expand_line_node(@token.location)
       when :__END_LINE__
