@@ -754,7 +754,7 @@ describe "Restrictions" do
 
       a = 1 || "foo" || true
       foo(a.class)
-      )) { union_of([uint8, uint16, uint32] of Type) }
+      ), inject_primitives: true) { union_of([uint8, uint16, uint32] of Type) }
   end
 
   it "restricts class union type to overloads with classes (2)" do
@@ -773,7 +773,7 @@ describe "Restrictions" do
 
       a = 1 || "foo"
       foo(a.class)
-      )) { union_of([uint8, uint16] of Type) }
+      ), inject_primitives: true) { union_of([uint8, uint16] of Type) }
   end
 
   it "makes metaclass subclass pass parent metaclass restriction (#2079)" do

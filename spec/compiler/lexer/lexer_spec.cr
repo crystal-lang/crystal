@@ -368,9 +368,9 @@ describe "Lexer" do
   assert_syntax_error "4f65", "invalid float suffix"
   assert_syntax_error "4f22", "invalid float suffix"
   # Tests for #8782
-  assert_syntax_error "4F32", "unexpected token: F32"
-  assert_syntax_error "4F64", "unexpected token: F64"
-  assert_syntax_error "0F32", "unexpected token: F32"
+  assert_syntax_error "4F32", %(unexpected token: "F32")
+  assert_syntax_error "4F64", %(unexpected token: "F64")
+  assert_syntax_error "0F32", %(unexpected token: "F32")
 
   assert_syntax_error "4.0_u32", "Invalid suffix u32 for decimal number"
   assert_syntax_error "2e8i8", "Invalid suffix i8 for decimal number"

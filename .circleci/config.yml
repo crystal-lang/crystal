@@ -28,6 +28,7 @@ jobs:
       TRAVIS_OS_NAME: linux
       ARCH: x86_64
       ARCH_CMD: linux64
+    resource_class: large
     steps:
       - checkout
       - run: bin/ci prepare_system
@@ -55,6 +56,7 @@ jobs:
       TRAVIS_OS_NAME: linux
       ARCH: x86_64-musl
       ARCH_CMD: linux64
+    resource_class: large
     steps: *ci_steps
 
   test_darwin:
@@ -121,7 +123,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout d7b2e1af04e36af692f8bb7e0a5e48609a3fbbac
+          git checkout 406d7d2bb371fd819b9977cc5e91e5dc58bfd5f2
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -132,9 +134,9 @@ jobs:
           echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
 
           # Which previous version use
-          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/1.1.1/crystal-1.1.1-1"
+          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/1.2.2/crystal-1.2.2-1"
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
-          echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-x86_64.tar.gz" >> build.env
+          echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-universal.tar.gz" >> build.env
 
           cat build.env
       - persist_to_workspace:
@@ -422,6 +424,7 @@ jobs:
       TRAVIS_OS_NAME: linux
       ARCH: x86_64
       ARCH_CMD: linux64
+    resource_class: large
     steps:
       - attach_workspace:
           at: /tmp/workspace

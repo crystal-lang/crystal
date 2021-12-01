@@ -150,53 +150,54 @@ describe "Slice" do
   end
 
   describe "#fill" do
-    it "replaces all values, without block" do
-      slice = Slice.new(4) { |i| i + 1 }
-      expected = Slice.new(4, 7)
-      slice.fill(7).should eq(expected)
-      slice.should eq(expected)
+    it "replaces values in a subrange" do
+      slice = Slice[0, 1, 2, 3, 4]
+      slice.fill(7)
+      slice.should eq(Slice[7, 7, 7, 7, 7])
 
-      expected = Slice.new(4, 5)
-      slice.fill(5).should eq(expected)
-      slice.should eq(expected)
+      slice = Slice[0, 1, 2, 3, 4]
+      slice.fill(7, 1, 2)
+      slice.should eq(Slice[0, 7, 7, 3, 4])
+      slice.fill(8, 4, 10)
+      slice.should eq(Slice[0, 7, 7, 3, 8])
+
+      slice = Slice[0, 1, 2, 3, 4]
+      slice.fill(7, 2..3)
+      slice.should eq(Slice[0, 1, 7, 7, 4])
+      slice.fill(8, -2..10)
+      slice.should eq(Slice[0, 1, 7, 8, 8])
+
+      slice = Slice[0, 0, 0, 0, 0]
+      slice.fill { |i| i + 7 }
+      slice.should eq(Slice[7, 8, 9, 10, 11])
+
+      slice = Slice[0, 0, 0, 0, 0]
+      slice.fill(offset: 2) { |i| i * i }
+      slice.should eq(Slice[4, 9, 16, 25, 36])
+
+      slice = Slice[0, 0, 0, 0, 0]
+      slice.fill(1, 2) { |i| i + 7 }
+      slice.should eq(Slice[0, 8, 9, 0, 0])
+
+      slice = Slice[0, 0, 0, 0, 0]
+      slice.fill(2..3) { |i| i + 7 }
+      slice.should eq(Slice[0, 0, 9, 10, 0])
+      slice.fill(-2..10, &.itself)
+      slice.should eq(Slice[0, 0, 9, 3, 4])
     end
 
-    it "works with primitive number types and 0" do
-      slice = Slice.new(4) { |i| i + 1 }
-      expected = Slice.new(4, 0)
-      slice.fill(0).should eq(expected)
-      slice.should eq(expected)
+    it "works for bytes" do
+      slice = Bytes[0, 1, 2, 3, 4]
+      slice.fill(7)
+      slice.should eq(Bytes[7, 7, 7, 7, 7])
 
-      slice = Slice.new(4, &.to_f64)
-      expected = Slice.new(4, 0.0)
-      slice.fill(0.0).should eq(expected)
-      slice.should eq(expected)
+      slice = Bytes[0, 1, 2, 3, 4]
+      slice.fill(7, 1, 2)
+      slice.should eq(Bytes[0, 7, 7, 3, 4])
 
-      slice = Slice.new(4, &.to_u8)
-      expected = Slice.new(4, 0_u8)
-      slice.fill(0).should eq(expected)
-      slice.should eq(expected)
-    end
-
-    it "works with Bytes" do
-      slice = Bytes[1, 2, 3]
-      expected = Slice.new(3, 7_u8)
-      slice.fill(7).should eq(expected)
-      slice.should eq(expected)
-    end
-
-    it "replaces all values, with block" do
-      slice = Slice.new(4) { |i| i + 1 }
-      expected = Slice[0, 1, 4, 9]
-      slice.fill { |i| i * i }.should eq(expected)
-      slice.should eq(expected)
-    end
-
-    it "replaces all values, with block and offset" do
-      slice = Slice.new(4) { |i| i + 1 }
-      expected = Slice[9, 16, 25, 36]
-      slice.fill(offset: 3) { |i| i * i }.should eq(expected)
-      slice.should eq(expected)
+      slice = Bytes[0, 1, 2, 3, 4]
+      slice.fill(7, 2..3)
+      slice.should eq(Bytes[0, 1, 7, 7, 4])
     end
   end
 
@@ -561,8 +562,12 @@ describe "Slice" do
     expect_raises(Exception, "Can't write to read-only Slice") { slice.swap(0, 1) }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.reverse! }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0, 0, 0) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0, 0..0) }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(&.itself) }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(offset: 0, &.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0, 0, &.itself) }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0..0, &.itself) }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.map!(&.itself) }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.map_with_index! { |v, i| v } }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.map_with_index!(offset: 0) { |v, i| v } }

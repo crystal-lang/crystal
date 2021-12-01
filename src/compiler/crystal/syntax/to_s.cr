@@ -616,6 +616,10 @@ module Crystal
         node.def.args.join(@str, ", ", &.accept self)
         @str << ')'
       end
+      if return_type = node.def.return_type
+        @str << " : "
+        return_type.accept self
+      end
       @str << ' '
       @str << keyword("do")
       newline
@@ -935,7 +939,10 @@ module Crystal
     end
 
     def visit(node : Metaclass)
+      needs_parens = node.name.is_a?(Union)
+      @str << '(' if needs_parens
       node.name.accept self
+      @str << ')' if needs_parens
       @str << '.'
       @str << keyword("class")
       false

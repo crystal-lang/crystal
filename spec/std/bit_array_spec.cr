@@ -366,6 +366,16 @@ describe "BitArray" do
       ary.toggle(30..35)
       ary[24..].should eq(from_int(16, 0b00110000_10100101))
     end
+
+    it "toggles zero bits correctly" do
+      ary = BitArray.new(32)
+      ary.toggle(0, 0)
+      ary.none?.should be_true
+      ary.toggle(32, 0)
+      ary.none?.should be_true
+      ary.toggle(32, 2)
+      ary.none?.should be_true
+    end
   end
 
   it "inverts all bits" do
@@ -382,6 +392,63 @@ describe "BitArray" do
 
     ary.invert
     ary.count { |b| b }.should eq(2)
+  end
+
+  describe "#reverse!" do
+    it "reverses empty BitArray" do
+      ba = from_int(0, 0)
+      ba.reverse!
+      ba.should eq(from_int(0, 0))
+    end
+
+    it "reverses short BitArray" do
+      ba = from_int(5, 0b01011)
+      ba.reverse!
+      ba.should eq(from_int(5, 0b11010))
+      assert_no_unused_bits ba
+
+      ba = from_int(8, 0b11101001)
+      ba.reverse!
+      ba.should eq(from_int(8, 0b10010111))
+      assert_no_unused_bits ba
+
+      ba = from_int(20, 0b1010_00110011_00001111)
+      ba.reverse!
+      ba.should eq(from_int(20, 0b1111_00001100_11000101))
+      assert_no_unused_bits ba
+
+      ba = from_int(32, 0b11000101_00011111_11000001_00011101_u32)
+      ba.reverse!
+      ba.should eq(from_int(32, 0b10111000_10000011_11111000_10100011_u32))
+    end
+
+    it "reverses medium BitArray" do
+      ba = from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64)
+      ba.reverse!
+      ba.should eq(from_int(45, 0b00010_01011100_00000000_00000000_00000010_01011100_u64))
+      assert_no_unused_bits ba
+
+      ba = from_int(64, 0b11001100_00101001_01111010_10110001_10111111_00100101_11101100_10101010_u64)
+      ba.reverse!
+      ba.should eq(from_int(64, 0b01010101_00110111_10100100_11111101_10001101_01011110_10010100_00110011_u64))
+    end
+
+    it "reverses large BitArray" do
+      ba = BitArray.new(200)
+      ba[0] = ba[2] = ba[5] = ba[11] = ba[64] = ba[103] = ba[193] = ba[194] = true
+      ba.reverse!
+      ba2 = BitArray.new(200)
+      ba2[199] = ba2[197] = ba2[194] = ba2[188] = ba2[135] = ba2[96] = ba2[6] = ba2[5] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba = BitArray.new(256)
+      ba[0] = ba[2] = ba[5] = ba[11] = ba[64] = ba[103] = ba[193] = ba[194] = true
+      ba.reverse!
+      ba2 = BitArray.new(256)
+      ba2[255] = ba2[253] = ba2[250] = ba2[244] = ba2[191] = ba2[152] = ba2[62] = ba2[61] = true
+      ba.should eq(ba2)
+    end
   end
 
   describe "#rotate!" do
