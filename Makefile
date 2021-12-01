@@ -62,7 +62,12 @@ ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
   EXPORT_CC ?= CC="cc -fuse-ld=lld"
 endif
 
-colorize = $(shell tput >&2 setaf 3; echo >&2 "$1"; tput >&2 sgr0)
+ifeq ($(or $(TERM),$(TERM),dumb),dumb)
+colorize = $(shell printf >&2 "$1")
+else
+colorize = $(shell printf >&2 "\033[33m$1\033[0m\n")
+endif
+
 check_llvm_config = $(eval \
 	check_llvm_config := $(if $(LLVM_VERSION),\
 	  $(call colorize,Using $(LLVM_CONFIG) [version=$(LLVM_VERSION)]),\
