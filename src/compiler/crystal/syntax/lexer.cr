@@ -1509,7 +1509,7 @@ module Crystal
 
         case current_char
         when '_'
-          raise("trailing '_' in number", @token, (current_pos - start)) if last_is_underscore
+          raise("consecutive underscores in numbers aren't allowed", @token, (current_pos - start)) if last_is_underscore
           last_is_underscore = true
           underscore_count += 1
         when '.'
