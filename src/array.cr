@@ -2042,11 +2042,7 @@ class Array(T)
 
   # Enusures that the internal buffer has at least `capacity` elements.
   def ensure_capacity(capacity : Int32) : self
-    rewind
-
-    if capacity >= @size
-      resize_to_capacity capacity
-    end
+    resize_to_capacity capacity if capacity >= @size
     self
   end
 

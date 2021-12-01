@@ -2057,11 +2057,11 @@ describe "Array" do
       ary.remaining_capacity.should eq(4)
     end
 
-    it "rewinds the array" do
+    it "doesn't rewinds the array" do
       ary = [1, 2, 3]
       ary.shift
       ary.ensure_capacity(3).should eq([2, 3])
-      ary.remaining_capacity.should eq(3)
+      ary.remaining_capacity.should eq(2)
     end
 
     it "does nothing if not enough capacity" do
