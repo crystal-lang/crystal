@@ -9,7 +9,7 @@ end
 struct Exception::CallStack
   @@image_slide : LibC::Long?
 
-  protected def self.load_dwarf_impl
+  protected def self.load_debug_info_impl
     read_dwarf_sections
   end
 
