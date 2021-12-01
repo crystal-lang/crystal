@@ -2315,6 +2315,11 @@ module Crystal
               next_char
               nest += 1
             end
+          when 'u'
+            if next_char == 'n' && next_char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's' && !ident_part_or_end?(peek_next_char)
+              next_char
+              nest += 1
+            end
           else
             # no nesting
           end
