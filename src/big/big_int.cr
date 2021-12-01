@@ -393,10 +393,11 @@ struct BigInt < Int
     result == 0 ? self : result
   end
 
-  # Computes `GCD(self,other)`, as well as its Bézout coefficients.
+  # Computes greatest common denominator of `self` and `other`,
+  # as well as its Bézout coefficients.
   #
   # ```
-  # g, s, t = 7.to_big_i.gcd_ext(2.to_big_i) # => {1, 1, -3}
+  # gcd, x, y = 7.to_big_i.gcd_ext(2.to_big_i) # => {1, 1, -3}
   # ```
   def gcd_ext(other : BigInt) : {BigInt, BigInt, BigInt}
     a = BigInt.new
