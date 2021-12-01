@@ -2048,7 +2048,7 @@ class Array(T)
 
   # Reduces the internal buffer to exactly fit the number of elements in the
   # array, plus `extra` elements.
-  def trim_to_size(extra : Int32 = 0) : self
+  def trim_to_size(*, extra : Int32 = 0) : self
     raise ArgumentError.new("Negative extra capacity: #{extra}") if extra < 0
 
     rewind

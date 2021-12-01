@@ -2082,7 +2082,7 @@ describe "Array" do
     it "trims with extra capacity" do
       a = Array(Int32).new(10)
       a << 1 << 2 << 3
-      a.trim_to_size(2).should eq([1, 2, 3])
+      a.trim_to_size(extra: 2).should eq([1, 2, 3])
       a.remaining_capacity.should eq(5)
     end
 
@@ -2092,6 +2092,13 @@ describe "Array" do
       a.shift
       a.trim_to_size.should eq([2, 3])
       a.remaining_capacity.should eq(2)
+    end
+
+    it "raises on negative extra capacity" do
+      expect_raises(ArgumentError, "Negative extra capacity: -1") do
+        a = [1, 2, 3]
+        a.trim_to_size(extra: -1)
+      end
     end
   end
 
