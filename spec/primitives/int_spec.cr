@@ -1,8 +1,6 @@
 require "spec"
 require "../support/number"
-{% unless flag?(:win32) %}
-  require "big"
-{% end %}
+require "big"
 
 {% for i in Int::Signed.union_types %}
   struct {{i}}
@@ -67,31 +65,29 @@ describe "Primitives: Int" do
     {% end %}
   end
 
-  {% unless flag?(:win32) %}
-    describe "#+" do
-      {% for int1 in BUILTIN_INTEGER_TYPES %}
-        {% for int2 in BUILTIN_INTEGER_TYPES %}
-          run_op_tests {{ int1 }}, {{ int2 }}, :+
-        {% end %}
+  describe "#+" do
+    {% for int1 in BUILTIN_INTEGER_TYPES %}
+      {% for int2 in BUILTIN_INTEGER_TYPES %}
+        run_op_tests {{ int1 }}, {{ int2 }}, :+
       {% end %}
-    end
+    {% end %}
+  end
 
-    describe "#-" do
-      {% for int1 in BUILTIN_INTEGER_TYPES %}
-        {% for int2 in BUILTIN_INTEGER_TYPES %}
-          run_op_tests {{ int1 }}, {{ int2 }}, :-
-        {% end %}
+  describe "#-" do
+    {% for int1 in BUILTIN_INTEGER_TYPES %}
+      {% for int2 in BUILTIN_INTEGER_TYPES %}
+        run_op_tests {{ int1 }}, {{ int2 }}, :-
       {% end %}
-    end
+    {% end %}
+  end
 
-    describe "#*" do
-      {% for int1 in BUILTIN_INTEGER_TYPES %}
-        {% for int2 in BUILTIN_INTEGER_TYPES %}
-          run_op_tests {{ int1 }}, {{ int2 }}, :*
-        {% end %}
+  describe "#*" do
+    {% for int1 in BUILTIN_INTEGER_TYPES %}
+      {% for int2 in BUILTIN_INTEGER_TYPES %}
+        run_op_tests {{ int1 }}, {{ int2 }}, :*
       {% end %}
-    end
-  {% end %}
+    {% end %}
+  end
 
   describe "#to_i" do
     {% for int1 in BUILTIN_INTEGER_TYPES %}
