@@ -164,7 +164,7 @@ describe "Lexer" do
                 ["+1.0f32", "+1.0"], ["-1.0f32", "-1.0"], ["-0.0f32", "-0.0"], ["1_234.567_890_f32", "1234.567890"]]
   it_lexes_f64 ["1.0", ["1.0hello", "1.0"], "+1.0", "-1.0", ["1_234.567_890", "1234.567890"]]
   it_lexes_f32 [["1e+23_f32", "1e+23"], ["1.2e+23_f32", "1.2e+23"]]
-  it_lexes_f64 ["1e23", "1e-23", "1e+23", "1.2e+23", ["1e23f64", "1e23"], ["1.2e+23_f64", "1.2e+23"], "0e40"]
+  it_lexes_f64 ["1e23", "1e-23", "1e+23", "1.2e+23", ["1e23f64", "1e23"], ["1.2e+23_f64", "1.2e+23"], "0e40", ["2_e2", "2e2"]]
 
   it_lexes_number :i8, ["1i8", "1"]
   it_lexes_number :i8, ["1_i8", "1"]
@@ -317,9 +317,9 @@ describe "Lexer" do
   assert_syntax_error "1__1", "consecutive underscores in numbers aren't allowed"
   assert_syntax_error "-3_", "trailing '_' in number"
   assert_syntax_error "0b_10", "numeric literal without digits"
-  assert_syntax_error "10_e10", "trailing '_' in number"
+  assert_syntax_error "10e_10", "trailing '_' in number"
   assert_syntax_error "1_.1", "trailing '_' in number"
-  assert_syntax_error "-0_e12", "trailing '_' in number"
+  assert_syntax_error "-0e_12", "trailing '_' in number"
 
   assert_syntax_error "0_12", "octal constants should be prefixed with 0o"
   assert_syntax_error "0123", "octal constants should be prefixed with 0o"

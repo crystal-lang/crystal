@@ -1518,7 +1518,7 @@ module Crystal
           break if is_decimal || base != 10 || !peek_next_char.in?('0'..'9')
           is_decimal = true
         when 'e', 'E'
-          raise("trailing '_' in number", @token, (current_pos - start)) if last_is_underscore
+          last_is_underscore = false
           break if is_e_notation || base != 10
           is_e_notation = is_decimal = true
           next_char if peek_next_char.in?({'+', '-'})
