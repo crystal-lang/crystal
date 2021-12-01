@@ -82,7 +82,7 @@ class Log
   end
 
   # Method to save and restore the current logging context.
-  # You can add temporary context via arguments
+  # Temporary context for the duration of the block can be set via arguments.
   #
   # ```
   # Log.context.set a: 1
