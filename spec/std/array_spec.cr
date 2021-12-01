@@ -2094,4 +2094,30 @@ describe "Array" do
       a.remaining_capacity.should eq(2)
     end
   end
+
+  describe "capacity re-sizing" do
+    it "initializes an array capacity to INITIAL_CAPACITY" do
+      a = [] of Int32
+      a.push(1)
+      a.@capacity.should eq(3)
+    end
+
+    it "doubles capacity for arrays smaller than CAPACITY_THRESHOLD" do
+      a = Array.new(255, 1)
+      a.push(1)
+      a.@capacity.should eq(255 * 2)
+    end
+
+    it "uses slow growth heuristic for arrays larger than CAPACITY_THRESHOLD" do
+      a = Array.new(512, 1)
+      a.push(1)
+      # ~63% larger
+      a.@capacity.should eq(832)
+
+      b = Array.new(4096, 1)
+      b.push(1)
+      # ~30% larger, starts converging toward 25%
+      b.@capacity.should eq(5312)
+    end
+  end
 end

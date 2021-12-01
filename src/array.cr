@@ -52,6 +52,12 @@ class Array(T)
   # Size of an Array that we consider small to do linear scans or other optimizations.
   private SMALL_ARRAY_SIZE = 16
 
+  # The initial capacity reserved for new arrays; just a lucky number
+  private INITIAL_CAPACITY = 3
+
+  # The capacity threshold before we stop doubling array during resize.
+  private CAPACITY_THRESHOLD = 256
+
   # The size of this array.
   @size : Int32
 
@@ -759,7 +765,7 @@ class Array(T)
     buf = @buffer + len
     other.each do |elem|
       if left_before_resize == 0
-        double_capacity
+        increase_capacity
         left_before_resize = remaining_capacity - len
         buf = @buffer + len
       end
@@ -1989,7 +1995,7 @@ class Array(T)
       # and now we don't have any offset to the root buffer
       reset_buffer_to_root_buffer
     else
-      double_capacity
+      increase_capacity
     end
   end
 
@@ -2021,7 +2027,7 @@ class Array(T)
       # `[-, -, -, 'c', 'd', -]`
       shift_buffer_by(half_capacity)
     else
-      double_capacity_for_unshift
+      increase_capacity_for_unshift
     end
   end
 
@@ -2054,8 +2060,18 @@ class Array(T)
     self
   end
 
-  private def double_capacity
-    resize_to_capacity(@capacity == 0 ? 3 : (@capacity * 2))
+  private def calculate_new_capacity
+    return INITIAL_CAPACITY if @capacity == 0
+
+    if @capacity < CAPACITY_THRESHOLD
+      @capacity * 2
+    else
+      @capacity + (@capacity + 3 * CAPACITY_THRESHOLD) // 4
+    end
+  end
+
+  private def increase_capacity
+    resize_to_capacity(calculate_new_capacity)
   end
 
   private def resize_to_capacity(capacity)
@@ -2070,8 +2086,8 @@ class Array(T)
   # Similar to double capacity, except that after reallocating the buffer
   # we point it to the middle of the buffer in case more unshifts come right away.
   # This assumes @offset_to_buffer is zero.
-  private def double_capacity_for_unshift
-    resize_to_capacity_for_unshift(@capacity == 0 ? 3 : (@capacity * 2))
+  private def increase_capacity_for_unshift
+    resize_to_capacity_for_unshift(calculate_new_capacity)
   end
 
   private def resize_to_capacity_for_unshift(capacity)
