@@ -104,8 +104,26 @@ class Log
   end
 
   # :ditto:
+  def self.with_context(values)
+    previous = Log.context
+    Log.context.set(values) unless values.empty?
+    begin
+      yield
+    ensure
+      Log.context = previous
+    end
+  end
+
+  # :ditto:
   def with_context(**kwargs)
     self.class.with_context(**kwargs) do
+      yield
+    end
+  end
+
+  # :ditto:
+  def with_context(values)
+    self.class.with_context(values) do
       yield
     end
   end
