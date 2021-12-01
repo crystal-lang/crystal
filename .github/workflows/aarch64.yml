@@ -28,10 +28,9 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v2
       - name: Download Crystal executable
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: crystal-aarch64-musl
-          path: ./
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run stdlib specs
@@ -46,10 +45,9 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v2
       - name: Download Crystal executable
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: crystal-aarch64-musl
-          path: ./
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run compiler specs
@@ -81,10 +79,9 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v2
       - name: Download Crystal executable
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: crystal-aarch64-gnu
-          path: ./
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run stdlib specs
@@ -99,10 +96,9 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v2
       - name: Download Crystal executable
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: crystal-aarch64-gnu
-          path: ./
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run compiler specs

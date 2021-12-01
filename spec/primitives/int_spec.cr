@@ -6,13 +6,13 @@ require "../support/number"
 
 {% for i in Int::Signed.union_types %}
   struct {{i}}
-    TEST_CASES = [MIN, MIN &+ 1, MIN &+ 2, -1, 0, 1, MAX &- 2, MAX &- 1, MAX] of {{i}}
+    TEST_CASES = [MIN, MIN &+ 1, MIN &+ 2, -2, -1, 0, 1, 2, MAX &- 2, MAX &- 1, MAX] of {{i}}
   end
 {% end %}
 
 {% for i in Int::Unsigned.union_types %}
   struct {{i}}
-    TEST_CASES = [MIN, MIN &+ 1, MIN &+ 2, MAX &- 2, MAX &- 1, MAX] of {{i}}
+    TEST_CASES = [MIN, MIN &+ 1, MIN &+ 2, MAX // 2 &- 1, MAX // 2, MAX // 2 &+ 1, MAX &- 2, MAX &- 1, MAX] of {{i}}
   end
 {% end %}
 
