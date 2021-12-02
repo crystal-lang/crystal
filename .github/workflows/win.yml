@@ -199,6 +199,7 @@ jobs:
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         working-directory: ./openssl
         run: |
+          sed -i 's|/Zi /Fd.*\.pdb||' Configurations/10-main.conf
           sed -i 's|/debug|/debug:none|' Configurations/10-main.conf
           perl Configure VC-WIN64A /MT -static no-tests --with-zlib-lib=..\zlib\Release --with-zlib-include=..\zlib
           nmake
