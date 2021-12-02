@@ -1,4 +1,5 @@
 require "../syntax_highlighter"
+require "html"
 
 # A syntax highlighter that renders Crystal source code with HTML markup.
 #
@@ -27,7 +28,7 @@ class Crystal::SyntaxHighlighter::HTML < Crystal::SyntaxHighlighter
   def self.highlight!(code : String)
     highlight(code)
   rescue
-    code
+    ::HTML.escape(code)
   end
 
   def initialize(@io : IO)

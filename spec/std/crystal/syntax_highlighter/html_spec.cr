@@ -61,6 +61,8 @@ describe Crystal::SyntaxHighlighter::HTML do
       it_highlights kw, %(<span class="k">#{kw}</span>)
     end
 
+    it_highlights "self", %(<span class="k">self</span>)
+
     %w(true false nil).each do |lit|
       it_highlights lit, %(<span class="n">#{lit}</span>)
     end
@@ -109,18 +111,25 @@ describe Crystal::SyntaxHighlighter::HTML do
   describe "#highlight!" do
     it_highlights! %(foo = bar("baz\#{PI + 1}") # comment), "foo <span class=\"o\">=</span> bar(<span class=\"s\">&quot;baz</span><span class=\"i\">\#{</span><span class=\"t\">PI</span> <span class=\"o\">+</span> <span class=\"n\">1</span><span class=\"i\">}</span><span class=\"s\">&quot;</span>) <span class=\"c\"># comment</span>"
 
-    it_highlights! <<-CR
+    it_highlights! <<-CR, <<-HTML
       foo, bar = <<-FOO, <<-BAR
         foo
         FOO
       CR
+      foo, bar = &lt;&lt;-FOO, &lt;&lt;-BAR
+        foo
+        FOO
+      HTML
 
-    it_highlights! <<-CR
+    it_highlights! <<-CR, <<-HTML
       foo, bar = <<-FOO, <<-BAR
         foo
       CR
+      foo, bar = &lt;&lt;-FOO, &lt;&lt;-BAR
+        foo
+      HTML
 
-    it_highlights! "\"foo"
+    it_highlights! "\"foo", "&quot;foo"
     it_highlights! "%w[foo"
     it_highlights! "%i[foo"
   end

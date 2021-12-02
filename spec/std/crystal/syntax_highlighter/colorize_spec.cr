@@ -90,7 +90,7 @@ describe Crystal::SyntaxHighlighter::Colorize do
     it_highlights "%w<foo bar baz>", %(\e[93m%w<foo bar baz>\e[0m)
     it_highlights "%i(foo bar baz)", %(\e[93m%i(foo bar baz)\e[0m)
 
-    it_highlights <<-CR, <<-HTML
+    it_highlights <<-CR, <<-ANSI
       foo, bar = <<-FOO, <<-BAR
         foo
         FOO
@@ -102,7 +102,7 @@ describe Crystal::SyntaxHighlighter::Colorize do
         FOO\e[0m
       \e[93m  bar
         BAR\e[0m
-      HTML
+      ANSI
   end
 
   describe ".highlight!" do
