@@ -1208,7 +1208,7 @@ class Crystal::Repl::Interpreter
           line_node = @context.program.semantic(line_node, main_visitor: main_visitor)
 
           value = interpreter.interpret(line_node, meta_vars)
-          puts SyntaxHighlighter.highlight(value.to_s)
+          puts value.to_s
         rescue ex : Crystal::CodeError
           ex.color = true
           ex.error_trace = true
@@ -1271,7 +1271,7 @@ class Crystal::Repl::Interpreter
 
       print line_number.colorize.blue
       print ": "
-      puts SyntaxHighlighter.highlight(line)
+      puts line
     end
     puts
   end
