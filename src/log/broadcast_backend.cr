@@ -37,7 +37,7 @@ class Log::BroadcastBackend < Log::Backend
   # :nodoc:
   def single_backend?
     if @backends.size == 1
-      {@backends.first_key, @backends.first_value}
+      @backends.first
     end
   end
 
