@@ -12,8 +12,10 @@ jobs:
         uses: actions/checkout@v2
       - name: Uninstall openssl 1.1
         run: apk del openssl-dev
+      - name: Upgrade alpine-keys
+        run: apk upgrade alpine-keys
       - name: Install openssl 3.0
-        run: apk add "openssl3-dev" --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
+        run: apk add "openssl3-dev" --repository=http://dl-cdn.alpinelinux.org/alpine/v3.15/main
       - name: Check LibSSL version
         run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
       - name: Run OpenSSL specs
@@ -55,11 +57,13 @@ jobs:
         uses: actions/checkout@v2
       - name: Uninstall openssl
         run: apk del openssl-dev openssl-libs-static
+      - name: Upgrade alpine-keys
+        run: apk upgrade alpine-keys
       - name: Install libressl 3.4
-        run: apk add "libressl-dev=~3.4" --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+        run: apk add "libressl-dev=~3.4" --repository=http://dl-cdn.alpinelinux.org/alpine/v3.15/community
       # We need a recent libc which include reallocarray
       - name: Upgrade musl-dev
-        run: apk add "musl-dev=~1.2" --repository=http://dl-cdn.alpinelinux.org/alpine/v3.14/main
+        run: apk add "musl-dev=~1.2" --repository=http://dl-cdn.alpinelinux.org/alpine/v3.15/main
       - name: Check LibSSL version
         run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
       - name: Run OpenSSL specs

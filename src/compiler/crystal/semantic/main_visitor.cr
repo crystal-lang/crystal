@@ -1137,8 +1137,10 @@ module Crystal
         # It can happen that the argument has a type already,
         # when converting a block to a proc literal
         if restriction = arg.restriction
+          @in_type_args += 1
           restriction.accept self
-          arg_type = restriction.type.instance_type
+          @in_type_args -= 1
+          arg_type = restriction.type
           MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
           arg.type = arg_type.virtual_type
         elsif !arg.type?
@@ -1234,12 +1236,12 @@ module Crystal
         node.raise "undefined fun '#{node.name}' for #{obj_type}" unless matching_fun
 
         call.args = matching_fun.args.map_with_index do |arg, i|
-          Var.new("arg#{i}", arg.type.instance_type).as(ASTNode)
+          Var.new("arg#{i}", arg.type).as(ASTNode)
         end
       else
         call.args = node.args.map_with_index do |arg, i|
           arg.accept self
-          arg_type = arg.type.instance_type
+          arg_type = arg.type
           MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
           Var.new("arg#{i}", arg_type.virtual_type).as(ASTNode)
         end

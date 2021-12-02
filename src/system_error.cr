@@ -77,7 +77,7 @@ module SystemError
     end
 
     @[Deprecated("Use `.from_os_error` instead")]
-    def from_errno(message : String? = nil, errno : Errno = nil, **opts)
+    def from_errno(message : String? = nil, errno : Errno? = nil, **opts)
       from_os_error(message, errno, **opts)
     end
 

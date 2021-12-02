@@ -2059,6 +2059,7 @@ module Crystal
         if delimiter_state.allow_escapes
           if delimiter_state.kind == :regex
             char = next_char
+            raise_unterminated_quoted delimiter_state if char == '\0'
             next_char
             @token.type = :STRING
             if char == '/' || char.ascii_whitespace?
@@ -2312,6 +2313,11 @@ module Crystal
             end
           when 'i'
             if next_char == 'f' && !ident_part_or_end?(peek_next_char)
+              next_char
+              nest += 1
+            end
+          when 'u'
+            if next_char == 'n' && next_char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's' && !ident_part_or_end?(peek_next_char)
               next_char
               nest += 1
             end
