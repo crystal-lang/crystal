@@ -43,9 +43,7 @@ EXPORTS_BUILD := \
 	CRYSTAL_CONFIG_LIBRARY_PATH=$(CRYSTAL_CONFIG_LIBRARY_PATH)
 SHELL = sh
 LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
-ifdef $(LLVM_CONFIG)
-  LLVM_VERSION := $(shell $(LLVM_CONFIG) --version 2> /dev/null))
-endif
+LLVM_VERSION := $(if $(LLVM_CONFIG), $(shell $(LLVM_CONFIG) --version 2> /dev/null))
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
 DEPS = $(LLVM_EXT_OBJ)
