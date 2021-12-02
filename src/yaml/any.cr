@@ -62,7 +62,15 @@ struct YAML::Any
 
       new hash
     when YAML::Nodes::Alias
-      anchors[node.anchor]
+      if value = node.value
+        convert(value, anchors)
+      elsif anchor = node.anchor
+        anchors.fetch(anchor) do
+          raise YAML::ParseException.new("Unknown anchor '#{anchor.inspect}'", *node.location)
+        end
+      else
+        raise "YAML::Nodes::Alias misses anchor value"
+      end
     else
       raise "Unknown node: #{node.class}"
     end
