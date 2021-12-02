@@ -208,7 +208,7 @@ class String
     end
 
     # :nodoc:
-    def self.break?(c1 : Char, c2 : Char, state : Pointer(Property)) : Bool
+    def self.break?(c1 : Char, c2 : Char, state : Property) : {Bool, Property}
       break?(Property.from(c1), Property.from(c2), state)
     end
 
