@@ -1,10 +1,5 @@
 @[Link("pcre")]
 lib LibPCRE
-  JIT_ENABLED = begin
-    LibPCRE.config CONFIG_JIT, out enabled
-    1 == enabled
-  end
-
   alias Int = LibC::Int
 
   type Pcre = Void*
