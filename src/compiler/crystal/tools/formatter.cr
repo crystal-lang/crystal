@@ -2662,7 +2662,7 @@ module Crystal
       # so we remove the space between "as" and "(".
       skip_space if special_call
 
-      # If the call has a single argument which is a prenthesized Expressions,
+      # If the call has a single argument which is a parenthesized `Expressions`,
       # we skip whitespace between the method name and the arg. The parenthesized
       # arg is transformed into a call with parenthesis: `foo (a)` becomes `foo(a)`.
       if node.args.size == 1 &&
