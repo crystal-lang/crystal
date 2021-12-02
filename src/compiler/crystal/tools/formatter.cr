@@ -2667,7 +2667,8 @@ module Crystal
       # arg is transformed into a call with parenthesis: `foo (a)` becomes `foo(a)`.
       if node.args.size == 1 &&
          !node.named_args && !node.block_arg && !node.block &&
-         node.args[0].as?(Expressions).try(&.keyword) == :"("
+         (expressions = node.args[0].as?(Expressions)) &&
+         expressions.keyword == :"(" && expressions.expressions.size == 1
         skip_space
       end
 
