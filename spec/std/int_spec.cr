@@ -1,7 +1,5 @@
 require "./spec_helper"
-{% unless flag?(:win32) %}
-  require "big"
-{% end %}
+require "big"
 require "spec/helpers/iterate"
 
 private macro it_converts_to_s(num, str, **opts)
@@ -784,22 +782,31 @@ describe "Int" do
     {% end %}
   end
 
-  pending_win32 "compares signed vs. unsigned integers" do
-    signed_ints = [Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int128::MAX, Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, Int128::MIN, 0_i8, 0_i16, 0_i32, 0_i64, 0_i128]
-    unsigned_ints = [UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, UInt128::MAX, 0_u8, 0_u16, 0_u32, 0_u64, 0_u128]
+  it "compares signed vs. unsigned integers" do
+    {% begin %}
+      signed_ints = [
+        Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, {% unless flag?(:win32) %} Int128::MAX, {% end %}
+        Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, {% unless flag?(:win32) %} Int128::MIN, {% end %}
+        Int8.zero, Int16.zero, Int32.zero, Int64.zero, {% unless flag?(:win32) %} Int128.zero, {% end %}
+      ]
+      unsigned_ints = [
+        UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, {% unless flag?(:win32) %} UInt128::MAX, {% end %}
+        UInt8.zero, UInt16.zero, UInt32.zero, UInt64.zero, {% unless flag?(:win32) %} UInt128.zero, {% end %}
+      ]
 
-    big_signed_ints = signed_ints.map &.to_big_i
-    big_unsigned_ints = unsigned_ints.map &.to_big_i
+      big_signed_ints = signed_ints.map &.to_big_i
+      big_unsigned_ints = unsigned_ints.map &.to_big_i
 
-    signed_ints.zip(big_signed_ints) do |si, bsi|
-      unsigned_ints.zip(big_unsigned_ints) do |ui, bui|
-        {% for op in %w(< <= > >=).map(&.id) %}
-          if (si {{op}} ui) != (bsi {{op}} bui)
-            fail "comparison of #{si} {{op}} #{ui} (#{si.class} {{op}} #{ui.class}) gave incorrect result"
-          end
-        {% end %}
+      signed_ints.zip(big_signed_ints) do |si, bsi|
+        unsigned_ints.zip(big_unsigned_ints) do |ui, bui|
+          {% for op in %w(< <= > >=).map(&.id) %}
+            if (si {{op}} ui) != (bsi {{op}} bui)
+              fail "comparison of #{si} {{op}} #{ui} (#{si.class} {{op}} #{ui.class}) gave incorrect result"
+            end
+          {% end %}
+        end
       end
-    end
+    {% end %}
   end
 
   it "compares equality and inequality of signed vs. unsigned integers" do
@@ -851,7 +858,7 @@ describe "Int" do
       -10.bit_length.should eq(4)
     end
 
-    pending_win32 "for BigInt" do
+    it "for BigInt" do
       (10.to_big_i ** 20).bit_length.should eq(67)
       (10.to_big_i ** 309).bit_length.should eq(1027)
       (10.to_big_i ** 3010).bit_length.should eq(10000)

@@ -344,16 +344,25 @@ module Crystal
         assert_macro %({{"hello".empty?}}), "false"
       end
 
-      it "executes string [Range] inclusive" do
+      it "executes [] with inclusive range" do
         assert_macro %({{"hello"[1..-2]}}), %("ell")
       end
 
-      it "executes string [Range] exclusive" do
+      it "executes [] with exclusive range" do
         assert_macro %({{"hello"[1...-2]}}), %("el")
       end
 
-      it "executes string [Range] inclusive (computed)" do
+      it "executes [] with computed range" do
         assert_macro %({{"hello"[[1].size..-2]}}), %("ell")
+      end
+
+      it "executes [] with incomplete range" do
+        assert_macro %({{"hello"[1..]}}), %("ello")
+        assert_macro %({{"hello"[1..nil]}}), %("ello")
+        assert_macro %({{"hello"[...3]}}), %("hel")
+        assert_macro %({{"hello"[nil...3]}}), %("hel")
+        assert_macro %({{"hello"[..]}}), %("hello")
+        assert_macro %({{"hello"[nil..nil]}}), %("hello")
       end
 
       it "executes string chomp" do
@@ -817,6 +826,15 @@ module Crystal
         assert_macro %({{ [1, 2, 3, 4][[1].size...-1] }}), %([2, 3])
       end
 
+      it "executes [] with incomplete range" do
+        assert_macro %({{ [1, 2, 3, 4][1..] }}), %([2, 3, 4])
+        assert_macro %({{ [1, 2, 3, 4][1..nil] }}), %([2, 3, 4])
+        assert_macro %({{ [1, 2, 3, 4][...2] }}), %([1, 2])
+        assert_macro %({{ [1, 2, 3, 4][nil...2] }}), %([1, 2])
+        assert_macro %({{ [1, 2, 3, 4][..] }}), %([1, 2, 3, 4])
+        assert_macro %({{ [1, 2, 3, 4][nil..nil] }}), %([1, 2, 3, 4])
+      end
+
       it "executes [] with two numbers" do
         assert_macro %({{ [1, 2, 3, 4, 5][1, 3] }}), %([2, 3, 4])
       end
@@ -1076,16 +1094,33 @@ module Crystal
     end
 
     describe TupleLiteral do
-      it "executes index 0" do
+      it "executes [] with 0" do
         assert_macro %({{ {1, 2, 3}[0] }}), "1"
       end
 
-      it "executes index 1" do
+      it "executes [] with 1" do
         assert_macro %({{ {1, 2, 3}[1] }}), "2"
       end
 
-      it "executes index out of bounds" do
+      it "executes [] out of bounds" do
         assert_macro %({{ {1, 2, 3}[3] }}), "nil"
+      end
+
+      it "executes [] with range" do
+        assert_macro %({{ {1, 2, 3, 4}[1...-1] }}), %({2, 3})
+      end
+
+      it "executes [] with computed range" do
+        assert_macro %({{ {1, 2, 3, 4}[[1].size...-1] }}), %({2, 3})
+      end
+
+      it "executes [] with incomplete range" do
+        assert_macro %({{ {1, 2, 3, 4}[1..] }}), %({2, 3, 4})
+        assert_macro %({{ {1, 2, 3, 4}[1..nil] }}), %({2, 3, 4})
+        assert_macro %({{ {1, 2, 3, 4}[...2] }}), %({1, 2})
+        assert_macro %({{ {1, 2, 3, 4}[nil...2] }}), %({1, 2})
+        assert_macro %({{ {1, 2, 3, 4}[..] }}), %({1, 2, 3, 4})
+        assert_macro %({{ {1, 2, 3, 4}[nil..nil] }}), %({1, 2, 3, 4})
       end
 
       it "executes size" do
@@ -1523,15 +1558,15 @@ module Crystal
         end
       end
 
-      it "executes instance_vars on symbol literal" do
+      it "executes instance_vars on symbol type" do
         assert_macro("{{x.instance_vars.map &.stringify}}", %([])) do |program|
-          {x: TypeNode.new(SymbolLiteralType.new(program, "foo".symbol))}
+          {x: TypeNode.new(program.symbol)}
         end
       end
 
-      it "executes class_vars on symbol literal" do
+      it "executes class_vars on symbol type" do
         assert_macro("{{x.class_vars.map &.stringify}}", %([])) do |program|
-          {x: TypeNode.new(SymbolLiteralType.new(program, "foo".symbol))}
+          {x: TypeNode.new(program.symbol)}
         end
       end
 
@@ -2263,6 +2298,29 @@ module Crystal
       end
     end
 
+    describe "metaclass methods" do
+      node = Metaclass.new(Path.new("Int32"))
+
+      it "executes instance" do
+        assert_macro %({{x.instance}}), "Int32", {x: node}
+      end
+
+      it "executes resolve" do
+        assert_macro %({{x.resolve}}), %(Int32.class), {x: node}
+        assert_macro %({{x.resolve}}), %(Array(T).class), {x: Metaclass.new(Path.new("Array"))}
+
+        assert_macro_error(%({{x.resolve}}), "undefined constant Foo") do
+          {x: Metaclass.new(Path.new("Foo"))}
+        end
+      end
+
+      it "executes resolve?" do
+        assert_macro %({{x.resolve?}}), %(Int32.class), {x: node}
+        assert_macro %({{x.resolve?}}), %(Array(T).class), {x: Metaclass.new(Path.new("Array"))}
+        assert_macro %({{x.resolve?}}), %(nil), {x: Metaclass.new(Path.new("Foo"))}
+      end
+    end
+
     describe "require methods" do
       it "executes path" do
         assert_macro %({{x.path}}), %("json"), {x: Require.new("json")}
@@ -2922,6 +2980,53 @@ module Crystal
 
     it "uses correct name for top-level macro methods" do
       assert_macro_error %({{flag?}}), "wrong number of arguments for top-level macro 'flag?' (given 0, expected 1)"
+    end
+  end
+
+  describe "immutability of returned container literals (#10818)" do
+    it "Annotation#args" do
+      node = Annotation.new(Path.new("Foo"), [42.int32, "a".string] of ASTNode)
+      assert_macro %({{ (x.args << "a"; x.args.size) }}), "2", {x: node}
+    end
+
+    it "Generic#type_vars" do
+      node = Generic.new("Foo".path, ["Bar".path, "Int32".path] of ASTNode)
+      assert_macro %({{ (x.type_vars << "a"; x.type_vars.size) }}), "2", {x: node}
+    end
+
+    it "MultiAssign#targets" do
+      node = MultiAssign.new(["foo".var, "bar".var] of ASTNode, [2.int32, "a".string] of ASTNode)
+      assert_macro %({{ (x.targets << "a"; x.targets.size) }}), "2", {x: node}
+    end
+
+    it "MultiAssign#values" do
+      node = MultiAssign.new(["foo".var, "bar".var] of ASTNode, [2.int32, "a".string] of ASTNode)
+      assert_macro %({{ (x.values << "a"; x.values.size) }}), "2", {x: node}
+    end
+
+    it "ProcNotation#inputs" do
+      node = ProcNotation.new([Path.new("SomeType"), Path.new("OtherType")] of ASTNode)
+      assert_macro %({{ (x.inputs << "a"; x.inputs.size) }}), "2", {x: node}
+    end
+
+    it "ProcPointer#args" do
+      node = ProcPointer.new(Var.new("some_object"), "method", [Path.new("SomeType"), Path.new("OtherType")] of ASTNode)
+      assert_macro %({{ (x.args << "a"; x.args.size) }}), "2", {x: node}
+    end
+
+    it "StringInterpolation#expressions" do
+      node = StringInterpolation.new(["fo".string, 1.int32, "o".string] of ASTNode)
+      assert_macro %({{ (x.expressions << "a"; x.expressions.size) }}), "3", {x: node}
+    end
+
+    it "Union#types" do
+      node = Crystal::Union.new(["Int32".path, "String".path] of ASTNode)
+      assert_macro %({{ (x.types << "a"; x.types.size) }}), "2", {x: node}
+    end
+
+    it "When#conds" do
+      node = When.new([2.int32, 3.int32] of ASTNode, 4.int32)
+      assert_macro %({{ (x.conds << "a"; x.conds.size) }}), "2", {x: node}
     end
   end
 end

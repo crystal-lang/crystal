@@ -5,11 +5,11 @@ require "./std/array_spec.cr"
 require "./std/atomic_spec.cr"
 require "./std/base64_spec.cr"
 require "./std/benchmark_spec.cr"
-# require "./std/big/big_decimal_spec.cr" (failed linking)
-# require "./std/big/big_float_spec.cr" (failed linking)
-# require "./std/big/big_int_spec.cr" (failed linking)
-# require "./std/big/big_rational_spec.cr" (failed linking)
-# require "./std/big/number_spec.cr" (failed linking)
+require "./std/big/big_decimal_spec.cr"
+require "./std/big/big_float_spec.cr"
+require "./std/big/big_int_spec.cr"
+require "./std/big/big_rational_spec.cr"
+require "./std/big/number_spec.cr"
 require "./std/bit_array_spec.cr"
 require "./std/bool_spec.cr"
 require "./std/box_spec.cr"
@@ -49,11 +49,11 @@ require "./std/csv/csv_spec.cr"
 require "./std/deque_spec.cr"
 require "./std/digest/adler32_spec.cr"
 require "./std/digest/crc32_spec.cr"
-# require "./std/digest/io_digest_spec.cr" (failed codegen)
-# require "./std/digest/md5_spec.cr" (failed codegen)
-# require "./std/digest/sha1_spec.cr" (failed codegen)
-# require "./std/digest/sha256_spec.cr" (failed codegen)
-# require "./std/digest/sha512_spec.cr" (failed codegen)
+require "./std/digest/io_digest_spec.cr"
+require "./std/digest/md5_spec.cr"
+require "./std/digest/sha1_spec.cr"
+require "./std/digest/sha256_spec.cr"
+require "./std/digest/sha512_spec.cr"
 require "./std/dir_spec.cr"
 require "./std/double_spec.cr"
 require "./std/ecr/ecr_lexer_spec.cr"
@@ -141,7 +141,7 @@ require "./std/log/main_spec.cr"
 require "./std/log/metadata_spec.cr"
 require "./std/log/spec_spec.cr"
 require "./std/match_data_spec.cr"
-# require "./std/math_spec.cr" (failed linking)
+require "./std/math_spec.cr"
 require "./std/mime/media_type_spec.cr"
 require "./std/mime/multipart/builder_spec.cr"
 require "./std/mime/multipart/parser_spec.cr"
@@ -149,29 +149,28 @@ require "./std/mime/multipart_spec.cr"
 require "./std/mime_spec.cr"
 # require "./std/mutex_spec.cr" (failed codegen)
 require "./std/named_tuple_spec.cr"
-# require "./std/number_spec.cr" (failed linking)
-# require "./std/oauth/access_token_spec.cr" (failed codegen)
-# require "./std/oauth/authorization_header_spec.cr" (failed codegen)
-# require "./std/oauth/consumer_spec.cr" (failed codegen)
-# require "./std/oauth/params_spec.cr" (failed codegen)
-# require "./std/oauth/request_token_spec.cr" (failed codegen)
-# require "./std/oauth/signature_spec.cr" (failed codegen)
-# require "./std/oauth2/access_token_spec.cr" (failed codegen)
+require "./std/number_spec.cr"
+require "./std/oauth/access_token_spec.cr"
+require "./std/oauth/authorization_header_spec.cr"
+require "./std/oauth/consumer_spec.cr"
+require "./std/oauth/params_spec.cr"
+require "./std/oauth/request_token_spec.cr"
+require "./std/oauth/signature_spec.cr"
+require "./std/oauth2/access_token_spec.cr"
 # require "./std/oauth2/client_spec.cr" (failed codegen)
 # require "./std/oauth2/session_spec.cr" (failed codegen)
 require "./std/object_spec.cr"
-# require "./std/openssl/cipher_spec.cr" (failed codegen)
-# require "./std/openssl/digest_spec.cr" (failed codegen)
-# require "./std/openssl/hmac_spec.cr" (failed codegen)
-# require "./std/openssl/pkcs5_spec.cr" (failed codegen)
-# require "./std/openssl/ssl/context_spec.cr" (failed codegen)
-# require "./std/openssl/ssl/hostname_validation_spec.cr" (failed codegen)
+require "./std/openssl/cipher_spec.cr"
+require "./std/openssl/digest_spec.cr"
+require "./std/openssl/hmac_spec.cr"
+require "./std/openssl/pkcs5_spec.cr"
+require "./std/openssl/ssl/context_spec.cr"
+require "./std/openssl/ssl/hostname_validation_spec.cr"
 # require "./std/openssl/ssl/server_spec.cr" (failed codegen)
 # require "./std/openssl/ssl/socket_spec.cr" (failed codegen)
-# require "./std/openssl/x509/certificate_spec.cr" (failed codegen)
-# require "./std/openssl/x509/name_spec.cr" (failed codegen)
+require "./std/openssl/x509/certificate_spec.cr"
+require "./std/openssl/x509/name_spec.cr"
 require "./std/option_parser_spec.cr"
-# require "./std/overflow_spec.cr" (failed linking)
 require "./std/path_spec.cr"
 require "./std/pointer_spec.cr"
 require "./std/pp_spec.cr"

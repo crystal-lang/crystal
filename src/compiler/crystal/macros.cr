@@ -649,6 +649,10 @@ module Crystal::Macros
     def [](index : NumberLiteral) : ASTNode
     end
 
+    # Similar to `Array#[]`.
+    def [](index : RangeLiteral) : ArrayLiteral(ASTNode)
+    end
+
     # Similar to `Array#[]=`.
     def []=(index : NumberLiteral, value : ASTNode) : ASTNode
     end
@@ -1614,8 +1618,22 @@ module Crystal::Macros
   # class Alias < ASTNode
   # end
 
-  # class Metaclass < ASTNode
-  # end
+  # A metaclass in a type expression: `T.class`
+  class Metaclass < ASTNode
+    # Returns the node representing the instance type of this metaclass.
+    def instance : ASTNode
+    end
+
+    # Resolves this metaclass to a `TypeNode` if it denotes a type,
+    # or otherwise gives a compile-time error.
+    def resolve : ASTNode
+    end
+
+    # Resolves this metaclass to a `TypeNode` if it denotes a type,
+    # or otherwise returns a `NilLiteral`.
+    def resolve? : ASTNode | NilLiteral
+    end
+  end
 
   # A cast call: `obj.as(to)`
   class Cast < ASTNode

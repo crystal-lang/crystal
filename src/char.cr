@@ -239,6 +239,9 @@ struct Char
 
   # Returns `true` if this char is a letter.
   #
+  # All codepoints in the Unicode General Category `L` (Letter) are considered
+  # a letter.
+  #
   # ```
   # 'c'.letter? # => true
   # 'á'.letter? # => true
@@ -506,9 +509,10 @@ struct Char
     !control? && (!whitespace? || self == ' ')
   end
 
-  # Returns this char as a string that contains a char literal.
+  # Returns a representation of `self` as a Crystal char literal, wrapped in single
+  # quotes.
   #
-  # ASCII control characters are escaped.
+  # Non-printable characters (see `#printable?`) are escaped.
   #
   # ```
   # 'a'.inspect      # => "'a'"
@@ -520,26 +524,28 @@ struct Char
   #
   # See `#unicode_escape` for the format used to escape charactes without a
   # special escape sequence.
+  #
+  # * `#dump` additionally escapes all non-ASCII characters.
   def inspect : String
     dump_or_inspect do |io|
-      if ascii_control?
-        unicode_escape(io)
-      else
+      if printable?
         to_s(io)
+      else
+        unicode_escape(io)
       end
     end
   end
 
-  # Appends this char as a string that contains a char literal to the given `IO`.
-  #
-  # See also: `#inspect`.
+  # :ditto:
   def inspect(io : IO) : Nil
     io << inspect
   end
 
-  # Returns this char as a string that contains a char literal as written in Crystal,
-  # with all non-ASCII characters (codepoint greater than `0x79`) as well as
-  # ASCII control characters escaped.
+  # Returns a representation of `self` as an ASCII-compatible Crystal char literal,
+  # wrapped in single quotes.
+  #
+  # Non-printable characters (see `#printable?`) and non-ASCII characters
+  # (codepoints larger `U+007F`) are escaped.
   #
   # ```
   # 'a'.dump      # => "'a'"
@@ -551,6 +557,8 @@ struct Char
   #
   # See `#unicode_escape` for the format used to escape charactes without a
   # special escape sequence.
+  #
+  # * `#inspect` only escapes non-printable characters.
   def dump : String
     dump_or_inspect do |io|
       if ascii_control? || ord >= 0x80
@@ -561,9 +569,7 @@ struct Char
     end
   end
 
-  # Appends this char as a string that contains a char literal to the given `IO`.
-  #
-  # See also: `#dump`.
+  # :ditto:
   def dump(io)
     io << dump
   end

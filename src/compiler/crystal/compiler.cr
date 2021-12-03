@@ -2,6 +2,10 @@ require "option_parser"
 require "file_utils"
 require "colorize"
 require "crystal/digest/md5"
+{% if flag?(:msvc) %}
+  require "crystal/system/win32/visual_studio"
+  require "crystal/system/win32/windows_sdk"
+{% end %}
 
 module Crystal
   @[Flags]
@@ -346,8 +350,37 @@ module Crystal
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
 
-        args = %(/nologo #{object_arg} #{output_arg} /link #{lib_flags} #{@link_flags}).gsub("\n", " ")
-        cmd = "#{CL} #{args}"
+        cl = CL
+        link_args = [] of String
+
+        # if the compiler and the target both have the `msvc` flag, we are not
+        # cross-compiling and therefore we should attempt detecting MSVC's
+        # standard paths
+        {% if flag?(:msvc) %}
+          if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
+            if win_sdk_libpath = Crystal::System::WindowsSDK.find_win10_sdk_libpath
+              host_bits = {{ flag?(:bits64) ? "x64" : "x86" }}
+              target_bits = program.has_flag?("bits64") ? "x64" : "x86"
+
+              # MSVC build tools and Windows SDK found; recreate `LIB` environment variable
+              # that is normally expected on the MSVC developer command prompt
+              link_args << Process.quote_windows("/LIBPATH:#{msvc_path.join("atlmfc", "lib", target_bits)}")
+              link_args << Process.quote_windows("/LIBPATH:#{msvc_path.join("lib", target_bits)}")
+              link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath.join("ucrt", target_bits)}")
+              link_args << Process.quote_windows("/LIBPATH:#{win_sdk_libpath.join("um", target_bits)}")
+
+              # use exact path for compiler instead of relying on `PATH`
+              cl = Process.quote_windows(msvc_path.join("bin", "Host#{host_bits}", target_bits, "cl.exe").to_s)
+            end
+          end
+        {% end %}
+
+        link_args << "/DEBUG:FULL /PDBALTPATH:%_PDB%" unless debug.none?
+        link_args << lib_flags
+        @link_flags.try { |flags| link_args << flags }
+
+        args = %(/nologo #{object_arg} #{output_arg} /link #{link_args.join(' ')}).gsub("\n", " ")
+        cmd = "#{cl} #{args}"
 
         if cmd.to_utf16.size > 32000
           # The command line would be too big, pass the args through a UTF-16-encoded file instead.
@@ -358,7 +391,7 @@ module Crystal
 
           args_filename = "#{output_dir}/linker_args.txt"
           File.write(args_filename, args_bytes)
-          cmd = "#{CL} #{Process.quote_windows("@" + args_filename)}"
+          cmd = "#{cl} #{Process.quote_windows("@" + args_filename)}"
         end
 
         {cmd, nil}

@@ -17,17 +17,22 @@ module Crystal
       @type || @freeze_type
     end
 
-    def type(*, with_literals = false)
+    def type(*, with_autocast = false)
       type = self.type
 
-      if with_literals
+      if with_autocast
         case self
         when NumberLiteral
-          NumberLiteralType.new(type.program, self)
+          NumberAutocastType.new(type.program, self)
         when SymbolLiteral
-          SymbolLiteralType.new(type.program, self)
+          SymbolAutocastType.new(type.program, self)
         else
-          type
+          case type
+          when IntegerType, FloatType
+            NumberAutocastType.new(type.program, self)
+          else
+            type
+          end
         end
       else
         type

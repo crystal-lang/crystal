@@ -32,6 +32,7 @@ lib LibC
     hStdError : HANDLE
   end
 
+  fun GetCurrentThread : HANDLE
   fun GetCurrentThreadStackLimits(lowLimit : ULONG_PTR*, highLimit : ULONG_PTR*) : Void
   fun GetCurrentProcess : HANDLE
   fun GetCurrentProcessId : DWORD
