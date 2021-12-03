@@ -186,7 +186,12 @@ function Exec-Process {
     # here we replicate the logic for `ProcessStartInfo.ArgumentList` on .NET 5 and above
     # See also: https://github.com/PowerShell/PowerShell/issues/14747
     # (note that we must nonetheless implement it by ourselves if we support Windows Powershell 5.1)
-    $Process = Start-Process $Path -ArgumentList (Build-Arguments $Args) -NoNewWindow -PassThru
+    $EscapedArgs = Build-Arguments $Args
+    if ($EscapedArgs) {
+        $Process = Start-Process $Path -ArgumentList $EscapedArgs -NoNewWindow -PassThru
+    } else {
+        $Process = Start-Process $Path -NoNewWindow -PassThru
+    }
     Wait-Process -Id $Process.Id
     Exit $Process.ExitCode
 }
