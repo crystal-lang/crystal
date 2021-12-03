@@ -616,6 +616,10 @@ module Crystal
         node.def.args.join(@str, ", ", &.accept self)
         @str << ')'
       end
+      if return_type = node.def.return_type
+        @str << " : "
+        return_type.accept self
+      end
       @str << ' '
       @str << keyword("do")
       newline
@@ -966,9 +970,11 @@ module Crystal
         @str << ' '
       end
       @str << keyword("yield")
-      if node.exps.size > 0
-        @str << ' '
-        node.exps.join(@str, ", ", &.accept self)
+      in_parenthesis(node.has_parentheses?) do
+        if node.exps.size > 0
+          @str << ' ' unless node.has_parentheses?
+          node.exps.join(@str, ", ", &.accept self)
+        end
       end
       false
     end
