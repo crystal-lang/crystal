@@ -8,7 +8,7 @@ class Digest::CRC32 < ::Digest
   @digest : UInt32
 
   def initialize
-    @digest = CRC32.initial()
+    @digest = CRC32.initial
   end
 
   def self.initial : UInt32
@@ -43,7 +43,7 @@ class Digest::CRC32 < ::Digest
 
   # :nodoc:
   def reset_impl : Nil
-    @digest = CRC32.initial()
+    @digest = CRC32.initial
   end
 
   # :nodoc:

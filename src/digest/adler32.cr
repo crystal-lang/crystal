@@ -8,7 +8,7 @@ class Digest::Adler32 < ::Digest
   @digest : UInt32
 
   def initialize
-    @digest = Adler32.initial()
+    @digest = Adler32.initial
   end
 
   def self.initial : UInt32
@@ -43,7 +43,7 @@ class Digest::Adler32 < ::Digest
 
   # :nodoc:
   def reset_impl : Nil
-    @digest = Adler32.initial()
+    @digest = Adler32.initial
   end
 
   # :nodoc:
