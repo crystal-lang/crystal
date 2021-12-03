@@ -106,6 +106,8 @@ lib LibGMP
 
   fun sqrt = __gmpz_sqrt(rop : MPZ*, op : MPZ*)
 
+  fun invert = __gmpz_invert(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
+
   # # Bitwise operations
 
   fun and = __gmpz_and(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
@@ -139,7 +141,6 @@ lib LibGMP
   fun gcd_ui = __gmpz_gcd_ui(rop : MPZ*, op1 : MPZ*, op2 : UI) : UI
   fun lcm = __gmpz_lcm(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun lcm_ui = __gmpz_lcm_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
-  fun invert = __gmpz_invert(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
 
   # MPQ
   struct MPQ
