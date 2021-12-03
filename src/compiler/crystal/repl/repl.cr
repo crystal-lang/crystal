@@ -1,5 +1,3 @@
-require "../../../crystal/readline"
-
 class Crystal::Repl
   property prelude : String = "prelude"
   getter program : Program
@@ -29,7 +27,8 @@ class Crystal::Repl
         io.print "  " * @nest if @nest > 0
       end
 
-      line = Readline.readline(prompt, add_history: true)
+      print prompt
+      line = gets
       unless line
         # Explicitly call exit on ctrl+D so at_exit handlers run
         interpret_exit

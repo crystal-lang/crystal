@@ -1161,7 +1161,8 @@ class Crystal::Repl::Interpreter
       while @pry
         # TODO: supoort multi-line expressions
 
-        line = Readline.readline("pry> ", add_history: true)
+        print "pry> "
+        line = gets
         unless line
           self.pry = false
           break
