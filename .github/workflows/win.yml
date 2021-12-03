@@ -135,6 +135,22 @@ jobs:
         working-directory: ./mpir
         run: |
           $VsVersion = "vs$((& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -property displayName) -replace '.*\b\d\d(\d\d)\b.*', '$1')"
+
+          echo '<Project>
+            <PropertyGroup>
+              <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
+            </PropertyGroup>
+          </Project>' > 'msvc\Directory.Build.props'
+
+          echo '<Project>
+            <ItemDefinitionGroup Label="Configuration">
+              <ClCompile>
+                <DebugInformationFormat>None</DebugInformationFormat>
+                <WholeProgramOptimization>false</WholeProgramOptimization>
+              </ClCompile>
+            </ItemDefinitionGroup>
+          </Project>' > 'msvc\Override.props'
+
           MSBuild.exe /p:Platform=x64 /p:Configuration=Release /p:DefineConstants=MSC_BUILD_DLL ".\msvc\$VsVersion\lib_mpir_gc\lib_mpir_gc.vcxproj"
       - name: Download libyaml
         if: steps.cache-libs.outputs.cache-hit != 'true'
