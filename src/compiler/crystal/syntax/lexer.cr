@@ -1450,22 +1450,22 @@ module Crystal
       @token.raw = ":#{value}" if @wants_raw
     end
 
-    macro gen_check_int_fits_in_size(type, method, size, number_size, raw_number_string, error_number_string, current_pos, start, negative, actual_type = nil)
+    macro gen_check_int_fits_in_size(type, method, size, number_size, raw_number_string, start, pos_before_suffix, negative, actual_type = nil)
       {% if type.stringify.starts_with? "U" %}
-        raise "Invalid negative value #{{{error_number_string}}} for {{type}}", @token, ({{current_pos}} - {{start}}) if {{negative}}
+        raise "Invalid negative value #{string_range({{start}}, {{pos_before_suffix}})} for {{type}}", @token, (current_pos - {{start}}) if {{negative}}
       {% end %}
 
       if {{number_size}} > {{size}} || ({{number_size}} == {{size}} && {{raw_number_string}}.to_{{method.id}}? == nil)
         {% if actual_type.nil? %}
-          raise_value_doesnt_fit_in "{{type}}", {{error_number_string}}, {{start}}
+          raise_value_doesnt_fit_in "{{type}}", string_range({{start}}, {{pos_before_suffix}}), {{start}}
         {% else %}
-          raise("#{{{error_number_string}}} doesn't fit in an {{actual_type}}. {{type}} literals that don't fit in an {{actual_type}} are currently not supported", @token, {{current_pos}} - {{start}})
+          raise("#{string_range({{start}}, {{pos_before_suffix}})} doesn't fit in an {{actual_type}}. {{type}} literals that don't fit in an {{actual_type}} are currently not supported", @token, {{current_pos}} - {{start}})
         {% end %}
       end
     end
 
-    def raise_value_doesnt_fit_in(type, string_value, start)
-      raise "#{string_value} doesn't fit in an #{type}", @token, (current_pos - start)
+    def raise_value_doesnt_fit_in(type, start, pos_before_suffix)
+      raise "#{string_range(start, pos_before_suffix)} doesn't fit in an #{type}", @token, (current_pos - start)
     end
 
     private def scan_number(start, negative = false)
@@ -1487,7 +1487,7 @@ module Crystal
         when 'x'      then base = 16
         when '0'..'9' then raise("octal constants should be prefixed with 0o", @token, (current_pos - start))
         when '_'
-          raise("octal constants should be prefixed with 0o", @token, (current_pos - start)) if next_char.in? '0'..'9'
+          raise("octal constants should be prefixed with 0o", @token, (current_pos - start)) if next_char.in?('0'..'9')
           has_underscores = last_is_underscore = true
         end
 
@@ -1520,7 +1520,7 @@ module Crystal
           last_is_underscore = false
           break if is_e_notation || base != 10
           is_e_notation = is_decimal = true
-          next_char if peek_next_char.in?({'+', '-'})
+          next_char if peek_next_char.in?('+', '-')
           raise("trailing '_' in number", @token, (current_pos - start)) if peek_next_char == '_'
         when 'i', 'u', 'f'
           before_prefix_pos = current_pos
@@ -1551,20 +1551,20 @@ module Crystal
         if base10_number_string
           number_size = base10_number_string.size
           first_byte = @reader.string.byte_at(start).chr
-          base10_number_string = first_byte + base10_number_string if first_byte.in?({'+', '-'})
+          base10_number_string = first_byte + base10_number_string if first_byte.in?('+', '-')
           @token.value = raw_number_string = base10_number_string
         end
       end
 
       if is_decimal
         @token.number_kind = :f64 if suffix_size == 0
-        raise("Invalid suffix #{@token.number_kind} for decimal number", @token, (current_pos - start)) unless @token.number_kind.in?({:f32, :f64})
+        raise("Invalid suffix #{@token.number_kind} for decimal number", @token, (current_pos - start)) unless @token.number_kind.in?(:f32, :f64)
         return
       end
 
       # Check or determine suffix
       if suffix_size == 0
-        raise_value_doesnt_fit_in(negative ? Int64 : UInt64, error_number_string, start) unless @token.value
+        raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix) unless @token.value
         @token.number_kind = case number_size
                              when 0..9   then :i32
                              when 10     then raw_number_string.to_i32? ? :i32 : :i64
@@ -1573,30 +1573,30 @@ module Crystal
                                if raw_number_string.to_i64?
                                  :i64
                                elsif negative
-                                 raise_value_doesnt_fit_in(Int64, error_number_string, start)
+                                 raise_value_doesnt_fit_in(Int64, start, pos_before_suffix)
                                else
                                  :u64
                                end
                              when 20
-                               raise_value_doesnt_fit_in(Int64, error_number_string, start) if negative
-                               raise_value_doesnt_fit_in(UInt64, error_number_string, start) unless raw_number_string.to_u64?
+                               raise_value_doesnt_fit_in(Int64, start, pos_before_suffix) if negative
+                               raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix) unless raw_number_string.to_u64?
                                :u64
                              else
-                               raise_value_doesnt_fit_in(Int64, error_number_string, start) if negative
-                               raise_value_doesnt_fit_in(UInt64, error_number_string, start)
+                               raise_value_doesnt_fit_in(Int64, start, pos_before_suffix) if negative
+                               raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix)
                              end
       else
         case @token.number_kind
-        when :i8   then gen_check_int_fits_in_size(Int8, :i8, 3, number_size, raw_number_string, error_number_string, current_pos, start, negative)
-        when :u8   then gen_check_int_fits_in_size(UInt8, :u8, 3, number_size, raw_number_string, error_number_string, current_pos, start, negative)
-        when :i16  then gen_check_int_fits_in_size(Int16, :i16, 5, number_size, raw_number_string, error_number_string, current_pos, start, negative)
-        when :u16  then gen_check_int_fits_in_size(UInt16, :u16, 5, number_size, raw_number_string, error_number_string, current_pos, start, negative)
-        when :i32  then gen_check_int_fits_in_size(Int32, :i32, 10, number_size, raw_number_string, error_number_string, current_pos, start, negative)
-        when :u32  then gen_check_int_fits_in_size(UInt32, :u32, 10, number_size, raw_number_string, error_number_string, current_pos, start, negative)
-        when :i64  then gen_check_int_fits_in_size(Int64, :i64, 19, number_size, raw_number_string, error_number_string, current_pos, start, negative)
-        when :u64  then gen_check_int_fits_in_size(UInt64, :u64, 20, number_size, raw_number_string, error_number_string, current_pos, start, negative)
-        when :i128 then gen_check_int_fits_in_size(Int128, :i64, 19, number_size, raw_number_string, error_number_string, current_pos, start, negative, Int64)
-        when :u128 then gen_check_int_fits_in_size(UInt128, :u64, 20, number_size, raw_number_string, error_number_string, current_pos, start, negative, UInt64)
+        when :i8   then gen_check_int_fits_in_size(Int8, :i8, 3, number_size, raw_number_string, current_pos, start, pos_before_suffix, negative)
+        when :u8   then gen_check_int_fits_in_size(UInt8, :u8, 3, number_size, raw_number_string, current_pos, start, pos_before_suffix, negative)
+        when :i16  then gen_check_int_fits_in_size(Int16, :i16, 5, number_size, raw_number_string, current_pos, start, pos_before_suffix, negative)
+        when :u16  then gen_check_int_fits_in_size(UInt16, :u16, 5, number_size, raw_number_string, current_pos, start, pos_before_suffix, negative)
+        when :i32  then gen_check_int_fits_in_size(Int32, :i32, 10, number_size, raw_number_string, current_pos, start, pos_before_suffix, negative)
+        when :u32  then gen_check_int_fits_in_size(UInt32, :u32, 10, number_size, raw_number_string, current_pos, start, pos_before_suffix, negative)
+        when :i64  then gen_check_int_fits_in_size(Int64, :i64, 19, number_size, raw_number_string, current_pos, start, pos_before_suffix, negative)
+        when :u64  then gen_check_int_fits_in_size(UInt64, :u64, 20, number_size, raw_number_string, current_pos, start, pos_before_suffix, negative)
+        when :i128 then gen_check_int_fits_in_size(Int128, :i64, 19, number_size, raw_number_string, current_pos, start, pos_before_suffix, negative, Int64)
+        when :u128 then gen_check_int_fits_in_size(UInt128, :u64, 20, number_size, raw_number_string, current_pos, start, pos_before_suffix, negative, UInt64)
         end
       end
     end
