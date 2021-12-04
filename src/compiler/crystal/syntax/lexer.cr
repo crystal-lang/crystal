@@ -1511,7 +1511,6 @@ module Crystal
         case current_char
         when '_'
           raise("consecutive underscores in numbers aren't allowed", @token, (current_pos - start)) if last_is_underscore
-          last_is_underscore = true
           has_underscores = last_is_underscore = true
         when '.'
           raise("trailing '_' in number", @token, (current_pos - start)) if last_is_underscore
