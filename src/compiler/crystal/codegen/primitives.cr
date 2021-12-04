@@ -293,7 +293,7 @@ class Crystal::CodeGenVisitor
   private def float32_upper_bound(max_value)
     {% begin %}
       case max_value
-      when Int32, UInt32, Int64, UInt64 {% unless flag?(:win32) %}, Int128, UInt128 {% end %}
+      when Int32, UInt32, Int64, UInt64 {% unless flag?(:win32) %}, Int128 {% end %}
         # TODO: 128-bit int-to-float does not work properly on windows
         max_value.class.new(max_value.to_f32.prev_float)
       else
@@ -305,7 +305,7 @@ class Crystal::CodeGenVisitor
   private def float64_upper_bound(max_value)
     {% begin %}
       case max_value
-      when Int32, UInt32, Int64, UInt64 {% unless flag?(:win32) %}, Int128, UInt128 {% end %}
+      when Int64, UInt64 {% unless flag?(:win32) %}, Int128, UInt128 {% end %}
         # TODO: 128-bit int-to-float does not work properly on windows
         max_value.class.new(max_value.to_f64.prev_float)
       else
