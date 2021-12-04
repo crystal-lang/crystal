@@ -30,7 +30,7 @@ describe "Normalize: multi assign" do
       CR
   end
 
-  context "without preview_multi_assign" do
+  context "without strict_multi_assign" do
     it "normalizes 1 to n" do
       assert_expand_second "d = 1; a, b, c = d", <<-CR
         __temp_1 = d
@@ -57,9 +57,9 @@ describe "Normalize: multi assign" do
     end
   end
 
-  context "preview_multi_assign" do
+  context "strict_multi_assign" do
     it "normalizes 1 to n" do
-      assert_expand_second "d = 1; a, b, c = d", <<-CR, flags: "preview_multi_assign"
+      assert_expand_second "d = 1; a, b, c = d", <<-CR, flags: "strict_multi_assign"
         __temp_1 = d
         if __temp_1.size != 3
           ::raise(::IndexError.new("Multiple assignment count mismatch"))
@@ -71,7 +71,7 @@ describe "Normalize: multi assign" do
     end
 
     it "normalizes 1 to n with []" do
-      assert_expand_third "a = 1; b = 2; a[0], b[1] = 2", <<-CR, flags: "preview_multi_assign"
+      assert_expand_third "a = 1; b = 2; a[0], b[1] = 2", <<-CR, flags: "strict_multi_assign"
         __temp_1 = 2
         if __temp_1.size != 2
           ::raise(::IndexError.new("Multiple assignment count mismatch"))
@@ -82,7 +82,7 @@ describe "Normalize: multi assign" do
     end
 
     it "normalizes 1 to n with call" do
-      assert_expand_third "a = 1; b = 2; a.foo, b.bar = 2", <<-CR, flags: "preview_multi_assign"
+      assert_expand_third "a = 1; b = 2; a.foo, b.bar = 2", <<-CR, flags: "strict_multi_assign"
         __temp_1 = 2
         if __temp_1.size != 2
           ::raise(::IndexError.new("Multiple assignment count mismatch"))

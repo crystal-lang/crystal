@@ -663,7 +663,7 @@ module Crystal
       #     a = temp[0]
       #     b = temp[1]
       #
-      # If the flag "preview_multi_assign" is present, requires `temp`'s size to
+      # If the flag "strict_multi_assign" is present, requires `temp`'s size to
       # match the number of assign targets exactly: (it must respond to `#size`)
       #
       #     temp = [1, 2]
@@ -689,7 +689,7 @@ module Crystal
       if node.values.size == 1
         value = node.values[0]
         middle_splat = splat_index && (0 < splat_index < node.targets.size - 1)
-        raise_on_count_mismatch = @program.has_flag?("preview_multi_assign") || middle_splat
+        raise_on_count_mismatch = @program.has_flag?("strict_multi_assign") || middle_splat
 
         temp_var = new_temp_var
 

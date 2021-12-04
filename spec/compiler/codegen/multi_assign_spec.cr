@@ -21,7 +21,7 @@ describe "Code gen: multi assign" do
       CR
   end
 
-  context "without preview_multi_assign" do
+  context "without strict_multi_assign" do
     it "doesn't raise if value size in 1 to n assignment doesn't match target count" do
       run(<<-CR).to_i.should eq(4)
         require "prelude"
@@ -37,9 +37,9 @@ describe "Code gen: multi assign" do
     end
   end
 
-  context "preview_multi_assign" do
+  context "strict_multi_assign" do
     it "raises if value size in 1 to n assignment doesn't match target count" do
-      run(<<-CR, flags: %w(preview_multi_assign)).to_i.should eq(5)
+      run(<<-CR, flags: %w(strict_multi_assign)).to_i.should eq(5)
         require "prelude"
 
         begin

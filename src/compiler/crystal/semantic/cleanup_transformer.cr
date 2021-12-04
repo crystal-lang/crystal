@@ -307,7 +307,7 @@ module Crystal
     end
 
     def transform(node : MultiAssign)
-      if @program.has_flag?("preview_multi_assign")
+      if @program.has_flag?("strict_multi_assign")
         if node.values.size == 1
           # the expanded node always starts with `temp = {{ node.values[0] }}`;
           # this is the whole Assign node and its deduced type is equal to the
