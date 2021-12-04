@@ -164,7 +164,7 @@ describe "Lexer" do
                 ["+1.0f32", "+1.0"], ["-1.0f32", "-1.0"], ["-0.0f32", "-0.0"], ["1_234.567_890_f32", "1234.567890"]]
   it_lexes_f64 ["1.0", ["1.0hello", "1.0"], "+1.0", "-1.0", ["1_234.567_890", "1234.567890"]]
   it_lexes_f32 [["1e+23_f32", "1e+23"], ["1.2e+23_f32", "1.2e+23"]]
-  it_lexes_f64 ["1e23", "1e-23", "1e+23", "1.2e+23", ["1e23f64", "1e23"], ["1.2e+23_f64", "1.2e+23"], "0e40", ["2_e2", "2e2"]]
+  it_lexes_f64 ["1e23", "1e-23", "1e+23", "1.2e+23", ["1e23f64", "1e23"], ["1.2e+23_f64", "1.2e+23"], "0e40", "2e01", ["2_e2", "2e2"]]
 
   it_lexes_number :i8, ["1i8", "1"]
   it_lexes_number :i8, ["1_i8", "1"]
@@ -367,6 +367,12 @@ describe "Lexer" do
   assert_syntax_error "4f33", "invalid float suffix"
   assert_syntax_error "4f65", "invalid float suffix"
   assert_syntax_error "4f22", "invalid float suffix"
+  assert_syntax_error "4i33", "invalid int suffix"
+  assert_syntax_error "4i65", "invalid int suffix"
+  assert_syntax_error "4i22", "invalid int suffix"
+  assert_syntax_error "4u33", "invalid uint suffix"
+  assert_syntax_error "4u65", "invalid uint suffix"
+  assert_syntax_error "4u22", "invalid uint suffix"
   # Tests for #8782
   assert_syntax_error "4F32", %(unexpected token: "F32")
   assert_syntax_error "4F64", %(unexpected token: "F64")
