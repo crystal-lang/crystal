@@ -210,7 +210,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type = type.remove_alias
 
       unless type.module?
-        node.raise "#{type} is not a module, it's a #{type.type_desc}"
+        node.raise "#{name} is not a module, it's a #{type.type_desc}"
       end
 
       if type_vars = node.type_vars
@@ -1090,12 +1090,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def check_ditto(node : Def | Assign | FunDef | Const | Macro, location : Location?) : Nil
     return if !@program.wants_doc?
-    stripped_doc = node.doc.try &.strip
-    if stripped_doc == ":ditto:"
-      node.doc = @last_doc
-    else
-      @last_doc = node.doc
+
+    if stripped_doc = node.doc.try &.strip
+      if stripped_doc == ":ditto:"
+        node.doc = @last_doc
+        return
+      elsif appendix = stripped_doc.lchop?(":ditto:\n")
+        node.doc = "#{@last_doc}\n\n#{appendix.lchop('\n')}"
+        return
+      end
     end
+
+    @last_doc = node.doc
   end
 
   def annotations_doc(annotations)

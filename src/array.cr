@@ -52,6 +52,12 @@ class Array(T)
   # Size of an Array that we consider small to do linear scans or other optimizations.
   private SMALL_ARRAY_SIZE = 16
 
+  # The initial capacity reserved for new arrays; just a lucky number
+  private INITIAL_CAPACITY = 3
+
+  # The capacity threshold before we stop doubling array during resize.
+  private CAPACITY_THRESHOLD = 256
+
   # The size of this array.
   @size : Int32
 
@@ -153,7 +159,7 @@ class Array(T)
   # ary[0][0] = 2
   # ary # => [[2], [1], [1]]
   # ```
-  def self.new(size : Int, &block : Int32 -> T)
+  def self.new(size : Int, & : Int32 -> T)
     Array(T).build(size) do |buffer|
       size.to_i.times do |i|
         buffer[i] = yield i
@@ -173,7 +179,7 @@ class Array(T)
   #   LibSome.fill_buffer_and_return_number_of_elements_filled(buffer)
   # end
   # ```
-  def self.build(capacity : Int) : self
+  def self.build(capacity : Int, & : Pointer(T) ->) : self
     ary = Array(T).new(capacity)
     ary.size = (yield ary.to_unsafe).to_i
     ary
@@ -208,7 +214,6 @@ class Array(T)
     equals?(other) { |x, y| x == y }
   end
 
-  # :nodoc:
   def ==(other)
     false
   end
@@ -412,12 +417,12 @@ class Array(T)
   end
 
   # Replaces a subrange with a single value. All elements in the range
-  # `index...index+count` are removed and replaced by a single element
+  # `start...start+count` are removed and replaced by a single element
   # *value*.
   #
-  # If *count* is zero, *value* is inserted at *index*.
+  # If *count* is zero, *value* is inserted at *start*.
   #
-  # Negative values of *index* count from the end of the array.
+  # Negative values of *start* count from the end of the array.
   #
   # ```
   # a = [1, 2, 3, 4, 5]
@@ -428,18 +433,18 @@ class Array(T)
   # a[1, 0] = 6
   # a # => [1, 6, 2, 3, 4, 5]
   # ```
-  def []=(index : Int, count : Int, value : T)
-    index, count = normalize_start_and_count(index, count)
+  def []=(start : Int, count : Int, value : T)
+    start, count = normalize_start_and_count(start, count)
 
     case count
     when 0
-      insert index, value
+      insert start, value
     when 1
-      @buffer[index] = value
+      @buffer[start] = value
     else
       diff = count - 1
 
-      # If index is 0 we can avoid a memcpy by doing a shift.
+      # If *start* is 0 we can avoid a memcpy by doing a shift.
       # For example if we have:
       #
       #    a = ['a', 'b', 'c', 'd']
@@ -454,20 +459,26 @@ class Array(T)
       #           ^
       #
       # (we also have to clear the elements before that)
-      if index == 0
+      if start == 0
         @buffer.clear(diff)
         shift_buffer_by(diff)
         @buffer.value = value
       else
-        (@buffer + index + 1).move_from(@buffer + index + count, size - index - count)
+        (@buffer + start + 1).move_from(@buffer + start + count, size - start - count)
         (@buffer + @size - diff).clear(diff)
-        @buffer[index] = value
+        @buffer[start] = value
       end
 
       @size -= diff
     end
 
     value
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#[]=(start, count, value)` instead")]
+  def []=(value : T, *, index start : Int, count : Int)
+    self[start, count] = value
   end
 
   # Replaces a subrange with a single value.
@@ -504,29 +515,35 @@ class Array(T)
   # a[1, 3] = [6, 7, 8, 9, 10]
   # a # => [1, 6, 7, 8, 9, 10, 5]
   # ```
-  def []=(index : Int, count : Int, values : Array(T))
-    index, count = normalize_start_and_count(index, count)
+  def []=(start : Int, count : Int, values : Array(T))
+    start, count = normalize_start_and_count(start, count)
     diff = values.size - count
 
     if diff == 0
       # Replace values directly
-      (@buffer + index).copy_from(values.to_unsafe, values.size)
+      (@buffer + start).copy_from(values.to_unsafe, values.size)
     elsif diff < 0
       # Need to shrink
       diff = -diff
-      (@buffer + index).copy_from(values.to_unsafe, values.size)
-      (@buffer + index + values.size).move_from(@buffer + index + count, size - index - count)
+      (@buffer + start).copy_from(values.to_unsafe, values.size)
+      (@buffer + start + values.size).move_from(@buffer + start + count, size - start - count)
       (@buffer + @size - diff).clear(diff)
       @size -= diff
     else
       # Need to grow
       resize_to_capacity(Math.pw2ceil(@size + diff))
-      (@buffer + index + values.size).move_from(@buffer + index + count, size - index - count)
-      (@buffer + index).copy_from(values.to_unsafe, values.size)
+      (@buffer + start + values.size).move_from(@buffer + start + count, size - start - count)
+      (@buffer + start).copy_from(values.to_unsafe, values.size)
       @size += diff
     end
 
     values
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#[]=(start, count, values)` instead")]
+  def []=(values : Array(T), *, index start : Int, count : Int)
+    self[start, count] = values
   end
 
   # Replaces a subrange with the elements of the given array.
@@ -748,7 +765,7 @@ class Array(T)
     buf = @buffer + len
     other.each do |elem|
       if left_before_resize == 0
-        double_capacity
+        increase_capacity
         left_before_resize = remaining_capacity - len
         buf = @buffer + len
       end
@@ -815,14 +832,13 @@ class Array(T)
   # a.delete_at(99..100) # raises IndexError
   # ```
   def delete_at(range : Range) : self
-    index, count = Indexable.range_to_index_and_count(range, self.size) || raise IndexError.new
-    delete_at(index, count)
+    delete_at(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
   end
 
-  # Removes *count* elements from `self` starting at *index*.
+  # Removes *count* elements from `self` starting at *start*.
   # If the size of `self` is less than *count*, removes values to the end of the array without error.
   # Returns an array of the removed elements with the original order of `self` preserved.
-  # Raises `IndexError` if *index* is out of range.
+  # Raises `IndexError` if *start* is out of range.
   #
   # ```
   # a = ["ant", "bat", "cat", "dog"]
@@ -830,14 +846,20 @@ class Array(T)
   # a                  # => ["ant", "dog"]
   # a.delete_at(99, 1) # raises IndexError
   # ```
-  def delete_at(index : Int, count : Int) : self
-    index, count = normalize_start_and_count(index, count)
+  def delete_at(start : Int, count : Int) : self
+    start, count = normalize_start_and_count(start, count)
 
-    val = self[index, count]
-    (@buffer + index).move_from(@buffer + index + count, size - index - count)
+    val = self[start, count]
+    (@buffer + start).move_from(@buffer + start + count, size - start - count)
     @size -= count
     (@buffer + @size).clear(count)
     val
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#delete_at(start, count)` instead")]
+  def delete_at(*, index start : Int, count : Int) : self
+    delete_at(start, count)
   end
 
   # Returns a new `Array` that has exactly `self`'s elements.
@@ -863,33 +885,34 @@ class Array(T)
     end
   end
 
-  # Yields each index of `self`, starting at *from*, to the given block and then assigns
+  # Yields each index of `self`, starting at *start*, to the given block and then assigns
   # the block's value in that position. Returns `self`.
   #
-  # Negative values of *from* count from the end of the array.
+  # Negative values of *start* count from the end of the array.
   #
-  # Raises `IndexError` if *from* is outside the array range.
+  # Raises `IndexError` if *start* is outside the array range.
   #
   # ```
   # a = [1, 2, 3, 4]
   # a.fill(2) { |i| i * i } # => [1, 2, 4, 9]
   # ```
-  def fill(from : Int, & : Int32 -> T) : self
-    from += size if from < 0
-
-    raise IndexError.new unless 0 <= from < size
-
-    to_unsafe_slice(from, size - from).fill(offset: from) { |i| yield i }
-
-    self
+  @[Deprecated("Use `fill(start.., &)` instead")]
+  def fill(start : Int, & : Int32 -> T) : self
+    fill(start..) { |i| yield i }
   end
 
-  # Yields each index of `self`, starting at *from* and just *count* times,
+  # :ditto:
+  @[Deprecated("Use `fill(start.., &)` instead")]
+  def fill(*, from start : Int, & : Int32 -> T) : self
+    fill(start..) { |i| yield i }
+  end
+
+  # Yields each index of `self`, starting at *start* and just *count* times,
   # to the given block and then assigns the block's value in that position. Returns `self`.
   #
-  # Negative values of *from* count from the end of the array.
+  # Negative values of *start* count from the end of the array.
   #
-  # Raises `IndexError` if *from* is outside the array range.
+  # Raises `IndexError` if *start* is outside the array range.
   #
   # Has no effect if *count* is zero or negative.
   #
@@ -897,29 +920,9 @@ class Array(T)
   # a = [1, 2, 3, 4, 5, 6]
   # a.fill(2, 2) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
   # ```
-  def fill(from : Int, count : Int, & : Int32 -> T) : self
-    return self if count <= 0
-
-    from += size if from < 0
-
-    raise IndexError.new unless 0 <= from < size && from + count <= size
-
-    to_unsafe_slice(from, count).fill(offset: from) { |i| yield i }
-
-    self
-  end
-
-  # Yields each index of `self`, in the given *range*, to the given block and then assigns
-  # the block's value in that position. Returns `self`.
-  #
-  # ```
-  # a = [1, 2, 3, 4, 5, 6]
-  # a.fill(2..3) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
-  # ```
-  def fill(range : Range, & : Int32 -> T) : self
-    fill(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new) do |i|
-      yield i
-    end
+  @[Deprecated("Use `Indexable::Mutable#fill(start, count, &)` instead")]
+  def fill(*, from start : Int, count : Int, & : Int32 -> T) : self
+    fill(start, count) { |i| yield i }
   end
 
   # :inherit:
@@ -929,43 +932,48 @@ class Array(T)
     self
   end
 
-  # Replaces every element in `self`, starting at *from*, with the given *value*. Returns `self`.
+  # Replaces every element in `self`, starting at *start*, with the given *value*. Returns `self`.
   #
-  # Negative values of *from* count from the end of the array.
+  # Negative values of *start* count from the end of the array.
   #
   # ```
   # a = [1, 2, 3, 4, 5]
   # a.fill(9, 2) # => [1, 2, 9, 9, 9]
   # ```
-  def fill(value : T, from : Int) : self
-    from += size if from < 0
+  @[Deprecated("Use `fill(value, start..)` instead")]
+  def fill(value : T, start : Int) : self
+    fill(value, start..)
+  end
 
-    raise IndexError.new unless 0 <= from < size
+  # :ditto:
+  @[Deprecated("Use `fill(value, start..)` instead")]
+  def fill(value : T, *, from start : Int) : self
+    fill(value, start..)
+  end
 
-    to_unsafe_slice(from, size - from).fill(value)
-
+  # Replaces *count* or less (if there aren't enough) elements starting at the
+  # given *start* index with *value*. Returns `self`.
+  #
+  # Negative values of *start* count from the end of the container.
+  #
+  # Raises `IndexError` if the *start* index is out of range.
+  #
+  # Raises `ArgumentError` if *count* is negative.
+  #
+  # ```
+  # array = [1, 2, 3, 4, 5]
+  # array.fill(9, 2, 2) # => [1, 2, 9, 9, 5]
+  # array               # => [1, 2, 9, 9, 5]
+  # ```
+  def fill(value : T, start : Int, count : Int) : self
+    to_unsafe_slice.fill(value, start, count)
     self
   end
 
-  # Replaces every element in `self`, starting at *from* and only *count* times,
-  # with the given *value*. Returns `self`.
-  #
-  # Negative values of *from* count from the end of the array.
-  #
-  # ```
-  # a = [1, 2, 3, 4, 5]
-  # a.fill(9, 2, 2) # => [1, 2, 9, 9, 5]
-  # ```
-  def fill(value : T, from : Int, count : Int) : self
-    return self if count <= 0
-
-    from += size if from < 0
-
-    raise IndexError.new unless 0 <= from < size && from + count <= size
-
-    to_unsafe_slice(from, count).fill(value)
-
-    self
+  # :ditto:
+  @[Deprecated("Use `#fill(value, start, count)` instead")]
+  def fill(value : T, *, from start : Int, count : Int) : self
+    fill(value, start, count)
   end
 
   # Replaces every element in *range* with *value*. Returns `self`.
@@ -977,7 +985,8 @@ class Array(T)
   # a.fill(9, 2..3) # => [1, 2, 9, 9, 5]
   # ```
   def fill(value : T, range : Range) : self
-    fill(value, *Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
+    to_unsafe_slice.fill(value, range)
+    self
   end
 
   # Returns the first *n* elements of the array.
@@ -1023,7 +1032,6 @@ class Array(T)
     self
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     to_s io
   end
@@ -1048,7 +1056,7 @@ class Array(T)
   end
 
   # Optimized version of `Enumerable#map`.
-  def map(&block : T -> U) forall U
+  def map(& : T -> U) forall U
     Array(U).new(size) { |i| yield @buffer[i] }
   end
 
@@ -1062,7 +1070,7 @@ class Array(T)
   # ```
   #
   # See also: `Array#select`.
-  def select!
+  def select!(& : T ->) : self
     reject! { |elem| !yield(elem) }
   end
 
@@ -1090,7 +1098,7 @@ class Array(T)
   # ```
   #
   # See also: `Array#reject`.
-  def reject!
+  def reject!(& : T ->) : self
     internal_delete { |e| yield e }
     self
   end
@@ -1151,8 +1159,8 @@ class Array(T)
   # results = gems.map_with_index { |gem, i| "#{i}: #{gem}" }
   # results # => ["0: crystal", "1: pearl", "2: diamond"]
   # ```
-  def map_with_index(offset = 0, &block : T, Int32 -> U) forall U
-    Array(U).new(size) { |i| yield @buffer[i], offset + i }
+  def map_with_index(offset = 0, & : T, Int32 -> _)
+    Array.new(size) { |i| yield @buffer[i], offset + i }
   end
 
   # Returns an `Array` with the first *count* elements removed
@@ -1188,57 +1196,32 @@ class Array(T)
     FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
   end
 
+  # Returns an `Array` of all ordered combinations of elements taken from each
+  # of the *arrays* as `Array`s.
+  # Traversal of elements starts from the last given array.
+  @[Deprecated("Use `Indexable.cartesian_product(indexables : Indexable(Indexable))` instead")]
   def self.product(arrays : Array(Array))
-    result = [] of Array(typeof(Enumerable.element_type Enumerable.element_type arrays))
-    each_product(arrays) do |product|
-      result << product
-    end
-    result
+    Indexable.cartesian_product(arrays)
   end
 
+  # :ditto:
+  @[Deprecated("Use `Indexable.cartesian_product(indexables : Indexable(Indexable))` instead")]
   def self.product(*arrays : Array)
-    product(arrays.to_a)
+    Indexable.cartesian_product(arrays)
   end
 
+  # Yields each ordered combination of the elements taken from each of the
+  # *arrays* as `Array`s.
+  # Traversal of elements starts from the last given array.
+  @[Deprecated("Use `Indexable.each_cartesian(indexables : Indexable(Indexable), reuse = false, &block)` instead")]
   def self.each_product(arrays : Array(Array), reuse = false)
-    lens = arrays.map &.size
-    return if lens.any? &.==(0)
-
-    pool = arrays.map &.first
-
-    n = arrays.size
-    indices = Array.new(n, 0)
-
-    if reuse
-      unless reuse.is_a?(Array)
-        reuse = typeof(pool).new(n)
-      end
-    else
-      reuse = nil
-    end
-
-    yield pool_slice(pool, n, reuse)
-
-    while true
-      i = n - 1
-      indices[i] += 1
-
-      while indices[i] >= lens[i]
-        indices[i] = 0
-        pool[i] = arrays[i][indices[i]]
-        i -= 1
-        return if i < 0
-        indices[i] += 1
-      end
-      pool[i] = arrays[i][indices[i]]
-      yield pool_slice(pool, n, reuse)
-    end
+    Indexable.each_cartesian(arrays, reuse: reuse) { |r| yield r }
   end
 
+  # :ditto:
+  @[Deprecated("Use `Indexable.each_cartesian(indexables : Indexable(Indexable), reuse = false, &block)` instead")]
   def self.each_product(*arrays : Array, reuse = false)
-    each_product(arrays.to_a, reuse: reuse) do |result|
-      yield result
-    end
+    Indexable.each_cartesian(arrays, reuse: reuse) { |r| yield r }
   end
 
   def repeated_permutations(size : Int = self.size) : Array(Array(T))
@@ -1257,7 +1240,7 @@ class Array(T)
     if size == 0
       yield([] of T)
     else
-      Array.each_product(Array.new(size, self), reuse: reuse) { |r| yield r }
+      Indexable.each_cartesian(Array.new(size, self), reuse: reuse) { |r| yield r }
     end
   end
 
@@ -1342,15 +1325,19 @@ class Array(T)
     pop { nil }
   end
 
+  # Returns an `Array` of all ordered combinations of elements taken from each
+  # of `self` and *ary* as `Tuple`s.
+  # Traversal of elements starts from *ary*.
+  @[Deprecated("Use `Indexable#cartesian_product(*others : Indexable)` instead")]
   def product(ary : Array(U)) forall U
-    result = Array({T, U}).new(size * ary.size)
-    product(ary) do |x, y|
-      result << {x, y}
-    end
-    result
+    cartesian_product(ary)
   end
 
-  def product(enumerable : Enumerable, &block)
+  # Yields each ordered combination of the elements taken from each of `self`
+  # and *enumerable* as a `Tuple`.
+  # Traversal of elements starts from *enumerable*.
+  @[Deprecated("Use `Indexable#each_cartesian(*others : Indexable, &block)` instead")]
+  def product(enumerable : Enumerable, &)
     self.each { |a| enumerable.each { |b| yield a, b } }
   end
 
@@ -1412,38 +1399,8 @@ class Array(T)
   end
 
   # :inherit:
-  def rotate!(n = 1) : self
-    return self if size == 0
-    n %= size
-
-    if n == 0
-    elsif n == 1
-      tmp = self[0]
-      @buffer.move_from(@buffer + n, size - n)
-      self[-1] = tmp
-    elsif n == (size - 1)
-      tmp = self[-1]
-      (@buffer + size - n).move_from(@buffer, n)
-      self[0] = tmp
-    elsif n <= SMALL_ARRAY_SIZE
-      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
-      tmp_buffer.to_unsafe.copy_from(@buffer, n)
-      @buffer.move_from(@buffer + n, size - n)
-      (@buffer + size - n).copy_from(tmp_buffer.to_unsafe, n)
-    elsif size - n <= SMALL_ARRAY_SIZE
-      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
-      tmp_buffer.to_unsafe.copy_from(@buffer + n, size - n)
-      (@buffer + size - n).move_from(@buffer, n)
-      @buffer.copy_from(tmp_buffer.to_unsafe, size - n)
-    elsif n <= size // 2
-      tmp = self[0..n]
-      @buffer.move_from(@buffer + n, size - n)
-      (@buffer + size - n).copy_from(tmp.to_unsafe, n)
-    else
-      tmp = self[n..-1]
-      (@buffer + size - n).move_from(@buffer, n)
-      @buffer.copy_from(tmp.to_unsafe, size - n)
-    end
+  def rotate!(n : Int = 1) : self
+    to_unsafe_slice.rotate!(n)
     self
   end
 
@@ -1579,32 +1536,40 @@ class Array(T)
     dup.shuffle!(random)
   end
 
-  # Returns a new array with all elements sorted based on the return value of
-  # their comparison method `#<=>`
+  # Returns a new instance with all elements sorted based on the return value of
+  # their comparison method `T#<=>` (see `Comparable#<=>`), using a stable sort algorithm.
   #
   # ```
   # a = [3, 1, 2]
   # a.sort # => [1, 2, 3]
   # a      # => [3, 1, 2]
   # ```
+  #
+  # See `Indexable::Mutable#sort!` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
   def sort : Array(T)
     dup.sort!
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted based on the return value of
+  # their comparison method `T#<=>` (see `Comparable#<=>`), using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # ```
+  # a = [3, 1, 2]
+  # a.unstable_sort # => [1, 2, 3]
+  # a               # => [3, 1, 2]
+  # ```
+  #
+  # See `Indexable::Mutable#unstable_sort!` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two elements returns `nil`.
   def unstable_sort : Array(T)
     dup.unstable_sort!
   end
 
-  # Returns a new array with all elements sorted based on the comparator in the
-  # given block.
-  #
-  # The block must implement a comparison between two elements *a* and *b*,
-  # where `a < b` returns `-1`, `a == b` returns `0`, and `a > b` returns `1`.
-  # The comparison operator `<=>` can be used for this.
+  # Returns a new instance with all elements sorted based on the comparator in the
+  # given block, using a stable sort algorithm.
   #
   # ```
   # a = [3, 1, 2]
@@ -1613,6 +1578,10 @@ class Array(T)
   # b # => [3, 2, 1]
   # a # => [3, 1, 2]
   # ```
+  #
+  # See `Indexable::Mutable#sort!(&block : T, T -> U)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def sort(&block : T, T -> U) : Array(T) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
@@ -1621,10 +1590,20 @@ class Array(T)
     dup.sort! &block
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted based on the comparator in the
+  # given block, using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # ```
+  # a = [3, 1, 2]
+  # b = a.unstable_sort { |a, b| b <=> a }
+  #
+  # b # => [3, 2, 1]
+  # a # => [3, 1, 2]
+  # ```
+  #
+  # See `Indexable::Mutable#unstable_sort!(&block : T, T -> U)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if for any two elements the block returns `nil`.
   def unstable_sort(&block : T, T -> U) : Array(T) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
@@ -1633,42 +1612,20 @@ class Array(T)
     dup.unstable_sort!(&block)
   end
 
-  # Modifies `self` by sorting all elements based on the return value of their
-  # comparison method `#<=>`
-  #
-  # ```
-  # a = [3, 1, 2]
-  # a.sort!
-  # a # => [1, 2, 3]
-  # ```
+  # :inherit:
   def sort! : Array(T)
     to_unsafe_slice.sort!
     self
   end
 
-  # :ditto:
-  #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort! : Array(T)
+  # :inherit:
+  def unstable_sort! : self
     to_unsafe_slice.unstable_sort!
     self
   end
 
-  # Modifies `self` by sorting all elements based on the comparator in the given
-  # block.
-  #
-  # The given block must implement a comparison between two elements
-  # *a* and *b*, where `a < b` returns `-1`, `a == b` returns `0`,
-  # and `a > b` returns `1`.
-  # The comparison operator `<=>` can be used for this.
-  #
-  # ```
-  # a = [3, 1, 2]
-  # a.sort! { |a, b| b <=> a }
-  # a # => [3, 2, 1]
-  # ```
-  def sort!(&block : T, T -> U) : Array(T) forall U
+  # :inherit:
+  def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
@@ -1677,11 +1634,8 @@ class Array(T)
     self
   end
 
-  # :ditto:
-  #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
-  def unstable_sort!(&block : T, T -> U) : Array(T) forall U
+  # :inherit:
+  def unstable_sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
@@ -1690,9 +1644,9 @@ class Array(T)
     self
   end
 
-  # Returns a new array with all elements sorted. The given block is called for
-  # each element, then the comparison method #<=> is called on the object
-  # returned from the block to determine sort order.
+  # Returns a new instance with all elements sorted by the output value of the
+  # block. The output values are compared via the comparison method `T#<=>`
+  # (see `Comparable#<=>`), using a stable sort algorithm.
   #
   # ```
   # a = %w(apple pear fig)
@@ -1700,27 +1654,38 @@ class Array(T)
   # b # => ["fig", "pear", "apple"]
   # a # => ["apple", "pear", "fig"]
   # ```
+  #
+  # If stability is expendable, `#unstable_sort_by(&block : T -> _)` provides a
+  # performance advantage over stable sort.
+  #
+  # See `Indexable::Mutable#sort_by!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
   def sort_by(&block : T -> _) : Array(T)
     dup.sort_by! { |e| yield(e) }
   end
 
-  # :ditto:
+  # Returns a new instance with all elements sorted by the output value of the
+  # block. The output values are compared via the comparison method `#<=>`
+  # (see `Comparable#<=>`), using an unstable sort algorithm.
   #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # ```
+  # a = %w(apple pear fig)
+  # b = a.unstable_sort_by { |word| word.size }
+  # b # => ["fig", "pear", "apple"]
+  # a # => ["apple", "pear", "fig"]
+  # ```
+  #
+  # If stability is necessary, use `#sort_by(&block : T -> _)` instead.
+  #
+  # See `Indexable::Mutable#unstable_sort!(&block : T -> _)` for details on the sorting mechanism.
+  #
+  # Raises `ArgumentError` if the comparison between any two comparison values returns `nil`.
   def unstable_sort_by(&block : T -> _) : Array(T)
     dup.unstable_sort_by! { |e| yield(e) }
   end
 
-  # Modifies `self` by sorting all elements. The given block is called for
-  # each element, then the comparison method #<=> is called on the object
-  # returned from the block to determine sort order.
-  #
-  # ```
-  # a = %w(apple pear fig)
-  # a.sort_by! { |word| word.size }
-  # a # => ["fig", "pear", "apple"]
-  # ```
+  # :inherit:
   def sort_by!(&block : T -> _) : Array(T)
     sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
     @size.times do |i|
@@ -1729,10 +1694,7 @@ class Array(T)
     self
   end
 
-  # :ditto:
-  #
-  # This method does not guarantee stability between equally sorting elements.
-  # Which results in a performance advantage over stable sort.
+  # :inherit:
   def unstable_sort_by!(&block : T -> _) : Array(T)
     sorted = map { |e| {e, yield(e)} }.unstable_sort! { |x, y| x[1] <=> y[1] }
     @size.times do |i|
@@ -1874,7 +1836,7 @@ class Array(T)
   # a.uniq { |s| s[0] } # => [{"student", "sam"}, {"teacher", "matz"}]
   # a                   # => [{"student", "sam"}, {"student", "george"}, {"teacher", "matz"}]
   # ```
-  def uniq(&block : T -> _)
+  def uniq(& : T ->)
     if size <= 1
       dup
     else
@@ -1915,7 +1877,7 @@ class Array(T)
   # a.uniq! { |s| s[0] } # => [{"student", "sam"}, {"teacher", "matz"}]
   # a                    # => [{"student", "sam"}, {"teacher", "matz"}]
   # ```
-  def uniq!
+  def uniq!(& : T ->) : self
     if size <= 1
       return self
     end
@@ -2033,7 +1995,7 @@ class Array(T)
       # and now we don't have any offset to the root buffer
       reset_buffer_to_root_buffer
     else
-      double_capacity
+      increase_capacity
     end
   end
 
@@ -2065,7 +2027,7 @@ class Array(T)
       # `[-, -, -, 'c', 'd', -]`
       shift_buffer_by(half_capacity)
     else
-      double_capacity_for_unshift
+      increase_capacity_for_unshift
     end
   end
 
@@ -2073,8 +2035,18 @@ class Array(T)
     @capacity - @offset_to_buffer
   end
 
-  private def double_capacity
-    resize_to_capacity(@capacity == 0 ? 3 : (@capacity * 2))
+  private def calculate_new_capacity
+    return INITIAL_CAPACITY if @capacity == 0
+
+    if @capacity < CAPACITY_THRESHOLD
+      @capacity * 2
+    else
+      @capacity + (@capacity + 3 * CAPACITY_THRESHOLD) // 4
+    end
+  end
+
+  private def increase_capacity
+    resize_to_capacity(calculate_new_capacity)
   end
 
   private def resize_to_capacity(capacity)
@@ -2089,8 +2061,8 @@ class Array(T)
   # Similar to double capacity, except that after reallocating the buffer
   # we point it to the middle of the buffer in case more unshifts come right away.
   # This assumes @offset_to_buffer is zero.
-  private def double_capacity_for_unshift
-    resize_to_capacity_for_unshift(@capacity == 0 ? 3 : (@capacity * 2))
+  private def increase_capacity_for_unshift
+    resize_to_capacity_for_unshift(calculate_new_capacity)
   end
 
   private def resize_to_capacity_for_unshift(capacity)
@@ -2141,16 +2113,16 @@ class Array(T)
     Slice.new(@buffer, size)
   end
 
-  private def to_unsafe_slice(index : Int, count : Int)
-    index, count = normalize_start_and_count(index, count)
-    Slice.new(@buffer + index, count)
+  private def to_unsafe_slice(start : Int, count : Int)
+    start, count = normalize_start_and_count(start, count)
+    Slice.new(@buffer + start, count)
   end
 
   protected def to_lookup_hash
     to_lookup_hash { |elem| elem }
   end
 
-  protected def to_lookup_hash(&block : T -> U) forall U
+  protected def to_lookup_hash(& : T -> U) forall U
     each_with_object(Hash(U, T).new) do |o, h|
       key = yield o
       unless h.has_key?(key)
@@ -2159,7 +2131,6 @@ class Array(T)
     end
   end
 
-  # :nodoc:
   def index(object, offset : Int = 0)
     # Optimize for the case of looking for a byte in a byte slice
     if T.is_a?(UInt8.class) &&
@@ -2203,15 +2174,5 @@ class Array(T)
         ary
       end
     end
-  end
-end
-
-private def pool_slice(pool, size, reuse)
-  if reuse
-    reuse.clear
-    size.times { |i| reuse << pool[i] }
-    reuse
-  else
-    pool[0, size]
   end
 end

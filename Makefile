@@ -29,7 +29,7 @@ O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 override FLAGS += $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )
-SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler
+SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler --exclude-warnings spec/primitives
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD 2> /dev/null)
@@ -99,8 +99,16 @@ std_spec: $(O)/std_spec ## Run standard library specs
 compiler_spec: $(O)/compiler_spec ## Run compiler specs
 	$(O)/compiler_spec $(SPEC_FLAGS)
 
+.PHONY: primitives_spec
+primitives_spec: $(O)/primitives_spec ## Run primitives specs
+	$(O)/primitives_spec $(SPEC_FLAGS)
+
 .PHONY: smoke_test ## Build specs as a smoke test
 smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal
+
+.PHONY: samples ## Build example programs
+samples:
+	$(MAKE) -C samples
 
 .PHONY: docs
 docs: ## Generate standard library documentation
@@ -162,6 +170,10 @@ $(O)/std_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 $(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr
+
+$(O)/primitives_spec: $(O)/crystal $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+	@mkdir -p $(O)
+	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
 
 $(O)/crystal: $(DEPS) $(SOURCES)
 	@mkdir -p $(O)

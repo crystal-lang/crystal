@@ -55,6 +55,26 @@ class LLVM::Module
     GlobalCollection.new(self)
   end
 
+  def add_flag(module_flag : ModuleFlag, key : String, val : Value)
+    {% if LibLLVM::IS_LT_70 %}
+      values = [
+        context.int32.const_int(module_flag.value),
+        context.md_string(key.to_s),
+        val,
+      ]
+      md_node = context.md_node(values)
+      LibLLVM.add_named_metadata_operand(self, "llvm.module.flags", md_node)
+    {% else %}
+      LibLLVM.add_module_flag(
+        self,
+        module_flag,
+        key,
+        key.bytesize,
+        LibLLVM.metadata_as_value(val.to_unsafe)
+      )
+    {% end %}
+  end
+
   def write_bitcode_to_file(filename : String)
     LibLLVM.write_bitcode_to_file self, filename
   end
@@ -93,10 +113,6 @@ class LLVM::Module
 
   def new_function_pass_manager
     FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
-  end
-
-  def add_named_metadata_operand(name : String, value : Value) : Nil
-    LibLLVM.add_named_metadata_operand(self, name, value)
   end
 
   def ==(other : self)

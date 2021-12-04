@@ -109,7 +109,7 @@ describe "Semantic: splat" do
       else
         4
       end
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if doesn't match splat with type restriction" do
