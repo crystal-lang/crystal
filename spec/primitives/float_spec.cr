@@ -2,6 +2,26 @@ require "spec"
 require "../support/number"
 
 describe "Primitives: Float" do
+  {% for op in %w(== != < <= > >=) %}
+    {% unequal = (op == "!=") %}
+    describe {{ "##{op.id}" }} do
+      {% for float in BUILTIN_FLOAT_TYPES %}
+        {% for float2 in BUILTIN_FLOAT_TYPES %}
+          it {{ "returns #{unequal} for #{float}::NAN #{op.id} #{float2}::NAN" }} do
+            ({{ float }}::NAN {{ op.id }} {{ float2 }}::NAN).should eq({{ unequal }})
+          end
+        {% end %}
+
+        {% for num in BUILTIN_NUMBER_TYPES %}
+          it {{ "returns #{unequal} for #{float}::NAN #{op.id} #{num}.zero" }} do
+            ({{ float }}::NAN {{ op.id }} {{ num }}.zero).should eq({{ unequal }})
+            ({{ num }}.zero {{ op.id }} {{ float }}::NAN).should eq({{ unequal }})
+          end
+        {% end %}
+      {% end %}
+    end
+  {% end %}
+
   describe "#to_i" do
     {% for float in BUILTIN_FLOAT_TYPES %}
       {% for method, int in BUILTIN_INT_CONVERSIONS %}
