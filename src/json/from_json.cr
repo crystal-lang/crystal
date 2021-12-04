@@ -85,10 +85,15 @@ end
                        } %}
   def {{type.id}}.new(pull : JSON::PullParser)
     location = pull.location
-    value = pull.read_int
+    value =
+      {% if type == "UInt64" %}
+        pull.read_raw
+      {% else %}
+        pull.read_int
+      {% end %}
     begin
       value.to_{{method.id}}
-    rescue ex : OverflowError
+    rescue ex : OverflowError | ArgumentError
       raise JSON::ParseException.new("Can't read {{type.id}}", *location, ex)
     end
   end

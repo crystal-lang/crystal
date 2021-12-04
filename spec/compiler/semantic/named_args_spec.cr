@@ -95,7 +95,7 @@ describe "Semantic: named args" do
       end
 
       foo x: 1, y: 2
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "sends two regular arguments as named arguments in inverted position (1)" do
@@ -279,7 +279,7 @@ describe "Semantic: named args" do
       end
 
       foo nil, y: 2
-      )) { bool }
+      ), inject_primitives: true) { bool }
   end
 
   it "matches specific overload with named arguments (2) (#2753)" do
@@ -295,7 +295,7 @@ describe "Semantic: named args" do
       end
 
       foo nil, z: 1, y: 2
-      )) { bool }
+      ), inject_primitives: true) { bool }
   end
 
   it "gives correct error message with external names (#3934)" do

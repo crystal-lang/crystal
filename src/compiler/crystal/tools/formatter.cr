@@ -1107,7 +1107,7 @@ module Crystal
         next_token_skip_space_or_newline
       end
 
-      if node.question?
+      if node.suffix.question?
         node.type_vars[0].accept self
         skip_space
         write_token :"?"
@@ -1115,28 +1115,35 @@ module Crystal
       end
 
       # Check if it's T* instead of Pointer(T)
-      if first_name == "Pointer" && @token.value != "Pointer"
+      if node.suffix.asterisk?
+        # Count nesting asterisk
+        asterisks = 1
+        while (type_var = node.type_vars.first) && type_var.is_a?(Generic) && type_var.suffix.asterisk?
+          node = type_var
+          asterisks += 1
+        end
+
         type_var = node.type_vars.first
         accept type_var
         skip_space_or_newline
 
-        # Another case is T** instead of Pointer(Pointer(T))
-        if @token.type == :"**"
-          if type_var.is_a?(Generic)
+        while asterisks > 0
+          skip_space
+          if @token.type == :"**" && asterisks >= 2
             write "**"
             next_token
+            asterisks -= 2
           else
-            # Skip
+            write_token :"*"
+            asterisks -= 1
           end
-        else
-          write_token :"*"
         end
 
         return false
       end
 
       # Check if it's T[N] instead of StaticArray(T, N)
-      if first_name == "StaticArray" && @token.value != "StaticArray"
+      if node.suffix.bracket?
         accept node.type_vars[0]
         skip_space_or_newline
         write_token :"["
@@ -1459,7 +1466,8 @@ module Crystal
       write node.name
 
       indent do
-        next_token_skip_space
+        next_token
+        skip_space consume_newline: false
         next_token_skip_space if @token.type == :"="
       end
 
@@ -2949,7 +2957,8 @@ module Crystal
           write " "
         end
         write "do"
-        next_token_skip_space
+        next_token
+        skip_space(@indent + 2)
         body = format_block_args node.args, node
         old_implicit_exception_handler_indent, @implicit_exception_handler_indent = @implicit_exception_handler_indent, @indent
         format_nested_with_end body
@@ -3668,8 +3677,9 @@ module Crystal
           @when_infos << AlignInfo.new(node.object_id, @line, @column, @column, @column, false)
           write " "
           accept a_else
+          wrote_newline = @wrote_newline
           found_comment = skip_space_or_newline
-          write_line unless found_comment
+          write_line unless found_comment || wrote_newline
         end
       end
 
@@ -4124,7 +4134,15 @@ module Crystal
         next_token_skip_space_or_newline
       end
 
-      write " " unless a_def.args.empty?
+      if return_type = a_def.return_type
+        check :":"
+        write " : "
+        next_token_skip_space_or_newline
+        accept return_type
+        next_token_skip_space_or_newline
+      end
+
+      write " " unless a_def.args.empty? && !return_type
 
       is_do = false
       if @token.keyword?(:do)
@@ -4262,7 +4280,7 @@ module Crystal
 
       skip_space_or_newline
 
-      if node.volatile? || node.alignstack? || node.intel?
+      if node.volatile? || node.alignstack? || node.intel? || node.can_throw?
         expected_parts = 4
       elsif node.clobbers
         expected_parts = 3
@@ -4308,7 +4326,7 @@ module Crystal
             end
           end
         when 4
-          parts = [node.volatile?, node.alignstack?, node.intel?].select(&.itself)
+          parts = [node.volatile?, node.alignstack?, node.intel?, node.can_throw?].select(&.itself)
           visit_asm_parts parts, colon_column do
             accept StringLiteral.new("")
           end

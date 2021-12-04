@@ -81,7 +81,6 @@ class Compress::Deflate::Writer < IO
     @closed
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     to_s(io)
   end

@@ -65,6 +65,10 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/_sidebar.html"
   end
 
+  record Error404Template do
+    ECR.def_to_s "#{__DIR__}/html/404.html"
+  end
+
   struct JsTypeTemplate
     ECR.def_to_s "#{__DIR__}/html/js/doc.js"
   end
