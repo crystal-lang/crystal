@@ -1634,6 +1634,7 @@ module Crystal
         end
         raise "invalid float suffix"
       end
+      # unreachable
       raise "invalid suffix"
     end
 
