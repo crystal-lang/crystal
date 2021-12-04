@@ -27,8 +27,30 @@ describe "Primitives: Float" do
             (-{{ float }}::INFINITY).{{ method }}
           end
         end
+
+        it "raises overflow if not a number (#10421)" do
+          expect_raises(OverflowError) do
+            {{ float }}::NAN.{{ method }}
+          end
+        end
       {% end %}
     {% end %}
+
+    describe "raises overflow if equal to Int::MAX (#11105)" do
+      # these examples hold because the integer would be rounded _up_ to the
+      # nearest representable float
+
+      it { expect_raises(OverflowError) { Float32.new!(Int32::MAX).to_i32 } }
+      it { expect_raises(OverflowError) { Float32.new!(UInt32::MAX).to_u32 } }
+      it { expect_raises(OverflowError) { Float32.new!(Int64::MAX).to_i64 } }
+      it { expect_raises(OverflowError) { Float32.new!(UInt64::MAX).to_u64 } }
+      it { expect_raises(OverflowError) { Float32.new!(Int128::MAX).to_i128 } }
+
+      it { expect_raises(OverflowError) { Float64.new!(Int64::MAX).to_i64 } }
+      it { expect_raises(OverflowError) { Float64.new!(UInt64::MAX).to_u64 } }
+      it { expect_raises(OverflowError) { Float64.new!(Int128::MAX).to_i128 } }
+      it { expect_raises(OverflowError) { Float64.new!(UInt128::MAX).to_u128 } }
+    end
   end
 
   describe "#to_f" do
