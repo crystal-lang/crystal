@@ -74,9 +74,8 @@ module Crystal
     # Returns a FFI::CallInterface for this proc, suitable for calling it.
     getter(ffi_call_interface : FFI::CallInterface) do
       FFI::CallInterface.new(
-        abi: FFI::ABI::DEFAULT,
-        args: arg_types.map(&.ffi_arg_type),
-        return_type: return_type.ffi_type,
+        return_type.ffi_type,
+        arg_types.map(&.ffi_arg_type)
       )
     end
   end

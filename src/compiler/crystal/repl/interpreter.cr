@@ -1,5 +1,5 @@
 require "./repl"
-require "../../../crystal/ffi"
+require "../ffi"
 require "colorize"
 
 # The ones that understands Crystal bytecode.

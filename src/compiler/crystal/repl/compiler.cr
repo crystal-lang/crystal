@@ -1850,11 +1850,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         def: external,
         symbol: @context.c_function(obj_type, external.real_name),
         call_interface: FFI::CallInterface.variadic(
-          abi: FFI::ABI::DEFAULT,
-          args: args_ffi_types,
-          return_type: external.type.ffi_type,
-          fixed_args: external.args.size,
-          total_args: node.args.size,
+          external.type.ffi_type,
+          args_ffi_types,
+          fixed_args: external.args.size
         ),
         args_bytesizes: args_bytesizes,
       )
@@ -1864,9 +1862,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         def: external,
         symbol: @context.c_function(obj_type, external.real_name),
         call_interface: FFI::CallInterface.new(
-          abi: FFI::ABI::DEFAULT,
-          args: args_ffi_types,
-          return_type: external.type.ffi_type,
+          external.type.ffi_type,
+          args_ffi_types
         ),
         args_bytesizes: args_bytesizes,
       )
