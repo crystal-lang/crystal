@@ -294,9 +294,8 @@ class Crystal::CodeGenVisitor
     {% begin %}
       case max_value
       when Int32, UInt32, Int64, UInt64 {% unless flag?(:win32) %}, Int128, UInt128 {% end %}
-        # TODO: use `prev_float` once 1.2.0 is out
-        # TODO: windows lacks definitions for `__floattisf` and `__floatuntisf`
-        max_value.class.new(max_value.to_f32.unsafe_as(Int32).pred.unsafe_as(Float32))
+        # TODO: 128-bit int-to-float does not work properly on windows
+        max_value.class.new(max_value.to_f32.prev_float)
       else
         max_value
       end
@@ -307,9 +306,8 @@ class Crystal::CodeGenVisitor
     {% begin %}
       case max_value
       when Int32, UInt32, Int64, UInt64 {% unless flag?(:win32) %}, Int128, UInt128 {% end %}
-        # TODO: use `prev_float` once 1.2.0 is out
-        # TODO: windows lacks definitions for `__floattidf` and `__floatuntidf`
-        max_value.class.new(max_value.to_f64.unsafe_as(Int64).pred.unsafe_as(Float64))
+        # TODO: 128-bit int-to-float does not work properly on windows
+        max_value.class.new(max_value.to_f64.prev_float)
       else
         max_value
       end
