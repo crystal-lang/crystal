@@ -1,14 +1,4 @@
-require "spec"
-
-# TODO: Replace helper methods with literals once possible
-
-private def make_ti(a : Int128, b : Int128)
-  (a << 64) + b
-end
-
-private def make_tu(a : UInt128, b : UInt128)
-  (a << 64) + b
-end
+require "./spec_helper"
 
 # Ported from:
 # - https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/test/builtins/Unit/umodti3_test.c
