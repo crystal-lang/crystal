@@ -431,8 +431,8 @@ jobs:
       - run: |
           cd /tmp/workspace/distribution-scripts
           source ./build.env
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64.tar.gz | docker image load
-          export DOCKER_TEST_PREFIX="crystallang/crystal:$DOCKER_TAG" >> $BASH_ENV
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
+          echo "export DOCKER_TEST_PREFIX=crystallang/crystal:${DOCKER_TAG}" >> $BASH_ENV
       - checkout
       - run: bin/ci prepare_system
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
@@ -504,7 +504,7 @@ workflows:
       - publish_docker:
           filters: *release
           requires:
-            - dist_docker
+            - test_dist_linux_on_docker
       - dist_docs:
           filters: *release
           requires:

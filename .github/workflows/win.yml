@@ -93,7 +93,22 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./libiconv
         run: |
-          sed -i 's/MultiThreadedDLL/MultiThreaded/' libiconv.vcxproj
+          echo '<Project>
+            <PropertyGroup>
+              <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
+            </PropertyGroup>
+          </Project>' > 'Directory.Build.props'
+
+          echo '<Project>
+            <ItemDefinitionGroup>
+              <ClCompile>
+                <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+                <DebugInformationFormat>None</DebugInformationFormat>
+                <WholeProgramOptimization>false</WholeProgramOptimization>
+              </ClCompile>
+            </ItemDefinitionGroup>
+          </Project>' > 'Override.props'
+
           MSBuild.exe /p:Platform=x64 /p:Configuration=ReleaseStatic libiconv.vcxproj
       - name: Download zlib
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -120,6 +135,22 @@ jobs:
         working-directory: ./mpir
         run: |
           $VsVersion = "vs$((& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -property displayName) -replace '.*\b\d\d(\d\d)\b.*', '$1')"
+
+          echo '<Project>
+            <PropertyGroup>
+              <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
+            </PropertyGroup>
+          </Project>' > 'msvc\Directory.Build.props'
+
+          echo '<Project>
+            <ItemDefinitionGroup Label="Configuration">
+              <ClCompile>
+                <DebugInformationFormat>None</DebugInformationFormat>
+                <WholeProgramOptimization>false</WholeProgramOptimization>
+              </ClCompile>
+            </ItemDefinitionGroup>
+          </Project>' > 'msvc\Override.props'
+
           MSBuild.exe /p:Platform=x64 /p:Configuration=Release /p:DefineConstants=MSC_BUILD_DLL ".\msvc\$VsVersion\lib_mpir_gc\lib_mpir_gc.vcxproj"
       - name: Download libyaml
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -267,7 +298,7 @@ jobs:
 
       - name: Build stdlib specs executable
         run: |
-          bin\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Di_know_what_im_doing
+          bin\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std -Di_know_what_im_doing
       - name: Run socket specs
         run: |
           .\std_spec.exe --verbose -e TCPSocket
@@ -277,7 +308,14 @@ jobs:
 
       - name: Build compiler specs executable
         run: |
-          bin\crystal.exe build spec/compiler_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Dwithout_playground -Di_know_what_im_doing
+          bin\crystal.exe build spec/compiler_spec.cr --exclude-warnings spec/compiler -Dwithout_playground -Di_know_what_im_doing
       - name: Run compiler specs
         run: |
           .\compiler_spec.exe
+
+      - name: Build primitives specs executable
+        run: |
+          bin\crystal.exe build spec/primitives_spec.cr --exclude-warnings spec/primitives -Dwithout_playground -Di_know_what_im_doing
+      - name: Run primitives specs
+        run: |
+          .\primitives_spec.exe

@@ -101,6 +101,10 @@ class Socket
         new(message, **opts)
       end
 
+      protected def self.new_from_os_error(message : String?, os_error, *, domain, **opts)
+        new(message, **opts)
+      end
+
       def self.build_message(message, *, domain, **opts)
         "Hostname lookup for #{domain} failed"
       end
@@ -157,10 +161,10 @@ class Socket
 
       ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
       unless ret.zero?
-        {% if flag?(:posix) %}
+        {% if flag?(:unix) %}
           # EAI_SYSTEM is not defined on win32
           if ret == LibC::EAI_SYSTEM
-            raise Error.from_errno message, domain: domain
+            raise Error.from_os_error nil, Errno.value, domain: domain
           end
         {% end %}
 

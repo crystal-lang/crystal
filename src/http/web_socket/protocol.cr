@@ -76,7 +76,7 @@ class HTTP::WebSocket::Protocol
 
     def flush(final = true) : Nil
       @websocket.send(
-        @buffer + (@pos % @buffer.size),
+        @buffer[0...@pos],
         @opcode,
         flags: final ? Flags::FINAL : Flags::None,
         flush: final
