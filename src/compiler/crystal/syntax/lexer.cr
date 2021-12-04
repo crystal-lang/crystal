@@ -1522,6 +1522,7 @@ module Crystal
           is_e_notation = is_decimal = true
           next_char if peek_next_char.in?('+', '-')
           raise("trailing '_' in number", @token, (current_pos - start)) if peek_next_char == '_'
+          break unless peek_next_char.in?('0'..'9')
         when 'i', 'u', 'f'
           before_prefix_pos = current_pos
           @token.number_kind = consume_number_suffix

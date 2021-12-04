@@ -384,6 +384,10 @@ describe "Lexer" do
   assert_syntax_error ".42", ".1 style number literal is not supported, put 0 before dot"
   assert_syntax_error "-.42", ".1 style number literal is not supported, put 0 before dot"
 
+  assert_syntax_error "2e", "unexpected token: \"e\""
+  assert_syntax_error "2ef32", "unexpected token: \"ef32\""
+  assert_syntax_error "2e+_2", "trailing '_' in number"
+
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"
     token = lexer.next_token
