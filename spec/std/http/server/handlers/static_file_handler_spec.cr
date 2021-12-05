@@ -1,5 +1,5 @@
 require "../../../spec_helper"
-require "../../../../support/http/client"
+require "spec/http/client"
 
 private def handle(request, fallthrough = true, directory_listing = true, ignore_body = false, decompress = true)
   handler = HTTP::StaticFileHandler.new datapath("static_file_handler"), fallthrough, directory_listing
