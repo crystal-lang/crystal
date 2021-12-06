@@ -307,11 +307,11 @@ module Base64
 
   private DECODE_TABLE = StaticArray(UInt8, 256).new do |i|
     case i.unsafe_chr
-    when 'A'..'Z' then (i - 0x41).to_u8
-    when 'a'..'z' then (i - 0x47).to_u8
-    when '0'..'9' then (i + 0x04).to_u8
-    when '+', '-' then 0x3E_u8
-    when '/', '_' then 0x3F_u8
+    when 'A'..'Z' then (i - 0x41).to_u8!
+    when 'a'..'z' then (i - 0x47).to_u8!
+    when '0'..'9' then (i + 0x04).to_u8!
+    when '+', '-' then 0x3E_u8!
+    when '/', '_' then 0x3F_u8!
     else               255_u8
     end
   end
