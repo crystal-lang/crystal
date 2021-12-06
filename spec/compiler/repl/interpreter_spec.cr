@@ -5959,7 +5959,7 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "does YAML" do
+    pending "does YAML" do
       interpret(<<-CODE, prelude: "prelude").should eq(6)
         require "yaml"
 
@@ -5973,7 +5973,7 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "does YAML::Serializable" do
+    pending "does YAML::Serializable" do
       interpret(<<-CODE, prelude: "prelude").should eq(3)
         require "yaml"
 
@@ -5989,7 +5989,7 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "does XML" do
+    pending "does XML" do
       interpret(<<-CODE, prelude: "prelude").should eq(3)
         require "xml"
 
