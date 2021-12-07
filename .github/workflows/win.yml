@@ -292,17 +292,13 @@ jobs:
           cp libs/* crystal/lib/
           cp src/* crystal/src -Recurse
           rm crystal/src/llvm/ext/llvm_ext.obj
-          echo "$(pwd)\crystal" >> $env:GITHUB_PATH
-
-      - name: Get latest shards release
-        run: |
-          echo "SHARDS_RELEASE_TAG=$(Invoke-RestMethod https://api.github.com/repos/crystal-lang/shards/releases/latest | Select-Object -ExpandProperty tag_name)" >> ${env:GITHUB_ENV}
+          echo "$(pwd)\crystal" >> ${env:GITHUB_PATH}
 
       - name: Download latest shards release
         uses: actions/checkout@v2
         with:
           repository: crystal-lang/shards
-          ref: ${{ env.SHARDS_RELEASE_TAG }}
+          ref: v0.16.0
           path: shards
 
       - name: Build latest shards release
