@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        crystal_bootstrap_version: [ci-libffi-dev]
+        crystal_bootstrap_version: [1.0.0, 1.1.1, 1.2.2]
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
@@ -33,7 +33,6 @@ jobs:
     env:
       ARCH: x86_64-musl
       ARCH_CMD: linux64
-      DOCKER_TEST_PREFIX: crystallang/crystal:ci-libffi-dev
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
@@ -52,7 +51,6 @@ jobs:
     env:
       ARCH: x86_64
       ARCH_CMD: linux64
-      DOCKER_TEST_PREFIX: crystallang/crystal:ci-libffi-dev
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
