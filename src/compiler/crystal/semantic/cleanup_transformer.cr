@@ -306,6 +306,45 @@ module Crystal
       node
     end
 
+    def transform(node : MultiAssign)
+      if @program.has_flag?("strict_multi_assign")
+        if node.values.size == 1
+          # the expanded node always starts with `temp = {{ node.values[0] }}`;
+          # this is the whole Assign node and its deduced type is equal to the
+          # original RHS's type
+          temp_assign = node.expanded.as(Expressions).expressions.first
+          target_count = node.targets.size
+
+          case type = temp_assign.type
+          when UnionType
+            sizes = type.union_types.map { |union_type| constant_size(union_type) }
+            if sizes.none? &.in?(target_count, nil)
+              node.values.first.raise "cannot assign #{type} to #{target_count} targets"
+            end
+          else
+            if size = constant_size(type)
+              unless size == target_count
+                node.values.first.raise "cannot assign #{type} to #{target_count} targets"
+              end
+            end
+          end
+        end
+      end
+
+      if expanded = node.expanded
+        return expanded.transform self
+      end
+
+      node
+    end
+
+    private def constant_size(type)
+      case type
+      when TupleInstanceType
+        type.size
+      end
+    end
+
     def transform(node : Path)
       # Some constants might not have been cleaned up at this point because
       # they don't have an explicit `Assign` node. One example is regex
@@ -861,8 +900,8 @@ module Crystal
       exp_type = node.exp.type?
 
       if exp_type
-        instance_type = exp_type.instance_type.devirtualize
-        if instance_type.struct? || instance_type.module? || instance_type.is_a?(UnionType)
+        instance_type = exp_type.devirtualize
+        if instance_type.struct? || instance_type.module? || instance_type.metaclass? || instance_type.is_a?(UnionType)
           node.exp.raise "instance_sizeof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
         end
       end

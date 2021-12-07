@@ -228,7 +228,8 @@ struct Number
       magnitude = 1
     end
 
-    magnitude, unit = yield_result = yield magnitude, self.to_f
+    yield_result = yield magnitude, self.to_f
+    magnitude, unit = yield_result[0..1]
 
     decimal_places = precision
     if significant

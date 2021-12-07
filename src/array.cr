@@ -52,6 +52,12 @@ class Array(T)
   # Size of an Array that we consider small to do linear scans or other optimizations.
   private SMALL_ARRAY_SIZE = 16
 
+  # The initial capacity reserved for new arrays; just a lucky number
+  private INITIAL_CAPACITY = 3
+
+  # The capacity threshold before we stop doubling array during resize.
+  private CAPACITY_THRESHOLD = 256
+
   # The size of this array.
   @size : Int32
 
@@ -759,7 +765,7 @@ class Array(T)
     buf = @buffer + len
     other.each do |elem|
       if left_before_resize == 0
-        double_capacity
+        increase_capacity
         left_before_resize = remaining_capacity - len
         buf = @buffer + len
       end
@@ -890,20 +896,15 @@ class Array(T)
   # a = [1, 2, 3, 4]
   # a.fill(2) { |i| i * i } # => [1, 2, 4, 9]
   # ```
+  @[Deprecated("Use `fill(start.., &)` instead")]
   def fill(start : Int, & : Int32 -> T) : self
-    start += size if start < 0
-
-    raise IndexError.new unless 0 <= start < size
-
-    to_unsafe_slice(start, size - start).fill(offset: start) { |i| yield i }
-
-    self
+    fill(start..) { |i| yield i }
   end
 
   # :ditto:
-  @[Deprecated("Use `#fill(start, &)` instead")]
+  @[Deprecated("Use `fill(start.., &)` instead")]
   def fill(*, from start : Int, & : Int32 -> T) : self
-    fill(start) { |i| yield i }
+    fill(start..) { |i| yield i }
   end
 
   # Yields each index of `self`, starting at *start* and just *count* times,
@@ -919,35 +920,9 @@ class Array(T)
   # a = [1, 2, 3, 4, 5, 6]
   # a.fill(2, 2) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
   # ```
-  def fill(start : Int, count : Int, & : Int32 -> T) : self
-    return self if count <= 0
-
-    start += size if start < 0
-
-    raise IndexError.new unless 0 <= start < size && start + count <= size
-
-    to_unsafe_slice(start, count).fill(offset: start) { |i| yield i }
-
-    self
-  end
-
-  # :ditto:
-  @[Deprecated("Use `#fill(start, count, &)` instead")]
+  @[Deprecated("Use `Indexable::Mutable#fill(start, count, &)` instead")]
   def fill(*, from start : Int, count : Int, & : Int32 -> T) : self
     fill(start, count) { |i| yield i }
-  end
-
-  # Yields each index of `self`, in the given *range*, to the given block and then assigns
-  # the block's value in that position. Returns `self`.
-  #
-  # ```
-  # a = [1, 2, 3, 4, 5, 6]
-  # a.fill(2..3) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
-  # ```
-  def fill(range : Range, & : Int32 -> T) : self
-    fill(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new) do |i|
-      yield i
-    end
   end
 
   # :inherit:
@@ -965,40 +940,33 @@ class Array(T)
   # a = [1, 2, 3, 4, 5]
   # a.fill(9, 2) # => [1, 2, 9, 9, 9]
   # ```
+  @[Deprecated("Use `fill(value, start..)` instead")]
   def fill(value : T, start : Int) : self
-    start += size if start < 0
-
-    raise IndexError.new unless 0 <= start < size
-
-    to_unsafe_slice(start, size - start).fill(value)
-
-    self
+    fill(value, start..)
   end
 
   # :ditto:
-  @[Deprecated("Use `#fill(value, start)` instead")]
+  @[Deprecated("Use `fill(value, start..)` instead")]
   def fill(value : T, *, from start : Int) : self
-    fill(value, start)
+    fill(value, start..)
   end
 
-  # Replaces every element in `self`, starting at *start* and only *count* times,
-  # with the given *value*. Returns `self`.
+  # Replaces *count* or less (if there aren't enough) elements starting at the
+  # given *start* index with *value*. Returns `self`.
   #
-  # Negative values of *start* count from the end of the array.
+  # Negative values of *start* count from the end of the container.
+  #
+  # Raises `IndexError` if the *start* index is out of range.
+  #
+  # Raises `ArgumentError` if *count* is negative.
   #
   # ```
-  # a = [1, 2, 3, 4, 5]
-  # a.fill(9, 2, 2) # => [1, 2, 9, 9, 5]
+  # array = [1, 2, 3, 4, 5]
+  # array.fill(9, 2, 2) # => [1, 2, 9, 9, 5]
+  # array               # => [1, 2, 9, 9, 5]
   # ```
   def fill(value : T, start : Int, count : Int) : self
-    return self if count <= 0
-
-    start += size if start < 0
-
-    raise IndexError.new unless 0 <= start < size && start + count <= size
-
-    to_unsafe_slice(start, count).fill(value)
-
+    to_unsafe_slice.fill(value, start, count)
     self
   end
 
@@ -1017,7 +985,8 @@ class Array(T)
   # a.fill(9, 2..3) # => [1, 2, 9, 9, 5]
   # ```
   def fill(value : T, range : Range) : self
-    fill(value, *Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
+    to_unsafe_slice.fill(value, range)
+    self
   end
 
   # Returns the first *n* elements of the array.
@@ -2026,7 +1995,7 @@ class Array(T)
       # and now we don't have any offset to the root buffer
       reset_buffer_to_root_buffer
     else
-      double_capacity
+      increase_capacity
     end
   end
 
@@ -2058,7 +2027,7 @@ class Array(T)
       # `[-, -, -, 'c', 'd', -]`
       shift_buffer_by(half_capacity)
     else
-      double_capacity_for_unshift
+      increase_capacity_for_unshift
     end
   end
 
@@ -2066,8 +2035,18 @@ class Array(T)
     @capacity - @offset_to_buffer
   end
 
-  private def double_capacity
-    resize_to_capacity(@capacity == 0 ? 3 : (@capacity * 2))
+  private def calculate_new_capacity
+    return INITIAL_CAPACITY if @capacity == 0
+
+    if @capacity < CAPACITY_THRESHOLD
+      @capacity * 2
+    else
+      @capacity + (@capacity + 3 * CAPACITY_THRESHOLD) // 4
+    end
+  end
+
+  private def increase_capacity
+    resize_to_capacity(calculate_new_capacity)
   end
 
   private def resize_to_capacity(capacity)
@@ -2082,8 +2061,8 @@ class Array(T)
   # Similar to double capacity, except that after reallocating the buffer
   # we point it to the middle of the buffer in case more unshifts come right away.
   # This assumes @offset_to_buffer is zero.
-  private def double_capacity_for_unshift
-    resize_to_capacity_for_unshift(@capacity == 0 ? 3 : (@capacity * 2))
+  private def increase_capacity_for_unshift
+    resize_to_capacity_for_unshift(calculate_new_capacity)
   end
 
   private def resize_to_capacity_for_unshift(capacity)

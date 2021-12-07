@@ -1136,8 +1136,8 @@ class Crystal::CodeGenVisitor
     success_ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     failure_ordering = atomic_ordering_from_symbol_literal(call.args[-1])
 
-    pointer, cmp, new = call_args
-    value = builder.cmpxchg(pointer, cmp, new, success_ordering, failure_ordering)
+    ptr, cmp, new, _, _ = call_args
+    value = builder.cmpxchg(ptr, cmp, new, success_ordering, failure_ordering)
     value_ptr = alloca llvm_type(node.type)
     store extract_value(value, 0), gep(value_ptr, 0, 0)
     store extract_value(value, 1), gep(value_ptr, 0, 1)
@@ -1150,8 +1150,8 @@ class Crystal::CodeGenVisitor
     ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     singlethread = bool_from_bool_literal(call.args[-1])
 
-    _, pointer, val = call_args
-    builder.atomicrmw(op, pointer, val, ordering, singlethread)
+    _, ptr, val, _, _ = call_args
+    builder.atomicrmw(op, ptr, val, ordering, singlethread)
   end
 
   def codegen_primitive_fence(call, node, target_def, call_args)
@@ -1168,7 +1168,7 @@ class Crystal::CodeGenVisitor
     ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     volatile = bool_from_bool_literal(call.args[-1])
 
-    ptr = call_args.first
+    ptr, _, _ = call_args
 
     inst = builder.load(ptr)
     inst.ordering = ordering
@@ -1182,7 +1182,7 @@ class Crystal::CodeGenVisitor
     ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     volatile = bool_from_bool_literal(call.args[-1])
 
-    ptr, value = call_args
+    ptr, value, _, _ = call_args
 
     inst = builder.store(value, ptr)
     inst.ordering = ordering

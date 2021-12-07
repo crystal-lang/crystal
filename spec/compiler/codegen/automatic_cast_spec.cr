@@ -270,4 +270,15 @@ describe "Code gen: automatic cast" do
       foo(255, 60)
       )).to_i.should eq(255)
   end
+
+  it "casts integer variable to larger type (#9565)" do
+    run(%(
+      def foo(x : Int64)
+        x
+      end
+
+      x = 123
+      foo(x)
+      )).to_i64.should eq(123)
+  end
 end

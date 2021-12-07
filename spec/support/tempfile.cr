@@ -43,9 +43,9 @@ def with_temp_executable(name, file = __FILE__)
   end
 end
 
-def with_temp_c_object_file(c_code, file = __FILE__)
+def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__)
   obj_ext = {{ flag?(:win32) ? ".obj" : ".o" }}
-  with_tempfile("temp_c.c", "temp_c#{obj_ext}", file: file) do |c_filename, o_filename|
+  with_tempfile("#{filename}.c", "#{filename}#{obj_ext}", file: file) do |c_filename, o_filename|
     File.write(c_filename, c_code)
 
     {% if flag?(:win32) %}
