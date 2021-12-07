@@ -1020,57 +1020,57 @@ describe "String" do
 
   describe "partition" do
     describe "by char" do
-      it { "hello".partition('h').should eq ({"", "h", "ello"}) }
-      it { "hello".partition('o').should eq ({"hell", "o", ""}) }
-      it { "hello".partition('l').should eq ({"he", "l", "lo"}) }
-      it { "hello".partition('x').should eq ({"hello", "", ""}) }
+      it { "hello".partition('h').should eq({"", "h", "ello"}) }
+      it { "hello".partition('o').should eq({"hell", "o", ""}) }
+      it { "hello".partition('l').should eq({"he", "l", "lo"}) }
+      it { "hello".partition('x').should eq({"hello", "", ""}) }
     end
 
     describe "by string" do
-      it { "hello".partition("h").should eq ({"", "h", "ello"}) }
-      it { "hello".partition("o").should eq ({"hell", "o", ""}) }
-      it { "hello".partition("l").should eq ({"he", "l", "lo"}) }
-      it { "hello".partition("ll").should eq ({"he", "ll", "o"}) }
-      it { "hello".partition("x").should eq ({"hello", "", ""}) }
+      it { "hello".partition("h").should eq({"", "h", "ello"}) }
+      it { "hello".partition("o").should eq({"hell", "o", ""}) }
+      it { "hello".partition("l").should eq({"he", "l", "lo"}) }
+      it { "hello".partition("ll").should eq({"he", "ll", "o"}) }
+      it { "hello".partition("x").should eq({"hello", "", ""}) }
     end
 
     describe "by regex" do
-      it { "hello".partition(/h/).should eq ({"", "h", "ello"}) }
-      it { "hello".partition(/o/).should eq ({"hell", "o", ""}) }
-      it { "hello".partition(/l/).should eq ({"he", "l", "lo"}) }
-      it { "hello".partition(/ll/).should eq ({"he", "ll", "o"}) }
-      it { "hello".partition(/.l/).should eq ({"h", "el", "lo"}) }
-      it { "hello".partition(/.h/).should eq ({"hello", "", ""}) }
-      it { "hello".partition(/h./).should eq ({"", "he", "llo"}) }
-      it { "hello".partition(/o./).should eq ({"hello", "", ""}) }
-      it { "hello".partition(/.o/).should eq ({"hel", "lo", ""}) }
-      it { "hello".partition(/x/).should eq ({"hello", "", ""}) }
+      it { "hello".partition(/h/).should eq({"", "h", "ello"}) }
+      it { "hello".partition(/o/).should eq({"hell", "o", ""}) }
+      it { "hello".partition(/l/).should eq({"he", "l", "lo"}) }
+      it { "hello".partition(/ll/).should eq({"he", "ll", "o"}) }
+      it { "hello".partition(/.l/).should eq({"h", "el", "lo"}) }
+      it { "hello".partition(/.h/).should eq({"hello", "", ""}) }
+      it { "hello".partition(/h./).should eq({"", "he", "llo"}) }
+      it { "hello".partition(/o./).should eq({"hello", "", ""}) }
+      it { "hello".partition(/.o/).should eq({"hel", "lo", ""}) }
+      it { "hello".partition(/x/).should eq({"hello", "", ""}) }
     end
   end
 
   describe "rpartition" do
     describe "by char" do
-      it { "hello".rpartition('l').should eq ({"hel", "l", "o"}) }
-      it { "hello".rpartition('o').should eq ({"hell", "o", ""}) }
-      it { "hello".rpartition('h').should eq ({"", "h", "ello"}) }
+      it { "hello".rpartition('l').should eq({"hel", "l", "o"}) }
+      it { "hello".rpartition('o').should eq({"hell", "o", ""}) }
+      it { "hello".rpartition('h').should eq({"", "h", "ello"}) }
     end
 
     describe "by string" do
-      it { "hello".rpartition("l").should eq ({"hel", "l", "o"}) }
-      it { "hello".rpartition("x").should eq ({"", "", "hello"}) }
-      it { "hello".rpartition("o").should eq ({"hell", "o", ""}) }
-      it { "hello".rpartition("h").should eq ({"", "h", "ello"}) }
-      it { "hello".rpartition("ll").should eq ({"he", "ll", "o"}) }
-      it { "hello".rpartition("lo").should eq ({"hel", "lo", ""}) }
-      it { "hello".rpartition("he").should eq ({"", "he", "llo"}) }
+      it { "hello".rpartition("l").should eq({"hel", "l", "o"}) }
+      it { "hello".rpartition("x").should eq({"", "", "hello"}) }
+      it { "hello".rpartition("o").should eq({"hell", "o", ""}) }
+      it { "hello".rpartition("h").should eq({"", "h", "ello"}) }
+      it { "hello".rpartition("ll").should eq({"he", "ll", "o"}) }
+      it { "hello".rpartition("lo").should eq({"hel", "lo", ""}) }
+      it { "hello".rpartition("he").should eq({"", "he", "llo"}) }
     end
 
     describe "by regex" do
-      it { "hello".rpartition(/.l/).should eq ({"he", "ll", "o"}) }
-      it { "hello".rpartition(/ll/).should eq ({"he", "ll", "o"}) }
-      it { "hello".rpartition(/.o/).should eq ({"hel", "lo", ""}) }
-      it { "hello".rpartition(/.e/).should eq ({"", "he", "llo"}) }
-      it { "hello".rpartition(/l./).should eq ({"hel", "lo", ""}) }
+      it { "hello".rpartition(/.l/).should eq({"he", "ll", "o"}) }
+      it { "hello".rpartition(/ll/).should eq({"he", "ll", "o"}) }
+      it { "hello".rpartition(/.o/).should eq({"hel", "lo", ""}) }
+      it { "hello".rpartition(/.e/).should eq({"", "he", "llo"}) }
+      it { "hello".rpartition(/l./).should eq({"hel", "lo", ""}) }
     end
   end
 
