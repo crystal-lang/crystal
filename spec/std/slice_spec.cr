@@ -383,34 +383,10 @@ describe "Slice" do
     end
   end
 
-  describe "#to_bytes" do
-    it "reinterprets a slice's elements as read-only bytes" do
-      slice = Slice[0x01020304, -0x01020304]
-      bytes = slice.to_bytes
-      bytes.read_only?.should be_true
-
-      {% if IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian %}
-        bytes.should eq(Bytes[0x04, 0x03, 0x02, 0x01, 0xFC, 0xFC, 0xFD, 0xFE])
-      {% else %}
-        bytes.should eq(Bytes[0x01, 0x02, 0x03, 0x04, 0xFE, 0xFD, 0xFC, 0xFC])
-      {% end %}
-    end
-  end
-
   describe "#hexstring" do
     it "works for Bytes" do
       slice = Bytes.new(4) { |i| i.to_u8 + 1 }
       slice.hexstring.should eq("01020304")
-    end
-
-    it "works for other element types" do
-      slice = Slice[0x01020304, -0x01020304]
-
-      {% if IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian %}
-        slice.hexstring.should eq("04030201fcfcfdfe")
-      {% else %}
-        slice.hexstring.should eq("01020304fefdfcfc")
-      {% end %}
     end
   end
 
@@ -449,20 +425,6 @@ describe "Slice" do
       assert_prints num.hexdump, <<-EOF
         00000000  30 31 32 33 34 35 36 37  38 39                    0123456789\n
         EOF
-    end
-
-    it "works for other element types" do
-      slice = Slice[0x31323334, 0x61626364]
-
-      {% if IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian %}
-        assert_prints slice.hexdump, <<-EOF
-          00000000  34 33 32 31 64 63 62 61                           4321dcba\n
-          EOF
-      {% else %}
-        assert_prints slice.hexdump, <<-EOF
-          00000000  31 32 33 34 61 62 63 64                           1234abcd\n
-          EOF
-      {% end %}
     end
   end
 

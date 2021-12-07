@@ -506,6 +506,8 @@ struct Slice(T)
   #
   # WARNING: This method is **unsafe**: elements are reinterpreted using
   # `#unsafe_as`, and the resulting slice may not be properly aligned.
+  # Additionally, the same elements may produce different results depending on
+  # the system endianness.
   #
   # ```
   # # assume little-endian system
@@ -522,7 +524,8 @@ struct Slice(T)
   #
   # WARNING: This method is **unsafe**: the returned slice is writable if `self`
   # is also writable, and modifications through the returned slice may violate
-  # the binary representations of Crystal objects.
+  # the binary representations of Crystal objects. Additionally, the same
+  # elements may produce different results depending on the system endianness.
   #
   # ```
   # # assume little-endian system
@@ -535,32 +538,23 @@ struct Slice(T)
     unsafe_slice_of(UInt8)
   end
 
-  # Returns a new read-only `Bytes` pointing at the same contents as `self`.
+  # Returns a hexstring representation of this slice.
   #
-  # This method is always safe to call; if `self` refers to a valid memory
-  # region, then it is always possible to address the individual bytes of that
-  # memory region.
-  #
-  # ```
-  # # assume little-endian system
-  # ints = Slice[0x01020304, 0x05060708]
-  # bytes = ints.to_bytes # => Bytes[0x04, 0x03, 0x02, 0x01, 0x08, 0x07, 0x06, 0x05]
-  # bytes[2] = 0xAD       # raises Exception
-  # ```
-  def to_bytes : Bytes
-    Slice.new(to_unsafe.as(UInt8*), bytesize, read_only: true)
-  end
-
-  # Returns a hexstring representation of this slice. If `self` is not a
-  # `Bytes`, its contents are reinterpreted using `#to_bytes`.
+  # `self` must be a `Slice(UInt8)`. To call this method on other `Slice`s,
+  # `#to_unsafe_bytes` should be used first.
   #
   # ```
-  # # assume little-endian system
   # UInt8.slice(97, 62, 63, 8, 255).hexstring # => "613e3f08ff"
-  # Int16.slice(97, 62, 1000, -2).hexstring   # => "61003e00e803feff"
+  #
+  # # assume little-endian system
+  # Int16.slice(97, 62, 1000, -2).to_unsafe_bytes.hexstring # => "61003e00e803feff"
   # ```
   def hexstring : String
-    str_size = bytesize * 2
+    {% unless T == UInt8 %}
+      {% raise "Can only call `#hexstring` on Slice(UInt8), not #{@type}" %}
+    {% end %}
+
+    str_size = size * 2
     String.new(str_size) do |buffer|
       hexstring(buffer)
       {str_size, str_size}
@@ -569,8 +563,12 @@ struct Slice(T)
 
   # :nodoc:
   def hexstring(buffer) : Nil
+    {% unless T == UInt8 %}
+      {% raise "Can only call `#hexstring` on Slice(UInt8), not #{@type}" %}
+    {% end %}
+
     offset = 0
-    to_bytes.each do |v|
+    each do |v|
       buffer[offset] = to_hex(v >> 4)
       buffer[offset + 1] = to_hex(v & 0x0f)
       offset += 2
@@ -579,8 +577,10 @@ struct Slice(T)
     nil
   end
 
-  # Returns a hexdump of this slice. If `self` is not a `Bytes`, its contents
-  # are reinterpreted using `#to_bytes`.
+  # Returns a hexdump of this slice.
+  #
+  # `self` must be a `Slice(UInt8)`. To call this method on other `Slice`s,
+  # `#to_unsafe_bytes` should be used first.
   #
   # This method is specially useful for debugging binary data and
   # incoming/outgoing data in protocols.
@@ -591,12 +591,16 @@ struct Slice(T)
   #
   # # assume little-endian system
   # slice = Int16.slice(97, 62, 1000, -2)
-  # slice.hexdump # => "00000000  61 00 3e 00 e8 03 fe ff                           a.>.....\n"
+  # slice.to_unsafe_bytes.hexdump # => "00000000  61 00 3e 00 e8 03 fe ff                           a.>.....\n"
   # ```
   def hexdump : String
+    {% unless T == UInt8 %}
+      {% raise "Can only call `#hexdump` on Slice(UInt8), not #{@type}" %}
+    {% end %}
+
     return "" if empty?
 
-    full_lines, leftover = bytesize.divmod(16)
+    full_lines, leftover = size.divmod(16)
     if leftover == 0
       str_size = full_lines * 77
     else
@@ -607,7 +611,7 @@ struct Slice(T)
       pos = 0
       offset = 0
 
-      while pos < bytesize
+      while pos < size
         # Ensure we don't write outside the buffer:
         # slower, but safer (speed is not very important when hexdump is used)
         hexdump_line(Slice.new(buf + offset, {77, str_size - offset}.min), pos)
@@ -619,8 +623,10 @@ struct Slice(T)
     end
   end
 
-  # Writes a hexdump of this slice to the given *io*. If `self` is not a
-  # `Bytes`, its contents are reinterpreted using `#to_bytes`.
+  # Writes a hexdump of this slice to the given *io*.
+  #
+  # `self` must be a `Slice(UInt8)`. To call this method on other `Slice`s,
+  # `#to_unsafe_bytes` should be used first.
   #
   # This method is specially useful for debugging binary data and
   # incoming/outgoing data in protocols.
@@ -638,6 +644,10 @@ struct Slice(T)
   # 00000000  61 3e 3f 08 ff                                    a>?..
   # ```
   def hexdump(io : IO)
+    {% unless T == UInt8 %}
+      {% raise "Can only call `#hexdump` on Slice(UInt8), not #{@type}" %}
+    {% end %}
+
     return 0 if empty?
 
     line = uninitialized UInt8[77]
@@ -645,7 +655,7 @@ struct Slice(T)
     count = 0
 
     pos = 0
-    while pos < bytesize
+    while pos < size
       line_bytes = hexdump_line(line_slice, pos)
       io.write_string(line_slice[0, line_bytes])
       count += line_bytes
@@ -657,8 +667,6 @@ struct Slice(T)
   end
 
   private def hexdump_line(line, start_pos)
-    bytes = to_unsafe.as(UInt8*)
-
     hex_offset = 10
     ascii_offset = 60
 
@@ -670,8 +678,8 @@ struct Slice(T)
 
     pos = start_pos
     16.times do |i|
-      break if pos >= bytesize
-      v = bytes[pos]
+      break if pos >= size
+      v = unsafe_fetch(pos)
       pos += 1
 
       line[hex_offset] = to_hex(v >> 4)
