@@ -1636,8 +1636,7 @@ module Crystal
         end
         raise "invalid float suffix"
       end
-      # unreachable
-      raise "invalid suffix"
+      raise "BUG: invalid suffix"
     end
 
     def next_string_token(delimiter_state)
