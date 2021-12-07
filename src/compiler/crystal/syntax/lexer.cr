@@ -1496,6 +1496,7 @@ module Crystal
           next_char
           pos_after_prefix = current_pos
           # Enforce number after prefix (disallow ex. "0x", "0x_1")
+          raise("unexpected '_' in number", @token, (current_pos - start)) if current_char == '_'
           raise("numeric literal without digits", @token, (current_pos - start)) unless String::CHAR_TO_DIGIT[current_char.ord].to_u8! < base
         end
       end
@@ -1513,7 +1514,7 @@ module Crystal
           raise("consecutive underscores in numbers aren't allowed", @token, (current_pos - start)) if last_is_underscore
           has_underscores = last_is_underscore = true
         when '.'
-          raise("trailing '_' in number", @token, (current_pos - start)) if last_is_underscore
+          raise("unexpected '_' in number", @token, (current_pos - start)) if last_is_underscore
           break if is_decimal || base != 10 || !peek_next_char.in?('0'..'9')
           is_decimal = true
         when 'e', 'E'
@@ -1521,7 +1522,7 @@ module Crystal
           break if is_e_notation || base != 10
           is_e_notation = is_decimal = true
           next_char if peek_next_char.in?('+', '-')
-          raise("trailing '_' in number", @token, (current_pos - start)) if peek_next_char == '_'
+          raise("unexpected '_' in number", @token, (current_pos - start)) if peek_next_char == '_'
           break unless peek_next_char.in?('0'..'9')
         when 'i', 'u', 'f'
           before_prefix_pos = current_pos

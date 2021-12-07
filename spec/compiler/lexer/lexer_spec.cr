@@ -316,10 +316,10 @@ describe "Lexer" do
 
   assert_syntax_error "1__1", "consecutive underscores in numbers aren't allowed"
   assert_syntax_error "-3_", "trailing '_' in number"
-  assert_syntax_error "0b_10", "numeric literal without digits"
-  assert_syntax_error "10e_10", "trailing '_' in number"
-  assert_syntax_error "1_.1", "trailing '_' in number"
-  assert_syntax_error "-0e_12", "trailing '_' in number"
+  assert_syntax_error "0b_10", "unexpected '_' in number"
+  assert_syntax_error "10e_10", "unexpected '_' in number"
+  assert_syntax_error "1_.1", "unexpected '_' in number"
+  assert_syntax_error "-0e_12", "unexpected '_' in number"
 
   assert_syntax_error "0_12", "octal constants should be prefixed with 0o"
   assert_syntax_error "0123", "octal constants should be prefixed with 0o"
@@ -390,7 +390,7 @@ describe "Lexer" do
 
   assert_syntax_error "2e", "unexpected token: \"e\""
   assert_syntax_error "2ef32", "unexpected token: \"ef32\""
-  assert_syntax_error "2e+_2", "trailing '_' in number"
+  assert_syntax_error "2e+_2", "unexpected '_' in number"
 
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"
