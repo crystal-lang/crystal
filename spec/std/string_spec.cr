@@ -1020,57 +1020,57 @@ describe "String" do
 
   describe "partition" do
     describe "by char" do
-      it { "hello".partition('h').should eq ({"", "h", "ello"}) }
-      it { "hello".partition('o').should eq ({"hell", "o", ""}) }
-      it { "hello".partition('l').should eq ({"he", "l", "lo"}) }
-      it { "hello".partition('x').should eq ({"hello", "", ""}) }
+      it { "hello".partition('h').should eq({"", "h", "ello"}) }
+      it { "hello".partition('o').should eq({"hell", "o", ""}) }
+      it { "hello".partition('l').should eq({"he", "l", "lo"}) }
+      it { "hello".partition('x').should eq({"hello", "", ""}) }
     end
 
     describe "by string" do
-      it { "hello".partition("h").should eq ({"", "h", "ello"}) }
-      it { "hello".partition("o").should eq ({"hell", "o", ""}) }
-      it { "hello".partition("l").should eq ({"he", "l", "lo"}) }
-      it { "hello".partition("ll").should eq ({"he", "ll", "o"}) }
-      it { "hello".partition("x").should eq ({"hello", "", ""}) }
+      it { "hello".partition("h").should eq({"", "h", "ello"}) }
+      it { "hello".partition("o").should eq({"hell", "o", ""}) }
+      it { "hello".partition("l").should eq({"he", "l", "lo"}) }
+      it { "hello".partition("ll").should eq({"he", "ll", "o"}) }
+      it { "hello".partition("x").should eq({"hello", "", ""}) }
     end
 
     describe "by regex" do
-      it { "hello".partition(/h/).should eq ({"", "h", "ello"}) }
-      it { "hello".partition(/o/).should eq ({"hell", "o", ""}) }
-      it { "hello".partition(/l/).should eq ({"he", "l", "lo"}) }
-      it { "hello".partition(/ll/).should eq ({"he", "ll", "o"}) }
-      it { "hello".partition(/.l/).should eq ({"h", "el", "lo"}) }
-      it { "hello".partition(/.h/).should eq ({"hello", "", ""}) }
-      it { "hello".partition(/h./).should eq ({"", "he", "llo"}) }
-      it { "hello".partition(/o./).should eq ({"hello", "", ""}) }
-      it { "hello".partition(/.o/).should eq ({"hel", "lo", ""}) }
-      it { "hello".partition(/x/).should eq ({"hello", "", ""}) }
+      it { "hello".partition(/h/).should eq({"", "h", "ello"}) }
+      it { "hello".partition(/o/).should eq({"hell", "o", ""}) }
+      it { "hello".partition(/l/).should eq({"he", "l", "lo"}) }
+      it { "hello".partition(/ll/).should eq({"he", "ll", "o"}) }
+      it { "hello".partition(/.l/).should eq({"h", "el", "lo"}) }
+      it { "hello".partition(/.h/).should eq({"hello", "", ""}) }
+      it { "hello".partition(/h./).should eq({"", "he", "llo"}) }
+      it { "hello".partition(/o./).should eq({"hello", "", ""}) }
+      it { "hello".partition(/.o/).should eq({"hel", "lo", ""}) }
+      it { "hello".partition(/x/).should eq({"hello", "", ""}) }
     end
   end
 
   describe "rpartition" do
     describe "by char" do
-      it { "hello".rpartition('l').should eq ({"hel", "l", "o"}) }
-      it { "hello".rpartition('o').should eq ({"hell", "o", ""}) }
-      it { "hello".rpartition('h').should eq ({"", "h", "ello"}) }
+      it { "hello".rpartition('l').should eq({"hel", "l", "o"}) }
+      it { "hello".rpartition('o').should eq({"hell", "o", ""}) }
+      it { "hello".rpartition('h').should eq({"", "h", "ello"}) }
     end
 
     describe "by string" do
-      it { "hello".rpartition("l").should eq ({"hel", "l", "o"}) }
-      it { "hello".rpartition("x").should eq ({"", "", "hello"}) }
-      it { "hello".rpartition("o").should eq ({"hell", "o", ""}) }
-      it { "hello".rpartition("h").should eq ({"", "h", "ello"}) }
-      it { "hello".rpartition("ll").should eq ({"he", "ll", "o"}) }
-      it { "hello".rpartition("lo").should eq ({"hel", "lo", ""}) }
-      it { "hello".rpartition("he").should eq ({"", "he", "llo"}) }
+      it { "hello".rpartition("l").should eq({"hel", "l", "o"}) }
+      it { "hello".rpartition("x").should eq({"", "", "hello"}) }
+      it { "hello".rpartition("o").should eq({"hell", "o", ""}) }
+      it { "hello".rpartition("h").should eq({"", "h", "ello"}) }
+      it { "hello".rpartition("ll").should eq({"he", "ll", "o"}) }
+      it { "hello".rpartition("lo").should eq({"hel", "lo", ""}) }
+      it { "hello".rpartition("he").should eq({"", "he", "llo"}) }
     end
 
     describe "by regex" do
-      it { "hello".rpartition(/.l/).should eq ({"he", "ll", "o"}) }
-      it { "hello".rpartition(/ll/).should eq ({"he", "ll", "o"}) }
-      it { "hello".rpartition(/.o/).should eq ({"hel", "lo", ""}) }
-      it { "hello".rpartition(/.e/).should eq ({"", "he", "llo"}) }
-      it { "hello".rpartition(/l./).should eq ({"hel", "lo", ""}) }
+      it { "hello".rpartition(/.l/).should eq({"he", "ll", "o"}) }
+      it { "hello".rpartition(/ll/).should eq({"he", "ll", "o"}) }
+      it { "hello".rpartition(/.o/).should eq({"hel", "lo", ""}) }
+      it { "hello".rpartition(/.e/).should eq({"", "he", "llo"}) }
+      it { "hello".rpartition(/l./).should eq({"hel", "lo", ""}) }
     end
   end
 
@@ -2604,54 +2604,56 @@ describe "String" do
     end
   end
 
-  pending_win32 describe: "encode" do
-    it "encodes" do
-      bytes = "Hello".encode("UCS-2LE")
-      bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
-    end
+  {% unless flag?(:without_iconv) %}
+    describe "encode" do
+      it "encodes" do
+        bytes = "Hello".encode("UCS-2LE")
+        bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
+      end
 
-    it "raises if wrong encoding" do
-      expect_raises ArgumentError, "Invalid encoding: FOO" do
-        "Hello".encode("FOO")
+      it "raises if wrong encoding" do
+        expect_raises ArgumentError, "Invalid encoding: FOO" do
+          "Hello".encode("FOO")
+        end
+      end
+
+      it "raises if wrong encoding with skip" do
+        expect_raises ArgumentError, "Invalid encoding: FOO" do
+          "Hello".encode("FOO", invalid: :skip)
+        end
+      end
+
+      it "raises if illegal byte sequence" do
+        expect_raises ArgumentError, "Invalid multibyte sequence" do
+          "\xff".encode("EUC-JP")
+        end
+      end
+
+      it "doesn't raise on invalid byte sequence" do
+        "好\xff是".encode("EUC-JP", invalid: :skip).to_a.should eq([185, 165, 192, 167])
+      end
+
+      it "raises if incomplete byte sequence" do
+        expect_raises ArgumentError, "Incomplete multibyte sequence" do
+          "好".byte_slice(0, 1).encode("EUC-JP")
+        end
+      end
+
+      it "doesn't raise if incomplete byte sequence" do
+        ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).to_a.should eq([192, 167])
+      end
+
+      it "decodes" do
+        bytes = "Hello".encode("UTF-16LE")
+        String.new(bytes, "UTF-16LE").should eq("Hello")
+      end
+
+      it "decodes with skip" do
+        bytes = Bytes[186, 195, 255, 202, 199]
+        String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
       end
     end
-
-    it "raises if wrong encoding with skip" do
-      expect_raises ArgumentError, "Invalid encoding: FOO" do
-        "Hello".encode("FOO", invalid: :skip)
-      end
-    end
-
-    it "raises if illegal byte sequence" do
-      expect_raises ArgumentError, "Invalid multibyte sequence" do
-        "\xff".encode("EUC-JP")
-      end
-    end
-
-    it "doesn't raise on invalid byte sequence" do
-      "好\xff是".encode("EUC-JP", invalid: :skip).to_a.should eq([185, 165, 192, 167])
-    end
-
-    it "raises if incomplete byte sequence" do
-      expect_raises ArgumentError, "Incomplete multibyte sequence" do
-        "好".byte_slice(0, 1).encode("EUC-JP")
-      end
-    end
-
-    it "doesn't raise if incomplete byte sequence" do
-      ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).to_a.should eq([192, 167])
-    end
-
-    it "decodes" do
-      bytes = "Hello".encode("UTF-16LE")
-      String.new(bytes, "UTF-16LE").should eq("Hello")
-    end
-
-    it "decodes with skip" do
-      bytes = Bytes[186, 195, 255, 202, 199]
-      String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
-    end
-  end
+  {% end %}
 
   it "inserts" do
     "bar".insert(0, "foo").should eq("foobar")

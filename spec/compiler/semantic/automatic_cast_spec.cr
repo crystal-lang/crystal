@@ -584,8 +584,7 @@ describe "Semantic: automatic cast" do
 
       x = 1_i32
       foo(x)
-      ),
-      flags: "number_autocast") { int64 }
+      )) { int64 }
   end
 
   it "casts integer variable to larger type (Int64 to Int128) (#9565)" do
@@ -596,8 +595,7 @@ describe "Semantic: automatic cast" do
 
       x = 1_i64
       foo(x)
-      ),
-      flags: "number_autocast") { int128 }
+      )) { int128 }
   end
 
   it "casts integer expression to larger type (#9565)" do
@@ -611,8 +609,7 @@ describe "Semantic: automatic cast" do
       end
 
       foo(bar)
-      ),
-      flags: "number_autocast") { int64 }
+      )) { int64 }
   end
 
   it "says ambiguous call for integer var to larger type (#9565)" do
@@ -628,8 +625,7 @@ describe "Semantic: automatic cast" do
       x = 1_u8
       foo(x)
       ),
-      "ambiguous call, implicit cast of UInt8 matches all of Int32, Int64",
-      flags: "number_autocast"
+      "ambiguous call, implicit cast of UInt8 matches all of Int32, Int64"
   end
 
   it "says ambiguous call for integer var to union type (#9565)" do
@@ -641,8 +637,7 @@ describe "Semantic: automatic cast" do
       x = 1_u8
       foo(x)
       ),
-      "ambiguous call, implicit cast of UInt8 matches all of Int32, UInt32",
-      flags: "number_autocast"
+      "ambiguous call, implicit cast of UInt8 matches all of Int32, UInt32"
   end
 
   it "can't cast integer to another type when it doesn't fit (#9565)" do
@@ -654,8 +649,7 @@ describe "Semantic: automatic cast" do
       x = 1_i64
       foo(x)
       ),
-      "no overload matches 'foo' with type Int64",
-      flags: "number_autocast"
+      "no overload matches 'foo' with type Int64"
   end
 
   it "doesn't cast integer variable to larger type (not #9565)" do
@@ -667,7 +661,8 @@ describe "Semantic: automatic cast" do
       x = 1_i32
       foo(x)
       ),
-      "no overload matches 'foo' with type Int32"
+      "no overload matches 'foo' with type Int32",
+      flags: "no_number_autocast"
   end
 
   it "doesn't autocast number on union (#8655)" do
@@ -699,8 +694,7 @@ describe "Semantic: automatic cast" do
 
       x = 1_i32
       foo(x)
-      ),
-      flags: "number_autocast") { float64 }
+      )) { float64 }
   end
 
   it "autocasts float32 variable to float64 type (#9565)" do
@@ -711,8 +705,7 @@ describe "Semantic: automatic cast" do
 
       x = 1.0_f32
       foo(x)
-      ),
-      flags: "number_autocast") { float64 }
+      )) { float64 }
   end
 
   it "autocasts nested type from non-nested type (#10315)" do

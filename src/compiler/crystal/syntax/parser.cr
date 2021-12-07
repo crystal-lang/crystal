@@ -345,6 +345,7 @@ module Crystal
     def parse_op_assign(allow_ops = true, allow_suffix = true)
       doc = @token.doc
       location = @token.location
+      start_token = @token
 
       atomic = parse_question_colon
 
@@ -378,7 +379,7 @@ module Crystal
             end
 
             if atomic.is_a?(Call) && (atomic.name.ends_with?('?') || atomic.name.ends_with?('!'))
-              raise "unexpected token: =", location
+              unexpected_token token: start_token
             end
 
             atomic = Var.new(atomic.name).at(atomic) if atomic.is_a?(Call)
@@ -898,7 +899,7 @@ module Crystal
         name = parse_responds_to_name
         next_token_skip_space
       else
-        unexpected_token msg: "expected space or '('"
+        unexpected_token "expected space or '('"
       end
 
       RespondsTo.new(atomic, name)
@@ -906,7 +907,7 @@ module Crystal
 
     def parse_responds_to_name
       if @token.type != :SYMBOL
-        unexpected_token msg: "expected symbol"
+        unexpected_token "expected symbol"
       end
 
       @token.value.to_s
@@ -997,7 +998,9 @@ module Crystal
           method = "[]"
         end
         location = @token.location
-        node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(value.to_i))
+        index = value.to_i?
+        raise "Index $#{value} doesn't fit in an Int32" unless index
+        node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(index))
       when :__LINE__
         node_and_next_token MagicConstant.expand_line_node(@token.location)
       when :__END_LINE__
@@ -1786,7 +1789,7 @@ module Crystal
         end
       end
 
-      unexpected_token "(" if @token.type == :"("
+      unexpected_token if @token.type == :"("
 
       node = Expressions.new(exps)
       node.keyword = :"("
@@ -1865,7 +1868,7 @@ module Crystal
         next_token_skip_space
 
         msg = String.build do |msg|
-          msg << "unexpected token '|', proc literals specify their parameters like this: ->("
+          msg << %[unexpected token: "|", proc literals specify their parameters like this: ->(]
           if @token.type == :IDENT
             msg << @token.value.to_s << " : Type"
             next_token_skip_space_or_newline
@@ -2739,10 +2742,10 @@ module Crystal
             next_token
             break
           else
-            unexpected_token @token.to_s, "expecting when, else or end"
+            unexpected_token "expecting when, else or end"
           end
         else
-          unexpected_token @token.to_s, "expecting when, else or end"
+          unexpected_token "expecting when, else or end"
         end
       end
 
@@ -2820,7 +2823,7 @@ module Crystal
           skip_statement_end
           return true
         else
-          unexpected_token @token.to_s, "expecting ',', ';' or '\n'"
+          unexpected_token "expecting ',', ';' or '\n'"
         end
       end
       false
@@ -2876,7 +2879,7 @@ module Crystal
 
             skip_space
             unless when_expression_end
-              unexpected_token @token.to_s, "expecting then, ';' or newline"
+              unexpected_token "expecting then, ';' or newline"
             end
             skip_statement_end
 
@@ -2886,7 +2889,7 @@ module Crystal
             whens << Select::When.new(condition, body)
           when :else
             if whens.size == 0
-              unexpected_token @token.to_s, "expecting when"
+              unexpected_token "expecting when"
             end
             slash_is_regex!
             next_token_skip_statement_end
@@ -2897,15 +2900,15 @@ module Crystal
             break
           when :end
             if whens.empty?
-              unexpected_token @token.to_s, "expecting when, else or end"
+              unexpected_token "expecting when, else or end"
             end
             next_token
             break
           else
-            unexpected_token @token.to_s, "expecting when, else or end"
+            unexpected_token "expecting when, else or end"
           end
         else
-          unexpected_token @token.to_s, "expecting when, else or end"
+          unexpected_token "expecting when, else or end"
         end
       end
 
@@ -3070,9 +3073,9 @@ module Crystal
           next_token
         when :IDENT, :"*"
           if @token.keyword?(:end)
-            unexpected_token @token.to_s, "expected ';' or newline"
+            unexpected_token "expected ';' or newline"
           else
-            unexpected_token @token.to_s, "parentheses are mandatory for macro parameters"
+            unexpected_token "parentheses are mandatory for macro parameters"
           end
         when :";", :"NEWLINE"
           # Skip
@@ -3182,7 +3185,7 @@ module Crystal
         when :"}"
           break
         else
-          unexpected_token @token, "expecting ',' or '}'"
+          unexpected_token %(expecting "," or "}")
         end
       end
       exps
@@ -3264,7 +3267,7 @@ module Crystal
                   when :IDENT
                     @token.value.to_s
                   else
-                    unexpected_token msg: "expecting ident or underscore"
+                    unexpected_token "expecting ident or underscore"
                   end
             vars << Var.new(var).at(@token.location)
 
@@ -3561,16 +3564,16 @@ module Crystal
         end
       when :IDENT, :INSTANCE_VAR, :CLASS_VAR, :"*", :"**"
         if @token.keyword?(:end)
-          unexpected_token @token.to_s, "expected ';' or newline"
+          unexpected_token %(expected ";" or newline)
         else
-          unexpected_token @token.to_s, "parentheses are mandatory for def parameters"
+          unexpected_token "parentheses are mandatory for def parameters"
         end
       when :";", :"NEWLINE"
         # Skip
       when :":"
         # Skip
       when :"&"
-        unexpected_token @token.to_s, "parentheses are mandatory for def parameters"
+        unexpected_token "parentheses are mandatory for def parameters"
       when :SYMBOL
         raise "a space is mandatory between ':' and return type", @token
       else
@@ -3934,14 +3937,14 @@ module Crystal
       else
         if external_name
           if found_string_literal
-            raise "unexpected token: #{@token}, expected parameter internal name"
+            unexpected_token "expected parameter internal name"
           end
           if invalid_internal_name
             raise "cannot use '#{invalid_internal_name}' as a parameter name", invalid_internal_name
           end
           arg_name = external_name
         else
-          raise "unexpected token: #{@token}"
+          unexpected_token
         end
       end
 
@@ -5377,7 +5380,7 @@ module Crystal
         @yields = args.size
       end
 
-      Yield.new(args || [] of ASTNode, scope).at(location).at_end(end_location)
+      Yield.new(args || [] of ASTNode, scope, !!call_args.try(&.has_parentheses)).at(location).at_end(end_location)
     end
 
     def parse_break
@@ -6105,11 +6108,12 @@ module Crystal
       @token.value.to_s
     end
 
-    def unexpected_token(token = @token.to_s, msg = nil)
+    def unexpected_token(msg : String? = nil, token : Token = @token)
+      token_str = token.type == :EOF ? "EOF" : token.to_s.inspect
       if msg
-        raise "unexpected token: #{token} (#{msg})", @token
+        raise "unexpected token: #{token_str} (#{msg})", @token
       else
-        raise "unexpected token: #{token}", @token
+        raise "unexpected token: #{token_str}", @token
       end
     end
 

@@ -15,7 +15,7 @@ jobs:
           make deps
       - name: Cross-compile Crystal
         run: |
-          LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground
+          LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground -Dwithout_iconv
 
       - name: Upload Crystal object file
         uses: actions/upload-artifact@v2
@@ -42,6 +42,7 @@ jobs:
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
             libs/pcre.lib
+            libs/iconv.lib
             libs/gc.lib
             libs/z.lib
             libs/mpir.lib
@@ -81,6 +82,34 @@ jobs:
         run: |
           cmake . -DBUILD_SHARED_LIBS=OFF -DPCRE_SUPPORT_UNICODE_PROPERTIES=ON -DPCRE_SUPPORT_JIT=ON -DPCRE_STATIC_RUNTIME=ON -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
           cmake --build . --config Release
+      - name: Download libiconv
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: pffang/libiconv-for-Windows
+          ref: 9b7aba8da6e125ef33912fa4412779279f204003 # master @ 2021-08-24
+          path: libiconv
+      - name: Build libiconv
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        working-directory: ./libiconv
+        run: |
+          echo '<Project>
+            <PropertyGroup>
+              <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
+            </PropertyGroup>
+          </Project>' > 'Directory.Build.props'
+
+          echo '<Project>
+            <ItemDefinitionGroup>
+              <ClCompile>
+                <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+                <DebugInformationFormat>None</DebugInformationFormat>
+                <WholeProgramOptimization>false</WholeProgramOptimization>
+              </ClCompile>
+            </ItemDefinitionGroup>
+          </Project>' > 'Override.props'
+
+          MSBuild.exe /p:Platform=x64 /p:Configuration=ReleaseStatic libiconv.vcxproj
       - name: Download zlib
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
@@ -106,6 +135,22 @@ jobs:
         working-directory: ./mpir
         run: |
           $VsVersion = "vs$((& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -property displayName) -replace '.*\b\d\d(\d\d)\b.*', '$1')"
+
+          echo '<Project>
+            <PropertyGroup>
+              <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
+            </PropertyGroup>
+          </Project>' > 'msvc\Directory.Build.props'
+
+          echo '<Project>
+            <ItemDefinitionGroup Label="Configuration">
+              <ClCompile>
+                <DebugInformationFormat>None</DebugInformationFormat>
+                <WholeProgramOptimization>false</WholeProgramOptimization>
+              </ClCompile>
+            </ItemDefinitionGroup>
+          </Project>' > 'msvc\Override.props'
+
           MSBuild.exe /p:Platform=x64 /p:Configuration=Release /p:DefineConstants=MSC_BUILD_DLL ".\msvc\$VsVersion\lib_mpir_gc\lib_mpir_gc.vcxproj"
       - name: Download libyaml
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -138,6 +183,7 @@ jobs:
         run: |
           mkdir libs
           mv pcre/Release/pcre.lib libs/
+          mv libiconv/lib64/libiconvStatic.lib libs/iconv.lib
           mv bdwgc/Release/gc.lib libs/
           mv zlib/Release/zlibstatic.lib libs/z.lib
           mv mpir/lib/x64/Release/mpir.lib libs/
@@ -151,6 +197,7 @@ jobs:
           path: |
             libs/crypto.lib
             libs/ssl.lib
+            libs/openssl_VERSION
           key: win-openssl-libs-3.0.0
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
@@ -168,6 +215,8 @@ jobs:
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         working-directory: ./openssl
         run: |
+          sed -i 's|/Zi /Fd.*\.pdb||' Configurations/10-main.conf
+          sed -i 's|/debug|/debug:none|' Configurations/10-main.conf
           perl Configure VC-WIN64A /MT -static no-tests --with-zlib-lib=..\zlib\Release --with-zlib-include=..\zlib
           nmake
       - name: Gather OpenSSL
@@ -175,9 +224,7 @@ jobs:
         run: |
           cp openssl/libcrypto.lib libs/crypto.lib
           cp openssl/libssl.lib libs/ssl.lib
-      - name: Set OpenSSL version
-        run: |
-          echo "CRYSTAL_OPENSSL_VERSION=3.0.0" >> ${env:GITHUB_ENV}
+          [IO.File]::WriteAllLines("libs/openssl_VERSION", "3.0.0")
 
       - name: Cache LLVM
         id: cache-llvm
@@ -212,11 +259,13 @@ jobs:
 
       - name: Set up environment
         run: |
-          echo "CRYSTAL_PATH=$(pwd)\src" >> ${env:GITHUB_ENV}
+          echo "CRYSTAL_PATH=lib;$(pwd)\src" >> ${env:GITHUB_ENV}
           echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
-          echo "LIB=${env:LIB};$(pwd)\libs" >> ${env:GITHUB_ENV}
+          echo 'CRYSTAL_CONFIG_PATH=$ORIGIN\src' >> ${env:GITHUB_ENV}
+          echo 'CRYSTAL_CONFIG_LIBRARY_PATH=$ORIGIN\lib' >> ${env:GITHUB_ENV}
           echo "TERM=dumb" >> ${env:GITHUB_ENV}
           echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
+          echo "CRYSTAL_CONFIG_BUILD_COMMIT=$(git rev-parse --short=9 HEAD)" >> ${env:GITHUB_ENV}
           echo "SOURCE_DATE_EPOCH=$(Get-Date -Millisecond 0 -UFormat %s)" >> ${env:GITHUB_ENV}
 
       - name: Download Crystal object file
@@ -228,7 +277,7 @@ jobs:
           cl /MT /c src\llvm\ext\llvm_ext.cc -I llvm\include /Fosrc\llvm\ext\llvm_ext.obj
       - name: Link Crystal executable
         run: |
-          Invoke-Expression "cl crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib dbghelp.lib legacy_stdio_definitions.lib /F10000000"
+          Invoke-Expression "cl crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib dbghelp.lib ole32.lib shell32.lib legacy_stdio_definitions.lib /link /LIBPATH:$(pwd)\libs /STACK:10000000"
 
       - name: Re-build Crystal
         run: |
@@ -237,9 +286,12 @@ jobs:
 
       - name: Gather Crystal binaries
         run: |
-          mkdir crystal
+          mkdir crystal/src
+          mkdir crystal/lib
           cp bin/crystal.exe crystal/
-          cp libs/* crystal/
+          cp libs/* crystal/lib/
+          cp src/* crystal/src -Recurse
+          rm crystal/src/llvm/ext/llvm_ext.obj
       - name: Upload Crystal binaries
         uses: actions/upload-artifact@v2
         with:
@@ -248,7 +300,7 @@ jobs:
 
       - name: Build stdlib specs executable
         run: |
-          bin\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Di_know_what_im_doing
+          bin\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std -Di_know_what_im_doing
       - name: Run socket specs
         run: |
           .\std_spec.exe --verbose -e TCPSocket
@@ -258,7 +310,14 @@ jobs:
 
       - name: Build compiler specs executable
         run: |
-          bin\crystal.exe build spec/compiler_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Dwithout_playground -Di_know_what_im_doing
+          bin\crystal.exe build spec/compiler_spec.cr --exclude-warnings spec/compiler -Dwithout_playground -Di_know_what_im_doing
       - name: Run compiler specs
         run: |
           .\compiler_spec.exe
+
+      - name: Build primitives specs executable
+        run: |
+          bin\crystal.exe build spec/primitives_spec.cr --exclude-warnings spec/primitives -Dwithout_playground -Di_know_what_im_doing
+      - name: Run primitives specs
+        run: |
+          .\primitives_spec.exe

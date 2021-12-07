@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 
 # Ported from https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/test/builtins/Unit/muloti4_test.c
 
@@ -11,12 +11,6 @@ private def test__muloti4(a : Int128, b : Int128, expected : Int128, expected_ov
       actual.should eq(expected), file: file, line: line
     end
   end
-end
-
-# TODO: Replace helper methods with literals once possible
-
-private def make_ti(a : Int128, b : Int128)
-  (a << 64) + b
 end
 
 describe "__muloti4" do

@@ -69,7 +69,7 @@ module Crystal
 
         main_visitor.pushing_type(owner.as(ModuleType)) do
           # Check if we can autocast
-          if node.supports_autocast?(@program.has_flag?("number_autocast")) && (class_var_type = class_var.type?)
+          if node.supports_autocast?(!@program.has_flag?("no_number_autocast")) && (class_var_type = class_var.type?)
             cloned_node = node.clone
             cloned_node.accept MainVisitor.new(self)
             if casted_value = MainVisitor.check_automatic_cast(@program, cloned_node, class_var_type)

@@ -1780,12 +1780,17 @@ module Crystal
       next_char
 
       num = 0_u64
+      num_size = 0
       while true
         case next_char
         when '0'
-          num *= 2
+          num = num << 1
+          if num_size > 0
+            num_size += 1
+          end
         when '1'
-          num = num * 2 + 1
+          num = (num << 1) + 1
+          num_size += 1
         when '_'
           # Nothing
         else
@@ -1793,6 +1798,7 @@ module Crystal
         end
       end
 
+      num = nil if num_size > 64
       finish_scan_prefixed_number num, negative, start
     end
 
@@ -1800,17 +1806,25 @@ module Crystal
       next_char
 
       num = 0_u64
-
+      num_size = first_digit = 0
       while true
         char = next_char
         if '0' <= char <= '7'
-          num = num * 8 + (char - '0')
+          num = (num << 3) | (char - '0')
+          if num_size == 0
+            first_digit = num
+            num_size += 1 if char != '0'
+          else
+            num_size += 1
+          end
         elsif char == '_'
         else
           break
         end
       end
 
+      # 0o177777_77777777_77777777 is the largest UInt64.
+      num = nil if {num_size, first_digit} > {22, 0o1}
       finish_scan_prefixed_number num, negative, start
     end
 
@@ -1818,23 +1832,49 @@ module Crystal
       next_char
 
       num = 0_u64
+      num_size = 0
       while true
         char = next_char
         if char == '_'
         else
           hex_value = char_to_hex(char) { nil }
           if hex_value
-            num = num * 16 + hex_value
+            num = (num << 4) | hex_value
+            if num_size > 0 || char != '0'
+              num_size += 1
+            end
           else
             break
           end
         end
       end
 
+      # 0xFFFF_FFFF_FFFF_FFFF is the longest UInt64.
+      num = nil if num_size > 16
       finish_scan_prefixed_number num, negative, start
     end
 
-    def finish_scan_prefixed_number(num, negative, start)
+    def finish_scan_prefixed_number(num : Int?, negative : Bool, start : Int32)
+      if num.nil? # Doesn't even fit in UInt64
+        case current_char
+        when 'i'
+          consume_int_suffix
+        when 'u'
+          consume_uint_suffix
+        else
+          @token.number_kind = :u64
+        end
+        case @token.number_kind
+        when :i8, :i16, :i32, :i64, :i128
+          type_name = "Int" + @token.number_kind.to_s[1..]
+        when :u8, :u16, :u32, :u64, :u128
+          type_name = "UInt" + @token.number_kind.to_s[1..]
+        else
+          raise "BUG: Expecting an integer token, got #{@token.number_kind}"
+        end
+        raise_value_doesnt_fit_in type_name, string_range_from_pool(start), start
+      end
+
       if negative
         string_value = (num.to_i64 * -1).to_s
       else
@@ -2019,6 +2059,7 @@ module Crystal
         if delimiter_state.allow_escapes
           if delimiter_state.kind == :regex
             char = next_char
+            raise_unterminated_quoted delimiter_state if char == '\0'
             next_char
             @token.type = :STRING
             if char == '/' || char.ascii_whitespace?
@@ -2272,6 +2313,11 @@ module Crystal
             end
           when 'i'
             if next_char == 'f' && !ident_part_or_end?(peek_next_char)
+              next_char
+              nest += 1
+            end
+          when 'u'
+            if next_char == 'n' && next_char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's' && !ident_part_or_end?(peek_next_char)
               next_char
               nest += 1
             end

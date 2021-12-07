@@ -115,10 +115,11 @@ build() {
         i=$((i + 1))
       done
 
+      with_build_env 'make primitives_spec threads=1 junit_output=.junit/primitives_spec.xml'
       with_build_env 'make docs threads=1'
       ;;
     *)
-      with_build_env 'make crystal std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml DOCS_OPTIONS="--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/"'
+      with_build_env 'make crystal primitives_spec std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml DOCS_OPTIONS="--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/"'
       ;;
   esac
 
