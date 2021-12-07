@@ -370,9 +370,13 @@ describe "Lexer" do
   assert_syntax_error "4i33", "invalid int suffix"
   assert_syntax_error "4i65", "invalid int suffix"
   assert_syntax_error "4i22", "invalid int suffix"
+  assert_syntax_error "4i3", "invalid int suffix"
+  assert_syntax_error "4i12", "invalid int suffix"
   assert_syntax_error "4u33", "invalid uint suffix"
   assert_syntax_error "4u65", "invalid uint suffix"
   assert_syntax_error "4u22", "invalid uint suffix"
+  assert_syntax_error "4u3", "invalid uint suffix"
+  assert_syntax_error "4u12", "invalid uint suffix"
   # Tests for #8782
   assert_syntax_error "4F32", %(unexpected token: "F32")
   assert_syntax_error "4F64", %(unexpected token: "F64")
