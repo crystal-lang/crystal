@@ -304,7 +304,7 @@ module Base64
     {% end %}
   end
 
-  private DECODE_TABLE = StaticArray(UInt8, 256).new do |i|
+  private DECODE_TABLE = Array(UInt8).new(size: 256) do |i|
     case i.unsafe_chr
     when 'A'..'Z' then (i - 0x41).to_u8!
     when 'a'..'z' then (i - 0x47).to_u8!
