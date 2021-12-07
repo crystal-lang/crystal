@@ -29,45 +29,28 @@ struct YAML::Any
   alias Type = Nil | Bool | Int64 | Float64 | String | Time | Bytes | Array(Any) | Hash(Any, Any) | Set(Any)
 
   def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-    anchors = {} of String => Any
-    convert(node, anchors)
-  end
-
-  private def self.convert(node, anchors)
     case node
     when YAML::Nodes::Scalar
       new YAML::Schema::Core.parse_scalar(node.value)
     when YAML::Nodes::Sequence
       ary = [] of Any
 
-      if anchor = node.anchor
-        anchors[anchor] = Any.new(ary)
-      end
-
       node.each do |value|
-        ary << convert(value, anchors)
+        ary << new(ctx, value)
       end
 
       new ary
     when YAML::Nodes::Mapping
       hash = {} of Any => Any
 
-      if anchor = node.anchor
-        anchors[anchor] = Any.new(hash)
-      end
-
       node.each do |key, value|
-        hash[convert(key, anchors)] = convert(value, anchors)
+        hash[new(ctx, key)] = new(ctx, value)
       end
 
       new hash
     when YAML::Nodes::Alias
       if value = node.value
-        convert(value, anchors)
-      elsif anchor = node.anchor
-        anchors.fetch(anchor) do
-          raise YAML::ParseException.new("Unknown anchor '#{anchor.inspect}'", *node.location)
-        end
+        new(ctx, value)
       else
         raise "YAML::Nodes::Alias misses anchor value"
       end
