@@ -8,7 +8,7 @@ require "./repl"
 # so it's hard to get access to stack values that are not at the top
 # of the stack.
 #
-# So, for interprted mode, when there's a dispatch, we actually create
+# So, for interpreted mode, when there's a dispatch, we actually create
 # a method that will do the dispatch, and we call that method.
 # For example, if we have this code:
 #
@@ -230,8 +230,6 @@ module Crystal::Repl::Multidispatch
     a_def.bind_to(a_def.body)
 
     a_def.body = context.program.cleanup(a_def.body, inside_def: true)
-
-    # puts a_def
 
     a_def
   end

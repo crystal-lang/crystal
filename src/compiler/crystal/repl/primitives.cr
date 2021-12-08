@@ -1,6 +1,6 @@
 require "./compiler"
 
-# Code to produce bytecode to interpter all the language primitives.
+# Code to produce bytecode to interpret all the language primitives.
 # It's usually the case that every primitive needs an opcode,
 # and some regular crystal functions are also done as primitives
 # (for example `caller`, or doing a fiber context switch.)

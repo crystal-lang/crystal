@@ -1,6 +1,6 @@
 require "./repl"
 
-# Gathers known local varialbes during a pry session.
+# Gathers known local variables during a pry session.
 # For example, if we have code like this:
 #
 # ```

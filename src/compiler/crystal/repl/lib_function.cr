@@ -16,7 +16,7 @@ class Crystal::Repl::LibFunction
   getter args_bytesizes : Array(Int32)
 
   def initialize(
-    @def : Def,
+    @def : External,
     @symbol : Void*,
     @call_interface : FFI::CallInterface,
     @args_bytesizes : Array(Int32)
