@@ -1,3 +1,4 @@
+{% skip_file if flag?(:without_interpreter) %}
 require "./repl"
 
 class Crystal::Repl::EscapingException < Exception

@@ -1,3 +1,4 @@
+{% skip_file if flag?(:without_interpreter) %}
 require "../spec_helper"
 
 private macro assert_overflows(code, file = __FILE__, line = __LINE__)
