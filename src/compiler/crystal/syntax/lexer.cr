@@ -1455,7 +1455,7 @@ module Crystal
         raise "Invalid negative value #{string_range({{start}}, {{pos_before_suffix}})} for {{type}}", @token, (current_pos - {{start}}) if {{negative}}
       {% end %}
 
-      if {{number_size}} > {{size}} || ({{number_size}} == {{size}} && {{raw_number_string}}.to_{{method.id}}? == nil)
+      if !@token.value || {{number_size}} > {{size}} || ({{number_size}} == {{size}} && {{raw_number_string}}.to_{{method.id}}? == nil)
         {% if actual_type.nil? %}
           raise_value_doesnt_fit_in "{{type}}", {{start}}, {{pos_before_suffix}}
         {% else %}
