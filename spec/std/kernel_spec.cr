@@ -3,12 +3,12 @@ require "./spec_helper"
 
 describe "exit" do
   it "exits normally with status 0" do
-    status, _ = compile_and_run_source "exit"
+    status, _, _ = compile_and_run_source "exit"
     status.success?.should be_true
   end
 
   it "exits with given error code" do
-    status, _ = compile_and_run_source "exit 42"
+    status, _, _ = compile_and_run_source "exit 42"
     status.success?.should be_false
     status.exit_code.should eq(42)
   end
@@ -16,7 +16,7 @@ end
 
 describe "at_exit" do
   it "runs handlers on normal program ending" do
-    status, output = compile_and_run_source <<-CODE
+    status, output, _ = compile_and_run_source <<-CODE
       at_exit do
         puts "handler code"
       end
@@ -27,7 +27,7 @@ describe "at_exit" do
   end
 
   it "runs handlers on explicit program ending" do
-    status, output = compile_and_run_source <<-'CODE'
+    status, output, _ = compile_and_run_source <<-'CODE'
       at_exit do |exit_code|
         puts "handler code, exit code: #{exit_code}"
       end
@@ -40,7 +40,7 @@ describe "at_exit" do
   end
 
   it "runs handlers in reverse order" do
-    status, output = compile_and_run_source <<-CODE
+    status, output, _ = compile_and_run_source <<-CODE
       at_exit do
         puts "first handler code"
       end
@@ -59,7 +59,7 @@ describe "at_exit" do
   end
 
   it "runs all handlers maximum once" do
-    status, output = compile_and_run_source <<-CODE
+    status, output, _ = compile_and_run_source <<-CODE
       at_exit do
         puts "first handler code"
       end
@@ -86,7 +86,7 @@ describe "at_exit" do
   end
 
   it "allows handlers to change the exit code with explicit `exit` call" do
-    status, output = compile_and_run_source <<-'CODE'
+    status, output, _ = compile_and_run_source <<-'CODE'
       at_exit do |exit_code|
         puts "first handler code, exit code: #{exit_code}"
       end
@@ -114,7 +114,7 @@ describe "at_exit" do
   end
 
   it "allows handlers to change the exit code with explicit `exit` call (2)" do
-    status, output = compile_and_run_source <<-'CODE'
+    status, output, _ = compile_and_run_source <<-'CODE'
       at_exit do |exit_code|
         puts "first handler code, exit code: #{exit_code}"
       end
@@ -210,7 +210,7 @@ describe "at_exit" do
   end
 
   it "allows at_exit inside at_exit" do
-    status, output = compile_and_run_source <<-CODE
+    status, output, _ = compile_and_run_source <<-CODE
       at_exit do
         puts "1"
         at_exit do

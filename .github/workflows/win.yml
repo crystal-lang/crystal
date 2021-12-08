@@ -197,6 +197,7 @@ jobs:
           path: |
             libs/crypto.lib
             libs/ssl.lib
+            libs/openssl_VERSION
           key: win-openssl-libs-3.0.0
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
@@ -214,6 +215,8 @@ jobs:
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         working-directory: ./openssl
         run: |
+          sed -i 's|/Zi /Fd.*\.pdb||' Configurations/10-main.conf
+          sed -i 's|/debug|/debug:none|' Configurations/10-main.conf
           perl Configure VC-WIN64A /MT -static no-tests --with-zlib-lib=..\zlib\Release --with-zlib-include=..\zlib
           nmake
       - name: Gather OpenSSL
@@ -221,9 +224,7 @@ jobs:
         run: |
           cp openssl/libcrypto.lib libs/crypto.lib
           cp openssl/libssl.lib libs/ssl.lib
-      - name: Set OpenSSL version
-        run: |
-          echo "CRYSTAL_OPENSSL_VERSION=3.0.0" >> ${env:GITHUB_ENV}
+          [IO.File]::WriteAllLines("libs/openssl_VERSION", "3.0.0")
 
       - name: Cache LLVM
         id: cache-llvm
@@ -264,6 +265,7 @@ jobs:
           echo 'CRYSTAL_CONFIG_LIBRARY_PATH=$ORIGIN\lib' >> ${env:GITHUB_ENV}
           echo "TERM=dumb" >> ${env:GITHUB_ENV}
           echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
+          echo "CRYSTAL_CONFIG_BUILD_COMMIT=$(git rev-parse --short=9 HEAD)" >> ${env:GITHUB_ENV}
           echo "SOURCE_DATE_EPOCH=$(Get-Date -Millisecond 0 -UFormat %s)" >> ${env:GITHUB_ENV}
 
       - name: Download Crystal object file
@@ -275,7 +277,7 @@ jobs:
           cl /MT /c src\llvm\ext\llvm_ext.cc -I llvm\include /Fosrc\llvm\ext\llvm_ext.obj
       - name: Link Crystal executable
         run: |
-          Invoke-Expression "cl crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib dbghelp.lib legacy_stdio_definitions.lib /link /LIBPATH:$(pwd)\libs /STACK:10000000"
+          Invoke-Expression "cl crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib dbghelp.lib ole32.lib shell32.lib legacy_stdio_definitions.lib /link /LIBPATH:$(pwd)\libs /STACK:10000000"
 
       - name: Re-build Crystal
         run: |

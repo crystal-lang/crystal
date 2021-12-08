@@ -2662,6 +2662,16 @@ module Crystal
       # so we remove the space between "as" and "(".
       skip_space if special_call
 
+      # If the call has a single argument which is a parenthesized `Expressions`,
+      # we skip whitespace between the method name and the arg. The parenthesized
+      # arg is transformed into a call with parenthesis: `foo (a)` becomes `foo(a)`.
+      if node.args.size == 1 &&
+         !node.named_args && !node.block_arg && !node.block &&
+         (expressions = node.args[0].as?(Expressions)) &&
+         expressions.keyword == :"(" && expressions.expressions.size == 1
+        skip_space
+      end
+
       if @token.type == :"("
         slash_is_regex!
         next_token
@@ -2678,7 +2688,7 @@ module Crystal
 
         write "("
         has_parentheses = true
-        has_newlines, found_comment = format_call_args(node, true, base_indent)
+        has_newlines, found_comment, _ = format_call_args(node, true, base_indent)
         found_comment ||= skip_space
         if @token.type == :NEWLINE
           ends_with_newline = true
@@ -2687,7 +2697,7 @@ module Crystal
       elsif has_args || node.block_arg
         write " " unless passed_backslash_newline
         skip_space
-        has_newlines, found_comment = format_call_args(node, false, base_indent)
+        has_newlines, found_comment, _ = format_call_args(node, false, base_indent)
       end
 
       if block = node.block

@@ -526,36 +526,36 @@ describe "Lexer" do
     lexer = Lexer.new ":a!=:a"
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
-    token.value.should eq ("a")
+    token.value.should eq("a")
     token = lexer.next_token
     token.type.should eq(:"!=")
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
-    token.value.should eq ("a")
+    token.value.should eq("a")
   end
 
   it "lexes symbol followed by ==" do
     lexer = Lexer.new ":a==:a"
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
-    token.value.should eq ("a")
+    token.value.should eq("a")
     token = lexer.next_token
     token.type.should eq(:"==")
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
-    token.value.should eq ("a")
+    token.value.should eq("a")
   end
 
   it "lexes symbol followed by ===" do
     lexer = Lexer.new ":a===:a"
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
-    token.value.should eq ("a")
+    token.value.should eq("a")
     token = lexer.next_token
     token.type.should eq(:"===")
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
-    token.value.should eq ("a")
+    token.value.should eq("a")
   end
 
   it "lexes != after identifier (#4815)" do
