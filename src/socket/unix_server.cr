@@ -39,6 +39,7 @@ class UNIXServer < UNIXSocket
       raise error
     end
 
+    return if type == Type::DGRAM
     listen(backlog) do |error|
       close
       raise error

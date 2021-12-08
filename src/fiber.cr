@@ -245,8 +245,7 @@ class Fiber
     @timeout_event.try &.delete
   end
 
-  # The current fiber will resume after a period of time
-  # and have the property `timed_out` set to true.
+  # The current fiber will resume after a period of time.
   # The timeout can be cancelled with `cancel_timeout`
   def self.timeout(timeout : Time::Span?, select_action : Channel::TimeoutAction? = nil) : Nil
     Crystal::Scheduler.current_fiber.timeout(timeout, select_action)

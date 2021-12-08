@@ -64,19 +64,14 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_info
-    {% begin %}
-      {% if flag?(:interpreted) && LibC.has_method?("__fxstat") %}
-        ret = LibC.__fxstat(1, fd, out stat)
-      {% else %}
-        ret = LibC.fstat(fd, out stat)
-      {% end %}
+    stat = uninitialized LibC::Stat
+    ret = File.fstat(fd, pointerof(stat))
 
-      if ret != 0
-        raise IO::Error.from_errno("Unable to get info")
-      end
+    if ret != 0
+      raise IO::Error.from_errno("Unable to get info")
+    end
 
-      FileInfo.new(stat)
-    {% end %}
+    FileInfo.new(stat)
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil

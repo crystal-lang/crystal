@@ -11,7 +11,17 @@ jobs:
     env:
       ARCH: x86_64
       ARCH_CMD: linux64
+      DOCKER_TEST_PREFIX: crystallang/crystal:${{ matrix.crystal_bootstrap_version }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        crystal_bootstrap_version: [1.2.2]
+        include:
+          # libffi is only available starting from the 1.2.2 build images
+          - crystal_bootstrap_version: 1.0.0
+            flags: -Dwithout_ffi
+          - crystal_bootstrap_version: 1.1.1
+            flags: -Dwithout_ffi
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
@@ -23,7 +33,7 @@ jobs:
         run: bin/ci prepare_build
 
       - name: Test
-        run: bin/ci build
+        run: FLAGS=${{ matrix.flags }} bin/ci build
 
   test_alpine:
     env:

@@ -659,7 +659,7 @@ struct Int
           if precision > count
             difference = precision - count
             ptr -= difference
-            Intrinsics.memset(ptr, '0'.ord.to_u8, difference, false)
+            Slice.new(ptr, difference).fill('0'.ord.to_u8)
             count += difference
           end
 
@@ -678,7 +678,7 @@ struct Int
               buffer += 1
             end
 
-            Intrinsics.memset(buffer, '0'.ord.to_u8, precision - count, false)
+            Slice.new(buffer, precision - count).fill('0'.ord.to_u8)
             ptr.copy_to(buffer + precision - count, count)
             {len, len}
           end

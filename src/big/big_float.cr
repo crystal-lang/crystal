@@ -394,7 +394,7 @@ end
 
 module Math
   # Decomposes the given floating-point *value* into a normalized fraction and an integral power of two.
-  def frexp(value : BigFloat) : {BigFloat, Int32 | Int64}
+  def frexp(value : BigFloat) : {BigFloat, Int64}
     LibGMP.mpf_get_d_2exp(out exp, value) # we need BigFloat frac, so will skip Float64 one.
     frac = BigFloat.new do |mpf|
       if exp >= 0
@@ -403,7 +403,7 @@ module Math
         LibGMP.mpf_mul_2exp(mpf, value, -exp)
       end
     end
-    {frac, exp}
+    {frac, exp.to_i64}
   end
 
   # Calculates the square root of *value*.

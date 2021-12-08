@@ -1241,7 +1241,7 @@ class Hash(K, V)
   # ```
   #
   # The enumeration follows the order the keys were inserted.
-  def each : Nil
+  def each(& : {K, V} ->) : Nil
     each_entry_with_index do |entry, i|
       yield({entry.key, entry.value})
     end
@@ -1273,7 +1273,7 @@ class Hash(K, V)
   # ```
   #
   # The enumeration follows the order the keys were inserted.
-  def each_key
+  def each_key(& : K ->)
     each do |key, value|
       yield key
     end
@@ -1308,7 +1308,7 @@ class Hash(K, V)
   # ```
   #
   # The enumeration follows the order the keys were inserted.
-  def each_value
+  def each_value(& : V ->)
     each do |key, value|
       yield value
     end
@@ -1363,14 +1363,14 @@ class Hash(K, V)
   # hash
   # # => {"foo" => "bar"}
   # ```
-  def merge(other : Hash(L, W)) forall L, W
+  def merge(other : Hash(L, W)) : Hash(K | L, V | W) forall L, W
     hash = Hash(K | L, V | W).new
     hash.merge! self
     hash.merge! other
     hash
   end
 
-  def merge(other : Hash(L, W), &block : L, V, W -> V | W) forall L, W
+  def merge(other : Hash(L, W), & : L, V, W -> V | W) : Hash(K | L, V | W) forall L, W
     hash = Hash(K | L, V | W).new
     hash.merge! self
     hash.merge!(other) { |k, v1, v2| yield k, v1, v2 }
@@ -1384,10 +1384,8 @@ class Hash(K, V)
   # hash.merge!({"baz" => "qux"})
   # hash # => {"foo" => "bar", "baz" => "qux"}
   # ```
-  def merge!(other : Hash)
-    other.each do |k, v|
-      self[k] = v
-    end
+  def merge!(other : Hash) : self
+    other.merge_into!(self)
     self
   end
 
@@ -1401,15 +1399,33 @@ class Hash(K, V)
   # hash.merge!(other) { |key, v1, v2| v1 + v2 }
   # hash # => {"a" => 100, "b" => 454, "c" => 300}
   # ```
-  def merge!(other : Hash, &block) : self
-    other.each do |k, v|
-      if self.has_key?(k)
-        self[k] = yield k, self[k], v
+  def merge!(other : Hash, &) : self
+    other.merge_into!(self) { |k, v1, v2| yield k, v1, v2 }
+    self
+  end
+
+  protected def merge_into!(other : Hash(K2, V2)) forall K2, V2
+    {% unless K2 >= K && V2 >= V %}
+      {% raise "#{Hash(K, V)} can't be merged into #{Hash(K2, V2)}" %}
+    {% end %}
+
+    each do |k, v|
+      other[k] = v
+    end
+  end
+
+  protected def merge_into!(other : Hash(K2, V2), & : K, V2, V -> V2) forall K2, V2
+    {% unless K2 >= K && V2 >= V %}
+      {% raise "#{Hash(K, V)} can't be merged into #{Hash(K2, V2)}" %}
+    {% end %}
+
+    each do |k, v|
+      if other.has_key?(k)
+        other[k] = yield k, other[k], v
       else
-        self[k] = v
+        other[k] = v
       end
     end
-    self
   end
 
   # Returns a new hash consisting of entries for which the block returns `true`.
@@ -1418,12 +1434,12 @@ class Hash(K, V)
   # h.select { |k, v| k > "a" } # => {"b" => 200, "c" => 300}
   # h.select { |k, v| v < 200 } # => {"a" => 100}
   # ```
-  def select(&block : K, V -> _)
+  def select(& : K, V ->)
     reject { |k, v| !yield(k, v) }
   end
 
   # Equivalent to `Hash#select` but makes modification on the current object rather than returning a new one. Returns `self`.
-  def select!(&block : K, V -> _)
+  def select!(& : K, V ->)
     reject! { |k, v| !yield(k, v) }
   end
 
@@ -1433,14 +1449,14 @@ class Hash(K, V)
   # h.reject { |k, v| k > "a" } # => {"a" => 100}
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
-  def reject(&block : K, V -> _)
+  def reject(& : K, V ->)
     each_with_object({} of K => V) do |(k, v), memo|
       memo[k] = v unless yield k, v
     end
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather than returning a new one. Returns `self`.
-  def reject!(&block : K, V -> _)
+  def reject!(& : K, V ->)
     each do |key, value|
       delete(key) if yield(key, value)
     end
@@ -1538,7 +1554,7 @@ class Hash(K, V)
   # hash = {:a => 1, :b => 2, :c => 3}
   # hash.transform_keys { |key| key.to_s } # => {"a" => 1, "b" => 2, "c" => 3}
   # ```
-  def transform_keys(&block : K -> K2) forall K2
+  def transform_keys(& : K -> K2) : Hash(K2, V) forall K2
     each_with_object({} of K2 => V) do |(key, value), memo|
       memo[yield(key)] = value
     end
@@ -1551,7 +1567,7 @@ class Hash(K, V)
   # hash = {:a => 1, :b => 2, :c => 3}
   # hash.transform_values { |value| value + 1 } # => {:a => 2, :b => 3, :c => 4}
   # ```
-  def transform_values(&block : V -> V2) forall V2
+  def transform_values(& : V -> V2) : Hash(K, V2) forall V2
     each_with_object({} of K => V2) do |(key, value), memo|
       memo[key] = yield(value)
     end
@@ -1565,7 +1581,7 @@ class Hash(K, V)
   # hash.transform_values! { |value| value + 1 }
   # hash # => {:a => 2, :b => 3, :c => 4}
   # ```
-  def transform_values!(&block : V -> V)
+  def transform_values!(& : V -> V) : self
     each_entry_with_index do |entry, i|
       new_value = yield entry.value
       set_entry(i, Entry(K, V).new(entry.hash, entry.key, new_value))
@@ -1868,7 +1884,7 @@ class Hash(K, V)
     end
   end
 
-  private def to_a_impl(&block : Entry(K, V) -> U) forall U
+  private def to_a_impl(& : Entry(K, V) -> U) forall U
     index = @first
     if @first == @deleted_count
       # If the deleted count equals the first element offset it

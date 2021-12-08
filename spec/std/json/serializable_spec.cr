@@ -1,10 +1,8 @@
 require "../spec_helper"
 require "json"
 require "yaml"
-{% unless flag?(:win32) %}
-  require "big"
-  require "big/json"
-{% end %}
+require "big"
+require "big/json"
 require "uuid"
 require "uuid/json"
 
@@ -96,13 +94,11 @@ class JSONAttrWithUUID
   property value : UUID
 end
 
-{% unless flag?(:win32) %}
-  class JSONAttrWithBigDecimal
-    include JSON::Serializable
+class JSONAttrWithBigDecimal
+  include JSON::Serializable
 
-    property value : BigDecimal
-  end
-{% end %}
+  property value : BigDecimal
+end
 
 class JSONAttrWithTime
   include JSON::Serializable
@@ -857,7 +853,7 @@ describe "JSON mapping" do
     end
   end
 
-  pending_win32 describe: "BigDecimal" do
+  describe "BigDecimal" do
     it "parses json string with BigDecimal" do
       json = JSONAttrWithBigDecimal.from_json(%({"value": "10.05"}))
       json.value.should eq(BigDecimal.new("10.05"))

@@ -620,7 +620,7 @@ describe "Semantic: module" do
       p = Pointer(Moo).malloc(1_u64)
       p.value = Foo.new
       p.value
-      ") { types["Moo"] }
+      ", inject_primitives: true) { types["Moo"] }
   end
 
   it "types pointer of module with method" do
@@ -639,7 +639,7 @@ describe "Semantic: module" do
       p = Pointer(Moo).malloc(1_u64)
       p.value = Foo.new
       p.value.foo
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types pointer of module with method with two including types" do
@@ -667,7 +667,7 @@ describe "Semantic: module" do
       p.value = Foo.new
       p.value = Bar.new
       p.value.foo
-      ") { union_of(int32, char) }
+      ", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "types pointer of module with generic type" do
@@ -686,7 +686,7 @@ describe "Semantic: module" do
       p = Pointer(Moo).malloc(1_u64)
       p.value = Foo(Int32).new
       p.value.foo
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types pointer of module with generic type" do
@@ -721,7 +721,7 @@ describe "Semantic: module" do
       p.value = Foo(Baz).new
 
       x
-      ") { union_of(int32, char) }
+      ", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "allows overloading with included generic module" do
@@ -878,7 +878,7 @@ describe "Semantic: module" do
 
       p = Pointer(Void).malloc(1_u64)
       p.bar(p)
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "finds inner class from inherited one (#476)" do
@@ -929,7 +929,7 @@ describe "Semantic: module" do
 
       z = ->(x : Moo) { x.foo }
       z.call(Foo(Int32).new)
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "types proc of module with generic class" do
@@ -947,7 +947,7 @@ describe "Semantic: module" do
 
       z = ->(x : Moo) { x.foo }
       z.call(Foo(Int32).new)
-      )) { char }
+      ), inject_primitives: true) { char }
   end
 
   it "errors if declares module inside if" do
