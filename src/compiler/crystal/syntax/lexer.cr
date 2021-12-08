@@ -1525,10 +1525,10 @@ module Crystal
           raise("unexpected '_' in number", @token, (current_pos - start)) if peek_next_char == '_'
           break unless peek_next_char.in?('0'..'9')
         when 'i', 'u', 'f'
-          before_prefix_pos = current_pos
+          before_suffix_pos = current_pos
           @token.number_kind = consume_number_suffix
           next_char
-          suffix_size = current_pos - before_prefix_pos
+          suffix_size = current_pos - before_suffix_pos
           suffix_size += 1 if last_is_underscore
           break
         else
@@ -1544,7 +1544,6 @@ module Crystal
       # Sanitize string (or convert to decimal unless number is in base 10)
       pos_before_suffix = current_pos - suffix_size
       raw_number_string = string_range(pos_after_prefix, pos_before_suffix)
-      error_number_string = string_range(start, pos_before_suffix)
       if base == 10
         raw_number_string = raw_number_string.delete('_') if has_underscores
         @token.value = raw_number_string
