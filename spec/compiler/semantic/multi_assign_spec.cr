@@ -11,6 +11,38 @@ describe "Semantic: multi assign" do
         {a, b}
         )) { tuple_of [int32, int32] }
     end
+
+    it "doesn't error if assigning non-Indexable (#11414)" do
+      assert_no_errors <<-CR
+        class Foo
+          def [](index)
+          end
+
+          def size
+            3
+          end
+        end
+
+        a, b, c = Foo.new
+        CR
+    end
+
+    it "errors if assigning non-Indexable to splat (#11414)" do
+      assert_error <<-CR, "right-hand side of one-to-many assignment must be an Indexable, not Foo"
+        require "prelude"
+
+        class Foo
+          def [](index)
+          end
+
+          def size
+            3
+          end
+        end
+
+        a, *b, c = Foo.new
+        CR
+    end
   end
 
   context "strict_multi_assign" do
@@ -59,6 +91,40 @@ describe "Semantic: multi assign" do
         a, b = x
         {a, b}
         ), flags: "strict_multi_assign") { tuple_of [int32, union_of(int32, string)] }
+    end
+
+    it "errors if assigning non-Indexable (#11414)" do
+      assert_error <<-CR, "right-hand side of one-to-many assignment must be an Indexable, not Foo", flags: "strict_multi_assign"
+        require "prelude"
+
+        class Foo
+          def [](index)
+          end
+
+          def size
+            3
+          end
+        end
+
+        a, b, c = Foo.new
+        CR
+    end
+
+    it "errors if assigning non-Indexable to splat (#11414)" do
+      assert_error <<-CR, "right-hand side of one-to-many assignment must be an Indexable, not Foo", flags: "strict_multi_assign"
+        require "prelude"
+
+        class Foo
+          def [](index)
+          end
+
+          def size
+            3
+          end
+        end
+
+        a, *b, c = Foo.new
+        CR
     end
   end
 end
