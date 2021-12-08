@@ -43,16 +43,12 @@ describe "Primitives: Float" do
       expect_raises(OverflowError) { Float32.new!(UInt32::MAX).to_u32 }
       expect_raises(OverflowError) { Float32.new!(Int64::MAX).to_i64 }
       expect_raises(OverflowError) { Float32.new!(UInt64::MAX).to_u64 }
-      {% unless flag?(:win32) %}
-        expect_raises(OverflowError) { Float32.new!(Int128::MAX).to_i128 }
-      {% end %}
+      expect_raises(OverflowError) { Float32.new!(Int128::MAX).to_i128 }
 
       expect_raises(OverflowError) { Float64.new!(Int64::MAX).to_i64 }
       expect_raises(OverflowError) { Float64.new!(UInt64::MAX).to_u64 }
-      {% unless flag?(:win32) %}
-        expect_raises(OverflowError) { Float64.new!(Int128::MAX).to_i128 }
-        expect_raises(OverflowError) { Float64.new!(UInt128::MAX).to_u128 }
-      {% end %}
+      expect_raises(OverflowError) { Float64.new!(Int128::MAX).to_i128 }
+      expect_raises(OverflowError) { Float64.new!(UInt128::MAX).to_u128 }
     end
   end
 
