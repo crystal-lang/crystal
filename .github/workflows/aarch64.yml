@@ -53,7 +53,7 @@ jobs:
       - name: Run compiler specs
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
-          args: make primitives_spec compiler_spec
+          args: make primitives_spec compiler_spec FLAGS=-Dwithout_ffi
   gnu-build:
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
