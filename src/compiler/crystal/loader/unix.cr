@@ -30,7 +30,7 @@ class Crystal::Loader
   def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths) : self
     libnames = [] of String
     file_paths = [] of String
-    OptionParser.parse(args) do |parser|
+    OptionParser.parse(args.dup) do |parser|
       parser.on("-L DIRECTORY", "--library-path DIRECTORY", "Add DIRECTORY to library search path") do |directory|
         search_paths << directory
       end
@@ -45,7 +45,13 @@ class Crystal::Loader
       end
     end
 
-    self.new(search_paths, libnames, file_paths)
+    begin
+      self.new(search_paths, libnames, file_paths)
+    rescue exc : LoadError
+      exc.args = args
+      exc.search_paths = search_paths
+      raise exc
+    end
   end
 
   def find_symbol?(name : String) : Handle?

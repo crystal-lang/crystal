@@ -44,8 +44,6 @@ class Crystal::Repl::Context
   # the proc in this Hash.
   getter ffi_closure_to_compiled_def : Hash(Void*, CompiledDef)
 
-  @pkg_config_path : String?
-
   def initialize(@program : Program)
     @program.flags << "interpreted"
 
@@ -56,8 +54,6 @@ class Crystal::Repl::Context
 
     @lib_functions = {} of External => LibFunction
     @lib_functions.compare_by_identity
-
-    @dl_handles = {} of LibType => Void*
 
     @symbol_to_index = {} of String => Int32
     @symbols = [] of String
@@ -77,8 +73,6 @@ class Crystal::Repl::Context
       Context.ffi_closure_fun(cif, ret, args, user_data)
       nil
     end
-
-    @pkg_config_path = Process.find_executable("pkg-config")
 
     # This is a stack pool, for checkout_stack.
     @stack_pool = [] of UInt8*
@@ -362,17 +356,32 @@ class Crystal::Repl::Context
     @id_to_type[id]
   end
 
-  def c_function(lib_type : LibType, name : String)
-    handle = lib_type_handle(lib_type)
-    unless handle
-      raise "Can't find dynamic library for #{lib_type}"
-    end
+  getter(loader : Loader) {
+    args = Process.parse_arguments(program.lib_flags)
+    link_libgc = args.delete("-lgc")
+    Crystal::Loader.parse(args).tap do |loader|
+      # FIXME: This is a workaround for initial integration of the interpreter:
+      # The loader can't handle the static libgc.a usually shipped with crystal.
+      # So we only try to load it - it works if it's available as a shared lbirary.
+      # If that fails, the loader falls back to the GC symbols in the compiler executable (see next workaround).
+      if link_libgc
+        loader.load_library?("gc")
+      end
 
-    fn = LibC.dlsym(handle, name)
-    if fn.null?
-      raise "dlsym failed for lib: #{lib_type}, name: #{name.inspect}: #{String.new(LibC.dlerror)}"
+      # FIXME: This is a workaround for initial integration of the interpreter:
+      # We append a handle to the current executable (i.e. the compiler program)
+      # to the loader's handle list. This gives the loader access to all the symbols in the compiler program,
+      # including those from statically linked libraries like libgc.
+      # This probably won't work for a fully statically linked compiler.
+      # But `Crystal::Loader` currently doesn't support that anyways.
+      if self_handle = LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
+        loader.@handles << self_handle
+      end
     end
-    fn
+  }
+
+  def c_function(lib_type : LibType, name : String)
+    loader.find_symbol(name)
   end
 
   def align(size : Int32) : Int32
@@ -382,112 +391,5 @@ class Crystal::Repl::Context
     else
       size + (8 - rem)
     end
-  end
-
-  private def lib_type_handle(lib_type)
-    pkg_config_path = @pkg_config_path
-
-    handle = @dl_handles[lib_type]?
-    return handle if handle
-
-    lib_type.link_annotations.try &.each do |link_annotation|
-      if ld_flags = link_annotation.ldflags
-        if ld_flags.starts_with?('`') && ld_flags.ends_with?('`')
-          handle = handle_from_ld_flags_command(ld_flags[1...-1])
-        else
-          handle = handle_from_ld_flags(ld_flags)
-        end
-      elsif (pkg_config_name = link_annotation.pkg_config) && pkg_config_path
-        handle = handle_from_pkg_config(pkg_config_path, pkg_config_name)
-      elsif (lib_name = link_annotation.lib) && pkg_config_path
-        handle = handle_from_pkg_config(pkg_config_path, lib_name)
-      end
-
-      break if handle
-    end
-
-    # If we can't find a handle, let's use one for the current binary
-    unless handle
-      handle = LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
-      handle = nil if handle.null?
-    end
-
-    @dl_handles[lib_type] = handle if handle
-
-    handle
-  end
-
-  # Returns the result of running `pkg-config mod` but returns nil if
-  # the module does not exist.
-  private def pkg_config(pkg_config_path : String, mod : String) : String?
-    return unless (Process.run(pkg_config_path, {mod}).success? rescue nil)
-
-    args = ["--libs"]
-    args << mod
-
-    process = Process.new(pkg_config_path, args, input: :close, output: :pipe, error: :inherit)
-    flags = process.output.gets_to_end.chomp
-    status = process.wait
-    return unless status.success?
-
-    flags
-  end
-
-  private def handle_from_pkg_config(pkg_config_path, pkg_config_name)
-    ld_flags = pkg_config(pkg_config_path, pkg_config_name)
-    return unless ld_flags
-
-    handle_from_ld_flags(ld_flags)
-  end
-
-  private def handle_from_ld_flags_command(command : String)
-    process = Process.new(command, shell: true, output: :pipe)
-    output = process.output.gets_to_end.chomp
-    status = process.wait
-    return unless status.success?
-
-    handle_from_ld_flags(output)
-  end
-
-  private def handle_from_ld_flags(flags : String)
-    # I don't know if this is the correct way to do this, but it works!
-    # For example:
-    #
-    # ```
-    # $ pkg-config --libs gmp
-    # -L/usr/local/Cellar/gmp/6.2.1/lib -lgmp
-    # ```
-    #
-    # So, in Mac we search for a file named
-    # /usr/local/Cellar/gmp/6.2.1/lib/libgmp.dylib
-    args = Process.parse_arguments(flags)
-
-    path = nil
-    name = nil
-
-    args.each do |arg|
-      if piece = arg.lchop?("-L")
-        path = piece
-      elsif piece = arg.lchop?("-l")
-        name = piece
-      end
-    end
-
-    return unless path && name
-
-    lib_path : String?
-    {% if flag?(:darwin) %}
-      lib_path = File.join(path, "lib#{name}.dylib")
-    {% elsif flag?(:unix) %}
-      lib_path = File.join(path, "lib#{name}.so")
-    {% else %}
-      {% raise "Can't load dynamic libraries" %}
-    {% end %}
-    return unless File.exists?(lib_path)
-
-    handle = LibC.dlopen(lib_path, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
-    return if handle.null?
-
-    handle
   end
 end
