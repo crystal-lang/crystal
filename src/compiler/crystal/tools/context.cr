@@ -1,5 +1,6 @@
 require "../syntax/ast"
 require "../compiler"
+require "../semantic/*"
 require "./table_print"
 require "./typed_def_processor"
 require "json"
