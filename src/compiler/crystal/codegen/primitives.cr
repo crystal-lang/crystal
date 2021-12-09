@@ -580,7 +580,7 @@ class Crystal::CodeGenVisitor
             when "*"         then builder.fmul p1, p2
             when "/", "fdiv" then builder.fdiv p1, p2
             when "=="        then return builder.fcmp LLVM::RealPredicate::OEQ, p1, p2
-            when "!="        then return builder.fcmp LLVM::RealPredicate::ONE, p1, p2
+            when "!="        then return builder.fcmp LLVM::RealPredicate::UNE, p1, p2
             when "<"         then return builder.fcmp LLVM::RealPredicate::OLT, p1, p2
             when "<="        then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
             when ">"         then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
