@@ -1,5 +1,3 @@
-{% skip_file if flag?(:without_playground) %}
-
 require "http/server"
 require "log"
 require "ecr/macros"
