@@ -16,6 +16,12 @@ private def it_highlights!(code, expected = code, *, file = __FILE__, line = __L
     highlighted.should eq(expected), file: file, line: line
     extracted_code = highlighted.gsub(/\e\[(?:\d+;)?\d+m/, "")
     extracted_code.should eq(code), file: file, line: line
+
+    no_colorized = String.build do |io|
+      colorize = Crystal::SyntaxHighlighter::Colorize.new io, ::Colorize.with.toggle(false)
+      colorize.highlight(code)
+    end rescue code
+    no_colorized.should eq(code), file: file, line: line
   end
 end
 

@@ -35,7 +35,7 @@ class Crystal::SyntaxHighlighter::Colorize < Crystal::SyntaxHighlighter
   # Creates a new instance of a Colorize syntax highlighter.
   #
   # Appends highlighted output (when calling `#highlight`) to *io*.
-  def initialize(@io : IO)
+  def initialize(@io : IO, @colorize : ::Colorize::Object(String) = ::Colorize.with.toggle(true))
   end
 
   property colors : Hash(TokenType, ::Colorize::Color) = {
@@ -58,7 +58,7 @@ class Crystal::SyntaxHighlighter::Colorize < Crystal::SyntaxHighlighter
   end
 
   def render_delimiter(&)
-    ::Colorize.with.toggle(true).fore(colors[TokenType::STRING]).surround(@io) do
+    @colorize.fore(colors[TokenType::STRING]).surround(@io) do
       yield
     end
   end
@@ -70,14 +70,16 @@ class Crystal::SyntaxHighlighter::Colorize < Crystal::SyntaxHighlighter
   end
 
   def render_string_array(&)
-    ::Colorize.with.toggle(true).fore(colors[TokenType::STRING]).surround(@io) do
+    @colorize.fore(colors[TokenType::STRING]).surround(@io) do
       yield
     end
   end
 
   private def colorize(type : TokenType, token)
     if color = colors[type]?
-      @io << token.colorize(color).toggle(true)
+      @colorize.fore(color).surround(@io) do
+        @io << token
+      end
     else
       @io << token
     end
