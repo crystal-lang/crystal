@@ -93,6 +93,8 @@ describe Crystal::SyntaxHighlighter::HTML do
     it_highlights "%w<foo bar baz>", %(<span class="s">%w&lt;foo bar baz&gt;</span>)
     it_highlights "%i(foo bar baz)", %(<span class="s">%i(foo bar baz)</span>)
 
+    it_highlights "Set{1, 2, 3}", %(<span class="t">Set</span>{<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>})
+
     it_highlights <<-CR, <<-HTML
     foo, bar = <<-FOO, <<-BAR
       foo

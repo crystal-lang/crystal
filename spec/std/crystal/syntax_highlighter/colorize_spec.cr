@@ -90,6 +90,8 @@ describe Crystal::SyntaxHighlighter::Colorize do
     it_highlights "%w<foo bar baz>", %(\e[93m%w<foo bar baz>\e[0m)
     it_highlights "%i(foo bar baz)", %(\e[93m%i(foo bar baz)\e[0m)
 
+    it_highlights "Set{1, 2, 3}", %(\e[36mSet\e[0m{\e[35m1\e[0m, \e[35m2\e[0m, \e[35m3\e[0m})
+
     it_highlights <<-CR, <<-ANSI
       foo, bar = <<-FOO, <<-BAR
         foo

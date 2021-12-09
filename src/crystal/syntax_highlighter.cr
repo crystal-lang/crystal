@@ -88,6 +88,8 @@ abstract class Crystal::SyntaxHighlighter
         highlight_string_array lexer, token
       when :"}"
         break if break_on_rcurly
+
+        highlight_token token, last_is_def
       when :EOF
         break
       else
