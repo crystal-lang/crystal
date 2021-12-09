@@ -182,16 +182,27 @@ function Exec-Process {
         [Parameter(Mandatory)] [AllowEmptyString()] [AllowNull()] [string[]] $Args
     )
 
-    # `Start-Process` simply joins all arguments without escaping and passes it to `ProcessStartInfo.Arguments`;
-    # here we replicate the logic for `ProcessStartInfo.ArgumentList` on .NET 5 and above
-    # See also: https://github.com/PowerShell/PowerShell/issues/14747
-    # (note that we must nonetheless implement it by ourselves if we support Windows Powershell 5.1)
-    $EscapedArgs = Build-Arguments $Args
-    if ($EscapedArgs) {
-        $Process = Start-Process $Path -ArgumentList $EscapedArgs -NoNewWindow -PassThru
+    if ($Args[0] -eq '--%') {
+        $null, $Args = $Args
+
+        if ($Args) {
+            $Process = Start-Process $Path -Argument $Args -NoNewWindow -PassThru
+        } else {
+            $Process = Start-Process $Path -NoNewWindow -PassThru
+        }
     } else {
-        $Process = Start-Process $Path -NoNewWindow -PassThru
+        # `Start-Process` simply joins all arguments without escaping and passes it to `ProcessStartInfo.Arguments`;
+        # here we replicate the logic for `ProcessStartInfo.ArgumentList` on .NET 5 and above
+        # See also: https://github.com/PowerShell/PowerShell/issues/14747
+        # (note that we must nonetheless implement it by ourselves if we support Windows Powershell 5.1)
+        $EscapedArgs = Build-Arguments $Args
+        if ($EscapedArgs) {
+            $Process = Start-Process $Path -ArgumentList $EscapedArgs -NoNewWindow -PassThru
+        } else {
+            $Process = Start-Process $Path -NoNewWindow -PassThru
+        }
     }
+
     Wait-Process -Id $Process.Id
     Exit $Process.ExitCode
 }
