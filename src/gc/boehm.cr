@@ -2,7 +2,11 @@
   require "crystal/rw_lock"
 {% end %}
 
-{% unless flag?(:win32) %}
+# MUSL: On musl systems, libpthread is empty. The entire library is already included in libc.
+# The empty library is only available for POSIX compatibility. We don't need to link it.
+# OTHER: On other systems, we add the linker annotation here to make sure libpthread is loaded
+# before libgc which looks up symbols from libpthread.
+{% unless flag?(:win32) || flag?(:musl) %}
   @[Link("pthread")]
 {% end %}
 

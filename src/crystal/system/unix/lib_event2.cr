@@ -1,6 +1,8 @@
 require "c/netdb"
 
-{% if flag?(:linux) %}
+# MUSL: On musl systems, libprt is empty. The entire library is already included in libc.
+# The empty library is only available for POSIX compatibility. We don't need to link it.
+{% if flag?(:linux) && !flag?(:musl) %}
   @[Link("rt")]
 {% end %}
 

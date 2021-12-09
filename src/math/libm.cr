@@ -1,4 +1,6 @@
-{% if flag?(:linux) || flag?(:bsd) %}
+# MUSL: On musl systems, libm is empty. The entire library is already included in libc.
+# The empty library is only available for POSIX compatibility. We don't need to link it.
+{% if (flag?(:linux) && !flag?(:musl)) || flag?(:bsd) %}
   @[Link("m")]
 {% end %}
 
