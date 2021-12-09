@@ -15,10 +15,8 @@ private def it_highlights!(code, expected = code, *, file = __FILE__, line = __L
   it code.inspect, file, line do
     highlighted = Crystal::SyntaxHighlighter::HTML.highlight! code
     highlighted.should eq(expected), file: file, line: line
-    unless code == highlighted
-      doc = XML.parse_html highlighted
-      doc.content.should eq(code), file: file, line: line
-    end
+    doc = XML.parse_html highlighted
+    doc.content.should eq(code), file: file, line: line
   end
 end
 
