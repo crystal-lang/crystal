@@ -32,6 +32,9 @@ class Crystal::SyntaxHighlighter::Colorize < Crystal::SyntaxHighlighter
     code
   end
 
+  # Creates a new instance of a Colorize syntax highlighter.
+  #
+  # Appends highlighted output (when calling `#highlight`) to *io*.
   def initialize(@io : IO)
   end
 

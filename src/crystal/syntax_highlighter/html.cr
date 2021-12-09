@@ -31,6 +31,9 @@ class Crystal::SyntaxHighlighter::HTML < Crystal::SyntaxHighlighter
     ::HTML.escape(code)
   end
 
+  # Creates a new instance of an HTML syntax highlighter.
+  #
+  # Appends highlighted output (when calling `#highlight`) to *io*.
   def initialize(@io : IO)
   end
 

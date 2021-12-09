@@ -4,7 +4,7 @@ require "html"
 {% end %}
 
 abstract class Crystal::SyntaxHighlighter
-  # Parses *code* as Crystal source code and highlights it.
+  # Parses *code* as Crystal source code and processes it.
   def highlight(code : String)
     lexer = Lexer.new(code)
     lexer.comments_enabled = true
