@@ -1,5 +1,7 @@
 require "html"
-require "compiler/crystal/syntax/**"
+{% unless flag?(:docs) %}
+  require "compiler/crystal/syntax"
+{% end %}
 
 abstract class Crystal::SyntaxHighlighter
   # Parses *code* as Crystal source code and highlights it.
