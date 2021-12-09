@@ -13,7 +13,20 @@ module Crystal::System::VisualStudio
     # unused fields not mapped
   end
 
+  @@found_msvc = false
+
+  @@msvc_path : ::Path?
+
   def self.find_latest_msvc_path : ::Path?
+    if !@@found_msvc
+      @@found_msvc = true
+      @@msvc_path = find_latest_msvc_path_impl
+    end
+
+    @@msvc_path
+  end
+
+  private def self.find_latest_msvc_path_impl
     # ported from https://github.com/microsoft/vswhere/wiki/Find-VC
     # Copyright (C) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
     if vs_installations = get_vs_installations
