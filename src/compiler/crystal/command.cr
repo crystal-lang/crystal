@@ -23,7 +23,6 @@ class Crystal::Command
         eval                     eval code from args or standard input
         i/interactive            starts interactive Crystal
         play                     starts Crystal playground server
-        repl                     launch a repl
         run (default)            build and run program
         spec                     build and run specs (in spec directory)
         tool                     run a tool
