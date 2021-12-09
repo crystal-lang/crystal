@@ -315,15 +315,28 @@ module Crystal
     end
 
     def transform(node : MultiAssign)
-      if @program.has_flag?("strict_multi_assign")
-        if node.values.size == 1
-          # the expanded node always starts with `temp = {{ node.values[0] }}`;
-          # this is the whole Assign node and its deduced type is equal to the
-          # original RHS's type
-          temp_assign = node.expanded.as(Expressions).expressions.first
-          target_count = node.targets.size
+      expanded = node.expanded
 
-          case type = temp_assign.type
+      if node.values.size == 1 && expanded
+        # the expanded node always starts with `temp = {{ node.values[0] }}`;
+        # `temp_assign` is this whole Assign node and its deduced type is same
+        # as the original RHS's type
+        temp_assign = expanded.as(Expressions).expressions.first
+        type = temp_assign.type
+        target_count = node.targets.size
+        has_strict_multi_assign = @program.has_flag?("strict_multi_assign")
+
+        # disallows `a, *b, c = {0 => "x", 1 => "y", 2 => "z"}`, as `Hash` is
+        # not `Indexable`
+        # also disallows `a, b, c = ...` if the strict flag is set
+        if node.targets.any?(Splat) || has_strict_multi_assign
+          unless type.implements?(@program.indexable)
+            node.values.first.raise "right-hand side of one-to-many assignment must be an Indexable, not #{type}"
+          end
+        end
+
+        if has_strict_multi_assign
+          case type
           when UnionType
             sizes = type.union_types.map { |union_type| constant_size(union_type) }
             if sizes.none? &.in?(target_count, nil)
@@ -339,7 +352,7 @@ module Crystal
         end
       end
 
-      if expanded = node.expanded
+      if expanded
         return expanded.transform self
       end
 
