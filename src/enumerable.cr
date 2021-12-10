@@ -33,6 +33,12 @@ module Enumerable(T)
     end
   end
 
+  class NotFoundError < Exception
+    def initialize(message = "No matching elements")
+      super(message)
+    end
+  end
+
   # Must yield this collection's elements to the block.
   abstract def each(& : T ->)
 
@@ -479,6 +485,20 @@ module Enumerable(T)
       return elem if yield elem
     end
     if_none
+  end
+
+  # Returns the first element in the collection for which the passed block is `true`.
+  # Raises `Enumerable::NotFoundError` if there are no element for which the block is `true`.
+  #
+  # ```
+  # [1, 2, 3, 4].find! { |i| i > 2 } # => 3
+  # [1, 2, 3, 4].find! { |i| i > 8 } # => raises Enumerable::NotFoundError
+  # ```
+  def find!(& : T ->) : T
+    each do |elem|
+      return elem if yield elem
+    end
+    raise Enumerable::NotFoundError.new
   end
 
   # Returns the first element in the collection,

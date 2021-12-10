@@ -453,6 +453,18 @@ describe "Enumerable" do
     end
   end
 
+  describe "find!" do
+    it "finds" do
+      [1, 2, 3].find! { |x| x > 2 }.should eq(3)
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        [1, 2, 3].find! { false }
+      end
+    end
+  end
+
   describe "first" do
     it "calls block if empty" do
       (1...1).first { 10 }.should eq(10)
