@@ -3183,13 +3183,13 @@ module Crystal
     end
 
     def self.ident_start?(char)
-      char.letter? || char == '_' || Unicode.number_letter?(char)
+      char.letter? || char == '_'
     end
 
     def self.ident_part?(char)
       ident_start?(char) ||
         Unicode.mark_nonspacing?(char) || Unicode.mark_spacing_combining?(char) ||
-        Unicode.number_digit?(char) ||
+        Unicode.number_digit?(char) || Unicode.number_letter?(char) ||
         Unicode.punctuation_connector?(char)
     end
 

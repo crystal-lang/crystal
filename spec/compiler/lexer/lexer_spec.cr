@@ -157,7 +157,6 @@ describe "Lexer" do
     "aः",      # Mc
     "a٠",      # Nd
     "a＿",      # Pc
-    "Ⅷ",       # Nl
     "aⅧ",      # Nl
   ]
 
