@@ -599,6 +599,30 @@ describe "Enumerable" do
     end
   end
 
+  describe "index! with a block" do
+    it "returns the index of the first element where the block returns true" do
+      ["Alice", "Bob"].index! { |name| name.size < 4 }.should eq 1
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        ["Alice", "Bob"].index! { |name| name.size < 3 }
+      end
+    end
+  end
+
+  describe "index! with an object" do
+    it "returns the index of that object if found" do
+      ["Alice", "Bob"].index!("Alice").should eq 0
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        ["Alice", "Bob"].index!("Mallory")
+      end
+    end
+  end
+
   describe "index_by" do
     it "creates a hash indexed by the value returned by the block" do
       hash = ["Anna", "Ary", "Alice"].index_by { |e| e.size }

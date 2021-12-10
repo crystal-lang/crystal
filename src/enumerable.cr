@@ -664,6 +664,31 @@ module Enumerable(T)
     index { |e| e == obj }
   end
 
+  # Returns the index of the first element for which the passed block returns `true`.
+  #
+  # ```
+  # ["Alice", "Bob"].index! { |name| name.size < 4 } # => 1 (Bob's index)
+  # ```
+  #
+  # Raises `Enumerable::NotFoundError` if there are no element for which the block is `true`.
+  def index!(& : T ->) : Int32
+    each_with_index do |e, i|
+      return i if yield e
+    end
+    raise Enumerable::NotFoundError.new
+  end
+
+  # Returns the index of the object *obj* in the collection.
+  #
+  # ```
+  # ["Alice", "Bob"].index!("Alice") # => 0
+  # ```
+  #
+  # Raises `Enumerable::NotFoundError` if there are no element for which the block is `true`.
+  def index!(obj) : Int32
+    index! { |e| e == obj }
+  end
+
   # Converts an `Enumerable` to a `Hash` by using the value returned by the block
   # as the hash key.
   # Be aware, if two elements return the same value as a key one will override
