@@ -64,7 +64,7 @@ def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__)
 
       `#{cl} /nologo /c #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_filename}")}`.should be_truthy
     {% else %}
-      `#{Process.quote(ENV["CC"]? || "cc")} #{Process.quote(c_filename)} -c -o #{Process.quote(o_filename)}`.should be_truthy
+      `#{ENV["CC"]? || "cc"} #{Process.quote(c_filename)} -c -o #{Process.quote(o_filename)}`.should be_truthy
     {% end %}
 
     yield o_filename
