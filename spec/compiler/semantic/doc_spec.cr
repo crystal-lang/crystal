@@ -305,7 +305,7 @@ describe "Semantic: doc" do
       end
     ), wants_doc: true
     program = result.program
-    ann = program.types["Flags"]
+    ann = program.types["Flags"].as(Crystal::AnnotationType)
     foo = program.types["Foo"]
     foo.annotation(ann).should_not be_nil
     foo.doc.should eq("Hello")
