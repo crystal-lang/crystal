@@ -6,11 +6,10 @@ describe "PROGRAM_NAME" do
     with_tempfile("source_file") do |source_file|
       File.write(source_file, "File.basename(PROGRAM_NAME).inspect(STDOUT)")
 
-      program_name = "×‽😂"
-      compile_file(source_file, bin_name: program_name) do |executable_file|
+      compile_file(source_file, bin_name: "×‽😂") do |executable_file|
         output = IO::Memory.new
         Process.run(executable_file, output: output).success?.should be_true
-        output.to_s.should eq(program_name.inspect)
+        output.to_s.should eq(File.basename(executable_file).inspect)
       end
     end
   end
