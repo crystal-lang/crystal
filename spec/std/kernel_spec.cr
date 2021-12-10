@@ -1,6 +1,36 @@
 require "spec"
 require "./spec_helper"
 
+describe "PROGRAM_NAME" do
+  it "works for UTF-8 name" do
+    with_tempfile("source_file") do |source_file|
+      File.write(source_file, "PROGRAM_NAME.inspect(STDOUT)")
+
+      program_name = "×‽😂"
+      compile_file(source_file, bin_name: program_name) do |executable_file|
+        output = IO::Memory.new
+        Process.run(executable_file, output: output).success?.should be_true
+        output.to_s.should eq(program_name.inspect)
+      end
+    end
+  end
+end
+
+describe "ARGV" do
+  it "accepts UTF-8 command-line arguments" do
+    with_tempfile("source_file") do |source_file|
+      File.write(source_file, "ARGV.inspect(STDOUT)")
+
+      compile_file(source_file) do |executable_file|
+        args = ["×‽😂", "あ×‽😂い"]
+        output = IO::Memory.new
+        Process.run(executable_file, args, output: output).success?.should be_true
+        output.to_s.should eq(args.inspect)
+      end
+    end
+  end
+end
+
 describe "exit" do
   it "exits normally with status 0" do
     status, _, _ = compile_and_run_source "exit"
