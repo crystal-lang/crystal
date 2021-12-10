@@ -1,7 +1,7 @@
 require "spec"
 require "./spec_helper"
 
-describe "PROGRAM_NAME", focus: true do
+describe "PROGRAM_NAME" do
   it "works for UTF-8 name" do
     with_tempfile("source_file") do |source_file|
       File.write(source_file, "File.basename(PROGRAM_NAME).inspect(STDOUT)")
