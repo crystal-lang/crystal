@@ -34,6 +34,8 @@ lib LibC
 
   alias LPTHREAD_START_ROUTINE = Void* -> DWORD
 
+  CREATE_SUSPENDED = 0x00000004
+
   fun GetCurrentThread : HANDLE
   fun GetCurrentThreadStackLimits(lowLimit : ULONG_PTR*, highLimit : ULONG_PTR*) : Void
   fun GetCurrentProcess : HANDLE
@@ -48,6 +50,7 @@ lib LibC
   fun CreateThread(lpThreadAttributes : SECURITY_ATTRIBUTES*, dwStackSize : SizeT,
                    lpStartAddress : LPTHREAD_START_ROUTINE, lpParameter : Void*,
                    dwCreationFlags : DWORD, lpThreadId : DWORD*) : HANDLE
+  fun ResumeThread(hThread : HANDLE) : DWORD
   fun GetProcessTimes(hProcess : HANDLE, lpCreationTime : FILETIME*, lpExitTime : FILETIME*,
                       lpKernelTime : FILETIME*, lpUserTime : FILETIME*) : BOOL
 

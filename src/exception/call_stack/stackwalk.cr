@@ -143,7 +143,8 @@ struct Exception::CallStack
         print_frame(frame)
       end
       LibC::DWORD.new!(0)
-    }, pointerof(info), 0, nil)
+    }, pointerof(info), LibC::CREATE_SUSPENDED, nil)
+    LibC.ResumeThread(handle)
     LibC.WaitForSingleObject(handle, LibC::INFINITE)
     LibC.CloseHandle(handle)
   end
