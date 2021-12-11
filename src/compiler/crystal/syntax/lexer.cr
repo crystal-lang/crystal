@@ -1552,6 +1552,7 @@ module Crystal
           @token.value = raw_number_string
         else
           coefficient = string_range(pos_after_prefix, pos_e_notation)
+          coefficient = coefficient.delete('_') if has_underscores
           exponent = string_range(pos_e_notation + 1, pos_before_suffix).to_i?(underscore: true)
           if exponent && exponent <= 19
             raise("Negative exponent not allowed for integer literal", @token, (current_pos - start)) if exponent < 0

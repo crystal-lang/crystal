@@ -240,6 +240,7 @@ describe "Lexer" do
   it_lexes_number :i32, ["-0e0i32", "-0"]
   it_lexes_number :i32, ["+2e1i32", "+20"]
   it_lexes_number :u32, ["2e0u32", "2"]
+  it_lexes_number :i64, ["2_3_e0_i64", "23"]
   assert_syntax_error "-0e-2u32", "Negative exponent not allowed for integer literal"
   assert_syntax_error "1e4u8", "1e4 doesn't fit in an UInt8"
   assert_syntax_error "-1_e1_u16", "Invalid negative value -1_e1 for UInt16"
