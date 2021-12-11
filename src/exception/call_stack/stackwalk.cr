@@ -1,4 +1,5 @@
 require "c/dbghelp"
+require "c/malloc"
 
 # :nodoc:
 struct Exception::CallStack
@@ -40,6 +41,7 @@ struct Exception::CallStack
         print_backtrace(exception_info)
         LibC._exit(1)
       when LibC::EXCEPTION_STACK_OVERFLOW
+        LibC._resetstkoflw
         Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
         print_backtrace(exception_info)
         LibC._exit(1)
@@ -47,6 +49,9 @@ struct Exception::CallStack
         LibC::EXCEPTION_CONTINUE_SEARCH
       end
     end)
+
+    stack_size = LibC::DWORD.new!(4096)
+    LibC.SetThreadStackGuarantee(pointerof(stack_size))
   end
 
   protected def self.unwind

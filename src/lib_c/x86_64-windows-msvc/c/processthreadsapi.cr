@@ -51,6 +51,7 @@ lib LibC
                    lpStartAddress : LPTHREAD_START_ROUTINE, lpParameter : Void*,
                    dwCreationFlags : DWORD, lpThreadId : DWORD*) : HANDLE
   fun ResumeThread(hThread : HANDLE) : DWORD
+  fun SetThreadStackGuarantee(stackSizeInBytes : DWORD*) : BOOL
   fun GetProcessTimes(hProcess : HANDLE, lpCreationTime : FILETIME*, lpExitTime : FILETIME*,
                       lpKernelTime : FILETIME*, lpUserTime : FILETIME*) : BOOL
 
