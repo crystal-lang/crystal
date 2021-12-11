@@ -1553,7 +1553,6 @@ module Crystal
         else
           coefficient = string_range(pos_after_prefix, pos_e_notation)
           exponent = string_range(pos_e_notation + 1, pos_before_suffix).to_i?(underscore: true)
-          first_byte = @reader.string.byte_at(start).chr
           if exponent && exponent <= 19
             raise("Negative exponent not allowed for integer literal", @token, (current_pos - start)) if exponent < 0
             number_size = coefficient.size + exponent
