@@ -1575,11 +1575,11 @@ module Crystal
                                  :u64
                                end
                              when 20
-                              if !negative && raw_number_string.to_u64?
-                                :u64
-                              else
-                                :i128
-                              end
+                               if !negative && raw_number_string.to_u64?
+                                 :u64
+                               else
+                                 :i128
+                               end
                              when 21..38 then :i128
                              when 39
                                if raw_number_string.to_i128?
