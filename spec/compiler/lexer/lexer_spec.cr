@@ -236,6 +236,14 @@ describe "Lexer" do
   it_lexes_number :i32, ["0_i32", "0"]
   it_lexes_number :i8, ["0i8", "0"]
 
+  it_lexes_number :i32, ["2e5i32", "200000"]
+  it_lexes_number :i32, ["-0e0i32", "-0"]
+  it_lexes_number :i32, ["+2e1i32", "+20"]
+  it_lexes_number :u32, ["2e0u32", "2"]
+  assert_syntax_error "-0e-2u32", "Negative exponent not allowed for integer literal"
+  assert_syntax_error "1e4u8", "1e4 doesn't fit in an UInt8"
+  assert_syntax_error "-1_e1_u16", "Invalid negative value -1_e1 for UInt16"
+
   it_lexes_char "'a'", 'a'
   it_lexes_char "'\\a'", '\a'
   it_lexes_char "'\\b'", '\b'
@@ -385,13 +393,14 @@ describe "Lexer" do
   assert_syntax_error "0F32", %(unexpected token: "F32")
 
   assert_syntax_error "4.0_u32", "Invalid suffix u32 for decimal number"
-  assert_syntax_error "2e8i8", "Invalid suffix i8 for decimal number"
+  assert_syntax_error "2.8i8", "Invalid suffix i8 for decimal number"
 
   assert_syntax_error ".42", ".1 style number literal is not supported, put 0 before dot"
   assert_syntax_error "-.42", ".1 style number literal is not supported, put 0 before dot"
 
   assert_syntax_error "2e", "unexpected token: \"e\""
   assert_syntax_error "2ef32", "unexpected token: \"ef32\""
+  assert_syntax_error "2ei32", "unexpected token: \"ei32\""
   assert_syntax_error "2e+_2", "unexpected '_' in number"
 
   it "lexes not instance var" do

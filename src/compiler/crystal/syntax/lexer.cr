@@ -1478,6 +1478,7 @@ module Crystal
       has_underscores = false
       last_is_underscore = false
       pos_after_prefix = start
+      pos_e_notation = 0
 
       # Consume prefix
       if current_char == '0'
@@ -1515,12 +1516,13 @@ module Crystal
           has_underscores = last_is_underscore = true
         when '.'
           raise("unexpected '_' in number", @token, (current_pos - start)) if last_is_underscore
-          break if is_decimal || base != 10 || !peek_next_char.in?('0'..'9')
+          break if is_e_notation || is_decimal || base != 10 || !peek_next_char.in?('0'..'9')
           is_decimal = true
         when 'e', 'E'
           last_is_underscore = false
           break if is_e_notation || base != 10
-          is_e_notation = is_decimal = true
+          pos_e_notation = current_pos
+          is_e_notation = true
           next_char if peek_next_char.in?('+', '-')
           raise("unexpected '_' in number", @token, (current_pos - start)) if peek_next_char == '_'
           break unless peek_next_char.in?('0'..'9')
@@ -1545,8 +1547,20 @@ module Crystal
       pos_before_suffix = current_pos - suffix_size
       raw_number_string = string_range(pos_after_prefix, pos_before_suffix)
       if base == 10
-        raw_number_string = raw_number_string.delete('_') if has_underscores
-        @token.value = raw_number_string
+        if !is_e_notation || is_decimal || @token.number_kind.in?(:f32, :f64) || suffix_size.zero?
+          raw_number_string = raw_number_string.delete('_') if has_underscores
+          @token.value = raw_number_string
+        else
+          coefficient = string_range(pos_after_prefix, pos_e_notation)
+          exponent = string_range(pos_e_notation + 1, pos_before_suffix).to_i?(underscore: true)
+          first_byte = @reader.string.byte_at(start).chr
+          if exponent && exponent <= 19
+            raise("Negative exponent not allowed for integer literal", @token, (current_pos - start)) if exponent < 0
+            number_size = coefficient.size + exponent
+            raw_number_string = coefficient.ljust(number_size, '0')
+            @token.value = raw_number_string
+          end
+        end
       else
         base10_number_string = raw_number_string.to_u64?(base: base, underscore: true).try &.to_s
         if base10_number_string
@@ -1557,7 +1571,7 @@ module Crystal
         end
       end
 
-      if is_decimal
+      if is_decimal || (is_e_notation && suffix_size.zero?)
         @token.number_kind = :f64 if suffix_size == 0
         raise("Invalid suffix #{@token.number_kind} for decimal number", @token, (current_pos - start)) unless @token.number_kind.in?(:f32, :f64)
         return
