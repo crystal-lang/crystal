@@ -31,7 +31,42 @@ struct Exception::CallStack
     LibC.SymSetOptions(LibC.SymGetOptions | LibC::SYMOPT_UNDNAME | LibC::SYMOPT_LOAD_LINES | LibC::SYMOPT_FAIL_CRITICAL_ERRORS | LibC::SYMOPT_NO_PROMPTS)
   end
 
-  def self.unwind
+  def self.setup_crash_handler
+    LibC.AddVectoredExceptionHandler(1, ->(exception_info) do
+      case status = exception_info.value.exceptionRecord.value.exceptionCode
+      when LibC::EXCEPTION_ACCESS_VIOLATION
+        addr = exception_info.value.exceptionRecord.value.exceptionInformation[1]
+        Crystal::System.print_error "Invalid memory access (C0000005) at address 0x%llx\n", addr
+        print_backtrace(exception_info)
+        LibC._exit(1)
+      when LibC::EXCEPTION_STACK_OVERFLOW
+        Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
+        print_backtrace(exception_info)
+        LibC._exit(1)
+      else
+        LibC::EXCEPTION_CONTINUE_SEARCH
+      end
+    end)
+  end
+
+  protected def self.unwind
+    # TODO: use stack if possible (must be 16-byte aligned)
+    context = Pointer(LibC::CONTEXT).malloc(1)
+    context.value.contextFlags = LibC::CONTEXT_FULL
+    LibC.RtlCaptureContext(context)
+
+    stack = [] of Void*
+    each_frame(context, LibC.GetCurrentThread) do |frame|
+      (frame.count + 1).times do
+        stack << frame.ip
+      end
+    end
+    stack
+  end
+
+  private def self.each_frame(context, thread, &)
+    # unlike DWARF, this is required on Windows to even be able to produce
+    # correct stack traces, so we do it here but not in `libunwind.cr`
     load_debug_info
 
     machine_type = {% if flag?(:x86_64) %}
@@ -43,11 +78,6 @@ struct Exception::CallStack
                      {% raise "architecture not supported" %}
                    {% end %}
 
-    # TODO: use stack if possible (must be 16-byte aligned)
-    context = Pointer(LibC::CONTEXT).malloc(1)
-    context.value.contextFlags = LibC::CONTEXT_FULL
-    LibC.RtlCaptureContext(context)
-
     stack_frame = LibC::STACKFRAME64.new
     stack_frame.addrPC.mode = LibC::ADDRESS_MODE::AddrModeFlat
     stack_frame.addrFrame.mode = LibC::ADDRESS_MODE::AddrModeFlat
@@ -57,13 +87,13 @@ struct Exception::CallStack
     stack_frame.addrFrame.offset = context.value.rbp
     stack_frame.addrStack.offset = context.value.rsp
 
-    stack = [] of Void*
+    last_frame = nil
 
     while true
       ret = LibC.StackWalk64(
         machine_type,
         LibC.GetCurrentProcess,
-        LibC.GetCurrentThread,
+        thread,
         pointerof(stack_frame),
         context,
         nil,
@@ -72,10 +102,79 @@ struct Exception::CallStack
         nil
       )
       break if ret == 0
-      stack << Pointer(Void).new(stack_frame.addrPC.offset)
+
+      ip = Pointer(Void).new(stack_frame.addrPC.offset)
+      if last_frame
+        if ip != last_frame.ip
+          yield last_frame
+          last_frame = RepeatedFrame.new(ip)
+        else
+          last_frame.incr
+        end
+      else
+        last_frame = RepeatedFrame.new(ip)
+      end
     end
 
-    stack
+    yield last_frame if last_frame
+  end
+
+  struct RepeatedFrame
+    getter ip : Void*, count : Int32
+
+    def initialize(@ip : Void*)
+      @count = 0
+    end
+
+    def incr
+      @count += 1
+    end
+  end
+
+  private record StackContext, context : LibC::CONTEXT*, thread : LibC::HANDLE
+
+  def self.print_backtrace(exception_info) : Nil
+    # we are still on the same thread which may have a corrupted stack, so we
+    # spawn a new thread and print the backtrace from a clean stack
+    info = StackContext.new(exception_info.value.contextRecord, LibC.GetCurrentThread)
+    handle = LibC.CreateThread(nil, 0, ->(lpParameter) {
+      the_info = lpParameter.as(StackContext*)
+      each_frame(the_info.value.context, the_info.value.thread) do |frame|
+        print_frame(frame)
+      end
+      LibC::DWORD.new!(0)
+    }, pointerof(info), 0, nil)
+    LibC.WaitForSingleObject(handle, LibC::INFINITE)
+    LibC.CloseHandle(handle)
+  end
+
+  private def self.print_frame(repeated_frame)
+    if name = decode_function_name(repeated_frame.ip.address)
+      file, line, _ = decode_line_number(repeated_frame.ip.address)
+      if file != "??" && line != 0
+        if repeated_frame.count == 0
+          Crystal::System.print_error "[0x%llx] %s at %s:%ld\n", repeated_frame.ip, name, file, line
+        else
+          Crystal::System.print_error "[0x%llx] %s at %s:%ld (%ld times)\n", repeated_frame.ip, name, file, line, repeated_frame.count + 1
+        end
+        return
+      end
+    end
+
+    if frame = decode_frame(repeated_frame.ip)
+      offset, sname, fname = frame
+      if repeated_frame.count == 0
+        Crystal::System.print_error "[0x%llx] %s +%lld in %s\n", repeated_frame.ip, sname, offset, fname
+      else
+        Crystal::System.print_error "[0x%llx] %s +%lld in %s (%ld times)\n", repeated_frame.ip, sname, offset, fname, repeated_frame.count + 1
+      end
+    else
+      if repeated_frame.count == 0
+        Crystal::System.print_error "[0x%llx] ???\n", repeated_frame.ip
+      else
+        Crystal::System.print_error "[0x%llx] ??? (%ld times)\n", repeated_frame.ip, repeated_frame.count + 1
+      end
+    end
   end
 
   protected def self.decode_line_number(pc)
@@ -86,19 +185,15 @@ struct Exception::CallStack
 
     if LibC.SymGetLineFromAddrW64(LibC.GetCurrentProcess, pc, out displacement, pointerof(line_info)) != 0
       file_name = String.from_utf16(line_info.fileName)[0]
-      line_number = line_info.lineNumber
+      line_number = line_info.lineNumber.to_i32
     else
       line_number = 0
     end
 
     unless file_name
-      module_info = Pointer(LibC::IMAGEHLP_MODULEW64).malloc(1)
-      module_info.value.sizeOfStruct = sizeof(LibC::IMAGEHLP_MODULEW64)
-
-      if LibC.SymGetModuleInfoW64(LibC.GetCurrentProcess, pc, module_info) != 0
-        mod_displacement = pc - LibC.SymGetModuleBase64(LibC.GetCurrentProcess, pc)
-        image_name = String.from_utf16(module_info.value.loadedImageName.to_unsafe)[0]
-        file_name = "#{image_name} +#{mod_displacement}"
+      if m_info = sym_get_module_info(pc)
+        offset, image_name = m_info
+        file_name = "#{image_name} +#{offset}"
       else
         file_name = "??"
       end
@@ -108,6 +203,37 @@ struct Exception::CallStack
   end
 
   protected def self.decode_function_name(pc)
+    if sym = sym_from_addr(pc)
+      _, sname = sym
+      sname
+    end
+  end
+
+  protected def self.decode_frame(ip)
+    pc = decode_address(ip)
+    if sym = sym_from_addr(pc)
+      if m_info = sym_get_module_info(pc)
+        offset, sname = sym
+        _, fname = m_info
+        {offset, sname, fname}
+      end
+    end
+  end
+
+  private def self.sym_get_module_info(pc)
+    load_debug_info
+
+    module_info = Pointer(LibC::IMAGEHLP_MODULEW64).malloc(1)
+    module_info.value.sizeOfStruct = sizeof(LibC::IMAGEHLP_MODULEW64)
+
+    if LibC.SymGetModuleInfoW64(LibC.GetCurrentProcess, pc, module_info) != 0
+      mod_displacement = pc - LibC.SymGetModuleBase64(LibC.GetCurrentProcess, pc)
+      image_name = String.from_utf16(module_info.value.loadedImageName.to_unsafe)[0]
+      {mod_displacement, image_name}
+    end
+  end
+
+  private def self.sym_from_addr(pc)
     load_debug_info
 
     symbol_size = sizeof(LibC::SYMBOL_INFOW) + (LibC::MAX_SYM_NAME - 1) * sizeof(LibC::WCHAR)
@@ -117,11 +243,9 @@ struct Exception::CallStack
 
     sym_displacement = LibC::DWORD64.zero
     if LibC.SymFromAddrW(LibC.GetCurrentProcess, pc, pointerof(sym_displacement), symbol) != 0
-      String.from_utf16(symbol.value.name.to_unsafe.to_slice(symbol.value.nameLen))
+      symbol_str = String.from_utf16(symbol.value.name.to_unsafe.to_slice(symbol.value.nameLen))
+      {sym_displacement, symbol_str}
     end
-  end
-
-  protected def self.decode_frame(pc)
   end
 
   protected def self.decode_address(ip)

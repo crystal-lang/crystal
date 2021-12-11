@@ -32,6 +32,10 @@ struct Exception::CallStack
     end
   {% end %}
 
+  def self.setup_crash_handler
+    Signal.setup_segfault_handler
+  end
+
   protected def self.unwind
     callstack = [] of Void*
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
