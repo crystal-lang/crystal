@@ -50,7 +50,9 @@ struct Exception::CallStack
       end
     end)
 
-    stack_size = LibC::DWORD.new!(4096)
+    # ensure that even in the case of stack overflow there is enough reserved
+    # stack space for recovery
+    stack_size = LibC::DWORD.new!(0x10000)
     LibC.SetThreadStackGuarantee(pointerof(stack_size))
   end
 
@@ -61,7 +63,7 @@ struct Exception::CallStack
     LibC.RtlCaptureContext(context)
 
     stack = [] of Void*
-    each_frame(context, LibC.GetCurrentThread) do |frame|
+    each_frame(context) do |frame|
       (frame.count + 1).times do
         stack << frame.ip
       end
@@ -69,7 +71,7 @@ struct Exception::CallStack
     stack
   end
 
-  private def self.each_frame(context, thread, &)
+  private def self.each_frame(context, &)
     # unlike DWARF, this is required on Windows to even be able to produce
     # correct stack traces, so we do it here but not in `libunwind.cr`
     load_debug_info
@@ -93,12 +95,14 @@ struct Exception::CallStack
     stack_frame.addrStack.offset = context.value.rsp
 
     last_frame = nil
+    cur_proc = LibC.GetCurrentProcess
+    cur_thread = LibC.GetCurrentThread
 
     while true
       ret = LibC.StackWalk64(
         machine_type,
-        LibC.GetCurrentProcess,
-        thread,
+        cur_proc,
+        cur_thread,
         pointerof(stack_frame),
         context,
         nil,
@@ -139,19 +143,9 @@ struct Exception::CallStack
   private record StackContext, context : LibC::CONTEXT*, thread : LibC::HANDLE
 
   def self.print_backtrace(exception_info) : Nil
-    # we are still on the same thread which may have a corrupted stack, so we
-    # spawn a new thread and print the backtrace from a clean stack
-    info = StackContext.new(exception_info.value.contextRecord, LibC.GetCurrentThread)
-    handle = LibC.CreateThread(nil, 0, ->(lpParameter) {
-      the_info = lpParameter.as(StackContext*)
-      each_frame(the_info.value.context, the_info.value.thread) do |frame|
-        print_frame(frame)
-      end
-      LibC::DWORD.new!(0)
-    }, pointerof(info), LibC::CREATE_SUSPENDED, nil)
-    LibC.ResumeThread(handle)
-    LibC.WaitForSingleObject(handle, LibC::INFINITE)
-    LibC.CloseHandle(handle)
+    each_frame(exception_info.value.contextRecord) do |frame|
+      print_frame(frame)
+    end
   end
 
   private def self.print_frame(repeated_frame)
