@@ -277,11 +277,11 @@ jobs:
           cl /MT /c src\llvm\ext\llvm_ext.cc -I llvm\include /Fosrc\llvm\ext\llvm_ext.obj
       - name: Link Crystal executable
         run: |
-          Invoke-Expression "cl crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib dbghelp.lib ole32.lib shell32.lib legacy_stdio_definitions.lib /link /LIBPATH:$(pwd)\libs /STACK:10000000"
+          Invoke-Expression "cl crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib WS2_32.lib advapi32.lib libcmt.lib dbghelp.lib ole32.lib shell32.lib legacy_stdio_definitions.lib /link /LIBPATH:$(pwd)\libs /STACK:0x800000"
 
       - name: Re-build Crystal
         run: |
-          .\crystal-cross.exe build src/compiler/crystal.cr -Di_know_what_im_doing -Dwithout_playground --link-flags=/STACK:10000000
+          .\crystal-cross.exe build src/compiler/crystal.cr -Di_know_what_im_doing -Dwithout_playground
           mv crystal.exe bin/
 
       - name: Gather Crystal binaries

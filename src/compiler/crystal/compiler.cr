@@ -374,7 +374,7 @@ module Crystal
         {% end %}
 
         link_args << "/DEBUG:FULL /PDBALTPATH:%_PDB%" unless debug.none?
-        link_args << "/INCREMENTAL:NO"
+        link_args << "/INCREMENTAL:NO /STACK:0x800000"
         link_args << lib_flags
         @link_flags.try { |flags| link_args << flags }
 
