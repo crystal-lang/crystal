@@ -516,14 +516,16 @@ module Crystal
     # Returns the `IntegerType` that matches the given Int value
     def int?(int)
       case int
-      when Int8   then int8
-      when Int16  then int16
-      when Int32  then int32
-      when Int64  then int64
-      when UInt8  then uint8
-      when UInt16 then uint16
-      when UInt32 then uint32
-      when UInt64 then uint64
+      when Int8    then int8
+      when Int16   then int16
+      when Int32   then int32
+      when Int64   then int64
+      when Int128  then int128
+      when UInt8   then uint8
+      when UInt16  then uint16
+      when UInt32  then uint32
+      when UInt64  then uint64
+      when UInt128 then uint128
       else
         nil
       end
