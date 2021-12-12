@@ -176,7 +176,22 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./libxml2
         run: |
-          cmake . -DBUILD_SHARED_LIBS=OFF -DLIBXML2_WITH_HTTP=OFF -DLIBXML2_WITH_FTP=OFF -DLIBXML2_WITH_TESTS=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
+          cmake . -DBUILD_SHARED_LIBS=OFF -DLIBXML2_WITH_PROGRAMS=OFF -DLIBXML2_WITH_HTTP=OFF -DLIBXML2_WITH_FTP=OFF -DLIBXML2_WITH_TESTS=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
+          
+          echo '<Project>
+            <PropertyGroup>
+              <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
+            </PropertyGroup>
+          </Project>' > 'Directory.Build.props'
+
+          echo '<Project>
+            <ItemDefinitionGroup>
+              <ClCompile>
+                <PreprocessorDefinitions>LIBXML_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+              </ClCompile>
+            </ItemDefinitionGroup>
+          </Project>' > 'Override.props'
+
           cmake --build . --config Release
       - name: Gather libraries
         if: steps.cache-libs.outputs.cache-hit != 'true'
