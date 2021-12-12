@@ -41,7 +41,7 @@ module Crystal
           case self_type = self.type?
           when IntegerType
             case self_type.kind
-            when :i8, :u8, :i16, :u16, :i32, :u32, :i64, :u64
+            when :i8, :u8, :i16, :u16, :i32, :u32, :i64, :u64, :i128, :u128
               true
             else
               false
