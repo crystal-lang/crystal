@@ -249,16 +249,14 @@ module Crystal
 
     def integer_value
       case kind
-      when :i8   then value.to_i8
-      when :i16  then value.to_i16
-      when :i32  then value.to_i32
-      when :i64  then value.to_i64
-      when :i128 then value.to_i128
-      when :u8   then value.to_u8
-      when :u16  then value.to_u16
-      when :u32  then value.to_u32
-      when :u64  then value.to_u64
-      when :u128 then value.to_u128
+      when :i8  then value.to_i8
+      when :i16 then value.to_i16
+      when :i32 then value.to_i32
+      when :i64 then value.to_i64
+      when :u8  then value.to_u8
+      when :u16 then value.to_u16
+      when :u32 then value.to_u32
+      when :u64 then value.to_u64
       else
         raise "Bug: called 'integer_value' for non-integer literal"
       end
