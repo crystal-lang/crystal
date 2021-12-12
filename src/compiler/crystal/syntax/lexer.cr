@@ -1464,6 +1464,10 @@ module Crystal
       raise "#{string_range(start, pos_before_suffix)} doesn't fit in an #{type}", @token, (current_pos - start)
     end
 
+    def raise_value_doesnt_fit_in(type, start, pos_before_suffix, alternative)
+      raise "#{string_range(start, pos_before_suffix)} doesn't fit in an #{type}, try using the suffix #{alternative}", @token, (current_pos - start)
+    end
+
     private def scan_number(start, negative = false)
       @token.type = :NUMBER
       base = 10
@@ -1562,7 +1566,7 @@ module Crystal
 
       # Check or determine suffix
       if suffix_size == 0
-        raise_value_doesnt_fit_in(negative ? Int128 : UInt128, start, pos_before_suffix) unless @token.value
+        raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix) unless @token.value
         @token.number_kind = case number_size
                              when 0..9   then :i32
                              when 10     then raw_number_string.to_i32? ? :i32 : :i64
@@ -1571,30 +1575,26 @@ module Crystal
                                if raw_number_string.to_i64?
                                  :i64
                                elsif negative
-                                 :i128
+                                 raise_value_doesnt_fit_in(Int64, start, pos_before_suffix, "i128")
                                else
                                  :u64
                                end
                              when 20
-                               if !negative && raw_number_string.to_u64?
-                                 :u64
-                               else
-                                 :i128
-                               end
-                             when 21..38 then :i128
+                               raise_value_doesnt_fit_in(Int64, start, pos_before_suffix, "i128") if negative
+                               raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix, "i128") unless raw_number_string.to_u64?
+                               :u64
+                             when 21..38
+                               raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix, "i128")
                              when 39
                                if raw_number_string.to_i128?
-                                 :i128
-                               elsif negative
-                                 raise_value_doesnt_fit_in(Int128, start, pos_before_suffix)
+                                 raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix, "i128")
                                elsif raw_number_string.to_u128?
-                                 :u128
+                                 raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix, "u128")
                                else
-                                 raise_value_doesnt_fit_in(UInt128, start, pos_before_suffix)
+                                 raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix)
                                end
                              else
-                               raise_value_doesnt_fit_in(Int128, start, pos_before_suffix) if negative
-                               raise_value_doesnt_fit_in(UInt128, start, pos_before_suffix)
+                               raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix)
                              end
       else
         case @token.number_kind
