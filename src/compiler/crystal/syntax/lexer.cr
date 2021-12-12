@@ -1561,7 +1561,7 @@ module Crystal
 
       # Check or determine suffix
       if suffix_size == 0
-        raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix) unless @token.value
+        raise_value_doesnt_fit_in(negative ? Int128 : UInt128, start, pos_before_suffix) unless @token.value
         @token.number_kind = case number_size
                              when 0..9   then :i32
                              when 10     then raw_number_string.to_i32? ? :i32 : :i64
