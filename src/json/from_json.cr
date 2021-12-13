@@ -76,23 +76,21 @@ end
 {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
   def {{type.id}}.new(pull : JSON::PullParser)
     location = pull.location
-    value =
-      {% if type == "UInt64" %}
-        pull.read_raw
-      {% else %}
-        pull.read_int
-      {% end %}
     begin
-      new value
+      {% if type == "UInt64" %}
+        {{type.id}}.new pull.read_raw
+      {% else %}
+       {{type.id}}.new pull.read_int
+      {% end %}
     rescue ex : OverflowError | ArgumentError
       raise JSON::ParseException.new("Can't read {{type.id}}", *location, ex)
     end
   end
-
-  def {{type.id}}.from_json_object_key?(key : String)
-    new? key
-  end
 {% end %}
+
+def Int.from_json_object_key?(key : String)
+  new? key
+end
 
 def Float32.new(pull : JSON::PullParser)
   case pull.kind
