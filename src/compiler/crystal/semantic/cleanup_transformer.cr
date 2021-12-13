@@ -8,8 +8,9 @@ module Crystal
       CleanupTransformer.new(self)
     end
 
-    def cleanup(node)
+    def cleanup(node, inside_def = false)
       transformer = self.cleanup_transformer
+      transformer.inside_def! if inside_def
       node = node.transform(transformer)
       puts node if ENV["AFTER"]? == "1"
       node
@@ -71,6 +72,10 @@ module Crystal
       @def_nest_count = 0
       @last_is_truthy = false
       @last_is_falsey = false
+    end
+
+    def inside_def!
+      @def_nest_count += 1
     end
 
     def after_transform(node)
@@ -292,7 +297,10 @@ module Crystal
         const.cleaned_up = true
       end
 
-      if node.target == node.value
+      if target == node.value &&
+         # This condition is because the interpreter will generate expressions
+         # like `$~ = $~` in multidispatches, and that's fine.
+         !(target.is_a?(Var) && target.special_var?)
         node.raise "expression has no effect"
       end
 

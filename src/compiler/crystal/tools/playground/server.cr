@@ -467,8 +467,8 @@ module Crystal::Playground
 
       agent_ws = PathWebSocketHandler.new "/agent" do |ws, context|
         match_data = context.request.path.not_nil!.match(/\/(\d+)\/(\d+)$/).not_nil!
-        session_key = match_data[1]?.try(&.to_i)
-        tag = match_data[2]?.try(&.to_i)
+        session_key = match_data[1].to_i
+        tag = match_data[2].to_i
         Log.info { "#{context.request.path} WebSocket connected (session=#{session_key}, tag=#{tag})" }
 
         session = @sessions[session_key]

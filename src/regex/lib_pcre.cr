@@ -26,5 +26,8 @@ lib LibPCRE
   $pcre_free : Free
 end
 
-LibPCRE.pcre_malloc = ->GC.malloc(LibC::SizeT)
-LibPCRE.pcre_free = ->GC.free(Void*)
+# TODO(interpreted): remove this unless
+{% unless flag?(:interpreted) %}
+  LibPCRE.pcre_malloc = ->GC.malloc(LibC::SizeT)
+  LibPCRE.pcre_free = ->GC.free(Void*)
+{% end %}

@@ -44,7 +44,7 @@ module Float::Printer
     unless success
       # grisu3 does not work for ~0.5% of floats
       # when this happens, fallback to another, slower approach
-      if v.class == Float64
+      if v.is_a?(Float64)
         LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%.17g", v)
       else
         LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%g", v.to_f64)

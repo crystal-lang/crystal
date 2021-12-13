@@ -121,7 +121,7 @@ require "./std/json/parser_spec.cr"
 require "./std/json/pull_parser_spec.cr"
 require "./std/json/serializable_spec.cr"
 require "./std/json/serialization_spec.cr"
-# require "./std/kernel_spec.cr" (failed codegen)
+require "./std/kernel_spec.cr"
 require "./std/levenshtein_spec.cr"
 # require "./std/llvm/aarch64_spec.cr" (failed linking)
 # require "./std/llvm/arm_abi_spec.cr" (failed linking)
