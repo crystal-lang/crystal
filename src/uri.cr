@@ -55,16 +55,18 @@ require "./uri/params"
 #
 # * `.decode(string : String, *, plus_to_space : Bool = false) : String`: Decodes a URL-encoded string.
 # * `.decode(string : String, io : IO, *, plus_to_space : Bool = false) : Nil`: Decodes a URL-encoded string to an IO.
-# * `.encode(string : String, *, space_to_plus : Bool = false) : String`: URL-encodes a string.
-# * `.encode(string : String, io : IO, *, space_to_plus : Bool = false) : Nil`: URL-encodes a string to an IO.
+# * `.encode_path(string : String) : String`: URL-encodes a string.
+# * `.encode_path(string : String, io : IO) : Nil`: URL-encodes a string to an IO.
+# * `.encode_path_segment(string : String) : String`: URL-encodes a string, escaping `/`.
+# * `.encode_path_segment(string : String, io : IO) : Nil`: URL-encodes a string to an IO, escaping `/`.
 # * `.decode_www_form(string : String, *, plus_to_space : Bool = true) : String`: Decodes an `x-www-form-urlencoded` string component.
 # * `.decode_www_form(string : String, io : IO, *, plus_to_space : Bool = true) : Nil`: Decodes an `x-www-form-urlencoded` string component to an IO.
 # * `.encode_www_form(string : String, *, space_to_plus : Bool = true) : String`: Encodes a string as a `x-www-form-urlencoded` component.
 # * `.encode_www_form(string : String, io : IO, *, space_to_plus : Bool = true) : Nil`: Encodes a string as a `x-www-form-urlencoded` component to an IO.
 #
-# The main difference is that `.encode_www_form` encodes reserved characters
-# (see `.reserved?`), while `.encode` does not. The decode methods are
-# identical except for the handling of `+` characters.
+# `.encode_www_form` encodes white space (` `) as `+`, while `.encode_path`
+# and `.encode_path_segment` encode it as `%20`. The decode methods differ regarding
+# the handling of `+` characters, respectively.
 #
 # NOTE: `URI::Params` provides a higher-level API for handling `x-www-form-urlencoded`
 # serialized data.
@@ -183,7 +185,7 @@ class URI
   # URI.parse("http://[::1]/bar").hostname # => "::1"
   # URI.parse("http://[::1]/bar").host     # => "[::1]"
   # ```
-  def hostname
+  def hostname : String?
     host.try { |host| self.class.unwrap_ipv6(host) }
   end
 
@@ -196,7 +198,7 @@ class URI
   # URI.unwrap_ipv6("127.0.0.1")   # => "127.0.0.1"
   # URI.unwrap_ipv6("example.com") # => "example.com"
   # ```
-  def self.unwrap_ipv6(host)
+  def self.unwrap_ipv6(host) : String
     if host.starts_with?('[') && host.ends_with?(']')
       host.byte_slice(1, host.bytesize - 2)
     else
@@ -230,12 +232,6 @@ class URI
         str << '?' << query
       end
     end
-  end
-
-  # :ditto:
-  @[Deprecated("Use `#request_target` instead.")]
-  def full_path : String
-    request_target
   end
 
   # Returns `true` if URI has a *scheme* specified.
@@ -288,9 +284,9 @@ class URI
   #
   # ```
   # uri = URI.parse "http://user:pass@example.com:80/path?query"
-  # uri.authority # => "user:pass@example.com"
+  # uri.authority # => "user:pass@example.com:80"
   #
-  # uri = URI.parse(path: "/relative")
+  # uri = URI.parse("/relative")
   # uri.authority # => nil
   # ```
   def authority : String?
@@ -309,7 +305,12 @@ class URI
     end
 
     if host = @host
-      URI.encode(host, io)
+      # https://datatracker.ietf.org/doc/html/rfc3986#section-3.2.2
+      #
+      # host        = IP-literal / IPv4address / reg-name
+      #
+      # The valid characters include unreserved, sub-delims, ':', '[', ']' (IPv6-Adress)
+      URI.encode(host, io) { |byte| URI.unreserved?(byte) || URI.sub_delim?(byte) || byte.unsafe_chr.in?(':', '[', ']') }
     end
 
     if port = @port
@@ -563,7 +564,7 @@ class URI
   # ```
   #
   # The return value is URL encoded (see `#encode_www_form`).
-  def userinfo
+  def userinfo : String?
     if user = @user
       String.build { |io| userinfo(user, io) }
     end

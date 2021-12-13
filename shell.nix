@@ -52,18 +52,13 @@ let
   # Hashes obtained using `nix-prefetch-url --unpack <url>`
   latestCrystalBinary = genericBinary ({
     x86_64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/0.36.1/crystal-0.36.1-1-darwin-x86_64.tar.gz";
-      sha256 = "sha256:0596aind8mlg65g99zhd9r1bic8scs5j6262xnh43r3fracw00lj";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.2.2/crystal-1.2.2-1-darwin-universal.tar.gz";
+      sha256 = "sha256:1y7bcwl6jybg28sdd9xrgkxbz3ysdqn1jlgapi50avc47h30kgbb";
     };
 
     x86_64-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/0.36.1/crystal-0.36.1-1-linux-x86_64.tar.gz";
-      sha256 = "sha256:1vpxm0zw5nbfl0pxl3gsm622958fqlwf71q2gm73avwj8kmhwsx6";
-    };
-
-    i686-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/0.36.1/crystal-0.36.1-1-linux-i686.tar.gz";
-      sha256 = "sha256:0a1x7w6690dhsjl9bdin1z79bx59ch5w0am1snn3bnjdpc1zbnbs";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.2.2/crystal-1.2.2-1-linux-x86_64.tar.gz";
+      sha256 = "sha256:1cxkyq7n2xw6h9c99h28c2ssf3viiw1vigb0w6l2rpnw4f55fbqz";
     };
   }.${pkgs.stdenv.system});
 
@@ -142,10 +137,10 @@ pkgs.stdenv.mkDerivation rec {
     latestCrystalBinary
     pkgconfig
     llvm_suite.llvm
+    pkgs.libffi
   ];
 
   LLVM_CONFIG = "${llvm_suite.llvm}/bin/llvm-config";
 
-  # ld: warning: object file (.../src/ext/libcrystal.a(sigfault.o)) was built for newer OSX version (10.14) than being linked (10.12)
   MACOSX_DEPLOYMENT_TARGET = "10.11";
 }

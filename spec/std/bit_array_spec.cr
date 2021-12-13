@@ -1,10 +1,30 @@
 require "spec"
 require "bit_array"
+require "spec/helpers/iterate"
 
 private def from_int(size : Int32, int : Int)
   ba = BitArray.new(size)
   (0).upto(size - 1) { |i| ba[i] = int.bit(size - i - 1) > 0 }
   ba
+end
+
+private def assert_no_unused_bits(ba : BitArray, *, file = __FILE__, line = __LINE__)
+  bit_count = 32 * ((ba.size - 1) // 32 + 1)
+  (ba.size...bit_count).each do |index|
+    ba.unsafe_fetch(index).should be_false, file: file, line: line
+  end
+end
+
+private def assert_rotates!(from : BitArray, n : Int, to : BitArray, *, file = __FILE__, line = __LINE__)
+  from.rotate!(n).should eq(from), file: file, line: line
+  from.should eq(to), file: file, line: line
+  assert_no_unused_bits from, file: file, line: line
+end
+
+private def assert_rotates!(from : BitArray, to : BitArray, *, file = __FILE__, line = __LINE__)
+  from.rotate!.should eq(from), file: file, line: line
+  from.should eq(to), file: file, line: line
+  assert_no_unused_bits from, file: file, line: line
 end
 
 describe "BitArray" do
@@ -240,17 +260,122 @@ describe "BitArray" do
 
       ba[28..40].should eq(from_int(13, 0b11111_11111111))
     end
+
+    it "does not cause overflow (#8494)" do
+      ba = BitArray.new(64, true)
+      ba[0] = false
+      ba[33] = false
+      ba[0, 32].should eq(from_int(32, 0b01111111_11111111_11111111_11111111_u32))
+      ba[1, 32].should eq(from_int(32, 0b11111111_11111111_11111111_11111111_u32))
+      ba[2, 32].should eq(from_int(32, 0b11111111_11111111_11111111_11111110_u32))
+    end
+
+    it "zeroes unused bits" do
+      ba = BitArray.new(32, true)
+      assert_no_unused_bits ba[0, 26]
+      assert_no_unused_bits ba[7, 11]
+
+      ba = BitArray.new(64, true)
+      assert_no_unused_bits ba[0, 26]
+      assert_no_unused_bits ba[0, 33]
+      assert_no_unused_bits ba[7, 53]
+
+      ba = BitArray.new(100, true)
+      assert_no_unused_bits ba[60, 26]
+      assert_no_unused_bits ba[0, 97]
+
+      ba = BitArray.new(38, true)
+      ba[0, 34].should eq(BitArray.new(34, true))
+    end
   end
 
-  it "toggles a bit" do
-    ary = BitArray.new(32)
-    ary[3].should be_false
+  describe "#toggle" do
+    it "toggles a bit" do
+      ary = BitArray.new(32)
+      ary[3].should be_false
 
-    ary.toggle(3)
-    ary[3].should be_true
+      ary.toggle(3)
+      ary[3].should be_true
 
-    ary.toggle(3)
-    ary[3].should be_false
+      ary.toggle(3)
+      ary[3].should be_false
+    end
+
+    it "toggles with index and count" do
+      ary = from_int(4, 0b0011)
+      ary.toggle(1, 2)
+      ary.should eq(from_int(4, 0b0101))
+
+      ary = from_int(40, 0b00110011_01010101)
+      ary.toggle(30, 6)
+      ary[24..].should eq(from_int(16, 0b00110000_10100101))
+
+      ary = from_int(32, 0b10000000_00000000_00000000_00000001)
+      ary.toggle(0, 32)
+      ary.should eq(from_int(32, 0b01111111_11111111_11111111_11111110))
+    end
+
+    it "toggles with index and count, not enough bits" do
+      ary = from_int(4, 0b0011)
+      ary.toggle(1, 5)
+      ary.should eq(from_int(4, 0b0100))
+      (4..31).each { |i| ary.unsafe_fetch(i).should be_false }
+
+      ary = from_int(40, 0b00110011_01010101)
+      ary.toggle(30, 12)
+      ary[24..].should eq(from_int(16, 0b00110000_10101010))
+      (40..63).each { |i| ary.unsafe_fetch(i).should be_false }
+    end
+
+    it "toggles with index == size and count" do
+      ary = from_int(4, 0b0011)
+      ary.toggle(4, 2)
+      ary.should eq(from_int(4, 0b0011))
+      (4..31).each { |i| ary.unsafe_fetch(i).should be_false }
+
+      ary = from_int(40, 0b00110011_01010101)
+      ary.toggle(40, 6)
+      ary[24..].should eq(from_int(16, 0b00110011_01010101))
+      (40..63).each { |i| ary.unsafe_fetch(i).should be_false }
+    end
+
+    it "toggles with index < 0 and count" do
+      ary = from_int(4, 0b0011)
+      ary.toggle(-3, 2)
+      ary.should eq(from_int(4, 0b0101))
+
+      ary = from_int(40, 0b00110011_01010101)
+      ary.toggle(-10, 6)
+      ary[24..].should eq(from_int(16, 0b00110000_10100101))
+    end
+
+    it "raises on out of bound index" do
+      expect_raises(IndexError) { BitArray.new(2).toggle(2) }
+      expect_raises(IndexError) { BitArray.new(2).toggle(-3) }
+
+      expect_raises(IndexError) { BitArray.new(2).toggle(3, 1) }
+      expect_raises(IndexError) { BitArray.new(2).toggle(-3, 1) }
+    end
+
+    it "raises on negative count" do
+      expect_raises(ArgumentError) { BitArray.new(2).toggle(0, -1) }
+    end
+
+    it "toggles with range" do
+      ary = from_int(40, 0b00110011_01010101)
+      ary.toggle(30..35)
+      ary[24..].should eq(from_int(16, 0b00110000_10100101))
+    end
+
+    it "toggles zero bits correctly" do
+      ary = BitArray.new(32)
+      ary.toggle(0, 0)
+      ary.none?.should be_true
+      ary.toggle(32, 0)
+      ary.none?.should be_true
+      ary.toggle(32, 2)
+      ary.none?.should be_true
+    end
   end
 
   it "inverts all bits" do
@@ -259,7 +384,7 @@ describe "BitArray" do
 
     ary.invert
     ary.all?.should be_true
-    (100..127).each { |i| ary.unsafe_fetch(i).should be_false }
+    assert_no_unused_bits ary
 
     ary[50] = false
     ary[33] = false
@@ -267,6 +392,142 @@ describe "BitArray" do
 
     ary.invert
     ary.count { |b| b }.should eq(2)
+  end
+
+  describe "#reverse!" do
+    it "reverses empty BitArray" do
+      ba = from_int(0, 0)
+      ba.reverse!
+      ba.should eq(from_int(0, 0))
+    end
+
+    it "reverses short BitArray" do
+      ba = from_int(5, 0b01011)
+      ba.reverse!
+      ba.should eq(from_int(5, 0b11010))
+      assert_no_unused_bits ba
+
+      ba = from_int(8, 0b11101001)
+      ba.reverse!
+      ba.should eq(from_int(8, 0b10010111))
+      assert_no_unused_bits ba
+
+      ba = from_int(20, 0b1010_00110011_00001111)
+      ba.reverse!
+      ba.should eq(from_int(20, 0b1111_00001100_11000101))
+      assert_no_unused_bits ba
+
+      ba = from_int(32, 0b11000101_00011111_11000001_00011101_u32)
+      ba.reverse!
+      ba.should eq(from_int(32, 0b10111000_10000011_11111000_10100011_u32))
+    end
+
+    it "reverses medium BitArray" do
+      ba = from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64)
+      ba.reverse!
+      ba.should eq(from_int(45, 0b00010_01011100_00000000_00000000_00000010_01011100_u64))
+      assert_no_unused_bits ba
+
+      ba = from_int(64, 0b11001100_00101001_01111010_10110001_10111111_00100101_11101100_10101010_u64)
+      ba.reverse!
+      ba.should eq(from_int(64, 0b01010101_00110111_10100100_11111101_10001101_01011110_10010100_00110011_u64))
+    end
+
+    it "reverses large BitArray" do
+      ba = BitArray.new(200)
+      ba[0] = ba[2] = ba[5] = ba[11] = ba[64] = ba[103] = ba[193] = ba[194] = true
+      ba.reverse!
+      ba2 = BitArray.new(200)
+      ba2[199] = ba2[197] = ba2[194] = ba2[188] = ba2[135] = ba2[96] = ba2[6] = ba2[5] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba = BitArray.new(256)
+      ba[0] = ba[2] = ba[5] = ba[11] = ba[64] = ba[103] = ba[193] = ba[194] = true
+      ba.reverse!
+      ba2 = BitArray.new(256)
+      ba2[255] = ba2[253] = ba2[250] = ba2[244] = ba2[191] = ba2[152] = ba2[62] = ba2[61] = true
+      ba.should eq(ba2)
+    end
+  end
+
+  describe "#rotate!" do
+    it "rotates empty BitArray" do
+      assert_rotates! from_int(0, 0), from_int(0, 0)
+      assert_rotates! from_int(0, 0), 0, from_int(0, 0)
+      assert_rotates! from_int(0, 0), 1, from_int(0, 0)
+      assert_rotates! from_int(0, 0), -1, from_int(0, 0)
+    end
+
+    it "rotates short BitArray" do
+      assert_rotates! from_int(5, 0b10011), from_int(5, 0b00111)
+      assert_rotates! from_int(5, 0b10011), 0, from_int(5, 0b10011)
+      assert_rotates! from_int(5, 0b10011), 1, from_int(5, 0b00111)
+      assert_rotates! from_int(5, 0b10011), 2, from_int(5, 0b01110)
+      assert_rotates! from_int(5, 0b10011), 3, from_int(5, 0b11100)
+      assert_rotates! from_int(5, 0b10011), 4, from_int(5, 0b11001)
+      assert_rotates! from_int(5, 0b10011), 5, from_int(5, 0b10011)
+      assert_rotates! from_int(5, 0b10011), 6, from_int(5, 0b00111)
+      assert_rotates! from_int(5, 0b10011), -1, from_int(5, 0b11001)
+      assert_rotates! from_int(5, 0b10011), -2, from_int(5, 0b11100)
+      assert_rotates! from_int(5, 0b10011), -3, from_int(5, 0b01110)
+      assert_rotates! from_int(5, 0b10011), -4, from_int(5, 0b00111)
+
+      ba = from_int(5, 0b10011)
+      assert_rotates! ba, from_int(5, 0b00111)
+      assert_rotates! ba, from_int(5, 0b01110)
+      assert_rotates! ba, 2, from_int(5, 0b11001)
+
+      ba = from_int(32, 0b11000101_00011111_11000001_00011101_u32)
+      assert_rotates! ba, 5, from_int(32, 0b10100011_11111000_00100011_10111000_u32)
+      assert_rotates! ba, -8, from_int(32, 0b10111000_10100011_11111000_00100011_u32)
+      assert_rotates! ba, 45, from_int(32, 0b01111111_00000100_01110111_00010100_u32)
+    end
+
+    it "rotates medium BitArray" do
+      ba = from_int(64, 0b11001100_00101001_01111010_10110001_10111111_00100101_11101100_10101010_u64)
+      assert_rotates! ba, from_int(64, 0b10011000_01010010_11110101_01100011_01111110_01001011_11011001_01010101_u64)
+      assert_rotates! ba, 10, from_int(64, 0b01001011_11010101_10001101_11111001_00101111_01100101_01010110_01100001_u64)
+      assert_rotates! ba, 51, from_int(64, 0b10110011_00001010_01011110_10101100_01101111_11001001_01111011_00101010_u64)
+      assert_rotates! ba, -40, from_int(64, 0b10101100_01101111_11001001_01111011_00101010_10110011_00001010_01011110_u64)
+      assert_rotates! ba, 128, from_int(64, 0b10101100_01101111_11001001_01111011_00101010_10110011_00001010_01011110_u64)
+      assert_rotates! ba, 97, from_int(64, 0b01010101_01100110_00010100_10111101_01011000_11011111_10010010_11110110_u64)
+    end
+
+    it "rotates large BitArray" do
+      ba = BitArray.new(200)
+      ba[0] = ba[2] = ba[5] = ba[11] = ba[64] = ba[103] = ba[193] = ba[194] = true
+
+      ba.rotate!
+      ba2 = BitArray.new(200)
+      ba2[199] = ba2[1] = ba2[4] = ba2[10] = ba2[63] = ba2[102] = ba2[192] = ba2[193] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba.rotate!(21)
+      ba2 = BitArray.new(200)
+      ba2[178] = ba2[180] = ba2[183] = ba2[189] = ba2[42] = ba2[81] = ba2[171] = ba2[172] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba.rotate!(192)
+      ba2 = BitArray.new(200)
+      ba2[186] = ba2[188] = ba2[191] = ba2[197] = ba2[50] = ba2[89] = ba2[179] = ba2[180] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba.rotate!(50)
+      ba2 = BitArray.new(200)
+      ba2[136] = ba2[138] = ba2[141] = ba2[147] = ba2[0] = ba2[39] = ba2[129] = ba2[130] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba.rotate!(123)
+      ba2 = BitArray.new(200)
+      ba2[13] = ba2[15] = ba2[18] = ba2[24] = ba2[77] = ba2[116] = ba2[6] = ba2[7] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+    end
   end
 
   it "raises when out of bounds" do
@@ -292,7 +553,7 @@ describe "BitArray" do
 
   it "initializes with unused bits cleared" do
     ary = BitArray.new(3, true)
-    (0...32).each { |i| ary.unsafe_fetch(i).should eq(i < ary.size) }
+    assert_no_unused_bits ary
   end
 
   it "reads bits from slice" do
@@ -328,36 +589,13 @@ describe "BitArray" do
     end
   end
 
-  it "provides an iterator" do
-    ary = BitArray.new(2)
-    ary[0] = true
-    ary[1] = false
+  ary = BitArray.new(2)
+  ary[0] = true
+  ary[1] = false
 
-    iter = ary.each
-    iter.next.should be_true
-    iter.next.should be_false
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "provides an index iterator" do
-    ary = BitArray.new(2)
-
-    iter = ary.each_index
-    iter.next.should eq(0)
-    iter.next.should eq(1)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "provides a reverse iterator" do
-    ary = BitArray.new(2)
-    ary[0] = true
-    ary[1] = false
-
-    iter = ary.reverse_each
-    iter.next.should be_false
-    iter.next.should be_true
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [true, false], ary.each
+  it_iterates "#each_index", [0, 1], ary.each_index
+  it_iterates "#reverse_each", [false, true], ary.reverse_each
 
   it "provides dup" do
     a = BitArray.new(2)

@@ -419,7 +419,7 @@ describe "Semantic: automatic cast" do
       a = 1 || Zed.new
       a + 2
       ),
-      "no overload matches"
+      "no overload matches", inject_primitives: true
   end
 
   it "doesn't say 'ambiguous call' when there's an exact match for symbol (#6601)" do
@@ -573,7 +573,96 @@ describe "Semantic: automatic cast" do
       end
 
       Baz.new.as(Foo).foo(1)
+    )) { int64 }
+  end
+
+  it "casts integer variable to larger type (#9565)" do
+    assert_type(%(
+      def foo(x : Int64)
+        x
+      end
+
+      x = 1_i32
+      foo(x)
       )) { int64 }
+  end
+
+  it "casts integer variable to larger type (Int64 to Int128) (#9565)" do
+    assert_type(%(
+      def foo(x : Int128)
+        x
+      end
+
+      x = 1_i64
+      foo(x)
+      )) { int128 }
+  end
+
+  it "casts integer expression to larger type (#9565)" do
+    assert_type(%(
+      def foo(x : Int64)
+        x
+      end
+
+      def bar
+        1_i32
+      end
+
+      foo(bar)
+      )) { int64 }
+  end
+
+  it "says ambiguous call for integer var to larger type (#9565)" do
+    assert_error %(
+      def foo(x : Int32)
+        x
+      end
+
+      def foo(x : Int64)
+        x
+      end
+
+      x = 1_u8
+      foo(x)
+      ),
+      "ambiguous call, implicit cast of UInt8 matches all of Int32, Int64"
+  end
+
+  it "says ambiguous call for integer var to union type (#9565)" do
+    assert_error %(
+      def foo(x : Int32 | UInt32)
+        x
+      end
+
+      x = 1_u8
+      foo(x)
+      ),
+      "ambiguous call, implicit cast of UInt8 matches all of Int32, UInt32"
+  end
+
+  it "can't cast integer to another type when it doesn't fit (#9565)" do
+    assert_error %(
+      def foo(x : Int32)
+        x
+      end
+
+      x = 1_i64
+      foo(x)
+      ),
+      "no overload matches 'foo' with type Int64"
+  end
+
+  it "doesn't cast integer variable to larger type (not #9565)" do
+    assert_error %(
+      def foo(x : Int64)
+        x
+      end
+
+      x = 1_i32
+      foo(x)
+      ),
+      "no overload matches 'foo' with type Int32",
+      flags: "no_number_autocast"
   end
 
   it "doesn't autocast number on union (#8655)" do
@@ -597,6 +686,28 @@ describe "Semantic: automatic cast" do
       "ambiguous call, implicit cast of 255 matches all of UInt64, Int64"
   end
 
+  it "autocasts integer variable to float type (#9565)" do
+    assert_type(%(
+      def foo(x : Float64)
+        x
+      end
+
+      x = 1_i32
+      foo(x)
+      )) { float64 }
+  end
+
+  it "autocasts float32 variable to float64 type (#9565)" do
+    assert_type(%(
+      def foo(x : Float64)
+        x
+      end
+
+      x = 1.0_f32
+      foo(x)
+      )) { float64 }
+  end
+
   it "autocasts nested type from non-nested type (#10315)" do
     assert_no_errors(%(
       module Moo
@@ -615,5 +726,19 @@ describe "Semantic: automatic cast" do
 
       Bar.new
       ))
+  end
+
+  it "errors when autocast default value doesn't match enum member" do
+    assert_error <<-CR,
+      enum Foo
+        FOO
+      end
+
+      def foo(foo : Foo = :bar)
+      end
+
+      foo
+      CR
+      "can't autocast :bar to Foo: no matching enum member"
   end
 end

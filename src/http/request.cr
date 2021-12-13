@@ -1,6 +1,7 @@
 require "./common"
 require "uri"
 require "http/params"
+require "socket"
 
 # An HTTP request.
 #
@@ -20,20 +21,40 @@ class HTTP::Request
   @query_params : URI::Params?
   @uri : URI?
 
-  {% unless flag?(:win32) %}
-    # The network address that sent the request to an HTTP server.
-    #
-    # `HTTP::Server` will try to fill this property, and its value
-    # will have a format like "IP:port", but this format is not guaranteed.
-    # Middlewares can overwrite this value.
-    #
-    # This property is not used by `HTTP::Client`.
-    property remote_address : Socket::Address?
-  {% else %}
-    # TODO: Remove this once `Socket` is working on Windows
+  # The network address that sent the request to an HTTP server.
+  #
+  # `HTTP::Server` will try to fill this property, and its value
+  # will have a format like "IP:port", but this format is not guaranteed.
+  # Middlewares can overwrite this value.
+  #
+  # Example:
+  #
+  # ```
+  # class ForwarderHandler
+  #   include HTTP::Handler
+  #
+  #   def call(context)
+  #     if ip = context.request.headers["X-Real-IP"]? # When using a reverse proxy that guarantees this field.
+  #       context.request.remote_address = Socket::IPAddress.new(ip, 0)
+  #     end
+  #     call_next(context)
+  #   end
+  # end
+  #
+  # server = HTTP::Server.new([ForwarderHandler.new, HTTP::LogHandler.new])
+  # ```
+  #
+  # This property is not used by `HTTP::Client`.
+  property remote_address : Socket::Address?
 
-    property remote_address : Nil
-  {% end %}
+  # The network address of the HTTP server.
+  #
+  # `HTTP::Server` will try to fill this property, and its value
+  # will have a format like "IP:port", but this format is not guaranteed.
+  # Middlewares can overwrite this value.
+  #
+  # This property is not used by `HTTP::Client`.
+  property local_address : Socket::Address?
 
   def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version = "HTTP/1.1")
     # Duplicate headers to prevent the request from modifying data that the user might hold.
@@ -47,26 +68,26 @@ class HTTP::Request
 
   # Returns a convenience wrapper around querying and setting cookie related
   # headers, see `HTTP::Cookies`.
-  def cookies
-    @cookies ||= Cookies.from_headers(headers)
+  def cookies : HTTP::Cookies
+    @cookies ||= Cookies.from_client_headers(headers)
   end
 
   # Returns a convenience wrapper around querying and setting query params,
   # see `URI::Params`.
-  def query_params
+  def query_params : URI::Params
     @query_params ||= uri.query_params
   end
 
-  def resource
+  def resource : String
     update_uri
     @uri.try(&.request_target) || @resource
   end
 
-  def keep_alive?
+  def keep_alive? : Bool
     HTTP.keep_alive?(self)
   end
 
-  def ignore_body?
+  def ignore_body? : Bool
     @method == "HEAD"
   end
 
@@ -117,6 +138,10 @@ class HTTP::Request
 
       if io.responds_to?(:remote_address)
         request.remote_address = io.remote_address
+      end
+
+      if io.responds_to?(:local_address)
+        request.local_address = io.local_address
       end
 
       return request
@@ -223,7 +248,7 @@ class HTTP::Request
   end
 
   # Returns the request's path component.
-  def path
+  def path : String
     uri.path.presence || "/"
   end
 
@@ -233,7 +258,7 @@ class HTTP::Request
   end
 
   # Lazily parses and returns the request's query component.
-  def query
+  def query : String?
     update_uri
     uri.query
   end
@@ -243,15 +268,6 @@ class HTTP::Request
     uri.query = value
     update_query_params
     value
-  end
-
-  # Returns request host from headers.
-  @[Deprecated("Use `#hostname` instead.")]
-  def host
-    host = @headers["Host"]?
-    return unless host
-    index = host.index(":")
-    index ? host[0...index] : host
   end
 
   # Extracts the hostname from `Host` header.
@@ -269,9 +285,7 @@ class HTTP::Request
       host = header
     else
       port = port.to_i?(whitespace: false)
-      # TODO: Remove temporal fix when Socket::IPAddress has been ported to
-      # win32
-      unless port && {% if flag?(:win32) %}port.in?(0..UInt16::MAX){% else %}Socket::IPAddress.valid_port?(port){% end %}
+      unless port && Socket::IPAddress.valid_port?(port)
         # what we identified as port is not valid, so use the entire header
         host = header
       end
@@ -282,7 +296,7 @@ class HTTP::Request
 
   # Returns request host with port from headers.
   @[Deprecated(%q(Use `headers["Host"]?` instead.))]
-  def host_with_port
+  def host_with_port : String?
     @headers["Host"]?
   end
 

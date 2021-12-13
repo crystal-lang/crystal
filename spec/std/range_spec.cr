@@ -1,8 +1,6 @@
 require "./spec_helper"
-require "../support/iterate"
-{% unless flag?(:win32) %}
-  require "big"
-{% end %}
+require "spec/helpers/iterate"
+require "big"
 
 struct RangeSpecIntWrapper
   include Comparable(self)
@@ -60,6 +58,19 @@ describe "Range" do
     r.excludes_end?.should be_true
   end
 
+  it "#==" do
+    ((1..1) == (1..1)).should be_true
+    ((1...1) == (1..1)).should be_false
+    ((1...1) == (1...1)).should be_true
+    ((1..1) == (1...1)).should be_false
+
+    ((1..nil) == (1..nil)).should be_true
+
+    (1..1).should eq Range(Int32?, Int32?).new(1, 1)
+    ((1..1) == Range(Int32?, Int32?).new(1, 1)).should be_true
+    ((1.0..1.0) == (1..1)).should be_true
+  end
+
   it "includes?" do
     (1..5).includes?(1).should be_true
     (1..5).includes?(5).should be_true
@@ -106,7 +117,7 @@ describe "Range" do
       (1...11).step(2).sum.should eq 25
     end
 
-    pending_win32 "called with no block is specialized for performance (BigInt)" do
+    it "called with no block is specialized for performance (BigInt)" do
       (BigInt.new("1")..BigInt.new("1 000 000 000")).sum.should eq BigInt.new("500 000 000 500 000 000")
       (BigInt.new("1")..BigInt.new("1 000 000 000")).step(2).sum.should eq BigInt.new("250 000 000 000 000 000")
     end
@@ -131,6 +142,8 @@ describe "Range" do
       (0...ary.size).bsearch { |i| true }.should eq 0
       (0...ary.size).bsearch { |i| false }.should eq nil
 
+      (0...ary.size).bsearch { |i| ary[i] >= 10 ? 1 : nil }.should eq 4
+
       ary = [0, 100, 100, 100, 200]
       (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq 1
 
@@ -144,7 +157,7 @@ describe "Range" do
       (0_u32...10_u32).bsearch { |x| x >= 10 }.should eq nil
     end
 
-    pending_win32 "BigInt" do
+    it "BigInt" do
       (BigInt.new("-10")...BigInt.new("10")).bsearch { |x| x >= -5 }.should eq BigInt.new("-5")
     end
 
@@ -443,6 +456,9 @@ describe "Range" do
     it_iterates "begin == end exclusive", [] of Int32, (1...1).step(1)
     it_iterates "begin.succ == end inclusive", [1, 2] of Int32, (1..2).step(1)
     it_iterates "begin.succ == end exclusive", [1] of Int32, (1...2).step(1)
+
+    it_iterates "Float step", [1.0, 1.5, 2.0, 2.5, 3.0], (1..3).step(by: 0.5)
+    it_iterates "Time::Span step", [1.minutes, 2.minutes, 3.minutes], (1.minutes..3.minutes).step(by: 1.minutes)
 
     describe "with #succ type" do
       range_basic = RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5)

@@ -291,10 +291,14 @@ class Crystal::CodeGenVisitor
 
   private def codegen_out_of_range(target_type : FloatType, arg_type : FloatType, arg)
     min_value, max_value = target_type.range
-    # arg < min_value || arg > max_value
-    or(
-      builder.fcmp(LLVM::RealPredicate::OLT, arg, float(min_value, arg_type)),
-      builder.fcmp(LLVM::RealPredicate::OGT, arg, float(max_value, arg_type))
+    # checks for arg being outside of range and not infinity
+    # (arg < min_value || arg > max_value) && arg != 2 * arg
+    and(
+      or(
+        builder.fcmp(LLVM::RealPredicate::OLT, arg, float(min_value, arg_type)),
+        builder.fcmp(LLVM::RealPredicate::OGT, arg, float(max_value, arg_type))
+      ),
+      builder.fcmp(LLVM::RealPredicate::ONE, arg, builder.fmul(float(2, arg_type), arg))
     )
   end
 
@@ -576,7 +580,7 @@ class Crystal::CodeGenVisitor
             when "*"         then builder.fmul p1, p2
             when "/", "fdiv" then builder.fdiv p1, p2
             when "=="        then return builder.fcmp LLVM::RealPredicate::OEQ, p1, p2
-            when "!="        then return builder.fcmp LLVM::RealPredicate::ONE, p1, p2
+            when "!="        then return builder.fcmp LLVM::RealPredicate::UNE, p1, p2
             when "<"         then return builder.fcmp LLVM::RealPredicate::OLT, p1, p2
             when "<="        then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
             when ">"         then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
@@ -606,7 +610,7 @@ class Crystal::CodeGenVisitor
     when from_type.normal_rank == to_type.normal_rank
       # if the normal_rank is the same (eg: UInt64 / Int64)
       # there is still chance for overflow
-      if checked
+      if from_type.kind != to_type.kind && checked
         overflow = codegen_out_of_range(to_type, from_type, arg)
         codegen_raise_overflow_cond(overflow)
       end
@@ -912,6 +916,8 @@ class Crystal::CodeGenVisitor
 
     in_main do
       define_main_function(name, ([llvm_context.int32]), llvm_context.int32) do |func|
+        set_internal_fun_debug_location(func, name)
+
         arg = func.params.first
 
         current_block = insert_block
@@ -1076,7 +1082,27 @@ class Crystal::CodeGenVisitor
     codegen_tuple_indexer(context.type, call_args[0], index)
   end
 
-  def codegen_tuple_indexer(type, value, index)
+  def codegen_tuple_indexer(type, value, index : Range)
+    case type
+    when TupleInstanceType
+      tuple_types = type.tuple_types[index].map &.as(Type)
+      allocate_tuple(@program.tuple_of(tuple_types).as(TupleInstanceType)) do |tuple_type, i|
+        ptr = aggregate_index value, index.begin + i
+        tuple_value = to_lhs ptr, tuple_type
+        {tuple_type, tuple_value}
+      end
+    else
+      type = type.instance_type
+      case type
+      when TupleInstanceType
+        type_id(@program.tuple_of(type.tuple_types[index].map &.as(Type)).metaclass)
+      else
+        raise "BUG: unsupported codegen for tuple_indexer"
+      end
+    end
+  end
+
+  def codegen_tuple_indexer(type, value, index : Int32)
     case type
     when TupleInstanceType
       ptr = aggregate_index value, index
@@ -1110,8 +1136,8 @@ class Crystal::CodeGenVisitor
     success_ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     failure_ordering = atomic_ordering_from_symbol_literal(call.args[-1])
 
-    pointer, cmp, new = call_args
-    value = builder.cmpxchg(pointer, cmp, new, success_ordering, failure_ordering)
+    ptr, cmp, new, _, _ = call_args
+    value = builder.cmpxchg(ptr, cmp, new, success_ordering, failure_ordering)
     value_ptr = alloca llvm_type(node.type)
     store extract_value(value, 0), gep(value_ptr, 0, 0)
     store extract_value(value, 1), gep(value_ptr, 0, 1)
@@ -1124,8 +1150,8 @@ class Crystal::CodeGenVisitor
     ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     singlethread = bool_from_bool_literal(call.args[-1])
 
-    _, pointer, val = call_args
-    builder.atomicrmw(op, pointer, val, ordering, singlethread)
+    _, ptr, val, _, _ = call_args
+    builder.atomicrmw(op, ptr, val, ordering, singlethread)
   end
 
   def codegen_primitive_fence(call, node, target_def, call_args)
@@ -1142,7 +1168,7 @@ class Crystal::CodeGenVisitor
     ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     volatile = bool_from_bool_literal(call.args[-1])
 
-    ptr = call_args.first
+    ptr, _, _ = call_args
 
     inst = builder.load(ptr)
     inst.ordering = ordering
@@ -1156,7 +1182,7 @@ class Crystal::CodeGenVisitor
     ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     volatile = bool_from_bool_literal(call.args[-1])
 
-    ptr, value = call_args
+    ptr, value, _, _ = call_args
 
     inst = builder.store(value, ptr)
     inst.ordering = ordering

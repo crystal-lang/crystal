@@ -210,4 +210,12 @@ describe "Code gen: hash literal spec" do
       custom.keys &* custom.values
       )).to_i.should eq(90)
   end
+
+  it "assignment in hash literal works" do
+    run("require \"prelude\"; {k = 1 => v = 2}; k + v").to_i.should eq(3)
+  end
+
+  it "assignment in hash-like literal works" do
+    run("require \"prelude\"; Hash(Int32, Int32){k = 1 => v = 2}; k + v").to_i.should eq(3)
+  end
 end

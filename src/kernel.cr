@@ -378,10 +378,8 @@ def sprintf(format_string, args : Array | Tuple) : String
   end
 end
 
-# Prints objects to `STDOUT`, each followed by a newline.
-#
-# If the string representation of an object ends with a newline, no additional
-# newline is printed for that object.
+# Prints *objects* to `STDOUT`, each followed by a newline character unless
+# the object is a `String` and already ends with a newline.
 #
 # See also: `IO#puts`.
 def puts(*objects) : Nil
@@ -535,18 +533,16 @@ end
   end
 
   Signal.setup_default_handlers
-  LibExt.setup_sigfault_handler
+  Signal.setup_segfault_handler
 {% end %}
 
-{% if !flag?(:win32) %}
-  # load dwarf on start up of the program is executed with CRYSTAL_LOAD_DWARF=1
-  # this will make dwarf available on print_frame that is used on __crystal_sigfault_handler
-  #
-  # - CRYSTAL_LOAD_DWARF=0 will never use dwarf information (See Exception::CallStack.load_dwarf)
-  # - CRYSTAL_LOAD_DWARF=1 will load dwarf on startup
-  # - Other values will load dwarf on demand: when the backtrace of the first exception is generated
-  Exception::CallStack.load_dwarf if ENV["CRYSTAL_LOAD_DWARF"]? == "1"
-{% end %}
+# load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
+# this will make debug info available on print_frame that is used by Crystal's segfault handler
+#
+# - CRYSTAL_LOAD_DEBUG_INFO=0 will never use debug info (See Exception::CallStack.load_debug_info)
+# - CRYSTAL_LOAD_DEBUG_INFO=1 will load debug info on startup
+# - Other values will load debug info on demand: when the backtrace of the first exception is generated
+Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
 
 {% if flag?(:preview_mt) %}
   Crystal::Scheduler.init_workers
