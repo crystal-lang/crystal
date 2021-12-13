@@ -539,6 +539,37 @@ class Regex
     ret >= 0
   end
 
+  # Yields the name of each capture group, along with the key as second argument. Non-named
+  # capture groups will not be yielded. Capture groups are indexed starting from `1`.
+  #
+  # ```
+  # /(?<foo>.)/.each_name do |name, index|
+  #   name  # => "foo"
+  #   index # => 1
+  # end
+  # ```
+  def each_name(& : String, Int32 ->) : Nil
+    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMECOUNT, out name_count)
+    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMEENTRYSIZE, out name_entry_size)
+
+    table_pointer = Pointer(UInt8).null
+    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMETABLE,
+      pointerof(table_pointer).as(Pointer(Int32)))
+    name_table = table_pointer.to_slice(name_entry_size * name_count)
+
+    name_count.times do |i|
+      capture_offset = i * name_entry_size
+      capture_number =
+        (name_table[capture_offset].to_u16 << 8) | name_table[capture_offset + 1].to_u16
+
+      name_offset = capture_offset + 2
+      checked = name_table[name_offset, name_entry_size - 3]
+      name = String.new(checked.to_unsafe)
+
+      yield name, capture_number.to_i
+    end
+  end
+
   # Returns a `Hash` where the values are the names of capture groups and the
   # keys are their indexes. Non-named capture groups will not have entries in
   # the `Hash`. Capture groups are indexed starting from `1`.
@@ -549,27 +580,26 @@ class Regex
   # /(?<foo>.)(?<bar>.)/.name_table          # => {2 => "bar", 1 => "foo"}
   # /(.)(?<foo>.)(.)(?<bar>.)(.)/.name_table # => {4 => "bar", 2 => "foo"}
   # ```
-  def name_table : Hash(UInt16, String)
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMECOUNT, out name_count)
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMEENTRYSIZE, out name_entry_size)
-    table_pointer = Pointer(UInt8).null
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMETABLE, pointerof(table_pointer).as(Pointer(Int32)))
-    name_table = table_pointer.to_slice(name_entry_size*name_count)
-
-    lookup = Hash(UInt16, String).new
-
-    name_count.times do |i|
-      capture_offset = i * name_entry_size
-      capture_number = (name_table[capture_offset].to_u16 << 8) | name_table[capture_offset + 1].to_u16
-
-      name_offset = capture_offset + 2
-      checked = name_table[name_offset, name_entry_size - 3]
-      name = String.new(checked.to_unsafe)
-
-      lookup[capture_number] = name
+  def name_table : Hash(Int32, String)
+    Hash(Int32, String).new.tap do |name_table|
+      each_name do |name, capture_number|
+        name_table[capture_number] = name
+      end
     end
+  end
 
-    lookup
+  # Returns an `Array` sorted by the capture index, where
+  # the values are the names of capture groups.
+  #
+  # Non-named capture groups will not have entries in
+  # the `Array`.
+  #
+  # ```
+  # /(.)/.names                # => []
+  # /(?<foo>.)(?<bar>.)/.names # => ["foo", "bar"]
+  # ```
+  def names : Array(String)
+    name_table.to_a.sort!.map(&.[1])
   end
 
   # Returns the number of (named & non-named) capture groups.

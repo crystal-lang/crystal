@@ -119,6 +119,23 @@ describe "Regex" do
     end
   end
 
+  describe "each_name" do
+    it "yields capture group name and index" do
+      name_table = {} of Int32 => String
+
+      pattern = /(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x
+      pattern.each_name do |name, index|
+        name_table[index] = name
+      end
+      name_table.should eq({
+        1 => "date",
+        2 => "year",
+        4 => "month",
+        5 => "day",
+      })
+    end
+  end
+
   describe "name_table" do
     it "is a map of capture group number to name" do
       table = (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x).name_table
@@ -136,6 +153,14 @@ describe "Regex" do
       /(?<foo>.+)/.capture_count.should eq(1)
       /(.)?/x.capture_count.should eq(1)
       /(.)|(.)/x.capture_count.should eq(2)
+    end
+  end
+
+  describe "names" do
+    it "is an array of capture group names sorted by the capture index" do
+      (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x)
+        .names
+        .should eq(%w[date year month day])
     end
   end
 
