@@ -1,7 +1,6 @@
+{% skip_file if flag?(:without_interpreter) %}
+
 # Implementation of the `crystal repl` command
-{% unless flag?(:without_interpreter) %}
-  require "../interpreter/*"
-{% end %}
 
 class Crystal::Command
   private def repl
