@@ -1,5 +1,7 @@
 {% if flag?(:win32) %}
   require "./call_stack/stackwalk"
+{% elsif flag?(:interpreted) %}
+  require "./call_stack/interpreter"
 {% else %}
   require "./call_stack/libunwind"
 {% end %}
