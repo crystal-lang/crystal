@@ -1548,6 +1548,8 @@ module Crystal
         raw_number_string = raw_number_string.delete('_') if has_underscores
         @token.value = raw_number_string
       else
+        # The conversion to base 10 is first tried using a UInt64 to circumvent compiler
+        # regressions caused by bugs in the platform's UInt128 implementation.
         base10_number_string = raw_number_string.to_u64?(base: base, underscore: true).try &.to_s
         base10_number_string ||= raw_number_string.to_u128?(base: base, underscore: true).try &.to_s
         if base10_number_string
