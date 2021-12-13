@@ -276,7 +276,7 @@ class Crystal::Repl::Compiler
       lib_type = node.obj.not_nil!.type.as(LibType)
       external = node.target_def.as(External)
 
-      fn = @context.c_function(lib_type, external.real_name)
+      fn = @context.c_function(external.real_name)
 
       # Put the symbol address, which is a pointer
       put_u64 fn.address, node: node
@@ -292,7 +292,7 @@ class Crystal::Repl::Compiler
       request_value(arg)
       dup(aligned_sizeof_type(arg), node: nil) if @wants_value
 
-      fn = @context.c_function(lib_type, external.real_name)
+      fn = @context.c_function(external.real_name)
 
       # Put the symbol address, which is a pointer
       put_u64 fn.address, node: node

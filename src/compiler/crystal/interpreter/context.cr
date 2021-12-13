@@ -378,7 +378,7 @@ class Crystal::Repl::Context
     end
   }
 
-  def c_function(lib_type : LibType, name : String)
+  def c_function(name : String)
     loader.find_symbol(name)
   end
 
