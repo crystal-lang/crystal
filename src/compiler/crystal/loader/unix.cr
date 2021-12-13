@@ -69,6 +69,12 @@ class Crystal::Loader
     LibC.dlopen(path, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
   end
 
+  def load_current_program_handle
+    if program_handle = LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
+      @handlers << program_handle
+    end
+  end
+
   # Closes all libraries loaded with this loader instance.
   #
   # Libraries are only unloaded when there are no references left.

@@ -374,9 +374,7 @@ class Crystal::Repl::Context
       # including those from statically linked libraries like libgc.
       # This probably won't work for a fully statically linked compiler.
       # But `Crystal::Loader` currently doesn't support that anyways.
-      if self_handle = LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
-        loader.@handles << self_handle
-      end
+      loader.load_current_program_handle
     end
   }
 
