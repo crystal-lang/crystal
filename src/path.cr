@@ -710,7 +710,7 @@ struct Path
     if home
       if name == "~"
         name = resolve_home(home).to_s
-      elsif name.starts_with?("~/")
+      elsif name.starts_with?("~/") || (windows? && name.starts_with?("~\\"))
         name = resolve_home(home).join(name.byte_slice(2, name.bytesize - 2)).to_s
       end
     end
