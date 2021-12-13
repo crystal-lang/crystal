@@ -9,7 +9,7 @@ module Crystal::System::Path
 
       pwd = uninitialized LibC::Passwd
       pwd_pointer = pointerof(pwd)
-      ret = uninitialized LibC::Int
+      ret = nil
       System.retry_with_buffer("getpwuid_r", User::GETPW_R_SIZE_MAX) do |buf|
         ret = LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
       end
@@ -17,7 +17,7 @@ module Crystal::System::Path
       if pwd_pointer
         String.new(pwd.pw_dir)
       else
-        raise RuntimeError.from_os_error("getpwuid_r", Errno.new(ret))
+        raise RuntimeError.from_os_error("getpwuid_r", Errno.new(ret.not_nil!))
       end
     end
   end
