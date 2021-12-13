@@ -143,7 +143,7 @@ struct Float32
   end
 
   # Casts the *value* by invoking `to_f32` on it.
-  def self.new(value)
+  def self.new(value) : self
     value.to_f32
   end
 
@@ -153,7 +153,7 @@ struct Float32
   end
 
   # Casts the *value* by invoking `to_f32?` on it.
-  def self.new?(value)
+  def self.new?(value) : self?
     value.to_f32?
   end
 
@@ -265,17 +265,17 @@ struct Float64
   end
 
   # Casts the *value* by invoking `to_f64!` on it.
-  def Float64.new(value)
+  def Float64.new(value) : self
     value.to_f64
   end
 
   # Casts the *value* by invoking `to_f64!` on it.
-  def Float64.new!(value) : Float64
+  def Float64.new!(value) : self
     value.to_f64!
   end
 
   # Casts the *value* by invoking `to_f64!` on it.
-  def Float64.new?(value)
+  def Float64.new?(value) : self?
     value.to_f64?
   end
 

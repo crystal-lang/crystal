@@ -845,22 +845,22 @@ struct Int8
   # Int8.new "20"                        # => 20
   # Int8.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int8:   20 (ArgumentError)
   # ```
-  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int8
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i8 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
   # Casts the *value* by invoking `to_i8` on it.
-  def self.new(value) : Int8
+  def self.new(value) : self
     value.to_i8
   end
 
   # Casts the *value* by invoking `to_i8!` on it.
-  def self.new!(value) : Int8
+  def self.new!(value) : self
     value.to_i8!
   end
 
   # Casts the *value* by invoking `to_i8?` on it.
-  def self.new?(value) : Int8?
+  def self.new?(value) : self?
     value.to_i8?
   end
 
@@ -900,22 +900,22 @@ struct Int16
   # Int16.new "20"                        # => 20
   # Int16.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int16:   20 (ArgumentError)
   # ```
-  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int16
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i16 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
   # Casts the *value* by invoking `to_i16` on it.
-  def self.new(value) : Int16
+  def self.new(value) : self
     value.to_i16
   end
 
   # Casts the *value* by invoking `to_i16` on it.
-  def self.new!(value) : Int16
+  def self.new!(value) : self
     value.to_i16!
   end
 
   # Casts the *value* by invoking `to_i16` on it.
-  def self.new?(value) : Int16?
+  def self.new?(value) : self?
     value.to_i16?
   end
 
@@ -955,22 +955,22 @@ struct Int32
   # Int32.new "20"                        # => 20
   # Int32.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int32:   20 (ArgumentError)
   # ```
-  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int32
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i32 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
   # Casts the *value* by invoking `to_i32` on it.
-  def self.new(value) : Int32
+  def self.new(value) : self
     value.to_i32
   end
 
   # Casts the *value* by invoking `to_i32!` on it.
-  def self.new!(value) : Int32
+  def self.new!(value) : self
     value.to_i32!
   end
 
   # Casts the *value* by invoking `to_i32?` on it.
-  def self.new?(value) : Int32?
+  def self.new?(value) : self?
     value.to_i32?
   end
 
@@ -1010,22 +1010,22 @@ struct Int64
   # Int64.new "20"                        # => 20
   # Int64.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int64:   20 (ArgumentError)
   # ```
-  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int64
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i64 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
   # Casts the *value* by invoking `to_i64` on it.
-  def self.new(value) : Int64
+  def self.new(value) : self
     value.to_i64
   end
 
   # Casts the *value* by invoking `to_i64!` on it.
-  def self.new!(value) : Int64
+  def self.new!(value) : self
     value.to_i64!
   end
 
   # Casts the *value* by invoking `to_i64?` on it.
-  def self.new?(value) : Int64?
+  def self.new?(value) : self?
     value.to_i64?
   end
 
@@ -1066,22 +1066,22 @@ struct Int128
   # Int128.new "20"                        # => 20
   # Int128.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int128:   20 (ArgumentError)
   # ```
-  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int128
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i128 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
   # Casts the *value* by invoking `to_u128` on it.
-  def self.new(value) : Int128
+  def self.new(value) : self
     value.to_i128
   end
 
   # Casts the *value* by invoking `to_u128!` on it.
-  def self.new!(value) : Int128
+  def self.new!(value) : self
     value.to_i128!
   end
 
   # Casts the *value* by invoking `to_u128?` on it.
-  def self.new?(value) : Int128?
+  def self.new?(value) : self?
     value.to_i128?
   end
 
@@ -1122,22 +1122,22 @@ struct UInt8
   # UInt8.new "20"                        # => 20
   # UInt8.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt8:   20 (ArgumentError)
   # ```
-  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt8
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u8 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
   # Casts the *value* by invoking `to_u8` on it.
-  def self.new(value) : UInt8
+  def self.new(value) : self
     value.to_u8
   end
 
   # Casts the *value* by invoking `to_u8!` on it.
-  def self.new!(value) : UInt8
+  def self.new!(value) : self
     value.to_u8!
   end
 
   # Casts the *value* by invoking `to_u8?` on it.
-  def self.new?(value) : UInt8?
+  def self.new?(value) : self?
     value.to_u8?
   end
 
@@ -1181,22 +1181,22 @@ struct UInt16
   # UInt16.new "20"                        # => 20
   # UInt16.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt16:   20 (ArgumentError)
   # ```
-  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt16
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u16 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
   # Casts the *value* by invoking `to_u16` on it.
-  def self.new(value) : UInt16
+  def self.new(value) : self
     value.to_u16
   end
 
   # Casts the *value* by invoking `to_u16!` on it.
-  def self.new!(value) : UInt16
+  def self.new!(value) : self
     value.to_u16!
   end
 
   # Casts the *value* by invoking `to_u16?` on it.
-  def self.new?(value) : UInt16?
+  def self.new?(value) : self?
     value.to_u16?
   end
 
@@ -1240,22 +1240,22 @@ struct UInt32
   # UInt32.new "20"                        # => 20
   # UInt32.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt32:   20 (ArgumentError)
   # ```
-  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt32
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u32 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
   # Casts the *value* by invoking `to_u32` on it.
-  def self.new(value) : UInt32
+  def self.new(value) : self
     value.to_u32
   end
 
   # Casts the *value* by invoking `to_u32!` on it.
-  def self.new!(value) : UInt32
+  def self.new!(value) : self
     value.to_u32!
   end
 
   # Casts the *value* by invoking `to_u32?` on it.
-  def self.new?(value) : UInt32?
+  def self.new?(value) : self?
     value.to_u32?
   end
 
@@ -1299,22 +1299,22 @@ struct UInt64
   # UInt64.new "20"                        # => 20
   # UInt64.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt64:   20 (ArgumentError)
   # ```
-  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt64
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u64 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
   # Casts the *value* by invoking `to_u64` on it.
-  def self.new(value) : UInt64
+  def self.new(value) : self
     value.to_u64
   end
 
   # Casts the *value* by invoking `to_u64!` on it.
-  def self.new!(value) : UInt64
+  def self.new!(value) : self
     value.to_u64!
   end
 
   # Casts the *value* by invoking `to_u64?` on it.
-  def self.new?(value) : UInt64?
+  def self.new?(value) : self?
     value.to_u64?
   end
 
@@ -1374,7 +1374,7 @@ struct UInt128
   end
 
   # Returns an `UInt128` or `Nil` by invoking `to_u128?` on *value*.
-  def self.new?(value)
+  def self.new?(value) : self?
     value.to_u128?
   end
 
