@@ -512,26 +512,26 @@ class URI
       end
     end
 
-    tmp = dst_path.join('/')
     # calculate
     if base_path.empty?
       if dst_path.empty?
         "./"
       elsif dst_path.first.includes?(':') # (see RFC2396 Section 5)
-        String.build do |io|
+        string_size = 1 + dst_path.sum { |path| path.bytesize } + dst_path.size
+        String.build(string_size) do |io|
           io << "./"
           dst_path.join(io, '/')
         end
       else
-        string = dst_path.join('/')
-        if string == ""
+        if dst_path.empty? || dst_path.first == ""
           "./"
         else
-          string
+          dst_path.join('/')
         end
       end
     else
-      String.build do |io|
+      string_size = 3 * base_path.size + dst_path.sum { |path| path.bytesize } + dst_path.size - 1
+      String.build(string_size) do |io|
         base_path.size.times { io << "../" }
         dst_path.join(io, '/')
       end
