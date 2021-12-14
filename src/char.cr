@@ -873,10 +873,37 @@ struct Char
   # 'あ'.to_s # => "あ"
   # ```
   def to_s : String
-    String.new(4) do |buffer|
-      appender = buffer.appender
-      each_byte { |byte| appender << byte }
-      {appender.size, 1}
+    c = ord
+    if c < 0x80
+      # 0xxxxxxx
+      String.new(1) do |pointer|
+        pointer[0] = c.to_u8
+        {1, 1}
+      end
+    elsif c <= 0x7ff
+      # 110xxxxx  10xxxxxx
+      String.new(2) do |pointer|
+        pointer[0] = (0xc0 | c >> 6).to_u8
+        pointer[1] = (0x80 | c & 0x3f).to_u8
+        {2, 1}
+      end
+    elsif c <= 0xffff
+      # 1110xxxx  10xxxxxx  10xxxxxx
+      String.new(3) do |pointer|
+        pointer[0] = (0xe0 | (c >> 12)).to_u8
+        pointer[1] = (0x80 | ((c >> 6) & 0x3f)).to_u8
+        pointer[2] = (0x80 | (c & 0x3f)).to_u8
+        {3, 1}
+      end
+    else
+      # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
+      String.new(4) do |pointer|
+        pointer[0] = (0xf0 | (c >> 18)).to_u8
+        pointer[1] = (0x80 | ((c >> 12) & 0x3f)).to_u8
+        pointer[2] = (0x80 | ((c >> 6) & 0x3f)).to_u8
+        pointer[3] = (0x80 | (c & 0x3f)).to_u8
+        {4, 1}
+      end
     end
   end
 
