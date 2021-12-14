@@ -56,7 +56,8 @@ struct Exception::CallStack
     LibC.SetThreadStackGuarantee(pointerof(stack_size))
   end
 
-  protected def self.unwind
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_call_stack_unwind)] {% end %}
+  protected def self.unwind : Array(Void*)
     # TODO: use stack if possible (must be 16-byte aligned)
     context = Pointer(LibC::CONTEXT).malloc(1)
     context.value.contextFlags = LibC::CONTEXT_FULL
