@@ -434,14 +434,8 @@ class URI
       if path.empty?
         path = base
       elsif !base.empty?
-        path = String.build do |io|
-          if base.ends_with?('/')
-            io << base
-          elsif pos = base.rindex('/')
-            io << base[0..pos]
-          end
-          io << path
-        end
+        out_base = base.ends_with?('/') ? base : base[0..base.rindex('/')]
+        path = String.interpolation(out_base, path)
       end
     end
     remove_dot_segments(path)
