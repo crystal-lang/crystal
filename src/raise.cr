@@ -217,18 +217,24 @@ end
     {% end %}
 
     exception.callstack ||= Exception::CallStack.new
-    unwind_ex = Pointer(LibUnwind::Exception).malloc
-    unwind_ex.value.exception_class = LibC::SizeT.zero
-    unwind_ex.value.exception_cleanup = LibC::SizeT.zero
-    unwind_ex.value.exception_object = exception.as(Void*)
-    unwind_ex.value.exception_type_id = exception.crystal_type_id
-    __crystal_raise(unwind_ex)
+    raise_without_backtrace(exception)
   end
 {% end %}
 
 # Raises an Exception with the *message*.
 def raise(message : String) : NoReturn
   raise Exception.new(message)
+end
+
+# :nodoc:
+{% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
+def raise_without_backtrace(exception : Exception) : NoReturn
+  unwind_ex = Pointer(LibUnwind::Exception).malloc
+  unwind_ex.value.exception_class = LibC::SizeT.zero
+  unwind_ex.value.exception_cleanup = LibC::SizeT.zero
+  unwind_ex.value.exception_object = exception.as(Void*)
+  unwind_ex.value.exception_type_id = exception.crystal_type_id
+  __crystal_raise(unwind_ex)
 end
 
 # :nodoc:
@@ -240,3 +246,9 @@ end
 fun __crystal_raise_overflow : NoReturn
   raise OverflowError.new
 end
+
+{% if flag?(:interpreted) %}
+  def __crystal_raise_cast_failed(obj, type_name : String, location : String)
+    raise TypeCastError.new("cast from #{obj.class} to #{type_name} failed, at #{location}")
+  end
+{% end %}
