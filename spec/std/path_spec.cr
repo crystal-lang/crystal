@@ -727,6 +727,10 @@ describe Path do
     describe "ignores name starting with ~" do
       it_expands_path("~foo.txt", "/current/~foo.txt", "\\current\\~foo.txt", base: "/current", env_home: "/")
     end
+
+    describe %q(supports ~\ for Windows paths only) do
+      it_expands_path("~\\a", {BASE_POSIX, "~\\a"}, {HOME_WINDOWS, "a"}, home: true)
+    end
   end
 
   describe "#<=>" do

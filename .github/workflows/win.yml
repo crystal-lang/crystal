@@ -15,7 +15,7 @@ jobs:
           make deps
       - name: Cross-compile Crystal
         run: |
-          LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground -Dwithout_iconv
+          LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground -Dwithout_iconv -Dwithout_interpreter
 
       - name: Upload Crystal object file
         uses: actions/upload-artifact@v2
@@ -281,7 +281,7 @@ jobs:
 
       - name: Re-build Crystal
         run: |
-          .\crystal-cross.exe build src/compiler/crystal.cr -Di_know_what_im_doing -Dwithout_playground
+          .\crystal-cross.exe build src/compiler/crystal.cr -Di_know_what_im_doing -Dwithout_playground -Dwithout_interpreter
           mv crystal.exe bin/
 
       - name: Gather Crystal binaries
@@ -310,7 +310,7 @@ jobs:
 
       - name: Build compiler specs executable
         run: |
-          bin\crystal.exe build spec/compiler_spec.cr --exclude-warnings spec/compiler -Dwithout_playground -Di_know_what_im_doing
+          bin\crystal.exe build spec/compiler_spec.cr --exclude-warnings spec/compiler -Dwithout_playground -Dwithout_interpreter -Di_know_what_im_doing
       - name: Run compiler specs
         run: |
           .\compiler_spec.exe
