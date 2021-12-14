@@ -42,11 +42,16 @@ module Crystal
         1
       end
 
-    status = Crystal::AtExitHandlers.run status, ex
+    exit(status, ex)
+  end
 
-    if ex
+  # :nodoc:
+  def self.exit(status : Int32, exception : Exception?) : Int32
+    status = Crystal::AtExitHandlers.run status, exception
+
+    if exception
       STDERR.print "Unhandled exception: "
-      ex.inspect_with_backtrace(STDERR)
+      exception.inspect_with_backtrace(STDERR)
     end
 
     ignore_stdio_errors { STDOUT.flush }

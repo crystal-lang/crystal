@@ -21,6 +21,7 @@ class Crystal::Command
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
+        i/interactive            starts interactive Crystal
         play                     starts Crystal playground server
         run (default)            build and run program
         spec                     build and run specs (in spec directory)
@@ -64,7 +65,7 @@ class Crystal::Command
     when !command
       puts USAGE
       exit
-    when "init".starts_with?(command)
+    when command == "init"
       options.shift
       init
     when "build".starts_with?(command)
@@ -95,7 +96,15 @@ class Crystal::Command
       options.shift
       use_crystal_opts
       eval
-    when "run".starts_with?(command)
+    when command == "i" || command == "interactive"
+      options.shift
+      {% if flag?(:without_interpreter) %}
+        STDERR.puts "Crystal was compiled without interpreter support"
+        exit 1
+      {% else %}
+        repl
+      {% end %}
+    when command == "run"
       options.shift
       use_crystal_opts
       run_command(single_file: false)
@@ -351,7 +360,7 @@ class Crystal::Command
         valid_emit_values.map! { |v| v.gsub('_', '-').downcase }
 
         opts.on("--emit [#{valid_emit_values.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
-          compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
+          compiler.emit_targets |= validate_emit_values(emit_values.split(',').map(&.strip))
         end
       end
 

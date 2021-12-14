@@ -523,27 +523,29 @@ end
   end
 {% end %}
 
-{% unless flag?(:win32) %}
-  # Background loop to cleanup unused fiber stacks.
-  spawn(name: "Fiber Clean Loop") do
-    loop do
-      sleep 5
-      Fiber.stack_pool.collect
+{% unless flag?(:interpreted) %}
+  {% unless flag?(:win32) %}
+    # Background loop to cleanup unused fiber stacks.
+    spawn(name: "Fiber Clean Loop") do
+      loop do
+        sleep 5
+        Fiber.stack_pool.collect
+      end
     end
-  end
 
-  Signal.setup_default_handlers
-  Signal.setup_segfault_handler
-{% end %}
+    Signal.setup_default_handlers
+    Signal.setup_segfault_handler
+  {% end %}
 
-# load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
-# this will make debug info available on print_frame that is used by Crystal's segfault handler
-#
-# - CRYSTAL_LOAD_DEBUG_INFO=0 will never use debug info (See Exception::CallStack.load_debug_info)
-# - CRYSTAL_LOAD_DEBUG_INFO=1 will load debug info on startup
-# - Other values will load debug info on demand: when the backtrace of the first exception is generated
-Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
+  # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
+  # this will make debug info available on print_frame that is used by Crystal's segfault handler
+  #
+  # - CRYSTAL_LOAD_DEBUG_INFO=0 will never use debug info (See Exception::CallStack.load_debug_info)
+  # - CRYSTAL_LOAD_DEBUG_INFO=1 will load debug info on startup
+  # - Other values will load debug info on demand: when the backtrace of the first exception is generated
+  Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
 
-{% if flag?(:preview_mt) %}
-  Crystal::Scheduler.init_workers
+  {% if flag?(:preview_mt) %}
+    Crystal::Scheduler.init_workers
+  {% end %}
 {% end %}
