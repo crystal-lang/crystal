@@ -221,7 +221,11 @@ class URI
   # uri.request_target # => "/?foo=bar"
   # ```
   def request_target : String
-    String.build do |str|
+    string_size = 1
+    string_size += @query ? @query.not_nil!.bytesize : -1
+    string_size += @path.empty? ? 1 : @path.bytesize
+
+    String.build(string_size) do |str|
       if @path.empty?
         str << "/" unless opaque?
       else
