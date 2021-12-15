@@ -1063,7 +1063,19 @@ module Crystal
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
           @str << '*' if i == node.splat_index
-          arg.accept self
+
+          if arg.name == ""
+            # This is an unpack
+            unpack = node.unpacks.not_nil![i]
+            @str << "("
+            unpack.expressions.each_with_index do |exp, j|
+              @str << ", " if j > 0
+              exp.accept self
+            end
+            @str << ")"
+          else
+            arg.accept self
+          end
         end
         @str << '|'
       end

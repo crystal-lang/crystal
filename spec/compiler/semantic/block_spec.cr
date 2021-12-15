@@ -1479,6 +1479,18 @@ describe "Block inference" do
       CR
   end
 
+  it "unpacks block argument" do
+    assert_type(%(
+      def foo
+        yield({1, 'a'})
+      end
+
+      foo do |(x, y)|
+        {x, y}
+      end
+      )) { tuple_of([int32, char]) }
+  end
+
   it "correctly types unpacked tuple block arg after block (#3339)" do
     assert_type(%(
       def foo

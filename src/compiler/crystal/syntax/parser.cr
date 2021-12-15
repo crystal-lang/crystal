@@ -4279,10 +4279,10 @@ module Crystal
 
       block_args = [] of Var
       all_names = [] of String
-      extra_assigns = nil
       block_body = nil
       arg_index = 0
       splat_index = nil
+      unpacks = nil
 
       slash_is_regex!
       next_token_skip_space
@@ -4312,7 +4312,7 @@ module Crystal
           when :UNDERSCORE
             arg_name = "_"
           when :"("
-            block_arg_name = temp_arg_name
+            unpack_expressions = [] of ASTNode
 
             next_token_skip_space_or_newline
 
@@ -4329,23 +4329,18 @@ module Crystal
                 if all_names.includes?(sub_arg_name)
                   raise "duplicated block parameter name: #{sub_arg_name}", @token
                 end
+
                 all_names << sub_arg_name
+                unpack_expressions << Arg.new(sub_arg_name)
               when :UNDERSCORE
                 sub_arg_name = "_"
+                unpack_expressions << Underscore.new
               else
                 raise "expecting block parameter name, not #{@token.type}", @token
               end
 
               push_var_name sub_arg_name
               location = @token.location
-
-              unless sub_arg_name == "_"
-                extra_assigns ||= [] of ASTNode
-                extra_assigns << Assign.new(
-                  Var.new(sub_arg_name).at(location),
-                  Call.new(Var.new(block_arg_name).at(location), "[]", NumberLiteral.new(i)).at(location)
-                ).at(location)
-              end
 
               next_token_skip_space_or_newline
               case @token.type
@@ -4361,7 +4356,9 @@ module Crystal
               i += 1
             end
 
-            arg_name = block_arg_name
+            arg_name = ""
+            unpacks ||= {} of Int32 => Expressions
+            unpacks[arg_index] = Expressions.new(unpack_expressions)
           else
             raise "expecting block parameter name, not #{@token.type}", @token
           end
@@ -4393,19 +4390,8 @@ module Crystal
 
         block_body = parse_expressions
 
-        if extra_assigns
-          exps = [] of ASTNode
-          exps.concat extra_assigns
-          if block_body.is_a?(Expressions)
-            exps.concat block_body.expressions
-          else
-            exps.push block_body
-          end
-          block_body = Expressions.from(exps).at(block_body)
-        end
-
         block_body, end_location = yield block_body
-        Block.new(block_args, block_body, splat_index).at(location).at_end(end_location)
+        Block.new(block_args, block_body, splat_index, unpacks).at(location).at_end(end_location)
       end
     end
 

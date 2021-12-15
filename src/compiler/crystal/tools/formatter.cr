@@ -3114,8 +3114,6 @@ module Crystal
     def format_block_args(args, node)
       return node.body if args.empty?
 
-      to_skip = 0
-
       write_token " ", :"|"
       skip_space_or_newline
       args.each_with_index do |arg, i|
@@ -3138,10 +3136,6 @@ module Crystal
             end
 
             write(underscore ? "_" : @token.value)
-
-            unless underscore
-              to_skip += 1
-            end
 
             next_token_skip_space_or_newline
             has_comma = false
@@ -3172,7 +3166,7 @@ module Crystal
       write_token :"|"
       skip_space
 
-      remove_to_skip node, to_skip
+      node.body
     end
 
     def remove_to_skip(node, to_skip)

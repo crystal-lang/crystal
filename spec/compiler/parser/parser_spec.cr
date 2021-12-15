@@ -664,28 +664,35 @@ module Crystal
     assert_syntax_error "foo(&block) {}"
 
     it_parses "foo { |a, (b, c), (d, e)| a; b; c; d; e }", Call.new(nil, "foo",
-      block: Block.new(["a".var, "__arg0".var, "__arg1".var],
+      block: Block.new(
+        ["a".var, "".var, "".var],
         Expressions.new([
-          Assign.new("b".var, Call.new("__arg0".var, "[]", 0.int32)),
-          Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
-          Assign.new("d".var, Call.new("__arg1".var, "[]", 0.int32)),
-          Assign.new("e".var, Call.new("__arg1".var, "[]", 1.int32)),
-          "a".var, "b".var, "c".var, "d".var, "e".var,
-        ] of ASTNode)))
+          "a".var,
+          "b".var,
+          "c".var,
+          "d".var,
+          "e".var,
+        ] of ASTNode),
+        unpacks: {
+          1 => Expressions.new(["b".arg, "c".arg] of ASTNode),
+          2 => Expressions.new(["d".arg, "e".arg] of ASTNode),
+        },
+      ),
+    )
 
     it_parses "foo { |(_, c)| c }", Call.new(nil, "foo",
-      block: Block.new(["__arg0".var],
-        Expressions.new([
-          Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
-          "c".var,
-        ] of ASTNode)))
+      block: Block.new(["".var],
+        "c".var,
+        unpacks: {0 => Expressions.new([Underscore.new, "c".arg] of ASTNode)},
+      )
+    )
 
     it_parses "foo { |(_, c, )| c }", Call.new(nil, "foo",
-      block: Block.new(["__arg0".var],
-        Expressions.new([
-          Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
-          "c".var,
-        ] of ASTNode)))
+      block: Block.new(["".var],
+        "c".var,
+        unpacks: {0 => Expressions.new([Underscore.new, "c".arg] of ASTNode)},
+      )
+    )
 
     assert_syntax_error "foo { |a b| }", "expecting ',' or '|', not b"
     assert_syntax_error "foo { |(a b)| }", "expecting ',' or ')', not b"

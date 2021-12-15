@@ -538,21 +538,23 @@ module Crystal
     property body : ASTNode
     property call : Call?
     property splat_index : Int32?
+    property unpacks : Hash(Int32, Expressions)?
 
-    def initialize(@args = [] of Var, body = nil, @splat_index = nil)
+    def initialize(@args = [] of Var, body = nil, @splat_index = nil, @unpacks = nil)
       @body = Expressions.from body
     end
 
     def accept_children(visitor)
       @args.each &.accept visitor
       @body.accept visitor
+      @unpacks.try &.each_value &.accept visitor
     end
 
     def clone_without_location
-      Block.new(@args.clone, @body.clone, @splat_index)
+      Block.new(@args.clone, @body.clone, @splat_index, @unpacks.clone)
     end
 
-    def_equals_and_hash args, body, splat_index
+    def_equals_and_hash args, body, splat_index, unpacks
   end
 
   # A method call.
@@ -789,8 +791,9 @@ module Crystal
   class MultiAssign < ASTNode
     property targets : Array(ASTNode)
     property values : Array(ASTNode)
+    property? unpack_expansion : Bool
 
-    def initialize(@targets, @values)
+    def initialize(@targets, @values, @unpack_expansion = false)
     end
 
     def accept_children(visitor)
@@ -802,15 +805,11 @@ module Crystal
       @end_location || @values.last.end_location
     end
 
-    def ==(other : self)
-      other.targets == targets && other.values == values
-    end
-
     def clone_without_location
-      MultiAssign.new(@targets.clone, @values.clone)
+      MultiAssign.new(@targets.clone, @values.clone, @unpack_expansion)
     end
 
-    def_hash @targets, @values
+    def_equals_and_hash @targets, @values, @unpack_expansion
   end
 
   # An instance variable.

@@ -428,5 +428,56 @@ module Crystal
 
       super
     end
+
+    # Turn block argument unpacking to multi assigns at the beginning
+    # of a block.
+    #
+    # So this:
+    #
+    #    foo do |(x, y), z|
+    #      x + y + z
+    #    end
+    #
+    # is transformed to:
+    #
+    #    foo do |__temp_1, z|
+    #      x, y = __temp_1
+    #      x + y + z
+    #    end
+    def transform(node : Block)
+      node = super
+
+      unpacks = node.unpacks
+      return node unless unpacks
+
+      extra_expressions = [] of ASTNode
+
+      unpacks.each do |index, expressions|
+        temp_name = program.new_temp_var_name
+
+        node.args[index] = Var.new(temp_name).at(node.args[index])
+        extra_expressions << MultiAssign.new(
+          expressions.expressions.map { |arg|
+            Var.new(arg.as(Arg).name).at(arg).as(ASTNode)
+          },
+          [Var.new(temp_name)] of ASTNode,
+          unpack_expansion: true,
+        )
+      end
+
+      body = node.body
+      case body
+      when Nop
+        node.body = Expressions.new(extra_expressions)
+      when Expressions
+        body.expressions = extra_expressions + body.expressions
+      else
+        node.body = Expressions.new([*extra_expressions, node.body] of ASTNode)
+      end
+
+      node.unpacks = nil
+
+      node
+    end
   end
 end
