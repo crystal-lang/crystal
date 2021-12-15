@@ -165,6 +165,78 @@ struct BitArray
     end
   end
 
+  # :inherit:
+  def all? : Bool
+    bit_index, sub_index = @size.divmod(32)
+
+    bit_index.times do |i|
+      return false unless @bits[i] == UInt32::MAX
+    end
+
+    return true if sub_index == 0
+    mask = ~(UInt32::MAX << sub_index)
+    @bits[bit_index] & mask == mask
+  end
+
+  # :inherit:
+  def any? : Bool
+    unless empty?
+      malloc_size.times do |i|
+        return true if @bits[i] != 0
+      end
+    end
+    false
+  end
+
+  # :inherit:
+  def none? : Bool
+    !any?
+  end
+
+  # Returns `true` if the collection contains *obj*, `false` otherwise.
+  #
+  # ```
+  # ba = BitArray.new(8, true)
+  # ba.includes?(true)  # => true
+  # ba.includes?(false) # => false
+  # ```
+  def includes?(obj : Bool) : Bool
+    obj ? any? : !all?
+  end
+
+  # :inherit:
+  def one? : Bool
+    c = 0
+    malloc_size.times do |i|
+      c += @bits[i].popcount
+      return false if c > 1
+    end
+    c == 1
+  end
+
+  # Returns the number of times that *item* is present in the bit array.
+  #
+  # ```
+  # ba = BitArray.new(12, true)
+  # ba[3] = false
+  # ba[7] = false
+  # ba.count(true)  # => 10
+  # ba.count(false) # => 2
+  # ```
+  def count(item : Bool) : Int32
+    ones_count = Slice.new(@bits, malloc_size).sum(&.popcount)
+    item ? ones_count : @size - ones_count
+  end
+
+  # :inherit:
+  def tally : Hash(Bool, Int32)
+    tallies = Hash(Bool, Int32).new
+    ones_count = count(true)
+    tallies[true] = ones_count if ones_count > 0
+    tallies[false] = @size - ones_count if ones_count < @size
+    tallies
+  end
+
   # Toggles the bit at the given *index*. A `false` bit becomes a `true` bit,
   # and vice versa.
   #
