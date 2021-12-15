@@ -674,8 +674,8 @@ module Crystal
           "e".var,
         ] of ASTNode),
         unpacks: {
-          1 => Expressions.new(["b".arg, "c".arg] of ASTNode),
-          2 => Expressions.new(["d".arg, "e".arg] of ASTNode),
+          1 => Expressions.new(["b".var, "c".var] of ASTNode),
+          2 => Expressions.new(["d".var, "e".var] of ASTNode),
         },
       ),
     )
@@ -683,15 +683,34 @@ module Crystal
     it_parses "foo { |(_, c)| c }", Call.new(nil, "foo",
       block: Block.new(["".var],
         "c".var,
-        unpacks: {0 => Expressions.new([Underscore.new, "c".arg] of ASTNode)},
+        unpacks: {0 => Expressions.new([Underscore.new, "c".var] of ASTNode)},
       )
     )
 
     it_parses "foo { |(_, c, )| c }", Call.new(nil, "foo",
       block: Block.new(["".var],
         "c".var,
-        unpacks: {0 => Expressions.new([Underscore.new, "c".arg] of ASTNode)},
+        unpacks: {0 => Expressions.new([Underscore.new, "c".var] of ASTNode)},
       )
+    )
+
+    it_parses "foo { |(a, (b, (c, d)))| }", Call.new(nil, "foo",
+      block: Block.new(
+        ["".var],
+        Nop.new,
+        unpacks: {
+          0 => Expressions.new([
+            "a".var,
+            Expressions.new([
+              "b".var,
+              Expressions.new([
+                "c".var,
+                "d".var,
+              ] of ASTNode),
+            ]),
+          ]),
+        },
+      ),
     )
 
     assert_syntax_error "foo { |a b| }", "expecting ',' or '|', not b"

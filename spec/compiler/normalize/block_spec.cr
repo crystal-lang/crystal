@@ -41,4 +41,34 @@ describe "Normalize: block" do
       end
       TO
   end
+
+  it "normalizes nested unpacking" do
+    assert_normalize <<-FROM, <<-TO
+      foo do |(a, (b, c))|
+        1
+      end
+      FROM
+      foo do |__temp_1|
+        a, __temp_2 = __temp_1
+        b, c = __temp_2
+        1
+      end
+      TO
+  end
+
+  it "normalizes multiple nested unpackings" do
+    assert_normalize <<-FROM, <<-TO
+      foo do |(a, (b, (c, (d, e)), f))|
+        1
+      end
+      FROM
+      foo do |__temp_1|
+        a, __temp_2 = __temp_1
+        b, __temp_3, f = __temp_2
+        c, __temp_4 = __temp_3
+        d, e = __temp_4
+        1
+      end
+      TO
+  end
 end

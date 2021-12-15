@@ -451,18 +451,25 @@ module Crystal
       return node unless unpacks
 
       extra_expressions = [] of ASTNode
+      next_unpacks = [] of {String, Expressions}
 
       unpacks.each do |index, expressions|
         temp_name = program.new_temp_var_name
-
         node.args[index] = Var.new(temp_name).at(node.args[index])
-        extra_expressions << MultiAssign.new(
-          expressions.expressions.map { |arg|
-            Var.new(arg.as(Arg).name).at(arg).as(ASTNode)
-          },
-          [Var.new(temp_name)] of ASTNode,
-          unpack_expansion: true,
-        )
+
+        targets = block_unpack_targets(expressions, next_unpacks)
+        values = [Var.new(temp_name)] of ASTNode
+        extra_expressions << MultiAssign.new(targets, values, unpack_expansion: true)
+      end
+
+      if next_unpacks
+        while next_unpack = next_unpacks.shift?
+          var_name, expressions = next_unpack
+
+          targets = block_unpack_targets(expressions, next_unpacks)
+          values = [Var.new(var_name)] of ASTNode
+          extra_expressions << MultiAssign.new(targets, values, unpack_expansion: true)
+        end
       end
 
       body = node.body
@@ -478,6 +485,25 @@ module Crystal
       node.unpacks = nil
 
       node
+    end
+
+    private def block_unpack_targets(expressions, next_unpacks)
+      expressions.expressions.map do |exp|
+        case exp
+        when Var
+          exp
+        when Underscore
+          exp
+        when Expressions
+          next_temp_name = program.new_temp_var_name
+
+          next_unpacks << {next_temp_name, exp}
+
+          Var.new(next_temp_name).at(exp)
+        else
+          raise "BUG: unexpedted block var #{exp} (#{exp.class})"
+        end
+      end
     end
   end
 end

@@ -3680,7 +3680,7 @@ module Crystal
     def parse_arg(args, extra_assigns, parentheses, found_default_value, found_splat, found_double_splat, allow_restrictions)
       if @token.type == :"&"
         next_token_skip_space_or_newline
-        block_arg = parse_block_arg(extra_assigns)
+        block_arg = parse_call_block_arg(extra_assigns)
         skip_space_or_newline
         # When block_arg.name is empty, this is an anonymous parameter.
         # An anonymous parameter should not conflict other parameters names.
@@ -3818,7 +3818,7 @@ module Crystal
       ArgExtras.new(nil, !!default_value, splat, !!double_splat)
     end
 
-    def parse_block_arg(extra_assigns)
+    def parse_call_block_arg(extra_assigns)
       name_location = @token.location
 
       if @token.type == :")" || @token.type == :NEWLINE || @token.type == :":"
@@ -4276,7 +4276,23 @@ module Crystal
 
     def parse_block2
       location = @token.location
+      block_args, splat_index, unpacks = parse_block_args(location)
 
+      with_lexical_var_scope do
+        push_vars block_args
+
+        unpacks.try &.each do |index, expressions|
+          push_block_vars(expressions)
+        end
+
+        block_body = parse_expressions
+        block_body, end_location = yield block_body
+
+        Block.new(block_args, block_body, splat_index, unpacks).at(location).at_end(end_location)
+      end
+    end
+
+    def parse_block_args(location)
       block_args = [] of Var
       all_names = [] of String
       block_body = nil
@@ -4289,82 +4305,18 @@ module Crystal
       if @token.type == :"|"
         next_token_skip_space_or_newline
         while true
-          if @token.type == :"*"
-            if splat_index
-              raise "splat block parameter already specified", @token
-            end
-            splat_index = arg_index
-            next_token
-          end
+          var, found_splat, unpack_expressions = parse_block_arg(
+            found_splat: !!splat_index,
+            allow_splat: true,
+            all_names: all_names,
+          )
+          splat_index ||= arg_index if found_splat
+          block_args << var
 
-          case @token.type
-          when :IDENT
-            if @token.keyword? && invalid_internal_name?(@token.value)
-              raise "cannot use '#{@token}' as a block parameter name", @token
-            end
-
-            arg_name = @token.value.to_s
-
-            if all_names.includes?(arg_name)
-              raise "duplicated block parameter name: #{arg_name}", @token
-            end
-            all_names << arg_name
-          when :UNDERSCORE
-            arg_name = "_"
-          when :"("
-            unpack_expressions = [] of ASTNode
-
-            next_token_skip_space_or_newline
-
-            i = 0
-            while true
-              case @token.type
-              when :IDENT
-                if @token.keyword? && invalid_internal_name?(@token.value)
-                  raise "cannot use '#{@token}' as a block parameter name", @token
-                end
-
-                sub_arg_name = @token.value.to_s
-
-                if all_names.includes?(sub_arg_name)
-                  raise "duplicated block parameter name: #{sub_arg_name}", @token
-                end
-
-                all_names << sub_arg_name
-                unpack_expressions << Arg.new(sub_arg_name)
-              when :UNDERSCORE
-                sub_arg_name = "_"
-                unpack_expressions << Underscore.new
-              else
-                raise "expecting block parameter name, not #{@token.type}", @token
-              end
-
-              push_var_name sub_arg_name
-              location = @token.location
-
-              next_token_skip_space_or_newline
-              case @token.type
-              when :","
-                next_token_skip_space_or_newline
-                break if @token.type == :")"
-              when :")"
-                break
-              else
-                raise "expecting ',' or ')', not #{@token}", @token
-              end
-
-              i += 1
-            end
-
-            arg_name = ""
+          if unpack_expressions
             unpacks ||= {} of Int32 => Expressions
             unpacks[arg_index] = Expressions.new(unpack_expressions)
-          else
-            raise "expecting block parameter name, not #{@token.type}", @token
           end
-
-          var = Var.new(arg_name).at(@token.location)
-          block_args << var
 
           next_token_skip_space_or_newline
 
@@ -4385,13 +4337,85 @@ module Crystal
         skip_statement_end
       end
 
-      with_lexical_var_scope do
-        push_vars block_args
+      {block_args, splat_index, unpacks}
+    end
 
-        block_body = parse_expressions
+    def parse_block_arg(found_splat, allow_splat, all_names)
+      if allow_splat && @token.type == :"*"
+        if found_splat
+          raise "splat block parameter already specified", @token
+        end
+        found_splat = true
+        next_token
+      end
 
-        block_body, end_location = yield block_body
-        Block.new(block_args, block_body, splat_index, unpacks).at(location).at_end(end_location)
+      case @token.type
+      when :IDENT
+        if @token.keyword? && invalid_internal_name?(@token.value)
+          raise "cannot use '#{@token}' as a block parameter name", @token
+        end
+
+        arg_name = @token.value.to_s
+
+        if all_names.includes?(arg_name)
+          raise "duplicated block parameter name: #{arg_name}", @token
+        end
+        all_names << arg_name
+      when :UNDERSCORE
+        arg_name = "_"
+      when :"("
+        next_token_skip_space_or_newline
+
+        unpack_expressions = [] of ASTNode
+
+        while true
+          sub_var, _, sub_unpack_expressions = parse_block_arg(
+            found_splat: false,
+            allow_splat: false,
+            all_names: all_names,
+          )
+
+          if sub_unpack_expressions
+            unpack_expressions << Expressions.new(sub_unpack_expressions)
+          elsif sub_var.name == "_"
+            unpack_expressions << Underscore.new
+          else
+            unpack_expressions << sub_var
+          end
+
+          next_token_skip_space_or_newline
+          case @token.type
+          when :","
+            next_token_skip_space_or_newline
+            break if @token.type == :")"
+          when :")"
+            break
+          else
+            raise "expecting ',' or ')', not #{@token}", @token
+          end
+        end
+
+        arg_name = ""
+      else
+        raise "expecting block parameter name, not #{@token.type}", @token
+      end
+
+      var = Var.new(arg_name).at(@token.location)
+      {var, found_splat, unpack_expressions}
+    end
+
+    def push_block_vars(node)
+      case node
+      when Expressions
+        node.expressions.each do |expression|
+          push_block_vars(expression)
+        end
+      when Var
+        push_var node
+      when Underscore
+        # Nothing to do
+      else
+        raise "BUG: unxpected block var: #{node} (#{node.class})"
       end
     end
 
