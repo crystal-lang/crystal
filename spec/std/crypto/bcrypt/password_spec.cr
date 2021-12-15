@@ -26,6 +26,12 @@ describe "Crypto::Bcrypt::Password" do
         Crypto::Bcrypt::Password.new("blarp")
       end
     end
+
+    it "raises on unsupported version (#11584)" do
+      expect_raises(Crypto::Bcrypt::Error, "Invalid hash version") do
+        Crypto::Bcrypt::Password.new("$-1$10$blarp")
+      end
+    end
   end
 
   describe "create" do
@@ -46,7 +52,7 @@ describe "Crypto::Bcrypt::Password" do
 
   describe "verify" do
     password = Crypto::Bcrypt::Password.create("secret", 4)
-    password2 = Crypto::Bcrypt::Password.new("$2b$04$ZsHrsVlj.dsmn74Az1rjmeE/21nYRC0vB5LPjG7ySBfi6lRaO/P22")
+    password2 = Crypto::Bcrypt::Password.new("$2$04$ZsHrsVlj.dsmn74Az1rjmeE/21nYRC0vB5LPjG7ySBfi6lRaO/P22")
 
     it "verifies password is incorrect" do
       (password.verify "wrong").should be_false

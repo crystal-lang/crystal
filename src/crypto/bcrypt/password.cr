@@ -15,6 +15,8 @@ require "../subtle"
 #
 # See `Crypto::Bcrypt` for hints to select the cost when generating hashes.
 class Crypto::Bcrypt::Password
+  SUPPORTED_VERSIONS = {"2", "2a", "2b"}
+
   # Hashes a password.
   #
   # ```
@@ -45,6 +47,7 @@ class Crypto::Bcrypt::Password
   def initialize(@raw_hash : String)
     parts = @raw_hash.split('$')
     raise Error.new("Invalid hash string") unless parts.size == 4
+    raise Error.new("Invalid hash version") unless SUPPORTED_VERSIONS.includes?(parts[1])
 
     @version = parts[1]
     @cost = parts[2].to_i
