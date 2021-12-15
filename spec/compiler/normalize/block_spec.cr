@@ -42,6 +42,17 @@ describe "Normalize: block" do
       TO
   end
 
+  it "normalizes unpacking with underscore" do
+    assert_normalize <<-FROM, <<-TO
+      foo do |(x, _), z|
+      end
+      FROM
+      foo do |__temp_1, z|
+        x, _ = __temp_1
+      end
+      TO
+  end
+
   it "normalizes nested unpacking" do
     assert_normalize <<-FROM, <<-TO
       foo do |(a, (b, c))|
