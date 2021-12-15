@@ -46,6 +46,7 @@ describe "Crypto::Bcrypt::Password" do
 
   describe "verify" do
     password = Crypto::Bcrypt::Password.create("secret", 4)
+    password2 = Crypto::Bcrypt::Password.new("$2b$04$ZsHrsVlj.dsmn74Az1rjmeE/21nYRC0vB5LPjG7ySBfi6lRaO/P22")
 
     it "verifies password is incorrect" do
       (password.verify "wrong").should be_false
@@ -53,6 +54,10 @@ describe "Crypto::Bcrypt::Password" do
 
     it "verifies password is correct" do
       (password.verify "secret").should be_true
+    end
+
+    it "verifies digests only (#11584)" do
+      (password2.verify "secret").should be_true
     end
   end
 end

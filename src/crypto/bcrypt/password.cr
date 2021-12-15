@@ -67,7 +67,8 @@ class Crypto::Bcrypt::Password
   # ```
   def verify(password : String) : Bool
     hashed_password = Bcrypt.new(password, salt, cost)
-    Crypto::Subtle.constant_time_compare(@raw_hash, hashed_password)
+    hashed_password_digest = Base64.encode(hashed_password.digest,hashed_password.digest.size-1)
+    Crypto::Subtle.constant_time_compare(@digest, hashed_password_digest)
   end
 
   def to_s(io : IO) : Nil
