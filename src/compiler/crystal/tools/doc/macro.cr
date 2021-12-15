@@ -129,7 +129,7 @@ class Crystal::Doc::Macro
     if default_value = arg.default_value
       io << " = "
       if html.highlight?
-        io << Highlighter.highlight(default_value.to_s)
+        io << SyntaxHighlighter::HTML.highlight!(default_value.to_s)
       else
         io << default_value
       end

@@ -1,3 +1,5 @@
+{% skip_file if flag?(:without_interpreter) %}
+
 # Implementation of the `crystal repl` command
 
 class Crystal::Command

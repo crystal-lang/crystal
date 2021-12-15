@@ -1,5 +1,6 @@
 {% skip_file if flag?(:without_interpreter) %}
 require "../spec_helper"
+require "compiler/crystal/interpreter/*"
 
 def interpret(code, *, prelude = "primitives")
   context, value = interpret_with_context(code, prelude: prelude)

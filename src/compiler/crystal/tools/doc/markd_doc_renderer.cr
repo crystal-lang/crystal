@@ -124,7 +124,7 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
   def code_block_body(node : Markd::Node, language : String?)
     code = node.text.chomp
     if language == "crystal"
-      literal(Highlighter.highlight code)
+      literal(SyntaxHighlighter::HTML.highlight! code)
     else
       output(code)
     end
