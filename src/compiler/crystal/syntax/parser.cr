@@ -4307,7 +4307,6 @@ module Crystal
         while true
           var, found_splat, unpack_expressions = parse_block_arg(
             found_splat: !!splat_index,
-            allow_splat: true,
             all_names: all_names,
           )
           splat_index ||= arg_index if found_splat
@@ -4340,8 +4339,8 @@ module Crystal
       {block_args, splat_index, unpacks}
     end
 
-    def parse_block_arg(found_splat, allow_splat, all_names)
-      if allow_splat && @token.type == :"*"
+    def parse_block_arg(found_splat, all_names)
+      if @token.type == :"*"
         if found_splat
           raise "splat block parameter already specified", @token
         end
@@ -4367,21 +4366,29 @@ module Crystal
         next_token_skip_space_or_newline
 
         unpack_expressions = [] of ASTNode
+        found_splat_in_nested_expression = false
 
         while true
-          sub_var, _, sub_unpack_expressions = parse_block_arg(
-            found_splat: false,
-            allow_splat: false,
+          sub_var, new_found_splat_in_nested_expression, sub_unpack_expressions = parse_block_arg(
+            found_splat: found_splat_in_nested_expression,
             all_names: all_names,
           )
 
-          if sub_unpack_expressions
-            unpack_expressions << Expressions.new(sub_unpack_expressions)
-          elsif sub_var.name == "_"
-            unpack_expressions << Underscore.new
-          else
-            unpack_expressions << sub_var
+          unpack_expression =
+            if sub_unpack_expressions
+              Expressions.new(sub_unpack_expressions)
+            elsif sub_var.name == "_"
+              Underscore.new
+            else
+              sub_var
+            end
+
+          if new_found_splat_in_nested_expression && !found_splat_in_nested_expression
+            unpack_expression = Splat.new(unpack_expression)
           end
+          found_splat_in_nested_expression = new_found_splat_in_nested_expression
+
+          unpack_expressions << unpack_expression
 
           next_token_skip_space_or_newline
           case @token.type
@@ -4414,6 +4421,8 @@ module Crystal
         push_var node
       when Underscore
         # Nothing to do
+      when Splat
+        push_block_vars(node.exp)
       else
         raise "BUG: unxpected block var: #{node} (#{node.class})"
       end

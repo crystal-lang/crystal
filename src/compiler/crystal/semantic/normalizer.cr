@@ -490,6 +490,8 @@ module Crystal
           exp
         when Underscore
           exp
+        when Splat
+          exp
         when Expressions
           next_temp_name = program.new_temp_var_name
 
@@ -497,7 +499,7 @@ module Crystal
 
           Var.new(next_temp_name).at(exp)
         else
-          raise "BUG: unexpedted block var #{exp} (#{exp.class})"
+          raise "BUG: unexpected block var #{exp} (#{exp.class})"
         end
       end
       values = [Var.new(var_name)] of ASTNode

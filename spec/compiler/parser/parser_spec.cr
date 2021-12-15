@@ -713,6 +713,20 @@ module Crystal
       ),
     )
 
+    it_parses "foo { |(a, *b, c)| }", Call.new(nil, "foo",
+      block: Block.new(
+        ["".var],
+        Nop.new,
+        unpacks: {
+          0 => Expressions.new([
+            "a".var,
+            Splat.new("b".var),
+            "c".var,
+          ]),
+        },
+      ),
+    )
+
     assert_syntax_error "foo { |a b| }", "expecting ',' or '|', not b"
     assert_syntax_error "foo { |(a b)| }", "expecting ',' or ')', not b"
 

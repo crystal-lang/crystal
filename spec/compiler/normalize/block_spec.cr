@@ -82,4 +82,15 @@ describe "Normalize: block" do
       end
       TO
   end
+
+  it "normalizes unpacking with splat" do
+    assert_normalize <<-FROM, <<-TO
+      foo do |(x, *y, z)|
+      end
+      FROM
+      foo do |__temp_1|
+        x, *y, z = __temp_1
+      end
+      TO
+  end
 end
