@@ -520,7 +520,7 @@ class URI
       if dst_path.empty?
         "./"
       elsif dst_path.first.includes?(':') # (see RFC2396 Section 5)
-        string_size = 1 + dst_path.sum { |path| path.bytesize } + dst_path.size
+        string_size = 1 + dst_path.sum(&.bytesize) + dst_path.size
         String.build(string_size) do |io|
           io << "./"
           dst_path.join(io, '/')
@@ -533,7 +533,7 @@ class URI
         end
       end
     else
-      string_size = 3 * base_path.size + dst_path.sum { |path| path.bytesize } + dst_path.size - 1
+      string_size = 3 * base_path.size + dst_path.sum(&.bytesize) + dst_path.size - 1
       String.build(string_size) do |io|
         base_path.size.times { io << "../" }
         dst_path.join(io, '/')
