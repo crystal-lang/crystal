@@ -457,18 +457,14 @@ module Crystal
         temp_name = program.new_temp_var_name
         node.args[index] = Var.new(temp_name).at(node.args[index])
 
-        targets = block_unpack_targets(expressions, next_unpacks)
-        values = [Var.new(temp_name)] of ASTNode
-        extra_expressions << MultiAssign.new(targets, values, unpack_expansion: true)
+        extra_expressions << block_unpack_multiassign(temp_name, expressions, next_unpacks)
       end
 
       if next_unpacks
         while next_unpack = next_unpacks.shift?
           var_name, expressions = next_unpack
 
-          targets = block_unpack_targets(expressions, next_unpacks)
-          values = [Var.new(var_name)] of ASTNode
-          extra_expressions << MultiAssign.new(targets, values, unpack_expansion: true)
+          extra_expressions << block_unpack_multiassign(var_name, expressions, next_unpacks)
         end
       end
 
@@ -487,8 +483,8 @@ module Crystal
       node
     end
 
-    private def block_unpack_targets(expressions, next_unpacks)
-      expressions.expressions.map do |exp|
+    private def block_unpack_multiassign(var_name, expressions, next_unpacks)
+      targets = expressions.expressions.map do |exp|
         case exp
         when Var
           exp
@@ -504,6 +500,8 @@ module Crystal
           raise "BUG: unexpedted block var #{exp} (#{exp.class})"
         end
       end
+      values = [Var.new(var_name)] of ASTNode
+      MultiAssign.new(targets, values, unpack_expansion: true)
     end
   end
 end
