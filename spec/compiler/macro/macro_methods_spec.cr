@@ -3042,11 +3042,4 @@ module Crystal
       assert_macro %({{ (x.conds << "a"; x.conds.size) }}), "2", {x: node}
     end
   end
-
-  describe "int128 support" do
-    it "" do
-      node = When.new([2.int32, 3.int32] of ASTNode, 4.int32)
-      assert_macro %({{ (x.conds << "a"; x.conds.size) }}), "2", {x: node}
-    end
-  end
 end
