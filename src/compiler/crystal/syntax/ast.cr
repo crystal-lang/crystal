@@ -538,6 +538,10 @@ module Crystal
     property body : ASTNode
     property call : Call?
     property splat_index : Int32?
+
+    # When a block argument unpacks, the corresponding Var will
+    # have an empty name, and `unpacks` will have the unpacked
+    # Expressions in that index.
     property unpacks : Hash(Int32, Expressions)?
 
     def initialize(@args = [] of Var, body = nil, @splat_index = nil, @unpacks = nil)
