@@ -28,6 +28,8 @@ module Crystal
 
     def evaluate(node, debug = Debug::Default)
       llvm_mod = codegen(node, single_module: true, debug: debug)[""].mod
+      llvm_mod.target = target_machine.triple
+
       main = llvm_mod.functions[MAIN_NAME]
 
       main_return_type = main.return_type
@@ -151,7 +153,6 @@ module Crystal
     @main_ret_type : Type
     @argc : LLVM::Value
     @argv : LLVM::Value
-    @empty_md_list : LLVM::Value
     @rescue_block : LLVM::BasicBlock?
     @catch_pad : LLVM::Value?
     @malloc_fun : LLVM::Function?
@@ -235,7 +236,6 @@ module Crystal
       # are not going to be used.
       @needs_value = true
 
-      @empty_md_list = metadata([] of Int32)
       @unused_fun_defs = [] of FunDef
       @proc_counts = Hash(String, Int32).new(0)
 
@@ -770,7 +770,9 @@ module Crystal
     end
 
     def visit(node : TypeOf)
-      @last = type_id(node.type)
+      # convert virtual metaclasses to non-virtual ones, because only the
+      # non-virtual type IDs are needed
+      @last = type_id(node.type.devirtualize)
       false
     end
 
@@ -1402,8 +1404,7 @@ module Crystal
 
     def cant_pass_closure_to_c_exception_call
       @cant_pass_closure_to_c_exception_call ||= begin
-        location = Location.new(@program.filename, 1, 1)
-        call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(location)
+        call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(UNKNOWN_LOCATION)
         @program.visit_main call
         call.raise "::raise must be of NoReturn return type!" unless call.type.is_a?(NoReturnType)
         call
@@ -1449,6 +1450,9 @@ module Crystal
       unless var
         var = llvm_mod.globals.add(llvm_c_return_type(type), name)
         var.linkage = LLVM::Linkage::External
+        if @program.has_flag?("win32") && @program.has_flag?("preview_dll")
+          var.dll_storage_class = LLVM::DLLStorageClass::DLLImport
+        end
         var.thread_local = thread_local
       end
       var
@@ -1470,7 +1474,7 @@ module Crystal
 
     def visit(node : Path)
       if const = node.target_const
-        read_const(const)
+        read_const(const, node)
       elsif replacement = node.syntax_replacement
         accept replacement
       else

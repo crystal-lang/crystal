@@ -44,13 +44,11 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
     end
   end
 
-  def code(node : Markd::Node, entering : Bool)
-    tag("code") do
-      if in_link?(node)
-        output(node.text)
-      else
-        literal(expand_code_links(node.text))
-      end
+  def code_body(node : Markd::Node)
+    if in_link?(node)
+      output(node.text)
+    else
+      literal(expand_code_links(node.text))
     end
   end
 
@@ -115,39 +113,21 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
     end
   end
 
-  def code_block(node : Markd::Node, entering : Bool)
-    languages = node.fence_language ? node.fence_language.split : nil
-    code_tag_attrs = attrs(node)
-    pre_tag_attrs = if @options.prettyprint
-                      {"class" => "prettyprint"}
-                    else
-                      nil
-                    end
-
-    language = languages.try &.first?.try &.strip
-    language = nil if language.try &.empty?
-
+  def code_block_language(languages)
+    language = languages.try(&.first?).try(&.strip.presence)
     if language.nil? || language == "cr"
       language = "crystal"
     end
+    language
+  end
 
-    if language
-      code_tag_attrs ||= {} of String => String
-      code_tag_attrs["class"] = "language-#{escape(language)}"
+  def code_block_body(node : Markd::Node, language : String?)
+    code = node.text.chomp
+    if language == "crystal"
+      literal(SyntaxHighlighter::HTML.highlight! code)
+    else
+      output(code)
     end
-
-    newline
-    tag("pre", pre_tag_attrs) do
-      tag("code", code_tag_attrs) do
-        code = node.text.chomp
-        if language == "crystal"
-          literal(Highlighter.highlight code)
-        else
-          output(code)
-        end
-      end
-    end
-    newline
   end
 
   private def type_link(type, text)

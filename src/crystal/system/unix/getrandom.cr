@@ -1,7 +1,20 @@
 {% skip_file unless flag?(:linux) %}
 
 require "c/unistd"
-require "c/sys/syscall"
+require "./syscall"
+
+{% if flag?(:interpreted) %}
+  lib LibC
+    fun getrandom(buf : Void*, buflen : SizeT, flags : UInt32) : LibC::SSizeT
+  end
+
+  module Crystal::System::Syscall
+    # TODO: Implement syscall for interpreter
+    def self.getrandom(buf : UInt8*, buflen : LibC::SizeT, flags : UInt32) : LibC::SSizeT
+      LibC.getrandom(buf, buflen, flags)
+    end
+  end
+{% end %}
 
 module Crystal::System::Random
   @@initialized = false
@@ -78,7 +91,7 @@ module Crystal::System::Random
   # portable).
   private def self.sys_getrandom(buf : Bytes)
     loop do
-      read_bytes = LibC.syscall(LibC::SYS_getrandom, buf, LibC::SizeT.new(buf.size), 0)
+      read_bytes = Syscall.getrandom(buf.to_unsafe, LibC::SizeT.new(buf.size), 0)
       if read_bytes < 0 && (Errno.value == Errno::EINTR || Errno.value == Errno::EAGAIN)
         ::Fiber.yield
       else

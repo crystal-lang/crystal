@@ -122,6 +122,7 @@ Executing `make crystal` builds the compiler into `.build/compiler` and you can 
 The script sets up the proper environment variables that the compiler can find the standard library source files in `src/`.
 
 `make compiler_spec` runs the compiler specs. `make std_spec` runs the standard library specs.
+`make primitives_spec` runs the specs for primitive methods with an up-to-date Crystal compiler.
 You can use `make help` for a list of available make targets.
 
 ## This guide

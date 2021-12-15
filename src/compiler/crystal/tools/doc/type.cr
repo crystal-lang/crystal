@@ -571,7 +571,7 @@ class Crystal::Doc::Type
 
   def node_to_html(node, io, html : HTMLOption = :all)
     if html.highlight?
-      io << Highlighter.highlight(node.to_s)
+      io << SyntaxHighlighter::HTML.highlight!(node.to_s)
     else
       io << node
     end
@@ -786,10 +786,12 @@ class Crystal::Doc::Type
       builder.field "full_name", full_name
       builder.field "name", name
       builder.field "abstract", abstract?
-      builder.field "superclass" { (s = superclass) ? s.to_json_simple(builder) : builder.null }
-      builder.field "ancestors" do
-        builder.array do
-          ancestors.each &.to_json_simple(builder)
+      builder.field "superclass" { superclass.try &.to_json_simple(builder) } unless superclass.nil?
+      unless ancestors.empty?
+        builder.field "ancestors" do
+          builder.array do
+            ancestors.each &.to_json_simple(builder)
+          end
         end
       end
       builder.field "locations", locations
@@ -797,38 +799,46 @@ class Crystal::Doc::Type
       builder.field "program", program?
       builder.field "enum", enum?
       builder.field "alias", alias?
-      builder.field "aliased", alias? ? alias_definition.to_s : nil
-      builder.field "aliased_html", alias? ? formatted_alias_definition : nil
+      builder.field "aliased", alias_definition.to_s if alias?
+      builder.field "aliased_html", formatted_alias_definition if alias?
       builder.field "const", const?
-      builder.field "constants", constants
-      builder.field "included_modules" do
-        builder.array do
-          included_modules.each &.to_json_simple(builder)
+      builder.field "constants", constants unless constants.empty?
+      unless included_modules.empty?
+        builder.field "included_modules" do
+          builder.array do
+            included_modules.each &.to_json_simple(builder)
+          end
         end
       end
-      builder.field "extended_modules" do
-        builder.array do
-          extended_modules.each &.to_json_simple(builder)
+      unless extended_modules.empty?
+        builder.field "extended_modules" do
+          builder.array do
+            extended_modules.each &.to_json_simple(builder)
+          end
         end
       end
-      builder.field "subclasses" do
-        builder.array do
-          subclasses.each &.to_json_simple(builder)
+      unless subclasses.empty?
+        builder.field "subclasses" do
+          builder.array do
+            subclasses.each &.to_json_simple(builder)
+          end
         end
       end
-      builder.field "including_types" do
-        builder.array do
-          including_types.each &.to_json_simple(builder)
+      unless including_types.empty?
+        builder.field "including_types" do
+          builder.array do
+            including_types.each &.to_json_simple(builder)
+          end
         end
       end
-      builder.field "namespace" { (n = namespace) ? n.to_json_simple(builder) : builder.null }
-      builder.field "doc", doc
-      builder.field "summary", formatted_summary
-      builder.field "class_methods", class_methods
-      builder.field "constructors", constructors
-      builder.field "instance_methods", instance_methods
-      builder.field "macros", macros
-      builder.field "types", types
+      builder.field "namespace" { namespace.try &.to_json_simple(builder) } unless namespace.nil?
+      builder.field "doc", doc unless doc.nil?
+      builder.field "summary", formatted_summary unless formatted_summary.nil?
+      builder.field "class_methods", class_methods unless class_methods.empty?
+      builder.field "constructors", constructors unless constructors.empty?
+      builder.field "instance_methods", instance_methods unless instance_methods.empty?
+      builder.field "macros", macros unless macros.empty?
+      builder.field "types", types unless types.empty?
     end
   end
 

@@ -1,9 +1,6 @@
 require "./spec_helper"
 require "spec/helpers/iterate"
-
-{% unless flag?(:win32) %}
-  require "big"
-{% end %}
+require "big"
 
 struct RangeSpecIntWrapper
   include Comparable(self)
@@ -120,7 +117,7 @@ describe "Range" do
       (1...11).step(2).sum.should eq 25
     end
 
-    pending_win32 "called with no block is specialized for performance (BigInt)" do
+    it "called with no block is specialized for performance (BigInt)" do
       (BigInt.new("1")..BigInt.new("1 000 000 000")).sum.should eq BigInt.new("500 000 000 500 000 000")
       (BigInt.new("1")..BigInt.new("1 000 000 000")).step(2).sum.should eq BigInt.new("250 000 000 000 000 000")
     end
@@ -145,6 +142,8 @@ describe "Range" do
       (0...ary.size).bsearch { |i| true }.should eq 0
       (0...ary.size).bsearch { |i| false }.should eq nil
 
+      (0...ary.size).bsearch { |i| ary[i] >= 10 ? 1 : nil }.should eq 4
+
       ary = [0, 100, 100, 100, 200]
       (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq 1
 
@@ -158,7 +157,7 @@ describe "Range" do
       (0_u32...10_u32).bsearch { |x| x >= 10 }.should eq nil
     end
 
-    pending_win32 "BigInt" do
+    it "BigInt" do
       (BigInt.new("-10")...BigInt.new("10")).bsearch { |x| x >= -5 }.should eq BigInt.new("-5")
     end
 

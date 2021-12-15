@@ -1481,10 +1481,16 @@ module Crystal
     property type_vars : Array(ASTNode)
     property named_args : Array(NamedArgument)?
 
-    # `true` if this Generic was parsed from `T?`
-    property? question = false
+    property suffix : Suffix
 
-    def initialize(@name, @type_vars : Array, @named_args = nil)
+    enum Suffix
+      None
+      Question # T?
+      Asterisk # T*
+      Bracket  # T[N]
+    end
+
+    def initialize(@name, @type_vars : Array, @named_args = nil, @suffix = Suffix::None)
     end
 
     def self.new(name, type_var : ASTNode)
@@ -1498,8 +1504,7 @@ module Crystal
     end
 
     def clone_without_location
-      generic = Generic.new(@name.clone, @type_vars.clone, @named_args.clone)
-      generic.question = question?
+      generic = Generic.new(@name.clone, @type_vars.clone, @named_args.clone, @suffix)
       generic
     end
 
@@ -1730,8 +1735,9 @@ module Crystal
   class Yield < ASTNode
     property exps : Array(ASTNode)
     property scope : ASTNode?
+    property? has_parentheses = false
 
-    def initialize(@exps = [] of ASTNode, @scope = nil)
+    def initialize(@exps = [] of ASTNode, @scope = nil, @has_parentheses = false)
     end
 
     def accept_children(visitor)
@@ -1740,14 +1746,14 @@ module Crystal
     end
 
     def clone_without_location
-      Yield.new(@exps.clone, @scope.clone)
+      Yield.new(@exps.clone, @scope.clone, @has_parentheses)
     end
 
     def end_location
       @end_location || @exps.last?.try(&.end_location)
     end
 
-    def_equals_and_hash @exps, @scope
+    def_equals_and_hash @exps, @scope, @has_parentheses
   end
 
   class Include < ASTNode
@@ -2249,8 +2255,9 @@ module Crystal
     property? volatile : Bool
     property? alignstack : Bool
     property? intel : Bool
+    property? can_throw : Bool
 
-    def initialize(@text, @outputs = nil, @inputs = nil, @clobbers = nil, @volatile = false, @alignstack = false, @intel = false)
+    def initialize(@text, @outputs = nil, @inputs = nil, @clobbers = nil, @volatile = false, @alignstack = false, @intel = false, @can_throw = false)
     end
 
     def accept_children(visitor)
@@ -2259,10 +2266,10 @@ module Crystal
     end
 
     def clone_without_location
-      Asm.new(@text, @outputs.clone, @inputs.clone, @clobbers, @volatile, @alignstack, @intel)
+      Asm.new(@text, @outputs.clone, @inputs.clone, @clobbers, @volatile, @alignstack, @intel, @can_throw)
     end
 
-    def_equals_and_hash text, outputs, inputs, clobbers, volatile?, alignstack?, intel?
+    def_equals_and_hash text, outputs, inputs, clobbers, volatile?, alignstack?, intel?, can_throw?
   end
 
   class AsmOperand < ASTNode
