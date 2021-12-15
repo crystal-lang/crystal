@@ -3116,47 +3116,8 @@ module Crystal
 
       write_token " ", :"|"
       skip_space_or_newline
-      args.each_with_index do |arg, i|
-        if @token.type == :"*"
-          write_token :"*"
-        end
-
-        if @token.type == :"("
-          write :"("
-          next_token_skip_space_or_newline
-
-          while true
-            case @token.type
-            when :IDENT
-              underscore = false
-            when :UNDERSCORE
-              underscore = true
-            else
-              raise "expecting block parameter name, not #{@token.type}"
-            end
-
-            write(underscore ? "_" : @token.value)
-
-            next_token_skip_space_or_newline
-            has_comma = false
-            if @token.type == :","
-              has_comma = true
-              next_token_skip_space_or_newline
-            end
-
-            if @token.type == :")"
-              next_token
-              write ")"
-              break
-            else
-              write ", "
-            end
-          end
-        else
-          accept arg
-        end
-
-        skip_space_or_newline
+      args.each_index do |i|
+        format_block_arg
         if @token.type == :","
           next_token_skip_space_or_newline
           write ", " unless last?(i, args)
@@ -3167,6 +3128,45 @@ module Crystal
       skip_space
 
       node.body
+    end
+
+    def format_block_arg
+      if @token.type == :"*"
+        write_token :"*"
+      end
+
+      case @token.type
+      when :"("
+        write :"("
+        next_token_skip_space_or_newline
+
+        while true
+          format_block_arg
+          has_comma = false
+          if @token.type == :","
+            has_comma = true
+            next_token_skip_space_or_newline
+          end
+
+          if @token.type == :")"
+            next_token
+            write ")"
+            break
+          else
+            write ", "
+          end
+        end
+      when :IDENT
+        write @token.value
+        next_token
+      when :UNDERSCORE
+        write("_")
+        next_token
+      else
+        raise "BUG: unexpected token #{@token.type}"
+      end
+
+      skip_space_or_newline
     end
 
     def remove_to_skip(node, to_skip)
