@@ -93,7 +93,7 @@ let
 
     src = builtins.fetchTarball {
       url = "https://github.com/ivmai/bdwgc/releases/download/v${version}/gc-${version}.tar.gz";
-      sha256 = "16ic5dwfw51r5lcl88vx3qrkg3g2iynblazkri3sl9brnqiyzjk7";
+      sha256 = "13zddy2xk5744vnx9mqz6sbdgvb6l0w6sv1jfmdnqkxpdhszfh15";
     };
 
     configureFlags = [
