@@ -221,9 +221,12 @@ class URI
   # uri.request_target # => "/?foo=bar"
   # ```
   def request_target : String
-    string_size = 1
-    string_size += @query ? @query.not_nil!.bytesize : -1
-    string_size += @path.empty? ? 1 : @path.bytesize
+    # Minimal size is 1 for an empty path (`"/"`)
+    string_size = @path.empty? ? 1 : @path.bytesize
+    if query = @query
+      # Add 1 for the query designator (`?`)
+      string_size += query.bytesize + 1
+    end
 
     String.build(string_size) do |str|
       if @path.empty?
@@ -523,7 +526,7 @@ class URI
           dst_path.join(io, '/')
         end
       else
-        if dst_path.empty? || dst_path.first == ""
+        if dst_path.empty? || dst_path.first.empty?
           "./"
         else
           dst_path.join('/')
