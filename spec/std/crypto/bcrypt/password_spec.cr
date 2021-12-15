@@ -46,7 +46,7 @@ describe "Crypto::Bcrypt::Password" do
 
   describe "verify" do
     password = Crypto::Bcrypt::Password.create("secret", 4)
-    password2 = Crypto::Bcrypt::Password.new("$2b$06$ZsHrsVlj.dsmn74Az1rjmeE/21nYRC0vB5LPjG7ySBfi6lRaO/P22")
+    password2 = Crypto::Bcrypt::Password.new("$2b$04$ZsHrsVlj.dsmn74Az1rjmeE/21nYRC0vB5LPjG7ySBfi6lRaO/P22")
 
     it "verifies password is incorrect" do
       (password.verify "wrong").should be_false
