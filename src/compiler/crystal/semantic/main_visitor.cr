@@ -1059,10 +1059,7 @@ module Crystal
           ignored_vars_after_block ||= node.args.dup
 
           exp.targets.each do |target|
-            if target.is_a?(Var)
-              bind_block_var(node, target, meta_vars, before_block_vars)
-              ignored_vars_after_block << Var.new(target.name)
-            end
+            handle_unpacked_block_argument(node, target, meta_vars, before_block_vars, ignored_vars_after_block)
           end
         end
       end
@@ -1114,6 +1111,22 @@ module Crystal
       node.bind_to node.body
 
       false
+    end
+
+    def handle_unpacked_block_argument(node, arg, meta_vars, before_block_vars, ignored_vars_after_block)
+      case arg
+      when Var
+        bind_block_var(node, arg, meta_vars, before_block_vars)
+        ignored_vars_after_block << Var.new(arg.name)
+      when Underscore
+        # Nothing
+      when Splat
+        handle_unpacked_block_argument(node, arg.exp, meta_vars, before_block_vars, ignored_vars_after_block)
+      when Expressions
+        arg.expressions.each do |exp|
+          handle_unpacked_block_argument(node, exp, meta_vars, before_block_vars, ignored_vars_after_block)
+        end
+      end
     end
 
     def bind_block_var(node, target, meta_vars, before_block_vars)
