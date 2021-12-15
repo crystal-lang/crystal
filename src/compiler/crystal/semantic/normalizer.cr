@@ -471,11 +471,11 @@ module Crystal
       body = node.body
       case body
       when Nop
-        node.body = Expressions.new(extra_expressions)
+        node.body = Expressions.new(extra_expressions).at(node.body)
       when Expressions
         body.expressions = extra_expressions + body.expressions
       else
-        node.body = Expressions.new([*extra_expressions, node.body] of ASTNode)
+        node.body = Expressions.new([*extra_expressions, node.body] of ASTNode).at(node.body)
       end
 
       node.unpacks = nil
@@ -502,8 +502,8 @@ module Crystal
           raise "BUG: unexpected block var #{exp} (#{exp.class})"
         end
       end
-      values = [Var.new(var_name)] of ASTNode
-      MultiAssign.new(targets, values, unpack_expansion: true)
+      values = [Var.new(var_name).at(expressions)] of ASTNode
+      MultiAssign.new(targets, values, unpack_expansion: true).at(expressions)
     end
   end
 end

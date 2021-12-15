@@ -4348,6 +4348,8 @@ module Crystal
         next_token
       end
 
+      location = @token.location
+
       case @token.type
       when :IDENT
         if @token.keyword? && invalid_internal_name?(@token.value)
@@ -4369,6 +4371,7 @@ module Crystal
         found_splat_in_nested_expression = false
 
         while true
+          sub_location = @token.location
           sub_var, new_found_splat_in_nested_expression, sub_unpack_expressions = parse_block_arg(
             found_splat: found_splat_in_nested_expression,
             all_names: all_names,
@@ -4376,15 +4379,15 @@ module Crystal
 
           unpack_expression =
             if sub_unpack_expressions
-              Expressions.new(sub_unpack_expressions)
+              Expressions.new(sub_unpack_expressions).at(sub_location)
             elsif sub_var.name == "_"
-              Underscore.new
+              Underscore.new.at(sub_location)
             else
               sub_var
             end
 
           if new_found_splat_in_nested_expression && !found_splat_in_nested_expression
-            unpack_expression = Splat.new(unpack_expression)
+            unpack_expression = Splat.new(unpack_expression).at(sub_location)
           end
           found_splat_in_nested_expression = new_found_splat_in_nested_expression
 
@@ -4407,7 +4410,7 @@ module Crystal
         raise "expecting block parameter name, not #{@token.type}", @token
       end
 
-      var = Var.new(arg_name).at(@token.location)
+      var = Var.new(arg_name).at(location)
       {var, found_splat, unpack_expressions}
     end
 
