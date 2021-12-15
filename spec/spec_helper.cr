@@ -4,7 +4,7 @@ ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
 
 require "spec"
 
-require "../src/compiler/crystal/**"
+require "compiler/requires"
 require "./support/syntax"
 require "./support/tempfile"
 require "./support/win32"
