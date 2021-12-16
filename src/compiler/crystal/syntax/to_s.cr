@@ -1067,12 +1067,8 @@ module Crystal
           if arg.name == ""
             # This is an unpack
             unpack = node.unpacks.not_nil![i]
-            @str << "("
-            unpack.expressions.each_with_index do |exp, j|
-              @str << ", " if j > 0
-              exp.accept self
-            end
-            @str << ")"
+
+            visit_unpack(unpack)
           else
             arg.accept self
           end
@@ -1087,6 +1083,20 @@ module Crystal
       @str << keyword("end")
 
       false
+    end
+
+    def visit_unpack(node)
+      case node
+      when Expressions
+        @str << "("
+        node.expressions.each_with_index do |exp, j|
+          @str << ", " if j > 0
+          visit_unpack exp
+        end
+        @str << ")"
+      else
+        node.accept self
+      end
     end
 
     def visit(node : Include)
