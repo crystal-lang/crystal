@@ -450,10 +450,49 @@ describe Crystal::Formatter do
   assert_format "__DIR__", "__DIR__"
   assert_format "__LINE__", "__LINE__"
 
-  assert_format %q("\\\"\#\a\b\n\r\t\v\f\e")
+  assert_format %("\\0\\"\#\a\b\r\n\t\v\f\e\\xFF"), %("\\0\\"\#\\a\\b\\r\n\t\\v\\f\\e\\xFF")
+  assert_format %("\u00AD\uF8FF\u202A"), %("\\u00AD\\uF8FF\\u202A")
+  assert_format %("\\0\\"\#\a\b\r\n\t\v\f\e\\xFF\#{nil}"), %("\\0\\"\#\\a\\b\\r\n\t\\v\\f\\e\\xFF\#{nil}")
+  assert_format %("\u00AD\uF8FF\u202A\#{nil}"), %("\\u00AD\\uF8FF\\u202A\#{nil}")
+  assert_format %(:"\\0\\"\#\a\b\r\n\t\v\f\e\\xFF"), %(:"\\0\\"\#\\a\\b\\r\n\t\\v\\f\\e\\xFF")
+  assert_format %(:"\u00AD\uF8FF\u202A"), %(:"\\u00AD\\uF8FF\\u202A")
+  assert_format %(<<-HERE\n\\0"\#\a\b\r\n\t\v\f\e\\xFF\nHERE), %(<<-HERE\n\\0"\#\\a\\b\\r\n\t\\v\\f\\e\\xFF\nHERE)
+  assert_format %(<<-HERE\n\u00AD\uF8FF\u202A\nHERE), %(<<-HERE\n\\u00AD\\uF8FF\\u202A\nHERE)
+  assert_format %q("\\0\\\"\#\a\b\n\r\t\v\f\e\\xFF")
   assert_format %q("\a\c\b\d"), %q("\ac\bd")
-  assert_format %q("\\\"\#\a\b\n\r\t#{foo}\v\f\e")
+  assert_format %q("\\0\\\"\#\a\b\n\r\t#{foo}\v\f\e\\xFF")
   assert_format %q("\a\c#{foo}\b\d"), %q("\ac#{foo}\bd")
+  assert_format %(%w(\\0\\"\#\a\b\r\n\t\v\f\e\\xFF)), %(%w(\\0\\"\#\\a\\b \\e\\xFF))
+  assert_format %(%w(\u00AD\uF8FF\u202A)), %(%w(\\u00AD\\uF8FF\\u202A))
+  assert_format %(%i(\\0\\"\#\a\b\r\n\t\v\f\e\\xFF)), %(%i(\\0\\"\#\\a\\b \\e\\xFF))
+  assert_format %(%i(\u00AD\uF8FF\u202A)), %(%i(\\u00AD\\uF8FF\\u202A))
+
+  assert_format %("\\u0061\\u{61}\\u0009\\u{9}")
+
+  assert_format "'\\''"
+  assert_format "'\\0'"
+  assert_format "'\\u0000'"
+  assert_format "'\\\\'"
+  assert_format "'\a'", "'\\a'"
+  assert_format "'\b'", "'\\b'"
+  assert_format "'\r'", "'\\r'"
+  assert_format "'\n'", "'\\n'"
+  assert_format "'\t'", "'\\t'"
+  assert_format "'\v'", "'\\v'"
+  assert_format "'\f'", "'\\f'"
+  assert_format "'\e'", "'\\e'"
+  assert_format "'\u00AD'", "'\\u00AD'"
+  assert_format "'\uF8FF'", "'\\uF8FF'"
+  assert_format "'\u202A'", "'\\u202A'"
+  assert_format "'青'"
+  assert_format "'\\u9752'"
+  assert_format "'\\u9752'"
+  assert_format "'\u{110BD}'", "'\\u{110BD}'"
+  assert_format "'\u{1F48E}'", "'\u{1F48E}'"
+  assert_format "'\\u0061'"
+  assert_format "'\\u{61}'"
+  assert_format "'\\u0009'"
+  assert_format "'\\u{9}'"
 
   assert_format %("\#{foo = 1\n}"), %("\#{foo = 1}")
   assert_format %("\#{\n  foo = 1\n}")

@@ -432,7 +432,14 @@ module Crystal
 
     def visit(node : CharLiteral)
       check :CHAR
-      write @token.raw
+      if @token.raw[1].printable?
+        # Keep original format when printable.
+        # This makes sure that printable representations of non-printable characters stay unmodified.
+        # Example: `'\u0009'` must not be converted to `'\t'`.
+        write @token.raw
+      else
+        write node.value.inspect
+      end
       next_token
 
       false
@@ -440,7 +447,7 @@ module Crystal
 
     def visit(node : SymbolLiteral)
       check :SYMBOL
-      write @token.raw
+      write_string @token
       next_token
 
       false
@@ -458,6 +465,39 @@ module Crystal
       next_token
 
       false
+    end
+
+    def write_string(token)
+      string = if token.invalid_escape
+                 token.value.as(String)
+               else
+                 token.raw
+               end
+
+      write escape_nonprintable(string)
+    end
+
+    # Escapes non-printable characters in *string*.
+    # This is similar to `String#inspect` except `\n` and `\t` characters are
+    # printed literally. These control characters should not be escaped to keep
+    # the code formating intact.
+    def escape_nonprintable(string)
+      String.build do |io|
+        string.each_char do |char|
+          case char
+          when '\a' then io << "\\a"
+          when '\b' then io << "\\b"
+          when '\e' then io << "\\e"
+          when '\v' then io << "\\v"
+          when '\f' then io << "\\f"
+          when '\r' then io << "\\r"
+          when '\n', '\t', .printable?
+            io << char
+          else
+            char.unicode_escape(io)
+          end
+        end
+      end
     end
 
     def visit(node : StringLiteral)
@@ -478,11 +518,7 @@ module Crystal
       while true
         case @token.type
         when :STRING
-          if @token.invalid_escape
-            write @token.value
-          else
-            write @token.raw
-          end
+          write_string @token
           next_string_token
         when :INTERPOLATION_START
           # This is the case of #{__DIR__}
@@ -597,7 +633,7 @@ module Crystal
           else
             loop do
               check :STRING
-              write @token.invalid_escape ? @token.value : @token.raw
+              write_string @token
               next_string_token
 
               # On heredoc, pieces of contents are combined due to removing indentation.
@@ -770,7 +806,7 @@ module Crystal
           case @token.type
           when :STRING
             write " " unless first || has_space_newline
-            write @token.raw
+            write_string @token
             first = false
           when :STRING_ARRAY_END
             write @token.raw
