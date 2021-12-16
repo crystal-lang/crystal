@@ -36,6 +36,7 @@
 require "spec"
 require "./spec_helper"
 require "../support/string"
+require "../support/number"
 
 # Tests that `v.to_s` is the same as the *v* literal is written in the source
 # code, except possibly omitting the `_f32` suffix for `Float32` literals.
@@ -49,66 +50,6 @@ end
 private macro it_converts_to_s(v, str)
   it {{ "converts #{v.id.gsub(/^hexfloat\("(.*)"\)$/, "\\1")} to #{str}" }} do
     assert_prints ({{ v }}).to_s, {{ str }}
-  end
-end
-
-# Converts *str*, a hexadecimal floating-point literal, to a `Float32` or
-# `Float64`.
-private def hexfloat(str)
-  m = str.match(/^(-?)0x([0-9A-Fa-f]+)(?:\.([0-9A-Fa-f]+))?p([+-]?)(\d+)(_f32)?$/).not_nil!
-
-  is_f32 = m[6]? == "_f32"
-  total_bits = is_f32 ? 32 : 64
-  mantissa_bits = (is_f32 ? Float32::MANT_DIGITS : Float64::MANT_DIGITS) - 1
-  exponent_bias = is_f32 ? 127 : 1023
-
-  is_negative = m[1] == "-"
-  int_part = m[2].to_u64(16)
-  frac = m[3]?.try(&.[](0, (mantissa_bits + 3) // 4)) || "0"
-  frac_part = frac.to_u64(16) << (mantissa_bits - frac.size * 4)
-  exponent = m[5].to_i * (m[4] == "-" ? -1 : 1)
-
-  if int_part > 1
-    last_bit = 0_u64
-    while int_part > 1
-      last_bit = frac_part & 1
-      frac_part |= (1_u64 << mantissa_bits) if int_part & 1 != 0
-      frac_part >>= 1
-      int_part >>= 1
-      exponent += 1
-    end
-    if last_bit != 0
-      frac_part += 1
-      if frac_part >= 1_u64 << mantissa_bits
-        frac_part = 0_u64
-        int_part += 1
-      end
-    end
-  elsif int_part == 0
-    while int_part == 0
-      frac_part <<= 1
-      if frac_part >= 1_u64 << mantissa_bits
-        frac_part &= ~(UInt64::MAX << mantissa_bits)
-        int_part += 1
-      end
-      exponent -= 1
-    end
-  end
-
-  exponent += exponent_bias
-  if exponent >= exponent_bias * 2 + 1
-    (is_f32 ? Float32::INFINITY : Float64::INFINITY) * (is_negative ? -1 : 1)
-  elsif exponent < -mantissa_bits
-    is_negative ? -0.0 : 0.0
-  elsif exponent <= 0
-    f = (frac_part >> (1 - exponent)) | (int_part << (mantissa_bits - 1 + exponent))
-    f |= 1_u64 << (total_bits - 1) if is_negative
-    is_f32 ? f.to_u32!.unsafe_as(Float32) : f.unsafe_as(Float64)
-  else
-    f = frac_part
-    f |= exponent.to_u64! << mantissa_bits
-    f |= 1_u64 << (total_bits - 1) if is_negative
-    is_f32 ? f.to_u32!.unsafe_as(Float32) : f.unsafe_as(Float64)
   end
 end
 
