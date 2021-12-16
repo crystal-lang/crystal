@@ -762,11 +762,23 @@ abstract class IO
         end
 
         buffer << '\r'
-        limit -= char_bytesize
+
+        if char_bytesize > limit
+          limit = 0
+        else
+          limit -= char_bytesize
+        end
+
         break if limit <= 0
 
         buffer << char2
-        limit -= char_bytesize2
+
+        if char_bytesize2 > limit
+          limit = 0
+        else
+          limit -= char_bytesize2
+        end
+
         break if limit <= 0
 
         next
@@ -777,7 +789,12 @@ abstract class IO
         buffer << char
       end
 
-      limit -= char_bytesize
+      if char_bytesize > limit
+        limit = 0
+      else
+        limit -= char_bytesize
+      end
+
       break if limit <= 0
     end
   end
