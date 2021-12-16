@@ -876,7 +876,7 @@ struct Char
     bytesize = self.bytesize
     String.new(bytesize) do |pointer|
       i = 0
-      self.each_byte do |byte|        
+      each_byte do |byte|
         pointer[i] = byte
         i += 1
       end
