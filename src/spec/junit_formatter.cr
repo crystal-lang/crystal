@@ -89,10 +89,10 @@ module Spec
 
     private def inner_content_tag(kind)
       case kind
-      when .error?   then "error"
-      when .fail?    then "failure"
-      when .pending? then "skipped"
-      else                nil
+      in .error?   then "error"
+      in .fail?    then "failure"
+      in .pending? then "skipped"
+      in .success? then nil
       end
     end
 

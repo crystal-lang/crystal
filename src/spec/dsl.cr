@@ -38,6 +38,7 @@ module Spec
     end
   end
 
+  # :nodoc:
   def self.color(str, kind : InfoKind)
     if use_colors?
       str.colorize(INFO_COLORS[kind])
