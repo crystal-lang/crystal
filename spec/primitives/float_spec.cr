@@ -50,6 +50,20 @@ describe "Primitives: Float" do
       expect_raises(OverflowError) { Float64.new!(Int128::MAX).to_i128 }
       expect_raises(OverflowError) { Float64.new!(UInt128::MAX).to_u128 }
     end
+
+    it "doesn't raise overflow if lower than Int::MAX (#11105)" do
+      Float32.new!(Int32::MAX).prev_float.to_i32
+      Float32.new!(UInt32::MAX).prev_float.to_u32
+      Float32.new!(Int64::MAX).prev_float.to_i64
+      Float32.new!(UInt64::MAX).prev_float.to_u64
+      Float32.new!(Int128::MAX).prev_float.to_i128
+      Float32::MAX.to_u128
+
+      Float64.new!(Int64::MAX).prev_float.to_i64
+      Float64.new!(UInt64::MAX).prev_float.to_u64
+      Float64.new!(Int128::MAX).prev_float.to_i128
+      Float64.new!(UInt128::MAX).prev_float.to_u128
+    end
   end
 
   describe "#to_f" do
