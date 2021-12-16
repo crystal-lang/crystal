@@ -1,5 +1,6 @@
 {% skip_file if flag?(:without_interpreter) %}
 require "../spec_helper"
+require "compiler/crystal/interpreter/*"
 
 private macro assert_overflows(code, file = __FILE__, line = __LINE__)
   it "overlows on {{code}}", file: {{file}}, line: {{line}} do
