@@ -6,7 +6,11 @@ module Crystal::System::File
   def self.open(filename, mode, perm)
     oflag = open_flag(mode) | LibC::O_CLOEXEC
 
-    fd = LibC.open(filename.check_no_null_byte, oflag, perm)
+    if perm.is_a?(::File::Permissions)
+      perm = perm.value
+    end
+
+    fd = LibC.open(filename.check_no_null_byte, oflag, LibC::ModeT.new(perm))
     if fd < 0
       raise ::File::Error.from_errno("Error opening file with mode '#{mode}'", file: filename)
     end

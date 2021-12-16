@@ -450,26 +450,65 @@ struct Char
     hasher.char(self)
   end
 
-  # Returns a Char that is one codepoint bigger than this char's codepoint.
+  # Returns the successor codepoint after this one.
+  #
+  # This can be used for iterating a range of characters (see `Range#each`).
   #
   # ```
   # 'a'.succ # => 'b'
   # 'あ'.succ # => 'ぃ'
   # ```
   #
-  # This method allows creating a `Range` of chars.
+  # This does not always return `codepoint + 1`. There is a gap in the
+  # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
+  #
+  # ```
+  # '\uD7FF'.succ # => '\uE000'
+  # ```
+  #
+  # Raises `OverflowError` for `Char::MAX`.
+  #
+  # * `#pred` returns the predecessor codepoint.
   def succ : Char
-    (ord + 1).chr
+    case self
+    when '\uD7FF'
+      '\uE000'
+    when MAX
+      raise OverflowError.new("Out of Char range")
+    else
+      (ord + 1).unsafe_chr
+    end
   end
 
-  # Returns a Char that is one codepoint smaller than this char's codepoint.
+  # Returns the predecessor codepoint before this one.
+  #
+  # This can be used for iterating a range of characters (see `Range#each`).
   #
   # ```
   # 'b'.pred # => 'a'
   # 'ぃ'.pred # => 'あ'
   # ```
+  # ```
+  #
+  # This does not always return `codepoint - 1`. There is a gap in the
+  # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
+  #
+  # ```
+  # '\uE000'.pred # => '\uD7FF'
+  # ```
+  #
+  # Raises `OverflowError` for `Char::ZERO`.
+  #
+  # * `#succ` returns the successor codepoint.
   def pred : Char
-    (ord - 1).chr
+    case self
+    when '\uE000'
+      '\uD7FF'
+    when ZERO
+      raise OverflowError.new("Out of Char range")
+    else
+      (ord - 1).unsafe_chr
+    end
   end
 
   # Returns `true` if this char is an ASCII control character.

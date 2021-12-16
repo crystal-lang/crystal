@@ -10,6 +10,7 @@
 
 require "json"
 require "./command/*"
+require "./tools/*"
 
 class Crystal::Command
   USAGE = <<-USAGE
@@ -21,6 +22,7 @@ class Crystal::Command
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
+        i/interactive            starts interactive Crystal
         play                     starts Crystal playground server
         run (default)            build and run program
         spec                     build and run specs (in spec directory)
@@ -64,7 +66,7 @@ class Crystal::Command
     when !command
       puts USAGE
       exit
-    when "init".starts_with?(command)
+    when command == "init"
       options.shift
       init
     when "build".starts_with?(command)
@@ -95,7 +97,15 @@ class Crystal::Command
       options.shift
       use_crystal_opts
       eval
-    when "run".starts_with?(command)
+    when command == "i" || command == "interactive"
+      options.shift
+      {% if flag?(:without_interpreter) %}
+        STDERR.puts "Crystal was compiled without interpreter support"
+        exit 1
+      {% else %}
+        repl
+      {% end %}
+    when command == "run"
       options.shift
       use_crystal_opts
       run_command(single_file: false)

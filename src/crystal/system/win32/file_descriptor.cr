@@ -1,5 +1,7 @@
 require "c/io"
 require "c/consoleapi"
+require "c/consoleapi2"
+require "c/winnls"
 
 module Crystal::System::FileDescriptor
   @volatile_fd : Atomic(LibC::Int)
@@ -182,5 +184,18 @@ module Crystal::System::FileDescriptor
       io.flush_on_newline = true
     end
     io
+  end
+end
+
+# Enable UTF-8 console I/O for the duration of program execution
+if LibC.IsValidCodePage(LibC::CP_UTF8) != 0
+  old_input_cp = LibC.GetConsoleCP
+  if LibC.SetConsoleCP(LibC::CP_UTF8) != 0
+    at_exit { LibC.SetConsoleCP(old_input_cp) }
+  end
+
+  old_output_cp = LibC.GetConsoleOutputCP
+  if LibC.SetConsoleOutputCP(LibC::CP_UTF8) != 0
+    at_exit { LibC.SetConsoleOutputCP(old_output_cp) }
   end
 end
