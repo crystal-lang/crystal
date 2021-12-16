@@ -398,27 +398,27 @@ describe "String" do
     end
 
     describe "to_i128" do
-      pending_win32 { "170141183460469231731687303715884105727".to_i128.should eq(Int128::MAX) }
-      pending_win32 { "-170141183460469231731687303715884105728".to_i128.should eq(Int128::MIN) }
-      pending_win32 { expect_raises(ArgumentError) { "170141183460469231731687303715884105728".to_i128 } }
-      pending_win32 { expect_raises(ArgumentError) { "-170141183460469231731687303715884105729".to_i128 } }
+      it { "170141183460469231731687303715884105727".to_i128.should eq(Int128::MAX) }
+      it { "-170141183460469231731687303715884105728".to_i128.should eq(Int128::MIN) }
+      it { expect_raises(ArgumentError) { "170141183460469231731687303715884105728".to_i128 } }
+      it { expect_raises(ArgumentError) { "-170141183460469231731687303715884105729".to_i128 } }
 
-      pending_win32 { "170141183460469231731687303715884105727".to_i128?.should eq(Int128::MAX) }
-      pending_win32 { "170141183460469231731687303715884105728".to_i128?.should be_nil }
-      pending_win32 { "170141183460469231731687303715884105728".to_i128 { 0 }.should eq(0) }
+      it { "170141183460469231731687303715884105727".to_i128?.should eq(Int128::MAX) }
+      it { "170141183460469231731687303715884105728".to_i128?.should be_nil }
+      it { "170141183460469231731687303715884105728".to_i128 { 0 }.should eq(0) }
 
-      pending_win32 { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_i128 } }
+      it { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_i128 } }
     end
 
     describe "to_u128" do
-      pending_win32 { "340282366920938463463374607431768211455".to_u128.should eq(UInt128::MAX) }
-      pending_win32 { "0".to_u128.should eq(0) }
-      pending_win32 { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_u128 } }
-      pending_win32 { expect_raises(ArgumentError) { "-1".to_u128 } }
+      it { "340282366920938463463374607431768211455".to_u128.should eq(UInt128::MAX) }
+      it { "0".to_u128.should eq(0) }
+      it { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_u128 } }
+      it { expect_raises(ArgumentError) { "-1".to_u128 } }
 
-      pending_win32 { "340282366920938463463374607431768211455".to_u128?.should eq(UInt128::MAX) }
-      pending_win32 { "340282366920938463463374607431768211456".to_u128?.should be_nil }
-      pending_win32 { "340282366920938463463374607431768211456".to_u128 { 0 }.should eq(0) }
+      it { "340282366920938463463374607431768211455".to_u128?.should eq(UInt128::MAX) }
+      it { "340282366920938463463374607431768211456".to_u128?.should be_nil }
+      it { "340282366920938463463374607431768211456".to_u128 { 0 }.should eq(0) }
     end
 
     it { "1234".to_i32.should eq(1234) }
@@ -1020,57 +1020,57 @@ describe "String" do
 
   describe "partition" do
     describe "by char" do
-      it { "hello".partition('h').should eq ({"", "h", "ello"}) }
-      it { "hello".partition('o').should eq ({"hell", "o", ""}) }
-      it { "hello".partition('l').should eq ({"he", "l", "lo"}) }
-      it { "hello".partition('x').should eq ({"hello", "", ""}) }
+      it { "hello".partition('h').should eq({"", "h", "ello"}) }
+      it { "hello".partition('o').should eq({"hell", "o", ""}) }
+      it { "hello".partition('l').should eq({"he", "l", "lo"}) }
+      it { "hello".partition('x').should eq({"hello", "", ""}) }
     end
 
     describe "by string" do
-      it { "hello".partition("h").should eq ({"", "h", "ello"}) }
-      it { "hello".partition("o").should eq ({"hell", "o", ""}) }
-      it { "hello".partition("l").should eq ({"he", "l", "lo"}) }
-      it { "hello".partition("ll").should eq ({"he", "ll", "o"}) }
-      it { "hello".partition("x").should eq ({"hello", "", ""}) }
+      it { "hello".partition("h").should eq({"", "h", "ello"}) }
+      it { "hello".partition("o").should eq({"hell", "o", ""}) }
+      it { "hello".partition("l").should eq({"he", "l", "lo"}) }
+      it { "hello".partition("ll").should eq({"he", "ll", "o"}) }
+      it { "hello".partition("x").should eq({"hello", "", ""}) }
     end
 
     describe "by regex" do
-      it { "hello".partition(/h/).should eq ({"", "h", "ello"}) }
-      it { "hello".partition(/o/).should eq ({"hell", "o", ""}) }
-      it { "hello".partition(/l/).should eq ({"he", "l", "lo"}) }
-      it { "hello".partition(/ll/).should eq ({"he", "ll", "o"}) }
-      it { "hello".partition(/.l/).should eq ({"h", "el", "lo"}) }
-      it { "hello".partition(/.h/).should eq ({"hello", "", ""}) }
-      it { "hello".partition(/h./).should eq ({"", "he", "llo"}) }
-      it { "hello".partition(/o./).should eq ({"hello", "", ""}) }
-      it { "hello".partition(/.o/).should eq ({"hel", "lo", ""}) }
-      it { "hello".partition(/x/).should eq ({"hello", "", ""}) }
+      it { "hello".partition(/h/).should eq({"", "h", "ello"}) }
+      it { "hello".partition(/o/).should eq({"hell", "o", ""}) }
+      it { "hello".partition(/l/).should eq({"he", "l", "lo"}) }
+      it { "hello".partition(/ll/).should eq({"he", "ll", "o"}) }
+      it { "hello".partition(/.l/).should eq({"h", "el", "lo"}) }
+      it { "hello".partition(/.h/).should eq({"hello", "", ""}) }
+      it { "hello".partition(/h./).should eq({"", "he", "llo"}) }
+      it { "hello".partition(/o./).should eq({"hello", "", ""}) }
+      it { "hello".partition(/.o/).should eq({"hel", "lo", ""}) }
+      it { "hello".partition(/x/).should eq({"hello", "", ""}) }
     end
   end
 
   describe "rpartition" do
     describe "by char" do
-      it { "hello".rpartition('l').should eq ({"hel", "l", "o"}) }
-      it { "hello".rpartition('o').should eq ({"hell", "o", ""}) }
-      it { "hello".rpartition('h').should eq ({"", "h", "ello"}) }
+      it { "hello".rpartition('l').should eq({"hel", "l", "o"}) }
+      it { "hello".rpartition('o').should eq({"hell", "o", ""}) }
+      it { "hello".rpartition('h').should eq({"", "h", "ello"}) }
     end
 
     describe "by string" do
-      it { "hello".rpartition("l").should eq ({"hel", "l", "o"}) }
-      it { "hello".rpartition("x").should eq ({"", "", "hello"}) }
-      it { "hello".rpartition("o").should eq ({"hell", "o", ""}) }
-      it { "hello".rpartition("h").should eq ({"", "h", "ello"}) }
-      it { "hello".rpartition("ll").should eq ({"he", "ll", "o"}) }
-      it { "hello".rpartition("lo").should eq ({"hel", "lo", ""}) }
-      it { "hello".rpartition("he").should eq ({"", "he", "llo"}) }
+      it { "hello".rpartition("l").should eq({"hel", "l", "o"}) }
+      it { "hello".rpartition("x").should eq({"", "", "hello"}) }
+      it { "hello".rpartition("o").should eq({"hell", "o", ""}) }
+      it { "hello".rpartition("h").should eq({"", "h", "ello"}) }
+      it { "hello".rpartition("ll").should eq({"he", "ll", "o"}) }
+      it { "hello".rpartition("lo").should eq({"hel", "lo", ""}) }
+      it { "hello".rpartition("he").should eq({"", "he", "llo"}) }
     end
 
     describe "by regex" do
-      it { "hello".rpartition(/.l/).should eq ({"he", "ll", "o"}) }
-      it { "hello".rpartition(/ll/).should eq ({"he", "ll", "o"}) }
-      it { "hello".rpartition(/.o/).should eq ({"hel", "lo", ""}) }
-      it { "hello".rpartition(/.e/).should eq ({"", "he", "llo"}) }
-      it { "hello".rpartition(/l./).should eq ({"hel", "lo", ""}) }
+      it { "hello".rpartition(/.l/).should eq({"he", "ll", "o"}) }
+      it { "hello".rpartition(/ll/).should eq({"he", "ll", "o"}) }
+      it { "hello".rpartition(/.o/).should eq({"hel", "lo", ""}) }
+      it { "hello".rpartition(/.e/).should eq({"", "he", "llo"}) }
+      it { "hello".rpartition(/l./).should eq({"hel", "lo", ""}) }
     end
   end
 

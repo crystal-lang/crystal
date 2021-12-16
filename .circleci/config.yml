@@ -123,7 +123,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout 406d7d2bb371fd819b9977cc5e91e5dc58bfd5f2
+          git checkout 638d5887e7a4bff9c32ab72fe9a32395df9dc1c5
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -431,8 +431,8 @@ jobs:
       - run: |
           cd /tmp/workspace/distribution-scripts
           source ./build.env
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64.tar.gz | docker image load
-          export DOCKER_TEST_PREFIX="crystallang/crystal:$DOCKER_TAG" >> $BASH_ENV
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
+          echo "export DOCKER_TEST_PREFIX=crystallang/crystal:${DOCKER_TAG}" >> $BASH_ENV
       - checkout
       - run: bin/ci prepare_system
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
@@ -504,7 +504,7 @@ workflows:
       - publish_docker:
           filters: *release
           requires:
-            - dist_docker
+            - test_dist_linux_on_docker
       - dist_docs:
           filters: *release
           requires:

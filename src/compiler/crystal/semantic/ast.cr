@@ -32,7 +32,7 @@ module Crystal
     end
 
     # `number_autocast` defines if casting numeric expressions to larger ones is enabled
-    def supports_autocast?(number_autocast : Bool = false)
+    def supports_autocast?(number_autocast : Bool = true)
       case self
       when NumberLiteral, SymbolLiteral
         true
@@ -178,7 +178,7 @@ module Crystal
     property yield_vars : Array(Var)?
     property previous : DefWithMetadata?
     property next : Def?
-    getter special_vars : Set(String)?
+    property special_vars : Set(String)?
     property block_nest = 0
     getter? raises = false
     property? closure = false

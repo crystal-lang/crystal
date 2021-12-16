@@ -37,7 +37,7 @@ class Crystal::Path
 end
 
 class Crystal::Call
-  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_autocast = false, number_autocast = false)
+  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_autocast = false, number_autocast = true)
     obj = @obj
     with_scope = @with_scope
 

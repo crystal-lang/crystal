@@ -191,6 +191,9 @@ module Crystal
       types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
       abstract_value_type(struct_t)
 
+      types["Enumerable"] = @enumerable = GenericModuleType.new self, self, "Enumerable", ["T"]
+      types["Indexable"] = @indexable = GenericModuleType.new self, self, "Indexable", ["T"]
+
       types["Array"] = @array = GenericClassType.new self, self, "Array", reference, ["T"]
       types["Hash"] = @hash_type = GenericClassType.new self, self, "Hash", reference, ["K", "V"]
       types["Regex"] = @regex = NonGenericClassType.new self, self, "Regex", reference
@@ -450,8 +453,8 @@ module Crystal
     end
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64 int128
-                     uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer array static_array
-                     exception tuple named_tuple proc union enum range regex crystal
+                     uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer enumerable indexable
+                     array static_array exception tuple named_tuple proc union enum range regex crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation

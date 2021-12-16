@@ -255,6 +255,7 @@ lib LibLLVM
   fun get_initializer = LLVMGetInitializer(global_var : ValueRef) : ValueRef
   fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : LLVM::Linkage)
   fun get_linkage = LLVMGetLinkage(global : ValueRef) : LLVM::Linkage
+  fun set_dll_storage_class = LLVMSetDLLStorageClass(global : ValueRef, storage_class : LLVM::DLLStorageClass)
   fun set_metadata = LLVMSetMetadata(value : ValueRef, kind_id : UInt32, node : ValueRef)
   fun set_target = LLVMSetTarget(mod : ModuleRef, triple : UInt8*)
   fun set_thread_local = LLVMSetThreadLocal(global_var : ValueRef, is_thread_local : Int32)

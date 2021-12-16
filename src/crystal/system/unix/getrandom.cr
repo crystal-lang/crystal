@@ -3,6 +3,19 @@
 require "c/unistd"
 require "./syscall"
 
+{% if flag?(:interpreted) %}
+  lib LibC
+    fun getrandom(buf : Void*, buflen : SizeT, flags : UInt32) : LibC::SSizeT
+  end
+
+  module Crystal::System::Syscall
+    # TODO: Implement syscall for interpreter
+    def self.getrandom(buf : UInt8*, buflen : LibC::SizeT, flags : UInt32) : LibC::SSizeT
+      LibC.getrandom(buf, buflen, flags)
+    end
+  end
+{% end %}
+
 module Crystal::System::Random
   @@initialized = false
   @@getrandom_available = false

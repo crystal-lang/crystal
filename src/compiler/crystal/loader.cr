@@ -1,3 +1,4 @@
+{% skip_file unless flag?(:unix) %}
 require "option_parser"
 
 # This loader component imitates the behaviour of `ld.so` for linking and loading

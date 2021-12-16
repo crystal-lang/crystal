@@ -137,6 +137,7 @@ pkgs.stdenv.mkDerivation rec {
     latestCrystalBinary
     pkgconfig
     llvm_suite.llvm
+    pkgs.libffi
   ];
 
   LLVM_CONFIG = "${llvm_suite.llvm}/bin/llvm-config";
