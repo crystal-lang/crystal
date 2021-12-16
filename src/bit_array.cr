@@ -191,25 +191,26 @@ struct BitArray
     if start_bit_index == end_bit_index
       # same UInt8, don't perform the loop at all
       mask = uint8_mask(start_sub_index, end_sub_index)
-      set_bits(value, start_bit_index, mask)
+      set_bits(bytes, value, start_bit_index, mask)
     else
       mask = uint8_mask(start_sub_index, 7)
-      set_bits(value, start_bit_index, mask)
+      set_bits(bytes, value, start_bit_index, mask)
 
       bytes[start_bit_index + 1..end_bit_index - 1].fill(value ? 0xFF_u8 : 0x00_u8)
 
       mask = uint8_mask(0, end_sub_index)
-      set_bits(value, end_bit_index, mask)
+      set_bits(bytes, value, end_bit_index, mask)
     end
 
     self
   end
 
-  private macro set_bits(value, index, mask)
-    if {{ value }}
-      bytes[{{ index }}] |= {{ mask }}
+  @[AlwaysInline]
+  private def set_bits(bytes : Slice(UInt8), value, index, mask)
+    if value
+      bytes[index] |= mask
     else
-      bytes[{{ index }}] &= ~{{ mask }}
+      bytes[index] &= ~mask
     end
   end
 
