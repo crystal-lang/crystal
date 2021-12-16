@@ -875,11 +875,8 @@ struct Char
   def to_s : String
     bytesize = self.bytesize
     String.new(bytesize) do |pointer|
-      i = 0
-      each_byte do |byte|
-        pointer[i] = byte
-        i += 1
-      end
+      appender = buffer.appender
+      each_byte { |byte| appender << byte }
       {bytesize, 1}
     end
   end
