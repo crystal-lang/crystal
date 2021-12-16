@@ -1,3 +1,5 @@
+require "llvm/enums/atomic"
+
 # A value that may be updated atomically.
 #
 # Only primitive integer types, reference types or nilable reference types
@@ -198,57 +200,27 @@ struct Atomic(T)
   end
 
   # :nodoc:
-  # this enum should match `LLVMAtomicOrdering`'s definition
-  enum Ordering
-    NotAtomic              = 0
-    Unordered              = 1
-    Monotonic              = 2
-    Acquire                = 4
-    Release                = 5
-    AcquireRelease         = 6
-    SequentiallyConsistent = 7
-  end
-
-  # :nodoc:
-  # this enum should match `LLVMAtomicRMWBinOp`'s definition
-  enum RMWBinOp
-    Xchg
-    Add
-    Sub
-    And
-    Nand
-    Or
-    Xor
-    Max
-    Min
-    Umax
-    Umin
-    Fadd
-    Fsub
-  end
-
-  # :nodoc:
   module Ops
     # Defines methods that directly map to LLVM instructions related to atomic operations.
 
     @[Primitive(:cmpxchg)]
-    def self.cmpxchg(ptr : T*, cmp : T, new : T, success_ordering : Ordering, failure_ordering : Ordering) : {T, Bool} forall T
+    def self.cmpxchg(ptr : T*, cmp : T, new : T, success_ordering : LLVM::AtomicOrdering, failure_ordering : LLVM::AtomicOrdering) : {T, Bool} forall T
     end
 
     @[Primitive(:atomicrmw)]
-    def self.atomicrmw(op : RMWBinOp, ptr : T*, val : T, ordering : Ordering, singlethread : Bool) : T forall T
+    def self.atomicrmw(op : LLVM::AtomicRMWBinOp, ptr : T*, val : T, ordering : LLVM::AtomicOrdering, singlethread : Bool) : T forall T
     end
 
     @[Primitive(:fence)]
-    def self.fence(ordering : Ordering, singlethread : Bool) : Nil
+    def self.fence(ordering : LLVM::AtomicOrdering, singlethread : Bool) : Nil
     end
 
     @[Primitive(:load_atomic)]
-    def self.load(ptr : T*, ordering : Ordering, volatile : Bool) : T forall T
+    def self.load(ptr : T*, ordering : LLVM::AtomicOrdering, volatile : Bool) : T forall T
     end
 
     @[Primitive(:store_atomic)]
-    def self.store(ptr : T*, value : T, ordering : Ordering, volatile : Bool) : Nil forall T
+    def self.store(ptr : T*, value : T, ordering : LLVM::AtomicOrdering, volatile : Bool) : Nil forall T
     end
   end
 end

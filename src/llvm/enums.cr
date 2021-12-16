@@ -467,3 +467,5 @@ module LLVM
     end
   end
 end
+
+require "./enums/*"

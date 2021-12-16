@@ -1227,10 +1227,10 @@ class Crystal::CodeGenVisitor
     if node.type.implements?(@program.enum) && llvm_arg.type.kind.integer? && llvm_arg.type.int_width == 32
       # any `Int32` enum will do, it is up to `Atomic::Ops` to use appropriate
       # parameter restrictions so that things don't go bad
-      Atomic::Ordering.new(llvm_arg.const_int_get_sext_value.to_i32!)
+      LLVM::AtomicOrdering.new(llvm_arg.const_int_get_sext_value.to_i32!)
     elsif node.is_a?(SymbolLiteral)
       # TODO: remove after 1.3.0
-      op = Atomic::Ordering.parse?(node.value)
+      op = LLVM::AtomicOrdering.parse?(node.value)
       unless op
         node.raise "unknown atomic ordering: #{node.value}"
       end
@@ -1244,9 +1244,9 @@ class Crystal::CodeGenVisitor
     node.raise "atomic rwm bin op must be a constant" unless llvm_arg.constant?
 
     if node.type.implements?(@program.enum) && llvm_arg.type.kind.integer? && llvm_arg.type.int_width == 32
-      Atomic::RMWBinOp.new(llvm_arg.const_int_get_sext_value.to_i32!)
+      LLVM::AtomicRMWBinOp.new(llvm_arg.const_int_get_sext_value.to_i32!)
     elsif node.is_a?(SymbolLiteral)
-      op = Atomic::RMWBinOp.parse?(node.value)
+      op = LLVM::AtomicRMWBinOp.parse?(node.value)
       unless op
         node.raise "unknown atomic rwm bin op: #{node.value}"
       end
