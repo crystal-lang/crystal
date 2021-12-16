@@ -60,8 +60,8 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./bdwgc
         run: |
-          cmake . -DBUILD_SHARED_LIBS=OFF -Denable_large_config=ON -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF -Dwithout_libatomic_ops=ON
-          cmake --build . --config Release
+          cmake . -DBUILD_SHARED_LIBS=OFF -Denable_large_config=ON -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
+          cmake --build . --config Release -Dwithout_libatomic_ops=ON
       - name: Download libpcre
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
