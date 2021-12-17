@@ -1015,21 +1015,21 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     begin
       current_type.as(ModuleType).include type
-      run_hooks hook_type(type), current_type, kind, node
+      run_hooks hook_type(type), current_type, kind, node, path_lookup: type
     rescue ex : TypeException
       node.raise "at '#{kind}' hook", ex
     end
   end
 
-  def run_hooks(type_with_hooks, current_type, kind, node, call = nil)
+  def run_hooks(type_with_hooks, current_type, kind, node, call = nil, path_lookup = current_type.instance_type)
     type_with_hooks.as?(ModuleType).try &.hooks.try &.each do |hook|
       next if hook.kind != kind
 
       expansion = expand_macro(hook.macro, node, visibility: :public) do
         if call
-          @program.expand_macro hook.macro, call, current_type.instance_type
+          @program.expand_macro hook.macro, call, current_type.instance_type, path_lookup
         else
-          @program.expand_macro hook.macro.body, current_type.instance_type
+          @program.expand_macro hook.macro.body, current_type.instance_type, path_lookup
         end
       end
 
