@@ -218,17 +218,22 @@ module Crystal::Playground
       ECR.embed "#{__DIR__}/views/layout.html.ecr", io
     end
 
-    protected def add_resource(kind, src)
+    protected def add_resource(kind : ResourceKind, src)
       @resources << Resource.new(kind, src)
     end
 
-    def each_resource(kind)
+    def each_resource(kind : ResourceKind)
       @resources.each do |res|
         yield res if res.kind == kind
       end
     end
 
-    record Resource, kind : Symbol, src : String
+    enum ResourceKind
+      CSS
+      JS
+    end
+
+    record Resource, kind : ResourceKind, src : String
   end
 
   class FileContentPage < PlaygroundPage
