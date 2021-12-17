@@ -763,23 +763,13 @@ abstract class IO
 
         buffer << '\r'
 
-        if char_bytesize > limit
-          limit = 0
-        else
-          limit -= char_bytesize
-        end
-
-        break if limit <= 0
+        break if char_bytesize >= limit
+        limit -= char_bytesize
 
         buffer << char2
 
-        if char_bytesize2 > limit
-          limit = 0
-        else
-          limit -= char_bytesize2
-        end
-
-        break if limit <= 0
+        break if char_bytesize2 >= limit
+        limit -= char_bytesize2
 
         next
       elsif char == delimiter
@@ -789,13 +779,8 @@ abstract class IO
         buffer << char
       end
 
-      if char_bytesize > limit
-        limit = 0
-      else
-        limit -= char_bytesize
-      end
-
-      break if limit <= 0
+      break if char_bytesize >= limit
+      limit -= char_bytesize
     end
   end
 
