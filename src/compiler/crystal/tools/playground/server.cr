@@ -350,10 +350,10 @@ module Crystal::Playground
 
     def load_resources(page : PlaygroundPage)
       Dir["playground/resources/*.css"].each do |file|
-        page.styles.add "/workbook/#{file}"
+        page.styles << "/workbook/#{file}"
       end
       Dir["playground/resources/*.js"].each do |file|
-        page.scripts.add "/workbook/#{file}"
+        page.scripts << "/workbook/#{file}"
       end
     end
   end
