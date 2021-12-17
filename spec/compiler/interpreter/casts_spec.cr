@@ -58,7 +58,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "casts from mixed union type to primitive type" do
-      interpret(<<-CODE, prelude: "prelude").should eq(2)
+      interpret(<<-CODE, prelude: "prelude").should eq("2")
         x = 1 == 1 ? 2 : nil
         x.as(Int32)
       CODE
@@ -81,7 +81,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "upcasts between tuple types" do
-      interpret(<<-CODE, prelude: "prelude").should eq(1 + 'a'.ord)
+      interpret(<<-CODE, prelude: "prelude").should eq((1 + 'a'.ord).to_s)
         a =
           if 1 == 1
             {1, 'a'}
@@ -94,7 +94,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "upcasts between named tuple types, same order" do
-      interpret(<<-CODE, prelude: "prelude").should eq(1 + 'a'.ord)
+      interpret(<<-CODE, prelude: "prelude").should eq((1 + 'a'.ord).to_s)
         a =
           if 1 == 1
             {a: 1, b: 'a'}
@@ -107,7 +107,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "upcasts between named tuple types, different order" do
-      interpret(<<-CODE, prelude: "prelude").should eq(1 + 'a'.ord)
+      interpret(<<-CODE, prelude: "prelude").should eq((1 + 'a'.ord).to_s)
         a =
           if 1 == 1
             {a: 1, b: 'a'}
@@ -214,7 +214,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "discards cast" do
-      interpret(<<-CODE, prelude: "prelude").should eq(10)
+      interpret(<<-CODE, prelude: "prelude").should eq("10")
         x = 1 || 'a'
         x.as(Int32)
         10
@@ -234,7 +234,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "casts to filtered type, not type in as(...)" do
-      interpret(<<-CODE, prelude: "prelude").should eq(1)
+      interpret(<<-CODE, prelude: "prelude").should eq("1")
         ({1} || 2).as(Tuple)[0]
       CODE
     end

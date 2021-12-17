@@ -3,24 +3,45 @@ require "../spec_helper"
 require "compiler/crystal/interpreter/*"
 
 def interpret(code, *, prelude = "primitives")
-  context, value = interpret_with_context(code, prelude: prelude)
-  value.value
+  if prelude == "primitives"
+    context, value = interpret_with_context(code, prelude)
+    value.value
+  else
+    interpret_in_separate_process(code, prelude)
+  end
 end
 
-def interpret_with_context(code, *, prelude = "primitives")
+def interpret_with_context(code, prelude = "primitives")
   repl = Crystal::Repl.new
   repl.prelude = prelude
 
-  # We disable the GC for programs that use the prelude because
-  # finalizers might kick off after the Context has been finalized,
-  # leading to segfaults.
-  # This is a bit tricky to solve: the finalizers will run once the
-  # context has been destroyed (it's memory is no longer allocated
-  # so the objects in the program won't be referenced anymore),
-  # but for finalizers to be able to run the context needs to be
-  # there! :/
-  code = "GC.disable\n#{code}" if prelude == "prelude"
-
   value = repl.run_code(code)
   {repl.context, value}
+end
+
+# FIXME: The following is a dirty hack to work around GC issues in interpreted programs. https://github.com/crystal-lang/crystal/issues/11602
+def Spec.option_parser
+  option_parser = previous_def
+  option_parser.on("", "--interpret-code PRELUDE", "Execute interpreted code") do |prelude|
+    code = STDIN.gets_to_end
+    _, value = interpret_with_context(code, prelude)
+    print value
+    exit
+  end
+  option_parser
+end
+
+def interpret_in_separate_process(code, prelude)
+  input = IO::Memory.new(code)
+  output = IO::Memory.new
+  error = IO::Memory.new
+  executable = Process.executable_path || fail "Can't find executable path of current process"
+  process = Process.new(executable, ["--interpret-code", prelude], input: input, output: output, error: error)
+
+  status = process.wait
+  unless status.success?
+    fail error.rewind.gets_to_end + output.rewind.gets_to_end
+  end
+
+  output.rewind.gets_to_end
 end

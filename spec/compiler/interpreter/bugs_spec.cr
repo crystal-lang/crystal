@@ -96,7 +96,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "doesn't incorrectly consider a non-closure as closure" do
-      interpret(<<-CODE, prelude: "prelude").should eq(false)
+      interpret(<<-CODE, prelude: "prelude").should eq("false")
         c = 0
         ->{
           c
@@ -130,7 +130,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does leading zeros" do
-      interpret(<<-CODE, prelude: "prelude").should eq(8)
+      interpret(<<-CODE, prelude: "prelude").should eq("8")
         0_i8.leading_zeros_count
       CODE
     end
