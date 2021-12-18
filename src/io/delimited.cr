@@ -150,14 +150,6 @@ class IO::Delimited < IO
       end
     end
 
-    # If the matching byte is past the data we need to read,
-    # we can fill the entire slice
-    if index >= slice.size
-      slice.copy_from(peek[0, slice.size])
-      @io.skip(slice.size)
-      return slice.size
-    end
-
     # If the delimiter is just a single byte, we can stop right here
     if @delimiter_buffer.size == 1
       slice.copy_from(peek[0, index])
