@@ -92,7 +92,7 @@ module Crystal
 
   class Program
     def object_extension
-      has_flag?("windows") ? ".obj" : ".o"
+      has_flag?("windows") ? ".obj" : has_flag?("wasm32") ? ".wasm" : ".o"
     end
 
     def lib_flags
