@@ -470,7 +470,7 @@ module Crystal
       end
 
       check :DELIMITER_START
-      is_regex = @token.delimiter_state.kind == :regex
+      is_regex = @token.delimiter_state.kind.regex?
 
       write @token.raw
       next_string_token
@@ -522,7 +522,7 @@ module Crystal
     end
 
     def visit(node : StringInterpolation)
-      if @token.delimiter_state.kind == :heredoc
+      if @token.delimiter_state.kind.heredoc?
         # For heredoc, only write the start: on a newline will print it
         @lexer.heredocs << {@token.delimiter_state, HeredocInfo.new(node, @token.dup, @line, @column, @indent, @string_continuation)}
         write @token.raw
@@ -538,14 +538,14 @@ module Crystal
     def visit_string_interpolation(node, token, line, column, old_indent, old_string_continuation, wrote_token = false)
       @token = token
 
-      is_regex = token.delimiter_state.kind == :regex
+      is_regex = token.delimiter_state.kind.regex?
       indent_difference = token.column_number - (column + 1)
 
       write token.raw unless wrote_token
       next_string_token
 
       delimiter_state = token.delimiter_state
-      is_heredoc = token.delimiter_state.kind == :heredoc
+      is_heredoc = token.delimiter_state.kind.heredoc?
       @last_is_heredoc = is_heredoc
 
       heredoc_line = @line
