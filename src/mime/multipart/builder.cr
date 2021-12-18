@@ -16,7 +16,7 @@ module MIME::Multipart
     # Creates a new `Multipart::Builder` which writes the generated multipart
     # message to *io*, using the multipart boundary *boundary*.
     def initialize(@io : IO, @boundary = Multipart.generate_boundary)
-      @state = :START
+      @state = State::START
     end
 
     getter boundary
@@ -66,9 +66,9 @@ module MIME::Multipart
     #
     # Can be called multiple times to append to the preamble multiple times.
     def preamble
-      fail "Cannot generate preamble: body already started" if @state != :START && @state != :PREAMBLE
+      fail "Cannot generate preamble: body already started" unless @state.start? || @state.preamble?
       yield @io
-      @state = :PREAMBLE
+      @state = State::PREAMBLE
     end
 
     # Appends a body part to the multipart message with the given *headers*
@@ -107,12 +107,12 @@ module MIME::Multipart
     end
 
     private def body_part_impl(headers, empty = false)
-      fail "Cannot generate body part: already finished" if @state == :FINISHED
-      fail "Cannot generate body part: after epilogue" if @state == :EPILOGUE
+      fail "Cannot generate body part: already finished" if @state.finished?
+      fail "Cannot generate body part: after epilogue" if @state.epilogue?
 
       # We don't add a crlf before the first boundary if this is the first body
       # part and there is no preamble
-      @io << "\r\n" unless @state == :START
+      @io << "\r\n" unless @state.start?
       @io << "--" << @boundary
       headers.each do |name, values|
         values.each do |value|
@@ -123,7 +123,7 @@ module MIME::Multipart
 
       yield @io
 
-      @state = :BODY_PART
+      @state = State::BODY_PART
     end
 
     # Appends *string* to the epilogue segment of the multipart message. Throws
@@ -159,31 +159,37 @@ module MIME::Multipart
     #
     # Can be called multiple times to append to the preamble multiple times.
     def epilogue
-      fail "Cannot generate epilogue: already finished" if @state == :FINISHED
-      fail "Cannot generate epilogue: no body parts" if @state == :START || @state == :PREAMBLE
-
-      if @state != :EPILOGUE
+      case @state
+      when .start?, .preamble?
+        fail "Cannot generate epilogue: no body parts"
+      when .finished?
+        fail "Cannot generate epilogue: already finished"
+      when .epilogue?
+        # do nothing
+      else
         # We need to send the end boundary
         @io << "\r\n--" << @boundary << "--\r\n"
       end
 
       yield @io
 
-      @state = :EPILOGUE
+      @state = State::EPILOGUE
     end
 
     # Finalizes the multipart message, this method must be called to properly
     # end the multipart message.
     def finish : Nil
-      fail "Cannot finish multipart: no body parts" if @state == :START || @state == :PREAMBLE
-      fail "Cannot finish multipart: already finished" if @state == :FINISHED
-
-      if @state == :BODY_PART
+      case @state
+      when .start?, .preamble?
+        fail "Cannot finish multipart: no body parts"
+      when .finished?
+        fail "Cannot finish multipart: already finished"
+      when .body_part?
         # We need to send the end boundary
         @io << "\r\n--" << @boundary << "--"
       end
 
-      @state = :FINISHED
+      @state = State::FINISHED
       @io.flush
     end
 
