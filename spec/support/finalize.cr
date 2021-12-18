@@ -1,4 +1,4 @@
-class State
+module FinalizeState
   @@count = {} of String => Int64
 
   def self.inc(key : String)
@@ -20,7 +20,7 @@ module FinalizeCounter
 
     def finalize
       if key = @key
-        State.inc(key)
+        FinalizeState.inc(key)
       end
 
       {% if @type.has_method?(:finalize) %}
@@ -31,8 +31,8 @@ module FinalizeCounter
 end
 
 def assert_finalizes(key : String)
-  State.reset
-  State.count(key).should eq(0)
+  FinalizeState.reset
+  FinalizeState.count(key).should eq(0)
 
   10.times do
     obj = yield
@@ -41,5 +41,5 @@ def assert_finalizes(key : String)
 
   GC.collect
 
-  State.count(key).should be > 0
+  FinalizeState.count(key).should be > 0
 end
