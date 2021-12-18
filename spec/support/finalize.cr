@@ -1,11 +1,11 @@
 class State
   @@count = {} of String => Int64
 
-  def self.inc(key)
+  def self.inc(key : String)
     @@count[key] = @@count.fetch(key, 0i64) + 1
   end
 
-  def self.count(key)
+  def self.count(key : String)
     @@count.fetch(key, 0i64)
   end
 
@@ -19,7 +19,7 @@ module FinalizeCounter
     property key : String?
 
     def finalize
-      if key = self.key
+      if key = @key
         State.inc(key)
       end
 
@@ -30,7 +30,7 @@ module FinalizeCounter
   end
 end
 
-def assert_finalizes(key)
+def assert_finalizes(key : String)
   State.reset
   State.count(key).should eq(0)
 
