@@ -203,11 +203,11 @@ describe OpenSSL::SSL::Context do
   {% end %}
 
   it "calls #finalize on insecure client context" do
-    assert_finalizes(:insecure_client_ctx) { OpenSSL::SSL::Context::Client.insecure }
+    assert_finalizes("insecure_client_ctx") { OpenSSL::SSL::Context::Client.insecure }
   end
 
   it "calls #finalize on insecure server context" do
-    assert_finalizes(:insecure_server_ctx) { OpenSSL::SSL::Context::Server.insecure }
+    assert_finalizes("insecure_server_ctx") { OpenSSL::SSL::Context::Server.insecure }
   end
 
   describe ".from_hash" do

@@ -1,5 +1,5 @@
 class State
-  @@count = {} of Symbol => Int64
+  @@count = {} of String => Int64
 
   def self.inc(key)
     @@count[key] = @@count.fetch(key, 0i64) + 1
@@ -16,7 +16,7 @@ end
 
 module FinalizeCounter
   macro included
-    property key : Symbol?
+    property key : String?
 
     def finalize
       if key = self.key

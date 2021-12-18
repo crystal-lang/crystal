@@ -488,7 +488,7 @@ describe Object do
 
   it "calls #finalize on #clone'd objects" do
     obj = TestObjectWithFinalize.new
-    assert_finalizes(:clone) { obj.clone }
+    assert_finalizes("clone") { obj.clone }
   end
 
   describe "def_hash" do

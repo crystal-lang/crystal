@@ -138,6 +138,6 @@ describe "Reference" do
 
   it "calls #finalize on #dup'ed objects" do
     obj = ReferenceSpec::TestClassWithFinalize.new
-    assert_finalizes(:clone) { obj.dup }
+    assert_finalizes("dup") { obj.dup }
   end
 end
