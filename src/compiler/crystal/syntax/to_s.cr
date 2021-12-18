@@ -372,7 +372,7 @@ module Crystal
       elsif node_obj && node.name.in?(UNARY_OPERATORS) && node.args.empty? && !node.named_args && !node.block_arg && !block
         @str << decorate_call(node, node.name)
         in_parenthesis(need_parens, node_obj)
-      elsif node_obj && !letter_or_underscore?(node.name) && node.name != "~" && node.args.size == 1 && !node.named_args && !node.block_arg && !block
+      elsif node_obj && !Lexer.ident?(node.name) && node.name != "~" && node.args.size == 1 && !node.named_args && !node.block_arg && !block
         in_parenthesis(need_parens, node_obj)
 
         arg = node.args[0]
@@ -385,7 +385,7 @@ module Crystal
           in_parenthesis(need_parens, node_obj)
           @str << '.'
         end
-        if node.name.ends_with?('=') && node.name[0].ascii_letter?
+        if Lexer.setter?(node.name)
           @str << decorate_call(node, node.name.rchop)
           @str << " = "
           node.args.join(@str, ", ", &.accept self)
@@ -461,7 +461,7 @@ module Crystal
       when Call
         case obj.args.size
         when 0
-          !letter_or_underscore?(obj.name)
+          !Lexer.ident?(obj.name)
         else
           case obj.name
           when "[]", "[]?", "<", "<=", ">", ">="
@@ -556,14 +556,6 @@ module Crystal
       str
     end
 
-    def letter?(string)
-      string[0].ascii_letter?
-    end
-
-    def letter_or_underscore?(string)
-      string[0].ascii_letter? || string[0] == '_'
-    end
-
     def visit(node : Assign)
       node.target.accept self
       @str << " = "
@@ -623,6 +615,10 @@ module Crystal
         @str << '('
         node.def.args.join(@str, ", ", &.accept self)
         @str << ')'
+      end
+      if return_type = node.def.return_type
+        @str << " : "
+        return_type.accept self
       end
       @str << ' '
       @str << keyword("do")
@@ -943,7 +939,10 @@ module Crystal
     end
 
     def visit(node : Metaclass)
+      needs_parens = node.name.is_a?(Union)
+      @str << '(' if needs_parens
       node.name.accept self
+      @str << ')' if needs_parens
       @str << '.'
       @str << keyword("class")
       false
@@ -971,9 +970,11 @@ module Crystal
         @str << ' '
       end
       @str << keyword("yield")
-      if node.exps.size > 0
-        @str << ' '
-        node.exps.join(@str, ", ", &.accept self)
+      in_parenthesis(node.has_parentheses?) do
+        if node.exps.size > 0
+          @str << ' ' unless node.has_parentheses?
+          node.exps.join(@str, ", ", &.accept self)
+        end
       end
       false
     end
@@ -1500,7 +1501,7 @@ module Crystal
         @str << ' '
       end
       @str << ":"
-      if node.volatile? || node.alignstack? || node.intel?
+      if node.volatile? || node.alignstack? || node.intel? || node.can_throw?
         @str << ' '
         comma = false
         if node.volatile?
@@ -1516,6 +1517,10 @@ module Crystal
           @str << ", " if comma
           @str << %("intel")
           comma = true
+        end
+        if node.can_throw?
+          @str << ", " if comma
+          @str << %("unwind")
         end
       end
       @str << ')'

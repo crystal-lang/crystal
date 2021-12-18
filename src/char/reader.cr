@@ -184,6 +184,8 @@ struct Char
       end
     end
 
+    # :nodoc:
+    # See also: `IO#read_char_with_bytesize`.
     private def decode_char_at(pos, & : UInt32, Int32, UInt8? ->)
       first = byte_at(pos)
       if first < 0x80

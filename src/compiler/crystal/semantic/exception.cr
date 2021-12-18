@@ -234,14 +234,12 @@ module Crystal
 
     def print_nil_reason(nil_reason, io)
       case nil_reason.reason
-      when :used_before_initialized
+      in .used_before_initialized?
         io << "Instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
-      when :used_self_before_initialized
+      in .used_self_before_initialized?
         io << "'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable"
-      when :initialized_in_rescue
+      in .initialized_in_rescue?
         io << "Instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued"
-      else
-        # TODO: we should probably change nil_reason to be an enum so we don't need this else branch
       end
     end
 
@@ -326,7 +324,7 @@ module Crystal
       msg = String.build do |str|
         str << common
         str << "\n\n"
-        str << undefined_variable_message("class", node.name)
+        str << undefined_variable_message("a class variable", node.name)
         str << "\n\n"
         str << common
       end
@@ -345,7 +343,7 @@ module Crystal
       msg = String.build do |str|
         str << common
         str << "\n\n"
-        str << undefined_variable_message("instance", node.name)
+        str << undefined_variable_message("an instance variable", node.name)
         str << "\n\n"
         str << common
       end
@@ -354,7 +352,7 @@ module Crystal
 
     def undefined_variable_message(kind, example_name)
       <<-MSG
-      The type of a #{kind} variable, if not declared explicitly with
+      The type of #{kind}, if not declared explicitly with
       `#{example_name} : Type`, is inferred from assignments to it across
       the whole program.
 

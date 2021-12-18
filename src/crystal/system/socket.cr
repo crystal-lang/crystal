@@ -80,6 +80,8 @@ end
   require "./unix/socket"
 {% elsif flag?(:wasm32) %}
   require "./wasm/socket"
+{% elsif flag?(:win32) %}
+  require "./win32/socket"
 {% else %}
   {% raise "No Crystal::System::Socket implementation available" %}
 {% end %}

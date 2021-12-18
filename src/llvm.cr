@@ -120,7 +120,7 @@ module LLVM
   end
 
   def self.to_io(chars, io) : Nil
-    io.write Slice.new(chars, LibC.strlen(chars))
+    io.write_string Slice.new(chars, LibC.strlen(chars))
     LibLLVM.dispose_message(chars)
   end
 

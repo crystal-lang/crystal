@@ -64,7 +64,7 @@ class String::Builder < IO
     nil
   end
 
-  def write_utf8(slice : Bytes) : Nil
+  def write_string(slice : Bytes) : Nil
     write(slice)
   end
 

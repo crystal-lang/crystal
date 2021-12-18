@@ -65,6 +65,7 @@ module Crystal
       within_temporary_directory do
         run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith")
         run_init_project("app", "example_app", "John Smith", "john@smith.com", "jsmith")
+        run_init_project("app", "num-followed-hyphen-1", "John Smith", "john@smith.com", "jsmith")
         run_init_project("lib", "example-lib", "John Smith", "john@smith.com", "jsmith")
         run_init_project("lib", "camel_example-camel_lib", "John Smith", "john@smith.com", "jsmith")
         run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith", dir: "other-example-directory")
@@ -75,6 +76,10 @@ module Crystal
 
         with_file "camel_example-camel_lib/src/camel_example-camel_lib.cr" do |file|
           file.should contain("CamelExample::CamelLib")
+        end
+
+        with_file "num-followed-hyphen-1/src/num-followed-hyphen-1.cr" do |file|
+          file.should contain("Num::Followed::Hyphen1")
         end
 
         with_file "example/.gitignore" do |gitignore|
@@ -304,7 +309,7 @@ module Crystal
       config.expanded_dir.should eq ::Path[Dir.current, "foo", "bar"]
     end
 
-    pending_win32 "DIR (relative to home)" do
+    it "DIR (relative to home)" do
       path = ::Path["~", "foo"].to_s
       config = Crystal::Init.parse_args(["lib", path])
       config.name.should eq "foo"
@@ -386,6 +391,18 @@ module Crystal
         Crystal::Init.validate_name("foo\abar")
       end
       Crystal::Init.validate_name("grüß-gott")
+    end
+  end
+
+  describe "View#module_name" do
+    it "namespace is divided by hyphen" do
+      Crystal::Init::View.module_name("my-proj-name").should eq "My::Proj::Name"
+    end
+    it "hyphen follwed by non-ascii letter is replaced by its character" do
+      Crystal::Init::View.module_name("my-proj-1").should eq "My::Proj1"
+    end
+    it "underscore is ignored" do
+      Crystal::Init::View.module_name("my-proj_name").should eq "My::ProjName"
     end
   end
 end

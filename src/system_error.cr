@@ -77,7 +77,7 @@ module SystemError
     end
 
     @[Deprecated("Use `.from_os_error` instead")]
-    def from_errno(message : String? = nil, errno : Errno = nil, **opts)
+    def from_errno(message : String? = nil, errno : Errno? = nil, **opts)
       from_os_error(message, errno, **opts)
     end
 
@@ -85,7 +85,7 @@ module SystemError
     #
     # By default it returns the original message unchanged. But that could be
     # customized based on the keyword arguments passed to `from_errno` or `from_winerror`.
-    protected def build_message(message, **opts) : String
+    protected def build_message(message : String?, **opts) : String?
       message
     end
 

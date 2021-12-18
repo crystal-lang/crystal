@@ -1,6 +1,7 @@
 {% skip_file if flag?(:wasm32) %}
 
 require "./spec_helper"
+require "../../support/win32"
 
 describe TCPSocket, tags: "network" do
   describe "#connect" do
@@ -20,7 +21,10 @@ describe TCPSocket, tags: "network" do
             sock.local_address.port.should eq(port)
             sock.local_address.address.should eq(address)
 
-            client.remote_address.port.should eq(port)
+            # FIXME: This should work on win32
+            {% unless flag?(:win32) %}
+              client.remote_address.port.should eq(port)
+            {% end %}
             sock.remote_address.address.should eq address
           end
         end
@@ -38,7 +42,7 @@ describe TCPSocket, tags: "network" do
         error = expect_raises(Socket::Addrinfo::Error) do
           TCPSocket.new(address, -12)
         end
-        error.error_code.should eq({% if flag?(:linux) %}LibC::EAI_SERVICE{% else %}LibC::EAI_NONAME{% end %})
+        error.os_error.should eq({% if flag?(:win32) %}WinError::WSATYPE_NOT_FOUND{% elsif flag?(:linux) %}Errno.new(LibC::EAI_SERVICE){% else %}Errno.new(LibC::EAI_NONAME){% end %})
       end
 
       it "raises when port is zero" do
@@ -60,15 +64,17 @@ describe TCPSocket, tags: "network" do
       end
 
       it "raises when host doesn't exist" do
-        expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed: No address found") do
+        error = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPSocket.new("doesnotexist.example.org.", 12345)
         end
+        error.os_error.should eq({% if flag?(:win32) %}WinError::WSAHOST_NOT_FOUND{% else %}Errno.new(LibC::EAI_NONAME){% end %})
       end
 
       it "raises (rather than segfault on darwin) when host doesn't exist and port is 0" do
-        expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed: No address found") do
+        error = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPSocket.new("doesnotexist.example.org.", 0)
         end
+        error.os_error.should eq({% if flag?(:win32) %}WinError::WSAHOST_NOT_FOUND{% else %}Errno.new(LibC::EAI_NONAME){% end %})
       end
     end
 
@@ -83,7 +89,7 @@ describe TCPSocket, tags: "network" do
     end
   end
 
-  it "sync from server" do
+  pending_win32 "sync from server" do
     port = unused_local_port
 
     TCPServer.open("::", port) do |server|
@@ -102,7 +108,7 @@ describe TCPSocket, tags: "network" do
     end
   end
 
-  it "settings" do
+  pending_win32 "settings" do
     port = unused_local_port
 
     TCPServer.open("::", port) do |server|

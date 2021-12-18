@@ -1197,4 +1197,106 @@ describe "Code gen: class" do
       Foo(Int32).new.x
       )).to_i.should eq(42)
   end
+
+  pending "codegens assignment of generic metaclasses (1) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+
+      x = Foo
+      x = Bar
+      x.name
+      )).to_string.should eq("Bar(T)")
+  end
+
+  pending "codegens assignment of generic metaclasses (2) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+
+      x = Foo
+      x = Bar(Int32)
+      x.name
+      )).to_string.should eq("Bar(Int32)")
+  end
+
+  it "codegens assignment of generic metaclasses (3) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+
+      x = Foo(Int32)
+      x = Bar(Int32)
+      x.name
+      )).to_string.should eq("Bar(Int32)")
+  end
+
+  it "codegens assignment of generic metaclasses (4) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+
+      x = Foo(String)
+      x = Bar(Int32)
+      x.name
+      )).to_string.should eq("Bar(Int32)")
+  end
+
+  it "codegens assignment of generic metaclasses, base is non-generic (1) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo; end
+      class Bar(T) < Foo; end
+
+      x = Foo
+      x = Bar
+      x.name
+      )).to_string.should eq("Bar(T)")
+  end
+
+  it "codegens assignment of generic metaclasses, base is non-generic (2) (#10394)" do
+    run(%(
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo; end
+      class Bar(T) < Foo; end
+
+      x = Foo
+      x = Bar(Int32)
+      x.name
+      )).to_string.should eq("Bar(Int32)")
+  end
 end

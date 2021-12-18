@@ -555,7 +555,7 @@ module Crystal
     end
 
     def guess_type(node : RegexLiteral)
-      program.types["Regex"]
+      program.regex
     end
 
     def guess_type(node : TupleLiteral)
@@ -599,6 +599,32 @@ module Crystal
       else
         nil
       end
+    end
+
+    def guess_type(node : ProcLiteral)
+      output = node.def.return_type
+      return nil unless output
+
+      types = nil
+
+      node.def.args.each do |input|
+        restriction = input.restriction
+        return nil unless restriction
+
+        input_type = lookup_type?(restriction)
+        return nil unless input_type
+
+        types ||= [] of Type
+        types << input_type.virtual_type
+      end
+
+      output_type = lookup_type?(output)
+      return nil unless output_type
+
+      types ||= [] of Type
+      types << output_type.virtual_type
+
+      program.proc_of(types)
     end
 
     def guess_type(node : Call)

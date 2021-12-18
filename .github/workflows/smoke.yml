@@ -47,6 +47,7 @@ jobs:
           - arm-linux-gnueabihf
           - i386-linux-musl
           - wasm32-unknown-wasi
+          - i386-linux-gnu
           - x86_64-dragonfly
           - x86_64-freebsd
           - x86_64-netbsd
