@@ -1922,6 +1922,20 @@ module Unicode
     end
   end
 
+  @@category_Pc : Array({Int32, Int32, Int32})?
+
+  private def self.category_Pc
+    @@category_Pc ||= begin
+      data = Array({Int32, Int32, Int32}).new(5)
+      put(data, 95, 8255, 8160)
+      put(data, 8256, 8276, 20)
+      put(data, 65075, 65076, 1)
+      put(data, 65101, 65103, 1)
+      put(data, 65343, 65343, 1)
+      data
+    end
+  end
+
   @@category_Zs : Array({Int32, Int32, Int32})?
 
   private def self.category_Zs

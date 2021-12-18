@@ -929,8 +929,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def visit(node : MultiAssign)
     node.targets.each do |target|
-      if target.is_a?(Var)
-        @vars[target.name] = MetaVar.new(target.name)
+      var = target.is_a?(Splat) ? target.exp : target
+      if var.is_a?(Var)
+        @vars[var.name] = MetaVar.new(var.name)
       end
       target.accept self
     end

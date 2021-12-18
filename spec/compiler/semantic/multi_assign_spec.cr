@@ -127,4 +127,21 @@ describe "Semantic: multi assign" do
         CR
     end
   end
+
+  it "can pass splat variable at top-level to macros (#11596)" do
+    assert_type(<<-CR) { tuple_of [int32, int32, int32] }
+      struct Tuple
+        def self.new(*args)
+          args
+        end
+      end
+
+      macro foo(x)
+        {{ x }}
+      end
+
+      a, *b, c = 1, 2, 3, 4, 5
+      foo(b)
+      CR
+  end
 end
