@@ -289,8 +289,7 @@ module Crystal
         assert_macro "{{ -20i128.to_number }}", "-20"
       end
 
-      # Requires #11571
-      pending "executes math operations using U/Int128" do
+      it "executes math operations using U/Int128" do
         assert_macro "{{18446744073709551615_u128 + 1}}", "18446744073709551616"
         assert_macro "{{18446744073709551_i128 - 1_u128}}", "18446744073709550"
         assert_macro "{{18446744073709551615_u128 * 10}}", "184467440737095516150"
