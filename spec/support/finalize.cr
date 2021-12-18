@@ -14,6 +14,22 @@ class State
   end
 end
 
+module FinalizeCounter
+  macro included
+    property key : Symbol?
+
+    def finalize
+      if key = self.key
+        State.inc(key)
+      end
+
+      {% if @type.has_method?(:finalize) %}
+        previous_def
+      {% end %}
+    end
+  end
+end
+
 def assert_finalizes(key)
   State.reset
   State.count(key).should eq(0)

@@ -50,13 +50,7 @@ private module ReferenceSpec
   end
 
   class TestClassWithFinalize
-    property key : Symbol?
-
-    def finalize
-      if key = self.key
-        State.inc(key)
-      end
-    end
+    include FinalizeCounter
   end
 end
 

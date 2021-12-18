@@ -3,15 +3,7 @@ require "openssl"
 require "../../../support/finalize"
 
 class OpenSSL::SSL::Context
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-
-    previous_def
-  end
+  include FinalizeCounter
 end
 
 describe OpenSSL::SSL::Context do
