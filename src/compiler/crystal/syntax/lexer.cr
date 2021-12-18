@@ -170,39 +170,39 @@ module Crystal
         when '='
           case next_char
           when '='
-            next_char :"==="
+            next_char :OP_EQ_EQ_EQ
           else
-            @token.type = :"=="
+            @token.type = :OP_EQ_EQ
           end
         when '>'
-          next_char :"=>"
+          next_char :OP_EQ_GT
         when '~'
-          next_char :"=~"
+          next_char :OP_EQ_TILDE
         else
-          @token.type = :"="
+          @token.type = :OP_EQ
         end
       when '!'
         case next_char
         when '='
-          next_char :"!="
+          next_char :OP_BANG_EQ
         when '~'
-          next_char :"!~"
+          next_char :OP_BANG_TILDE
         else
-          @token.type = :"!"
+          @token.type = :OP_BANG
         end
       when '<'
         case next_char
         when '='
           case next_char
           when '>'
-            next_char :"<=>"
+            next_char :OP_LT_EQ_GT
           else
-            @token.type = :"<="
+            @token.type = :OP_LT_EQ
           end
         when '<'
           case next_char
           when '='
-            next_char :"<<="
+            next_char :OP_LT_LT_EQ
           when '-'
             has_single_quote = false
             found_closing_single_quote = false
@@ -263,64 +263,64 @@ module Crystal
 
             delimited_pair :heredoc, here, here, start, allow_escapes: !has_single_quote, advance: false
           else
-            @token.type = :"<<"
+            @token.type = :OP_LT_LT
           end
         else
-          @token.type = :"<"
+          @token.type = :OP_LT
         end
       when '>'
         case next_char
         when '='
-          next_char :">="
+          next_char :OP_GT_EQ
         when '>'
           case next_char
           when '='
-            next_char :">>="
+            next_char :OP_GT_GT_EQ
           else
-            @token.type = :">>"
+            @token.type = :OP_GT_GT
           end
         else
-          @token.type = :">"
+          @token.type = :OP_GT
         end
       when '+'
         @token.start = start
         case next_char
         when '='
-          next_char :"+="
+          next_char :OP_PLUS_EQ
         when '0'..'9'
           scan_number start
         when '+'
           raise "postfix increment is not supported, use `exp += 1`"
         else
-          @token.type = :"+"
+          @token.type = :OP_PLUS
         end
       when '-'
         @token.start = start
         case next_char
         when '='
-          next_char :"-="
+          next_char :OP_MINUS_EQ
         when '>'
-          next_char :"->"
+          next_char :OP_MINUS_GT
         when '0'..'9'
           scan_number start, negative: true
         when '-'
           raise "postfix decrement is not supported, use `exp -= 1`"
         else
-          @token.type = :"-"
+          @token.type = :OP_MINUS
         end
       when '*'
         case next_char
         when '='
-          next_char :"*="
+          next_char :OP_STAR_EQ
         when '*'
           case next_char
           when '='
-            next_char :"**="
+            next_char :OP_STAR_STAR_EQ
           else
-            @token.type = :"**"
+            @token.type = :OP_STAR_STAR
           end
         else
-          @token.type = :"*"
+          @token.type = :OP_STAR
         end
       when '/'
         line = @line_number
@@ -329,34 +329,34 @@ module Crystal
         if (@wants_def_or_macro_name || !@slash_is_regex) && char == '/'
           case next_char
           when '='
-            next_char :"//="
+            next_char :OP_SLASH_SLASH_EQ
           else
-            @token.type = :"//"
+            @token.type = :OP_SLASH_SLASH
           end
         elsif !@slash_is_regex && char == '='
-          next_char :"/="
+          next_char :OP_SLASH_EQ
         elsif @wants_def_or_macro_name
-          @token.type = :"/"
+          @token.type = :OP_SLASH
         elsif @slash_is_regex
           @token.type = :DELIMITER_START
           @token.delimiter_state = Token::DelimiterState.new(:regex, '/', '/')
           @token.raw = "/"
         elsif char.ascii_whitespace? || char == '\0'
-          @token.type = :"/"
+          @token.type = :OP_SLASH
         elsif @wants_regex
           @token.type = :DELIMITER_START
           @token.delimiter_state = Token::DelimiterState.new(:regex, '/', '/')
           @token.raw = "/"
         else
-          @token.type = :"/"
+          @token.type = :OP_SLASH
         end
       when '%'
         if @wants_def_or_macro_name
-          next_char :"%"
+          next_char :OP_PERCENT
         else
           case next_char
           when '='
-            next_char :"%="
+            next_char :OP_PERCENT_EQ
           when '(', '[', '{', '<', '|'
             delimited_pair :string, current_char, closing_char, start
           when 'i'
@@ -367,7 +367,7 @@ module Crystal
               @token.raw = "%i#{start_char}" if @wants_raw
               @token.delimiter_state = Token::DelimiterState.new(:symbol_array, start_char, closing_char(start_char))
             else
-              @token.type = :"%"
+              @token.type = :OP_PERCENT
             end
           when 'q'
             case peek_next_char
@@ -375,7 +375,7 @@ module Crystal
               next_char
               delimited_pair :string, current_char, closing_char, start, allow_escapes: false
             else
-              @token.type = :"%"
+              @token.type = :OP_PERCENT
             end
           when 'Q'
             case peek_next_char
@@ -383,7 +383,7 @@ module Crystal
               next_char
               delimited_pair :string, current_char, closing_char, start
             else
-              @token.type = :"%"
+              @token.type = :OP_PERCENT
             end
           when 'r'
             case next_char
@@ -407,54 +407,54 @@ module Crystal
               @token.raw = "%w#{start_char}" if @wants_raw
               @token.delimiter_state = Token::DelimiterState.new(:string_array, start_char, closing_char(start_char))
             else
-              @token.type = :"%"
+              @token.type = :OP_PERCENT
             end
           when '}'
-            next_char :"%}"
+            next_char :OP_PERCENT_CURLYR
           else
-            @token.type = :"%"
+            @token.type = :OP_PERCENT
           end
         end
-      when '(' then next_char :"("
-      when ')' then next_char :")"
+      when '(' then next_char :OP_BRACKETL
+      when ')' then next_char :OP_BRACKETR
       when '{'
         char = next_char
         case char
         when '%'
-          next_char :"{%"
+          next_char :OP_CURLYL_PERCENT
         when '{'
-          next_char :"{{"
+          next_char :OP_CURLYL_CURLYL
         else
-          @token.type = :"{"
+          @token.type = :OP_CURLYL
         end
-      when '}' then next_char :"}"
+      when '}' then next_char :OP_CURLYR
       when '['
         case next_char
         when ']'
           case next_char
           when '='
-            next_char :"[]="
+            next_char :OP_SQUAREL_SQUARER_EQ
           when '?'
-            next_char :"[]?"
+            next_char :OP_SQUAREL_SQUARER_QUESTION
           else
-            @token.type = :"[]"
+            @token.type = :OP_SQUAREL_SQUARER
           end
         else
-          @token.type = :"["
+          @token.type = :OP_SQUAREL
         end
-      when ']' then next_char :"]"
-      when ',' then next_char :","
-      when '?' then next_char :"?"
+      when ']' then next_char :OP_SQUARER
+      when ',' then next_char :OP_COMMA
+      when '?' then next_char :OP_QUESTION
       when ';'
         reset_regex_flags = false
-        next_char :";"
+        next_char :OP_SEMICOLON
       when ':'
         char = next_char
 
         if @wants_symbol
           case char
           when ':'
-            next_char :"::"
+            next_char :OP_COLON_COLON
           when '+'
             next_char_and_symbol "+"
           when '-'
@@ -619,19 +619,19 @@ module Crystal
               @token.value = string_range_from_pool(start)
               set_token_raw_from_start(start - 1)
             else
-              @token.type = :":"
+              @token.type = :OP_COLON
             end
           end
         else
           case char
           when ':'
-            next_char :"::"
+            next_char :OP_COLON_COLON
           else
-            @token.type = :":"
+            @token.type = :OP_COLON
           end
         end
       when '~'
-        next_char :"~"
+        next_char :OP_TILDE
       when '.'
         line = @line_number
         column = @column_number
@@ -639,79 +639,79 @@ module Crystal
         when '.'
           case next_char
           when '.'
-            next_char :"..."
+            next_char :OP_PERIOD_PERIOD_PERIOD
           else
-            @token.type = :".."
+            @token.type = :OP_PERIOD_PERIOD
           end
         when .ascii_number?
           raise ".1 style number literal is not supported, put 0 before dot", line, column
         else
-          @token.type = :"."
+          @token.type = :OP_PERIOD
         end
       when '&'
         case next_char
         when '&'
           case next_char
           when '='
-            next_char :"&&="
+            next_char :OP_AMP_AMP_EQ
           else
-            @token.type = :"&&"
+            @token.type = :OP_AMP_AMP
           end
         when '='
-          next_char :"&="
+          next_char :OP_AMP_EQ
         when '+'
           case next_char
           when '='
-            next_char :"&+="
+            next_char :OP_AMP_PLUS_EQ
           else
-            @token.type = :"&+"
+            @token.type = :OP_AMP_PLUS
           end
         when '-'
           # Check if '>' comes after '&-', making it '&->'.
           # We want to parse that like '&(->...)',
           # so we only return '&' for now.
           if peek_next_char == '>'
-            @token.type = :"&"
+            @token.type = :OP_AMP
           else
             case next_char
             when '='
-              next_char :"&-="
+              next_char :OP_AMP_MINUS_EQ
             else
-              @token.type = :"&-"
+              @token.type = :OP_AMP_MINUS
             end
           end
         when '*'
           case next_char
           when '*'
-            next_char :"&**"
+            next_char :OP_AMP_STAR_STAR
           when '='
-            next_char :"&*="
+            next_char :OP_AMP_STAR_EQ
           else
-            @token.type = :"&*"
+            @token.type = :OP_AMP_STAR
           end
         else
-          @token.type = :"&"
+          @token.type = :OP_AMP
         end
       when '|'
         case next_char
         when '|'
           case next_char
           when '='
-            next_char :"||="
+            next_char :OP_BAR_BAR_EQ
           else
-            @token.type = :"||"
+            @token.type = :OP_BAR_BAR
           end
         when '='
-          next_char :"|="
+          next_char :OP_BAR_EQ
         else
-          @token.type = :"|"
+          @token.type = :OP_BAR
         end
       when '^'
         case next_char
         when '='
-          next_char :"^="
+          next_char :OP_CARET_EQ
         else
-          @token.type = :"^"
+          @token.type = :OP_CARET
         end
       when '\''
         start = current_pos
@@ -766,7 +766,7 @@ module Crystal
       when '"', '`'
         delimiter = current_char
         if delimiter == '`' && @wants_def_or_macro_name
-          next_char :"`"
+          next_char :OP_GRAVE
         else
           next_char
           @token.type = :DELIMITER_START
@@ -779,7 +779,7 @@ module Crystal
         start = current_pos
         case next_char
         when '['
-          next_char :"@["
+          next_char :OP_AT_SQUAREL
         else
           class_var = false
           if current_char == '@'
@@ -790,7 +790,7 @@ module Crystal
             while ident_part?(next_char)
               # Nothing to do
             end
-            @token.type = class_var ? :CLASS_VAR : :INSTANCE_VAR
+            @token.type = class_var ? Token::Kind::CLASS_VAR : Token::Kind::INSTANCE_VAR
             @token.value = string_range_from_pool(start)
           else
             unknown_token
@@ -802,10 +802,10 @@ module Crystal
         case current_char
         when '~'
           next_char
-          @token.type = :"$~"
+          @token.type = :OP_DOLLAR_TILDE
         when '?'
           next_char
-          @token.type = :"$?"
+          @token.type = :OP_DOLLAR_QUESTION
         when .ascii_number?
           start = current_pos
           char = next_char
@@ -1245,7 +1245,7 @@ module Crystal
                 scan_ident(start)
               else
                 next_char
-                @token.type = :__DIR__
+                @token.type = :MAGIC_DIR
                 return @token
               end
             end
@@ -1255,7 +1255,7 @@ module Crystal
                 scan_ident(start)
               else
                 next_char
-                @token.type = :__END_LINE__
+                @token.type = :MAGIC_END_LINE
                 return @token
               end
             end
@@ -1265,7 +1265,7 @@ module Crystal
                 scan_ident(start)
               else
                 next_char
-                @token.type = :__FILE__
+                @token.type = :MAGIC_FILE
                 return @token
               end
             end
@@ -1275,7 +1275,7 @@ module Crystal
                 scan_ident(start)
               else
                 next_char
-                @token.type = :__LINE__
+                @token.type = :MAGIC_LINE
                 return @token
               end
             end
@@ -1650,7 +1650,7 @@ module Crystal
       string_open_count = delimiter_state.open_count
 
       # For empty heredocs:
-      if @token.type == :NEWLINE && delimiter_state.kind == :heredoc
+      if @token.type.newline? && delimiter_state.kind == :heredoc
         if check_heredoc_end delimiter_state
           set_token_raw_from_start start
           return @token
@@ -2761,7 +2761,7 @@ module Crystal
       char
     end
 
-    def next_char(token_type)
+    def next_char(token_type : Token::Kind)
       next_char
       @token.type = token_type
     end
@@ -2773,7 +2773,7 @@ module Crystal
       @token.filename = @filename
       @token.location = nil
       @token.passed_backslash_newline = false
-      @token.doc_buffer = nil unless @token.type == :SPACE || @token.type == :NEWLINE
+      @token.doc_buffer = nil unless @token.type.space? || @token.type.newline?
       @token.invalid_escape = false
       @token_end_location = nil
     end
@@ -2879,19 +2879,19 @@ module Crystal
     end
 
     def skip_space
-      while @token.type == :SPACE
+      while @token.type.space?
         next_token
       end
     end
 
     def skip_space_or_newline
-      while (@token.type == :SPACE || @token.type == :NEWLINE)
+      while (@token.type.space? || @token.type.newline?)
         next_token
       end
     end
 
     def skip_statement_end
-      while (@token.type == :SPACE || @token.type == :NEWLINE || @token.type == :";")
+      while (@token.type.space? || @token.type.newline? || @token.type.op_semicolon?)
         next_token
       end
     end

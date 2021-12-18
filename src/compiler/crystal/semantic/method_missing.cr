@@ -181,7 +181,7 @@ private def starts_with_def?(source)
   while true
     token = lexer.next_token
     return true if token.keyword?(:def)
-    break if token.type == :EOF
+    break if token.type.eof?
   end
   false
 end
