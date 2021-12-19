@@ -1566,8 +1566,8 @@ module Crystal
       end
 
       if is_decimal
-        @token.number_kind = :f64 if suffix_size == 0
-        raise("Invalid suffix #{@token.number_kind} for decimal number", @token, (current_pos - start)) unless @token.number_kind.in?(:f32, :f64)
+        @token.number_kind = NumberKind::F64 if suffix_size == 0
+        raise("Invalid suffix #{@token.number_kind} for decimal number", @token, (current_pos - start)) unless @token.number_kind.float?
         return
       end
 
@@ -1575,21 +1575,21 @@ module Crystal
       if suffix_size == 0
         raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix) unless @token.value
         @token.number_kind = case number_size
-                             when 0..9   then :i32
-                             when 10     then raw_number_string.to_i32? ? :i32 : :i64
-                             when 11..18 then :i64
+                             when 0..9   then NumberKind::I32
+                             when 10     then raw_number_string.to_i32? ? NumberKind::I32 : NumberKind::I64
+                             when 11..18 then NumberKind::I64
                              when 19
                                if raw_number_string.to_i64?
-                                 :i64
+                                 NumberKind::I64
                                elsif negative
                                  raise_value_doesnt_fit_in(Int64, start, pos_before_suffix, "i128")
                                else
-                                 :u64
+                                 NumberKind::U64
                                end
                              when 20
                                raise_value_doesnt_fit_in(Int64, start, pos_before_suffix, "i128") if negative
                                raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix, "i128") unless raw_number_string.to_u64?
-                               :u64
+                               NumberKind::U64
                              when 21..38
                                raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix, "i128")
                              when 39
@@ -1605,50 +1605,50 @@ module Crystal
                              end
       else
         case @token.number_kind
-        when :i8   then gen_check_int_fits_in_size(Int8, :i8, 3, number_size, raw_number_string, start, pos_before_suffix, negative)
-        when :u8   then gen_check_int_fits_in_size(UInt8, :u8, 3, number_size, raw_number_string, start, pos_before_suffix, negative)
-        when :i16  then gen_check_int_fits_in_size(Int16, :i16, 5, number_size, raw_number_string, start, pos_before_suffix, negative)
-        when :u16  then gen_check_int_fits_in_size(UInt16, :u16, 5, number_size, raw_number_string, start, pos_before_suffix, negative)
-        when :i32  then gen_check_int_fits_in_size(Int32, :i32, 10, number_size, raw_number_string, start, pos_before_suffix, negative)
-        when :u32  then gen_check_int_fits_in_size(UInt32, :u32, 10, number_size, raw_number_string, start, pos_before_suffix, negative)
-        when :i64  then gen_check_int_fits_in_size(Int64, :i64, 19, number_size, raw_number_string, start, pos_before_suffix, negative)
-        when :u64  then gen_check_int_fits_in_size(UInt64, :u64, 20, number_size, raw_number_string, start, pos_before_suffix, negative)
-        when :i128 then gen_check_int_fits_in_size(Int128, :i128, 39, number_size, raw_number_string, start, pos_before_suffix, negative)
-        when :u128 then gen_check_int_fits_in_size(UInt128, :u128, 39, number_size, raw_number_string, start, pos_before_suffix, negative)
+        when .i8?   then gen_check_int_fits_in_size(Int8, :i8, 3, number_size, raw_number_string, start, pos_before_suffix, negative)
+        when .u8?   then gen_check_int_fits_in_size(UInt8, :u8, 3, number_size, raw_number_string, start, pos_before_suffix, negative)
+        when .i16?  then gen_check_int_fits_in_size(Int16, :i16, 5, number_size, raw_number_string, start, pos_before_suffix, negative)
+        when .u16?  then gen_check_int_fits_in_size(UInt16, :u16, 5, number_size, raw_number_string, start, pos_before_suffix, negative)
+        when .i32?  then gen_check_int_fits_in_size(Int32, :i32, 10, number_size, raw_number_string, start, pos_before_suffix, negative)
+        when .u32?  then gen_check_int_fits_in_size(UInt32, :u32, 10, number_size, raw_number_string, start, pos_before_suffix, negative)
+        when .i64?  then gen_check_int_fits_in_size(Int64, :i64, 19, number_size, raw_number_string, start, pos_before_suffix, negative)
+        when .u64?  then gen_check_int_fits_in_size(UInt64, :u64, 20, number_size, raw_number_string, start, pos_before_suffix, negative)
+        when .i128? then gen_check_int_fits_in_size(Int128, :i128, 39, number_size, raw_number_string, start, pos_before_suffix, negative)
+        when .u128? then gen_check_int_fits_in_size(UInt128, :u128, 39, number_size, raw_number_string, start, pos_before_suffix, negative)
         end
       end
     end
 
-    private def consume_number_suffix : Symbol
+    private def consume_number_suffix : NumberKind
       case current_char
       when 'i'
         case next_char
-        when '8' then return :i8
+        when '8' then return NumberKind::I8
         when '1'
           case next_char
-          when '2' then return :i128 if next_char == '8'
-          when '6' then return :i16
+          when '2' then return NumberKind::I128 if next_char == '8'
+          when '6' then return NumberKind::I16
           end
-        when '3' then return :i32 if next_char == '2'
-        when '6' then return :i64 if next_char == '4'
+        when '3' then return NumberKind::I32 if next_char == '2'
+        when '6' then return NumberKind::I64 if next_char == '4'
         end
         raise "invalid int suffix"
       when 'u'
         case next_char
-        when '8' then return :u8
+        when '8' then return NumberKind::U8
         when '1'
           case next_char
-          when '2' then return :u128 if next_char == '8'
-          when '6' then return :u16
+          when '2' then return NumberKind::U128 if next_char == '8'
+          when '6' then return NumberKind::U16
           end
-        when '3' then return :u32 if next_char == '2'
-        when '6' then return :u64 if next_char == '4'
+        when '3' then return NumberKind::U32 if next_char == '2'
+        when '6' then return NumberKind::U64 if next_char == '4'
         end
         raise "invalid uint suffix"
       when 'f'
         case next_char
-        when '3' then return :f32 if next_char == '2'
-        when '6' then return :f64 if next_char == '4'
+        when '3' then return NumberKind::F32 if next_char == '2'
+        when '6' then return NumberKind::F64 if next_char == '4'
         end
         raise "invalid float suffix"
       end

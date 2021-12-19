@@ -59,9 +59,9 @@ module Crystal
 
     def needs_suffix?(node : NumberLiteral)
       case node.kind
-      when :i32
+      when .i32?
         false
-      when :f64
+      when .f64?
         # If there's no '.' nor 'e', for example in `1_f64`,
         # we need to include it (#3315)
         node.value.each_char do |char|

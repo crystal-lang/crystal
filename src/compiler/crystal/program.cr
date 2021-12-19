@@ -474,21 +474,20 @@ module Crystal
       @hash_type.not_nil!
     end
 
-    def type_from_literal_kind(kind)
+    def type_from_literal_kind(kind : NumberKind)
       case kind
-      when :i8   then int8
-      when :i16  then int16
-      when :i32  then int32
-      when :i64  then int64
-      when :i128 then int128
-      when :u8   then uint8
-      when :u16  then uint16
-      when :u32  then uint32
-      when :u64  then uint64
-      when :u128 then uint128
-      when :f32  then float32
-      when :f64  then float64
-      else            raise "Invalid node kind: #{kind}"
+      in .i8?   then int8
+      in .i16?  then int16
+      in .i32?  then int32
+      in .i64?  then int64
+      in .i128? then int128
+      in .u8?   then uint8
+      in .u16?  then uint16
+      in .u32?  then uint32
+      in .u64?  then uint64
+      in .u128? then uint128
+      in .f32?  then float32
+      in .f64?  then float64
       end
     end
 

@@ -20,7 +20,7 @@ private def it_lexes(string, type, value)
   end
 end
 
-private def it_lexes(string, type, value, number_kind)
+private def it_lexes(string, type, value, number_kind : NumberKind)
   it "lexes #{string.inspect}" do
     lexer = Lexer.new string
     token = lexer.next_token
@@ -72,11 +72,11 @@ private def it_lexes_f64(values)
   values.each { |value| it_lexes_number :f64, value }
 end
 
-private def it_lexes_number(number_kind, value : Array)
+private def it_lexes_number(number_kind : NumberKind, value : Array)
   it_lexes value[0], :NUMBER, value[1], number_kind
 end
 
-private def it_lexes_number(number_kind, value : String)
+private def it_lexes_number(number_kind : NumberKind, value : String)
   it_lexes value, :NUMBER, value, number_kind
 end
 
@@ -567,11 +567,11 @@ describe "Lexer" do
 
   it "lexes float then zero (bug)" do
     lexer = Lexer.new "2.5 0"
-    lexer.next_token.number_kind.should eq(:f64)
+    lexer.next_token.number_kind.should eq(NumberKind::F64)
     lexer.next_token.type.should eq(:SPACE)
     token = lexer.next_token
     token.type.should eq(:NUMBER)
-    token.number_kind.should eq(:i32)
+    token.number_kind.should eq(NumberKind::I32)
   end
 
   it "lexes symbol with quote" do
