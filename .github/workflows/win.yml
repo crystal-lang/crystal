@@ -284,7 +284,7 @@ jobs:
           .\crystal-cross.exe build src/compiler/crystal.cr -Di_know_what_im_doing -Dwithout_playground --link-flags=/STACK:10000000
           mv crystal.exe bin/
 
-      - name: Download latest shards release
+      - name: Download shards release
         uses: actions/checkout@v2
         with:
           repository: crystal-lang/shards
@@ -296,11 +296,11 @@ jobs:
         with:
           repository: crystal-lang/crystal-molinillo
           ref: v0.2.0
-          path: shards\lib\molinillo
+          path: shards/lib/molinillo
 
-      - name: Build latest shards release
-        working-directory: .\shards
-        run: ..\bin\crystal.exe build --no-color src\shards.cr
+      - name: Build shards release
+        working-directory: ./shards
+        run: ../bin/crystal.exe build src/shards.cr
 
       - name: Gather Crystal binaries
         run: |
