@@ -12,6 +12,7 @@ class String
   # ```
   #
   # * `#each_grapheme` iterates the grapheme clusters without allocating an array
+  @[Experimental("The grapheme API is still under development. Join the discussion at [#11610](https://github.com/crystal-lang/crystal/issues/11610).")]
   def graphemes : Array(Grapheme)
     graphemes = [] of Grapheme
     each_grapheme do |grapheme|
@@ -33,6 +34,7 @@ class String
   # ```
   #
   # * `#graphemes` collects all grapheme clusters in an array
+  @[Experimental("The grapheme API is still under development. Join the discussion at [#11610](https://github.com/crystal-lang/crystal/issues/11610).")]
   def each_grapheme(& : Grapheme -> _) : Nil
     each_grapheme_boundary do |range, last_char|
       yield Grapheme.new(self, range, last_char)
@@ -42,6 +44,7 @@ class String
   # Returns the number of Unicode extended graphemes clusters in this string.
   #
   # * `#each_grapheme` iterates the grapheme clusters.
+  @[Experimental("The grapheme API is still under development. Join the discussion at [#11610](https://github.com/crystal-lang/crystal/issues/11610).")]
   def grapheme_size : Int32
     size = 0
     each_grapheme_boundary do
@@ -61,6 +64,7 @@ class String
   # ```
   #
   # * `#graphemes` collects all grapheme clusters in an array
+  @[Experimental("The grapheme API is still under development. Join the discussion at [#11610](https://github.com/crystal-lang/crystal/issues/11610).")]
   def each_grapheme : Iterator(Grapheme)
     GraphemeIterator.new(self)
   end
