@@ -54,6 +54,11 @@ module Crystal
 
     def initialize(string, string_pool : StringPool? = nil)
       @reader = Char::Reader.new(string)
+
+      if error = @reader.error
+        ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16, upcase: true)} at position #{@reader.pos}, malformed UTF-8")
+      end
+
       @token = Token.new
       @temp_token = Token.new
       @line_number = 1
@@ -1450,22 +1455,22 @@ module Crystal
       @token.raw = ":#{value}" if @wants_raw
     end
 
-    macro gen_check_int_fits_in_size(type, method, size, number_size, raw_number_string, start, pos_before_suffix, negative, actual_type = nil)
+    macro gen_check_int_fits_in_size(type, method, size, number_size, raw_number_string, start, pos_before_suffix, negative)
       {% if type.stringify.starts_with? "U" %}
         raise "Invalid negative value #{string_range({{start}}, {{pos_before_suffix}})} for {{type}}", @token, (current_pos - {{start}}) if {{negative}}
       {% end %}
 
       if !@token.value || {{number_size}} > {{size}} || ({{number_size}} == {{size}} && {{raw_number_string}}.to_{{method.id}}? == nil)
-        {% if actual_type.nil? %}
-          raise_value_doesnt_fit_in "{{type}}", {{start}}, {{pos_before_suffix}}
-        {% else %}
-          raise("#{string_range({{start}}, {{pos_before_suffix}})} doesn't fit in an {{actual_type}}. {{type}} literals that don't fit in an {{actual_type}} are currently not supported", @token, current_pos - {{start}})
-        {% end %}
+        raise_value_doesnt_fit_in "{{type}}", {{start}}, {{pos_before_suffix}}
       end
     end
 
     def raise_value_doesnt_fit_in(type, start, pos_before_suffix)
       raise "#{string_range(start, pos_before_suffix)} doesn't fit in an #{type}", @token, (current_pos - start)
+    end
+
+    def raise_value_doesnt_fit_in(type, start, pos_before_suffix, alternative)
+      raise "#{string_range(start, pos_before_suffix)} doesn't fit in an #{type}, try using the suffix #{alternative}", @token, (current_pos - start)
     end
 
     private def scan_number(start, negative = false)
@@ -1548,7 +1553,10 @@ module Crystal
         raw_number_string = raw_number_string.delete('_') if has_underscores
         @token.value = raw_number_string
       else
+        # The conversion to base 10 is first tried using a UInt64 to circumvent compiler
+        # regressions caused by bugs in the platform's UInt128 implementation.
         base10_number_string = raw_number_string.to_u64?(base: base, underscore: true).try &.to_s
+        base10_number_string ||= raw_number_string.to_u128?(base: base, underscore: true).try &.to_s
         if base10_number_string
           number_size = base10_number_string.size
           first_byte = @reader.string.byte_at(start).chr
@@ -1574,17 +1582,26 @@ module Crystal
                                if raw_number_string.to_i64?
                                  :i64
                                elsif negative
-                                 raise_value_doesnt_fit_in(Int64, start, pos_before_suffix)
+                                 raise_value_doesnt_fit_in(Int64, start, pos_before_suffix, "i128")
                                else
                                  :u64
                                end
                              when 20
-                               raise_value_doesnt_fit_in(Int64, start, pos_before_suffix) if negative
-                               raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix) unless raw_number_string.to_u64?
+                               raise_value_doesnt_fit_in(Int64, start, pos_before_suffix, "i128") if negative
+                               raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix, "i128") unless raw_number_string.to_u64?
                                :u64
+                             when 21..38
+                               raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix, "i128")
+                             when 39
+                               if raw_number_string.to_i128?
+                                 raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix, "i128")
+                               elsif raw_number_string.to_u128?
+                                 raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix, "u128")
+                               else
+                                 raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix)
+                               end
                              else
-                               raise_value_doesnt_fit_in(Int64, start, pos_before_suffix) if negative
-                               raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix)
+                               raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix)
                              end
       else
         case @token.number_kind
@@ -1596,8 +1613,8 @@ module Crystal
         when :u32  then gen_check_int_fits_in_size(UInt32, :u32, 10, number_size, raw_number_string, start, pos_before_suffix, negative)
         when :i64  then gen_check_int_fits_in_size(Int64, :i64, 19, number_size, raw_number_string, start, pos_before_suffix, negative)
         when :u64  then gen_check_int_fits_in_size(UInt64, :u64, 20, number_size, raw_number_string, start, pos_before_suffix, negative)
-        when :i128 then gen_check_int_fits_in_size(Int128, :i64, 19, number_size, raw_number_string, start, pos_before_suffix, negative, Int64)
-        when :u128 then gen_check_int_fits_in_size(UInt128, :u64, 20, number_size, raw_number_string, start, pos_before_suffix, negative, UInt64)
+        when :i128 then gen_check_int_fits_in_size(Int128, :i128, 39, number_size, raw_number_string, start, pos_before_suffix, negative)
+        when :u128 then gen_check_int_fits_in_size(UInt128, :u128, 39, number_size, raw_number_string, start, pos_before_suffix, negative)
         end
       end
     end
@@ -2741,7 +2758,7 @@ module Crystal
     def next_char_no_column_increment
       char = @reader.next_char
       if error = @reader.error
-        ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16)} at position #{@reader.pos}, malformed UTF-8")
+        ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16, upcase: true)} at position #{@reader.pos}, malformed UTF-8")
       end
       char
     end
@@ -2843,11 +2860,14 @@ module Crystal
     end
 
     def self.ident_start?(char)
-      char.ascii_letter? || char == '_' || char.ord > 0x9F
+      char.letter? || char == '_'
     end
 
     def self.ident_part?(char)
-      ident_start?(char) || char.ascii_number?
+      ident_start?(char) ||
+        Unicode.mark_nonspacing?(char) || Unicode.mark_spacing_combining?(char) ||
+        Unicode.number_digit?(char) || Unicode.number_letter?(char) ||
+        Unicode.punctuation_connector?(char)
     end
 
     def self.ident?(name)

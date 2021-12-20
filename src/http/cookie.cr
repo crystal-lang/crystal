@@ -102,7 +102,7 @@ module HTTP
     end
 
     def to_cookie_header : String
-      String.build do |io|
+      String.build(@name.bytesize + @value.bytesize + 1) do |io|
         to_cookie_header(io)
       end
     end
