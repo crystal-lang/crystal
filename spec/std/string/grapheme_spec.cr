@@ -28,10 +28,10 @@ describe String::Grapheme do
   end
 
   describe "#each_byte" do
-    it_iterates "string", ['f', 'o', 'o'], String::Grapheme.new("foo").each_char
-    it_iterates "string", ['🙂', '🙂'], String::Grapheme.new("🙂🙂").each_char
-    it_iterates "char", ['f'], String::Grapheme.new('f').each_char
-    it_iterates "char", ['🙂'], String::Grapheme.new('🙂').each_char
+    it_iterates "string", ['f', 'o', 'o'], String::Grapheme.new("foo").each_byte
+    it_iterates "string", ['🙂', '🙂'], String::Grapheme.new("🙂🙂").each_byte
+    it_iterates "char", ['f'], String::Grapheme.new('f').each_byte
+    it_iterates "char", ['🙂'], String::Grapheme.new('🙂').each_byte
   end
 
   it "#inspect" do
