@@ -811,8 +811,16 @@ module Crystal
     end
   end
 
-  # A macro hook (:inherited, :included, :extended)
-  record Hook, kind : Symbol, macro : Macro
+  # Kinds of macro hooks (`method_missing` and `finished` are handled separately)
+  enum HookKind
+    Inherited
+    Included
+    Extended
+    MethodAdded
+  end
+
+  # A macro hook
+  record Hook, kind : HookKind, macro : Macro
 
   # The key by which instantiated methods are cached.
   #
@@ -921,7 +929,7 @@ module Crystal
       end
     end
 
-    def add_hook(kind, a_macro, args_size = 0)
+    def add_hook(kind : HookKind, a_macro, args_size = 0)
       check_macro_param_count(a_macro, args_size)
       hooks = @hooks ||= [] of Hook
       hooks << Hook.new(kind, a_macro)

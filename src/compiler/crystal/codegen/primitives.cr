@@ -260,17 +260,49 @@ class Crystal::CodeGenVisitor
   end
 
   private def codegen_out_of_range(target_type : IntegerType, arg_type : FloatType, arg)
-    if arg_type.kind.f32? && target_type.kind.u128?
-      # since Float32::MAX < UInt128::MAX
-      # the range checking is replaced by a positive check only
-      builder.fcmp(LLVM::RealPredicate::OLT, arg, llvm_type(arg_type).const_float(0))
+    min_value, max_value = target_type.range
+    max_value = case arg_type.kind
+                when .f32?
+                  float32_upper_bound(max_value)
+                when .f64?
+                  float64_upper_bound(max_value)
+                else
+                  raise "BUG: unknown float type"
+                end
+
+    # we allow one comparison to be unordered so that NaNs are caught
+    # !(arg >= min_value) || arg > max_value
+    or(
+      builder.fcmp(LLVM::RealPredicate::ULT, arg, int_to_float(target_type, arg_type, int(min_value, target_type))),
+      builder.fcmp(LLVM::RealPredicate::OGT, arg, int_to_float(target_type, arg_type, int(max_value, target_type)))
+    )
+  end
+
+  private def float32_upper_bound(int_max_value)
+    case int_max_value
+    when UInt128
+      # `Float32::MAX < UInt128::MAX`, so we use `Float32::MAX` instead as the
+      # upper bound in order to reject positive infinity
+      int_max_value.class.new(Float32::MAX)
+    when Int32, UInt32, Int64, UInt64, Int128
+      # if the float type has fewer bits of precision than the integer type
+      # then the upper bound would mistakenly allow values near the upper limit,
+      # e.g. 2147483647_i32 -> 2147483648_f32, because the bound itself is
+      # rounded to the nearest even-significand number in the `int_to_float`
+      # call above; we choose the predecessor as the upper bound, i.e.
+      # 2147483520_f32, ensuring it is exact when converted back to an integer
+      int_max_value.class.new(int_max_value.to_f32.prev_float)
     else
-      min_value, max_value = target_type.range
-      # arg < min_value || arg > max_value
-      or(
-        builder.fcmp(LLVM::RealPredicate::OLT, arg, int_to_float(target_type, arg_type, int(min_value, target_type))),
-        builder.fcmp(LLVM::RealPredicate::OGT, arg, int_to_float(target_type, arg_type, int(max_value, target_type)))
-      )
+      int_max_value
+    end
+  end
+
+  private def float64_upper_bound(int_max_value)
+    case int_max_value
+    when Int64, UInt64, Int128, UInt128
+      int_max_value.class.new(int_max_value.to_f64.prev_float)
+    else
+      int_max_value
     end
   end
 

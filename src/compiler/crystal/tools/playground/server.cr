@@ -212,23 +212,12 @@ module Crystal::Playground
   end
 
   abstract class PlaygroundPage
-    @resources = [] of Resource
+    getter styles = [] of String
+    getter scripts = [] of String
 
     def render_with_layout(io, &block)
       ECR.embed "#{__DIR__}/views/layout.html.ecr", io
     end
-
-    protected def add_resource(kind, src)
-      @resources << Resource.new(kind, src)
-    end
-
-    def each_resource(kind)
-      @resources.each do |res|
-        yield res if res.kind == kind
-      end
-    end
-
-    record Resource, kind : Symbol, src : String
   end
 
   class FileContentPage < PlaygroundPage
@@ -361,10 +350,10 @@ module Crystal::Playground
 
     def load_resources(page : PlaygroundPage)
       Dir["playground/resources/*.css"].each do |file|
-        page.add_resource :css, "/workbook/#{file}"
+        page.styles << "/workbook/#{file}"
       end
       Dir["playground/resources/*.js"].each do |file|
-        page.add_resource :js, "/workbook/#{file}"
+        page.scripts << "/workbook/#{file}"
       end
     end
   end
