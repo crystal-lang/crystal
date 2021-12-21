@@ -35,7 +35,7 @@ module Crystal
       property needs_newline : Bool
       property needs_format : Bool
 
-      def initialize(@start_line : Int32, @kind : Symbol, @needs_format : Bool)
+      def initialize(@start_line : Int32, @needs_format : Bool)
         @end_line = @start_line
         @needs_newline = true
       end
@@ -4664,7 +4664,7 @@ module Crystal
 
               # We only format crystal code (empty by default means crystal)
               needs_format = language.empty?
-              @current_doc_comment = CommentInfo.new(@line + 1, :backticks, needs_format)
+              @current_doc_comment = CommentInfo.new(@line + 1, needs_format)
             end
           end
         end
