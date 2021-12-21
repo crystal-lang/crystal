@@ -50,6 +50,7 @@ module Spec
       end
     end
 
+    
     def negative_failure_message(actual_value)
       "Expected: actual_value != #{@expected_value.pretty_inspect}\n     got: #{actual_value.pretty_inspect}"
     end
