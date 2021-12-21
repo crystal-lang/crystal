@@ -95,7 +95,7 @@ jobs:
         run: bin/ci prepare_build
 
       - name: Test interpreter
-        run: bin/ci with_build_env 'make deps && bin/crystal build -o interpreter_spec spec/compiler/interpreter_spec.cr && ./interpreter_spec --verbose'
+        run: bin/ci with_build_env 'make deps && bin/crystal build -o interpreter_spec spec/compiler/interpreter_spec.cr && ./interpreter_spec'
 
   check_format:
     env:
