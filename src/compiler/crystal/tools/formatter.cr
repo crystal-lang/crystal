@@ -205,7 +205,7 @@ module Crystal
 
       empty_expressions = node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
 
-      if node.keyword == :"(" && @token.type == :"("
+      if node.keyword.paren? && @token.type == :"("
         write "("
         next_needs_indent = false
         has_paren = true
@@ -218,7 +218,7 @@ module Crystal
           next_needs_indent = true
           has_newline = true
         end
-      elsif node.keyword == :begin && @token.keyword?(:begin)
+      elsif node.keyword.begin? && @token.keyword?(:begin)
         write "begin"
         @indent += 2
         write_line
@@ -2668,7 +2668,7 @@ module Crystal
       if node.args.size == 1 &&
          !node.named_args && !node.block_arg && !node.block &&
          (expressions = node.args[0].as?(Expressions)) &&
-         expressions.keyword == :"(" && expressions.expressions.size == 1
+         expressions.keyword.paren? && expressions.expressions.size == 1
         skip_space
       end
 
