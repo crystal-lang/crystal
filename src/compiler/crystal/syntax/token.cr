@@ -64,8 +64,8 @@ module Crystal
       OP_AMP_MINUS                # &-
       OP_AMP_MINUS_EQ             # &-=
       OP_AMP_EQ                   # &=
-      OP_BRACKETL                 # (
-      OP_BRACKETR                 # )
+      OP_PARENL                   # (
+      OP_PARENR                   # )
       OP_STAR                     # *
       OP_STAR_STAR                # **
       OP_STAR_STAR_EQ             # **=
@@ -126,8 +126,8 @@ module Crystal
         {% begin %}
           {%
             operator1 = {
-              "BANG" => "!", "DOLLAR" => "$", "PERCENT" => "%", "AMP" => "&", "BRACKETL" => "(",
-              "BRACKETR" => ")", "STAR" => "*", "PLUS" => "+", "COMMA" => ",", "MINUS" => "-",
+              "BANG" => "!", "DOLLAR" => "$", "PERCENT" => "%", "AMP" => "&", "PARENL" => "(",
+              "PARENR" => ")", "STAR" => "*", "PLUS" => "+", "COMMA" => ",", "MINUS" => "-",
               "PERIOD" => ".", "SLASH" => "/", "COLON" => ":", "SEMICOLON" => ";", "LT" => "<",
               "EQ" => "=", "GT" => ">", "QUESTION" => "?", "AT" => "@", "SQUAREL" => "[",
               "SQUARER" => "]", "CARET" => "^", "GRAVE" => "`", "CURLYL" => "{", "BAR" => "|",

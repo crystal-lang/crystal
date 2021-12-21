@@ -166,7 +166,7 @@ module Crystal
     end
 
     def visit(node : Expressions)
-      if node.expressions.size == 1 && @token.type.op_bracketl?
+      if node.expressions.size == 1 && @token.type.op_parenl?
         # If it's (...) with a single expression, we treat it
         # like a single expression, indenting it if needed
         write "("
@@ -178,7 +178,7 @@ module Crystal
           skip_space_write_line
           skip_space_or_newline
           write_indent
-          write_token :OP_BRACKETR
+          write_token :OP_PARENR
           return false
         end
         skip_space_or_newline
@@ -205,7 +205,7 @@ module Crystal
 
       empty_expressions = node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
 
-      if node.keyword == :"(" && @token.type.op_bracketl?
+      if node.keyword == :"(" && @token.type.op_parenl?
         write "("
         next_needs_indent = false
         has_paren = true
@@ -321,7 +321,7 @@ module Crystal
       end
 
       if has_paren
-        write_token :OP_BRACKETR
+        write_token :OP_PARENR
       end
 
       if has_begin
@@ -1051,8 +1051,8 @@ module Crystal
     end
 
     def check_open_paren
-      if @token.type.op_bracketl?
-        while @token.type.op_bracketl?
+      if @token.type.op_parenl?
+        while @token.type.op_parenl?
           write "("
           next_token_skip_space
           @paren_count += 1
@@ -1064,9 +1064,9 @@ module Crystal
     end
 
     def check_close_paren
-      while @token.type.op_bracketr? && @paren_count > 0
+      while @token.type.op_parenr? && @paren_count > 0
         @paren_count -= 1
-        write_token :OP_BRACKETR
+        write_token :OP_PARENR
       end
     end
 
@@ -1198,7 +1198,7 @@ module Crystal
       accept name
       skip_space_or_newline
 
-      write_token :OP_BRACKETL
+      write_token :OP_PARENL
       skip_space
 
       # Given that generic type arguments are always inside parentheses
@@ -1232,7 +1232,7 @@ module Crystal
       end
 
       skip_space_or_newline if @paren_count == 0
-      write_token :OP_BRACKETR
+      write_token :OP_PARENR
 
       # Restore the old parentheses count
       @paren_count = old_paren_count
@@ -1283,7 +1283,7 @@ module Crystal
               write_indent(column)
               next_token_skip_space_or_newline
             end
-          when .op_bracketr?
+          when .op_parenr?
             if @paren_count > 0
               @paren_count -= 1
               write ")"
@@ -1517,9 +1517,9 @@ module Crystal
     def format_def_args(args : Array, block_arg, splat_index, variadic, double_splat)
       # If there are no args, remove extra "()"
       if args.empty? && !block_arg && !double_splat && !variadic
-        if @token.type.op_bracketl?
+        if @token.type.op_parenl?
           next_token_skip_space_or_newline
-          check :OP_BRACKETR
+          check :OP_PARENR
           next_token
         end
         return 0
@@ -1534,7 +1534,7 @@ module Crystal
       old_indent = @indent
       @indent = @column + 1
 
-      write_token :OP_BRACKETL
+      write_token :OP_PARENL
       skip_space
 
       # When "(" follows newline, it turns on two spaces indentation mode.
@@ -1592,7 +1592,7 @@ module Crystal
         wrote_newline = true
       end
       write_indent(found_first_newline ? old_indent : @indent) if wrote_newline
-      write_token :OP_BRACKETR
+      write_token :OP_PARENR
 
       @indent = old_indent
 
@@ -2633,14 +2633,14 @@ module Crystal
         skip_space
 
         next_token
-        if @token.type.op_bracketl?
+        if @token.type.op_parenl?
           write "=("
           has_parentheses = true
           slash_is_regex!
           next_token
           format_call_args(node, true, base_indent)
           skip_space_or_newline
-          write_token :OP_BRACKETR
+          write_token :OP_PARENR
         else
           write " ="
           skip_space
@@ -2672,7 +2672,7 @@ module Crystal
         skip_space
       end
 
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         slash_is_regex!
         next_token
 
@@ -2681,7 +2681,7 @@ module Crystal
         # like `nil?` when there might not be a receiver.
         if (obj || special_call) && !has_args && !node.block_arg && !node.block
           skip_space_or_newline
-          check :OP_BRACKETR
+          check :OP_PARENR
           next_token
           return false
         end
@@ -2714,13 +2714,13 @@ module Crystal
               write_line
             end
             needs_space = false
-            block_indent += 2 if !@token.type.op_bracketr? # foo(1, ↵  &.foo) case
+            block_indent += 2 if !@token.type.op_parenr? # foo(1, ↵  &.foo) case
             write_indent(block_indent)
           else
-            write "," if !@token.type.op_bracketr? # foo(1, &.foo) case
+            write "," if !@token.type.op_parenr? # foo(1, &.foo) case
           end
         end
-        if has_parentheses && @token.type.op_bracketr?
+        if has_parentheses && @token.type.op_parenr?
           if ends_with_newline
             write_line unless found_comment || @wrote_newline
             write_indent
@@ -2744,7 +2744,7 @@ module Crystal
         finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
       elsif has_parentheses
         skip_space_or_newline
-        write_token :OP_BRACKETR
+        write_token :OP_PARENR
       end
 
       false
@@ -2900,7 +2900,7 @@ module Crystal
         elsif found_comment
           write_indent(column)
         end
-        check :OP_BRACKETR
+        check :OP_PARENR
 
         if ends_with_newline
           write_line unless @wrote_newline
@@ -3123,7 +3123,7 @@ module Crystal
           write_token :OP_STAR
         end
 
-        if @token.type.op_bracketl?
+        if @token.type.op_parenl?
           write "("
           next_token_skip_space_or_newline
 
@@ -3150,7 +3150,7 @@ module Crystal
               next_token_skip_space_or_newline
             end
 
-            if @token.type.op_bracketr?
+            if @token.type.op_parenr?
               next_token
               write ")"
               break
@@ -3445,7 +3445,7 @@ module Crystal
     def format_type_vars(type_vars, splat_index)
       if type_vars
         skip_space
-        write_token :OP_BRACKETL
+        write_token :OP_PARENL
         skip_space_or_newline
         type_vars.each_with_index do |type_var, i|
           write_token :OP_STAR if i == splat_index
@@ -3456,7 +3456,7 @@ module Crystal
             next_token_skip_space_or_newline
           end
         end
-        write_token :OP_BRACKETR
+        write_token :OP_PARENR
         skip_space
       end
     end
@@ -3576,7 +3576,7 @@ module Crystal
       write_keyword keyword
 
       has_parentheses = false
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         has_parentheses = true
         write "("
         next_token_skip_space_or_newline
@@ -3604,7 +3604,7 @@ module Crystal
         end
       end
 
-      write_token :OP_BRACKETR if has_parentheses
+      write_token :OP_PARENR if has_parentheses
 
       false
     end
@@ -3639,7 +3639,7 @@ module Crystal
 
       write_keyword :yield
 
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         format_parenthesized_args(node.exps)
       else
         write " " unless node.exps.empty?
@@ -3832,13 +3832,13 @@ module Crystal
       node.path.accept self
       skip_space_or_newline
 
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         has_args = !node.args.empty? || node.named_args
         if has_args
           format_parenthesized_args(node.args, named_args: node.named_args)
         else
           next_token_skip_space_or_newline
-          check :OP_BRACKETR
+          check :OP_PARENR
           next_token
         end
       end
@@ -4102,7 +4102,7 @@ module Crystal
       next_token_skip_space
       next_token_skip_space if @token.type.op_eq?
 
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         write "(" unless node.args.empty?
         next_token_skip_space
         node.args.each_with_index do |arg, i|
@@ -4126,7 +4126,7 @@ module Crystal
 
       a_def = node.def
 
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         write "(" unless a_def.args.empty?
         next_token_skip_space_or_newline
 
@@ -4139,7 +4139,7 @@ module Crystal
           end
         end
 
-        check :OP_BRACKETR
+        check :OP_PARENR
         write ")" unless a_def.args.empty?
         next_token_skip_space_or_newline
       end
@@ -4261,7 +4261,7 @@ module Crystal
       column = @column
       has_newlines = false
 
-      write_token :OP_BRACKETL
+      write_token :OP_PARENL
       skip_space
 
       if @token.type.newline?
@@ -4356,7 +4356,7 @@ module Crystal
         write_indent
       end
 
-      write_token :OP_BRACKETR
+      write_token :OP_PARENR
 
       false
     end
@@ -4365,11 +4365,11 @@ module Crystal
       accept StringLiteral.new(node.constraint)
 
       skip_space_or_newline
-      write_token :OP_BRACKETL
+      write_token :OP_PARENL
       skip_space_or_newline
       accept node.exp
       skip_space_or_newline
-      write_token :OP_BRACKETR
+      write_token :OP_PARENR
 
       false
     end

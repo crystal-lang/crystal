@@ -317,7 +317,7 @@ module Crystal
           else
             break
           end
-        when .op_bracketr?, .op_comma?, .op_semicolon?, .op_percent_curlyr?, .newline?, .eof?
+        when .op_parenr?, .op_comma?, .op_semicolon?, .op_percent_curlyr?, .newline?, .eof?
           break
         else
           if end_token?
@@ -512,7 +512,7 @@ module Crystal
       next_token_skip_space
       check_void_expression_keyword
       right = if end_token? ||
-                 @token.type.op_bracketr? ||
+                 @token.type.op_parenr? ||
                  @token.type.op_comma? ||
                  @token.type.op_semicolon? ||
                  @token.type.op_eq_gt? ||
@@ -716,7 +716,7 @@ module Crystal
               # Rewrite 'f.x = arg' as f.x=(arg)
               next_token
 
-              if @token.type.op_bracketl?
+              if @token.type.op_parenl?
                 # If we have `f.x=(exp1).a.b.c`, consider it the same as `f.x = (exp1).a.b.c`
                 # and not as `(f.x = exp1).a.b.c` because a difference in space
                 # should not make a difference in semantic (#4399)
@@ -725,7 +725,7 @@ module Crystal
                 if current_char == '*'
                   next_token_skip_space
                   arg = parse_single_arg
-                  check :OP_BRACKETR
+                  check :OP_PARENR
                   next_token
                 else
                   arg = parse_op_assign_no_control
@@ -854,11 +854,11 @@ module Crystal
     def parse_is_a(atomic)
       next_token_skip_space
 
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         next_token_skip_space_or_newline
         type = parse_bare_proc_type
         skip_space_or_newline
-        check :OP_BRACKETR
+        check :OP_PARENR
         end_location = token_end_location
         next_token_skip_space
       else
@@ -872,11 +872,11 @@ module Crystal
     def parse_as(atomic, klass = Cast)
       next_token_skip_space
 
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         next_token_skip_space_or_newline
         type = parse_bare_proc_type
         skip_space_or_newline
-        check :OP_BRACKETR
+        check :OP_PARENR
         end_location = token_end_location
         next_token_skip_space
       else
@@ -894,11 +894,11 @@ module Crystal
     def parse_responds_to(atomic)
       next_token
 
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         next_token_skip_space_or_newline
         name = parse_responds_to_name
         next_token_skip_space_or_newline
-        check :OP_BRACKETR
+        check :OP_PARENR
         next_token_skip_space
       elsif @token.type.space?
         next_token
@@ -922,9 +922,9 @@ module Crystal
     def parse_nil?(atomic)
       next_token
 
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         next_token_skip_space_or_newline
-        check :OP_BRACKETR
+        check :OP_PARENR
         next_token_skip_space
       end
 
@@ -934,9 +934,9 @@ module Crystal
     def parse_negation_suffix(atomic)
       next_token
 
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         next_token_skip_space_or_newline
-        check :OP_BRACKETR
+        check :OP_PARENR
         next_token_skip_space
       end
 
@@ -952,7 +952,7 @@ module Crystal
 
     def parse_atomic_without_location
       case @token.type
-      when .op_bracketl?
+      when .op_parenl?
         parse_parenthesized_expression
       when .op_squarel_squarer?
         parse_empty_array_literal
@@ -1303,13 +1303,13 @@ module Crystal
       args = [] of ASTNode
       named_args = nil
 
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         open("annotation") do
           next_token_skip_space_or_newline
-          while !@token.type.op_bracketr?
+          while !@token.type.op_parenr?
             if @token.type.ident? && current_char == ':'
               named_args = parse_named_args(@token.location, first_name: nil, allow_newline: true)
-              check :OP_BRACKETR
+              check :OP_PARENR
               break
             else
               args << parse_call_arg
@@ -1530,7 +1530,7 @@ module Crystal
 
       if check_paren
         skip_space_or_newline
-        check :OP_BRACKETR
+        check :OP_PARENR
         next_token_skip_space
       else
         skip_space
@@ -1587,10 +1587,10 @@ module Crystal
 
         if @token.type.op_eq?
           next_token_skip_space
-          if @token.type.op_bracketl?
+          if @token.type.op_parenl?
             next_token_skip_space
             exp = parse_op_assign
-            check :OP_BRACKETR
+            check :OP_PARENR
             next_token_skip_space
             call.name = "#{call.name}="
             call.args = [exp] of ASTNode
@@ -1662,13 +1662,13 @@ module Crystal
     def parse_type_vars
       type_vars = nil
       splat_index = nil
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         type_vars = [] of String
 
         next_token_skip_space_or_newline
 
         index = 0
-        while !@token.type.op_bracketr?
+        while !@token.type.op_parenr?
           if @token.type.op_star?
             raise "splat type parameter already specified", @token if splat_index
             splat_index = index
@@ -1687,7 +1687,7 @@ module Crystal
             next_token_skip_space_or_newline
           else
             skip_space_or_newline
-            check :OP_BRACKETR
+            check :OP_PARENR
           end
 
           index += 1
@@ -1759,7 +1759,7 @@ module Crystal
       slash_is_regex!
       next_token_skip_space_or_newline
 
-      if @token.type.op_bracketr?
+      if @token.type.op_parenr?
         node = Expressions.new([Nop.new] of ASTNode)
         node.keyword = :"("
         return node_and_next_token node
@@ -1779,13 +1779,13 @@ module Crystal
       while true
         exps << parse_expression
         case @token.type
-        when .op_bracketr?
+        when .op_parenr?
           @wants_regex = false
           next_token_skip_space
           break
         when .newline?, .op_semicolon?
           next_token_skip_space
-          if @token.type.op_bracketr?
+          if @token.type.op_parenr?
             @wants_regex = false
             next_token_skip_space
             break
@@ -1795,7 +1795,7 @@ module Crystal
         end
       end
 
-      unexpected_token if @token.type.op_bracketl?
+      unexpected_token if @token.type.op_parenl?
 
       node = Expressions.new(exps)
       node.keyword = :"("
@@ -1811,16 +1811,16 @@ module Crystal
       when .symbol?
         # -> :T { }
         raise "a space is mandatory between ':' and return type", @token
-      when .op_bracketl?, .op_curlyl?, .op_colon?
+      when .op_parenl?, .op_curlyl?, .op_colon?
         # do nothing
       else
         return parse_fun_pointer unless @token.keyword?(:do)
       end
 
       args = [] of Arg
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         next_token_skip_space_or_newline
-        while !@token.type.op_bracketr?
+        while !@token.type.op_parenr?
           param_location = @token.location
           arg = parse_fun_literal_arg.at(param_location)
           if args.any? &.name.==(arg.name)
@@ -1903,7 +1903,7 @@ module Crystal
         next_token_skip_space_or_newline
       else
         skip_space_or_newline
-        check :OP_BRACKETR
+        check :OP_PARENR
       end
 
       Arg.new name, restriction: type
@@ -1951,10 +1951,10 @@ module Crystal
         unexpected_token
       end
 
-      if @token.type.op_bracketl?
+      if @token.type.op_parenl?
         next_token_skip_space
-        types = parse_union_types(:OP_BRACKETR)
-        check :OP_BRACKETR
+        types = parse_union_types(:OP_PARENR)
+        check :OP_PARENR
         next_token_skip_space
       else
         types = [] of ASTNode
@@ -3039,9 +3039,9 @@ module Crystal
         index = 0
 
         case @token.type
-        when .op_bracketl?
+        when .op_parenl?
           next_token_skip_space_or_newline
-          while !@token.type.op_bracketr?
+          while !@token.type.op_parenr?
             extras = parse_arg(args,
               extra_assigns: nil,
               parentheses: true,
@@ -3061,13 +3061,13 @@ module Crystal
               found_double_splat = double_splat
             end
             if block_arg = extras.block_arg
-              check :OP_BRACKETR
+              check :OP_PARENR
               break
             elsif @token.type.op_comma?
               next_token_skip_space_or_newline
             else
               skip_space_or_newline
-              check :OP_BRACKETR
+              check :OP_PARENR
             end
             index += 1
           end
@@ -3523,9 +3523,9 @@ module Crystal
       double_splat = nil
 
       case @token.type
-      when .op_bracketl?
+      when .op_parenl?
         next_token_skip_space_or_newline
-        while !@token.type.op_bracketr?
+        while !@token.type.op_parenr?
           extras = parse_arg(args,
             extra_assigns: extra_assigns,
             parentheses: true,
@@ -3547,14 +3547,14 @@ module Crystal
           end
           if block_arg = extras.block_arg
             compute_block_arg_yields block_arg
-            check :OP_BRACKETR
+            check :OP_PARENR
             found_block = true
             break
           elsif @token.type.op_comma?
             next_token_skip_space_or_newline
           else
             skip_space_or_newline
-            check :OP_BRACKETR
+            check :OP_PARENR
           end
           index += 1
         end
@@ -3737,7 +3737,7 @@ module Crystal
 
       found_space = false
 
-      if splat && (@token.type.op_comma? || @token.type.op_bracketr?)
+      if splat && (@token.type.op_comma? || @token.type.op_parenr?)
         arg_name = ""
         uses_arg = false
         allow_restrictions = false
@@ -3834,7 +3834,7 @@ module Crystal
     def parse_block_arg(extra_assigns)
       name_location = @token.location
 
-      if @token.type.op_bracketr? || @token.type.newline? || @token.type.op_colon?
+      if @token.type.op_parenr? || @token.type.newline? || @token.type.op_colon?
         arg_name = ""
       else
         arg_name, external_name, found_space, uses_arg = parse_arg_name(name_location, extra_assigns, allow_external_name: false)
@@ -4324,7 +4324,7 @@ module Crystal
             all_names << arg_name
           when .underscore?
             arg_name = "_"
-          when .op_bracketl?
+          when .op_parenl?
             block_arg_name = temp_arg_name
 
             next_token_skip_space_or_newline
@@ -4364,8 +4364,8 @@ module Crystal
               case @token.type
               when .op_comma?
                 next_token_skip_space_or_newline
-                break if @token.type.op_bracketr?
-              when .op_bracketr?
+                break if @token.type.op_parenr?
+              when .op_parenr?
                 break
               else
                 raise "expecting ',' or ')', not #{@token}", @token
@@ -4437,7 +4437,7 @@ module Crystal
       case @token.type
       when .op_curlyl?
         nil
-      when .op_bracketl?
+      when .op_parenl?
         slash_is_regex!
 
         args = [] of ASTNode
@@ -4450,7 +4450,7 @@ module Crystal
           found_double_splat = false
 
           next_token_skip_space_or_newline
-          while !@token.type.op_bracketr?
+          while !@token.type.op_parenr?
             if call_block_arg_follows?
               return parse_call_block_arg(args, true)
             end
@@ -4473,7 +4473,7 @@ module Crystal
               next_token_skip_space_or_newline
             else
               skip_space_or_newline
-              check :OP_BRACKETR
+              check :OP_PARENR
               break
             end
           end
@@ -4504,7 +4504,7 @@ module Crystal
       @call_args_nest -= 1
     end
 
-    def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token : Token::Kind = :OP_BRACKETR,
+    def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token : Token::Kind = :OP_PARENR,
                                        allow_beginless_range = false)
       # This method is called by `parse_call_args`, so it increments once too much in this case.
       # But it is no problem, because it decrements once too much.
@@ -4525,7 +4525,7 @@ module Crystal
         return nil unless allow_curly
       when .char?, .string?, .delimiter_start?, .string_array_start?, .symbol_array_start?,
            .number?, .ident?, .symbol?, .instance_var?, .class_var?, .const?, .global?,
-           .op_dollar_tilde?, .op_dollar_question?, .global_match_data_index?, .op_bracketl?,
+           .op_dollar_tilde?, .op_dollar_question?, .global_match_data_index?, .op_parenl?,
            .op_bang?, .op_squarel?, .op_squarel_squarer?, .op_tilde?, .op_minus_gt?,
            .op_curlyl_curlyl?, .magic?, .underscore?
         # Nothing
@@ -4613,7 +4613,7 @@ module Crystal
         return parse_call_block_arg(args, check_paren: allow_newline, named_args: named_args)
       end
 
-      check :OP_BRACKETR if allow_newline
+      check :OP_PARENR if allow_newline
       end_location = token_end_location
 
       if allow_newline
@@ -4659,7 +4659,7 @@ module Crystal
         skip_space
         if @token.type.op_comma?
           next_token_skip_space_or_newline
-          if @token.type.op_bracketr? || @token.type.op_amp? || @token.type.op_squarer?
+          if @token.type.op_parenr? || @token.type.op_amp? || @token.type.op_squarer?
             break
           end
         elsif @token.type.newline? && allow_newline
@@ -4844,10 +4844,10 @@ module Crystal
         type
       when .op_minus_gt?
         parse_proc_type_output(nil, location)
-      when .op_bracketl?
+      when .op_parenl?
         next_token_skip_space_or_newline
         type = parse_type_splat { parse_union_type }
-        if @token.type.op_bracketr?
+        if @token.type.op_parenr?
           next_token_skip_space
           if @token.type.op_minus_gt? # `(A) -> B` case
             type = parse_proc_type_output([type], location)
@@ -4858,15 +4858,15 @@ module Crystal
           input_types = [type]
           while @token.type.op_comma?
             next_token_skip_space_or_newline
-            break if @token.type.op_bracketr? # allow trailing comma
+            break if @token.type.op_parenr? # allow trailing comma
             input_types << parse_type_splat { parse_union_type }
           end
           if @token.type.op_minus_gt? # `(A, B, C -> D)` case
             type = parse_proc_type_output(input_types, input_types.first.location)
-            check :OP_BRACKETR
+            check :OP_PARENR
             next_token_skip_space
           else # `(A, B, C) -> D` case
-            check :OP_BRACKETR
+            check :OP_PARENR
             next_token_skip_space
             type = parse_proc_type_output(input_types, location)
           end
@@ -4959,17 +4959,17 @@ module Crystal
     end
 
     def parse_type_args(name)
-      return name unless @token.type.op_bracketl?
+      return name unless @token.type.op_parenl?
 
       next_token_skip_space_or_newline
       args = [] of ASTNode
       if named_tuple_start? || string_literal_start?
-        named_args = parse_named_type_args(:OP_BRACKETR)
+        named_args = parse_named_type_args(:OP_PARENR)
       else
         args << parse_type_splat { parse_type_arg }
         while @token.type.op_comma?
           next_token_skip_space_or_newline
-          break if @token.type.op_bracketr? # allow trailing comma
+          break if @token.type.op_parenr? # allow trailing comma
           args << parse_type_splat { parse_type_arg }
         end
 
@@ -4980,7 +4980,7 @@ module Crystal
       end
 
       skip_space_or_newline
-      check :OP_BRACKETR
+      check :OP_PARENR
       end_location = token_end_location
       next_token
 
@@ -5149,7 +5149,7 @@ module Crystal
     end
 
     def type_start?
-      while @token.type.op_bracketl? || @token.type.op_curlyl?
+      while @token.type.op_parenl? || @token.type.op_curlyl?
         next_token_skip_space_or_newline
       end
 
@@ -5204,7 +5204,7 @@ module Crystal
         next_token_skip_space
         delimiter_or_type_suffix?
       when .op_minus_gt?, .op_bar?, .op_comma?, .op_eq_gt?, .newline?, .eof?,
-           .op_eq?, .op_semicolon?, .op_bracketl?, .op_bracketr?, .op_squarel?, .op_squarer?
+           .op_eq?, .op_semicolon?, .op_parenl?, .op_parenr?, .op_squarel?, .op_squarer?
         # -> | , => \n EOF = ; ( ) [ ]
         true
       else
@@ -5216,21 +5216,21 @@ module Crystal
       location = @token.location
 
       next_token_skip_space
-      check :OP_BRACKETL
+      check :OP_PARENL
       next_token_skip_space_or_newline
-      if @token.type.op_bracketr?
+      if @token.type.op_parenr?
         raise "missing typeof argument"
       end
 
       with_lexical_var_scope do
         exps = [] of ASTNode
-        while !@token.type.op_bracketr?
+        while !@token.type.op_parenr?
           exps << parse_op_assign
           if @token.type.op_comma?
             next_token_skip_space_or_newline
           else
             skip_space_or_newline
-            check :OP_BRACKETR
+            check :OP_PARENR
           end
         end
 
@@ -5256,7 +5256,7 @@ module Crystal
 
     def parse_asm
       next_token_skip_space
-      check :OP_BRACKETL
+      check :OP_PARENL
       next_token_skip_space_or_newline
       text = parse_string_without_interpolation("asm")
       skip_space_or_newline
@@ -5267,7 +5267,7 @@ module Crystal
       can_throw = false
 
       part_index = 0
-      until @token.type.op_bracketr?
+      until @token.type.op_parenr?
         if @token.type.op_colon_colon?
           next_token_skip_space_or_newline
           part_index += 2
@@ -5299,7 +5299,7 @@ module Crystal
         end
       end
 
-      check :OP_BRACKETR
+      check :OP_PARENR
 
       next_token_skip_space
 
@@ -5320,10 +5320,10 @@ module Crystal
 
     def parse_asm_operand
       text = parse_string_without_interpolation("constraint")
-      check :OP_BRACKETL
+      check :OP_PARENL
       next_token_skip_space_or_newline
       exp = parse_expression
-      check :OP_BRACKETR
+      check :OP_PARENR
       next_token_skip_space_or_newline
       AsmOperand.new(text, exp)
     end
@@ -5572,13 +5572,13 @@ module Crystal
         args = [] of Arg
         varargs = false
 
-        if @token.type.op_bracketl?
+        if @token.type.op_parenl?
           next_token_skip_space_or_newline
-          while !@token.type.op_bracketr?
+          while !@token.type.op_parenr?
             if @token.type.op_period_period_period?
               varargs = true
               next_token_skip_space_or_newline
-              check :OP_BRACKETR
+              check :OP_PARENR
               break
             end
 
@@ -5604,7 +5604,7 @@ module Crystal
               next_token_skip_space_or_newline
             else
               skip_space_or_newline
-              check :OP_BRACKETR
+              check :OP_PARENR
               break
             end
           end
@@ -5664,7 +5664,7 @@ module Crystal
     def parse_pointerof
       next_token_skip_space
 
-      check :OP_BRACKETL
+      check :OP_PARENL
       next_token_skip_space_or_newline
 
       if @token.keyword?(:self)
@@ -5675,7 +5675,7 @@ module Crystal
       skip_space_or_newline
 
       end_location = token_end_location
-      check :OP_BRACKETR
+      check :OP_PARENR
       next_token_skip_space
 
       PointerOf.new(exp).at_end(end_location)
@@ -5692,7 +5692,7 @@ module Crystal
     def parse_sizeof(klass)
       next_token_skip_space
 
-      check :OP_BRACKETL
+      check :OP_PARENL
       next_token_skip_space_or_newline
 
       location = @token.location
@@ -5701,7 +5701,7 @@ module Crystal
       skip_space_or_newline
 
       end_location = token_end_location
-      check :OP_BRACKETR
+      check :OP_PARENR
       next_token_skip_space
 
       klass.new(exp).at_end(end_location)
@@ -5709,7 +5709,7 @@ module Crystal
 
     def parse_offsetof
       next_token_skip_space
-      check :OP_BRACKETL
+      check :OP_PARENL
 
       next_token_skip_space_or_newline
       type_location = @token.location
@@ -5733,7 +5733,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       end_location = token_end_location
-      check :OP_BRACKETR
+      check :OP_PARENR
       next_token_skip_space
 
       OffsetOf.new(type, offset).at_end(end_location)

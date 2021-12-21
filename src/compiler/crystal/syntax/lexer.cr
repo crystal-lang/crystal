@@ -415,8 +415,8 @@ module Crystal
             @token.type = :OP_PERCENT
           end
         end
-      when '(' then next_char :OP_BRACKETL
-      when ')' then next_char :OP_BRACKETR
+      when '(' then next_char :OP_PARENL
+      when ')' then next_char :OP_PARENR
       when '{'
         char = next_char
         case char
