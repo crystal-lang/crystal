@@ -20,6 +20,7 @@ module HTML
   #
   # HTML.escape("Crystal & You") # => "Crystal &amp; You"
   # ```
+  # See also `URI.encode_path`
   def self.escape(string : String) : String
     string.gsub(SUBSTITUTIONS)
   end
