@@ -91,7 +91,7 @@ lib LibGC
   # Boehm GC requires to use its own thread manipulation routines instead of pthread's or Win32's
   {% if flag?(:win32) %}
     fun beginthreadex = GC_beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt,
-                                          arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : Void*
+                                         arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : Void*
   {% else %}
     fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*) : LibC::Int
     fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
