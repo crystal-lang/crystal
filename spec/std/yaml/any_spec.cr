@@ -2,6 +2,86 @@ require "spec"
 require "yaml"
 require "json"
 
+private def it_fetches_from_hash(key, *equivalent_keys)
+  it "fetches #{key.class}" do
+    any = YAML::Any.new({YAML::Any.new(key) => YAML::Any.new("bar")})
+
+    any[key].raw.should eq("bar")
+    any[YAML::Any.new(key)].raw.should eq("bar")
+
+    equivalent_keys.each do |k|
+      any[k].raw.should eq("bar")
+      any[YAML::Any.new(k)].raw.should eq("bar")
+    end
+
+    unless key.nil?
+      expect_raises(KeyError, %(Missing hash key: nil)) do
+        any[nil]
+      end
+
+      expect_raises(KeyError, %(Missing hash key: nil)) do
+        any[YAML::Any.new(nil)]
+      end
+    end
+
+    expect_raises(KeyError, %(Missing hash key: "fox")) do
+      any["fox"]
+    end
+
+    expect_raises(KeyError, %(Missing hash key: "fox")) do
+      any[YAML::Any.new("fox")]
+    end
+
+    expect_raises(KeyError, %(Missing hash key: 2)) do
+      any[2]
+    end
+
+    expect_raises(KeyError, %(Missing hash key: 2)) do
+      any[YAML::Any.new(2i64)]
+    end
+
+    expect_raises(KeyError, %(Missing hash key: 2)) do
+      any[2.0]
+    end
+
+    expect_raises(KeyError, %(Missing hash key: 2)) do
+      any[YAML::Any.new(2.0f64)]
+    end
+
+    expect_raises(KeyError, %(Missing hash key: 'c')) do
+      any['c']
+    end
+  end
+end
+
+private def it_fetches_from_hash?(key, *equivalent_keys)
+  it "fetches #{key.class}" do
+    any = YAML::Any.new({YAML::Any.new(key) => YAML::Any.new("bar")})
+
+    any[key]?.try(&.raw).should eq("bar")
+    any[YAML::Any.new(key)]?.try(&.raw).should eq("bar")
+
+    equivalent_keys.each do |k|
+      any[k]?.try(&.raw).should eq("bar")
+      any[YAML::Any.new(k)]?.try(&.raw).should eq("bar")
+    end
+
+    unless key.nil?
+      any[nil]?.should be_nil
+      any[YAML::Any.new(nil)]?.should be_nil
+    end
+
+    any["fox"]?.should be_nil
+    any[YAML::Any.new("fox")]?.should be_nil
+    any[2]?.should be_nil
+    any[YAML::Any.new(2i64)]?.should be_nil
+    any[2.0]?.should be_nil
+    any[YAML::Any.new(2.0f64)]?.should be_nil
+
+    any['c']?.should be_nil
+  end
+end
+
 describe YAML::Any do
   describe "casts" do
     it "gets nil" do
@@ -141,14 +221,59 @@ describe YAML::Any do
   describe "#[]" do
     it "of array" do
       YAML.parse("- foo\n- bar\n")[1].raw.should eq("bar")
+
+      any = YAML::Any.new([YAML::Any.new("baz"), YAML::Any.new("bar")])
+
+      any[1i64].raw.should eq("bar")
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[nil]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new(nil)]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any["fox"]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new("fox")]
+      end
+
+      expect_raises(IndexError, %(Index out of bounds)) do
+        any[2]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new(2i64)]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[2.0]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new(2.0)]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any['c']
+      end
     end
 
-    it "of hash" do
-      YAML.parse("foo: bar")["foo"].raw.should eq("bar")
-    end
-
-    it "of hash with integer keys" do
-      YAML.parse("1: bar")[1].raw.should eq("bar")
+    context "hash" do
+      it_fetches_from_hash nil
+      it_fetches_from_hash true
+      it_fetches_from_hash 1i64, 1.0
+      it_fetches_from_hash 1.0, 1i64
+      it_fetches_from_hash "foo"
+      it_fetches_from_hash Time.utc
+      it_fetches_from_hash "foo".to_slice
+      it_fetches_from_hash [YAML::Any.new("foo")]
+      it_fetches_from_hash({YAML::Any.new("foo") => YAML::Any.new("baz")})
+      it_fetches_from_hash Set{YAML::Any.new("foo")}
     end
   end
 
@@ -156,6 +281,46 @@ describe YAML::Any do
     it "of array" do
       YAML.parse("- foo\n- bar\n")[1]?.not_nil!.raw.should eq("bar")
       YAML.parse("- foo\n- bar\n")[3]?.should be_nil
+
+      any = YAML::Any.new([YAML::Any.new("baz"), YAML::Any.new("bar")])
+
+      any[1i64].raw.should eq("bar")
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[nil]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new(nil)]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any["fox"]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new("fox")]
+      end
+
+      expect_raises(IndexError, %(Index out of bounds)) do
+        any[2]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new(2i64)]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[2.0]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new(2.0)]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any['c']
+      end
     end
 
     it "of hash" do
@@ -166,6 +331,19 @@ describe YAML::Any do
     it "of hash with integer keys" do
       YAML.parse("1: bar")[1]?.not_nil!.raw.should eq("bar")
       YAML.parse("1: bar")[2]?.should be_nil
+    end
+
+    context "hash" do
+      it_fetches_from_hash? nil
+      it_fetches_from_hash? true
+      it_fetches_from_hash? 1i64, 1.0
+      it_fetches_from_hash? 1.0, 1i64
+      it_fetches_from_hash? "foo"
+      it_fetches_from_hash? Time.utc
+      it_fetches_from_hash? "foo".to_slice
+      it_fetches_from_hash? [YAML::Any.new("foo")]
+      it_fetches_from_hash?({YAML::Any.new("foo") => YAML::Any.new("baz")})
+      it_fetches_from_hash? Set{YAML::Any.new("foo")}
     end
   end
 
