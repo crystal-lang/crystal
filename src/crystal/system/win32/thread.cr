@@ -24,10 +24,13 @@ class Thread
   def initialize(&@func : ->)
     @th = uninitialized LibC::HANDLE
 
-    @th = LibGC.beginthreadex(nil, 0, ->(data : Void*) {
-      (data.as(Thread)).start
-      LibC::UInt.zero
-    }, self.as(Void*), 0, nil).as(LibC::HANDLE)
+    @th = GC.beginthreadex(
+      security: Pointer(Void).null,
+      stack_size: LibC::UInt.zero,
+      start_address: ->(data : Void*) { data.as(Thread).start; LibC::UInt.zero },
+      arglist: self.as(Void*),
+      initflag: LibC::UInt.zero,
+      thrdaddr: Pointer(LibC::UInt).null)
 
     if @th.null?
       raise RuntimeError.from_errno("_beginthreadex")

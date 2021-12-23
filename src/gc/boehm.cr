@@ -227,7 +227,14 @@ module GC
       reclaimed_bytes_before_gc: stats.reclaimed_bytes_before_gc)
   end
 
-  {% unless flag?(:win32) %}
+  {% if flag?(:win32) %}
+    {% unless flag?(:preview_dll) %}
+      # :nodoc:
+      def self.beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt, arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::HANDLE
+        LibGC.beginthreadex(security, stack_size, start_address, arglist, initflag, thrdaddr).as(LibC::HANDLE)
+      end
+    {% end %}
+  {% else %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
       LibGC.pthread_create(thread, attr, start, arg)

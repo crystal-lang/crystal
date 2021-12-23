@@ -1,4 +1,6 @@
-{% unless flag?(:win32) %}
+{% if flag?(:win32) %}
+  require "c/process"
+{% else %}
   @[Link("pthread")]
   lib LibC
   end
@@ -66,7 +68,16 @@ module GC
       reclaimed_bytes_before_gc: zero)
   end
 
-  {% unless flag?(:win32) %}
+  {% if flag?(:win32) %}
+    {% if flag?(:preview_dll) %}
+      {% raise "TODO: implement CreateThread" %}
+    {% else %}
+      # :nodoc:
+      def self.beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt, arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::HANDLE
+        LibC._beginthreadex(security, stack_size, start_address, arglist, initflag, thrdaddr).as(LibC::HANDLE)
+      end
+    {% end %}
+  {% else %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
       LibC.pthread_create(thread, attr, start, arg)
