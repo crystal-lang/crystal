@@ -334,6 +334,12 @@ struct BitArray
     self
   end
 
+  # :inherit:
+  def fill(value : Bool) : self
+    Intrinsics.memset(@bits, (value ? ~0u8 : 0u8), bytesize, false)
+    self
+  end
+
   # Creates a string representation of self.
   #
   # ```
