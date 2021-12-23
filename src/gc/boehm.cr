@@ -88,8 +88,15 @@ lib LibGC
 
   fun size = GC_size(addr : Void*) : LibC::SizeT
 
-  {% unless flag?(:win32) %}
-    # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
+  # Boehm GC requires to use its own thread manipulation routines instead of pthread's or Win32's
+  {% if flag?(:win32) %}
+    {% if flag?(:preview_dll) %}
+      {% raise "TODO: implement GC_CreateThread" %}
+    {% else %}
+      fun beginthreadex = GC_beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt,
+                                           arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : Void*
+    {% end %}
+  {% else %}
     fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*) : LibC::Int
     fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
     fun pthread_detach = GC_pthread_detach(thread : LibC::PthreadT) : LibC::Int

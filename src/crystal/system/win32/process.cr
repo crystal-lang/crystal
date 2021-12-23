@@ -20,7 +20,7 @@ struct Crystal::System::Process
   end
 
   def wait
-    if LibC.WaitForSingleObject(@process_handle, LibC::INFINITE) != 0
+    if LibC.WaitForSingleObject(@process_handle, LibC::INFINITE) != LibC::WAIT_OBJECT_0
       raise RuntimeError.from_winerror("WaitForSingleObject")
     end
 

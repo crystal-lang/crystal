@@ -27,10 +27,10 @@ class Thread
 end
 
 require "./thread_linked_list"
+require "./thread_condition_variable"
 
 {% if flag?(:unix) %}
   require "./unix/pthread"
-  require "./unix/pthread_condition_variable"
 {% elsif flag?(:win32) %}
   require "./win32/thread"
 {% else %}
