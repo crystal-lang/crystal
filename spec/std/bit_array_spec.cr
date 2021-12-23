@@ -538,4 +538,26 @@ describe "BitArray" do
     a[0].should be_false
     b[0].should be_true
   end
+
+  describe "#fill" do
+    it "sets all elements to the same value" do
+      ba = BitArray.new 3, true
+      ba.fill(false)
+      ba.to_a.should eq([false, false, false])
+      ba.fill(false)
+      ba.to_a.should eq([false, false, false])
+      ba[1] = true
+      ba.fill(false)
+      ba.to_a.should eq([false, false, false])
+
+      ba = BitArray.new 3, false
+      ba.fill(true)
+      ba.to_a.should eq([true, true, true])
+      ba.fill(true)
+      ba.to_a.should eq([true, true, true])
+      ba[2] = false
+      ba.fill(true)
+      ba.to_a.should eq([true, true, true])
+    end
+  end
 end
