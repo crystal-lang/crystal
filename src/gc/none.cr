@@ -69,14 +69,12 @@ module GC
   end
 
   {% if flag?(:win32) %}
-    {% if flag?(:preview_dll) %}
-      {% raise "TODO: implement CreateThread" %}
-    {% else %}
-      # :nodoc:
-      def self.beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt, arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::HANDLE
-        LibC._beginthreadex(security, stack_size, start_address, arglist, initflag, thrdaddr).as(LibC::HANDLE)
-      end
-    {% end %}
+    # :nodoc:
+    def self.beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt, arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::HANDLE
+      ret = LibC._beginthreadex(security, stack_size, start_address, arglist, initflag, thrdaddr)
+      raise RuntimeError.from_errno("_beginthreadex") if ret.null?
+      ret.as(LibC::HANDLE)
+    end
   {% else %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)

@@ -90,12 +90,8 @@ lib LibGC
 
   # Boehm GC requires to use its own thread manipulation routines instead of pthread's or Win32's
   {% if flag?(:win32) %}
-    {% if flag?(:preview_dll) %}
-      {% raise "TODO: implement GC_CreateThread" %}
-    {% else %}
-      fun beginthreadex = GC_beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt,
-                                           arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : Void*
-    {% end %}
+    fun beginthreadex = GC_beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt,
+                                          arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : Void*
   {% else %}
     fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*) : LibC::Int
     fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
@@ -228,12 +224,12 @@ module GC
   end
 
   {% if flag?(:win32) %}
-    {% unless flag?(:preview_dll) %}
-      # :nodoc:
-      def self.beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt, arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::HANDLE
-        LibGC.beginthreadex(security, stack_size, start_address, arglist, initflag, thrdaddr).as(LibC::HANDLE)
-      end
-    {% end %}
+    # :nodoc:
+    def self.beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt, arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::HANDLE
+      ret = LibGC.beginthreadex(security, stack_size, start_address, arglist, initflag, thrdaddr)
+      raise RuntimeError.from_errno("GC_beginthreadex") if ret.null?
+      ret.as(LibC::HANDLE)
+    end
   {% else %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
