@@ -263,4 +263,13 @@ describe "Semantic: did you mean" do
       ),
       "Did you mean 'FooBar'?"
   end
+
+  context "when require is off by a letter" do
+    it "suggests the closest name" do
+      assert_error %(
+        require "httz"
+      ),
+        "Did you mean 'http'?"
+    end
+  end
 end

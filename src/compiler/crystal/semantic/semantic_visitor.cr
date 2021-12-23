@@ -72,6 +72,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     message = "can't find file '#{ex.filename}'"
     notes = [] of String
 
+    ex.similar_require.try do |similar|
+      notes << "Did you mean '#{similar}'?\n"
+    end
+
     if ex.filename.starts_with? '.'
       if relative_to
         message += " relative to '#{relative_to}'"

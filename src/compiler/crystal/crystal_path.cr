@@ -7,7 +7,20 @@ module Crystal
       getter filename
       getter relative_to
 
-      def initialize(@filename : String, @relative_to : String?)
+      def initialize(
+        @filename : String,
+        @relative_to : String?,
+        @entries : Array(String)
+      ); end
+
+      def similar_require
+        Levenshtein.find @filename do |l|
+          @entries.each do |entry|
+            Dir.each_child(entry) do |child_entry|
+              l.test child_entry
+            end
+          end
+        end
       end
     end
 
@@ -93,7 +106,7 @@ module Crystal
       end
 
       unless result
-        raise NotFoundError.new(filename, relative_to)
+        raise NotFoundError.new(filename, relative_to, @entries)
       end
 
       result = [result] if result.is_a?(String)
