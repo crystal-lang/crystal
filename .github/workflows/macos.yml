@@ -33,4 +33,4 @@ jobs:
         run: bin/ci build
 
       - name: Test interpreter
-        run: bin/ci with_build_env 'bin/crystal spec spec/compiler/interpreter'
+        run: bin/ci with_build_env 'bin/crystal spec spec/compiler/interpreter_spec.cr'
