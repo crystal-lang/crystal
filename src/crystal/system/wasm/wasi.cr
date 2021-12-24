@@ -1,0 +1,54 @@
+require "./lib_wasi"
+
+module Crystal::System::Wasi
+  PREOPENS = [] of {String, String, LibWasi::Fd}
+
+  def self.init_preopens
+    # Skip stdin, stdout, and stderr, and count up until we reach an invalid file descriptor.
+    (3..).each do |fd|
+      stat = uninitialized LibWasi::Prestat
+      err = LibWasi.fd_prestat_get(fd, pointerof(stat))
+
+      break if err.badf?
+      unless err.success?
+        raise RuntimeError.from_os_error("fd_prestat_get", err)
+      end
+
+      next unless stat.tag.dir?
+
+      len = stat.value.dir.pr_name_len
+
+      name = String.new(len + 1) do |buffer|
+        err = LibWasi.fd_prestat_dir_name(fd, buffer, len)
+        raise RuntimeError.from_os_error("fd_prestat_dir_name", err) unless err.success?
+        buffer[len] = 0
+        len = LibC.strlen(buffer)
+        {len, 0}
+      end
+
+      path = ::Path[name].expand.to_s
+      PREOPENS << {path, path.ends_with?("/") ? path : path + "/", fd}
+    end
+
+    # Preopens added later take priority over preopens added earlier.
+    PREOPENS.reverse!
+    # Preopens of longer prefix take priority over shorter prefixes.
+    PREOPENS.sort_by! { |entry| -entry[0].size }
+  end
+
+  def self.find_path_preopen(path)
+    path = ::Path[path].expand.to_s
+    PREOPENS.each do |preopen|
+      if preopen[0] == path
+        return {preopen[2], "."}
+      elsif path.starts_with? preopen[1]
+        return {preopen[2], path[preopen[1].size..-1]}
+      end
+    end
+
+    # If we can't find a preopen for it, indicate that we lack capabilities.
+    raise RuntimeError.from_os_error(nil, WasiError::NOTCAPABLE)
+  end
+end
+
+Crystal::System::Wasi.init_preopens

@@ -51,8 +51,10 @@ module Crystal::System::Dir
   # def self.delete(path : String) : Nil
 end
 
-{% if flag?(:unix) || flag?(:wasm32) %}
+{% if flag?(:unix) %}
   require "./unix/dir"
+{% elsif flag?(:wasm32) %}
+  require "./wasm/dir"
 {% elsif flag?(:win32) %}
   require "./win32/dir"
 {% else %}
