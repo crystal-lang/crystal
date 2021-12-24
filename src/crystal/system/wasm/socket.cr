@@ -68,23 +68,11 @@ module Crystal::System::Socket
   end
 
   private def system_linger
-    v = LibC::Linger.new
-    ret = getsockopt LibC::SO_LINGER, v
-    ret.l_onoff == 0 ? nil : ret.l_linger
+    raise NotImplementedError.new "Crystal::System::Socket#system_linger"
   end
 
   private def system_linger=(val)
-    v = LibC::Linger.new
-    case val
-    when Int
-      v.l_onoff = 1
-      v.l_linger = val
-    when nil
-      v.l_onoff = 0
-    end
-
-    setsockopt LibC::SO_LINGER, v
-    val
+    raise NotImplementedError.new "Crystal::System::Socket#system_linge="
   end
 
   private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
