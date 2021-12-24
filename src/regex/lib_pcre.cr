@@ -27,7 +27,7 @@ lib LibPCRE
 end
 
 # TODO(interpreted): remove this unless
-{% unless flag?(:interpreted) || flag?(:wasm32) %}
+{% unless flag?(:interpreted) %}
   LibPCRE.pcre_malloc = ->GC.malloc(LibC::SizeT)
   LibPCRE.pcre_free = ->GC.free(Void*)
 {% end %}
