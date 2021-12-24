@@ -286,41 +286,15 @@ describe YAML::Any do
 
       any[1i64].raw.should eq("bar")
 
-      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
-        any[nil]
-      end
-
-      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
-        any[YAML::Any.new(nil)]
-      end
-
-      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
-        any["fox"]
-      end
-
-      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
-        any[YAML::Any.new("fox")]
-      end
-
-      expect_raises(IndexError, %(Index out of bounds)) do
-        any[2]
-      end
-
-      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
-        any[YAML::Any.new(2i64)]
-      end
-
-      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
-        any[2.0]
-      end
-
-      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
-        any[YAML::Any.new(2.0)]
-      end
-
-      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
-        any['c']
-      end
+      any[nil]?.should be_nil
+      any[YAML::Any.new(nil)]?.should be_nil
+      any["fox"]?.should be_nil
+      any[YAML::Any.new("fox")]?.should be_nil
+      any[2]?.should be_nil
+      any[YAML::Any.new(2i64)]?.should be_nil
+      any[2.0]?.should be_nil
+      any[YAML::Any.new(2.0)]?.should be_nil
+      any['c']?.should be_nil
     end
 
     it "of hash" do
