@@ -210,7 +210,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type = type.remove_alias
 
       unless type.module?
-        node.raise "#{type} is not a module, it's a #{type.type_desc}"
+        node.raise "#{name} is not a module, it's a #{type.type_desc}"
       end
 
       if type_vars = node.type_vars
@@ -330,6 +330,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.set_type @program.nil
 
     if node.name == "finished"
+      unless node.args.empty?
+        node.raise "wrong number of parameters for macro '#{node.name}' (given #{node.args.size}, expected 0)"
+      end
       @finished_hooks << FinishedHook.new(current_type, node)
       return false
     end
@@ -443,10 +446,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     value = arg.value
-
-    unless node.body.is_a?(Nop)
-      node.raise "method marked as Primitive must have an empty body"
-    end
 
     primitive = Primitive.new(value)
     primitive.location = node.location
@@ -876,6 +875,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     process_def_annotations(external, annotations) do |annotation_type, ann|
       if annotation_type == @program.call_convention_annotation
         call_convention = parse_call_convention(ann, call_convention)
+      elsif annotation_type == @program.primitive_annotation
+        process_primitive_annotation(external, ann)
       else
         ann.raise "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention"
       end
@@ -920,8 +921,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def visit(node : MultiAssign)
     node.targets.each do |target|
-      if target.is_a?(Var)
-        @vars[target.name] = MetaVar.new(target.name)
+      var = target.is_a?(Splat) ? target.exp : target
+      if var.is_a?(Var)
+        @vars[var.name] = MetaVar.new(var.name)
       end
       target.accept self
     end
@@ -990,7 +992,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def include_in(current_type, node, kind)
+  def include_in(current_type, node, kind : HookKind)
     node_name = node.name
 
     type = lookup_type(node_name)
@@ -1011,7 +1013,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
   end
 
-  def run_hooks(type_with_hooks, current_type, kind, node, call = nil)
+  def run_hooks(type_with_hooks, current_type, kind : HookKind, node, call = nil)
     type_with_hooks.as?(ModuleType).try &.hooks.try &.each do |hook|
       next if hook.kind != kind
 
@@ -1026,7 +1028,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node.add_hook_expansion(expansion)
     end
 
-    if kind == :inherited
+    if kind.inherited?
       # In the case of:
       #
       #    class A(X); end
@@ -1081,12 +1083,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def check_ditto(node : Def | Assign | FunDef | Const | Macro, location : Location?) : Nil
     return if !@program.wants_doc?
-    stripped_doc = node.doc.try &.strip
-    if stripped_doc == ":ditto:"
-      node.doc = @last_doc
-    else
-      @last_doc = node.doc
+
+    if stripped_doc = node.doc.try &.strip
+      if stripped_doc == ":ditto:"
+        node.doc = @last_doc
+        return
+      elsif appendix = stripped_doc.lchop?(":ditto:\n")
+        node.doc = "#{@last_doc}\n\n#{appendix.lchop('\n')}"
+        return
+      end
     end
+
+    @last_doc = node.doc
   end
 
   def annotations_doc(annotations)
@@ -1159,7 +1167,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     unless target_type
       next_type = base_type
       path.names.each do |name|
-        next_type = base_type.lookup_path_item(name, lookup_in_namespace: false, include_private: true, location: path.location)
+        next_type = base_type.lookup_path_item(name, lookup_self: false, lookup_in_namespace: false, include_private: true, location: path.location)
         if next_type
           if next_type.is_a?(ASTNode)
             path.raise "expected #{name} to be a type"

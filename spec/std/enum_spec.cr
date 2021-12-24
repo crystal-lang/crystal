@@ -199,7 +199,7 @@ describe Enum do
     end
 
     it "for private enum" do
-      PrivateEnum.from_value(0).should eq (PrivateEnum::FOO)
+      PrivateEnum.from_value(0).should eq(PrivateEnum::FOO)
     end
   end
 

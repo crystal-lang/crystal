@@ -147,4 +147,18 @@ describe UNIXServer do
       end
     end
   end
+
+  describe "datagrams" do
+    it "can send and receive datagrams" do
+      with_tempfile("unix_dgram_server.sock") do |path|
+        UNIXServer.open(path, Socket::Type::DGRAM) do |s|
+          UNIXSocket.open(path, Socket::Type::DGRAM) do |c|
+            c.send("foobar")
+            msg, _addr = s.receive(512)
+            msg.should eq "foobar"
+          end
+        end
+      end
+    end
+  end
 end

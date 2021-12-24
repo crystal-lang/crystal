@@ -1,5 +1,7 @@
 require "c/io"
 require "c/consoleapi"
+require "c/consoleapi2"
+require "c/winnls"
 
 module Crystal::System::FileDescriptor
   @volatile_fd : Atomic(LibC::Int)
@@ -157,11 +159,11 @@ module Crystal::System::FileDescriptor
     overlapped.union.offset.offsetHigh = LibC::DWORD.new(offset >> 32)
     if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
       error = WinError.value
-      return 0 if error == WinError::ERROR_HANDLE_EOF
-      raise IO::Error.from_winerror "Error reading file", error
+      return 0_i64 if error == WinError::ERROR_HANDLE_EOF
+      raise IO::Error.from_os_error "Error reading file", error
     end
 
-    bytes_read
+    bytes_read.to_i64
   end
 
   def self.from_stdio(fd)
@@ -182,5 +184,18 @@ module Crystal::System::FileDescriptor
       io.flush_on_newline = true
     end
     io
+  end
+end
+
+# Enable UTF-8 console I/O for the duration of program execution
+if LibC.IsValidCodePage(LibC::CP_UTF8) != 0
+  old_input_cp = LibC.GetConsoleCP
+  if LibC.SetConsoleCP(LibC::CP_UTF8) != 0
+    at_exit { LibC.SetConsoleCP(old_input_cp) }
+  end
+
+  old_output_cp = LibC.GetConsoleOutputCP
+  if LibC.SetConsoleOutputCP(LibC::CP_UTF8) != 0
+    at_exit { LibC.SetConsoleOutputCP(old_output_cp) }
   end
 end

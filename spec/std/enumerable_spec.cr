@@ -615,6 +615,20 @@ describe "Enumerable" do
       result = ([] of Int32).reduce(10) { |memo, i| memo + i }
       result.should eq 10
     end
+
+    it "allows block return type to be different from element type" do
+      [1, 2, 3].reduce { |x, y| "#{x}-#{y}" }.should eq("1-2-3")
+      [1].reduce { |x, y| "#{x}-#{y}" }.should eq(1)
+      {1}.reduce { |x, y| "#{x}-#{y}" }.should eq(1)
+
+      expect_raises Enumerable::EmptyError do
+        ([] of Int32).reduce { |x, y| "#{x}-#{y}" }
+      end
+
+      expect_raises Enumerable::EmptyError do
+        Tuple.new.reduce { |x, y| "#{x}-#{y}" }
+      end
+    end
   end
 
   describe "reduce?" do
@@ -622,6 +636,14 @@ describe "Enumerable" do
 
     it "returns nil if empty" do
       ([] of Int32).reduce? { |memo, i| memo + i }.should be_nil
+    end
+
+    it "allows block return type to be different from element type" do
+      [1, 2, 3].reduce? { |x, y| "#{x}-#{y}" }.should eq("1-2-3")
+      [1].reduce? { |x, y| "#{x}-#{y}" }.should eq(1)
+      {1}.reduce? { |x, y| "#{x}-#{y}" }.should eq(1)
+      ([] of Int32).reduce? { |x, y| "#{x}-#{y}" }.should be_nil
+      Tuple.new.reduce? { |x, y| "#{x}-#{y}" }.should be_nil
     end
   end
 
@@ -932,6 +954,12 @@ describe "Enumerable" do
       ints.should eq([1, 3])
       ints.should be_a(Array(Int32))
     end
+
+    it "with type, for tuples" do
+      ints = {1, true, false, 3}.reject(Int32)
+      ints.should eq([true, false])
+      ints.should be_a(Array(Bool))
+    end
   end
 
   describe "sample" do
@@ -1151,6 +1179,12 @@ describe "Enumerable" do
     end
   end
 
+  describe "tally_by" do
+    it "returns a hash with counts according to the value returned by the block" do
+      %w[a A b B c C C].tally_by(&.downcase).should eq({"a" => 2, "b" => 2, "c" => 3})
+    end
+  end
+
   describe "tally" do
     it "returns a hash with counts according to the value" do
       %w[1 2 3 3 3 2].tally.should eq({"1" => 1, "2" => 2, "3" => 3})
@@ -1168,6 +1202,10 @@ describe "Enumerable" do
       hash = Tuple.new({:a, 1}, {:c, 2}).to_h
       hash.should be_a(Hash(Symbol, Int32))
       hash.should eq({:a => 1, :c => 2})
+
+      hash = Tuple.new({1, 1.0}, {'a', "aaa"}).to_h
+      hash.should be_a(Hash(Int32 | Char, Float64 | String))
+      hash.should eq({1 => 1.0, 'a' => "aaa"})
     end
 
     it "for array" do

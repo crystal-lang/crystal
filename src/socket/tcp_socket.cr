@@ -13,8 +13,8 @@ require "./ip_socket"
 # ```
 class TCPSocket < IPSocket
   # Creates a new `TCPSocket`, waiting to be connected.
-  def self.new(family : Family = Family::INET)
-    super(family, Type::STREAM, Protocol::TCP)
+  def self.new(family : Family = Family::INET, blocking = false)
+    super(family, Type::STREAM, Protocol::TCP, blocking)
   end
 
   # Creates a new TCP connection to a remote TCP server.
@@ -24,9 +24,9 @@ class TCPSocket < IPSocket
   # must be in seconds (integers or floats).
   #
   # Note that `dns_timeout` is currently ignored.
-  def initialize(host, port, dns_timeout = nil, connect_timeout = nil)
+  def initialize(host, port, dns_timeout = nil, connect_timeout = nil, blocking = false)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
-      super(addrinfo.family, addrinfo.type, addrinfo.protocol)
+      super(addrinfo.family, addrinfo.type, addrinfo.protocol, blocking)
       connect(addrinfo, timeout: connect_timeout) do |error|
         close
         error
@@ -34,17 +34,17 @@ class TCPSocket < IPSocket
     end
   end
 
-  protected def initialize(family : Family, type : Type, protocol : Protocol)
-    super family, type, protocol
+  protected def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
+    super family, type, protocol, blocking
   end
 
-  protected def initialize(fd : Handle, family : Family, type : Type, protocol : Protocol)
-    super fd, family, type, protocol
+  protected def initialize(fd : Handle, family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
+    super fd, family, type, protocol, blocking
   end
 
   # Creates a TCPSocket from an already configured raw file descriptor
-  def initialize(*, fd : Handle, family : Family = Family::INET)
-    super fd, family, Type::STREAM, Protocol::TCP
+  def initialize(*, fd : Handle, family : Family = Family::INET, blocking = false)
+    super fd, family, Type::STREAM, Protocol::TCP, blocking
   end
 
   # Opens a TCP socket to a remote TCP server, yields it to the block, then

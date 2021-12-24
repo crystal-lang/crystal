@@ -36,7 +36,7 @@ class Fiber
   # (see makecontext below) and thus must also be saved/restored when swapping
   # the context.
   #
-  # def self.swapcontext(current_context : Context*, old_context : Context*) : Nil
+  # def self.swapcontext(current_context : Context*, new_context : Context*) : Nil
   # end
 
   # :nodoc:
@@ -52,4 +52,8 @@ end
 # Load the arch-specific methods to create a context and to swap from one
 # context to another one. There are two methods: `Fiber#makecontext` and
 # `Fiber.swapcontext`.
-require "./context/*"
+{% if flag?(:interpreted) %}
+  require "./context/interpreted"
+{% else %}
+  require "./context/*"
+{% end %}

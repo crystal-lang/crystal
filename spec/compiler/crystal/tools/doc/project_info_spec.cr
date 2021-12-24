@@ -52,7 +52,7 @@ describe Crystal::Doc::ProjectInfo do
       it "git but no commit" do
         run_git "init"
 
-        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", nil, refname: nil))
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "1.0", refname: nil))
         assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: nil))
         assert_with_defaults(ProjectInfo.new(nil, "2.0"), ProjectInfo.new("foo", "2.0", refname: nil))
       end
@@ -118,7 +118,7 @@ describe Crystal::Doc::ProjectInfo do
         run_git "remote add origin git@github.com:foo/bar"
 
         url_pattern = "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
-        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", nil, refname: nil, source_url_pattern: url_pattern))
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "1.0", refname: nil, source_url_pattern: url_pattern))
         assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: nil, source_url_pattern: url_pattern))
         assert_with_defaults(ProjectInfo.new(nil, "2.0"), ProjectInfo.new("foo", "2.0", refname: nil, source_url_pattern: url_pattern))
         assert_with_defaults(ProjectInfo.new(nil, "2.0", source_url_pattern: "foo_bar"), ProjectInfo.new("foo", "2.0", refname: nil, source_url_pattern: "foo_bar"))

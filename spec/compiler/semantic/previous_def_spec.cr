@@ -165,7 +165,7 @@ describe "Semantic: previous_def" do
       end
 
       foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "types previous def when inside fun and forwards args" do
@@ -180,7 +180,7 @@ describe "Semantic: previous_def" do
       end
 
       foo(1)
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "says wrong number of arguments for previous_def (#1223)" do

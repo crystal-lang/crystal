@@ -85,10 +85,15 @@ end
                        } %}
   def {{type.id}}.new(pull : JSON::PullParser)
     location = pull.location
-    value = pull.read_int
+    value =
+      {% if type == "UInt64" %}
+        pull.read_raw
+      {% else %}
+        pull.read_int
+      {% end %}
     begin
       value.to_{{method.id}}
-    rescue ex : OverflowError
+    rescue ex : OverflowError | ArgumentError
       raise JSON::ParseException.new("Can't read {{type.id}}", *location, ex)
     end
   end
@@ -231,13 +236,13 @@ def NamedTuple.new(pull : JSON::PullParser)
 
     {% for key, type in T %}
       if %var{key.id}.nil? && !%found{key.id} && !{{type.nilable?}}
-        raise JSON::ParseException.new("Missing json attribute: {{key}}", *location)
+        raise JSON::ParseException.new("Missing json attribute: #{{{key.id.stringify}}}", *location)
       end
     {% end %}
 
     {
       {% for key, type in T %}
-        {{key}}: (%var{key.id}).as({{type}}),
+        {{key.id.stringify}}: (%var{key.id}).as({{type}}),
       {% end %}
     }
   {% end %}
