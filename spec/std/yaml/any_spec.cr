@@ -11,7 +11,10 @@ private def it_fetches_from_hash(key, *equivalent_keys)
 
     equivalent_keys.each do |k|
       any[k].raw.should eq("bar")
-      any[YAML::Any.new(k)].raw.should eq("bar")
+      # FIXME: Can't do `YAML::Any.new` with arbitrary number types (#11645)
+      if k.is_a?(YAML::Any::Type)
+        any[YAML::Any.new(k)].raw.should eq("bar")
+      end
     end
 
     unless key.nil?
@@ -63,7 +66,10 @@ private def it_fetches_from_hash?(key, *equivalent_keys)
 
     equivalent_keys.each do |k|
       any[k]?.try(&.raw).should eq("bar")
-      any[YAML::Any.new(k)]?.try(&.raw).should eq("bar")
+      # FIXME: Can't do `YAML::Any.new` with arbitrary number types (#11645)
+      if k.is_a?(YAML::Any::Type)
+        any[YAML::Any.new(k)]?.try(&.raw).should eq("bar")
+      end
     end
 
     unless key.nil?
@@ -225,6 +231,8 @@ describe YAML::Any do
       any = YAML::Any.new([YAML::Any.new("baz"), YAML::Any.new("bar")])
 
       any[1i64].raw.should eq("bar")
+      any[1i32].raw.should eq("bar")
+      any[1u8].raw.should eq("bar")
 
       expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
         any[nil]
@@ -251,11 +259,19 @@ describe YAML::Any do
       end
 
       expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
-        any[2.0]
+        any[2.0f64]
       end
 
       expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
-        any[YAML::Any.new(2.0)]
+        any[YAML::Any.new(2.0f64)]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[2.0f32]
+      end
+
+      expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
+        any[YAML::Any.new(2.0f32)]
       end
 
       expect_raises(Exception, %(Expected int key for Array#[], not Array(YAML::Any))) do
@@ -266,8 +282,8 @@ describe YAML::Any do
     context "hash" do
       it_fetches_from_hash nil
       it_fetches_from_hash true
-      it_fetches_from_hash 1i64, 1.0
-      it_fetches_from_hash 1.0, 1i64
+      it_fetches_from_hash 1i64, 1.0f64, 1i32, 1u8, 1.0f32
+      it_fetches_from_hash 1.0f64, 1i64, 1i32, 1u8, 1.0f32
       it_fetches_from_hash "foo"
       it_fetches_from_hash Time.utc
       it_fetches_from_hash "foo".to_slice
@@ -284,7 +300,11 @@ describe YAML::Any do
 
       any = YAML::Any.new([YAML::Any.new("baz"), YAML::Any.new("bar")])
 
-      any[1i64].raw.should eq("bar")
+      any[1i64]?.try(&.raw).should eq("bar")
+      any[1i32]?.try(&.raw).should eq("bar")
+      any[1u8]?.try(&.raw).should eq("bar")
+      any[1.0f64]?.try(&.raw).should be_nil
+      any[1.0f32]?.try(&.raw).should be_nil
 
       any[nil]?.should be_nil
       any[YAML::Any.new(nil)]?.should be_nil
@@ -292,8 +312,10 @@ describe YAML::Any do
       any[YAML::Any.new("fox")]?.should be_nil
       any[2]?.should be_nil
       any[YAML::Any.new(2i64)]?.should be_nil
-      any[2.0]?.should be_nil
-      any[YAML::Any.new(2.0)]?.should be_nil
+      any[2.0f64]?.should be_nil
+      any[YAML::Any.new(2.0f64)]?.should be_nil
+      any[2.0f32]?.should be_nil
+      any[YAML::Any.new(2.0f32)]?.should be_nil
       any['c']?.should be_nil
     end
 
