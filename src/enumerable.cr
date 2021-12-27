@@ -672,10 +672,7 @@ module Enumerable(T)
   #
   # Raises `Enumerable::NotFoundError` if there are no element for which the block is `true`.
   def index!(& : T ->) : Int32
-    each_with_index do |e, i|
-      return i if yield e
-    end
-    raise Enumerable::NotFoundError.new
+    index { |e| yield e } || raise Enumerable::NotFoundError.new
   end
 
   # Returns the index of the object *obj* in the collection.
