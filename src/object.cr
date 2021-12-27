@@ -219,7 +219,14 @@ class Object
   end
 
   # Returns `self`.
+  #
   # `Nil` overrides this method and raises `NilAssertionError`, see `Nil#not_nil!`.
+  #
+  # This method can be used to remove `Nil` from a union type.
+  # However, it should be avoided if possible and is often considered a code smell.
+  # Usually, you can write code in a way that the compiler can safely exclude `Nil` types,
+  # for example using [`if var`](https://crystal-lang.org/reference/1.2/syntax_and_semantics/if_var.html`).
+  # `not_nil!` is only meant as a last resort when no other solution is possible.
   def not_nil!
     self
   end
