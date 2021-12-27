@@ -267,4 +267,10 @@ describe OpenSSL::SSL::Context do
       end
     end
   end
+
+  describe OpenSSL::SSL::VerifyMode do
+    it ".parse none (#7455)" do
+      OpenSSL::SSL::VerifyMode.parse("none").should eq OpenSSL::SSL::VerifyMode::NONE
+    end
+  end
 end
