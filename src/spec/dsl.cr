@@ -10,16 +10,16 @@ module Spec
   end
 
   private STATUS_COLORS = {
-    Status::Success => :green,
-    Status::Fail    => :red,
-    Status::Error   => :red,
-    Status::Pending => :yellow,
+    Status::Success => Colorize::ColorANSI::Green,
+    Status::Fail    => Colorize::ColorANSI::Red,
+    Status::Error   => Colorize::ColorANSI::Red,
+    Status::Pending => Colorize::ColorANSI::Yellow,
   }
 
   private INFO_COLORS = {
-    InfoKind::Comment => :cyan,
-    InfoKind::Focus   => :cyan,
-    InfoKind::Order   => :cyan,
+    InfoKind::Comment => Colorize::ColorANSI::Cyan,
+    InfoKind::Focus   => Colorize::ColorANSI::Cyan,
+    InfoKind::Order   => Colorize::ColorANSI::Cyan,
   }
 
   private LETTERS = {

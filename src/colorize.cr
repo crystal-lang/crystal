@@ -89,26 +89,7 @@
 # "foo".colorize(Random::DEFAULT.next_bool ? :green : :default)
 # ```
 #
-# Available colors are:
-# ```
-# :default
-# :black
-# :red
-# :green
-# :yellow
-# :blue
-# :magenta
-# :cyan
-# :light_gray
-# :dark_gray
-# :light_red
-# :light_green
-# :light_yellow
-# :light_blue
-# :light_magenta
-# :light_cyan
-# :white
-# ```
+# See `Colorize::ColorANSI` for all available colors.
 #
 # See `Colorize::Mode` for available text decorations.
 module Colorize
@@ -170,7 +151,7 @@ module Colorize::ObjectExtensions
   end
 
   # Turns `self` into a `Colorize::Object` and colors it with a color.
-  def colorize(fore)
+  def colorize(fore : Color)
     Colorize::Object.new(self).fore(fore)
   end
 end
@@ -283,8 +264,6 @@ end
 
 # A colorized object. Colors and text decorations can be modified.
 struct Colorize::Object(T)
-  private COLORS = %w(default black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white)
-
   @fore : Color
   @back : Color
 
@@ -295,14 +274,14 @@ struct Colorize::Object(T)
     @enabled = Colorize.enabled?
   end
 
-  {% for name in COLORS %}
-    def {{name.id}}
-      @fore = ColorANSI::{{name.camelcase.id}}
+  {% for color in ColorANSI.constants.reject { |constant| constant == "All" || constant == "None" } %}
+    def {{color.underscore.id}}
+      @fore = ColorANSI::{{color.id}}
       self
     end
 
-    def on_{{name.id}}
-      @back = ColorANSI::{{name.camelcase.id}}
+    def on_{{color.underscore.id}}
+      @back = ColorANSI::{{color.id}}
       self
     end
   {% end %}
@@ -314,30 +293,8 @@ struct Colorize::Object(T)
     end
   {% end %}
 
-  def fore(color : Symbol) : self
-    {% for name in COLORS %}
-      if color == :{{name.id}}
-        @fore = ColorANSI::{{name.camelcase.id}}
-        return self
-      end
-    {% end %}
-
-    raise ArgumentError.new "Unknown color: #{color}"
-  end
-
   def fore(@fore : Color) : self
     self
-  end
-
-  def back(color : Symbol) : self
-    {% for name in COLORS %}
-      if color == :{{name.id}}
-        @back = ColorANSI::{{name.camelcase.id}}
-        return self
-      end
-    {% end %}
-
-    raise ArgumentError.new "Unknown color: #{color}"
   end
 
   def back(@back : Color) : self
@@ -350,7 +307,7 @@ struct Colorize::Object(T)
     self
   end
 
-  def on(color : Symbol)
+  def on(color : Color)
     back color
   end
 
