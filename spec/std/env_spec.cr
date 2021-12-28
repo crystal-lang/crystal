@@ -172,4 +172,75 @@ describe "ENV" do
   ensure
     ENV.delete("FOO")
   end
+
+  it "clears and replaces" do
+    # Add a dummy value so that post replace we can ensure
+    # at least one variable exists in the ENV.
+    ENV["TEST_DUMMY_VAR"] = "dummy_value"
+    original_env = ENV.to_h
+    ENV.clear
+    ENV.should be_empty
+    ENV.replace original_env
+    ENV.should_not be_empty
+    ENV.to_h.should eq original_env
+  ensure
+    ENV.delete("TEST_DUMMY_VAR")
+  end
+
+  describe "merge" do
+    it "merges with overwrite" do
+      ENV["TEST_MERGE_1"] = "1"
+      ENV["TEST_MERGE_2"] = "2"
+      merge_hash = {
+        "TEST_MERGE_1" => "one",
+        "TEST_MERGE_3" => "three",
+      }
+      ENV.merge! merge_hash
+      ENV.fetch("TEST_MERGE_1").should eq "one"
+      ENV.fetch("TEST_MERGE_2").should eq "2"
+      ENV.fetch("TEST_MERGE_3").should eq "three"
+    ensure
+      ENV.delete("TEST_MERGE_1")
+      ENV.delete("TEST_MERGE_2")
+      ENV.delete("TEST_MERGE_3")
+    end
+
+    it "merges with a block" do
+      ENV["TEST_MERGE_AAA"] = "1"
+      ENV["TEST_MERGE_BBB"] = "2"
+      ENV["TEST_MERGE_CCC"] = "3"
+      ENV["TEST_MERGE_DDD"] = "4"
+      ENV["TEST_MERGE_FFF"] = "6"
+
+      merge_hash = {
+        "TEST_MERGE_AAA" => "aa",
+        "TEST_MERGE_BBB" => "bb",
+        "TEST_MERGE_CCC" => "cc",
+        "TEST_MERGE_EEE" => "ee",
+        "TEST_MERGE_FFF" => "ffff",
+      }
+
+      ENV.merge!(merge_hash) do |name, old, new|
+        case name
+        when /AAA/ then old
+        when /BBB/ then new
+        when /CCC/ then nil
+        when /FFF/ then old + new
+        else            name
+        end
+      end
+
+      ENV.fetch("TEST_MERGE_AAA").should eq "1"  # old
+      ENV.fetch("TEST_MERGE_BBB").should eq "bb" # new
+      ENV.fetch("TEST_MERGE_CCC", nil).should eq nil
+      ENV.fetch("TEST_MERGE_DDD").should eq "4"
+      ENV.fetch("TEST_MERGE_EEE").should eq "ee"
+      ENV.fetch("TEST_MERGE_FFF").should eq "6ffff"
+    ensure
+      %w[TEST_MERGE_AAA TEST_MERGE_BBB TEST_MERGE_CCC
+        TEST_MERGE_DDD TEST_MERGE_EEE TEST_MERGE_FFF].each do |name|
+        ENV.delete(name)
+      end
+    end
+  end
 end

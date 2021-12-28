@@ -109,8 +109,35 @@ module ENV
     end
   end
 
+  # Removes all environment variables.
   def self.clear : Nil
     keys.each { |k| delete k }
+  end
+
+  # Conditionally merges *other* hash in, and uses the block to determine the merge value.
+  # The block is yielded the name of each duplicate entry, the initial-value and other-value, and expects the result of the block to be a String or Nil.
+  # If the block returns nil, the new entry is not merged into the ENV.
+  def self.merge!(other : Hash, &block : String, String, String -> String?)
+    other.each do |name, new_value|
+      value = if self.has_key?(name)
+                yield name, self[name], new_value
+              else
+                new_value
+              end
+      Crystal::System::Env.set(name, value)
+    end
+    self
+  end
+
+  # Merges an *other* hash in, overwriting any duplicates.
+  def self.merge!(other : Hash)
+    self.merge!(other) { |_name, _orig_value, new_value| new_value }
+  end
+
+  # Replaces the ENV with an *other* hash.
+  def self.replace(other : Hash)
+    clear
+    merge! other
   end
 
   # Writes the contents of the environment to *io*.
