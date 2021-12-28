@@ -36,7 +36,7 @@ class Thread
     raise NotImplementedError.new("Thread.yield")
   end
 
-  @@current : Thread? = nil
+  @@current : Thread? = Thread.new
 
   # Associates the Thread object to the running system thread.
   protected def self.current=(@@current : Thread) : Thread
