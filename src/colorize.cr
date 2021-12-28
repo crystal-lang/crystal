@@ -257,6 +257,8 @@ module Colorize
       when .blink?          then '5'
       when .reverse?        then '7'
       when .hidden?         then '8'
+      else
+        raise "unreachable"
       end
     end
   end
