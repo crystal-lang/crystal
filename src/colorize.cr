@@ -97,16 +97,7 @@
 # :white
 # ```
 #
-# Available text decorations are:
-# ```
-# :bold
-# :bright
-# :dim
-# :underline
-# :blink
-# :reverse
-# :hidden
-# ```
+# See `Colorize::Mode` for available text decorations.
 module Colorize
   # If this value is `true`, `Colorize::Object` is enabled by default.
   # But if this value is `false`, `Colorize::Object` is disabled.
@@ -290,6 +281,7 @@ struct Colorize::Object(T)
   {% end %}
 
   {% for mode in Mode.constants.reject { |constant| constant == "All" || constant == "None" } %}
+    # Apply text decoration `Mode::{{ mode }}`.
     def {{mode.underscore.id}}
       mode Mode::{{mode.id}}
     end
