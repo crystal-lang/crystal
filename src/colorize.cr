@@ -226,28 +226,44 @@ module Colorize
       io << blue
     end
   end
+
+  # A text decoration.
+  #
+  # Note that not all text decorations are supported in all terminals.
+  # When a text decoration is not supported, it will leave the text unaffected.
+  @[Flags]
+  enum Mode
+    # Makes the text bold.
+    Bold = 1
+    # Makes the text color bright.
+    Bright = 1
+    # Dims the text color.
+    Dim
+    # Underlines the text.
+    Underline
+    # Makes the text blink slowly.
+    Blink
+    # Swaps the foreground and background colors of the text.
+    Reverse
+    # Makes the text invisible.
+    Hidden
+
+    def code
+      case self
+      when .none?           then '0'
+      when .bold?, .bright? then '1'
+      when .dim?            then '2'
+      when .underline?      then '4'
+      when .blink?          then '5'
+      when .reverse?        then '7'
+      when .hidden?         then '8'
+      end
+    end
+  end
 end
 
 struct Colorize::Object(T)
-  private MODE_DEFAULT   = '0'
-  private MODE_BOLD      = '1'
-  private MODE_BRIGHT    = '1'
-  private MODE_DIM       = '2'
-  private MODE_UNDERLINE = '4'
-  private MODE_BLINK     = '5'
-  private MODE_REVERSE   = '7'
-  private MODE_HIDDEN    = '8'
-
-  private MODE_BOLD_FLAG      =  1
-  private MODE_BRIGHT_FLAG    =  1
-  private MODE_DIM_FLAG       =  2
-  private MODE_UNDERLINE_FLAG =  4
-  private MODE_BLINK_FLAG     =  8
-  private MODE_REVERSE_FLAG   = 16
-  private MODE_HIDDEN_FLAG    = 32
-
   private COLORS = %w(default black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white)
-  private MODES  = %w(bold bright dim underline blink reverse hidden)
 
   @fore : Color
   @back : Color
@@ -255,7 +271,7 @@ struct Colorize::Object(T)
   def initialize(@object : T)
     @fore = ColorANSI::Default
     @back = ColorANSI::Default
-    @mode = 0
+    @mode = Mode::None
     @enabled = Colorize.enabled?
   end
 
@@ -271,10 +287,9 @@ struct Colorize::Object(T)
     end
   {% end %}
 
-  {% for name in MODES %}
-    def {{name.id}}
-      @mode |= MODE_{{name.upcase.id}}_FLAG
-      self
+  {% for mode in Mode.constants.reject { |constant| constant == "All" || constant == "None" } %}
+    def {{mode.underscore.id}}
+      mode Mode::{{mode.id}}
     end
   {% end %}
 
@@ -308,15 +323,10 @@ struct Colorize::Object(T)
     self
   end
 
-  def mode(mode : Symbol) : self
-    {% for name in MODES %}
-      if mode == :{{name.id}}
-        @mode |= MODE_{{name.upcase.id}}_FLAG
-        return self
-      end
-    {% end %}
-
-    raise ArgumentError.new "Unknown mode: #{mode}"
+  # Adds *mode* to the text's decorations.
+  def mode(mode : Mode)
+    @mode |= mode
+    self
   end
 
   def on(color : Symbol)
@@ -359,7 +369,7 @@ struct Colorize::Object(T)
   @@last_color = {
     fore: ColorANSI::Default.as(Color),
     back: ColorANSI::Default.as(Color),
-    mode: 0,
+    mode: Mode::None,
   }
 
   protected def self.surround(io, color)
@@ -379,7 +389,7 @@ struct Colorize::Object(T)
     last_color_is_default =
       @@last_color[:fore] == ColorANSI::Default &&
         @@last_color[:back] == ColorANSI::Default &&
-        @@last_color[:mode] == 0
+        @@last_color[:mode] == Mode::None
 
     fore = color[:fore]
     back = color[:back]
@@ -387,9 +397,8 @@ struct Colorize::Object(T)
 
     fore_is_default = fore == ColorANSI::Default
     back_is_default = back == ColorANSI::Default
-    mode_is_default = mode == 0
 
-    if fore_is_default && back_is_default && mode_is_default && last_color_is_default || @@last_color == color
+    if fore_is_default && back_is_default && mode.none? && last_color_is_default || @@last_color == color
       false
     else
       io << "\e["
@@ -397,7 +406,7 @@ struct Colorize::Object(T)
       printed = false
 
       unless last_color_is_default
-        io << MODE_DEFAULT
+        io << Mode::None.code
         printed = true
       end
 
@@ -413,15 +422,22 @@ struct Colorize::Object(T)
         printed = true
       end
 
-      unless mode_is_default
-        # Can't reuse MODES constant because it has bold/bright duplicated
-        {% for name in %w(bold dim underline blink reverse hidden) %}
-          if mode.bits_set? MODE_{{name.upcase.id}}_FLAG
-            io << ';' if printed
-            io << MODE_{{name.upcase.id}}
-            printed = true
+      unless mode.none?
+        printed_bright = false
+        mode.each do |flag|
+          # Enum#each yields each member flag. Bright and bold have the same value
+          # and would show up as duplicate, so we need to handle this special case.
+          if flag.bright?
+            if printed_bright
+              next
+            else
+              printed_bright = true
+            end
           end
-        {% end %}
+          io << ';' if printed
+          io << flag.code
+          printed = true
+        end
       end
 
       io << 'm'
