@@ -1,9 +1,9 @@
 require "./lib_wasi"
 
 module Crystal::System::Wasi
-  PREOPENS = [] of {String, String, LibWasi::Fd}
+  @@preopens : Array({String, String, LibWasi::Fd}) = begin
+    preopens = [] of {String, String, LibWasi::Fd}
 
-  def self.init_preopens
     # Skip stdin, stdout, and stderr, and count up until we reach an invalid file descriptor.
     (3..).each do |fd|
       stat = uninitialized LibWasi::Prestat
@@ -27,18 +27,22 @@ module Crystal::System::Wasi
       end
 
       path = ::Path[name].expand.to_s
-      PREOPENS << {path, path.ends_with?("/") ? path : path + "/", fd}
+      preopens << {path, path.ends_with?("/") ? path : path + "/", fd}
     end
 
     # Preopens added later take priority over preopens added earlier.
-    PREOPENS.reverse!
+    preopens.reverse!
     # Preopens of longer prefix take priority over shorter prefixes.
-    PREOPENS.sort_by! { |entry| -entry[0].size }
+    preopens.sort_by! { |entry| -entry[0].size }
+
+    p preopens
+
+    preopens
   end
 
   def self.find_path_preopen(path)
     path = ::Path[path].expand.to_s
-    PREOPENS.each do |preopen|
+    @@preopens.each do |preopen|
       if preopen[0] == path
         return {preopen[2], "."}
       elsif path.starts_with? preopen[1]
@@ -50,5 +54,3 @@ module Crystal::System::Wasi
     raise RuntimeError.from_os_error(nil, WasiError::NOTCAPABLE)
   end
 end
-
-Crystal::System::Wasi.init_preopens
