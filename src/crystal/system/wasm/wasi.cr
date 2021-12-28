@@ -35,17 +35,16 @@ module Crystal::System::Wasi
     # Preopens of longer prefix take priority over shorter prefixes.
     preopens.sort_by! { |entry| -entry[0].size }
 
-    p preopens
-
     preopens
   end
 
   def self.find_path_preopen(path)
     path = ::Path[path].expand.to_s
     @@preopens.each do |preopen|
-      if preopen[0] == path
+      case path
+      when preopen[0]
         return {preopen[2], "."}
-      elsif path.starts_with? preopen[1]
+      when .starts_with? preopen[1]
         return {preopen[2], path[preopen[1].size..-1]}
       end
     end
