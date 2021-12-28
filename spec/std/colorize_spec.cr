@@ -1,8 +1,8 @@
 require "spec"
 require "colorize"
 
-private def colorize(obj, *args)
-  obj.colorize(*args).toggle(true)
+private def colorize(obj)
+  obj.colorize.toggle(true)
 end
 
 private def with_color_wrap(*args)
@@ -99,7 +99,6 @@ describe "colorize" do
   end
 
   it "colorizes foreground with symbol" do
-    colorize("hello", :red).to_s.should eq("\e[31mhello\e[0m")
     colorize("hello").fore(:red).to_s.should eq("\e[31mhello\e[0m")
   end
 
@@ -120,7 +119,7 @@ describe "colorize" do
   end
 
   it "inspects" do
-    colorize("hello", :red).inspect.should eq("\e[31m\"hello\"\e[0m")
+    colorize("hello").fore(:red).inspect.should eq("\e[31m\"hello\"\e[0m")
   end
 
   it "colorizes with surround" do
