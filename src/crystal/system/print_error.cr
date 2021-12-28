@@ -3,7 +3,7 @@ module Crystal::System
   # This is useful for error messages from components that are required for
   # IO to work (fibers, scheduler, event_loop).
   def self.print_error(message, *args)
-    {% if flag?(:unix) %}
+    {% if flag?(:unix) || flag?(:wasm32) %}
       LibC.dprintf 2, message, *args
     {% elsif flag?(:win32) %}
       buffer = StaticArray(UInt8, 512).new(0_u8)
