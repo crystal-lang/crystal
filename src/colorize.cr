@@ -248,7 +248,7 @@ module Colorize
     # Makes the text invisible.
     Hidden
 
-    def code
+    def code : Char
       case self
       when .none?           then '0'
       when .bold?, .bright? then '1'
