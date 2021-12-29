@@ -383,7 +383,7 @@ struct Colorize::Object(T)
     last_color_is_default =
       @@last_color[:fore] == ColorANSI::Default &&
         @@last_color[:back] == ColorANSI::Default &&
-        @@last_color[:mode] == Mode::None
+        @@last_color[:mode].none?
 
     fore = color[:fore]
     back = color[:back]
