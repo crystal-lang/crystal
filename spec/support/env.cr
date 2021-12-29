@@ -4,7 +4,6 @@ def with_env(values : Hash)
     old_values = ENV.to_h
     values.each do |key, value|
       key = key.to_s
-      #old_values[key] = ENV[key]?
       ENV[key] = value
     end
 

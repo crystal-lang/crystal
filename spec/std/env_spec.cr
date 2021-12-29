@@ -175,19 +175,18 @@ describe "ENV" do
   end
 
   it "clears the env" do
-    tempenv = { "TEST_VAR1" => "/foo/bar:/baz/buz", "TEST_VAR2" => "dummy_value" }
+    tempenv = {"TEST_VAR1" => "/foo/bar:/baz/buz", "TEST_VAR2" => "dummy_value"}
     with_env(tempenv) do
-      ENV.should_not be_empty      
+      ENV.should_not be_empty
       ENV.clear
       ENV.should be_empty
     end
-
   end
 
   it "replaces the env with a hash" do
     p ENV
-    tempenv = { "TEST_VAR_1" => "/foo/bar:/baz/buz", "TEST_VAR_ONE" => "dummy_value" }
-    newenv = { "TEST_VAR_2" => "/oof/rab:/zab/zub", "TEST_VAR_TWO" => "another_value" }
+    tempenv = {"TEST_VAR_1" => "/foo/bar:/baz/buz", "TEST_VAR_ONE" => "dummy_value"}
+    newenv = {"TEST_VAR_2" => "/oof/rab:/zab/zub", "TEST_VAR_TWO" => "another_value"}
     with_env(tempenv) do
       ENV.has_key?("TEST_VAR_1").should be_true
       ENV.has_key?("TEST_VAR_ONE").should be_true
@@ -198,7 +197,7 @@ describe "ENV" do
       ENV.has_key?("TEST_VAR_TWO").should be_true
     end
   end
-  
+
   describe "merge" do
     it "merges with overwrite" do
       ENV["TEST_MERGE_1"] = "1"
@@ -245,13 +244,13 @@ describe "ENV" do
           else            name
           end
         end
-        ENV.fetch("TEST_MERGE_AAA").should eq "1"  # old
-        ENV.fetch("TEST_MERGE_BBB").should eq "bb" # new
+        ENV.fetch("TEST_MERGE_AAA").should eq "1"      # old
+        ENV.fetch("TEST_MERGE_BBB").should eq "bb"     # new
         ENV.has_key?("TEST_MERGE_CCC").should be_false # removal (nil) case
-        ENV.fetch("TEST_MERGE_DDD").should eq "4" # not a collision, value from original env
+        ENV.fetch("TEST_MERGE_DDD").should eq "4"      # not a collision, value from original env
         ENV.fetch("TEST_MERGE_EEE").should eq "ee"
         ENV.fetch("TEST_MERGE_FFF").should eq "6ffff" # old + new
-        ENV.fetch("TEST_MERGE_GGG").should eq "keep" # not a collision, value from new hash
+        ENV.fetch("TEST_MERGE_GGG").should eq "keep"  # not a collision, value from new hash
       end
     end
   end
