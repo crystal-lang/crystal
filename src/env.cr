@@ -115,8 +115,9 @@ module ENV
   end
 
   # Conditionally merges *other* hash in, and uses the block to determine the merge value.
-  # The block is yielded the name of each duplicate entry, the initial-value and other-value, and expects the result of the block to be a String or Nil.
-  # If the block returns nil, the new entry is not merged into the ENV.
+  # If the key from the *other* hash does not exist in the ENV, that key/value will be added to the ENV.
+  # However if the key exists in both the ENV and the *other* hash, a block is yielded the key, the ENV-value and the other-value, and expects the result of the block to be a String or Nil.
+  # If the block returns nil, the key is removed from the ENV.
   def self.merge!(other : Hash, &block : String, String, String -> String?)
     other.each do |name, new_value|
       value = if self.has_key?(name)
