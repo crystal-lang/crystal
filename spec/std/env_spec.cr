@@ -174,7 +174,8 @@ describe "ENV" do
     ENV.delete("FOO")
   end
 
-  it "clears the env" do
+  
+  it "does .clear" do
     tempenv = {"TEST_VAR1" => "/foo/bar:/baz/buz", "TEST_VAR2" => "dummy_value"}
     with_env(tempenv) do
       ENV.should_not be_empty
@@ -184,7 +185,6 @@ describe "ENV" do
   end
 
   it "replaces the env with a hash" do
-    p ENV
     tempenv = {"TEST_VAR_1" => "/foo/bar:/baz/buz", "TEST_VAR_ONE" => "dummy_value"}
     newenv = {"TEST_VAR_2" => "/oof/rab:/zab/zub", "TEST_VAR_TWO" => "another_value"}
     with_env(tempenv) do
@@ -198,8 +198,8 @@ describe "ENV" do
     end
   end
 
-  describe "merge" do
-    it "merges with overwrite" do
+  describe ".merge!" do
+    it "merges without a block (overwrite)" do
       ENV["TEST_MERGE_1"] = "1"
       ENV["TEST_MERGE_2"] = "2"
       merge_hash = {
