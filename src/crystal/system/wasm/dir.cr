@@ -1,3 +1,5 @@
+require "./wasi"
+
 module Crystal::System::Dir
   private class DirHandle
     property fd : LibWasi::Fd
