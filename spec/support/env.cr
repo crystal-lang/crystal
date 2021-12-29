@@ -1,9 +1,10 @@
 def with_env(values : Hash)
   old_values = {} of String => String?
   begin
+    old_values = ENV.to_h
     values.each do |key, value|
       key = key.to_s
-      old_values[key] = ENV[key]?
+      #old_values[key] = ENV[key]?
       ENV[key] = value
     end
 

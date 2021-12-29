@@ -175,7 +175,7 @@ describe "ENV" do
   end
 
   it "clears the env" do
-    tempenv = { "PATH" => "/foo/bar:/baz/buz", "DUMMY_VAR" => "dummy_value" }
+    tempenv = { "TEST_VAR1" => "/foo/bar:/baz/buz", "TEST_VAR2" => "dummy_value" }
     with_env(tempenv) do
       ENV.should_not be_empty      
       ENV.clear
@@ -185,16 +185,17 @@ describe "ENV" do
   end
 
   it "replaces the env with a hash" do
-    tempenv = { "PATH1" => "/foo/bar:/baz/buz", "DUMMY_VAR" => "dummy_value" }
-    newenv = { "PATH2" => "/oof/rab:/zab/zub", "DUMMY_TWO" => "another_value" }
+    p ENV
+    tempenv = { "TEST_VAR_1" => "/foo/bar:/baz/buz", "TEST_VAR_ONE" => "dummy_value" }
+    newenv = { "TEST_VAR_2" => "/oof/rab:/zab/zub", "TEST_VAR_TWO" => "another_value" }
     with_env(tempenv) do
-      ENV.has_key?("PATH1").should be_true
-      ENV.has_key?("DUMMY_VAR").should be_true
+      ENV.has_key?("TEST_VAR_1").should be_true
+      ENV.has_key?("TEST_VAR_ONE").should be_true
       ENV.replace(newenv)
-      ENV.has_key?("PATH1").should be_false
-      ENV.has_key?("DUMMY_VAR").should be_false
-      ENV.has_key?("PATH2").should be_true
-      ENV.has_key?("DUMMY_TWO").should be_true
+      ENV.has_key?("TEST_VAR_1").should be_false
+      ENV.has_key?("TEST_VAR_ONE").should be_false
+      ENV.has_key?("TEST_VAR_2").should be_true
+      ENV.has_key?("TEST_VAR_TWO").should be_true
     end
   end
   
