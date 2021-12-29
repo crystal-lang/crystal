@@ -26,7 +26,7 @@
 class YAML::Builder
   @box : Void*
 
-  # By default the maximum nesting of sequences/amppings is 99. Nesting more
+  # By default the maximum nesting of sequences/mappings is 99. Nesting more
   # than this will result in a YAML::Error. Changing the value of this property
   # allows more/less nesting.
   property max_nesting = 99
@@ -39,18 +39,20 @@ class YAML::Builder
     @closed = false
     @nesting = 0
     LibYAML.yaml_emitter_initialize(@emitter)
+    LibYAML.yaml_emitter_set_unicode(@emitter, 1)
     LibYAML.yaml_emitter_set_output(@emitter, ->(data, buffer, size) {
       data_io = Box(IO).unbox(data)
-      data_io.write(Slice.new(buffer, size))
+      data_io.write_string(Slice.new(buffer, size))
       1
     }, @box)
   end
 
-  # Creates a `YAML::Builder` that will write to the given `IO`,
-  # invokes the block and closes the builder.
-  def self.new(io : IO)
-    emitter = new(io)
-    yield emitter ensure emitter.close
+  # Creates a `YAML::Builder` that writes to *io* and yields it to the block.
+  #
+  # After returning from the block the builder is closed.
+  def self.build(io : IO, & : self ->) : Nil
+    builder = new(io)
+    yield builder ensure builder.close
   end
 
   # Starts a YAML stream.
@@ -59,8 +61,9 @@ class YAML::Builder
   end
 
   # Ends a YAML stream.
-  def end_stream
+  def end_stream : Nil
     emit stream_end
+    flush
   end
 
   # Starts a YAML stream, invokes the block, and ends it.
@@ -93,14 +96,14 @@ class YAML::Builder
   end
 
   # Starts a sequence.
-  def start_sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY)
+  def start_sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY) : Nil
     implicit = tag ? 0 : 1
     emit sequence_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
     increase_nesting
   end
 
   # Ends a sequence.
-  def end_sequence
+  def end_sequence : Nil
     emit sequence_end
     decrease_nesting
   end
@@ -112,14 +115,14 @@ class YAML::Builder
   end
 
   # Starts a mapping.
-  def start_mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY)
+  def start_mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY) : Nil
     implicit = tag ? 0 : 1
     emit mapping_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
     increase_nesting
   end
 
   # Ends a mapping.
-  def end_mapping
+  def end_mapping : Nil
     emit mapping_end
     decrease_nesting
   end
@@ -130,14 +133,50 @@ class YAML::Builder
     yield.tap { end_mapping }
   end
 
-  def alias(anchor : String)
+  # Emits an alias to the given *anchor*.
+  #
+  # ```
+  # require "yaml"
+  #
+  # yaml = YAML.build do |builder|
+  #   builder.mapping do
+  #     builder.scalar "key"
+  #     builder.alias "example"
+  #   end
+  # end
+  #
+  # yaml # => "---\nkey: *example\n"
+  # ```
+  def alias(anchor : String) : Nil
     LibYAML.yaml_alias_event_initialize(pointerof(@event), anchor)
     yaml_emit("alias")
+  end
+
+  # Emits the scalar `"<<"` followed by an alias to the given *anchor*.
+  #
+  # See [YAML Merge](https://yaml.org/type/merge.html).
+  #
+  # ```
+  # require "yaml"
+  #
+  # yaml = YAML.build do |builder|
+  #   builder.mapping do
+  #     builder.merge "development"
+  #   end
+  # end
+  #
+  # yaml # => "---\n<<: *development\n"
+  # ```
+  def merge(anchor : String) : Nil
+    self.scalar "<<"
+    self.alias anchor
   end
 
   # Flushes any pending data to the underlying `IO`.
   def flush
     LibYAML.yaml_emitter_flush(@emitter)
+
+    @io.flush
   end
 
   def finalize
@@ -146,7 +185,7 @@ class YAML::Builder
   end
 
   # Closes the builder, freeing up resources.
-  def close
+  def close : Nil
     finalize
     @closed = true
   end
@@ -209,8 +248,8 @@ module YAML
   end
 
   # Writes YAML into the given `IO`. A `YAML::Builder` is yielded to the block.
-  def self.build(io : IO)
-    YAML::Builder.new(io) do |yaml|
+  def self.build(io : IO) : Nil
+    YAML::Builder.build(io) do |yaml|
       yaml.stream do
         yaml.document do
           yield yaml

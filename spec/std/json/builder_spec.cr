@@ -1,11 +1,9 @@
 require "spec"
 require "json"
+require "../../support/string"
 
-private def assert_built(expected)
-  string = JSON.build do |json|
-    with json yield json
-  end
-  string.should eq(expected)
+private def assert_built(expected, *, file = __FILE__, line = __LINE__)
+  assert_prints JSON.build { |json| with json yield json }, expected, file: file, line: line
 end
 
 private class TestObject
@@ -306,5 +304,19 @@ describe JSON::Builder do
     expect_raises(JSON::Error, "Nesting of 4 is too deep") do
       builder.start_object
     end
+  end
+
+  it "#next_is_object_key?" do
+    io = IO::Memory.new
+    builder = JSON::Builder.new(io)
+    builder.next_is_object_key?.should be_false
+    builder.start_document
+    builder.next_is_object_key?.should be_false
+    builder.start_object
+    builder.next_is_object_key?.should be_true
+    builder.scalar("foo")
+    builder.next_is_object_key?.should be_false
+    builder.scalar("bar")
+    builder.next_is_object_key?.should be_true
   end
 end

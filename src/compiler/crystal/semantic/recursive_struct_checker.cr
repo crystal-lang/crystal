@@ -31,8 +31,8 @@ class Crystal::RecursiveStructChecker
   end
 
   def check_single(type)
-    return if @all_checked.includes?(type)
-    @all_checked << type
+    has_not_been_checked = @all_checked.add?(type)
+    return unless has_not_been_checked
 
     if struct?(type)
       target = type
@@ -54,7 +54,7 @@ class Crystal::RecursiveStructChecker
 
   def check_generic_instances(type)
     if type.struct? && type.is_a?(GenericType)
-      type.generic_types.each_value do |instance|
+      type.each_instantiated_type do |instance|
         check_single(instance)
       end
     end
@@ -67,7 +67,7 @@ class Crystal::RecursiveStructChecker
       end
 
       msg = <<-MSG
-        recursive struct #{target} detected#{alias_message}:
+        recursive struct #{target} detected#{alias_message}
 
           #{path_to_s(path)}
 

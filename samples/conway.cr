@@ -32,8 +32,8 @@ struct ConwayMap
 
     ix = min WIDTH, pattern.map(&.size).max
     iy = min HEIGHT, pattern.size
-    dx = (WIDTH - ix) / 2
-    dy = (HEIGHT - iy) / 2
+    dx = (WIDTH - ix) // 2
+    dy = (HEIGHT - iy) // 2
 
     iy.times do |y|
       ix.times do |x|

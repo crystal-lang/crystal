@@ -16,7 +16,7 @@ module Spec
     def report(result)
     end
 
-    def finish
+    def finish(elapsed_time, aborted)
     end
 
     def print_results(elapsed_time : Time::Span, aborted : Bool)
@@ -25,17 +25,37 @@ module Spec
 
   # :nodoc:
   class DotFormatter < Formatter
+    @count = 0
+    @split = 0
+
+    def initialize(*args)
+      super
+
+      if split = ENV["SPEC_SPLIT_DOTS"]?
+        @split = split.to_i
+      end
+    end
+
     def report(result)
       @io << Spec.color(LETTERS[result.kind], result.kind)
+      split_lines
       @io.flush
     end
 
-    def finish
+    private def split_lines
+      return unless @split > 0
+      if (@count += 1) >= @split
+        @io.puts
+        @count = 0
+      end
+    end
+
+    def finish(elapsed_time, aborted)
       @io.puts
     end
 
     def print_results(elapsed_time : Time::Span, aborted : Bool)
-      Spec::RootContext.print_results(elapsed_time, aborted)
+      Spec.root_context.print_results(elapsed_time, aborted)
     end
   end
 
@@ -91,7 +111,7 @@ module Spec
     end
 
     def print_results(elapsed_time : Time::Span, aborted : Bool)
-      Spec::RootContext.print_results(elapsed_time, aborted)
+      Spec.root_context.print_results(elapsed_time, aborted)
     end
   end
 

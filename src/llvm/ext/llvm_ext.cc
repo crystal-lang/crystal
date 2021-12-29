@@ -9,6 +9,11 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/ADT/Triple.h>
+#include <llvm-c/TargetMachine.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm-c/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/RTDyldMemoryManager.h>
 
 using namespace llvm;
 
@@ -20,6 +25,12 @@ using namespace llvm;
 
 #define LLVM_VERSION_LE(major, minor) \
   (LLVM_VERSION_MAJOR < (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR <= (minor))
+
+#if LLVM_VERSION_GE(7, 0)
+#include <llvm/Target/CodeGenCWrappers.h>
+#else
+#include <llvm/Support/CodeGenCWrappers.h>
+#endif
 
 #if LLVM_VERSION_GE(6, 0)
 #include <llvm-c/DebugInfo.h>
@@ -56,27 +67,23 @@ template <typename T> T *unwrapDIptr(LLVMMetadataRef v) {
 
 extern "C" {
 
-LLVMDIBuilderRef LLVMNewDIBuilder(LLVMModuleRef mref) {
+LLVMDIBuilderRef LLVMExtNewDIBuilder(LLVMModuleRef mref) {
   Module *m = unwrap(mref);
   return wrap(new DIBuilder(*m));
 }
 
-#if LLVM_VERSION_LE(5, 0)
-void LLVMDIBuilderFinalize(LLVMDIBuilderRef dref) { unwrap(dref)->finalize(); }
-#endif
+// Missing LLVMDIBuilderFinalize in LLVM <= 5.0
+void LLVMExtDIBuilderFinalize(LLVMDIBuilderRef dref) { unwrap(dref)->finalize(); }
 
-LLVMMetadataRef LLVMDIBuilderCreateFile2(DIBuilderRef Dref, const char *File,
-                                        const char *Dir) {
+LLVMMetadataRef LLVMExtDIBuilderCreateFile(
+    DIBuilderRef Dref, const char *File, const char *Dir) {
   return wrap(Dref->createFile(File, Dir));
 }
 
-LLVMMetadataRef LLVMDIBuilderCreateCompileUnit2(DIBuilderRef Dref, unsigned Lang,
-                                               const char *File,
-                                               const char *Dir,
-                                               const char *Producer,
-                                               int Optimized,
-                                               const char *Flags,
-                                               unsigned RuntimeVersion) {
+LLVMMetadataRef LLVMExtDIBuilderCreateCompileUnit(
+    DIBuilderRef Dref, unsigned Lang, const char *File, const char *Dir,
+    const char *Producer, int Optimized, const char *Flags,
+    unsigned RuntimeVersion) {
 #if LLVM_VERSION_LE(3, 9)
   return wrap(Dref->createCompileUnit(Lang, File, Dir, Producer, Optimized,
                                       Flags, RuntimeVersion));
@@ -87,7 +94,7 @@ LLVMMetadataRef LLVMDIBuilderCreateCompileUnit2(DIBuilderRef Dref, unsigned Lang
 #endif
 }
 
-LLVMMetadataRef LLVMDIBuilderCreateFunction(
+LLVMMetadataRef LLVMExtDIBuilderCreateFunction(
     DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
     const char *LinkageName, LLVMMetadataRef File, unsigned Line,
     LLVMMetadataRef CompositeType, bool IsLocalToUnit, bool IsDefinition,
@@ -99,28 +106,31 @@ LLVMMetadataRef LLVMDIBuilderCreateFunction(
 #endif
     bool IsOptimized,
     LLVMValueRef Func) {
+#if LLVM_VERSION_GE(8, 0)
+  DISubprogram *Sub = Dref->createFunction(
+      unwrapDI<DIScope>(Scope), StringRef(Name), StringRef(LinkageName), unwrapDI<DIFile>(File), Line,
+      unwrapDI<DISubroutineType>(CompositeType),
+      ScopeLine, Flags, DISubprogram::toSPFlags(IsLocalToUnit, IsDefinition, IsOptimized));
+#else
   DISubprogram *Sub = Dref->createFunction(
       unwrapDI<DIScope>(Scope), Name, LinkageName, unwrapDI<DIFile>(File), Line,
       unwrapDI<DISubroutineType>(CompositeType), IsLocalToUnit, IsDefinition,
       ScopeLine, Flags, IsOptimized);
+#endif
   unwrap<Function>(Func)->setSubprogram(Sub);
   return wrap(Sub);
 }
 
-LLVMMetadataRef LLVMDIBuilderCreateLexicalBlock(DIBuilderRef Dref,
-                                                LLVMMetadataRef Scope,
-                                                LLVMMetadataRef File,
-                                                unsigned Line,
-                                                unsigned Column) {
+LLVMMetadataRef LLVMExtDIBuilderCreateLexicalBlock(
+    DIBuilderRef Dref, LLVMMetadataRef Scope, LLVMMetadataRef File,
+    unsigned Line, unsigned Column) {
   return wrap(Dref->createLexicalBlock(unwrapDI<DIDescriptor>(Scope),
                                        unwrapDI<DIFile>(File), Line, Column));
 }
 
-LLVMMetadataRef LLVMDIBuilderCreateBasicType(DIBuilderRef Dref,
-                                             const char *Name,
-                                             uint64_t SizeInBits,
-                                             uint64_t AlignInBits,
-                                             unsigned Encoding) {
+LLVMMetadataRef LLVMExtDIBuilderCreateBasicType(
+    DIBuilderRef Dref, const char *Name, uint64_t SizeInBits,
+    uint64_t AlignInBits, unsigned Encoding) {
 #if LLVM_VERSION_LE(3, 9)
   return wrap(Dref->createBasicType(Name, SizeInBits, AlignInBits, Encoding));
 #else
@@ -128,31 +138,28 @@ LLVMMetadataRef LLVMDIBuilderCreateBasicType(DIBuilderRef Dref,
 #endif
 }
 
-LLVMMetadataRef LLVMDIBuilderGetOrCreateTypeArray(DIBuilderRef Dref,
-                                                  LLVMMetadataRef *Data,
-                                                  unsigned Length) {
+LLVMMetadataRef LLVMExtDIBuilderGetOrCreateTypeArray(
+    DIBuilderRef Dref, LLVMMetadataRef *Data, unsigned Length) {
   Metadata **DataValue = unwrap(Data);
   return wrap(
       Dref->getOrCreateTypeArray(ArrayRef<Metadata *>(DataValue, Length))
           .get());
 }
 
-LLVMMetadataRef LLVMDIBuilderGetOrCreateArray(DIBuilderRef Dref,
-                                              LLVMMetadataRef *Data,
-                                              unsigned Length) {
+LLVMMetadataRef LLVMExtDIBuilderGetOrCreateArray(
+    DIBuilderRef Dref, LLVMMetadataRef *Data, unsigned Length) {
   Metadata **DataValue = unwrap(Data);
   return wrap(
       Dref->getOrCreateArray(ArrayRef<Metadata *>(DataValue, Length)).get());
 }
 
-LLVMMetadataRef
-LLVMDIBuilderCreateSubroutineType(DIBuilderRef Dref, LLVMMetadataRef File,
-                                  LLVMMetadataRef ParameterTypes) {
+LLVMMetadataRef LLVMExtDIBuilderCreateSubroutineType(
+    DIBuilderRef Dref, LLVMMetadataRef File, LLVMMetadataRef ParameterTypes) {
   DISubroutineType *CT = Dref->createSubroutineType(DITypeRefArray(unwrap<MDTuple>(ParameterTypes)));
   return wrap(CT);
 }
 
-LLVMMetadataRef LLVMDIBuilderCreateAutoVariable(
+LLVMMetadataRef LLVMExtDIBuilderCreateAutoVariable(
     DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
     LLVMMetadataRef File, unsigned Line, LLVMMetadataRef Ty,
     int AlwaysPreserve,
@@ -174,7 +181,7 @@ LLVMMetadataRef LLVMDIBuilderCreateAutoVariable(
   return wrap(V);
 }
 
-LLVMMetadataRef LLVMDIBuilderCreateParameterVariable(
+LLVMMetadataRef LLVMExtDIBuilderCreateParameterVariable(
     DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
     unsigned ArgNo, LLVMMetadataRef File, unsigned Line,
     LLVMMetadataRef Ty, int AlwaysPreserve,
@@ -190,12 +197,9 @@ LLVMMetadataRef LLVMDIBuilderCreateParameterVariable(
   return wrap(V);
 }
 
-LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(DIBuilderRef Dref,
-                                             LLVMValueRef Storage,
-                                             LLVMMetadataRef VarInfo,
-                                             LLVMMetadataRef Expr,
-                                             LLVMValueRef DL,
-                                             LLVMBasicBlockRef Block) {
+LLVMValueRef LLVMExtDIBuilderInsertDeclareAtEnd(
+    DIBuilderRef Dref, LLVMValueRef Storage, LLVMMetadataRef VarInfo,
+    LLVMMetadataRef Expr, LLVMValueRef DL, LLVMBasicBlockRef Block) {
   Instruction *Instr =
     Dref->insertDeclare(unwrap(Storage), unwrap<DILocalVariable>(VarInfo),
                         unwrapDI<DIExpression>(Expr),
@@ -204,12 +208,12 @@ LLVMValueRef LLVMDIBuilderInsertDeclareAtEnd(DIBuilderRef Dref,
   return wrap(Instr);
 }
 
-LLVMMetadataRef LLVMDIBuilderCreateExpression(DIBuilderRef Dref, int64_t *Addr,
-                                              size_t Length) {
+LLVMMetadataRef LLVMExtDIBuilderCreateExpression(
+    DIBuilderRef Dref, int64_t *Addr, size_t Length) {
   return wrap(Dref->createExpression(ArrayRef<int64_t>(Addr, Length)));
 }
 
-LLVMMetadataRef LLVMDIBuilderCreateEnumerationType(
+LLVMMetadataRef LLVMExtDIBuilderCreateEnumerationType(
     DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
     LLVMMetadataRef File, unsigned LineNumber, uint64_t SizeInBits,
     uint64_t AlignInBits, LLVMMetadataRef Elements,
@@ -221,27 +225,22 @@ LLVMMetadataRef LLVMDIBuilderCreateEnumerationType(
   return wrap(enumType);
 }
 
-LLVMMetadataRef LLVMDIBuilderCreateEnumerator(DIBuilderRef Dref,
-                                              const char *Name, int64_t Value) {
+LLVMMetadataRef LLVMExtDIBuilderCreateEnumerator(
+    DIBuilderRef Dref, const char *Name, int64_t Value) {
   DIEnumerator *e = Dref->createEnumerator(Name, Value);
   return wrap(e);
 }
 
-LLVMMetadataRef
-LLVMDIBuilderCreateStructType(DIBuilderRef Dref,
-                              LLVMMetadataRef Scope,
-                              const char *Name,
-                              LLVMMetadataRef File,
-                              unsigned Line,
-                              uint64_t SizeInBits,
-                              uint64_t AlignInBits,
+LLVMMetadataRef LLVMExtDIBuilderCreateStructType(
+    DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
+    LLVMMetadataRef File, unsigned Line, uint64_t SizeInBits,
+    uint64_t AlignInBits,
 #if LLVM_VERSION_LE(3, 9)
-                              unsigned Flags,
+    unsigned Flags,
 #else
-                              DINode::DIFlags Flags,
+    DINode::DIFlags Flags,
 #endif
-                              LLVMMetadataRef DerivedFrom,
-                              LLVMMetadataRef Elements) {
+    LLVMMetadataRef DerivedFrom, LLVMMetadataRef Elements) {
   DICompositeType *CT = Dref->createStructType(
       unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
       SizeInBits, AlignInBits, Flags, unwrapDI<DIType>(DerivedFrom),
@@ -249,13 +248,33 @@ LLVMDIBuilderCreateStructType(DIBuilderRef Dref,
   return wrap(CT);
 }
 
-LLVMMetadataRef
-LLVMDIBuilderCreateReplaceableCompositeType(DIBuilderRef Dref,
-                                            LLVMMetadataRef Scope,
-                                            const char *Name,
-                                            LLVMMetadataRef File,
-                                            unsigned Line)
-{
+LLVMMetadataRef LLVMExtDIBuilderCreateUnionType(
+    DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
+    LLVMMetadataRef File, unsigned Line, uint64_t SizeInBits,
+    uint64_t AlignInBits,
+#if LLVM_VERSION_LE(3, 9)
+    unsigned Flags,
+#else
+    DINode::DIFlags Flags,
+#endif
+    LLVMMetadataRef Elements) {
+  DICompositeType *CT = Dref->createUnionType(
+      unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
+      SizeInBits, AlignInBits, Flags,
+      DINodeArray(unwrapDI<MDTuple>(Elements)));
+  return wrap(CT);
+}
+
+LLVMMetadataRef LLVMExtDIBuilderCreateArrayType(
+    DIBuilderRef Dref, uint64_t Size, uint64_t AlignInBits,
+    LLVMMetadataRef Type, LLVMMetadataRef Subs) {
+      return wrap(Dref->createArrayType(Size, AlignInBits, unwrapDI<DIType>(Type), DINodeArray(unwrapDI<MDTuple>(Subs))));
+}
+
+
+LLVMMetadataRef LLVMExtDIBuilderCreateReplaceableCompositeType(
+  DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
+  LLVMMetadataRef File, unsigned Line) {
   DICompositeType *CT = Dref->createReplaceableCompositeType(llvm::dwarf::DW_TAG_structure_type,
                                                              Name,
                                                              unwrapDI<DIScope>(Scope),
@@ -264,11 +283,23 @@ LLVMDIBuilderCreateReplaceableCompositeType(DIBuilderRef Dref,
   return wrap(CT);
 }
 
-void
-LLVMDIBuilderReplaceTemporary(DIBuilderRef Dref,
-                              LLVMMetadataRef From,
-                              LLVMMetadataRef To)
-{
+// LLVM 7.0 LLVMDIBuilderCreateUnspecifiedType
+LLVMMetadataRef LLVMExtDIBuilderCreateUnspecifiedType(
+  DIBuilderRef Dref, const char *Name, size_t NameLen) {
+  return wrap(Dref->createUnspecifiedType({Name, NameLen}));
+}
+
+// LLVM 7.0 LLVMDIBuilderCreateLexicalBlockFile
+LLVMMetadataRef LLVMExtDIBuilderCreateLexicalBlockFile(
+  DIBuilderRef Dref,
+  LLVMMetadataRef Scope, LLVMMetadataRef File, unsigned Discriminator) {
+  return wrap(Dref->createLexicalBlockFile(unwrapDI<DIScope>(Scope),
+                                           unwrapDI<DIFile>(File),
+                                           Discriminator));
+}
+
+void LLVMExtDIBuilderReplaceTemporary(
+  DIBuilderRef Dref, LLVMMetadataRef From, LLVMMetadataRef To) {
   auto *Node = unwrap<MDNode>(From);
   auto *Type = unwrap<DIType>(To);
 
@@ -276,28 +307,24 @@ LLVMDIBuilderReplaceTemporary(DIBuilderRef Dref,
   Dref->replaceTemporary(std::move(fwd_decl), Type);
 }
 
-LLVMMetadataRef
-LLVMDIBuilderCreateMemberType(DIBuilderRef Dref, LLVMMetadataRef Scope,
-                              const char *Name, LLVMMetadataRef File,
-                              unsigned Line, uint64_t SizeInBits,
-                              uint64_t AlignInBits, uint64_t OffsetInBits,
+LLVMMetadataRef LLVMExtDIBuilderCreateMemberType(
+    DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name, LLVMMetadataRef File,
+    unsigned Line, uint64_t SizeInBits, uint64_t AlignInBits, uint64_t OffsetInBits,
 #if LLVM_VERSION_LE(3, 9)
-                              unsigned Flags,
+    unsigned Flags,
 #else
-                              DINode::DIFlags Flags,
+    DINode::DIFlags Flags,
 #endif
-                              LLVMMetadataRef Ty) {
+    LLVMMetadataRef Ty) {
   DIDerivedType *DT = Dref->createMemberType(
       unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
       SizeInBits, AlignInBits, OffsetInBits, Flags, unwrapDI<DIType>(Ty));
   return wrap(DT);
 }
 
-LLVMMetadataRef LLVMDIBuilderCreatePointerType(DIBuilderRef Dref,
-                                               LLVMMetadataRef PointeeType,
-                                               uint64_t SizeInBits,
-                                               uint64_t AlignInBits,
-                                               const char *Name) {
+LLVMMetadataRef LLVMExtDIBuilderCreatePointerType(
+    DIBuilderRef Dref, LLVMMetadataRef PointeeType,
+    uint64_t SizeInBits, uint64_t AlignInBits, const char *Name) {
   DIDerivedType *T = Dref->createPointerType(unwrapDI<DIType>(PointeeType),
                                              SizeInBits, AlignInBits,
 #if LLVM_VERSION_GE(5, 0)
@@ -307,33 +334,71 @@ LLVMMetadataRef LLVMDIBuilderCreatePointerType(DIBuilderRef Dref,
   return wrap(T);
 }
 
-LLVMMetadataRef LLVMTemporaryMDNode(LLVMContextRef C, LLVMMetadataRef *MDs,
-                                    unsigned Count) {
+LLVMMetadataRef LLVMTemporaryMDNode2(
+    LLVMContextRef C, LLVMMetadataRef *MDs, unsigned Count) {
   return wrap(MDTuple::getTemporary(*unwrap(C),
                                     ArrayRef<Metadata *>(unwrap(MDs), Count))
                   .release());
 }
 
-void LLVMMetadataReplaceAllUsesWith(LLVMMetadataRef MD, LLVMMetadataRef New) {
+void LLVMMetadataReplaceAllUsesWith2(
+  LLVMMetadataRef MD, LLVMMetadataRef New) {
   auto *Node = unwrap<MDNode>(MD);
   Node->replaceAllUsesWith(unwrap<MDNode>(New));
   MDNode::deleteTemporary(Node);
 }
 
-void LLVMSetCurrentDebugLocation2(LLVMBuilderRef Bref, unsigned Line,
-                                  unsigned Col, LLVMMetadataRef Scope,
-                                  LLVMMetadataRef InlinedAt) {
+void LLVMExtSetCurrentDebugLocation(
+  LLVMBuilderRef Bref, unsigned Line, unsigned Col, LLVMMetadataRef Scope,
+  LLVMMetadataRef InlinedAt) {
+#if LLVM_VERSION_GE(12, 0)
+  if (!Scope)
+    unwrap(Bref)->SetCurrentDebugLocation(DebugLoc());
+  else
+    unwrap(Bref)->SetCurrentDebugLocation(
+      DILocation::get(unwrap<MDNode>(Scope)->getContext(), Line, Col,
+                      unwrapDI<DILocalScope>(Scope),
+                      unwrapDI<DILocation>(InlinedAt)));
+#else
   unwrap(Bref)->SetCurrentDebugLocation(
       DebugLoc::get(Line, Col, Scope ? unwrap<MDNode>(Scope) : nullptr,
                     InlinedAt ? unwrap<MDNode>(InlinedAt) : nullptr));
+#endif
 }
 
-LLVMValueRef LLVMExtBuildCmpxchg(LLVMBuilderRef B,
-                               LLVMValueRef PTR, LLVMValueRef Cmp, LLVMValueRef New,
-                               LLVMAtomicOrdering SuccessOrdering,
-                               LLVMAtomicOrdering FailureOrdering) {
+#if LLVM_VERSION_GE(3, 9)
+// A backported LLVMCreateTypeAttribute for LLVM < 13
+// from https://github.com/llvm/llvm-project/blob/bb8ce25e88218be60d2a4ea9c9b0b721809eff27/llvm/lib/IR/Core.cpp#L167
+LLVMAttributeRef LLVMExtCreateTypeAttribute(
+  LLVMContextRef C, unsigned KindID, LLVMTypeRef Ty) {
+  auto &Ctx = *unwrap(C);
+  auto AttrKind = (Attribute::AttrKind)KindID;
+#if LLVM_VERSION_GE(12, 0)
+  return wrap(Attribute::get(Ctx, AttrKind, unwrap(Ty)));
+#else
+  return wrap(Attribute::get(Ctx, AttrKind));
+#endif
+}
+#endif
+
+LLVMValueRef LLVMExtBuildCmpxchg(
+    LLVMBuilderRef B, LLVMValueRef PTR, LLVMValueRef Cmp, LLVMValueRef New,
+    LLVMAtomicOrdering SuccessOrdering, LLVMAtomicOrdering FailureOrdering) {
+#if LLVM_VERSION_GE(13, 0)
+  return wrap(
+    unwrap(B)->CreateAtomicCmpXchg(
+      unwrap(PTR),
+      unwrap(Cmp),
+      unwrap(New),
+      llvm::MaybeAlign(),
+      (llvm::AtomicOrdering)SuccessOrdering,
+      (llvm::AtomicOrdering)FailureOrdering
+    )
+  );
+#else
   return wrap(unwrap(B)->CreateAtomicCmpXchg(unwrap(PTR), unwrap(Cmp), unwrap(New),
     (llvm::AtomicOrdering)SuccessOrdering, (llvm::AtomicOrdering)FailureOrdering));
+#endif
 }
 
 void LLVMExtSetOrdering(LLVMValueRef MemAccessInst, LLVMAtomicOrdering Ordering) {
@@ -345,8 +410,9 @@ void LLVMExtSetOrdering(LLVMValueRef MemAccessInst, LLVMAtomicOrdering Ordering)
   return cast<StoreInst>(P)->setOrdering(O);
 }
 
-LLVMValueRef LLVMExtBuildCatchPad(LLVMBuilderRef B, LLVMValueRef ParentPad,
-                                  unsigned ArgCount, LLVMValueRef *LLArgs, const char *Name) {
+LLVMValueRef LLVMExtBuildCatchPad(
+    LLVMBuilderRef B, LLVMValueRef ParentPad, unsigned ArgCount,
+    LLVMValueRef *LLArgs, const char *Name) {
 #if LLVM_VERSION_GE(3, 8)
   Value **Args = unwrap(LLArgs);
   return wrap(unwrap(B)->CreateCatchPad(
@@ -356,9 +422,8 @@ LLVMValueRef LLVMExtBuildCatchPad(LLVMBuilderRef B, LLVMValueRef ParentPad,
 #endif
 }
 
-LLVMValueRef LLVMExtBuildCatchRet(LLVMBuilderRef B,
-                                  LLVMValueRef Pad,
-                                  LLVMBasicBlockRef BB) {
+LLVMValueRef LLVMExtBuildCatchRet(
+    LLVMBuilderRef B, LLVMValueRef Pad, LLVMBasicBlockRef BB) {
 #if LLVM_VERSION_GE(3, 8)
   return wrap(unwrap(B)->CreateCatchRet(cast<CatchPadInst>(unwrap(Pad)),
                                               unwrap(BB)));
@@ -367,11 +432,9 @@ LLVMValueRef LLVMExtBuildCatchRet(LLVMBuilderRef B,
 #endif
 }
 
-LLVMValueRef LLVMExtBuildCatchSwitch(LLVMBuilderRef B,
-                                     LLVMValueRef ParentPad,
-                                     LLVMBasicBlockRef BB,
-                                     unsigned NumHandlers,
-                                     const char *Name) {
+LLVMValueRef LLVMExtBuildCatchSwitch(
+    LLVMBuilderRef B, LLVMValueRef ParentPad, LLVMBasicBlockRef BB,
+    unsigned NumHandlers, const char *Name) {
 #if LLVM_VERSION_GE(3, 8)
   if (ParentPad == nullptr) {
     Type *Ty = Type::getTokenTy(unwrap(B)->getContext());
@@ -384,17 +447,15 @@ LLVMValueRef LLVMExtBuildCatchSwitch(LLVMBuilderRef B,
 #endif
 }
 
-void LLVMExtAddHandler(LLVMValueRef CatchSwitchRef,
-                       LLVMBasicBlockRef Handler) {
+void LLVMExtAddHandler(LLVMValueRef CatchSwitchRef, LLVMBasicBlockRef Handler) {
 #if LLVM_VERSION_GE(3, 8)
   Value *CatchSwitch = unwrap(CatchSwitchRef);
   cast<CatchSwitchInst>(CatchSwitch)->addHandler(unwrap(Handler));
 #endif
 }
 
-OperandBundleDef *LLVMExtBuildOperandBundleDef(const char *Name,
-                                                           LLVMValueRef *Inputs,
-                                                           unsigned NumInputs) {
+OperandBundleDef *LLVMExtBuildOperandBundleDef(
+    const char *Name, LLVMValueRef *Inputs, unsigned NumInputs) {
 #if LLVM_VERSION_GE(3, 8)
   return new OperandBundleDef(Name, makeArrayRef(unwrap(Inputs), NumInputs));
 #else
@@ -402,11 +463,15 @@ OperandBundleDef *LLVMExtBuildOperandBundleDef(const char *Name,
 #endif
 }
 
-LLVMValueRef LLVMExtBuildCall(LLVMBuilderRef B, LLVMValueRef Fn,
-                                          LLVMValueRef *Args, unsigned NumArgs,
-                                          OperandBundleDef *Bundle,
-                                          const char *Name) {
-#if LLVM_VERSION_GE(3, 8)
+LLVMValueRef LLVMExtBuildCall2(
+    LLVMBuilderRef B, LLVMTypeRef Ty, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
+    OperandBundleDef *Bundle, const char *Name) {
+#if LLVM_VERSION_GE(8, 0)
+  unsigned Len = Bundle ? 1 : 0;
+  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
+  return wrap(unwrap(B)->CreateCall(
+       (llvm::FunctionType*) unwrap(Ty), unwrap(Fn), makeArrayRef(unwrap(Args), NumArgs), Bundles, Name));
+#elif LLVM_VERSION_GE(3, 8)
   unsigned Len = Bundle ? 1 : 0;
   ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
   return wrap(unwrap(B)->CreateCall(
@@ -416,11 +481,17 @@ LLVMValueRef LLVMExtBuildCall(LLVMBuilderRef B, LLVMValueRef Fn,
 #endif
 }
 
-LLVMValueRef LLVMExtBuildInvoke(LLVMBuilderRef B, LLVMValueRef Fn, LLVMValueRef *Args,
-                    unsigned NumArgs, LLVMBasicBlockRef Then,
-                    LLVMBasicBlockRef Catch, OperandBundleDef *Bundle,
-                    const char *Name) {
-#if LLVM_VERSION_GE(3, 8)
+LLVMValueRef LLVMExtBuildInvoke2(
+    LLVMBuilderRef B,  LLVMTypeRef Ty, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
+    LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch, OperandBundleDef *Bundle,
+    const char *Name) {
+#if LLVM_VERSION_GE(8, 0)
+  unsigned Len = Bundle ? 1 : 0;
+  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
+  return wrap(unwrap(B)->CreateInvoke((llvm::FunctionType*) unwrap(Ty), unwrap(Fn), unwrap(Then), unwrap(Catch),
+                                      makeArrayRef(unwrap(Args), NumArgs),
+                                      Bundles, Name));
+#elif LLVM_VERSION_GE(3, 8)
   unsigned Len = Bundle ? 1 : 0;
   ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
   return wrap(unwrap(B)->CreateInvoke(unwrap(Fn), unwrap(Then), unwrap(Catch),
@@ -431,26 +502,126 @@ LLVMValueRef LLVMExtBuildInvoke(LLVMBuilderRef B, LLVMValueRef Fn, LLVMValueRef 
 #endif
 }
 
-void LLVMWriteBitcodeWithSummaryToFile(LLVMModuleRef mref, const char *File) {
+void LLVMExtWriteBitcodeWithSummaryToFile(LLVMModuleRef mref, const char *File) {
 #if LLVM_VERSION_GE(4, 0)
   // https://github.com/ldc-developers/ldc/pull/1840/files
   Module *m = unwrap(mref);
 
   std::error_code EC;
+#if LLVM_VERSION_GE(13, 0)
+  raw_fd_ostream OS(File, EC, sys::fs::OF_None);
+#else
   raw_fd_ostream OS(File, EC, sys::fs::F_None);
+#endif
   if (EC) return;
 
   llvm::ModuleSummaryIndex moduleSummaryIndex = llvm::buildModuleSummaryIndex(*m, nullptr, nullptr);
+#if LLVM_VERSION_GE(7, 0)
+  llvm::WriteBitcodeToFile(*m, OS, true, &moduleSummaryIndex, true);
+#else
   llvm::WriteBitcodeToFile(m, OS, true, &moduleSummaryIndex, true);
 #endif
-}
-
-// LLVMNormalizeTargetTriple is available from LLVM in LLVM 8 and up,
-// in lower releases, we emulate it.
-#if LLVM_VERSION_LE(7, 0)
-char *LLVMNormalizeTargetTriple(const char* triple) {
-    return strdup(Triple::normalize(StringRef(triple)).c_str());
-}
 #endif
+}
 
+// Missing LLVMNormalizeTargetTriple in LLVM <= 7.0
+char *LLVMExtNormalizeTargetTriple(const char* triple) {
+  return strdup(Triple::normalize(StringRef(triple)).c_str());
+}
+
+char *LLVMExtBasicBlockName(LLVMBasicBlockRef BB) {
+#if LLVM_VERSION_GE(4, 0)
+  // It seems to work since llvm-4.0 https://stackoverflow.com/a/46045548/30948
+  return strdup(unwrap(BB)->getName().data());
+#else
+  return NULL;
+#endif
+}
+
+static TargetMachine *unwrap(LLVMTargetMachineRef P) {
+  return reinterpret_cast<TargetMachine *>(P);
+}
+
+void LLVMExtTargetMachineEnableGlobalIsel(LLVMTargetMachineRef T, LLVMBool Enable) {
+#if LLVM_VERSION_GE(7, 0)
+  unwrap(T)->setGlobalISel(Enable);
+#endif
+}
+
+// Copy paste of https://github.com/llvm/llvm-project/blob/dace8224f38a31636a02fe9c2af742222831f70c/llvm/lib/ExecutionEngine/ExecutionEngineBindings.cpp#L160-L214
+// but with a parameter to set global isel state
+LLVMBool LLVMExtCreateMCJITCompilerForModule(
+    LLVMExecutionEngineRef *OutJIT, LLVMModuleRef M,
+    LLVMMCJITCompilerOptions *PassedOptions, size_t SizeOfPassedOptions,
+    LLVMBool EnableGlobalISel,
+    char **OutError) {
+  LLVMMCJITCompilerOptions options;
+  // If the user passed a larger sized options struct, then they were compiled
+  // against a newer LLVM. Tell them that something is wrong.
+  if (SizeOfPassedOptions > sizeof(options)) {
+    *OutError = strdup(
+      "Refusing to use options struct that is larger than my own; assuming "
+      "LLVM library mismatch.");
+    return 1;
+  }
+
+
+  // Defend against the user having an old version of the API by ensuring that
+  // any fields they didn't see are cleared. We must defend against fields being
+  // set to the bitwise equivalent of zero, and assume that this means "do the
+  // default" as if that option hadn't been available.
+  LLVMInitializeMCJITCompilerOptions(&options, sizeof(options));
+  memcpy(&options, PassedOptions, SizeOfPassedOptions);
+
+
+  TargetOptions targetOptions;
+  targetOptions.EnableFastISel = options.EnableFastISel;
+  #if LLVM_VERSION_GE(7, 0)
+    targetOptions.EnableGlobalISel = EnableGlobalISel;
+  #endif
+  std::unique_ptr<Module> Mod(unwrap(M));
+
+  if (Mod)
+    // Set function attribute "frame-pointer" based on
+    // NoFramePointerElim.
+    for (auto &F : *Mod) {
+      auto Attrs = F.getAttributes();
+      StringRef Value = options.NoFramePointerElim ? "all" : "none";
+      Attrs = Attrs.addAttribute(F.getContext(), AttributeList::FunctionIndex,
+                                 "frame-pointer", Value);
+      F.setAttributes(Attrs);
+    }
+
+
+  std::string Error;
+  EngineBuilder builder(std::move(Mod));
+  builder.setEngineKind(EngineKind::JIT)
+         .setErrorStr(&Error)
+         .setOptLevel((CodeGenOpt::Level)options.OptLevel)
+         .setTargetOptions(targetOptions);
+  bool JIT;
+  if (Optional<CodeModel::Model> CM = unwrap(options.CodeModel, JIT))
+    builder.setCodeModel(*CM);
+  if (options.MCJMM)
+    builder.setMCJITMemoryManager(
+      std::unique_ptr<RTDyldMemoryManager>(unwrap(options.MCJMM)));
+
+  TargetMachine* tm = builder.selectTarget();
+  #if LLVM_VERSION_GE(7, 0)
+    tm->setGlobalISel(EnableGlobalISel);
+  #endif
+
+  if (ExecutionEngine *JIT = builder.create(tm)) {
+    *OutJIT = wrap(JIT);
+    return 0;
+  }
+  *OutError = strdup(Error.c_str());
+  return 1;
+}
+
+LLVMMetadataRef LLVMExtDIBuilderGetOrCreateArraySubrange(
+  DIBuilderRef Dref, uint64_t Lo,
+  uint64_t Count) {
+    return wrap(Dref->getOrCreateSubrange(Lo, Count));
+  }
 }

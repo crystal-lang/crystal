@@ -208,14 +208,14 @@ describe "Code gen: cast" do
 
       bar = Bar.new
       x = bar.as(Foo).foo
-      x.to_i
+      x.to_i!
       )).to_i.should eq(1)
   end
 
   it "casts to bigger union" do
     run(%(
       x = 1.5.as(Int32 | Float64)
-      x.to_i
+      x.to_i!
       )).to_i.should eq(1)
   end
 
@@ -410,5 +410,17 @@ describe "Code gen: cast" do
       x = foo.as(Foo)
       x.foo
       )).to_i.should eq(1)
+  end
+
+  it "can cast to metaclass (#11121)" do
+    run(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      A.as(A.class)
+      ))
   end
 end

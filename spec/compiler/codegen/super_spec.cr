@@ -411,7 +411,7 @@ describe "Codegen: super" do
       end
 
       z = Bar.new.foo(3 || 2.5)
-      z.to_i
+      z.to_i!
       )).to_i.should eq(3)
   end
 
@@ -439,5 +439,20 @@ describe "Codegen: super" do
 
       (Foo || Bar).bar(true)
       ))
+  end
+
+  it "calls super on an object (#10004)" do
+    run(%(
+      class Foo
+        @foo = 42
+
+        def super
+          @foo
+        end
+
+      end
+
+      Foo.new.super
+      )).to_i.should eq(42)
   end
 end

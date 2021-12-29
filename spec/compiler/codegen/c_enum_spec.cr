@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-CodeGenCEnumString = "lib LibFoo; enum Bar; X, Y, Z = 10, W; end end"
+CodeGenCEnumString = "lib LibFoo; enum Bar; X; Y; Z = 10; W; end end"
 
 describe "Code gen: c enum" do
   it "codegens enum value" do
@@ -23,7 +23,8 @@ describe "Code gen: c enum" do
     {"1 + 2", 3},
     {"3 - 2", 1},
     {"3 * 2", 6},
-    {"10 / 2", 5},
+    # {"10 / 2", 5}, # MathInterpreter only works with Integer and 10 / 2 : Float
+    {"10 // 2", 5},
     {"1 << 3", 8},
     {"100 >> 3", 12},
     {"10 & 3", 2},

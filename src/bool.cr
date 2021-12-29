@@ -4,6 +4,8 @@
 # true  # A Bool that is true
 # false # A Bool that is false
 # ```
+#
+# See [`Bool` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/bool.html) in the language reference.
 struct Bool
   # Bitwise OR. Returns `true` if this bool or *other* is `true`, otherwise returns `false`.
   #
@@ -13,7 +15,7 @@ struct Bool
   # true | false  # => true
   # true | true   # => true
   # ```
-  def |(other : Bool)
+  def |(other : Bool) : Bool
     self ? true : other
   end
 
@@ -25,7 +27,7 @@ struct Bool
   # true & false  # => false
   # true & true   # => true
   # ```
-  def &(other : Bool)
+  def &(other : Bool) : Bool
     self ? other : false
   end
 
@@ -37,7 +39,7 @@ struct Bool
   # true ^ false  # => true
   # true ^ true   # => false
   # ```
-  def ^(other : Bool)
+  def ^(other : Bool) : Bool
     self != other
   end
 
@@ -63,7 +65,7 @@ struct Bool
     io << to_s
   end
 
-  def clone
+  def clone : Bool
     self
   end
 end

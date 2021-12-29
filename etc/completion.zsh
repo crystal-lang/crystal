@@ -102,7 +102,7 @@ _crystal-build() {
 _crystal-env() {
   _arguments \
     '(--help)--help[prints help]' \
-    '1:type:(CRYSTAL_CACHE_DIR CRYSTAL_PATH CRYSTAL_VERSION)' \
+    '1:type:(CRYSTAL_CACHE_DIR CRYSTAL_PATH CRYSTAL_VERSION CRYSTAL_OPTS)' \
     && ret=0
 }
 

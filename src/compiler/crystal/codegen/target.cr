@@ -1,7 +1,8 @@
 require "llvm"
+require "../error"
 
 class Crystal::Codegen::Target
-  class Error < Crystal::LocationlessException
+  class Error < Crystal::Error
   end
 
   getter architecture : String
@@ -13,16 +14,23 @@ class Crystal::Codegen::Target
     # triple with the architecture, vendor and OS in the correct place.
     target_triple = LLVM.normalize_triple(target_triple.downcase)
 
+    if target_triple.count('-') < 2
+      raise Target::Error.new("Invalid target triple: #{target_triple}")
+    end
     @architecture, @vendor, @environment = target_triple.split('-', 3)
 
-    # Perform additional normalisation and parsing
+    # Perform additional normalization and parsing
     case @architecture
     when "i486", "i586", "i686"
       @architecture = "i386"
     when "amd64"
       @architecture = "x86_64"
+    when "arm64"
+      @architecture = "aarch64"
     when .starts_with?("arm")
       @architecture = "arm"
+    else
+      # no need to tweak the architecture
     end
   end
 
@@ -45,8 +53,12 @@ class Crystal::Codegen::Target
       "darwin"
     when .freebsd?
       "freebsd"
+    when .dragonfly?
+      "dragonfly"
     when .openbsd?
       "openbsd"
+    when .netbsd?
+      "netbsd"
     else
       environment
     end
@@ -68,24 +80,36 @@ class Crystal::Codegen::Target
     end
   end
 
+  def dragonfly?
+    @environment.starts_with?("dragonfly")
+  end
+
   def openbsd?
     @environment.starts_with?("openbsd")
+  end
+
+  def netbsd?
+    @environment.starts_with?("netbsd")
   end
 
   def linux?
     @environment.starts_with?("linux")
   end
 
+  def bsd?
+    freebsd? || netbsd? || openbsd? || dragonfly?
+  end
+
   def unix?
-    macos? || freebsd? || openbsd? || linux?
+    macos? || bsd? || linux?
   end
 
   def gnu?
-    environment_parts.any? { |part| {"gnu", "gnueabi", "gnueabihf"}.includes? part }
+    environment_parts.any? &.in?("gnu", "gnueabi", "gnueabihf")
   end
 
   def musl?
-    environment_parts.any? { |part| {"musl", "musleabi", "musleabihf"}.includes? part }
+    environment_parts.any? &.in?("musl", "musleabi", "musleabihf")
   end
 
   def windows?
@@ -101,10 +125,11 @@ class Crystal::Codegen::Target
   end
 
   def armhf?
-    environment_parts.includes?("gnueabihf") || environment_parts.includes?("musleabihf")
+    environment_parts.any? &.in?("gnueabihf", "musleabihf")
   end
 
-  def to_target_machine(cpu = "", features = "", release = false) : LLVM::TargetMachine
+  def to_target_machine(cpu = "", features = "", release = false,
+                        code_model = LLVM::CodeModel::Default) : LLVM::TargetMachine
     case @architecture
     when "i386", "x86_64"
       LLVM.init_x86
@@ -126,10 +151,29 @@ class Crystal::Codegen::Target
     opt_level = release ? LLVM::CodeGenOptLevel::Aggressive : LLVM::CodeGenOptLevel::None
 
     target = LLVM::Target.from_triple(self.to_s)
-    target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level).not_nil!
+    machine = target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level, code_model: code_model).not_nil!
+    # We need to disable global isel until https://reviews.llvm.org/D80898 is released,
+    # or we fixed generating values for 0 sized types.
+    # When removing this, also remove it from the ABI specs and jit compiler.
+    # See https://github.com/crystal-lang/crystal/issues/9297#issuecomment-636512270
+    # for background info
+    machine.enable_global_isel = false
+    machine
   end
 
   def to_s(io : IO) : Nil
     io << architecture << '-' << vendor << '-' << environment
+  end
+
+  def ==(other : self)
+    return false unless architecture == other.architecture
+
+    # If any vendor is unknown, we can skip it. But if both are known, they must
+    # match.
+    if vendor != "unknown" && other.vendor != "unknown"
+      return false unless vendor == other.vendor
+    end
+
+    environment == other.environment
   end
 end

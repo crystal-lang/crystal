@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 require "big"
 
 private module StructSpec

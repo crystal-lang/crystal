@@ -12,7 +12,7 @@ module Crystal
   # around in every step of a compilation to record and query this information.
   #
   # In a way, a Program is an alternative implementation to having global variables
-  # for all of this data, but modelled this way one can easily test and exercise
+  # for all of this data, but modeled this way one can easily test and exercise
   # programs because each one has its own definition of the types created,
   # methods instantiated, etc.
   #
@@ -25,10 +25,6 @@ module Crystal
 
     # All symbols (:foo, :bar) found in the program
     getter symbols = Set(String).new
-
-    # All global variables in the program ($foo, $bar), indexed by their name.
-    # The names includes the `$` sign.
-    getter global_vars = {} of String => MetaTypeVar
 
     # Hash that prevents recursive splat expansions. For example:
     #
@@ -46,7 +42,7 @@ module Crystal
     # associated to a def's object id (the UInt64), and on an instantiation
     # we compare the new type with the previous one and check if it contains
     # the previous type.
-    getter splat_expansions = {} of UInt64 => Type
+    getter splat_expansions : Hash(Def, Type) = ({} of Def => Type).compare_by_identity
 
     # All FileModules indexed by their filename.
     # These store file-private defs, and top-level variables in files other
@@ -90,10 +86,13 @@ module Crystal
     # The cache directory where temporary files are placed.
     setter cache_dir : String?
 
-    # Here we store class var initializers and constants, in the
+    # Here we store constants, in the
     # order that they are used. They will be initialized as soon
     # as the program starts, before the main code.
-    getter class_var_and_const_initializers = [] of ClassVarInitializer | Const
+    getter const_initializers = [] of Const
+
+    # The class var initializers stored to be used by the cleanup transformer
+    getter class_var_initializers = [] of ClassVarInitializer
 
     # The constant for ARGC_UNSAFE
     getter! argc : Const
@@ -113,7 +112,11 @@ module Crystal
     # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
-    property codegen_target = Config.default_target
+    property codegen_target = Config.host_target
+
+    getter predefined_constants = Array(Const).new
+
+    property compiler : Compiler?
 
     def initialize
       super(self, self, "main")
@@ -123,11 +126,11 @@ module Crystal
       types = self.types
 
       types["Object"] = object = @object = NonGenericClassType.new self, self, "Object", nil
-      object.allowed_in_generics = false
+      object.can_be_stored = false
       object.abstract = true
 
       types["Reference"] = reference = @reference = NonGenericClassType.new self, self, "Reference", object
-      reference.allowed_in_generics = false
+      reference.can_be_stored = false
 
       types["Value"] = value = @value = NonGenericClassType.new self, self, "Value", object
       abstract_value_type(value)
@@ -164,18 +167,18 @@ module Crystal
       types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", value, 4
       types["Pointer"] = pointer = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
       pointer.struct = true
-      pointer.allowed_in_generics = false
+      pointer.can_be_stored = false
 
       types["Tuple"] = tuple = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
-      tuple.allowed_in_generics = false
+      tuple.can_be_stored = false
 
       types["NamedTuple"] = named_tuple = @named_tuple = NamedTupleType.new self, self, "NamedTuple", value, ["T"]
-      named_tuple.allowed_in_generics = false
+      named_tuple.can_be_stored = false
 
       types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       static_array.struct = true
       static_array.declare_instance_var("@buffer", static_array.type_parameter("T"))
-      static_array.allowed_in_generics = false
+      static_array.can_be_stored = false
 
       types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
       string.declare_instance_var("@bytesize", int32)
@@ -183,10 +186,13 @@ module Crystal
       string.declare_instance_var("@c", uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
-      klass.allowed_in_generics = false
+      klass.can_be_stored = false
 
       types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
       abstract_value_type(struct_t)
+
+      types["Enumerable"] = @enumerable = GenericModuleType.new self, self, "Enumerable", ["T"]
+      types["Indexable"] = @indexable = GenericModuleType.new self, self, "Indexable", ["T"]
 
       types["Array"] = @array = GenericClassType.new self, self, "Array", reference, ["T"]
       types["Hash"] = @hash_type = GenericClassType.new self, self, "Hash", reference, ["K", "V"]
@@ -206,9 +212,15 @@ module Crystal
       types["ARGC_UNSAFE"] = @argc = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new("argc", int32)
       types["ARGV_UNSAFE"] = @argv = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new("argv", pointer_of(pointer_of(uint8)))
 
+      argc_unsafe.no_init_flag = true
+      argv_unsafe.no_init_flag = true
+
+      predefined_constants << argc_unsafe
+      predefined_constants << argv_unsafe
+
       # Make sure to initialize `ARGC_UNSAFE` and `ARGV_UNSAFE` as soon as the program starts
-      class_var_and_const_initializers << argc_unsafe
-      class_var_and_const_initializers << argv_unsafe
+      const_initializers << argc_unsafe
+      const_initializers << argv_unsafe
 
       types["GC"] = gc = NonGenericModuleType.new self, self, "GC"
       gc.metaclass.as(ModuleType).add_def Def.new("add_finalizer", [Arg.new("object")], Nop.new)
@@ -226,6 +238,8 @@ module Crystal
       types["Raises"] = @raises_annotation = AnnotationType.new self, self, "Raises"
       types["ReturnsTwice"] = @returns_twice_annotation = AnnotationType.new self, self, "ReturnsTwice"
       types["ThreadLocal"] = @thread_local_annotation = AnnotationType.new self, self, "ThreadLocal"
+      types["Deprecated"] = @deprecated_annotation = AnnotationType.new self, self, "Deprecated"
+      types["Experimental"] = @experimental_annotation = AnnotationType.new self, self, "Experimental"
 
       define_crystal_constants
     end
@@ -270,7 +284,9 @@ module Crystal
     end
 
     private def define_crystal_constant(name, value)
-      crystal.types[name] = Const.new self, crystal, name, value
+      crystal.types[name] = const = Const.new self, crystal, name, value
+      const.no_init_flag = true
+      predefined_constants << const
     end
 
     property(target_machine : LLVM::TargetMachine) { codegen_target.to_target_machine }
@@ -302,17 +318,26 @@ module Crystal
       named_tuple_of(entries)
     end
 
-    # ditto
+    # :ditto:
     def named_tuple_of(entries : Array(NamedArgumentType))
       named_tuple.instantiate_named_args(entries)
     end
 
     # Returns the `Type` for `type | Nil`
     def nilable(type)
-      # Nil | Nil # => Nil
-      return self.nil if type == self.nil
-
-      union_of self.nil, type
+      case type
+      when self.nil, self.no_return
+        # Nil | Nil      # => Nil
+        # NoReturn | Nil # => Nil
+        self.nil
+      when UnionType
+        types = Array(Type).new(type.union_types.size + 1)
+        types.concat type.union_types
+        types << self.nil unless types.includes? self.nil
+        union_of types
+      else
+        union_of self.nil, type
+      end
     end
 
     # Returns the `Type` for `type1 | type2`
@@ -351,8 +376,6 @@ module Crystal
             untyped_type = other_type.remove_typedef
             if untyped_type.proc?
               return NilableProcType.new(self, other_type)
-            elsif untyped_type.is_a?(PointerInstanceType)
-              return NilablePointerType.new(self, other_type)
             end
           end
         end
@@ -413,18 +436,6 @@ module Crystal
       static_array.instantiate([type, NumberLiteral.new(size)] of TypeVar)
     end
 
-    # Adds *filename* to the list of all required files.
-    # Returns `true` if the file was added, `false` if it was
-    # already required.
-    def add_to_requires(filename)
-      if requires.includes? filename
-        false
-      else
-        requires.add filename
-        true
-      end
-    end
-
     record RecordedRequire, filename : String, relative_to : String? do
       include JSON::Serializable
     end
@@ -442,12 +453,12 @@ module Crystal
     end
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64 int128
-                     uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer array static_array
-                     exception tuple named_tuple proc union enum range regex crystal
+                     uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer enumerable indexable
+                     array static_array exception tuple named_tuple proc union enum range regex crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation
-                     flags_annotation link_annotation extern_annotation) %}
+                     flags_annotation link_annotation extern_annotation deprecated_annotation experimental_annotation) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end
@@ -478,6 +489,30 @@ module Crystal
       when :f32  then float32
       when :f64  then float64
       else            raise "Invalid node kind: #{kind}"
+      end
+    end
+
+    def int_type(signed, size)
+      if signed
+        case size
+        when  1 then int8
+        when  2 then int16
+        when  4 then int32
+        when  8 then int64
+        when 16 then int128
+        else
+          raise "BUG: Invalid int size: #{size}"
+        end
+      else
+        case size
+        when  1 then uint8
+        when  2 then uint16
+        when  4 then uint32
+        when  8 then uint64
+        when 16 then uint128
+        else
+          raise "BUG: Invalid int size: #{size}"
+        end
       end
     end
 
@@ -527,7 +562,7 @@ module Crystal
     private def abstract_value_type(type)
       type.abstract = true
       type.struct = true
-      type.allowed_in_generics = false
+      type.can_be_stored = false
     end
 
     # Next come overrides for the type system
@@ -556,8 +591,8 @@ module Crystal
       end
     end
 
-    def lookup_private_matches(filename, signature)
-      file_module?(filename).try &.lookup_matches(signature)
+    def lookup_private_matches(filename, signature, analyze_all = false)
+      file_module?(filename).try &.lookup_matches(signature, analyze_all: analyze_all)
     end
 
     def file_module?(filename)
@@ -571,11 +606,8 @@ module Crystal
     def check_private(node)
       return nil unless node.visibility.private?
 
-      location = node.location
-      return nil unless location
-
-      filename = location.filename
-      return nil unless filename.is_a?(String)
+      filename = node.location.try &.original_filename
+      return nil unless filename
 
       file_module(filename)
     end

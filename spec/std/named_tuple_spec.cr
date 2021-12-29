@@ -1,8 +1,23 @@
 require "spec"
 
+private record NamedTupleSpecObj, x : Int32 do
+  def_equals @x
+end
+
 describe "NamedTuple" do
-  it "does new" do
+  it "does NamedTuple.new, without type vars" do
     NamedTuple.new(x: 1, y: 2).should eq({x: 1, y: 2})
+    NamedTuple.new(z: NamedTupleSpecObj.new(10)).should eq({z: NamedTupleSpecObj.new(10)})
+  end
+
+  it "does NamedTuple.new, with type vars" do
+    NamedTuple(foo: Int32, bar: String).new(foo: 1, bar: "a").should eq({foo: 1, bar: "a"})
+    NamedTuple(z: NamedTupleSpecObj).new(z: NamedTupleSpecObj.new(10)).should eq({z: NamedTupleSpecObj.new(10)})
+    typeof(NamedTuple.new).new.should eq(NamedTuple.new)
+
+    t = NamedTuple(foo: Int32 | String, bar: Int32 | String).new(foo: 1, bar: "a")
+    t.should eq({foo: 1, bar: "a"})
+    t.class.should_not eq(NamedTuple(foo: Int32, bar: String))
   end
 
   it "does NamedTuple.from" do
@@ -133,7 +148,7 @@ describe "NamedTuple" do
     typeof(val).should eq(Int32 | Char | Nil)
   end
 
-  describe "dig?" do
+  describe "#dig?" do
     it "gets the value at given path given splat" do
       h = {a: {b: {c: [10, 20]}}, x: {a: "b"}}
 
@@ -150,7 +165,7 @@ describe "NamedTuple" do
     end
   end
 
-  describe "dig" do
+  describe "#dig" do
     it "gets the value at given path given splat" do
       h = {a: {b: {c: [10, 20]}}, x: {a: "b", c: nil}}
 
@@ -193,6 +208,8 @@ describe "NamedTuple" do
       when 1
         key.should eq(:b)
         value.should eq("hello")
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil
@@ -208,6 +225,8 @@ describe "NamedTuple" do
         key.should eq(:a)
       when 1
         key.should eq(:b)
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil
@@ -223,6 +242,8 @@ describe "NamedTuple" do
         value.should eq(1)
       when 1
         value.should eq("hello")
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil
@@ -242,6 +263,8 @@ describe "NamedTuple" do
         key.should eq(:b)
         value.should eq("hello")
         index.should eq(1)
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil
@@ -267,14 +290,18 @@ describe "NamedTuple" do
     NamedTuple.new.empty?.should be_true
   end
 
-  it "does to_a" do
-    tup = {a: 1, b: 'a'}
-    tup.to_a.should eq([{:a, 1}, {:b, 'a'}])
-  end
+  describe "#to_a" do
+    it "creates an array of key-value pairs" do
+      tup = {a: 1, b: 'a'}
+      tup.to_a.should eq([{:a, 1}, {:b, 'a'}])
+    end
 
-  it "does key_index" do
-    tup = {a: 1, b: 'a'}
-    tup.to_a.should eq([{:a, 1}, {:b, 'a'}])
+    it "preserves key type for empty named tuples" do
+      tup = NamedTuple.new
+      arr = tup.to_a
+      arr.should be_empty
+      arr.should be_a(Array({Symbol, NoReturn}))
+    end
   end
 
   it "does map" do
@@ -309,10 +336,19 @@ describe "NamedTuple" do
     u.should_not eq(v)
   end
 
-  it "does to_h" do
-    tup1 = {a: 1, b: "hello"}
-    hash = tup1.to_h
-    hash.should eq({:a => 1, :b => "hello"})
+  describe "#to_h" do
+    it "creates a hash" do
+      tup1 = {a: 1, b: "hello"}
+      hash = tup1.to_h
+      hash.should eq({:a => 1, :b => "hello"})
+    end
+
+    it "creates an empty hash from an empty named tuple" do
+      tup = NamedTuple.new
+      hash = tup.to_h
+      hash.should be_empty
+      hash.should be_a(Hash(Symbol, NoReturn))
+    end
   end
 
   it "does to_s" do
@@ -342,6 +378,11 @@ describe "NamedTuple" do
   it "does keys" do
     tup = {a: 1, b: 2}
     tup.keys.should eq({:a, :b})
+  end
+
+  it "does sorted_keys" do
+    tup = {foo: 1, bar: 2, baz: 3}
+    tup.sorted_keys.should eq({:bar, :baz, :foo})
   end
 
   it "does values" do

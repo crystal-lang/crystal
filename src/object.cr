@@ -201,6 +201,23 @@ class Object
     yield self
   end
 
+  # Returns `true` if `self` is included in the *collection* argument.
+  #
+  # ```
+  # 10.in?(0..100)     # => true
+  # 10.in?({0, 1, 10}) # => true
+  # 10.in?(0, 1, 10)   # => true
+  # 10.in?(:foo, :bar) # => false
+  # ```
+  def in?(collection : Object) : Bool
+    collection.includes?(self)
+  end
+
+  # :ditto:
+  def in?(*values : Object) : Bool
+    in?(values)
+  end
+
   # Returns `self`.
   # `Nil` overrides this method and raises `NilAssertionError`, see `Nil#not_nil!`.
   def not_nil!
@@ -217,15 +234,54 @@ class Object
     self
   end
 
-  # Returns a shallow copy of this object.
+  # Returns a shallow copy (“duplicate”) of this object.
   #
-  # As a convention, `clone` is the method used to create a deep copy of
-  # an object, but this logic isn't defined generically for every type
-  # because cycles could be involved, and the clone logic might not need
-  # to clone everything.
+  # In order to create a new object with the same value as an existing one, there
+  # are two possible routes:
+  #
+  # * create a *shallow copy* (`#dup`): Constructs a new object with all its
+  #   properties' values identical to the original object's properties. They
+  #   are shared references. That means for mutable values that changes to
+  #   either object's values will be present in both's.
+  # * create a *deep copy* (`#clone`): Constructs a new object with all its
+  #   properties' values being recursive deep copies of the original object's
+  #   properties.
+  #   There is no shared state and the new object is a completely independent
+  #   copy, including everything inside it. This may not be available for every
+  #   type.
+  #
+  # A shallow copy is only one level deep whereas a deep copy copies everything
+  # below.
+  #
+  # This distinction is only relevant for compound values. Primitive types
+  # do not have any properties that could be shared or cloned.
+  # In that case, `dup` and `clone` are exactly the same.
+  #
+  # The `#clone` method can't be defined on `Object`. It's not
+  # generically available for every type because cycles could be involved, and
+  # the clone logic might not need to clone everything.
   #
   # Many types in the standard library, like `Array`, `Hash`, `Set` and
   # `Deque`, and all primitive types, define `dup` and `clone`.
+  #
+  # Example:
+  #
+  # ```
+  # original = {"foo" => [1, 2, 3]}
+  # shallow_copy = original.dup
+  # deep_copy = original.clone
+  #
+  # # "foo" references the same array object for both original and shallow copy,
+  # # but not for a deep copy:
+  # original["foo"] << 4
+  # shallow_copy["foo"] # => [1, 2, 3, 4]
+  # deep_copy["foo"]    # => [1, 2, 3]
+  #
+  # # Assigning new value does not share it to either copy:
+  # original["foo"] = [1]
+  # shallow_copy["foo"] # => [1, 2, 3, 4]
+  # deep_copy["foo"]    # => [1, 2, 3]
+  # ```
   abstract def dup
 
   # Unsafely reinterprets the bytes of an object as being of another `type`.
@@ -257,11 +313,12 @@ class Object
     pointerof(x).as(T*).value
   end
 
-  {% for prefixes in { {"", "", "@"}, {"class_", "self.", "@@"} } %}
+  {% for prefixes in { {"", "", "@", "#"}, {"class_", "self.", "@@", "."} } %}
     {%
       macro_prefix = prefixes[0].id
       method_prefix = prefixes[1].id
       var_prefix = prefixes[2].id
+      doc_prefix = prefixes[3].id
     %}
 
     # Defines getter methods for each of the given arguments.
@@ -334,7 +391,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -388,7 +445,7 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}
+          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
@@ -487,16 +544,31 @@ class Object
       \{% for name in names %}
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name}}?
-          \{% name = name.var %}
+
+          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}?
+            {{var_prefix}}\{{name.var.id}}
+          end
+
+          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              ::raise NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.var.id}} cannot be nil")
+            else
+              value
+            end
+          end
+        \{% else %}
+          def {{method_prefix}}\{{name.id}}?
+            {{var_prefix}}\{{name.id}}
+          end
+
+          def {{method_prefix}}\{{name.id}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              ::raise NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.id}} cannot be nil")
+            else
+              value
+            end
+          end
         \{% end %}
-
-        def {{method_prefix}}\{{name.id}}?
-          {{var_prefix}}\{{name.id}}
-        end
-
-        def {{method_prefix}}\{{name.id}}
-          {{var_prefix}}\{{name.id}}.not_nil!
-        end
       \{% end %}
     end
 
@@ -570,7 +642,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -604,7 +676,7 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}?
+          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
@@ -710,7 +782,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -826,7 +898,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -883,17 +955,18 @@ class Object
 
         \{% name = names[0] %}
 
-        {{macro_prefix}}setter \{{name}}
-
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}
+          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
               value
             end
+          end
+
+          def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
@@ -902,6 +975,9 @@ class Object
             else
               value
             end
+          end
+
+          def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
           end
         \{% end %}
       \{% else %}
@@ -1091,7 +1167,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -1128,7 +1204,7 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}?
+          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
@@ -1250,6 +1326,9 @@ class Object
   # Defines an `==` method by comparing the given fields.
   #
   # The generated `==` method has a `self` restriction.
+  # For classes it will first compare by reference and return `true`
+  # when an object instance is compared with itself, without comparing
+  # any of the fields.
   #
   # ```
   # class Person
@@ -1262,6 +1341,9 @@ class Object
   # ```
   macro def_equals(*fields)
     def ==(other : self)
+      {% if @type.class? %}
+        return true if same?(other)
+      {% end %}
       {% for field in fields %}
         return false unless {{field.id}} == other.{{field.id}}
       {% end %}
@@ -1313,10 +1395,20 @@ class Object
   macro def_clone
     # Returns a copy of `self` with all instance variables cloned.
     def clone
-      clone = \{{@type}}.allocate
-      clone.initialize_copy(self)
-      GC.add_finalizer(clone) if clone.responds_to?(:finalize)
-      clone
+      \{% if @type < Reference && !@type.instance_vars.map(&.type).all? { |t| t == ::Bool || t == ::Char || t == ::Symbol || t == ::String || t < ::Number::Primitive } %}
+        exec_recursive_clone do |hash|
+          clone = \{{@type}}.allocate
+          hash[object_id] = clone.object_id
+          clone.initialize_copy(self)
+          GC.add_finalizer(clone) if clone.responds_to?(:finalize)
+          clone
+        end
+      \{% else %}
+        clone = \{{@type}}.allocate
+        clone.initialize_copy(self)
+        GC.add_finalizer(clone) if clone.responds_to?(:finalize)
+        clone
+      \{% end %}
     end
 
     protected def initialize_copy(other)

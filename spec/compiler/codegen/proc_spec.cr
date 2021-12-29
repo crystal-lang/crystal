@@ -9,6 +9,14 @@ describe "Code gen: proc" do
     run("f = ->(x : Int32) { x &+ 1 }; f.call(41)").to_i.should eq(42)
   end
 
+  it "call proc literal with return type" do
+    run(<<-CR).to_b.should be_true
+      f = -> : Int32 | Float64 { 1 }
+      x = f.call
+      x.is_a?(Int32) && x == 1
+      CR
+  end
+
   it "call proc pointer" do
     run("def foo; 1; end; x = ->foo; x.call").to_i.should eq(1)
   end
@@ -94,7 +102,7 @@ describe "Code gen: proc" do
       end
 
       f = ->(x : Int32 | Float64) { x &+ 1 }
-      f.call(1).to_i
+      f.call(1).to_i!
       ").to_i.should eq(2)
   end
 
@@ -161,7 +169,7 @@ describe "Code gen: proc" do
       end
 
       f = ->(x : Int32 | Float64) { x.abs }
-      f.call(1 || 1.5).to_i
+      f.call(1 || 1.5).to_i!
       ").to_i.should eq(1)
   end
 
@@ -379,7 +387,7 @@ describe "Code gen: proc" do
   it "allows invoking proc literal with smaller type" do
     run("
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -387,12 +395,18 @@ describe "Code gen: proc" do
       f = ->(x : Int32 | Nil) {
         x
       }
-      f.call(1).to_i
+      f.call(1).to_i!
       ").to_i.should eq(1)
   end
 
   it "does new on proc type" do
     run("
+      struct Proc
+        def self.new(&block : self)
+          block
+        end
+      end
+
       alias Func = Int32 -> Int32
 
       a = 2
@@ -477,7 +491,7 @@ describe "Code gen: proc" do
 
       foo = ->(x : Int32 | Float64) { x }
       foo.call(a)
-      foo.call(a).to_i
+      foo.call(a).to_i!
       )).to_i.should eq(1)
   end
 
@@ -595,6 +609,8 @@ describe "Code gen: proc" do
 
   it "codegens proc to implicit self in constant (#647)" do
     run(%(
+      require "prelude"
+
       module Foo
         def self.blah
           1
@@ -758,5 +774,208 @@ describe "Code gen: proc" do
       f = ->a.&+(Int32)
       f.call(20)
       )).to_i.should eq(21)
+  end
+
+  it "can pass Proc(T) to Proc(Nil) in type restriction (#8964)" do
+    run(%(
+      def foo(x : Proc(Nil))
+        x
+      end
+
+      a = 1
+      proc = foo(->{ a = 2 })
+      proc.call
+      a
+      )).to_i.should eq(2)
+  end
+
+  it "can assign proc that returns anything to proc that returns nil (#3655)" do
+    run(%(
+      class Foo
+        @block : -> Nil
+
+        def initialize(@block)
+        end
+
+        def call
+          @block.call
+        end
+      end
+
+      a = 1
+      block = ->{ a = 2 }
+
+      Foo.new(block).call
+
+      a
+      )).to_i.should eq(2)
+  end
+
+  it "can assign proc that returns anything to proc that returns nil, using union type (#3655)" do
+    run(%(
+      class Foo
+        @block : -> Nil
+
+        def initialize(@block)
+        end
+
+        def call
+          @block.call
+        end
+      end
+
+      a = 1
+      block1 = ->{ a = 2 }
+      block2 = ->{ a = 3; nil }
+
+      Foo.new(block2 || block1).call
+
+      a
+      )).to_i.should eq(3)
+  end
+
+  it "calls function pointer" do
+    run(%(
+      require "prelude"
+
+      fun foo(f : Int32 -> Int32) : Int32
+        f.call(1)
+      end
+
+      foo(->(x : Int32) { x &+ 1 })
+    )).to_i.should eq(2)
+  end
+
+  it "casts from function pointer to proc" do
+    codegen(%(
+      fun a(a : Void* -> Void*)
+        Pointer(Proc((Void* -> Void*), Void*)).new(0_u64).value.call(a)
+      end
+    ))
+  end
+
+  it "takes pointerof function pointer" do
+    codegen(%(
+      fun a(a : Void* -> Void*)
+        pointerof(a).value.call(Pointer(Void).new(0_u64))
+      end
+    ))
+  end
+
+  it "closures var on ->var.call (#8584)" do
+    run(%(
+      def bar(x)
+        x
+      end
+
+      struct Foo
+        def initialize
+          @value = 1
+        end
+
+        def value
+          bar(@value)
+          @value
+        end
+      end
+
+      def get_proc_a
+        foo = Foo.new
+        ->foo.value
+      end
+
+      def get_proc_b
+        foo = Foo.new
+        ->{ foo.value }
+      end
+
+      proc_a = get_proc_a
+      proc_b = get_proc_b
+      proc_b.call
+      proc_a.call
+      )).to_i.should eq(1)
+  end
+
+  # FIXME: JIT compilation of this spec is broken, forcing normal compilation (#10961)
+  it "doesn't crash when taking a proc pointer to a virtual type (#9823)" do
+    run(%(
+      abstract struct Parent
+        abstract def work(a : Int32, b : Int32)
+
+        def get
+          ->work(Int32, Int32)
+        end
+      end
+
+      struct Child1 < Parent
+        def work(a : Int32, b : Int32)
+          a &+ b
+        end
+      end
+
+      struct Child2 < Parent
+        def work(a : Int32, b : Int32)
+          a &- b
+        end
+      end
+
+      Child1.new.as(Parent).get
+    ), flags: [] of String)
+  end
+
+  it "doesn't crash when taking a proc pointer that multidispatches on the top-level (#3822)" do
+    run(%(
+      class Foo
+        def initialize(@proc : Proc(Bar, Nil))
+        end
+      end
+
+      module Bar
+      end
+
+      class Baz
+        include Bar
+      end
+
+      def test(bar : Bar)
+        if bar.is_a? Baz
+          test bar
+        end
+      end
+
+      def test(baz : Baz)
+      end
+
+      Foo.new(->test(Bar))
+    ))
+  end
+
+  it "doesn't crash when taking a proc pointer that multidispatches on a module (#3822)" do
+    run(%(
+      class Foo
+        def initialize(@proc : Proc(Bar, Nil))
+        end
+      end
+
+      module Bar
+      end
+
+      class Baz
+        include Bar
+      end
+
+      module Moo
+        def self.test(bar : Bar)
+          if bar.is_a? Baz
+            test bar
+          end
+        end
+
+        def self.test(baz : Baz)
+        end
+      end
+
+      Foo.new(->Moo.test(Bar))
+    ))
   end
 end

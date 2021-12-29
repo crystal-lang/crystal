@@ -53,7 +53,7 @@ module Float::Printer::Grisu3
   # representable number to the input.
   #
   # Modifies the generated digits in the buffer to approach (round towards) *w*.
-  def round_weed(buffer_ptr, length, distance_too_high_w, unsafe_interval, rest, ten_kappa, unit)
+  def round_weed(buffer_ptr, length, distance_too_high_w, unsafe_interval, rest, ten_kappa, unit) : Bool
     buffer = buffer_ptr.to_slice(128)
     small_distance = distance_too_high_w - unit
     big_distance = distance_too_high_w + unit
@@ -251,7 +251,7 @@ module Float::Printer::Grisu3
     # with the divisor exponent + 1. And the divisor is the biggest power of ten
     # that is smaller than integrals.
     while kappa > 0
-      digit = integrals / divisor
+      digit = integrals // divisor
       # pp [digit, kappa]
       buffer[length] = 48_u8 + digit
       length += 1
@@ -271,7 +271,7 @@ module Float::Printer::Grisu3
         return weeded, kappa, length
       end
 
-      divisor /= 10
+      divisor //= 10
     end
 
     # The integrals have been generated. We are at the point of the decimal
@@ -341,7 +341,7 @@ module Float::Printer::Grisu3
     # the difference between w and boundary_minus/plus (a power of 2) and to
     # compute scaled_boundary_minus/plus by subtracting/adding from
     # scaled_w. However the code becomes much less readable and the speed
-    # enhancements are not terriffic.
+    # enhancements are not terrific.
     scaled_boundary_minus = boundaries[:minus] * ten_mk
     scaled_boundary_plus = boundaries[:plus] * ten_mk
 
@@ -349,7 +349,7 @@ module Float::Printer::Grisu3
     # v == (scaled_w * 10^-mk).to_f
     # Set decimal_exponent == -mk and pass it to DigitGen. If scaled_w is not an
     # integer than it will be updated. For instance if scaled_w == 1.23 then
-    # the buffer will be filled with "123" und the decimal_exponent will be
+    # the buffer will be filled with "123" and the decimal_exponent will be
     # decreased by 2.
     result, kappa, length = digit_gen(scaled_boundary_minus, scaled_w, scaled_boundary_plus, buffer_p)
 

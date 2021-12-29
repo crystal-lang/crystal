@@ -1,5 +1,28 @@
 require "./spec_helper"
-require "../support/errno"
+
+private def unset_tempdir
+  {% if flag?(:windows) %}
+    old_tempdirs = {ENV["TMP"]?, ENV["TEMP"]?, ENV["USERPROFILE"]?}
+    begin
+      ENV.delete("TMP")
+      ENV.delete("TEMP")
+      ENV.delete("USERPROFILE")
+
+      yield
+    ensure
+      ENV["TMP"], ENV["TEMP"], ENV["USERPROFILE"] = old_tempdirs
+    end
+  {% else %}
+    begin
+      old_tempdir = ENV["TMPDIR"]?
+      ENV.delete("TMPDIR")
+
+      yield
+    ensure
+      ENV["TMPDIR"] = old_tempdir
+    end
+  {% end %}
+end
 
 private def it_raises_on_null_byte(operation, &block)
   it "errors on #{operation}" do
@@ -39,16 +62,25 @@ describe "Dir" do
     end
 
     it "tests empty? on nonexistent directory" do
-      expect_raises_errno(Errno::ENOENT, "Error determining size of '#{datapath("foo", "bar")}'") do
+      expect_raises(File::NotFoundError, "Error opening directory: '#{datapath("foo", "bar").inspect_unquoted}'") do
         Dir.empty?(datapath("foo", "bar"))
       end
     end
 
     # TODO: do we even want this?
     pending_win32 "tests empty? on a directory path to a file" do
-      expect_raises_errno(Errno::ENOTDIR, "Error determining size of '#{datapath("dir", "f1.txt", "/")}'") do
+      expect_raises(File::Error, "Error opening directory: '#{datapath("dir", "f1.txt", "/").inspect_unquoted}'") do
         Dir.empty?(datapath("dir", "f1.txt", "/"))
       end
+    end
+  end
+
+  it "tests mkdir and delete with a new path" do
+    with_tempfile("mkdir") do |path|
+      Dir.mkdir(path, 0o700)
+      Dir.exists?(path).should be_true
+      Dir.delete(path)
+      Dir.exists?(path).should be_false
     end
   end
 
@@ -56,46 +88,54 @@ describe "Dir" do
     with_tempfile("mkdir") do |path|
       Dir.mkdir(path, 0o700)
       Dir.exists?(path).should be_true
-      Dir.rmdir(path)
+      Dir.delete(path)
       Dir.exists?(path).should be_false
     end
   end
 
   it "tests mkdir with an existing path" do
-    expect_raises_errno(Errno::EEXIST, "Unable to create directory '#{datapath}'") do
+    expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath.inspect_unquoted}'") do
       Dir.mkdir(datapath, 0o700)
     end
   end
 
-  it "tests mkdir_p with a new path" do
-    with_tempfile("mkdir_p") do |path|
-      Dir.mkdir_p(path)
-      Dir.exists?(path).should be_true
-      path = File.join(path, "a", "b", "c")
-      Dir.mkdir_p(path)
-      Dir.exists?(path).should be_true
+  describe ".mkdir_p" do
+    it "with a new path" do
+      with_tempfile("mkdir_p-new") do |path|
+        Dir.mkdir_p(path)
+        Dir.exists?(path).should be_true
+        path = File.join(path, "a", "b", "c")
+        Dir.mkdir_p(path)
+        Dir.exists?(path).should be_true
+      end
     end
-  end
 
-  it "tests mkdir_p with an existing path" do
-    Dir.mkdir_p(datapath)
-    # FIXME: Refactor Dir#mkdir_p to remove leading `./` in error message
-    expect_raises_errno(Errno::EEXIST, "Unable to create directory './#{datapath("dir", "f1.txt")}'") do
-      Dir.mkdir_p(datapath("dir", "f1.txt"))
-    end
-  end
+    context "path exists" do
+      it "fails when path is a file" do
+        expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt").inspect_unquoted}': File exists") do
+          Dir.mkdir_p(datapath("test_file.txt"))
+        end
+      end
 
-  it "tests rmdir with an nonexistent path" do
-    with_tempfile("nonexistant") do |path|
-      expect_raises_errno(Errno::ENOENT, "Unable to remove directory '#{path}'") do
-        Dir.rmdir(path)
+      it "noop when path is a directory" do
+        Dir.exists?(datapath("dir")).should be_true
+        Dir.mkdir_p(datapath("dir"))
+        Dir.exists?(datapath("dir")).should be_true
       end
     end
   end
 
-  it "tests rmdir with a path that cannot be removed" do
-    expect_raises_errno(Errno::ENOTEMPTY, "Unable to remove directory '#{datapath}'") do
-      Dir.rmdir(datapath)
+  it "tests delete with an nonexistent path" do
+    with_tempfile("nonexistent") do |path|
+      expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
+        Dir.delete(path)
+      end
+    end
+  end
+
+  it "tests delete with a path that cannot be removed" do
+    expect_raises(File::Error, "Unable to remove directory: '#{datapath.inspect_unquoted}'") do
+      Dir.delete(datapath)
     end
   end
 
@@ -137,6 +177,40 @@ describe "Dir" do
         datapath("dir", "subdir", "f1.txt"),
         datapath("dir", "subdir", "subdir2", "f2.txt"),
       ].sort
+    end
+
+    it "tests double recursive matcher (#10807)" do
+      with_tempfile "glob-double-recurse" do |path|
+        Dir.mkdir_p path
+        Dir.cd(path) do
+          path1 = Path["x", "b", "x"]
+          Dir.mkdir_p path1
+          File.touch path1.join("file")
+
+          Dir["**/b/**/*"].sort.should eq [
+            path1.to_s,
+            path1.join("file").to_s,
+          ].sort
+        end
+      end
+    end
+
+    it "tests double recursive matcher, multiple paths" do
+      with_tempfile "glob-double-recurse2" do |path|
+        Dir.mkdir_p path
+        Dir.cd(path) do
+          p1 = Path["x", "a", "x", "c"]
+          p2 = Path["x", "a", "x", "a", "x", "c"]
+
+          Dir.mkdir_p p1
+          Dir.mkdir_p p2
+
+          Dir["**/a/**/c"].sort.should eq [
+            p1.to_s,
+            p2.to_s,
+          ].sort
+        end
+      end
     end
 
     it "tests a recursive glob with '?'" do
@@ -233,17 +307,16 @@ describe "Dir" do
 
     it "tests with relative path (starts with ..)" do
       Dir.cd(datapath) do
-        base_path = "../data/dir"
+        base_path = Path["..", "data", "dir"]
         Dir["#{base_path}/*/"].sort.should eq [
-          File.join(base_path, "dots", ""),
-          File.join(base_path, "subdir", ""),
-          File.join(base_path, "subdir2", ""),
+          base_path.join("dots", "").to_s,
+          base_path.join("subdir", "").to_s,
+          base_path.join("subdir2", "").to_s,
         ].sort
       end
     end
 
-    # TODO: This spec is broken on win32 because of `raise` weirdness on windows
-    pending_win32 "tests with relative path starting recursive" do
+    it "tests with relative path starting recursive" do
       Dir["**/dir/*/"].sort.should eq [
         datapath("dir", "dots", ""),
         datapath("dir", "subdir", ""),
@@ -251,7 +324,7 @@ describe "Dir" do
       ].sort
     end
 
-    it "matches symlinks" do
+    pending_win32 "matches symlinks" do
       link = datapath("f1_link.txt")
       non_link = datapath("non_link.txt")
 
@@ -270,18 +343,38 @@ describe "Dir" do
       end
     end
 
+    pending_win32 "matches symlink dir" do
+      with_tempfile "symlink_dir" do |path|
+        Dir.mkdir_p(Path[path, "glob"])
+        target = Path[path, "target"]
+        Dir.mkdir_p(target)
+
+        File.write(target / "a.txt", "")
+        File.symlink(target, Path[path, "glob", "dir"])
+
+        Dir.glob("#{path}/glob/*/a.txt").sort.should eq [] of String
+        Dir.glob("#{path}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
+          "#{path}/glob/dir/a.txt",
+        ]
+      end
+    end
+
     it "empty pattern" do
       Dir[""].should eq [] of String
     end
 
-    pending_win32 "root pattern" do
-      Dir["/"].should eq ["/"]
+    it "root pattern" do
+      {% if flag?(:windows) %}
+        Dir["C:/"].should eq ["C:\\"]
+      {% else %}
+        Dir["/"].should eq ["/"]
+      {% end %}
     end
 
     it "pattern ending with .." do
       Dir["#{datapath}/dir/.."].sort.should eq [
         datapath("dir", ".."),
-      ]
+      ].sort
     end
 
     it "pattern ending with */.." do
@@ -289,13 +382,13 @@ describe "Dir" do
         datapath("dir", "dots", ".."),
         datapath("dir", "subdir", ".."),
         datapath("dir", "subdir2", ".."),
-      ]
+      ].sort
     end
 
     it "pattern ending with ." do
       Dir["#{datapath}/dir/."].sort.should eq [
         datapath("dir", "."),
-      ]
+      ].sort
     end
 
     it "pattern ending with */." do
@@ -303,7 +396,7 @@ describe "Dir" do
         datapath("dir", "dots", "."),
         datapath("dir", "subdir", "."),
         datapath("dir", "subdir2", "."),
-      ]
+      ].sort
     end
 
     context "match_hidden: true" do
@@ -315,10 +408,38 @@ describe "Dir" do
         ].sort
       end
     end
+
+    context "match_hidden: false" do
+      it "ignores hidden files" do
+        Dir.glob("#{datapath}/dir/dots/*", match_hidden: false).size.should eq 0
+      end
+
+      it "ignores hidden files recursively" do
+        Dir.glob("#{datapath}/dir/dots/**/*", match_hidden: false).size.should eq 0
+      end
+    end
+
+    context "with path" do
+      expected = [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "g2.txt"),
+      ]
+
+      it "posix path" do
+        Dir[Path.posix(datapath, "dir", "*.txt")].sort.should eq expected
+        Dir[[Path.posix(datapath, "dir", "*.txt")]].sort.should eq expected
+      end
+
+      it "windows path" do
+        Dir[Path.windows(datapath, "dir", "*.txt")].sort.should eq expected
+        Dir[[Path.windows(datapath, "dir", "*.txt")]].sort.should eq expected
+      end
+    end
   end
 
   describe "cd" do
-    it "should work" do
+    it "accepts string" do
       cwd = Dir.current
       Dir.cd("..")
       Dir.current.should_not eq(cwd)
@@ -326,13 +447,31 @@ describe "Dir" do
       Dir.current.should eq(cwd)
     end
 
+    it "accepts path" do
+      cwd = Dir.current
+      Dir.cd(Path.new(".."))
+      Dir.current.should_not eq(cwd)
+      Dir.cd(cwd)
+      Dir.current.should eq(cwd)
+    end
+
     it "raises" do
-      expect_raises_errno(Errno::ENOENT, "Error while changing directory to '/nope'") do
+      expect_raises(File::NotFoundError, "Error while changing directory: '/nope'") do
         Dir.cd("/nope")
       end
     end
 
-    it "accepts a block" do
+    it "accepts a block with path" do
+      cwd = Dir.current
+
+      Dir.cd(Path.new("..")) do
+        Dir.current.should_not eq(cwd)
+      end
+
+      Dir.current.should eq(cwd)
+    end
+
+    it "accepts a block with string" do
       cwd = Dir.current
 
       Dir.cd("..") do
@@ -343,21 +482,33 @@ describe "Dir" do
     end
   end
 
+  it ".current" do
+    Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
+  end
+
   describe ".tempdir" do
     it "returns default directory for tempfiles" do
-      old_tmpdir = ENV["TMPDIR"]?
-      ENV.delete("TMPDIR")
-      Dir.tempdir.should eq("/tmp")
-    ensure
-      ENV["TMPDIR"] = old_tmpdir
+      unset_tempdir do
+        {% if flag?(:windows) %}
+          # GetTempPathW defaults to the Windows directory when %TMP%, %TEMP%
+          # and %USERPROFILE% are not set.
+          # Without going further into the implementation details, simply
+          # verifying that the directory exits is sufficient.
+          Dir.exists?(Dir.tempdir).should be_true
+        {% else %}
+          # POSIX implementation is in Crystal::System::Dir and defaults to
+          # `/tmp` when $TMPDIR is not set.
+          Dir.tempdir.should eq "/tmp"
+        {% end %}
+      end
     end
 
     it "returns configure directory for tempfiles" do
-      old_tmpdir = ENV["TMPDIR"]?
-      ENV["TMPDIR"] = "/my/tmp"
-      Dir.tempdir.should eq("/my/tmp")
-    ensure
-      ENV["TMPDIR"] = old_tmpdir
+      unset_tempdir do
+        tmp_path = Path["my_temporary_path"].expand.to_s
+        ENV[{{ flag?(:windows) ? "TMP" : "TMPDIR" }}] = tmp_path
+        Dir.tempdir.should eq tmp_path
+      end
     end
   end
 
@@ -383,6 +534,14 @@ describe "Dir" do
     end
 
     filenames.includes?("f1.txt").should be_true
+  end
+
+  describe "#path" do
+    it "returns init value" do
+      path = datapath("dir")
+      dir = Dir.new(path)
+      dir.path.should eq path
+    end
   end
 
   it "lists entries" do
@@ -454,8 +613,8 @@ describe "Dir" do
       Dir.mkdir_p("foo\0bar")
     end
 
-    it_raises_on_null_byte "rmdir" do
-      Dir.rmdir("foo\0bar")
+    it_raises_on_null_byte "delete" do
+      Dir.delete("foo\0bar")
     end
   end
 end

@@ -1,5 +1,6 @@
 require "crystal/system/windows"
 require "c/winbase"
+require "c/processenv"
 
 module Crystal::System::Env
   # Sets an environment variable or unsets it if *value* is `nil`.
@@ -8,7 +9,7 @@ module Crystal::System::Env
     value.check_no_null_byte("value")
 
     if LibC.SetEnvironmentVariableW(key.to_utf16, value.to_utf16) == 0
-      raise WinError.new("SetEnvironmentVariableW")
+      raise RuntimeError.from_winerror("SetEnvironmentVariableW")
     end
   end
 
@@ -17,7 +18,7 @@ module Crystal::System::Env
     key.check_no_null_byte("key")
 
     if LibC.SetEnvironmentVariableW(key.to_utf16, nil) == 0
-      raise WinError.new("SetEnvironmentVariableW")
+      raise RuntimeError.from_winerror("SetEnvironmentVariableW")
     end
   end
 
@@ -37,13 +38,13 @@ module Crystal::System::Env
       elsif small_buf && length > 0
         next length
       else
-        case last_error = LibC.GetLastError
+        case last_error = WinError.value
         when WinError::ERROR_SUCCESS
           return ""
         when WinError::ERROR_ENVVAR_NOT_FOUND
           return
         else
-          raise WinError.new("GetEnvironmentVariableW", last_error)
+          raise RuntimeError.from_os_error("GetEnvironmentVariableW", last_error)
         end
       end
     end
@@ -60,18 +61,32 @@ module Crystal::System::Env
   # Iterates all environment variables.
   def self.each(&block : String, String ->)
     orig_pointer = pointer = LibC.GetEnvironmentStringsW
-    raise WinError.new("GetEnvironmentStringsW") if pointer.null?
+    raise RuntimeError.from_winerror("GetEnvironmentStringsW") if pointer.null?
 
     begin
       while !pointer.value.zero?
         string, pointer = String.from_utf16(pointer)
-        key_value = string.split('=', 2)
-        key = key_value[0]
-        value = key_value[1]? || ""
+        key, _, value = string.partition('=')
+        # The actual env variables are preceded by these weird lines in the output:
+        # "=::=::\", "=C:=c:\foo\bar", "=ExitCode=00000000" -- skip them.
+        next if key.empty?
         yield key, value
       end
     ensure
       LibC.FreeEnvironmentStringsW(orig_pointer)
     end
+  end
+
+  # Used internally to create an input for `CreateProcess` `lpEnvironment`.
+  def self.make_env_block(env : Enumerable({String, String}))
+    String.build do |io|
+      env.each do |(key, value)|
+        if key.includes?('=') || key.empty?
+          raise ArgumentError.new("Invalid env key #{key.inspect}")
+        end
+        io << key.check_no_null_byte("key") << '=' << value.check_no_null_byte("value") << '\0'
+      end
+      io << '\0'
+    end.to_utf16.to_unsafe
   end
 end

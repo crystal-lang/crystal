@@ -72,27 +72,17 @@ class Crystal::Command
     )
       @format_stdin = files.size == 1 && files[0] == "-"
 
-      includes = normalize_paths includes
-      excludes = normalize_paths excludes
+      includes.map! { |p| Crystal.normalize_path p }
+      excludes.map! { |p| Crystal.normalize_path p }
       excludes = excludes - includes
       if files.empty?
         files = Dir["./**/*.cr"]
       else
-        files = normalize_paths files
+        files.map! { |p| Crystal.normalize_path p }
       end
 
       @files = files
       @excludes = excludes
-    end
-
-    private def normalize_paths(paths)
-      path_start = ".#{File::SEPARATOR}"
-      paths.map do |path|
-        unless path.starts_with?(path_start) || path.starts_with?(File::SEPARATOR)
-          path = path_start + path
-        end
-        path.rstrip(File::SEPARATOR)
-      end
     end
 
     def run
@@ -151,7 +141,7 @@ class Crystal::Command
       error "file '#{filename}' is not a valid Crystal source file: #{ex.message}"
       @status_code = 1
     rescue ex : Crystal::SyntaxException
-      error ex
+      error "syntax error in '#{filename}:#{ex.line_number}:#{ex.column_number}': #{ex.message}"
       @status_code = 1
     rescue ex
       if @show_backtrace
@@ -170,7 +160,7 @@ class Crystal::Command
     end
 
     private def error(msg)
-      Crystal.error msg, @color, exit_code: nil, stderr: @stderr
+      Crystal.error msg, @color, exit_code: nil, stderr: @stderr, leading_error: false
     end
   end
 end

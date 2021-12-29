@@ -1,5 +1,7 @@
 # Represents a UUID (Universally Unique IDentifier).
 struct UUID
+  include Comparable(UUID)
+
   # Variants with 16 bytes.
   enum Variant
     # Unknown (i.e. custom, your own).
@@ -30,7 +32,7 @@ struct UUID
     V5 = 5
   end
 
-  protected getter bytes : StaticArray(UInt8, 16)
+  @bytes : StaticArray(UInt8, 16)
 
   # Generates UUID from *bytes*, applying *version* and *variant* to the UUID if
   # present.
@@ -129,12 +131,12 @@ struct UUID
     new(new_bytes, variant, version)
   end
 
-  def self.empty
+  def self.empty : self
     new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
   end
 
   # Returns UUID variant.
-  def variant
+  def variant : UUID::Variant
     case
     when @bytes[8] & 0x80 == 0x00
       Variant::NCS
@@ -150,7 +152,7 @@ struct UUID
   end
 
   # Returns version based on RFC4122 format. See also `#variant`.
-  def version
+  def version : UUID::Version
     case @bytes[6] >> 4
     when 1 then Version::V1
     when 2 then Version::V2
@@ -161,9 +163,9 @@ struct UUID
     end
   end
 
-  # Returns 16-byte slice.
-  def to_slice
-    @bytes.to_slice
+  # Returns the binary representation of the UUID.
+  def bytes : StaticArray(UInt8, 16)
+    @bytes.dup
   end
 
   # Returns unsafe pointer to 16-bytes.
@@ -171,10 +173,7 @@ struct UUID
     @bytes.to_unsafe
   end
 
-  # Returns `true` if `other` UUID represents the same UUID, `false` otherwise.
-  def ==(other : UUID)
-    to_slice == other.to_slice
-  end
+  def_equals_and_hash @bytes
 
   # Convert to `String` in literal format.
   def inspect(io : IO) : Nil
@@ -184,7 +183,7 @@ struct UUID
   end
 
   def to_s(io : IO) : Nil
-    slice = to_slice
+    slice = @bytes.to_slice
 
     buffer = uninitialized UInt8[36]
     buffer_ptr = buffer.to_unsafe
@@ -196,18 +195,22 @@ struct UUID
     slice[8, 2].hexstring(buffer_ptr + 19)
     slice[10, 6].hexstring(buffer_ptr + 24)
 
-    io.write(buffer.to_slice)
+    io.write_string(buffer.to_slice)
   end
 
-  def hexstring
-    to_slice.hexstring
+  def hexstring : String
+    @bytes.to_slice.hexstring
   end
 
-  def urn
+  def urn : String
     String.build(45) do |str|
       str << "urn:uuid:"
       to_s(str)
     end
+  end
+
+  def <=>(other : UUID) : Int32
+    @bytes <=> other.bytes
   end
 
   class Error < Exception

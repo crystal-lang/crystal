@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 
 describe "Regex" do
   it "compare to other instances" do
@@ -75,6 +75,14 @@ describe "Regex" do
     ("foo\n<bar\n>baz" =~ /<bar.*?>/m).should eq(4)
   end
 
+  it "matches unicode char against [[:print:]] (#11262)" do
+    ("\n☃" =~ /[[:print:]]/).should eq(1)
+  end
+
+  it "matches unicode char against [[:alnum:]] (#4704)" do
+    /[[:alnum:]]/x.match("à").should_not be_nil
+  end
+
   it "matches with =~ and captures" do
     ("fooba" =~ /f(o+)(bar?)/).should eq(0)
     $~.group_size.should eq(2)
@@ -95,6 +103,22 @@ describe "Regex" do
     $2.should eq("ba")
   end
 
+  describe "#matches?" do
+    it "matches but create no MatchData" do
+      /f(o+)(bar?)/.matches?("fooba").should be_true
+      /f(o+)(bar?)/.matches?("barfo").should be_false
+    end
+
+    it "can specify initial position of matching" do
+      /f(o+)(bar?)/.matches?("fooba", 1).should be_false
+    end
+
+    it "matches a large single line string" do
+      str = File.read(datapath("large_single_line_string.txt"))
+      str.matches?(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/).should be_false
+    end
+  end
+
   describe "name_table" do
     it "is a map of capture group number to name" do
       table = (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x).name_table
@@ -103,6 +127,15 @@ describe "Regex" do
       table[3]?.should be_nil
       table[4].should eq("month")
       table[5].should eq("day")
+    end
+  end
+
+  describe "capture_count" do
+    it "returns the number of (named & non-named) capture groups" do
+      /(?:.)/x.capture_count.should eq(0)
+      /(?<foo>.+)/.capture_count.should eq(1)
+      /(.)?/x.capture_count.should eq(1)
+      /(.)|(.)/x.capture_count.should eq(2)
     end
   end
 
@@ -161,5 +194,21 @@ describe "Regex" do
   it "clones" do
     regex = /foo/
     regex.clone.should be(regex)
+  end
+
+  it "checks equality by ==" do
+    regex = Regex.new("foo", Regex::Options::IGNORE_CASE)
+    (regex == Regex.new("foo", Regex::Options::IGNORE_CASE)).should be_true
+    (regex == Regex.new("foo")).should be_false
+    (regex == Regex.new("bar", Regex::Options::IGNORE_CASE)).should be_false
+    (regex == Regex.new("bar")).should be_false
+  end
+
+  it "hashes" do
+    hash = Regex.new("foo", Regex::Options::IGNORE_CASE).hash
+    hash.should eq(Regex.new("foo", Regex::Options::IGNORE_CASE).hash)
+    hash.should_not eq(Regex.new("foo").hash)
+    hash.should_not eq(Regex.new("bar", Regex::Options::IGNORE_CASE).hash)
+    hash.should_not eq(Regex.new("bar").hash)
   end
 end

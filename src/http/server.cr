@@ -3,7 +3,9 @@ require "uri"
 require "./server/context"
 require "./server/handler"
 require "./server/response"
+require "./server/request_processor"
 require "./common"
+require "log"
 {% unless flag?(:without_openssl) %}
   require "openssl"
 {% end %}
@@ -71,7 +73,7 @@ require "./common"
 #
 # ## Binding to sockets
 #
-# The server can be bound to one ore more server sockets (see `#bind`)
+# The server can be bound to one or more server sockets (see `#bind`)
 #
 # Supported types:
 #
@@ -127,6 +129,8 @@ require "./common"
 # Reusing the connection also requires that the request body (if present) is
 # entirely consumed in the handler chain. Otherwise the connection will be closed.
 class HTTP::Server
+  Log = ::Log.for("http.server")
+
   @sockets = [] of Socket::Server
 
   # Returns `true` if this server is closed.
@@ -154,6 +158,41 @@ class HTTP::Server
   # Creates a new HTTP server with the given *handler*.
   def initialize(handler : HTTP::Handler | HTTP::Handler::HandlerProc)
     @processor = RequestProcessor.new(handler)
+  end
+
+  # Returns the maximum permitted size for the request line in an HTTP request.
+  #
+  # The request line is the first line of a request, consisting of method,
+  # resource and HTTP version and the delimiting line break.
+  # If the request line has a larger byte size than the permitted size,
+  # the server responds with the status code `414 URI Too Long` (see `HTTP::Status::URI_TOO_LONG`).
+  #
+  # Default: `HTTP::MAX_REQUEST_LINE_SIZE`
+  def max_request_line_size : Int32
+    @processor.max_request_line_size
+  end
+
+  # Sets the maximum permitted size for the request line in an HTTP request.
+  def max_request_line_size=(size : Int32)
+    @processor.max_request_line_size = size
+  end
+
+  # Returns the maximum permitted combined size for the headers in an HTTP request.
+  #
+  # When parsing a request, the server keeps track of the amount of total bytes
+  # consumed for all headers (including line breaks).
+  # If combined byte size of all headers is larger than the permitted size,
+  # the server responds with the status code `432 Request Header Fields Too Large`
+  # (see `HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE`).
+  #
+  # Default: `HTTP::MAX_HEADERS_SIZE`
+  def max_headers_size : Int32
+    @processor.max_headers_size
+  end
+
+  # Sets the maximum permitted combined size for the headers in an HTTP request.
+  def max_headers_size=(size : Int32)
+    @processor.max_headers_size = size
   end
 
   # Creates a `TCPServer` listening on `host:port` and adds it as a socket, returning the local address
@@ -278,6 +317,7 @@ class HTTP::Server
     def bind_tls(host : String, port : Int32, context : OpenSSL::SSL::Context::Server, reuse_port : Bool = false) : Socket::IPAddress
       tcp_server = TCPServer.new(host, port, reuse_port: reuse_port)
       server = OpenSSL::SSL::Server.new(tcp_server, context)
+      server.start_immediately = false
 
       begin
         bind(server)
@@ -349,7 +389,7 @@ class HTTP::Server
     when "tls", "ssl"
       address = Socket::IPAddress.parse(uri)
       {% unless flag?(:without_openssl) %}
-        context = OpenSSL::SSL::Context::Server.from_hash(HTTP::Params.parse(uri.query || ""))
+        context = OpenSSL::SSL::Context::Server.from_hash(uri.query_params)
 
         bind_tls(address, context)
       {% else %}
@@ -404,7 +444,7 @@ class HTTP::Server
   end
 
   # Starts the server. Blocks until the server is closed.
-  def listen
+  def listen : Nil
     raise "Can't re-start closed server" if closed?
     raise "Can't start server with no sockets to listen to, use HTTP::Server#bind first" if @sockets.empty?
     raise "Can't start running server" if listening?
@@ -414,18 +454,20 @@ class HTTP::Server
 
     @sockets.each do |socket|
       spawn do
-        until closed?
+        loop do
           io = begin
             socket.accept?
           rescue e
             handle_exception(e)
-            nil
+            next
           end
 
           if io
             # a non nillable version of the closured io
             _io = io
             spawn handle_client(_io)
+          else
+            break
           end
         end
       ensure
@@ -438,7 +480,7 @@ class HTTP::Server
 
   # Gracefully terminates the server. It will process currently accepted
   # requests, but it won't accept new connections.
-  def close
+  def close : Nil
     raise "Can't close server, it's already closed" if closed?
 
     @closed = true
@@ -459,12 +501,33 @@ class HTTP::Server
       io.sync = false
     end
 
+    {% unless flag?(:without_openssl) %}
+      if io.is_a?(OpenSSL::SSL::Socket::Server)
+        begin
+          io.accept
+        rescue ex
+          Log.debug(exception: ex) { "Error during SSL handshake" }
+          return
+        end
+      end
+    {% end %}
+
     @processor.process(io, io)
+  ensure
+    {% begin %}
+      begin
+        io.close
+      rescue IO::Error{% unless flag?(:without_openssl) %} | OpenSSL::SSL::Error{% end %}
+      end
+    {% end %}
   end
 
+  # This method handles exceptions raised at `Socket#accept?`.
   private def handle_exception(e : Exception)
-    e.inspect_with_backtrace STDERR
-    STDERR.flush
+    # TODO: This needs more refinement. Not every exception is an actual server
+    # error and should be logged as such. Client malfunction should only be informational.
+    # See https://github.com/crystal-lang/crystal/pull/9034#discussion_r407038999
+    Log.error(exception: e) { "Error while connecting a new socket" }
   end
 
   # Builds all handlers as the middleware for `HTTP::Server`.

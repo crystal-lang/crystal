@@ -1,5 +1,7 @@
 require "c/winnt"
 require "c/basetsd"
+require "c/wtypesbase"
+require "c/minwinbase"
 
 lib LibC
   fun GetFullPathNameW(lpFileName : LPWSTR, nBufferLength : DWORD, lpBuffer : LPWSTR, lpFilePart : LPWSTR*) : DWORD
@@ -11,6 +13,15 @@ lib LibC
   FILE_TYPE_UNKNOWN = DWORD.new(0x0)
 
   fun GetFileType(hFile : HANDLE) : DWORD
+
+  struct WIN32_FILE_ATTRIBUTE_DATA
+    dwFileAttributes : DWORD
+    ftCreationTime : FILETIME
+    ftLastAccessTime : FILETIME
+    ftLastWriteTime : FILETIME
+    nFileSizeHigh : DWORD
+    nFileSizeLow : DWORD
+  end
 
   struct BY_HANDLE_FILE_INFORMATION
     dwFileAttributes : DWORD
@@ -32,6 +43,7 @@ lib LibC
 
   OPEN_EXISTING = 3
 
+  FILE_ATTRIBUTE_NORMAL      =       0x80
   FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
 
   FILE_SHARE_READ   = 0x1
@@ -41,23 +53,6 @@ lib LibC
   fun CreateFileW(lpFileName : LPWSTR, dwDesiredAccess : DWORD, dwShareMode : DWORD,
                   lpSecurityAttributes : SECURITY_ATTRIBUTES*, dwCreationDisposition : DWORD,
                   dwFlagsAndAttributes : DWORD, hTemplateFile : HANDLE) : HANDLE
-
-  struct OVERLAPPED_OFFSET
-    offset : DWORD
-    offsetHigh : DWORD
-  end
-
-  union OVERLAPPED_UNION
-    offset : OVERLAPPED_OFFSET
-    pointer : Void*
-  end
-
-  struct OVERLAPPED
-    internal : ULONG_PTR
-    internalHigh : ULONG_PTR
-    union : OVERLAPPED_UNION
-    hEvent : HANDLE
-  end
 
   fun ReadFile(hFile : HANDLE, lpBuffer : Void*, nNumberOfBytesToRead : DWORD, lpNumberOfBytesRead : DWORD*, lpOverlapped : OVERLAPPED*) : BOOL
 
@@ -79,4 +74,7 @@ lib LibC
   fun FindFirstFileW(lpFileName : LPWSTR, lpFindFileData : WIN32_FIND_DATAW*) : HANDLE
   fun FindNextFileW(hFindFile : HANDLE, lpFindFileData : WIN32_FIND_DATAW*) : BOOL
   fun FindClose(hFindFile : HANDLE) : BOOL
+
+  fun SetFileTime(hFile : HANDLE, lpCreationTime : FILETIME*,
+                  lpLastAccessTime : FILETIME*, lpLastWriteTime : FILETIME*) : BOOL
 end

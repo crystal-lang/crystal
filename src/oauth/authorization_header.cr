@@ -10,9 +10,9 @@ struct OAuth::AuthorizationHeader
     return unless value
 
     @str << ", " unless @first
-    @str << key
+    URI.encode_www_form key, @str
     @str << %(=")
-    URI.escape value, @str
+    URI.encode_www_form value, @str
     @str << '"'
     @first = false
   end

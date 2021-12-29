@@ -1,6 +1,8 @@
-require "./event_loop"
+require "crystal/system/event_loop"
+require "crystal/system/print_error"
+require "./fiber_channel"
 require "fiber"
-require "thread"
+require "crystal/system/thread"
 
 # :nodoc:
 #
@@ -15,11 +17,27 @@ class Crystal::Scheduler
   end
 
   def self.enqueue(fiber : Fiber) : Nil
-    Thread.current.scheduler.enqueue(fiber)
+    {% if flag?(:preview_mt) %}
+      th = fiber.@current_thread.lazy_get
+
+      if th.nil?
+        th = Thread.current.scheduler.find_target_thread
+      end
+
+      if th == Thread.current
+        Thread.current.scheduler.enqueue(fiber)
+      else
+        th.scheduler.send_fiber(fiber)
+      end
+    {% else %}
+      Thread.current.scheduler.enqueue(fiber)
+    {% end %}
   end
 
   def self.enqueue(fibers : Enumerable(Fiber)) : Nil
-    Thread.current.scheduler.enqueue(fibers)
+    fibers.each do |fiber|
+      enqueue(fiber)
+    end
   end
 
   def self.reschedule : Nil
@@ -42,6 +60,19 @@ class Crystal::Scheduler
     Thread.current.scheduler.yield(fiber)
   end
 
+  {% if flag?(:preview_mt) %}
+    def self.enqueue_free_stack(stack : Void*) : Nil
+      Thread.current.scheduler.enqueue_free_stack(stack)
+    end
+  {% end %}
+
+  {% if flag?(:preview_mt) %}
+    @fiber_channel = Crystal::FiberChannel.new
+    @free_stacks = Deque(Void*).new
+  {% end %}
+  @lock = Crystal::SpinLock.new
+  @sleeping = false
+
   # :nodoc:
   def initialize(@main : Fiber)
     @current = @main
@@ -49,25 +80,91 @@ class Crystal::Scheduler
   end
 
   protected def enqueue(fiber : Fiber) : Nil
-    @runnables << fiber
+    @lock.sync { @runnables << fiber }
   end
 
   protected def enqueue(fibers : Enumerable(Fiber)) : Nil
-    @runnables.concat fibers
+    @lock.sync { @runnables.concat fibers }
   end
 
   protected def resume(fiber : Fiber) : Nil
+    validate_resumable(fiber)
+    {% if flag?(:preview_mt) %}
+      set_current_thread(fiber)
+      GC.lock_read
+    {% elsif flag?(:interpreted) %}
+      # No need to change the stack bottom!
+    {% else %}
+      GC.set_stackbottom(fiber.@stack_bottom)
+    {% end %}
+
     current, @current = @current, fiber
-    GC.stack_bottom = fiber.@stack_bottom
-    Fiber.swapcontext(pointerof(current.@stack_top), fiber.@stack_top)
+
+    {% if flag?(:interpreted) %}
+      # TODO: ideally we could set this in the interprter if the
+      # @context had a pointer back to the fiber.
+      # I also wonder why this isn't done always like that instead of in asm.
+      current.@context.resumable = 1
+    {% end %}
+
+    Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
+
+    {% if flag?(:preview_mt) %}
+      GC.unlock_read
+    {% end %}
   end
 
-  protected def reschedule : Nil
-    if runnable = @runnables.shift?
-      runnable.resume
+  private def validate_resumable(fiber)
+    return if fiber.resumable?
+
+    if fiber.dead?
+      fatal_resume_error(fiber, "tried to resume a dead fiber")
     else
-      Crystal::EventLoop.resume
+      fatal_resume_error(fiber, "can't resume a running fiber")
     end
+  end
+
+  private def set_current_thread(fiber)
+    fiber.@current_thread.set(Thread.current)
+  end
+
+  private def fatal_resume_error(fiber, message)
+    Crystal::System.print_error "\nFATAL: #{message}: #{fiber}\n"
+    {% unless flag?(:win32) %}
+      # FIXME: Enable when caller is supported on win32
+      caller.each { |line| Crystal::System.print_error "  from #{line}\n" }
+    {% end %}
+
+    exit 1
+  end
+
+  {% if flag?(:preview_mt) %}
+    protected def enqueue_free_stack(stack)
+      @free_stacks.push stack
+    end
+
+    private def release_free_stacks
+      while stack = @free_stacks.shift?
+        Fiber.stack_pool.release stack
+      end
+    end
+  {% end %}
+
+  protected def reschedule : Nil
+    loop do
+      if runnable = @lock.sync { @runnables.shift? }
+        unless runnable == @current
+          runnable.resume
+        end
+        break
+      else
+        Crystal::EventLoop.run_once
+      end
+    end
+
+    {% if flag?(:preview_mt) %}
+      release_free_stacks
+    {% end %}
   end
 
   protected def sleep(time : Time::Span) : Nil
@@ -83,4 +180,90 @@ class Crystal::Scheduler
     @current.resume_event.add(0.seconds)
     resume(fiber)
   end
+
+  {% if flag?(:preview_mt) %}
+    @rr_target = 0
+
+    protected def find_target_thread
+      if workers = @@workers
+        @rr_target += 1
+        workers[@rr_target % workers.size]
+      else
+        Thread.current
+      end
+    end
+
+    def run_loop
+      loop do
+        @lock.lock
+        if runnable = @runnables.shift?
+          @runnables << Fiber.current
+          @lock.unlock
+          runnable.resume
+        else
+          @sleeping = true
+          @lock.unlock
+          fiber = @fiber_channel.receive
+
+          @lock.lock
+          @sleeping = false
+          @runnables << Fiber.current
+          @lock.unlock
+          fiber.resume
+        end
+      end
+    end
+
+    def send_fiber(fiber : Fiber)
+      @lock.lock
+      if @sleeping
+        @fiber_channel.send(fiber)
+      else
+        @runnables << fiber
+      end
+      @lock.unlock
+    end
+
+    def self.init_workers
+      count = worker_count
+      pending = Atomic(Int32).new(count - 1)
+      @@workers = Array(Thread).new(count) do |i|
+        if i == 0
+          worker_loop = Fiber.new(name: "Worker Loop") { Thread.current.scheduler.run_loop }
+          Thread.current.scheduler.enqueue worker_loop
+          Thread.current
+        else
+          Thread.new do
+            scheduler = Thread.current.scheduler
+            pending.sub(1)
+            scheduler.run_loop
+          end
+        end
+      end
+
+      # Wait for all worker threads to be fully ready to be used
+      while pending.get > 0
+        Fiber.yield
+      end
+    end
+
+    private def self.worker_count
+      env_workers = ENV["CRYSTAL_WORKERS"]?
+
+      if env_workers && !env_workers.empty?
+        workers = env_workers.to_i?
+        if !workers || workers < 1
+          Crystal::System.print_error "FATAL: Invalid value for CRYSTAL_WORKERS: #{env_workers}\n"
+          exit 1
+        end
+
+        workers
+      else
+        # TODO: default worker count, currently hardcoded to 4 that seems to be something
+        # that is beneficial for many scenarios without adding too much contention.
+        # In the future we could use the number of cores or something associated to it.
+        4
+      end
+    end
+  {% end %}
 end

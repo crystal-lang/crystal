@@ -8,6 +8,7 @@ lib LibC
   X_OK                =  1
   SC_CLK_TCK          =  2
   SC_NPROCESSORS_ONLN = 84
+  SC_PAGESIZE         = 30
 
   fun chroot(path : Char*) : Int
   fun access(x0 : Char*, x1 : Int) : Int
@@ -38,6 +39,7 @@ lib LibC
   fun pread(x0 : Int, x1 : Void*, x2 : SizeT, x3 : OffT) : SSizeT
   fun rmdir(x0 : Char*) : Int
   fun symlink(x0 : Char*, x1 : Char*) : Int
+  fun readlink(path : Char*, buf : Char*, size : SizeT) : SSizeT
   fun syscall(x0 : Long, ...) : Long
   fun sysconf(x0 : Int) : Long
   fun unlink(x0 : Char*) : Int

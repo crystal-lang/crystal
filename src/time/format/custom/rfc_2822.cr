@@ -18,7 +18,7 @@ struct Time::Format
     end
 
     # Formats a `Time` into a `String`.
-    def self.format(time : Time)
+    def self.format(time : Time) : String
       String.build do |io|
         format(time, io)
       end
@@ -80,7 +80,7 @@ struct Time::Format
       end
     end
 
-    # comment or folding white space
+    # comment or folding whitespace
     def cfws?
       in_comment = false
       seen_whitespace = false

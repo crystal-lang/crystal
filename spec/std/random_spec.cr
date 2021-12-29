@@ -1,5 +1,5 @@
+require "./spec_helper"
 require "big"
-require "spec"
 
 private class TestRNG(T)
   include Random
@@ -60,8 +60,16 @@ describe "Random" do
     x.should be <= 1
   end
 
-  it "limited float number" do
-    x = rand(3.5)
+  it "limited Float32 number" do
+    x = rand(3.5_f32)
+    x.should be_a Float32
+    x.should be >= 0
+    x.should be < 3.5
+  end
+
+  it "limited Float64 number" do
+    x = rand(3.5_f64)
+    x.should be_a Float64
     x.should be >= 0
     x.should be < 3.5
   end
@@ -134,24 +142,32 @@ describe "Random" do
     x.should be < 3.3_f32
   end
 
-  it "raises on invalid range" do
-    expect_raises ArgumentError, "Invalid range for rand: 1...1" do
-      rand(1...1)
+  describe "raises on invalid range" do
+    it "Int32 range" do
+      expect_raises ArgumentError, "Invalid range for rand: 1...1" do
+        rand(1...1)
+      end
+      expect_raises ArgumentError, "Invalid range for rand: 1..0" do
+        rand(1..0)
+      end
     end
-    expect_raises ArgumentError, "Invalid range for rand: 1..0" do
-      rand(1..0)
+
+    it "BigInt range" do
+      expect_raises ArgumentError, "Invalid range for rand: #{1.to_big_i...1.to_big_i}" do
+        rand(1.to_big_i...1.to_big_i)
+      end
+      expect_raises ArgumentError, "Invalid range for rand: #{1.to_big_i..0.to_big_i}" do
+        rand(1.to_big_i..0.to_big_i)
+      end
     end
-    expect_raises ArgumentError, "Invalid range for rand: #{1.to_big_i...1.to_big_i}" do
-      rand(1.to_big_i...1.to_big_i)
-    end
-    expect_raises ArgumentError, "Invalid range for rand: #{1.to_big_i..0.to_big_i}" do
-      rand(1.to_big_i..0.to_big_i)
-    end
-    expect_raises ArgumentError, "Invalid range for rand: 1.0...1.0" do
-      rand(1.0...1.0)
-    end
-    expect_raises ArgumentError, "Invalid range for rand: 1.0..0.0" do
-      rand(1.0..0.0)
+
+    it "Float64 range" do
+      expect_raises ArgumentError, "Invalid range for rand: 1.0...1.0" do
+        rand(1.0...1.0)
+      end
+      expect_raises ArgumentError, "Invalid range for rand: 1.0..0.0" do
+        rand(1.0..0.0)
+      end
     end
   end
 
@@ -300,5 +316,19 @@ describe "Random" do
       hex = TestRNG.new(RNG_DATA_64).hex(50)
       hex.should eq("9fd857f462831002ffffffffffffffff0000000000000000e88d3a30db4e730021b8a5e33b020000362f518e0700000062da")
     end
+  end
+
+  it "returns a random integer" do
+    {% for type in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64).map(&.id) %}
+      value = TestRNG.new(RNG_DATA_32).rand({{type}})
+      typeof(value).should eq({{type}})
+    {% end %}
+  end
+
+  it "returns a random static array" do
+    {% for type in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64).map(&.id) %}
+      array = TestRNG.new(RNG_DATA_32).rand(StaticArray({{type}}, 4))
+      typeof(array).should eq(StaticArray({{type}}, 4))
+    {% end %}
   end
 end

@@ -29,7 +29,7 @@ lib LibC
   struct Stat
     st_dev : DevT
     __pad1 : UShort
-    st_ino : InoT
+    __st_ino : ULong
     st_mode : ModeT
     st_nlink : NlinkT
     st_uid : UidT
@@ -42,16 +42,15 @@ lib LibC
     st_atim : Timespec
     st_mtim : Timespec
     st_ctim : Timespec
-    __unused4 : ULong
-    __unused5 : ULong
+    st_ino : InoT
   end
 
   fun chmod(file : Char*, mode : ModeT) : Int
-  fun fstat(fd : Int, buf : Stat*) : Int
-  fun lstat(file : Char*, buf : Stat*) : Int
+  fun fstat = fstat64(fd : Int, buf : Stat*) : Int
+  fun lstat = lstat64(file : Char*, buf : Stat*) : Int
   fun mkdir(path : Char*, mode : ModeT) : Int
   fun mkfifo(path : Char*, mode : ModeT) : Int
   fun mknod(path : Char*, mode : ModeT, dev : DevT) : Int
-  fun stat(file : Char*, buf : Stat*) : Int
+  fun stat = stat64(file : Char*, buf : Stat*) : Int
   fun umask(mask : ModeT) : ModeT
 end

@@ -187,7 +187,7 @@ describe "Code gen: closure" do
       a = 1
       f = -> { a }
       a = 2.5
-      f.call.to_i
+      f.call.to_i!
       ").to_i.should eq(2)
   end
 
@@ -514,7 +514,7 @@ describe "Code gen: closure" do
       a = 1
       g = foo { |x| x &+ a }
       h = foo { |x| x.to_f + a }
-      (g.call(3) + h.call(5)).to_i
+      (g.call(3) + h.call(5)).to_i!
       ").to_i.should eq(10)
   end
 
@@ -531,8 +531,8 @@ describe "Code gen: closure" do
       end
 
       a = 1
-      foo = Foo.new { |x| x.to_f + a }
-      foo.block.call(1).to_i
+      foo = Foo.new { |x| x.to_f! + a }
+      foo.block.call(1).to_i!
       ").to_i.should eq(2)
   end
 
@@ -546,7 +546,7 @@ describe "Code gen: closure" do
       v = foo do
         1.5 + a
       end
-      v.to_i
+      v.to_i!
       ").to_i.should eq(2)
   end
 
@@ -676,9 +676,53 @@ describe "Code gen: closure" do
       arg = 2
 
       local = 4_i64
-      f2 = ->{ local.to_i }
+      f2 = ->{ local.to_i! }
 
       f1.call &+ f2.call
+    ))
+  end
+
+  it "ensures it can raise from the closure check" do
+    expect_raises(Exception, "::raise must be of NoReturn return type!") do
+      codegen(%(
+        def raise(m : String)
+        end
+
+        fun a(a : -> Int32)
+        end
+
+        value = 1
+        p = ->{ value }
+        a(p)
+      ))
+    end
+  end
+
+  it "allows passing an external function along" do
+    codegen(%(
+      require "prelude"
+
+
+      lib LibA
+        fun a(a : Void* -> Void*)
+      end
+
+      fun b(a : Void* -> Void*)
+        LibA.a(a)
+      end
+    ))
+  end
+
+  it "allows passing an external function along (2)" do
+    codegen(%(
+      lib LibFoo
+        struct S
+          callback : ->
+        end
+      end
+
+      s = LibFoo::S.new
+      s.callback = nil
     ))
   end
 end

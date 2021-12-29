@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private class TupleSpecObj
   getter x : Int32
@@ -9,6 +10,8 @@ private class TupleSpecObj
   def clone
     TupleSpecObj.new(@x)
   end
+
+  def_equals @x
 end
 
 describe "Tuple" do
@@ -154,9 +157,20 @@ describe "Tuple" do
     u[1].should_not be(r2)
   end
 
-  it "does Tuple.new" do
+  it "does Tuple.new, without type vars" do
     Tuple.new(1, 2, 3).should eq({1, 2, 3})
     Tuple.new([1, 2, 3]).should eq({[1, 2, 3]})
+    Tuple.new(TupleSpecObj.new(10)).should eq({TupleSpecObj.new(10)})
+  end
+
+  it "does Tuple.new, with type vars" do
+    Tuple(Int32, String).new(1, "a").should eq({1, "a"})
+    Tuple(TupleSpecObj).new(TupleSpecObj.new(10)).should eq({TupleSpecObj.new(10)})
+    typeof(Tuple.new).new.should eq(Tuple.new)
+
+    t = Tuple(Int32 | String, Int32 | String).new(1, "a")
+    t.should eq({1, "a"})
+    t.class.should_not eq(Tuple(Int32, String))
   end
 
   it "does Tuple.from" do
@@ -191,14 +205,7 @@ describe "Tuple" do
     Tuple.new.clone.should eq(Tuple.new)
   end
 
-  it "does iterator" do
-    iter = {1, 2, 3}.each
-
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should eq(3)
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [1, 2, 3], {1, 2, 3}.each
 
   it "does map" do
     tuple = {1, 2.5, "a"}
@@ -213,28 +220,17 @@ describe "Tuple" do
     tuple2.should eq({1, 2, 4, 5})
   end
 
+  it "does map_with_index, with offset" do
+    tuple = {1, 1, 2, 2}
+    tuple2 = tuple.map_with_index(10) { |e, i| e + i }
+    tuple2.should eq({11, 12, 14, 15})
+  end
+
   it "does reverse" do
     {1, 2.5, "a", 'c'}.reverse.should eq({'c', "a", 2.5, 1})
   end
 
-  it "does reverse_each" do
-    str = ""
-    {"a", "b", "c"}.reverse_each do |i|
-      str += i
-    end.should be_nil
-    str.should eq("cba")
-  end
-
-  describe "reverse_each iterator" do
-    it "does next" do
-      a = {1, 2, 3}
-      iter = a.reverse_each
-      iter.next.should eq(3)
-      iter.next.should eq(2)
-      iter.next.should eq(1)
-      iter.next.should be_a(Iterator::Stop)
-    end
-  end
+  it_iterates "#reverse_each", [3, 2, 1], {1, 2, 3}.reverse_each
 
   it "gets first element" do
     tuple = {1, 2.5}
@@ -292,5 +288,14 @@ describe "Tuple" do
     ({1, 2, 3} === {1, 2}).should be_false
     ({/o+/, "bar"} === {"fox", "bar"}).should be_true
     ({1, 2} === nil).should be_false
+  end
+
+  it "does to_a" do
+    ary = {1, 'a', true}.to_a
+    ary.should eq([1, 'a', true])
+    ary.size.should eq(3)
+
+    ary = Tuple.new.to_a
+    ary.size.should eq(0)
   end
 end

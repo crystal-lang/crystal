@@ -36,7 +36,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     @class_vars = {} of ClassVarContainer => Hash(String, TypeDeclarationWithLocation)
 
     # A hash of all defined funs, so we can detect when
-    # a fun is redefined with a different signautre
+    # a fun is redefined with a different signature
     @externals = {} of String => External
   end
 
@@ -112,7 +112,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       arg_type = lookup_type(restriction)
       arg_type = check_allowed_in_lib(restriction, arg_type)
       if arg_type.remove_typedef.void?
-        restriction.raise "can't use Void as argument type"
+        restriction.raise "can't use Void as parameter type"
       end
       external.args << Arg.new(arg.name, type: arg_type).at(arg.location)
     end
@@ -151,6 +151,8 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       declare_instance_var(node, var)
     when ClassVar
       declare_class_var(node, var, false)
+    else
+      raise "Unexpected TypeDeclaration var type: #{var.class}"
     end
 
     false
@@ -218,6 +220,8 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     when NonGenericModuleType
       declare_instance_var(owner, node, var)
       return
+    else
+      # Error, continue
     end
 
     node.raise "can only declare instance variables of a non-generic class, not a #{owner.type_desc} (#{owner})"
@@ -253,6 +257,8 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       declare_instance_var(node, var)
     when ClassVar
       declare_class_var(node, var, true)
+    else
+      # nothing (it's a var)
     end
     false
   end

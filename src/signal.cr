@@ -122,18 +122,62 @@ enum Signal : Int32
     LibC.sigismember(pointerof(@@sigset), self) == 1
   end
 
-  @@setup_default_handlers = Atomic(Int32).new(0)
+  @@setup_default_handlers = Atomic::Flag.new
+  @@setup_segfault_handler = Atomic::Flag.new
+  @@segfault_handler = LibC::SigactionHandlerT.new { |sig, info, data|
+    # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
+
+    # Determine if the SEGV was inside or 'near' the top of the stack
+    # to check for potential stack overflow. 'Near' is a small
+    # amount larger than a typical stack frame, 4096 bytes here.
+    addr = info.value.si_addr
+
+    is_stack_overflow =
+      begin
+        stack_top = Pointer(Void).new(Fiber.current.@stack.address - 4096)
+        stack_bottom = Fiber.current.@stack_bottom
+        stack_top <= addr < stack_bottom
+      rescue e
+        Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corruption\n"
+        false
+      end
+
+    if is_stack_overflow
+      Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
+    else
+      Crystal::System.print_error "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
+    end
+
+    Exception::CallStack.print_backtrace
+    LibC._exit(sig)
+  }
 
   # :nodoc:
-  def self.setup_default_handlers
-    _, success = @@setup_default_handlers.compare_and_set(0, 1)
-    return unless success
-
+  def self.setup_default_handlers : Nil
+    return unless @@setup_default_handlers.test_and_set
     LibC.sigemptyset(pointerof(@@sigset))
-
     Crystal::Signal.start_loop
     Signal::PIPE.ignore
     Signal::CHLD.reset
+  end
+
+  # :nodoc:
+  def self.setup_segfault_handler
+    return unless @@setup_segfault_handler.test_and_set
+
+    altstack = LibC::StackT.new
+    altstack.ss_sp = LibC.malloc(LibC::SIGSTKSZ)
+    altstack.ss_size = LibC::SIGSTKSZ
+    altstack.ss_flags = 0
+    LibC.sigaltstack(pointerof(altstack), nil)
+
+    action = LibC::Sigaction.new
+    action.sa_flags = LibC::SA_ONSTACK | LibC::SA_SIGINFO
+    action.sa_sigaction = @@segfault_handler
+    LibC.sigemptyset(pointerof(action.@sa_mask))
+
+    LibC.sigaction(SEGV, pointerof(action), nil)
+    LibC.sigaction(BUS, pointerof(action), nil)
   end
 end
 
@@ -150,7 +194,7 @@ module Crystal::Signal
   @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   @@handlers = {} of ::Signal => Handler
   @@child_handler : Handler?
-  @@mutex = Mutex.new
+  @@mutex = Mutex.new(:unchecked)
 
   def self.trap(signal, handler) : Nil
     @@mutex.synchronize do
@@ -195,10 +239,10 @@ module Crystal::Signal
   end
 
   def self.start_loop
-    spawn do
+    spawn(name: "Signal Loop") do
       loop do
         value = reader.read_bytes(Int32)
-      rescue Errno
+      rescue IO::Error
         next
       else
         process(::Signal.new(value))
@@ -223,7 +267,7 @@ module Crystal::Signal
   # Replaces the signal pipe so the child process won't share the file
   # descriptors of the parent process and send it received signals.
   def self.after_fork
-    @@pipe.each(&.close)
+    @@pipe.each(&.file_descriptor_close)
   ensure
     @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   end
@@ -232,7 +276,7 @@ module Crystal::Signal
   # signals that would be sent to the parent process through the signal
   # pipe.
   #
-  # We keep a signal set to because accessing @@handlers ins't thread safe —a
+  # We keep a signal set to because accessing @@handlers isn't thread safe —a
   # thread could be mutating the hash while another one forked. This allows to
   # only reset a few signals (fast) rather than all (very slow).
   #
@@ -245,7 +289,9 @@ module Crystal::Signal
       LibC.signal(signal, LibC::SIG_DFL) if signal.set?
     end
   ensure
-    @@pipe.each(&.close)
+    {% unless flag?(:preview_mt) %}
+      @@pipe.each(&.file_descriptor_close)
+    {% end %}
   end
 
   private def self.reader
@@ -272,11 +318,11 @@ module Crystal::SignalChildHandler
   # child process exited.
 
   @@pending = {} of LibC::PidT => Int32
-  @@waiting = {} of LibC::PidT => Channel::Buffered(Int32)
-  @@mutex = Mutex.new
+  @@waiting = {} of LibC::PidT => Channel(Int32)
+  @@mutex = Mutex.new(:unchecked)
 
-  def self.wait(pid : LibC::PidT) : Channel::Buffered(Int32)
-    channel = Channel::Buffered(Int32).new(1)
+  def self.wait(pid : LibC::PidT) : Channel(Int32)
+    channel = Channel(Int32).new(1)
 
     @@mutex.lock
     if exit_code = @@pending.delete(pid)
@@ -300,17 +346,17 @@ module Crystal::SignalChildHandler
         return
       when -1
         return if Errno.value == Errno::ECHILD
-        raise Errno.new("waitpid")
-      end
-
-      @@mutex.lock
-      if channel = @@waiting.delete(pid)
-        @@mutex.unlock
-        channel.send(exit_code)
-        channel.close
+        raise RuntimeError.from_errno("waitpid")
       else
-        @@pending[pid] = exit_code
-        @@mutex.unlock
+        @@mutex.lock
+        if channel = @@waiting.delete(pid)
+          @@mutex.unlock
+          channel.send(exit_code)
+          channel.close
+        else
+          @@pending[pid] = exit_code
+          @@mutex.unlock
+        end
       end
     end
   end
@@ -320,23 +366,4 @@ module Crystal::SignalChildHandler
     @@waiting.each_value(&.close)
     @@waiting.clear
   end
-end
-
-# :nodoc:
-fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
-  # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
-
-  # Determine if the SEGV was inside or 'near' the top of the stack
-  # to check for potential stack overflow. 'Near' is a small
-  # amount larger than a typical stack frame, 4096 bytes here.
-  stack_top = Pointer(Void).new(Fiber.current.@stack.address - 4096)
-
-  if stack_top <= addr < Fiber.current.@stack_bottom
-    LibC.dprintf 2, "Stack overflow (e.g., infinite or very deep recursion)\n"
-  else
-    LibC.dprintf 2, "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
-  end
-
-  CallStack.print_backtrace
-  LibC._exit(sig)
 end

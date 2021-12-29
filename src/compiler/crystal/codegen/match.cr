@@ -47,6 +47,7 @@ class Crystal::CodeGenVisitor
   private def create_match_fun(name, type)
     in_main do
       define_main_function(name, ([llvm_context.int32]), llvm_context.int1) do |func|
+        set_internal_fun_debug_location(func, name)
         type_id = func.params.first
         create_match_fun_body(type, type_id)
       end
@@ -63,22 +64,13 @@ class Crystal::CodeGenVisitor
   end
 
   private def create_match_fun_body(type : VirtualType, type_id)
-    min, max = @llvm_id.min_max_type_id(type.base_type).not_nil!
+    min, max = @program.llvm_id.min_max_type_id(type.base_type).not_nil!
     ret(
       and(
         builder.icmp(LLVM::IntPredicate::SGE, type_id, int(min)),
         builder.icmp(LLVM::IntPredicate::SLE, type_id, int(max))
       )
     )
-  end
-
-  private def create_match_fun_body(type : VirtualMetaclassType, type_id)
-    result = equal? type_id(type), type_id
-    type.each_concrete_type do |sub_type|
-      sub_type_cond = equal? type_id(sub_type), type_id
-      result = or(result, sub_type_cond)
-    end
-    ret result
   end
 
   private def create_match_fun_body(type, type_id)

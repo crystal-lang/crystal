@@ -20,7 +20,7 @@ private def run_context_tool(code)
     end
   end
 
-  code = code.gsub('‸', "")
+  code = code.delete('‸')
 
   if cursor_location
     visitor, result = processed_context_visitor(code, cursor_location)

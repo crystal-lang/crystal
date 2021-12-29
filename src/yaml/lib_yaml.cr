@@ -1,6 +1,6 @@
 require "./enums"
 
-@[Link("yaml")]
+@[Link("yaml", pkg_config: "yaml-0.1")]
 lib LibYAML
   alias Int = LibC::Int
 
@@ -10,10 +10,10 @@ lib LibYAML
   # structs if necessary, where we mapped only some fields
   # we are interested in.
   {% if flag?(:x86_64) || flag?(:aarch64) %}
-    PARSER_SIZE = 480
+    PARSER_SIZE  = 480
     EMITTER_SIZE = 432
   {% else %}
-    PARSER_SIZE = 248
+    PARSER_SIZE  = 248
     EMITTER_SIZE = 264
   {% end %}
 
@@ -143,6 +143,7 @@ lib LibYAML
   fun yaml_emitter_emit(emitter : Emitter*, event : Event*) : Int
   fun yaml_emitter_delete(emitter : Emitter*)
   fun yaml_emitter_flush(emitter : Emitter*) : Int
+  fun yaml_emitter_set_unicode(emitter : Emitter*, unicode : Int)
 
   fun yaml_get_version(major : LibC::Int*, minor : LibC::Int*, patch : LibC::Int*)
 end

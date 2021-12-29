@@ -2,60 +2,65 @@ module LLVM
   {% if LibLLVM.has_constant?(:AttributeRef) %}
     @[Flags]
     enum Attribute : UInt64
-      Alignment = 1 << 0
-      AllocSize = 1 << 1
-      AlwaysInline = 1 << 2
-      ArgMemOnly = 1 << 3
-      Builtin = 1 << 4
-      ByVal = 1 << 5
-      Cold = 1 << 6
-      Convergent = 1 << 7
-      Dereferenceable = 1 << 8
-      DereferenceableOrNull = 1 << 9
-      InAlloca = 1 << 10
-      InReg = 1 << 11
-      InaccessibleMemOnly = 1 << 12
-      InaccessibleMemOrArgMemOnly = 1 << 13
-      InlineHint = 1 << 14
-      JumpTable = 1 << 15
-      MinSize = 1 << 16
-      Naked = 1 << 17
-      Nest = 1 << 18
-      NoAlias = 1 << 19
-      NoBuiltin = 1 << 20
-      NoCapture = 1 << 21
-      NoDuplicate = 1 << 22
-      NoImplicitFloat = 1 << 23
-      NoInline = 1 << 24
-      NoRecurse = 1 << 25
-      NoRedZone = 1 << 26
-      NoReturn = 1 << 27
-      NoUnwind = 1 << 28
-      NonLazyBind = 1 << 29
-      NonNull = 1 << 30
-      OptimizeForSize = 1 << 31
-      OptimizeNone = 1 << 32
-      ReadNone = 1 << 33
-      ReadOnly = 1 << 34
-      Returned = 1 << 35
-      ReturnsTwice = 1 << 36
-      SExt = 1 << 37
-      SafeStack = 1 << 38
-      SanitizeAddress = 1 << 39
-      SanitizeMemory = 1 << 40
-      SanitizeThread = 1 << 41
-      StackAlignment = 1 << 42
-      StackProtect = 1 << 43
-      StackProtectReq = 1 << 44
-      StackProtectStrong = 1 << 45
-      StructRet = 1 << 46
-      SwiftError = 1 << 47
-      SwiftSelf = 1 << 48
-      UWTable = 1 << 49
-      WriteOnly = 1 << 50
-      ZExt = 1 << 51
+      Alignment
+      AllocSize
+      AlwaysInline
+      ArgMemOnly
+      Builtin
+      ByVal
+      Cold
+      Convergent
+      Dereferenceable
+      DereferenceableOrNull
+      InAlloca
+      InReg
+      InaccessibleMemOnly
+      InaccessibleMemOrArgMemOnly
+      InlineHint
+      JumpTable
+      MinSize
+      Naked
+      Nest
+      NoAlias
+      NoBuiltin
+      NoCapture
+      NoDuplicate
+      NoFree
+      NoImplicitFloat
+      NoInline
+      NoRecurse
+      NoRedZone
+      NoReturn
+      NoSync
+      NoUnwind
+      NonLazyBind
+      NonNull
+      OptimizeForSize
+      OptimizeNone
+      ReadNone
+      ReadOnly
+      Returned
+      ImmArg
+      ReturnsTwice
+      SExt
+      SafeStack
+      SanitizeAddress
+      SanitizeMemory
+      SanitizeThread
+      StackAlignment
+      StackProtect
+      StackProtectReq
+      StackProtectStrong
+      StructRet
+      SwiftError
+      SwiftSelf
+      UWTable
+      WillReturn
+      WriteOnly
+      ZExt
 
       @@kind_ids = load_llvm_kinds_from_names.as(Hash(Attribute, UInt32))
+      @@typed_attrs = load_llvm_typed_attributes.as(Array(Attribute))
 
       def each_kind(&block)
         return if value == 0
@@ -74,59 +79,80 @@ module LLVM
 
       private def self.load_llvm_kinds_from_names
         kinds = {} of Attribute => UInt32
-        kinds[Alignment]                   = kind_for_name("align")
-        kinds[AllocSize]                   = kind_for_name("allocsize")
-        kinds[AlwaysInline]                = kind_for_name("alwaysinline")
-        kinds[ArgMemOnly]                  = kind_for_name("argmemonly")
-        kinds[Builtin]                     = kind_for_name("builtin")
-        kinds[ByVal]                       = kind_for_name("byval")
-        kinds[Cold]                        = kind_for_name("cold")
-        kinds[Convergent]                  = kind_for_name("convergent")
-        kinds[Dereferenceable]             = kind_for_name("dereferenceable")
-        kinds[DereferenceableOrNull]       = kind_for_name("dereferenceable_or_null")
-        kinds[InAlloca]                    = kind_for_name("inalloca")
-        kinds[InReg]                       = kind_for_name("inreg")
-        kinds[InaccessibleMemOnly]         = kind_for_name("inaccessiblememonly")
+        kinds[Alignment] = kind_for_name("align")
+        kinds[AllocSize] = kind_for_name("allocsize")
+        kinds[AlwaysInline] = kind_for_name("alwaysinline")
+        kinds[ArgMemOnly] = kind_for_name("argmemonly")
+        kinds[Builtin] = kind_for_name("builtin")
+        kinds[ByVal] = kind_for_name("byval")
+        kinds[Cold] = kind_for_name("cold")
+        kinds[Convergent] = kind_for_name("convergent")
+        kinds[Dereferenceable] = kind_for_name("dereferenceable")
+        kinds[DereferenceableOrNull] = kind_for_name("dereferenceable_or_null")
+        kinds[InAlloca] = kind_for_name("inalloca")
+        kinds[InReg] = kind_for_name("inreg")
+        kinds[InaccessibleMemOnly] = kind_for_name("inaccessiblememonly")
         kinds[InaccessibleMemOrArgMemOnly] = kind_for_name("inaccessiblemem_or_argmemonly")
-        kinds[InlineHint]                  = kind_for_name("inlinehint")
-        kinds[JumpTable]                   = kind_for_name("jumptable")
-        kinds[MinSize]                     = kind_for_name("minsize")
-        kinds[Naked]                       = kind_for_name("naked")
-        kinds[Nest]                        = kind_for_name("nest")
-        kinds[NoAlias]                     = kind_for_name("noalias")
-        kinds[NoBuiltin]                   = kind_for_name("nobuiltin")
-        kinds[NoCapture]                   = kind_for_name("nocapture")
-        kinds[NoDuplicate]                 = kind_for_name("noduplicate")
-        kinds[NoImplicitFloat]             = kind_for_name("noimplicitfloat")
-        kinds[NoInline]                    = kind_for_name("noinline")
-        kinds[NoRecurse]                   = kind_for_name("norecurse")
-        kinds[NoRedZone]                   = kind_for_name("noredzone")
-        kinds[NoReturn]                    = kind_for_name("noreturn")
-        kinds[NoUnwind]                    = kind_for_name("nounwind")
-        kinds[NonLazyBind]                 = kind_for_name("nonlazybind")
-        kinds[NonNull]                     = kind_for_name("nonnull")
-        kinds[OptimizeForSize]             = kind_for_name("optsize")
-        kinds[OptimizeNone]                = kind_for_name("optnone")
-        kinds[ReadNone]                    = kind_for_name("readnone")
-        kinds[ReadOnly]                    = kind_for_name("readonly")
-        kinds[Returned]                    = kind_for_name("returned")
-        kinds[ReturnsTwice]                = kind_for_name("returns_twice")
-        kinds[SExt]                        = kind_for_name("signext")
-        kinds[SafeStack]                   = kind_for_name("safestack")
-        kinds[SanitizeAddress]             = kind_for_name("sanitize_address")
-        kinds[SanitizeMemory]              = kind_for_name("sanitize_memory")
-        kinds[SanitizeThread]              = kind_for_name("sanitize_thread")
-        kinds[StackAlignment]              = kind_for_name("alignstack")
-        kinds[StackProtect]                = kind_for_name("ssp")
-        kinds[StackProtectReq]             = kind_for_name("sspreq")
-        kinds[StackProtectStrong]          = kind_for_name("sspstrong")
-        kinds[StructRet]                   = kind_for_name("sret")
-        kinds[SwiftError]                  = kind_for_name("swifterror")
-        kinds[SwiftSelf]                   = kind_for_name("swiftself")
-        kinds[UWTable]                     = kind_for_name("uwtable")
-        kinds[WriteOnly]                   = kind_for_name("writeonly")
-        kinds[ZExt]                        = kind_for_name("zeroext")
+        kinds[InlineHint] = kind_for_name("inlinehint")
+        kinds[JumpTable] = kind_for_name("jumptable")
+        kinds[MinSize] = kind_for_name("minsize")
+        kinds[Naked] = kind_for_name("naked")
+        kinds[Nest] = kind_for_name("nest")
+        kinds[NoAlias] = kind_for_name("noalias")
+        kinds[NoBuiltin] = kind_for_name("nobuiltin")
+        kinds[NoCapture] = kind_for_name("nocapture")
+        kinds[NoDuplicate] = kind_for_name("noduplicate")
+        kinds[NoFree] = kind_for_name("nofree")
+        kinds[NoImplicitFloat] = kind_for_name("noimplicitfloat")
+        kinds[NoInline] = kind_for_name("noinline")
+        kinds[NoRecurse] = kind_for_name("norecurse")
+        kinds[NoRedZone] = kind_for_name("noredzone")
+        kinds[NoReturn] = kind_for_name("noreturn")
+        kinds[NoSync] = kind_for_name("nosync")
+        kinds[NoUnwind] = kind_for_name("nounwind")
+        kinds[NonLazyBind] = kind_for_name("nonlazybind")
+        kinds[NonNull] = kind_for_name("nonnull")
+        kinds[OptimizeForSize] = kind_for_name("optsize")
+        kinds[OptimizeNone] = kind_for_name("optnone")
+        kinds[ReadNone] = kind_for_name("readnone")
+        kinds[ReadOnly] = kind_for_name("readonly")
+        kinds[Returned] = kind_for_name("returned")
+        kinds[ImmArg] = kind_for_name("immarg")
+        kinds[ReturnsTwice] = kind_for_name("returns_twice")
+        kinds[SExt] = kind_for_name("signext")
+        kinds[SafeStack] = kind_for_name("safestack")
+        kinds[SanitizeAddress] = kind_for_name("sanitize_address")
+        kinds[SanitizeMemory] = kind_for_name("sanitize_memory")
+        kinds[SanitizeThread] = kind_for_name("sanitize_thread")
+        kinds[StackAlignment] = kind_for_name("alignstack")
+        kinds[StackProtect] = kind_for_name("ssp")
+        kinds[StackProtectReq] = kind_for_name("sspreq")
+        kinds[StackProtectStrong] = kind_for_name("sspstrong")
+        kinds[StructRet] = kind_for_name("sret")
+        kinds[SwiftError] = kind_for_name("swifterror")
+        kinds[SwiftSelf] = kind_for_name("swiftself")
+        kinds[UWTable] = kind_for_name("uwtable")
+        kinds[WillReturn] = kind_for_name("willreturn")
+        kinds[WriteOnly] = kind_for_name("writeonly")
+        kinds[ZExt] = kind_for_name("zeroext")
         kinds
+      end
+
+      private def self.load_llvm_typed_attributes
+        typed_attrs = [] of Attribute
+
+        unless LibLLVM::IS_LT_120
+          # LLVM 12 introduced mandatory type parameters for byval and sret
+          typed_attrs << ByVal
+          typed_attrs << StructRet
+        end
+
+        unless LibLLVM::IS_LT_130
+          # LLVM 13 manadates type params for inalloca
+          typed_attrs << InAlloca
+        end
+
+        typed_attrs
       end
 
       def self.kind_for(member)
@@ -135,6 +161,11 @@ module LLVM
 
       def self.from_kind(kind)
         @@kind_ids.key_for(kind)
+      end
+
+      def self.requires_type?(kind)
+        member = from_kind(kind)
+        @@typed_attrs.includes?(member)
       end
     end
   {% else %}
@@ -189,13 +220,23 @@ module LLVM
     Appending
     Internal
     Private
-    DLLImport
-    DLLExport
+    DLLImport # obsolete
+    DLLExport # obsolete
     ExternalWeak
     Ghost
     Common
     LinkerPrivate
     LinkerPrivateWeak
+  end
+
+  enum DLLStorageClass
+    Default
+
+    # Function to be imported from DLL.
+    DLLImport
+
+    # Function to be accessible from DLL.
+    DLLExport
   end
 
   enum IntPredicate
@@ -370,6 +411,13 @@ module LLVM
     BitField            = 1 << 19
     NoReturn            = 1 << 20
     MainSubprogram      = 1 << 21
+    PassByValue         = 1 << 22
+    TypePassByReference = 1 << 23
+    EnumClass           = 1 << 24
+    Thunk               = 1 << 25
+    NonTrivial          = 1 << 26
+    BigEndian           = 1 << 27
+    LittleEndian        = 1 << 28
   end
 
   struct Value
@@ -408,5 +456,38 @@ module LLVM
 
   enum ModuleFlag : Int32
     Warning = 2
+  end
+
+  struct Metadata
+    enum Type : UInt32
+      Dbg                   =  0 # "dbg"
+      Tbaa                  =  1 # "tbaa"
+      Prof                  =  2 # "prof"
+      Fpmath                =  3 # "fpmath"
+      Range                 =  4 # "range"
+      TbaaStruct            =  5 # "tbaa.struct"
+      InvariantLoad         =  6 # "invariant.load"
+      AliasScope            =  7 # "alias.scope"
+      Noalias               =  8 # "noalias"
+      Nontemporal           =  9 # "nontemporal"
+      MemParallelLoopAccess = 10 # "llvm.mem.parallel_loop_access"
+      Nonnull               = 11 # "nonnull"
+      Dereferenceable       = 12 # "dereferenceable"
+      DereferenceableOrNull = 13 # "dereferenceable_or_null"
+      MakeImplicit          = 14 # "make.implicit"
+      Unpredictable         = 15 # "unpredictable"
+      InvariantGroup        = 16 # "invariant.group"
+      Align                 = 17 # "align"
+      Loop                  = 18 # "llvm.loop"
+      Type                  = 19 # "type"
+      SectionPrefix         = 20 # "section_prefix"
+      AbsoluteSymbol        = 21 # "absolute_symbol"
+      Associated            = 22 # "associated"
+      Callees               = 23 # "callees"
+      IrrLoop               = 24 # "irr_loop"
+      AccessGroup           = 25 # "llvm.access.group"
+      Callback              = 26 # "callback"
+      PreserveAccessIndex   = 27 # "llvm.preserve.*.access.index"
+    end
   end
 end

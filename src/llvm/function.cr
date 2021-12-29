@@ -3,6 +3,10 @@ require "./value_methods"
 struct LLVM::Function
   include LLVM::ValueMethods
 
+  def self.from_value(value : LLVM::ValueMethods)
+    new(value.to_unsafe)
+  end
+
   def basic_blocks
     BasicBlockCollection.new self
   end
@@ -15,12 +19,16 @@ struct LLVM::Function
     LibLLVM.set_function_call_convention(self, cc)
   end
 
-  def add_attribute(attribute : Attribute, index = AttributeIndex::FunctionIndex)
+  def add_attribute(attribute : Attribute, index = AttributeIndex::FunctionIndex, type : Type? = nil)
     return if attribute.value == 0
     {% if LibLLVM.has_constant?(:AttributeRef) %}
       context = LibLLVM.get_module_context(LibLLVM.get_global_parent(self))
       attribute.each_kind do |kind|
-        attribute_ref = LibLLVM.create_enum_attribute(context, kind, 0)
+        if type && LLVM::Attribute.requires_type?(kind)
+          attribute_ref = LibLLVMExt.create_type_attribute(context, kind, type)
+        else
+          attribute_ref = LibLLVM.create_enum_attribute(context, kind, 0)
+        end
         LibLLVM.add_attribute_at_index(self, index, attribute_ref)
       end
     {% else %}
@@ -78,5 +86,13 @@ struct LLVM::Function
 
   def personality_function=(fn)
     LibLLVM.set_personality_fn(self, fn)
+  end
+
+  def delete
+    LibLLVM.delete_function(self)
+  end
+
+  def naked?
+    attributes.naked?
   end
 end

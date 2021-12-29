@@ -1,6 +1,13 @@
 require "spec"
 require "big"
 
+private def it_converts_to_s(num, str, *, file = __FILE__, line = __LINE__, **opts)
+  it file: file, line: line do
+    num.to_s(**opts).should eq(str), file: file, line: line
+    String.build { |io| num.to_s(io, **opts) }.should eq(str), file: file, line: line
+  end
+end
+
 describe "BigInt" do
   it "creates with a value of zero" do
     BigInt.new.to_s.should eq("0")
@@ -88,6 +95,15 @@ describe "BigInt" do
     (5.to_big_i + Int64::MAX).should eq(Int64::MAX.to_big_i + 5)
 
     (2 + 1.to_big_i).should eq(3.to_big_i)
+
+    (1.to_big_i &+ 2.to_big_i).should eq(3.to_big_i)
+    (1.to_big_i &+ 2).should eq(3.to_big_i)
+    (1.to_big_i &+ 2_u8).should eq(3.to_big_i)
+    (5.to_big_i &+ (-2_i64)).should eq(3.to_big_i)
+    (5.to_big_i &+ Int64::MAX).should be > Int64::MAX.to_big_i
+    (5.to_big_i &+ Int64::MAX).should eq(Int64::MAX.to_big_i &+ 5)
+
+    (2 &+ 1.to_big_i).should eq(3.to_big_i)
   end
 
   it "subs" do
@@ -100,6 +116,16 @@ describe "BigInt" do
 
     (5 - 1.to_big_i).should eq(4.to_big_i)
     (-5 - 1.to_big_i).should eq(-6.to_big_i)
+
+    (5.to_big_i &- 2.to_big_i).should eq(3.to_big_i)
+    (5.to_big_i &- 2).should eq(3.to_big_i)
+    (5.to_big_i &- 2_u8).should eq(3.to_big_i)
+    (5.to_big_i &- (-2_i64)).should eq(7.to_big_i)
+    (-5.to_big_i &- Int64::MAX).should be < -Int64::MAX.to_big_i
+    (-5.to_big_i &- Int64::MAX).should eq(-Int64::MAX.to_big_i &- 5)
+
+    (5 &- 1.to_big_i).should eq(4.to_big_i)
+    (-5 &- 1.to_big_i).should eq(-6.to_big_i)
   end
 
   it "negates" do
@@ -113,32 +139,83 @@ describe "BigInt" do
     (3 * 2.to_big_i).should eq(6.to_big_i)
     (3_u8 * 2.to_big_i).should eq(6.to_big_i)
     (2.to_big_i * Int64::MAX).should eq(2.to_big_i * Int64::MAX.to_big_i)
+
+    (2.to_big_i &* 3.to_big_i).should eq(6.to_big_i)
+    (2.to_big_i &* 3).should eq(6.to_big_i)
+    (2.to_big_i &* 3_u8).should eq(6.to_big_i)
+    (3 &* 2.to_big_i).should eq(6.to_big_i)
+    (3_u8 &* 2.to_big_i).should eq(6.to_big_i)
+    (2.to_big_i &* Int64::MAX).should eq(2.to_big_i &* Int64::MAX.to_big_i)
   end
 
   it "gets absolute value" do
     (-10.to_big_i.abs).should eq(10.to_big_i)
   end
 
+  it "gets factorial value" do
+    0.to_big_i.factorial.should eq(1.to_big_i)
+    5.to_big_i.factorial.should eq(120.to_big_i)
+    100.to_big_i.factorial.should eq("93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i)
+  end
+
+  it "raises if factorial of negative" do
+    expect_raises ArgumentError do
+      -1.to_big_i.factorial
+    end
+
+    expect_raises ArgumentError do
+      "-93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i.factorial
+    end
+  end
+
+  it "raises if factorial of 2^64" do
+    expect_raises ArgumentError do
+      (LibGMP::ULong::MAX.to_big_i + 1).factorial
+    end
+  end
+
   it "divides" do
-    (10.to_big_i / 3.to_big_i).should eq(3.to_big_i)
-    (10.to_big_i / 3).should eq(3.to_big_i)
-    (10 / 3.to_big_i).should eq(3.to_big_i)
+    (10.to_big_i / 3.to_big_i).should be_close(3.3333.to_big_f, 0.0001)
+    (10.to_big_i / 3).should be_close(3.3333.to_big_f, 0.0001)
+    (10 / 3.to_big_i).should be_close(3.3333.to_big_f, 0.0001)
     ((Int64::MAX.to_big_i * 2.to_big_i) / Int64::MAX).should eq(2.to_big_i)
   end
 
-  it "divides with negative numbers" do
-    (7.to_big_i / 2).should eq(3.to_big_i)
-    (7.to_big_i / 2.to_big_i).should eq(3.to_big_i)
-    (7.to_big_i / -2).should eq(-4.to_big_i)
-    (7.to_big_i / -2.to_big_i).should eq(-4.to_big_i)
-    (-7.to_big_i / 2).should eq(-4.to_big_i)
-    (-7.to_big_i / 2.to_big_i).should eq(-4.to_big_i)
-    (-7.to_big_i / -2).should eq(3.to_big_i)
-    (-7.to_big_i / -2.to_big_i).should eq(3.to_big_i)
+  it "divides" do
+    (10.to_big_i // 3.to_big_i).should eq(3.to_big_i)
+    (10.to_big_i // 3).should eq(3.to_big_i)
+    (10 // 3.to_big_i).should eq(3.to_big_i)
+    ((Int64::MAX.to_big_i * 2.to_big_i) // Int64::MAX).should eq(2.to_big_i)
+  end
 
-    (-6.to_big_i / 2).should eq(-3.to_big_i)
-    (6.to_big_i / -2).should eq(-3.to_big_i)
-    (-6.to_big_i / -2).should eq(3.to_big_i)
+  it "divides with negative numbers" do
+    (7.to_big_i / 2).should eq(3.5.to_big_f)
+    (7.to_big_i / 2.to_big_i).should eq(3.5.to_big_f)
+    (7.to_big_i / -2).should eq(-3.5.to_big_f)
+    (7.to_big_i / -2.to_big_i).should eq(-3.5.to_big_f)
+    (-7.to_big_i / 2).should eq(-3.5.to_big_f)
+    (-7.to_big_i / 2.to_big_i).should eq(-3.5.to_big_f)
+    (-7.to_big_i / -2).should eq(3.5.to_big_f)
+    (-7.to_big_i / -2.to_big_i).should eq(3.5.to_big_f)
+
+    (-6.to_big_i / 2).should eq(-3.to_big_f)
+    (6.to_big_i / -2).should eq(-3.to_big_f)
+    (-6.to_big_i / -2).should eq(3.to_big_f)
+  end
+
+  it "divides with negative numbers" do
+    (7.to_big_i // 2).should eq(3.to_big_i)
+    (7.to_big_i // 2.to_big_i).should eq(3.to_big_i)
+    (7.to_big_i // -2).should eq(-4.to_big_i)
+    (7.to_big_i // -2.to_big_i).should eq(-4.to_big_i)
+    (-7.to_big_i // 2).should eq(-4.to_big_i)
+    (-7.to_big_i // 2.to_big_i).should eq(-4.to_big_i)
+    (-7.to_big_i // -2).should eq(3.to_big_i)
+    (-7.to_big_i // -2.to_big_i).should eq(3.to_big_i)
+
+    (-6.to_big_i // 2).should eq(-3.to_big_i)
+    (6.to_big_i // -2).should eq(-3.to_big_i)
+    (-6.to_big_i // -2).should eq(3.to_big_i)
   end
 
   it "tdivs" do
@@ -224,6 +301,20 @@ describe "BigInt" do
     end
   end
 
+  it "raises if divides by zero" do
+    expect_raises DivisionByZeroError do
+      10.to_big_i // 0.to_big_i
+    end
+
+    expect_raises DivisionByZeroError do
+      10.to_big_i // 0
+    end
+
+    expect_raises DivisionByZeroError do
+      10 // 0.to_big_i
+    end
+  end
+
   it "raises if mods by zero" do
     expect_raises DivisionByZeroError do
       10.to_big_i % 0.to_big_i
@@ -244,14 +335,102 @@ describe "BigInt" do
     result.to_s.should eq("10715086071862673209484250490600018105614048117055336074437503883703510511249361224931983788156958581275946729175531468251871452856923140435984577574698574803934567774824230985421074605062371141877954182153046474983581941267398767559165543946077062914571196477686542167660429831652624386837205668069376")
   end
 
-  it "does to_s in the given base" do
-    a = BigInt.new("1234567890123456789")
-    b = "1000100100010000100001111010001111101111010011000000100010101"
-    c = "112210f47de98115"
-    d = "128gguhuuj08l"
-    a.to_s(2).should eq(b)
-    a.to_s(16).should eq(c)
-    a.to_s(32).should eq(d)
+  describe "#to_s" do
+    context "base and upcase parameters" do
+      a = BigInt.new("1234567890123456789")
+      it_converts_to_s a, "1000100100010000100001111010001111101111010011000000100010101", base: 2
+      it_converts_to_s a, "112210f47de98115", base: 16
+      it_converts_to_s a, "112210F47DE98115", base: 16, upcase: true
+      it_converts_to_s a, "128gguhuuj08l", base: 32
+      it_converts_to_s a, "128GGUHUUJ08L", base: 32, upcase: true
+      it_converts_to_s a, "1tckI1NfUnH", base: 62
+
+      # ensure case is same as for primitive integers
+      it_converts_to_s 10.to_big_i, 10.to_s(62), base: 62
+
+      it_converts_to_s (-a), "-1000100100010000100001111010001111101111010011000000100010101", base: 2
+      it_converts_to_s (-a), "-112210f47de98115", base: 16
+      it_converts_to_s (-a), "-112210F47DE98115", base: 16, upcase: true
+      it_converts_to_s (-a), "-128gguhuuj08l", base: 32
+      it_converts_to_s (-a), "-128GGUHUUJ08L", base: 32, upcase: true
+      it_converts_to_s (-a), "-1tckI1NfUnH", base: 62
+
+      it_converts_to_s 16.to_big_i ** 1000, "1#{"0" * 1000}", base: 16
+
+      it "raises on base 1" do
+        expect_raises(ArgumentError, "Invalid base 1") { a.to_s(1) }
+        expect_raises(ArgumentError, "Invalid base 1") { a.to_s(IO::Memory.new, 1) }
+      end
+
+      it "raises on base 37" do
+        expect_raises(ArgumentError, "Invalid base 37") { a.to_s(37) }
+        expect_raises(ArgumentError, "Invalid base 37") { a.to_s(IO::Memory.new, 37) }
+      end
+
+      it "raises on base 62 with upcase" do
+        expect_raises(ArgumentError, "upcase must be false for base 62") { a.to_s(62, upcase: true) }
+        expect_raises(ArgumentError, "upcase must be false for base 62") { a.to_s(IO::Memory.new, 62, upcase: true) }
+      end
+    end
+
+    context "precision parameter" do
+      it_converts_to_s 0.to_big_i, "", precision: 0
+      it_converts_to_s 0.to_big_i, "0", precision: 1
+      it_converts_to_s 0.to_big_i, "00", precision: 2
+      it_converts_to_s 0.to_big_i, "00000", precision: 5
+      it_converts_to_s 0.to_big_i, "0" * 200, precision: 200
+
+      it_converts_to_s 1.to_big_i, "1", precision: 0
+      it_converts_to_s 1.to_big_i, "1", precision: 1
+      it_converts_to_s 1.to_big_i, "01", precision: 2
+      it_converts_to_s 1.to_big_i, "00001", precision: 5
+      it_converts_to_s 1.to_big_i, "#{"0" * 199}1", precision: 200
+
+      it_converts_to_s 2.to_big_i, "2", precision: 0
+      it_converts_to_s 2.to_big_i, "2", precision: 1
+      it_converts_to_s 2.to_big_i, "02", precision: 2
+      it_converts_to_s 2.to_big_i, "00002", precision: 5
+      it_converts_to_s 2.to_big_i, "#{"0" * 199}2", precision: 200
+
+      it_converts_to_s (-1).to_big_i, "-1", precision: 0
+      it_converts_to_s (-1).to_big_i, "-1", precision: 1
+      it_converts_to_s (-1).to_big_i, "-01", precision: 2
+      it_converts_to_s (-1).to_big_i, "-00001", precision: 5
+      it_converts_to_s (-1).to_big_i, "-#{"0" * 199}1", precision: 200
+
+      it_converts_to_s 85.to_big_i, "85", precision: 0
+      it_converts_to_s 85.to_big_i, "85", precision: 1
+      it_converts_to_s 85.to_big_i, "85", precision: 2
+      it_converts_to_s 85.to_big_i, "085", precision: 3
+      it_converts_to_s 85.to_big_i, "0085", precision: 4
+      it_converts_to_s 85.to_big_i, "00085", precision: 5
+      it_converts_to_s 85.to_big_i, "#{"0" * 198}85", precision: 200
+
+      it_converts_to_s (-85).to_big_i, "-85", precision: 0
+      it_converts_to_s (-85).to_big_i, "-85", precision: 1
+      it_converts_to_s (-85).to_big_i, "-85", precision: 2
+      it_converts_to_s (-85).to_big_i, "-085", precision: 3
+      it_converts_to_s (-85).to_big_i, "-0085", precision: 4
+      it_converts_to_s (-85).to_big_i, "-00085", precision: 5
+      it_converts_to_s (-85).to_big_i, "-#{"0" * 198}85", precision: 200
+
+      it_converts_to_s 123.to_big_i, "123", precision: 0
+      it_converts_to_s 123.to_big_i, "123", precision: 1
+      it_converts_to_s 123.to_big_i, "123", precision: 2
+      it_converts_to_s 123.to_big_i, "00123", precision: 5
+      it_converts_to_s 123.to_big_i, "#{"0" * 197}123", precision: 200
+
+      a = 2.to_big_i ** 1024 - 1
+      it_converts_to_s a, "#{"1" * 1024}", base: 2, precision: 1023
+      it_converts_to_s a, "#{"1" * 1024}", base: 2, precision: 1024
+      it_converts_to_s a, "0#{"1" * 1024}", base: 2, precision: 1025
+      it_converts_to_s a, "#{"0" * 976}#{"1" * 1024}", base: 2, precision: 2000
+
+      it_converts_to_s (-a), "-#{"1" * 1024}", base: 2, precision: 1023
+      it_converts_to_s (-a), "-#{"1" * 1024}", base: 2, precision: 1024
+      it_converts_to_s (-a), "-0#{"1" * 1024}", base: 2, precision: 1025
+      it_converts_to_s (-a), "-#{"0" * 976}#{"1" * 1024}", base: 2, precision: 2000
+    end
   end
 
   it "does to_big_f" do
@@ -272,19 +451,21 @@ describe "BigInt" do
     a_17 = a * 17
 
     (abc * b).gcd(abc * c).should eq(abc)
+    abc.gcd(a_17).should eq(a)
     (abc * b).lcm(abc * c).should eq(abc * b * c)
     (abc * b).gcd(abc * c).should be_a(BigInt)
 
     (a_17).gcd(17).should eq(17)
-    (17).gcd(a_17).should eq(17)
     (-a_17).gcd(17).should eq(17)
-    (-17).gcd(a_17).should eq(17)
-
-    (a_17).gcd(17).should be_a(Int::Unsigned)
-    (17).gcd(a_17).should be_a(Int::Unsigned)
+    (17).gcd(a_17).should eq(17)
+    (17).gcd(-a_17).should eq(17)
 
     (a_17).lcm(17).should eq(a_17)
+    (-a_17).lcm(17).should eq(a_17)
     (17).lcm(a_17).should eq(a_17)
+    (17).lcm(-a_17).should eq(a_17)
+
+    (a_17).gcd(17).should be_a(Int::Unsigned)
   end
 
   it "can use Number::[]" do
@@ -305,17 +486,86 @@ describe "BigInt" do
     big.to_u16!.should eq(722)
     big.to_u32.should eq(1234567890)
 
+    expect_raises(OverflowError) { BigInt.new(-1234567890).to_u }
+
     u64 = big.to_u64
     u64.should eq(1234567890)
     u64.should be_a(UInt64)
   end
 
-  {% if flag?(:x86_64) %}
-    # For 32 bits libgmp can't seem to be able to do it
-    it "can cast UInt64::MAX to UInt64 (#2264)" do
-      BigInt.new(UInt64::MAX).to_u64.should eq(UInt64::MAX)
+  context "conversion to 64-bit" do
+    it "above 64 bits" do
+      big = BigInt.new("9" * 20)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(7766279631452241919) # 99999999999999999999 - 5*(2**64)
+      big.to_u64!.should eq(7766279631452241919)
+
+      big = BigInt.new("9" * 32)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(-8814407033341083649) # 99999999999999999999999999999999 - 5421010862428*(2**64)
+      big.to_u64!.should eq(9632337040368467967)  # 99999999999999999999999999999999 - 5421010862427*(2**64)
     end
-  {% end %}
+
+    it "between 63 and 64 bits" do
+      big = BigInt.new(i = 9999999999999999999)
+      expect_raises(OverflowError) { big.to_i64 }
+      big.to_u64.should eq(i)
+      big.to_i64!.should eq(-8446744073709551617) # 9999999999999999999 - 2**64
+      big.to_u64!.should eq(i)
+    end
+
+    it "between 32 and 63 bits" do
+      big = BigInt.new(i = 9999999999999)
+      big.to_i64.should eq(i)
+      big.to_u64.should eq(i)
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(i)
+    end
+
+    it "negative under 32 bits" do
+      big = BigInt.new(i = -9999)
+      big.to_i64.should eq(i)
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(18446744073709541617) # -9999 + 2**64
+    end
+
+    it "negative between 32 and 63 bits" do
+      big = BigInt.new(i = -9999999999999)
+      big.to_i64.should eq(i)
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(18446734073709551617) # -9999999999999 + 2**64
+    end
+
+    it "negative between 63 and 64 bits" do
+      big = BigInt.new("-9999999999999999999")
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(8446744073709551617) # -9999999999999999999 + 2**64
+      big.to_u64!.should eq(8446744073709551617)
+    end
+
+    it "negative above 64 bits" do
+      big = BigInt.new("-" + "9" * 20)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(-7766279631452241919) # -9999999999999999999 + 5*(2**64)
+      big.to_u64!.should eq(10680464442257309697) # -9999999999999999999 + 6*(2**64)
+
+      big = BigInt.new("-" + "9" * 32)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(8814407033341083649) # -99999999999999999999999999999999 + 5421010862428*(2**64)
+      big.to_u64!.should eq(8814407033341083649)
+    end
+  end
+
+  it "can cast UInt64::MAX to UInt64 (#2264)" do
+    BigInt.new(UInt64::MAX).to_u64.should eq(UInt64::MAX)
+  end
 
   it "does String#to_big_i" do
     "123456789123456789".to_big_i.should eq(BigInt.new("123456789123456789"))
@@ -333,10 +583,12 @@ describe "BigInt" do
   it "#hash" do
     b1 = 5.to_big_i
     b2 = 5.to_big_i
-    b3 = 6.to_big_i
+    b3 = -6.to_big_i
 
     b1.hash.should eq(b2.hash)
     b1.hash.should_not eq(b3.hash)
+
+    b3.hash.should eq((-6).hash)
   end
 
   it "clones" do
@@ -348,10 +600,46 @@ describe "BigInt" do
     it { BigInt.new("1180591620717411303424").humanize_bytes.should eq("1.0ZiB") }
     it { BigInt.new("1208925819614629174706176").humanize_bytes.should eq("1.0YiB") }
   end
+
+  it "has unsafe_shr (#8691)" do
+    BigInt.new(8).unsafe_shr(1).should eq(4)
+  end
+
+  describe "#digits" do
+    it "works for positive numbers or zero" do
+      0.to_big_i.digits.should eq([0])
+      1.to_big_i.digits.should eq([1])
+      10.to_big_i.digits.should eq([0, 1])
+      123.to_big_i.digits.should eq([3, 2, 1])
+      123456789.to_big_i.digits.should eq([9, 8, 7, 6, 5, 4, 3, 2, 1])
+    end
+
+    it "works with a base" do
+      123.to_big_i.digits(16).should eq([11, 7])
+    end
+
+    it "raises for invalid base" do
+      [1, 0, -1].each do |base|
+        expect_raises(ArgumentError, "Invalid base #{base}") do
+          123.to_big_i.digits(base)
+        end
+      end
+    end
+
+    it "raises for negative numbers" do
+      expect_raises(ArgumentError, "Can't request digits of negative number") do
+        -123.to_big_i.digits
+      end
+    end
+  end
 end
 
 describe "BigInt Math" do
   it "sqrt" do
     Math.sqrt(BigInt.new("1" + "0"*48)).should eq(BigFloat.new("1" + "0"*24))
+  end
+
+  it "isqrt" do
+    Math.isqrt(BigInt.new("1" + "0"*48)).should eq(BigInt.new("1" + "0"*24))
   end
 end

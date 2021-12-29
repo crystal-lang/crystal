@@ -1,19 +1,19 @@
 struct Time::Format
   module Pattern
-    def date_time_iso_8601
+    def date_time_iso_8601 : Nil
       year_month_day_iso_8601
       char? 'T'
       time_iso_8601
     end
 
-    def time_iso_8601
+    def time_iso_8601 : Nil
       hour_minute_second_iso8601
       time_zone_z_or_offset
     end
   end
 
   struct Parser
-    def year_month_day_iso_8601
+    def year_month_day_iso_8601 : Nil
       year
       extended_format = char? '-'
       if current_char == 'W'
@@ -58,7 +58,7 @@ struct Time::Format
       end
     end
 
-    def hour_minute_second_iso8601
+    def hour_minute_second_iso8601 : Nil
       hour_24_zero_padded
       decimal_seconds = Time::SECONDS_PER_HOUR
 
@@ -96,17 +96,17 @@ struct Time::Format
         digits = @reader.pos - pos
         if digits > 6
           # make sure to avoid overflow
-          decimals = decimals / 10_i64 ** (digits - 6)
+          decimals = decimals // 10_i64 ** (digits - 6)
           digits = 6
         end
 
-        @nanosecond_offset = decimals.to_i64 * 10 ** 9 / 10 ** digits * decimal_seconds
+        @nanosecond_offset = decimals.to_i64 * 10 ** 9 // 10 ** digits * decimal_seconds
       end
     end
   end
 
   struct Formatter
-    def year_month_day_iso_8601
+    def year_month_day_iso_8601 : Nil
       year_month_day
     end
 
@@ -132,7 +132,7 @@ struct Time::Format
     end
 
     # Formats a `Time` into a `String`.
-    def self.format(time : Time)
+    def self.format(time : Time) : String
       String.build do |io|
         format(time, io)
       end
@@ -156,7 +156,7 @@ struct Time::Format
     end
 
     # Formats a `Time` into a `String`.
-    def self.format(time : Time)
+    def self.format(time : Time) : String
       String.build do |io|
         format(time, io)
       end
