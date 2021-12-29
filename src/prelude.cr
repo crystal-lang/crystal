@@ -24,9 +24,6 @@ require "indexable"
 require "string"
 require "number"
 require "primitives"
-{% if flag?(:wasm32) %}
-  require "crystal/system/wasm/wasi"
-{% end %}
 
 # Alpha-sorted list
 require "annotations"

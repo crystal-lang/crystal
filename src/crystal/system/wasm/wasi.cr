@@ -1,7 +1,7 @@
 require "./lib_wasi"
 
 module Crystal::System::Wasi
-  @@preopens : Array({String, String, LibWasi::Fd}) = begin
+  PREOPENS = begin
     preopens = [] of {String, String, LibWasi::Fd}
 
     # Skip stdin, stdout, and stderr, and count up until we reach an invalid file descriptor.
@@ -9,10 +9,7 @@ module Crystal::System::Wasi
       stat = uninitialized LibWasi::Prestat
       err = LibWasi.fd_prestat_get(fd, pointerof(stat))
 
-      break if err.badf?
-      unless err.success?
-        raise RuntimeError.from_os_error("fd_prestat_get", err)
-      end
+      break unless err.success?
 
       next unless stat.tag.dir?
 
@@ -40,7 +37,7 @@ module Crystal::System::Wasi
 
   def self.find_path_preopen(path)
     path = ::Path[path].expand.to_s
-    @@preopens.each do |preopen|
+    PREOPENS.each do |preopen|
       case path
       when preopen[0]
         return {preopen[2], "."}
