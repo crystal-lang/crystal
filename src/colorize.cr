@@ -318,7 +318,7 @@ struct Colorize::Object(T)
   end
 
   # Adds *mode* to the text's decorations.
-  def mode(mode : Mode)
+  def mode(mode : Mode) : self
     @mode |= mode
     self
   end
