@@ -214,7 +214,7 @@ module Crystal
           case value.type?
           when IntegerType, EnumType
             interpreter = MathInterpreter.new(namespace, visitor)
-            @compile_time_value = interpreter.interpret(value) rescue nil
+            @compile_time_value = interpreter.interpret?(value)
           end
         end
       end
