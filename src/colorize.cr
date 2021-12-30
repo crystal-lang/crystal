@@ -134,7 +134,7 @@ module Colorize
   # ```
   #
   # NOTE: This is by default disabled on non-TTY devices because they likely don't support ANSI escape codes.
-  # This is also be disabled if the environment variable `TERM` is "dumb".
+  # This will also be disabled if the environment variable `TERM` is "dumb".
   class_property? enabled : Bool = true
 
   # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
