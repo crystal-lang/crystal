@@ -174,7 +174,6 @@ describe "ENV" do
     ENV.delete("FOO")
   end
 
-  
   it "does .clear" do
     tempenv = {"TEST_VAR1" => "/foo/bar:/baz/buz", "TEST_VAR2" => "dummy_value"}
     with_env(tempenv) do
