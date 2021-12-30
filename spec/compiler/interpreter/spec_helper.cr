@@ -20,6 +20,9 @@ def interpret_with_context(code, prelude = "primitives")
 end
 
 # FIXME: The following is a dirty hack to work around GC issues in interpreted programs. https://github.com/crystal-lang/crystal/issues/11602
+# In a nutshell, `interpret_in_separate_process` below calls this same process with an extra option that causes
+# the interpretation of the code from stdin, reading the output from stdout. That string is used as the result of
+# the program being tested.
 def Spec.option_parser
   option_parser = previous_def
   option_parser.on("", "--interpret-code PRELUDE", "Execute interpreted code") do |prelude|
