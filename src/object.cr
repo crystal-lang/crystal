@@ -225,8 +225,9 @@ class Object
   # This method can be used to remove `Nil` from a union type.
   # However, it should be avoided if possible and is often considered a code smell.
   # Usually, you can write code in a way that the compiler can safely exclude `Nil` types,
-  # for example using [`if var`](https://crystal-lang.org/reference/syntax_and_semantics/if_var.html`).
-  # `not_nil!` is only meant as a last resort when no other solution is possible.
+  # for example using [`if var`](https://crystal-lang.org/reference/syntax_and_semantics/if_var.html).
+  # `not_nil!` is only meant as a last resort when there's no other way to explain this to the compiler.
+  # Either way, consider instead raising a concrete exception with a descriptive message.
   def not_nil!
     self
   end
