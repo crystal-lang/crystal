@@ -238,21 +238,16 @@ module Colorize
     Reverse
     # Makes the text invisible.
     Hidden
-
-    def code : Char
-      case self
-      when .none?           then '0'
-      when .bold?, .bright? then '1'
-      when .dim?            then '2'
-      when .underline?      then '4'
-      when .blink?          then '5'
-      when .reverse?        then '7'
-      when .hidden?         then '8'
-      else
-        raise "unreachable"
-      end
-    end
   end
+end
+
+private def each_code(mode : Colorize::Mode)
+  yield '1' if mode.bold?
+  yield '2' if mode.dim?
+  yield '4' if mode.underline?
+  yield '5' if mode.blink?
+  yield '7' if mode.reverse?
+  yield '8' if mode.hidden?
 end
 
 struct Colorize::Object(T)
@@ -400,7 +395,7 @@ struct Colorize::Object(T)
       printed = false
 
       unless last_color_is_default
-        io << Mode::None.code
+        io << '0'
         printed = true
       end
 
@@ -416,22 +411,10 @@ struct Colorize::Object(T)
         printed = true
       end
 
-      unless mode.none?
-        printed_bright = false
-        mode.each do |flag|
-          # Enum#each yields each member flag. Bright and bold have the same value
-          # and would show up as duplicate, so we need to handle this special case.
-          if flag.bright?
-            if printed_bright
-              next
-            else
-              printed_bright = true
-            end
-          end
-          io << ';' if printed
-          io << flag.code
-          printed = true
-        end
+      each_code(mode) do |code|
+        io << ';' if printed
+        io << code
+        printed = true
       end
 
       io << 'm'
