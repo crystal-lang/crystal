@@ -1432,7 +1432,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when Call
       # lib external var
       external = exp.dependencies.first.as(External)
-      lib_type = external.owner.as(LibType)
       fn = @context.c_function(external.real_name)
 
       # Put the symbol address, which is a pointer
@@ -1763,8 +1762,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       return false
     end
 
-    if obj && (obj_type = obj.type).is_a?(LibType)
-      compile_lib_call(node, obj_type)
+    if obj.try(&.type).is_a?(LibType)
+      compile_lib_call(node)
       return false
     end
 
@@ -1795,7 +1794,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  private def compile_lib_call(node : Call, obj_type)
+  private def compile_lib_call(node : Call)
     target_def = node.target_def
     external = target_def.as(External)
 
