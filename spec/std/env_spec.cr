@@ -239,7 +239,7 @@ describe "ENV" do
           when /AAA/ then old
           when /BBB/ then new
           when /CCC/ then nil
-          when /FFF/ then old + new
+          when /FFF/ then "#{old}#{new}"
           else            name
           end
         end

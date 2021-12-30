@@ -1,15 +1,10 @@
 def with_env(values : Hash)
   old_values = ENV.to_h
   begin
-    values.each do |key, value|
-      key = key.to_s
-      ENV[key] = value
-    end
+    ENV.merge! values
     yield
   ensure
-    old_values.each do |key, old_value|
-      ENV[key] = old_value
-    end
+    ENV.replace old_values
   end
 end
 
