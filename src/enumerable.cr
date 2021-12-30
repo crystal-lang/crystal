@@ -34,7 +34,7 @@ module Enumerable(T)
   end
 
   class NotFoundError < Exception
-    def initialize(message = "No matching elements")
+    def initialize(message = "Element not found")
       super(message)
     end
   end
