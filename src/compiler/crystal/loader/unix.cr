@@ -30,6 +30,8 @@ class Crystal::Loader
   def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths) : self
     libnames = [] of String
     file_paths = [] of String
+
+    # OptionParser removes items from the args array, so we dup it here in order to produce a meaningful error message.
     OptionParser.parse(args.dup) do |parser|
       parser.on("-L DIRECTORY", "--library-path DIRECTORY", "Add DIRECTORY to library search path") do |directory|
         search_paths << directory
