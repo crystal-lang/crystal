@@ -4,16 +4,16 @@ require "compiler/crystal/interpreter/*"
 
 def interpret(code, *, prelude = "primitives")
   if prelude == "primitives"
-    context, value = interpret_with_context(code, prelude)
+    context, value = interpret_with_context(code)
     value.value
   else
     interpret_in_separate_process(code, prelude)
   end
 end
 
-def interpret_with_context(code, prelude = "primitives")
+def interpret_with_context(code)
   repl = Crystal::Repl.new
-  repl.prelude = prelude
+  repl.prelude = "primitives"
 
   value = repl.run_code(code)
   {repl.context, value}
