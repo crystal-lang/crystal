@@ -470,7 +470,7 @@ module Enumerable(T)
     obj
   end
 
-  # Returns the first element in the collection for which the passed block is `true`.
+  # Returns the first element in the collection for which the passed block is truthy.
   #
   # Accepts an optional parameter *if_none*, to set what gets returned if
   # no element is found (defaults to `nil`).
@@ -487,8 +487,8 @@ module Enumerable(T)
     if_none
   end
 
-  # Returns the first element in the collection for which the passed block is `true`.
-  # Raises `Enumerable::NotFoundError` if there are no element for which the block is `true`.
+  # Returns the first element in the collection for which the passed block is truthy.
+  # Raises `Enumerable::NotFoundError` if there is no element for which the block is truthy.
   #
   # ```
   # [1, 2, 3, 4].find! { |i| i > 2 } # => 3
@@ -639,13 +639,13 @@ module Enumerable(T)
     any? { |e| e == obj }
   end
 
-  # Returns the index of the first element for which the passed block returns `true`.
+  # Returns the index of the first element for which the passed block is truthy.
   #
   # ```
   # ["Alice", "Bob"].index { |name| name.size < 4 } # => 1 (Bob's index)
   # ```
   #
-  # Returns `nil` if the block didn't return `true` for any element.
+  # Returns `nil` if the block is not truthy for any element.
   def index(& : T ->) : Int32?
     each_with_index do |e, i|
       return i if yield e
@@ -653,7 +653,7 @@ module Enumerable(T)
     nil
   end
 
-  # Returns the index of the object *obj* in the collection.
+  # Returns the first index of *obj* in the collection.
   #
   # ```
   # ["Alice", "Bob"].index("Alice") # => 0
@@ -664,24 +664,24 @@ module Enumerable(T)
     index { |e| e == obj }
   end
 
-  # Returns the index of the first element for which the passed block returns `true`.
+  # Returns the index of the first element for which the passed block is truthy.
   #
   # ```
   # ["Alice", "Bob"].index! { |name| name.size < 4 } # => 1 (Bob's index)
   # ```
   #
-  # Raises `Enumerable::NotFoundError` if there are no element for which the block is `true`.
+  # Raises `Enumerable::NotFoundError` if there is no element for which the block is truthy.
   def index!(& : T ->) : Int32
     index { |e| yield e } || raise Enumerable::NotFoundError.new
   end
 
-  # Returns the index of the object *obj* in the collection.
+  # Returns the first index of *obj* in the collection.
   #
   # ```
   # ["Alice", "Bob"].index!("Alice") # => 0
   # ```
   #
-  # Raises `Enumerable::NotFoundError` if there are no element for which the block is `true`.
+  # Raises `Enumerable::NotFoundError` if *obj* is not in the collection.
   def index!(obj) : Int32
     index! { |e| e == obj }
   end
