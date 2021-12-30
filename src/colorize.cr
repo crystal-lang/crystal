@@ -389,8 +389,7 @@ struct Colorize::Object(T)
   #   io << " string"
   # end
   #
-  # io.to_s # => "colorful hello world string"
-  # # Where "colorful" is red, "hello" green, "world" blue and " string" red again
+  # io.to_s # returns a colorful string where "colorful" is red, "hello" green, "world" blue and " string" red again
   # ```
   def surround(io = STDOUT)
     return yield io unless @enabled
