@@ -19,14 +19,6 @@ lib LibC
   O_RDWR     = O_RDONLY | O_WRONLY
   O_WRONLY   = 0x10000000
 
-  struct Flock
-    l_type : Short
-    l_whence : Short
-    l_start : OffT
-    l_len : OffT
-    l_pid : PidT
-  end
-
   fun fcntl(x0 : Int, x1 : Int, ...) : Int
   fun open(x0 : Char*, x1 : Int, ...) : Int
 end

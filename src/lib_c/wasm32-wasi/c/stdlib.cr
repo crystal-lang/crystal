@@ -1,5 +1,4 @@
 require "./stddef"
-require "./sys/wait"
 
 lib LibC
   struct DivT

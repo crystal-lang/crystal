@@ -1,5 +1,3 @@
-require "c/sys/mman"
-
 module Crystal::System::Fiber
   def self.allocate_stack(stack_size) : Void*
     LibC.malloc(stack_size)

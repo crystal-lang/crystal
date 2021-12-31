@@ -1,8 +1,5 @@
-require "c/signal"
 require "c/stdlib"
-require "c/sys/resource"
 require "c/unistd"
-require "file/error"
 
 struct Crystal::System::Process
   getter pid : LibC::PidT
