@@ -27,8 +27,11 @@ def Spec.option_parser
   option_parser = previous_def
   option_parser.on("", "--interpret-code PRELUDE", "Execute interpreted code") do |prelude|
     code = STDIN.gets_to_end
-    _, value = interpret_with_context(code, prelude)
-    print value
+
+    repl = Crystal::Repl.new
+    repl.prelude = "primitives"
+
+    print repl.run_code(code)
     exit
   end
   option_parser
