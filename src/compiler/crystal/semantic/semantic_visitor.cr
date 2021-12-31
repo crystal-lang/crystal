@@ -547,7 +547,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   def interpret_enum_value(node : ASTNode, target_type : IntegerType? = nil)
     MathInterpreter
       .new(current_type, self, target_type)
-      .interpret(node)
+      .interpret(node) { |error| raise error }
   end
 
   def inside_exp?

@@ -254,12 +254,10 @@ class Crystal::Type
           case type
           when Const
             interpreter = MathInterpreter.new(@root)
-            begin
-              num = interpreter.interpret(type.value)
-              type_vars << NumberLiteral.new(num)
-            rescue ex : Crystal::CodeError
-              type_var.raise "expanding constant value for a number value", inner: ex
+            num = interpreter.interpret(type.value) do |error|
+              type_var.raise "expanding constant value for a number value", inner: error
             end
+            type_vars << NumberLiteral.new(num)
             next
           when ASTNode
             type_vars << type
