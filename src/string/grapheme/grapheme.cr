@@ -104,6 +104,7 @@ class String
   # The algorithm to determine boundaries between grapheme clusters is specified
   # in the [Unicode Standard Annex #29](https://www.unicode.org/reports/tr29/tr29-37.html#Grapheme_Cluster_Boundaries),
   # and implemented in Version Unicode 13.0.0.
+  @[Experimental("The grapheme API is still under development. Join the discussion at [#11610](https://github.com/crystal-lang/crystal/issues/11610).")]
   struct Grapheme
     # For efficency reasons we avoid allocating a string for graphemes consisting
     # of only a single character.

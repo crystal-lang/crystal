@@ -9,6 +9,8 @@ require "./syscall"
   end
 
   module Crystal::System::Syscall
+    GRND_NONBLOCK = 1u32
+
     # TODO: Implement syscall for interpreter
     def self.getrandom(buf : UInt8*, buflen : LibC::SizeT, flags : UInt32) : LibC::SSizeT
       LibC.getrandom(buf, buflen, flags)

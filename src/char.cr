@@ -876,10 +876,11 @@ struct Char
   # 'あ'.to_s # => "あ"
   # ```
   def to_s : String
-    String.new(4) do |buffer|
+    bytesize = self.bytesize
+    String.new(bytesize) do |buffer|
       appender = buffer.appender
       each_byte { |byte| appender << byte }
-      {appender.size, 1}
+      {bytesize, 1}
     end
   end
 
