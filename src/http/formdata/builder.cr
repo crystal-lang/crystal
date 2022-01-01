@@ -76,11 +76,11 @@ module HTTP::FormData
     # generated multipart message written to the IO is considered valid.
     def finish : Nil
       case @state
-      when .start?
+      in .start?
         fail "Cannot finish form-data: no body parts"
-      when .finished?
+      in .finished?
         fail "Cannot finish form-data: already finished"
-      else
+      in .field?
         @io << "\r\n--" << @boundary << "--"
         @state = State::FINISHED
       end

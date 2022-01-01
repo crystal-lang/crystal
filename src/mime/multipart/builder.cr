@@ -160,15 +160,17 @@ module MIME::Multipart
     # Can be called multiple times to append to the preamble multiple times.
     def epilogue
       case @state
-      when .start?, .preamble?
+      in .start?, .preamble?
         fail "Cannot generate epilogue: no body parts"
-      when .finished?
+      in .finished?
         fail "Cannot generate epilogue: already finished"
-      when .epilogue?
+      in .epilogue?
         # do nothing
-      else
+      in .body_part?
         # We need to send the end boundary
         @io << "\r\n--" << @boundary << "--\r\n"
+      in .errored?
+        fail "BUG: unexpected error state"
       end
 
       yield @io
@@ -180,13 +182,17 @@ module MIME::Multipart
     # end the multipart message.
     def finish : Nil
       case @state
-      when .start?, .preamble?
+      in .start?, .preamble?
         fail "Cannot finish multipart: no body parts"
-      when .finished?
+      in .finished?
         fail "Cannot finish multipart: already finished"
-      when .body_part?
+      in .body_part?
         # We need to send the end boundary
         @io << "\r\n--" << @boundary << "--"
+      in .epilogue?
+        # do nothing
+      in .errored?
+        fail "BUG: unexpected error state"
       end
 
       @state = State::FINISHED
