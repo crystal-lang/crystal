@@ -29,7 +29,7 @@ def Spec.option_parser
     code = STDIN.gets_to_end
 
     repl = Crystal::Repl.new
-    repl.prelude = "primitives"
+    repl.prelude = prelude
 
     print repl.run_code(code)
     exit
