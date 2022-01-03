@@ -132,6 +132,7 @@ struct UUID
   end
 
   # Generates an empty UUID.
+  #
   # ```
   # UUID.empty # => UUID(00000000-0000-4000-0000-000000000000)
   # ```
