@@ -794,6 +794,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     const.private = true if target.visibility.private?
 
     process_annotations(annotations) do |annotation_type, ann|
+      # annotations on constants are inaccessible in macros so we only add deprecations
       const.add_annotation(annotation_type, ann) if annotation_type == @program.deprecated_annotation
     end
 
