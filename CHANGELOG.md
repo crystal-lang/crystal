@@ -4,7 +4,7 @@
 
 - Parser: allow keyword as named argument inside macros ([#10377](https://github.com/crystal-lang/crystal/pull/10377), thanks @asterite)
 - Disable specs for `StaticArray#sort_by` on broken targets ([#11359](https://github.com/crystal-lang/crystal/pull/11359), thanks @straight-shoota)
-- Parser: add missing end location to IsA node ([#11351](https://github.com/crystal-lang/crystal/pull/11351), thanks @FnControlOption)
+- Parser: add missing end location to `IsA` node ([#11351](https://github.com/crystal-lang/crystal/pull/11351), thanks @FnControlOption)
 - Attach debug locations to auto-generated `initialize` methods ([#11313](https://github.com/crystal-lang/crystal/pull/11313), thanks @HertzDevil)
 - Fix node locations for `ProcLiteral`s with parameters ([#11365](https://github.com/crystal-lang/crystal/pull/11365), thanks @HertzDevil)
 - Show proper owner for `Class`'s methods in error messages ([#10590](https://github.com/crystal-lang/crystal/pull/10590), thanks @HertzDevil)
@@ -15,7 +15,7 @@
 - Be more strict about `ProcNotation` variable declarations ([#11372](https://github.com/crystal-lang/crystal/pull/11372), thanks @HertzDevil)
 - Report syntax error for too-long bin/hex/oct integer literals ([#11447](https://github.com/crystal-lang/crystal/pull/11447), thanks @oprypin)
 - Allow metaclass parameters in `Proc` literals and pointers ([#11367](https://github.com/crystal-lang/crystal/pull/11367), thanks @HertzDevil)
-- [lexer] Correctly increase nesting for escaped macro "unless" ([#11440](https://github.com/crystal-lang/crystal/pull/11440), thanks @rymiel)
+- [lexer] Correctly increase nesting for escaped macro `unless` ([#11440](https://github.com/crystal-lang/crystal/pull/11440), thanks @rymiel)
 - Show proper syntax errors in some edge cases in the parser ([#11446](https://github.com/crystal-lang/crystal/pull/11446), thanks @oprypin)
 - Fix parse yield with parenthesis ([#11469](https://github.com/crystal-lang/crystal/pull/11469), thanks @straight-shoota)
 - Replace `semantic` with `assert_no_errors` in compiler specs whenever possible ([#11288](https://github.com/crystal-lang/crystal/pull/11288), thanks @HertzDevil)
@@ -34,7 +34,7 @@
 - Disable incremental linking on MSVC ([#11552](https://github.com/crystal-lang/crystal/pull/11552), thanks @HertzDevil)
 - Allow multiple `--emit` compiler options to stack ([#11556](https://github.com/crystal-lang/crystal/pull/11556), thanks @HertzDevil)
 - Refactor some type restrictions in the compiler ([#11531](https://github.com/crystal-lang/crystal/pull/11531), thanks @straight-shoota)
-- crystal i ([#11159](https://github.com/crystal-lang/crystal/pull/11159), thanks @asterite)
+- `crystal i`, a Crystal interpreter ([#11159](https://github.com/crystal-lang/crystal/pull/11159), thanks @asterite)
 - Detect `cl.exe`'s path for compiler specs requiring a C compiler ([#11560](https://github.com/crystal-lang/crystal/pull/11560), thanks @HertzDevil)
 - Add minimal load-time DLL support on Windows, support `dllimport` storage class ([#11573](https://github.com/crystal-lang/crystal/pull/11573), thanks @HertzDevil)
 - Increase default stack size on MSVC to 8 MB ([#11569](https://github.com/crystal-lang/crystal/pull/11569), thanks @HertzDevil)
@@ -46,7 +46,7 @@
 - **(breaking-change)** Require right-hand side of one-to-many assignments to be `Indexable` ([#11545](https://github.com/crystal-lang/crystal/pull/11545), thanks @HertzDevil)
 - Support splats on left-hand sides of multiple assignment expressions ([#10410](https://github.com/crystal-lang/crystal/pull/10410), thanks @HertzDevil)
 - Make all AST nodes immutable through container-returning methods ([#11397](https://github.com/crystal-lang/crystal/pull/11397), thanks @HertzDevil)
-- Add auto upcast for integer and float values ([#11431](https://github.com/crystal-lang/crystal/pull/11431), [#11529](https://github.com/crystal-lang/crystal/pull/11529), thanks @beta-ziliani)
+- Add auto upcast for integer and float values ([#11431](https://github.com/crystal-lang/crystal/pull/11431), [#11529](https://github.com/crystal-lang/crystal/pull/11529), thanks @asterite, @beta-ziliani)
 
 ## Standard Library
 
@@ -61,7 +61,7 @@
 - **(breaking-change)** Always use `start` as parameter in subrange-accepting methods ([#11350](https://github.com/crystal-lang/crystal/pull/11350), thanks @HertzDevil)
 - **(breaking-change)** Refactor `Indexable::Mutable#fill`'s overloads ([#11368](https://github.com/crystal-lang/crystal/pull/11368), thanks @HertzDevil)
 - Add sorting methods to `StaticArray` ([#10889](https://github.com/crystal-lang/crystal/pull/10889), thanks @HertzDevil)
-- Add spaceship operator to StaticArray ([#11364](https://github.com/crystal-lang/crystal/pull/11364), thanks @henrikac)
+- Add spaceship operator to `StaticArray` ([#11364](https://github.com/crystal-lang/crystal/pull/11364), thanks @henrikac)
 - **(performance)** Optimize `BitArray#reverse!` ([#11363](https://github.com/crystal-lang/crystal/pull/11363), thanks @HertzDevil)
 - **(performance)** Grow large arrays more slowly ([#11482](https://github.com/crystal-lang/crystal/pull/11482), thanks @mgomes)
 - Fix docs for `Indexable::Mutable#map!` ([#11349](https://github.com/crystal-lang/crystal/pull/11349), thanks @HertzDevil)
@@ -99,8 +99,8 @@
 - Fix flag for UNIX-like OS ([#11382](https://github.com/crystal-lang/crystal/pull/11382), thanks @straight-shoota)
 - Add more `check_headers` to `HTTP::Server::Response` ([#11253](https://github.com/crystal-lang/crystal/pull/11253), thanks @straight-shoota)
 - Enable `LogHandler` address for win32 ([#11465](https://github.com/crystal-lang/crystal/pull/11465), thanks @straight-shoota)
-- Test enable some specs ([#11467](https://github.com/crystal-lang/crystal/pull/11467), thanks @straight-shoota)
-- TCPServer: explain how to get an ephermal port ([#11407](https://github.com/crystal-lang/crystal/pull/11407), thanks @rdp)
+- Enable two specs to run on all platforms ([#11467](https://github.com/crystal-lang/crystal/pull/11467), thanks @straight-shoota)
+- `TCPServer`: explain how to get an ephermal port ([#11407](https://github.com/crystal-lang/crystal/pull/11407), thanks @rdp)
 
 ### Numeric
 
@@ -117,7 +117,7 @@
 ### Runtime
 
 - GC/Boehm: Silence GC warnings about big allocations. ([#11289](https://github.com/crystal-lang/crystal/pull/11289), thanks @yxhuvud)
-- Disable pending spec on win32 ([#11451](https://github.com/crystal-lang/crystal/pull/11451), thanks @straight-shoota)
+- Disable impossible spec on win32, previously marked as pending ([#11451](https://github.com/crystal-lang/crystal/pull/11451), thanks @straight-shoota)
 - Support call stacks on Windows ([#11461](https://github.com/crystal-lang/crystal/pull/11461), thanks @HertzDevil)
 - Make Windows PDB lookup relative to running executable ([#11493](https://github.com/crystal-lang/crystal/pull/11493), thanks @HertzDevil)
 
