@@ -793,6 +793,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     const = Const.new(@program, scope, name, value)
     const.private = true if target.visibility.private?
 
+    process_annotations(annotations) do |annotation_type, ann|
+      const.add_annotation(annotation_type, ann) if annotation_type == @program.deprecated_annotation
+    end
+
     check_ditto node, node.location
     attach_doc const, node, annotations
 
