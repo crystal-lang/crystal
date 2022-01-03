@@ -166,7 +166,8 @@ struct UUID
     end
   end
 
-  # Returns version based on [RFC4122 format](https://datatracker.ietf.org/doc/html/rfc4122#section-4.1). See also `#variant`.
+  # Returns version based on [RFC4122 format](https://datatracker.ietf.org/doc/html/rfc4122#section-4.1).
+  # See also `#variant`.
   #
   # ```
   # require "uuid"
