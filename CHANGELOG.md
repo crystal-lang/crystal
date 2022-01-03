@@ -17,7 +17,7 @@
 - Allow metaclass parameters in `Proc` literals and pointers ([#11367](https://github.com/crystal-lang/crystal/pull/11367), thanks @HertzDevil)
 - [lexer] Correctly increase nesting for escaped macro `unless` ([#11440](https://github.com/crystal-lang/crystal/pull/11440), thanks @rymiel)
 - Show proper syntax errors in some edge cases in the parser ([#11446](https://github.com/crystal-lang/crystal/pull/11446), thanks @oprypin)
-- Fix parse yield with parenthesis ([#11469](https://github.com/crystal-lang/crystal/pull/11469), thanks @straight-shoota)
+- Fix parse `yield` with parenthesis ([#11469](https://github.com/crystal-lang/crystal/pull/11469), thanks @straight-shoota)
 - Replace `semantic` with `assert_no_errors` in compiler specs whenever possible ([#11288](https://github.com/crystal-lang/crystal/pull/11288), thanks @HertzDevil)
 - Make `inject_primitives = false` default for semantic specs  ([#11297](https://github.com/crystal-lang/crystal/pull/11297), thanks @HertzDevil)
 - Add spec for #8428 ([#10073](https://github.com/crystal-lang/crystal/pull/10073), thanks @docelic)
@@ -28,7 +28,7 @@
 - Unify format of "unexpected token" error ([#11473](https://github.com/crystal-lang/crystal/pull/11473), thanks @straight-shoota)
 - Automatically detect MSVC tools on Windows via `vswhere` ([#11496](https://github.com/crystal-lang/crystal/pull/11496), thanks @HertzDevil)
 - Add `Crystal::Loader` ([#11434](https://github.com/crystal-lang/crystal/pull/11434), thanks @straight-shoota)
-- Lexer number parsing refactor (int128 literals part 2) ([#11211](https://github.com/crystal-lang/crystal/pull/11211), thanks @BlobCodes)
+- Lexer number parsing refactor ([#11211](https://github.com/crystal-lang/crystal/pull/11211), thanks @BlobCodes)
 - Implement FFI bindings ([#11475](https://github.com/crystal-lang/crystal/pull/11475), thanks @straight-shoota)
 - Clean up .pdb files for temporary executables on MSVC ([#11553](https://github.com/crystal-lang/crystal/pull/11553), thanks @HertzDevil)
 - Disable incremental linking on MSVC ([#11552](https://github.com/crystal-lang/crystal/pull/11552), thanks @HertzDevil)
@@ -136,8 +136,8 @@
 
 ### Text
 
-- Regex: use PCRE_UCP ([#11265](https://github.com/crystal-lang/crystal/pull/11265), thanks @asterite)
-- Add missing 'it' in UUID spec ([#11353](https://github.com/crystal-lang/crystal/pull/11353), thanks @darkstego)
+- Regex: use `PCRE_UCP` ([#11265](https://github.com/crystal-lang/crystal/pull/11265), thanks @asterite)
+- Add missing `it` in `UUID` spec ([#11353](https://github.com/crystal-lang/crystal/pull/11353), thanks @darkstego)
 - Add `Char#unicode_escape` and fix `#dump` and `#inspect` format ([#11421](https://github.com/crystal-lang/crystal/pull/11421), thanks @straight-shoota)
 - Fix `Char#letter?` to include all letter categories ([#11474](https://github.com/crystal-lang/crystal/pull/11474), thanks @straight-shoota)
 - Pass JIT Compile flag to `study` ([#11325](https://github.com/crystal-lang/crystal/pull/11325), thanks @Blacksmoke16)
@@ -163,7 +163,7 @@
 
 ## Other
 
-- Update previous Crystal release1.2.2 ([#11430](https://github.com/crystal-lang/crystal/pull/11430), thanks @straight-shoota)
+- Update previous Crystal release - 1.2.2 ([#11430](https://github.com/crystal-lang/crystal/pull/11430), thanks @straight-shoota)
 - Prepare 1.3.0-dev ([#11317](https://github.com/crystal-lang/crystal/pull/11317), thanks @straight-shoota)
 - [CI] Fix `test_dist_linux_on_docker` ([#11512](https://github.com/crystal-lang/crystal/pull/11512), thanks @straight-shoota)
 - Improve compiler spec helpers for macro methods ([#11139](https://github.com/crystal-lang/crystal/pull/11139), thanks @HertzDevil)
@@ -175,7 +175,7 @@
 - Update license template ([#11498](https://github.com/crystal-lang/crystal/pull/11498), thanks @taupiqueur)
 - Pin alpine repo for ssl libs to 3.15 ([#11500](https://github.com/crystal-lang/crystal/pull/11500), thanks @straight-shoota)
 - Don't generate PDB for MPIR on Windows ([#11521](https://github.com/crystal-lang/crystal/pull/11521), thanks @HertzDevil)
-- [Makefile] Check for LLVM_CONFIG only when LLVM is used ([#11519](https://github.com/crystal-lang/crystal/pull/11519), thanks @straight-shoota)
+- [Makefile] Check for `LLVM_CONFIG` only when LLVM is used ([#11519](https://github.com/crystal-lang/crystal/pull/11519), thanks @straight-shoota)
 - Update distribution-scripts ([#11514](https://github.com/crystal-lang/crystal/pull/11514), [#11515](https://github.com/crystal-lang/crystal/pull/11515), thanks @straight-shoota)
 - Add commit hash to Windows builds ([#11538](https://github.com/crystal-lang/crystal/pull/11538), thanks @HertzDevil)
 - Support BuildTools and other VS variants in vswhere detection ([#11534](https://github.com/crystal-lang/crystal/pull/11534), thanks @neatorobito)
