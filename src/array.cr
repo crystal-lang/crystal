@@ -1383,6 +1383,7 @@ class Array(T)
 
   # Replaces the contents of `self` with the contents of *other*.
   # This resizes the Array to a greater capacity but does not free memory if the given array is smaller.
+  #
   # ```
   # a1 = [1, 2, 3]
   # a1.replace([1])
