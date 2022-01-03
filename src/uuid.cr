@@ -140,7 +140,8 @@ struct UUID
     new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
   end
 
-  # Returns UUID variant based on the [RFC4122 format](https://datatracker.ietf.org/doc/html/rfc4122#section-4.1). See also `#version`
+  # Returns UUID variant based on the [RFC4122 format](https://datatracker.ietf.org/doc/html/rfc4122#section-4.1).
+  # See also `#version`
   #
   # ```
   # require "uuid"
