@@ -253,6 +253,7 @@ class Crystal::Type
           type = @root.lookup_path(type_var)
           case type
           when Const
+            program.check_deprecated_constant(type, type_var)
             interpreter = MathInterpreter.new(@root)
             begin
               num = interpreter.interpret(type.value)
