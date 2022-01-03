@@ -189,12 +189,22 @@ module Unicode
 
   # :nodoc:
   def self.letter?(char : Char) : Bool
-    in_any_category?(char.ord, category_Lu, category_Ll, category_Lt)
+    in_any_category?(char.ord, category_Lu, category_Ll, category_Lt, category_Lm, category_Lo)
   end
 
   # :nodoc:
   def self.number?(char : Char) : Bool
     in_any_category?(char.ord, category_Nd, category_Nl, category_No)
+  end
+
+  # :nodoc:
+  def self.number_digit?(char : Char) : Bool
+    in_any_category?(char.ord, category_Nd)
+  end
+
+  # :nodoc:
+  def self.number_letter?(char : Char) : Bool
+    in_any_category?(char.ord, category_Nl)
   end
 
   # :nodoc:
@@ -208,8 +218,23 @@ module Unicode
   end
 
   # :nodoc:
+  def self.punctuation_connector?(char : Char) : Bool
+    in_any_category?(char.ord, category_Pc)
+  end
+
+  # :nodoc:
   def self.mark?(char : Char) : Bool
     in_any_category?(char.ord, category_Mn, category_Me, category_Mc)
+  end
+
+  # :nodoc:
+  def self.mark_nonspacing?(char : Char) : Bool
+    in_any_category?(char.ord, category_Mn)
+  end
+
+  # :nodoc:
+  def self.mark_spacing_combining?(char : Char) : Bool
+    in_any_category?(char.ord, category_Mc)
   end
 
   private def self.search_ranges(haystack, needle)

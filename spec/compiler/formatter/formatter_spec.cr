@@ -647,6 +647,8 @@ describe Crystal::Formatter do
 
   assert_format "a , b  = 1  ,  2", "a, b = 1, 2"
   assert_format "a[1] , b[2] = 1  ,  2", "a[1], b[2] = 1, 2"
+  assert_format " * a = 1 ", "*a = 1"
+  assert_format " _ , *_ ,\na.foo  ,a.bar  =  1  ,  2,3", "_, *_, a.foo, a.bar = 1, 2, 3"
   assert_format "あ.い, う.え.お = 1, 2"
 
   assert_format "begin\n1\nensure\n2\nend", "begin\n  1\nensure\n  2\nend"
@@ -778,6 +780,7 @@ describe Crystal::Formatter do
   assert_format "foo = 1\n->foo.bar=(Int32)"
   assert_format "foo = 1\n->foo.[](Int32)"
   assert_format "foo = 1\n->foo.[]=(Int32)"
+
   assert_format "->{ x }"
   assert_format "->{\nx\n}", "->{\n  x\n}"
   assert_format "->do\nx\nend", "->do\n  x\nend"
@@ -785,6 +788,12 @@ describe Crystal::Formatter do
   assert_format "->() do x end", "->do x end"
   assert_format "->( x , y )   { x }", "->(x, y) { x }"
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
+  assert_format "->{}"
+
+  assert_format "-> : Int32 {}"
+  assert_format "->\n:\nInt32\n{\n}", "-> : Int32 {\n}"
+  assert_format "->( x )\n:\nInt32 { }", "->(x) : Int32 {}"
+  assert_format "->: Int32 do\nx\nend", "-> : Int32 do\n  x\nend"
 
   {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :&+, :&-, :&*, :&**}.each do |sym|
     assert_format ":#{sym}"
@@ -923,6 +932,9 @@ describe Crystal::Formatter do
   assert_format "foo(\n# x\n1,\n\n# y\nz: 2\n)", "foo(\n  # x\n  1,\n\n  # y\n  z: 2\n)"
   assert_format "foo(\n# x\n1,\n\n# y\nz: 2,\n\n# a\nb: 3)", "foo(\n  # x\n  1,\n\n  # y\n  z: 2,\n\n  # a\n  b: 3)"
   assert_format "foo(\n 1, # hola\n2, # chau\n )", "foo(\n  1, # hola\n  2, # chau\n)"
+  assert_format "foo (1)", "foo(1)"
+  assert_format "foo (1), 2"
+  assert_format "foo (1; 2)"
   assert_format "def foo(\n\n#foo\nx,\n\n#bar\nz\n)\nend", "def foo(\n  # foo\n  x,\n\n  # bar\n  z\n)\nend"
   assert_format "def foo(\nx, #foo\nz #bar\n)\nend", "def foo(\n  x, # foo\n  z  # bar\n)\nend"
   assert_format "a = 1;;; b = 2", "a = 1; b = 2"
@@ -1879,5 +1891,34 @@ describe Crystal::Formatter do
     foo = {1, {2,
                3},
            4}
+    CODE
+
+  # #10817
+  assert_format <<-CODE
+    def func # comment
+      (1 + 2) / 3
+    end
+    CODE
+
+  # #10943
+  assert_format <<-CODE
+    foo do # a
+      # b
+      bar
+    end
+    CODE
+
+  # #10499
+  assert_format <<-CODE
+    case nil
+    else nil; nil # comment
+    end
+    CODE
+
+  assert_format <<-CODE
+    case nil
+    else nil; nil
+    # comment
+    end
     CODE
 end

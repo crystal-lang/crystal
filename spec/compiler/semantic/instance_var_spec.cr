@@ -775,6 +775,22 @@ describe "Semantic: instance var" do
       )) { named_tuple_of({"x": int32, "y": string}) }
   end
 
+  it "infers type from proc literal with return type" do
+    assert_type(<<-CR) { proc_of([int32, bool, string]) }
+      class Foo
+        def initialize
+          @x = ->(x : Int32, y : Bool) : String { "" }
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      CR
+  end
+
   it "infers type from new expression" do
     assert_type(%(
       class Bar

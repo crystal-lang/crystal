@@ -36,7 +36,7 @@ describe Spec::ExampleGroup do
 
       grand_child.report(:fail, "oops", "f.cr", 3, nil, nil)
 
-      root.@results[:fail].first.description.should eq("child grand_child oops")
+      root.results_for(:fail).first.description.should eq("child grand_child oops")
     end
   end
 end

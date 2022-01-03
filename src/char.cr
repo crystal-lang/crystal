@@ -239,6 +239,9 @@ struct Char
 
   # Returns `true` if this char is a letter.
   #
+  # All codepoints in the Unicode General Category `L` (Letter) are considered
+  # a letter.
+  #
   # ```
   # 'c'.letter? # => true
   # 'á'.letter? # => true
@@ -447,29 +450,71 @@ struct Char
     hasher.char(self)
   end
 
-  # Returns a Char that is one codepoint bigger than this char's codepoint.
+  # Returns the successor codepoint after this one.
+  #
+  # This can be used for iterating a range of characters (see `Range#each`).
   #
   # ```
   # 'a'.succ # => 'b'
   # 'あ'.succ # => 'ぃ'
   # ```
   #
-  # This method allows creating a `Range` of chars.
+  # This does not always return `codepoint + 1`. There is a gap in the
+  # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
+  #
+  # ```
+  # '\uD7FF'.succ # => '\uE000'
+  # ```
+  #
+  # Raises `OverflowError` for `Char::MAX`.
+  #
+  # * `#pred` returns the predecessor codepoint.
   def succ : Char
-    (ord + 1).chr
+    case self
+    when '\uD7FF'
+      '\uE000'
+    when MAX
+      raise OverflowError.new("Out of Char range")
+    else
+      (ord + 1).unsafe_chr
+    end
   end
 
-  # Returns a Char that is one codepoint smaller than this char's codepoint.
+  # Returns the predecessor codepoint before this one.
+  #
+  # This can be used for iterating a range of characters (see `Range#each`).
   #
   # ```
   # 'b'.pred # => 'a'
   # 'ぃ'.pred # => 'あ'
   # ```
+  # ```
+  #
+  # This does not always return `codepoint - 1`. There is a gap in the
+  # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
+  #
+  # ```
+  # '\uE000'.pred # => '\uD7FF'
+  # ```
+  #
+  # Raises `OverflowError` for `Char::ZERO`.
+  #
+  # * `#succ` returns the successor codepoint.
   def pred : Char
-    (ord - 1).chr
+    case self
+    when '\uE000'
+      '\uD7FF'
+    when ZERO
+      raise OverflowError.new("Out of Char range")
+    else
+      (ord - 1).unsafe_chr
+    end
   end
 
   # Returns `true` if this char is an ASCII control character.
+  #
+  # This includes the *C0 control codes* (`U+0000` through `U+001F`) and the
+  # *Delete* character (`U+007F`).
   #
   # ```
   # ('\u0000'..'\u0019').each do |char|
@@ -481,7 +526,7 @@ struct Char
   # end
   # ```
   def ascii_control? : Bool
-    ord < 0x20 || (0x7F <= ord <= 0x9F)
+    ord < 0x20 || ord == 0x7F
   end
 
   # Returns `true` if this char is a control character according to unicode.
@@ -489,66 +534,86 @@ struct Char
     ascii? ? ascii_control? : Unicode.control?(self)
   end
 
-  # Returns `true` if this is char is a mark character according to unicode.
+  # Returns `true` if this char is a mark character according to unicode.
   def mark? : Bool
     Unicode.mark?(self)
   end
 
-  # Returns this char as a string that contains a char literal.
+  # Returns `true` if this char is a printable character.
+  #
+  # There is no universal definition of printable characters in Unicode.
+  # For the purpose of this method, all characters with a visible glyph and the
+  # ASCII whitespace (` `) are considered printable.
+  #
+  # This means characters which are `control?` or `whitespace?` (except for ` `)
+  # are non-printable.
+  def printable?
+    !control? && (!whitespace? || self == ' ')
+  end
+
+  # Returns a representation of `self` as a Crystal char literal, wrapped in single
+  # quotes.
+  #
+  # Non-printable characters (see `#printable?`) are escaped.
   #
   # ```
   # 'a'.inspect      # => "'a'"
   # '\t'.inspect     # => "'\\t'"
   # 'あ'.inspect      # => "'あ'"
-  # '\u0012'.inspect # => "'\\u{12}'"
+  # '\u0012'.inspect # => "'\\u0012'"
+  # '😀'.inspect      # => "'\u{1F600}'"
   # ```
+  #
+  # See `#unicode_escape` for the format used to escape charactes without a
+  # special escape sequence.
+  #
+  # * `#dump` additionally escapes all non-ASCII characters.
   def inspect : String
     dump_or_inspect do |io|
-      if ascii_control?
-        io << "\\u{"
-        ord.to_s(io, 16)
-        io << '}'
-      else
+      if printable?
         to_s(io)
+      else
+        unicode_escape(io)
       end
     end
   end
 
-  # Appends this char as a string that contains a char literal to the given `IO`.
-  #
-  # See also: `#inspect`.
+  # :ditto:
   def inspect(io : IO) : Nil
     io << inspect
   end
 
-  # Returns this char as a string that contains a char literal as written in Crystal,
-  # with characters with a codepoint greater than `0x79` written as `\u{...}`.
+  # Returns a representation of `self` as an ASCII-compatible Crystal char literal,
+  # wrapped in single quotes.
+  #
+  # Non-printable characters (see `#printable?`) and non-ASCII characters
+  # (codepoints larger `U+007F`) are escaped.
   #
   # ```
   # 'a'.dump      # => "'a'"
   # '\t'.dump     # => "'\\t'"
-  # 'あ'.dump      # => "'\\u{3042}'"
-  # '\u0012'.dump # => "'\\u{12}'"
+  # 'あ'.dump      # => "'\\u3042'"
+  # '\u0012'.dump # => "'\\u0012'"
+  # '😀'.dump      # => "'\\u{1F600}'"
   # ```
+  #
+  # See `#unicode_escape` for the format used to escape charactes without a
+  # special escape sequence.
+  #
+  # * `#inspect` only escapes non-printable characters.
   def dump : String
     dump_or_inspect do |io|
       if ascii_control? || ord >= 0x80
-        io << "\\u{"
-        ord.to_s(io, 16)
-        io << '}'
+        unicode_escape(io)
       else
         to_s(io)
       end
     end
   end
 
-  # Appends this char as a string that contains a char literal to the given `IO`.
-  #
-  # See also: `#dump`.
+  # :ditto:
   def dump(io)
-    io << '\''
     io << dump
-    io << '\''
   end
 
   private def dump_or_inspect
@@ -563,6 +628,7 @@ struct Char
     when '\r' then "'\\r'"
     when '\t' then "'\\t'"
     when '\v' then "'\\v'"
+    when '\0' then "'\\0'"
     else
       String.build do |io|
         io << '\''
@@ -570,6 +636,37 @@ struct Char
         io << '\''
       end
     end
+  end
+
+  # Returns the Unicode escape sequence representing this character.
+  #
+  # The codepoints are expressed as hexadecimal digits with uppercase letters.
+  # Unicode escapes always use the four digit style for codepoints `U+FFFF`
+  # and lower, adding leading zeros when necessary. Higher codepoints have their
+  # digits wrapped in curly braces and no leading zeros.
+  #
+  # ```
+  # 'a'.unicode_escape      # => "\\u00E1"
+  # '\t'.unicode_escape     # => "\\u0009"
+  # 'あ'.unicode_escape      # => "\\u3042"
+  # '\u0012'.unicode_escape # => "\\u0012"
+  # '😀'.unicode_escape      # => "\\u{1F600}"
+  # ```
+  def unicode_escape : String
+    String.build do |io|
+      unicode_escape(io)
+    end
+  end
+
+  # :ditto:
+  def unicode_escape(io : IO) : Nil
+    io << "\\u"
+    io << '{' if ord > 0xFFFF
+    io << '0' if ord < 0x1000
+    io << '0' if ord < 0x0100
+    io << '0' if ord < 0x0010
+    ord.to_s(io, 16, upcase: true)
+    io << '}' if ord > 0xFFFF
   end
 
   # Returns the integer value of this char if it's an ASCII char denoting a digit
@@ -779,10 +876,11 @@ struct Char
   # 'あ'.to_s # => "あ"
   # ```
   def to_s : String
-    String.new(4) do |buffer|
+    bytesize = self.bytesize
+    String.new(bytesize) do |buffer|
       appender = buffer.appender
       each_byte { |byte| appender << byte }
-      {appender.size, 1}
+      {bytesize, 1}
     end
   end
 

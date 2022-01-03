@@ -72,8 +72,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     message = "can't find file '#{ex.filename}'"
     notes = [] of String
 
-    # FIXME: as(String) should not be necessary
-    if ex.filename.as(String).starts_with? '.'
+    if ex.filename.starts_with? '.'
       if relative_to
         message += " relative to '#{relative_to}'"
       end

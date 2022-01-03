@@ -642,6 +642,13 @@ describe "YAML::Serializable" do
 
     yaml = YAMLAttrWithAny.from_yaml({:obj => {:foo => :bar}}.to_yaml)
     yaml.obj["foo"].as_s.should eq("bar")
+
+    yaml = YAMLAttrWithAny.from_yaml("extra: &foo hello\nobj: *foo")
+    yaml.obj.as_s.should eq("hello")
+
+    expect_raises YAML::ParseException, "Unknown anchor 'foo' at line 1, column 6" do
+      YAMLAttrWithAny.from_yaml("obj: *foo")
+    end
   end
 
   it "parses yaml with problematic keys" do
