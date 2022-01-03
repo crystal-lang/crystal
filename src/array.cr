@@ -1381,7 +1381,7 @@ class Array(T)
     self
   end
 
-  # Replaces the contents of the current Array with the contents of the given Array.
+  # Replaces the contents of `self` with the contents of *other*.
   # This resizes the Array to a greater capacity but does not free memory if the given array is smaller.
   # ```
   # a1 = [1, 2, 3]
