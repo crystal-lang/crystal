@@ -2,12 +2,12 @@
 require "../spec_helper"
 require "compiler/crystal/interpreter/*"
 
-def interpret(code, *, prelude = "primitives")
+def interpret(code, *, prelude = "primitives", file = __FILE__, line = __LINE__)
   if prelude == "primitives"
     context, value = interpret_with_context(code)
     value.value
   else
-    interpret_in_separate_process(code, prelude)
+    interpret_in_separate_process(code, prelude, file: file, line: line)
   end
 end
 
@@ -37,7 +37,7 @@ def Spec.option_parser
   option_parser
 end
 
-def interpret_in_separate_process(code, prelude)
+def interpret_in_separate_process(code, prelude, file = __FILE__, line = __LINE__)
   input = IO::Memory.new(code)
   output = IO::Memory.new
   error = IO::Memory.new
@@ -46,7 +46,7 @@ def interpret_in_separate_process(code, prelude)
 
   status = process.wait
   unless status.success?
-    fail error.rewind.gets_to_end + output.rewind.gets_to_end
+    fail error.rewind.gets_to_end + output.rewind.gets_to_end, file: file, line: line
   end
 
   output.rewind.gets_to_end
