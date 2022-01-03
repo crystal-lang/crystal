@@ -1381,6 +1381,17 @@ class Array(T)
     self
   end
 
+  # Replaces the contents of the current Array with the contents of the given Array.
+  # This resizes the Array to a greater capacity but does not free memory if the given array is smaller.
+  # ```
+  # a1 = [1, 2, 3]
+  # a1.replace([1])
+  # a1                    # => [1]
+  # a1.remaining_capacity # => 3
+  # a1                    # => [1]
+  # a2.replace([1, 2, 3])
+  # a2 # => [1, 2, 3]
+  # ```
   def replace(other : Array) : self
     @size = other.size
     resize_to_capacity(Math.pw2ceil(@size)) if @size > @capacity
