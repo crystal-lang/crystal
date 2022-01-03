@@ -430,6 +430,9 @@ describe "Lexer" do
   assert_syntax_error "2ef32", "unexpected token: \"ef32\""
   assert_syntax_error "2e+_2", "unexpected '_' in number"
 
+  # Test for #11671
+  it_lexes_i32 [["0b0_1", "1"]]
+
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"
     token = lexer.next_token

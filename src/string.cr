@@ -583,11 +583,12 @@ class String
     end
 
     found_digit = false
+    last_is_underscore = true
 
     # Check leading zero
     if ptr.value.unsafe_chr == '0'
       ptr += 1
-
+      last_is_underscore = false
       if prefix
         case ptr.value.unsafe_chr
         when 'b'
@@ -616,7 +617,6 @@ class String
 
     value = int_class.new(0)
     mul_overflow = ~(int_class.new(0)) // base
-    last_is_underscore = true
     invalid = false
 
     digits = (base == 62 ? CHAR_TO_DIGIT62 : CHAR_TO_DIGIT).to_unsafe

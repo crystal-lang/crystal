@@ -295,6 +295,9 @@ describe "String" do
     it { "1z".to_i(62).should eq(97) }
     it { "ZZ".to_i(62).should eq(3843) }
 
+    # Test for #11671
+    it { "0_1".to_i(underscore: true).should eq(1) }
+
     describe "to_i8" do
       it { "127".to_i8.should eq(127) }
       it { "-128".to_i8.should eq(-128) }
