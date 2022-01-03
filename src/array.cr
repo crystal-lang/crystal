@@ -2031,6 +2031,12 @@ class Array(T)
     end
   end
 
+  # Returns the allocated slots in the Array.
+  # ```
+  # Array(Int32).new.remaining_capacity # => 0
+  # [1, 2, 3].remaining_capacity # => 3
+  # Array(Int32).new(100).remaining_capacity # => 100
+  # ````
   def remaining_capacity : Int32
     @capacity - @offset_to_buffer
   end
