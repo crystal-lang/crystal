@@ -15,7 +15,6 @@ class HTTP::WebSocket::Protocol
 
   @[Flags]
   enum Flags : UInt8
-    None  = 0x00
     FINAL = 0x80
     RSV1  = 0x40
     RSV2  = 0x20

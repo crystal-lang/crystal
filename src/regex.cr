@@ -206,7 +206,6 @@ class Regex
 
   @[Flags]
   enum Options
-    None = 0
     # Case insensitive match.
     IGNORE_CASE = 1
     # PCRE native `PCRE_MULTILINE` flag is `2`, and `PCRE_DOTALL` is `4`

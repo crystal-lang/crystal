@@ -171,7 +171,6 @@ module LLVM
   {% else %}
     @[Flags]
     enum Attribute : UInt32
-      None            = 0
       ZExt            = 1 << 0
       SExt            = 1 << 1
       NoReturn        = 1 << 2
