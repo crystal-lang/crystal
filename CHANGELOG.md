@@ -50,9 +50,9 @@
 - `crystal i`, a Crystal interpreter ([#11159](https://github.com/crystal-lang/crystal/pull/11159), thanks @asterite)
 - Implement FFI bindings ([#11475](https://github.com/crystal-lang/crystal/pull/11475), thanks @straight-shoota)
 - Add `Crystal::Loader` ([#11434](https://github.com/crystal-lang/crystal/pull/11434), [#11662](https://github.com/crystal-lang/crystal/pull/11662), thanks @straight-shoota, @HertzDevil)
-- Disable interpreter specs, as they're broken on master ([#11623](https://github.com/crystal-lang/crystal/pull/11623), thanks @oprypin)
 - Mark `bswap32` instrinsic with interpreter primitive annotation ([#11582](https://github.com/crystal-lang/crystal/pull/11582), thanks @rymiel)
 - Split interpreter specs into separate files ([#11578](https://github.com/crystal-lang/crystal/pull/11578), thanks @straight-shoota)
+- Workaround for GC issues in interpreter specs ([#11634](https://github.com/crystal-lang/crystal/pull/11634), thanks @straight-shoota)
 
 ## Language
 
@@ -70,6 +70,8 @@
 - Use `Slice(UInt8)#fill` in the standard library ([#11468](https://github.com/crystal-lang/crystal/pull/11468), thanks @HertzDevil)
 - Update `spec/win32_std_spec.cr` ([#11432](https://github.com/crystal-lang/crystal/pull/11432), [#11637](https://github.com/crystal-lang/crystal/pull/11637), thanks @HertzDevil)
 - Use strings instead of symbols in `#finalize` specs ([#11619](https://github.com/crystal-lang/crystal/pull/11619), thanks @HertzDevil)
+- Fix `Enum.parse` to handle case-sensitive member names ([#11659](https://github.com/crystal-lang/crystal/pull/11659), thanks @straight-shoota)
+- Improve docs for `Object#not_nil!` ([#11661](https://github.com/crystal-lang/crystal/pull/11661), thanks @straight-shoota)
 
 ### Collection
 
@@ -186,6 +188,7 @@
 - **(performance)** Performance: specify string sizes in advance ([#11592](https://github.com/crystal-lang/crystal/pull/11592), thanks @BlobCodes)
 - **(performance)** Improve performance of Char#to_s ([#11593](https://github.com/crystal-lang/crystal/pull/11593), thanks @BlobCodes)
 - Add docs to `Colorize` ([#11664](https://github.com/crystal-lang/crystal/pull/11664), thanks @straight-shoota)
+- Support ANSI escape sequence output on more Windows consoles ([#11622](https://github.com/crystal-lang/crystal/pull/11622), thanks @HertzDevil)
 
 ## Tools
 
@@ -221,6 +224,7 @@
 - Improve texts in README.md ([#11587](https://github.com/crystal-lang/crystal/pull/11587), thanks @athix)
 - Include `shards` with Windows build artifacts ([#11543](https://github.com/crystal-lang/crystal/pull/11543), thanks @neatorobito)
 - [CI] Remove `libatomic_ops` ([#11598](https://github.com/crystal-lang/crystal/pull/11598), thanks @straight-shoota)
+- Update NOTICE Copyright year to 2022 ([#11679](https://github.com/crystal-lang/crystal/pull/11679), thanks @matiasgarciaisaia)
 
 # 1.2.2 (2021-11-10)
 
