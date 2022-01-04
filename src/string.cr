@@ -891,7 +891,7 @@ class String
     end
   end
 
-  # Returns the `Char?` at the given *index*.
+  # Returns the character at *index* or `nil` if it's out of range.
   #
   # Negative indices can be used to start counting from the end of the string.
   #
