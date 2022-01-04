@@ -147,6 +147,8 @@ sections = array.group_by { |pr|
     case label
     when .starts_with?("topic:lang")
       break "Language"
+    when .starts_with?("topic:compiler:interpreter")
+      break "Compiler: Interpreter"
     when .starts_with?("topic:compiler")
       break "Compiler"
     when .starts_with?("topic:tools")
@@ -163,11 +165,17 @@ sections = array.group_by { |pr|
   end || "Other"
 }
 
-titles = sections.keys.sort!
+titles = [] of String
+["Compiler", "Language", "Standard Library", "Tools", "Other"].each do |main_section|
+  titles.concat sections.each_key.select(&.starts_with?(main_section)).to_a.sort!
+end
+sections.keys.sort!.each do |section|
+  titles << section unless titles.includes?(section)
+end
 last_title1 = nil
 
 titles.each do |title|
-  prs = sections[title]
+  prs = sections[title]? || next
   title1, _, title2 = title.partition(": ")
   if title2.presence
     if title1 != last_title1
