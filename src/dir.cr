@@ -11,6 +11,17 @@ class Dir
   include Enumerable(String)
   include Iterable(String)
 
+  # Returns the path of Dir from the location from the location initialized.
+  #
+  # ```
+  # Dir.mkdir("testdir")
+  # dir = Dir.new("testdir")
+  # Dir.mkdir("testdir/extendeddir")
+  # dir2 = Dir.new("testdir/extendeddir")
+  #
+  # dir.path  # => "testdir"
+  # dir2.path # => "testdir/extendeddir"
+  # ```
   getter path : String
 
   # Returns a new directory object for the named directory.
