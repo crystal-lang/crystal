@@ -247,6 +247,13 @@ struct Complex
   end
 
   # Returns the number `0` in complex form.
+  #
+  # ```
+  # require "complex"
+  #
+  # zero = Complex.zero
+  # zero.zero? # => true
+  # ```
   def self.zero : Complex
     new 0, 0
   end
