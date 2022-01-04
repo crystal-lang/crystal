@@ -1478,7 +1478,7 @@ class Hash(K, V)
   # ```
   # hash = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}
   # hash.reject!(["a", "c"]) # => {"b" => 2, "d" => 4}
-  # hash                           # => {"b" => 2, "d" => 4}
+  # hash                     # => {"b" => 2, "d" => 4}
   # ```
   def reject!(keys : Array | Tuple) : self
     keys.each { |k| delete(k) }
