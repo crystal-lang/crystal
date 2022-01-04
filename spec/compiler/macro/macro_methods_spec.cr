@@ -2043,7 +2043,7 @@ module Crystal
         end
       end
 
-      it "executes private?" do
+      describe "#private?" do
         it false do
           assert_macro("{{x.private?}}", "false") do |program|
             klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
