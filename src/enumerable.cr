@@ -291,12 +291,14 @@ module Enumerable(T)
   # interest is to be used in a read-only fashion.
   #
   # Chunks of two items can be iterated using `#each_cons_pair`, an optimized
-  # implementation for the special case of `size == 2` which avoids heap
+  # implementation for the special case of `count == 2` which avoids heap
   # allocations.
   def each_cons(count : Int, reuse = false)
     raise ArgumentError.new "Invalid cons size: #{count}" if count <= 0
     if reuse.nil? || reuse.is_a?(Bool)
-      each_cons_internal(count, reuse, Array(T).new(count)) { |slice| yield slice }
+      # we use an initial capacity of double the count, because a second
+      # iteration would have reallocated the array to that capacity anyway
+      each_cons_internal(count, reuse, Array(T).new(count * 2)) { |slice| yield slice }
     else
       each_cons_internal(count, true, reuse) { |slice| yield slice }
     end
@@ -337,7 +339,7 @@ module Enumerable(T)
   #
   # Chunks of more than two items can be iterated using `#each_cons`.
   # This method is just an optimized implementation for the special case of
-  # `size == 2` to avoid heap allocations.
+  # `count == 2` to avoid heap allocations.
   def each_cons_pair(& : (T, T) ->) : Nil
     last_elem = uninitialized T
     first_iteration = true

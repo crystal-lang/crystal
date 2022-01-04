@@ -132,7 +132,7 @@ module Crystal
     # * llvm-bc: LLVM bitcode
     # * llvm-ir: LLVM IR
     # * obj: object file
-    property emit : EmitTarget?
+    property emit_targets : EmitTarget = EmitTarget::None
 
     # Base filename to use for `emit` output.
     property emit_base_filename : String?
@@ -268,7 +268,7 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || @emit
+        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || !@emit_targets.none?
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
@@ -328,9 +328,7 @@ module Crystal
 
       optimize llvm_mod if @release
 
-      if emit = @emit
-        unit.emit(emit, emit_base_filename || output_filename)
-      end
+      unit.emit(@emit_targets, emit_base_filename || output_filename)
 
       target_machine.emit_obj_to_file llvm_mod, object_name
 
@@ -376,6 +374,7 @@ module Crystal
         {% end %}
 
         link_args << "/DEBUG:FULL /PDBALTPATH:%_PDB%" unless debug.none?
+        link_args << "/INCREMENTAL:NO /STACK:0x800000"
         link_args << lib_flags
         @link_flags.try { |flags| link_args << flags }
 
@@ -416,10 +415,7 @@ module Crystal
           first_unit = units.first
           first_unit.compile
           reused << first_unit.name if first_unit.reused_previous_compilation?
-
-          if emit = @emit
-            first_unit.emit(emit, emit_base_filename || output_filename)
-          end
+          first_unit.emit(@emit_targets, emit_base_filename || output_filename)
         else
           reused = codegen_many_units(program, units, target_triple)
         end
@@ -694,7 +690,7 @@ module Crystal
 
         must_compile = true
         can_reuse_previous_compilation =
-          !compiler.emit && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
+          compiler.emit_targets.none? && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
 
         memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
 
@@ -737,17 +733,17 @@ module Crystal
         llvm_mod.print_to_file ll_name if compiler.dump_ll?
       end
 
-      def emit(emit_target : EmitTarget, output_filename)
-        if emit_target.asm?
+      def emit(emit_targets : EmitTarget, output_filename)
+        if emit_targets.asm?
           compiler.target_machine.emit_asm_to_file llvm_mod, "#{output_filename}.s"
         end
-        if emit_target.llvm_bc?
+        if emit_targets.llvm_bc?
           FileUtils.cp(bc_name, "#{output_filename}.bc")
         end
-        if emit_target.llvm_ir?
+        if emit_targets.llvm_ir?
           llvm_mod.print_to_file "#{output_filename}.ll"
         end
-        if emit_target.obj?
+        if emit_targets.obj?
           FileUtils.cp(object_name, output_filename + @object_extension)
         end
       end

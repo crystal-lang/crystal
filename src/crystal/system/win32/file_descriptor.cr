@@ -1,5 +1,7 @@
 require "c/io"
 require "c/consoleapi"
+require "c/consoleapi2"
+require "c/winnls"
 
 module Crystal::System::FileDescriptor
   @volatile_fd : Atomic(LibC::Int)
@@ -168,8 +170,14 @@ module Crystal::System::FileDescriptor
     console_handle = false
     handle = LibC._get_osfhandle(fd)
     if handle != -1
-      if LibC.GetConsoleMode(LibC::HANDLE.new(handle), out _) != 0
+      handle = LibC::HANDLE.new(handle)
+      if LibC.GetConsoleMode(handle, out old_mode) != 0
         console_handle = true
+        if fd == 1 || fd == 2 # STDOUT or STDERR
+          if LibC.SetConsoleMode(handle, old_mode | LibC::ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0
+            at_exit { LibC.SetConsoleMode(handle, old_mode) }
+          end
+        end
       end
     end
 
@@ -182,5 +190,18 @@ module Crystal::System::FileDescriptor
       io.flush_on_newline = true
     end
     io
+  end
+end
+
+# Enable UTF-8 console I/O for the duration of program execution
+if LibC.IsValidCodePage(LibC::CP_UTF8) != 0
+  old_input_cp = LibC.GetConsoleCP
+  if LibC.SetConsoleCP(LibC::CP_UTF8) != 0
+    at_exit { LibC.SetConsoleCP(old_input_cp) }
+  end
+
+  old_output_cp = LibC.GetConsoleOutputCP
+  if LibC.SetConsoleOutputCP(LibC::CP_UTF8) != 0
+    at_exit { LibC.SetConsoleOutputCP(old_output_cp) }
   end
 end

@@ -1,0 +1,6 @@
+require "./crystal/annotatable"
+require "./crystal/program"
+require "./crystal/*"
+require "./crystal/semantic/*"
+require "./crystal/macros/*"
+require "./crystal/codegen/*"

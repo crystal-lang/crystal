@@ -392,7 +392,7 @@ class Crystal::CodeGenVisitor
           end
           node.args.each_with_index do |node_arg, i|
             a_def_arg = a_def.args[i]
-            if node_arg.supports_autocast?(@program.has_flag?("number_autocast"))
+            if node_arg.supports_autocast?(!@program.has_flag?("no_number_autocast"))
               # If a call argument is a literal like 1 or :foo then
               # it will match all the multidispatch overloads because
               # it has a single type and there's no way some overload
