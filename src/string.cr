@@ -908,7 +908,7 @@ class String
     char_at(index) { nil }
   end
 
-  # Returns `String?` of matching *given* if the given *str* is in *self*.
+  # Returns *str* if *str* is found in this string, or `nil` otherwise.
   #
   # ```
   # "crystal"["cry"]?  # => "cry"
