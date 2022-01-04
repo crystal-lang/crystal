@@ -1476,7 +1476,8 @@ class Hash(K, V)
   # Removes a list of keys out of hash.
   #
   # ```
-  # hash = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject!(["a", "c"])
+  # hash = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}
+  # hash.reject!(["a", "c"])
   # hash # => {"b" => 2, "d" => 4}
   # ```
   def reject!(keys : Array | Tuple) : self
@@ -1487,7 +1488,8 @@ class Hash(K, V)
   # Removes a list of keys out of hash.
   #
   # ```
-  # hash = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject!("a", "c")
+  # hash = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}
+  # hash.reject!("a", "c")
   # hash # => {"b" => 2, "d" => 4}
   # ```
   def reject!(*keys) : self
