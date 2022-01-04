@@ -914,7 +914,7 @@ class String
   # "crystal"["cry"]?  # => "cry"
   # "crystal"["ruby"]? # => nil
   # ```
-  def []?(str : String | Char) : String?
+  def []?(str : String | Char)
     includes?(str) ? str : nil
   end
 
