@@ -66,15 +66,14 @@ module Crystal
     private def check_deprecation(object, use_site, detects)
       if (ann = object.annotation(self.deprecated_annotation)) &&
          (deprecated_annotation = DeprecatedAnnotation.from(ann))
-        call_location = use_site.location.try(&.macro_location) || use_site.location
-        return if ignore_warning_due_to_location?(call_location)
+        use_location = use_site.location.try(&.macro_location) || use_site.location
+        return if !use_location || ignore_warning_due_to_location?(use_location)
 
-        # skip warning if the call site was already informed
-        # if there is no location information just inform it.
+        # skip warning if the use site was already informed
         name = object.short_reference
-        warning_key = call_location.try { |l| "#{name} #{l}" }
-        return if !warning_key || detects.includes?(warning_key)
-        detects.add(warning_key) if warning_key
+        warning_key = "#{name} #{use_location}"
+        return if detects.includes?(warning_key)
+        detects.add(warning_key)
 
         full_message = String.build do |io|
           io << "Deprecated " << name << '.'
