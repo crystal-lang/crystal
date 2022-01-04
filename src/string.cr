@@ -927,7 +927,7 @@ class String
     match[group]? if match
   end
 
-  # Returns `String?` of matching *given* if the given *str* is in *self*.
+  # Returns *str* if *str* is found in this string.
   #
   # ```
   # "crystal"["cry"]  # => "cry"
