@@ -908,7 +908,7 @@ class String
     char_at(index) { nil }
   end
 
-  # Returns the `String?` if the given *str* is in *self*.
+  # Returns `String?` of matching *given* if the given *str* is in *self*.
   #
   # ```
   # "crystal"["cry"]?  # => "cry"
@@ -927,7 +927,7 @@ class String
     match[group]? if match
   end
 
-  # Returns the `String` if the given *str* is in *self*.
+  # Returns `String?` of matching *given* if the given *str* is in *self*.
   #
   # ```
   # "crystal"["cry"]  # => "cry"
