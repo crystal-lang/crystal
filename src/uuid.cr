@@ -209,8 +209,8 @@ struct UUID
   #
   # uuid = UUID.empty
   # uuid.urn # => "urn:uuid:00000000-0000-4000-0000-000000000000"
-  # uuid2 = UUID.random
-  # uuid2 # => "urn:uuid:c49fc136-9362-4414-81a5-9a7e0fcca0f1"
+  # uuid2 = UUID.new("c49fc136-9362-4414-81a5-9a7e0fcca0f1")
+  # uuid2.urn # => "urn:uuid:c49fc136-9362-4414-81a5-9a7e0fcca0f1"
   # ```
   def urn : String
     String.build(45) do |str|
