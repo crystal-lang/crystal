@@ -96,6 +96,20 @@ class Dir
     end
   end
 
+  # Rerturns an Iterator for each entry except for `.` and `..` in this directory.
+  # See `#each_child`
+  #
+  # ```
+  # Dir.mkdir("testdir")
+  # File.write("testdir/file_1", "")
+  # File.write("testdir/file_2", "")
+  #
+  # dir = Dir.new("testdir")
+  # itr = d.each_child
+  #
+  # itr.next # => "file_1"
+  # itr.next # => "file_2"
+  # ```
   def each_child : Iterator(String)
     ChildIterator.new(self)
   end
