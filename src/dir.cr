@@ -11,7 +11,7 @@ class Dir
   include Enumerable(String)
   include Iterable(String)
 
-  # Returns the path of Dir from the location from the location initialized.
+  # Returns the path of this directory.
   #
   # ```
   # Dir.mkdir("testdir")
