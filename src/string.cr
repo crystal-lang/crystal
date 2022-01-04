@@ -898,11 +898,11 @@ class String
   # See `#[]` for a raising alternative.
   #
   # ```
-  # "hello"[0]  # => 'h'
-  # "hello"[1]  # => 'e'
-  # "hello"[-1] # => 'o'
-  # "hello"[-2] # => 'l'
-  # "hello"[5]  # => nil
+  # "hello"[0]?  # => 'h'
+  # "hello"[1]?  # => 'e'
+  # "hello"[-1]? # => 'o'
+  # "hello"[-2]? # => 'l'
+  # "hello"[5]?  # => nil
   # ```
   def []?(index : Int) : Char?
     char_at(index) { nil }
