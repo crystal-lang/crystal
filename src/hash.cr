@@ -1476,14 +1476,18 @@ class Hash(K, V)
   # Removes a list of keys out of hash.
   #
   # ```
-  # h = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject!("a", "c")
-  # h # => {"b" => 2, "d" => 4}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject!(["a", "c"]) # => {"b" => 2, "d" => 4}
   # ```
   def reject!(keys : Array | Tuple) : self
     keys.each { |k| delete(k) }
     self
   end
 
+  # Removes a list of keys out of hash.
+  #
+  # ```
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject!("a", "c") # => {"b" => 2, "d" => 4}
+  # ```
   def reject!(*keys) : self
     reject!(keys)
   end
