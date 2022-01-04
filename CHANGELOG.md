@@ -2,48 +2,32 @@
 
 ## Compiler
 
-- Parser: allow keyword as named argument inside macros ([#10377](https://github.com/crystal-lang/crystal/pull/10377), thanks @asterite)
-- Disable specs for `StaticArray#sort_by` on broken targets ([#11359](https://github.com/crystal-lang/crystal/pull/11359), thanks @straight-shoota)
-- Parser: add missing end location to `IsA` node ([#11351](https://github.com/crystal-lang/crystal/pull/11351), thanks @FnControlOption)
-- Attach debug locations to auto-generated `initialize` methods ([#11313](https://github.com/crystal-lang/crystal/pull/11313), thanks @HertzDevil)
-- Fix node locations for `ProcLiteral`s with parameters ([#11365](https://github.com/crystal-lang/crystal/pull/11365), thanks @HertzDevil)
-- Show proper owner for `Class`'s methods in error messages ([#10590](https://github.com/crystal-lang/crystal/pull/10590), thanks @HertzDevil)
-- Fix link flag behaviour on Windows MSVC ([#11424](https://github.com/crystal-lang/crystal/pull/11424), thanks @HertzDevil)
-- Fix debug location for `~check_proc_is_not_closure` ([#11311](https://github.com/crystal-lang/crystal/pull/11311), thanks @HertzDevil)
-- Fix parser error with named argument `end` in macro body ([#11463](https://github.com/crystal-lang/crystal/pull/11463), thanks @straight-shoota)
 - Refer to `T.class` as "metaclass" in error messages, not "class" ([#11378](https://github.com/crystal-lang/crystal/pull/11378), thanks @HertzDevil)
-- Be more strict about `ProcNotation` variable declarations ([#11372](https://github.com/crystal-lang/crystal/pull/11372), thanks @HertzDevil)
-- Report syntax error for too-long bin/hex/oct integer literals ([#11447](https://github.com/crystal-lang/crystal/pull/11447), thanks @oprypin)
-- Allow metaclass parameters in `Proc` literals and pointers ([#11367](https://github.com/crystal-lang/crystal/pull/11367), thanks @HertzDevil)
-- [lexer] Correctly increase nesting for escaped macro `unless` ([#11440](https://github.com/crystal-lang/crystal/pull/11440), thanks @rymiel)
-- Show proper syntax errors in some edge cases in the parser ([#11446](https://github.com/crystal-lang/crystal/pull/11446), thanks @oprypin)
-- Fix parse `yield` with parenthesis ([#11469](https://github.com/crystal-lang/crystal/pull/11469), thanks @straight-shoota)
-- Replace `semantic` with `assert_no_errors` in compiler specs whenever possible ([#11288](https://github.com/crystal-lang/crystal/pull/11288), thanks @HertzDevil)
-- Make `inject_primitives = false` default for semantic specs  ([#11297](https://github.com/crystal-lang/crystal/pull/11297), thanks @HertzDevil)
-- Add spec for #8428 ([#10073](https://github.com/crystal-lang/crystal/pull/10073), thanks @docelic)
-- Create `Reason` enum for exhaustive case in nil-reason check ([#11449](https://github.com/crystal-lang/crystal/pull/11449), thanks @rymiel)
-- Remove and resolve spurious cast and its associated FIXME ([#11455](https://github.com/crystal-lang/crystal/pull/11455), thanks @rymiel)
+- Create Reason enum for exhaustive case in nil-reason check ([#11449](https://github.com/crystal-lang/crystal/pull/11449), thanks @rymiel)
 - Improve cache directory behaviour on Windows ([#11436](https://github.com/crystal-lang/crystal/pull/11436), thanks @HertzDevil)
-- Add pending spec for recursive abstract struct ([#11470](https://github.com/crystal-lang/crystal/pull/11470), thanks @HertzDevil)
-- Unify format of "unexpected token" error ([#11473](https://github.com/crystal-lang/crystal/pull/11473), thanks @straight-shoota)
 - Automatically detect MSVC tools on Windows via `vswhere` ([#11496](https://github.com/crystal-lang/crystal/pull/11496), thanks @HertzDevil)
-- Lexer number parsing refactor ([#11211](https://github.com/crystal-lang/crystal/pull/11211), thanks @BlobCodes)
 - Clean up .pdb files for temporary executables on MSVC ([#11553](https://github.com/crystal-lang/crystal/pull/11553), thanks @HertzDevil)
 - Disable incremental linking on MSVC ([#11552](https://github.com/crystal-lang/crystal/pull/11552), thanks @HertzDevil)
 - Allow multiple `--emit` compiler options to stack ([#11556](https://github.com/crystal-lang/crystal/pull/11556), thanks @HertzDevil)
 - Refactor some type restrictions in the compiler ([#11531](https://github.com/crystal-lang/crystal/pull/11531), thanks @straight-shoota)
 - Detect `cl.exe`'s path for compiler specs requiring a C compiler ([#11560](https://github.com/crystal-lang/crystal/pull/11560), thanks @HertzDevil)
-- Add minimal load-time DLL support on Windows, support `dllimport` storage class ([#11573](https://github.com/crystal-lang/crystal/pull/11573), thanks @HertzDevil)
 - Increase default stack size on MSVC to 8 MB ([#11569](https://github.com/crystal-lang/crystal/pull/11569), thanks @HertzDevil)
 - Resolve compiler wildcard require ([#11562](https://github.com/crystal-lang/crystal/pull/11562), thanks @straight-shoota)
-- Fix top-level multi-assign splat variable not working in macros ([#11600](https://github.com/crystal-lang/crystal/pull/11600), thanks @HertzDevil)
+- Compiler: use enums instead of symbols in various places ([#11607](https://github.com/crystal-lang/crystal/pull/11607), thanks @HertzDevil)
+
+### Codegen
+
+- Disable specs for `StaticArray#sort_by` on broken targets ([#11359](https://github.com/crystal-lang/crystal/pull/11359), thanks @straight-shoota)
+- Fix link flag behaviour on Windows MSVC ([#11424](https://github.com/crystal-lang/crystal/pull/11424), thanks @HertzDevil)
 - Attach debug locations to splat expansions inside array-like literals ([#11655](https://github.com/crystal-lang/crystal/pull/11655), thanks @HertzDevil)
 - Use full name for private types' class variables during codegen ([#11651](https://github.com/crystal-lang/crystal/pull/11651), thanks @HertzDevil)
-- Implement lexer int128 support ([#11571](https://github.com/crystal-lang/crystal/pull/11571), thanks @BlobCodes)
-- Allow underscores after a leading zero in `String#to_i` (regression fix) ([#11672](https://github.com/crystal-lang/crystal/pull/11672), thanks @BlobCodes)
 - Fix codegen when instantiating class methods of typedefs ([#11636](https://github.com/crystal-lang/crystal/pull/11636), thanks @HertzDevil)
-- Fix no comma before short block in `ToSVisitor` ([#11677](https://github.com/crystal-lang/crystal/pull/11677), thanks @homonoidian)
-- Compiler: use enums instead of symbols in various places ([#11607](https://github.com/crystal-lang/crystal/pull/11607), thanks @HertzDevil)
+- Add minimal load-time DLL support on Windows, support `dllimport` storage class ([#11573](https://github.com/crystal-lang/crystal/pull/11573), thanks @HertzDevil)
+
+### Debugger
+
+- Attach debug locations to auto-generated `initialize` methods ([#11313](https://github.com/crystal-lang/crystal/pull/11313), thanks @HertzDevil)
+- Fix debug location for `~check_proc_is_not_closure` ([#11311](https://github.com/crystal-lang/crystal/pull/11311), thanks @HertzDevil)
 
 ### Interpreter
 
@@ -53,6 +37,34 @@
 - Mark `bswap32` instrinsic with interpreter primitive annotation ([#11582](https://github.com/crystal-lang/crystal/pull/11582), thanks @rymiel)
 - Split interpreter specs into separate files ([#11578](https://github.com/crystal-lang/crystal/pull/11578), thanks @straight-shoota)
 - Workaround for GC issues in interpreter specs ([#11634](https://github.com/crystal-lang/crystal/pull/11634), thanks @straight-shoota)
+
+### Parser
+
+- Parser: allow keyword as named argument inside macros ([#10377](https://github.com/crystal-lang/crystal/pull/10377), thanks @asterite)
+- Parser: add missing end location to `IsA` node ([#11351](https://github.com/crystal-lang/crystal/pull/11351), thanks @FnControlOption)
+- Fix node locations for `ProcLiteral`s with parameters ([#11365](https://github.com/crystal-lang/crystal/pull/11365), thanks @HertzDevil)
+- Fix parser error with named argument `end` in macro body ([#11463](https://github.com/crystal-lang/crystal/pull/11463), thanks @straight-shoota)
+- Report syntax error for too-long bin/hex/oct integer literals ([#11447](https://github.com/crystal-lang/crystal/pull/11447), thanks @oprypin)
+- [lexer] Correctly increase nesting for escaped macro `unless` ([#11440](https://github.com/crystal-lang/crystal/pull/11440), thanks @rymiel)
+- Show proper syntax errors in some edge cases in the parser ([#11446](https://github.com/crystal-lang/crystal/pull/11446), thanks @oprypin)
+- Fix parse `yield` with parenthesis ([#11469](https://github.com/crystal-lang/crystal/pull/11469), thanks @straight-shoota)
+- Lexer number parsing refactor ([#11211](https://github.com/crystal-lang/crystal/pull/11211), thanks @BlobCodes)
+- Allow underscores after a leading zero in `String#to_i` (regression fix) ([#11672](https://github.com/crystal-lang/crystal/pull/11672), thanks @BlobCodes)
+- Fix no comma before short block in `ToSVisitor` ([#11677](https://github.com/crystal-lang/crystal/pull/11677), thanks @homonoidian)
+- Unify format of "unexpected token" error ([#11473](https://github.com/crystal-lang/crystal/pull/11473), thanks @straight-shoota)
+- Implement lexer int128 support ([#11571](https://github.com/crystal-lang/crystal/pull/11571), thanks @BlobCodes)
+
+### Semantic
+
+- Show proper owner for `Class`'s methods in error messages ([#10590](https://github.com/crystal-lang/crystal/pull/10590), thanks @HertzDevil)
+- Be more strict about `ProcNotation` variable declarations ([#11372](https://github.com/crystal-lang/crystal/pull/11372), thanks @HertzDevil)
+- Allow metaclass parameters in `Proc` literals and pointers ([#11367](https://github.com/crystal-lang/crystal/pull/11367), thanks @HertzDevil)
+- Fix top-level multi-assign splat variable not working in macros ([#11600](https://github.com/crystal-lang/crystal/pull/11600), thanks @HertzDevil)
+- Replace `semantic` with `assert_no_errors` in compiler specs whenever possible ([#11288](https://github.com/crystal-lang/crystal/pull/11288), thanks @HertzDevil)
+- Make `inject_primitives = false` default for semantic specs  ([#11297](https://github.com/crystal-lang/crystal/pull/11297), thanks @HertzDevil)
+- Add spec for #8428 ([#10073](https://github.com/crystal-lang/crystal/pull/10073), thanks @docelic)
+- Remove and resolve spurious cast and its associated FIXME ([#11455](https://github.com/crystal-lang/crystal/pull/11455), thanks @rymiel)
+- Add pending spec for recursive abstract struct ([#11470](https://github.com/crystal-lang/crystal/pull/11470), thanks @HertzDevil)
 
 ## Language
 
