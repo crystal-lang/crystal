@@ -895,7 +895,7 @@ class String
   #
   # Negative indices can be used to start counting from the end of the string.
   #
-  # See '#[]'
+  # See `#[]` for a raising alternative.
   #
   # ```
   # "hello"[0]  # => 'h'
