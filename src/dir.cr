@@ -101,8 +101,8 @@ class Dir
   #
   # ```
   # Dir.mkdir("testdir")
-  # File.write("testdir/file_1", "")
-  # File.write("testdir/file_2", "")
+  # File.touch("testdir/file_1")
+  # File.touch("testdir/file_2")
   #
   # dir = Dir.new("testdir")
   # itr = d.each_child
