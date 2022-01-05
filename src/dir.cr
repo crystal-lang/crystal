@@ -64,7 +64,15 @@ class Dir
     EntryIterator.new(self)
   end
 
-  # Returns an array containing all of the filenames in the given directory.
+  # Returns an `Array(String)` containing all of the filenames in the given directory including "." and "..".
+  #
+  # ```
+  # Dir.mkdir("testdir")
+  # File.touch("testdir/file_1")
+  # File.touch("testdir/file_2")
+  #
+  # Dir.new("testdir").entries # => ["..", "file_1", "file_2", "."]
+  # ```
   def entries : Array(String)
     entries = [] of String
     each do |filename|
