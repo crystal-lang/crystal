@@ -103,7 +103,7 @@
 - Support OpenSSL on Windows ([#11477](https://github.com/crystal-lang/crystal/pull/11477), thanks @HertzDevil)
 - Encode OpenSSL version on Windows ([#11516](https://github.com/crystal-lang/crystal/pull/11516), thanks @HertzDevil)
 - Add docs to `Crypto::Bcrypt` ([#9647](https://github.com/crystal-lang/crystal/pull/9647), thanks @j8r)
-- Fix getrandom for interpreter ([#11624](https://github.com/crystal-lang/crystal/pull/11624), thanks @straight-shoota)
+- Fix `getrandom` for interpreter ([#11624](https://github.com/crystal-lang/crystal/pull/11624), thanks @straight-shoota)
 - **(performance)** Use more efficient method to split `UInt32` to bytes in `Crypto::Blowfish` ([#11594](https://github.com/crystal-lang/crystal/pull/11594), thanks @BlobCodes)
 
 ### Files
@@ -198,7 +198,7 @@
 - Implement Unicode grapheme clusters ([#11472](https://github.com/crystal-lang/crystal/pull/11472), [#11611](https://github.com/crystal-lang/crystal/pull/11611), thanks @straight-shoota)
 - **(breaking-change)** Fix `Char#ascii_control?` restrict to ASCII characters ([#11510](https://github.com/crystal-lang/crystal/pull/11510), thanks @straight-shoota)
 - **(performance)** Performance: specify string sizes in advance ([#11592](https://github.com/crystal-lang/crystal/pull/11592), thanks @BlobCodes)
-- **(performance)** Improve performance of Char#to_s ([#11593](https://github.com/crystal-lang/crystal/pull/11593), thanks @BlobCodes)
+- **(performance)** Improve performance of `Char#to_s` ([#11593](https://github.com/crystal-lang/crystal/pull/11593), thanks @BlobCodes)
 - Add docs to `Colorize` ([#11664](https://github.com/crystal-lang/crystal/pull/11664), thanks @straight-shoota)
 - Support ANSI escape sequence output on more Windows consoles ([#11622](https://github.com/crystal-lang/crystal/pull/11622), thanks @HertzDevil)
 
@@ -233,7 +233,7 @@
 - Add commit hash to Windows builds ([#11538](https://github.com/crystal-lang/crystal/pull/11538), thanks @HertzDevil)
 - Support BuildTools and other VS variants in vswhere detection ([#11534](https://github.com/crystal-lang/crystal/pull/11534), thanks @neatorobito)
 - Define `LIBXML_STATIC` when building xml2.lib on Windows ([#11574](https://github.com/crystal-lang/crystal/pull/11574), thanks @HertzDevil)
-- Improve texts in README.md ([#11587](https://github.com/crystal-lang/crystal/pull/11587), thanks @athix)
+- Improve texts in `README.md` ([#11587](https://github.com/crystal-lang/crystal/pull/11587), thanks @athix)
 - Include `shards` with Windows build artifacts ([#11543](https://github.com/crystal-lang/crystal/pull/11543), thanks @neatorobito)
 - [CI] Remove `libatomic_ops` ([#11598](https://github.com/crystal-lang/crystal/pull/11598), thanks @straight-shoota)
 - Update NOTICE Copyright year to 2022 ([#11679](https://github.com/crystal-lang/crystal/pull/11679), thanks @matiasgarciaisaia)
