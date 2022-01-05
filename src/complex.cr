@@ -259,7 +259,6 @@ struct Complex
   # Complex.new(0, 0).zero? # => true
   # Complex.new(1, 0).zero? # => false
   # Complex.new(0, 1).zero? # => false
-  #
   # ````
   def zero? : Bool
     @real == 0 && @imag == 0
