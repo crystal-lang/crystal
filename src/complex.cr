@@ -251,7 +251,7 @@ struct Complex
     new 0, 0
   end
 
-  # Returns a `true` if the complex number is zero.  This means the real and imaginary are both zero.
+  # Returns `true` if the complex number is zero.  This means the real and imaginary are both zero.
   #
   # ```
   # require "complex"
