@@ -96,19 +96,20 @@ class Dir
     end
   end
 
-  # Rerturns an Iterator for each entry except for `.` and `..` in this directory.
-  # See `#each_child`
+  # Returns an iterator over of the all entries in this directory except for `.` and `..`.
+  #
+  # See `#each_child(&)`
   #
   # ```
-  # Dir.mkdir("testdir")
-  # File.touch("testdir/file_1")
-  # File.touch("testdir/file_2")
+  # Dir.mkdir("test")
+  # File.touch("test/foo")
+  # File.touch("test/bar")
   #
-  # dir = Dir.new("testdir")
-  # itr = d.each_child
+  # dir = Dir.new("test")
+  # iter = d.each_child
   #
-  # itr.next # => "file_1"
-  # itr.next # => "file_2"
+  # iter.next # => "foo"
+  # iter.next # => "bar"
   # ```
   def each_child : Iterator(String)
     ChildIterator.new(self)
