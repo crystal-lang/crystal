@@ -3,7 +3,7 @@
 ## Compiler
 
 - Refer to `T.class` as "metaclass" in error messages, not "class" ([#11378](https://github.com/crystal-lang/crystal/pull/11378), thanks @HertzDevil)
-- Create Reason enum for exhaustive case in nil-reason check ([#11449](https://github.com/crystal-lang/crystal/pull/11449), thanks @rymiel)
+- Create `Reason` enum for exhaustive case in nil-reason check ([#11449](https://github.com/crystal-lang/crystal/pull/11449), thanks @rymiel)
 - Improve cache directory behaviour on Windows ([#11436](https://github.com/crystal-lang/crystal/pull/11436), thanks @HertzDevil)
 - Automatically detect MSVC tools on Windows via `vswhere` ([#11496](https://github.com/crystal-lang/crystal/pull/11496), thanks @HertzDevil)
 - Clean up .pdb files for temporary executables on MSVC ([#11553](https://github.com/crystal-lang/crystal/pull/11553), thanks @HertzDevil)
