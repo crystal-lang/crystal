@@ -1,3 +1,5 @@
+version: 2.1
+
 defaults:
   environment: &env
     TRAVIS_BRANCH: $CIRCLE_BRANCH
@@ -17,8 +19,6 @@ defaults:
         path: ~/test-results
     - store_artifacts:
         path: ~/test-results/spec
-
-version: 2
 
 jobs:
   test_linux:
