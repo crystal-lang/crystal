@@ -153,7 +153,7 @@ module Crystal::Macros
   def host_flag?(name) : BoolLiteral
   end
 
-  # Parses `self` into a `Path` or `Generic` (also used for unions).
+  # Parses *type_name* into a `Path` or `Generic` (also used for unions).
   # The `Path#resolve` or `Generic#resolve` method could then be used
   # to resolve the value into a `TypeNode`, if the *type_name* represents a type,
   # otherwise the value of the constant.
