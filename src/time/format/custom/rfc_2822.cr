@@ -8,7 +8,7 @@ struct Time::Format
   # Time::Format::RFC_2822.format(Time.utc(2016, 2, 15, 4, 35, 50)) # => "Mon, 15 Feb 2016 04:35:50 +0000"
   #
   # Time::Format::RFC_2822.parse("Mon, 15 Feb 2016 04:35:50 +0000") # => 2016-02-15 04:35:50.0 +00:00
-  # Time::Format::RFC_2822.parse("Mon, 15 Feb 2016 04:35:50 UTC") # => 2016-02-15 04:35:50.0 UTC
+  # Time::Format::RFC_2822.parse("Mon, 15 Feb 2016 04:35:50 UTC")   # => 2016-02-15 04:35:50.0 UTC
   # ```
   module RFC_2822
     # Parses a string into a `Time`.
