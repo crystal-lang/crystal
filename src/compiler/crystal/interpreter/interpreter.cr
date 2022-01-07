@@ -396,25 +396,28 @@ class Crystal::Repl::Interpreter
   end
 
   private def migrate_local_vars(current_local_vars, next_meta_vars)
+    # Always start with fresh variables, because union types might have changed
+    @local_vars = LocalVars.new(@context)
+
     # Check if any existing local variable size changed.
     # If so, it means we need to put them inside a union,
     # or make the union bigger.
     current_names = current_local_vars.names_at_block_level_zero
     needs_migration = current_names.any? do |current_name|
+      next_meta_var = next_meta_vars[current_name]?
+
+      # This can happen because the interpreter might declare temporary variables
+      # exclusive to it, not visible to the semantic phase (MainVisitor), specifically
+      # in `Compiler#assign_to_temporary_and_return_pointer`. In that case there's
+      # nothing to migrate.
+      next unless next_meta_var
+
       current_type = current_local_vars.type(current_name, 0)
-      if (next_meta_vars.has_key?(current_name))
-        next_type = next_meta_vars[current_name].type
-        aligned_sizeof_type(current_type) != aligned_sizeof_type(next_type)
-      else
-        false
-      end
+      next_type = next_meta_vars[current_name].type
+      aligned_sizeof_type(current_type) != aligned_sizeof_type(next_type)
     end
 
-    unless needs_migration
-      # Always start with fresh variables, because union types might have changed
-      @local_vars = LocalVars.new(@context)
-      return
-    end
+    return unless needs_migration
 
     current_memory = Pointer(UInt8).malloc(current_local_vars.current_bytesize)
     @stack.copy_to(current_memory, current_local_vars.current_bytesize)
@@ -422,8 +425,13 @@ class Crystal::Repl::Interpreter
     stack = @stack
     current_names.each do |current_name|
       current_type = current_local_vars.type(current_name, 0)
-      next unless (next_meta_vars.has_key?(current_name))
-      next_type = next_meta_vars[current_name].type
+      next_meta_var = next_meta_vars[current_name]?
+
+      # Same as before: the next meta var might not exist.
+      # In that case, to simplify things, we make it so the next type
+      # is the same as the current type, which means "doesn't need a migration"
+      next_type = next_meta_var.try(&.type) || current_type
+
       current_type_size = aligned_sizeof_type(current_type)
       next_type_size = aligned_sizeof_type(next_type)
 
@@ -466,9 +474,6 @@ class Crystal::Repl::Interpreter
       stack += next_type_size
       current_memory += current_type_size
     end
-
-    # Need to start with fresh local variables
-    @local_vars = LocalVars.new(@context)
   end
 
   private def current_local_vars
