@@ -53,6 +53,7 @@ lib LibIntrinsics
   fun bitreverse32 = "llvm.bitreverse.i32"(id : UInt32) : UInt32
   fun bitreverse16 = "llvm.bitreverse.i16"(id : UInt16) : UInt16
 
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap32)] {% end %}
   fun bswap32 = "llvm.bswap.i32"(id : UInt32) : UInt32
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap16)] {% end %}

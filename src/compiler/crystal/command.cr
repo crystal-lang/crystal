@@ -10,6 +10,7 @@
 
 require "json"
 require "./command/*"
+require "./tools/*"
 
 class Crystal::Command
   USAGE = <<-USAGE

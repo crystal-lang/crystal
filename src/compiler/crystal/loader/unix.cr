@@ -84,6 +84,7 @@ class Crystal::Loader
     @handles.each do |handle|
       LibC.dlclose(handle)
     end
+    @handles.clear
   end
 
   # Returns a list of directories used as the default search paths
