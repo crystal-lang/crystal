@@ -73,7 +73,7 @@ class Crystal::Loader
 
   def load_current_program_handle
     if program_handle = LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
-      @handlers << program_handle
+      @handles << program_handle
     end
   end
 
