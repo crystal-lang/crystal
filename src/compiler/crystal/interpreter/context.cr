@@ -358,17 +358,13 @@ class Crystal::Repl::Context
 
   getter(loader : Loader) {
     args = Process.parse_arguments(program.lib_flags)
-    link_libgc = args.delete("-lgc")
-    Crystal::Loader.parse(args).tap do |loader|
-      # FIXME: This is a workaround for initial integration of the interpreter:
-      # The loader can't handle the static libgc.a usually shipped with crystal.
-      # So we only try to load it - it works if it's available as a shared lbirary.
-      # If that fails, the loader falls back to the GC symbols in the compiler executable (see next workaround).
-      if link_libgc
-        loader.load_library?("gc")
-      end
+    # FIXME: Part 1: This is a workaround for initial integration of the interpreter:
+    # The loader can't handle the static libgc.a usually shipped with crystal and loading as a shared library conflicts
+    # with the compiler's own GC.
+    args.delete("-lgc")
 
-      # FIXME: This is a workaround for initial integration of the interpreter:
+    Crystal::Loader.parse(args).tap do |loader|
+      # FIXME: Part 2: This is a workaround for initial integration of the interpreter:
       # We append a handle to the current executable (i.e. the compiler program)
       # to the loader's handle list. This gives the loader access to all the symbols in the compiler program,
       # including those from statically linked libraries like libgc.
