@@ -1119,7 +1119,6 @@ struct Time
 
   # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
-  # Example:
   # ```
   # Time.parse_rfc3339("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50.0 UTC
   # ```
@@ -1134,7 +1133,6 @@ struct Time
   #
   # Use `#to_rfc3339` to format a `Time` according to .
   #
-  # Example:
   # ```
   # Time.parse_iso8601("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50.0 UTC
   # ```
@@ -1165,7 +1163,6 @@ struct Time
   #
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
   #
-  # Example:
   # ```
   # Time.parse_rfc2822("Mon, 15 Feb 2016 04:35:50 UTC") # => 2016-02-15 04:35:50.0 UTC
   # ```

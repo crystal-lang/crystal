@@ -3,7 +3,6 @@ struct Time::Format
   #
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
   #
-  # Example:
   # ```
   # Time::Format::RFC_2822.format(Time.utc(2016, 2, 15, 4, 35, 50)) # => "Mon, 15 Feb 2016 04:35:50 +0000"
   #
