@@ -402,8 +402,12 @@ class Crystal::Repl::Interpreter
     current_names = current_local_vars.names_at_block_level_zero
     needs_migration = current_names.any? do |current_name|
       current_type = current_local_vars.type(current_name, 0)
-      next_type = next_meta_vars[current_name].type
-      aligned_sizeof_type(current_type) != aligned_sizeof_type(next_type)
+      if (next_meta_vars.has_key?(current_name))
+        next_type = next_meta_vars[current_name].type
+        aligned_sizeof_type(current_type) != aligned_sizeof_type(next_type)
+      else
+        false
+      end
     end
 
     unless needs_migration
@@ -418,6 +422,7 @@ class Crystal::Repl::Interpreter
     stack = @stack
     current_names.each do |current_name|
       current_type = current_local_vars.type(current_name, 0)
+      next unless (next_meta_vars.has_key?(current_name))
       next_type = next_meta_vars[current_name].type
       current_type_size = aligned_sizeof_type(current_type)
       next_type_size = aligned_sizeof_type(next_type)
