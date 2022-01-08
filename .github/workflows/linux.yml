@@ -96,6 +96,31 @@ jobs:
       - name: Test interpreter
         run: bin/ci with_build_env 'make deps && bin/crystal build -o interpreter_spec spec/compiler/interpreter_spec.cr && ./interpreter_spec'
 
+  test_compatibility:
+    env:
+      ARCH: ${{ matrix.arch }}
+      ARCH_CMD: linux64
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch:
+          - x86_64
+        profile:
+          - current
+          - legacy
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+
+      - name: Prepare System
+        run: bin/ci prepare_system
+
+      - name: Prepare Build
+        run: bin/ci prepare_build
+
+      - name: Test
+        run: bin/ci with_build_env 'make crystal std_spec primitives_spec samples profile=${{ matrix.profile }}'
+
   check_format:
     env:
       ARCH: x86_64
