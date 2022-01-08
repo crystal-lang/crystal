@@ -134,9 +134,7 @@ module Crystal
       end
 
       if of = node.of
-        @str << ' '
-        @str << "of"
-        @str << ' '
+        @str << " of "
         of.accept self
       end
       false
@@ -165,9 +163,7 @@ module Crystal
       @str << ' ' if space
       @str << '}'
       if of = node.of
-        @str << ' '
-        @str << "of"
-        @str << ' '
+        @str << " of "
         of.key.accept self
         @str << " => "
         of.value.accept self
@@ -267,8 +263,7 @@ module Crystal
 
     def visit(node : ClassDef)
       if node.abstract?
-        @str << "abstract"
-        @str << ' '
+        @str << "abstract "
       end
       @str << (node.struct? ? "struct" : "class")
       @str << ' '
@@ -295,8 +290,7 @@ module Crystal
     end
 
     def visit(node : ModuleDef)
-      @str << "module"
-      @str << ' '
+      @str << "module "
       node.name.accept self
       if type_vars = node.type_vars
         @str << '('
@@ -316,8 +310,7 @@ module Crystal
     end
 
     def visit(node : AnnotationDef)
-      @str << "annotation"
-      @str << ' '
+      @str << "annotation "
       node.name.accept self
       newline
       append_indent
@@ -364,10 +357,7 @@ module Crystal
 
         @str << "["
         visit_args(node, exclude_last: true)
-        @str << "]"
-        @str << ' '
-        @str << "="
-        @str << ' '
+        @str << "] = "
         node.args.last.accept self
       elsif node_obj && node.name.in?(UNARY_OPERATORS) && node.args.empty? && !node.named_args && !node.block_arg && !block
         @str << node.name
@@ -588,8 +578,7 @@ module Crystal
         @str << " : "
         return_type.accept self
       end
-      @str << ' '
-      @str << "do"
+      @str << " do"
       newline
       accept_with_indent(node.def.body)
       append_indent
@@ -615,8 +604,7 @@ module Crystal
 
     def visit(node : Def)
       @str << "abstract " if node.abstract?
-      @str << "def"
-      @str << ' '
+      @str << "def "
       if node_receiver = node.receiver
         node_receiver.accept self
         @str << '.'
@@ -666,8 +654,7 @@ module Crystal
     end
 
     def visit(node : Macro)
-      @str << "macro"
-      @str << ' '
+      @str << "macro "
       @str << node.name.to_s
       if node.args.size > 0 || node.block_arg || node.double_splat
         @str << '('
@@ -911,8 +898,7 @@ module Crystal
       @str << '(' if needs_parens
       node.name.accept self
       @str << ')' if needs_parens
-      @str << '.'
-      @str << "class"
+      @str << ".class"
       false
     end
 
@@ -1046,15 +1032,13 @@ module Crystal
     end
 
     def visit(node : Include)
-      @str << "include"
-      @str << ' '
+      @str << "include "
       node.name.accept self
       false
     end
 
     def visit(node : Extend)
-      @str << "extend"
-      @str << ' '
+      @str << "extend "
       node.name.accept self
       false
     end
@@ -1100,8 +1084,7 @@ module Crystal
     end
 
     def visit(node : LibDef)
-      @str << "lib"
-      @str << ' '
+      @str << "lib "
       @str << node.name
       newline
       @inside_lib = true
@@ -1113,8 +1096,7 @@ module Crystal
     end
 
     def visit(node : FunDef)
-      @str << "fun"
-      @str << ' '
+      @str << "fun "
       if node.name == node.real_name
         @str << node.name
       else
@@ -1156,8 +1138,7 @@ module Crystal
     end
 
     def visit(node : TypeDef)
-      @str << "type"
-      @str << ' '
+      @str << "type "
       @str << node.name.to_s
       @str << " = "
       node.type_spec.accept self
@@ -1176,8 +1157,7 @@ module Crystal
     end
 
     def visit(node : EnumDef)
-      @str << "enum"
-      @str << ' '
+      @str << "enum "
       @str << node.name.to_s
       if base_type = node.base_type
         @str << " : "
@@ -1217,32 +1197,28 @@ module Crystal
     end
 
     def visit(node : PointerOf)
-      @str << "pointerof"
-      @str << '('
+      @str << "pointerof("
       node.exp.accept(self)
       @str << ')'
       false
     end
 
     def visit(node : SizeOf)
-      @str << "sizeof"
-      @str << '('
+      @str << "sizeof("
       node.exp.accept(self)
       @str << ')'
       false
     end
 
     def visit(node : InstanceSizeOf)
-      @str << "instance_sizeof"
-      @str << '('
+      @str << "instance_sizeof("
       node.exp.accept(self)
       @str << ')'
       false
     end
 
     def visit(node : OffsetOf)
-      @str << "offsetof"
-      @str << '('
+      @str << "offsetof("
       node.offsetof_type.accept(self)
       @str << ", "
       node.offset.accept(self)
@@ -1290,8 +1266,7 @@ module Crystal
     end
 
     def visit(node : Require)
-      @str << "require"
-      @str << " \""
+      @str << "require \""
       @str << node.string
       @str << '"'
       false
@@ -1402,8 +1377,7 @@ module Crystal
     end
 
     def visit(node : Alias)
-      @str << "alias"
-      @str << ' '
+      @str << "alias "
       node.name.accept self
       @str << " = "
       node.value.accept self
@@ -1411,8 +1385,7 @@ module Crystal
     end
 
     def visit(node : TypeOf)
-      @str << "typeof"
-      @str << '('
+      @str << "typeof("
       node.expressions.join(@str, ", ", &.accept self)
       @str << ')'
       false
