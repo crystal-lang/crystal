@@ -544,7 +544,7 @@ CrystalDocs.loadIndex = function() {
         loadScript(jsonPath);
         return;
       } else {
-        var jsonPath = script.src.replace("js/doc.js", "index.json");
+        var jsonPath = script.src.replace("js/doc.js", "search-index.json");
         loadJSON(jsonPath, parseJSON);
         return;
       }
