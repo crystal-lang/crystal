@@ -132,20 +132,13 @@ module GC
     # By default the GC warns on big allocations/reallocations. This
     # is of limited use and pollutes program output with warnings.
     LibGC.set_warn_proc ->(msg, v) do
-      unless GC.starts_with?(msg, "GC Warning: Repeated allocation of very large block")
+      start = "GC Warning: Repeated allocation of very large block"
+      # This implements `String#starts_with?` without allocating a `String` (#11728)
+      format_string = Slice.new(msg, Math.min(LibC.strlen(msg), start.bytesize))
+      unless format_string == start.to_slice
         LibC.printf msg, v
       end
     end
-  end
-
-  # :nodoc:
-  # This method implements `String#starts_with?` without allocating a `String` (#11728)
-  def self.starts_with?(string_pointer, start)
-    start.to_slice.each_with_index do |chr, i|
-      return false unless chr == string_pointer[i]
-    end
-
-    true
   end
 
   def self.collect
