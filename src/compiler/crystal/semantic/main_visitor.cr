@@ -1219,11 +1219,19 @@ module Crystal
         end)
       end
 
+      args = node.args
+
+      # If it's something like `->foo(...)` then we also turn it into a closure
+      # because it could be doing a mutlidispatch and that's not supported in ProcPointer.
+      # However, if it's `->foo` (no args) then it can never be a multidispatch.
+      if !obj && !args.empty?
+        expand(node)
+        return false
+      end
+
       # If it's something like `->foo.bar` we turn it into a closure
       # where `foo` is assigned to a temporary variable.
-      # If it's something like `->foo` then we also turn it into a closure
-      # because it could be doing a mutlidispatch and that's not supported in ProcPointer.
-      if !obj || obj.is_a?(Var) || obj.is_a?(InstanceVar) || obj.is_a?(ClassVar)
+      if obj.is_a?(Var) || obj.is_a?(InstanceVar) || obj.is_a?(ClassVar)
         expand(node)
         return false
       end
@@ -1238,7 +1246,7 @@ module Crystal
       end
 
       # Check if it's ->LibFoo.foo, so we deduce the type from that method
-      if node.args.empty? && obj && (obj_type = obj.type).is_a?(LibType)
+      if args.empty? && obj && (obj_type = obj.type).is_a?(LibType)
         matching_fun = obj_type.lookup_first_def(node.name, false)
         node.raise "undefined fun '#{node.name}' for #{obj_type}" unless matching_fun
 
@@ -1246,7 +1254,7 @@ module Crystal
           Var.new("arg#{i}", arg.type).as(ASTNode)
         end
       else
-        call.args = node.args.map_with_index do |arg, i|
+        call.args = args.map_with_index do |arg, i|
           arg.accept self
           arg_type = arg.type
           MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
