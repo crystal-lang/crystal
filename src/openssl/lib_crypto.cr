@@ -112,6 +112,7 @@ lib LibCrypto
     fun BIO_get_data(Bio*) : Void*
     fun BIO_set_init(Bio*, Int)
     fun BIO_set_shutdown(Bio*, Int)
+
     fun BIO_meth_new(Int, Char*) : BioMethod*
     fun BIO_meth_set_read(BioMethod*, BioMethodReadOld)
     fun BIO_meth_set_write(BioMethod*, BioMethodWriteOld)
