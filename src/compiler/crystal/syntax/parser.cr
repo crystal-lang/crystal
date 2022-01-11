@@ -1778,7 +1778,7 @@ module Crystal
           next_token_skip_space
           break
         when :NEWLINE, :";"
-          next_token_skip_space
+          next_token_skip_statement_end
           if @token.type == :")"
             @wants_regex = false
             next_token_skip_space
