@@ -214,7 +214,7 @@ class Crystal::System::IoUring
   private def make_timeval(time : ::Time::Span)
     LibC::Timeval.new(
       tv_sec: LibC::TimeT.new(time.total_seconds),
-      tv_usec: time.nanoseconds // 1_000
+      tv_usec: time.nanoseconds
     )
   end
 
