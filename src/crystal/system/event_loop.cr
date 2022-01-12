@@ -33,8 +33,6 @@ abstract struct Crystal::Event
 end
 
 {% if flag?(:unix) %}
-  require "./unix/event_loop_io_uring"
-  require "./unix/event_loop_libevent"
   require "./unix/event_loop"
 {% elsif flag?(:win32) %}
   require "./win32/event_loop_iocp"

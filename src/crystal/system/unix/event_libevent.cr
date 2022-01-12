@@ -1,5 +1,3 @@
-{% skip_file if flag?(:linux) && flag?(:force_iouring) %}
-
 require "./lib_event2"
 
 {% if flag?(:preview_mt) %}

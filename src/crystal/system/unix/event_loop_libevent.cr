@@ -1,4 +1,4 @@
-{% skip_file if flag?(:linux) && flag?(:force_iouring) %}
+{% skip_file if flag?(:linux) && !flag?(:interpreted) && flag?(:force_iouring) %}
 
 require "./event_libevent"
 
