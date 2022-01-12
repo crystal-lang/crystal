@@ -555,7 +555,7 @@ module Crystal
     end
 
     def guess_type(node : RegexLiteral)
-      program.types["Regex"]
+      program.regex
     end
 
     def guess_type(node : TupleLiteral)

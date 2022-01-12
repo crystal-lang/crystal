@@ -407,7 +407,7 @@ module Crystal
           if block_body.is_a?(Call)
             block_obj = block_body.obj
             if block_obj.is_a?(Var) && block_obj.name == first_block_arg.name
-              if node.args.empty?
+              if node.args.empty? && !node.named_args
                 unless call_args_need_parens
                   @str << '('
                   call_args_need_parens = true
@@ -970,9 +970,11 @@ module Crystal
         @str << ' '
       end
       @str << keyword("yield")
-      if node.exps.size > 0
-        @str << ' '
-        node.exps.join(@str, ", ", &.accept self)
+      in_parenthesis(node.has_parentheses?) do
+        if node.exps.size > 0
+          @str << ' ' unless node.has_parentheses?
+          node.exps.join(@str, ", ", &.accept self)
+        end
       end
       false
     end

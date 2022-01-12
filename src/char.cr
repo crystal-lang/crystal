@@ -239,6 +239,9 @@ struct Char
 
   # Returns `true` if this char is a letter.
   #
+  # All codepoints in the Unicode General Category `L` (Letter) are considered
+  # a letter.
+  #
   # ```
   # 'c'.letter? # => true
   # 'á'.letter? # => true
@@ -447,29 +450,71 @@ struct Char
     hasher.char(self)
   end
 
-  # Returns a Char that is one codepoint bigger than this char's codepoint.
+  # Returns the successor codepoint after this one.
+  #
+  # This can be used for iterating a range of characters (see `Range#each`).
   #
   # ```
   # 'a'.succ # => 'b'
   # 'あ'.succ # => 'ぃ'
   # ```
   #
-  # This method allows creating a `Range` of chars.
+  # This does not always return `codepoint + 1`. There is a gap in the
+  # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
+  #
+  # ```
+  # '\uD7FF'.succ # => '\uE000'
+  # ```
+  #
+  # Raises `OverflowError` for `Char::MAX`.
+  #
+  # * `#pred` returns the predecessor codepoint.
   def succ : Char
-    (ord + 1).chr
+    case self
+    when '\uD7FF'
+      '\uE000'
+    when MAX
+      raise OverflowError.new("Out of Char range")
+    else
+      (ord + 1).unsafe_chr
+    end
   end
 
-  # Returns a Char that is one codepoint smaller than this char's codepoint.
+  # Returns the predecessor codepoint before this one.
+  #
+  # This can be used for iterating a range of characters (see `Range#each`).
   #
   # ```
   # 'b'.pred # => 'a'
   # 'ぃ'.pred # => 'あ'
   # ```
+  # ```
+  #
+  # This does not always return `codepoint - 1`. There is a gap in the
+  # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
+  #
+  # ```
+  # '\uE000'.pred # => '\uD7FF'
+  # ```
+  #
+  # Raises `OverflowError` for `Char::ZERO`.
+  #
+  # * `#succ` returns the successor codepoint.
   def pred : Char
-    (ord - 1).chr
+    case self
+    when '\uE000'
+      '\uD7FF'
+    when ZERO
+      raise OverflowError.new("Out of Char range")
+    else
+      (ord - 1).unsafe_chr
+    end
   end
 
   # Returns `true` if this char is an ASCII control character.
+  #
+  # This includes the *C0 control codes* (`U+0000` through `U+001F`) and the
+  # *Delete* character (`U+007F`).
   #
   # ```
   # ('\u0000'..'\u0019').each do |char|
@@ -481,7 +526,7 @@ struct Char
   # end
   # ```
   def ascii_control? : Bool
-    ord < 0x20 || (0x7F <= ord <= 0x9F)
+    ord < 0x20 || ord == 0x7F
   end
 
   # Returns `true` if this char is a control character according to unicode.
@@ -506,9 +551,10 @@ struct Char
     !control? && (!whitespace? || self == ' ')
   end
 
-  # Returns this char as a string that contains a char literal.
+  # Returns a representation of `self` as a Crystal char literal, wrapped in single
+  # quotes.
   #
-  # ASCII control characters are escaped.
+  # Non-printable characters (see `#printable?`) are escaped.
   #
   # ```
   # 'a'.inspect      # => "'a'"
@@ -520,26 +566,28 @@ struct Char
   #
   # See `#unicode_escape` for the format used to escape charactes without a
   # special escape sequence.
+  #
+  # * `#dump` additionally escapes all non-ASCII characters.
   def inspect : String
     dump_or_inspect do |io|
-      if ascii_control?
-        unicode_escape(io)
-      else
+      if printable?
         to_s(io)
+      else
+        unicode_escape(io)
       end
     end
   end
 
-  # Appends this char as a string that contains a char literal to the given `IO`.
-  #
-  # See also: `#inspect`.
+  # :ditto:
   def inspect(io : IO) : Nil
     io << inspect
   end
 
-  # Returns this char as a string that contains a char literal as written in Crystal,
-  # with all non-ASCII characters (codepoint greater than `0x79`) as well as
-  # ASCII control characters escaped.
+  # Returns a representation of `self` as an ASCII-compatible Crystal char literal,
+  # wrapped in single quotes.
+  #
+  # Non-printable characters (see `#printable?`) and non-ASCII characters
+  # (codepoints larger `U+007F`) are escaped.
   #
   # ```
   # 'a'.dump      # => "'a'"
@@ -551,6 +599,8 @@ struct Char
   #
   # See `#unicode_escape` for the format used to escape charactes without a
   # special escape sequence.
+  #
+  # * `#inspect` only escapes non-printable characters.
   def dump : String
     dump_or_inspect do |io|
       if ascii_control? || ord >= 0x80
@@ -561,9 +611,7 @@ struct Char
     end
   end
 
-  # Appends this char as a string that contains a char literal to the given `IO`.
-  #
-  # See also: `#dump`.
+  # :ditto:
   def dump(io)
     io << dump
   end
@@ -828,10 +876,11 @@ struct Char
   # 'あ'.to_s # => "あ"
   # ```
   def to_s : String
-    String.new(4) do |buffer|
+    bytesize = self.bytesize
+    String.new(bytesize) do |buffer|
       appender = buffer.appender
       each_byte { |byte| appender << byte }
-      {appender.size, 1}
+      {bytesize, 1}
     end
   end
 
