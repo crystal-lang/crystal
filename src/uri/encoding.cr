@@ -78,7 +78,7 @@ class URI
   # * `.decode_www_form` encodes plus to space by default.
   def self.decode(string : String, *, plus_to_space : Bool = false) : String
     if needs_decode?(string, plus_to_space: plus_to_space)
-      String.build { |io| decode!(string, io, plus_to_space: plus_to_space) }
+      String.build { |io| decode!(string, io, plus_to_space: plus_to_space) { false } }
     else
       string
     end
@@ -89,11 +89,6 @@ class URI
   # See `.decode(string : String, *, plus_to_space : Bool = false) : String` for details.
   def self.decode(string : String, io : IO, *, plus_to_space : Bool = false) : Nil
     self.decode(string, io, plus_to_space: plus_to_space) { false }
-  end
-
-  # Similar to the above, but it assumes there will be chars to decode (% or +).
-  private def self.decode!(string : String, io : IO, *, plus_to_space : Bool = false) : Nil
-    self.decode!(string, io, plus_to_space: plus_to_space) { false }
   end
 
   # URL-encodes *string*.
