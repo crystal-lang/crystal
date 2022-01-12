@@ -259,15 +259,23 @@ class URI
   def self.decode(string : String, io : IO, *, plus_to_space : Bool = false, &block) : Nil
     i = 0
     bytesize = string.bytesize
-    buffer = IO::Memory.new(bytesize)
+
+    if io.encoding == "UTF-8"
+      target_io = io
+    else
+      io_memory = IO::Memory.new(bytesize)
+      target_io = io_memory
+    end
 
     while i < bytesize
       byte = string.to_unsafe[i]
       char = byte.unsafe_chr
-      i = decode_one(string, bytesize, i, byte, char, buffer, plus_to_space) { |byte| yield byte }
+      i = decode_one(string, bytesize, i, byte, char, target_io, plus_to_space) { |byte| yield byte }
     end
 
-    io.write_string(buffer.to_slice)
+    if io_memory
+      io.write_string(io_memory.to_slice)
+    end
   end
 
   # URL-encodes *string* and writes the result to an `IO`.
