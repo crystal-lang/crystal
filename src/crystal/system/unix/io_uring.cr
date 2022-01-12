@@ -157,7 +157,7 @@ class Crystal::System::IoUring
     end
 
     @submission_entries = mem.as(Syscall::IoUringSqe*)
-    @timeval_entries = Slice(LibC::Timeval).new(@params.sq_entries.to_i, make_timeval(::Time::Span::ZERO))
+    @timeval_entries = Slice(LibC::Timespec64).new(@params.sq_entries.to_i, make_timespec64(::Time::Span::ZERO))
 
     @submission_queue = SubmissionQueue.new(@fd, @submission_queue_mmap, @params.sq_off)
     @completion_queue = CompletionQueue.new(@fd, @completion_queue_mmap, @params.cq_off)
@@ -211,9 +211,9 @@ class Crystal::System::IoUring
     exit 1
   end
 
-  private def make_timeval(time : ::Time::Span)
-    LibC::Timeval.new(
-      tv_sec: LibC::TimeT.new(time.total_seconds),
+  private def make_timespec64(time : ::Time::Span)
+    LibC::Timespec64.new(
+      tv_sec: time.total_seconds,
       tv_usec: time.nanoseconds
     )
   end
@@ -264,7 +264,7 @@ class Crystal::System::IoUring
     if timeout
       index_timeout = get_free_index
 
-      @timeval_entries[index_timeout] = make_timeval(timeout)
+      @timeval_entries[index_timeout] = make_timespec64(timeout)
 
       sqe_timeout = @submission_entries + index_timeout
       Intrinsics.memset(sqe_timeout, 0_u8, sizeof(Syscall::IoUringSqe), false)
@@ -688,7 +688,7 @@ class Crystal::System::IoUring
   end
 
   def timeout(time : ::Time::Span)
-    timeval = make_timeval(time)
+    timeval = make_timespec64(time)
 
     submit_and_wait Syscall::IORING_OP_TIMEOUT do |sqe|
       sqe.value.addr = pointerof(timeval).address
@@ -705,7 +705,7 @@ class Crystal::System::IoUring
     end
 
     index = get_free_index
-    @timeval_entries[index] = make_timeval(time)
+    @timeval_entries[index] = make_timespec64(time)
 
     submit_and_callback Syscall::IORING_OP_TIMEOUT, callback, index: index do |sqe|
       sqe.value.addr = (@timeval_entries.to_unsafe + index).address
