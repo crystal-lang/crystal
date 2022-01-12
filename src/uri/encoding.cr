@@ -77,7 +77,11 @@ class URI
   # * `.encode` is the reverse operation.
   # * `.decode_www_form` encodes plus to space by default.
   def self.decode(string : String, *, plus_to_space : Bool = false) : String
-    String.build { |io| decode(string, io, plus_to_space: plus_to_space) }
+    if needs_decode?(string, plus_to_space: plus_to_space)
+      String.build { |io| decode!(string, io, plus_to_space: plus_to_space) }
+    else
+      string
+    end
   end
 
   # URL-decodes a string and writes the result to *io*.
@@ -85,6 +89,11 @@ class URI
   # See `.decode(string : String, *, plus_to_space : Bool = false) : String` for details.
   def self.decode(string : String, io : IO, *, plus_to_space : Bool = false) : Nil
     self.decode(string, io, plus_to_space: plus_to_space) { false }
+  end
+
+  # Similar to the above, but it assumes there will be chars to decode (% or +).
+  private def self.decode!(string : String, io : IO, *, plus_to_space : Bool = false) : Nil
+    self.decode!(string, io, plus_to_space: plus_to_space) { false }
   end
 
   # URL-encodes *string*.
@@ -257,6 +266,18 @@ class URI
   # by either `.decode(string : String, *, plus_to_space : Bool = false) : String` or
   # `.decode_www_form(string : String, *, plus_to_space : Bool = true) : String`.
   def self.decode(string : String, io : IO, *, plus_to_space : Bool = false, &block) : Nil
+    unless needs_decode?(string, plus_to_space: plus_to_space)
+      io.write_string(string.to_slice)
+      return
+    end
+
+    decode!(string, io, plus_to_space: plus_to_space) do |byte|
+      yield byte
+    end
+  end
+
+  # Similar to the above, but it assumes there will be chars to decode (% or +).
+  private def self.decode!(string : String, io : IO, *, plus_to_space : Bool, &block) : Nil
     i = 0
     bytesize = string.bytesize
 
@@ -354,5 +375,12 @@ class URI
     io.write_byte byte
     i += 1
     i
+  end
+
+  # Checks if there's any chars that actually needs decoding.
+  # If not, decoding a string can be done much faster, because
+  # it's just the same string.
+  private def self.needs_decode?(string : String, *, plus_to_space : Bool) : Bool
+    !!(string.index('%') || (plus_to_space && string.index('+')))
   end
 end
