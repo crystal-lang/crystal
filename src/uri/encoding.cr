@@ -381,6 +381,6 @@ class URI
   # If not, decoding a string can be done much faster, because
   # it's just the same string.
   private def self.needs_decode?(string : String, *, plus_to_space : Bool) : Bool
-    !!(string.index('%') || (plus_to_space && string.index('+')))
+    string.includes?('%') || (plus_to_space && string.includes?('+'))
   end
 end
