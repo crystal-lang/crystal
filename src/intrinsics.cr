@@ -110,10 +110,10 @@ lib LibIntrinsics
 
   {% if flag?(:arm) %}
     {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_pause)] {% end %}
-    fun arm_hint = "llvm.arm.hint"(hint : ARMHint)
+    fun arm_hint = "llvm.arm.hint"(hint : Int32)
   {% elsif flag?(:aarch64) %}
     {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_pause)] {% end %}
-    fun arm_hint = "llvm.aarch64.hint"(hint : ARMHint)
+    fun arm_hint = "llvm.aarch64.hint"(hint : Int32)
   {% end %}
 end
 
