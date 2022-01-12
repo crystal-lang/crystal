@@ -107,6 +107,14 @@ lib LibIntrinsics
     {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_pause)] {% end %}
     fun pause = "llvm.x86.sse2.pause"
   {% end %}
+
+  {% if flag?(:arm) %}
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_pause)] {% end %}
+    fun arm_hint = "llvm.arm.hint"(hint : ARMHint)
+  {% elsif flag?(:aarch64) %}
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_pause)] {% end %}
+    fun arm_hint = "llvm.aarch64.hint"(hint : ARMHint)
+  {% end %}
 end
 
 module Intrinsics
@@ -117,6 +125,8 @@ module Intrinsics
   def self.pause
     {% if flag?(:i386) || flag?(:x86_64) %}
       LibIntrinsics.pause
+    {% elsif flag?(:arm) || flag?(:aarch64) %}
+      LibIntrinsics.arm_hint(1) # YIELD
     {% end %}
   end
 
