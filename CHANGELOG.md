@@ -1,3 +1,26 @@
+# 1.3.1 (2022-01-13)
+
+## Standard Library
+
+- Remove useless variable declarations in trailing position ([#11704](https://github.com/crystal-lang/crystal/pull/11704), thanks @HertzDevil)
+
+### Crypto
+
+- Fix for missing `BIO_*` functions in OpenSSL < 1.1.0 ([#11736](https://github.com/crystal-lang/crystal/pull/11736), thanks @daliborfilus)
+
+### Runtime
+
+- Remove string allocation from `GC_set_warn_proc` ([#11729](https://github.com/crystal-lang/crystal/pull/11729), thanks @straight-shoota)
+
+## Tools
+
+- Doc generator: Fix escape HTML in code span ([#11686](https://github.com/crystal-lang/crystal/pull/11686), thanks @straight-shoota)
+- Fix formatter error for `ProcLiteral`s with `Union` return type ([#11709](https://github.com/crystal-lang/crystal/pull/11709), thanks @HertzDevil)
+
+## Other
+
+- Fix typos ([#11725](https://github.com/crystal-lang/crystal/pull/11725), thanks @kianmeng)
+
 # 1.3.0 (2022-01-06)
 
 ## Compiler
