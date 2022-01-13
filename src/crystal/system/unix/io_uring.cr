@@ -157,7 +157,7 @@ class Crystal::System::IoUring
     end
 
     @submission_entries = mem.as(Syscall::IoUringSqe*)
-    @timeval_entries = Slice(LibC::Timespec64).new(@params.sq_entries.to_i, make_timespec64(::Time::Span::ZERO))
+    @timespec_entries = Slice(LibC::Timespec64).new(@params.sq_entries.to_i, make_timespec64(::Time::Span::ZERO))
 
     @submission_queue = SubmissionQueue.new(@fd, @submission_queue_mmap, @params.sq_off)
     @completion_queue = CompletionQueue.new(@fd, @completion_queue_mmap, @params.cq_off)
@@ -213,7 +213,7 @@ class Crystal::System::IoUring
 
   private def make_timespec64(time : ::Time::Span)
     LibC::Timespec64.new(
-      tv_sec: time.total_seconds,
+      tv_sec: time.to_i,
       tv_usec: time.nanoseconds
     )
   end
@@ -264,11 +264,11 @@ class Crystal::System::IoUring
     if timeout
       index_timeout = get_free_index
 
-      @timeval_entries[index_timeout] = make_timespec64(timeout)
+      @timespec_entries[index_timeout] = make_timespec64(timeout)
 
       sqe_timeout = @submission_entries + index_timeout
       Intrinsics.memset(sqe_timeout, 0_u8, sizeof(Syscall::IoUringSqe), false)
-      sqe_timeout.value.addr = (@timeval_entries.to_unsafe + index_timeout).address
+      sqe_timeout.value.addr = (@timespec_entries.to_unsafe + index_timeout).address
       sqe_timeout.value.len = 1u32
 
       if IoUring.probe.supports_op? Syscall::IORING_OP_LINK_TIMEOUT
@@ -688,10 +688,10 @@ class Crystal::System::IoUring
   end
 
   def timeout(time : ::Time::Span)
-    timeval = make_timespec64(time)
+    timespec = make_timespec64(time)
 
     submit_and_wait Syscall::IORING_OP_TIMEOUT do |sqe|
-      sqe.value.addr = pointerof(timeval).address
+      sqe.value.addr = pointerof(timespec).address
       sqe.value.len = 1u32
     end
   end
@@ -705,10 +705,10 @@ class Crystal::System::IoUring
     end
 
     index = get_free_index
-    @timeval_entries[index] = make_timespec64(time)
+    @timespec_entries[index] = make_timespec64(time)
 
     submit_and_callback Syscall::IORING_OP_TIMEOUT, callback, index: index do |sqe|
-      sqe.value.addr = (@timeval_entries.to_unsafe + index).address
+      sqe.value.addr = (@timespec_entries.to_unsafe + index).address
       sqe.value.len = 1u32
     end
   end
