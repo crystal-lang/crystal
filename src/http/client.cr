@@ -879,7 +879,7 @@ class HTTP::Client
 
   # This method is called when executing the request. Although it can be
   # redefined, it is recommended to use the `def_around_exec` macro to be
-  # able to add new behaviors without loosing prior existing ones.
+  # able to add new behaviors without losing prior existing ones.
   protected def around_exec(request)
     yield
   end
