@@ -6,7 +6,7 @@
 
 ### Crypto
 
-- Fix BIO_get BIO_set functions require openssl 1.1.0 ([#11736](https://github.com/crystal-lang/crystal/pull/11736), thanks @daliborfilus)
+- Fix for missing `BIO_*` functions in OpenSSL < 1.1.0 ([#11736](https://github.com/crystal-lang/crystal/pull/11736), thanks @daliborfilus)
 
 ### Runtime
 
