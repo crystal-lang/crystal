@@ -106,12 +106,13 @@ lib LibCrypto
 
   fun BIO_new(BioMethod*) : Bio*
   fun BIO_free(Bio*) : Int
-  fun BIO_set_data(Bio*, Void*)
-  fun BIO_get_data(Bio*) : Void*
-  fun BIO_set_init(Bio*, Int)
-  fun BIO_set_shutdown(Bio*, Int)
 
   {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    fun BIO_set_data(Bio*, Void*)
+    fun BIO_get_data(Bio*) : Void*
+    fun BIO_set_init(Bio*, Int)
+    fun BIO_set_shutdown(Bio*, Int)
+
     fun BIO_meth_new(Int, Char*) : BioMethod*
     fun BIO_meth_set_read(BioMethod*, BioMethodReadOld)
     fun BIO_meth_set_write(BioMethod*, BioMethodWriteOld)

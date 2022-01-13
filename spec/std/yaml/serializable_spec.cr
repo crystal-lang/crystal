@@ -260,16 +260,12 @@ end
 
 private class YAMLAttrWithFinalize
   include YAML::Serializable
+  include FinalizeCounter
+
   property value : YAML::Any
 
   @[YAML::Field(ignore: true)]
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-  end
+  property key : String?
 end
 
 module YAMLAttrModule
@@ -900,7 +896,7 @@ describe "YAML::Serializable" do
   end
 
   it "calls #finalize" do
-    assert_finalizes(:yaml) { YAMLAttrWithFinalize.from_yaml("---\nvalue: 1\n") }
+    assert_finalizes("yaml") { YAMLAttrWithFinalize.from_yaml("---\nvalue: 1\n") }
   end
 
   describe "work with module and inheritance" do

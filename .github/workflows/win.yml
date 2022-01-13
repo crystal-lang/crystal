@@ -278,7 +278,6 @@ jobs:
           echo "CRYSTAL_LIBRARY_PATH=$(pwd)\libs" >> ${env:GITHUB_ENV}
           echo 'CRYSTAL_CONFIG_PATH=$ORIGIN\src' >> ${env:GITHUB_ENV}
           echo 'CRYSTAL_CONFIG_LIBRARY_PATH=$ORIGIN\lib' >> ${env:GITHUB_ENV}
-          echo "TERM=dumb" >> ${env:GITHUB_ENV}
           echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
           echo "CRYSTAL_CONFIG_BUILD_COMMIT=$(git rev-parse --short=9 HEAD)" >> ${env:GITHUB_ENV}
           echo "SOURCE_DATE_EPOCH=$(Get-Date -Millisecond 0 -UFormat %s)" >> ${env:GITHUB_ENV}
