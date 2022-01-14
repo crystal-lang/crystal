@@ -169,13 +169,15 @@ module Crystal
 
         arg.raise "argument to parse_type cannot be an empty value" if type_name.blank?
 
-        parser = Crystal::Parser.new type_name
-        parser.next_token
-        type = parser.parse_bare_proc_type
-        parser.check :EOF
-        @last = type
-      rescue ex : Crystal::SyntaxException
-        arg.raise "Invalid type name: #{type_name.inspect}"
+        begin
+          parser = Crystal::Parser.new type_name
+          parser.next_token
+          type = parser.parse_bare_proc_type
+          parser.check :EOF
+          @last = type
+        rescue ex : Crystal::SyntaxException
+          arg.raise "Invalid type name: #{type_name.inspect}"
+        end
       end
     end
 
