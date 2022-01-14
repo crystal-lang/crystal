@@ -170,7 +170,7 @@ module Crystal
         arg.raise "argument to parse_type cannot be an empty value" if type_name.blank?
 
         parser = Crystal::Parser.new type_name
-        parser.next_token_skip_statement_end
+        parser.next_token
         type = parser.parse_bare_proc_type
         parser.check :EOF
         @last = type

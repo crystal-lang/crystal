@@ -153,9 +153,9 @@ module Crystal::Macros
   def host_flag?(name) : BoolLiteral
   end
 
-  # Parses *type_name* into a `Path` or `Generic` (also used for unions).
-  # The `Path#resolve` or `Generic#resolve` method could then be used
-  # to resolve the value into a `TypeNode`, if the *type_name* represents a type,
+  # Parses *type_name* into a `Path`, `Generic` (also used for unions), `ProcNotation`, or `Metaclass`.
+  #
+  # The `#resolve` method could then be used to resolve the value into a `TypeNode`, if the *type_name* represents a type,
   # otherwise the value of the constant.
   #
   # A compile time error is raised if the type/constant does not actually exist,
@@ -179,7 +179,7 @@ module Crystal::Macros
   # {{ parse_type("MissingType").resolve }}   # => Error: undefined constant MissingType
   # {{ parse_type("UNKNOWN_CONST").resolve }} # => Error: undefined constant UNKNOWN_CONST
   # ```
-  def parse_type(type_name : StringLiteral) : Path | Generic
+  def parse_type(type_name : StringLiteral) : Path | Generic | ProcNotation | Metaclass
   end
 
   # Prints AST nodes at compile-time. Useful for debugging macros.
