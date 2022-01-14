@@ -176,8 +176,8 @@ module Crystal::Macros
   # {{ parse_type("Bar(Int32)|Foo").resolve.union_types[0].type_vars.size }} # => 1
   # {{ parse_type("MY_CONST").resolve }}                                     # => 1234
   #
-  # {{ parse_type("MissingType").resolve }}   # => Error: undefined constant MissingType
-  # {{ parse_type("UNKNOWN_CONST").resolve }} # => Error: undefined constant UNKNOWN_CONST
+  # {{ parse_type("MissingType").resolve }}   # Error: undefined constant MissingType
+  # {{ parse_type("UNKNOWN_CONST").resolve }} # Error: undefined constant UNKNOWN_CONST
   # ```
   def parse_type(type_name : StringLiteral) : Path | Generic | ProcNotation | Metaclass
   end
