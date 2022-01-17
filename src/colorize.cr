@@ -1,9 +1,10 @@
-# With Colorize you can change the fore- and background colors and text decorations when rendering text
+# With `Colorize` you can change the fore- and background colors and text decorations when rendering text
 # on terminals supporting ANSI escape codes. It adds the `colorize` method to `Object` and thus all classes
 # as its main interface, which calls `to_s` and surrounds it with the necessary escape codes
 # when it comes to obtaining a string representation of the object.
 #
 # Its first argument changes the foreground color:
+#
 # ```
 # require "colorize"
 #
@@ -13,6 +14,7 @@
 # ```
 #
 # There are alternative ways to change the foreground color:
+#
 # ```
 # require "colorize"
 #
@@ -21,6 +23,7 @@
 # ```
 #
 # To change the background color, the following methods are available:
+#
 # ```
 # require "colorize"
 #
@@ -30,13 +33,19 @@
 # ```
 #
 # You can also pass an RGB color to `colorize`:
+#
 # ```
 # require "colorize"
+#
+# "foo".colorize(0, 255, 255) # => "foo" in aqua
+#
+# # This is the same as:
 #
 # "foo".colorize(Colorize::ColorRGB.new(0, 255, 255)) # => "foo" in aqua
 # ```
 #
 # Or an 8-bit color:
+#
 # ```
 # require "colorize"
 #
@@ -44,6 +53,7 @@
 # ```
 #
 # It's also possible to change the text decoration:
+#
 # ```
 # require "colorize"
 #
@@ -53,6 +63,7 @@
 #
 # The `colorize` method returns a `Colorize::Object` instance,
 # which allows chaining methods together:
+#
 # ```
 # require "colorize"
 #
@@ -61,6 +72,7 @@
 #
 # With the `toggle` method you can temporarily disable adding the escape codes.
 # Settings of the instance are preserved however and can be turned back on later:
+#
 # ```
 # require "colorize"
 #
@@ -68,12 +80,13 @@
 # "foo".colorize(:red).toggle(false).toggle(true) # => "foo" in red
 # ```
 #
-# The color `:default` will just leave the object as it is (but it's an `Colorize::Object(String)` then).
-# That's handy in for example conditions:
+# The color `:default` leaves the object's representation as it is but the object is a `Colorize::Object` then
+# which is handy in conditions such as:
+#
 # ```
 # require "colorize"
 #
-# "foo".colorize(some_bool ? :green : :default)
+# "foo".colorize(Random::DEFAULT.next_bool ? :green : :default)
 # ```
 #
 # Available colors are:
@@ -108,10 +121,7 @@
 # :hidden
 # ```
 module Colorize
-  # If this value is `true`, `Colorize::Object` is enabled by default.
-  # But if this value is `false`, `Colorize::Object` is disabled.
-  #
-  # The default value is `true`.
+  # Objects will only be colored if this is `true`.
   #
   # ```
   # require "colorize"
@@ -122,6 +132,9 @@ module Colorize
   # Colorize.enabled = false
   # "hello".colorize.red.to_s # => "hello"
   # ```
+  #
+  # NOTE: This is by default disabled on non-TTY devices because they likely don't support ANSI escape codes.
+  # This will also be disabled if the environment variable `TERM` is "dumb".
   class_property? enabled : Bool = true
 
   # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
@@ -132,6 +145,15 @@ module Colorize
     self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb"
   end
 
+  # Resets the color and text decoration of the *io*.
+  #
+  # ```
+  # with_color.green.surround(io) do
+  #   io << "green"
+  #   Colorize.reset
+  #   io << " default"
+  # end
+  # ```
   def self.reset(io = STDOUT)
     io << "\e[0m" if enabled?
   end
@@ -145,16 +167,18 @@ module Colorize
   #   io << "green and bold if Colorize.enabled"
   # end
   # ```
-  def self.with
+  def self.with : Colorize::Object(String)
     "".colorize
   end
 end
 
 module Colorize::ObjectExtensions
-  def colorize
+  # Turns `self` into a `Colorize::Object`.
+  def colorize : Colorize::Object
     Colorize::Object.new(self)
   end
 
+  # Turns `self` into a `Colorize::Object` and colors it with a color.
   def colorize(fore)
     Colorize::Object.new(self).fore(fore)
   end
@@ -167,6 +191,7 @@ end
 module Colorize
   alias Color = ColorANSI | Color256 | ColorRGB
 
+  # One color of a fixed set of colors.
   enum ColorANSI
     Default      = 39
     Black        = 30
@@ -195,6 +220,7 @@ module Colorize
     end
   end
 
+  # An 8-bit color.
   record Color256,
     value : UInt8 do
     def fore(io : IO) : Nil
@@ -208,6 +234,7 @@ module Colorize
     end
   end
 
+  # An RGB color.
   record ColorRGB,
     red : UInt8,
     green : UInt8,
@@ -228,6 +255,7 @@ module Colorize
   end
 end
 
+# A colorized object. Colors and text decorations can be modified.
 struct Colorize::Object(T)
   private MODE_DEFAULT   = '0'
   private MODE_BOLD      = '1'
@@ -278,7 +306,7 @@ struct Colorize::Object(T)
     end
   {% end %}
 
-  def fore(color : Symbol)
+  def fore(color : Symbol) : self
     {% for name in COLORS %}
       if color == :{{name.id}}
         @fore = ColorANSI::{{name.camelcase.id}}
@@ -289,11 +317,11 @@ struct Colorize::Object(T)
     raise ArgumentError.new "Unknown color: #{color}"
   end
 
-  def fore(@fore : Color)
+  def fore(@fore : Color) : self
     self
   end
 
-  def back(color : Symbol)
+  def back(color : Symbol) : self
     {% for name in COLORS %}
       if color == :{{name.id}}
         @back = ColorANSI::{{name.camelcase.id}}
@@ -304,11 +332,11 @@ struct Colorize::Object(T)
     raise ArgumentError.new "Unknown color: #{color}"
   end
 
-  def back(@back : Color)
+  def back(@back : Color) : self
     self
   end
 
-  def mode(mode : Symbol)
+  def mode(mode : Symbol) : self
     {% for name in MODES %}
       if mode == :{{name.id}}
         @mode |= MODE_{{name.upcase.id}}_FLAG
@@ -323,23 +351,46 @@ struct Colorize::Object(T)
     back color
   end
 
+  # Enables or disables colors and text decoration on this object.
   def toggle(flag)
     @enabled = !!flag
     self
   end
 
+  # Appends this object colored and with text decoration to *io*.
   def to_s(io : IO) : Nil
     surround(io) do
       io << @object
     end
   end
 
+  # Inspects this object and makes the ANSI escape codes visible.
   def inspect(io : IO) : Nil
     surround(io) do
       @object.inspect(io)
     end
   end
 
+  # Surrounds *io* by the ANSI escape codes and lets you build colored strings:
+  #
+  # ```
+  # require "colorize"
+  #
+  # io = IO::Memory.new
+  #
+  # with_color.red.surround(io) do
+  #   io << "colorful"
+  #   with_color.green.bold.surround(io) do
+  #     io << " hello "
+  #   end
+  #   with_color.blue.surround(io) do
+  #     io << "world"
+  #   end
+  #   io << " string"
+  # end
+  #
+  # io.to_s # returns a colorful string where "colorful" is red, "hello" green, "world" blue and " string" red again
+  # ```
   def surround(io = STDOUT)
     return yield io unless @enabled
 

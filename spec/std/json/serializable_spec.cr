@@ -1,10 +1,8 @@
 require "../spec_helper"
 require "json"
 require "yaml"
-{% unless flag?(:win32) %}
-  require "big"
-  require "big/json"
-{% end %}
+require "big"
+require "big/json"
 require "uuid"
 require "uuid/json"
 
@@ -96,13 +94,11 @@ class JSONAttrWithUUID
   property value : UUID
 end
 
-{% unless flag?(:win32) %}
-  class JSONAttrWithBigDecimal
-    include JSON::Serializable
+class JSONAttrWithBigDecimal
+  include JSON::Serializable
 
-    property value : BigDecimal
-  end
-{% end %}
+  property value : BigDecimal
+end
 
 class JSONAttrWithTime
   include JSON::Serializable
@@ -370,14 +366,19 @@ enum JSONVariableDiscriminatorEnumFoo
   Foo = 4
 end
 
+enum JSONVariableDiscriminatorEnumFoo8 : UInt8
+  Foo = 1_8
+end
+
 class JSONVariableDiscriminatorValueType
   include JSON::Serializable
 
   use_json_discriminator "type", {
-                                        0 => JSONVariableDiscriminatorNumber,
-    "1"                                   => JSONVariableDiscriminatorString,
-    true                                  => JSONVariableDiscriminatorBool,
-    JSONVariableDiscriminatorEnumFoo::Foo => JSONVariableDiscriminatorEnum,
+                                         0 => JSONVariableDiscriminatorNumber,
+    "1"                                    => JSONVariableDiscriminatorString,
+    true                                   => JSONVariableDiscriminatorBool,
+    JSONVariableDiscriminatorEnumFoo::Foo  => JSONVariableDiscriminatorEnum,
+    JSONVariableDiscriminatorEnumFoo8::Foo => JSONVariableDiscriminatorEnum8,
   }
 end
 
@@ -391,6 +392,9 @@ class JSONVariableDiscriminatorBool < JSONVariableDiscriminatorValueType
 end
 
 class JSONVariableDiscriminatorEnum < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorEnum8 < JSONVariableDiscriminatorValueType
 end
 
 module JSONNamespace
@@ -849,7 +853,7 @@ describe "JSON mapping" do
     end
   end
 
-  pending_win32 describe: "BigDecimal" do
+  describe "BigDecimal" do
     it "parses json string with BigDecimal" do
       json = JSONAttrWithBigDecimal.from_json(%({"value": "10.05"}))
       json.value.should eq(BigDecimal.new("10.05"))
@@ -944,6 +948,9 @@ describe "JSON mapping" do
 
       object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 4}))
       object_enum.should be_a(JSONVariableDiscriminatorEnum)
+
+      object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 18}))
+      object_enum.should be_a(JSONVariableDiscriminatorEnum8)
     end
   end
 

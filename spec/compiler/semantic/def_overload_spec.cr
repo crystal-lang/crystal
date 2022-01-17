@@ -892,6 +892,17 @@ describe "Semantic: def overload" do
       "no overload matches"
   end
 
+  it "errors if no overload matches on union against named arg with external param name (#10516)" do
+    assert_error %(
+      def f(a b : Int32)
+      end
+
+      a = 1 || nil
+      f(a: a)
+      ),
+      "no overload matches"
+  end
+
   it "dispatches with named arg" do
     assert_type(%(
       def f(a : Int32, b : Int32)
@@ -1030,7 +1041,7 @@ describe "Semantic: def overload" do
 			end
 
 			do_something value: 7.as(Int32 | Char)
-			)) { union_of float64, bool }
+			), inject_primitives: true) { union_of float64, bool }
   end
 
   it "resets free vars after a partial match is rejected (#10270)" do

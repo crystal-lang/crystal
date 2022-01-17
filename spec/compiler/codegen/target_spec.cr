@@ -1,5 +1,5 @@
 require "spec"
-require "compiler/crystal/**"
+require "compiler/requires"
 
 private alias Target = Crystal::Codegen::Target
 

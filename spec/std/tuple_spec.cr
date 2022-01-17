@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private class TupleSpecObj
   getter x : Int32
@@ -204,14 +205,7 @@ describe "Tuple" do
     Tuple.new.clone.should eq(Tuple.new)
   end
 
-  it "does iterator" do
-    iter = {1, 2, 3}.each
-
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should eq(3)
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [1, 2, 3], {1, 2, 3}.each
 
   it "does map" do
     tuple = {1, 2.5, "a"}
@@ -236,24 +230,7 @@ describe "Tuple" do
     {1, 2.5, "a", 'c'}.reverse.should eq({'c', "a", 2.5, 1})
   end
 
-  it "does reverse_each" do
-    str = ""
-    {"a", "b", "c"}.reverse_each do |i|
-      str += i
-    end.should be_nil
-    str.should eq("cba")
-  end
-
-  describe "reverse_each iterator" do
-    it "does next" do
-      a = {1, 2, 3}
-      iter = a.reverse_each
-      iter.next.should eq(3)
-      iter.next.should eq(2)
-      iter.next.should eq(1)
-      iter.next.should be_a(Iterator::Stop)
-    end
-  end
+  it_iterates "#reverse_each", [3, 2, 1], {1, 2, 3}.reverse_each
 
   it "gets first element" do
     tuple = {1, 2.5}

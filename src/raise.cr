@@ -8,23 +8,23 @@ private struct LEBReader
   def initialize(@data : UInt8*)
   end
 
-  def data
+  def data : UInt8*
     @data
   end
 
-  def read_uint8
+  def read_uint8 : UInt8
     value = @data.value
     @data += 1
     value
   end
 
-  def read_uint32
+  def read_uint32 : UInt32
     value = @data.as(UInt32*).value
     @data += 4
     value
   end
 
-  def read_uleb128
+  def read_uleb128 : UInt64
     result = 0_u64
     shift = 0
     while true
@@ -111,6 +111,7 @@ end
       exception.inspect_with_backtrace(STDERR)
     {% end %}
 
+    exception.callstack ||= Exception::CallStack.new
     LibC._CxxThrowException(pointerof(exception).as(Void*), throw_info)
   end
 
@@ -216,18 +217,24 @@ end
     {% end %}
 
     exception.callstack ||= Exception::CallStack.new
-    unwind_ex = Pointer(LibUnwind::Exception).malloc
-    unwind_ex.value.exception_class = LibC::SizeT.zero
-    unwind_ex.value.exception_cleanup = LibC::SizeT.zero
-    unwind_ex.value.exception_object = exception.as(Void*)
-    unwind_ex.value.exception_type_id = exception.crystal_type_id
-    __crystal_raise(unwind_ex)
+    raise_without_backtrace(exception)
   end
 {% end %}
 
 # Raises an Exception with the *message*.
 def raise(message : String) : NoReturn
   raise Exception.new(message)
+end
+
+# :nodoc:
+{% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
+def raise_without_backtrace(exception : Exception) : NoReturn
+  unwind_ex = Pointer(LibUnwind::Exception).malloc
+  unwind_ex.value.exception_class = LibC::SizeT.zero
+  unwind_ex.value.exception_cleanup = LibC::SizeT.zero
+  unwind_ex.value.exception_object = exception.as(Void*)
+  unwind_ex.value.exception_type_id = exception.crystal_type_id
+  __crystal_raise(unwind_ex)
 end
 
 # :nodoc:
@@ -239,3 +246,9 @@ end
 fun __crystal_raise_overflow : NoReturn
   raise OverflowError.new
 end
+
+{% if flag?(:interpreted) %}
+  def __crystal_raise_cast_failed(obj, type_name : String, location : String)
+    raise TypeCastError.new("cast from #{obj.class} to #{type_name} failed, at #{location}")
+  end
+{% end %}

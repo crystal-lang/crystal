@@ -19,6 +19,12 @@ describe "Semantic: nilable cast" do
       )) { nil_type }
   end
 
+  it "types as? with NoReturn" do
+    assert_type(%(
+      1.as?(NoReturn)
+      )) { nil_type }
+  end
+
   it "does upcast" do
     assert_type(%(
       class Foo

@@ -6,7 +6,11 @@ module Crystal::System::File
   def self.open(filename, mode, perm)
     oflag = open_flag(mode) | LibC::O_CLOEXEC
 
-    fd = LibC.open(filename.check_no_null_byte, oflag, perm)
+    if perm.is_a?(::File::Permissions)
+      perm = perm.value
+    end
+
+    fd = LibC.open(filename.check_no_null_byte, oflag, LibC::ModeT.new(perm))
     if fd < 0
       raise ::File::Error.from_errno("Error opening file with mode '#{mode}'", file: filename)
     end
@@ -30,9 +34,9 @@ module Crystal::System::File
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
     stat = uninitialized LibC::Stat
     if follow_symlinks
-      ret = LibC.stat(path.check_no_null_byte, pointerof(stat))
+      ret = stat(path.check_no_null_byte, pointerof(stat))
     else
-      ret = LibC.lstat(path.check_no_null_byte, pointerof(stat))
+      ret = lstat(path.check_no_null_byte, pointerof(stat))
     end
 
     if ret == 0
@@ -44,6 +48,38 @@ module Crystal::System::File
         raise ::File::Error.from_errno("Unable to get file info", file: path)
       end
     end
+  end
+
+  # On some systems, the symbols `stat`, `fstat` and `lstat` are not part of the GNU
+  # shared library `libc.so` and instead provided by `libc_noshared.a`.
+  # That makes them unavailable for dynamic runtime symbol lookup via `dlsym`
+  # which we use for interpreted mode.
+  # See https://github.com/crystal-lang/crystal/issues/11157#issuecomment-949640034 for details.
+  # Linking against the internal counterparts `__xstat`, `__fxstat` and `__lxstat` directly
+  # should work in both interpreted and compiled mode.
+
+  def self.stat(path, stat)
+    {% if LibC.has_method?(:__xstat) %}
+      LibC.__xstat(1, path, stat)
+    {% else %}
+      LibC.stat(path, stat)
+    {% end %}
+  end
+
+  def self.fstat(path, stat)
+    {% if LibC.has_method?(:__fxstat) %}
+      LibC.__fxstat(1, path, stat)
+    {% else %}
+      LibC.fstat(path, stat)
+    {% end %}
+  end
+
+  def self.lstat(path, stat)
+    {% if LibC.has_method?(:__lxstat) %}
+      LibC.__lxstat(1, path, stat)
+    {% else %}
+      LibC.lstat(path, stat)
+    {% end %}
   end
 
   def self.info(path, follow_symlinks)
@@ -127,13 +163,13 @@ module Crystal::System::File
       end
     end
 
-    raise ::File::Error.from_errno("Cannot read link", Errno::ENAMETOOLONG, file: path)
+    raise ::File::Error.from_os_error("Cannot read link", Errno::ENAMETOOLONG, file: path)
   end
 
-  def self.rename(old_filename, new_filename)
+  def self.rename(old_filename, new_filename) : ::File::Error?
     code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)
     if code != 0
-      raise ::File::Error.from_errno("Error renaming file", file: old_filename, other: new_filename)
+      ::File::Error.from_errno("Error renaming file", file: old_filename, other: new_filename)
     end
   end
 

@@ -21,7 +21,7 @@ struct LLVM::Type
     end
   end
 
-  def kind
+  def kind : LLVM::Type::Kind
     LibLLVM.get_type_kind(self)
   end
 
@@ -41,11 +41,11 @@ struct LLVM::Type
     Value.new LibLLVM.get_undef(self)
   end
 
-  def pointer
+  def pointer : LLVM::Type
     Type.new LibLLVM.pointer_type(self, 0)
   end
 
-  def array(count)
+  def array(count) : LLVM::Type
     Type.new LibLLVM.array_type(self, count)
   end
 
@@ -53,12 +53,12 @@ struct LLVM::Type
     Type.new LibLLVM.vector_type(self, count)
   end
 
-  def int_width
+  def int_width : Int32
     raise "Not an Integer" unless kind == Kind::Integer
     LibLLVM.get_int_type_width(self).to_i32
   end
 
-  def packed_struct?
+  def packed_struct? : Bool
     raise "Not a Struct" unless kind == Kind::Struct
     LibLLVM.is_packed_struct(self) != 0
   end
@@ -73,7 +73,7 @@ struct LLVM::Type
     name ? String.new(name) : nil
   end
 
-  def struct_element_types
+  def struct_element_types : Array(LLVM::Type)
     raise "Not a Struct" unless kind == Kind::Struct
     count = LibLLVM.count_struct_element_types(self)
 
@@ -83,7 +83,7 @@ struct LLVM::Type
     end
   end
 
-  def element_type
+  def element_type : LLVM::Type
     case kind
     when Kind::Array, Kind::Vector, Kind::Pointer
       Type.new LibLLVM.get_element_type(self)
@@ -92,7 +92,7 @@ struct LLVM::Type
     end
   end
 
-  def array_size
+  def array_size : Int32
     raise "Not an Array" unless kind == Kind::Array
     LibLLVM.get_array_length(self).to_i32
   end
@@ -154,12 +154,39 @@ struct LLVM::Type
     Value.new LibLLVM.const_array(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
   end
 
-  def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false)
+  def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false, can_throw = false)
     value =
-      {% unless LibLLVM::IS_LT_70 %}
-        LibLLVM.get_inline_asm(self, asm_string, asm_string.size, constraints, constraints.size, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0), LibLLVM::InlineAsmDialect::Intel)
+      {% if LibLLVM::IS_LT_70 %}
+        LibLLVM.const_inline_asm(
+          self,
+          asm_string,
+          constraints,
+          (has_side_effects ? 1 : 0),
+          (is_align_stack ? 1 : 0)
+        )
+      {% elsif LibLLVM::IS_LT_130 %}
+        LibLLVM.get_inline_asm(
+          self,
+          asm_string,
+          asm_string.size,
+          constraints,
+          constraints.size,
+          (has_side_effects ? 1 : 0),
+          (is_align_stack ? 1 : 0),
+          LibLLVM::InlineAsmDialect::Intel
+        )
       {% else %}
-        LibLLVM.const_inline_asm(self, asm_string, constraints, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0))
+        LibLLVM.get_inline_asm(
+          self,
+          asm_string,
+          asm_string.size,
+          constraints,
+          constraints.size,
+          (has_side_effects ? 1 : 0),
+          (is_align_stack ? 1 : 0),
+          LibLLVM::InlineAsmDialect::Intel,
+          (can_throw ? 1 : 0)
+        )
       {% end %}
     Value.new value
   end
