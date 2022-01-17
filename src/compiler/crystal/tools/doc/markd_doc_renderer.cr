@@ -48,7 +48,7 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
     if in_link?(node)
       output(node.text)
     else
-      literal(expand_code_links(node.text))
+      literal(expand_code_links(escape(node.text)))
     end
   end
 
