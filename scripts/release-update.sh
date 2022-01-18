@@ -22,7 +22,7 @@ sed -i -E "s|[0-9.]+/crystal-[0-9.]+-[0-9]|$CRYSTAL_VERSION/crystal-$CRYSTAL_VER
 sed -i -E "s|crystal-[0-9.]+-[0-9]|crystal-$CRYSTAL_VERSION-1|g" bin/ci
 
 # Edit .github/workflows/*.yml to point to docker image
-# Update the latest entry if same minor version to have only one item per minor version
+# Update the patch version of the latest entry if same minor version to have only one item per minor version
 sed -i -E "/crystal_bootstrap_version:/ s/(, ${CRYSTAL_VERSION%.*}\.[0-9]*)?\]\$/, $CRYSTAL_VERSION]/" .github/workflows/linux.yml
 sed -i -E "s|crystallang/crystal:[0-9.]+|crystallang/crystal:$CRYSTAL_VERSION|g" .github/workflows/*.yml
 
