@@ -4,7 +4,7 @@
 
 ### Text
 
-- Fix buffer overflow in `String#index` ([#11747](https://github.com/crystal-lang/crystal/pull/11747), thanks @straight-shoota)
+- Fix buffer overflow in `String#index` ([#11747](https://github.com/crystal-lang/crystal/pull/11747), thanks @asterite, @straight-shoota)
 
 # 1.3.1 (2022-01-13)
 
