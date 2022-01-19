@@ -3132,10 +3132,9 @@ class String
         return char_index
       end
 
-      return if pointer >= end_pointer
-
       byte = head_pointer.value
       char_bytesize = String.char_bytesize_at(head_pointer)
+      return if pointer + char_bytesize > end_pointer
       case char_bytesize
       when 1 then update_hash 1
       when 2 then update_hash 2

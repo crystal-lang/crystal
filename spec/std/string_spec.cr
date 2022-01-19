@@ -900,6 +900,7 @@ describe "String" do
       it { "日本語日本語".index("本語").should eq(1) }
       it { "\xFF\xFFcrystal".index("crystal").should eq(2) }
       it { "\xFD\x9A\xAD\x50NG".index("PNG").should eq(3) }
+      it { "🧲$".index("✅").should be_nil } # #11745
 
       describe "with offset" do
         it { "foobarbaz".index("ba", 4).should eq(6) }
