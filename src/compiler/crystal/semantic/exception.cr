@@ -172,7 +172,7 @@ module Crystal
   end
 
   class MethodTraceException < CodeError
-    def initialize(@owner : Type?, @trace : Array(ASTNode), @nil_reason : NilReason?, @show : Bool)
+    def initialize(@owner : Type?, @trace : Array(ASTNode), @nil_reason : NilReason?)
       super(nil)
     end
 
@@ -192,22 +192,20 @@ module Crystal
     end
 
     def has_message?
-      @nil_reason || has_trace? && @show
+      @nil_reason || has_trace?
     end
 
     def append_to_s(io : IO, source)
       nil_reason = @nil_reason
 
-      if !@show
-        if nil_reason
-          print_nil_reason(nil_reason, io)
-          if has_trace? || nil_reason.try(&.nodes)
-            io.puts
-            io.puts
-          end
+      if nil_reason
+        print_nil_reason(nil_reason, io)
+        if has_trace? || nil_reason.try(&.nodes)
+          io.puts
+          io.puts
         end
-        return
       end
+      return
 
       if has_trace?
         io << "#{@owner} trace:"

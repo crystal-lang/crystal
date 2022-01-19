@@ -103,9 +103,6 @@ module Crystal
     # Default standard output to use in a program, while compiling.
     property stdout : IO = STDOUT
 
-    # Whether to show error trace
-    property? show_error_trace = false
-
     # The main filename of this program
     property filename : String?
 
