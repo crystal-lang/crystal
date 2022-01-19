@@ -1512,7 +1512,7 @@ struct Time
     zone, range = location.lookup_with_boundaries(unix)
 
     if zone.offset != 0
-      case utc = unix - zone.offset
+      case unix - zone.offset
       when .<(range[0])
         zone = location.lookup(range[0] - 1)
       when .>=(range[1])
