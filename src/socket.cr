@@ -369,7 +369,7 @@ class Socket < IO
   end
 
   def close_on_exec=(arg : Bool)
-    system_close_on_exec = arg
+    self.system_close_on_exec = arg
   end
 
   def self.fcntl(fd, cmd, arg = 0)

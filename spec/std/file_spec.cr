@@ -314,7 +314,7 @@ describe "File" do
     File.extname("").should eq("")
   end
 
-  # There are more detailled specs for `Path#join` in path_spec.cr
+  # There are more detailed specs for `Path#join` in path_spec.cr
   it "constructs a path from parts" do
     {% if flag?(:win32) %}
       File.join(["///foo", "bar"]).should eq("///foo\\bar")
@@ -558,7 +558,7 @@ describe "File" do
     end
   end
 
-  # There are more detailled specs for `Path#expand` in path_spec.cr
+  # There are more detailed specs for `Path#expand` in path_spec.cr
   describe ".expand_path" do
     it "converts a pathname to an absolute pathname" do
       File.expand_path("a/b").should eq(Path.new("a/b").expand(Dir.current).to_s)
@@ -848,7 +848,7 @@ describe "File" do
 
   # TODO: implement flock on windows
   describe "flock" do
-    pending_win32 "exlusively locks a file" do
+    pending_win32 "exclusively locks a file" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_exclusive do
