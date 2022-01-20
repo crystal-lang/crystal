@@ -130,8 +130,8 @@ module Crystal
       end
     end
 
-    def format_error(filename, lines, line_number, column_number, size = 0)
-      return "In #{relative_filename(filename)}" unless line_number
+    def format_error(filename, lines, line_number, column_number, size = 0) : String
+      return colorize("#{relative_filename(filename)}").bold.underline.to_s unless line_number
 
       line = lines[line_number - 1]?
       unless line
