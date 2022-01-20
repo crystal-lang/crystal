@@ -148,6 +148,9 @@ module Crystal
     # Default standard error to use in a compilation.
     property stderr : IO = STDERR
 
+    # Whether to show error trace
+    property? show_error_trace = false
+
     # Whether to link statically
     property? static = false
 
@@ -212,6 +215,7 @@ module Crystal
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout
+      program.show_error_trace = show_error_trace?
       program.progress_tracker = @progress_tracker
       program.warnings = @warnings
       program.warnings_exclude = @warnings_exclude.map { |p| File.expand_path p }

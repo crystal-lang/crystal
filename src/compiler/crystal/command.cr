@@ -56,6 +56,7 @@ class Crystal::Command
 
   def initialize(@options : Array(String))
     @color = ENV["TERM"]? != "dumb"
+    @error_trace = false
     @progress_tracker = ProgressTracker.new
   end
 
@@ -379,7 +380,10 @@ class Crystal::Command
         output_format = f
       end
 
-      Command.add_error_trace_option(opts)
+      opts.on("--error-trace", "Show full error trace") do
+        compiler.show_error_trace = true
+        @error_trace = true
+      end
 
       opts.on("-h", "--help", "Show this message") do
         puts opts
@@ -558,9 +562,10 @@ class Crystal::Command
     opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
       compiler.flags << flag
     end
-
-    Command.add_error_trace_option(opts)
-
+    opts.on("--error-trace", "Show full error trace") do
+      @error_trace = true
+      compiler.show_error_trace = true
+    end
     opts.on("--release", "Compile in release mode") do
       compiler.release = true
     end

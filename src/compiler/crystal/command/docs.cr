@@ -76,7 +76,9 @@ class Crystal::Command
         compiler.flags << flag
       end
 
-      Command.add_error_trace_option(opts)
+      opts.on("--error-trace", "Show full error trace") do
+        compiler.show_error_trace = true
+      end
 
       opts.on("--no-color", "Disable colored output") do
         @color = false

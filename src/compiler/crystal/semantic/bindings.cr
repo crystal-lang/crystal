@@ -75,7 +75,7 @@ module Crystal
       if !freeze_type.includes_type?(invalid_type.program.nil) && invalid_type.includes_type?(invalid_type.program.nil)
         # This means that an instance variable become nil
         if self.is_a?(MetaTypeVar) && (nil_reason = self.nil_reason)
-          inner = MethodTraceException.new(nil, [] of ASTNode, nil_reason)
+          inner = MethodTraceException.new(nil, [] of ASTNode, nil_reason, freeze_type.program.show_error_trace?)
         end
       end
 
@@ -285,7 +285,7 @@ module Crystal
         end
       end
 
-      MethodTraceException.new(owner, owner_trace, nil_reason)
+      MethodTraceException.new(owner, owner_trace, nil_reason, program.show_error_trace?)
     end
   end
 
