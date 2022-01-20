@@ -99,23 +99,36 @@ module Crystal
         msg = @message.to_s
       end
 
-      error_message_lines = msg.lines
+      # This is a small hack for now. Later we'll change this to be a specific error class.
+      is_instantiating_error = msg.starts_with?("instantiating '") && msg.ends_with?('\'')
 
       if body = error_body(source, default_message)
         io << body
         io << '\n'
       end
 
-      unless error_message_lines.empty?
-        io << error_headline(error_message_lines.shift)
-        io << remaining error_message_lines
+      unless is_instantiating_error
+        error_message_lines = msg.lines
+        unless error_message_lines.empty?
+          io << error_headline(error_message_lines.shift)
+          io << remaining error_message_lines
+        end
       end
 
       if inner
         return if inner.is_a? MethodTraceException && !inner.has_message?
+        return if inner.coco
         return unless inner.has_location?
-        io << "\n\n"
-        io << '\n' unless inner.is_a? MethodTraceException
+
+        if is_instantiating_error
+          io << "In ".colorize.blue
+          io << msg.lchop("instantiating '").rchop('\'').colorize.blue
+          io.puts
+        else
+          io << "\n\n"
+          io << '\n' unless inner.is_a? MethodTraceException
+        end
+
         inner.append_to_s io, source
       end
     end
