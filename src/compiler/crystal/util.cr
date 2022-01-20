@@ -47,7 +47,7 @@ module Crystal
       target = i + line_number_start == highlight_line_number
       if target
         if color
-          " > #{line_number} | ".colorize.green.to_s + line.colorize.bold.to_s
+          " > #{line_number} | ".colorize.red.to_s + line.colorize.bold.to_s
         else
           " > #{line_number} | " + line
         end
