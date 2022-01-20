@@ -564,7 +564,7 @@ struct Char
   # '😀'.inspect      # => "'\u{1F600}'"
   # ```
   #
-  # See `#unicode_escape` for the format used to escape charactes without a
+  # See `#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#dump` additionally escapes all non-ASCII characters.
@@ -597,7 +597,7 @@ struct Char
   # '😀'.dump      # => "'\\u{1F600}'"
   # ```
   #
-  # See `#unicode_escape` for the format used to escape charactes without a
+  # See `#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#inspect` only escapes non-printable characters.
