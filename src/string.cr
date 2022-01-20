@@ -3132,10 +3132,9 @@ class String
         return char_index
       end
 
-      return if pointer >= end_pointer
-
       byte = head_pointer.value
       char_bytesize = String.char_bytesize_at(head_pointer)
+      return if pointer + char_bytesize > end_pointer
       case char_bytesize
       when 1 then update_hash 1
       when 2 then update_hash 2
@@ -4568,7 +4567,7 @@ class String
   # "\u{1f48e} - à la carte\n".inspect # => %("\u{1F48E} - à la carte\\n")
   # ```
   #
-  # See `Char#unicode_escape` for the format used to escape charactes without a
+  # See `Char#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#inspect_unquoted` omits the delimiters.
@@ -4593,7 +4592,7 @@ class String
   # "\u{1f48e} - à la carte\n".inspect_unquoted # => %(\u{1F48E} - à la carte\\n)
   # ```
   #
-  # See `Char#unicode_escape` for the format used to escape charactes without a
+  # See `Char#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#inspect` wraps the content in double quotes.
@@ -4621,7 +4620,7 @@ class String
   # "\u{1f48e} - à la carte\n".dump # => %("\\u{1F48E} - \\u00E0 la carte\\n")
   # ```
   #
-  # See `Char#unicode_escape` for the format used to escape charactes without a
+  # See `Char#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#dump_unquoted` omits the delimiters.
@@ -4649,7 +4648,7 @@ class String
   # "\u{1f48e} - à la carte\n".dump_unquoted # => %(\\u{1F48E} - \\u00E0 la carte\\n)
   # ```
   #
-  # See `Char#unicode_escape` for the format used to escape charactes without a
+  # See `Char#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#dump` wraps the content in double quotes.
