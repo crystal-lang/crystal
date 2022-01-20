@@ -117,7 +117,6 @@ module Crystal
 
       if inner
         return if inner.is_a? MethodTraceException && !inner.has_message?
-        return if inner.coco
         return unless inner.has_location?
 
         if is_instantiating_error
@@ -274,7 +273,7 @@ module Crystal
       io << "    "
       io << (" " * (name_location.column_number - 1))
       with_color.green.bold.surround(io) do
-        io << '^'
+        io << '~'
         if name_size > 0
           io << ("~" * (name_size - 1)) if name_size
         end
