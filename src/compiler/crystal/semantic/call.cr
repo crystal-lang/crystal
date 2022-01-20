@@ -1095,11 +1095,11 @@ class Crystal::Call
 
       receiver = (obj.try(&.type) || with_scope || scope).try(&.devirtualize)
       if receiver && receiver.metaclass?
-        raise "instantiating '#{receiver.instance_type}.#{name}(#{args.map(&.type).join ", "})'", ex
+        raise "#{receiver.instance_type}.#{name}(#{args.map(&.type).join ", "})", ex, exception_type: InstantiationError
       elsif receiver
-        raise "instantiating '#{receiver}##{name}(#{args.map(&.type).join ", "})'", ex
+        raise "#{receiver}##{name}(#{args.map(&.type).join ", "})", ex, exception_type: InstantiationError
       else
-        raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
+        raise "#{name}(#{args.map(&.type).join ", "})", ex, exception_type: InstantiationError
       end
     end
   end
