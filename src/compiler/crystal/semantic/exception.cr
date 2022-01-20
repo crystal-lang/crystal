@@ -109,6 +109,7 @@ module Crystal
       unless is_instantiation_error
         error_message_lines = msg.lines
         unless error_message_lines.empty?
+          io.puts
           io << error_headline(error_message_lines.shift)
           io << remaining error_message_lines
         end
@@ -139,12 +140,12 @@ module Crystal
     end
 
     def error_headline(msg)
-      return "Warning: #{msg}" if @warning
-
-      if (inner = @inner) && !inner.is_a? MethodTraceException? && inner.has_location?
-        colorize("Error: #{msg}").yellow
+      if @warning
+        "Warning: #{msg}"
+      elsif @color
+        "#{colorize(" Error ").back(:red).fore(:white)} #{msg}"
       else
-        colorize("Error: #{msg}").yellow.bold
+        "Error: #{msg}"
       end
     end
 
