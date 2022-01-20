@@ -119,6 +119,7 @@ module Crystal
         return unless inner.has_location?
 
         if is_instantiation_error
+          io.puts
           io << colorize("In ").blue
           io << colorize(msg).blue
           io.puts
