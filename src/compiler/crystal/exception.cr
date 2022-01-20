@@ -170,8 +170,8 @@ module Crystal
 
     def format_macro_error(virtual_file : VirtualFile)
       String.build do |io|
-        io << "There was a problem expanding macro '#{virtual_file.macro.name}'"
-        io << "\n\n"
+        io << "While expanding macro #{virtual_file.macro.name}".colorize.blue
+        io.puts
         append_where_macro_expanded(io, virtual_file)
         io << '\n'
         io << "Called macro defined in "
@@ -270,7 +270,7 @@ module Crystal
       lines = source_lines(source_filename)
       return unless lines
 
-      io << "Code in " << format_error(
+      io << format_error(
         filename: source_filename,
         lines: lines,
         line_number: expanded_source.line_number,

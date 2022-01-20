@@ -55,7 +55,7 @@ module Crystal
     protected def self.wrap_macro_expression(ex, location)
       filename = location.filename
       if filename.is_a?(VirtualFile) && (expanded_location = filename.expanded_location)
-        ex = TypeException.new "expanding macro", expanded_location.line_number, expanded_location.column_number, expanded_location.filename, 0, ex
+        ex = MacroExpansionError.new "expanding macro", expanded_location.line_number, expanded_location.column_number, expanded_location.filename, 0, ex
       end
       ex
     end
@@ -100,13 +100,14 @@ module Crystal
       end
 
       is_instantiation_error = self.is_a?(InstantiationError)
+      is_macro_expansion_error = self.is_a?(MacroExpansionError)
 
       if body = error_body(source, default_message)
         io << body
         io << '\n'
       end
 
-      unless is_instantiation_error
+      unless is_instantiation_error || is_macro_expansion_error
         error_message_lines = msg.lines
         unless error_message_lines.empty?
           io.puts
@@ -123,6 +124,8 @@ module Crystal
           io.puts
           io << colorize("In ").blue
           io << colorize(msg).blue
+          io.puts
+        elsif is_macro_expansion_error
           io.puts
         else
           io << "\n\n"
@@ -167,6 +170,9 @@ module Crystal
   end
 
   class InstantiationError < TypeException
+  end
+
+  class MacroExpansionError < TypeException
   end
 
   class MethodTraceException < CodeError

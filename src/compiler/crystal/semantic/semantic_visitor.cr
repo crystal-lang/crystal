@@ -450,7 +450,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   rescue ex : MacroRaiseException
     node.raise ex.message, exception_type: MacroRaiseException
   rescue ex : Crystal::CodeError
-    node.raise "expanding macro", ex
+    node.raise "expanding macro", ex, exception_type: MacroExpansionError
   end
 
   def process_annotations(annotations)
