@@ -116,26 +116,35 @@ module Crystal
 
     def filename_row_col_message(filename, line_number, column_number)
       String.build do |io|
+        filename_row_col_message(filename, line_number, column_number, io)
+      end
+    end
+
+    def filename_row_col_message(filename, line_number, column_number, io)
+      case filename
+      in String
         io << colorize("#{relative_filename(filename)}:#{line_number}:#{column_number}").underline
+      in VirtualFile
+        io << "macro '" << colorize("#{filename.macro.name}").underline << '\''
+      in Nil
+        io << "unknown location"
       end
     end
 
     def format_error(filename, lines, line_number, column_number, size = 0)
-      return "#{relative_filename(filename)}" unless line_number
+      return "In #{relative_filename(filename)}" unless line_number
 
-      unless line = lines[line_number - 1]?
-        return filename_row_col_message(filename, line_number, column_number)
+      line = lines[line_number - 1]?
+      unless line
+        return String.build do |io|
+          io << "In "
+          filename_row_col_message(filename, line_number, column_number, io)
+        end
       end
 
       String.build do |io|
-        case filename
-        in String
-          io << filename_row_col_message(filename, line_number, column_number)
-        in VirtualFile
-          io << "macro '" << colorize("#{filename.macro.name}").underline << '\''
-        in Nil
-          io << "unknown location"
-        end
+        io << "In "
+        filename_row_col_message(filename, line_number, column_number, io)
 
         decorator = line_number_decorator(line_number)
         lstripped_line = line.lstrip
@@ -151,15 +160,13 @@ module Crystal
     end
 
     def format_error_from_file(filename : String)
-      lines = File.read_lines(filename)
-      formatted_error = format_error(
+      format_error(
         filename: @filename,
-        lines: lines,
+        lines: File.read_lines(filename),
         line_number: @line_number,
         column_number: @column_number,
         size: @size
       )
-      "In #{formatted_error}"
     end
 
     def format_macro_error(virtual_file : VirtualFile)
@@ -209,14 +216,7 @@ module Crystal
       line_number = macro_source.try &.line_number
       column_number = macro_source.try &.column_number
 
-      case source_filename
-      in String
-        io << colorize("#{relative_filename(source_filename)}:#{line_number}:#{column_number}").underline
-      in VirtualFile
-        io << "macro '" << colorize("#{source_filename.macro.name}").underline << '\''
-      in Nil
-        "unknown location"
-      end
+      filename_row_col_message(source_filename, line_number, column_number, io)
 
       lines = source_lines(source_filename)
 
