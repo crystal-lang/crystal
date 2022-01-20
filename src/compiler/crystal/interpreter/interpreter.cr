@@ -1211,7 +1211,6 @@ class Crystal::Repl::Interpreter
           puts value.to_s
         rescue ex : Crystal::CodeError
           ex.color = true
-          ex.error_trace = true
           puts ex
           next
         rescue ex : Exception

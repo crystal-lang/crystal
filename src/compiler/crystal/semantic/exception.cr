@@ -16,11 +16,6 @@ module Crystal
       inner.try &.color=(color)
     end
 
-    def error_trace=(error_trace)
-      @error_trace = !!error_trace
-      inner.try &.error_trace=(error_trace)
-    end
-
     def warning=(warning)
       super
       inner.try &.warning=(warning)
@@ -37,8 +32,6 @@ module Crystal
     end
 
     def initialize(message, @line_number, @column_number : Int32, @filename, @size, @inner = nil)
-      @error_trace = true
-
       # If the inner exception is a macro raise, we replace this exception's
       # message with that message. In this way the error message will
       # look like a regular message produced by the compiler, and not
@@ -98,12 +91,6 @@ module Crystal
     def append_to_s(io : IO, source)
       inner = @inner
 
-      unless @error_trace || inner.is_a? MethodTraceException
-        if inner && inner.has_location?
-          return inner.append_to_s(io, source)
-        end
-      end
-
       # If the inner exception has no location it means that they came from virtual nodes.
       # In that case, get the deepest error message and only show that.
       if inner && !inner.has_location?
@@ -113,11 +100,6 @@ module Crystal
       end
 
       error_message_lines = msg.lines
-
-      unless @error_trace || @warning
-        io << colorize("Showing last frame. Use --error-trace for full trace.").dim
-        io << "\n\n"
-      end
 
       if body = error_body(source, default_message)
         io << body

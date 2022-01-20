@@ -6,7 +6,6 @@ module Crystal
   # Base class for all errors related to specific user code.
   abstract class CodeError < Error
     property? color = false
-    property? error_trace = false
 
     @filename : String | VirtualFile | Nil
 
@@ -170,14 +169,11 @@ module Crystal
     end
 
     def format_macro_error(virtual_file : VirtualFile)
-      show_where_macro_expanded = !(@error_trace && self.responds_to?(:error_trace=))
       String.build do |io|
         io << "There was a problem expanding macro '#{virtual_file.macro.name}'"
         io << "\n\n"
-        if show_where_macro_expanded
-          append_where_macro_expanded(io, virtual_file)
-          io << '\n'
-        end
+        append_where_macro_expanded(io, virtual_file)
+        io << '\n'
         io << "Called macro defined in "
         append_macro_definition_location(io, virtual_file)
         io << "\n\n"
@@ -252,10 +248,7 @@ module Crystal
 
     def append_expanded_macro(io, source)
       line_number = @line_number
-      if @error_trace || !line_number
-        source, _ = minimize_indentation(source.lines)
-        io << Crystal.with_line_numbers(source, line_number, @color)
-      else
+      if line_number
         to_index = line_number.clamp(0..source.lines.size)
         from_index = {0, to_index - MACRO_LINES_TO_SHOW}.max
         source_slice = source.lines[from_index...to_index]
@@ -264,6 +257,9 @@ module Crystal
         io << Crystal.with_line_numbers(source_slice, line_number, @color, line_number_start = from_index + 1)
         offset = OFFSET_FROM_LINE_NUMBER_DECORATOR + line_number.to_s.chars.size - spaces_removed
         append_error_indicator(io, offset, @column_number, @size)
+      else
+        source, _ = minimize_indentation(source.lines)
+        io << Crystal.with_line_numbers(source, line_number, @color)
       end
     end
 

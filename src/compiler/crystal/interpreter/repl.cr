@@ -98,7 +98,6 @@ class Crystal::Repl
         @line_number += 1
 
         ex.color = true
-        ex.error_trace = true
         puts ex
       rescue ex : Exception
         @nest = 0
@@ -154,7 +153,6 @@ class Crystal::Repl
     exit 1
   rescue ex : Crystal::CodeError
     ex.color = true
-    ex.error_trace = true
     puts ex
     exit 1
   rescue ex : Exception
