@@ -107,7 +107,18 @@ module Crystal
         io << '\n'
       end
 
-      unless is_instantiation_error || is_macro_expansion_error
+      inner_has_message =
+        if inner
+          if inner.is_a?(MethodTraceException) && !inner.has_message?
+            false
+          else
+            inner.has_location?
+          end
+        else
+          false
+        end
+
+      if (!is_instantiation_error && !is_macro_expansion_error) || !inner_has_message
         error_message_lines = msg.lines
         unless error_message_lines.empty?
           io.puts unless @warning
@@ -116,10 +127,7 @@ module Crystal
         end
       end
 
-      if inner
-        return if inner.is_a? MethodTraceException && !inner.has_message?
-        return unless inner.has_location?
-
+      if inner && inner_has_message
         if is_instantiation_error
           io.puts
           io << colorize("In ").blue
