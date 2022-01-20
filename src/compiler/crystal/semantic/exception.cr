@@ -119,8 +119,8 @@ module Crystal
         return unless inner.has_location?
 
         if is_instantiation_error
-          io << "In ".colorize.blue
-          io << msg.colorize.blue
+          io << colorize("In ").blue
+          io << colorize(msg).blue
           io.puts
         else
           io << "\n\n"
