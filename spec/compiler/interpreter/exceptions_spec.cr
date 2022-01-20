@@ -109,7 +109,7 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
-    it "excutes ensure when exception is raised in body" do
+    it "executes ensure when exception is raised in body" do
       interpret(<<-CODE, prelude: "prelude").should eq("10")
           a = 0
 
@@ -126,7 +126,7 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
-    it "excutes ensure when exception is raised in rescue" do
+    it "executes ensure when exception is raised in rescue" do
       interpret(<<-CODE, prelude: "prelude").should eq("10")
           a = 0
 
@@ -238,7 +238,7 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "excutes ensure when returning from a block" do
+    it "executes ensure when returning from a block" do
       interpret(<<-CODE).should eq(21)
         module Global
           @@property = 0
@@ -272,7 +272,7 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "excutes ensure when returning from a block (2)" do
+    it "executes ensure when returning from a block (2)" do
       interpret(<<-CODE).should eq(21)
         module Global
           @@property = 0
@@ -317,7 +317,7 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "excutes ensure when breaking from a block" do
+    it "executes ensure when breaking from a block" do
       interpret(<<-CODE).should eq(18)
         module Global
           @@property = 0
@@ -351,7 +351,7 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "excutes ensure when returning a big value from a block" do
+    it "executes ensure when returning a big value from a block" do
       interpret(<<-CODE, prelude: "prelude").should eq("32405")
         module Global
           @@property = 0
