@@ -110,7 +110,7 @@ module Crystal
       unless is_instantiation_error || is_macro_expansion_error
         error_message_lines = msg.lines
         unless error_message_lines.empty?
-          io.puts
+          io.puts unless @warning
           io << error_headline(error_message_lines.shift)
           io << remaining error_message_lines
         end
