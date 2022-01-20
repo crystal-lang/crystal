@@ -1085,15 +1085,19 @@ class Crystal::Call
     begin
       yield
     rescue ex : Crystal::CodeError
-      if obj = @obj
-        if name == "initialize"
-          # Avoid putting 'initialize' in the error trace
-          # because it's most likely that this is happening
-          # inside a generated 'new' method
-          ::raise ex
-        else
-          raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
-        end
+      obj = @obj
+      if obj && name == "initialize"
+        # Avoid putting 'initialize' in the error trace
+        # because it's most likely that this is happening
+        # inside a generated 'new' method
+        ::raise ex
+      end
+
+      receiver = (obj.try(&.type) || with_scope || scope).try(&.devirtualize)
+      if receiver && receiver.metaclass?
+        raise "instantiating '#{receiver.instance_type}.#{name}(#{args.map(&.type).join ", "})'", ex
+      elsif receiver
+        raise "instantiating '#{receiver}##{name}(#{args.map(&.type).join ", "})'", ex
       else
         raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
       end
