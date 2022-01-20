@@ -676,7 +676,7 @@ describe "Semantic: macro" do
   end
 
   it "show macro trace in errors (1)" do
-    ex = assert_error(<<-CR, "Error: expanding macro")
+    ex = assert_error(<<-CR, "expanding macro")
       macro foo
         Bar
       end
@@ -688,7 +688,7 @@ describe "Semantic: macro" do
   end
 
   it "show macro trace in errors (2)" do
-    ex = assert_error(<<-CR, "Error: expanding macro")
+    ex = assert_error(<<-CR, "expanding macro")
       {% begin %}
         Bar
       {% end %}
