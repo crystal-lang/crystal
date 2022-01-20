@@ -76,6 +76,8 @@ class Crystal::Command
         compiler.flags << flag
       end
 
+      Command.add_error_trace_option(opts)
+
       opts.on("--no-color", "Disable colored output") do
         @color = false
         compiler.color = false

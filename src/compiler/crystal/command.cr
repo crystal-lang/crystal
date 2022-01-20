@@ -379,6 +379,8 @@ class Crystal::Command
         output_format = f
       end
 
+      Command.add_error_trace_option(opts)
+
       opts.on("-h", "--help", "Show this message") do
         puts opts
         exit
@@ -556,6 +558,9 @@ class Crystal::Command
     opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
       compiler.flags << flag
     end
+
+    Command.add_error_trace_option(opts)
+
     opts.on("--release", "Compile in release mode") do
       compiler.release = true
     end
@@ -633,5 +638,11 @@ class Crystal::Command
 
   private def new_compiler
     @compiler = Compiler.new
+  end
+
+  protected def self.add_error_trace_option(opts)
+    opts.on("--error-trace", "Show full error trace (deprecated)") do
+      STDERR.puts "Note: the --error-trace flag is deprecated and no longer has any effect."
+    end
   end
 end
