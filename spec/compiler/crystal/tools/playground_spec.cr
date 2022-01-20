@@ -581,7 +581,7 @@ private def assert_compile(source)
   sources = Playground::Session.instrument_and_prelude("", "", 0, source)
   compiler = Compiler.new
   compiler.no_codegen = true
-  result = compiler.compile sources, "fake-no-build"
+  compiler.compile sources, "fake-no-build"
 end
 
 describe Playground::Session do

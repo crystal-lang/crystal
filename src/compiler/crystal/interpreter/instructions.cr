@@ -1620,7 +1620,7 @@ require "./repl"
           interpreter_intrinsics_memcpy: {
             pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, align : UInt32, is_volatile : Bool],
             code:       begin
-              # In the std, align is alway set to 0. Let's worry about this if really needed.
+              # In the std, align is always set to 0. Let's worry about this if really needed.
               raise "BUG: memcpy with align != 0 is not supported" if align != 0
 
               # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
@@ -1634,7 +1634,7 @@ require "./repl"
           interpreter_intrinsics_memmove: {
             pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, align : UInt32, is_volatile : Bool],
             code:       begin
-              # In the std, align is alway set to 0. Let's worry about this if really needed.
+              # In the std, align is always set to 0. Let's worry about this if really needed.
               raise "BUG: memcpy with align != 0 is not supported" if align != 0
 
               # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
@@ -1648,7 +1648,7 @@ require "./repl"
           interpreter_intrinsics_memset: {
             pop_values: [dest : Pointer(Void), val : UInt8, len : UInt64, align : UInt32, is_volatile : Bool],
             code:       begin
-              # In the std, align is alway set to 0. Let's worry about this if really needed.
+              # In the std, align is always set to 0. Let's worry about this if really needed.
               raise "BUG: memcpy with align != 0 is not supported" if align != 0
 
               # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
@@ -1699,7 +1699,7 @@ require "./repl"
           interpreter_intrinsics_memcpy: {
             pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, align : UInt32, is_volatile : Bool],
             code:       begin
-              # In the std, align is alway set to 0. Let's worry about this if really needed.
+              # In the std, align is always set to 0. Let's worry about this if really needed.
               raise "BUG: memcpy with align != 0 is not supported" if align != 0
 
               # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
@@ -1713,7 +1713,7 @@ require "./repl"
           interpreter_intrinsics_memmove: {
             pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, align : UInt32, is_volatile : Bool],
             code:       begin
-              # In the std, align is alway set to 0. Let's worry about this if really needed.
+              # In the std, align is always set to 0. Let's worry about this if really needed.
               raise "BUG: memcpy with align != 0 is not supported" if align != 0
 
               # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
@@ -1727,7 +1727,7 @@ require "./repl"
           interpreter_intrinsics_memset: {
             pop_values: [dest : Pointer(Void), val : UInt8, len : UInt32, align : UInt32, is_volatile : Bool],
             code:       begin
-              # In the std, align is alway set to 0. Let's worry about this if really needed.
+              # In the std, align is always set to 0. Let's worry about this if really needed.
               raise "BUG: memcpy with align != 0 is not supported" if align != 0
 
               # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
