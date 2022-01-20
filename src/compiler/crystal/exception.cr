@@ -122,11 +122,11 @@ module Crystal
     def filename_row_col_message(filename, line_number, column_number, io)
       case filename
       in String
-        io << colorize("#{relative_filename(filename)}:#{line_number}:#{column_number}").underline
+        io << colorize("#{relative_filename(filename)}:#{line_number}:#{column_number}").bold.underline
       in VirtualFile
-        io << "macro '" << colorize("#{filename.macro.name}").underline << '\''
+        io << colorize("macro '").bold << colorize("#{filename.macro.name}").bold.underline << colorize("'").bold
       in Nil
-        io << "unknown location"
+        io << colorize("unknown location").bold
       end
     end
 
@@ -136,13 +136,13 @@ module Crystal
       line = lines[line_number - 1]?
       unless line
         return String.build do |io|
-          io << "In "
+          io << colorize("In ").bold
           filename_row_col_message(filename, line_number, column_number, io)
         end
       end
 
       String.build do |io|
-        io << "In "
+        io << colorize("In ").bold
         filename_row_col_message(filename, line_number, column_number, io)
 
         decorator = line_number_decorator(line_number)
@@ -153,7 +153,7 @@ module Crystal
         final_column_number = (column_number - space_delta).clamp(0..)
 
         io << "\n\n"
-        io << colorize(decorator).dim << colorize(lstripped_line.chomp).bold
+        io << colorize(decorator).dim << lstripped_line.chomp
         append_error_indicator(io, decorator.chars.size, final_column_number, size || 0)
       end
     end
