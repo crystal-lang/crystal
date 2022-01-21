@@ -1479,7 +1479,7 @@ class Hash(K, V)
   # h = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject!("a", "c")
   # h # => {"b" => 2, "d" => 4}
   # ```
-  def reject!(keys : Array | Tuple) : self
+  def reject!(keys : Enumerable) : self
     keys.each { |k| delete(k) }
     self
   end
@@ -1491,11 +1491,12 @@ class Hash(K, V)
   # Returns a new `Hash` with the given keys.
   #
   # ```
-  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select({"a", "c"}) # => {"a" => 1, "c" => 3}
-  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select("a", "c")   # => {"a" => 1, "c" => 3}
-  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(["a", "c"]) # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select({"a", "c"})    # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select("a", "c")      # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(["a", "c"])    # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(Set{"a", "c"}) # => {"a" => 1, "c" => 3}
   # ```
-  def select(keys : Array | Tuple) : Hash(K, V)
+  def select(keys : Enumerable) : Hash(K, V)
     hash = {} of K => V
     keys.each { |k| hash[k] = self[k] if has_key?(k) }
     hash
@@ -1512,10 +1513,11 @@ class Hash(K, V)
   # h1 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!({"a", "c"})
   # h2 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!("a", "c")
   # h3 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!(["a", "c"])
-  # h1 == h2 == h3 # => true
-  # h1             # => {"a" => 1, "c" => 3}
+  # h4 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!(Set{"a", "c"})
+  # h1 == h2 == h3 == h4 # => true
+  # h1                   # => {"a" => 1, "c" => 3}
   # ```
-  def select!(keys : Array | Tuple) : self
+  def select!(keys : Enumerable) : self
     each { |k, v| delete(k) unless keys.includes?(k) }
     self
   end
