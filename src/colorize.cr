@@ -252,8 +252,12 @@ module Colorize
   @[Flags]
   enum Mode
     # Makes the text bold.
+    #
+    # Same as `Bright`.
     Bold = 1
     # Makes the text color bright.
+    #
+    # Same as `Bold`.
     Bright = 1
     # Dims the text color.
     Dim
