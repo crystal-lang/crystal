@@ -220,7 +220,7 @@ alternate_ranges = alternate_ranges(downcase_one_ranges)
 casefold_ranges = case_ranges entries, &.casefold
 
 all_strides = {} of String => Array(Stride)
-categories = %w(Lu Ll Lt Lm Lo Mn Mc Me Nd Nl No Pc Zs Zl Zp Cc Cf Cs Co Cn)
+categories = %w(Lu Ll Lt Lm Lo Mn Mc Me Nd Nl No Zs Zl Zp Cc Cf Cs Co Cn)
 
 categories.each do |category|
   all_strides[category] = strides entries, category, &.general_category

@@ -1430,8 +1430,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when Call
       # lib external var
       external = exp.dependencies.first.as(External)
-      lib_type = external.owner.as(LibType)
-      fn = @context.c_function(lib_type, external.real_name)
+      fn = @context.c_function(external.real_name)
 
       # Put the symbol address, which is a pointer
       put_u64 fn.address, node: node
@@ -1761,8 +1760,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       return false
     end
 
-    if obj && (obj_type = obj.type).is_a?(LibType)
-      compile_lib_call(node, obj_type)
+    if obj.try(&.type).is_a?(LibType)
+      compile_lib_call(node)
       return false
     end
 
@@ -1793,7 +1792,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  private def compile_lib_call(node : Call, obj_type)
+  private def compile_lib_call(node : Call)
     target_def = node.target_def
     external = target_def.as(External)
 
@@ -1846,7 +1845,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if external.varargs?
       lib_function = LibFunction.new(
         def: external,
-        symbol: @context.c_function(obj_type, external.real_name),
+        symbol: @context.c_function(external.real_name),
         call_interface: FFI::CallInterface.variadic(
           external.type.ffi_type,
           args_ffi_types,
@@ -1858,7 +1857,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     else
       lib_function = @context.lib_functions[external] ||= LibFunction.new(
         def: external,
-        symbol: @context.c_function(obj_type, external.real_name),
+        symbol: @context.c_function(external.real_name),
         call_interface: FFI::CallInterface.new(
           external.type.ffi_type,
           args_ffi_types

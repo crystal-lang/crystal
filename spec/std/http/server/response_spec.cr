@@ -203,6 +203,18 @@ describe HTTP::Server::Response do
     end
   end
 
+  it "closes gracefully with replaced output that syncs close (#11389)" do
+    output = IO::Memory.new
+    response = HTTP::Server::Response.new(output)
+
+    response.output = IO::Stapled.new(response.output, response.output, sync_close: true)
+    response.print "some body"
+
+    response.close
+
+    output.rewind.gets_to_end.should eq "HTTP/1.1 200 OK\r\nContent-Length: 9\r\n\r\nsome body"
+  end
+
   it "flushes" do
     io = IO::Memory.new
     response = Response.new(io)

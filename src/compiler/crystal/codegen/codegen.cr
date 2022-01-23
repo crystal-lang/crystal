@@ -1152,7 +1152,7 @@ module Crystal
       thread_local_fun = check_main_fun(fun_name, thread_local_fun)
       indirection_ptr = alloca llvm_type(type).pointer
       call thread_local_fun, indirection_ptr
-      ptr = load indirection_ptr
+      load indirection_ptr
     end
 
     def visit(node : TypeDeclaration)

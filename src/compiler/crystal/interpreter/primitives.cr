@@ -273,10 +273,9 @@ class Crystal::Repl::Compiler
     when "external_var_get"
       return unless @wants_value
 
-      lib_type = node.obj.not_nil!.type.as(LibType)
       external = node.target_def.as(External)
 
-      fn = @context.c_function(lib_type, external.real_name)
+      fn = @context.c_function(external.real_name)
 
       # Put the symbol address, which is a pointer
       put_u64 fn.address, node: node
@@ -284,7 +283,6 @@ class Crystal::Repl::Compiler
       # Read from the pointer
       pointer_get(inner_sizeof_type(node), node: node)
     when "external_var_set"
-      lib_type = node.obj.not_nil!.type.as(LibType)
       external = node.target_def.as(External)
 
       # pointer_set needs first arg, then obj
@@ -292,7 +290,7 @@ class Crystal::Repl::Compiler
       request_value(arg)
       dup(aligned_sizeof_type(arg), node: nil) if @wants_value
 
-      fn = @context.c_function(lib_type, external.real_name)
+      fn = @context.c_function(external.real_name)
 
       # Put the symbol address, which is a pointer
       put_u64 fn.address, node: node
