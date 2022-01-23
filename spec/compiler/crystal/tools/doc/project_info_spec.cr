@@ -92,12 +92,12 @@ describe Crystal::Doc::ProjectInfo do
 
       it "git non-tagged commit" do
         run_git "init"
-        run_git "checkout -b a_branch"
+        run_git "checkout -B master"
         run_git "add shard.yml"
         run_git "commit -m \"Initial commit\" --no-gpg-sign"
         commit_sha = `git rev-parse HEAD`.chomp
 
-        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "a_branch", refname: commit_sha))
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master", refname: commit_sha))
         assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1", refname: commit_sha))
         assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: commit_sha))
         assert_with_defaults(ProjectInfo.new("bar", "2.0", refname: "12345"), ProjectInfo.new("bar", "2.0", refname: "12345"))
@@ -105,12 +105,12 @@ describe Crystal::Doc::ProjectInfo do
 
       it "git non-tagged commit dirty" do
         run_git "init"
-        run_git "checkout -b a_branch"
+        run_git "checkout -B master"
         run_git "add shard.yml"
         run_git "commit -m \"Initial commit\" --no-gpg-sign"
         File.write("shard.yml", "\n", mode: "a")
 
-        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "a_branch-dev", refname: nil))
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master-dev", refname: nil))
         assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1", refname: nil))
         assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: nil))
       end
@@ -147,23 +147,23 @@ describe Crystal::Doc::ProjectInfo do
 
     # Empty git directory
     run_git "init"
-    run_git "checkout -b original_branch"
+    run_git "checkout -B master"
     ProjectInfo.find_git_version.should be_nil
 
     # Non-tagged commit
     File.write("file.txt", "foo")
     run_git "add file.txt"
     run_git "commit -m \"Initial commit\" --no-gpg-sign"
-    ProjectInfo.find_git_version.should eq "original_branch"
+    ProjectInfo.find_git_version.should eq "master"
 
     # Other branch
     run_git "checkout -b foo"
     ProjectInfo.find_git_version.should eq "foo"
 
     # Non-tagged commit, dirty workdir
-    run_git "checkout original_branch"
+    run_git "checkout master"
     File.write("file.txt", "bar")
-    ProjectInfo.find_git_version.should eq "original_branch-dev"
+    ProjectInfo.find_git_version.should eq "master-dev"
 
     run_git "checkout -- ."
 
