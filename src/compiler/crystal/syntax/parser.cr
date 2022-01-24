@@ -5127,14 +5127,16 @@ module Crystal
       has_output_type = type_start?(consume_newlines: false)
 
       check :"->"
+      end_location = token_end_location
       next_token_skip_space
 
       if has_output_type
         skip_space_or_newline
         output_type = parse_union_type
+        end_location = output_type.end_location
       end
 
-      ProcNotation.new(input_types, output_type).at(location)
+      ProcNotation.new(input_types, output_type).at(location).at_end(end_location)
     end
 
     def make_nilable_type(type)
