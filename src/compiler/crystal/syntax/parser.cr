@@ -366,7 +366,9 @@ module Crystal
 
             atomic.name = "[]="
             atomic.name_size = 0
-            atomic.args << parse_op_assign_no_control
+            arg = parse_op_assign_no_control
+            atomic.args << arg
+            atomic.end_location = arg.end_location
           else
             break unless can_be_assigned?(atomic)
 
