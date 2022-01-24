@@ -1327,13 +1327,14 @@ module Crystal
     end
 
     def parse_begin
+      begin_location = @token.location
       slash_is_regex!
       next_token_skip_statement_end
       exps = parse_expressions
       node, end_location = parse_exception_handler exps
       node.end_location = end_location
       if !node.is_a?(ExceptionHandler) && (!node.is_a?(Expressions) || node.keyword)
-        node = Expressions.new([node]).at(node).at_end(node)
+        node = Expressions.new([node]).at(begin_location).at_end(end_location)
       end
       node.keyword = :begin if node.is_a?(Expressions)
       node
