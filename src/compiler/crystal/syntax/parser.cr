@@ -4089,8 +4089,7 @@ module Crystal
       node
     end
 
-    def parse_var_or_call(global = false, force_call = false)
-      location = @token.location
+    def parse_var_or_call(global = false, force_call = false, location = @token.location)
       end_location = token_end_location
       doc = @token.doc
 
@@ -4761,7 +4760,7 @@ module Crystal
 
       case @token.type
       when :IDENT
-        set_visibility parse_var_or_call global: true
+        set_visibility parse_var_or_call global: true, location: location
       when :CONST
         ident = parse_generic global: true, location: location, expression: true
         parse_custom_literal ident
