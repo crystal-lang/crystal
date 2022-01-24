@@ -1202,7 +1202,7 @@ module Crystal
         next_token_skip_space_or_newline
         value = parse_op_assign_no_control
       end
-      TypeDeclaration.new(var, var_type, value).at(var.location)
+      TypeDeclaration.new(var, var_type, value).at(var).at_end(value || var_type)
     end
 
     def next_comes_colon_space?
@@ -4227,6 +4227,7 @@ module Crystal
           else
             if @no_type_declaration == 0 && @token.type == :":"
               declare_var = parse_type_declaration(Var.new(name).at(location))
+              end_location = declare_var.end_location
               push_var declare_var if @call_args_nest == 0
               declare_var
             elsif (!force_call && is_var)
