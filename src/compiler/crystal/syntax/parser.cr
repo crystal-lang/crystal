@@ -230,7 +230,7 @@ module Crystal
       end
 
       multi = MultiAssign.new(targets, values).at(location)
-      parse_expression_suffix multi, @token.location
+      parse_expression_suffix multi, location
     end
 
     def multi_assign_target?(exp)

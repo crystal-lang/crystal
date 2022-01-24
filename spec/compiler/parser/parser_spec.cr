@@ -2042,6 +2042,7 @@ module Crystal
       assert_end_location "extend Foo"
       assert_end_location "1.as(Int32)"
       assert_end_location "puts obj.foo"
+      assert_end_location "a, b = 1, 2 if 3"
 
       assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
       assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"
