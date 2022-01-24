@@ -109,6 +109,30 @@ describe "expectations" do
   describe "eq" do
     it { 10.should eq(10) }
     it { 10.should_not eq(1) }
+
+    describe "when generating failure messages" do
+      context "given string values" do
+        it "handles messages for values without quotes" do
+          expect_raises(Spec::AssertionFailed, "Expected: \"value\"\n     got: \"test\"") do
+            "test".should eq("value")
+          end
+        end
+
+        it "handles messages for values with quotes" do
+          expect_raises(Spec::AssertionFailed, %(Expected: %|test message "other"|\n     got: %|test message "value"|)) do
+            "test message \"value\"".should eq("test message \"other\"")
+          end
+        end
+      end
+
+      context "given other values" do
+        it "handles messages for the value" do
+          expect_raises(Spec::AssertionFailed, "Expected: 10\n     got: 100") do
+            100.should eq(10)
+          end
+        end
+      end
+    end
   end
 
   describe "match" do

@@ -40,14 +40,25 @@ module Spec
                got size: #{actual_value.size}
           MSG
       else
-        expected = expected_value.inspect
-        got = actual_value.inspect
+        expected = self.format_by_type(expected_value)
+        got = self.format_by_type(actual_value)
         if expected == got
-          expected += " : #{@expected_value.class}"
+          expected += " : #{expected_value.class}"
           got += " : #{actual_value.class}"
         end
         "Expected: #{expected}\n     got: #{got}"
       end
+    end
+
+    def format_by_type(value)
+      case value
+      when String
+        if value.includes?('"')
+          return %(%|#{value}|)
+        end
+      end
+
+      value.inspect
     end
 
     def negative_failure_message(actual_value)
