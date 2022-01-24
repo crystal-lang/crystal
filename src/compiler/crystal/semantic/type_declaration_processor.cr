@@ -503,9 +503,8 @@ struct Crystal::TypeDeclarationProcessor
 
   private def compute_non_nilable_instance_vars_multi(owner, infos)
     # Get ancestor's non-nilable variables
-    ancestor = owner.ancestors.first?
-    ancestor = uninstantiate(ancestor)
-    if ancestor
+    if ancestor = owner.ancestors.first?
+      ancestor = uninstantiate(ancestor)
       ancestor_non_nilable = @non_nilable_instance_vars[ancestor]?
     end
 
@@ -758,9 +757,9 @@ struct Crystal::TypeDeclarationProcessor
     end
   end
 
-  private def uninstantiate(type)
+  private def uninstantiate(type) : Type
     if type.is_a?(GenericInstanceType)
-      type.generic_type
+      type.generic_type.as(Type)
     else
       type
     end

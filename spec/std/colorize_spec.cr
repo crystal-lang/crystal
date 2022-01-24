@@ -119,12 +119,6 @@ describe "colorize" do
     end
   end
 
-  it "raises on unknown mode" do
-    expect_raises ArgumentError, "Unknown mode: bad" do
-      colorize("hello").mode(:bad)
-    end
-  end
-
   it "inspects" do
     colorize("hello", :red).inspect.should eq("\e[31m\"hello\"\e[0m")
   end

@@ -4149,7 +4149,7 @@ module Crystal
         write " : "
         next_token_skip_space_or_newline
         accept return_type
-        next_token_skip_space_or_newline
+        skip_space_or_newline
       end
 
       write " " unless a_def.args.empty? && !return_type

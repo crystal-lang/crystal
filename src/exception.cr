@@ -54,6 +54,7 @@ class Exception
 
   def inspect_with_backtrace(io : IO) : Nil
     io << message << " (" << self.class << ")\n"
+
     backtrace?.try &.each do |frame|
       io.print "  from "
       io.puts frame
