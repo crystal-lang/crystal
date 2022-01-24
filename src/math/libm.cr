@@ -1,5 +1,6 @@
 # MUSL: On musl systems, libm is empty. The entire library is already included in libc.
 # The empty library is only available for POSIX compatibility. We don't need to link it.
+#
 # Interpreter: On GNU systems, libm.so is typically a GNU ld script which adds
 # the actual library file to the load path. `Crystal::Loader` does not support
 # ld scripts yet. So we just skip that for now. The libm symbols are still
