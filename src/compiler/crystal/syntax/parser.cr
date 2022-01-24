@@ -929,15 +929,17 @@ module Crystal
     end
 
     def parse_negation_suffix(atomic)
+      end_location = token_end_location
       next_token
 
       if @token.type == :"("
         next_token_skip_space_or_newline
         check :")"
+        end_location = token_end_location
         next_token_skip_space
       end
 
-      Not.new(atomic)
+      Not.new(atomic).at_end(end_location)
     end
 
     def parse_atomic
