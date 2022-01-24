@@ -2213,6 +2213,22 @@ module Crystal
         loc.column_number.should eq(1)
       end
 
+      it "sets correct location of `else` of if statement" do
+        parser = Parser.new("if foo\nelse\nend")
+        node = parser.parse.as(If)
+        node.location.not_nil!.line_number.should eq(1)
+        node.else_location.not_nil!.line_number.should eq(2)
+        node.end_location.not_nil!.line_number.should eq(3)
+      end
+
+      it "sets correct location of `elsif` of if statement" do
+        parser = Parser.new("if foo\nelsif bar\nend")
+        node = parser.parse.as(If)
+        node.location.not_nil!.line_number.should eq(1)
+        node.else_location.not_nil!.line_number.should eq(2)
+        node.end_location.not_nil!.line_number.should eq(3)
+      end
+
       it "doesn't override yield with macro yield" do
         parser = Parser.new("def foo; yield 1; {% begin %} yield 1 {% end %}; end")
         a_def = parser.parse.as(Def)

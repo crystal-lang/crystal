@@ -4011,6 +4011,7 @@ module Crystal
 
       a_else = nil
       if @token.type == :IDENT
+        else_location = @token.location
         case @token.value
         when :else
           next_token_skip_statement_end
@@ -4026,7 +4027,9 @@ module Crystal
         next_token_skip_space
       end
 
-      If.new(cond, a_then, a_else).at(location).at_end(end_location)
+      node = If.new(cond, a_then, a_else).at(location).at_end(end_location)
+      node.else_location = else_location
+      node
     end
 
     def parse_unless
