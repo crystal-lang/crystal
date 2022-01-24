@@ -809,6 +809,7 @@ module Crystal
 
           if @token.type == :"?"
             method_name = "[]?"
+            end_location = token_end_location
             next_token_skip_space
           else
             method_name = "[]"

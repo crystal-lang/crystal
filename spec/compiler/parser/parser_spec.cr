@@ -2047,6 +2047,7 @@ module Crystal
       assert_end_location "::foo"
       assert_end_location "foo.[0] = 1"
       assert_end_location "x : Foo(A, *B, C)"
+      assert_end_location "Int[8]?"
 
       assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
       assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"
