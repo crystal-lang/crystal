@@ -40,11 +40,14 @@ end
 
 private def assert_end_location(source, line_number = 1, column_number = source.size, file = __FILE__, line = __LINE__)
   it "gets corrects end location for #{source.inspect}", file, line do
-    parser = Parser.new("#{source}; 1")
+    string = "#{source}; 1"
+    parser = Parser.new(string)
     node = parser.parse.as(Expressions).expressions[0]
+    loc = node.location.not_nil!
     end_loc = node.end_location.not_nil!
     end_loc.line_number.should eq(line_number)
     end_loc.column_number.should eq(column_number)
+    source_between(string, loc, end_loc).should eq(source)
   end
 end
 
