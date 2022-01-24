@@ -722,16 +722,19 @@ module Crystal
                   next_token_skip_space
                   arg = parse_single_arg
                   check :")"
+                  end_location = token_end_location
                   next_token
                 else
                   arg = parse_op_assign_no_control
+                  end_location = arg.end_location
                 end
               else
                 skip_space_or_newline
                 arg = parse_single_arg
+                end_location = arg.end_location
               end
 
-              atomic = Call.new(atomic, "#{name}=", arg).at(location)
+              atomic = Call.new(atomic, "#{name}=", arg).at(location).at_end(end_location)
               atomic.name_location = name_location
               next
             when :"+=", :"-=", :"*=", :"/=", :"//=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&=", :"&+=", :"&-=", :"&*="

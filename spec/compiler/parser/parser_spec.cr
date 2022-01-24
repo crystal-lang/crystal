@@ -2076,6 +2076,9 @@ module Crystal
       assert_end_location "Foo { 1 }"
       assert_end_location "foo.!"
       assert_end_location "foo.!()"
+      assert_end_location "f.x = foo"
+      assert_end_location "f.x=(*foo)"
+      assert_end_location "f.x=(foo).bar"
 
       assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
       assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"
