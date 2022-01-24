@@ -1755,7 +1755,8 @@ module Crystal
       next_token_skip_space_or_newline
 
       if @token.type == :")"
-        node = Expressions.new([Nop.new] of ASTNode)
+        end_location = token_end_location
+        node = Expressions.new([Nop.new] of ASTNode).at(location).at_end(end_location)
         node.keyword = :"("
         return node_and_next_token node
       end
@@ -1776,12 +1777,14 @@ module Crystal
         case @token.type
         when :")"
           @wants_regex = false
+          end_location = token_end_location
           next_token_skip_space
           break
         when :NEWLINE, :";"
           next_token_skip_space
           if @token.type == :")"
             @wants_regex = false
+            end_location = token_end_location
             next_token_skip_space
             break
           end
@@ -1792,7 +1795,7 @@ module Crystal
 
       unexpected_token if @token.type == :"("
 
-      node = Expressions.new(exps)
+      node = Expressions.new(exps).at(location).at_end(end_location)
       node.keyword = :"("
       node
     end

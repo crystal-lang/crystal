@@ -2244,6 +2244,20 @@ module Crystal
         node.end_location.not_nil!.line_number.should eq(3)
       end
 
+      it "sets correct location and end location of parenthesized empty block" do
+        parser = Parser.new("()")
+        node = parser.parse.as(Expressions)
+        node.location.not_nil!.column_number.should eq(1)
+        node.end_location.not_nil!.column_number.should eq(2)
+      end
+
+      it "sets correct location and end location of parenthesized block" do
+        parser = Parser.new("(foo; bar)")
+        node = parser.parse.as(Expressions)
+        node.location.not_nil!.column_number.should eq(1)
+        node.end_location.not_nil!.column_number.should eq(10)
+      end
+
       it "doesn't override yield with macro yield" do
         parser = Parser.new("def foo; yield 1; {% begin %} yield 1 {% end %}; end")
         a_def = parser.parse.as(Def)
