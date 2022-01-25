@@ -126,7 +126,7 @@ describe "expectations" do
 
         it "handles messages for values with unbalanced parens" do
           expect_raises(Spec::AssertionFailed, %[Expected: %(test)\n     got: %(test "value"\\))]) do
-          "test \"value\")".should eq("test")
+            "test \"value\")".should eq("test")
           end
         end
       end

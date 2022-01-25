@@ -45,7 +45,7 @@ module Spec
         if formatted[:expected] == formatted[:actual]
           formatted = {
             expected: "#{formatted[:expected]} : #{expected_value.class}",
-            actual: "#{formatted[:actual]} : #{actual_value.class}"
+            actual:   "#{formatted[:actual]} : #{actual_value.class}",
           }
         end
 
@@ -55,30 +55,30 @@ module Spec
 
     def format_values(expected : String, actual : String)
       delimiter = self.find_delimiter(expected + actual)
-      
+
       if (delimiter == :paren)
         formatted = {expected.escape_delimiters('(', ')'), actual.escape_delimiters('(', ')')}
-        return { expected: %|%(#{formatted[0]})|, actual: %|%(#{formatted[1]})| }
+        return {expected: %|%(#{formatted[0]})|, actual: %|%(#{formatted[1]})|}
       end
 
-      { expected: expected.inspect, actual: actual.inspect }
+      {expected: expected.inspect, actual: actual.inspect}
     end
 
     def format_values(expected, actual)
-      { expected: expected.inspect, actual: actual.inspect }
+      {expected: expected.inspect, actual: actual.inspect}
     end
 
     def find_delimiter(value)
       quote_count = 0
       paren_count = 0
-    
+
       value.each_char do |current|
         case current
-        when '"' then quote_count += 1
+        when '"'      then quote_count += 1
         when '(', ')' then paren_count += 1
         end
       end
-  
+
       quote_count > paren_count ? :paren : :quote
     end
 
