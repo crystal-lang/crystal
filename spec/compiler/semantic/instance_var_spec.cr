@@ -5414,7 +5414,7 @@ describe "Semantic: instance var" do
 
   describe "instance variable inherited from multiple parents" do
     context "with compatible type" do
-      pending "module and class, with declarations" do
+      it "module and class, with declarations" do
         assert_error <<-CR, "instance variable '@a' of B is already defined in A"
           module M
             @a : Int32 = 1
@@ -5430,7 +5430,7 @@ describe "Semantic: instance var" do
           CR
       end
 
-      pending "module and class, with definitions" do
+      it "module and class, with definitions" do
         assert_error <<-CR, "instance variable '@a' of B is already defined in A"
           module M
             @a = 1
@@ -5483,7 +5483,7 @@ describe "Semantic: instance var" do
 
     context "with incompatible type" do
       it "module and class, with definitions" do
-        assert_error <<-CR, "instance variable '@a' of A must be Int32, not (Char | Int32)"
+        assert_error <<-CR, "instance variable '@a' of B is already defined in A"
           module M
             @a = 'a'
           end
@@ -5499,7 +5499,7 @@ describe "Semantic: instance var" do
       end
 
       it "module and class, with declarations" do
-        assert_error <<-CR, "instance variable '@a' of A must be Int32, not (Char | Int32)"
+        assert_error <<-CR, "instance variable '@a' of B is already defined in A"
           module M
             @a : Char = 'a'
           end
