@@ -40,25 +40,46 @@ module Spec
                got size: #{actual_value.size}
           MSG
       else
-        expected = self.format_by_type(expected_value)
-        got = self.format_by_type(actual_value)
-        if expected == got
-          expected += " : #{expected_value.class}"
-          got += " : #{actual_value.class}"
+        formatted = self.format_values(expected_value, actual_value)
+
+        if formatted[:expected] == formatted[:actual]
+          formatted = {
+            expected: "#{formatted[:expected]} : #{expected_value.class}",
+            actual: "#{formatted[:actual]} : #{actual_value.class}"
+          }
         end
-        "Expected: #{expected}\n     got: #{got}"
+
+        "Expected: #{formatted[:expected]}\n     got: #{formatted[:actual]}"
       end
     end
 
-    def format_by_type(value)
-      case value
-      when String
-        if value.includes?('"')
-          return %(%|#{value}|)
-        end
+    def format_values(expected : String, actual : String)
+      delimiter = self.find_delimiter(expected + actual)
+      
+      if (delimiter == :paren)
+        formatted = {expected.escape_delimiters('(', ')'), actual.escape_delimiters('(', ')')}
+        return { expected: %|%(#{formatted[0]})|, actual: %|%(#{formatted[1]})| }
       end
 
-      value.inspect
+      { expected: expected.inspect, actual: actual.inspect }
+    end
+
+    def format_values(expected, actual)
+      { expected: expected.inspect, actual: actual.inspect }
+    end
+
+    def find_delimiter(value)
+      quote_count = 0
+      paren_count = 0
+    
+      value.each_char do |current|
+        case current
+        when '"' then quote_count += 1
+        when '(', ')' then paren_count += 1
+        end
+      end
+  
+      quote_count > paren_count ? :paren : :quote
     end
 
     def negative_failure_message(actual_value)

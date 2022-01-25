@@ -2345,6 +2345,33 @@ describe "String" do
     end
   end
 
+  describe "escape_delimiters" do
+    it "returns self when balanced" do
+      "(( . ))".escape_delimiters('(', ')').should eq("(( . ))")
+    end
+
+    it "returns an escape sequence for left characters unbalanced" do
+      "((".escape_delimiters('(', ')').should eq("\\(\\(")
+    end
+
+    it "returns an escape sequence for right characters unbalanced" do
+      "))".escape_delimiters('(', ')').should eq("\\)\\)")
+    end
+
+    it "escapes the last occurrences of the left char" do
+      "((( . ))".escape_delimiters('(', ')').should eq("((\\( . ))")
+    end
+
+    it "escapes the last occurrences of the right char" do
+      "(( . )))".escape_delimiters('(', ')').should eq("(( . ))\\)")
+    end
+
+    it "works with other characters" do
+      "{1, 2, 3}".escape_delimiters('{', '}').should eq("{1, 2, 3}")
+      "{1, 2, 3}}".escape_delimiters('{', '}').should eq("{1, 2, 3}\\}")
+    end
+  end
+
   it "uses sprintf from top-level" do
     sprintf("Hello %d world", 123).should eq("Hello 123 world")
     sprintf("Hello %d world", [123]).should eq("Hello 123 world")

@@ -119,8 +119,14 @@ describe "expectations" do
         end
 
         it "handles messages for values with quotes" do
-          expect_raises(Spec::AssertionFailed, %(Expected: %|test message "other"|\n     got: %|test message "value"|)) do
+          expect_raises(Spec::AssertionFailed, %(Expected: %(test message "other")\n     got: %(test message "value"))) do
             "test message \"value\"".should eq("test message \"other\"")
+          end
+        end
+
+        it "handles messages for values with unbalanced parens" do
+          expect_raises(Spec::AssertionFailed, %[Expected: %(test)\n     got: %(test "value"\\))]) do
+          "test \"value\")".should eq("test")
           end
         end
       end

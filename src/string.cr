@@ -4307,6 +4307,43 @@ class String
     end
   end
 
+  # Finds delimiters that are unbalanced by their opposing side delimiter and escapes them.
+  #
+  # ```
+  # "(( . )))".escape_delimiters('(', ')') # => "(( . ))\)"
+  # ```
+  def escape_delimiters(left : Char, right : Char)
+    indexes_left = [] of Int32
+    indexes_right = [] of Int32
+
+    self.each_char_with_index do |current, index|
+      case current
+      when left
+        indexes_left.push(index)
+      when right
+        if (indexes_left.size > 0)
+          indexes_left.shift
+        else
+          indexes_right.push(index)
+        end
+      end
+    end
+
+    if (indexes_left.size == indexes_right.size)
+      return self
+    end
+
+    String.build(self.size + indexes_left.size + indexes_right.size) do |str|
+      self.each_char_with_index do |current, index|
+        if (indexes_left.includes?(index) || indexes_right.includes?(index))
+          str << "\\#{current}"
+        else
+          str << current
+        end
+      end
+    end
+  end
+
   # Finds match of *regex*, starting at *pos*.
   # It also updates `$~` with the result.
   #
