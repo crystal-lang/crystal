@@ -24,7 +24,6 @@ private def expect_to_s(original, expected = original, emit_doc = false, file = 
 end
 
 describe "ASTNode#to_s" do
-  expect_to_s "(a=1;\nb=2)", "(a = 1\nb = 2)"
   expect_to_s "([] of T).foo"
   expect_to_s "({} of K => V).foo"
   expect_to_s "foo(bar)"

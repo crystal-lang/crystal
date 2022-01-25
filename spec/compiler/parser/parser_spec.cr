@@ -503,6 +503,7 @@ module Crystal
     it_parses "(foo bar do\nend)", Expressions.new([Call.new(nil, "foo", ["bar".call] of ASTNode, Block.new)] of ASTNode)
     it_parses "(baz; bar do\nend)", Expressions.new(["baz".call, Call.new(nil, "bar", [] of ASTNode, Block.new)] of ASTNode)
     it_parses "(bar {})", Expressions.new([Call.new(nil, "bar", [] of ASTNode, Block.new)] of ASTNode)
+    it_parses "(a;\nb)", Expressions.new([Call.new(nil, "a"), Call.new(nil, "b")] of ASTNode)
     it_parses "1.x; foo do\nend", [Call.new(1.int32, "x"), Call.new(nil, "foo", block: Block.new)] of ASTNode
     it_parses "x = 1; foo.bar x do\nend", [Assign.new("x".var, 1.int32), Call.new("foo".call, "bar", ["x".var] of ASTNode, Block.new)]
 
