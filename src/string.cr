@@ -4329,7 +4329,7 @@ class String
       end
     end
 
-    if (indexes_left.size == indexes_right.size)
+    if (0 == indexes_left.size == indexes_right.size)
       return self
     end
 
