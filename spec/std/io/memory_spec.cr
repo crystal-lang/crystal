@@ -42,13 +42,25 @@ describe IO::Memory do
     end
   end
 
-  it "appends to another buffer" do
-    s1 = IO::Memory.new
-    s1 << "hello"
+  describe "#to_s" do
+    it "appends to another buffer" do
+      s1 = IO::Memory.new
+      s1 << "hello"
 
-    s2 = IO::Memory.new
-    s1.to_s(s2)
-    s2.to_s.should eq("hello")
+      s2 = IO::Memory.new
+      s1.to_s(s2)
+      s2.to_s.should eq("hello")
+    end
+
+    it "appends to itself" do
+      io = IO::Memory.new
+      io << "." * 33
+      old_capacity = io.@capacity
+      io.to_s(io)
+      io.to_s.should eq "." * 66
+      # Ensure that the buffer is resized, otherwise the spec doesn't work
+      io.@capacity.should_not eq old_capacity
+    end
   end
 
   it "reads single line content" do
