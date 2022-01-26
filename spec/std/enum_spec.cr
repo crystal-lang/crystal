@@ -327,7 +327,6 @@ describe Enum do
   describe "each" do
     it "iterates each member" do
       keys = [] of SpecEnum
-
       values = [] of Int8
 
       SpecEnum.each do |key, value|
