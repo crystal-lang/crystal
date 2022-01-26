@@ -49,8 +49,8 @@ private enum SpecEnumWithCaseSensitiveMembers
 end
 
 private enum SpecEnumWithMethodOverrides
-  FOO
-  BAR
+  FOO = 1
+  BAR = 2
 
   def self.parse?(string : String)
     result = super(string)
@@ -61,6 +61,23 @@ private enum SpecEnumWithMethodOverrides
         result = FOO
       when "b"
         result = BAR
+      end
+    end
+
+    result
+  end
+
+  def self.from_value?(value : Int)
+    result = super(value)
+
+    if result.nil?
+      case value
+      when 10
+        result = FOO
+      when 20
+        result = BAR
+      else
+        p! value
       end
     end
 
@@ -360,5 +377,10 @@ describe Enum do
     SpecEnumWithMethodOverrides.parse?("foo").should eq SpecEnumWithMethodOverrides::FOO
     SpecEnumWithMethodOverrides.parse?("b").should eq SpecEnumWithMethodOverrides::BAR
     SpecEnumWithMethodOverrides.parse?("bar").should eq SpecEnumWithMethodOverrides::BAR
+
+    SpecEnumWithMethodOverrides.from_value?(10).should eq SpecEnumWithMethodOverrides::FOO
+    SpecEnumWithMethodOverrides.from_value?(1).should eq SpecEnumWithMethodOverrides::FOO
+    SpecEnumWithMethodOverrides.from_value?(20).should eq SpecEnumWithMethodOverrides::BAR
+    SpecEnumWithMethodOverrides.from_value?(2).should eq SpecEnumWithMethodOverrides::BAR
   end
 end
