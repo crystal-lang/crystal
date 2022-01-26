@@ -76,8 +76,6 @@ private enum SpecEnumWithMethodOverrides
         result = FOO
       when 20
         result = BAR
-      else
-        p! value
       end
     end
 
