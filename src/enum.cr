@@ -431,7 +431,7 @@ struct Enum
   # ```
   #
   # If multiple members match the same normalized string, the first one is returned.
-  def self.parse?(string : String) : self?
+  def self.parse?(string : String)
     {% begin %}
       case string.camelcase.downcase
       # Temporarily map all constants to their normalized value in order to
