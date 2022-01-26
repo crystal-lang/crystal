@@ -703,6 +703,9 @@ module Crystal
     property then : ASTNode
     property else : ASTNode
 
+    # The location of the `else` keyword if present.
+    property else_location : Location?
+
     def initialize(@cond, a_then = nil, a_else = nil)
       @then = Expressions.from a_then
       @else = Expressions.from a_else

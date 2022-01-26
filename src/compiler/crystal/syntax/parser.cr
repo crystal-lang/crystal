@@ -4051,6 +4051,7 @@ module Crystal
 
       a_else = nil
       if @token.keyword?(:else)
+        else_location = @token.location
         next_token_skip_statement_end
         a_else = parse_expressions
       end
@@ -4059,7 +4060,9 @@ module Crystal
       end_location = token_end_location
       next_token_skip_space
 
-      Unless.new(cond, a_then, a_else).at(location).at_end(end_location)
+      node = Unless.new(cond, a_then, a_else).at(location).at_end(end_location)
+      node.else_location = else_location
+      node
     end
 
     def set_visibility(node)
