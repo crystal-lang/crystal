@@ -84,7 +84,7 @@ module Crystal
         if self.global?
           from.raise "global variable '#{self.name}' must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
         else
-          from.raise "#{self.kind.to_s.downcase} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
+          from.raise "#{self.kind.to_s.underscore} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
         end
       when Def
         (self.return_type || self).raise "method #{self.short_reference} must return #{freeze_type} but it is returning #{invalid_type}", inner, Crystal::FrozenTypeException
