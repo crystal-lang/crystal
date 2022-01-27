@@ -54,11 +54,6 @@ module Crystal
 
     def initialize(string, string_pool : StringPool? = nil)
       @reader = Char::Reader.new(string)
-
-      if error = @reader.error
-        ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16, upcase: true)} at position #{@reader.pos}, malformed UTF-8")
-      end
-
       @token = Token.new
       @temp_token = Token.new
       @line_number = 1
@@ -2759,7 +2754,7 @@ module Crystal
     def next_char_no_column_increment
       char = @reader.next_char
       if error = @reader.error
-        ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16, upcase: true)} at position #{@reader.pos}, malformed UTF-8")
+        ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16)} at position #{@reader.pos}, malformed UTF-8")
       end
       char
     end
@@ -2861,14 +2856,11 @@ module Crystal
     end
 
     def self.ident_start?(char)
-      char.letter? || char == '_'
+      char.ascii_letter? || char == '_' || char.ord > 0x9F
     end
 
     def self.ident_part?(char)
-      ident_start?(char) ||
-        Unicode.mark_nonspacing?(char) || Unicode.mark_spacing_combining?(char) ||
-        Unicode.number_digit?(char) || Unicode.number_letter?(char) ||
-        Unicode.punctuation_connector?(char)
+      ident_start?(char) || char.ascii_number?
     end
 
     def self.ident?(name)

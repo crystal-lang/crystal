@@ -153,6 +153,35 @@ module Crystal::Macros
   def host_flag?(name) : BoolLiteral
   end
 
+  # Parses *type_name* into a `Path`, `Generic` (also used for unions), `ProcNotation`, or `Metaclass`.
+  #
+  # The `#resolve` method could then be used to resolve the value into a `TypeNode`, if the *type_name* represents a type,
+  # otherwise the value of the constant.
+  #
+  # A compile time error is raised if the type/constant does not actually exist,
+  # or if a required generic argument was not provided.
+  #
+  # ```
+  # class Foo; end
+  #
+  # struct Some::Namespace::Foo; end
+  #
+  # module Bar(T); end
+  #
+  # MY_CONST = 1234
+  #
+  # {{ parse_type("Foo").resolve.class? }}                                   # => true
+  # {{ parse_type("Some::Namespace::Foo").resolve.struct? }}                 # => true
+  # {{ parse_type("Foo|Some::Namespace::Foo").resolve.union_types.size }}    # => 2
+  # {{ parse_type("Bar(Int32)|Foo").resolve.union_types[0].type_vars.size }} # => 1
+  # {{ parse_type("MY_CONST").resolve }}                                     # => 1234
+  #
+  # {{ parse_type("MissingType").resolve }}   # Error: undefined constant MissingType
+  # {{ parse_type("UNKNOWN_CONST").resolve }} # Error: undefined constant UNKNOWN_CONST
+  # ```
+  def parse_type(type_name : StringLiteral) : Path | Generic | ProcNotation | Metaclass
+  end
+
   # Prints AST nodes at compile-time. Useful for debugging macros.
   def puts(*expressions) : Nop
   end
