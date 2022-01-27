@@ -49,17 +49,56 @@ module IO::Overlapped
     end
   end
 
+  def self.wait_queued_completions(timeout)
+    overlapped_entries = uninitialized LibC::OVERLAPPED_ENTRY[1]
+
+    if timeout > UInt64::MAX
+      timeout = LibC::INFINITE
+    else
+      timeout = timeout.to_u64
+    end
+    result = LibC.GetQueuedCompletionStatusEx(Crystal::EventLoop.iocp, overlapped_entries, overlapped_entries.size, out removed, timeout, false)
+    if result == 0
+      error = WinError.value
+      if timeout && error.wait_timeout?
+        return true
+      else
+        raise IO::Error.from_os_error("GetQueuedCompletionStatusEx", error)
+      end
+    end
+
+    if removed == 0
+      raise IO::Error.new("GetQueuedCompletionStatusEx returned 0")
+    end
+
+    removed.times do |i|
+      overlapped_entry = overlapped_entries[i]
+      operation = overlapped_entry.lpOverlapped.as(OverlappedOperation*).value
+
+      yield operation.fiber
+    end
+
+    false
+  end
+
   @[Extern]
   struct OverlappedOperation
-    getter overlapped : LibC::WSAOVERLAPPED
+    @overlapped : LibC::WSAOVERLAPPED
+    @fiber : Void*
 
-    def initialize(@overlapped)
+    def initialize(@overlapped : LibC::WSAOVERLAPPED, fiber : Fiber)
+      @fiber = Box.box(fiber)
+    end
+
+    def fiber
+      raise "Invalid fiber:\n#{@overlapped} #{@overlapped.internal.to_s(16)}" if @fiber.null?
+      Box(Fiber).unbox(@fiber)
     end
   end
 
   def create_operation
     overlapped = LibC::WSAOVERLAPPED.new
-    OverlappedOperation.new(overlapped)
+    OverlappedOperation.new(overlapped, Fiber.current)
   end
 
   def get_overlapped_result(socket, operation)
@@ -77,7 +116,17 @@ module IO::Overlapped
 
   # Returns `false` if the operation timed out.
   def schedule_overlapped(timeout : Time::Span?, line = __LINE__) : Bool
-    Crystal::EventLoop.wait_completion(timeout.try(&.total_milliseconds) || LibC::INFINITE)
+    if timeout
+      timeout_event = Crystal::Event.new(Fiber.current)
+      timeout_event.add(timeout)
+    else
+      timeout_event = Crystal::Event.new(Fiber.current, Time::Span::MAX)
+    end
+    Crystal::EventLoop.enqueue(timeout_event)
+
+    Crystal::Scheduler.reschedule
+
+    Crystal::EventLoop.dequeue(timeout_event)
   end
 
   def overlapped_operation(socket, method, timeout, connreset_is_error = true)
@@ -110,9 +159,7 @@ module IO::Overlapped
 
     yield pointerof(operation).as(LibC::OVERLAPPED*)
 
-    unless schedule_overlapped(read_timeout)
-      return ::Socket::ConnectError.new(method)
-    end
+    schedule_overlapped(read_timeout || 1.seconds)
 
     get_overlapped_result(socket, operation) do |error|
       case error
