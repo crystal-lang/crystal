@@ -1407,21 +1407,26 @@ module Crystal
     ConstOrDoubleColon = [:CONST, :"::"]
 
     def parse_rescue
+      location = @token.location
+      end_location = token_end_location
       next_token_skip_space
 
       case @token.type
       when :IDENT
         name = @token.value.to_s
         push_var_name name
+        end_location = token_end_location
         next_token_skip_space
 
         if @token.type == :":"
           next_token_skip_space_or_newline
           check ConstOrDoubleColon
           types = parse_rescue_types
+          end_location = types.last.end_location
         end
       when :CONST, :"::"
         types = parse_rescue_types
+        end_location = types.last.end_location
       else
         # keep going
       end
@@ -1434,10 +1439,11 @@ module Crystal
         body = nil
       else
         body = parse_expressions
+        end_location = body.end_location
         skip_statement_end
       end
 
-      Rescue.new(body, types, name)
+      Rescue.new(body, types, name).at(location).at_end(end_location)
     end
 
     def parse_rescue_types
