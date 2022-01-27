@@ -111,11 +111,11 @@ compiler_spec: $(O)/compiler_spec ## Run compiler specs
 primitives_spec: $(O)/primitives_spec ## Run primitives specs
 	$(O)/primitives_spec $(SPEC_FLAGS)
 
-.PHONY: smoke_test ## Build specs as a smoke test
-smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal
+.PHONY: smoke_test
+smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal ## Build specs as a smoke test
 
-.PHONY: samples ## Build example programs
-samples:
+.PHONY: samples
+samples: ## Build example programs
 	$(MAKE) -C samples
 
 .PHONY: docs
