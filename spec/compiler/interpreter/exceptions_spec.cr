@@ -33,7 +33,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "raises and rescues anything" do
-      interpret(<<-CODE, prelude: "prelude").should eq(2)
+      interpret(<<-CODE, prelude: "prelude").should eq("2")
           a = begin
             if 1 == 1
               raise "OH NO"
@@ -53,7 +53,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "raises and rescues anything, does ensure when an exception is rescued" do
-      interpret(<<-CODE, prelude: "prelude").should eq(3)
+      interpret(<<-CODE, prelude: "prelude").should eq("3")
           a = 0
           b = 0
 
@@ -70,7 +70,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "raises and rescues specific exception type" do
-      interpret(<<-CODE, prelude: "prelude").should eq(2)
+      interpret(<<-CODE, prelude: "prelude").should eq("2")
           class Ex1 < Exception; end
           class Ex2 < Exception; end
 
@@ -89,7 +89,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "captures exception in variable" do
-      interpret(<<-CODE, prelude: "prelude").should eq(10)
+      interpret(<<-CODE, prelude: "prelude").should eq("10")
           class Ex1 < Exception
             getter value
 
@@ -109,8 +109,8 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
-    it "excutes ensure when exception is raised in body" do
-      interpret(<<-CODE, prelude: "prelude").should eq(10)
+    it "executes ensure when exception is raised in body" do
+      interpret(<<-CODE, prelude: "prelude").should eq("10")
           a = 0
 
           begin
@@ -126,8 +126,8 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
-    it "excutes ensure when exception is raised in rescue" do
-      interpret(<<-CODE, prelude: "prelude").should eq(10)
+    it "executes ensure when exception is raised in rescue" do
+      interpret(<<-CODE, prelude: "prelude").should eq("10")
           a = 0
 
           begin
@@ -181,7 +181,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does ensure for else when else raises" do
-      interpret(<<-CODE, prelude: "prelude").should eq(2)
+      interpret(<<-CODE, prelude: "prelude").should eq("2")
           x = 1
 
           begin
@@ -238,7 +238,7 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "excutes ensure when returning from a block" do
+    it "executes ensure when returning from a block" do
       interpret(<<-CODE).should eq(21)
         module Global
           @@property = 0
@@ -272,7 +272,7 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "excutes ensure when returning from a block (2)" do
+    it "executes ensure when returning from a block (2)" do
       interpret(<<-CODE).should eq(21)
         module Global
           @@property = 0
@@ -317,7 +317,7 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "excutes ensure when breaking from a block" do
+    it "executes ensure when breaking from a block" do
       interpret(<<-CODE).should eq(18)
         module Global
           @@property = 0
@@ -351,8 +351,8 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "excutes ensure when returning a big value from a block" do
-      interpret(<<-CODE, prelude: "prelude").should eq(32405)
+    it "executes ensure when returning a big value from a block" do
+      interpret(<<-CODE, prelude: "prelude").should eq("32405")
         module Global
           @@property = 0
 
