@@ -3,15 +3,15 @@
 # Recipes for this Makefile
 
 ## Build the compiler
-##   $ make
+##   $ make -f Makefile.win
 ## Build the compiler with progress output
-##   $ make progress=true
+##   $ make -f Makefile.win progress=true
 ## Clean up built files then build the compiler
-##   $ make clean crystal
+##   $ make -f Makefile.win clean crystal
 ## Build the compiler in release mode
-##   $ make crystal release=1
+##   $ make -f Makefile.win crystal release=1
 ## Run all specs in verbose mode
-##   $ make spec verbose=1
+##   $ make -f Makefile.win spec verbose=1
 
 CRYSTAL ?= crystal ## which previous crystal compiler use
 LLVM_CONFIG ?=     ## llvm-config command path to use
@@ -79,44 +79,6 @@ check_llvm_config = $(eval \
 
 .PHONY: all
 all: crystal ## Build all files (currently crystal only) [default]
-
-define SP
-  
-endef
-
-.PHONY: help
-help: ## Show this help
-	@setlocal EnableDelayedExpansion &\
-	echo. &\
-	echo targets: &\
-	(for /F "usebackq tokens=1* delims=:" %%g in ($(MAKEFILE_LIST)) do (\
-		if not "%%h" == "" (\
-			set "_line=%%g                " &\
-			set "_rest=%%h" &\
-			set "_comment=!_rest:* ## =!" &\
-			if not "!_comment!" == "!_rest!"\
-				if "!_line:_rest=!" == "!_line!"\
-					echo   !_line:~0,16!!_comment!\
-		)\
-	)) &\
-	echo. &\
-	echo optional variables: &\
-	(for /F "usebackq tokens=1,3 delims=?#" %%g in ($(MAKEFILE_LIST)) do (\
-		if not "%%h" == "" (\
-			set "_var=%%g              " &\
-			echo   !_var:~0,14! %%h\
-		)\
-	)) &\
-	echo. &\
-	echo recipes: &\
-	(for /F "usebackq tokens=* delims=" %%g in ($(MAKEFILE_LIST)) do (\
-		set "_line=%%g" &\
-		if "!_line:~0,7!" == "##   $$ " (\
-			echo !_name! &\
-			echo  !_line:~2!\
-		) else if "!_line:~0,3!" == "## "\
-			set "_name=  !_line:~3!"\
-	))
 
 .PHONY: spec
 spec: $(O)\all_spec.exe ## Run all specs
@@ -231,3 +193,37 @@ clean_crystal: ## Clean up crystal built files
 .PHONY: clean_cache
 clean_cache: ## Clean up CRYSTAL_CACHE_DIR files
 	$(call RMDIR,"$(shell .\bin\crystal env CRYSTAL_CACHE_DIR)")
+
+.PHONY: help
+help: ## Show this help
+	@setlocal EnableDelayedExpansion &\
+	echo. &\
+	echo targets: &\
+	(for /F "usebackq tokens=1* delims=:" %%g in ($(MAKEFILE_LIST)) do (\
+		if not "%%h" == "" (\
+			set "_line=%%g                " &\
+			set "_rest=%%h" &\
+			set "_comment=!_rest:* ## =!" &\
+			if not "!_comment!" == "!_rest!"\
+				if "!_line:_rest=!" == "!_line!"\
+					echo   !_line:~0,16!!_comment!\
+		)\
+	)) &\
+	echo. &\
+	echo optional variables: &\
+	(for /F "usebackq tokens=1,3 delims=?#" %%g in ($(MAKEFILE_LIST)) do (\
+		if not "%%h" == "" (\
+			set "_var=%%g              " &\
+			echo   !_var:~0,14! %%h\
+		)\
+	)) &\
+	echo. &\
+	echo recipes: &\
+	(for /F "usebackq tokens=* delims=" %%g in ($(MAKEFILE_LIST)) do (\
+		set "_line=%%g" &\
+		if "!_line:~0,7!" == "##   $$ " (\
+			echo !_name! &\
+			echo  !_line:~2!\
+		) else if "!_line:~0,3!" == "## "\
+			set "_name=  !_line:~3!"\
+	))

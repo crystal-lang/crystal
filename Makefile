@@ -78,23 +78,6 @@ check_llvm_config = $(eval \
 .PHONY: all
 all: crystal ## Build all files (currently crystal only) [default]
 
-.PHONY: help
-help: ## Show this help
-	@echo
-	@printf '\033[34mtargets:\033[0m\n'
-	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) |\
-		sort |\
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
-	@echo
-	@printf '\033[34moptional variables:\033[0m\n'
-	@grep -hE '^[a-zA-Z_-]+ \?=.*?## .*$$' $(MAKEFILE_LIST) |\
-		sort |\
-		awk 'BEGIN {FS = " \\?=.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
-	@echo
-	@printf '\033[34mrecipes:\033[0m\n'
-	@grep -hE '^##.*$$' $(MAKEFILE_LIST) |\
-		awk 'BEGIN {FS = "## "}; /^## [a-zA-Z_-]/ {printf "  \033[36m%s\033[0m\n", $$2}; /^##  / {printf "  %s\n", $$2}'
-
 .PHONY: spec
 spec: $(O)/all_spec ## Run all specs
 	$(O)/all_spec $(SPEC_FLAGS)
@@ -211,3 +194,20 @@ clean_crystal: ## Clean up crystal built files
 .PHONY: clean_cache
 clean_cache: ## Clean up CRYSTAL_CACHE_DIR files
 	rm -rf $(shell ./bin/crystal env CRYSTAL_CACHE_DIR)
+
+.PHONY: help
+help: ## Show this help
+	@echo
+	@printf '\033[34mtargets:\033[0m\n'
+	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) |\
+		sort |\
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo
+	@printf '\033[34moptional variables:\033[0m\n'
+	@grep -hE '^[a-zA-Z_-]+ \?=.*?## .*$$' $(MAKEFILE_LIST) |\
+		sort |\
+		awk 'BEGIN {FS = " \\?=.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo
+	@printf '\033[34mrecipes:\033[0m\n'
+	@grep -hE '^##.*$$' $(MAKEFILE_LIST) |\
+		awk 'BEGIN {FS = "## "}; /^## [a-zA-Z_-]/ {printf "  \033[36m%s\033[0m\n", $$2}; /^##  / {printf "  %s\n", $$2}'
