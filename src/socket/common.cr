@@ -52,12 +52,24 @@ class Socket < IO
       when Errno::EADDRINUSE
         Socket::BindError.new(message, **opts)
       else
-        super message, os_error, **opts
+        super message || "", os_error, **opts
       end
     end
   end
 
   class ConnectError < Error
+    # :nodoc:
+    setter address : String?
+
+    getter address : String?
+
+    def to_s(io : IO)
+      io << "Error connecting"
+      if address = self.address
+        io << " to '" << address << "'"
+      end
+      io << ":" << message
+    end
   end
 
   class BindError < Error

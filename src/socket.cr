@@ -332,12 +332,12 @@ class Socket < IO
   end
 
   # Returns the modified *optval*.
-  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+  def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     getsockopt(optname, optval, level) { |value| return value }
     raise Socket::Error.from_errno("getsockopt")
   end
 
-  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+  def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     system_getsockopt(fd, optname, optval, level) { |value| yield value }
   end
 
@@ -345,7 +345,7 @@ class Socket < IO
     system_setsockopt(fd, optname, optval, level)
   end
 
-  private def getsockopt_bool(optname, level = LibC::SOL_SOCKET)
+  def getsockopt_bool(optname, level = LibC::SOL_SOCKET)
     ret = getsockopt optname, 0, level
     ret != 0
   end
