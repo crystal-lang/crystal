@@ -147,12 +147,18 @@ sections = array.group_by { |pr|
     case label
     when .starts_with?("topic:lang")
       break "Language"
-    when .starts_with?("topic:compiler:interpreter")
-      break "Compiler: Interpreter"
     when .starts_with?("topic:compiler")
-      break "Compiler"
+      if label == "topic:compiler"
+        break "Compiler"
+      else
+        break "Compiler: #{label.lchop("topic:compiler:").titleize}"
+      end
     when .starts_with?("topic:tools")
-      break "Tools"
+      if label == "topic:tools"
+        break "Tools"
+      else
+        break "Tools: #{label.lchop("topic:tools:").titleize}"
+      end
     when .starts_with?("topic:stdlib")
       if label == "topic:stdlib"
         break "Standard Library"
