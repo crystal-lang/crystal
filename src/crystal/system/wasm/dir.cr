@@ -21,8 +21,7 @@ module Crystal::System::Dir
   def self.open(path : String) : DirHandle
     parent_fd, relative_path = Wasi.find_path_preopen(path)
 
-    fd = uninitialized LibWasi::Fd
-    err = LibWasi.path_open(parent_fd, LibWasi::LookupFlags::SymlinkFollow, relative_path, LibWasi::OpenFlags::Directory, LibWasi::Rights::FdReaddir, LibWasi::Rights::None, LibWasi::FdFlags::None, pointerof(fd))
+    err = LibWasi.path_open(parent_fd, LibWasi::LookupFlags::SymlinkFollow, relative_path, LibWasi::OpenFlags::Directory, LibWasi::Rights::FdReaddir, LibWasi::Rights::None, LibWasi::FdFlags::None, out fd)
     raise ::File::Error.from_os_error("Error opening directory", err, file: path) unless err.success?
 
     DirHandle.new(fd)
@@ -67,7 +66,7 @@ module Crystal::System::Dir
 
   def self.close(dir, path) : Nil
     err = LibWasi.fd_close(dir.fd)
-    raise ::File::Error.from_os_error("Error opening directory", err, file: path) unless err.success?
+    raise ::File::Error.from_os_error("Error closing directory", err, file: path) unless err.success?
   end
 
   def self.current : String
