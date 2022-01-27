@@ -166,7 +166,7 @@ sections = array.group_by { |pr|
 }
 
 titles = [] of String
-["Compiler", "Language", "Standard Library", "Tools", "Other"].each do |main_section|
+["Language", "Standard Library", "Compiler", "Tools", "Other"].each do |main_section|
   titles.concat sections.each_key.select(&.starts_with?(main_section)).to_a.sort!
 end
 sections.keys.sort!.each do |section|
