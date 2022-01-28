@@ -588,6 +588,7 @@ module Crystal
 
     def visit(node : ProcPointer)
       @str << "->"
+      @str << "::" if node.global?
       if obj = node.obj
         obj.accept self
         @str << '.'

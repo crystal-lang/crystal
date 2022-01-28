@@ -1246,6 +1246,8 @@ module Crystal
         interpret_check_args { MacroId.new(@name) }
       when "args"
         interpret_check_args { ArrayLiteral.map(@args, &.itself) }
+      when "global?"
+        interpret_check_args { BoolLiteral.new(@global) }
       else
         super
       end
