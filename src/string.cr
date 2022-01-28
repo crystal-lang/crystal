@@ -931,7 +931,7 @@ class String
   #
   # ```
   # "crystal"["cry"]  # => "cry"
-  # "crystal"["ruby"] # => raises Nil assertion error
+  # "crystal"["ruby"] # raises NilAssertionError
   # ```
   def [](str : String | Char)
     self[str]?.not_nil!
