@@ -41,7 +41,7 @@ module Crystal
     def self.parse_args(args)
       config = Config.new
 
-      OptionParser.parse(args) do |opts|
+      Crystal::Command.parse_with_crystal_opts(args) do |opts|
         opts.banner = <<-USAGE
           Usage: crystal init TYPE (DIR | NAME DIR)
 
