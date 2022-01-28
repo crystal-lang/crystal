@@ -309,7 +309,7 @@ module Crystal
       config.expanded_dir.should eq ::Path[Dir.current, "foo", "bar"]
     end
 
-    pending_win32 "DIR (relative to home)" do
+    it "DIR (relative to home)" do
       path = ::Path["~", "foo"].to_s
       config = Crystal::Init.parse_args(["lib", path])
       config.name.should eq "foo"
@@ -398,7 +398,7 @@ module Crystal
     it "namespace is divided by hyphen" do
       Crystal::Init::View.module_name("my-proj-name").should eq "My::Proj::Name"
     end
-    it "hyphen follwed by non-ascii letter is replaced by its character" do
+    it "hyphen followed by non-ascii letter is replaced by its character" do
       Crystal::Init::View.module_name("my-proj-1").should eq "My::Proj1"
     end
     it "underscore is ignored" do

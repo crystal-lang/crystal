@@ -189,7 +189,7 @@ module Unicode
 
   # :nodoc:
   def self.letter?(char : Char) : Bool
-    in_any_category?(char.ord, category_Lu, category_Ll, category_Lt)
+    in_any_category?(char.ord, category_Lu, category_Ll, category_Lt, category_Lm, category_Lo)
   end
 
   # :nodoc:

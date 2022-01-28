@@ -164,13 +164,28 @@ module Crystal
     it_parses "x = 0; a, b = x += 1", [Assign.new("x".var, 0.int32), MultiAssign.new(["a".var, "b".var] of ASTNode, [OpAssign.new("x".var, "+", 1.int32)] of ASTNode)] of ASTNode
     it_parses "a, b = 1, 2 if 3", If.new(3.int32, MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode))
 
+    it_parses "*a = 1", MultiAssign.new(["a".var.splat] of ASTNode, [1.int32] of ASTNode)
+    it_parses "*a = 1, 2", MultiAssign.new(["a".var.splat] of ASTNode, [1.int32, 2.int32] of ASTNode)
+    it_parses "*_ = 1, 2", MultiAssign.new([Underscore.new.splat] of ASTNode, [1.int32, 2.int32] of ASTNode)
+
+    it_parses "*a, b = 1", MultiAssign.new(["a".var.splat, "b".var] of ASTNode, [1.int32] of ASTNode)
+    it_parses "a, *b = 1", MultiAssign.new(["a".var, "b".var.splat] of ASTNode, [1.int32] of ASTNode)
+    it_parses "a, *b = 1, 2", MultiAssign.new(["a".var, "b".var.splat] of ASTNode, [1.int32, 2.int32] of ASTNode)
+    it_parses "*a, b = 1, 2, 3, 4", MultiAssign.new(["a".var.splat, "b".var] of ASTNode, [1.int32, 2.int32, 3.int32, 4.int32] of ASTNode)
+    it_parses "a, b, *c = 1", MultiAssign.new(["a".var, "b".var, "c".var.splat] of ASTNode, [1.int32] of ASTNode)
+    it_parses "a, b, *c = 1, 2", MultiAssign.new(["a".var, "b".var, "c".var.splat] of ASTNode, [1.int32, 2.int32] of ASTNode)
+    it_parses "_, *_, _, _ = 1, 2, 3", MultiAssign.new([Underscore.new, Underscore.new.splat, Underscore.new, Underscore.new] of ASTNode, [1.int32, 2.int32, 3.int32] of ASTNode)
+
+    it_parses "*a.foo, a.bar = 1", MultiAssign.new([Call.new("a".call, "foo").splat, Call.new("a".call, "bar")] of ASTNode, [1.int32] of ASTNode)
+    it_parses "a.foo, *a.bar = 1", MultiAssign.new([Call.new("a".call, "foo"), Call.new("a".call, "bar").splat] of ASTNode, [1.int32] of ASTNode)
+
     it_parses "@a, b = 1, 2", MultiAssign.new(["@a".instance_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "@@a, b = 1, 2", MultiAssign.new(["@@a".class_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
     it_parses "あ.い, う.え.お = 1, 2", MultiAssign.new([Call.new("あ".call, "い"), Call.new(Call.new("う".call, "え"), "お")] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
-    assert_syntax_error "b? = 1", "unexpected token: ="
-    assert_syntax_error "b! = 1", "unexpected token: ="
+    assert_syntax_error "b? = 1", %(unexpected token: "=")
+    assert_syntax_error "b! = 1", %(unexpected token: "=")
     assert_syntax_error "a, B = 1, 2", "can't assign to constant in multiple assignment"
 
     assert_syntax_error "1 == 2, a = 4"
@@ -178,6 +193,18 @@ module Crystal
     assert_syntax_error "b, 1 == 2, a = 4"
     assert_syntax_error "a = 1, 2, 3", "Multiple assignment count mismatch"
     assert_syntax_error "a = 1, b = 2", "Multiple assignment count mismatch"
+
+    assert_syntax_error "*a"
+    assert_syntax_error "*a if true"
+    assert_syntax_error "*a if true = 2"
+    assert_syntax_error "*a, 1 = 2"
+    assert_syntax_error "*1, a = 2"
+    assert_syntax_error "*a, *b = 1", "splat assignment already specified"
+
+    assert_syntax_error "*a, b, c, d = 1, 2", "Multiple assignment count mismatch"
+    assert_syntax_error "a, b, *c, d = 1, 2", "Multiple assignment count mismatch"
+    assert_syntax_error "*a, b, c, d, e = 1, 2", "Multiple assignment count mismatch"
+    assert_syntax_error "a, b, c, d, *e = 1, 2, 3", "Multiple assignment count mismatch"
 
     it_parses "def foo\n1\nend", Def.new("foo", body: 1.int32)
     it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], 1.int32)
@@ -193,8 +220,8 @@ module Crystal
     it_parses "def type(type); end", Def.new("type", ["type".arg])
 
     # #4815
-    assert_syntax_error "def foo!=; end", "unexpected token: !="
-    assert_syntax_error "def foo?=(x); end", "unexpected token: ?"
+    assert_syntax_error "def foo!=; end", %(unexpected token: "!=")
+    assert_syntax_error "def foo?=(x); end", %(unexpected token: "?")
 
     # #5856
     assert_syntax_error "def foo=(a,b); end", "setter method 'foo=' cannot have more than one parameter"
@@ -263,6 +290,7 @@ module Crystal
     it_parses "def foo; yield; end", Def.new("foo", body: Yield.new, yields: 0)
     it_parses "def foo; yield 1; end", Def.new("foo", body: Yield.new([1.int32] of ASTNode), yields: 1)
     it_parses "def foo; yield 1; yield; end", Def.new("foo", body: [Yield.new([1.int32] of ASTNode), Yield.new] of ASTNode, yields: 1)
+    it_parses "def foo; yield(1); end", Def.new("foo", body: [Yield.new([1.int32] of ASTNode, has_parentheses: true)] of ASTNode, yields: 1)
     it_parses "def foo(a, b = a); end", Def.new("foo", [Arg.new("a"), Arg.new("b", "a".var)])
     it_parses "def foo(&block); end", Def.new("foo", block_arg: Arg.new("block"), yields: 0)
     it_parses "def foo(&); end", Def.new("foo", block_arg: Arg.new(""), yields: 0)
@@ -938,6 +966,9 @@ module Crystal
     it_parses %(macro foo\n"\\'"\nend), Macro.new("foo", body: Expressions.from([%("\\'"\n).macro_literal] of ASTNode))
     it_parses %(macro foo\n"\\\\"\nend), Macro.new("foo", body: Expressions.from([%("\\\\"\n).macro_literal] of ASTNode))
 
+    it_parses "macro foo;bar(end: 1);end", Macro.new("foo", body: Expressions.from(["bar(".macro_literal, "end: 1);".macro_literal] of ASTNode))
+    it_parses "def foo;bar(end: 1);end", Def.new("foo", body: Expressions.from([Call.new(nil, "bar", named_args: [NamedArgument.new("end", 1.int32)])] of ASTNode))
+
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
 
@@ -1093,6 +1124,9 @@ module Crystal
     it_parses "$1?", Call.new(Global.new("$~"), "[]?", 1.int32)
     it_parses "foo $1", Call.new(nil, "foo", Call.new(Global.new("$~"), "[]", 1.int32))
     it_parses "$~ = 1", Assign.new("$~".var, 1.int32)
+
+    assert_syntax_error "$2147483648"
+    assert_syntax_error "$99999999999999999999999?", "Index $99999999999999999999999 doesn't fit in an Int32"
 
     it_parses "foo /a/", Call.new(nil, "foo", regex("a"))
     it_parses "foo(/a/)", Call.new(nil, "foo", regex("a"))
@@ -1290,6 +1324,15 @@ module Crystal
     it_parses "->(x) { x }", ProcLiteral.new(Def.new("->", [Arg.new("x")], "x".var))
     it_parses "x = 1; ->{ x }", [Assign.new("x".var, 1.int32), ProcLiteral.new(Def.new("->", body: "x".var))]
     it_parses "f ->{ a do\n end\n }", Call.new(nil, "f", ProcLiteral.new(Def.new("->", body: Call.new(nil, "a", block: Block.new))))
+
+    it_parses "-> : Int32 { }", ProcLiteral.new(Def.new("->", return_type: "Int32".path))
+    it_parses "->\n:\nInt32\n{\n}", ProcLiteral.new(Def.new("->", return_type: "Int32".path))
+    it_parses "->() : Int32 { }", ProcLiteral.new(Def.new("->", return_type: "Int32".path))
+    it_parses "->() : Int32 do end", ProcLiteral.new(Def.new("->", return_type: "Int32".path))
+    it_parses "->(x : Int32) : Int32 { }", ProcLiteral.new(Def.new("->", [Arg.new("x", restriction: "Int32".path)], return_type: "Int32".path))
+
+    assert_syntax_error "-> :Int32 { }", "a space is mandatory between ':' and return type"
+    assert_syntax_error "->() :Int32 { }", "a space is mandatory between ':' and return type"
 
     %w(foo foo= foo? foo!).each do |method|
       it_parses "->#{method}", ProcPointer.new(nil, method)
@@ -1599,8 +1642,8 @@ module Crystal
 
     assert_syntax_error %q(asm("nop" ::: "#{foo}")), "interpolation not allowed in asm clobber"
     assert_syntax_error %q(asm("nop" :::: "#{volatile}")), "interpolation not allowed in asm option"
-    assert_syntax_error %q(asm("" ::: ""(var))), "unexpected token: ("
-    assert_syntax_error %q(asm("" : 1)), "unexpected token: 1"
+    assert_syntax_error %q(asm("" ::: ""(var))), %{unexpected token: "("}
+    assert_syntax_error %q(asm("" : 1)), %(unexpected token: "1")
 
     it_parses "foo begin\nbar do\nend\nend", Call.new(nil, "foo", Expressions.new([Call.new(nil, "bar", block: Block.new)] of ASTNode))
     it_parses "foo 1.bar do\nend", Call.new(nil, "foo", args: [Call.new(1.int32, "bar")] of ASTNode, block: Block.new)
@@ -1674,7 +1717,7 @@ module Crystal
     it_parses %({foo:'a', bar:'b'}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", CharLiteral.new('a')), NamedTupleLiteral::Entry.new("bar", CharLiteral.new('b'))])
     it_parses %({foo:a, bar:b}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", "a".call), NamedTupleLiteral::Entry.new("bar", "b".call)])
 
-    assert_syntax_error "return do\nend", "unexpected token: do"
+    assert_syntax_error "return do\nend", %(unexpected token: "do")
 
     %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
       assert_syntax_error "def foo\n#{keyword}\nend"
@@ -1698,7 +1741,7 @@ module Crystal
 
     assert_syntax_error "case when .foo? then 1; end"
     assert_syntax_error "macro foo;{%end};end"
-    assert_syntax_error "foo {1, 2}", "unexpected token: ,"
+    assert_syntax_error "foo {1, 2}", %(unexpected token: ",")
     assert_syntax_error "pointerof(self)", "can't take address of self"
     assert_syntax_error "def foo 1; end"
 
@@ -1711,8 +1754,8 @@ module Crystal
     assert_syntax_error %(macro foo x; 1 + 2; end), "parentheses are mandatory for macro parameters"
     assert_syntax_error %(macro foo x\n 1 + 2; end), "parentheses are mandatory for macro parameters"
 
-    assert_syntax_error "1 2", "unexpected token: 2"
-    assert_syntax_error "macro foo(*x, *y); end", "unexpected token: *"
+    assert_syntax_error "1 2", %(unexpected token: "2")
+    assert_syntax_error "macro foo(*x, *y); end", %(unexpected token: "*")
 
     assert_syntax_error "foo x: 1, x: 1", "duplicated named argument: x", 1, 11
 
@@ -1769,8 +1812,8 @@ module Crystal
     assert_syntax_error "/foo)/", "invalid regex"
     assert_syntax_error "def =\nend"
     assert_syntax_error "def foo; A = 1; end", "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
-    assert_syntax_error "{1, ->{ |x| x } }", "unexpected token '|'"
-    assert_syntax_error "{1, ->do\n|x| x\end }", "unexpected token '|'"
+    assert_syntax_error "{1, ->{ |x| x } }", %(unexpected token: "|")
+    assert_syntax_error "{1, ->do\n|x| x\end }", %(unexpected token: "|")
 
     assert_syntax_error "1 while 3", "trailing `while` is not supported"
     assert_syntax_error "1 until 3", "trailing `until` is not supported"
@@ -1789,7 +1832,7 @@ module Crystal
     assert_syntax_error "def foo(x: Int32); end", "space required before colon in type restriction"
     assert_syntax_error "def foo(x :Int32); end", "space required after colon in type restriction"
 
-    assert_syntax_error "def f end", "unexpected token: end (expected ';' or newline)"
+    assert_syntax_error "def f end", %(unexpected token: "end" (expected ";" or newline))
 
     assert_syntax_error "fun foo\nclass", "can't define class inside fun"
     assert_syntax_error "fun foo\nFoo = 1", "dynamic constant assignment"
@@ -2160,6 +2203,14 @@ module Crystal
 
         name_location.line_number.should eq(1)
         name_location.column_number.should eq(12)
+      end
+
+      it "sets correct location of proc literal" do
+        parser = Parser.new("->(\n  x : Int32,\n  y : String\n) { }")
+        node = parser.parse.as(ProcLiteral)
+        loc = node.location.not_nil!
+        loc.line_number.should eq(1)
+        loc.column_number.should eq(1)
       end
 
       it "doesn't override yield with macro yield" do

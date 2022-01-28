@@ -1,0 +1,591 @@
+{% skip_file if flag?(:without_interpreter) %}
+require "./spec_helper"
+
+describe Crystal::Repl::Interpreter do
+  context "blocks" do
+    it "interprets simplest block" do
+      interpret(<<-CODE).should eq(1)
+        def foo
+          yield
+        end
+
+        a = 0
+        foo do
+          a += 1
+        end
+        a
+      CODE
+    end
+
+    it "interprets block with multiple yields" do
+      interpret(<<-CODE).should eq(2)
+        def foo
+          yield
+          yield
+        end
+
+        a = 0
+        foo do
+          a += 1
+        end
+        a
+      CODE
+    end
+
+    it "interprets yield return value" do
+      interpret(<<-CODE).should eq(1)
+        def foo
+          yield
+        end
+
+        z = foo do
+          1
+        end
+        z
+      CODE
+    end
+
+    it "interprets yield inside another block" do
+      interpret(<<-CODE).should eq(1)
+        def foo
+          bar do
+            yield
+          end
+        end
+
+        def bar
+          yield
+        end
+
+        a = 0
+        foo do
+          a += 1
+        end
+        a
+      CODE
+    end
+
+    it "interprets yield inside def with arguments" do
+      interpret(<<-CODE).should eq(18)
+        def foo(x)
+          a = yield
+          a + x
+        end
+
+        a = foo(10) do
+          8
+        end
+        a
+      CODE
+    end
+
+    it "interprets yield expression" do
+      interpret(<<-CODE).should eq(2)
+        def foo
+          yield 1
+        end
+
+        a = 1
+        foo do |x|
+          a += x
+        end
+        a
+      CODE
+    end
+
+    it "interprets yield expressions" do
+      interpret(<<-CODE).should eq(2 + 2*3 + 4*5)
+        def foo
+          yield 3, 4, 5
+        end
+
+        a = 2
+        foo do |x, y, z|
+          a += a * x + y * z
+        end
+        a
+      CODE
+    end
+
+    it "discards yield expression" do
+      interpret(<<-CODE).should eq(3)
+        def foo
+          yield 1
+        end
+
+        a = 2
+        foo do
+          a = 3
+        end
+        a
+      CODE
+    end
+
+    it "yields different values to form a union" do
+      interpret(<<-CODE).should eq(5)
+        def foo
+          yield 1
+          yield 'a'
+        end
+
+        a = 2
+        foo do |x|
+          a +=
+            case x
+            in Int32
+              1
+            in Char
+              2
+            end
+        end
+        a
+      CODE
+    end
+
+    it "returns from block" do
+      interpret(<<-CODE).should eq(42)
+        def foo
+          baz do
+            yield
+          end
+        end
+
+        def baz
+          yield
+        end
+
+        def bar
+          foo do
+            foo do
+              return 42
+            end
+          end
+
+          1
+        end
+
+        bar
+      CODE
+    end
+
+    it "interprets next inside block" do
+      interpret(<<-CODE).should eq(10)
+        def foo
+          yield
+        end
+
+        a = 0
+        foo do
+          if a == 0
+            next 10
+          end
+          20
+        end
+      CODE
+    end
+
+    it "interprets next inside block (union, through next)" do
+      interpret(<<-CODE).should eq(10)
+        def foo
+          yield
+        end
+
+        a = 0
+        x = foo do
+          if a == 0
+            next 10
+          end
+          'a'
+        end
+
+        if x.is_a?(Int32)
+          x
+        else
+          20
+        end
+      CODE
+    end
+
+    it "interprets next inside block (union, through normal exit)" do
+      interpret(<<-CODE).should eq('a')
+        def foo
+          yield
+        end
+
+        a = 0
+        x = foo do
+          if a == 1
+            next 10
+          end
+          'a'
+        end
+
+        if x.is_a?(Char)
+          x
+        else
+          'b'
+        end
+      CODE
+    end
+
+    it "interprets break inside block" do
+      interpret(<<-CODE).should eq(20)
+        def baz
+          yield
+        end
+
+        def foo
+          baz do
+            w = yield
+            w + 100
+          end
+        end
+
+        a = 0
+        foo do
+          if a == 0
+            break 20
+          end
+          20
+        end
+      CODE
+    end
+
+    it "interprets break inside block (union, through break)" do
+      interpret(<<-CODE).should eq(20)
+        def foo
+          yield
+          'a'
+        end
+
+        a = 0
+        w = foo do
+          if a == 0
+            break 20
+          end
+          20
+        end
+        if w.is_a?(Int32)
+          w
+        else
+          30
+        end
+      CODE
+    end
+
+    it "interprets break inside block (union, through normal flow)" do
+      interpret(<<-CODE).should eq('a')
+        def foo
+          yield
+          'a'
+        end
+
+        a = 0
+        w = foo do
+          if a == 1
+            break 20
+          end
+          20
+        end
+        if w.is_a?(Char)
+          w
+        else
+          'b'
+        end
+      CODE
+    end
+
+    it "interprets break inside block (union, through return)" do
+      interpret(<<-CODE).should eq('a')
+        def foo
+          yield
+          return 'a'
+        end
+
+        a = 0
+        w = foo do
+          if a == 1
+            break 20
+          end
+          20
+        end
+        if w.is_a?(Char)
+          w
+        else
+          'b'
+        end
+      CODE
+    end
+
+    it "interprets block with args that conflict with a local var" do
+      interpret(<<-CODE).should eq(201)
+        def foo
+          yield 1
+        end
+
+        a = 200
+        x = 0
+
+        foo do |a|
+          x += a
+        end
+
+        x + a
+      CODE
+    end
+
+    it "interprets block with args that conflict with a local var" do
+      interpret(<<-CODE).should eq(216)
+        def foo
+          yield 1
+        end
+
+        def bar
+          yield 2
+        end
+
+        def baz
+          yield 3, 4, 5
+        end
+
+        # a: 0, 8
+        a = 200
+
+        # x: 8, 16
+        x = 0
+
+        # a: 16, 24
+        foo do |a|
+          x += a
+
+          # a: 24, 32
+          bar do |a|
+            x += a
+          end
+
+          # a: 24, 32
+          # b: 32, 40
+          # c: 40, 48
+          baz do |a, b, c|
+            x += a
+            x += b
+            x += c
+          end
+
+          x += a
+        end
+        x + a
+      CODE
+    end
+
+    it "clears block local variables when calling block" do
+      interpret(<<-CODE).should eq(20)
+        def foo
+          yield 1
+        end
+
+        def bar
+          a = 1
+
+          foo do |b|
+            x = 1
+          end
+
+          foo do |b|
+            if a == 0 || b == 0
+              x = 10
+            end
+
+            return x
+          end
+        end
+
+        z = bar
+        if z.is_a?(Nil)
+          20
+        else
+          z
+        end
+        CODE
+    end
+
+    it "clears block local variables when calling block (2)" do
+      interpret(<<-CODE).should eq(20)
+        def foo
+          yield
+        end
+
+        a = 0
+
+        foo do
+          x = 1
+        end
+
+        foo do
+          if 1 == 2
+            x = 1
+          end
+          a = x
+        end
+
+        if a
+          a
+        else
+          20
+        end
+        CODE
+    end
+
+    it "captures non-closure block" do
+      interpret(<<-CODE).should eq(42)
+        def capture(&block : Int32 -> Int32)
+          block
+        end
+
+        # This variable is needed in the test because it's also
+        # part of the block, even though it's not closured (it's in node.def.vars)
+        a = 100
+        b = capture { |x| x + 1 }
+        b.call(41)
+      CODE
+    end
+
+    it "casts yield expression to block var type (not block arg type)" do
+      interpret(<<-CODE).should eq(42)
+        def foo
+          yield 42
+        end
+
+        def bar
+          foo do |x|
+            yield x
+            x = nil
+          end
+        end
+
+        a = 0
+        bar { |z| a = z }
+        a
+      CODE
+    end
+
+    it "interprets with ... yield" do
+      interpret(<<-CODE).should eq(31)
+        struct Int32
+          def plus(x : Int32)
+            self + x
+          end
+        end
+
+        def foo
+          with 10 yield 20
+        end
+
+        foo do |x|
+          1 + (plus x)
+        end
+      CODE
+    end
+
+    it "interprets with ... yield with struct" do
+      interpret(<<-CODE).should eq(2)
+        struct Foo
+          def initialize
+            @x = 1
+          end
+
+          def inc
+            @x += 1
+          end
+
+          def x
+            @x
+          end
+        end
+
+        def foo
+          with Foo.new yield
+        end
+
+        foo do
+          inc
+          x
+        end
+      CODE
+    end
+
+    it "interprets yield with splat (1)" do
+      interpret(<<-CODE).should eq((2 - 3) * 4)
+        def foo
+          t = {2, 3, 4}
+          yield *t
+        end
+
+        a = 0
+        foo do |x1, x2, x3|
+          a = (x1 - x2) * x3
+        end
+        a
+      CODE
+    end
+
+    it "interprets yield with splat (2)" do
+      interpret(<<-CODE).should eq((((1 - 2) * 3) - 4) * 5)
+        def foo
+          t = {2, 3, 4}
+          yield 1, *t, 5
+        end
+
+        a = 0
+        foo do |x1, x2, x3, x4, x5|
+          a = (((x1 - x2) * x3) - x4) * x5
+        end
+        a
+      CODE
+    end
+
+    it "interprets yield with splat, less block arguments" do
+      interpret(<<-CODE).should eq(2 - 3)
+        def foo
+          t = {2, 3, 4}
+          yield *t
+        end
+
+        a = 0
+        foo do |x1, x2|
+          a = x1 - x2
+        end
+        a
+      CODE
+    end
+
+    it "interprets block with splat" do
+      interpret(<<-CODE).should eq((((1 - 2) * 3) - 4) * 5)
+        def foo
+          yield 1, 2, 3, 4, 5
+        end
+
+        a = 0
+        foo do |x1, *x, x5|
+          a = (((x1 - x[0]) * x[1]) - x[2]) * x5
+        end
+        a
+      CODE
+    end
+
+    it "interprets yield with splat, block with splat" do
+      interpret(<<-CODE).should eq((((1 - 2) * 3) - 4) * 5)
+        def foo
+          t = {1, 2, 3}
+          yield *t, 4, 5
+        end
+
+        a = 0
+        foo do |x1, *x, x5|
+          a = (((x1 - x[0]) * x[1]) - x[2]) * x5
+        end
+        a
+      CODE
+    end
+  end
+end

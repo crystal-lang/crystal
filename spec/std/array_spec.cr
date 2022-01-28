@@ -698,173 +698,34 @@ describe "Array" do
   end
 
   describe "#fill" do
-    it "replaces all values" do
-      a = ['a', 'b', 'c']
-      expected = ['x', 'x', 'x']
-      a.fill('x').should be(a)
-      a.should eq(expected)
+    it "replaces values in a subrange" do
+      a = [0, 1, 2, 3, 4]
+      a.fill(7).should be(a)
+      a.should eq([7, 7, 7, 7, 7])
 
-      a = [1, 2, 3]
-      expected = [0, 0, 0]
-      a.fill(0).should be(a)
-      a.should eq(expected)
+      a = [0, 1, 2, 3, 4]
+      a.fill(7, 1, 2).should be(a)
+      a.should eq([0, 7, 7, 3, 4])
 
-      a = [1.0, 2.0, 3.0]
-      expected = [0.0, 0.0, 0.0]
-      a.fill(0.0).should be(a)
-      a.should eq(expected)
-    end
+      a = [0, 1, 2, 3, 4]
+      a.fill(7, 2..3).should be(a)
+      a.should eq([0, 1, 7, 7, 4])
 
-    it "replaces only values between index and size" do
-      a = ['a', 'b', 'c']
-      expected = ['x', 'x', 'c']
-      a.fill('x', 0, 2).should be(a)
-      a.should eq(expected)
+      a = [0, 0, 0, 0, 0]
+      a.fill { |i| i + 7 }.should be(a)
+      a.should eq([7, 8, 9, 10, 11])
 
-      a = [1, 2, 3]
-      expected = [0, 0, 3]
-      a.fill(0, 0, 2).should be(a)
-      a.should eq(expected)
+      a = [0, 0, 0, 0, 0]
+      a.fill(offset: 2) { |i| i * i }.should be(a)
+      a.should eq([4, 9, 16, 25, 36])
 
-      a = [1.0, 2.0, 3.0]
-      expected = [0, 0, 3]
-      a.fill(0, 0, 2).should be(a)
-      a.should eq(expected)
-    end
+      a = [0, 0, 0, 0, 0]
+      a.fill(1, 2) { |i| i + 7 }.should be(a)
+      a.should eq([0, 8, 9, 0, 0])
 
-    it "replaces only values between index and size (2)" do
-      a = ['a', 'b', 'c']
-      expected = ['a', 'x', 'x']
-      a.fill('x', 1, 2).should be(a)
-      a.should eq(expected)
-
-      a = [1, 2, 3]
-      expected = [1, 0, 0]
-      a.fill(0, 1, 2).should be(a)
-      a.should eq(expected)
-
-      a = [1.0, 2.0, 3.0]
-      expected = [1, 0, 0]
-      a.fill(0, 1, 2).should be(a)
-      a.should eq(expected)
-    end
-
-    it "replaces all values from index onwards" do
-      a = ['a', 'b', 'c']
-      expected = ['a', 'x', 'x']
-      a.fill('x', -2).should be(a)
-      a.should eq(expected)
-
-      a = [1, 2, 3]
-      expected = [1, 0, 0]
-      a.fill(0, -2).should be(a)
-      a.should eq(expected)
-
-      a = [1.0, 2.0, 3.0]
-      expected = [1, 0, 0]
-      a.fill(0, -2).should be(a)
-      a.should eq(expected)
-    end
-
-    it "raises when given big negative number (#4539)" do
-      expect_raises(IndexError) do
-        ['a', 'b', 'c'].fill('x', -4)
-      end
-      expect_raises(IndexError) do
-        [1, 2, 3].fill(0, -4)
-      end
-      expect_raises(IndexError) do
-        [1.0, 2.0, 3.0].fill(0, -4)
-      end
-    end
-
-    it "replaces only values between negative index and size" do
-      a = ['a', 'b', 'c']
-      expected = ['a', 'b', 'x']
-      a.fill('x', -1, 1).should be(a)
-      a.should eq(expected)
-
-      a = [1, 2, 3]
-      expected = [1, 2, 0]
-      a.fill(0, -1, 1).should be(a)
-      a.should eq(expected)
-
-      a = [1.0, 2.0, 3.0]
-      expected = [1, 2, 0]
-      a.fill(0, -1, 1).should be(a)
-      a.should eq(expected)
-    end
-
-    it "raises when given big negative number in from/count (#4539)" do
-      expect_raises(IndexError) do
-        ['a', 'b', 'c'].fill('x', -4, 1)
-      end
-      expect_raises(IndexError) do
-        [1, 2, 3].fill(0, -4, 1)
-      end
-      expect_raises(IndexError) do
-        [1.0, 2.0, 3.0].fill(0, -4, 1)
-      end
-    end
-
-    it "replaces only values in range" do
-      a = ['a', 'b', 'c']
-      expected = ['x', 'x', 'c']
-      a.fill('x', -3..1).should be(a)
-      a.should eq(expected)
-
-      a = [1, 2, 3]
-      expected = [0, 0, 3]
-      a.fill(0, -3..1).should be(a)
-      a.should eq(expected)
-
-      a = [1.0, 2.0, 3.0]
-      expected = [0, 0, 3]
-      a.fill(0, -3..1).should be(a)
-      a.should eq(expected)
-    end
-
-    it "replaces only values in range without end" do
-      a = ['a', 'b', 'c']
-      expected = ['a', 'x', 'x']
-      a.fill('x', 1..nil).should be(a)
-      a.should eq(expected)
-
-      a = [1, 2, 3]
-      expected = [1, 0, 0]
-      a.fill(0, 1..nil).should be(a)
-      a.should eq(expected)
-
-      a = [1.0, 2.0, 3.0]
-      expected = [1, 0, 0]
-      a.fill(0, 1..nil).should be(a)
-      a.should eq(expected)
-    end
-
-    it "replaces only values in range begin" do
-      a = ['a', 'b', 'c']
-      expected = ['x', 'x', 'c']
-      a.fill('x', nil..1).should be(a)
-      a.should eq(expected)
-
-      a = [1, 2, 3]
-      expected = [0, 0, 3]
-      a.fill(0, nil..1).should be(a)
-      a.should eq(expected)
-
-      a = [1.0, 2.0, 3.0]
-      expected = [0, 0, 3]
-      a.fill(0, nil..1).should be(a)
-      a.should eq(expected)
-    end
-
-    it "works with a block" do
-      a = [3, 6, 9]
-      a.clone.fill { 0 }.should eq([0, 0, 0])
-      a.clone.fill { |i| i }.should eq([0, 1, 2])
-      a.clone.fill(1) { |i| i ** i }.should eq([3, 1, 4])
-      a.clone.fill(1, 1) { |i| i ** i }.should eq([3, 1, 9])
-      a.clone.fill(1..1) { |i| i ** i }.should eq([3, 1, 9])
+      a = [0, 0, 0, 0, 0]
+      a.fill(2..3) { |i| i + 7 }.should be(a)
+      a.should eq([0, 0, 9, 10, 0])
     end
   end
 
@@ -1636,6 +1497,14 @@ describe "Array" do
       end
       a.@capacity.should eq(3)
     end
+
+    it "unshift of large array does not corrupt elements" do
+      a = Array.new(300, &.itself)
+      a.@capacity.should eq(300)
+      a.unshift 1
+      a.@capacity.should be > 300
+      a[-1].should eq(299)
+    end
   end
 
   it "does update" do
@@ -2178,6 +2047,32 @@ describe "Array" do
 
     expect_raises(ArgumentError, "Attempt to skip negative size") do
       ary.skip(-1)
+    end
+  end
+
+  describe "capacity re-sizing" do
+    it "initializes an array capacity to INITIAL_CAPACITY" do
+      a = [] of Int32
+      a.push(1)
+      a.@capacity.should eq(3)
+    end
+
+    it "doubles capacity for arrays smaller than CAPACITY_THRESHOLD" do
+      a = Array.new(255, 1)
+      a.push(1)
+      a.@capacity.should eq(255 * 2)
+    end
+
+    it "uses slow growth heuristic for arrays larger than CAPACITY_THRESHOLD" do
+      a = Array.new(512, 1)
+      a.push(1)
+      # ~63% larger
+      a.@capacity.should eq(832)
+
+      b = Array.new(4096, 1)
+      b.push(1)
+      # ~30% larger, starts converging toward 25%
+      b.@capacity.should eq(5312)
     end
   end
 end

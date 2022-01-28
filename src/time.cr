@@ -1118,6 +1118,10 @@ struct Time
   end
 
   # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  #
+  # ```
+  # Time.parse_rfc3339("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50.0 UTC
+  # ```
   def self.parse_rfc3339(time : String) : self
     Format::RFC_3339.parse(time)
   end
@@ -1128,6 +1132,10 @@ struct Time
   # In ISO 8601 for examples, field delimiters (`-`, `:`) are optional.
   #
   # Use `#to_rfc3339` to format a `Time` according to .
+  #
+  # ```
+  # Time.parse_iso8601("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50.0 UTC
+  # ```
   def self.parse_iso8601(time : String)
     Format::ISO_8601_DATE_TIME.parse(time)
   end
@@ -1154,6 +1162,10 @@ struct Time
   # Parse time format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
   #
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
+  #
+  # ```
+  # Time.parse_rfc2822("Mon, 15 Feb 2016 04:35:50 UTC") # => 2016-02-15 04:35:50.0 UTC
+  # ```
   def self.parse_rfc2822(time : String) : self
     Format::RFC_2822.parse(time)
   end
@@ -1356,7 +1368,7 @@ struct Time
 
   # Returns a copy of this `Time` representing the end of the semester.
   def at_end_of_semester : Time
-    year, month = year_month_day_day_year
+    year, month, _, _ = year_month_day_day_year
     if month <= 6
       month, day = 6, 30
     else
@@ -1367,7 +1379,7 @@ struct Time
 
   # Returns a copy of this `Time` representing the end of the quarter.
   def at_end_of_quarter : Time
-    year, month = year_month_day_day_year
+    year, month, _, _ = year_month_day_day_year
     if month <= 3
       month, day = 3, 31
     elsif month <= 6
@@ -1404,7 +1416,7 @@ struct Time
 
   # Returns a copy of this `Time` representing midday (`12:00`) of the same day.
   def at_midday : Time
-    year, month, day = year_month_day_day_year
+    year, month, day, _ = year_month_day_day_year
     Time.local(year, month, day, 12, 0, 0, nanosecond: 0, location: location)
   end
 

@@ -13,8 +13,12 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v2
 
-      - uses: cachix/install-nix-action@v12
-      - uses: cachix/cachix-action@v8
+      - uses: cachix/install-nix-action@v14
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.4/install
+          extra_nix_config: |
+            experimental-features = nix-command
+      - uses: cachix/cachix-action@v10
         with:
           name: crystal-ci
           signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
@@ -27,3 +31,6 @@ jobs:
 
       - name: Test
         run: bin/ci build
+
+      - name: Test interpreter
+        run: bin/ci with_build_env 'bin/crystal spec spec/compiler/interpreter_spec.cr'

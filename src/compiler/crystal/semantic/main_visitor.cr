@@ -2,7 +2,7 @@ require "./semantic_visitor"
 
 module Crystal
   class Program
-    def visit_main(node, visitor = MainVisitor.new(self), process_finished_hooks = false, cleanup = true)
+    def visit_main(node, visitor : MainVisitor = MainVisitor.new(self), process_finished_hooks = false, cleanup = true)
       node.accept visitor
       program.process_finished_hooks(visitor) if process_finished_hooks
 
@@ -67,24 +67,31 @@ module Crystal
     property is_initialize : Bool
     property exception_handler_vars : MetaVars? = nil
 
-    # It means the last block kind, that is one of `block`, `while` and
-    # `ensure`. It is used to detect `break` or `next` from `ensure`.
+    private enum BlockKind
+      None
+      While
+      Block
+      Ensure
+    end
+
+    # It means the last block kind. It is used to detect `break` or `next`
+    # from `ensure`.
     #
     # ```
     # begin
-    #   # `last_block_kind == nil`
+    #   # `last_block_kind.none?`
     # ensure
-    #   # `last_block_kind == :ensure`
+    #   # `last_block_kind.ensure?`
     #   while true
-    #     # `last_block_kind == :while`
+    #     # `last_block_kind.while?`
     #   end
     #   loop do
-    #     # `last_block_kind == :block`
+    #     # `last_block_kind.block?`
     #   end
-    #   # `last_block_kind == :ensure`
+    #   # `last_block_kind.ensure?`
     # end
     # ```
-    property last_block_kind : Symbol?
+    property last_block_kind : BlockKind = :none
     property? inside_ensure : Bool = false
     property? inside_constant = false
     property file_module : FileModule?
@@ -297,23 +304,28 @@ module Crystal
     end
 
     def visit(node : ProcNotation)
+      types = [] of Type
       @in_type_args += 1
-      node.inputs.try &.each &.accept(self)
-      node.output.try &.accept(self)
-      @in_type_args -= 1
 
-      if inputs = node.inputs
-        types = inputs.map &.type.instance_type.virtual_type
-      else
-        types = [] of Type
+      node.inputs.try &.each do |input|
+        input.accept self
+        input_type = input.type
+        check_not_a_constant(input)
+        MainVisitor.check_type_allowed_as_proc_argument(input, input_type)
+        types << input_type.virtual_type
       end
 
       if output = node.output
-        types << output.type.instance_type.virtual_type
+        output.accept self
+        output_type = output.type
+        check_not_a_constant(output)
+        MainVisitor.check_type_allowed_as_proc_argument(output, output_type)
+        types << output_type.virtual_type
       else
         types << program.void
       end
 
+      @in_type_args -= 1
       node.type = program.proc_of(types)
 
       false
@@ -922,7 +934,7 @@ module Crystal
 
     def self.check_automatic_cast(program, value, var_type, assign = nil)
       if value.is_a?(NumberLiteral) && value.type != var_type
-        literal_type = NumberLiteralType.new(program, value)
+        literal_type = NumberAutocastType.new(program, value)
         restricted = literal_type.restrict(var_type, MatchContext.new(value.type, value.type))
         if restricted.is_a?(IntegerType) || restricted.is_a?(FloatType)
           value.type = restricted
@@ -931,7 +943,7 @@ module Crystal
           return value
         end
       elsif value.is_a?(SymbolLiteral) && value.type != var_type
-        literal_type = SymbolLiteralType.new(program, value)
+        literal_type = SymbolAutocastType.new(program, value)
         restricted = literal_type.restrict(var_type, MatchContext.new(value.type, value.type))
         if restricted.is_a?(EnumType)
           member = restricted.find_member(value.value).not_nil!
@@ -1132,8 +1144,10 @@ module Crystal
         # It can happen that the argument has a type already,
         # when converting a block to a proc literal
         if restriction = arg.restriction
+          @in_type_args += 1
           restriction.accept self
-          arg_type = restriction.type.instance_type
+          @in_type_args -= 1
+          arg_type = restriction.type
           MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
           arg.type = arg_type.virtual_type
         elsif !arg.type?
@@ -1146,6 +1160,17 @@ module Crystal
         meta_var = new_meta_var(arg.name, context: node.def)
         meta_var.bind_to fun_var
         meta_vars[arg.name] = meta_var
+      end
+
+      if return_type = node.def.return_type
+        @in_type_args += 1
+        return_type.accept self
+        @in_type_args -= 1
+        check_not_a_constant(return_type)
+
+        def_type = return_type.type
+        MainVisitor.check_type_allowed_as_proc_argument(node, def_type)
+        node.expected_return_type = def_type.virtual_type
       end
 
       node.bind_to node.def
@@ -1218,12 +1243,12 @@ module Crystal
         node.raise "undefined fun '#{node.name}' for #{obj_type}" unless matching_fun
 
         call.args = matching_fun.args.map_with_index do |arg, i|
-          Var.new("arg#{i}", arg.type.instance_type).as(ASTNode)
+          Var.new("arg#{i}", arg.type).as(ASTNode)
         end
       else
         call.args = node.args.map_with_index do |arg, i|
           arg.accept self
-          arg_type = arg.type.instance_type
+          arg_type = arg.type
           MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
           Var.new("arg#{i}", arg_type.virtual_type).as(ASTNode)
         end
@@ -1321,7 +1346,7 @@ module Crystal
         end
       end
 
-      node.recalculate
+      recalculate_call(node)
 
       check_call_in_initialize node
 
@@ -1339,6 +1364,10 @@ module Crystal
       end
       node.with_scope = with_scope
       node.parent_visitor = self
+    end
+
+    def recalculate_call(node : Call)
+      node.recalculate
     end
 
     def call_needs_splat_expansion?(node)
@@ -2190,7 +2219,7 @@ module Crystal
     end
 
     def end_visit(node : Break)
-      if last_block_kind == :ensure
+      if last_block_kind.ensure?
         node.raise "can't use break inside ensure"
       end
 
@@ -2220,7 +2249,7 @@ module Crystal
     end
 
     def end_visit(node : Next)
-      if last_block_kind == :ensure
+      if last_block_kind.ensure?
         node.raise "can't use next inside ensure"
       end
 
@@ -2250,9 +2279,9 @@ module Crystal
       @unreachable = true
     end
 
-    def with_block_kind(kind)
+    def with_block_kind(kind : BlockKind)
       old_block_kind, @last_block_kind = last_block_kind, kind
-      old_inside_ensure, @inside_ensure = @inside_ensure, @inside_ensure || kind == :ensure
+      old_inside_ensure, @inside_ensure = @inside_ensure, @inside_ensure || kind.ensure?
       yield
       @last_block_kind = old_block_kind
       @inside_ensure = old_inside_ensure
@@ -2518,7 +2547,7 @@ module Crystal
       # Try to resolve the instance_sizeof right now to a number literal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
-      if type && type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
+      if type && type.devirtualize.class? && !type.metaclass? && !node.exp.is_a?(TypeOf)
         expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
