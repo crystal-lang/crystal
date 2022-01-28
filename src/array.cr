@@ -1390,6 +1390,7 @@ class Array(T)
   # a1                    # => [1]
   # a1.remaining_capacity # => 3
   # a1                    # => [1]
+  # a2 = [1]
   # a2.replace([1, 2, 3])
   # a2 # => [1, 2, 3]
   # ```
