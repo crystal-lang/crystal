@@ -4092,8 +4092,14 @@ module Crystal
       write_token :"->"
       skip_space_or_newline
 
+      if node.global?
+        write_token :"::"
+        skip_space_or_newline
+      end
+
       if obj = node.obj
         accept obj
+        skip_space
         write_token :"."
         skip_space_or_newline
       end
