@@ -78,7 +78,7 @@ abstract class Crystal::SyntaxHighlighter
 
       case token.type
       when :DELIMITER_START
-        if token.delimiter_state.kind == :heredoc
+        if token.delimiter_state.kind.heredoc?
           heredoc_stack << token.dup
           highlight_token token, last_is_def
         else
@@ -210,7 +210,7 @@ abstract class Crystal::SyntaxHighlighter
           render :STRING_ARRAY_END, token.raw
           break
         when :EOF
-          if token.delimiter_state.kind == :string_array
+          if token.delimiter_state.kind.string_array?
             raise "Unterminated string array literal"
           else # == :symbol_array
             raise "Unterminated symbol array literal"
