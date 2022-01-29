@@ -187,17 +187,14 @@ module Crystal
     end
 
     def visit(node : Expressions)
-      parens = node.keyword == :"("
-      begin_end = node.keyword == :begin
-
-      case
-      when parens
+      case node.keyword
+      in .paren?
         @str << '('
-      when begin_end
+      in .begin?
         @str << "begin"
         @indent += 1
         newline
-      else
+      in .none?
         # Not a special condition
       end
 
@@ -208,19 +205,19 @@ module Crystal
           unless exp.nop?
             append_indent
             exp.accept self
-            newline unless parens && i == node.expressions.size - 1
+            newline unless node.keyword.paren? && i == node.expressions.size - 1
           end
         end
       end
 
-      case
-      when parens
+      case node.keyword
+      in .paren?
         @str << ')'
-      when begin_end
+      in .begin?
         @indent -= 1
         append_indent
         @str << "end"
-      else
+      in .none?
         # Not a special condition
       end
 
@@ -1500,7 +1497,7 @@ module Crystal
       with_indent do
         node.accept self
       end
-      newline if node.keyword == :"("
+      newline if node.keyword.paren?
     end
 
     def accept_with_indent(node : Nop)

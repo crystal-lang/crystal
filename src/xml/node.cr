@@ -294,7 +294,7 @@ class XML::Node
     end
   end
 
-  # Returns namespaces defined on self element directly.
+  # Returns namespaces defined on this node directly.
   def namespace_definitions : Array(Namespace)
     namespaces = [] of Namespace
 
@@ -307,11 +307,11 @@ class XML::Node
     namespaces
   end
 
-  # Returns namespaces in scope for self – those defined on self element
+  # Returns namespaces in scope for this node – those defined on this node
   # directly or any ancestor node – as an `Array` of `XML::Namespace` objects.
   #
-  # Default namespaces (`"xmlns="` style) for self are included in this array;
-  # Default namespaces for ancestors, however, are not.
+  # Default namespaces (`"xmlns="` style) for this node are included in this
+  # array; default namespaces for ancestors, however, are not.
   #
   # See also `#namespaces`
   def namespace_scopes : Array(Namespace)
@@ -329,7 +329,7 @@ class XML::Node
   #
   # This method returns the same namespaces as `#namespace_scopes`.
   #
-  # Returns namespaces in scope for self – those defined on self element
+  # Returns namespaces in scope for this node – those defined on this node
   # directly or any ancestor node – as a `Hash` of attribute-name/value pairs.
   #
   # NOTE: Note that the keys in this hash XML attributes that would be used to
