@@ -379,7 +379,7 @@ struct BitArray
     self
   end
 
-  # Creates a string representation of self.
+  # Creates a string representation of `self`.
   #
   # ```
   # require "bit_array"

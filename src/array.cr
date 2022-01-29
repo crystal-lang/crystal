@@ -676,7 +676,7 @@ class Array(T)
     @buffer[index] = value
   end
 
-  # Removes all elements from self.
+  # Removes all elements from `self`.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
