@@ -138,8 +138,14 @@ module Crystal
 
   # A container for one or many expressions.
   class Expressions < ASTNode
+    enum Keyword
+      None
+      Paren
+      Begin
+    end
+
     property expressions : Array(ASTNode)
-    property keyword : Symbol?
+    property keyword : Keyword = Keyword::None
 
     def self.from(obj : Nil)
       Nop.new
