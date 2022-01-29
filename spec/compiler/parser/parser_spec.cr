@@ -156,19 +156,6 @@ module Crystal
     it_parses "a = 1", Assign.new("a".var, 1.int32)
     it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int32))
 
-    # check control characters: They're allowed inside literals, but not in identifiers.
-    ['\u200B', '\u202A', '\u202B', '\u202C', '\u202D', '\u202E', '\u2066', '\u2067', '\u2068', '\u2069'].each do |char|
-      it_parses %('#{char}'), CharLiteral.new(char)
-      assert_syntax_error %(ident#{char}), "unknown token: #{char.inspect}"
-      it_parses %("#{char}"), StringLiteral.new("#{char}")
-      it_parses %(%w(#{char})), ArrayLiteral.new([StringLiteral.new "#{char}"] of ASTNode, of: Path.new("String", global: true))
-      assert_syntax_error %(:#{char}), %(unexpected token: ":")
-      it_parses %(:"#{char}"), SymbolLiteral.new "#{char}"
-      it_parses %(%i(#{char})), ArrayLiteral.new([SymbolLiteral.new "#{char}"] of ASTNode, of: Path.new("Symbol", global: true))
-      it_parses %(##{char}), Nop.new
-      it_parses %(macro foo\n##{char}\nend), Macro.new("foo", body: MacroLiteral.new("##{char}\n"))
-    end
-
     it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32] of ASTNode)
     it_parses "_, _ = 1, 2", MultiAssign.new([Underscore.new, Underscore.new] of ASTNode, [1.int32, 2.int32] of ASTNode)
@@ -503,6 +490,7 @@ module Crystal
     it_parses "(foo bar do\nend)", Expressions.new([Call.new(nil, "foo", ["bar".call] of ASTNode, Block.new)] of ASTNode)
     it_parses "(baz; bar do\nend)", Expressions.new(["baz".call, Call.new(nil, "bar", [] of ASTNode, Block.new)] of ASTNode)
     it_parses "(bar {})", Expressions.new([Call.new(nil, "bar", [] of ASTNode, Block.new)] of ASTNode)
+    it_parses "(a;\nb)", Expressions.new([Call.new(nil, "a"), Call.new(nil, "b")] of ASTNode)
     it_parses "1.x; foo do\nend", [Call.new(1.int32, "x"), Call.new(nil, "foo", block: Block.new)] of ASTNode
     it_parses "x = 1; foo.bar x do\nend", [Assign.new("x".var, 1.int32), Call.new("foo".call, "bar", ["x".var] of ASTNode, Block.new)]
 

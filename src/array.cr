@@ -676,7 +676,7 @@ class Array(T)
     @buffer[index] = value
   end
 
-  # Removes all elements from self.
+  # Removes all elements from `self`.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
@@ -1370,8 +1370,6 @@ class Array(T)
   # a.push("b", "c") # => ["a", "b", "c"]
   # ```
   def push(*values : T) : self
-    new_size = @size + values.size
-
     resize_if_cant_insert(values.size)
 
     values.each_with_index do |value, i|
@@ -2058,7 +2056,7 @@ class Array(T)
     end
   end
 
-  # Similar to double capacity, except that after reallocating the buffer
+  # Similar to `increase_capacity`, except that after reallocating the buffer
   # we point it to the middle of the buffer in case more unshifts come right away.
   # This assumes @offset_to_buffer is zero.
   private def increase_capacity_for_unshift
@@ -2066,18 +2064,18 @@ class Array(T)
   end
 
   private def resize_to_capacity_for_unshift(capacity)
-    @capacity = capacity
-    half = @capacity // 2
+    old_capacity, @capacity = @capacity, capacity
+    offset = @capacity - old_capacity
 
     if @buffer
       @buffer = root_buffer.realloc(@capacity)
-      @buffer.move_to(@buffer + half, @capacity - half)
-      @buffer.clear(half)
+      @buffer.move_to(@buffer + offset, old_capacity)
+      @buffer.clear(offset)
     else
       @buffer = Pointer(T).malloc(@capacity)
     end
 
-    shift_buffer_by(half)
+    shift_buffer_by(offset)
   end
 
   private def resize_if_cant_insert(insert_size)

@@ -150,21 +150,8 @@ describe "Lexer" do
                      :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
                      :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?,
                      :annotation, :verbatim]
-  it_lexes_idents ["ident", "something", "with_underscores", "_start_underscore", "with_1", "foo?", "bar!", "fooBar"]
-  it_lexes_idents [
-    "ä",       # L
-    "a\u0300", # Mn
-    "aः",      # Mc
-    "a٠",      # Nd
-    "a＿",      # Pc
-    "aⅧ",      # Nl
-  ]
-
-  assert_syntax_error "\u200B", "unknown token: '\\u200B'"
-  assert_syntax_error "ident\u200B", "unknown token: '\\u200B'"
-  assert_syntax_error ":\u200B", %(unexpected token: ":")
-  assert_syntax_error ":ident\u200B", "unknown token: '\\u200B'"
-
+  it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
+                   "❨╯°□°❩╯︵┻━┻"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?",
                    "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
   it_lexes_idents ["def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!",
@@ -429,6 +416,9 @@ describe "Lexer" do
   assert_syntax_error "2e", "unexpected token: \"e\""
   assert_syntax_error "2ef32", "unexpected token: \"ef32\""
   assert_syntax_error "2e+_2", "unexpected '_' in number"
+
+  # Test for #11671
+  it_lexes_i32 [["0b0_1", "1"]]
 
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"

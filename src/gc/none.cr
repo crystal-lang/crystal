@@ -1,9 +1,5 @@
 {% if flag?(:win32) %}
   require "c/process"
-{% else %}
-  @[Link("pthread")]
-  lib LibC
-  end
 {% end %}
 
 module GC
