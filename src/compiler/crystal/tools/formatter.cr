@@ -35,7 +35,7 @@ module Crystal
       property needs_newline : Bool
       property needs_format : Bool
 
-      def initialize(@start_line : Int32, @kind : Symbol, @needs_format : Bool)
+      def initialize(@start_line : Int32, @needs_format : Bool)
         @end_line = @start_line
         @needs_newline = true
       end
@@ -205,7 +205,7 @@ module Crystal
 
       empty_expressions = node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
 
-      if node.keyword == :"(" && @token.type.op_parenl?
+      if node.keyword.paren? && @token.type.op_parenl?
         write "("
         next_needs_indent = false
         has_paren = true
@@ -218,7 +218,7 @@ module Crystal
           next_needs_indent = true
           has_newline = true
         end
-      elsif node.keyword == :begin && @token.keyword?(:begin)
+      elsif node.keyword.begin? && @token.keyword?(:begin)
         write "begin"
         @indent += 2
         write_line
@@ -470,7 +470,7 @@ module Crystal
       end
 
       check :DELIMITER_START
-      is_regex = @token.delimiter_state.kind == :regex
+      is_regex = @token.delimiter_state.kind.regex?
 
       write @token.raw
       next_string_token
@@ -522,7 +522,7 @@ module Crystal
     end
 
     def visit(node : StringInterpolation)
-      if @token.delimiter_state.kind == :heredoc
+      if @token.delimiter_state.kind.heredoc?
         # For heredoc, only write the start: on a newline will print it
         @lexer.heredocs << {@token.delimiter_state, HeredocInfo.new(node, @token.dup, @line, @column, @indent, @string_continuation)}
         write @token.raw
@@ -538,14 +538,14 @@ module Crystal
     def visit_string_interpolation(node, token, line, column, old_indent, old_string_continuation, wrote_token = false)
       @token = token
 
-      is_regex = token.delimiter_state.kind == :regex
+      is_regex = token.delimiter_state.kind.regex?
       indent_difference = token.column_number - (column + 1)
 
       write token.raw unless wrote_token
       next_string_token
 
       delimiter_state = token.delimiter_state
-      is_heredoc = token.delimiter_state.kind == :heredoc
+      is_heredoc = token.delimiter_state.kind.heredoc?
       @last_is_heredoc = is_heredoc
 
       heredoc_line = @line
@@ -2668,7 +2668,7 @@ module Crystal
       if node.args.size == 1 &&
          !node.named_args && !node.block_arg && !node.block &&
          (expressions = node.args[0].as?(Expressions)) &&
-         expressions.keyword == :"(" && expressions.expressions.size == 1
+         expressions.keyword.paren? && expressions.expressions.size == 1
         skip_space
       end
 
@@ -4149,7 +4149,7 @@ module Crystal
         write " : "
         next_token_skip_space_or_newline
         accept return_type
-        next_token_skip_space_or_newline
+        skip_space_or_newline
       end
 
       write " " unless a_def.args.empty? && !return_type
@@ -4664,7 +4664,7 @@ module Crystal
 
               # We only format crystal code (empty by default means crystal)
               needs_format = language.empty?
-              @current_doc_comment = CommentInfo.new(@line + 1, :backticks, needs_format)
+              @current_doc_comment = CommentInfo.new(@line + 1, needs_format)
             end
           end
         end

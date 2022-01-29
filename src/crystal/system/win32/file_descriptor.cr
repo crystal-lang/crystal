@@ -170,8 +170,14 @@ module Crystal::System::FileDescriptor
     console_handle = false
     handle = LibC._get_osfhandle(fd)
     if handle != -1
-      if LibC.GetConsoleMode(LibC::HANDLE.new(handle), out _) != 0
+      handle = LibC::HANDLE.new(handle)
+      if LibC.GetConsoleMode(handle, out old_mode) != 0
         console_handle = true
+        if fd == 1 || fd == 2 # STDOUT or STDERR
+          if LibC.SetConsoleMode(handle, old_mode | LibC::ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0
+            at_exit { LibC.SetConsoleMode(handle, old_mode) }
+          end
+        end
       end
     end
 

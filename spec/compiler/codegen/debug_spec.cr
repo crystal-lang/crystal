@@ -246,4 +246,34 @@ describe "Code gen: debug" do
       THE_FOO = a_foo
       ), debug: Crystal::Debug::All)
   end
+
+  it "doesn't fail on splat expansions inside array-like literals" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def each
+          yield 1
+          yield 2
+          yield 3
+        end
+      end
+
+      class Bar
+        @bar = 0
+
+        def <<(value)
+          @bar = @bar &* 10 &+ value
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      x = Foo.new
+      y = Bar{*x}
+      y.bar
+      ), debug: Crystal::Debug::All).to_i.should eq(123)
+  end
 end

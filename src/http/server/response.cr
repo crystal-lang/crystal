@@ -160,7 +160,7 @@ class HTTP::Server
     end
 
     private def check_headers
-      check_open
+      raise IO::Error.new "Closed stream" if @original_output.closed?
       if wrote_headers?
         raise IO::Error.new("Headers already sent")
       end

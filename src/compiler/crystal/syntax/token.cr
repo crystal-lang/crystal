@@ -206,8 +206,17 @@ module Crystal
       setter control_nest
     end
 
+    enum DelimiterKind
+      STRING
+      REGEX
+      STRING_ARRAY
+      SYMBOL_ARRAY
+      COMMAND
+      HEREDOC
+    end
+
     record DelimiterState,
-      kind : Symbol,
+      kind : DelimiterKind,
       nest : Char | String,
       end : Char | String,
       open_count : Int32,
@@ -220,15 +229,15 @@ module Crystal
         DelimiterState.new(:string, '\0', '\0', 0, 0, true)
       end
 
-      def self.new(kind, nest, the_end)
+      def self.new(kind : DelimiterKind, nest, the_end)
         new kind, nest, the_end, 0, 0, true
       end
 
-      def self.new(kind, nest, the_end, allow_escapes : Bool)
+      def self.new(kind : DelimiterKind, nest, the_end, allow_escapes : Bool)
         new kind, nest, the_end, 0, 0, allow_escapes
       end
 
-      def self.new(kind, nest, the_end, open_count : Int32)
+      def self.new(kind : DelimiterKind, nest, the_end, open_count : Int32)
         new kind, nest, the_end, open_count, 0, true
       end
 

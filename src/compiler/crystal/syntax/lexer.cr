@@ -770,7 +770,8 @@ module Crystal
         else
           next_char
           @token.type = :DELIMITER_START
-          @token.delimiter_state = Token::DelimiterState.new(delimiter == '`' ? :command : :string, delimiter, delimiter)
+          delimiter_kind = delimiter == '`' ? Token::DelimiterKind::COMMAND : Token::DelimiterKind::STRING
+          @token.delimiter_state = Token::DelimiterState.new(delimiter_kind, delimiter, delimiter)
           set_token_raw_from_start(start)
         end
       when '0'..'9'
@@ -1450,22 +1451,22 @@ module Crystal
       @token.raw = ":#{value}" if @wants_raw
     end
 
-    macro gen_check_int_fits_in_size(type, method, size, number_size, raw_number_string, start, pos_before_suffix, negative, actual_type = nil)
+    macro gen_check_int_fits_in_size(type, method, size, number_size, raw_number_string, start, pos_before_suffix, negative)
       {% if type.stringify.starts_with? "U" %}
         raise "Invalid negative value #{string_range({{start}}, {{pos_before_suffix}})} for {{type}}", @token, (current_pos - {{start}}) if {{negative}}
       {% end %}
 
       if !@token.value || {{number_size}} > {{size}} || ({{number_size}} == {{size}} && {{raw_number_string}}.to_{{method.id}}? == nil)
-        {% if actual_type.nil? %}
-          raise_value_doesnt_fit_in "{{type}}", {{start}}, {{pos_before_suffix}}
-        {% else %}
-          raise("#{string_range({{start}}, {{pos_before_suffix}})} doesn't fit in an {{actual_type}}. {{type}} literals that don't fit in an {{actual_type}} are currently not supported", @token, current_pos - {{start}})
-        {% end %}
+        raise_value_doesnt_fit_in "{{type}}", {{start}}, {{pos_before_suffix}}
       end
     end
 
     def raise_value_doesnt_fit_in(type, start, pos_before_suffix)
       raise "#{string_range(start, pos_before_suffix)} doesn't fit in an #{type}", @token, (current_pos - start)
+    end
+
+    def raise_value_doesnt_fit_in(type, start, pos_before_suffix, alternative)
+      raise "#{string_range(start, pos_before_suffix)} doesn't fit in an #{type}, try using the suffix #{alternative}", @token, (current_pos - start)
     end
 
     private def scan_number(start, negative = false)
@@ -1548,7 +1549,10 @@ module Crystal
         raw_number_string = raw_number_string.delete('_') if has_underscores
         @token.value = raw_number_string
       else
+        # The conversion to base 10 is first tried using a UInt64 to circumvent compiler
+        # regressions caused by bugs in the platform's UInt128 implementation.
         base10_number_string = raw_number_string.to_u64?(base: base, underscore: true).try &.to_s
+        base10_number_string ||= raw_number_string.to_u128?(base: base, underscore: true).try &.to_s
         if base10_number_string
           number_size = base10_number_string.size
           first_byte = @reader.string.byte_at(start).chr
@@ -1574,17 +1578,26 @@ module Crystal
                                if raw_number_string.to_i64?
                                  :i64
                                elsif negative
-                                 raise_value_doesnt_fit_in(Int64, start, pos_before_suffix)
+                                 raise_value_doesnt_fit_in(Int64, start, pos_before_suffix, "i128")
                                else
                                  :u64
                                end
                              when 20
-                               raise_value_doesnt_fit_in(Int64, start, pos_before_suffix) if negative
-                               raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix) unless raw_number_string.to_u64?
+                               raise_value_doesnt_fit_in(Int64, start, pos_before_suffix, "i128") if negative
+                               raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix, "i128") unless raw_number_string.to_u64?
                                :u64
+                             when 21..38
+                               raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix, "i128")
+                             when 39
+                               if raw_number_string.to_i128?
+                                 raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix, "i128")
+                               elsif raw_number_string.to_u128?
+                                 raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix, "u128")
+                               else
+                                 raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix)
+                               end
                              else
-                               raise_value_doesnt_fit_in(Int64, start, pos_before_suffix) if negative
-                               raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix)
+                               raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix)
                              end
       else
         case @token.number_kind
@@ -1596,8 +1609,8 @@ module Crystal
         when :u32  then gen_check_int_fits_in_size(UInt32, :u32, 10, number_size, raw_number_string, start, pos_before_suffix, negative)
         when :i64  then gen_check_int_fits_in_size(Int64, :i64, 19, number_size, raw_number_string, start, pos_before_suffix, negative)
         when :u64  then gen_check_int_fits_in_size(UInt64, :u64, 20, number_size, raw_number_string, start, pos_before_suffix, negative)
-        when :i128 then gen_check_int_fits_in_size(Int128, :i64, 19, number_size, raw_number_string, start, pos_before_suffix, negative, Int64)
-        when :u128 then gen_check_int_fits_in_size(UInt128, :u64, 20, number_size, raw_number_string, start, pos_before_suffix, negative, UInt64)
+        when :i128 then gen_check_int_fits_in_size(Int128, :i128, 39, number_size, raw_number_string, start, pos_before_suffix, negative)
+        when :u128 then gen_check_int_fits_in_size(UInt128, :u128, 39, number_size, raw_number_string, start, pos_before_suffix, negative)
         end
       end
     end
@@ -1650,7 +1663,7 @@ module Crystal
       string_open_count = delimiter_state.open_count
 
       # For empty heredocs:
-      if @token.type.newline? && delimiter_state.kind == :heredoc
+      if @token.type.newline? && delimiter_state.kind.heredoc?
         if check_heredoc_end delimiter_state
           set_token_raw_from_start start
           return @token
@@ -1676,7 +1689,7 @@ module Crystal
         @token.delimiter_state = delimiter_state.with_open_count_delta(+1)
       when '\\'
         if delimiter_state.allow_escapes
-          if delimiter_state.kind == :regex
+          if delimiter_state.kind.regex?
             char = next_char
             raise_unterminated_quoted delimiter_state if char == '\0'
             next_char
@@ -1796,7 +1809,7 @@ module Crystal
         @token.line_number = @line_number
         @token.column_number = @column_number
 
-        if delimiter_state.kind == :heredoc
+        if delimiter_state.kind.heredoc?
           unless check_heredoc_end delimiter_state
             next_string_token_noescape delimiter_state
             @token.value = string_range(start)
@@ -1873,11 +1886,11 @@ module Crystal
 
     def raise_unterminated_quoted(delimiter_state)
       msg = case delimiter_state.kind
-            when :command then "Unterminated command literal"
-            when :regex   then "Unterminated regular expression"
-            when :heredoc
+            when .command? then "Unterminated command literal"
+            when .regex?   then "Unterminated regular expression"
+            when .heredoc?
               "Unterminated heredoc: can't find \"#{delimiter_state.end}\" anywhere before the end of file"
-            when :string then "Unterminated string literal"
+            when .string? then "Unterminated string literal"
             else
               ::raise "unreachable"
             end
@@ -2098,7 +2111,7 @@ module Crystal
             delimiter_state = heredocs.shift
           end
 
-          if delimiter_state && delimiter_state.kind == :heredoc && check_heredoc_end(delimiter_state)
+          if delimiter_state && delimiter_state.kind.heredoc? && check_heredoc_end(delimiter_state)
             char = current_char
             delimiter_state = heredocs.try &.shift?
           end
@@ -2511,7 +2524,7 @@ module Crystal
       @token.value = value
     end
 
-    def delimited_pair(kind, string_nest, string_end, start, allow_escapes = true, advance = true)
+    def delimited_pair(kind : Token::DelimiterKind, string_nest, string_end, start, allow_escapes = true, advance = true)
       next_char if advance
       @token.type = :DELIMITER_START
       @token.delimiter_state = Token::DelimiterState.new(kind, string_nest, string_end, allow_escapes)

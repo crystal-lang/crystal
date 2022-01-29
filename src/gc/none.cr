@@ -1,9 +1,3 @@
-{% unless flag?(:win32) %}
-  @[Link("pthread")]
-  lib LibC
-  end
-{% end %}
-
 module GC
   def self.init
   end
