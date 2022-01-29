@@ -59,7 +59,7 @@ module Crystal
 
           # Also add `initialize`, so `super` in a subclass
           # inside an `initialize` will find this one
-          type.add_def Def.argless_initialize
+          type.add_def Def.argless_initialize(type)
         end
 
         # Check to see if a type doesn't define `initialize`
@@ -71,7 +71,7 @@ module Crystal
         has_self_initialize_methods = !self_initialize_methods.empty?
         if !has_self_initialize_methods
           is_generic = type.is_a?(GenericClassType)
-          inherits_from_generic = type.ancestors.any?(&.is_a?(GenericClassInstanceType))
+          inherits_from_generic = type.ancestors.any?(GenericClassInstanceType)
           if is_generic || inherits_from_generic
             has_default_self_new = self_new_methods.any? do |a_def|
               a_def.args.empty? && !a_def.yields
@@ -86,7 +86,7 @@ module Crystal
               # If the type has `self.new()`, don't override it
               unless has_default_self_new
                 type.metaclass.as(ModuleType).add_def(Def.argless_new(type))
-                type.add_def(Def.argless_initialize)
+                type.add_def(Def.argless_initialize(type))
               end
             else
               initialize_owner = nil
@@ -252,8 +252,9 @@ module Crystal
       a_def
     end
 
-    def self.argless_initialize
-      Def.new("initialize", body: Nop.new)
+    def self.argless_initialize(instance_type)
+      loc = instance_type.locations.try &.first?
+      Def.new("initialize", body: Nop.new).at(loc)
     end
 
     def expand_new_default_arguments(instance_type, args_size, named_args)

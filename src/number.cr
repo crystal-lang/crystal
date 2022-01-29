@@ -39,7 +39,7 @@ struct Number
     new(1)
   end
 
-  # Returns self.
+  # Returns `self`.
   def +
     self
   end
@@ -118,7 +118,12 @@ struct Number
     %array
   end
 
-  # :ditto:
+  # Performs a `#step` in the direction of the _limit_. For instance:
+  #
+  # ```
+  # 10.step(to: 5).to_a # => [10, 9, 8, 7, 6, 5]
+  # 5.step(to: 10).to_a # => [5, 6, 7, 8, 9, 10]
+  # ```
   def step(*, to limit = nil, exclusive : Bool = false, &) : Nil
     if limit
       direction = limit <=> self
@@ -191,7 +196,7 @@ struct Number
   # - `-1` if `self` is less than *other*
   # - `0` if `self` is equal to *other*
   # - `-1` if `self` is greater than *other*
-  # - `nil` if self is `NaN` or *other* is `NaN`, because `NaN` values are not comparable
+  # - `nil` if `self` is `NaN` or *other* is `NaN`, because `NaN` values are not comparable
   def <=>(other) : Int32?
     # NaN can't be compared to other numbers
     return nil if self.is_a?(Float) && self.nan?
@@ -218,12 +223,9 @@ struct Number
     if digits < 0
       raise ArgumentError.new "digits should be non-negative"
     end
+    return self if zero?
 
     x = self.to_f
-
-    if x == 0
-      return x
-    end
 
     if base == 10
       log = Math.log10(self.abs)

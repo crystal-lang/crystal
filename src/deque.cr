@@ -10,7 +10,7 @@
 # This Deque is implemented with a [dynamic array](http://en.wikipedia.org/wiki/Dynamic_array) used as a
 # [circular buffer](https://en.wikipedia.org/wiki/Circular_buffer).
 class Deque(T)
-  include Indexable(T)
+  include Indexable::Mutable(T)
 
   # This Deque is based on a circular buffer. It works like a normal array, but when an item is removed from the left
   # side, instead of shifting all the items, only the start position is shifted. This can lead to configurations like:
@@ -77,7 +77,7 @@ class Deque(T)
   # ```
   # Deque.new(3) { |i| (i + 1) ** 2 } # => Deque{1, 4, 9}
   # ```
-  def self.new(size : Int, &block : Int32 -> T)
+  def self.new(size : Int, & : Int32 -> T)
     if size < 0
       raise ArgumentError.new("Negative deque size: #{size}")
     end
@@ -136,23 +136,16 @@ class Deque(T)
     push(value)
   end
 
-  # Sets the given value at the given *index*.
-  #
-  # Raises `IndexError` if the deque had no previous value at the given *index*.
-  def []=(index : Int, value : T)
-    index += @size if index < 0
-    unless 0 <= index < @size
-      raise IndexError.new
-    end
-    index += @start
-    index -= @capacity if index >= @capacity
-    @buffer[index] = value
-  end
-
-  def unsafe_fetch(index : Int)
+  def unsafe_fetch(index : Int) : T
     index += @start
     index -= @capacity if index >= @capacity
     @buffer[index]
+  end
+
+  def unsafe_put(index : Int, value : T)
+    index += @start
+    index -= @capacity if index >= @capacity
+    @buffer[index] = value
   end
 
   # Removes all elements from `self`.
@@ -214,7 +207,7 @@ class Deque(T)
   # ```
   #
   # See also: `Deque#select`.
-  def select!
+  def select!(& : T ->) : self
     reject! { |elem| !yield(elem) }
   end
 
@@ -242,7 +235,7 @@ class Deque(T)
   # ```
   #
   # See also: `Deque#reject`.
-  def reject!
+  def reject!(& : T ->) : self
     internal_delete { |e| yield e }
     self
   end
@@ -345,7 +338,7 @@ class Deque(T)
   # Yields each item in this deque, from first to last.
   #
   # Do not modify the deque while using this variant of `each`!
-  def each : Nil
+  def each(& : T ->) : Nil
     halfs do |r|
       r.each do |i|
         yield @buffer[i]
@@ -489,11 +482,8 @@ class Deque(T)
     self
   end
 
-  # Rotates this deque in place so that the element at *n* becomes first.
-  #
-  # * For positive *n*, equivalent to `n.times { push(shift) }`.
-  # * For negative *n*, equivalent to `(-n).times { unshift(pop) }`.
-  def rotate!(n : Int = 1)
+  # :inherit:
+  def rotate!(n : Int = 1) : Nil
     return if @size <= 1
     if @size == @capacity
       @start = (@start + n) % @capacity
@@ -553,12 +543,6 @@ class Deque(T)
     n = Math.min(n, @size)
     n.times { shift }
     nil
-  end
-
-  # Swaps the items at the indices *i* and *j*.
-  def swap(i, j) : self
-    self[i], self[j] = self[j], self[i]
-    self
   end
 
   def to_s(io : IO) : Nil

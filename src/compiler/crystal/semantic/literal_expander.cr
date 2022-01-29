@@ -148,8 +148,8 @@ module Crystal
       node.elements.each do |elem|
         if elem.is_a?(Splat)
           yield_var = new_temp_var
-          each_body = Call.new(temp_var.clone, "<<", yield_var.clone)
-          each_block = Block.new(args: [yield_var], body: each_body)
+          each_body = Call.new(temp_var.clone, "<<", yield_var.clone).at(node)
+          each_block = Block.new(args: [yield_var], body: each_body).at(node)
           exps << Call.new(elem.exp.clone, "each", block: each_block).at(node)
         else
           exps << Call.new(temp_var.clone, "<<", elem.clone).at(node)
@@ -253,18 +253,16 @@ module Crystal
     #
     #     /regex/flags
     #
-    # To:
+    # To declaring a constant with this value (if not already declared):
     #
-    #     if temp_var = $some_global
-    #       temp_var
-    #     else
-    #       $some_global = Regex.new("regex", Regex::Options.new(flags))
-    #     end
+    # ```
+    # Regex.new("regex", Regex::Options.new(flags))
+    # ```
     #
-    # That is, cache the regex in a global variable.
+    # and then reading from that constant.
+    # That is, we cache regex literals to avoid recompiling them all of the time.
     #
     # Only do this for regex literals that don't contain interpolation.
-    #
     # If there's an interpolation, expand to: Regex.new(interpolation, flags)
     def expand(node : RegexLiteral)
       node_value = node.value
@@ -273,30 +271,21 @@ module Crystal
         string = node_value.value
 
         key = {string, node.options}
-        index = @regexes.index key
-        unless index
-          index = @regexes.size
+        index = @regexes.index(key) || @regexes.size
+        const_name = "$Regex:#{index}"
+
+        if index == @regexes.size
           @regexes << key
+
+          const_value = regex_new_call(node, StringLiteral.new(string).at(node))
+          const = Const.new(@program, @program, const_name, const_value)
+
+          @program.types[const_name] = const
+        else
+          const = @program.types[const_name].as(Const)
         end
 
-        global_name = "$Regex:#{index}"
-        temp_name = @program.new_temp_var_name
-
-        global_var = MetaTypeVar.new(global_name)
-        global_var.owner = @program
-        type = @program.nilable(@program.regex)
-        global_var.freeze_type = type
-        global_var.type = type
-
-        # TODO: need to bind with nil_var for codegen, but shouldn't be needed
-        global_var.bind_to(@program.nil_var)
-
-        @program.global_vars[global_name] = global_var
-
-        first_assign = Assign.new(Var.new(temp_name).at(node), Global.new(global_name).at(node)).at(node)
-        regex = regex_new_call(node, StringLiteral.new(string).at(node))
-        second_assign = Assign.new(Global.new(global_name).at(node), regex).at(node)
-        If.new(first_assign, Var.new(temp_name).at(node), second_assign).at(node)
+        Path.new(const_name).at(const.value)
       else
         regex_new_call(node, node_value)
       end
@@ -653,6 +642,16 @@ module Crystal
 
     # Transform a multi assign into many assigns.
     def expand(node : MultiAssign)
+      splat_index = nil
+      splat_underscore = false
+      node.targets.each_with_index do |target, i|
+        if target.is_a?(Splat)
+          raise "BUG: splat assignment already specified" if splat_index
+          splat_index = i
+          splat_underscore = true if target.exp.is_a?(Underscore)
+        end
+      end
+
       # From:
       #
       #     a, b = [1, 2]
@@ -663,17 +662,70 @@ module Crystal
       #     temp = [1, 2]
       #     a = temp[0]
       #     b = temp[1]
+      #
+      # If the flag "strict_multi_assign" is present, requires `temp`'s size to
+      # match the number of assign targets exactly: (it must respond to `#size`)
+      #
+      #     temp = [1, 2]
+      #     raise ... if temp.size != 2
+      #     a = temp[0]
+      #     b = temp[1]
+      #
+      # From:
+      #
+      #     a, *b, c, d = [1, 2]
+      #
+      # To:
+      #
+      #     temp = [1, 2]
+      #     raise ... if temp.size < 3
+      #     a = temp[0]
+      #     b = temp[1..-3]
+      #     c = temp[-2]
+      #     d = temp[-1]
+      #
+      # Except any assignments to *_, including the indexing call, are omitted
+      # altogether.
       if node.values.size == 1
         value = node.values[0]
+        middle_splat = splat_index && (0 < splat_index < node.targets.size - 1)
+        raise_on_count_mismatch = @program.has_flag?("strict_multi_assign") || middle_splat
 
         temp_var = new_temp_var
 
-        assigns = Array(ASTNode).new(node.targets.size + 1)
+        # temp = ...
+        assigns = Array(ASTNode).new(node.targets.size + (splat_underscore ? 0 : 1) + (raise_on_count_mismatch ? 1 : 0))
         assigns << Assign.new(temp_var.clone, value).at(value)
+
+        # raise ... if temp.size < ...
+        if raise_on_count_mismatch
+          size_call = Call.new(temp_var.clone, "size").at(value)
+          if middle_splat
+            size_comp = Call.new(size_call, "<", NumberLiteral.new(node.targets.size - 1)).at(value)
+          else
+            size_comp = Call.new(size_call, "!=", NumberLiteral.new(node.targets.size)).at(value)
+          end
+          index_error = Call.new(Path.global("IndexError"), "new", StringLiteral.new("Multiple assignment count mismatch")).at(value)
+          raise_call = Call.global("raise", index_error).at(value)
+          assigns << If.new(size_comp, raise_call).at(value)
+        end
+
+        # ... = temp[...]
         node.targets.each_with_index do |target, i|
-          call = Call.new(temp_var.clone, "[]", NumberLiteral.new(i)).at(value)
+          if i == splat_index
+            next if splat_underscore
+            indexer = RangeLiteral.new(
+              NumberLiteral.new(i),
+              NumberLiteral.new(i - node.targets.size),
+              false,
+            ).at(value)
+          else
+            indexer = NumberLiteral.new(splat_index && i > splat_index ? i - node.targets.size : i)
+          end
+          call = Call.new(temp_var.clone, "[]", indexer).at(value)
           assigns << transform_multi_assign_target(target, call)
         end
+
         exps = Expressions.new(assigns)
 
         # From:
@@ -686,32 +738,65 @@ module Crystal
         #     temp2 = d
         #     a = temp1
         #     b = temp2
+        #
+        # From:
+        #
+        #     a, *b, c = d, e, f, g
+        #
+        # To:
+        #
+        #     temp1 = d
+        #     temp2 = ::Tuple.new(e, f)
+        #     temp3 = g
+        #     a = temp1
+        #     b = temp2
+        #     c = temp3
+        #
+        # Except values assigned to `*_` are evaluated directly where the
+        # `Tuple` would normally be constructed, and no assignments to `_` would
+        # actually take place.
       else
-        raise "BUG: multiple assignment count mismatch" unless node.targets.size == node.values.size
-
-        temp_vars = node.values.map { new_temp_var }
-
-        assign_to_temps = [] of ASTNode
-        assign_from_temps = [] of ASTNode
-
-        temp_vars.each_with_index do |temp_var_2, i|
-          target = node.targets[i]
-          value = node.values[i]
-          if target.is_a?(Path)
-            assign_from_temps << Assign.new(target, value).at(node)
-          else
-            assign_to_temps << Assign.new(temp_var_2.clone, value).at(node)
-            assign_from_temps << transform_multi_assign_target(target, temp_var_2.clone)
-          end
+        if splat_index
+          raise "BUG: multiple assignment count mismatch" if node.targets.size - 1 > node.values.size
+        else
+          raise "BUG: multiple assignment count mismatch" if node.targets.size != node.values.size
         end
 
-        exps = Expressions.new(assign_to_temps + assign_from_temps)
+        assign_to_count = splat_underscore ? node.values.size : node.targets.size
+        assign_from_count = node.targets.size - (splat_underscore ? 1 : 0)
+        assign_to_temps = Array(ASTNode).new(assign_to_count)
+        assign_from_temps = Array(ASTNode).new(assign_from_count)
+
+        node.targets.each_with_index do |target, i|
+          if i == splat_index
+            if splat_underscore
+              node.values.each(within: i..i - node.targets.size) do |value|
+                assign_to_temps << value
+              end
+              next
+            end
+            value_exps = node.values[i..i - node.targets.size]
+            value = Call.new(Path.global("Tuple").at(node), "new", node.values[i..i - node.targets.size])
+          else
+            value = node.values[splat_index && i > splat_index ? i - node.targets.size : i]
+          end
+
+          temp_var = new_temp_var
+          assign_to_temps << Assign.new(temp_var.clone, value).at(node)
+          assign_from_temps << transform_multi_assign_target(target, temp_var.clone)
+        end
+
+        exps = Expressions.new(assign_to_temps.concat(assign_from_temps))
       end
       exps.location = node.location
       exps
     end
 
     def transform_multi_assign_target(target, value)
+      if target.is_a?(Splat)
+        target = target.exp
+      end
+
       if target.is_a?(Call)
         target.name = "#{target.name}="
         target.args << value
@@ -830,7 +915,7 @@ module Crystal
       end
 
       body = Call.new(obj, node.name, call_args).at(node)
-      proc_literal = ProcLiteral.new(Def.new("->", def_args, body)).at(node)
+      proc_literal = ProcLiteral.new(Def.new("->", def_args, body).at(node)).at(node)
       proc_literal.proc_pointer = node
 
       if assign

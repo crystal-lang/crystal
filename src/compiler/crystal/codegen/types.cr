@@ -2,11 +2,17 @@ module Crystal
   class Type
     # Returns `true` if this type is passed as a `self` argument
     # in the codegen phase. For example a method whose receiver is
-    # the Program, or a Metaclass, doesn't have a `self` argument.
+    # the Program, or a non-generic metaclass, doesn't have a `self` argument.
     def passed_as_self?
       case self
-      when Program, FileModule, LibType, MetaclassType
+      when Program, FileModule, LibType
         false
+      when MetaclassType
+        # Given `type T = Void*`, `T.class` is not necessarily a non-generic
+        # metaclass, so we must resolve any typedefs here (we don't need to
+        # check for the cases above because `#remove_typedef` must return a
+        # metaclass)
+        !self.remove_typedef.is_a?(MetaclassType)
       else
         true
       end
@@ -150,7 +156,7 @@ module Crystal
 
   class UnionType
     def expand_union_types
-      if union_types.any?(&.is_a?(NonGenericModuleType))
+      if union_types.any?(NonGenericModuleType)
         types = [] of Type
         union_types.each &.append_to_expand_union_types(types)
         types
@@ -196,7 +202,7 @@ module Crystal
       !(initializer || no_init_flag? || simple?)
     end
 
-    @compile_time_value : (Int16 | Int32 | Int64 | Int8 | UInt16 | UInt32 | UInt64 | UInt8 | Bool | Char | Nil)
+    @compile_time_value : (Int128 | Int16 | Int32 | Int64 | Int8 | UInt128 | UInt16 | UInt32 | UInt64 | UInt8 | Bool | Char | Nil)
     @computed_compile_time_value = false
 
     # Returns a value if this constant's value can be evaluated at

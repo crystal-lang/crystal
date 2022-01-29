@@ -210,7 +210,7 @@ describe "Semantic: named tuples" do
       ptr = Pointer(typeof(tup1, tup2, tup3)).malloc(1_u64)
       ptr.value = tup3
       ptr.value
-      )) { union_of(named_tuple_of({"x": int32}), named_tuple_of({"x": int32, "y": string})) }
+      ), inject_primitives: true) { union_of(named_tuple_of({"x": int32}), named_tuple_of({"x": int32, "y": string})) }
   end
 
   it "allows tuple covariance" do
@@ -251,7 +251,7 @@ describe "Semantic: named tuples" do
       end
 
       foo
-      )) { named_tuple_of({"x": union_of(char, string), "y": nilable(int32)}) }
+      ), inject_primitives: true) { named_tuple_of({"x": union_of(char, string), "y": nilable(int32)}) }
   end
 
   it "accept named tuple in type restriction" do
