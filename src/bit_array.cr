@@ -180,12 +180,7 @@ struct BitArray
 
   # :inherit:
   def any? : Bool
-    unless empty?
-      malloc_size.times do |i|
-        return true if @bits[i] != 0
-      end
-    end
-    false
+    Slice.new(@bits, malloc_size).any? { |bits| bits != 0 }
   end
 
   # :inherit:
