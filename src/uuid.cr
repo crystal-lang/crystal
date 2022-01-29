@@ -131,11 +131,26 @@ struct UUID
     new(new_bytes, variant, version)
   end
 
+  # Generates an empty UUID.
+  #
+  # ```
+  # UUID.empty # => UUID(00000000-0000-4000-0000-000000000000)
+  # ```
   def self.empty : self
     new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
   end
 
-  # Returns UUID variant.
+  # Returns UUID variant based on the [RFC4122 format](https://datatracker.ietf.org/doc/html/rfc4122#section-4.1).
+  # See also `#version`
+  #
+  # ```
+  # require "uuid"
+  #
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::NCS).variant       # => NCS
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::RFC4122).variant   # => RFC4122
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Microsoft).variant # => Microsoft
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Future).variant    # => Future
+  # ```
   def variant : UUID::Variant
     case
     when @bytes[8] & 0x80 == 0x00
@@ -151,7 +166,18 @@ struct UUID
     end
   end
 
-  # Returns version based on RFC4122 format. See also `#variant`.
+  # Returns version based on [RFC4122 format](https://datatracker.ietf.org/doc/html/rfc4122#section-4.1).
+  # See also `#variant`.
+  #
+  # ```
+  # require "uuid"
+  #
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V1).version # => V1
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V2).version # => V2
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V3).version # => V3
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V4).version # => V4
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V5).version # => V5
+  # ```
   def version : UUID::Version
     case @bytes[6] >> 4
     when 1 then Version::V1
