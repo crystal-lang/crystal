@@ -274,3 +274,31 @@ describe StringScanner, "#terminate" do
     s.eos?.should eq(true)
   end
 end
+
+describe StringScanner, "#read_byte" do
+  it "returns one byte from current offset and adcance the offset" do
+    s = StringScanner.new("あ")
+    s.read_byte.should eq "\xE3"
+    s.offset.should eq 1
+    s.read_byte.should eq "\x81"
+    s.offset.should eq 2
+    s.read_byte.should eq "\x82"
+    s.offset.should eq 3
+    s.read_byte.should be_nil
+    s.offset.should eq 3
+    s.eos?.should eq(true)
+  end
+end
+
+describe StringScanner, "#read_char" do
+  it "returns a char from current offset and adcance the offset" do
+    s = StringScanner.new("ab")
+    s.read_char.should eq "a"
+    s.offset.should eq 1
+    s.read_char.should eq "b"
+    s.offset.should eq 2
+    s.read_byte.should be_nil
+    s.offset.should eq 2
+    s.eos?.should eq(true)
+  end
+end

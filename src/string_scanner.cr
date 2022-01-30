@@ -38,6 +38,8 @@
 # * `#scan_until`
 # * `#skip`
 # * `#skip_until`
+# * `#read_byte`
+# * `#read_char`
 #
 # Methods that look ahead:
 # * `#peek`
@@ -73,7 +75,7 @@ class StringScanner
 
   # Returns the current position of the scan offset.
   def offset : Int32
-    @str.byte_index_to_char_index(@byte_offset).not_nil!
+    @byte_offset
   end
 
   # Tries to match with *pattern* at the current position. If there's a match,
@@ -278,6 +280,34 @@ class StringScanner
   # ```
   def rest : String
     @str.byte_slice(@byte_offset, @str.bytesize - @byte_offset)
+  end
+
+  # Returns one byte from current offset.
+  # ```
+  # require "string_scanner"
+  #
+  # s = StringScanner.new("あ")
+  # s.read_byte # => "\xE3"
+  # s.read_byte # => "\x81"
+  # s.read_byte # => "\x82"
+  # ```
+  def read_byte : String?
+    return nil if eos?
+    s = @str.byte_slice(@byte_offset, 1)
+    @byte_offset += 1
+    s
+  end
+
+  # Returns one char from current offset.
+  # ```
+  # require "string_scanner"
+  #
+  # s = StringScanner.new("ab")
+  # s.read_char # => "a"
+  # s.read_char # => "b"
+  # ```
+  def read_char : String?
+    scan(/./)
   end
 
   # Writes a representation of the scanner.
