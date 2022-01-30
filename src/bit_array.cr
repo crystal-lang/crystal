@@ -165,6 +165,61 @@ struct BitArray
     end
   end
 
+  # :inherit:
+  def fill(value : Bool) : self
+    return self if size == 0
+
+    if size <= 64
+      @bits.as(UInt64*).value = value ? ~(UInt64::MAX << size) : 0_u64
+    else
+      to_slice.fill(value ? 0xFF_u8 : 0x00_u8)
+      clear_unused_bits if value
+    end
+
+    self
+  end
+
+  # :inherit:
+  def fill(value : Bool, start : Int, count : Int) : self
+    start, count = normalize_start_and_count(start, count)
+    return self if count <= 0
+    bytes = to_slice
+
+    start_bit_index, start_sub_index = start.divmod(8)
+    end_bit_index, end_sub_index = (start + count - 1).divmod(8)
+
+    if start_bit_index == end_bit_index
+      # same UInt8, don't perform the loop at all
+      mask = uint8_mask(start_sub_index, end_sub_index)
+      set_bits(bytes, value, start_bit_index, mask)
+    else
+      mask = uint8_mask(start_sub_index, 7)
+      set_bits(bytes, value, start_bit_index, mask)
+
+      bytes[start_bit_index + 1..end_bit_index - 1].fill(value ? 0xFF_u8 : 0x00_u8)
+
+      mask = uint8_mask(0, end_sub_index)
+      set_bits(bytes, value, end_bit_index, mask)
+    end
+
+    self
+  end
+
+  @[AlwaysInline]
+  private def set_bits(bytes : Slice(UInt8), value, index, mask)
+    if value
+      bytes[index] |= mask
+    else
+      bytes[index] &= ~mask
+    end
+  end
+
+  # returns (1 << from) | (1 << (from + 1)) | ... | (1 << to)
+  @[AlwaysInline]
+  private def uint8_mask(from, to)
+    (Int8::MIN >> (to - from)).to_u8! >> (7 - to)
+  end
+
   # Toggles the bit at the given *index*. A `false` bit becomes a `true` bit,
   # and vice versa.
   #
