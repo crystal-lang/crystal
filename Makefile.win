@@ -63,7 +63,23 @@ CXXFLAGS += $(if $(debug),/MTd /Od,/MT)
 CRYSTAL_VERSION ?= $(shell type src\VERSION)
 
 DESTDIR ?=
-prefix ?= $(if $(ProgramW6432),$(ProgramW6432),$(ProgramFiles))\crystal
+prefix ?= $(or $(ProgramW6432),$(ProgramFiles))\crystal
+
+# if both `DESTDIR` and `prefix` have a drive letter, the former takes precedence and we remove the drive letter in `prefix`
+space := 
+space +=
+__letters := A B C D E F G H I J K L M N O P Q R S T U V W X Y Z a b c d e f g h i j k l m n o p q r s t u v w x y z
+__temp := $(subst :,$(space):$(space),$(DESTDIR))
+__drive := $(firstword $(__temp))
+ifeq ($(word 2,$(__temp)),:)
+	__temp := $(subst :,$(space):$(space),$(prefix))
+	__drive := $(firstword $(__temp))
+	ifeq ($(word 2,$(__temp)),:)
+		prefix_drive := $(if $(findstring $(__drive),$(__letters)),$(__drive):)
+		override prefix := $(subst :$(__drive) :$(space),,:$(__temp))
+	endif
+endif
+
 BINDIR ?= $(DESTDIR)$(prefix)
 LIBDIR ?= $(DESTDIR)$(prefix)\lib
 SRCDIR ?= $(DESTDIR)$(prefix)\src
