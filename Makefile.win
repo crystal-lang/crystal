@@ -97,8 +97,6 @@ BINDIR ?= $(DESTDIR)$(prefix)
 LIBDIR ?= $(DESTDIR)$(prefix)\lib
 SRCDIR ?= $(DESTDIR)$(prefix)\src
 DATADIR ?= $(DESTDIR)$(prefix)
-$(info $(BINDIR))
-$(error a)
 
 colorize = $1
 
