@@ -28,6 +28,7 @@ lib LibC
   fun getpgid(pid : PidT) : PidT
   fun getpid : PidT
   fun getppid : PidT
+  fun getuid : UidT
   fun isatty(fd : Int) : Int
   fun ttyname_r(fd : Int, buf : Char*, buffersize : SizeT) : Int
   fun lchown(file : Char*, owner : UidT, group : GidT) : Int
