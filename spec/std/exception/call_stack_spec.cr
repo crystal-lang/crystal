@@ -55,7 +55,7 @@ describe "Backtrace" do
     error.to_s.should contain("IndexError")
   end
 
-  pending_win32 "prints crash backtrace to stderr" do
+  it "prints crash backtrace to stderr" do
     sample = datapath("crash_backtrace_sample")
 
     _, output, error = compile_and_run_file(sample)
