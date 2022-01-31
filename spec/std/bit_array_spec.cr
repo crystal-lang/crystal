@@ -394,6 +394,99 @@ describe "BitArray" do
     ary.count { |b| b }.should eq(2)
   end
 
+  describe "#fill" do
+    context "without block" do
+      it "clears all bits" do
+        ba = BitArray.new(7, true)
+        ba.fill(false).none?.should be_true
+        ba.none?.should be_true
+
+        ba = BitArray.new(32, true)
+        ba.fill(false).none?.should be_true
+        ba.none?.should be_true
+
+        ba = BitArray.new(100, true)
+        ba.fill(false).none?.should be_true
+        ba.none?.should be_true
+      end
+
+      it "sets all bits" do
+        ba = BitArray.new(7)
+        ba.fill(true).all?.should be_true
+        ba.all?.should be_true
+        assert_no_unused_bits ba
+
+        ba = BitArray.new(32)
+        ba.fill(true).all?.should be_true
+        ba.all?.should be_true
+
+        ba = BitArray.new(100)
+        ba.fill(true).all?.should be_true
+        ba.all?.should be_true
+        assert_no_unused_bits ba
+      end
+    end
+
+    context "without block, with start and count" do
+      it "sets or clears a subrange of bits" do
+        ba = from_int(5, 0b01011)
+        ba.fill(true, 1, 3).should eq(from_int(5, 0b01111))
+        ba.should eq(from_int(5, 0b01111))
+        ba.fill(false, 2, 5).should eq(from_int(5, 0b01000))
+        ba.should eq(from_int(5, 0b01000))
+        ba.fill(true, -2, 7).should eq(from_int(5, 0b01011))
+        ba.should eq(from_int(5, 0b01011))
+        assert_no_unused_bits ba
+
+        ba = from_int(8, 0b11010001)
+        ba.fill(false, 1, 3).should eq(from_int(8, 0b10000001))
+        ba.should eq(from_int(8, 0b10000001))
+        ba.fill(true, 4, 5).should eq(from_int(8, 0b10001111))
+        ba.should eq(from_int(8, 0b10001111))
+        ba.fill(true, 8, 0).should eq(from_int(8, 0b10001111))
+        ba.should eq(from_int(8, 0b10001111))
+        ba.fill(true, 8, 10).should eq(from_int(8, 0b10001111))
+        ba.should eq(from_int(8, 0b10001111))
+        ba.fill(true, -6, 0).should eq(from_int(8, 0b10001111))
+        ba.should eq(from_int(8, 0b10001111))
+
+        ba = from_int(32, 0b11000101_00011111_11000001_00011101_u32)
+        ba.fill(true, 6, 15).should eq(from_int(32, 0b11000111_11111111_11111001_00011101_u32))
+        ba.should eq(from_int(32, 0b11000111_11111111_11111001_00011101_u32))
+        ba.fill(false, -20, 12).should eq(from_int(32, 0b11000111_11110000_00000000_00011101_u32))
+        ba.should eq(from_int(32, 0b11000111_11110000_00000000_00011101_u32))
+        ba.fill(true, 23, 2).should eq(from_int(32, 0b11000111_11110000_00000001_10011101_u32))
+        ba.should eq(from_int(32, 0b11000111_11110000_00000001_10011101_u32))
+        ba.fill(false, 24, 0).should eq(from_int(32, 0b11000111_11110000_00000001_10011101_u32))
+        ba.should eq(from_int(32, 0b11000111_11110000_00000001_10011101_u32))
+      end
+
+      it "raises if start index is out of range" do
+        expect_raises(IndexError) { BitArray.new(7).fill(true, 8, 0) }
+        expect_raises(IndexError) { BitArray.new(7).fill(true, -8, 0) }
+      end
+    end
+
+    context "without block, with range" do
+      it "sets or clears a subrange of bits" do
+        ba = from_int(5, 0b01011)
+        ba.fill(true, 1..3).should eq(from_int(5, 0b01111))
+        ba.should eq(from_int(5, 0b01111))
+        ba.fill(false, 2..).should eq(from_int(5, 0b01000))
+        ba.should eq(from_int(5, 0b01000))
+        ba.fill(true, ...-2).should eq(from_int(5, 0b11100))
+        ba.should eq(from_int(5, 0b11100))
+        ba.fill(true, 0...0).should eq(from_int(5, 0b11100))
+        ba.should eq(from_int(5, 0b11100))
+      end
+
+      it "raises if start index is out of range" do
+        expect_raises(IndexError) { BitArray.new(7).fill(true, 8..9) }
+        expect_raises(IndexError) { BitArray.new(7).fill(true, -8...) }
+      end
+    end
+  end
+
   describe "#reverse!" do
     it "reverses empty BitArray" do
       ba = from_int(0, 0)

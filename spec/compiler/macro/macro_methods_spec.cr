@@ -265,6 +265,7 @@ module Crystal
 
       it "executes unary -" do
         assert_macro "{{-(3)}}", "-3"
+        assert_macro "{{-(3_i128)}}", "-3_i128"
       end
 
       it "executes unary ~" do
@@ -276,12 +277,23 @@ module Crystal
         assert_macro "{{1e-123_f32.kind}}", ":f32"
         assert_macro "{{1.0.kind}}", ":f64"
         assert_macro "{{0xde7ec7ab1e_u64.kind}}", ":u64"
+        assert_macro "{{1_u128.kind}}", ":u128"
+        assert_macro "{{-20i128.kind}}", ":i128"
       end
 
       it "#to_number" do
         assert_macro "{{ 4_u8.to_number }}", "4"
         assert_macro "{{ 2147483648.to_number }}", "2147483648"
         assert_macro "{{ 1_f32.to_number }}", "1.0"
+        assert_macro "{{ 4_u128.to_number }}", "4"
+        assert_macro "{{ -20i128.to_number }}", "-20"
+      end
+
+      it "executes math operations using U/Int128" do
+        assert_macro "{{18446744073709551615_u128 + 1}}", "18446744073709551616_u128"
+        assert_macro "{{18446744073709551_i128 - 1_u128}}", "18446744073709550_i128"
+        assert_macro "{{18446744073709551615_u128 * 10}}", "184467440737095516150_u128"
+        assert_macro "{{18446744073709551610_u128 // 10}}", "1844674407370955161_u128"
       end
     end
 

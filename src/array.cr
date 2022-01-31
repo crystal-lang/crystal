@@ -676,7 +676,7 @@ class Array(T)
     @buffer[index] = value
   end
 
-  # Removes all elements from self.
+  # Removes all elements from `self`.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
@@ -1370,8 +1370,6 @@ class Array(T)
   # a.push("b", "c") # => ["a", "b", "c"]
   # ```
   def push(*values : T) : self
-    new_size = @size + values.size
-
     resize_if_cant_insert(values.size)
 
     values.each_with_index do |value, i|

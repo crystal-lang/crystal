@@ -1333,8 +1333,8 @@ module Crystal
       exps = parse_expressions
       node, end_location = parse_exception_handler exps, begin_location: begin_location
       node.end_location = end_location
-      if !node.is_a?(ExceptionHandler) && (!node.is_a?(Expressions) || node.keyword)
-        node = Expressions.new([node]).at(begin_location).at_end(end_location)
+      if !node.is_a?(ExceptionHandler) && (!node.is_a?(Expressions) || !node.keyword.none?)
+        node = Expressions.new([node]).at(node).at_end(node)
       end
       node.keyword = :begin if node.is_a?(Expressions)
       node
@@ -1764,9 +1764,8 @@ module Crystal
       next_token_skip_space_or_newline
 
       if @token.type == :")"
-        end_location = token_end_location
-        node = Expressions.new([Nop.new] of ASTNode).at(location).at_end(end_location)
-        node.keyword = :"("
+        node = Expressions.new([Nop.new] of ASTNode)
+        node.keyword = :paren
         return node_and_next_token node
       end
 
@@ -1790,7 +1789,7 @@ module Crystal
           next_token_skip_space
           break
         when :NEWLINE, :";"
-          next_token_skip_space
+          next_token_skip_statement_end
           if @token.type == :")"
             @wants_regex = false
             end_location = token_end_location
@@ -1804,8 +1803,8 @@ module Crystal
 
       unexpected_token if @token.type == :"("
 
-      node = Expressions.new(exps).at(location).at_end(end_location)
-      node.keyword = :"("
+      node = Expressions.new(exps)
+      node.keyword = :paren
       node
     end
 
@@ -1984,7 +1983,7 @@ module Crystal
 
       check :DELIMITER_START
 
-      if delimiter_state.kind == :heredoc
+      if delimiter_state.kind.heredoc?
         if @inside_interpolation
           raise "heredoc cannot be used inside interpolation", location
         end
@@ -2002,12 +2001,12 @@ module Crystal
 
       delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
 
-      if want_skip_space && delimiter_state.kind == :string
+      if want_skip_space && delimiter_state.kind.string?
         while true
           passed_backslash_newline = @token.passed_backslash_newline
           skip_space
 
-          if passed_backslash_newline && @token.type == :DELIMITER_START && @token.delimiter_state.kind == :string
+          if passed_backslash_newline && @token.type == :DELIMITER_START && @token.delimiter_state.kind.string?
             next_string_token(delimiter_state)
             delimiter_state = @token.delimiter_state
             delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
@@ -2026,9 +2025,9 @@ module Crystal
       end
 
       case delimiter_state.kind
-      when :command
+      when .command?
         result = Call.new(nil, "`", result).at(location)
-      when :regex
+      when .regex?
         if result.is_a?(StringLiteral) && (regex_error = Regex.error?(result.value))
           raise "invalid regex: #{regex_error}", location
         end
@@ -2074,7 +2073,7 @@ module Crystal
           next_string_token(delimiter_state)
           delimiter_state = @token.delimiter_state
         when :DELIMITER_END
-          if delimiter_state.kind == :regex
+          if delimiter_state.kind.regex?
             options = consume_regex_options
           end
           token_end_location = token_end_location()
@@ -2082,11 +2081,11 @@ module Crystal
           break
         when :EOF
           case delimiter_state.kind
-          when :command
+          when .command?
             raise "Unterminated command"
-          when :regex
+          when .regex?
             raise "Unterminated regular expression"
-          when :heredoc
+          when .heredoc?
             raise "Unterminated heredoc"
           else
             raise "Unterminated string literal"
@@ -2101,7 +2100,7 @@ module Crystal
 
           # We cannot reduce `StringLiteral` of interpolation inside heredoc into `String`
           # because heredoc try to remove its indentation.
-          if exp.is_a?(StringLiteral) && delimiter_state.kind != :heredoc
+          if exp.is_a?(StringLiteral) && !delimiter_state.kind.heredoc?
             pieces << Piece.new(exp.value, line_number)
           else
             pieces << Piece.new(exp, line_number)
@@ -2178,7 +2177,7 @@ module Crystal
     end
 
     def needs_heredoc_indent_removed?(delimiter_state)
-      delimiter_state.kind == :heredoc && delimiter_state.heredoc_indent >= 0
+      delimiter_state.kind.heredoc? && delimiter_state.heredoc_indent >= 0
     end
 
     def remove_heredoc_indent(pieces : Array, indent)
@@ -2506,7 +2505,7 @@ module Crystal
     end
 
     def string_literal_start?
-      @token.type == :DELIMITER_START && @token.delimiter_state.kind == :string
+      @token.type == :DELIMITER_START && @token.delimiter_state.kind.string?
     end
 
     def parse_tuple(first_exp, location)
