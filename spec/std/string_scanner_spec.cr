@@ -276,7 +276,7 @@ describe StringScanner, "#terminate" do
 end
 
 describe StringScanner, "#read_byte" do
-  it "returns one byte from current offset and adcance the offset" do
+  it "returns one byte from the current offset and advances the offset" do
     s = StringScanner.new("あ")
     s.read_byte.should eq "\xE3"
     s.offset.should eq 1
@@ -291,7 +291,7 @@ describe StringScanner, "#read_byte" do
 end
 
 describe StringScanner, "#read_char" do
-  it "returns a char from current offset and adcance the offset" do
+  it "returns a char from the current offset and advances the offset" do
     s = StringScanner.new("ab")
     s.read_char.should eq "a"
     s.offset.should eq 1

@@ -282,7 +282,7 @@ class StringScanner
     @str.byte_slice(@byte_offset, @str.bytesize - @byte_offset)
   end
 
-  # Returns one byte from current offset.
+  # Returns one byte from the current offset.
   # ```
   # require "string_scanner"
   #
@@ -298,7 +298,7 @@ class StringScanner
     s
   end
 
-  # Returns one char from current offset.
+  # Returns one char from the current offset.
   # ```
   # require "string_scanner"
   #
