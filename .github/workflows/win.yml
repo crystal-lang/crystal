@@ -3,7 +3,7 @@ name: Windows CI
 on: [push, pull_request]
 
 jobs:
-  linux-job:
+  x86_64-linux-job:
     runs-on: ubuntu-latest
     container: crystallang/crystal:1.3.2-build
     steps:
@@ -23,8 +23,8 @@ jobs:
           name: objs
           path: crystal.obj
 
-  windows-job:
-    needs: linux-job
+  x86_64-windows-job:
+    needs: x86_64-linux-job
     runs-on: windows-latest
     steps:
       - name: Disable CRLF line ending substitution
