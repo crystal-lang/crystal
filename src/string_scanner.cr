@@ -70,7 +70,7 @@ class StringScanner
   # Sets the *position* of the scan offset.
   def offset=(position : Int)
     raise IndexError.new unless position >= 0
-    @byte_offset = @str.char_index_to_byte_index(position) || @str.bytesize
+    @byte_offset = [position, @str.bytesize].min
   end
 
   # Returns the current position of the scan offset.
@@ -287,13 +287,13 @@ class StringScanner
   # require "string_scanner"
   #
   # s = StringScanner.new("あ")
-  # s.read_byte # => "\xE3"
-  # s.read_byte # => "\x81"
-  # s.read_byte # => "\x82"
+  # s.read_byte # => 227
+  # s.read_byte # => 129
+  # s.read_byte # => 130
   # ```
-  def read_byte : String?
+  def read_byte : UInt8?
     return nil if eos?
-    s = @str.byte_slice(@byte_offset, 1)
+    s = @str.byte_at(@byte_offset)
     @byte_offset += 1
     s
   end
@@ -303,11 +303,11 @@ class StringScanner
   # require "string_scanner"
   #
   # s = StringScanner.new("ab")
-  # s.read_char # => "a"
-  # s.read_char # => "b"
+  # s.read_char # => 'a'
+  # s.read_char # => 'b'
   # ```
-  def read_char : String?
-    scan(/./)
+  def read_char : Char?
+    scan(/./m).try &.[0]
   end
 
   # Writes a representation of the scanner.
