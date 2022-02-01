@@ -85,6 +85,109 @@ describe "OptionParser" do
     expect_capture_option ["-f", "-g -h"], "-f FLAG", "-g -h"
   end
 
+  describe "Consumption of flags following an ungiven optional argument" do
+    context "Given a short option with an optional value" do
+      it "doesn't eat a following short option" do
+        flag = nil
+        not_eaten = [] of String
+        args = ["-f", "-g", "-i"]
+        OptionParser.parse(args) do |opts|
+          opts.on("-f [FLAG]", "some flag") do |flag_value|
+            flag = flag_value
+          end
+          opts.on("-g", "shouldn't be eaten") do
+            not_eaten << "-g"
+          end
+          opts.on("-i", "shouldn't be eaten") do
+            not_eaten << "-i"
+          end
+        end
+        flag.should eq("")
+        not_eaten.should eq(["-g", "-i"])
+        args.size.should eq(0)
+      end
+
+      it "doesn't eat a following long option" do
+        flag = nil
+        not_eaten = [] of String
+        args = ["-f", "--g-long", "-i"]
+        OptionParser.parse(args) do |opts|
+          opts.on("-f [FLAG]", "some flag") do |flag_value|
+            flag = flag_value
+          end
+          opts.on("-g", "--g-long", "shouldn't be eaten") do
+            not_eaten << "--g-long"
+          end
+          opts.on("-i", "shouldn't be eaten") do
+            not_eaten << "-i"
+          end
+        end
+        flag.should eq("")
+        not_eaten.should eq(["--g-long", "-i"])
+        args.size.should eq(0)
+      end
+
+      it "does eat a value that looks like an option" do
+        flag = nil
+        not_eaten = [] of String
+        args = ["-f", "--not-an-option--", "-i"]
+        OptionParser.parse(args) do |opts|
+          opts.on("-f [FLAG]", "some flag") do |flag_value|
+            flag = flag_value
+          end
+          opts.on("-i", "shouldn't be eaten") do
+            not_eaten << "-i"
+          end
+        end
+        flag.should eq("--not-an-option--")
+        not_eaten.should eq(["-i"])
+        args.size.should eq(0)
+      end
+    end
+
+    context "Given a long option with an optional value" do
+      it "doesn't eat further short options" do
+        flag = nil
+        not_eaten = [] of String
+        args = ["--long-flag", "-g", "-i"]
+        OptionParser.parse(args) do |opts|
+          opts.on("--long-flag [FLAG]", "some flag") do |flag_value|
+            flag = flag_value
+          end
+          opts.on("-g", "shouldn't be eaten") do
+            not_eaten << "-g"
+          end
+          opts.on("-i", "shouldn't be eaten") do
+            not_eaten << "-i"
+          end
+        end
+        flag.should eq("")
+        not_eaten.should eq(["-g", "-i"])
+        args.size.should eq(0)
+      end
+
+      it "doesn't eat further long options" do
+        flag = nil
+        not_eaten = [] of String
+        args = ["--long-flag", "--g-long", "-i"]
+        OptionParser.parse(args) do |opts|
+          opts.on("--long-flag [FLAG]", "some flag") do |flag_value|
+            flag = flag_value
+          end
+          opts.on("--g-long", "shouldn't be eaten") do
+            not_eaten << "--g-long"
+          end
+          opts.on("-i", "shouldn't be eaten") do
+            not_eaten << "-i"
+          end
+        end
+        flag.should eq("")
+        not_eaten.should eq(["--g-long", "-i"])
+        args.size.should eq(0)
+      end
+    end
+  end
+
   it "raises if missing required option with space" do
     expect_missing_option ["-f"], "-f FLAG", "-f"
   end

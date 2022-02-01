@@ -727,6 +727,10 @@ describe Path do
     describe "ignores name starting with ~" do
       it_expands_path("~foo.txt", "/current/~foo.txt", "\\current\\~foo.txt", base: "/current", env_home: "/")
     end
+
+    describe %q(supports ~\ for Windows paths only) do
+      it_expands_path("~\\a", {BASE_POSIX, "~\\a"}, {HOME_WINDOWS, "a"}, home: true)
+    end
   end
 
   describe "#<=>" do
@@ -893,13 +897,17 @@ describe Path do
       end
     end
 
-    # TODO: check that this is the home of the current user
-    {% if flag?(:win32) %}
-      it "doesn't raise if environment variable is missing" do
-        with_env({HOME_ENV_KEY => nil}) do
-          Path.home
-        end
+    # TODO: check that the cases below return the home of the current user (via #7829)
+    it "doesn't return empty string if environment variable is empty" do
+      with_env({HOME_ENV_KEY => ""}) do
+        Path.home.should_not eq(Path.new(""))
       end
-    {% end %}
+    end
+
+    it "doesn't raise if environment variable is missing" do
+      with_env({HOME_ENV_KEY => nil}) do
+        Path.home.should be_a(Path)
+      end
+    end
   end
 end

@@ -68,10 +68,10 @@ module Crystal
         # Float64 mantissa has 52 bits
         case self_type.kind
         when :i8, :u8, :i16, :u16
-          # Less than 23 bits, so convertable to Float32 and Float64 without precision loss
+          # Less than 23 bits, so convertible to Float32 and Float64 without precision loss
           true
         when :i32, :u32
-          # Less than 52 bits, so convertable to Float64 without precision loss
+          # Less than 52 bits, so convertible to Float64 without precision loss
           other_type.kind == :f64
         else
           false
@@ -178,7 +178,7 @@ module Crystal
     property yield_vars : Array(Var)?
     property previous : DefWithMetadata?
     property next : Def?
-    getter special_vars : Set(String)?
+    property special_vars : Set(String)?
     property block_nest = 0
     getter? raises = false
     property? closure = false
@@ -594,21 +594,27 @@ module Crystal
     # not when reading it.
     property? no_init_flag = false
 
+    enum Kind
+      Class
+      Instance
+      Global
+    end
+
     def kind
       case name[0]
       when '@'
         if name[1] == '@'
-          :class
+          Kind::Class
         else
-          :instance
+          Kind::Instance
         end
       else
-        :global
+        Kind::Global
       end
     end
 
     def global?
-      kind == :global
+      kind.global?
     end
   end
 
