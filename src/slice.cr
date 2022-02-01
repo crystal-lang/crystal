@@ -461,7 +461,7 @@ struct Slice(T)
   # Copies the contents of this slice into *target*.
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred
-  # e.g. dest.size < self.size.
+  # e.g. `dest.size < self.size`.
   #
   # ```
   # src = Slice['a', 'a', 'a']
@@ -932,7 +932,7 @@ struct Slice(T)
   # The sort mechanism is implemented as [*merge sort*](https://en.wikipedia.org/wiki/Merge_sort).
   # It is stable, which is typically a good default.
   #
-  # Stablility means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # Stability means that two elements which compare equal (i.e. `a <=> b == 0`)
   # keep their original relation. Stable sort guarantees that `[a, b].sort!`
   # always results in `[a, b]` (given they compare equal). With unstable sort,
   # the result could also be `[b, a]`.
@@ -963,7 +963,7 @@ struct Slice(T)
   # It does not guarantee stability between equally comparing elements.
   # This offers higher performance but may be unexpected in some situations.
   #
-  # Stablility means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # Stability means that two elements which compare equal (i.e. `a <=> b == 0`)
   # keep their original relation. Stable sort guarantees that `[a, b].sort!`
   # always results in `[a, b]` (given they compare equal). With unstable sort,
   # the result could also be `[b, a]`.
@@ -1001,7 +1001,7 @@ struct Slice(T)
   # The sort mechanism is implemented as [*merge sort*](https://en.wikipedia.org/wiki/Merge_sort).
   # It is stable, which is typically a good default.
   #
-  # Stablility means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # Stability means that two elements which compare equal (i.e. `a <=> b == 0`)
   # keep their original relation. Stable sort guarantees that `[a, b].sort!`
   # always results in `[a, b]` (given they compare equal). With unstable sort,
   # the result could also be `[b, a]`.
@@ -1045,7 +1045,7 @@ struct Slice(T)
   # It does not guarantee stability between equally comparing elements.
   # This offers higher performance but may be unexpected in some situations.
   #
-  # Stablility means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # Stability means that two elements which compare equal (i.e. `a <=> b == 0`)
   # keep their original relation. Stable sort guarantees that `[a, b].sort!`
   # always results in `[a, b]` (given they compare equal). With unstable sort,
   # the result could also be `[b, a]`.

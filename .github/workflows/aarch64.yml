@@ -3,7 +3,7 @@ name: AArch64 CI
 on: [push, pull_request]
 
 jobs:
-  musl-build:
+  aarch64-musl-build:
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
     steps:
@@ -20,8 +20,8 @@ jobs:
           path: |
             .build/crystal
             src/llvm/ext/llvm_ext.o
-  musl-test-stdlib:
-    needs: musl-build
+  aarch64-musl-test-stdlib:
+    needs: aarch64-musl-build
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
     steps:
@@ -37,8 +37,8 @@ jobs:
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
           args: make std_spec
-  musl-test-compiler:
-    needs: musl-build
+  aarch64-musl-test-compiler:
+    needs: aarch64-musl-build
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
     steps:
@@ -54,7 +54,7 @@ jobs:
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
           args: make primitives_spec compiler_spec FLAGS=-Dwithout_ffi
-  gnu-build:
+  aarch64-gnu-build:
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
     steps:
@@ -71,8 +71,8 @@ jobs:
           path: |
             .build/crystal
             src/llvm/ext/llvm_ext.o
-  gnu-test-stdlib:
-    needs: gnu-build
+  aarch64-gnu-test-stdlib::
+    needs: aarch64-gnu-build
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
     steps:
@@ -88,8 +88,8 @@ jobs:
         uses: docker://jhass/crystal:1.0.0-build
         with:
           args: make std_spec
-  gnu-test-compiler:
-    needs: gnu-build
+  aarch64-gnu-test-compiler:
+    needs: aarch64-gnu-build
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
     steps:

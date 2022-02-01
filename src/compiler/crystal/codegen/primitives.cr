@@ -977,6 +977,9 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_proc_call(node, target_def, call_args)
+    location = @call_location
+    set_current_debug_location(location) if location && @debug.line_numbers?
+
     closure_ptr = call_args[0]
 
     # For non-closure args we use byval attribute and other things
@@ -1009,10 +1012,7 @@ class Crystal::CodeGenVisitor
     ctx_is_null = equal? ctx_ptr, llvm_context.void_pointer.null
     cond ctx_is_null, ctx_is_null_block, ctx_is_not_null_block
 
-    old_needs_value = @needs_value
-    @needs_value = true
-
-    phi_value = Phi.open(self, node, @needs_value) do |phi|
+    Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_proc_type(context.type)
 
@@ -1049,9 +1049,6 @@ class Crystal::CodeGenVisitor
       target_def.abi_info = old_abi_info
       target_def.c_calling_convention = old_c_calling_convention
     end
-
-    old_needs_value = @needs_value
-    phi_value
   end
 
   def codegen_extern_primitive_proc_call(target_def, args, fun_ptr)

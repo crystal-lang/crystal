@@ -453,6 +453,18 @@ describe "Enumerable" do
     end
   end
 
+  describe "find!" do
+    it "finds" do
+      [1, 2, 3].find! { |x| x > 2 }.should eq(3)
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        [1, 2, 3].find! { false }
+      end
+    end
+  end
+
   describe "first" do
     it "calls block if empty" do
       (1...1).first { 10 }.should eq(10)
@@ -584,6 +596,30 @@ describe "Enumerable" do
 
     it "returns nil if the object was not found" do
       ["Alice", "Bob"].index("Mallory").should be_nil
+    end
+  end
+
+  describe "index! with a block" do
+    it "returns the index of the first element where the block returns true" do
+      ["Alice", "Bob"].index! { |name| name.size < 4 }.should eq 1
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        ["Alice", "Bob"].index! { |name| name.size < 3 }
+      end
+    end
+  end
+
+  describe "index! with an object" do
+    it "returns the index of that object if found" do
+      ["Alice", "Bob"].index!("Alice").should eq 0
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        ["Alice", "Bob"].index!("Mallory")
+      end
     end
   end
 

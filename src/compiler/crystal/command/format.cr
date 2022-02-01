@@ -156,7 +156,7 @@ class Crystal::Command
 
     # This method is for mocking `Crystal.format` in test.
     private def format(filename, source)
-      result = Crystal.format(source, filename: filename)
+      Crystal.format(source, filename: filename)
     end
 
     private def error(msg)

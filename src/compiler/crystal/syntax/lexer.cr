@@ -54,11 +54,6 @@ module Crystal
 
     def initialize(string, string_pool : StringPool? = nil)
       @reader = Char::Reader.new(string)
-
-      if error = @reader.error
-        ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16, upcase: true)} at position #{@reader.pos}, malformed UTF-8")
-      end
-
       @token = Token.new
       @temp_token = Token.new
       @line_number = 1
@@ -775,7 +770,8 @@ module Crystal
         else
           next_char
           @token.type = :DELIMITER_START
-          @token.delimiter_state = Token::DelimiterState.new(delimiter == '`' ? :command : :string, delimiter, delimiter)
+          delimiter_kind = delimiter == '`' ? Token::DelimiterKind::COMMAND : Token::DelimiterKind::STRING
+          @token.delimiter_state = Token::DelimiterState.new(delimiter_kind, delimiter, delimiter)
           set_token_raw_from_start(start)
         end
       when '0'..'9'
@@ -1667,7 +1663,7 @@ module Crystal
       string_open_count = delimiter_state.open_count
 
       # For empty heredocs:
-      if @token.type == :NEWLINE && delimiter_state.kind == :heredoc
+      if @token.type == :NEWLINE && delimiter_state.kind.heredoc?
         if check_heredoc_end delimiter_state
           set_token_raw_from_start start
           return @token
@@ -1693,7 +1689,7 @@ module Crystal
         @token.delimiter_state = delimiter_state.with_open_count_delta(+1)
       when '\\'
         if delimiter_state.allow_escapes
-          if delimiter_state.kind == :regex
+          if delimiter_state.kind.regex?
             char = next_char
             raise_unterminated_quoted delimiter_state if char == '\0'
             next_char
@@ -1813,7 +1809,7 @@ module Crystal
         @token.line_number = @line_number
         @token.column_number = @column_number
 
-        if delimiter_state.kind == :heredoc
+        if delimiter_state.kind.heredoc?
           unless check_heredoc_end delimiter_state
             next_string_token_noescape delimiter_state
             @token.value = string_range(start)
@@ -1890,11 +1886,11 @@ module Crystal
 
     def raise_unterminated_quoted(delimiter_state)
       msg = case delimiter_state.kind
-            when :command then "Unterminated command literal"
-            when :regex   then "Unterminated regular expression"
-            when :heredoc
+            when .command? then "Unterminated command literal"
+            when .regex?   then "Unterminated regular expression"
+            when .heredoc?
               "Unterminated heredoc: can't find \"#{delimiter_state.end}\" anywhere before the end of file"
-            when :string then "Unterminated string literal"
+            when .string? then "Unterminated string literal"
             else
               ::raise "unreachable"
             end
@@ -2115,7 +2111,7 @@ module Crystal
             delimiter_state = heredocs.shift
           end
 
-          if delimiter_state && delimiter_state.kind == :heredoc && check_heredoc_end(delimiter_state)
+          if delimiter_state && delimiter_state.kind.heredoc? && check_heredoc_end(delimiter_state)
             char = current_char
             delimiter_state = heredocs.try &.shift?
           end
@@ -2528,7 +2524,7 @@ module Crystal
       @token.value = value
     end
 
-    def delimited_pair(kind, string_nest, string_end, start, allow_escapes = true, advance = true)
+    def delimited_pair(kind : Token::DelimiterKind, string_nest, string_end, start, allow_escapes = true, advance = true)
       next_char if advance
       @token.type = :DELIMITER_START
       @token.delimiter_state = Token::DelimiterState.new(kind, string_nest, string_end, allow_escapes)
@@ -2758,7 +2754,7 @@ module Crystal
     def next_char_no_column_increment
       char = @reader.next_char
       if error = @reader.error
-        ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16, upcase: true)} at position #{@reader.pos}, malformed UTF-8")
+        ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16)} at position #{@reader.pos}, malformed UTF-8")
       end
       char
     end
@@ -2860,14 +2856,11 @@ module Crystal
     end
 
     def self.ident_start?(char)
-      char.letter? || char == '_'
+      char.ascii_letter? || char == '_' || char.ord > 0x9F
     end
 
     def self.ident_part?(char)
-      ident_start?(char) ||
-        Unicode.mark_nonspacing?(char) || Unicode.mark_spacing_combining?(char) ||
-        Unicode.number_digit?(char) || Unicode.number_letter?(char) ||
-        Unicode.punctuation_connector?(char)
+      ident_start?(char) || char.ascii_number?
     end
 
     def self.ident?(name)
