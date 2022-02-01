@@ -1,4 +1,5 @@
 require "./repl"
+require "../semantic/main_visitor"
 
 # Non-interprted Crystal does multidispatch by essentially
 # inlining `is_a?` calls and performing the appropriate casting

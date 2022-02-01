@@ -85,7 +85,6 @@ module Float::Printer
 
     # add fractional part digits
     io.write_string buffer.to_slice[i, length - i]
-    i = length
 
     # print trailing 0 if whole number or exp notation of power of ten
     if (decimal_exponent >= 0 && !exp_mode) || (exp != point && length == 1)

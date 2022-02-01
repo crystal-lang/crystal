@@ -10,6 +10,7 @@
 
 require "json"
 require "./command/*"
+require "./tools/*"
 
 class Crystal::Command
   USAGE = <<-USAGE
@@ -397,28 +398,7 @@ class Crystal::Command
         opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |some_link_flags|
           link_flags << some_link_flags
         end
-        opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
-          if cpu == "native"
-            compiler.mcpu = LLVM.host_cpu_name
-          else
-            compiler.mcpu = cpu
-          end
-        end
-        opts.on("--mattr CPU", "Target specific features") do |features|
-          compiler.mattr = features
-        end
-        opts.on("--mcmodel MODEL", "Target specific code model") do |mcmodel|
-          compiler.mcmodel = case mcmodel
-                             when "default" then LLVM::CodeModel::Default
-                             when "small"   then LLVM::CodeModel::Small
-                             when "kernel"  then LLVM::CodeModel::Kernel
-                             when "medium"  then LLVM::CodeModel::Medium
-                             when "large"   then LLVM::CodeModel::Large
-                             else
-                               error "--mcmodel should be one of: default, kernel, small, medium, large"
-                               raise "unreachable"
-                             end
-        end
+        target_specific_opts(opts, compiler)
         setup_compiler_warning_options(opts, compiler)
       end
 
@@ -586,8 +566,34 @@ class Crystal::Command
       @color = false
       compiler.color = false
     end
+    target_specific_opts(opts, compiler)
     setup_compiler_warning_options(opts, compiler)
     opts.invalid_option { }
+  end
+
+  private def target_specific_opts(opts, compiler)
+    opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
+      if cpu == "native"
+        compiler.mcpu = LLVM.host_cpu_name
+      else
+        compiler.mcpu = cpu
+      end
+    end
+    opts.on("--mattr CPU", "Target specific features") do |features|
+      compiler.mattr = features
+    end
+    opts.on("--mcmodel MODEL", "Target specific code model") do |mcmodel|
+      compiler.mcmodel = case mcmodel
+                         when "default" then LLVM::CodeModel::Default
+                         when "small"   then LLVM::CodeModel::Small
+                         when "kernel"  then LLVM::CodeModel::Kernel
+                         when "medium"  then LLVM::CodeModel::Medium
+                         when "large"   then LLVM::CodeModel::Large
+                         else
+                           error "--mcmodel should be one of: default, kernel, small, medium, large"
+                           raise "unreachable"
+                         end
+    end
   end
 
   private def setup_compiler_warning_options(opts, compiler)

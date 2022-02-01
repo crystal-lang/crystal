@@ -8,7 +8,7 @@ module Crystal
         @str << ' '
       end
       if node.name
-        @str << decorate_arg(node, node.name)
+        @str << node.name
       else
         @str << '?'
       end
