@@ -641,14 +641,8 @@ class Crystal::Call
 
   def check_recursive_splat_call(a_def, args)
     if a_def.splat_index
-      current_splat_type = args.values.last.type
-      previous_splat_types = program.splat_expansions[a_def]?
-      if previous_splat_types
-        previous_splat_types.push(current_splat_type)
-      else
-        previous_splat_types = [current_splat_type]
-        program.splat_expansions[a_def] = previous_splat_types
-      end
+      previous_splat_types = program.splat_expansions[a_def] ||= [] of Type
+      previous_splat_types.push(args.values.last.type)
 
       # This is just an heuristic, but if a same method is called recursively
       # 5 times or more, and the splat type keeps expanding and containing
