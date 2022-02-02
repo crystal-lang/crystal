@@ -1334,7 +1334,7 @@ module Crystal
       node, end_location = parse_exception_handler exps, begin_location: begin_location
       node.end_location = end_location
       if !node.is_a?(ExceptionHandler) && (!node.is_a?(Expressions) || !node.keyword.none?)
-        node = Expressions.new([node]).at(node).at_end(node)
+        node = Expressions.new([node]).at(begin_location).at_end(end_location)
       end
       node.keyword = :begin if node.is_a?(Expressions)
       node
@@ -1764,7 +1764,8 @@ module Crystal
       next_token_skip_space_or_newline
 
       if @token.type == :")"
-        node = Expressions.new([Nop.new] of ASTNode)
+        end_location = token_end_location
+        node = Expressions.new([Nop.new] of ASTNode).at(location).at_end(end_location)
         node.keyword = :paren
         return node_and_next_token node
       end
@@ -1803,7 +1804,7 @@ module Crystal
 
       unexpected_token if @token.type == :"("
 
-      node = Expressions.new(exps)
+      node = Expressions.new(exps).at(location).at_end(end_location)
       node.keyword = :paren
       node
     end
