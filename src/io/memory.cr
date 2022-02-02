@@ -169,7 +169,6 @@ class IO::Memory < IO
     string
   end
 
-  # :nodoc:
   def read_byte : UInt8?
     check_open
 
@@ -184,7 +183,6 @@ class IO::Memory < IO
     end
   end
 
-  # :nodoc:
   def peek : Bytes
     check_open
 
@@ -203,14 +201,12 @@ class IO::Memory < IO
     end
   end
 
-  # :nodoc:
   def skip_to_end : Nil
     check_open
 
     @pos = @bytesize
   end
 
-  # :nodoc:
   def gets_to_end : String
     return super if @encoding
 
@@ -242,7 +238,7 @@ class IO::Memory < IO
   # io = IO::Memory.new "hello"
   # io.clear # raises IO::Error
   # ```
-  def clear
+  def clear : Nil
     check_open
     check_resizeable
     @bytesize = 0
@@ -372,7 +368,7 @@ class IO::Memory < IO
   # io.close
   # io.gets_to_end # raises IO::Error (closed stream)
   # ```
-  def close
+  def close : Nil
     @closed = true
   end
 
@@ -413,6 +409,12 @@ class IO::Memory < IO
 
   # Appends this internal buffer to the given `IO`.
   def to_s(io : IO) : Nil
+    if io == self
+      # When appending to itself, we need to pull the resize up before taking
+      # pointer to the buffer. It would become invalid when a resize happens during `#write`.
+      new_bytesize = bytesize * 2
+      resize_to_capacity(new_bytesize) if @capacity < new_bytesize
+    end
     io.write(to_slice)
   end
 

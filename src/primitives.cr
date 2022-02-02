@@ -318,7 +318,8 @@ end
                              ">"  => "greater than",
                              ">=" => "greater than or equal to",
                            } %}
-          # Returns `true` if `self` is {{desc.id}} *other*.
+          # Returns `true` if `self` is {{desc.id}} *other*{% if op == "!=" && (!ints.includes?(num) || !ints.includes?(num2)) %}
+          # or if `self` and *other* are unordered{% end %}.
           @[Primitive(:binary)]
           def {{op.id}}(other : {{num2.id}}) : Bool
           end
@@ -331,7 +332,7 @@ end
     struct {{int.id}}
       # Returns a `Char` that has the unicode codepoint of `self`,
       # without checking if this integer is in the range valid for
-      # chars (`0..0x10ffff`).
+      # chars (`0..0xd7ff` and `0xe000..0x10ffff`).
       #
       # You should never use this method unless `chr` turns out to
       # be a bottleneck.

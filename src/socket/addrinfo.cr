@@ -58,23 +58,24 @@ class Socket
     # an `Exception` (e.g. a `Socket` or `nil`).
     def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil)
       getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
-        error = nil
-
         loop do
           value = yield addrinfo.not_nil!
 
           if value.is_a?(Exception)
-            error = value
+            unless addrinfo = addrinfo.try(&.next?)
+              if value.is_a?(Socket::ConnectError)
+                raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", value.os_error)
+              else
+                {% if flag?(:win32) && compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 %}
+                  # FIXME: Workardound for https://github.com/crystal-lang/crystal/issues/11047
+                  array = StaticArray(UInt8, 0).new(0)
+                {% end %}
+
+                raise value
+              end
+            end
           else
             return value
-          end
-
-          unless addrinfo = addrinfo.try(&.next?)
-            if error.is_a?(Socket::ConnectError)
-              raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", error.os_error)
-            else
-              raise error if error
-            end
           end
         end
       end
@@ -97,6 +98,10 @@ class Socket
       end
 
       protected def self.new_from_os_error(message : String?, os_error, *, domain, type, service, protocol, **opts)
+        new(message, **opts)
+      end
+
+      protected def self.new_from_os_error(message : String?, os_error, *, domain, **opts)
         new(message, **opts)
       end
 
@@ -148,13 +153,18 @@ class Socket
           service = "00"
         end
       {% end %}
+      {% if flag?(:win32) %}
+        if service.is_a?(Int) && service < 0
+          raise Error.from_os_error(nil, WinError::WSATYPE_NOT_FOUND, domain: domain, type: type, protocol: protocol, service: service)
+        end
+      {% end %}
 
       ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
       unless ret.zero?
-        {% if flag?(:posix) %}
+        {% if flag?(:unix) %}
           # EAI_SYSTEM is not defined on win32
           if ret == LibC::EAI_SYSTEM
-            raise Error.from_errno message, domain: domain
+            raise Error.from_os_error nil, Errno.value, domain: domain
           end
         {% end %}
 

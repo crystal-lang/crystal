@@ -1,7 +1,7 @@
 require "spec"
-require "socket/addrinfo"
+require "socket"
 
-describe Socket::Addrinfo do
+describe Socket::Addrinfo, tags: "network" do
   describe ".resolve" do
     it "returns an array" do
       addrinfos = Socket::Addrinfo.resolve("localhost", 80, type: Socket::Type::STREAM)

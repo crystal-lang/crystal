@@ -42,6 +42,7 @@ describe "Number" do
     it "preserves type" do
       123.significant(2).should eq(120)
       123.significant(2).should be_a(Int32)
+      0.significant(1).should be_a(Int32)
     end
   end
 
