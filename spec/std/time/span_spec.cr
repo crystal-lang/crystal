@@ -1,5 +1,5 @@
 require "spec"
-require "../../support/iterate"
+require "spec/helpers/iterate"
 
 private def expect_overflow
   expect_raises ArgumentError, "Time::Span too big or too small" do

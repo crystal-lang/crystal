@@ -483,6 +483,9 @@ module Crystal
     def guess_array_literal_element_types(node)
       element_types = nil
       node.elements.each do |element|
+        # Splats here require the yield type of `#each`, which we cannot guess
+        return nil if element.is_a?(Splat)
+
         element_type = guess_type(element)
         next unless element_type
 
@@ -552,17 +555,26 @@ module Crystal
     end
 
     def guess_type(node : RegexLiteral)
-      program.types["Regex"]
+      program.regex
     end
 
     def guess_type(node : TupleLiteral)
       element_types = nil
       node.elements.each do |element|
-        element_type = guess_type(element)
-        return nil unless element_type
+        if element.is_a?(Splat)
+          element_type = guess_type(element.exp)
+          return nil unless element_type.is_a?(TupleInstanceType)
 
-        element_types ||= [] of Type
-        element_types << element_type
+          next if element_type.tuple_types.empty?
+          element_types ||= [] of Type
+          element_types.concat(element_type.tuple_types)
+        else
+          element_type = guess_type(element)
+          return nil unless element_type
+
+          element_types ||= [] of Type
+          element_types << element_type
+        end
       end
 
       if element_types
@@ -587,6 +599,32 @@ module Crystal
       else
         nil
       end
+    end
+
+    def guess_type(node : ProcLiteral)
+      output = node.def.return_type
+      return nil unless output
+
+      types = nil
+
+      node.def.args.each do |input|
+        restriction = input.restriction
+        return nil unless restriction
+
+        input_type = lookup_type?(restriction)
+        return nil unless input_type
+
+        types ||= [] of Type
+        types << input_type.virtual_type
+      end
+
+      output_type = lookup_type?(output)
+      return nil unless output_type
+
+      types ||= [] of Type
+      types << output_type.virtual_type
+
+      program.proc_of(types)
     end
 
     def guess_type(node : Call)

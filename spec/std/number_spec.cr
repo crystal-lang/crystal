@@ -2,7 +2,6 @@ require "spec"
 require "big"
 require "complex"
 require "../support/number"
-require "../support/iterate"
 
 describe "Number" do
   {% for number_type in BUILTIN_NUMBER_TYPES %}
@@ -21,6 +20,11 @@ describe "Number" do
       1234.567.significant(5).should be_close(1234.6, 1e-7)
       1234.567.significant(6).should eq(1234.57)
       1234.567.significant(7).should eq(1234.567)
+
+      123.456789.significant(5).should eq(123.46)
+      0.000123456789.significant(3).should eq 0.000123
+      0.123456789.significant(4).should eq 0.1235
+      1.23456789.significant(2).should eq 1.2
     end
 
     it "2 base" do
@@ -38,6 +42,7 @@ describe "Number" do
     it "preserves type" do
       123.significant(2).should eq(120)
       123.significant(2).should be_a(Int32)
+      0.significant(1).should be_a(Int32)
     end
   end
 

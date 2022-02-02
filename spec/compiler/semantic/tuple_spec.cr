@@ -13,6 +13,18 @@ describe "Semantic: tuples" do
     assert_type("{1}; {1, 2}") { tuple_of([int32, int32] of TypeVar) }
   end
 
+  it "types tuple with splats inside" do
+    assert_type("{1, *{2.5, 'a'}, true}") { tuple_of([int32, float64, char, bool] of TypeVar) }
+  end
+
+  it "errors if non-tuple is splatted inside tuple" do
+    assert_error "{*1}", "argument to splat must be a tuple, not Int32"
+  end
+
+  it "errors if non-tuple is splatted inside tuple (2)" do
+    assert_error "{*{1} || {2, 3}}", "argument to splat must be a tuple, not (Tuple(Int32) | Tuple(Int32, Int32))"
+  end
+
   describe "#[](NumberLiteral)" do
     it "types, inbound index" do
       assert_type("{1, 'a'}[0]") { int32 }
@@ -44,11 +56,11 @@ describe "Semantic: tuples" do
     end
 
     it "types, metaclass index" do
-      assert_type("{1, 'a'}.class[0]") { int32.metaclass }
-      assert_type("{1, 'a'}.class[1]") { char.metaclass }
+      assert_type("{1, 'a'}.class[0]", inject_primitives: true) { int32.metaclass }
+      assert_type("{1, 'a'}.class[1]", inject_primitives: true) { char.metaclass }
 
-      assert_type("{1, 'a'}.class[-1]") { char.metaclass }
-      assert_type("{1, 'a'}.class[-2]") { int32.metaclass }
+      assert_type("{1, 'a'}.class[-1]", inject_primitives: true) { char.metaclass }
+      assert_type("{1, 'a'}.class[-2]", inject_primitives: true) { int32.metaclass }
     end
 
     it "gives error when indexing out of range" do
@@ -267,11 +279,11 @@ describe "Semantic: tuples" do
     end
 
     it "types, metaclass index" do
-      assert_type(%(#{range_new}; {1, 'a'}.class[0..1])) { tuple_of([int32, char]).metaclass }
-      assert_type(%(#{range_new}; {1, 'a'}.class[1..2])) { tuple_of([char]).metaclass }
-      assert_type(%(#{range_new}; {1, 'a'}.class[1..-2])) { tuple_of([] of Type).metaclass }
-      assert_type(%(#{range_new}; {1, 'a'}.class[-2..-1])) { tuple_of([int32, char]).metaclass }
-      assert_type(%(#{range_new}; {1, 'a'}.class[-1..0])) { tuple_of([] of Type).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[0..1]), inject_primitives: true) { tuple_of([int32, char]).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[1..2]), inject_primitives: true) { tuple_of([char]).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[1..-2]), inject_primitives: true) { tuple_of([] of Type).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[-2..-1]), inject_primitives: true) { tuple_of([int32, char]).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[-1..0]), inject_primitives: true) { tuple_of([] of Type).metaclass }
     end
 
     it "gives error when begin index is out of range" do
@@ -402,7 +414,7 @@ describe "Semantic: tuples" do
       end
 
       foo
-      )) { tuple_of [string, nilable(int32)] }
+      ), inject_primitives: true) { tuple_of [string, nilable(int32)] }
   end
 
   it "accept tuple in type restriction" do

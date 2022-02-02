@@ -63,7 +63,7 @@ class Compress::Gzip::Writer < IO
   end
 
   # Always raises `IO::Error` because this is a write-only `IO`.
-  def read(slice : Bytes)
+  def read(slice : Bytes) : NoReturn
     raise IO::Error.new("Can't read from Gzip::Writer")
   end
 
@@ -88,7 +88,7 @@ class Compress::Gzip::Writer < IO
   # data has been written yet.
   #
   # See `IO#flush`.
-  def flush
+  def flush : Nil
     check_open
 
     flate_io = write_header
@@ -96,7 +96,7 @@ class Compress::Gzip::Writer < IO
   end
 
   # Closes this writer. Must be invoked after all data has been written.
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 

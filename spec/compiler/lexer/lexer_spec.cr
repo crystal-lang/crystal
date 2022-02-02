@@ -164,7 +164,7 @@ describe "Lexer" do
                 ["+1.0f32", "+1.0"], ["-1.0f32", "-1.0"], ["-0.0f32", "-0.0"], ["1_234.567_890_f32", "1234.567890"]]
   it_lexes_f64 ["1.0", ["1.0hello", "1.0"], "+1.0", "-1.0", ["1_234.567_890", "1234.567890"]]
   it_lexes_f32 [["1e+23_f32", "1e+23"], ["1.2e+23_f32", "1.2e+23"]]
-  it_lexes_f64 ["1e23", "1e-23", "1e+23", "1.2e+23", ["1e23f64", "1e23"], ["1.2e+23_f64", "1.2e+23"]]
+  it_lexes_f64 ["1e23", "1e-23", "1e+23", "1.2e+23", ["1e23f64", "1e23"], ["1.2e+23_f64", "1.2e+23"], "0e40", "2e01", ["2_e2", "2e2"], "1E40"]
 
   it_lexes_number :i8, ["1i8", "1"]
   it_lexes_number :i8, ["1_i8", "1"]
@@ -225,6 +225,7 @@ describe "Lexer" do
   it_lexes_number :u64, ["10000000000000000000_u64", "10000000000000000000"]
 
   it_lexes_i64 [["0x3fffffffffffffff", "4611686018427387903"]]
+  it_lexes_i64 [["-0x8000000000000000_i64", "-9223372036854775808"]]
   it_lexes_i64 ["-9223372036854775808", "9223372036854775807"]
   it_lexes_u64 [["0xffffffffffffffff", "18446744073709551615"]]
 
@@ -295,31 +296,129 @@ describe "Lexer" do
   assert_syntax_error "118446744073709551616_u64", "118446744073709551616 doesn't fit in an UInt64"
   assert_syntax_error "18446744073709551616_u64", "18446744073709551616 doesn't fit in an UInt64"
   assert_syntax_error "-1_u64", "Invalid negative value -1 for UInt64"
+  assert_syntax_error "-0_u64", "Invalid negative value -0 for UInt64"
+  assert_syntax_error "-0u64", "Invalid negative value -0 for UInt64"
 
   assert_syntax_error "18446744073709551616_i32", "18446744073709551616 doesn't fit in an Int32"
   assert_syntax_error "9999999999999999999_i32", "9999999999999999999 doesn't fit in an Int32"
 
-  assert_syntax_error "-9999999999999999999", "-9999999999999999999 doesn't fit in an Int64"
-  assert_syntax_error "-99999999999999999999", "-99999999999999999999 doesn't fit in an Int64"
-  assert_syntax_error "-11111111111111111111", "-11111111111111111111 doesn't fit in an Int64"
-  assert_syntax_error "-9223372036854775809", "-9223372036854775809 doesn't fit in an Int64"
-  assert_syntax_error "18446744073709551616", "18446744073709551616 doesn't fit in an UInt64"
+  assert_syntax_error "-9999999999999999999", "-9999999999999999999 doesn't fit in an Int64, try using the suffix i128"
+  assert_syntax_error "-99999999999999999999", "-99999999999999999999 doesn't fit in an Int64, try using the suffix i128"
+  assert_syntax_error "-11111111111111111111", "-11111111111111111111 doesn't fit in an Int64, try using the suffix i128"
+  assert_syntax_error "-9223372036854775809", "-9223372036854775809 doesn't fit in an Int64, try using the suffix i128"
+  assert_syntax_error "118446744073709551616", "118446744073709551616 doesn't fit in an UInt64, try using the suffix i128"
+  assert_syntax_error "18446744073709551616", "18446744073709551616 doesn't fit in an UInt64, try using the suffix i128"
 
-  assert_syntax_error "0xFF_i8", "255 doesn't fit in an Int8"
-  assert_syntax_error "0o200_i8", "128 doesn't fit in an Int8"
-  assert_syntax_error "0b10000000_i8", "128 doesn't fit in an Int8"
+  assert_syntax_error "340282366920938463463374607431768211456", "340282366920938463463374607431768211456 doesn't fit in an UInt64"
+  assert_syntax_error "-170141183460469231731687303715884105729", "-170141183460469231731687303715884105729 doesn't fit in an Int64"
+  assert_syntax_error "-999999999999999999999999999999999999999", "-999999999999999999999999999999999999999 doesn't fit in an Int64"
 
+  assert_syntax_error "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF doesn't fit in an UInt64"
+  assert_syntax_error "0o7777777777777777777777777777777777777777777777777", "0o7777777777777777777777777777777777777777777777777 doesn't fit in an UInt64"
+  assert_syntax_error "-0o7777777777777777777777777777777777777777777777777", "-0o7777777777777777777777777777777777777777777777777 doesn't fit in an Int64"
+
+  it_lexes_number :i128, ["9223372036854775808_i128", "9223372036854775808"]
+  it_lexes_number :i128, ["-9223372036854775809_i128", "-9223372036854775809"]
+  it_lexes_number :u128, ["118446744073709551616_u128", "118446744073709551616"]
+  it_lexes_number :u128, ["18446744073709551616_u128", "18446744073709551616"]
+  it_lexes_number :i128, ["170141183460469231731687303715884105727_i128", "170141183460469231731687303715884105727"]
+  it_lexes_number :u128, ["170141183460469231731687303715884105728_u128", "170141183460469231731687303715884105728"]
+  it_lexes_number :u128, ["340282366920938463463374607431768211455_u128", "340282366920938463463374607431768211455"]
+  it_lexes_number :u128, ["0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF_u128", "340282366920938463463374607431768211455"]
+  it_lexes_number :i128, ["-0x80000000000000000000000000000000_i128", "-170141183460469231731687303715884105728"]
+  assert_syntax_error "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF doesn't fit in an UInt64, try using the suffix u128"
+  assert_syntax_error "-0x80000000000000000000000000000000", "-0x80000000000000000000000000000000 doesn't fit in an Int64, try using the suffix i128"
+  assert_syntax_error "-0x80000000000000000000000000000001", "-0x80000000000000000000000000000001 doesn't fit in an Int64"
+  assert_syntax_error "-1_u128", "Invalid negative value -1 for UInt128"
+
+  assert_syntax_error "1__1", "consecutive underscores in numbers aren't allowed"
+  assert_syntax_error "-3_", "trailing '_' in number"
+  assert_syntax_error "0b_10", "unexpected '_' in number"
+  assert_syntax_error "10e_10", "unexpected '_' in number"
+  assert_syntax_error "1_.1", "unexpected '_' in number"
+  assert_syntax_error "-0e_12", "unexpected '_' in number"
+
+  assert_syntax_error "0_12", "octal constants should be prefixed with 0o"
   assert_syntax_error "0123", "octal constants should be prefixed with 0o"
   assert_syntax_error "00", "octal constants should be prefixed with 0o"
   assert_syntax_error "01_i64", "octal constants should be prefixed with 0o"
 
+  assert_syntax_error "0xFF_i8", "0xFF doesn't fit in an Int8"
+  assert_syntax_error "0o200_i8", "0o200 doesn't fit in an Int8"
+  assert_syntax_error "0b10000000_i8", "0b10000000 doesn't fit in an Int8"
+
+  # 2**31 - 1
+  it_lexes_i32 [["0x7fffffff", "2147483647"], ["0o17777777777", "2147483647"], ["0b1111111111111111111111111111111", "2147483647"]]
+  it_lexes_i32 [["0x7fffffff_i32", "2147483647"], ["0o17777777777_i32", "2147483647"], ["0b1111111111111111111111111111111_i32", "2147483647"]]
+  # 2**32 - 1
+  it_lexes_i64 [["0xffffffff", "4294967295"], ["0o37777777777", "4294967295"], ["0b11111111111111111111111111111111", "4294967295"]]
+  # 2**32
+  it_lexes_i64 [["0x100000000", "4294967296"], ["0o40000000000", "4294967296"], ["0b100000000000000000000000000000000", "4294967296"]]
+  assert_syntax_error "0x100000000i32", "0x100000000 doesn't fit in an Int32"
+  assert_syntax_error "0o40000000000i32", "0o40000000000 doesn't fit in an Int32"
+  assert_syntax_error "0b100000000000000000000000000000000i32", "0b100000000000000000000000000000000 doesn't fit in an Int32"
+  # 2**63 - 1
+  it_lexes_i64 [["0x7fffffffffffffff", "9223372036854775807"], ["0o777777777777777777777", "9223372036854775807"], ["0b111111111111111111111111111111111111111111111111111111111111111", "9223372036854775807"]]
+  # 2**63
+  it_lexes_u64 [["0x8000000000000000", "9223372036854775808"], ["0o1000000000000000000000", "9223372036854775808"], ["0b1000000000000000000000000000000000000000000000000000000000000000", "9223372036854775808"]]
+  assert_syntax_error "0x8000000000000000i64", "0x8000000000000000 doesn't fit in an Int64"
+  assert_syntax_error "0o1000000000000000000000i64", "0o1000000000000000000000 doesn't fit in an Int64"
+  assert_syntax_error "0b1000000000000000000000000000000000000000000000000000000000000000i64", "0b1000000000000000000000000000000000000000000000000000000000000000 doesn't fit in an Int64"
+  # 2**64 - 1
+  it_lexes_u64 [["0xffff_ffff_ffff_ffff", "18446744073709551615"], ["0o177777_77777777_77777777", "18446744073709551615"], ["0b11111111_11111111_11111111_11111111_11111111_11111111_11111111_11111111", "18446744073709551615"]]
+  it_lexes_u64 [["0x00ffffffffffffffff", "18446744073709551615"], ["0o001777777777777777777777", "18446744073709551615"], ["0b001111111111111111111111111111111111111111111111111111111111111111", "18446744073709551615"]]
+  # 2**64
+  assert_syntax_error "0x10000_0000_0000_0000", "0x10000_0000_0000_0000 doesn't fit in an UInt64, try using the suffix i128"
+  it_lexes_number :i128, ["0x10000_0000_0000_0000_i128", "18446744073709551616"]
+  assert_syntax_error "0x10000_0000_0000_0000_u64", "0x10000_0000_0000_0000 doesn't fit in an UInt64"
+  assert_syntax_error "0xfffffffffffffffff_u64", "0xfffffffffffffffff doesn't fit in an UInt64"
+  assert_syntax_error "0o200000_00000000_00000000_u64", "0o200000_00000000_00000000 doesn't fit in an UInt64"
+  assert_syntax_error "0o200000_00000000_00000000", "0o200000_00000000_00000000 doesn't fit in an UInt64, try using the suffix i128"
+  assert_syntax_error "0b100000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_u64", "0b100000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000 doesn't fit in an UInt64"
+  assert_syntax_error "0b100000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000", "0b100000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000 doesn't fit in an UInt64, try using the suffix i128"
+  # Very large
+  assert_syntax_error "0x1afafafafafafafafafafaf", "0x1afafafafafafafafafafaf doesn't fit in an UInt64, try using the suffix i128"
+  assert_syntax_error "0x1afafafafafafafafafafafu64", "0x1afafafafafafafafafafaf doesn't fit in an UInt64"
+  assert_syntax_error "0x1afafafafafafafafafafafi32", "0x1afafafafafafafafafafaf doesn't fit in an Int32"
+  assert_syntax_error "0o1234567123456712345671234567u64", "0o1234567123456712345671234567 doesn't fit in an UInt64"
+  assert_syntax_error "0o1234567123456712345671234567", "0o1234567123456712345671234567 doesn't fit in an UInt64, try using the suffix i128"
+  assert_syntax_error "0o12345671234567_12345671234567_i8", "0o12345671234567_12345671234567 doesn't fit in an Int8"
+  assert_syntax_error "0b100000000000000000000000000000000000000000000000000000000000000000", "0b100000000000000000000000000000000000000000000000000000000000000000 doesn't fit in an UInt64, try using the suffix i128"
+  assert_syntax_error "0b100000000000000000000000000000000000000000000000000000000000000000u64", "0b100000000000000000000000000000000000000000000000000000000000000000 doesn't fit in an UInt64"
+
+  it_lexes_i64 [["0o700000000000000000000", "8070450532247928832"]]
+  it_lexes_u64 [["0o1000000000000000000000", "9223372036854775808"]]
+
   assert_syntax_error "4f33", "invalid float suffix"
   assert_syntax_error "4f65", "invalid float suffix"
   assert_syntax_error "4f22", "invalid float suffix"
+  assert_syntax_error "4i33", "invalid int suffix"
+  assert_syntax_error "4i65", "invalid int suffix"
+  assert_syntax_error "4i22", "invalid int suffix"
+  assert_syntax_error "4i3", "invalid int suffix"
+  assert_syntax_error "4i12", "invalid int suffix"
+  assert_syntax_error "4u33", "invalid uint suffix"
+  assert_syntax_error "4u65", "invalid uint suffix"
+  assert_syntax_error "4u22", "invalid uint suffix"
+  assert_syntax_error "4u3", "invalid uint suffix"
+  assert_syntax_error "4u12", "invalid uint suffix"
   # Tests for #8782
-  assert_syntax_error "4F32", "unexpected token: F32"
-  assert_syntax_error "4F64", "unexpected token: F64"
-  assert_syntax_error "0F32", "unexpected token: F32"
+  assert_syntax_error "4F32", %(unexpected token: "F32")
+  assert_syntax_error "4F64", %(unexpected token: "F64")
+  assert_syntax_error "0F32", %(unexpected token: "F32")
+
+  assert_syntax_error "4.0_u32", "Invalid suffix u32 for decimal number"
+  assert_syntax_error "2e8i8", "Invalid suffix i8 for decimal number"
+
+  assert_syntax_error ".42", ".1 style number literal is not supported, put 0 before dot"
+  assert_syntax_error "-.42", ".1 style number literal is not supported, put 0 before dot"
+
+  assert_syntax_error "2e", "unexpected token: \"e\""
+  assert_syntax_error "2ef32", "unexpected token: \"ef32\""
+  assert_syntax_error "2e+_2", "unexpected '_' in number"
+
+  # Test for #11671
+  it_lexes_i32 [["0b0_1", "1"]]
 
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"
@@ -393,6 +492,7 @@ describe "Lexer" do
   end
 
   assert_syntax_error "/foo", "Unterminated regular expression"
+  assert_syntax_error "/\\", "Unterminated regular expression"
   assert_syntax_error ":\"foo", "unterminated quoted symbol"
 
   it "lexes utf-8 char" do
@@ -482,36 +582,36 @@ describe "Lexer" do
     lexer = Lexer.new ":a!=:a"
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
-    token.value.should eq ("a")
+    token.value.should eq("a")
     token = lexer.next_token
     token.type.should eq(:"!=")
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
-    token.value.should eq ("a")
+    token.value.should eq("a")
   end
 
   it "lexes symbol followed by ==" do
     lexer = Lexer.new ":a==:a"
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
-    token.value.should eq ("a")
+    token.value.should eq("a")
     token = lexer.next_token
     token.type.should eq(:"==")
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
-    token.value.should eq ("a")
+    token.value.should eq("a")
   end
 
   it "lexes symbol followed by ===" do
     lexer = Lexer.new ":a===:a"
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
-    token.value.should eq ("a")
+    token.value.should eq("a")
     token = lexer.next_token
     token.type.should eq(:"===")
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
-    token.value.should eq ("a")
+    token.value.should eq("a")
   end
 
   it "lexes != after identifier (#4815)" do

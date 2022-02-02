@@ -39,7 +39,7 @@ struct Number
     new(1)
   end
 
-  # Returns self.
+  # Returns `self`.
   def +
     self
   end
@@ -118,7 +118,12 @@ struct Number
     %array
   end
 
-  # :ditto:
+  # Performs a `#step` in the direction of the _limit_. For instance:
+  #
+  # ```
+  # 10.step(to: 5).to_a # => [10, 9, 8, 7, 6, 5]
+  # 5.step(to: 10).to_a # => [5, 6, 7, 8, 9, 10]
+  # ```
   def step(*, to limit = nil, exclusive : Bool = false, &) : Nil
     if limit
       direction = limit <=> self
@@ -146,7 +151,7 @@ struct Number
   # 123.abs  # => 123
   # -123.abs # => 123
   # ```
-  def abs
+  def abs : self
     self < 0 ? -self : self
   end
 
@@ -170,7 +175,7 @@ struct Number
   # 0.sign   # => 0
   # -42.sign # => -1
   # ```
-  def sign
+  def sign : Int32
     self < 0 ? -1 : (self == 0 ? 0 : 1)
   end
 
@@ -191,7 +196,7 @@ struct Number
   # - `-1` if `self` is less than *other*
   # - `0` if `self` is equal to *other*
   # - `-1` if `self` is greater than *other*
-  # - `nil` if self is `NaN` or *other* is `NaN`, because `NaN` values are not comparable
+  # - `nil` if `self` is `NaN` or *other* is `NaN`, because `NaN` values are not comparable
   def <=>(other) : Int32?
     # NaN can't be compared to other numbers
     return nil if self.is_a?(Float) && self.nan?
@@ -218,22 +223,28 @@ struct Number
     if digits < 0
       raise ArgumentError.new "digits should be non-negative"
     end
+    return self if zero?
 
     x = self.to_f
 
-    if x == 0
-      return x
+    if base == 10
+      log = Math.log10(self.abs)
+    elsif base == 2
+      log = Math.log2(self.abs)
+    else
+      log = Math.log2(self.abs) / Math.log2(base)
     end
 
-    y = if base == 10
-          10 ** ((Math.log10(self.abs) - digits + 1).floor)
-        elsif base == 2
-          2 ** ((Math.log2(self.abs) - digits + 1).floor)
-        else
-          base ** (((Math.log2(self.abs)) / (Math.log2(base)) - digits + 1).floor)
-        end
+    exponent = (log - digits + 1).floor
+    if exponent < 0
+      y = base ** -exponent
+      value = (x * y).round / y
+    else
+      y = base ** exponent
+      value = (x / y).round * y
+    end
 
-    self.class.new((x / y).round * y)
+    self.class.new(value)
   end
 
   # Rounds this number to a given precision.

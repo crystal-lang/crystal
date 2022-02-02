@@ -96,6 +96,11 @@ describe BigRational do
     r.to_big_f.should be_close(f, 0.001)
   end
 
+  it "#to_big_r" do
+    r = br(10, 3)
+    r.to_big_r.should eq(r)
+  end
+
   it "Int#to_big_r" do
     3.to_big_r.should eq(br(3, 1))
   end
@@ -192,6 +197,10 @@ describe BigRational do
   describe "#**" do
     it "exponentiates with positive powers" do
       result = br(17, 11) ** 5
+      result.should be_a(BigRational)
+      result.should eq(br(1419857, 161051))
+
+      result = br(17, 11) ** 5_u8
       result.should be_a(BigRational)
       result.should eq(br(1419857, 161051))
     end

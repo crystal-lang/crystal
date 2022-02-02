@@ -56,13 +56,13 @@ module ENV
 
   # Retrieves a value corresponding to the given *key*. Return the second argument's value
   # if the *key* does not exist.
-  def self.fetch(key, default)
+  def self.fetch(key, default) : String?
     fetch(key) { default }
   end
 
   # Retrieves a value corresponding to a given *key*. Return the value of the block if
   # the *key* does not exist.
-  def self.fetch(key : String, &block : String -> String?)
+  def self.fetch(key : String, &block : String -> T) : String | T forall T
     if value = Crystal::System::Env.get(key)
       return value
     else
@@ -103,13 +103,13 @@ module ENV
   #   puts "#{key} => #{value}"
   # end
   # ```
-  def self.each
+  def self.each(& : {String, String} ->)
     Crystal::System::Env.each do |key, value|
       yield({key, value})
     end
   end
 
-  def self.clear
+  def self.clear : Nil
     keys.each { |k| delete k }
   end
 

@@ -107,6 +107,25 @@ describe YAML::Any do
       value = YAML.parse("1").as_bytes?
       value.should be_nil
     end
+
+    it "gets anchor" do
+      value = YAML.parse("&foo bar").as_s
+      value.should eq "bar"
+
+      value = YAML.parse("- &foo bar\n- *foo").as_a.map(&.as_s)
+      value.should eq ["bar", "bar"]
+
+      value = YAML.parse("foo: &foo\n  bar: *foo").as_h
+      foo = {YAML::Any.new("bar") => YAML::Any.new(nil)}
+      foo[YAML::Any.new("bar")] = YAML::Any.new(foo)
+      hash = YAML::Any.new({YAML::Any.new("foo") => YAML::Any.new(foo)})
+      # FIXME: Using to_s here because comparison of recursive YAML structures seems to be broken.
+      value.to_s.should eq hash.to_s
+
+      expect_raises YAML::ParseException, "Unknown anchor 'foo' at line 1, column 1" do
+        YAML.parse("*foo")
+      end
+    end
   end
 
   describe "#size" do

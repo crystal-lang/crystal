@@ -133,13 +133,7 @@ private class DelegatedTestObject
 end
 
 private class TestObjectWithFinalize
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-  end
+  include FinalizeCounter
 
   def_clone
 end
@@ -494,7 +488,7 @@ describe Object do
 
   it "calls #finalize on #clone'd objects" do
     obj = TestObjectWithFinalize.new
-    assert_finalizes(:clone) { obj.clone }
+    assert_finalizes("clone") { obj.clone }
   end
 
   describe "def_hash" do

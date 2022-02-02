@@ -260,17 +260,49 @@ class Crystal::CodeGenVisitor
   end
 
   private def codegen_out_of_range(target_type : IntegerType, arg_type : FloatType, arg)
-    if arg_type.kind == :f32 && target_type.kind == :u128
-      # since Float32::MAX < UInt128::MAX
-      # the range checking is replaced by a positive check only
-      builder.fcmp(LLVM::RealPredicate::OLT, arg, llvm_type(arg_type).const_float(0))
+    min_value, max_value = target_type.range
+    max_value = case arg_type.kind
+                when :f32
+                  float32_upper_bound(max_value)
+                when :f64
+                  float64_upper_bound(max_value)
+                else
+                  raise "BUG: unknown float type"
+                end
+
+    # we allow one comparison to be unordered so that NaNs are caught
+    # !(arg >= min_value) || arg > max_value
+    or(
+      builder.fcmp(LLVM::RealPredicate::ULT, arg, int_to_float(target_type, arg_type, int(min_value, target_type))),
+      builder.fcmp(LLVM::RealPredicate::OGT, arg, int_to_float(target_type, arg_type, int(max_value, target_type)))
+    )
+  end
+
+  private def float32_upper_bound(int_max_value)
+    case int_max_value
+    when UInt128
+      # `Float32::MAX < UInt128::MAX`, so we use `Float32::MAX` instead as the
+      # upper bound in order to reject positive infinity
+      int_max_value.class.new(Float32::MAX)
+    when Int32, UInt32, Int64, UInt64, Int128
+      # if the float type has fewer bits of precision than the integer type
+      # then the upper bound would mistakenly allow values near the upper limit,
+      # e.g. 2147483647_i32 -> 2147483648_f32, because the bound itself is
+      # rounded to the nearest even-significand number in the `int_to_float`
+      # call above; we choose the predecessor as the upper bound, i.e.
+      # 2147483520_f32, ensuring it is exact when converted back to an integer
+      int_max_value.class.new(int_max_value.to_f32.prev_float)
     else
-      min_value, max_value = target_type.range
-      # arg < min_value || arg > max_value
-      or(
-        builder.fcmp(LLVM::RealPredicate::OLT, arg, int_to_float(target_type, arg_type, int(min_value, target_type))),
-        builder.fcmp(LLVM::RealPredicate::OGT, arg, int_to_float(target_type, arg_type, int(max_value, target_type)))
-      )
+      int_max_value
+    end
+  end
+
+  private def float64_upper_bound(int_max_value)
+    case int_max_value
+    when Int64, UInt64, Int128, UInt128
+      int_max_value.class.new(int_max_value.to_f64.prev_float)
+    else
+      int_max_value
     end
   end
 
@@ -580,7 +612,7 @@ class Crystal::CodeGenVisitor
             when "*"         then builder.fmul p1, p2
             when "/", "fdiv" then builder.fdiv p1, p2
             when "=="        then return builder.fcmp LLVM::RealPredicate::OEQ, p1, p2
-            when "!="        then return builder.fcmp LLVM::RealPredicate::ONE, p1, p2
+            when "!="        then return builder.fcmp LLVM::RealPredicate::UNE, p1, p2
             when "<"         then return builder.fcmp LLVM::RealPredicate::OLT, p1, p2
             when "<="        then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
             when ">"         then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
@@ -610,7 +642,7 @@ class Crystal::CodeGenVisitor
     when from_type.normal_rank == to_type.normal_rank
       # if the normal_rank is the same (eg: UInt64 / Int64)
       # there is still chance for overflow
-      if checked
+      if from_type.kind != to_type.kind && checked
         overflow = codegen_out_of_range(to_type, from_type, arg)
         codegen_raise_overflow_cond(overflow)
       end
@@ -916,6 +948,8 @@ class Crystal::CodeGenVisitor
 
     in_main do
       define_main_function(name, ([llvm_context.int32]), llvm_context.int32) do |func|
+        set_internal_fun_debug_location(func, name)
+
         arg = func.params.first
 
         current_block = insert_block
@@ -943,6 +977,9 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_proc_call(node, target_def, call_args)
+    location = @call_location
+    set_current_debug_location(location) if location && @debug.line_numbers?
+
     closure_ptr = call_args[0]
 
     # For non-closure args we use byval attribute and other things
@@ -975,10 +1012,7 @@ class Crystal::CodeGenVisitor
     ctx_is_null = equal? ctx_ptr, llvm_context.void_pointer.null
     cond ctx_is_null, ctx_is_null_block, ctx_is_not_null_block
 
-    old_needs_value = @needs_value
-    @needs_value = true
-
-    phi_value = Phi.open(self, node, @needs_value) do |phi|
+    Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_proc_type(context.type)
 
@@ -1015,9 +1049,6 @@ class Crystal::CodeGenVisitor
       target_def.abi_info = old_abi_info
       target_def.c_calling_convention = old_c_calling_convention
     end
-
-    old_needs_value = @needs_value
-    phi_value
   end
 
   def codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
@@ -1134,8 +1165,8 @@ class Crystal::CodeGenVisitor
     success_ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     failure_ordering = atomic_ordering_from_symbol_literal(call.args[-1])
 
-    pointer, cmp, new = call_args
-    value = builder.cmpxchg(pointer, cmp, new, success_ordering, failure_ordering)
+    ptr, cmp, new, _, _ = call_args
+    value = builder.cmpxchg(ptr, cmp, new, success_ordering, failure_ordering)
     value_ptr = alloca llvm_type(node.type)
     store extract_value(value, 0), gep(value_ptr, 0, 0)
     store extract_value(value, 1), gep(value_ptr, 0, 1)
@@ -1148,8 +1179,8 @@ class Crystal::CodeGenVisitor
     ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     singlethread = bool_from_bool_literal(call.args[-1])
 
-    _, pointer, val = call_args
-    builder.atomicrmw(op, pointer, val, ordering, singlethread)
+    _, ptr, val, _, _ = call_args
+    builder.atomicrmw(op, ptr, val, ordering, singlethread)
   end
 
   def codegen_primitive_fence(call, node, target_def, call_args)
@@ -1166,7 +1197,7 @@ class Crystal::CodeGenVisitor
     ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     volatile = bool_from_bool_literal(call.args[-1])
 
-    ptr = call_args.first
+    ptr, _, _ = call_args
 
     inst = builder.load(ptr)
     inst.ordering = ordering
@@ -1180,7 +1211,7 @@ class Crystal::CodeGenVisitor
     ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     volatile = bool_from_bool_literal(call.args[-1])
 
-    ptr, value = call_args
+    ptr, value, _, _ = call_args
 
     inst = builder.store(value, ptr)
     inst.ordering = ordering

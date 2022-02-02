@@ -70,7 +70,7 @@ class IO::Memory < IO
   end
 
   # See `IO#read(slice)`.
-  def read(slice : Bytes)
+  def read(slice : Bytes) : Int32
     check_open
 
     count = slice.size
@@ -108,7 +108,7 @@ class IO::Memory < IO
 
   # See `IO#write_byte`. Raises if this `IO::Memory` is non-writeable,
   # or if it's non-resizeable and a resize is needed.
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : Nil
     check_writeable
     check_open
 
@@ -131,7 +131,7 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def gets(delimiter : Char, limit : Int32, chomp = false)
+  def gets(delimiter : Char, limit : Int32, chomp = false) : String?
     return super if @encoding || delimiter.ord >= 128
 
     check_open
@@ -169,8 +169,7 @@ class IO::Memory < IO
     string
   end
 
-  # :nodoc:
-  def read_byte
+  def read_byte : UInt8?
     check_open
 
     pos = Math.min(@pos, @bytesize)
@@ -184,15 +183,14 @@ class IO::Memory < IO
     end
   end
 
-  # :nodoc:
-  def peek
+  def peek : Bytes
     check_open
 
-    Slice.new(@buffer + @pos, @bytesize - @pos)
+    Slice.new(@buffer + @pos, @bytesize - @pos, read_only: !@writeable)
   end
 
   # :nodoc:
-  def skip(bytes_count)
+  def skip(bytes_count) : Nil
     check_open
 
     available = @bytesize - @pos
@@ -203,15 +201,13 @@ class IO::Memory < IO
     end
   end
 
-  # :nodoc:
   def skip_to_end : Nil
     check_open
 
     @pos = @bytesize
   end
 
-  # :nodoc:
-  def gets_to_end
+  def gets_to_end : String
     return super if @encoding
 
     check_open
@@ -242,7 +238,7 @@ class IO::Memory < IO
   # io = IO::Memory.new "hello"
   # io.clear # raises IO::Error
   # ```
-  def clear
+  def clear : Nil
     check_open
     check_resizeable
     @bytesize = 0
@@ -257,7 +253,7 @@ class IO::Memory < IO
   # io.print "hello"
   # io.empty? # => false
   # ```
-  def empty?
+  def empty? : Bool
     @bytesize == 0
   end
 
@@ -269,7 +265,7 @@ class IO::Memory < IO
   # io.rewind
   # io.gets(2) # => "he"
   # ```
-  def rewind
+  def rewind : self
     @pos = 0
     self
   end
@@ -280,7 +276,7 @@ class IO::Memory < IO
   # io = IO::Memory.new "hello"
   # io.size # => 5
   # ```
-  def size
+  def size : Int32
     @bytesize
   end
 
@@ -317,7 +313,7 @@ class IO::Memory < IO
   # io.gets(2) # => "he"
   # io.pos     # => 2
   # ```
-  def pos
+  def pos : Int32
     @pos
   end
 
@@ -372,7 +368,7 @@ class IO::Memory < IO
   # io.close
   # io.gets_to_end # raises IO::Error (closed stream)
   # ```
-  def close
+  def close : Nil
     @closed = true
   end
 
@@ -384,7 +380,7 @@ class IO::Memory < IO
   # io.close
   # io.closed? # => true
   # ```
-  def closed?
+  def closed? : Bool
     @closed
   end
 
@@ -413,6 +409,12 @@ class IO::Memory < IO
 
   # Appends this internal buffer to the given `IO`.
   def to_s(io : IO) : Nil
+    if io == self
+      # When appending to itself, we need to pull the resize up before taking
+      # pointer to the buffer. It would become invalid when a resize happens during `#write`.
+      new_bytesize = bytesize * 2
+      resize_to_capacity(new_bytesize) if @capacity < new_bytesize
+    end
     io.write(to_slice)
   end
 
@@ -426,10 +428,6 @@ class IO::Memory < IO
     unless @resizeable
       raise IO::Error.new "Non-resizeable stream"
     end
-  end
-
-  private def check_needs_resize
-    resize_to_capacity(@capacity * 2) if @bytesize == @capacity
   end
 
   private def resize_to_capacity(capacity)
