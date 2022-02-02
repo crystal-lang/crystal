@@ -345,6 +345,7 @@ module Crystal
     def parse_op_assign(allow_ops = true, allow_suffix = true)
       doc = @token.doc
       location = @token.location
+      start_token = @token
 
       atomic = parse_question_colon
 
@@ -378,7 +379,7 @@ module Crystal
             end
 
             if atomic.is_a?(Call) && (atomic.name.ends_with?('?') || atomic.name.ends_with?('!'))
-              raise "unexpected token: =", location
+              unexpected_token token: start_token
             end
 
             atomic = Var.new(atomic.name).at(atomic) if atomic.is_a?(Call)
@@ -898,7 +899,7 @@ module Crystal
         name = parse_responds_to_name
         next_token_skip_space
       else
-        unexpected_token msg: "expected space or '('"
+        unexpected_token "expected space or '('"
       end
 
       RespondsTo.new(atomic, name)
@@ -906,7 +907,7 @@ module Crystal
 
     def parse_responds_to_name
       if @token.type != :SYMBOL
-        unexpected_token msg: "expected symbol"
+        unexpected_token "expected symbol"
       end
 
       @token.value.to_s
@@ -997,7 +998,9 @@ module Crystal
           method = "[]"
         end
         location = @token.location
-        node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(value.to_i))
+        index = value.to_i?
+        raise "Index $#{value} doesn't fit in an Int32" unless index
+        node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(index))
       when :__LINE__
         node_and_next_token MagicConstant.expand_line_node(@token.location)
       when :__END_LINE__
@@ -1329,7 +1332,7 @@ module Crystal
       exps = parse_expressions
       node, end_location = parse_exception_handler exps
       node.end_location = end_location
-      if !node.is_a?(ExceptionHandler) && (!node.is_a?(Expressions) || node.keyword)
+      if !node.is_a?(ExceptionHandler) && (!node.is_a?(Expressions) || !node.keyword.none?)
         node = Expressions.new([node]).at(node).at_end(node)
       end
       node.keyword = :begin if node.is_a?(Expressions)
@@ -1752,7 +1755,7 @@ module Crystal
 
       if @token.type == :")"
         node = Expressions.new([Nop.new] of ASTNode)
-        node.keyword = :"("
+        node.keyword = :paren
         return node_and_next_token node
       end
 
@@ -1775,7 +1778,7 @@ module Crystal
           next_token_skip_space
           break
         when :NEWLINE, :";"
-          next_token_skip_space
+          next_token_skip_statement_end
           if @token.type == :")"
             @wants_regex = false
             next_token_skip_space
@@ -1786,10 +1789,10 @@ module Crystal
         end
       end
 
-      unexpected_token "(" if @token.type == :"("
+      unexpected_token if @token.type == :"("
 
       node = Expressions.new(exps)
-      node.keyword = :"("
+      node.keyword = :paren
       node
     end
 
@@ -1865,7 +1868,7 @@ module Crystal
         next_token_skip_space
 
         msg = String.build do |msg|
-          msg << "unexpected token '|', proc literals specify their parameters like this: ->("
+          msg << %[unexpected token: "|", proc literals specify their parameters like this: ->(]
           if @token.type == :IDENT
             msg << @token.value.to_s << " : Type"
             next_token_skip_space_or_newline
@@ -1968,7 +1971,7 @@ module Crystal
 
       check :DELIMITER_START
 
-      if delimiter_state.kind == :heredoc
+      if delimiter_state.kind.heredoc?
         if @inside_interpolation
           raise "heredoc cannot be used inside interpolation", location
         end
@@ -1986,12 +1989,12 @@ module Crystal
 
       delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
 
-      if want_skip_space && delimiter_state.kind == :string
+      if want_skip_space && delimiter_state.kind.string?
         while true
           passed_backslash_newline = @token.passed_backslash_newline
           skip_space
 
-          if passed_backslash_newline && @token.type == :DELIMITER_START && @token.delimiter_state.kind == :string
+          if passed_backslash_newline && @token.type == :DELIMITER_START && @token.delimiter_state.kind.string?
             next_string_token(delimiter_state)
             delimiter_state = @token.delimiter_state
             delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
@@ -2010,9 +2013,9 @@ module Crystal
       end
 
       case delimiter_state.kind
-      when :command
+      when .command?
         result = Call.new(nil, "`", result).at(location)
-      when :regex
+      when .regex?
         if result.is_a?(StringLiteral) && (regex_error = Regex.error?(result.value))
           raise "invalid regex: #{regex_error}", location
         end
@@ -2058,7 +2061,7 @@ module Crystal
           next_string_token(delimiter_state)
           delimiter_state = @token.delimiter_state
         when :DELIMITER_END
-          if delimiter_state.kind == :regex
+          if delimiter_state.kind.regex?
             options = consume_regex_options
           end
           token_end_location = token_end_location()
@@ -2066,11 +2069,11 @@ module Crystal
           break
         when :EOF
           case delimiter_state.kind
-          when :command
+          when .command?
             raise "Unterminated command"
-          when :regex
+          when .regex?
             raise "Unterminated regular expression"
-          when :heredoc
+          when .heredoc?
             raise "Unterminated heredoc"
           else
             raise "Unterminated string literal"
@@ -2085,7 +2088,7 @@ module Crystal
 
           # We cannot reduce `StringLiteral` of interpolation inside heredoc into `String`
           # because heredoc try to remove its indentation.
-          if exp.is_a?(StringLiteral) && delimiter_state.kind != :heredoc
+          if exp.is_a?(StringLiteral) && !delimiter_state.kind.heredoc?
             pieces << Piece.new(exp.value, line_number)
           else
             pieces << Piece.new(exp, line_number)
@@ -2162,7 +2165,7 @@ module Crystal
     end
 
     def needs_heredoc_indent_removed?(delimiter_state)
-      delimiter_state.kind == :heredoc && delimiter_state.heredoc_indent >= 0
+      delimiter_state.kind.heredoc? && delimiter_state.heredoc_indent >= 0
     end
 
     def remove_heredoc_indent(pieces : Array, indent)
@@ -2490,7 +2493,7 @@ module Crystal
     end
 
     def string_literal_start?
-      @token.type == :DELIMITER_START && @token.delimiter_state.kind == :string
+      @token.type == :DELIMITER_START && @token.delimiter_state.kind.string?
     end
 
     def parse_tuple(first_exp, location)
@@ -2739,10 +2742,10 @@ module Crystal
             next_token
             break
           else
-            unexpected_token @token.to_s, "expecting when, else or end"
+            unexpected_token "expecting when, else or end"
           end
         else
-          unexpected_token @token.to_s, "expecting when, else or end"
+          unexpected_token "expecting when, else or end"
         end
       end
 
@@ -2820,7 +2823,7 @@ module Crystal
           skip_statement_end
           return true
         else
-          unexpected_token @token.to_s, "expecting ',', ';' or '\n'"
+          unexpected_token "expecting ',', ';' or '\n'"
         end
       end
       false
@@ -2876,7 +2879,7 @@ module Crystal
 
             skip_space
             unless when_expression_end
-              unexpected_token @token.to_s, "expecting then, ';' or newline"
+              unexpected_token "expecting then, ';' or newline"
             end
             skip_statement_end
 
@@ -2886,7 +2889,7 @@ module Crystal
             whens << Select::When.new(condition, body)
           when :else
             if whens.size == 0
-              unexpected_token @token.to_s, "expecting when"
+              unexpected_token "expecting when"
             end
             slash_is_regex!
             next_token_skip_statement_end
@@ -2897,15 +2900,15 @@ module Crystal
             break
           when :end
             if whens.empty?
-              unexpected_token @token.to_s, "expecting when, else or end"
+              unexpected_token "expecting when, else or end"
             end
             next_token
             break
           else
-            unexpected_token @token.to_s, "expecting when, else or end"
+            unexpected_token "expecting when, else or end"
           end
         else
-          unexpected_token @token.to_s, "expecting when, else or end"
+          unexpected_token "expecting when, else or end"
         end
       end
 
@@ -3070,9 +3073,9 @@ module Crystal
           next_token
         when :IDENT, :"*"
           if @token.keyword?(:end)
-            unexpected_token @token.to_s, "expected ';' or newline"
+            unexpected_token "expected ';' or newline"
           else
-            unexpected_token @token.to_s, "parentheses are mandatory for macro parameters"
+            unexpected_token "parentheses are mandatory for macro parameters"
           end
         when :";", :"NEWLINE"
           # Skip
@@ -3182,7 +3185,7 @@ module Crystal
         when :"}"
           break
         else
-          unexpected_token @token, "expecting ',' or '}'"
+          unexpected_token %(expecting "," or "}")
         end
       end
       exps
@@ -3264,7 +3267,7 @@ module Crystal
                   when :IDENT
                     @token.value.to_s
                   else
-                    unexpected_token msg: "expecting ident or underscore"
+                    unexpected_token "expecting ident or underscore"
                   end
             vars << Var.new(var).at(@token.location)
 
@@ -3561,16 +3564,16 @@ module Crystal
         end
       when :IDENT, :INSTANCE_VAR, :CLASS_VAR, :"*", :"**"
         if @token.keyword?(:end)
-          unexpected_token @token.to_s, "expected ';' or newline"
+          unexpected_token %(expected ";" or newline)
         else
-          unexpected_token @token.to_s, "parentheses are mandatory for def parameters"
+          unexpected_token "parentheses are mandatory for def parameters"
         end
       when :";", :"NEWLINE"
         # Skip
       when :":"
         # Skip
       when :"&"
-        unexpected_token @token.to_s, "parentheses are mandatory for def parameters"
+        unexpected_token "parentheses are mandatory for def parameters"
       when :SYMBOL
         raise "a space is mandatory between ':' and return type", @token
       else
@@ -3934,14 +3937,14 @@ module Crystal
       else
         if external_name
           if found_string_literal
-            raise "unexpected token: #{@token}, expected parameter internal name"
+            unexpected_token "expected parameter internal name"
           end
           if invalid_internal_name
             raise "cannot use '#{invalid_internal_name}' as a parameter name", invalid_internal_name
           end
           arg_name = external_name
         else
-          raise "unexpected token: #{@token}"
+          unexpected_token
         end
       end
 
@@ -5377,7 +5380,7 @@ module Crystal
         @yields = args.size
       end
 
-      Yield.new(args || [] of ASTNode, scope).at(location).at_end(end_location)
+      Yield.new(args || [] of ASTNode, scope, !!call_args.try(&.has_parentheses)).at(location).at_end(end_location)
     end
 
     def parse_break
@@ -6105,11 +6108,12 @@ module Crystal
       @token.value.to_s
     end
 
-    def unexpected_token(token = @token.to_s, msg = nil)
+    def unexpected_token(msg : String? = nil, token : Token = @token)
+      token_str = token.type == :EOF ? "EOF" : token.to_s.inspect
       if msg
-        raise "unexpected token: #{token} (#{msg})", @token
+        raise "unexpected token: #{token_str} (#{msg})", @token
       else
-        raise "unexpected token: #{token}", @token
+        raise "unexpected token: #{token_str}", @token
       end
     end
 

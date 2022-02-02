@@ -138,8 +138,14 @@ module Crystal
 
   # A container for one or many expressions.
   class Expressions < ASTNode
+    enum Keyword
+      None
+      Paren
+      Begin
+    end
+
     property expressions : Array(ASTNode)
-    property keyword : Symbol?
+    property keyword : Keyword = Keyword::None
 
     def self.from(obj : Nil)
       Nop.new
@@ -249,14 +255,16 @@ module Crystal
 
     def integer_value
       case kind
-      when :i8  then value.to_i8
-      when :i16 then value.to_i16
-      when :i32 then value.to_i32
-      when :i64 then value.to_i64
-      when :u8  then value.to_u8
-      when :u16 then value.to_u16
-      when :u32 then value.to_u32
-      when :u64 then value.to_u64
+      when :i8   then value.to_i8
+      when :i16  then value.to_i16
+      when :i32  then value.to_i32
+      when :i64  then value.to_i64
+      when :i128 then value.to_i128
+      when :u8   then value.to_u8
+      when :u16  then value.to_u16
+      when :u32  then value.to_u32
+      when :u64  then value.to_u64
+      when :u128 then value.to_u128
       else
         raise "Bug: called 'integer_value' for non-integer literal"
       end
@@ -1735,8 +1743,9 @@ module Crystal
   class Yield < ASTNode
     property exps : Array(ASTNode)
     property scope : ASTNode?
+    property? has_parentheses = false
 
-    def initialize(@exps = [] of ASTNode, @scope = nil)
+    def initialize(@exps = [] of ASTNode, @scope = nil, @has_parentheses = false)
     end
 
     def accept_children(visitor)
@@ -1745,14 +1754,14 @@ module Crystal
     end
 
     def clone_without_location
-      Yield.new(@exps.clone, @scope.clone)
+      Yield.new(@exps.clone, @scope.clone, @has_parentheses)
     end
 
     def end_location
       @end_location || @exps.last?.try(&.end_location)
     end
 
-    def_equals_and_hash @exps, @scope
+    def_equals_and_hash @exps, @scope, @has_parentheses
   end
 
   class Include < ASTNode

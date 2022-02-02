@@ -8,17 +8,70 @@ describe "Code gen: multi assign" do
       CR
   end
 
-  it "supports 1 to n assignment" do
-    run(<<-CR).to_i.should eq(123)
-      class Foo
-        def [](index)
-          index &+ 1
+  context "without strict_multi_assign" do
+    it "supports 1 to n assignment" do
+      run(<<-CR).to_i.should eq(123)
+        class Foo
+          def [](index)
+            index &+ 1
+          end
         end
-      end
 
-      a, b, c = Foo.new
-      a &* 100 &+ b &* 10 &+ c
-      CR
+        a, b, c = Foo.new
+        a &* 100 &+ b &* 10 &+ c
+        CR
+    end
+
+    it "doesn't raise if value size in 1 to n assignment doesn't match target count" do
+      run(<<-CR).to_i.should eq(4)
+        require "prelude"
+
+        begin
+          a, b = [1, 2, 3]
+          4
+        rescue ex : Exception
+          raise ex unless ex.message == "Multiple assignment count mismatch"
+          5
+        end
+        CR
+    end
+  end
+
+  context "strict_multi_assign" do
+    it "supports 1 to n assignment" do
+      run(<<-CR, flags: %w(strict_multi_assign)).to_i.should eq(123)
+        require "prelude"
+
+        class Foo
+          include Indexable(Int32)
+
+          def unsafe_fetch(index)
+            index &+ 1
+          end
+
+          def size
+            3
+          end
+        end
+
+        a, b, c = Foo.new
+        a &* 100 &+ b &* 10 &+ c
+        CR
+    end
+
+    it "raises if value size in 1 to n assignment doesn't match target count" do
+      run(<<-CR, flags: %w(strict_multi_assign)).to_i.should eq(5)
+        require "prelude"
+
+        begin
+          a, b = [1, 2, 3]
+          4
+        rescue ex : Exception
+          raise ex unless ex.message == "Multiple assignment count mismatch"
+          5
+        end
+        CR
+    end
   end
 
   it "supports m to n assignment, with splat on left-hand side (1)" do
@@ -87,6 +140,7 @@ describe "Code gen: multi assign" do
   it "supports 1 to n assignment, with splat on left-hand side (2)" do
     run(<<-CR).to_i.should eq(12345)
       #{range_new}
+      #{include_indexable}
 
       *a, b, c = {1, 2, 3, 4, 5}
       a[0] &* 10000 &+ a[1] &* 1000 &+ a[2] &* 100 &+ b &* 10 &+ c
@@ -96,6 +150,7 @@ describe "Code gen: multi assign" do
   it "supports 1 to n assignment, with splat on left-hand side (3)" do
     run(<<-CR).to_i.should eq(12345)
       #{range_new}
+      #{include_indexable}
 
       a, b, *c = {1, 2, 3, 4, 5}
       a &* 10000 &+ b &* 1000 &+ c[0] &* 100 &+ c[1] &* 10 &+ c[2]
@@ -115,6 +170,7 @@ describe "Code gen: multi assign" do
     run(<<-CR).to_b.should be_true
       #{tuple_new}
       #{range_new}
+      #{include_indexable}
 
       *x, _, _ = {1, 2}
       x.is_a?(Tuple(*typeof(Tuple.new)))
@@ -125,6 +181,7 @@ describe "Code gen: multi assign" do
     run(<<-CR).to_b.should be_true
       #{tuple_new}
       #{range_new}
+      #{include_indexable}
 
       _, _, *x = {1, 2}
       x.is_a?(Tuple(*typeof(Tuple.new)))
@@ -178,7 +235,7 @@ private def tuple_new
         args
       end
     end
-  CR
+    CR
 end
 
 private def range_new
@@ -187,5 +244,13 @@ private def range_new
       def initialize(@begin : B, @end : E, @exclusive : Bool = false)
       end
     end
-  CR
+    CR
+end
+
+private def include_indexable
+  <<-CR
+    struct Tuple(*T)
+      include Indexable(Union(*T))
+    end
+    CR
 end

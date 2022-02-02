@@ -44,7 +44,7 @@ module Float::Printer
     unless success
       # grisu3 does not work for ~0.5% of floats
       # when this happens, fallback to another, slower approach
-      if v.class == Float64
+      if v.is_a?(Float64)
         LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%.17g", v)
       else
         LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%g", v.to_f64)
@@ -85,7 +85,6 @@ module Float::Printer
 
     # add fractional part digits
     io.write_string buffer.to_slice[i, length - i]
-    i = length
 
     # print trailing 0 if whole number or exp notation of power of ten
     if (decimal_exponent >= 0 && !exp_mode) || (exp != point && length == 1)

@@ -116,21 +116,21 @@ class Crystal::Call
   end
 
   def lookup_matches
-    lookup_matches(with_literals: false)
+    lookup_matches(with_autocast: false)
   rescue ex : RetryLookupWithLiterals
-    lookup_matches(with_literals: true)
+    lookup_matches(with_autocast: true)
   end
 
-  def lookup_matches(*, with_literals = false)
+  def lookup_matches(*, with_autocast = false)
     if args.any? { |arg| arg.is_a?(Splat) || arg.is_a?(DoubleSplat) }
-      lookup_matches_with_splat(with_literals)
+      lookup_matches_with_splat(with_autocast)
     else
-      arg_types = args.map(&.type(with_literals: with_literals))
-      named_args_types = NamedArgumentType.from_args(named_args, with_literals)
-      matches = lookup_matches_without_splat arg_types, named_args_types, with_literals
+      arg_types = args.map(&.type(with_autocast: with_autocast))
+      named_args_types = NamedArgumentType.from_args(named_args, with_autocast)
+      matches = lookup_matches_without_splat arg_types, named_args_types, with_autocast
 
       # If we checked for automatic casts, see if an ambiguous call was produced
-      if with_literals
+      if with_autocast
         arg_types.each &.check_restriction_exception
         named_args_types.try &.each &.type.check_restriction_exception
       end
@@ -139,7 +139,7 @@ class Crystal::Call
     end
   end
 
-  def lookup_matches_with_splat(with_literals)
+  def lookup_matches_with_splat(with_autocast)
     # Check if all splat are of tuples
     arg_types = Array(Type).new(args.size * 2)
     named_args_types = nil
@@ -170,7 +170,7 @@ class Crystal::Call
           arg.raise "argument to double splat must be a named tuple, not #{arg_type}"
         end
       else
-        arg_types << arg.type(with_literals: with_literals)
+        arg_types << arg.type(with_autocast: with_autocast)
       end
     end
 
@@ -182,106 +182,106 @@ class Crystal::Call
         raise "duplicate key: #{named_arg.name}" if named_args_types.any? &.name.==(named_arg.name)
         named_args_types << NamedArgumentType.new(
           named_arg.name,
-          named_arg.value.type(with_literals: with_literals),
+          named_arg.value.type(with_autocast: with_autocast),
         )
       end
     end
 
-    lookup_matches_without_splat arg_types, named_args_types, with_literals: with_literals
+    lookup_matches_without_splat arg_types, named_args_types, with_autocast: with_autocast
   end
 
-  def lookup_matches_without_splat(arg_types, named_args_types, with_literals)
+  def lookup_matches_without_splat(arg_types, named_args_types, with_autocast)
     if obj = @obj
-      lookup_matches_in(obj.type, arg_types, named_args_types, with_literals: with_literals)
+      lookup_matches_in(obj.type, arg_types, named_args_types, with_autocast: with_autocast)
     elsif name == "super"
-      lookup_super_matches(arg_types, named_args_types, with_literals: with_literals)
+      lookup_super_matches(arg_types, named_args_types, with_autocast: with_autocast)
     elsif name == "previous_def"
-      lookup_previous_def_matches(arg_types, named_args_types, with_literals: with_literals)
+      lookup_previous_def_matches(arg_types, named_args_types, with_autocast: with_autocast)
     elsif with_scope = @with_scope
-      lookup_matches_with_scope_in with_scope, arg_types, named_args_types, with_literals: with_literals
+      lookup_matches_with_scope_in with_scope, arg_types, named_args_types, with_autocast: with_autocast
     else
-      lookup_matches_in scope, arg_types, named_args_types, with_literals: with_literals
+      lookup_matches_in scope, arg_types, named_args_types, with_autocast: with_autocast
     end
   end
 
-  def lookup_matches_in(owner : AliasType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_literals = false)
-    lookup_matches_in(owner.remove_alias, arg_types, named_args_types, search_in_parents: search_in_parents, with_literals: with_literals)
+  def lookup_matches_in(owner : AliasType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
+    lookup_matches_in(owner.remove_alias, arg_types, named_args_types, search_in_parents: search_in_parents, with_autocast: with_autocast)
   end
 
-  def lookup_matches_in(owner : UnionType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_literals = false)
-    owner.union_types.flat_map { |type| lookup_matches_in(type, arg_types, named_args_types, search_in_parents: search_in_parents, with_literals: with_literals) }
+  def lookup_matches_in(owner : UnionType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
+    owner.union_types.flat_map { |type| lookup_matches_in(type, arg_types, named_args_types, search_in_parents: search_in_parents, with_autocast: with_autocast) }
   end
 
-  def lookup_matches_in(owner : Program, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_literals = false)
-    lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents: search_in_parents, with_literals: with_literals)
+  def lookup_matches_in(owner : Program, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
+    lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents: search_in_parents, with_autocast: with_autocast)
   end
 
-  def lookup_matches_in(owner : FileModule, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_literals = false)
-    lookup_matches_in program, arg_types, named_args_types, search_in_parents: search_in_parents, with_literals: with_literals
+  def lookup_matches_in(owner : FileModule, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
+    lookup_matches_in program, arg_types, named_args_types, search_in_parents: search_in_parents, with_autocast: with_autocast
   end
 
-  def lookup_matches_in(owner : NonGenericModuleType | GenericModuleInstanceType | GenericType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_literals = false)
+  def lookup_matches_in(owner : NonGenericModuleType | GenericModuleInstanceType | GenericType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
     attach_subclass_observer owner
 
     including_types = owner.including_types
     if including_types
-      lookup_matches_in(including_types, arg_types, named_args_types, search_in_parents: search_in_parents, with_literals: with_literals)
+      lookup_matches_in(including_types, arg_types, named_args_types, search_in_parents: search_in_parents, with_autocast: with_autocast)
     else
       [] of Def
     end
   end
 
-  def lookup_matches_in(owner : LibType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_literals = false)
+  def lookup_matches_in(owner : LibType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
     raise "lib fun call is not supported in dispatch"
   end
 
-  def lookup_matches_in(owner : Type, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_literals = false)
-    lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents: search_in_parents, with_literals: with_literals)
+  def lookup_matches_in(owner : Type, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
+    lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents: search_in_parents, with_autocast: with_autocast)
   end
 
-  def lookup_matches_with_scope_in(owner, arg_types, named_args_types, with_literals = false)
+  def lookup_matches_with_scope_in(owner, arg_types, named_args_types, with_autocast = false)
     signature = CallSignature.new(name, arg_types, block, named_args_types)
 
-    matches = lookup_matches_checking_expansion(owner, signature, with_literals: with_literals)
+    matches = lookup_matches_checking_expansion(owner, signature, with_autocast: with_autocast)
 
     if matches.empty? && owner.class? && owner.abstract?
-      matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_literals)
+      matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_autocast)
     end
 
     if matches.empty?
       @uses_with_scope = false
-      return lookup_matches_in scope, arg_types, named_args_types, with_literals: with_literals
+      return lookup_matches_in scope, arg_types, named_args_types, with_autocast: with_autocast
     end
 
     @uses_with_scope = true
-    instantiate signature, matches, owner, self_type: nil, with_literals: with_literals
+    instantiate signature, matches, owner, self_type: nil, with_autocast: with_autocast
   end
 
-  def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents, search_in_toplevel = true, with_literals = false)
+  def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents, search_in_toplevel = true, with_autocast = false)
     signature = CallSignature.new(def_name, arg_types, block, named_args_types)
 
     matches = check_tuple_indexer(owner, def_name, args, arg_types)
-    matches ||= lookup_matches_checking_expansion(owner, signature, search_in_parents, with_literals: with_literals)
+    matches ||= lookup_matches_checking_expansion(owner, signature, search_in_parents, with_autocast: with_autocast)
 
     # If we didn't find a match and this call doesn't have a receiver,
     # and we are not at the top level, let's try searching the top-level
     if matches.empty? && !obj && owner != program && search_in_toplevel
-      program_matches = lookup_matches_with_signature(program, signature, search_in_parents, with_literals)
+      program_matches = lookup_matches_with_signature(program, signature, search_in_parents, with_autocast)
       matches = program_matches unless program_matches.empty?
     end
 
     if matches.empty? && owner.class? && owner.abstract? && !super?
-      matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_literals)
+      matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_autocast)
     end
 
     if matches.empty?
       defined_method_missing = owner.check_method_missing(signature, self)
       if defined_method_missing
-        matches = owner.lookup_matches(signature, analyze_all: with_literals)
+        matches = owner.lookup_matches(signature, analyze_all: with_autocast)
       elsif with_scope = @with_scope
         defined_method_missing = with_scope.check_method_missing(signature, self)
         if defined_method_missing
-          matches = with_scope.lookup_matches(signature, analyze_all: with_literals)
+          matches = with_scope.lookup_matches(signature, analyze_all: with_autocast)
           @uses_with_scope = true
         end
       end
@@ -294,7 +294,7 @@ class Crystal::Call
       # compile errors, which will anyway appear once you add concrete
       # subclasses and instances.
       if def_name == "new" || !(!owner.metaclass? && owner.abstract_leaf?)
-        raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_literals: with_literals)
+        raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast"))
       end
     end
 
@@ -308,10 +308,10 @@ class Crystal::Call
       attach_subclass_observer instance_type.base_type
     end
 
-    instantiate signature, matches, owner, self_type, with_literals
+    instantiate signature, matches, owner, self_type, with_autocast
   end
 
-  def lookup_matches_checking_expansion(owner, signature, search_in_parents = true, with_literals = false)
+  def lookup_matches_checking_expansion(owner, signature, search_in_parents = true, with_autocast = false)
     # If this call is an expansion (because of default or named args) we must
     # resolve the call in the type that defined the original method, without
     # triggering a virtual lookup. But the context of lookup must be preserved.
@@ -319,9 +319,9 @@ class Crystal::Call
       matches = bubbling_exception do
         target = parent_visitor.typed_def.original_owner
         if search_in_parents
-          target.lookup_matches(signature, analyze_all: with_literals)
+          target.lookup_matches(signature, analyze_all: with_autocast)
         else
-          target.lookup_matches_without_parents(signature, analyze_all: with_literals)
+          target.lookup_matches_without_parents(signature, analyze_all: with_autocast)
         end
       end
       matches.each do |match|
@@ -330,37 +330,37 @@ class Crystal::Call
       end
       matches
     else
-      bubbling_exception { lookup_matches_with_signature(owner, signature, search_in_parents, with_literals) }
+      bubbling_exception { lookup_matches_with_signature(owner, signature, search_in_parents, with_autocast) }
     end
   end
 
-  def lookup_matches_with_signature(owner : Program, signature, search_in_parents, with_literals)
+  def lookup_matches_with_signature(owner : Program, signature, search_in_parents, with_autocast)
     location = self.location
     if location && (filename = location.original_filename)
-      matches = owner.lookup_private_matches(filename, signature, analyze_all: with_literals)
+      matches = owner.lookup_private_matches(filename, signature, analyze_all: with_autocast)
     end
 
     if matches
       if matches.empty?
-        matches = owner.lookup_matches(signature, analyze_all: with_literals)
+        matches = owner.lookup_matches(signature, analyze_all: with_autocast)
       end
     else
-      matches = owner.lookup_matches(signature, analyze_all: with_literals)
+      matches = owner.lookup_matches(signature, analyze_all: with_autocast)
     end
 
     matches
   end
 
-  def lookup_matches_with_signature(owner, signature, search_in_parents, with_literals)
+  def lookup_matches_with_signature(owner, signature, search_in_parents, with_autocast)
     if search_in_parents
-      owner.lookup_matches(signature, analyze_all: with_literals)
+      owner.lookup_matches(signature, analyze_all: with_autocast)
     else
-      owner.lookup_matches_without_parents(signature, analyze_all: with_literals)
+      owner.lookup_matches_without_parents(signature, analyze_all: with_autocast)
     end
   end
 
-  def instantiate(signature, matches, owner, self_type, with_literals)
-    matches.each &.remove_literals if with_literals
+  def instantiate(signature, matches, owner, self_type, with_autocast)
+    matches.each &.remove_literals if with_autocast
 
     block = @block
 
@@ -631,7 +631,7 @@ class Crystal::Call
     end
   end
 
-  def lookup_super_matches(arg_types, named_args_types, with_literals)
+  def lookup_super_matches(arg_types, named_args_types, with_autocast)
     if scope.is_a?(Program)
       raise "there's no superclass in this scope"
     end
@@ -669,16 +669,16 @@ class Crystal::Call
     if parents && parents.size > 0
       parents.each_with_index do |parent, i|
         if parent.lookup_first_def(enclosing_def.name, block)
-          return lookup_matches_in_type(parent, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize, search_in_toplevel: false, with_literals: with_literals)
+          return lookup_matches_in_type(parent, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize, search_in_toplevel: false, with_autocast: with_autocast)
         end
       end
-      lookup_matches_in_type(parents.last, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize, search_in_toplevel: false, with_literals: with_literals)
+      lookup_matches_in_type(parents.last, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize, search_in_toplevel: false, with_autocast: with_autocast)
     else
       raise "there's no superclass in this scope"
     end
   end
 
-  def lookup_previous_def_matches(arg_types, named_args_types, with_literals)
+  def lookup_previous_def_matches(arg_types, named_args_types, with_autocast)
     enclosing_def = enclosing_def("previous_def")
 
     previous_item = enclosing_def.previous
@@ -694,14 +694,14 @@ class Crystal::Call
     matches = Matches.new([match] of Match, true)
 
     unless signature.match(previous_item, context)
-      raise_matches_not_found scope, previous.name, arg_types, named_args_types, matches, with_literals: with_literals
+      raise_matches_not_found scope, previous.name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast")
     end
 
     unless scope.is_a?(Program)
       parent_visitor.check_self_closured
     end
 
-    typed_defs = instantiate signature, matches, scope, self_type: nil, with_literals: with_literals
+    typed_defs = instantiate signature, matches, scope, self_type: nil, with_autocast: with_autocast
     typed_defs.each do |typed_def|
       typed_def.next = parent_visitor.typed_def
     end
