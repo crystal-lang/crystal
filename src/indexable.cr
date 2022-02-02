@@ -753,7 +753,7 @@ module Indexable(T)
   end
 
   # Returns the index of the first object in `self` for which the block
-  # returns `true`, starting from the given *offset*, or `nil` if no match
+  # is truthy, starting from the given *offset*, or `nil` if no match
   # is found.
   #
   # ```
@@ -828,7 +828,7 @@ module Indexable(T)
   end
 
   # Returns the index of the first object in `self` for which the block
-  # returns `true`, starting from the last object, or `nil` if no match
+  # is truthy, starting from the last object, or `nil` if no match
   # is found.
   #
   # If *offset* is given, the search starts from that index towards the

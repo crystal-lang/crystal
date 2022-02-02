@@ -42,7 +42,7 @@ module Enumerable(T)
   # Must yield this collection's elements to the block.
   abstract def each(& : T ->)
 
-  # Returns `true` if the passed block returns a value other than `false` or `nil`
+  # Returns `true` if the passed block is truthy
   # for all elements of the collection.
   #
   # ```
@@ -67,7 +67,7 @@ module Enumerable(T)
     all? { |e| pattern === e }
   end
 
-  # Returns `true` if none of the elements of the collection is `false` or `nil`.
+  # Returns `true` if all of the elements of the collection are truthy.
   #
   # ```
   # [nil, true, 99].all? # => false
@@ -77,7 +77,7 @@ module Enumerable(T)
     all? &.itself
   end
 
-  # Returns `true` if the passed block returns a value other than `false` or `nil`
+  # Returns `true` if the passed block is truthy
   # for at least one element of the collection.
   #
   # ```
@@ -102,7 +102,7 @@ module Enumerable(T)
     any? { |e| pattern === e }
   end
 
-  # Returns `true` if at least one of the collection members is not `false` or `nil`.
+  # Returns `true` if at least one of the collection's members is truthy.
   #
   # ```
   # [nil, true, 99].any? # => true
@@ -239,7 +239,7 @@ module Enumerable(T)
   end
 
   # Returns the number of elements in the collection for which
-  # the passed block returns `true`.
+  # the passed block is truthy.
   #
   # ```
   # [1, 2, 3, 4].count { |i| i % 2 == 0 } # => 2
@@ -1244,7 +1244,7 @@ module Enumerable(T)
     value <=> memo || raise ArgumentError.new("Comparison of #{value} and #{memo} failed")
   end
 
-  # Returns `true` if the passed block returns `true`
+  # Returns `true` if the passed block is truthy
   # for none of the elements of the collection.
   #
   # ```
@@ -1269,7 +1269,7 @@ module Enumerable(T)
     none? { |e| pattern === e }
   end
 
-  # Returns `true` if all of the elements of the collection are `false` or `nil`.
+  # Returns `true` if all of the elements of the collection are falsey.
   #
   # ```
   # [nil, false].none?       # => true
@@ -1281,7 +1281,7 @@ module Enumerable(T)
     none? &.itself
   end
 
-  # Returns `true` if the passed block returns `true`
+  # Returns `true` if the passed block is truthy
   # for exactly one of the elements of the collection.
   #
   # ```
@@ -1310,7 +1310,7 @@ module Enumerable(T)
   end
 
   # Returns `true` if only one element in this enumerable
-  # is _truthy_.
+  # is truthy.
   #
   # ```
   # [1, false, false].one? # => true
@@ -1323,8 +1323,8 @@ module Enumerable(T)
   end
 
   # Returns a `Tuple` with two arrays. The first one contains the elements
-  # in the collection for which the passed block returned `true`,
-  # and the second one those for which it returned `false`.
+  # in the collection for which the passed block is truthy,
+  # and the second one those for which the block is falsey.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].partition { |i| i % 2 == 0 } # => {[2, 4, 6], [1, 3, 5]}
@@ -1339,7 +1339,7 @@ module Enumerable(T)
   end
 
   # Returns an `Array` with all the elements in the collection for which
-  # the passed block returns `false`.
+  # the passed block is falsey.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].reject { |i| i % 2 == 0 } # => [1, 3, 5]
@@ -1442,7 +1442,7 @@ module Enumerable(T)
   end
 
   # Returns an `Array` with all the elements in the collection for which
-  # the passed block returns `true`.
+  # the passed block is truthy.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].select { |i| i % 2 == 0 } # => [2, 4, 6]
@@ -1517,7 +1517,7 @@ module Enumerable(T)
   end
 
   # Skips elements up to, but not including, the first element for which
-  # the block returns `nil` or `false` and returns an `Array`
+  # the block is falsey, and returns an `Array`
   # containing the remaining elements.
   #
   # ```
@@ -1725,7 +1725,7 @@ module Enumerable(T)
     ary
   end
 
-  # Passes elements to the block until the block returns `nil` or `false`,
+  # Passes elements to the block until the block returns a falsey value,
   # then stops iterating and returns an `Array` of all prior elements.
   #
   # ```
