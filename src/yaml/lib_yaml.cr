@@ -1,10 +1,6 @@
 require "./enums"
 
-{% if compare_versions(Crystal::VERSION, "0.35.0-0") >= 0 %}
-  @[Link("yaml", pkg_config: "yaml-0.1")]
-{% else %}
-  @[Link("yaml")]
-{% end %}
+@[Link("yaml", pkg_config: "yaml-0.1")]
 lib LibYAML
   alias Int = LibC::Int
 

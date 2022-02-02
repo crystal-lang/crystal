@@ -1,3 +1,5 @@
+require "crystal/system/path"
+
 # A `Path` represents a filesystem path and allows path-handling operations
 # such as querying its components as well as semantic manipulations.
 #
@@ -708,7 +710,7 @@ struct Path
     if home
       if name == "~"
         name = resolve_home(home).to_s
-      elsif name.starts_with?("~/")
+      elsif name.starts_with?("~/") || (windows? && name.starts_with?("~\\"))
         name = resolve_home(home).join(name.byte_slice(2, name.bytesize - 2)).to_s
       end
     end
@@ -1359,6 +1361,6 @@ struct Path
 
   # Returns the path of the home directory of the current user.
   def self.home : Path
-    new ENV["HOME"]
+    new(Crystal::System::Path.home)
   end
 end

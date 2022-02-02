@@ -55,6 +55,8 @@ module Crystal
         interpret_env(node)
       when "flag?", "host_flag?"
         interpret_flag?(node)
+      when "parse_type"
+        interpret_parse_type(node)
       when "puts"
         interpret_puts(node)
       when "p", "pp"
@@ -153,6 +155,29 @@ module Crystal
                   raise "Bug: unexpected macro method #{node.name}"
                 end
         @last = BoolLiteral.new(flags.includes?(flag_name))
+      end
+    end
+
+    def interpret_parse_type(node)
+      interpret_check_args_toplevel do |arg|
+        arg.accept self
+        type_name = case last = @last
+                    when StringLiteral then last.value
+                    else
+                      arg.raise "argument to parse_type must be a StringLiteral, not #{last.class_desc}"
+                    end
+
+        arg.raise "argument to parse_type cannot be an empty value" if type_name.blank?
+
+        begin
+          parser = Crystal::Parser.new type_name
+          parser.next_token
+          type = parser.parse_bare_proc_type
+          parser.check :EOF
+          @last = type
+        rescue ex : Crystal::SyntaxException
+          arg.raise "Invalid type name: #{type_name.inspect}"
+        end
       end
     end
 
@@ -526,16 +551,18 @@ module Crystal
 
     def to_number
       case @kind
-      when :i8  then @value.to_i8
-      when :i16 then @value.to_i16
-      when :i32 then @value.to_i32
-      when :i64 then @value.to_i64
-      when :u8  then @value.to_u8
-      when :u16 then @value.to_u16
-      when :u32 then @value.to_u32
-      when :u64 then @value.to_u64
-      when :f32 then @value.to_f32
-      when :f64 then @value.to_f64
+      when :i8   then @value.to_i8
+      when :i16  then @value.to_i16
+      when :i32  then @value.to_i32
+      when :i64  then @value.to_i64
+      when :i128 then @value.to_i128
+      when :u8   then @value.to_u8
+      when :u16  then @value.to_u16
+      when :u32  then @value.to_u32
+      when :u64  then @value.to_u64
+      when :u128 then @value.to_u128
+      when :f32  then @value.to_f32
+      when :f64  then @value.to_f64
       else
         raise "Unknown kind: #{@kind}"
       end
@@ -568,20 +595,7 @@ module Crystal
         interpret_check_args do |arg|
           case arg
           when RangeLiteral
-            from, to = arg.from, arg.to
-            from = interpreter.accept(from)
-            to = interpreter.accept(to)
-
-            unless from.is_a?(NumberLiteral)
-              raise "range from in StringLiteral#[] must be a number, not #{from.class_desc}: #{from}"
-            end
-
-            unless to.is_a?(NumberLiteral)
-              raise "range to in StringLiteral#[] must be a number, not #{to.class_desc}: #{from}"
-            end
-
-            from, to = from.to_number.to_i, to = to.to_number.to_i
-            range = Range.new(from, to, arg.exclusive?)
+            range = arg.interpret_to_nilable_range(interpreter)
             StringLiteral.new(@value[range])
           else
             raise "wrong argument for StringLiteral#[] (#{arg.class_desc}): #{arg}"
@@ -785,7 +799,7 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "expressions"
-        interpret_check_args { ArrayLiteral.new(expressions) }
+        interpret_check_args { ArrayLiteral.map(expressions, &.itself) }
       else
         super
       end
@@ -1068,24 +1082,47 @@ module Crystal
     end
 
     def interpret_to_range(interpreter)
-      from = self.from
-      to = self.to
+      node = interpreter.accept(self.from)
+      from = case node
+             when NumberLiteral
+               node.to_number.to_i
+             else
+               raise "range begin must be a NumberLiteral, not #{node.class_desc}"
+             end
 
-      from = interpreter.accept(from)
-      to = interpreter.accept(to)
+      node = interpreter.accept(self.to)
+      to = case node
+           when NumberLiteral
+             node.to_number.to_i
+           else
+             raise "range end must be a NumberLiteral, not #{node.class_desc}"
+           end
 
-      unless from.is_a?(NumberLiteral)
-        raise "range begin must be a NumberLiteral, not #{from.class_desc}"
-      end
+      Range.new(from, to, self.exclusive?)
+    end
 
-      unless to.is_a?(NumberLiteral)
-        raise "range end must be a NumberLiteral, not #{to.class_desc}"
-      end
+    def interpret_to_nilable_range(interpreter)
+      node = interpreter.accept(self.from)
+      from = case node
+             when NumberLiteral
+               node.to_number.to_i
+             when NilLiteral, Nop
+               nil
+             else
+               raise "range begin must be a NumberLiteral | NilLiteral | Nop, not #{node.class_desc}"
+             end
 
-      from = from.to_number.to_i
-      to = to.to_number.to_i
+      node = interpreter.accept(self.to)
+      to = case node
+           when NumberLiteral
+             node.to_number.to_i
+           when NilLiteral, Nop
+             nil
+           else
+             raise "range end must be a NumberLiteral | NilLiteral | Nop, not #{node.class_desc}"
+           end
 
-      self.exclusive? ? (from...to) : (from..to)
+      Range.new(from, to, self.exclusive?)
     end
   end
 
@@ -1172,9 +1209,19 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "inputs"
-        interpret_check_args { ArrayLiteral.new(@inputs || [] of ASTNode) }
+        interpret_check_args do
+          if inputs = @inputs
+            ArrayLiteral.map(inputs, &.itself)
+          else
+            ArrayLiteral.new
+          end
+        end
       when "output"
         interpret_check_args { @output || NilLiteral.new }
+      when "resolve"
+        interpret_check_args { interpreter.resolve(self) }
+      when "resolve?"
+        interpret_check_args { interpreter.resolve?(self) || NilLiteral.new }
       else
         super
       end
@@ -1184,7 +1231,7 @@ module Crystal
   class ProcLiteral
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
-      when "args", "body"
+      when "args", "body", "return_type"
         @def.interpret(method, args, named_args, block, interpreter, location)
       else
         super
@@ -1200,7 +1247,7 @@ module Crystal
       when "name"
         interpret_check_args { MacroId.new(@name) }
       when "args"
-        interpret_check_args { ArrayLiteral.new(@args) }
+        interpret_check_args { ArrayLiteral.map(@args, &.itself) }
       else
         super
       end
@@ -1277,7 +1324,7 @@ module Crystal
       when "resolve?"
         interpret_check_args { interpreter.resolve?(self) || NilLiteral.new }
       when "types"
-        interpret_check_args { ArrayLiteral.new(@types) }
+        interpret_check_args { ArrayLiteral.map(@types, &.itself) }
       else
         super
       end
@@ -1320,6 +1367,14 @@ module Crystal
         interpret_check_args { BoolLiteral.new(@yields != nil) }
       when "return_type"
         interpret_check_args { @return_type || Nop.new }
+      when "free_vars"
+        interpret_check_args do
+          if (free_vars = @free_vars) && !free_vars.empty?
+            ArrayLiteral.map(free_vars) { |free_var| MacroId.new(free_var) }
+          else
+            empty_no_return_array
+          end
+        end
       when "body"
         interpret_check_args { @body }
       when "receiver"
@@ -1328,6 +1383,8 @@ module Crystal
         interpret_check_args do
           visibility_to_symbol(@visibility)
         end
+      when "abstract?"
+        interpret_check_args { BoolLiteral.new(@abstract) }
       when "annotation"
         fetch_annotation(self, method, args, named_args, block) do |type|
           self.annotation(type)
@@ -1389,6 +1446,21 @@ module Crystal
         interpret_check_args { @offsetof_type }
       when "offset"
         interpret_check_args { @offset }
+      else
+        super
+      end
+    end
+  end
+
+  class Metaclass
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "instance"
+        interpret_check_args { @name }
+      when "resolve"
+        interpret_check_args { interpreter.resolve(self) }
+      when "resolve?"
+        interpret_check_args { interpreter.resolve?(self) || NilLiteral.new }
       else
         super
       end
@@ -1893,6 +1965,8 @@ module Crystal
         interpret_check_args { self.block || Nop.new }
       when "block_arg"
         interpret_check_args { self.block_arg || Nop.new }
+      when "global?"
+        interpret_check_args { BoolLiteral.new(@global) }
       else
         super
       end
@@ -1944,6 +2018,8 @@ module Crystal
         interpret_check_args { ArrayLiteral.map whens, &.itself }
       when "else"
         interpret_check_args { self.else || Nop.new }
+      when "exhaustive?"
+        interpret_check_args { BoolLiteral.new(@exhaustive) }
       else
         super
       end
@@ -1954,9 +2030,67 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "conds"
-        interpret_check_args { ArrayLiteral.new(conds) }
+        interpret_check_args { ArrayLiteral.map(conds, &.itself) }
       when "body"
         interpret_check_args { body }
+      when "exhaustive?"
+        interpret_check_args { BoolLiteral.new(@exhaustive) }
+      else
+        super
+      end
+    end
+  end
+
+  class ExceptionHandler
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "body"
+        interpret_check_args { @body }
+      when "rescues"
+        interpret_check_args { (rescues = @rescues) ? ArrayLiteral.map(rescues, &.itself) : NilLiteral.new }
+      when "else"
+        interpret_check_args { @else || Nop.new }
+      when "ensure"
+        interpret_check_args { @ensure || Nop.new }
+      else
+        super
+      end
+    end
+  end
+
+  class Rescue
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "body"
+        interpret_check_args { body }
+      when "types"
+        interpret_check_args { (types = @types) ? ArrayLiteral.map(types, &.itself) : NilLiteral.new }
+      when "name"
+        interpret_check_args { (name = @name) ? MacroId.new(name) : Nop.new }
+      else
+        super
+      end
+    end
+  end
+
+  class ControlExpression
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "exp"
+        interpret_check_args { exp || Nop.new }
+      else
+        super
+      end
+    end
+  end
+
+  class Yield
+    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
+      case method
+      when "expressions"
+        interpret_check_args { ArrayLiteral.map(@exps, &.itself) }
+      when "scope"
+        interpret_check_args { scope || Nop.new }
       else
         super
       end
@@ -1980,9 +2114,9 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "targets"
-        interpret_check_args { ArrayLiteral.new(targets) }
+        interpret_check_args { ArrayLiteral.map(targets, &.itself) }
       when "values"
-        interpret_check_args { ArrayLiteral.new(values) }
+        interpret_check_args { ArrayLiteral.map(values, &.itself) }
       else
         super
       end
@@ -2120,7 +2254,7 @@ module Crystal
       when "name"
         interpret_check_args { name }
       when "type_vars"
-        interpret_check_args { ArrayLiteral.new(type_vars) }
+        interpret_check_args { ArrayLiteral.map(type_vars, &.itself) }
       when "named_args"
         interpret_check_args do
           if named_args = @named_args
@@ -2144,6 +2278,8 @@ module Crystal
   class Annotation
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
+      when "name"
+        interpret_check_args { @path }
       when "[]"
         interpret_check_args do |arg|
           case arg
@@ -2164,7 +2300,7 @@ module Crystal
         end
       when "args"
         interpret_check_args do
-          TupleLiteral.new self.args
+          TupleLiteral.map self.args, &.itself
         end
       when "named_args"
         interpret_check_args do
@@ -2356,7 +2492,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
           index = arg.to_number.to_i
           value = object.elements[index]? || Crystal::NilLiteral.new
         when Crystal::RangeLiteral
-          range = arg.interpret_to_range(interpreter)
+          range = arg.interpret_to_nilable_range(interpreter)
           begin
             klass.new(object.elements[range])
           rescue ex

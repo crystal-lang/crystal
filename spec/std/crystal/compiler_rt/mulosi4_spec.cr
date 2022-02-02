@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 
 # Ported from https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/test/builtins/Unit/mulosi4_test.c
 

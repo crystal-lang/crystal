@@ -81,6 +81,9 @@ module Crystal
       # A module class can't be restricted into a class
       return nil if type1.instance_type.module?
 
+      # `T+.class` is always a subtype of `Class`
+      return type2 if type1 == type1.program.class_type
+
       restricted = common_descendent(type1.instance_type, type2.instance_type.base_type)
       restricted.try(&.metaclass)
     end

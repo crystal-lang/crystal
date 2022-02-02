@@ -289,6 +289,175 @@ describe "BitArray" do
     end
   end
 
+  describe "#none?" do
+    context "without block" do
+      it "returns true if no bits are set" do
+        from_int(0, 0).none?.should be_true
+        from_int(1, 0b0).none?.should be_true
+        from_int(1, 0b1).none?.should be_false
+        from_int(2, 0b00).none?.should be_true
+        from_int(2, 0b01).none?.should be_false
+        from_int(2, 0b10).none?.should be_false
+        from_int(2, 0b11).none?.should be_false
+        from_int(32, 0b00000000_00000000_00000000_00000000_u32).none?.should be_true
+        from_int(32, 0b00000000_00000000_00000000_00000001_u32).none?.should be_false
+        from_int(32, 0b00000000_00000000_00010000_00000000_u32).none?.should be_false
+        from_int(32, 0b10000000_00000000_00000000_00000000_u32).none?.should be_false
+        from_int(34, 0b00_00000000_00000000_00000000_00000000_u64).none?.should be_true
+        from_int(34, 0b00_00000000_00000000_00000000_00000001_u64).none?.should be_false
+        from_int(34, 0b00_00000000_00000000_00010000_00000000_u64).none?.should be_false
+        from_int(34, 0b00_10000000_00000000_00000000_00000000_u64).none?.should be_false
+        from_int(34, 0b10_00000000_00000000_00000000_00000000_u64).none?.should be_false
+      end
+    end
+  end
+
+  describe "#any?" do
+    context "without block" do
+      it "returns true if any bits are set" do
+        from_int(0, 0).any?.should be_false
+        from_int(1, 0b0).any?.should be_false
+        from_int(1, 0b1).any?.should be_true
+        from_int(2, 0b00).any?.should be_false
+        from_int(2, 0b01).any?.should be_true
+        from_int(2, 0b10).any?.should be_true
+        from_int(2, 0b11).any?.should be_true
+        from_int(32, 0b00000000_00000000_00000000_00000000_u32).any?.should be_false
+        from_int(32, 0b00000000_00000000_00000000_00000001_u32).any?.should be_true
+        from_int(32, 0b00000000_00000000_00010000_00000000_u32).any?.should be_true
+        from_int(32, 0b10000000_00000000_00000000_00000000_u32).any?.should be_true
+        from_int(34, 0b00_00000000_00000000_00000000_00000000_u64).any?.should be_false
+        from_int(34, 0b00_00000000_00000000_00000000_00000001_u64).any?.should be_true
+        from_int(34, 0b00_00000000_00000000_00010000_00000000_u64).any?.should be_true
+        from_int(34, 0b00_10000000_00000000_00000000_00000000_u64).any?.should be_true
+        from_int(34, 0b10_00000000_00000000_00000000_00000000_u64).any?.should be_true
+      end
+    end
+  end
+
+  describe "#all?" do
+    context "without block" do
+      it "returns true if all bits are set" do
+        from_int(0, 0).all?.should be_true
+        from_int(1, 0b0).all?.should be_false
+        from_int(1, 0b1).all?.should be_true
+        from_int(2, 0b00).all?.should be_false
+        from_int(2, 0b01).all?.should be_false
+        from_int(2, 0b10).all?.should be_false
+        from_int(2, 0b11).all?.should be_true
+        from_int(32, 0b11111111_11111111_11111111_11111111_u32).all?.should be_true
+        from_int(32, 0b11111111_11111111_11111111_11111110_u32).all?.should be_false
+        from_int(32, 0b11111111_11111111_11101111_11111111_u32).all?.should be_false
+        from_int(32, 0b01111111_11111111_11111111_11111111_u32).all?.should be_false
+        from_int(34, 0b11_11111111_11111111_11111111_11111111_u64).all?.should be_true
+        from_int(34, 0b11_11111111_11111111_11111111_11111110_u64).all?.should be_false
+        from_int(34, 0b11_11111111_11111111_11101111_11111111_u64).all?.should be_false
+        from_int(34, 0b11_01111111_11111111_11111111_11111111_u64).all?.should be_false
+        from_int(34, 0b01_11111111_11111111_11111111_11111111_u64).all?.should be_false
+      end
+    end
+  end
+
+  describe "#includes?" do
+    it "returns whether the given bit is included" do
+      ary = BitArray.new(0)
+      ary.includes?(true).should be_false
+      ary.includes?(false).should be_false
+
+      ary = BitArray.new(1)
+      ary.includes?(true).should be_false
+      ary.includes?(false).should be_true
+      ary[0] = true
+      ary.includes?(true).should be_true
+      ary.includes?(false).should be_false
+
+      ary = BitArray.new(32, true)
+      ary.includes?(true).should be_true
+      ary.includes?(false).should be_false
+      ary[6] = false
+      ary.includes?(true).should be_true
+      ary.includes?(false).should be_true
+
+      ary = BitArray.new(34)
+      ary.includes?(true).should be_false
+      ary.includes?(false).should be_true
+      ary[6] = true
+      ary.includes?(true).should be_true
+      ary.includes?(false).should be_true
+    end
+  end
+
+  describe "#one?" do
+    it "returns true if exactly one bit is set" do
+      from_int(0, 0).one?.should be_false
+      from_int(1, 0b0).one?.should be_false
+      from_int(1, 0b1).one?.should be_true
+      from_int(2, 0b00).one?.should be_false
+      from_int(2, 0b01).one?.should be_true
+      from_int(2, 0b10).one?.should be_true
+      from_int(2, 0b11).one?.should be_false
+      from_int(32, 0b00000000_00000000_00000000_00000000_u32).one?.should be_false
+      from_int(32, 0b00000000_00000000_00000000_00000001_u32).one?.should be_true
+      from_int(32, 0b10000000_00000000_00000000_00000000_u32).one?.should be_true
+      from_int(32, 0b10000000_00000000_00000000_00000001_u32).one?.should be_false
+      from_int(34, 0b00_00000000_00000000_00000000_00000000_u64).one?.should be_false
+      from_int(34, 0b00_00000000_00000000_00000000_00000001_u64).one?.should be_true
+      from_int(34, 0b00_00000000_00000000_00010000_00000000_u64).one?.should be_true
+      from_int(34, 0b10_00000000_00000000_00000000_00000000_u64).one?.should be_true
+      from_int(34, 0b00_00000000_00000000_00010000_00000001_u64).one?.should be_false
+      from_int(34, 0b01_00000000_00000000_00000000_00000001_u64).one?.should be_false
+      from_int(34, 0b11_00000000_00000000_00000000_00000000_u64).one?.should be_false
+    end
+  end
+
+  describe "#count" do
+    context "without block" do
+      it "returns the number of bits set" do
+        from_int(0, 0).count(true).should eq(0)
+        from_int(1, 0b0).count(true).should eq(0)
+        from_int(1, 0b1).count(true).should eq(1)
+        from_int(2, 0b00).count(true).should eq(0)
+        from_int(2, 0b01).count(true).should eq(1)
+        from_int(2, 0b10).count(true).should eq(1)
+        from_int(2, 0b11).count(true).should eq(2)
+        from_int(32, 0b00000000_00000000_00000000_00000000_u32).count(true).should eq(0)
+        from_int(32, 0b11000101_00010111_11000001_00011101_u32).count(true).should eq(15)
+        from_int(32, 0b11111111_11111111_11111111_11111111_u32).count(true).should eq(32)
+        from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64).count(true).should eq(10)
+      end
+
+      it "returns the number of bits cleared" do
+        from_int(0, 0).count(false).should eq(0)
+        from_int(1, 0b0).count(false).should eq(1)
+        from_int(1, 0b1).count(false).should eq(0)
+        from_int(2, 0b00).count(false).should eq(2)
+        from_int(2, 0b01).count(false).should eq(1)
+        from_int(2, 0b10).count(false).should eq(1)
+        from_int(2, 0b11).count(false).should eq(0)
+        from_int(32, 0b00000000_00000000_00000000_00000000_u32).count(false).should eq(32)
+        from_int(32, 0b11000101_00010111_11000001_00011101_u32).count(false).should eq(17)
+        from_int(32, 0b11111111_11111111_11111111_11111111_u32).count(false).should eq(0)
+        from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64).count(false).should eq(35)
+      end
+    end
+  end
+
+  describe "#tally" do
+    it "tallies the number of set and cleared bits" do
+      from_int(0, 0).tally.should eq({} of Bool => Int32)
+      from_int(1, 0b0).tally.should eq({false => 1})
+      from_int(1, 0b1).tally.should eq({true => 1})
+      from_int(2, 0b00).tally.should eq({false => 2})
+      from_int(2, 0b01).tally.should eq({true => 1, false => 1})
+      from_int(2, 0b10).tally.should eq({true => 1, false => 1})
+      from_int(2, 0b11).tally.should eq({true => 2})
+      from_int(32, 0b00000000_00000000_00000000_00000000_u32).tally.should eq({false => 32})
+      from_int(32, 0b11000101_00010111_11000001_00011101_u32).tally.should eq({true => 15, false => 17})
+      from_int(32, 0b11111111_11111111_11111111_11111111_u32).tally.should eq({true => 32})
+      from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64).tally.should eq({true => 10, false => 35})
+    end
+  end
+
   describe "#toggle" do
     it "toggles a bit" do
       ary = BitArray.new(32)
@@ -366,6 +535,16 @@ describe "BitArray" do
       ary.toggle(30..35)
       ary[24..].should eq(from_int(16, 0b00110000_10100101))
     end
+
+    it "toggles zero bits correctly" do
+      ary = BitArray.new(32)
+      ary.toggle(0, 0)
+      ary.none?.should be_true
+      ary.toggle(32, 0)
+      ary.none?.should be_true
+      ary.toggle(32, 2)
+      ary.none?.should be_true
+    end
   end
 
   it "inverts all bits" do
@@ -382,6 +561,99 @@ describe "BitArray" do
 
     ary.invert
     ary.count { |b| b }.should eq(2)
+  end
+
+  describe "#fill" do
+    context "without block" do
+      it "clears all bits" do
+        ba = BitArray.new(7, true)
+        ba.fill(false).none?.should be_true
+        ba.none?.should be_true
+
+        ba = BitArray.new(32, true)
+        ba.fill(false).none?.should be_true
+        ba.none?.should be_true
+
+        ba = BitArray.new(100, true)
+        ba.fill(false).none?.should be_true
+        ba.none?.should be_true
+      end
+
+      it "sets all bits" do
+        ba = BitArray.new(7)
+        ba.fill(true).all?.should be_true
+        ba.all?.should be_true
+        assert_no_unused_bits ba
+
+        ba = BitArray.new(32)
+        ba.fill(true).all?.should be_true
+        ba.all?.should be_true
+
+        ba = BitArray.new(100)
+        ba.fill(true).all?.should be_true
+        ba.all?.should be_true
+        assert_no_unused_bits ba
+      end
+    end
+
+    context "without block, with start and count" do
+      it "sets or clears a subrange of bits" do
+        ba = from_int(5, 0b01011)
+        ba.fill(true, 1, 3).should eq(from_int(5, 0b01111))
+        ba.should eq(from_int(5, 0b01111))
+        ba.fill(false, 2, 5).should eq(from_int(5, 0b01000))
+        ba.should eq(from_int(5, 0b01000))
+        ba.fill(true, -2, 7).should eq(from_int(5, 0b01011))
+        ba.should eq(from_int(5, 0b01011))
+        assert_no_unused_bits ba
+
+        ba = from_int(8, 0b11010001)
+        ba.fill(false, 1, 3).should eq(from_int(8, 0b10000001))
+        ba.should eq(from_int(8, 0b10000001))
+        ba.fill(true, 4, 5).should eq(from_int(8, 0b10001111))
+        ba.should eq(from_int(8, 0b10001111))
+        ba.fill(true, 8, 0).should eq(from_int(8, 0b10001111))
+        ba.should eq(from_int(8, 0b10001111))
+        ba.fill(true, 8, 10).should eq(from_int(8, 0b10001111))
+        ba.should eq(from_int(8, 0b10001111))
+        ba.fill(true, -6, 0).should eq(from_int(8, 0b10001111))
+        ba.should eq(from_int(8, 0b10001111))
+
+        ba = from_int(32, 0b11000101_00011111_11000001_00011101_u32)
+        ba.fill(true, 6, 15).should eq(from_int(32, 0b11000111_11111111_11111001_00011101_u32))
+        ba.should eq(from_int(32, 0b11000111_11111111_11111001_00011101_u32))
+        ba.fill(false, -20, 12).should eq(from_int(32, 0b11000111_11110000_00000000_00011101_u32))
+        ba.should eq(from_int(32, 0b11000111_11110000_00000000_00011101_u32))
+        ba.fill(true, 23, 2).should eq(from_int(32, 0b11000111_11110000_00000001_10011101_u32))
+        ba.should eq(from_int(32, 0b11000111_11110000_00000001_10011101_u32))
+        ba.fill(false, 24, 0).should eq(from_int(32, 0b11000111_11110000_00000001_10011101_u32))
+        ba.should eq(from_int(32, 0b11000111_11110000_00000001_10011101_u32))
+      end
+
+      it "raises if start index is out of range" do
+        expect_raises(IndexError) { BitArray.new(7).fill(true, 8, 0) }
+        expect_raises(IndexError) { BitArray.new(7).fill(true, -8, 0) }
+      end
+    end
+
+    context "without block, with range" do
+      it "sets or clears a subrange of bits" do
+        ba = from_int(5, 0b01011)
+        ba.fill(true, 1..3).should eq(from_int(5, 0b01111))
+        ba.should eq(from_int(5, 0b01111))
+        ba.fill(false, 2..).should eq(from_int(5, 0b01000))
+        ba.should eq(from_int(5, 0b01000))
+        ba.fill(true, ...-2).should eq(from_int(5, 0b11100))
+        ba.should eq(from_int(5, 0b11100))
+        ba.fill(true, 0...0).should eq(from_int(5, 0b11100))
+        ba.should eq(from_int(5, 0b11100))
+      end
+
+      it "raises if start index is out of range" do
+        expect_raises(IndexError) { BitArray.new(7).fill(true, 8..9) }
+        expect_raises(IndexError) { BitArray.new(7).fill(true, -8...) }
+      end
+    end
   end
 
   describe "#reverse!" do

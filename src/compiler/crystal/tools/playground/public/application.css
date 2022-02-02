@@ -51,6 +51,7 @@ h4 {
   top: 7px;
   left: 7px;
   transform: scale(0.66);
+  height: 1.7em;
 }
 
 @media only screen and (max-width: 992px) {
