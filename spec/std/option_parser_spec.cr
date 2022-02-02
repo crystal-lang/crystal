@@ -248,6 +248,32 @@ describe "OptionParser" do
     expect_doesnt_capture_option [] of String, "-f FLAG"
   end
 
+  describe "gnu_optional_args" do
+    it "doesn't get optional argument for short flag after space" do
+      flag = nil
+      args = %w(-f 123)
+      OptionParser.parse(args, gnu_optional_args: true) do |opts|
+        opts.on("-f [FLAG]", "some flag") do |flag_value|
+          flag = flag_value
+        end
+      end
+      flag.should eq("")
+      args.should eq(%w(123))
+    end
+
+    it "doesn't get optional argument for long flag after space" do
+      flag = nil
+      args = %w(--f 123)
+      OptionParser.parse(args, gnu_optional_args: true) do |opts|
+        opts.on("--f [FLAG]", "some flag") do |flag_value|
+          flag = flag_value
+        end
+      end
+      flag.should eq("")
+      args.should eq(%w(123))
+    end
+  end
+
   it "parses argument when only referenced in long flag" do
     captured = ""
     parser = OptionParser.parse([] of String) do |opts|
