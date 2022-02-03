@@ -295,6 +295,9 @@ describe "String" do
     it { "1z".to_i(62).should eq(97) }
     it { "ZZ".to_i(62).should eq(3843) }
 
+    # Test for #11671
+    it { "0_1".to_i(underscore: true).should eq(1) }
+
     describe "to_i8" do
       it { "127".to_i8.should eq(127) }
       it { "-128".to_i8.should eq(-128) }
@@ -398,27 +401,27 @@ describe "String" do
     end
 
     describe "to_i128" do
-      pending_win32 { "170141183460469231731687303715884105727".to_i128.should eq(Int128::MAX) }
-      pending_win32 { "-170141183460469231731687303715884105728".to_i128.should eq(Int128::MIN) }
-      pending_win32 { expect_raises(ArgumentError) { "170141183460469231731687303715884105728".to_i128 } }
-      pending_win32 { expect_raises(ArgumentError) { "-170141183460469231731687303715884105729".to_i128 } }
+      it { "170141183460469231731687303715884105727".to_i128.should eq(Int128::MAX) }
+      it { "-170141183460469231731687303715884105728".to_i128.should eq(Int128::MIN) }
+      it { expect_raises(ArgumentError) { "170141183460469231731687303715884105728".to_i128 } }
+      it { expect_raises(ArgumentError) { "-170141183460469231731687303715884105729".to_i128 } }
 
-      pending_win32 { "170141183460469231731687303715884105727".to_i128?.should eq(Int128::MAX) }
-      pending_win32 { "170141183460469231731687303715884105728".to_i128?.should be_nil }
-      pending_win32 { "170141183460469231731687303715884105728".to_i128 { 0 }.should eq(0) }
+      it { "170141183460469231731687303715884105727".to_i128?.should eq(Int128::MAX) }
+      it { "170141183460469231731687303715884105728".to_i128?.should be_nil }
+      it { "170141183460469231731687303715884105728".to_i128 { 0 }.should eq(0) }
 
-      pending_win32 { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_i128 } }
+      it { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_i128 } }
     end
 
     describe "to_u128" do
-      pending_win32 { "340282366920938463463374607431768211455".to_u128.should eq(UInt128::MAX) }
-      pending_win32 { "0".to_u128.should eq(0) }
-      pending_win32 { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_u128 } }
-      pending_win32 { expect_raises(ArgumentError) { "-1".to_u128 } }
+      it { "340282366920938463463374607431768211455".to_u128.should eq(UInt128::MAX) }
+      it { "0".to_u128.should eq(0) }
+      it { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_u128 } }
+      it { expect_raises(ArgumentError) { "-1".to_u128 } }
 
-      pending_win32 { "340282366920938463463374607431768211455".to_u128?.should eq(UInt128::MAX) }
-      pending_win32 { "340282366920938463463374607431768211456".to_u128?.should be_nil }
-      pending_win32 { "340282366920938463463374607431768211456".to_u128 { 0 }.should eq(0) }
+      it { "340282366920938463463374607431768211455".to_u128?.should eq(UInt128::MAX) }
+      it { "340282366920938463463374607431768211456".to_u128?.should be_nil }
+      it { "340282366920938463463374607431768211456".to_u128 { 0 }.should eq(0) }
     end
 
     it { "1234".to_i32.should eq(1234) }
@@ -897,6 +900,7 @@ describe "String" do
       it { "日本語日本語".index("本語").should eq(1) }
       it { "\xFF\xFFcrystal".index("crystal").should eq(2) }
       it { "\xFD\x9A\xAD\x50NG".index("PNG").should eq(3) }
+      it { "🧲$".index("✅").should be_nil } # #11745
 
       describe "with offset" do
         it { "foobarbaz".index("ba", 4).should eq(6) }
@@ -1696,9 +1700,9 @@ describe "String" do
     assert_prints "a".dump, %("a")
     assert_prints "\\".dump, %("\\\\")
     assert_prints "\"".dump, %("\\"")
-    assert_prints "\0".inspect, %("\\u0000")
-    assert_prints "\x01".inspect, %("\\u0001")
-    assert_prints "\xFF".inspect, %("\\xFF")
+    assert_prints "\0".dump, %("\\u0000")
+    assert_prints "\x01".dump, %("\\u0001")
+    assert_prints "\xFF".dump, %("\\xFF")
     assert_prints "\a".dump, %("\\a")
     assert_prints "\b".dump, %("\\b")
     assert_prints "\e".dump, %("\\e")
@@ -1746,11 +1750,11 @@ describe "String" do
     assert_prints "á".inspect, %("á")
     assert_prints "\u{81}".inspect, %("\\u0081")
     assert_prints "\u{1F48E}".inspect, %("\u{1F48E}")
-    assert_prints "\uF8FF".dump, %("\\uF8FF")       # private use character (Co)
-    assert_prints "\u202A".dump, %("\\u202A")       # bidi control character (Cf)
-    assert_prints "\u{110BD}".dump, %("\\u{110BD}") # Format character > U+FFFF (Cf)
-    assert_prints "\u00A0".dump, %("\\u00A0")       # white space (Zs)
-    assert_prints "\u200D".dump, %("\\u200D")       # format character (Cf)
+    assert_prints "\uF8FF".inspect, %("\\uF8FF")       # private use character (Co)
+    assert_prints "\u202A".inspect, %("\\u202A")       # bidi control character (Cf)
+    assert_prints "\u{110BD}".inspect, %("\\u{110BD}") # Format character > U+FFFF (Cf)
+    assert_prints "\u00A0".inspect, %("\\u00A0")       # white space (Zs)
+    assert_prints "\u200D".inspect, %("\\u200D")       # format character (Cf)
     assert_prints " ".inspect, %(" ")
   end
 

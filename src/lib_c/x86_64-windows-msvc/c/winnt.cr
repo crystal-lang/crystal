@@ -153,4 +153,19 @@ lib LibC
   {% end %}
 
   fun RtlCaptureContext(contextRecord : CONTEXT*)
+
+  struct EXCEPTION_RECORD64
+    exceptionCode : DWORD
+    exceptionFlags : DWORD
+    exceptionRecord : DWORD64
+    exceptionAddress : DWORD64
+    numberParameters : DWORD
+    __unusedAlignment : DWORD
+    exceptionInformation : DWORD64[15]
+  end
+
+  struct EXCEPTION_POINTERS
+    exceptionRecord : EXCEPTION_RECORD64*
+    contextRecord : CONTEXT*
+  end
 end

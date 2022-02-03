@@ -170,12 +170,22 @@ class Crystal::Repl::Compiler
 
         index = body.as(TupleIndexer).index
         case index
-        when Int32
+        in Int32
           element_type = type.tuple_types[index]
           offset = @context.offset_of(type, index)
           tuple_indexer_known_index(aligned_sizeof_type(type), offset, inner_sizeof_type(element_type), node: node)
-        else
-          node.raise "BUG: missing handling of primitive #{body.name} with range"
+        in Range
+          element_type = @context.program.tuple_of(type.tuple_types[index].map &.as(Type))
+          tuple_size = aligned_sizeof_type(type)
+          index.each do |i|
+            old_offset = @context.offset_of(type, i)
+            new_offset = @context.offset_of(element_type, i - index.begin)
+            element_size = inner_sizeof_type(type.tuple_types[i])
+            tuple_copy_element(tuple_size, old_offset, new_offset, element_size, node: node)
+          end
+          value_size = inner_sizeof_type(element_type)
+          pop(tuple_size - value_size, node: node)
+          push_zeros(aligned_sizeof_type(element_type) - value_size, node: node)
         end
       when NamedTupleInstanceType
         obj.accept self
@@ -199,10 +209,10 @@ class Crystal::Repl::Compiler
         when TupleInstanceType
           index = body.as(TupleIndexer).index
           case index
-          when Int32
+          in Int32
             put_type(type.tuple_types[index].as(Type).metaclass, node: node)
-          else
-            node.raise "BUG: missing handling of primitive #{body.name} with range"
+          in Range
+            put_type(@context.program.tuple_of(type.tuple_types[index].map &.as(Type)), node: node)
           end
         when NamedTupleInstanceType
           index = body.as(TupleIndexer).index
@@ -273,10 +283,9 @@ class Crystal::Repl::Compiler
     when "external_var_get"
       return unless @wants_value
 
-      lib_type = node.obj.not_nil!.type.as(LibType)
       external = node.target_def.as(External)
 
-      fn = @context.c_function(lib_type, external.real_name)
+      fn = @context.c_function(external.real_name)
 
       # Put the symbol address, which is a pointer
       put_u64 fn.address, node: node
@@ -284,7 +293,6 @@ class Crystal::Repl::Compiler
       # Read from the pointer
       pointer_get(inner_sizeof_type(node), node: node)
     when "external_var_set"
-      lib_type = node.obj.not_nil!.type.as(LibType)
       external = node.target_def.as(External)
 
       # pointer_set needs first arg, then obj
@@ -292,7 +300,7 @@ class Crystal::Repl::Compiler
       request_value(arg)
       dup(aligned_sizeof_type(arg), node: nil) if @wants_value
 
-      fn = @context.c_function(lib_type, external.real_name)
+      fn = @context.c_function(external.real_name)
 
       # Put the symbol address, which is a pointer
       put_u64 fn.address, node: node
