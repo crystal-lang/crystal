@@ -134,7 +134,7 @@ module IO::ByteFormat
         def self.encode(int : {{type.id}}, bytes : Bytes)
           buffer = int.unsafe_as(StaticArray(UInt8, {{bytesize}}))
           buffer.reverse! unless SystemEndian == self
-          buffer.to_slice.copy_to(bytes)
+          buffer.to_unsafe.copy_to(bytes.to_unsafe, {{bytesize}})
         end
 
         def self.decode(type : {{type.id}}.class, io : IO)
@@ -146,7 +146,7 @@ module IO::ByteFormat
 
         def self.decode(type : {{type.id}}.class, bytes : Bytes)
           buffer = uninitialized UInt8[{{bytesize}}]
-          bytes.to_slice[0, {{bytesize}}].copy_to(buffer.to_slice)
+          bytes.copy_to(buffer.to_unsafe, {{bytesize}})
           buffer.reverse! unless SystemEndian == self
           buffer.unsafe_as({{type.id}})
         end
