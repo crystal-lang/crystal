@@ -1837,7 +1837,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           args_ffi_types << FFI::Type.pointer
         else
           args_bytesizes << aligned_sizeof_type(arg)
-          args_ffi_types << arg.type.ffi_type
+          args_ffi_types << arg.type.ffi_arg_type
         end
       end
     end
