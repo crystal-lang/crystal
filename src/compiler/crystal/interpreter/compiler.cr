@@ -1809,7 +1809,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         put_i64 0, node: arg
       when StaticArrayInstanceType
         # Static arrays are passed as pointers to C
-        compile_pointerof_node(arg, arg.type)
+        compile_pointerof_node(arg, arg_type)
       else
         request_value(arg)
       end
@@ -1836,8 +1836,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           args_bytesizes << sizeof(Pointer(Void))
           args_ffi_types << FFI::Type.pointer
         else
-          args_bytesizes << aligned_sizeof_type(arg)
-          args_ffi_types << arg.type.ffi_arg_type
+          args_bytesizes << aligned_sizeof_type(arg_type)
+          args_ffi_types << arg_type.ffi_arg_type
         end
       end
     end
