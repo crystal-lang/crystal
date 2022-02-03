@@ -733,6 +733,9 @@ module Crystal
     property else : ASTNode
     property? ternary : Bool
 
+    # The location of the `else` keyword if present.
+    property else_location : Location?
+
     def initialize(@cond, a_then = nil, a_else = nil, @ternary = false)
       @then = Expressions.from a_then
       @else = Expressions.from a_else
@@ -755,6 +758,9 @@ module Crystal
     property cond : ASTNode
     property then : ASTNode
     property else : ASTNode
+
+    # The location of the `else` keyword if present.
+    property else_location : Location?
 
     def initialize(@cond, a_then = nil, a_else = nil)
       @then = Expressions.from a_then
@@ -1665,6 +1671,12 @@ module Crystal
     property ensure : ASTNode?
     property implicit = false
     property suffix = false
+
+    # The location of the `else` keyword if present.
+    property else_location : Location?
+
+    # The location of the `ensure` keyword if present.
+    property ensure_location : Location?
 
     def initialize(body = nil, @rescues = nil, @else = nil, @ensure = nil)
       @body = Expressions.from body
