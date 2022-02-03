@@ -392,7 +392,7 @@ class Crystal::CodeGenVisitor
           end
           node.args.each_with_index do |node_arg, i|
             a_def_arg = a_def.args[i]
-            if node_arg.supports_autocast?(@program.has_flag?("number_autocast"))
+            if node_arg.supports_autocast?(!@program.has_flag?("no_number_autocast"))
               # If a call argument is a literal like 1 or :foo then
               # it will match all the multidispatch overloads because
               # it has a single type and there's no way some overload
@@ -503,7 +503,11 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
-    set_current_debug_location node if @debug.line_numbers?
+    # If *fun_type* is not nil, then this method is being called from
+    # `codegen_primitive_proc_call` and *node* is simply `Proc#call`'s "body";
+    # in that case do not replace line numbers so that call stacks will continue
+    # using the original invocation
+    set_current_debug_location node if @debug.line_numbers? && fun_type.nil?
 
     if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"

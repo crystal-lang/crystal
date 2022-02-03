@@ -11,7 +11,7 @@ module Crystal::TypedDefProcessor
 
   private def process_result(result : Compiler::Result)
     process_type result.program
-    if file_module = result.program.file_module? target_location.original_filename
+    if (filename = target_location.original_filename) && (file_module = result.program.file_module?(filename))
       process_type file_module
     end
   end

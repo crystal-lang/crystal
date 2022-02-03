@@ -32,7 +32,12 @@ struct Exception::CallStack
     end
   {% end %}
 
-  protected def self.unwind
+  def self.setup_crash_handler
+    Signal.setup_segfault_handler
+  end
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_call_stack_unwind)] {% end %}
+  protected def self.unwind : Array(Void*)
     callstack = [] of Void*
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
       bt = data.as(typeof(callstack))

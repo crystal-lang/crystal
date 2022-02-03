@@ -450,29 +450,71 @@ struct Char
     hasher.char(self)
   end
 
-  # Returns a Char that is one codepoint bigger than this char's codepoint.
+  # Returns the successor codepoint after this one.
+  #
+  # This can be used for iterating a range of characters (see `Range#each`).
   #
   # ```
   # 'a'.succ # => 'b'
   # 'あ'.succ # => 'ぃ'
   # ```
   #
-  # This method allows creating a `Range` of chars.
+  # This does not always return `codepoint + 1`. There is a gap in the
+  # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
+  #
+  # ```
+  # '\uD7FF'.succ # => '\uE000'
+  # ```
+  #
+  # Raises `OverflowError` for `Char::MAX`.
+  #
+  # * `#pred` returns the predecessor codepoint.
   def succ : Char
-    (ord + 1).chr
+    case self
+    when '\uD7FF'
+      '\uE000'
+    when MAX
+      raise OverflowError.new("Out of Char range")
+    else
+      (ord + 1).unsafe_chr
+    end
   end
 
-  # Returns a Char that is one codepoint smaller than this char's codepoint.
+  # Returns the predecessor codepoint before this one.
+  #
+  # This can be used for iterating a range of characters (see `Range#each`).
   #
   # ```
   # 'b'.pred # => 'a'
   # 'ぃ'.pred # => 'あ'
   # ```
+  # ```
+  #
+  # This does not always return `codepoint - 1`. There is a gap in the
+  # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
+  #
+  # ```
+  # '\uE000'.pred # => '\uD7FF'
+  # ```
+  #
+  # Raises `OverflowError` for `Char::ZERO`.
+  #
+  # * `#succ` returns the successor codepoint.
   def pred : Char
-    (ord - 1).chr
+    case self
+    when '\uE000'
+      '\uD7FF'
+    when ZERO
+      raise OverflowError.new("Out of Char range")
+    else
+      (ord - 1).unsafe_chr
+    end
   end
 
   # Returns `true` if this char is an ASCII control character.
+  #
+  # This includes the *C0 control codes* (`U+0000` through `U+001F`) and the
+  # *Delete* character (`U+007F`).
   #
   # ```
   # ('\u0000'..'\u0019').each do |char|
@@ -484,7 +526,7 @@ struct Char
   # end
   # ```
   def ascii_control? : Bool
-    ord < 0x20 || (0x7F <= ord <= 0x9F)
+    ord < 0x20 || ord == 0x7F
   end
 
   # Returns `true` if this char is a control character according to unicode.
@@ -522,7 +564,7 @@ struct Char
   # '😀'.inspect      # => "'\u{1F600}'"
   # ```
   #
-  # See `#unicode_escape` for the format used to escape charactes without a
+  # See `#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#dump` additionally escapes all non-ASCII characters.
@@ -555,7 +597,7 @@ struct Char
   # '😀'.dump      # => "'\\u{1F600}'"
   # ```
   #
-  # See `#unicode_escape` for the format used to escape charactes without a
+  # See `#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#inspect` only escapes non-printable characters.
@@ -834,10 +876,11 @@ struct Char
   # 'あ'.to_s # => "あ"
   # ```
   def to_s : String
-    String.new(4) do |buffer|
+    bytesize = self.bytesize
+    String.new(bytesize) do |buffer|
       appender = buffer.appender
       each_byte { |byte| appender << byte }
-      {appender.size, 1}
+      {bytesize, 1}
     end
   end
 

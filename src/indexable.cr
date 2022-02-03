@@ -347,8 +347,6 @@ module Indexable(T)
   end
 
   protected def self.each_cartesian_impl(*indexables : *U) forall U
-    return Iterator.of(Iterator.stop) if indexables.any? &.empty?
-
     {% begin %}
       CartesianProductIteratorT(U, Tuple(
         {% for i in 0...U.size %}
@@ -384,11 +382,7 @@ module Indexable(T)
   # This can be used to prevent many memory allocations when each combination of
   # interest is to be used in a read-only fashion.
   def self.each_cartesian(indexables : Indexable(Indexable), reuse = false)
-    if indexables.any? &.empty?
-      Iterator.of(Iterator.stop)
-    else
-      CartesianProductIteratorN(typeof(indexables), typeof(Enumerable.element_type Enumerable.element_type indexables)).new(indexables, reuse)
-    end
+    CartesianProductIteratorN(typeof(indexables), typeof(Enumerable.element_type Enumerable.element_type indexables)).new(indexables, reuse)
   end
 
   private class CartesianProductIteratorT(Is, Ts)
@@ -759,7 +753,7 @@ module Indexable(T)
   end
 
   # Returns the index of the first object in `self` for which the block
-  # returns `true`, starting from the given *offset*, or `nil` if no match
+  # is truthy, starting from the given *offset*, or `nil` if no match
   # is found.
   #
   # ```
@@ -834,7 +828,7 @@ module Indexable(T)
   end
 
   # Returns the index of the first object in `self` for which the block
-  # returns `true`, starting from the last object, or `nil` if no match
+  # is truthy, starting from the last object, or `nil` if no match
   # is found.
   #
   # If *offset* is given, the search starts from that index towards the

@@ -33,10 +33,16 @@ module Enumerable(T)
     end
   end
 
+  class NotFoundError < Exception
+    def initialize(message = "Element not found")
+      super(message)
+    end
+  end
+
   # Must yield this collection's elements to the block.
   abstract def each(& : T ->)
 
-  # Returns `true` if the passed block returns a value other than `false` or `nil`
+  # Returns `true` if the passed block is truthy
   # for all elements of the collection.
   #
   # ```
@@ -61,7 +67,7 @@ module Enumerable(T)
     all? { |e| pattern === e }
   end
 
-  # Returns `true` if none of the elements of the collection is `false` or `nil`.
+  # Returns `true` if all of the elements of the collection are truthy.
   #
   # ```
   # [nil, true, 99].all? # => false
@@ -71,7 +77,7 @@ module Enumerable(T)
     all? &.itself
   end
 
-  # Returns `true` if the passed block returns a value other than `false` or `nil`
+  # Returns `true` if the passed block is truthy
   # for at least one element of the collection.
   #
   # ```
@@ -96,7 +102,7 @@ module Enumerable(T)
     any? { |e| pattern === e }
   end
 
-  # Returns `true` if at least one of the collection members is not `false` or `nil`.
+  # Returns `true` if at least one of the collection's members is truthy.
   #
   # ```
   # [nil, true, 99].any? # => true
@@ -233,7 +239,7 @@ module Enumerable(T)
   end
 
   # Returns the number of elements in the collection for which
-  # the passed block returns `true`.
+  # the passed block is truthy.
   #
   # ```
   # [1, 2, 3, 4].count { |i| i % 2 == 0 } # => 2
@@ -291,12 +297,14 @@ module Enumerable(T)
   # interest is to be used in a read-only fashion.
   #
   # Chunks of two items can be iterated using `#each_cons_pair`, an optimized
-  # implementation for the special case of `size == 2` which avoids heap
+  # implementation for the special case of `count == 2` which avoids heap
   # allocations.
   def each_cons(count : Int, reuse = false)
     raise ArgumentError.new "Invalid cons size: #{count}" if count <= 0
     if reuse.nil? || reuse.is_a?(Bool)
-      each_cons_internal(count, reuse, Array(T).new(count)) { |slice| yield slice }
+      # we use an initial capacity of double the count, because a second
+      # iteration would have reallocated the array to that capacity anyway
+      each_cons_internal(count, reuse, Array(T).new(count * 2)) { |slice| yield slice }
     else
       each_cons_internal(count, true, reuse) { |slice| yield slice }
     end
@@ -337,7 +345,7 @@ module Enumerable(T)
   #
   # Chunks of more than two items can be iterated using `#each_cons`.
   # This method is just an optimized implementation for the special case of
-  # `size == 2` to avoid heap allocations.
+  # `count == 2` to avoid heap allocations.
   def each_cons_pair(& : (T, T) ->) : Nil
     last_elem = uninitialized T
     first_iteration = true
@@ -462,7 +470,7 @@ module Enumerable(T)
     obj
   end
 
-  # Returns the first element in the collection for which the passed block is `true`.
+  # Returns the first element in the collection for which the passed block is truthy.
   #
   # Accepts an optional parameter *if_none*, to set what gets returned if
   # no element is found (defaults to `nil`).
@@ -477,6 +485,20 @@ module Enumerable(T)
       return elem if yield elem
     end
     if_none
+  end
+
+  # Returns the first element in the collection for which the passed block is truthy.
+  # Raises `Enumerable::NotFoundError` if there is no element for which the block is truthy.
+  #
+  # ```
+  # [1, 2, 3, 4].find! { |i| i > 2 } # => 3
+  # [1, 2, 3, 4].find! { |i| i > 8 } # => raises Enumerable::NotFoundError
+  # ```
+  def find!(& : T ->) : T
+    each do |elem|
+      return elem if yield elem
+    end
+    raise Enumerable::NotFoundError.new
   end
 
   # Returns the first element in the collection,
@@ -617,13 +639,13 @@ module Enumerable(T)
     any? { |e| e == obj }
   end
 
-  # Returns the index of the first element for which the passed block returns `true`.
+  # Returns the index of the first element for which the passed block is truthy.
   #
   # ```
   # ["Alice", "Bob"].index { |name| name.size < 4 } # => 1 (Bob's index)
   # ```
   #
-  # Returns `nil` if the block didn't return `true` for any element.
+  # Returns `nil` if the block is not truthy for any element.
   def index(& : T ->) : Int32?
     each_with_index do |e, i|
       return i if yield e
@@ -631,7 +653,7 @@ module Enumerable(T)
     nil
   end
 
-  # Returns the index of the object *obj* in the collection.
+  # Returns the first index of *obj* in the collection.
   #
   # ```
   # ["Alice", "Bob"].index("Alice") # => 0
@@ -640,6 +662,28 @@ module Enumerable(T)
   # Returns `nil` if *obj* is not in the collection.
   def index(obj) : Int32?
     index { |e| e == obj }
+  end
+
+  # Returns the index of the first element for which the passed block is truthy.
+  #
+  # ```
+  # ["Alice", "Bob"].index! { |name| name.size < 4 } # => 1 (Bob's index)
+  # ```
+  #
+  # Raises `Enumerable::NotFoundError` if there is no element for which the block is truthy.
+  def index!(& : T ->) : Int32
+    index { |e| yield e } || raise Enumerable::NotFoundError.new
+  end
+
+  # Returns the first index of *obj* in the collection.
+  #
+  # ```
+  # ["Alice", "Bob"].index!("Alice") # => 0
+  # ```
+  #
+  # Raises `Enumerable::NotFoundError` if *obj* is not in the collection.
+  def index!(obj) : Int32
+    index! { |e| e == obj }
   end
 
   # Converts an `Enumerable` to a `Hash` by using the value returned by the block
@@ -1200,7 +1244,7 @@ module Enumerable(T)
     value <=> memo || raise ArgumentError.new("Comparison of #{value} and #{memo} failed")
   end
 
-  # Returns `true` if the passed block returns `true`
+  # Returns `true` if the passed block is truthy
   # for none of the elements of the collection.
   #
   # ```
@@ -1225,7 +1269,7 @@ module Enumerable(T)
     none? { |e| pattern === e }
   end
 
-  # Returns `true` if all of the elements of the collection are `false` or `nil`.
+  # Returns `true` if all of the elements of the collection are falsey.
   #
   # ```
   # [nil, false].none?       # => true
@@ -1237,7 +1281,7 @@ module Enumerable(T)
     none? &.itself
   end
 
-  # Returns `true` if the passed block returns `true`
+  # Returns `true` if the passed block is truthy
   # for exactly one of the elements of the collection.
   #
   # ```
@@ -1266,7 +1310,7 @@ module Enumerable(T)
   end
 
   # Returns `true` if only one element in this enumerable
-  # is _truthy_.
+  # is truthy.
   #
   # ```
   # [1, false, false].one? # => true
@@ -1279,8 +1323,8 @@ module Enumerable(T)
   end
 
   # Returns a `Tuple` with two arrays. The first one contains the elements
-  # in the collection for which the passed block returned `true`,
-  # and the second one those for which it returned `false`.
+  # in the collection for which the passed block is truthy,
+  # and the second one those for which the block is falsey.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].partition { |i| i % 2 == 0 } # => {[2, 4, 6], [1, 3, 5]}
@@ -1295,7 +1339,7 @@ module Enumerable(T)
   end
 
   # Returns an `Array` with all the elements in the collection for which
-  # the passed block returns `false`.
+  # the passed block is falsey.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].reject { |i| i % 2 == 0 } # => [1, 3, 5]
@@ -1398,7 +1442,7 @@ module Enumerable(T)
   end
 
   # Returns an `Array` with all the elements in the collection for which
-  # the passed block returns `true`.
+  # the passed block is truthy.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].select { |i| i % 2 == 0 } # => [2, 4, 6]
@@ -1473,7 +1517,7 @@ module Enumerable(T)
   end
 
   # Skips elements up to, but not including, the first element for which
-  # the block returns `nil` or `false` and returns an `Array`
+  # the block is falsey, and returns an `Array`
   # containing the remaining elements.
   #
   # ```
@@ -1681,7 +1725,7 @@ module Enumerable(T)
     ary
   end
 
-  # Passes elements to the block until the block returns `nil` or `false`,
+  # Passes elements to the block until the block returns a falsey value,
   # then stops iterating and returns an `Array` of all prior elements.
   #
   # ```
