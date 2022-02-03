@@ -370,6 +370,16 @@ describe Indexable do
       iter.next.should be_a(Iterator::Stop)
     end
 
+    it "does with 1 other Indexable, without block, combined with select" do
+      iter = SafeIndexable.new(3).each_cartesian(SafeStringIndexable.new(2))
+      iter = iter.select { |(x, y)| x > 0 }
+      iter.next.should eq({1, "0"})
+      iter.next.should eq({1, "1"})
+      iter.next.should eq({2, "0"})
+      iter.next.should eq({2, "1"})
+      iter.next.should be_a(Iterator::Stop)
+    end
+
     it "does with >1 other Indexables, with block" do
       r = [] of Int32 | String
       i1 = SafeIndexable.new(2)
@@ -447,6 +457,22 @@ describe Indexable do
       iter.next.should eq([0, 0])
       iter.next.should eq([0, 1])
       iter.next.should eq([0, 2])
+      iter.next.should eq([1, 0])
+      iter.next.should eq([1, 1])
+      iter.next.should eq([1, 2])
+      iter.next.should eq([2, 0])
+      iter.next.should eq([2, 1])
+      iter.next.should eq([2, 2])
+      iter.next.should be_a(Iterator::Stop)
+
+      iter = Indexable.each_cartesian(SafeNestedIndexable.new(0, 3))
+      iter.next.should eq([] of Int32)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "does with an Indexable of Indexables, without block, combined with select" do
+      iter = Indexable.each_cartesian(SafeNestedIndexable.new(2, 3))
+      iter = iter.select { |(x, y)| x > 0 }
       iter.next.should eq([1, 0])
       iter.next.should eq([1, 1])
       iter.next.should eq([1, 2])

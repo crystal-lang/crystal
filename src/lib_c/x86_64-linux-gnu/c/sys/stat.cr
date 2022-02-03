@@ -46,6 +46,7 @@ lib LibC
 
   fun chmod(file : Char*, mode : ModeT) : Int
   fun fstat(fd : Int, buf : Stat*) : Int
+  fun __fxstat(ver : Int, fd : Int, buf : Stat*) : Int
   fun lstat(file : Char*, buf : Stat*) : Int
   fun __fxstat(ver : Int, fd : Int, buf : Stat*) : Int
   fun __lxstat(ver : Int, file : Char*, buf : Stat*) : Int

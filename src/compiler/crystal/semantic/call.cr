@@ -294,7 +294,7 @@ class Crystal::Call
       # compile errors, which will anyway appear once you add concrete
       # subclasses and instances.
       if def_name == "new" || !(!owner.metaclass? && owner.abstract_leaf?)
-        raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: program.has_flag?("number_autocast"))
+        raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast"))
       end
     end
 
@@ -694,7 +694,7 @@ class Crystal::Call
     matches = Matches.new([match] of Match, true)
 
     unless signature.match(previous_item, context)
-      raise_matches_not_found scope, previous.name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: program.has_flag?("number_autocast")
+      raise_matches_not_found scope, previous.name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast")
     end
 
     unless scope.is_a?(Program)

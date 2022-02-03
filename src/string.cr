@@ -583,11 +583,12 @@ class String
     end
 
     found_digit = false
+    last_is_underscore = true
 
     # Check leading zero
     if ptr.value.unsafe_chr == '0'
       ptr += 1
-
+      last_is_underscore = false
       if prefix
         case ptr.value.unsafe_chr
         when 'b'
@@ -616,7 +617,6 @@ class String
 
     value = int_class.new(0)
     mul_overflow = ~(int_class.new(0)) // base
-    last_is_underscore = true
     invalid = false
 
     digits = (base == 62 ? CHAR_TO_DIGIT62 : CHAR_TO_DIGIT).to_unsafe
@@ -891,10 +891,29 @@ class String
     end
   end
 
+  # Returns the character at *index* or `nil` if it's out of range.
+  #
+  # Negative indices can be used to start counting from the end of the string.
+  #
+  # See `#[]` for a raising alternative.
+  #
+  # ```
+  # "hello"[0]?  # => 'h'
+  # "hello"[1]?  # => 'e'
+  # "hello"[-1]? # => 'o'
+  # "hello"[-2]? # => 'l'
+  # "hello"[5]?  # => nil
+  # ```
   def []?(index : Int) : Char?
     char_at(index) { nil }
   end
 
+  # Returns *str* if *str* is found in this string, or `nil` otherwise.
+  #
+  # ```
+  # "crystal"["cry"]?  # => "cry"
+  # "crystal"["ruby"]? # => nil
+  # ```
   def []?(str : String | Char)
     includes?(str) ? str : nil
   end
@@ -908,6 +927,12 @@ class String
     match[group]? if match
   end
 
+  # Returns *str* if *str* is found in this string.
+  #
+  # ```
+  # "crystal"["cry"]  # => "cry"
+  # "crystal"["ruby"] # raises NilAssertionError
+  # ```
   def [](str : String | Char)
     self[str]?.not_nil!
   end
@@ -3132,10 +3157,9 @@ class String
         return char_index
       end
 
-      return if pointer >= end_pointer
-
       byte = head_pointer.value
       char_bytesize = String.char_bytesize_at(head_pointer)
+      return if pointer + char_bytesize > end_pointer
       case char_bytesize
       when 1 then update_hash 1
       when 2 then update_hash 2
@@ -4106,11 +4130,9 @@ class String
       # so combining characters are placed correctly
       String.new(bytesize) do |buffer|
         buffer += bytesize
-        scan(/\X/) do |match|
-          match_begin = match.byte_begin(0)
-          match_bytesize = match.byte_end(0) - match_begin
-          buffer -= match_bytesize
-          buffer.copy_from(to_unsafe + match_begin, match_bytesize)
+        each_grapheme_boundary do |range|
+          buffer -= range.size
+          buffer.copy_from(to_unsafe + range.begin, range.size)
         end
         {@bytesize, @length}
       end
@@ -4570,7 +4592,7 @@ class String
   # "\u{1f48e} - à la carte\n".inspect # => %("\u{1F48E} - à la carte\\n")
   # ```
   #
-  # See `Char#unicode_escape` for the format used to escape charactes without a
+  # See `Char#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#inspect_unquoted` omits the delimiters.
@@ -4595,7 +4617,7 @@ class String
   # "\u{1f48e} - à la carte\n".inspect_unquoted # => %(\u{1F48E} - à la carte\\n)
   # ```
   #
-  # See `Char#unicode_escape` for the format used to escape charactes without a
+  # See `Char#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#inspect` wraps the content in double quotes.
@@ -4623,7 +4645,7 @@ class String
   # "\u{1f48e} - à la carte\n".dump # => %("\\u{1F48E} - \\u00E0 la carte\\n")
   # ```
   #
-  # See `Char#unicode_escape` for the format used to escape charactes without a
+  # See `Char#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#dump_unquoted` omits the delimiters.
@@ -4651,7 +4673,7 @@ class String
   # "\u{1f48e} - à la carte\n".dump_unquoted # => %(\\u{1F48E} - \\u00E0 la carte\\n)
   # ```
   #
-  # See `Char#unicode_escape` for the format used to escape charactes without a
+  # See `Char#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#dump` wraps the content in double quotes.

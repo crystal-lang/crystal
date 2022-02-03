@@ -12,29 +12,12 @@ describe "Normalize: multi assign" do
       CR
   end
 
-  it "normalizes 1 to n" do
-    assert_expand_second "d = 1; a, b, c = d", <<-CR
-      __temp_1 = d
-      a = __temp_1[0]
-      b = __temp_1[1]
-      c = __temp_1[2]
-      CR
-  end
-
   it "normalizes n to n with []" do
     assert_expand_third "a = 1; b = 2; a[0], b[1] = 2, 3", <<-CR
       __temp_1 = 2
       __temp_2 = 3
       a[0] = __temp_1
       b[1] = __temp_2
-      CR
-  end
-
-  it "normalizes 1 to n with []" do
-    assert_expand_third "a = 1; b = 2; a[0], b[1] = 2", <<-CR
-      __temp_1 = 2
-      a[0] = __temp_1[0]
-      b[1] = __temp_1[1]
       CR
   end
 
@@ -47,12 +30,67 @@ describe "Normalize: multi assign" do
       CR
   end
 
-  it "normalizes 1 to n with call" do
-    assert_expand_third "a = 1; b = 2; a.foo, b.bar = 2", <<-CR
-      __temp_1 = 2
-      a.foo = __temp_1[0]
-      b.bar = __temp_1[1]
-      CR
+  context "without strict_multi_assign" do
+    it "normalizes 1 to n" do
+      assert_expand_second "d = 1; a, b, c = d", <<-CR
+        __temp_1 = d
+        a = __temp_1[0]
+        b = __temp_1[1]
+        c = __temp_1[2]
+        CR
+    end
+
+    it "normalizes 1 to n with []" do
+      assert_expand_third "a = 1; b = 2; a[0], b[1] = 2", <<-CR
+        __temp_1 = 2
+        a[0] = __temp_1[0]
+        b[1] = __temp_1[1]
+        CR
+    end
+
+    it "normalizes 1 to n with call" do
+      assert_expand_third "a = 1; b = 2; a.foo, b.bar = 2", <<-CR
+        __temp_1 = 2
+        a.foo = __temp_1[0]
+        b.bar = __temp_1[1]
+        CR
+    end
+  end
+
+  context "strict_multi_assign" do
+    it "normalizes 1 to n" do
+      assert_expand_second "d = 1; a, b, c = d", <<-CR, flags: "strict_multi_assign"
+        __temp_1 = d
+        if __temp_1.size != 3
+          ::raise(::IndexError.new("Multiple assignment count mismatch"))
+        end
+        a = __temp_1[0]
+        b = __temp_1[1]
+        c = __temp_1[2]
+        CR
+    end
+
+    it "normalizes 1 to n with []" do
+      assert_expand_third "a = 1; b = 2; a[0], b[1] = 2", <<-CR, flags: "strict_multi_assign"
+        __temp_1 = 2
+        if __temp_1.size != 2
+          ::raise(::IndexError.new("Multiple assignment count mismatch"))
+        end
+        a[0] = __temp_1[0]
+        b[1] = __temp_1[1]
+        CR
+    end
+
+    it "normalizes 1 to n with call" do
+      assert_expand_third "a = 1; b = 2; a.foo, b.bar = 2", <<-CR, flags: "strict_multi_assign"
+        __temp_1 = 2
+        if __temp_1.size != 2
+          ::raise(::IndexError.new("Multiple assignment count mismatch"))
+        end
+        a.foo = __temp_1[0]
+        b.bar = __temp_1[1]
+        CR
+    end
   end
 
   it "normalizes m to n, with splat on left-hand side, splat is empty" do

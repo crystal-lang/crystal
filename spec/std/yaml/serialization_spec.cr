@@ -66,7 +66,7 @@ describe "YAML serialization" do
     end
 
     it "can parse string that looks like a number" do
-      String.from_yaml(%(1.2)).should eq ("1.2")
+      String.from_yaml(%(1.2)).should eq("1.2")
     end
 
     it "does Path.from_yaml" do

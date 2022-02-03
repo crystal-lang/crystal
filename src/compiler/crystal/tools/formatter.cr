@@ -35,7 +35,7 @@ module Crystal
       property needs_newline : Bool
       property needs_format : Bool
 
-      def initialize(@start_line : Int32, @kind : Symbol, @needs_format : Bool)
+      def initialize(@start_line : Int32, @needs_format : Bool)
         @end_line = @start_line
         @needs_newline = true
       end
@@ -205,7 +205,7 @@ module Crystal
 
       empty_expressions = node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
 
-      if node.keyword == :"(" && @token.type == :"("
+      if node.keyword.paren? && @token.type == :"("
         write "("
         next_needs_indent = false
         has_paren = true
@@ -218,7 +218,7 @@ module Crystal
           next_needs_indent = true
           has_newline = true
         end
-      elsif node.keyword == :begin && @token.keyword?(:begin)
+      elsif node.keyword.begin? && @token.keyword?(:begin)
         write "begin"
         @indent += 2
         write_line
@@ -470,7 +470,7 @@ module Crystal
       end
 
       check :DELIMITER_START
-      is_regex = @token.delimiter_state.kind == :regex
+      is_regex = @token.delimiter_state.kind.regex?
 
       write @token.raw
       next_string_token
@@ -522,7 +522,7 @@ module Crystal
     end
 
     def visit(node : StringInterpolation)
-      if @token.delimiter_state.kind == :heredoc
+      if @token.delimiter_state.kind.heredoc?
         # For heredoc, only write the start: on a newline will print it
         @lexer.heredocs << {@token.delimiter_state, HeredocInfo.new(node, @token.dup, @line, @column, @indent, @string_continuation)}
         write @token.raw
@@ -538,14 +538,14 @@ module Crystal
     def visit_string_interpolation(node, token, line, column, old_indent, old_string_continuation, wrote_token = false)
       @token = token
 
-      is_regex = token.delimiter_state.kind == :regex
+      is_regex = token.delimiter_state.kind.regex?
       indent_difference = token.column_number - (column + 1)
 
       write token.raw unless wrote_token
       next_string_token
 
       delimiter_state = token.delimiter_state
-      is_heredoc = token.delimiter_state.kind == :heredoc
+      is_heredoc = token.delimiter_state.kind.heredoc?
       @last_is_heredoc = is_heredoc
 
       heredoc_line = @line
@@ -2662,6 +2662,16 @@ module Crystal
       # so we remove the space between "as" and "(".
       skip_space if special_call
 
+      # If the call has a single argument which is a parenthesized `Expressions`,
+      # we skip whitespace between the method name and the arg. The parenthesized
+      # arg is transformed into a call with parenthesis: `foo (a)` becomes `foo(a)`.
+      if node.args.size == 1 &&
+         !node.named_args && !node.block_arg && !node.block &&
+         (expressions = node.args[0].as?(Expressions)) &&
+         expressions.keyword.paren? && expressions.expressions.size == 1
+        skip_space
+      end
+
       if @token.type == :"("
         slash_is_regex!
         next_token
@@ -2678,7 +2688,7 @@ module Crystal
 
         write "("
         has_parentheses = true
-        has_newlines, found_comment = format_call_args(node, true, base_indent)
+        has_newlines, found_comment, _ = format_call_args(node, true, base_indent)
         found_comment ||= skip_space
         if @token.type == :NEWLINE
           ends_with_newline = true
@@ -2687,7 +2697,7 @@ module Crystal
       elsif has_args || node.block_arg
         write " " unless passed_backslash_newline
         skip_space
-        has_newlines, found_comment = format_call_args(node, false, base_indent)
+        has_newlines, found_comment, _ = format_call_args(node, false, base_indent)
       end
 
       if block = node.block
@@ -4139,7 +4149,7 @@ module Crystal
         write " : "
         next_token_skip_space_or_newline
         accept return_type
-        next_token_skip_space_or_newline
+        skip_space_or_newline
       end
 
       write " " unless a_def.args.empty? && !return_type
@@ -4654,7 +4664,7 @@ module Crystal
 
               # We only format crystal code (empty by default means crystal)
               needs_format = language.empty?
-              @current_doc_comment = CommentInfo.new(@line + 1, :backticks, needs_format)
+              @current_doc_comment = CommentInfo.new(@line + 1, needs_format)
             end
           end
         end

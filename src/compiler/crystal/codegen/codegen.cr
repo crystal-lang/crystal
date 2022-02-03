@@ -475,11 +475,9 @@ module Crystal
       when :u64
         @last = int64(node.value.to_u64)
       when :i128
-        # TODO: implement String#to_i128 and use it
-        @last = int128(node.value.to_i64)
+        @last = int128(node.value.to_i128)
       when :u128
-        # TODO: implement String#to_u128 and use it
-        @last = int128(node.value.to_u64)
+        @last = int128(node.value.to_u128)
       when :f32
         @last = float32(node.value)
       when :f64
@@ -1156,7 +1154,7 @@ module Crystal
       thread_local_fun = check_main_fun(fun_name, thread_local_fun)
       indirection_ptr = alloca llvm_type(type).pointer
       call thread_local_fun, indirection_ptr
-      ptr = load indirection_ptr
+      load indirection_ptr
     end
 
     def visit(node : TypeDeclaration)
@@ -1450,6 +1448,9 @@ module Crystal
       unless var
         var = llvm_mod.globals.add(llvm_c_return_type(type), name)
         var.linkage = LLVM::Linkage::External
+        if @program.has_flag?("win32") && @program.has_flag?("preview_dll")
+          var.dll_storage_class = LLVM::DLLStorageClass::DLLImport
+        end
         var.thread_local = thread_local
       end
       var

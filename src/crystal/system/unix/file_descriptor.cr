@@ -64,26 +64,14 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_info
-    {% begin %}
-      # On some systems, the symbols `fstat` and `lstat` are not part of the GNU
-      # shared library `libc.so` and instead provided by `libc_noshared.a`.
-      # That makes them unavailable for dynamic runtime symbol lookup via `dlsym`
-      # which we use for interpreted mode.
-      # See https://github.com/crystal-lang/crystal/issues/11157#issuecomment-949640034 for details.
-      # Linking against the internal counterparts `__fxstat` and `__lxstat` directly
-      # should work in both interpreted and compiled mode.
-      {% if LibC.has_method?(:__fxstat) %}
-        ret = LibC.__fxstat(1, fd, out stat)
-      {% else %}
-        ret = LibC.fstat(fd, out stat)
-      {% end %}
+    stat = uninitialized LibC::Stat
+    ret = File.fstat(fd, pointerof(stat))
 
-      if ret != 0
-        raise IO::Error.from_errno("Unable to get info")
-      end
+    if ret != 0
+      raise IO::Error.from_errno("Unable to get info")
+    end
 
-      FileInfo.new(stat)
-    {% end %}
+    FileInfo.new(stat)
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
