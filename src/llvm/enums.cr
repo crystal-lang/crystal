@@ -147,6 +147,11 @@ module LLVM
           typed_attrs << StructRet
         end
 
+        unless LibLLVM::IS_LT_130
+          # LLVM 13 manadates type params for inalloca
+          typed_attrs << InAlloca
+        end
+
         typed_attrs
       end
 
@@ -215,13 +220,23 @@ module LLVM
     Appending
     Internal
     Private
-    DLLImport
-    DLLExport
+    DLLImport # obsolete
+    DLLExport # obsolete
     ExternalWeak
     Ghost
     Common
     LinkerPrivate
     LinkerPrivateWeak
+  end
+
+  enum DLLStorageClass
+    Default
+
+    # Function to be imported from DLL.
+    DLLImport
+
+    # Function to be accessible from DLL.
+    DLLExport
   end
 
   enum IntPredicate

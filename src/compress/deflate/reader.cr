@@ -148,7 +148,6 @@ class Compress::Deflate::Reader < IO
     initialize(@io, @sync_close, @dict)
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     to_s(io)
   end

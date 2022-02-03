@@ -35,7 +35,7 @@ module Crystal
       property needs_newline : Bool
       property needs_format : Bool
 
-      def initialize(@start_line : Int32, @kind : Symbol, @needs_format : Bool)
+      def initialize(@start_line : Int32, @needs_format : Bool)
         @end_line = @start_line
         @needs_newline = true
       end
@@ -205,7 +205,7 @@ module Crystal
 
       empty_expressions = node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
 
-      if node.keyword == :"(" && @token.type == :"("
+      if node.keyword.paren? && @token.type == :"("
         write "("
         next_needs_indent = false
         has_paren = true
@@ -218,7 +218,7 @@ module Crystal
           next_needs_indent = true
           has_newline = true
         end
-      elsif node.keyword == :begin && @token.keyword?(:begin)
+      elsif node.keyword.begin? && @token.keyword?(:begin)
         write "begin"
         @indent += 2
         write_line
@@ -470,7 +470,7 @@ module Crystal
       end
 
       check :DELIMITER_START
-      is_regex = @token.delimiter_state.kind == :regex
+      is_regex = @token.delimiter_state.kind.regex?
 
       write @token.raw
       next_string_token
@@ -522,7 +522,7 @@ module Crystal
     end
 
     def visit(node : StringInterpolation)
-      if @token.delimiter_state.kind == :heredoc
+      if @token.delimiter_state.kind.heredoc?
         # For heredoc, only write the start: on a newline will print it
         @lexer.heredocs << {@token.delimiter_state, HeredocInfo.new(node, @token.dup, @line, @column, @indent, @string_continuation)}
         write @token.raw
@@ -538,14 +538,14 @@ module Crystal
     def visit_string_interpolation(node, token, line, column, old_indent, old_string_continuation, wrote_token = false)
       @token = token
 
-      is_regex = token.delimiter_state.kind == :regex
+      is_regex = token.delimiter_state.kind.regex?
       indent_difference = token.column_number - (column + 1)
 
       write token.raw unless wrote_token
       next_string_token
 
       delimiter_state = token.delimiter_state
-      is_heredoc = token.delimiter_state.kind == :heredoc
+      is_heredoc = token.delimiter_state.kind.heredoc?
       @last_is_heredoc = is_heredoc
 
       heredoc_line = @line
@@ -857,13 +857,12 @@ module Crystal
           indent(offset, element)
         end
         element_lines = @line - start_line
-        next_offset = element_lines == 0 ? start_column : offset
 
         has_heredoc_in_line = !@lexer.heredocs.empty?
 
         last = last?(i, elements)
 
-        found_comment = skip_space(next_offset, write_comma: (last || has_heredoc_in_line) && has_newlines)
+        found_comment = skip_space(offset, write_comma: (last || has_heredoc_in_line) && has_newlines)
 
         if @token.type == :","
           if !found_comment && (!last || has_heredoc_in_line)
@@ -873,7 +872,7 @@ module Crystal
 
           slash_is_regex!
           next_token
-          found_comment = skip_space(element_lines == 0 ? start_column : offset, write_comma: last && has_newlines)
+          found_comment = skip_space(offset, write_comma: last && has_newlines)
           if @token.type == :NEWLINE
             if last && !found_comment && !wrote_comma
               write ","
@@ -883,14 +882,14 @@ module Crystal
             skip_space_or_newline
             next_needs_indent = true
             has_newlines = true
-            offset = next_offset if element_lines == 0
+            offset = start_column
           else
             if !last && !found_comment
               write " "
               next_needs_indent = false
             elsif found_comment
               next_needs_indent = true
-              offset = next_offset if element_lines == 0
+              offset = start_column
             end
           end
         end
@@ -1108,7 +1107,7 @@ module Crystal
         next_token_skip_space_or_newline
       end
 
-      if node.question?
+      if node.suffix.question?
         node.type_vars[0].accept self
         skip_space
         write_token :"?"
@@ -1116,28 +1115,35 @@ module Crystal
       end
 
       # Check if it's T* instead of Pointer(T)
-      if first_name == "Pointer" && @token.value != "Pointer"
+      if node.suffix.asterisk?
+        # Count nesting asterisk
+        asterisks = 1
+        while (type_var = node.type_vars.first) && type_var.is_a?(Generic) && type_var.suffix.asterisk?
+          node = type_var
+          asterisks += 1
+        end
+
         type_var = node.type_vars.first
         accept type_var
         skip_space_or_newline
 
-        # Another case is T** instead of Pointer(Pointer(T))
-        if @token.type == :"**"
-          if type_var.is_a?(Generic)
+        while asterisks > 0
+          skip_space
+          if @token.type == :"**" && asterisks >= 2
             write "**"
             next_token
+            asterisks -= 2
           else
-            # Skip
+            write_token :"*"
+            asterisks -= 1
           end
-        else
-          write_token :"*"
         end
 
         return false
       end
 
       # Check if it's T[N] instead of StaticArray(T, N)
-      if first_name == "StaticArray" && @token.value != "StaticArray"
+      if node.suffix.bracket?
         accept node.type_vars[0]
         skip_space_or_newline
         write_token :"["
@@ -1460,7 +1466,8 @@ module Crystal
       write node.name
 
       indent do
-        next_token_skip_space
+        next_token
+        skip_space consume_newline: false
         next_token_skip_space if @token.type == :"="
       end
 
@@ -2182,7 +2189,7 @@ module Crystal
         mode = Parser::ParseMode::Normal
       end
 
-      parser = Parser.new(source, def_vars: @vars.clone)
+      parser = Parser.new(source, var_scopes: @vars.clone)
       # parser.filename = formatter.filename
       nodes = parser.parse(mode)
 
@@ -2611,7 +2618,7 @@ module Crystal
         return false
       end
 
-      assignment = node.name.ends_with?('=') && node.name.chars.any?(&.ascii_letter?)
+      assignment = Lexer.setter?(node.name)
 
       if assignment
         write node.name.rchop
@@ -2655,6 +2662,16 @@ module Crystal
       # so we remove the space between "as" and "(".
       skip_space if special_call
 
+      # If the call has a single argument which is a parenthesized `Expressions`,
+      # we skip whitespace between the method name and the arg. The parenthesized
+      # arg is transformed into a call with parenthesis: `foo (a)` becomes `foo(a)`.
+      if node.args.size == 1 &&
+         !node.named_args && !node.block_arg && !node.block &&
+         (expressions = node.args[0].as?(Expressions)) &&
+         expressions.keyword.paren? && expressions.expressions.size == 1
+        skip_space
+      end
+
       if @token.type == :"("
         slash_is_regex!
         next_token
@@ -2671,7 +2688,7 @@ module Crystal
 
         write "("
         has_parentheses = true
-        has_newlines, found_comment = format_call_args(node, true, base_indent)
+        has_newlines, found_comment, _ = format_call_args(node, true, base_indent)
         found_comment ||= skip_space
         if @token.type == :NEWLINE
           ends_with_newline = true
@@ -2680,7 +2697,7 @@ module Crystal
       elsif has_args || node.block_arg
         write " " unless passed_backslash_newline
         skip_space
-        has_newlines, found_comment = format_call_args(node, false, base_indent)
+        has_newlines, found_comment, _ = format_call_args(node, false, base_indent)
       end
 
       if block = node.block
@@ -2950,7 +2967,8 @@ module Crystal
           write " "
         end
         write "do"
-        next_token_skip_space
+        next_token
+        skip_space(@indent + 2)
         body = format_block_args node.args, node
         old_implicit_exception_handler_indent, @implicit_exception_handler_indent = @implicit_exception_handler_indent, @indent
         format_nested_with_end body
@@ -3116,7 +3134,7 @@ module Crystal
             when :UNDERSCORE
               underscore = true
             else
-              raise "expecting block argument name, not #{@token.type}"
+              raise "expecting block parameter name, not #{@token.type}"
             end
 
             write(underscore ? "_" : @token.value)
@@ -3669,8 +3687,9 @@ module Crystal
           @when_infos << AlignInfo.new(node.object_id, @line, @column, @column, @column, false)
           write " "
           accept a_else
+          wrote_newline = @wrote_newline
           found_comment = skip_space_or_newline
-          write_line unless found_comment
+          write_line unless found_comment || wrote_newline
         end
       end
 
@@ -4125,7 +4144,15 @@ module Crystal
         next_token_skip_space_or_newline
       end
 
-      write " " unless a_def.args.empty?
+      if return_type = a_def.return_type
+        check :":"
+        write " : "
+        next_token_skip_space_or_newline
+        accept return_type
+        skip_space_or_newline
+      end
+
+      write " " unless a_def.args.empty? && !return_type
 
       is_do = false
       if @token.keyword?(:do)
@@ -4263,7 +4290,7 @@ module Crystal
 
       skip_space_or_newline
 
-      if node.volatile? || node.alignstack? || node.intel?
+      if node.volatile? || node.alignstack? || node.intel? || node.can_throw?
         expected_parts = 4
       elsif node.clobbers
         expected_parts = 3
@@ -4309,7 +4336,7 @@ module Crystal
             end
           end
         when 4
-          parts = [node.volatile?, node.alignstack?, node.intel?].select(&.itself)
+          parts = [node.volatile?, node.alignstack?, node.intel?, node.can_throw?].select(&.itself)
           visit_asm_parts parts, colon_column do
             accept StringLiteral.new("")
           end
@@ -4637,7 +4664,7 @@ module Crystal
 
               # We only format crystal code (empty by default means crystal)
               needs_format = language.empty?
-              @current_doc_comment = CommentInfo.new(@line + 1, :backticks, needs_format)
+              @current_doc_comment = CommentInfo.new(@line + 1, needs_format)
             end
           end
         end

@@ -583,7 +583,11 @@ class HTTP::Client
   end
 
   private def exec_internal(request)
-    response = exec_internal_single(request)
+    begin
+      response = exec_internal_single(request)
+    rescue IO::Error
+      response = nil
+    end
     return handle_response(response) if response
 
     # Server probably closed the connection, so retry one
@@ -592,7 +596,7 @@ class HTTP::Client
     response = exec_internal_single(request)
     return handle_response(response) if response
 
-    raise "Unexpected end of http response"
+    raise IO::EOFError.new("Unexpected end of http response")
   end
 
   private def exec_internal_single(request)
@@ -625,27 +629,30 @@ class HTTP::Client
   end
 
   private def exec_internal(request, &block : Response -> T) : T forall T
+    exec_internal_single(request, ignore_io_error: true) do |response|
+      if response
+        return handle_response(response) { yield response }
+      end
+    end
+
+    # Server probably closed the connection, so retry once
+    close
+    request.body.try &.rewind
     exec_internal_single(request) do |response|
       if response
         return handle_response(response) { yield response }
       end
-
-      # Server probably closed the connection, so retry once
-      close
-      request.body.try &.rewind
-      exec_internal_single(request) do |response|
-        if response
-          return handle_response(response) do
-            yield response
-          end
-        end
-      end
     end
-    raise "Unexpected end of http response"
+    raise IO::EOFError.new("Unexpected end of http response")
   end
 
-  private def exec_internal_single(request)
-    decompress = send_request(request)
+  private def exec_internal_single(request, ignore_io_error = false)
+    begin
+      decompress = send_request(request)
+    rescue ex : IO::Error
+      return yield nil if ignore_io_error
+      raise ex
+    end
     HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
       yield response
     end
@@ -761,6 +768,9 @@ class HTTP::Client
   # Closes this client. If used again, a new connection will be opened.
   def close : Nil
     @io.try &.close
+  rescue IO::Error
+    nil
+  ensure
     @io = nil
   end
 
@@ -869,7 +879,7 @@ class HTTP::Client
 
   # This method is called when executing the request. Although it can be
   # redefined, it is recommended to use the `def_around_exec` macro to be
-  # able to add new behaviors without loosing prior existing ones.
+  # able to add new behaviors without losing prior existing ones.
   protected def around_exec(request)
     yield
   end
@@ -892,7 +902,7 @@ class HTTP::Client
     protected def around_exec(%request)
       previous_def do
         {% if block.args.size != 1 %}
-          {% raise "Wrong number of block arguments (given #{block.args.size}, expected: 1)" %}
+          {% raise "Wrong number of block parameters for macro 'def_around_exec' (given #{block.args.size}, expected 1)" %}
         {% end %}
 
         {{ block.args.first.id }} = %request

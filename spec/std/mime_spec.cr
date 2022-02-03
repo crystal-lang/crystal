@@ -123,22 +123,22 @@ describe MIME do
   it "parses media types" do
     MIME.init(load_defaults: false)
     MIME.register(".parse-media-type1", "text/html; charset=utf-8")
-    MIME.extensions("text/html").should contain (".parse-media-type1")
+    MIME.extensions("text/html").should contain(".parse-media-type1")
 
     MIME.register(".parse-media-type2", "text/html; foo = bar; bar= foo ;")
-    MIME.extensions("text/html").should contain (".parse-media-type2")
+    MIME.extensions("text/html").should contain(".parse-media-type2")
 
     MIME.register(".parse-media-type3", "foo/bar")
-    MIME.extensions("foo/bar").should contain (".parse-media-type3")
+    MIME.extensions("foo/bar").should contain(".parse-media-type3")
 
     MIME.register(".parse-media-type4", " form-data ; name=foo")
-    MIME.extensions("form-data").should contain (".parse-media-type4")
+    MIME.extensions("form-data").should contain(".parse-media-type4")
 
     MIME.register(".parse-media-type41", %(FORM-DATA;name="foo"))
-    MIME.extensions("form-data").should contain (".parse-media-type41")
+    MIME.extensions("form-data").should contain(".parse-media-type41")
 
     MIME.register(".parse-media-type5", %( FORM-DATA ; name="foo"))
-    MIME.extensions("form-data").should contain (".parse-media-type5")
+    MIME.extensions("form-data").should contain(".parse-media-type5")
 
     expect_raises ArgumentError, "Invalid media type" do
       MIME.register(".parse-media-type6", ": inline; attachment; filename=foo.html")
@@ -198,4 +198,12 @@ describe MIME do
       MIME.from_extension?(".foo").should eq "foo/bar"
     end
   end
+
+  {% if flag?(:win32) %}
+    it "loads MIME data from registry" do
+      MIME.register(".wma", "non-initialized")
+      MIME.init
+      MIME.from_extension?(".wma").should eq "audio/x-ms-wma"
+    end
+  {% end %}
 end

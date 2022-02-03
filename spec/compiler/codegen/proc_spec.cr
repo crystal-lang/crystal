@@ -9,6 +9,14 @@ describe "Code gen: proc" do
     run("f = ->(x : Int32) { x &+ 1 }; f.call(41)").to_i.should eq(42)
   end
 
+  it "call proc literal with return type" do
+    run(<<-CR).to_b.should be_true
+      f = -> : Int32 | Float64 { 1 }
+      x = f.call
+      x.is_a?(Int32) && x == 1
+      CR
+  end
+
   it "call proc pointer" do
     run("def foo; 1; end; x = ->foo; x.call").to_i.should eq(1)
   end

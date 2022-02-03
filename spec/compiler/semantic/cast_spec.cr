@@ -221,6 +221,18 @@ describe "Semantic: cast" do
       )) { int32.metaclass }
   end
 
+  it "can cast to metaclass (2) (#11121)" do
+    assert_type(%(
+      class A
+      end
+
+      class B < A
+      end
+
+      A.as(A.class)
+      )) { types["A"].virtual_type.metaclass }
+  end
+
   # Later we might want casting something to Object to have a meaning
   # similar to casting to Void*, but for now it's useless.
   it "disallows casting to Object (#815)" do

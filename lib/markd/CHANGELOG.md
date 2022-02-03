@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - GFM support
 
+## [0.4.2] (2021-10-19)
+
+### Added
+
+- Enable Table of Content (TOC) #[41](https://github.com/icyleaf/markd/pull/41) thanks @[Nephos](https://github.com/Nephos).
+
+### Fixed
+
+- Fix byte slice negative #[43](https://github.com/icyleaf/markd/pull/43).
+- Compatibility with Crystal 1.2.
+
+## [0.4.1] (2021-09-27)
+
+### Added
+
+- Refactor Options and change to a class #[36](https://github.com/icyleaf/markd/pull/36) thanks @[straight-shoota](https://github.com/straight-shoota).
+- Add `lang` parameter to to `HTMLRenderer#code_block_body` #[38](https://github.com/icyleaf/markd/pull/38) thanks @[straight-shoota](https://github.com/straight-shoota).
+
 ## [0.4.0] (2021-03-23)
 
 - Compatibility with Crystal 1.0. #[34](https://github.com/icyleaf/markd/pull/34) thanks @[bcardiff](https://github.com/bcardiff).
@@ -53,7 +71,10 @@ No changelog.
 
 - [initial implementation](https://github.com/icyleaf/markd/milestone/1?closed=1)
 
-[Unreleased]: https://github.com/icyleaf/markd/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/icyleaf/markd/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/icyleaf/halite/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/icyleaf/halite/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/icyleaf/halite/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/icyleaf/halite/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/icyleaf/halite/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/icyleaf/halite/compare/v0.1.2...v0.2.0

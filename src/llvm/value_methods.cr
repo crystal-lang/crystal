@@ -55,6 +55,10 @@ module LLVM::ValueMethods
     LibLLVM.get_linkage(self)
   end
 
+  def dll_storage_class=(storage_class)
+    LibLLVM.set_dll_storage_class(self, storage_class)
+  end
+
   def call_convention=(call_convention)
     LibLLVM.set_instruction_call_convention(self, call_convention)
   end

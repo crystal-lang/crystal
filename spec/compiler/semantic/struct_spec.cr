@@ -129,7 +129,7 @@ describe "Semantic: struct" do
       ptr = Pointer(Foo).malloc(1_u64)
       ptr.value = Bar.new
       ptr.value
-      )) { types["Foo"].virtual_type! }
+      ), inject_primitives: true) { types["Foo"].virtual_type! }
   end
 
   it "doesn't error if method is not found in abstract type" do
@@ -153,7 +153,7 @@ describe "Semantic: struct" do
       ptr.value = Bar.new
       ptr.value = Baz.new
       ptr.value.foo
-      )) { union_of(int32, char) }
+      ), inject_primitives: true) { union_of(int32, char) }
   end
 
   it "can cast to base abstract struct" do

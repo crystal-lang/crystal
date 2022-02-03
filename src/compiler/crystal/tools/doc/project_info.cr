@@ -38,7 +38,7 @@ module Crystal::Doc
         if shard_name && !name?
           self.name = shard_name
         end
-        if shard_version && !version? && !ProjectInfo.git_dir?
+        if shard_version && !version?
           self.version = shard_version
         end
       end
@@ -52,10 +52,6 @@ module Crystal::Doc
 
       url = url_pattern % {refname: refname, path: location.filename, filename: File.basename(location.filename), line: location.line_number}
       url.presence
-    end
-
-    def self.git_dir?
-      Crystal::Git.git_command(["rev-parse", "--is-inside-work-tree"])
     end
 
     VERSION_TAG = /^v(\d+[-.][-.a-zA-Z\d]+)$/
