@@ -2358,7 +2358,6 @@ module Crystal
           end
 
           exps << exp
-          end_location = token_end_location
           skip_space
 
           if @token.type == :","
@@ -2371,6 +2370,7 @@ module Crystal
           end
         end
         @wants_regex = false
+        end_location = token_end_location
         next_token_skip_space
       end
 
