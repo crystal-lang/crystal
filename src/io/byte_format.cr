@@ -134,7 +134,7 @@ module IO::ByteFormat
         def self.encode(int : {{type.id}}, bytes : Bytes)
           buffer = int.unsafe_as(StaticArray(UInt8, {{bytesize}}))
           buffer.reverse! unless SystemEndian == self
-          buffer.to_unsafe.copy_to(bytes.to_unsafe, {{bytesize}})
+          buffer.to_slice.copy_to(bytes)
         end
 
         def self.decode(type : {{type.id}}.class, io : IO)
