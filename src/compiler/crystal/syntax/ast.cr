@@ -236,17 +236,83 @@ module Crystal
     def_equals_and_hash value
   end
 
+  # The kind of primitive numbers.
+  enum NumberKind
+    I8
+    I16
+    I32
+    I64
+    I128
+    U8
+    U16
+    U32
+    U64
+    U128
+    F32
+    F64
+
+    def to_s : String
+      super.downcase
+    end
+
+    def bytesize
+      case self
+      in .i8?   then 8
+      in .i16?  then 16
+      in .i32?  then 32
+      in .i64?  then 64
+      in .i128? then 128
+      in .u8?   then 8
+      in .u16?  then 16
+      in .u32?  then 32
+      in .u64?  then 64
+      in .u128? then 128
+      in .f32?  then 32
+      in .f64?  then 64
+      end
+    end
+
+    def signed_int?
+      i8? || i16? || i32? || i64? || i128?
+    end
+
+    def unsigned_int?
+      u8? || u16? || u32? || u64? || u128?
+    end
+
+    def float?
+      f32? || f64?
+    end
+
+    def self.from_number(number : Number)
+      case number
+      when Int8    then I8
+      when Int16   then I16
+      when Int32   then I32
+      when Int64   then I64
+      when Int128  then I128
+      when UInt8   then U8
+      when UInt16  then U16
+      when UInt32  then U32
+      when UInt64  then U64
+      when UInt128 then U128
+      when Float32 then F32
+      when Float64 then F64
+      else              raise "Unsupported Number type for NumberLiteral: #{number.class}"
+      end
+    end
+  end
+
   # Any number literal.
-  # kind stores a symbol indicating which type is it: i32, u16, f32, f64, etc.
   class NumberLiteral < ASTNode
     property value : String
-    property kind : Symbol
+    property kind : NumberKind
 
-    def initialize(@value : String, @kind = :i32)
+    def initialize(@value : String, @kind : NumberKind = :i32)
     end
 
     def self.new(value : Number)
-      new(value.to_s, kind_from_number(value))
+      new(value.to_s, NumberKind.from_number(value))
     end
 
     def has_sign?
@@ -255,16 +321,16 @@ module Crystal
 
     def integer_value
       case kind
-      when :i8   then value.to_i8
-      when :i16  then value.to_i16
-      when :i32  then value.to_i32
-      when :i64  then value.to_i64
-      when :i128 then value.to_i128
-      when :u8   then value.to_u8
-      when :u16  then value.to_u16
-      when :u32  then value.to_u32
-      when :u64  then value.to_u64
-      when :u128 then value.to_u128
+      when .i8?   then value.to_i8
+      when .i16?  then value.to_i16
+      when .i32?  then value.to_i32
+      when .i64?  then value.to_i64
+      when .i128? then value.to_i128
+      when .u8?   then value.to_u8
+      when .u16?  then value.to_u16
+      when .u32?  then value.to_u32
+      when .u64?  then value.to_u64
+      when .u128? then value.to_u128
       else
         raise "Bug: called 'integer_value' for non-integer literal"
       end
@@ -276,24 +342,6 @@ module Crystal
 
     def_equals value.to_f64, kind
     def_hash value, kind
-
-    def self.kind_from_number(number : Number)
-      case number
-      when Int8    then :i8
-      when Int16   then :i16
-      when Int32   then :i32
-      when Int64   then :i64
-      when Int128  then :i128
-      when UInt8   then :u8
-      when UInt16  then :u16
-      when UInt32  then :u32
-      when UInt64  then :u64
-      when UInt128 then :u128
-      when Float32 then :f32
-      when Float64 then :f64
-      else              raise "Unsupported Number type for NumberLiteral: #{number.class}"
-      end
-    end
   end
 
   # A char literal.

@@ -5704,7 +5704,7 @@ module Crystal
                when :INSTANCE_VAR
                  InstanceVar.new(@token.value.to_s)
                when :NUMBER
-                 raise "expecting an integer offset, not '#{@token}'", @token if @token.number_kind != :i32
+                 raise "expecting an integer offset, not '#{@token}'", @token if !@token.number_kind.i32?
                  NumberLiteral.new(@token.value.to_s, @token.number_kind)
                else
                  raise "expecting an instance variable or a integer offset, not '#{@token}'", @token
