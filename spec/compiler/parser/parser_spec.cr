@@ -2236,6 +2236,12 @@ module Crystal
         node.location.not_nil!.line_number.should eq(1)
         node.else_location.not_nil!.line_number.should eq(2)
         node.end_location.not_nil!.line_number.should eq(3)
+
+        parser = Parser.new("if foo\nend")
+        node = parser.parse.as(If)
+        node.location.not_nil!.line_number.should eq(1)
+        node.else_location.should be_nil
+        node.end_location.not_nil!.line_number.should eq(2)
       end
 
       it "sets correct location of `elsif` of if statement" do

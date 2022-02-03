@@ -4022,14 +4022,16 @@ module Crystal
       a_then = parse_expressions
       skip_statement_end
 
+      else_location = nil
       a_else = nil
       if @token.type == :IDENT
-        else_location = @token.location
         case @token.value
         when :else
+          else_location = @token.location
           next_token_skip_statement_end
           a_else = parse_expressions
         when :elsif
+          else_location = @token.location
           a_else = parse_if check_end: false
         end
       end
