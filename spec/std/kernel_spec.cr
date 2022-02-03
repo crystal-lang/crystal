@@ -239,8 +239,8 @@ describe "at_exit" do
   end
 end
 
-pending_win32 describe: "seg fault" do
-  it "reports SIGSEGV" do
+describe "hardware exception" do
+  it "reports invalid memory access" do
     status, _, error = compile_and_run_source <<-'CODE'
       puts Pointer(Int64).null.value
     CODE
@@ -261,7 +261,7 @@ pending_win32 describe: "seg fault" do
       # will address this.
       status, _, error = compile_and_run_source <<-'CODE'
       def foo
-        y = StaticArray(Int8,512).new(0)
+        y = StaticArray(Int8, 512).new(0)
         foo
       end
       foo
@@ -272,10 +272,10 @@ pending_win32 describe: "seg fault" do
     end
   {% end %}
 
-  it "detects stack overflow on a fiber stack" do
+  pending_win32 "detects stack overflow on a fiber stack" do
     status, _, error = compile_and_run_source <<-'CODE'
       def foo
-        y = StaticArray(Int8,512).new(0)
+        y = StaticArray(Int8, 512).new(0)
         foo
       end
 

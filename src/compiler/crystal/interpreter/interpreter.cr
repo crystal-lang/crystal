@@ -237,13 +237,13 @@ class Crystal::Repl::Interpreter
     # That is, there's a space right at the beginning where local variables
     # are stored (local variables live in the stack.)
 
-    # This is the true beginning fo the stack, and a reference to where local
+    # This is the true beginning of the stack, and a reference to where local
     # variables for the current call frame begin.
     stack_bottom = @stack
 
     # Shift stack to leave roomm for local vars.
     # Previous runs that wrote to local vars would have those values
-    # written to @stack alreay (or property migrated thanks to `migrate_local_vars`)
+    # written to @stack already (or property migrated thanks to `migrate_local_vars`)
     stack_bottom_after_local_vars = stack_bottom + @local_vars.max_bytesize
     stack = stack_bottom_after_local_vars
 
@@ -500,7 +500,7 @@ class Crystal::Repl::Interpreter
     # return call's return value.
     %stack_before_call_args = stack - {{compiled_def}}.args_bytesize
 
-    # Clear the portion after the call args and upto the def local vars
+    # Clear the portion after the call args and up to the def local vars
     # because it might contain garbage data from previous block calls or
     # method calls.
     %size_to_clear = {{compiled_def}}.local_vars.max_bytesize - {{compiled_def}}.args_bytesize
@@ -570,7 +570,7 @@ class Crystal::Repl::Interpreter
     if %size_to_clear > 0
       %offset_to_clear = {{compiled_block}}.locals_bytesize_start + {{compiled_block}}.args_bytesize
 
-      # Clear the portion after the block args and upto the block local vars
+      # Clear the portion after the block args and up to the block local vars
       # because it might contain garbage data from previous block calls or
       # method calls.
       #

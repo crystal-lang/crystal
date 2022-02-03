@@ -85,7 +85,7 @@ lib LibLLVMExt
                                                                      align_in_bits : UInt64, flags : LLVM::DIFlags, element_types : LibLLVM::MetadataRef) : LibLLVM::MetadataRef
 
   fun di_builder_create_array_type = LLVMExtDIBuilderCreateArrayType(builder : DIBuilder, size : UInt64,
-                                                                     alignInBits : UInt32, ty : LibLLVM::MetadataRef,
+                                                                     alignInBits : UInt64, ty : LibLLVM::MetadataRef,
                                                                      subscripts : LibLLVM::MetadataRef) : LibLLVM::MetadataRef
 
   fun di_builder_create_member_type = LLVMExtDIBuilderCreateMemberType(builder : DIBuilder,

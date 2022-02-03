@@ -1497,6 +1497,14 @@ describe "Array" do
       end
       a.@capacity.should eq(3)
     end
+
+    it "unshift of large array does not corrupt elements" do
+      a = Array.new(300, &.itself)
+      a.@capacity.should eq(300)
+      a.unshift 1
+      a.@capacity.should be > 300
+      a[-1].should eq(299)
+    end
   end
 
   it "does update" do
