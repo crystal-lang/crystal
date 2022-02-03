@@ -765,7 +765,7 @@ module Crystal
 
             atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args
             atomic.name_location = name_location
-            atomic.end_location = call_args.try(&.end_location) || block.try(&.end_location) || end_location
+            atomic.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
             atomic.at(location)
             atomic
           end
