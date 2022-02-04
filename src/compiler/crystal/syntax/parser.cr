@@ -1926,7 +1926,9 @@ module Crystal
       case @token.type
       when :IDENT
         name = @token.value.to_s
-        if consume_def_equals_sign_skip_space
+        end_location = token_end_location
+        if equals_end_location = consume_def_equals_sign_skip_space
+          end_location = equals_end_location
           name = "#{name}="
         elsif @token.type == :"."
           if name != "self" && !var_in_scope?(name)
@@ -1935,25 +1937,41 @@ module Crystal
           obj = Var.new(name)
 
           name = consume_def_or_macro_name
-          name = "#{name}=" if consume_def_equals_sign_skip_space
+          end_location = token_end_location
+          if equals_end_location = consume_def_equals_sign_skip_space
+            end_location = equals_end_location
+            name = "#{name}="
+          end
         end
       when :CONST
         obj = parse_generic
         check :"."
         name = consume_def_or_macro_name
-        name = "#{name}=" if consume_def_equals_sign_skip_space
+        end_location = token_end_location
+        if equals_end_location = consume_def_equals_sign_skip_space
+            end_location = equals_end_location
+            name = "#{name}="
+          end
       when :INSTANCE_VAR
         obj = InstanceVar.new(@token.value.to_s)
         next_token_skip_space
         check :"."
         name = consume_def_or_macro_name
-        name = "#{name}=" if consume_def_equals_sign_skip_space
+        end_location = token_end_location
+        if equals_end_location = consume_def_equals_sign_skip_space
+            end_location = equals_end_location
+            name = "#{name}="
+          end
       when :CLASS_VAR
         obj = ClassVar.new(@token.value.to_s)
         next_token_skip_space
         check :"."
         name = consume_def_or_macro_name
-        name = "#{name}=" if consume_def_equals_sign_skip_space
+        end_location = token_end_location
+        if equals_end_location = consume_def_equals_sign_skip_space
+            end_location = equals_end_location
+            name = "#{name}="
+          end
       else
         unexpected_token
       end
@@ -1966,12 +1984,13 @@ module Crystal
         next_token_skip_space
         types = parse_union_types(:")")
         check :")"
+        end_location = token_end_location
         next_token_skip_space
       else
         types = [] of ASTNode
       end
 
-      ProcPointer.new(obj, name, types)
+      ProcPointer.new(obj, name, types).at_end(end_location)
     end
 
     record Piece,
@@ -6011,12 +6030,13 @@ module Crystal
 
     def consume_def_equals_sign_skip_space
       next_token
+      end_location = token_end_location
       if @token.type == :"="
         next_token_skip_space
-        true
+        end_location
       else
         skip_space
-        false
+        nil
       end
     end
 
