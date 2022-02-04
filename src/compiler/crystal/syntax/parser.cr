@@ -1260,7 +1260,7 @@ module Crystal
 
         case tuple_or_hash
         when TupleLiteral
-          ary = ArrayLiteral.new(tuple_or_hash.elements, name: type).at(tuple_or_hash.location)
+          ary = ArrayLiteral.new(tuple_or_hash.elements, name: type).at(tuple_or_hash)
           return ary
         when HashLiteral
           tuple_or_hash.name = type
