@@ -4922,8 +4922,9 @@ module Crystal
       # is appeared in macro expression. (e.g. `{% if T <= Int32? %} ... {% end %}`)
       # Note that the parser cannot consume any spaces because it conflicts ternary operator.
       while expression && @token.type == :"?"
+        end_location = token_end_location
         next_token
-        type = make_nilable_expression(type)
+        type = make_nilable_expression(type).at_end(end_location)
       end
 
       skip_space
