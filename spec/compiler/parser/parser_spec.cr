@@ -2055,6 +2055,11 @@ module Crystal
       assert_end_location "{%\nif foo\n  bar\n end\n%}", line_number: 5, column_number: 2
       assert_end_location "foo bar, out baz"
       assert_end_location "Foo?"
+      assert_end_location "foo : Foo.class"
+      assert_end_location "foo : Foo?"
+      assert_end_location "foo : Foo*"
+      assert_end_location "foo : Foo**"
+      assert_end_location "foo : Foo[42]"
 
       assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
       assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"

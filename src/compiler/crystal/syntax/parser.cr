@@ -5067,28 +5067,31 @@ module Crystal
 
     def parse_type_suffix(type)
       loop do
+        end_location = token_end_location
         case @token.type
         when :"."
           next_token_skip_space_or_newline
           check_ident :class
+          end_location = token_end_location
           next_token_skip_space
-          type = Metaclass.new(type).at(type)
+          type = Metaclass.new(type).at(type).at_end(end_location)
         when :"?"
           next_token_skip_space
-          type = make_nilable_type(type)
+          type = make_nilable_type(type).at_end(end_location)
         when :"*"
           next_token_skip_space
-          type = make_pointer_type(type)
+          type = make_pointer_type(type).at_end(end_location)
         when :"**"
           next_token_skip_space
-          type = make_pointer_type(make_pointer_type(type))
+          type = make_pointer_type(make_pointer_type(type)).at_end(end_location)
         when :"["
           next_token_skip_space_or_newline
           size = parse_type_arg
           skip_space_or_newline
           check :"]"
+          end_location = token_end_location
           next_token_skip_space
-          type = make_static_array_type(type, size)
+          type = make_static_array_type(type, size).at_end(end_location)
         else
           return type
         end
