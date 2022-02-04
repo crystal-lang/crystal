@@ -3376,6 +3376,8 @@ module Crystal
         else
           node = parse_if_after_condition cond, location, true
         end
+        skip_space_or_newline
+        check :"%}"
         return MacroExpression.new(node, output: false).at_end(token_end_location)
       end
 
