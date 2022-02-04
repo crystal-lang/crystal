@@ -1954,9 +1954,9 @@ module Crystal
         name = consume_def_or_macro_name
         end_location = token_end_location
         if equals_end_location = consume_def_equals_sign_skip_space
-            end_location = equals_end_location
-            name = "#{name}="
-          end
+          end_location = equals_end_location
+          name = "#{name}="
+        end
       when :INSTANCE_VAR
         obj = InstanceVar.new(@token.value.to_s)
         next_token_skip_space
@@ -1964,9 +1964,9 @@ module Crystal
         name = consume_def_or_macro_name
         end_location = token_end_location
         if equals_end_location = consume_def_equals_sign_skip_space
-            end_location = equals_end_location
-            name = "#{name}="
-          end
+          end_location = equals_end_location
+          name = "#{name}="
+        end
       when :CLASS_VAR
         obj = ClassVar.new(@token.value.to_s)
         next_token_skip_space
@@ -1974,9 +1974,9 @@ module Crystal
         name = consume_def_or_macro_name
         end_location = token_end_location
         if equals_end_location = consume_def_equals_sign_skip_space
-            end_location = equals_end_location
-            name = "#{name}="
-          end
+          end_location = equals_end_location
+          name = "#{name}="
+        end
       else
         unexpected_token
       end
