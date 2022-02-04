@@ -187,7 +187,7 @@ Pending pull requests should usually stay in the queue for at least one full bus
 This wait time can be extended, for example for big changes or when there was a lot of recent activity in the discussion.
 Urgent bug fixes can skip the line.
 
-If reasonable objection or questsions arise while waiting for merge, the pull request must be removed from the milestone until they are resolved.
+If reasonable objection or questions arise while waiting for merge, the pull request must be removed from the milestone until they are resolved.
 
 It's good practice to have a single maintainer responsible for operating the merge queue.
 
