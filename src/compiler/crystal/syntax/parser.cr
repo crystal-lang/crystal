@@ -2330,6 +2330,7 @@ module Crystal
 
     def parse_string_or_symbol_array(klass, elements_type)
       strings = [] of ASTNode
+      end_location = nil
 
       while true
         next_string_array_token
@@ -2337,6 +2338,7 @@ module Crystal
         when :STRING
           strings << klass.new(@token.value.to_s)
         when :STRING_ARRAY_END
+          end_location = token_end_location
           next_token
           break
         else
@@ -2344,7 +2346,7 @@ module Crystal
         end
       end
 
-      ArrayLiteral.new strings, Path.global(elements_type)
+      ArrayLiteral.new(strings, Path.global(elements_type)).at_end(end_location)
     end
 
     def parse_empty_array_literal
