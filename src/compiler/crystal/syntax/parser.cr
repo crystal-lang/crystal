@@ -2337,7 +2337,6 @@ module Crystal
         when :STRING
           strings << klass.new(@token.value.to_s)
         when :STRING_ARRAY_END
-          end_location = token_end_location
           next_token
           break
         else
@@ -2345,7 +2344,7 @@ module Crystal
         end
       end
 
-      ArrayLiteral.new(strings, Path.global(elements_type)).at_end(end_location)
+      ArrayLiteral.new strings, Path.global(elements_type)
     end
 
     def parse_empty_array_literal
