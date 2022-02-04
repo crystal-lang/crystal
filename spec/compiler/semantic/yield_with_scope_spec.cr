@@ -186,4 +186,23 @@ describe "Semantic: yield with scope" do
       Bar.new.bar
       )) { int32 }
   end
+
+  it "mentions with yield scope and current scope in error" do
+    assert_error %(
+      def foo
+        with 1 yield
+      end
+
+      class Foo
+        def bar
+          foo do
+            baz
+          end
+        end
+      end
+
+      Foo.new.bar
+      ),
+      "undefined local variable or method 'baz' for Int32 (with ... yield) and Foo (current scope)"
+  end
 end

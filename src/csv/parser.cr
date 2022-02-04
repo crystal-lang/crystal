@@ -53,6 +53,11 @@ class CSV::Parser
     next_row_internal(token, array)
   end
 
+  # Rewinds this parser to the beginning.
+  def rewind : Nil
+    @lexer.rewind
+  end
+
   private def next_row_internal(token, row)
     while true
       case token.kind
@@ -66,11 +71,6 @@ class CSV::Parser
     end
   end
 
-  # Rewinds this parser to the first row.
-  def rewind
-    @lexer.rewind
-  end
-
   private struct RowIterator
     include Iterator(Array(String))
 
@@ -81,10 +81,6 @@ class CSV::Parser
 
     def next
       @parser.next_row || stop
-    end
-
-    def rewind
-      @parser.rewind
     end
   end
 end

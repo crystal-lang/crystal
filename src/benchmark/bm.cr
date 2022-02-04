@@ -25,12 +25,12 @@ module Benchmark
       end
 
       # Total time, that is utime + stime + cutime + cstime
-      def total
+      def total : Float64
         utime + stime + cutime + cstime
       end
 
       # Prints *utime*, *stime*, *total* and *real* to the given IO.
-      def to_s(io : IO)
+      def to_s(io : IO) : Nil
         io.printf "  %.6f   %.6f   %.6f (  %.6f)", utime, stime, total, real
       end
     end

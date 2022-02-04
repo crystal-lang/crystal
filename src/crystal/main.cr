@@ -3,19 +3,7 @@ lib LibCrystalMain
   fun __crystal_main(argc : Int32, argv : UInt8**)
 end
 
-# :nodoc:
-def _crystal_main(argc : Int32, argv : UInt8**)
-  # TODO: remove this method and embed this inside
-  # Crystal.main. A bug in Crystal 0.23.1 prevents invoking
-  # __crystal_main from anywhere except the top level.
-  LibCrystalMain.__crystal_main(argc, argv)
-end
-
 module Crystal
-  @@stdin_is_blocking = false
-  @@stdout_is_blocking = false
-  @@stderr_is_blocking = false
-
   # Defines the main routine run by normal Crystal programs:
   #
   # - Initializes the GC
@@ -46,8 +34,6 @@ module Crystal
   def self.main(&block)
     GC.init
 
-    remember_blocking_state
-
     status =
       begin
         yield
@@ -56,14 +42,28 @@ module Crystal
         1
       end
 
-    AtExitHandlers.run status
-    ex.inspect_with_backtrace STDERR if ex
-    STDOUT.flush
-    STDERR.flush
+    exit(status, ex)
+  end
 
-    restore_blocking_state
+  # :nodoc:
+  def self.exit(status : Int32, exception : Exception?) : Int32
+    status = Crystal::AtExitHandlers.run status, exception
+
+    if exception
+      STDERR.print "Unhandled exception: "
+      exception.inspect_with_backtrace(STDERR)
+    end
+
+    ignore_stdio_errors { STDOUT.flush }
+    ignore_stdio_errors { STDERR.flush }
 
     status
+  end
+
+  # :nodoc:
+  def self.ignore_stdio_errors
+    yield
+  rescue IO::Error
   end
 
   # Main method run by all Crystal programs at startup.
@@ -89,7 +89,7 @@ module Crystal
   #
   # ```
   # fun main(argc : Int32, argv : UInt8**) : Int32
-  #   LibFoo.init_foo_and_invoke_main(argc, argv, ->Crystal.main)
+  #   LibFoo.init_foo_and_invoke_main(argc, argv, ->Crystal.main(Int32, UInt8**))
   # end
   # ```
   #
@@ -100,6 +100,9 @@ module Crystal
     main do
       main_user_code(argc, argv)
     end
+  rescue ex
+    Crystal::System.print_exception "Unhandled exception", ex
+    1
   end
 
   # Executes the main user code. This normally is executed
@@ -109,27 +112,7 @@ module Crystal
   # redefine C's main function. See `Crystal.main` for
   # more details.
   def self.main_user_code(argc : Int32, argv : UInt8**)
-    _crystal_main(argc, argv)
-  end
-
-  # :nodoc:
-  def self.remember_blocking_state
-    {% if flag?(:win32) %}
-      @@stdin_is_blocking = true
-      @@stdout_is_blocking = true
-      @@stderr_is_blocking = true
-    {% else %}
-      @@stdin_is_blocking = IO::FileDescriptor.fcntl(0, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
-      @@stdout_is_blocking = IO::FileDescriptor.fcntl(1, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
-      @@stderr_is_blocking = IO::FileDescriptor.fcntl(2, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
-    {% end %}
-  end
-
-  # :nodoc:
-  def self.restore_blocking_state
-    STDIN.blocking = @@stdin_is_blocking
-    STDOUT.blocking = @@stdout_is_blocking
-    STDERR.blocking = @@stderr_is_blocking
+    LibCrystalMain.__crystal_main(argc, argv)
   end
 end
 
@@ -137,6 +120,13 @@ end
 # Invokes `Crystal.main`.
 #
 # Can be redefined. See `Crystal.main` for examples.
+#
+# On Windows the actual entry point is `wmain`, but there is no need to redefine
+# that. See the file required below for details.
 fun main(argc : Int32, argv : UInt8**) : Int32
   Crystal.main(argc, argv)
 end
+
+{% if flag?(:win32) %}
+  require "./system/win32/wmain"
+{% end %}

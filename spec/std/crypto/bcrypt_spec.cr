@@ -17,6 +17,7 @@ describe "Crypto::Bcrypt" do
     {5, latin1_pound_sign, "CCCCCCCCCCCCCCCCCCCCC.", "BvtRGGx3p8o0C5C36uS442Qqnrwofrq"},
     {5, utf8_pound_sign, "CCCCCCCCCCCCCCCCCCCCC.", "CAzSxlf0FLW7g1A5q7W/ZCj1xsN6A.e"},
     {5, bit8_unicode_pound_sign, "CCCCCCCCCCCCCCCCCCCCC.", "CAzSxlf0FLW7g1A5q7W/ZCj1xsN6A.e"},
+    {5, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789012345678", "VU6N0LbtX7trKLCg4Uf8qe", "5WYPzqIUUIrkveFjCbMg/hXc592OQLK"},
   ]
 
   it "computes digest vectors" do

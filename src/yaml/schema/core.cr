@@ -4,14 +4,14 @@ module YAML::Schema::Core
   # Deserializes a YAML document.
   #
   # Same as `YAML.parse`.
-  def self.parse(data : String | IO)
+  def self.parse(data : String | IO) : YAML::Any
     Parser.new data, &.parse
   end
 
   # Deserializes multiple YAML documents.
   #
   # Same as `YAML.parse_all`.
-  def self.parse_all(data : String | IO)
+  def self.parse_all(data : String | IO) : Array(YAML::Any)
     Parser.new data, &.parse_all
   end
 
@@ -19,7 +19,7 @@ module YAML::Schema::Core
   # parses it according to the core schema, taking the
   # scalar's style and tag into account, then advances
   # the pull parser.
-  def self.parse_scalar(pull_parser : YAML::PullParser) : Type
+  def self.parse_scalar(pull_parser : YAML::PullParser) : Nil | Bool | Int64 | Float64 | String | Time | Bytes
     string = pull_parser.value
 
     # Check for core schema tags
@@ -36,7 +36,7 @@ module YAML::Schema::Core
   end
 
   # Parses a scalar value from the given *node*.
-  def self.parse_scalar(node : YAML::Nodes::Scalar) : Type
+  def self.parse_scalar(node : YAML::Nodes::Scalar) : Nil | Bool | Int64 | Float64 | String | Time | Bytes
     string = node.value
 
     # Check for core schema tags
@@ -56,11 +56,13 @@ module YAML::Schema::Core
   # the string had a plain style.
   #
   # ```
+  # require "yaml"
+  #
   # YAML::Schema::Core.parse_scalar("hello") # => "hello"
   # YAML::Schema::Core.parse_scalar("1.2")   # => 1.2
   # YAML::Schema::Core.parse_scalar("false") # => false
   # ```
-  def self.parse_scalar(string : String) : Type
+  def self.parse_scalar(string : String) : Nil | Bool | Int64 | Float64 | String | Time | Bytes
     if parse_null?(string)
       return nil
     end
@@ -78,31 +80,38 @@ module YAML::Schema::Core
          .starts_with?("+0x"),
          .starts_with?("-0x")
       value = string.to_i64?(base: 16, prefix: true)
-      return value || string
+      value || string
+    when .starts_with?("0."),
+         .starts_with?('.')
+      value = parse_float?(string)
+      value || string
     when .starts_with?('0')
-      value = string.to_i64?(base: 8, prefix: true)
-      return value || string
+      return 0_i64 if string.size == 1
+      value = string.to_i64?(base: 8, prefix: true, leading_zero_is_octal: true)
+      value || string
     when .starts_with?('-'),
          .starts_with?('+')
       value = parse_number?(string)
-      return value || string
+      value || string
+    else
+      if string[0].ascii_number?
+        value = parse_number?(string)
+        return value if value
+
+        value = parse_time?(string)
+        return value if value
+      end
+
+      string
     end
-
-    if string[0].ascii_number?
-      value = parse_number?(string)
-      return value if value
-
-      value = parse_time?(string)
-      return value if value
-    end
-
-    string
   end
 
   # Returns whether a string is reserved and must non be output
   # with a plain style, according to the core schema.
   #
   # ```
+  # require "yaml"
+  #
   # YAML::Schema::Core.reserved_string?("hello") # => false
   # YAML::Schema::Core.reserved_string?("1.2")   # => true
   # YAML::Schema::Core.reserved_string?("false") # => true
@@ -120,7 +129,7 @@ module YAML::Schema::Core
   # If `node` parses to a null value, returns `nil`, otherwise
   # invokes the given block.
   def self.parse_null_or(node : YAML::Nodes::Node)
-    if node.is_a?(YAML::Nodes::Scalar) && parse_null?(node.value)
+    if node.is_a?(YAML::Nodes::Scalar) && parse_null?(node)
       nil
     else
       yield
@@ -232,7 +241,9 @@ module YAML::Schema::Core
   end
 
   protected def self.parse_int(string, location) : Int64
-    string.to_i64?(underscore: true, prefix: true) ||
+    return 0_i64 if string == "0"
+
+    string.to_i64?(underscore: true, prefix: true, leading_zero_is_octal: true) ||
       raise(YAML::ParseException.new("Invalid int", *location))
   end
 
@@ -277,7 +288,13 @@ module YAML::Schema::Core
       yield source.value
     when "tag:yaml.org,2002:timestamp"
       yield parse_time(source.value, source.location)
+    else
+      # not a tag we support
     end
+  end
+
+  private def self.parse_null?(node : Nodes::Scalar)
+    parse_null?(node.value) && node.style.plain?
   end
 
   private def self.parse_null?(string)
@@ -305,7 +322,7 @@ module YAML::Schema::Core
   end
 
   private def self.parse_int?(string)
-    string.to_i64?(underscore: true)
+    string.to_i64?(underscore: true, leading_zero_is_octal: true)
   end
 
   private def self.parse_float?(string)
@@ -330,6 +347,6 @@ module YAML::Schema::Core
     # Minimum length is that of YYYY-M-D
     return nil if string.size < 8
 
-    TimeParser.new(string).parse
+    Time::Format::YAML_DATE.parse?(string)
   end
 end

@@ -1,13 +1,9 @@
-# Provides methods that answer questions about unicode characters,
-# and the `Unicode::CaseOptions` enum for special case conversions
-# like Turkic.
-#
-# There's no need to use the methods defined in this module
-# because they are exposed in `Char` in a more convenient way
-# (`Char#upcase`, `Char#downcase`, `Char#whitespace?`, etc.)
+# Provides the `Unicode::CaseOptions` enum for special case conversions like Turkic.
 module Unicode
-  # Options to pass to `upcase`, `downcase`, `uppercase?`
-  # and `lowercase?` to control their behaviour.
+  # The currently supported [Unicode](https://home.unicode.org) version.
+  VERSION = "14.0.0"
+
+  # Case options to pass to various `Char` and `String` methods such as `upcase` or `downcase`.
   @[Flags]
   enum CaseOptions
     # Only transform ASCII characters.
@@ -27,7 +23,8 @@ module Unicode
     Fold
   end
 
-  def self.upcase(char : Char, options : CaseOptions)
+  # :nodoc:
+  def self.upcase(char : Char, options : CaseOptions) : Char
     result = check_upcase_ascii(char, options)
     return result if result
 
@@ -37,6 +34,7 @@ module Unicode
     check_upcase_ranges(char)
   end
 
+  # :nodoc:
   def self.upcase(char : Char, options : CaseOptions)
     result = check_upcase_ascii(char, options)
     if result
@@ -73,11 +71,13 @@ module Unicode
   private def self.check_upcase_turkic(char, options)
     if options.turkic?
       case char
-      when 'ı'; return 'I'
-      when 'i'; return 'İ'
+      when 'ı' then 'I'
+      when 'i' then 'İ'
+      else          nil
       end
+    else
+      nil
     end
-    nil
   end
 
   private def self.check_upcase_ranges(char)
@@ -90,7 +90,8 @@ module Unicode
     char
   end
 
-  def self.downcase(char : Char, options : CaseOptions)
+  # :nodoc:
+  def self.downcase(char : Char, options : CaseOptions) : Char
     result = check_downcase_ascii(char, options)
     return result if result
 
@@ -103,6 +104,7 @@ module Unicode
     check_downcase_ranges(char)
   end
 
+  # :nodoc:
   def self.downcase(char : Char, options : CaseOptions)
     result = check_downcase_ascii(char, options)
     if result
@@ -146,11 +148,13 @@ module Unicode
   private def self.check_downcase_turkic(char, options)
     if options.turkic?
       case char
-      when 'I'; return 'ı'
-      when 'İ'; return 'i'
+      when 'I' then 'ı'
+      when 'İ' then 'i'
+      else          nil
       end
+    else
+      nil
     end
-    nil
   end
 
   private def self.check_downcase_fold(char, options)
@@ -173,31 +177,38 @@ module Unicode
     char
   end
 
-  def self.lowercase?(char : Char)
+  # :nodoc:
+  def self.lowercase?(char : Char) : Bool
     in_category?(char.ord, category_Ll)
   end
 
-  def self.uppercase?(char : Char)
+  # :nodoc:
+  def self.uppercase?(char : Char) : Bool
     in_category?(char.ord, category_Lu)
   end
 
-  def self.letter?(char : Char)
-    in_any_category?(char.ord, category_Lu, category_Ll, category_Lt)
+  # :nodoc:
+  def self.letter?(char : Char) : Bool
+    in_any_category?(char.ord, category_Lu, category_Ll, category_Lt, category_Lm, category_Lo)
   end
 
-  def self.number?(char : Char)
+  # :nodoc:
+  def self.number?(char : Char) : Bool
     in_any_category?(char.ord, category_Nd, category_Nl, category_No)
   end
 
-  def self.control?(char : Char)
+  # :nodoc:
+  def self.control?(char : Char) : Bool
     in_any_category?(char.ord, category_Cs, category_Co, category_Cn, category_Cf, category_Cc)
   end
 
-  def self.whitespace?(char : Char)
+  # :nodoc:
+  def self.whitespace?(char : Char) : Bool
     in_any_category?(char.ord, category_Zs, category_Zl, category_Zp)
   end
 
-  def self.mark?(char : Char)
+  # :nodoc:
+  def self.mark?(char : Char) : Bool
     in_any_category?(char.ord, category_Mn, category_Me, category_Mc)
   end
 
@@ -228,7 +239,7 @@ module Unicode
     end
   end
 
-  def self.in_any_category?(needle, *haystacks)
+  private def self.in_any_category?(needle, *haystacks) : Bool
     haystacks.any? { |haystack| in_category?(needle, haystack) }
   end
 end

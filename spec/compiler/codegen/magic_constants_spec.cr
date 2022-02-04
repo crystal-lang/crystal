@@ -61,7 +61,7 @@ describe "Code gen: magic constants" do
       require "primitives"
 
       def foo(x, z = 10, line = __LINE__)
-        z + line
+        z &+ line
       end
 
       foo 1, 20
@@ -73,7 +73,7 @@ describe "Code gen: magic constants" do
       require "primitives"
 
       def foo(x, line = __LINE__, z = 1)
-        z + line
+        z &+ line
       end
 
       foo 1, z: 20

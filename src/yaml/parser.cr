@@ -16,6 +16,10 @@ abstract class YAML::Parser
   abstract def new_scalar
   abstract def put_anchor(anchor, value)
   abstract def get_anchor(anchor)
+  abstract def add_to_documents(documents, document)
+  abstract def add_to_document(document, node)
+  abstract def add_to_sequence(sequence, node)
+  abstract def add_to_mapping(mapping, key, value)
 
   def end_value(value)
   end
@@ -23,16 +27,12 @@ abstract class YAML::Parser
   def process_tag(tag, &block)
   end
 
-  protected def cast_value(value)
-    value
-  end
-
   protected def cast_document(document)
     document
   end
 
   # Deserializes multiple YAML document.
-  def parse_all
+  def parse_all : Array(YAML::Any)
     documents = new_documents
 
     @pull_parser.read_next
@@ -41,7 +41,7 @@ abstract class YAML::Parser
       when .stream_end?
         return documents
       when .document_start?
-        documents << cast_value(parse_document)
+        add_to_documents(documents, parse_document)
       else
         unexpected_event
       end
@@ -62,7 +62,7 @@ abstract class YAML::Parser
       unexpected_event
     end
 
-    cast_value(cast_document(document))
+    cast_document(document)
   end
 
   private def parse_document
@@ -73,7 +73,7 @@ abstract class YAML::Parser
 
   private def parse_document(document)
     @pull_parser.read_next
-    document << parse_node
+    add_to_document(document, parse_node)
     end_value(document)
     @pull_parser.read_document_end
   end
@@ -116,7 +116,7 @@ abstract class YAML::Parser
     sequence = anchor new_sequence
 
     parse_sequence(sequence) do
-      sequence << parse_node
+      add_to_sequence(sequence, parse_node)
     end
 
     sequence
@@ -138,7 +138,7 @@ abstract class YAML::Parser
     mapping = anchor new_mapping
 
     parse_mapping(mapping) do
-      mapping[parse_node] = parse_node
+      add_to_mapping(mapping, parse_node, parse_node)
     end
 
     mapping
@@ -157,7 +157,7 @@ abstract class YAML::Parser
   end
 
   # Closes this parser, freeing up resources.
-  def close
+  def close : Nil
     @pull_parser.close
   end
 

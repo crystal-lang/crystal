@@ -5,15 +5,15 @@
 # Check all `#new` methods for details.
 #
 # ```
-# Time::Span.new(nanoseconds: 10_000) # => 00:00:00.000010000
-# Time::Span.new(10, 10, 10)          # => 10:10:10
-# Time::Span.new(10, 10, 10, 10)      # => 10.10:10:10
+# Time::Span.new(nanoseconds: 10_000)                           # => 00:00:00.000010000
+# Time::Span.new(hours: 10, minutes: 10, seconds: 10)           # => 10:10:10
+# Time::Span.new(days: 10, hours: 10, minutes: 10, seconds: 10) # => 10.10:10:10
 # ```
 #
 # Calculation between `Time` also returns a `Time::Span`.
 #
 # ```
-# span = Time.new(2015, 10, 10) - Time.new(2015, 9, 10)
+# span = Time.utc(2015, 10, 10) - Time.utc(2015, 9, 10)
 # span       # => 30.00:00:00
 # span.class # => Time::Span
 # ```
@@ -21,7 +21,7 @@
 # Inspection:
 #
 # ```
-# span = Time::Span.new(20, 10, 10)
+# span = Time::Span.new(hours: 20, minutes: 10, seconds: 10)
 # span.hours   # => 20
 # span.minutes # => 10
 # span.seconds # => 10
@@ -30,8 +30,8 @@
 # Calculation:
 #
 # ```
-# a = Time::Span.new(20, 10, 10)
-# b = Time::Span.new(10, 10, 10)
+# a = Time::Span.new(hours: 20, minutes: 10, seconds: 10)
+# b = Time::Span.new(hours: 10, minutes: 10, seconds: 10)
 # c = a - b # => 10:00:00
 # c.hours   # => 10
 # ```
@@ -41,6 +41,7 @@ struct Time::Span
   # https://github.com/mono/mono/blob/master/mcs/class/corlib/System/Time::Span.cs
 
   include Comparable(self)
+  include Steppable
 
   MAX  = new seconds: Int64::MAX, nanoseconds: 999_999_999
   MIN  = new seconds: Int64::MIN, nanoseconds: -999_999_999
@@ -53,17 +54,15 @@ struct Time::Span
   # @nanoseconds can either be negative or positive).
   @nanoseconds : Int32
 
-  def self.new(hours : Int, minutes : Int, seconds : Int)
-    new(0, hours, minutes, seconds)
-  end
-
-  def self.new(days : Int, hours : Int, minutes : Int, seconds : Int, nanoseconds : Int = 0)
-    new(
-      seconds: compute_seconds!(days, hours, minutes, seconds),
-      nanoseconds: nanoseconds.to_i64,
-    )
-  end
-
+  # Creates a new `Time::Span` from *seconds* and *nanoseconds*.
+  #
+  # Nanoseconds get normalized in the range of `0...1_000_000_000`,
+  # the nanosecond overflow gets added as seconds.
+  #
+  # ```
+  # Time::Span.new(seconds: 30)                 # => 00:00:30
+  # Time::Span.new(seconds: 5, nanoseconds: 12) # => 00:00:05.000000012
+  # ```
   def initialize(*, seconds : Int, nanoseconds : Int)
     # Normalize nanoseconds in the range 0...1_000_000_000
     seconds += nanoseconds.tdiv(NANOSECONDS_PER_SECOND)
@@ -84,6 +83,15 @@ struct Time::Span
     @nanoseconds = nanoseconds.to_i32
   end
 
+  # Creates a new `Time::Span` from the *nanoseconds* given
+  #
+  # Nanoseconds get normalized in the range of `0...1_000_000_000`,
+  # the nanosecond overflow gets added as seconds.
+  #
+  # ```
+  # Time::Span.new(nanoseconds: 500_000_000)   # => 00:00:00.500000000
+  # Time::Span.new(nanoseconds: 5_500_000_000) # => 00:00:05.500000000
+  # ```
   def self.new(*, nanoseconds : Int)
     new(
       seconds: nanoseconds.to_i64.tdiv(NANOSECONDS_PER_SECOND),
@@ -91,61 +99,30 @@ struct Time::Span
     )
   end
 
-  private def self.compute_seconds!(days, hours, minutes, seconds)
-    compute_seconds(days, hours, minutes, seconds, true).not_nil!
+  # Creates a new `Time::Span` from the *days*, *hours*, *minutes*, *seconds* and *nanoseconds* given
+  #
+  # Any time unit can be omitted.
+  #
+  # ```
+  # Time::Span.new(days: 1)                                                   # => 1.00:00:00
+  # Time::Span.new(days: 1, hours: 2, minutes: 3)                             # => 01:02:03
+  # Time::Span.new(days: 1, hours: 2, minutes: 3, seconds: 4, nanoseconds: 5) # => 1.02:03:04.000000005
+  # ```
+  def self.new(*, days : Int = 0, hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0)
+    new(
+      seconds: compute_seconds(days, hours, minutes, seconds),
+      nanoseconds: nanoseconds.to_i64,
+    )
   end
 
-  private def self.compute_seconds(days, hours, minutes, seconds, raise_exception)
-    # there's no overflow checks for hours, minutes, ...
-    # so big hours/minutes values can overflow at some point and change expected values
-    hrssec = hours * 3600 # break point at (Int32::MAX - 596523)
-    minsec = minutes * 60
-    s = (hrssec + minsec + seconds).to_i64
+  private def self.compute_seconds(days, hours, minutes, seconds)
+    days_to_seconds = SECONDS_PER_DAY.to_i64 * days
+    hours_to_seconds = SECONDS_PER_HOUR.to_i64 * hours
+    minutes_to_seconds = SECONDS_PER_MINUTE.to_i64 * minutes
 
-    result = 0_i64
-
-    overflow = false
-    # days is problematic because it can overflow but that overflow can be
-    # "legal" (i.e. temporary) (e.g. if other parameters are negative) or
-    # illegal (e.g. sign change).
-    if days > 0
-      sd = SECONDS_PER_DAY.to_i64 * days
-      if sd < days
-        overflow = true
-      elsif s < 0
-        temp = s
-        s += sd
-        # positive days -> total seconds should be lower
-        overflow = temp > s
-      else
-        s += sd
-        # positive + positive != negative result
-        overflow = s < 0
-      end
-    elsif days < 0
-      sd = SECONDS_PER_DAY.to_i64 * days
-      if sd > days
-        overflow = true
-      elsif s <= 0
-        s += sd
-        # negative + negative != positive result
-        overflow = s > 0
-      else
-        nanos = s
-        s += sd
-        # negative days -> total nanos should be lower
-        overflow = s > nanos
-      end
-    end
-
-    if overflow
-      if raise_exception
-        raise ArgumentError.new "Time::Span too big or too small"
-      end
-      return nil
-    end
-
-    s
+    days_to_seconds + hours_to_seconds + minutes_to_seconds + seconds
+  rescue OverflowError
+    raise ArgumentError.new "Time::Span too big or too small"
   end
 
   # Returns the number of full days in this time span.
@@ -179,7 +156,12 @@ struct Time::Span
 
   # Returns the number of milliseconds of the second (`0..999`) in this time span.
   def milliseconds : Int32
-    nanoseconds / NANOSECONDS_PER_MILLISECOND
+    nanoseconds // NANOSECONDS_PER_MILLISECOND
+  end
+
+  # Returns the number of microseconds of the second (`0..999999`) in this time span.
+  def microseconds : Int32
+    nanoseconds // NANOSECONDS_PER_MICROSECOND
   end
 
   # Returns the number of nanoseconds of the second (`0..999_999_999`)
@@ -221,14 +203,19 @@ struct Time::Span
     to_i.to_f + (nanoseconds.to_f / NANOSECONDS_PER_SECOND)
   end
 
-  # Converts to a number of nanoseconds.
-  def total_nanoseconds : Float64
-    (to_i.to_f * NANOSECONDS_PER_SECOND) + nanoseconds
-  end
-
   # Converts to a number of milliseconds.
   def total_milliseconds : Float64
     total_nanoseconds / NANOSECONDS_PER_MILLISECOND
+  end
+
+  # Converts to a number of microseconds.
+  def total_microseconds : Float64
+    total_nanoseconds / NANOSECONDS_PER_MICROSECOND
+  end
+
+  # Converts to a number of nanoseconds.
+  def total_nanoseconds : Float64
+    (to_i.to_f * NANOSECONDS_PER_SECOND) + nanoseconds
   end
 
   # Alias of `total_seconds`.
@@ -241,25 +228,31 @@ struct Time::Span
     @seconds
   end
 
-  # Alias of `abs`.
-  def duration : Time::Span
-    abs
-  end
-
   # Returns the absolute (non-negative) amount of time this `Time::Span`
   # represents by removing the sign.
   def abs : Time::Span
     Span.new(seconds: to_i.abs, nanoseconds: nanoseconds.abs)
   end
 
+  # Returns the sign of this time span.
+  #
+  # Values are `-1`, `0`, `1` if `self` is smaller, equal, bigger compared to `ZERO`.
+  def sign : Int32
+    if @seconds == 0
+      @nanoseconds.sign
+    else
+      @seconds.sign
+    end
+  end
+
   # Returns a `Time` that happens later by `self` than the current time.
   def from_now : Time
-    Time.now + self
+    Time.local + self
   end
 
   # Returns a `Time` that happens earlier by `self` than the current time.
   def ago : Time
-    Time.now - self
+    Time.local - self
   end
 
   def -(other : self) : Time::Span
@@ -286,31 +279,49 @@ struct Time::Span
     )
   end
 
+  # Returns the additive identity of this type.
+  #
+  # This is `zero`.
+  def self.additive_identity : self
+    zero
+  end
+
   def + : self
     self
   end
 
   # Returns a `Time::Span` that is *number* times longer.
-  def *(number : Number) : Time::Span
+  def *(number : Int) : Time::Span
     # TODO check overflow
     Span.new(
-      seconds: to_i.to_i64 * number,
+      seconds: to_i * number,
       nanoseconds: nanoseconds.to_i64 * number,
     )
   end
 
-  def /(number : Number) : Time::Span
+  # Returns a `Time::Span` that is *number* times longer.
+  def *(number : Float) : Time::Span
+    (total_nanoseconds * number).nanoseconds
+  end
+
+  # Returns a `Time::Span` that is divided by *number*.
+  def /(number : Int) : Time::Span
     seconds = to_i.tdiv(number)
     nanoseconds = self.nanoseconds.tdiv(number)
 
     remainder = to_i.remainder(number)
-    nanoseconds += (remainder * NANOSECONDS_PER_SECOND) / number
+    nanoseconds += (remainder * NANOSECONDS_PER_SECOND) // number
 
     # TODO check overflow
     Span.new(
       seconds: seconds,
       nanoseconds: nanoseconds,
     )
+  end
+
+  # Returns a `Time::Span` that is divided by *number*.
+  def /(number : Float) : Time::Span
+    (total_nanoseconds / number).nanoseconds
   end
 
   def /(other : self) : Float64
@@ -323,7 +334,11 @@ struct Time::Span
     cmp
   end
 
-  def inspect(io : IO)
+  def sign : Int32
+    (self <=> ZERO).sign
+  end
+
+  def inspect(io : IO) : Nil
     if to_i < 0 || nanoseconds < 0
       io << '-'
     end
@@ -368,88 +383,133 @@ struct Time::Span
     end
   end
 
+  # Creates a new `Time::Span` representing a span of zero time.
   def self.zero : Time::Span
     ZERO
   end
 
+  # Returns `true` if `self` represents a span of zero time.
+  #
+  # ```
+  # 2.hours.zero?  # => false
+  # 0.days.zero?   # => true
+  # 1.second.zero? # => false
+  # ```
   def zero? : Bool
-    to_i == 0 && nanoseconds == 0
+    self == ZERO
+  end
+
+  # Returns `true` if `self` represents a positive time span.
+  #
+  # ```
+  # 2.hours.positive? # => true
+  # 0.days.positive?  # => false
+  # -3.days.positive? # => false
+  # ```
+  def positive? : Bool
+    self > ZERO
+  end
+
+  # Returns `true` if `self` represents a negative time span.
+  #
+  # ```
+  # 2.hours.negative? # => false
+  # 0.days.negative?  # => false
+  # -3.days.negative? # => true
+  # ```
+  def negative? : Bool
+    self < ZERO
   end
 end
 
 struct Int
-  # :nodoc:
+  # Returns a `Time::Span` of `self` weeks.
+  def weeks : Time::Span
+    Time::Span.new(days: (7 * self))
+  end
+
+  # :ditto:
   def week : Time::Span
     weeks
   end
 
-  # Returns a `Time::Span` of `self` weeks.
-  def weeks : Time::Span
-    Time::Span.new 7 * self, 0, 0, 0
+  # Returns a `Time::Span` of `self` days.
+  def days : Time::Span
+    Time::Span.new(days: self)
   end
 
-  # :nodoc:
+  # :ditto:
   def day : Time::Span
     days
   end
 
-  # Returns a `Time::Span` of `self` days.
-  def days : Time::Span
-    Time::Span.new self, 0, 0, 0
+  # Returns a `Time::Span` of `self` hours.
+  def hours : Time::Span
+    Time::Span.new(hours: self)
   end
 
-  # :nodoc:
+  # :ditto:
   def hour : Time::Span
     hours
   end
 
-  # Returns a `Time::Span` of `self` hours.
-  def hours : Time::Span
-    Time::Span.new self, 0, 0
+  # Returns a `Time::Span` of `self` minutes.
+  def minutes : Time::Span
+    Time::Span.new(minutes: self)
   end
 
-  # :nodoc:
+  # :ditto:
   def minute : Time::Span
     minutes
   end
 
-  # Returns a `Time::Span` of `self` minutes.
-  def minutes : Time::Span
-    Time::Span.new 0, self, 0
+  # Returns a `Time::Span` of `self` seconds.
+  def seconds : Time::Span
+    Time::Span.new(seconds: self)
   end
 
-  # :nodoc:
+  # :ditto:
   def second : Time::Span
     seconds
   end
 
-  # Returns a `Time::Span` of `self` seconds.
-  def seconds : Time::Span
-    Time::Span.new 0, 0, self
+  # Returns a `Time::Span` of `self` milliseconds.
+  def milliseconds : Time::Span
+    Time::Span.new(nanoseconds: (self.to_i64 * Time::NANOSECONDS_PER_MILLISECOND))
   end
 
-  # :nodoc:
+  # :ditto:
   def millisecond : Time::Span
     milliseconds
   end
 
-  # Returns a `Time::Span` of `self` milliseconds.
-  def milliseconds : Time::Span
-    Time::Span.new 0, 0, 0, 0, (self.to_i64 * Time::NANOSECONDS_PER_MILLISECOND)
+  # Returns a `Time::Span` of `self` microseconds.
+  def microseconds : Time::Span
+    Time::Span.new(nanoseconds: (self.to_i64 * Time::NANOSECONDS_PER_MICROSECOND))
   end
 
-  # :nodoc:
-  def nanosecond : Time::Span
-    nanoseconds
+  # :ditto:
+  def microsecond : Time::Span
+    microseconds
   end
 
   # Returns a `Time::Span` of `self` nanoseconds.
   def nanoseconds : Time::Span
     Time::Span.new(nanoseconds: self.to_i64)
   end
+
+  # :ditto:
+  def nanosecond : Time::Span
+    nanoseconds
+  end
 end
 
 struct Float
+  # Returns a `Time::Span` of `self` weeks.
+  def weeks : Time::Span
+    (self * 7).days
+  end
+
   # Returns a `Time::Span` of `self` days.
   def days : Time::Span
     (self * 24).hours
@@ -484,6 +544,11 @@ struct Float
     (self / 1_000).seconds
   end
 
+  # Returns a `Time::Span` of `self` microseconds.
+  def microseconds : Time::Span
+    (self / 1_000_000).seconds
+  end
+
   # Returns a `Time::Span` of `self` nanoseconds.
   def nanoseconds : Time::Span
     seconds = (self / Time::NANOSECONDS_PER_SECOND).to_i64
@@ -503,8 +568,8 @@ end
 # specified number of months.
 #
 # ```
-# Time.new(2016, 2, 1) + 13.months # => 2017-03-01 00:00:00
-# Time.new(2016, 2, 29) + 2.years  # => 2018-02-28 00:00:00
+# Time.local(2016, 2, 1) + 13.months # => 2017-03-01 00:00:00
+# Time.local(2016, 2, 29) + 2.years  # => 2018-02-28 00:00:00
 # ```
 struct Time::MonthSpan
   # The number of months.
@@ -516,33 +581,33 @@ struct Time::MonthSpan
 
   # Returns a `Time` that happens N months after now.
   def from_now : Time
-    Time.now + self
+    Time.local + self
   end
 
   # Returns a `Time` that happens N months before now.
   def ago : Time
-    Time.now - self
+    Time.local - self
   end
 end
 
 struct Int
-  # :nodoc:
-  def month : Time::MonthSpan
-    months
-  end
-
   # Returns a `Time::MonthSpan` of `self` months.
   def months : Time::MonthSpan
     Time::MonthSpan.new(self)
   end
 
-  # :nodoc:
-  def year : Time::MonthSpan
-    years
+  # :ditto:
+  def month : Time::MonthSpan
+    months
   end
 
   # Returns a `Time::MonthSpan` of `self` years.
   def years : Time::MonthSpan
     Time::MonthSpan.new(self * 12)
+  end
+
+  # :ditto:
+  def year : Time::MonthSpan
+    years
   end
 end

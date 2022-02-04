@@ -7,8 +7,15 @@ enum SpecEnum : Int8
 end
 
 enum SpecEnum2
-  FourtyTwo
-  FOURTY_FOUR
+  FortyTwo
+  FORTY_FOUR
+end
+
+private enum PrivateEnum
+  FOO = 0
+  BAR = 1
+  BAZ = 2
+  QUX = 0
 end
 
 @[Flags]
@@ -16,6 +23,29 @@ enum SpecEnumFlags
   One
   Two
   Three
+end
+
+@[Flags]
+enum SpecEnumFlags8 : Int8
+  One
+  Two
+  Three
+end
+
+@[Flags]
+private enum PrivateFlagsEnum
+  FOO
+  BAR
+  BAZ
+end
+
+enum SpecBigEnum : Int64
+  TooBig = 4294967296i64 # == 2**32
+end
+
+private enum SpecEnumWithCaseSensitiveMembers
+  FOO = 1
+  Foo = 2
 end
 
 describe Enum do
@@ -31,6 +61,24 @@ describe Enum do
       SpecEnumFlags::All.to_s.should eq("One | Two | Three")
       (SpecEnumFlags::One | SpecEnumFlags::Two).to_s.should eq("One | Two")
     end
+
+    it "for private enum" do
+      PrivateEnum::FOO.to_s.should eq "FOO"
+      PrivateFlagsEnum::FOO.to_s.should eq "FOO"
+      PrivateEnum::QUX.to_s.should eq "FOO"
+      String.build { |io| PrivateEnum::FOO.to_s(io) }.should eq "FOO"
+      String.build { |io| PrivateFlagsEnum::FOO.to_s(io) }.should eq "FOO"
+      String.build { |io| (PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAZ).to_s(io) }.should eq "FOO | BAZ"
+    end
+  end
+
+  it "creates an enum instance from an auto-casted symbol (#8573)" do
+    enum_value = SpecEnum.new(:two)
+    enum_value.should eq SpecEnum::Two
+
+    SpecEnumWithCaseSensitiveMembers.new(:foo).should eq SpecEnumWithCaseSensitiveMembers::FOO
+    SpecEnumWithCaseSensitiveMembers.new(:Foo).should eq SpecEnumWithCaseSensitiveMembers::FOO
+    SpecEnumWithCaseSensitiveMembers.new(:FOO).should eq SpecEnumWithCaseSensitiveMembers::FOO
   end
 
   it "gets value" do
@@ -86,6 +134,17 @@ describe Enum do
       names.should eq([SpecEnumFlags::One, SpecEnumFlags::Three])
       values.should eq([SpecEnumFlags::One.value, SpecEnumFlags::Three.value])
     end
+
+    it "private enum" do
+      names = [] of PrivateFlagsEnum
+      values = [] of Int32
+      (PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAZ).each do |name, value|
+        names << name
+        values << value
+      end
+      names.should eq([PrivateFlagsEnum::FOO, PrivateFlagsEnum::BAZ])
+      values.should eq([PrivateFlagsEnum::FOO.value, PrivateFlagsEnum::BAZ.value])
+    end
   end
 
   describe "names" do
@@ -112,16 +171,19 @@ describe Enum do
     it "for simple enum" do
       SpecEnum.from_value?(0).should eq(SpecEnum::One)
       SpecEnum.from_value?(1).should eq(SpecEnum::Two)
+      SpecEnum.from_value?(1_i8).should eq(SpecEnum::Two)
       SpecEnum.from_value?(2).should eq(SpecEnum::Three)
       SpecEnum.from_value?(3).should be_nil
     end
 
     it "for flags enum" do
-      SpecEnumFlags.from_value?(0).should be_nil
+      SpecEnumFlags.from_value?(0).should eq(SpecEnumFlags::None)
       SpecEnumFlags.from_value?(1).should eq(SpecEnumFlags::One)
+      SpecEnumFlags.from_value?(1_i8).should eq(SpecEnumFlags::One)
       SpecEnumFlags.from_value?(2).should eq(SpecEnumFlags::Two)
       SpecEnumFlags.from_value?(3).should eq(SpecEnumFlags::One | SpecEnumFlags::Two)
       SpecEnumFlags.from_value?(8).should be_nil
+      SpecEnumFlags8.from_value?(1_i8).should eq(SpecEnumFlags8::One)
     end
   end
 
@@ -134,10 +196,38 @@ describe Enum do
     end
 
     it "for flags enum" do
-      expect_raises(Exception, "Unknown enum SpecEnumFlags value: 0") { SpecEnumFlags.from_value(0) }
+      SpecEnumFlags.from_value(0).should eq(SpecEnumFlags::None)
       SpecEnumFlags.from_value(1).should eq(SpecEnumFlags::One)
       SpecEnumFlags.from_value(2).should eq(SpecEnumFlags::Two)
       SpecEnumFlags.from_value(3).should eq(SpecEnumFlags::One | SpecEnumFlags::Two)
+      expect_raises(Exception, "Unknown enum SpecEnumFlags value: 8") { SpecEnumFlags.from_value(8) }
+    end
+
+    it "for private enum" do
+      PrivateEnum.from_value(0).should eq(PrivateEnum::FOO)
+    end
+  end
+
+  describe "valid?" do
+    it "for simple enum" do
+      SpecEnum.valid?(SpecEnum::One).should be_true
+      SpecEnum.valid?(SpecEnum::Two).should be_true
+      SpecEnum.valid?(SpecEnum::Three).should be_true
+      SpecEnum.valid?(SpecEnum.new(3i8)).should be_false
+    end
+
+    it "for flags enum" do
+      SpecEnumFlags.valid?(SpecEnumFlags::One).should be_true
+      SpecEnumFlags.valid?(SpecEnumFlags::Two).should be_true
+      SpecEnumFlags.valid?(SpecEnumFlags::One | SpecEnumFlags::Two).should be_true
+      SpecEnumFlags.valid?(SpecEnumFlags.new(8)).should be_false
+      SpecEnumFlags.valid?(SpecEnumFlags::None).should be_true
+      SpecEnumFlags.valid?(SpecEnumFlags::All).should be_true
+    end
+
+    it "for Int64 enum" do
+      SpecBigEnum.valid?(SpecBigEnum::TooBig).should be_true
+      SpecBigEnum.valid?(SpecBigEnum.new(0i64)).should be_false
     end
   end
 
@@ -145,21 +235,29 @@ describe Enum do
     SpecEnum::Two.hash.should_not eq(SpecEnum::Three.hash)
   end
 
-  it "parses" do
+  it ".parse" do
     SpecEnum.parse("Two").should eq(SpecEnum::Two)
-    SpecEnum2.parse("FourtyTwo").should eq(SpecEnum2::FourtyTwo)
-    SpecEnum2.parse("fourty_two").should eq(SpecEnum2::FourtyTwo)
+    SpecEnum2.parse("FortyTwo").should eq(SpecEnum2::FortyTwo)
+    SpecEnum2.parse("forty_two").should eq(SpecEnum2::FortyTwo)
     expect_raises(ArgumentError, "Unknown enum SpecEnum value: Four") { SpecEnum.parse("Four") }
 
     SpecEnum.parse("TWO").should eq(SpecEnum::Two)
     SpecEnum.parse("TwO").should eq(SpecEnum::Two)
-    SpecEnum2.parse("FOURTY_TWO").should eq(SpecEnum2::FourtyTwo)
+    SpecEnum2.parse("FORTY_TWO").should eq(SpecEnum2::FortyTwo)
 
-    SpecEnum2.parse("FOURTY_FOUR").should eq(SpecEnum2::FOURTY_FOUR)
-    SpecEnum2.parse("fourty_four").should eq(SpecEnum2::FOURTY_FOUR)
-    SpecEnum2.parse("FourtyFour").should eq(SpecEnum2::FOURTY_FOUR)
-    SpecEnum2.parse("FOURTYFOUR").should eq(SpecEnum2::FOURTY_FOUR)
-    SpecEnum2.parse("fourtyfour").should eq(SpecEnum2::FOURTY_FOUR)
+    SpecEnum2.parse("FORTY_FOUR").should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("forty_four").should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("FortyFour").should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("FORTYFOUR").should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("fortyfour").should eq(SpecEnum2::FORTY_FOUR)
+
+    PrivateEnum.parse("FOO").should eq(PrivateEnum::FOO)
+    PrivateEnum.parse("BAR").should eq(PrivateEnum::BAR)
+    PrivateEnum.parse("QUX").should eq(PrivateEnum::QUX)
+
+    SpecEnumWithCaseSensitiveMembers.parse("foo").should eq SpecEnumWithCaseSensitiveMembers::FOO
+    SpecEnumWithCaseSensitiveMembers.parse("FOO").should eq SpecEnumWithCaseSensitiveMembers::FOO
+    SpecEnumWithCaseSensitiveMembers.parse("Foo").should eq SpecEnumWithCaseSensitiveMembers::FOO
   end
 
   it "parses?" do
@@ -169,6 +267,26 @@ describe Enum do
 
   it "clones" do
     SpecEnum::One.clone.should eq(SpecEnum::One)
+  end
+
+  describe ".flags" do
+    it "non-flags enum" do
+      SpecEnum.flags.should be_nil
+      SpecEnum.flags(One).should eq SpecEnum::One
+      SpecEnum.flags(One, Two).should eq SpecEnum::One | SpecEnum::Two
+    end
+
+    it "flags enum" do
+      SpecEnumFlags.flags.should be_nil
+      SpecEnumFlags.flags(One).should eq SpecEnumFlags::One
+      SpecEnumFlags.flags(One, Two).should eq SpecEnumFlags::One | SpecEnumFlags::Two
+    end
+
+    it "private flags enum" do
+      PrivateFlagsEnum.flags.should be_nil
+      PrivateFlagsEnum.flags(FOO).should eq PrivateFlagsEnum::FOO
+      PrivateFlagsEnum.flags(FOO, BAR).should eq PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAR
+    end
   end
 
   describe "each" do
@@ -197,9 +315,22 @@ describe Enum do
       keys.should eq([SpecEnumFlags::One, SpecEnumFlags::Two, SpecEnumFlags::Three])
       values.should eq([SpecEnumFlags::One.value, SpecEnumFlags::Two.value, SpecEnumFlags::Three.value])
     end
+
+    it "iterates private enum members" do
+      keys = [] of PrivateEnum
+      values = [] of Int32
+
+      PrivateEnum.each do |key, value|
+        keys << key
+        values << value
+      end
+
+      keys.should eq([PrivateEnum::FOO, PrivateEnum::BAR, PrivateEnum::BAZ, PrivateEnum::QUX])
+      values.should eq([PrivateEnum::FOO.value, PrivateEnum::BAR.value, PrivateEnum::BAZ.value, PrivateEnum::QUX.value])
+    end
   end
 
   it "different enums classes not eq always" do
-    SpecEnum::One.should_not eq SpecEnum2::FourtyTwo
+    SpecEnum::One.should_not eq SpecEnum2::FortyTwo
   end
 end

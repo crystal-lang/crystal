@@ -5,7 +5,12 @@
 # ```
 # x..y  # an inclusive range, in mathematics: [x, y]
 # x...y # an exclusive range, in mathematics: [x, y)
+# (x..) # an endless range, in mathematics: >= x
+# ..y   # a beginless inclusive range, in mathematics: <= y
+# ...y  # a beginless exclusive range, in mathematics: < y
 # ```
+#
+# See [`Range` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/range.html) in the language reference.
 #
 # An easy way to remember which one is inclusive and which one is exclusive it
 # to think of the extra dot as if it pushes *y* further away, thus leaving it outside of the range.
@@ -84,6 +89,10 @@ struct Range(B, E)
   def initialize(@begin : B, @end : E, @exclusive : Bool = false)
   end
 
+  def ==(other : Range)
+    @begin == other.@begin && @end == other.@end && @exclusive == other.@exclusive
+  end
+
   # Returns an `Iterator` that cycles over the values of this range.
   #
   # ```
@@ -100,12 +109,31 @@ struct Range(B, E)
   # # prints: 10 11 12 13 14 15
   # ```
   def each : Nil
+    {% if B == Nil %}
+      {% raise "Can't each beginless range" %}
+    {% end %}
+
     current = @begin
-    while current < @end
-      yield current
-      current = current.succ
+    if current.nil?
+      raise ArgumentError.new("Can't each beginless range")
     end
-    yield current if !@exclusive && current == @end
+
+    # TODO: This typeof and the macro interpolations are a workaround until #9324 is fixed.
+    typeof(yield current)
+
+    {% if E == Nil %}
+      while true
+        {{ "yield current".id }}
+        current = current.succ
+      end
+    {% else %}
+      end_value = @end
+      while end_value.nil? || current < end_value
+        {{ "yield current".id }}
+        current = current.succ
+      end
+      {{ "yield current".id }} if !@exclusive && current == end_value
+    {% end %}
   end
 
   # Returns an `Iterator` over the elements of this range.
@@ -114,6 +142,14 @@ struct Range(B, E)
   # (1..3).each.skip(1).to_a # => [2, 3]
   # ```
   def each
+    {% if B == Nil %}
+      {% raise "Can't each beginless range" %}
+    {% end %}
+
+    if @begin.nil?
+      raise ArgumentError.new("Can't each beginless range")
+    end
+
     ItemIterator.new(self)
   end
 
@@ -125,12 +161,33 @@ struct Range(B, E)
   # # prints: 14 13 12 11 10
   # ```
   def reverse_each : Nil
-    yield @end if !@exclusive && !(@end < @begin)
-    current = @end
-    while @begin < current
-      current = current.pred
-      yield current
+    {% if E == Nil %}
+      {% raise "Can't reverse_each endless range" %}
+    {% end %}
+
+    end_value = @end
+    if end_value.nil?
+      raise ArgumentError.new("Can't reverse_each endless range")
     end
+
+    begin_value = @begin
+
+    yield end_value if !@exclusive && (begin_value.nil? || !(end_value < begin_value))
+    current = end_value
+
+    # TODO: The macro interpolations are a workaround until #9324 is fixed.
+
+    {% if B == Nil %}
+      while true
+        current = current.pred
+        {{ "yield current".id }}
+      end
+    {% else %}
+      while begin_value.nil? || begin_value < current
+        current = current.pred
+        {{ "yield current".id }}
+      end
+    {% end %}
   end
 
   # Returns a reverse `Iterator` over the elements of this range.
@@ -139,51 +196,78 @@ struct Range(B, E)
   # (1..3).reverse_each.skip(1).to_a # => [2, 1]
   # ```
   def reverse_each
+    {% if E == Nil %}
+      {% raise "Can't reverse_each endless range" %}
+    {% end %}
+
+    if @end.nil?
+      raise ArgumentError.new("Can't reverse_each endless range")
+    end
+
     ReverseIterator.new(self)
   end
 
-  # Iterates over this range, passing each nth element to the block.
+  # Iterates from `begin` to `end` incrementing by the amount of *step* on each
+  # iteration.
   #
   # ```
-  # range = Xs.new(1)..Xs.new(10)
-  # range.step(2) { |x| puts x }
-  # puts
-  # range.step(3) { |x| puts x }
+  # ary = [] of Int32
+  # (1..4).step(by: 2) do |x|
+  #   ary << x
+  # end
+  # ary                      # => [1, 3]
+  # (1..4).step(by: 2).to_a  # => [1, 3]
+  # (1..4).step(by: 1).to_a  # => [1, 2, 3, 4]
+  # (1...4).step(by: 1).to_a # => [1, 2, 3]
   # ```
   #
-  # Produces:
+  # If `B` is a `Steppable`, implementation is delegated to `Steppable#step`.
+  # Otherwise `#succ` method is expected to be defined on `begin` and its
+  # successors and iteration is based on calling `#succ` sequentially
+  # (*step* times per iteration).
   #
-  # ```text
-  # 1 x
-  # 3 xxx
-  # 5 xxxxx
-  # 7 xxxxxxx
-  # 9 xxxxxxxxx
-  #
-  # 1 x
-  # 4 xxxx
-  # 7 xxxxxxx
-  # 10 xxxxxxxxxx
-  # ```
-  #
-  # See `Range`'s overview for the definition of `Xs`.
-  def step(by = 1)
+  # Raises `ArgumentError` if `begin` is `nil`.
+  def step(by = 1, &) : Nil
     current = @begin
-    while current < @end
-      yield current
-      by.times { current = current.succ }
+    if current.nil?
+      raise ArgumentError.new("Can't step beginless range")
     end
-    yield current if !@exclusive && current == @end
-    self
+
+    {% if B < Steppable %}
+      current.step(to: @end, by: by, exclusive: @exclusive) do |x|
+        yield x
+      end
+    {% else %}
+      end_value = @end
+      while end_value.nil? || current < end_value
+        yield current
+        by.times do
+          current = current.succ
+          return if end_value && current > end_value
+        rescue exc : OverflowError
+          if current == end_value
+            return
+          else
+            raise exc
+          end
+        end
+      end
+      yield current if !@exclusive && current == @end
+    {% end %}
   end
 
-  # Returns an `Iterator` that returns each nth element in this range.
-  #
-  # ```
-  # (1..10).step(3).skip(1).to_a # => [4, 7, 10]
-  # ```
-  def step(by = 1)
-    StepIterator(self, B, typeof(by)).new(self, by)
+  # :ditto:
+  def step(by = 1) : Iterator
+    start = @begin
+    if start.nil?
+      raise ArgumentError.new("Can't step beginless range")
+    end
+
+    {% if B < Steppable %}
+      start.step(to: @end, by: by, exclusive: @exclusive)
+    {% else %}
+      StepIterator(self, B, typeof(by)).new(self, by)
+    {% end %}
   end
 
   # Returns `true` if this range excludes the *end* element.
@@ -192,7 +276,7 @@ struct Range(B, E)
   # (1..10).excludes_end?  # => false
   # (1...10).excludes_end? # => true
   # ```
-  def excludes_end?
+  def excludes_end? : Bool
     @exclusive
   end
 
@@ -206,12 +290,15 @@ struct Range(B, E)
   # (1...10).includes?(9)  # => true
   # (1...10).includes?(10) # => false
   # ```
-  def includes?(value)
-    if @exclusive
-      @begin <= value < @end
-    else
-      @begin <= value <= @end
-    end
+  def includes?(value) : Bool
+    begin_value = @begin
+    end_value = @end
+
+    # begin passes
+    (begin_value.nil? || value >= begin_value) &&
+      # end passes
+      (end_value.nil? ||
+        (@exclusive ? value < end_value : value <= end_value))
   end
 
   # Same as `includes?`.
@@ -240,20 +327,18 @@ struct Range(B, E)
     includes?(value)
   end
 
-  # :nodoc:
-  def to_s(io : IO)
-    @begin.inspect(io)
+  def to_s(io : IO) : Nil
+    @begin.try &.inspect(io)
     io << (@exclusive ? "..." : "..")
-    @end.inspect(io)
+    @end.try &.inspect(io)
   end
 
-  # :nodoc:
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
-  # If `self` is a `Int` range, it provides O(1) implementation,
-  # otherwise it is same as `Enumerable#sum`.
+  # Optimized version of `Enumerable#sum` that runs in O(1) time when `self` is
+  # an `Int` range.
   def sum(initial)
     b = self.begin
     e = self.end
@@ -262,7 +347,7 @@ struct Range(B, E)
       e -= 1 if @exclusive
       n = e - b + 1
       if n >= 0
-        initial + n * (b + e) / 2
+        initial + n * (b + e) // 2
       else
         initial
       end
@@ -271,12 +356,63 @@ struct Range(B, E)
     end
   end
 
+  # Optimized version of `Enumerable#sample` that runs in O(1) time when `self`
+  # is an `Int` or `Float` range. In these cases, this range is considered to be
+  # a distribution of numeric values rather than a collection of elements, and
+  # the method simply calls `random.rand(self)`.
+  #
+  # Raises `ArgumentError` if `self` is an open range.
+  def sample(random = Random::DEFAULT)
+    {% if B == Nil || E == Nil %}
+      {% raise "Can't sample an open range" %}
+    {% end %}
+
+    {% if B < Int && E < Int %}
+      random.rand(self)
+    {% elsif B < Float && E < Float %}
+      random.rand(self)
+    {% elsif B.nilable? || E.nilable? %}
+      b = self.begin
+      e = self.end
+
+      if b.nil? || e.nil?
+        raise ArgumentError.new("Can't sample an open range")
+      end
+
+      Range.new(b, e, @exclusive).sample(random)
+    {% else %}
+      super
+    {% end %}
+  end
+
+  # :inherit:
+  #
+  # If `self` is not empty and `n` is equal to 1, calls `sample(random)` exactly
+  # once. Thus, *random* will be left in a different state compared to the
+  # implementation in `Enumerable`.
+  def sample(n : Int, random = Random::DEFAULT)
+    {% if B == Nil || E == Nil %}
+      {% raise "Can't sample an open range" %}
+    {% end %}
+
+    if self.begin.nil? || self.end.nil?
+      raise ArgumentError.new("Can't sample an open range")
+    end
+
+    return super unless n == 1
+
+    if empty?
+      [] of B
+    else
+      [sample(random)]
+    end
+  end
+
   # Returns a new `Range` with `begin` and `end` cloned.
   def clone
     Range.new(@begin.clone, @end.clone, @exclusive)
   end
 
-  # :nodoc:
   def map(&block : B -> U) forall U
     b = self.begin
     e = self.end
@@ -292,8 +428,20 @@ struct Range(B, E)
     end
   end
 
-  # :nodoc:
+  # Returns the number of values in this range.
+  #
+  # If both the beginning and the end of this range are `Int`s, runs in constant
+  # time instead of linear.
+  #
+  # ```
+  # (3..8).size  # => 5
+  # (3...8).size # => 6
+  # ```
   def size
+    {% if B == Nil || E == Nil %}
+      {% raise "Can't calculate size of an open range" %}
+    {% end %}
+
     b = self.begin
     e = self.end
 
@@ -303,6 +451,9 @@ struct Range(B, E)
       n = e - b + 1
       n < 0 ? 0 : n
     else
+      if b.nil? || e.nil?
+        raise ArgumentError.new("Can't calculate size of an open range")
+      end
       super
     end
   end
@@ -320,25 +471,21 @@ struct Range(B, E)
     def next
       return stop if @reached_end
 
-      if @current < @range.end
+      end_value = @range.end
+
+      if end_value.nil? || @current < end_value
         value = @current
         @current = @current.succ
         value
       else
         @reached_end = true
 
-        if !@range.excludes_end? && @current == @range.end
+        if !@range.excludes_end? && @current == end_value
           @current
         else
           stop
         end
       end
-    end
-
-    def rewind
-      @current = @range.begin
-      @reached_end = false
-      self
     end
   end
 
@@ -348,23 +495,19 @@ struct Range(B, E)
     @range : Range(B, E)
     @current : E
 
-    def initialize(@range : Range(B, E), @current = range.end)
-      rewind
+    def initialize(@range : Range(B, E))
+      if range.excludes_end?
+        @current = range.end.not_nil!
+      else
+        @current = range.end.not_nil!.succ
+      end
     end
 
     def next
-      return stop if @current <= @range.begin
+      begin_value = @range.begin
+
+      return stop if !begin_value.nil? && @current <= begin_value
       return @current = @current.pred
-    end
-
-    def rewind
-      if @range.excludes_end?
-        @current = @range.end
-      else
-        @current = @range.end.succ
-      end
-
-      self
     end
   end
 
@@ -375,6 +518,7 @@ struct Range(B, E)
     @step : N
     @current : B
     @reached_end : Bool
+    @at_start = true
 
     def initialize(@range, @step, @current = range.begin, @reached_end = false)
     end
@@ -382,29 +526,45 @@ struct Range(B, E)
     def next
       return stop if @reached_end
 
-      if @current < @range.end
-        value = @current
-        @step.times { @current = @current.succ }
-        value
+      end_value = @range.end
+
+      if @at_start
+        @at_start = false
+
+        if end_value
+          if @current > end_value || (@current == end_value && @range.exclusive?)
+            @reached_end = true
+            return stop
+          end
+        end
+
+        return @current
+      end
+
+      if end_value.nil? || @current < end_value
+        @step.times do
+          if end_value && @current >= end_value
+            @reached_end = true
+            return stop
+          end
+
+          @current = @current.succ
+        end
+
+        if @current == end_value && @range.exclusive?
+          @reached_end = true
+          stop
+        else
+          @current
+        end
       else
         @reached_end = true
-
-        if !@range.excludes_end? && @current == @range.end
-          @current
-        else
-          stop
-        end
+        stop
       end
     end
 
-    def rewind
-      @current = @range.begin
-      @reached_end = false
-      self
-    end
-
     def sum(initial)
-      super if @reached_end
+      return super if @reached_end
 
       b = @current
       e = @range.end
@@ -412,10 +572,10 @@ struct Range(B, E)
 
       if b.is_a?(Int) && e.is_a?(Int) && d.is_a?(Int)
         e -= 1 if @range.excludes_end?
-        n = (e - b) / d + 1
+        n = (e - b) // d + 1
         if n >= 0
           e = b + (n - 1) * d
-          initial + n * (b + e) / 2
+          initial + n * (b + e) // 2
         else
           initial
         end

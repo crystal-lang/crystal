@@ -14,7 +14,8 @@ class LLVM::Module
     def name : String
       @name
     end
-  {% else %} # LLVM >= 3.9
+  {% else %}
+    # LLVM >= 3.9
     def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
       @owned = false
     end
@@ -36,7 +37,8 @@ class LLVM::Module
   def data_layout=(data : TargetData)
     {% if LibLLVM::IS_38 %}
       LibLLVM.set_data_layout(self, data.to_data_layout_string)
-    {% else %} # LLVM >= 3.9
+    {% else %}
+      # LLVM >= 3.9
       LibLLVM.set_module_data_layout(self, data)
     {% end %}
   end
@@ -51,6 +53,26 @@ class LLVM::Module
 
   def globals
     GlobalCollection.new(self)
+  end
+
+  def add_flag(module_flag : ModuleFlag, key : String, val : Value)
+    {% if LibLLVM::IS_LT_70 %}
+      values = [
+        context.int32.const_int(module_flag.value),
+        context.md_string(key.to_s),
+        val,
+      ]
+      md_node = context.md_node(values)
+      LibLLVM.add_named_metadata_operand(self, "llvm.module.flags", md_node)
+    {% else %}
+      LibLLVM.add_module_flag(
+        self,
+        module_flag,
+        key,
+        key.bytesize,
+        LibLLVM.metadata_as_value(val.to_unsafe)
+      )
+    {% end %}
   end
 
   def write_bitcode_to_file(filename : String)
@@ -93,15 +115,11 @@ class LLVM::Module
     FunctionPassManager.new LibLLVM.create_function_pass_manager_for_module(self)
   end
 
-  def add_named_metadata_operand(name : String, value : Value) : Nil
-    LibLLVM.add_named_metadata_operand(self, name, value)
-  end
-
   def ==(other : self)
     @unwrap == other.@unwrap
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     LLVM.to_io(LibLLVM.print_module_to_string(self), io)
     self
   end

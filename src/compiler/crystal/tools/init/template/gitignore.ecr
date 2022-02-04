@@ -2,9 +2,10 @@
 /lib/
 /bin/
 /.shards/
+*.dwarf
 <%- if config.skeleton_type == "lib" -%>
 
 # Libraries don't need dependency lock
-# Dependencies will be locked in application that uses them
+# Dependencies will be locked in applications that use them
 /shard.lock
 <%- end -%>

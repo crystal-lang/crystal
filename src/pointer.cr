@@ -21,7 +21,7 @@ require "c/string"
 # x # => 2
 # ```
 #
-# Note that a pointer is *falsey* if it's null (if it's address is zero).
+# Note that a pointer is *falsey* if it's null (if its address is zero).
 #
 # When calling a C function that expects a pointer you can also pass `nil` instead of using
 # `Pointer.null` to construct a null pointer.
@@ -43,7 +43,7 @@ struct Pointer(T)
       @pointer += 1
     end
 
-    def size
+    def size : Int64
       @pointer - @start
     end
 
@@ -63,7 +63,7 @@ struct Pointer(T)
   # b = Pointer(Int32).new(0)
   # b.null? # => true
   # ```
-  def null?
+  def null? : Bool
     address == 0
   end
 
@@ -92,13 +92,14 @@ struct Pointer(T)
   # ptr2.address # => 1230
   # ```
   def -(other : Int)
-    self + (-other)
+    # TODO: If throwing on overflow for integer conversion is implemented,
+    # then (here and in `Pointer#-`) for a `UInt64` argument the call to
+    # `to_i64` should become `as_unsafe`.
+    self + (-other.to_i64!)
   end
 
-  # Returns -1, 0 or 1 if this pointer's address is less, equal or greater than *other*'s address,
+  # Returns `-1`, `0` or `1` depending on whether this pointer's address is less, equal or greater than *other*'s address,
   # respectively.
-  #
-  # See also: `Object#<=>`.
   def <=>(other : self)
     address <=> other.address
   end
@@ -242,7 +243,7 @@ struct Pointer(T)
     raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
-      Intrinsics.memcpy(self.as(Void*), source.as(Void*), bytesize(count), 0_u32, false)
+      Intrinsics.memcpy(self.as(Void*), source.as(Void*), bytesize(count), false)
     else
       while (count -= 1) >= 0
         self[count] = source[count]
@@ -255,7 +256,7 @@ struct Pointer(T)
     raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
-      Intrinsics.memmove(self.as(Void*), source.as(Void*), bytesize(count), 0_u32, false)
+      Intrinsics.memmove(self.as(Void*), source.as(Void*), bytesize(count), false)
     else
       if source.address < address
         copy_from source, count
@@ -281,7 +282,7 @@ struct Pointer(T)
   # ptr2.memcmp(ptr1, 4) # => 10
   # ptr1.memcmp(ptr1, 4) # => 0
   # ```
-  def memcmp(other : Pointer(T), count : Int)
+  def memcmp(other : Pointer(T), count : Int) : Int32
     LibC.memcmp(self.as(Void*), (other.as(Void*)), (count * sizeof(T)))
   end
 
@@ -317,15 +318,15 @@ struct Pointer(T)
   # ptr2 = Pointer(Int32).new(0)
   # ptr2.to_s # => "Pointer(Int32).null"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "Pointer("
     io << T.to_s
-    io << ")"
+    io << ')'
     if address == 0
       io << ".null"
     else
       io << "@0x"
-      address.to_s(16, io)
+      address.to_s(io, 16)
     end
   end
 
@@ -375,16 +376,19 @@ struct Pointer(T)
   # ptr.map!(4) { |value| value * 2 }
   # ptr # [2, 4, 6, 8]
   # ```
-  def map!(count : Int)
+  def map!(count : Int, & : T -> T)
     count.times do |i|
       self[i] = yield self[i]
     end
   end
 
-  # Like `map!`, but yield 2 arugments, the element and it's index
-  def map_with_index!(count : Int, &block)
+  # Like `map!`, but yields 2 arguments, the element and its index
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index!(count : Int, offset = 0, &block)
     count.times do |i|
-      self[i] = yield self[i], i
+      self[i] = yield self[i], offset + i
     end
     self
   end
@@ -409,7 +413,7 @@ struct Pointer(T)
   # ptr.address # => 5678
   # ```
   def self.new(address : Int)
-    new address.to_u64
+    new address.to_u64!
   end
 
   # Allocates `size * sizeof(T)` bytes from the system's heap initialized
@@ -469,14 +473,14 @@ struct Pointer(T)
   # ptr[2] # => 12
   # ptr[3] # => 13
   # ```
-  def self.malloc(size : Int, &block : Int32 -> T)
+  def self.malloc(size : Int, & : Int32 -> T)
     ptr = Pointer(T).malloc(size)
     size.times { |i| ptr[i] = yield i }
     ptr
   end
 
   # Returns a `Pointer::Appender` for this pointer.
-  def appender
+  def appender : Pointer::Appender
     Pointer::Appender.new(self)
   end
 
@@ -487,7 +491,7 @@ struct Pointer(T)
   # slice = ptr.to_slice(4)                # => Slice[10, 11, 12, 13]
   # slice.class                            # => Slice(Int32)
   # ```
-  def to_slice(size)
+  def to_slice(size) : Slice(T)
     Slice.new(self, size)
   end
 
@@ -499,7 +503,7 @@ struct Pointer(T)
   # ptr.to_slice(6) # => Slice[0, 0, 0, 13, 14, 15]
   # ```
   def clear(count = 1)
-    Intrinsics.memset(self.as(Void*), 0_u8, bytesize(count), 0_u32, false)
+    Intrinsics.memset(self.as(Void*), 0_u8, bytesize(count), false)
   end
 
   def clone

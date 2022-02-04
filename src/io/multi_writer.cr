@@ -29,20 +29,26 @@ class IO::MultiWriter < IO
     @writers = writers.map(&.as(IO)).to_a
   end
 
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     check_open
+
+    return if slice.empty?
 
     @writers.each { |writer| writer.write(slice) }
   end
 
-  def read(slice : Bytes)
+  def read(slice : Bytes) : NoReturn
     raise IO::Error.new("Can't read from IO::MultiWriter")
   end
 
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 
     @writers.each { |writer| writer.close } if sync_close?
+  end
+
+  def flush : Nil
+    @writers.each(&.flush)
   end
 end

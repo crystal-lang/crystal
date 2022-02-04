@@ -21,7 +21,7 @@ struct LLVM::Type
     end
   end
 
-  def kind
+  def kind : LLVM::Type::Kind
     LibLLVM.get_type_kind(self)
   end
 
@@ -41,11 +41,11 @@ struct LLVM::Type
     Value.new LibLLVM.get_undef(self)
   end
 
-  def pointer
+  def pointer : LLVM::Type
     Type.new LibLLVM.pointer_type(self, 0)
   end
 
-  def array(count)
+  def array(count) : LLVM::Type
     Type.new LibLLVM.array_type(self, count)
   end
 
@@ -53,18 +53,18 @@ struct LLVM::Type
     Type.new LibLLVM.vector_type(self, count)
   end
 
-  def int_width
+  def int_width : Int32
     raise "Not an Integer" unless kind == Kind::Integer
     LibLLVM.get_int_type_width(self).to_i32
   end
 
-  def packed_struct?
+  def packed_struct? : Bool
     raise "Not a Struct" unless kind == Kind::Struct
     LibLLVM.is_packed_struct(self) != 0
   end
 
   # Assuming this type is a struct, returns its name.
-  # The name can be `nil` if the struct is anynomous.
+  # The name can be `nil` if the struct is anonymous.
   # Raises if this type is not a struct.
   def struct_name : String?
     raise "not a Struct" unless kind == Kind::Struct
@@ -73,7 +73,7 @@ struct LLVM::Type
     name ? String.new(name) : nil
   end
 
-  def struct_element_types
+  def struct_element_types : Array(LLVM::Type)
     raise "Not a Struct" unless kind == Kind::Struct
     count = LibLLVM.count_struct_element_types(self)
 
@@ -83,7 +83,7 @@ struct LLVM::Type
     end
   end
 
-  def element_type
+  def element_type : LLVM::Type
     case kind
     when Kind::Array, Kind::Vector, Kind::Pointer
       Type.new LibLLVM.get_element_type(self)
@@ -92,7 +92,7 @@ struct LLVM::Type
     end
   end
 
-  def array_size
+  def array_size : Int32
     raise "Not an Array" unless kind == Kind::Array
     LibLLVM.get_array_length(self).to_i32
   end
@@ -126,7 +126,12 @@ struct LLVM::Type
   end
 
   def const_int(value) : Value
-    Value.new LibLLVM.const_int(self, value, 0)
+    if !value.is_a?(Int128) && !value.is_a?(UInt128) && int_width != 128
+      Value.new LibLLVM.const_int(self, value, 0)
+    else
+      encoded_value = UInt64[value & UInt64::MAX, (value >> 64) & UInt64::MAX]
+      Value.new LibLLVM.const_int_of_arbitrary_precision(self, encoded_value.size, encoded_value)
+    end
   end
 
   def const_float(value : Float32) : Value
@@ -149,15 +154,48 @@ struct LLVM::Type
     Value.new LibLLVM.const_array(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
   end
 
-  def const_inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false)
-    Value.new LibLLVM.const_inline_asm(self, asm_string, constraints, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0))
+  def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false, can_throw = false)
+    value =
+      {% if LibLLVM::IS_LT_70 %}
+        LibLLVM.const_inline_asm(
+          self,
+          asm_string,
+          constraints,
+          (has_side_effects ? 1 : 0),
+          (is_align_stack ? 1 : 0)
+        )
+      {% elsif LibLLVM::IS_LT_130 %}
+        LibLLVM.get_inline_asm(
+          self,
+          asm_string,
+          asm_string.size,
+          constraints,
+          constraints.size,
+          (has_side_effects ? 1 : 0),
+          (is_align_stack ? 1 : 0),
+          LibLLVM::InlineAsmDialect::Intel
+        )
+      {% else %}
+        LibLLVM.get_inline_asm(
+          self,
+          asm_string,
+          asm_string.size,
+          constraints,
+          constraints.size,
+          (has_side_effects ? 1 : 0),
+          (is_align_stack ? 1 : 0),
+          LibLLVM::InlineAsmDialect::Intel,
+          (can_throw ? 1 : 0)
+        )
+      {% end %}
+    Value.new value
   end
 
   def context : Context
     Context.new(LibLLVM.get_type_context(self), dispose_on_finalize: false)
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     LLVM.to_io(LibLLVM.print_type_to_string(self), io)
     self
   end

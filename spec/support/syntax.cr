@@ -45,7 +45,7 @@ class Array
   end
 
   def path
-    Path.new self
+    Crystal::Path.new self
   end
 end
 
@@ -54,8 +54,8 @@ class String
     Var.new self
   end
 
-  def arg(default_value = nil, restriction = nil)
-    Arg.new self, default_value: default_value, restriction: restriction
+  def arg(default_value = nil, restriction = nil, external_name = nil)
+    Arg.new self, default_value: default_value, restriction: restriction, external_name: external_name
   end
 
   def call
@@ -75,7 +75,7 @@ class String
   end
 
   def path(global = false)
-    Path.new self, global
+    Crystal::Path.new self, global
   end
 
   def instance_var
@@ -88,6 +88,10 @@ class String
 
   def string
     StringLiteral.new self
+  end
+
+  def string_interpolation
+    StringInterpolation.new([self.string] of ASTNode)
   end
 
   def float32
@@ -107,7 +111,7 @@ class String
   end
 
   def static_array_of(size : ASTNode)
-    Generic.new(Path.global("StaticArray"), [path, size] of ASTNode)
+    Generic.new(Crystal::Path.global("StaticArray"), [path, size] of ASTNode)
   end
 
   def macro_literal
@@ -117,7 +121,7 @@ end
 
 class Crystal::ASTNode
   def pointer_of
-    Generic.new(Path.global("Pointer"), [self] of ASTNode)
+    Generic.new(Crystal::Path.global("Pointer"), [self] of ASTNode)
   end
 
   def splat
@@ -150,8 +154,11 @@ def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile =
   end
 end
 
-def parse(string, wants_doc = false)
+def parse(string, wants_doc = false, filename = nil)
   parser = Parser.new(string)
   parser.wants_doc = wants_doc
+  if filename
+    parser.filename = filename
+  end
   parser.parse
 end

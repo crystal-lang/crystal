@@ -1,0 +1,16 @@
+<% unless methods.empty? %>
+  <h2>
+    <%= Crystal::Doc.anchor_link(title) %>
+    <%= title %>
+  </h2>
+  <ul class="list-summary">
+    <% methods.each do |method| %>
+      <li class="entry-summary">
+        <a href="<%= method.anchor %>" class="signature"><strong><%= method.prefix %><%= method.name %></strong><%= method.args_to_html(:highlight) %></a>
+        <% if summary = method.formatted_summary %>
+          <div class="summary"><%= summary %></div>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

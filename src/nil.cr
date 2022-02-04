@@ -39,11 +39,13 @@
 # # if our assumption doesn't hold.
 # idx3 = str.index('o').not_nil!
 # ```
+#
+# See [`Nil` literal](https://crystal-lang.org/reference/syntax_and_semantics/literals/nil.html) in the language reference.
 struct Nil
   # Returns `0_u64`. Even though `Nil` is not a `Reference` type, it is usually
   # mixed with them to form nilable types so it's useful to have an
   # object id for `nil`.
-  def object_id
+  def object_id : UInt64
     0_u64
   end
 
@@ -63,7 +65,7 @@ struct Nil
   end
 
   # Returns `false`.
-  def same?(other : Reference)
+  def same?(other : Reference) : Bool
     false
   end
 
@@ -73,22 +75,22 @@ struct Nil
   end
 
   # Returns an empty string.
-  def to_s
+  def to_s : String
     ""
   end
 
   # Doesn't write anything to the given `IO`.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     # Nothing to do
   end
 
   # Returns `"nil"`.
-  def inspect
+  def inspect : String
     "nil"
   end
 
   # Writes `"nil"` to the given `IO`.
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << "nil"
   end
 
@@ -99,11 +101,24 @@ struct Nil
     self
   end
 
-  # Raises an exception.
+  # Raises `NilAssertionError`.
   #
   # See also: `Object#not_nil!`.
-  def not_nil!
-    raise "Nil assertion failed"
+  def not_nil! : NoReturn
+    raise NilAssertionError.new
+  end
+
+  # Returns `self`.
+  # This method enables to call the `presence` method (see `String#presence`) on a union with `Nil`.
+  # The idea is to return `nil` when the value is `nil` or empty.
+  #
+  # ```
+  # config = {"empty" => ""}
+  # config["empty"]?.presence   # => nil
+  # config["missing"]?.presence # => nil
+  # ```
+  def presence : Nil
+    self
   end
 
   def clone

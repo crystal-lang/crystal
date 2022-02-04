@@ -1,9 +1,9 @@
-{% skip_file() if flag?(:win32) %}
+{% skip_file if flag?(:win32) %}
 
 require "termios"
 
 class IO::FileDescriptor < IO
-  # Turn off character echoing for the duration of the given block.
+  # Turns off character echoing for the duration of the given block.
   # This will prevent displaying back to the user what they enter on the terminal.
   # Only call this when this IO is a TTY, such as a not redirected stdin.
   #
@@ -19,12 +19,12 @@ class IO::FileDescriptor < IO
     end
   end
 
-  # Turn off character echoing for this IO.
+  # Turns off character echoing for this IO.
   # This will prevent displaying back to the user what they enter on the terminal.
   # Only call this when this IO is a TTY, such as a not redirected stdin.
   def noecho!
     if LibC.tcgetattr(fd, out mode) != 0
-      raise Errno.new "can't set IO#noecho!"
+      raise IO::Error.from_errno "can't set IO#noecho!"
     end
     noecho_from_tc_mode!
   end
@@ -34,7 +34,7 @@ class IO::FileDescriptor < IO
     LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
-  # Enable character processing for the duration of the given block.
+  # Enables character processing for the duration of the given block.
   # The so called cooked mode is the standard behavior of a terminal,
   # doing line wise editing by the terminal and only sending the input to
   # the program on a newline.
@@ -46,14 +46,14 @@ class IO::FileDescriptor < IO
     end
   end
 
-  # Enable character processing for this IO.
+  # Enables character processing for this IO.
   # The so called cooked mode is the standard behavior of a terminal,
   # doing line wise editing by the terminal and only sending the input to
   # the program on a newline.
   # Only call this when this IO is a TTY, such as a not redirected stdin.
-  def cooked!
+  def cooked! : Nil
     if LibC.tcgetattr(fd, out mode) != 0
-      raise Errno.new "can't set IO#cooked!"
+      raise IO::Error.from_errno "can't set IO#cooked!"
     end
     cooked_from_tc_mode!
   end
@@ -74,7 +74,7 @@ class IO::FileDescriptor < IO
     LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
-  # Enable raw mode for the duration of the given block.
+  # Enables raw mode for the duration of the given block.
   # In raw mode every keypress is directly sent to the program, no interpretation
   # is done by the terminal.
   # Only call this when this IO is a TTY, such as a not redirected stdin.
@@ -85,13 +85,13 @@ class IO::FileDescriptor < IO
     end
   end
 
-  # Enable raw mode for this IO.
+  # Enables raw mode for this IO.
   # In raw mode every keypress is directly sent to the program, no interpretation
   # is done by the terminal.
   # Only call this when this IO is a TTY, such as a not redirected stdin.
   def raw!
     if LibC.tcgetattr(fd, out mode) != 0
-      raise Errno.new "can't set IO#raw!"
+      raise IO::Error.from_errno "can't set IO#raw!"
     end
 
     raw_from_tc_mode!
@@ -104,7 +104,7 @@ class IO::FileDescriptor < IO
 
   private def preserving_tc_mode(msg)
     if LibC.tcgetattr(fd, out mode) != 0
-      raise Errno.new msg
+      raise IO::Error.from_errno msg
     end
     before = mode
     begin

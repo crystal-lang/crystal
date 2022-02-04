@@ -7,8 +7,6 @@ describe String::Builder do
       builder << 456
     end
     str.should eq("123456")
-    str.size.should eq(6)
-    str.bytesize.should eq(6)
   end
 
   it "raises if invokes to_s twice" do
@@ -33,5 +31,13 @@ describe String::Builder do
       str.back(2)
     end
     s.should eq("")
+  end
+
+  describe "#chomp!" do
+    it "returns self" do
+      str = String::Builder.new
+      str << "a,b,c,"
+      str.chomp!(44).to_s.should eq("a,b,c")
+    end
   end
 end

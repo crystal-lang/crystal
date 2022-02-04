@@ -16,6 +16,11 @@ class JSON::Builder
 
   @indent : String?
 
+  # By default the maximum nesting of arrays/objects is 99. Nesting more
+  # than this will result in a JSON::Error. Changing the value of this property
+  # allows more/less nesting.
+  property max_nesting = 99
+
   # Creates a `JSON::Builder` that will write to the given `IO`.
   def initialize(@io : IO)
     @state = [StartState.new] of State
@@ -23,7 +28,7 @@ class JSON::Builder
   end
 
   # Starts a document.
-  def start_document
+  def start_document : Nil
     case state = @state.last
     when StartState
       @state[-1] = DocumentStartState.new
@@ -45,7 +50,10 @@ class JSON::Builder
       raise JSON::Error.new("Unterminated JSON array")
     when ObjectState
       raise JSON::Error.new("Unterminated JSON object")
+    when DocumentEndState
+      # okay
     end
+    flush
   end
 
   def document
@@ -54,28 +62,28 @@ class JSON::Builder
   end
 
   # Writes a `null` value.
-  def null
+  def null : Nil
     scalar do
       @io << "null"
     end
   end
 
   # Writes a boolean value.
-  def bool(value : Bool)
+  def bool(value : Bool) : Nil
     scalar do
       @io << value
     end
   end
 
   # Writes an integer.
-  def number(number : Int)
+  def number(number : Int) : Nil
     scalar do
       @io << number
     end
   end
 
   # Writes a float.
-  def number(number : Float)
+  def number(number : Float) : Nil
     scalar do
       case number
       when .nan?
@@ -92,7 +100,7 @@ class JSON::Builder
   # by invoking `to_s` on it.
   #
   # This method can also be used to write the name of an object field.
-  def string(value)
+  def string(value) : Nil
     string = value.to_s
 
     scalar(string: true) do
@@ -118,13 +126,13 @@ class JSON::Builder
         when '\t'
           escape = "\\t"
         when .ascii_control?
-          io.write string.to_slice[start_pos, reader.pos - start_pos]
+          io.write_string string.to_slice[start_pos, reader.pos - start_pos]
           io << "\\u"
           ord = char.ord
           io << '0' if ord < 0x1000
           io << '0' if ord < 0x100
           io << '0' if ord < 0x10
-          ord.to_s(16, io)
+          ord.to_s(io, 16)
           reader.next_char
           start_pos = reader.pos
           next
@@ -133,13 +141,13 @@ class JSON::Builder
           next
         end
 
-        io.write string.to_slice[start_pos, reader.pos - start_pos]
+        io.write_string string.to_slice[start_pos, reader.pos - start_pos]
         io << escape
         reader.next_char
         start_pos = reader.pos
       end
 
-      io.write string.to_slice[start_pos, reader.pos - start_pos]
+      io.write_string string.to_slice[start_pos, reader.pos - start_pos]
 
       io << '"'
     end
@@ -149,22 +157,22 @@ class JSON::Builder
   # the IO without processing. This is the only method that
   # might lead to invalid JSON being generated, so you must
   # be sure that *string* contains a valid JSON string.
-  def raw(string : String)
+  def raw(string : String) : Nil
     scalar do
       @io << string
     end
   end
 
   # Writes the start of an array.
-  def start_array
+  def start_array : Nil
     start_scalar
-    @current_indent += 1
+    increase_indent
     @state.push ArrayState.new(empty: true)
-    @io << "["
+    @io << '['
   end
 
   # Writes the end of an array.
-  def end_array
+  def end_array : Nil
     case state = @state.last
     when ArrayState
       @state.pop
@@ -172,8 +180,8 @@ class JSON::Builder
       raise JSON::Error.new("Can't do end_array: not inside an array")
     end
     write_indent state
-    @io << "]"
-    @current_indent -= 1
+    @io << ']'
+    decrease_indent
     end_scalar
   end
 
@@ -185,15 +193,15 @@ class JSON::Builder
   end
 
   # Writes the start of an object.
-  def start_object
+  def start_object : Nil
     start_scalar
-    @current_indent += 1
+    increase_indent
     @state.push ObjectState.new(empty: true, name: true)
-    @io << "{"
+    @io << '{'
   end
 
   # Writes the end of an object.
-  def end_object
+  def end_object : Nil
     case state = @state.last
     when ObjectState
       unless state.name
@@ -204,8 +212,8 @@ class JSON::Builder
       raise JSON::Error.new("Can't do end_object: not inside an object")
     end
     write_indent state
-    @io << "}"
-    @current_indent -= 1
+    @io << '}'
+    decrease_indent
     end_scalar
   end
 
@@ -221,18 +229,18 @@ class JSON::Builder
     null
   end
 
-  # ditto
+  # :ditto:
   def scalar(value : Bool)
     bool(value)
   end
 
-  # ditto
-  def scalar(value : Int | Float)
+  # :ditto:
+  def scalar(value : Int | Float) : Nil
     number(value)
   end
 
-  # ditto
-  def scalar(value : String)
+  # :ditto:
+  def scalar(value : String) : Nil
     string(value)
   end
 
@@ -275,6 +283,13 @@ class JSON::Builder
     end
   end
 
+  # Returns `true` if the next thing that must pushed into this
+  # builder is an object key (so a string) or the end of an object.
+  def next_is_object_key? : Bool
+    state = @state.last
+    state.is_a?(ObjectState) && state.name
+  end
+
   private def scalar(string = false)
     start_scalar(string)
     yield.tap { end_scalar(string) }
@@ -283,6 +298,8 @@ class JSON::Builder
   private def start_scalar(string = false)
     object_value = false
     case state = @state.last
+    when DocumentStartState
+      # okay
     when StartState
       raise JSON::Error.new("Write before start_document")
     when DocumentEndState
@@ -308,20 +325,22 @@ class JSON::Builder
     when ObjectState
       colon if state.name
       @state[-1] = ObjectState.new(empty: false, name: !state.name)
+    else
+      raise "Bug: unexpected state: #{state.class}"
     end
   end
 
   private def comma
-    @io << ","
+    @io << ','
   end
 
   private def colon
-    @io << ":"
-    @io << " " if @indent
+    @io << ':'
+    @io << ' ' if @indent
   end
 
   private def newline
-    @io << "\n"
+    @io << '\n'
   end
 
   private def write_indent
@@ -347,6 +366,17 @@ class JSON::Builder
     times.times do
       @io << indent
     end
+  end
+
+  private def increase_indent
+    @current_indent += 1
+    if @current_indent > @max_nesting
+      raise JSON::Error.new("Nesting of #{@current_indent} is too deep")
+    end
+  end
+
+  private def decrease_indent
+    @current_indent -= 1
   end
 end
 
@@ -379,7 +409,7 @@ module JSON
   end
 
   # Writes JSON into the given `IO`. A `JSON::Builder` is yielded to the block.
-  def self.build(io : IO, indent = nil)
+  def self.build(io : IO, indent = nil) : Nil
     builder = JSON::Builder.new(io)
     builder.indent = indent if indent
     builder.document do

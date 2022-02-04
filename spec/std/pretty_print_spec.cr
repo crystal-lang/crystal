@@ -225,6 +225,25 @@ describe PrettyPrint do
     abc def ghi jkl mno pqr stu
     END
 
+  assert_indent 0, 23, <<-END
+    x x x x x x x x x x x
+    END
+
+  assert_indent 5, 20, <<-END
+    x x x x x x x x
+         x x x
+    END
+
+  assert_indent 6, 20, <<-END
+    x x x x x x x
+          x x x x
+    END
+
+  assert_indent 7, 20, <<-END
+    x x x x x x x
+           x x x x
+    END
+
   it "tail group" do
     text = String.build do |io|
       PrettyPrint.format(io, 10) do |q|
@@ -350,7 +369,7 @@ private def hello(width)
   end
 end
 
-private def stritc_pretty(width)
+private def strict_pretty(width)
   String.build do |io|
     PrettyPrint.format(io, width) do |q|
       q.group do
@@ -416,6 +435,20 @@ private def fill(width)
   end
 end
 
+private def indent(indent, width)
+  String.build do |io|
+    PrettyPrint.format(io, width, indent: indent) do |q|
+      q.text "x"
+      10.times do |i|
+        q.group do
+          q.breakable
+          q.text "x"
+        end
+      end
+    end
+  end
+end
+
 private def assert_hello(range, expected)
   it "pretty prints hello #{range}" do
     range.each do |width|
@@ -443,7 +476,7 @@ end
 private def assert_strict_pretty(range, expected)
   it "pretty prints strict pretty #{range}" do
     range.each do |width|
-      stritc_pretty(width).should eq(expected)
+      strict_pretty(width).should eq(expected)
     end
   end
 end
@@ -453,5 +486,11 @@ private def assert_fill(range, expected)
     range.each do |width|
       fill(width).should eq(expected)
     end
+  end
+end
+
+private def assert_indent(width, indent, expected)
+  it "pretty prints width #{width} indent #{indent}" do
+    indent(width, indent).should eq(expected)
   end
 end

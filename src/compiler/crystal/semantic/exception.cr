@@ -2,35 +2,43 @@ require "../exception"
 require "../types"
 
 module Crystal
-  class TypeException < Exception
+  class TypeException < CodeError
+    include ErrorFormat
+
     getter node
-    property inner : Exception?
-    @line : Int32?
-    @column : Int32
-    @size : Int32
+    property inner : CodeError?
+    getter line_number : Int32?
+    getter column_number : Int32
+    getter size : Int32
 
     def color=(color)
       @color = !!color
       inner.try &.color=(color)
     end
 
+    def error_trace=(error_trace)
+      @error_trace = !!error_trace
+      inner.try &.error_trace=(error_trace)
+    end
+
+    def warning=(warning)
+      super
+      inner.try &.warning=(warning)
+    end
+
     def self.for_node(node, message, inner = nil)
-      location = node.location
+      location = node.name_location || node.location
       if location
-        column_number = node.name_column_number
-        name_size = node.name_size
-        if column_number == 0
-          name_size = 0
-          column_number = location.column_number
-        end
-        ex = new message, location.line_number, column_number, location.filename, name_size, inner
+        ex = new message, location.line_number, location.column_number, location.filename, node.name_size, inner
         wrap_macro_expression(ex, location)
       else
         new message, nil, 0, nil, 0, inner
       end
     end
 
-    def initialize(message, @line, @column : Int32, @filename, @size, @inner = nil)
+    def initialize(message, @line_number, @column_number : Int32, @filename, @size, @inner = nil)
+      @error_trace = true
+
       # If the inner exception is a macro raise, we replace this exception's
       # message with that message. In this way the error message will
       # look like a regular message produced by the compiler, and not
@@ -62,8 +70,8 @@ module Crystal
     def to_json_single(json)
       json.object do
         json.field "file", true_filename
-        json.field "line", @line
-        json.field "column", @column
+        json.field "line", @line_number
+        json.field "column", @column_number
         json.field "size", @size
         json.field "message", @message
       end
@@ -72,14 +80,29 @@ module Crystal
       end
     end
 
-    def to_s_with_source(source, io)
-      io << "Error "
-      append_to_s source, io
+    def inspect_with_backtrace(io : IO) : Nil
+      to_s(io)
+
+      backtrace?.try &.each do |frame|
+        io.print "  from "
+        io.puts frame
+      end
+
+      io.flush
     end
 
-    def append_to_s(source, io)
+    def to_s_with_source(io : IO, source)
+      append_to_s io, source
+    end
+
+    def append_to_s(io : IO, source)
       inner = @inner
-      filename = @filename
+
+      unless @error_trace || inner.is_a? MethodTraceException
+        if inner && inner.has_location?
+          return inner.append_to_s(io, source)
+        end
+      end
 
       # If the inner exception has no location it means that they came from virtual nodes.
       # In that case, get the deepest error message and only show that.
@@ -89,59 +112,45 @@ module Crystal
         msg = @message.to_s
       end
 
-      is_macro = false
+      error_message_lines = msg.lines
 
-      case filename
-      when String
-        if File.file?(filename)
-          lines = File.read_lines(filename)
-          io << "in " << relative_filename(filename) << ":" << @line << ": "
-          append_error_message io, msg
-        else
-          lines = source ? source.lines.to_a : nil
-          io << "in line #{@line}: " if @line
-          append_error_message io, msg
-        end
-      when VirtualFile
-        io << "in macro '#{filename.macro.name}' #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number}, line #{@line}:\n\n"
-        io << Crystal.with_line_numbers(filename.source, @line, @color)
-        is_macro = true
-      else
-        lines = source ? source.lines.to_a : nil
-        io << "in line #{@line}: " if @line
-        append_error_message io, msg
-      end
-
-      if lines && (line_number = @line) && (line = lines[line_number - 1]?)
+      unless @error_trace || @warning
+        io << colorize("Showing last frame. Use --error-trace for full trace.").dim
         io << "\n\n"
-        io << replace_leading_tabs_with_spaces(line.chomp)
-        io << "\n"
-        io << (" " * (@column - 1))
-        with_color.green.bold.surround(io) do
-          io << "^"
-          if @size > 0
-            io << ("~" * (@size - 1))
-          end
-        end
-      end
-      io << "\n"
-
-      if is_macro
-        io << "\n"
-        append_error_message io, @message
       end
 
-      if inner && inner.has_location?
-        io << "\n"
-        inner.append_to_s source, io
+      if body = error_body(source, default_message)
+        io << body
+        io << '\n'
+      end
+
+      unless error_message_lines.empty?
+        io << error_headline(error_message_lines.shift)
+        io << remaining error_message_lines
+      end
+
+      if inner
+        return if inner.is_a? MethodTraceException && !inner.has_message?
+        return unless inner.has_location?
+        io << "\n\n"
+        io << '\n' unless inner.is_a? MethodTraceException
+        inner.append_to_s io, source
       end
     end
 
-    def append_error_message(io, msg)
-      if @inner
-        io << msg
+    def default_message
+      if line_number = @line_number
+        "#{@warning ? "warning" : "error"} in line #{@line_number}"
+      end
+    end
+
+    def error_headline(msg)
+      return "Warning: #{msg}" if @warning
+
+      if (inner = @inner) && !inner.is_a? MethodTraceException? && inner.has_location?
+        colorize("Error: #{msg}").yellow
       else
-        io << colorize(msg).bold
+        colorize("Error: #{msg}").yellow.bold
       end
     end
 
@@ -149,7 +158,7 @@ module Crystal
       if @inner.try &.has_location?
         true
       else
-        @filename || @line
+        @filename || @line_number
       end
     end
 
@@ -162,7 +171,7 @@ module Crystal
     end
   end
 
-  class MethodTraceException < Exception
+  class MethodTraceException < CodeError
     def initialize(@owner : Type?, @trace : Array(ASTNode), @nil_reason : NilReason?, @show : Bool)
       super(nil)
     end
@@ -174,31 +183,33 @@ module Crystal
     def to_json_single(json)
     end
 
-    def to_s_with_source(source, io)
-      append_to_s(source, io)
+    def to_s_with_source(io : IO, source)
+      append_to_s(io, source)
     end
 
-    def append_to_s(source, io)
-      has_trace = @trace.any?(&.location)
+    def has_trace?
+      @trace.any?(&.location)
+    end
+
+    def has_message?
+      @nil_reason || has_trace? && @show
+    end
+
+    def append_to_s(io : IO, source)
       nil_reason = @nil_reason
 
       if !@show
         if nil_reason
           print_nil_reason(nil_reason, io)
-          if has_trace || nil_reason.try(&.nodes)
+          if has_trace? || nil_reason.try(&.nodes)
             io.puts
             io.puts
           end
         end
-        if has_trace || nil_reason.try(&.nodes)
-          io.print "Rerun with --error-trace to show a complete error trace."
-        end
         return
       end
 
-      if has_trace
-        io.puts ("=" * 80)
-        io.puts
+      if has_trace?
         io << "#{@owner} trace:"
         @trace.each do |node|
           print_with_location node, io
@@ -207,12 +218,10 @@ module Crystal
 
       return unless nil_reason
 
-      if has_trace
+      if has_trace?
         io.puts
         io.puts
       end
-      io.puts ("=" * 80)
-      io.puts
 
       print_nil_reason(nil_reason, io)
 
@@ -224,14 +233,13 @@ module Crystal
     end
 
     def print_nil_reason(nil_reason, io)
-      io << colorize("Error: ").bold
       case nil_reason.reason
-      when :used_before_initialized
-        io << colorize("instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable").bold
-      when :used_self_before_initialized
-        io << colorize("'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable").bold
-      when :initialized_in_rescue
-        io << colorize("instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued").bold
+      in .used_before_initialized?
+        io << "Instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      in .used_self_before_initialized?
+        io << "'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable"
+      in .initialized_in_rescue?
+        io << "Instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued"
       end
     end
 
@@ -254,26 +262,26 @@ module Crystal
 
       io << "\n\n"
       io << "  "
-      io << relative_filename(filename) << ":" << line_number
+      io << relative_filename(filename) << ':' << line_number
       io << "\n\n"
 
       return unless lines
 
       line = lines[line_number - 1]
 
-      name_column = node.name_column_number
+      name_location = node.name_location
       name_size = node.name_size
 
       io << "    "
       io << replace_leading_tabs_with_spaces(line.chomp)
       io.puts
 
-      return unless name_column > 0
+      return unless name_location
 
       io << "    "
-      io << (" " * (name_column - 1))
+      io << (" " * (name_location.column_number - 1))
       with_color.green.bold.surround(io) do
-        io << "^"
+        io << '^'
         if name_size > 0
           io << ("~" * (name_size - 1)) if name_size
         end
@@ -296,43 +304,27 @@ module Crystal
 
   class SkipMacroException < ::Exception
     getter expanded_before_skip : String
+    getter macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
 
-    def initialize(@expanded_before_skip)
+    def initialize(@expanded_before_skip, @macro_expansion_pragmas)
       super()
     end
   end
 
   class Program
-    def undefined_global_variable(node, similar_name)
-      common = String.build do |str|
-        str << "Can't infer the type of global variable '#{node.name}'"
-        if similar_name
-          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
-        end
-      end
-
-      msg = String.build do |str|
-        str << common
-        str << "\n\n"
-        str << undefined_variable_message("global", node.name)
-        str << "\n\n"
-        str << common
-      end
-      node.raise msg
-    end
-
     def undefined_class_variable(node, owner, similar_name)
       common = String.build do |str|
-        str << "Can't infer the type of class variable '#{node.name}' of #{owner.devirtualize}"
+        str << "can't infer the type of class variable '#{node.name}' of #{owner.devirtualize}"
         if similar_name
-          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
+          str << '\n'
+          str << "Did you mean '#{similar_name}'?"
         end
       end
 
       msg = String.build do |str|
         str << common
         str << "\n\n"
-        str << undefined_variable_message("class", node.name)
+        str << undefined_variable_message("a class variable", node.name)
         str << "\n\n"
         str << common
       end
@@ -341,16 +333,17 @@ module Crystal
 
     def undefined_instance_variable(node, owner, similar_name)
       common = String.build do |str|
-        str << "Can't infer the type of instance variable '#{node.name}' of #{owner.devirtualize}"
+        str << "can't infer the type of instance variable '#{node.name}' of #{owner.devirtualize}"
         if similar_name
-          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
+          str << '\n'
+          str << "Did you mean '#{similar_name}'?"
         end
       end
 
       msg = String.build do |str|
         str << common
         str << "\n\n"
-        str << undefined_variable_message("instance", node.name)
+        str << undefined_variable_message("an instance variable", node.name)
         str << "\n\n"
         str << common
       end
@@ -359,7 +352,7 @@ module Crystal
 
     def undefined_variable_message(kind, example_name)
       <<-MSG
-      The type of a #{kind} variable, if not declared explicitly with
+      The type of #{kind}, if not declared explicitly with
       `#{example_name} : Type`, is inferred from assignments to it across
       the whole program.
 

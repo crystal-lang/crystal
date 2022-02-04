@@ -5,31 +5,6 @@ module Crystal
     def no_returns?
       type?.try &.no_return?
     end
-
-    def zero?
-      false
-    end
-
-    def false?
-      false
-    end
-  end
-
-  class BoolLiteral
-    def false?
-      !value
-    end
-  end
-
-  class NumberLiteral
-    def zero?
-      case :kind
-      when :f32, :f64
-        value == "0.0"
-      else
-        value == "0"
-      end
-    end
   end
 
   class Def
@@ -37,23 +12,23 @@ module Crystal
 
     def mangled_name(program, self_type)
       name = String.build do |str|
-        str << "*"
+        str << '*'
 
         if owner = @owner
           if owner.metaclass?
             self_type.instance_type.llvm_name(str)
             if original_owner != self_type
-              str << "@"
+              str << '@'
               original_owner.instance_type.llvm_name(str)
             end
             str << "::"
           elsif !owner.is_a?(Crystal::Program)
             self_type.llvm_name(str)
             if original_owner != self_type
-              str << "@"
+              str << '@'
               original_owner.llvm_name(str)
             end
-            str << "#"
+            str << '#'
           end
         end
 
@@ -61,12 +36,12 @@ module Crystal
 
         next_def = self.next
         while next_def
-          str << "'"
+          str << '\''
           next_def = next_def.next
         end
 
         if args.size > 0 || uses_block_arg?
-          str << "<"
+          str << '<'
           if args.size > 0
             args.each_with_index do |arg, i|
               str << ", " if i > 0
@@ -75,13 +50,13 @@ module Crystal
           end
           if uses_block_arg?
             str << ", " if args.size > 0
-            str << "&"
+            str << '&'
             block_arg.not_nil!.type.llvm_name(str)
           end
-          str << ">"
+          str << '>'
         end
         if return_type = @type
-          str << ":"
+          str << ':'
           return_type.llvm_name(str)
         end
       end
@@ -111,8 +86,8 @@ module Crystal
     end
 
     private def compute_c_calling_convention
-      # One case where this is not true if for LLVM instrinsics.
-      # For example overflow intrincis return a tuple, like {i32, i1}:
+      # One case where this is not true if for LLVM intrinsics.
+      # For example overflow intrinsics return a tuple, like {i32, i1}:
       # in C ABI that is represented as i64, but we need to keep the original
       # type here, respecting LLVM types, not the C ABI.
       if self.is_a?(External)

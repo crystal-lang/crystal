@@ -1,4 +1,5 @@
 require "./openssl/lib_ssl"
+require "./openssl/error"
 
 # ## OpenSSL Integration
 #
@@ -10,7 +11,7 @@ require "./openssl/lib_ssl"
 # Recommended ciphers can be taken from:
 # - [OWASP Wiki](https://www.owasp.org/index.php/Transport_Layer_Protection_Cheat_Sheet#Rule_-_Only_Support_Strong_Cryptographic_Ciphers)
 # - [Cipherli.st](https://cipherli.st/)
-# - Full list is available at [OpenSSL Wiki](https://wiki.openssl.org/index.php/Manual:Ciphers%281%29#CIPHER_STRINGS)
+# - A full list is available at the [OpenSSL Docs](https://www.openssl.org/docs/man1.1.0/apps/ciphers.html#CIPHER-STRINGS)
 #
 # Do note that:
 # - Crystal does its best to provide sane configuration defaults (see [Mozilla-Intermediate](https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28default.29)).
@@ -64,38 +65,18 @@ require "./openssl/lib_ssl"
 # end
 # ```
 module OpenSSL
-  class Error < Exception
-    getter! code : LibCrypto::ULong
-
-    def initialize(message = nil, fetched = false)
-      @code ||= LibCrypto::ULong.new(0)
-
-      if fetched
-        super(message)
-      else
-        @code, error = fetch_error_details
-        super(message ? "#{message}: #{error}" : error)
-      end
-    end
-
-    protected def fetch_error_details
-      code = LibCrypto.err_get_error
-      message = String.new(LibCrypto.err_error_string(code, nil)) unless code == 0
-      {code, message || "Unknown or no error"}
-    end
-  end
-
   module SSL
     alias Modes = LibSSL::Modes
     alias Options = LibSSL::Options
     alias VerifyMode = LibSSL::VerifyMode
     alias ErrorType = LibSSL::SSLError
-    {% if LibSSL::OPENSSL_102 %}
-    alias X509VerifyFlags = LibCrypto::X509VerifyFlags
+    {% if LibCrypto.has_constant?(:X509VerifyFlags) %}
+      alias X509VerifyFlags = LibCrypto::X509VerifyFlags
     {% end %}
 
     class Error < OpenSSL::Error
       getter error : ErrorType
+      getter? underlying_eof : Bool = false
 
       def initialize(ssl : LibSSL::SSL, return_code : LibSSL::Int, func = nil)
         @error = LibSSL.ssl_get_error(ssl, return_code)
@@ -109,8 +90,10 @@ module OpenSSL
             case return_code
             when 0
               message = "Unexpected EOF"
+              @underlying_eof = true
             when -1
-              raise Errno.new(func || "OpenSSL")
+              cause = RuntimeError.from_errno(func || "OpenSSL")
+              message = "I/O error"
             else
               message = "Unknown error"
             end
@@ -121,7 +104,7 @@ module OpenSSL
           message = @error.to_s
         end
 
-        super(func ? "#{func}: #{message}" : message, true)
+        super(func ? "#{func}: #{message}" : message, true, cause: cause)
       end
     end
   end
@@ -129,6 +112,8 @@ end
 
 require "./openssl/bio"
 require "./openssl/ssl/*"
-require "./openssl/digest/*"
+require "./openssl/digest"
 require "./openssl/md5"
 require "./openssl/x509/x509"
+require "./openssl/pkcs5"
+require "./openssl/cipher"

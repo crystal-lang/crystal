@@ -22,7 +22,7 @@ describe Benchmark::IPS::Job do
     a.mean.should be > 10
 
     # one of the reports should be normalized to the fastest but do to the
-    # timer precisison sleep 0.001 may not always be faster than 0.002 so we
+    # timer precision sleep 0.001 may not always be faster than 0.002 so we
     # don't care which
     first, second = [a.slower, b.slower].sort
     first.should eq(1)
@@ -68,8 +68,8 @@ private def h_mean(mean)
 end
 
 describe Benchmark::IPS::Entry, "#human_mean" do
-  it { h_mean(0.01234567890123).should eq("  0.01 ") }
-  it { h_mean(0.12345678901234).should eq("  0.12 ") }
+  it { h_mean(0.01234567890123).should eq(" 12.35m") }
+  it { h_mean(0.12345678901234).should eq("123.46m") }
 
   it { h_mean(1.23456789012345).should eq("  1.23 ") }
   it { h_mean(12.3456789012345).should eq(" 12.35 ") }
@@ -94,7 +94,7 @@ private def h_ips(seconds)
 end
 
 describe Benchmark::IPS::Entry, "#human_iteration_time" do
-  it { h_ips(1234.567_890_123).should eq("1234.57s ") }
+  it { h_ips(1234.567_890_123).should eq("1,234.57s ") }
   it { h_ips(123.456_789_012_3).should eq("123.46s ") }
   it { h_ips(12.345_678_901_23).should eq(" 12.35s ") }
   it { h_ips(1.234_567_890_123).should eq("  1.23s ") }
@@ -108,7 +108,7 @@ describe Benchmark::IPS::Entry, "#human_iteration_time" do
   it { h_ips(0.000_001_234_567).should eq("  1.23µs") }
 
   it { h_ips(0.000_000_123_456).should eq("123.46ns") }
-  it { h_ips(0.000_000_012_345).should eq(" 12.35ns") }
+  it { h_ips(0.000_000_012_345).should eq(" 12.34ns") }
   it { h_ips(0.000_000_001_234).should eq("  1.23ns") }
   it { h_ips(0.000_000_000_123).should eq("  0.12ns") }
 end

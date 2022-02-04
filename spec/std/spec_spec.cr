@@ -9,7 +9,7 @@ private class SpecException < Exception
 end
 
 private class NilMimicker
-  def ==(nil : Nil)
+  def ==(a_nil : Nil)
     true
   end
 end
@@ -46,7 +46,7 @@ describe "Spec matchers" do
   end
 
   describe "should_not be_falsey" do
-    it "passses for true" do
+    it "passes for true" do
       true.should_not be_falsey
     end
 
@@ -112,6 +112,24 @@ describe "Spec matchers" do
   context "should work like describe" do
     it "is true" do
       true.should be_truthy
+    end
+  end
+
+  it "detects a nesting `it`" do
+    ex = expect_raises(Spec::NestingSpecError) { it { } }
+    ex.message.should eq "can't nest `it` or `pending`"
+    ex.file.should eq __FILE__
+  end
+
+  it "detects a nesting `pending`" do
+    ex = expect_raises(Spec::NestingSpecError) { pending }
+    ex.message.should eq "can't nest `it` or `pending`"
+    ex.file.should eq __FILE__
+  end
+
+  describe "pending block is not compiled" do
+    pending "pending has block with valid syntax, but invalid semantics" do
+      UndefinedConstant.undefined_method
     end
   end
 end

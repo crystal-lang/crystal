@@ -1,0 +1,27 @@
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="search-box">
+      <input type="search" class="search-input" placeholder="Search..." spellcheck="false" aria-label="Search">
+    </div>
+
+    <div class="project-summary">
+      <h1 class="project-name">
+        <a href="<%= current_type.try(&.path_to("")) %>index.html">
+          <%= project_info.name %>
+        </a>
+      </h1>
+
+      <span class="project-version">
+        <%= project_info.version %>
+      </span>
+    </div>
+  </div>
+
+  <div class="search-results hidden">
+    <ul class="search-list"></ul>
+  </div>
+
+  <div class="types-list">
+    <%= ListItemsTemplate.new(types, current_type) %>
+  </div>
+</div>

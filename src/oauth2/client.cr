@@ -54,18 +54,35 @@
 # You can also use an `OAuth2::Session` to automatically refresh expired
 # tokens before each request.
 class OAuth2::Client
+  # Sets the `HTTP::Client` to use with this client.
+  setter http_client : HTTP::Client?
+
+  # Returns the `HTTP::Client` to use with this client.
+  #
+  # By default, this returns a new instance every time. To reuse the same instance,
+  # one can be assigned with `#http_client=`.
+  def http_client : HTTP::Client
+    @http_client || HTTP::Client.new(token_uri)
+  end
+
   # Creates an OAuth client.
   #
   # Any or all of the customizable URIs *authorize_uri* and
   # *token_uri* can be relative or absolute.
   # If they are relative, the given *host*, *port* and *scheme* will be used.
   # If they are absolute, the absolute URL will be used.
+  #
+  # As per https://tools.ietf.org/html/rfc6749#section-2.3.1,
+  # `AuthScheme::HTTPBasic` is the default *auth_scheme* (the mechanism used to
+  # transmit the client credentials to the server). `AuthScheme::RequestBody` should
+  # only be used if the server does not support HTTP Basic.
   def initialize(@host : String, @client_id : String, @client_secret : String,
-                 @port = 443,
+                 @port : Int32? = nil,
                  @scheme = "https",
                  @authorize_uri = "/oauth2/authorize",
                  @token_uri = "/oauth2/token",
-                 @redirect_uri : String? = nil)
+                 @redirect_uri : String? = nil,
+                 @auth_scheme : AuthScheme = :http_basic)
   end
 
   # Builds an authorize URI, as specified by
@@ -77,9 +94,9 @@ class OAuth2::Client
   # Builds an authorize URI, as specified by
   # [RFC 6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.1).
   #
-  # Yields an `HTTP::Params::Builder` to add extra parameters other than those
+  # Yields an `URI::Params::Builder` to add extra parameters other than those
   # defined by the standard.
-  def get_authorize_uri(scope = nil, state = nil, &block : HTTP::Params::Builder ->) : String
+  def get_authorize_uri(scope = nil, state = nil, &block : URI::Params::Builder ->) : String
     uri = URI.parse(@authorize_uri)
 
     # Use the default URI if it's not an absolute one
@@ -87,16 +104,14 @@ class OAuth2::Client
       uri = URI.new(@scheme, @host, @port, @authorize_uri)
     end
 
-    uri.query = HTTP::Params.build do |form|
+    uri.query = URI::Params.build do |form|
       form.add "client_id", @client_id
       form.add "redirect_uri", @redirect_uri
       form.add "response_type", "code"
       form.add "scope", scope unless scope.nil?
       form.add "state", state unless state.nil?
-      if query = uri.query
-        HTTP::Params.parse(query).each do |key, value|
-          form.add key, value
-        end
+      uri.query_params.each do |key, value|
+        form.add key, value
       end
       yield form
     end
@@ -105,12 +120,32 @@ class OAuth2::Client
   end
 
   # Gets an access token using an authorization code, as specified by
-  # [RFC 6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.3).
-  def get_access_token_using_authorization_code(authorization_code) : AccessToken
+  # [RFC 6749, Section 4.1.3](https://tools.ietf.org/html/rfc6749#section-4.1.3).
+  def get_access_token_using_authorization_code(authorization_code : String) : AccessToken
     get_access_token do |form|
       form.add("redirect_uri", @redirect_uri)
       form.add("grant_type", "authorization_code")
       form.add("code", authorization_code)
+    end
+  end
+
+  # Gets an access token using the resource owner credentials, as specified by
+  # [RFC 6749, Section 4.3.2](https://tools.ietf.org/html/rfc6749#section-4.3.2).
+  def get_access_token_using_resource_owner_credentials(username : String, password : String, scope = nil) : AccessToken
+    get_access_token do |form|
+      form.add("grant_type", "password")
+      form.add("username", username)
+      form.add("password", password)
+      form.add("scope", scope) unless scope.nil?
+    end
+  end
+
+  # Gets an access token using client credentials, as specified by
+  # [RFC 6749, Section 4.4.2](https://tools.ietf.org/html/rfc6749#section-4.4.2).
+  def get_access_token_using_client_credentials(scope = nil) : AccessToken
+    get_access_token do |form|
+      form.add("grant_type", "client_credentials")
+      form.add("scope", scope) unless scope.nil?
     end
   end
 
@@ -124,44 +159,41 @@ class OAuth2::Client
     end
   end
 
-  # Gets an access token using client credentials, as specified by
-  # [RFC 6749, Section 4.4.2](https://tools.ietf.org/html/rfc6749#section-4.4.2).
-  def get_access_token_using_client_credentials(scope = nil)
-    get_access_token do |form|
-      form.add("grant_type", "client_credentials")
-      form.add("scope", scope) unless scope.nil?
-    end
-  end
+  private def get_access_token : AccessToken
+    headers = HTTP::Headers{
+      "Accept"       => "application/json",
+      "Content-Type" => "application/x-www-form-urlencoded",
+    }
 
-  private def get_access_token
-    body = HTTP::Params.build do |form|
-      form.add("client_id", @client_id)
-      form.add("client_secret", @client_secret)
+    body = URI::Params.build do |form|
+      case @auth_scheme
+      when .request_body?
+        form.add("client_id", @client_id)
+        form.add("client_secret", @client_secret)
+      when .http_basic?
+        headers.add(
+          "Authorization",
+          "Basic #{Base64.strict_encode("#{@client_id}:#{@client_secret}")}"
+        )
+      end
       yield form
     end
 
-    headers = HTTP::Headers{
-      "Accept" => "application/json",
-    }
-
-    response = HTTP::Client.post(token_uri, form: body, headers: headers)
-    case response.status_code
-    when 200, 201
+    response = http_client.post token_uri.request_target, form: body, headers: headers
+    case response.status
+    when .ok?, .created?
       OAuth2::AccessToken.from_json(response.body)
     else
-      raise OAuth2::Error.from_json(response.body)
+      raise OAuth2::Error.new(response.body)
     end
   end
 
-  private def token_uri
+  private def token_uri : URI
     uri = URI.parse(@token_uri)
-
     if uri.host
-      # If it's an absolute URI, use that one
-      @token_uri
+      uri
     else
-      # Otherwise use the default one
-      URI.new(@scheme, @host, @port, @token_uri).to_s
+      URI.new(@scheme, @host, @port, @token_uri)
     end
   end
 end

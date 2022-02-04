@@ -1,4 +1,6 @@
 struct LLVM::ParameterCollection
+  include Indexable(LLVM::Value)
+
   def initialize(@function : Function)
   end
 
@@ -14,21 +16,8 @@ struct LLVM::ParameterCollection
     end
   end
 
-  def [](index)
-    param_size = size()
-    index += param_size if index < 0
-
-    unless 0 <= index < param_size
-      raise IndexError.new
-    end
-
+  def unsafe_fetch(index : Int)
     Value.new LibLLVM.get_param(@function, index)
-  end
-
-  def first
-    raise IndexError.new if size == 0
-
-    Value.new LibLLVM.get_param(@function, 0)
   end
 
   def types

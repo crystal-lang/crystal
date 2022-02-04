@@ -8,6 +8,13 @@ describe "Semantic: alias" do
       ") { types["Int32"].metaclass }
   end
 
+  it "declares alias inside type" do
+    assert_type("
+      alias Foo::Bar = Int32
+      Foo::Bar
+      ") { types["Int32"].metaclass }
+  end
+
   it "works with alias type as restriction" do
     assert_type("
       alias Alias = Int32
@@ -80,7 +87,7 @@ describe "Semantic: alias" do
       alias Type = Nil | Pointer(Type)
       p = Pointer(Type).malloc(1_u64)
       1
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if alias already defined" do
@@ -309,5 +316,38 @@ describe "Semantic: alias" do
 
       Foo(Bar).new(Foo.new(1).as(Bar))
     ), "can't cast Foo(Int32) to Bar"
+  end
+
+  it "can pass recursive alias to proc" do
+    assert_type(%(
+      class Object
+        def itself
+          self
+        end
+      end
+
+      alias Rec = Int32 | Array(Rec)
+
+      a = uninitialized Rec
+
+      f = ->(x : Rec) {}
+      f.call(a.itself)
+      ), inject_primitives: true) { nil_type }
+  end
+
+  it "overloads union type through alias" do
+    assert_type(%(
+      alias X = Int8 | Int32
+
+      def foo(x : Int32)
+        1
+      end
+
+      def foo(x : X)
+        'a'
+      end
+
+      foo(1)
+     )) { int32 }
   end
 end

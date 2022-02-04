@@ -18,7 +18,9 @@ require "./tcp_socket"
 # ```
 #
 # Options:
-# - *backlog* to specify how many pending connections are allowed;
+# - *host* local interface to bind on, or `::` to bind on all local interfaces.
+# - *port* specific port to bind on, or `0` to receive an "ephemeral" (free, assigned by kernel) port.
+# - *backlog* to specify how many pending connections are allowed.
 # - *reuse_port* to enable multiple processes to bind to the same port (`SO_REUSEPORT`).
 class TCPServer < TCPSocket
   include Socket::Server
@@ -29,14 +31,14 @@ class TCPServer < TCPSocket
   end
 
   # Binds a socket to the *host* and *port* combination.
-  def initialize(host : String, port : Int, backlog = SOMAXCONN, dns_timeout = nil, reuse_port = false)
+  def initialize(host : String, port : Int, backlog : Int = SOMAXCONN, dns_timeout = nil, reuse_port : Bool = false)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
 
       self.reuse_address = true
       self.reuse_port = true if reuse_port
 
-      if errno = bind(addrinfo) { |errno| errno }
+      if errno = system_bind(addrinfo, "#{host}:#{port}") { |errno| errno }
         close
         next errno
       end
@@ -46,6 +48,11 @@ class TCPServer < TCPSocket
         next errno
       end
     end
+  end
+
+  # Creates a TCPServer from an already configured raw file descriptor
+  def initialize(*, fd : Handle, family : Family = Family::INET)
+    super(fd: fd, family: family)
   end
 
   # Creates a new TCP server, listening on all local interfaces (`::`).
@@ -98,9 +105,9 @@ class TCPServer < TCPSocket
   #   end
   # end
   # ```
-  def accept?
-    if client_fd = accept_impl
-      sock = TCPSocket.new(client_fd, family, type, protocol)
+  def accept? : TCPSocket?
+    if client_fd = system_accept
+      sock = TCPSocket.new(fd: client_fd, family: family, type: type, protocol: protocol)
       sock.sync = sync?
       sock
     end

@@ -1,4 +1,5 @@
-require "spec"
+require "./spec_helper"
+require "big"
 
 private class TestRNG(T)
   include Random
@@ -36,8 +37,21 @@ describe "Random" do
     5.times do
       rand(Int64::MAX).should be >= 0
     end
+  end
 
-    rand(0).should eq 0
+  it "limited BigInt" do
+    rand(1.to_big_i).should eq(0.to_big_i)
+
+    x = rand(2.to_big_i)
+    x.should be >= 0
+    x.should be < 2
+  end
+
+  it "limited large BigInt" do
+    max = "1234567890123456789012345".to_big_i
+    x = rand(max)
+    x.should be >= 0
+    x.should be < max
   end
 
   it "float number" do
@@ -46,23 +60,33 @@ describe "Random" do
     x.should be <= 1
   end
 
-  it "limited float number" do
-    x = rand(3.5)
+  it "limited Float32 number" do
+    x = rand(3.5_f32)
+    x.should be_a Float32
     x.should be >= 0
     x.should be < 3.5
   end
 
-  it "float number 0.0" do
-    rand(0.0).should eq 0.0
+  it "limited Float64 number" do
+    x = rand(3.5_f64)
+    x.should be_a Float64
+    x.should be >= 0
+    x.should be < 3.5
   end
 
   it "raises on invalid number" do
+    expect_raises ArgumentError, "Invalid bound for rand: 0" do
+      rand(0)
+    end
     expect_raises ArgumentError, "Invalid bound for rand: -1" do
       rand(-1)
     end
   end
 
   it "raises on invalid float number" do
+    expect_raises ArgumentError, "Invalid bound for rand: 0.0" do
+      rand(0.0)
+    end
     expect_raises ArgumentError, "Invalid bound for rand: -1.0" do
       rand(-1.0)
     end
@@ -86,31 +110,64 @@ describe "Random" do
     end
   end
 
+  it "does with BigInt range" do
+    [1.to_big_i...2.to_big_i,
+     -"1234567890123456789012345".to_big_i...7.to_big_i,
+     -7.to_big_i..."1234567890123456789012345".to_big_i].each do |range|
+      x = rand(range)
+      x.should be >= range.begin
+      x.should be < range.end
+    end
+  end
+
   it "does with inclusive range of floats" do
     rand(1.0..1.0).should eq(1.0)
     x = rand(1.8..3.2)
     x.should be >= 1.8
     x.should be <= 3.2
+
+    rand(1.0_f32..1.0_f32).should eq(1.0_f32)
+    x = rand(1.8_f32..3.2_f32)
+    x.should be >= 1.8_f32
+    x.should be <= 3.2_f32
   end
 
   it "does with exclusive range of floats" do
     x = rand(1.8...3.3)
     x.should be >= 1.8
     x.should be < 3.3
+
+    x = rand(1.8_f32...3.3_f32)
+    x.should be >= 1.8_f32
+    x.should be < 3.3_f32
   end
 
-  it "raises on invalid range" do
-    expect_raises ArgumentError, "Invalid range for rand: 1...1" do
-      rand(1...1)
+  describe "raises on invalid range" do
+    it "Int32 range" do
+      expect_raises ArgumentError, "Invalid range for rand: 1...1" do
+        rand(1...1)
+      end
+      expect_raises ArgumentError, "Invalid range for rand: 1..0" do
+        rand(1..0)
+      end
     end
-    expect_raises ArgumentError, "Invalid range for rand: 1..0" do
-      rand(1..0)
+
+    it "BigInt range" do
+      expect_raises ArgumentError, "Invalid range for rand: #{1.to_big_i...1.to_big_i}" do
+        rand(1.to_big_i...1.to_big_i)
+      end
+      expect_raises ArgumentError, "Invalid range for rand: #{1.to_big_i..0.to_big_i}" do
+        rand(1.to_big_i..0.to_big_i)
+      end
     end
-    expect_raises ArgumentError, "Invalid range for rand: 1.0...1.0" do
-      rand(1.0...1.0)
-    end
-    expect_raises ArgumentError, "Invalid range for rand: 1.0..0.0" do
-      rand(1.0..0.0)
+
+    it "Float64 range" do
+      expect_raises ArgumentError, "Invalid range for rand: 1.0...1.0" do
+        rand(1.0...1.0)
+      end
+      expect_raises ArgumentError, "Invalid range for rand: 1.0..0.0" do
+        rand(1.0..0.0)
+      end
     end
   end
 
@@ -259,5 +316,19 @@ describe "Random" do
       hex = TestRNG.new(RNG_DATA_64).hex(50)
       hex.should eq("9fd857f462831002ffffffffffffffff0000000000000000e88d3a30db4e730021b8a5e33b020000362f518e0700000062da")
     end
+  end
+
+  it "returns a random integer" do
+    {% for type in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64).map(&.id) %}
+      value = TestRNG.new(RNG_DATA_32).rand({{type}})
+      typeof(value).should eq({{type}})
+    {% end %}
+  end
+
+  it "returns a random static array" do
+    {% for type in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64).map(&.id) %}
+      array = TestRNG.new(RNG_DATA_32).rand(StaticArray({{type}}, 4))
+      typeof(array).should eq(StaticArray({{type}}, 4))
+    {% end %}
   end
 end

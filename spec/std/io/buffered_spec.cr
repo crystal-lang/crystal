@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 
 private class BufferedWrapper < IO
   include IO::Buffered
@@ -49,7 +49,28 @@ private class BufferedWrapper < IO
   end
 end
 
+DEFAULT_BUFFER_SIZE = BufferedWrapper.new(IO::Memory.new("")).buffer_size
+
 describe "IO::Buffered" do
+  it "can report buffer_size" do
+    io = BufferedWrapper.new(IO::Memory.new(""))
+    io.buffer_size.should eq(DEFAULT_BUFFER_SIZE)
+  end
+
+  it "can set buffer_size" do
+    io = BufferedWrapper.new(IO::Memory.new(""))
+    io.buffer_size = 16_384
+    io.buffer_size.should eq(16_384)
+  end
+
+  it "can not set buffer_size after first use" do
+    io = BufferedWrapper.new(IO::Memory.new("hello\r\nworld\n"))
+    io.gets
+    expect_raises ArgumentError, "buffer_size" do
+      io.buffer_size = 16_384
+    end
+  end
+
   it "does gets" do
     io = BufferedWrapper.new(IO::Memory.new("hello\r\nworld\n"))
     io.gets.should eq("hello")
@@ -121,14 +142,14 @@ describe "IO::Buffered" do
   end
 
   it "does gets with char and limit when not found in buffer" do
-    io = BufferedWrapper.new(IO::Memory.new(("a" * (IO::Buffered::BUFFER_SIZE + 10)) + "b"))
+    io = BufferedWrapper.new(IO::Memory.new(("a" * (DEFAULT_BUFFER_SIZE + 10)) + "b"))
     io.gets('b', 2).should eq("aa")
   end
 
   it "does gets with char and limit when not found in buffer (2)" do
-    base = "a" * (IO::Buffered::BUFFER_SIZE + 10)
+    base = "a" * (DEFAULT_BUFFER_SIZE + 10)
     io = BufferedWrapper.new(IO::Memory.new(base + "aabaaa"))
-    io.gets('b', IO::Buffered::BUFFER_SIZE + 11).should eq(base + "a")
+    io.gets('b', DEFAULT_BUFFER_SIZE + 11).should eq(base + "a")
   end
 
   it "raises if invoking gets with negative limit" do
@@ -262,41 +283,127 @@ describe "IO::Buffered" do
     str.to_s.should eq("hello" * 10_000)
   end
 
-  it "flushes on \n" do
-    str = IO::Memory.new
-    io = BufferedWrapper.new(str)
-    io.flush_on_newline = true
+  describe "flush_on_newline" do
+    it "flushes on \n" do
+      str = IO::Memory.new
+      io = BufferedWrapper.new(str)
+      io.flush_on_newline = true
 
-    io << "hello\nworld"
-    str.to_s.should eq("hello\n")
-    io.flush
-    str.to_s.should eq("hello\nworld")
+      io << "hello\nworld"
+      str.to_s.should eq("hello\n")
+      io.flush
+      str.to_s.should eq("hello\nworld")
+    end
+
+    it "doesn't write past count" do
+      str = IO::Memory.new
+      io = BufferedWrapper.new(str)
+      io.flush_on_newline = true
+
+      slice = Slice.new(10) { |i| i == 9 ? '\n'.ord.to_u8 : ('a'.ord + i).to_u8 }
+      io.write slice[0, 4]
+      io.flush
+      str.to_s.should eq("abcd")
+    end
   end
 
-  it "doesn't write past count" do
-    str = IO::Memory.new
-    io = BufferedWrapper.new(str)
-    io.flush_on_newline = true
+  describe "sync" do
+    it "syncs (write)" do
+      str = IO::Memory.new
 
-    slice = Slice.new(10) { |i| i == 9 ? '\n'.ord.to_u8 : ('a'.ord + i).to_u8 }
-    io.write slice[0, 4]
-    io.flush
-    str.to_s.should eq("abcd")
+      io = BufferedWrapper.new(str)
+      io.sync?.should be_false
+
+      io.sync = true
+      io.sync?.should be_true
+
+      io.write_byte 1_u8
+
+      str.rewind
+      str.read_byte.should eq(1_u8)
+    end
   end
 
-  it "syncs" do
-    str = IO::Memory.new
+  describe "read_buffering" do
+    it "works with IO#read" do
+      str = IO::Memory.new "abc"
 
-    io = BufferedWrapper.new(str)
-    io.sync?.should be_false
+      io = BufferedWrapper.new(str)
+      io.read_buffering?.should be_true
 
-    io.sync = true
-    io.sync?.should be_true
+      io.read_buffering = false
+      io.read_buffering?.should be_false
 
-    io.write_byte 1_u8
+      byte = Bytes.new(1)
+      io.read_fully(byte)
+      byte[0].should eq('a'.ord.to_u8)
 
-    str.rewind
-    str.read_byte.should eq(1_u8)
+      str.gets_to_end.should eq("bc")
+    end
+
+    it "works with IO#read (already buffered)" do
+      str = IO::Memory.new
+      str << "a" * DEFAULT_BUFFER_SIZE
+      str.pos = 0
+
+      io = BufferedWrapper.new(str)
+      io.read_buffering?.should be_true
+
+      io.buffer_size.times do
+        byte = Bytes.new(1)
+        io.read_fully(byte)
+        byte[0].should eq('a'.ord.to_u8)
+      end
+
+      io.read_buffering = false
+      io.read_buffering?.should be_false
+
+      str << "bcde"
+      str.pos -= 4
+
+      byte = Bytes.new(1)
+      io.read_fully(byte)
+      byte[0].should eq('b'.ord.to_u8)
+
+      str.gets_to_end.should eq("cde")
+    end
+
+    it "works with IO#read_byte" do
+      str = IO::Memory.new "abc"
+
+      io = BufferedWrapper.new(str)
+      io.read_buffering?.should be_true
+
+      io.read_buffering = false
+      io.read_buffering?.should be_false
+
+      io.read_byte.should eq('a'.ord.to_u8)
+
+      str.gets_to_end.should eq("bc")
+    end
+
+    it "works with IO#read_byte (already buffered)" do
+      str = IO::Memory.new
+      str << "a" * DEFAULT_BUFFER_SIZE
+      str.pos = 0
+
+      io = BufferedWrapper.new(str)
+      io.read_buffering?.should be_true
+
+      io.buffer_size.times do
+        io.read_byte.should eq('a'.ord.to_u8)
+      end
+
+      io.read_buffering = false
+      io.read_buffering?.should be_false
+
+      str << "bcde"
+      str.pos -= 4
+
+      io.read_byte.should eq('b'.ord.to_u8)
+
+      str.gets_to_end.should eq("cde")
+    end
   end
 
   it "shouldn't call unbuffered read if reading to an empty slice" do
@@ -333,69 +440,71 @@ describe "IO::Buffered" do
     io.read_char.should eq('b')
   end
 
-  describe "encoding" do
-    describe "decode" do
-      it "gets_to_end" do
-        str = "Hello world" * 200
-        base_io = IO::Memory.new(str.encode("UCS-2LE"))
-        io = BufferedWrapper.new(base_io)
-        io.set_encoding("UCS-2LE")
-        io.gets_to_end.should eq(str)
-      end
-
-      it "gets" do
-        str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
-        base_io = IO::Memory.new(str.encode("UCS-2LE"))
-        io = BufferedWrapper.new(base_io)
-        io.set_encoding("UCS-2LE")
-        io.gets.should eq("Hello world")
-        io.gets.should eq("Foo")
-        io.gets.should eq("Bar")
-      end
-
-      it "gets with chomp = false" do
-        str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
-        base_io = IO::Memory.new(str.encode("UCS-2LE"))
-        io = BufferedWrapper.new(base_io)
-        io.set_encoding("UCS-2LE")
-        io.gets(chomp: false).should eq("Hello world\n")
-        io.gets(chomp: false).should eq("Foo\n")
-        io.gets(chomp: false).should eq("Bar\n")
-      end
-
-      it "gets big string" do
-        str = "Hello\nWorld\n" * 10_000
-        base_io = IO::Memory.new(str.encode("UCS-2LE"))
-        io = BufferedWrapper.new(base_io)
-        io.set_encoding("UCS-2LE")
-        10_000.times do |i|
-          io.gets(chomp: false).should eq("Hello\n")
-          io.gets(chomp: false).should eq("World\n")
+  {% unless flag?(:without_iconv) %}
+    describe "encoding" do
+      describe "decode" do
+        it "gets_to_end" do
+          str = "Hello world" * 200
+          base_io = IO::Memory.new(str.encode("UCS-2LE"))
+          io = BufferedWrapper.new(base_io)
+          io.set_encoding("UCS-2LE")
+          io.gets_to_end.should eq(str)
         end
-      end
 
-      it "gets big GB2312 string" do
-        str = ("你好我是人\n" * 1000).encode("GB2312")
-        base_io = IO::Memory.new(str)
-        io = BufferedWrapper.new(base_io)
-        io.set_encoding("GB2312")
-        1000.times do
-          io.gets(chomp: false).should eq("你好我是人\n")
+        it "gets" do
+          str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
+          base_io = IO::Memory.new(str.encode("UCS-2LE"))
+          io = BufferedWrapper.new(base_io)
+          io.set_encoding("UCS-2LE")
+          io.gets.should eq("Hello world")
+          io.gets.should eq("Foo")
+          io.gets.should eq("Bar")
         end
-      end
 
-      it "reads char" do
-        str = "x\nHello world" + ("1234567890" * 1000)
-        base_io = IO::Memory.new(str.encode("UCS-2LE"))
-        io = BufferedWrapper.new(base_io)
-        io.set_encoding("UCS-2LE")
-        io.gets(chomp: false).should eq("x\n")
-        str = str[2..-1]
-        str.each_char do |char|
-          io.read_char.should eq(char)
+        it "gets with chomp = false" do
+          str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
+          base_io = IO::Memory.new(str.encode("UCS-2LE"))
+          io = BufferedWrapper.new(base_io)
+          io.set_encoding("UCS-2LE")
+          io.gets(chomp: false).should eq("Hello world\n")
+          io.gets(chomp: false).should eq("Foo\n")
+          io.gets(chomp: false).should eq("Bar\n")
         end
-        io.read_char.should be_nil
+
+        it "gets big string" do
+          str = "Hello\nWorld\n" * 10_000
+          base_io = IO::Memory.new(str.encode("UCS-2LE"))
+          io = BufferedWrapper.new(base_io)
+          io.set_encoding("UCS-2LE")
+          10_000.times do |i|
+            io.gets(chomp: false).should eq("Hello\n")
+            io.gets(chomp: false).should eq("World\n")
+          end
+        end
+
+        it "gets big EUC-JP string" do
+          str = ("好我是人\n" * 1000).encode("EUC-JP")
+          base_io = IO::Memory.new(str)
+          io = BufferedWrapper.new(base_io)
+          io.set_encoding("EUC-JP")
+          1000.times do
+            io.gets(chomp: false).should eq("好我是人\n")
+          end
+        end
+
+        it "reads char" do
+          str = "x\nHello world" + ("1234567890" * 1000)
+          base_io = IO::Memory.new(str.encode("UCS-2LE"))
+          io = BufferedWrapper.new(base_io)
+          io.set_encoding("UCS-2LE")
+          io.gets(chomp: false).should eq("x\n")
+          str = str[2..-1]
+          str.each_char do |char|
+            io.read_char.should eq(char)
+          end
+          io.read_char.should be_nil
+        end
       end
     end
-  end
+  {% end %}
 end

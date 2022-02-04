@@ -22,7 +22,7 @@ private def run_expand_tool(code)
     end
   end
 
-  code = code.gsub('‸', "")
+  code = code.delete('‸')
 
   if cursor_location
     visitor, result = processed_expand_visitor(code, cursor_location)
@@ -55,11 +55,11 @@ private def assert_expand(code, expected_result)
   end
 end
 
-private def assert_expand_simple(code, expanded, original = code.gsub('‸', ""))
+private def assert_expand_simple(code, expanded, original = code.delete('‸'))
   assert_expand_simple(code, expanded, original) { }
 end
 
-private def assert_expand_simple(code, expanded, original = code.gsub('‸', ""))
+private def assert_expand_simple(code, expanded, original = code.delete('‸'))
   assert_expand(code, [[original, expanded]]) { |result| yield result.expansions.not_nil![0] }
 end
 
@@ -465,24 +465,24 @@ describe "expand" do
       code = <<-CODE
       lib Foo
         #{keyword} Foo
-          ‸{{ "Foo = 1".id }}
+          ‸{{ "x : Int32".id }}
         end
       end
       CODE
 
-      assert_expand_simple code, original: %({{ "Foo = 1".id }}), expanded: "Foo = 1"
+      assert_expand_simple code, original: %({{ "x : Int32".id }}), expanded: "x : Int32"
     end
 
     it "expands macro expression inside C #{keyword} of private lib" do
       code = <<-CODE
       private lib Foo
         #{keyword} Foo
-          ‸{{ "Foo = 1".id }}
+          ‸{{ "x : Int32".id }}
         end
       end
       CODE
 
-      assert_expand_simple code, original: %({{ "Foo = 1".id }}), expanded: "Foo = 1"
+      assert_expand_simple code, original: %({{ "x : Int32".id }}), expanded: "x : Int32"
     end
   end
 
@@ -620,6 +620,6 @@ describe "expand" do
     end
     CODE
 
-    assert_expand_simple code, original: "foo(hello)", expanded: expanded + "\n"
+    assert_expand_simple code, original: "foo(hello)", expanded: expanded + '\n'
   end
 end

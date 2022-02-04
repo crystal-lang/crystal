@@ -488,7 +488,7 @@ describe "Code gen: module" do
       mooer = Mooer.new(Bar.new)
       y = mooer.moo
 
-      x + y
+      x &+ y
       )).to_i.should eq(3)
   end
 
@@ -527,7 +527,7 @@ describe "Code gen: module" do
       mooer = Mooer.new(Bar(Int32).new)
       y = mooer.moo
 
-      x + y
+      x &+ y
       )).to_i.should eq(3)
   end
 
@@ -597,7 +597,7 @@ describe "Code gen: module" do
       )).to_i.should eq(10)
   end
 
-  it "codegend dispatch of union with module (#3647)" do
+  it "codegens dispatch of union with module (#3647)" do
     run(%(
       module Moo
       end

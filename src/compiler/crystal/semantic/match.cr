@@ -46,12 +46,10 @@ module Crystal
     # Any instance variables associated with the method instantiation
     getter free_vars : Hash(String, TypeVar)?
 
-    getter? strict : Bool
-
     # Def free variables, unbound (`def (X, Y) ...`)
     property def_free_vars : Array(String)?
 
-    def initialize(@instantiated_type, @defining_type, @free_vars = nil, @strict = false, @def_free_vars = nil)
+    def initialize(@instantiated_type, @defining_type, @free_vars = nil, @def_free_vars = nil)
     end
 
     def get_free_var(name)
@@ -60,6 +58,7 @@ module Crystal
 
     def set_free_var(name, type)
       free_vars = @free_vars ||= {} of String => TypeVar
+      type = type.remove_literal if type.is_a?(Type)
       free_vars[name] = type
     end
 
@@ -92,7 +91,7 @@ module Crystal
     end
 
     def clone
-      MatchContext.new(@instantiated_type, @defining_type, @free_vars.dup, @strict, @def_free_vars.dup)
+      MatchContext.new(@instantiated_type, @defining_type, @free_vars.dup, @def_free_vars.dup)
     end
   end
 
@@ -115,6 +114,11 @@ module Crystal
     getter context : MatchContext
 
     def initialize(@def, @arg_types, @context, @named_arg_types = nil)
+    end
+
+    def remove_literals
+      @arg_types.map!(&.remove_literal)
+      @named_arg_types.try &.map! { |arg| NamedArgumentType.new(arg.name, arg.type.remove_literal) }
     end
   end
 
@@ -152,6 +156,10 @@ module Crystal
 
     def size
       @matches.try(&.size) || 0
+    end
+
+    def [](*args)
+      Matches.new(@matches.try &.[](*args), @cover, @owner, @success)
     end
   end
 end

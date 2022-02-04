@@ -7,7 +7,6 @@ _crystal_commands() {
   commands=(
     "init:generate new crystal project"
     "build:build an executable"
-    "deps:install project dependencies"
     "docs:generate documentation"
     "env:print Crystal environment information"
     "eval:eval code from args or standard input"
@@ -100,22 +99,10 @@ _crystal-build() {
     && ret=0
 }
 
-_crystal-deps() {
-  _arguments \
-    '1:type:(build check init install list prune update)' \
-    $help_args \
-    $no_color_args \
-    '(--version)--version[version]' \
-    '(--production)--production[production mode]' \
-    '(-v --verbose)'{-v,--verbose}'[verbose mode]' \
-    '(-q --quiet)'{-q,--quiet}'[quiet mode]' \
-    && ret=0
-}
-
 _crystal-env() {
   _arguments \
     '(--help)--help[prints help]' \
-    '1:type:(CRYSTAL_CACHE_DIR CRYSTAL_PATH CRYSTAL_VERSION)' \
+    '1:type:(CRYSTAL_CACHE_DIR CRYSTAL_PATH CRYSTAL_VERSION CRYSTAL_OPTS)' \
     && ret=0
 }
 

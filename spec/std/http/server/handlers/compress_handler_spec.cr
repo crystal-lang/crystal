@@ -9,7 +9,7 @@ describe HTTP::CompressHandler do
     context = HTTP::Server::Context.new(request, response)
 
     handler = HTTP::CompressHandler.new
-    handler.next = HTTP::Handler::Proc.new do |ctx|
+    handler.next = HTTP::Handler::HandlerProc.new do |ctx|
       ctx.response.print "Hello"
     end
     handler.call(context)
@@ -28,7 +28,7 @@ describe HTTP::CompressHandler do
     context = HTTP::Server::Context.new(request, response)
 
     handler = HTTP::CompressHandler.new
-    handler.next = HTTP::Handler::Proc.new do |ctx|
+    handler.next = HTTP::Handler::HandlerProc.new do |ctx|
       ctx.response.print "Hello"
     end
     handler.call(context)
@@ -38,13 +38,9 @@ describe HTTP::CompressHandler do
     response2 = HTTP::Client::Response.from_io(io, decompress: false)
     body = response2.body
 
-    io2 = IO::Memory.new
-    deflate = Flate::Writer.new(io2)
-    deflate.print "Hello"
-    deflate.close
-    io2.rewind
-
-    body.to_slice.should eq(io2.to_slice)
+    io2 = IO::Memory.new(body)
+    flate = Compress::Deflate::Reader.new(io2)
+    flate.gets_to_end.should eq("Hello")
   end
 
   it "deflates gzip if has deflate in 'deflate' Accept-Encoding header" do
@@ -56,7 +52,7 @@ describe HTTP::CompressHandler do
     context = HTTP::Server::Context.new(request, response)
 
     handler = HTTP::CompressHandler.new
-    handler.next = HTTP::Handler::Proc.new do |ctx|
+    handler.next = HTTP::Handler::HandlerProc.new do |ctx|
       ctx.response.print "Hello"
     end
     handler.call(context)
@@ -66,12 +62,92 @@ describe HTTP::CompressHandler do
     response2 = HTTP::Client::Response.from_io(io, decompress: false)
     body = response2.body
 
-    io2 = IO::Memory.new
-    deflate = Gzip::Writer.new(io2)
-    deflate.print "Hello"
-    deflate.close
-    io2.rewind
+    io2 = IO::Memory.new(body)
+    gzip = Compress::Gzip::Reader.new(io2)
+    gzip.gets_to_end.should eq("Hello")
+  end
 
-    body.to_slice.should eq(io2.to_slice)
+  it "doesn't compress twice" do
+    io = IO::Memory.new
+    request = HTTP::Request.new("GET", "/")
+    request.headers["Accept-Encoding"] = "gzip"
+
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler1 = HTTP::CompressHandler.new
+    handler2 = HTTP::CompressHandler.new
+    handler1.next = handler2
+    handler2.next = HTTP::Handler::HandlerProc.new do |ctx|
+      ctx.response.print "Hello"
+    end
+    handler1.call(context)
+    response.close
+
+    io.rewind
+    response2 = HTTP::Client::Response.from_io(io)
+    response2.body.should eq("Hello")
+  end
+
+  it "fix content-length header" do
+    io = IO::Memory.new
+    request = HTTP::Request.new("GET", "/")
+    request.headers["Accept-Encoding"] = "gzip"
+
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler = HTTP::CompressHandler.new
+    handler.next = HTTP::Handler::HandlerProc.new do |ctx|
+      ctx.response.content_length = 5
+      ctx.response.print "Hello"
+      ctx.response.flush
+    end
+    handler.call(context)
+    response.close
+
+    io.rewind
+    response = HTTP::Client::Response.from_io(io)
+    response.body.should eq("Hello")
+  end
+
+  it "don't try to compress for empty body responses" do
+    io = IO::Memory.new
+    request = HTTP::Request.new("GET", "/")
+    request.headers["Accept-Encoding"] = "gzip"
+
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler = HTTP::CompressHandler.new
+    handler.next = HTTP::Handler::HandlerProc.new do |ctx|
+      context.response.status = :not_modified
+    end
+    handler.call(context)
+    response.close
+
+    io.rewind
+    io.to_s.should eq("HTTP/1.1 304 Not Modified\r\n\r\n")
+  end
+
+  it "don't try to compress upgraded response" do
+    io = IO::Memory.new
+    request = HTTP::Request.new("GET", "/")
+    request.headers["Accept-Encoding"] = "gzip"
+
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler = HTTP::CompressHandler.new
+    handler.next = HTTP::Handler::HandlerProc.new do |ctx|
+      response.status = :switching_protocols
+      response.upgrade do |io|
+      end
+    end
+    handler.call(context)
+    response.close
+
+    io.rewind
+    io.to_s.should eq("HTTP/1.1 101 Switching Protocols\r\n\r\n")
   end
 end

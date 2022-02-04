@@ -15,7 +15,6 @@ module Crystal
     def initialize(@program : Program, @llvm_context : LLVM::Context)
       @cache = TypeCache.new
       @struct_cache = TypeCache.new
-      @union_value_cache = TypeCache.new
 
       # For union types we just need to know the maximum size of their types.
       # It might happen that we have a recursive type, for example:
@@ -45,7 +44,6 @@ module Crystal
       # types, because there can be cycles.
       @wants_size_cache = TypeCache.new
       @wants_size_struct_cache = TypeCache.new
-      @wants_size_union_value_cache = TypeCache.new
 
       @structs = {} of String => LLVM::Type
 
@@ -235,49 +233,6 @@ module Crystal
       proc_type
     end
 
-    private def create_llvm_type(type : NilablePointerType, wants_size)
-      llvm_type(type.pointer_type, wants_size)
-    end
-
-    private def create_llvm_type(type : MixedUnionType, wants_size)
-      llvm_name = llvm_name(type, wants_size)
-      if s = @structs[llvm_name]?
-        return s
-      end
-
-      @llvm_context.struct(llvm_name) do |a_struct|
-        if wants_size
-          @wants_size_cache[type] = a_struct
-        else
-          @cache[type] = a_struct
-          @structs[llvm_name] = a_struct
-        end
-
-        max_size = 0
-        type.expand_union_types.each do |subtype|
-          unless subtype.void?
-            size = size_of(llvm_type(subtype, wants_size: true))
-            max_size = size if size > max_size
-          end
-        end
-
-        max_size /= pointer_size.to_f
-        max_size = max_size.ceil.to_i
-
-        max_size = 1 if max_size == 0
-
-        llvm_value_type = size_t.array(max_size)
-
-        if wants_size
-          @wants_size_union_value_cache[type] = llvm_value_type
-        else
-          @union_value_cache[type] = llvm_value_type
-        end
-
-        [@llvm_context.int32, llvm_value_type]
-      end
-    end
-
     private def create_llvm_type(type : TypeDefType, wants_size)
       llvm_type(type.typedef, wants_size)
     end
@@ -452,6 +407,12 @@ module Crystal
       end
     end
 
+    # StaticArray can only be "returned" in lib externs,
+    # not in C functions, and there it must not be a pointer.
+    def llvm_c_return_type(type : StaticArrayInstanceType)
+      llvm_struct_type(type)
+    end
+
     def llvm_c_return_type(type : NilType)
       @llvm_context.void
     end
@@ -559,6 +520,10 @@ module Crystal
       end
     end
 
+    def offset_of(type, element_index)
+      @layout.offset_of_element(type, element_index)
+    end
+
     def align_of(type)
       @layout.abi_alignment(type)
     end
@@ -575,10 +540,6 @@ module Crystal
 
     def pointer_size
       @pointer_size ||= size_of(@llvm_context.void_pointer)
-    end
-
-    def union_value_type(type : MixedUnionType)
-      @union_value_cache[type] ||= llvm_type(type).struct_element_types[1]
     end
   end
 end

@@ -68,18 +68,25 @@ class Crystal::Def
     end
 
     if named_args
+      # When **opts is expanded for named arguments, we must use internal
+      # names that won't clash with local variables defined in the method.
+      named_args_temp_names = Array(String).new(named_args.size)
+
       new_name = String.build do |str|
         str << name
         named_args.each do |named_arg|
           str << ':'
           str << named_arg
 
+          temp_name = program.new_temp_var_name
+          named_args_temp_names << temp_name
+
           # If a named argument matches an argument's external name, use the internal name
           matching_arg = args.find { |arg| arg.external_name == named_arg }
           if matching_arg
             new_args << Arg.new(matching_arg.name, external_name: named_arg)
           else
-            new_args << Arg.new(named_arg)
+            new_args << Arg.new(temp_name, external_name: named_arg)
           end
         end
       end
@@ -87,16 +94,17 @@ class Crystal::Def
       new_name = name
     end
 
-    expansion = Def.new(new_name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, macro_def?, yields)
+    expansion = Def.new(new_name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, macro_def?, yields).at(self)
     expansion.args.each { |arg| arg.default_value = nil }
     expansion.calls_super = calls_super?
     expansion.calls_initialize = calls_initialize?
     expansion.calls_previous_def = calls_previous_def?
     expansion.uses_block_arg = uses_block_arg?
     expansion.yields = yields
-    expansion.location = location
     expansion.raises = raises?
     expansion.free_vars = free_vars
+    expansion.annotations = annotations
+    expansion.special_vars = special_vars
     if owner = self.owner?
       expansion.owner = owner
     end
@@ -122,11 +130,13 @@ class Crystal::Def
           if default_value.is_a?(MagicConstant)
             expansion.args.push arg.clone
           else
-            new_body << Assign.new(Var.new(arg.name), default_value)
+            assign = Assign.new(Var.new(arg.name).at(arg), default_value).at(arg)
 
             if restriction = arg.restriction
-              new_body << TypeRestriction.new(Var.new(arg.name), restriction).at(arg)
+              assign = AssignWithRestriction.new(assign, restriction)
             end
+
+            new_body << assign
           end
         end
       end
@@ -135,27 +145,29 @@ class Crystal::Def
       if splat_names && splat_index
         tuple_args = [] of ASTNode
         splat_size.times do |i|
-          tuple_args << Var.new(splat_names[i])
+          tuple_args << Var.new(splat_names[i]).at(self)
         end
-        tuple = TupleLiteral.new(tuple_args).at(args[splat_index])
-        new_body << Assign.new(Var.new(args[splat_index].name), tuple)
+        splat_arg = args[splat_index]
+        tuple = TupleLiteral.new(tuple_args).at(splat_arg)
+        new_body << Assign.new(Var.new(splat_arg.name).at(splat_arg), tuple).at(splat_arg)
       end
 
       # Double splat argument
       if double_splat
         named_tuple_entries = [] of NamedTupleLiteral::Entry
-        named_args.try &.each do |named_arg|
+        named_args.try &.each_with_index do |named_arg, i|
           # Don't put here regular arguments
-          next if args.any? &.name.==(named_arg)
+          next if args.any? &.external_name.==(named_arg)
 
-          named_tuple_entries << NamedTupleLiteral::Entry.new(named_arg, Var.new(named_arg))
+          temp_name = named_args_temp_names.not_nil![i]
+          named_tuple_entries << NamedTupleLiteral::Entry.new(named_arg, Var.new(temp_name))
         end
         named_tuple = NamedTupleLiteral.new(named_tuple_entries).at(double_splat)
-        new_body << Assign.new(Var.new(double_splat.name), named_tuple)
+        new_body << Assign.new(Var.new(double_splat.name).at(double_splat), named_tuple).at(double_splat)
       end
 
       new_body.push body
-      expansion.body = Expressions.new(new_body)
+      expansion.body = Expressions.new(new_body).at(body)
     else
       new_args = [] of ASTNode
       body = [] of ASTNode
@@ -182,8 +194,8 @@ class Crystal::Def
             new_args.push Var.new(arg.name)
             expansion.args.push arg.clone
           else
-            body << Assign.new(Var.new(arg.name), default_value.clone)
-            new_args.push Var.new(arg.name)
+            body << Assign.new(Var.new(arg.name).at(arg), default_value.clone).at(arg)
+            new_args.push Var.new(arg.name).at(arg)
           end
         end
       end
@@ -192,7 +204,7 @@ class Crystal::Def
       call.expansion = true
       body << call
 
-      expansion.body = Expressions.new(body)
+      expansion.body = Expressions.new(body).at(self.body)
     end
 
     expansion

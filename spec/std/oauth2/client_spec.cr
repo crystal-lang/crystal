@@ -1,5 +1,6 @@
 require "spec"
 require "oauth2"
+require "../http/spec_helper"
 
 describe OAuth2::Client do
   describe "authorization uri" do
@@ -38,11 +39,173 @@ describe OAuth2::Client do
     end
   end
 
+  describe "get_access_token_using_*" do
+    describe "using HTTP Basic authentication to pass credentials" do
+      it "#get_access_token_using_authorization_code" do
+        handler = HTTP::Handler::HandlerProc.new do |context|
+          body = context.request.body.not_nil!.gets_to_end
+          response = {access_token: "access_token", body: body}
+          context.response.print response.to_json
+        end
+
+        run_handler(handler) do |http_client|
+          client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http"
+          client.http_client = http_client
+
+          token = client.get_access_token_using_authorization_code(authorization_code: "SDFhw39fwfg23flSfpawbef")
+          token.extra.not_nil!["body"].should eq %("redirect_uri=&grant_type=authorization_code&code=SDFhw39fwfg23flSfpawbef")
+          token.access_token.should eq "access_token"
+        end
+      end
+
+      it "configures HTTP::Client" do
+        server = HTTP::Server.new do |context|
+          body = context.request.body.not_nil!.gets_to_end
+          response = {access_token: "access_token", body: body}
+          context.response.print response.to_json
+        end
+        address = server.bind_tcp 0
+
+        run_server(server) do
+          client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", port: address.port, scheme: "http"
+          client.http_client.port.should eq address.port
+          client.http_client.host.should eq "127.0.0.1"
+
+          token = client.get_access_token_using_authorization_code(authorization_code: "SDFhw39fwfg23flSfpawbef")
+          token.extra.not_nil!["body"].should eq %("redirect_uri=&grant_type=authorization_code&code=SDFhw39fwfg23flSfpawbef")
+          token.access_token.should eq "access_token"
+        end
+      end
+
+      it "#get_access_token_using_resource_owner_credentials" do
+        handler = HTTP::Handler::HandlerProc.new do |context|
+          body = context.request.body.not_nil!.gets_to_end
+          response = {access_token: "access_token", body: body}
+          context.response.print response.to_json
+        end
+
+        run_handler(handler) do |http_client|
+          client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http"
+          client.http_client = http_client
+
+          token = client.get_access_token_using_resource_owner_credentials(username: "user123", password: "monkey", scope: "read_posts")
+          token.extra.not_nil!["body"].should eq %("grant_type=password&username=user123&password=monkey&scope=read_posts")
+          token.access_token.should eq "access_token"
+        end
+      end
+
+      it "#get_access_token_using_client_credentials" do
+        handler = HTTP::Handler::HandlerProc.new do |context|
+          body = context.request.body.not_nil!.gets_to_end
+          response = {access_token: "access_token", body: body}
+          context.response.print response.to_json
+        end
+
+        run_handler(handler) do |http_client|
+          client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http"
+          client.http_client = http_client
+
+          token = client.get_access_token_using_client_credentials(scope: "read_posts")
+          token.extra.not_nil!["body"].should eq %("grant_type=client_credentials&scope=read_posts")
+          token.access_token.should eq "access_token"
+        end
+      end
+
+      it "#get_access_token_using_refresh_token" do
+        handler = HTTP::Handler::HandlerProc.new do |context|
+          body = context.request.body.not_nil!.gets_to_end
+          response = {access_token: "access_token", body: body}
+          context.response.print response.to_json
+        end
+
+        run_handler(handler) do |http_client|
+          client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http"
+          client.http_client = http_client
+
+          token = client.get_access_token_using_refresh_token(scope: "read_posts", refresh_token: "some_refresh_token")
+          token.extra.not_nil!["body"].should eq %("grant_type=refresh_token&refresh_token=some_refresh_token&scope=read_posts")
+          token.access_token.should eq "access_token"
+        end
+      end
+    end
+    describe "using Request Body to pass credentials" do
+      it "#get_access_token_using_authorization_code" do
+        handler = HTTP::Handler::HandlerProc.new do |context|
+          body = context.request.body.not_nil!.gets_to_end
+          response = {access_token: "access_token", body: body}
+          context.response.print response.to_json
+        end
+
+        run_handler(handler) do |http_client|
+          client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http", auth_scheme: OAuth2::AuthScheme::RequestBody
+          client.http_client = http_client
+
+          token = client.get_access_token_using_authorization_code(authorization_code: "SDFhw39fwfg23flSfpawbef")
+          token.extra.not_nil!["body"].should eq %("client_id=client_id&client_secret=client_secret&redirect_uri=&grant_type=authorization_code&code=SDFhw39fwfg23flSfpawbef")
+          token.access_token.should eq "access_token"
+        end
+      end
+
+      it "#get_access_token_using_resource_owner_credentials" do
+        handler = HTTP::Handler::HandlerProc.new do |context|
+          body = context.request.body.not_nil!.gets_to_end
+          response = {access_token: "access_token", body: body}
+          context.response.print response.to_json
+        end
+
+        run_handler(handler) do |http_client|
+          client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http", auth_scheme: OAuth2::AuthScheme::RequestBody
+          client.http_client = http_client
+
+          token = client.get_access_token_using_resource_owner_credentials(username: "user123", password: "monkey", scope: "read_posts")
+          token.extra.not_nil!["body"].should eq %("client_id=client_id&client_secret=client_secret&grant_type=password&username=user123&password=monkey&scope=read_posts")
+          token.access_token.should eq "access_token"
+        end
+      end
+
+      it "#get_access_token_using_client_credentials" do
+        handler = HTTP::Handler::HandlerProc.new do |context|
+          body = context.request.body.not_nil!.gets_to_end
+          response = {access_token: "access_token", body: body}
+          context.response.print response.to_json
+        end
+
+        run_handler(handler) do |http_client|
+          client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http", auth_scheme: OAuth2::AuthScheme::RequestBody
+          client.http_client = http_client
+
+          token = client.get_access_token_using_client_credentials(scope: "read_posts")
+          token.extra.not_nil!["body"].should eq %("client_id=client_id&client_secret=client_secret&grant_type=client_credentials&scope=read_posts")
+          token.access_token.should eq "access_token"
+        end
+      end
+
+      it "#get_access_token_using_refresh_token" do
+        handler = HTTP::Handler::HandlerProc.new do |context|
+          body = context.request.body.not_nil!.gets_to_end
+          response = {access_token: "access_token", body: body}
+          context.response.print response.to_json
+        end
+
+        run_handler(handler) do |http_client|
+          client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http", auth_scheme: OAuth2::AuthScheme::RequestBody
+          client.http_client = http_client
+
+          token = client.get_access_token_using_refresh_token(scope: "read_posts", refresh_token: "some_refresh_token")
+          token.extra.not_nil!["body"].should eq %("client_id=client_id&client_secret=client_secret&grant_type=refresh_token&refresh_token=some_refresh_token&scope=read_posts")
+          token.access_token.should eq "access_token"
+        end
+      end
+    end
+  end
+
   typeof(begin
     client = OAuth2::Client.new "localhost", "client_id", "client_secret", redirect_uri: "uri", authorize_uri: "/baz"
     client.get_access_token_using_authorization_code("some_code")
     client.get_access_token_using_refresh_token("some_refresh_token")
     client.get_access_token_using_refresh_token("some_refresh_token", scope: "some scope")
     client.get_access_token_using_client_credentials(scope: "some scope")
+    client.get_access_token_using_resource_owner_credentials(username: "user123", password: "monkey")
+    client.get_access_token_using_resource_owner_credentials(username: "user123", password: "monkey", scope: "foo")
   end)
 end

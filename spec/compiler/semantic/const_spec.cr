@@ -3,8 +3,7 @@ require "../../spec_helper"
 describe "Semantic: const" do
   it "types a constant" do
     input = parse("CONST = 1").as(Assign)
-    result = semantic input
-    mod = result.program
+    semantic input
     input.target.type?.should be_nil # Don't type value until needed
   end
 
@@ -14,6 +13,85 @@ describe "Semantic: const" do
 
   it "types a nested constant" do
     assert_type("class Foo; A = 1; end; Foo::A") { int32 }
+  end
+
+  it "types a constant using Path" do
+    assert_type(%(
+      Foo::Bar = 1
+
+      Foo::Bar
+      )) { int32 }
+  end
+
+  it "types a nested constant using Path" do
+    assert_type(%(
+      class Foo
+        Bar::Baz = 1
+      end
+
+      Foo::Bar::Baz
+      )) { int32 }
+  end
+
+  it "types a nested type with same name" do
+    assert_type(%(
+      class Foo
+        class Foo
+          A = 1
+        end
+      end
+
+      Foo::Foo::A
+      )) { int32 }
+  end
+
+  it "creates container module if not exist when using Path" do
+    assert_type(%(
+      Foo::Bar = 1
+      Foo
+    )) do
+      foo = types["Foo"]
+      foo.module?.should be_true
+      foo.metaclass
+    end
+  end
+
+  it "keeps type of container when using Path" do
+    assert_type(%(
+      class Foo
+      end
+
+      Foo::Const = 1
+      Foo
+    )) do
+      foo = types["Foo"]
+      foo.class?.should be_true
+      foo.metaclass
+    end
+
+    assert_type(%(
+      struct Foo
+      end
+
+      Foo::Const = 1
+      Foo
+    )) do
+      foo = types["Foo"]
+      foo.struct?.should be_true
+      foo.metaclass
+    end
+
+    assert_type(%(
+      module Foo
+      end
+
+      Foo::Const = 1
+      Foo
+    )) do
+      foo = types["Foo"]
+      foo.module?.should be_true
+      foo.metaclass
+    end
   end
 
   it "types a constant inside a def" do
@@ -62,6 +140,81 @@ describe "Semantic: const" do
 
       Foo::Bar.foo
       ") { int32 }
+  end
+
+  it "finds current type before parents (#4086)" do
+    assert_type(%(
+      class Foo
+        class Bar
+          class Baz < Foo
+            def self.foo
+              Baz.new.foo
+            end
+
+            def foo
+              1
+            end
+          end
+        end
+
+        class Baz
+        end
+      end
+
+      Foo::Bar::Baz.foo
+      )) { int32 }
+  end
+
+  it "doesn't count parent types as current type" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar
+        class Foo
+          def foo
+            1
+          end
+        end
+
+        class Baz < Foo
+          def self.bar
+            Foo.new
+          end
+        end
+      end
+
+      Bar::Baz.bar.foo
+      )) { int32 }
+  end
+
+  it "finds current type only for first path item (1)" do
+    assert_error %(
+      class Foo
+        def self.foo
+          Foo::Foo
+        end
+      end
+
+      Foo.foo
+      ),
+      "undefined constant Foo::Foo"
+  end
+
+  it "finds current type only for first path item (2)" do
+    assert_error %(
+      class Foo
+        class Foo
+        end
+
+        def self.foo
+          Foo::Foo
+        end
+      end
+
+      Foo.foo
+      ),
+      "undefined constant Foo::Foo"
   end
 
   it "types a global constant reference in method" do
@@ -162,15 +315,18 @@ describe "Semantic: const" do
       )) { bool }
   end
 
-  ["nil", "true", "1", "'a'", %("foo"), "+ 1", "- 2", "~ 2", "1 + 2", "1 + ZED"].each do |node|
+  ["nil", "true", "1", "'a'", %("foo"), "+ 1", "- 2", "~ 2",
+   "1 + 2", "1 + ZED", "ZED - 1", "ZED * 2", "ZED // 2",
+   "1 &+ ZED", "ZED &- 1", "ZED &* 2"].each do |node|
     it "doesn't errors if constant depends on another one defined later through method, but constant is simple (#{node})" do
-      semantic(%(
+      assert_no_errors <<-CR, inject_primitives: true
         ZED = 10
 
         struct Int32
           def +; 0; end
           def ~; 0; end
           def -; 0; end
+          def //(other); 0; end
         end
 
         CONST1 = foo
@@ -181,7 +337,7 @@ describe "Semantic: const" do
         end
 
         CONST1
-        ))
+        CR
     end
   end
 
@@ -265,7 +421,7 @@ describe "Semantic: const" do
       "A is not a type, it's a constant"
   end
 
-  it "errors if using const in unintialized" do
+  it "errors if using const in uninitialized" do
     assert_error %(
       A = 1
 
@@ -293,5 +449,47 @@ describe "Semantic: const" do
       foo(1)
       ),
       "A is not a type, it's a constant"
+  end
+
+  it "errors if using const in proc notation parameter type" do
+    assert_error <<-CR, "A is not a type, it's a constant"
+      A = 1
+
+      x : A ->
+      CR
+  end
+
+  it "errors if using const in proc notation return type" do
+    assert_error <<-CR, "A is not a type, it's a constant"
+      A = 1
+
+      x : -> A
+      CR
+  end
+
+  it "errors if using return inside constant value (#5391)" do
+    assert_error %(
+      class Foo
+        A = begin
+          return if 1 == 2
+        end
+      end
+
+      Foo::A
+      ),
+      "can't return from constant", inject_primitives: true
+  end
+
+  it "errors if constant has NoReturn type (#6139)" do
+    assert_error %(
+      lib LibFoo
+        fun foo : NoReturn
+      end
+
+      FOO = LibFoo.foo
+
+      FOO
+      ),
+      "constant FOO has illegal type NoReturn"
   end
 end

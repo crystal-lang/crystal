@@ -60,6 +60,441 @@ describe "Restrictions" do
 
       mod.t("Axx+").restrict(mod.t("Mxx"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("Bxx+"), mod.t("Cxx+")))
     end
+
+    it "restricts module with another module" do
+      mod = Program.new
+      mod.semantic parse("
+        module Mxx; end
+        module Nxx; end
+        class Axx; include Mxx; end
+        class Bxx; include Nxx; end
+        class Cxx; include Mxx; include Nxx; end
+        class Dxx < Axx; include Nxx; end
+        class Exx < Bxx; include Mxx; end
+      ")
+
+      mod.t("Mxx").restrict(mod.t("Nxx"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
+    end
+
+    it "restricts generic module instance with another module" do
+      mod = Program.new
+      mod.semantic parse("
+        module Mxx(T); end
+        module Nxx; end
+        class Axx; include Mxx(Int32); end
+        class Bxx; include Nxx; end
+        class Cxx; include Mxx(Int32); include Nxx; end
+        class Dxx < Axx; include Nxx; end
+        class Exx < Bxx; include Mxx(Int32); end
+      ")
+
+      result = mod.generic_module("Mxx", mod.int32).restrict(mod.t("Nxx"), MatchContext.new(mod, mod))
+      result.should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
+    end
+
+    it "restricts generic module instance with another generic module instance" do
+      mod = Program.new
+      mod.semantic parse("
+        module Mxx(T); end
+        module Nxx(T); end
+        class Axx; include Mxx(Int32); end
+        class Bxx; include Nxx(Int32); end
+        class Cxx; include Mxx(Int32); include Nxx(Int32); end
+        class Dxx < Axx; include Nxx(Int32); end
+        class Exx < Bxx; include Mxx(Int32); end
+        class Fxx; include Mxx(Int32); include Nxx(Char); end
+        class Gxx; include Mxx(Char); include Nxx(Int32); end
+      ")
+
+      result = mod.generic_module("Mxx", mod.int32).restrict(mod.generic_module("Nxx", mod.int32), MatchContext.new(mod, mod))
+      result.should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
+    end
+
+    it "restricts generic module instance with class" do
+      mod = Program.new
+      mod.semantic parse("
+        module Mxx(T); end
+        module Nxx; end
+        class Axx; include Mxx(Int32); end
+        class Bxx; include Nxx; end
+        class Cxx; include Mxx(Int32); include Nxx; end
+        class Dxx < Axx; include Nxx; end
+        class Exx < Bxx; include Mxx(Int32); end
+      ")
+
+      result = mod.generic_module("Mxx", mod.int32).restrict(mod.t("Nxx"), MatchContext.new(mod, mod))
+      result.should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
+    end
+
+    it "restricts module through generic include (#4287)" do
+      mod = Program.new
+      mod.semantic parse("
+        module Axx; end
+        module Bxx(T); include Axx; end
+        class Cxx; include Bxx(Int32); end
+      ")
+
+      mod.t("Axx").restrict(mod.t("Cxx"), MatchContext.new(mod, mod)).should eq(mod.t("Cxx"))
+    end
+
+    it "restricts class against uninstantiated generic base class through multiple inheritance (1) (#9660)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx < Bxx(Int32); end
+      ")
+
+      result = mod.t("Cxx").restrict(mod.t("Axx"), MatchContext.new(mod, mod))
+      result.should eq(mod.t("Cxx"))
+    end
+
+    it "restricts class against uninstantiated generic base class through multiple inheritance (2) (#9660)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx(T) < Bxx(T); end
+      ")
+
+      result = mod.generic_class("Cxx", mod.int32).restrict(mod.t("Axx"), MatchContext.new(mod, mod))
+      result.should eq(mod.generic_class("Cxx", mod.int32))
+    end
+
+    it "restricts virtual generic class against uninstantiated generic subclass (1)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx < Bxx(Int32); end
+      ")
+
+      result = mod.generic_class("Axx", mod.int32).virtual_type.restrict(mod.generic_class("Bxx", mod.int32), MatchContext.new(mod, mod))
+      result.should eq(mod.generic_class("Bxx", mod.int32).virtual_type)
+    end
+
+    it "restricts virtual generic class against uninstantiated generic subclass (2)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx(T) < Bxx(T); end
+      ")
+
+      result = mod.generic_class("Axx", mod.int32).virtual_type.restrict(mod.generic_class("Bxx", mod.int32), MatchContext.new(mod, mod))
+      result.should eq(mod.generic_class("Bxx", mod.int32).virtual_type)
+    end
+  end
+
+  describe "restriction_of?" do
+    describe "Metaclass vs Metaclass" do
+      it "inserts typed Metaclass before untyped Metaclass" do
+        assert_type(%(
+          def foo(a : T.class) forall T
+            1
+          end
+
+          def foo(a : Int32.class)
+            true
+          end
+
+          foo(Int32)
+          )) { bool }
+      end
+
+      it "keeps typed Metaclass before untyped Metaclass" do
+        assert_type(%(
+          def foo(a : Int32.class)
+            true
+          end
+
+          def foo(a : T.class) forall T
+            1
+          end
+
+          foo(Int32)
+          )) { bool }
+      end
+    end
+
+    describe "Path vs Path" do
+      it "inserts typed Path before untyped Path" do
+        assert_type(%(
+          def foo(a : T) forall T
+            1
+          end
+
+          def foo(a : Int32)
+            true
+          end
+
+          foo(1)
+          )) { bool }
+      end
+
+      it "keeps typed Path before untyped Path" do
+        assert_type(%(
+          def foo(a : Int32)
+            true
+          end
+
+          def foo(a : T) forall T
+            1
+          end
+
+          foo(1)
+          )) { bool }
+      end
+    end
+
+    describe "Generic vs Path" do
+      it "inserts typed Generic before untyped Path" do
+        assert_type(%(
+          def foo(a : T) forall T
+            1
+          end
+
+          def foo(a : Array(Int32))
+            true
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "keeps typed Generic before untyped Path" do
+        assert_type(%(
+          def foo(a : Array(Int32))
+            true
+          end
+
+          def foo(a : T) forall T
+            1
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "inserts untyped Generic before untyped Path" do
+        assert_type(%(
+          def foo(a : T) forall T
+            1
+          end
+
+          def foo(a : Array(T)) forall T
+            true
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "inserts untyped Generic before untyped Path (2)" do
+        assert_type(%(
+          def foo(a : T) forall T
+            1
+          end
+
+          def foo(a : Array)
+            true
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "keeps untyped Generic before untyped Path" do
+        assert_type(%(
+          def foo(a : Array(T)) forall T
+            true
+          end
+
+          def foo(a : T) forall T
+            1
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+    end
+
+    describe "Generic vs Generic" do
+      it "inserts typed Generic before untyped Generic" do
+        assert_type(%(
+          def foo(a : Array(T)) forall T
+            1
+          end
+
+          def foo(a : Array(Int32))
+            true
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "keeps typed Generic before untyped Generic" do
+        assert_type(%(
+          def foo(a : Array(Int32))
+            true
+          end
+
+          def foo(a : Array(T)) forall T
+            1
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+    end
+
+    describe "GenericClassType vs GenericClassInstanceType" do
+      it "inserts GenericClassInstanceType before GenericClassType" do
+        assert_type(%(
+          class Foo(T)
+          end
+
+          def bar(a : Foo)
+            1
+          end
+
+          def bar(a : Foo(Int32))
+            true
+          end
+
+          {
+            bar(Foo(Int32).new),
+            bar(Foo(Float64).new)
+          }
+          )) { tuple_of([bool, int32]) }
+      end
+
+      it "keeps GenericClassInstanceType before GenericClassType" do
+        assert_type(%(
+          class Foo(T)
+          end
+
+          def bar(a : Foo(Int32))
+            true
+          end
+
+          def bar(a : Foo)
+            1
+          end
+
+          {
+            bar(Foo(Int32).new),
+            bar(Foo(Float64).new)
+          }
+          )) { tuple_of([bool, int32]) }
+      end
+
+      it "works with classes in different namespaces" do
+        assert_type(%(
+          class Foo(T)
+          end
+
+          class Mod::Foo(G)
+          end
+
+          def bar(a : Foo(Int32))
+            true
+          end
+
+          def bar(a : Mod::Foo)
+            1
+          end
+
+          {
+            bar(Foo(Int32).new),
+            bar(Mod::Foo(Int32).new)
+          }
+          )) { tuple_of([bool, int32]) }
+      end
+
+      it "doesn't mix different generic classes" do
+        assert_type(%(
+          class Foo(T)
+          end
+
+          class Bar(U)
+          end
+
+          def bar(a : Bar(Int32))
+            true
+          end
+
+          def bar(a : Foo)
+            1
+          end
+
+          {
+            bar(Foo(Int32).new),
+            bar(Bar(Int32).new)
+          }
+          )) { tuple_of([int32, bool]) }
+      end
+    end
+
+    describe "NamedTuple vs NamedTuple" do
+      it "inserts more specialized NamedTuple before less specialized one" do
+        assert_type(%(
+          class Foo
+          end
+
+          class Bar < Foo
+          end
+
+          def foo(a : NamedTuple(x: Foo))
+            1
+          end
+
+          def foo(a : NamedTuple(x: Bar))
+            true
+          end
+
+          foo({x: Bar.new})
+          )) { bool }
+      end
+
+      it "keeps more specialized NamedTuple before less specialized one" do
+        assert_type(%(
+          class Foo
+          end
+
+          class Bar < Foo
+          end
+
+          def foo(a : NamedTuple(x: Bar))
+            true
+          end
+
+          def foo(a : NamedTuple(x: Foo))
+            1
+          end
+
+          foo({x: Bar.new})
+          )) { bool }
+      end
+
+      it "doesn't mix incompatible NamedTuples (#10238)" do
+        assert_type(%(
+          def foo(a : NamedTuple(a: Int32))
+            1
+          end
+
+          def foo(a : NamedTuple(b: Int32))
+            true
+          end
+
+          {
+            foo({a: 1}),
+            foo({b: 1})
+          }
+          )) { tuple_of([int32, bool]) }
+      end
+    end
   end
 
   it "self always matches instance type in restriction" do
@@ -86,16 +521,49 @@ describe "Restrictions" do
       )) { types["Foo"] }
   end
 
-  it "allows typeof as restriction" do
-    assert_type(%(
-      struct Int32
-        def self.foo(x : typeof(self))
-          x
-        end
+  it "errors if using typeof" do
+    assert_error %(
+      def foo(x : typeof(1))
       end
 
-      Int32.foo 1
-      )) { int32 }
+      foo(1)
+      ),
+      "can't use typeof in type restrictions"
+  end
+
+  it "errors if using typeof inside generic type" do
+    assert_error %(
+      class Gen(T)
+      end
+
+      def foo(x : Gen(typeof(1)))
+      end
+
+      foo(Gen(Int32).new)
+      ),
+      "can't use typeof in type restrictions"
+  end
+
+  it "errors if using typeof in block restriction" do
+    assert_error %(
+      def foo(&x : typeof(1) -> )
+        yield 1
+      end
+
+      foo {}
+      ),
+      "can't use 'typeof' here"
+  end
+
+  it "errors if using typeof in block restriction" do
+    assert_error %(
+      def foo(&x : -> typeof(1))
+        yield
+      end
+
+      foo {}
+      ),
+      "can't use typeof in type restriction"
   end
 
   it "passes #278" do
@@ -286,7 +754,7 @@ describe "Restrictions" do
 
       a = 1 || "foo" || true
       foo(a.class)
-      )) { union_of([uint8, uint16, uint32] of Type) }
+      ), inject_primitives: true) { union_of([uint8, uint16, uint32] of Type) }
   end
 
   it "restricts class union type to overloads with classes (2)" do
@@ -305,7 +773,7 @@ describe "Restrictions" do
 
       a = 1 || "foo"
       foo(a.class)
-      )) { union_of([uint8, uint16] of Type) }
+      ), inject_primitives: true) { union_of([uint8, uint16] of Type) }
   end
 
   it "makes metaclass subclass pass parent metaclass restriction (#2079)" do
@@ -395,16 +863,6 @@ describe "Restrictions" do
       )) { types["Parent"].metaclass.virtual_type! }
   end
 
-  it "doesn't crash on invalid splat restriction (#3698)" do
-    assert_error %(
-      def foo(arg : *String)
-      end
-
-      foo(1)
-      ),
-      "no overload matches"
-  end
-
   it "errors if using free var without forall" do
     assert_error %(
       def foo(x : T)
@@ -426,5 +884,36 @@ describe "Restrictions" do
       foo(x, y)
       ),
       "no overload matches"
+  end
+
+  it "gives precedence to T.class over Class (#7392)" do
+    assert_type(%(
+      def foo(x : Class)
+        'a'
+      end
+
+      def foo(x : Int32.class)
+        1
+      end
+
+      foo(Int32)
+      )) { int32 }
+  end
+
+  it "restricts aliased typedef type (#9474)" do
+    assert_type(%(
+      lib A
+        alias B = Int32
+      end
+
+      alias C = A::B
+
+      def foo(x : C)
+        1
+      end
+
+      x = uninitialized C
+      foo x
+      )) { int32 }
   end
 end

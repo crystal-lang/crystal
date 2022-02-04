@@ -13,6 +13,13 @@ module Crystal
       file_modules.each_value do |file_module|
         define_default_new(file_module)
       end
+
+      # Once we are done with the expansions we mark `initialize` methods
+      # without an explicit visibility as `protected`.
+      new_expansions.each do |expansion|
+        original = expansion[:original]
+        original.visibility = Visibility::Protected if original.visibility.public?
+      end
     end
 
     def define_default_new(type)
@@ -30,6 +37,8 @@ module Crystal
                 false
               when NonGenericClassType, GenericClassType
                 true
+              else
+                false
               end
 
       if check
@@ -50,7 +59,7 @@ module Crystal
 
           # Also add `initialize`, so `super` in a subclass
           # inside an `initialize` will find this one
-          type.add_def Def.argless_initialize
+          type.add_def Def.argless_initialize(type)
         end
 
         # Check to see if a type doesn't define `initialize`
@@ -62,7 +71,7 @@ module Crystal
         has_self_initialize_methods = !self_initialize_methods.empty?
         if !has_self_initialize_methods
           is_generic = type.is_a?(GenericClassType)
-          inherits_from_generic = type.ancestors.any?(&.is_a?(GenericClassInstanceType))
+          inherits_from_generic = type.ancestors.any?(GenericClassInstanceType)
           if is_generic || inherits_from_generic
             has_default_self_new = self_new_methods.any? do |a_def|
               a_def.args.empty? && !a_def.yields
@@ -77,7 +86,7 @@ module Crystal
               # If the type has `self.new()`, don't override it
               unless has_default_self_new
                 type.metaclass.as(ModuleType).add_def(Def.argless_new(type))
-                type.add_def(Def.argless_initialize)
+                type.add_def(Def.argless_initialize(type))
               end
             else
               initialize_owner = nil
@@ -126,15 +135,15 @@ module Crystal
     def expand_new_signature_from_initialize(instance_type)
       def_args = args.clone
 
-      new_def = Def.new("new", def_args, Nop.new)
+      new_def = Def.new("new", def_args, Nop.new).at(self)
       new_def.splat_index = splat_index
       new_def.double_splat = double_splat.clone
       new_def.yields = yields
-      new_def.visibility = Visibility::Private if visibility.private?
+      new_def.visibility = visibility
       new_def.new = true
-      new_def.location = location
       new_def.doc = doc
       new_def.free_vars = free_vars
+      new_def.annotations = annotations
 
       # Forward block argument if any
       if uses_block_arg?
@@ -178,7 +187,7 @@ module Crystal
         # Check if the argument has to be passed as a named argument
         if splat_index && i > splat_index
           named_args ||= [] of NamedArgument
-          named_args << NamedArgument.new(arg.name, Var.new(arg.name).at(self)).at(self)
+          named_args << NamedArgument.new(arg.external_name, Var.new(arg.name).at(self)).at(self)
         else
           new_var = Var.new(arg.name).at(self)
           new_var = Splat.new(new_var).at(self) if i == splat_index
@@ -215,7 +224,7 @@ module Crystal
         init.block_arg = Var.new(block_arg.name).at(self)
       end
 
-      self.body = Expressions.from(exps).at(self)
+      self.body = Expressions.from(exps).at(self.body)
     end
 
     def self.argless_new(instance_type)
@@ -243,8 +252,9 @@ module Crystal
       a_def
     end
 
-    def self.argless_initialize
-      Def.new("initialize", body: Nop.new)
+    def self.argless_initialize(instance_type)
+      loc = instance_type.locations.try &.first?
+      Def.new("initialize", body: Nop.new).at(loc)
     end
 
     def expand_new_default_arguments(instance_type, args_size, named_args)
@@ -265,9 +275,13 @@ module Crystal
         name = String.build do |str|
           str << "new"
           named_args.each do |named_arg|
-            str << ":"
+            str << ':'
             str << named_arg
-            def_args << Arg.new(named_arg)
+
+            # When **opts is expanded for named arguments, we must use internal
+            # names that won't clash with local variables defined in the method.
+            temp_name = instance_type.program.new_temp_var_name
+            def_args << Arg.new(temp_name, external_name: named_arg)
             i += 1
           end
         end
@@ -275,9 +289,11 @@ module Crystal
         name = "new"
       end
 
-      expansion = Def.new(name, def_args, Nop.new, splat_index: splat_index)
+      expansion = Def.new(name, def_args, Nop.new, splat_index: splat_index).at(self)
       expansion.yields = yields
-      expansion.visibility = Visibility::Private if visibility.private?
+      expansion.visibility = visibility
+      expansion.annotations = annotations
+
       if uses_block_arg?
         block_arg = self.block_arg.not_nil!
         expansion.block_arg = block_arg.clone

@@ -2,6 +2,7 @@ module Crystal
   class MacroInterpreter < Visitor
     getter last : ASTNode
     property free_vars : Hash(String, TypeVar)?
+    property macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))? = nil
 
     def self.new(program, scope : Type, path_lookup : Type, a_macro : Macro, call, a_def : Def? = nil, in_macro = false)
       vars = {} of String => ASTNode
@@ -51,7 +52,7 @@ module Crystal
         next if vars.has_key?(macro_arg.name)
 
         default_value = default_value.expand_node(call.location, call.end_location) if default_value.is_a?(MagicConstant)
-        vars[macro_arg.name] = default_value
+        vars[macro_arg.name] = default_value.clone
       end
 
       # The named arguments
@@ -77,11 +78,11 @@ module Crystal
                    @scope : Type, @path_lookup : Type, @location : Location?,
                    @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil,
                    @in_macro = false)
-      @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug()}}
+      @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug}}`
       @last = Nop.new
     end
 
-    def define_var(name, value)
+    def define_var(name : String, value : ASTNode) : Nil
       @vars[name] = value
     end
 
@@ -99,13 +100,17 @@ module Crystal
       node.exp.accept self
 
       if node.output?
-        # In the caseof {{yield}}, we want to paste the block's body
-        # retaining the original node's location, so error messages
-        # are shown in the block instead of in the generated macro source
         is_yield = node.exp.is_a?(Yield) && !@last.is_a?(Nop)
-        @str << " #<loc:push>begin " if is_yield
-        @last.to_s(@str, emit_loc_pragma: is_yield, emit_doc: is_yield)
-        @str << " end#<loc:pop> " if is_yield
+        if (loc = @last.location) && loc.filename.is_a?(String) || is_yield
+          macro_expansion_pragmas = @macro_expansion_pragmas ||= {} of Int32 => Array(Lexer::LocPragma)
+          (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPushPragma.new
+          @str << "begin " if is_yield
+          @last.to_s(@str, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: true)
+          @str << " end" if is_yield
+          (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPopPragma.new
+        else
+          @last.to_s(@str)
+        end
       end
 
       false
@@ -113,6 +118,18 @@ module Crystal
 
     def visit(node : MacroLiteral)
       @str << node.value
+    end
+
+    def visit(node : MacroVerbatim)
+      exp = node.exp
+      if exp.is_a?(Expressions)
+        exp.expressions.each do |subexp|
+          subexp.to_s(@str)
+        end
+      else
+        exp.to_s(@str)
+      end
+      false
     end
 
     def visit(node : Var)
@@ -180,28 +197,11 @@ module Crystal
           {MacroId.new(entry.key), entry.value}
         end
       when RangeLiteral
-        exp.from.accept self
-        from = @last
-
-        unless from.is_a?(NumberLiteral)
-          node.raise "range begin #{exp.from} must evaluate to a NumberLiteral"
-        end
-
-        from = from.to_number.to_i
-
-        exp.to.accept self
-        to = @last
-
-        unless to.is_a?(NumberLiteral)
-          node.raise "range end #{exp.to} must evaluate to a NumberLiteral"
-        end
-
-        to = to.to_number.to_i
+        range = exp.interpret_to_range(self)
 
         element_var = node.vars[0]
         index_var = node.vars[1]?
 
-        range = Range.new(from, to, exp.exclusive?)
         range.each_with_index do |element, index|
           @vars[element_var.name] = NumberLiteral.new(element)
           if index_var
@@ -225,10 +225,10 @@ module Crystal
             {MacroId.new(entry.name), TypeNode.new(entry.type)}
           end
         else
-          exp.raise "can't interate TypeNode of type #{type}, only tuple or named tuple types"
+          exp.raise "can't iterate TypeNode of type #{type}, only tuple or named tuple types"
         end
       else
-        node.exp.raise "for expression must be an array, hash or tuple literal, not #{exp.class_desc}:\n\n#{exp}"
+        node.exp.raise "`for` expression must be an array, hash, tuple, named tuple or a range literal, not #{exp.class_desc}:\n\n#{exp}"
       end
 
       false
@@ -301,6 +301,16 @@ module Crystal
       false
     end
 
+    def visit(node : OpAssign)
+      @program.normalize(node).accept(self)
+      false
+    end
+
+    def visit(node : MultiAssign)
+      @program.literal_expander.expand(node).accept(self)
+      false
+    end
+
     def visit(node : And)
       node.left.accept self
       if @last.truthy?
@@ -346,10 +356,13 @@ module Crystal
         end
 
         args = node.args.map { |arg| accept arg }
+        named_args = node.named_args.try &.to_h { |arg| {arg.name, accept arg.value} }
 
         begin
-          @last = receiver.interpret(node.name, args, node.block, self)
-        rescue ex : Crystal::Exception
+          @last = receiver.interpret(node.name, args, named_args, node.block, self, node.name_location)
+        rescue ex : MacroRaiseException
+          raise ex
+        rescue ex : Crystal::CodeError
           node.raise ex.message, inner: ex
         rescue ex
           node.raise ex.message
@@ -374,7 +387,7 @@ module Crystal
           block_vars = {} of String => ASTNode
           node.exps.each_with_index do |exp, i|
             if block_arg = block.args[i]?
-              block_vars[block_arg.name] = exp.clone
+              block_vars[block_arg.name] = accept exp.clone
             end
           end
           @last = replace_block_vars block.body.clone, block_vars
@@ -386,6 +399,11 @@ module Crystal
     end
 
     def visit(node : Path)
+      @last = resolve(node)
+      false
+    end
+
+    def visit(node : Generic)
       @last = resolve(node)
       false
     end
@@ -426,6 +444,7 @@ module Crystal
           else
             produce_tuple = false
           end
+
           if produce_tuple
             case matched_type
             when TupleInstanceType
@@ -442,9 +461,6 @@ module Crystal
         end
 
         TypeNode.new(matched_type)
-      when Self
-        target = @scope == @program.class_type ? @scope : @scope.instance_type
-        TypeNode.new(target)
       when ASTNode
         matched_type
       else
@@ -452,23 +468,58 @@ module Crystal
       end
     end
 
+    def resolve(node : Generic | Metaclass | ProcNotation)
+      type = @path_lookup.lookup_type(node, self_type: @scope, free_vars: @free_vars)
+      TypeNode.new(type)
+    end
+
+    def resolve?(node : Generic | Metaclass | ProcNotation)
+      resolve(node)
+    rescue Crystal::CodeError
+      nil
+    end
+
+    def resolve(node : Union)
+      union_type = @program.union_of(node.types.map do |type|
+        resolve(type).type
+      end)
+      TypeNode.new(union_type.not_nil!)
+    end
+
+    def resolve?(node : Union)
+      union_type = @program.union_of(node.types.map do |type|
+        resolved = resolve?(type)
+        return nil unless resolved
+
+        resolved.type
+      end)
+      TypeNode.new(union_type.not_nil!)
+    end
+
+    def resolve(node : ASTNode?)
+      node.raise "can't resolve #{node} (#{node.class_desc})"
+    end
+
+    def resolve?(node : ASTNode)
+      node.raise "can't resolve #{node} (#{node.class_desc})"
+    end
+
     def visit(node : Splat)
       node.exp.accept self
-      @last = @last.interpret("splat", [] of ASTNode, nil, self)
+      @last = @last.interpret("splat", [] of ASTNode, nil, nil, self, node.location)
       false
     end
 
     def visit(node : DoubleSplat)
       node.exp.accept self
-      @last = @last.interpret("double_splat", [] of ASTNode, nil, self)
+      @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self, node.location)
       false
     end
 
     def visit(node : IsA)
       node.obj.accept self
       const_name = node.const.to_s
-      obj_class_desc = @last.class_desc
-      @last = BoolLiteral.new(@last.class_desc == const_name)
+      @last = BoolLiteral.new(@last.class_desc_is_a?(const_name))
       false
     end
 
@@ -476,21 +527,23 @@ module Crystal
       case node.name
       when "@type"
         target = @scope == @program.class_type ? @scope : @scope.instance_type
-        return @last = TypeNode.new(target)
+        @last = TypeNode.new(target.devirtualize)
+      when "@top_level"
+        @last = TypeNode.new(@program)
       when "@def"
-        return @last = @def || NilLiteral.new
+        @last = @def || NilLiteral.new
+      else
+        node.raise "unknown macro instance var: '#{node.name}'"
       end
-
-      node.raise "unknown macro instance var: '#{node.name}'"
     end
 
     def visit(node : TupleLiteral)
-      @last = TupleLiteral.map(node.elements) { |element| accept element }.at(node)
+      @last = TupleLiteral.map(node.elements) { |element| accept element }
       false
     end
 
     def visit(node : ArrayLiteral)
-      @last = ArrayLiteral.map(node.elements) { |element| accept element }.at(node)
+      @last = ArrayLiteral.map(node.elements) { |element| accept element }
       false
     end
 
@@ -498,7 +551,7 @@ module Crystal
       @last =
         HashLiteral.new(node.entries.map do |entry|
           HashLiteral::Entry.new(accept(entry.key), accept(entry.value))
-        end).at(node)
+        end)
       false
     end
 
@@ -506,12 +559,12 @@ module Crystal
       @last =
         NamedTupleLiteral.new(node.entries.map do |entry|
           NamedTupleLiteral::Entry.new(entry.key, accept(entry.value))
-        end).at(node)
+        end)
       false
     end
 
     def visit(node : Nop | NilLiteral | BoolLiteral | NumberLiteral | CharLiteral | StringLiteral | SymbolLiteral | RangeLiteral | RegexLiteral | MacroId | TypeNode | Def)
-      @last = node
+      @last = node.clone_without_location
       false
     end
 
@@ -519,7 +572,7 @@ module Crystal
       node.raise "can't execute #{node.class_desc} in a macro"
     end
 
-    def to_s
+    def to_s : String
       @str.to_s
     end
 

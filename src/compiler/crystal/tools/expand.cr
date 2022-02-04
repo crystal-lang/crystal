@@ -3,11 +3,11 @@ require "./implementations"
 
 module Crystal
   struct ExpandResult
-    JSON.mapping({
-      status:     {type: String},
-      message:    {type: String},
-      expansions: {type: Array(Expansion), nilable: true},
-    })
+    include JSON::Serializable
+
+    property status : String
+    property message : String
+    property expansions : Array(Expansion)?
 
     def initialize(@status, @message)
     end
@@ -35,13 +35,12 @@ module Crystal
     end
 
     struct Expansion
+      include JSON::Serializable
       alias MacroImplementation = {name: String, implementation: ImplementationTrace}
 
-      JSON.mapping({
-        original_source:  {type: String},
-        expanded_sources: {type: Array(String)},
-        expanded_macros:  {type: Array(Array(MacroImplementation))},
-      })
+      property original_source : String
+      property expanded_sources : Array(String)
+      property expanded_macros : Array(Array(MacroImplementation))
 
       def initialize(@original_source, @expanded_sources, @expanded_macros)
       end
@@ -162,19 +161,6 @@ module Crystal
 
     def visit(node)
       contains_target(node)
-    end
-
-    private def contains_target(node)
-      if loc_start = node.location
-        loc_end = node.end_location || loc_start
-        # if it is not between, it could be the case that node is the top level Expressions
-        # in which the (start) location might be in one file and the end location in another.
-        @target_location.between?(loc_start, loc_end) || loc_start.filename != loc_end.filename
-      else
-        # if node has no location, assume they may contain the target.
-        # for example with the main expressions ast node this matters
-        true
-      end
     end
   end
 

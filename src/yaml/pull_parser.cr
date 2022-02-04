@@ -56,6 +56,8 @@ class YAML::PullParser
       ptr = @event.data.sequence_start.tag
     when .scalar?
       ptr = @event.data.scalar.tag
+    else
+      # no tag
     end
     ptr ? String.new(ptr) : nil
   end
@@ -71,7 +73,7 @@ class YAML::PullParser
 
   # Returns the anchor associated to the current event, or `nil`
   # if there's no anchor.
-  def anchor
+  def anchor : String?
     case kind
     when .scalar?
       read_anchor @event.data.scalar.anchor
@@ -159,7 +161,7 @@ class YAML::PullParser
   end
 
   # Reads an alias event, returning its anchor.
-  def read_alias
+  def read_alias : String?
     expect_kind EventKind::ALIAS
     anchor = self.anchor
     read_next
@@ -167,7 +169,7 @@ class YAML::PullParser
   end
 
   # Reads a scalar, returning its value.
-  def read_scalar
+  def read_scalar : String
     expect_kind EventKind::SCALAR
     value = self.value
     read_next
@@ -220,7 +222,7 @@ class YAML::PullParser
     read_next
   end
 
-  def skip
+  def skip : YAML::EventKind
     case kind
     when .scalar?
       read_next
@@ -239,29 +241,43 @@ class YAML::PullParser
         skip
       end
       read_next
+    when .document_start?
+      read_next
+      until kind.document_end?
+        skip
+      end
+      read_next
+    when .stream_start?
+      read_next
+      until kind.stream_end?
+        skip
+      end
+      read_next
+    else
+      read_next
     end
   end
 
   # Note: YAML starts counting from 0, we want to count from 1
 
-  def location
+  def location : {Int32, Int32}
     {start_line, start_column}
   end
 
-  def start_line
-    @event.start_mark.line + 1
+  def start_line : Int32
+    @event.start_mark.line.to_i32 + 1
   end
 
-  def start_column
-    @event.start_mark.column + 1
+  def start_column : Int32
+    @event.start_mark.column.to_i32 + 1
   end
 
-  def end_line
-    @event.end_mark.line + 1
+  def end_line : Int32
+    @event.end_mark.line.to_i32 + 1
   end
 
-  def end_column
-    @event.end_mark.column + 1
+  def end_column : Int32
+    @event.end_mark.column.to_i32 + 1
   end
 
   private def problem_line_number
@@ -305,13 +321,13 @@ class YAML::PullParser
     LibYAML.yaml_event_delete(pointerof(@event))
   end
 
-  def close
+  def close : Nil
     finalize
     @closed = true
   end
 
   # Raises if the current kind is not the expected one.
-  def expect_kind(kind : EventKind)
+  def expect_kind(kind : EventKind) : Nil
     raise "Expected #{kind} but was #{self.kind}" unless kind == self.kind
   end
 
@@ -319,7 +335,7 @@ class YAML::PullParser
     anchor ? String.new(anchor) : nil
   end
 
-  def raise(msg : String, line_number = self.start_line, column_number = self.start_column, context_info = nil)
+  def raise(msg : String, line_number = self.start_line, column_number = self.start_column, context_info = nil) : NoReturn
     ::raise ParseException.new(msg, line_number, column_number, context_info)
   end
 end

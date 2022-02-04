@@ -91,7 +91,7 @@ class Object
   # Descendants must usually **not** override this method. Instead,
   # they must override `to_s(io)`, which must append to the given
   # IO object.
-  def to_s
+  def to_s : String
     String.build do |io|
       to_s io
     end
@@ -102,17 +102,45 @@ class Object
   #
   # An object must never append itself to the io argument,
   # as this will in turn call `to_s(io)` on it.
-  abstract def to_s(io : IO)
+  abstract def to_s(io : IO) : Nil
 
-  # Returns a `String` representation of this object.
+  # Returns a `String` representation of this object suitable
+  # to be embedded inside other expressions, sometimes providing
+  # more information about this object.
   #
-  # Similar to `to_s`, but usually returns more information about
-  # this object.
+  # `#inspect` (and `#inspect(io)`) are the methods used when
+  # you invoke `#to_s` or `#inspect` on an object that holds
+  # other objects and wants to show them. For example when you
+  # invoke `Array#to_s`, `#inspect` will be invoked on each element:
+  #
+  # ```
+  # ary = ["one", "two", "three, etc."]
+  # ary.inspect # => ["one", "two", "three, etc."]
+  # ```
+  #
+  # Note that if Array invoked `#to_s` on each of the elements
+  # above, the output would have been this:
+  #
+  # ```
+  # ary = ["one", "two", "three, etc."]
+  # # If inspect invoked to_s on each element...
+  # ary.inspect # => [one, two, three, etc.]
+  # ```
+  #
+  # Note that it's not clear how many elements the array has,
+  # or which are they, because `#to_s` doesn't guarantee that
+  # the string representation is clearly delimited (in the case
+  # of `String` the quotes are not shown).
+  #
+  # Also note that sometimes the output of `#inspect` will look
+  # like a Crystal expression that will compile, but this isn't
+  # always the case, nor is it necessary. Notably, `Reference#inspect`
+  # and `Struct#inspect` return values that don't compile.
   #
   # Classes must usually **not** override this method. Instead,
   # they must override `inspect(io)`, which must append to the
   # given `IO` object.
-  def inspect
+  def inspect : String
     String.build do |io|
       inspect io
     end
@@ -123,7 +151,8 @@ class Object
   #
   # Similar to `to_s(io)`, but usually appends more information
   # about this object.
-  def inspect(io : IO)
+  # See `#inspect`.
+  def inspect(io : IO) : Nil
     to_s io
   end
 
@@ -172,12 +201,38 @@ class Object
     yield self
   end
 
-  # Returns `self`. `Nil` overrides this method and raises an exception.
+  # Returns `true` if `self` is included in the *collection* argument.
+  #
+  # ```
+  # 10.in?(0..100)     # => true
+  # 10.in?({0, 1, 10}) # => true
+  # 10.in?(0, 1, 10)   # => true
+  # 10.in?(:foo, :bar) # => false
+  # ```
+  def in?(collection : Object) : Bool
+    collection.includes?(self)
+  end
+
+  # :ditto:
+  def in?(*values : Object) : Bool
+    in?(values)
+  end
+
+  # Returns `self`.
+  #
+  # `Nil` overrides this method and raises `NilAssertionError`, see `Nil#not_nil!`.
+  #
+  # This method can be used to remove `Nil` from a union type.
+  # However, it should be avoided if possible and is often considered a code smell.
+  # Usually, you can write code in a way that the compiler can safely exclude `Nil` types,
+  # for example using [`if var`](https://crystal-lang.org/reference/syntax_and_semantics/if_var.html).
+  # `not_nil!` is only meant as a last resort when there's no other way to explain this to the compiler.
+  # Either way, consider instead raising a concrete exception with a descriptive message.
   def not_nil!
     self
   end
 
-  # Return `self`.
+  # Returns `self`.
   #
   # ```
   # str = "hello"
@@ -187,15 +242,54 @@ class Object
     self
   end
 
-  # Returns a shallow copy of this object.
+  # Returns a shallow copy (“duplicate”) of this object.
   #
-  # As a convention, `clone` is the method used to create a deep copy of
-  # an object, but this logic isn't defined generically for every type
-  # because cycles could be involved, and the clone logic might not need
-  # to clone everything.
+  # In order to create a new object with the same value as an existing one, there
+  # are two possible routes:
+  #
+  # * create a *shallow copy* (`#dup`): Constructs a new object with all its
+  #   properties' values identical to the original object's properties. They
+  #   are shared references. That means for mutable values that changes to
+  #   either object's values will be present in both's.
+  # * create a *deep copy* (`#clone`): Constructs a new object with all its
+  #   properties' values being recursive deep copies of the original object's
+  #   properties.
+  #   There is no shared state and the new object is a completely independent
+  #   copy, including everything inside it. This may not be available for every
+  #   type.
+  #
+  # A shallow copy is only one level deep whereas a deep copy copies everything
+  # below.
+  #
+  # This distinction is only relevant for compound values. Primitive types
+  # do not have any properties that could be shared or cloned.
+  # In that case, `dup` and `clone` are exactly the same.
+  #
+  # The `#clone` method can't be defined on `Object`. It's not
+  # generically available for every type because cycles could be involved, and
+  # the clone logic might not need to clone everything.
   #
   # Many types in the standard library, like `Array`, `Hash`, `Set` and
   # `Deque`, and all primitive types, define `dup` and `clone`.
+  #
+  # Example:
+  #
+  # ```
+  # original = {"foo" => [1, 2, 3]}
+  # shallow_copy = original.dup
+  # deep_copy = original.clone
+  #
+  # # "foo" references the same array object for both original and shallow copy,
+  # # but not for a deep copy:
+  # original["foo"] << 4
+  # shallow_copy["foo"] # => [1, 2, 3, 4]
+  # deep_copy["foo"]    # => [1, 2, 3]
+  #
+  # # Assigning new value does not share it to either copy:
+  # original["foo"] = [1]
+  # shallow_copy["foo"] # => [1, 2, 3, 4]
+  # deep_copy["foo"]    # => [1, 2, 3]
+  # ```
   abstract def dup
 
   # Unsafely reinterprets the bytes of an object as being of another `type`.
@@ -227,11 +321,12 @@ class Object
     pointerof(x).as(T*).value
   end
 
-  {% for prefixes in { {"", "", "@"}, {"class_", "self.", "@@"} } %}
+  {% for prefixes in { {"", "", "@", "#"}, {"class_", "self.", "@@", "."} } %}
     {%
       macro_prefix = prefixes[0].id
       method_prefix = prefixes[1].id
       var_prefix = prefixes[2].id
+      doc_prefix = prefixes[3].id
     %}
 
     # Defines getter methods for each of the given arguments.
@@ -304,7 +399,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -330,7 +425,7 @@ class Object
     #
     # ```
     # class Person
-    #   {{macro_prefix}}getter(birth_date) { Time.now }
+    #   {{macro_prefix}}getter(birth_date) { Time.local }
     # end
     # ```
     #
@@ -339,7 +434,11 @@ class Object
     # ```
     # class Person
     #   def {{method_prefix}}birth_date
-    #     {{var_prefix}}birth_date ||= Time.now
+    #     if (value = {{var_prefix}}birth_date).nil?
+    #       {{var_prefix}}birth_date = Time.local
+    #     else
+    #       value
+    #     end
     #   end
     # end
     # ```
@@ -354,12 +453,20 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}
-            {{var_prefix}}\{{name.var.id}} ||= \{{yield}}
+          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
-            {{var_prefix}}\{{name.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% end %}
       \{% else %}
@@ -445,16 +552,31 @@ class Object
       \{% for name in names %}
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name}}?
-          \{% name = name.var %}
+
+          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}?
+            {{var_prefix}}\{{name.var.id}}
+          end
+
+          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              ::raise NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.var.id}} cannot be nil")
+            else
+              value
+            end
+          end
+        \{% else %}
+          def {{method_prefix}}\{{name.id}}?
+            {{var_prefix}}\{{name.id}}
+          end
+
+          def {{method_prefix}}\{{name.id}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              ::raise NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.id}} cannot be nil")
+            else
+              value
+            end
+          end
         \{% end %}
-
-        def {{method_prefix}}\{{name.id}}?
-          {{var_prefix}}\{{name.id}}
-        end
-
-        def {{method_prefix}}\{{name.id}}
-          {{var_prefix}}\{{name.id}}.not_nil!
-        end
       \{% end %}
     end
 
@@ -528,7 +650,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -547,24 +669,56 @@ class Object
     #   end
     # end
     # ```
-    macro {{macro_prefix}}getter?(*names)
-      \{% for name in names %}
+    #
+    # If a block is given to the macro, a getter is generated
+    # with a variable that is lazily initialized with
+    # the block's contents, for examples see `#{{macro_prefix}}getter`.
+    macro {{macro_prefix}}getter?(*names, &block)
+      \{% if block %}
+        \{% if names.size != 1 %}
+          \{{ raise "Only one argument can be passed to `getter?` with a block" }}
+        \{% end %}
+
+        \{% name = names[0] %}
+
         \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name}}
+          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            {{var_prefix}}\{{name.var.id}}
-          end
-        \{% elsif name.is_a?(Assign) %}
-          {{var_prefix}}\{{name}}
-
-          def {{method_prefix}}\{{name.target.id}}?
-            {{var_prefix}}\{{name.target.id}}
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}?
-            {{var_prefix}}\{{name.id}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
           end
+        \{% end %}
+      \{% else %}
+        \{% for name in names %}
+          \{% if name.is_a?(TypeDeclaration) %}
+            {{var_prefix}}\{{name}}
+
+            def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
+              {{var_prefix}}\{{name.var.id}}
+            end
+          \{% elsif name.is_a?(Assign) %}
+            {{var_prefix}}\{{name}}
+
+            def {{method_prefix}}\{{name.target.id}}?
+              {{var_prefix}}\{{name.target.id}}
+            end
+          \{% else %}
+            def {{method_prefix}}\{{name.id}}?
+              {{var_prefix}}\{{name.id}}
+            end
+          \{% end %}
         \{% end %}
       \{% end %}
     end
@@ -636,7 +790,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -752,7 +906,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -781,7 +935,7 @@ class Object
     #
     # ```
     # class Person
-    #   {{macro_prefix}}property(birth_date) { Time.now }
+    #   {{macro_prefix}}property(birth_date) { Time.local }
     # end
     # ```
     #
@@ -790,7 +944,11 @@ class Object
     # ```
     # class Person
     #   def {{method_prefix}}birth_date
-    #     {{var_prefix}}birth_date ||= Time.now
+    #     if (value = {{var_prefix}}birth_date).nil?
+    #       {{var_prefix}}birth_date = Time.local
+    #     else
+    #       value
+    #     end
     #   end
     #
     #   def {{method_prefix}}birth_date=({{var_prefix}}birth_date)
@@ -805,17 +963,29 @@ class Object
 
         \{% name = names[0] %}
 
-        {{macro_prefix}}setter \{{name}}
-
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}
-            {{var_prefix}}\{{name.var.id}} ||= \{{yield}}
+          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
+          end
+
+          def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
-            {{var_prefix}}\{{name.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
+          end
+
+          def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
           end
         \{% end %}
       \{% else %}
@@ -972,10 +1142,10 @@ class Object
     # class Person
     #   {{var_prefix}}happy : Bool
     #
-    #   def {{method_prefix}}happy=({{var_prefix}}happy)
+    #   def {{method_prefix}}happy=({{var_prefix}}happy : Bool)
     #   end
     #
-    #   def {{method_prefix}}happy?
+    #   def {{method_prefix}}happy? : Bool
     #     {{var_prefix}}happy
     #   end
     # end
@@ -1005,7 +1175,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -1027,33 +1197,71 @@ class Object
     #   end
     # end
     # ```
-    macro {{macro_prefix}}property?(*names)
-      \{% for name in names %}
+    #
+    # If a block is given to the macro, a property is generated
+    # with a variable that is lazily initialized with
+    # the block's contents, for examples see `#{{macro_prefix}}property`.
+    macro {{macro_prefix}}property?(*names, &block)
+      \{% if block %}
+        \{% if names.size != 1 %}
+          \{{ raise "Only one argument can be passed to `property?` with a block" }}
+        \{% end %}
+
+        \{% name = names[0] %}
+
         \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name}}
+          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            {{var_prefix}}\{{name.var.id}}
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
           end
 
           def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
           end
-        \{% elsif name.is_a?(Assign) %}
-          {{var_prefix}}\{{name}}
-
-          def {{method_prefix}}\{{name.target.id}}?
-            {{var_prefix}}\{{name.target.id}}
-          end
-
-          def {{method_prefix}}\{{name.target.id}}=({{var_prefix}}\{{name.target.id}})
-          end
         \{% else %}
           def {{method_prefix}}\{{name.id}}?
-            {{var_prefix}}\{{name.id}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
           end
 
           def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
           end
+        \{% end %}
+      \{% else %}
+        \{% for name in names %}
+          \{% if name.is_a?(TypeDeclaration) %}
+            {{var_prefix}}\{{name}}
+
+            def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
+              {{var_prefix}}\{{name.var.id}}
+            end
+
+            def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
+            end
+          \{% elsif name.is_a?(Assign) %}
+            {{var_prefix}}\{{name}}
+
+            def {{method_prefix}}\{{name.target.id}}?
+              {{var_prefix}}\{{name.target.id}}
+            end
+
+            def {{method_prefix}}\{{name.target.id}}=({{var_prefix}}\{{name.target.id}})
+            end
+          \{% else %}
+            def {{method_prefix}}\{{name.id}}?
+              {{var_prefix}}\{{name.id}}
+            end
+
+            def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
+            end
+          \{% end %}
         \{% end %}
       \{% end %}
     end
@@ -1072,6 +1280,7 @@ class Object
   #   delegate downcase, to: @string
   #   delegate gsub, to: @string
   #   delegate empty?, capitalize, to: @string
+  #   delegate :[], to: @string
   # end
   #
   # wrapper = StringWrapper.new "HELLO"
@@ -1082,15 +1291,23 @@ class Object
   # ```
   macro delegate(*methods, to object)
     {% for method in methods %}
-      def {{method.id}}(*args, **options)
-        {{object.id}}.{{method.id}}(*args, **options)
-      end
-
-      def {{method.id}}(*args, **options)
-        {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
-          yield *yield_args
+      {% if method.id.ends_with?('=') && method.id != "[]=" %}
+        def {{method.id}}(arg)
+          {{object.id}}.{{method.id}} arg
         end
-      end
+      {% else %}
+        def {{method.id}}(*args, **options)
+          {{object.id}}.{{method.id}}(*args, **options)
+        end
+
+        {% if method.id != "[]=" %}
+          def {{method.id}}(*args, **options)
+            {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
+              yield *yield_args
+            end
+          end
+        {% end %}
+      {% end %}
     {% end %}
   end
 
@@ -1108,7 +1325,7 @@ class Object
   macro def_hash(*fields)
     def hash(hasher)
       {% for field in fields %}
-        hasher = {{field}}.hash(hasher)
+        hasher = {{field.id}}.hash(hasher)
       {% end %}
       hasher
     end
@@ -1117,6 +1334,9 @@ class Object
   # Defines an `==` method by comparing the given fields.
   #
   # The generated `==` method has a `self` restriction.
+  # For classes it will first compare by reference and return `true`
+  # when an object instance is compared with itself, without comparing
+  # any of the fields.
   #
   # ```
   # class Person
@@ -1129,6 +1349,9 @@ class Object
   # ```
   macro def_equals(*fields)
     def ==(other : self)
+      {% if @type.class? %}
+        return true if same?(other)
+      {% end %}
       {% for field in fields %}
         return false unless {{field.id}} == other.{{field.id}}
       {% end %}
@@ -1180,10 +1403,20 @@ class Object
   macro def_clone
     # Returns a copy of `self` with all instance variables cloned.
     def clone
-      clone = \{{@type}}.allocate
-      clone.initialize_copy(self)
-      GC.add_finalizer(clone) if clone.responds_to?(:finalize)
-      clone
+      \{% if @type < Reference && !@type.instance_vars.map(&.type).all? { |t| t == ::Bool || t == ::Char || t == ::Symbol || t == ::String || t < ::Number::Primitive } %}
+        exec_recursive_clone do |hash|
+          clone = \{{@type}}.allocate
+          hash[object_id] = clone.object_id
+          clone.initialize_copy(self)
+          GC.add_finalizer(clone) if clone.responds_to?(:finalize)
+          clone
+        end
+      \{% else %}
+        clone = \{{@type}}.allocate
+        clone.initialize_copy(self)
+        GC.add_finalizer(clone) if clone.responds_to?(:finalize)
+        clone
+      \{% end %}
     end
 
     protected def initialize_copy(other)

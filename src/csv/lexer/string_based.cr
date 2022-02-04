@@ -11,8 +11,13 @@ class CSV::Lexer::StringBased < CSV::Lexer
     end
   end
 
-  def rewind
+  def rewind : Nil
+    super
     @reader.pos = 0
+    if @reader.current_char == '\n'
+      @line_number += 1
+      @column_number = 0
+    end
   end
 
   private def consume_unquoted_cell

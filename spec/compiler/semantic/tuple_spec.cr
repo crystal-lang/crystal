@@ -13,76 +13,305 @@ describe "Semantic: tuples" do
     assert_type("{1}; {1, 2}") { tuple_of([int32, int32] of TypeVar) }
   end
 
-  it "types tuple [0]" do
-    assert_type("{1, 'a'}[0]") { int32 }
+  it "types tuple with splats inside" do
+    assert_type("{1, *{2.5, 'a'}, true}") { tuple_of([int32, float64, char, bool] of TypeVar) }
   end
 
-  it "types tuple [1]" do
-    assert_type("{1, 'a'}[1]") { char }
+  it "errors if non-tuple is splatted inside tuple" do
+    assert_error "{*1}", "argument to splat must be a tuple, not Int32"
   end
 
-  it "types tuple [-1]" do
-    assert_type("{1, 'a'}[-1]") { char }
+  it "errors if non-tuple is splatted inside tuple (2)" do
+    assert_error "{*{1} || {2, 3}}", "argument to splat must be a tuple, not (Tuple(Int32) | Tuple(Int32, Int32))"
   end
 
-  it "types tuple [-2]" do
-    assert_type("{1, 'a'}[-2]") { int32 }
+  describe "#[](NumberLiteral)" do
+    it "types, inbound index" do
+      assert_type("{1, 'a'}[0]") { int32 }
+      assert_type("{1, 'a'}[1]") { char }
+
+      assert_type("{1, 'a'}[-1]") { char }
+      assert_type("{1, 'a'}[-2]") { int32 }
+    end
+
+    it "types, inbound index, nilable" do
+      assert_type("{1, 'a'}[0]?") { int32 }
+      assert_type("{1, 'a'}[1]?") { char }
+
+      assert_type("{1, 'a'}[-1]?") { char }
+      assert_type("{1, 'a'}[-2]?") { int32 }
+    end
+
+    it "types, out of bound, nilable" do
+      assert_type("{1, 'a'}[2]?") { nil_type }
+      assert_type("{1, 'a'}[-3]?") { nil_type }
+
+      assert_type(%(
+        def tuple(*args)
+          args
+        end
+
+        tuple()[0]?
+        )) { nil_type }
+    end
+
+    it "types, metaclass index" do
+      assert_type("{1, 'a'}.class[0]", inject_primitives: true) { int32.metaclass }
+      assert_type("{1, 'a'}.class[1]", inject_primitives: true) { char.metaclass }
+
+      assert_type("{1, 'a'}.class[-1]", inject_primitives: true) { char.metaclass }
+      assert_type("{1, 'a'}.class[-2]", inject_primitives: true) { int32.metaclass }
+    end
+
+    it "gives error when indexing out of range" do
+      assert_error "{1, 'a'}[2]",
+        "index out of bounds for Tuple(Int32, Char) (2 not in -2..1)"
+    end
+
+    it "gives error when indexing out of range on empty tuple" do
+      assert_error %(
+        def tuple(*args)
+          args
+        end
+
+        tuple()[0]
+        ),
+        "index '0' out of bounds for empty tuple"
+    end
   end
 
-  it "types tuple [0]?" do
-    assert_type("{1, 'a'}[0]?") { int32 }
-  end
+  describe "#[](RangeLiteral)" do
+    it "types, inbound begin" do
+      assert_type(%(#{range_new}; {1, 'a'}[0..-3])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[0..-2])) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[0..-1])) { tuple_of([int32, char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[0..0])) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[0..1])) { tuple_of([int32, char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[0..2])) { tuple_of([int32, char]) }
 
-  it "types tuple [1]?" do
-    assert_type("{1, 'a'}[1]?") { char }
-  end
+      assert_type(%(#{range_new}; {1, 'a'}[1..-3])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[1..-2])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[1..-1])) { tuple_of([char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[1..0])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[1..1])) { tuple_of([char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[1..2])) { tuple_of([char]) }
 
-  it "types tuple [2]?" do
-    assert_type("{1, 'a'}[2]?") { nil_type }
-  end
+      assert_type(%(#{range_new}; {1, 'a'}[2..-3])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2..-2])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2..-1])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2..0])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2..1])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2..2])) { tuple_of([] of Type) }
 
-  it "types tuple [-1]?" do
-    assert_type("{1, 'a'}[-1]?") { char }
-  end
+      assert_type(%(#{range_new}; {1, 'a'}[-1..-3])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1..-2])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1..-1])) { tuple_of([char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1..0])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1..1])) { tuple_of([char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1..2])) { tuple_of([char]) }
 
-  it "types tuple [-2]?" do
-    assert_type("{1, 'a'}[-2]?") { int32 }
-  end
+      assert_type(%(#{range_new}; {1, 'a'}[-2..-3])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2..-2])) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2..-1])) { tuple_of([int32, char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2..0])) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2..1])) { tuple_of([int32, char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2..2])) { tuple_of([int32, char]) }
 
-  it "types tuple [-3]?" do
-    assert_type("{1, 'a'}[-3]?") { nil_type }
-  end
+      assert_type(%(
+        #{range_new}
 
-  it "types tuple metaclass [0]" do
-    assert_type("{1, 'a'}.class[0]") { int32.metaclass }
-  end
+        def tuple(*args)
+          args
+        end
 
-  it "types tuple metaclass [1]" do
-    assert_type("{1, 'a'}.class[1]") { char.metaclass }
-  end
+        tuple()[0..0]
+        )) { tuple_of([] of Type) }
+    end
 
-  it "types tuple metaclass [-1]" do
-    assert_type("{1, 'a'}.class[-1]") { char.metaclass }
-  end
+    it "types, inbound begin, end-less" do
+      assert_type(%(#{range_new}; {1, 'a'}[0..])) { tuple_of([int32, char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[1..])) { tuple_of([char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[2..])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1..])) { tuple_of([char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2..])) { tuple_of([int32, char]) }
 
-  it "types tuple metaclass [-2]" do
-    assert_type("{1, 'a'}.class[-2]") { int32.metaclass }
-  end
+      assert_type(%(
+        #{range_new}
 
-  it "gives error when indexing out of range" do
-    assert_error "{1, 'a'}[2]",
-      "index out of bounds for Tuple(Int32, Char) (2 not in -2..1)"
-  end
+        def tuple(*args)
+          args
+        end
 
-  it "gives error when indexing out of range on empty tuple" do
-    assert_error %(
-      def tuple(*args)
-        args
-      end
+        tuple()[0..]
+        )) { tuple_of([] of Type) }
+    end
 
-      tuple()[0]
-      ),
-      "index '0' out of bounds for empty tuple"
+    it "types, begin-less" do
+      assert_type(%(#{range_new}; {1, 'a'}[..0])) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[..1])) { tuple_of([int32, char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[..2])) { tuple_of([int32, char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[..-3])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[..-2])) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[..-1])) { tuple_of([int32, char]) }
+
+      assert_type(%(
+        #{range_new}
+
+        def tuple(*args)
+          args
+        end
+
+        tuple()[..0]
+        )) { tuple_of([] of Type) }
+    end
+
+    it "types, begin-less, end-less" do
+      assert_type(%(#{range_new}; {1, 'a'}[..])) { tuple_of([int32, char]) }
+
+      assert_type(%(
+        #{range_new}
+
+        def tuple(*args)
+          args
+        end
+
+        tuple()[..]
+        )) { tuple_of([] of Type) }
+    end
+
+    it "types, exclusive range" do
+      assert_type(%(#{range_new}; {1, 'a'}[0...-2])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[0...-1])) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[0...0])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[0...1])) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[0...2])) { tuple_of([int32, char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[0...3])) { tuple_of([int32, char]) }
+
+      assert_type(%(#{range_new}; {1, 'a'}[1...-2])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[1...-1])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[1...0])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[1...1])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[1...2])) { tuple_of([char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[1...3])) { tuple_of([char]) }
+
+      assert_type(%(#{range_new}; {1, 'a'}[2...-2])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2...-1])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2...0])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2...1])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2...2])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2...3])) { tuple_of([] of Type) }
+
+      assert_type(%(#{range_new}; {1, 'a'}[-1...-2])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1...-1])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1...0])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1...1])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1...2])) { tuple_of([char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1...3])) { tuple_of([char]) }
+
+      assert_type(%(#{range_new}; {1, 'a'}[-2...-2])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2...-1])) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2...0])) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2...1])) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2...2])) { tuple_of([int32, char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2...3])) { tuple_of([int32, char]) }
+    end
+
+    it "types, inbound begin, nilable" do
+      assert_type(%(#{range_new}; {1, 'a'}[0..-3]?)) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[0..-2]?)) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[0..-1]?)) { tuple_of([int32, char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[0..0]?)) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[0..1]?)) { tuple_of([int32, char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[0..2]?)) { tuple_of([int32, char]) }
+
+      assert_type(%(#{range_new}; {1, 'a'}[1..-3]?)) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[1..-2]?)) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[1..-1]?)) { tuple_of([char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[1..0]?)) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[1..1]?)) { tuple_of([char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[1..2]?)) { tuple_of([char]) }
+
+      assert_type(%(#{range_new}; {1, 'a'}[2..-3]?)) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2..-2]?)) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2..-1]?)) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2..0]?)) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2..1]?)) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[2..2]?)) { tuple_of([] of Type) }
+
+      assert_type(%(#{range_new}; {1, 'a'}[-1..-3]?)) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1..-2]?)) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1..-1]?)) { tuple_of([char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1..0]?)) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1..1]?)) { tuple_of([char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-1..2]?)) { tuple_of([char]) }
+
+      assert_type(%(#{range_new}; {1, 'a'}[-2..-3]?)) { tuple_of([] of Type) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2..-2]?)) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2..-1]?)) { tuple_of([int32, char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2..0]?)) { tuple_of([int32]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2..1]?)) { tuple_of([int32, char]) }
+      assert_type(%(#{range_new}; {1, 'a'}[-2..2]?)) { tuple_of([int32, char]) }
+
+      assert_type(%(
+        #{range_new}
+
+        def tuple(*args)
+          args
+        end
+
+        tuple()[0..0]?
+        )) { tuple_of([] of Type) }
+    end
+
+    it "types, out of bound begin, nilable" do
+      assert_type(%(#{range_new}; {1, 'a'}[-3..0]?)) { nil_type }
+      assert_type(%(#{range_new}; {1, 'a'}[3..2]?)) { nil_type }
+
+      assert_type(%(
+        #{range_new}
+
+        def tuple(*args)
+          args
+        end
+
+        tuple()[1..0]?
+        )) { nil_type }
+    end
+
+    it "types, metaclass index" do
+      assert_type(%(#{range_new}; {1, 'a'}.class[0..1]), inject_primitives: true) { tuple_of([int32, char]).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[1..2]), inject_primitives: true) { tuple_of([char]).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[1..-2]), inject_primitives: true) { tuple_of([] of Type).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[-2..-1]), inject_primitives: true) { tuple_of([int32, char]).metaclass }
+      assert_type(%(#{range_new}; {1, 'a'}.class[-1..0]), inject_primitives: true) { tuple_of([] of Type).metaclass }
+    end
+
+    it "gives error when begin index is out of range" do
+      assert_error %(
+        #{range_new}
+
+        {1, 'a'}[3..0]
+        ),
+        "begin index out of bounds for Tuple(Int32, Char) (3 not in -2..2)"
+
+      assert_error %(
+        #{range_new}
+
+        {1, 'a'}[-3..0]
+        ),
+        "begin index out of bounds for Tuple(Int32, Char) (-3 not in -2..2)"
+
+      assert_error %(
+        #{range_new}
+
+        def tuple(*args)
+          args
+        end
+
+        tuple()[1..0]
+        ),
+        "begin index out of bounds for Tuple() (1 not in 0..0)"
+    end
   end
 
   it "can name a tuple type" do
@@ -120,7 +349,7 @@ describe "Semantic: tuples" do
       "recursive splat expansion"
   end
 
-  it "errors on recusrive splat expansion (1) (#361)" do
+  it "errors on recursive splat expansion (1) (#361)" do
     assert_error %(
       require "prelude"
 
@@ -185,7 +414,7 @@ describe "Semantic: tuples" do
       end
 
       foo
-      )) { tuple_of [string, nilable(int32)] }
+      ), inject_primitives: true) { tuple_of [string, nilable(int32)] }
   end
 
   it "accept tuple in type restriction" do
@@ -287,6 +516,56 @@ describe "Semantic: tuples" do
         pos += {0, 0}
       end
       ),
-      "tuple too big"
+      "tuple size cannot be greater than 300 (size is 302)"
   end
+
+  it "errors on named tuple too big" do
+    named_tuple_keys = String.build do |io|
+      333.times { |i| io << "key" << i << ": 0, " }
+    end
+
+    assert_error %(
+      { #{named_tuple_keys} }
+      ),
+      "named tuple size cannot be greater than 300 (size is 333)"
+  end
+
+  it "doesn't unify tuple metaclasses (#5384)" do
+    assert_type(%(
+      Tuple(Int32) || Tuple(String)
+      )) {
+      union_of(
+        tuple_of([int32] of Type).metaclass,
+        tuple_of([string] of Type).metaclass,
+      )
+    }
+  end
+
+  it "doesn't crash on tuple in not executed block (#6718)" do
+    assert_type(%(
+      require "prelude"
+
+      def pending(&block)
+      end
+
+      def untyped(x = nil)
+      end
+
+      # To reproduce this bug, it is needed to the expression that is
+      # not typed on main phase but is typed on cleanup phase.
+      # `untyped(untyped)` is just one.
+      pending do
+        {untyped(untyped)}
+      end
+    )) { nil_type }
+  end
+end
+
+private def range_new
+  %(
+    struct Range(B, E)
+      def initialize(@begin : B, @end : E, @exclusive : Bool = false)
+      end
+    end
+  )
 end

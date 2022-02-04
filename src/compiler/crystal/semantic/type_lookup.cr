@@ -41,28 +41,28 @@ class Crystal::Type
   # ```
   #
   # If `self` is `Foo` and `Bar(Baz)` is given, the result will be `Foo::Bar(Baz)`.
-  def lookup_type(node : ASTNode, self_type = self.instance_type, allow_typeof = true, lazy_self = false, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type
-    TypeLookup.new(self, self_type, true, allow_typeof, lazy_self, free_vars, find_root_generic_type_parameters).lookup(node).not_nil!
+  def lookup_type(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type
+    TypeLookup.new(self, self_type, true, allow_typeof, free_vars, find_root_generic_type_parameters).lookup(node).not_nil!
   end
 
   # Similar to `lookup_type`, but returns `nil` if a type can't be found.
-  def lookup_type?(node : ASTNode, self_type = self.instance_type, allow_typeof = true, lazy_self = false, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type?
-    TypeLookup.new(self, self_type, false, allow_typeof, lazy_self, free_vars, find_root_generic_type_parameters).lookup(node)
+  def lookup_type?(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type?
+    TypeLookup.new(self, self_type, false, allow_typeof, free_vars, find_root_generic_type_parameters).lookup(node)
   end
 
   # Similar to `lookup_type`, but the result might also be an ASTNode, for example when
   # looking `N` relative to a StaticArray.
-  def lookup_type_var(node : Path, free_vars : Hash(String, TypeVar)? = nil) : Type | ASTNode
-    TypeLookup.new(self, self.instance_type, true, false, false, free_vars).lookup_type_var(node).not_nil!
+  def lookup_type_var(node : Path, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true, remove_alias = true) : Type | ASTNode
+    TypeLookup.new(self, self.instance_type, true, false, free_vars, find_root_generic_type_parameters, remove_alias).lookup_type_var(node).not_nil!
   end
 
   # Similar to `lookup_type_var`, but might return `nil`.
-  def lookup_type_var?(node : Path, free_vars : Hash(String, TypeVar)? = nil, raise = false) : Type | ASTNode | Nil
-    TypeLookup.new(self, self.instance_type, raise, false, false, free_vars).lookup_type_var?(node)
+  def lookup_type_var?(node : Path, free_vars : Hash(String, TypeVar)? = nil, raise = false, find_root_generic_type_parameters = true) : Type | ASTNode | Nil
+    TypeLookup.new(self, self.instance_type, raise, false, free_vars, find_root_generic_type_parameters).lookup_type_var?(node)
   end
 
   private struct TypeLookup
-    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @lazy_self : Bool, @free_vars : Hash(String, TypeVar)? = nil, @find_root_generic_type_parameters = true)
+    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @free_vars : Hash(String, TypeVar)? = nil, @find_root_generic_type_parameters = true, @remove_alias = true)
       @in_generic_args = 0
 
       # If we are looking types inside a non-instantiated generic type,
@@ -80,6 +80,13 @@ class Crystal::Type
     delegate program, to: @root
 
     def lookup(node : Path)
+      # A Path might have a type set.
+      # This is at least done in AbstractDefChecker when we replace type
+      # parameters with concrete types.
+      if type = node.type?
+        return type
+      end
+
       type_var = lookup_type_var?(node)
 
       case type_var
@@ -87,18 +94,16 @@ class Crystal::Type
         if @raise
           node.raise "#{type_var} is not a type, it's a constant"
         else
-          return nil
+          nil
         end
       when Type
-        return type_var
-      when Self
-        return lookup(type_var)
-      end
-
-      if @raise
-        raise_undefined_constant(node)
+        type_var
       else
-        nil
+        if @raise
+          raise_undefined_constant(node)
+        else
+          nil
+        end
       end
     end
 
@@ -133,7 +138,7 @@ class Crystal::Type
             type.process_value
           end
         end
-        type = type.remove_alias_if_simple
+        type = type.remove_alias_if_simple if @remove_alias
       end
 
       type
@@ -145,7 +150,7 @@ class Crystal::Type
         return if !@raise && !type
         type = type.not_nil!
 
-        check_type_allowed_in_generics(ident, type, "can't use #{type} in unions")
+        check_type_can_be_stored(ident, type, "can't use #{type} in unions")
 
         type.virtual_type
       end
@@ -185,13 +190,13 @@ class Crystal::Type
           return if !@raise && !type
           type = type.not_nil!
 
-          check_type_allowed_in_generics(subnode, type, "can't use #{type} as a generic type argument")
+          check_type_can_be_stored(subnode, type, "can't use #{type} as a generic type argument")
           NamedArgumentType.new(named_arg.name, type.virtual_type)
         end
 
         begin
           return instance_type.instantiate_named_args(entries)
-        rescue ex : Crystal::Exception
+        rescue ex : Crystal::CodeError
           node.raise "instantiating #{node}", inner: ex if @raise
         end
       when GenericType
@@ -220,11 +225,6 @@ class Crystal::Type
       type_vars = Array(TypeVar).new(node.type_vars.size + 1)
       node.type_vars.each do |type_var|
         case type_var
-        when Self
-          if @lazy_self
-            type_vars << type_var
-            next
-          end
         when NumberLiteral
           type_vars << type_var
           next
@@ -257,13 +257,13 @@ class Crystal::Type
             begin
               num = interpreter.interpret(type.value)
               type_vars << NumberLiteral.new(num)
-            rescue ex : Crystal::Exception
+            rescue ex : Crystal::CodeError
               type_var.raise "expanding constant value for a number value", inner: ex
             end
             next
-            # when ASTNode
-            #   type_vars << type
-            #   next
+          when ASTNode
+            type_vars << type
+            next
           end
         end
 
@@ -273,14 +273,14 @@ class Crystal::Type
 
         case instance_type
         when GenericUnionType, PointerType, StaticArrayType, TupleType, ProcType
-          check_type_allowed_in_generics(type_var, type, "can't use #{type} as a generic type argument")
+          check_type_can_be_stored(type_var, type, "can't use #{type} as a generic type argument")
         end
 
         type_vars << type.virtual_type
       end
 
       begin
-        if instance_type.is_a?(GenericUnionType) && type_vars.any? &.is_a?(TypeSplat)
+        if instance_type.is_a?(GenericUnionType) && type_vars.any?(TypeSplat)
           # In the case of `Union(*T)`, we don't need to instantiate the union right
           # now because it will just return `*T`, but what we want to expand the
           # union types only when the type is instantiated.
@@ -289,7 +289,7 @@ class Crystal::Type
         else
           instance_type.as(GenericType).instantiate(type_vars)
         end
-      rescue ex : Crystal::Exception
+      rescue ex : Crystal::CodeError
         node.raise "instantiating #{node}", inner: ex if @raise
       end
     end
@@ -318,7 +318,7 @@ class Crystal::Type
             return if !@raise && !type
             type = type.not_nil!
 
-            check_type_allowed_in_generics(input, type, "can't use #{type} as proc argument")
+            check_type_can_be_stored(input, type, "can't use #{type} as proc argument")
 
             types << type.virtual_type
           end
@@ -330,7 +330,7 @@ class Crystal::Type
         return if !@raise && !type
         type = type.not_nil!
 
-        check_type_allowed_in_generics(output, type, "can't use #{type} as proc return type")
+        check_type_can_be_stored(output, type, "can't use #{type} as proc return type")
 
         types << type.virtual_type
       else
@@ -345,8 +345,16 @@ class Crystal::Type
         node.raise "there's no self in this scope"
       end
 
-      if (self_type = @self_type).is_a?(GenericType)
-        params = self_type.type_vars.map { |type_var| self_type.type_parameter(type_var).as(TypeVar) }
+      if (self_type = @self_type).is_a?(GenericType) && (free_vars = @free_vars)
+        # Only instantiate self type with available free variables
+        params = self_type.type_vars.map do |type_var|
+          free_var = free_vars[type_var]?
+          if free_var
+            self_type.type_parameter(type_var).as(TypeVar)
+          else
+            return @self_type.virtual_type
+          end
+        end
         self_type.instantiate(params)
       else
         @self_type.virtual_type
@@ -367,7 +375,7 @@ class Crystal::Type
       expressions = node.expressions.clone
       begin
         expressions.each &.accept visitor
-      rescue ex : Crystal::Exception
+      rescue ex : Crystal::CodeError
         node.raise "typing typeof", inner: ex
       end
       program.type_merge expressions
@@ -408,8 +416,8 @@ class Crystal::Type
       end
     end
 
-    def check_type_allowed_in_generics(ident, type, message)
-      Crystal.check_type_allowed_in_generics(ident, type, message)
+    def check_type_can_be_stored(ident, type, message)
+      Crystal.check_type_can_be_stored(ident, type, message)
     end
 
     def in_generic_args

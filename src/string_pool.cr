@@ -25,14 +25,26 @@ class StringPool
   # Returns the size
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # pool.size # => 0
   # ```
   getter size : Int32
 
   # Creates a new empty string pool.
-  def initialize
-    @capacity = 8
+  #
+  # The *initial_capacity* is useful to avoid unnecessary reallocations
+  # of the internal buffers in case of growth. If you have an estimate
+  # of the maximum number of elements the pool will hold it should
+  # be initialized with that capacity for improved performance.
+  #
+  # ```
+  # pool = StringPool.new(256)
+  # pool.size # => 0
+  # ```
+  def initialize(initial_capacity = 8)
+    @capacity = initial_capacity
     @hashes = Pointer(UInt64).malloc(@capacity, 0_u64)
     @values = Pointer(String).malloc(@capacity, "")
     @size = 0
@@ -41,12 +53,14 @@ class StringPool
   # Returns `true` if the `StringPool` has no element otherwise returns `false`.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # pool.empty? # => true
   # pool.get("crystal")
   # pool.empty? # => false
   # ```
-  def empty?
+  def empty? : Bool
     @size == 0
   end
 
@@ -56,15 +70,17 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # ptr = Pointer.malloc(9) { |i| ('a'.ord + i).to_u8 }
   # slice = Slice.new(ptr, 3)
   # pool.empty? # => true
   # pool.get(slice)
   # pool.empty? # => false
-  #  ```
-  def get(slice : Bytes)
-    get slice.pointer(slice.size), slice.size
+  # ```
+  def get(slice : Bytes) : String
+    get slice.to_unsafe, slice.size
   end
 
   # Returns a `String` with the contents given by the pointer *str* of size *len*.
@@ -73,17 +89,19 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # pool.get("hey".to_unsafe, 3)
   # pool.size # => 1
   # ```
-  def get(str : UInt8*, len)
+  def get(str : UInt8*, len) : String
     hash = hash(str, len)
     get(hash, str, len)
   end
 
   private def get(hash : UInt64, str : UInt8*, len)
-    rehash if @size >= @capacity / 4 * 3
+    rehash if @size >= @capacity // 4 * 3
 
     mask = (@capacity - 1).to_u64
     index = hash & mask
@@ -124,13 +142,15 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # io = IO::Memory.new "crystal"
   # pool.empty? # => true
   # pool.get(io)
   # pool.empty? # => false
   # ```
-  def get(str : IO::Memory)
+  def get(str : IO::Memory) : String
     get(str.buffer, str.bytesize)
   end
 
@@ -140,13 +160,15 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # string = "crystal"
   # pool.empty? # => true
   # pool.get(string)
   # pool.empty? # => false
   # ```
-  def get(str : String)
+  def get(str : String) : String
     get(str.to_unsafe, str.bytesize)
   end
 
@@ -154,7 +176,7 @@ class StringPool
   # if values of key objects have changed since they were inserted.
   #
   # Call this method if you modified a string submitted to the pool.
-  def rehash
+  def rehash : Nil
     if @capacity * 2 <= 0
       raise "Hash table too big"
     end

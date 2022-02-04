@@ -19,7 +19,7 @@ class Crystal::Command
       end
 
       opts.on("-v", "--verbose", "Display detailed information of executed code") do
-        server.logger.level = Logger::Severity::DEBUG
+        Crystal::Playground::Log.level = :debug
       end
 
       opts.on("-h", "--help", "Show this message") do

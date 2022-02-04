@@ -173,6 +173,6 @@ describe DiyFP do
     fp = DiyFP.from_f_normalized(f)
 
     fp.exp.should eq 0x7FE - 0x3FF - 52 - 11
-    fp.frac.should eq 0x001fffffffffffff << 11
+    fp.frac.should eq 0x001fffffffffffff_u64 << 11
   end
 end

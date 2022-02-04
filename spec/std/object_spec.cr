@@ -3,7 +3,7 @@ require "../support/finalize"
 
 private class StringWrapper
   delegate downcase, to: @string
-  delegate upcase, capitalize, at, scan, to: @string
+  delegate upcase, capitalize, char_at, scan, to: @string
 
   @string : String
 
@@ -35,6 +35,12 @@ private class TestObject
   def self.getter12_value=(@@getter12_value)
   end
 
+  @getter13_counter = 0
+  getter(getter13) { @getter13_counter += 1; false }
+
+  getter?(getter14 : Bool) { true }
+  getter?(getter15) { true }
+
   setter setter1
   setter setter2 : Int32
   setter setter3 : Int32 = 3
@@ -57,6 +63,12 @@ private class TestObject
 
   property(property11) { 11 }
   property property12 : Int32 { 10 + 2 }
+
+  @property13_counter = 0
+  property(property13) { @property13_counter += 1; false }
+
+  property?(property14 : Bool) { true }
+  property?(property15) { true }
 
   def initialize
     @getter1 = 1
@@ -96,18 +108,58 @@ private class TestObject
   def setter4
     @setter4
   end
+
+  def []=(key, value)
+    {key, value}
+  end
+
+  annotation TestAnnotation
+  end
+
+  @[TestAnnotation]
+  property(x : Int32) { 1 }
+
+  def self.test_annotation_count
+    {{ @type.instance_vars.select(&.annotation(TestObject::TestAnnotation)).size }}
+  end
+end
+
+private class DelegatedTestObject
+  delegate :property1=, to: @test_object
+  delegate :[]=, to: @test_object
+
+  def initialize(@test_object : TestObject)
+  end
 end
 
 private class TestObjectWithFinalize
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-  end
+  include FinalizeCounter
 
   def_clone
+end
+
+private class HashedTestObject
+  property a : Int32
+  property b : Int32
+
+  def initialize(@a, @b)
+  end
+
+  def_hash :a, :b
+end
+
+private struct NonReflexive
+  def ==(other)
+    false
+  end
+end
+
+private class DefEquals
+  def initialize
+    @x = NonReflexive.new
+  end
+
+  def_equals @x
 end
 
 describe Object do
@@ -118,16 +170,29 @@ describe Object do
       wrapper.upcase.should eq("HELLO")
       wrapper.capitalize.should eq("Hello")
 
-      wrapper.at(0).should eq('H')
-      wrapper.at(index: 1).should eq('e')
+      wrapper.char_at(0).should eq('H')
+      wrapper.char_at(index: 1).should eq('e')
 
-      wrapper.at(10) { 20 }.should eq(20)
+      wrapper.char_at(10) { 20 }.should eq(20)
 
       matches = [] of String
       wrapper.scan(/l/) do |match|
         matches << match[0]
       end
       matches.should eq(["l", "l"])
+    end
+
+    it "delegates setter" do
+      test_object = TestObject.new
+      delegated = DelegatedTestObject.new(test_object)
+      delegated.property1 = 42
+      test_object.property1.should eq 42
+    end
+
+    it "delegates []=" do
+      test_object = TestObject.new
+      delegated = DelegatedTestObject.new(test_object)
+      (delegated["foo"] = "bar").should eq({"foo", "bar"})
     end
   end
 
@@ -170,12 +235,19 @@ describe Object do
       obj2 = TestObject.new
       obj2.getter12.should eq(24)
     end
+
+    it "defines lazy getter with block returning false" do
+      obj = TestObject.new
+      obj.@getter13_counter.should eq(0)
+      3.times { obj.getter13.should be_false }
+      obj.@getter13_counter.should eq(1)
+    end
   end
 
   describe "getter!" do
     it "uses getter!" do
       obj = TestObject.new
-      expect_raises(Exception, "Nil assertion failed") do
+      expect_raises(NilAssertionError, "TestObject#getter5 cannot be nil") do
         obj.getter5
       end
       obj.getter5 = 5
@@ -186,7 +258,7 @@ describe Object do
 
     it "uses getter! with type declaration" do
       obj = TestObject.new
-      expect_raises(Exception, "Nil assertion failed") do
+      expect_raises(NilAssertionError, "TestObject#getter6 cannot be nil") do
         obj.getter6
       end
       obj.getter6 = 6
@@ -223,6 +295,24 @@ describe Object do
       obj.getter10?.should be_true
       typeof(obj.@getter10).should eq(Bool)
       typeof(obj.getter10?).should eq(Bool)
+    end
+
+    it "uses getter? with type declaration and block" do
+      obj = TestObject.new
+      typeof(obj.@getter14).should eq(Bool?)
+      typeof(obj.getter14?).should eq(Bool)
+      obj.@getter14.should be_nil
+      obj.getter14?.should be_true
+      obj.@getter14.should be_true
+    end
+
+    it "uses getter? with block" do
+      obj = TestObject.new
+      typeof(obj.@getter15).should eq(Bool?)
+      typeof(obj.getter15?).should eq(Bool)
+      obj.@getter15.should be_nil
+      obj.getter15?.should be_true
+      obj.@getter15.should be_true
     end
   end
 
@@ -295,12 +385,19 @@ describe Object do
       obj.property12 = 13
       obj.property12.should eq(13)
     end
+
+    it "defines lazy property with block returning false" do
+      obj = TestObject.new
+      obj.@property13_counter.should eq(0)
+      3.times { obj.property13.should be_false }
+      obj.@property13_counter.should eq(1)
+    end
   end
 
   describe "property!" do
     it "uses property!" do
       obj = TestObject.new
-      expect_raises(Exception, "Nil assertion failed") do
+      expect_raises(NilAssertionError, "TestObject#property5 cannot be nil") do
         obj.property5
       end
       obj.property5 = 5
@@ -309,7 +406,7 @@ describe Object do
 
     it "uses property! with type declaration" do
       obj = TestObject.new
-      expect_raises(Exception, "Nil assertion failed") do
+      expect_raises(NilAssertionError, "TestObject#property6 cannot be nil") do
         obj.property6
       end
       obj.property6 = 6
@@ -345,6 +442,44 @@ describe Object do
       obj.property10 = false
       obj.property10?.should be_false
     end
+
+    it "uses property? with type declaration and block" do
+      obj = TestObject.new
+      typeof(obj.@property14).should eq(Bool?)
+      typeof(obj.property14?).should eq(Bool)
+      obj.@property14.should be_nil
+      obj.property14?.should be_true
+      obj.@property14.should be_true
+    end
+
+    it "uses property? with block" do
+      obj = TestObject.new
+      typeof(obj.@property15).should eq(Bool?)
+      typeof(obj.property15?).should eq(Bool)
+      obj.@property15.should be_nil
+      obj.property15?.should be_true
+      obj.@property15.should be_true
+    end
+  end
+
+  describe "#in?" do
+    it "works with Enumerable-s" do
+      :foo.in?([:foo, :bar]).should be_true
+      :bar.in?({:foo, :baz}).should be_false
+      42.in?(0..100).should be_true
+      4242.in?(0..100).should be_false
+    end
+
+    it "works with splatted arguments" do
+      :baz.in?(:foo, :bar).should be_false
+      1.in?(1, 10, 100).should be_true
+    end
+
+    it "works with other objects implementing #includes?" do
+      "o".in?("foo").should be_true
+      'o'.in?("foo").should be_true
+      'x'.in?("foo").should be_false
+    end
   end
 
   it "#unsafe_as" do
@@ -353,6 +488,29 @@ describe Object do
 
   it "calls #finalize on #clone'd objects" do
     obj = TestObjectWithFinalize.new
-    assert_finalizes(:clone) { obj.clone }
+    assert_finalizes("clone") { obj.clone }
+  end
+
+  describe "def_hash" do
+    it "should return same hash for equal property values" do
+      HashedTestObject.new(1, 2).hash.should eq HashedTestObject.new(1, 2).hash
+    end
+
+    it "shouldn't return same hash for different property values" do
+      HashedTestObject.new(1, 2).hash.should_not eq HashedTestObject.new(3, 4).hash
+    end
+  end
+
+  it "applies annotation to lazy property (#9139)" do
+    TestObject.test_annotation_count.should eq(1)
+  end
+
+  describe "def_equals" do
+    it "compares by reference" do
+      x = DefEquals.new
+      y = DefEquals.new
+      (x == x).should be_true
+      (x == y).should be_false
+    end
   end
 end

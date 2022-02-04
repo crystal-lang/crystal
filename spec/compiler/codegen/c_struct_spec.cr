@@ -261,7 +261,7 @@ describe "Code gen: struct" do
       end
 
       point = LibC::Point.new x: 1, y: 2
-      point.x + point.y
+      point.x &+ point.y
       )).to_i.should eq(3)
   end
 
@@ -378,5 +378,20 @@ describe "Code gen: struct" do
       foo.set(->(x : Int32) { x + 1 })
       foo.x.call(1)
       )).to_i.should eq(2)
+  end
+
+  it "can access member of uninitialized struct behind type (#8774)" do
+    run(%(
+      lib LibFoo
+        struct Foo
+          x : Int32
+        end
+
+        type FooT = Foo
+      end
+
+      foo = uninitialized LibFoo::FooT
+      foo.x
+    ))
   end
 end

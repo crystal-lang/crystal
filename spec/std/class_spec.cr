@@ -1,5 +1,23 @@
 require "spec"
 
+private class A
+end
+
+private class B1 < A
+end
+
+private class C1 < B1
+end
+
+private class B2 < A
+end
+
+private class ClassWithRedefinedName
+  def self.name
+    "OtherName"
+  end
+end
+
 describe Class do
   it "does ===" do
     (Int32 === 1).should be_true
@@ -36,5 +54,106 @@ describe Class do
     Nil.nilable?.should be_true
     (Int32 | String).nilable?.should be_false
     Int32?.nilable?.should be_true
+  end
+
+  it "does to_s" do
+    Int32.to_s.should eq("Int32")
+  end
+
+  it "does to_s with name redefined (#7292)" do
+    ClassWithRedefinedName.name.should eq("OtherName")
+    ClassWithRedefinedName.to_s.should eq("ClassWithRedefinedName")
+  end
+
+  describe "comparison operators" do
+    t = [A, B1, B2, C1]
+
+    it "<" do
+      (t[0] < t[0]).should be_false
+      (t[0] < t[1]).should be_false
+      (t[0] < t[2]).should be_false
+      (t[0] < t[3]).should be_false
+
+      (t[1] < t[0]).should be_true
+      (t[1] < t[1]).should be_false
+      (t[1] < t[2]).should be_false
+      (t[1] < t[3]).should be_false
+
+      (t[2] < t[0]).should be_true
+      (t[2] < t[1]).should be_false
+      (t[2] < t[2]).should be_false
+      (t[2] < t[3]).should be_false
+
+      (t[3] < t[0]).should be_true
+      (t[3] < t[1]).should be_true
+      (t[3] < t[2]).should be_false
+      (t[3] < t[3]).should be_false
+    end
+
+    it "<=" do
+      (t[0] <= t[0]).should be_true
+      (t[0] <= t[1]).should be_false
+      (t[0] <= t[2]).should be_false
+      (t[0] <= t[3]).should be_false
+
+      (t[1] <= t[0]).should be_true
+      (t[1] <= t[1]).should be_true
+      (t[1] <= t[2]).should be_false
+      (t[1] <= t[3]).should be_false
+
+      (t[2] <= t[0]).should be_true
+      (t[2] <= t[1]).should be_false
+      (t[2] <= t[2]).should be_true
+      (t[2] <= t[3]).should be_false
+
+      (t[3] <= t[0]).should be_true
+      (t[3] <= t[1]).should be_true
+      (t[3] <= t[2]).should be_false
+      (t[3] <= t[3]).should be_true
+    end
+
+    it ">" do
+      (t[0] > t[0]).should be_false
+      (t[0] > t[1]).should be_true
+      (t[0] > t[2]).should be_true
+      (t[0] > t[3]).should be_true
+
+      (t[1] > t[0]).should be_false
+      (t[1] > t[1]).should be_false
+      (t[1] > t[2]).should be_false
+      (t[1] > t[3]).should be_true
+
+      (t[2] > t[0]).should be_false
+      (t[2] > t[1]).should be_false
+      (t[2] > t[2]).should be_false
+      (t[2] > t[3]).should be_false
+
+      (t[3] > t[0]).should be_false
+      (t[3] > t[1]).should be_false
+      (t[3] > t[2]).should be_false
+      (t[3] > t[3]).should be_false
+    end
+
+    it ">=" do
+      (t[0] >= t[0]).should be_true
+      (t[0] >= t[1]).should be_true
+      (t[0] >= t[2]).should be_true
+      (t[0] >= t[3]).should be_true
+
+      (t[1] >= t[0]).should be_false
+      (t[1] >= t[1]).should be_true
+      (t[1] >= t[2]).should be_false
+      (t[1] >= t[3]).should be_true
+
+      (t[2] >= t[0]).should be_false
+      (t[2] >= t[1]).should be_false
+      (t[2] >= t[2]).should be_true
+      (t[2] >= t[3]).should be_false
+
+      (t[3] >= t[0]).should be_false
+      (t[3] >= t[1]).should be_false
+      (t[3] >= t[2]).should be_false
+      (t[3] >= t[3]).should be_true
+    end
   end
 end

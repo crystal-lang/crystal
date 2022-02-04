@@ -58,9 +58,9 @@ describe "Semantic: uninitialized" do
   it "errors if declares var and then assigns other type" do
     assert_error %(
       x = uninitialized Int32
-      x = 1_i64
+      x = 'a'
       ),
-      "type must be Int32, not (Int32 | Int64)"
+      "type must be Int32, not (Char | Int32)"
   end
 
   it "errors if declaring variable multiple times with different types (#917)" do
@@ -71,7 +71,7 @@ describe "Semantic: uninitialized" do
         buf = uninitialized Float64
       end
       ),
-      "variable 'buf' already declared with type Int32"
+      "variable 'buf' already declared with type Int32", inject_primitives: true
   end
 
   it "can uninitialize variable outside initialize (#2828)" do
@@ -145,5 +145,18 @@ describe "Semantic: uninitialized" do
     assert_type(%(
       x = uninitialized Int32
       )) { int32 }
+  end
+
+  it "uses virtual type for uninitialized (#8216)" do
+    assert_type(%(
+      class Base
+      end
+
+      class Sub < Base
+      end
+
+      u = uninitialized Base
+      u
+      )) { types["Base"].virtual_type! }
   end
 end

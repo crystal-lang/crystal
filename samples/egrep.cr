@@ -1,6 +1,5 @@
 if ARGV.empty?
-  puts "usage: cat somefile | egrep 'some'"
-  exit
+  abort "Usage: cat somefile | egrep 'some'"
 end
 
 regx = Regex.new(ARGV[0])

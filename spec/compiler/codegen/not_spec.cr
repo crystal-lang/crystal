@@ -55,4 +55,16 @@ describe "Code gen: not" do
       !a.is_a?(String) && !a
       )).to_b.should be_false
   end
+
+  it "codegens not with inlinable value (#6451)" do
+    codegen(%(
+      class Test
+        def test
+          false
+        end
+      end
+
+      !Test.new.test
+      nil))
+  end
 end

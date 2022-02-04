@@ -133,7 +133,7 @@ describe "Code gen: new" do
 
       class Bar < Foo
         def self.new(foo : Int32) : self
-          Global.x = foo + 1
+          Global.x = foo &+ 1
           super
         end
       end
@@ -162,7 +162,7 @@ describe "Code gen: new" do
         end
 
         def self.new(foo : Int32) : self
-          Global.x = foo + 1
+          Global.x = foo &+ 1
           previous_def
         end
       end
@@ -179,7 +179,7 @@ describe "Code gen: new" do
         @x : Int32
 
         def initialize(x : Int32)
-          @x = x + 1
+          @x = x &+ 1
         end
 
         def x
@@ -325,7 +325,7 @@ describe "Code gen: new" do
       end
 
       foo = Foo.new(y: 22)
-      foo.x + foo.y
+      foo.x &+ foo.y
       )).to_i.should eq(42)
   end
 
@@ -349,10 +349,10 @@ describe "Code gen: new" do
 
       total = 0
       foo = Foo.new do |a, b|
-        total += a
-        total += b
+        total &+= a
+        total &+= b
       end
-      total += foo.x
+      total &+= foo.x
       total
       )).to_i.should eq(42)
   end
@@ -381,7 +381,7 @@ describe "Code gen: new" do
       foo = Foo.new do
         20
       end
-      foo.x + foo.block.call
+      foo.x &+ foo.block.call
       )).to_i.should eq(42)
   end
 end

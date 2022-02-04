@@ -1,44 +1,48 @@
-# `JSON::Any` is a convenient wrapper around all possible JSON types (`JSON::Type`)
+# `JSON::Any` is a convenient wrapper around all possible JSON types (`JSON::Any::Type`)
 # and can be used for traversing dynamic or unknown JSON structures.
 #
 # ```
+# require "json"
+#
 # obj = JSON.parse(%({"access": [{"name": "mapping", "speed": "fast"}, {"name": "any", "speed": "slow"}]}))
 # obj["access"][1]["name"].as_s  # => "any"
 # obj["access"][1]["speed"].as_s # => "slow"
 # ```
 #
-# Note that methods used to traverse a JSON structure, `#[]`, `#[]?` and `#each`,
+# Note that methods used to traverse a JSON structure, `#[]` and `#[]?`,
 # always return a `JSON::Any` to allow further traversal. To convert them to `String`,
 # `Int32`, etc., use the `as_` methods, such as `#as_s`, `#as_i`, which perform
 # a type check against the raw underlying value. This means that invoking `#as_s`
 # when the underlying value is not a String will raise: the value won't automatically
-# be converted (parsed) to a `String`.
+# be converted (parsed) to a `String`. There are also nil-able variants (`#as_i?`, `#as_s?`, ...),
+# which return `nil` when the underlying value type won't match.
 struct JSON::Any
-  include Enumerable(self)
+  # All possible JSON types.
+  alias Type = Nil | Bool | Int64 | Float64 | String | Array(Any) | Hash(String, Any)
 
   # Reads a `JSON::Any` value from the given pull parser.
   def self.new(pull : JSON::PullParser)
     case pull.kind
-    when :null
+    when .null?
       new pull.read_null
-    when :bool
+    when .bool?
       new pull.read_bool
-    when :int
+    when .int?
       new pull.read_int
-    when :float
+    when .float?
       new pull.read_float
-    when :string
+    when .string?
       new pull.read_string
-    when :begin_array
-      ary = [] of JSON::Type
+    when .begin_array?
+      ary = [] of JSON::Any
       pull.read_array do
-        ary << new(pull).raw
+        ary << new(pull)
       end
       new ary
-    when :begin_object
-      hash = {} of String => JSON::Type
+    when .begin_object?
+      hash = {} of String => JSON::Any
       pull.read_object do |key|
-        hash[key] = new(pull).raw
+        hash[key] = new(pull)
       end
       new hash
     else
@@ -46,11 +50,11 @@ struct JSON::Any
     end
   end
 
-  # Returns the raw underlying value, a `JSON::Type`.
-  getter raw : JSON::Type
+  # Returns the raw underlying value.
+  getter raw : Type
 
-  # Creates a `JSON::Any` that wraps the given `JSON::Type`.
-  def initialize(@raw : JSON::Type)
+  # Creates a `JSON::Any` that wraps the given value.
+  def initialize(@raw : Type)
   end
 
   # Assumes the underlying value is an `Array` or `Hash` and returns its size.
@@ -72,7 +76,7 @@ struct JSON::Any
   def [](index : Int) : JSON::Any
     case object = @raw
     when Array
-      Any.new object[index]
+      object[index]
     else
       raise "Expected Array for #[](index : Int), not #{object.class}"
     end
@@ -84,8 +88,7 @@ struct JSON::Any
   def []?(index : Int) : JSON::Any?
     case object = @raw
     when Array
-      value = object[index]?
-      value.nil? ? nil : Any.new(value)
+      object[index]?
     else
       raise "Expected Array for #[]?(index : Int), not #{object.class}"
     end
@@ -97,7 +100,7 @@ struct JSON::Any
   def [](key : String) : JSON::Any
     case object = @raw
     when Hash
-      Any.new object[key]
+      object[key]
     else
       raise "Expected Hash for #[](key : String), not #{object.class}"
     end
@@ -109,29 +112,36 @@ struct JSON::Any
   def []?(key : String) : JSON::Any?
     case object = @raw
     when Hash
-      value = object[key]?
-      value.nil? ? nil : Any.new(value)
+      object[key]?
     else
       raise "Expected Hash for #[]?(key : String), not #{object.class}"
     end
   end
 
-  # Assumes the underlying value is an `Array` or `Hash` and yields each
-  # of the elements or key/values, always as `JSON::Any`.
-  # Raises if the underlying value is not an `Array` or `Hash`.
-  def each
-    case object = @raw
-    when Array
-      object.each do |elem|
-        yield Any.new(elem), Any.new(nil)
-      end
-    when Hash
-      object.each do |key, value|
-        yield Any.new(key), Any.new(value)
-      end
+  # Traverses the depth of a structure and returns the value.
+  # Returns `nil` if not found.
+  def dig?(index_or_key : String | Int, *subkeys) : JSON::Any?
+    self[index_or_key]?.try &.dig?(*subkeys)
+  end
+
+  # :nodoc:
+  def dig?(index_or_key : String | Int) : JSON::Any?
+    case @raw
+    when Hash, Array
+      self[index_or_key]?
     else
-      raise "Expected Array or Hash for #each, not #{object.class}"
+      nil
     end
+  end
+
+  # Traverses the depth of a structure and returns the value, otherwise raises.
+  def dig(index_or_key : String | Int, *subkeys) : JSON::Any
+    self[index_or_key].dig(*subkeys)
+  end
+
+  # :nodoc:
+  def dig(index_or_key : String | Int) : JSON::Any
+    self[index_or_key]
   end
 
   # Checks that the underlying value is `Nil`, and returns `nil`.
@@ -179,13 +189,13 @@ struct JSON::Any
   # Checks that the underlying value is `Float`, and returns its value as an `Float64`.
   # Raises otherwise.
   def as_f : Float64
-    @raw.as(Float).to_f
+    @raw.as(Float64)
   end
 
   # Checks that the underlying value is `Float`, and returns its value as an `Float64`.
   # Returns `nil` otherwise.
   def as_f? : Float64?
-    as_f if @raw.is_a?(Float64)
+    @raw.as?(Float64)
   end
 
   # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
@@ -197,7 +207,7 @@ struct JSON::Any
   # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
   # Returns `nil` otherwise.
   def as_f32? : Float32?
-    as_f32 if (@raw.is_a?(Float32) || @raw.is_a?(Float64))
+    as_f32 if @raw.is_a?(Float)
   end
 
   # Checks that the underlying value is `String`, and returns its value.
@@ -214,35 +224,33 @@ struct JSON::Any
 
   # Checks that the underlying value is `Array`, and returns its value.
   # Raises otherwise.
-  def as_a : Array(Type)
+  def as_a : Array(Any)
     @raw.as(Array)
   end
 
   # Checks that the underlying value is `Array`, and returns its value.
   # Returns `nil` otherwise.
-  def as_a? : Array(Type)?
-    as_a if @raw.is_a?(Array(Type))
+  def as_a? : Array(Any)?
+    as_a if @raw.is_a?(Array)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
   # Raises otherwise.
-  def as_h : Hash(String, Type)
+  def as_h : Hash(String, Any)
     @raw.as(Hash)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
   # Returns `nil` otherwise.
-  def as_h? : Hash(String, Type)?
-    as_h if @raw.is_a?(Hash(String, Type))
+  def as_h? : Hash(String, Any)?
+    as_h if @raw.is_a?(Hash)
   end
 
-  # :nodoc:
-  def inspect(io)
+  def inspect(io : IO) : Nil
     @raw.inspect(io)
   end
 
-  # :nodoc:
-  def to_s(io)
+  def to_s(io : IO) : Nil
     @raw.to_s(io)
   end
 
@@ -268,11 +276,49 @@ struct JSON::Any
   def to_json(json : JSON::Builder)
     raw.to_json(json)
   end
+
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
+    raw.to_yaml(yaml)
+  end
+
+  # Returns a new JSON::Any instance with the `raw` value `dup`ed.
+  def dup
+    Any.new(raw.dup)
+  end
+
+  # Returns a new JSON::Any instance with the `raw` value `clone`ed.
+  def clone
+    Any.new(raw.clone)
+  end
 end
 
 class Object
   def ===(other : JSON::Any)
     self === other.raw
+  end
+end
+
+struct Value
+  def ==(other : JSON::Any)
+    self == other.raw
+  end
+end
+
+class Reference
+  def ==(other : JSON::Any)
+    self == other.raw
+  end
+end
+
+class Array
+  def ==(other : JSON::Any)
+    self == other.raw
+  end
+end
+
+class Hash
+  def ==(other : JSON::Any)
+    self == other.raw
   end
 end
 

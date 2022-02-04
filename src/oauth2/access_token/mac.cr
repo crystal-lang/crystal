@@ -12,16 +12,16 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
   property mac_key : String
   property issued_at : Int64
 
-  def initialize(access_token, expires_in, @mac_algorithm, @mac_key, refresh_token = nil, scope = nil, @issued_at = Time.now.epoch, extra = nil)
+  def initialize(access_token, expires_in, @mac_algorithm, @mac_key, refresh_token = nil, scope = nil, @issued_at = Time.utc.to_unix, extra = nil)
     super(access_token, expires_in, refresh_token, scope, extra)
   end
 
-  def token_type
+  def token_type : String
     "Mac"
   end
 
   def authenticate(request : HTTP::Request, tls)
-    ts = Time.now.epoch
+    ts = Time.utc.to_unix
     nonce = "#{ts - @issued_at}:#{Random::Secure.hex}"
     method = request.method
     uri = request.resource
@@ -34,18 +34,18 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
     request.headers["Authorization"] = header
   end
 
-  def self.signature(ts, nonce, method, uri, host, port, ext, mac_algorithm, mac_key)
+  def self.signature(ts, nonce, method, uri, host, port, ext, mac_algorithm, mac_key) : String
     normalized_request_string = "#{ts}\n#{nonce}\n#{method}\n#{uri}\n#{host}\n#{port}\n#{ext}\n"
 
     digest = case mac_algorithm
-             when "hmac-sha-1"   then :sha1
-             when "hmac-sha-256" then :sha256
+             when "hmac-sha-1"   then OpenSSL::Algorithm::SHA1
+             when "hmac-sha-256" then OpenSSL::Algorithm::SHA256
              else                     raise "Unsupported algorithm: #{mac_algorithm}"
              end
     Base64.strict_encode OpenSSL::HMAC.digest(digest, mac_key, normalized_request_string)
   end
 
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.object do
       json.field "token_type", "mac"
       json.field "access_token", access_token

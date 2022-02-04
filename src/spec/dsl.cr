@@ -1,45 +1,54 @@
 require "colorize"
 require "option_parser"
-require "signal"
 
 module Spec
-  private COLORS = {
-    success: :green,
-    fail:    :red,
-    error:   :red,
-    pending: :yellow,
-    comment: :cyan,
+  # :nodoc:
+  enum InfoKind
+    Comment
+    Focus
+    Order
+  end
+
+  private STATUS_COLORS = {
+    Status::Success => :green,
+    Status::Fail    => :red,
+    Status::Error   => :red,
+    Status::Pending => :yellow,
+  }
+
+  private INFO_COLORS = {
+    InfoKind::Comment => :cyan,
+    InfoKind::Focus   => :cyan,
+    InfoKind::Order   => :cyan,
   }
 
   private LETTERS = {
-    success: '.',
-    fail:    'F',
-    error:   'E',
-    pending: '*',
+    Status::Success => '.',
+    Status::Fail    => 'F',
+    Status::Error   => 'E',
+    Status::Pending => '*',
   }
 
-  @@use_colors = true
-
   # :nodoc:
-  def self.color(str, status)
+  def self.color(str, status : Status)
     if use_colors?
-      str.colorize(COLORS[status])
+      str.colorize(STATUS_COLORS[status])
     else
       str
     end
   end
 
   # :nodoc:
-  def self.use_colors?
-    @@use_colors
+  def self.color(str, kind : InfoKind)
+    if use_colors?
+      str.colorize(INFO_COLORS[kind])
+    else
+      str
+    end
   end
 
   # :nodoc:
-  def self.use_colors=(@@use_colors)
-  end
-
-  # :nodoc:
-  class AssertionFailed < Exception
+  class SpecError < Exception
     getter file : String
     getter line : Int32
 
@@ -48,29 +57,24 @@ module Spec
     end
   end
 
+  # :nodoc:
+  class AssertionFailed < SpecError
+  end
+
+  # :nodoc:
+  class ExamplePending < SpecError
+  end
+
+  # :nodoc:
+  class NestingSpecError < SpecError
+  end
+
   @@aborted = false
 
   # :nodoc:
   def self.abort!
-    exit
-  end
-
-  # :nodoc:
-  def self.pattern=(pattern)
-    @@pattern = Regex.new(Regex.escape(pattern))
-  end
-
-  # :nodoc:
-  def self.line=(@@line : Int32)
-  end
-
-  # :nodoc:
-  def self.slowest=(@@slowest : Int32)
-  end
-
-  # :nodoc:
-  def self.slowest
-    @@slowest
+    @@aborted = true
+    finish_run
   end
 
   # :nodoc:
@@ -94,84 +98,180 @@ module Spec
     "#{minutes}:#{seconds < 10 ? "0" : ""}#{seconds} minutes"
   end
 
-  # :nodoc:
-  def self.add_location(file, line)
-    locations = @@locations ||= {} of String => Array(Int32)
-    lines = locations[File.expand_path(file)] ||= [] of Int32
-    lines << line
-  end
+  record SplitFilter, remainder : Int32, quotient : Int32
 
-  # :nodoc:
-  def self.matches?(description, file, line, end_line = line)
-    spec_pattern = @@pattern
-    spec_line = @@line
-    locations = @@locations
+  @@split_filter : SplitFilter? = nil
 
-    # When a method invokes `it` and only forwards line information,
-    # not end_line information (this can happen in code before we
-    # introduced the end_line feature) then running a spec by giving
-    # a line won't work because end_line might be located before line.
-    # So, we also check `line == spec_line` to somehow preserve
-    # backwards compatibility.
-    if spec_line && (line == spec_line || line <= spec_line <= end_line)
-      return true
-    end
-
-    if locations
-      lines = locations[file]?
-      return true if lines && lines.any? { |l| line == l || line <= l <= end_line }
-    end
-
-    if spec_pattern || spec_line || locations
-      Spec::RootContext.matches?(description, spec_pattern, spec_line, locations)
+  def self.add_split_filter(filter)
+    if filter
+      r, m = filter.split('%').map &.to_i
+      @@split_filter = SplitFilter.new(remainder: r, quotient: m)
     else
-      true
+      @@split_filter = nil
     end
   end
 
-  @@fail_fast = false
-
-  # :nodoc:
-  def self.fail_fast=(@@fail_fast)
-  end
-
-  # :nodoc:
-  def self.fail_fast?
-    @@fail_fast
-  end
-
   # Instructs the spec runner to execute the given block
-  # before each spec, regardless of where this method is invoked.
+  # before each spec in the spec suite.
+  #
+  # If multiple blocks are registered they run in the order
+  # that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.before_each { puts 1 }
+  # Spec.before_each { puts 2 }
+  # ```
+  #
+  # will print, just before each spec, 1 and then 2.
   def self.before_each(&block)
-    before_each = @@before_each ||= [] of ->
-    before_each << block
+    root_context.before_each(&block)
   end
 
   # Instructs the spec runner to execute the given block
-  # after each spec, regardless of where this method is invoked.
+  # after each spec spec in the spec suite.
+  #
+  # If multiple blocks are registered they run in the reversed
+  # order that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.after_each { puts 1 }
+  # Spec.after_each { puts 2 }
+  # ```
+  #
+  # will print, just after each spec, 2 and then 1.
   def self.after_each(&block)
-    after_each = @@after_each ||= [] of ->
-    after_each << block
+    root_context.after_each(&block)
   end
 
-  # :nodoc:
-  def self.run_before_each_hooks
-    @@before_each.try &.each &.call
+  # Instructs the spec runner to execute the given block
+  # before the entire spec suite.
+  #
+  # If multiple blocks are registered they run in the order
+  # that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.before_suite { puts 1 }
+  # Spec.before_suite { puts 2 }
+  # ```
+  #
+  # will print, just before the spec suite starts, 1 and then 2.
+  def self.before_suite(&block)
+    root_context.before_all(&block)
   end
 
-  # :nodoc:
-  def self.run_after_each_hooks
-    @@after_each.try &.each &.call
+  # Instructs the spec runner to execute the given block
+  # after the entire spec suite.
+  #
+  # If multiple blocks are registered they run in the reversed
+  # order that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.after_suite { puts 1 }
+  # Spec.after_suite { puts 2 }
+  # ```
+  #
+  # will print, just after the spec suite ends, 2 and then 1.
+  def self.after_suite(&block)
+    root_context.after_all(&block)
   end
+
+  # Instructs the spec runner to execute the given block when each spec in the
+  # spec suite runs.
+  #
+  # The block must call `run` on the given `Example::Procsy` object.
+  #
+  # If multiple blocks are registered they run in the reversed
+  # order that they are given.
+  #
+  # ```
+  # require "spec"
+  #
+  # Spec.around_each do |example|
+  #   puts "runs before each sample"
+  #   example.run
+  #   puts "runs after each sample"
+  # end
+  #
+  # it { }
+  # it { }
+  # ```
+  def self.around_each(&block : Example::Procsy ->)
+    root_context.around_each(&block)
+  end
+
+  @@start_time : Time::Span? = nil
 
   # :nodoc:
   def self.run
-    start_time = Time.monotonic
+    @@start_time = Time.monotonic
+
     at_exit do
-      elapsed_time = Time.monotonic - start_time
-      Spec::RootContext.print_results(elapsed_time)
-      exit 1 unless Spec::RootContext.succeeded
+      log_setup
+      maybe_randomize
+      run_filters
+      root_context.run
+    rescue ex
+      STDERR.print "Unhandled exception: "
+      ex.inspect_with_backtrace(STDERR)
+      STDERR.flush
+      @@aborted = true
+    ensure
+      finish_run
     end
+  end
+
+  # :nodoc:
+  #
+  # Workaround for #8914
+  private macro defined?(t)
+    {% if t.resolve? %}
+      {{ yield }}
+    {% end %}
+  end
+
+  # :nodoc:
+  def self.log_setup
+  end
+
+  # :nodoc:
+  macro finished
+    # :nodoc:
+    #
+    # Initialized the log module for the specs.
+    # If the "log" module is required it is configured to emit no entries by default.
+    def self.log_setup
+      defined?(::Log) do
+        if Log.responds_to?(:setup)
+          Log.setup_from_env(default_level: :none)
+        end
+      end
+    end
+  end
+
+  def self.finish_run
+    elapsed_time = Time.monotonic - @@start_time.not_nil!
+    root_context.finish(elapsed_time, @@aborted)
+    exit 1 if !root_context.succeeded || @@aborted
+  end
+
+  # :nodoc:
+  def self.maybe_randomize
+    if randomizer = @@randomizer
+      root_context.randomize(randomizer)
+    end
+  end
+
+  # :nodoc:
+  def self.run_filters
+    root_context.run_filters(@@pattern, @@line, @@locations, @@split_filter, @@focus, @@tags, @@anti_tags)
   end
 end
 

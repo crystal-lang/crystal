@@ -17,17 +17,17 @@ describe "ECR" do
 
     pieces = [
       %(__str__ << "hello "),
-      %((#<loc:"foo.cr",1,10> 1 ).to_s __str__),
+      %(#<loc:push>(#<loc:"foo.cr",1,10> 1 )#<loc:pop>.to_s __str__),
       %(__str__ << " wor\\nld "),
-      %(#<loc:"foo.cr",2,6> while true ),
+      %(#<loc:push>#<loc:"foo.cr",2,6> while true #<loc:pop>),
       %(__str__ << " 2 "),
-      %(#<loc:"foo.cr",2,25> end ),
+      %(#<loc:push>#<loc:"foo.cr",2,25> end #<loc:pop>),
       %(__str__ << "\\n"),
-      %(#<loc:\"foo.cr\",3,3> # skip ),
+      %(#<loc:push>#<loc:"foo.cr",3,3> # skip #<loc:pop>),
       %(__str__ << " "),
       %(__str__ << "<% \\"string\\" %>"),
     ]
-    program.should eq(pieces.join("\n") + "\n")
+    program.should eq(pieces.join('\n') + '\n')
   end
 
   it "does ECR.def_to_s" do
@@ -63,5 +63,9 @@ describe "ECR" do
     io = IO::Memory.new
     ECR.embed "#{__DIR__}/../data/test_template6.ecr", io
     io.to_s.should eq("string with -%")
+  end
+
+  it ".render" do
+    ECR.render("#{__DIR__}/../data/test_template2.ecr").should eq("123")
   end
 end

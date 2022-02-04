@@ -6,20 +6,20 @@ private def br(n, d)
 end
 
 private def test_comp(val, less, equal, greater, file = __FILE__, line = __LINE__)
-  (val < greater).should eq(true), file, line
-  (greater < val).should eq(false), file, line
-  (val <=> greater).should eq(-1), file, line
-  (greater <=> val).should eq(1), file, line
+  (val < greater).should eq(true), file: file, line: line
+  (greater < val).should eq(false), file: file, line: line
+  (val <=> greater).should eq(-1), file: file, line: line
+  (greater <=> val).should eq(1), file: file, line: line
 
-  (val == equal).should eq(true), file, line
-  (equal == val).should eq(true), file, line
-  (val <=> equal).should eq(0), file, line
-  (equal <=> val).should eq(0), file, line
+  (val == equal).should eq(true), file: file, line: line
+  (equal == val).should eq(true), file: file, line: line
+  (val <=> equal).should eq(0), file: file, line: line
+  (equal <=> val).should eq(0), file: file, line: line
 
-  (val > less).should eq(true), file, line
-  (less > val).should eq(false), file, line
-  (val <=> less).should eq(1), file, line
-  (less <=> val).should eq(-1), file, line
+  (val > less).should eq(true), file: file, line: line
+  (less > val).should eq(false), file: file, line: line
+  (val <=> less).should eq(1), file: file, line: line
+  (less <=> val).should eq(-1), file: file, line: line
 end
 
 describe BigRational do
@@ -60,10 +60,22 @@ describe BigRational do
     r.to_f64.should be_close(f, 0.001)
   end
 
+  it "#to_f64!" do
+    r = br(10, 3)
+    f = 10.to_f64 / 3.to_f64
+    r.to_f64!.should be_close(f, 0.001)
+  end
+
   it "#to_f" do
     r = br(10, 3)
     f = 10.to_f64 / 3.to_f64
     r.to_f.should be_close(f, 0.001)
+  end
+
+  it "#to_f!" do
+    r = br(10, 3)
+    f = 10.to_f64 / 3.to_f64
+    r.to_f!.should be_close(f, 0.001)
   end
 
   it "#to_f32" do
@@ -72,10 +84,21 @@ describe BigRational do
     r.to_f32.should be_close(f, 0.001)
   end
 
+  it "#to_f32!" do
+    r = br(10, 3)
+    f = 10.to_f32 / 3.to_f32
+    r.to_f32!.should be_close(f, 0.001)
+  end
+
   it "#to_big_f" do
     r = br(10, 3)
     f = 10.to_big_f / 3.to_big_f
     r.to_big_f.should be_close(f, 0.001)
+  end
+
+  it "#to_big_r" do
+    r = br(10, 3)
+    r.to_big_r.should eq(r)
   end
 
   it "Int#to_big_r" do
@@ -90,13 +113,17 @@ describe BigRational do
     0.3333333333333333333333_f64.to_big_r.should eq(br(6004799503160661, 18014398509481984))
   end
 
+  it "BigDecimal#to_big_r" do
+    BigDecimal.new("1.123").to_big_r.should eq(br(1123, 1000))
+  end
+
   it "#<=>(:BigRational) and Comparable" do
     a = br(11, 3)
     l = br(10, 3)
     e = a
     g = br(12, 3)
 
-    # sanity check things aren't swapped
+    # verify things aren't swapped
     [l, e, g].each { |o| (a <=> o).should eq(a.to_f <=> o.to_f) }
 
     test_comp(a, l, e, g)
@@ -139,6 +166,13 @@ describe BigRational do
     (1 / br(10, 7)).should eq(br(7, 10))
   end
 
+  it "#//" do
+    (br(10, 7) // br(3, 7)).should eq(br(9, 3))
+    expect_raises(DivisionByZeroError) { br(10, 7) / br(0, 10) }
+    (br(10, 7) // 3).should eq(0)
+    (1 // br(10, 7)).should eq(0)
+  end
+
   it "#- (negation)" do
     (-br(10, 3)).should eq(br(-10, 3))
   end
@@ -160,6 +194,60 @@ describe BigRational do
     (br(10, 3) >> 2).should eq(br(5, 6))
   end
 
+  describe "#**" do
+    it "exponentiates with positive powers" do
+      result = br(17, 11) ** 5
+      result.should be_a(BigRational)
+      result.should eq(br(1419857, 161051))
+
+      result = br(17, 11) ** 5_u8
+      result.should be_a(BigRational)
+      result.should eq(br(1419857, 161051))
+    end
+
+    it "exponentiates with negative powers" do
+      result = br(17, 11) ** -5
+      result.should eq(br(161051, 1419857))
+    end
+
+    it "cannot raise 0 to a negative power" do
+      expect_raises(DivisionByZeroError) { br(0, 1) ** -1 }
+    end
+  end
+
+  it "#ceil" do
+    br(2, 1).ceil.should eq(2)
+    br(21, 10).ceil.should eq(3)
+    br(29, 10).ceil.should eq(3)
+
+    br(201, 100).ceil.should eq(3)
+    br(211, 100).ceil.should eq(3)
+    br(291, 100).ceil.should eq(3)
+
+    br(-201, 100).ceil.should eq(-2)
+    br(-291, 100).ceil.should eq(-2)
+  end
+
+  it "#floor" do
+    br(21, 10).floor.should eq(2)
+    br(29, 10).floor.should eq(2)
+    br(-29, 10).floor.should eq(-3)
+
+    br(211, 100).floor.should eq(2)
+    br(291, 100).floor.should eq(2)
+    br(-291, 100).floor.should eq(-3)
+  end
+
+  it "#trunc" do
+    br(21, 10).trunc.should eq(2)
+    br(29, 10).trunc.should eq(2)
+    br(-29, 10).trunc.should eq(-2)
+
+    br(211, 100).trunc.should eq(2)
+    br(291, 100).trunc.should eq(2)
+    br(-291, 100).trunc.should eq(-2)
+  end
+
   it "#hash" do
     b = br(10, 3)
     hash = b.hash
@@ -173,6 +261,10 @@ describe BigRational do
   it "clones" do
     x = br(10, 3)
     x.clone.should eq(x)
+  end
+
+  describe "#inspect" do
+    it { 123.to_big_r.inspect.should eq("123") }
   end
 end
 

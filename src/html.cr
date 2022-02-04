@@ -1,6 +1,8 @@
 require "./html/entities"
 
 # Provides HTML escaping and unescaping methods.
+#
+# For HTML *parsing* see module XML, especially `XML.parse_html`.
 module HTML
   private SUBSTITUTIONS = {
     '&'  => "&amp;",
@@ -22,10 +24,12 @@ module HTML
     string.gsub(SUBSTITUTIONS)
   end
 
-  # Same as `escape(string)` but ouputs the result to
+  # Same as `escape(string)` but outputs the result to
   # the given *io*.
   #
   # ```
+  # require "html"
+  #
   # io = IO::Memory.new
   # HTML.escape("Crystal & You", io) # => nil
   # io.to_s                          # => "Crystal &amp; You"
@@ -77,11 +81,13 @@ module HTML
   }
 
   # Returns a string where named and numeric character references
-  # (e.g. &gt;, &#62;, &x3e;) in *string* are replaced with the corresponding
+  # (e.g. &amp;gt;, &amp;#62;, &amp;#x3e;) in *string* are replaced with the corresponding
   # unicode characters. This method decodes all HTML5 entities including those
-  # without a trailing semicolon (such as `&copy`).
+  # without a trailing semicolon (such as "&amp;copy").
   #
   # ```
+  # require "html"
+  #
   # HTML.unescape("Crystal &amp; You") # => "Crystal & You"
   # ```
   def self.unescape(string : String) : String
@@ -147,7 +153,7 @@ module HTML
              # last two of each plane (nonchars) disallowed
              codepoint & 0xFFFF >= 0xFFFE ||
              # unicode control characters expect space
-             (codepoint < 0x0020 && !{0x0009, 0x000A, 0x000C}.includes?(codepoint))
+             (codepoint < 0x0020 && !codepoint.in?(0x0009, 0x000A, 0x000C))
         codepoint.unsafe_chr
       end
     end

@@ -1,21 +1,19 @@
 struct LLVM::InstructionCollection
+  include Enumerable(LLVM::Value)
+
   def initialize(@basic_block : BasicBlock)
   end
 
   def empty?
-    llvm_first.null?
+    first?.nil?
   end
 
-  def first?
-    value = llvm_first
-    value ? Value.new(value) : nil
-  end
+  def each : Nil
+    inst = LibLLVM.get_first_instruction @basic_block
 
-  def first
-    first?.not_nil!
-  end
-
-  private def llvm_first
-    LibLLVM.get_first_instruction @basic_block
+    while inst
+      yield LLVM::Value.new inst
+      inst = LibLLVM.get_next_instruction(inst)
+    end
   end
 end

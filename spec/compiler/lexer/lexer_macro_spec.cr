@@ -39,7 +39,7 @@ describe "Lexer macro" do
     token.type.should eq(:MACRO_END)
   end
 
-  ["begin", "do", "if", "unless", "class", "struct", "module", "def", "while", "until", "case", "macro", "fun", "lib", "union"].each do |keyword|
+  ["begin", "do", "if", "unless", "class", "struct", "module", "def", "while", "until", "case", "macro", "fun", "lib", "union", "annotation", "select"].each do |keyword|
     it "lexes macro with nested #{keyword}" do
       lexer = Lexer.new(%(hello\n  #{keyword} {{world}} end end))
 
@@ -572,6 +572,28 @@ describe "Lexer macro" do
     token.value.should eq("{%    for")
     token.macro_state.beginning_of_line.should be_false
     token.macro_state.nest.should eq(1)
+  end
+
+  it "lexes with unless inside escaped macro (#5664)" do
+    lexer = Lexer.new(%(\\{%    unless true %} 2 \\{% end %} end))
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("{%    unless")
+    token.macro_state.beginning_of_line.should be_false
+    token.macro_state.nest.should eq(1)
+
+    token = lexer.next_macro_token(token.macro_state, token.macro_state.beginning_of_line)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(" true %} 2 ")
+    token.macro_state.beginning_of_line.should be_false
+    token.macro_state.nest.should eq(1)
+
+    token = lexer.next_macro_token(token.macro_state, token.macro_state.beginning_of_line)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("{% end")
+    token.macro_state.beginning_of_line.should be_false
+    token.macro_state.nest.should eq(0)
   end
 
   it "lexes begin end" do

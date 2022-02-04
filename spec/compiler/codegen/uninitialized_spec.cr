@@ -67,7 +67,7 @@ describe "Code gen: uninitialized" do
       end
 
       bar = Bar.new
-      bar.x + bar.y
+      bar.x &+ bar.y
       )).to_i.should eq(3)
   end
 

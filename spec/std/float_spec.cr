@@ -14,7 +14,7 @@ describe "Float" do
 
   describe "%" do
     it "uses modulo behavior, not remainder behavior" do
-      it { ((-11.5) % 4.0).should eq(0.5) }
+      ((-11.5) % 4.0).should eq(0.5)
     end
   end
 
@@ -54,7 +54,8 @@ describe "Float" do
   end
 
   describe "round" do
-    it { 2.5.round.should eq(3) }
+    it { 2.5.round.should eq(2) }
+    it { 3.5.round.should eq(4) }
     it { 2.4.round.should eq(2) }
   end
 
@@ -118,6 +119,26 @@ describe "Float" do
 
     it { -1.4.divmod(-0.3)[0].should eq(4) }
     it { -1.4.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
+  end
+
+  describe "floor division //" do
+    it "preserves type of lhs" do
+      (7.0 // 2).should be_a(Float64)
+      (7.0 // 2i32).should be_a(Float64)
+      (7.0 // 2.0).should be_a(Float64)
+      (7.0_f32 // 2.0_f64).should be_a(Float32)
+      (7.0_f32 // 2.0_f32).should be_a(Float32)
+    end
+
+    it "applies floor" do
+      (7.0 // 2.0).should eq(3.0)
+      (-7.0 // 2.0).should eq(-4.0)
+
+      (6.0 // 2.0).should eq(3.0)
+      (-6.0 // 2.0).should eq(-3.0)
+
+      (30.3 // 3.9).should eq(7.0)
+    end
   end
 
   describe "to_s" do
@@ -184,13 +205,57 @@ describe "Float" do
     end
   end
 
+  describe "#next_float" do
+    it "does for f64" do
+      0.0.next_float.should eq(5.0e-324) # smallest denormal (not MIN_POSITIVE)
+      1.0.next_float.should eq(1.0000000000000002)
+      (-1.0).next_float.should eq(-0.9999999999999999)
+      Float64::MAX.next_float.should eq(Float64::INFINITY)
+      Float64::INFINITY.next_float.should eq(Float64::INFINITY)
+      (-Float64::INFINITY).next_float.should eq(Float64::MIN)
+      Float64::NAN.next_float.nan?.should be_true
+    end
+
+    it "does for f32" do
+      0.0_f32.next_float.should eq(1.0e-45_f32) # smallest denormal (not MIN_POSITIVE)
+      1.0_f32.next_float.should eq(1.0000001_f32)
+      (-1.0_f32).next_float.should eq(-0.99999994_f32)
+      Float32::MAX.next_float.should eq(Float32::INFINITY)
+      Float32::INFINITY.next_float.should eq(Float32::INFINITY)
+      (-Float32::INFINITY).next_float.should eq(Float32::MIN)
+      Float32::NAN.next_float.nan?.should be_true
+    end
+  end
+
+  describe "#prev_float" do
+    it "does for f64" do
+      0.0.prev_float.should eq(-5.0e-324) # smallest denormal (not MIN_POSITIVE)
+      1.0.prev_float.should eq(0.9999999999999999)
+      (-1.0).prev_float.should eq(-1.0000000000000002)
+      Float64::MIN.prev_float.should eq(-Float64::INFINITY)
+      Float64::INFINITY.prev_float.should eq(Float64::MAX)
+      (-Float64::INFINITY).prev_float.should eq(-Float64::INFINITY)
+      Float64::NAN.prev_float.nan?.should be_true
+    end
+
+    it "does for f32" do
+      0.0_f32.prev_float.should eq(-1.0e-45_f32) # smallest denormal (not MIN_POSITIVE)
+      1.0_f32.prev_float.should eq(0.99999994_f32)
+      (-1.0_f32).prev_float.should eq(-1.0000001_f32)
+      Float32::MIN.prev_float.should eq(-Float32::INFINITY)
+      Float32::INFINITY.prev_float.should eq(Float32::MAX)
+      (-Float32::INFINITY).prev_float.should eq(-Float32::INFINITY)
+      Float32::NAN.prev_float.nan?.should be_true
+    end
+  end
+
   describe "#inspect" do
     it "does inspect for f64" do
       3.2.inspect.should eq("3.2")
     end
 
     it "does inspect for f32" do
-      3.2_f32.inspect.should eq("3.2_f32")
+      3.2_f32.inspect.should eq("3.2")
     end
 
     it "does inspect for f64 with IO" do
@@ -200,7 +265,7 @@ describe "Float" do
 
     it "does inspect for f32" do
       str = String.build { |io| 3.2_f32.inspect(io) }
-      str.should eq("3.2_f32")
+      str.should eq("3.2")
     end
   end
 
@@ -214,12 +279,28 @@ describe "Float" do
     end
   end
 
-  it "casts" do
-    Float32.new(1_f64).should be_a(Float32)
-    Float32.new(1_f64).should eq(1)
+  describe ".new" do
+    it "String overload" do
+      Float32.new("1").should be_a(Float32)
+      Float32.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Float32.new(" 1 ", whitespace: false)
+      end
 
-    Float64.new(1_f32).should be_a(Float64)
-    Float64.new(1_f32).should eq(1)
+      Float64.new("1").should be_a(Float64)
+      Float64.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Float64.new(" 1 ", whitespace: false)
+      end
+    end
+
+    it "fallback overload" do
+      Float32.new(1_f64).should be_a(Float32)
+      Float32.new(1_f64).should eq(1)
+
+      Float64.new(1_f32).should be_a(Float64)
+      Float64.new(1_f32).should eq(1)
+    end
   end
 
   it "does nan?" do
@@ -245,6 +326,26 @@ describe "Float" do
     (-0.0/0.0).finite?.should be_false
   end
 
+  {% if compare_versions(Crystal::VERSION, "0.36.1") > 0 %}
+    it "converts infinity" do
+      Float32::INFINITY.to_f64.infinite?.should eq 1
+      Float32::INFINITY.to_f32.infinite?.should eq 1
+      expect_raises(OverflowError) { Float32::INFINITY.to_i }
+      (-Float32::INFINITY).to_f64.infinite?.should eq -1
+      (-Float32::INFINITY).to_f32.infinite?.should eq -1
+      expect_raises(OverflowError) { (-Float32::INFINITY).to_i }
+
+      Float64::INFINITY.to_f64.infinite?.should eq 1
+      Float64::INFINITY.to_f32.infinite?.should eq 1
+      expect_raises(OverflowError) { Float64::INFINITY.to_i }
+      (-Float64::INFINITY).to_f64.infinite?.should eq -1
+      (-Float64::INFINITY).to_f32.infinite?.should eq -1
+      expect_raises(OverflowError) { (-Float64::INFINITY).to_i }
+    end
+  {% else %}
+    pending "converts infinity"
+  {% end %}
+
   it "does unary -" do
     f = -(1.5)
     f.should eq(-1.5)
@@ -258,5 +359,67 @@ describe "Float" do
   it "clones" do
     1.0.clone.should eq(1.0)
     1.0_f32.clone.should eq(1.0_f32)
+  end
+
+  it "constants have right binary value" do
+    Float32::MIN.unsafe_as(UInt32).should eq 0xff7fffff_u32
+    Float32::MAX.unsafe_as(UInt32).should eq 0x7f7fffff_u32
+    Float32::EPSILON.unsafe_as(UInt32).should eq 0x34000000_u32
+    Float32::MIN_POSITIVE.unsafe_as(UInt32).should eq 0x00800000_u32
+
+    Float64::MIN.unsafe_as(UInt64).should eq 0xffefffffffffffff_u64
+    Float64::MAX.unsafe_as(UInt64).should eq 0x7fefffffffffffff_u64
+    Float64::EPSILON.unsafe_as(UInt64).should eq 0x3cb0000000000000_u64
+    Float64::MIN_POSITIVE.unsafe_as(UInt64).should eq 0x0010000000000000_u64
+  end
+
+  it "returns nil in <=> for NaN values (Float32)" do
+    nan = Float32::NAN
+
+    (1_f32 <=> nan).should be_nil
+    (1_f64 <=> nan).should be_nil
+
+    (1_u8 <=> nan).should be_nil
+    (1_u16 <=> nan).should be_nil
+    (1_u32 <=> nan).should be_nil
+    (1_u64 <=> nan).should be_nil
+    (1_i8 <=> nan).should be_nil
+    (1_i16 <=> nan).should be_nil
+    (1_i32 <=> nan).should be_nil
+    (1_i64 <=> nan).should be_nil
+
+    (nan <=> 1_u8).should be_nil
+    (nan <=> 1_u16).should be_nil
+    (nan <=> 1_u32).should be_nil
+    (nan <=> 1_u64).should be_nil
+    (nan <=> 1_i8).should be_nil
+    (nan <=> 1_i16).should be_nil
+    (nan <=> 1_i32).should be_nil
+    (nan <=> 1_i64).should be_nil
+  end
+
+  it "returns nil in <=> for NaN values (Float64)" do
+    nan = Float64::NAN
+
+    (1_f32 <=> nan).should be_nil
+    (1_f64 <=> nan).should be_nil
+
+    (1_u8 <=> nan).should be_nil
+    (1_u16 <=> nan).should be_nil
+    (1_u32 <=> nan).should be_nil
+    (1_u64 <=> nan).should be_nil
+    (1_i8 <=> nan).should be_nil
+    (1_i16 <=> nan).should be_nil
+    (1_i32 <=> nan).should be_nil
+    (1_i64 <=> nan).should be_nil
+
+    (nan <=> 1_u8).should be_nil
+    (nan <=> 1_u16).should be_nil
+    (nan <=> 1_u32).should be_nil
+    (nan <=> 1_u64).should be_nil
+    (nan <=> 1_i8).should be_nil
+    (nan <=> 1_i16).should be_nil
+    (nan <=> 1_i32).should be_nil
+    (nan <=> 1_i64).should be_nil
   end
 end

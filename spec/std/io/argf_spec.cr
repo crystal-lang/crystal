@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 
 describe IO::ARGF do
   it "reads from STDIN if ARGV isn't specified" do
@@ -12,8 +12,8 @@ describe IO::ARGF do
   end
 
   it "reads from ARGV if specified" do
-    path1 = "#{__DIR__}/../data/argf_test_file_1.txt"
-    path2 = "#{__DIR__}/../data/argf_test_file_2.txt"
+    path1 = datapath("argf_test_file_1.txt")
+    path2 = datapath("argf_test_file_2.txt")
     stdin = IO::Memory.new("")
     argv = [path1, path2]
 
@@ -38,6 +38,18 @@ describe IO::ARGF do
     str.should eq("12345")
   end
 
+  it "reads when is more data left to read" do
+    argf = IO::ARGF.new [datapath("argf_test_file_3.xml")], IO::Memory.new
+    argf.read(Bytes.new(4))
+    buf = Bytes.new(4096)
+    z = argf.read(buf)
+    z = argf.read(buf)
+    z = argf.read(buf)
+    z = argf.read(buf)
+    z.should_not eq 0
+    String.new(buf[0...z]).should_not be_empty
+  end
+
   describe "gets" do
     it "reads from STDIN if ARGV isn't specified" do
       argv = [] of String
@@ -60,8 +72,8 @@ describe IO::ARGF do
     end
 
     it "reads from ARGV if specified" do
-      path1 = "#{__DIR__}/../data/argf_test_file_1.txt"
-      path2 = "#{__DIR__}/../data/argf_test_file_2.txt"
+      path1 = datapath("argf_test_file_1.txt")
+      path2 = datapath("argf_test_file_2.txt")
       stdin = IO::Memory.new("")
       argv = [path1, path2]
 
@@ -94,8 +106,8 @@ describe IO::ARGF do
     end
 
     it "peeks from ARGV if specified" do
-      path1 = "#{__DIR__}/../data/argf_test_file_1.txt"
-      path2 = "#{__DIR__}/../data/argf_test_file_2.txt"
+      path1 = datapath("argf_test_file_1.txt")
+      path2 = datapath("argf_test_file_2.txt")
       stdin = IO::Memory.new("")
       argv = [path1, path2]
 

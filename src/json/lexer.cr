@@ -29,7 +29,7 @@ abstract class JSON::Lexer
   private abstract def append_number_char
   private abstract def number_string
 
-  def next_token
+  def next_token : JSON::Token
     skip_whitespace
 
     @token.line_number = @line_number
@@ -37,19 +37,19 @@ abstract class JSON::Lexer
 
     case current_char
     when '\0'
-      @token.type = :EOF
+      @token.kind = :EOF
     when '{'
-      next_char :"{"
+      next_char :begin_object
     when '}'
-      next_char :"}"
+      next_char :end_object
     when '['
-      next_char :"["
+      next_char :begin_array
     when ']'
-      next_char :"]"
+      next_char :end_array
     when ','
-      next_char :","
+      next_char :comma
     when ':'
-      next_char :":"
+      next_char :colon
     when 'f'
       consume_false
     when 'n'
@@ -57,7 +57,7 @@ abstract class JSON::Lexer
     when 't'
       consume_true
     when '"'
-      @token.type = :STRING
+      @token.kind = :string
       @skip ? consume_string_skip : consume_string
     else
       consume_number
@@ -98,7 +98,7 @@ abstract class JSON::Lexer
   private def consume_true
     if next_char == 'r' && next_char == 'u' && next_char == 'e'
       next_char
-      @token.type = :true
+      @token.kind = :true
     else
       unexpected_char
     end
@@ -107,7 +107,7 @@ abstract class JSON::Lexer
   private def consume_false
     if next_char == 'a' && next_char == 'l' && next_char == 's' && next_char == 'e'
       next_char
-      @token.type = :false
+      @token.kind = :false
     else
       unexpected_char
     end
@@ -116,7 +116,7 @@ abstract class JSON::Lexer
   private def consume_null
     if next_char == 'u' && next_char == 'l' && next_char == 'l'
       next_char
-      @token.type = :null
+      @token.kind = :null
     else
       unexpected_char
     end
@@ -189,14 +189,19 @@ abstract class JSON::Lexer
       '\t'
     when 'u'
       hexnum1 = read_hex_number
-      if hexnum1 > 0xD800 && hexnum1 < 0xDBFF
+      if hexnum1 < 0xd800 || hexnum1 >= 0xe000
+        hexnum1.unsafe_chr
+      elsif hexnum1 < 0xdc00
         if next_char != '\\' || next_char != 'u'
           raise "Unterminated UTF-16 sequence"
         end
         hexnum2 = read_hex_number
-        (0x10000 | (hexnum1 & 0x3FF) << 10 | (hexnum2 & 0x3FF)).chr
+        unless 0xdc00 <= hexnum2 <= 0xdfff
+          raise "Invalid UTF-16 sequence"
+        end
+        ((hexnum1 << 10) &+ hexnum2 &- 0x35fdc00).unsafe_chr
       else
-        hexnum1.chr
+        raise "Invalid UTF-16 sequence"
       end
     else
       raise "Unknown escape char: #{char}"
@@ -215,53 +220,41 @@ abstract class JSON::Lexer
   private def consume_number
     number_start
 
-    integer = 0_i64
-    negative = false
-    digits = 0
-
     if current_char == '-'
       append_number_char
-      negative = true
       next_char
     end
 
     case current_char
     when '0'
       append_number_char
-      next_char
-      case current_char
+      char = next_char
+      case char
       when '.'
-        consume_float(negative, integer, digits)
+        consume_float
       when 'e', 'E'
-        consume_exponent(negative, integer.to_f64, digits)
+        consume_exponent
       when '0'..'9'
         unexpected_char
       else
-        @token.type = :INT
-        @token.int_value = 0_i64
+        @token.kind = :int
         number_end
       end
     when '1'..'9'
-      digits = 1
       append_number_char
-      integer = (current_char - '0').to_i64
       char = next_char
       while '0' <= char <= '9'
         append_number_char
-        integer *= 10
-        integer += char - '0'
-        digits += 1
         char = next_char
       end
 
       case char
       when '.'
-        consume_float(negative, integer, digits)
+        consume_float
       when 'e', 'E'
-        consume_exponent(negative, integer.to_f64, digits)
+        consume_exponent
       else
-        @token.type = :INT
-        @token.int_value = negative ? -integer : integer
+        @token.kind = :int
         number_end
       end
     else
@@ -269,9 +262,8 @@ abstract class JSON::Lexer
     end
   end
 
-  private def consume_float(negative, integer, digits)
+  private def consume_float
     append_number_char
-    divisor = 1_u64
     char = next_char
 
     unless '0' <= char <= '9'
@@ -280,32 +272,19 @@ abstract class JSON::Lexer
 
     while '0' <= char <= '9'
       append_number_char
-      integer *= 10
-      integer += char - '0'
-      divisor *= 10
-      digits += 1
       char = next_char
     end
-    float = integer.to_f64 / divisor
 
     if char == 'e' || char == 'E'
-      consume_exponent(negative, float, digits)
+      consume_exponent
     else
-      @token.type = :FLOAT
-      # If there's a chance of overflow, we parse the raw string
-      if digits >= 18
-        @token.float_value = number_string.to_f64
-      else
-        @token.float_value = negative ? -float : float
-      end
+      @token.kind = :float
       number_end
     end
   end
 
-  private def consume_exponent(negative, float, digits)
+  private def consume_exponent
     append_number_char
-    exponent = 0
-    negative_exponent = false
 
     char = next_char
     if char == '+'
@@ -314,31 +293,18 @@ abstract class JSON::Lexer
     elsif char == '-'
       append_number_char
       char = next_char
-      negative_exponent = true
     end
 
     if '0' <= char <= '9'
       while '0' <= char <= '9'
         append_number_char
-        exponent *= 10
-        exponent += char - '0'
         char = next_char
       end
     else
       unexpected_char
     end
 
-    @token.type = :FLOAT
-
-    exponent = -exponent if negative_exponent
-    float *= (10_f64 ** exponent)
-
-    # If there's a chance of overflow, we parse the raw string
-    if digits >= 18
-      @token.float_value = number_string.to_f64
-    else
-      @token.float_value = negative ? -float : float
-    end
+    @token.kind = :float
 
     number_end
   end
@@ -348,8 +314,8 @@ abstract class JSON::Lexer
     next_char_no_column_increment
   end
 
-  private def next_char(token_type)
-    @token.type = token_type
+  private def next_char(kind : Token::Kind)
+    @token.kind = kind
     next_char
   end
 

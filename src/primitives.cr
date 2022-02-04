@@ -86,7 +86,7 @@ struct Char
   # '\u007f'.ord # => 127
   # '☃'.ord      # => 9731
   # ```
-  @[Primitive(:cast)]
+  @[Primitive(:convert)]
   def ord : Int32
   end
 
@@ -117,7 +117,7 @@ struct Symbol
   end
 
   # Returns a unique number for this symbol.
-  @[Primitive(:cast)]
+  @[Primitive(:convert)]
   def to_i : Int32
   end
 
@@ -149,6 +149,17 @@ struct Pointer(T)
   # # ...
   # ptr[9] # => 0
   # ```
+  #
+  # The implementation uses `GC.malloc` if the compiler is aware that the
+  # allocated type contains inner address pointers. Otherwise it uses
+  # `GC.malloc_atomic`. Primitive types are expected to not contain pointers,
+  # except `Void`. `Proc` and `Pointer` are expected to contain pointers.
+  # For unions, structs and collection types (tuples, static array)
+  # it depends on the contained types. All other types, including classes are
+  # expected to contain inner address pointers.
+  #
+  # To override this implicit behaviour, `GC.malloc` and `GC.malloc_atomic`
+  # can be used directly instead.
   @[Primitive(:pointer_malloc)]
   def self.malloc(size : UInt64)
   end
@@ -270,7 +281,7 @@ end
   {% ints = %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128) %}
   {% floats = %w(Float32 Float64) %}
   {% nums = %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128 Float32 Float64) %}
-  {% binaries = {"+" => "adding", "-" => "subtracting", "*" => "multiplying", "/" => "dividing"} %}
+  {% binaries = {"+" => "adding", "-" => "subtracting", "*" => "multiplying"} %}
 
   {% for num in nums %}
     struct {{num.id}}
@@ -281,8 +292,20 @@ end
                              to_f32: Float32, to_f64: Float64,
                            } %}
         # Returns `self` converted to `{{type}}`.
-        @[Primitive(:cast)]
+        # Raises `OverflowError` in case of overflow.
+        @[Primitive(:convert)]
+        @[Raises]
         def {{name.id}} : {{type}}
+        end
+
+        # Returns `self` converted to `{{type}}`.
+        # In case of overflow
+        # {% if ints.includes?(num) %} a wrapping is performed.
+        # {% elsif type < Int %} the result is undefined.
+        # {% else %} infinity is returned.
+        # {% end %}
+        @[Primitive(:unchecked_convert)]
+        def {{name.id}}! : {{type}}
         end
       {% end %}
 
@@ -295,7 +318,8 @@ end
                              ">"  => "greater than",
                              ">=" => "greater than or equal to",
                            } %}
-          # Returns `true` if `self` is {{desc.id}} *other*.
+          # Returns `true` if `self` is {{desc.id}} *other*{% if op == "!=" && (!ints.includes?(num) || !ints.includes?(num2)) %}
+          # or if `self` and *other* are unordered{% end %}.
           @[Primitive(:binary)]
           def {{op.id}}(other : {{num2.id}}) : Bool
           end
@@ -308,7 +332,7 @@ end
     struct {{int.id}}
       # Returns a `Char` that has the unicode codepoint of `self`,
       # without checking if this integer is in the range valid for
-      # chars (`0..0x10ffff`).
+      # chars (`0..0xd7ff` and `0xe000..0x10ffff`).
       #
       # You should never use this method unless `chr` turns out to
       # be a bottleneck.
@@ -316,18 +340,24 @@ end
       # ```
       # 97.unsafe_chr # => 'a'
       # ```
-      @[Primitive(:cast)]
+      @[Primitive(:convert)]
       def unsafe_chr : Char
       end
 
       {% for int2 in ints %}
         {% for op, desc in binaries %}
-          {% if op != "/" %}
-            # Returns the result of {{desc.id}} `self` and *other*.
-            @[Primitive(:binary)]
-            def {{op.id}}(other : {{int2.id}}) : self
-            end
-          {% end %}
+          # Returns the result of {{desc.id}} `self` and *other*.
+          # Raises `OverflowError` in case of overflow.
+          @[Primitive(:binary)]
+          @[Raises]
+          def {{op.id}}(other : {{int2.id}}) : self
+          end
+
+          # Returns the result of {{desc.id}} `self` and *other*.
+          # In case of overflow a wrapping is performed.
+          @[Primitive(:binary)]
+          def &{{op.id}}(other : {{int2.id}}) : self
+          end
         {% end %}
 
         # Returns the result of performing a bitwise OR of `self`'s and *other*'s bits.
@@ -386,7 +416,17 @@ end
           def {{op.id}}(other : {{num.id}}) : self
           end
         {% end %}
+
+        # Returns the float division of `self` and *other*.
+        @[Primitive(:binary)]
+        def fdiv(other : {{num.id}}) : self
+        end
       {% end %}
+
+      # Returns the result of division `self` and *other*.
+      @[Primitive(:binary)]
+      def /(other : {{float.id}}) : {{float.id}}
+      end
     end
   {% end %}
 {% end %}

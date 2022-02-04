@@ -186,6 +186,24 @@ describe "Pointer" do
     Pointer(Int32).new(1234).address.should eq(1234)
   end
 
+  it "performs arithmetic with u64" do
+    p = Pointer(Int8).new(1234)
+    d = 4_u64
+    (p + d).address.should eq(1238)
+    (p - d).address.should eq(1230)
+
+    p = Pointer(Int8).new(UInt64::MAX)
+    d = UInt64::MAX - 1
+    (p - d).address.should eq(1)
+  end
+
+  it "performs arithmetic with u32" do
+    p = Pointer(Int8).new(1234)
+    d = 4_u32
+    (p + d).address.should eq(1238)
+    (p - d).address.should eq(1230)
+  end
+
   it "shuffles!" do
     a = Pointer(Int32).malloc(3) { |i| i + 1 }
     a.shuffle!(3)
@@ -211,6 +229,14 @@ describe "Pointer" do
     a[0].should eq(1)
     a[1].should eq(3)
     a[2].should eq(5)
+  end
+
+  it "maps_with_index!, with offset" do
+    a = Pointer(Int32).malloc(3) { |i| i + 1 }
+    a.map_with_index!(3, offset: 10) { |e, i| e + i }
+    a[0].should eq(11)
+    a[1].should eq(13)
+    a[2].should eq(15)
   end
 
   it "raises if mallocs negative size" do

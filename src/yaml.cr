@@ -1,4 +1,9 @@
-require "./yaml/**"
+require "./yaml/*"
+require "./yaml/schema/*"
+require "./yaml/schema/core/*"
+require "./yaml/nodes/*"
+require "semantic_version"
+
 require "base64"
 
 # The YAML module provides serialization and deserialization of YAML
@@ -7,7 +12,7 @@ require "base64"
 #
 # ### Parsing with `#parse` and `#parse_all`
 #
-# `YAML#parse` will return an `Any`, which is a convenient wrapper around all possible
+# `YAML.parse` will return an `Any`, which is a convenient wrapper around all possible
 # YAML core types, making it easy to traverse a complex YAML structure but requires
 # some casts from time to time, mostly via some method invocations.
 #
@@ -25,6 +30,17 @@ require "base64"
 # data["foo"]["bar"]["baz"][1].as_s # => "fox"
 # ```
 #
+# `YAML.parse` can read from an `IO` directly (such as a file) which saves
+# allocating a string:
+#
+# ```
+# require "yaml"
+#
+# yaml = File.open("path/to/file.yml") do |file|
+#   YAML.parse(file)
+# end
+# ```
+#
 # ### Parsing with `from_yaml`
 #
 # A type `T` can be deserialized from YAML by invoking `T.from_yaml(string_or_io)`.
@@ -34,7 +50,7 @@ require "base64"
 # anchored values (see `YAML::PullParser` for an explanation of this).
 #
 # Crystal primitive types, `Time`, `Bytes` and `Union` implement
-# this method. `YAML.mapping` can be used to implement this method
+# this method. `YAML::Serializable` can be used to implement this method
 # for user types.
 #
 # ### Dumping with `YAML.dump` or `#to_yaml`
@@ -48,7 +64,7 @@ require "base64"
 # `to_yaml(builder : YAML::Nodes::Builder`).
 #
 # Crystal primitive types, `Time` and `Bytes` implement
-# this method. `YAML.mapping` can be used to implement this method
+# this method. `YAML::Serializable` can be used to implement this method
 # for user types.
 #
 # ```
@@ -78,13 +94,10 @@ module YAML
       end
     end
 
-    def location
+    def location : {Int32, Int32}
       {line_number, column_number}
     end
   end
-
-  # All valid YAML core schema types.
-  alias Type = Nil | Bool | Int64 | Float64 | String | Time | Bytes | Array(Type) | Hash(Type, Type) | Set(Type)
 
   # Deserializes a YAML document according to the core schema.
   #
@@ -142,7 +155,14 @@ module YAML
   end
 
   # Serializes an object to YAML, writing it to *io*.
-  def self.dump(object, io : IO)
+  def self.dump(object, io : IO) : Nil
     object.to_yaml(io)
+  end
+
+  # Returns the used version of `libyaml`.
+  def self.libyaml_version : SemanticVersion
+    LibYAML.yaml_get_version(out major, out minor, out patch)
+
+    SemanticVersion.new(major, minor, patch)
   end
 end

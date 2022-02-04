@@ -1,0 +1,6 @@
+lib LibC
+  TCP_NODELAY   =    1
+  TCP_KEEPIDLE  =  256
+  TCP_KEEPINTVL =  512
+  TCP_KEEPCNT   = 1024
+end

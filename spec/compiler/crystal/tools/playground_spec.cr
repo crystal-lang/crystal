@@ -1,3 +1,5 @@
+{% skip_file if flag?(:without_playground) %}
+
 require "../../../spec_helper"
 
 private def instrument(source)
@@ -12,7 +14,7 @@ private def assert_agent(source, expected)
 
   instrument(source).should contain(expected)
 
-  # whatever case should work beforeit should work with appended lines
+  # whatever case should work before it should work with appended lines
   instrument("#{source}\n1\n").should contain(expected)
 end
 
@@ -47,10 +49,10 @@ describe Playground::Agent do
   it "should send json messages and return inspected value" do
     agent = TestAgent.new(".", 32)
     agent.i(1) { 5 }.should eq(5)
-    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"5","value_type":"Int32"}))
+    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"5","html_value":"5","value_type":"Int32"}))
     x, y = 3, 4
     agent.i(1, ["x", "y"]) { {x, y} }.should eq({3, 4})
-    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"{3, 4}","value_type":"Tuple(Int32, Int32)","data":{"x":"3","y":"4"}}))
+    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"{3, 4}","html_value":"{3, 4}","value_type":"Tuple(Int32, Int32)","data":{"x":"3","y":"4"}}))
   end
 end
 
@@ -317,7 +319,7 @@ describe Playground::AgentInstrumentorTransformer do
   end
 
   it "do not instrument top level macro calls" do
-    assert_agent(<<-CR
+    assert_agent(<<-FROM, <<-TO
     macro bar
       def foo
         4
@@ -325,8 +327,7 @@ describe Playground::AgentInstrumentorTransformer do
     end
     bar
     foo
-    CR
-    , <<-CR
+    FROM
     macro bar
       def foo
         4
@@ -334,12 +335,12 @@ describe Playground::AgentInstrumentorTransformer do
     end
     bar
     _p.i(7) { foo }
-    CR
+    TO
     )
   end
 
   it "do not instrument class/module declared macro" do
-    assert_agent(<<-CR
+    assert_agent(<<-FROM, <<-TO
     module Bar
       macro bar
         4
@@ -353,8 +354,7 @@ describe Playground::AgentInstrumentorTransformer do
         8
       end
     end
-    CR
-    , <<-CR
+    FROM
     module Bar
       macro bar
         4
@@ -368,7 +368,7 @@ describe Playground::AgentInstrumentorTransformer do
         _p.i(11) { 8 }
       end
     end
-    CR
+    TO
     )
   end
 
@@ -578,10 +578,10 @@ describe Playground::AgentInstrumentorTransformer do
 end
 
 private def assert_compile(source)
-  sources = Playground::Session.instrument_and_prelude("", "", 0, source, Logger.new(nil))
+  sources = Playground::Session.instrument_and_prelude("", "", 0, source)
   compiler = Compiler.new
   compiler.no_codegen = true
-  result = compiler.compile sources, "fake-no-build"
+  compiler.compile sources, "fake-no-build"
 end
 
 describe Playground::Session do

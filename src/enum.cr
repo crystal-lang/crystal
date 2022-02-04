@@ -26,7 +26,7 @@
 #
 # ### Flags enum
 #
-# An enum can be marked with the `@[Flags]` attribute. This changes the default values:
+# An enum can be marked with the `@[Flags]` annotation. This changes the default values:
 #
 # ```
 # @[Flags]
@@ -47,7 +47,7 @@
 # Color.new(1).to_s # => "Green"
 # ```
 #
-# Values that don't correspond to an enum's constants are allowed: the value
+# Values that don't correspond to enum's constants are allowed: the value
 # will still be of type Color, but when printed you will get the underlying value:
 #
 # ```
@@ -89,18 +89,23 @@
 struct Enum
   include Comparable(self)
 
+  # Returns *value*.
+  def self.new(value : self)
+    value
+  end
+
   # Appends a `String` representation of this enum member to the given *io*.
   #
   # See also: `to_s`.
   def to_s(io : IO) : Nil
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       if value == 0
         io << "None"
       else
         found = false
         {% for member in @type.constants %}
           {% if member.stringify != "All" %}
-            if {{@type}}::{{member}}.value != 0 && (value & {{@type}}::{{member}}.value) == {{@type}}::{{member}}.value
+            if {{@type.constant(member)}} != 0 && value.bits_set? {{@type.constant(member)}}
               io << " | " if found
               io << {{member.stringify}}
               found = true
@@ -117,7 +122,7 @@ struct Enum
 
   # Returns a `String` representation of this enum member.
   # In the case of regular enums, this is just the name of the member.
-  # In the case of flag enums, it's the names joined by commas, or "None",
+  # In the case of flag enums, it's the names joined by vertical bars, or "None",
   # if the value is zero.
   #
   # If an enum's value doesn't match a member's value, the raw value
@@ -131,17 +136,18 @@ struct Enum
   # Color.new(10).to_s # => "10"
   # ```
   def to_s : String
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       String.build { |io| to_s(io) }
     {% else %}
-      case value
-      {% for member in @type.constants %}
-      when {{@type}}::{{member}}.value
-        {{member.stringify}}
+      # Can't use `case` here because case with duplicate values do
+      # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
+      {% for member, i in @type.constants %}
+        if value == {{@type.constant(member)}}
+          return {{member.stringify}}
+        end
       {% end %}
-      else
-        value.to_s
-      end
+
+      value.to_s
     {% end %}
   end
 
@@ -164,6 +170,11 @@ struct Enum
     def to_{{name.id}} : {{type}}
       value.to_{{name.id}}
     end
+
+    # Returns the value of this enum member as a `{{type}}`
+    def to_{{name.id}}! : {{type}}
+      value.to_{{name.id}}!
+    end
   {% end %}
 
   # Returns the enum member that results from adding *other*
@@ -174,7 +185,7 @@ struct Enum
   # Color::Red + 2 # => Color::Blue
   # Color::Red + 3 # => Color.new(3)
   # ```
-  def +(other : Int)
+  def +(other : Int) : self
     self.class.new(value + other)
   end
 
@@ -186,7 +197,7 @@ struct Enum
   # Color::Blue - 2 # => Color::Red
   # Color::Blue - 3 # => Color.new(-1)
   # ```
-  def -(other : Int)
+  def -(other : Int) : self
     self.class.new(value - other)
   end
 
@@ -197,7 +208,7 @@ struct Enum
   # ```
   # (IOMode::Read | IOMode::Async) # => IOMode::Read | IOMode::Async
   # ```
-  def |(other : self)
+  def |(other : self) : self
     self.class.new(value | other.value)
   end
 
@@ -208,20 +219,20 @@ struct Enum
   # ```
   # (IOMode::Read | IOMode::Async) & IOMode::Read # => IOMode::Read
   # ```
-  def &(other : self)
+  def &(other : self) : self
     self.class.new(value & other.value)
   end
 
   # Returns the enum member that results from applying a logical
   # "xor" operation between this enum member's value and *other*.
   # This is mostly useful with flag enums.
-  def ^(other : self)
+  def ^(other : self) : self
     self.class.new(value ^ other.value)
   end
 
   # Returns the enum member that results from applying a logical
   # "not" operation of this enum member's value.
-  def ~
+  def ~ : self
     self.class.new(~value)
   end
 
@@ -235,6 +246,10 @@ struct Enum
   # ```
   def <=>(other : self)
     value <=> other.value
+  end
+
+  def ==(other)
+    false
   end
 
   # Returns `true` if this enum member's value includes *other*. This
@@ -260,7 +275,7 @@ struct Enum
   # mode.includes?(IOMode::Read)  # => true
   # mode.includes?(IOMode::Async) # => false
   # ```
-  def includes?(other : self)
+  def includes?(other : self) : Bool
     (value & other.value) != 0
   end
 
@@ -287,13 +302,13 @@ struct Enum
   #   # yield IOMode::Async, 3
   # end
   # ```
-  def each
-    {% if @type.has_attribute?("Flags") %}
+  def each(& : self ->)
+    {% if @type.annotation(Flags) %}
       return if value == 0
       {% for member in @type.constants %}
         {% if member.stringify != "All" %}
-          if includes?({{@type}}::{{member}})
-            yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
+          if includes?(self.class.new({{@type.constant(member)}}))
+            yield self.class.new({{@type.constant(member)}}), {{@type.constant(member)}}
           end
         {% end %}
       {% end %}
@@ -308,7 +323,7 @@ struct Enum
   # Color.names # => ["Red", "Green", "Blue"]
   # ```
   def self.names : Array(String)
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map &.stringify }}
     {% else %}
       {{ @type.constants.map &.stringify }}
@@ -321,7 +336,7 @@ struct Enum
   # Color.values # => [Color::Red, Color::Green, Color::Blue]
   # ```
   def self.values : Array(self)
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map { |e| "#{@type}::#{e.id}".id } }}
     {% else %}
       {{ @type.constants.map { |e| "#{@type}::#{e.id}".id } }}
@@ -337,16 +352,14 @@ struct Enum
   # Color.from_value?(2) # => Color::Blue
   # Color.from_value?(3) # => nil
   # ```
-  def self.from_value?(value) : self?
-    {% if @type.has_attribute?("Flags") %}
-      mask = {% for member, i in @type.constants %}\
-        {% if i != 0 %} | {% end %}\
-        {{@type}}::{{member}}.value{% end %}
-      return if (mask & value != value) || (value == 0 && values.none? { |val| val.to_i == 0 })
-      return new(value)
+  def self.from_value?(value : Int) : self?
+    {% if @type.annotation(Flags) %}
+      all_mask = {{@type}}::All.value
+      return if all_mask & value != value
+      return new(all_mask.class.new(value))
     {% else %}
       {% for member in @type.constants %}
-        return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
+        return new({{@type.constant(member)}}) if {{@type.constant(member)}} == value
       {% end %}
     {% end %}
     nil
@@ -361,8 +374,23 @@ struct Enum
   # Color.from_value(2) # => Color::Blue
   # Color.from_value(3) # raises Exception
   # ```
-  def self.from_value(value) : self
+  def self.from_value(value : Int) : self
     from_value?(value) || raise "Unknown enum #{self} value: #{value}"
+  end
+
+  # Returns `true` if the given *value* is an enum member, otherwise `false`.
+  # `false` if not member.
+  #
+  # ```
+  # Color.valid?(Color::Red)   # => true
+  # Color.valid?(Color.new(4)) # => false
+  # ```
+  #
+  # NOTE: This is a class method, not an instance method because
+  # an instance method `valid?` is defined by the language when a user
+  # defines an enum member named `Valid`.
+  def self.valid?(value : self) : Bool
+    !!from_value?(value.value)
   end
 
   # def self.to_h : Hash(String, self)
@@ -376,37 +404,49 @@ struct Enum
   # Returns the enum member that has the given name, or
   # raises `ArgumentError` if no such member exists. The comparison is made by using
   # `String#camelcase` and `String#downcase` between *string* and
-  # the enum members names, so a member named "FourtyTwo" or "FOURTY_TWO"
-  # is found with any of these strings: "fourty_two", "FourtyTwo", "FOURTY_TWO",
-  # "FOURTYTWO", "fourtytwo".
+  # the enum members names, so a member named "FortyTwo" or "FORTY_TWO"
+  # is found with any of these strings: "forty_two", "FortyTwo", "FORTY_TWO",
+  # "FORTYTWO", "fortytwo".
   #
   # ```
   # Color.parse("Red")    # => Color::Red
   # Color.parse("BLUE")   # => Color::Blue
   # Color.parse("Yellow") # raises ArgumentError
   # ```
-  def self.parse(string) : self
+  def self.parse(string : String) : self
     parse?(string) || raise ArgumentError.new("Unknown enum #{self} value: #{string}")
   end
 
   # Returns the enum member that has the given name, or
   # `nil` if no such member exists. The comparison is made by using
   # `String#camelcase` and `String#downcase` between *string* and
-  # the enum members names, so a member named "FourtyTwo" or "FOURTY_TWO"
-  # is found with any of these strings: "fourty_two", "FourtyTwo", "FOURTY_TWO",
-  # "FOURTYTWO", "fourtytwo".
+  # the enum members names, so a member named "FortyTwo" or "FORTY_TWO"
+  # is found with any of these strings: "forty_two", "FortyTwo", "FORTY_TWO",
+  # "FORTYTWO", "fortytwo".
   #
   # ```
   # Color.parse?("Red")    # => Color::Red
   # Color.parse?("BLUE")   # => Color::Blue
   # Color.parse?("Yellow") # => nil
   # ```
-  def self.parse?(string) : self?
+  #
+  # If multiple members match the same normalized string, the first one is returned.
+  def self.parse?(string : String) : self?
     {% begin %}
       case string.camelcase.downcase
+      # Temporarily map all constants to their normalized value in order to
+      # avoid duplicates in the `case` conditions.
+      # `FOO` and `Foo` members would both generate `when "foo"` which creates a compile time error.
+      # The first matching member is chosen, like with symbol autocasting.
+      # That's different from the predicate methods which return true for the last matching member.
+      {% constants = {} of _ => _ %}
       {% for member in @type.constants %}
-        when {{member.stringify.camelcase.downcase}}
-          {{@type}}::{{member}}
+        {% key = member.stringify.camelcase.downcase %}
+        {% constants[key] = member unless constants[key] %}
+      {% end %}
+      {% for name, member in constants %}
+        when {{name}}
+          new({{@type.constant(member)}})
       {% end %}
       else
         nil
@@ -439,10 +479,10 @@ struct Enum
   #   # yield IOMode::Async, 3
   # end
   # ```
-  def self.each
+  def self.each(& : self ->)
     {% for member in @type.constants %}
-      {% unless @type.has_attribute?("Flags") && %w(none all).includes?(member.stringify.downcase) %}
-        yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
+      {% unless @type.annotation(Flags) && %w(none all).includes?(member.stringify.downcase) %}
+        yield new({{@type.constant(member)}}), {{@type.constant(member)}}
       {% end %}
     {% end %}
   end

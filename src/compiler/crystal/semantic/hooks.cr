@@ -7,7 +7,7 @@ module Crystal
       @finished_hooks << FinishedHook.new(scope, a_macro, node)
     end
 
-    # Visit all finished hooks with the given visitor
+    # Visits all finished hooks with the given visitor
     def process_finished_hooks(visitor)
       @finished_hooks.each do |hook|
         if visitor.is_a?(SemanticVisitor)
@@ -29,7 +29,7 @@ module Crystal
 
   # Holds hook expansions.
   #
-  # For example, a `ClassDef` node will include macro exapnsions
+  # For example, a `ClassDef` node will include macro expansions
   # that result from the `inherited` hook. So in this code:
   #
   # ```
@@ -77,7 +77,7 @@ module Crystal
     #
     # ```
     # module Moo
-    #   macro extended
+    #   macro included
     #     puts 1
     #   end
     # end

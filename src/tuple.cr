@@ -13,6 +13,8 @@
 # tuple[2]                  # => 'x'
 # ```
 #
+# See [`Tuple` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/tuple.html) in the language reference.
+#
 # The compiler knows what types are in each position, so when indexing
 # a tuple with an integer literal the compiler will return
 # the value in that index and with the expected type, like in the above
@@ -22,6 +24,15 @@
 # Indexing with an integer value that is only known at runtime will return
 # a value whose type is the union of all the types in the tuple, and might raise
 # `IndexError`.
+#
+# Indexing with a range literal known at compile-time is also allowed, and the
+# returned value will have the correct sub-tuple type:
+#
+# ```
+# tuple = {1, "hello", 'x'} # Tuple(Int32, String, Char)
+# sub = tuple[0..1]         # => {1, "hello"}
+# typeof(sub)               # => Tuple(Int32, String)
+# ```
 #
 # Tuples are the preferred way to return fixed-size multiple return
 # values because no memory is needed to be allocated for them:
@@ -66,10 +77,10 @@ struct Tuple
   include Indexable(Union(*T))
   include Comparable(Tuple)
 
-  # Creates a tuple that will contain the given arguments.
+  # Creates a tuple that will contain the given values.
   #
   # This method is useful in macros and generic code because with it you can
-  # creates empty tuples, something that you can't do with a tuple literal.
+  # create empty tuples, something that you can't do with a tuple literal.
   #
   # ```
   # Tuple.new(1, "hello", 'x') #=> {1, "hello", 'x'}
@@ -78,14 +89,32 @@ struct Tuple
   # {}                         # syntax error
   # ```
   def self.new(*args : *T)
-    args
+    {% if @type.name(generic_args: false) == "Tuple" %}
+      # deduced type vars
+      args
+    {% elsif @type.name(generic_args: false) == "Tuple()" %}
+      # special case: empty tuple
+      args
+    {% else %}
+      # explicitly provided type vars
+      {% begin %}
+        {
+          {% for i in 0...@type.size %}
+            args[{{ i }}].as(typeof(begin
+              x = uninitialized self
+              x[{{ i }}]
+            end)),
+          {% end %}
+        }
+      {% end %}
+    {% end %}
   end
 
   # Creates a tuple from the given array, with elements casted to the given types.
   #
   # ```
-  # Tuple(String, Int64).from(["world", 2])       # => {"world", 2}
-  # Tuple(String, Int64).from(["world", 2]).class # => {String, Int64}
+  # Tuple(String, Int64).from(["world", 2_i64])       # => {"world", 2_i64}
+  # Tuple(String, Int64).from(["world", 2_i64]).class # => Tuple(String, Int64)
   # ```
   #
   # See also: `#from`.
@@ -101,11 +130,13 @@ struct Tuple
   # This allows you to easily pass an array as individual arguments to a method.
   #
   # ```
+  # require "json"
+  #
   # def speak_about(thing : String, n : Int64)
   #   "I see #{n} #{thing}s"
   # end
   #
-  # data = JSON.parse(%(["world", 2])).as_a
+  # data = JSON.parse(%(["world", 2])).as_a.map(&.raw)
   # speak_about(*{String, Int64}.from(data)) # => "I see 2 worlds"
   # ```
   def from(array : Array)
@@ -122,7 +153,7 @@ struct Tuple
     {% end %}
   end
 
-  def unsafe_at(index : Int)
+  def unsafe_fetch(index : Int)
     self[index]
   end
 
@@ -153,6 +184,32 @@ struct Tuple
   # ```
   def []?(index : Int)
     at(index) { nil }
+  end
+
+  # Returns all elements that are within the given *range*. *range* must be a
+  # range literal whose value is known at compile-time.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element). Additionally, an empty array is returned when the starting index
+  # for an element range is at the end of the array.
+  #
+  # Raises a compile-time error if `range.begin` is out of range.
+  #
+  # ```
+  # tuple = {1, "hello", 'x'}
+  # tuple[0..1] # => {1, "hello"}
+  # tuple[-2..] # => {"hello", 'x'}
+  # tuple[...1] # => {1}
+  # tuple[4..]  # Error: begin index out of bounds for Tuple(Int32, Char, Array(Int32), String) (5 not in -4..4)
+  #
+  # i = 0
+  # tuple[i..2] # Error: Tuple#[](Range) can only be called with range literals known at compile-time
+  #
+  # i = 0..2
+  # tuple[i] # Error: Tuple#[](Range) can only be called with range literals known at compile-time
+  # ```
+  def [](range : Range)
+    {% raise "Tuple#[](Range) can only be called with range literals known at compile-time" %}
   end
 
   # Returns the element at the given *index* or raises IndexError if out of bounds.
@@ -198,14 +255,14 @@ struct Tuple
   # "hello"
   # 'x'
   # ```
-  def each : Nil
+  def each(& : Union(*T) ->) : Nil
     {% for i in 0...T.size %}
       yield self[{{i}}]
     {% end %}
   end
 
   # Returns `true` if this tuple has the same size as the other tuple
-  # and their elements are equal to each other when  compared with `==`.
+  # and their elements are equal to each other when compared with `==`.
   #
   # ```
   # t1 = {1, "hello"}
@@ -222,7 +279,7 @@ struct Tuple
     true
   end
 
-  # ditto
+  # :ditto:
   def ==(other : Tuple)
     return false unless size == other.size
 
@@ -269,13 +326,13 @@ struct Tuple
     true
   end
 
-  # Implements the comparison operator.
+  # The comparison operator.
   #
-  # Each object in each tuple is compared (using the `<=>` operator).
+  # Each object in each tuple is compared using the `<=>` operator.
   #
   # Tuples are compared in an "element-wise" manner; the first element of this tuple is
   # compared with the first one of *other* using the `<=>` operator, then each of the second elements,
-  # etc. As soon as the result of any such comparison is non zero
+  # etc. As soon as the result of any such comparison is non-zero
   # (i.e. the two corresponding elements are not equal), that result is returned for the whole tuple comparison.
   #
   # If all the elements are equal, then the result is based on a comparison of the tuple sizes.
@@ -284,11 +341,9 @@ struct Tuple
   #
   # ```
   # {"a", "a", "c"} <=> {"a", "b", "c"} # => -1
-  # {1, 2, 3, 4, 5, 6} <=> {1, 2}       # => +1
+  # {1, 2, 3, 4, 5, 6} <=> {1, 2}       # => 1
   # {1, 2} <=> {1, 2.0}                 # => 0
   # ```
-  #
-  # See also: `Object#<=>`.
   def <=>(other : self)
     {% for i in 0...T.size %}
       cmp = self[{{i}}] <=> other[{{i}}]
@@ -297,7 +352,7 @@ struct Tuple
     0
   end
 
-  # ditto
+  # :ditto:
   def <=>(other : Tuple)
     min_size = Math.min(size, other.size)
     min_size.times do |i|
@@ -372,8 +427,17 @@ struct Tuple
   end
 
   # Same as `to_s`.
-  def inspect
+  def inspect : String
     to_s
+  end
+
+  def to_a
+    Array(Union(*T)).build(size) do |buffer|
+      {% for i in 0...T.size %}
+        buffer[{{i}}] = self[{{i}}]
+      {% end %}
+      size
+    end
   end
 
   # Appends a string representation of this tuple to the given `IO`.
@@ -382,10 +446,10 @@ struct Tuple
   # tuple = {1, "hello"}
   # tuple.to_s # => "{1, \"hello\"}"
   # ```
-  def to_s(io)
-    io << "{"
-    join ", ", io, &.inspect(io)
-    io << "}"
+  def to_s(io : IO) : Nil
+    io << '{'
+    join io, ", ", &.inspect(io)
+    io << '}'
   end
 
   def pretty_print(pp) : Nil
@@ -398,7 +462,7 @@ struct Tuple
   # tuple = {1, 2.5, "a"}
   # tuple.map &.to_s # => {"1", "2.5", "a"}
   # ```
-  def map
+  def map(& : Union(*T) ->)
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
@@ -414,11 +478,14 @@ struct Tuple
   # tuple = {1, 2.5, "a"}
   # tuple.map_with_index { |e, i| "tuple[#{i}]: #{e}" } # => {"tuple[0]: 1", "tuple[1]: 2.5", "tuple[2]: a"}
   # ```
-  def map_with_index
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0)
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
-          (yield self[{{i}}], {{i}}),
+          (yield self[{{i}}], offset + {{i}}),
         {% end %}
       )
     {% end %}
@@ -456,11 +523,39 @@ struct Tuple
   # "hello"
   # 1
   # ```
-  def reverse_each
+  def reverse_each(& : Union(*T) ->)
     {% for i in 1..T.size %}
       yield self[{{T.size - i}}]
     {% end %}
     nil
+  end
+
+  # :inherit:
+  def reduce
+    {% if T.empty? %}
+      raise Enumerable::EmptyError.new
+    {% else %}
+      memo = self[0]
+      {% for i in 1...T.size %}
+        memo = yield memo, self[{{ i }}]
+      {% end %}
+      memo
+    {% end %}
+  end
+
+  # :inherit:
+  def reduce(memo)
+    {% for i in 0...T.size %}
+      memo = yield memo, self[{{ i }}]
+    {% end %}
+    memo
+  end
+
+  # :inherit:
+  def reduce?
+    {% unless T.empty? %}
+      reduce { |memo, elem| yield memo, elem }
+    {% end %}
   end
 
   # Returns the first element of this tuple. Doesn't compile
