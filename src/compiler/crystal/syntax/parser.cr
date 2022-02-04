@@ -4714,6 +4714,7 @@ module Crystal
 
         parse_out
       else
+        location = @token.location
         splat = nil
         case @token.type
         when :"*"
@@ -4742,9 +4743,9 @@ module Crystal
 
         case splat
         when :single
-          arg = Splat.new(arg).at(arg.location)
+          arg = Splat.new(arg).at(location).at_end(arg)
         when :double
-          arg = DoubleSplat.new(arg).at(arg.location)
+          arg = DoubleSplat.new(arg).at(location).at_end(arg)
         else
           # no splat
         end
