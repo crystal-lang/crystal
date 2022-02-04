@@ -4735,31 +4735,25 @@ module Crystal
     end
 
     def parse_out
-      next_token_skip_space_or_newline
       location = @token.location
+      next_token_skip_space_or_newline
       name = @token.value.to_s
 
       case @token.type
       when :IDENT
-        var = Var.new(name).at(location)
-        var_out = Out.new(var).at(location)
+        var = Var.new(name)
         push_var var
-
-        next_token
-        var_out
       when :INSTANCE_VAR
-        ivar = InstanceVar.new(name).at(location)
-        ivar_out = Out.new(ivar).at(location)
-        next_token
-        ivar_out
+        var = InstanceVar.new(name)
       when :UNDERSCORE
-        underscore = Underscore.new.at(location)
-        var_out = Out.new(underscore).at(location)
-        next_token
-        var_out
+        var = Underscore.new
       else
         raise "expecting variable or instance variable after out"
       end
+      var.location = @token.location
+      var.end_location = token_end_location
+      next_token
+      Out.new(var).at(location).at_end(var)
     end
 
     def parse_generic_or_global_call
