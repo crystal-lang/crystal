@@ -147,12 +147,16 @@ export CRYSTAL_HAS_WRAPPER=true
 
 export CRYSTAL="${CRYSTAL:-"crystal"}"
 
+# check if the crystal command refers to this script
 if [ "$(realpath "$(command -v "$CRYSTAL")")" = "$SCRIPT_PATH" ]; then
+  # remove the path to this script from PATH
   NEW_PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")"
+  # if the PATH did not change it will lead to an infinite recursion => display error
   if [ "$NEW_PATH" = "$PATH" ]; then
     __error_msg 'Could not remove the script bin/crystal from the PATH. Remove it by hand or set the CRYSTAL env variable'
     exit 1
   fi
+  # re-execute this script with the cleaned up PATH
   export PATH="$(NEW_PATH)"
   exec "$SCRIPT_PATH" "$@"
 fi
