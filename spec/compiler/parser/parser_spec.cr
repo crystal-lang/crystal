@@ -2214,6 +2214,61 @@ module Crystal
         loc.column_number.should eq(1)
       end
 
+      it "sets correct location of `else` of if statement" do
+        parser = Parser.new("if foo\nelse\nend")
+        node = parser.parse.as(If)
+        node.location.not_nil!.line_number.should eq(1)
+        node.else_location.not_nil!.line_number.should eq(2)
+        node.end_location.not_nil!.line_number.should eq(3)
+      end
+
+      it "sets correct location of `elsif` of if statement" do
+        parser = Parser.new("if foo\nelsif bar\nend")
+        node = parser.parse.as(If)
+        node.location.not_nil!.line_number.should eq(1)
+        node.else_location.not_nil!.line_number.should eq(2)
+        node.end_location.not_nil!.line_number.should eq(3)
+      end
+
+      it "sets correct location of `else` of unless statement" do
+        parser = Parser.new("unless foo\nelse\nend")
+        node = parser.parse.as(Unless)
+        node.location.not_nil!.line_number.should eq(1)
+        node.else_location.not_nil!.line_number.should eq(2)
+        node.end_location.not_nil!.line_number.should eq(3)
+      end
+
+      it "sets correct location and end location of `begin` block" do
+        parser = Parser.new("begin\nfoo\nend")
+        node = parser.parse.as(Expressions)
+        node.location.not_nil!.line_number.should eq(1)
+        node.end_location.not_nil!.line_number.should eq(3)
+      end
+
+      it "sets correct location and end location of parenthesized empty block" do
+        parser = Parser.new("()")
+        node = parser.parse.as(Expressions)
+        node.location.not_nil!.column_number.should eq(1)
+        node.end_location.not_nil!.column_number.should eq(2)
+      end
+
+      it "sets correct location and end location of parenthesized block" do
+        parser = Parser.new("(foo; bar)")
+        node = parser.parse.as(Expressions)
+        node.location.not_nil!.column_number.should eq(1)
+        node.end_location.not_nil!.column_number.should eq(10)
+      end
+
+      it "sets correct locations of keywords of exception handler" do
+        parser = Parser.new("begin\nrescue\nelse\nensure\nend")
+        node = parser.parse.as(ExceptionHandler)
+        node.location.not_nil!.line_number.should eq(1)
+        node.rescues.not_nil!.first.location.not_nil!.line_number.should eq(2)
+        node.else_location.not_nil!.line_number.should eq(3)
+        node.ensure_location.not_nil!.line_number.should eq(4)
+        node.end_location.not_nil!.line_number.should eq(5)
+      end
+
       it "doesn't override yield with macro yield" do
         parser = Parser.new("def foo; yield 1; {% begin %} yield 1 {% end %}; end")
         a_def = parser.parse.as(Def)

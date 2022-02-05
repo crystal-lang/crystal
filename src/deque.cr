@@ -198,7 +198,7 @@ class Deque(T)
   end
 
   # Modifies `self`, keeping only the elements in the collection for which the
-  # passed block returns `true`. Returns `self`.
+  # passed block is truthy. Returns `self`.
   #
   # ```
   # a = Deque{1, 6, 2, 4, 8}
@@ -226,7 +226,7 @@ class Deque(T)
   end
 
   # Modifies `self`, deleting the elements in the collection for which the
-  # passed block returns `true`. Returns `self`.
+  # passed block is truthy. Returns `self`.
   #
   # ```
   # a = Deque{1, 6, 2, 4, 8}

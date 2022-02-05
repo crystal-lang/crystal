@@ -1428,7 +1428,7 @@ class Hash(K, V)
     end
   end
 
-  # Returns a new hash consisting of entries for which the block returns `true`.
+  # Returns a new hash consisting of entries for which the block is truthy.
   # ```
   # h = {"a" => 100, "b" => 200, "c" => 300}
   # h.select { |k, v| k > "a" } # => {"b" => 200, "c" => 300}
@@ -1443,7 +1443,7 @@ class Hash(K, V)
     reject! { |k, v| !yield(k, v) }
   end
 
-  # Returns a new hash consisting of entries for which the block returns `false`.
+  # Returns a new hash consisting of entries for which the block is falsey.
   # ```
   # h = {"a" => 100, "b" => 200, "c" => 300}
   # h.reject { |k, v| k > "a" } # => {"a" => 100}

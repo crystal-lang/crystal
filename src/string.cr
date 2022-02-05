@@ -891,10 +891,29 @@ class String
     end
   end
 
+  # Returns the character at *index* or `nil` if it's out of range.
+  #
+  # Negative indices can be used to start counting from the end of the string.
+  #
+  # See `#[]` for a raising alternative.
+  #
+  # ```
+  # "hello"[0]?  # => 'h'
+  # "hello"[1]?  # => 'e'
+  # "hello"[-1]? # => 'o'
+  # "hello"[-2]? # => 'l'
+  # "hello"[5]?  # => nil
+  # ```
   def []?(index : Int) : Char?
     char_at(index) { nil }
   end
 
+  # Returns *str* if *str* is found in this string, or `nil` otherwise.
+  #
+  # ```
+  # "crystal"["cry"]?  # => "cry"
+  # "crystal"["ruby"]? # => nil
+  # ```
   def []?(str : String | Char)
     includes?(str) ? str : nil
   end
@@ -908,6 +927,12 @@ class String
     match[group]? if match
   end
 
+  # Returns *str* if *str* is found in this string.
+  #
+  # ```
+  # "crystal"["cry"]  # => "cry"
+  # "crystal"["ruby"] # raises NilAssertionError
+  # ```
   def [](str : String | Char)
     self[str]?.not_nil!
   end

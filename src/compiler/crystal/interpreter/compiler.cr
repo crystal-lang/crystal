@@ -317,34 +317,32 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def compile_number(node, kind, value)
     case kind
-    when :i8
+    in .i8?
       put_i8 value.to_i8, node: node
-    when :u8
+    in .u8?
       put_u8 value.to_u8, node: node
-    when :i16
+    in .i16?
       put_i16 value.to_i16, node: node
-    when :u16
+    in .u16?
       put_u16 value.to_u16, node: node
-    when :i32
+    in .i32?
       put_i32 value.to_i32, node: node
-    when :u32
+    in .u32?
       put_u32 value.to_u32, node: node
-    when :i64
+    in .i64?
       put_i64 value.to_i64, node: node
-    when :u64
+    in .u64?
       put_u64 value.to_u64, node: node
-    when :i128
+    in .i128?
       # TODO: implement String#to_i128 and use it
       put_i128 value.to_i64.to_i128!, node: node
-    when :u128
+    in .u128?
       # TODO: implement String#to_i128 and use it
       put_u128 value.to_u64.to_u128!, node: node
-    when :f32
+    in .f32?
       put_i32 value.to_f32.unsafe_as(Int32), node: node
-    when :f64
+    in .f64?
       put_i64 value.to_f64.unsafe_as(Int64), node: node
-    else
-      node.raise "BUG: missing interpret for NumberLiteral with kind #{kind}"
     end
   end
 

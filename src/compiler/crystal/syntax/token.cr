@@ -177,7 +177,7 @@ module Crystal
 
     property type : Kind
     property value : Char | String | Symbol | Nil
-    property number_kind : Symbol
+    property number_kind : NumberKind
     property line_number : Int32
     property column_number : Int32
     property filename : String | VirtualFile | Nil
@@ -252,7 +252,7 @@ module Crystal
 
     def initialize
       @type = Kind::EOF
-      @number_kind = :i32
+      @number_kind = NumberKind::I32
       @line_number = 0
       @column_number = 0
       @delimiter_state = DelimiterState.default

@@ -693,7 +693,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if default_value.is_a?(Crystal::NumberLiteral)
         enum_base_kind = base_type.kind
-        if (enum_base_kind == :i32) && (enum_base_kind != default_value.kind)
+        if (enum_base_kind.i32?) && (enum_base_kind != default_value.kind)
           default_value.raise "enum value must be an Int32"
         end
       end
