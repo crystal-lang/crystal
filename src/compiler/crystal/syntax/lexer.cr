@@ -410,39 +410,39 @@ module Crystal
               @token.type = :OP_PERCENT
             end
           when '}'
-            next_char :OP_PERCENT_CURLYR
+            next_char :OP_PERCENT_RCURLY
           else
             @token.type = :OP_PERCENT
           end
         end
-      when '(' then next_char :OP_PARENL
-      when ')' then next_char :OP_PARENR
+      when '(' then next_char :OP_LPAREN
+      when ')' then next_char :OP_RPAREN
       when '{'
         char = next_char
         case char
         when '%'
-          next_char :OP_CURLYL_PERCENT
+          next_char :OP_LCURLY_PERCENT
         when '{'
-          next_char :OP_CURLYL_CURLYL
+          next_char :OP_LCURLY_LCURLY
         else
-          @token.type = :OP_CURLYL
+          @token.type = :OP_LCURLY
         end
-      when '}' then next_char :OP_CURLYR
+      when '}' then next_char :OP_RCURLY
       when '['
         case next_char
         when ']'
           case next_char
           when '='
-            next_char :OP_SQUAREL_SQUARER_EQ
+            next_char :OP_LSQUARE_RSQUARE_EQ
           when '?'
-            next_char :OP_SQUAREL_SQUARER_QUESTION
+            next_char :OP_LSQUARE_RSQUARE_QUESTION
           else
-            @token.type = :OP_SQUAREL_SQUARER
+            @token.type = :OP_LSQUARE_RSQUARE
           end
         else
-          @token.type = :OP_SQUAREL
+          @token.type = :OP_LSQUARE
         end
-      when ']' then next_char :OP_SQUARER
+      when ']' then next_char :OP_RSQUARE
       when ',' then next_char :OP_COMMA
       when '?' then next_char :OP_QUESTION
       when ';'
@@ -780,7 +780,7 @@ module Crystal
         start = current_pos
         case next_char
         when '['
-          next_char :OP_AT_SQUAREL
+          next_char :OP_AT_LSQUARE
         else
           class_var = false
           if current_char == '@'

@@ -52,7 +52,7 @@ module Crystal
       OP_DOLLAR_TILDE             # $~
       OP_PERCENT                  # %
       OP_PERCENT_EQ               # %=
-      OP_PERCENT_CURLYR           # %}
+      OP_PERCENT_RCURLY           # %}
       OP_AMP                      # &
       OP_AMP_AMP                  # &&
       OP_AMP_AMP_EQ               # &&=
@@ -64,8 +64,8 @@ module Crystal
       OP_AMP_MINUS                # &-
       OP_AMP_MINUS_EQ             # &-=
       OP_AMP_EQ                   # &=
-      OP_PARENL                   # (
-      OP_PARENR                   # )
+      OP_LPAREN                   # (
+      OP_RPAREN                   # )
       OP_STAR                     # *
       OP_STAR_STAR                # **
       OP_STAR_STAR_EQ             # **=
@@ -101,23 +101,23 @@ module Crystal
       OP_GT_GT                    # >>
       OP_GT_GT_EQ                 # >>=
       OP_QUESTION                 # ?
-      OP_AT_SQUAREL               # @[
-      OP_SQUAREL                  # [
-      OP_SQUAREL_SQUARER          # []
-      OP_SQUAREL_SQUARER_EQ       # []=
-      OP_SQUAREL_SQUARER_QUESTION # []?
-      OP_SQUARER                  # ]
+      OP_AT_LSQUARE               # @[
+      OP_LSQUARE                  # [
+      OP_LSQUARE_RSQUARE          # []
+      OP_LSQUARE_RSQUARE_EQ       # []=
+      OP_LSQUARE_RSQUARE_QUESTION # []?
+      OP_RSQUARE                  # ]
       OP_CARET                    # ^
       OP_CARET_EQ                 # ^=
       OP_GRAVE                    # `
-      OP_CURLYL                   # {
-      OP_CURLYL_PERCENT           # {%
-      OP_CURLYL_CURLYL            # {{
+      OP_LCURLY                   # {
+      OP_LCURLY_PERCENT           # {%
+      OP_LCURLY_LCURLY            # {{
       OP_BAR                      # |
       OP_BAR_EQ                   # |=
       OP_BAR_BAR                  # ||
       OP_BAR_BAR_EQ               # ||=
-      OP_CURLYR                   # }
+      OP_RCURLY                   # }
       OP_TILDE                    # ~
 
       # non-flag enums are special since the `IO` overload relies on the
@@ -126,18 +126,18 @@ module Crystal
         {% begin %}
           {%
             operator1 = {
-              "BANG" => "!", "DOLLAR" => "$", "PERCENT" => "%", "AMP" => "&", "PARENL" => "(",
-              "PARENR" => ")", "STAR" => "*", "PLUS" => "+", "COMMA" => ",", "MINUS" => "-",
+              "BANG" => "!", "DOLLAR" => "$", "PERCENT" => "%", "AMP" => "&", "LPAREN" => "(",
+              "RPAREN" => ")", "STAR" => "*", "PLUS" => "+", "COMMA" => ",", "MINUS" => "-",
               "PERIOD" => ".", "SLASH" => "/", "COLON" => ":", "SEMICOLON" => ";", "LT" => "<",
-              "EQ" => "=", "GT" => ">", "QUESTION" => "?", "AT" => "@", "SQUAREL" => "[",
-              "SQUARER" => "]", "CARET" => "^", "GRAVE" => "`", "CURLYL" => "{", "BAR" => "|",
-              "CURLYR" => "}", "TILDE" => "~",
+              "EQ" => "=", "GT" => ">", "QUESTION" => "?", "AT" => "@", "LSQUARE" => "[",
+              "RSQUARE" => "]", "CARET" => "^", "GRAVE" => "`", "LCURLY" => "{", "BAR" => "|",
+              "RCURLY" => "}", "TILDE" => "~",
             }
           %}
 
-          case value
+          case self
           {% for member in @type.constants %}
-          when {{ @type.constant(member) }}
+          in {{ member.id }}
             {% if member.starts_with?("OP_") %}
               {% parts = member.split("_") %}
               {{ parts.map { |ch| operator1[ch] || "" }.join("") }}
@@ -147,8 +147,6 @@ module Crystal
               {{ member.stringify }}
             {% end %}
           {% end %}
-          else
-            value.to_s
           end
         {% end %}
       end

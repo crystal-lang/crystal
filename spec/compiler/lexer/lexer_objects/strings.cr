@@ -72,7 +72,7 @@ module LexerObjects
       token.value.should eq(interpolated_variable_name)
 
       @token = lexer.next_token
-      token.type.should eq(t :OP_CURLYR)
+      token.type.should eq(t :OP_RCURLY)
     end
 
     def token_should_be_at(line = nil, column = nil)

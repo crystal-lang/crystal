@@ -32,8 +32,8 @@ describe "Lexer macro" do
     token.type.should eq(t :IDENT)
     token.value.should eq("world")
 
-    lexer.next_token.type.should eq(t :OP_CURLYR)
-    lexer.next_token.type.should eq(t :OP_CURLYR)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
 
     token = lexer.next_macro_token(token_before_expression.macro_state, false)
     token.type.should eq(t :MACRO_LITERAL)
@@ -61,8 +61,8 @@ describe "Lexer macro" do
       token.type.should eq(t :IDENT)
       token.value.should eq("world")
 
-      lexer.next_token.type.should eq(t :OP_CURLYR)
-      lexer.next_token.type.should eq(t :OP_CURLYR)
+      lexer.next_token.type.should eq(t :OP_RCURLY)
+      lexer.next_token.type.should eq(t :OP_RCURLY)
 
       token = lexer.next_macro_token(token_before_expression.macro_state, false)
       token.type.should eq(t :MACRO_LITERAL)
@@ -98,8 +98,8 @@ describe "Lexer macro" do
     token.type.should eq(t :IDENT)
     token.value.should eq("world")
 
-    lexer.next_token.type.should eq(t :OP_CURLYR)
-    lexer.next_token.type.should eq(t :OP_CURLYR)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
 
     token = lexer.next_macro_token(token_before_expression.macro_state, false)
     token.type.should eq(t :MACRO_LITERAL)
@@ -130,8 +130,8 @@ describe "Lexer macro" do
     token.type.should eq(t :IDENT)
     token.value.should eq("world")
 
-    lexer.next_token.type.should eq(t :OP_CURLYR)
-    lexer.next_token.type.should eq(t :OP_CURLYR)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
 
     token = lexer.next_macro_token(token_before_expression.macro_state, false)
     token.type.should eq(t :MACRO_LITERAL)
@@ -158,8 +158,8 @@ describe "Lexer macro" do
     token.type.should eq(t :IDENT)
     token.value.should eq("world")
 
-    lexer.next_token.type.should eq(t :OP_CURLYR)
-    lexer.next_token.type.should eq(t :OP_CURLYR)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
 
     token = lexer.next_macro_token(token_before_expression.macro_state, false)
     token.type.should eq(t :MACRO_LITERAL)
@@ -216,8 +216,8 @@ describe "Lexer macro" do
     token.line_number.should eq(3)
     token.column_number.should eq(7)
 
-    lexer.next_token.type.should eq(t :OP_CURLYR)
-    lexer.next_token.type.should eq(t :OP_CURLYR)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
 
     token = lexer.next_macro_token(Token::MacroState.default, false)
     token.type.should eq(t :MACRO_LITERAL)
@@ -284,8 +284,8 @@ describe "Lexer macro" do
     token.type.should eq(t :IDENT)
     token.value.should eq("foo")
 
-    lexer.next_token.type.should eq(t :OP_CURLYR)
-    lexer.next_token.type.should eq(t :OP_CURLYR)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
 
     token = lexer.next_macro_token(macro_state, false)
     token.type.should eq(t :MACRO_LITERAL)
@@ -375,8 +375,8 @@ describe "Lexer macro" do
     token.type.should eq(t :IDENT)
     token.value.should eq("name")
 
-    lexer.next_token.type.should eq(t :OP_CURLYR)
-    lexer.next_token.type.should eq(t :OP_CURLYR)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
+    lexer.next_token.type.should eq(t :OP_RCURLY)
 
     token = lexer.next_macro_token(token_before_expression.macro_state, false)
     token.type.should eq(t :MACRO_LITERAL)

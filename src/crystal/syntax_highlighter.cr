@@ -86,7 +86,7 @@ abstract class Crystal::SyntaxHighlighter
         end
       when .string_array_start?, .symbol_array_start?
         highlight_string_array lexer, token
-      when .op_curlyr?
+      when .op_rcurly?
         break if break_on_rcurly
 
         highlight_token token, last_is_def
@@ -168,7 +168,7 @@ abstract class Crystal::SyntaxHighlighter
     when .op_plus?, .op_minus?, .op_star?, .op_amp_plus?, .op_amp_minus?, .op_amp_star?, .op_slash?, .op_slash_slash?,           # + - * &+ &- &* / //
          .op_eq?, .op_eq_eq?, .op_lt?, .op_lt_eq?, .op_gt?, .op_gt_eq?, .op_bang?, .op_bang_eq?, .op_eq_tilde?, .op_bang_tilde?, # = == < <= > >= ! != =~ !~
          .op_amp?, .op_bar?, .op_caret?, .op_tilde?, .op_star_star?, .op_gt_gt?, .op_lt_lt?, .op_percent?,                       # & | ^ ~ ** >> << %
-         .op_squarel_squarer?, .op_squarel_squarer_question?, .op_squarel_squarer_eq?, .op_lt_eq_gt?, .op_eq_eq_eq?              # [] []? []= <=> ===
+         .op_lsquare_rsquare?, .op_lsquare_rsquare_question?, .op_lsquare_rsquare_eq?, .op_lt_eq_gt?, .op_eq_eq_eq?              # [] []? []= <=> ===
       render :OPERATOR, token.to_s
     when .underscore?
       render :UNDERSCORE, "_"

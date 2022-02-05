@@ -166,7 +166,7 @@ module Crystal
     end
 
     def visit(node : Expressions)
-      if node.expressions.size == 1 && @token.type.op_parenl?
+      if node.expressions.size == 1 && @token.type.op_lparen?
         # If it's (...) with a single expression, we treat it
         # like a single expression, indenting it if needed
         write "("
@@ -178,7 +178,7 @@ module Crystal
           skip_space_write_line
           skip_space_or_newline
           write_indent
-          write_token :OP_PARENR
+          write_token :OP_RPAREN
           return false
         end
         skip_space_or_newline
@@ -205,7 +205,7 @@ module Crystal
 
       empty_expressions = node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
 
-      if node.keyword.paren? && @token.type.op_parenl?
+      if node.keyword.paren? && @token.type.op_lparen?
         write "("
         next_needs_indent = false
         has_paren = true
@@ -321,7 +321,7 @@ module Crystal
       end
 
       if has_paren
-        write_token :OP_PARENR
+        write_token :OP_RPAREN
       end
 
       if has_begin
@@ -490,7 +490,7 @@ module Crystal
           next_token_skip_space_or_newline
           indent(@column, node)
           skip_space_or_newline
-          check :OP_CURLYR
+          check :OP_RCURLY
           write "}"
           next_string_token
         when .delimiter_end?
@@ -590,7 +590,7 @@ module Crystal
             next_token_skip_space_or_newline
             indent(@column, exp)
             skip_space_or_newline
-            check :OP_CURLYR
+            check :OP_RCURLY
             write "}"
             @token.delimiter_state = delimiter_state
             next_string_token
@@ -625,7 +625,7 @@ module Crystal
           end
 
           skip_space_or_newline
-          check :OP_CURLYR
+          check :OP_RCURLY
           write "}"
           @token.delimiter_state = delimiter_state
           next_string_token
@@ -747,9 +747,9 @@ module Crystal
 
     def visit(node : ArrayLiteral)
       case @token.type
-      when .op_squarel?
-        format_literal_elements node.elements, :OP_SQUAREL, :OP_SQUARER
-      when .op_squarel_squarer?
+      when .op_lsquare?
+        format_literal_elements node.elements, :OP_LSQUARE, :OP_RSQUARE
+      when .op_lsquare_rsquare?
         write "[]"
         next_token
       when .string_array_start?, .symbol_array_start?
@@ -786,7 +786,7 @@ module Crystal
         name = node.name.not_nil!
         accept name
         skip_space
-        format_literal_elements node.elements, :OP_CURLYL, :OP_CURLYR
+        format_literal_elements node.elements, :OP_LCURLY, :OP_RCURLY
       end
 
       if node_of = node.of
@@ -798,7 +798,7 @@ module Crystal
     end
 
     def visit(node : TupleLiteral)
-      format_literal_elements node.elements, :OP_CURLYL, :OP_CURLYR
+      format_literal_elements node.elements, :OP_LCURLY, :OP_RCURLY
       false
     end
 
@@ -843,8 +843,8 @@ module Crystal
         end
 
         # This is to prevent writing `{{` and `{%`
-        if prefix.op_curlyl? && i == 0 && !wrote_newline &&
-           (@token.type.op_curlyl? || @token.type.op_curlyl_curlyl? || @token.type.op_curlyl_percent? ||
+        if prefix.op_lcurly? && i == 0 && !wrote_newline &&
+           (@token.type.op_lcurly? || @token.type.op_lcurly_lcurly? || @token.type.op_lcurly_percent? ||
            @token.type.op_percent? || @token.raw.starts_with?("%"))
           write " "
           write_space_at_end = true
@@ -906,7 +906,7 @@ module Crystal
 
       old_hash = @current_hash
       @current_hash = node
-      format_literal_elements node.entries, :OP_CURLYL, :OP_CURLYR
+      format_literal_elements node.entries, :OP_LCURLY, :OP_RCURLY
       @current_hash = old_hash
 
       if node_of = node.of
@@ -956,7 +956,7 @@ module Crystal
     def visit(node : NamedTupleLiteral)
       old_hash = @current_hash
       @current_hash = node
-      format_literal_elements node.entries, :OP_CURLYL, :OP_CURLYR
+      format_literal_elements node.entries, :OP_LCURLY, :OP_RCURLY
       @current_hash = old_hash
 
       if @hash_in_same_line.includes? node
@@ -1051,8 +1051,8 @@ module Crystal
     end
 
     def check_open_paren
-      if @token.type.op_parenl?
-        while @token.type.op_parenl?
+      if @token.type.op_lparen?
+        while @token.type.op_lparen?
           write "("
           next_token_skip_space
           @paren_count += 1
@@ -1064,9 +1064,9 @@ module Crystal
     end
 
     def check_close_paren
-      while @token.type.op_parenr? && @paren_count > 0
+      while @token.type.op_rparen? && @paren_count > 0
         @paren_count -= 1
-        write_token :OP_PARENR
+        write_token :OP_RPAREN
       end
     end
 
@@ -1146,22 +1146,22 @@ module Crystal
       if node.suffix.bracket?
         accept node.type_vars[0]
         skip_space_or_newline
-        write_token :OP_SQUAREL
+        write_token :OP_LSQUARE
         skip_space_or_newline
         accept node.type_vars[1]
         skip_space_or_newline
-        write_token :OP_SQUARER
+        write_token :OP_RSQUARE
         return false
       end
 
       # Check if it's {A, B} instead of Tuple(A, B)
       if first_name == "Tuple" && @token.value != "Tuple"
-        write_token :OP_CURLYL
+        write_token :OP_LCURLY
         found_comment = skip_space_or_newline
         write_space_at_end = false
         node.type_vars.each_with_index do |type_var, i|
           # This is to prevent writing `{{` and `{%`
-          if i == 0 && !found_comment && (@token.type.op_curlyl? || @token.type.op_curlyl_curlyl? || @token.type.op_curlyl_percent? || @token.type.op_percent? || @token.raw.starts_with?("%"))
+          if i == 0 && !found_comment && (@token.type.op_lcurly? || @token.type.op_lcurly_lcurly? || @token.type.op_lcurly_percent? || @token.type.op_percent? || @token.raw.starts_with?("%"))
             write " "
             write_space_at_end = true
           end
@@ -1174,13 +1174,13 @@ module Crystal
           # Write space at end when write space for preventing writing `{{` and `{%` at first.
           write " " if last?(i, node.type_vars) && write_space_at_end
         end
-        write_token :OP_CURLYR
+        write_token :OP_RCURLY
         return false
       end
 
       # Check if it's {x: A, y: B} instead of NamedTuple(x: A, y: B)
       if first_name == "NamedTuple" && @token.value != "NamedTuple"
-        write_token :OP_CURLYL
+        write_token :OP_LCURLY
         skip_space_or_newline
         named_args = node.named_args.not_nil!
         named_args.each_with_index do |named_arg, i|
@@ -1191,14 +1191,14 @@ module Crystal
             next_token_skip_space_or_newline
           end
         end
-        write_token :OP_CURLYR
+        write_token :OP_RCURLY
         return false
       end
 
       accept name
       skip_space_or_newline
 
-      write_token :OP_PARENL
+      write_token :OP_LPAREN
       skip_space
 
       # Given that generic type arguments are always inside parentheses
@@ -1232,7 +1232,7 @@ module Crystal
       end
 
       skip_space_or_newline if @paren_count == 0
-      write_token :OP_PARENR
+      write_token :OP_RPAREN
 
       # Restore the old parentheses count
       @paren_count = old_paren_count
@@ -1283,7 +1283,7 @@ module Crystal
               write_indent(column)
               next_token_skip_space_or_newline
             end
-          when .op_parenr?
+          when .op_rparen?
             if @paren_count > 0
               @paren_count -= 1
               write ")"
@@ -1517,9 +1517,9 @@ module Crystal
     def format_def_args(args : Array, block_arg, splat_index, variadic, double_splat)
       # If there are no args, remove extra "()"
       if args.empty? && !block_arg && !double_splat && !variadic
-        if @token.type.op_parenl?
+        if @token.type.op_lparen?
           next_token_skip_space_or_newline
-          check :OP_PARENR
+          check :OP_RPAREN
           next_token
         end
         return 0
@@ -1534,7 +1534,7 @@ module Crystal
       old_indent = @indent
       @indent = @column + 1
 
-      write_token :OP_PARENL
+      write_token :OP_LPAREN
       skip_space
 
       # When "(" follows newline, it turns on two spaces indentation mode.
@@ -1592,7 +1592,7 @@ module Crystal
         wrote_newline = true
       end
       write_indent(found_first_newline ? old_indent : @indent) if wrote_newline
-      write_token :OP_PARENR
+      write_token :OP_RPAREN
 
       @indent = old_indent
 
@@ -1756,7 +1756,7 @@ module Crystal
       if inside_macro?
         check :MACRO_CONTROL_START
       else
-        check :OP_CURLYL_PERCENT
+        check :OP_LCURLY_PERCENT
       end
       write "{%"
       next_token_skip_space_or_newline
@@ -1766,7 +1766,7 @@ module Crystal
       check_keyword :do
       write " do"
       next_token_skip_space
-      check :OP_PERCENT_CURLYR
+      check :OP_PERCENT_RCURLY
       write " %}"
 
       @macro_state.control_nest += 1
@@ -1782,7 +1782,7 @@ module Crystal
       check_keyword :end
       write " end"
       next_token_skip_space
-      check :OP_PERCENT_CURLYR
+      check :OP_PERCENT_RCURLY
       write " %}"
 
       if inside_macro?
@@ -1804,13 +1804,13 @@ module Crystal
         if inside_macro?
           check :MACRO_EXPRESSION_START
         else
-          check :OP_CURLYL_CURLYL
+          check :OP_LCURLY_LCURLY
         end
         write_macro_slashes
         write "{{"
       else
         case @token.type
-        when .macro_control_start?, .op_curlyl_percent?
+        when .macro_control_start?, .op_lcurly_percent?
           # OK
         else
           check :MACRO_CONTROL_START
@@ -1853,12 +1853,12 @@ module Crystal
           write_line
           write_indent(old_column)
         end
-        check :OP_CURLYR
+        check :OP_RCURLY
         next_token
-        check :OP_CURLYR
+        check :OP_RCURLY
         write "}}"
       else
-        check :OP_PERCENT_CURLYR
+        check :OP_PERCENT_RCURLY
         if @wrote_newline
           write_indent(old_column)
         elsif has_newline
@@ -1886,7 +1886,7 @@ module Crystal
       if inside_macro?
         check :MACRO_CONTROL_START
       else
-        check :OP_CURLYL_PERCENT
+        check :OP_LCURLY_PERCENT
       end
 
       write_macro_slashes
@@ -1915,7 +1915,7 @@ module Crystal
 
     def format_macro_if_epilogue(node, macro_state, check_end = true)
       skip_space_or_newline
-      check :OP_PERCENT_CURLYR
+      check :OP_PERCENT_RCURLY
       write " %}"
 
       @macro_state = macro_state
@@ -1940,7 +1940,7 @@ module Crystal
         else
           check_keyword :else
           next_token_skip_space_or_newline
-          check :OP_PERCENT_CURLYR
+          check :OP_PERCENT_RCURLY
 
           write_macro_slashes
           write "{% else %}"
@@ -1962,7 +1962,7 @@ module Crystal
 
         check_end
         next_token_skip_space_or_newline
-        check :OP_PERCENT_CURLYR
+        check :OP_PERCENT_RCURLY
 
         write_macro_slashes
         write "{% end %}"
@@ -1985,7 +1985,7 @@ module Crystal
       if inside_macro?
         check :MACRO_CONTROL_START
       else
-        check :OP_CURLYL_PERCENT
+        check :OP_LCURLY_PERCENT
       end
 
       write_macro_slashes
@@ -2014,7 +2014,7 @@ module Crystal
       outside_macro { indent(@column, node.exp) }
       skip_space_or_newline
 
-      check :OP_PERCENT_CURLYR
+      check :OP_PERCENT_RCURLY
       write " %}"
 
       @macro_state.control_nest += 1
@@ -2031,7 +2031,7 @@ module Crystal
 
       check_end
       next_token_skip_space_or_newline
-      check :OP_PERCENT_CURLYR
+      check :OP_PERCENT_RCURLY
 
       write_macro_slashes
       write "{% end %}"
@@ -2053,7 +2053,7 @@ module Crystal
 
       if exps = node.exps
         next_token
-        write_token :OP_CURLYL
+        write_token :OP_LCURLY
         skip_space_or_newline
         exps.each_with_index do |exp, i|
           indent(@column, exp)
@@ -2063,7 +2063,7 @@ module Crystal
             next_token_skip_space_or_newline
           end
         end
-        check :OP_CURLYR
+        check :OP_RCURLY
         write "}"
       end
 
@@ -2471,7 +2471,7 @@ module Crystal
 
         if !@token.type.op_period?
           # It's an operator
-          if @token.type.op_squarel?
+          if @token.type.op_lsquare?
             write "["
             next_token_skip_space
 
@@ -2496,7 +2496,7 @@ module Crystal
               found_comment = skip_space_or_newline
               write_indent if found_comment
             end
-            write_token :OP_SQUARER
+            write_token :OP_RSQUARE
 
             if node.name == "[]?"
               skip_space
@@ -2517,7 +2517,7 @@ module Crystal
             end
 
             return false
-          elsif @token.type.op_squarel_squarer?
+          elsif @token.type.op_lsquare_rsquare?
             write "[]"
             next_token
 
@@ -2584,23 +2584,23 @@ module Crystal
       end
 
       # This is for foo &.[bar] and &.[bar]?, or foo.[bar] and foo.[bar]?
-      if (node.name == "[]" || node.name == "[]?") && @token.type.op_squarel?
+      if (node.name == "[]" || node.name == "[]?") && @token.type.op_lsquare?
         write "["
         next_token_skip_space_or_newline
         format_call_args(node, false, base_indent)
-        write_token :OP_SQUARER
+        write_token :OP_RSQUARE
         write_token :OP_QUESTION if node.name == "[]?"
         return false
       end
 
       # This is for foo.[bar] = baz
-      if node.name == "[]=" && @token.type.op_squarel?
+      if node.name == "[]=" && @token.type.op_lsquare?
         write "["
         next_token_skip_space_or_newline
         args = node.args
         last_arg = args.pop
         format_call_args(node, true, base_indent)
-        write_token :OP_SQUARER
+        write_token :OP_RSQUARE
         skip_space_or_newline
         write " ="
         next_token_skip_space
@@ -2609,8 +2609,8 @@ module Crystal
       end
 
       # This is for foo.[] = bar
-      if node.name == "[]=" && @token.type.op_squarel_squarer?
-        write_token :OP_SQUAREL_SQUARER
+      if node.name == "[]=" && @token.type.op_lsquare_rsquare?
+        write_token :OP_LSQUARE_RSQUARE
         next_token_skip_space_or_newline
         write " ="
         next_token_skip_space
@@ -2633,14 +2633,14 @@ module Crystal
         skip_space
 
         next_token
-        if @token.type.op_parenl?
+        if @token.type.op_lparen?
           write "=("
           has_parentheses = true
           slash_is_regex!
           next_token
           format_call_args(node, true, base_indent)
           skip_space_or_newline
-          write_token :OP_PARENR
+          write_token :OP_RPAREN
         else
           write " ="
           skip_space
@@ -2672,7 +2672,7 @@ module Crystal
         skip_space
       end
 
-      if @token.type.op_parenl?
+      if @token.type.op_lparen?
         slash_is_regex!
         next_token
 
@@ -2681,7 +2681,7 @@ module Crystal
         # like `nil?` when there might not be a receiver.
         if (obj || special_call) && !has_args && !node.block_arg && !node.block
           skip_space_or_newline
-          check :OP_PARENR
+          check :OP_RPAREN
           next_token
           return false
         end
@@ -2714,13 +2714,13 @@ module Crystal
               write_line
             end
             needs_space = false
-            block_indent += 2 if !@token.type.op_parenr? # foo(1, ↵  &.foo) case
+            block_indent += 2 if !@token.type.op_rparen? # foo(1, ↵  &.foo) case
             write_indent(block_indent)
           else
-            write "," if !@token.type.op_parenr? # foo(1, &.foo) case
+            write "," if !@token.type.op_rparen? # foo(1, &.foo) case
           end
         end
-        if has_parentheses && @token.type.op_parenr?
+        if has_parentheses && @token.type.op_rparen?
           if ends_with_newline
             write_line unless found_comment || @wrote_newline
             write_indent
@@ -2744,7 +2744,7 @@ module Crystal
         finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
       elsif has_parentheses
         skip_space_or_newline
-        write_token :OP_PARENR
+        write_token :OP_RPAREN
       end
 
       false
@@ -2900,7 +2900,7 @@ module Crystal
         elsif found_comment
           write_indent(column)
         end
-        check :OP_PARENR
+        check :OP_RPAREN
 
         if ends_with_newline
           write_line unless @wrote_newline
@@ -2974,7 +2974,7 @@ module Crystal
         format_nested_with_end body
         @implicit_exception_handler_indent = old_implicit_exception_handler_indent
         @indent -= 2
-      elsif @token.type.op_curlyl?
+      elsif @token.type.op_lcurly?
         write "," if needs_comma
         write " {"
         next_token_skip_space
@@ -2992,7 +2992,7 @@ module Crystal
           skip_space_or_newline
           write " "
         end
-        write_token :OP_CURLYR
+        write_token :OP_RCURLY
       else
         # It's foo &.bar
         write "," if needs_comma
@@ -3123,7 +3123,7 @@ module Crystal
           write_token :OP_STAR
         end
 
-        if @token.type.op_parenl?
+        if @token.type.op_lparen?
           write "("
           next_token_skip_space_or_newline
 
@@ -3150,7 +3150,7 @@ module Crystal
               next_token_skip_space_or_newline
             end
 
-            if @token.type.op_parenr?
+            if @token.type.op_rparen?
               next_token
               write ")"
               break
@@ -3445,7 +3445,7 @@ module Crystal
     def format_type_vars(type_vars, splat_index)
       if type_vars
         skip_space
-        write_token :OP_PARENL
+        write_token :OP_LPAREN
         skip_space_or_newline
         type_vars.each_with_index do |type_var, i|
           write_token :OP_STAR if i == splat_index
@@ -3456,7 +3456,7 @@ module Crystal
             next_token_skip_space_or_newline
           end
         end
-        write_token :OP_PARENR
+        write_token :OP_RPAREN
         skip_space
       end
     end
@@ -3576,7 +3576,7 @@ module Crystal
       write_keyword keyword
 
       has_parentheses = false
-      if @token.type.op_parenl?
+      if @token.type.op_lparen?
         has_parentheses = true
         write "("
         next_token_skip_space_or_newline
@@ -3604,7 +3604,7 @@ module Crystal
         end
       end
 
-      write_token :OP_PARENR if has_parentheses
+      write_token :OP_RPAREN if has_parentheses
 
       false
     end
@@ -3612,7 +3612,7 @@ module Crystal
     def opening_curly_brace_count
       @lexer.peek_ahead do
         count = 0
-        while @lexer.token.type.op_curlyl?
+        while @lexer.token.type.op_lcurly?
           count += 1
           @lexer.next_token_skip_space_or_newline
         end
@@ -3639,7 +3639,7 @@ module Crystal
 
       write_keyword :yield
 
-      if @token.type.op_parenl?
+      if @token.type.op_lparen?
         format_parenthesized_args(node.exps)
       else
         write " " unless node.exps.empty?
@@ -3826,25 +3826,25 @@ module Crystal
     end
 
     def visit(node : Annotation)
-      write_token :OP_AT_SQUAREL
+      write_token :OP_AT_LSQUARE
       skip_space_or_newline
 
       node.path.accept self
       skip_space_or_newline
 
-      if @token.type.op_parenl?
+      if @token.type.op_lparen?
         has_args = !node.args.empty? || node.named_args
         if has_args
           format_parenthesized_args(node.args, named_args: node.named_args)
         else
           next_token_skip_space_or_newline
-          check :OP_PARENR
+          check :OP_RPAREN
           next_token
         end
       end
 
       skip_space_or_newline
-      write_token :OP_SQUARER
+      write_token :OP_RSQUARE
 
       false
     end
@@ -4102,7 +4102,7 @@ module Crystal
       next_token_skip_space
       next_token_skip_space if @token.type.op_eq?
 
-      if @token.type.op_parenl?
+      if @token.type.op_lparen?
         write "(" unless node.args.empty?
         next_token_skip_space
         node.args.each_with_index do |arg, i|
@@ -4126,7 +4126,7 @@ module Crystal
 
       a_def = node.def
 
-      if @token.type.op_parenl?
+      if @token.type.op_lparen?
         write "(" unless a_def.args.empty?
         next_token_skip_space_or_newline
 
@@ -4139,7 +4139,7 @@ module Crystal
           end
         end
 
-        check :OP_PARENR
+        check :OP_RPAREN
         write ")" unless a_def.args.empty?
         next_token_skip_space_or_newline
       end
@@ -4159,7 +4159,7 @@ module Crystal
         write_keyword :do
         is_do = true
       else
-        write_token :OP_CURLYL
+        write_token :OP_LCURLY
       end
       skip_space
 
@@ -4187,7 +4187,7 @@ module Crystal
         if @wrote_newline
           write_indent
         end
-        write_token :OP_CURLYR
+        write_token :OP_RCURLY
       end
 
       false
@@ -4261,7 +4261,7 @@ module Crystal
       column = @column
       has_newlines = false
 
-      write_token :OP_PARENL
+      write_token :OP_LPAREN
       skip_space
 
       if @token.type.newline?
@@ -4356,7 +4356,7 @@ module Crystal
         write_indent
       end
 
-      write_token :OP_PARENR
+      write_token :OP_RPAREN
 
       false
     end
@@ -4365,11 +4365,11 @@ module Crystal
       accept StringLiteral.new(node.constraint)
 
       skip_space_or_newline
-      write_token :OP_PARENL
+      write_token :OP_LPAREN
       skip_space_or_newline
       accept node.exp
       skip_space_or_newline
-      write_token :OP_PARENR
+      write_token :OP_RPAREN
 
       false
     end
