@@ -1314,7 +1314,7 @@ module Crystal
       visit_if_or_unless node, :unless
     end
 
-    def visit_if_or_unless(node, keyword)
+    def visit_if_or_unless(node, keyword : Keyword)
       if !@token.keyword?(keyword) && node.else.is_a?(Nop)
         # Suffix if/unless
         accept node.then
@@ -1331,7 +1331,7 @@ module Crystal
       false
     end
 
-    def format_if_at_cond(node, keyword, check_end = true)
+    def format_if_at_cond(node, keyword : Keyword, check_end = true)
       inside_cond do
         indent(@column, node.cond)
       end
@@ -1360,7 +1360,7 @@ module Crystal
       end
     end
 
-    def format_elsif(node_else, keyword)
+    def format_elsif(node_else, keyword : Keyword)
       write_indent
       write "elsif "
       next_token_skip_space_or_newline
@@ -1375,7 +1375,7 @@ module Crystal
       format_while_or_until node, :until
     end
 
-    def format_while_or_until(node, keyword)
+    def format_while_or_until(node, keyword : Keyword)
       write_keyword keyword, " "
       inside_cond do
         indent(@column, node.cond)
@@ -3413,7 +3413,7 @@ module Crystal
 
     def visit(node : ClassDef)
       write_keyword :abstract, " " if node.abstract?
-      write_keyword (node.struct? ? :struct : :class), " "
+      write_keyword (node.struct? ? Keyword::STRUCT : Keyword::CLASS), " "
 
       accept node.name
       format_type_vars node.type_vars, node.splat_index
@@ -3450,7 +3450,7 @@ module Crystal
     end
 
     def visit(node : CStructOrUnionDef)
-      keyword = node.union? ? :union : :struct
+      keyword = node.union? ? Keyword::UNION : Keyword::STRUCT
       write_keyword keyword, " "
 
       write node.name
@@ -3560,7 +3560,7 @@ module Crystal
       format_control_expression node, :next
     end
 
-    def format_control_expression(node, keyword)
+    def format_control_expression(node, keyword : Keyword)
       write_keyword keyword
 
       has_parentheses = false
@@ -3694,7 +3694,7 @@ module Crystal
 
       slash_is_regex!
       write_indent
-      write_keyword(node.exhaustive? ? :in : :when, " ")
+      write_keyword(node.exhaustive? ? Keyword::IN : Keyword::WHEN, " ")
       base_indent = @column
       when_start_line = @line
       when_start_column = @column
@@ -4056,7 +4056,7 @@ module Crystal
       format_alias_or_typedef node, :type, node.type_spec
     end
 
-    def format_alias_or_typedef(node, keyword, value)
+    def format_alias_or_typedef(node, keyword : Keyword, value)
       write_keyword keyword, " "
 
       name = node.name
@@ -4993,24 +4993,24 @@ module Crystal
       end
     end
 
-    def write_keyword(keyword : Symbol)
+    def write_keyword(keyword : Keyword)
       check_keyword keyword
       write keyword
       next_token
     end
 
-    def write_keyword(before : String, keyword : Symbol)
+    def write_keyword(before : String, keyword : Keyword)
       write before
       write_keyword keyword
     end
 
-    def write_keyword(keyword : Symbol, after : String, skip_space_or_newline = true)
+    def write_keyword(keyword : Keyword, after : String, skip_space_or_newline = true)
       write_keyword keyword
       write after
       skip_space_or_newline() if skip_space_or_newline
     end
 
-    def write_keyword(before : String, keyword : Symbol, after : String)
+    def write_keyword(before : String, keyword : Keyword, after : String)
       passed_backslash_newline = @token.passed_backslash_newline
       skip_space
       if passed_backslash_newline && before == " "
@@ -5045,7 +5045,7 @@ module Crystal
       write after
     end
 
-    def check_keyword(*keywords)
+    def check_keyword(*keywords : Keyword)
       raise "expecting keyword #{keywords.join " or "}, not `#{@token.type}, #{@token.value}`, at #{@token.location}" unless keywords.any? { |k| @token.keyword?(k) }
     end
 

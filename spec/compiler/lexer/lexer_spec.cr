@@ -40,7 +40,7 @@ private def it_lexes_many(values, type : Token::Kind)
   end
 end
 
-private def it_lexes_keywords(keywords)
+private def it_lexes_keywords(*keywords : Keyword)
   keywords.each do |keyword|
     it_lexes keyword.to_s, :IDENT, keyword
   end
@@ -153,13 +153,17 @@ describe "Lexer" do
   it_lexes "\n", :NEWLINE
   it_lexes "\n\n\n", :NEWLINE
   it_lexes "_", :UNDERSCORE
-  it_lexes_keywords [:def, :if, :else, :elsif, :end, :true, :false, :class, :module, :include,
-                     :extend, :while, :until, :nil, :do, :yield, :return, :unless, :next, :break,
-                     :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
-                     :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
-                     :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
-                     :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?,
-                     :annotation, :verbatim]
+  it_lexes_keywords :def, :if, :else, :elsif, :end, :true, :false, :class, :module, :include,
+    :extend, :while, :until, :nil, :do, :yield, :return, :unless, :next, :break,
+    :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
+    :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :alias,
+    :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :typeof, :for, :in,
+    :with, :self, :super, :private, :protected, :asm, :uninitialized,
+    :annotation, :verbatim
+  it_lexes "is_a?", :IDENT, Keyword::IS_A
+  it_lexes "as?", :IDENT, Keyword::AS_NILABLE
+  it_lexes "nil?", :IDENT, Keyword::NIL_METHOD
+  it_lexes "responds_to?", :IDENT, Keyword::RESPONDS_TO
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
                    "❨╯°□°❩╯︵┻━┻"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?",
@@ -443,7 +447,7 @@ describe "Lexer" do
     lexer = Lexer.new "end 1"
     token = lexer.next_token
     token.type.should eq(t :IDENT)
-    token.value.should eq(:end)
+    token.value.should eq(Keyword::END)
     token = lexer.next_token
     token.type.should eq(t :SPACE)
   end
