@@ -244,7 +244,7 @@ end
 class JSONAttrWithPresence
   include JSON::Serializable
 
-  @[JSON::Field(presence: true)]
+  @[JSON::Field(presence: true, ignore_serialize_if: ignore_first_name?, emit_null: true)]
   property first_name : String?
 
   @[JSON::Field(presence: true)]
@@ -255,6 +255,10 @@ class JSONAttrWithPresence
 
   @[JSON::Field(ignore: true)]
   getter? last_name_present : Bool
+
+  def ignore_first_name?
+    first_name.to_s == "ignore me"
+  end
 end
 
 class JSONAttrWithQueryAttributes
@@ -808,6 +812,11 @@ describe "JSON mapping" do
       json.first_name_present?.should be_true
       json.last_name.should be_nil
       json.last_name_present?.should be_false
+    end
+
+    it "ignores field with method call" do
+      json = JSONAttrWithPresence.from_json(%({"first_name": "ignore me"}))
+      json.to_json.should eq(%({}))
     end
   end
 
