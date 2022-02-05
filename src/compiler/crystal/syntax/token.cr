@@ -152,7 +152,7 @@ module Crystal
       end
 
       def operator?
-        value.in?(OP_BANG.value..OP_TILDE.value)
+        self.in?(OP_BANG..OP_TILDE)
       end
 
       def assignment_operator?
