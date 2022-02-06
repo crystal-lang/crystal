@@ -247,14 +247,17 @@ class JSONAttrWithPresence
   @[JSON::Field(presence: true, ignore_serialize_if: ignore_first_name?)]
   property first_name : String?
 
-  @[JSON::Field(presence: true, ignore_serialize_if: !last_name_present?, emit_null: true)]
+  @[JSON::Field(presence: true, ignore_serialize_if: last_name.nil? && !last_name_present?, emit_null: true)]
   property last_name : String?
 
   @[JSON::Field(ignore: true)]
-  getter? first_name_present : Bool
+  getter? first_name_present : Bool = false
 
   @[JSON::Field(ignore: true)]
-  getter? last_name_present : Bool
+  getter? last_name_present : Bool = false
+
+  def initialize(@first_name : String? = nil, @last_name : String? = nil)
+  end
 
   def ignore_first_name?
     first_name.to_s == "ignore me"
@@ -822,6 +825,8 @@ describe "JSON mapping" do
     it "emit nulls dynamically" do
       json = JSONAttrWithPresence.from_json(%({"last_name": null}))
       json.to_json.should eq(%({"last_name":null}))
+      json = JSONAttrWithPresence.new(last_name: "something")
+      json.to_json.should eq(%({"last_name":"something"}))
       json = JSONAttrWithPresence.from_json(%({}))
       json.to_json.should eq(%({}))
     end
