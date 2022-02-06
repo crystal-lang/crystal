@@ -244,6 +244,22 @@ end
 class JSONAttrWithPresence
   include JSON::Serializable
 
+  @[JSON::Field(presence: true)]
+  property first_name : String?
+
+  @[JSON::Field(presence: true)]
+  property last_name : String?
+
+  @[JSON::Field(ignore: true)]
+  getter? first_name_present : Bool
+
+  @[JSON::Field(ignore: true)]
+  getter? last_name_present : Bool
+end
+
+class JSONAttrWithPresenceAndIgnoreSerializeIf
+  include JSON::Serializable
+
   @[JSON::Field(presence: true, ignore_serialize_if: ignore_first_name?)]
   property first_name : String?
 
@@ -260,7 +276,7 @@ class JSONAttrWithPresence
   end
 
   def ignore_first_name?
-    first_name.to_s == "ignore me"
+    first_name.nil? || first_name == ""
   end
 end
 
@@ -816,19 +832,47 @@ describe "JSON mapping" do
       json.last_name.should be_nil
       json.last_name_present?.should be_false
     end
+  end
 
-    it "ignores field with method call" do
-      json = JSONAttrWithPresence.from_json(%({"first_name": "ignore me"}))
-      json.to_json.should eq(%({}))
+  describe "serializes JSON with presence markers and ignore_serialize_if" do
+    context "ignore_serialize_if is set to a method which returns true when value is nil or empty string" do
+      it "ignores field when value is empty string" do
+        json = JSONAttrWithPresenceAndIgnoreSerializeIf.from_json(%({"first_name": ""}))
+        json.first_name_present?.should be_true
+        json.to_json.should eq(%({}))
+      end
+
+      it "ignores field when value is nil" do
+        json = JSONAttrWithPresenceAndIgnoreSerializeIf.from_json(%({"first_name": null}))
+        json.first_name_present?.should be_true
+        json.to_json.should eq(%({}))
+      end
     end
 
-    it "emit nulls dynamically" do
-      json = JSONAttrWithPresence.from_json(%({"last_name": null}))
-      json.to_json.should eq(%({"last_name":null}))
-      json = JSONAttrWithPresence.new(last_name: "something")
-      json.to_json.should eq(%({"last_name":"something"}))
-      json = JSONAttrWithPresence.from_json(%({}))
-      json.to_json.should eq(%({}))
+    context "ignore_serialize_if is set to conditional expressions 'last_name.nil? && !last_name_present?'" do
+      it "emits null when value is null and @last_name_present is true" do
+        json = JSONAttrWithPresenceAndIgnoreSerializeIf.from_json(%({"last_name": null}))
+        json.last_name_present?.should be_true
+        json.to_json.should eq(%({"last_name":null}))
+      end
+
+      it "does not emit null when value is null and @last_name_present is false" do
+        json = JSONAttrWithPresenceAndIgnoreSerializeIf.from_json(%({}))
+        json.last_name_present?.should be_false
+        json.to_json.should eq(%({}))
+      end
+
+      it "emits field when value is not nil and @last_name_present is false" do
+        json = JSONAttrWithPresenceAndIgnoreSerializeIf.new(last_name: "something")
+        json.last_name_present?.should be_false
+        json.to_json.should eq(%({"last_name":"something"}))
+      end
+
+      it "emits field when value is not nil and @last_name_present is true" do
+        json = JSONAttrWithPresenceAndIgnoreSerializeIf.from_json(%({"last_name":"something"}))
+        json.last_name_present?.should be_true
+        json.to_json.should eq(%({"last_name":"something"}))
+      end
     end
   end
 
