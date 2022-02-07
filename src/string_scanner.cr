@@ -293,9 +293,9 @@ class StringScanner
   # ```
   def read_byte : UInt8?
     return nil if eos?
-    s = @str.byte_at(@byte_offset)
+    byte = @str.byte_at(@byte_offset)
     @byte_offset += 1
-    s
+    byte
   end
 
   # Returns one char from the current offset.
@@ -308,9 +308,9 @@ class StringScanner
   # ```
   def read_char : Char?
     reader = Char::Reader.new(@str, @byte_offset)
-    c = reader.current_char
-    @byte_offset += c.bytesize
-    c
+    char = reader.current_char
+    @byte_offset += char.bytesize
+    char
   end
 
   # Writes a representation of the scanner.
