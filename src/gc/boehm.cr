@@ -13,7 +13,7 @@
 #
 # OTHERS: On other systems, we add the linker annotation here to make sure libpthread is loaded
 # before libgc which looks up symbols from libpthread.
-{% unless flag?(:win32) || flag?(:musl) || (flag?(:interpreter) && flag?(:gnu)) %}
+{% unless flag?(:win32) || flag?(:musl) || (flag?(:interpreted) && flag?(:gnu)) %}
   @[Link("pthread")]
 {% end %}
 
