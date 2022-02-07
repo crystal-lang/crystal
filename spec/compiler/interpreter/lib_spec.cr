@@ -22,7 +22,7 @@ describe Crystal::Repl::Interpreter do
 
     it "promotes int" do
       interpret(<<-CR).should eq 5
-        @[Link("#{SPEC_CRYSTAL_LOADER_LIB_PATH}/libsum.so")]
+        @[Link(ldflags: "-L#{SPEC_CRYSTAL_LOADER_LIB_PATH} -lsum")]
         lib LibSum
           fun sum_int(count : Int32, ...) : Int32
         end
@@ -33,7 +33,7 @@ describe Crystal::Repl::Interpreter do
 
     it "promotes enum" do
       interpret(<<-CR).should eq 5
-        @[Link("#{SPEC_CRYSTAL_LOADER_LIB_PATH}/libsum.so")]
+        @[Link(ldflags: "-L#{SPEC_CRYSTAL_LOADER_LIB_PATH} -lsum")]
         lib LibSum
           fun sum_int(count : Int32, ...) : Int32
         end
