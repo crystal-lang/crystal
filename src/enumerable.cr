@@ -1766,6 +1766,43 @@ module Enumerable(T)
     tally_by { |item| item }
   end
 
+  # Tallies the collection. Accepts a `hash` to count occurrences.
+  # The value corresponding to each element must be an `Int32`.
+  # Returns a `hash` where the keys are the
+  # elements and the values are numbers of elements in the collection
+  # that correspond to the key after transformation by the given block.
+  #
+  # ```
+  # hash = {} of Char => Int32
+  # words = ["Crystal", "Ruby"]
+  # words.each { |word| word.chars.tally_by(hash, &.downcase) }
+  # hash
+  # => {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+  # ```
+  def tally_by(hash : Hash(U, Int32), & : T -> U) : Hash(U, Int32) forall U
+    each_with_object(hash) do |item, hash|
+      value = yield item
+      count = hash[value]?
+      hash[value] = count ? count + 1 : 1
+    end
+  end
+
+  # Tallies the collection. Accepts a `hash` to count occurrences.
+  # The value corresponding to each element must be an `Int32`.
+  # The number of occurrences is added to each value in the `hash`,
+  # and the `hash` is returned.
+  #
+  # ```
+  # hash = {} of Char => Int32
+  # words = ["crystal", "ruby"]
+  # words.each { |word| word.chars.tally(hash) }
+  # hash
+  # => {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+  # ```
+  def tally(hash : Hash(T, Int32)) : Hash(T, Int32)
+    tally_by(hash, &.itself)
+  end
+
   # Returns an `Array` with all the elements in the collection.
   #
   # ```

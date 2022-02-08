@@ -1219,11 +1219,35 @@ describe "Enumerable" do
     it "returns a hash with counts according to the value returned by the block" do
       %w[a A b B c C C].tally_by(&.downcase).should eq({"a" => 2, "b" => 2, "c" => 3})
     end
+
+    context "with hash" do
+      it "returns a hash with counts according to the value returned by the block" do
+        hash = {} of Char => Int32
+        words = ["Crystal", "Ruby"]
+        words.each { |word| word.chars.tally_by(hash, &.downcase) }
+
+        hash.should eq(
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+        )
+      end
+    end
   end
 
   describe "tally" do
     it "returns a hash with counts according to the value" do
       %w[1 2 3 3 3 2].tally.should eq({"1" => 1, "2" => 2, "3" => 3})
+    end
+
+    context "with hash" do
+      it "returns a hash with counts according to the value" do
+        hash = {} of Char => Int32
+        words = ["crystal", "ruby"]
+        words.each { |word| word.chars.tally(hash) }
+
+        hash.should eq(
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+        )
+      end
     end
   end
 
