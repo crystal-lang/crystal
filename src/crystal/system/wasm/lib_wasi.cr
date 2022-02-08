@@ -98,4 +98,5 @@ lib LibWasi
   fun path_open = __wasi_path_open(fd : Fd, dirflags : LookupFlags, path : UInt8*, oflags : OpenFlags, fs_rights_base : Rights, fs_rights_inheriting : Rights, fdflags : FdFlags, ret : Fd*) : WasiError
   fun fd_readdir = __wasi_fd_readdir(fd : Fd, buf : UInt8*, len : Size, cookie : UInt64, ret : Size*) : WasiError
   fun fd_close = __wasi_fd_close(fd : Fd) : WasiError
+  fun random_get = __wasi_random_get(buf : UInt8*, len : Size) : WasiError
 end
