@@ -62,41 +62,11 @@ DEPS = $(LLVM_EXT_OBJ)
 CXXFLAGS += $(if $(debug),/MTd /Od,/MT)
 CRYSTAL_VERSION ?= $(shell type src\VERSION)
 
-DESTDIR ?=
 prefix ?= $(or $(ProgramW6432),$(ProgramFiles))\crystal
-
-# if both `DESTDIR` and `prefix` have a drive letter, the former takes precedence
-space := 
-space +=
-__letters := A B C D E F G H I J K L M N O P Q R S T U V W X Y Z a b c d e f g h i j k l m n o p q r s t u v w x y z
-
-__temp := $(subst :,$(space):$(space),$(DESTDIR))
-__drive := $(firstword $(__temp))
-DESTDIR_rest := $(DESTDIR)
-ifeq ($(word 2,$(__temp)),:)
-	ifneq ($(findstring $(__drive),$(__letters)),)
-		DESTDIR_drive := $(__drive):
-		DESTDIR_rest := $(subst :$(__drive) :$(space),,:$(__temp))
-	endif
-endif
-
-__temp := $(subst :,$(space):$(space),$(prefix))
-__drive := $(firstword $(__temp))
-prefix_rest := $(prefix)
-ifeq ($(word 2,$(__temp)),:)
-	ifneq ($(findstring $(__drive),$(__letters)),)
-		prefix_drive := $(__drive):
-		prefix_rest := $(subst :$(__drive) :$(space),,:$(__temp))
-	endif
-endif
-
-override DESTDIR := $(or $(DESTDIR_drive),$(prefix_drive))$(DESTDIR_rest)
-override prefix := $(prefix_rest)
-
-BINDIR ?= $(DESTDIR)$(prefix)
-LIBDIR ?= $(DESTDIR)$(prefix)\lib
-SRCDIR ?= $(DESTDIR)$(prefix)\src
-DATADIR ?= $(DESTDIR)$(prefix)
+BINDIR ?= $(prefix)
+LIBDIR ?= $(prefix)\lib
+SRCDIR ?= $(prefix)\src
+DATADIR ?= $(prefix)
 
 colorize = $1
 
@@ -145,7 +115,7 @@ deps: $(DEPS) ## Build dependencies
 llvm_ext: $(LLVM_EXT_OBJ)
 
 .PHONY: install
-install: $(O)\crystal.exe ## Install the compiler at DESTDIR
+install: $(O)\crystal.exe ## Install the compiler at prefix
 	$(call MKDIR,"$(BINDIR)")
 	$(call INSTALL,"$(O)\crystal.exe","$(BINDIR)\crystal.exe")
 	$(call INSTALL,"$(O)\crystal.pdb","$(BINDIR)\crystal.pdb")
@@ -157,7 +127,7 @@ install: $(O)\crystal.exe ## Install the compiler at DESTDIR
 	$(call INSTALL,LICENSE,"$(DATADIR)\LICENSE.txt")
 
 .PHONY: uninstall
-uninstall: ## Uninstall the compiler from DESTDIR
+uninstall: ## Uninstall the compiler from prefix
 	$(call RM,"$(DATADIR)\LICENSE.txt")
 
 	$(call RMDIR,"$(DATADIR)\src")
@@ -166,13 +136,13 @@ uninstall: ## Uninstall the compiler from DESTDIR
 	$(call RM,"$(BINDIR)\crystal.pdb")
 
 .PHONY: install_docs
-install_docs: docs ## Install docs at DESTDIR
+install_docs: docs ## Install docs at prefix
 	$(call MKDIR,"$(DATADIR)")
 	$(call INSTALLDIR,docs,"$(DATADIR)\docs")
 	$(call INSTALLDIR,samples,"$(DATADIR)\examples")
 
 .PHONY: uninstall_docs
-uninstall_docs: ## Uninstall docs from DESTDIR
+uninstall_docs: ## Uninstall docs from prefix
 	$(call RMDIR,"$(DATADIR)\docs")
 	$(call RMDIR,"$(DATADIR)\examples")
 
