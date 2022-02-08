@@ -60,8 +60,7 @@ module JSON
   #
   # `JSON::Field` properties:
   # * **ignore**: if `true` skip this field in serialization and deserialization (by default false)
-  # * **ignore_serialize**: if `true` skip this field in serialization (by default false)
-  # * **ignore_serialize_if**: an instance method name or conditional expressions returning Bool, skips this field in serialization if it returns `true` after evaluation
+  # * **ignore_serialize**: a Bool literal or instance method returning Bool or conditional expressions, skip this field in serialization if it is `true` after evaluation (by default false)
   # * **ignore_deserialize**: if `true` skip this field in deserialization (by default false)
   # * **key**: the value of the key in the json object (by default the name of the instance variable)
   # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
@@ -271,15 +270,15 @@ module JSON
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::JSON::Field) %}
-          {% unless ann && (ann[:ignore] || ann[:ignore_serialize]) %}
+          {% unless ann && ann[:ignore] %}
             {%
               properties[ivar.id] = {
-                type:                ivar.type,
-                key:                 ((ann && ann[:key]) || ivar).id.stringify,
-                root:                ann && ann[:root],
-                converter:           ann && ann[:converter],
-                emit_null:           (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
-                ignore_serialize_if: ann && ann[:ignore_serialize_if],
+                type:             ivar.type,
+                key:              ((ann && ann[:key]) || ivar).id.stringify,
+                root:             ann && ann[:root],
+                converter:        ann && ann[:converter],
+                emit_null:        (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
+                ignore_serialize: ann && ann[:ignore_serialize],
               }
             %}
           {% end %}
@@ -287,52 +286,54 @@ module JSON
 
         json.object do
           {% for name, value in properties %}
-            _{{name}} = @{{name}}
+            {% unless value[:ignore_serialize] == true %}
+              _{{name}} = @{{name}}
 
-            {% if value[:ignore_serialize_if] %}
-              unless {{ value[:ignore_serialize_if] }}
-            {% end %}
-
-              {% unless value[:emit_null] %}
-                unless _{{name}}.nil?
+              {% unless value[:ignore_serialize].nil? || value[:ignore_serialize] == false %}
+                unless {{ value[:ignore_serialize] }}
               {% end %}
 
-                json.field({{value[:key]}}) do
-                  {% if value[:root] %}
-                    {% if value[:emit_null] %}
-                      if _{{name}}.nil?
-                        nil.to_json(json)
+                {% unless value[:emit_null] %}
+                  unless _{{name}}.nil?
+                {% end %}
+
+                  json.field({{value[:key]}}) do
+                    {% if value[:root] %}
+                      {% if value[:emit_null] %}
+                        if _{{name}}.nil?
+                          nil.to_json(json)
+                        else
+                      {% end %}
+
+                      json.object do
+                        json.field({{value[:root]}}) do
+                    {% end %}
+
+                    {% if value[:converter] %}
+                      if _{{name}}
+                        {{ value[:converter] }}.to_json(_{{name}}, json)
                       else
+                        nil.to_json(json)
+                      end
+                    {% else %}
+                      _{{name}}.to_json(json)
                     {% end %}
 
-                    json.object do
-                      json.field({{value[:root]}}) do
-                  {% end %}
-
-                  {% if value[:converter] %}
-                    if _{{name}}
-                      {{ value[:converter] }}.to_json(_{{name}}, json)
-                    else
-                      nil.to_json(json)
-                    end
-                  {% else %}
-                    _{{name}}.to_json(json)
-                  {% end %}
-
-                  {% if value[:root] %}
-                    {% if value[:emit_null] %}
+                    {% if value[:root] %}
+                      {% if value[:emit_null] %}
+                        end
+                      {% end %}
+                        end
                       end
                     {% end %}
-                      end
-                    end
-                  {% end %}
-                end
+                  end
 
-              {% unless value[:emit_null] %}
+                {% unless value[:emit_null] %}
+                  end
+                {% end %}
+              {% unless value[:ignore_serialize].nil? || value[:ignore_serialize] == false %}
                 end
               {% end %}
-            {% if value[:ignore_serialize_if] %}
-              end
             {% end %}
           {% end %}
           on_to_json(json)
