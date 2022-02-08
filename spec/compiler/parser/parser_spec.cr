@@ -65,6 +65,7 @@ module Crystal
     it_parses %("foo"), "foo".string
     it_parses %(""), "".string
     it_parses %("hello \\\n     world"), "hello world".string
+    it_parses %("hello \\\r\n     world"), "hello world".string
 
     it_parses %(%Q{hello \\n world}), "hello \n world".string
     it_parses %(%q{hello \\n world}), "hello \\n world".string
@@ -1522,6 +1523,8 @@ module Crystal
 
     it_parses "1 \\\n + 2", Call.new(1.int32, "+", 2.int32)
     it_parses "1\\\n + 2", Call.new(1.int32, "+", 2.int32)
+    it_parses "1 \\\r\n + 2", Call.new(1.int32, "+", 2.int32)
+    it_parses "1\\\r\n + 2", Call.new(1.int32, "+", 2.int32)
 
     it_parses %("hello " \\\n "world"), StringLiteral.new("hello world")
     it_parses %("hello "\\\n"world"), StringLiteral.new("hello world")
