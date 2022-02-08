@@ -61,7 +61,7 @@ class Log::Builder
   end
 
   # Returns a `Log` for the given *source* with a severity level and
-  # backend according to the bindings in *self*.
+  # backend according to the bindings in `self`.
   # If new bindings are applied, the existing `Log` instances will be
   # reconfigured.
   # Calling this method multiple times with the same value will return

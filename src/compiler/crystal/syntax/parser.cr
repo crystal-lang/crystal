@@ -1327,23 +1327,24 @@ module Crystal
     end
 
     def parse_begin
+      begin_location = @token.location
       slash_is_regex!
       next_token_skip_statement_end
       exps = parse_expressions
-      node, end_location = parse_exception_handler exps
+      node, end_location = parse_exception_handler exps, begin_location: begin_location
       node.end_location = end_location
-      if !node.is_a?(ExceptionHandler) && (!node.is_a?(Expressions) || node.keyword)
-        node = Expressions.new([node]).at(node).at_end(node)
+      if !node.is_a?(ExceptionHandler) && (!node.is_a?(Expressions) || !node.keyword.none?)
+        node = Expressions.new([node]).at(begin_location).at_end(end_location)
       end
       node.keyword = :begin if node.is_a?(Expressions)
       node
     end
 
-    def parse_exception_handler(exp, implicit = false)
+    def parse_exception_handler(exp, implicit = false, begin_location = nil)
       rescues = nil
       a_else = nil
       a_ensure = nil
-      begin_location = exp.location
+      begin_location ||= exp.location
 
       if @token.keyword?(:rescue)
         rescues = [] of Rescue
@@ -1372,6 +1373,7 @@ module Crystal
           raise "'else' is useless without 'rescue'", @token, 4
         end
 
+        else_location = @token.location
         begin_location ||= @token.location
         next_token_skip_statement_end
         a_else = parse_expressions
@@ -1379,6 +1381,7 @@ module Crystal
       end
 
       if @token.keyword?(:ensure)
+        ensure_location = @token.location
         begin_location ||= @token.location
         next_token_skip_statement_end
         a_ensure = parse_expressions
@@ -1392,9 +1395,10 @@ module Crystal
       next_token_skip_space
 
       if rescues || a_ensure
-        ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at(exp).at_end(end_location)
-        ex.at(begin_location)
+        ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at(begin_location).at_end(end_location)
         ex.implicit = true if implicit
+        ex.else_location = else_location
+        ex.ensure_location = ensure_location
         {ex, end_location}
       else
         exp
@@ -1406,21 +1410,26 @@ module Crystal
     ConstOrDoubleColon = [:CONST, :"::"]
 
     def parse_rescue
+      location = @token.location
+      end_location = token_end_location
       next_token_skip_space
 
       case @token.type
       when :IDENT
         name = @token.value.to_s
         push_var_name name
+        end_location = token_end_location
         next_token_skip_space
 
         if @token.type == :":"
           next_token_skip_space_or_newline
           check ConstOrDoubleColon
           types = parse_rescue_types
+          end_location = types.last.end_location
         end
       when :CONST, :"::"
         types = parse_rescue_types
+        end_location = types.last.end_location
       else
         # keep going
       end
@@ -1433,10 +1442,11 @@ module Crystal
         body = nil
       else
         body = parse_expressions
+        end_location = body.end_location
         skip_statement_end
       end
 
-      Rescue.new(body, types, name)
+      Rescue.new(body, types, name).at(location).at_end(end_location)
     end
 
     def parse_rescue_types
@@ -1754,8 +1764,9 @@ module Crystal
       next_token_skip_space_or_newline
 
       if @token.type == :")"
-        node = Expressions.new([Nop.new] of ASTNode)
-        node.keyword = :"("
+        end_location = token_end_location
+        node = Expressions.new([Nop.new] of ASTNode).at(location).at_end(end_location)
+        node.keyword = :paren
         return node_and_next_token node
       end
 
@@ -1775,12 +1786,14 @@ module Crystal
         case @token.type
         when :")"
           @wants_regex = false
+          end_location = token_end_location
           next_token_skip_space
           break
         when :NEWLINE, :";"
-          next_token_skip_space
+          next_token_skip_statement_end
           if @token.type == :")"
             @wants_regex = false
+            end_location = token_end_location
             next_token_skip_space
             break
           end
@@ -1791,8 +1804,8 @@ module Crystal
 
       unexpected_token if @token.type == :"("
 
-      node = Expressions.new(exps)
-      node.keyword = :"("
+      node = Expressions.new(exps).at(location).at_end(end_location)
+      node.keyword = :paren
       node
     end
 
@@ -1971,7 +1984,7 @@ module Crystal
 
       check :DELIMITER_START
 
-      if delimiter_state.kind == :heredoc
+      if delimiter_state.kind.heredoc?
         if @inside_interpolation
           raise "heredoc cannot be used inside interpolation", location
         end
@@ -1989,12 +2002,12 @@ module Crystal
 
       delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
 
-      if want_skip_space && delimiter_state.kind == :string
+      if want_skip_space && delimiter_state.kind.string?
         while true
           passed_backslash_newline = @token.passed_backslash_newline
           skip_space
 
-          if passed_backslash_newline && @token.type == :DELIMITER_START && @token.delimiter_state.kind == :string
+          if passed_backslash_newline && @token.type == :DELIMITER_START && @token.delimiter_state.kind.string?
             next_string_token(delimiter_state)
             delimiter_state = @token.delimiter_state
             delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
@@ -2013,9 +2026,9 @@ module Crystal
       end
 
       case delimiter_state.kind
-      when :command
+      when .command?
         result = Call.new(nil, "`", result).at(location)
-      when :regex
+      when .regex?
         if result.is_a?(StringLiteral) && (regex_error = Regex.error?(result.value))
           raise "invalid regex: #{regex_error}", location
         end
@@ -2061,7 +2074,7 @@ module Crystal
           next_string_token(delimiter_state)
           delimiter_state = @token.delimiter_state
         when :DELIMITER_END
-          if delimiter_state.kind == :regex
+          if delimiter_state.kind.regex?
             options = consume_regex_options
           end
           token_end_location = token_end_location()
@@ -2069,11 +2082,11 @@ module Crystal
           break
         when :EOF
           case delimiter_state.kind
-          when :command
+          when .command?
             raise "Unterminated command"
-          when :regex
+          when .regex?
             raise "Unterminated regular expression"
-          when :heredoc
+          when .heredoc?
             raise "Unterminated heredoc"
           else
             raise "Unterminated string literal"
@@ -2088,7 +2101,7 @@ module Crystal
 
           # We cannot reduce `StringLiteral` of interpolation inside heredoc into `String`
           # because heredoc try to remove its indentation.
-          if exp.is_a?(StringLiteral) && delimiter_state.kind != :heredoc
+          if exp.is_a?(StringLiteral) && !delimiter_state.kind.heredoc?
             pieces << Piece.new(exp.value, line_number)
           else
             pieces << Piece.new(exp, line_number)
@@ -2165,7 +2178,7 @@ module Crystal
     end
 
     def needs_heredoc_indent_removed?(delimiter_state)
-      delimiter_state.kind == :heredoc && delimiter_state.heredoc_indent >= 0
+      delimiter_state.kind.heredoc? && delimiter_state.heredoc_indent >= 0
     end
 
     def remove_heredoc_indent(pieces : Array, indent)
@@ -2493,7 +2506,7 @@ module Crystal
     end
 
     def string_literal_start?
-      @token.type == :DELIMITER_START && @token.delimiter_state.kind == :string
+      @token.type == :DELIMITER_START && @token.delimiter_state.kind.string?
     end
 
     def parse_tuple(first_exp, location)
@@ -4011,6 +4024,7 @@ module Crystal
 
       a_else = nil
       if @token.type == :IDENT
+        else_location = @token.location
         case @token.value
         when :else
           next_token_skip_statement_end
@@ -4026,7 +4040,9 @@ module Crystal
         next_token_skip_space
       end
 
-      If.new(cond, a_then, a_else).at(location).at_end(end_location)
+      node = If.new(cond, a_then, a_else).at(location).at_end(end_location)
+      node.else_location = else_location
+      node
     end
 
     def parse_unless
@@ -4048,6 +4064,7 @@ module Crystal
 
       a_else = nil
       if @token.keyword?(:else)
+        else_location = @token.location
         next_token_skip_statement_end
         a_else = parse_expressions
       end
@@ -4056,7 +4073,9 @@ module Crystal
       end_location = token_end_location
       next_token_skip_space
 
-      Unless.new(cond, a_then, a_else).at(location).at_end(end_location)
+      node = Unless.new(cond, a_then, a_else).at(location).at_end(end_location)
+      node.else_location = else_location
+      node
     end
 
     def set_visibility(node)
@@ -5704,7 +5723,7 @@ module Crystal
                when :INSTANCE_VAR
                  InstanceVar.new(@token.value.to_s)
                when :NUMBER
-                 raise "expecting an integer offset, not '#{@token}'", @token if @token.number_kind != :i32
+                 raise "expecting an integer offset, not '#{@token}'", @token if !@token.number_kind.i32?
                  NumberLiteral.new(@token.value.to_s, @token.number_kind)
                else
                  raise "expecting an instance variable or a integer offset, not '#{@token}'", @token

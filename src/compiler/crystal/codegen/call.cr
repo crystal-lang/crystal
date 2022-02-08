@@ -229,10 +229,10 @@ class Crystal::CodeGenVisitor
       # If we are passing variadic arguments there are some special rules
       if i >= target_def_args_size
         arg_type = arg.type.remove_indirection
-        if arg_type.is_a?(FloatType) && arg_type.kind == :f32
+        if arg_type.is_a?(FloatType) && arg_type.kind.bytesize < 64
           # Floats must be passed as doubles (there are no float varargs)
           call_arg = extend_float @program.float64, call_arg
-        elsif arg_type.is_a?(IntegerType) && arg_type.kind.in?(:i8, :u8, :i16, :u16)
+        elsif arg_type.is_a?(IntegerType) && arg_type.kind.bytesize < 32
           # Integer with a size less that `int` must be converted to `int`
           call_arg = extend_int arg_type, @program.int32, call_arg
         end
@@ -503,7 +503,11 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
-    set_current_debug_location node if @debug.line_numbers?
+    # If *fun_type* is not nil, then this method is being called from
+    # `codegen_primitive_proc_call` and *node* is simply `Proc#call`'s "body";
+    # in that case do not replace line numbers so that call stacks will continue
+    # using the original invocation
+    set_current_debug_location node if @debug.line_numbers? && fun_type.nil?
 
     if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"

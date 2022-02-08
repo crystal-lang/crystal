@@ -488,4 +488,25 @@ describe "Code gen: generic class type" do
       Baz.new
       ))
   end
+
+  it "codegens compile-time interpreted generic int128" do
+    run(%(
+      require "prelude"
+
+      CONST = 1_i128 + 2_i128
+      class Foo(T)
+        def initialize()
+        end
+
+        def t_incr
+          T + 1
+        end
+      end
+
+      class Bar < Foo(CONST)
+      end
+
+      Bar.new.t_incr
+      )).to_i.should eq(4)
+  end
 end
