@@ -1,7 +1,7 @@
 {% if flag?(:win32) %}
   require "c/ws2tcpip"
   require "c/afunix"
-{% elsif flag?(:wasm32) %}
+{% elsif flag?(:wasi) %}
   require "c/arpa/inet"
   require "c/netinet/in"
 {% else %}
@@ -43,7 +43,7 @@ class Socket < IO
   enum Type
     STREAM = LibC::SOCK_STREAM
     DGRAM  = LibC::SOCK_DGRAM
-    {% unless flag?(:wasm32) %}
+    {% unless flag?(:wasi) %}
       RAW       = LibC::SOCK_RAW
       SEQPACKET = LibC::SOCK_SEQPACKET
     {% end %}

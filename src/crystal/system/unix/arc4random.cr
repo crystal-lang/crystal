@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:openbsd) || flag?(:netbsd) || flag?(:wasm32) %}
+{% skip_file unless flag?(:openbsd) || flag?(:netbsd) %}
 
 require "c/stdlib"
 
