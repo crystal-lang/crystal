@@ -56,5 +56,8 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v2
 
+      - name: Build fresh compiler
+        run: bin/ci with_build_env make
+
       - name: Run smoke test
         run: bin/ci with_build_env make smoke_test target=${{ matrix.target }}
