@@ -1,30 +1,13 @@
 class Thread
-  # all thread objects, so the GC can see them (it doesn't scan thread locals)
-  @@threads = Thread::LinkedList(Thread).new
-
-  @exception : Exception?
-  @detached = Atomic(UInt8).new(0)
   @main_fiber : Fiber?
-  @func : (Proc(Nil))?
-
-  # :nodoc:
-  property next : Thread?
-
-  # :nodoc:
-  property previous : Thread?
-
-  def self.unsafe_each
-    @@threads.unsafe_each { |thread| yield thread }
-  end
 
   def initialize
     @main_fiber = Fiber.new(stack_address, self)
-    @@threads.push(self)
 
     # TODO: Create thread
   end
 
-  def initialize(&@func : ->)
+  def initialize(&func : ->)
     initialize
   end
 
@@ -36,7 +19,7 @@ class Thread
     raise NotImplementedError.new("Thread.yield")
   end
 
-  @@current : Thread? = Thread.new
+  @@current = Thread.new
 
   # Associates the Thread object to the running system thread.
   protected def self.current=(@@current : Thread) : Thread
@@ -44,7 +27,7 @@ class Thread
 
   # Returns the Thread object associated to the running system thread.
   def self.current : Thread
-    @@current || raise "BUG: Thread.current returned NULL"
+    @@current
   end
 
   # Create the thread object for the current thread (aka the main thread of the
@@ -64,18 +47,7 @@ class Thread
   end
 
   protected def start
-    Thread.current = self
-    @main_fiber = fiber = Fiber.new(stack_address, self)
-
-    begin
-      @func.call
-    rescue ex
-      @exception = ex
-    ensure
-      @@threads.delete(self)
-      Fiber.inactive(fiber)
-      detach_self
-    end
+    raise NotImplementedError.new("Thread#start")
   end
 
   private def stack_address : Void*

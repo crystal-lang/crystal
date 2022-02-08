@@ -10,14 +10,14 @@ module Crystal::System::Random
   # def self.next_u
 end
 
-{% if flag?(:linux) %}
+{% if flag?(:wasi) %}
+  require "./wasi/random"
+{% elsif flag?(:linux) %}
   require "./unix/getrandom"
 {% elsif flag?(:openbsd) || flag?(:netbsd) %}
   require "./unix/arc4random"
 {% elsif flag?(:unix) %}
   require "./unix/urandom"
-{% elsif flag?(:wasm32) %}
-  require "./wasm/random"
 {% elsif flag?(:win32) %}
   require "./win32/random"
 {% else %}

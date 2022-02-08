@@ -96,12 +96,16 @@ class Crystal::Codegen::Target
     @environment.starts_with?("linux")
   end
 
+  def wasi?
+    @environment.starts_with?("wasi")
+  end
+
   def bsd?
     freebsd? || netbsd? || openbsd? || dragonfly?
   end
 
   def unix?
-    macos? || bsd? || linux?
+    macos? || bsd? || linux? || wasi?
   end
 
   def gnu?

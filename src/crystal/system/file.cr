@@ -49,12 +49,12 @@ module Crystal::System::File
   # def file_descriptor_close
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./wasi/file"
+{% elsif flag?(:unix) %}
   require "./unix/file"
 {% elsif flag?(:win32) %}
   require "./win32/file"
-{% elsif flag?(:wasm32) %}
-  require "./wasm/file"
 {% else %}
   {% raise "No Crystal::System::File implementation available" %}
 {% end %}

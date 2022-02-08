@@ -12,7 +12,7 @@ module Crystal::System::Env
   # def self.each(&block : String, String ->)
 end
 
-{% if flag?(:unix) || flag?(:wasm32) %}
+{% if flag?(:unix) %}
   require "./unix/env"
 {% elsif flag?(:win32) %}
   require "./win32/env"

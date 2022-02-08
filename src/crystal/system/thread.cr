@@ -28,13 +28,13 @@ end
 
 require "./thread_linked_list"
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./wasi/thread"
+{% elsif flag?(:unix) %}
   require "./unix/pthread"
   require "./unix/pthread_condition_variable"
 {% elsif flag?(:win32) %}
   require "./win32/thread"
-{% elsif flag?(:wasm32) %}
-  require "./wasm/thread"
 {% else %}
   {% raise "thread not supported" %}
 {% end %}

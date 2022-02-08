@@ -12,7 +12,7 @@ module Crystal::System::Time
   # def self.load_localtime : ::Time::Location?
 end
 
-{% if flag?(:unix) || flag?(:wasm32) %}
+{% if flag?(:unix) %}
   require "./unix/time"
 {% elsif flag?(:win32) %}
   require "./win32/time"

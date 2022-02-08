@@ -9,12 +9,12 @@ module Crystal::System::Fiber
   # def self.main_fiber_stack(stack_bottom : Void*) : Void*
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./wasi/fiber"
+{% elsif flag?(:unix) %}
   require "./unix/fiber"
 {% elsif flag?(:win32) %}
   require "./win32/fiber"
-{% elsif flag?(:wasm32) %}
-  require "./wasm/fiber"
 {% else %}
   {% raise "fiber not supported" %}
 {% end %}
