@@ -960,7 +960,7 @@ module Crystal
     def guess_type(node : BinaryOp)
       left_type = guess_type(node.left)
       right_type = guess_type(node.right)
-      guess_from_two(left_type, right_type)
+      guess_from_two(left_type, right_type, is_or: node.is_a?(Or))
     end
 
     def guess_type(node : If)
@@ -1082,7 +1082,9 @@ module Crystal
       @program.nil
     end
 
-    def guess_from_two(type1, type2)
+    def guess_from_two(type1, type2, is_or = false)
+      type1 = TruthyFilter.instance.apply(type1) if type1 && is_or
+
       if type1
         if type2
           Type.merge!(type1, type2)

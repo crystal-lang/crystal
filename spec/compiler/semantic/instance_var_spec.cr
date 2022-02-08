@@ -3859,6 +3859,24 @@ describe "Semantic: instance var" do
       )) { generic_class "Gen", int32 }
   end
 
+  it "infers type by removing nil from || left side" do
+    assert_type(%(
+      struct Int32
+        def foo : Int32?
+          1
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = 1.foo || 2
+        end
+      end
+
+      Foo.new.@x
+      )) { int32 }
+  end
+
   it "guesses inside macro if" do
     assert_type(%(
       {% if true %}
