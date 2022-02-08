@@ -1,4 +1,4 @@
-{% skip_file if !flag?(:unix) || flag?(:wasm32) %}
+{% skip_file if !flag?(:unix) || flag?(:wasi) %}
 
 require "./spec_helper"
 require "../spec_helper"
