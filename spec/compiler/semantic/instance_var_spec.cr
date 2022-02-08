@@ -3819,6 +3819,46 @@ describe "Semantic: instance var" do
       "wrong number of arguments for 'Foo.new'"
   end
 
+  it "infers from method on integer literal, with type annotation" do
+    assert_type(%(
+      struct Int32
+        def foo : Char
+          'a'
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = 1.foo
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { char }
+  end
+
+  it "infers from method in generic type, with type annotation" do
+    assert_type(%(
+      class Gen(T)
+        def foo : Gen(T)
+          self
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = Gen(Int32).new.foo
+        end
+      end
+
+      Foo.new.@x
+      )) { generic_class "Gen", int32 }
+  end
+
   it "guesses inside macro if" do
     assert_type(%(
       {% if true %}

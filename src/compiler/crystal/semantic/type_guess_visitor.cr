@@ -642,7 +642,7 @@ module Crystal
         type = lookup_type?(obj)
         if type
           # See if the "new" method has a return type annotation, and use it if so
-          return_type = guess_type_from_method(type, node)
+          return_type = guess_type_from_class_method(type, node)
           return return_type if return_type
 
           # Otherwise, infer it to be T
@@ -657,7 +657,7 @@ module Crystal
            current_type.is_a?(GenericClassInstanceType)
          )
         # See if the "new" method has a return type annotation
-        return_type = guess_type_from_method(current_type, node)
+        return_type = guess_type_from_class_method(current_type, node)
         return return_type if return_type
 
         # Otherwise, infer it to the current type
@@ -737,28 +737,34 @@ module Crystal
     # Guess type from T.method, where T is a Path and
     # method solves to a method with a type annotation
     # (use the type annotation)
-    def guess_type_call_with_type_annotation(node)
+    def guess_type_call_with_type_annotation(node : Call)
       obj = node.obj
       return nil unless obj
-      return nil unless obj.is_a?(Path) || obj.is_a?(Generic)
 
-      obj_type = lookup_type_no_check?(obj)
+      if obj.is_a?(Path) || obj.is_a?(Generic)
+        obj_type = lookup_type_no_check?(obj)
+        return nil unless obj_type
+
+        return guess_type_from_class_method(obj_type, node)
+      end
+
+      obj_type = guess_type(obj)
       return nil unless obj_type
 
       guess_type_from_method(obj_type, node)
     end
 
-    def guess_type_from_method(obj_type, node : Call)
+    def guess_type_from_class_method(obj_type, node : Call)
       @dont_find_root_generic_type_parameters += 1 if obj_type != current_type
 
-      type = guess_type_from_method_impl(obj_type, node)
+      type = guess_type_from_class_method_impl(obj_type, node)
 
       @dont_find_root_generic_type_parameters -= 1 if obj_type != current_type
 
       type
     end
 
-    def guess_type_from_method_impl(obj_type, node : Call)
+    def guess_type_from_class_method_impl(obj_type, node : Call)
       metaclass = obj_type.devirtualize.metaclass
 
       defs = metaclass.lookup_defs(node.name)
@@ -820,6 +826,50 @@ module Crystal
       @methods_being_checked.pop
 
       type
+    end
+
+    def guess_type_from_method(obj_type, node : Call)
+      @dont_find_root_generic_type_parameters += 1 if obj_type != current_type
+
+      type = guess_type_from_method_impl(obj_type, node)
+
+      @dont_find_root_generic_type_parameters -= 1 if obj_type != current_type
+
+      type
+    end
+
+    def guess_type_from_method_impl(obj_type, node : Call)
+      return nil if node.block || node.block_arg
+
+      arg_types = node.args.map do |arg|
+        guessed_arg_type = guess_type(arg)
+        return unless guessed_arg_type
+
+        guessed_arg_type
+      end
+
+      named_args_types = node.named_args.try(&.map do |named_arg|
+        guessed_arg_type = guess_type(named_arg.value)
+        return unless guessed_arg_type
+
+        NamedArgumentType.new(named_arg.name, guessed_arg_type)
+      end)
+
+      signature = CallSignature.new(
+        name: node.name,
+        arg_types: arg_types,
+        named_args: named_args_types,
+        block: nil,
+      )
+      matches = obj_type.lookup_matches(signature).matches
+      return nil unless matches
+      return nil unless matches.size == 1
+
+      match = matches.first
+      return_type = match.def.return_type
+      return nil unless return_type
+
+      lookup_type?(return_type, match.context.instantiated_type)
     end
 
     def guess_type(node : Cast)
