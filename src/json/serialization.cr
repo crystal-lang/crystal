@@ -270,7 +270,7 @@ module JSON
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::JSON::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% unless ann && (ann[:ignore] || ann[:ignore_serialize] == true) %}
             {%
               properties[ivar.id] = {
                 type:             ivar.type,
@@ -286,54 +286,52 @@ module JSON
 
         json.object do
           {% for name, value in properties %}
-            {% unless value[:ignore_serialize] == true %}
-              _{{name}} = @{{name}}
+            _{{name}} = @{{name}}
 
-              {% unless value[:ignore_serialize].nil? || value[:ignore_serialize] == false %}
-                unless {{ value[:ignore_serialize] }}
+            {% if value[:ignore_serialize] %}
+              unless {{ value[:ignore_serialize] }}
+            {% end %}
+
+              {% unless value[:emit_null] %}
+                unless _{{name}}.nil?
               {% end %}
 
-                {% unless value[:emit_null] %}
-                  unless _{{name}}.nil?
-                {% end %}
-
-                  json.field({{value[:key]}}) do
-                    {% if value[:root] %}
-                      {% if value[:emit_null] %}
-                        if _{{name}}.nil?
-                          nil.to_json(json)
-                        else
-                      {% end %}
-
-                      json.object do
-                        json.field({{value[:root]}}) do
-                    {% end %}
-
-                    {% if value[:converter] %}
-                      if _{{name}}
-                        {{ value[:converter] }}.to_json(_{{name}}, json)
-                      else
+                json.field({{value[:key]}}) do
+                  {% if value[:root] %}
+                    {% if value[:emit_null] %}
+                      if _{{name}}.nil?
                         nil.to_json(json)
-                      end
-                    {% else %}
-                      _{{name}}.to_json(json)
+                      else
                     {% end %}
 
-                    {% if value[:root] %}
-                      {% if value[:emit_null] %}
-                        end
-                      {% end %}
-                        end
+                    json.object do
+                      json.field({{value[:root]}}) do
+                  {% end %}
+
+                  {% if value[:converter] %}
+                    if _{{name}}
+                      {{ value[:converter] }}.to_json(_{{name}}, json)
+                    else
+                      nil.to_json(json)
+                    end
+                  {% else %}
+                    _{{name}}.to_json(json)
+                  {% end %}
+
+                  {% if value[:root] %}
+                    {% if value[:emit_null] %}
                       end
                     {% end %}
-                  end
+                      end
+                    end
+                  {% end %}
+                end
 
-                {% unless value[:emit_null] %}
-                  end
-                {% end %}
-              {% unless value[:ignore_serialize].nil? || value[:ignore_serialize] == false %}
+              {% unless value[:emit_null] %}
                 end
               {% end %}
+            {% if value[:ignore_serialize] %}
+              end
             {% end %}
           {% end %}
           on_to_json(json)
