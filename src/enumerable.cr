@@ -1747,18 +1747,24 @@ module Enumerable(T)
   # ```
   # ["a", "A", "b", "B"].tally_by(&.downcase) # => {"a" => 2, "b" => 2}
   # ```
-  #
-  # If an optional `hash` is given, the number of occurrences is added to each value
-  # in the `hash`, and the `hash` is returned.
+  def tally_by(&block : T -> U) : Hash(U, Int32) forall U
+    tally_by(Hash(U, Int32).new, &block)
+  end
+
+  # Tallies the collection. Accepts a `hash` to count occurrences.
+  # The value corresponding to each element must be an integer.
+  # Returns a `hash` where the keys are the
+  # elements and the values are numbers of elements in the collection
+  # that correspond to the key after transformation by the given block.
   #
   # ```
   # hash = {} of Char => Int32
-  # words = ["crystal", "ruby"]
-  # words.each { |word| word.chars.tally(hash) }
+  # words = ["Crystal", "Ruby"]
+  # words.each { |word| word.chars.tally_by(hash, &.downcase) }
   # hash
   # => {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
   # ```
-  def tally_by(hash = Hash(U, Int32).new, & : T -> U) : Hash(U, Int32) forall U
+  def tally_by(hash : Hash(U, Int32), & : T -> U) : Hash(U, Int32) forall U
     each_with_object(hash) do |item, hash|
       value = yield item
       hash[value] = hash.fetch(value, 0) + 1
@@ -1772,18 +1778,23 @@ module Enumerable(T)
   # ```
   # ["a", "b", "c", "b"].tally # => {"a"=>1, "b"=>2, "c"=>1}
   # ```
-  #
-  # If an optional `hash` is given, the number of occurrences is added to each value
-  # in the `hash`, and the `hash` is returned.
+  def tally : Hash(T, Int32)
+    tally_by(&.itself)
+  end
+
+  # Tallies the collection. Accepts a `hash` to count occurrences.
+  # The value corresponding to each element must be an integer.
+  # The number of occurrences is added to each value in the `hash`,
+  # and the `hash` is returned.
   #
   # ```
   # hash = {} of Char => Int32
-  # words = ["Crystal", "Ruby"]
-  # words.each { |word| word.chars.tally_by(hash, &.downcase) }
+  # words = ["crystal", "ruby"]
+  # words.each { |word| word.chars.tally(hash) }
   # hash
   # => {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
   # ```
-  def tally(hash = Hash(T, Int32).new) : Hash(T, Int32)
+  def tally(hash : Hash(T, Int32)) : Hash(T, Int32)
     tally_by(hash, &.itself)
   end
 
