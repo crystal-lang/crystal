@@ -863,13 +863,17 @@ module Crystal
       )
       matches = obj_type.lookup_matches(signature).matches
       return nil unless matches
-      return nil unless matches.size == 1
 
-      match = matches.first
-      return_type = match.def.return_type
-      return nil unless return_type
+      return_types = matches.compact_map do |match|
+        return_type = match.def.return_type
+        next unless return_type
 
-      lookup_type?(return_type, match.context.instantiated_type)
+        lookup_type?(return_type, match.context.instantiated_type)
+      end
+
+      return nil if return_types.empty?
+
+      Type.merge(return_types)
     end
 
     def guess_type(node : Cast)

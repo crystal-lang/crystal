@@ -3877,6 +3877,36 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
+  it "infers type from all call matches" do
+    assert_type(%(
+      class Base
+        def foo : Int32
+          1
+        end
+      end
+
+      class Sub1 < Base
+        def foo : Char
+          'a'
+        end
+      end
+
+      class Sub2 < Base
+        def foo
+          1 + 2
+        end
+      end
+
+      class Foo
+        def initialize(base : Base)
+          @x = base.foo
+        end
+      end
+
+      Foo.new(Base.new).@x
+      )) { union_of int32, char }
+  end
+
   it "guesses inside macro if" do
     assert_type(%(
       {% if true %}
