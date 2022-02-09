@@ -1764,7 +1764,7 @@ module Enumerable(T)
   # hash
   # => {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
   # ```
-  def tally_by(hash : Hash(U, Int32), & : T -> U) : Hash(U, Int32) forall U
+  def tally_by(hash)
     each_with_object(hash) do |item, hash|
       value = yield item
       hash[value] = hash.fetch(value, 0) + 1
@@ -1794,7 +1794,7 @@ module Enumerable(T)
   # hash
   # => {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
   # ```
-  def tally(hash : Hash(T, Int32)) : Hash(T, Int32)
+  def tally(hash)
     tally_by(hash, &.itself)
   end
 
