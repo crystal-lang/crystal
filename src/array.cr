@@ -210,11 +210,11 @@ class Array(T)
   # ary == [1, 2, 3] # => true
   # ary == [2, 3]    # => false
   # ```
-  def ==(other : Array)
+  def ==(other : Array) : Bool
     equals?(other) { |x, y| x == y }
   end
 
-  def ==(other)
+  def ==(other) : Bool
     false
   end
 
@@ -234,7 +234,7 @@ class Array(T)
   # [2] <=> [4, 2, 3] # => -1
   # [1, 2] <=> [1, 2] # => 0
   # ```
-  def <=>(other : Array)
+  def <=>(other : Array) : Int32
     min_size = Math.min(size, other.size)
     0.upto(min_size - 1) do |i|
       n = @buffer[i] <=> other.to_unsafe[i]
@@ -252,7 +252,7 @@ class Array(T)
   # ```
   #
   # See also: `#uniq`.
-  def &(other : Array(U)) forall U
+  def &(other : Array(U)) : Array(T) forall U
     return Array(T).new if self.empty? || other.empty?
 
     # Heuristic: for small arrays we do a linear scan, which is usually
@@ -290,7 +290,7 @@ class Array(T)
   # ```
   #
   # See also: `#uniq`.
-  def |(other : Array(U)) forall U
+  def |(other : Array(U)) : Array(T | U) forall U
     # Heuristic: if the combined size is small we just do a linear scan
     # instead of using a Hash for lookup.
     if size + other.size <= SMALL_ARRAY_SIZE
@@ -332,7 +332,7 @@ class Array(T)
   # [1, 2] + ["a"]  # => [1,2,"a"] of (Int32 | String)
   # [1, 2] + [2, 3] # => [1,2,2,3]
   # ```
-  def +(other : Array(U)) forall U
+  def +(other : Array(U)) : Array(T | U) forall U
     new_size = size + other.size
     Array(T | U).build(new_size) do |buffer|
       buffer.copy_from(@buffer, size)
@@ -354,7 +354,7 @@ class Array(T)
   # ```
   # [1, 2, 3] - [2, 1] # => [3]
   # ```
-  def -(other : Array(U)) forall U
+  def -(other : Array(U)) : Array(T) forall U
     # Heuristic: if any of the arrays is small we just do a linear scan
     # instead of using a Hash for lookup.
     if size <= SMALL_ARRAY_SIZE || other.size <= SMALL_ARRAY_SIZE
@@ -378,7 +378,7 @@ class Array(T)
   # ```
   # ["a", "b", "c"] * 2 # => [ "a", "b", "c", "a", "b", "c" ]
   # ```
-  def *(times : Int)
+  def *(times : Int) : Array(T)
     if times == 0 || empty?
       return Array(T).new
     end
@@ -412,7 +412,7 @@ class Array(T)
   # a = [1, 2]
   # a << 3 # => [1,2,3]
   # ```
-  def <<(value : T)
+  def <<(value : T) : self
     push(value)
   end
 
@@ -433,7 +433,7 @@ class Array(T)
   # a[1, 0] = 6
   # a # => [1, 6, 2, 3, 4, 5]
   # ```
-  def []=(start : Int, count : Int, value : T)
+  def []=(start : Int, count : Int, value : T) : T
     start, count = normalize_start_and_count(start, count)
 
     case count
@@ -704,7 +704,7 @@ class Array(T)
   # ary  # => [[5, 2], [3, 4]]
   # ary2 # => [[1, 2], [3, 4], [7, 8]]
   # ```
-  def clone
+  def clone : Array(T)
     {% if T == ::Bool || T == ::Char || T == ::String || T == ::Symbol || T < ::Number::Primitive %}
       Array(T).new(size) { |i| @buffer[i].clone.as(T) }
     {% else %}
@@ -746,7 +746,7 @@ class Array(T)
   # ary.concat(["c", "d"])
   # ary # => ["a", "b", "c", "d"]
   # ```
-  def concat(other : Array)
+  def concat(other : Array) : self
     other_size = other.size
 
     resize_if_cant_insert(other_size)
@@ -759,7 +759,7 @@ class Array(T)
   end
 
   # :ditto:
-  def concat(other : Enumerable)
+  def concat(other : Enumerable) : self
     left_before_resize = remaining_capacity - @size
     len = @size
     buf = @buffer + len
@@ -806,7 +806,7 @@ class Array(T)
   # a               # => ["ant", "bat", "dog"]
   # a.delete_at(99) # raises IndexError
   # ```
-  def delete_at(index : Int)
+  def delete_at(index : Int) : T
     index = check_index_out_of_bounds index
 
     # Deleting the first element is the same as a shift
@@ -878,7 +878,7 @@ class Array(T)
   # ary  # => [[5, 2], [3, 4]]
   # ary2 # => [[5, 2], [3, 4], [7, 8]]
   # ```
-  def dup
+  def dup : Array(T)
     Array(T).build(@size) do |buffer|
       buffer.copy_from(@buffer, size)
       size
@@ -1010,7 +1010,7 @@ class Array(T)
   # a.insert(2, "y")  # => ["x", "a", "y", "b", "c"]
   # a.insert(-1, "z") # => ["x", "a", "y", "b", "c", "z"]
   # ```
-  def insert(index : Int, object : T)
+  def insert(index : Int, object : T) : self
     if index == 0
       return unshift(object)
     end
@@ -1056,7 +1056,7 @@ class Array(T)
   end
 
   # Optimized version of `Enumerable#map`.
-  def map(& : T -> U) forall U
+  def map(& : T -> U) : Array(U) forall U
     Array(U).new(size) { |i| yield @buffer[i] }
   end
 
@@ -1355,7 +1355,7 @@ class Array(T)
   # a.push("c") # => ["a", "b", "c"]
   # a.push(1)   # => ["a", "b", "c", 1]
   # ```
-  def push(value : T)
+  def push(value : T) : self
     check_needs_resize
     @buffer[@size] = value
     @size += 1
@@ -1713,7 +1713,7 @@ class Array(T)
     self
   end
 
-  def to_a
+  def to_a : self
     self
   end
 
@@ -1819,7 +1819,7 @@ class Array(T)
   # a.uniq # => ["a", "b", "c"]
   # a      # => [ "a", "a", "b", "b", "c" ]
   # ```
-  def uniq
+  def uniq : Array(T)
     if size <= 1
       return dup
     end
@@ -1846,7 +1846,7 @@ class Array(T)
   # a.uniq { |s| s[0] } # => [{"student", "sam"}, {"teacher", "matz"}]
   # a                   # => [{"student", "sam"}, {"student", "george"}, {"teacher", "matz"}]
   # ```
-  def uniq(& : T ->)
+  def uniq(& : T ->) : Array(T)
     if size <= 1
       dup
     else
