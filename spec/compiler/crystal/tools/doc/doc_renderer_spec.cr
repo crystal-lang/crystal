@@ -308,6 +308,10 @@ describe Doc::MarkdDocRenderer do
     it_renders nil, "```\nHello\nWorld\n```", %(<pre><code class="language-crystal"><span class="t">Hello</span>\n<span class="t">World</span></code></pre>)
   end
 
+  describe "renders code spans" do
+    it_renders nil, "`<style>`", %(<p><code>&lt;style&gt;</code></p>)
+  end
+
   describe "renders links" do
     it_renders nil, "[foo](http://example.com/foo)", %(<p><a href="http://example.com/foo">foo</a></p>)
 

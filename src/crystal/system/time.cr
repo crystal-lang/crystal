@@ -17,5 +17,5 @@ end
 {% elsif flag?(:win32) %}
   require "./win32/time"
 {% else %}
-  {% raise "No implementation of Crystal::System::Time available" %}
+  {% raise "No Crystal::System::Time implementation available" %}
 {% end %}

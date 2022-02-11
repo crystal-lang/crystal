@@ -170,12 +170,22 @@ class Crystal::Repl::Compiler
 
         index = body.as(TupleIndexer).index
         case index
-        when Int32
+        in Int32
           element_type = type.tuple_types[index]
           offset = @context.offset_of(type, index)
           tuple_indexer_known_index(aligned_sizeof_type(type), offset, inner_sizeof_type(element_type), node: node)
-        else
-          node.raise "BUG: missing handling of primitive #{body.name} with range"
+        in Range
+          element_type = @context.program.tuple_of(type.tuple_types[index].map &.as(Type))
+          tuple_size = aligned_sizeof_type(type)
+          index.each do |i|
+            old_offset = @context.offset_of(type, i)
+            new_offset = @context.offset_of(element_type, i - index.begin)
+            element_size = inner_sizeof_type(type.tuple_types[i])
+            tuple_copy_element(tuple_size, old_offset, new_offset, element_size, node: node)
+          end
+          value_size = inner_sizeof_type(element_type)
+          pop(tuple_size - value_size, node: node)
+          push_zeros(aligned_sizeof_type(element_type) - value_size, node: node)
         end
       when NamedTupleInstanceType
         obj.accept self
@@ -199,10 +209,10 @@ class Crystal::Repl::Compiler
         when TupleInstanceType
           index = body.as(TupleIndexer).index
           case index
-          when Int32
+          in Int32
             put_type(type.tuple_types[index].as(Type).metaclass, node: node)
-          else
-            node.raise "BUG: missing handling of primitive #{body.name} with range"
+          in Range
+            put_type(@context.program.tuple_of(type.tuple_types[index].map &.as(Type)), node: node)
           end
         when NamedTupleInstanceType
           index = body.as(TupleIndexer).index
@@ -273,10 +283,9 @@ class Crystal::Repl::Compiler
     when "external_var_get"
       return unless @wants_value
 
-      lib_type = node.obj.not_nil!.type.as(LibType)
       external = node.target_def.as(External)
 
-      fn = @context.c_function(lib_type, external.real_name)
+      fn = @context.c_function(external.real_name)
 
       # Put the symbol address, which is a pointer
       put_u64 fn.address, node: node
@@ -284,7 +293,6 @@ class Crystal::Repl::Compiler
       # Read from the pointer
       pointer_get(inner_sizeof_type(node), node: node)
     when "external_var_set"
-      lib_type = node.obj.not_nil!.type.as(LibType)
       external = node.target_def.as(External)
 
       # pointer_set needs first arg, then obj
@@ -292,7 +300,7 @@ class Crystal::Repl::Compiler
       request_value(arg)
       dup(aligned_sizeof_type(arg), node: nil) if @wants_value
 
-      fn = @context.c_function(lib_type, external.real_name)
+      fn = @context.c_function(external.real_name)
 
       # Put the symbol address, which is a pointer
       put_u64 fn.address, node: node
@@ -589,155 +597,154 @@ class Crystal::Repl::Compiler
     node.raise "BUG: missing handling of convert from #{from_type} to #{to_type}"
   end
 
-  private def primitive_convert(node : ASTNode, from_kind : Symbol, to_kind : Symbol, checked : Bool)
+  private def primitive_convert(node : ASTNode, from_kind : NumberKind, to_kind : NumberKind, checked : Bool)
     # Most of these are nop because we align the stack to 64 bits,
     # so numbers are already converted to 64 bits
     case {from_kind, to_kind}
-    when {:i8, :i8}     then nop
-    when {:i8, :i16}    then sign_extend(7, node: node)
-    when {:i8, :i32}    then sign_extend(7, node: node)
-    when {:i8, :i64}    then sign_extend(7, node: node)
-    when {:i8, :i128}   then sign_extend(15, node: node)
-    when {:i8, :u8}     then checked ? (sign_extend(7, node: node); i64_to_u8(node: node)) : nop
-    when {:i8, :u16}    then sign_extend(7, node: node); checked ? i64_to_u16(node: node) : nop
-    when {:i8, :u32}    then sign_extend(7, node: node); checked ? i64_to_u32(node: node) : nop
-    when {:i8, :u64}    then sign_extend(7, node: node); checked ? i64_to_u64(node: node) : nop
-    when {:i8, :u128}   then sign_extend(15, node: node); checked ? i128_to_u128(node: node) : nop
-    when {:i8, :f32}    then sign_extend(7, node: node); i64_to_f32(node: node)
-    when {:i8, :f64}    then sign_extend(7, node: node); i64_to_f64(node: node)
-    when {:u8, :i8}     then zero_extend(7, node: node); checked ? u64_to_i8(node: node) : nop
-    when {:u8, :i16}    then zero_extend(7, node: node)
-    when {:u8, :i32}    then zero_extend(7, node: node)
-    when {:u8, :i64}    then zero_extend(7, node: node)
-    when {:u8, :i128}   then zero_extend(15, node: node)
-    when {:u8, :u8}     then nop
-    when {:u8, :u16}    then zero_extend(7, node: node)
-    when {:u8, :u32}    then zero_extend(7, node: node)
-    when {:u8, :u64}    then zero_extend(7, node: node)
-    when {:u8, :u128}   then zero_extend(15, node: node)
-    when {:u8, :f32}    then zero_extend(7, node: node); u64_to_f32(node: node)
-    when {:u8, :f64}    then zero_extend(7, node: node); u64_to_f64(node: node)
-    when {:i16, :i8}    then checked ? (sign_extend(6, node: node); i64_to_i8(node: node)) : nop
-    when {:i16, :i16}   then nop
-    when {:i16, :i32}   then sign_extend(6, node: node)
-    when {:i16, :i64}   then sign_extend(6, node: node)
-    when {:i16, :i128}  then sign_extend(14, node: node)
-    when {:i16, :u8}    then checked ? (sign_extend(6, node: node); i64_to_u8(node: node)) : nop
-    when {:i16, :u16}   then checked ? (sign_extend(6, node: node); i64_to_u16(node: node)) : nop
-    when {:i16, :u32}   then sign_extend(6, node: node); checked ? i64_to_u32(node: node) : nop
-    when {:i16, :u64}   then sign_extend(6, node: node); checked ? i64_to_u64(node: node) : nop
-    when {:i16, :u128}  then sign_extend(14, node: node); checked ? i128_to_u128(node: node) : nop
-    when {:i16, :f32}   then sign_extend(6, node: node); i64_to_f32(node: node)
-    when {:i16, :f64}   then sign_extend(6, node: node); i64_to_f64(node: node)
-    when {:u16, :i8}    then checked ? (zero_extend(6, node: node); u64_to_i8(node: node)) : nop
-    when {:u16, :i16}   then checked ? (zero_extend(6, node: node); u64_to_i16(node: node)) : nop
-    when {:u16, :i32}   then zero_extend(6, node: node)
-    when {:u16, :i64}   then zero_extend(6, node: node)
-    when {:u16, :i128}  then zero_extend(14, node: node)
-    when {:u16, :u8}    then nop
-    when {:u16, :u16}   then nop
-    when {:u16, :u32}   then zero_extend(6, node: node)
-    when {:u16, :u64}   then zero_extend(6, node: node)
-    when {:u16, :u128}  then zero_extend(14, node: node)
-    when {:u16, :f32}   then zero_extend(6, node: node); u64_to_f32(node: node)
-    when {:u16, :f64}   then zero_extend(6, node: node); u64_to_f64(node: node)
-    when {:i32, :i8}    then checked ? (sign_extend(4, node: node); i64_to_i8(node: node)) : nop
-    when {:i32, :i16}   then checked ? (sign_extend(4, node: node); i64_to_i16(node: node)) : nop
-    when {:i32, :i32}   then nop
-    when {:i32, :i64}   then sign_extend(4, node: node)
-    when {:i32, :i128}  then sign_extend(12, node: node)
-    when {:i32, :u8}    then checked ? (sign_extend(4, node: node); i64_to_u8(node: node)) : nop
-    when {:i32, :u16}   then checked ? (sign_extend(4, node: node); i64_to_u16(node: node)) : nop
-    when {:i32, :u32}   then checked ? (sign_extend(4, node: node); i64_to_u32(node: node)) : nop
-    when {:i32, :u64}   then checked ? (sign_extend(4, node: node); i64_to_u64(node: node)) : sign_extend(4, node: node)
-    when {:i32, :u128}  then checked ? (sign_extend(12, node: node); i128_to_u128(node: node)) : sign_extend(12, node: node)
-    when {:i32, :f32}   then sign_extend(4, node: node); i64_to_f32(node: node)
-    when {:i32, :f64}   then sign_extend(4, node: node); i64_to_f64(node: node)
-    when {:u32, :i8}    then checked ? (zero_extend(4, node: node); u64_to_i8(node: node)) : nop
-    when {:u32, :i16}   then checked ? (zero_extend(4, node: node); u64_to_i16(node: node)) : nop
-    when {:u32, :i32}   then checked ? (zero_extend(4, node: node); u64_to_i32(node: node)) : nop
-    when {:u32, :i64}   then zero_extend(4, node: node)
-    when {:u32, :i128}  then zero_extend(12, node: node)
-    when {:u32, :u8}    then checked ? (zero_extend(4, node: node); u64_to_u8(node: node)) : nop
-    when {:u32, :u16}   then checked ? (zero_extend(4, node: node); u64_to_u16(node: node)) : nop
-    when {:u32, :u32}   then nop
-    when {:u32, :u64}   then zero_extend(4, node: node)
-    when {:u32, :u128}  then zero_extend(12, node: node)
-    when {:u32, :f32}   then zero_extend(4, node: node); u64_to_f32(node: node)
-    when {:u32, :f64}   then zero_extend(4, node: node); u64_to_f64(node: node)
-    when {:i64, :i8}    then checked ? i64_to_i8(node: node) : nop
-    when {:i64, :i16}   then checked ? i64_to_i16(node: node) : nop
-    when {:i64, :i32}   then checked ? i64_to_i32(node: node) : nop
-    when {:i64, :i64}   then nop
-    when {:i64, :i128}  then sign_extend(8, node: node)
-    when {:i64, :u8}    then checked ? i64_to_u8(node: node) : nop
-    when {:i64, :u16}   then checked ? i64_to_u16(node: node) : nop
-    when {:i64, :u32}   then checked ? i64_to_u32(node: node) : nop
-    when {:i64, :u64}   then checked ? i64_to_u64(node: node) : nop
-    when {:i64, :u128}  then checked ? (sign_extend(8, node: node); i128_to_u128(node: node)) : sign_extend(8, node: node)
-    when {:i64, :f32}   then i64_to_f32(node: node)
-    when {:i64, :f64}   then i64_to_f64(node: node)
-    when {:u64, :i8}    then checked ? u64_to_i8(node: node) : nop
-    when {:u64, :i16}   then checked ? u64_to_i16(node: node) : nop
-    when {:u64, :i32}   then checked ? u64_to_i32(node: node) : nop
-    when {:u64, :i64}   then checked ? u64_to_i64(node: node) : nop
-    when {:u64, :i128}  then zero_extend(8, node: node)
-    when {:u64, :u8}    then checked ? u64_to_u8(node: node) : nop
-    when {:u64, :u16}   then checked ? u64_to_u16(node: node) : nop
-    when {:u64, :u32}   then checked ? u64_to_u32(node: node) : nop
-    when {:u64, :u64}   then nop
-    when {:u64, :u128}  then zero_extend(8, node: node)
-    when {:u64, :f32}   then u64_to_f32(node: node)
-    when {:u64, :f64}   then u64_to_f64(node: node)
-    when {:i128, :i8}   then checked ? i128_to_i8(node: node) : pop(8, node: node)
-    when {:i128, :i16}  then checked ? i128_to_i16(node: node) : pop(8, node: node)
-    when {:i128, :i32}  then checked ? i128_to_i32(node: node) : pop(8, node: node)
-    when {:i128, :i64}  then checked ? i128_to_i64(node: node) : pop(8, node: node)
-    when {:i128, :i128} then nop
-    when {:i128, :u8}   then checked ? i128_to_u8(node: node) : pop(8, node: node)
-    when {:i128, :u16}  then checked ? i128_to_u16(node: node) : pop(8, node: node)
-    when {:i128, :u32}  then checked ? i128_to_u32(node: node) : pop(8, node: node)
-    when {:i128, :u64}  then checked ? i128_to_u64(node: node) : pop(8, node: node)
-    when {:i128, :u128} then checked ? i128_to_u128(node: node) : nop
-    when {:i128, :f32}  then i128_to_f32(node: node)
-    when {:i128, :f64}  then i128_to_f64(node: node)
-    when {:u128, :i8}   then checked ? u128_to_i8(node: node) : pop(8, node: node)
-    when {:u128, :i16}  then checked ? u128_to_i16(node: node) : pop(8, node: node)
-    when {:u128, :i32}  then checked ? u128_to_i32(node: node) : pop(8, node: node)
-    when {:u128, :i64}  then checked ? u128_to_i64(node: node) : pop(8, node: node)
-    when {:u128, :i128} then checked ? u128_to_i128(node: node) : nop
-    when {:u128, :u8}   then checked ? u128_to_u8(node: node) : pop(8, node: node)
-    when {:u128, :u16}  then checked ? u128_to_u16(node: node) : pop(8, node: node)
-    when {:u128, :u32}  then checked ? u128_to_u32(node: node) : pop(8, node: node)
-    when {:u128, :u64}  then checked ? u128_to_u64(node: node) : pop(8, node: node)
-    when {:u128, :u128} then nop
-    when {:u128, :f32}  then u128_to_f32(node: node)
-    when {:u128, :f64}  then u128_to_f64(node: node)
-    when {:f32, :i8}    then f32_to_f64(node: node); checked ? f64_to_i8(node: node) : f64_to_i64_bang(node: node)
-    when {:f32, :i16}   then f32_to_f64(node: node); checked ? f64_to_i16(node: node) : f64_to_i64_bang(node: node)
-    when {:f32, :i32}   then f32_to_f64(node: node); checked ? f64_to_i32(node: node) : f64_to_i64_bang(node: node)
-    when {:f32, :i64}   then f32_to_f64(node: node); checked ? f64_to_i64(node: node) : f64_to_i64_bang(node: node)
-    when {:f32, :i128}  then f32_to_f64(node: node); checked ? f64_to_i128(node: node) : f64_to_i128_bang(node: node)
-    when {:f32, :u8}    then f32_to_f64(node: node); checked ? f64_to_u8(node: node) : f64_to_i64_bang(node: node)
-    when {:f32, :u16}   then f32_to_f64(node: node); checked ? f64_to_u16(node: node) : f64_to_i64_bang(node: node)
-    when {:f32, :u32}   then f32_to_f64(node: node); checked ? f64_to_u32(node: node) : f64_to_i64_bang(node: node)
-    when {:f32, :u64}   then f32_to_f64(node: node); checked ? f64_to_u64(node: node) : f64_to_i64_bang(node: node)
-    when {:f32, :u128}  then f32_to_f64(node: node); checked ? f64_to_u128(node: node) : f64_to_i128_bang(node: node)
-    when {:f32, :f32}   then nop
-    when {:f32, :f64}   then f32_to_f64(node: node)
-    when {:f64, :i8}    then checked ? f64_to_i8(node: node) : f64_to_i64_bang(node: node)
-    when {:f64, :i16}   then checked ? f64_to_i16(node: node) : f64_to_i64_bang(node: node)
-    when {:f64, :i32}   then checked ? f64_to_i32(node: node) : f64_to_i64_bang(node: node)
-    when {:f64, :i64}   then checked ? f64_to_i64(node: node) : f64_to_i64_bang(node: node)
-    when {:f64, :i128}  then checked ? f64_to_i128(node: node) : f64_to_i128_bang(node: node)
-    when {:f64, :u8}    then checked ? f64_to_u8(node: node) : f64_to_i64_bang(node: node)
-    when {:f64, :u16}   then checked ? f64_to_u16(node: node) : f64_to_i64_bang(node: node)
-    when {:f64, :u32}   then checked ? f64_to_u32(node: node) : f64_to_i64_bang(node: node)
-    when {:f64, :u64}   then checked ? f64_to_u64(node: node) : f64_to_i64_bang(node: node)
-    when {:f64, :u128}  then checked ? f64_to_u128(node: node) : f64_to_i128_bang(node: node)
-    when {:f64, :f32}   then checked ? f64_to_f32(node: node) : f64_to_f32_bang(node: node)
-    when {:f64, :f64}   then nop
-    else                     node.raise "BUG: missing handling of unchecked_convert for #{from_kind} - #{to_kind}"
+    in {.i8?, .i8?}     then nop
+    in {.i8?, .i16?}    then sign_extend(7, node: node)
+    in {.i8?, .i32?}    then sign_extend(7, node: node)
+    in {.i8?, .i64?}    then sign_extend(7, node: node)
+    in {.i8?, .i128?}   then sign_extend(15, node: node)
+    in {.i8?, .u8?}     then checked ? (sign_extend(7, node: node); i64_to_u8(node: node)) : nop
+    in {.i8?, .u16?}    then sign_extend(7, node: node); checked ? i64_to_u16(node: node) : nop
+    in {.i8?, .u32?}    then sign_extend(7, node: node); checked ? i64_to_u32(node: node) : nop
+    in {.i8?, .u64?}    then sign_extend(7, node: node); checked ? i64_to_u64(node: node) : nop
+    in {.i8?, .u128?}   then sign_extend(15, node: node); checked ? i128_to_u128(node: node) : nop
+    in {.i8?, .f32?}    then sign_extend(7, node: node); i64_to_f32(node: node)
+    in {.i8?, .f64?}    then sign_extend(7, node: node); i64_to_f64(node: node)
+    in {.u8?, .i8?}     then zero_extend(7, node: node); checked ? u64_to_i8(node: node) : nop
+    in {.u8?, .i16?}    then zero_extend(7, node: node)
+    in {.u8?, .i32?}    then zero_extend(7, node: node)
+    in {.u8?, .i64?}    then zero_extend(7, node: node)
+    in {.u8?, .i128?}   then zero_extend(15, node: node)
+    in {.u8?, .u8?}     then nop
+    in {.u8?, .u16?}    then zero_extend(7, node: node)
+    in {.u8?, .u32?}    then zero_extend(7, node: node)
+    in {.u8?, .u64?}    then zero_extend(7, node: node)
+    in {.u8?, .u128?}   then zero_extend(15, node: node)
+    in {.u8?, .f32?}    then zero_extend(7, node: node); u64_to_f32(node: node)
+    in {.u8?, .f64?}    then zero_extend(7, node: node); u64_to_f64(node: node)
+    in {.i16?, .i8?}    then checked ? (sign_extend(6, node: node); i64_to_i8(node: node)) : nop
+    in {.i16?, .i16?}   then nop
+    in {.i16?, .i32?}   then sign_extend(6, node: node)
+    in {.i16?, .i64?}   then sign_extend(6, node: node)
+    in {.i16?, .i128?}  then sign_extend(14, node: node)
+    in {.i16?, .u8?}    then checked ? (sign_extend(6, node: node); i64_to_u8(node: node)) : nop
+    in {.i16?, .u16?}   then checked ? (sign_extend(6, node: node); i64_to_u16(node: node)) : nop
+    in {.i16?, .u32?}   then sign_extend(6, node: node); checked ? i64_to_u32(node: node) : nop
+    in {.i16?, .u64?}   then sign_extend(6, node: node); checked ? i64_to_u64(node: node) : nop
+    in {.i16?, .u128?}  then sign_extend(14, node: node); checked ? i128_to_u128(node: node) : nop
+    in {.i16?, .f32?}   then sign_extend(6, node: node); i64_to_f32(node: node)
+    in {.i16?, .f64?}   then sign_extend(6, node: node); i64_to_f64(node: node)
+    in {.u16?, .i8?}    then checked ? (zero_extend(6, node: node); u64_to_i8(node: node)) : nop
+    in {.u16?, .i16?}   then checked ? (zero_extend(6, node: node); u64_to_i16(node: node)) : nop
+    in {.u16?, .i32?}   then zero_extend(6, node: node)
+    in {.u16?, .i64?}   then zero_extend(6, node: node)
+    in {.u16?, .i128?}  then zero_extend(14, node: node)
+    in {.u16?, .u8?}    then nop
+    in {.u16?, .u16?}   then nop
+    in {.u16?, .u32?}   then zero_extend(6, node: node)
+    in {.u16?, .u64?}   then zero_extend(6, node: node)
+    in {.u16?, .u128?}  then zero_extend(14, node: node)
+    in {.u16?, .f32?}   then zero_extend(6, node: node); u64_to_f32(node: node)
+    in {.u16?, .f64?}   then zero_extend(6, node: node); u64_to_f64(node: node)
+    in {.i32?, .i8?}    then checked ? (sign_extend(4, node: node); i64_to_i8(node: node)) : nop
+    in {.i32?, .i16?}   then checked ? (sign_extend(4, node: node); i64_to_i16(node: node)) : nop
+    in {.i32?, .i32?}   then nop
+    in {.i32?, .i64?}   then sign_extend(4, node: node)
+    in {.i32?, .i128?}  then sign_extend(12, node: node)
+    in {.i32?, .u8?}    then checked ? (sign_extend(4, node: node); i64_to_u8(node: node)) : nop
+    in {.i32?, .u16?}   then checked ? (sign_extend(4, node: node); i64_to_u16(node: node)) : nop
+    in {.i32?, .u32?}   then checked ? (sign_extend(4, node: node); i64_to_u32(node: node)) : nop
+    in {.i32?, .u64?}   then checked ? (sign_extend(4, node: node); i64_to_u64(node: node)) : sign_extend(4, node: node)
+    in {.i32?, .u128?}  then checked ? (sign_extend(12, node: node); i128_to_u128(node: node)) : sign_extend(12, node: node)
+    in {.i32?, .f32?}   then sign_extend(4, node: node); i64_to_f32(node: node)
+    in {.i32?, .f64?}   then sign_extend(4, node: node); i64_to_f64(node: node)
+    in {.u32?, .i8?}    then checked ? (zero_extend(4, node: node); u64_to_i8(node: node)) : nop
+    in {.u32?, .i16?}   then checked ? (zero_extend(4, node: node); u64_to_i16(node: node)) : nop
+    in {.u32?, .i32?}   then checked ? (zero_extend(4, node: node); u64_to_i32(node: node)) : nop
+    in {.u32?, .i64?}   then zero_extend(4, node: node)
+    in {.u32?, .i128?}  then zero_extend(12, node: node)
+    in {.u32?, .u8?}    then checked ? (zero_extend(4, node: node); u64_to_u8(node: node)) : nop
+    in {.u32?, .u16?}   then checked ? (zero_extend(4, node: node); u64_to_u16(node: node)) : nop
+    in {.u32?, .u32?}   then nop
+    in {.u32?, .u64?}   then zero_extend(4, node: node)
+    in {.u32?, .u128?}  then zero_extend(12, node: node)
+    in {.u32?, .f32?}   then zero_extend(4, node: node); u64_to_f32(node: node)
+    in {.u32?, .f64?}   then zero_extend(4, node: node); u64_to_f64(node: node)
+    in {.i64?, .i8?}    then checked ? i64_to_i8(node: node) : nop
+    in {.i64?, .i16?}   then checked ? i64_to_i16(node: node) : nop
+    in {.i64?, .i32?}   then checked ? i64_to_i32(node: node) : nop
+    in {.i64?, .i64?}   then nop
+    in {.i64?, .i128?}  then sign_extend(8, node: node)
+    in {.i64?, .u8?}    then checked ? i64_to_u8(node: node) : nop
+    in {.i64?, .u16?}   then checked ? i64_to_u16(node: node) : nop
+    in {.i64?, .u32?}   then checked ? i64_to_u32(node: node) : nop
+    in {.i64?, .u64?}   then checked ? i64_to_u64(node: node) : nop
+    in {.i64?, .u128?}  then checked ? (sign_extend(8, node: node); i128_to_u128(node: node)) : sign_extend(8, node: node)
+    in {.i64?, .f32?}   then i64_to_f32(node: node)
+    in {.i64?, .f64?}   then i64_to_f64(node: node)
+    in {.u64?, .i8?}    then checked ? u64_to_i8(node: node) : nop
+    in {.u64?, .i16?}   then checked ? u64_to_i16(node: node) : nop
+    in {.u64?, .i32?}   then checked ? u64_to_i32(node: node) : nop
+    in {.u64?, .i64?}   then checked ? u64_to_i64(node: node) : nop
+    in {.u64?, .i128?}  then zero_extend(8, node: node)
+    in {.u64?, .u8?}    then checked ? u64_to_u8(node: node) : nop
+    in {.u64?, .u16?}   then checked ? u64_to_u16(node: node) : nop
+    in {.u64?, .u32?}   then checked ? u64_to_u32(node: node) : nop
+    in {.u64?, .u64?}   then nop
+    in {.u64?, .u128?}  then zero_extend(8, node: node)
+    in {.u64?, .f32?}   then u64_to_f32(node: node)
+    in {.u64?, .f64?}   then u64_to_f64(node: node)
+    in {.i128?, .i8?}   then checked ? i128_to_i8(node: node) : pop(8, node: node)
+    in {.i128?, .i16?}  then checked ? i128_to_i16(node: node) : pop(8, node: node)
+    in {.i128?, .i32?}  then checked ? i128_to_i32(node: node) : pop(8, node: node)
+    in {.i128?, .i64?}  then checked ? i128_to_i64(node: node) : pop(8, node: node)
+    in {.i128?, .i128?} then nop
+    in {.i128?, .u8?}   then checked ? i128_to_u8(node: node) : pop(8, node: node)
+    in {.i128?, .u16?}  then checked ? i128_to_u16(node: node) : pop(8, node: node)
+    in {.i128?, .u32?}  then checked ? i128_to_u32(node: node) : pop(8, node: node)
+    in {.i128?, .u64?}  then checked ? i128_to_u64(node: node) : pop(8, node: node)
+    in {.i128?, .u128?} then checked ? i128_to_u128(node: node) : nop
+    in {.i128?, .f32?}  then i128_to_f32(node: node)
+    in {.i128?, .f64?}  then i128_to_f64(node: node)
+    in {.u128?, .i8?}   then checked ? u128_to_i8(node: node) : pop(8, node: node)
+    in {.u128?, .i16?}  then checked ? u128_to_i16(node: node) : pop(8, node: node)
+    in {.u128?, .i32?}  then checked ? u128_to_i32(node: node) : pop(8, node: node)
+    in {.u128?, .i64?}  then checked ? u128_to_i64(node: node) : pop(8, node: node)
+    in {.u128?, .i128?} then checked ? u128_to_i128(node: node) : nop
+    in {.u128?, .u8?}   then checked ? u128_to_u8(node: node) : pop(8, node: node)
+    in {.u128?, .u16?}  then checked ? u128_to_u16(node: node) : pop(8, node: node)
+    in {.u128?, .u32?}  then checked ? u128_to_u32(node: node) : pop(8, node: node)
+    in {.u128?, .u64?}  then checked ? u128_to_u64(node: node) : pop(8, node: node)
+    in {.u128?, .u128?} then nop
+    in {.u128?, .f32?}  then u128_to_f32(node: node)
+    in {.u128?, .f64?}  then u128_to_f64(node: node)
+    in {.f32?, .i8?}    then f32_to_f64(node: node); checked ? f64_to_i8(node: node) : f64_to_i64_bang(node: node)
+    in {.f32?, .i16?}   then f32_to_f64(node: node); checked ? f64_to_i16(node: node) : f64_to_i64_bang(node: node)
+    in {.f32?, .i32?}   then f32_to_f64(node: node); checked ? f64_to_i32(node: node) : f64_to_i64_bang(node: node)
+    in {.f32?, .i64?}   then f32_to_f64(node: node); checked ? f64_to_i64(node: node) : f64_to_i64_bang(node: node)
+    in {.f32?, .i128?}  then f32_to_f64(node: node); checked ? f64_to_i128(node: node) : f64_to_i128_bang(node: node)
+    in {.f32?, .u8?}    then f32_to_f64(node: node); checked ? f64_to_u8(node: node) : f64_to_i64_bang(node: node)
+    in {.f32?, .u16?}   then f32_to_f64(node: node); checked ? f64_to_u16(node: node) : f64_to_i64_bang(node: node)
+    in {.f32?, .u32?}   then f32_to_f64(node: node); checked ? f64_to_u32(node: node) : f64_to_i64_bang(node: node)
+    in {.f32?, .u64?}   then f32_to_f64(node: node); checked ? f64_to_u64(node: node) : f64_to_i64_bang(node: node)
+    in {.f32?, .u128?}  then f32_to_f64(node: node); checked ? f64_to_u128(node: node) : f64_to_i128_bang(node: node)
+    in {.f32?, .f32?}   then nop
+    in {.f32?, .f64?}   then f32_to_f64(node: node)
+    in {.f64?, .i8?}    then checked ? f64_to_i8(node: node) : f64_to_i64_bang(node: node)
+    in {.f64?, .i16?}   then checked ? f64_to_i16(node: node) : f64_to_i64_bang(node: node)
+    in {.f64?, .i32?}   then checked ? f64_to_i32(node: node) : f64_to_i64_bang(node: node)
+    in {.f64?, .i64?}   then checked ? f64_to_i64(node: node) : f64_to_i64_bang(node: node)
+    in {.f64?, .i128?}  then checked ? f64_to_i128(node: node) : f64_to_i128_bang(node: node)
+    in {.f64?, .u8?}    then checked ? f64_to_u8(node: node) : f64_to_i64_bang(node: node)
+    in {.f64?, .u16?}   then checked ? f64_to_u16(node: node) : f64_to_i64_bang(node: node)
+    in {.f64?, .u32?}   then checked ? f64_to_u32(node: node) : f64_to_i64_bang(node: node)
+    in {.f64?, .u64?}   then checked ? f64_to_u64(node: node) : f64_to_i64_bang(node: node)
+    in {.f64?, .u128?}  then checked ? f64_to_u128(node: node) : f64_to_i128_bang(node: node)
+    in {.f64?, .f32?}   then checked ? f64_to_f32(node: node) : f64_to_f32_bang(node: node)
+    in {.f64?, .f64?}   then nop
     end
   end
 
@@ -772,118 +779,120 @@ class Crystal::Repl::Compiler
 
   private def primitive_binary_op_math(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
     kind = extend_int(left_type, right_type, left_node, right_node, node)
-    case kind
-    when :mixed_64
-      if left_type.rank > right_type.rank
-        # It's UInt64 op X where X is a signed integer
-        left_node ? left_node.accept(self) : put_self(node: node)
-        right_node.accept self
+    if kind.is_a?(MixedNumberKind)
+      case kind
+      in .mixed64?
+        if left_type.rank > right_type.rank
+          # It's UInt64 op X where X is a signed integer
+          left_node ? left_node.accept(self) : put_self(node: node)
+          right_node.accept self
 
-        # TODO: do we need to check for overflow here?
-        primitive_convert(node, right_type.kind, :i64, checked: false)
+          # TODO: do we need to check for overflow here?
+          primitive_convert(node, right_type.kind, :i64, checked: false)
 
-        case node.name
-        when "+"          then add_u64_i64(node: node)
-        when "&+"         then add_wrap_i64(node: node)
-        when "-"          then sub_u64_i64(node: node)
-        when "&-"         then sub_wrap_i64(node: node)
-        when "*"          then mul_u64_i64(node: node)
-        when "&*"         then mul_wrap_i64(node: node)
-        when "^"          then xor_i64(node: node)
-        when "|"          then or_i64(node: node)
-        when "&"          then and_i64(node: node)
-        when "unsafe_shl" then unsafe_shl_i64(node: node)
-        when "unsafe_shr" then unsafe_shr_u64_i64(node: node)
-        when "unsafe_div" then unsafe_div_u64_i64(node: node)
-        when "unsafe_mod" then unsafe_mod_u64_i64(node: node)
+          case node.name
+          when "+"          then add_u64_i64(node: node)
+          when "&+"         then add_wrap_i64(node: node)
+          when "-"          then sub_u64_i64(node: node)
+          when "&-"         then sub_wrap_i64(node: node)
+          when "*"          then mul_u64_i64(node: node)
+          when "&*"         then mul_wrap_i64(node: node)
+          when "^"          then xor_i64(node: node)
+          when "|"          then or_i64(node: node)
+          when "&"          then and_i64(node: node)
+          when "unsafe_shl" then unsafe_shl_i64(node: node)
+          when "unsafe_shr" then unsafe_shr_u64_i64(node: node)
+          when "unsafe_div" then unsafe_div_u64_i64(node: node)
+          when "unsafe_mod" then unsafe_mod_u64_i64(node: node)
+          else
+            node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+          end
+
+          kind = NumberKind::U64
         else
-          node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+          # It's X op UInt64 where X is a signed integer
+          left_node ? left_node.accept(self) : put_self(node: node)
+
+          # TODO: do we need to check for overflow here?
+          primitive_convert(node, left_type.kind, :i64, checked: false)
+          right_node.accept self
+
+          case node.name
+          when "+"          then add_i64_u64(node: node)
+          when "&+"         then add_wrap_i64(node: node)
+          when "-"          then sub_i64_u64(node: node)
+          when "&-"         then sub_wrap_i64(node: node)
+          when "*"          then mul_i64_u64(node: node)
+          when "&*"         then mul_wrap_i64(node: node)
+          when "^"          then xor_i64(node: node)
+          when "|"          then or_i64(node: node)
+          when "&"          then and_i64(node: node)
+          when "unsafe_shl" then unsafe_shl_i64(node: node)
+          when "unsafe_shr" then unsafe_shr_i64_u64(node: node)
+          when "unsafe_div" then unsafe_div_i64_u64(node: node)
+          when "unsafe_mod" then unsafe_mod_i64_u64(node: node)
+          else
+            node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+          end
+
+          kind = NumberKind::I64
         end
+      in .mixed128?
+        if left_type.rank > right_type.rank
+          # It's UInt128 op X where X is a signed integer
+          left_node ? left_node.accept(self) : put_self(node: node)
+          right_node.accept self
 
-        kind = :u64
-      else
-        # It's X op UInt64 where X is a signed integer
-        left_node ? left_node.accept(self) : put_self(node: node)
+          # TODO: do we need to check for overflow here?
+          primitive_convert(node, right_type.kind, :i128, checked: false)
 
-        # TODO: do we need to check for overflow here?
-        primitive_convert(node, left_type.kind, :i64, checked: false)
-        right_node.accept self
+          case node.name
+          when "+"          then add_u128_i128(node: node)
+          when "&+"         then add_wrap_i128(node: node)
+          when "-"          then sub_u128_i128(node: node)
+          when "&-"         then sub_wrap_i128(node: node)
+          when "*"          then mul_u128_i128(node: node)
+          when "&*"         then mul_wrap_i128(node: node)
+          when "^"          then xor_i128(node: node)
+          when "|"          then or_i128(node: node)
+          when "&"          then and_i128(node: node)
+          when "unsafe_shl" then unsafe_shl_i128(node: node)
+          when "unsafe_shr" then unsafe_shr_u128_i128(node: node)
+          when "unsafe_div" then unsafe_div_u128_i128(node: node)
+          when "unsafe_mod" then unsafe_mod_u128_i128(node: node)
+          else
+            node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+          end
 
-        case node.name
-        when "+"          then add_i64_u64(node: node)
-        when "&+"         then add_wrap_i64(node: node)
-        when "-"          then sub_i64_u64(node: node)
-        when "&-"         then sub_wrap_i64(node: node)
-        when "*"          then mul_i64_u64(node: node)
-        when "&*"         then mul_wrap_i64(node: node)
-        when "^"          then xor_i64(node: node)
-        when "|"          then or_i64(node: node)
-        when "&"          then and_i64(node: node)
-        when "unsafe_shl" then unsafe_shl_i64(node: node)
-        when "unsafe_shr" then unsafe_shr_i64_u64(node: node)
-        when "unsafe_div" then unsafe_div_i64_u64(node: node)
-        when "unsafe_mod" then unsafe_mod_i64_u64(node: node)
+          kind = NumberKind::U128
         else
-          node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+          # It's X op UInt128 where X is a signed integer
+          left_node ? left_node.accept(self) : put_self(node: node)
+
+          # TODO: do we need to check for overflow here?
+          primitive_convert(node, left_type.kind, :i128, checked: false)
+          right_node.accept self
+
+          case node.name
+          when "+"          then add_i128_u128(node: node)
+          when "&+"         then add_wrap_i128(node: node)
+          when "-"          then sub_i128_u128(node: node)
+          when "&-"         then sub_wrap_i128(node: node)
+          when "*"          then mul_i128_u128(node: node)
+          when "&*"         then mul_wrap_i128(node: node)
+          when "^"          then xor_i128(node: node)
+          when "|"          then or_i128(node: node)
+          when "&"          then and_i128(node: node)
+          when "unsafe_shl" then unsafe_shl_i128(node: node)
+          when "unsafe_shr" then unsafe_shr_i128_u128(node: node)
+          when "unsafe_div" then unsafe_div_i128_u128(node: node)
+          when "unsafe_mod" then unsafe_mod_i128_u128(node: node)
+          else
+            node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+          end
+
+          kind = NumberKind::I128
         end
-
-        kind = :i64
-      end
-    when :mixed_128
-      if left_type.rank > right_type.rank
-        # It's UInt128 op X where X is a signed integer
-        left_node ? left_node.accept(self) : put_self(node: node)
-        right_node.accept self
-
-        # TODO: do we need to check for overflow here?
-        primitive_convert(node, right_type.kind, :i128, checked: false)
-
-        case node.name
-        when "+"          then add_u128_i128(node: node)
-        when "&+"         then add_wrap_i128(node: node)
-        when "-"          then sub_u128_i128(node: node)
-        when "&-"         then sub_wrap_i128(node: node)
-        when "*"          then mul_u128_i128(node: node)
-        when "&*"         then mul_wrap_i128(node: node)
-        when "^"          then xor_i128(node: node)
-        when "|"          then or_i128(node: node)
-        when "&"          then and_i128(node: node)
-        when "unsafe_shl" then unsafe_shl_i128(node: node)
-        when "unsafe_shr" then unsafe_shr_u128_i128(node: node)
-        when "unsafe_div" then unsafe_div_u128_i128(node: node)
-        when "unsafe_mod" then unsafe_mod_u128_i128(node: node)
-        else
-          node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
-        end
-
-        kind = :u128
-      else
-        # It's X op UInt128 where X is a signed integer
-        left_node ? left_node.accept(self) : put_self(node: node)
-
-        # TODO: do we need to check for overflow here?
-        primitive_convert(node, left_type.kind, :i128, checked: false)
-        right_node.accept self
-
-        case node.name
-        when "+"          then add_i128_u128(node: node)
-        when "&+"         then add_wrap_i128(node: node)
-        when "-"          then sub_i128_u128(node: node)
-        when "&-"         then sub_wrap_i128(node: node)
-        when "*"          then mul_i128_u128(node: node)
-        when "&*"         then mul_wrap_i128(node: node)
-        when "^"          then xor_i128(node: node)
-        when "|"          then or_i128(node: node)
-        when "&"          then and_i128(node: node)
-        when "unsafe_shl" then unsafe_shl_i128(node: node)
-        when "unsafe_shr" then unsafe_shr_i128_u128(node: node)
-        when "unsafe_div" then unsafe_div_i128_u128(node: node)
-        when "unsafe_mod" then unsafe_mod_i128_u128(node: node)
-        else
-          node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
-        end
-
-        kind = :i128
       end
     else
       # Go on
@@ -940,9 +949,9 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private def primitive_binary_op_math(node : ASTNode, kind : Symbol, op : String)
+  private def primitive_binary_op_math(node : ASTNode, kind : NumberKind, op : String)
     case kind
-    when :i32
+    when .i32?
       case op
       when "+"          then add_i32(node: node)
       when "&+"         then add_wrap_i32(node: node)
@@ -960,7 +969,7 @@ class Crystal::Repl::Compiler
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
-    when :u32
+    when .u32?
       case op
       when "+"          then add_u32(node: node)
       when "&+"         then add_wrap_i32(node: node)
@@ -978,7 +987,7 @@ class Crystal::Repl::Compiler
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
-    when :i64
+    when .i64?
       case op
       when "+"          then add_i64(node: node)
       when "&+"         then add_wrap_i64(node: node)
@@ -996,7 +1005,7 @@ class Crystal::Repl::Compiler
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
-    when :u64
+    when .u64?
       case op
       when "+"          then add_u64(node: node)
       when "&+"         then add_wrap_i64(node: node)
@@ -1014,7 +1023,7 @@ class Crystal::Repl::Compiler
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
-    when :i128
+    when .i128?
       case op
       when "+"          then add_i128(node: node)
       when "&+"         then add_wrap_i128(node: node)
@@ -1032,7 +1041,7 @@ class Crystal::Repl::Compiler
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
-    when :u128
+    when .u128?
       case op
       when "+"          then add_u128(node: node)
       when "&+"         then add_wrap_i128(node: node)
@@ -1050,7 +1059,7 @@ class Crystal::Repl::Compiler
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
-    when :f32
+    when .f32?
       # TODO: not tested
       case op
       when "+" then add_f32(node: node)
@@ -1059,7 +1068,7 @@ class Crystal::Repl::Compiler
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
-    when :f64
+    when .f64?
       case op
       when "+" then add_f64(node: node)
       when "-" then sub_f64(node: node)
@@ -1112,61 +1121,63 @@ class Crystal::Repl::Compiler
 
   private def primitive_binary_op_cmp(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : String)
     kind = extend_int(left_type, right_type, left_node, right_node, node)
-    case kind
-    when :mixed_64
-      if left_type.rank > right_type.rank
-        # It's UInt64 == X where X is a signed integer.
+    if kind.is_a?(MixedNumberKind)
+      case kind
+      in .mixed64?
+        if left_type.rank > right_type.rank
+          # It's UInt64 == X where X is a signed integer.
 
-        # We first extend right to left
-        left_node.accept self
-        right_node.accept self
+          # We first extend right to left
+          left_node.accept self
+          right_node.accept self
 
-        # TODO: do we need to check for overflow here?
-        primitive_convert right_node, right_type.kind, :i64, checked: false
+          # TODO: do we need to check for overflow here?
+          primitive_convert right_node, right_type.kind, :i64, checked: false
 
-        cmp_u64_i64(node: node)
-      else
-        # It's X < UInt64 where X is a signed integer
-        left_node.accept self
+          cmp_u64_i64(node: node)
+        else
+          # It's X < UInt64 where X is a signed integer
+          left_node.accept self
 
-        # TODO: do we need to check for overflow here?
-        primitive_convert left_node, left_type.kind, :i64, checked: false
+          # TODO: do we need to check for overflow here?
+          primitive_convert left_node, left_type.kind, :i64, checked: false
 
-        right_node.accept self
+          right_node.accept self
 
-        cmp_i64_u64(node: node)
-      end
-    when :mixed_128
-      if left_type.rank > right_type.rank
-        # It's UInt128 == X where X is a signed integer.
+          cmp_i64_u64(node: node)
+        end
+      in .mixed128?
+        if left_type.rank > right_type.rank
+          # It's UInt128 == X where X is a signed integer.
 
-        # We first extend right to left
-        left_node.accept self
-        right_node.accept self
+          # We first extend right to left
+          left_node.accept self
+          right_node.accept self
 
-        # TODO: do we need to check for overflow here?
-        primitive_convert right_node, right_type.kind, :i128, checked: false
+          # TODO: do we need to check for overflow here?
+          primitive_convert right_node, right_type.kind, :i128, checked: false
 
-        cmp_u128_i128(node: node)
-      else
-        # It's X < UInt128 where X is a signed integer
-        left_node.accept self
+          cmp_u128_i128(node: node)
+        else
+          # It's X < UInt128 where X is a signed integer
+          left_node.accept self
 
-        # TODO: do we need to check for overflow here?
-        primitive_convert left_node, left_type.kind, :i128, checked: false
+          # TODO: do we need to check for overflow here?
+          primitive_convert left_node, left_type.kind, :i128, checked: false
 
-        right_node.accept self
+          right_node.accept self
 
-        cmp_i128_u128(node: node)
+          cmp_i128_u128(node: node)
+        end
       end
     else
       case kind
-      when :i32  then cmp_i32(node: node)
-      when :u32  then cmp_u32(node: node)
-      when :i64  then cmp_i64(node: node)
-      when :u64  then cmp_u64(node: node)
-      when :i128 then cmp_i128(node: node)
-      when :u128 then cmp_u128(node: node)
+      when .i32?  then cmp_i32(node: node)
+      when .u32?  then cmp_u32(node: node)
+      when .i64?  then cmp_i64(node: node)
+      when .u64?  then cmp_u64(node: node)
+      when .i128? then cmp_i128(node: node)
+      when .u128? then cmp_u128(node: node)
       else
         node.raise "BUG: missing handling of binary #{op} for #{kind}"
       end
@@ -1202,13 +1213,13 @@ class Crystal::Repl::Compiler
       primitive_convert(left_node, left_type.kind, right_type.kind, checked: false)
       right_node.accept self
 
-      kind = :f64
+      kind = NumberKind::F64
     else
       left_node.accept self
       right_node.accept self
       primitive_convert(right_node, right_type.kind, left_type.kind, checked: false)
 
-      kind = :f64
+      kind = NumberKind::F64
     end
 
     primitive_binary_op_cmp_float(node, kind, op)
@@ -1218,10 +1229,10 @@ class Crystal::Repl::Compiler
     left_node.raise "BUG: primitive_binary_op_cmp called with #{left_type} #{op} #{right_type}"
   end
 
-  private def primitive_binary_op_cmp_float(node : ASTNode, kind : Symbol, op : String)
+  private def primitive_binary_op_cmp_float(node : ASTNode, kind : NumberKind, op : String)
     case kind
-    when :f32 then cmp_f32(node: node)
-    when :f64 then cmp_f64(node: node)
+    when .f32? then cmp_f32(node: node)
+    when .f64? then cmp_f64(node: node)
     else
       node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
     end
@@ -1242,6 +1253,15 @@ class Crystal::Repl::Compiler
     end
   end
 
+  # interpreter-exclusive integer unions
+  private enum MixedNumberKind
+    # Int64 | UInt64
+    Mixed64
+
+    # Int128 | UInt128
+    Mixed128
+  end
+
   private def extend_int(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode)
     # We don't do operations "below" Int32, we always cast the values
     # to at least Int32. This might be slightly slower, but it allows
@@ -1255,7 +1275,7 @@ class Crystal::Repl::Compiler
       right_node.accept self
       primitive_convert(right_node, right_type.kind, :i32, checked: false) if right_type.rank < 5
 
-      :i32
+      NumberKind::I32
     elsif left_type.signed? == right_type.signed?
       if left_type.rank == right_type.rank
         left_node ? left_node.accept(self) : put_self(node: node)
@@ -1281,9 +1301,9 @@ class Crystal::Repl::Compiler
       right_node.accept self
       primitive_convert(right_node, right_type.kind, :i64, checked: false) if right_type.rank < 7
 
-      :i64
+      NumberKind::I64
     elsif left_type.rank <= 8 && right_type.rank <= 8
-      :mixed_64
+      MixedNumberKind::Mixed64
     elsif left_type.rank <= 9 && right_type.rank <= 9
       # If both fit in an Int128
       # Convert them to Int128 first, then do the comparison
@@ -1293,9 +1313,9 @@ class Crystal::Repl::Compiler
       right_node.accept self
       primitive_convert(right_node, right_type.kind, :i128, checked: false) if right_type.rank < 9
 
-      :i128
+      NumberKind::I128
     else
-      :mixed_128
+      MixedNumberKind::Mixed128
     end
   end
 
@@ -1325,9 +1345,9 @@ class Crystal::Repl::Compiler
     end
 
     case {obj_kind, arg_kind}
-    when {:f32, :f32}
+    when {.f32?, .f32?}
       div_f32(node: node)
-    when {:f64, :f64}
+    when {.f64?, .f64?}
       div_f64(node: node)
     else
       node.raise "BUG: missing handling of binary float div with types #{obj_type} and #{arg_type}"

@@ -92,6 +92,7 @@ describe Crystal::Doc::ProjectInfo do
 
       it "git non-tagged commit" do
         run_git "init"
+        run_git "checkout -B master"
         run_git "add shard.yml"
         run_git "commit -m \"Initial commit\" --no-gpg-sign"
         commit_sha = `git rev-parse HEAD`.chomp
@@ -104,6 +105,7 @@ describe Crystal::Doc::ProjectInfo do
 
       it "git non-tagged commit dirty" do
         run_git "init"
+        run_git "checkout -B master"
         run_git "add shard.yml"
         run_git "commit -m \"Initial commit\" --no-gpg-sign"
         File.write("shard.yml", "\n", mode: "a")
@@ -145,6 +147,7 @@ describe Crystal::Doc::ProjectInfo do
 
     # Empty git directory
     run_git "init"
+    run_git "checkout -B master"
     ProjectInfo.find_git_version.should be_nil
 
     # Non-tagged commit

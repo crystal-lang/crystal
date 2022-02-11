@@ -20,7 +20,7 @@ private def it_lexes(string, type, value)
   end
 end
 
-private def it_lexes(string, type, value, number_kind)
+private def it_lexes(string, type, value, number_kind : NumberKind)
   it "lexes #{string.inspect}" do
     lexer = Lexer.new string
     token = lexer.next_token
@@ -72,11 +72,11 @@ private def it_lexes_f64(values)
   values.each { |value| it_lexes_number :f64, value }
 end
 
-private def it_lexes_number(number_kind, value : Array)
+private def it_lexes_number(number_kind : NumberKind, value : Array)
   it_lexes value[0], :NUMBER, value[1], number_kind
 end
 
-private def it_lexes_number(number_kind, value : String)
+private def it_lexes_number(number_kind : NumberKind, value : String)
   it_lexes value, :NUMBER, value, number_kind
 end
 
@@ -150,21 +150,8 @@ describe "Lexer" do
                      :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
                      :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?,
                      :annotation, :verbatim]
-  it_lexes_idents ["ident", "something", "with_underscores", "_start_underscore", "with_1", "foo?", "bar!", "fooBar"]
-  it_lexes_idents [
-    "ä",       # L
-    "a\u0300", # Mn
-    "aः",      # Mc
-    "a٠",      # Nd
-    "a＿",      # Pc
-    "aⅧ",      # Nl
-  ]
-
-  assert_syntax_error "\u200B", "unknown token: '\\u200B'"
-  assert_syntax_error "ident\u200B", "unknown token: '\\u200B'"
-  assert_syntax_error ":\u200B", %(unexpected token: ":")
-  assert_syntax_error ":ident\u200B", "unknown token: '\\u200B'"
-
+  it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
+                   "❨╯°□°❩╯︵┻━┻"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?",
                    "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
   it_lexes_idents ["def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!",
@@ -430,6 +417,9 @@ describe "Lexer" do
   assert_syntax_error "2ef32", "unexpected token: \"ef32\""
   assert_syntax_error "2e+_2", "unexpected '_' in number"
 
+  # Test for #11671
+  it_lexes_i32 [["0b0_1", "1"]]
+
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"
     token = lexer.next_token
@@ -567,11 +557,11 @@ describe "Lexer" do
 
   it "lexes float then zero (bug)" do
     lexer = Lexer.new "2.5 0"
-    lexer.next_token.number_kind.should eq(:f64)
+    lexer.next_token.number_kind.should eq(NumberKind::F64)
     lexer.next_token.type.should eq(:SPACE)
     token = lexer.next_token
     token.type.should eq(:NUMBER)
-    token.number_kind.should eq(:i32)
+    token.number_kind.should eq(NumberKind::I32)
   end
 
   it "lexes symbol with quote" do
