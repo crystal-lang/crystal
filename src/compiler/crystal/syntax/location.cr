@@ -18,20 +18,33 @@ class Crystal::Location
 
   # Returns the Location whose filename is a String, not a VirtualFile,
   # traversing virtual file expanded locations.
-  def original_location
+  def expanded_location
     case filename = @filename
     when String
       self
     when VirtualFile
-      filename.expanded_location.try &.original_location
+      filename.expanded_location.try &.expanded_location
     else
       nil
     end
   end
 
-  # Returns the filename of the `original_location`
+  # Returns the Location whose filename is a String, not a VirtualFile,
+  # traversing virtual file expanded locations leading to the original user source code
+  def macro_location
+    case filename = @filename
+    when String
+      self
+    when VirtualFile
+      filename.macro.location.try(&.macro_location)
+    else
+      nil
+    end
+  end
+
+  # Returns the filename of the `expanded_location`
   def original_filename
-    original_location.try &.filename.as?(String)
+    expanded_location.try &.filename.as?(String)
   end
 
   def between?(min, max)

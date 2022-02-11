@@ -476,11 +476,42 @@ module XML
     end
 
     describe "#expand" do
+      it "raises an exception if the node could not be expanded" do
+        reader = Reader.new(%{<root id="1<child/></root>}) # Invalid XML
+        reader.read
+        expect_raises XML::Error, "Couldn't find end of Start Tag root" do
+          reader.expand
+        end
+      end
+
       it "parses the content of the node and subtree" do
         reader = Reader.new(%{<root id="1"><child/></root>})
-        reader.expand.should be_nil
         reader.read # <root id="1">
         node = reader.expand
+        node.should be_a(XML::Node)
+        node.attributes["id"].content.should eq("1")
+        node.xpath_node("child").should be_a(XML::Node)
+      end
+
+      it "is only available until the next read" do
+        reader = Reader.new(%{<root><child><subchild/></child></root>})
+        reader.read # <root>
+        reader.read # <child>
+        node = reader.expand
+        node.should be_a(XML::Node)
+        node.xpath_node("subchild").should be_a(XML::Node)
+        reader.read # <subchild/>
+        reader.read # </child>
+        node.xpath_node("subchild").should be_nil
+      end
+    end
+
+    describe "#expand?" do
+      it "parses the content of the node and subtree" do
+        reader = Reader.new(%{<root id="1"><child/></root>})
+        reader.expand?.should be_nil
+        reader.read # <root id="1">
+        node = reader.expand?
         node.should be_a(XML::Node)
         node.not_nil!.attributes["id"].content.should eq("1")
         node.not_nil!.xpath_node("child").should be_a(XML::Node)
@@ -490,7 +521,7 @@ module XML
         reader = Reader.new(%{<root><child><subchild/></child></root>})
         reader.read # <root>
         reader.read # <child>
-        node = reader.expand
+        node = reader.expand?
         node.should be_a(XML::Node)
         node.not_nil!.xpath_node("subchild").should be_a(XML::Node)
         reader.read # <subchild/>

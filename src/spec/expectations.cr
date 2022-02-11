@@ -153,37 +153,42 @@ module Spec
 
   # :nodoc:
   struct Be(T)
+    enum Relation
+      LessThan
+      LessOrEqual
+      GreaterThan
+      GreaterOrEqual
+    end
+
     def self.<(other)
-      Be.new(other, :"<")
+      Be.new(other, :less_than)
     end
 
     def self.<=(other)
-      Be.new(other, :"<=")
+      Be.new(other, :less_or_equal)
     end
 
     def self.>(other)
-      Be.new(other, :">")
+      Be.new(other, :greater_than)
     end
 
     def self.>=(other)
-      Be.new(other, :">=")
+      Be.new(other, :greater_or_equal)
     end
 
-    def initialize(@expected_value : T, @op : Symbol)
+    def initialize(@expected_value : T, @op : Relation)
     end
 
     def match(actual_value)
       case @op
-      when :"<"
+      in .less_than?
         actual_value < @expected_value
-      when :"<="
+      in .less_or_equal?
         actual_value <= @expected_value
-      when :">"
+      in .greater_than?
         actual_value > @expected_value
-      when :">="
+      in .greater_or_equal?
         actual_value >= @expected_value
-      else
-        false
       end
     end
 
@@ -368,7 +373,7 @@ module Spec
 
     # Creates an `Expectation` that passes if actual is of type *type* (`is_a?`).
     macro be_a(type)
-      Spec::BeAExpectation({{type}}).new
+      ::Spec::BeAExpectation({{type}}).new
     end
 
     # Runs the block and passes if it raises an exception of type *klass* and the error message matches.
@@ -377,10 +382,10 @@ module Spec
     # If *message* is a regular expression, it is used to match the error message.
     #
     # It returns the rescued exception.
-    def expect_raises(klass : T.class, message = nil, file = __FILE__, line = __LINE__) forall T
+    def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__) forall T
       yield
     rescue ex : T
-      # We usually bubble Spec::AssertaionFailed, unless this is the expected exception
+      # We usually bubble Spec::AssertionFailed, unless this is the expected exception
       if ex.is_a?(Spec::AssertionFailed) && klass != Spec::AssertionFailed
         raise ex
       end
@@ -404,12 +409,14 @@ module Spec
           fail "Expected #{klass} with #{message.inspect}, got #<#{ex.class}: " \
                "#{ex_to_s}> with backtrace:\n#{backtrace}", file, line
         end
+      when Nil
+        # No need to check the message
       end
 
       ex
     rescue ex
       backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-      fail "Expected #{klass}, got #<#{ex.class}: #{ex.to_s}> with backtrace:\n" \
+      fail "Expected #{klass}, got #<#{ex.class}: #{ex}> with backtrace:\n" \
            "#{backtrace}", file, line
     else
       fail "Expected #{klass} but nothing was raised", file, line
@@ -419,19 +426,85 @@ module Spec
   module ObjectExtensions
     # Validates an expectation and fails the example if it does not match.
     #
-    # See `Spec::Expecations` for available expectations.
-    def should(expectation, file = __FILE__, line = __LINE__)
+    # This overload returns a value whose type is restricted to the expected type. For example:
+    #
+    # ```
+    # x = 1 || 'a'
+    # typeof(x) # => Int32 | Char
+    # x = x.should be_a(Int32)
+    # typeof(x) # => Int32
+    # ```
+    #
+    # See `Spec::Expectations` for available expectations.
+    def should(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) : T forall T
+      if expectation.match self
+        self.is_a?(T) ? self : (raise "Bug: expected #{self} to be a #{T}")
+      else
+        failure_message ||= expectation.failure_message(self)
+        fail(failure_message, file, line)
+      end
+    end
+
+    # Validates an expectation and fails the example if it does not match.
+    #
+    # See `Spec::Expectations` for available expectations.
+    def should(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
       unless expectation.match self
-        fail(expectation.failure_message(self), file, line)
+        failure_message ||= expectation.failure_message(self)
+        fail(failure_message, file, line)
       end
     end
 
     # Validates an expectation and fails the example if it matches.
     #
-    # See `Spec::Expecations` for available expectations.
-    def should_not(expectation, file = __FILE__, line = __LINE__)
+    # This overload returns a value whose type is restricted to exclude the given
+    # type in `should_not be_a`. For example:
+    #
+    # ```
+    # x = 1 || 'a'
+    # typeof(x) # => Int32 | Char
+    # x = x.should_not be_a(Char)
+    # typeof(x) # => Int32
+    # ```
+    #
+    # See `Spec::Expectations` for available expectations.
+    def should_not(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) forall T
       if expectation.match self
-        fail(expectation.negative_failure_message(self), file, line)
+        failure_message ||= expectation.negative_failure_message(self)
+        fail(failure_message, file, line)
+      else
+        self.is_a?(T) ? (raise "Bug: expected #{self} not to be a #{T}") : self
+      end
+    end
+
+    # Validates an expectation and fails the example if it matches.
+    #
+    # This overload returns a value whose type is restricted to be not `Nil`. For example:
+    #
+    # ```
+    # x = 1 || nil
+    # typeof(x) # => Int32 | Nil
+    # x = x.should_not be_nil
+    # typeof(x) # => Int32
+    # ```
+    #
+    # See `Spec::Expectations` for available expectations.
+    def should_not(expectation : BeNilExpectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
+      if expectation.match self
+        failure_message ||= expectation.negative_failure_message(self)
+        fail(failure_message, file, line)
+      else
+        self.not_nil!
+      end
+    end
+
+    # Validates an expectation and fails the example if it matches.
+    #
+    # See `Spec::Expectations` for available expectations.
+    def should_not(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
+      if expectation.match self
+        failure_message ||= expectation.negative_failure_message(self)
+        fail(failure_message, file, line)
       end
     end
   end

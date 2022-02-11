@@ -154,8 +154,11 @@ def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile =
   end
 end
 
-def parse(string, wants_doc = false)
+def parse(string, wants_doc = false, filename = nil)
   parser = Parser.new(string)
   parser.wants_doc = wants_doc
+  if filename
+    parser.filename = filename
+  end
   parser.parse
 end

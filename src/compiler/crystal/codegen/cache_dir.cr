@@ -31,9 +31,18 @@ module Crystal
     def directory_for(filename : String)
       dir = compute_dir
 
-      name = filename.gsub('/', '-')
-      while name.starts_with?('-')
-        name = name[1..-1]
+      filename = ::Path[filename]
+      name = String.build do |io|
+        filename.each_part do |part|
+          if io.empty?
+            if part == "#{filename.anchor}"
+              part = "#{filename.drive}"[..0]
+            end
+          else
+            io << '-'
+          end
+          io << part
+        end
       end
       output_dir = File.join(dir, name)
       Dir.mkdir_p(output_dir)
@@ -64,24 +73,32 @@ module Crystal
       return dir if dir
 
       # Try to use one of these as a cache directory, in order
-      candidates = [
-        ENV["CRYSTAL_CACHE_DIR"]?,
-        ENV["XDG_CACHE_HOME"]?.try { |home| "#{home}/crystal" },
-        ENV["HOME"]?.try { |home| "#{home}/.cache/crystal" },
-        ENV["HOME"]?.try { |home| "#{home}/.crystal" },
-        ".crystal",
-      ]
+      candidates = {% begin %}
+        [
+          ENV["CRYSTAL_CACHE_DIR"]?,
+          {% if flag?(:windows) %}
+            ENV["LOCALAPPDATA"]?.try { |dir| "#{dir}/crystal/cache" },
+            ENV["USERPROFILE"]?.try { |home| "#{home}/.cache/crystal" },
+            ENV["USERPROFILE"]?.try { |home| "#{home}/.crystal" },
+          {% else %}
+            ENV["XDG_CACHE_HOME"]?.try { |home| "#{home}/crystal" },
+            ENV["HOME"]?.try { |home| "#{home}/.cache/crystal" },
+            ENV["HOME"]?.try { |home| "#{home}/.crystal" },
+          {% end %}
+          ".crystal",
+        ]
+      {% end %}
       candidates = candidates
         .compact
-        .map { |file| File.expand_path(file) }
-        .uniq
+        .map! { |file| File.expand_path(file) }
+        .uniq!
 
       # Return the first one for which we could create a directory
       candidates.each do |candidate|
         begin
           Dir.mkdir_p(candidate)
           return @dir = candidate
-        rescue Errno
+        rescue File::Error
           # Try next one
         end
       end
@@ -110,7 +127,7 @@ module Crystal
         .sort_by! { |dir| File.info?(dir).try(&.modification_time) || Time.unix(0) }
         .reverse!
         .skip(10)
-        .each { |name| `rm -rf "#{name}"` rescue nil }
+        .each { |name| FileUtils.rm_rf(name) }
     end
 
     private def gather_cache_entries(dir)

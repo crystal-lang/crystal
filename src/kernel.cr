@@ -1,38 +1,45 @@
-{% if flag?(:win32) %}
-  # The standard input file descriptor. Contains data piped to the program.
-  STDIN = IO::FileDescriptor.new(0)
+require "crystal/at_exit_handlers"
 
-  # The standard output file descriptor.
-  #
-  # Typically used to output data and information.
-  STDOUT = IO::FileDescriptor.new(1)
-
-  # The standard error file descriptor.
-  #
-  # Typically used to output error messages and diagnostics.
-  STDERR = IO::FileDescriptor.new(2)
-{% else %}
+{% unless flag?(:win32) %}
   require "c/unistd"
-
-  # The standard input file descriptor. Contains data piped to the program.
-  STDIN = IO::FileDescriptor.from_stdio(0)
-
-  # The standard output file descriptor.
-  #
-  # Typically used to output data and information.
-  #
-  # When this is a TTY device, `sync` will be true for it
-  # at the start of the program.
-  STDOUT = IO::FileDescriptor.from_stdio(1)
-
-  # The standard error file descriptor.
-  #
-  # Typically used to output error messages and diagnostics.
-  #
-  # When this is a TTY device, `sync` will be true for it
-  # at the start of the program.
-  STDERR = IO::FileDescriptor.from_stdio(2)
 {% end %}
+
+# The standard input file descriptor. Contains data piped to the program.
+STDIN = IO::FileDescriptor.from_stdio(0)
+
+# The standard output file descriptor.
+#
+# Typically used to output data and information.
+#
+# At the start of the program STDOUT is configured like this:
+# - if it's a TTY device (like the console) then `sync` is `true`,
+#   meaning that output will be outputted as soon as it is written
+#   to STDOUT. This is so users can see real time output data.
+# - if it's not a TTY device (like a file, or because the output
+#   was piped to a file) then `sync` is `false` but `flush_on_newline`
+#   is `true`. This is so that if you pipe the output to a file, and,
+#   for example, you `tail -f`, you can see data on a line-per-line basis.
+#   This is convenient but slower than with `flush_on_newline` set to `false`.
+#   If you need a bit more performance and you don't care about near real-time
+#   output you can do `STDOUT.flush_on_newline = false`.
+STDOUT = IO::FileDescriptor.from_stdio(1)
+
+# The standard error file descriptor.
+#
+# Typically used to output error messages and diagnostics.
+#
+# At the start of the program STDERR is configured like this:
+# - if it's a TTY device (like the console) then `sync` is `true`,
+#   meaning that output will be outputted as soon as it is written
+#   to STDERR. This is so users can see real time output data.
+# - if it's not a TTY device (like a file, or because the output
+#   was piped to a file) then `sync` is `false` but `flush_on_newline`
+#   is `true`. This is so that if you pipe the output to a file, and,
+#   for example, you `tail -f`, you can see data on a line-per-line basis.
+#   This is convenient but slower than with `flush_on_newline` set to `false`.
+#   If you need a bit more performance and you don't care about near real-time
+#   output you can do `STDERR.flush_on_newline = false`.
+STDERR = IO::FileDescriptor.from_stdio(2)
 
 # The name, the program was called with.
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
@@ -64,7 +71,7 @@ ARGV = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
 # $ echo "hello" | ./program
 # hello
 # $ ./program unknown
-# Unhandled exception: Error opening file 'unknown' with mode 'r': No such file or directory (Errno)
+# Unhandled exception: Error opening file with mode 'r': 'unknown': No such file or directory (File::NotFoundError)
 # ...
 # ```
 #
@@ -125,7 +132,7 @@ def printf(format_string, *args) : Nil
   printf format_string, args
 end
 
-# ditto
+# :ditto:
 def printf(format_string, args : Array | Tuple) : Nil
   STDOUT.printf format_string, args
 end
@@ -136,20 +143,31 @@ end
 #
 # Within the format string, any characters other than format specifiers
 # (specifiers beginning with `%`) are copied to the result.
+# The formatter supports positional format specifiers (`%.1f`),
+# formatted substitution (`%<name>.1f`) and plain substitution (`%{name}`).
 #
-# The syntax for a format specifier is:
+# Substitutions expect the first argument to be a `Hash` or `NamedTuple` to
+# resolve substitution names.
+# Positional specifiers correspond to the positional values in the method
+# arguments, or the array supplied as first argument.
+#
+# A simple format specifier consists of a percent sign, followed by optional flags,
+# width, and precision indicators, then terminated with a field type
+# character.
 #
 # ```text
 # %[flags][width][.precision]type
 # ```
 #
-# A format specifier consists of a percent sign, followed by optional flags,
-# width, and precision indicators, then terminated with a field type
-# character.
+# A formatted substitution is similar but after the percent sign follows the
+# mandatory name of the substitution wrapped in angle brackets.
 #
-# The field type controls how the corresponding
-# `sprintf` argument is to be interpreted, while the flags
-# modify that interpretation.
+# ```text
+# %<name>[flags][width][.precision]type
+# ```
+#
+# The field type controls how the corresponding argument value is to be
+# interpreted, while the flags modify that interpretation.
 #
 # The field type characters are:
 #
@@ -180,9 +198,9 @@ end
 #       | The precision specifies the number of significant digits.
 #   G   | Equivalent to g, but use an uppercase E in exponent form.
 #   a   | Formats floating point argument as [-]0xh.hhhhp[+-]dd,
-#       | which is consisted from optional sign, "0x", fraction part
+#       | which consists of an optional sign, "0x", fraction part
 #       | as hexadecimal, "p", and exponential part as decimal.
-#   A   | Equivalent to a, but use uppercase X and P.
+#   A   | Equivalent to a, but uses uppercase X and P.
 #
 # Field | Other Format
 # ------+------------------------------------------------------------
@@ -192,8 +210,9 @@ end
 #       | will be copied.
 #   %   | A percent sign itself will be displayed. No argument taken.
 # ```
-# The flags modifies the behavior of the formats.
-# The flag characters are:
+#
+# Flags modify the behavior of the format specifiers:
+#
 # ```text
 # Flag     | Applies to    | Meaning
 # ---------+---------------+--------------------------------------------
@@ -219,14 +238,14 @@ end
 #
 # Examples of flags:
 #
-# Decimal number conversion
+# Decimal number conversion:
 # ```
 # sprintf "%d", 123  # => "123"
 # sprintf "%+d", 123 # => "+123"
 # sprintf "% d", 123 # => " 123"
 # ```
 #
-# Octal number conversion
+# Octal number conversion:
 # ```
 # sprintf "%o", 123   # => "173"
 # sprintf "%+o", 123  # => "+173"
@@ -234,7 +253,7 @@ end
 # sprintf "%+o", -123 # => "-173"
 # ```
 #
-# Hexadecimal number conversion
+# Hexadecimal number conversion:
 # ```
 # sprintf "%x", 123   # => "7b"
 # sprintf "%+x", 123  # => "+7b"
@@ -247,7 +266,7 @@ end
 # sprintf "%#X", -123 # => "-7B"
 # ```
 #
-# Binary number conversion
+# Binary number conversion:
 # ```
 # sprintf "%b", 123    # => "1111011"
 # sprintf "%+b", 123   # => "+1111011"
@@ -260,13 +279,13 @@ end
 # sprintf "%+ b", -123 # => "-1111011"
 # ```
 #
-# Floating point conversion
+# Floating point conversion:
 # ```
 # sprintf "%a", 123 # => "0x1.ecp+6"
 # sprintf "%A", 123 # => "0X1.ECP+6"
 # ```
 #
-# Exponential form conversion
+# Exponential form conversion:
 # ```
 # sprintf "%g", 123.4          # => "123.4"
 # sprintf "%g", 123.4567       # => "123.457"
@@ -304,7 +323,7 @@ end
 # Examples of precisions:
 #
 # Precision for `d`, `o`, `x` and `b` is
-# minimum number of digits
+# minimum number of digits:
 # ```
 # sprintf "%20.8d", 123   # => "                 123"
 # sprintf "%020.8d", 123  # => "00000000000000000123"
@@ -320,24 +339,24 @@ end
 # sprintf "%20.8b", -11   # => "               -1011"
 # ```
 #
-# Precision for `e` is number of digits after the decimal point.
+# Precision for `e` is number of digits after the decimal point:
 # ```
 # sprintf "%20.8e", 1234.56789 # => "      1.23456789e+03"
 # ```
 #
-# Precision for `f` is number of digits after the decimal point.
+# Precision for `f` is number of digits after the decimal point:
 # ```
 # sprintf "%20.8f", 1234.56789 # => "       1234.56789000"
 # ```
 #
-# Precision for `g` is number of significant digits.
+# Precision for `g` is number of significant digits:
 # ```
 # sprintf "%20.8g", 1234.56789 # => "           1234.5679"
 # sprintf "%20.8g", 123456789  # => "       1.2345679e+08"
 # sprintf "%-20.8g", 123456789 # => "1.2345679e+08       "
 # ```
 #
-# Precision for `s` is maximum number of characters.
+# Precision for `s` is maximum number of characters:
 # ```
 # sprintf "%20.8s", "string test" # => "            string t"
 # ```
@@ -352,14 +371,15 @@ def sprintf(format_string, *args) : String
   sprintf format_string, args
 end
 
-# ditto
+# :ditto:
 def sprintf(format_string, args : Array | Tuple) : String
   String.build(format_string.bytesize) do |str|
     String::Formatter(typeof(args)).new(format_string, args, str).format
   end
 end
 
-# Prints objects to `STDOUT`, each followed by a newline.
+# Prints *objects* to `STDOUT`, each followed by a newline character unless
+# the object is a `String` and already ends with a newline.
 #
 # See also: `IO#puts`.
 def puts(*objects) : Nil
@@ -432,48 +452,6 @@ def pp(**objects)
   pp(objects) unless objects.empty?
 end
 
-# :nodoc:
-module AtExitHandlers
-  @@running = false
-
-  class_property exception : Exception?
-
-  private class_getter(handlers) { [] of Int32, Exception? -> }
-
-  def self.add(handler)
-    raise "Cannot use at_exit from an at_exit handler" if @@running
-
-    handlers << handler
-  end
-
-  def self.run(status)
-    @@running = true
-
-    if handlers = @@handlers
-      # Run the registered handlers in reverse order
-      while handler = handlers.pop?
-        begin
-          handler.call status, exception
-        rescue handler_ex
-          STDERR.puts "Error running at_exit handler: #{handler_ex}"
-          status = 1 if status.zero?
-        end
-      end
-    end
-
-    if ex = @@exception
-      # Print the exception after all at_exit handlers, to make sure
-      # the user sees it.
-
-      STDERR.print "Unhandled exception: "
-      ex.inspect_with_backtrace(STDERR)
-      STDERR.flush
-    end
-
-    status
-  end
-end
-
 # Registers the given `Proc` for execution when the program exits.
 # If multiple handlers are registered, they are executed in reverse order of registration.
 #
@@ -497,9 +475,13 @@ end
 # the block as its first argument. In case of any unhandled exception, it is
 # passed as the second argument to the block, if the program terminates
 # normally or `exit(status)` is called explicitly, then the second argument
-# will be nil.
+# will be `nil`.
+#
+# NOTE: If `at_exit` is called inside an `at_exit` handler, it will be called
+# right after the current `at_exit` handler ends, and then other handlers
+# will be invoked.
 def at_exit(&handler : Int32, Exception? ->) : Nil
-  AtExitHandlers.add(handler)
+  Crystal::AtExitHandlers.add(handler)
 end
 
 # Terminates execution immediately, returning the given status code
@@ -507,21 +489,23 @@ end
 #
 # Registered `at_exit` procs are executed.
 def exit(status = 0) : NoReturn
-  status = AtExitHandlers.run status
-  STDOUT.flush
-  STDERR.flush
+  status = Crystal::AtExitHandlers.run status
+  Crystal.ignore_stdio_errors { STDOUT.flush }
+  Crystal.ignore_stdio_errors { STDERR.flush }
   Process.exit(status)
 end
 
 # Terminates execution immediately, printing *message* to `STDERR` and
 # then calling `exit(status)`.
 def abort(message = nil, status = 1) : NoReturn
-  STDERR.puts message if message
+  Crystal.ignore_stdio_errors { STDERR.puts message } if message
   exit status
 end
 
 {% unless flag?(:preview_mt) %}
   class Process
+    # :nodoc:
+    #
     # Hooks are defined here due to load order problems.
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
@@ -539,19 +523,29 @@ end
   end
 {% end %}
 
-{% unless flag?(:win32) %}
-  # Background loop to cleanup unused fiber stacks.
-  spawn(name: "Fiber Clean Loop") do
-    loop do
-      sleep 5
-      Fiber.stack_pool.collect
+{% unless flag?(:interpreted) %}
+  {% unless flag?(:win32) %}
+    # Background loop to cleanup unused fiber stacks.
+    spawn(name: "Fiber Clean Loop") do
+      loop do
+        sleep 5
+        Fiber.stack_pool.collect
+      end
     end
-  end
 
-  Signal.setup_default_handlers
-  LibExt.setup_sigfault_handler
-{% end %}
+    Signal.setup_default_handlers
+  {% end %}
 
-{% if flag?(:preview_mt) %}
-  Crystal::Scheduler.init_workers
+  # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
+  # this will make debug info available on print_frame that is used by Crystal's segfault handler
+  #
+  # - CRYSTAL_LOAD_DEBUG_INFO=0 will never use debug info (See Exception::CallStack.load_debug_info)
+  # - CRYSTAL_LOAD_DEBUG_INFO=1 will load debug info on startup
+  # - Other values will load debug info on demand: when the backtrace of the first exception is generated
+  Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
+  Exception::CallStack.setup_crash_handler
+
+  {% if flag?(:preview_mt) %}
+    Crystal::Scheduler.init_workers
+  {% end %}
 {% end %}

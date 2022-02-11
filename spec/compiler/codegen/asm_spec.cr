@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: asm" do
   # TODO: arm asm tests
-  {% if flag?(:i686) || flag?(:x86_64) %}
+  {% if flag?(:i386) || flag?(:x86_64) %}
     it "codegens without inputs" do
       run(%(
         dst = uninitialized Int32

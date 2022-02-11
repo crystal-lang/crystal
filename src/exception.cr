@@ -1,6 +1,7 @@
-require "callstack"
+require "./exception/call_stack"
+require "system_error"
 
-CallStack.skip(__FILE__)
+Exception::CallStack.skip(__FILE__)
 
 # Represents errors that occur during application execution.
 #
@@ -16,6 +17,8 @@ class Exception
   # This is useful for wrapping exceptions and retaining the original
   # exception information.
   getter cause : Exception?
+
+  # :nodoc:
   property callstack : CallStack?
 
   def initialize(@message : String? = nil, @cause : Exception? = nil)
@@ -24,7 +27,7 @@ class Exception
   # Returns any backtrace associated with the exception.
   # The backtrace is an array of strings, each containing
   # “0xAddress: Function at File Line Column”.
-  def backtrace
+  def backtrace : Array(String)
     self.backtrace?.not_nil!
   end
 
@@ -32,11 +35,7 @@ class Exception
   # The backtrace is an array of strings, each containing
   # “0xAddress: Function at File Line Column”.
   def backtrace?
-    {% if flag?(:win32) %}
-      Array(String).new
-    {% else %}
-      @callstack.try &.printable_backtrace
-    {% end %}
+    @callstack.try &.printable_backtrace
   end
 
   def to_s(io : IO) : Nil
@@ -55,6 +54,7 @@ class Exception
 
   def inspect_with_backtrace(io : IO) : Nil
     io << message << " (" << self.class << ")\n"
+
     backtrace?.try &.each do |frame|
       io.print "  from "
       io.puts frame
@@ -162,4 +162,9 @@ class NilAssertionError < Exception
   def initialize(message = "Nil assertion failed")
     super(message)
   end
+end
+
+# Raised when there is an internal runtime error
+class RuntimeError < Exception
+  include SystemError
 end

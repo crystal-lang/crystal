@@ -4,8 +4,12 @@ struct BigInt
 end
 
 struct BigFloat
-  def /(other : UInt8 | UInt16 | UInt32 | UInt64)
-    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinitiy
+  def fdiv(other : Number::Primitive) : self
+    self.class.new(self / other)
+  end
+
+  def /(other : UInt8 | UInt16 | UInt32 | UInt64) : BigFloat
+    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
     raise DivisionByZeroError.new if other == 0
     if other.is_a?(UInt8 | UInt16 | UInt32) || (LibGMP::ULong == UInt64 && other.is_a?(UInt64))
       BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, other) }
@@ -96,6 +100,12 @@ struct UInt128
   Number.expand_div [BigFloat], BigFloat
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
+end
+
+struct Float
+  def fdiv(other : BigInt | BigFloat | BigDecimal | BigRational) : self
+    self.class.new(self / other)
+  end
 end
 
 struct Float32

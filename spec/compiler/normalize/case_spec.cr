@@ -49,6 +49,10 @@ describe "Normalize: case" do
     assert_expand "case x; when .as?(T); 2; end", "__temp_1 = x\nif __temp_1.as?(T)\n  2\nend"
   end
 
+  it "normalizes case with implicit !" do
+    assert_expand "case x; when .!; 2; end", "__temp_1 = x\nif !__temp_1\n  2\nend"
+  end
+
   it "normalizes case with assignment" do
     assert_expand "case x = 1; when 2; 3; end", "x = 1\nif 2 === x\n  3\nend"
   end
@@ -115,5 +119,9 @@ describe "Normalize: case" do
 
   it "normalizes case without cond, when but else" do
     assert_expand "case; else; y; end", "y"
+  end
+
+  it "normalizes case with Path.class to is_a? (in)" do
+    assert_expand_second "x = 1; case x; in Foo.class; 'b'; end", "if x.is_a?(Foo.class)\n  'b'\nelse\n  raise \"unreachable\"\nend"
   end
 end

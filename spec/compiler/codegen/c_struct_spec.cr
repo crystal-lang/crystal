@@ -398,4 +398,19 @@ describe "Code gen: struct" do
       foo.x &+ foo.y
       )).to_i.should eq(4)
   end
+
+  it "can access member of uninitialized struct behind type (#8774)" do
+    run(%(
+      lib LibFoo
+        struct Foo
+          x : Int32
+        end
+
+        type FooT = Foo
+      end
+
+      foo = uninitialized LibFoo::FooT
+      foo.x
+    ))
+  end
 end

@@ -1,6 +1,20 @@
 require "crystal/spin_lock"
 
 # A fiber-safe mutex.
+#
+# Provides deadlock protection by default. Attempting to re-lock the mutex from
+# the same fiber will raise an exception. Trying to unlock an unlocked mutex, or
+# a mutex locked by another fiber will raise an exception.
+#
+# The reentrant protection maintains a lock count. Attempting to re-lock the
+# mutex from the same fiber will increment the lock count. Attempting to unlock
+# the counter from the same fiber will decrement the lock count, eventually
+# releasing the lock when the lock count returns to 0. Attempting to unlock an
+# unlocked mutex, or a mutex locked by another fiber will raise an exception.
+#
+# You also disable all protections with `unchecked`. Attempting to re-lock the
+# mutex from the same fiber will deadlock. Any fiber can unlock the mutex, even
+# if it wasn't previously locked.
 class Mutex
   @state = Atomic(Int32).new(0)
   @mutex_fiber : Fiber?
@@ -9,19 +23,29 @@ class Mutex
   @queue_count = Atomic(Int32).new(0)
   @lock = Crystal::SpinLock.new
 
-  def initialize(*, @reentrant = false)
+  enum Protection
+    Checked
+    Reentrant
+    Unchecked
+  end
+
+  def initialize(@protection : Protection = :checked)
   end
 
   @[AlwaysInline]
-  def lock
+  def lock : Nil
     if @state.swap(1) == 0
-      @mutex_fiber = Fiber.current if @reentrant
+      @mutex_fiber = Fiber.current unless @protection.unchecked?
       return
     end
 
-    if @reentrant && @mutex_fiber == Fiber.current
-      @lock_count += 1
-      return
+    if !@protection.unchecked? && @mutex_fiber == Fiber.current
+      if @protection.reentrant?
+        @lock_count += 1
+        return
+      else
+        raise "Attempt to lock a mutex recursively (deadlock)"
+      end
     end
 
     lock_slow
@@ -65,13 +89,17 @@ class Mutex
     true
   end
 
-  def unlock
-    if @reentrant
-      unless @mutex_fiber == Fiber.current
+  def unlock : Nil
+    unless @protection.unchecked?
+      if mutex_fiber = @mutex_fiber
+        unless mutex_fiber == Fiber.current
+          raise "Attempt to unlock a mutex locked by another fiber"
+        end
+      else
         raise "Attempt to unlock a mutex which is not locked"
       end
 
-      if @lock_count > 0
+      if @protection.reentrant? && @lock_count > 0
         @lock_count -= 1
         return
       end

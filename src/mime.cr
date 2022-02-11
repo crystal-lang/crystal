@@ -91,7 +91,7 @@ module MIME
     ".html" => "text/html; charset=utf-8",
     ".jpg"  => "image/jpeg",
     ".jpeg" => "image/jpeg",
-    ".js"   => "application/javascript; charset=utf-8",
+    ".js"   => "text/javascript; charset=utf-8",
     ".json" => "application/json",
     ".pdf"  => "application/pdf",
     ".png"  => "image/png",
@@ -99,6 +99,7 @@ module MIME
     ".txt"  => "text/plain; charset=utf-8",
     ".xml"  => "text/xml; charset=utf-8",
     ".wasm" => "application/wasm",
+    ".webp" => "image/webp",
   }
 
   # Initializes the MIME database.
@@ -179,32 +180,32 @@ module MIME
   #
   # A case-sensitive search is tried first, if this yields no result, it is
   # matched case-insensitive. Returns *default* if extension is not registered.
-  def self.from_filename(filename : String, default) : String
-    from_extension(File.extname(filename), default)
+  def self.from_filename(filename : String | Path, default) : String
+    from_extension(File.extname(filename.to_s), default)
   end
 
   # Looks up the MIME type associated with the extension in *filename*.
   #
   # A case-sensitive search is tried first, if this yields no result, it is
   # matched case-insensitive. Raises `KeyError` if extension is not registered.
-  def self.from_filename(filename : String) : String
-    from_extension(File.extname(filename))
+  def self.from_filename(filename : String | Path) : String
+    from_extension(File.extname(filename.to_s))
   end
 
   # Looks up the MIME type associated with the extension in *filename*.
   #
   # A case-sensitive search is tried first, if this yields no result, it is
   # matched case-insensitive. Returns `nil` if extension is not registered.
-  def self.from_filename?(filename : String) : String?
-    from_extension?(File.extname(filename))
+  def self.from_filename?(filename : String | Path) : String?
+    from_extension?(File.extname(filename.to_s))
   end
 
   # Looks up the MIME type associated with the extension in *filename*.
   #
   # A case-sensitive search is tried first, if this yields no result, it is
-  # matched case-insensitive. Runs the fiven block if extension is not registered.
-  def self.from_filename(filename : String, &block)
-    from_extension(File.extname(filename)) { |extension| yield extension }
+  # matched case-insensitive. Runs the given block if extension is not registered.
+  def self.from_filename(filename : String | Path, &block)
+    from_extension(File.extname(filename.to_s)) { |extension| yield extension }
   end
 
   # Register *type* for *extension*.

@@ -6,6 +6,39 @@ private def yield_to(fiber)
   Crystal::Scheduler.resume(fiber)
 end
 
+private macro parallel(*jobs)
+  %channel = Channel(Exception | Nil).new
+
+  {% for job, i in jobs %}
+    %ret{i} = uninitialized typeof({{job}})
+    spawn do
+      begin
+        %ret{i} = {{job}}
+      rescue e : Exception
+        %channel.send e
+      else
+        %channel.send nil
+      end
+    end
+  {% end %}
+
+  {{ jobs.size }}.times do
+    %value = %channel.receive
+    if %value.is_a?(Exception)
+      raise Exception.new(
+        "An unhandled error occurred inside a `parallel` call",
+        cause: %value
+      )
+    end
+  end
+
+  {
+    {% for job, i in jobs %}
+      %ret{i},
+    {% end %}
+  }
+end
+
 describe Channel do
   it "creates unbuffered with no arguments" do
     Channel(Int32).new
@@ -32,6 +65,17 @@ describe Channel do
     ch1.send(1)
     Channel.send_first(2, ch1, ch2)
     ch2.receive.should eq 2
+  end
+
+  it "does not raise or change its status when it is closed more than once" do
+    ch = Channel(Int32).new
+    ch.closed?.should be_false
+
+    ch.close
+    ch.closed?.should be_true
+
+    ch.close
+    ch.closed?.should be_true
   end
 
   describe ".select" do
@@ -176,6 +220,28 @@ describe Channel do
       end
     end
 
+    context "mix of receive and receive? multi-channel" do
+      it "raises if receive channel was closed and receive? channel was not ready" do
+        ch = Channel(String).new
+        ch2 = Channel(String).new
+        spawn_and_wait(->{ ch.close }) do
+          expect_raises Channel::ClosedError do
+            Channel.select(ch.receive_select_action, ch2.receive_select_action?)
+          end
+        end
+      end
+
+      it "returns nil if receive channel was not ready and receive? channel was closed" do
+        ch = Channel(String).new
+        ch2 = Channel(String).new
+        spawn_and_wait(->{ ch2.close }) do
+          i, m = Channel.select(ch.receive_select_action, ch2.receive_select_action?)
+          i.should eq(1)
+          m.should eq(nil)
+        end
+      end
+    end
+
     context "send raise-on-close single-channel" do
       it "types" do
         ch = Channel(String).new
@@ -244,6 +310,116 @@ describe Channel do
         end
       end
     end
+
+    context "timeout" do
+      it "types" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.select(ch.receive_select_action, timeout_select_action(0.1.seconds))
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(String?)
+        end
+      end
+
+      it "triggers timeout" do
+        ch = Channel(String).new
+        spawn_and_wait(->{}) do
+          i, m = Channel.select(ch.receive_select_action, timeout_select_action(0.1.seconds))
+
+          i.should eq(1)
+          m.should eq(nil)
+        end
+      end
+
+      it "triggers timeout (reverse order)" do
+        ch = Channel(String).new
+        spawn_and_wait(->{}) do
+          i, m = Channel.select(timeout_select_action(0.1.seconds), ch.receive_select_action)
+
+          i.should eq(0)
+          m.should eq(nil)
+        end
+      end
+
+      it "triggers timeout (same fiber multiple times)" do
+        ch = Channel(String).new
+        spawn_and_wait(->{}) do
+          3.times do
+            i, m = Channel.select(ch.receive_select_action, timeout_select_action(0.1.seconds))
+
+            i.should eq(1)
+            m.should eq(nil)
+          end
+        end
+      end
+
+      it "allows receiving while waiting" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.select(ch.receive_select_action, timeout_select_action(1.seconds))
+          i.should eq(0)
+          m.should eq("foo")
+        end
+      end
+
+      it "allows receiving while waiting (reverse order)" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.select(timeout_select_action(1.seconds), ch.receive_select_action)
+          i.should eq(1)
+          m.should eq("foo")
+        end
+      end
+
+      it "allows receiving while waiting (same fiber multiple times)" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ 3.times { ch.send "foo" } }) do
+          3.times do
+            i, m = Channel.select(ch.receive_select_action, timeout_select_action(1.seconds))
+            i.should eq(0)
+            m.should eq("foo")
+          end
+        end
+      end
+
+      it "negative amounts should not trigger timeout" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.select(ch.receive_select_action, timeout_select_action(-1.seconds))
+
+          i.should eq(0)
+          m.should eq("foo")
+        end
+      end
+
+      it "send raise-on-close raises if channel was closed while waiting" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.close }) do
+          expect_raises Channel::ClosedError do
+            Channel.select(ch.send_select_action("foo"), timeout_select_action(0.1.seconds))
+          end
+        end
+      end
+
+      it "receive raise-on-close raises if channel was closed while waiting" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.close }) do
+          expect_raises Channel::ClosedError do
+            Channel.select(ch.receive_select_action, timeout_select_action(0.1.seconds))
+          end
+        end
+      end
+
+      it "receive nil-on-close returns index of closed while waiting" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.close }) do
+          i, m = Channel.select(ch.receive_select_action?, timeout_select_action(0.1.seconds))
+
+          i.should eq(0)
+          m.should eq(nil)
+        end
+      end
+    end
   end
 
   describe ".non_blocking_select" do
@@ -289,6 +465,29 @@ describe Channel do
       end
     end
 
+    context "mix of receive and receive? multi-channel" do
+      it "raises if receive channel was close and receive? channel was not ready" do
+        ch = Channel(String).new
+        ch2 = Channel(String).new
+
+        spawn_and_wait(->{ ch.close }) do
+          expect_raises Channel::ClosedError do
+            Channel.non_blocking_select(ch.receive_select_action, ch2.receive_select_action?)
+          end
+        end
+      end
+
+      it "returns nil if receive channel was not ready and receive? channel was closed" do
+        ch = Channel(String).new
+        ch2 = Channel(String).new
+        spawn_and_wait(->{ ch2.close }) do
+          i, m = Channel.non_blocking_select(ch.receive_select_action, ch2.receive_select_action?)
+          i.should eq(1)
+          m.should eq(nil)
+        end
+      end
+    end
+
     context "send raise-on-close single-channel" do
       it "types" do
         ch = Channel(String).new
@@ -308,6 +507,65 @@ describe Channel do
           i, m = Channel.non_blocking_select(ch.send_select_action("foo"), ch2.send_select_action(true))
           typeof(i).should eq(Int32)
           typeof(m).should eq(Nil | Channel::NotReady)
+        end
+      end
+    end
+
+    context "timeout" do
+      it "types" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.non_blocking_select(ch.receive_select_action, timeout_select_action(0.1.seconds))
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(String | Nil | Channel::NotReady)
+        end
+      end
+
+      it "should not trigger timeout" do
+        ch = Channel(String).new
+        spawn_and_wait(->{}) do
+          i, m = Channel.non_blocking_select(ch.receive_select_action, timeout_select_action(0.1.seconds))
+
+          i.should eq(2)
+          m.should eq(Channel::NotReady.new)
+        end
+      end
+
+      it "negative amounts should not trigger timeout" do
+        ch = Channel(String).new
+        spawn_and_wait(->{}) do
+          i, m = Channel.non_blocking_select(ch.receive_select_action, timeout_select_action(-1.seconds))
+
+          i.should eq(2)
+          m.should eq(Channel::NotReady.new)
+        end
+      end
+
+      it "send raise-on-close raises if channel was closed while waiting" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.close }) do
+          expect_raises Channel::ClosedError do
+            Channel.non_blocking_select(ch.send_select_action("foo"), timeout_select_action(0.1.seconds))
+          end
+        end
+      end
+
+      it "receive raise-on-close raises if channel was closed while waiting" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.close }) do
+          expect_raises Channel::ClosedError do
+            Channel.non_blocking_select(ch.receive_select_action, timeout_select_action(0.1.seconds))
+          end
+        end
+      end
+
+      it "receive nil-on-close returns index of closed while waiting" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.close }) do
+          i, m = Channel.non_blocking_select(ch.receive_select_action?, timeout_select_action(0.1.seconds))
+
+          i.should eq(0)
+          m.should eq(nil)
         end
       end
     end
@@ -360,11 +618,6 @@ describe "unbuffered" do
     Channel.select(ch1.receive_select_action, ch2.receive_select_action).should eq({0, 123})
   end
 
-  it "works with select else" do
-    ch1 = Channel(Int32).new
-    Channel.select({ch1.receive_select_action}, true).should eq({1, Channel::NotReady.new})
-  end
-
   it "can send and receive nil" do
     ch = Channel(Nil).new
     sender = Fiber.new { ch.send nil }
@@ -375,8 +628,9 @@ describe "unbuffered" do
   it "can be closed" do
     ch = Channel(Int32).new
     ch.closed?.should be_false
-    ch.close.should be_nil
+    ch.close.should be_true
     ch.closed?.should be_true
+    ch.close.should be_false
     expect_raises(Channel::ClosedError) { ch.receive }
   end
 
@@ -467,7 +721,7 @@ describe "unbuffered" do
     closed.should be_true
   end
 
-  it "can send suceesfully without raise" do
+  it "can send successfully without raise" do
     ch = Channel(Int32).new
     raise_flag = false
 
@@ -498,17 +752,20 @@ describe "buffered" do
 
   it "blocks when full" do
     ch = Channel(Int32).new(2)
-    freed = false
-    spawn { 2.times { ch.receive }; freed = true }
+    done = false
+    f = spawn { 5.times { |i| ch.send i }; done = true }
 
-    ch.send 1
-    freed.should be_false
+    ch.receive
+    done.should be_false
 
-    ch.send 2
-    freed.should be_false
+    ch.receive
+    done.should be_false
 
-    ch.send 3
-    freed.should be_true
+    # after the third receive, since the buffer is 2
+    # f should be able to exec fully
+    ch.receive
+    wait_until_finished f
+    done.should be_true
   end
 
   it "doesn't block when not full" do
@@ -591,7 +848,7 @@ describe "buffered" do
     ch.receive?.should eq(123)
   end
 
-  it "can send sucessfully without raise" do
+  it "can send successfully without raise" do
     ch = Channel(Int32).new(1)
     raise_flag = false
 

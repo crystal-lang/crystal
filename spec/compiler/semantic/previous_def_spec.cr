@@ -41,7 +41,7 @@ describe "Semantic: previous_def" do
       )) { int32 }
   end
 
-  it "types previous def with arguments" do
+  it "types previous def with explicit arguments" do
     assert_type(%(
       def foo(x)
         x
@@ -55,7 +55,7 @@ describe "Semantic: previous_def" do
       )) { float64 }
   end
 
-  it "types previous def with arguments but without parenthesis" do
+  it "types previous def with forwarded arguments, def has parameters" do
     assert_type(%(
       def foo(x)
         x
@@ -67,6 +67,76 @@ describe "Semantic: previous_def" do
 
       foo(1)
       )) { int32 }
+  end
+
+  it "types previous def with forwarded arguments, def has bare splat parameter (#8895)" do
+    assert_type(%(
+      def foo(*, x)
+        x
+      end
+
+      def foo(*, x)
+        previous_def
+      end
+
+      foo(x: 1)
+      )) { int32 }
+  end
+
+  it "types previous def with named arguments, def has bare splat parameter (#8895)" do
+    assert_type(%(
+      def foo(*, x)
+        x
+      end
+
+      def foo(*, x)
+        previous_def x: x || 'a'
+      end
+
+      foo(x: 1)
+      )) { union_of int32, char }
+  end
+
+  it "types previous def with named arguments, def has bare splat parameter (2) (#8895)" do
+    assert_type(%(
+      def foo(x)
+        x
+      end
+
+      def foo(x)
+        previous_def x: x || 'a'
+      end
+
+      foo(1)
+      )) { union_of int32, char }
+  end
+
+  it "types previous def with forwarded arguments, different internal names (#8895)" do
+    assert_type(%(
+      def foo(*, x a)
+        a
+      end
+
+      def foo(*, x b)
+        previous_def
+      end
+
+      foo(x: 1)
+      )) { int32 }
+  end
+
+  it "types previous def with named arguments, def has double splat parameter (#8895)" do
+    assert_type(%(
+      def foo(**opts)
+        opts
+      end
+
+      def foo(**opts)
+        previous_def
+      end
+
+      foo(x: 1, y: 'a')
+      )) { named_tuple_of({"x": int32, "y": char}) }
   end
 
   it "types previous def with restrictions" do
@@ -95,7 +165,7 @@ describe "Semantic: previous_def" do
       end
 
       foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "types previous def when inside fun and forwards args" do
@@ -110,7 +180,7 @@ describe "Semantic: previous_def" do
       end
 
       foo(1)
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "says wrong number of arguments for previous_def (#1223)" do

@@ -4,23 +4,23 @@ Navigator = function(sidebar, searchInput, list, leaveSearchScope){
 
   var performingSearch = false;
 
-  document.addEventListener('CrystalDoc:searchStarted', function(){
+  document.addEventListener('CrystalDocs:searchStarted', function(){
     performingSearch = true;
   });
-  document.addEventListener('CrystalDoc:searchDebounceStarted', function(){
+  document.addEventListener('CrystalDocs:searchDebounceStarted', function(){
     performingSearch = true;
   });
-  document.addEventListener('CrystalDoc:searchPerformed', function(){
+  document.addEventListener('CrystalDocs:searchPerformed', function(){
     performingSearch = false;
   });
-  document.addEventListener('CrystalDoc:searchDebounceStopped', function(event){
+  document.addEventListener('CrystalDocs:searchDebounceStopped', function(event){
     performingSearch = false;
   });
 
   function delayWhileSearching(callback) {
     if(performingSearch){
-      document.addEventListener('CrystalDoc:searchPerformed', function listener(){
-        document.removeEventListener('CrystalDoc:searchPerformed', listener);
+      document.addEventListener('CrystalDocs:searchPerformed', function listener(){
+        document.removeEventListener('CrystalDocs:searchPerformed', listener);
 
         // add some delay to let search results display kick in
         setTimeout(callback, 100);

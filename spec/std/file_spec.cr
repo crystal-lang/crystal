@@ -1,5 +1,4 @@
 require "./spec_helper"
-require "../support/errno"
 
 private def base
   Dir.current
@@ -106,14 +105,14 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = datapath("non_existing_file.txt")
-      expect_raises_errno(Errno::ENOENT, "Error determining size of '#{filename}'") do
+      expect_raises(File::NotFoundError, "Unable to get file info: '#{filename.inspect_unquoted}'") do
         File.empty?(filename)
       end
     end
 
     # TODO: do we even want this?
-    pending_win32 "raises an error when a component of the path is a file" do
-      expect_raises_errno(Errno::ENOTDIR, "Error determining size of '#{datapath("test_file.txt", "")}'") do
+    it "raises an error when a component of the path is a file" do
+      expect_raises(File::Error, "Unable to get file info: '#{datapath("test_file.txt", "").inspect_unquoted}'") do
         File.empty?(datapath("test_file.txt", ""))
       end
     end
@@ -252,7 +251,8 @@ describe "File" do
   end
 
   describe "symlink?" do
-    it "gives true" do
+    # TODO: this fails depending on how Git checks out the repository
+    pending_win32 "gives true" do
       File.symlink?(datapath("symlink.txt")).should be_true
     end
 
@@ -271,7 +271,7 @@ describe "File" do
   end
 
   describe ".readlink" do
-    it "reads link" do
+    pending_win32 "reads link" do
       File.readlink(datapath("symlink.txt")).should eq "test_file.txt"
     end
   end
@@ -280,6 +280,7 @@ describe "File" do
     File.dirname("/Users/foo/bar.cr").should eq("/Users/foo")
     File.dirname("foo").should eq(".")
     File.dirname("").should eq(".")
+    File.dirname("/τελεία/łódź").should eq("/τελεία")
   end
 
   it "gets basename" do
@@ -313,23 +314,43 @@ describe "File" do
     File.extname("").should eq("")
   end
 
+  # There are more detailed specs for `Path#join` in path_spec.cr
   it "constructs a path from parts" do
-    File.join(["///foo", "bar"]).should eq("///foo/bar")
-    File.join(["///foo", "//bar"]).should eq("///foo//bar")
-    File.join(["/foo/", "/bar"]).should eq("/foo/bar")
-    File.join(["foo", "bar", "baz"]).should eq("foo/bar/baz")
-    File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
-    File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
-    File.join(["", "foo"]).should eq("foo")
-    File.join(["foo", ""]).should eq("foo/")
-    File.join(["", "", "foo"]).should eq("foo")
-    File.join(["foo", "", "bar"]).should eq("foo/bar")
-    File.join(["foo", "", "", "bar"]).should eq("foo/bar")
-    File.join(["foo", "/", "bar"]).should eq("foo/bar")
-    File.join(["foo", "/", "/", "bar"]).should eq("foo/bar")
-    File.join(["/", "/foo", "/", "bar/", "/"]).should eq("/foo/bar/")
-    File.join(["foo"]).should eq("foo")
-    File.join("foo").should eq("foo")
+    {% if flag?(:win32) %}
+      File.join(["///foo", "bar"]).should eq("///foo\\bar")
+      File.join(["///foo", "//bar"]).should eq("///foo//bar")
+      File.join(["/foo/", "/bar"]).should eq("/foo/bar")
+      File.join(["foo", "bar", "baz"]).should eq("foo\\bar\\baz")
+      File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
+      File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
+      File.join(["", "foo"]).should eq("foo")
+      File.join(["foo", ""]).should eq("foo\\")
+      File.join(["", "", "foo"]).should eq("foo")
+      File.join(["foo", "", "bar"]).should eq("foo\\bar")
+      File.join(["foo", "", "", "bar"]).should eq("foo\\bar")
+      File.join(["foo", "/", "bar"]).should eq("foo/bar")
+      File.join(["foo", "/", "/", "bar"]).should eq("foo/bar")
+      File.join(["/", "/foo", "/", "bar/", "/"]).should eq("/foo/bar/")
+      File.join(["foo"]).should eq("foo")
+      File.join("foo").should eq("foo")
+    {% else %}
+      File.join(["///foo", "bar"]).should eq("///foo/bar")
+      File.join(["///foo", "//bar"]).should eq("///foo//bar")
+      File.join(["/foo/", "/bar"]).should eq("/foo/bar")
+      File.join(["foo", "bar", "baz"]).should eq("foo/bar/baz")
+      File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
+      File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
+      File.join(["", "foo"]).should eq("foo")
+      File.join(["foo", ""]).should eq("foo/")
+      File.join(["", "", "foo"]).should eq("foo")
+      File.join(["foo", "", "bar"]).should eq("foo/bar")
+      File.join(["foo", "", "", "bar"]).should eq("foo/bar")
+      File.join(["foo", "/", "bar"]).should eq("foo/bar")
+      File.join(["foo", "/", "/", "bar"]).should eq("foo/bar")
+      File.join(["/", "/foo", "/", "bar/", "/"]).should eq("/foo/bar/")
+      File.join(["foo"]).should eq("foo")
+      File.join("foo").should eq("foo")
+    {% end %}
   end
 
   it "chown" do
@@ -357,7 +378,7 @@ describe "File" do
         File.chmod(path, 0o664)
         File.info(path).permissions.should eq(normalize_permissions(0o664, directory: true))
       ensure
-        Dir.rmdir(path) if Dir.exists?(path)
+        Dir.delete(path) if Dir.exists?(path)
       end
     end
 
@@ -387,64 +408,65 @@ describe "File" do
     end
 
     it "raises when destination doesn't exist" do
-      expect_raises_errno(Errno::ENOENT, "Error changing permissions of '#{datapath("unknown_chmod_path.txt")}'") do
+      expect_raises(File::NotFoundError, "Error changing permissions: '#{datapath("unknown_chmod_path.txt").inspect_unquoted}'") do
         File.chmod(datapath("unknown_chmod_path.txt"), 0o664)
       end
     end
   end
 
-  it "gets info for this file" do
-    info = File.info(datapath("test_file.txt"))
-    info.type.should eq(File::Type::File)
-  end
-
-  it "gets info for this directory" do
-    info = File.info(datapath)
-    info.type.should eq(File::Type::Directory)
-  end
-
-  # TODO: support stating nul on windows
-  pending_win32 "gets info for a character device" do
-    info = File.info(File::NULL)
-    info.type.should eq(File::Type::CharacterDevice)
-  end
-
-  it "gets info for a symlink" do
-    info = File.info(datapath("symlink.txt"), follow_symlinks: false)
-    info.type.should eq(File::Type::Symlink)
-  end
-
-  it "gets info for open file" do
-    File.open(datapath("test_file.txt"), "r") do |file|
-      info = file.info
+  describe "File::Info" do
+    it "gets for this file" do
+      info = File.info(datapath("test_file.txt"))
       info.type.should eq(File::Type::File)
     end
-  end
 
-  it "gets info for pipe" do
-    IO.pipe do |r, w|
-      r.info.type.should eq(File::Type::Pipe)
-      w.info.type.should eq(File::Type::Pipe)
+    it "gets for this directory" do
+      info = File.info(datapath)
+      info.type.should eq(File::Type::Directory)
     end
-  end
 
-  it "gets info for non-existent file and raises" do
-    expect_raises_errno(Errno::ENOENT, "Unable to get info for 'non-existent'") do
-      File.info("non-existent")
+    # TODO: support stating nul on windows
+    pending_win32 "gets for a character device" do
+      info = File.info(File::NULL)
+      info.type.should eq(File::Type::CharacterDevice)
     end
-  end
 
-  it "gets info mtime for new file" do
-    with_tempfile("mtime") do |path|
-      File.touch(path)
-      File.open(path) do |file|
-        file.info.modification_time.should be_close(Time.utc, 1.seconds)
+    # TODO: this fails depending on how Git checks out the repository
+    pending_win32 "gets for a symlink" do
+      info = File.info(datapath("symlink.txt"), follow_symlinks: false)
+      info.type.should eq(File::Type::Symlink)
+    end
+
+    it "gets for open file" do
+      File.open(datapath("test_file.txt"), "r") do |file|
+        info = file.info
+        info.type.should eq(File::Type::File)
       end
-      File.info(path).modification_time.should be_close(Time.utc, 1.seconds)
     end
-  end
 
-  describe "File::Info" do
+    it "gets for pipe" do
+      IO.pipe do |r, w|
+        r.info.type.should eq(File::Type::Pipe)
+        w.info.type.should eq(File::Type::Pipe)
+      end
+    end
+
+    it "gets for non-existent file and raises" do
+      expect_raises(File::NotFoundError, "Unable to get file info: 'non-existent'") do
+        File.info("non-existent")
+      end
+    end
+
+    it "gets mtime for new file" do
+      with_tempfile("mtime") do |path|
+        File.touch(path)
+        File.open(path) do |file|
+          file.info.modification_time.should be_close(Time.utc, 1.seconds)
+        end
+        File.info(path).modification_time.should be_close(Time.utc, 1.seconds)
+      end
+    end
+
     it "tests equal for the same file" do
       File.info(datapath("test_file.txt")).should eq(File.info(datapath("test_file.txt")))
     end
@@ -472,14 +494,14 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = datapath("non_existing_file.txt")
-      expect_raises_errno(Errno::ENOENT, "Error determining size of '#{filename}'") do
+      expect_raises(File::NotFoundError, "Unable to get file info: '#{filename.inspect_unquoted}'") do
         File.size(filename)
       end
     end
 
     # TODO: do we even want this?
-    pending_win32 "raises an error when a component of the path is a file" do
-      expect_raises_errno(Errno::ENOTDIR, "Error determining size of '#{datapath("test_file.txt", "")}'") do
+    it "raises an error when a component of the path is a file" do
+      expect_raises(File::Error, "Unable to get file info: '#{datapath("test_file.txt", "").inspect_unquoted}'") do
         File.size(datapath("test_file.txt", ""))
       end
     end
@@ -495,9 +517,9 @@ describe "File" do
       end
     end
 
-    it "raises errno when file doesn't exist" do
-      with_tempfile("nonexistant_file.txt") do |path|
-        expect_raises_errno(Errno::ENOENT, "Error deleting file '#{path}'") do
+    it "raises when file doesn't exist" do
+      with_tempfile("nonexistent_file.txt") do |path|
+        expect_raises(File::NotFoundError, "Error deleting file: '#{path.inspect_unquoted}'") do
           File.delete(path)
         end
       end
@@ -516,111 +538,35 @@ describe "File" do
       end
     end
 
+    it "replaces a file" do
+      with_tempfile("rename-source.txt", "rename-target.txt") do |source_path, target_path|
+        File.write(source_path, "foo")
+        File.write(target_path, "bar")
+        File.rename(source_path, target_path)
+        File.exists?(source_path).should be_false
+        File.read(target_path).strip.should eq("foo")
+        File.delete(target_path)
+      end
+    end
+
     it "raises if old file doesn't exist" do
       with_tempfile("rename-fail-source.txt", "rename-fail-target.txt") do |source_path, target_path|
-        expect_raises_errno(Errno::ENOENT, "Error renaming file '#{source_path}' to '#{target_path}'") do
+        expect_raises(File::NotFoundError, "Error renaming file: '#{source_path.inspect_unquoted}' -> '#{target_path.inspect_unquoted}'") do
           File.rename(source_path, target_path)
         end
       end
     end
   end
 
-  # TODO: expand_path is horribly broken on win32
-  describe "expand_path" do
-    pending_win32 "converts a pathname to an absolute pathname" do
-      File.expand_path("").should eq(base)
-      File.expand_path("a").should eq(File.join([base, "a"]))
-      File.expand_path("a", nil).should eq(File.join([base, "a"]))
-    end
+  # There are more detailed specs for `Path#expand` in path_spec.cr
+  describe ".expand_path" do
+    it "converts a pathname to an absolute pathname" do
+      File.expand_path("a/b").should eq(Path.new("a/b").expand(Dir.current).to_s)
+      File.expand_path("a/b", "c/d").should eq(Path.new("a/b").expand("c/d").to_s)
+      File.expand_path("~/b", home: "c/d").should eq(Path.new("~/b").expand(Dir.current, home: "c/d").to_s)
+      File.expand_path("~/b", "c/d", home: false).should eq(Path.new("~/b").expand("c/d", home: false).to_s)
 
-    pending_win32 "converts a pathname to an absolute pathname, Ruby-Talk:18512" do
-      File.expand_path(".a").should eq(File.join([base, ".a"]))
-      File.expand_path("..a").should eq(File.join([base, "..a"]))
-      File.expand_path("a../b").should eq(File.join([base, "a../b"]))
-    end
-
-    pending_win32 "keeps trailing dots on absolute pathname" do
-      File.expand_path("a.").should eq(File.join([base, "a."]))
-      File.expand_path("a..").should eq(File.join([base, "a.."]))
-    end
-
-    pending_win32 "converts a pathname to an absolute pathname, using a complete path" do
-      File.expand_path("", "#{tmpdir}").should eq("#{tmpdir}")
-      File.expand_path("a", "#{tmpdir}").should eq("#{tmpdir}/a")
-      File.expand_path("../a", "#{tmpdir}/xxx").should eq("#{tmpdir}/a")
-      File.expand_path(".", "#{rootdir}").should eq("#{rootdir}")
-    end
-
-    pending_win32 "expands a path with multi-byte characters" do
-      File.expand_path("Ångström").should eq("#{base}/Ångström")
-    end
-
-    pending_win32 "expands /./dir to /dir" do
-      File.expand_path("/./dir").should eq("/dir")
-    end
-
-    pending_win32 "replaces multiple / with a single /" do
-      File.expand_path("////some/path").should eq("/some/path")
-      File.expand_path("/some////path").should eq("/some/path")
-    end
-
-    pending_win32 "expand path with" do
-      File.expand_path("../../bin", "/tmp/x").should eq("/bin")
-      File.expand_path("../../bin", "/tmp").should eq("/bin")
-      File.expand_path("../../bin", "/").should eq("/bin")
-      File.expand_path("../bin", "tmp/x").should eq(File.join([base, "tmp", "bin"]))
-      File.expand_path("../bin", "x/../tmp").should eq(File.join([base, "bin"]))
-    end
-
-    it "expand_path for commoms unix path  give a full path" do
-      File.expand_path("/tmp/").should eq("/tmp/")
-      File.expand_path("/tmp/../../../tmp").should eq("/tmp")
-      File.expand_path("").should eq(base)
-      File.expand_path("./////").should eq(File.join(base, ""))
-      File.expand_path(".").should eq(base)
-      File.expand_path(base).should eq(base)
-    end
-
-    it "converts a pathname to an absolute pathname, using ~ (home) as base" do
-      File.expand_path("~/").should eq(File.join(home, ""))
-      File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-      File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
-      File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
-      File.expand_path("~").should eq(home)
-      File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
-      File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
-    end
-
-    it "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
-      prev_home = home
-      begin
-        ENV["HOME"] = File.expand_path(datapath)
-        File.expand_path("~/").should eq(File.join(home, ""))
-        File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-        File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
-        File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
-        File.expand_path("~").should eq(home)
-        File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
-        File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
-      ensure
-        ENV["HOME"] = prev_home
-      end
-    end
-
-    it "converts a pathname to an absolute pathname, using ~ (home) as base (HOME=/)" do
-      prev_home = home
-      begin
-        ENV["HOME"] = "/"
-        File.expand_path("~/").should eq(home)
-        File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-        File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(/\A\/\//, "/"))
-        File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
-        File.expand_path("~").should eq(home)
-        File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
-        File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
-      ensure
-        ENV["HOME"] = prev_home
-      end
+      File.expand_path(Path.new("a/b")).should eq(Path.new("a/b").expand(Dir.current).to_s)
     end
   end
 
@@ -635,8 +581,8 @@ describe "File" do
       {% end %}
     end
 
-    it "raises Errno if file doesn't exist" do
-      expect_raises_errno(Errno::ENOENT, "Error resolving real path of '/usr/share/foo/bar'") do
+    it "raises if file doesn't exist" do
+      expect_raises(File::NotFoundError, "Error resolving real path: '/usr/share/foo/bar'") do
         File.real_path("/usr/share/foo/bar")
       end
     end
@@ -841,6 +787,14 @@ describe "File" do
     end
   end
 
+  pending_win32 "raises when reading a file with no permission" do
+    with_tempfile("file.txt") do |path|
+      File.touch(path)
+      File.chmod(path, 0)
+      expect_raises(File::AccessDeniedError) { File.read(path) }
+    end
+  end
+
   describe "truncate" do
     it "truncates" do
       with_tempfile("truncate.txt") do |path|
@@ -872,7 +826,7 @@ describe "File" do
       with_tempfile("truncate-opened.txt") do |path|
         File.write(path, "0123456789")
         File.open(path, "r") do |f|
-          expect_raises_errno(Errno::EINVAL, "Error truncating file '#{path}'") do
+          expect_raises(File::Error, "Error truncating file: '#{path.inspect_unquoted}'") do
             f.truncate(4)
           end
         end
@@ -881,7 +835,7 @@ describe "File" do
   end
 
   describe "fsync" do
-    it "syncs OS file buffer to disk" do
+    pending_win32 "syncs OS file buffer to disk" do
       with_tempfile("fsync.txt") do |path|
         File.open(path, "a") do |f|
           f.puts("333")
@@ -894,12 +848,12 @@ describe "File" do
 
   # TODO: implement flock on windows
   describe "flock" do
-    pending_win32 "exlusively locks a file" do
+    pending_win32 "exclusively locks a file" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_exclusive do
             # BUG: check for EWOULDBLOCK when exception filters are implemented
-            expect_raises_errno(Errno::EAGAIN, "flock") do
+            expect_raises(IO::Error, "Error applying or removing file lock") do
               file2.flock_exclusive(blocking: false) { }
             end
           end
@@ -924,8 +878,13 @@ describe "File" do
       file.read_at(6, 100) do |io|
         io.gets_to_end.should eq("World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello Worl")
       end
+
       file.read_at(0, 240) do |io|
         io.gets_to_end.should eq(File.read(filename))
+      end
+
+      file.read_at(6_i64, 5_i64) do |io|
+        io.gets_to_end.should eq("World")
       end
     end
   end
@@ -1076,8 +1035,7 @@ describe "File" do
     end
   end
 
-  # TODO: these specs don't compile on win32 because iconv isn't implemented
-  {% unless flag?(:win32) %}
+  {% unless flag?(:without_iconv) %}
     describe "encoding" do
       it "writes with encoding" do
         with_tempfile("encoding-write.txt") do |path|
@@ -1154,13 +1112,13 @@ describe "File" do
       atime = Time.utc(2000, 1, 2)
       mtime = Time.utc(2000, 3, 4)
 
-      expect_raises_errno(Errno::ENOENT, "Error setting time on file '#{datapath("nonexistent_file.txt")}'") do
+      expect_raises(File::NotFoundError, "Error setting time on file: '#{datapath("nonexistent_file.txt").inspect_unquoted}'") do
         File.utime(atime, mtime, datapath("nonexistent_file.txt"))
       end
     end
   end
 
-  describe "touch" do
+  describe ".touch" do
     it "creates file if it doesn't exist" do
       with_tempfile("touch-create.txt") do |path|
         File.exists?(path).should be_false
@@ -1189,23 +1147,108 @@ describe "File" do
     end
 
     it "raises if path contains non-existent directory" do
-      with_tempfile(File.join("nonexistant-dir", "touch.txt")) do |path|
-        expect_raises_errno(Errno::ENOENT, "Error opening file '#{path}'") do
+      with_tempfile(File.join("nonexistent-dir", "touch.txt")) do |path|
+        expect_raises(File::NotFoundError, "Error opening file with mode 'a': '#{path.inspect_unquoted}'") do
           File.touch(path)
         end
       end
     end
 
-    # TODO: there is no file which is reliably unwritable on windows
+    describe "touches existing" do
+      it "file" do
+        with_tempfile("touch-file") do |path|
+          File.write(path, "")
+
+          File.touch(path, Time.utc(2021, 1, 23))
+          info = File.info(path)
+          info.modification_time.should eq Time.utc(2021, 1, 23)
+
+          File.touch(path)
+          info = File.info(path)
+          info.modification_time.should be_close(Time.utc, 1.second)
+        end
+      end
+
+      it "directory" do
+        with_tempfile("touch-directory") do |path|
+          Dir.mkdir(path)
+
+          File.touch(path, Time.utc(2021, 1, 23))
+          info = File.info(path)
+          info.modification_time.should eq Time.utc(2021, 1, 23)
+
+          File.touch(path)
+          info = File.info(path)
+          info.modification_time.should be_close(Time.utc, 1.second)
+        end
+      end
+    end
+
+    # TODO: there is no file which is reliably nonwriteable on windows
     pending_win32 "raises if file cannot be accessed" do
-      expect_raises_errno(Errno::EPERM, "Error setting time on file '/bin/ls'") do
+      expect_raises(File::Error, "Error setting time on file: '/bin/ls'") do
         File.touch("/bin/ls")
+      end
+    end
+  end
+
+  describe ".same_content?" do
+    it "compares two equal files" do
+      File.same_content?(
+        datapath("test_file.txt"),
+        datapath("test_file.txt")
+      ).should be_true
+    end
+
+    it "compares two different files" do
+      File.same_content?(
+        datapath("test_file.txt"),
+        datapath("test_file.ini")
+      ).should be_false
+    end
+  end
+
+  describe ".copy" do
+    it "copies a file" do
+      src_path = datapath("test_file.txt")
+      with_tempfile("cp.txt") do |out_path|
+        File.copy(src_path, out_path)
+        File.exists?(out_path).should be_true
+        File.same_content?(src_path, out_path).should be_true
+      end
+    end
+
+    pending_win32 "copies permissions" do
+      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o700)
+
+        File.copy(src_path, out_path)
+
+        File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+        File.same_content?(src_path, out_path).should be_true
+      end
+    end
+
+    pending_win32 "overwrites existing destination and permissions" do
+      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o700)
+
+        File.write(out_path, "bar")
+        File.chmod(out_path, 0o777)
+
+        File.copy(src_path, out_path)
+
+        File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+        File.same_content?(src_path, out_path).should be_true
       end
     end
   end
 
   describe ".match?" do
     it "matches basics" do
+      File.match?("abc", Path["abc"]).should be_true
       File.match?("abc", "abc").should be_true
       File.match?("*", "abc").should be_true
       File.match?("*c", "abc").should be_true

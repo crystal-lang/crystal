@@ -4,7 +4,6 @@ module Crystal
   def self.check_type_can_be_stored(node, type, msg)
     return if type.can_be_stored?
 
-    type = type.union_types.find { |t| !t.can_be_stored? } if type.is_a?(UnionType)
     node.raise "#{msg} yet, use a more specific type"
   end
 
@@ -18,7 +17,7 @@ module Crystal
       String.build do |io|
         exception = exception_type.for_node(self, message, inner)
         exception.warning = true
-        exception.append_to_s(nil, io)
+        exception.append_to_s(io, nil)
       end
     end
 
@@ -27,6 +26,53 @@ module Crystal
       when Nop, NilLiteral, BoolLiteral, NumberLiteral, CharLiteral,
            StringLiteral, SymbolLiteral
         true
+      else
+        false
+      end
+    end
+
+    # `number_autocast` defines if casting numeric expressions to larger ones is enabled
+    def supports_autocast?(number_autocast : Bool = true)
+      case self
+      when NumberLiteral, SymbolLiteral
+        true
+      else
+        if number_autocast
+          case self_type = self.type?
+          when IntegerType
+            self_type.kind.bytesize <= 64
+          when FloatType
+            self_type.kind.f32?
+          end
+        else
+          false
+        end
+      end
+    end
+
+    def can_autocast_to?(other_type)
+      self_type = self.type
+
+      case {self_type, other_type}
+      when {IntegerType, IntegerType}
+        self_min, self_max = self_type.range
+        other_min, other_max = other_type.range
+        other_min <= self_min && self_max <= other_max
+      when {IntegerType, FloatType}
+        # Float32 mantissa has 23 bits,
+        # Float64 mantissa has 52 bits
+        case self_type.kind
+        when .i8?, .u8?, .i16?, .u16?
+          # Less than 23 bits, so convertable to Float32 and Float64 without precision loss
+          true
+        when .i32?, .u32?
+          # Less than 52 bits, so convertable to Float64 without precision loss
+          other_type.kind.f64?
+        else
+          false
+        end
+      when {FloatType, FloatType}
+        self_type.kind.f32? && other_type.kind.f64?
       else
         false
       end
@@ -57,9 +103,9 @@ module Crystal
 
   # Fictitious node to represent a tuple indexer
   class TupleIndexer < Primitive
-    getter index : Int32
+    getter index : TupleInstanceType::Index
 
-    def initialize(@index : Int32)
+    def initialize(@index)
       super("tuple_indexer_known_index")
     end
 
@@ -119,13 +165,15 @@ module Crystal
   end
 
   class Def
+    include Annotatable
+
     property! owner : Type
     property! original_owner : Type
     property vars : MetaVars?
     property yield_vars : Array(Var)?
     property previous : DefWithMetadata?
     property next : Def?
-    getter special_vars : Set(String)?
+    property special_vars : Set(String)?
     property block_nest = 0
     getter? raises = false
     property? closure = false
@@ -146,9 +194,6 @@ module Crystal
 
     # Is this a `new` method that was expanded from an initialize?
     property? new = false
-
-    # Annotations on this def
-    property annotations : Hash(AnnotationType, Array(Annotation))?
 
     @macro_owner : Type?
 
@@ -177,23 +222,6 @@ module Crystal
           end
         end
       end
-    end
-
-    # Adds an annotation with the given type and value
-    def add_annotation(annotation_type : AnnotationType, value : Annotation)
-      annotations = @annotations ||= {} of AnnotationType => Array(Annotation)
-      annotations[annotation_type] ||= [] of Annotation
-      annotations[annotation_type] << value
-    end
-
-    # Returns the last defined annotation with the given type, if any, or `nil` otherwise
-    def annotation(annotation_type) : Annotation?
-      @annotations.try &.[annotation_type]?.try &.last?
-    end
-
-    # Returns all annotations with the given type, if any, or `nil` otherwise
-    def annotations(annotation_type) : Array(Annotation)?
-      @annotations.try &.[annotation_type]?
     end
 
     # Returns the minimum and maximum number of arguments that must
@@ -250,6 +278,10 @@ module Crystal
   end
 
   class Macro
+    include Annotatable
+
+    property! owner : Type
+
     # Yields `arg, arg_index, object, object_index` corresponding
     # to arguments matching the given objects, taking into account this
     # macro's splat index.
@@ -445,12 +477,38 @@ module Crystal
 
     # A variable is closured if it's used in a ProcLiteral context
     # where it wasn't created.
-    property? closured = false
+    getter? closured = false
 
     # Is this metavar assigned a value?
     property? assigned_to = false
 
+    # Is this metavar closured in a mutable way?
+    # This means it's closured and it got a value assigned to it more than once.
+    # If that's the case, when it's closured then all local variable related to
+    # it will also be bound to it.
+    property? mutably_closured = false
+
+    # Local variables associated with this meta variable.
+    # Can be Var or MetaVar.
+    property(local_vars) { [] of ASTNode }
+
     def initialize(@name : String, @type : Type? = nil)
+    end
+
+    # Marks this variable as closured.
+    def mark_as_closured
+      @closured = true
+
+      return unless mutably_closured?
+
+      local_vars = @local_vars
+      return unless local_vars
+
+      # If a meta var is not readonly and it became a closure we must
+      # bind all previously related local vars to it so that
+      # they get all types assigned to it.
+      local_vars.each &.bind_to self
+      local_vars = nil
     end
 
     # True if this variable belongs to the given context
@@ -462,6 +520,11 @@ module Crystal
     # True if this variable belongs to the given context.
     def belongs_to?(context)
       @context.same?(context)
+    end
+
+    # Is this metavar associated with any local vars?
+    def local_vars?
+      @local_vars
     end
 
     def ==(other : self)
@@ -480,6 +543,7 @@ module Crystal
       end
       io << " (nil-if-read)" if nil_if_read?
       io << " (closured)" if closured?
+      io << " (mutably-closured)" if mutably_closured?
       io << " (assigned-to)" if assigned_to?
       io << " (object id: #{object_id})"
     end
@@ -494,6 +558,8 @@ module Crystal
   # A variable belonging to a type: a global,
   # class or instance variable (globals belong to the program).
   class MetaTypeVar < Var
+    include Annotatable
+
     property nil_reason : NilReason?
 
     # The owner of this variable, useful for showing good
@@ -514,44 +580,42 @@ module Crystal
     # Is this variable "unsafe" (no need to check if it was initialized)?
     property? uninitialized = false
 
+    # Was this class_var already read during the codegen phase?
+    # If not, and we are at the place that declares the class var, we can
+    # directly initialize it now, without checking for an `init` flag.
+    property? read = false
+
+    # If true, there's no need to check whether the class var was initialized or
+    # not when reading it.
+    property? no_init_flag = false
+
     # The byte offset of this instance variable. To be used with Sizeof and Offsetof annotations.
     property offsetof : Int32?
 
     # Annotations of this instance var
     property annotations : Hash(AnnotationType, Array(Annotation))?
 
+    enum Kind
+      Class
+      Instance
+      Global
+    end
+
     def kind
       case name[0]
       when '@'
         if name[1] == '@'
-          :class
+          Kind::Class
         else
-          :instance
+          Kind::Instance
         end
       else
-        :global
+        Kind::Global
       end
     end
 
     def global?
-      kind == :global
-    end
-
-    # Adds an annotation with the given type and value
-    def add_annotation(annotation_type : AnnotationType, value : Annotation)
-      annotations = @annotations ||= {} of AnnotationType => Array(Annotation)
-      annotations[annotation_type] ||= [] of Annotation
-      annotations[annotation_type] << value
-    end
-
-    # Returns the last defined annotation with the given type, if any, or `nil` otherwise
-    def annotation(annotation_type) : Annotation?
-      @annotations.try &.[annotation_type]?.try &.last?
-    end
-
-    # Returns all annotations with the given type, if any, or `nil` otherwise
-    def annotations(annotation_type) : Array(Annotation)?
-      @annotations.try &.[annotation_type]?
+      kind.global?
     end
   end
 
@@ -699,12 +763,18 @@ module Crystal
   end
 
   class NilReason
+    enum Reason
+      UsedBeforeInitialized
+      UsedSelfBeforeInitialized
+      InitializedInRescue
+    end
+
     getter name : String
-    getter reason : Symbol
+    getter reason : Reason
     getter nodes : Array(ASTNode)?
     getter scope : Type?
 
-    def initialize(@name, @reason, @nodes = nil, @scope = nil)
+    def initialize(@name, @reason : Reason, @nodes = nil, @scope = nil)
     end
   end
 
@@ -786,7 +856,7 @@ module Crystal
     def initialize(@name, @type)
     end
 
-    def class_desc
+    def self.class_desc
       "MetaVar"
     end
 
@@ -796,7 +866,7 @@ module Crystal
   end
 
   class NumberLiteral
-    def can_be_autocast_to?(other_type)
+    def can_autocast_to?(other_type)
       case {self.type, other_type}
       when {IntegerType, IntegerType}
         min, max = other_type.range
@@ -809,5 +879,23 @@ module Crystal
         false
       end
     end
+  end
+
+  # Fictitious node to mean a location in code shouldn't be reached.
+  # This is used in the implicit `else` branch of a case.
+  class Unreachable < ASTNode
+    def clone_without_location
+      Unreachable.new
+    end
+  end
+
+  class ProcLiteral
+    # If this ProcLiteral was created from expanding a ProcPointer,
+    # this holds the reference to it.
+    property proc_pointer : ProcPointer?
+  end
+
+  class ProcPointer
+    property expanded : ASTNode?
   end
 end

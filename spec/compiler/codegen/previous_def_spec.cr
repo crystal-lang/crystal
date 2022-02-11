@@ -15,7 +15,7 @@ describe "codegen: previous_def" do
       )).to_i.should eq(2)
   end
 
-  it "codeges previous def when inside fun and forwards args" do
+  it "codegens previous def when inside fun and forwards args" do
     run(%(
       def foo(z)
         z &+ 1
@@ -50,5 +50,19 @@ describe "codegen: previous_def" do
 
       Foo.new.bar.call
       )).to_i.should eq(1)
+  end
+
+  it "correctly passes named arguments" do
+    run(%(
+      def foo(x, *args, other = 1)
+        other
+      end
+
+      def foo(x, *args, other = 1)
+        previous_def
+      end
+
+      foo(1, 2, 3, other: 4)
+      )).to_i.should eq(4)
   end
 end

@@ -18,7 +18,7 @@ module Crystal::CCR
 
     status = Process.run(CC, [generated_c_filename, "-o", generated_bin_filename], error: :inherit)
     if !status.success?
-      raise Crystal::LocationlessException.new("Expanding '#{filename}' resulted in an invalid C program: '#{generated_c_filename}'")
+      raise Crystal::Error.new("Expanding '#{filename}' resulted in an invalid C program: '#{generated_c_filename}'")
     end
 
     File.open(generated_cr_filename, "w") do |generated_cr_file|

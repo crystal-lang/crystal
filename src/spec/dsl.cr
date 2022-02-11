@@ -2,40 +2,49 @@ require "colorize"
 require "option_parser"
 
 module Spec
-  private COLORS = {
-    success: :green,
-    fail:    :red,
-    error:   :red,
-    pending: :yellow,
-    comment: :cyan,
-    focus:   :cyan,
+  # :nodoc:
+  enum InfoKind
+    Comment
+    Focus
+    Order
+  end
+
+  private STATUS_COLORS = {
+    Status::Success => :green,
+    Status::Fail    => :red,
+    Status::Error   => :red,
+    Status::Pending => :yellow,
+  }
+
+  private INFO_COLORS = {
+    InfoKind::Comment => :cyan,
+    InfoKind::Focus   => :cyan,
+    InfoKind::Order   => :cyan,
   }
 
   private LETTERS = {
-    success: '.',
-    fail:    'F',
-    error:   'E',
-    pending: '*',
+    Status::Success => '.',
+    Status::Fail    => 'F',
+    Status::Error   => 'E',
+    Status::Pending => '*',
   }
 
-  @@use_colors = true
-
   # :nodoc:
-  def self.color(str, status)
+  def self.color(str, status : Status)
     if use_colors?
-      str.colorize(COLORS[status])
+      str.colorize(STATUS_COLORS[status])
     else
       str
     end
   end
 
   # :nodoc:
-  def self.use_colors?
-    @@use_colors
-  end
-
-  # :nodoc:
-  def self.use_colors=(@@use_colors)
+  def self.color(str, kind : InfoKind)
+    if use_colors?
+      str.colorize(INFO_COLORS[kind])
+    else
+      str
+    end
   end
 
   # :nodoc:
@@ -53,6 +62,10 @@ module Spec
   end
 
   # :nodoc:
+  class ExamplePending < SpecError
+  end
+
+  # :nodoc:
   class NestingSpecError < SpecError
   end
 
@@ -61,25 +74,7 @@ module Spec
   # :nodoc:
   def self.abort!
     @@aborted = true
-    exit
-  end
-
-  # :nodoc:
-  def self.pattern=(pattern)
-    @@pattern = Regex.new(Regex.escape(pattern))
-  end
-
-  # :nodoc:
-  def self.line=(@@line : Int32)
-  end
-
-  # :nodoc:
-  def self.slowest=(@@slowest : Int32)
-  end
-
-  # :nodoc:
-  def self.slowest
-    @@slowest
+    finish_run
   end
 
   # :nodoc:
@@ -103,13 +98,6 @@ module Spec
     "#{minutes}:#{seconds < 10 ? "0" : ""}#{seconds} minutes"
   end
 
-  # :nodoc:
-  def self.add_location(file, line)
-    locations = @@locations ||= {} of String => Array(Int32)
-    lines = locations[File.expand_path(file)] ||= [] of Int32
-    lines << line
-  end
-
   record SplitFilter, remainder : Int32, quotient : Int32
 
   @@split_filter : SplitFilter? = nil
@@ -123,14 +111,8 @@ module Spec
     end
   end
 
-  # :nodoc:
-  class_property? fail_fast = false
-
-  # :nodoc:
-  class_property? focus = false
-
   # Instructs the spec runner to execute the given block
-  # before each spec, regardless of where this method is invoked.
+  # before each spec in the spec suite.
   #
   # If multiple blocks are registered they run in the order
   # that they are given.
@@ -144,12 +126,11 @@ module Spec
   #
   # will print, just before each spec, 1 and then 2.
   def self.before_each(&block)
-    before_each = @@before_each ||= [] of ->
-    before_each << block
+    root_context.before_each(&block)
   end
 
   # Instructs the spec runner to execute the given block
-  # after each spec, regardless of where this method is invoked.
+  # after each spec in the spec suite.
   #
   # If multiple blocks are registered they run in the reversed
   # order that they are given.
@@ -163,8 +144,7 @@ module Spec
   #
   # will print, just after each spec, 2 and then 1.
   def self.after_each(&block)
-    after_each = @@after_each ||= [] of ->
-    after_each << block
+    root_context.after_each(&block)
   end
 
   # Instructs the spec runner to execute the given block
@@ -182,8 +162,7 @@ module Spec
   #
   # will print, just before the spec suite starts, 1 and then 2.
   def self.before_suite(&block)
-    before_suite = @@before_suite ||= [] of ->
-    before_suite << block
+    root_context.before_all(&block)
   end
 
   # Instructs the spec runner to execute the given block
@@ -201,67 +180,98 @@ module Spec
   #
   # will print, just after the spec suite ends, 2 and then 1.
   def self.after_suite(&block)
-    after_suite = @@after_suite ||= [] of ->
-    after_suite << block
+    root_context.after_all(&block)
   end
 
-  # :nodoc:
-  def self.run_before_each_hooks
-    @@before_each.try &.each &.call
+  # Instructs the spec runner to execute the given block when each spec in the
+  # spec suite runs.
+  #
+  # The block must call `run` on the given `Example::Procsy` object.
+  #
+  # If multiple blocks are registered they run in the reversed
+  # order that they are given.
+  #
+  # ```
+  # require "spec"
+  #
+  # Spec.around_each do |example|
+  #   puts "runs before each sample"
+  #   example.run
+  #   puts "runs after each sample"
+  # end
+  #
+  # it { }
+  # it { }
+  # ```
+  def self.around_each(&block : Example::Procsy ->)
+    root_context.around_each(&block)
   end
 
-  # :nodoc:
-  def self.run_after_each_hooks
-    @@after_each.try &.reverse_each &.call
-  end
-
-  # :nodoc:
-  def self.run_before_suite_hooks
-    @@before_suite.try &.each &.call
-  end
-
-  # :nodoc:
-  def self.run_after_suite_hooks
-    @@after_suite.try &.reverse_each &.call
-  end
+  @@start_time : Time::Span? = nil
 
   # :nodoc:
   def self.run
-    start_time = Time.monotonic
+    @@start_time = Time.monotonic
 
     at_exit do
+      log_setup
+      maybe_randomize
       run_filters
-      run_before_suite_hooks
       root_context.run
-      run_after_suite_hooks
+    rescue ex
+      STDERR.print "Unhandled exception: "
+      ex.inspect_with_backtrace(STDERR)
+      STDERR.flush
+      @@aborted = true
     ensure
-      elapsed_time = Time.monotonic - start_time
-      root_context.finish(elapsed_time, @@aborted)
-      exit 1 unless root_context.succeeded && !@@aborted
+      finish_run
+    end
+  end
+
+  # :nodoc:
+  #
+  # Workaround for #8914
+  private macro defined?(t)
+    {% if t.resolve? %}
+      {{ yield }}
+    {% end %}
+  end
+
+  # :nodoc:
+  def self.log_setup
+  end
+
+  # :nodoc:
+  macro finished
+    # :nodoc:
+    #
+    # Initialized the log module for the specs.
+    # If the "log" module is required it is configured to emit no entries by default.
+    def self.log_setup
+      defined?(::Log) do
+        if Log.responds_to?(:setup)
+          Log.setup_from_env(default_level: :none)
+        end
+      end
+    end
+  end
+
+  def self.finish_run
+    elapsed_time = Time.monotonic - @@start_time.not_nil!
+    root_context.finish(elapsed_time, @@aborted)
+    exit 1 if !root_context.succeeded || @@aborted
+  end
+
+  # :nodoc:
+  def self.maybe_randomize
+    if randomizer = @@randomizer
+      root_context.randomize(randomizer)
     end
   end
 
   # :nodoc:
   def self.run_filters
-    if pattern = @@pattern
-      root_context.filter_by_pattern(pattern)
-    end
-
-    if line = @@line
-      root_context.filter_by_line(line)
-    end
-
-    if locations = @@locations
-      root_context.filter_by_locations(locations)
-    end
-
-    if split_filter = @@split_filter
-      root_context.filter_by_split(split_filter)
-    end
-
-    if focus = @@focus
-      root_context.filter_by_focus
-    end
+    root_context.run_filters(@@pattern, @@line, @@locations, @@split_filter, @@focus, @@tags, @@anti_tags)
   end
 end
 

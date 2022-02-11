@@ -39,15 +39,11 @@ module MIME::Multipart
   #
   # MIME::Multipart.parse_boundary("multipart/mixed; boundary=\"abcde\"") # => "abcde"
   # ```
-  def self.parse_boundary(content_type)
+  def self.parse_boundary(content_type) : String?
     type = MIME::MediaType.parse?(content_type)
 
     if type && type.type == "multipart"
-      boundary = type["boundary"]?
-
-      if boundary && !boundary.empty?
-        boundary
-      end
+      type["boundary"]?.presence
     end
   end
 

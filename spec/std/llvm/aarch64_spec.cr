@@ -9,6 +9,7 @@ private def abi
   triple = "aarch64-unknown-linux-gnu"
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
+  machine.enable_global_isel = false
   LLVM::ABI::AArch64.new(machine)
 end
 
@@ -140,7 +141,7 @@ class LLVM::ABI
           info = abi.abi_info(arg_types, return_type, true, ctx)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))
+          info.arg_types[0].should eq(ArgType.indirect(str, nil))
           info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))
         end
       end

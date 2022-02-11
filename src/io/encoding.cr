@@ -1,3 +1,7 @@
+{% unless flag?(:without_iconv) %}
+  require "crystal/iconv"
+{% end %}
+
 class IO
   # Has the `name` and the `invalid` option.
   struct EncodingOptions
@@ -8,22 +12,27 @@ class IO
       EncodingOptions.check_invalid(invalid)
     end
 
-    def self.check_invalid(invalid)
+    def self.check_invalid(invalid) : Nil
       if invalid && invalid != :skip
         raise ArgumentError.new "Valid values for `invalid` option are `nil` and `:skip`, not #{invalid.inspect}"
       end
     end
   end
+end
 
-  {% skip_file if flag?(:win32) %}
+{% if flag?(:without_iconv) %}
+  require "./encoding_stubs"
+  {% skip_file %}
+{% end %}
 
+class IO
   private class Encoder
     def initialize(@encoding_options : EncodingOptions)
-      @iconv = Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
+      @iconv = Crystal::Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
       @closed = false
     end
 
-    def write(io, slice : Bytes)
+    def write(io, slice : Bytes) : Nil
       inbuf_ptr = slice.to_unsafe
       inbytesleft = LibC::SizeT.new(slice.size)
       outbuf = uninitialized UInt8[1024]
@@ -31,14 +40,14 @@ class IO
         outbuf_ptr = outbuf.to_unsafe
         outbytesleft = LibC::SizeT.new(outbuf.size)
         err = @iconv.convert(pointerof(inbuf_ptr), pointerof(inbytesleft), pointerof(outbuf_ptr), pointerof(outbytesleft))
-        if err == Iconv::ERROR
+        if err == Crystal::Iconv::ERROR
           @iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
         end
         io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
       end
     end
 
-    def close
+    def close : Nil
       return if @closed
       @closed = true
       @iconv.close
@@ -58,7 +67,7 @@ class IO
     @in_buffer : Pointer(UInt8)
 
     def initialize(@encoding_options : EncodingOptions)
-      @iconv = Iconv.new(encoding_options.name, "UTF-8", encoding_options.invalid)
+      @iconv = Crystal::Iconv.new(encoding_options.name, "UTF-8", encoding_options.invalid)
       @buffer = Bytes.new((GC.malloc_atomic(BUFFER_SIZE).as(UInt8*)), BUFFER_SIZE)
       @in_buffer = @buffer.to_unsafe
       @in_buffer_left = LibC::SizeT.new(0)
@@ -67,21 +76,13 @@ class IO
       @closed = false
     end
 
-    def read(io)
+    def read(io) : Nil
       loop do
         return unless @out_slice.empty?
 
         if @in_buffer_left == 0
           @in_buffer = @buffer.to_unsafe
           @in_buffer_left = LibC::SizeT.new(io.read(@buffer))
-        end
-
-        # If we just have a few bytes to decode, read more, just in case these don't produce a character
-        if @in_buffer_left < 16
-          buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
-          @buffer.copy_from(@in_buffer, @in_buffer_left)
-          @in_buffer = @buffer.to_unsafe
-          @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
         end
 
         # If, after refilling the buffer, we couldn't read new bytes
@@ -95,7 +96,7 @@ class IO
         @out_slice = @out_buffer[0, OUT_BUFFER_SIZE - out_buffer_left]
 
         # Check for errors
-        if result == Iconv::ERROR
+        if result == Crystal::Iconv::ERROR
           case Errno.value
           when Errno::EILSEQ
             # For an illegal sequence we just skip one byte and we'll continue next
@@ -112,6 +113,8 @@ class IO
             if old_in_buffer_left == @in_buffer_left
               @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left))
             end
+          else
+            # Not an error we can handle
           end
 
           # Continue decoding after an error
@@ -132,7 +135,7 @@ class IO
       @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
     end
 
-    def read_byte(io)
+    def read_byte(io) : UInt8?
       read(io)
       if out_slice.empty?
         nil
@@ -143,7 +146,7 @@ class IO
       end
     end
 
-    def read_utf8(io, slice)
+    def read_utf8(io, slice) : Int32
       count = 0
       until slice.empty?
         read(io)
@@ -158,7 +161,7 @@ class IO
       count
     end
 
-    def gets(io, delimiter : UInt8, limit : Int, chomp)
+    def gets(io, delimiter : UInt8, limit : Int, chomp) : String?
       read(io)
       return nil if @out_slice.empty?
 
@@ -226,21 +229,21 @@ class IO
       string
     end
 
-    def write(io)
+    def write(io) : Nil
       io.write @out_slice
       @out_slice = Bytes.empty
     end
 
-    def write(io, numbytes)
+    def write(io, numbytes) : Nil
       io.write @out_slice[0, numbytes]
       @out_slice += numbytes
     end
 
-    def advance(numbytes)
+    def advance(numbytes) : Nil
       @out_slice += numbytes
     end
 
-    def close
+    def close : Nil
       return if @closed
       @closed = true
 

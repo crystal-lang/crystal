@@ -8,6 +8,7 @@ lib LibC
   X_OK                =  1
   SC_CLK_TCK          =  2
   SC_NPROCESSORS_ONLN = 84
+  SC_PAGESIZE         = 30
 
   fun chroot(path : Char*) : Int
   fun access(x0 : Char*, x1 : Int) : Int
@@ -27,6 +28,7 @@ lib LibC
   fun getpgid(x0 : PidT) : PidT
   fun getpid : PidT
   fun getppid : PidT
+  fun getuid : UidT
   fun isatty(x0 : Int) : Int
   fun ttyname_r(fd : Int, buf : Char*, buffersize : SizeT) : Int
   fun lchown(x0 : Char*, x1 : UidT, x2 : GidT) : Int

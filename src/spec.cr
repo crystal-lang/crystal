@@ -1,4 +1,5 @@
 require "./spec/dsl"
+require "./spec/cli"
 
 # Crystal's built-in testing library. It provides a structure for writing executable examples
 # of how your code should behave. A domain specific language allows you to write them in a way similar to natural language.
@@ -28,7 +29,6 @@ require "./spec/dsl"
 #   end
 #
 #   # lots more specs
-#
 # end
 # ```
 #
@@ -51,7 +51,7 @@ require "./spec/dsl"
 # and run the specs of a project by running `crystal spec`.
 #
 # ```console
-# # Run  all specs in files matching spec/**/*_spec.cr
+# # Run all specs in files matching spec/**/*_spec.cr
 # crystal spec
 #
 # # Run all specs in files matching spec/my/test/**/*_spec.cr
@@ -62,6 +62,12 @@ require "./spec/dsl"
 #
 # # Run the spec or group defined in line 14 of spec/my/test/file_spec.cr
 # crystal spec spec/my/test/file_spec.cr:14
+#
+# # Run all specs tagged with "fast"
+# crystal spec --tag 'fast'
+#
+# # Run all specs not tagged with "slow"
+# crystal spec --tag '~slow'
 # ```
 #
 # ## Focusing on a group of specs
@@ -75,50 +81,39 @@ require "./spec/dsl"
 # ```
 #
 # If any such thing is marked with `focus: true` then only those examples will run.
+#
+# ## Randomizing order of specs
+#
+# Specs, by default, run in the order defined, but can be run in a random order
+# by passing `--order random` to `crystal spec`.
+#
+# Specs run in random order will display a seed value upon completion. This seed
+# value can be used to rerun the specs in that same order by passing the seed
+# value to `--order`.
 module Spec
 end
 
-OptionParser.parse do |opts|
-  opts.banner = "crystal spec runner"
-  opts.on("-e ", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
-    Spec.pattern = pattern
-  end
-  opts.on("-l ", "--line LINE", "run examples whose line matches LINE") do |line|
-    Spec.line = line.to_i
-  end
-  opts.on("-p", "--profile", "Print the 10 slowest specs") do
-    Spec.slowest = 10
-  end
-  opts.on("--fail-fast", "abort the run on first failure") do
-    Spec.fail_fast = true
-  end
-  opts.on("--location file:line", "run example at line 'line' in file 'file', multiple allowed") do |location|
-    if location =~ /\A(.+?)\:(\d+)\Z/
-      Spec.add_location $1, $2.to_i
-    else
-      STDERR.puts "location #{location} must be file:line"
-      exit 1
-    end
-  end
-  opts.on("--junit_output OUTPUT_DIR", "generate JUnit XML output") do |output_dir|
-    junit_formatter = Spec::JUnitFormatter.file(output_dir)
+Colorize.on_tty_only!
+
+# :nodoc:
+#
+# Implement formatter configuration.
+def Spec.configure_formatter(formatter, output_path = nil)
+  case formatter
+  when "junit"
+    junit_formatter = Spec::JUnitFormatter.file(Path.new(output_path.not_nil!))
     Spec.add_formatter(junit_formatter)
-  end
-  opts.on("--help", "show this help") do |pattern|
-    puts opts
-    exit
-  end
-  opts.on("-v", "--verbose", "verbose output") do
+  when "verbose"
     Spec.override_default_formatter(Spec::VerboseFormatter.new)
-  end
-  opts.on("--tap", "Generate TAP output (Test Anything Protocol)") do
+  when "tap"
     Spec.override_default_formatter(Spec::TAPFormatter.new)
   end
-  opts.on("--no-color", "Disable colored output") do
-    Spec.use_colors = false
-  end
-  opts.unknown_args do |args|
-  end
+end
+
+begin
+  Spec.option_parser.parse(ARGV)
+rescue e : OptionParser::InvalidOption
+  abort("Error: #{e.message}")
 end
 
 unless ARGV.empty?

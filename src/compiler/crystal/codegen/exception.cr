@@ -1,13 +1,13 @@
 require "./codegen"
 
 class Crystal::CodeGenVisitor
-  @node_ensure_exception_handlers = {} of UInt64 => Handler
+  @node_ensure_exception_handlers : Hash(ASTNode, Handler) = ({} of ASTNode => Handler).compare_by_identity
 
   def visit(node : ExceptionHandler)
     # In this codegen, we assume that LLVM only provides us with a basic try/catch abstraction with no
     # type restrictions on the exception caught. The basic strategy is to codegen this
     #
-    # ```cr
+    # ```
     # begin
     #   body
     # else
@@ -25,7 +25,7 @@ class Crystal::CodeGenVisitor
     #
     # Into something like (assuming goto is implemented in crystal):
     #
-    # ```cr
+    # ```
     # begin
     #   body
     # rescue ex
@@ -62,7 +62,7 @@ class Crystal::CodeGenVisitor
 
     windows = @program.has_flag? "windows"
 
-    context.fun.personality_function = @llvm_mod.functions[@personality_name] if windows
+    context.fun.personality_function = windows_personality_fun if windows
 
     # This is the block which is entered when the body raises an exception
     rescue_block = new_block "rescue"
@@ -289,7 +289,7 @@ class Crystal::CodeGenVisitor
   end
 
   def execute_ensures_until(node)
-    stop_exception_handler = @node_ensure_exception_handlers[node.object_id]?.try &.node
+    stop_exception_handler = @node_ensure_exception_handlers[node]?.try &.node
 
     @ensure_exception_handlers.try &.reverse_each do |exception_handler|
       break if exception_handler.node.same?(stop_exception_handler)
@@ -305,13 +305,19 @@ class Crystal::CodeGenVisitor
 
   def set_ensure_exception_handler(node)
     if eh = @ensure_exception_handlers.try &.last?
-      @node_ensure_exception_handlers[node.object_id] = eh
+      @node_ensure_exception_handlers[node] = eh
     end
   end
 
   private def windows_throw_fun
     @llvm_mod.functions["_CxxThrowException"]? || begin
       @llvm_mod.functions.add("_CxxThrowException", [llvm_context.void_pointer, llvm_context.void_pointer], llvm_context.void, false)
+    end
+  end
+
+  private def windows_personality_fun
+    @llvm_mod.functions["__CxxFrameHandler3"]? || begin
+      @llvm_mod.functions.add("__CxxFrameHandler3", [] of LLVM::Type, llvm_context.int32, true)
     end
   end
 end

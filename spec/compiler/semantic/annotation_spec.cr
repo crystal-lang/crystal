@@ -730,7 +730,7 @@ describe "Semantic: annotation" do
           end
 
           def foo
-            {% if @type.instance_vars.first.annotations(Foo) %}
+            {% if @type.instance_vars.first.annotation(Foo) %}
               1
             {% else %}
               'a'
@@ -892,13 +892,13 @@ describe "Semantic: annotation" do
         "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention"
     end
 
-    it "doesn't carry link attribute from lib to fun" do
-      semantic(%(
+    it "doesn't carry link annotation from lib to fun" do
+      assert_no_errors <<-CR
         @[Link("foo")]
         lib LibFoo
           fun foo
         end
-      ))
+        CR
     end
 
     it "finds annotation in generic parent (#7885)" do
@@ -916,5 +916,59 @@ describe "Semantic: annotation" do
         {{ Child.superclass.annotation(Ann)[0] }}
       )) { int32 }
     end
+  end
+
+  it "errors when annotate instance variable in subclass" do
+    assert_error %(
+      annotation Foo
+      end
+
+      class Base
+        @x : Nil
+      end
+
+      class Child < Base
+        @[Foo]
+        @x : Nil
+      end
+      ),
+      "can't annotate @x in Child because it was first defined in Base"
+  end
+
+  it "errors if wanting to add type inside annotation (1) (#8614)" do
+    assert_error %(
+      annotation Ann
+      end
+
+      class Ann::Foo
+      end
+
+      Ann::Foo.new
+      ),
+      "can't declare type inside annotation Ann"
+  end
+
+  it "errors if wanting to add type inside annotation (2) (#8614)" do
+    assert_error %(
+      annotation Ann
+      end
+
+      class Ann::Foo::Bar
+      end
+
+      Ann::Foo::Bar.new
+      ),
+      "can't declare type inside annotation Ann"
+  end
+
+  it "doesn't bleed annotation from class into class variable (#8314)" do
+    assert_no_errors <<-CR
+      annotation Attr; end
+
+      @[Attr]
+      class Bar
+        @@x = 0
+      end
+      CR
   end
 end

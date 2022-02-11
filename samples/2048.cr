@@ -25,7 +25,7 @@ module Screen
 
   def self.colorize_for(tile)
     fg_color, bg_color = TILES[tile]
-    color = with_color(fg_color)
+    color = Colorize.with.fore(fg_color)
     color = color.on(bg_color) if bg_color
     color.surround do
       yield
@@ -245,16 +245,17 @@ class Game
   end
 
   def execute_action(action)
-    if [:up, :down, :left, :right].includes? action
+    case action
+    when :up, :down, :left, :right
       if can_move_in? action
         shift_grid action
         true
       else
         false
       end
-    elsif [:ctrl_c, :escape, :q].includes? action
+    when :ctrl_c, :escape, :q
       end_game "Bye"
-    elsif action == :unknown
+    when :unknown
       false # ignore
     else
       raise ArgumentError.new "Unknown action: #{action}"

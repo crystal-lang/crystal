@@ -1,4 +1,5 @@
 require "c/sys/file"
+require "file/error"
 
 # :nodoc:
 module Crystal::System::File
@@ -7,7 +8,7 @@ module Crystal::System::File
 
     fd = LibC.open(filename.check_no_null_byte, oflag, perm)
     if fd < 0
-      raise Errno.new("Error opening file '#{filename.inspect_unquoted}' with mode '#{mode}'")
+      raise ::File::Error.from_errno("Error opening file with mode '#{mode}'", file: filename)
     end
     fd
   end
@@ -22,27 +23,63 @@ module Crystal::System::File
       fd = LibC.mkstemp(path)
     end
 
-    raise Errno.new("mkstemp: '#{path.inspect_unquoted}'") if fd == -1
+    raise ::File::Error.from_errno("Error creating temporary file", file: path) if fd == -1
     {fd, path}
   end
 
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
     stat = uninitialized LibC::Stat
     if follow_symlinks
-      ret = LibC.stat(path.check_no_null_byte, pointerof(stat))
+      ret = stat(path.check_no_null_byte, pointerof(stat))
     else
-      ret = LibC.lstat(path.check_no_null_byte, pointerof(stat))
+      ret = lstat(path.check_no_null_byte, pointerof(stat))
     end
 
     if ret == 0
       FileInfo.new(stat)
     else
-      if {Errno::ENOENT, Errno::ENOTDIR}.includes? Errno.value
+      if Errno.value.in?(Errno::ENOENT, Errno::ENOTDIR)
         return nil
       else
-        raise Errno.new("Unable to get info for '#{path.inspect_unquoted}'")
+        raise ::File::Error.from_errno("Unable to get file info", file: path)
       end
     end
+  end
+
+  # On some systems, the symbols `stat`, `fstat` and `lstat` are not part of the GNU
+  # shared library `libc.so` and instead provided by `libc_noshared.a`.
+  # That makes them unavailable for dynamic runtime symbol lookup via `dlsym`
+  # which we use for interpreted mode.
+  # See https://github.com/crystal-lang/crystal/issues/11157#issuecomment-949640034 for details.
+  # Linking against the internal counterparts `__xstat`, `__fxstat` and `__lxstat` directly
+  # should work in both interpreted and compiled mode.
+
+  def self.stat(path, stat)
+    {% if LibC.has_method?(:__xstat) %}
+      LibC.__xstat(1, path, stat)
+    {% else %}
+      LibC.stat(path, stat)
+    {% end %}
+  end
+
+  def self.fstat(path, stat)
+    {% if LibC.has_method?(:__fxstat) %}
+      LibC.__fxstat(1, path, stat)
+    {% else %}
+      LibC.fstat(path, stat)
+    {% end %}
+  end
+
+  def self.lstat(path, stat)
+    {% if LibC.has_method?(:__lxstat) %}
+      LibC.__lxstat(1, path, stat)
+    {% else %}
+      LibC.lstat(path, stat)
+    {% end %}
+  end
+
+  def self.info(path, follow_symlinks)
+    info?(path, follow_symlinks) || raise ::File::Error.from_errno("Unable to get file info", file: path)
   end
 
   def self.exists?(path)
@@ -71,49 +108,49 @@ module Crystal::System::File
           else
             LibC.chown(path, uid, gid)
           end
-    raise Errno.new("Error changing owner of '#{path.inspect_unquoted}'") if ret == -1
+    raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
   end
 
   def self.chmod(path, mode)
     if LibC.chmod(path, mode) == -1
-      raise Errno.new("Error changing permissions of '#{path.inspect_unquoted}'")
+      raise ::File::Error.from_errno("Error changing permissions", file: path)
     end
   end
 
   def self.delete(path)
     err = LibC.unlink(path.check_no_null_byte)
     if err == -1
-      raise Errno.new("Error deleting file '#{path.inspect_unquoted}'")
+      raise ::File::Error.from_errno("Error deleting file", file: path)
     end
   end
 
   def self.real_path(path)
     real_path_ptr = LibC.realpath(path, nil)
-    raise Errno.new("Error resolving real path of '#{path.inspect_unquoted}'") unless real_path_ptr
+    raise ::File::Error.from_errno("Error resolving real path", file: path) unless real_path_ptr
     String.new(real_path_ptr).tap { LibC.free(real_path_ptr.as(Void*)) }
   end
 
   def self.link(old_path, new_path)
     ret = LibC.link(old_path.check_no_null_byte, new_path.check_no_null_byte)
-    raise Errno.new("Error creating link from '#{old_path.inspect_unquoted}' to '#{new_path.inspect_unquoted}'") if ret != 0
+    raise ::File::Error.from_errno("Error creating link", file: old_path, other: new_path) if ret != 0
     ret
   end
 
   def self.symlink(old_path, new_path)
     ret = LibC.symlink(old_path.check_no_null_byte, new_path.check_no_null_byte)
-    raise Errno.new("Error creating symlink from '#{old_path.inspect_unquoted}' to '#{new_path.inspect_unquoted}'") if ret != 0
+    raise ::File::Error.from_errno("Error creating symlink", file: old_path, other: new_path) if ret != 0
     ret
   end
 
   def self.readlink(path) : String
     buf = Bytes.new 256
-    # First pass at 256 bytes handles all normal occurences in 1 system call.
+    # First pass at 256 bytes handles all normal occurrences in 1 system call.
     # Second pass at 1024 bytes handles outliers?
     # Third pass is the max or double what Linux/MacOS can store.
     3.times do |iter|
       bytesize = LibC.readlink(path, buf, buf.bytesize)
       if bytesize == -1
-        raise Errno.new("readlink")
+        raise ::File::Error.from_errno("Cannot read link", file: path)
       elsif bytesize == buf.bytesize
         break if iter >= 2
         buf = Bytes.new(buf.bytesize * 4)
@@ -122,14 +159,13 @@ module Crystal::System::File
       end
     end
 
-    Errno.value = Errno::ENAMETOOLONG
-    raise Errno.new("readlink")
+    raise ::File::Error.from_os_error("Cannot read link", Errno::ENAMETOOLONG, file: path)
   end
 
-  def self.rename(old_filename, new_filename)
+  def self.rename(old_filename, new_filename) : ::File::Error?
     code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)
     if code != 0
-      raise Errno.new("Error renaming file '#{old_filename.inspect_unquoted}' to '#{new_filename.inspect_unquoted}'")
+      ::File::Error.from_errno("Error renaming file", file: old_filename, other: new_filename)
     end
   end
 
@@ -139,7 +175,7 @@ module Crystal::System::File
     timevals[1] = to_timeval(mtime)
     ret = LibC.utimes(filename, timevals)
     if ret != 0
-      raise Errno.new("Error setting time on file '#{filename.inspect_unquoted}'")
+      raise ::File::Error.from_errno("Error setting time on file", file: filename)
     end
   end
 
@@ -154,7 +190,7 @@ module Crystal::System::File
     flush
     code = LibC.ftruncate(fd, size)
     if code != 0
-      raise Errno.new("Error truncating file '#{path.inspect_unquoted}'")
+      raise ::File::Error.from_errno("Error truncating file", file: path)
     end
   end
 
@@ -173,22 +209,27 @@ module Crystal::System::File
   private def flock(op : LibC::FlockOp, blocking : Bool = true)
     op |= LibC::FlockOp::NB unless blocking
 
-    if LibC.flock(@fd, op) != 0
-      raise Errno.new("flock")
+    if LibC.flock(fd, op) != 0
+      raise IO::Error.from_errno("Error applying or removing file lock")
     end
 
     nil
   end
 
   private def system_fsync(flush_metadata = true) : Nil
-    if flush_metadata
-      if LibC.fsync(fd) != 0
-        raise Errno.new("fsync")
+    ret =
+      if flush_metadata
+        LibC.fsync(fd)
+      else
+        {% if flag?(:dragonfly) %}
+          LibC.fsync(fd)
+        {% else %}
+          LibC.fdatasync(fd)
+        {% end %}
       end
-    else
-      if LibC.fdatasync(fd) != 0
-        raise Errno.new("fdatasync")
-      end
+
+    if ret != 0
+      raise IO::Error.from_errno("Error syncing file")
     end
   end
 end

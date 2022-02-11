@@ -43,7 +43,7 @@ $(function(){
   session.onChange = function() {
     saveAsLastCode();
   };
-  $(window).unload(function(){
+  $(window).on("unload", function(){
     saveAsLastCode();
   });
 

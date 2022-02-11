@@ -2,7 +2,7 @@ require "spec"
 require "../spec_helper"
 
 describe "select" do
-  it "select many receviers" do
+  it "select many receivers" do
     ch1 = Channel(Int32).new
     ch2 = Channel(Int32).new
     res = [] of Int32
@@ -72,9 +72,7 @@ describe "select" do
       end
     end
 
-    until f.dead?
-      Fiber.yield
-    end
+    wait_until_finished f
 
     res.should eq (0...10).to_a
   end
@@ -114,7 +112,7 @@ describe "select" do
     ch3 = Channel(Int32).new
     x = nil
 
-    spawn do
+    f = spawn do
       select
       when x = ch1.receive
       when x = ch2.receive
@@ -128,7 +126,7 @@ describe "select" do
     end
 
     ch3.receive.should eq(3)
-    Fiber.yield
+    wait_until_finished f
     x.should eq(1)
   end
 
@@ -138,7 +136,7 @@ describe "select" do
     ch3 = Channel(Int32).new
     x = nil
 
-    spawn do
+    f = spawn do
       select
       when ch1.send 1
         x = 1
@@ -154,7 +152,7 @@ describe "select" do
     end
 
     ch3.receive.should eq(3)
-    Fiber.yield
+    wait_until_finished f
     x.should eq(1)
   end
 
@@ -173,7 +171,7 @@ describe "select" do
     x.should eq 123
   end
 
-  it "priorize by order when entering in a select" do
+  it "prioritize by order when entering in a select" do
     ch1 = Channel(Int32).new(5)
     ch2 = Channel(Int32).new(5)
 
