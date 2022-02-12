@@ -321,11 +321,10 @@ module Crystal
 
     def integer?
       case kind
-      when :i8, :i16, :i32, :i64, :i128,
-           :u8, :u16, :u32, :u64, :u128
-        true
-      else
+      when .f32?, .f64?
         false
+      else
+        true
       end
     end
 
