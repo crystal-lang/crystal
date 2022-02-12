@@ -128,7 +128,7 @@ class URI
     # ```
     #
     # By default spaces are outputted as `+`.
-    # If *splace_to_plus* is `false` then they are outputted as `%20`:
+    # If *space_to_plus* is `false` then they are outputted as `%20`:
     #
     # ```
     # require "uri/params"
@@ -372,13 +372,13 @@ class URI
     # ```
     #
     # By default spaces are outputted as `+`.
-    # If *splace_to_plus* is `false` then they are outputted as `%20`:
+    # If *space_to_plus* is `false` then they are outputted as `%20`:
     #
     # ```
     # require "uri/params"
     #
     # params = URI::Params.parse("item=keychain&greeting=hello+world&email=john@example.org")
-    # params.to_s(splace_to_plus: false) # => "item=keychain&greeting=hello%20world&email=john%40example.org"
+    # params.to_s(space_to_plus: false) # => "item=keychain&greeting=hello%20world&email=john%40example.org"
     # ```
     def to_s(*, space_to_plus : Bool = true)
       String.build do |io|
