@@ -390,6 +390,10 @@ describe Path do
     assert_paths("\\\\some\\share\\foo", nil, "\\\\some\\share", &.drive)
     assert_paths("\\\\\\not-a\\share", nil, nil, &.drive)
     assert_paths("\\\\not-a\\\\share", nil, nil, &.drive)
+
+    assert_paths("\\\\some$\\share\\", nil, "\\\\some$\\share", &.drive)
+    assert_paths("\\\\%10%20\\share\\", nil, "\\\\%10%20\\share", &.drive)
+    assert_paths("\\\\_.-~!$;=&'()*+,aB1\\ !-.@^_`{}~#$%&'()aB1\\", nil, "\\\\_.-~!$;=&'()*+,aB1\\ !-.@^_`{}~#$%&'()aB1", &.drive)
   end
 
   describe "#root" do
@@ -676,6 +680,11 @@ describe Path do
       it_expands_path("C:\\foo", "D:/C:\\foo", "C:\\foo", base: Path.windows("D:\\"))
       it_expands_path("C:/foo", "D:/C:/foo", "C:\\foo", base: "D:/")
       it_expands_path("C:\\foo", "D:/C:\\foo", "C:\\foo", base: "D:/")
+    end
+
+    describe "UNC path" do
+      it_expands_path("baz", "/foo/bar/baz", "\\\\foo\\bar\\baz", base: Path.windows("\\\\foo\\bar\\"))
+      it_expands_path("baz", "/foo$/bar/baz", "\\\\foo$\\bar\\baz", base: Path.windows("\\\\foo$\\bar\\"))
     end
 
     it "doesn't expand ~" do
