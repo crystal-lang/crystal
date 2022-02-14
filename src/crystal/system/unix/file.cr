@@ -36,7 +36,7 @@ module Crystal::System::File
     end
 
     if ret == 0
-      FileInfo.new(stat)
+      ::File::Info.new(FileInfo.new(stat))
     else
       if Errno.value.in?(Errno::ENOENT, Errno::ENOTDIR)
         return nil

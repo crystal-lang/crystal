@@ -1,4 +1,4 @@
-struct Crystal::System::FileInfo < ::File::Info
+struct Crystal::System::FileInfo
   protected getter file_attributes
 
   def initialize(@file_attributes : LibC::BY_HANDLE_FILE_INFORMATION, @file_type : LibC::DWORD)
@@ -82,7 +82,7 @@ struct Crystal::System::FileInfo < ::File::Info
     "0"
   end
 
-  def same_file?(other : ::File::Info) : Bool
+  def same_file?(other : self) : Bool
     return false if type.symlink? || type.pipe? || type.character_device?
 
     @file_attributes.dwVolumeSerialNumber == other.file_attributes.dwVolumeSerialNumber &&

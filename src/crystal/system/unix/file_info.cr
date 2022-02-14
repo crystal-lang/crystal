@@ -1,4 +1,4 @@
-struct Crystal::System::FileInfo < ::File::Info
+struct Crystal::System::FileInfo
   def initialize(@stat : LibC::Stat)
   end
 
@@ -55,7 +55,7 @@ struct Crystal::System::FileInfo < ::File::Info
     @stat.st_gid.to_s
   end
 
-  def same_file?(other : ::File::Info) : Bool
+  def same_file?(other : self) : Bool
     @stat.st_dev == other.@stat.st_dev && @stat.st_ino == other.@stat.st_ino
   end
 end

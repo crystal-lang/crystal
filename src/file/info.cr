@@ -77,33 +77,53 @@ class File
 
   # A `File::Info` contains metadata regarding a file.
   # It is returned by `File.info`, `File#info` and `File.info?`.
-  abstract struct Info
+  struct Info
+    # :nodoc:
+    def initialize(@data : Crystal::System::FileInfo)
+    end
+
     # Size of the file, in bytes.
-    abstract def size : Int64
+    def size : Int64
+      @data.size
+    end
 
     # The permissions of the file.
-    abstract def permissions : Permissions
+    def permissions : Permissions
+      @data.permissions
+    end
 
     # The type of the file.
-    abstract def type : Type
+    def type : Type
+      @data.type
+    end
 
     # The special flags this file has set.
-    abstract def flags : Flags
+    def flags : Flags
+      @data.flags
+    end
 
     # The last time this file was modified.
-    abstract def modification_time : Time
+    def modification_time : Time
+      @data.modification_time
+    end
 
     # The user ID that the file belongs to.
-    abstract def owner_id : String
+    def owner_id : String
+      @data.owner_id
+    end
 
     # The group ID that the file belongs to.
-    abstract def group_id : String
+    def group_id : String
+      @data.group_id
+    end
 
     # Returns true if this `Info` and *other* are of the same file.
     #
     # On unix, this compares device and inode fields, and will compare equal for
     # hard linked files.
-    abstract def same_file?(other : File::Info) : Bool
+    def same_file?(other : File::Info) : Bool
+      @data.same_file?(other.@data)
+    end
 
     # Returns true if this `Info` represents a standard file. Shortcut for
     # `type.file?`.
