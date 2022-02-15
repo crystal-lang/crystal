@@ -207,6 +207,7 @@ class IO::Memory < IO
     @pos = @bytesize
   end
 
+  # :inherit:
   def gets_to_end : String
     return super if @encoding
 
@@ -218,6 +219,19 @@ class IO::Memory < IO
       ""
     else
       String.new(@buffer + @pos, @bytesize - @pos).tap do
+        @pos = @bytesize
+      end
+    end
+  end
+
+  # :inherit:
+  def getb_to_end : Bytes
+    pos = Math.min(@pos, @bytesize)
+
+    if pos == @bytesize
+      Bytes.new(0)
+    else
+      Slice.new(@buffer + @pos, @bytesize - @pos).dup.tap do
         @pos = @bytesize
       end
     end
