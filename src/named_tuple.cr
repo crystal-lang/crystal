@@ -106,13 +106,23 @@ struct NamedTuple
     {% end %}
   end
 
-  # Returns the value for the given *key*, if there's such key, otherwise raises `KeyError`.
+  # Returns the value for the given *key* if there is such a key, otherwise
+  # raises `KeyError`.
+  # Read the type docs to understand the difference between indexing with a
+  # literal or a variable.
   #
   # ```
   # tuple = {name: "Crystal", year: 2011}
   #
+  # tuple[:name]          # => "Crystal"
+  # typeof(tuple[:name])  # => String
+  # tuple["year"]         # => 2011
+  # typeof(tuple["year"]) # => Int32
+  # tuple[:other]         # Error: missing key 'other' for named tuple NamedTuple(name: String, year: Int32)
+  #
   # key = :name
-  # tuple[key] # => "Crystal"
+  # tuple[key]         # => "Crystal"
+  # typeof(tuple[key]) # => (Int32 | String)
   #
   # key = "year"
   # tuple[key] # => 2011
@@ -124,22 +134,92 @@ struct NamedTuple
     fetch(key) { raise KeyError.new "Missing named tuple key: #{key.inspect}" }
   end
 
-  # Returns the value for the given *key*, if there's such key, otherwise returns `nil`.
+  # Returns the value type for the given *key* if there is such a key, otherwise
+  # raises `KeyError`.
+  # Read the type docs to understand the difference between indexing with a
+  # literal or a variable.
+  #
+  # ```
+  # alias Foo = NamedTuple(name: String, year: Int32)
+  #
+  # Foo[:name]       # => String
+  # Foo["year"]      # => Int32
+  # Foo["year"].zero # => 0
+  # Foo[:other]      # => Error: missing key 'other' for named tuple NamedTuple(name: String, year: Int32).class
+  #
+  # key = :year
+  # Foo[key]      # => Int32
+  # Foo[key].zero # Error: undefined method '[]' for NamedTuple(name: String, year: Int32).class
+  #
+  # key = "other"
+  # Foo[key] # raises KeyError
+  # ```
+  def self.[](key : Symbol | String)
+    self[key]? || raise KeyError.new "Missing named tuple key: #{key.inspect}"
+  end
+
+  # Returns the value for the given *key* if there is such a key, otherwise
+  # returns `nil`.
+  # Read the type docs to understand the difference between indexing with a
+  # literal or a variable.
   #
   # ```
   # tuple = {name: "Crystal", year: 2011}
   #
+  # tuple[:name]?          # => "Crystal"
+  # typeof(tuple[:name]?)  # => String
+  # tuple["year"]?         # => 2011
+  # typeof(tuple["year"]?) # => Int32
+  # tuple[:other]?         # => nil
+  # typeof(tuple[:other]?) # => Nil
+  #
   # key = :name
-  # tuple[key]? # => "Crystal"
+  # tuple[key]?         # => "Crystal"
+  # typeof(tuple[key]?) # => (Int32 | String | Nil)
   #
   # key = "year"
   # tuple[key] # => 2011
   #
   # key = :other
-  # tuple[key]? # => nil
+  # tuple[key] # => nil
   # ```
   def []?(key : Symbol | String)
     fetch(key, nil)
+  end
+
+  # Returns the value type for the given *key* if there is such a key, otherwise
+  # returns `nil`.
+  # Read the type docs to understand the difference between indexing with a
+  # literal or a variable.
+  #
+  # ```
+  # alias Foo = NamedTuple(name: String, year: Int32)
+  #
+  # Foo[:name]?          # => String
+  # Foo["year"]?         # => Int32
+  # Foo["year"]?.zero    # => 0
+  # Foo[:other]?         # => nil
+  # typeof(Foo[:other]?) # => Nil
+  #
+  # key = :year
+  # Foo[key]?      # => Int32
+  # Foo[key]?.zero # Error: undefined method 'zero' for String.class (compile-time type is (Int32.class | String.class | Nil))
+  #
+  # key = "other"
+  # Foo[key]? # => nil
+  # ```
+  def self.[]?(key : Symbol | String)
+    {% begin %}
+      case key
+      {% for key in T %}
+      when {{ key.symbolize }}, {{ key.stringify }}
+        typeof(begin
+          x = uninitialized self
+          x[{{ key.symbolize }}]
+        end)
+      {% end %}
+      end
+    {% end %}
   end
 
   # Traverses the depth of a structure and returns the value.

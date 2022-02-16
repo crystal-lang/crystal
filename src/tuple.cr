@@ -162,11 +162,13 @@ struct Tuple
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple[0] # => 1 (Int32)
-  # tuple[3] # compile error: index out of bounds for tuple {Int32, String, Char}
+  # tuple[0]         # => 1
+  # typeof(tuple[0]) # => Int32
+  # tuple[3]         # Error: index out of bounds for Tuple(Int32, String, Char) (3 not in -3..2)
   #
   # i = 0
-  # tuple[i] # => 1 (Int32 | String | Char)
+  # tuple[i]         # => 1
+  # typeof(tuple[i]) # => (Char | Int32 | String)
   #
   # i = 3
   # tuple[i] # raises IndexError
@@ -175,23 +177,87 @@ struct Tuple
     at(index)
   end
 
-  # Returns the element at the given *index* or `nil` if out of bounds.
+  # Returns the element type at the given *index*. Read the type docs to
+  # understand the difference between indexing with a number literal or a
+  # variable.
+  #
+  # ```
+  # alias Foo = Tuple(Int32, String)
+  # Foo[0]      # => Int32
+  # Foo[0].zero # => 0
+  # Foo[2]      # Error: index out of bounds for Tuple(Int32, String).class (2 not in -2..1)
+  #
+  # i = 0
+  # Foo[i]      # => Int32
+  # Foo[i].zero # Error: undefined method 'zero' for String.class (compile-time type is (Int32.class | String.class))
+  #
+  # i = 2
+  # Foo[i] # raises IndexError
+  # ```
+  def self.[](index : Int)
+    self[index]? || raise IndexError.new
+  end
+
+  # Returns the element at the given *index* or `nil` if out of bounds. Read the
+  # type docs to understand the difference between indexing with a number
+  # literal or a variable.
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple[0]? # => 1
-  # tuple[3]? # => nil
+  # tuple[0]?         # => 1
+  # typeof(tuple[0]?) # => Int32
+  # tuple[3]?         # => nil
+  # typeof(tuple[3]?) # => Nil
+  #
+  # i = 0
+  # tuple[i]?         # => 1
+  # typeof(tuple[i]?) # => (Char | Int32 | String | Nil)
+  #
+  # i = 3
+  # tuple[i]? # => nil
   # ```
   def []?(index : Int)
     at(index) { nil }
   end
 
+  # Returns the element type at the given *index* or `nil` if out of bounds.
+  # Read the type docs to understand the difference between indexing with a
+  # number literal or a variable.
+  #
+  # ```
+  # alias Foo = Tuple(Int32, String)
+  # Foo[0]?         # => Int32
+  # Foo[0]?.zero    # => 0
+  # Foo[2]?         # => nil
+  # typeof(Foo[2]?) # => Nil
+  #
+  # i = 0
+  # Foo[i]?      # => Int32
+  # Foo[i]?.zero # Error: undefined method 'zero' for String.class (compile-time type is (Int32.class | String.class | Nil))
+  #
+  # i = 2
+  # Foo[i]? # => nil
+  # ```
+  def self.[]?(index : Int)
+    {% begin %}
+      case index
+      {% for i in 0...T.size %}
+      when {{ i }}, {{ i - T.size }}
+        typeof(begin
+          v = uninitialized self
+          v[{{ i }}]
+        end)
+      {% end %}
+      end
+    {% end %}
+  end
+
   # Returns all elements that are within the given *range*. *range* must be a
   # range literal whose value is known at compile-time.
   #
-  # Negative indices count backward from the end of the array (-1 is the last
-  # element). Additionally, an empty array is returned when the starting index
-  # for an element range is at the end of the array.
+  # Negative indices count backward from the end of the tuple (-1 is the last
+  # element). Additionally, an empty tuple is returned when the starting index
+  # for an element range is at the end of the tuple.
   #
   # Raises a compile-time error if `range.begin` is out of range.
   #
@@ -200,7 +266,7 @@ struct Tuple
   # tuple[0..1] # => {1, "hello"}
   # tuple[-2..] # => {"hello", 'x'}
   # tuple[...1] # => {1}
-  # tuple[4..]  # Error: begin index out of bounds for Tuple(Int32, Char, Array(Int32), String) (5 not in -4..4)
+  # tuple[4..]  # Error: begin index out of bounds for Tuple(Int32, String, Char) (4 not in -3..3)
   #
   # i = 0
   # tuple[i..2] # Error: Tuple#[](Range) can only be called with range literals known at compile-time
@@ -210,6 +276,32 @@ struct Tuple
   # ```
   def [](range : Range)
     {% raise "Tuple#[](Range) can only be called with range literals known at compile-time" %}
+  end
+
+  # Returns all element types that are within the given *range*. *range* must be
+  # a range literal whose value is known at compile-time.
+  #
+  # Negative indices count backward from the end of the tuple (-1 is the last
+  # element). Additionally, an empty tuple is returned when the starting index
+  # for an element range is at the end of the tuple.
+  #
+  # Raises a compile-time error if `range.begin` is out of range.
+  #
+  # ```
+  # alias Foo = Tuple(Int32, String, Char)
+  # Foo[0..1] # => Tuple(Int32, String)
+  # Foo[-2..] # => Tuple(String, Char)
+  # Foo[...1] # => Tuple(Int32)
+  # Foo[4..]  # Error: begin index out of bounds for Tuple(Int32, String, Char).class (4 not in -3..3)
+  #
+  # i = 0
+  # Foo[i..2] # Error: Tuple.[](Range) can only be called with range literals known at compile-time
+  #
+  # i = 0..2
+  # Foo[i] # Error: Tuple.[](Range) can only be called with range literals known at compile-time
+  # ```
+  def self.[](range : Range)
+    {% raise "Tuple.[](Range) can only be called with range literals known at compile-time" %}
   end
 
   # Returns the element at the given *index* or raises IndexError if out of bounds.
