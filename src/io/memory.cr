@@ -218,22 +218,24 @@ class IO::Memory < IO
     if pos == @bytesize
       ""
     else
-      String.new(@buffer + @pos, @bytesize - @pos).tap do
-        @pos = @bytesize
-      end
+      str = String.new(@buffer + @pos, @bytesize - @pos)
+      @pos = @bytesize
+      str
     end
   end
 
   # :inherit:
   def getb_to_end : Bytes
+    check_open
+
     pos = Math.min(@pos, @bytesize)
 
     if pos == @bytesize
       Bytes.new(0)
     else
-      Slice.new(@buffer + @pos, @bytesize - @pos).dup.tap do
-        @pos = @bytesize
-      end
+      bytes = Slice.new(@buffer + @pos, @bytesize - @pos).dup
+      @pos = @bytesize
+      bytes
     end
   end
 
