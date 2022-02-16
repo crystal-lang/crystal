@@ -1,5 +1,6 @@
 require "spec"
 require "weak_ref"
+require "../spec_helper"
 require "../support/finalize"
 
 private class Foo
@@ -9,7 +10,7 @@ private class Foo
   end
 end
 
-describe WeakRef do
+describe WeakRef, focus: true do
   it "should get dereferenced object" do
     foo = Foo.new("foo")
     ref = WeakRef.new(foo)
@@ -65,5 +66,19 @@ describe WeakRef do
 
     # Use `last` to stop the variable from being optimised away in release mode.
     last.to_s
+  end
+
+  it "errors if weak referenced object is a module" do
+    assert_error %(
+      require "weak_ref"
+      module M; end
+      class A; include M; end
+      class B
+        @foo : WeakRef(M)
+        def initialize(thing); @foo = WeakRef.new(thing.as(M)); end
+      end
+      B.new(A.new)
+      ),
+      "Cannot create a WeakRef to a module"
   end
 end
