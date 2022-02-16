@@ -213,9 +213,7 @@ class IO::Memory < IO
 
     check_open
 
-    pos = Math.min(@pos, @bytesize)
-
-    if pos == @bytesize
+    if @pos >= @bytesize
       ""
     else
       str = String.new(@buffer + @pos, @bytesize - @pos)
@@ -228,9 +226,7 @@ class IO::Memory < IO
   def getb_to_end : Bytes
     check_open
 
-    pos = Math.min(@pos, @bytesize)
-
-    if pos == @bytesize
+    if @pos >= @bytesize
       Bytes.new(0)
     else
       bytes = Slice.new(@buffer + @pos, @bytesize - @pos).dup
