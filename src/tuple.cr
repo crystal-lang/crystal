@@ -25,6 +25,15 @@
 # a value whose type is the union of all the types in the tuple, and might raise
 # `IndexError`.
 #
+# Indexing with `#[]?` does not make the return value nilable if the index is
+# known to be within bounds:
+#
+# ```
+# tuple = {1, "hello", 'x'}
+# tuple[0]?         # => 1
+# typeof(tuple[0]?) # => Int32
+# ```
+#
 # Indexing with a range literal known at compile-time is also allowed, and the
 # returned value will have the correct sub-tuple type:
 #
@@ -32,6 +41,16 @@
 # tuple = {1, "hello", 'x'} # Tuple(Int32, String, Char)
 # sub = tuple[0..1]         # => {1, "hello"}
 # typeof(sub)               # => Tuple(Int32, String)
+# ```
+#
+# `Tuple`'s own instance classes may also be indexed in a similar manner,
+# returning their element types instead:
+#
+# ```
+# tuple = Tuple(Int32, String, Char)
+# tuple[0]   # => Int32
+# tuple[3]?  # => nil
+# tuple[1..] # => Tuple(String, Char)
 # ```
 #
 # Tuples are the preferred way to return fixed-size multiple return
