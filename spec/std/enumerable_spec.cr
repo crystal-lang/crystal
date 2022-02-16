@@ -1248,6 +1248,16 @@ describe "Enumerable" do
           {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
         )
       end
+
+      it "returns a hash with Int64 counts according to the value" do
+        hash = {} of Char => Int64
+        words = ["crystal", "ruby"]
+        words.each { |word| word.chars.tally(hash) }
+
+        hash.should eq(
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+        )
+      end
     end
   end
 

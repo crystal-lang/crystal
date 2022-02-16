@@ -1767,7 +1767,9 @@ module Enumerable(T)
   def tally_by(hash)
     each_with_object(hash) do |item, hash|
       value = yield item
-      hash[value] = hash.fetch(value, 0) + 1
+
+      count = hash.has_key?(value) ? hash[value] : typeof(hash[value]?.not_nil!).zero
+      hash[value] = count + 1
     end
   end
 
