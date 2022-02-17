@@ -10,7 +10,7 @@ private class Foo
   end
 end
 
-describe WeakRef, focus: true do
+describe WeakRef do
   it "should get dereferenced object" do
     foo = Foo.new("foo")
     ref = WeakRef.new(foo)

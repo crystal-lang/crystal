@@ -12,9 +12,7 @@ class WeakRef(T)
   @target : Void*
 
   def initialize(target : T)
-    {% if @type.type_vars.any?(&.module?) %}
-      {{ raise "Cannot create a WeakRef to a module" }}
-    {% end %}
+    {% raise "Cannot create a WeakRef to a module" if T.module? %}
 
     @target = target.as(Void*)
     if GC.is_heap_ptr(@target)
