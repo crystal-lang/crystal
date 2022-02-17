@@ -1784,10 +1784,10 @@ module Enumerable(T)
     tally_by(&.itself)
   end
 
-  # Tallies the collection. Accepts a `hash` to count occurrences.
+  # Tallies the collection. Accepts a *hash* to count occurrences.
   # The value corresponding to each element must be an integer.
-  # The number of occurrences is added to each value in the `hash`,
-  # and the `hash` is returned.
+  # The number of occurrences is added to each value in *hash*,
+  # and *hash* is returned.
   #
   # ```
   # hash = {} of Char => Int32
