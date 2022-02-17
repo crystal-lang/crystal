@@ -79,6 +79,6 @@ describe WeakRef do
       end
       B.new(A.new)
       ),
-      "Cannot create a WeakRef to a module"
+      "Cannot create a WeakRef of a module"
   end
 end
