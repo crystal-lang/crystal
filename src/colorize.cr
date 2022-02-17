@@ -172,7 +172,7 @@ module Colorize::ObjectExtensions
     Colorize::Object.new(self)
   end
 
-  # Turns `self` into a `Colorize::Object` and colors it with the given `Color256`
+  # Wraps `self` in a `Colorize::Object` and colors it with the given `Color256`
   # made up from the single *fore* byte.
   def colorize(fore : UInt8)
     Colorize::Object.new(self).fore(fore)
