@@ -1,5 +1,7 @@
 # Weak Reference class that allows a referenced object to be garbage-collected.
 #
+# WARNING: The referenced object cannot be a module.
+#
 # ```
 # require "weak_ref"
 #
