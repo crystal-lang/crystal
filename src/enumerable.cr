@@ -1768,7 +1768,7 @@ module Enumerable(T)
     each_with_object(hash) do |item, hash|
       value = yield item
 
-      count = hash.has_key?(value) ? hash[value] : typeof(hash[value]?.not_nil!).zero
+      count = hash.fetch(value) { typeof(hash[value]).zero }
       hash[value] = count + 1
     end
   end
