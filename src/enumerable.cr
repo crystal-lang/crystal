@@ -1751,7 +1751,7 @@ module Enumerable(T)
     tally_by(Hash(U, Int32).new, &block)
   end
 
-  # Tallies the collection. Accepts a `hash` to count occurrences.
+  # Tallies the collection. Accepts a *hash* to count occurrences.
   # The value corresponding to each element must be an integer.
   # Returns a `hash` where the keys are the
   # elements and the values are numbers of elements in the collection
