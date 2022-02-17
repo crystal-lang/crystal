@@ -70,6 +70,7 @@ describe WeakRef do
 
   it "errors if weak referenced object is a module" do
     assert_error %(
+      require "prelude"
       require "weak_ref"
       module M; end
       class A; include M; end
