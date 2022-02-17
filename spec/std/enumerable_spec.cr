@@ -1249,6 +1249,16 @@ describe "Enumerable" do
         )
       end
 
+      it "updates existing hash with counts according to the value" do
+        hash = {'a' => 1, 'b' => 1, 'c' => 1, 'd' => 1}
+        words = ["crystal", "ruby"]
+        words.each { |word| word.chars.tally(hash) }
+
+        hash.should eq(
+          {'a' => 2, 'b' => 2, 'c' => 2, 'd' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'l' => 1, 'u' => 1}
+        )
+      end
+
       it "ignores the default value" do
         hash = Hash(Char, Int32).new(100)
         words = ["crystal", "ruby"]
