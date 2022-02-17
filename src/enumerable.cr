@@ -1753,7 +1753,7 @@ module Enumerable(T)
 
   # Tallies the collection. Accepts a *hash* to count occurrences.
   # The value corresponding to each element must be an integer.
-  # Returns a `hash` where the keys are the
+  # Returns *hash* where the keys are the
   # elements and the values are numbers of elements in the collection
   # that correspond to the key after transformation by the given block.
   #
