@@ -1,17 +1,15 @@
-{% unless flag?(:preview_overload_order) %}
-  # :nodoc: Forward declarations
-  struct BigInt < Int
-  end
+# :nodoc: Forward declarations
+struct BigInt < Int
+end
 
-  struct BigFloat < Float
-  end
+struct BigFloat < Float
+end
 
-  struct BigRational < Number
-  end
+struct BigRational < Number
+end
 
-  struct BigDecimal < Number
-  end
-{% end %}
+struct BigDecimal < Number
+end
 
 require "./big/lib_gmp"
 require "./big/big_int"
