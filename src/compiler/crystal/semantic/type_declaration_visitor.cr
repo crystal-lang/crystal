@@ -131,6 +131,9 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     old_external = add_external external
     old_external.dead = true if old_external
 
+    # C funs cannot overload, so overload order shouldn't matter here
+    # TODO: top-level funs can still overload with top-level defs (#4761),
+    # they should be disallowed
     current_type.add_def(external)
 
     if current_type.is_a?(Program)
@@ -193,6 +196,8 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
   def declare_c_struct_or_union_field(type, field_name, var, location)
     type.instance_vars[var.name] = var
+    # even on `-Dpreview_overload_order` these methods should never be defined
+    # on the type before, because field names cannot repeat
     type.add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new("struct_or_union_set").at(location))
     type.add_def Def.new(field_name, body: InstanceVar.new(var.name))
   end
