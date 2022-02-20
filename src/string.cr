@@ -1134,7 +1134,7 @@ class String
     reader = Char::Reader.new(self)
     i = 0
 
-    reader.each do |char|
+    reader.each do
       if i == start
         start_pos = reader.pos
       elsif i == start + count
