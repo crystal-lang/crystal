@@ -113,7 +113,7 @@ module Benchmark
     yield job
     return if job.items.empty?
     job.execute
-    job.print_results
+    job.report
     job
   end
 
