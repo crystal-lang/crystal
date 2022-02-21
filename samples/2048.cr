@@ -25,7 +25,7 @@ module Screen
 
   def self.colorize_for(tile)
     fg_color, bg_color = TILES[tile]
-    color = with_color(fg_color)
+    color = Colorize.with.fore(fg_color)
     color = color.on(bg_color) if bg_color
     color.surround do
       yield
@@ -156,8 +156,8 @@ class Drawer
     tile_value = (content == "empty" ? 0 : (content.to_i? || 0)).to_i
     content = "" if !@content_line || content == "empty"
 
-    fill_size = INNER_CELL_WIDTH / 2
-    fill_size -= content.size / 2
+    fill_size = INNER_CELL_WIDTH // 2
+    fill_size -= content.size // 2
     fill_size -= 2
 
     print fill
@@ -245,16 +245,17 @@ class Game
   end
 
   def execute_action(action)
-    if [:up, :down, :left, :right].includes? action
+    case action
+    when :up, :down, :left, :right
       if can_move_in? action
         shift_grid action
         true
       else
         false
       end
-    elsif [:ctrl_c, :escape, :q].includes? action
+    when :ctrl_c, :escape, :q
       end_game "Bye"
-    elsif action == :unknown
+    when :unknown
       false # ignore
     else
       raise ArgumentError.new "Unknown action: #{action}"

@@ -79,7 +79,7 @@ describe "Semantic: class var" do
         f = -> { @@foo }
       end
       f.call
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "allows self.class as type var in class body (#537)" do
@@ -221,7 +221,7 @@ describe "Semantic: class var" do
 
       Foo.foo
       ",
-      "Can't infer the type of class variable '@@foo' of Foo"
+      "can't infer the type of class variable '@@foo' of Foo"
   end
 
   it "errors if using class variable at the top level" do
@@ -308,7 +308,7 @@ describe "Semantic: class var" do
         end
       end
       ),
-      "can't use Class as the type of class variable @@class of Foo, use a more specific type"
+      "can't use Class as the type of class variable '@@class' of Foo, use a more specific type"
   end
 
   it "gives correct error when trying to use Int as a class variable type" do
@@ -437,7 +437,7 @@ describe "Semantic: class var" do
       )) { int32 }
   end
 
-  it "doesn't error on recursive depdendency if var is nilable (#2943)" do
+  it "doesn't error on recursive dependency if var is nilable (#2943)" do
     assert_type(%(
       class Foo
         @@foo : Int32?
@@ -508,6 +508,6 @@ describe "Semantic: class var" do
       end
 
       Foo(Int32).inc
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 end

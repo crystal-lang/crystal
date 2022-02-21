@@ -141,7 +141,7 @@ class Crystal::Command
       error "file '#{filename}' is not a valid Crystal source file: #{ex.message}"
       @status_code = 1
     rescue ex : Crystal::SyntaxException
-      error ex
+      error "syntax error in '#{filename}:#{ex.line_number}:#{ex.column_number}': #{ex.message}"
       @status_code = 1
     rescue ex
       if @show_backtrace
@@ -156,11 +156,11 @@ class Crystal::Command
 
     # This method is for mocking `Crystal.format` in test.
     private def format(filename, source)
-      result = Crystal.format(source, filename: filename)
+      Crystal.format(source, filename: filename)
     end
 
     private def error(msg)
-      Crystal.error msg, @color, exit_code: nil, stderr: @stderr
+      Crystal.error msg, @color, exit_code: nil, stderr: @stderr, leading_error: false
     end
   end
 end

@@ -27,6 +27,7 @@ lib LibC
   fun getpgid(x0 : PidT) : PidT
   fun getpid : PidT
   fun getppid : PidT
+  fun getuid : UidT
   fun isatty(x0 : Int) : Int
   fun ttyname_r(fd : Int, buf : Char*, buffersize : SizeT) : Int
   fun lchown(x0 : Char*, x1 : UidT, x2 : GidT) : Int
@@ -38,6 +39,7 @@ lib LibC
   fun pread(x0 : Int, x1 : Void*, x2 : SizeT, x3 : OffT) : SSizeT
   fun rmdir(x0 : Char*) : Int
   fun symlink(x0 : Char*, x1 : Char*) : Int
+  fun readlink(path : Char*, buf : Char*, size : SizeT) : SSizeT
   fun syscall(x0 : Int, ...) : Int
   fun sysconf(x0 : Int) : Long
   fun unlink(x0 : Char*) : Int

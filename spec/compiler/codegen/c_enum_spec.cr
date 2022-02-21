@@ -23,7 +23,8 @@ describe "Code gen: c enum" do
     {"1 + 2", 3},
     {"3 - 2", 1},
     {"3 * 2", 6},
-    {"10 / 2", 5},
+    # {"10 / 2", 5}, # MathInterpreter only works with Integer and 10 / 2 : Float
+    {"10 // 2", 5},
     {"1 << 3", 8},
     {"100 >> 3", 12},
     {"10 & 3", 2},

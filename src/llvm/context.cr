@@ -11,7 +11,8 @@ class LLVM::Context
   def new_module(name : String) : Module
     {% if LibLLVM::IS_38 %}
       Module.new(LibLLVM.module_create_with_name_in_context(name, self), name, self)
-    {% else %} # LLVM >= 3.9
+    {% else %}
+      # LLVM >= 3.9
       Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
     {% end %}
   end
@@ -106,7 +107,8 @@ class LLVM::Context
     end
     {% if LibLLVM::IS_38 %}
       Module.new(mod, "unknown", self)
-    {% else %} # LLVM >= 3.9
+    {% else %}
+      # LLVM >= 3.9
       Module.new(mod, self)
     {% end %}
   end

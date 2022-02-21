@@ -333,7 +333,7 @@ describe "Code gen: macro" do
   it "expands def macro with instance var and method call (bug)" do
     run(%(
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -348,7 +348,7 @@ describe "Code gen: macro" do
         end
       end
 
-      Foo.new.foo.to_i
+      Foo.new.foo.to_i!
       )).to_i.should eq(1)
   end
 
@@ -438,7 +438,7 @@ describe "Code gen: macro" do
       end
 
       foo 1
-      foo(1.5).to_i
+      foo(1.5).to_i!
       )).to_i.should eq(2)
   end
 
@@ -578,7 +578,18 @@ describe "Code gen: macro" do
     )).to_string.should eq("Int32")
   end
 
-  it "can acccess type variables that are not types" do
+  it "can access type variables of a module" do
+    run(%(
+      module Foo(T)
+        def self.foo
+          {{ @type.type_vars.first.name.stringify }}
+        end
+      end
+      Foo(Int32).foo
+    )).to_string.should eq("Int32")
+  end
+
+  it "can access type variables that are not types" do
     run(%(
       class Foo(T)
         def foo
@@ -589,7 +600,7 @@ describe "Code gen: macro" do
     )).to_b.should eq(true)
   end
 
-  it "can acccess type variables of a tuple" do
+  it "can access type variables of a tuple" do
     run(%(
       struct Tuple
         def foo
@@ -663,6 +674,8 @@ describe "Code gen: macro" do
 
   it "transforms hooks (bug)" do
     codegen(%(
+      require "prelude"
+
       module GC
         def self.add_finalizer(object : T)
           object.responds_to?(:finalize)
@@ -757,7 +770,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Green")
   end
 
-  it "says that enum has Flags attribute" do
+  it "says that enum has Flags annotation" do
     run(%(
       @[Flags]
       enum Color
@@ -766,11 +779,11 @@ describe "Code gen: macro" do
         Blue
       end
 
-      {{Color.has_attribute?("Flags")}}
+      {{Color.annotation(Flags) ? true : false}}
       )).to_b.should be_true
   end
 
-  it "says that enum doesn't have Flags attribute" do
+  it "says that enum doesn't have Flags annotation" do
     run(%(
       enum Color
         Red
@@ -778,7 +791,7 @@ describe "Code gen: macro" do
         Blue
       end
 
-      {{Color.has_attribute?("Flags")}}
+      {{Color.annotation(Flags) ? true : false}}
       )).to_b.should be_false
   end
 
@@ -800,6 +813,8 @@ describe "Code gen: macro" do
 
   it "copies base macro def to sub-subtype even after it was copied to a subtype (#448)" do
     run(%(
+      require "prelude"
+
       class Object
         def class_name : String
           {{@type.name.stringify}}
@@ -1254,28 +1269,6 @@ describe "Code gen: macro" do
       end
 
       id(CONST)
-      )).to_i.should eq(1)
-  end
-
-  it "solves macro expression arguments before macro expansion (type)" do
-    run(%(
-      macro name(x)
-        {{x.name.stringify}}
-      end
-
-      name({{String}})
-      )).to_string.should eq("String")
-  end
-
-  it "solves macro expression arguments before macro expansion (constant)" do
-    run(%(
-      CONST = 1
-
-      macro id(x)
-        {{x}}
-      end
-
-      id({{CONST}})
       )).to_i.should eq(1)
   end
 
@@ -1818,5 +1811,72 @@ describe "Code gen: macro" do
         puts x
       end
     )).to_string.chomp.should eq("2")
+  end
+
+  it "devirtualizes @type" do
+    run(%(
+      class Foo
+        def foo
+          {{@type.id.stringify}}
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      (Foo.new || Bar.new).foo
+    )).to_string.should eq("Foo")
+  end
+
+  it "keeps heredoc contents inside macro" do
+    run(%(
+      macro foo
+        <<-FOO
+          %foo
+        FOO
+      end
+
+      foo
+    )).to_string.should eq("  %foo")
+  end
+
+  it "keeps heredoc contents with interpolation inside macro" do
+    run(%q(
+      require "prelude"
+
+      macro foo
+        %foo = 42
+        <<-FOO
+          #{ %foo }
+        FOO
+      end
+
+      foo
+    )).to_string.should eq("  42")
+  end
+
+  it "access to the program with @top_level" do
+    run(%(
+      class Foo
+        def bar
+          {{@top_level.name.stringify}}
+        end
+      end
+
+      Foo.new.bar
+      )).to_string.should eq("main")
+  end
+
+  it "responds correctly to has_constant? with @top_level" do
+    run(%(
+      FOO = 1
+      class Foo
+        def bar
+          {{@top_level.has_constant?("FOO")}}
+        end
+      end
+
+      Foo.new.bar
+      )).to_b.should eq(true)
   end
 end

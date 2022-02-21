@@ -1,5 +1,7 @@
 # Represents a UUID (Universally Unique IDentifier).
 struct UUID
+  include Comparable(UUID)
+
   # Variants with 16 bytes.
   enum Variant
     # Unknown (i.e. custom, your own).
@@ -30,7 +32,7 @@ struct UUID
     V5 = 5
   end
 
-  protected getter bytes : StaticArray(UInt8, 16)
+  @bytes : StaticArray(UInt8, 16)
 
   # Generates UUID from *bytes*, applying *version* and *variant* to the UUID if
   # present.
@@ -129,12 +131,27 @@ struct UUID
     new(new_bytes, variant, version)
   end
 
-  def self.empty
+  # Generates an empty UUID.
+  #
+  # ```
+  # UUID.empty # => UUID(00000000-0000-4000-0000-000000000000)
+  # ```
+  def self.empty : self
     new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
   end
 
-  # Returns UUID variant.
-  def variant
+  # Returns UUID variant based on the [RFC4122 format](https://datatracker.ietf.org/doc/html/rfc4122#section-4.1).
+  # See also `#version`
+  #
+  # ```
+  # require "uuid"
+  #
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::NCS).variant       # => NCS
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::RFC4122).variant   # => RFC4122
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Microsoft).variant # => Microsoft
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Future).variant    # => Future
+  # ```
+  def variant : UUID::Variant
     case
     when @bytes[8] & 0x80 == 0x00
       Variant::NCS
@@ -149,8 +166,19 @@ struct UUID
     end
   end
 
-  # Returns version based on RFC4122 format. See also `#variant`.
-  def version
+  # Returns version based on [RFC4122 format](https://datatracker.ietf.org/doc/html/rfc4122#section-4.1).
+  # See also `#variant`.
+  #
+  # ```
+  # require "uuid"
+  #
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V1).version # => V1
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V2).version # => V2
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V3).version # => V3
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V4).version # => V4
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V5).version # => V5
+  # ```
+  def version : UUID::Version
     case @bytes[6] >> 4
     when 1 then Version::V1
     when 2 then Version::V2
@@ -161,9 +189,9 @@ struct UUID
     end
   end
 
-  # Returns 16-byte slice.
-  def to_slice
-    @bytes.to_slice
+  # Returns the binary representation of the UUID.
+  def bytes : StaticArray(UInt8, 16)
+    @bytes.dup
   end
 
   # Returns unsafe pointer to 16-bytes.
@@ -171,10 +199,7 @@ struct UUID
     @bytes.to_unsafe
   end
 
-  # Returns `true` if `other` UUID represents the same UUID, `false` otherwise.
-  def ==(other : UUID)
-    to_slice == other.to_slice
-  end
+  def_equals_and_hash @bytes
 
   # Convert to `String` in literal format.
   def inspect(io : IO) : Nil
@@ -184,7 +209,7 @@ struct UUID
   end
 
   def to_s(io : IO) : Nil
-    slice = to_slice
+    slice = @bytes.to_slice
 
     buffer = uninitialized UInt8[36]
     buffer_ptr = buffer.to_unsafe
@@ -196,18 +221,32 @@ struct UUID
     slice[8, 2].hexstring(buffer_ptr + 19)
     slice[10, 6].hexstring(buffer_ptr + 24)
 
-    io.write(buffer.to_slice)
+    io.write_string(buffer.to_slice)
   end
 
-  def hexstring
-    to_slice.hexstring
+  def hexstring : String
+    @bytes.to_slice.hexstring
   end
 
-  def urn
+  # Returns a `String` that is a valid urn of *self*
+  #
+  # ```
+  # require "uuid"
+  #
+  # uuid = UUID.empty
+  # uuid.urn # => "urn:uuid:00000000-0000-4000-0000-000000000000"
+  # uuid2 = UUID.new("c49fc136-9362-4414-81a5-9a7e0fcca0f1")
+  # uuid2.urn # => "urn:uuid:c49fc136-9362-4414-81a5-9a7e0fcca0f1"
+  # ```
+  def urn : String
     String.build(45) do |str|
       str << "urn:uuid:"
       to_s(str)
     end
+  end
+
+  def <=>(other : UUID) : Int32
+    @bytes <=> other.bytes
   end
 
   class Error < Exception

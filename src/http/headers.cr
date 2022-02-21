@@ -49,11 +49,16 @@ struct HTTP::Headers
   end
 
   def initialize
-    @hash = Hash(Key, Array(String)).new
+    # We keep a Hash with String | Array(String) values because
+    # the most common case is a single value and so we avoid allocating
+    # memory for arrays.
+    @hash = Hash(Key, String | Array(String)).new
   end
 
   def []=(key, value : String)
-    self[wrap(key)] = [value]
+    check_invalid_header_content(value)
+
+    @hash[wrap(key)] = value
   end
 
   def []=(key, value : Array(String))
@@ -62,12 +67,12 @@ struct HTTP::Headers
     @hash[wrap(key)] = value
   end
 
-  def [](key)
+  def [](key) : String
     values = @hash[wrap(key)]
     concat values
   end
 
-  def []?(key)
+  def []?(key) : String?
     fetch(key, nil)
   end
 
@@ -80,54 +85,64 @@ struct HTTP::Headers
   # headers = HTTP::Headers{"Connection" => "keep-alive, Upgrade"}
   # headers.includes_word?("Connection", "Upgrade") # => true
   # ```
-  def includes_word?(key, word)
+  def includes_word?(key, word) : Bool
     return false if word.empty?
 
-    word = word.downcase
-    # iterates over all header values avoiding the concatenation
-    get?(key).try &.each do |value|
-      value = value.downcase
-      offset = 0
-      while true
-        start = value.index(word, offset)
-        break unless start
-        offset = start + word.size
-
-        # check if the match is not surrounded by alphanumeric chars
-        next if start > 0 && value[start - 1].ascii_alphanumeric?
-        next if start + word.size < value.size && value[start + word.size].ascii_alphanumeric?
-        return true
+    values = @hash[wrap(key)]?
+    case values
+    when Nil
+      false
+    when String
+      includes_word_in_header_value?(word.downcase, values.downcase)
+    else
+      word = word.downcase
+      values.any? do |value|
+        includes_word_in_header_value?(word, value.downcase)
       end
+    end
+  end
+
+  private def includes_word_in_header_value?(word, value)
+    offset = 0
+    while true
+      start = value.index(word, offset)
+      return false unless start
+      offset = start + word.size
+
+      # check if the match is not surrounded by alphanumeric chars
+      next if start > 0 && value[start - 1].ascii_alphanumeric?
+      next if start + word.size < value.size && value[start + word.size].ascii_alphanumeric?
+      return true
     end
 
     false
   end
 
-  def add(key, value : String)
+  def add(key, value : String) : self
     check_invalid_header_content value
     unsafe_add(key, value)
     self
   end
 
-  def add(key, value : Array(String))
+  def add(key, value : Array(String)) : self
     value.each { |val| check_invalid_header_content val }
     unsafe_add(key, value)
     self
   end
 
-  def add?(key, value : String)
+  def add?(key, value : String) : Bool
     return false unless valid_value?(value)
     unsafe_add(key, value)
     true
   end
 
-  def add?(key, value : Array(String))
+  def add?(key, value : Array(String)) : Bool
     value.each { |val| return false unless valid_value?(val) }
     unsafe_add(key, value)
     true
   end
 
-  def fetch(key, default)
+  def fetch(key, default) : String?
     fetch(wrap(key)) { default }
   end
 
@@ -136,64 +151,94 @@ struct HTTP::Headers
     values ? concat(values) : yield key
   end
 
-  def has_key?(key)
+  def has_key?(key) : Bool
     @hash.has_key? wrap(key)
   end
 
-  def empty?
+  def empty? : Bool
     @hash.empty?
   end
 
-  def delete(key)
+  def delete(key) : String?
     values = @hash.delete wrap(key)
     values ? concat(values) : nil
   end
 
-  def merge!(other)
+  def merge!(other) : self
     other.each do |key, value|
       self[wrap(key)] = value
     end
     self
   end
 
+  # Equality operator.
+  #
+  # Returns `true` if *other* is equal to `self`.
+  #
+  # Keys are matched case-insensitive.
+  # String values are treated equal to an array values with the same string as
+  # single element.
+  #
+  # ```
+  # HTTP::Headers{"Foo" => "bar"} == HTTP::Headers{"Foo" => "bar"}   # => true
+  # HTTP::Headers{"Foo" => "bar"} == HTTP::Headers{"foo" => "bar"}   # => true
+  # HTTP::Headers{"Foo" => "bar"} == HTTP::Headers{"Foo" => ["bar"]} # => true
+  # HTTP::Headers{"Foo" => "bar"} == HTTP::Headers{"Foo" => "baz"}   # => false
+  # ```
   def ==(other : self)
-    self == other.@hash
-  end
+    # Adapts `Hash#==` to treat string values equal to a single element array.
 
-  def ==(other : Hash)
-    return false unless @hash.size == other.size
+    return false unless @hash.size == other.@hash.size
 
-    other.each do |key, value|
-      this_value = @hash[wrap(key)]?
-      if this_value
-        case value
-        when String
-          return false unless this_value.size == 1 && this_value[0] == value
-        when Array(String)
-          return false unless this_value == value
-        else
-          false
-        end
-      else
-        return false unless value.nil?
+    other.@hash.each do |key, value|
+      this_value = @hash.fetch(key) { return false }
+      case {value, this_value}
+      in {String, String}, {Array, Array}
+        return false unless this_value == value
+      in {String, Array}
+        return false unless this_value.size == 1 && this_value.unsafe_fetch(0) == value
+      in {Array, String}
+        return false unless value.size == 1 && value.unsafe_fetch(0) == this_value
       end
     end
-
     true
+  end
+
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    # Adapts `Hash#hash` to ensure consistency with equality operator.
+
+    # The hash value must be the same regardless of the
+    # order of the keys.
+    result = hasher.result
+
+    @hash.each do |key, value|
+      copy = hasher
+      copy = key.hash(copy)
+      if value.is_a?(Array)
+        copy = value.hash(copy)
+      else
+        copy = 1.hash(copy)
+        copy = value.hash(copy)
+      end
+      result &+= copy.result
+    end
+
+    result.hash(hasher)
   end
 
   def each
     @hash.each do |key, value|
-      yield({key.name, value})
+      yield({key.name, cast(value)})
     end
   end
 
-  def get(key)
-    @hash[wrap(key)]
+  def get(key) : Array(String)
+    cast @hash[wrap(key)]
   end
 
-  def get?(key)
-    @hash[wrap(key)]?
+  def get?(key) : Array(String)?
+    @hash[wrap(key)]?.try { |value| cast(value) }
   end
 
   def dup
@@ -208,7 +253,7 @@ struct HTTP::Headers
     dup
   end
 
-  def same?(other : HTTP::Headers)
+  def same?(other : HTTP::Headers) : Bool
     object_id == other.object_id
   end
 
@@ -218,8 +263,13 @@ struct HTTP::Headers
       io << ", " if index > 0
       key.name.inspect(io)
       io << " => "
-      if values.size == 1
-        values.first.inspect(io)
+      case values
+      when Array
+        if values.size == 1
+          values.first.inspect(io)
+        else
+          values.inspect(io)
+        end
       else
         values.inspect(io)
       end
@@ -249,7 +299,7 @@ struct HTTP::Headers
     end
   end
 
-  def valid_value?(value)
+  def valid_value?(value) : Bool
     return invalid_value_char(value).nil?
   end
 
@@ -259,9 +309,13 @@ struct HTTP::Headers
     key = wrap(key)
     existing = @hash[key]?
     if existing
-      existing << value
+      if existing.is_a?(Array)
+        existing << value
+      else
+        @hash[key] = [existing, value]
+      end
     else
-      @hash[key] = [value]
+      @hash[key] = value
     end
   end
 
@@ -269,7 +323,13 @@ struct HTTP::Headers
     key = wrap(key)
     existing = @hash[key]?
     if existing
-      existing.concat value
+      if existing.is_a?(Array)
+        existing.concat value
+      else
+        new_value = [existing]
+        new_value.concat(value)
+        @hash[key] = new_value
+      end
     else
       @hash[key] = value
     end
@@ -287,7 +347,11 @@ struct HTTP::Headers
     value
   end
 
-  private def concat(values)
+  private def concat(values : String)
+    values
+  end
+
+  private def concat(values : Array(String))
     case values.size
     when 0
       ""

@@ -412,4 +412,33 @@ describe "Visibility modifiers" do
       ),
       "protected method 'new' called for Foo.class"
   end
+
+  it "handles virtual types (#8561)" do
+    assert_no_errors <<-CR
+      module Namespace
+        class Foo
+          protected def foo
+          end
+        end
+
+        class Bar
+          def bar
+            Foo.new.foo
+          end
+        end
+
+        class Baz < Bar
+          def initialize
+            @bar = Bar.new
+          end
+
+          def bar
+            @bar.bar
+          end
+        end
+      end
+
+      Namespace::Baz.new.bar
+      CR
+  end
 end

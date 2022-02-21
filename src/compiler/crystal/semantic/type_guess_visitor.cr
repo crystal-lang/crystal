@@ -78,7 +78,7 @@ module Crystal
     end
 
     def visit(node : Var)
-      # Check for an argument that mathces this var, and see
+      # Check for an argument that matches this var, and see
       # if it has a default value. If so, we do a `self` check
       # to make sure `self` isn't used
       if (arg = args_hash[node.name]?) && (default_value = arg.default_value)
@@ -110,6 +110,8 @@ module Crystal
           process_uninitialized_instance_var(owner, var, node.declared_type)
         when GenericModuleType
           process_uninitialized_instance_var(owner, var, node.declared_type)
+        else
+          # TODO: can this be reached?
         end
       end
     end
@@ -190,6 +192,8 @@ module Crystal
             process_lib_out(owner, exp, type)
           when GenericModuleType
             process_lib_out(owner, exp, type)
+          else
+            # TODO: can this be reached?
           end
         end
       end
@@ -278,6 +282,8 @@ module Crystal
 
                 owner_vars = @class_vars[owner] ||= {} of String => TypeInfo
                 add_type_info(owner_vars, target.name, tuple_type, target)
+              else
+                # TODO: can this be reached?
               end
             end
           end
@@ -457,7 +463,7 @@ module Crystal
             return type.instantiate([Type.merge!(element_types)] of TypeVar).virtual_type
           end
         else
-          return check_allowed_in_generics(node, type)
+          return check_can_be_stored(node, type)
         end
       elsif node_of = node.of
         type = lookup_type?(node_of)
@@ -477,6 +483,9 @@ module Crystal
     def guess_array_literal_element_types(node)
       element_types = nil
       node.elements.each do |element|
+        # Splats here require the yield type of `#each`, which we cannot guess
+        return nil if element.is_a?(Splat)
+
         element_type = guess_type(element)
         next unless element_type
 
@@ -495,7 +504,7 @@ module Crystal
             return type.instantiate([Type.merge!(key_types), Type.merge!(value_types)] of TypeVar).virtual_type
           end
         else
-          return check_allowed_in_generics(node, type)
+          return check_can_be_stored(node, type)
         end
       elsif node_of = node.of
         key_type = lookup_type?(node_of.key)
@@ -546,17 +555,26 @@ module Crystal
     end
 
     def guess_type(node : RegexLiteral)
-      program.types["Regex"]
+      program.regex
     end
 
     def guess_type(node : TupleLiteral)
       element_types = nil
       node.elements.each do |element|
-        element_type = guess_type(element)
-        return nil unless element_type
+        if element.is_a?(Splat)
+          element_type = guess_type(element.exp)
+          return nil unless element_type.is_a?(TupleInstanceType)
 
-        element_types ||= [] of Type
-        element_types << element_type
+          next if element_type.tuple_types.empty?
+          element_types ||= [] of Type
+          element_types.concat(element_type.tuple_types)
+        else
+          element_type = guess_type(element)
+          return nil unless element_type
+
+          element_types ||= [] of Type
+          element_types << element_type
+        end
       end
 
       if element_types
@@ -583,7 +601,37 @@ module Crystal
       end
     end
 
+    def guess_type(node : ProcLiteral)
+      output = node.def.return_type
+      return nil unless output
+
+      types = nil
+
+      node.def.args.each do |input|
+        restriction = input.restriction
+        return nil unless restriction
+
+        input_type = lookup_type?(restriction)
+        return nil unless input_type
+
+        types ||= [] of Type
+        types << input_type.virtual_type
+      end
+
+      output_type = lookup_type?(output)
+      return nil unless output_type
+
+      types ||= [] of Type
+      types << output_type.virtual_type
+
+      program.proc_of(types)
+    end
+
     def guess_type(node : Call)
+      if expanded = node.expanded
+        return guess_type(expanded)
+      end
+
       guess_type_call_lib_out(node)
 
       obj = node.obj
@@ -631,6 +679,14 @@ module Crystal
       return type if type
 
       type = guess_type_call_with_type_annotation(node)
+
+      # If the type is unbound (uninstantiated generic) but the call
+      # wasn't something like `Gen(Int32).something` then we can never
+      # guess a type, the type is probably inferred from type restrictions
+      if !obj.is_a?(Generic) && type.try &.unbound?
+        return nil
+      end
+
       return type if type
 
       nil
@@ -807,7 +863,7 @@ module Crystal
           if @splat.same?(arg)
             # If restriction is not splat (like `*foo : T`),
             # we cannot guess the type.
-            # (We can also guess `Indexable(T)`, but it is not perfact.)
+            # (We can also guess `Indexable(T)`, but it is not perfect.)
             # And this early return is no problem because splat argument
             # cannot have a default value.
             return unless restriction.is_a?(Splat)
@@ -1049,14 +1105,14 @@ module Crystal
         allow_typeof: false,
         find_root_generic_type_parameters: find_root_generic_type_parameters
       )
-      check_allowed_in_generics(node, type)
+      check_can_be_stored(node, type)
     end
 
     def lookup_type_var?(node, root = current_type)
       type_var = root.lookup_type_var?(node)
       return nil unless type_var.is_a?(Type)
 
-      check_allowed_in_generics(node, type_var)
+      check_can_be_stored(node, type_var)
       type_var
     end
 
@@ -1064,22 +1120,17 @@ module Crystal
       current_type.lookup_type?(node, allow_typeof: false)
     end
 
-    def check_allowed_in_generics(node, type)
-      # Types such as Object, Int, etc., are not allowed in generics
-      # and as variables types, so we disallow them.
-      if type && !type.allowed_in_generics?
-        @error = Error.new(node, type)
-        return nil
-      end
-
-      case type
-      when GenericClassType
+    def check_can_be_stored(node, type)
+      if type.is_a?(GenericClassType)
+        nil
+      elsif type.is_a?(GenericModuleType)
+        nil
+      elsif type && !type.can_be_stored?
+        # Types such as Object, Int, etc., are not allowed in generics
+        # and as variables types, so we disallow them.
         @error = Error.new(node, type)
         nil
-      when GenericModuleType
-        @error = Error.new(node, type)
-        nil
-      when NonGenericClassType
+      elsif type.is_a?(NonGenericClassType)
         type.virtual_type
       else
         type

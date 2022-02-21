@@ -2,36 +2,40 @@ abstract class OpenSSL::SSL::Socket < IO
   class Client < Socket
     def initialize(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
       super(io, context, sync_close)
+      begin
+        if hostname
+          # Macro from OpenSSL: SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
+          LibSSL.ssl_ctrl(
+            @ssl,
+            LibSSL::SSLCtrl::SET_TLSEXT_HOSTNAME,
+            LibSSL::TLSExt::NAMETYPE_host_name,
+            hostname.to_unsafe.as(Pointer(Void))
+          )
 
-      if hostname
-        # Macro from OpenSSL: SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
-        LibSSL.ssl_ctrl(
-          @ssl,
-          LibSSL::SSLCtrl::SET_TLSEXT_HOSTNAME,
-          LibSSL::TLSExt::NAMETYPE_host_name,
-          hostname.to_unsafe.as(Pointer(Void))
-        )
+          {% if LibSSL.has_method?(:ssl_get0_param) %}
+            param = LibSSL.ssl_get0_param(@ssl)
 
-        {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
-          param = LibSSL.ssl_get0_param(@ssl)
-
-          if ::Socket.ip?(hostname)
-            unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
-              raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
+            if ::Socket.ip?(hostname)
+              unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
+                raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
+              end
+            else
+              unless LibCrypto.x509_verify_param_set1_host(param, hostname, 0) == 1
+                raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_host")
+              end
             end
-          else
-            unless LibCrypto.x509_verify_param_set1_host(param, hostname, 0) == 1
-              raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_host")
-            end
-          end
-        {% else %}
-          context.set_cert_verify_callback(hostname)
-        {% end %}
-      end
+          {% else %}
+            context.set_cert_verify_callback(hostname)
+          {% end %}
+        end
 
-      ret = LibSSL.ssl_connect(@ssl)
-      unless ret == 1
-        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
+        ret = LibSSL.ssl_connect(@ssl)
+        unless ret == 1
+          raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
+        end
+      rescue ex
+        LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
+        raise ex
       end
     end
 
@@ -44,15 +48,32 @@ abstract class OpenSSL::SSL::Socket < IO
         socket.close
       end
     end
+
+    # Returns the `OpenSSL::X509::Certificate` the peer presented.
+    def peer_certificate : OpenSSL::X509::Certificate
+      super.not_nil!
+    end
   end
 
   class Server < Socket
-    def initialize(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
+    def initialize(io, context : Context::Server = Context::Server.new,
+                   sync_close : Bool = false, accept : Bool = true)
       super(io, context, sync_close)
 
+      if accept
+        begin
+          self.accept
+        rescue ex
+          LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
+          raise ex
+        end
+      end
+    end
+
+    def accept : Nil
       ret = LibSSL.ssl_accept(@ssl)
       unless ret == 1
-        io.close if sync_close
+        @bio.io.close if @sync_close
         raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
       end
     end
@@ -99,46 +120,53 @@ abstract class OpenSSL::SSL::Socket < IO
     LibSSL.ssl_free(@ssl)
   end
 
-  def unbuffered_read(slice : Bytes)
+  def unbuffered_read(slice : Bytes) : Int32
     check_open
 
     count = slice.size
     return 0 if count == 0
 
-    LibSSL.ssl_read(@ssl, slice.pointer(count), count).tap do |bytes|
+    LibSSL.ssl_read(@ssl, slice.to_unsafe, count).tap do |bytes|
       if bytes <= 0 && !LibSSL.ssl_get_error(@ssl, bytes).zero_return?
-        raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
+        ex = OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
+        if ex.underlying_eof?
+          # underlying BIO terminated gracefully, without terminating SSL aspect gracefully first
+          # some misbehaving servers "do this" so treat as EOF even though it's a protocol error
+          return 0
+        end
+        raise ex
       end
     end
   end
 
-  def unbuffered_write(slice : Bytes)
+  def unbuffered_write(slice : Bytes) : Nil
     check_open
 
     return if slice.empty?
 
     count = slice.size
-    bytes = LibSSL.ssl_write(@ssl, slice.pointer(count), count)
+    bytes = LibSSL.ssl_write(@ssl, slice.to_unsafe, count)
     unless bytes > 0
       raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_write")
     end
-    nil
   end
 
-  def unbuffered_flush
+  def unbuffered_flush : Nil
     @bio.io.flush
   end
 
-  {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
   # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
   # negotiated.
   def alpn_protocol
-    LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
-    String.new(protocol, len) unless protocol.null?
+    {% if LibSSL.has_method?(:ssl_get0_alpn_selected) %}
+      LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
+      String.new(protocol, len) unless protocol.null?
+    {% else %}
+      raise NotImplementedError.new("LibSSL.ssl_get0_alpn_selected")
+    {% end %}
   end
-  {% end %}
 
-  def unbuffered_close
+  def unbuffered_close : Nil
     return if @closed
     @closed = true
 
@@ -146,7 +174,8 @@ abstract class OpenSSL::SSL::Socket < IO
       loop do
         begin
           ret = LibSSL.ssl_shutdown(@ssl)
-          break if ret == 1
+          break if ret == 1                # done bidirectional
+          break if ret == 0 && sync_close? # done unidirectional, "this first successful call to SSL_shutdown() is sufficient"
           raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
         rescue e : OpenSSL::SSL::Error
           case e.error
@@ -180,6 +209,16 @@ abstract class OpenSSL::SSL::Socket < IO
     end
   end
 
+  # Returns the current cipher used by this socket.
+  def cipher : String
+    String.new(LibSSL.ssl_cipher_get_name(LibSSL.ssl_get_current_cipher(@ssl)))
+  end
+
+  # Returns the name of the TLS protocol version used by this socket.
+  def tls_version : String
+    String.new(LibSSL.ssl_get_version(@ssl))
+  end
+
   def local_address
     io = @bio.io
     io.responds_to?(:local_address) ? io.local_address : nil
@@ -188,5 +227,54 @@ abstract class OpenSSL::SSL::Socket < IO
   def remote_address
     io = @bio.io
     io.responds_to?(:remote_address) ? io.remote_address : nil
+  end
+
+  def read_timeout
+    io = @bio.io
+    if io.responds_to? :read_timeout
+      io.read_timeout
+    else
+      raise NotImplementedError.new("#{io.class}#read_timeout")
+    end
+  end
+
+  def read_timeout=(value)
+    io = @bio.io
+    if io.responds_to? :read_timeout=
+      io.read_timeout = value
+    else
+      raise NotImplementedError.new("#{io.class}#read_timeout=")
+    end
+  end
+
+  def write_timeout
+    io = @bio.io
+    if io.responds_to? :write_timeout
+      io.write_timeout
+    else
+      raise NotImplementedError.new("#{io.class}#write_timeout")
+    end
+  end
+
+  def write_timeout=(value)
+    io = @bio.io
+    if io.responds_to? :write_timeout=
+      io.write_timeout = value
+    else
+      raise NotImplementedError.new("#{io.class}#write_timeout=")
+    end
+  end
+
+  # Returns the `OpenSSL::X509::Certificate` the peer presented, if a
+  # connection was esablished.
+  #
+  # NOTE: Due to the protocol definition, a TLS/SSL server will always send a
+  # certificate, if present. A client will only send a certificate when
+  # explicitly requested to do so by the server (see `SSL_CTX_set_verify(3)`). If
+  # an anonymous cipher is used, no certificates are sent. That a certificate
+  # is returned does not indicate information about the verification state.
+  def peer_certificate : OpenSSL::X509::Certificate?
+    cert = LibSSL.ssl_get_peer_certificate(@ssl)
+    OpenSSL::X509::Certificate.new cert if cert
   end
 end

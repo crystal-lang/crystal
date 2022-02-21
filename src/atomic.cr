@@ -34,7 +34,7 @@ struct Atomic(T)
       # If so, use addresses because LLVM < 3.9 doesn't support cmpxchg with pointers
       address, success = Ops.cmpxchg(pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(cmp.as(T).object_id), LibC::SizeT.new(new.as(T).object_id), :sequentially_consistent, :sequentially_consistent)
       {address == 0 ? nil : Pointer(T).new(address).as(T), success}
-    # Check if it's a reference type
+      # Check if it's a reference type
     {% elsif T < Reference %}
       # Use addresses again (but this can't return nil)
       address, success = Ops.cmpxchg(pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(cmp.as(T).object_id), LibC::SizeT.new(new.as(T).object_id), :sequentially_consistent, :sequentially_consistent)
@@ -52,7 +52,7 @@ struct Atomic(T)
   # atomic.add(2) # => 1
   # atomic.get    # => 3
   # ```
-  def add(value : T)
+  def add(value : T) : T
     Ops.atomicrmw(:add, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -63,7 +63,7 @@ struct Atomic(T)
   # atomic.sub(2) # => 9
   # atomic.get    # => 7
   # ```
-  def sub(value : T)
+  def sub(value : T) : T
     Ops.atomicrmw(:sub, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -74,7 +74,7 @@ struct Atomic(T)
   # atomic.and(3) # => 5
   # atomic.get    # => 1
   # ```
-  def and(value : T)
+  def and(value : T) : T
     Ops.atomicrmw(:and, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -85,7 +85,7 @@ struct Atomic(T)
   # atomic.nand(3) # => 5
   # atomic.get     # => -2
   # ```
-  def nand(value : T)
+  def nand(value : T) : T
     Ops.atomicrmw(:nand, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -96,7 +96,7 @@ struct Atomic(T)
   # atomic.or(2) # => 5
   # atomic.get   # => 7
   # ```
-  def or(value : T)
+  def or(value : T) : T
     Ops.atomicrmw(:or, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -107,7 +107,7 @@ struct Atomic(T)
   # atomic.xor(3) # => 5
   # atomic.get    # => 6
   # ```
-  def xor(value : T)
+  def xor(value : T) : T
     Ops.atomicrmw(:xor, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -172,7 +172,7 @@ struct Atomic(T)
   # atomic.set(10) # => 10
   # atomic.get     # => 10
   # ```
-  def set(value : T)
+  def set(value : T) : T
     Ops.store(pointerof(@value), value.as(T), :sequentially_consistent, true)
     value
   end
@@ -184,11 +184,11 @@ struct Atomic(T)
   # atomic.lazy_set(10) # => 10
   # atomic.get          # => 10
   # ```
-  def lazy_set(@value : T)
+  def lazy_set(@value : T) : T
   end
 
   # Atomically returns this atomic's value.
-  def get
+  def get : T
     Ops.load(pointerof(@value), :sequentially_consistent, true)
   end
 
@@ -220,5 +220,35 @@ struct Atomic(T)
     @[Primitive(:store_atomic)]
     def self.store(ptr : T*, value : T, ordering : Symbol, volatile : Bool) : Nil forall T
     end
+  end
+end
+
+# An atomic flag, that can be set or not.
+#
+# Concurrency safe. If many fibers try to set the atomic in parallel, only one
+# will succeed.
+#
+# Example:
+# ```
+# flag = Atomic::Flag.new
+# flag.test_and_set # => true
+# flag.test_and_set # => false
+# flag.clear
+# flag.test_and_set # => true
+# ```
+struct Atomic::Flag
+  def initialize
+    @value = 0_u8
+  end
+
+  # Atomically tries to set the flag. Only succeeds and returns `true` if the
+  # flag wasn't previously set; returns `false` otherwise.
+  def test_and_set : Bool
+    Atomic::Ops.atomicrmw(:xchg, pointerof(@value), 1_u8, :sequentially_consistent, false) == 0_u8
+  end
+
+  # Atomically clears the flag.
+  def clear : Nil
+    Atomic::Ops.store(pointerof(@value), 0_u8, :sequentially_consistent, true)
   end
 end

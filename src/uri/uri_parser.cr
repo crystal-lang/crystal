@@ -18,11 +18,11 @@ class URI
       @ptr = 0
     end
 
-    def c
+    def c : UInt8
       @input[@ptr]
     end
 
-    def run
+    def run : self
       parse_scheme_start
       self
     end
@@ -97,14 +97,14 @@ class URI
       loop do
         if c === '@'
           if password_flag
-            @uri.password = URI.unescape(from_input(start))
+            @uri.password = URI.decode_www_form(from_input(start))
           else
-            @uri.user = URI.unescape(from_input(start))
+            @uri.user = URI.decode_www_form(from_input(start))
           end
           @ptr += 1
           return parse_host
         elsif c === ':'
-          @uri.user = URI.unescape(from_input(start))
+          @uri.user = URI.decode_www_form(from_input(start))
           password_flag = true
           @ptr += 1
           start = @ptr
@@ -120,11 +120,11 @@ class URI
       return parse_path if c === '/'
       loop do
         if c === ':' && !bracket_flag
-          @uri.host = URI.unescape(from_input(start))
+          @uri.host = URI.decode(from_input(start))
           @ptr += 1
           return parse_port
         elsif end_of_host?
-          @uri.host = URI.unescape(from_input(start))
+          @uri.host = URI.decode(from_input(start))
           return parse_path
         else
           bracket_flag = true if c === '['

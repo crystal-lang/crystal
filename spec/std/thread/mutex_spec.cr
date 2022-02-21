@@ -1,5 +1,12 @@
+{% if flag?(:musl) %}
+  # FIXME: These thread specs occasionally fail on musl/alpine based ci, so
+  # they're disabled for now to reduce noise.
+  # See https://github.com/crystal-lang/crystal/issues/8738
+  pending Thread::Mutex
+  {% skip_file %}
+{% end %}
+
 require "spec"
-require "../../support/errno"
 
 describe Thread::Mutex do
   it "synchronizes" do
@@ -20,7 +27,7 @@ describe Thread::Mutex do
     mutex = Thread::Mutex.new
     mutex.try_lock.should be_true
     mutex.try_lock.should be_false
-    expect_raises_errno(Errno::EDEADLK, "pthread_mutex_lock: ") { mutex.lock }
+    expect_raises(RuntimeError, "pthread_mutex_lock: ") { mutex.lock }
     mutex.unlock
   end
 
@@ -28,7 +35,7 @@ describe Thread::Mutex do
     mutex = Thread::Mutex.new
     mutex.lock
 
-    expect_raises_errno(Errno::EPERM, "pthread_mutex_unlock: ") do
+    expect_raises(RuntimeError, "pthread_mutex_unlock: ") do
       Thread.new { mutex.unlock }.join
     end
 

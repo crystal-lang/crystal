@@ -8,7 +8,7 @@ module Crystal
         @str << ' '
       end
       if node.name
-        @str << decorate_arg(node, node.name)
+        @str << node.name
       else
         @str << '?'
       end
@@ -77,6 +77,11 @@ module Crystal
 
     def visit(node : MacroId)
       @str << node.value
+      false
+    end
+
+    def visit(node : Unreachable)
+      @str << %(raise "unreachable")
       false
     end
   end

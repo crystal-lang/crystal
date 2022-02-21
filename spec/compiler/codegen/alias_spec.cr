@@ -55,7 +55,7 @@ describe "Code gen: alias" do
         def self.new(&block : -> T)
         end
 
-        def to_i
+        def to_i!
           0
         end
       end
@@ -70,7 +70,7 @@ describe "Code gen: alias" do
         end
       end
 
-      foo(2).to_i
+      foo(2).to_i!
       )).to_i.should eq(1)
   end
 
@@ -101,8 +101,14 @@ describe "Code gen: alias" do
       ))
   end
 
-  it "lazyly solves aliases (#1346)" do
+  it "lazily solves aliases (#1346)" do
     run(%(
+      struct Proc
+        def self.new(&block : self)
+          block
+        end
+      end
+
       class Session; end
 
       alias CmdHandler = Proc(Session, Int32)

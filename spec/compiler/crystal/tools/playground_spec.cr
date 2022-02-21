@@ -1,3 +1,5 @@
+{% skip_file if flag?(:without_playground) %}
+
 require "../../../spec_helper"
 
 private def instrument(source)
@@ -12,7 +14,7 @@ private def assert_agent(source, expected)
 
   instrument(source).should contain(expected)
 
-  # whatever case should work beforeit should work with appended lines
+  # whatever case should work before it should work with appended lines
   instrument("#{source}\n1\n").should contain(expected)
 end
 
@@ -576,10 +578,10 @@ describe Playground::AgentInstrumentorTransformer do
 end
 
 private def assert_compile(source)
-  sources = Playground::Session.instrument_and_prelude("", "", 0, source, Logger.new(nil))
+  sources = Playground::Session.instrument_and_prelude("", "", 0, source)
   compiler = Compiler.new
   compiler.no_codegen = true
-  result = compiler.compile sources, "fake-no-build"
+  compiler.compile sources, "fake-no-build"
 end
 
 describe Playground::Session do

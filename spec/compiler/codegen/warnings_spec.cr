@@ -2,29 +2,29 @@ require "../spec_helper"
 
 describe "Code gen: warnings" do
   it "detects top-level deprecated methods" do
-    assert_warning %(
+    assert_warning <<-CR,
       @[Deprecated("Do not use me")]
       def foo
       end
 
       foo
-    ), "Warning in line 6: Deprecated top-level foo. Do not use me",
-      inject_primitives: false
+      CR
+      "warning in line 5\nWarning: Deprecated top-level foo. Do not use me"
   end
 
   it "deprecation reason is optional" do
-    assert_warning %(
+    assert_warning <<-CR,
       @[Deprecated]
       def foo
       end
 
       foo
-    ), "Warning in line 6: Deprecated top-level foo.",
-      inject_primitives: false
+      CR
+      "warning in line 5\nWarning: Deprecated top-level foo."
   end
 
   it "detects deprecated instance methods" do
-    assert_warning %(
+    assert_warning <<-CR,
       class Foo
         @[Deprecated("Do not use me")]
         def m
@@ -32,12 +32,12 @@ describe "Code gen: warnings" do
       end
 
       Foo.new.m
-    ), "Warning in line 8: Deprecated Foo#m. Do not use me",
-      inject_primitives: false
+      CR
+      "warning in line 7\nWarning: Deprecated Foo#m. Do not use me"
   end
 
   it "detects deprecated class methods" do
-    assert_warning %(
+    assert_warning <<-CR,
       class Foo
         @[Deprecated("Do not use me")]
         def self.m
@@ -45,12 +45,12 @@ describe "Code gen: warnings" do
       end
 
       Foo.m
-    ), "Warning in line 8: Deprecated Foo.m. Do not use me",
-      inject_primitives: false
+      CR
+      "warning in line 7\nWarning: Deprecated Foo.m. Do not use me"
   end
 
   it "detects deprecated generic instance methods" do
-    assert_warning %(
+    assert_warning <<-CR,
       class Foo(T)
         @[Deprecated("Do not use me")]
         def m
@@ -58,12 +58,12 @@ describe "Code gen: warnings" do
       end
 
       Foo(Int32).new.m
-    ), "Warning in line 8: Deprecated Foo(Int32)#m. Do not use me",
-      inject_primitives: false
+      CR
+      "warning in line 7\nWarning: Deprecated Foo(Int32)#m. Do not use me"
   end
 
   it "detects deprecated generic class methods" do
-    assert_warning %(
+    assert_warning <<-CR,
       class Foo(T)
         @[Deprecated("Do not use me")]
         def self.m
@@ -71,12 +71,12 @@ describe "Code gen: warnings" do
       end
 
       Foo(Int32).m
-    ), "Warning in line 8: Deprecated Foo(Int32).m. Do not use me",
-      inject_primitives: false
+      CR
+      "warning in line 7\nWarning: Deprecated Foo(Int32).m. Do not use me"
   end
 
   it "detects deprecated module methods" do
-    assert_warning %(
+    assert_warning <<-CR,
       module Foo
         @[Deprecated("Do not use me")]
         def self.m
@@ -84,12 +84,49 @@ describe "Code gen: warnings" do
       end
 
       Foo.m
-    ), "Warning in line 8: Deprecated Foo.m. Do not use me",
-      inject_primitives: false
+      CR
+      "warning in line 7\nWarning: Deprecated Foo.m. Do not use me"
+  end
+
+  it "detects deprecated methods with named arguments" do
+    assert_warning <<-CR,
+      @[Deprecated]
+      def foo(*, a)
+      end
+
+      foo(a: 2)
+      CR
+      "warning in line 5\nWarning: Deprecated top-level foo:a."
+  end
+
+  it "detects deprecated initialize" do
+    assert_warning <<-CR,
+      class Foo
+        @[Deprecated]
+        def initialize
+        end
+      end
+
+      Foo.new
+      CR
+      "warning in line 7\nWarning: Deprecated Foo.new."
+  end
+
+  it "detects deprecated initialize with named arguments" do
+    assert_warning <<-CR,
+      class Foo
+        @[Deprecated]
+        def initialize(*, a)
+        end
+      end
+
+      Foo.new(a: 2)
+      CR
+      "warning in line 7\nWarning: Deprecated Foo.new:a."
   end
 
   it "informs warnings once per call site location (a)" do
-    warning_failures = warnings_result %(
+    warning_failures = warnings_result <<-CR
       class Foo
         @[Deprecated("Do not use me")]
         def m
@@ -102,13 +139,12 @@ describe "Code gen: warnings" do
 
       Foo.new.b
       Foo.new.b
-    ), inject_primitives: false
-
+      CR
     warning_failures.size.should eq(1)
   end
 
   it "informs warnings once per call site location (b)" do
-    warning_failures = warnings_result %(
+    warning_failures = warnings_result <<-CR
       class Foo
         @[Deprecated("Do not use me")]
         def m
@@ -117,13 +153,13 @@ describe "Code gen: warnings" do
 
       Foo.new.m
       Foo.new.m
-    ), inject_primitives: false
+      CR
 
     warning_failures.size.should eq(2)
   end
 
   it "informs warnings once per yield" do
-    warning_failures = warnings_result %(
+    warning_failures = warnings_result <<-CR
       class Foo
         @[Deprecated("Do not use me")]
         def m
@@ -136,13 +172,13 @@ describe "Code gen: warnings" do
       end
 
       twice { Foo.new.m }
-    ), inject_primitives: false
+      CR
 
     warning_failures.size.should eq(1)
   end
 
   it "informs warnings once per target type" do
-    warning_failures = warnings_result %(
+    warning_failures = warnings_result <<-CR
       class Foo(T)
         @[Deprecated("Do not use me")]
         def m
@@ -155,7 +191,7 @@ describe "Code gen: warnings" do
 
       Foo(Int32).new.b
       Foo(Int64).new.b
-    ), inject_primitives: false
+      CR
 
     warning_failures.size.should eq(2)
   end
@@ -173,13 +209,13 @@ describe "Code gen: warnings" do
       output_filename = File.join(path, "main")
 
       Dir.cd(path) do
-        File.write main_filename, %(
+        File.write main_filename, <<-CR
           require "./lib/foo"
 
           bar
           foo
-        )
-        File.write File.join(path, "lib", "foo.cr"), %(
+          CR
+        File.write File.join(path, "lib", "foo.cr"), <<-CR
           @[Deprecated("Do not use me")]
           def foo
           end
@@ -187,9 +223,9 @@ describe "Code gen: warnings" do
           def bar
             foo
           end
-        )
+          CR
 
-        compiler = Compiler.new
+        compiler = create_spec_compiler
         compiler.warnings = Warnings::All
         compiler.warnings_exclude << Crystal.normalize_path "lib"
         compiler.prelude = "empty"
@@ -201,29 +237,29 @@ describe "Code gen: warnings" do
   end
 
   it "errors if invalid argument type" do
-    assert_error %(
+    assert_error <<-CR,
       @[Deprecated(42)]
       def foo
       end
-      ),
-      "Error in line 3: first argument must be a String"
+      CR
+      "first argument must be a String"
   end
 
   it "errors if too many arguments" do
-    assert_error %(
+    assert_error <<-CR,
       @[Deprecated("Do not use me", "extra arg")]
       def foo
       end
-      ),
-      "Error in line 3: wrong number of deprecated annotation arguments (given 2, expected 1)"
+      CR
+      "wrong number of deprecated annotation arguments (given 2, expected 1)"
   end
 
-  it "errors if missing link arguments" do
-    assert_error %(
+  it "errors if invalid named arguments" do
+    assert_error <<-CR,
       @[Deprecated(invalid: "Do not use me")]
       def foo
       end
-      ),
-      "Error in line 3: too many named arguments (given 1, expected maximum 0)"
+      CR
+      "too many named arguments (given 1, expected maximum 0)"
   end
 end

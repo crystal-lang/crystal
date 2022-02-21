@@ -1,5 +1,6 @@
 require "spec"
 require "bit_array"
+require "../spec_helper"
 require "big"
 require "random/secure"
 
@@ -56,7 +57,6 @@ describe "Crystal::Hasher" do
       Int64::MAX.hash.should eq(Int64::MAX.hash)
     end
 
-    # TODO: remove fencing when 128bits support is added to non-native platforms
     {% if flag?(:bits64) %}
       it "128bit types should be hashed ok" do
         1.to_i128.hash.should eq(1_i8.hash)

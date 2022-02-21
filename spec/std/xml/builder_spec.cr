@@ -1,22 +1,36 @@
 require "spec"
 require "xml"
+require "../../support/string"
 
-private def assert_built(expected, quote_char = nil)
-  string = XML.build(quote_char: quote_char) do |xml|
-    with xml yield xml
-  end
-  string.should eq(expected)
+private def assert_built(expected, quote_char = nil, *, file = __FILE__, line = __LINE__)
+  assert_prints XML.build(quote_char: quote_char) { |xml| with xml yield xml }, expected, file: file, line: line
 end
 
 describe XML::Builder do
   it "writes document" do
-    assert_built(%[<?xml version=\"1.0\"?>\n\n]) do
+    assert_built(%[<?xml version="1.0"?>\n\n]) do
     end
   end
 
   it "writes element" do
     assert_built(%[<?xml version="1.0"?>\n<foo/>\n]) do
       element("foo") { }
+    end
+  end
+
+  it "errors on invalid element names" do
+    expect_raises(XML::Error, "Invalid element name: '1'") do
+      XML.build do |xml|
+        xml.element("1") do
+        end
+      end
+    end
+
+    expect_raises(XML::Error, "Invalid element name: 'a b=\"c\"'") do
+      XML.build do |xml|
+        xml.element("a b=\"c\"") do
+        end
+      end
     end
   end
 
@@ -28,13 +42,13 @@ describe XML::Builder do
     end
   end
 
-  it "writes element with namspace" do
+  it "writes element with namespace" do
     assert_built(%[<?xml version="1.0"?>\n<x:foo id="1" xmlns:x="http://foo.com"/>\n]) do
       element("x", "foo", "http://foo.com", id: 1) { }
     end
   end
 
-  it "writes element with namspace, without block" do
+  it "writes element with namespace, without block" do
     assert_built(%[<?xml version="1.0"?>\n<x:foo id="1" xmlns:x="http://foo.com"/>\n]) do
       element("x", "foo", "http://foo.com", id: 1)
     end
@@ -52,6 +66,42 @@ describe XML::Builder do
     assert_built(%[<?xml version="1.0"?>\n<foo x:id="1" xmlns:x="http://ww.foo.com"/>\n]) do
       element("foo") do
         attribute("x", "id", "http://ww.foo.com", 1)
+      end
+    end
+  end
+
+  it "writes element with namespace" do
+    assert_built(%[<?xml version="1.0"?>\n<foo xmlns="bar">baz</foo>\n]) do
+      element(nil, "foo", "bar") do
+        text "baz"
+      end
+    end
+  end
+
+  it "writes element with prefix" do
+    assert_built(%[<?xml version="1.0"?>\n<foo:bar>baz</foo:bar>\n]) do
+      element("foo", "bar", nil) do
+        text "baz"
+      end
+    end
+  end
+
+  it "errors on invalid element name with prefix" do
+    expect_raises(XML::Error, "Invalid prefix: 'foo='") do
+      XML.build do |xml|
+        xml.element("foo=", "bar", nil) do
+          xml.text "baz"
+        end
+      end
+    end
+  end
+
+  it "errors on invalid element name with prefix and namespace" do
+    expect_raises(XML::Error, "Invalid prefix: 'foo '") do
+      XML.build do |xml|
+        xml.element("foo ", "bar", "ns") do
+          xml.text "baz"
+        end
       end
     end
   end
@@ -118,19 +168,29 @@ describe XML::Builder do
     end
   end
 
-  it "writes cdata" do
-    assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
-      element("foo") do
-        cdata("hello")
+  describe "#cdata" do
+    it "writes cdata" do
+      assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
+        element("foo") do
+          cdata("hello")
+        end
       end
     end
-  end
 
-  it "writes cdata with block" do
-    assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
-      element("foo") do
-        cdata do
-          text "hello"
+    it "escapes ]]> sequences" do
+      assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[One]]]]><![CDATA[>Two]]]]><![CDATA[>Three]]></foo>\n}) do |xml|
+        element("foo") do
+          cdata("One]]>Two]]>Three")
+        end
+      end
+    end
+
+    it "writes cdata with block" do
+      assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
+        element("foo") do
+          cdata do
+            text "hello"
+          end
         end
       end
     end

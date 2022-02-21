@@ -63,7 +63,7 @@ macro record(name, *properties)
       {% if property.is_a?(Assign) %}
         getter {{property.target.id}}
       {% elsif property.is_a?(TypeDeclaration) %}
-        getter {{property.var}} : {{property.type}}
+        getter {{property}}
       {% else %}
         getter :{{property.id}}
       {% end %}
@@ -89,31 +89,31 @@ macro record(name, *properties)
                       end
                     end
                   }})
-      {{name.id}}.new({{
-                        *properties.map do |property|
-                          if property.is_a?(Assign)
-                            "_#{property.target.id}".id
-                          elsif property.is_a?(TypeDeclaration)
-                            "_#{property.var.id}".id
-                          else
-                            "_#{property.id}".id
-                          end
-                        end
-                      }})
+      self.class.new({{
+                       *properties.map do |property|
+                         if property.is_a?(Assign)
+                           "_#{property.target.id}".id
+                         elsif property.is_a?(TypeDeclaration)
+                           "_#{property.var.id}".id
+                         else
+                           "_#{property.id}".id
+                         end
+                       end
+                     }})
     end
 
     def clone
-      {{name.id}}.new({{
-                        *properties.map do |property|
-                          if property.is_a?(Assign)
-                            "@#{property.target.id}.clone".id
-                          elsif property.is_a?(TypeDeclaration)
-                            "@#{property.var.id}.clone".id
-                          else
-                            "@#{property.id}.clone".id
-                          end
-                        end
-                      }})
+      self.class.new({{
+                       *properties.map do |property|
+                         if property.is_a?(Assign)
+                           "@#{property.target.id}.clone".id
+                         elsif property.is_a?(TypeDeclaration)
+                           "@#{property.var.id}.clone".id
+                         else
+                           "@#{property.id}.clone".id
+                         end
+                       end
+                     }})
     end
   end
 end
@@ -184,12 +184,4 @@ macro p!(*exps)
       {% end %}
     }
   {% end %}
-end
-
-macro assert_responds_to(var, method)
-  if {{var}}.responds_to?(:{{method}})
-    {{var}}
-  else
-    raise "Expected {{var}} to respond to :{{method}}, not #{ {{var}} }"
-  end
 end

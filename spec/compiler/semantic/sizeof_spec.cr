@@ -22,10 +22,47 @@ describe "Semantic: sizeof" do
   end
 
   it "gives error if using instance_sizeof on something that's not a class" do
-    assert_error "instance_sizeof(Int32)", "Int32 is not a class, it's a struct"
+    assert_error %(
+      instance_sizeof(Int32)
+      ),
+      "instance_sizeof can only be used with a class, but Int32 is a struct"
+  end
+
+  it "gives error if using instance_sizeof on a struct" do
+    assert_error %(
+      struct Foo
+      end
+
+      instance_sizeof(Foo)
+      ),
+      "instance_sizeof can only be used with a class, but Foo is a struct"
+  end
+
+  it "gives error if using instance_sizeof on a module" do
+    assert_error %(
+      module Moo
+      end
+
+      instance_sizeof(Moo)
+      ),
+      "instance_sizeof can only be used with a class, but Moo is a module"
+  end
+
+  it "gives error if using instance_sizeof on a metaclass" do
+    assert_error <<-CR, "instance_sizeof can only be used with a class, but Foo.class is a metaclass"
+      class Foo
+      end
+
+      instance_sizeof(Foo.class)
+      CR
   end
 
   it "gives error if using instance_sizeof on a generic type without type vars" do
     assert_error "instance_sizeof(Array)", "can't take instance_sizeof uninstantiated generic type Array(T)"
+  end
+
+  it "gives error if using instance_sizeof on a union type (#8349)" do
+    assert_error "instance_sizeof(Int32 | Bool)",
+      "instance_sizeof can only be used with a class, but (Bool | Int32) is a union"
   end
 end

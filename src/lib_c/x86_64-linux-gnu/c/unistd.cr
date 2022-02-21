@@ -8,6 +8,7 @@ lib LibC
   X_OK                =  1
   SC_CLK_TCK          =  2
   SC_NPROCESSORS_ONLN = 84
+  SC_PAGESIZE         = 30
 
   fun chroot(path : Char*) : Int
   fun access(name : Char*, type : Int) : Int
@@ -27,6 +28,7 @@ lib LibC
   fun getpgid(pid : PidT) : PidT
   fun getpid : PidT
   fun getppid : PidT
+  fun getuid : UidT
   fun isatty(fd : Int) : Int
   fun ttyname_r(fd : Int, buf : Char*, buffersize : SizeT) : Int
   fun lchown(file : Char*, owner : UidT, group : GidT) : Int
@@ -38,6 +40,7 @@ lib LibC
   fun pread(x0 : Int, x1 : Void*, x2 : SizeT, x3 : OffT) : SSizeT
   fun rmdir(path : Char*) : Int
   fun symlink(from : Char*, to : Char*) : Int
+  fun readlink(path : Char*, buf : Char*, size : SizeT) : SSizeT
   fun syscall(sysno : Long, ...) : Long
   fun sysconf(name : Int) : Long
   fun unlink(name : Char*) : Int

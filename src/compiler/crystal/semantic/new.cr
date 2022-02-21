@@ -14,7 +14,7 @@ module Crystal
         define_default_new(file_module)
       end
 
-      # Once we are done with the expansions we mark `initialze` methods
+      # Once we are done with the expansions we mark `initialize` methods
       # without an explicit visibility as `protected`.
       new_expansions.each do |expansion|
         original = expansion[:original]
@@ -37,6 +37,8 @@ module Crystal
                 false
               when NonGenericClassType, GenericClassType
                 true
+              else
+                false
               end
 
       if check
@@ -57,7 +59,7 @@ module Crystal
 
           # Also add `initialize`, so `super` in a subclass
           # inside an `initialize` will find this one
-          type.add_def Def.argless_initialize
+          type.add_def Def.argless_initialize(type)
         end
 
         # Check to see if a type doesn't define `initialize`
@@ -69,7 +71,7 @@ module Crystal
         has_self_initialize_methods = !self_initialize_methods.empty?
         if !has_self_initialize_methods
           is_generic = type.is_a?(GenericClassType)
-          inherits_from_generic = type.ancestors.any?(&.is_a?(GenericClassInstanceType))
+          inherits_from_generic = type.ancestors.any?(GenericClassInstanceType)
           if is_generic || inherits_from_generic
             has_default_self_new = self_new_methods.any? do |a_def|
               a_def.args.empty? && !a_def.yields
@@ -84,7 +86,7 @@ module Crystal
               # If the type has `self.new()`, don't override it
               unless has_default_self_new
                 type.metaclass.as(ModuleType).add_def(Def.argless_new(type))
-                type.add_def(Def.argless_initialize)
+                type.add_def(Def.argless_initialize(type))
               end
             else
               initialize_owner = nil
@@ -141,6 +143,7 @@ module Crystal
       new_def.new = true
       new_def.doc = doc
       new_def.free_vars = free_vars
+      new_def.annotations = annotations
 
       # Forward block argument if any
       if uses_block_arg?
@@ -221,7 +224,7 @@ module Crystal
         init.block_arg = Var.new(block_arg.name).at(self)
       end
 
-      self.body = Expressions.from(exps).at(self)
+      self.body = Expressions.from(exps).at(self.body)
     end
 
     def self.argless_new(instance_type)
@@ -249,8 +252,9 @@ module Crystal
       a_def
     end
 
-    def self.argless_initialize
-      Def.new("initialize", body: Nop.new)
+    def self.argless_initialize(instance_type)
+      loc = instance_type.locations.try &.first?
+      Def.new("initialize", body: Nop.new).at(loc)
     end
 
     def expand_new_default_arguments(instance_type, args_size, named_args)
@@ -288,6 +292,8 @@ module Crystal
       expansion = Def.new(name, def_args, Nop.new, splat_index: splat_index).at(self)
       expansion.yields = yields
       expansion.visibility = visibility
+      expansion.annotations = annotations
+
       if uses_block_arg?
         block_arg = self.block_arg.not_nil!
         expansion.block_arg = block_arg.clone

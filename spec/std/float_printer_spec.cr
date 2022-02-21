@@ -27,6 +27,7 @@
 #   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 require "spec"
+require "./spec_helper"
 
 private def float_to_s(v)
   String.build(22) do |buff|
@@ -51,7 +52,7 @@ private def test_pair(v : UInt32, str, file = __FILE__, line = __LINE__)
 end
 
 private def test_pair(v : Float64 | Float32, str, file = __FILE__, line = __LINE__)
-  float_to_s(v).should eq(str), file, line
+  float_to_s(v).should eq(str), file: file, line: line
 end
 
 describe "#print Float64" do
@@ -106,7 +107,7 @@ describe "#print Float64" do
     test_pair 5.5626846462680035e-309, "5.562684646268003e-309"
   end
 
-  it "falure case" do
+  pending_win32 "failure case" do
     # grisu cannot do this number, so it should fall back to libc
     test_pair 3.5844466002796428e+298, "3.5844466002796428e+298"
   end
@@ -135,6 +136,8 @@ describe "#print Float32" do
   it { test_pair 1000000000000000.0_f32, "1.0e+15" }
   it { test_pair 1111111111111111.0_f32, "1.1111111e+15" }
   it { test_pair -3.9292015898194142585311918e-10_f32, "-3.9292017e-10" }
+  # fails grisu check; ensures libc fallback works correctly
+  it { test_pair 85_f32 / 512_f32, "0.166016" }
 
   it "largest float" do
     test_pair 3.4028234e38_f32, "3.4028235e+38"

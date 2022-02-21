@@ -69,11 +69,10 @@ module Crystal
 
         main_visitor.pushing_type(owner.as(ModuleType)) do
           # Check if we can autocast
-          if (node.is_a?(NumberLiteral) || node.is_a?(SymbolLiteral)) &&
-             (class_var_type = class_var.type?)
+          if node.supports_autocast?(!@program.has_flag?("no_number_autocast")) && (class_var_type = class_var.type?)
             cloned_node = node.clone
             cloned_node.accept MainVisitor.new(self)
-            if casted_value = MainVisitor.check_automatic_cast(cloned_node, class_var_type)
+            if casted_value = MainVisitor.check_automatic_cast(@program, cloned_node, class_var_type)
               node = initializer.node = casted_value
             end
           end
@@ -87,7 +86,7 @@ module Crystal
 
         class_var.bind_to(node)
         class_var.initializer = initializer
-        self.class_var_and_const_initializers << initializer
+        self.class_var_initializers << initializer
       end
 
       node

@@ -1,7 +1,27 @@
 require "ecr/macros"
 
 module Crystal::Doc
-  record TypeTemplate, type : Type, types : Array(Type), canonical_base_url : String? do
+  SVG_DEFS = <<-SVGS
+  <svg class="hidden">
+    <symbol id="octicon-link" viewBox="0 0 16 16">
+      <path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+    </symbol>
+  </svg>
+  SVGS
+
+  def self.anchor_link(anchor : String)
+    anchor = anchor.downcase.gsub(' ', '-')
+
+    <<-ANCHOR
+    <a id="#{anchor}" class="anchor" href="##{anchor}">
+      <svg class="octicon-link" aria-hidden="true">
+        <use href="#octicon-link"/>
+      </svg>
+    </a>
+    ANCHOR
+  end
+
+  record TypeTemplate, type : Type, types : Array(Type), project_info : ProjectInfo do
     ECR.def_to_s "#{__DIR__}/html/type.html"
   end
 
@@ -25,16 +45,28 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/_other_types.html"
   end
 
-  record MainTemplate, body : String, types : Array(Type), repository_name : String, canonical_base_url : String? do
+  record MainTemplate, body : String, types : Array(Type), project_info : ProjectInfo do
     ECR.def_to_s "#{__DIR__}/html/main.html"
   end
 
-  record HeadTemplate, type : Type?, canonical_base_url : String? do
+  record HeadTemplate, project_info : ProjectInfo, current_type : Type? do
+    def base_path
+      if current_type = self.current_type
+        current_type.path_to ""
+      else
+        ""
+      end
+    end
+
     ECR.def_to_s "#{__DIR__}/html/_head.html"
   end
 
-  record SidebarTemplate, repository_name : String, types : Array(Type), current_type : Type? do
+  record SidebarTemplate, project_info : ProjectInfo, types : Array(Type), current_type : Type? do
     ECR.def_to_s "#{__DIR__}/html/_sidebar.html"
+  end
+
+  record Error404Template do
+    ECR.def_to_s "#{__DIR__}/html/404.html"
   end
 
   struct JsTypeTemplate
@@ -49,11 +81,19 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/js/_navigator.js"
   end
 
+  struct JsVersionsTemplate
+    ECR.def_to_s "#{__DIR__}/html/js/_versions.js"
+  end
+
   struct JsUsageModal
     ECR.def_to_s "#{__DIR__}/html/js/_usage-modal.js"
   end
 
   struct StyleTemplate
     ECR.def_to_s "#{__DIR__}/html/css/style.css"
+  end
+
+  record SitemapTemplate, types : Array(Type), base_url : String, priority : String, changefreq : String do
+    ECR.def_to_s "#{__DIR__}/html/sitemap.xml"
   end
 end

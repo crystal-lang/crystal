@@ -27,8 +27,8 @@ struct Crystal::System::FileInfo < ::File::Info
     @reparse_tag = LibC::DWORD.new(0)
   end
 
-  def size : UInt64
-    (@file_attributes.nFileSizeHigh.to_u64 << 32) | @file_attributes.nFileSizeLow.to_u64
+  def size : Int64
+    ((@file_attributes.nFileSizeHigh.to_u64 << 32) | @file_attributes.nFileSizeLow.to_u64).to_i64
   end
 
   def permissions : ::File::Permissions
@@ -74,12 +74,12 @@ struct Crystal::System::FileInfo < ::File::Info
     Time.from_filetime(@file_attributes.ftLastWriteTime)
   end
 
-  def owner : UInt32
-    0_u32
+  def owner_id : String
+    "0"
   end
 
-  def group : UInt32
-    0_u32
+  def group_id : String
+    "0"
   end
 
   def same_file?(other : ::File::Info) : Bool

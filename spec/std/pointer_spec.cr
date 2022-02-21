@@ -231,6 +231,14 @@ describe "Pointer" do
     a[2].should eq(5)
   end
 
+  it "maps_with_index!, with offset" do
+    a = Pointer(Int32).malloc(3) { |i| i + 1 }
+    a.map_with_index!(3, offset: 10) { |e, i| e + i }
+    a[0].should eq(11)
+    a[1].should eq(13)
+    a[2].should eq(15)
+  end
+
   it "raises if mallocs negative size" do
     expect_raises(ArgumentError) { Pointer.malloc(-1, 0) }
   end

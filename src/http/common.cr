@@ -1,12 +1,15 @@
 require "mime/media_type"
 {% if !flag?(:without_zlib) %}
-  require "flate"
-  require "gzip"
+  require "compress/deflate"
+  require "compress/gzip"
 {% end %}
 
 module HTTP
-  # :nodoc:
-  MAX_HEADER_SIZE = 16_384
+  # Default maximum permitted size (in bytes) of the request line in an HTTP request.
+  MAX_REQUEST_LINE_SIZE = 8192 # 8 KB
+
+  # Default maximum permitted combined size (in bytes) of the headers in an HTTP request.
+  MAX_HEADERS_SIZE = 16_384 # 16 KB
 
   # :nodoc:
   enum BodyType
@@ -18,24 +21,24 @@ module HTTP
   SUPPORTED_VERSIONS = {"HTTP/1.0", "HTTP/1.1"}
 
   # :nodoc:
-  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true)
+  record EndOfRequest
+  # :nodoc:
+  record HeaderLine, name : String, value : String, bytesize : Int32
+
+  # :nodoc:
+  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true, *, max_headers_size : Int32 = MAX_HEADERS_SIZE) : HTTP::Status?
     headers = Headers.new
 
-    headers_size = 0
-    while line = io.gets(MAX_HEADER_SIZE, chomp: true)
-      headers_size += line.bytesize
-      break if headers_size > MAX_HEADER_SIZE
-
-      if line.empty?
+    max_size = max_headers_size
+    while header_line = read_header_line(io, max_size)
+      case header_line
+      when EndOfRequest
         body = nil
 
         if body_type.prohibited?
           body = nil
         elsif content_length = content_length(headers)
-          if content_length != 0
-            # Don't create IO for Content-Length == 0
-            body = FixedLengthContent.new(io, content_length)
-          end
+          body = FixedLengthContent.new(io, content_length)
         elsif headers["Transfer-Encoding"]? == "chunked"
           body = ChunkedContent.new(io)
         elsif body_type.mandatory?
@@ -47,15 +50,26 @@ module HTTP
         end
 
         if decompress && body
+          encoding = headers["Content-Encoding"]?
           {% if flag?(:without_zlib) %}
-            raise "Can't decompress because `-D without_zlib` was passed at compile time"
+            case encoding
+            when "gzip", "deflate"
+              raise "Can't decompress because `-D without_zlib` was passed at compile time"
+            else
+              # not a format we support
+            end
           {% else %}
-            encoding = headers["Content-Encoding"]?
             case encoding
             when "gzip"
-              body = Gzip::Reader.new(body, sync_close: true)
+              body = Compress::Gzip::Reader.new(body, sync_close: true)
+              headers.delete("Content-Encoding")
+              headers.delete("Content-Length")
             when "deflate"
-              body = Flate::Reader.new(body, sync_close: true)
+              body = Compress::Deflate::Reader.new(body, sync_close: true)
+              headers.delete("Content-Encoding")
+              headers.delete("Content-Length")
+            else
+              # not a format we support
             end
           {% end %}
         end
@@ -63,12 +77,58 @@ module HTTP
         check_content_type_charset(body, headers)
 
         yield headers, body
-        break
-      end
+        return
+      else # HeaderLine
+        max_size -= header_line.bytesize
+        return HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE if max_size < 0
 
-      name, value = parse_header(line)
-      break unless headers.add?(name, value)
+        return HTTP::Status::BAD_REQUEST unless headers.add?(header_line.name, header_line.value)
+      end
     end
+  end
+
+  private def self.read_header_line(io, max_size) : HeaderLine | EndOfRequest | Nil
+    # Optimization: check if we have a peek buffer
+    if peek = io.peek
+      # peek.empty? means EOF (so bad request)
+      return nil if peek.empty?
+
+      # See if we can find \n
+      index = peek.index('\n'.ord.to_u8)
+      if index
+        end_index = index
+
+        # Also check (and discard) \r before that
+        if index > 0 && peek[index - 1] == '\r'.ord.to_u8
+          end_index -= 1
+        end
+
+        # Check if we just have "\n" or "\r\n" (so end of request)
+        if end_index == 0
+          io.skip(index + 1)
+          return EndOfRequest.new
+        end
+
+        return HeaderLine.new name: "", value: "", bytesize: index + 1 if index > max_size
+
+        name, value = parse_header(peek[0, end_index])
+        io.skip(index + 1) # Must skip until after \n
+        return HeaderLine.new name: name, value: value, bytesize: index + 1
+      end
+    end
+
+    line = io.gets(max_size + 1, chomp: true)
+    return nil unless line
+    if line.bytesize > max_size
+      return HeaderLine.new name: "", value: "", bytesize: max_size
+    end
+
+    if line.empty?
+      return EndOfRequest.new
+    end
+
+    name, value = parse_header(line)
+    return HeaderLine.new name: name, value: value, bytesize: line.bytesize
   end
 
   private def self.check_content_type_charset(body, headers)
@@ -81,13 +141,18 @@ module HTTP
     return unless mime_type
 
     charset = mime_type["charset"]?
-    return unless charset
+    return if !charset || charset == "utf-8"
 
     body.set_encoding(charset, invalid: :skip)
   end
 
   # :nodoc:
-  def self.parse_header(line)
+  def self.parse_header(line : String) : {String, String}
+    parse_header(line.to_slice)
+  end
+
+  # :nodoc:
+  def self.parse_header(slice : Bytes) : {String, String}
     # This is basically
     #
     # ```
@@ -100,12 +165,12 @@ module HTTP
     # instead of 3 (two from the split and one for the lstrip),
     # and there's no need for the array returned by split.
 
-    cstr = line.to_unsafe
-    bytesize = line.bytesize
+    cstr = slice.to_unsafe
+    bytesize = slice.size
 
     # Get the colon index and name
-    colon_index = cstr.to_slice(bytesize).index(':'.ord) || 0
-    name = line.byte_slice(0, colon_index)
+    colon_index = slice.index(':'.ord.to_u8) || 0
+    name = header_name(slice[0, colon_index])
 
     # Get where the header value starts (skip space)
     middle_index = colon_index + 1
@@ -117,15 +182,76 @@ module HTTP
     right_index = bytesize
     if middle_index >= right_index
       return {name, ""}
-    elsif right_index > 1 && cstr[right_index - 2] === '\r' && cstr[right_index - 1] === '\n'
+    elsif right_index > 1 && cstr[right_index - 2] == '\r'.ord.to_u8 && cstr[right_index - 1] == '\n'.ord.to_u8
       right_index -= 2
-    elsif right_index > 0 && cstr[right_index - 1] === '\n'
+    elsif right_index > 0 && cstr[right_index - 1] == '\n'.ord.to_u8
       right_index -= 1
     end
 
-    value = line.byte_slice(middle_index, right_index - middle_index)
+    value = String.new(slice[middle_index, right_index - middle_index])
 
     {name, value}
+  end
+
+  # Important! These have to be in lexicographic order.
+  private COMMON_HEADERS = %w(
+    Accept-Encoding
+    Accept-Language
+    Accept-encoding
+    Accept-language
+    Allow
+    Cache-Control
+    Cache-control
+    Connection
+    Content-Disposition
+    Content-Encoding
+    Content-Language
+    Content-Length
+    Content-Type
+    Content-disposition
+    Content-encoding
+    Content-language
+    Content-length
+    Content-type
+    ETag
+    Etag
+    Expires
+    Host
+    Last-Modified
+    Last-modified
+    Location
+    Referer
+    User-Agent
+    User-agent
+    accept-encoding
+    accept-language
+    allow
+    cache-control
+    connection
+    content-disposition
+    content-encoding
+    content-language
+    content-length
+    content-type
+    etag
+    expires
+    host
+    last-modified
+    location
+    referer
+    user-agent
+  )
+
+  # :nodoc:
+  def self.header_name(slice : Bytes) : String
+    # Check if the header name is a common one.
+    # If so we avoid having to allocate a string for it.
+    if slice.size < 20
+      name = COMMON_HEADERS.bsearch { |string| slice <= string.to_slice }
+      return name if name && name.to_slice == slice
+    end
+
+    String.new(slice)
   end
 
   # :nodoc:
@@ -171,7 +297,7 @@ module HTTP
   def self.serialize_chunked_body(io, body)
     buf = uninitialized UInt8[8192]
     while (buf_length = body.read(buf.to_slice)) > 0
-      buf_length.to_s(16, io)
+      buf_length.to_s(io, 16)
       io << "\r\n"
       io.write(buf.to_slice[0, buf_length])
       io << "\r\n"
@@ -180,7 +306,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.content_length(headers)
+  def self.content_length(headers) : UInt64?
     length_headers = headers.get? "Content-Length"
     return nil unless length_headers
     first_header = length_headers[0]
@@ -191,23 +317,23 @@ module HTTP
   end
 
   # :nodoc:
-  def self.keep_alive?(message)
+  def self.keep_alive?(message) : Bool
     case message.headers["Connection"]?.try &.downcase
     when "keep-alive"
-      return true
+      true
     when "close", "upgrade"
-      return false
-    end
-
-    case message.version
-    when "HTTP/1.0"
       false
     else
-      true
+      case message.version
+      when "HTTP/1.0"
+        false
+      else
+        true
+      end
     end
   end
 
-  def self.expect_continue?(headers)
+  def self.expect_continue?(headers) : Bool
     headers["Expect"]?.try(&.downcase) == "100-continue"
   end
 
@@ -253,7 +379,7 @@ module HTTP
   # quoted = %q(\"foo\\bar\")
   # HTTP.dequote_string(quoted) # => %q("foo\bar")
   # ```
-  def self.dequote_string(str)
+  def self.dequote_string(str) : String
     data = str.to_slice
     quoted_pair_index = data.index('\\'.ord)
     return str unless quoted_pair_index
@@ -261,7 +387,7 @@ module HTTP
     String.build do |io|
       while quoted_pair_index
         io.write(data[0, quoted_pair_index])
-        io << data[quoted_pair_index + 1].chr
+        io << data[quoted_pair_index + 1].unsafe_chr
 
         data += quoted_pair_index + 2
         quoted_pair_index = data.index('\\'.ord)
@@ -283,17 +409,19 @@ module HTTP
   # io.rewind
   # io.gets_to_end # => %q(\"foo\\\ bar\")
   # ```
-  def self.quote_string(string, io)
+  def self.quote_string(string, io) : Nil
     # Escaping rules: https://evolvis.org/pipermail/evolvis-platfrm-discuss/2014-November/000675.html
 
-    string.each_byte do |byte|
-      case byte
-      when '\t'.ord, ' '.ord, '"'.ord, '\\'.ord
+    string.each_char do |char|
+      case char
+      when '\t', ' ', '"', '\\'
         io << '\\'
-      when 0x00..0x1F, 0x7F
-        raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+      when '\u{00}'..'\u{1F}', '\u{7F}'
+        raise ArgumentError.new("String contained invalid character #{char.inspect}")
+      else
+        # output byte as is
       end
-      io.write_byte byte
+      io << char
     end
   end
 
@@ -306,7 +434,7 @@ module HTTP
   # string = %q("foo\ bar")
   # HTTP.quote_string(string) # => %q(\"foo\\\ bar\")
   # ```
-  def self.quote_string(string)
+  def self.quote_string(string) : String
     String.build do |io|
       quote_string(string, io)
     end
@@ -319,3 +447,4 @@ require "./client/response"
 require "./headers"
 require "./content"
 require "./cookie"
+require "./formdata"

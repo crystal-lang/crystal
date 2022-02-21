@@ -3,7 +3,7 @@ require "../support/finalize"
 
 private class StringWrapper
   delegate downcase, to: @string
-  delegate upcase, capitalize, at, scan, to: @string
+  delegate upcase, capitalize, char_at, scan, to: @string
 
   @string : String
 
@@ -112,6 +112,16 @@ private class TestObject
   def []=(key, value)
     {key, value}
   end
+
+  annotation TestAnnotation
+  end
+
+  @[TestAnnotation]
+  property(x : Int32) { 1 }
+
+  def self.test_annotation_count
+    {{ @type.instance_vars.select(&.annotation(TestObject::TestAnnotation)).size }}
+  end
 end
 
 private class DelegatedTestObject
@@ -123,13 +133,7 @@ private class DelegatedTestObject
 end
 
 private class TestObjectWithFinalize
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-  end
+  include FinalizeCounter
 
   def_clone
 end
@@ -144,6 +148,20 @@ private class HashedTestObject
   def_hash :a, :b
 end
 
+private struct NonReflexive
+  def ==(other)
+    false
+  end
+end
+
+private class DefEquals
+  def initialize
+    @x = NonReflexive.new
+  end
+
+  def_equals @x
+end
+
 describe Object do
   describe "delegate" do
     it "delegates" do
@@ -152,10 +170,10 @@ describe Object do
       wrapper.upcase.should eq("HELLO")
       wrapper.capitalize.should eq("Hello")
 
-      wrapper.at(0).should eq('H')
-      wrapper.at(index: 1).should eq('e')
+      wrapper.char_at(0).should eq('H')
+      wrapper.char_at(index: 1).should eq('e')
 
-      wrapper.at(10) { 20 }.should eq(20)
+      wrapper.char_at(10) { 20 }.should eq(20)
 
       matches = [] of String
       wrapper.scan(/l/) do |match|
@@ -229,7 +247,7 @@ describe Object do
   describe "getter!" do
     it "uses getter!" do
       obj = TestObject.new
-      expect_raises(Exception, "Nil assertion failed") do
+      expect_raises(NilAssertionError, "TestObject#getter5 cannot be nil") do
         obj.getter5
       end
       obj.getter5 = 5
@@ -240,7 +258,7 @@ describe Object do
 
     it "uses getter! with type declaration" do
       obj = TestObject.new
-      expect_raises(Exception, "Nil assertion failed") do
+      expect_raises(NilAssertionError, "TestObject#getter6 cannot be nil") do
         obj.getter6
       end
       obj.getter6 = 6
@@ -379,7 +397,7 @@ describe Object do
   describe "property!" do
     it "uses property!" do
       obj = TestObject.new
-      expect_raises(Exception, "Nil assertion failed") do
+      expect_raises(NilAssertionError, "TestObject#property5 cannot be nil") do
         obj.property5
       end
       obj.property5 = 5
@@ -388,7 +406,7 @@ describe Object do
 
     it "uses property! with type declaration" do
       obj = TestObject.new
-      expect_raises(Exception, "Nil assertion failed") do
+      expect_raises(NilAssertionError, "TestObject#property6 cannot be nil") do
         obj.property6
       end
       obj.property6 = 6
@@ -444,13 +462,33 @@ describe Object do
     end
   end
 
+  describe "#in?" do
+    it "works with Enumerable-s" do
+      :foo.in?([:foo, :bar]).should be_true
+      :bar.in?({:foo, :baz}).should be_false
+      42.in?(0..100).should be_true
+      4242.in?(0..100).should be_false
+    end
+
+    it "works with splatted arguments" do
+      :baz.in?(:foo, :bar).should be_false
+      1.in?(1, 10, 100).should be_true
+    end
+
+    it "works with other objects implementing #includes?" do
+      "o".in?("foo").should be_true
+      'o'.in?("foo").should be_true
+      'x'.in?("foo").should be_false
+    end
+  end
+
   it "#unsafe_as" do
     0x12345678.unsafe_as(Tuple(UInt8, UInt8, UInt8, UInt8)).should eq({0x78, 0x56, 0x34, 0x12})
   end
 
   it "calls #finalize on #clone'd objects" do
     obj = TestObjectWithFinalize.new
-    assert_finalizes(:clone) { obj.clone }
+    assert_finalizes("clone") { obj.clone }
   end
 
   describe "def_hash" do
@@ -460,6 +498,19 @@ describe Object do
 
     it "shouldn't return same hash for different property values" do
       HashedTestObject.new(1, 2).hash.should_not eq HashedTestObject.new(3, 4).hash
+    end
+  end
+
+  it "applies annotation to lazy property (#9139)" do
+    TestObject.test_annotation_count.should eq(1)
+  end
+
+  describe "def_equals" do
+    it "compares by reference" do
+      x = DefEquals.new
+      y = DefEquals.new
+      (x == x).should be_true
+      (x == y).should be_false
     end
   end
 end

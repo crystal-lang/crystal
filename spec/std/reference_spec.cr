@@ -21,7 +21,19 @@ private module ReferenceSpec
 
     def initialize
       @x = 1
+      @y = "y"
+    end
+
+    def_clone
+  end
+
+  class DupCloneRecursiveClass
+    getter x, y, z
+
+    def initialize
+      @x = 1
       @y = [1, 2, 3]
+      @z = self
     end
 
     def_clone
@@ -38,13 +50,7 @@ private module ReferenceSpec
   end
 
   class TestClassWithFinalize
-    property key : Symbol?
-
-    def finalize
-      if key = self.key
-        State.inc(key)
-      end
-    end
+    include FinalizeCounter
   end
 end
 
@@ -113,8 +119,16 @@ describe "Reference" do
     clone = original.clone
     clone.should_not be(original)
     clone.x.should eq(original.x)
+  end
+
+  it "clones with def_clone (recursive type)" do
+    original = ReferenceSpec::DupCloneRecursiveClass.new
+    clone = original.clone
+    clone.should_not be(original)
+    clone.x.should eq(original.x)
     clone.y.should_not be(original.y)
     clone.y.should eq(original.y)
+    clone.z.should be(clone)
   end
 
   it "pretty_print" do
@@ -124,6 +138,6 @@ describe "Reference" do
 
   it "calls #finalize on #dup'ed objects" do
     obj = ReferenceSpec::TestClassWithFinalize.new
-    assert_finalizes(:clone) { obj.dup }
+    assert_finalizes("dup") { obj.dup }
   end
 end

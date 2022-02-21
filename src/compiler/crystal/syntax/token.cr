@@ -4,7 +4,7 @@ module Crystal
   class Token
     property type : Symbol
     property value : Char | String | Symbol | Nil
-    property number_kind : Symbol
+    property number_kind : NumberKind
     property line_number : Int32
     property column_number : Int32
     property filename : String | VirtualFile | Nil
@@ -14,6 +14,7 @@ module Crystal
     property doc_buffer : IO::Memory?
     property raw : String
     property start : Int32
+    property invalid_escape : Bool
 
     record MacroState,
       whitespace : Bool,
@@ -22,17 +23,27 @@ module Crystal
       delimiter_state : DelimiterState?,
       beginning_of_line : Bool,
       yields : Bool,
-      comment : Bool do
+      comment : Bool,
+      heredocs : Array(DelimiterState)? do
       def self.default
-        MacroState.new(true, 0, 0, nil, true, false, false)
+        MacroState.new(true, 0, 0, nil, true, false, false, nil)
       end
 
       setter whitespace
       setter control_nest
     end
 
+    enum DelimiterKind
+      STRING
+      REGEX
+      STRING_ARRAY
+      SYMBOL_ARRAY
+      COMMAND
+      HEREDOC
+    end
+
     record DelimiterState,
-      kind : Symbol,
+      kind : DelimiterKind,
       nest : Char | String,
       end : Char | String,
       open_count : Int32,
@@ -45,15 +56,15 @@ module Crystal
         DelimiterState.new(:string, '\0', '\0', 0, 0, true)
       end
 
-      def self.new(kind, nest, the_end)
+      def self.new(kind : DelimiterKind, nest, the_end)
         new kind, nest, the_end, 0, 0, true
       end
 
-      def self.new(kind, nest, the_end, allow_escapes : Bool)
+      def self.new(kind : DelimiterKind, nest, the_end, allow_escapes : Bool)
         new kind, nest, the_end, 0, 0, allow_escapes
       end
 
-      def self.new(kind, nest, the_end, open_count : Int32)
+      def self.new(kind : DelimiterKind, nest, the_end, open_count : Int32)
         new kind, nest, the_end, open_count, 0, true
       end
 
@@ -68,7 +79,7 @@ module Crystal
 
     def initialize
       @type = :EOF
-      @number_kind = :i32
+      @number_kind = NumberKind::I32
       @line_number = 0
       @column_number = 0
       @delimiter_state = DelimiterState.default
@@ -76,6 +87,7 @@ module Crystal
       @passed_backslash_newline = false
       @raw = ""
       @start = 0
+      @invalid_escape = false
     end
 
     def doc

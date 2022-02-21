@@ -337,4 +337,38 @@ describe "Code gen: enum" do
       Foo.new(1)
       )).to_i.should eq(2)
   end
+
+  it "can define flags enum : UInt64 with more than 32 values (#7268)" do
+    run(%(
+      @[Flags]
+      enum Foo : UInt64
+        #{Array.new(33) { |i| "V#{i + 1}" }.join "\n"}
+      end
+
+      Foo::V33.value
+      )).to_u64.should eq(1_u64 << 32)
+  end
+
+  it "can define flags enum : UInt128 with 128 values" do
+    run(%(
+      @[Flags]
+      enum Foo : UInt128
+        #{Array.new(128) { |i| "V#{i + 1}" }.join "\n"}
+      end
+
+      Foo::V64.value.to_u64!
+      )).to_u64.should eq(1_u64 << 63)
+  end
+
+  it "can define flags enum : UInt128 with compile-time interpreted values" do
+    run(%(
+      enum Foo : UInt128
+        A = 1_u128 << 6
+        B = 1_u128 << 20
+        C = 1_u128 << 60
+      end
+
+      Foo::A.value.to_u64!
+      )).to_u64.should eq(1 << 6)
+  end
 end

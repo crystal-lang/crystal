@@ -11,7 +11,6 @@ require "mime/multipart"
 #
 # ```
 # require "http"
-# require "tempfile"
 #
 # server = HTTP::Server.new do |context|
 #   name = nil
@@ -28,7 +27,7 @@ require "mime/multipart"
 #   end
 #
 #   unless name && file
-#     context.response.status = :bad_request
+#     context.response.respond_with_status(:bad_request)
 #     next
 #   end
 #
@@ -78,7 +77,7 @@ require "mime/multipart"
 # end
 # ```
 module HTTP::FormData
-  # Parses a multipart/form-data message, yielding a `FormData::Parser`.
+  # Parses a multipart/form-data message, yielding a `FormData::Part`.
   #
   # ```
   # require "http"
@@ -98,7 +97,7 @@ module HTTP::FormData
     end
   end
 
-  # Parses a multipart/form-data message, yielding a `FormData::Parser`.
+  # Parses a multipart/form-data message, yielding a `FormData::Part`.
   #
   # ```
   # require "http"
@@ -163,6 +162,8 @@ module HTTP::FormData
         size = value.to_u64
       when "name"
         name = value
+      else
+        # not a field we are interested in
       end
     end
 

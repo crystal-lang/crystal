@@ -3,6 +3,7 @@ require "./codegen"
 class Crystal::CodeGenVisitor
   class Context
     property fun : LLVM::Function
+    property fun_debug_params = [] of LibLLVM::MetadataRef
     property type : Type
     property vars : Hash(String, LLVMVar)
     property return_type : Type?
@@ -10,7 +11,6 @@ class Crystal::CodeGenVisitor
     property break_phi : Phi?
     property next_phi : Phi?
     property while_block : LLVM::BasicBlock?
-    property while_exit_block : LLVM::BasicBlock?
     property! block : Block
     property! block_context : Context
     property closure_vars : Array(MetaVar)?
@@ -43,7 +43,6 @@ class Crystal::CodeGenVisitor
       context.break_phi = @break_phi
       context.next_phi = @next_phi
       context.while_block = @while_block
-      context.while_exit_block = @while_exit_block
       if block = @block
         context.block = block
       end
@@ -55,6 +54,10 @@ class Crystal::CodeGenVisitor
       context.closure_parent_context = @closure_parent_context
       context.closure_self = @closure_self
       context
+    end
+
+    def add_fun_debug_param(debug_type)
+      fun_debug_params << debug_type if debug_type
     end
   end
 

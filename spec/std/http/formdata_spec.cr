@@ -1,5 +1,6 @@
 require "spec"
-require "http"
+require "http/formdata"
+require "http/server/response"
 
 describe HTTP::FormData do
   describe ".parse(IO, String)" do
@@ -94,7 +95,7 @@ describe HTTP::FormData do
     end
   end
 
-  describe ".build(HTTP::Response, String)" do
+  describe ".build(HTTP::Server::Response, String)" do
     it "builds a message" do
       io = IO::Memory.new
       response = HTTP::Server::Response.new(io)

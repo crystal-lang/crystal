@@ -17,4 +17,9 @@ struct LLVM::BasicBlock
   def to_unsafe
     @unwrap
   end
+
+  def name
+    block_name = LibLLVMExt.basic_block_name(self)
+    block_name ? LLVM.string_and_dispose(block_name) : nil
+  end
 end
