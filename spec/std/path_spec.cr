@@ -768,13 +768,29 @@ describe Path do
   end
 
   describe "#to_windows" do
-    assert_paths_raw("foo/bar", Path.windows("foo/bar"), &.to_windows)
-    assert_paths_raw("C:\\foo\\bar", Path.windows("C:\\foo\\bar"), &.to_windows)
+    assert_paths_raw("C:\\foo\\bar", Path.windows("C:\\foo\\bar"), label: "default: mappings=false", &.to_windows)
+
+    assert_paths_raw("foo/bar", Path.windows("foo/bar"), &.to_windows(mappings: true))
+    assert_paths_raw("C:\\foo\\bar", Path.windows("C\uF03A\uF05Cfoo\uF05Cbar"), Path.windows("C:\\foo\\bar"), &.to_windows(mappings: true))
+    assert_paths_raw(%("*/:<>?\\| ), Path.windows("\uF022\uF02A/\uF03A\uF03C\uF03E\uF03F\uF05C\uF07C\uF020"), Path.windows(%("*/:<>?\\| )), &.to_windows(mappings: true))
+
+    assert_paths_raw("foo/bar", Path.windows("foo/bar"), &.to_windows(mappings: false))
+    assert_paths_raw("C:\\foo\\bar", Path.windows("C:\\foo\\bar"), &.to_windows(mappings: false))
+    assert_paths_raw(%("*/:<>?\\| ), Path.windows(%("*/:<>?\\| )), &.to_windows(mappings: false))
   end
 
   describe "#to_posix" do
-    assert_paths_raw("foo/bar", Path.posix("foo/bar"), &.to_posix)
-    assert_paths_raw("C:\\foo\\bar", Path.posix("C:\\foo\\bar"), Path.posix("C:/foo/bar"), &.to_posix)
+    assert_paths_raw("C\uF03A\uF05Cfoo\uF05Cbar", Path.posix("C\uF03A\uF05Cfoo\uF05Cbar"), label: "default: mappings=false", &.to_posix)
+
+    assert_paths_raw("foo/bar", Path.posix("foo/bar"), &.to_posix(mappings: true))
+    assert_paths_raw("C:\\foo\\bar", Path.posix("C:\\foo\\bar"), Path.posix("C:/foo/bar"), &.to_posix(mappings: true))
+    assert_paths_raw("C\uF03A\uF05Cfoo\uF05Cbar", Path.posix("C\uF03A\uF05Cfoo\uF05Cbar"), Path.posix("C:\\foo\\bar"), &.to_posix(mappings: true))
+    assert_paths_raw("\uF022\uF02A/\uF03A\uF03C\uF03E\uF03F\uF05C\uF07C\uF020", Path.posix("\uF022\uF02A/\uF03A\uF03C\uF03E\uF03F\uF05C\uF07C\uF020"), Path.posix(%("*/:<>?\\| )), &.to_posix(mappings: true))
+
+    assert_paths_raw("foo/bar", Path.posix("foo/bar"), &.to_posix(mappings: false))
+    assert_paths_raw("C:\\foo\\bar", Path.posix("C:\\foo\\bar"), Path.posix("C:/foo/bar"), &.to_posix(mappings: false))
+    assert_paths_raw("C\uF03A\uF05Cfoo\uF05Cbar", Path.posix("C\uF03A\uF05Cfoo\uF05Cbar"), &.to_posix(mappings: false))
+    assert_paths_raw("\uF022\uF02A/\uF03A\uF03C\uF03E\uF03F\uF05C\uF07C\uF020", Path.posix("\uF022\uF02A/\uF03A\uF03C\uF03E\uF03F\uF05C\uF07C\uF020"), &.to_posix(mappings: false))
   end
 
   describe "#relative_to?" do
