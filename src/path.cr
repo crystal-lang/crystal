@@ -648,7 +648,7 @@ struct Path
   # Path.windows("foo/bar").to_windows # => Path.windows("foo/bar")
   # ```
   #
-  # When *mappings* is `true`, forbidden characters in Windows paths are
+  # When *mappings* is `true` (default), forbidden characters in Windows paths are
   # substituted by replacement characters when converting from a POSIX path.
   # Replacements are calculated by adding `0xF000` to their codepoint.
   # For example, the backslash character `U+005C` becomes `U+F05C`.
@@ -660,7 +660,7 @@ struct Path
   #
   # * `#to_posix` performs the inverse conversion.
   # * `#to_kind` performs a configurable conversion.
-  def to_windows(*, mappings : Bool = false) : Path
+  def to_windows(*, mappings : Bool = true) : Path
     name = @name
     if posix? && mappings
       name = name.tr(WINDOWS_ESCAPE_CHARACTERS, WINDOWS_ESCAPED_CHARACTERS)
@@ -684,7 +684,7 @@ struct Path
   # Path.posix("foo/bar\\baz").to_posix   # => Path.posix("foo/bar\\baz")
   # ```
   #
-  # When *mappings* is `true`, replacements  for forbidden characters in Windows
+  # When *mappings* is `true` (default), replacements  for forbidden characters in Windows
   # paths are substituted by the original characters when converting to a POSIX path.
   # Originals are calculated by subtracting `0xF000` from the replacement codepoint.
   # For example, the `U+F05C` becomes `U+005C`, the backslash character.
@@ -696,7 +696,7 @@ struct Path
   #
   # * `#to_windows` performs the inverse conversion.
   # * `#to_kind` performs a configurable conversion.
-  def to_posix(*, mappings : Bool = false) : Path
+  def to_posix(*, mappings : Bool = true) : Path
     name = @name
     if windows?
       name = name.gsub('\\', '/')
@@ -712,7 +712,7 @@ struct Path
   # See `#to_windows` and `#to_posix` for details.
   #
   # * `#to_native` converts to the native path semantics.
-  def to_kind(kind, *, mappings : Bool = false) : Path
+  def to_kind(kind, *, mappings : Bool = true) : Path
     if kind.posix?
       to_posix(mappings: mappings)
     else

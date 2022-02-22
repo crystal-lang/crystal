@@ -648,18 +648,18 @@ describe Path do
       it_expands_path("foo", "D:/foo", "D:foo", base: "D:")
       it_expands_path("/foo", "/foo", "D:\\foo", base: "D:")
       it_expands_path("\\foo", "D:/\\foo", "D:\\foo", base: "D:")
-      it_expands_path("foo", "D:\\/foo", "D:\\foo", base: Path.posix("D:\\"))
+      it_expands_path("foo", "D:\\/foo", "D\uF03A\uF05C\\foo", base: Path.posix("D:\\"))
       it_expands_path("foo", "D:/foo", "D:\\foo", base: Path.windows("D:\\"))
       it_expands_path("foo", "D:/foo", "D:\\foo", base: "D:/")
       it_expands_path("/foo", "/foo", "D:\\foo", base: "D:\\")
-      it_expands_path("\\foo", "D:\\/\\foo", "D:\\foo", base: Path.posix("D:\\"))
+      it_expands_path("\\foo", "D:\\/\\foo", "\\foo", base: Path.posix("D:\\"))
       it_expands_path("\\foo", "D:/\\foo", "D:\\foo", base: Path.windows("D:\\"))
       it_expands_path("/foo", "/foo", "D:\\foo", base: "D:/")
       it_expands_path("\\foo", "D:/\\foo", "D:\\foo", base: "D:/")
 
       it_expands_path("C:", "D:/C:", "C:", base: "D:")
       it_expands_path("C:", "D:/C:", "C:\\", base: "D:/")
-      it_expands_path("C:", "D:\\/C:", "C:\\", base: Path.posix("D:\\"))
+      it_expands_path("C:", "D:\\/C:", "C:D\uF03A\uF05C\\", base: Path.posix("D:\\"))
       it_expands_path("C:", "D:/C:", "C:\\", base: Path.windows("D:\\"))
       it_expands_path("C:/", "D:/C:/", "C:\\", base: "D:")
       it_expands_path("C:/", "D:/C:/", "C:\\", base: "D:/")
@@ -673,7 +673,7 @@ describe Path do
       it_expands_path("C:foo", "D:/C:foo", "C:foo", base: "D:")
       it_expands_path("C:/foo", "D:/C:/foo", "C:\\foo", base: "D:")
       it_expands_path("C:\\foo", "D:/C:\\foo", "C:\\foo", base: "D:")
-      it_expands_path("C:foo", "D:\\/C:foo", "C:\\foo", base: Path.posix("D:\\"))
+      it_expands_path("C:foo", "D:\\/C:foo", "C:D\uF03A\uF05C\\foo", base: Path.posix("D:\\"))
       it_expands_path("C:foo", "D:/C:foo", "C:\\foo", base: Path.windows("D:\\"))
       it_expands_path("C:foo", "D:/C:foo", "C:\\foo", base: "D:/")
       it_expands_path("C:/foo", "D:\\/C:/foo", "C:\\foo", base: Path.posix("D:\\"))
@@ -774,7 +774,7 @@ describe Path do
   end
 
   describe "#to_windows" do
-    assert_paths_raw("C:\\foo\\bar", Path.windows("C:\\foo\\bar"), label: "default: mappings=false", &.to_windows)
+    assert_paths_raw("C:\\foo\\bar", Path.windows("C\uF03A\uF05Cfoo\uF05Cbar"), Path.windows("C:\\foo\\bar"), label: "default: mappings=true", &.to_windows)
 
     assert_paths_raw("foo/bar", Path.windows("foo/bar"), &.to_windows(mappings: true))
     assert_paths_raw("C:\\foo\\bar", Path.windows("C\uF03A\uF05Cfoo\uF05Cbar"), Path.windows("C:\\foo\\bar"), &.to_windows(mappings: true))
@@ -786,7 +786,7 @@ describe Path do
   end
 
   describe "#to_posix" do
-    assert_paths_raw("C\uF03A\uF05Cfoo\uF05Cbar", Path.posix("C\uF03A\uF05Cfoo\uF05Cbar"), label: "default: mappings=false", &.to_posix)
+    assert_paths_raw("C\uF03A\uF05Cfoo\uF05Cbar", Path.posix("C\uF03A\uF05Cfoo\uF05Cbar"), Path.posix("C:\\foo\\bar"), label: "default: mappings=true", &.to_posix)
 
     assert_paths_raw("foo/bar", Path.posix("foo/bar"), &.to_posix(mappings: true))
     assert_paths_raw("C:\\foo\\bar", Path.posix("C:\\foo\\bar"), Path.posix("C:/foo/bar"), &.to_posix(mappings: true))
