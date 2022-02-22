@@ -14,9 +14,15 @@ end
 
 private def it_expands_path(path, posix, windows = posix, *, base = nil, env_home = nil, expand_base = false, home = false, file = __FILE__, line = __LINE__)
   assert_paths(path, posix, windows, %((base: "#{base}")), file, line) do |path|
-    with_env({HOME_ENV_KEY => env_home || (path.windows? ? HOME_WINDOWS : HOME_POSIX)}) do
+    with_env({HOME_ENV_KEY => env_home}) do
       base_arg = base || (path.windows? ? BASE_WINDOWS : BASE_POSIX)
-      path.expand(base_arg.not_nil!, expand_base: !!expand_base, home: home)
+      base_arg = path.windows? ? Path.windows(base_arg) : Path.posix(base_arg) unless base_arg.is_a?(Path)
+      if home == true && env_home.nil?
+        myhome = path.windows? ? Path.windows(HOME_WINDOWS) : Path.posix(HOME_POSIX)
+      else
+        myhome = home
+      end
+      path.expand(base_arg, expand_base: !!expand_base, home: myhome)
     end
   end
 end
