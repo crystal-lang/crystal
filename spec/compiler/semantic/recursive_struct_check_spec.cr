@@ -184,4 +184,15 @@ describe "Semantic: recursive struct check" do
 
     ex.to_s.should contain "`(Bar(Foo) | Int32)` -> `Bar(Foo)` -> `@x : Foo`"
   end
+
+  it "errors on private recursive type" do
+    assert_error <<-CR, "recursive struct Test detected"
+      private struct Test
+        def initialize(@test : Test?)
+        end
+      end
+
+      Test.new(Test.new(nil))
+      CR
+  end
 end
