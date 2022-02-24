@@ -1840,6 +1840,8 @@ module Crystal
     assert_syntax_error "def foo(x :Int32); end", "space required after colon in type restriction"
 
     assert_syntax_error "def f end", %(unexpected token: "end" (expected ";" or newline))
+    assert_syntax_error "def foo : Int32 1 end", %(unexpected token: "1" (expected ";" or newline))
+    assert_syntax_error "def foo(x : U) forall U end", %(unexpected token: "end" (expected ";" or newline))
 
     assert_syntax_error "fun foo\nclass", "can't define class inside fun"
     assert_syntax_error "fun foo\nFoo = 1", "dynamic constant assignment"

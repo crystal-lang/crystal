@@ -3613,7 +3613,13 @@ module Crystal
         body = Nop.new
       else
         slash_is_regex!
-        skip_statement_end
+
+        case @token.type
+        when :";", :NEWLINE
+          skip_statement_end
+        else
+          unexpected_token %(expected ";" or newline)
+        end
 
         end_location = token_end_location
 
