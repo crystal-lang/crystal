@@ -158,7 +158,7 @@ Approvals from Core Team members are required for accepting a pull requests. Oth
 
 1. Make sure the [formal minimum requirements](#minimum-requirements) are met, for the change itself and the PR. Cross check with the referenced issue(s).
 2. Check if CI is successful. If not, try to figure out what's wrong and add a comment about it. If a failure seems unrelated, maintainers can try to rerun the job.
-3. Leave code comments when you want to request changes or ask for clarification. Suggestions are often understood as requirements, so make it clear if a proposal is optional or you're just asking for feedback.
+3. Leave inline comments when you want to request changes or ask for clarification. Suggestions are often understood as requirements, so make it clear if a proposal is optional or you're just asking for feedback.
 
 ### Accepting a Pull Request
 
