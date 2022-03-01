@@ -142,7 +142,9 @@ module Crystal
         consume_whitespace
         reset_regex_flags = false
       when '\\'
-        if next_char == '\n'
+        case next_char
+        when '\r', '\n'
+          handle_slash_r_slash_n_or_slash_n
           incr_line_number
           @token.passed_backslash_newline = true
           consume_whitespace
@@ -1373,7 +1375,9 @@ module Crystal
         when ' ', '\t'
           next_char
         when '\\'
-          if next_char == '\n'
+          case next_char
+          when '\r', '\n'
+            handle_slash_r_slash_n_or_slash_n
             next_char
             incr_line_number
             @token.passed_backslash_newline = true
@@ -1746,7 +1750,8 @@ module Crystal
                 buffer[0] = value
                 {1, 0}
               end
-            when '\n'
+            when '\r', '\n'
+              handle_slash_r_slash_n_or_slash_n
               incr_line_number
               @token.line_number = @line_number
 
@@ -1797,13 +1802,7 @@ module Crystal
           @token.value = "#"
         end
       when '\r', '\n'
-        is_slash_r = current_char == '\r'
-        if is_slash_r
-          if next_char != '\n'
-            raise "expecting '\\n' after '\\r'"
-          end
-        end
-
+        is_slash_r = handle_slash_r_slash_n_or_slash_n
         next_char
         incr_line_number 1
         @token.line_number = @line_number
@@ -2907,6 +2906,16 @@ module Crystal
       while (@token.type.space? || @token.type.newline? || @token.type.op_semicolon?)
         next_token
       end
+    end
+
+    def handle_slash_r_slash_n_or_slash_n
+      is_slash_r = current_char == '\r'
+      if is_slash_r
+        if next_char != '\n'
+          raise "expecting '\\n' after '\\r'"
+        end
+      end
+      is_slash_r
     end
 
     def unknown_token

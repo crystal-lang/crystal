@@ -66,6 +66,14 @@ describe "NamedTuple" do
     expect_raises(TypeCastError, /cast from String to Int32 failed/) do
       {foo: Int32, bar: Int32}.from({:foo => 1, :bar => "foo"})
     end
+
+    t = {foo: Int32, bar: Int32}.from({"foo" => 1, :bar => 2})
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
+
+    t = {foo: Int32, bar: Int32}.from({"foo" => 1, :bar => 2} of String | Int32 | Symbol => Int32)
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
   end
 
   it "gets size" do
