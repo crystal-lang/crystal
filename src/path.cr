@@ -557,7 +557,7 @@ struct Path
   def self.next_part_separator_index(reader : Char::Reader, last_was_separator, separators)
     start_pos = reader.pos
 
-    found = reader.each do |char|
+    reader.each do |char|
       if separators.includes?(char)
         if last_was_separator
           next
