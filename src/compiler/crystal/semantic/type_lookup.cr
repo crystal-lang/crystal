@@ -250,7 +250,7 @@ class Crystal::Type
 
         # Check the case of T resolving to a number
         if type_var.is_a?(Path)
-          type = @root.lookup_path(type_var)
+          type = lookup_type_var?(type_var)
           case type
           when Const
             interpreter = MathInterpreter.new(@root)
