@@ -10,6 +10,26 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "interprets tuple range indexer" do
+      interpret(<<-CODE).should eq(6)
+        #{range_new}
+
+        a = {1, 2, 4, 8, 16}
+        b = a[1...-2]
+        b[0] + b[1]
+      CODE
+    end
+
+    it "interprets tuple range indexer (2)" do
+      interpret(<<-CODE).should eq(24)
+        #{range_new}
+
+        a = {1_i8, 2_i8, 4_i8, 8_i8, 16_i32}
+        b = a[3..]
+        b[1] + b[0]
+      CODE
+    end
+
     it "interprets tuple literal of different types (1)" do
       interpret(<<-CODE).should eq(3)
         a = {1, true}
@@ -80,5 +100,36 @@ describe Crystal::Repl::Interpreter do
         a.class[0].foo
       CODE
     end
+
+    it "interprets tuple metaclass range indexer" do
+      interpret(<<-CODE).should eq(3)
+        #{range_new}
+
+        struct Int32
+          def self.foo
+            1
+          end
+        end
+
+        class String
+          def self.bar
+            2
+          end
+        end
+
+        a = {true, 1, "a", 'a', 1.0}
+        b = a.class[1...-2]
+        b[0].foo + b[1].bar
+      CODE
+    end
   end
+end
+
+private def range_new
+  %(
+    struct Range(B, E)
+      def initialize(@begin : B, @end : E, @exclusive : Bool = false)
+      end
+    end
+  )
 end

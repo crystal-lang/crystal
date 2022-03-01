@@ -7,7 +7,7 @@ env:
   SPEC_SPLIT_DOTS: 160
 
 jobs:
-  test_linux:
+  x86_64-gnu-test:
     env:
       ARCH: x86_64
       ARCH_CMD: linux64
@@ -35,7 +35,7 @@ jobs:
       - name: Test
         run: FLAGS=${{ matrix.flags }} bin/ci build
 
-  test_alpine:
+  x86_64-musl-test:
     env:
       ARCH: x86_64-musl
       ARCH_CMD: linux64
@@ -82,7 +82,7 @@ jobs:
       - name: Test
         run: bin/ci with_build_env "make clean deps compiler_spec crystal std_spec LLVM_CONFIG=\$(pwd)/llvm/bin/llvm-config threads=1 verbose=1 junit_output=.junit/spec.xml"
 
-  test_preview_mt:
+  x86_64-gnu-test-preview_mt:
     env:
       ARCH: x86_64
       ARCH_CMD: linux64

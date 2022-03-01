@@ -477,7 +477,6 @@ class URI
 
     query = uri.query
     query = nil if query == @query
-    fragment = uri.fragment
 
     path = relativize_path(@path, uri.path)
 

@@ -7,7 +7,7 @@ env:
   CI_NIX_SHELL: true
 
 jobs:
-  test_macos:
+  x86_64-darwin-test:
     runs-on: macos-10.15
     steps:
       - name: Download Crystal source

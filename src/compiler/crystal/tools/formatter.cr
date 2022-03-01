@@ -837,11 +837,6 @@ module Crystal
       end
 
       elements.each_with_index do |element, i|
-        current_element = element
-        if current_element.is_a?(HashLiteral::Entry)
-          current_element = current_element.key
-        end
-
         # This is to prevent writing `{{` and `{%`
         if prefix == :"{" && i == 0 && !wrote_newline &&
            (@token.type == :"{" || @token.type == :"{{" || @token.type == :"{%" ||
@@ -856,8 +851,6 @@ module Crystal
         else
           indent(offset, element)
         end
-        element_lines = @line - start_line
-
         has_heredoc_in_line = !@lexer.heredocs.empty?
 
         last = last?(i, elements)
@@ -1253,9 +1246,7 @@ module Crystal
         return false
       end
 
-      paren_count = @paren_count
       column = @column
-
       node.types.each_with_index do |type, i|
         if @token.type == :"?"
           # This can happen if it's a nilable type written like T?
@@ -2448,7 +2439,6 @@ module Crystal
         end
 
         accept obj
-        obj_width = @column - @indent
 
         passed_backslash_newline = @token.passed_backslash_newline
 
@@ -3144,9 +3134,7 @@ module Crystal
             end
 
             next_token_skip_space_or_newline
-            has_comma = false
             if @token.type == :","
-              has_comma = true
               next_token_skip_space_or_newline
             end
 
@@ -3999,7 +3987,7 @@ module Crystal
       end
 
       if node_rescues = node.rescues
-        node_rescues.each_with_index do |node_rescue, i|
+        node_rescues.each do |node_rescue|
           skip_space_or_newline(column + 2, last: true)
           write_indent(column)
           write_keyword :rescue
