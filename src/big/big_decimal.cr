@@ -15,12 +15,6 @@ end
 # The general idea and some of the arithmetic algorithms were adapted from
 # the MIT/APACHE-licensed [bigdecimal-rs](https://github.com/akubera/bigdecimal-rs).
 struct BigDecimal < Number
-  @[Deprecated]
-  ZERO = BigInt.new(0)
-
-  @[Deprecated]
-  TEN = BigInt.new(10)
-
   private TWO_I  = BigInt.new(2)
   private FIVE_I = BigInt.new(5)
   private TEN_I  = BigInt.new(10)
