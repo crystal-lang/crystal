@@ -88,21 +88,24 @@ class File < IO::FileDescriptor
   # *mode* must be one of the following file open modes:
   #
   # ```text
-  # Mode | Description
-  # -----+------------------------------------------------------
-  # r    | Read-only, starts at the beginning of the file.
-  # r+   | Read-write, starts at the beginning of the file.
-  # w    | Write-only, truncates existing file to zero length or
-  #      | creates a new file if the file doesn't exist.
-  # w+   | Read-write, truncates existing file to zero length or
-  #      | creates a new file if the file doesn't exist.
-  # a    | Write-only, starts at the end of the file,
-  #      | creates a new file if the file doesn't exist.
-  # a+   | Read-write, starts at the end of the file,
-  #      | creates a new file if the file doesn't exist.
-  # rb   | Same as 'r' but in binary file mode.
-  # wb   | Same as 'w' but in binary file mode.
-  # ab   | Same as 'a' but in binary file mode.
+  # Mode    | Description
+  # --------+------------------------------------------------------
+  # r       | Read-only, starts at the beginning of the file.
+  # r+      | Read-write, starts at the beginning of the file.
+  # w       | Write-only, truncates existing file to zero length or
+  #         | creates a new file if the file doesn't exist.
+  # w+      | Read-write, truncates existing file to zero length or
+  #         | creates a new file if the file doesn't exist.
+  # a       | Write-only, all writes seek to the end of the file,
+  #         | creates a new file if the file doesn't exist.
+  # a+      | Read-write, all writes seek to the end of the file,
+  #         | creates a new file if the file doesn't exist.
+  # rb      | Same as 'r' but in binary file mode.
+  # r+b rb+ | Same as 'r+' but in binary file mode.
+  # wb      | Same as 'w' but in binary file mode.
+  # w+b wb+ | Same as 'w+' but in binary file mode.
+  # ab      | Same as 'a' but in binary file mode.
+  # a+b ab+ | Same as 'a+' but in binary file mode.
   # ```
   #
   # In binary file mode, line endings are not converted to CRLF on Windows.

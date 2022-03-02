@@ -317,34 +317,32 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def compile_number(node, kind, value)
     case kind
-    when :i8
+    in .i8?
       put_i8 value.to_i8, node: node
-    when :u8
+    in .u8?
       put_u8 value.to_u8, node: node
-    when :i16
+    in .i16?
       put_i16 value.to_i16, node: node
-    when :u16
+    in .u16?
       put_u16 value.to_u16, node: node
-    when :i32
+    in .i32?
       put_i32 value.to_i32, node: node
-    when :u32
+    in .u32?
       put_u32 value.to_u32, node: node
-    when :i64
+    in .i64?
       put_i64 value.to_i64, node: node
-    when :u64
+    in .u64?
       put_u64 value.to_u64, node: node
-    when :i128
+    in .i128?
       # TODO: implement String#to_i128 and use it
       put_i128 value.to_i64.to_i128!, node: node
-    when :u128
+    in .u128?
       # TODO: implement String#to_i128 and use it
       put_u128 value.to_u64.to_u128!, node: node
-    when :f32
+    in .f32?
       put_i32 value.to_f32.unsafe_as(Int32), node: node
-    when :f64
+    in .f64?
       put_i64 value.to_f64.unsafe_as(Int64), node: node
-    else
-      node.raise "BUG: missing interpret for NumberLiteral with kind #{kind}"
     end
   end
 
@@ -1811,7 +1809,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         put_i64 0, node: arg
       when StaticArrayInstanceType
         # Static arrays are passed as pointers to C
-        compile_pointerof_node(arg, arg.type)
+        compile_pointerof_node(arg, arg_type)
       else
         request_value(arg)
       end
@@ -1838,8 +1836,31 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           args_bytesizes << sizeof(Pointer(Void))
           args_ffi_types << FFI::Type.pointer
         else
-          args_bytesizes << aligned_sizeof_type(arg)
-          args_ffi_types << arg.type.ffi_type
+          if external.varargs?
+            # Apply default promotions to certain types used as variadic arguments in C function calls.
+
+            # Resolve EnumType to its base type because that's the type that gets promoted
+            if arg_type.is_a?(EnumType)
+              arg_type = arg_type.base_type
+            end
+
+            if arg_type.is_a?(FloatType) && arg_type.bytes < 8
+              # Arguments of type float are promoted to double
+              promoted_type = @context.program.float64
+              primitive_convert node, arg_type, promoted_type, true
+
+              arg_type = promoted_type
+            elsif arg_type.is_a?(IntegerType) && arg_type.bytes < 4
+              # Integer argument types smaller than 4 bytes are promoted to 4 bytes
+              promoted_type = arg_type.signed? ? @context.program.int32 : @context.program.uint32
+              primitive_convert node, arg_type, promoted_type, true
+
+              arg_type = promoted_type
+            end
+          end
+
+          args_bytesizes << aligned_sizeof_type(arg_type)
+          args_ffi_types << arg_type.ffi_arg_type
         end
       end
     end
