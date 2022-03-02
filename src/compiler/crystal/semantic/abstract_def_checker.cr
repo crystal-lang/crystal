@@ -29,6 +29,9 @@ class Crystal::AbstractDefChecker
 
   def run
     check_types(@program)
+    @program.file_modules.each_value do |file_module|
+      check_types(file_module)
+    end
   end
 
   def check_types(type)
@@ -93,7 +96,15 @@ class Crystal::AbstractDefChecker
     return true if implements?(type, type, method, base, free_vars)
 
     type.ancestors.any? do |ancestor|
-      implements?(type, ancestor, method, base, free_vars)
+      if implements?(type, ancestor, method, base, free_vars)
+        # Check that the implementation does not come from a supertype of `base`
+        if ancestor.is_a?(GenericInstanceType)
+          ancestor = ancestor.generic_type.as(Type)
+        end
+        !base.implements?(ancestor)
+      else
+        false
+      end
     end
   end
 

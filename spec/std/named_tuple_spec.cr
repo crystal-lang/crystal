@@ -66,6 +66,14 @@ describe "NamedTuple" do
     expect_raises(TypeCastError, /cast from String to Int32 failed/) do
       {foo: Int32, bar: Int32}.from({:foo => 1, :bar => "foo"})
     end
+
+    t = {foo: Int32, bar: Int32}.from({"foo" => 1, :bar => 2})
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
+
+    t = {foo: Int32, bar: Int32}.from({"foo" => 1, :bar => 2} of String | Int32 | Symbol => Int32)
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
   end
 
   it "gets size" do
@@ -148,7 +156,7 @@ describe "NamedTuple" do
     typeof(val).should eq(Int32 | Char | Nil)
   end
 
-  describe "dig?" do
+  describe "#dig?" do
     it "gets the value at given path given splat" do
       h = {a: {b: {c: [10, 20]}}, x: {a: "b"}}
 
@@ -165,7 +173,7 @@ describe "NamedTuple" do
     end
   end
 
-  describe "dig" do
+  describe "#dig" do
     it "gets the value at given path given splat" do
       h = {a: {b: {c: [10, 20]}}, x: {a: "b", c: nil}}
 
@@ -290,9 +298,18 @@ describe "NamedTuple" do
     NamedTuple.new.empty?.should be_true
   end
 
-  it "does to_a" do
-    tup = {a: 1, b: 'a'}
-    tup.to_a.should eq([{:a, 1}, {:b, 'a'}])
+  describe "#to_a" do
+    it "creates an array of key-value pairs" do
+      tup = {a: 1, b: 'a'}
+      tup.to_a.should eq([{:a, 1}, {:b, 'a'}])
+    end
+
+    it "preserves key type for empty named tuples" do
+      tup = NamedTuple.new
+      arr = tup.to_a
+      arr.should be_empty
+      arr.should be_a(Array({Symbol, NoReturn}))
+    end
   end
 
   it "does map" do
@@ -327,10 +344,19 @@ describe "NamedTuple" do
     u.should_not eq(v)
   end
 
-  it "does to_h" do
-    tup1 = {a: 1, b: "hello"}
-    hash = tup1.to_h
-    hash.should eq({:a => 1, :b => "hello"})
+  describe "#to_h" do
+    it "creates a hash" do
+      tup1 = {a: 1, b: "hello"}
+      hash = tup1.to_h
+      hash.should eq({:a => 1, :b => "hello"})
+    end
+
+    it "creates an empty hash from an empty named tuple" do
+      tup = NamedTuple.new
+      hash = tup.to_h
+      hash.should be_empty
+      hash.should be_a(Hash(Symbol, NoReturn))
+    end
   end
 
   it "does to_s" do

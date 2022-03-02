@@ -1,4 +1,3 @@
-require "spec"
 {% unless flag?(:win32) %}
   require "./support/mt_abort_timeout"
   require "./std/**"

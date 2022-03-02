@@ -88,21 +88,24 @@ class File < IO::FileDescriptor
   # *mode* must be one of the following file open modes:
   #
   # ```text
-  # Mode | Description
-  # -----+------------------------------------------------------
-  # r    | Read-only, starts at the beginning of the file.
-  # r+   | Read-write, starts at the beginning of the file.
-  # w    | Write-only, truncates existing file to zero length or
-  #      | creates a new file if the file doesn't exist.
-  # w+   | Read-write, truncates existing file to zero length or
-  #      | creates a new file if the file doesn't exist.
-  # a    | Write-only, starts at the end of the file,
-  #      | creates a new file if the file doesn't exist.
-  # a+   | Read-write, starts at the end of the file,
-  #      | creates a new file if the file doesn't exist.
-  # rb   | Same as 'r' but in binary file mode.
-  # wb   | Same as 'w' but in binary file mode.
-  # ab   | Same as 'a' but in binary file mode.
+  # Mode    | Description
+  # --------+------------------------------------------------------
+  # r       | Read-only, starts at the beginning of the file.
+  # r+      | Read-write, starts at the beginning of the file.
+  # w       | Write-only, truncates existing file to zero length or
+  #         | creates a new file if the file doesn't exist.
+  # w+      | Read-write, truncates existing file to zero length or
+  #         | creates a new file if the file doesn't exist.
+  # a       | Write-only, all writes seek to the end of the file,
+  #         | creates a new file if the file doesn't exist.
+  # a+      | Read-write, all writes seek to the end of the file,
+  #         | creates a new file if the file doesn't exist.
+  # rb      | Same as 'r' but in binary file mode.
+  # r+b rb+ | Same as 'r+' but in binary file mode.
+  # wb      | Same as 'w' but in binary file mode.
+  # w+b wb+ | Same as 'w+' but in binary file mode.
+  # ab      | Same as 'a' but in binary file mode.
+  # a+b ab+ | Same as 'a+' but in binary file mode.
   # ```
   #
   # In binary file mode, line endings are not converted to CRLF on Windows.
@@ -398,7 +401,7 @@ class File < IO::FileDescriptor
     File.expand_brace_pattern(pattern, expanded_patterns)
 
     expanded_patterns.each do |expanded_pattern|
-      return true if match_single_pattern(expanded_pattern, path)
+      return true if match_single_pattern(expanded_pattern, path.to_s)
     end
     false
   end
@@ -587,12 +590,12 @@ class File < IO::FileDescriptor
 
   # Creates a new link (also known as a hard link) at *new_path* to an existing file
   # given by *old_path*.
-  def self.link(old_path : Path | String, new_path : Path | String)
+  def self.link(old_path : Path | String, new_path : Path | String) : Nil
     Crystal::System::File.link(old_path.to_s, new_path.to_s)
   end
 
   # Creates a symbolic link at *new_path* to an existing file given by *old_path*.
-  def self.symlink(old_path : Path | String, new_path : Path | String)
+  def self.symlink(old_path : Path | String, new_path : Path | String) : Nil
     Crystal::System::File.symlink(old_path.to_s, new_path.to_s)
   end
 
@@ -773,7 +776,9 @@ class File < IO::FileDescriptor
   # File.exists?("afile.cr") # => true
   # ```
   def self.rename(old_filename : Path | String, new_filename : Path | String) : Nil
-    Crystal::System::File.rename(old_filename.to_s, new_filename.to_s)
+    if error = Crystal::System::File.rename(old_filename.to_s, new_filename.to_s)
+      raise error
+    end
   end
 
   # Sets the access and modification times of *filename*.

@@ -197,28 +197,11 @@ module Crystal
           {MacroId.new(entry.key), entry.value}
         end
       when RangeLiteral
-        exp.from.accept self
-        from = @last
-
-        unless from.is_a?(NumberLiteral)
-          node.raise "range begin #{exp.from} must evaluate to a NumberLiteral"
-        end
-
-        from = from.to_number.to_i
-
-        exp.to.accept self
-        to = @last
-
-        unless to.is_a?(NumberLiteral)
-          node.raise "range end #{exp.to} must evaluate to a NumberLiteral"
-        end
-
-        to = to.to_number.to_i
+        range = exp.interpret_to_range(self)
 
         element_var = node.vars[0]
         index_var = node.vars[1]?
 
-        range = Range.new(from, to, exp.exclusive?)
         range.each_with_index do |element, index|
           @vars[element_var.name] = NumberLiteral.new(element)
           if index_var
@@ -485,12 +468,12 @@ module Crystal
       end
     end
 
-    def resolve(node : Generic)
+    def resolve(node : Generic | Metaclass | ProcNotation)
       type = @path_lookup.lookup_type(node, self_type: @scope, free_vars: @free_vars)
       TypeNode.new(type)
     end
 
-    def resolve?(node : Generic)
+    def resolve?(node : Generic | Metaclass | ProcNotation)
       resolve(node)
     rescue Crystal::CodeError
       nil
@@ -536,8 +519,7 @@ module Crystal
     def visit(node : IsA)
       node.obj.accept self
       const_name = node.const.to_s
-      obj_class_desc = @last.class_desc
-      @last = BoolLiteral.new(@last.class_desc == const_name)
+      @last = BoolLiteral.new(@last.class_desc_is_a?(const_name))
       false
     end
 

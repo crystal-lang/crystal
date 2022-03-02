@@ -342,7 +342,20 @@ describe Crystal::Formatter do
     assert_format "#{keyword}  1", "#{keyword} 1"
     assert_format "#{keyword}( 1 , 2 )", "#{keyword}(1, 2)"
     assert_format "#{keyword}  1 ,  2", "#{keyword} 1, 2"
-    assert_format "#{keyword} { 1 ,  2 }", "#{keyword} {1, 2}" unless keyword == "yield"
+    assert_format "#{keyword}  *1", "#{keyword} *1"
+    assert_format "#{keyword}  1  , *2", "#{keyword} 1, *2"
+    assert_format "#{keyword}  *1  ,2", "#{keyword} *1, 2"
+    assert_format "#{keyword}  *1  , *2", "#{keyword} *1, *2"
+    assert_format "#{keyword}( *1  , *2 )", "#{keyword}(*1, *2)"
+
+    unless keyword == "yield"
+      assert_format "#{keyword} { 1 ,  2 }", "#{keyword} {1, 2}"
+      assert_format "#{keyword} {1, 2}, 3"
+      assert_format "#{keyword} 1, {2, 3}"
+      assert_format "#{keyword} {1, 2}, {3, 4}"
+      assert_format "#{keyword} { {1, 2}, {3, 4} }"
+      assert_format "#{keyword} { {1, 2}, {3, 4} }, 5"
+    end
   end
 
   assert_format "yield 1\n2", "yield 1\n2"
@@ -526,6 +539,7 @@ describe Crystal::Formatter do
   assert_format "x  :   Int32[ 8 ]", "x : Int32[8]"
   assert_format "x  :   (A | B)", "x : (A | B)"
   assert_format "x  :   (A -> B)", "x : (A -> B)"
+  assert_format "x  :   (A -> )", "x : (A ->)"
   assert_format "x  :   (A -> B)?", "x : (A -> B)?"
   assert_format "x  :   {A, B}", "x : {A, B}"
   assert_format "x : { {A, B}, {C, D} }"
@@ -629,9 +643,13 @@ describe Crystal::Formatter do
   assert_format "pointerof( @a )", "pointerof(@a)"
 
   assert_format "_ = 1"
+  assert_format "あ.い = 1"
 
   assert_format "a , b  = 1  ,  2", "a, b = 1, 2"
   assert_format "a[1] , b[2] = 1  ,  2", "a[1], b[2] = 1, 2"
+  assert_format " * a = 1 ", "*a = 1"
+  assert_format " _ , *_ ,\na.foo  ,a.bar  =  1  ,  2,3", "_, *_, a.foo, a.bar = 1, 2, 3"
+  assert_format "あ.い, う.え.お = 1, 2"
 
   assert_format "begin\n1\nensure\n2\nend", "begin\n  1\nensure\n  2\nend"
   assert_format "begin\n1\nrescue\n3\nensure\n2\nend", "begin\n  1\nrescue\n  3\nensure\n  2\nend"
@@ -749,13 +767,20 @@ describe Crystal::Formatter do
   assert_format "lib Bar\n  enum Foo\n    A\n  end\nend"
   assert_format "lib Bar\n  enum Foo\n    A = 1\n  end\nend"
 
-  assert_format "->foo="
-  assert_format "foo = 1\n->foo.bar"
-  assert_format "foo = 1\n->foo.bar="
+  %w(foo foo= foo? foo!).each do |method|
+    assert_format "->#{method}"
+    assert_format "foo = 1\n->foo.#{method}"
+    assert_format "->Foo.#{method}"
+    assert_format "->@foo.#{method}"
+    assert_format "->@@foo.#{method}"
+  end
+
   assert_format "foo = 1\n->foo.bar(Int32)"
   assert_format "foo = 1\n->foo.bar(Int32*)"
   assert_format "foo = 1\n->foo.bar=(Int32)"
   assert_format "foo = 1\n->foo.[](Int32)"
+  assert_format "foo = 1\n->foo.[]=(Int32)"
+
   assert_format "->{ x }"
   assert_format "->{\nx\n}", "->{\n  x\n}"
   assert_format "->do\nx\nend", "->do\n  x\nend"
@@ -763,9 +788,20 @@ describe Crystal::Formatter do
   assert_format "->() do x end", "->do x end"
   assert_format "->( x , y )   { x }", "->(x, y) { x }"
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
+  assert_format "->{}"
 
-  assert_format "->@foo.foo"
-  assert_format "->@@foo.foo"
+  assert_format "-> : Int32 {}"
+  assert_format "-> : Int32 | String { 1 }"
+  assert_format "-> : Array(Int32) {}"
+  assert_format "-> : Int32? {}"
+  assert_format "-> : Int32* {}"
+  assert_format "-> : Int32[1] {}"
+  assert_format "-> : {Int32, String} {}"
+  assert_format "-> : {Int32} { String }"
+  assert_format "-> : {x: Int32, y: String} {}"
+  assert_format "->\n:\nInt32\n{\n}", "-> : Int32 {\n}"
+  assert_format "->( x )\n:\nInt32 { }", "->(x) : Int32 {}"
+  assert_format "->: Int32 do\nx\nend", "-> : Int32 do\n  x\nend"
 
   {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :&+, :&-, :&*, :&**}.each do |sym|
     assert_format ":#{sym}"
@@ -904,6 +940,9 @@ describe Crystal::Formatter do
   assert_format "foo(\n# x\n1,\n\n# y\nz: 2\n)", "foo(\n  # x\n  1,\n\n  # y\n  z: 2\n)"
   assert_format "foo(\n# x\n1,\n\n# y\nz: 2,\n\n# a\nb: 3)", "foo(\n  # x\n  1,\n\n  # y\n  z: 2,\n\n  # a\n  b: 3)"
   assert_format "foo(\n 1, # hola\n2, # chau\n )", "foo(\n  1, # hola\n  2, # chau\n)"
+  assert_format "foo (1)", "foo(1)"
+  assert_format "foo (1), 2"
+  assert_format "foo (1; 2)"
   assert_format "def foo(\n\n#foo\nx,\n\n#bar\nz\n)\nend", "def foo(\n  # foo\n  x,\n\n  # bar\n  z\n)\nend"
   assert_format "def foo(\nx, #foo\nz #bar\n)\nend", "def foo(\n  x, # foo\n  z  # bar\n)\nend"
   assert_format "a = 1;;; b = 2", "a = 1; b = 2"
@@ -1091,6 +1130,12 @@ describe Crystal::Formatter do
   assert_format "foo : (A) | D"
   assert_format "foo : (F(A)) | D"
   assert_format "foo : (   A  |  B   )", "foo : (A | B)"
+
+  # #11179
+  assert_format "foo : Pointer(Foo)*"
+  assert_format "foo : Foo*****"
+  assert_format "foo : Foo * * * * *", "foo : Foo*****"
+  assert_format "foo : StaticArray(Foo, 12)[34]"
 
   assert_format "def   foo(x   :  (A | B)) \n  end", "def foo(x : (A | B))\nend"
   assert_format "foo : (String -> String?) | (String)"
@@ -1313,6 +1358,12 @@ describe Crystal::Formatter do
   assert_format "  <<-EOF\n   1\n EOF", "<<-EOF\n  1\nEOF"
   assert_format "x =  <<-EOF\n 1\nEOF", "x = <<-EOF\n 1\nEOF"
   assert_format "  <<-EOF\n 1\n  2\n EOF", "<<-EOF\n1\n 2\nEOF"
+
+  # #10735
+  assert_format "{\n  variables => true,\n  query     => <<-HEREDOC,\n    foo\n  HEREDOC\n}"
+  assert_format "{\n  variables => true,\n  query     => <<-HEREDOC,\n    foo\n  HEREDOC\n  foo => true,\n}"
+  assert_format "{\n  query     => <<-HEREDOC,\n    foo\n  HEREDOC\n}", "{\n  query => <<-HEREDOC,\n    foo\n  HEREDOC\n}"
+  assert_format "begin\n  query = <<-HEREDOC\n    foo\n  HEREDOC\nend"
 
   assert_format "begin 0[1] rescue 2 end"
   assert_format "begin\n 0[1] rescue 2 end", "begin 0[1] rescue 2 end"
@@ -1835,5 +1886,47 @@ describe Crystal::Formatter do
     ) {
       2
     }
+    CODE
+
+  # #11079
+  assert_format <<-CODE
+    foo = [1, [2,
+               3],
+           4]
+    CODE
+
+  assert_format <<-CODE
+    foo = {1, {2,
+               3},
+           4}
+    CODE
+
+  # #10817
+  assert_format <<-CODE
+    def func # comment
+      (1 + 2) / 3
+    end
+    CODE
+
+  # #10943
+  assert_format <<-CODE
+    foo do # a
+      # b
+      bar
+    end
+    CODE
+
+  # #10499
+  assert_format <<-CODE
+    case nil
+    else nil; nil # comment
+    end
+    CODE
+
+  assert_format <<-CODE
+    case nil
+    else nil; nil
+    # comment
+    end
     CODE
 end

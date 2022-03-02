@@ -351,16 +351,54 @@ void LLVMMetadataReplaceAllUsesWith2(
 void LLVMExtSetCurrentDebugLocation(
   LLVMBuilderRef Bref, unsigned Line, unsigned Col, LLVMMetadataRef Scope,
   LLVMMetadataRef InlinedAt) {
+#if LLVM_VERSION_GE(12, 0)
+  if (!Scope)
+    unwrap(Bref)->SetCurrentDebugLocation(DebugLoc());
+  else
+    unwrap(Bref)->SetCurrentDebugLocation(
+      DILocation::get(unwrap<MDNode>(Scope)->getContext(), Line, Col,
+                      unwrapDI<DILocalScope>(Scope),
+                      unwrapDI<DILocation>(InlinedAt)));
+#else
   unwrap(Bref)->SetCurrentDebugLocation(
       DebugLoc::get(Line, Col, Scope ? unwrap<MDNode>(Scope) : nullptr,
                     InlinedAt ? unwrap<MDNode>(InlinedAt) : nullptr));
+#endif
 }
+
+#if LLVM_VERSION_GE(3, 9)
+// A backported LLVMCreateTypeAttribute for LLVM < 13
+// from https://github.com/llvm/llvm-project/blob/bb8ce25e88218be60d2a4ea9c9b0b721809eff27/llvm/lib/IR/Core.cpp#L167
+LLVMAttributeRef LLVMExtCreateTypeAttribute(
+  LLVMContextRef C, unsigned KindID, LLVMTypeRef Ty) {
+  auto &Ctx = *unwrap(C);
+  auto AttrKind = (Attribute::AttrKind)KindID;
+#if LLVM_VERSION_GE(12, 0)
+  return wrap(Attribute::get(Ctx, AttrKind, unwrap(Ty)));
+#else
+  return wrap(Attribute::get(Ctx, AttrKind));
+#endif
+}
+#endif
 
 LLVMValueRef LLVMExtBuildCmpxchg(
     LLVMBuilderRef B, LLVMValueRef PTR, LLVMValueRef Cmp, LLVMValueRef New,
     LLVMAtomicOrdering SuccessOrdering, LLVMAtomicOrdering FailureOrdering) {
+#if LLVM_VERSION_GE(13, 0)
+  return wrap(
+    unwrap(B)->CreateAtomicCmpXchg(
+      unwrap(PTR),
+      unwrap(Cmp),
+      unwrap(New),
+      llvm::MaybeAlign(),
+      (llvm::AtomicOrdering)SuccessOrdering,
+      (llvm::AtomicOrdering)FailureOrdering
+    )
+  );
+#else
   return wrap(unwrap(B)->CreateAtomicCmpXchg(unwrap(PTR), unwrap(Cmp), unwrap(New),
     (llvm::AtomicOrdering)SuccessOrdering, (llvm::AtomicOrdering)FailureOrdering));
+#endif
 }
 
 void LLVMExtSetOrdering(LLVMValueRef MemAccessInst, LLVMAtomicOrdering Ordering) {
@@ -470,7 +508,11 @@ void LLVMExtWriteBitcodeWithSummaryToFile(LLVMModuleRef mref, const char *File) 
   Module *m = unwrap(mref);
 
   std::error_code EC;
+#if LLVM_VERSION_GE(13, 0)
+  raw_fd_ostream OS(File, EC, sys::fs::OF_None);
+#else
   raw_fd_ostream OS(File, EC, sys::fs::F_None);
+#endif
   if (EC) return;
 
   llvm::ModuleSummaryIndex moduleSummaryIndex = llvm::buildModuleSummaryIndex(*m, nullptr, nullptr);

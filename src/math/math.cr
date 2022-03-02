@@ -332,6 +332,25 @@ module Math
     sqrt(value.to_f)
   end
 
+  # Calculates the integer square root of *value*.
+  def isqrt(value : Int::Primitive)
+    raise ArgumentError.new "Input must be non-negative integer" if value < 0
+    return value if value < 2
+    res = value.class.zero
+    bit = res.succ << (res.leading_zeros_count - 2)
+    bit >>= value.leading_zeros_count & ~0x3
+    while (bit != 0)
+      if value >= res + bit
+        value -= res + bit
+        res = (res >> 1) + bit
+      else
+        res >>= 1
+      end
+      bit >>= 2
+    end
+    res
+  end
+
   # Calculates the cubic root of *value*.
   def cbrt(value : Float32) : Float32
     LibM.cbrt_f32(value)
@@ -424,7 +443,7 @@ module Math
 
   # Calculates the cylindrical Bessel function of the first kind of *value* for the given *order*.
   def besselj(order : Int32, value : Float32)
-    {% if flag?(:darwin) %}
+    {% if flag?(:darwin) || flag?(:win32) %}
       LibM.besselj_f64(order, value).to_f32
     {% else %}
       LibM.besselj_f32(order, value)
@@ -443,7 +462,7 @@ module Math
 
   # Calculates the cylindrical Bessel function of the first kind of *value* for order 0.
   def besselj0(value : Float32)
-    {% if flag?(:darwin) %}
+    {% if flag?(:darwin) || flag?(:win32) %}
       LibM.besselj0_f64(value).to_f32
     {% else %}
       LibM.besselj0_f32(value)
@@ -462,7 +481,7 @@ module Math
 
   # Calculates the cylindrical Bessel function of the first kind of *value* for order 1.
   def besselj1(value : Float32)
-    {% if flag?(:darwin) %}
+    {% if flag?(:darwin) || flag?(:win32) %}
       LibM.besselj1_f64(value).to_f32
     {% else %}
       LibM.besselj1_f32(value)
@@ -481,7 +500,7 @@ module Math
 
   # Calculates the cylindrical Bessel function of the second kind of *value* for the given *order*.
   def bessely(order : Int32, value : Float32)
-    {% if flag?(:darwin) %}
+    {% if flag?(:darwin) || flag?(:win32) %}
       LibM.bessely_f64(order, value).to_f32
     {% else %}
       LibM.bessely_f32(order, value)
@@ -500,7 +519,7 @@ module Math
 
   # Calculates the cylindrical Bessel function of the second kind of *value* for order 0.
   def bessely0(value : Float32)
-    {% if flag?(:darwin) %}
+    {% if flag?(:darwin) || flag?(:win32) %}
       LibM.bessely0_f64(value).to_f32
     {% else %}
       LibM.bessely0_f32(value)
@@ -519,7 +538,7 @@ module Math
 
   # Calculates the cylindrical Bessel function of the second kind of *value* for order 1.
   def bessely1(value : Float32)
-    {% if flag?(:darwin) %}
+    {% if flag?(:darwin) || flag?(:win32) %}
       LibM.bessely1_f64(value).to_f32
     {% else %}
       LibM.bessely1_f32(value)
@@ -637,8 +656,14 @@ module Math
 
   # Decomposes the given floating-point *value* into a normalized fraction and an integral power of two.
   def frexp(value : Float32) : {Float32, Int32}
-    frac = LibM.frexp_f32(value, out exp)
-    {frac, exp}
+    {% if flag?(:win32) %}
+      # libucrt does not export `frexpf` and instead defines it like this
+      frac = LibM.frexp_f64(value, out exp)
+      {frac.to_f32, exp}
+    {% else %}
+      frac = LibM.frexp_f32(value, out exp)
+      {frac, exp}
+    {% end %}
   end
 
   # :ditto:

@@ -15,8 +15,9 @@ end
 # The general idea and some of the arithmetic algorithms were adapted from
 # the MIT/APACHE-licensed [bigdecimal-rs](https://github.com/akubera/bigdecimal-rs).
 struct BigDecimal < Number
-  ZERO                       = BigInt.new(0)
-  TEN                        = BigInt.new(10)
+  private ZERO = BigInt.new(0)
+  private TEN  = BigInt.new(10)
+
   DEFAULT_MAX_DIV_ITERATIONS = 100_u64
 
   include Comparable(Int)
@@ -161,7 +162,7 @@ struct BigDecimal < Number
     end
   end
 
-  def +(other : Int) : BigDecimal
+  def +(other : Number) : BigDecimal
     self + BigDecimal.new(other)
   end
 
@@ -177,7 +178,7 @@ struct BigDecimal < Number
     end
   end
 
-  def -(other : Int) : BigDecimal
+  def -(other : Number) : BigDecimal
     self - BigDecimal.new(other)
   end
 
@@ -185,7 +186,7 @@ struct BigDecimal < Number
     BigDecimal.new(@value * other.value, @scale + other.scale)
   end
 
-  def *(other : Int) : BigDecimal
+  def *(other : Number) : BigDecimal
     self * BigDecimal.new(other)
   end
 
@@ -292,9 +293,7 @@ struct BigDecimal < Number
   # BigDecimal.new(1234, 2) ** 2 # => 152.2756
   # ```
   def **(other : Int) : BigDecimal
-    if other < 0
-      raise ArgumentError.new("Negative exponent isn't supported")
-    end
+    return (to_big_r ** other).to_big_d if other < 0
     BigDecimal.new(@value ** other, @scale * other)
   end
 
@@ -421,7 +420,7 @@ struct BigDecimal < Number
   end
 
   def to_big_r : BigRational
-    BigRational.new(self.value, BigDecimal::TEN ** self.scale)
+    BigRational.new(self.value, TEN ** self.scale)
   end
 
   # Converts to `Int64`. Truncates anything on the right side of the decimal point.

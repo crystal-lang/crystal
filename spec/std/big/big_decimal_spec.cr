@@ -212,33 +212,39 @@ describe BigDecimal do
     result.to_s.should eq("286138.1721051424")
   end
 
+  it "exponentiates with negative powers" do
+    result = "2.0".to_big_d ** -1
+    result.should be_a(BigDecimal)
+    result.to_s.should eq("0.5")
+  end
+
   it "can be converted from other types" do
-    1.to_big_d.should eq (BigDecimal.new(1))
-    "1.5".to_big_d.should eq (BigDecimal.new(15, 1))
-    "+1.5".to_big_d.should eq (BigDecimal.new(15, 1))
-    BigInt.new(15).to_big_d.should eq (BigDecimal.new(15, 0))
-    1.5.to_big_d.should eq (BigDecimal.new(15, 1))
-    1.5.to_big_f.to_big_d.should eq (BigDecimal.new(15, 1))
+    1.to_big_d.should eq(BigDecimal.new(1))
+    "1.5".to_big_d.should eq(BigDecimal.new(15, 1))
+    "+1.5".to_big_d.should eq(BigDecimal.new(15, 1))
+    BigInt.new(15).to_big_d.should eq(BigDecimal.new(15, 0))
+    1.5.to_big_d.should eq(BigDecimal.new(15, 1))
+    1.5.to_big_f.to_big_d.should eq(BigDecimal.new(15, 1))
     1.5.to_big_r.to_big_d.should eq(BigDecimal.new(15, 1))
   end
 
   it "can be converted from scientific notation" do
-    "10.01e1".to_big_d.should eq (BigDecimal.new("100.1"))
-    "10.01e-1".to_big_d.should eq (BigDecimal.new("1.001"))
-    "6.033e2".to_big_d.should eq (BigDecimal.new("603.3"))
-    "603.3e-2".to_big_d.should eq (BigDecimal.new("6.033"))
-    "-0.123e12".to_big_d.should eq (BigDecimal.new("-123000000000"))
-    "0.123e12".to_big_d.should eq (BigDecimal.new("123000000000"))
-    "0.123e+12".to_big_d.should eq (BigDecimal.new("123000000000"))
-    "-0.123e-7".to_big_d.should eq (BigDecimal.new("-0.0000000123"))
-    "-0.1e-7".to_big_d.should eq (BigDecimal.new("-0.00000001"))
-    "0.1e-7".to_big_d.should eq (BigDecimal.new("0.00000001"))
-    "1.0e-8".to_big_d.should eq (BigDecimal.new("0.00000001"))
-    "10e-8".to_big_d.should eq (BigDecimal.new("0.0000001"))
-    "1.0e+8".to_big_d.should eq (BigDecimal.new("100000000"))
-    "10e+8".to_big_d.should eq (BigDecimal.new("1000000000"))
-    "10E+8".to_big_d.should eq (BigDecimal.new("1000000000"))
-    "10E8".to_big_d.should eq (BigDecimal.new("1000000000"))
+    "10.01e1".to_big_d.should eq(BigDecimal.new("100.1"))
+    "10.01e-1".to_big_d.should eq(BigDecimal.new("1.001"))
+    "6.033e2".to_big_d.should eq(BigDecimal.new("603.3"))
+    "603.3e-2".to_big_d.should eq(BigDecimal.new("6.033"))
+    "-0.123e12".to_big_d.should eq(BigDecimal.new("-123000000000"))
+    "0.123e12".to_big_d.should eq(BigDecimal.new("123000000000"))
+    "0.123e+12".to_big_d.should eq(BigDecimal.new("123000000000"))
+    "-0.123e-7".to_big_d.should eq(BigDecimal.new("-0.0000000123"))
+    "-0.1e-7".to_big_d.should eq(BigDecimal.new("-0.00000001"))
+    "0.1e-7".to_big_d.should eq(BigDecimal.new("0.00000001"))
+    "1.0e-8".to_big_d.should eq(BigDecimal.new("0.00000001"))
+    "10e-8".to_big_d.should eq(BigDecimal.new("0.0000001"))
+    "1.0e+8".to_big_d.should eq(BigDecimal.new("100000000"))
+    "10e+8".to_big_d.should eq(BigDecimal.new("1000000000"))
+    "10E+8".to_big_d.should eq(BigDecimal.new("1000000000"))
+    "10E8".to_big_d.should eq(BigDecimal.new("1000000000"))
   end
 
   it "is comparable with other types" do
@@ -312,6 +318,7 @@ describe BigDecimal do
     BigDecimal.new(0).to_s.should eq "0"
     BigDecimal.new(1).to_s.should eq "1"
     BigDecimal.new(-1).to_s.should eq "-1"
+    BigDecimal.new("8.5").to_s.should eq "8.5"
     BigDecimal.new("-0.35").to_s.should eq "-0.35"
     BigDecimal.new("-.35").to_s.should eq "-0.35"
     BigDecimal.new("0.01").to_s.should eq "0.01"

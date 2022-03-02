@@ -64,7 +64,10 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_info
-    if LibC.fstat(fd, out stat) != 0
+    stat = uninitialized LibC::Stat
+    ret = File.fstat(fd, pointerof(stat))
+
+    if ret != 0
       raise IO::Error.from_errno("Unable to get info")
     end
 

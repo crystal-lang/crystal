@@ -382,12 +382,14 @@ module Iterator(T)
   # interest is to be used in a read-only fashion.
   #
   # Chunks of two items can be iterated using `#cons_pair`, an optimized
-  # implementation for the special case of `size == 2` which avoids heap
+  # implementation for the special case of `n == 2` which avoids heap
   # allocations.
   def cons(n : Int, reuse = false)
     raise ArgumentError.new "Invalid cons size: #{n}" if n <= 0
     if reuse.nil? || reuse.is_a?(Bool)
-      Cons(typeof(self), T, typeof(n), Array(T)).new(self, n, Array(T).new(n), reuse)
+      # we use an initial capacity of n * 2, because a second iteration would
+      # have reallocated the array to that capacity anyway
+      Cons(typeof(self), T, typeof(n), Array(T)).new(self, n, Array(T).new(n * 2), reuse)
     else
       Cons(typeof(self), T, typeof(n), typeof(reuse)).new(self, n, reuse, reuse)
     end
@@ -431,7 +433,7 @@ module Iterator(T)
   #
   # Chunks of more than two items can be iterated using `#cons`.
   # This method is just an optimized implementation for the special case of
-  # `size == 2` to avoid heap allocations.
+  # `n == 2` to avoid heap allocations.
   def cons_pair : Iterator({T, T})
     ConsTuple(typeof(self), T).new(self)
   end
@@ -590,7 +592,7 @@ module Iterator(T)
   # iter = ["a", "b", "c"].each
   # iter.each { |x| print x, " " } # Prints "a b c"
   # ```
-  def each : Nil
+  def each(& : T ->) : Nil
     while true
       value = self.next
       break if value.is_a?(Stop)
