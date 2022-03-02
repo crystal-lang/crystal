@@ -1712,6 +1712,41 @@ describe Crystal::Formatter do
         .bar2)
     CODE
 
+  # #10395
+  assert_format <<-CODE
+    foo
+      .foo1.foo2 do
+        bar
+          .bar1.bar2 do
+            baz
+          end
+        bar3
+      end.foo3 do
+        bar
+          .bar1.bar2 do
+            baz
+          end
+        bar3
+      end
+      .foo4
+
+    foo
+      .foo1.foo2 {
+        bar
+          .bar1.bar2 {
+            baz
+          }
+        bar3
+      }.foo3 {
+        bar
+          .bar1.bar2 {
+            baz
+          }
+        bar3
+      }
+      .foo4
+    CODE
+
   assert_format "[] of (Array(T))"
   assert_format "[] of (((Array(T))))"
 

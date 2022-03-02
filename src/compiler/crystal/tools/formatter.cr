@@ -74,6 +74,7 @@ module Crystal
     @inside_struct_or_union : Int32
     @inside_enum : Int32
     @implicit_exception_handler_indent : Int32
+    @call_chain_needs_indent : Bool
     @last_write : String
     @exp_needs_indent : Bool
     @inside_def : Int32
@@ -119,6 +120,7 @@ module Crystal
       @inside_enum = 0
       @inside_struct_or_union = 0
       @implicit_exception_handler_indent = 0
+      @call_chain_needs_indent = false # Extra indent from "foo\n  .bar"
       @last_write = ""
       @exp_needs_indent = true
       @inside_def = 0
@@ -311,6 +313,7 @@ module Crystal
         end
 
         last_aligned_assign = nil if last_aligned_assign.same?(exp)
+        @call_chain_needs_indent = false
       end
 
       @indent = old_indent
@@ -2454,6 +2457,7 @@ module Crystal
         # It's something like `foo.bar\n
         #                        .baz`
         if (@token.type == :NEWLINE) || @wrote_newline
+          @call_chain_needs_indent = true
           base_indent = @indent + 2
           indent(base_indent) { consume_newlines }
           write_indent(base_indent)
@@ -2563,6 +2567,7 @@ module Crystal
         @lexer.wants_def_or_macro_name = false
         skip_space
         if (@token.type == :NEWLINE) || @wrote_newline
+          @call_chain_needs_indent = true
           base_indent = @indent + 2
           indent(base_indent) { consume_newlines }
           write_indent(base_indent)
@@ -2961,7 +2966,9 @@ module Crystal
         skip_space(@indent + 2)
         body = format_block_args node.args, node
         old_implicit_exception_handler_indent, @implicit_exception_handler_indent = @implicit_exception_handler_indent, @indent
-        format_nested_with_end body
+        indent_from_call_chain do
+          format_nested_with_end body
+        end
         @implicit_exception_handler_indent = old_implicit_exception_handler_indent
         @indent -= 2
       elsif @token.type == :"{"
@@ -2971,9 +2978,12 @@ module Crystal
         body = format_block_args node.args, node
         next_token_skip_space_or_newline if @token.type == :";"
         if @token.type == :NEWLINE
-          format_nested body
-          skip_space_or_newline
-          write_indent
+          indent_from_call_chain do
+            format_nested body
+            skip_space_or_newline
+            write_indent
+            write_token :"}"
+          end
         else
           unless body.is_a?(Nop)
             write " "
@@ -2981,8 +2991,8 @@ module Crystal
           end
           skip_space_or_newline
           write " "
+          write_token :"}"
         end
-        write_token :"}"
       else
         # It's foo &.bar
         write "," if needs_comma
@@ -4714,6 +4724,14 @@ module Crystal
       @indent = 0
       yield
       @indent = old_indent
+    end
+
+    def indent_from_call_chain
+      old_indent, old_needs_indent, @call_chain_needs_indent = @indent, @call_chain_needs_indent, false
+      @indent += 2 if old_needs_indent
+      value = yield
+      @indent, @call_chain_needs_indent = old_indent, old_needs_indent
+      value
     end
 
     def write_indent
