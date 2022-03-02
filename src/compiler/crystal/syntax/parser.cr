@@ -4172,7 +4172,7 @@ module Crystal
         has_parentheses = false
       end
 
-      if call_args && call_args.stopped_on_do_after_space
+      if call_args.try(&.stopped_on_do_after_space)
         # This is the case when we have:
         #
         #     x = 1
@@ -4185,7 +4185,7 @@ module Crystal
         # to a method x with a block. Instead, we just stop on x and we don't
         # consume the block, leaving the block for 'foo' to consume.
         block = parse_curly_block(block)
-      elsif @stop_on_do && call_args && call_args.has_parentheses
+      elsif @stop_on_do && call_args.try(&.has_parentheses)
         # This is the case when we have:
         #
         #    foo x(y) do
@@ -4202,45 +4202,25 @@ module Crystal
         raise "can't use captured and non-captured blocks together", location
       end
 
-      node =
-        if block || block_arg || global
-          call = Call.new(nil, name, (args || [] of ASTNode), block, block_arg, named_args, global)
-          call.name_location = name_location
-          call.has_parentheses = has_parentheses
-          call
-        else
-          if args
-            maybe_var = !force_call && is_var
-            if maybe_var
-              Var.new(name)
-            else
-              call = Call.new(nil, name, args, nil, nil, named_args, global)
-              call.name_location = name_location
-              call.has_parentheses = has_parentheses
-              call
-            end
-          else
-            if @no_type_declaration == 0 && @token.type == :":"
-              declare_var = parse_type_declaration(Var.new(name).at(location))
-              push_var declare_var if @call_args_nest == 0
-              declare_var
-            elsif (!force_call && is_var)
-              if @block_arg_name && !@uses_block_arg && name == @block_arg_name
-                @uses_block_arg = true
-              end
-              Var.new(name)
-            else
-              if !force_call && !named_args && !global && @assigned_vars.includes?(name)
-                raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
-              end
+      force_call ||= global || has_parentheses || (args.try(&.empty?) == false) || (named_args.try(&.empty?) == false) || block || block_arg
 
-              call = Call.new(nil, name, [] of ASTNode, nil, nil, named_args, global)
-              call.name_location = name_location
-              call.has_parentheses = has_parentheses
-              call
-            end
-          end
+      if @no_type_declaration == 0 && @token.type == :":" && !force_call
+        node = parse_type_declaration(Var.new(name).at(location))
+        push_var node if @call_args_nest == 0
+      elsif is_var && !force_call
+        if name == @block_arg_name
+          @uses_block_arg = true
         end
+
+        node = Var.new(name)
+      elsif @assigned_vars.includes?(name) && !force_call
+        raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
+      else
+        node = Call.new(nil, name, (args || [] of ASTNode), block, block_arg, named_args, global)
+        node.name_location = name_location
+        node.has_parentheses = has_parentheses
+      end
+
       node.doc = doc
       node.location = location
       node.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
