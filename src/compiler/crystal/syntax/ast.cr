@@ -2264,9 +2264,9 @@ module Crystal
   end
 
   class MagicConstant < ASTNode
-    property name : Symbol
+    property name : Token::Kind
 
-    def initialize(@name : Symbol)
+    def initialize(@name : Token::Kind)
     end
 
     def clone_without_location
@@ -2275,13 +2275,13 @@ module Crystal
 
     def expand_node(location, end_location)
       case name
-      when :__LINE__
+      when .magic_line?
         MagicConstant.expand_line_node(location)
-      when :__END_LINE__
+      when .magic_end_line?
         MagicConstant.expand_line_node(end_location)
-      when :__FILE__
+      when .magic_file?
         MagicConstant.expand_file_node(location)
-      when :__DIR__
+      when .magic_dir?
         MagicConstant.expand_dir_node(location)
       else
         raise "BUG: unknown magic constant: #{name}"
