@@ -312,7 +312,7 @@ class Crystal::Type
       # any pointer matches a void*
       expected_type.is_a?(PointerInstanceType) && expected_type.element_type.void?
     else
-      false
+      struct_wrapper_of?(expected_type)
     end
   end
 end

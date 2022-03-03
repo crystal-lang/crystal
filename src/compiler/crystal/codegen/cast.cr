@@ -510,7 +510,12 @@ class Crystal::CodeGenVisitor
   end
 
   def downcast_distinct(value, to_type : Type, from_type : Type)
-    raise "BUG: trying to downcast #{to_type} (#{to_type.class}) <- #{from_type} (#{from_type.class})"
+    if from_type.struct_wrapper_of?(to_type)
+      casted_pointer = bit_cast(value, llvm_type(to_type).pointer)
+      load(casted_pointer)
+    else
+      raise "BUG: trying to downcast #{to_type} (#{to_type.class}) <- #{from_type} (#{from_type.class})"
+    end
   end
 
   def upcast(value, to_type, from_type)

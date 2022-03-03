@@ -962,4 +962,21 @@ describe "Semantic: lib" do
       ),
       "passing Void return value of lib fun call has no effect"
   end
+
+  it "can pass wrapper struct to C function" do
+    assert_type(%(
+      lib LibFoo
+        type Foo = Void*
+
+        fun foo(f : Foo) : Int32
+      end
+
+      struct Wrapper
+        @foo = uninitialized LibFoo::Foo
+      end
+
+      wrapper = Wrapper.new
+      LibFoo.foo(wrapper)
+    )) { int32 }
+  end
 end

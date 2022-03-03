@@ -712,6 +712,12 @@ module Crystal
       nil
     end
 
+    # Returns true if this type is a struct with a single instance variable
+    # whose type is exactly *type*.
+    def struct_wrapper_of?(type : Type)
+      false
+    end
+
     # Yields self and returns true if the block returns a truthy value.
     # UnionType overrides it and yields all types in turn and returns
     # true if for each of them the block returns true.
@@ -1093,6 +1099,13 @@ module Crystal
   # A type that can have instance variables.
   module InstanceVarContainer
     getter(instance_vars) { {} of String => MetaTypeVar }
+
+    def struct_wrapper_of?(type : Type)
+      return false unless struct?
+
+      instance_vars = all_instance_vars
+      instance_vars.size == 1 && instance_vars.first_value.type == type
+    end
   end
 
   # A non generic module type.
