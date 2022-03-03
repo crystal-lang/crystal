@@ -455,21 +455,25 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def visit(node : Include)
     check_outside_exp node, "include"
+    validate_include node
+    include_in current_type, node, :included
+    false
+  end
 
+  private def validate_include(node)
     node_name = node.name
     case node_name
     when Path, Generic
       # Okay
+      return
     when Var
       if node_name.name == "self"
         node.name = Self.new.at(node_name)
+        return
       end
-    else
-      node.name.raise "argument to `include` must be a type or `self`, not #{node.name.class_desc}"
     end
 
-    include_in current_type, node, :included
-    false
+    node.name.raise "argument to `include` must be a type or `self`, not #{node.name.class_desc}"
   end
 
   def visit(node : Extend)

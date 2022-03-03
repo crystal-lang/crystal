@@ -1690,4 +1690,12 @@ describe "Semantic: module" do
       ),
       "argument to `include` must be a type or `self`, not NumberLiteral"
   end
+
+  it "can't include non-self var" do
+    assert_error %(
+      a = 1
+      include a
+      ),
+      "argument to `include` must be a type or `self`, not Var"
+  end
 end
