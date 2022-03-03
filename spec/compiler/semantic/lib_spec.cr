@@ -979,4 +979,21 @@ describe "Semantic: lib" do
       LibFoo.foo(wrapper)
     )) { int32 }
   end
+
+  it "can pass pointer of wrapper struct to C function" do
+    assert_type(%(
+      lib LibFoo
+        type Foo = Void*
+
+        fun foo(f : Foo*) : Int32
+      end
+
+      struct Wrapper
+        @foo = uninitialized LibFoo::Foo
+      end
+
+      ptr = uninitialized Pointer(Wrapper)
+      LibFoo.foo(ptr)
+    )) { int32 }
+  end
 end

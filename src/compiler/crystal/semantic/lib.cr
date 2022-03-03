@@ -309,8 +309,15 @@ class Crystal::Type
       # fun will be cast to return nil
       expected_type.is_a?(ProcInstanceType) && expected_type.return_type == program.nil && expected_type.arg_types == self.arg_types
     when PointerInstanceType
-      # any pointer matches a void*
-      expected_type.is_a?(PointerInstanceType) && expected_type.element_type.void?
+      if expected_type.is_a?(PointerInstanceType)
+        # any pointer matches a void*
+        return true if expected_type.element_type.void?
+
+        # Pointer of a wrapper matches pointer of the unwrapper value
+        return true if self.element_type.struct_wrapper_of?(expected_type.element_type)
+      end
+
+      false
     else
       struct_wrapper_of?(expected_type)
     end

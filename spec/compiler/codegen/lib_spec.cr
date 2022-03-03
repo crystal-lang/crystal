@@ -254,4 +254,21 @@ describe "Code gen: lib" do
       LibFoo.foo(wrapper)
     ))
   end
+
+  it "can pass pointer of wrapper struct to C function" do
+    codegen(%(
+      lib LibFoo
+        type Foo = Void*
+
+        fun foo(f : Foo*) : Int32
+      end
+
+      struct Wrapper
+        @foo = uninitialized LibFoo::Foo
+      end
+
+      ptr = uninitialized Pointer(Wrapper)
+      LibFoo.foo(ptr)
+    ))
+  end
 end
