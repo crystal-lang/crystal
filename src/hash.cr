@@ -1010,6 +1010,37 @@ class Hash(K, V)
     updated_entry ? updated_entry.value : yield key
   end
 
+  # It fetches the key and updates it with the value of the block.
+  #
+  # If no key is present, but there's a default value or default block,
+  # that value is used to insert the new key.
+  #
+  # Otherwise it raises.
+  #
+  # ```
+  # h = {"a" => 0, "b" => 1}
+  # h.update("b") { |v| v + 41 }
+  # h["b"] # => 42
+  #
+  # h = Hash(String, Int32).new(42)
+  # h.update("foo") { 2018 }
+  # h["foo"] # => 42
+  #
+  # h = {} of String => Int32
+  # h.update("a") { 42 } # raises KeyError
+  # ```
+  def update(key : K)
+    new_value = if entry = find_entry(key)
+                  yield entry.value
+                elsif (block = @block) && key.is_a?(K)
+                  block.call(self, key.as(K))
+                else
+                  raise KeyError.new "Missing hash key: #{key.inspect}"
+                end
+
+    self[key] = new_value
+  end
+
   # Returns the value for the key given by *key*.
   # If not found, returns the default value given by `Hash.new`, otherwise raises `KeyError`.
   #

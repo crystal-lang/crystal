@@ -191,6 +191,58 @@ describe "Hash" do
     end
   end
 
+  describe "update" do
+    it "updates the value of an existing key with the given block" do
+      h = {"a" => 0, "b" => 1}
+
+      h.update("b") { |v| v + 41 }
+      h["b"].should eq(42)
+    end
+
+    it "returns the new value" do
+      h = {"a" => 0}
+
+      h.update("a") { |v| v + 1 }.should eq(1)
+    end
+
+    it "inserts a new entry using the default block if key does not exist" do
+      h = Hash(String, String).new { |h, new_key| "default value for #{new_key}" }
+
+      h.update("new key") { "new value for new key" }
+      h["new key"].should eq("default value for new key")
+    end
+
+    it "inserts a new entry using the default value if key does not exist" do
+      h = Hash(String, Int32).new(42)
+
+      h.update("new key") { 2018 }
+      h["new key"].should eq(42)
+    end
+
+    it "raises if key does not exist and no default value specified" do
+      h = {} of String => Int32
+
+      expect_raises KeyError, %(Missing hash key: "a") do
+        h.update("a") { 42 }
+      end
+    end
+
+    it "can update with a nil value" do
+      h = {"a" => 42} of String => Int32?
+
+      h.update("a") { nil }
+      h["a"].should be_nil
+    end
+
+    it "can update a current nil value with a new value" do
+      h = {"a" => nil} of String => Int32?
+
+      h.has_key?("a").should be_true
+      h.update("a") { 42 }
+      h["a"].should eq(42)
+    end
+  end
+
   describe "dig?" do
     it "gets the value at given path given splat" do
       ary = [1, 2, 3]
