@@ -1022,8 +1022,8 @@ class Hash(K, V)
   # h.update("b") { |v| v + 41 }
   # h["b"] # => 42
   #
-  # h = Hash(String, Int32).new(42)
-  # h.update("foo") { 2018 }
+  # h = Hash(String, Int32).new(40)
+  # h.update("foo") { |v| v + 2 }
   # h["foo"] # => 42
   #
   # h = {} of String => Int32
@@ -1033,7 +1033,7 @@ class Hash(K, V)
     new_value = if entry = find_entry(key)
                   yield entry.value
                 elsif (block = @block) && key.is_a?(K)
-                  block.call(self, key.as(K))
+                  yield block.call(self, key.as(K))
                 else
                   raise KeyError.new "Missing hash key: #{key.inspect}"
                 end

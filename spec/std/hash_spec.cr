@@ -205,18 +205,18 @@ describe "Hash" do
       h.update("a") { |v| v + 1 }.should eq(1)
     end
 
-    it "inserts a new entry using the default block if key does not exist" do
-      h = Hash(String, String).new { |h, new_key| "default value for #{new_key}" }
+    it "inserts a new entry using the value returned by the default block if key does not exist" do
+      h = Hash(String, Int32).new { |h, new_key| new_key.size }
 
-      h.update("new key") { "new value for new key" }
-      h["new key"].should eq("default value for new key")
+      h.update("new key") { |v| v * 6 }
+      h["new key"].should eq(42)
     end
 
     it "inserts a new entry using the default value if key does not exist" do
-      h = Hash(String, Int32).new(42)
+      h = Hash(String, Int32).new(2)
 
-      h.update("new key") { 2018 }
-      h["new key"].should eq(42)
+      h.update("new key") { |v| v + 40 }
+      h["new key"].should eq(2 + 40)
     end
 
     it "raises if key does not exist and no default value specified" do
