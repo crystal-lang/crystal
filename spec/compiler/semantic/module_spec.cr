@@ -1683,4 +1683,11 @@ describe "Semantic: module" do
       ),
       "wrong number of arguments"
   end
+
+  it "can't include non-type" do
+    assert_error %(
+      include 1
+      ),
+      "argument to `include` must be a type or `self`, not NumberLiteral"
+  end
 end

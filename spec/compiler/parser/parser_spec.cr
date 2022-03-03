@@ -237,7 +237,7 @@ module Crystal
     # #5895, #6042, #5997
     %w(
       begin nil true false yield with abstract
-      def macro require case select if unless include
+      def macro require case select if unless
       extend class struct module enum while until return
       next break lib fun alias pointerof sizeof
       instance_sizeof offsetof typeof private protected asm out
@@ -560,8 +560,6 @@ module Crystal
     it_parses "if foo\n1\nelse\n2\nend", If.new("foo".call, 1.int32, 2.int32)
     it_parses "if foo; 1; elsif bar; 2; else 3; end", If.new("foo".call, 1.int32, If.new("bar".call, 2.int32, 3.int32))
 
-    it_parses "include Foo", Include.new("Foo".path)
-    it_parses "include Foo\nif true; end", [Include.new("Foo".path), If.new(true.bool)]
     it_parses "extend Foo", Extend.new("Foo".path)
     it_parses "extend Foo\nif true; end", [Extend.new("Foo".path), If.new(true.bool)]
     it_parses "extend self", Extend.new(Self.new)
@@ -1726,7 +1724,7 @@ module Crystal
 
     assert_syntax_error "return do\nend", %(unexpected token: "do")
 
-    %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
+    %w(def macro class struct module fun alias abstract extend lib).each do |keyword|
       assert_syntax_error "def foo\n#{keyword}\nend"
     end
 

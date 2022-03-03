@@ -241,6 +241,8 @@ module Crystal
       types["Deprecated"] = @deprecated_annotation = AnnotationType.new self, self, "Deprecated"
       types["Experimental"] = @experimental_annotation = AnnotationType.new self, self, "Experimental"
 
+      add_macro Macro.new("include", [Arg.new("type")], Primitive.new("include"))
+
       define_crystal_constants
     end
 

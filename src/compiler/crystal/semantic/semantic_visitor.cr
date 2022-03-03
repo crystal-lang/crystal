@@ -270,11 +270,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def expand_macro(node, raise_on_missing_const = true, first_pass = false, accept = true)
     if expanded = node.expanded
-      @exp_nest -= 1
-      eval_macro(node) do
-        expanded.accept self if accept
+      outside_exp do
+        eval_macro(node) do
+          expanded.accept self if accept
+        end
       end
-      @exp_nest += 1
       return true
     end
 
@@ -309,15 +309,28 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
     args, named_args = expand_macro_arguments(node, expansion_scope)
 
-    @exp_nest -= 1
-    generated_nodes = expand_macro(the_macro, node, visibility: node.visibility, accept: accept) do
-      old_args, old_named_args = node.args, node.named_args
-      node.args, node.named_args = args, named_args
-      expanded_macro, macro_expansion_pragmas = @program.expand_macro the_macro, node, expansion_scope, expansion_scope, @untyped_def
-      node.args, node.named_args = old_args, old_named_args
-      {expanded_macro, macro_expansion_pragmas}
+    body = the_macro.body
+    if body.is_a?(Primitive)
+      case body.name
+      when "include"
+        generated_nodes = Include.new(args[0]).at(node)
+        outside_exp do
+          generated_nodes.accept self
+        end
+      else
+        node.raise "BUG: unhandled macro primitive #{body.name.inspect}"
+      end
+    else
+      generated_nodes = outside_exp do
+        expand_macro(the_macro, node, visibility: node.visibility, accept: accept) do
+          old_args, old_named_args = node.args, node.named_args
+          node.args, node.named_args = args, named_args
+          expanded_macro, macro_expansion_pragmas = @program.expand_macro the_macro, node, expansion_scope, expansion_scope, @untyped_def
+          node.args, node.named_args = old_args, old_named_args
+          {expanded_macro, macro_expansion_pragmas}
+        end
+      end
     end
-    @exp_nest += 1
 
     node.expanded = generated_nodes
     node.expanded_macro = the_macro
@@ -552,6 +565,13 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def inside_exp?
     @exp_nest > 0
+  end
+
+  def outside_exp
+    @exp_nest -= 1
+    yield
+  ensure
+    @exp_nest += 1
   end
 
   def pushing_type(type : ModuleType)

@@ -1074,12 +1074,6 @@ module Crystal
           check_type_declaration { parse_if }
         when :unless
           check_type_declaration { parse_unless }
-        when :include
-          check_type_declaration do
-            check_not_inside_def("can't include") do
-              parse_include
-            end
-          end
         when :extend
           check_type_declaration do
             check_not_inside_def("can't extend") do
@@ -3979,7 +3973,7 @@ module Crystal
         # We cannot assign value into them and never reference them,
         # so they are invalid internal name.
         when :begin, :nil, :true, :false, :yield, :with, :abstract,
-             :def, :macro, :require, :case, :select, :if, :unless, :include,
+             :def, :macro, :require, :case, :select, :if, :unless,
              :extend, :class, :struct, :module, :enum, :while, :until, :return,
              :next, :break, :lib, :fun, :alias, :pointerof, :sizeof, :offsetof,
              :instance_sizeof, :typeof, :private, :protected, :asm, :out,
