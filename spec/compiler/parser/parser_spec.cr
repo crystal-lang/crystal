@@ -1515,11 +1515,11 @@ module Crystal
     it_parses "__FILE__", "/foo/bar/baz.cr".string
     it_parses "__DIR__", "/foo/bar".string
 
-    it_parses "def foo(x = __LINE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__LINE__))])
-    it_parses "def foo(x = __FILE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__FILE__))])
-    it_parses "def foo(x = __DIR__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__DIR__))])
+    it_parses "def foo(x = __LINE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:MAGIC_LINE))])
+    it_parses "def foo(x = __FILE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:MAGIC_FILE))])
+    it_parses "def foo(x = __DIR__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:MAGIC_DIR))])
 
-    it_parses "macro foo(x = __LINE__);end", Macro.new("foo", body: Expressions.new, args: [Arg.new("x", default_value: MagicConstant.new(:__LINE__))])
+    it_parses "macro foo(x = __LINE__);end", Macro.new("foo", body: Expressions.new, args: [Arg.new("x", default_value: MagicConstant.new(:MAGIC_LINE))])
 
     it_parses "1 \\\n + 2", Call.new(1.int32, "+", 2.int32)
     it_parses "1\\\n + 2", Call.new(1.int32, "+", 2.int32)
