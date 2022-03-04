@@ -199,10 +199,66 @@ describe "Hash" do
       h["b"].should eq(42)
     end
 
+    it "updates the value of an existing key with the given block (big hash)" do
+      h = {} of Int32 => Int32
+      100.times do |i|
+        h[i] = i
+      end
+
+      h.update(2) { |v|
+        x = v * 20
+        x + 2
+      }
+      h[2].should eq(42)
+    end
+
     it "returns the old value when key exists" do
       h = {"a" => 0}
 
       h.update("a") { |v| v + 1 }.should eq(0)
+    end
+
+    it "returns the old value when key exists (big hash)" do
+      h = {} of Int32 => Int32
+      100.times do |i|
+        h[i] = i
+      end
+
+      h.update(0) { |v| v + 1 }.should eq(0)
+    end
+
+    it "inserts a new entry using the value returned by the default block as input, if key does not exist" do
+      h = Hash(String, Int32).new { |h, new_key| new_key.size }
+
+      h.update("new key") { |v| v * 6 }
+      h["new key"].should eq(7 * 6)
+    end
+
+    it "inserts a new entry using the value returned by the default block as input, if key does not exist (big hash)" do
+      h = Hash(Int32, Int32).new { |h, new_key| new_key }
+      100.times do |i|
+        h[i] = i
+      end
+
+      h.update(3000) { |v| v + 42 }
+      h[3000].should eq(3000 + 42)
+    end
+
+    it "inserts a new entry using the default value as input, if key does not exist" do
+      h = Hash(String, Int32).new(2)
+
+      h.update("new key") { |v| v + 40 }
+      h["new key"].should eq(2 + 40)
+    end
+
+    it "inserts a new entry using the default value as input, if key does not exist (big hash)" do
+      h = Hash(Int32, Int32).new(2)
+      100.times do |i|
+        h[i] = i
+      end
+
+      h.update(3000) { |v| v + 40 }
+      h[3000].should eq(2 + 40)
     end
 
     it "returns the default value when key does not exist" do
@@ -211,18 +267,13 @@ describe "Hash" do
       h.update("a") { |v| v + 1 }.should eq(0)
     end
 
-    it "inserts a new entry using the value returned by the default block if key does not exist" do
-      h = Hash(String, Int32).new { |h, new_key| new_key.size }
+    it "returns the default value when key does not exist (big hash)" do
+      h = Hash(Int32, Int32).new(0)
+      100.times do |i|
+        h[i] = i
+      end
 
-      h.update("new key") { |v| v * 6 }
-      h["new key"].should eq(42)
-    end
-
-    it "inserts a new entry using the default value if key does not exist" do
-      h = Hash(String, Int32).new(2)
-
-      h.update("new key") { |v| v + 40 }
-      h["new key"].should eq(2 + 40)
+      h.update(3000) { |v| v + 1 }.should eq(0)
     end
 
     it "raises if key does not exist and no default value specified" do
@@ -230,6 +281,17 @@ describe "Hash" do
 
       expect_raises KeyError, %(Missing hash key: "a") do
         h.update("a") { 42 }
+      end
+    end
+
+    it "raises if key does not exist and no default value specified (big hash)" do
+      h = {} of Int32 => Int32
+      100.times do |i|
+        h[i] = i
+      end
+
+      expect_raises KeyError, %(Missing hash key: 3000) do
+        h.update(3000) { 42 }
       end
     end
 
@@ -244,7 +306,7 @@ describe "Hash" do
       h = {"a" => nil} of String => Int32?
 
       h.has_key?("a").should be_true
-      h.update("a") { 42 }
+      h.update("a") { 42 }.should be_nil
       h["a"].should eq(42)
     end
   end
