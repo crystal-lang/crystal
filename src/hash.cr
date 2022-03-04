@@ -341,7 +341,7 @@ class Hash(K, V)
     # No indices allocated yet so try to do a linear scan
     if @indices.null?
       # Try to do an update by doing a linear scan
-      updated_entry = update_linear_scan(key, value, hash)
+      updated_entry = update_linear_scan(hash, key) { value }
       return updated_entry if updated_entry
 
       # If we still have space, add an entry.
@@ -402,11 +402,25 @@ class Hash(K, V)
 
   # Tries to update a key-value-hash triplet by doing a linear scan.
   # Returns an old `Entry` if it was updated, otherwise `nil`.
-  private def update_linear_scan(key, value, hash) : Entry(K, V)?
+
+  # private def update_linear_scan(key, value, hash) : Entry(K, V)?
+  #   # Just do a linear scan...
+  #   each_entry_with_index do |entry, index|
+  #     if entry_matches?(entry, hash, key)
+  #       set_entry(index, Entry(K, V).new(entry.hash, entry.key, value))
+  #       return entry
+  #     end
+  #   end
+
+  #   nil
+  # end
+
+  private def update_linear_scan(hash, key, &) : Entry(K, V)?
     # Just do a linear scan...
     each_entry_with_index do |entry, index|
       if entry_matches?(entry, hash, key)
-        set_entry(index, Entry(K, V).new(entry.hash, entry.key, value))
+        new_value = yield entry.value
+        set_entry(index, Entry(K, V).new(entry.hash, entry.key, new_value))
         return entry
       end
     end
@@ -834,6 +848,10 @@ class Hash(K, V)
     entries_size == entries_capacity
   end
 
+  private def space_for_new_entry?: Bool
+    !entries_full?
+  end
+
   # Yields each non-deleted Entry with its index inside `@entries`.
   protected def each_entry_with_index : Nil
     return if @size == 0
@@ -1010,13 +1028,16 @@ class Hash(K, V)
     updated_entry ? updated_entry.value : yield key
   end
 
-  # It fetches the key and updates it with the value of the block.
+  # Updates the current value of *key* with the value returned by the given block
+  # (the current value is used as input for the block)
   #
-  # If no key is present, but there's a default value or default block,
-  # that value is used to insert the new key.
+  # If no key is present, but there's a default value (or default block)
+  # then that default value is used as input for the given block.
   #
   # Otherwise it raises.
   #
+  # It returns the value used as input for the given block
+  # (ie. the old value if key present, or the default value)
   # ```
   # h = {"a" => 0, "b" => 1}
   # h.update("b") { |v| v + 41 }
@@ -1029,16 +1050,112 @@ class Hash(K, V)
   # h = {} of String => Int32
   # h.update("a") { 42 } # raises KeyError
   # ```
-  def update(key : K)
-    new_value = if entry = find_entry(key)
-                  yield entry.value
-                elsif (block = @block) && key.is_a?(K)
-                  yield block.call(self, key.as(K))
-                else
-                  raise KeyError.new "Missing hash key: #{key.inspect}"
-                end
+  # def update(key : K)
+  #   new_value = if entry = find_entry(key)
+  #                 yield entry.value
+  #               elsif (block = @block) && key.is_a?(K)
+  #                 yield block.call(self, key.as(K))
+  #               else
+  #                 raise KeyError.new "Missing hash key: #{key.inspect}"
+  #               end
 
-    self[key] = new_value
+  #   self[key] = new_value
+  #   # set_entry(index, new_value) # but what if the key doesn't exist?
+  # end
+
+  def update(key : K, &)
+    # Empty hash table so only initialize entries for now
+    if @entries.null?
+      @indices_size_pow2 = 3
+      @entries = malloc_entries(4)
+    end
+
+    hash = key_hash(key)
+
+    # No indices allocated yet so try to do a linear scan
+    if @indices.null?
+      # Try to do an update by doing a linear scan
+      updated_entry = update_linear_scan(hash, key) { |current_value| yield current_value }
+      return updated_entry.value if updated_entry # updated so return entry
+
+      # The key was not found!
+      # so we need to insert the new key-value
+
+      # If we have space to add a new entry ...
+      if space_for_new_entry? # !entries_full?
+        if (block = @block) && key.is_a?(K)
+          default_value = block.call(self, key.as(K))
+          add_entry_and_increment_size(hash, key, yield default_value)
+          return default_value
+        else
+          raise KeyError.new "Missing hash key: #{key.inspect}"
+        end
+      end
+
+      # No more space so we need to do a resize
+      resize
+
+      # Now, it could happen that we are still with less than 16 elements
+      # and so `@indices` will be null, in which case we only need to
+      # add the key-value pair at the end of the `@entries` buffer.
+      if @indices.null?
+        if (block = @block) && key.is_a?(K)
+          default_value = block.call(self, key.as(K))
+          add_entry_and_increment_size(hash, key, yield default_value)
+          return default_value
+        else
+          raise KeyError.new "Missing hash key: #{key.inspect}"
+        end
+      end
+
+      # Otherwise `@indices` became non-null which means
+      # that we cannot use the _linear scan_
+      # and we need to continue ...
+    end
+
+    # Fit the hash value into an index in `@indices`
+    index = fit_in_indices(hash)
+
+    while true
+      entry_index = get_index(index)
+
+      # If we find an empty index slot, there's no such key
+      # so we insert the new key and value
+      if entry_index == -1 # key not found!
+
+        # Before adding the new key-value we need to check if there is space
+        # If we've reached the maximum in `@entries` then resize the hash
+        # and repeat the process
+        if entries_full?
+          resize
+          # We have to fit the hash into an index in `@indices` again, and try again
+          index = fit_in_indices(hash)
+          next
+        end
+
+        # We have free space: store the index and then insert the entry
+        if (block = @block) && key.is_a?(K)
+          set_index(index, entries_size)
+          default_value = block.call(self, key.as(K))
+          add_entry_and_increment_size(hash, key, yield default_value)
+          return default_value
+        else
+          raise KeyError.new "Missing hash key: #{key.inspect}"
+        end
+      end
+
+      # We found a non-empty slot, let's see if the key we have matches
+      entry = get_entry(entry_index)
+      if entry_matches?(entry, hash, key)
+        # If it does we just update the entry
+        new_value = yield entry.value
+        set_entry(entry_index, Entry(K, V).new(hash, key, new_value))
+        return entry.value
+      else
+        # Otherwise we have to keep looking...
+        index = next_index(index)
+      end
+    end
   end
 
   # Returns the value for the key given by *key*.

@@ -199,10 +199,16 @@ describe "Hash" do
       h["b"].should eq(42)
     end
 
-    it "returns the new value" do
+    it "returns the old value when key exists" do
       h = {"a" => 0}
 
-      h.update("a") { |v| v + 1 }.should eq(1)
+      h.update("a") { |v| v + 1 }.should eq(0)
+    end
+
+    it "returns the default value when key does not exist" do
+      h = Hash(String, Int32).new(0)
+
+      h.update("a") { |v| v + 1 }.should eq(0)
     end
 
     it "inserts a new entry using the value returned by the default block if key does not exist" do
