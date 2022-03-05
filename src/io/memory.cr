@@ -392,7 +392,11 @@ class IO::Memory < IO
   # io.to_s # => "123"
   # ```
   def to_s : String
-    String.new @buffer, @bytesize
+    if encoding = @encoding
+      String.new to_slice, encoding: encoding.name, invalid: encoding.invalid
+    else
+      String.new @buffer, @bytesize
+    end
   end
 
   # Returns the underlying bytes.
@@ -415,7 +419,11 @@ class IO::Memory < IO
       new_bytesize = bytesize * 2
       resize_to_capacity(new_bytesize) if @capacity < new_bytesize
     end
-    io.write(to_slice)
+    if encoding = @encoding
+      String.encode(to_slice, encoding.name, io.encoding, io, io.@encoding.try(&.invalid))
+    else
+      io.write(to_slice)
+    end
   end
 
   private def check_writeable
