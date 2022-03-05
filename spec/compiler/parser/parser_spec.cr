@@ -65,6 +65,7 @@ module Crystal
     it_parses %("foo"), "foo".string
     it_parses %(""), "".string
     it_parses %("hello \\\n     world"), "hello world".string
+    it_parses %("hello \\\r\n     world"), "hello world".string
 
     it_parses %(%Q{hello \\n world}), "hello \n world".string
     it_parses %(%q{hello \\n world}), "hello \\n world".string
@@ -490,6 +491,7 @@ module Crystal
     it_parses "(foo bar do\nend)", Expressions.new([Call.new(nil, "foo", ["bar".call] of ASTNode, Block.new)] of ASTNode)
     it_parses "(baz; bar do\nend)", Expressions.new(["baz".call, Call.new(nil, "bar", [] of ASTNode, Block.new)] of ASTNode)
     it_parses "(bar {})", Expressions.new([Call.new(nil, "bar", [] of ASTNode, Block.new)] of ASTNode)
+    it_parses "(a;\nb)", Expressions.new([Call.new(nil, "a"), Call.new(nil, "b")] of ASTNode)
     it_parses "1.x; foo do\nend", [Call.new(1.int32, "x"), Call.new(nil, "foo", block: Block.new)] of ASTNode
     it_parses "x = 1; foo.bar x do\nend", [Assign.new("x".var, 1.int32), Call.new("foo".call, "bar", ["x".var] of ASTNode, Block.new)]
 
@@ -1519,18 +1521,23 @@ module Crystal
     it_parses "__FILE__", "/foo/bar/baz.cr".string
     it_parses "__DIR__", "/foo/bar".string
 
-    it_parses "def foo(x = __LINE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__LINE__))])
-    it_parses "def foo(x = __FILE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__FILE__))])
-    it_parses "def foo(x = __DIR__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__DIR__))])
+    it_parses "def foo(x = __LINE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:MAGIC_LINE))])
+    it_parses "def foo(x = __FILE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:MAGIC_FILE))])
+    it_parses "def foo(x = __DIR__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:MAGIC_DIR))])
 
-    it_parses "macro foo(x = __LINE__);end", Macro.new("foo", body: Expressions.new, args: [Arg.new("x", default_value: MagicConstant.new(:__LINE__))])
+    it_parses "macro foo(x = __LINE__);end", Macro.new("foo", body: Expressions.new, args: [Arg.new("x", default_value: MagicConstant.new(:MAGIC_LINE))])
 
     it_parses "1 \\\n + 2", Call.new(1.int32, "+", 2.int32)
     it_parses "1\\\n + 2", Call.new(1.int32, "+", 2.int32)
+    it_parses "1 \\\r\n + 2", Call.new(1.int32, "+", 2.int32)
+    it_parses "1\\\r\n + 2", Call.new(1.int32, "+", 2.int32)
 
     it_parses %("hello " \\\n "world"), StringLiteral.new("hello world")
     it_parses %("hello "\\\n"world"), StringLiteral.new("hello world")
+    it_parses %("hello " \\\r\n "world"), StringLiteral.new("hello world")
+    it_parses %("hello "\\\r\n"world"), StringLiteral.new("hello world")
     it_parses %("hello \#{1}" \\\n "\#{2} world"), StringInterpolation.new(["hello ".string, 1.int32, 2.int32, " world".string] of ASTNode)
+    it_parses %("hello \#{1}" \\\r\n "\#{2} world"), StringInterpolation.new(["hello ".string, 1.int32, 2.int32, " world".string] of ASTNode)
     it_parses "<<-HERE\nHello, mom! I am HERE.\nHER dress is beautiful.\nHE is OK.\n  HERESY\nHERE",
       "Hello, mom! I am HERE.\nHER dress is beautiful.\nHE is OK.\n  HERESY".string_interpolation
     it_parses "<<-HERE\n   One\n  Zero\n  HERE", " One\nZero".string_interpolation
@@ -2217,6 +2224,61 @@ module Crystal
         loc = node.location.not_nil!
         loc.line_number.should eq(1)
         loc.column_number.should eq(1)
+      end
+
+      it "sets correct location of `else` of if statement" do
+        parser = Parser.new("if foo\nelse\nend")
+        node = parser.parse.as(If)
+        node.location.not_nil!.line_number.should eq(1)
+        node.else_location.not_nil!.line_number.should eq(2)
+        node.end_location.not_nil!.line_number.should eq(3)
+      end
+
+      it "sets correct location of `elsif` of if statement" do
+        parser = Parser.new("if foo\nelsif bar\nend")
+        node = parser.parse.as(If)
+        node.location.not_nil!.line_number.should eq(1)
+        node.else_location.not_nil!.line_number.should eq(2)
+        node.end_location.not_nil!.line_number.should eq(3)
+      end
+
+      it "sets correct location of `else` of unless statement" do
+        parser = Parser.new("unless foo\nelse\nend")
+        node = parser.parse.as(Unless)
+        node.location.not_nil!.line_number.should eq(1)
+        node.else_location.not_nil!.line_number.should eq(2)
+        node.end_location.not_nil!.line_number.should eq(3)
+      end
+
+      it "sets correct location and end location of `begin` block" do
+        parser = Parser.new("begin\nfoo\nend")
+        node = parser.parse.as(Expressions)
+        node.location.not_nil!.line_number.should eq(1)
+        node.end_location.not_nil!.line_number.should eq(3)
+      end
+
+      it "sets correct location and end location of parenthesized empty block" do
+        parser = Parser.new("()")
+        node = parser.parse.as(Expressions)
+        node.location.not_nil!.column_number.should eq(1)
+        node.end_location.not_nil!.column_number.should eq(2)
+      end
+
+      it "sets correct location and end location of parenthesized block" do
+        parser = Parser.new("(foo; bar)")
+        node = parser.parse.as(Expressions)
+        node.location.not_nil!.column_number.should eq(1)
+        node.end_location.not_nil!.column_number.should eq(10)
+      end
+
+      it "sets correct locations of keywords of exception handler" do
+        parser = Parser.new("begin\nrescue\nelse\nensure\nend")
+        node = parser.parse.as(ExceptionHandler)
+        node.location.not_nil!.line_number.should eq(1)
+        node.rescues.not_nil!.first.location.not_nil!.line_number.should eq(2)
+        node.else_location.not_nil!.line_number.should eq(3)
+        node.ensure_location.not_nil!.line_number.should eq(4)
+        node.end_location.not_nil!.line_number.should eq(5)
       end
 
       it "doesn't override yield with macro yield" do

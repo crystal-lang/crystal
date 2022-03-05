@@ -28,7 +28,6 @@ module Crystal
     end
 
     def define_method_from_method_missing(method_missing, signature, original_call)
-      name_node = StringLiteral.new(signature.name)
       args_nodes = [] of ASTNode
       named_args_nodes = nil
       args_nodes_names = [] of {String?, String} # external <-> internal name
@@ -47,7 +46,7 @@ module Crystal
         end
       end
       if block = signature.block
-        block_vars = block.args.map_with_index do |var, index|
+        block_vars = block.args.map_with_index do |_, index|
           Var.new("_block_arg#{index}")
         end
         yield_exps = block_vars.map { |var| var.clone.as(ASTNode) }
@@ -181,7 +180,7 @@ private def starts_with_def?(source)
   while true
     token = lexer.next_token
     return true if token.keyword?(:def)
-    break if token.type == :EOF
+    break if token.type.eof?
   end
   false
 end

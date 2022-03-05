@@ -775,7 +775,6 @@ module Crystal
               end
               next
             end
-            value_exps = node.values[i..i - node.targets.size]
             value = Call.new(Path.global("Tuple").at(node), "new", node.values[i..i - node.targets.size])
           else
             value = node.values[splat_index && i > splat_index ? i - node.targets.size : i]

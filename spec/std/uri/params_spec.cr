@@ -53,6 +53,14 @@ class URI
           encoded.should eq(to)
         end
       end
+
+      it "turns spaces to %20 if wanted" do
+        encoded = Params.build(space_to_plus: false) do |form|
+          form.add("foo bar", "hello world")
+        end
+
+        encoded.should eq("foo%20bar=hello%20world")
+      end
     end
 
     describe ".encode" do
@@ -71,6 +79,16 @@ class URI
       it "serializes params to http form" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
         params.to_s.should eq("foo=bar&foo=baz&baz=qux")
+      end
+
+      it "turns spaces to + by default" do
+        params = Params.parse("foo+bar=hello+world")
+        params.to_s.should eq("foo+bar=hello+world")
+      end
+
+      it "turns spaces to %20 if space_to_plus is false" do
+        params = Params.parse("foo+bar=hello+world")
+        params.to_s(space_to_plus: false).should eq("foo%20bar=hello%20world")
       end
     end
 

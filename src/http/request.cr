@@ -333,7 +333,7 @@ class HTTP::Request
 
     require_comma = false
     while reader.has_next?
-      case char = reader.current_char
+      case reader.current_char
       when ' ', '\t'
         reader.next_char
       when ','
@@ -375,7 +375,7 @@ class HTTP::Request
     reader.next_char
 
     while reader.has_next?
-      case char = reader.current_char
+      case reader.current_char
       when '!', '\u{23}'..'\u{7E}', '\u{80}'..'\u{FF}'
         reader.next_char
       when '"'

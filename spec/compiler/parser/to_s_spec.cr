@@ -117,6 +117,7 @@ describe "ASTNode#to_s" do
   expect_to_s "macro foo\n\\{%@type %}\nend"
   expect_to_s "enum A : B\nend"
   expect_to_s "# doc\ndef foo\nend", emit_doc: true
+  expect_to_s "class Foo\n  # doc\n  def foo\n  end\nend", emit_doc: true
   expect_to_s "foo[x, y, a: 1, b: 2]"
   expect_to_s "foo[x, y, a: 1, b: 2] = z"
   expect_to_s %(@[Foo(1, 2, a: 1, b: 2)])

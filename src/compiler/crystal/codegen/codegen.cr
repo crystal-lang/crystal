@@ -458,32 +458,30 @@ module Crystal
 
     def visit(node : NumberLiteral)
       case node.kind
-      when :i8
+      in .i8?
         @last = int8(node.value.to_i8)
-      when :u8
+      in .u8?
         @last = int8(node.value.to_u8)
-      when :i16
+      in .i16?
         @last = int16(node.value.to_i16)
-      when :u16
+      in .u16?
         @last = int16(node.value.to_u16)
-      when :i32
+      in .i32?
         @last = int32(node.value.to_i32)
-      when :u32
+      in .u32?
         @last = int32(node.value.to_u32)
-      when :i64
+      in .i64?
         @last = int64(node.value.to_i64)
-      when :u64
+      in .u64?
         @last = int64(node.value.to_u64)
-      when :i128
+      in .i128?
         @last = int128(node.value.to_i128)
-      when :u128
+      in .u128?
         @last = int128(node.value.to_u128)
-      when :f32
+      in .f32?
         @last = float32(node.value)
-      when :f64
+      in .f64?
         @last = float64(node.value)
-      else
-        node.raise "Bug: unhandled number kind: #{node.kind}"
       end
     end
 

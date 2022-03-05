@@ -42,9 +42,9 @@ module Crystal
 
     def float(value, type)
       case type.kind
-      when :f32
+      when .f32?
         float32(value.to_f32)
-      when :f64
+      when .f64?
         float64(value.to_f64)
       else
         raise "Unsupported float type"

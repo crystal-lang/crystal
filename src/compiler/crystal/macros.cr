@@ -215,7 +215,12 @@ module Crystal::Macros
   def `(command) : MacroId
   end
 
-  # :ditto:
+  # Executes a system command and returns the output as a `MacroId`.
+  # Gives a compile-time error if the command failed to execute.
+  #
+  # ```
+  # {{ system("echo hi") }} # => "hi\n"
+  # ```
   def system(command) : MacroId
   end
 
@@ -252,8 +257,8 @@ module Crystal::Macros
   #
   # The file denoted by *filename* must be a valid Crystal program.
   # This macro invocation passes *args* to the program as regular
-  # program arguments. The program must output a valid Crystal expression.
-  # This output is the result of this macro invocation, as a `MacroId`.
+  # program arguments. This output is the result of this macro invocation,
+  # as a `MacroId`.
   #
   # The `run` macro is useful when the subset of available macro methods
   # are not enough for your purposes and you need something more powerful.

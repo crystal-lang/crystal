@@ -244,6 +244,17 @@ describe "Semantic: abstract def" do
       CR
   end
 
+  it "errors if abstract method of private type is not implemented by subclass" do
+    assert_error <<-CR, "abstract `def Foo#foo()` must be implemented by Bar"
+      private abstract class Foo
+        abstract def foo
+      end
+
+      class Bar < Foo
+      end
+      CR
+  end
+
   it "errors if abstract method is not implemented by subclass of subclass" do
     assert_error %(
       abstract class Foo
@@ -300,6 +311,18 @@ describe "Semantic: abstract def" do
 
         def foo
         end
+      end
+      CR
+  end
+
+  it "errors if abstract method of private type is not implemented by including class" do
+    assert_error <<-CR, "abstract `def Foo#foo()` must be implemented by Bar"
+      private module Foo
+        abstract def foo
+      end
+
+      class Bar
+        include Foo
       end
       CR
   end
