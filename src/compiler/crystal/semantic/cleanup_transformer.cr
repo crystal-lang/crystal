@@ -4,15 +4,20 @@ require "../types"
 
 module Crystal
   class Program
-    def cleanup(node)
-      transformer = CleanupTransformer.new(self)
+    getter(cleanup_transformer : CleanupTransformer) do
+      CleanupTransformer.new(self)
+    end
+
+    def cleanup(node, inside_def = false)
+      transformer = self.cleanup_transformer
+      transformer.inside_def! if inside_def
       node = node.transform(transformer)
       puts node if ENV["AFTER"]? == "1"
       node
     end
 
     def cleanup_types
-      transformer = CleanupTransformer.new(self)
+      transformer = self.cleanup_transformer
 
       after_inference_types.each do |type|
         cleanup_type type, transformer
@@ -67,6 +72,10 @@ module Crystal
       @def_nest_count = 0
       @last_is_truthy = false
       @last_is_falsey = false
+    end
+
+    def inside_def!
+      @def_nest_count += 1
     end
 
     def after_transform(node)
@@ -211,7 +220,7 @@ module Crystal
 
     def has_enum_type?(type)
       if type.is_a?(UnionType)
-        type.union_types.any? &.is_a?(EnumType)
+        type.union_types.any?(EnumType)
       else
         type.is_a?(EnumType)
       end
@@ -265,7 +274,7 @@ module Crystal
 
       if target.is_a?(Path)
         const = target.target_const.not_nil!
-        return node unless const.used?
+        return node if !const.used? || const.cleaned_up?
 
         unless const.value.type?
           node.raise "can't infer type of constant #{const} (maybe the constant refers to itself?)"
@@ -285,9 +294,13 @@ module Crystal
       if target.is_a?(Path)
         const = const.not_nil!
         const.value = const.value.transform self
+        const.cleaned_up = true
       end
 
-      if node.target == node.value
+      if target == node.value &&
+         # This condition is because the interpreter will generate expressions
+         # like `$~ = $~` in multidispatches, and that's fine.
+         !(target.is_a?(Var) && target.special_var?)
         node.raise "expression has no effect"
       end
 
@@ -296,6 +309,70 @@ module Crystal
         if node.value.type?.try &.no_return?
           return node.value
         end
+      end
+
+      node
+    end
+
+    def transform(node : MultiAssign)
+      expanded = node.expanded
+
+      if node.values.size == 1 && expanded
+        # the expanded node always starts with `temp = {{ node.values[0] }}`;
+        # `temp_assign` is this whole Assign node and its deduced type is same
+        # as the original RHS's type
+        temp_assign = expanded.as(Expressions).expressions.first
+        type = temp_assign.type
+        target_count = node.targets.size
+        has_strict_multi_assign = @program.has_flag?("strict_multi_assign")
+
+        # disallows `a, *b, c = {0 => "x", 1 => "y", 2 => "z"}`, as `Hash` is
+        # not `Indexable`
+        # also disallows `a, b, c = ...` if the strict flag is set
+        if node.targets.any?(Splat) || has_strict_multi_assign
+          unless type.implements?(@program.indexable)
+            node.values.first.raise "right-hand side of one-to-many assignment must be an Indexable, not #{type}"
+          end
+        end
+
+        if has_strict_multi_assign
+          case type
+          when UnionType
+            sizes = type.union_types.map { |union_type| constant_size(union_type) }
+            if sizes.none? &.in?(target_count, nil)
+              node.values.first.raise "cannot assign #{type} to #{target_count} targets"
+            end
+          else
+            if size = constant_size(type)
+              unless size == target_count
+                node.values.first.raise "cannot assign #{type} to #{target_count} targets"
+              end
+            end
+          end
+        end
+      end
+
+      if expanded
+        return expanded.transform self
+      end
+
+      node
+    end
+
+    private def constant_size(type)
+      case type
+      when TupleInstanceType
+        type.size
+      end
+    end
+
+    def transform(node : Path)
+      # Some constants might not have been cleaned up at this point because
+      # they don't have an explicit `Assign` node. One example is regex
+      # literals: a constant is created for them, but there's no `Assign` node.
+      if (const = node.target_const) && const.used? && !const.cleaned_up?
+        const.value = const.value.transform self
+        const.cleaned_up = true
       end
 
       node
@@ -425,8 +502,6 @@ module Crystal
       end
 
       if target_defs = node.target_defs
-        changed = false
-
         if target_defs.size == 1
           if target_defs[0].is_a?(External)
             check_args_are_not_closure node, "can't send closure to C function"
@@ -844,8 +919,8 @@ module Crystal
       exp_type = node.exp.type?
 
       if exp_type
-        instance_type = exp_type.instance_type.devirtualize
-        if instance_type.struct? || instance_type.module? || instance_type.is_a?(UnionType)
+        instance_type = exp_type.devirtualize
+        if instance_type.struct? || instance_type.module? || instance_type.metaclass? || instance_type.is_a?(UnionType)
           node.exp.raise "instance_sizeof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
         end
       end

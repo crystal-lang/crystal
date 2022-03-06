@@ -81,12 +81,20 @@ module Crystal
   end
 
   class CrystalLibraryPath
+    def self.default_paths : Array(String)
+      paths = ENV.fetch("CRYSTAL_LIBRARY_PATH", Crystal::Config.library_path).split(Process::PATH_DELIMITER, remove_empty: true)
+
+      CrystalPath.expand_paths(paths)
+
+      paths
+    end
+
     def self.default_path : String
-      ENV.fetch("CRYSTAL_LIBRARY_PATH", Crystal::Config.library_path)
+      default_paths.join(Process::PATH_DELIMITER)
     end
 
     class_getter paths : Array(String) do
-      default_path.split(Process::PATH_DELIMITER, remove_empty: true)
+      default_paths
     end
   end
 
@@ -100,17 +108,27 @@ module Crystal
     end
 
     private def lib_flags_windows
-      String.build do |flags|
-        link_annotations.reverse_each do |ann|
-          if ldflags = ann.ldflags
-            flags << ' ' << ldflags
-          end
+      flags = [] of String
 
-          if libname = ann.lib
-            flags << ' ' << Process.quote_windows("#{libname}.lib")
-          end
+      # Add CRYSTAL_LIBRARY_PATH locations, so the linker preferentially
+      # searches user-given library paths.
+      if has_flag?("msvc")
+        CrystalLibraryPath.paths.each do |path|
+          flags << Process.quote_windows("/LIBPATH:#{path}")
         end
       end
+
+      link_annotations.reverse_each do |ann|
+        if ldflags = ann.ldflags
+          flags << ldflags
+        end
+
+        if libname = ann.lib
+          flags << Process.quote_windows("#{libname}.lib")
+        end
+      end
+
+      flags.join(" ")
     end
 
     private def lib_flags_posix

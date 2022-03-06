@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
 
@@ -93,6 +94,61 @@ describe "Hash" do
       a = { {1 => 2} => 3 }
       b = { {1 => 2} => 3 }
       a.should eq(b)
+    end
+  end
+
+  context "subset/superset operators" do
+    h1 = {"a" => 1, "b" => 2}
+    h2 = {"a" => 1, "b" => 2, "c" => 3}
+    h3 = {"c" => 3}
+    h4 = {} of Nil => Nil
+
+    describe "#proper_subset_of?" do
+      it do
+        h1.proper_subset_of?(h2).should be_true
+        h2.proper_subset_of?(h1).should be_false
+        h1.proper_subset_of?(h1).should be_false
+        h1.proper_subset_of?(h3).should be_false
+        h1.proper_subset_of?(h4).should be_false
+      end
+
+      it "handles edge case where both values are nil" do
+        {"a" => nil}.proper_subset_of?({"b" => nil, "c" => nil}).should be_false
+      end
+    end
+
+    describe "#subset_of?" do
+      it do
+        h1.subset_of?(h2).should be_true
+        h2.subset_of?(h1).should be_false
+        h1.subset_of?(h1).should be_true
+        h1.subset_of?(h3).should be_false
+        h1.subset_of?(h4).should be_false
+      end
+
+      it "handles edge case where both values are nil" do
+        {"a" => nil}.subset_of?({"b" => nil}).should be_false
+      end
+    end
+
+    describe "#proper_superset_of?" do
+      it do
+        h1.proper_superset_of?(h2).should be_false
+        h2.proper_superset_of?(h1).should be_true
+        h1.proper_superset_of?(h1).should be_false
+        h1.proper_superset_of?(h3).should be_false
+        h1.proper_superset_of?(h4).should be_true
+      end
+    end
+
+    describe "#superset_of?" do
+      it do
+        h1.superset_of?(h2).should be_false
+        h2.superset_of?(h1).should be_true
+        h1.superset_of?(h1).should be_true
+        h1.superset_of?(h3).should be_false
+        h1.superset_of?(h4).should be_true
+      end
     end
   end
 
@@ -439,6 +495,16 @@ describe "Hash" do
       clone = h.clone
       clone.should be(clone.first[1])
     end
+
+    it "retains default block on clone" do
+      h1 = Hash(Int32, String).new("a")
+      h2 = h1.clone
+      h2[0].should eq("a")
+
+      h1[1] = "b"
+      h3 = h1.clone
+      h3[0].should eq("a")
+    end
   end
 
   describe "dup" do
@@ -480,6 +546,16 @@ describe "Hash" do
 
       h1.delete(0)
       h2[0].should eq([0])
+    end
+
+    it "retains default block on dup" do
+      h1 = Hash(Int32, String).new("a")
+      h2 = h1.dup
+      h2[0].should eq("a")
+
+      h1[1] = "b"
+      h3 = h1.dup
+      h3[0].should eq("a")
     end
   end
 
@@ -929,52 +1005,15 @@ describe "Hash" do
     vs.should eq([1, 2])
   end
 
-  it "gets each iterator" do
-    iter = {:a => 1, :b => 2}.each
-    iter.next.should eq({:a, 1})
-    iter.next.should eq({:b, 2})
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [{:a, 1}, {:b, 2}], {:a => 1, :b => 2}.each
+  it_iterates "#each_key", [:a, :b], {:a => 1, :b => 2}.each_key
+  it_iterates "#each_value", [1, 2], {:a => 1, :b => 2}.each_value
 
-  it "gets each key iterator" do
-    iter = {:a => 1, :b => 2}.each_key
-    iter.next.should eq(:a)
-    iter.next.should eq(:b)
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each_with_index", [{ {:a, 1}, 0 }, { {:b, 2}, 1 }], {:a => 1, :b => 2}.each_with_index, tuple: true
+  it_iterates "#each_with_index(offset)", [{ {:a, 1}, 2 }, { {:b, 2}, 3 }], {:a => 1, :b => 2}.each_with_index(2), tuple: true
 
-  it "gets each value iterator" do
-    iter = {:a => 1, :b => 2}.each_value
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  describe "each_with_index" do
-    it "pass key, value, index values into block" do
-      hash = {2 => 4, 5 => 10, 7 => 14}
-      results = [] of Int32
-      hash.each_with_index { |(k, v), i| results << k + v + i }.should be_nil
-      results.should eq [6, 16, 23]
-    end
-
-    it "can be used with offset" do
-      hash = {2 => 4, 5 => 10, 7 => 14}
-      results = [] of Int32
-      hash.each_with_index(3) { |(k, v), i| results << k + v + i }.should be_nil
-      results.should eq [9, 19, 26]
-    end
-  end
-
-  describe "each_with_object" do
-    it "passes memo, key and value into block" do
-      hash = {:a => 'b'}
-      hash.each_with_object(:memo) do |(k, v), memo|
-        memo.should eq(:memo)
-        k.should eq(:a)
-        v.should eq('b')
-      end.should eq(:memo)
-    end
+  describe "#each_with_object" do
+    it_iterates "passes memo, key and value into block", [{ {:a, 1}, :memo }, { {:b, 2}, :memo }], {:a => 1, :b => 2}.each_with_object(:memo), tuple: true
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
@@ -1071,6 +1110,7 @@ describe "Hash" do
 
   describe "reject" do
     it { {:a => 2, :b => 3}.reject(:b, :d).should eq({:a => 2}) }
+    it { {:a => 2, :b => 3}.reject(Set{:b, :d}).should eq({:a => 2}) }
     it { {:a => 2, :b => 3}.reject(:b, :a).should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.reject([:b, :a]).should eq({} of Symbol => Int32) }
     it "does not change current hash" do
@@ -1082,6 +1122,7 @@ describe "Hash" do
 
   describe "reject!" do
     it { {:a => 2, :b => 3}.reject!(:b, :d).should eq({:a => 2}) }
+    it { {:a => 2, :b => 3}.reject!(Set{:b, :d}).should eq({:a => 2}) }
     it { {:a => 2, :b => 3}.reject!(:b, :a).should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.reject!([:b, :a]).should eq({} of Symbol => Int32) }
     it "changes current hash" do
@@ -1096,6 +1137,7 @@ describe "Hash" do
     it { {:a => 2, :b => 3}.select.should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.select(:b, :a).should eq({:a => 2, :b => 3}) }
     it { {:a => 2, :b => 3}.select([:b, :a]).should eq({:a => 2, :b => 3}) }
+    it { {:a => 2, :b => 3}.select(Set{:b, :a}).should eq({:a => 2, :b => 3}) }
     it "does not change current hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h2 = h.select(:b, :c)
@@ -1108,6 +1150,7 @@ describe "Hash" do
     it { {:a => 2, :b => 3}.select!.should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.select!(:b, :a).should eq({:a => 2, :b => 3}) }
     it { {:a => 2, :b => 3}.select!([:b, :a]).should eq({:a => 2, :b => 3}) }
+    it { {:a => 2, :b => 3}.select!(Set{:b, :a}).should eq({:a => 2, :b => 3}) }
     it "does change current hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h.select!(:b, :c)

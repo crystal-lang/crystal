@@ -260,16 +260,12 @@ end
 
 private class YAMLAttrWithFinalize
   include YAML::Serializable
+  include FinalizeCounter
+
   property value : YAML::Any
 
   @[YAML::Field(ignore: true)]
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-  end
+  property key : String?
 end
 
 module YAMLAttrModule
@@ -351,14 +347,19 @@ enum YAMLVariableDiscriminatorEnumFoo
   Foo = 4
 end
 
+enum YAMLVariableDiscriminatorEnumFoo8 : UInt8
+  Foo = 1_8
+end
+
 class YAMLVariableDiscriminatorValueType
   include YAML::Serializable
 
   use_yaml_discriminator "type", {
-                                        0 => YAMLVariableDiscriminatorNumber,
-    "1"                                   => YAMLVariableDiscriminatorString,
-    true                                  => YAMLVariableDiscriminatorBool,
-    YAMLVariableDiscriminatorEnumFoo::Foo => YAMLVariableDiscriminatorEnum,
+                                         0 => YAMLVariableDiscriminatorNumber,
+    "1"                                    => YAMLVariableDiscriminatorString,
+    true                                   => YAMLVariableDiscriminatorBool,
+    YAMLVariableDiscriminatorEnumFoo::Foo  => YAMLVariableDiscriminatorEnum,
+    YAMLVariableDiscriminatorEnumFoo8::Foo => YAMLVariableDiscriminatorEnum8,
   }
 end
 
@@ -372,6 +373,9 @@ class YAMLVariableDiscriminatorBool < YAMLVariableDiscriminatorValueType
 end
 
 class YAMLVariableDiscriminatorEnum < YAMLVariableDiscriminatorValueType
+end
+
+class YAMLVariableDiscriminatorEnum8 < YAMLVariableDiscriminatorValueType
 end
 
 describe "YAML::Serializable" do
@@ -634,6 +638,13 @@ describe "YAML::Serializable" do
 
     yaml = YAMLAttrWithAny.from_yaml({:obj => {:foo => :bar}}.to_yaml)
     yaml.obj["foo"].as_s.should eq("bar")
+
+    yaml = YAMLAttrWithAny.from_yaml("extra: &foo hello\nobj: *foo")
+    yaml.obj.as_s.should eq("hello")
+
+    expect_raises YAML::ParseException, "Unknown anchor 'foo' at line 1, column 6" do
+      YAMLAttrWithAny.from_yaml("obj: *foo")
+    end
   end
 
   it "parses yaml with problematic keys" do
@@ -734,6 +745,13 @@ describe "YAML::Serializable" do
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"a":null,"b":null}))
       yaml.a.should eq 11
+      yaml.b.should eq "Haha"
+
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":""}))
+      yaml.b.should eq ""
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":''}))
+      yaml.b.should eq ""
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":}))
       yaml.b.should eq "Haha"
     end
 
@@ -878,7 +896,7 @@ describe "YAML::Serializable" do
   end
 
   it "calls #finalize" do
-    assert_finalizes(:yaml) { YAMLAttrWithFinalize.from_yaml("---\nvalue: 1\n") }
+    assert_finalizes("yaml") { YAMLAttrWithFinalize.from_yaml("---\nvalue: 1\n") }
   end
 
   describe "work with module and inheritance" do
@@ -931,6 +949,9 @@ describe "YAML::Serializable" do
 
       object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 4}))
       object_enum.should be_a(YAMLVariableDiscriminatorEnum)
+
+      object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 18}))
+      object_enum.should be_a(YAMLVariableDiscriminatorEnum8)
     end
   end
 

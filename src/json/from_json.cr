@@ -85,10 +85,15 @@ end
                        } %}
   def {{type.id}}.new(pull : JSON::PullParser)
     location = pull.location
-    value = pull.read_int
+    value =
+      {% if type == "UInt64" %}
+        pull.read_raw
+      {% else %}
+        pull.read_int
+      {% end %}
     begin
       value.to_{{method.id}}
-    rescue ex : OverflowError
+    rescue ex : OverflowError | ArgumentError
       raise JSON::ParseException.new("Can't read {{type.id}}", *location, ex)
     end
   end
@@ -109,7 +114,7 @@ def Float32.new(pull : JSON::PullParser)
   end
 end
 
-def Float32.from_json_object_key?(key : String)
+def Float32.from_json_object_key?(key : String) : Float32?
   key.to_f32?
 end
 
@@ -124,7 +129,7 @@ def Float64.new(pull : JSON::PullParser)
   end
 end
 
-def Float64.from_json_object_key?(key : String)
+def Float64.from_json_object_key?(key : String) : Float64?
   key.to_f64?
 end
 
@@ -136,7 +141,7 @@ def Path.new(pull : JSON::PullParser)
   new(pull.read_string)
 end
 
-def String.from_json_object_key?(key : String)
+def String.from_json_object_key?(key : String) : String
   key
 end
 
@@ -231,13 +236,13 @@ def NamedTuple.new(pull : JSON::PullParser)
 
     {% for key, type in T %}
       if %var{key.id}.nil? && !%found{key.id} && !{{type.nilable?}}
-        raise JSON::ParseException.new("Missing json attribute: {{key}}", *location)
+        raise JSON::ParseException.new("Missing json attribute: #{{{key.id.stringify}}}", *location)
       end
     {% end %}
 
     {
       {% for key, type in T %}
-        {{key}}: (%var{key.id}).as({{type}}),
+        {{key.id.stringify}}: (%var{key.id}).as({{type}}),
       {% end %}
     }
   {% end %}
@@ -384,7 +389,7 @@ def Time.new(pull : JSON::PullParser)
 end
 
 struct Time::Format
-  def from_json(pull : JSON::PullParser)
+  def from_json(pull : JSON::PullParser) : Time
     string = pull.read_string
     parse(string, Time::Location::UTC)
   end
@@ -427,7 +432,7 @@ module Time::EpochMillisConverter
 end
 
 module String::RawConverter
-  def self.from_json(value : JSON::PullParser)
+  def self.from_json(value : JSON::PullParser) : String
     value.read_raw
   end
 end
