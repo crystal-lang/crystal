@@ -393,7 +393,11 @@ class IO::Memory < IO
   # ```
   def to_s : String
     if encoding = @encoding
-      String.new to_slice, encoding: encoding.name, invalid: encoding.invalid
+      {% if flag?(:without_iconv) %}
+        raise NotImplementedError.new("String.encode")
+      {% else %}
+        String.new to_slice, encoding: encoding.name, invalid: encoding.invalid
+      {% end %}
     else
       String.new @buffer, @bytesize
     end
@@ -420,7 +424,11 @@ class IO::Memory < IO
       resize_to_capacity(new_bytesize) if @capacity < new_bytesize
     end
     if encoding = @encoding
-      String.encode(to_slice, encoding.name, io.encoding, io, io.@encoding.try(&.invalid))
+      {% if flag?(:without_iconv) %}
+        raise NotImplementedError.new("String.encode")
+      {% else %}
+        String.encode(to_slice, encoding.name, io.encoding, io, io.@encoding.try(&.invalid))
+      {% end %}
     else
       io.write(to_slice)
     end
