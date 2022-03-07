@@ -1110,18 +1110,20 @@ class Hash(K, V)
       # so we insert the new key and value
       if entry_index == -1 # key not found!
 
-        # Before adding the new key-value we need to check if there is space
-        # If we've reached the maximum in `@entries` then resize the hash
-        # and repeat the process
-        if entries_full?
-          resize
-          # We have to fit the hash into an index in `@indices` again, and try again
-          index = fit_in_indices(hash)
-          next
-        end
-
-        # We have free space: store the index and then insert the entry
+        # The key was not found so we need a default value/block
+        # If we don't have a default value/block then we raise
         if (block = @block) && key.is_a?(K)
+          # Before adding the new key-value we need to check if there is space
+          # If we've reached the maximum in `@entries` then resize the hash
+          # and repeat the process
+          if entries_full?
+            resize
+            # We have to fit the hash into an index in `@indices` again, and try again
+            index = fit_in_indices(hash)
+            next
+          end
+
+          # We have free space: store the index and then insert the entry
           set_index(index, entries_size)
           default_value = block.call(self, key.as(K))
           add_entry_and_increment_size(hash, key, yield default_value)
