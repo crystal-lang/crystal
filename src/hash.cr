@@ -848,7 +848,7 @@ class Hash(K, V)
     entries_size == entries_capacity
   end
 
-  private def space_for_new_entry?: Bool
+  private def space_for_new_entry? : Bool
     !entries_full?
   end
 
