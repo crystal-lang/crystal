@@ -162,7 +162,7 @@ Approvals from Core Team members are required for accepting a pull requests. Oth
 
 ### Accepting a Pull Request
 
-Check list:
+The process of accepting a pull request entails the following check list:
 
 1. At least two approvals by Core Team members; one approval if the author is a Core Team member. Only approvals based on the most recent code version count (ignoring minor changes like fixing a typo).
 2. There are no outstanding questions nor requested changes in the pull request and associated issues.
@@ -172,10 +172,10 @@ Check list:
 6. CI is green.
 
 When these conditions are met, a Core Team member can mark the pull request as accepted by adding it to the current development milestone.
-This signals it is scheduled to be merged soon and gives another chance for final reviews.
+This signals that the PR is scheduled to be merged soon and gives another chance for final reviews.
 
-The current development milestone is typically the milestone for the next release.
-During the freeze period for the next release, feature enhancements are added to the release milestone after the next.
+The current [development milestone](https://github.com/crystal-lang/crystal/milestones) is typically the milestone for the next release.
+During the freeze period of a release, feature enhancements are added to the milestone of the next release.
 Freeze periods are announced on the community forums and usually span two weeks before the scheduled date of a minor release.
 
 ### Merge Queue
@@ -185,7 +185,7 @@ are eligible for being merged.
 
 Pending pull requests should usually stay in the queue for at least one full business day, allowing other reviewers to take a final look at it.
 This wait time can be extended, for example for big changes or when there was a lot of recent activity in the discussion.
-Urgent bug fixes can skip the line.
+Urgent bug and regression fixes can skip the line.
 
 If reasonable objection or questions arise while waiting for merge, the pull request must be removed from the milestone until they are resolved.
 
@@ -193,10 +193,9 @@ It's good practice to have a single maintainer responsible for operating the mer
 
 ### Merging
 
-Make sure, the pull request has been on the merge queue for some time (usually 1+ business days) and there has not been any
+Before merging, make sure the pull request has been on the merge queue for some time (usually 1+ business days) and there has not been any
 more recent discussion that questions the current state of the change.
-
-Now, the pull request can finally be merged. Use squash merge to not pollute the version history of the main branch with
+If conditions are met, the pull request can finally be merged. Use squash merge to not pollute the version history of the main branch with
 details of the pull request process. For non-trivial changes, the merge commit should contain a short description.
 
 ### For maintainers with push access
