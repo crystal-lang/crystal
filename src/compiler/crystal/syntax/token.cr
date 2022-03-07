@@ -7,7 +7,7 @@ module Crystal
     ALIAS
     ANNOTATION
     AS
-    AS_NILABLE
+    AS_QUESTION
     ASM
     BEGIN
     BREAK
@@ -28,13 +28,13 @@ module Crystal
     IN
     INCLUDE
     INSTANCE_SIZEOF
-    IS_A
+    IS_A_QUESTION
     LIB
     MACRO
     MODULE
     NEXT
     NIL
-    NIL_METHOD
+    NIL_QUESTION
     OF
     OFFSETOF
     OUT
@@ -43,7 +43,7 @@ module Crystal
     PROTECTED
     REQUIRE
     RESCUE
-    RESPONDS_TO
+    RESPONDS_TO_QUESTION
     RETURN
     SELECT
     SELF
@@ -66,13 +66,13 @@ module Crystal
 
     def to_s
       case self
-      when AS_NILABLE
+      when AS_QUESTION
         "as?"
-      when IS_A
+      when IS_A_QUESTION
         "is_a?"
-      when NIL_METHOD
+      when NIL_QUESTION
         "nil?"
-      when RESPONDS_TO
+      when RESPONDS_TO_QUESTION
         "responds_to?"
       else
         super.downcase

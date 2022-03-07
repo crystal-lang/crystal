@@ -676,15 +676,15 @@ module Crystal
           check AtomicWithMethodCheck
           name_location = @token.location
 
-          if @token.value == Keyword::IS_A
+          if @token.value == Keyword::IS_A_QUESTION
             atomic = parse_is_a(atomic).at(location)
           elsif @token.value == Keyword::AS
             atomic = parse_as(atomic).at(location)
-          elsif @token.value == Keyword::AS_NILABLE
+          elsif @token.value == Keyword::AS_QUESTION
             atomic = parse_as?(atomic).at(location)
-          elsif @token.value == Keyword::RESPONDS_TO
+          elsif @token.value == Keyword::RESPONDS_TO_QUESTION
             atomic = parse_responds_to(atomic).at(location)
-          elsif !@in_macro_expression && @token.value == Keyword::NIL_METHOD
+          elsif !@in_macro_expression && @token.value == Keyword::NIL_QUESTION
             atomic = parse_nil?(atomic).at(location)
           elsif @token.type.op_bang?
             atomic = parse_negation_suffix(atomic).at(location)
@@ -1018,7 +1018,7 @@ module Crystal
       when .ident?
         # NOTE: Update `Parser#invalid_internal_name?` keyword list
         # when adding or removing keyword to handle here.
-        if (keyword = @token.value).is_a?(Keyword)
+        if keyword = @token.value.as?(Keyword)
           case keyword
           when .begin?
             check_type_declaration { parse_begin }
@@ -1553,19 +1553,19 @@ module Crystal
 
       check AtomicWithMethodCheck
 
-      if @token.value == Keyword::IS_A
+      if @token.value == Keyword::IS_A_QUESTION
         call = parse_is_a(obj).at(location)
         call = parse_atomic_method_suffix_special(call, location)
       elsif @token.value == Keyword::AS
         call = parse_as(obj).at(location)
         call = parse_atomic_method_suffix_special(call, location)
-      elsif @token.value == Keyword::AS_NILABLE
+      elsif @token.value == Keyword::AS_QUESTION
         call = parse_as?(obj).at(location)
         call = parse_atomic_method_suffix_special(call, location)
-      elsif @token.value == Keyword::RESPONDS_TO
+      elsif @token.value == Keyword::RESPONDS_TO_QUESTION
         call = parse_responds_to(obj).at(location)
         call = parse_atomic_method_suffix_special(call, location)
-      elsif !@in_macro_expression && @token.value == Keyword::NIL_METHOD
+      elsif !@in_macro_expression && @token.value == Keyword::NIL_QUESTION
         call = parse_nil?(obj).at(location)
         call = parse_atomic_method_suffix_special(call, location)
       elsif @token.type.op_bang?
@@ -2653,7 +2653,7 @@ module Crystal
         next_token_skip_space
       end
 
-      unless @token.keyword? && @token.value.in?(Keyword::WHEN, Keyword::ELSE, Keyword::END)
+      unless @token.value.in?(Keyword::WHEN, Keyword::ELSE, Keyword::END)
         cond = parse_op_assign_no_control
         skip_statement_end
       end
@@ -3643,7 +3643,7 @@ module Crystal
     end
 
     def check_valid_def_name
-      if @token.value.in?(Keyword::IS_A, Keyword::AS, Keyword::AS_NILABLE, Keyword::RESPONDS_TO, Keyword::NIL_METHOD)
+      if @token.value.in?(Keyword::IS_A_QUESTION, Keyword::AS, Keyword::AS_QUESTION, Keyword::RESPONDS_TO_QUESTION, Keyword::NIL_QUESTION)
         raise "'#{@token.value}' is a pseudo-method and can't be redefined", @token
       end
     end
@@ -4093,19 +4093,19 @@ module Crystal
       end
 
       case @token.value
-      when Keyword::IS_A
+      when Keyword::IS_A_QUESTION
         obj = Var.new("self").at(location)
         return parse_is_a(obj)
       when Keyword::AS
         obj = Var.new("self").at(location)
         return parse_as(obj)
-      when Keyword::AS_NILABLE
+      when Keyword::AS_QUESTION
         obj = Var.new("self").at(location)
         return parse_as?(obj)
-      when Keyword::RESPONDS_TO
+      when Keyword::RESPONDS_TO_QUESTION
         obj = Var.new("self").at(location)
         return parse_responds_to(obj)
-      when Keyword::NIL_METHOD
+      when Keyword::NIL_QUESTION
         unless @in_macro_expression
           obj = Var.new("self").at(location)
           return parse_nil?(obj)
@@ -5966,7 +5966,7 @@ module Crystal
         return true
       end
 
-      if (keyword = @token.value).is_a?(Keyword)
+      if keyword = @token.value.as?(Keyword)
         case keyword
         when .do?, .end?, .else?, .elsif?, .when?, Keyword::IN, .rescue?, .ensure?, .then?
           !next_comes_colon_space?

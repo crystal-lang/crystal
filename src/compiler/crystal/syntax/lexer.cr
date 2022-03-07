@@ -853,7 +853,7 @@ module Crystal
             next_char
             next_char
             @token.type = :IDENT
-            @token.value = :as_nilable
+            @token.value = :as_question
             return @token
           else
             return check_ident_or_keyword(:as, start)
@@ -989,7 +989,7 @@ module Crystal
           end
         when 's'
           if next_char == '_' && next_char == 'a' && next_char == '?'
-            return check_ident_or_keyword(:is_a, start)
+            return check_ident_or_keyword(:is_a_question, start)
           end
         else
           # scan_ident
@@ -1035,7 +1035,7 @@ module Crystal
           when 'l'
             if peek_next_char == '?'
               next_char
-              return check_ident_or_keyword(:nil_method, start)
+              return check_ident_or_keyword(:nil_question, start)
             else
               return check_ident_or_keyword(:nil, start)
             end
@@ -1100,7 +1100,7 @@ module Crystal
               end
             when 'p'
               if next_char == 'o' && next_char == 'n' && next_char == 'd' && next_char == 's' && next_char == '_' && next_char == 't' && next_char == 'o' && next_char == '?'
-                return check_ident_or_keyword(:responds_to, start)
+                return check_ident_or_keyword(:responds_to_question, start)
               end
             else
               # scan_ident

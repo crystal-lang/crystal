@@ -160,10 +160,10 @@ describe "Lexer" do
     :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :typeof, :for, :in,
     :with, :self, :super, :private, :protected, :asm, :uninitialized,
     :annotation, :verbatim
-  it_lexes "is_a?", :IDENT, Keyword::IS_A
-  it_lexes "as?", :IDENT, Keyword::AS_NILABLE
-  it_lexes "nil?", :IDENT, Keyword::NIL_METHOD
-  it_lexes "responds_to?", :IDENT, Keyword::RESPONDS_TO
+  it_lexes "is_a?", :IDENT, Keyword::IS_A_QUESTION
+  it_lexes "as?", :IDENT, Keyword::AS_QUESTION
+  it_lexes "nil?", :IDENT, Keyword::NIL_QUESTION
+  it_lexes "responds_to?", :IDENT, Keyword::RESPONDS_TO_QUESTION
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
                    "❨╯°□°❩╯︵┻━┻"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?",
