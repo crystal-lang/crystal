@@ -1131,9 +1131,10 @@ class Hash(K, V)
       entry = get_entry(entry_index)
       if entry_matches?(entry, hash, key)
         # If it does we just update the entry
-        new_value = yield entry.value
+        old_value = entry.value
+        new_value = yield old_value
         set_entry(entry_index, Entry(K, V).new(hash, key, new_value))
-        return entry.value
+        return old_value
       else
         # Otherwise we have to keep looking...
         index = next_index(index)
