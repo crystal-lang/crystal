@@ -1050,19 +1050,6 @@ class Hash(K, V)
   # h = {} of String => Int32
   # h.update("a") { 42 } # raises KeyError
   # ```
-  # def update(key : K)
-  #   new_value = if entry = find_entry(key)
-  #                 yield entry.value
-  #               elsif (block = @block) && key.is_a?(K)
-  #                 yield block.call(self, key.as(K))
-  #               else
-  #                 raise KeyError.new "Missing hash key: #{key.inspect}"
-  #               end
-
-  #   self[key] = new_value
-  #   # set_entry(index, new_value) # but what if the key doesn't exist?
-  # end
-
   def update(key : K, &)
     # Empty hash table so only initialize entries for now
     if @entries.null?
@@ -1082,7 +1069,7 @@ class Hash(K, V)
       # so we need to insert the new key-value
 
       # If we have space to add a new entry ...
-      if space_for_new_entry? # !entries_full?
+      if space_for_new_entry?
         if (block = @block) && key.is_a?(K)
           default_value = block.call(self, key.as(K))
           add_entry_and_increment_size(hash, key, yield default_value)
