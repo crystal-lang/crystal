@@ -341,7 +341,7 @@ class Hash(K, V)
     # No indices allocated yet so try to do a linear scan
     if @indices.null?
       # Try to do an update by doing a linear scan
-      updated_entry = update_linear_scan(hash, key) { value }
+      updated_entry = update_linear_scan(hash, key, value)
       return updated_entry if updated_entry
 
       # If we still have space, add an entry.
@@ -400,21 +400,15 @@ class Hash(K, V)
     end
   end
 
-  # Tries to update a key-value-hash triplet by doing a linear scan.
+  # Tries to update a hash-key-value triplet by doing a linear scan.
   # Returns an old `Entry` if it was updated, otherwise `nil`.
+  private def update_linear_scan(hash, key, value) : Entry(K, V)?
+    update_linear_scan(hash, key) { value }
+  end
 
-  # private def update_linear_scan(key, value, hash) : Entry(K, V)?
-  #   # Just do a linear scan...
-  #   each_entry_with_index do |entry, index|
-  #     if entry_matches?(entry, hash, key)
-  #       set_entry(index, Entry(K, V).new(entry.hash, entry.key, value))
-  #       return entry
-  #     end
-  #   end
-
-  #   nil
-  # end
-
+  # Tries to update a hash-key using current value as input to given block
+  # by doing a linear scan.
+  # Returns an old `Entry` if it was updated, otherwise `nil`.
   private def update_linear_scan(hash, key, &) : Entry(K, V)?
     # Just do a linear scan...
     each_entry_with_index do |entry, index|
