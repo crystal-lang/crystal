@@ -1,6 +1,8 @@
 require "spec"
 require "./spec_helper"
+require "../support/env"
 
+private HOME_ENV_KEY = {% if flag?(:win32) %} "USERPROFILE" {% else %} "HOME" {% end %}
 private BASE_POSIX   = "/default/base"
 private BASE_WINDOWS = "\\default\\base"
 private HOME_WINDOWS = "C:\\Users\\Crystal"
@@ -12,15 +14,9 @@ end
 
 private def it_expands_path(path, posix, windows = posix, *, base = nil, env_home = nil, expand_base = false, home = false, file = __FILE__, line = __LINE__)
   assert_paths(path, posix, windows, %((base: "#{base}")), file, line) do |path|
-    prev_home = ENV["HOME"]?
-
-    begin
-      ENV["HOME"] = env_home || (path.windows? ? HOME_WINDOWS : HOME_POSIX)
-
+    with_env({HOME_ENV_KEY => env_home || (path.windows? ? HOME_WINDOWS : HOME_POSIX)}) do
       base_arg = base || (path.windows? ? BASE_WINDOWS : BASE_POSIX)
       path.expand(base_arg.not_nil!, expand_base: !!expand_base, home: home)
-    ensure
-      ENV["HOME"] = prev_home
     end
   end
 end
@@ -47,10 +43,10 @@ end
 
 private def assert_paths_raw(path, posix, windows = posix, label = nil, file = __FILE__, line = __LINE__, &block : Path -> _)
   it %(#{label} "#{path}" (posix)), file, line do
-    block.call(Path.posix(path)).should eq(posix)
+    block.call(Path.posix(path)).should eq(posix), file: file, line: line
   end
   it %(#{label} "#{path}" (windows)), file, line do
-    block.call(Path.windows(path)).should eq(windows)
+    block.call(Path.windows(path)).should eq(windows), file: file, line: line
   end
 end
 
@@ -343,6 +339,11 @@ describe Path do
     assert_paths_raw("/foo/bar/foo.", "", &.extension)
     assert_paths_raw("test", "", &.extension)
     assert_paths_raw("test.ext/foo", "", &.extension)
+    assert_paths_raw("test.ext/foo/", "", &.extension)
+    assert_paths_raw("test.ext/", ".ext", &.extension)
+    assert_paths_raw("test/.", "", &.extension)
+    assert_paths_raw("test\\.", "", &.extension)
+    assert_paths_raw("test.ext\\", ".ext\\", ".ext", &.extension)
   end
 
   describe "#absolute?" do
@@ -579,7 +580,7 @@ describe Path do
     describe "converts a pathname to an absolute pathname" do
       it_expands_path("", BASE_POSIX, BASE_WINDOWS)
       it_expands_path("a", {BASE_POSIX, "a"}, {BASE_WINDOWS, "a"})
-      it_expands_path("a", {BASE_POSIX, "a"}, {BASE_WINDOWS, "a"})
+      it_expands_path("a", {BASE_POSIX, "a"}, {BASE_WINDOWS, "a"}, base: nil)
     end
 
     describe "converts a pathname to an absolute pathname, Ruby-Talk:18512" do
@@ -620,7 +621,7 @@ describe Path do
       it_expands_path("/some////path", "/some/path", "\\some\\path")
     end
 
-    describe "expand path with" do
+    describe "expand path with .." do
       it_expands_path("../../bin", "/bin", "\\bin", base: "/tmp/x")
       it_expands_path("../../bin", "/bin", "\\bin", base: "/tmp")
       it_expands_path("../../bin", "/bin", "\\bin", base: "/")
@@ -726,12 +727,34 @@ describe Path do
     describe "ignores name starting with ~" do
       it_expands_path("~foo.txt", "/current/~foo.txt", "\\current\\~foo.txt", base: "/current", env_home: "/")
     end
+
+    describe %q(supports ~\ for Windows paths only) do
+      it_expands_path("~\\a", {BASE_POSIX, "~\\a"}, {HOME_WINDOWS, "a"}, home: true)
+    end
   end
 
   describe "#<=>" do
     it "case sensitivity" do
+      (Path.posix("foo") <=> Path.posix("FOO")).should eq 1
+      (Path.windows("foo") <=> Path.windows("FOO")).should eq 0
+      (Path.windows("foo") <=> Path.posix("FOO")).should eq 1
+      (Path.posix("foo") <=> Path.windows("FOO")).should eq -1
+    end
+  end
+
+  describe "#==" do
+    it "simple" do
+      Path.posix("foo").should eq Path.posix("foo")
+      Path.windows("foo").should eq Path.windows("foo")
+      Path.windows("foo").should_not eq Path.posix("foo")
+      Path.posix("foo").should_not eq Path.windows("foo")
+    end
+
+    it "case sensitivity" do
       Path.posix("foo").should_not eq Path.posix("FOO")
       Path.windows("foo").should eq Path.windows("FOO")
+      Path.windows("foo").should_not eq Path.posix("FOO")
+      Path.posix("foo").should_not eq Path.windows("FOO")
     end
   end
 
@@ -830,6 +853,61 @@ describe Path do
       path.relative_to(Path.windows("C:/cwd")).should eq path
       path = Path.windows(".")
       path.relative_to(Path.windows("C:cwd")).should eq path
+    end
+  end
+
+  describe "#stem" do
+    assert_paths_raw("foo.txt", "foo", &.stem)
+    assert_paths_raw("foo.txt.txt", "foo.txt", &.stem)
+    assert_paths_raw(".txt", ".txt", &.stem)
+    assert_paths_raw(".txt.txt", ".txt", &.stem)
+    assert_paths_raw("foo.", "foo.", &.stem)
+    assert_paths_raw("foo.txt.", "foo.txt.", &.stem)
+    assert_paths_raw("foo..txt", "foo.", &.stem)
+
+    assert_paths_raw("bar/foo.txt", "foo", &.stem)
+    assert_paths_raw("bar/foo.txt.txt", "foo.txt", &.stem)
+    assert_paths_raw("bar/.txt", ".txt", &.stem)
+    assert_paths_raw("bar/.txt.txt", ".txt", &.stem)
+    assert_paths_raw("bar/foo.", "foo.", &.stem)
+    assert_paths_raw("bar/foo.txt.", "foo.txt.", &.stem)
+    assert_paths_raw("bar/foo..txt", "foo.", &.stem)
+
+    assert_paths_raw("bar\\foo.txt", "bar\\foo", "foo", &.stem)
+    assert_paths_raw("bar\\foo.txt.txt", "bar\\foo.txt", "foo.txt", &.stem)
+    assert_paths_raw("bar\\.txt", "bar\\", ".txt", &.stem)
+    assert_paths_raw("bar\\.txt.txt", "bar\\.txt", ".txt", &.stem)
+    assert_paths_raw("bar\\foo.", "bar\\foo.", "foo.", &.stem)
+    assert_paths_raw("bar\\foo.txt.", "bar\\foo.txt.", "foo.txt.", &.stem)
+    assert_paths_raw("bar\\foo..txt", "bar\\foo.", "foo.", &.stem)
+
+    assert_paths_raw("foo.txt/", "foo", &.stem)
+    assert_paths_raw("foo.txt.txt/", "foo.txt", &.stem)
+    assert_paths_raw(".txt/", ".txt", &.stem)
+    assert_paths_raw(".txt.txt/", ".txt", &.stem)
+    assert_paths_raw("foo./", "foo.", &.stem)
+    assert_paths_raw("foo.txt./", "foo.txt.", &.stem)
+    assert_paths_raw("foo..txt/", "foo.", &.stem)
+  end
+
+  describe ".home" do
+    it "uses home from environment variable if set" do
+      with_env({HOME_ENV_KEY => "foo/bar"}) do
+        Path.home.should eq(Path.new("foo/bar"))
+      end
+    end
+
+    # TODO: check that the cases below return the home of the current user (via #7829)
+    it "doesn't return empty string if environment variable is empty" do
+      with_env({HOME_ENV_KEY => ""}) do
+        Path.home.should_not eq(Path.new(""))
+      end
+    end
+
+    it "doesn't raise if environment variable is missing" do
+      with_env({HOME_ENV_KEY => nil}) do
+        Path.home.should be_a(Path)
+      end
     end
   end
 end

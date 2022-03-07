@@ -55,17 +55,17 @@ class Log::Metadata
 
   # Returns a `Metadata` with the information of the argument.
   # Used to handle `Log::Context#set` and `Log#Emitter.emit` overloads.
-  def self.build(value : NamedTuple | Hash)
+  def self.build(value : NamedTuple | Hash) : self
     return @@empty if value.empty?
     Metadata.new(nil, value)
   end
 
   # :ditto:
-  def self.build(value : Metadata)
+  def self.build(value : Metadata) : Metadata
     value
   end
 
-  # Returns a `Log::Metadata` with all the entries of *self*
+  # Returns a `Log::Metadata` with all the entries of `self`
   # and *other*. If a key is defined in both, the values in *other* are used.
   def extend(other : NamedTuple | Hash) : Metadata
     return Metadata.build(other) if self.empty?
@@ -74,14 +74,14 @@ class Log::Metadata
     Metadata.new(self, other)
   end
 
-  def empty?
+  def empty? : Bool
     parent = @parent
 
     @size == 0 && (parent.nil? || parent.empty?)
   end
 
-  # Removes the reference to *parent*. Flattening the entries from it into *self*.
-  # *self* was originally allocated with enough entries to perform this action.
+  # Removes the reference to *parent*. Flattening the entries from it into `self`.
+  # `self` was originally allocated with enough entries to perform this action.
   #
   # If multiple threads execute defrag concurrently, the entries
   # will be recomputed, but the result should be the same.
@@ -175,9 +175,12 @@ class Log::Metadata
     true
   end
 
-  # :nodoc:
   def ==(other)
     false
+  end
+
+  def hash(hasher)
+    to_a.sort_by!(&.[0]).hash(hasher)
   end
 
   def to_s(io : IO) : Nil
@@ -209,7 +212,7 @@ class Log::Metadata
     end
 
     # :nodoc:
-    def self.to_metadata_value(value)
+    def self.to_metadata_value(value) : Metadata::Value
       value.is_a?(Value) ? value : Value.new(value)
     end
   end

@@ -80,7 +80,11 @@ describe "Complex" do
   end
 
   it "cis" do
-    2.4.cis.should eq(Complex.new(-0.7373937155412454, 0.675463180551151))
+    {% if flag?(:aarch64) && flag?(:darwin) %}
+      2.4.cis.should eq(Complex.new(-0.7373937155412454, 0.6754631805511511))
+    {% else %}
+      2.4.cis.should eq(Complex.new(-0.7373937155412454, 0.675463180551151))
+    {% end %}
   end
 
   it "conj" do
@@ -174,7 +178,8 @@ describe "Complex" do
   end
 
   it "rounds" do
-    (Complex.new(1.125, 0.875).round(2)).should eq(Complex.new(1.13, 0.88))
+    (Complex.new(1.125, 0.875).round(2)).should eq(Complex.new(1.12, 0.88))
+    (Complex.new(1.135, 0.865).round(2)).should eq(Complex.new(1.14, 0.86))
     (Complex.new(1.125, 0.875).round(digits: 1)).should eq(Complex.new(1.1, 0.9))
   end
 

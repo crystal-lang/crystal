@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private class DequeTester
   # Execute the same actions on an Array and a Deque and compare them at each step.
@@ -615,18 +616,7 @@ describe "Deque" do
   end
 
   describe "each iterator" do
-    it "does next" do
-      a = Deque{1, 2, 3}
-      iter = a.each
-      iter.next.should eq(1)
-      iter.next.should eq(2)
-      iter.next.should eq(3)
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "cycles" do
-      Deque{1, 2, 3}.cycle.first(8).join.should eq("12312312")
-    end
+    it_iterates "#each", [1, 2, 3], Deque{1, 2, 3}.each
 
     it "works while modifying deque" do
       a = Deque{1, 2, 3}
@@ -641,14 +631,7 @@ describe "Deque" do
   end
 
   describe "each_index iterator" do
-    it "does next" do
-      a = Deque{1, 2, 3}
-      iter = a.each_index
-      iter.next.should eq(0)
-      iter.next.should eq(1)
-      iter.next.should eq(2)
-      iter.next.should be_a(Iterator::Stop)
-    end
+    it_iterates "#each_index", [0, 1, 2], Deque{1, 2, 3}.each_index
 
     it "works while modifying deque" do
       a = Deque{1, 2, 3}
@@ -662,41 +645,8 @@ describe "Deque" do
     end
   end
 
-  describe "reverse each iterator" do
-    it "does next" do
-      a = Deque{1, 2, 3}
-      iter = a.reverse_each
-      iter.next.should eq(3)
-      iter.next.should eq(2)
-      iter.next.should eq(1)
-      iter.next.should be_a(Iterator::Stop)
-    end
-  end
+  it_iterates "#reverse_each", [3, 2, 1], Deque{1, 2, 3}.reverse_each
 
-  describe "cycle" do
-    it "cycles" do
-      a = [] of Int32
-      Deque{1, 2, 3}.cycle do |x|
-        a << x
-        break if a.size == 9
-      end
-      a.should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
-    end
-
-    it "cycles N times" do
-      a = [] of Int32
-      Deque{1, 2, 3}.cycle(2) do |x|
-        a << x
-      end
-      a.should eq([1, 2, 3, 1, 2, 3])
-    end
-
-    it "cycles with iterator" do
-      Deque{1, 2, 3}.cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
-    end
-
-    it "cycles with N and iterator" do
-      Deque{1, 2, 3}.cycle(2).to_a.should eq([1, 2, 3, 1, 2, 3])
-    end
-  end
+  it_iterates "#cycle", [1, 2, 3, 1, 2, 3, 1, 2], Deque{1, 2, 3}.cycle, infinite: true
+  it_iterates "#cycle(limit)", [1, 2, 3, 1, 2, 3], Deque{1, 2, 3}.cycle(2)
 end

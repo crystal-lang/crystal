@@ -42,14 +42,14 @@ describe "Semantic: var" do
 
   it "reports variable always nil" do
     assert_error "1 == 2 ? (a = 1) : a",
-      "read before assignment to local variable 'a'"
+      "read before assignment to local variable 'a'", inject_primitives: true
   end
 
   it "lets type on else side of if with a Bool | Nil union" do
     assert_type(%(
       a = (1 == 1) || nil
       a ? nil : a
-      )) { nilable bool }
+      ), inject_primitives: true) { nilable bool }
   end
 
   it "errors if declaring var that is already declared" do
@@ -99,7 +99,7 @@ describe "Semantic: var" do
         a = 1
       end
       a
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "declares local variable but doesn't assign it in all branches" do
@@ -110,7 +110,7 @@ describe "Semantic: var" do
       end
       a
       ),
-      "type must be Int32"
+      "type must be Int32", inject_primitives: true
   end
 
   it "declares local variable and assigns wrong type" do

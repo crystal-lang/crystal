@@ -626,6 +626,78 @@ describe "Semantic: def overload" do
       ") { int32.metaclass }
   end
 
+  it "matches a union argument with free var" do
+    each_union_variant("T", "Nil") do |restriction|
+      assert_type(%(
+        def foo(x : #{restriction}) forall T
+          T
+        end
+
+        {foo(1), foo(1 || nil)}
+        )) { tuple_of([int32.metaclass, int32.metaclass]) }
+    end
+  end
+
+  it "matches a union metaclass argument with free var (#8071)" do
+    each_union_variant("T", "Nil") do |restriction|
+      assert_type(%(
+        def foo(x : (#{restriction}).class) forall T
+          T
+        end
+
+        {foo(String), foo(String?)}
+        )) { tuple_of([string.metaclass, string.metaclass]) }
+    end
+  end
+
+  it "matches a union argument with free var, more types (1)" do
+    each_union_variant("T", "Nil") do |restriction|
+      assert_type(%(
+        def foo(x : #{restriction}) forall T
+          T
+        end
+
+        foo(1 || "" || nil)
+        )) { union_of(int32, string).metaclass }
+    end
+  end
+
+  it "matches a union argument with free var, more types (2)" do
+    each_union_variant("T", "(Int32 | String)") do |restriction|
+      assert_type(%(
+        def foo(x : #{restriction}) forall T
+          T
+        end
+
+        foo(1 || "" || 'a')
+        )) { char.metaclass }
+    end
+  end
+
+  it "errors if union restriction has multiple free vars" do
+    each_union_variant("T", "U") do |restriction|
+      assert_error "
+        def foo(x : #{restriction}) forall T, U
+        end
+
+        foo(1)
+        ",
+        "can't specify more than one free var in union restriction"
+    end
+  end
+
+  it "errors if union restriction has multiple free vars (2)" do
+    each_union_variant("T", "U") do |restriction|
+      assert_error "
+        def foo(x : #{restriction}) forall T, U
+        end
+
+        foo(1 || 'a')
+        ",
+        "can't specify more than one free var in union restriction"
+    end
+  end
+
   it "matches virtual type to union" do
     assert_type("
       abstract class Foo
@@ -820,6 +892,17 @@ describe "Semantic: def overload" do
       "no overload matches"
   end
 
+  it "errors if no overload matches on union against named arg with external param name (#10516)" do
+    assert_error %(
+      def f(a b : Int32)
+      end
+
+      a = 1 || nil
+      f(a: a)
+      ),
+      "no overload matches"
+  end
+
   it "dispatches with named arg" do
     assert_type(%(
       def f(a : Int32, b : Int32)
@@ -958,6 +1041,68 @@ describe "Semantic: def overload" do
 			end
 
 			do_something value: 7.as(Int32 | Char)
-			)) { union_of float64, bool }
+			), inject_primitives: true) { union_of float64, bool }
   end
+
+  it "resets free vars after a partial match is rejected (#10270)" do
+    assert_type(%(
+      def foo(x : T, y : String) forall T
+        1
+      end
+
+      def foo(x : Char, y : T) forall T
+        true
+      end
+
+      foo('a', 1)
+      )) { bool }
+  end
+
+  it "resets free vars after a partial match is rejected (2) (#10185)" do
+    assert_type(%(
+      def foo(*x : *T) forall T
+        T
+      end
+
+      def foo(**x : **T) forall T
+        T
+      end
+
+      foo(**{a: 1, b: ""})
+      )) { named_tuple_of({a: int32, b: string}).metaclass }
+  end
+
+  it "considers NamedTuple in a module's including types (#10380)" do
+    assert_error %(
+      module Foo
+      end
+
+      struct NamedTuple
+        include Foo
+      end
+
+      class Bar
+        include Foo
+      end
+
+      def foo(x : Bar)
+      end
+
+      # force a name tuple instantiation
+      {a: 1}
+
+      x = uninitialized Foo
+      foo(x)
+      ),
+      "no overload matches"
+  end
+end
+
+private def each_union_variant(t1, t2)
+  yield "#{t1} | #{t2}"
+  yield "#{t2} | #{t1}"
+  # yield "Union(#{t1}, #{t2})"
+  # yield "Union(#{t2}, #{t1})"
+  yield "#{t1}?" if t2 == "Nil"
+  yield "#{t2}?" if t1 == "Nil" && t2 != "Nil"
 end

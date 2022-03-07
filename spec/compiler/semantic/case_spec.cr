@@ -109,7 +109,7 @@ describe "semantic: case" do
         in .red?
         end
       ),
-      "case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue"
+      "case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue", inject_primitives: true
   end
 
   it "checks exhaustiveness of enum via const" do
@@ -356,7 +356,7 @@ describe "semantic: case" do
         in .red?
         end
       ),
-      "case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue"
+      "case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue", inject_primitives: true
   end
 
   it "checks exhaustiveness of union with bool" do
@@ -425,6 +425,24 @@ describe "semantic: case" do
       "case is not exhaustive.\n\nMissing cases:\n - {false, Char}"
   end
 
+  it "checks exhaustiveness for tuple literal of 3 elements, all bool" do
+    assert_error %(
+        #{bool_case_eq}
+
+        case {true, true, true}
+        in {true, true, true}
+        end
+      ),
+      <<-ERROR
+      case is not exhaustive.
+
+      Missing cases:
+       - {true, true, false}
+       - {true, false, Bool}
+       - {false, Bool, Bool}
+      ERROR
+  end
+
   it "checks exhaustiveness for tuple literal of 2 elements, first is enum" do
     assert_error %(
         #{enum_eq}
@@ -440,7 +458,35 @@ describe "semantic: case" do
         in {.blue?, Char}
         end
       ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Color::Green, Char}"
+      "case is not exhaustive.\n\nMissing cases:\n - {Color::Green, Char}", inject_primitives: true
+  end
+
+  it "checks exhaustiveness for tuple literal of 3 elements, all enums" do
+    assert_error %(
+        #{enum_eq}
+
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        case {Color::Red, Color::Red, Color::Red}
+        in {.red?, .green?, .blue?}
+        end
+      ),
+      <<-ERROR,
+      case is not exhaustive.
+
+      Missing cases:
+       - {Color::Red, Color::Red, Color}
+       - {Color::Red, Color::Green, Color::Red}
+       - {Color::Red, Color::Green, Color::Green}
+       - {Color::Red, Color::Blue, Color}
+       - {Color::Green, Color, Color}
+       - {Color::Blue, Color, Color}
+      ERROR
+      inject_primitives: true
   end
 
   it "checks exhaustiveness for tuple literal with types and underscore at first position" do
@@ -543,7 +589,7 @@ describe "semantic: case" do
         in {.blue?, Char}
         end
       ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Color::Red, Char}\n - {Color::Green, Char}"
+      "case is not exhaustive.\n\nMissing cases:\n - {Color::Red, Char}\n - {Color::Green, Char}", inject_primitives: true
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at second position" do
@@ -578,7 +624,7 @@ describe "semantic: case" do
         in {Char, .blue?}
         end
       ),
-      "case is not exhaustive.\n\nMissing cases:\n - {Char, Color::Red}\n - {Char, Color::Green}"
+      "case is not exhaustive.\n\nMissing cases:\n - {Char, Color::Red}\n - {Char, Color::Green}", inject_primitives: true
   end
 
   it "checks exhaustiveness for tuple literal, with call" do

@@ -153,37 +153,42 @@ module Spec
 
   # :nodoc:
   struct Be(T)
+    enum Relation
+      LessThan
+      LessOrEqual
+      GreaterThan
+      GreaterOrEqual
+    end
+
     def self.<(other)
-      Be.new(other, :"<")
+      Be.new(other, :less_than)
     end
 
     def self.<=(other)
-      Be.new(other, :"<=")
+      Be.new(other, :less_or_equal)
     end
 
     def self.>(other)
-      Be.new(other, :">")
+      Be.new(other, :greater_than)
     end
 
     def self.>=(other)
-      Be.new(other, :">=")
+      Be.new(other, :greater_or_equal)
     end
 
-    def initialize(@expected_value : T, @op : Symbol)
+    def initialize(@expected_value : T, @op : Relation)
     end
 
     def match(actual_value)
       case @op
-      when :"<"
+      in .less_than?
         actual_value < @expected_value
-      when :"<="
+      in .less_or_equal?
         actual_value <= @expected_value
-      when :">"
+      in .greater_than?
         actual_value > @expected_value
-      when :">="
+      in .greater_or_equal?
         actual_value >= @expected_value
-      else
-        false
       end
     end
 
@@ -431,20 +436,22 @@ module Spec
     # ```
     #
     # See `Spec::Expectations` for available expectations.
-    def should(expectation : BeAExpectation(T), file = __FILE__, line = __LINE__) : T forall T
+    def should(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) : T forall T
       if expectation.match self
         self.is_a?(T) ? self : (raise "Bug: expected #{self} to be a #{T}")
       else
-        fail(expectation.failure_message(self), file, line)
+        failure_message ||= expectation.failure_message(self)
+        fail(failure_message, file, line)
       end
     end
 
     # Validates an expectation and fails the example if it does not match.
     #
     # See `Spec::Expectations` for available expectations.
-    def should(expectation, file = __FILE__, line = __LINE__)
+    def should(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
       unless expectation.match self
-        fail(expectation.failure_message(self), file, line)
+        failure_message ||= expectation.failure_message(self)
+        fail(failure_message, file, line)
       end
     end
 
@@ -461,9 +468,10 @@ module Spec
     # ```
     #
     # See `Spec::Expectations` for available expectations.
-    def should_not(expectation : BeAExpectation(T), file = __FILE__, line = __LINE__) forall T
+    def should_not(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) forall T
       if expectation.match self
-        fail(expectation.negative_failure_message(self), file, line)
+        failure_message ||= expectation.negative_failure_message(self)
+        fail(failure_message, file, line)
       else
         self.is_a?(T) ? (raise "Bug: expected #{self} not to be a #{T}") : self
       end
@@ -481,9 +489,10 @@ module Spec
     # ```
     #
     # See `Spec::Expectations` for available expectations.
-    def should_not(expectation : BeNilExpectation, file = __FILE__, line = __LINE__)
+    def should_not(expectation : BeNilExpectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
       if expectation.match self
-        fail(expectation.negative_failure_message(self), file, line)
+        failure_message ||= expectation.negative_failure_message(self)
+        fail(failure_message, file, line)
       else
         self.not_nil!
       end
@@ -492,9 +501,10 @@ module Spec
     # Validates an expectation and fails the example if it matches.
     #
     # See `Spec::Expectations` for available expectations.
-    def should_not(expectation, file = __FILE__, line = __LINE__)
+    def should_not(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
       if expectation.match self
-        fail(expectation.negative_failure_message(self), file, line)
+        failure_message ||= expectation.negative_failure_message(self)
+        fail(failure_message, file, line)
       end
     end
   end

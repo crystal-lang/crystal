@@ -64,7 +64,7 @@ module JSON
   # * **ignore_deserialize**: if `true` skip this field in deserialization (by default false)
   # * **key**: the value of the key in the json object (by default the name of the instance variable)
   # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
-  # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
+  # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)`. Examples of converters are a `Time::Format` instance and `Time::EpochConverter` for `Time`.
   # * **presence**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
   # * **emit_null**: if `true`, emits a `null` value for nilable property (by default nulls are not emitted)
   #
@@ -407,8 +407,19 @@ module JSON
             builder.start_object
             pull.read_object do |key|
               if key == {{field.id.stringify}}
-                discriminator_value = pull.read_string
+                value_kind = pull.kind
+                case value_kind
+                when .string?
+                  discriminator_value = pull.string_value
+                when .int?
+                  discriminator_value = pull.int_value
+                when .bool?
+                  discriminator_value = pull.bool_value
+                else
+                  raise ::JSON::SerializableError.new("JSON discriminator field '{{field.id}}' has an invalid value type of #{value_kind.to_s}", to_s, nil, *location, nil)
+                end
                 builder.field(key, discriminator_value)
+                pull.read_next
               else
                 builder.field(key) { pull.read_raw(builder) }
               end
@@ -423,8 +434,20 @@ module JSON
 
         case discriminator_value
         {% for key, value in mapping %}
-          when {{key.id.stringify}}
-            {{value.id}}.from_json(json)
+          {% if mapping.is_a?(NamedTupleLiteral) %}
+            when {{key.id.stringify}}
+          {% else %}
+            {% if key.is_a?(StringLiteral) %}
+              when {{key}}
+            {% elsif key.is_a?(NumberLiteral) || key.is_a?(BoolLiteral) %}
+              when {{key.id}}
+            {% elsif key.is_a?(Path) %}
+              when {{key.resolve}}
+            {% else %}
+              {% key.raise "mapping keys must be one of StringLiteral, NumberLiteral, BoolLiteral, or Path, not #{key.class_name.id}" %}
+            {% end %}
+          {% end %}
+          {{value.id}}.from_json(json)
         {% end %}
         else
           raise ::JSON::SerializableError.new("Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}", to_s, nil, *location, nil)
