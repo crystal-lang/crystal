@@ -1925,14 +1925,22 @@ module Crystal
     def parse_fun_pointer
       location = @token.location
 
+      global = false
+      if @token.type.op_colon_colon?
+        next_token_skip_space_or_newline
+        global = true
+      end
+
       case @token.type
       when .ident?
         name = @token.value.to_s
+        global_call = global
         if consume_def_equals_sign_skip_space
           name = "#{name}="
         elsif @token.type.op_period?
+          raise "ProcPointer of local variable cannot be global", location if global
           if name != "self" && !var_in_scope?(name)
-            raise "undefined variable '#{name}'", location.line_number, location.column_number
+            raise "undefined variable '#{name}'", location
           end
           obj = Var.new(name)
 
@@ -1940,17 +1948,19 @@ module Crystal
           name = "#{name}=" if consume_def_equals_sign_skip_space
         end
       when .const?
-        obj = parse_generic
+        obj = parse_generic global: global, location: location, expression: false
         check :OP_PERIOD
         name = consume_def_or_macro_name
         name = "#{name}=" if consume_def_equals_sign_skip_space
       when .instance_var?
+        raise "ProcPointer of instance variable cannot be global", location if global
         obj = InstanceVar.new(@token.value.to_s)
         next_token_skip_space
         check :OP_PERIOD
         name = consume_def_or_macro_name
         name = "#{name}=" if consume_def_equals_sign_skip_space
       when .class_var?
+        raise "ProcPointer of class variable cannot be global", location if global
         obj = ClassVar.new(@token.value.to_s)
         next_token_skip_space
         check :OP_PERIOD
@@ -1973,7 +1983,7 @@ module Crystal
         types = [] of ASTNode
       end
 
-      ProcPointer.new(obj, name, types)
+      ProcPointer.new(obj, name, types, !!global_call)
     end
 
     record Piece,

@@ -4080,8 +4080,14 @@ module Crystal
       write_token :OP_MINUS_GT
       skip_space_or_newline
 
+      if node.global?
+        write_token :OP_COLON_COLON
+        skip_space_or_newline
+      end
+
       if obj = node.obj
         accept obj
+        skip_space
         write_token :OP_PERIOD
         skip_space_or_newline
       end

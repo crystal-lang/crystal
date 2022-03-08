@@ -1342,7 +1342,13 @@ module Crystal
       it_parses "->Foo.#{method}", ProcPointer.new("Foo".path, method)
       it_parses "->@foo.#{method}", ProcPointer.new("@foo".instance_var, method)
       it_parses "->@@foo.#{method}", ProcPointer.new("@@foo".class_var, method)
+      it_parses "->::#{method}", ProcPointer.new(nil, method, global: true)
+      it_parses "->::Foo.#{method}", ProcPointer.new(Path.global("Foo"), method)
     end
+
+    assert_syntax_error "->::foo.foo", "ProcPointer of local variable cannot be global"
+    assert_syntax_error "->::@foo.foo", "ProcPointer of instance variable cannot be global"
+    assert_syntax_error "->::@@foo.foo", "ProcPointer of class variable cannot be global"
 
     it_parses "->Foo::Bar::Baz.foo", ProcPointer.new(["Foo", "Bar", "Baz"].path, "foo")
     it_parses "->foo(Int32, Float64)", ProcPointer.new(nil, "foo", ["Int32".path, "Float64".path] of ASTNode)
