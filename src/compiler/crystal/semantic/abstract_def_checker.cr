@@ -360,10 +360,8 @@ class Crystal::AbstractDefChecker
     end
 
     def visit(node : Path)
-      if !node.global? && node.names.size == 1
+      if name = node.single_name?
         # Check if it matches any of the generic type vars
-        name = node.names.first
-
         type_var = @generic_type.type_vars[name]?
         if type_var.is_a?(Var)
           # Check that it's actually a type parameter on the base type

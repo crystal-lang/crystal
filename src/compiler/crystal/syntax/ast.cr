@@ -1383,6 +1383,11 @@ module Crystal
       names.size == 1 && names.first == name
     end
 
+    # Returns this path's name if it has only one part and is not global
+    def single_name?
+      names.first if names.size == 1 && !global?
+    end
+
     def clone_without_location
       ident = Path.new(@names.clone, @global)
       ident
