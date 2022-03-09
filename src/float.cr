@@ -132,7 +132,7 @@ struct Float32
   # Smallest representable positive value
   MIN_POSITIVE = 1.17549435e-38_f32
 
-  # Returns a `Float32` by invoking `String#to_f32` on *value*.
+  # Casts the *value* by invoking `String#to_f32` on it.
   #
   # ```
   # Float32.new "20"                        # => 20.0
@@ -142,14 +142,21 @@ struct Float32
     value.to_f32 whitespace: whitespace, strict: strict
   end
 
-  # Returns a `Float32` by invoking `to_f32` on *value*.
-  def self.new(value)
+  # Casts the *value* by invoking `to_f32` on it.
+  def self.new(value) : self
     value.to_f32
   end
 
-  # Returns a `Float32` by invoking `to_f32!` on *value*.
+  # Casts the *value* by invoking `to_f32!` on it.
   def self.new!(value) : self
     value.to_f32!
+  end
+
+  # Casts the *value* by invoking `to_f32?` on it.
+  def self.new?(value) : self?
+    # TODO: implement to_f32?
+    value.to_f32
+  rescue
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float32
@@ -249,7 +256,7 @@ struct Float64
   # Smallest representable positive value
   MIN_POSITIVE = 2.2250738585072014e-308_f64
 
-  # Returns a `Float64` by invoking `String#to_f64` on *value*.
+  # Casts the *value* by invoking `String#to_f64` on it.
   #
   # ```
   # Float64.new "20"                        # => 20.0
@@ -259,14 +266,21 @@ struct Float64
     value.to_f64 whitespace: whitespace, strict: strict
   end
 
-  # Returns a `Float64` by invoking `to_f64` on *value*.
-  def Float64.new(value)
+  # Casts the *value* by invoking `to_f64!` on it.
+  def self.new(value) : self
     value.to_f64
   end
 
-  # Returns a `Float64` by invoking `to_f64!` on *value*.
-  def Float64.new!(value) : Float64
+  # Casts the *value* by invoking `to_f64!` on it.
+  def self.new!(value) : self
     value.to_f64!
+  end
+
+  # Casts the *value* by invoking `to_f64!` on it.
+  def self.new?(value) : self?
+    # TODO: implement to_f64?
+    value.to_f64
+  rescue
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64

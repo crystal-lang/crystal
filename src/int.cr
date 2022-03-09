@@ -839,8 +839,7 @@ struct Int8
   MIN = -128_i8
   MAX =  127_i8
 
-  # Returns an `Int8` by invoking `to_i8` on *value*.
-  # See `String#to_i` for more details.
+  # Casts the *value* by invoking `String#to_i8` on it.
   #
   # ```
   # Int8.new "20"                        # => 20
@@ -850,14 +849,21 @@ struct Int8
     value.to_i8 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
-  # Returns an `Int8` by invoking `to_i8` on *value*.
+  # Casts the *value* by invoking `to_i8` on it.
   def self.new(value) : self
     value.to_i8
   end
 
-  # Returns an `Int8` by invoking `to_i8!` on *value*.
+  # Casts the *value* by invoking `to_i8!` on it.
   def self.new!(value) : self
     value.to_i8!
+  end
+
+  # Casts the *value* by invoking `to_i8?` on it.
+  def self.new?(value) : self?
+    # TODO: implement to_i8?
+    value.to_i8
+  rescue
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
@@ -890,8 +896,7 @@ struct Int16
   MIN = -32768_i16
   MAX =  32767_i16
 
-  # Returns an `Int16` by invoking `to_i16` on *value*.
-  # See `String#to_i` for more details.
+  # Casts the *value* by invoking `String#to_i16` on it.
   #
   # ```
   # Int16.new "20"                        # => 20
@@ -901,14 +906,21 @@ struct Int16
     value.to_i16 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
-  # Returns an `Int16` by invoking `to_i16` on *value*.
+  # Casts the *value* by invoking `to_i16` on it.
   def self.new(value) : self
     value.to_i16
   end
 
-  # Returns an `Int16` by invoking `to_i16!` on *value*.
+  # Casts the *value* by invoking `to_i16` on it.
   def self.new!(value) : self
     value.to_i16!
+  end
+
+  # Casts the *value* by invoking `to_i16` on it.
+  def self.new?(value) : self?
+    # TODO: implement to_i16?
+    value.to_i16
+  rescue
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
@@ -941,8 +953,7 @@ struct Int32
   MIN = -2147483648_i32
   MAX =  2147483647_i32
 
-  # Returns an `Int32` by invoking `to_i32` on *value*.
-  # See `String#to_i` for more details.
+  # Casts the *value* by invoking `String#to_i32` on it.
   #
   # ```
   # Int32.new "20"                        # => 20
@@ -952,14 +963,21 @@ struct Int32
     value.to_i32 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
-  # Returns an `Int32` by invoking `to_i32` on *value*.
+  # Casts the *value* by invoking `to_i32` on it.
   def self.new(value) : self
     value.to_i32
   end
 
-  # Returns an `Int32` by invoking `to_i32!` on *value*.
+  # Casts the *value* by invoking `to_i32!` on it.
   def self.new!(value) : self
     value.to_i32!
+  end
+
+  # Casts the *value* by invoking `to_i32?` on it.
+  def self.new?(value) : self?
+    # TODO: implement to_i32?
+    value.to_i32
+  rescue
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
@@ -992,8 +1010,7 @@ struct Int64
   MIN = -9223372036854775808_i64
   MAX =  9223372036854775807_i64
 
-  # Returns an `Int64` by invoking `to_i64` on *value*.
-  # See `String#to_i` for more details.
+  # Casts the *value* by invoking `String#to_i64` on it.
   #
   # ```
   # Int64.new "20"                        # => 20
@@ -1003,14 +1020,21 @@ struct Int64
     value.to_i64 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
-  # Returns an `Int64` by invoking `to_i64` on *value*.
+  # Casts the *value* by invoking `to_i64` on it.
   def self.new(value) : self
     value.to_i64
   end
 
-  # Returns an `Int64` by invoking `to_i64!` on *value*.
+  # Casts the *value* by invoking `to_i64!` on it.
   def self.new!(value) : self
     value.to_i64!
+  end
+
+  # Casts the *value* by invoking `to_i64?` on it.
+  def self.new?(value) : self?
+    # TODO: implement to_i64?
+    value.to_i64
+  rescue
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
@@ -1044,8 +1068,7 @@ struct Int128
   MIN = new(1) << 127
   MAX = ~MIN
 
-  # Returns an `Int128` by invoking `to_i128` on *value*.
-  # See `String#to_i` for more details.
+  # Casts the *value* by invoking `String#to_i128` on it.
   #
   # ```
   # Int128.new "20"                        # => 20
@@ -1055,14 +1078,21 @@ struct Int128
     value.to_i128 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
-  # Returns an `Int128` by invoking `to_i128` on *value*.
+  # Casts the *value* by invoking `to_u128` on it.
   def self.new(value) : self
     value.to_i128
   end
 
-  # Returns an `Int128` by invoking `to_i128!` on *value*.
+  # Casts the *value* by invoking `to_u128!` on it.
   def self.new!(value) : self
     value.to_i128!
+  end
+
+  # Casts the *value* by invoking `to_u128?` on it.
+  def self.new?(value) : self?
+    # TODO: implement to_i128?
+    value.to_i128
+  rescue
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
@@ -1096,8 +1126,7 @@ struct UInt8
   MIN =   0_u8
   MAX = 255_u8
 
-  # Returns an `UInt8` by invoking `to_u8` on *value*.
-  # See `String#to_i` for more details.
+  # Casts the *value* by invoking `String#to_u8` on it.
   #
   # ```
   # UInt8.new "20"                        # => 20
@@ -1107,14 +1136,21 @@ struct UInt8
     value.to_u8 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
-  # Returns an `UInt8` by invoking `to_u8` on *value*.
+  # Casts the *value* by invoking `to_u8` on it.
   def self.new(value) : self
     value.to_u8
   end
 
-  # Returns an `UInt8` by invoking `to_u8!` on *value*.
+  # Casts the *value* by invoking `to_u8!` on it.
   def self.new!(value) : self
     value.to_u8!
+  end
+
+  # Casts the *value* by invoking `to_u8?` on it.
+  def self.new?(value) : self?
+    # TODO: implement to_u8?
+    value.to_u8
+  rescue
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
@@ -1151,8 +1187,7 @@ struct UInt16
   MIN =     0_u16
   MAX = 65535_u16
 
-  # Returns an `UInt16` by invoking `to_u16` on *value*.
-  # See `String#to_i` for more details.
+  # Casts the *value* by invoking `String#to_u16` on it.
   #
   # ```
   # UInt16.new "20"                        # => 20
@@ -1162,14 +1197,21 @@ struct UInt16
     value.to_u16 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
-  # Returns an `UInt16` by invoking `to_u16` on *value*.
+  # Casts the *value* by invoking `to_u16` on it.
   def self.new(value) : self
     value.to_u16
   end
 
-  # Returns an `UInt16` by invoking `to_u16!` on *value*.
+  # Casts the *value* by invoking `to_u16!` on it.
   def self.new!(value) : self
     value.to_u16!
+  end
+
+  # Casts the *value* by invoking `to_u16?` on it.
+  def self.new?(value) : self?
+    # TODO: implement to_u16?
+    value.to_u16
+  rescue
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
@@ -1206,8 +1248,7 @@ struct UInt32
   MIN =          0_u32
   MAX = 4294967295_u32
 
-  # Returns an `UInt32` by invoking `to_u32` on *value*.
-  # See `String#to_i` for more details.
+  # Casts the *value* by invoking `String#to_u32` on it.
   #
   # ```
   # UInt32.new "20"                        # => 20
@@ -1217,14 +1258,21 @@ struct UInt32
     value.to_u32 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
-  # Returns an `UInt32` by invoking `to_u32` on *value*.
+  # Casts the *value* by invoking `to_u32` on it.
   def self.new(value) : self
     value.to_u32
   end
 
-  # Returns an `UInt32` by invoking `to_u32!` on *value*.
+  # Casts the *value* by invoking `to_u32!` on it.
   def self.new!(value) : self
     value.to_u32!
+  end
+
+  # Casts the *value* by invoking `to_u32?` on it.
+  def self.new?(value) : self?
+    # TODO: implement to_i8?
+    value.to_u32
+  rescue
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
@@ -1261,8 +1309,7 @@ struct UInt64
   MIN =                    0_u64
   MAX = 18446744073709551615_u64
 
-  # Returns an `UInt64` by invoking `to_u64` on *value*.
-  # See `String#to_i` for more details.
+  # Casts the *value* by invoking `String#to_u64` on it.
   #
   # ```
   # UInt64.new "20"                        # => 20
@@ -1272,14 +1319,21 @@ struct UInt64
     value.to_u64 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
   end
 
-  # Returns an `UInt64` by invoking `to_u64` on *value*.
+  # Casts the *value* by invoking `to_u64` on it.
   def self.new(value) : self
     value.to_u64
   end
 
-  # Returns an `UInt64` by invoking `to_u64!` on *value*.
+  # Casts the *value* by invoking `to_u64!` on it.
   def self.new!(value) : self
     value.to_u64!
+  end
+
+  # Casts the *value* by invoking `to_u64?` on it.
+  def self.new?(value) : self?
+    # TODO: implement to_u64?
+    value.to_u64
+  rescue
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
@@ -1317,8 +1371,7 @@ struct UInt128
   MIN = new 0
   MAX = ~MIN
 
-  # Returns an `UInt128` by invoking `to_u128` on *value*.
-  # See `String#to_i` for more details.
+  # Casts the *value* by invoking `String#to_u128` on it.
   #
   # ```
   # UInt128.new "20"                        # => 20
@@ -1336,6 +1389,13 @@ struct UInt128
   # Returns an `UInt128` by invoking `to_u128!` on *value*.
   def self.new!(value) : self
     value.to_u128!
+  end
+
+  # Returns an `UInt128` or `Nil` by invoking `to_u128?` on *value*.
+  def self.new?(value) : self?
+    # TODO: implement to_u128?
+    value.to_u128
+  rescue
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64

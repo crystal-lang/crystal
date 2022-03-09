@@ -281,25 +281,34 @@ describe "Float" do
 
   describe ".new" do
     it "String overload" do
-      Float32.new("1").should be_a(Float32)
-      Float32.new("1").should eq(1)
-      expect_raises ArgumentError do
-        Float32.new(" 1 ", whitespace: false)
-      end
-
-      Float64.new("1").should be_a(Float64)
-      Float64.new("1").should eq(1)
-      expect_raises ArgumentError do
-        Float64.new(" 1 ", whitespace: false)
-      end
+      {% for type in [Float32, Float64] %}
+        {{type}}.new("1").should be_a {{type}}
+        {{type}}.new("1").should eq(1)
+        {{type}}.new?("a").should be_nil
+        expect_raises ArgumentError do
+          {{type}}.new(" 1 ", whitespace: false)
+        end
+      {% end %}
     end
 
     it "fallback overload" do
-      Float32.new(1_f64).should be_a(Float32)
-      Float32.new(1_f64).should eq(1)
+      Float32.new(1_f32).should be_a(Float32)
+      Float32.new(1_f32).should eq(1)
 
-      Float64.new(1_f32).should be_a(Float64)
-      Float64.new(1_f32).should eq(1)
+      Float32.new?(1_f32).should be_a(Float32)
+      Float32.new?(1_f32).should eq(1)
+
+      Float32.new!(1_f32).should be_a(Float32)
+      Float32.new!(1_f32).should eq(1)
+
+      Float64.new(1_f64).should be_a(Float64)
+      Float64.new(1_f64).should eq(1)
+
+      Float64.new?(1_f64).should be_a(Float64)
+      Float64.new?(1_f64).should eq(1)
+
+      Float64.new!(1_f64).should be_a(Float64)
+      Float64.new!(1_f64).should eq(1)
     end
   end
 
