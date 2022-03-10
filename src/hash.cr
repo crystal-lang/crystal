@@ -1027,13 +1027,14 @@ class Hash(K, V)
   #
   # It returns the value used as input for the given block
   # (ie. the old value if key present, or the default value)
+  #
   # ```
   # h = {"a" => 0, "b" => 1}
-  # h.update("b") { |v| v + 41 }
+  # h.update("b") { |v| v + 41 } # => 1
   # h["b"] # => 42
   #
   # h = Hash(String, Int32).new(40)
-  # h.update("foo") { |v| v + 2 }
+  # h.update("foo") { |v| v + 2 } # => 40
   # h["foo"] # => 42
   #
   # h = {} of String => Int32
