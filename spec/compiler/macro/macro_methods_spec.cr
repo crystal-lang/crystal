@@ -265,6 +265,7 @@ module Crystal
 
       it "executes unary -" do
         assert_macro "{{-(3)}}", "-3"
+        assert_macro "{{-(3_i128)}}", "-3_i128"
       end
 
       it "executes unary ~" do
@@ -276,12 +277,23 @@ module Crystal
         assert_macro "{{1e-123_f32.kind}}", ":f32"
         assert_macro "{{1.0.kind}}", ":f64"
         assert_macro "{{0xde7ec7ab1e_u64.kind}}", ":u64"
+        assert_macro "{{1_u128.kind}}", ":u128"
+        assert_macro "{{-20i128.kind}}", ":i128"
       end
 
       it "#to_number" do
         assert_macro "{{ 4_u8.to_number }}", "4"
         assert_macro "{{ 2147483648.to_number }}", "2147483648"
         assert_macro "{{ 1_f32.to_number }}", "1.0"
+        assert_macro "{{ 4_u128.to_number }}", "4"
+        assert_macro "{{ -20i128.to_number }}", "-20"
+      end
+
+      it "executes math operations using U/Int128" do
+        assert_macro "{{18446744073709551615_u128 + 1}}", "18446744073709551616_u128"
+        assert_macro "{{18446744073709551_i128 - 1_u128}}", "18446744073709550_i128"
+        assert_macro "{{18446744073709551615_u128 * 10}}", "184467440737095516150_u128"
+        assert_macro "{{18446744073709551610_u128 // 10}}", "1844674407370955161_u128"
       end
     end
 
@@ -2143,6 +2155,12 @@ module Crystal
       it "executes args when not empty" do
         assert_macro %({{x.args}}), "[SomeType, OtherType]", {x: ProcPointer.new(Var.new("some_object"), "method", [Path.new("SomeType"), Path.new("OtherType")] of ASTNode)}
       end
+
+      it "executes global?" do
+        assert_macro %({{x.global?}}), "false", {x: ProcPointer.new(nil, "method")}
+        assert_macro %({{x.global?}}), "true", {x: ProcPointer.new(nil, "method", global: true)}
+        assert_macro %({{x.global?}}), "false", {x: ProcPointer.new(Path.global("Foo"), "method")}
+      end
     end
 
     describe "def methods" do
@@ -2820,6 +2838,63 @@ module Crystal
 
     it "compares versions" do
       assert_macro %({{compare_versions("1.10.3", "1.2.3")}}), %(1)
+    end
+
+    describe "#parse_type" do
+      it "path" do
+        assert_type(%[class Bar; end; {{ parse_type("Bar").is_a?(Path) ? 1 : 'a'}}]) { int32 }
+        assert_type(%[class Bar; end; {{ parse_type(:Bar.id.stringify).is_a?(Path) ? 1 : 'a'}}]) { int32 }
+      end
+
+      it "generic" do
+        assert_type(%[class Foo(A, B); end; {{ parse_type("Foo(Int32, String)").resolve.type_vars.size == 2 ? 1 : 'a' }}]) { int32 }
+      end
+
+      it "union - |" do
+        assert_type(%[class Foo; end; class Bar; end; {{ parse_type("Foo|Bar").resolve.union_types.size == 2 ? 1 : 'a' }}]) { int32 }
+      end
+
+      it "union - Union" do
+        assert_type(%[class Foo; end; class Bar; end; {{ parse_type("Union(Foo,Bar)").resolve.union_types.size == 2 ? 1 : 'a' }}]) { int32 }
+      end
+
+      it "union - in generic" do
+        assert_type(%[{{ parse_type("Array(Int32 | String)").resolve.type_vars[0].union_types.size == 2 ? 1 : 'a' }}]) { int32 }
+      end
+
+      it "proc" do
+        assert_type(%[{{ parse_type("String, Int32 -> Bool").inputs.size == 2 ? 1 : 'a' }}]) { int32 }
+        assert_type(%[{{ parse_type("String, Int32 -> Bool").output.resolve == Bool ? 1 : 'a' }}]) { int32 }
+      end
+
+      it "metaclass" do
+        assert_type(%[{{ parse_type("Int32.class").resolve == Int32.class ? 1 : 'a' }}]) { int32 }
+        assert_type(%[{{ parse_type("Int32").resolve == Int32.instance ? 1 : 'a' }}]) { int32 }
+      end
+
+      it "raises on empty string" do
+        expect_raises(Crystal::TypeException, "argument to parse_type cannot be an empty value") do
+          assert_macro %({{parse_type ""}}), %(nil)
+        end
+      end
+
+      it "raises on extra unparsed tokens before the type" do
+        expect_raises(Crystal::TypeException, %(Invalid type name: "100Foo")) do
+          assert_macro %({{parse_type "100Foo" }}), %(nil)
+        end
+      end
+
+      it "raises on extra unparsed tokens after the type" do
+        expect_raises(Crystal::TypeException, %(Invalid type name: "Foo(Int32)100")) do
+          assert_macro %({{parse_type "Foo(Int32)100" }}), %(nil)
+        end
+      end
+
+      it "raises on non StringLiteral arguments" do
+        expect_raises(Crystal::TypeException, "argument to parse_type must be a StringLiteral, not SymbolLiteral") do
+          assert_macro %({{parse_type :Foo }}), %(nil)
+        end
+      end
     end
 
     describe "printing" do

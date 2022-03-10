@@ -314,7 +314,7 @@ describe "File" do
     File.extname("").should eq("")
   end
 
-  # There are more detailled specs for `Path#join` in path_spec.cr
+  # There are more detailed specs for `Path#join` in path_spec.cr
   it "constructs a path from parts" do
     {% if flag?(:win32) %}
       File.join(["///foo", "bar"]).should eq("///foo\\bar")
@@ -558,7 +558,7 @@ describe "File" do
     end
   end
 
-  # There are more detailled specs for `Path#expand` in path_spec.cr
+  # There are more detailed specs for `Path#expand` in path_spec.cr
   describe ".expand_path" do
     it "converts a pathname to an absolute pathname" do
       File.expand_path("a/b").should eq(Path.new("a/b").expand(Dir.current).to_s)
@@ -680,6 +680,45 @@ describe "File" do
       file.close
       file.to_s.should eq("#<File:0x#{file.object_id.to_s(16)}>")
       file.inspect.should eq("#<File:#{datapath("test_file.txt")} (closed)>")
+    end
+  end
+
+  it "supports binary modes" do
+    with_tempfile("binary-modes.txt") do |path|
+      File.open(path, "wb") do |f|
+        f.write(Bytes[1, 3, 6, 10])
+      end
+      File.open(path, "rb") do |f|
+        bytes = Bytes.new(4)
+        f.read(bytes)
+        bytes.should eq(Bytes[1, 3, 6, 10])
+      end
+      File.open(path, "ab") do |f|
+        f.size.should eq(4)
+      end
+
+      File.open(path, "r+b") do |f|
+        bytes = Bytes.new(4)
+        f.read(bytes)
+        bytes.should eq(Bytes[1, 3, 6, 10])
+        f.seek(0)
+        f.write(Bytes[1, 3, 6, 10])
+      end
+      File.open(path, "a+b") do |f|
+        f.write(Bytes[13, 13, 10])
+        f.flush
+        f.seek(0)
+        bytes = Bytes.new(7)
+        f.read(bytes)
+        bytes.should eq(Bytes[1, 3, 6, 10, 13, 13, 10])
+      end
+      File.open(path, "w+b") do |f|
+        f.size.should eq(0)
+      end
+
+      File.open(path, "rb+") { }
+      File.open(path, "wb+") { }
+      File.open(path, "ab+") { }
     end
   end
 
@@ -848,7 +887,7 @@ describe "File" do
 
   # TODO: implement flock on windows
   describe "flock" do
-    pending_win32 "exlusively locks a file" do
+    pending_win32 "exclusively locks a file" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_exclusive do

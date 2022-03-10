@@ -775,7 +775,6 @@ module Crystal
               end
               next
             end
-            value_exps = node.values[i..i - node.targets.size]
             value = Call.new(Path.global("Tuple").at(node), "new", node.values[i..i - node.targets.size])
           else
             value = node.values[splat_index && i > splat_index ? i - node.targets.size : i]
@@ -914,7 +913,7 @@ module Crystal
         Var.new(def_arg.name).at(def_arg).as(ASTNode)
       end
 
-      body = Call.new(obj, node.name, call_args).at(node)
+      body = Call.new(obj, node.name, call_args, global: node.global?).at(node)
       proc_literal = ProcLiteral.new(Def.new("->", def_args, body).at(node)).at(node)
       proc_literal.proc_pointer = node
 

@@ -773,6 +773,8 @@ describe Crystal::Formatter do
     assert_format "->Foo.#{method}"
     assert_format "->@foo.#{method}"
     assert_format "->@@foo.#{method}"
+    assert_format "-> :: #{method}", "->::#{method}"
+    assert_format "-> :: Foo . #{method}", "->::Foo.#{method}"
   end
 
   assert_format "foo = 1\n->foo.bar(Int32)"
@@ -791,6 +793,14 @@ describe Crystal::Formatter do
   assert_format "->{}"
 
   assert_format "-> : Int32 {}"
+  assert_format "-> : Int32 | String { 1 }"
+  assert_format "-> : Array(Int32) {}"
+  assert_format "-> : Int32? {}"
+  assert_format "-> : Int32* {}"
+  assert_format "-> : Int32[1] {}"
+  assert_format "-> : {Int32, String} {}"
+  assert_format "-> : {Int32} { String }"
+  assert_format "-> : {x: Int32, y: String} {}"
   assert_format "->\n:\nInt32\n{\n}", "-> : Int32 {\n}"
   assert_format "->( x )\n:\nInt32 { }", "->(x) : Int32 {}"
   assert_format "->: Int32 do\nx\nend", "-> : Int32 do\n  x\nend"
