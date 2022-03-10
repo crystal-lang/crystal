@@ -1809,7 +1809,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         put_i64 0, node: arg
       when StaticArrayInstanceType
         # Static arrays are passed as pointers to C
-        compile_pointerof_node(arg, arg.type)
+        compile_pointerof_node(arg, arg_type)
       else
         request_value(arg)
       end
@@ -1836,8 +1836,31 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           args_bytesizes << sizeof(Pointer(Void))
           args_ffi_types << FFI::Type.pointer
         else
-          args_bytesizes << aligned_sizeof_type(arg)
-          args_ffi_types << arg.type.ffi_type
+          if external.varargs?
+            # Apply default promotions to certain types used as variadic arguments in C function calls.
+
+            # Resolve EnumType to its base type because that's the type that gets promoted
+            if arg_type.is_a?(EnumType)
+              arg_type = arg_type.base_type
+            end
+
+            if arg_type.is_a?(FloatType) && arg_type.bytes < 8
+              # Arguments of type float are promoted to double
+              promoted_type = @context.program.float64
+              primitive_convert node, arg_type, promoted_type, true
+
+              arg_type = promoted_type
+            elsif arg_type.is_a?(IntegerType) && arg_type.bytes < 4
+              # Integer argument types smaller than 4 bytes are promoted to 4 bytes
+              promoted_type = arg_type.signed? ? @context.program.int32 : @context.program.uint32
+              primitive_convert node, arg_type, promoted_type, true
+
+              arg_type = promoted_type
+            end
+          end
+
+          args_bytesizes << aligned_sizeof_type(arg_type)
+          args_ffi_types << arg_type.ffi_arg_type
         end
       end
     end
@@ -2169,15 +2192,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       location = node.location
       end_location = node.end_location
       case default_value.name
-      when :__LINE__
+      when .magic_line?
         put_i32 MagicConstant.expand_line(location), node: node
-      when :__END_LINE__
+      when .magic_end_line?
         # TODO: not tested
         put_i32 MagicConstant.expand_line(end_location), node: node
-      when :__FILE__
+      when .magic_file?
         # TODO: not tested
         put_string MagicConstant.expand_file(location), node: node
-      when :__DIR__
+      when .magic_dir?
         # TODO: not tested
         put_string MagicConstant.expand_dir(location), node: node
       else

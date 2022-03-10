@@ -438,7 +438,7 @@ class OptionParser
           # If this is a subcommand (flag not starting with -), delete all
           # subcommands since they are no longer valid.
           unless flag.starts_with?('-')
-            @handlers.select! { |k, v| k.starts_with?('-') }
+            @handlers.select! { |k, _| k.starts_with?('-') }
             @flags.select! { |flag| flag.starts_with?("    -") }
           end
 
