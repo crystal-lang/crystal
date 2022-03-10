@@ -400,7 +400,7 @@ class Hash(K, V)
     end
   end
 
-  # Tries to update a hash-key-value triplet by doing a linear scan.
+  # Tries to update a key-value-hash triplet by doing a linear scan.
   # Returns an old `Entry` if it was updated, otherwise `nil`.
   private def update_linear_scan(key, value, hash) : Entry(K, V)?
     # Just do a linear scan...
