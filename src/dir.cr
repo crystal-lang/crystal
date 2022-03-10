@@ -75,7 +75,7 @@ class Dir
     EntryIterator.new(self)
   end
 
-  # Returns an `Array(String)` containing all of the filenames in the given directory including "." and "..".
+  # Returns an array containing all of entries in the given directory including "." and "..".
   #
   # ```
   # Dir.mkdir("testdir")
