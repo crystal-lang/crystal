@@ -16,7 +16,7 @@ require "crystal/hasher"
 # hash["one"] # => 1
 # ```
 #
-# [Hash literals](http://crystal-lang.org/reference/syntax_and_semantics/literals/hash.html)
+# [Hash literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/hash.html)
 # can also be used to create a `Hash`:
 #
 # ```
@@ -52,7 +52,7 @@ class Hash(K, V)
   # There are two main data structures:
   #
   # - @entries:
-  #     A continguous buffer (Pointer) of hash entries (Entry) in the order
+  #     A contiguous buffer (Pointer) of hash entries (Entry) in the order
   #     they were inserted. This makes it possible for Hash to preserve
   #     order of insertion.
   #     An entry holds a key-value pair together with the key's hash code.
@@ -140,7 +140,7 @@ class Hash(K, V)
   # shift of the buffer (expensive).
   #
   # There might be other optimizations to try out, like not using Linear Probing,
-  # but for now this implementaton is much faster than the old one which used
+  # but for now this implementation is much faster than the old one which used
   # linked lists (closed addressing).
   #
   # All methods that deal with this implementation come after the constructors.
@@ -187,6 +187,9 @@ class Hash(K, V)
   # Otherwise guaranteed to be at least 3.
   @indices_size_pow2 : UInt8
 
+  # Whether to compare objects using `object_id`.
+  @compare_by_identity : Bool = false
+
   # The optional block that triggers on non-existing keys.
   @block : (self, K -> V)?
 
@@ -217,8 +220,8 @@ class Hash(K, V)
   # The *initial_capacity* is useful to avoid unnecessary reallocations
   # of the internal buffer in case of growth. If the number of elements
   # a hash will hold is known, the hash should be initialized with that
-  # capacity for improved performance. Otherwise, the default is 11 and inputs
-  # less than 11 are ignored.
+  # capacity for improved performance. Otherwise, the default is 8.
+  # Inputs lower than 8 are ignored.
   def initialize(block : (Hash(K, V), K -> V)? = nil, *, initial_capacity = nil)
     initial_capacity = (initial_capacity || 0).to_i32
 
@@ -277,8 +280,8 @@ class Hash(K, V)
   # The *initial_capacity* is useful to avoid unnecessary reallocations
   # of the internal buffer in case of growth. If the number of elements
   # a hash will hold is known, the hash should be initialized with that
-  # capacity for improved performance. Otherwise, the default is 11 and inputs
-  # less than 11 are ignored.
+  # capacity for improved performance. Otherwise, the default is 8.
+  # Inputs lower than 8 are ignored.
   def self.new(initial_capacity = nil, &block : (Hash(K, V), K -> V))
     new block, initial_capacity: initial_capacity
   end
@@ -302,8 +305,8 @@ class Hash(K, V)
   # The *initial_capacity* is useful to avoid unnecessary reallocations
   # of the internal buffer in case of growth. If the number of elements
   # a hash will hold is known, the hash should be initialized with that
-  # capacity for improved performance. Otherwise, the default is 11 and inputs
-  # less than 11 are ignored.
+  # capacity for improved performance. Otherwise, the default is 8.
+  # Inputs lower than 8 are ignored.
   def self.new(default_value : V, initial_capacity = nil)
     new(initial_capacity: initial_capacity) { default_value }
   end
@@ -386,7 +389,7 @@ class Hash(K, V)
 
       # We found a non-empty slot, let's see if the key we have matches
       entry = get_entry(entry_index)
-      if entry.matches?(hash, key)
+      if entry_matches?(entry, hash, key)
         # If it does we just update the entry
         set_entry(entry_index, Entry(K, V).new(hash, key, value))
         return entry
@@ -402,7 +405,7 @@ class Hash(K, V)
   private def update_linear_scan(key, value, hash) : Entry(K, V)?
     # Just do a linear scan...
     each_entry_with_index do |entry, index|
-      if entry.matches?(hash, key)
+      if entry_matches?(entry, hash, key)
         set_entry(index, Entry(K, V).new(entry.hash, entry.key, value))
         return entry
       end
@@ -438,7 +441,7 @@ class Hash(K, V)
 
       # We found a non-empty slot, let's see if the key we have matches
       entry = get_entry(entry_index)
-      if entry.matches?(hash, key)
+      if entry_matches?(entry, hash, key)
         delete_entry_and_update_counts(entry_index)
         return entry
       else
@@ -452,7 +455,7 @@ class Hash(K, V)
   # Returns the deleted Entry, if it existed, `nil` otherwise.
   private def delete_linear_scan(key, hash) : Entry(K, V)?
     each_entry_with_index do |entry, index|
-      if entry.matches?(hash, key)
+      if entry_matches?(entry, hash, key)
         delete_entry_and_update_counts(index)
         return entry
       end
@@ -487,7 +490,7 @@ class Hash(K, V)
 
       # We found a non-empty slot, let's see if the key we have matches
       entry = get_entry(entry_index)
-      if entry.matches?(hash, key)
+      if entry_matches?(entry, hash, key)
         # It does!
         return entry
       else
@@ -504,12 +507,12 @@ class Hash(K, V)
     # computing a hash code of a complex structure).
     if entries_size <= 8
       each_entry_with_index do |entry|
-        return entry if entry.key == key
+        return entry if entry_matches?(entry, key)
       end
     else
       hash = key_hash(key)
       each_entry_with_index do |entry|
-        return entry if entry.matches?(hash, key)
+        return entry if entry_matches?(entry, hash, key)
       end
     end
 
@@ -520,7 +523,7 @@ class Hash(K, V)
   # no more available entries to add.
   # Might not result in a resize if there are many entries marked as
   # deleted. In that case the entries table is simply compacted.
-  # However, in case of a resize deleted entries are also compcated.
+  # However, in case of a resize deleted entries are also compacted.
   private def resize : Nil
     # Only do an actual resize (grow `@entries` buffer) if we don't
     # have many deleted elements.
@@ -574,16 +577,18 @@ class Hash(K, V)
     each_entry_with_index do |entry, entry_index|
       if rehash
         # When rehashing we always have to copy the entry
-        set_entry(new_entry_index, Entry(K, V).new(key_hash(entry.key), entry.key, entry.value))
+        entry_hash = key_hash(entry.key)
+        set_entry(new_entry_index, Entry(K, V).new(entry_hash, entry.key, entry.value))
       else
         # First we move the entry to its new index (if we need to do that)
+        entry_hash = entry.hash
         set_entry(new_entry_index, entry) if entry_index != new_entry_index
       end
 
       if has_indices
         # Then we try to find an empty index slot
         # (we should find one now that we have more space)
-        index = fit_in_indices(entry.hash)
+        index = fit_in_indices(entry_hash)
         until get_index(index) == -1
           index = next_index(index)
         end
@@ -634,6 +639,9 @@ class Hash(K, V)
 
   # Initializes a `dup` copy from the contents of `other`.
   protected def initialize_dup(other)
+    initialize_compare_by_identity(other)
+    initialize_default_block(other)
+
     return if other.empty?
 
     initialize_dup_entries(other)
@@ -642,21 +650,32 @@ class Hash(K, V)
 
   # Initializes a `clone` copy from the contents of `other`.
   protected def initialize_clone(other)
+    initialize_compare_by_identity(other)
+    initialize_default_block(other)
+
     return if other.empty?
 
     initialize_clone_entries(other)
     initialize_copy_non_entries_vars(other)
   end
 
+  private def initialize_compare_by_identity(other)
+    compare_by_identity if other.compare_by_identity?
+  end
+
+  private def initialize_default_block(other)
+    @block = other.@block
+  end
+
   # Initializes `@entries` for a dup copy.
-  # Here we only need tu duplicate the buffer.
+  # Here we only need to duplicate the buffer.
   private def initialize_dup_entries(other)
     return if other.@entries.null?
 
     @entries = malloc_entries(other.entries_capacity)
 
     # Note that we only need to copy `entries_size` which
-    # are the effectives entries in use.
+    # are the effective entries in use.
     @entries.copy_from(other.@entries, other.entries_size)
   end
 
@@ -672,14 +691,13 @@ class Hash(K, V)
     end
   end
 
-  # Initializes all variables other than `@entries` for a copy.
+  # Initializes all variables other than `@entries` and `@block` for a copy.
   private def initialize_copy_non_entries_vars(other)
     @indices_bytesize = other.@indices_bytesize
     @first = other.@first
     @size = other.@size
     @deleted_count = other.@deleted_count
     @indices_size_pow2 = other.@indices_size_pow2
-    @block = other.@block
 
     unless other.@indices.null?
       @indices = malloc_indices(other.indices_size)
@@ -701,7 +719,7 @@ class Hash(K, V)
             end
 
     # Because we increment the value by one when we store the value
-    # here we have to substract one
+    # here we have to subtract one
     value - 1
   end
 
@@ -890,8 +908,48 @@ class Hash(K, V)
 
   # Computes the hash of a key.
   private def key_hash(key)
-    hash = key.hash.to_u32!
+    if @compare_by_identity && key.responds_to?(:object_id)
+      hash = key.object_id.hash.to_u32!
+    else
+      hash = key.hash.to_u32!
+    end
     hash == 0 ? UInt32::MAX : hash
+  end
+
+  private def entry_matches?(entry, hash, key)
+    # Tiny optimization: for these primitive types it's faster to just
+    # compare the key instead of comparing the hash and the key.
+    # We still have to skip hashes with value 0 (means deleted).
+    {% if K == Bool ||
+            K == Char ||
+            K == Symbol ||
+            K < Number::Primitive ||
+            K < Enum %}
+      entry.key == key && entry.hash != 0_u32
+    {% else %}
+      entry.hash == hash && entry_matches?(entry, key)
+    {% end %}
+  end
+
+  private def entry_matches?(entry, key)
+    entry_key = entry.key
+
+    if @compare_by_identity
+      if entry_key.responds_to?(:object_id)
+        if key.responds_to?(:object_id)
+          entry_key.object_id == key.object_id
+        else
+          false
+        end
+      elsif key.responds_to?(:object_id)
+        # because entry_key doesn't respond to :object_id
+        false
+      else
+        entry_key == key
+      end
+    else
+      entry_key == key
+    end
   end
 
   # ===========================================================================
@@ -901,6 +959,29 @@ class Hash(K, V)
   # Returns the number of elements in this Hash.
   getter size : Int32
 
+  # Makes this hash compare keys using their object identity (`object_id)`
+  # for types that define such method (`Reference` types, but also structs that
+  # might wrap other `Reference` types and delegate the `object_id` method to them).
+  #
+  # ```
+  # h1 = {"foo" => 1, "bar" => 2}
+  # h1["fo" + "o"]? # => 1
+  #
+  # h1.compare_by_identity
+  # h1.compare_by_identity? # => true
+  # h1["fo" + "o"]?         # => nil # not the same String instance
+  # ```
+  def compare_by_identity : self
+    @compare_by_identity = true
+    rehash
+    self
+  end
+
+  # Returns `true` of this Hash is comparing keys by `object_id`.
+  #
+  # See `compare_by_identity`.
+  getter? compare_by_identity : Bool
+
   # Sets the value of *key* to the given *value*.
   #
   # ```
@@ -908,7 +989,7 @@ class Hash(K, V)
   # h["foo"] = "bar"
   # h["foo"] # => "bar"
   # ```
-  def []=(key : K, value : V)
+  def []=(key : K, value : V) : V
     upsert(key, value)
     value
   end
@@ -1016,7 +1097,7 @@ class Hash(K, V)
   # h.has_key?("foo") # => true
   # h.has_key?("bar") # => false
   # ```
-  def has_key?(key)
+  def has_key?(key) : Bool
     !!find_entry(key)
   end
 
@@ -1027,7 +1108,7 @@ class Hash(K, V)
   # h.has_value?("foo") # => false
   # h.has_value?("bar") # => true
   # ```
-  def has_value?(val)
+  def has_value?(val) : Bool
     each_value do |value|
       return true if value == val
     end
@@ -1059,14 +1140,14 @@ class Hash(K, V)
     entry ? entry.value : yield key
   end
 
-  # Returns a tuple populated with the elements at the given *indexes*.
-  # Raises if any index is invalid.
+  # Returns a tuple populated with the values of the given *keys*, with the same order.
+  # Raises if a key is not found.
   #
   # ```
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.values_at("a", "c") # => {1, 3}
   # ```
-  def values_at(*indexes : K)
-    indexes.map { |index| self[index] }
+  def values_at(*keys : K)
+    keys.map { |index| self[index] }
   end
 
   # Returns a key with the given *value*, else raises `KeyError`.
@@ -1077,7 +1158,7 @@ class Hash(K, V)
   # hash.key_for("qux")    # => "baz"
   # hash.key_for("foobar") # raises KeyError (Missing hash key for value: foobar)
   # ```
-  def key_for(value)
+  def key_for(value) : K
     key_for(value) { raise KeyError.new "Missing hash key for value: #{value}" }
   end
 
@@ -1089,7 +1170,7 @@ class Hash(K, V)
   # hash.key_for?("qux")    # => "baz"
   # hash.key_for?("foobar") # => nil
   # ```
-  def key_for?(value)
+  def key_for?(value) : K?
     key_for(value) { nil }
   end
 
@@ -1114,7 +1195,7 @@ class Hash(K, V)
   # h.delete("foo")     # => "bar"
   # h.fetch("foo", nil) # => nil
   # ```
-  def delete(key)
+  def delete(key) : V?
     delete(key) { nil }
   end
 
@@ -1131,24 +1212,6 @@ class Hash(K, V)
     entry ? entry.value : yield key
   end
 
-  # Deletes each key-value pair for which the given block returns `true`.
-  #
-  # ```
-  # h = {"foo" => "bar", "fob" => "baz", "bar" => "qux"}
-  # h.delete_if { |key, value| key.starts_with?("fo") }
-  # h # => { "bar" => "qux" }
-  # ```
-  def delete_if
-    keys_to_delete = [] of K
-    each do |key, value|
-      keys_to_delete << key if yield(key, value)
-    end
-    keys_to_delete.each do |key|
-      delete(key)
-    end
-    self
-  end
-
   # Returns `true` when hash contains no key-value pairs.
   #
   # ```
@@ -1158,7 +1221,7 @@ class Hash(K, V)
   # h = {"foo" => "bar"}
   # h.empty? # => false
   # ```
-  def empty?
+  def empty? : Bool
     @size == 0
   end
 
@@ -1178,7 +1241,7 @@ class Hash(K, V)
   # ```
   #
   # The enumeration follows the order the keys were inserted.
-  def each : Nil
+  def each(& : {K, V} ->) : Nil
     each_entry_with_index do |entry, i|
       yield({entry.key, entry.value})
     end
@@ -1210,7 +1273,7 @@ class Hash(K, V)
   # ```
   #
   # The enumeration follows the order the keys were inserted.
-  def each_key
+  def each_key(& : K ->)
     each do |key, value|
       yield key
     end
@@ -1245,7 +1308,7 @@ class Hash(K, V)
   # ```
   #
   # The enumeration follows the order the keys were inserted.
-  def each_value
+  def each_value(& : V ->)
     each do |key, value|
       yield value
     end
@@ -1290,21 +1353,6 @@ class Hash(K, V)
     to_a_impl &.value
   end
 
-  # Returns the index of the given key, or `nil` when not found.
-  # The keys are ordered based on when they were inserted.
-  #
-  # ```
-  # h = {"foo" => "bar", "baz" => "qux"}
-  # h.key_index("foo") # => 0
-  # h.key_index("qux") # => nil
-  # ```
-  def key_index(key)
-    each_with_index do |(my_key, my_value), index|
-      return index if key == my_key
-    end
-    nil
-  end
-
   # Returns a new `Hash` with the keys and values of this hash and *other* combined.
   # A value in *other* takes precedence over the one in this hash.
   #
@@ -1315,14 +1363,14 @@ class Hash(K, V)
   # hash
   # # => {"foo" => "bar"}
   # ```
-  def merge(other : Hash(L, W)) forall L, W
+  def merge(other : Hash(L, W)) : Hash(K | L, V | W) forall L, W
     hash = Hash(K | L, V | W).new
     hash.merge! self
     hash.merge! other
     hash
   end
 
-  def merge(other : Hash(L, W), &block : K, V, W -> V | W) forall L, W
+  def merge(other : Hash(L, W), & : L, V, W -> V | W) : Hash(K | L, V | W) forall L, W
     hash = Hash(K | L, V | W).new
     hash.merge! self
     hash.merge!(other) { |k, v1, v2| yield k, v1, v2 }
@@ -1336,58 +1384,83 @@ class Hash(K, V)
   # hash.merge!({"baz" => "qux"})
   # hash # => {"foo" => "bar", "baz" => "qux"}
   # ```
-  def merge!(other : Hash)
-    other.each do |k, v|
-      self[k] = v
-    end
+  def merge!(other : Hash) : self
+    other.merge_into!(self)
     self
   end
 
-  def merge!(other : Hash, &block)
-    other.each do |k, v|
-      if self.has_key?(k)
-        self[k] = yield k, self[k], v
+  # Adds the contents of *other* to this hash.
+  # If a key exists in both hashes, the given block is called to determine the value to be used.
+  # The block arguments are the key, the value in `self` and the value in *other*.
+  #
+  # ```
+  # hash = {"a" => 100, "b" => 200}
+  # other = {"b" => 254, "c" => 300}
+  # hash.merge!(other) { |key, v1, v2| v1 + v2 }
+  # hash # => {"a" => 100, "b" => 454, "c" => 300}
+  # ```
+  def merge!(other : Hash, &) : self
+    other.merge_into!(self) { |k, v1, v2| yield k, v1, v2 }
+    self
+  end
+
+  protected def merge_into!(other : Hash(K2, V2)) forall K2, V2
+    {% unless K2 >= K && V2 >= V %}
+      {% raise "#{Hash(K, V)} can't be merged into #{Hash(K2, V2)}" %}
+    {% end %}
+
+    each do |k, v|
+      other[k] = v
+    end
+  end
+
+  protected def merge_into!(other : Hash(K2, V2), & : K, V2, V -> V2) forall K2, V2
+    {% unless K2 >= K && V2 >= V %}
+      {% raise "#{Hash(K, V)} can't be merged into #{Hash(K2, V2)}" %}
+    {% end %}
+
+    each do |k, v|
+      if other.has_key?(k)
+        other[k] = yield k, other[k], v
       else
-        self[k] = v
+        other[k] = v
       end
     end
-    self
   end
 
-  # Returns a new hash consisting of entries for which the block returns `true`.
+  # Returns a new hash consisting of entries for which the block is truthy.
   # ```
   # h = {"a" => 100, "b" => 200, "c" => 300}
   # h.select { |k, v| k > "a" } # => {"b" => 200, "c" => 300}
   # h.select { |k, v| v < 200 } # => {"a" => 100}
   # ```
-  def select(&block : K, V -> _)
+  def select(& : K, V ->) : Hash(K, V)
     reject { |k, v| !yield(k, v) }
   end
 
-  # Equivalent to `Hash#select` but makes modification on the current object rather that returning a new one. Returns `nil` if no changes were made
-  def select!(&block : K, V -> _)
+  # Equivalent to `Hash#select` but makes modification on the current object rather than returning a new one. Returns `self`.
+  def select!(& : K, V ->) : self
     reject! { |k, v| !yield(k, v) }
   end
 
-  # Returns a new hash consisting of entries for which the block returns `false`.
+  # Returns a new hash consisting of entries for which the block is falsey.
   # ```
   # h = {"a" => 100, "b" => 200, "c" => 300}
   # h.reject { |k, v| k > "a" } # => {"a" => 100}
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
-  def reject(&block : K, V -> _)
+  def reject(& : K, V ->) : Hash(K, V)
     each_with_object({} of K => V) do |(k, v), memo|
       memo[k] = v unless yield k, v
     end
   end
 
-  # Equivalent to `Hash#reject`, but makes modification on the current object rather that returning a new one. Returns `nil` if no changes were made.
-  def reject!(&block : K, V -> _)
-    num_entries = size
+  # Equivalent to `Hash#reject`, but makes modification on the current object rather than returning a new one. Returns `self`.
+  def reject!(& : K, V ->) : self
     each do |key, value|
       delete(key) if yield(key, value)
     end
-    num_entries == size ? nil : self
+    self
   end
 
   # Returns a new `Hash` without the given keys.
@@ -1395,7 +1468,7 @@ class Hash(K, V)
   # ```
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject("a", "c") # => {"b" => 2, "d" => 4}
   # ```
-  def reject(*keys)
+  def reject(*keys) : Hash(K, V)
     hash = self.dup
     hash.reject!(*keys)
   end
@@ -1403,45 +1476,62 @@ class Hash(K, V)
   # Removes a list of keys out of hash.
   #
   # ```
-  # h = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject!("a", "c")
-  # h # => {"b" => 2, "d" => 4}
+  # hash = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}
+  # hash.reject!(["a", "c"]) # => {"b" => 2, "d" => 4}
+  # hash                     # => {"b" => 2, "d" => 4}
   # ```
-  def reject!(keys : Array | Tuple)
+  def reject!(keys : Enumerable) : self
     keys.each { |k| delete(k) }
     self
   end
 
-  def reject!(*keys)
+  # Removes a list of keys out of hash.
+  #
+  # ```
+  # hash = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}
+  # hash.reject!("a", "c") # => {"b" => 2, "d" => 4}
+  # hash                   # => {"b" => 2, "d" => 4}
+  # ```
+  def reject!(*keys) : self
     reject!(keys)
   end
 
   # Returns a new `Hash` with the given keys.
   #
   # ```
-  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select("a", "c") # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select({"a", "c"})    # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select("a", "c")      # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(["a", "c"])    # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(Set{"a", "c"}) # => {"a" => 1, "c" => 3}
   # ```
-  def select(keys : Array | Tuple)
+  def select(keys : Enumerable) : Hash(K, V)
     hash = {} of K => V
     keys.each { |k| hash[k] = self[k] if has_key?(k) }
     hash
   end
 
-  def select(*keys)
+  # :ditto:
+  def select(*keys) : Hash(K, V)
     self.select(keys)
   end
 
   # Removes every element except the given ones.
   #
   # ```
-  # h = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!("a", "c")
-  # h # => {"a" => 1, "c" => 3}
+  # h1 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!({"a", "c"})
+  # h2 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!("a", "c")
+  # h3 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!(["a", "c"])
+  # h4 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!(Set{"a", "c"})
+  # h1 == h2 == h3 == h4 # => true
+  # h1                   # => {"a" => 1, "c" => 3}
   # ```
-  def select!(keys : Array | Tuple)
+  def select!(keys : Enumerable) : self
     each { |k, v| delete(k) unless keys.includes?(k) }
     self
   end
 
-  def select!(*keys)
+  # :ditto:
+  def select!(*keys) : self
     select!(keys)
   end
 
@@ -1457,14 +1547,13 @@ class Hash(K, V)
     end
   end
 
-  # Removes all `nil` value from `self`. Returns `nil` if no changes were made.
+  # Removes all `nil` value from `self`. Returns `self`.
   #
   # ```
   # hash = {"hello" => "world", "foo" => nil}
   # hash.compact! # => {"hello" => "world"}
-  # hash.compact! # => nil
   # ```
-  def compact!
+  def compact! : self
     reject! { |key, value| value.nil? }
   end
 
@@ -1475,7 +1564,7 @@ class Hash(K, V)
   # hash = {:a => 1, :b => 2, :c => 3}
   # hash.transform_keys { |key| key.to_s } # => {"a" => 1, "b" => 2, "c" => 3}
   # ```
-  def transform_keys(&block : K -> K2) forall K2
+  def transform_keys(& : K -> K2) : Hash(K2, V) forall K2
     each_with_object({} of K2 => V) do |(key, value), memo|
       memo[yield(key)] = value
     end
@@ -1488,7 +1577,7 @@ class Hash(K, V)
   # hash = {:a => 1, :b => 2, :c => 3}
   # hash.transform_values { |value| value + 1 } # => {:a => 2, :b => 3, :c => 4}
   # ```
-  def transform_values(&block : V -> V2) forall V2
+  def transform_values(& : V -> V2) : Hash(K, V2) forall V2
     each_with_object({} of K => V2) do |(key, value), memo|
       memo[key] = yield(value)
     end
@@ -1502,7 +1591,7 @@ class Hash(K, V)
   # hash.transform_values! { |value| value + 1 }
   # hash # => {:a => 2, :b => 3, :c => 4}
   # ```
-  def transform_values!(&block : V -> V)
+  def transform_values!(& : V -> V) : self
     each_entry_with_index do |entry, i|
       new_value = yield entry.value
       set_entry(i, Entry(K, V).new(entry.hash, entry.key, new_value))
@@ -1525,7 +1614,7 @@ class Hash(K, V)
   end
 
   # Returns the first key in the hash.
-  def first_key
+  def first_key : K
     entry = first_entry?
     entry ? entry.key : raise "Can't get first key of empty Hash"
   end
@@ -1538,12 +1627,12 @@ class Hash(K, V)
   # hash.clear
   # hash.first_key? # => nil
   # ```
-  def first_key?
+  def first_key? : K?
     first_entry?.try &.key
   end
 
   # Returns the first value in the hash.
-  def first_value
+  def first_value : V
     entry = first_entry?
     entry ? entry.value : raise "Can't get first value of empty Hash"
   end
@@ -1556,12 +1645,12 @@ class Hash(K, V)
   # hash.clear
   # hash.first_value? # => nil
   # ```
-  def first_value?
+  def first_value? : V?
     first_entry?.try &.value
   end
 
   # Returns the last key in the hash.
-  def last_key
+  def last_key : K
     entry = last_entry?
     entry ? entry.key : raise "Can't get last key of empty Hash"
   end
@@ -1574,12 +1663,12 @@ class Hash(K, V)
   # hash.clear
   # hash.last_key? # => nil
   # ```
-  def last_key?
+  def last_key? : K?
     last_entry?.try &.key
   end
 
   # Returns the last value in the hash.
-  def last_value
+  def last_value : V
     entry = last_entry?
     entry ? entry.value : raise "Can't get last value of empty Hash"
   end
@@ -1592,7 +1681,7 @@ class Hash(K, V)
   # hash.clear
   # hash.last_value? # => nil
   # ```
-  def last_value?
+  def last_value? : V?
     last_entry?.try &.value
   end
 
@@ -1607,7 +1696,7 @@ class Hash(K, V)
   # hash = {} of String => String
   # hash.shift # raises IndexError
   # ```
-  def shift
+  def shift : {K, V}
     shift { raise IndexError.new }
   end
 
@@ -1621,7 +1710,7 @@ class Hash(K, V)
   # hash = {} of String => String
   # hash.shift? # => nil
   # ```
-  def shift?
+  def shift? : {K, V}?
     shift { nil }
   end
 
@@ -1653,19 +1742,47 @@ class Hash(K, V)
   # hash = {"foo" => "bar"}
   # hash.clear # => {}
   # ```
-  def clear
+  def clear : self
     clear_impl
     self
   end
 
   # Compares with *other*. Returns `true` if all key-value pairs are the same.
-  def ==(other : Hash)
+  def ==(other : Hash) : Bool
     return false unless size == other.size
     each do |key, value|
       entry = other.find_entry(key)
       return false unless entry && entry.value == value
     end
     true
+  end
+
+  # Returns `true` if `self` is a subset of *other*.
+  def proper_subset_of?(other : Hash) : Bool
+    return false if other.size <= size
+    all? do |key, value|
+      other_value = other.fetch(key) { return false }
+      other_value == value
+    end
+  end
+
+  # Returns `true` if `self` is a subset of *other* or equals to *other*.
+  def subset_of?(other : Hash) : Bool
+    return false if other.size < size
+    all? do |key, value|
+      other_value = other.fetch(key) { return false }
+      other_value == value
+    end
+  end
+
+  # Returns `true` if *other* is a subset of `self`.
+  def superset_of?(other : Hash) : Bool
+    other.subset_of?(self)
+  end
+
+  # Returns `true` if *other* is a subset of `self` or equals to `self`.
+  def proper_superset_of?(other : Hash) : Bool
+    other.proper_subset_of?(self)
   end
 
   # See `Object#hash(hasher)`
@@ -1692,7 +1809,7 @@ class Hash(K, V)
   # hash_b.merge!({"baz" => "qux"})
   # hash_a # => {"foo" => "bar"}
   # ```
-  def dup
+  def dup : Hash(K, V)
     hash = Hash(K, V).new
     hash.initialize_dup(self)
     hash
@@ -1706,10 +1823,19 @@ class Hash(K, V)
   # hash_b["foobar"]["foo"] = "baz"
   # hash_a # => {"foobar" => {"foo" => "bar"}}
   # ```
-  def clone
-    hash = Hash(K, V).new
-    hash.initialize_clone(self)
-    hash
+  def clone : Hash(K, V)
+    {% if V == ::Bool || V == ::Char || V == ::String || V == ::Symbol || V < ::Number::Primitive %}
+      clone = Hash(K, V).new
+      clone.initialize_clone(self)
+      clone
+    {% else %}
+      exec_recursive_clone do |hash|
+        clone = Hash(K, V).new
+        hash[object_id] = clone.object_id
+        clone.initialize_clone(self)
+        clone
+      end
+    {% end %}
   end
 
   def inspect(io : IO) : Nil
@@ -1761,13 +1887,14 @@ class Hash(K, V)
   # h = {1 => 'a', 2 => 'b', 3 => 'c'}
   # h.to_a # => [{1, 'a'}, {2, 'b'}, {3, 'c'}]
   # ```
+  # The order of the array follows the order the keys were inserted in the Hash.
   def to_a : Array({K, V})
     to_a_impl do |entry|
       {entry.key, entry.value}
     end
   end
 
-  private def to_a_impl(&block : Entry(K, V) -> U) forall U
+  private def to_a_impl(& : Entry(K, V) -> U) forall U
     index = @first
     if @first == @deleted_count
       # If the deleted count equals the first element offset it
@@ -1792,7 +1919,7 @@ class Hash(K, V)
   end
 
   # Returns `self`.
-  def to_h
+  def to_h : self
     self
   end
 
@@ -1811,7 +1938,7 @@ class Hash(K, V)
   # {"foo" => "bar"}.invert                 # => {"bar" => "foo"}
   # {"foo" => "bar", "baz" => "bar"}.invert # => {"bar" => "baz"}
   # ```
-  def invert
+  def invert : Hash(V, K)
     hash = Hash(V, K).new(initial_capacity: @size)
     self.each do |k, v|
       hash[v] = k
@@ -1831,24 +1958,8 @@ class Hash(K, V)
       new(0_u32, key, value)
     end
 
-    def deleted?
+    def deleted? : Bool
       @hash == 0_u32
-    end
-
-    def matches?(hash, key)
-      # Tiny optimization: for these primitive types it's faster to just
-      # compare the key instead of comparing the hash and the key.
-      # We still have to skip hashes with value 0 (means deleted).
-      {% if K == Bool ||
-              K == Char ||
-              K == Symbol ||
-              K < Int::Primitive ||
-              K < Float::Primitive ||
-              K < Enum %}
-        @key == key && @hash != 0_u32
-      {% else %}
-        @hash == hash && @key == key
-      {% end %}
     end
 
     def clone

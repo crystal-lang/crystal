@@ -20,7 +20,7 @@ module Crystal
         Crystal #{version} #{formatted_sha}(#{date})
 
         LLVM: #{llvm_version}
-        Default target: #{self.default_target}
+        Default target: #{self.host_target}
         DOC
     end
 
@@ -32,14 +32,18 @@ module Crystal
     end
 
     def self.date
-      time = {{ (env("SOURCE_DATE_EPOCH") || `date +%s`).to_i }}
-      Time.unix(time).to_s("%Y-%m-%d")
+      source_date_epoch = {{ (t = env("SOURCE_DATE_EPOCH")) && !t.empty? ? t.to_i : nil }}
+      if source_date_epoch
+        Time.unix(source_date_epoch).to_s("%Y-%m-%d")
+      else
+        ""
+      end
     end
 
-    @@default_target : Crystal::Codegen::Target?
+    @@host_target : Crystal::Codegen::Target?
 
-    def self.default_target : Crystal::Codegen::Target
-      @@default_target ||= begin
+    def self.host_target : Crystal::Codegen::Target
+      @@host_target ||= begin
         target = Crystal::Codegen::Target.new({{env("CRYSTAL_CONFIG_TARGET")}} || LLVM.default_target_triple)
 
         if target.linux?
@@ -50,22 +54,26 @@ module Crystal
           # in order to use the appropriate environment target.
           default_libc = target.gnu? ? "-gnu" : "-musl"
 
-          target = Crystal::Codegen::Target.new(target.to_s.sub(default_libc, "-#{runtime_libc}"))
+          target = Crystal::Codegen::Target.new(target.to_s.sub(default_libc, "-#{linux_runtime_libc}"))
         end
 
         target
       end
     end
 
-    private def self.runtime_libc
+    def self.linux_runtime_libc
       ldd_version = String.build do |io|
         Process.run("ldd", {"--version"}, output: io, error: io)
-      rescue Errno
+      rescue
         # In case of an error (eg. `ldd` not available), we assume it's gnu.
         return "gnu"
       end
 
-      if ldd_version.starts_with?("musl")
+      # Generally, `ldd --version` should print `musl`.
+      # But there is a bug in alpine 3.10 which breaks `ldd --version`.
+      # But detection still works with `-musl`, and it doesn't do harm in other
+      # cases.
+      if ldd_version.starts_with?("musl") || ldd_version.includes?("-musl")
         "musl"
       else
         "gnu"

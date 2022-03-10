@@ -14,7 +14,8 @@
 # `Int32`, etc., use the `as_` methods, such as `#as_s`, `#as_i`, which perform
 # a type check against the raw underlying value. This means that invoking `#as_s`
 # when the underlying value is not a String will raise: the value won't automatically
-# be converted (parsed) to a `String`.
+# be converted (parsed) to a `String`. There are also nil-able variants (`#as_i?`, `#as_s?`, ...),
+# which return `nil` when the underlying value type won't match.
 struct JSON::Any
   # All possible JSON types.
   alias Type = Nil | Bool | Int64 | Float64 | String | Array(Any) | Hash(String, Any)
@@ -119,28 +120,28 @@ struct JSON::Any
 
   # Traverses the depth of a structure and returns the value.
   # Returns `nil` if not found.
-  def dig?(key : String | Int, *subkeys)
-    if (value = self[key]?) && value.responds_to?(:dig?)
-      value.dig?(*subkeys)
-    end
+  def dig?(index_or_key : String | Int, *subkeys) : JSON::Any?
+    self[index_or_key]?.try &.dig?(*subkeys)
   end
 
   # :nodoc:
-  def dig?(key : String | Int)
-    self[key]?
+  def dig?(index_or_key : String | Int) : JSON::Any?
+    case @raw
+    when Hash, Array
+      self[index_or_key]?
+    else
+      nil
+    end
   end
 
   # Traverses the depth of a structure and returns the value, otherwise raises.
-  def dig(key : String | Int, *subkeys)
-    if (value = self[key]) && value.responds_to?(:dig)
-      return value.dig(*subkeys)
-    end
-    raise "JSON::Any value not diggable for key: #{key.inspect}"
+  def dig(index_or_key : String | Int, *subkeys) : JSON::Any
+    self[index_or_key].dig(*subkeys)
   end
 
   # :nodoc:
-  def dig(key : String | Int)
-    self[key]
+  def dig(index_or_key : String | Int) : JSON::Any
+    self[index_or_key]
   end
 
   # Checks that the underlying value is `Nil`, and returns `nil`.
@@ -245,12 +246,10 @@ struct JSON::Any
     as_h if @raw.is_a?(Hash)
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     @raw.inspect(io)
   end
 
-  # :nodoc:
   def to_s(io : IO) : Nil
     @raw.to_s(io)
   end
@@ -278,7 +277,7 @@ struct JSON::Any
     raw.to_json(json)
   end
 
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     raw.to_yaml(yaml)
   end
 

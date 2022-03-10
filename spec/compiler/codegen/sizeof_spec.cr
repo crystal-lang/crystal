@@ -95,6 +95,10 @@ describe "Code gen: sizeof" do
     run("sizeof(Nil)").to_i.should eq(0)
   end
 
+  it "gets sizeof Bool (#8272)" do
+    run("sizeof(Bool)").to_i.should eq(1)
+  end
+
   it "can use sizeof in type argument (1)" do
     run(%(
       struct StaticArray
@@ -181,9 +185,8 @@ describe "Code gen: sizeof" do
       )).to_i.should eq(12)
   end
 
-  {% if flag?(:x86_64) %}
-    it "returns correct sizeof for abstract struct (#4319)" do
-      size = run(%(
+  it "returns correct sizeof for abstract struct (#4319)" do
+    size = run(%(
         abstract struct Entry
         end
 
@@ -202,9 +205,8 @@ describe "Code gen: sizeof" do
         sizeof(Entry)
         )).to_i
 
-      size.should eq(16)
-    end
-  {% end %}
+    size.should eq(16)
+  end
 
   it "doesn't precompute sizeof of abstract struct (#7741)" do
     run(%(

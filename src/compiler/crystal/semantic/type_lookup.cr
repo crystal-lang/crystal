@@ -94,16 +94,16 @@ class Crystal::Type
         if @raise
           node.raise "#{type_var} is not a type, it's a constant"
         else
-          return nil
+          nil
         end
       when Type
-        return type_var
-      end
-
-      if @raise
-        raise_undefined_constant(node)
+        type_var
       else
-        nil
+        if @raise
+          raise_undefined_constant(node)
+        else
+          nil
+        end
       end
     end
 
@@ -196,7 +196,7 @@ class Crystal::Type
 
         begin
           return instance_type.instantiate_named_args(entries)
-        rescue ex : Crystal::Exception
+        rescue ex : Crystal::CodeError
           node.raise "instantiating #{node}", inner: ex if @raise
         end
       when GenericType
@@ -257,7 +257,7 @@ class Crystal::Type
             begin
               num = interpreter.interpret(type.value)
               type_vars << NumberLiteral.new(num)
-            rescue ex : Crystal::Exception
+            rescue ex : Crystal::CodeError
               type_var.raise "expanding constant value for a number value", inner: ex
             end
             next
@@ -280,7 +280,7 @@ class Crystal::Type
       end
 
       begin
-        if instance_type.is_a?(GenericUnionType) && type_vars.any? &.is_a?(TypeSplat)
+        if instance_type.is_a?(GenericUnionType) && type_vars.any?(TypeSplat)
           # In the case of `Union(*T)`, we don't need to instantiate the union right
           # now because it will just return `*T`, but what we want to expand the
           # union types only when the type is instantiated.
@@ -289,7 +289,7 @@ class Crystal::Type
         else
           instance_type.as(GenericType).instantiate(type_vars)
         end
-      rescue ex : Crystal::Exception
+      rescue ex : Crystal::CodeError
         node.raise "instantiating #{node}", inner: ex if @raise
       end
     end
@@ -375,7 +375,7 @@ class Crystal::Type
       expressions = node.expressions.clone
       begin
         expressions.each &.accept visitor
-      rescue ex : Crystal::Exception
+      rescue ex : Crystal::CodeError
         node.raise "typing typeof", inner: ex
       end
       program.type_merge expressions

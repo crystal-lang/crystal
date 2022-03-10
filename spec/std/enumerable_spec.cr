@@ -10,6 +10,24 @@ private class SpecEnumerable
   end
 end
 
+private class SpecEmptyEnumerable
+  include Enumerable(Int32)
+
+  def each(&block : T -> _)
+  end
+end
+
+private class SpecCountUpIterator
+  include Iterator(Int32)
+
+  def initialize(@size : Int32, @count = 0)
+  end
+
+  def next
+    (@count += 1) <= @size ? (@count - 1) : stop
+  end
+end
+
 describe "Enumerable" do
   describe "all? with block" do
     it "returns true" do
@@ -235,84 +253,96 @@ describe "Enumerable" do
     end
   end
 
-  describe "each_cons" do
+  describe "#each_cons" do
+    context "iterator" do
+      it "iterates" do
+        iter = [1, 2, 3, 4, 5].each_cons(3)
+        iter.next.should eq([1, 2, 3])
+        iter.next.should eq([2, 3, 4])
+        iter.next.should eq([3, 4, 5])
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "iterates with reuse = true" do
+        iter = [1, 2, 3, 4, 5].each_cons(3, reuse: true)
+
+        a = iter.next
+        a.should eq([1, 2, 3])
+
+        b = iter.next
+        b.should be(a)
+      end
+
+      it "iterates with reuse = array" do
+        reuse = [] of Int32
+        iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
+
+        a = iter.next
+        a.should eq([1, 2, 3])
+        a.should be(reuse)
+      end
+
+      it "iterates with reuse = deque" do
+        reuse = Deque(Int32).new
+        iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
+
+        a = iter.next
+        a.should eq(Deque{1, 2, 3})
+        a.should be(reuse)
+      end
+    end
+
+    context "yield" do
+      it "returns running pairs" do
+        array = [] of Array(Int32)
+        [1, 2, 3, 4].each_cons(2) { |pair| array << pair }
+        array.should eq([[1, 2], [2, 3], [3, 4]])
+      end
+
+      it "returns running triples" do
+        array = [] of Array(Int32)
+        [1, 2, 3, 4, 5].each_cons(3) { |triple| array << triple }
+        array.should eq([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
+      end
+
+      it "yields running pairs with reuse = true" do
+        array = [] of Array(Int32)
+        object_ids = Set(UInt64).new
+        [1, 2, 3, 4].each_cons(2, reuse: true) do |pair|
+          object_ids << pair.object_id
+          array << pair.dup
+        end
+        array.should eq([[1, 2], [2, 3], [3, 4]])
+        object_ids.size.should eq(1)
+      end
+
+      it "yields running pairs with reuse = array" do
+        array = [] of Array(Int32)
+        reuse = [] of Int32
+        [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
+          pair.should be(reuse)
+          array << pair.dup
+        end
+        array.should eq([[1, 2], [2, 3], [3, 4]])
+      end
+
+      it "yields running pairs with reuse = deque" do
+        array = [] of Deque(Int32)
+        reuse = Deque(Int32).new
+        [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
+          pair.should be(reuse)
+          array << pair.dup
+        end
+        array.should eq([Deque{1, 2}, Deque{2, 3}, Deque{3, 4}])
+      end
+    end
+  end
+
+  describe "#each_cons_pair" do
     it "returns running pairs" do
       array = [] of Array(Int32)
-      [1, 2, 3, 4].each_cons(2) { |pair| array << pair }
+      [1, 2, 3, 4].each_cons_pair { |a, b| array << [a, b] }
       array.should eq([[1, 2], [2, 3], [3, 4]])
-    end
-
-    it "returns running triples" do
-      array = [] of Array(Int32)
-      [1, 2, 3, 4, 5].each_cons(3) { |triple| array << triple }
-      array.should eq([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
-    end
-
-    it "returns each_cons iterator" do
-      iter = [1, 2, 3, 4, 5].each_cons(3)
-      iter.next.should eq([1, 2, 3])
-      iter.next.should eq([2, 3, 4])
-      iter.next.should eq([3, 4, 5])
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "returns each_cons iterator with reuse = true" do
-      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: true)
-
-      a = iter.next
-      a.should eq([1, 2, 3])
-
-      b = iter.next
-      b.should be(a)
-    end
-
-    it "returns each_cons iterator with reuse = array" do
-      reuse = [] of Int32
-      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
-
-      a = iter.next
-      a.should eq([1, 2, 3])
-      a.should be(reuse)
-    end
-
-    it "returns each_cons iterator with reuse = deque" do
-      reuse = Deque(Int32).new
-      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
-
-      a = iter.next
-      a.should eq(Deque{1, 2, 3})
-      a.should be(reuse)
-    end
-
-    it "yields running pairs with reuse = true" do
-      array = [] of Array(Int32)
-      object_ids = Set(UInt64).new
-      [1, 2, 3, 4].each_cons(2, reuse: true) do |pair|
-        object_ids << pair.object_id
-        array << pair.dup
-      end
-      array.should eq([[1, 2], [2, 3], [3, 4]])
-      object_ids.size.should eq(1)
-    end
-
-    it "yields running pairs with reuse = array" do
-      array = [] of Array(Int32)
-      reuse = [] of Int32
-      [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
-        pair.should be(reuse)
-        array << pair.dup
-      end
-      array.should eq([[1, 2], [2, 3], [3, 4]])
-    end
-
-    it "yields running pairs with reuse = deque" do
-      array = [] of Deque(Int32)
-      reuse = Deque(Int32).new
-      [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
-        pair.should be(reuse)
-        array << pair.dup
-      end
-      array.should eq([Deque{1, 2}, Deque{2, 3}, Deque{3, 4}])
     end
   end
 
@@ -392,7 +422,7 @@ describe "Enumerable" do
       object = "a"
       (1..3).each_with_object(object) do |e, o|
         collection << {e, o}
-      end
+      end.should be(object)
       collection.should eq [{1, object}, {2, object}, {3, object}]
     end
 
@@ -402,6 +432,11 @@ describe "Enumerable" do
       iter.next.should eq({2, "a"})
       iter.next.should be_a(Iterator::Stop)
     end
+  end
+
+  describe "empty?" do
+    it { SpecEnumerable.new.empty?.should be_false }
+    it { SpecEmptyEnumerable.new.empty?.should be_true }
   end
 
   describe "find" do
@@ -418,7 +453,23 @@ describe "Enumerable" do
     end
   end
 
+  describe "find!" do
+    it "finds" do
+      [1, 2, 3].find! { |x| x > 2 }.should eq(3)
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        [1, 2, 3].find! { false }
+      end
+    end
+  end
+
   describe "first" do
+    it "calls block if empty" do
+      (1...1).first { 10 }.should eq(10)
+    end
+
     it "gets first" do
       (1..3).first.should eq(1)
     end
@@ -462,15 +513,9 @@ describe "Enumerable" do
     it "flattens iterators" do
       [[1, 2], [3, 4]].flat_map(&.each).should eq([1, 2, 3, 4])
     end
-  end
 
-  describe "grep" do
-    it "works with regexes for instance" do
-      ["Alice", "Bob", "Cipher", "Anna"].grep(/^A/).should eq ["Alice", "Anna"]
-    end
-
-    it "returns empty array if nothing matches" do
-      %w(Alice Bob Mallory).grep(/nothing/).should eq [] of String
+    it "accepts mixed element types" do
+      [[1, 2, 3], ['a', 'b'].each, "cde"].flat_map { |e| e }.should eq([1, 2, 3, 'a', 'b', "cde"])
     end
   end
 
@@ -535,7 +580,7 @@ describe "Enumerable" do
   end
 
   describe "index with a block" do
-    it "returns the index of the first element where the blcok returns true" do
+    it "returns the index of the first element where the block returns true" do
       ["Alice", "Bob"].index { |name| name.size < 4 }.should eq 1
     end
 
@@ -554,6 +599,30 @@ describe "Enumerable" do
     end
   end
 
+  describe "index! with a block" do
+    it "returns the index of the first element where the block returns true" do
+      ["Alice", "Bob"].index! { |name| name.size < 4 }.should eq 1
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        ["Alice", "Bob"].index! { |name| name.size < 3 }
+      end
+    end
+  end
+
+  describe "index! with an object" do
+    it "returns the index of that object if found" do
+      ["Alice", "Bob"].index!("Alice").should eq 0
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        ["Alice", "Bob"].index!("Mallory")
+      end
+    end
+  end
+
   describe "index_by" do
     it "creates a hash indexed by the value returned by the block" do
       hash = ["Anna", "Ary", "Alice"].index_by { |e| e.size }
@@ -569,6 +638,8 @@ describe "Enumerable" do
   describe "reduce" do
     it { [1, 2, 3].reduce { |memo, i| memo + i }.should eq(6) }
     it { [1, 2, 3].reduce(10) { |memo, i| memo + i }.should eq(16) }
+    it { [1, 2, 3].reduce([] of Int32) { |memo, i| memo.unshift(i) }.should eq([3, 2, 1]) }
+    it { [[0, 1], [2, 3], [4, 5]].reduce([] of Int32) { |memo, i| memo.concat(i) }.should eq([0, 1, 2, 3, 4, 5]) }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -580,6 +651,20 @@ describe "Enumerable" do
       result = ([] of Int32).reduce(10) { |memo, i| memo + i }
       result.should eq 10
     end
+
+    it "allows block return type to be different from element type" do
+      [1, 2, 3].reduce { |x, y| "#{x}-#{y}" }.should eq("1-2-3")
+      [1].reduce { |x, y| "#{x}-#{y}" }.should eq(1)
+      {1}.reduce { |x, y| "#{x}-#{y}" }.should eq(1)
+
+      expect_raises Enumerable::EmptyError do
+        ([] of Int32).reduce { |x, y| "#{x}-#{y}" }
+      end
+
+      expect_raises Enumerable::EmptyError do
+        Tuple.new.reduce { |x, y| "#{x}-#{y}" }
+      end
+    end
   end
 
   describe "reduce?" do
@@ -588,27 +673,105 @@ describe "Enumerable" do
     it "returns nil if empty" do
       ([] of Int32).reduce? { |memo, i| memo + i }.should be_nil
     end
+
+    it "allows block return type to be different from element type" do
+      [1, 2, 3].reduce? { |x, y| "#{x}-#{y}" }.should eq("1-2-3")
+      [1].reduce? { |x, y| "#{x}-#{y}" }.should eq(1)
+      {1}.reduce? { |x, y| "#{x}-#{y}" }.should eq(1)
+      ([] of Int32).reduce? { |x, y| "#{x}-#{y}" }.should be_nil
+      Tuple.new.reduce? { |x, y| "#{x}-#{y}" }.should be_nil
+    end
   end
 
-  describe "join" do
-    it "joins with separator and block" do
-      str = [1, 2, 3].join(", ") { |x| x + 1 }
-      str.should eq("2, 3, 4")
+  describe "#accumulate" do
+    context "prefix sums" do
+      it { SpecEnumerable.new.accumulate.should eq([1, 3, 6]) }
+      it { [1.5, 3.75, 6.125].accumulate.should eq([1.5, 5.25, 11.375]) }
+      it { Array(Int32).new.accumulate.should eq(Array(Int32).new) }
     end
 
-    it "joins without separator and block" do
+    context "prefix sums, with init" do
+      it { SpecEnumerable.new.accumulate(0).should eq([0, 1, 3, 6]) }
+      it { [1.5, 3.75, 6.125].accumulate(0.5).should eq([0.5, 2.0, 5.75, 11.875]) }
+      it { Array(Int32).new.accumulate(7).should eq([7]) }
+
+      it "preserves initial type" do
+        x = SpecEnumerable.new.accumulate(4.0)
+        x.should be_a(Array(Float64))
+        x.should eq([4.0, 5.0, 7.0, 10.0])
+      end
+    end
+
+    context "generic cumulative fold" do
+      it { SpecEnumerable.new.accumulate { |x, y| x * 10 + y }.should eq([1, 12, 123]) }
+      it { Array(Int32).new.accumulate { raise "" }.should eq(Array(Int32).new) }
+    end
+
+    context "generic cumulative fold, with init" do
+      it { SpecEnumerable.new.accumulate(4) { |x, y| x * 10 + y }.should eq([4, 41, 412, 4123]) }
+      it { Array(Int32).new.accumulate(7) { raise "" }.should eq([7]) }
+
+      it "preserves initial type" do
+        x = [4, 3, 2].accumulate("X") { |x, y| x * y }
+        x.should be_a(Array(String))
+        x.should eq(%w(X XXXX XXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXX))
+      end
+    end
+  end
+
+  describe "#join" do
+    it "()" do
+      [1, 2, 3].join.should eq("123")
+    end
+
+    it "(separator)" do
+      ["Ruby", "Crystal", "Python"].join(", ").should eq "Ruby, Crystal, Python"
+    end
+
+    it "(&)" do
       str = [1, 2, 3].join { |x| x + 1 }
       str.should eq("234")
     end
 
-    it "joins with io and block" do
+    it "(separator, &)" do
+      str = [1, 2, 3].join(", ") { |x| x + 1 }
+      str.should eq("2, 3, 4")
+    end
+
+    it "(io)" do
+      io = IO::Memory.new
+      [1, 2, 3].join(io)
+      io.to_s.should eq("123")
+    end
+
+    it "(io, separator)" do
+      io = IO::Memory.new
+      ["Ruby", "Crystal", "Python"].join(io, ", ")
+      io.to_s.should eq "Ruby, Crystal, Python"
+    end
+
+    it "(separator, io) (deprecated)" do
+      io = IO::Memory.new
+      ["Ruby", "Crystal", "Python"].join(", ", io)
+      io.to_s.should eq "Ruby, Crystal, Python"
+    end
+
+    it "(io, &)" do
+      io = IO::Memory.new
+      [1, 2, 3].join(io) { |x, io| io << x + 1 }
+      io.to_s.should eq("234")
+    end
+
+    it "(io, separator, &)" do
+      io = IO::Memory.new
+      [1, 2, 3].join(io, ", ") { |x, io| io << x + 1 }
+      io.to_s.should eq("2, 3, 4")
+    end
+
+    it "(separator, io, &) (deprecated)" do
       str = IO::Memory.new
       [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }
       str.to_s.should eq("2, 3, 4")
-    end
-
-    it "joins with only separator" do
-      ["Ruby", "Crystal", "Python"].join(", ").should eq "Ruby, Crystal, Python"
     end
   end
 
@@ -627,8 +790,8 @@ describe "Enumerable" do
 
   describe "map_with_index" do
     it "yields the element and the index" do
-      result = ["Alice", "Bob"].map_with_index { |name, i| "User ##{i}: #{name}" }
-      result.should eq ["User #0: Alice", "User #1: Bob"]
+      result = SpecEnumerable.new.map_with_index { |e, i| "Value ##{i}: #{e}" }
+      result.should eq ["Value #0: 1", "Value #1: 2", "Value #2: 3"]
     end
 
     it "yields the element and the index of an iterator" do
@@ -644,6 +807,12 @@ describe "Enumerable" do
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
         ([] of Int32).max
+      end
+    end
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [Float64::NAN, 1.0, 2.0, Float64::NAN].max
       end
     end
   end
@@ -666,6 +835,12 @@ describe "Enumerable" do
 
   describe "max_of" do
     it { [-1, -2, -3].max_of { |x| -x }.should eq(3) }
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].max_of { |x| -x }
+      end
+    end
   end
 
   describe "max_of?" do
@@ -680,6 +855,12 @@ describe "Enumerable" do
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
         ([] of Int32).min
+      end
+    end
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].min
       end
     end
   end
@@ -702,6 +883,12 @@ describe "Enumerable" do
 
   describe "min_of" do
     it { [1, 2, 3].min_of { |x| -x }.should eq(-3) }
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].min_of { |x| -x }
+      end
+    end
   end
 
   describe "min_of?" do
@@ -724,6 +911,12 @@ describe "Enumerable" do
     it "returns two nils if empty" do
       ([] of Int32).minmax?.should eq({nil, nil})
     end
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].minmax
+      end
+    end
   end
 
   describe "minmax_by" do
@@ -738,6 +931,12 @@ describe "Enumerable" do
 
   describe "minmax_of" do
     it { [-1, -2, -3].minmax_of { |x| -x }.should eq({1, 3}) }
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].minmax_of { |x| -x }
+      end
+    end
   end
 
   describe "minmax_of?" do
@@ -790,6 +989,93 @@ describe "Enumerable" do
       ints = [1, true, false, 3].reject(Bool)
       ints.should eq([1, 3])
       ints.should be_a(Array(Int32))
+    end
+
+    it "with type, for tuples" do
+      ints = {1, true, false, 3}.reject(Int32)
+      ints.should eq([true, false])
+      ints.should be_a(Array(Bool))
+    end
+  end
+
+  describe "sample" do
+    describe "single-element" do
+      it "samples without random" do
+        [1].sample.should eq(1)
+
+        x = SpecEnumerable.new.sample
+        [1, 2, 3].includes?(x).should be_true
+      end
+
+      it "samples with random" do
+        SpecEnumerable.new.sample(Random.new(1)).should eq(1)
+        [1, 2, 3].sample(Random.new(1)).should eq(2)
+      end
+
+      it "raises on empty self" do
+        expect_raises(IndexError) { Array(Int32).new.sample }
+        expect_raises(IndexError) { SpecEmptyEnumerable.new.sample }
+      end
+    end
+
+    describe "multiple-element" do
+      it "samples 0 elements" do
+        ary = [1].sample(0)
+        ary.should eq([] of Int32)
+        ary.should be_a(Array(Int32))
+
+        ary = SpecEmptyEnumerable.new.sample(0)
+        ary.should eq([] of Int32)
+        ary.should be_a(Array(Int32))
+      end
+
+      it "samples 1 element" do
+        [1].sample(1).should eq([1])
+
+        x = [1, 2, 3].sample(1)
+        x.size.should eq(1)
+        x = x.first
+        [1, 2, 3].includes?(x).should be_true
+      end
+
+      it "samples k elements out of n" do
+        ary = [1].sample(1)
+        ary.should eq([1])
+
+        a = {1, 2, 3, 4, 5}
+        b = a.sample(3)
+        set = Set.new(b)
+        set.size.should eq(3)
+
+        set.each do |e|
+          a.includes?(e).should be_true
+        end
+      end
+
+      it "raises on k < 0" do
+        expect_raises(ArgumentError) { Array(Int32).new.sample(-1) }
+        expect_raises(ArgumentError) { SpecEnumerable.new.sample(-1) }
+      end
+
+      it "samples k elements out of n, where k > n" do
+        a = SpecEnumerable.new
+        b = a.sample(10)
+        b.size.should eq(3)
+        set = Set.new(b)
+        set.size.should eq(3)
+
+        set.each do |e|
+          a.includes?(e).should be_true
+        end
+
+        SpecEmptyEnumerable.new.sample(1).should eq([] of Int32)
+      end
+
+      it "samples k elements out of n, with random" do
+        a = (1..5)
+        b = a.sample(3, Random.new(1))
+        b.should eq([4, 3, 1])
+      end
     end
   end
 
@@ -857,10 +1143,26 @@ describe "Enumerable" do
     it { (1..3).sum { |x| x * 2 }.should eq(12) }
     it { (1..3).sum(1.5) { |x| x * 2 }.should eq(13.5) }
 
-    it "uses zero from type" do
+    it "uses additive_identity from type" do
       typeof([1, 2, 3].sum).should eq(Int32)
       typeof([1.5, 2.5, 3.5].sum).should eq(Float64)
       typeof([1, 2, 3].sum(&.to_f)).should eq(Float64)
+      typeof(([1, 2, 3] of Float32).sum).should eq(Float32)
+    end
+
+    it "array of arrays" do
+      [[1, 2, 3], [3, 4, 5]].sum.should eq [1, 2, 3, 3, 4, 5]
+      [[[1, 2], [3]], [[1, 2], [3, 4, 5]]].sum.should eq [[1, 2], [3], [1, 2], [3, 4, 5]]
+      Deque{[1, 2, 3], [3, 4, 5]}.sum.should eq [1, 2, 3, 3, 4, 5]
+    end
+
+    it "strings" do
+      ["foo", "bar"].sum.should eq "foobar"
+    end
+
+    it "float" do
+      [1.0, 2.0, 3.5, 4.5].sum.should eq 11.0
+      ([1.0, 2.0, 3.5, 4.5] of Float32).sum.should eq 11.0
     end
   end
 
@@ -913,6 +1215,12 @@ describe "Enumerable" do
     end
   end
 
+  describe "tally_by" do
+    it "returns a hash with counts according to the value returned by the block" do
+      %w[a A b B c C C].tally_by(&.downcase).should eq({"a" => 2, "b" => 2, "c" => 3})
+    end
+  end
+
   describe "tally" do
     it "returns a hash with counts according to the value" do
       %w[1 2 3 3 3 2].tally.should eq({"1" => 1, "2" => 2, "3" => 3})
@@ -930,6 +1238,10 @@ describe "Enumerable" do
       hash = Tuple.new({:a, 1}, {:c, 2}).to_h
       hash.should be_a(Hash(Symbol, Int32))
       hash.should eq({:a => 1, :c => 2})
+
+      hash = Tuple.new({1, 1.0}, {'a', "aaa"}).to_h
+      hash.should be_a(Hash(Int32 | Char, Float64 | String))
+      hash.should eq({1 => 1.0, 'a' => "aaa"})
     end
 
     it "for array" do
@@ -938,6 +1250,18 @@ describe "Enumerable" do
 
     it "with block" do
       (1..3).to_h { |i| {i, i ** 2} }.should eq({1 => 1, 2 => 4, 3 => 9})
+    end
+  end
+
+  describe "zip" do
+    it "works for Iterators as receiver" do
+      SpecCountUpIterator.new(3).zip(1..3, 2..4).should eq([{0, 1, 2}, {1, 2, 3}, {2, 3, 4}])
+    end
+  end
+
+  describe "zip?" do
+    it "works for Iterators as receiver" do
+      SpecCountUpIterator.new(3).zip?(1..2, 2..4).should eq([{0, 1, 2}, {1, 2, 3}, {2, nil, 4}])
     end
   end
 end

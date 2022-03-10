@@ -1,23 +1,23 @@
 require "big"
 
-# A `BigDecimal` represents arbitrary precision decimals.
-#
-# It is internally represented by a pair of `BigInt` and `UInt64`: value and scale.
-# Value contains the actual value, and scale tells the decimal point place.
-# e.g. value=1234, scale=2 => 12.34
-#
-# The general idea and some of the arithmetic algorithms were adapted from
-# the MIT/APACHE -licensed https://github.com/akubera/bigdecimal-rs
-
 class InvalidBigDecimalException < Exception
   def initialize(big_decimal_str : String, reason : String)
     super("Invalid BigDecimal: #{big_decimal_str} (#{reason})")
   end
 end
 
+# A `BigDecimal` can represent arbitrarily large precision decimals.
+#
+# It is internally represented by a pair of `BigInt` and `UInt64`: value and scale.
+# Value contains the actual value, and scale tells the decimal point place.
+# E.g. when value is `1234` and scale `2`, the result is `12.34`.
+#
+# The general idea and some of the arithmetic algorithms were adapted from
+# the MIT/APACHE-licensed [bigdecimal-rs](https://github.com/akubera/bigdecimal-rs).
 struct BigDecimal < Number
-  ZERO                       = BigInt.new(0)
-  TEN                        = BigInt.new(10)
+  private ZERO = BigInt.new(0)
+  private TEN  = BigInt.new(10)
+
   DEFAULT_MAX_DIV_ITERATIONS = 100_u64
 
   include Comparable(Int)
@@ -162,7 +162,7 @@ struct BigDecimal < Number
     end
   end
 
-  def +(other : Int)
+  def +(other : Number) : BigDecimal
     self + BigDecimal.new(other)
   end
 
@@ -178,7 +178,7 @@ struct BigDecimal < Number
     end
   end
 
-  def -(other : Int)
+  def -(other : Number) : BigDecimal
     self - BigDecimal.new(other)
   end
 
@@ -186,7 +186,7 @@ struct BigDecimal < Number
     BigDecimal.new(@value * other.value, @scale + other.scale)
   end
 
-  def *(other : Int)
+  def *(other : Number) : BigDecimal
     self * BigDecimal.new(other)
   end
 
@@ -208,8 +208,13 @@ struct BigDecimal < Number
     check_division_by_zero other
     other.factor_powers_of_ten
 
-    scale = @scale - other.scale
     numerator, denominator = @value, other.@value
+    scale = if @scale >= other.scale
+              @scale - other.scale
+            else
+              numerator *= TEN ** (other.scale - @scale)
+              0
+            end
 
     quotient, remainder = numerator.divmod(denominator)
     if remainder == ZERO
@@ -255,12 +260,17 @@ struct BigDecimal < Number
     end
   end
 
+  def zero? : Bool
+    @value.zero?
+  end
+
   # Scales a `BigDecimal` to another `BigDecimal`, so they can be
   # computed easier.
   def scale_to(new_scale : BigDecimal) : BigDecimal
     in_scale(new_scale.scale)
   end
 
+  # :nodoc:
   private def in_scale(new_scale : UInt64) : BigDecimal
     if @value == 0
       BigDecimal.new(0.to_big_i, new_scale)
@@ -283,24 +293,88 @@ struct BigDecimal < Number
   # BigDecimal.new(1234, 2) ** 2 # => 152.2756
   # ```
   def **(other : Int) : BigDecimal
-    if other < 0
-      raise ArgumentError.new("Negative exponent isn't supported")
-    end
+    return (to_big_r ** other).to_big_d if other < 0
     BigDecimal.new(@value ** other, @scale * other)
   end
 
+  # Rounds towards positive infinity.
   def ceil : BigDecimal
-    mask = power_ten_to(@scale)
-    diff = (mask - @value % mask) % mask
-    (self + BigDecimal.new(diff, @scale))
+    round_impl { |rem| rem > 0 }
   end
 
+  # Rounds towards negative infinity.
   def floor : BigDecimal
-    in_scale(0)
+    round_impl { |rem| rem < 0 }
   end
 
+  # Rounds towards zero.
   def trunc : BigDecimal
-    self < 0 ? ceil : floor
+    round_impl { false }
+  end
+
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds towards the even neighbor (Banker's rounding).
+  def round_even : BigDecimal
+    round_impl do |rem, rem_range, mantissa|
+      case rem.abs <=> rem_range // 2
+      when .<(0)
+        false
+      when .>(0)
+        true
+      else
+        # `to_i!` is safe as GMP explicitly states the "least significant part"
+        # is returned and that always preserves `mantissa`'s parity modulo 2
+        mantissa.to_i!.odd?
+      end
+    end
+  end
+
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds away from zero.
+  def round_away : BigDecimal
+    round_impl { |rem, rem_range| rem.abs >= rem_range // 2 }
+  end
+
+  private def round_impl
+    return self if @scale <= 0 || zero?
+
+    # `self == @value / 10 ** @scale == mantissa + (rem / 10 ** @scale)`
+    #
+    # Where:
+    # - `mantissa` and `rem` are both integers
+    # - `rem.abs < 10 ** @scale`
+    # - if `self` is negative, so are `mantissa` and `rem`
+    multiplier = power_ten_to(@scale)
+    mantissa, rem = @value.unsafe_truncated_divmod(multiplier)
+
+    round_away = yield rem, multiplier, mantissa
+    mantissa += self.sign if round_away
+
+    BigDecimal.new(mantissa, 0)
+  end
+
+  def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even) : BigDecimal
+    return self if (base == 10 && @scale <= digits) || zero?
+
+    # the following is same as the overload in `Number` except `base.to_f`
+    # becomes `.to_big_d`
+    if digits < 0
+      multiplier = base.to_big_d ** digits.abs
+      shifted = self / multiplier
+    else
+      multiplier = base.to_big_d ** digits
+      shifted = self * multiplier
+    end
+
+    rounded = shifted.round(mode)
+
+    if digits < 0
+      result = rounded * multiplier
+    else
+      result = rounded / multiplier
+    end
+
+    BigDecimal.new result
   end
 
   def to_s(io : IO) : Nil
@@ -324,19 +398,16 @@ struct BigDecimal < Number
         io << '0'
       end
       io << s[1..-1]
+    elsif (offset = s.size - @scale) == 1 && @value < 0
+      io << "-0." << s[offset..-1]
     else
-      offset = s.size - @scale
       io << s[0...offset] << '.' << s[offset..-1]
     end
   end
 
   # Converts to `BigInt`. Truncates anything on the right side of the decimal point.
-  def to_big_i
-    if self >= 0
-      self.floor.value
-    else
-      self.ceil.value
-    end
+  def to_big_i : BigInt
+    trunc.value
   end
 
   # Converts to `BigFloat`.
@@ -348,37 +419,37 @@ struct BigDecimal < Number
     self
   end
 
-  def to_big_r
-    BigRational.new(self.value, BigDecimal::TEN ** self.scale)
+  def to_big_r : BigRational
+    BigRational.new(self.value, TEN ** self.scale)
   end
 
   # Converts to `Int64`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_i64
+  def to_i64 : Int64
     to_big_i.to_i64
   end
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_i32
+  def to_i32 : Int32
     to_big_i.to_i32
   end
 
   # Converts to `Int16`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_i16
+  def to_i16 : Int16
     to_big_i.to_i16
   end
 
   # Converts to `Int8`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_i8
+  def to_i8 : Int8
     to_big_i.to_i8
   end
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_i
+  def to_i : Int32
     to_i32
   end
 
@@ -396,7 +467,7 @@ struct BigDecimal < Number
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
   # In case of overflow a wrapping is performed.
-  def to_i32!
+  def to_i32! : Int32
     to_big_i.to_i32!
   end
 
@@ -408,46 +479,46 @@ struct BigDecimal < Number
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
   # In case of overflow a wrapping is performed.
-  def to_i!
+  def to_i! : Int32
     to_i32!
   end
 
   private def to_big_u
+    raise OverflowError.new if self < 0
+    to_big_u!
+  end
+
+  private def to_big_u!
     (@value.abs // TEN ** @scale)
   end
 
-  # Converts to `UInt64`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt64`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_u64
+  def to_u64 : UInt64
     to_big_u.to_u64
   end
 
-  # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt32`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_u32
+  def to_u32 : UInt32
     to_big_u.to_u32
   end
 
-  # Converts to `UInt16`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt16`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_u16
+  def to_u16 : UInt16
     to_big_u.to_u16
   end
 
-  # Converts to `UInt8`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt8`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_u8
+  def to_u8 : UInt8
     to_big_u.to_u8
   end
 
-  # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt32`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_u
+  def to_u : UInt32
     to_u32
   end
 
@@ -455,52 +526,52 @@ struct BigDecimal < Number
   # converting negative to positive.
   # In case of overflow a wrapping is performed.
   def to_u8!
-    to_big_u.to_u8!
+    to_big_u!.to_u8!
   end
 
   # Converts to `UInt16`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   # In case of overflow a wrapping is performed.
   def to_u16!
-    to_big_u.to_u16!
+    to_big_u!.to_u16!
   end
 
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   # In case of overflow a wrapping is performed.
-  def to_u32!
-    to_big_u.to_u32!
+  def to_u32! : UInt32
+    to_big_u!.to_u32!
   end
 
   # Converts to `UInt64`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   # In case of overflow a wrapping is performed.
   def to_u64!
-    to_big_u.to_u64!
+    to_big_u!.to_u64!
   end
 
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   # In case of overflow a wrapping is performed.
-  def to_u!
+  def to_u! : UInt32
     to_u32!
   end
 
   # Converts to `Float64`.
   # Raises `OverflowError` in case of overflow.
-  def to_f64
+  def to_f64 : Float64
     to_s.to_f64
   end
 
   # Converts to `Float32`.
   # Raises `OverflowError` in case of overflow.
-  def to_f32
+  def to_f32 : Float32
     to_f64.to_f32
   end
 
   # Converts to `Float64`.
   # Raises `OverflowError` in case of overflow.
-  def to_f
+  def to_f : Float64
     to_f64
   end
 
@@ -512,13 +583,13 @@ struct BigDecimal < Number
 
   # Converts to `Float64`.
   # In case of overflow a wrapping is performed.
-  def to_f64!
+  def to_f64! : Float64
     to_f64
   end
 
   # Converts to `Float64`.
   # In case of overflow a wrapping is performed.
-  def to_f!
+  def to_f! : Float64
     to_f64!
   end
 
@@ -569,7 +640,7 @@ struct Int
   # require "big"
   # 12123415151254124124.to_big_d
   # ```
-  def to_big_d
+  def to_big_d : BigDecimal
     BigDecimal.new(self)
   end
 
@@ -577,15 +648,15 @@ struct Int
     to_big_d <=> other
   end
 
-  def +(other : BigDecimal)
+  def +(other : BigDecimal) : BigDecimal
     other + self
   end
 
-  def -(other : BigDecimal)
+  def -(other : BigDecimal) : BigDecimal
     to_big_d - other
   end
 
-  def *(other : BigDecimal)
+  def *(other : BigDecimal) : BigDecimal
     other * self
   end
 end
@@ -605,7 +676,7 @@ struct Float
   # require "big"
   # 1212341515125412412412421.0.to_big_d
   # ```
-  def to_big_d
+  def to_big_d : BigDecimal
     BigDecimal.new(self)
   end
 end
@@ -618,7 +689,7 @@ struct BigRational
   end
 
   # Converts `self` to `BigDecimal`.
-  def to_big_d
+  def to_big_d : BigDecimal
     BigDecimal.new(self)
   end
 end
@@ -629,7 +700,7 @@ class String
   # require "big"
   # "1212341515125412412412421".to_big_d
   # ```
-  def to_big_d
+  def to_big_d : BigDecimal
     BigDecimal.new(self)
   end
 end

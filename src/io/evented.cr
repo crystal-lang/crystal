@@ -15,33 +15,33 @@ module IO::Evented
   @read_event = Crystal::ThreadLocalValue(Crystal::Event).new
   @write_event = Crystal::ThreadLocalValue(Crystal::Event).new
 
-  # Returns the time to wait when reading before raising an `IO::Timeout`.
+  # Returns the time to wait when reading before raising an `IO::TimeoutError`.
   def read_timeout : Time::Span?
     @read_timeout
   end
 
-  # Sets the time to wait when reading before raising an `IO::Timeout`.
+  # Sets the time to wait when reading before raising an `IO::TimeoutError`.
   def read_timeout=(timeout : Time::Span?) : ::Time::Span?
     @read_timeout = timeout
   end
 
-  # Sets the number of seconds to wait when reading before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when reading before raising an `IO::TimeoutError`.
   def read_timeout=(read_timeout : Number) : Number
     self.read_timeout = read_timeout.seconds
     read_timeout
   end
 
-  # Returns the time to wait when writing before raising an `IO::Timeout`.
+  # Returns the time to wait when writing before raising an `IO::TimeoutError`.
   def write_timeout : Time::Span?
     @write_timeout
   end
 
-  # Sets the time to wait when writing before raising an `IO::Timeout`.
+  # Sets the time to wait when writing before raising an `IO::TimeoutError`.
   def write_timeout=(timeout : Time::Span?) : ::Time::Span?
     @write_timeout = timeout
   end
 
-  # Sets the number of seconds to wait when writing before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when writing before raising an `IO::TimeoutError`.
   def write_timeout=(write_timeout : Number) : Number
     self.write_timeout = write_timeout.seconds
     write_timeout
@@ -58,7 +58,7 @@ module IO::Evented
       if Errno.value == Errno::EAGAIN
         wait_readable
       else
-        raise Errno.new(errno_msg)
+        raise IO::Error.from_errno(errno_msg)
       end
     end
   ensure
@@ -70,7 +70,8 @@ module IO::Evented
 
     begin
       loop do
-        bytes_written = yield slice
+        # TODO: Investigate why the .to_i64 is needed as a workaround for #8230
+        bytes_written = (yield slice).to_i64
         if bytes_written != -1
           slice += bytes_written
           return if slice.size == 0
@@ -78,7 +79,7 @@ module IO::Evented
           if Errno.value == Errno::EAGAIN
             wait_writable
           else
-            raise Errno.new(errno_msg)
+            raise IO::Error.from_errno(errno_msg)
           end
         end
       end
@@ -89,7 +90,7 @@ module IO::Evented
 
   def evented_send(slice : Bytes, errno_msg : String) : Int32
     bytes_written = yield slice
-    raise Errno.new(errno_msg) if bytes_written == -1
+    raise Socket::Error.from_errno(errno_msg) if bytes_written == -1
     # `to_i32` is acceptable because `Slice#size` is an Int32
     bytes_written.to_i32
   ensure
@@ -97,7 +98,7 @@ module IO::Evented
   end
 
   # :nodoc:
-  def resume_read(timed_out = false)
+  def resume_read(timed_out = false) : Nil
     @read_timed_out = timed_out
 
     if reader = @readers.get?.try &.shift?
@@ -106,7 +107,7 @@ module IO::Evented
   end
 
   # :nodoc:
-  def resume_write(timed_out = false)
+  def resume_write(timed_out = false) : Nil
     @write_timed_out = timed_out
 
     if writer = @writers.get?.try &.shift?
@@ -114,11 +115,13 @@ module IO::Evented
     end
   end
 
-  protected def wait_readable(timeout = @read_timeout)
-    wait_readable(timeout: timeout) { |err| raise err }
+  # :nodoc:
+  def wait_readable(timeout = @read_timeout) : Nil
+    wait_readable(timeout: timeout) { raise TimeoutError.new("Read timed out") }
   end
 
-  protected def wait_readable(timeout = @read_timeout) : Nil
+  # :nodoc:
+  def wait_readable(timeout = @read_timeout, *, raise_if_closed = true) : Nil
     readers = @readers.get { Deque(Fiber).new }
     readers << Fiber.current
     add_read_event(timeout)
@@ -126,8 +129,10 @@ module IO::Evented
 
     if @read_timed_out
       @read_timed_out = false
-      yield Timeout.new("Read timed out")
+      yield
     end
+
+    check_open if raise_if_closed
   end
 
   private def add_read_event(timeout = @read_timeout) : Nil
@@ -135,11 +140,13 @@ module IO::Evented
     event.add timeout
   end
 
-  protected def wait_writable(timeout = @write_timeout)
-    wait_writable(timeout: timeout) { |err| raise err }
+  # :nodoc:
+  def wait_writable(timeout = @write_timeout) : Nil
+    wait_writable(timeout: timeout) { raise TimeoutError.new("Write timed out") }
   end
 
-  protected def wait_writable(timeout = @write_timeout) : Nil
+  # :nodoc:
+  def wait_writable(timeout = @write_timeout) : Nil
     writers = @writers.get { Deque(Fiber).new }
     writers << Fiber.current
     add_write_event(timeout)
@@ -147,8 +154,10 @@ module IO::Evented
 
     if @write_timed_out
       @write_timed_out = false
-      yield Timeout.new("Write timed out")
+      yield
     end
+
+    check_open
   end
 
   private def add_write_event(timeout = @write_timeout) : Nil
@@ -156,26 +165,22 @@ module IO::Evented
     event.add timeout
   end
 
-  def evented_reopen
+  def evented_reopen : Nil
     evented_close
   end
 
-  def evented_close
-    @read_event.each &.free
-    @read_event.clear
+  def evented_close : Nil
+    @read_event.consume_each &.free
 
-    @write_event.each &.free
-    @write_event.clear
+    @write_event.consume_each &.free
 
-    @readers.each do |readers|
+    @readers.consume_each do |readers|
       Crystal::Scheduler.enqueue readers
     end
-    @readers.clear
 
-    @writers.each do |writers|
+    @writers.consume_each do |writers|
       Crystal::Scheduler.enqueue writers
     end
-    @writers.clear
   end
 
   private def resume_pending_readers

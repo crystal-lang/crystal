@@ -7,7 +7,7 @@ module Crystal::System::Env
     value.check_no_null_byte("value")
 
     if LibC.setenv(key, value, 1) != 0
-      raise Errno.new("setenv")
+      raise RuntimeError.from_errno("setenv")
     end
   end
 
@@ -16,7 +16,7 @@ module Crystal::System::Env
     key.check_no_null_byte("key")
 
     if LibC.unsetenv(key) != 0
-      raise Errno.new("unsetenv")
+      raise RuntimeError.from_errno("unsetenv")
     end
   end
 

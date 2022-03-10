@@ -1,5 +1,6 @@
 require "spec"
-require "http"
+require "http/formdata"
+require "http/server/response"
 
 describe HTTP::FormData::Builder do
   it "builds valid form-data messages" do

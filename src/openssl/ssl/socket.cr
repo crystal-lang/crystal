@@ -12,7 +12,7 @@ abstract class OpenSSL::SSL::Socket < IO
             hostname.to_unsafe.as(Pointer(Void))
           )
 
-          {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+          {% if LibSSL.has_method?(:ssl_get0_param) %}
             param = LibSSL.ssl_get0_param(@ssl)
 
             if ::Socket.ip?(hostname)
@@ -48,20 +48,33 @@ abstract class OpenSSL::SSL::Socket < IO
         socket.close
       end
     end
+
+    # Returns the `OpenSSL::X509::Certificate` the peer presented.
+    def peer_certificate : OpenSSL::X509::Certificate
+      super.not_nil!
+    end
   end
 
   class Server < Socket
-    def initialize(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
+    def initialize(io, context : Context::Server = Context::Server.new,
+                   sync_close : Bool = false, accept : Bool = true)
       super(io, context, sync_close)
-      begin
-        ret = LibSSL.ssl_accept(@ssl)
-        unless ret == 1
-          io.close if sync_close
-          raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
+
+      if accept
+        begin
+          self.accept
+        rescue ex
+          LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
+          raise ex
         end
-      rescue ex
-        LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
-        raise ex
+      end
+    end
+
+    def accept : Nil
+      ret = LibSSL.ssl_accept(@ssl)
+      unless ret == 1
+        @bio.io.close if @sync_close
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
       end
     end
 
@@ -107,7 +120,7 @@ abstract class OpenSSL::SSL::Socket < IO
     LibSSL.ssl_free(@ssl)
   end
 
-  def unbuffered_read(slice : Bytes)
+  def unbuffered_read(slice : Bytes) : Int32
     check_open
 
     count = slice.size
@@ -115,12 +128,18 @@ abstract class OpenSSL::SSL::Socket < IO
 
     LibSSL.ssl_read(@ssl, slice.to_unsafe, count).tap do |bytes|
       if bytes <= 0 && !LibSSL.ssl_get_error(@ssl, bytes).zero_return?
-        raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
+        ex = OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
+        if ex.underlying_eof?
+          # underlying BIO terminated gracefully, without terminating SSL aspect gracefully first
+          # some misbehaving servers "do this" so treat as EOF even though it's a protocol error
+          return 0
+        end
+        raise ex
       end
     end
   end
 
-  def unbuffered_write(slice : Bytes)
+  def unbuffered_write(slice : Bytes) : Nil
     check_open
 
     return if slice.empty?
@@ -130,23 +149,24 @@ abstract class OpenSSL::SSL::Socket < IO
     unless bytes > 0
       raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_write")
     end
-    nil
   end
 
-  def unbuffered_flush
+  def unbuffered_flush : Nil
     @bio.io.flush
   end
 
-  {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
-    # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
-    # negotiated.
-    def alpn_protocol
+  # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
+  # negotiated.
+  def alpn_protocol
+    {% if LibSSL.has_method?(:ssl_get0_alpn_selected) %}
       LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
       String.new(protocol, len) unless protocol.null?
-    end
-  {% end %}
+    {% else %}
+      raise NotImplementedError.new("LibSSL.ssl_get0_alpn_selected")
+    {% end %}
+  end
 
-  def unbuffered_close
+  def unbuffered_close : Nil
     return if @closed
     @closed = true
 
@@ -154,7 +174,8 @@ abstract class OpenSSL::SSL::Socket < IO
       loop do
         begin
           ret = LibSSL.ssl_shutdown(@ssl)
-          break if ret == 1
+          break if ret == 1                # done bidirectional
+          break if ret == 0 && sync_close? # done unidirectional, "this first successful call to SSL_shutdown() is sufficient"
           raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
         rescue e : OpenSSL::SSL::Error
           case e.error
@@ -242,5 +263,18 @@ abstract class OpenSSL::SSL::Socket < IO
     else
       raise NotImplementedError.new("#{io.class}#write_timeout=")
     end
+  end
+
+  # Returns the `OpenSSL::X509::Certificate` the peer presented, if a
+  # connection was esablished.
+  #
+  # NOTE: Due to the protocol definition, a TLS/SSL server will always send a
+  # certificate, if present. A client will only send a certificate when
+  # explicitly requested to do so by the server (see `SSL_CTX_set_verify(3)`). If
+  # an anonymous cipher is used, no certificates are sent. That a certificate
+  # is returned does not indicate information about the verification state.
+  def peer_certificate : OpenSSL::X509::Certificate?
+    cert = LibSSL.ssl_get_peer_certificate(@ssl)
+    OpenSSL::X509::Certificate.new cert if cert
   end
 end

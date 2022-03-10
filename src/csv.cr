@@ -20,7 +20,7 @@
 # A CSV instance holds a cursor to the current row in the CSV. The cursor
 # is advanced by invoking `#next`, which returns `true` if a next row was found,
 # and `false` otherwise. A first call to `#next` is required to position the
-# csv parser in the first row.
+# CSV parser in the first row.
 #
 # Once positioned in a row, values can be obtained with the several `#[]` methods,
 # which can accept a header name, column position, or header name pattern as a `Regex`.
@@ -155,9 +155,10 @@ class CSV
   # end
   # io.to_s # => "HEADER\none,two\nthree\n"
   # ```
-  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC)
+  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC) : Nil
     builder = Builder.new(io, separator, quote_char, quoting)
     yield builder
+    io.flush
   end
 
   @headers : Array(String)?
@@ -217,7 +218,7 @@ class CSV
   # Advanced the cursor to the next row. Must be called once to position
   # the cursor in the first row. Returns `true` if a next row was found,
   # `false` otherwise.
-  def next
+  def next : Bool
     return false if @traversed
 
     row = @row ||= [] of String
@@ -294,6 +295,13 @@ class CSV
     Row.new(self, current_row.dup)
   end
 
+  # Rewinds this CSV to the beginning, rewinding the underlying IO if any.
+  def rewind : Nil
+    @parser.rewind
+    @parser.next_row if @headers
+    @traversed = false
+  end
+
   private def row_internal
     Row.new(self, current_row)
   end
@@ -310,7 +318,7 @@ class CSV
   end
 
   # :nodoc:
-  def indices
+  def indices : Hash(String, Int32)
     @indices || raise(Error.new("Headers not requested"))
   end
 
@@ -318,7 +326,7 @@ class CSV
   getter? strip
 
   # :nodoc:
-  def headers?
+  def headers? : Array(String)?
     @headers
   end
 
@@ -397,7 +405,7 @@ class CSV
 
     # Returns the number of columns in this row, regardless of the number
     # of headers (if requested).
-    def size
+    def size : Int32
       @row.size
     end
 

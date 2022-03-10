@@ -7,10 +7,23 @@ class IO::FileDescriptor < IO
 
   # The raw file-descriptor. It is defined to be an `Int`, but its size is
   # platform-specific.
-  getter fd
+  def fd : Int
+    @volatile_fd.get
+  end
 
-  def initialize(@fd, blocking = false)
+  def initialize(fd, blocking = nil)
+    @volatile_fd = Atomic.new(fd)
     @closed = system_closed?
+
+    if blocking.nil?
+      blocking =
+        case system_info.type
+        when .pipe?, .socket?, .character_device?
+          false
+        else
+          true
+        end
+    end
 
     unless blocking || {{flag?(:win32)}}
       self.blocking = false
@@ -18,23 +31,8 @@ class IO::FileDescriptor < IO
   end
 
   # :nodoc:
-  def self.from_stdio(fd)
-    # If we have a TTY for stdin/out/err, it is possibly a shared terminal.
-    # We need to reopen it to use O_NONBLOCK without causing other programs to break
-
-    # Figure out the terminal TTY name. If ttyname fails we have a non-tty, or something strange.
-    path = uninitialized UInt8[256]
-    ret = LibC.ttyname_r(fd, path, 256)
-    return new(fd, blocking: true) unless ret == 0
-
-    clone_fd = LibC.open(path, LibC::O_RDWR)
-    return new(fd, blocking: true) if clone_fd == -1
-
-    # We don't buffer output for TTY devices to see their output right away
-    io = new(clone_fd)
-    io.close_on_exec = true
-    io.sync = true
-    io
+  def self.from_stdio(fd) : self
+    Crystal::System::FileDescriptor.from_stdio(fd)
   end
 
   def blocking
@@ -45,7 +43,7 @@ class IO::FileDescriptor < IO
     self.system_blocking = value
   end
 
-  def close_on_exec?
+  def close_on_exec? : Bool
     system_close_on_exec?
   end
 
@@ -59,7 +57,7 @@ class IO::FileDescriptor < IO
     end
 
     def fcntl(cmd, arg = 0)
-      Crystal::System::FileDescriptor.fcntl(@fd, cmd, arg)
+      Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
     end
   {% end %}
 
@@ -115,7 +113,7 @@ class IO::FileDescriptor < IO
   # file.gets(2) # => "he"
   # file.pos     # => 2
   # ```
-  def pos
+  def pos : Int64
     check_open
 
     system_pos - @in_buffer_rem.size
@@ -135,17 +133,71 @@ class IO::FileDescriptor < IO
     value
   end
 
+  # Flushes all data written to this File Descriptor to the disk device so that
+  # all changed information can be retrieved even if the system
+  # crashes or is rebooted. The call blocks until the device reports that
+  # the transfer has completed.
+  # To reduce disk activity the *flush_metadata* parameter can be set to false,
+  # then the syscall *fdatasync* will be used and only data required for
+  # subsequent data retrieval is flushed. Metadata such as modified time and
+  # access time is not written.
+  #
+  # NOTE: Metadata is flushed even when *flush_metadata* is false on Windows
+  # and DragonFly BSD.
+  def fsync(flush_metadata = true) : Nil
+    flush
+    system_fsync(flush_metadata)
+  end
+
+  # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
+  # TODO: always use non-blocking locks, yield fiber until resource becomes available
+
+  def flock_shared(blocking = true)
+    flock_shared blocking
+    begin
+      yield
+    ensure
+      flock_unlock
+    end
+  end
+
+  # Places a shared advisory lock. More than one process may hold a shared lock for a given file descriptor at a given time.
+  # `IO::Error` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
+  def flock_shared(blocking = true) : Nil
+    system_flock_shared(blocking)
+  end
+
+  def flock_exclusive(blocking = true)
+    flock_exclusive blocking
+    begin
+      yield
+    ensure
+      flock_unlock
+    end
+  end
+
+  # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file descriptor at a given time.
+  # `IO::Error` is raised if *blocking* is set to `false` and any existing lock is set.
+  def flock_exclusive(blocking = true) : Nil
+    system_flock_exclusive(blocking)
+  end
+
+  # Removes an existing advisory lock held by this process.
+  def flock_unlock : Nil
+    system_flock_unlock
+  end
+
   def finalize
     return if closed?
 
     close rescue nil
   end
 
-  def closed?
+  def closed? : Bool
     @closed
   end
 
-  def tty?
+  def tty? : Bool
     system_tty?
   end
 
@@ -161,7 +213,7 @@ class IO::FileDescriptor < IO
     if closed?
       io << "(closed)"
     else
-      io << " fd=" << @fd
+      io << " fd=" << fd
     end
     io << '>'
   end
@@ -177,7 +229,11 @@ class IO::FileDescriptor < IO
   private def unbuffered_close
     return if @closed
 
-    system_close ensure @closed = true
+    # Set before the @closed state so the pending
+    # IO::Evented readers and writers can be cancelled
+    # knowing the IO is in a closed state.
+    @closed = true
+    system_close
   end
 
   private def unbuffered_flush

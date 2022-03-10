@@ -1,23 +1,25 @@
 require "http/server"
-require "logger"
+require "log"
 require "ecr/macros"
 require "compiler/crystal/tools/formatter"
-require "compiler/crystal/tools/doc/markdown"
+require "../../../../../lib/markd/src/markd"
 
 module Crystal::Playground
+  Log = ::Log.for("crystal.playground")
+
   class Session
     getter tag : Int32
 
-    def initialize(@ws : HTTP::WebSocket, @session_key : Int32, @port : Int32, @logger : Logger)
+    def initialize(@ws : HTTP::WebSocket, @session_key : Int32, @port : Int32)
       @running_process_filename = ""
       @tag = 0
     end
 
-    def self.instrument_and_prelude(session_key, port, tag, source, logger)
+    def self.instrument_and_prelude(session_key, port, tag, source)
       ast = Parser.new(source).parse
 
       instrumented = Playground::AgentInstrumentorTransformer.transform(ast).to_s
-      logger.info "Code instrumentation (session=#{session_key}, tag=#{tag}).\n#{instrumented}"
+      Log.info { "Code instrumentation (session=#{session_key}, tag=#{tag}).\n#{instrumented}" }
 
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
@@ -42,36 +44,36 @@ module Crystal::Playground
     end
 
     def run(source, tag)
-      @logger.info "Request to run code (session=#{@session_key}, tag=#{tag}).\n#{source}"
+      Log.info { "Request to run code (session=#{@session_key}, tag=#{tag}).\n#{source}" }
 
       @tag = tag
       begin
-        sources = self.class.instrument_and_prelude(@session_key, @port, tag, source, @logger)
-      rescue ex : Crystal::Exception
+        sources = self.class.instrument_and_prelude(@session_key, @port, tag, source)
+      rescue ex : Crystal::CodeError
         send_exception ex, tag
         return
       end
 
-      output_filename = tempfile "play-#{@session_key}-#{tag}"
+      output_filename = Crystal.temp_executable "play-#{@session_key}-#{tag}"
       compiler = Compiler.new
       compiler.color = false
       begin
-        @logger.info "Instrumented code compilation started (session=#{@session_key}, tag=#{tag})."
-        result = compiler.compile sources, output_filename
+        Log.info { "Instrumented code compilation started (session=#{@session_key}, tag=#{tag})." }
+        compiler.compile sources, output_filename
       rescue ex
-        @logger.info "Instrumented code compilation failed (session=#{@session_key}, tag=#{tag})."
+        Log.info { "Instrumented code compilation failed (session=#{@session_key}, tag=#{tag})." }
 
         # due to instrumentation, we compile the original program
         begin
-          @logger.info "Original code compilation started (session=#{@session_key}, tag=#{tag})."
+          Log.info { "Original code compilation started (session=#{@session_key}, tag=#{tag})." }
           compiler.compile Compiler::Source.new("play", source), output_filename
         rescue ex
-          @logger.info "Original code compilation failed (session=#{@session_key}, tag=#{tag})."
+          Log.info { "Original code compilation failed (session=#{@session_key}, tag=#{tag})." }
           send_exception ex, tag
           return # if we don't exit here we've found a bug
         end
 
-        @logger.error "Instrumention bug found (session=#{@session_key}, tag=#{tag})."
+        Log.error { "Instrumentation bug found (session=#{@session_key}, tag=#{tag})." }
         send_with_json_builder do |json|
           json.field "type", "bug"
           json.field "tag", tag
@@ -93,13 +95,13 @@ module Crystal::Playground
     end
 
     def format(source, tag)
-      @logger.info "Request to format code (session=#{@session_key}, tag=#{tag}).\n#{source}"
+      Log.info { "Request to format code (session=#{@session_key}, tag=#{tag}).\n#{source}" }
 
       @tag = tag
 
       begin
         value = Crystal.format source
-      rescue ex : Crystal::Exception
+      rescue ex : Crystal::CodeError
         send_exception ex, tag
         return
       end
@@ -119,7 +121,7 @@ module Crystal::Playground
       begin
         @ws.send(message)
       rescue ex : IO::Error
-        @logger.warn "Unable to send message (session=#{@session_key})."
+        Log.warn { "Unable to send message (session=#{@session_key})." }
       end
     end
 
@@ -144,7 +146,7 @@ module Crystal::Playground
     def append_exception(json, ex)
       json.object do
         json.field "message", ex.to_s
-        if ex.is_a?(Crystal::Exception)
+        if ex.is_a?(Crystal::CodeError)
           json.field "payload" do
             ex.to_json(json)
           end
@@ -152,29 +154,25 @@ module Crystal::Playground
       end
     end
 
-    private def tempfile(basename)
-      Crystal.tempfile(basename)
-    end
-
     private def stop_process
       if process = @process
-        @logger.info "Code execution killed (session=#{@session_key}, filename=#{@running_process_filename})."
+        Log.info { "Code execution killed (session=#{@session_key}, filename=#{@running_process_filename})." }
         @process = nil
         File.delete @running_process_filename rescue nil
-        process.kill rescue nil
+        process.terminate rescue nil
       end
     end
 
     private def execute(tag, output_filename)
       stop_process
 
-      @logger.info "Code execution started (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
+      Log.info { "Code execution started (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})." }
       process = @process = Process.new(output_filename, args: [] of String, input: Process::Redirect::Pipe, output: Process::Redirect::Pipe, error: Process::Redirect::Pipe)
       @running_process_filename = output_filename
 
       spawn do
         status = process.wait
-        @logger.info "Code execution ended (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
+        Log.info { "Code execution ended (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})." }
         exit_status = status.normal_exit? ? status.exit_code : status.exit_signal.value
 
         send_with_json_builder do |json|
@@ -214,23 +212,12 @@ module Crystal::Playground
   end
 
   abstract class PlaygroundPage
-    @resources = [] of Resource
+    getter styles = [] of String
+    getter scripts = [] of String
 
     def render_with_layout(io, &block)
       ECR.embed "#{__DIR__}/views/layout.html.ecr", io
     end
-
-    protected def add_resource(kind, src)
-      @resources << Resource.new(kind, src)
-    end
-
-    def each_resource(kind)
-      @resources.each do |res|
-        yield res if res.kind == kind
-      end
-    end
-
-    record Resource, kind : Symbol, src : String
   end
 
   class FileContentPage < PlaygroundPage
@@ -247,7 +234,7 @@ module Crystal::Playground
                   end
 
         if extname == ".md" || extname == ".cr"
-          content = Crystal::Doc::Markdown.to_html(content)
+          content = Markd.to_html(content)
         end
         content
       rescue e
@@ -354,6 +341,8 @@ module Crystal::Playground
           context.response << page
           return
         end
+      else
+        # Not a special path
       end
 
       call_next(context)
@@ -361,10 +350,10 @@ module Crystal::Playground
 
     def load_resources(page : PlaygroundPage)
       Dir["playground/resources/*.css"].each do |file|
-        page.add_resource :css, "/workbook/#{file}"
+        page.styles << "/workbook/#{file}"
       end
       Dir["playground/resources/*.js"].each do |file|
-        page.add_resource :js, "/workbook/#{file}"
+        page.scripts << "/workbook/#{file}"
       end
     end
   end
@@ -443,7 +432,7 @@ module Crystal::Playground
     end
   end
 
-  class Error < Crystal::LocationlessException
+  class Error < Crystal::Error
   end
 
   class Server
@@ -452,15 +441,12 @@ module Crystal::Playground
 
     property host : String?
     property port
-    property logger
     property source : Compiler::Source?
 
     def initialize
       @host = nil
       @port = 8080
       @verbose = false
-      @logger = Logger.new(STDOUT)
-      @logger.level = Logger::Severity::WARN
     end
 
     def start
@@ -470,9 +456,9 @@ module Crystal::Playground
 
       agent_ws = PathWebSocketHandler.new "/agent" do |ws, context|
         match_data = context.request.path.not_nil!.match(/\/(\d+)\/(\d+)$/).not_nil!
-        session_key = match_data[1]?.try(&.to_i)
-        tag = match_data[2]?.try(&.to_i)
-        @logger.info "#{context.request.path} WebSocket connected (session=#{session_key}, tag=#{tag})"
+        session_key = match_data[1].to_i
+        tag = match_data[2].to_i
+        Log.info { "#{context.request.path} WebSocket connected (session=#{session_key}, tag=#{tag})" }
 
         session = @sessions[session_key]
 
@@ -488,12 +474,12 @@ module Crystal::Playground
       client_ws = PathWebSocketHandler.new "/client" do |ws, context|
         origin = context.request.headers["Origin"]
         if !accept_request?(origin)
-          @logger.warn "Invalid Request Origin: #{origin}"
-          ws.close "Invalid Request Origin"
+          Log.warn { "Invalid Request Origin: #{origin}" }
+          ws.close :policy_violation, "Invalid Request Origin"
         else
           @sessions_key += 1
-          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, @logger)
-          @logger.info "/client WebSocket connected as session=#{@sessions_key}"
+          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port)
+          Log.info { "/client WebSocket connected as session=#{@sessions_key}" }
 
           ws.on_message do |message|
             json = JSON.parse(message)
@@ -508,6 +494,8 @@ module Crystal::Playground
               source = json["source"].as_s
               tag = json["tag"].as_i
               session.format source, tag
+            else
+              # TODO: maybe raise because it's an unexpected message?
             end
           end
         end

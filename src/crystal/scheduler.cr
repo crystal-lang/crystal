@@ -1,7 +1,8 @@
-require "./event_loop"
+require "crystal/system/event_loop"
+require "crystal/system/print_error"
 require "./fiber_channel"
 require "fiber"
-require "thread"
+require "crystal/system/thread"
 
 # :nodoc:
 #
@@ -91,11 +92,21 @@ class Crystal::Scheduler
     {% if flag?(:preview_mt) %}
       set_current_thread(fiber)
       GC.lock_read
+    {% elsif flag?(:interpreted) %}
+      # No need to change the stack bottom!
     {% else %}
       GC.set_stackbottom(fiber.@stack_bottom)
     {% end %}
 
     current, @current = @current, fiber
+
+    {% if flag?(:interpreted) %}
+      # TODO: ideally we could set this in the interprter if the
+      # @context had a pointer back to the fiber.
+      # I also wonder why this isn't done always like that instead of in asm.
+      current.@context.resumable = 1
+    {% end %}
+
     Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
 
     {% if flag?(:preview_mt) %}
@@ -118,8 +129,12 @@ class Crystal::Scheduler
   end
 
   private def fatal_resume_error(fiber, message)
-    LibC.dprintf 2, "\nFATAL: #{message}: #{fiber}\n"
-    caller.each { |line| LibC.dprintf(2, "  from #{line}\n") }
+    Crystal::System.print_error "\nFATAL: #{message}: #{fiber}\n"
+    {% unless flag?(:win32) %}
+      # FIXME: Enable when caller is supported on win32
+      caller.each { |line| Crystal::System.print_error "  from #{line}\n" }
+    {% end %}
+
     exit 1
   end
 
@@ -138,7 +153,7 @@ class Crystal::Scheduler
   protected def reschedule : Nil
     loop do
       if runnable = @lock.sync { @runnables.shift? }
-        unless runnable == Fiber.current
+        unless runnable == @current
           runnable.resume
         end
         break
@@ -238,14 +253,14 @@ class Crystal::Scheduler
       if env_workers && !env_workers.empty?
         workers = env_workers.to_i?
         if !workers || workers < 1
-          LibC.dprintf 2, "FATAL: Invalid value for CRYSTAL_WORKERS: #{env_workers}\n"
+          Crystal::System.print_error "FATAL: Invalid value for CRYSTAL_WORKERS: #{env_workers}\n"
           exit 1
         end
 
         workers
       else
-        # TODO: default worker count, currenlty hardcoded to 4 that seems to be something
-        # that is benefitial for many scenarios without adding too much contention.
+        # TODO: default worker count, currently hardcoded to 4 that seems to be something
+        # that is beneficial for many scenarios without adding too much contention.
         # In the future we could use the number of cores or something associated to it.
         4
       end

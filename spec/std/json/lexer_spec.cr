@@ -75,6 +75,16 @@ private def it_lexes_float(string, float_value, file = __FILE__, line = __LINE__
   end
 end
 
+private def it_errors_to_lex(string, *, file = __FILE__, line = __LINE__)
+  it "errors if lexing #{string} from String", file: file, line: line do
+    expect_raises(Exception) { JSON::Lexer.new(string).next_token }
+  end
+
+  it "errors if lexing #{string} from IO", file: file, line: line do
+    expect_raises(Exception) { JSON::Lexer.new(IO::Memory.new(string)).next_token }
+  end
+end
+
 describe JSON::Lexer do
   it_lexes "", :EOF, expected_to_s: "<EOF>"
   it_lexes "{", :begin_object
@@ -97,7 +107,13 @@ describe JSON::Lexer do
   it_lexes_string "\"hello\\rworld\"", "hello\rworld"
   it_lexes_string "\"hello\\tworld\"", "hello\tworld"
   it_lexes_string "\"\\u201chello world\\u201d\"", "“hello world”"
+  it_lexes_string "\"\\uD800\\uDC00\"", 0x10000.unsafe_chr.to_s
+  it_lexes_string "\"\\uD840\\uDC00\"", 0x20000.unsafe_chr.to_s
+  it_lexes_string "\"\\uDBFF\\uDFFF\"", 0x10ffff.unsafe_chr.to_s
   it_lexes_string "\"\\uD834\\uDD1E\"", "𝄞"
+  it_errors_to_lex %("\\uD800")
+  it_errors_to_lex %("\\uDC00")
+  it_errors_to_lex %("\\uD800\\u0020")
   it_lexes_int "0", 0
   it_lexes_int "1", 1
   it_lexes_int "1234", 1234

@@ -12,21 +12,21 @@ class Time::Location
   end
 
   # :nodoc:
-  def self.load?(name : String, sources : Enumerable(String))
+  def self.load?(name : String, sources : Enumerable(String)) : Time::Location?
     if source = find_zoneinfo_file(name, sources)
       load_from_dir_or_zip(name, source)
     end
   end
 
   # :nodoc:
-  def self.load(name : String, sources : Enumerable(String))
+  def self.load(name : String, sources : Enumerable(String)) : Time::Location?
     if source = find_zoneinfo_file(name, sources)
       load_from_dir_or_zip(name, source) || raise InvalidLocationNameError.new(name, source)
     end
   end
 
   # :nodoc:
-  def self.load_from_dir_or_zip(name : String, source : String)
+  def self.load_from_dir_or_zip(name : String, source : String) : Time::Location?
     if source.ends_with?(".zip")
       open_file_cached(name, source) do |file|
         read_zip_file(name, file) do |io|
@@ -60,14 +60,15 @@ class Time::Location
   end
 
   # :nodoc:
-  def self.find_zoneinfo_file(name : String, sources : Enumerable(String))
+  def self.find_zoneinfo_file(name : String, sources : Enumerable(String)) : String?
     sources.each do |source|
       if source.ends_with?(".zip")
-        return source if File.exists?(source)
+        path = source
       else
         path = File.join(source, name)
-        return source if File.exists?(path)
       end
+
+      return source if File.exists?(path) && File.file?(path) && File.readable?(path)
     end
   end
 
@@ -76,12 +77,12 @@ class Time::Location
   # See https://data.iana.org/time-zones/tz-link.html, https://github.com/eggert/tz, tzfile(5)
 
   # :nodoc:
-  def self.read_zoneinfo(location_name : String, io : IO)
+  def self.read_zoneinfo(location_name : String, io : IO) : Time::Location
     raise InvalidTZDataError.new unless io.read_string(4) == "TZif"
 
     # 1-byte version, then 15 bytes of padding
     version = io.read_byte
-    raise InvalidTZDataError.new unless {0_u8, '2'.ord, '3'.ord}.includes?(version)
+    raise InvalidTZDataError.new unless version.in?(0_u8, '2'.ord, '3'.ord)
     io.skip(15)
 
     # six big-endian 32-bit integers:
@@ -138,13 +139,15 @@ class Time::Location
       zone_idx = transition_indexes[transition_id]
       raise InvalidTZDataError.new unless zone_idx < zones.size
 
-      isstd = !{nil, 0_u8}.includes? isstddata[transition_id]?
-      isutc = !{nil, 0_u8}.includes? isstddata[transition_id]?
+      isstd = !isstddata[transition_id]?.in?(nil, 0_u8)
+      isutc = !isstddata[transition_id]?.in?(nil, 0_u8)
 
       ZoneTransition.new(time, zone_idx, isstd, isutc)
     end
 
     new(location_name, zones, transitions)
+  rescue exc : IO::Error
+    raise InvalidTZDataError.new(cause: exc)
   end
 
   private def self.read_int32(io : IO)

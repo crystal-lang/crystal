@@ -1,11 +1,29 @@
 require "./lib_crypto"
 
+{% if flag?(:without_openssl) %}
+  {% raise "The `without_openssl` flag is preventing you to use the LibSSL module" %}
+{% end %}
+
 {% begin %}
   lib LibSSL
-    {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
-                       (`test -f $(pkg-config --silence-errors --variable=includedir libssl)/openssl/opensslv.h || printf %s false` != "false") &&
-                       (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libssl || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
-    {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
+    {% if flag?(:win32) %}
+      {% from_libressl = false %}
+      {% ssl_version = nil %}
+      {% for dir in Crystal::LIBRARY_PATH.split(';') %}
+        {% unless ssl_version %}
+          {% config_path = "#{dir.id}\\openssl_VERSION" %}
+          {% if config_version = read_file?(config_path) %}
+            {% ssl_version = config_version.chomp %}
+          {% end %}
+        {% end %}
+      {% end %}
+      {% ssl_version ||= "0.0.0" %}
+    {% else %}
+      {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
+                         (`test -f $(pkg-config --silence-errors --variable=includedir libssl)/openssl/opensslv.h || printf %s false` != "false") &&
+                         (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libssl || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
+      {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
+    {% end %}
 
     {% if from_libressl %}
       LIBRESSL_VERSION = {{ ssl_version }}
@@ -17,7 +35,14 @@ require "./lib_crypto"
   end
 {% end %}
 
-@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
+{% if flag?(:win32) %}
+  @[Link("ssl")]
+  @[Link("crypto")]
+  @[Link("crypt32")] # CertOpenStore, ...
+  @[Link("user32")]  # GetProcessWindowStation, GetUserObjectInformationW, _MessageBoxW
+{% else %}
+  @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
+{% end %}
 lib LibSSL
   alias Int = LibC::Int
   alias Char = LibC::Char
@@ -96,8 +121,12 @@ lib LibSSL
 
     NO_SSL_V3   = 0x02000000
     NO_TLS_V1   = 0x04000000
+    NO_TLS_V1_3 = 0x20000000
     NO_TLS_V1_2 = 0x08000000
     NO_TLS_V1_1 = 0x10000000
+    {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+      NO_RENEGOTIATION = 0x40000000
+    {% end %}
 
     NETSCAPE_CA_DN_BUG              = 0x20000000
     NETSCAPE_DEMO_CIPHER_CHANGE_BUG = 0x40000000
@@ -194,10 +223,17 @@ lib LibSSL
   fun ssl_ctx_set_default_verify_paths = SSL_CTX_set_default_verify_paths(ctx : SSLContext) : Int
   fun ssl_ctx_ctrl = SSL_CTX_ctrl(ctx : SSLContext, cmd : Int, larg : ULong, parg : Void*) : ULong
 
+  {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
+    fun ssl_get_peer_certificate = SSL_get1_peer_certificate(handle : SSL) : LibCrypto::X509
+  {% else %}
+    fun ssl_get_peer_certificate = SSL_get_peer_certificate(handle : SSL) : LibCrypto::X509
+  {% end %}
+
   {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
     fun ssl_ctx_get_options = SSL_CTX_get_options(ctx : SSLContext) : ULong
     fun ssl_ctx_set_options = SSL_CTX_set_options(ctx : SSLContext, larg : ULong) : ULong
     fun ssl_ctx_clear_options = SSL_CTX_clear_options(ctx : SSLContext, larg : ULong) : ULong
+    fun ssl_ctx_set_ciphersuites = SSL_CTX_set_ciphersuites(ctx : SSLContext, ciphers : Char*) : Int
   {% end %}
 
   @[Raises]
@@ -205,6 +241,12 @@ lib LibSSL
 
   # Hostname validation for OpenSSL <= 1.0.1
   fun ssl_ctx_set_cert_verify_callback = SSL_CTX_set_cert_verify_callback(ctx : SSLContext, callback : CertVerifyCallback, arg : Void*)
+
+  # control TLS 1.3 session ticket generation
+  {% if compare_versions(OPENSSL_VERSION, "1.1.1") >= 0 %}
+    fun ssl_ctx_set_num_tickets = SSL_CTX_set_num_tickets(ctx : SSLContext, larg : LibC::SizeT) : Int
+    fun ssl_set_num_tickets = SSL_set_num_tickets(ctx : SSL, larg : LibC::SizeT) : Int
+  {% end %}
 
   {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
     fun tls_method = TLS_method : SSLMethod
@@ -229,6 +271,11 @@ lib LibSSL
     fun ssl_get0_param = SSL_get0_param(handle : SSL) : X509VerifyParam
     fun ssl_ctx_get0_param = SSL_CTX_get0_param(ctx : SSLContext) : X509VerifyParam
     fun ssl_ctx_set1_param = SSL_CTX_set1_param(ctx : SSLContext, param : X509VerifyParam) : Int
+  {% end %}
+
+  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+    fun ssl_ctx_set_security_level = SSL_CTX_set_security_level(ctx : SSLContext, level : Int) : Void
+    fun ssl_ctx_get_security_level = SSL_CTX_get_security_level(ctx : SSLContext) : Int
   {% end %}
 end
 

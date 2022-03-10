@@ -12,22 +12,40 @@ class String
   # "hi 𐂥".to_utf16 # => Slice[104_u16, 105_u16, 32_u16, 55296_u16, 56485_u16]
   # ```
   def to_utf16 : Slice(UInt16)
-    size = 0
-    each_char do |char|
-      size += char.ord < 0x10000 ? 1 : 2
+    if ascii_only?
+      # size == bytesize, so each char fits in one UInt16
+
+      # This is essentially equivalent to `to_slice.map(&.to_u16)` but also makes
+      # sure to allocate a null byte after the string.
+      slice = Slice(UInt16).new(bytesize + 1) do |i|
+        if i == bytesize
+          0_u16
+        else
+          to_unsafe[i].to_u16
+        end
+      end
+      return slice[0, bytesize]
     end
 
-    slice = Slice(UInt16).new(size + 1)
+    # size < bytesize, so we need to count the number of characters that are
+    # two UInt16 wide.
+    u16_size = 0
+    each_char do |char|
+      u16_size += char.ord < 0x1_0000 ? 1 : 2
+    end
+
+    # Allocate one extra character for trailing null
+    slice = Slice(UInt16).new(u16_size + 1)
 
     i = 0
     each_char do |char|
       ord = char.ord
-      if ord <= 0xd800 || (0xe000 <= ord < 0x10000)
+      if ord <= 0xd800 || (0xe000 <= ord < 0x1_0000)
         # One UInt16 is enough
         slice[i] = ord.to_u16
-      elsif ord >= 0x10000
+      elsif ord >= 0x1_0000
         # Needs surrogate pair
-        ord -= 0x10000
+        ord -= 0x1_0000
         slice[i] = 0xd800_u16 + ((ord >> 10) & 0x3ff) # Keep top 10 bits
         i += 1
         slice[i] = 0xdc00_u16 + (ord & 0x3ff) # Keep low 10 bits
@@ -41,7 +59,7 @@ class String
     # Append null byte
     slice[i] = 0_u16
 
-    slice[0, size]
+    slice[0, u16_size]
   end
 
   # Decodes the given *slice* UTF-16 sequence into a String.
@@ -116,18 +134,18 @@ class String
       if byte < 0xd800 || byte >= 0xe000
         # One byte
         codepoint = byte
-      elsif 0xd800 <= byte < 0xdc00 &&
+      elsif byte < 0xdc00 &&
             (i + 1) < slice.size &&
             0xdc00 <= slice[i + 1] <= 0xdfff
-        # Surrougate pair
-        codepoint = ((byte - 0xd800) << 10) + (slice[i + 1] - 0xdc00) + 0x10000
+        # Surrogate pair
+        codepoint = (byte << 10) &+ slice[i + 1] &- 0x35fdc00
         i += 1
       else
         # Invalid byte
         codepoint = 0xfffd
       end
 
-      yield codepoint.chr
+      yield codepoint.unsafe_chr
 
       i += 1
     end
@@ -142,17 +160,17 @@ class String
       if byte < 0xd800 || byte >= 0xe000
         # One byte
         codepoint = byte
-      elsif 0xd800 <= byte < 0xdc00 &&
+      elsif byte < 0xdc00 &&
             0xdc00 <= (pointer + 1).value <= 0xdfff
-        # Surrougate pair
+        # Surrogate pair
         pointer = pointer + 1
-        codepoint = ((byte - 0xd800) << 10) + (pointer.value - 0xdc00) + 0x10000
+        codepoint = (byte << 10) &+ pointer.value &- 0x35fdc00
       else
         # Invalid byte
         codepoint = 0xfffd
       end
 
-      yield codepoint.chr
+      yield codepoint.unsafe_chr
 
       pointer = pointer + 1
     end
