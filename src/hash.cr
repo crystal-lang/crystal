@@ -469,8 +469,6 @@ class Hash(K, V)
     if entry_index = find_entry_with_index(key)
       return entry_index[0]
     end
-
-    nil
   end
 
   # Finds an entry (and its index) with the given key.
@@ -1020,12 +1018,12 @@ class Hash(K, V)
   end
 
   # Updates the current value of *key* with the value returned by the given block
-  # (the current value is used as input for the block)
+  # (the current value is used as input for the block).
   #
-  # If no key is present, but there's a default value (or default block)
+  # If no entry for *key* is present, but there's a default value (or default block)
   # then that default value is used as input for the given block.
   #
-  # Otherwise it raises.
+  # If no entry for *key* is present and the hash has no default value, it raises `KeyError`.
   #
   # It returns the value used as input for the given block
   # (ie. the old value if key present, or the default value)
@@ -1046,8 +1044,8 @@ class Hash(K, V)
       entry, index = entry_index
       set_entry(index, Entry(K, V).new(entry.hash, entry.key, yield entry.value))
       entry.value
-    elsif (block = @block) && key.is_a?(K)
-      default_value = block.call(self, key.as(K))
+    elsif block = @block
+      default_value = block.call(self, key)
       upsert(key, yield default_value)
       default_value
     else
