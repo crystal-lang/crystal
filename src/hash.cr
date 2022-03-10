@@ -1029,12 +1029,12 @@ class Hash(K, V)
   # (ie. the old value if key present, or the default value)
   # ```
   # h = {"a" => 0, "b" => 1}
-  # h.update("b") { |v| v + 41 }
-  # h["b"] # => 42
+  # h.update("b") { |v| v + 41 } # => 1
+  # h["b"]                       # => 42
   #
   # h = Hash(String, Int32).new(40)
-  # h.update("foo") { |v| v + 2 }
-  # h["foo"] # => 42
+  # h.update("foo") { |v| v + 2 } # => 40
+  # h["foo"]                      # => 42
   #
   # h = {} of String => Int32
   # h.update("a") { 42 } # raises KeyError
