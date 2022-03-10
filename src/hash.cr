@@ -1027,6 +1027,7 @@ class Hash(K, V)
   #
   # It returns the value used as input for the given block
   # (ie. the old value if key present, or the default value)
+  #
   # ```
   # h = {"a" => 0, "b" => 1}
   # h.update("b") { |v| v + 41 } # => 1
