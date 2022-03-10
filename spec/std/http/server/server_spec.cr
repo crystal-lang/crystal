@@ -4,13 +4,10 @@ require "http/client/response"
 require "../../../support/ssl"
 require "../../../support/channel"
 
-# TODO: replace with `HTTP::Client` once it supports connecting to Unix socket (#2735)
+# TODO: replace with `HTTP::Client.get` once it supports connecting to Unix socket (#2735)
 private def unix_request(path)
   UNIXSocket.open(path) do |io|
-    request = HTTP::Request.new("GET", "/", HTTP::Headers{"X-Unix-Socket" => path})
-    request.to_io(io)
-
-    HTTP::Client::Response.from_io(io).body
+    HTTP::Client.new(io).get(path).body
   end
 end
 
@@ -97,7 +94,7 @@ describe HTTP::Server do
 
   it "binds to different ports" do
     server = HTTP::Server.new do |context|
-      context.response.print "Test Server (#{context.request.headers["Host"]?})"
+      context.response.print "Test Server (#{context.request.local_address})"
     end
 
     tcp_server = TCPServer.new("127.0.0.1", 0)
@@ -302,7 +299,7 @@ describe HTTP::Server do
   describe "#bind_tls" do
     it "binds SSL server context" do
       server = HTTP::Server.new do |context|
-        context.response.puts "Test Server (#{context.request.headers["Host"]?})"
+        context.response.puts "Test Server (#{context.request.local_address})"
         context.response.close
       end
 
@@ -355,8 +352,7 @@ describe HTTP::Server do
 
         begin
           server = HTTP::Server.new do |context|
-            # TODO: Replace custom header with local_address (#5784)
-            context.response.print "Test Server (#{context.request.headers["X-Unix-Socket"]?})"
+            context.response.print "Test Server (#{context.request.local_address})"
             context.response.close
           end
 
@@ -475,48 +471,54 @@ describe HTTP::Server do
       end
     end
   end
-end
 
-describe "#remote_address" do
-  it "for http server" do
-    remote_address = nil
+  describe "#remote_address / #local_address" do
+    it "for http server" do
+      remote_address = nil
+      local_address = nil
 
-    server = HTTP::Server.new do |context|
-      remote_address = context.request.remote_address
-    end
+      server = HTTP::Server.new do |context|
+        remote_address = context.request.remote_address
+        local_address = context.request.local_address
+      end
 
-    tcp_server = TCPServer.new("127.0.0.1", 0)
-    server.bind tcp_server
-    address1 = tcp_server.local_address
+      tcp_server = TCPServer.new("127.0.0.1", 0)
+      server.bind tcp_server
+      address1 = tcp_server.local_address
 
-    run_server(server) do
-      HTTP::Client.new(URI.parse("http://#{address1}/")) do |client|
-        client.get("/")
+      run_server(server) do
+        HTTP::Client.new(URI.parse("http://#{address1}/")) do |client|
+          client.get("/")
 
-        remote_address.should eq(client.@socket.as(IPSocket).local_address.to_s)
+          remote_address.should eq(client.@io.as(IPSocket).local_address)
+          local_address.should eq(client.@io.as(IPSocket).remote_address)
+        end
       end
     end
-  end
 
-  it "for https server" do
-    remote_address = nil
+    it "for https server" do
+      remote_address = nil
+      local_address = nil
 
-    server = HTTP::Server.new do |context|
-      remote_address = context.request.remote_address
-    end
+      server = HTTP::Server.new do |context|
+        remote_address = context.request.remote_address
+        local_address = context.request.local_address
+      end
 
-    server_context, client_context = ssl_context_pair
+      server_context, client_context = ssl_context_pair
 
-    socket = OpenSSL::SSL::Server.new(TCPServer.new("127.0.0.1", 0), server_context)
-    server.bind socket
-    ip_address1 = server.bind_tls "127.0.0.1", 0, server_context
+      socket = OpenSSL::SSL::Server.new(TCPServer.new("127.0.0.1", 0), server_context)
+      server.bind socket
+      ip_address1 = server.bind_tls "127.0.0.1", 0, server_context
 
-    run_server(server) do
-      HTTP::Client.new(
-        uri: URI.parse("https://#{ip_address1}"),
-        tls: client_context) do |client|
-        client.get("/")
-        remote_address.should eq(client.@socket.as(OpenSSL::SSL::Socket).local_address.to_s)
+      run_server(server) do
+        HTTP::Client.new(
+          uri: URI.parse("https://#{ip_address1}"),
+          tls: client_context) do |client|
+          client.get("/")
+          remote_address.should eq(client.@io.as(OpenSSL::SSL::Socket).local_address)
+          local_address.should eq(client.@io.as(OpenSSL::SSL::Socket).remote_address)
+        end
       end
     end
   end

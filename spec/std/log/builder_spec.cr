@@ -105,13 +105,13 @@ describe Log::Builder do
     builder = Log::Builder.new
     a = Log::MemoryBackend.new
     builder.bind("*", :fatal, a)
-    builder.bind("db.*", :warning, a)
+    builder.bind("db.*", :warn, a)
     builder.bind("db", :error, a)
     builder.bind("db.pool", :none, a)
 
     builder.for("").level.should eq(s(:fatal))
     builder.for("db").level.should eq(s(:error))
-    builder.for("db.query").level.should eq(s(:warning))
+    builder.for("db.query").level.should eq(s(:warn))
     builder.for("db.pool").level.should eq(s(:none))
   end
 
@@ -130,10 +130,10 @@ describe Log::Builder do
     log.level.should eq(s(:none))
 
     a = Log::MemoryBackend.new
-    builder.bind("*", :warning, a)
+    builder.bind("*", :warn, a)
 
     log.backend.should be(a)
-    log.level.should eq(s(:warning))
+    log.level.should eq(s(:warn))
   end
 
   it "removes all logs backends on .clear" do

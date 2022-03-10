@@ -3,7 +3,11 @@
 class Log::MemoryBackend < Log::Backend
   getter entries = Array(Log::Entry).new
 
-  def write(entry : Log::Entry)
+  def initialize
+    super(:direct)
+  end
+
+  def write(entry : Log::Entry) : Nil
     @entries << entry
   end
 end

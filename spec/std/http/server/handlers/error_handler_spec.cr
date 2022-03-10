@@ -1,6 +1,6 @@
 require "spec"
+require "log/spec"
 require "http/server/handler"
-require "../../../../support/log"
 require "../../../../support/io"
 
 describe HTTP::ErrorHandler do
@@ -13,7 +13,7 @@ describe HTTP::ErrorHandler do
     exception = Exception.new("OH NO!")
     handler = HTTP::ErrorHandler.new(verbose: true)
     handler.next = ->(ctx : HTTP::Server::Context) { raise exception }
-    logs = capture_logs("http.server") { handler.call(context) }
+    logs = Log.capture("http.server") { handler.call(context) }
     response.close
 
     client_response = HTTP::Client::Response.from_io(io.rewind)
@@ -23,9 +23,8 @@ describe HTTP::ErrorHandler do
     client_response.headers.has_key?("content-length").should be_true
     client_response.body.should match(/^ERROR: OH NO! \(Exception\)/)
 
-    match_logs(logs,
-      {:error, "Unhandled exception", exception}
-    )
+    logs.check(:error, "Unhandled exception")
+    logs.entry.exception.should eq(exception)
   end
 
   it "logs to custom logger" do
@@ -40,9 +39,9 @@ describe HTTP::ErrorHandler do
     handler.next = ->(ctx : HTTP::Server::Context) { raise exception }
     handler.call(context)
 
-    match_logs(backend.entries,
-      {:error, "Unhandled exception", exception}
-    )
+    logs = Log::EntriesChecker.new(backend.entries)
+    logs.check(:error, "Unhandled exception")
+    logs.entry.exception.should eq(exception)
   end
 
   it "can return a generic error message" do
@@ -54,7 +53,7 @@ describe HTTP::ErrorHandler do
     exception = Exception.new("OH NO!")
     handler = HTTP::ErrorHandler.new
     handler.next = ->(ctx : HTTP::Server::Context) { raise exception }
-    logs = capture_logs("http.server") { handler.call(context) }
+    logs = Log.capture("http.server") { handler.call(context) }
 
     client_response = HTTP::Client::Response.from_io(io.rewind)
     client_response.status_code.should eq(500)
@@ -62,9 +61,8 @@ describe HTTP::ErrorHandler do
     client_response.headers["content-type"].should eq("text/plain")
     client_response.body.should eq("500 Internal Server Error\n")
 
-    match_logs(logs,
-      {:error, "Unhandled exception", exception}
-    )
+    logs.check(:error, "Unhandled exception")
+    logs.entry.exception.should eq(exception)
   end
 
   it "log debug message when the output is closed" do
@@ -76,12 +74,10 @@ describe HTTP::ErrorHandler do
 
     handler = HTTP::ErrorHandler.new
     handler.next = ->(ctx : HTTP::Server::Context) { ctx.response.print "Hi!"; ctx.response.flush }
-    logs = capture_logs("http.server") { handler.call(context) }
+    logs = Log.capture("http.server") { handler.call(context) }
 
-    match_logs(logs,
-      {:debug, "Error while writing data to the client"}
-    )
-    logs[0].exception.should be_a(IO::Error)
+    logs.check(:debug, "Error while writing data to the client")
+    logs.entry.exception.should be_a(IO::Error)
   end
 
   it "doesn't write errors when there is some output already sent" do
@@ -97,7 +93,7 @@ describe HTTP::ErrorHandler do
       ctx.response.flush
       raise exception
     end
-    logs = capture_logs("http.server") { handler.call(context) }
+    logs = Log.capture("http.server") { handler.call(context) }
     response.close
 
     client_response = HTTP::Client::Response.from_io(io.rewind)
@@ -105,8 +101,7 @@ describe HTTP::ErrorHandler do
     client_response.status_message.should eq("OK")
     client_response.body.should eq("Hi")
 
-    match_logs(logs,
-      {:error, "Unhandled exception", exception}
-    )
+    logs.check(:error, "Unhandled exception")
+    logs.entry.exception.should eq(exception)
   end
 end

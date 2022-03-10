@@ -6,6 +6,8 @@ require "ini"
 require "spec"
 require "yaml"
 require "../../../support/tempfile"
+require "../../../support/env"
+require "../../../support/win32"
 
 private def exec_init(project_name, project_dir = nil, type = "lib", force = false, skip_existing = false)
   args = [type, project_name]
@@ -41,10 +43,29 @@ end
 
 module Crystal
   describe Init::InitProject do
+    it "correctly uses git config" do
+      within_temporary_directory do
+        File.write(".gitconfig", <<-CONTENT)
+        [user]
+          email = dorian@dorianmarie.fr
+          name = Dorian Marié
+        CONTENT
+
+        with_env("GIT_CONFIG": "#{FileUtils.pwd}/.gitconfig") do
+          exec_init("example", "example", "app")
+        end
+
+        with_file "example/LICENSE" do |file|
+          file.should contain("Dorian Marié")
+        end
+      end
+    end
+
     it "has proper contents" do
       within_temporary_directory do
         run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith")
         run_init_project("app", "example_app", "John Smith", "john@smith.com", "jsmith")
+        run_init_project("app", "num-followed-hyphen-1", "John Smith", "john@smith.com", "jsmith")
         run_init_project("lib", "example-lib", "John Smith", "john@smith.com", "jsmith")
         run_init_project("lib", "camel_example-camel_lib", "John Smith", "john@smith.com", "jsmith")
         run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith", dir: "other-example-directory")
@@ -55,6 +76,10 @@ module Crystal
 
         with_file "camel_example-camel_lib/src/camel_example-camel_lib.cr" do |file|
           file.should contain("CamelExample::CamelLib")
+        end
+
+        with_file "num-followed-hyphen-1/src/num-followed-hyphen-1.cr" do |file|
+          file.should contain("Num::Followed::Hyphen1")
         end
 
         with_file "example/.gitignore" do |gitignore|
@@ -149,12 +174,6 @@ module Crystal
           parsed["targets"].should eq({"example_app" => {"main" => "src/example_app.cr"}})
         end
 
-        with_file "example/.travis.yml" do |travis|
-          parsed = YAML.parse(travis)
-
-          parsed["language"].should eq("crystal")
-        end
-
         with_file "example/src/example.cr" do |example|
           example.should eq(<<-EOF
         # TODO: Write documentation for `Example`
@@ -201,6 +220,16 @@ module Crystal
   end
 
   describe "Init invocation" do
+    it "produces valid yaml file" do
+      within_temporary_directory do
+        exec_init("example", "example", "app")
+
+        with_file "example/shard.yml" do |file|
+          YAML.parse(file)
+        end
+      end
+    end
+
     it "prints error if a file is already present" do
       within_temporary_directory do
         existing_file = "existing-file"
@@ -362,6 +391,18 @@ module Crystal
         Crystal::Init.validate_name("foo\abar")
       end
       Crystal::Init.validate_name("grüß-gott")
+    end
+  end
+
+  describe "View#module_name" do
+    it "namespace is divided by hyphen" do
+      Crystal::Init::View.module_name("my-proj-name").should eq "My::Proj::Name"
+    end
+    it "hyphen followed by non-ascii letter is replaced by its character" do
+      Crystal::Init::View.module_name("my-proj-1").should eq "My::Proj1"
+    end
+    it "underscore is ignored" do
+      Crystal::Init::View.module_name("my-proj_name").should eq "My::ProjName"
     end
   end
 end

@@ -13,8 +13,8 @@ require "./ip_socket"
 # ```
 class TCPSocket < IPSocket
   # Creates a new `TCPSocket`, waiting to be connected.
-  def self.new(family : Family = Family::INET)
-    super(family, Type::STREAM, Protocol::TCP)
+  def self.new(family : Family = Family::INET, blocking = false)
+    super(family, Type::STREAM, Protocol::TCP, blocking)
   end
 
   # Creates a new TCP connection to a remote TCP server.
@@ -24,9 +24,9 @@ class TCPSocket < IPSocket
   # must be in seconds (integers or floats).
   #
   # Note that `dns_timeout` is currently ignored.
-  def initialize(host, port, dns_timeout = nil, connect_timeout = nil)
+  def initialize(host, port, dns_timeout = nil, connect_timeout = nil, blocking = false)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
-      super(addrinfo.family, addrinfo.type, addrinfo.protocol)
+      super(addrinfo.family, addrinfo.type, addrinfo.protocol, blocking)
       connect(addrinfo, timeout: connect_timeout) do |error|
         close
         error
@@ -34,17 +34,17 @@ class TCPSocket < IPSocket
     end
   end
 
-  protected def initialize(family : Family, type : Type, protocol : Protocol)
-    super family, type, protocol
+  protected def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
+    super family, type, protocol, blocking
   end
 
-  protected def initialize(fd : Int32, family : Family, type : Type, protocol : Protocol)
-    super fd, family, type, protocol
+  protected def initialize(fd : Handle, family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
+    super fd, family, type, protocol, blocking
   end
 
   # Creates a TCPSocket from an already configured raw file descriptor
-  def initialize(*, fd : Int32, family : Family = Family::INET)
-    super fd, family, Type::STREAM, Protocol::TCP
+  def initialize(*, fd : Handle, family : Family = Family::INET, blocking = false)
+    super fd, family, Type::STREAM, Protocol::TCP, blocking
   end
 
   # Opens a TCP socket to a remote TCP server, yields it to the block, then
@@ -60,8 +60,8 @@ class TCPSocket < IPSocket
     end
   end
 
-  # Returns `true` if the Nable algorithm is disabled.
-  def tcp_nodelay?
+  # Returns `true` if the Nagle algorithm is disabled.
+  def tcp_nodelay? : Bool
     getsockopt_bool LibC::TCP_NODELAY, level: Protocol::TCP
   end
 
@@ -70,45 +70,31 @@ class TCPSocket < IPSocket
     setsockopt_bool LibC::TCP_NODELAY, val, level: Protocol::TCP
   end
 
-  {% unless flag?(:openbsd) %}
-    # The amount of time in seconds the connection must be idle before sending keepalive probes.
-    def tcp_keepalive_idle
-      optname = {% if flag?(:darwin) %}
-        LibC::TCP_KEEPALIVE
-      {% else %}
-        LibC::TCP_KEEPIDLE
-      {% end %}
-      getsockopt optname, 0, level: Protocol::TCP
-    end
+  # The amount of time in seconds the connection must be idle before sending keepalive probes.
+  def tcp_keepalive_idle
+    system_tcp_keepalive_idle
+  end
 
-    def tcp_keepalive_idle=(val : Int)
-      optname = {% if flag?(:darwin) %}
-        LibC::TCP_KEEPALIVE
-      {% else %}
-        LibC::TCP_KEEPIDLE
-      {% end %}
-      setsockopt optname, val, level: Protocol::TCP
-      val
-    end
+  def tcp_keepalive_idle=(val : Int)
+    self.system_tcp_keepalive_idle = val
+  end
 
-    # The amount of time in seconds between keepalive probes.
-    def tcp_keepalive_interval
-      getsockopt LibC::TCP_KEEPINTVL, 0, level: Protocol::TCP
-    end
+  # The amount of time in seconds between keepalive probes.
+  def tcp_keepalive_interval
+    system_tcp_keepalive_interval
+  end
 
-    def tcp_keepalive_interval=(val : Int)
-      setsockopt LibC::TCP_KEEPINTVL, val, level: Protocol::TCP
-      val
-    end
+  def tcp_keepalive_interval=(val : Int)
+    self.system_tcp_keepalive_interval = val
+    val
+  end
 
-    # The number of probes sent, without response before dropping the connection.
-    def tcp_keepalive_count
-      getsockopt LibC::TCP_KEEPCNT, 0, level: Protocol::TCP
-    end
+  # The number of probes sent, without response before dropping the connection.
+  def tcp_keepalive_count
+    system_tcp_keepalive_count
+  end
 
-    def tcp_keepalive_count=(val : Int)
-      setsockopt LibC::TCP_KEEPCNT, val, level: Protocol::TCP
-      val
-    end
-  {% end %}
+  def tcp_keepalive_count=(val : Int)
+    self.system_tcp_keepalive_count = val
+  end
 end

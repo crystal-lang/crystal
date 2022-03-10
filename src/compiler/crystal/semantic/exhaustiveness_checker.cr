@@ -3,13 +3,7 @@ struct Crystal::ExhaustivenessChecker
   end
 
   def check(node : Case)
-    # If there's an else clause we don't need to check anything
-    return if node.else
-
-    cond = node.cond
-
-    # No condition means it's just like a series of if/else
-    return unless cond
+    cond = node.cond.not_nil!
 
     if cond.is_a?(TupleLiteral)
       check_tuple_exp(node, cond)
@@ -22,7 +16,7 @@ struct Crystal::ExhaustivenessChecker
     cond_type = cond.type?
 
     # No type on condition means we couldn't type it so we can't
-    # check exhasutiveness.
+    # check exhaustiveness.
     return unless cond_type
 
     # Compute all types that we must cover.
@@ -33,16 +27,11 @@ struct Crystal::ExhaustivenessChecker
     # Compute all the targets that we must cover
     targets = cond_types.map { |cond_type| compute_target(cond_type) }
 
+    # Is any type a @[Flags] enum?
+    flags_enum = cond_types.find { |type| type.is_a?(EnumType) && type.flags? }
+
     # Are all patterns Path types?
     all_patterns_are_types = true
-
-    # Are all patterns things that we can handle?
-    # For example an integer literal is something that we don't
-    # take into account for exhaustiveness.
-    all_provable_patterns = true
-
-    # Is any type a @[Flags] enum?
-    has_flags_enum = cond_types.any? { |type| type.is_a?(EnumType) && type.flags? }
 
     # Start checking each `when`...
     node.whens.each do |a_when|
@@ -53,11 +42,7 @@ struct Crystal::ExhaustivenessChecker
           all_patterns_are_types = false
         end
 
-        if pattern
-          targets.each &.cover(pattern)
-        else
-          all_provable_patterns = false
-        end
+        targets.each &.cover(pattern)
       end
     end
 
@@ -66,7 +51,7 @@ struct Crystal::ExhaustivenessChecker
     # If we covered all types, we are done.
     return if targets.empty?
 
-    if targets.all?(&.is_a?(TypeTarget)) && all_patterns_are_types
+    if targets.all?(TypeTarget) && all_patterns_are_types
       node.raise <<-MSG
         case is not exhaustive.
 
@@ -87,37 +72,34 @@ struct Crystal::ExhaustivenessChecker
         MSG
     when EnumTarget
       node.raise <<-MSG
-        case is not exhaustive for enum #{single_target.type}.
+      case is not exhaustive for enum #{single_target.type}.
 
-        Missing members:
-         - #{single_target.members.map(&.name).join("\n - ")}
-        MSG
+      Missing members:
+       - #{single_target.members.map(&.name).join("\n - ")}
+      MSG
     else
       # No specific error messages for non-single types
     end
 
-    if all_provable_patterns && !has_flags_enum
-      node.raise <<-MSG
-        case is not exhaustive.
+    msg = <<-MSG
+      case is not exhaustive.
 
-        Missing cases:
-         - #{targets.flat_map(&.missing_cases).join("\n - ")}
-        MSG
+      Missing cases:
+       - #{targets.flat_map(&.missing_cases).join("\n - ")}
+      MSG
+
+    if flags_enum
+      msg += "\n\n" + flags_enum_message(flags_enum)
     end
 
-    # Otherwise we can't prove exhaustiveness and an `else` clause is required
-    node.raise <<-MSG
-      can't prove case is exhaustive.
-
-      Please add an `else` clause.
-      MSG
+    node.raise msg
   end
 
   private def check_tuple_exp(node, cond)
     elements = cond.elements
 
     # No type on condition means we couldn't type it so we can't
-    # check exhasutiveness.
+    # check exhaustiveness.
     return unless elements.all? &.type?
 
     element_types = elements.map &.type
@@ -126,13 +108,19 @@ struct Crystal::ExhaustivenessChecker
       expand_types(element_type)
     end
 
-    # Compute all the targets that we must cover
-    targets = compute_targets(all_expanded_types)
+    # Is any type a @[Flags] enum?
+    flags_enum = nil
+    all_expanded_types.each do |types|
+      types.each do |type|
+        if type.is_a?(EnumType) && type.flags?
+          flags_enum = type
+          break
+        end
+      end
+      break if flags_enum
+    end
 
-    # Are all patterns things that we can handle?
-    # For example an integer literal is something that we don't
-    # take into account for exhaustiveness.
-    all_provable_patterns = true
+    targets = compute_targets(all_expanded_types)
 
     # Start checking each `when`...
     node.whens.each do |a_when|
@@ -142,12 +130,7 @@ struct Crystal::ExhaustivenessChecker
             when_pattern(when_cond_exp)
           end
 
-          if patterns.all?
-            patterns = patterns.map &.not_nil!
-            targets.each &.cover(patterns, 0)
-          else
-            all_provable_patterns = false
-          end
+          targets.each &.cover(patterns, 0)
         else
           # Not a tuple literal so we don't care
           # TODO: one could put `Tuple` or `Object` here and that would make
@@ -162,26 +145,29 @@ struct Crystal::ExhaustivenessChecker
     # If we covered all types, we are done.
     return if targets.empty?
 
-    # If all patterns are stuff we can handle, show the missing cases
-    if all_provable_patterns
-      missing_cases = targets
-        .flat_map(&.missing_cases)
-        .map { |cases| "{#{cases}}" }
-        .join("\n - ")
+    missing_cases = targets
+      .flat_map(&.missing_cases)
+      .map { |cases| "{#{cases}}" }
+      .join("\n - ")
 
-      node.raise <<-MSG
-        case is not exhaustive.
+    msg = <<-MSG
+      case is not exhaustive.
 
-        Missing cases:
-         - #{missing_cases}
-        MSG
+      Missing cases:
+       - #{missing_cases}
+      MSG
+
+    if flags_enum
+      msg += "\n\n" + flags_enum_message(flags_enum)
     end
 
-    # Otherwise we can't prove exhaustiveness and an `else` clause is required
-    node.raise <<-MSG
-      can't prove case is exhaustive.
+    node.raise msg
+  end
 
-      Please add an `else` clause.
+  private def flags_enum_message(flags_enum)
+    <<-MSG
+      Note that @[Flags] enum can't be proved to be exhaustive by matching against enum members.
+      In particular, the enum #{flags_enum} can't be proved to be exhaustive like that.
       MSG
   end
 
@@ -193,7 +179,7 @@ struct Crystal::ExhaustivenessChecker
     end
   end
 
-  # Retuens an array of all the types inside `type`:
+  # Returns an array of all the types inside `type`:
   # for unions it's all the union types, otherwise it's just that type.
   private def expand_types(type)
     if type.is_a?(UnionType)
@@ -236,20 +222,26 @@ struct Crystal::ExhaustivenessChecker
         # if it's an enum member, try to remove it from the targets.
         EnumMemberPattern.new(target_const)
       else
-        nil
+        when_cond.raise "can't use constant values in exhaustive case, only constant types"
       end
+    when Generic
+      TypePattern.new(when_cond.type.devirtualize)
     when Call
+      obj = when_cond.obj
+
       # Check if it's something like `.foo?` to remove that member from the ones
       # we must cover.
       # Note: a user could override the meaning of such methods.
       # In the future it would be wise to mark these as non-redefinable
       # so this checks are sounds.
-      if when_cond.obj.is_a?(ImplicitObj) &&
-         when_cond.args.empty? && when_cond.named_args.nil? &&
-         !when_cond.block && !when_cond.block_arg && when_cond.name.ends_with?('?')
+      if obj.is_a?(ImplicitObj) && when_cond.name.ends_with?('?')
         EnumMemberNamePattern.new(when_cond.name.rchop)
+      elsif obj.is_a?(Path) && when_cond.name == "class"
+        TypePattern.new(obj.type.metaclass.devirtualize)
+      elsif obj.is_a?(Generic) && when_cond.name == "class"
+        TypePattern.new(obj.type.metaclass.devirtualize)
       else
-        nil
+        raise "Bug: unknown pattern in exhaustive case"
       end
     when BoolLiteral
       BoolPattern.new(when_cond.value)
@@ -258,7 +250,7 @@ struct Crystal::ExhaustivenessChecker
     when Underscore
       UnderscorePattern.new
     else
-      nil
+      raise "Bug: unknown pattern in exhaustive case"
     end
   end
 
@@ -295,7 +287,7 @@ struct Crystal::ExhaustivenessChecker
     end
 
     # Tries to cover this target with the given pattern.
-    # By default, a TypePatteren will cover a target.
+    # By default, a TypePattern will cover a target.
     # Other, more specific, patterns will partially cover a target.
     def cover(pattern : Pattern) : Nil
       case pattern
@@ -411,8 +403,9 @@ struct Crystal::ExhaustivenessChecker
         end
 
         missing_cases_per_bool.each do |bool, missing_cases|
-          next if missing_cases.empty?
-          gathered_missing_cases << "#{bool}, #{missing_cases.join(", ")}"
+          missing_cases.each do |missing_case|
+            gathered_missing_cases << "#{bool}, #{missing_case}"
+          end
         end
 
         gathered_missing_cases
@@ -541,8 +534,9 @@ struct Crystal::ExhaustivenessChecker
         end
 
         missing_cases_per_member.each do |member, missing_cases|
-          next if missing_cases.empty?
-          gathered_missing_cases << "#{member}, #{missing_cases.join(", ")}"
+          missing_cases.each do |missing_case|
+            gathered_missing_cases << "#{member}, #{missing_case}"
+          end
         end
 
         gathered_missing_cases

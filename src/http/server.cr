@@ -73,7 +73,7 @@ require "log"
 #
 # ## Binding to sockets
 #
-# The server can be bound to one ore more server sockets (see `#bind`)
+# The server can be bound to one or more server sockets (see `#bind`)
 #
 # Supported types:
 #
@@ -389,7 +389,7 @@ class HTTP::Server
     when "tls", "ssl"
       address = Socket::IPAddress.parse(uri)
       {% unless flag?(:without_openssl) %}
-        context = OpenSSL::SSL::Context::Server.from_hash(HTTP::Params.parse(uri.query || ""))
+        context = OpenSSL::SSL::Context::Server.from_hash(uri.query_params)
 
         bind_tls(address, context)
       {% else %}
@@ -444,7 +444,7 @@ class HTTP::Server
   end
 
   # Starts the server. Blocks until the server is closed.
-  def listen
+  def listen : Nil
     raise "Can't re-start closed server" if closed?
     raise "Can't start server with no sockets to listen to, use HTTP::Server#bind first" if @sockets.empty?
     raise "Can't start running server" if listening?
@@ -454,18 +454,20 @@ class HTTP::Server
 
     @sockets.each do |socket|
       spawn do
-        until closed?
+        loop do
           io = begin
             socket.accept?
           rescue e
             handle_exception(e)
-            nil
+            next
           end
 
           if io
             # a non nillable version of the closured io
             _io = io
             spawn handle_client(_io)
+          else
+            break
           end
         end
       ensure
@@ -478,7 +480,7 @@ class HTTP::Server
 
   # Gracefully terminates the server. It will process currently accepted
   # requests, but it won't accept new connections.
-  def close
+  def close : Nil
     raise "Can't close server, it's already closed" if closed?
 
     @closed = true
@@ -511,6 +513,13 @@ class HTTP::Server
     {% end %}
 
     @processor.process(io, io)
+  ensure
+    {% begin %}
+      begin
+        io.close
+      rescue IO::Error{% unless flag?(:without_openssl) %} | OpenSSL::SSL::Error{% end %}
+      end
+    {% end %}
   end
 
   # This method handles exceptions raised at `Socket#accept?`.

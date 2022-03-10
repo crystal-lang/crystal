@@ -29,7 +29,7 @@ class UNIXSocket < Socket
   end
 
   # Creates a UNIXSocket from an already configured raw file descriptor
-  def initialize(*, fd : Int32, type : Type = Type::STREAM, @path : String? = nil)
+  def initialize(*, fd : Handle, type : Type = Type::STREAM, @path : String? = nil)
     super fd, Family::UNIX, type, Protocol::IP
   end
 
@@ -46,7 +46,7 @@ class UNIXSocket < Socket
     end
   end
 
-  # Returns a pair of unamed UNIX sockets.
+  # Returns a pair of unnamed UNIX sockets.
   #
   # ```
   # require "socket"
@@ -62,7 +62,7 @@ class UNIXSocket < Socket
   # left.puts "message"
   # left.gets # => "message"
   # ```
-  def self.pair(type : Type = Type::STREAM)
+  def self.pair(type : Type = Type::STREAM) : {UNIXSocket, UNIXSocket}
     fds = uninitialized Int32[2]
 
     socktype = type.value
@@ -77,7 +77,7 @@ class UNIXSocket < Socket
     {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}
   end
 
-  # Creates a pair of unamed UNIX sockets (see `pair`) and yields them to the
+  # Creates a pair of unnamed UNIX sockets (see `pair`) and yields them to the
   # block. Eventually closes both sockets when the block returns.
   #
   # Returns the value of the block.
@@ -91,11 +91,11 @@ class UNIXSocket < Socket
     end
   end
 
-  def local_address
+  def local_address : Socket::UNIXAddress
     UNIXAddress.new(path.to_s)
   end
 
-  def remote_address
+  def remote_address : Socket::UNIXAddress
     UNIXAddress.new(path.to_s)
   end
 

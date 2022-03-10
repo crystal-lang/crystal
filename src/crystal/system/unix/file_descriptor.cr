@@ -64,7 +64,10 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_info
-    if LibC.fstat(fd, out stat) != 0
+    stat = uninitialized LibC::Stat
+    ret = File.fstat(fd, pointerof(stat))
+
+    if ret != 0
       raise IO::Error.from_errno("Unable to get info")
     end
 
@@ -80,7 +83,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_pos
-    pos = LibC.lseek(fd, 0, IO::Seek::Current)
+    pos = LibC.lseek(fd, 0, IO::Seek::Current).to_i64
     raise IO::Error.from_errno "Unable to tell" if pos == -1
     pos
   end
@@ -90,7 +93,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    {% if LibC.methods.includes? "dup3".id %}
+    {% if LibC.has_method?("dup3") %}
       # dup doesn't copy the CLOEXEC flag, so copy it manually using dup3
       flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
       if LibC.dup3(other.fd, fd, flags) == -1
@@ -122,7 +125,7 @@ module Crystal::System::FileDescriptor
     file_descriptor_close
   end
 
-  def file_descriptor_close
+  def file_descriptor_close : Nil
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
     _fd = @volatile_fd.swap(-1)
@@ -153,12 +156,32 @@ module Crystal::System::FileDescriptor
   end
 
   def self.pread(fd, buffer, offset)
-    bytes_read = LibC.pread(fd, buffer, buffer.size, offset)
+    bytes_read = LibC.pread(fd, buffer, buffer.size, offset).to_i64
 
     if bytes_read == -1
       raise IO::Error.from_errno "Error reading file"
     end
 
     bytes_read
+  end
+
+  def self.from_stdio(fd)
+    # If we have a TTY for stdin/out/err, it is possibly a shared terminal.
+    # We need to reopen it to use O_NONBLOCK without causing other programs to break
+
+    # Figure out the terminal TTY name. If ttyname fails we have a non-tty, or something strange.
+    # For non-tty we set flush_on_newline to true for reasons described in STDOUT and STDERR docs.
+    path = uninitialized UInt8[256]
+    ret = LibC.ttyname_r(fd, path, 256)
+    return IO::FileDescriptor.new(fd).tap(&.flush_on_newline=(true)) unless ret == 0
+
+    clone_fd = LibC.open(path, LibC::O_RDWR)
+    return IO::FileDescriptor.new(fd).tap(&.flush_on_newline=(true)) if clone_fd == -1
+
+    # We don't buffer output for TTY devices to see their output right away
+    io = IO::FileDescriptor.new(clone_fd)
+    io.close_on_exec = true
+    io.sync = true
+    io
   end
 end

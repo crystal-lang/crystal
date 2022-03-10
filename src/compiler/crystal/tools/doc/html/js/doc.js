@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  var repositoryName = document.querySelector('#repository-name').getAttribute('content');
+  var repositoryName = document.querySelector('[name=repository-name]').getAttribute('content');
   var typesList = document.querySelector('.types-list');
   var searchInput = document.querySelector('.search-input');
   var parents = document.querySelectorAll('.types-list li.parent');
@@ -186,11 +186,10 @@ document.addEventListener('DOMContentLoaded', function() {
   var scrollToEntryFromLocationHash = function() {
     var hash = window.location.hash;
     if (hash) {
-      var targetAnchor = unescape(hash.substr(1));
-      var targetEl = document.querySelectorAll('.entry-detail[id="' + targetAnchor + '"]');
-
-      if (targetEl && targetEl.length > 0) {
-        targetEl[0].offsetParent.scrollTop = targetEl[0].offsetTop;
+      var targetAnchor = decodeURI(hash.substr(1));
+      var targetEl = document.getElementById(targetAnchor)
+      if (targetEl) {
+        targetEl.offsetParent.scrollTop = targetEl.offsetTop;
       }
     }
   };

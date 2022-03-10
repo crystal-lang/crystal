@@ -6,9 +6,9 @@ set +x
 # * `failed codegen` annotates specs that error in the compiler.
 #   This is mostly caused by some API not being ported to win32 (either the spec
 #   target itself or some tools used by the spec).
-# * `failed linking` annotats specs that compile but don't link (at least not on
+# * `failed linking` annotates specs that compile but don't link (at least not on
 #   basis of the libraries from *Porting to Windows* guide).
-#   Most failers are caused by missing libraries (libxml2, libyaml, libgmp,
+#   Most failures are caused by missing libraries (libxml2, libyaml, libgmp,
 #   libllvm, libz, libssl), but there also seem to be some incompatibilities
 #   with the existing libraries.
 # * `failed to run` annotates specs that compile and link but don't properly

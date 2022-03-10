@@ -1,19 +1,7 @@
 require "../spec_helper"
 
-private def compile_and_run_file(source_file)
-  with_tempfile("executable_file") do |executable_file|
-    Process.run("bin/crystal", ["build", "--debug", "-o", executable_file, source_file])
-    File.exists?(executable_file).should be_true
-
-    output, error = IO::Memory.new, IO::Memory.new
-    Process.run executable_file, output: output, error: error
-
-    {output.to_s, error.to_s}
-  end
-end
-
 describe "Backtrace" do
-  it "prints file line:colunm" do
+  it "prints file line:column" do
     source_file = datapath("backtrace_sample")
 
     # CallStack tries to make files relative to the current dir,
@@ -22,25 +10,46 @@ describe "Backtrace" do
     current_dir += File::SEPARATOR unless current_dir.ends_with?(File::SEPARATOR)
     source_file = source_file.lchop(current_dir)
 
-    output, _ = compile_and_run_file(source_file)
+    _, output, _ = compile_and_run_file(source_file)
 
-    # resolved file line:column
-    output.should match(/#{source_file}:3:10 in 'callee1'/)
-
-    unless output =~ /#{source_file}:13:5 in 'callee3'/
-      fail "didn't find callee3 in the backtrace"
-    end
+    # resolved file:line:column (no column for windows PDB because of poor
+    # support in general)
+    {% if flag?(:win32) %}
+      output.should match(/^#{Regex.escape(source_file)}:3 in 'callee1'/m)
+      output.should match(/^#{Regex.escape(source_file)}:13 in 'callee3'/m)
+    {% else %}
+      output.should match(/^#{Regex.escape(source_file)}:3:10 in 'callee1'/m)
+      output.should match(/^#{Regex.escape(source_file)}:13:5 in 'callee3'/m)
+    {% end %}
 
     # skipped internal details
-    output.should_not match(/src\/callstack\.cr/)
-    output.should_not match(/src\/exception\.cr/)
-    output.should_not match(/src\/raise\.cr/)
+    output.should_not contain("src/callstack.cr")
+    output.should_not contain("src/exception.cr")
+    output.should_not contain("src/raise.cr")
+  end
+
+  it "doesn't relativize paths outside of current dir (#10169)" do
+    with_tempfile("source_file") do |source_file|
+      source_path = Path.new(source_file)
+      source_path.absolute?.should be_true
+
+      File.write source_file, <<-EOF
+        def callee1
+          puts caller.join('\n')
+        end
+
+        callee1
+        EOF
+      _, output, _ = compile_and_run_file(source_file)
+
+      output.should match /\A(#{Regex.escape(source_path.to_s)}):/
+    end
   end
 
   it "prints exception backtrace to stderr" do
     sample = datapath("exception_backtrace_sample")
 
-    output, error = compile_and_run_file(sample)
+    _, output, error = compile_and_run_file(sample)
 
     output.to_s.empty?.should be_true
     error.to_s.should contain("IndexError")
@@ -49,9 +58,30 @@ describe "Backtrace" do
   it "prints crash backtrace to stderr" do
     sample = datapath("crash_backtrace_sample")
 
-    output, error = compile_and_run_file(sample)
+    _, output, error = compile_and_run_file(sample)
 
     output.to_s.empty?.should be_true
     error.to_s.should contain("Invalid memory access")
   end
+
+  {% unless flag?(:win32) %}
+    # In windows, the current working directory of the process cannot be
+    # removed. So we probably don't need to test that.
+    # https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/rmdir-wrmdir?view=msvc-170#remarks
+    it "print exception with non-existing PWD" do
+      source_file = datapath("blank_test_file.txt")
+      compile_file(source_file) do |executable_file|
+        output, error = IO::Memory.new, IO::Memory.new
+        with_tempfile("non-existent") do |path|
+          Dir.mkdir path
+          Dir.cd(path) do
+            Dir.delete(path)
+            status = Process.run executable_file
+
+            status.success?.should be_true
+          end
+        end
+      end
+    end
+  {% end %}
 end

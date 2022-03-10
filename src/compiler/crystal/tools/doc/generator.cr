@@ -1,32 +1,24 @@
+require "../../../../../lib/markd/src/markd"
+require "crystal/syntax_highlighter/html"
+
 class Crystal::Doc::Generator
   getter program : Program
 
   @base_dir : String
-  @repository : String? = nil
-  getter repository_name = ""
   getter project_info
 
   # Adding a flag and associated css class will add support in parser
   FLAG_COLORS = {
-    "BUG"        => "red",
-    "DEPRECATED" => "red",
-    "FIXME"      => "yellow",
-    "NOTE"       => "purple",
-    "OPTIMIZE"   => "green",
-    "TODO"       => "orange",
+    "BUG"          => "red",
+    "DEPRECATED"   => "red",
+    "WARNING"      => "yellow",
+    "EXPERIMENTAL" => "lime",
+    "FIXME"        => "yellow",
+    "NOTE"         => "purple",
+    "OPTIMIZE"     => "green",
+    "TODO"         => "orange",
   }
   FLAGS = FLAG_COLORS.keys
-
-  GIT_REMOTE_PATTERNS = {
-    /github\.com(?:\:|\/)(?<user>(?:\w|-|_)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:\.git)?\s/ => {
-      repository: "https://github.com/%{user}/%{repo}/blob/%{rev}",
-      repo_name:  "github.com/%{user}/%{repo}",
-    },
-    /gitlab\.com(?:\:|\/)(?<user>(?:\w|-|_|\.)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:\.git)?\s/ => {
-      repository: "https://gitlab.com/%{user}/%{repo}/blob/%{rev}",
-      repo_name:  "gitlab.com/%{user}/%{repo}",
-    },
-  }
 
   def self.new(program : Program, included_dirs : Array(String))
     new(program, included_dirs, ".", "html", nil, "1.0", "never", ProjectInfo.new("test", "0.0.0-test"))
@@ -39,8 +31,6 @@ class Crystal::Doc::Generator
                  @project_info : ProjectInfo)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
-    @repo_name = ""
-    compute_repository
   end
 
   def run
@@ -80,7 +70,7 @@ class Crystal::Doc::Generator
 
   def generate_docs_json(program_type, types)
     readme = read_readme
-    json = Main.new(readme, Type.new(self, @program), repository_name)
+    json = Main.new(readme, Type.new(self, @program), project_info)
     puts json
   end
 
@@ -97,14 +87,16 @@ class Crystal::Doc::Generator
 
     File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, project_info)
 
-    main_index = Main.new(raw_body, Type.new(self, @program), repository_name)
+    main_index = Main.new(raw_body, Type.new(self, @program), project_info)
     File.write File.join(@output_dir, "index.json"), main_index
     File.write File.join(@output_dir, "search-index.js"), main_index.to_jsonp
+
+    File.write File.join(@output_dir, "404.html"), MainTemplate.new(Error404Template.new.to_s, types, project_info)
   end
 
   def generate_sitemap(types)
     if sitemap_base_url = @sitemap_base_url
-      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, "1.0", "never")
+      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, @sitemap_priority, @sitemap_changefreq)
     end
   end
 
@@ -143,8 +135,13 @@ class Crystal::Doc::Generator
 
   def must_include?(type : Crystal::Type)
     return false if type.private?
-    return false if nodoc?(type, type.locations.try(&.first?))
+    return false if nodoc? type
     return true if crystal_builtin?(type)
+
+    # Don't include types whose namespace is :nodoc:
+    type.each_namespace do |ns|
+      return false if nodoc? ns
+    end
 
     # Don't include lib types or types inside a lib type
     return false if type.is_a?(Crystal::LibType) || type.namespace.is_a?(LibType)
@@ -159,7 +156,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_def : Crystal::Def)
-    return false if nodoc?(a_def, a_def.location)
+    return false if nodoc? a_def
 
     must_include? a_def.location
   end
@@ -169,7 +166,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_macro : Crystal::Macro)
-    return false if nodoc?(a_macro, a_macro.location)
+    return false if nodoc? a_macro
 
     must_include? a_macro.location
   end
@@ -179,7 +176,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(const : Crystal::Const)
-    return false if nodoc?(const, const.locations.try(&.first?))
+    return false if nodoc? const
     return true if crystal_builtin?(const)
 
     const.locations.try &.any? { |location| must_include? location }
@@ -209,32 +206,13 @@ class Crystal::Doc::Generator
     toplevel_items.any? { |item| must_include? item }
   end
 
-  # TODO: remove after 0.34.0
-  # Needed because there are multiple passes while generating docs
-  # and we want to avoid duplicate warnings per location
-  @nodoc_warnings_locations = Set(String).new
-
-  def nodoc?(str : String?, location : Location?) : Bool
+  def nodoc?(str : String?) : Bool
     return false if !str || !@program.wants_doc?
-
-    # TODO: remove after 0.34.0
-    if str.starts_with?("nodoc")
-      if location
-        # Show one line above to highlight the nodoc line
-        location = Location.new(location.filename, location.line_number - 1, location.column_number)
-      end
-
-      if !location || @nodoc_warnings_locations.add?(location.to_s)
-        @program.report_warning_at location, "`nodoc` is no longer supported. Use `:nodoc:` instead"
-      end
-      return true
-    end
-
     str.starts_with?(":nodoc:")
   end
 
-  def nodoc?(obj, location : Location?)
-    nodoc? obj.doc.try(&.strip), location
+  def nodoc?(obj)
+    nodoc? obj.doc.try &.strip
   end
 
   def crystal_builtin?(type)
@@ -306,7 +284,7 @@ class Crystal::Doc::Generator
   def summary(obj : Type | Method | Macro | Constant)
     doc = obj.doc
 
-    return if !doc && !obj.annotations(@program.deprecated_annotation)
+    return if !doc && !has_doc_annotations?(obj)
 
     summary obj, doc || ""
   end
@@ -325,18 +303,27 @@ class Crystal::Doc::Generator
   def doc(obj : Type | Method | Macro | Constant)
     doc = obj.doc
 
-    return if !doc && !obj.annotations(@program.deprecated_annotation)
+    return if !doc && !has_doc_annotations?(obj)
 
     doc obj, doc || ""
+  end
+
+  def has_doc_annotations?(obj)
+    obj.annotations(@program.deprecated_annotation) || obj.annotations(@program.experimental_annotation)
   end
 
   def doc(context, string)
     string = isolate_flag_lines string
     string += build_flag_lines_from_annotations context
-    markdown = String.build do |io|
-      Markdown.parse string, Markdown::DocRenderer.new(context, io)
-    end
+    markdown = render_markdown(context, string)
     generate_flags markdown
+  end
+
+  private def render_markdown(context, source)
+    options = ::Markd::Options.new
+    document = ::Markd::Parser.parse(source, options)
+    renderer = MarkdDocRenderer.new(context, options)
+    renderer.render(document).chomp
   end
 
   def fetch_doc_lines(doc : String) : String
@@ -360,7 +347,7 @@ class Crystal::Doc::Generator
   def isolate_flag_lines(string)
     flag_regexp = /^ ?(#{FLAGS.join('|')}):?/
     String.build do |io|
-      string.each_line(chomp: false).join("", io) do |line, io|
+      string.each_line(chomp: false).join(io) do |line, io|
         if line =~ flag_regexp
           io << '\n' << line
         else
@@ -380,115 +367,45 @@ class Crystal::Doc::Generator
           io << "DEPRECATED: #{DeprecatedAnnotation.from(ann).message}\n\n"
         end
       end
+
+      if anns = context.annotations(@program.experimental_annotation)
+        anns.each do |ann|
+          io << "\n\n" if first
+          first = false
+          io << "EXPERIMENTAL: #{ExperimentalAnnotation.from(ann).message}\n\n"
+        end
+      end
     end
   end
 
-  def compute_repository
-    # check whether inside git work-tree
-    `git rev-parse --is-inside-work-tree >/dev/null 2>&1`
-    return unless $?.success?
-
-    remotes = `git remote -v`
-    return unless $?.success?
-
-    git_matches = remotes.each_line.compact_map do |line|
-      GIT_REMOTE_PATTERNS.each_key.compact_map(&.match(line)).first?
-    end.to_a
-
-    origin = git_matches.find(&.string.starts_with?("origin")) || git_matches.first?
-    return unless origin
-
-    user = origin["user"]
-    repo = origin["repo"]
-    rev = `git rev-parse HEAD`.chomp
-
-    info = GIT_REMOTE_PATTERNS[origin.regex]
-    @repository = info[:repository] % {user: user, repo: repo, rev: rev}
-    @repository_name = info[:repo_name] % {user: user, repo: repo}
-  end
-
-  def source_link(node)
-    location = relative_location node
+  def relative_location(node)
+    location = RelativeLocation.from(node, @base_dir)
     return unless location
-
-    filename = relative_filename location
-    return unless filename
-
-    "#{@repository}#{filename}#L#{location.line_number}"
-  end
-
-  def relative_location(node : ASTNode)
-    relative_location node.location
-  end
-
-  def relative_location(location : Location?)
-    return unless location
-
-    repository = @repository
-    return unless repository
-
-    filename = location.filename
-    if filename.is_a?(VirtualFile)
-      location = filename.expanded_location
-    end
-
+    location.url = project_info.source_url(location)
     location
   end
 
-  def relative_filename(location)
-    filename = location.filename
-    return unless filename.is_a?(String)
-    return unless filename.starts_with? @base_dir
-    filename[@base_dir.size..-1]
-  end
-
-  class RelativeLocation
-    property show_line_number
-    getter filename, line_number, url
-
-    def initialize(@filename : String, @line_number : Int32, @url : String?, @show_line_number : Bool)
-    end
-
-    def to_json(builder : JSON::Builder)
-      builder.object do
-        builder.field "filename", filename
-        builder.field "line_number", line_number
-        builder.field "url", url
-      end
-    end
-  end
-
-  SRC_SEP = "src#{File::SEPARATOR}"
-
   def relative_locations(type)
-    repository = @repository
     locations = [] of RelativeLocation
     type.locations.try &.each do |location|
-      location = relative_location location
+      location = RelativeLocation.from(location, @base_dir)
       next unless location
-
-      filename = relative_filename location
+      filename = location.filename
       next unless filename
 
-      url = "#{repository}#{filename}" if repository
-
-      filename = filename[1..-1] if filename.starts_with? File::SEPARATOR
-      filename = filename[4..-1] if filename.starts_with? SRC_SEP
+      location.url = project_info.source_url(location)
 
       # Prevent identical link generation in the "Defined in:" section in the docs because of macros
-      next if locations.any? { |loc| loc.filename == filename && loc.line_number == location.line_number }
+      next if locations.includes?(location)
 
-      show_line_number = locations.any? do |location|
-        if location.filename == filename
-          location.show_line_number = true
-          true
-        else
-          false
-        end
+      same_file_location = locations.find { |loc| loc.filename == filename }
+      if same_file_location
+        location.show_line_number = true
+        same_file_location.show_line_number = true
       end
 
-      locations << RelativeLocation.new(filename, location.line_number, url, show_line_number)
+      locations << location
     end
-    locations
+    locations.sort
   end
 end

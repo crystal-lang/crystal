@@ -2,14 +2,27 @@
   require "crystal/rw_lock"
 {% end %}
 
-{% unless flag?(:win32) %}
+# MUSL: On musl systems, libpthread is empty. The entire library is already included in libc.
+# The empty library is only available for POSIX compatibility. We don't need to link it.
+#
+# Darwin: `libpthread` is provided as part of `libsystem`. There's no reason to link it explicitly.
+#
+# Interpreter: Starting with glibc 2.34, `pthread` is integrated into `libc`
+# and may not even be available as a separate shared library.
+# There's always a static library for compiled mode, but `Crystal::Loader` does not support
+# static libraries. So we just skip `pthread` entirely. The symbols are still
+# available in the interpreter because they are loaded in the compiler.
+#
+# OTHERS: On other systems, we add the linker annotation here to make sure libpthread is loaded
+# before libgc which looks up symbols from libpthread.
+{% unless flag?(:win32) || flag?(:musl) || flag?(:darwin) || (flag?(:interpreted) && flag?(:gnu)) %}
   @[Link("pthread")]
 {% end %}
 
 {% if flag?(:freebsd) || flag?(:dragonfly) %}
   @[Link("gc-threaded")]
 {% else %}
-  @[Link("gc", static: true)]
+  @[Link("gc")]
 {% end %}
 
 lib LibGC
@@ -54,7 +67,7 @@ lib LibGC
   fun is_heap_ptr = GC_is_heap_ptr(pointer : Void*) : Int
   fun general_register_disappearing_link = GC_general_register_disappearing_link(link : Void**, obj : Void*) : Int
 
-  type Finalizer = Void*, Void* ->
+  alias Finalizer = Void*, Void* ->
   fun register_finalizer = GC_register_finalizer(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
   fun register_finalizer_ignore_self = GC_register_finalizer_ignore_self(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
   fun invoke_finalizers = GC_invoke_finalizers : Int
@@ -120,7 +133,7 @@ module GC
     LibGC.realloc(ptr, size)
   end
 
-  def self.init
+  def self.init : Nil
     {% unless flag?(:win32) %}
       LibGC.set_handle_fork(1)
     {% end %}
@@ -128,6 +141,16 @@ module GC
 
     LibGC.set_start_callback ->do
       GC.lock_write
+    end
+    # By default the GC warns on big allocations/reallocations. This
+    # is of limited use and pollutes program output with warnings.
+    LibGC.set_warn_proc ->(msg, v) do
+      start = "GC Warning: Repeated allocation of very large block"
+      # This implements `String#starts_with?` without allocating a `String` (#11728)
+      format_string = Slice.new(msg, Math.min(LibC.strlen(msg), start.bytesize))
+      unless format_string == start.to_slice
+        LibC.printf msg, v
+      end
     end
   end
 
@@ -147,11 +170,11 @@ module GC
     LibGC.disable
   end
 
-  def self.free(pointer : Void*)
+  def self.free(pointer : Void*) : Nil
     LibGC.free(pointer)
   end
 
-  def self.add_finalizer(object : Reference)
+  def self.add_finalizer(object : Reference) : Nil
     add_finalizer_impl(object)
   end
 
@@ -221,7 +244,7 @@ module GC
     # :nodoc:
     def self.pthread_join(thread : LibC::PthreadT) : Void*
       ret = LibGC.pthread_join(thread, out value)
-      raise RuntimeError.from_errno("pthread_join", Errno.new(ret)) unless ret == 0
+      raise RuntimeError.from_os_error("pthread_join", Errno.new(ret)) unless ret == 0
       value
     end
 
@@ -283,12 +306,12 @@ module GC
   end
 
   # :nodoc:
-  def self.push_stack(stack_top, stack_bottom)
+  def self.push_stack(stack_top, stack_bottom) : Nil
     LibGC.push_all_eager(stack_top, stack_bottom)
   end
 
   # :nodoc:
-  def self.before_collect(&block)
+  def self.before_collect(&block) : Nil
     @@curr_push_other_roots = block
     @@prev_push_other_roots = LibGC.get_push_other_roots
 
@@ -299,20 +322,22 @@ module GC
   end
 
   # pushes the stack of pending fibers when the GC wants to collect memory:
-  GC.before_collect do
-    Fiber.unsafe_each do |fiber|
-      fiber.push_gc_roots unless fiber.running?
-    end
-
-    {% if flag?(:preview_mt) %}
-      Thread.unsafe_each do |thread|
-        if scheduler = thread.@scheduler
-          fiber = scheduler.@current
-          GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
-        end
+  {% unless flag?(:interpreted) %}
+    GC.before_collect do
+      Fiber.unsafe_each do |fiber|
+        fiber.push_gc_roots unless fiber.running?
       end
-    {% end %}
 
-    GC.unlock_write
-  end
+      {% if flag?(:preview_mt) %}
+        Thread.unsafe_each do |thread|
+          if scheduler = thread.@scheduler
+            fiber = scheduler.@current
+            GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
+          end
+        end
+      {% end %}
+
+      GC.unlock_write
+    end
+  {% end %}
 end

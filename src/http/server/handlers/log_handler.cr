@@ -5,15 +5,10 @@ require "log"
 class HTTP::LogHandler
   include HTTP::Handler
 
-  @[Deprecated("Use `new([Log])` instead")]
-  def initialize(io : IO)
-    @log = Log.new("http.server", Log::IOBackend.new(io), :info)
-  end
-
   def initialize(@log = Log.for("http.server"))
   end
 
-  def call(context)
+  def call(context) : Nil
     start = Time.monotonic
 
     begin
@@ -24,7 +19,18 @@ class HTTP::LogHandler
 
       req = context.request
       res = context.response
-      @log.info { "#{req.remote_address || "-"} - #{req.method} #{req.resource} #{req.version} - #{res.status_code} (#{elapsed_text})" }
+
+      addr =
+        case remote_address = req.remote_address
+        when nil
+          "-"
+        when Socket::IPAddress
+          remote_address.address
+        else
+          remote_address
+        end
+
+      @log.info { "#{addr} - #{req.method} #{req.resource} #{req.version} - #{res.status_code} (#{elapsed_text})" }
     end
   end
 

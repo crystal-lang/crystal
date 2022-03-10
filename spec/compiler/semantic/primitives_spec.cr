@@ -34,7 +34,7 @@ describe "Semantic: primitives" do
   end
 
   it "types char ord" do
-    assert_type("'a'.ord") { int32 }
+    assert_type("'a'.ord", inject_primitives: true) { int32 }
   end
 
   it "types a symbol" do
@@ -58,7 +58,7 @@ describe "Semantic: primitives" do
   end
 
   it "types 1 + 2" do
-    assert_type("1 + 2") { int32 }
+    assert_type("1 + 2", inject_primitives: true) { int32 }
   end
 
   it "errors when comparing void (#225)" do
@@ -140,7 +140,7 @@ describe "Semantic: primitives" do
       end
 
       Test.foo.to_i
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "can invoke binary on primitive typedef (#614)" do
@@ -151,7 +151,7 @@ describe "Semantic: primitives" do
       end
 
       Test.foo + 1
-      )) { types["Test"].types["K"] }
+      ), inject_primitives: true) { types["Test"].types["K"] }
   end
 
   it "can invoke binary on primitive typedef (2) (#614)" do
@@ -162,7 +162,7 @@ describe "Semantic: primitives" do
       end
 
       Test.foo.unsafe_shl 1
-      )) { types["Test"].types["K"] }
+      ), inject_primitives: true) { types["Test"].types["K"] }
   end
 
   it "errors if using instance variable inside primitive type" do
@@ -212,19 +212,18 @@ describe "Semantic: primitives" do
       "expected Primitive argument to be a symbol literal"
   end
 
-  it "errors if @[Primitive] method has body" do
-    assert_error %(
+  it "allows @[Primitive] on method that has body" do
+    assert_no_errors %(
       struct Int32
         @[Primitive(:binary)]
         def +(other : Int32) : Int32
           1
         end
       end
-      ),
-      "method marked as Primitive must have an empty body"
+      )
   end
 
-  it "types va_arg primitive" do
+  pending_win32 "types va_arg primitive" do
     assert_type(%(
       struct VaList
         @[Primitive(:va_arg)]

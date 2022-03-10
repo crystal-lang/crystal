@@ -1,6 +1,8 @@
 require "c/winbase"
-require "winerror"
+require "c/timezoneapi"
+require "c/windows"
 require "./zone_names"
+require "./windows_registry"
 
 module Crystal::System::Time
   # Win32 epoch is 1601-01-01 00:00:00 UTC
@@ -33,6 +35,15 @@ module Crystal::System::Time
   def self.from_filetime(filetime) : ::Time
     seconds, nanoseconds = filetime_to_seconds_and_nanoseconds(filetime)
     ::Time.utc(seconds: seconds, nanoseconds: nanoseconds)
+  end
+
+  def self.to_filetime(time : ::Time) : LibC::FILETIME
+    span = time - ::Time.utc(seconds: WINDOWS_EPOCH_IN_SECONDS, nanoseconds: 0)
+    ticks = span.to_i.to_u64 * FILETIME_TICKS_PER_SECOND + span.nanoseconds // NANOSECONDS_PER_FILETIME_TICK
+    filetime = uninitialized LibC::FILETIME
+    filetime.dwHighDateTime = (ticks >> 32).to_u32
+    filetime.dwLowDateTime = ticks.to_u32!
+    filetime
   end
 
   def self.filetime_to_f64secs(filetime) : Float64
@@ -145,13 +156,13 @@ module Crystal::System::Time
 
   # Normalizes the names of the standard and dst zones.
   private def self.normalize_zone_names(info : LibC::TIME_ZONE_INFORMATION) : Tuple(String, String)
-    stdname = String.from_utf16(info.standardName.to_slice)
+    stdname, _ = String.from_utf16(info.standardName.to_slice.to_unsafe)
 
     if normalized_names = WINDOWS_ZONE_NAMES[stdname]?
       return normalized_names
     end
 
-    dstname = String.from_utf16(info.daylightName.to_slice)
+    dstname, _ = String.from_utf16(info.daylightName.to_slice.to_unsafe)
 
     if english_name = translate_zone_name(stdname, dstname)
       if normalized_names = WINDOWS_ZONE_NAMES[english_name]?
@@ -164,10 +175,25 @@ module Crystal::System::Time
     return stdname, dstname
   end
 
+  REGISTRY_TIME_ZONES = %q(SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones).to_utf16
+  Std                 = "Std".to_utf16
+  Dlt                 = "Dlt".to_utf16
+
   # Searches the registry for an English name of a time zone named *stdname* or *dstname*
   # and returns the English name.
   private def self.translate_zone_name(stdname, dstname)
-    # TODO: Needs implementation once there is access to the registry.
-    nil
+    WindowsRegistry.open?(LibC::HKEY_LOCAL_MACHINE, REGISTRY_TIME_ZONES) do |key_handle|
+      WindowsRegistry.each_name(key_handle) do |name|
+        WindowsRegistry.open?(key_handle, name) do |sub_handle|
+          # TODO: Implement reading MUI
+          std = WindowsRegistry.get_string(sub_handle, Std)
+          dlt = WindowsRegistry.get_string(sub_handle, Dlt)
+
+          if std == stdname || dlt == dstname
+            return String.from_utf16(name)
+          end
+        end
+      end
+    end
   end
 end

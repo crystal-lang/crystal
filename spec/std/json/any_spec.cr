@@ -1,8 +1,6 @@
 require "../spec_helper"
 require "json"
-{% unless flag?(:win32) %}
-  require "yaml"
-{% end %}
+require "yaml"
 
 describe JSON::Any do
   describe "casts" do
@@ -172,7 +170,7 @@ describe JSON::Any do
     any2.as_a[0].as_a.should_not be(any.as_a[0].as_a)
   end
 
-  pending_win32 "#to_yaml" do
+  it "#to_yaml" do
     any = JSON.parse <<-JSON
       {
         "foo": "bar",

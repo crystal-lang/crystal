@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
 
@@ -13,6 +14,14 @@ private class NeverInstantiated
 end
 
 private alias RecursiveType = String | Int32 | Array(RecursiveType) | Hash(Symbol, RecursiveType)
+
+private class HashWrapper(K, V)
+  include Enumerable({K, V})
+
+  @hash = {} of K => V
+
+  delegate each, to: @hash
+end
 
 describe "Hash" do
   describe "empty" do
@@ -85,6 +94,61 @@ describe "Hash" do
       a = { {1 => 2} => 3 }
       b = { {1 => 2} => 3 }
       a.should eq(b)
+    end
+  end
+
+  context "subset/superset operators" do
+    h1 = {"a" => 1, "b" => 2}
+    h2 = {"a" => 1, "b" => 2, "c" => 3}
+    h3 = {"c" => 3}
+    h4 = {} of Nil => Nil
+
+    describe "#proper_subset_of?" do
+      it do
+        h1.proper_subset_of?(h2).should be_true
+        h2.proper_subset_of?(h1).should be_false
+        h1.proper_subset_of?(h1).should be_false
+        h1.proper_subset_of?(h3).should be_false
+        h1.proper_subset_of?(h4).should be_false
+      end
+
+      it "handles edge case where both values are nil" do
+        {"a" => nil}.proper_subset_of?({"b" => nil, "c" => nil}).should be_false
+      end
+    end
+
+    describe "#subset_of?" do
+      it do
+        h1.subset_of?(h2).should be_true
+        h2.subset_of?(h1).should be_false
+        h1.subset_of?(h1).should be_true
+        h1.subset_of?(h3).should be_false
+        h1.subset_of?(h4).should be_false
+      end
+
+      it "handles edge case where both values are nil" do
+        {"a" => nil}.subset_of?({"b" => nil}).should be_false
+      end
+    end
+
+    describe "#proper_superset_of?" do
+      it do
+        h1.proper_superset_of?(h2).should be_false
+        h2.proper_superset_of?(h1).should be_true
+        h1.proper_superset_of?(h1).should be_false
+        h1.proper_superset_of?(h3).should be_false
+        h1.proper_superset_of?(h4).should be_true
+      end
+    end
+
+    describe "#superset_of?" do
+      it do
+        h1.superset_of?(h2).should be_false
+        h2.superset_of?(h1).should be_true
+        h1.superset_of?(h1).should be_true
+        h1.superset_of?(h3).should be_false
+        h1.superset_of?(h4).should be_true
+      end
     end
   end
 
@@ -424,6 +488,23 @@ describe "Hash" do
       h1.delete(0)
       h2[0].should eq([0])
     end
+
+    it "clones recursive hash" do
+      h = {} of RecursiveHash => RecursiveHash
+      h[h] = h
+      clone = h.clone
+      clone.should be(clone.first[1])
+    end
+
+    it "retains default block on clone" do
+      h1 = Hash(Int32, String).new("a")
+      h2 = h1.clone
+      h2[0].should eq("a")
+
+      h1[1] = "b"
+      h3 = h1.clone
+      h3[0].should eq("a")
+    end
   end
 
   describe "dup" do
@@ -465,6 +546,16 @@ describe "Hash" do
 
       h1.delete(0)
       h2[0].should eq([0])
+    end
+
+    it "retains default block on dup" do
+      h1 = Hash(Int32, String).new("a")
+      h2 = h1.dup
+      h2[0].should eq("a")
+
+      h1[1] = "b"
+      h3 = h1.dup
+      h3[0].should eq("a")
     end
   end
 
@@ -513,6 +604,14 @@ describe "Hash" do
     result.should eq({:foo => "bar", :foobar => "foo"})
   end
 
+  it "merges other type with block" do
+    h1 = {1 => "foo"}
+    h2 = {1 => "bar", "fizz" => "buzz"}
+
+    h3 = h1.merge(h2) { |k, v1, v2| v1 + v2 }
+    h3.should eq({1 => "foobar", "fizz" => "buzz"})
+  end
+
   it "merges!" do
     h1 = {1 => 2, 3 => 4}
     h2 = {1 => 5, 2 => 3}
@@ -552,16 +651,9 @@ describe "Hash" do
     h1 = {:a => 1, :b => 2, :c => 3}
 
     h2 = h1.select! { |k, v| k == :b }
+    h2.should be_a(Hash(Symbol, Int32))
     h2.should eq({:b => 2})
     h2.should be(h1)
-  end
-
-  it "returns nil when using select! and no changes were made" do
-    h1 = {:a => 1, :b => 2, :c => 3}
-
-    h2 = h1.select! { true }
-    h2.should eq(nil)
-    h1.should eq({:a => 1, :b => 2, :c => 3})
   end
 
   it "rejects" do
@@ -576,16 +668,9 @@ describe "Hash" do
     h1 = {:a => 1, :b => 2, :c => 3}
 
     h2 = h1.reject! { |k, v| k == :b }
+    h2.should be_a(Hash(Symbol, Int32))
     h2.should eq({:a => 1, :c => 3})
     h2.should be(h1)
-  end
-
-  it "returns nil when using reject! and no changes were made" do
-    h1 = {:a => 1, :b => 2, :c => 3}
-
-    h2 = h1.reject! { false }
-    h2.should eq(nil)
-    h1.should eq({:a => 1, :b => 2, :c => 3})
   end
 
   it "compacts" do
@@ -600,16 +685,9 @@ describe "Hash" do
     h1 = {:a => 1, :b => 2, :c => nil}
 
     h2 = h1.compact!
+    h2.should be_a(Hash(Symbol, Int32 | Nil))
     h2.should eq({:a => 1, :b => 2})
     h2.should be(h1)
-  end
-
-  it "returns nil when using compact! and no changes were made" do
-    h1 = {:a => 1, :b => 2, :c => 3}
-
-    h2 = h1.compact!
-    h2.should be_nil
-    h1.should eq({:a => 1, :b => 2, :c => 3})
   end
 
   it "transforms keys" do
@@ -802,12 +880,6 @@ describe "Hash" do
     h.shift?.should be_nil
   end
 
-  it "gets key index" do
-    h = {1 => 2, 3 => 4}
-    h.key_index(3).should eq(1)
-    h.key_index(2).should be_nil
-  end
-
   it "inserts many" do
     times = 1000
     h = {} of Int32 => Int32
@@ -933,59 +1005,22 @@ describe "Hash" do
     vs.should eq([1, 2])
   end
 
-  it "gets each iterator" do
-    iter = {:a => 1, :b => 2}.each
-    iter.next.should eq({:a, 1})
-    iter.next.should eq({:b, 2})
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [{:a, 1}, {:b, 2}], {:a => 1, :b => 2}.each
+  it_iterates "#each_key", [:a, :b], {:a => 1, :b => 2}.each_key
+  it_iterates "#each_value", [1, 2], {:a => 1, :b => 2}.each_value
 
-  it "gets each key iterator" do
-    iter = {:a => 1, :b => 2}.each_key
-    iter.next.should eq(:a)
-    iter.next.should eq(:b)
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each_with_index", [{ {:a, 1}, 0 }, { {:b, 2}, 1 }], {:a => 1, :b => 2}.each_with_index, tuple: true
+  it_iterates "#each_with_index(offset)", [{ {:a, 1}, 2 }, { {:b, 2}, 3 }], {:a => 1, :b => 2}.each_with_index(2), tuple: true
 
-  it "gets each value iterator" do
-    iter = {:a => 1, :b => 2}.each_value
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  describe "each_with_index" do
-    it "pass key, value, index values into block" do
-      hash = {2 => 4, 5 => 10, 7 => 14}
-      results = [] of Int32
-      hash.each_with_index { |(k, v), i| results << k + v + i }.should be_nil
-      results.should eq [6, 16, 23]
-    end
-
-    it "can be used with offset" do
-      hash = {2 => 4, 5 => 10, 7 => 14}
-      results = [] of Int32
-      hash.each_with_index(3) { |(k, v), i| results << k + v + i }.should be_nil
-      results.should eq [9, 19, 26]
-    end
-  end
-
-  describe "each_with_object" do
-    it "passes memo, key and value into block" do
-      hash = {:a => 'b'}
-      hash.each_with_object(:memo) do |(k, v), memo|
-        memo.should eq(:memo)
-        k.should eq(:a)
-        v.should eq('b')
-      end
-    end
+  describe "#each_with_object" do
+    it_iterates "passes memo, key and value into block", [{ {:a, 1}, :memo }, { {:b, 2}, :memo }], {:a => 1, :b => 2}.each_with_object(:memo), tuple: true
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
-      result = nil
-      result = hash.each_with_object({} of Char => Symbol) do |(k, v), memo|
+      result = {} of Char => Symbol
+      hash.each_with_object(result) do |(k, v), memo|
         memo[v] = k
-      end
+      end.should be(result)
       result.should eq({'b' => :a, 'd' => :c, 'f' => :e})
     end
   end
@@ -1075,9 +1110,10 @@ describe "Hash" do
 
   describe "reject" do
     it { {:a => 2, :b => 3}.reject(:b, :d).should eq({:a => 2}) }
+    it { {:a => 2, :b => 3}.reject(Set{:b, :d}).should eq({:a => 2}) }
     it { {:a => 2, :b => 3}.reject(:b, :a).should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.reject([:b, :a]).should eq({} of Symbol => Int32) }
-    it "does not change currrent hash" do
+    it "does not change current hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h2 = h.reject(:b, :c)
       h.should eq({:a => 3, :b => 6, :c => 9})
@@ -1086,9 +1122,10 @@ describe "Hash" do
 
   describe "reject!" do
     it { {:a => 2, :b => 3}.reject!(:b, :d).should eq({:a => 2}) }
+    it { {:a => 2, :b => 3}.reject!(Set{:b, :d}).should eq({:a => 2}) }
     it { {:a => 2, :b => 3}.reject!(:b, :a).should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.reject!([:b, :a]).should eq({} of Symbol => Int32) }
-    it "changes currrent hash" do
+    it "changes current hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h.reject!(:b, :c)
       h.should eq({:a => 3})
@@ -1100,7 +1137,8 @@ describe "Hash" do
     it { {:a => 2, :b => 3}.select.should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.select(:b, :a).should eq({:a => 2, :b => 3}) }
     it { {:a => 2, :b => 3}.select([:b, :a]).should eq({:a => 2, :b => 3}) }
-    it "does not change currrent hash" do
+    it { {:a => 2, :b => 3}.select(Set{:b, :a}).should eq({:a => 2, :b => 3}) }
+    it "does not change current hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h2 = h.select(:b, :c)
       h.should eq({:a => 3, :b => 6, :c => 9})
@@ -1112,7 +1150,8 @@ describe "Hash" do
     it { {:a => 2, :b => 3}.select!.should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.select!(:b, :a).should eq({:a => 2, :b => 3}) }
     it { {:a => 2, :b => 3}.select!([:b, :a]).should eq({:a => 2, :b => 3}) }
-    it "does change currrent hash" do
+    it { {:a => 2, :b => 3}.select!(Set{:b, :a}).should eq({:a => 2, :b => 3}) }
+    it "does change current hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h.select!(:b, :c)
       h.should eq({:b => 6, :c => 9})
@@ -1224,5 +1263,9 @@ describe "Hash" do
       h = ({} of String => Int32).compare_by_identity
       h.clone.compare_by_identity?.should be_true
     end
+  end
+
+  it "can be wrapped" do
+    HashWrapper(Int32, Int32).new.to_a.should be_empty
   end
 end

@@ -2,7 +2,7 @@ require "./context"
 
 # A handler is a class which includes `HTTP::Handler` and implements the `call` method.
 # You can use a handler to intercept any incoming request and can modify the response.
-# These can be used for request throttling, ip-based whitelisting, adding custom headers e.g.
+# These can be used for request throttling, ip-based filtering, adding custom headers e.g.
 #
 # ### A custom handler
 #

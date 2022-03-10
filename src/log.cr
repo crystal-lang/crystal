@@ -12,10 +12,17 @@
 # Log.info { "Program started" }
 # ```
 #
+# Data can be associated with a log entry via the `Log::Emitter` yielded in the logging methods.
+#
+# ```
+# Log.info &.emit("User logged in", user_id: 42)
+# ```
+#
 # If you want to log an exception, you can indicate it in the `exception:` named argument.
 #
 # ```
 # Log.warn(exception: e) { "Oh no!" }
+# Log.warn exception: e, &.emit("Oh no!", user_id: 42)
 # ```
 #
 # The block is only evaluated if the current message is to be emitted to some `Log::Backend`.
@@ -73,6 +80,8 @@
 #
 # If you need to change the default level, backend or sources call `Log.setup` upon startup.
 #
+# NOTE: Calling `setup` will override previous `setup` calls.
+#
 # ```
 # Log.setup(:debug)                     # Log debug and above for all sources to STDOUT
 # Log.setup("myapp.*, http.*", :notice) # Log notice and above for myapp.* and http.* sources only, and log nothing for any other source.
@@ -98,10 +107,10 @@
 # sources errors (or higher) to an elasticsearch backend.
 #
 # ```
-# Log.setup |c|
+# Log.setup do |c|
 #   backend = Log::IOBackend.new
 #
-#   c.bind "*", :warning, backend
+#   c.bind "*", :warn, backend
 #   c.bind "db.*", :debug, backend
 #   c.bind "*", :error, ElasticSearchBackend.new("http://localhost:9200")
 # end
@@ -138,12 +147,14 @@ end
 require "./log/backend"
 require "./log/broadcast_backend"
 require "./log/builder"
-require "./log/context"
+require "./log/metadata"
 require "./log/entry"
+require "./log/format"
 require "./log/main"
 require "./log/setup"
 require "./log/log"
 require "./log/memory_backend"
 require "./log/io_backend"
+require "./log/dispatch"
 
 Log.setup
