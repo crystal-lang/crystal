@@ -211,6 +211,18 @@ describe "File" do
     end
   end
 
+  describe "open exclusive" do
+    it "can't open an existing file" do
+      with_tempfile("test_file_oexcl.txt") do |path|
+        mode = File::Mode.new(:create_new)
+        File.write path, "foo", mode
+        expect_raises(File::AlreadyExistsError) do
+          File.new(path, mode)
+        end
+      end
+    end
+  end
+
   describe "link" do
     it "creates a hard link" do
       with_tempfile("hard_link_source.txt", "hard_link_target.txt") do |in_path, out_path|
