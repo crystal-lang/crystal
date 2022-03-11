@@ -1040,7 +1040,9 @@ class Hash(K, V)
   # h = {} of String => Int32
   # h.update("a") { 42 } # raises KeyError
   # ```
-  def update(key : K, &)
+  #
+  # See `#transform_values!` for updating *all* the values.
+  def update(key : K, & : V -> V) : V
     if entry_index = find_entry_with_index(key)
       entry, index = entry_index
       set_entry(index, Entry(K, V).new(entry.hash, entry.key, yield entry.value))
@@ -1635,6 +1637,7 @@ class Hash(K, V)
   # hash.transform_values! { |value| value + 1 }
   # hash # => {:a => 2, :b => 3, :c => 4}
   # ```
+  # See `#update` for updating a *single* value.
   def transform_values!(& : V -> V) : self
     each_entry_with_index do |entry, i|
       new_value = yield entry.value
