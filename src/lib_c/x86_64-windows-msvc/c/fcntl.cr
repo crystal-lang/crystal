@@ -20,4 +20,6 @@ lib LibC
   O_OBTAIN_DIR  = 0x2000
   O_SEQUENTIAL  = 0x0020
   O_RANDOM      = 0x0010
+
+  O_NOFOLLOW = 0 # Unsupported?
 end
