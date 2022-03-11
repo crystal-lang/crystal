@@ -803,7 +803,7 @@ class File < IO::FileDescriptor
   # ```
   def self.copy(src : String | Path, dst : String | Path) : Nil
     open(src) do |s|
-      open(dst, "wb") do |d|
+      open(dst, :create, :truncate) do |d|
         # TODO use sendfile or copy_file_range syscall. See #8926, #8919
         IO.copy(s, d)
       end

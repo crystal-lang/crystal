@@ -7,7 +7,7 @@ require "./file_info"
 # ```
 # require "compress/zip"
 #
-# File.open("./file.zip", :write, :truncate) do |file|
+# File.open("./file.zip", :create, :truncate) do |file|
 #   Compress::Zip::Writer.open(file) do |zip|
 #     # Add a file with a String content
 #     zip.add "foo.txt", "contents of foo"
@@ -46,7 +46,7 @@ class Compress::Zip::Writer
 
   # Creates a new writer to the given *filename*.
   def self.new(filename : String)
-    new(::File.new(filename, :write, :truncate), sync_close: true)
+    new(::File.new(filename, :create, :truncate), sync_close: true)
   end
 
   # Creates a new writer to the given *io*, yields it to the given block,

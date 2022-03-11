@@ -68,11 +68,11 @@ require "base64"
 # for user types.
 #
 # ```
-# yaml = YAML.dump({hello: "world"})                                             # => "---\nhello: world\n"
-# File.open("foo.yml", :write, :truncate) { |f| YAML.dump({hello: "world"}, f) } # writes it to the file
+# yaml = YAML.dump({hello: "world"})                                              # => "---\nhello: world\n"
+# File.open("foo.yml", :create, :truncate) { |f| YAML.dump({hello: "world"}, f) } # writes it to the file
 # # or:
-# yaml = {hello: "world"}.to_yaml                                             # => "---\nhello: world\n"
-# File.open("foo.yml", :write, :truncate) { |f| {hello: "world"}.to_yaml(f) } # writes it to the file
+# yaml = {hello: "world"}.to_yaml                                              # => "---\nhello: world\n"
+# File.open("foo.yml", :create, :truncate) { |f| {hello: "world"}.to_yaml(f) } # writes it to the file
 # ```
 module YAML
   class Error < Exception
