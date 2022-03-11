@@ -91,16 +91,25 @@ class File < IO::FileDescriptor
   # -----+------------------------------------------------------
   # :read    | Read, starts at the beginning of the file.
   # :write    | Write, starts at the beginning of the file.
-  # :append | Write, all writes are appended to the end of the file atomically.
+  # :truncate     | Open for writing and truncate the file.
+  # :create     | creates a new file if the file doesn't exists.
+  # :create_new     | creates a new file or `raises Errno` if the file exists.
+  # :append | all writes are appended to the end of the file atomically.
+  # ```
+  #
+  # Some common combinations:
+  # ```text
+  # Mode | Description
+  # -----+------------------------------------------------------
+  # :read, :create | For reading and writing, creates if file doesn't exist
+  # :read, :write | For reading and writing an existing file
+  # :create, :truncate, :append | To overwrite log files
   # ```
   #
   # *modes* may contain any number of these optional arguments:
   # ```text
   # Mode | Description
   # -----+------------------------------------------------------
-  # :create     | creates a new file if the file doesn't exists.
-  # :create_new     | creates a new file or `raises Errno` if the file exists.
-  # :truncate     | truncate the file.
   # :sym_link_no_follow | opening a symlink `raises Errno`.
   # ```
   def self.new(filename : Path | String, *modes : Mode, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
@@ -112,7 +121,7 @@ class File < IO::FileDescriptor
   # Opens the file named by *filename*.
   #
   # *mode* must be a `File::Mode`:
-  def self.new(filename : Path | String, mode : Mode = File::Mode.flags(Read), perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.new(filename : Path | String, mode : Mode = File::Mode.flags(Read), perm : File::Permissions | Int = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     filename = filename.to_s
     fd = Crystal::System::File.open(filename, mode, perm)
     new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
@@ -654,7 +663,7 @@ class File < IO::FileDescriptor
   #
   # See `self.new` for what *mode* can be.
   @[Deprecated("Use `File.open(filename, :read, :write, :create)`")]
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
+  def self.open(filename : Path | String, mode : String, perm : File::Permissions | Int = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
     new filename, mode, perm, encoding, invalid
   end
 
@@ -677,7 +686,7 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode : Mode = File::Mode.flags(Read), perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.open(filename : Path | String, mode : Mode = File::Mode.flags(Read), perm : File::Permissions | Int = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     file = new filename, mode, perm, encoding, invalid
     begin
       yield file
@@ -770,7 +779,7 @@ class File < IO::FileDescriptor
   # (the result of invoking `to_s` on *content*).
   #
   # See `self.new` for what *mode* can be.
-  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = File::Mode.flags(Write, Truncate))
+  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = File::Mode.flags(Create, Truncate))
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
       when Bytes

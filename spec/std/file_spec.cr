@@ -232,10 +232,10 @@ describe "File" do
         File.symlink(File.real_path(file), symlink)
         File.new(symlink, :read)
         File.new(symlink, File::Mode.flags(Read))
-        expect_raises(Errno) do
+        expect_raises(File::Error, /Too many levels of symbolic links/i) do
           File.new(symlink, :read, :symlink_no_follow)
         end
-        expect_raises(Errno) do
+        expect_raises(File::Error, /Too many levels of symbolic links/i) do
           File.new(symlink, File::Mode.flags(Read, SymlinkNoFollow))
         end
       end
@@ -243,7 +243,7 @@ describe "File" do
       with_tempfile("test_file_symlink.txt") do |symlink|
         File.symlink(File.real_path(file), symlink)
         File.new(symlink, File::Mode.flags(Read))
-        expect_raises(Errno) do
+        expect_raises(File::Error, /Too many levels of symbolic links/i) do
           File.new(symlink, File::Mode.flags(Read, SymlinkNoFollow))
         end
       end
@@ -911,7 +911,7 @@ describe "File" do
   describe "fsync" do
     pending_win32 "syncs OS file buffer to disk" do
       with_tempfile("fsync.txt") do |path|
-        File.open(path, :append) do |f|
+        File.open(path, :create, :append) do |f|
           f.puts("333")
           f.fsync
           File.read(path).should eq("333\n")

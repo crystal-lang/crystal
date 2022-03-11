@@ -6,25 +6,29 @@ module Crystal::System::File
   # calls.
   private def self.open_flag(mode : ::File::Mode)
     flags = 0
-    if mode.read? && (mode.write? || mode.append?)
-      flags |= LibC::O_RDWR
-      flags |= LibC::O_APPEND if mode.append?
-      mode &= ~(::File::Mode::Read | ::File::Mode::Write | ::File::Mode::Append)
-    end
+    want_read = false
+    want_write = false
     mode.each do |m|
       case m
-      when ::File::Mode::Read            then flags |= LibC::O_RDONLY
-      when ::File::Mode::Write           then flags |= LibC::O_WRONLY
-      when ::File::Mode::Create          then flags |= LibC::O_CREAT
-      when ::File::Mode::CreateNew       then flags |= LibC::O_CREAT | LibC::O_EXCL
-      when ::File::Mode::Append          then flags |= LibC::O_WRONLY | LibC::O_APPEND
-      when ::File::Mode::Truncate        then flags |= LibC::O_TRUNC
+      when ::File::Mode::Read            then want_read = true
+      when ::File::Mode::Write           then want_write = true
+      when ::File::Mode::Create          then want_write = true; flags |= LibC::O_CREAT
+      when ::File::Mode::CreateNew       then want_write = true; flags |= LibC::O_CREAT | LibC::O_EXCL
+      when ::File::Mode::Append          then want_write = true; flags |= LibC::O_APPEND
+      when ::File::Mode::Truncate        then want_write = true; flags |= LibC::O_TRUNC
       when ::File::Mode::Sync            then flags |= LibC::O_SYNC
       when ::File::Mode::SymlinkNoFollow then flags |= LibC::O_NOFOLLOW
       else
         raise "Unknown mode #{m}"
       end
     end
+
+    flags |= if want_read
+               !want_write ? LibC::O_RDONLY : LibC::O_RDWR
+             else
+               LibC::O_WRONLY
+             end
+
     flags
   end
 

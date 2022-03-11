@@ -4,7 +4,7 @@ require "file/error"
 # :nodoc:
 module Crystal::System::File
   def self.open(filename, mode, perm)
-    oflag = open_flag(mode).to_i32 | LibC::O_CLOEXEC
+    oflag = open_flag(mode) | LibC::O_CLOEXEC
 
     fd = LibC.open(filename.check_no_null_byte, oflag, perm)
     if fd < 0
