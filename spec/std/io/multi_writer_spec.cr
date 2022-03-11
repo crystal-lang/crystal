@@ -56,7 +56,7 @@ describe "IO::MultiWriter" do
       with_tempfile("multiple_writer_spec") do |path|
         io = IO::Memory.new
 
-        File.open(path, :write) do |file|
+        File.open(path, :create) do |file|
           writer = IO::MultiWriter.new(io, file)
 
           writer.puts "foo bar"
