@@ -9,7 +9,6 @@ class ::File < IO::FileDescriptor
     CreateNew
     Truncate
 
-    Sync
     SymlinkNoFollow
   end
 end

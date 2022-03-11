@@ -16,7 +16,6 @@ module Crystal::System::File
       when ::File::Mode::CreateNew       then want_write = true; flags |= LibC::O_CREAT | LibC::O_EXCL
       when ::File::Mode::Append          then want_write = true; flags |= LibC::O_APPEND
       when ::File::Mode::Truncate        then want_write = true; flags |= LibC::O_TRUNC
-      when ::File::Mode::Sync            then flags |= LibC::O_SYNC
       when ::File::Mode::SymlinkNoFollow then flags |= LibC::O_NOFOLLOW
       else
         raise "Unknown mode #{m}"
