@@ -84,6 +84,16 @@ describe "Dir" do
     end
   end
 
+  it "tests mkdir and delete? with a new path" do
+    with_tempfile("mkdir") do |path|
+      Dir.mkdir(path, 0o700)
+      Dir.exists?(path).should be_true
+      Dir.delete?(path).should be_true
+      Dir.exists?(path).should be_false
+      Dir.delete?(path).should be_false
+    end
+  end
+
   it "tests mkdir and rmdir with a new path" do
     with_tempfile("mkdir") do |path|
       Dir.mkdir(path, 0o700)

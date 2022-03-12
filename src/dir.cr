@@ -279,6 +279,14 @@ class Dir
     Crystal::System::Dir.delete(path.to_s)
   end
 
+  # Removes the directory at the given path.
+  def self.delete?(path : Path | String) : Bool
+    delete(path)
+    true
+  rescue File::NotFoundError
+    false
+  end
+
   def to_s(io : IO) : Nil
     io << "#<Dir:" << @path << '>'
   end

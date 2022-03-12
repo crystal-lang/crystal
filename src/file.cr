@@ -349,6 +349,20 @@ class File < IO::FileDescriptor
     Crystal::System::File.delete(path.to_s)
   end
 
+  # Deletes the file at *path*. Deleting non-existent file returns false.
+  #
+  # ```
+  # File.write("foo", "")
+  # File.delete?("./foo") # => true
+  # File.delete?("./bar") # => false
+  # ```
+  def self.delete?(path : Path | String) : Bool
+    delete(path)
+    true
+  rescue File::NotFoundError
+    false
+  end
+
   # Returns *filename*'s extension, or an empty string if it has no extension.
   #
   # ```
