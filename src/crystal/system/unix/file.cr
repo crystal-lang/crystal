@@ -111,8 +111,19 @@ module Crystal::System::File
     raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
   end
 
+  def self.fchown(path, fd, uid : Int, gid : Int)
+    ret = LibC.fchown(fd, uid, gid)
+    raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
+  end
+
   def self.chmod(path, mode)
     if LibC.chmod(path, mode) == -1
+      raise ::File::Error.from_errno("Error changing permissions", file: path)
+    end
+  end
+
+  def self.fchmod(path, fd, mode)
+    if LibC.fchmod(fd, mode) == -1
       raise ::File::Error.from_errno("Error changing permissions", file: path)
     end
   end

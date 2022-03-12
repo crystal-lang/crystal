@@ -357,6 +357,11 @@ describe "File" do
     # changing owners requires special privileges, so we test that method calls do compile
     typeof(File.chown("/tmp/test"))
     typeof(File.chown("/tmp/test", uid: 1001, gid: 100, follow_symlinks: true))
+
+    File.open(File::NULL, "w") do |file|
+      typeof(file.chown)
+      typeof(file.chown(uid: 1001, gid: 100))
+    end
   end
 
   describe "chmod" do
@@ -365,6 +370,18 @@ describe "File" do
       begin
         File.write(path, "")
         File.chmod(path, 0o775)
+        File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
+      ensure
+        File.delete(path) if File.exists?(path)
+      end
+    end
+
+    it "changes file permissions with fchmod" do
+      path = datapath("chmod.txt")
+      begin
+        File.open(path, "w") do |file|
+          file.chmod(0o775)
+        end
         File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
       ensure
         File.delete(path) if File.exists?(path)

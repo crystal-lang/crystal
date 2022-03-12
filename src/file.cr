@@ -834,6 +834,29 @@ class File < IO::FileDescriptor
     io << '>'
   end
 
+  # Changes the owner of the specified file.
+  #
+  # ```
+  # file.chown(1001, 100)
+  # file.chown(gid: 100)
+  # ```
+  def chown(uid : Int = -1, gid : Int = -1) : Nil
+    Crystal::System::File.fchown(@path, fd, uid, gid)
+  end
+
+  # Changes the permissions of the specified file.
+  #
+  # ```
+  # file.chmod(0o755)
+  # file.info.permissions.value # => 0o755
+  #
+  # file.chmod(0o700)
+  # file.info.permissions.value # => 0o700
+  # ```
+  def chmod(permissions : Int | Permissions) : Nil
+    Crystal::System::File.fchmod(@path, fd, permissions)
+  end
+
   # Deletes this file.
   def delete : Nil
     File.delete(@path)
