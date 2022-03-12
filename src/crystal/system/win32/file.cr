@@ -164,7 +164,7 @@ module Crystal::System::File
 
   def self.fchmod(path : String, fd : Int, mode : Int32 | ::File::Permissions) : Nil
     # TODO: use fd instead of path
-    chmod path, fd, mode
+    chmod path, mode
   end
 
   def self.delete(path : String) : Nil
