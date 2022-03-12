@@ -136,7 +136,7 @@ module Crystal::System::File
   end
 
   def self.fchown(path : String, fd : Int, uid : Int32, gid : Int32) : Nil
-    raise NotImplementedError.new("File##chown")
+    raise NotImplementedError.new("File#chown")
   end
 
   def self.chmod(path : String, mode : Int32 | ::File::Permissions) : Nil
