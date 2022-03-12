@@ -103,7 +103,7 @@ module Crystal::System::File
   end
 
   def self.chown(path, uid : Int, gid : Int, follow_symlinks)
-    ret = if !follow_symlinks && ::File.symlink?(path)
+    ret = if !follow_symlinks
             LibC.lchown(path, uid, gid)
           else
             LibC.chown(path, uid, gid)
