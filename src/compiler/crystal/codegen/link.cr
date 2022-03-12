@@ -133,7 +133,7 @@ module Crystal
 
     private def lib_flags_posix
       flags = [] of String
-      flags_channel = Channel(String).new
+      flags_channel = Channel(Array(String)).new
       static_build = has_flag?("static")
 
       # Instruct the linker to link statically if the user asks
@@ -147,31 +147,31 @@ module Crystal
 
       link_annotations.reverse_each do |ann|
         spawn do
-          next_flag = ""
+          next_flags = [] of String
           if ldflags = ann.ldflags
-            next_flag = ldflags
+            next_flags << ldflags
           end
 
           # First, check pkg-config for the pkg-config module name if provided, then
           # check pkg-config with the lib name, then fall back to -lname
           if (pkg_config_name = ann.pkg_config) && (flag = pkg_config(pkg_config_name, static_build))
-            next_flag = flag
+            next_flags << flag
           elsif (lib_name = ann.lib) && (flag = pkg_config(lib_name, static_build))
-            next_flag = flag
+            next_flags << flag
           elsif (lib_name = ann.lib)
-            next_flag = Process.quote_posix("-l#{lib_name}")
+            next_flags << Process.quote_posix("-l#{lib_name}")
           end
 
           if framework = ann.framework
-            next_flag = "-framework" + Process.quote_posix(framework)
+            next_flags << "-framework" + Process.quote_posix(framework)
           end
 
-          flags_channel.send next_flag
+          flags_channel.send next_flags
         end
       end
 
       link_annotations.size.times do
-        flags << flags_channel.receive
+        flags += flags_channel.receive
       end
 
       flags.join(" ")
