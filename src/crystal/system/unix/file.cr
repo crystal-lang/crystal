@@ -190,6 +190,16 @@ module Crystal::System::File
     end
   end
 
+  def self.futimens(filename : String, fd : Int, atime : ::Time, mtime : ::Time) : Nil
+    timevals = uninitialized LibC::Timeval[2]
+    timevals[0] = to_timeval(atime)
+    timevals[1] = to_timeval(mtime)
+    ret = LibC.futimens(fd, timevals)
+    if ret != 0
+      raise ::File::Error.from_errno("Error setting time on file", file: filename)
+    end
+  end
+
   private def self.to_timeval(time : ::Time)
     t = uninitialized LibC::Timeval
     t.tv_sec = typeof(t.tv_sec).new(time.to_unix)

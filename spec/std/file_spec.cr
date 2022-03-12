@@ -1164,6 +1164,20 @@ describe "File" do
       end
     end
 
+    it "sets times with futime" do
+      with_tempfile("utime-set.txt") do |path|
+        File.open(path, "w") do |file|
+          atime = Time.utc(2000, 1, 2)
+          mtime = Time.utc(2000, 3, 4)
+
+          file.utime(atime, mtime)
+
+          info = File.info(path)
+          info.modification_time.should eq(mtime)
+        end
+      end
+    end
+
     it "raises if file not found" do
       atime = Time.utc(2000, 1, 2)
       mtime = Time.utc(2000, 3, 4)

@@ -857,6 +857,17 @@ class File < IO::FileDescriptor
     Crystal::System::File.fchmod(@path, fd, permissions)
   end
 
+  # Sets the access and modification times
+  def utime(atime : Time, mtime : Time) : Nil
+    Crystal::System::File.futimens(@path, fd, atime, mtime)
+  end
+
+  # Attempts to set the access and modification times
+  # to the value given in *time*.
+  def touch(time : Time = Time.utc) : Nil
+    utime time, time
+  end
+
   # Deletes this file.
   def delete : Nil
     File.delete(@path)
