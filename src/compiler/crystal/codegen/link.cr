@@ -133,7 +133,8 @@ module Crystal
 
     private def lib_flags_posix
       flags = [] of String
-      flags_channel = Channel(Array(String)).new
+      flags_channel = Channel(Tuple(Array(String), Int32)).new
+      unsorted_resolved_libs = [] of Tuple(Array(String), Int32)
       static_build = has_flag?("static")
 
       # Instruct the linker to link statically if the user asks
@@ -145,7 +146,7 @@ module Crystal
         flags << Process.quote_posix("-L#{path}")
       end
 
-      link_annotations.reverse_each do |ann|
+      link_annotations.reverse_each.each_with_index do |ann, ann_id|
         spawn do
           next_flags = [] of String
           if ldflags = ann.ldflags
@@ -166,12 +167,23 @@ module Crystal
             next_flags << "-framework" + Process.quote_posix(framework)
           end
 
-          flags_channel.send next_flags
+          flags_channel.send({next_flags, ann_id})
         end
       end
 
+      # For as many times the code spawned a new process, wait for the channel
+      # to be populated with new resolved flags
       link_annotations.size.times do
-        flags.concat(flags_channel.receive)
+        unsorted_resolved_libs << flags_channel.receive
+      end
+
+      # List of resolved flags may come back unsorted from the channel,
+      # so the list needs to be resorted to enforce linker flag order,
+      # and concatenate each new list to the main list of flags.
+      unsorted_resolved_libs.sort_by do |(next_flags, id)|
+        id
+      end.each do |(next_flags, id)|
+        flags.concat(next_flags)
       end
 
       flags.join(" ")
