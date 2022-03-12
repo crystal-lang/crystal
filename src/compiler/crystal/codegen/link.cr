@@ -171,7 +171,7 @@ module Crystal
       end
 
       link_annotations.size.times do
-        flags += flags_channel.receive
+        flags.concat(flags_channel.receive)
       end
 
       flags.join(" ")
