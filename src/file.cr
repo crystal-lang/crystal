@@ -130,6 +130,8 @@ class File < IO::FileDescriptor
   #
   # File.symlink("foo", "bar")
   # File.info?("bar", follow_symlinks: false).try(&.type.symlink?) # => true
+  #
+  # Use `#info` if the `File` is already open.
   # ```
   def self.info?(path : Path | String, follow_symlinks = true) : Info?
     Crystal::System::File.info?(path.to_s, follow_symlinks)
@@ -148,6 +150,8 @@ class File < IO::FileDescriptor
   #
   # File.symlink("foo", "bar")
   # File.info("bar", follow_symlinks: false).type.symlink? # => true
+  #
+  # Use `#info` if the `File` is already open.
   # ```
   def self.info(path : Path | String, follow_symlinks = true) : Info
     Crystal::System::File.info(path.to_s, follow_symlinks)
@@ -318,6 +322,8 @@ class File < IO::FileDescriptor
   # File.chown("foo", gid: 100)                        # changes foo's gid
   # File.chown("foo", gid: 100, follow_symlinks: true) # changes baz's gid
   # ```
+  #
+  # Use `#chown` if the `File` is already open.
   def self.chown(path : Path | String, uid : Int = -1, gid : Int = -1, follow_symlinks = false) : Nil
     Crystal::System::File.chown(path.to_s, uid, gid, follow_symlinks)
   end
@@ -334,6 +340,8 @@ class File < IO::FileDescriptor
   # File.chmod("foo", 0o700)
   # File.info("foo").permissions.value # => 0o700
   # ```
+  #
+  # Use `#chmod` if the `File` is already open.
   def self.chmod(path : Path | String, permissions : Int | Permissions) : Nil
     Crystal::System::File.chmod(path.to_s, permissions)
   end
@@ -783,6 +791,8 @@ class File < IO::FileDescriptor
   end
 
   # Sets the access and modification times of *filename*.
+  #
+  # Use `#utime` if the `File` is already open.
   def self.utime(atime : Time, mtime : Time, filename : Path | String) : Nil
     Crystal::System::File.utime(atime, mtime, filename.to_s)
   end
@@ -791,6 +801,8 @@ class File < IO::FileDescriptor
   # in the *filename* parameter to the value given in *time*.
   #
   # If the file does not exist, it will be created.
+  #
+  # Use `#touch` if the `File` is already open.
   def self.touch(filename : Path | String, time : Time = Time.utc) : Nil
     open(filename, "a") { } unless exists?(filename)
     utime time, time, filename
