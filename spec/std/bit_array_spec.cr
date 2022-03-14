@@ -28,6 +28,46 @@ private def assert_rotates!(from : BitArray, to : BitArray, *, file = __FILE__, 
 end
 
 describe "BitArray" do
+  describe ".new" do
+    context "without block" do
+      it "initializes with initial value" do
+        ary = BitArray.new(64, false)
+        ary.size.times { |i| ary[i].should be_false }
+
+        ary = BitArray.new(64, true)
+        ary.size.times { |i| ary[i].should be_true }
+      end
+
+      it "initializes with false by default" do
+        ary = BitArray.new(64)
+        ary.size.times { |i| ary[i].should be_false }
+      end
+
+      it "initializes with non-Int32 size" do
+        BitArray.new(5_i8).size.should eq(5)
+        BitArray.new(5_u64).size.should eq(5)
+      end
+
+      it "initializes with unused bits cleared" do
+        ary = BitArray.new(3, true)
+        assert_no_unused_bits ary
+      end
+    end
+
+    context "with block" do
+      it "initializes elements with block" do
+        BitArray.new(5) { |i| i >= 3 }.should eq(from_int(5, 0b00011))
+        BitArray.new(6) { |i| i < 2 ? "" : nil }.should eq(from_int(6, 0b110000))
+        BitArray.new(7_i64, &.even?).should eq(from_int(7, 0b1010101))
+      end
+    end
+
+    it "raises if size is negative" do
+      expect_raises(ArgumentError) { BitArray.new(-1) }
+      expect_raises(ArgumentError) { BitArray.new(-2) { true } }
+    end
+  end
+
   it "has size" do
     ary = BitArray.new(100)
     ary.size.should eq(100)
@@ -806,16 +846,6 @@ describe "BitArray" do
     ary[4] = true
     ary.to_s.should eq("BitArray[10101000]")
     ary.inspect.should eq("BitArray[10101000]")
-  end
-
-  it "initializes with true by default" do
-    ary = BitArray.new(64, true)
-    ary.size.times { |i| ary[i].should be_true }
-  end
-
-  it "initializes with unused bits cleared" do
-    ary = BitArray.new(3, true)
-    assert_no_unused_bits ary
   end
 
   it "reads bits from slice" do
