@@ -42,7 +42,11 @@ struct BitArray
   # BitArray.new(6) { |i| i if i < 2 } # => BitArray[110000]
   # ```
   def self.new(size : Int, & : Int32 -> _)
-    new(size).fill { |i| !!yield i }
+    arr = new(size)
+    size.to_i.times do |i|
+      arr.unsafe_put(i, true) if yield i
+    end
+    arr
   end
 
   def ==(other : BitArray)
