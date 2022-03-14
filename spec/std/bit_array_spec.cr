@@ -3,9 +3,7 @@ require "bit_array"
 require "spec/helpers/iterate"
 
 private def from_int(size : Int32, int : Int)
-  ba = BitArray.new(size)
-  (0).upto(size - 1) { |i| ba[i] = int.bit(size - i - 1) > 0 }
-  ba
+  BitArray.new(size) { |i| int.bit(size - i - 1) > 0 }
 end
 
 private def assert_no_unused_bits(ba : BitArray, *, file = __FILE__, line = __LINE__)
@@ -56,9 +54,9 @@ describe "BitArray" do
 
     context "with block" do
       it "initializes elements with block" do
-        BitArray.new(5) { |i| i >= 3 }.should eq(from_int(5, 0b00011))
-        BitArray.new(6) { |i| i < 2 ? "" : nil }.should eq(from_int(6, 0b110000))
-        BitArray.new(7_i64, &.even?).should eq(from_int(7, 0b1010101))
+        BitArray.new(5) { |i| i >= 3 }.to_a.should eq([false, false, false, true, true])
+        BitArray.new(6) { |i| i < 2 ? "" : nil }.to_a.should eq([true, true, false, false, false, false])
+        BitArray.new(7_i64, &.even?).to_a.should eq([true, false, true, false, true, false, true])
       end
     end
 
