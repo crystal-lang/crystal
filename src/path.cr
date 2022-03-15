@@ -557,7 +557,7 @@ struct Path
   def self.next_part_separator_index(reader : Char::Reader, last_was_separator, separators)
     start_pos = reader.pos
 
-    found = reader.each do |char|
+    reader.each do |char|
       if separators.includes?(char)
         if last_was_separator
           next
@@ -632,50 +632,91 @@ struct Path
   end
 
   # Converts this path to a native path.
+  #
+  # * `#to_kind` performs a configurable conversion.
   def to_native : Path
     to_kind(Kind.native)
   end
 
   # Converts this path to a Windows path.
   #
+  # This creates a new instance with the same string representation but with
+  # `Kind::WINDOWS`. If `#windows?` is true, this is a no-op.
+  #
   # ```
   # Path.posix("foo/bar").to_windows   # => Path.windows("foo/bar")
   # Path.windows("foo/bar").to_windows # => Path.windows("foo/bar")
   # ```
   #
-  # This creates a new instance with the same string representation but with
-  # `Kind::WINDOWS`.
-  def to_windows : Path
-    new_instance(@name, Kind::WINDOWS)
+  # When *mappings* is `true` (default), forbidden characters in Windows paths are
+  # substituted by replacement characters when converting from a POSIX path.
+  # Replacements are calculated by adding `0xF000` to their codepoint.
+  # For example, the backslash character `U+005C` becomes `U+F05C`.
+  #
+  # ```
+  # Path.posix("foo\\bar").to_windows(mappings: true)  # => Path.windows("foo\uF05Cbar")
+  # Path.posix("foo\\bar").to_windows(mappings: false) # => Path.windows("foo\\bar")
+  # ```
+  #
+  # * `#to_posix` performs the inverse conversion.
+  # * `#to_kind` performs a configurable conversion.
+  def to_windows(*, mappings : Bool = true) : Path
+    name = @name
+    if posix? && mappings
+      name = name.tr(WINDOWS_ESCAPE_CHARACTERS, WINDOWS_ESCAPED_CHARACTERS)
+    end
+    new_instance(name, Kind::WINDOWS)
   end
+
+  # :nodoc:
+  WINDOWS_ESCAPE_CHARACTERS = %("*:<>?\\| )
+  # :nodoc:
+  WINDOWS_ESCAPED_CHARACTERS = "\uF022\uF02A\uF03A\uF03C\uF03E\uF03F\uF05C\uF07C\uF020"
 
   # Converts this path to a POSIX path.
   #
+  # It returns a new instance with `Kind::POSIX` and all occurrences of Windows'
+  # backslash file separators (`\\`) replaced by forward slash (`/`).
+  # If `#posix?` is true, this is a no-op.
+  #
   # ```
   # Path.windows("foo/bar\\baz").to_posix # => Path.posix("foo/bar/baz")
-  # Path.posix("foo/bar").to_posix        # => Path.posix("foo/bar")
   # Path.posix("foo/bar\\baz").to_posix   # => Path.posix("foo/bar\\baz")
   # ```
   #
-  # It returns a copy of this instance if it already has POSIX kind. Otherwise
-  # a new instance is created with `Kind::POSIX` and all occurrences of
-  # backslash file separators (`\\`) replaced by forward slash (`/`).
-  def to_posix : Path
-    if posix?
-      new_instance(@name, Kind::POSIX)
-    else
-      new_instance(@name.gsub(Path.separators(Kind::WINDOWS)[0], Path.separators(Kind::POSIX)[0]), Kind::POSIX)
+  # When *mappings* is `true` (default), replacements  for forbidden characters in Windows
+  # paths are substituted by the original characters when converting to a POSIX path.
+  # Originals are calculated by subtracting `0xF000` from the replacement codepoint.
+  # For example, the `U+F05C` becomes `U+005C`, the backslash character.
+  #
+  # ```
+  # Path.windows("foo\uF05Cbar").to_posix(mappings: true)  # => Path.posix("foo\\bar")
+  # Path.windows("foo\uF05Cbar").to_posix(mappings: false) # => Path.posix("foo\uF05Cbar")
+  # ```
+  #
+  # * `#to_windows` performs the inverse conversion.
+  # * `#to_kind` performs a configurable conversion.
+  def to_posix(*, mappings : Bool = true) : Path
+    name = @name
+    if windows?
+      name = name.gsub('\\', '/')
+      if mappings
+        name = name.tr(WINDOWS_ESCAPED_CHARACTERS, WINDOWS_ESCAPE_CHARACTERS)
+      end
     end
+    new_instance(name, Kind::POSIX)
   end
 
   # Converts this path to the given *kind*.
   #
   # See `#to_windows` and `#to_posix` for details.
-  def to_kind(kind) : Path
+  #
+  # * `#to_native` converts to the native path semantics.
+  def to_kind(kind, *, mappings : Bool = true) : Path
     if kind.posix?
-      to_posix
+      to_posix(mappings: mappings)
     else
-      to_windows
+      to_windows(mappings: mappings)
     end
   end
 
