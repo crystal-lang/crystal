@@ -283,13 +283,13 @@ describe "Float" do
     it "String overload" do
       Float32.new("1").should be_a(Float32)
       Float32.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Float32: " 1 ") do
         Float32.new(" 1 ", whitespace: false)
       end
 
       Float64.new("1").should be_a(Float64)
       Float64.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Float64: " 1 ") do
         Float64.new(" 1 ", whitespace: false)
       end
     end

@@ -20,6 +20,21 @@
 class Crystal::Loader
   alias Handle = Void*
 
+  class LoadError
+    def self.new_dl_error(message)
+      if char_pointer = LibC.dlerror
+        new(String.build do |io|
+          io << message
+          io << " ("
+          io.write_string(Slice.new(char_pointer, LibC.strlen(char_pointer)))
+          io << ")"
+        end)
+      else
+        new message
+      end
+    end
+  end
+
   SHARED_LIBRARY_EXTENSION = {% if flag?(:darwin) %}
                                ".dylib"
                              {% else %}
@@ -64,7 +79,11 @@ class Crystal::Loader
   end
 
   def load_file(path : String | ::Path) : Handle
-    load_file?(path) || raise LoadError.new String.new(LibC.dlerror)
+    load_file?(path) || raise LoadError.new_dl_error "cannot load #{path}"
+  end
+
+  def load_library(libname : String) : Handle
+    load_library?(libname) || raise LoadError.new_dl_error "cannot find -l#{libname}"
   end
 
   private def open_library(path : String)

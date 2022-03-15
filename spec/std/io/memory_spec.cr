@@ -358,6 +358,23 @@ describe IO::Memory do
     io.gets_to_end.should eq("")
   end
 
+  it "consumes with getb_to_end" do
+    io = IO::Memory.new(Bytes[0, 1, 3, 6, 10, 15])
+    io.getb_to_end.should eq(Bytes[0, 1, 3, 6, 10, 15])
+    io.getb_to_end.should eq(Bytes.new(0))
+    io.seek(3)
+    bytes = io.getb_to_end
+    bytes.should eq(Bytes[6, 10, 15])
+    bytes.read_only?.should be_false
+
+    io.seek(3)
+    io.write(Bytes[2, 4, 5])
+    bytes.should eq(Bytes[6, 10, 15])
+
+    io.seek(10)
+    io.getb_to_end.should eq(Bytes.new(0))
+  end
+
   it "peeks" do
     str = "hello world"
     io = IO::Memory.new(str)

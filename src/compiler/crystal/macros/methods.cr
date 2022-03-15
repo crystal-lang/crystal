@@ -551,20 +551,18 @@ module Crystal
 
     def to_number
       case @kind
-      when :i8   then @value.to_i8
-      when :i16  then @value.to_i16
-      when :i32  then @value.to_i32
-      when :i64  then @value.to_i64
-      when :i128 then @value.to_i128
-      when :u8   then @value.to_u8
-      when :u16  then @value.to_u16
-      when :u32  then @value.to_u32
-      when :u64  then @value.to_u64
-      when :u128 then @value.to_u128
-      when :f32  then @value.to_f32
-      when :f64  then @value.to_f64
-      else
-        raise "Unknown kind: #{@kind}"
+      in .i8?   then @value.to_i8
+      in .i16?  then @value.to_i16
+      in .i32?  then @value.to_i32
+      in .i64?  then @value.to_i64
+      in .i128? then @value.to_i128
+      in .u8?   then @value.to_u8
+      in .u16?  then @value.to_u16
+      in .u32?  then @value.to_u32
+      in .u64?  then @value.to_u64
+      in .u128? then @value.to_u128
+      in .f32?  then @value.to_f32
+      in .f64?  then @value.to_f64
       end
     end
   end
@@ -1248,6 +1246,8 @@ module Crystal
         interpret_check_args { MacroId.new(@name) }
       when "args"
         interpret_check_args { ArrayLiteral.map(@args, &.itself) }
+      when "global?"
+        interpret_check_args { BoolLiteral.new(@global) }
       else
         super
       end

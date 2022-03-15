@@ -482,8 +482,8 @@ module Crystal
       # Match all concrete types first
       free_var_count = other.types.count do |other_type|
         other_type.is_a?(Path) &&
-          other_type.names.size == 1 &&
-          context.has_def_free_var?(other_type.names.first)
+          (first_name = other_type.single_name?) &&
+          context.has_def_free_var?(first_name)
       end
       if free_var_count > 1
         other.raise "can't specify more than one free var in union restriction"
@@ -496,21 +496,18 @@ module Crystal
     end
 
     def restrict(other : Path, context)
-      single_name = other.names.size == 1
-      if single_name
-        first_name = other.names.first
+      if first_name = other.single_name?
         if context.has_def_free_var?(first_name)
           return context.set_free_var(first_name, self)
         end
       end
 
-      if single_name
+      if first_name
         owner = context.instantiated_type
 
         # Special case: if we have an *uninstantiated* generic type like Foo(X)
         # and a restriction X, it matches, and we add X to the free vars.
         if owner.is_a?(GenericType)
-          first_name = other.names.first
           if owner.type_vars.includes?(first_name)
             context.set_free_var(first_name, self)
             return self
@@ -531,8 +528,7 @@ module Crystal
         return restrict ident_type, context
       end
 
-      if single_name
-        first_name = other.names.first
+      if first_name
         if context.defining_type.type_var?(first_name)
           return context.set_free_var(first_name, self)
         end
@@ -654,8 +650,8 @@ module Crystal
       # Match all concrete types first
       free_vars, other_types = other.types.partition do |other_type|
         other_type.is_a?(Path) &&
-          other_type.names.size == 1 &&
-          context.has_def_free_var?(other_type.names.first)
+          (first_name = other_type.single_name?) &&
+          context.has_def_free_var?(first_name)
       end
       if free_vars.size > 1
         other.raise "can't specify more than one free var in union restriction"
@@ -872,17 +868,15 @@ module Crystal
             return type_var
           end
         when Path
-          if other_type_var.names.size == 1
-            name = other_type_var.names.first
-
+          if first_name = other_type_var.single_name?
             # If the free variable is already set to another
             # number, there's no match
-            existing = context.get_free_var(name)
+            existing = context.get_free_var(first_name)
             if existing && existing != type_var
               return nil
             end
 
-            context.set_free_var(name, type_var)
+            context.set_free_var(first_name, type_var)
             return type_var
           end
         else
@@ -1092,9 +1086,7 @@ module Crystal
     end
 
     def restrict(other : Path, context)
-      single_name = other.names.size == 1
-      if single_name
-        first_name = other.names.first
+      if first_name = other.single_name?
         if context.has_def_free_var?(first_name)
           return context.set_free_var(first_name, self)
         end
@@ -1106,9 +1098,7 @@ module Crystal
           return self
         end
       else
-        single_name = other.names.size == 1
-        if single_name
-          first_name = other.names.first
+        if first_name = other.single_name?
           if context.defining_type.type_var?(first_name)
             return context.set_free_var(first_name, self)
           else
