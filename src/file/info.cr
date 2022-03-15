@@ -1,7 +1,7 @@
 class File
   # Represents the various behaviour-altering flags which can be set on files.
   # Not all flags will be supported on all platforms.
-  @[Flags]
+  @[::Flags]
   enum Flags : UInt8
     SetUser
     SetGroup
@@ -37,7 +37,7 @@ class File
   # On windows, only the `OwnerWrite` bit is effective. All file permissions
   # will either be `0o444` for read-only files or `0o666` for read-write files.
   # Directories are always mode `0o555` for read-only or `0o777`.
-  @[Flags]
+  @[::Flags]
   enum Permissions : Int16
     OtherExecute = 0o001
     OtherWrite   = 0o002
