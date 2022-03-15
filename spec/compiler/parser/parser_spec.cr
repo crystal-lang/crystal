@@ -65,6 +65,7 @@ module Crystal
     it_parses %("foo"), "foo".string
     it_parses %(""), "".string
     it_parses %("hello \\\n     world"), "hello world".string
+    it_parses %("hello \\\r\n     world"), "hello world".string
 
     it_parses %(%Q{hello \\n world}), "hello \n world".string
     it_parses %(%q{hello \\n world}), "hello \\n world".string
@@ -1341,7 +1342,13 @@ module Crystal
       it_parses "->Foo.#{method}", ProcPointer.new("Foo".path, method)
       it_parses "->@foo.#{method}", ProcPointer.new("@foo".instance_var, method)
       it_parses "->@@foo.#{method}", ProcPointer.new("@@foo".class_var, method)
+      it_parses "->::#{method}", ProcPointer.new(nil, method, global: true)
+      it_parses "->::Foo.#{method}", ProcPointer.new(Path.global("Foo"), method)
     end
+
+    assert_syntax_error "->::foo.foo", "ProcPointer of local variable cannot be global"
+    assert_syntax_error "->::@foo.foo", "ProcPointer of instance variable cannot be global"
+    assert_syntax_error "->::@@foo.foo", "ProcPointer of class variable cannot be global"
 
     it_parses "->Foo::Bar::Baz.foo", ProcPointer.new(["Foo", "Bar", "Baz"].path, "foo")
     it_parses "->foo(Int32, Float64)", ProcPointer.new(nil, "foo", ["Int32".path, "Float64".path] of ASTNode)
@@ -1514,18 +1521,23 @@ module Crystal
     it_parses "__FILE__", "/foo/bar/baz.cr".string
     it_parses "__DIR__", "/foo/bar".string
 
-    it_parses "def foo(x = __LINE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__LINE__))])
-    it_parses "def foo(x = __FILE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__FILE__))])
-    it_parses "def foo(x = __DIR__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:__DIR__))])
+    it_parses "def foo(x = __LINE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:MAGIC_LINE))])
+    it_parses "def foo(x = __FILE__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:MAGIC_FILE))])
+    it_parses "def foo(x = __DIR__); end", Def.new("foo", args: [Arg.new("x", default_value: MagicConstant.new(:MAGIC_DIR))])
 
-    it_parses "macro foo(x = __LINE__);end", Macro.new("foo", body: Expressions.new, args: [Arg.new("x", default_value: MagicConstant.new(:__LINE__))])
+    it_parses "macro foo(x = __LINE__);end", Macro.new("foo", body: Expressions.new, args: [Arg.new("x", default_value: MagicConstant.new(:MAGIC_LINE))])
 
     it_parses "1 \\\n + 2", Call.new(1.int32, "+", 2.int32)
     it_parses "1\\\n + 2", Call.new(1.int32, "+", 2.int32)
+    it_parses "1 \\\r\n + 2", Call.new(1.int32, "+", 2.int32)
+    it_parses "1\\\r\n + 2", Call.new(1.int32, "+", 2.int32)
 
     it_parses %("hello " \\\n "world"), StringLiteral.new("hello world")
     it_parses %("hello "\\\n"world"), StringLiteral.new("hello world")
+    it_parses %("hello " \\\r\n "world"), StringLiteral.new("hello world")
+    it_parses %("hello "\\\r\n"world"), StringLiteral.new("hello world")
     it_parses %("hello \#{1}" \\\n "\#{2} world"), StringInterpolation.new(["hello ".string, 1.int32, 2.int32, " world".string] of ASTNode)
+    it_parses %("hello \#{1}" \\\r\n "\#{2} world"), StringInterpolation.new(["hello ".string, 1.int32, 2.int32, " world".string] of ASTNode)
     it_parses "<<-HERE\nHello, mom! I am HERE.\nHER dress is beautiful.\nHE is OK.\n  HERESY\nHERE",
       "Hello, mom! I am HERE.\nHER dress is beautiful.\nHE is OK.\n  HERESY".string_interpolation
     it_parses "<<-HERE\n   One\n  Zero\n  HERE", " One\nZero".string_interpolation

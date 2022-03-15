@@ -1562,6 +1562,11 @@ module Crystal::Macros
     # Returns the name of the method this proc points to.
     def name : MacroId
     end
+
+    # Returns true if this proc pointer refers to a global method (starts with
+    # `::` and does not have a receiver).
+    def global? : BoolLiteral
+    end
   end
 
   # A type union, like `(Int32 | String)`.
