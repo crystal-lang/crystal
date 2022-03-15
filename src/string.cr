@@ -359,7 +359,7 @@ class String
 
   # Same as `#to_i` but returns an `Int8`.
   def to_i8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int8
-    to_i8(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int8: #{self}") }
+    to_i8(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int8: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `Int8` or `nil`.
@@ -374,7 +374,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt8`.
   def to_u8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt8
-    to_u8(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt8: #{self}") }
+    to_u8(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt8: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `UInt8` or `nil`.
@@ -389,7 +389,7 @@ class String
 
   # Same as `#to_i` but returns an `Int16`.
   def to_i16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int16
-    to_i16(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int16: #{self}") }
+    to_i16(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int16: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `Int16` or `nil`.
@@ -404,7 +404,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt16`.
   def to_u16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt16
-    to_u16(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt16: #{self}") }
+    to_u16(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt16: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `UInt16` or `nil`.
@@ -419,7 +419,7 @@ class String
 
   # Same as `#to_i`.
   def to_i32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int32
-    to_i32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int32: #{self}") }
+    to_i32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int32: #{self.inspect}") }
   end
 
   # Same as `#to_i`.
@@ -434,7 +434,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt32`.
   def to_u32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt32
-    to_u32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt32: #{self}") }
+    to_u32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt32: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `UInt32` or `nil`.
@@ -449,7 +449,7 @@ class String
 
   # Same as `#to_i` but returns an `Int64`.
   def to_i64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int64
-    to_i64(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int64: #{self}") }
+    to_i64(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int64: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `Int64` or `nil`.
@@ -464,7 +464,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt64`.
   def to_u64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt64
-    to_u64(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt64: #{self}") }
+    to_u64(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt64: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `UInt64` or `nil`.
@@ -479,7 +479,7 @@ class String
 
   # Same as `#to_i` but returns an `Int128`.
   def to_i128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int128
-    to_i128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int128: #{self}") }
+    to_i128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int128: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `Int128` or `nil`.
@@ -494,7 +494,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt128`.
   def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt128
-    to_u128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt128: #{self}") }
+    to_u128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt128: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `UInt128` or `nil`.
@@ -691,7 +691,7 @@ class String
 
   # :ditto:
   def to_f64(whitespace : Bool = true, strict : Bool = true) : Float64
-    to_f64?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float64: #{self}")
+    to_f64?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float64: #{self.inspect}")
   end
 
   # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
@@ -724,7 +724,7 @@ class String
 
   # Same as `#to_f` but returns a Float32.
   def to_f32(whitespace : Bool = true, strict : Bool = true) : Float32
-    to_f32?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float32: #{self}")
+    to_f32?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float32: #{self.inspect}")
   end
 
   # Same as `#to_f?` but returns a Float32.

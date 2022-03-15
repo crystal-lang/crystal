@@ -773,6 +773,8 @@ describe Crystal::Formatter do
     assert_format "->Foo.#{method}"
     assert_format "->@foo.#{method}"
     assert_format "->@@foo.#{method}"
+    assert_format "-> :: #{method}", "->::#{method}"
+    assert_format "-> :: Foo . #{method}", "->::Foo.#{method}"
   end
 
   assert_format "foo = 1\n->foo.bar(Int32)"

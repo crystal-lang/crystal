@@ -913,7 +913,7 @@ module Crystal
         Var.new(def_arg.name).at(def_arg).as(ASTNode)
       end
 
-      body = Call.new(obj, node.name, call_args).at(node)
+      body = Call.new(obj, node.name, call_args, global: node.global?).at(node)
       proc_literal = ProcLiteral.new(Def.new("->", def_args, body).at(node)).at(node)
       proc_literal.proc_pointer = node
 
