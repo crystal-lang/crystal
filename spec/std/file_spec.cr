@@ -683,6 +683,45 @@ describe "File" do
     end
   end
 
+  it "supports binary modes" do
+    with_tempfile("binary-modes.txt") do |path|
+      File.open(path, "wb") do |f|
+        f.write(Bytes[1, 3, 6, 10])
+      end
+      File.open(path, "rb") do |f|
+        bytes = Bytes.new(4)
+        f.read(bytes)
+        bytes.should eq(Bytes[1, 3, 6, 10])
+      end
+      File.open(path, "ab") do |f|
+        f.size.should eq(4)
+      end
+
+      File.open(path, "r+b") do |f|
+        bytes = Bytes.new(4)
+        f.read(bytes)
+        bytes.should eq(Bytes[1, 3, 6, 10])
+        f.seek(0)
+        f.write(Bytes[1, 3, 6, 10])
+      end
+      File.open(path, "a+b") do |f|
+        f.write(Bytes[13, 13, 10])
+        f.flush
+        f.seek(0)
+        bytes = Bytes.new(7)
+        f.read(bytes)
+        bytes.should eq(Bytes[1, 3, 6, 10, 13, 13, 10])
+      end
+      File.open(path, "w+b") do |f|
+        f.size.should eq(0)
+      end
+
+      File.open(path, "rb+") { }
+      File.open(path, "wb+") { }
+      File.open(path, "ab+") { }
+    end
+  end
+
   it "opens with perm (int)" do
     with_tempfile("write_with_perm-int.txt") do |path|
       perm = 0o600

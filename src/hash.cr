@@ -466,6 +466,13 @@ class Hash(K, V)
 
   # Finds an entry with the given key.
   protected def find_entry(key) : Entry(K, V)?
+    if entry_index = find_entry_with_index(key)
+      return entry_index[0]
+    end
+  end
+
+  # Finds an entry (and its index) with the given key.
+  protected def find_entry_with_index(key) : {Entry(K, V), Int32}?
     # Empty hash table so there's no way it's there
     if @indices_size_pow2 == 0
       return nil
@@ -473,7 +480,7 @@ class Hash(K, V)
 
     # No indices allocated yet so do linear scan
     if @indices.null?
-      return find_entry_linear_scan(key)
+      return find_entry_with_index_linear_scan(key)
     end
 
     hash = key_hash(key)
@@ -492,7 +499,7 @@ class Hash(K, V)
       entry = get_entry(entry_index)
       if entry_matches?(entry, hash, key)
         # It does!
-        return entry
+        return entry, entry_index
       else
         # Nope, move on to the next slot
         index = next_index(index)
@@ -501,18 +508,18 @@ class Hash(K, V)
   end
 
   # Finds an Entry with the given key by doing a linear scan.
-  private def find_entry_linear_scan(key) : Entry(K, V)?
+  private def find_entry_with_index_linear_scan(key) : {Entry(K, V), Int32}?
     # If we have less than 8 elements we avoid computing the hash
     # code and directly compare the keys (might be cheaper than
     # computing a hash code of a complex structure).
     if entries_size <= 8
-      each_entry_with_index do |entry|
-        return entry if entry_matches?(entry, key)
+      each_entry_with_index do |entry, index|
+        return entry, index if entry_matches?(entry, key)
       end
     else
       hash = key_hash(key)
-      each_entry_with_index do |entry|
-        return entry if entry_matches?(entry, hash, key)
+      each_entry_with_index do |entry, index|
+        return entry, index if entry_matches?(entry, hash, key)
       end
     end
 
@@ -971,7 +978,7 @@ class Hash(K, V)
   # h1.compare_by_identity? # => true
   # h1["fo" + "o"]?         # => nil # not the same String instance
   # ```
-  def compare_by_identity
+  def compare_by_identity : self
     @compare_by_identity = true
     rehash
     self
@@ -980,7 +987,7 @@ class Hash(K, V)
   # Returns `true` of this Hash is comparing keys by `object_id`.
   #
   # See `compare_by_identity`.
-  getter? compare_by_identity
+  getter? compare_by_identity : Bool
 
   # Sets the value of *key* to the given *value*.
   #
@@ -989,7 +996,7 @@ class Hash(K, V)
   # h["foo"] = "bar"
   # h["foo"] # => "bar"
   # ```
-  def []=(key : K, value : V)
+  def []=(key : K, value : V) : V
     upsert(key, value)
     value
   end
@@ -1008,6 +1015,45 @@ class Hash(K, V)
   def put(key : K, value : V)
     updated_entry = upsert(key, value)
     updated_entry ? updated_entry.value : yield key
+  end
+
+  # Updates the current value of *key* with the value returned by the given block
+  # (the current value is used as input for the block).
+  #
+  # If no entry for *key* is present, but there's a default value (or default block)
+  # then that default value is used as input for the given block.
+  #
+  # If no entry for *key* is present and the hash has no default value, it raises `KeyError`.
+  #
+  # It returns the value used as input for the given block
+  # (ie. the old value if key present, or the default value)
+  #
+  # ```
+  # h = {"a" => 0, "b" => 1}
+  # h.update("b") { |v| v + 41 } # => 1
+  # h["b"]                       # => 42
+  #
+  # h = Hash(String, Int32).new(40)
+  # h.update("foo") { |v| v + 2 } # => 40
+  # h["foo"]                      # => 42
+  #
+  # h = {} of String => Int32
+  # h.update("a") { 42 } # raises KeyError
+  # ```
+  #
+  # See `#transform_values!` for updating *all* the values.
+  def update(key : K, & : V -> V) : V
+    if entry_index = find_entry_with_index(key)
+      entry, index = entry_index
+      set_entry(index, Entry(K, V).new(entry.hash, entry.key, yield entry.value))
+      entry.value
+    elsif block = @block
+      default_value = block.call(self, key)
+      upsert(key, yield default_value)
+      default_value
+    else
+      raise KeyError.new "Missing hash key: #{key.inspect}"
+    end
   end
 
   # Returns the value for the key given by *key*.
@@ -1195,7 +1241,7 @@ class Hash(K, V)
   # h.delete("foo")     # => "bar"
   # h.fetch("foo", nil) # => nil
   # ```
-  def delete(key)
+  def delete(key) : V?
     delete(key) { nil }
   end
 
@@ -1434,12 +1480,12 @@ class Hash(K, V)
   # h.select { |k, v| k > "a" } # => {"b" => 200, "c" => 300}
   # h.select { |k, v| v < 200 } # => {"a" => 100}
   # ```
-  def select(& : K, V ->)
+  def select(& : K, V ->) : Hash(K, V)
     reject { |k, v| !yield(k, v) }
   end
 
   # Equivalent to `Hash#select` but makes modification on the current object rather than returning a new one. Returns `self`.
-  def select!(& : K, V ->)
+  def select!(& : K, V ->) : self
     reject! { |k, v| !yield(k, v) }
   end
 
@@ -1449,14 +1495,14 @@ class Hash(K, V)
   # h.reject { |k, v| k > "a" } # => {"a" => 100}
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
-  def reject(& : K, V ->)
+  def reject(& : K, V ->) : Hash(K, V)
     each_with_object({} of K => V) do |(k, v), memo|
       memo[k] = v unless yield k, v
     end
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather than returning a new one. Returns `self`.
-  def reject!(& : K, V ->)
+  def reject!(& : K, V ->) : self
     each do |key, value|
       delete(key) if yield(key, value)
     end
@@ -1591,6 +1637,7 @@ class Hash(K, V)
   # hash.transform_values! { |value| value + 1 }
   # hash # => {:a => 2, :b => 3, :c => 4}
   # ```
+  # See `#update` for updating a *single* value.
   def transform_values!(& : V -> V) : self
     each_entry_with_index do |entry, i|
       new_value = yield entry.value
@@ -1614,7 +1661,7 @@ class Hash(K, V)
   end
 
   # Returns the first key in the hash.
-  def first_key
+  def first_key : K
     entry = first_entry?
     entry ? entry.key : raise "Can't get first key of empty Hash"
   end
@@ -1632,7 +1679,7 @@ class Hash(K, V)
   end
 
   # Returns the first value in the hash.
-  def first_value
+  def first_value : V
     entry = first_entry?
     entry ? entry.value : raise "Can't get first value of empty Hash"
   end
@@ -1645,12 +1692,12 @@ class Hash(K, V)
   # hash.clear
   # hash.first_value? # => nil
   # ```
-  def first_value?
+  def first_value? : V?
     first_entry?.try &.value
   end
 
   # Returns the last key in the hash.
-  def last_key
+  def last_key : K
     entry = last_entry?
     entry ? entry.key : raise "Can't get last key of empty Hash"
   end
@@ -1663,12 +1710,12 @@ class Hash(K, V)
   # hash.clear
   # hash.last_key? # => nil
   # ```
-  def last_key?
+  def last_key? : K?
     last_entry?.try &.key
   end
 
   # Returns the last value in the hash.
-  def last_value
+  def last_value : V
     entry = last_entry?
     entry ? entry.value : raise "Can't get last value of empty Hash"
   end
@@ -1681,7 +1728,7 @@ class Hash(K, V)
   # hash.clear
   # hash.last_value? # => nil
   # ```
-  def last_value?
+  def last_value? : V?
     last_entry?.try &.value
   end
 
@@ -1696,7 +1743,7 @@ class Hash(K, V)
   # hash = {} of String => String
   # hash.shift # raises IndexError
   # ```
-  def shift
+  def shift : {K, V}
     shift { raise IndexError.new }
   end
 
@@ -1742,13 +1789,13 @@ class Hash(K, V)
   # hash = {"foo" => "bar"}
   # hash.clear # => {}
   # ```
-  def clear
+  def clear : self
     clear_impl
     self
   end
 
   # Compares with *other*. Returns `true` if all key-value pairs are the same.
-  def ==(other : Hash)
+  def ==(other : Hash) : Bool
     return false unless size == other.size
     each do |key, value|
       entry = other.find_entry(key)
@@ -1758,7 +1805,7 @@ class Hash(K, V)
   end
 
   # Returns `true` if `self` is a subset of *other*.
-  def proper_subset_of?(other : Hash)
+  def proper_subset_of?(other : Hash) : Bool
     return false if other.size <= size
     all? do |key, value|
       other_value = other.fetch(key) { return false }
@@ -1767,7 +1814,7 @@ class Hash(K, V)
   end
 
   # Returns `true` if `self` is a subset of *other* or equals to *other*.
-  def subset_of?(other : Hash)
+  def subset_of?(other : Hash) : Bool
     return false if other.size < size
     all? do |key, value|
       other_value = other.fetch(key) { return false }
@@ -1776,12 +1823,12 @@ class Hash(K, V)
   end
 
   # Returns `true` if *other* is a subset of `self`.
-  def superset_of?(other : Hash)
+  def superset_of?(other : Hash) : Bool
     other.subset_of?(self)
   end
 
   # Returns `true` if *other* is a subset of `self` or equals to `self`.
-  def proper_superset_of?(other : Hash)
+  def proper_superset_of?(other : Hash) : Bool
     other.proper_subset_of?(self)
   end
 
@@ -1809,7 +1856,7 @@ class Hash(K, V)
   # hash_b.merge!({"baz" => "qux"})
   # hash_a # => {"foo" => "bar"}
   # ```
-  def dup
+  def dup : Hash(K, V)
     hash = Hash(K, V).new
     hash.initialize_dup(self)
     hash
@@ -1823,7 +1870,7 @@ class Hash(K, V)
   # hash_b["foobar"]["foo"] = "baz"
   # hash_a # => {"foobar" => {"foo" => "bar"}}
   # ```
-  def clone
+  def clone : Hash(K, V)
     {% if V == ::Bool || V == ::Char || V == ::String || V == ::Symbol || V < ::Number::Primitive %}
       clone = Hash(K, V).new
       clone.initialize_clone(self)
