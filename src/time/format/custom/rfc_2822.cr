@@ -92,7 +92,7 @@ struct Time::Format
       in_comment = false
       seen_whitespace = false
       loop do
-        case char = current_char
+        case current_char
         when .ascii_whitespace?
           seen_whitespace = true
         when '('

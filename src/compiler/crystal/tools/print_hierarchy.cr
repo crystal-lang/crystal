@@ -269,7 +269,7 @@ module Crystal
 
       @json.field "sub_types" do
         @json.array do
-          types.each_with_index do |type, index|
+          types.each do |type|
             if must_print? type
               @json.object do
                 print_type(type)

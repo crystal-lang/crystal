@@ -71,7 +71,7 @@ jobs:
           path: |
             .build/crystal
             src/llvm/ext/llvm_ext.o
-  aarch64-gnu-test-stdlib::
+  aarch64-gnu-test-stdlib:
     needs: aarch64-gnu-build
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
