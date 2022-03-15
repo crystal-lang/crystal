@@ -116,6 +116,7 @@ struct Tuple
       args
     {% else %}
       # explicitly provided type vars
+      # following `typeof` is needed to access private types
       {% begin %}
         {
           {% for i in 0...@type.size %}
@@ -258,6 +259,7 @@ struct Tuple
   # Foo[i]? # => nil
   # ```
   def self.[]?(index : Int)
+    # following `typeof` is needed to access private types
     {% begin %}
       case index
       {% for i in 0...T.size %}

@@ -65,6 +65,7 @@ struct NamedTuple
       options
     {% else %}
       # explicitly provided type vars
+      # following `typeof` is needed to access private types
       {% begin %}
         {
           {% for key in T %}
@@ -198,10 +199,10 @@ struct NamedTuple
   # typeof(tuple[key]?) # => (Int32 | String | Nil)
   #
   # key = "year"
-  # tuple[key] # => 2011
+  # tuple[key]? # => 2011
   #
   # key = :other
-  # tuple[key] # => nil
+  # tuple[key]? # => nil
   # ```
   def []?(key : Symbol | String)
     fetch(key, nil)
@@ -229,6 +230,7 @@ struct NamedTuple
   # Foo[key]? # => nil
   # ```
   def self.[]?(key : Symbol | String)
+    # following `typeof` is needed to access private types
     {% begin %}
       case key
       {% for key in T %}
