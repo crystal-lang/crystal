@@ -1,4 +1,4 @@
--include Makefile.local # for optional local options e.g. threads
+-include Makefile.win.local # for optional local options e.g. threads
 
 # Recipes for this Makefile
 
@@ -96,7 +96,8 @@ primitives_spec: $(O)\primitives_spec.exe ## Run primitives specs
 	$(O)\primitives_spec $(SPEC_FLAGS)
 
 .PHONY: smoke_test
-smoke_test: $(O)\std_spec.exe $(O)\compiler_spec.exe $(O)\crystal.exe ## Build specs as a smoke test
+smoke_test: ## Build specs as a smoke test
+smoke_test: $(O)\std_spec.exe $(O)\compiler_spec.exe $(O)\crystal.exe
 
 .PHONY: samples
 samples: ## Build example programs
