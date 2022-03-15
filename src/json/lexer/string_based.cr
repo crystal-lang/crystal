@@ -15,7 +15,7 @@ class JSON::Lexer::StringBased < JSON::Lexer
     start_pos = current_pos
 
     while true
-      case char = next_char
+      case next_char
       when '\0'
         raise "Unterminated string"
       when '\\'

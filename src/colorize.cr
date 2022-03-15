@@ -37,11 +37,13 @@
 # ```
 # require "colorize"
 #
-# "foo".colorize(0, 255, 255) # => "foo" in aqua
+# "foo".colorize(0, 255, 255)      # => "foo" in aqua
+# "foo".colorize.fore(0, 255, 255) # => "foo" in aqua
 #
 # # This is the same as:
 #
-# "foo".colorize(Colorize::ColorRGB.new(0, 255, 255)) # => "foo" in aqua
+# "foo".colorize(Colorize::ColorRGB.new(0, 255, 255))      # => "foo" in aqua
+# "foo".colorize.fore(Colorize::ColorRGB.new(0, 255, 255)) # => "foo" in aqua
 # ```
 #
 # Or an 8-bit color:
@@ -49,7 +51,8 @@
 # ```
 # require "colorize"
 #
-# "foo".colorize(Colorize::Color256.new(208)) # => "foo" in orange
+# "foo".colorize(Colorize::Color256.new(208))      # => "foo" in orange
+# "foo".colorize.fore(Colorize::Color256.new(208)) # => "foo" in orange
 # ```
 #
 # It's also possible to change the text decoration:
@@ -169,8 +172,25 @@ module Colorize::ObjectExtensions
     Colorize::Object.new(self)
   end
 
-  # Turns `self` into a `Colorize::Object` and colors it with a color.
-  def colorize(fore)
+  # Wraps `self` in a `Colorize::Object` and colors it with the given `Color256`
+  # made up from the single *fore* byte.
+  def colorize(fore : UInt8)
+    Colorize::Object.new(self).fore(fore)
+  end
+
+  # Wraps `self` in a `Colorize::Object` and colors it with the given `Color256` made
+  # up from the given *r*ed, *g*reen and *b*lue values.
+  def colorize(r : UInt8, g : UInt8, b : UInt8)
+    Colorize::Object.new(self).fore(r, g, b)
+  end
+
+  # Wraps `self` in a `Colorize::Object` and colors it with the given *fore* `Color`.
+  def colorize(fore : Color)
+    Colorize::Object.new(self).fore(fore)
+  end
+
+  # Wraps `self` in a `Colorize::Object` and colors it with the given *fore* color.
+  def colorize(fore : Symbol)
     Colorize::Object.new(self).fore(fore)
   end
 end
@@ -329,6 +349,16 @@ struct Colorize::Object(T)
     self
   end
 
+  def fore(fore : UInt8)
+    @fore = Color256.new(fore)
+    self
+  end
+
+  def fore(r : UInt8, g : UInt8, b : UInt8)
+    @fore = ColorRGB.new(r, g, b)
+    self
+  end
+
   def back(color : Symbol) : self
     {% for name in COLORS %}
       if color == :{{name.id}}
@@ -341,6 +371,16 @@ struct Colorize::Object(T)
   end
 
   def back(@back : Color) : self
+    self
+  end
+
+  def back(back : UInt8)
+    @back = Color256.new(back)
+    self
+  end
+
+  def back(r : UInt8, g : UInt8, b : UInt8)
+    @back = ColorRGB.new(r, g, b)
     self
   end
 
