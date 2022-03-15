@@ -418,13 +418,14 @@ jobs:
 
   dist_artifacts:
     docker:
-      - image: buildpack-deps:xenial
+      - image: manastech/s3cmd:2.2-alpine
+    environment:
+      <<: *env
+      AWS_ACCESS_KEY_ID: AKIA2EEIIRCJCMOSW2XH
     steps:
       - attach_workspace:
           at: /tmp/workspace
-      - store_artifacts:
-          path: /tmp/workspace/build
-          destination: dist_packages
+      - run: s3cmd put --recursive /tmp/workspace/* s3://artifacts.crystal-lang.org/dist/
 
   test_dist_linux_on_docker:
     machine: true
