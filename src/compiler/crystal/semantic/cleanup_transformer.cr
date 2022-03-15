@@ -506,8 +506,6 @@ module Crystal
       end
 
       if target_defs = node.target_defs
-        changed = false
-
         if target_defs.size == 1
           if target_defs[0].is_a?(External)
             check_args_are_not_closure node, "can't send closure to C function"

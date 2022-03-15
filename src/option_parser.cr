@@ -108,15 +108,19 @@ class OptionParser
 
   # Creates a new parser, with its configuration specified in the block,
   # and uses it to parse the passed *args* (defaults to `ARGV`).
-  def self.parse(args = ARGV) : self
-    parser = OptionParser.new
+  #
+  # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
+  def self.parse(args = ARGV, *, gnu_optional_args : Bool = false) : self
+    parser = OptionParser.new(gnu_optional_args: gnu_optional_args)
     yield parser
     parser.parse(args)
     parser
   end
 
   # Creates a new parser.
-  def initialize
+  #
+  # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
+  def initialize(*, @gnu_optional_args : Bool = false)
     @flags = [] of String
     @handlers = Hash(String, Handler).new
     @stop = false
@@ -125,9 +129,47 @@ class OptionParser
   end
 
   # Creates a new parser, with its configuration specified in the block.
-  def self.new
-    new.tap { |parser| yield parser }
+  #
+  # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
+  def self.new(*, gnu_optional_args : Bool = false)
+    new(gnu_optional_args: gnu_optional_args).tap { |parser| yield parser }
   end
+
+  # Returns whether the GNU convention is followed for optional arguments.
+  #
+  # If true, any optional argument must follow the preceding flag in the same
+  # token immediately, without any space inbetween:
+  #
+  # ```
+  # require "option_parser"
+  #
+  # OptionParser.parse(%w(-a1 -a 2 -a --b=3 --b 4), gnu_optional_args: true) do |parser|
+  #   parser.on("-a", "--b [x]", "optional") { |x| p x }
+  #   parser.unknown_args { |args, _| puts "Remaining: #{args}" }
+  # end
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # "1"
+  # ""
+  # ""
+  # "3"
+  # ""
+  # Remaining: ["2", "4"]
+  # ```
+  #
+  # Without `gnu_optional_args: true`, prints the following instead:
+  #
+  # ```text
+  # "1"
+  # "2"
+  # "--b=3"
+  # "4"
+  # Remaining: []
+  # ```
+  property? gnu_optional_args : Bool
 
   # Establishes the initial message for the help printout.
   # Typically, you want to write here the name of your program,
@@ -379,12 +421,14 @@ class OptionParser
                 @missing_option.call(flag)
               end
             in FlagValue::Optional
-              value = args[arg_index + 1]?
-              if value && !@handlers.has_key?(value)
-                handled_args << arg_index + 1
-                arg_index += 1
-              else
-                value = nil
+              unless gnu_optional_args?
+                value = args[arg_index + 1]?
+                if value && !@handlers.has_key?(value)
+                  handled_args << arg_index + 1
+                  arg_index += 1
+                else
+                  value = nil
+                end
               end
             in FlagValue::None
               # do nothing
@@ -394,7 +438,7 @@ class OptionParser
           # If this is a subcommand (flag not starting with -), delete all
           # subcommands since they are no longer valid.
           unless flag.starts_with?('-')
-            @handlers.select! { |k, v| k.starts_with?('-') }
+            @handlers.select! { |k, _| k.starts_with?('-') }
             @flags.select! { |flag| flag.starts_with?("    -") }
           end
 

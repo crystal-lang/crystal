@@ -668,7 +668,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     when Expressions
       visit_enum_members(node, member.expressions, counter, all_value, overflow, **options)
     when Arg
-      existed = options[:existed]
       enum_type = options[:enum_type]
       base_type = options[:enum_base_type]
       is_flags = options[:is_flags]
@@ -693,7 +692,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if default_value.is_a?(Crystal::NumberLiteral)
         enum_base_kind = base_type.kind
-        if (enum_base_kind == :i32) && (enum_base_kind != default_value.kind)
+        if (enum_base_kind.i32?) && (enum_base_kind != default_value.kind)
           default_value.raise "enum value must be an Int32"
         end
       end
