@@ -50,27 +50,9 @@ module Crystal
     end
 
     def check_deprecated_constant(const : Const, node : Path)
-      return unless self.warnings.all?
+      return unless @warnings.all?
 
-      if (ann = const.annotation(self.deprecated_annotation)) &&
-         (deprecated_annotation = DeprecatedAnnotation.from(ann))
-        call_location = node.location.try(&.macro_location) || node.location
-
-        return if self.ignore_warning_due_to_location?(call_location)
-        warning_key = call_location.try { |l| "#{const} #{l}" }
-
-        # skip warning if the call site was already informed
-        # if there is no location information just inform it.
-        return if !warning_key || @deprecated_constants_detected.includes?(warning_key)
-        @deprecated_constants_detected.add(warning_key) if warning_key
-
-        message = deprecated_annotation.message
-        message = message ? " #{message}" : ""
-
-        full_message = node.warning "Deprecated #{const}.#{message}"
-
-        self.warning_failures << full_message
-      end
+      check_deprecation(const, node, @deprecated_constants_detected)
     end
 
     def check_call_to_deprecated_macro(a_macro : Macro, call : Call)
@@ -173,6 +155,12 @@ module Crystal
       else
         "#{owner}##{name}"
       end
+    end
+  end
+
+  class Const
+    def short_reference
+      to_s
     end
   end
 
