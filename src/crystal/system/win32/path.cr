@@ -4,7 +4,7 @@ require "c/shlobj_core"
 
 module Crystal::System::Path
   def self.home : String
-    if home_path = ENV["USERPROFILE"]?
+    if home_path = ENV["USERPROFILE"]?.presence
       home_path
     elsif LibC.SHGetKnownFolderPath(pointerof(LibC::FOLDERID_Profile), 0, nil, out path_ptr) == 0
       home_path, _ = String.from_utf16(path_ptr)

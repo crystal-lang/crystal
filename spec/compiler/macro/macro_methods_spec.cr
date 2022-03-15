@@ -2155,6 +2155,12 @@ module Crystal
       it "executes args when not empty" do
         assert_macro %({{x.args}}), "[SomeType, OtherType]", {x: ProcPointer.new(Var.new("some_object"), "method", [Path.new("SomeType"), Path.new("OtherType")] of ASTNode)}
       end
+
+      it "executes global?" do
+        assert_macro %({{x.global?}}), "false", {x: ProcPointer.new(nil, "method")}
+        assert_macro %({{x.global?}}), "true", {x: ProcPointer.new(nil, "method", global: true)}
+        assert_macro %({{x.global?}}), "false", {x: ProcPointer.new(Path.global("Foo"), "method")}
+      end
     end
 
     describe "def methods" do

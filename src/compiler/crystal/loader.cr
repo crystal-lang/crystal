@@ -79,7 +79,7 @@ class Crystal::Loader
       return load_file(::Path[libname].expand)
     end
 
-    find_library_path(libname) do |library_path|
+    each_library_path(libname) do |library_path|
       handle = load_file?(library_path)
       return handle if handle
     end
@@ -93,14 +93,6 @@ class Crystal::Loader
 
     @handles << handle
     handle
-  end
-
-  private def find_library_path(libname)
-    each_library_path(libname) do |path|
-      if File.exists?(path)
-        yield path
-      end
-    end
   end
 
   private def each_library_path(libname)

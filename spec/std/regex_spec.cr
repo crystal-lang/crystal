@@ -114,6 +114,9 @@ describe "Regex" do
     end
 
     it "matches a large single line string" do
+      LibPCRE.config LibPCRE::CONFIG_JIT, out jit_enabled
+      pending! "PCRE JIT mode not available." unless 1 == jit_enabled
+
       str = File.read(datapath("large_single_line_string.txt"))
       str.matches?(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/).should be_false
     end

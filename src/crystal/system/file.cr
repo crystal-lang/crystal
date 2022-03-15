@@ -34,6 +34,12 @@ module Crystal::System::File
       else
         raise "Invalid file open mode: '#{mode}'"
       end
+    when 3
+      # POSIX allows both `+b` and `b+`: https://pubs.opengroup.org/onlinepubs/9699919799/functions/fopen.html
+      unless mode.ends_with?("+b") || mode.ends_with?("b+")
+        raise "Invalid file open mode: '#{mode}'"
+      end
+      m = LibC::O_RDWR
     else
       raise "Invalid file open mode: '#{mode}'"
     end
