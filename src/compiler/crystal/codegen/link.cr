@@ -1,12 +1,15 @@
 module Crystal
-  struct LinkAnnotation
+  class LinkAnnotation
     getter lib : String?
     getter pkg_config : String?
     getter ldflags : String?
     getter framework : String?
+    property resolved_flag : String?
 
     def initialize(@lib = nil, @pkg_config = @lib, @ldflags = nil, @static = false, @framework = nil)
     end
+
+    def_equals_and_hash @lib, pkg_config, ldflags, framework, resolved_flag
 
     def static?
       @static
@@ -133,8 +136,6 @@ module Crystal
 
     private def lib_flags_posix
       flags = [] of String
-      flags_channel = Channel(Tuple(Array(String), Int32)).new
-      unsorted_resolved_libs = [] of Tuple(Array(String), Int32)
       static_build = has_flag?("static")
 
       # Instruct the linker to link statically if the user asks
@@ -146,44 +147,45 @@ module Crystal
         flags << Process.quote_posix("-L#{path}")
       end
 
-      link_annotations.reverse_each.each_with_index do |ann, ann_id|
+      # Resolve link flags concurrently.
+      # TODO: This could be moved further ahead in the codegen process (https://github.com/crystal-lang/crystal/issues/11888#issuecomment-1065935049)
+      channel = Channel(Exception?).new
+      link_annotations = self.link_annotations
+      link_annotations.each do |ann|
         spawn do
-          next_flags = [] of String
-          if ldflags = ann.ldflags
-            next_flags << ldflags
-          end
-
           # First, check pkg-config for the pkg-config module name if provided, then
           # check pkg-config with the lib name, then fall back to -lname
           if (pkg_config_name = ann.pkg_config) && (flag = pkg_config(pkg_config_name, static_build))
-            next_flags << flag
+            ann.resolved_flag = flag
           elsif (lib_name = ann.lib) && (flag = pkg_config(lib_name, static_build))
-            next_flags << flag
+            ann.resolved_flag = flag
           elsif (lib_name = ann.lib)
-            next_flags << Process.quote_posix("-l#{lib_name}")
+            ann.resolved_flag = Process.quote_posix("-l#{lib_name}")
           end
-
-          if framework = ann.framework
-            next_flags << "-framework" + Process.quote_posix(framework)
-          end
-
-          flags_channel.send({next_flags, ann_id})
+          channel.send nil
+        rescue exc
+          channel.send exc
         end
       end
 
-      # For as many times the code spawned a new process, wait for the channel
-      # to be populated with new resolved flags
       link_annotations.size.times do
-        unsorted_resolved_libs << flags_channel.receive
+        if exc = channel.receive
+          raise exc
+        end
       end
 
-      # List of resolved flags may come back unsorted from the channel,
-      # so the list needs to be resorted to enforce linker flag order,
-      # and concatenate each new list to the main list of flags.
-      unsorted_resolved_libs.sort_by do |(next_flags, id)|
-        id
-      end.each do |(next_flags, id)|
-        flags.concat(next_flags)
+      link_annotations.reverse_each do |ann|
+        if ldflags = ann.ldflags
+          flags << ldflags
+        end
+
+        if resolved_flag = ann.resolved_flag
+          flags << resolved_flag
+        end
+
+        if framework = ann.framework
+          flags << "-framework" << Process.quote_posix(framework)
+        end
       end
 
       flags.join(" ")
