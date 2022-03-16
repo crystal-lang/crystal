@@ -148,7 +148,6 @@ module Crystal
       end
 
       # Resolve link flags concurrently.
-      # TODO: This could be moved further ahead in the codegen process (https://github.com/crystal-lang/crystal/issues/11888#issuecomment-1065935049)
       channel = Channel(Exception?).new
       link_annotations = self.link_annotations
       link_annotations.each do |ann|

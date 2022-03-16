@@ -414,6 +414,9 @@ module Crystal
       end
 
       output_filename = File.expand_path(output_filename)
+
+      # Kick off linker library name resolution to overlap with time take to compile
+      # On some platforms, name resolution can take some time that is mostly spent waiting
       linker_command_channel = Channel(Tuple(String, Array(String)?)).new
       spawn do
         linker_command_channel.send(linker_command(program, object_names, output_filename, output_dir, expand: true))
