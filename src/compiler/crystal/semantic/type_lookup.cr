@@ -408,7 +408,7 @@ class Crystal::Type
     end
 
     def check_cant_infer_generic_type_parameter(scope, node)
-      if scope.is_a?(MetaclassType) && (instance_type = scope.instance_type).is_a?(GenericClassType)
+      if scope.is_a?(MetaclassType) && (instance_type = scope.instance_type).is_a?(GenericType)
         first_name = node.names.first
         if instance_type.type_vars.includes?(first_name)
           node.raise "can't infer the type parameter #{first_name} for the #{instance_type.type_desc} #{instance_type}. Please provide it explicitly"
