@@ -416,7 +416,7 @@ jobs:
           paths:
             - build
 
-  dist_artifacts:
+  publish_nightly_artifacts:
     docker:
       - image: manastech/s3cmd:2.2-alpine
     environment:
@@ -426,6 +426,16 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - run: s3cmd put --recursive /tmp/workspace/* s3://artifacts.crystal-lang.org/dist/
+
+  dist_artifacts:
+    docker:
+      - image: buildpack-deps:xenial
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - store_artifacts:
+          path: /tmp/workspace/build
+          destination: dist_packages
 
   test_dist_linux_on_docker:
     machine: true
@@ -572,6 +582,10 @@ workflows:
       - dist_docs:
           requires:
             - dist_docker
+      - publish_nightly_artifacts:
+          requires:
+            - dist_linux
+            - dist_darwin
       - dist_artifacts:
           requires:
             - dist_linux
