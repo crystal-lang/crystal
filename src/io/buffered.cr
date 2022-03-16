@@ -190,19 +190,13 @@ module IO::Buffered
   # file.pos     # => 2
   # ```
   def pos : Int64
+    flush
     in_rem = @in_buffer_rem.size
-    out_rem = @out_count
-    rem = if in_rem > 0
-            raise RuntimeError.new("can't mix read + write when .sync = false") if out_rem > 0
-            in_rem
-          else
-            out_rem * -1
-          end
 
     if self.responds_to?(:unbuffered_pos)
-      self.unbuffered_pos - rem
+      self.unbuffered_pos - in_rem
     else
-      super - rem
+      super - in_rem
     end
   end
 
