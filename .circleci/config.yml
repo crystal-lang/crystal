@@ -425,7 +425,12 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/workspace
-      - run: s3cmd put --recursive /tmp/workspace/* s3://artifacts.crystal-lang.org/dist/
+      - run: |
+          mkdir -p /tmp/upload
+          cd /tmp/workspace/build
+          cp crystal-*-darwin-universal.tar.gz /tmp/upload/crystal-nightly-darwin-universal.tar.gz
+          cp crystal-*-linux-x86_64.tar.gz /tmp/upload/crystal-nightly-linux-x86_64.tar.gz
+      - run: s3cmd put --recursive /tmp/upload s3://artifacts.crystal-lang.org/dist/
 
   dist_artifacts:
     docker:
