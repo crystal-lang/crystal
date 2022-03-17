@@ -1,8 +1,39 @@
+require "file/mode"
+
 # :nodoc:
 module Crystal::System::File
   # Helper method for calculating file open modes on systems with posix-y `open`
   # calls.
-  private def self.open_flag(mode)
+  private def self.open_flag(mode : ::File::Mode)
+    flags = 0
+    want_read = false
+    want_write = false
+    mode.each do |m|
+      case m
+      when ::File::Mode::Read            then want_read = true
+      when ::File::Mode::Write           then want_write = true
+      when ::File::Mode::Create          then want_write = true; flags |= LibC::O_CREAT
+      when ::File::Mode::CreateNew       then want_write = true; flags |= LibC::O_CREAT | LibC::O_EXCL
+      when ::File::Mode::Append          then want_write = true; flags |= LibC::O_APPEND
+      when ::File::Mode::Truncate        then want_write = true; flags |= LibC::O_TRUNC
+      when ::File::Mode::SymlinkNoFollow then flags |= LibC::O_NOFOLLOW
+      else
+        raise "Unknown mode #{m}"
+      end
+    end
+
+    flags |= if want_read
+               !want_write ? LibC::O_RDONLY : LibC::O_RDWR
+             else
+               LibC::O_WRONLY
+             end
+
+    flags
+  end
+
+  # Helper method for calculating file open modes on systems with posix-y `open`
+  # calls.
+  private def self.open_flag(mode : String)
     if mode.size == 0
       raise "No file open mode specified"
     end

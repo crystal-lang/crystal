@@ -6,11 +6,11 @@ def do_work(in_filenames, output_filename, ignore_case)
   if in_filenames.empty?
     in_files = [STDIN]
   else
-    in_files = in_filenames.map { |name| File.open(name, "r") }
+    in_files = in_filenames.map { |name| File.new(name) }
   end
 
   if output_filename
-    out_file = File.open(output_filename, "w")
+    out_file = File.new(output_filename, :write, :truncate)
   else
     out_file = STDOUT
   end

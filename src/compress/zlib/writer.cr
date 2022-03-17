@@ -21,7 +21,7 @@ class Compress::Zlib::Writer < IO
 
   # Creates a new writer to the given *filename*.
   def self.new(filename : String, level = Zlib::DEFAULT_COMPRESSION, dict : Bytes? = nil)
-    new(::File.new(filename, "w"), level: level, sync_close: true, dict: dict)
+    new(::File.new(filename, :create, :truncate), level: level, sync_close: true, dict: dict)
   end
 
   # Creates a new writer to the given *io*, yields it to the given block,

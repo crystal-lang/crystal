@@ -174,9 +174,9 @@ class Process
       dst_io
     when Redirect::Close
       if dst_io == STDIN
-        File.open(File::NULL, "r")
+        File.new(File::NULL)
       else
-        File.open(File::NULL, "w")
+        File.new(File::NULL, :write)
       end
     else
       raise "BUG: impossible type in ExecStdio #{stdio.class}"
@@ -275,9 +275,9 @@ class Process
       dst_io
     when Redirect::Close
       if dst_io == STDIN
-        File.open(File::NULL, "r")
+        File.new(File::NULL)
       else
-        File.open(File::NULL, "w")
+        File.new(File::NULL, :write)
       end
     else
       raise "BUG: impossible type in stdio #{stdio.class}"

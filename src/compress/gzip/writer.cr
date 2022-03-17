@@ -13,8 +13,8 @@
 #
 # File.write("file.txt", "abc")
 #
-# File.open("./file.txt", "r") do |input_file|
-#   File.open("./file.gzip", "w") do |output_file|
+# File.open("./file.txt") do |input_file|
+#   File.open("./file.gzip", :create, :truncate) do |output_file|
 #     Compress::Gzip::Writer.open(output_file) do |gzip|
 #       IO.copy(input_file, gzip)
 #     end

@@ -133,7 +133,7 @@ module MIME
   def self.init(filename : String) : Nil
     init(load_defaults: false)
 
-    File.open(filename, "r") do |file|
+    File.open(filename) do |file|
       load_mime_database(file)
     end
   end
