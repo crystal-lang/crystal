@@ -193,6 +193,7 @@ module IO::Buffered
     flush
     in_rem = @in_buffer_rem.size
 
+    # TODO In 2.0 we should make `unbuffered_pos` an abstract method of Buffered
     if self.responds_to?(:unbuffered_pos)
       self.unbuffered_pos - in_rem
     else
