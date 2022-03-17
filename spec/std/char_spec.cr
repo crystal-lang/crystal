@@ -20,14 +20,26 @@ describe "Char" do
     it { 'Ń'.downcase(Unicode::CaseOptions::Fold).should eq('ń') }
   end
 
-  describe "succ" do
-    it { 'a'.succ.should eq('b') }
-    it { 'あ'.succ.should eq('ぃ') }
+  it "#succ" do
+    'a'.succ.should eq('b')
+    'あ'.succ.should eq('ぃ')
+
+    '\uD7FF'.succ.should eq '\uE000'
+
+    expect_raises OverflowError, "Out of Char range" do
+      Char::MAX.succ
+    end
   end
 
-  describe "pred" do
-    it { 'b'.pred.should eq('a') }
-    it { 'ぃ'.pred.should eq('あ') }
+  it "#pred" do
+    'b'.pred.should eq('a')
+    'ぃ'.pred.should eq('あ')
+
+    '\uE000'.pred.should eq '\uD7FF'
+
+    expect_raises OverflowError, "Out of Char range" do
+      Char::ZERO.pred
+    end
   end
 
   describe "+" do
@@ -82,6 +94,22 @@ describe "Char" do
     it { ' '.ascii_letter?.should be_false }
   end
 
+  it "#letter?" do
+    'A'.letter?.should be_true # Unicode General Category Lu
+    'a'.letter?.should be_true # Unicode General Category Ll
+    'ǅ'.letter?.should be_true # Unicode General Category Lt
+    'ʰ'.letter?.should be_true # Unicode General Category Lm
+    'か'.letter?.should be_true # Unicode General Category Lo
+
+    'ः'.letter?.should be_false  # Unicode General Category M
+    '1'.letter?.should be_false  # Unicode General Category Nd
+    'Ⅰ'.letter?.should be_false  # Unicode General Category Nl
+    '_'.letter?.should be_false  # Unicode General Category P
+    '$'.letter?.should be_false  # Unicode General Category S
+    ' '.letter?.should be_false  # Unicode General Category Z
+    '\n'.letter?.should be_false # Unicode General Category C
+  end
+
   describe "alphanumeric?" do
     it { 'a'.alphanumeric?.should be_true }
     it { 'A'.alphanumeric?.should be_true }
@@ -128,6 +156,7 @@ describe "Char" do
     assert_prints '\u202A'.dump, %('\\u202A')
     assert_prints '\u{81}'.dump, %('\\u0081')
     assert_prints '\u{110BD}'.dump, %('\\u{110BD}')
+    assert_prints '\u{1F48E}'.dump, %('\\u{1F48E}')
     assert_prints '\u00AD'.dump, %('\\u00AD')
   end
 
@@ -147,11 +176,12 @@ describe "Char" do
     assert_prints '\v'.inspect, %('\\v')
     assert_prints '\f'.inspect, %('\\f')
     assert_prints 'á'.inspect, %('á')
-    assert_prints '\uF8FF'.inspect, %('\uF8FF')
-    assert_prints '\u202A'.inspect, %('\u202A')
+    assert_prints '\uF8FF'.inspect, %('\\uF8FF')
+    assert_prints '\u202A'.inspect, %('\\u202A')
     assert_prints '\u{81}'.inspect, %('\\u0081')
-    assert_prints '\u{110BD}'.inspect, %('\u{110BD}')
-    assert_prints '\u00AD'.inspect, %('\u00AD')
+    assert_prints '\u{110BD}'.inspect, %('\\u{110BD}')
+    assert_prints '\u{1F48E}'.inspect, %('\u{1F48E}')
+    assert_prints '\u00AD'.inspect, %('\\u00AD')
   end
 
   it "#unicode_escape" do
@@ -417,10 +447,12 @@ describe "Char" do
     'a'.number?.should be_false
   end
 
-  it "does ascii_control?" do
+  it "#ascii_control?" do
     'ù'.ascii_control?.should be_false
     'a'.ascii_control?.should be_false
     '\u0019'.ascii_control?.should be_true
+    '\u007F'.ascii_control?.should be_true
+    '\u0080'.ascii_control?.should be_false
   end
 
   it "does mark?" do

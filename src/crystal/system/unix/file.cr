@@ -30,20 +30,9 @@ module Crystal::System::File
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
     stat = uninitialized LibC::Stat
     if follow_symlinks
-      ret = LibC.stat(path.check_no_null_byte, pointerof(stat))
+      ret = stat(path.check_no_null_byte, pointerof(stat))
     else
-      # On some systems, the symbols `fstat` and `lstat` are not part of the GNU
-      # shared library `libc.so` and instead provided by `libc_noshared.a`.
-      # That makes them unavailable for dynamic runtime symbol lookup via `dlsym`
-      # which we use for interpreted mode.
-      # See https://github.com/crystal-lang/crystal/issues/11157#issuecomment-949640034 for details.
-      # Linking against the internal counterparts `__fxstat` and `__lxstat` directly
-      # should work in both interpreted and compiled mode.
-      {% if LibC.has_method?(:__lxstat) %}
-        ret = LibC.__lxstat(1, path.check_no_null_byte, pointerof(stat))
-      {% else %}
-        ret = LibC.lstat(path.check_no_null_byte, pointerof(stat))
-      {% end %}
+      ret = lstat(path.check_no_null_byte, pointerof(stat))
     end
 
     if ret == 0
@@ -55,6 +44,38 @@ module Crystal::System::File
         raise ::File::Error.from_errno("Unable to get file info", file: path)
       end
     end
+  end
+
+  # On some systems, the symbols `stat`, `fstat` and `lstat` are not part of the GNU
+  # shared library `libc.so` and instead provided by `libc_noshared.a`.
+  # That makes them unavailable for dynamic runtime symbol lookup via `dlsym`
+  # which we use for interpreted mode.
+  # See https://github.com/crystal-lang/crystal/issues/11157#issuecomment-949640034 for details.
+  # Linking against the internal counterparts `__xstat`, `__fxstat` and `__lxstat` directly
+  # should work in both interpreted and compiled mode.
+
+  def self.stat(path, stat)
+    {% if LibC.has_method?(:__xstat) %}
+      LibC.__xstat(1, path, stat)
+    {% else %}
+      LibC.stat(path, stat)
+    {% end %}
+  end
+
+  def self.fstat(path, stat)
+    {% if LibC.has_method?(:__fxstat) %}
+      LibC.__fxstat(1, path, stat)
+    {% else %}
+      LibC.fstat(path, stat)
+    {% end %}
+  end
+
+  def self.lstat(path, stat)
+    {% if LibC.has_method?(:__lxstat) %}
+      LibC.__lxstat(1, path, stat)
+    {% else %}
+      LibC.lstat(path, stat)
+    {% end %}
   end
 
   def self.info(path, follow_symlinks)
@@ -82,10 +103,10 @@ module Crystal::System::File
   end
 
   def self.chown(path, uid : Int, gid : Int, follow_symlinks)
-    ret = if !follow_symlinks && ::File.symlink?(path)
-            LibC.lchown(path, uid, gid)
-          else
+    ret = if follow_symlinks
             LibC.chown(path, uid, gid)
+          else
+            LibC.lchown(path, uid, gid)
           end
     raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
   end

@@ -1,10 +1,8 @@
 require "../spec_helper"
 require "json"
 require "yaml"
-{% unless flag?(:win32) %}
-  require "big"
-  require "big/json"
-{% end %}
+require "big"
+require "big/json"
 require "uuid"
 require "uuid/json"
 
@@ -96,13 +94,11 @@ class JSONAttrWithUUID
   property value : UUID
 end
 
-{% unless flag?(:win32) %}
-  class JSONAttrWithBigDecimal
-    include JSON::Serializable
+class JSONAttrWithBigDecimal
+  include JSON::Serializable
 
-    property value : BigDecimal
-  end
-{% end %}
+  property value : BigDecimal
+end
 
 class JSONAttrWithTime
   include JSON::Serializable
@@ -259,6 +255,29 @@ class JSONAttrWithPresence
 
   @[JSON::Field(ignore: true)]
   getter? last_name_present : Bool
+end
+
+class JSONAttrWithPresenceAndIgnoreSerialize
+  include JSON::Serializable
+
+  @[JSON::Field(presence: true, ignore_serialize: ignore_first_name?)]
+  property first_name : String?
+
+  @[JSON::Field(presence: true, ignore_serialize: last_name.nil? && !last_name_present?, emit_null: true)]
+  property last_name : String?
+
+  @[JSON::Field(ignore: true)]
+  getter? first_name_present : Bool = false
+
+  @[JSON::Field(ignore: true)]
+  getter? last_name_present : Bool = false
+
+  def initialize(@first_name : String? = nil, @last_name : String? = nil)
+  end
+
+  def ignore_first_name?
+    first_name.nil? || first_name == ""
+  end
 end
 
 class JSONAttrWithQueryAttributes
@@ -815,6 +834,48 @@ describe "JSON mapping" do
     end
   end
 
+  describe "serializes JSON with presence markers and ignore_serialize" do
+    context "ignore_serialize is set to a method which returns true when value is nil or empty string" do
+      it "ignores field when value is empty string" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({"first_name": ""}))
+        json.first_name_present?.should be_true
+        json.to_json.should eq(%({}))
+      end
+
+      it "ignores field when value is nil" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({"first_name": null}))
+        json.first_name_present?.should be_true
+        json.to_json.should eq(%({}))
+      end
+    end
+
+    context "ignore_serialize is set to conditional expressions 'last_name.nil? && !last_name_present?'" do
+      it "emits null when value is null and @last_name_present is true" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({"last_name": null}))
+        json.last_name_present?.should be_true
+        json.to_json.should eq(%({"last_name":null}))
+      end
+
+      it "does not emit null when value is null and @last_name_present is false" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({}))
+        json.last_name_present?.should be_false
+        json.to_json.should eq(%({}))
+      end
+
+      it "emits field when value is not nil and @last_name_present is false" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.new(last_name: "something")
+        json.last_name_present?.should be_false
+        json.to_json.should eq(%({"last_name":"something"}))
+      end
+
+      it "emits field when value is not nil and @last_name_present is true" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({"last_name":"something"}))
+        json.last_name_present?.should be_true
+        json.to_json.should eq(%({"last_name":"something"}))
+      end
+    end
+  end
+
   describe "with query attributes" do
     it "defines query getter" do
       json = JSONAttrWithQueryAttributes.from_json(%({"foo": true}))
@@ -857,7 +918,7 @@ describe "JSON mapping" do
     end
   end
 
-  pending_win32 describe: "BigDecimal" do
+  describe "BigDecimal" do
     it "parses json string with BigDecimal" do
       json = JSONAttrWithBigDecimal.from_json(%({"value": "10.05"}))
       json.value.should eq(BigDecimal.new("10.05"))

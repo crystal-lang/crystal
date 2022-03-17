@@ -153,7 +153,7 @@ describe Socket::IPAddress do
   end
 end
 
-{% unless flag?(:win32) %}
+{% if flag?(:unix) %}
   describe Socket::UNIXAddress do
     it "transforms into a C struct and back" do
       path = "unix_address.sock"
@@ -276,9 +276,8 @@ describe Socket do
     Socket.ip?("1:2:3:4:5:6:7:8::").should be_false
     Socket.ip?("1:2:3:4:5:6:7::9").should be_false
     Socket.ip?("::1:2:3:4:5:6").should be_true
-    {% if flag?(:win32) %}
-      Socket.ip?("::1:2:3:4:5:6:7").should be_false
-    {% else %}
+    # FIXME: On older Windows versions, this returned `false`. It was apparently fixed in Windows Server 2022.
+    {% unless flag?(:win32) %}
       Socket.ip?("::1:2:3:4:5:6:7").should be_true
     {% end %}
     Socket.ip?("::1:2:3:4:5:6:7:8").should be_false

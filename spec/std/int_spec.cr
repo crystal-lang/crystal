@@ -1,7 +1,5 @@
 require "./spec_helper"
-{% unless flag?(:win32) %}
-  require "big"
-{% end %}
+require "big"
 require "spec/helpers/iterate"
 
 private macro it_converts_to_s(num, str, **opts)
@@ -190,11 +188,9 @@ describe "Int" do
 
       it_converts_to_s 18446744073709551615_u64, "18446744073709551615"
 
-      {% unless flag?(:win32) %}
-        it_converts_to_s UInt128::MAX, "340282366920938463463374607431768211455"
-        it_converts_to_s Int128::MAX, "170141183460469231731687303715884105727"
-        it_converts_to_s Int128::MIN, "-170141183460469231731687303715884105728"
-      {% end %}
+      it_converts_to_s UInt128::MAX, "340282366920938463463374607431768211455"
+      it_converts_to_s Int128::MAX, "170141183460469231731687303715884105727"
+      it_converts_to_s Int128::MIN, "-170141183460469231731687303715884105728"
     end
 
     context "base and upcase parameters" do
@@ -415,49 +411,49 @@ describe "Int" do
     it "String overload" do
       Int8.new("1").should be_a(Int8)
       Int8.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int8: " 1 ") do
         Int8.new(" 1 ", whitespace: false)
       end
 
       Int16.new("1").should be_a(Int16)
       Int16.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int16: " 1 ") do
         Int16.new(" 1 ", whitespace: false)
       end
 
       Int32.new("1").should be_a(Int32)
       Int32.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int32: " 1 ") do
         Int32.new(" 1 ", whitespace: false)
       end
 
       Int64.new("1").should be_a(Int64)
       Int64.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int64: " 1 ") do
         Int64.new(" 1 ", whitespace: false)
       end
 
       UInt8.new("1").should be_a(UInt8)
       UInt8.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt8: " 1 ") do
         UInt8.new(" 1 ", whitespace: false)
       end
 
       UInt16.new("1").should be_a(UInt16)
       UInt16.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt16: " 1 ") do
         UInt16.new(" 1 ", whitespace: false)
       end
 
       UInt32.new("1").should be_a(UInt32)
       UInt32.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt32: " 1 ") do
         UInt32.new(" 1 ", whitespace: false)
       end
 
       UInt64.new("1").should be_a(UInt64)
       UInt64.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt64: " 1 ") do
         UInt64.new(" 1 ", whitespace: false)
       end
     end
@@ -517,28 +513,15 @@ describe "Int" do
       (Int16::MIN / -1).should eq(-(Int16::MIN.to_f64))
       (Int32::MIN / -1).should eq(-(Int32::MIN.to_f64))
       (Int64::MIN / -1).should eq(-(Int64::MIN.to_f64))
+      (Int128::MIN / -1).should eq(-(Int128::MIN.to_f64))
 
       (UInt8::MIN / -1).should eq(0)
-    end
-
-    pending_win32 "divides Int128::MIN by -1" do
-      (Int128::MIN / -1).should eq(-(Int128::MIN.to_f64))
     end
   end
 
   describe "floor division //" do
     it "preserves type of lhs" do
-      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64] %}
-        ({{type}}.new(7) // 2).should be_a({{type}})
-        ({{type}}.new(7) // 2.0).should be_a({{type}})
-        ({{type}}.new(7) // 2.0_f32).should be_a({{type}})
-      {% end %}
-    end
-
-    # Missing symbols: __floattidf, __floatuntidf, __fixdfti, __fixsfti, __fixunsdfti, __fixunssfti, __floatuntisf, __floattisf
-    # These symbols are all required to convert U/Int128s to Floats
-    pending_win32 "preserves type of lhs (128-bit)" do
-      {% for type in [UInt128, Int128] %}
+      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
         ({{type}}.new(7) // 2).should be_a({{type}})
         ({{type}}.new(7) // 2.0).should be_a({{type}})
         ({{type}}.new(7) // 2.0_f32).should be_a({{type}})
@@ -784,22 +767,31 @@ describe "Int" do
     {% end %}
   end
 
-  pending_win32 "compares signed vs. unsigned integers" do
-    signed_ints = [Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int128::MAX, Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, Int128::MIN, 0_i8, 0_i16, 0_i32, 0_i64, 0_i128]
-    unsigned_ints = [UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, UInt128::MAX, 0_u8, 0_u16, 0_u32, 0_u64, 0_u128]
+  it "compares signed vs. unsigned integers" do
+    {% begin %}
+      signed_ints = [
+        Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int128::MAX,
+        Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, Int128::MIN,
+        Int8.zero, Int16.zero, Int32.zero, Int64.zero, Int128.zero,
+      ]
+      unsigned_ints = [
+        UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, UInt128::MAX,
+        UInt8.zero, UInt16.zero, UInt32.zero, UInt64.zero, UInt128.zero,
+      ]
 
-    big_signed_ints = signed_ints.map &.to_big_i
-    big_unsigned_ints = unsigned_ints.map &.to_big_i
+      big_signed_ints = signed_ints.map &.to_big_i
+      big_unsigned_ints = unsigned_ints.map &.to_big_i
 
-    signed_ints.zip(big_signed_ints) do |si, bsi|
-      unsigned_ints.zip(big_unsigned_ints) do |ui, bui|
-        {% for op in %w(< <= > >=).map(&.id) %}
-          if (si {{op}} ui) != (bsi {{op}} bui)
-            fail "comparison of #{si} {{op}} #{ui} (#{si.class} {{op}} #{ui.class}) gave incorrect result"
-          end
-        {% end %}
+      signed_ints.zip(big_signed_ints) do |si, bsi|
+        unsigned_ints.zip(big_unsigned_ints) do |ui, bui|
+          {% for op in %w(< <= > >=).map(&.id) %}
+            if (si {{op}} ui) != (bsi {{op}} bui)
+              fail "comparison of #{si} {{op}} #{ui} (#{si.class} {{op}} #{ui.class}) gave incorrect result"
+            end
+          {% end %}
+        end
       end
-    end
+    {% end %}
   end
 
   it "compares equality and inequality of signed vs. unsigned integers" do
@@ -851,7 +843,7 @@ describe "Int" do
       -10.bit_length.should eq(4)
     end
 
-    pending_win32 "for BigInt" do
+    it "for BigInt" do
       (10.to_big_i ** 20).bit_length.should eq(67)
       (10.to_big_i ** 309).bit_length.should eq(1027)
       (10.to_big_i ** 3010).bit_length.should eq(10000)
@@ -871,10 +863,6 @@ describe "Int" do
       Int32::MAX.digits.should eq(Int32::MAX.to_s.chars.map(&.to_i).reverse)
       Int64::MAX.digits.should eq(Int64::MAX.to_s.chars.map(&.to_i).reverse)
       UInt64::MAX.digits.should eq(UInt64::MAX.to_s.chars.map(&.to_i).reverse)
-    end
-
-    # Missing symbol __floatuntidf on windows
-    pending_win32 "works for u/int128 maximums" do
       Int128::MAX.digits.should eq(Int128::MAX.to_s.chars.map(&.to_i).reverse)
       UInt128::MAX.digits.should eq(UInt128::MAX.to_s.chars.map(&.to_i).reverse)
     end

@@ -32,7 +32,12 @@ struct Exception::CallStack
     end
   {% end %}
 
-  protected def self.unwind
+  def self.setup_crash_handler
+    Signal.setup_segfault_handler
+  end
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_call_stack_unwind)] {% end %}
+  protected def self.unwind : Array(Void*)
     callstack = [] of Void*
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
       bt = data.as(typeof(callstack))
@@ -126,59 +131,6 @@ struct Exception::CallStack
       else
         Crystal::System.print_error "[0x%lx] ??? (%ld times)\n", repeated_frame.ip, repeated_frame.count + 1
       end
-    end
-  end
-
-  private def decode_backtrace
-    show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
-
-    @callstack.compact_map do |ip|
-      pc = CallStack.decode_address(ip)
-
-      file, line, column = CallStack.decode_line_number(pc)
-
-      if file && file != "??"
-        next if @@skip.includes?(file)
-
-        # Turn to relative to the current dir, if possible
-        if current_dir = CURRENT_DIR
-          file = file.lchop(current_dir)
-        end
-
-        file_line_column = "#{file}:#{line}:#{column}"
-      end
-
-      if name = CallStack.decode_function_name(pc)
-        function = name
-      elsif frame = CallStack.decode_frame(ip)
-        _, function, file = frame
-        # Crystal methods (their mangled name) start with `*`, so
-        # we remove that to have less clutter in the output.
-        function = function.lchop('*')
-      else
-        function = "??"
-      end
-
-      if file_line_column
-        if show_full_info && (frame = CallStack.decode_frame(ip))
-          _, sname, _ = frame
-          line = "#{file_line_column} in '#{sname}'"
-        else
-          line = "#{file_line_column} in '#{function}'"
-        end
-      else
-        if file == "??" && function == "??"
-          line = "???"
-        else
-          line = "#{file} in '#{function}'"
-        end
-      end
-
-      if show_full_info
-        line = "#{line} at 0x#{ip.address.to_s(16)}"
-      end
-
-      line
     end
   end
 

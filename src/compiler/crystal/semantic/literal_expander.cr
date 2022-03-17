@@ -148,8 +148,8 @@ module Crystal
       node.elements.each do |elem|
         if elem.is_a?(Splat)
           yield_var = new_temp_var
-          each_body = Call.new(temp_var.clone, "<<", yield_var.clone)
-          each_block = Block.new(args: [yield_var], body: each_body)
+          each_body = Call.new(temp_var.clone, "<<", yield_var.clone).at(node)
+          each_block = Block.new(args: [yield_var], body: each_body).at(node)
           exps << Call.new(elem.exp.clone, "each", block: each_block).at(node)
         else
           exps << Call.new(temp_var.clone, "<<", elem.clone).at(node)
@@ -663,6 +663,14 @@ module Crystal
       #     a = temp[0]
       #     b = temp[1]
       #
+      # If the flag "strict_multi_assign" is present, requires `temp`'s size to
+      # match the number of assign targets exactly: (it must respond to `#size`)
+      #
+      #     temp = [1, 2]
+      #     raise ... if temp.size != 2
+      #     a = temp[0]
+      #     b = temp[1]
+      #
       # From:
       #
       #     a, *b, c, d = [1, 2]
@@ -681,17 +689,22 @@ module Crystal
       if node.values.size == 1
         value = node.values[0]
         middle_splat = splat_index && (0 < splat_index < node.targets.size - 1)
+        raise_on_count_mismatch = @program.has_flag?("strict_multi_assign") || middle_splat
 
         temp_var = new_temp_var
 
         # temp = ...
-        assigns = Array(ASTNode).new(node.targets.size + (splat_underscore ? 0 : 1) + (middle_splat ? 1 : 0))
+        assigns = Array(ASTNode).new(node.targets.size + (splat_underscore ? 0 : 1) + (raise_on_count_mismatch ? 1 : 0))
         assigns << Assign.new(temp_var.clone, value).at(value)
 
         # raise ... if temp.size < ...
-        if middle_splat
+        if raise_on_count_mismatch
           size_call = Call.new(temp_var.clone, "size").at(value)
-          size_comp = Call.new(size_call, "<", NumberLiteral.new(node.targets.size - 1)).at(value)
+          if middle_splat
+            size_comp = Call.new(size_call, "<", NumberLiteral.new(node.targets.size - 1)).at(value)
+          else
+            size_comp = Call.new(size_call, "!=", NumberLiteral.new(node.targets.size)).at(value)
+          end
           index_error = Call.new(Path.global("IndexError"), "new", StringLiteral.new("Multiple assignment count mismatch")).at(value)
           raise_call = Call.global("raise", index_error).at(value)
           assigns << If.new(size_comp, raise_call).at(value)
@@ -762,7 +775,6 @@ module Crystal
               end
               next
             end
-            value_exps = node.values[i..i - node.targets.size]
             value = Call.new(Path.global("Tuple").at(node), "new", node.values[i..i - node.targets.size])
           else
             value = node.values[splat_index && i > splat_index ? i - node.targets.size : i]
@@ -901,7 +913,7 @@ module Crystal
         Var.new(def_arg.name).at(def_arg).as(ASTNode)
       end
 
-      body = Call.new(obj, node.name, call_args).at(node)
+      body = Call.new(obj, node.name, call_args, global: node.global?).at(node)
       proc_literal = ProcLiteral.new(Def.new("->", def_args, body).at(node)).at(node)
       proc_literal.proc_pointer = node
 

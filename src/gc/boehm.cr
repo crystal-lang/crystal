@@ -2,7 +2,20 @@
   require "crystal/rw_lock"
 {% end %}
 
-{% unless flag?(:win32) %}
+# MUSL: On musl systems, libpthread is empty. The entire library is already included in libc.
+# The empty library is only available for POSIX compatibility. We don't need to link it.
+#
+# Darwin: `libpthread` is provided as part of `libsystem`. There's no reason to link it explicitly.
+#
+# Interpreter: Starting with glibc 2.34, `pthread` is integrated into `libc`
+# and may not even be available as a separate shared library.
+# There's always a static library for compiled mode, but `Crystal::Loader` does not support
+# static libraries. So we just skip `pthread` entirely. The symbols are still
+# available in the interpreter because they are loaded in the compiler.
+#
+# OTHERS: On other systems, we add the linker annotation here to make sure libpthread is loaded
+# before libgc which looks up symbols from libpthread.
+{% unless flag?(:win32) || flag?(:musl) || flag?(:darwin) || (flag?(:interpreted) && flag?(:gnu)) %}
   @[Link("pthread")]
 {% end %}
 
@@ -132,9 +145,11 @@ module GC
     # By default the GC warns on big allocations/reallocations. This
     # is of limited use and pollutes program output with warnings.
     LibGC.set_warn_proc ->(msg, v) do
-      format_string = String.new(msg)
-      unless format_string.starts_with?("GC Warning: Repeated allocation of very large block")
-        LibC.printf format_string, v
+      start = "GC Warning: Repeated allocation of very large block"
+      # This implements `String#starts_with?` without allocating a `String` (#11728)
+      format_string = Slice.new(msg, Math.min(LibC.strlen(msg), start.bytesize))
+      unless format_string == start.to_slice
+        LibC.printf msg, v
       end
     end
   end
@@ -307,20 +322,22 @@ module GC
   end
 
   # pushes the stack of pending fibers when the GC wants to collect memory:
-  GC.before_collect do
-    Fiber.unsafe_each do |fiber|
-      fiber.push_gc_roots unless fiber.running?
-    end
-
-    {% if flag?(:preview_mt) %}
-      Thread.unsafe_each do |thread|
-        if scheduler = thread.@scheduler
-          fiber = scheduler.@current
-          GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
-        end
+  {% unless flag?(:interpreted) %}
+    GC.before_collect do
+      Fiber.unsafe_each do |fiber|
+        fiber.push_gc_roots unless fiber.running?
       end
-    {% end %}
 
-    GC.unlock_write
-  end
+      {% if flag?(:preview_mt) %}
+        Thread.unsafe_each do |thread|
+          if scheduler = thread.@scheduler
+            fiber = scheduler.@current
+            GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
+          end
+        end
+      {% end %}
+
+      GC.unlock_write
+    end
+  {% end %}
 end

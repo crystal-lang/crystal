@@ -280,6 +280,12 @@ struct Crystal::TypeDeclarationProcessor
         ann.raise "can't annotate #{name} in #{owner} because it was first defined in #{supervar.owner}"
       end
     else
+      owner.all_subclasses.each do |subclass|
+        if subclass.is_a?(InstanceVarContainer) && (subclass_var = subclass.instance_vars[name]?)
+          raise TypeException.new("instance variable '#{name}' of #{subclass_var.owner} is already defined in #{owner}", subclass_var.location || type_decl.location)
+        end
+      end
+
       declare_meta_type_var(owner.instance_vars, owner, name, type_decl, instance_var: true, check_nilable: !owner.module?)
       remove_error owner, name
 
@@ -384,6 +390,12 @@ struct Crystal::TypeDeclarationProcessor
     # the guessed type information for subclasses
     supervar = owner.lookup_instance_var?(name)
     return if supervar
+
+    owner.all_subclasses.each do |subclass|
+      if subclass.is_a?(InstanceVarContainer) && (subclass_var = subclass.instance_vars[name]?)
+        raise TypeException.new("instance variable '#{name}' of #{subclass_var.owner} is already defined in #{owner}", subclass_var.location || type_info.location)
+      end
+    end
 
     case owner
     when NonGenericClassType
@@ -503,9 +515,8 @@ struct Crystal::TypeDeclarationProcessor
 
   private def compute_non_nilable_instance_vars_multi(owner, infos)
     # Get ancestor's non-nilable variables
-    ancestor = owner.ancestors.first?
-    ancestor = uninstantiate(ancestor)
-    if ancestor
+    if ancestor = owner.ancestors.first?
+      ancestor = uninstantiate(ancestor)
       ancestor_non_nilable = @non_nilable_instance_vars[ancestor]?
     end
 
@@ -758,9 +769,9 @@ struct Crystal::TypeDeclarationProcessor
     end
   end
 
-  private def uninstantiate(type)
+  private def uninstantiate(type) : Type
     if type.is_a?(GenericInstanceType)
-      type.generic_type
+      type.generic_type.as(Type)
     else
       type
     end
