@@ -227,7 +227,7 @@ class IO::Memory < IO
     check_open
 
     if @pos >= @bytesize
-      Bytes.new(0)
+      Bytes[]
     else
       bytes = Slice.new(@buffer + @pos, @bytesize - @pos).dup
       @pos = @bytesize

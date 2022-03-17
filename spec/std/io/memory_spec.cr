@@ -392,7 +392,7 @@ describe IO::Memory do
   it "consumes with getb_to_end" do
     io = IO::Memory.new(Bytes[0, 1, 3, 6, 10, 15])
     io.getb_to_end.should eq(Bytes[0, 1, 3, 6, 10, 15])
-    io.getb_to_end.should eq(Bytes.new(0))
+    io.getb_to_end.should eq(Bytes[])
     io.seek(3)
     bytes = io.getb_to_end
     bytes.should eq(Bytes[6, 10, 15])
@@ -403,7 +403,7 @@ describe IO::Memory do
     bytes.should eq(Bytes[6, 10, 15])
 
     io.seek(10)
-    io.getb_to_end.should eq(Bytes.new(0))
+    io.getb_to_end.should eq(Bytes[])
   end
 
   it "peeks" do
