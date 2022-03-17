@@ -683,8 +683,8 @@ describe "File" do
     end
   end
 
-  it "supports binary modes" do
-    with_tempfile("binary-modes.txt") do |path|
+  it "supports the `b` mode flag" do
+    with_tempfile("b-mode-flag.txt") do |path|
       File.open(path, "wb") do |f|
         f.write(Bytes[1, 3, 6, 10])
       end
