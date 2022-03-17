@@ -48,7 +48,7 @@ describe "Semantic: not" do
         z = a + 10
       end
       z
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "doesn't restrict and" do
@@ -59,7 +59,7 @@ describe "Semantic: not" do
         z = a
       end
       z
-      )) { nilable int32 }
+      ), inject_primitives: true) { nilable int32 }
   end
 
   it "doesn't restrict and in while (#4243)" do

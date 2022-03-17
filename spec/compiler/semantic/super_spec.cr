@@ -215,7 +215,7 @@ describe "Semantic: super" do
       end
 
       Bar.new.foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "types super when inside fun and forwards args" do
@@ -234,7 +234,7 @@ describe "Semantic: super" do
       end
 
       Bar.new.foo(1)
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors no superclass method in top-level" do

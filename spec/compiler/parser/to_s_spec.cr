@@ -51,6 +51,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(%r( )), %(/\\ /)
   expect_to_s %(foo &.bar), %(foo(&.bar))
   expect_to_s %(foo &.bar(1, 2, 3)), %(foo(&.bar(1, 2, 3)))
+  expect_to_s %(foo x: 1, y: 2, &.bar), %(foo(x: 1, y: 2, &.bar))
   expect_to_s %(foo { |i| i.bar { i } }), "foo do |i|\n  i.bar do\n    i\n  end\nend"
   expect_to_s %(foo do |k, v|\n  k.bar(1, 2, 3)\nend)
   expect_to_s %(foo(3, &.*(2)))
@@ -71,6 +72,7 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x : T = 1)\nend"
   expect_to_s "def foo(x : X, y : Y) forall X, Y\nend"
   expect_to_s %(foo : A | (B -> C))
+  expect_to_s %(foo : (A | B).class)
   expect_to_s %[%("\#{foo}")], %["\\"\#{foo}\\""]
   expect_to_s "class Foo\n  private def bar\n  end\nend"
   expect_to_s "foo(&.==(2))"
@@ -115,6 +117,7 @@ describe "ASTNode#to_s" do
   expect_to_s "macro foo\n\\{%@type %}\nend"
   expect_to_s "enum A : B\nend"
   expect_to_s "# doc\ndef foo\nend", emit_doc: true
+  expect_to_s "class Foo\n  # doc\n  def foo\n  end\nend", emit_doc: true
   expect_to_s "foo[x, y, a: 1, b: 2]"
   expect_to_s "foo[x, y, a: 1, b: 2] = z"
   expect_to_s %(@[Foo(1, 2, a: 1, b: 2)])
@@ -176,6 +179,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(asm("nop" :::: "volatile"))
   expect_to_s %(asm("nop" :: "a"(1) :: "volatile"))
   expect_to_s %(asm("nop" ::: "e" : "volatile"))
+  expect_to_s %(asm("bl trap" :::: "unwind"))
   expect_to_s %[(1..)]
   expect_to_s %[..3]
   expect_to_s "offsetof(Foo, @bar)"
@@ -186,4 +190,9 @@ describe "ASTNode#to_s" do
   expect_to_s %[他.说("你好")]
   expect_to_s %[他.说 = "你好"]
   expect_to_s %[あ.い, う.え.お = 1, 2]
+  expect_to_s "-> : Int32 do\nend"
+  expect_to_s "->(x : Int32, y : Bool) : Char do\n  'a'\nend"
+  expect_to_s "->::foo(Int32, String)"
+  expect_to_s "->::Foo::Bar.foo"
+  expect_to_s "yield(1)"
 end

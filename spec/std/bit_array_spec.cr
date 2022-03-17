@@ -15,6 +15,18 @@ private def assert_no_unused_bits(ba : BitArray, *, file = __FILE__, line = __LI
   end
 end
 
+private def assert_rotates!(from : BitArray, n : Int, to : BitArray, *, file = __FILE__, line = __LINE__)
+  from.rotate!(n).should eq(from), file: file, line: line
+  from.should eq(to), file: file, line: line
+  assert_no_unused_bits from, file: file, line: line
+end
+
+private def assert_rotates!(from : BitArray, to : BitArray, *, file = __FILE__, line = __LINE__)
+  from.rotate!.should eq(from), file: file, line: line
+  from.should eq(to), file: file, line: line
+  assert_no_unused_bits from, file: file, line: line
+end
+
 describe "BitArray" do
   it "has size" do
     ary = BitArray.new(100)
@@ -277,6 +289,175 @@ describe "BitArray" do
     end
   end
 
+  describe "#none?" do
+    context "without block" do
+      it "returns true if no bits are set" do
+        from_int(0, 0).none?.should be_true
+        from_int(1, 0b0).none?.should be_true
+        from_int(1, 0b1).none?.should be_false
+        from_int(2, 0b00).none?.should be_true
+        from_int(2, 0b01).none?.should be_false
+        from_int(2, 0b10).none?.should be_false
+        from_int(2, 0b11).none?.should be_false
+        from_int(32, 0b00000000_00000000_00000000_00000000_u32).none?.should be_true
+        from_int(32, 0b00000000_00000000_00000000_00000001_u32).none?.should be_false
+        from_int(32, 0b00000000_00000000_00010000_00000000_u32).none?.should be_false
+        from_int(32, 0b10000000_00000000_00000000_00000000_u32).none?.should be_false
+        from_int(34, 0b00_00000000_00000000_00000000_00000000_u64).none?.should be_true
+        from_int(34, 0b00_00000000_00000000_00000000_00000001_u64).none?.should be_false
+        from_int(34, 0b00_00000000_00000000_00010000_00000000_u64).none?.should be_false
+        from_int(34, 0b00_10000000_00000000_00000000_00000000_u64).none?.should be_false
+        from_int(34, 0b10_00000000_00000000_00000000_00000000_u64).none?.should be_false
+      end
+    end
+  end
+
+  describe "#any?" do
+    context "without block" do
+      it "returns true if any bits are set" do
+        from_int(0, 0).any?.should be_false
+        from_int(1, 0b0).any?.should be_false
+        from_int(1, 0b1).any?.should be_true
+        from_int(2, 0b00).any?.should be_false
+        from_int(2, 0b01).any?.should be_true
+        from_int(2, 0b10).any?.should be_true
+        from_int(2, 0b11).any?.should be_true
+        from_int(32, 0b00000000_00000000_00000000_00000000_u32).any?.should be_false
+        from_int(32, 0b00000000_00000000_00000000_00000001_u32).any?.should be_true
+        from_int(32, 0b00000000_00000000_00010000_00000000_u32).any?.should be_true
+        from_int(32, 0b10000000_00000000_00000000_00000000_u32).any?.should be_true
+        from_int(34, 0b00_00000000_00000000_00000000_00000000_u64).any?.should be_false
+        from_int(34, 0b00_00000000_00000000_00000000_00000001_u64).any?.should be_true
+        from_int(34, 0b00_00000000_00000000_00010000_00000000_u64).any?.should be_true
+        from_int(34, 0b00_10000000_00000000_00000000_00000000_u64).any?.should be_true
+        from_int(34, 0b10_00000000_00000000_00000000_00000000_u64).any?.should be_true
+      end
+    end
+  end
+
+  describe "#all?" do
+    context "without block" do
+      it "returns true if all bits are set" do
+        from_int(0, 0).all?.should be_true
+        from_int(1, 0b0).all?.should be_false
+        from_int(1, 0b1).all?.should be_true
+        from_int(2, 0b00).all?.should be_false
+        from_int(2, 0b01).all?.should be_false
+        from_int(2, 0b10).all?.should be_false
+        from_int(2, 0b11).all?.should be_true
+        from_int(32, 0b11111111_11111111_11111111_11111111_u32).all?.should be_true
+        from_int(32, 0b11111111_11111111_11111111_11111110_u32).all?.should be_false
+        from_int(32, 0b11111111_11111111_11101111_11111111_u32).all?.should be_false
+        from_int(32, 0b01111111_11111111_11111111_11111111_u32).all?.should be_false
+        from_int(34, 0b11_11111111_11111111_11111111_11111111_u64).all?.should be_true
+        from_int(34, 0b11_11111111_11111111_11111111_11111110_u64).all?.should be_false
+        from_int(34, 0b11_11111111_11111111_11101111_11111111_u64).all?.should be_false
+        from_int(34, 0b11_01111111_11111111_11111111_11111111_u64).all?.should be_false
+        from_int(34, 0b01_11111111_11111111_11111111_11111111_u64).all?.should be_false
+      end
+    end
+  end
+
+  describe "#includes?" do
+    it "returns whether the given bit is included" do
+      ary = BitArray.new(0)
+      ary.includes?(true).should be_false
+      ary.includes?(false).should be_false
+
+      ary = BitArray.new(1)
+      ary.includes?(true).should be_false
+      ary.includes?(false).should be_true
+      ary[0] = true
+      ary.includes?(true).should be_true
+      ary.includes?(false).should be_false
+
+      ary = BitArray.new(32, true)
+      ary.includes?(true).should be_true
+      ary.includes?(false).should be_false
+      ary[6] = false
+      ary.includes?(true).should be_true
+      ary.includes?(false).should be_true
+
+      ary = BitArray.new(34)
+      ary.includes?(true).should be_false
+      ary.includes?(false).should be_true
+      ary[6] = true
+      ary.includes?(true).should be_true
+      ary.includes?(false).should be_true
+    end
+  end
+
+  describe "#one?" do
+    it "returns true if exactly one bit is set" do
+      from_int(0, 0).one?.should be_false
+      from_int(1, 0b0).one?.should be_false
+      from_int(1, 0b1).one?.should be_true
+      from_int(2, 0b00).one?.should be_false
+      from_int(2, 0b01).one?.should be_true
+      from_int(2, 0b10).one?.should be_true
+      from_int(2, 0b11).one?.should be_false
+      from_int(32, 0b00000000_00000000_00000000_00000000_u32).one?.should be_false
+      from_int(32, 0b00000000_00000000_00000000_00000001_u32).one?.should be_true
+      from_int(32, 0b10000000_00000000_00000000_00000000_u32).one?.should be_true
+      from_int(32, 0b10000000_00000000_00000000_00000001_u32).one?.should be_false
+      from_int(34, 0b00_00000000_00000000_00000000_00000000_u64).one?.should be_false
+      from_int(34, 0b00_00000000_00000000_00000000_00000001_u64).one?.should be_true
+      from_int(34, 0b00_00000000_00000000_00010000_00000000_u64).one?.should be_true
+      from_int(34, 0b10_00000000_00000000_00000000_00000000_u64).one?.should be_true
+      from_int(34, 0b00_00000000_00000000_00010000_00000001_u64).one?.should be_false
+      from_int(34, 0b01_00000000_00000000_00000000_00000001_u64).one?.should be_false
+      from_int(34, 0b11_00000000_00000000_00000000_00000000_u64).one?.should be_false
+    end
+  end
+
+  describe "#count" do
+    context "without block" do
+      it "returns the number of bits set" do
+        from_int(0, 0).count(true).should eq(0)
+        from_int(1, 0b0).count(true).should eq(0)
+        from_int(1, 0b1).count(true).should eq(1)
+        from_int(2, 0b00).count(true).should eq(0)
+        from_int(2, 0b01).count(true).should eq(1)
+        from_int(2, 0b10).count(true).should eq(1)
+        from_int(2, 0b11).count(true).should eq(2)
+        from_int(32, 0b00000000_00000000_00000000_00000000_u32).count(true).should eq(0)
+        from_int(32, 0b11000101_00010111_11000001_00011101_u32).count(true).should eq(15)
+        from_int(32, 0b11111111_11111111_11111111_11111111_u32).count(true).should eq(32)
+        from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64).count(true).should eq(10)
+      end
+
+      it "returns the number of bits cleared" do
+        from_int(0, 0).count(false).should eq(0)
+        from_int(1, 0b0).count(false).should eq(1)
+        from_int(1, 0b1).count(false).should eq(0)
+        from_int(2, 0b00).count(false).should eq(2)
+        from_int(2, 0b01).count(false).should eq(1)
+        from_int(2, 0b10).count(false).should eq(1)
+        from_int(2, 0b11).count(false).should eq(0)
+        from_int(32, 0b00000000_00000000_00000000_00000000_u32).count(false).should eq(32)
+        from_int(32, 0b11000101_00010111_11000001_00011101_u32).count(false).should eq(17)
+        from_int(32, 0b11111111_11111111_11111111_11111111_u32).count(false).should eq(0)
+        from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64).count(false).should eq(35)
+      end
+    end
+  end
+
+  describe "#tally" do
+    it "tallies the number of set and cleared bits" do
+      from_int(0, 0).tally.should eq({} of Bool => Int32)
+      from_int(1, 0b0).tally.should eq({false => 1})
+      from_int(1, 0b1).tally.should eq({true => 1})
+      from_int(2, 0b00).tally.should eq({false => 2})
+      from_int(2, 0b01).tally.should eq({true => 1, false => 1})
+      from_int(2, 0b10).tally.should eq({true => 1, false => 1})
+      from_int(2, 0b11).tally.should eq({true => 2})
+      from_int(32, 0b00000000_00000000_00000000_00000000_u32).tally.should eq({false => 32})
+      from_int(32, 0b11000101_00010111_11000001_00011101_u32).tally.should eq({true => 15, false => 17})
+      from_int(32, 0b11111111_11111111_11111111_11111111_u32).tally.should eq({true => 32})
+      from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64).tally.should eq({true => 10, false => 35})
+    end
+  end
+
   describe "#toggle" do
     it "toggles a bit" do
       ary = BitArray.new(32)
@@ -354,6 +535,16 @@ describe "BitArray" do
       ary.toggle(30..35)
       ary[24..].should eq(from_int(16, 0b00110000_10100101))
     end
+
+    it "toggles zero bits correctly" do
+      ary = BitArray.new(32)
+      ary.toggle(0, 0)
+      ary.none?.should be_true
+      ary.toggle(32, 0)
+      ary.none?.should be_true
+      ary.toggle(32, 2)
+      ary.none?.should be_true
+    end
   end
 
   it "inverts all bits" do
@@ -370,6 +561,235 @@ describe "BitArray" do
 
     ary.invert
     ary.count { |b| b }.should eq(2)
+  end
+
+  describe "#fill" do
+    context "without block" do
+      it "clears all bits" do
+        ba = BitArray.new(7, true)
+        ba.fill(false).none?.should be_true
+        ba.none?.should be_true
+
+        ba = BitArray.new(32, true)
+        ba.fill(false).none?.should be_true
+        ba.none?.should be_true
+
+        ba = BitArray.new(100, true)
+        ba.fill(false).none?.should be_true
+        ba.none?.should be_true
+      end
+
+      it "sets all bits" do
+        ba = BitArray.new(7)
+        ba.fill(true).all?.should be_true
+        ba.all?.should be_true
+        assert_no_unused_bits ba
+
+        ba = BitArray.new(32)
+        ba.fill(true).all?.should be_true
+        ba.all?.should be_true
+
+        ba = BitArray.new(100)
+        ba.fill(true).all?.should be_true
+        ba.all?.should be_true
+        assert_no_unused_bits ba
+      end
+    end
+
+    context "without block, with start and count" do
+      it "sets or clears a subrange of bits" do
+        ba = from_int(5, 0b01011)
+        ba.fill(true, 1, 3).should eq(from_int(5, 0b01111))
+        ba.should eq(from_int(5, 0b01111))
+        ba.fill(false, 2, 5).should eq(from_int(5, 0b01000))
+        ba.should eq(from_int(5, 0b01000))
+        ba.fill(true, -2, 7).should eq(from_int(5, 0b01011))
+        ba.should eq(from_int(5, 0b01011))
+        assert_no_unused_bits ba
+
+        ba = from_int(8, 0b11010001)
+        ba.fill(false, 1, 3).should eq(from_int(8, 0b10000001))
+        ba.should eq(from_int(8, 0b10000001))
+        ba.fill(true, 4, 5).should eq(from_int(8, 0b10001111))
+        ba.should eq(from_int(8, 0b10001111))
+        ba.fill(true, 8, 0).should eq(from_int(8, 0b10001111))
+        ba.should eq(from_int(8, 0b10001111))
+        ba.fill(true, 8, 10).should eq(from_int(8, 0b10001111))
+        ba.should eq(from_int(8, 0b10001111))
+        ba.fill(true, -6, 0).should eq(from_int(8, 0b10001111))
+        ba.should eq(from_int(8, 0b10001111))
+
+        ba = from_int(32, 0b11000101_00011111_11000001_00011101_u32)
+        ba.fill(true, 6, 15).should eq(from_int(32, 0b11000111_11111111_11111001_00011101_u32))
+        ba.should eq(from_int(32, 0b11000111_11111111_11111001_00011101_u32))
+        ba.fill(false, -20, 12).should eq(from_int(32, 0b11000111_11110000_00000000_00011101_u32))
+        ba.should eq(from_int(32, 0b11000111_11110000_00000000_00011101_u32))
+        ba.fill(true, 23, 2).should eq(from_int(32, 0b11000111_11110000_00000001_10011101_u32))
+        ba.should eq(from_int(32, 0b11000111_11110000_00000001_10011101_u32))
+        ba.fill(false, 24, 0).should eq(from_int(32, 0b11000111_11110000_00000001_10011101_u32))
+        ba.should eq(from_int(32, 0b11000111_11110000_00000001_10011101_u32))
+      end
+
+      it "raises if start index is out of range" do
+        expect_raises(IndexError) { BitArray.new(7).fill(true, 8, 0) }
+        expect_raises(IndexError) { BitArray.new(7).fill(true, -8, 0) }
+      end
+    end
+
+    context "without block, with range" do
+      it "sets or clears a subrange of bits" do
+        ba = from_int(5, 0b01011)
+        ba.fill(true, 1..3).should eq(from_int(5, 0b01111))
+        ba.should eq(from_int(5, 0b01111))
+        ba.fill(false, 2..).should eq(from_int(5, 0b01000))
+        ba.should eq(from_int(5, 0b01000))
+        ba.fill(true, ...-2).should eq(from_int(5, 0b11100))
+        ba.should eq(from_int(5, 0b11100))
+        ba.fill(true, 0...0).should eq(from_int(5, 0b11100))
+        ba.should eq(from_int(5, 0b11100))
+      end
+
+      it "raises if start index is out of range" do
+        expect_raises(IndexError) { BitArray.new(7).fill(true, 8..9) }
+        expect_raises(IndexError) { BitArray.new(7).fill(true, -8...) }
+      end
+    end
+  end
+
+  describe "#reverse!" do
+    it "reverses empty BitArray" do
+      ba = from_int(0, 0)
+      ba.reverse!
+      ba.should eq(from_int(0, 0))
+    end
+
+    it "reverses short BitArray" do
+      ba = from_int(5, 0b01011)
+      ba.reverse!
+      ba.should eq(from_int(5, 0b11010))
+      assert_no_unused_bits ba
+
+      ba = from_int(8, 0b11101001)
+      ba.reverse!
+      ba.should eq(from_int(8, 0b10010111))
+      assert_no_unused_bits ba
+
+      ba = from_int(20, 0b1010_00110011_00001111)
+      ba.reverse!
+      ba.should eq(from_int(20, 0b1111_00001100_11000101))
+      assert_no_unused_bits ba
+
+      ba = from_int(32, 0b11000101_00011111_11000001_00011101_u32)
+      ba.reverse!
+      ba.should eq(from_int(32, 0b10111000_10000011_11111000_10100011_u32))
+    end
+
+    it "reverses medium BitArray" do
+      ba = from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64)
+      ba.reverse!
+      ba.should eq(from_int(45, 0b00010_01011100_00000000_00000000_00000010_01011100_u64))
+      assert_no_unused_bits ba
+
+      ba = from_int(64, 0b11001100_00101001_01111010_10110001_10111111_00100101_11101100_10101010_u64)
+      ba.reverse!
+      ba.should eq(from_int(64, 0b01010101_00110111_10100100_11111101_10001101_01011110_10010100_00110011_u64))
+    end
+
+    it "reverses large BitArray" do
+      ba = BitArray.new(200)
+      ba[0] = ba[2] = ba[5] = ba[11] = ba[64] = ba[103] = ba[193] = ba[194] = true
+      ba.reverse!
+      ba2 = BitArray.new(200)
+      ba2[199] = ba2[197] = ba2[194] = ba2[188] = ba2[135] = ba2[96] = ba2[6] = ba2[5] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba = BitArray.new(256)
+      ba[0] = ba[2] = ba[5] = ba[11] = ba[64] = ba[103] = ba[193] = ba[194] = true
+      ba.reverse!
+      ba2 = BitArray.new(256)
+      ba2[255] = ba2[253] = ba2[250] = ba2[244] = ba2[191] = ba2[152] = ba2[62] = ba2[61] = true
+      ba.should eq(ba2)
+    end
+  end
+
+  describe "#rotate!" do
+    it "rotates empty BitArray" do
+      assert_rotates! from_int(0, 0), from_int(0, 0)
+      assert_rotates! from_int(0, 0), 0, from_int(0, 0)
+      assert_rotates! from_int(0, 0), 1, from_int(0, 0)
+      assert_rotates! from_int(0, 0), -1, from_int(0, 0)
+    end
+
+    it "rotates short BitArray" do
+      assert_rotates! from_int(5, 0b10011), from_int(5, 0b00111)
+      assert_rotates! from_int(5, 0b10011), 0, from_int(5, 0b10011)
+      assert_rotates! from_int(5, 0b10011), 1, from_int(5, 0b00111)
+      assert_rotates! from_int(5, 0b10011), 2, from_int(5, 0b01110)
+      assert_rotates! from_int(5, 0b10011), 3, from_int(5, 0b11100)
+      assert_rotates! from_int(5, 0b10011), 4, from_int(5, 0b11001)
+      assert_rotates! from_int(5, 0b10011), 5, from_int(5, 0b10011)
+      assert_rotates! from_int(5, 0b10011), 6, from_int(5, 0b00111)
+      assert_rotates! from_int(5, 0b10011), -1, from_int(5, 0b11001)
+      assert_rotates! from_int(5, 0b10011), -2, from_int(5, 0b11100)
+      assert_rotates! from_int(5, 0b10011), -3, from_int(5, 0b01110)
+      assert_rotates! from_int(5, 0b10011), -4, from_int(5, 0b00111)
+
+      ba = from_int(5, 0b10011)
+      assert_rotates! ba, from_int(5, 0b00111)
+      assert_rotates! ba, from_int(5, 0b01110)
+      assert_rotates! ba, 2, from_int(5, 0b11001)
+
+      ba = from_int(32, 0b11000101_00011111_11000001_00011101_u32)
+      assert_rotates! ba, 5, from_int(32, 0b10100011_11111000_00100011_10111000_u32)
+      assert_rotates! ba, -8, from_int(32, 0b10111000_10100011_11111000_00100011_u32)
+      assert_rotates! ba, 45, from_int(32, 0b01111111_00000100_01110111_00010100_u32)
+    end
+
+    it "rotates medium BitArray" do
+      ba = from_int(64, 0b11001100_00101001_01111010_10110001_10111111_00100101_11101100_10101010_u64)
+      assert_rotates! ba, from_int(64, 0b10011000_01010010_11110101_01100011_01111110_01001011_11011001_01010101_u64)
+      assert_rotates! ba, 10, from_int(64, 0b01001011_11010101_10001101_11111001_00101111_01100101_01010110_01100001_u64)
+      assert_rotates! ba, 51, from_int(64, 0b10110011_00001010_01011110_10101100_01101111_11001001_01111011_00101010_u64)
+      assert_rotates! ba, -40, from_int(64, 0b10101100_01101111_11001001_01111011_00101010_10110011_00001010_01011110_u64)
+      assert_rotates! ba, 128, from_int(64, 0b10101100_01101111_11001001_01111011_00101010_10110011_00001010_01011110_u64)
+      assert_rotates! ba, 97, from_int(64, 0b01010101_01100110_00010100_10111101_01011000_11011111_10010010_11110110_u64)
+    end
+
+    it "rotates large BitArray" do
+      ba = BitArray.new(200)
+      ba[0] = ba[2] = ba[5] = ba[11] = ba[64] = ba[103] = ba[193] = ba[194] = true
+
+      ba.rotate!
+      ba2 = BitArray.new(200)
+      ba2[199] = ba2[1] = ba2[4] = ba2[10] = ba2[63] = ba2[102] = ba2[192] = ba2[193] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba.rotate!(21)
+      ba2 = BitArray.new(200)
+      ba2[178] = ba2[180] = ba2[183] = ba2[189] = ba2[42] = ba2[81] = ba2[171] = ba2[172] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba.rotate!(192)
+      ba2 = BitArray.new(200)
+      ba2[186] = ba2[188] = ba2[191] = ba2[197] = ba2[50] = ba2[89] = ba2[179] = ba2[180] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba.rotate!(50)
+      ba2 = BitArray.new(200)
+      ba2[136] = ba2[138] = ba2[141] = ba2[147] = ba2[0] = ba2[39] = ba2[129] = ba2[130] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+
+      ba.rotate!(123)
+      ba2 = BitArray.new(200)
+      ba2[13] = ba2[15] = ba2[18] = ba2[24] = ba2[77] = ba2[116] = ba2[6] = ba2[7] = true
+      ba.should eq(ba2)
+      assert_no_unused_bits ba
+    end
   end
 
   it "raises when out of bounds" do

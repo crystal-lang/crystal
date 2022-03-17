@@ -11,6 +11,17 @@ class Dir
   include Enumerable(String)
   include Iterable(String)
 
+  # Returns the path of this directory.
+  #
+  # ```
+  # Dir.mkdir("testdir")
+  # dir = Dir.new("testdir")
+  # Dir.mkdir("testdir/extendeddir")
+  # dir2 = Dir.new("testdir/extendeddir")
+  #
+  # dir.path  # => "testdir"
+  # dir2.path # => "testdir/extendeddir"
+  # ```
   getter path : String
 
   # Returns a new directory object for the named directory.
@@ -64,7 +75,15 @@ class Dir
     EntryIterator.new(self)
   end
 
-  # Returns an array containing all of the filenames in the given directory.
+  # Returns an array containing all of entries in the given directory including "." and "..".
+  #
+  # ```
+  # Dir.mkdir("testdir")
+  # File.touch("testdir/file_1")
+  # File.touch("testdir/file_2")
+  #
+  # Dir.new("testdir").entries # => ["..", "file_1", "file_2", "."]
+  # ```
   def entries : Array(String)
     entries = [] of String
     each do |filename|
@@ -96,6 +115,21 @@ class Dir
     end
   end
 
+  # Returns an iterator over of the all entries in this directory except for `.` and `..`.
+  #
+  # See `#each_child(&)`
+  #
+  # ```
+  # Dir.mkdir("test")
+  # File.touch("test/foo")
+  # File.touch("test/bar")
+  #
+  # dir = Dir.new("test")
+  # iter = d.each_child
+  #
+  # iter.next # => "foo"
+  # iter.next # => "bar"
+  # ```
   def each_child : Iterator(String)
     ChildIterator.new(self)
   end

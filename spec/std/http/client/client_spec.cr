@@ -283,24 +283,19 @@ module HTTP
       end
     end
 
-    {% unless flag?(:darwin) %}
-      # TODO the following spec is failing on Nix Darwin CI when executed
-      #      together with some other tests. If run alone it succeeds.
-      #      The exhibit failure is a Failed to raise an exception: END_OF_STACK.
-      it "tests write_timeout" do
-        # Here we don't want to write a response on the server side because
-        # it doesn't make sense to try to write because the client will already
-        # timeout on read. Writing a response could lead on an exception in
-        # the server if the socket is closed.
-        test_server("localhost", 0, 0, write_response: false) do |server|
-          client = Client.new("localhost", server.local_address.port)
-          expect_raises(IO::TimeoutError, "Write timed out") do
-            client.write_timeout = 0.001
-            client.post("/", body: "a" * 5_000_000)
-          end
+    it "tests write_timeout" do
+      # Here we don't want to write a response on the server side because
+      # it doesn't make sense to try to write because the client will already
+      # timeout on read. Writing a response could lead on an exception in
+      # the server if the socket is closed.
+      test_server("localhost", 0, 0, write_response: false) do |server|
+        client = Client.new("localhost", server.local_address.port)
+        expect_raises(IO::TimeoutError, "Write timed out") do
+          client.write_timeout = 0.001
+          client.post("/", body: "a" * 5_000_000)
         end
       end
-    {% end %}
+    end
 
     it "tests connect_timeout" do
       test_server("localhost", 0, 0) do |server|

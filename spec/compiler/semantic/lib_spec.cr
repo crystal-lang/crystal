@@ -131,7 +131,7 @@ describe "Semantic: lib" do
       x = Pointer(Int32).malloc(1_u64)
       Lib.foo out x
       ),
-      "variable 'x' is already defined, `out` must be used to define a variable, use another name"
+      "variable 'x' is already defined, `out` must be used to define a variable, use another name", inject_primitives: true
   end
 
   it "allows invoking out with underscore " do
@@ -282,7 +282,7 @@ describe "Semantic: lib" do
 
       t = {y: 2.5, x: 3}
       LibC.foo **t
-      )) { float64 }
+      ), inject_primitives: true) { float64 }
   end
 
   it "errors if missing link arguments" do
@@ -431,7 +431,7 @@ describe "Semantic: lib" do
       a = 1 == 1 ? nil : Pointer(Int32).malloc(1_u64)
       Foo.foo(a)
       ),
-      "argument 'x' of 'Foo#foo' must be Pointer(Int32), not (Pointer(Int32) | Nil)"
+      "argument 'x' of 'Foo#foo' must be Pointer(Int32), not (Pointer(Int32) | Nil)", inject_primitives: true
   end
 
   it "correctly attached link flags if there's a macro if" do
@@ -603,7 +603,7 @@ describe "Semantic: lib" do
 
       a = 1_u8
       LibFoo.foo a
-      )) { float64 }
+      ), inject_primitives: true) { float64 }
   end
 
   it "passes float as another integer type in variable" do
@@ -614,7 +614,7 @@ describe "Semantic: lib" do
 
       a = 1_f64
       LibFoo.foo a
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "passes int as another integer type with literal" do
