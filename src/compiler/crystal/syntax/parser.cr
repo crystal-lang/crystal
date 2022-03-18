@@ -4994,7 +4994,7 @@ module Crystal
       args = [] of ASTNode
       if named_tuple_start? || string_literal_start?
         named_args = parse_named_type_args(:OP_RPAREN)
-      else
+      elsif !@token.type.op_rparen?
         args << parse_type_splat { parse_type_arg }
         while @token.type.op_comma?
           next_token_skip_space_or_newline
