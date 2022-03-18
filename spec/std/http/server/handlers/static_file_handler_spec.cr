@@ -26,6 +26,8 @@ describe HTTP::StaticFileHandler do
     response = handle HTTP::Request.new("GET", "/foo\\bar.txt"), ignore_body: false
     response.status_code.should eq 404
 
+    # This file can't be checkout out from git on Windows, thus we need to create it here.
+    File.touch(datapath("static_file_handler", "back\\slash.txt"))
     response = handle HTTP::Request.new("GET", "/back\\slash.txt"), ignore_body: false
     response.status_code.should eq 200
   end
