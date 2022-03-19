@@ -243,11 +243,21 @@ struct BitArray
 
   # :inherit:
   def tally : Hash(Bool, Int32)
-    tallies = Hash(Bool, Int32).new
+    tally(Hash(Bool, Int32).new)
+  end
+
+  # :inherit:
+  def tally(hash)
     ones_count = count(true)
-    tallies[true] = ones_count if ones_count > 0
-    tallies[false] = @size - ones_count if ones_count < @size
-    tallies
+    if ones_count > 0
+      count = hash.fetch(true) { typeof(hash[true]).zero }
+      hash[true] = count + ones_count
+    end
+    if ones_count < @size
+      count = hash.fetch(false) { typeof(hash[false]).zero }
+      hash[false] = count + @size - ones_count
+    end
+    hash
   end
 
   # :inherit:
