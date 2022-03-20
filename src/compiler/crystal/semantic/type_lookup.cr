@@ -250,7 +250,7 @@ class Crystal::Type
 
         # Check the case of T resolving to a number
         if type_var.is_a?(Path)
-          type = @root.lookup_path(type_var)
+          type = in_generic_args { lookup_type_var(type_var) }
           case type
           when Const
             program.check_deprecated_constant(type, type_var)
@@ -262,7 +262,7 @@ class Crystal::Type
               type_var.raise "expanding constant value for a number value", inner: ex
             end
             next
-          when ASTNode
+          when NumberLiteral
             type_vars << type
             next
           end
