@@ -125,6 +125,68 @@ describe "Code gen: warnings" do
       "warning in line 7\nWarning: Deprecated Foo.new:a."
   end
 
+  it "detects deprecated constants" do
+    assert_warning <<-CR,
+      @[Deprecated("Do not use me")]
+      FOO = 1
+
+      FOO
+      CR
+      "warning in line 4\nWarning: Deprecated FOO. Do not use me"
+  end
+
+  it "detects deprecated constants inside macros" do
+    assert_warning <<-CR,
+      @[Deprecated("Do not use me")]
+      FOO = 1
+
+      {% FOO %}
+      CR
+      "warning in line 4\nWarning: Deprecated FOO. Do not use me"
+  end
+
+  it "detects deprecated constants in type declarations (1)" do
+    assert_warning <<-CR,
+      @[Deprecated("Do not use me")]
+      FOO = 1
+
+      class Foo(N)
+      end
+
+      class Bar < Foo(FOO)
+      end
+      CR
+      "warning in line 7\nWarning: Deprecated FOO. Do not use me"
+  end
+
+  it "detects deprecated constants in type declarations (2)" do
+    assert_warning <<-CR,
+      @[Deprecated("Do not use me")]
+      FOO = 1
+
+      module Foo(N)
+      end
+
+      class Bar
+        include Foo(FOO)
+      end
+      CR
+      "warning in line 8\nWarning: Deprecated FOO. Do not use me"
+  end
+
+  it "detects deprecated constants in type declarations (3)" do
+    assert_warning <<-CR,
+      @[Deprecated("Do not use me")]
+      FOO = 1
+
+      class Foo(N)
+      end
+
+      alias Bar = Foo(FOO)
+      CR
+      "warning in line 7\nWarning: Deprecated FOO. Do not use me"
+  end
+
   it "informs warnings once per call site location (a)" do
     warning_failures = warnings_result <<-CR
       class Foo
