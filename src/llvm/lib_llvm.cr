@@ -17,8 +17,8 @@ end
   end
 {% end %}
 
-{% begin %}
-  lib LibLLVM
+lib LibLLVM
+  {% begin %}
     IS_130 = {{LibLLVM::VERSION.starts_with?("13.0")}}
     IS_120 = {{LibLLVM::VERSION.starts_with?("12.0")}}
     IS_111 = {{LibLLVM::VERSION.starts_with?("11.1")}}
@@ -33,16 +33,18 @@ end
     IS_40 = {{LibLLVM::VERSION.starts_with?("4.0")}}
     IS_39 = {{LibLLVM::VERSION.starts_with?("3.9")}}
     IS_38 = {{LibLLVM::VERSION.starts_with?("3.8")}}
+  {% end %}
 
-    IS_LT_70 = IS_38 || IS_39 || IS_40 || IS_50 || IS_60
-    IS_LT_80 = IS_LT_70 || IS_70 || IS_71
-    IS_LT_90 = IS_LT_80 || IS_80
-    IS_LT_100 = IS_LT_90 || IS_90
-    IS_LT_110 = IS_LT_100 || IS_100
-    IS_LT_120 = IS_LT_110 || IS_110 || IS_111
-    IS_LT_130 = IS_LT_120 || IS_120
-  end
-{% end %}
+  {% begin %}
+    IS_LT_70 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60}}
+    IS_LT_80 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60 || IS_70 || IS_71}}
+    IS_LT_90 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60 || IS_70 || IS_71 || IS_80}}
+    IS_LT_100 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60 || IS_70 || IS_71 || IS_80 || IS_90}}
+    IS_LT_110 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60 || IS_70 || IS_71 || IS_80 || IS_90 || IS_100}}
+    IS_LT_120 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60 || IS_70 || IS_71 || IS_80 || IS_90 || IS_100 || IS_110 || IS_111}}
+    IS_LT_130 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60 || IS_70 || IS_71 || IS_80 || IS_90 || IS_100 || IS_110 || IS_111 || IS_120}}
+  {% end %}
+end
 
 lib LibLLVM
   alias Char = LibC::Char
@@ -80,13 +82,18 @@ lib LibLLVM
     end
   {% end %}
 
+  # `LLVMModuleFlagBehavior` (_not_ `LLVM::Module::ModFlagBehavior`, their values disagree)
+  enum ModuleFlagBehavior
+    Warning = 1
+  end
+
   fun add_case = LLVMAddCase(switch : ValueRef, onval : ValueRef, dest : BasicBlockRef)
   fun add_clause = LLVMAddClause(lpad : ValueRef, clause_val : ValueRef)
   fun add_function = LLVMAddFunction(module : ModuleRef, name : UInt8*, type : TypeRef) : ValueRef
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : UInt8*) : ValueRef
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef*, count : Int32)
   {% unless LibLLVM::IS_LT_70 %}
-    fun add_module_flag = LLVMAddModuleFlag(mod : ModuleRef, behavior : ModuleFlag, key : UInt8*, len : LibC::SizeT, val : MetadataRef)
+    fun add_module_flag = LLVMAddModuleFlag(mod : ModuleRef, behavior : ModuleFlagBehavior, key : UInt8*, len : LibC::SizeT, val : MetadataRef)
   {% end %}
   fun add_named_metadata_operand = LLVMAddNamedMetadataOperand(mod : ModuleRef, name : UInt8*, val : ValueRef)
   fun add_target_dependent_function_attr = LLVMAddTargetDependentFunctionAttr(fn : ValueRef, a : LibC::Char*, v : LibC::Char*)
@@ -397,7 +404,7 @@ lib LibLLVM
   fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : UInt8*, length : Int32) : ValueRef
 
   {% unless LibLLVM::IS_LT_70 %}
-    fun metadata_as_value = LLVMMetadataAsValue(c : ContextRef, md : MetadataRef) : ValueRef
+    fun value_as_metadata = LLVMValueAsMetadata(val : ValueRef) : MetadataRef
   {% end %}
 
   fun append_basic_block_in_context = LLVMAppendBasicBlockInContext(ctx : ContextRef, fn : ValueRef, name : UInt8*) : BasicBlockRef

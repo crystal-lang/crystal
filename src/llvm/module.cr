@@ -55,7 +55,7 @@ class LLVM::Module
     GlobalCollection.new(self)
   end
 
-  def add_flag(module_flag : ModuleFlag, key : String, val : Value)
+  def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Value)
     {% if LibLLVM::IS_LT_70 %}
       values = [
         context.int32.const_int(module_flag.value),
@@ -70,7 +70,7 @@ class LLVM::Module
         module_flag,
         key,
         key.bytesize,
-        LibLLVM.metadata_as_value(val.to_unsafe)
+        LibLLVM.value_as_metadata(val.to_unsafe)
       )
     {% end %}
   end
