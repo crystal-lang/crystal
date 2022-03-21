@@ -106,7 +106,7 @@ describe "Code gen: multi assign" do
       #{tuple_new}
 
       _, *x, _ = 1, 2
-      x.is_a?(Tuple(*typeof(Tuple.new)))
+      x.is_a?(Tuple())
       CR
   end
 
@@ -115,7 +115,7 @@ describe "Code gen: multi assign" do
       #{tuple_new}
 
       *x, _, _ = 1, 2
-      x.is_a?(Tuple(*typeof(Tuple.new)))
+      x.is_a?(Tuple())
       CR
   end
 
@@ -124,7 +124,7 @@ describe "Code gen: multi assign" do
       #{tuple_new}
 
       _, _, *x = 1, 2
-      x.is_a?(Tuple(*typeof(Tuple.new)))
+      x.is_a?(Tuple())
       CR
   end
 
@@ -162,7 +162,7 @@ describe "Code gen: multi assign" do
       require "prelude"
 
       _, *x, _ = {1, 2}
-      x.is_a?(Tuple(*typeof(Tuple.new)))
+      x.is_a?(Tuple())
       CR
   end
 
@@ -173,7 +173,7 @@ describe "Code gen: multi assign" do
       #{include_indexable}
 
       *x, _, _ = {1, 2}
-      x.is_a?(Tuple(*typeof(Tuple.new)))
+      x.is_a?(Tuple())
       CR
   end
 
@@ -184,7 +184,7 @@ describe "Code gen: multi assign" do
       #{include_indexable}
 
       _, _, *x = {1, 2}
-      x.is_a?(Tuple(*typeof(Tuple.new)))
+      x.is_a?(Tuple())
       CR
   end
 

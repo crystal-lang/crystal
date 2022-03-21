@@ -25,12 +25,12 @@ module Crystal
 
     def visit_any(node)
       if @emit_doc && (doc = node.doc) && !doc.empty?
-        doc.each_line(chomp: false) do |line|
-          append_indent
+        doc.each_line(chomp: true) do |line|
           @str << "# "
           @str << line
+          newline
+          append_indent
         end
-        @str.puts
       end
 
       if (macro_expansion_pragmas = @macro_expansion_pragmas) && (loc = node.location) && (filename = loc.filename).is_a?(String)
@@ -585,6 +585,7 @@ module Crystal
 
     def visit(node : ProcPointer)
       @str << "->"
+      @str << "::" if node.global?
       if obj = node.obj
         obj.accept self
         @str << '.'
