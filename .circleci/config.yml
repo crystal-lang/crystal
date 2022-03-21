@@ -534,10 +534,6 @@ workflows:
           filters: *release
           requires:
             - dist_docker
-      - publish_nightly_artifacts:
-          requires:
-            - dist_linux
-            - dist_darwin
       - dist_artifacts:
           filters: *release
           requires:
