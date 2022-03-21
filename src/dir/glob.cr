@@ -80,8 +80,14 @@ class Dir
         sequences = compile(pattern)
 
         sequences.each do |sequence|
-          run(sequence, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |match|
-            yield match
+          if sequence.count(&.is_a?(RecursiveDirectories)) > 1
+            run_tracking(sequence, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |match|
+              yield match
+            end
+          else
+            run(sequence, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |match|
+              yield match
+            end
           end
         end
       end
@@ -147,6 +153,16 @@ class Dir
       true
     end
 
+    private def self.run_tracking(sequence, match_hidden, follow_symlinks, &block : String -> _)
+      result_tracker = Set(String).new
+
+      run(sequence, match_hidden, follow_symlinks) do |result|
+        if result_tracker.add?(result)
+          yield result
+        end
+      end
+    end
+
     private def self.run(sequence, match_hidden, follow_symlinks, &block : String -> _)
       return if sequence.empty?
 
@@ -177,7 +193,7 @@ class Dir
             yield fullpath
           end
         in EntryMatch
-          return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
+          next if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           each_child(path) do |entry|
             next if !match_hidden && entry.name.starts_with?('.')
             yield join(path, entry.name) if cmd.matches?(entry.name)
@@ -198,7 +214,7 @@ class Dir
             end
           end
         in ConstantEntry
-          return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
+          next if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           full = join(path, cmd.path)
           yield full if File.exists?(full) || File.symlink?(full)
         in ConstantDirectory
@@ -216,7 +232,7 @@ class Dir
             dir = Dir.new(path || ".")
             dir_stack << dir
           rescue File::Error
-            return
+            next
           end
           recurse = false
 

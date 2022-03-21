@@ -16,7 +16,7 @@
 # ba[2] # => true
 # ```
 struct BitArray
-  include Indexable(Bool)
+  include Indexable::Mutable(Bool)
 
   # The number of bits the BitArray stores
   getter size : Int32
@@ -25,10 +25,28 @@ struct BitArray
   #
   # *initial* optionally sets the starting value, `true` or `false`, for all bits
   # in the array.
-  def initialize(@size, initial : Bool = false)
+  def initialize(size : Int, initial : Bool = false)
+    raise ArgumentError.new("Negative bit array size: #{size}") if size < 0
+    @size = size.to_i
     value = initial ? UInt32::MAX : UInt32::MIN
     @bits = Pointer(UInt32).malloc(malloc_size, value)
     clear_unused_bits if initial
+  end
+
+  # Creates a new `BitArray` of *size* bits and invokes the given block once
+  # for each index of `self`, setting the bit at that index to `true` if the
+  # block is truthy.
+  #
+  # ```
+  # BitArray.new(5) { |i| i >= 3 }     # => BitArray[00011]
+  # BitArray.new(6) { |i| i if i < 2 } # => BitArray[110000]
+  # ```
+  def self.new(size : Int, & : Int32 -> _)
+    arr = new(size)
+    size.to_i.times do |i|
+      arr.unsafe_put(i, true) if yield i
+    end
+    arr
   end
 
   def ==(other : BitArray)
@@ -44,23 +62,24 @@ struct BitArray
     (@bits[bit_index] & (1 << sub_index)) > 0
   end
 
-  # Sets the bit at the given *index*.
-  # Negative indices can be used to start counting from the end of the array.
-  # Raises `IndexError` if trying to access a bit outside the array's range.
-  #
-  # ```
-  # require "bit_array"
-  #
-  # ba = BitArray.new(5)
-  # ba[3] = true
-  # ```
-  def []=(index, value : Bool)
+  def unsafe_put(index : Int, value : Bool)
+    bit_index, sub_index = index.divmod(32)
+    if value
+      @bits[bit_index] |= 1 << sub_index
+    else
+      @bits[bit_index] &= ~(1 << sub_index)
+    end
+  end
+
+  # :inherit:
+  def []=(index : Int, value : Bool) : Bool
     bit_index, sub_index = bit_index_and_sub_index(index)
     if value
       @bits[bit_index] |= 1 << sub_index
     else
       @bits[bit_index] &= ~(1 << sub_index)
     end
+    value
   end
 
   # Returns all elements that are within the given range.
@@ -121,7 +140,7 @@ struct BitArray
       bits = @bits[0]
 
       bits >>= start
-      bits &= (1 << count) - 1
+      bits &= ~(UInt32::MAX << count)
 
       BitArray.new(count).tap { |ba| ba.@bits[0] = bits }
     elsif size <= 64
@@ -129,10 +148,10 @@ struct BitArray
       bits = @bits.as(UInt64*)[0]
 
       bits >>= start
-      bits &= (1 << count) - 1
+      bits &= ~(UInt64::MAX << count)
 
       if count <= 32
-        BitArray.new(count).tap { |ba| ba.@bits[0] = bits.to_u32 }
+        BitArray.new(count).tap { |ba| ba.@bits[0] = bits.to_u32! }
       else
         BitArray.new(count).tap { |ba| ba.@bits.as(UInt64*)[0] = bits }
       end
@@ -150,7 +169,7 @@ struct BitArray
         bits = @bits[start_bit_index + i + 1]
 
         high_bits = bits
-        high_bits &= (1 << start_sub_index) - 1
+        high_bits &= ~(UInt32::MAX << start_sub_index)
         high_bits <<= 32 - start_sub_index
 
         ba.@bits[i] = low_bits | high_bits
@@ -164,10 +183,135 @@ struct BitArray
     end
   end
 
-  # Toggles the bit at the given *index*. A false bit becomes a `true` bit, and
-  # vice versa.
-  # Negative indices can be used to start counting from the end of the array.
-  # Raises `IndexError` if trying to access a bit outside the array's range.
+  # :inherit:
+  def all? : Bool
+    bit_index, sub_index = @size.divmod(32)
+
+    bit_index.times do |i|
+      return false unless @bits[i] == UInt32::MAX
+    end
+
+    return true if sub_index == 0
+    mask = ~(UInt32::MAX << sub_index)
+    @bits[bit_index] & mask == mask
+  end
+
+  # :inherit:
+  def any? : Bool
+    Slice.new(@bits, malloc_size).any? { |bits| bits != 0 }
+  end
+
+  # :inherit:
+  def none? : Bool
+    !any?
+  end
+
+  # Returns `true` if the collection contains *obj*, `false` otherwise.
+  #
+  # ```
+  # ba = BitArray.new(8, true)
+  # ba.includes?(true)  # => true
+  # ba.includes?(false) # => false
+  # ```
+  def includes?(obj : Bool) : Bool
+    obj ? any? : !all?
+  end
+
+  # :inherit:
+  def one? : Bool
+    c = 0
+    malloc_size.times do |i|
+      c += @bits[i].popcount
+      return false if c > 1
+    end
+    c == 1
+  end
+
+  # Returns the number of times that *item* is present in the bit array.
+  #
+  # ```
+  # ba = BitArray.new(12, true)
+  # ba[3] = false
+  # ba[7] = false
+  # ba.count(true)  # => 10
+  # ba.count(false) # => 2
+  # ```
+  def count(item : Bool) : Int32
+    ones_count = Slice.new(@bits, malloc_size).sum(&.popcount)
+    item ? ones_count : @size - ones_count
+  end
+
+  # :inherit:
+  def tally : Hash(Bool, Int32)
+    tallies = Hash(Bool, Int32).new
+    ones_count = count(true)
+    tallies[true] = ones_count if ones_count > 0
+    tallies[false] = @size - ones_count if ones_count < @size
+    tallies
+  end
+
+  # :inherit:
+  def fill(value : Bool) : self
+    return self if size == 0
+
+    if size <= 64
+      @bits.as(UInt64*).value = value ? ~(UInt64::MAX << size) : 0_u64
+    else
+      to_slice.fill(value ? 0xFF_u8 : 0x00_u8)
+      clear_unused_bits if value
+    end
+
+    self
+  end
+
+  # :inherit:
+  def fill(value : Bool, start : Int, count : Int) : self
+    start, count = normalize_start_and_count(start, count)
+    return self if count <= 0
+    bytes = to_slice
+
+    start_bit_index, start_sub_index = start.divmod(8)
+    end_bit_index, end_sub_index = (start + count - 1).divmod(8)
+
+    if start_bit_index == end_bit_index
+      # same UInt8, don't perform the loop at all
+      mask = uint8_mask(start_sub_index, end_sub_index)
+      set_bits(bytes, value, start_bit_index, mask)
+    else
+      mask = uint8_mask(start_sub_index, 7)
+      set_bits(bytes, value, start_bit_index, mask)
+
+      bytes[start_bit_index + 1..end_bit_index - 1].fill(value ? 0xFF_u8 : 0x00_u8)
+
+      mask = uint8_mask(0, end_sub_index)
+      set_bits(bytes, value, end_bit_index, mask)
+    end
+
+    self
+  end
+
+  @[AlwaysInline]
+  private def set_bits(bytes : Slice(UInt8), value, index, mask)
+    if value
+      bytes[index] |= mask
+    else
+      bytes[index] &= ~mask
+    end
+  end
+
+  # returns (1 << from) | (1 << (from + 1)) | ... | (1 << to)
+  @[AlwaysInline]
+  private def uint8_mask(from, to)
+    (Int8::MIN >> (to - from)).to_u8! >> (7 - to)
+  end
+
+  # Toggles the bit at the given *index*. A `false` bit becomes a `true` bit,
+  # and vice versa.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element).
+  #
+  # Raises `IndexError` if *index* is out of range.
   #
   # ```
   # require "bit_array"
@@ -177,9 +321,71 @@ struct BitArray
   # ba.toggle(3)
   # ba[3] # => true
   # ```
-  def toggle(index)
+  def toggle(index) : Nil
     bit_index, sub_index = bit_index_and_sub_index(index)
     @bits[bit_index] ^= 1 << sub_index
+  end
+
+  # Toggles all bits that are within the given *range*. A `false` bit becomes a
+  # `true` bit, and vice versa.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element).
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # require "bit_array"
+  #
+  # ba = BitArray.new(5)
+  # ba.to_s # => "BitArray[00000]"
+  # ba.toggle(1..-2)
+  # ba.to_s # => "BitArray[01110]"
+  # ```
+  def toggle(range : Range)
+    toggle(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
+  end
+
+  # Toggles *count* or less (if there aren't enough) bits starting at the given
+  # *start* index. A `false` bit becomes a `true` bit, and vice versa.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element).
+  #
+  # Raises `IndexError` if *index* is out of range.
+  # Raises `ArgumentError` if *count* is a negative number.
+  #
+  # ```
+  # require "bit_array"
+  #
+  # ba = BitArray.new(5)
+  # ba.to_s # => "BitArray[00000]"
+  # ba.toggle(1, 3)
+  # ba.to_s # => "BitArray[01110]"
+  # ```
+  def toggle(start : Int, count : Int)
+    start, count = normalize_start_and_count(start, count)
+    return if count == 0
+
+    start_bit_index, start_sub_index = start.divmod(32)
+    end_bit_index, end_sub_index = (start + count - 1).divmod(32)
+
+    if start_bit_index == end_bit_index
+      # same UInt32, don't perform the loop at all
+      @bits[start_bit_index] ^= uint32_mask(start_sub_index, end_sub_index)
+    else
+      @bits[start_bit_index] ^= uint32_mask(start_sub_index, 31)
+      (start_bit_index + 1..end_bit_index - 1).each do |i|
+        @bits[i] = ~@bits[i]
+      end
+      @bits[end_bit_index] ^= uint32_mask(0, end_sub_index)
+    end
+  end
+
+  # returns (1 << from) | (1 << (from + 1)) | ... | (1 << to)
+  @[AlwaysInline]
+  private def uint32_mask(from, to)
+    (Int32::MIN >> (to - from)).to_u32! >> (31 - to)
   end
 
   # Inverts all bits in the array. Falses become `true` and vice versa.
@@ -193,14 +399,127 @@ struct BitArray
   # ba.invert
   # ba # => BitArray[11001]
   # ```
-  def invert
+  def invert : Nil
     malloc_size.times do |i|
       @bits[i] = ~@bits[i]
     end
     clear_unused_bits
   end
 
-  # Creates a string representation of self.
+  # :inherit:
+  def reverse! : self
+    return self if size <= 1
+
+    if size <= 32
+      @bits.value = Intrinsics.bitreverse32(@bits.value) >> (32 - size)
+    elsif size <= 64
+      more_bits = @bits.as(UInt64*)
+      more_bits.value = Intrinsics.bitreverse64(more_bits.value) >> (64 - size)
+    else
+      # 3 or more groups of bits
+      offset = (-size) % 32
+      if offset != 0
+        # left-shifting, followed by bit-reversing in each group
+        # simplified bit pattern example using a group size of 8: (offset = 3)
+        #
+        #     hgfedcba ponmlkji 000utsrq
+        #     hgfedcba ponmlkji utsrqpon
+        #     hgfedcba ponmlkji nopqrstu
+        #     hgfedcba mlkjihgf nopqrstu
+        #     hgfedcba fghijklm nopqrstu
+        (malloc_size - 1).downto(1) do |i|
+          @bits[i] = Intrinsics.bitreverse32((@bits[i] << offset) | (@bits[i - 1] >> (32 - offset)))
+        end
+
+        # last group:
+        #
+        #     edcba000 fghijklm nopqrstu
+        #     000abcde fghijklm nopqrstu
+        @bits[0] = Intrinsics.bitreverse32(@bits[0] << offset)
+      else
+        # no padding; do only the bit reverses
+        Slice.new(@bits, malloc_size).map! { |x| Intrinsics.bitreverse32(x) }
+      end
+
+      # reversing all groups themselves:
+      #
+      #     nopqrstu fghijklm 000abcde
+      Slice.new(@bits, malloc_size).reverse!
+    end
+
+    self
+  end
+
+  # :inherit:
+  def rotate!(n : Int = 1) : self
+    return self if size <= 1
+    n %= size
+    return self if n == 0
+
+    if size % 8 == 0 && n % 8 == 0
+      to_slice.rotate!(n // 8)
+    elsif size <= 32
+      @bits[0] = (@bits[0] >> n) | (@bits[0] << (size - n))
+      clear_unused_bits
+    elsif n <= 32
+      temp = @bits[0]
+      malloc_size = self.malloc_size
+      (malloc_size - 1).times do |i|
+        @bits[i] = (@bits[i] >> n) | (@bits[i + 1] << (32 - n))
+      end
+
+      end_sub_index = (size - 1) % 32 + 1
+      if n <= end_sub_index
+        # n = 3: (bit patterns here are little-endian)
+        #
+        #     ........ ........ ........ .....CBA -> ........ ........ ........ ........
+        #     ........ ........ ........ ........ -> cba..... ........ ........ ........
+        #     00000000 00000000 00000000 000edcba -> 00000000 00000000 00000000 000CBAed
+        @bits[malloc_size - 1] = (@bits[malloc_size - 1] >> n) | (temp << (end_sub_index - n))
+      else
+        # n = 7:
+        #
+        #     ........ ........ ........ .GFEDCBA -> ........ ........ ........ ........
+        #     ........ ........ ........ ........ -> BAedcba. ........ ........ ........
+        #     00000000 00000000 00000000 000edcba -> 00000000 00000000 00000000 000GFEDC
+        @bits[malloc_size - 2] |= temp << (32 + end_sub_index - n)
+        @bits[malloc_size - 1] = temp << (end_sub_index - n)
+      end
+
+      clear_unused_bits
+    elsif n >= size - 32
+      n = size - n
+      malloc_size = self.malloc_size
+
+      end_sub_index = (size - 1) % 32 + 1
+      if n <= end_sub_index
+        # n = 3:
+        #
+        #     ........ ........ ........ ........ -> ........ ........ ........ .....CBA
+        #     00000000 00000000 00000000 000CBA.. -> 00000000 00000000 00000000 000.....
+        temp = @bits[malloc_size - 1] >> (end_sub_index - n)
+      else
+        # n = 7:
+        #
+        #     BA...... ........ ........ ........ -> ........ ........ ........ .GFEDCBA
+        #     00000000 00000000 00000000 000GFEDC -> 00000000 00000000 00000000 000.....
+        temp = (@bits[malloc_size - 1] << (n - end_sub_index)) | (@bits[malloc_size - 2] >> (32 + end_sub_index - n))
+      end
+
+      (malloc_size - 1).downto(1) do |i|
+        @bits[i] = (@bits[i] << n) | (@bits[i - 1] >> (32 - n))
+      end
+      @bits[0] = (@bits[0] << n) | temp
+
+      clear_unused_bits
+    else
+      super
+    end
+
+    self
+  end
+
+  # Creates a string representation of `self`.
   #
   # ```
   # require "bit_array"
@@ -259,7 +578,7 @@ struct BitArray
   protected def clear_unused_bits
     # There are no unused bits if `size` is a multiple of 32.
     bit_index, sub_index = @size.divmod(32)
-    @bits[bit_index] &= (1 << sub_index) - 1 unless sub_index == 0
+    @bits[bit_index] &= ~(UInt32::MAX << sub_index) unless sub_index == 0
   end
 
   private def bytesize

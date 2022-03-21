@@ -22,6 +22,9 @@ class Crystal::RecursiveStructChecker
 
   def run
     check_types(@program)
+    @program.file_modules.each_value do |file_module|
+      check_types(file_module)
+    end
   end
 
   def check_types(type)

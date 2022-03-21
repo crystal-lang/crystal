@@ -136,7 +136,7 @@ struct Float32
   #
   # ```
   # Float32.new "20"                        # => 20.0
-  # Float32.new "  20  ", whitespace: false # => Unhandled exception: Invalid Float32:   20 (ArgumentError)
+  # Float32.new "  20  ", whitespace: false # raises ArgumentError: Invalid Float32: "  20  "
   # ```
   def self.new(value : String, whitespace : Bool = true, strict : Bool = true) : self
     value.to_f32 whitespace: whitespace, strict: strict
@@ -179,6 +179,16 @@ struct Float32
 
   def trunc : Float32
     LibM.trunc_f32(self)
+  end
+
+  # Returns the least `Float32` that is greater than `self`.
+  def next_float : Float32
+    LibM.nextafter_f32(self, INFINITY)
+  end
+
+  # Returns the greatest `Float32` that is less than `self`.
+  def prev_float : Float32
+    LibM.nextafter_f32(self, -INFINITY)
   end
 
   def **(other : Int32)
@@ -243,7 +253,7 @@ struct Float64
   #
   # ```
   # Float64.new "20"                        # => 20.0
-  # Float64.new "  20  ", whitespace: false # => Unhandled exception: Invalid Float64:   20 (ArgumentError)
+  # Float64.new "  20  ", whitespace: false # raises ArgumentError: Invalid Float64: "  20  "
   # ```
   def self.new(value : String, whitespace : Bool = true, strict : Bool = true) : self
     value.to_f64 whitespace: whitespace, strict: strict
@@ -286,6 +296,16 @@ struct Float64
 
   def trunc : Float64
     LibM.trunc_f64(self)
+  end
+
+  # Returns the least `Float64` that is greater than `self`.
+  def next_float : Float64
+    LibM.nextafter_f64(self, INFINITY)
+  end
+
+  # Returns the greatest `Float64` that is less than `self`.
+  def prev_float : Float64
+    LibM.nextafter_f64(self, -INFINITY)
   end
 
   def **(other : Int32)

@@ -41,7 +41,7 @@ module Crystal
     def self.parse_args(args)
       config = Config.new
 
-      OptionParser.parse(args) do |opts|
+      Crystal::Command.parse_with_crystal_opts(args) do |opts|
         opts.banner = <<-USAGE
           Usage: crystal init TYPE (DIR | NAME DIR)
 
@@ -207,7 +207,17 @@ module Crystal
       end
 
       def module_name
-        config.name.split('-').map(&.camelcase).join("::")
+        View.module_name(config.name)
+      end
+
+      def self.module_name(name)
+        name
+          .gsub(/[-_]([^a-z])/i, "\\1")
+          .split('-')
+          .compact_map do |name|
+            name.camelcase if name[0]?.try(&.ascii_letter?)
+          end
+          .join("::")
       end
 
       abstract def path

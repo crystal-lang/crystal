@@ -2,6 +2,13 @@ struct Time::Format
   # The [RFC 2822](https://tools.ietf.org/html/rfc2822) datetime format.
   #
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
+  #
+  # ```
+  # Time::Format::RFC_2822.format(Time.utc(2016, 2, 15, 4, 35, 50)) # => "Mon, 15 Feb 2016 04:35:50 +0000"
+  #
+  # Time::Format::RFC_2822.parse("Mon, 15 Feb 2016 04:35:50 +0000") # => 2016-02-15 04:35:50.0 +00:00
+  # Time::Format::RFC_2822.parse("Mon, 15 Feb 2016 04:35:50 UTC")   # => 2016-02-15 04:35:50.0 UTC
+  # ```
   module RFC_2822
     # Parses a string into a `Time`.
     def self.parse(string, kind = Time::Location::UTC) : Time
@@ -85,7 +92,7 @@ struct Time::Format
       in_comment = false
       seen_whitespace = false
       loop do
-        case char = current_char
+        case current_char
         when .ascii_whitespace?
           seen_whitespace = true
         when '('

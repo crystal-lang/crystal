@@ -453,6 +453,18 @@ describe "Enumerable" do
     end
   end
 
+  describe "find!" do
+    it "finds" do
+      [1, 2, 3].find! { |x| x > 2 }.should eq(3)
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        [1, 2, 3].find! { false }
+      end
+    end
+  end
+
   describe "first" do
     it "calls block if empty" do
       (1...1).first { 10 }.should eq(10)
@@ -587,6 +599,30 @@ describe "Enumerable" do
     end
   end
 
+  describe "index! with a block" do
+    it "returns the index of the first element where the block returns true" do
+      ["Alice", "Bob"].index! { |name| name.size < 4 }.should eq 1
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        ["Alice", "Bob"].index! { |name| name.size < 3 }
+      end
+    end
+  end
+
+  describe "index! with an object" do
+    it "returns the index of that object if found" do
+      ["Alice", "Bob"].index!("Alice").should eq 0
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        ["Alice", "Bob"].index!("Mallory")
+      end
+    end
+  end
+
   describe "index_by" do
     it "creates a hash indexed by the value returned by the block" do
       hash = ["Anna", "Ary", "Alice"].index_by { |e| e.size }
@@ -615,6 +651,20 @@ describe "Enumerable" do
       result = ([] of Int32).reduce(10) { |memo, i| memo + i }
       result.should eq 10
     end
+
+    it "allows block return type to be different from element type" do
+      [1, 2, 3].reduce { |x, y| "#{x}-#{y}" }.should eq("1-2-3")
+      [1].reduce { |x, y| "#{x}-#{y}" }.should eq(1)
+      {1}.reduce { |x, y| "#{x}-#{y}" }.should eq(1)
+
+      expect_raises Enumerable::EmptyError do
+        ([] of Int32).reduce { |x, y| "#{x}-#{y}" }
+      end
+
+      expect_raises Enumerable::EmptyError do
+        Tuple.new.reduce { |x, y| "#{x}-#{y}" }
+      end
+    end
   end
 
   describe "reduce?" do
@@ -622,6 +672,14 @@ describe "Enumerable" do
 
     it "returns nil if empty" do
       ([] of Int32).reduce? { |memo, i| memo + i }.should be_nil
+    end
+
+    it "allows block return type to be different from element type" do
+      [1, 2, 3].reduce? { |x, y| "#{x}-#{y}" }.should eq("1-2-3")
+      [1].reduce? { |x, y| "#{x}-#{y}" }.should eq(1)
+      {1}.reduce? { |x, y| "#{x}-#{y}" }.should eq(1)
+      ([] of Int32).reduce? { |x, y| "#{x}-#{y}" }.should be_nil
+      Tuple.new.reduce? { |x, y| "#{x}-#{y}" }.should be_nil
     end
   end
 
@@ -932,6 +990,12 @@ describe "Enumerable" do
       ints.should eq([1, 3])
       ints.should be_a(Array(Int32))
     end
+
+    it "with type, for tuples" do
+      ints = {1, true, false, 3}.reject(Int32)
+      ints.should eq([true, false])
+      ints.should be_a(Array(Bool))
+    end
   end
 
   describe "sample" do
@@ -1151,9 +1215,69 @@ describe "Enumerable" do
     end
   end
 
+  describe "tally_by" do
+    it "returns a hash with counts according to the value returned by the block" do
+      %w[a A b B c C C].tally_by(&.downcase).should eq({"a" => 2, "b" => 2, "c" => 3})
+    end
+
+    context "with hash" do
+      it "returns a hash with counts according to the value returned by the block" do
+        hash = {} of Char => Int32
+        words = ["Crystal", "Ruby"]
+        words.each { |word| word.chars.tally_by(hash, &.downcase) }
+
+        hash.should eq(
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+        )
+      end
+    end
+  end
+
   describe "tally" do
     it "returns a hash with counts according to the value" do
       %w[1 2 3 3 3 2].tally.should eq({"1" => 1, "2" => 2, "3" => 3})
+    end
+
+    context "with hash" do
+      it "returns a hash with counts according to the value" do
+        hash = {} of Char => Int32
+        words = ["crystal", "ruby"]
+        words.each { |word| word.chars.tally(hash) }
+
+        hash.should eq(
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+        )
+      end
+
+      it "updates existing hash with counts according to the value" do
+        hash = {'a' => 1, 'b' => 1, 'c' => 1, 'd' => 1}
+        words = ["crystal", "ruby"]
+        words.each { |word| word.chars.tally(hash) }
+
+        hash.should eq(
+          {'a' => 2, 'b' => 2, 'c' => 2, 'd' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'l' => 1, 'u' => 1}
+        )
+      end
+
+      it "ignores the default value" do
+        hash = Hash(Char, Int32).new(100)
+        words = ["crystal", "ruby"]
+        words.each { |word| word.chars.tally(hash) }
+
+        hash.should eq(
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+        )
+      end
+
+      it "returns a hash with Int64 counts according to the value" do
+        hash = {} of Char => Int64
+        words = ["crystal", "ruby"]
+        words.each { |word| word.chars.tally(hash) }
+
+        hash.should eq(
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+        )
+      end
     end
   end
 
@@ -1168,6 +1292,10 @@ describe "Enumerable" do
       hash = Tuple.new({:a, 1}, {:c, 2}).to_h
       hash.should be_a(Hash(Symbol, Int32))
       hash.should eq({:a => 1, :c => 2})
+
+      hash = Tuple.new({1, 1.0}, {'a', "aaa"}).to_h
+      hash.should be_a(Hash(Int32 | Char, Float64 | String))
+      hash.should eq({1 => 1.0, 'a' => "aaa"})
     end
 
     it "for array" do

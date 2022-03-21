@@ -15,8 +15,9 @@ end
 # The general idea and some of the arithmetic algorithms were adapted from
 # the MIT/APACHE-licensed [bigdecimal-rs](https://github.com/akubera/bigdecimal-rs).
 struct BigDecimal < Number
-  ZERO                       = BigInt.new(0)
-  TEN                        = BigInt.new(10)
+  private ZERO = BigInt.new(0)
+  private TEN  = BigInt.new(10)
+
   DEFAULT_MAX_DIV_ITERATIONS = 100_u64
 
   include Comparable(Int)
@@ -75,23 +76,27 @@ struct BigDecimal < Number
     # Check str's validity and find index of 'e'
     exponent_index = nil
 
+    input_length = str.bytesize
+
     str.each_char_with_index do |char, index|
+      final_character = index == input_length - 1
+      first_character = index == 0
       case char
       when '-'
-        unless index == 0 || exponent_index == index - 1
+        unless (first_character && !final_character) || (exponent_index == index - 1 && !final_character)
           raise InvalidBigDecimalException.new(str, "Unexpected '-' character")
         end
       when '+'
-        unless exponent_index == index - 1
+        if final_character || exponent_index != index - 1
           raise InvalidBigDecimalException.new(str, "Unexpected '+' character")
         end
       when '.'
-        if decimal_index
+        if decimal_index || exponent_index
           raise InvalidBigDecimalException.new(str, "Unexpected '.' character")
         end
         decimal_index = index
       when 'e', 'E'
-        if exponent_index
+        if first_character || final_character || exponent_index || decimal_index == index - 1
           raise InvalidBigDecimalException.new(str, "Unexpected #{char.inspect} character")
         end
         exponent_index = index
@@ -102,7 +107,7 @@ struct BigDecimal < Number
       end
     end
 
-    decimal_end_index = (exponent_index || str.bytesize) - 1
+    decimal_end_index = (exponent_index || input_length) - 1
     if decimal_index
       decimal_count = (decimal_end_index - decimal_index).to_u64
 
@@ -161,7 +166,7 @@ struct BigDecimal < Number
     end
   end
 
-  def +(other : Int) : BigDecimal
+  def +(other : Number) : BigDecimal
     self + BigDecimal.new(other)
   end
 
@@ -177,7 +182,7 @@ struct BigDecimal < Number
     end
   end
 
-  def -(other : Int) : BigDecimal
+  def -(other : Number) : BigDecimal
     self - BigDecimal.new(other)
   end
 
@@ -185,7 +190,7 @@ struct BigDecimal < Number
     BigDecimal.new(@value * other.value, @scale + other.scale)
   end
 
-  def *(other : Int) : BigDecimal
+  def *(other : Number) : BigDecimal
     self * BigDecimal.new(other)
   end
 
@@ -292,9 +297,7 @@ struct BigDecimal < Number
   # BigDecimal.new(1234, 2) ** 2 # => 152.2756
   # ```
   def **(other : Int) : BigDecimal
-    if other < 0
-      raise ArgumentError.new("Negative exponent isn't supported")
-    end
+    return (to_big_r ** other).to_big_d if other < 0
     BigDecimal.new(@value ** other, @scale * other)
   end
 
@@ -421,7 +424,7 @@ struct BigDecimal < Number
   end
 
   def to_big_r : BigRational
-    BigRational.new(self.value, BigDecimal::TEN ** self.scale)
+    BigRational.new(self.value, TEN ** self.scale)
   end
 
   # Converts to `Int64`. Truncates anything on the right side of the decimal point.
