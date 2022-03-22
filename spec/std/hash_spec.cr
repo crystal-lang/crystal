@@ -191,6 +191,126 @@ describe "Hash" do
     end
   end
 
+  describe "update" do
+    it "updates the value of an existing key with the given block" do
+      h = {"a" => 0, "b" => 1}
+
+      h.update("b") { |v| v + 41 }
+      h["b"].should eq(42)
+    end
+
+    it "updates the value of an existing key with the given block (big hash)" do
+      h = {} of Int32 => Int32
+      100.times do |i|
+        h[i] = i
+      end
+
+      h.update(2) { |v|
+        x = v * 20
+        x + 2
+      }
+      h[2].should eq(42)
+    end
+
+    it "returns the old value when key exists" do
+      h = {"a" => 0}
+
+      h.update("a") { |v| v + 1 }.should eq(0)
+    end
+
+    it "returns the old value when key exists (big hash)" do
+      h = {} of Int32 => Int32
+      100.times do |i|
+        h[i] = i
+      end
+
+      h.update(0) { |v| v + 1 }.should eq(0)
+    end
+
+    it "inserts a new entry using the value returned by the default block as input, if key does not exist" do
+      h = Hash(String, Int32).new { |h, new_key| new_key.size }
+
+      h.update("new key") { |v| v * 6 }
+      h["new key"].should eq(7 * 6)
+    end
+
+    it "inserts a new entry using the value returned by the default block as input, if key does not exist (big hash)" do
+      h = Hash(Int32, Int32).new { |h, new_key| new_key }
+      100.times do |i|
+        h[i] = i
+      end
+
+      h.update(3000) { |v| v + 42 }
+      h[3000].should eq(3000 + 42)
+    end
+
+    it "inserts a new entry using the default value as input, if key does not exist" do
+      h = Hash(String, Int32).new(2)
+
+      h.update("new key") { |v| v + 40 }
+      h["new key"].should eq(2 + 40)
+    end
+
+    it "inserts a new entry using the default value as input, if key does not exist (big hash)" do
+      h = Hash(Int32, Int32).new(2)
+      100.times do |i|
+        h[i] = i
+      end
+
+      h.update(3000) { |v| v + 40 }
+      h[3000].should eq(2 + 40)
+    end
+
+    it "returns the default value when key does not exist" do
+      h = Hash(String, Int32).new(0)
+
+      h.update("a") { |v| v + 1 }.should eq(0)
+    end
+
+    it "returns the default value when key does not exist (big hash)" do
+      h = Hash(Int32, Int32).new(0)
+      100.times do |i|
+        h[i] = i
+      end
+
+      h.update(3000) { |v| v + 1 }.should eq(0)
+    end
+
+    it "raises if key does not exist and no default value specified" do
+      h = {} of String => Int32
+
+      expect_raises KeyError, %(Missing hash key: "a") do
+        h.update("a") { 42 }
+      end
+    end
+
+    it "raises if key does not exist and no default value specified (big hash)" do
+      h = {} of Int32 => Int32
+      100.times do |i|
+        h[i] = i
+      end
+
+      expect_raises KeyError, %(Missing hash key: 3000) do
+        h.update(3000) { 42 }
+      end
+    end
+
+    it "can update with a nil value" do
+      h = {"a" => 42} of String => Int32?
+
+      h.update("a") { nil }
+      h["a"].should be_nil
+    end
+
+    it "can update a current nil value with a new value" do
+      h = {"a" => nil} of String => Int32?
+
+      h.has_key?("a").should be_true
+      h.update("a") { 42 }.should be_nil
+      h["a"].should eq(42)
+    end
+  end
+
   describe "dig?" do
     it "gets the value at given path given splat" do
       ary = [1, 2, 3]
@@ -1110,6 +1230,7 @@ describe "Hash" do
 
   describe "reject" do
     it { {:a => 2, :b => 3}.reject(:b, :d).should eq({:a => 2}) }
+    it { {:a => 2, :b => 3}.reject(Set{:b, :d}).should eq({:a => 2}) }
     it { {:a => 2, :b => 3}.reject(:b, :a).should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.reject([:b, :a]).should eq({} of Symbol => Int32) }
     it "does not change current hash" do
@@ -1121,6 +1242,7 @@ describe "Hash" do
 
   describe "reject!" do
     it { {:a => 2, :b => 3}.reject!(:b, :d).should eq({:a => 2}) }
+    it { {:a => 2, :b => 3}.reject!(Set{:b, :d}).should eq({:a => 2}) }
     it { {:a => 2, :b => 3}.reject!(:b, :a).should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.reject!([:b, :a]).should eq({} of Symbol => Int32) }
     it "changes current hash" do
@@ -1135,6 +1257,7 @@ describe "Hash" do
     it { {:a => 2, :b => 3}.select.should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.select(:b, :a).should eq({:a => 2, :b => 3}) }
     it { {:a => 2, :b => 3}.select([:b, :a]).should eq({:a => 2, :b => 3}) }
+    it { {:a => 2, :b => 3}.select(Set{:b, :a}).should eq({:a => 2, :b => 3}) }
     it "does not change current hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h2 = h.select(:b, :c)
@@ -1147,6 +1270,7 @@ describe "Hash" do
     it { {:a => 2, :b => 3}.select!.should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.select!(:b, :a).should eq({:a => 2, :b => 3}) }
     it { {:a => 2, :b => 3}.select!([:b, :a]).should eq({:a => 2, :b => 3}) }
+    it { {:a => 2, :b => 3}.select!(Set{:b, :a}).should eq({:a => 2, :b => 3}) }
     it "does change current hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h.select!(:b, :c)

@@ -900,6 +900,7 @@ describe "String" do
       it { "日本語日本語".index("本語").should eq(1) }
       it { "\xFF\xFFcrystal".index("crystal").should eq(2) }
       it { "\xFD\x9A\xAD\x50NG".index("PNG").should eq(3) }
+      it { "🧲$".index("✅").should be_nil } # #11745
 
       describe "with offset" do
         it { "foobarbaz".index("ba", 4).should eq(6) }
@@ -2718,12 +2719,14 @@ describe "String" do
     string.should be(clone)
   end
 
-  it "allocates buffer of correct size when UInt8 is given to new (#3332)" do
-    String.new(255_u8) do |buffer|
-      LibGC.size(buffer).should be >= 255
-      {255, 0}
+  {% unless flag?(:wasm32) %}
+    it "allocates buffer of correct size when UInt8 is given to new (#3332)" do
+      String.new(255_u8) do |buffer|
+        LibGC.size(buffer).should be >= 255
+        {255, 0}
+      end
     end
-  end
+  {% end %}
 
   it "raises on String.new if returned bytesize is greater than capacity" do
     expect_raises ArgumentError, "Bytesize out of capacity bounds" do

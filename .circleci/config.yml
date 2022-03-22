@@ -1,3 +1,15 @@
+version: 2.1
+
+parameters:
+  distribution-scripts-version:
+    description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
+    type: string
+    default: "8328ae59292c05cf8c830a34b5b39ac46c43813e"
+  previous_crystal_base_url:
+    description: "Prefix for URLs to Crystal bootstrap compiler"
+    type: string
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.3.2/crystal-1.3.2-1"
+
 defaults:
   environment: &env
     TRAVIS_BRANCH: $CIRCLE_BRANCH
@@ -17,8 +29,6 @@ defaults:
         path: ~/test-results
     - store_artifacts:
         path: ~/test-results/spec
-
-version: 2
 
 jobs:
   test_linux:
@@ -123,7 +133,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout 8328ae59292c05cf8c830a34b5b39ac46c43813e
+          git checkout << pipeline.parameters.distribution-scripts-version >>
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -134,9 +144,8 @@ jobs:
           echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
 
           # Which previous version use
-          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/1.2.2/crystal-1.2.2-1"
-          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
-          echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-universal.tar.gz" >> build.env
+          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=<< pipeline.parameters.previous_crystal_base_url >>-linux-x86_64.tar.gz" >> build.env
+          echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=<< pipeline.parameters.previous_crystal_base_url >>-darwin-universal.tar.gz" >> build.env
 
           cat build.env
       - persist_to_workspace:
@@ -407,6 +416,22 @@ jobs:
           paths:
             - build
 
+  publish_nightly_artifacts:
+    docker:
+      - image: manastech/s3cmd:2.2-alpine
+    environment:
+      <<: *env
+      AWS_ACCESS_KEY_ID: AKIA2EEIIRCJCMOSW2XH
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          mkdir -p /tmp/upload
+          cd /tmp/workspace/build
+          cp crystal-*-darwin-universal.tar.gz /tmp/upload/crystal-nightly-darwin-universal.tar.gz
+          cp crystal-*-linux-x86_64.tar.gz /tmp/upload/crystal-nightly-linux-x86_64.tar.gz
+      - run: s3cmd put --recursive /tmp/upload/* s3://artifacts.crystal-lang.org/dist/
+
   dist_artifacts:
     docker:
       - image: buildpack-deps:xenial
@@ -562,6 +587,10 @@ workflows:
       - dist_docs:
           requires:
             - dist_docker
+      - publish_nightly_artifacts:
+          requires:
+            - dist_linux
+            - dist_darwin
       - dist_artifacts:
           requires:
             - dist_linux

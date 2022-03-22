@@ -12,23 +12,23 @@ class Crystal::Doc::Type
   def kind
     case @type
     when Const
-      :const
+      "const"
     when .struct?
-      :struct
+      "struct"
     when .class?, .metaclass?
-      :class
+      "class"
     when .module?
-      :module
+      "module"
     when AliasType
-      :alias
+      "alias"
     when EnumType
-      :enum
+      "enum"
     when NoReturnType, VoidType
-      :struct
+      "struct"
     when AnnotationType
-      :annotation
+      "annotation"
     when LibType
-      :module
+      "module"
     else
       raise "Unhandled type in `kind`: #{@type}"
     end
@@ -133,15 +133,15 @@ class Crystal::Doc::Type
   end
 
   def enum?
-    kind == :enum
+    @type.is_a?(EnumType)
   end
 
   def alias?
-    kind == :alias
+    @type.is_a?(AliasType)
   end
 
   def const?
-    kind == :const
+    @type.is_a?(Const)
   end
 
   def alias_definition

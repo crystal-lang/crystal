@@ -250,9 +250,10 @@ class Crystal::Type
 
         # Check the case of T resolving to a number
         if type_var.is_a?(Path)
-          type = @root.lookup_path(type_var)
+          type = in_generic_args { lookup_type_var(type_var) }
           case type
           when Const
+            program.check_deprecated_constant(type, type_var)
             interpreter = MathInterpreter.new(@root)
             begin
               num = interpreter.interpret(type.value)
@@ -261,7 +262,7 @@ class Crystal::Type
               type_var.raise "expanding constant value for a number value", inner: ex
             end
             next
-          when ASTNode
+          when NumberLiteral
             type_vars << type
             next
           end
@@ -408,7 +409,7 @@ class Crystal::Type
     end
 
     def check_cant_infer_generic_type_parameter(scope, node)
-      if scope.is_a?(MetaclassType) && (instance_type = scope.instance_type).is_a?(GenericClassType)
+      if scope.is_a?(MetaclassType) && (instance_type = scope.instance_type).is_a?(GenericType)
         first_name = node.names.first
         if instance_type.type_vars.includes?(first_name)
           node.raise "can't infer the type parameter #{first_name} for the #{instance_type.type_desc} #{instance_type}. Please provide it explicitly"

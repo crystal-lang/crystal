@@ -3,9 +3,9 @@ name: Windows CI
 on: [push, pull_request]
 
 jobs:
-  linux-job:
+  x86_64-linux-job:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:1.2.2-build
+    container: crystallang/crystal:1.3.2-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
@@ -23,8 +23,8 @@ jobs:
           name: objs
           path: crystal.obj
 
-  windows-job:
-    needs: linux-job
+  x86_64-windows-job:
+    needs: x86_64-linux-job
     runs-on: windows-latest
     steps:
       - name: Disable CRLF line ending substitution
@@ -246,12 +246,12 @@ jobs:
         uses: actions/cache@v2
         with:
           path: llvm
-          key: llvm-libs-10.0.0
+          key: llvm-libs-13.0.0
       - name: Download LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |
-          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/llvm-10.0.0.src.tar.xz -OutFile llvm.tar.xz
-          (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "df83a44b3a9a71029049ec101fb0077ecbbdf5fe41e395215025779099a98fdf"
+          iwr https://github.com/llvm/llvm-project/releases/download/llvmorg-13.0.0/llvm-13.0.0.src.tar.xz -OutFile llvm.tar.xz
+          (Get-FileHash -Algorithm SHA256 .\llvm.tar.xz).hash -eq "408d11708643ea826f519ff79761fcdfc12d641a2510229eec459e72f8163020"
           7z x llvm.tar.xz
           7z x llvm.tar
           mv llvm-* llvm-src

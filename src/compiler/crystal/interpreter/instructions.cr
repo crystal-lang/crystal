@@ -1409,7 +1409,7 @@ require "./repl"
       },
       # >>> is_a? (3)
 
-      # <<< Tuples (1)
+      # <<< Tuples (3)
       tuple_indexer_known_index: {
         operands:   [tuple_size : Int32, offset : Int32, value_size : Int32],
         code:       begin
@@ -1423,7 +1423,11 @@ require "./repl"
         operands:   [offset : Int32, size : Int32],
         code:       stack_move_from(stack - offset, size),
       },
-      # >>> Tuples (1)
+      tuple_copy_element: {
+        operands:   [tuple_size : Int32, old_offset : Int32, new_offset : Int32, element_size : Int32],
+        code:       (stack - tuple_size + new_offset).copy_from(stack - tuple_size + old_offset, element_size),
+      },
+      # >>> Tuples (3)
 
       # <<< Symbol (1)
       symbol_to_s: {

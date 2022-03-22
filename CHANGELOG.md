@@ -1,3 +1,11 @@
+# 1.3.2 (2022-01-18)
+
+## Standard Library
+
+### Text
+
+- Fix buffer overflow in `String#index` ([#11747](https://github.com/crystal-lang/crystal/pull/11747), thanks @asterite, @straight-shoota)
+
 # 1.3.1 (2022-01-13)
 
 ## Standard Library

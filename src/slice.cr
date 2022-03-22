@@ -34,7 +34,7 @@ struct Slice(T)
     # TODO: there should be a better way to check this, probably
     # asking if @type was instantiated or if T is defined
     {% if @type.name != "Slice(T)" && T < Number %}
-      {{T}}.slice({{*args}}, read_only: {{read_only}})
+      {{T}}.slice({{args.splat(", ")}}read_only: {{read_only}})
     {% else %}
       %ptr = Pointer(typeof({{*args}})).malloc({{args.size}})
       {% for arg, i in args %}
@@ -461,7 +461,7 @@ struct Slice(T)
   # Copies the contents of this slice into *target*.
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred
-  # e.g. dest.size < self.size.
+  # e.g. `dest.size < self.size`.
   #
   # ```
   # src = Slice['a', 'a', 'a']
