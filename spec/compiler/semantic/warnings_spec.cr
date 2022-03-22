@@ -429,4 +429,78 @@ describe "Semantic: warnings" do
       ),
       "too many named arguments (given 1, expected maximum 0)"
   end
+
+  describe "abstract def positional parameter name mismatch" do
+    it "detects mismatch with single parameter" do
+      assert_warning <<-CR, "warning in line 6\nWarning: positional parameter 'y' corresponds to parameter 'x' of the overridden method"
+        abstract class Foo
+          abstract def foo(x)
+        end
+
+        class Bar < Foo
+          def foo(y); end
+        end
+        CR
+    end
+
+    it "detects mismatch within many parameters" do
+      assert_warning <<-CR, "warning in line 6\nWarning: positional parameter 'e' corresponds to parameter 'c' of the overridden method"
+        abstract class Foo
+          abstract def foo(a, b, c, d)
+        end
+
+        class Bar < Foo
+          def foo(a, b, e, d); end
+        end
+        CR
+    end
+
+    it "detects multiple mismatches" do
+      warnings_result(<<-CR).size.should eq(2)
+        abstract class Foo
+          abstract def foo(src, dst)
+        end
+
+        class Bar < Foo
+          def foo(dst, src); end
+        end
+        CR
+    end
+
+    it "respects external parameter names" do
+      assert_warning <<-CR, "warning in line 6\nWarning: positional parameter 'a' corresponds to parameter 'b' of the overridden method"
+        abstract class Foo
+          abstract def foo(b)
+        end
+
+        class Bar < Foo
+          def foo(a b); end
+        end
+        CR
+    end
+
+    it "doesn't compare positional parameters to single splat" do
+      warnings_result(<<-CR).should be_empty
+        abstract class Foo
+          abstract def foo(x)
+        end
+
+        class Bar < Foo
+          def foo(*y); end
+        end
+        CR
+    end
+
+    it "doesn't compare single splats" do
+      warnings_result(<<-CR).should be_empty
+        abstract class Foo
+          abstract def foo(*x)
+        end
+
+        class Bar < Foo
+          def foo(*y); end
+        end
+        CR
+    end
+  end
 end

@@ -118,6 +118,7 @@ class Crystal::AbstractDefChecker
 
         if implements?(target_type, ancestor_type, a_def, def_free_vars, base, method, method_free_vars)
           check_return_type(target_type, ancestor_type, a_def, base, method)
+          check_positional_param_names(target_type, ancestor_type, a_def, base, method)
           return true
         end
       end
@@ -317,6 +318,18 @@ class Crystal::AbstractDefChecker
     unless return_type.implements?(base_return_type)
       report_error(return_type_node, "this method must return #{base_return_type}, which is the return type of the overridden method #{Call.def_full_name(base_type, base_method)}, or a subtype of it, not #{return_type}")
       return
+    end
+  end
+
+  def check_positional_param_names(target_type : Type, impl_type : Type, impl_method : Def, base_type : Type, base_method : Def)
+    impl_param_count = impl_method.splat_index || impl_method.args.size
+    base_param_count = base_method.splat_index || base_method.args.size
+    {impl_param_count, base_param_count}.min.times do |i|
+      impl_arg = impl_method.args[i]
+      base_arg = base_method.args[i]
+      unless impl_arg.external_name == base_arg.external_name
+        @program.report_warning(impl_arg, "positional parameter '#{impl_arg.external_name}' corresponds to parameter '#{base_arg.external_name}' of the overridden method #{Call.def_full_name(base_type, base_method)}, which has a different name and may affect named argument passing")
+      end
     end
   end
 
