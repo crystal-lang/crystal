@@ -17,8 +17,8 @@ end
   end
 {% end %}
 
-lib LibLLVM
-  {% begin %}
+{% begin %}
+  lib LibLLVM
     IS_130 = {{LibLLVM::VERSION.starts_with?("13.0")}}
     IS_120 = {{LibLLVM::VERSION.starts_with?("12.0")}}
     IS_111 = {{LibLLVM::VERSION.starts_with?("11.1")}}
@@ -33,18 +33,16 @@ lib LibLLVM
     IS_40 = {{LibLLVM::VERSION.starts_with?("4.0")}}
     IS_39 = {{LibLLVM::VERSION.starts_with?("3.9")}}
     IS_38 = {{LibLLVM::VERSION.starts_with?("3.8")}}
-  {% end %}
 
-  {% begin %}
-    IS_LT_70 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60}}
-    IS_LT_80 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60 || IS_70 || IS_71}}
-    IS_LT_90 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60 || IS_70 || IS_71 || IS_80}}
-    IS_LT_100 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60 || IS_70 || IS_71 || IS_80 || IS_90}}
-    IS_LT_110 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60 || IS_70 || IS_71 || IS_80 || IS_90 || IS_100}}
-    IS_LT_120 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60 || IS_70 || IS_71 || IS_80 || IS_90 || IS_100 || IS_110 || IS_111}}
-    IS_LT_130 = {{IS_38 || IS_39 || IS_40 || IS_50 || IS_60 || IS_70 || IS_71 || IS_80 || IS_90 || IS_100 || IS_110 || IS_111 || IS_120}}
-  {% end %}
-end
+    IS_LT_70 = {{compare_versions(LibLLVM::VERSION, "7.0.0") < 0}}
+    IS_LT_80 = {{compare_versions(LibLLVM::VERSION, "8.0.0") < 0}}
+    IS_LT_90 = {{compare_versions(LibLLVM::VERSION, "9.0.0") < 0}}
+    IS_LT_100 = {{compare_versions(LibLLVM::VERSION, "10.0.0") < 0}}
+    IS_LT_110 = {{compare_versions(LibLLVM::VERSION, "11.0.0") < 0}}
+    IS_LT_120 = {{compare_versions(LibLLVM::VERSION, "12.0.0") < 0}}
+    IS_LT_130 = {{compare_versions(LibLLVM::VERSION, "13.0.0") < 0}}
+  end
+{% end %}
 
 lib LibLLVM
   alias Char = LibC::Char
