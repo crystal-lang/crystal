@@ -325,10 +325,10 @@ class Crystal::AbstractDefChecker
     impl_param_count = impl_method.splat_index || impl_method.args.size
     base_param_count = base_method.splat_index || base_method.args.size
     {impl_param_count, base_param_count}.min.times do |i|
-      impl_arg = impl_method.args[i]
-      base_arg = base_method.args[i]
-      unless impl_arg.external_name == base_arg.external_name
-        @program.report_warning(impl_arg, "positional parameter '#{impl_arg.external_name}' corresponds to parameter '#{base_arg.external_name}' of the overridden method #{Call.def_full_name(base_type, base_method)}, which has a different name and may affect named argument passing")
+      impl_param = impl_method.args[i]
+      base_param = base_method.args[i]
+      unless impl_param.external_name == base_param.external_name
+        @program.report_warning(impl_param, "positional parameter '#{impl_param.external_name}' corresponds to parameter '#{base_param.external_name}' of the overridden method #{Call.def_full_name(base_type, base_method)}, which has a different name and may affect named argument passing")
       end
     end
   end
