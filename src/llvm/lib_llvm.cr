@@ -35,13 +35,13 @@ end
     IS_39 = {{LibLLVM::VERSION.starts_with?("3.9")}}
     IS_38 = {{LibLLVM::VERSION.starts_with?("3.8")}}
 
-    IS_LT_70 = IS_38 || IS_39 || IS_40 || IS_50 || IS_60
-    IS_LT_80 = IS_LT_70 || IS_70 || IS_71
-    IS_LT_90 = IS_LT_80 || IS_80
-    IS_LT_100 = IS_LT_90 || IS_90
-    IS_LT_110 = IS_LT_100 || IS_100
-    IS_LT_120 = IS_LT_110 || IS_110 || IS_111
-    IS_LT_130 = IS_LT_120 || IS_120
+    IS_LT_70 = {{compare_versions(LibLLVM::VERSION, "7.0.0") < 0}}
+    IS_LT_80 = {{compare_versions(LibLLVM::VERSION, "8.0.0") < 0}}
+    IS_LT_90 = {{compare_versions(LibLLVM::VERSION, "9.0.0") < 0}}
+    IS_LT_100 = {{compare_versions(LibLLVM::VERSION, "10.0.0") < 0}}
+    IS_LT_110 = {{compare_versions(LibLLVM::VERSION, "11.0.0") < 0}}
+    IS_LT_120 = {{compare_versions(LibLLVM::VERSION, "12.0.0") < 0}}
+    IS_LT_130 = {{compare_versions(LibLLVM::VERSION, "13.0.0") < 0}}
   end
 {% end %}
 
@@ -81,13 +81,18 @@ lib LibLLVM
     end
   {% end %}
 
+  # `LLVMModuleFlagBehavior` (_not_ `LLVM::Module::ModFlagBehavior`, their values disagree)
+  enum ModuleFlagBehavior
+    Warning = 1
+  end
+
   fun add_case = LLVMAddCase(switch : ValueRef, onval : ValueRef, dest : BasicBlockRef)
   fun add_clause = LLVMAddClause(lpad : ValueRef, clause_val : ValueRef)
   fun add_function = LLVMAddFunction(module : ModuleRef, name : UInt8*, type : TypeRef) : ValueRef
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : UInt8*) : ValueRef
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef*, count : Int32)
   {% unless LibLLVM::IS_LT_70 %}
-    fun add_module_flag = LLVMAddModuleFlag(mod : ModuleRef, behavior : ModuleFlag, key : UInt8*, len : LibC::SizeT, val : MetadataRef)
+    fun add_module_flag = LLVMAddModuleFlag(mod : ModuleRef, behavior : ModuleFlagBehavior, key : UInt8*, len : LibC::SizeT, val : MetadataRef)
   {% end %}
   fun add_named_metadata_operand = LLVMAddNamedMetadataOperand(mod : ModuleRef, name : UInt8*, val : ValueRef)
   fun add_target_dependent_function_attr = LLVMAddTargetDependentFunctionAttr(fn : ValueRef, a : LibC::Char*, v : LibC::Char*)
@@ -226,6 +231,11 @@ lib LibLLVM
   fun initialize_arm_target = LLVMInitializeARMTarget
   fun initialize_arm_target_info = LLVMInitializeARMTargetInfo
   fun initialize_arm_target_mc = LLVMInitializeARMTargetMC
+  fun initialize_webassembly_asm_printer = LLVMInitializeWebAssemblyAsmPrinter
+  fun initialize_webassembly_asm_parser = LLVMInitializeWebAssemblyAsmParser
+  fun initialize_webassembly_target = LLVMInitializeWebAssemblyTarget
+  fun initialize_webassembly_target_info = LLVMInitializeWebAssemblyTargetInfo
+  fun initialize_webassembly_target_mc = LLVMInitializeWebAssemblyTargetMC
   fun initialize_native_target = LLVMInitializeNativeTarget
   fun is_constant = LLVMIsConstant(val : ValueRef) : Int32
   fun is_function_var_arg = LLVMIsFunctionVarArg(ty : TypeRef) : Int32
@@ -398,7 +408,7 @@ lib LibLLVM
   fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : UInt8*, length : Int32) : ValueRef
 
   {% unless LibLLVM::IS_LT_70 %}
-    fun metadata_as_value = LLVMMetadataAsValue(c : ContextRef, md : MetadataRef) : ValueRef
+    fun value_as_metadata = LLVMValueAsMetadata(val : ValueRef) : MetadataRef
   {% end %}
 
   fun append_basic_block_in_context = LLVMAppendBasicBlockInContext(ctx : ContextRef, fn : ValueRef, name : UInt8*) : BasicBlockRef
