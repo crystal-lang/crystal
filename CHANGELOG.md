@@ -79,7 +79,7 @@
 
 ### Specs
 
-- Add file and line arguments to `it_iterates` ([#11628](https://github.com/crystal-lang/crystal/pull/11628), thanks @straight-shoota)
+- Add `file` and `line` arguments to `it_iterates` ([#11628](https://github.com/crystal-lang/crystal/pull/11628), thanks @straight-shoota)
 - Remove duplicate word in documentation ([#11797](https://github.com/crystal-lang/crystal/pull/11797), thanks @samueleaton)
 
 ### System
