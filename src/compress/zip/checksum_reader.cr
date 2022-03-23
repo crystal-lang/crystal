@@ -5,7 +5,7 @@ module Compress::Zip
   private class ChecksumReader < IO
     getter crc32 = ::Digest::CRC32.initial
 
-    def initialize(@io : IO, @filename : Path | String, verify @expected_crc32 : UInt32? = nil)
+    def initialize(@io : IO, @filename : String, verify @expected_crc32 : UInt32? = nil)
     end
 
     def read(slice : Bytes) : Int32

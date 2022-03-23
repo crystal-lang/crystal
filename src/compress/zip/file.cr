@@ -65,7 +65,7 @@ class Compress::Zip::File
   # Returns the entry that has the given filename, or
   # raises `KeyError` if no such entry exists.
   def [](filename : Path | String) : Entry
-    self[filename.to_s]? || raise(KeyError.new("Missing zip entry: #{filename}"))
+    self[filename]? || raise(KeyError.new("Missing zip entry: #{filename}"))
   end
 
   # Returns the entry that has the given filename, or
