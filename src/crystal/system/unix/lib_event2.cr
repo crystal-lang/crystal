@@ -1,6 +1,8 @@
 require "c/netdb"
 
-{% if flag?(:linux) %}
+# MUSL: On musl systems, librt is empty. The entire library is already included in libc.
+# The empty library is only available for POSIX compatibility. We don't need to link it.
+{% if flag?(:linux) && !flag?(:musl) %}
   @[Link("rt")]
 {% end %}
 
@@ -8,10 +10,10 @@ require "c/netdb"
   @[Link("event_core")]
   @[Link("event_extra")]
 {% else %}
-  @[Link("event")]
+  @[Link("event", pkg_config: "libevent")]
 {% end %}
 {% if flag?(:preview_mt) %}
-  @[Link("event_pthreads")]
+  @[Link("event_pthreads", pkg_config: "libevent_pthreads")]
 {% end %}
 lib LibEvent2
   alias Int = LibC::Int

@@ -268,9 +268,9 @@ describe HTTP::Server::RequestProcessor do
     logs.entry.exception.should be_a(IO::Error)
   end
 
-  it "catches raised error on handler" do
+  it "catches raised error on handler and retains context from handler" do
     exception = Exception.new "OH NO"
-    processor = HTTP::Server::RequestProcessor.new { raise exception }
+    processor = HTTP::Server::RequestProcessor.new { Log.context.set foo: "bar"; raise exception }
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = IO::Memory.new
     logs = Log.capture("http.server") do
@@ -286,6 +286,7 @@ describe HTTP::Server::RequestProcessor do
 
     logs.check(:error, "Unhandled exception on HTTP::Handler")
     logs.entry.exception.should eq(exception)
+    logs.entry.context[:foo].should eq "bar"
   end
 
   it "doesn't respond with error when headers were already sent" do
@@ -319,5 +320,33 @@ describe HTTP::Server::RequestProcessor do
     client_response = HTTP::Client::Response.from_io(output.rewind)
     client_response.status_code.should eq(200)
     client_response.body.should eq("Hello world")
+  end
+
+  it "does not bleed Log::Context between requests" do
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      Log.info { "before" }
+      Log.context.set foo: "bar"
+      Log.info { "after" }
+
+      context.response.content_type = "text/plain"
+      context.response.print "Hello world"
+    end
+
+    logs = Log.capture do
+      processor.process(
+        IO::Memory.new("GET / HTTP/1.1\r\n\r\nGET / HTTP/1.1\r\n\r\n"),
+        IO::Memory.new,
+      )
+    end
+
+    logs.check :info, "before"
+    logs.entry.context.should be_empty
+    logs.check :info, "after"
+    logs.entry.context[:foo].should eq "bar"
+
+    logs.check :info, "before"
+    logs.entry.context.should be_empty
+    logs.check :info, "after"
+    logs.entry.context[:foo].should eq "bar"
   end
 end

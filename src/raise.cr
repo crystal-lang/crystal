@@ -8,23 +8,23 @@ private struct LEBReader
   def initialize(@data : UInt8*)
   end
 
-  def data
+  def data : UInt8*
     @data
   end
 
-  def read_uint8
+  def read_uint8 : UInt8
     value = @data.value
     @data += 1
     value
   end
 
-  def read_uint32
+  def read_uint32 : UInt32
     value = @data.as(UInt32*).value
     @data += 4
     value
   end
 
-  def read_uleb128
+  def read_uleb128 : UInt64
     result = 0_u64
     shift = 0
     while true
@@ -103,7 +103,7 @@ end
   # Raises the *exception*.
   #
   # This will set the exception's callstack if it hasn't been already.
-  # Re-raising a previously catched exception won't replace the callstack.
+  # Re-raising a previously caught exception won't replace the callstack.
   def raise(exception : Exception) : NoReturn
     {% if flag?(:debug_raise) %}
       STDERR.puts
@@ -111,6 +111,7 @@ end
       exception.inspect_with_backtrace(STDERR)
     {% end %}
 
+    exception.callstack ||= Exception::CallStack.new
     LibC._CxxThrowException(pointerof(exception).as(Void*), throw_info)
   end
 
@@ -169,6 +170,31 @@ end
 
     __crystal_continue_unwind
   end
+{% elsif flag?(:wasm32) %}
+  # :nodoc:
+  fun __crystal_personality
+    LibC.printf("EXITING: __crystal_personality called")
+    LibC.exit(1)
+  end
+
+  # :nodoc:
+  @[Raises]
+  fun __crystal_raise(ex : Void*) : NoReturn
+    LibC.printf("EXITING: __crystal_raise called")
+    LibC.exit(1)
+  end
+
+  # :nodoc:
+  fun __crystal_get_exception(ex : Void*) : UInt64
+    LibC.printf("EXITING: __crystal_get_exception called")
+    LibC.exit(1)
+    0u64
+  end
+
+  def raise(exception : Exception) : NoReturn
+    LibC.printf("EXITING: Attempting to raise:\n#{exception.inspect_with_backtrace}")
+    LibC.exit(1)
+  end
 {% else %}
   # :nodoc:
   fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*) : LibUnwind::ReasonCode
@@ -188,13 +214,14 @@ end
   end
 {% end %}
 
-{% unless flag?(:win32) %}
+{% unless flag?(:win32) || flag?(:wasm32) %}
   # :nodoc:
   @[Raises]
   fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
     ret = LibUnwind.raise_exception(unwind_ex)
     Crystal::System.print_error "Failed to raise an exception: %s\n", ret.to_s
     Exception::CallStack.print_backtrace
+    Crystal::System.print_exception("\nTried to raise:", unwind_ex.value.exception_object.as(Exception))
     LibC.exit(ret)
   end
 
@@ -206,7 +233,7 @@ end
   # Raises the *exception*.
   #
   # This will set the exception's callstack if it hasn't been already.
-  # Re-raising a previously catched exception won't replace the callstack.
+  # Re-raising a previously caught exception won't replace the callstack.
   def raise(exception : Exception) : NoReturn
     {% if flag?(:debug_raise) %}
       STDERR.puts
@@ -215,18 +242,24 @@ end
     {% end %}
 
     exception.callstack ||= Exception::CallStack.new
-    unwind_ex = Pointer(LibUnwind::Exception).malloc
-    unwind_ex.value.exception_class = LibC::SizeT.zero
-    unwind_ex.value.exception_cleanup = LibC::SizeT.zero
-    unwind_ex.value.exception_object = exception.as(Void*)
-    unwind_ex.value.exception_type_id = exception.crystal_type_id
-    __crystal_raise(unwind_ex)
+    raise_without_backtrace(exception)
   end
 {% end %}
 
 # Raises an Exception with the *message*.
 def raise(message : String) : NoReturn
   raise Exception.new(message)
+end
+
+# :nodoc:
+{% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
+def raise_without_backtrace(exception : Exception) : NoReturn
+  unwind_ex = Pointer(LibUnwind::Exception).malloc
+  unwind_ex.value.exception_class = LibC::SizeT.zero
+  unwind_ex.value.exception_cleanup = LibC::SizeT.zero
+  unwind_ex.value.exception_object = exception.as(Void*)
+  unwind_ex.value.exception_type_id = exception.crystal_type_id
+  __crystal_raise(unwind_ex)
 end
 
 # :nodoc:
@@ -238,3 +271,9 @@ end
 fun __crystal_raise_overflow : NoReturn
   raise OverflowError.new
 end
+
+{% if flag?(:interpreted) %}
+  def __crystal_raise_cast_failed(obj, type_name : String, location : String)
+    raise TypeCastError.new("cast from #{obj.class} to #{type_name} failed, at #{location}")
+  end
+{% end %}

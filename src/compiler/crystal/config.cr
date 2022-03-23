@@ -32,8 +32,12 @@ module Crystal
     end
 
     def self.date
-      time = {{ (env("SOURCE_DATE_EPOCH") || `date +%s`).to_i }}
-      Time.unix(time).to_s("%Y-%m-%d")
+      source_date_epoch = {{ (t = env("SOURCE_DATE_EPOCH")) && !t.empty? ? t.to_i : nil }}
+      if source_date_epoch
+        Time.unix(source_date_epoch).to_s("%Y-%m-%d")
+      else
+        ""
+      end
     end
 
     @@host_target : Crystal::Codegen::Target?

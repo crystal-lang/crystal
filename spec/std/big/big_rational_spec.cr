@@ -6,20 +6,20 @@ private def br(n, d)
 end
 
 private def test_comp(val, less, equal, greater, file = __FILE__, line = __LINE__)
-  (val < greater).should eq(true), file, line
-  (greater < val).should eq(false), file, line
-  (val <=> greater).should eq(-1), file, line
-  (greater <=> val).should eq(1), file, line
+  (val < greater).should eq(true), file: file, line: line
+  (greater < val).should eq(false), file: file, line: line
+  (val <=> greater).should eq(-1), file: file, line: line
+  (greater <=> val).should eq(1), file: file, line: line
 
-  (val == equal).should eq(true), file, line
-  (equal == val).should eq(true), file, line
-  (val <=> equal).should eq(0), file, line
-  (equal <=> val).should eq(0), file, line
+  (val == equal).should eq(true), file: file, line: line
+  (equal == val).should eq(true), file: file, line: line
+  (val <=> equal).should eq(0), file: file, line: line
+  (equal <=> val).should eq(0), file: file, line: line
 
-  (val > less).should eq(true), file, line
-  (less > val).should eq(false), file, line
-  (val <=> less).should eq(1), file, line
-  (less <=> val).should eq(-1), file, line
+  (val > less).should eq(true), file: file, line: line
+  (less > val).should eq(false), file: file, line: line
+  (val <=> less).should eq(1), file: file, line: line
+  (less <=> val).should eq(-1), file: file, line: line
 end
 
 describe BigRational do
@@ -94,6 +94,11 @@ describe BigRational do
     r = br(10, 3)
     f = 10.to_big_f / 3.to_big_f
     r.to_big_f.should be_close(f, 0.001)
+  end
+
+  it "#to_big_r" do
+    r = br(10, 3)
+    r.to_big_r.should eq(r)
   end
 
   it "Int#to_big_r" do
@@ -192,6 +197,10 @@ describe BigRational do
   describe "#**" do
     it "exponentiates with positive powers" do
       result = br(17, 11) ** 5
+      result.should be_a(BigRational)
+      result.should eq(br(1419857, 161051))
+
+      result = br(17, 11) ** 5_u8
       result.should be_a(BigRational)
       result.should eq(br(1419857, 161051))
     end

@@ -26,6 +26,13 @@ enum SpecEnumFlags
 end
 
 @[Flags]
+enum SpecEnumFlags8 : Int8
+  One
+  Two
+  Three
+end
+
+@[Flags]
 private enum PrivateFlagsEnum
   FOO
   BAR
@@ -34,6 +41,11 @@ end
 
 enum SpecBigEnum : Int64
   TooBig = 4294967296i64 # == 2**32
+end
+
+private enum SpecEnumWithCaseSensitiveMembers
+  FOO = 1
+  Foo = 2
 end
 
 describe Enum do
@@ -63,6 +75,10 @@ describe Enum do
   it "creates an enum instance from an auto-casted symbol (#8573)" do
     enum_value = SpecEnum.new(:two)
     enum_value.should eq SpecEnum::Two
+
+    SpecEnumWithCaseSensitiveMembers.new(:foo).should eq SpecEnumWithCaseSensitiveMembers::FOO
+    SpecEnumWithCaseSensitiveMembers.new(:Foo).should eq SpecEnumWithCaseSensitiveMembers::FOO
+    SpecEnumWithCaseSensitiveMembers.new(:FOO).should eq SpecEnumWithCaseSensitiveMembers::FOO
   end
 
   it "gets value" do
@@ -155,6 +171,7 @@ describe Enum do
     it "for simple enum" do
       SpecEnum.from_value?(0).should eq(SpecEnum::One)
       SpecEnum.from_value?(1).should eq(SpecEnum::Two)
+      SpecEnum.from_value?(1_i8).should eq(SpecEnum::Two)
       SpecEnum.from_value?(2).should eq(SpecEnum::Three)
       SpecEnum.from_value?(3).should be_nil
     end
@@ -162,9 +179,11 @@ describe Enum do
     it "for flags enum" do
       SpecEnumFlags.from_value?(0).should eq(SpecEnumFlags::None)
       SpecEnumFlags.from_value?(1).should eq(SpecEnumFlags::One)
+      SpecEnumFlags.from_value?(1_i8).should eq(SpecEnumFlags::One)
       SpecEnumFlags.from_value?(2).should eq(SpecEnumFlags::Two)
       SpecEnumFlags.from_value?(3).should eq(SpecEnumFlags::One | SpecEnumFlags::Two)
       SpecEnumFlags.from_value?(8).should be_nil
+      SpecEnumFlags8.from_value?(1_i8).should eq(SpecEnumFlags8::One)
     end
   end
 
@@ -185,7 +204,7 @@ describe Enum do
     end
 
     it "for private enum" do
-      PrivateEnum.from_value(0).should eq (PrivateEnum::FOO)
+      PrivateEnum.from_value(0).should eq(PrivateEnum::FOO)
     end
   end
 
@@ -216,7 +235,7 @@ describe Enum do
     SpecEnum::Two.hash.should_not eq(SpecEnum::Three.hash)
   end
 
-  it "parses" do
+  it ".parse" do
     SpecEnum.parse("Two").should eq(SpecEnum::Two)
     SpecEnum2.parse("FortyTwo").should eq(SpecEnum2::FortyTwo)
     SpecEnum2.parse("forty_two").should eq(SpecEnum2::FortyTwo)
@@ -235,6 +254,10 @@ describe Enum do
     PrivateEnum.parse("FOO").should eq(PrivateEnum::FOO)
     PrivateEnum.parse("BAR").should eq(PrivateEnum::BAR)
     PrivateEnum.parse("QUX").should eq(PrivateEnum::QUX)
+
+    SpecEnumWithCaseSensitiveMembers.parse("foo").should eq SpecEnumWithCaseSensitiveMembers::FOO
+    SpecEnumWithCaseSensitiveMembers.parse("FOO").should eq SpecEnumWithCaseSensitiveMembers::FOO
+    SpecEnumWithCaseSensitiveMembers.parse("Foo").should eq SpecEnumWithCaseSensitiveMembers::FOO
   end
 
   it "parses?" do

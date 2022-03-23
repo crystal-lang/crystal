@@ -60,7 +60,7 @@ class StringPool
   # pool.get("crystal")
   # pool.empty? # => false
   # ```
-  def empty?
+  def empty? : Bool
     @size == 0
   end
 
@@ -79,7 +79,7 @@ class StringPool
   # pool.get(slice)
   # pool.empty? # => false
   # ```
-  def get(slice : Bytes)
+  def get(slice : Bytes) : String
     get slice.to_unsafe, slice.size
   end
 
@@ -95,7 +95,7 @@ class StringPool
   # pool.get("hey".to_unsafe, 3)
   # pool.size # => 1
   # ```
-  def get(str : UInt8*, len)
+  def get(str : UInt8*, len) : String
     hash = hash(str, len)
     get(hash, str, len)
   end
@@ -150,7 +150,7 @@ class StringPool
   # pool.get(io)
   # pool.empty? # => false
   # ```
-  def get(str : IO::Memory)
+  def get(str : IO::Memory) : String
     get(str.buffer, str.bytesize)
   end
 
@@ -168,7 +168,7 @@ class StringPool
   # pool.get(string)
   # pool.empty? # => false
   # ```
-  def get(str : String)
+  def get(str : String) : String
     get(str.to_unsafe, str.bytesize)
   end
 
@@ -176,7 +176,7 @@ class StringPool
   # if values of key objects have changed since they were inserted.
   #
   # Call this method if you modified a string submitted to the pool.
-  def rehash
+  def rehash : Nil
     if @capacity * 2 <= 0
       raise "Hash table too big"
     end

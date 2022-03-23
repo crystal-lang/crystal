@@ -4,15 +4,20 @@ require "../types"
 
 module Crystal
   class Program
-    def cleanup(node)
-      transformer = CleanupTransformer.new(self)
+    getter(cleanup_transformer : CleanupTransformer) do
+      CleanupTransformer.new(self)
+    end
+
+    def cleanup(node, inside_def = false)
+      transformer = self.cleanup_transformer
+      transformer.inside_def! if inside_def
       node = node.transform(transformer)
       puts node if ENV["AFTER"]? == "1"
       node
     end
 
     def cleanup_types
-      transformer = CleanupTransformer.new(self)
+      transformer = self.cleanup_transformer
 
       after_inference_types.each do |type|
         cleanup_type type, transformer
@@ -28,7 +33,7 @@ module Crystal
       when GenericClassInstanceType
         cleanup_single_type(type, transformer)
       when GenericClassType
-        type.generic_types.each_value do |instance|
+        type.each_instantiated_type do |instance|
           cleanup_type instance, transformer
         end
       when ClassType
@@ -67,6 +72,10 @@ module Crystal
       @def_nest_count = 0
       @last_is_truthy = false
       @last_is_falsey = false
+    end
+
+    def inside_def!
+      @def_nest_count += 1
     end
 
     def after_transform(node)
@@ -211,7 +220,7 @@ module Crystal
 
     def has_enum_type?(type)
       if type.is_a?(UnionType)
-        type.union_types.any? &.is_a?(EnumType)
+        type.union_types.any?(EnumType)
       else
         type.is_a?(EnumType)
       end
@@ -265,7 +274,7 @@ module Crystal
 
       if target.is_a?(Path)
         const = target.target_const.not_nil!
-        return node unless const.used?
+        return node if !const.used? || const.cleaned_up?
 
         unless const.value.type?
           node.raise "can't infer type of constant #{const} (maybe the constant refers to itself?)"
@@ -285,9 +294,13 @@ module Crystal
       if target.is_a?(Path)
         const = const.not_nil!
         const.value = const.value.transform self
+        const.cleaned_up = true
       end
 
-      if node.target == node.value
+      if target == node.value &&
+         # This condition is because the interpreter will generate expressions
+         # like `$~ = $~` in multidispatches, and that's fine.
+         !(target.is_a?(Var) && target.special_var?)
         node.raise "expression has no effect"
       end
 
@@ -295,6 +308,74 @@ module Crystal
       unless node.target.is_a?(Path)
         if node.value.type?.try &.no_return?
           return node.value
+        end
+      end
+
+      node
+    end
+
+    def transform(node : MultiAssign)
+      expanded = node.expanded
+
+      if node.values.size == 1 && expanded
+        # the expanded node always starts with `temp = {{ node.values[0] }}`;
+        # `temp_assign` is this whole Assign node and its deduced type is same
+        # as the original RHS's type
+        temp_assign = expanded.as(Expressions).expressions.first
+        type = temp_assign.type
+        target_count = node.targets.size
+        has_strict_multi_assign = @program.has_flag?("strict_multi_assign")
+
+        # disallows `a, *b, c = {0 => "x", 1 => "y", 2 => "z"}`, as `Hash` is
+        # not `Indexable`
+        # also disallows `a, b, c = ...` if the strict flag is set
+        if node.targets.any?(Splat) || has_strict_multi_assign
+          unless type.implements?(@program.indexable)
+            node.values.first.raise "right-hand side of one-to-many assignment must be an Indexable, not #{type}"
+          end
+        end
+
+        if has_strict_multi_assign
+          case type
+          when UnionType
+            sizes = type.union_types.map { |union_type| constant_size(union_type) }
+            if sizes.none? &.in?(target_count, nil)
+              node.values.first.raise "cannot assign #{type} to #{target_count} targets"
+            end
+          else
+            if size = constant_size(type)
+              unless size == target_count
+                node.values.first.raise "cannot assign #{type} to #{target_count} targets"
+              end
+            end
+          end
+        end
+      end
+
+      if expanded
+        return expanded.transform self
+      end
+
+      node
+    end
+
+    private def constant_size(type)
+      case type
+      when TupleInstanceType
+        type.size
+      end
+    end
+
+    def transform(node : Path)
+      if const = node.target_const
+        @program.check_deprecated_constant(const, node)
+
+        # Some constants might not have been cleaned up at this point because
+        # they don't have an explicit `Assign` node. One example is regex
+        # literals: a constant is created for them, but there's no `Assign` node.
+        if const.used? && !const.cleaned_up?
+          const.value = const.value.transform self
+          const.cleaned_up = true
         end
       end
 
@@ -315,7 +396,7 @@ module Crystal
 
     def transform(node : Global)
       if expanded = node.expanded
-        return expanded
+        return expanded.transform self
       end
 
       node
@@ -326,6 +407,8 @@ module Crystal
         return expanded.transform self
       end
 
+      @program.check_call_to_deprecated_method(node)
+
       # Need to transform these manually because node.block doesn't
       # need to be transformed if it has a fun_literal
       # ~~~
@@ -335,6 +418,8 @@ module Crystal
       transform_many node.args
 
       if (node_block = node.block) && !node_block.fun_literal
+        # TODO: if the block isn't used in any of the target defs we could
+        # avoid transforming it, because it probably isn't typed **at all**
         node.block = node_block.transform(self)
       end
 
@@ -391,7 +476,7 @@ module Crystal
         end
       end
 
-      # Check if the block has its type freezed and it doesn't match the current type
+      # Check if the block has its type frozen and it doesn't match the current type
       if block && (freeze_type = block.freeze_type) && (block_type = block.type?)
         unless block_type.implements?(freeze_type)
           freeze_type = freeze_type.base_type if freeze_type.is_a?(VirtualType)
@@ -421,8 +506,6 @@ module Crystal
       end
 
       if target_defs = node.target_defs
-        changed = false
-
         if target_defs.size == 1
           if target_defs[0].is_a?(External)
             check_args_are_not_closure node, "can't send closure to C function"
@@ -498,33 +581,87 @@ module Crystal
 
     def check_args_are_not_closure(node, message)
       node.args.each do |arg|
-        case arg
-        when ProcLiteral
-          if arg.def.closure?
-            vars = ClosuredVarsCollector.collect arg.def
-            unless vars.empty?
-              message += " (closured vars: #{vars.join ", "})"
-            end
+        check_arg_is_not_closure(node, message, arg)
+      end
+    end
 
-            arg.raise message
-          end
-        when ProcPointer
-          if arg.obj.try &.type?.try &.passed_as_self?
+    def check_arg_is_not_closure(node, message, arg)
+      case arg
+      when Expressions
+        arg.expressions.each do |exp|
+          check_arg_is_not_closure(node, message, exp)
+        end
+      when Call
+        # If the call simply returns its captured block unchanged, we can detect
+        # closured vars inside the block during compile-time
+        if target_def_is_captured_block?(arg)
+          check_arg_is_not_closure(node, message, arg.block.not_nil!.fun_literal)
+        end
+      when ProcLiteral
+        if proc_pointer = arg.proc_pointer
+          case proc_pointer.obj
+          when Var
+            arg.raise "#{message} (closured vars: #{proc_pointer.obj})"
+          when InstanceVar
             arg.raise "#{message} (closured vars: self)"
           end
+        end
 
-          owner = arg.call.target_def.owner
-          if owner.passed_as_self?
-            arg.raise "#{message} (closured vars: self)"
+        if arg.def.closure?
+          vars = ClosuredVarsCollector.collect arg.def
+          if vars.empty?
+            message += " (closured vars: self)"
+          else
+            message += " (closured vars: #{vars.join ", "})"
           end
-        else
-          # nothing to do
+
+          arg.raise message
+        end
+      when ProcPointer
+        if expanded = arg.expanded
+          return check_arg_is_not_closure(node, message, expanded)
+        end
+
+        if arg.obj.try &.type?.try &.passed_as_self?
+          arg.raise "#{message} (closured vars: self)"
+        end
+
+        owner = arg.call.target_def.owner
+        if owner.passed_as_self?
+          arg.raise "#{message} (closured vars: self)"
         end
       end
     end
 
+    # Checks whether *arg*'s target def has the following definition:
+    #
+    # ```
+    # def f(&block)
+    #   block
+    # end
+    # ```
+    #
+    # That is, the def returns its captured block and does nothing else. An
+    # example is Proc.new(&block).
+    def target_def_is_captured_block?(arg : Call)
+      a_def = arg.target_defs.try &.first
+      return false unless a_def
+
+      block_arg = a_def.block_arg
+      return false unless block_arg
+
+      body_var = a_def.body.as?(Var)
+      return false unless body_var && body_var.name == block_arg.name
+
+      true
+    end
+
     def transform(node : ProcPointer)
       super
+
+      if expanded = node.expanded
+        return transform(expanded)
+      end
 
       if call = node.call?
         result = call.transform(self)
@@ -660,10 +797,13 @@ module Crystal
       super
       reset_last_status
       if replacement = node.syntax_replacement
-        replacement.transform(self)
-      else
-        transform_is_a_or_responds_to node, &.filter_by(node.const.type)
+        return replacement.transform(self)
       end
+
+      const_type = node.const.type?
+      return untyped_expression(node) unless const_type
+
+      transform_is_a_or_responds_to node, &.filter_by(const_type)
     end
 
     def transform(node : RespondsTo)
@@ -783,14 +923,14 @@ module Crystal
       exp_type = node.exp.type?
 
       if exp_type
-        instance_type = exp_type.instance_type.devirtualize
-        if instance_type.struct? || instance_type.module? || instance_type.is_a?(UnionType)
+        instance_type = exp_type.devirtualize
+        if instance_type.struct? || instance_type.module? || instance_type.metaclass? || instance_type.is_a?(UnionType)
           node.exp.raise "instance_sizeof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
         end
       end
 
       if expanded = node.expanded
-        return expanded
+        return expanded.transform self
       end
 
       node

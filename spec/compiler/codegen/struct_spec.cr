@@ -288,7 +288,7 @@ describe "Code gen: struct" do
       ").to_i.should eq(1)
   end
 
-  it "allows assinging to struct argument (bug)" do
+  it "allows assigning to struct argument (bug)" do
     run("
       struct Foo
         def bar

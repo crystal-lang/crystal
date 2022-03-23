@@ -6,7 +6,7 @@
 .Sh NAME
 .Nm crystal
 .Nd Compiler for the Crystal language.
-.Sh SYNOPSYS
+.Sh SYNOPSIS
 .Nm
 command
 .Op switches
@@ -76,7 +76,7 @@ Creates a library skeleton
 Creates an application skeleton
 .El
 
-This initializes the lib/app project folder as a git repository, with a license file, a README file, a .travis.yml file for Travis CI integration, a shard.yml for use with shards (the Crystal dependency manager), a .gitignore file, and src and spec folders.
+This initializes the lib/app project folder as a git repository, with a license file, a README file, a shard.yml for use with shards (the Crystal dependency manager), a .gitignore file, and src and spec folders.
 .Bd -literal -offset
 DIR  - directory where project will be generated
 .Pp
@@ -129,6 +129,7 @@ Dump LLVM assembly file to output directory.
 Pass additional flags to the linker. Though you can specify those flags on the source code, this is useful for passing environment specific information directly to the linker, like non-standard library paths or names. For more information on specifying linker flags on source, you can read the "C bindings" section of the documentation available on the official web site.
 .It Fl -mcpu Ar CPU
 Specify a specific CPU to generate code for. This will pass a -mcpu flag to LLVM, and is only intended to be used for cross-compilation. For a list of available CPUs, invoke "llvm-as < /dev/null | llc -march=xyz -mcpu=help".
+Passing --mcpu native will pass the host CPU name to tune performance for the host.
 .It Fl -mattr Ar CPU
 Override or control specific attributes of the target, such as whether SIMD operations are enabled or not. The default set of attributes is set by the current CPU. This will pass a -mattr flag to LLVM, and is only intended to be used for cross-compilation. For a list of available attributes, invoke "llvm-as < /dev/null | llc -march=xyz -mattr=help".
 .It Fl -mcmodel default|kernel|small|medium|large
@@ -176,14 +177,40 @@ Options:
 .Pp
 .It Fl -project-name Ar NAME
 Set the project name. The default value is extracted from shard.yml if available.
+
 In case no default can be found, this option is mandatory.
 .It Fl -project-version Ar VERSION
 Set the project version. The default value is extracted from current git commit or shard.yml if available.
+
 In case no default can be found, this option is mandatory.
 .It Fl -json-config-url Ar URL
 Set the URL pointing to a config file (used for discovering versions).
+.It Fl -source-refname Ar REFNAME
+Set source refname (e.g. git tag, commit hash). The default value is extracted from current git commit if available.
+
+If this option is missing and can't be automatically determined, the generator can't produce source code links.
+.It Fl -source-url-pattern Ar URL
+Set URL pattern for source code links. The default value is extracted from git remotes ("origin" or first one) if available and the provider's URL pattern is recognized.
+
+.Pp
+Supported replacement tags:
+.Pp
+.Bl -tag -width "%{refname}" -compact
+.It Sy %{refname}
+commit reference
+.It Sy %{path}
+path to source file inside the repository
+.It Sy %{filename}
+basename of the source file
+.It Sy %{line}
+line number
+.El
+.Pp
+If this option is missing and can't be automatically determined, the generator can't produce source code links.
 .It Fl o Ar DIR, Fl -output Ar DIR
 Set the output directory (default: ./docs).
+.It Fl b Ar URL, Fl -canonical-base-url Ar URL
+Indicate the preferred URL with rel="canonical" link element.
 .It Fl b Ar URL, Fl -sitemap-base-url Ar URL
 Set the sitemap base URL. Sitemap will only be generated when this option is set.
 .It Fl -sitemap-priority Ar PRIO
@@ -203,6 +230,11 @@ Variables:
 .Pp
 .It
 .It Sy CRYSTAL_CACHE_DIR
+Please see
+.Sm "ENVIRONMENT VARIABLES".
+.Pp
+.It
+.It Sy CRYSTAL_LIBRARY_PATH
 Please see
 .Sm "ENVIRONMENT VARIABLES".
 .Pp
@@ -357,8 +389,17 @@ Show version.
 Defines path where Crystal caches partial compilation results for faster subsequent builds. This path is also used to temporarily store executables when Crystal programs are run with 'crystal run' rather than 'crystal build'.
 .Pp
 .It
+.It Sy CRYSTAL_LIBRARY_PATH
+Defines paths where Crystal searches for (binary) libraries. Multiple paths can be separated by ":".
+These paths are passed to the linker as `-L` flags.
+.Pp
+The pattern '$ORIGIN' at the start of the path expands to the directory where the compiler binary is located. For example, '$ORIGIN/../lib/crystal' resolves the standard library path relative to the compiler location in a generic way, independent of the absolute paths (assuming the relative location is correct).
+.Pp
+.It
 .It Sy CRYSTAL_PATH
-Defines paths where Crystal searches for required files.
+Defines paths where Crystal searches for required source files. Multiple paths can be separated by ":".
+.Pp
+The pattern '$ORIGIN' at the start of the path expands to the directory where the compiler binary is located. For example, '$ORIGIN/../share/crystal/src' resolves the standard library path relative to the compiler location in a generic way, independent of the absolute paths (assuming the relative location is correct).
 .Pp
 .It
 .It Sy CRYSTAL_OPTS

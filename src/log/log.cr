@@ -38,16 +38,16 @@ class Log
                                debug:  Severity::Debug,
                                info:   Severity::Info,
                                notice: Severity::Notice,
-                               warn:   Severity::Warning,
+                               warn:   Severity::Warn,
                                error:  Severity::Error,
                                fatal:  Severity::Fatal,
                              } %}
-
     # Logs a message if the logger's current severity is lower or equal to `{{severity}}`.
     def {{method.id}}(*, exception : Exception? = nil)
-      return unless backend = @backend
       severity = Severity.new({{severity}})
       return unless level <= severity
+
+      return unless backend = @backend
 
       dsl = Emitter.new(@source, severity, exception)
       result = yield dsl
@@ -59,7 +59,7 @@ class Log
           dsl.emit(result.to_s)
         end
 
-      backend.write entry
+      backend.dispatch entry
     end
   {% end %}
 end

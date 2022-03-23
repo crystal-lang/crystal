@@ -26,7 +26,7 @@ describe Log::BroadcastBackend do
     backend_b.entries.should eq([error_entry])
   end
 
-  it "overwritting log level overwrites to all backends" do
+  it "overwriting log level overwrites to all backends" do
     main = Log::BroadcastBackend.new
     backend_a = Log::MemoryBackend.new
     backend_b = Log::MemoryBackend.new
@@ -68,15 +68,15 @@ describe Log::BroadcastBackend do
 
     it "single backend" do
       main = Log::BroadcastBackend.new
-      main.append(Log::MemoryBackend.new, s(:warning))
+      main.append(Log::MemoryBackend.new, s(:warn))
 
-      main.min_level.should eq(s(:warning))
+      main.min_level.should eq(s(:warn))
     end
 
     it "multiple backends" do
       main = Log::BroadcastBackend.new
       main.append(Log::MemoryBackend.new, s(:info))
-      main.append(Log::MemoryBackend.new, s(:warning))
+      main.append(Log::MemoryBackend.new, s(:warn))
 
       main.min_level.should eq(s(:info))
     end

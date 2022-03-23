@@ -1,7 +1,8 @@
+{% skip_file if flag?(:wasm32) %}
+
 require "spec"
 require "process"
 require "./spec_helper"
-require "../spec_helper"
 
 private def exit_code_command(code)
   {% if flag?(:win32) %}
@@ -34,6 +35,15 @@ private def stdin_to_stdout_command
   {% end %}
 end
 
+private def print_env_command
+  {% if flag?(:win32) %}
+    # cmd adds these by itself, clear them out before printing.
+    shell_command("set COMSPEC=& set PATHEXT=& set PROMPT=& set")
+  {% else %}
+    {"env", [] of String}
+  {% end %}
+end
+
 private def standing_command
   {% if flag?(:win32) %}
     {"cmd.exe"}
@@ -61,9 +71,28 @@ describe Process do
     process.wait.exit_code.should eq(1)
   end
 
+  it "raises if command doesn't exist" do
+    expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+      Process.new("foobarbaz")
+    end
+  end
+
+  pending_win32 "raises if command is not executable" do
+    with_tempfile("crystal-spec-run") do |path|
+      File.touch path
+      expect_raises(File::AccessDeniedError, "Error executing process: '#{path.inspect_unquoted}'") do
+        Process.new(path)
+      end
+    end
+  end
+
   it "raises if command could not be executed" do
-    expect_raises(RuntimeError, "Error executing process:") do
-      Process.new("foobarbaz", ["foo"])
+    with_tempfile("crystal-spec-run") do |path|
+      File.touch path
+      command = File.join(path, "foo")
+      expect_raises(IO::Error, "Error executing process: '#{command.inspect_unquoted}'") do
+        Process.new(command)
+      end
     end
   end
 
@@ -138,7 +167,7 @@ describe Process do
   end
 
   pending_win32 "chroot raises when unprivileged" do
-    status, output = build_and_run <<-'CODE'
+    status, output, _ = compile_and_run_source <<-'CODE'
       begin
         Process.chroot("/usr")
         puts "FAIL"
@@ -190,28 +219,99 @@ describe Process do
   end
 
   describe "environ" do
-    pending_win32 "clears the environment" do
-      value = Process.run("env", clear_env: true) do |proc|
+    it "clears the environment" do
+      value = Process.run(*print_env_command, clear_env: true) do |proc|
         proc.output.gets_to_end
       end
       value.should eq("")
     end
 
-    pending_win32 "sets an environment variable" do
-      env = {"FOO" => "bar"}
-      value = Process.run("env", clear_env: true, env: env) do |proc|
+    it "clears and sets an environment variable" do
+      value = Process.run(*print_env_command, clear_env: true, env: {"FOO" => "bar"}) do |proc|
         proc.output.gets_to_end
       end
-      value.should eq("FOO=bar\n")
+      value.should eq("FOO=bar#{newline}")
     end
 
-    pending_win32 "deletes an environment variable" do
-      env = {"HOME" => nil}
-      value = Process.run("env | egrep '^HOME='", env: env, shell: true) do |proc|
+    it "sets an environment variable" do
+      value = Process.run(*print_env_command, env: {"FOO" => "bar"}) do |proc|
         proc.output.gets_to_end
       end
-      value.should eq("")
+      value.should match /(*ANYCRLF)^FOO=bar$/m
     end
+
+    it "sets an empty environment variable" do
+      value = Process.run(*print_env_command, env: {"FOO" => ""}) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should match /(*ANYCRLF)^FOO=$/m
+    end
+
+    it "deletes existing environment variable" do
+      ENV["FOO"] = "bar"
+      value = Process.run(*print_env_command, env: {"FOO" => nil}) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should_not match /(*ANYCRLF)^FOO=/m
+    ensure
+      ENV.delete("FOO")
+    end
+
+    {% if flag?(:win32) %}
+      it "deletes existing environment variable case-insensitive" do
+        ENV["FOO"] = "bar"
+        value = Process.run(*print_env_command, env: {"foo" => nil}) do |proc|
+          proc.output.gets_to_end
+        end
+        value.should_not match /(*ANYCRLF)^FOO=/mi
+      ensure
+        ENV.delete("FOO")
+      end
+    {% end %}
+
+    it "preserves existing environment variable" do
+      ENV["FOO"] = "bar"
+      value = Process.run(*print_env_command) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should match /(*ANYCRLF)^FOO=bar$/m
+    ensure
+      ENV.delete("FOO")
+    end
+
+    it "preserves and sets an environment variable" do
+      ENV["FOO"] = "bar"
+      value = Process.run(*print_env_command, env: {"FOO2" => "bar2"}) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should match /(*ANYCRLF)^FOO=bar$/m
+      value.should match /(*ANYCRLF)^FOO2=bar2$/m
+    ensure
+      ENV.delete("FOO")
+    end
+
+    it "overrides existing environment variable" do
+      ENV["FOO"] = "bar"
+      value = Process.run(*print_env_command, env: {"FOO" => "different"}) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should match /(*ANYCRLF)^FOO=different$/m
+    ensure
+      ENV.delete("FOO")
+    end
+
+    {% if flag?(:win32) %}
+      it "overrides existing environment variable case-insensitive" do
+        ENV["FOO"] = "bar"
+        value = Process.run(*print_env_command, env: {"fOo" => "different"}) do |proc|
+          proc.output.gets_to_end
+        end
+        value.should_not match /(*ANYCRLF)^FOO=/m
+        value.should match /(*ANYCRLF)^fOo=different$/m
+      ensure
+        ENV.delete("FOO")
+      end
+    {% end %}
   end
 
   describe "signal" do
@@ -259,6 +359,12 @@ describe Process do
         File.exists?(path).should be_true
       end
     end
+
+    it "gets error from exec" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.exec("foobarbaz")
+      end
+    end
   {% end %}
 
   pending_win32 "checks for existence" do
@@ -298,27 +404,70 @@ describe Process do
     end
   end
 
-  describe "find_executable" do
-    pwd = Process::INITIAL_PWD
-    crystal_path = Path.new(pwd, "bin", "crystal").to_s
+  describe "quote_posix" do
+    it { Process.quote_posix("").should eq "''" }
+    it { Process.quote_posix(" ").should eq "' '" }
+    it { Process.quote_posix("$hi").should eq "'$hi'" }
+    it { Process.quote_posix(orig = "aZ5+,-./:=@_").should eq orig }
+    it { Process.quote_posix(orig = "cafe").should eq orig }
+    it { Process.quote_posix("café").should eq "'café'" }
+    it { Process.quote_posix("I'll").should eq %('I'"'"'ll') }
+    it { Process.quote_posix("'").should eq %(''"'"'') }
+    it { Process.quote_posix("\\").should eq "'\\'" }
 
-    pending_win32 "resolves absolute executable" do
-      Process.find_executable(Path.new(pwd, "bin", "crystal")).should eq(crystal_path)
+    context "join" do
+      it { Process.quote_posix([] of String).should eq "" }
+      it { Process.quote_posix(["my file.txt", "another.txt"]).should eq "'my file.txt' another.txt" }
+      it { Process.quote_posix(["foo ", "", " ", " bar"]).should eq "'foo ' '' ' ' ' bar'" }
+      it { Process.quote_posix(["foo'", "\"bar"]).should eq %('foo'"'"'' '"bar') }
+    end
+  end
+
+  describe "quote_windows" do
+    it { Process.quote_windows("").should eq %("") }
+    it { Process.quote_windows(" ").should eq %(" ") }
+    it { Process.quote_windows(orig = "%hi%").should eq orig }
+    it { Process.quote_windows(%q(C:\"foo" project.txt)).should eq %q("C:\\\"foo\" project.txt") }
+    it { Process.quote_windows(%q(C:\"foo"_project.txt)).should eq %q(C:\\\"foo\"_project.txt) }
+    it { Process.quote_windows(%q(C:\Program Files\Foo Bar\foobar.exe)).should eq %q("C:\Program Files\Foo Bar\foobar.exe") }
+    it { Process.quote_windows(orig = "café").should eq orig }
+    it { Process.quote_windows(%(")).should eq %q(\") }
+    it { Process.quote_windows(%q(a\\b\ c\)).should eq %q("a\\b\ c\\") }
+    it { Process.quote_windows(orig = %q(a\\b\c\)).should eq orig }
+
+    context "join" do
+      it { Process.quote_windows([] of String).should eq "" }
+      it { Process.quote_windows(["my file.txt", "another.txt"]).should eq %("my file.txt" another.txt) }
+      it { Process.quote_windows(["foo ", "", " ", " bar"]).should eq %("foo " "" " " " bar") }
+    end
+  end
+
+  describe "parse_arguments" do
+    it { Process.parse_arguments("").should eq(%w[]) }
+    it { Process.parse_arguments(" ").should eq(%w[]) }
+    it { Process.parse_arguments("foo").should eq(%w[foo]) }
+    it { Process.parse_arguments("foo bar").should eq(%w[foo bar]) }
+    it { Process.parse_arguments(%q("foo bar" 'foo bar' baz)).should eq(["foo bar", "foo bar", "baz"]) }
+    it { Process.parse_arguments(%q("foo bar"'foo bar'baz)).should eq(["foo barfoo barbaz"]) }
+    it { Process.parse_arguments(%q(foo\ bar)).should eq(["foo bar"]) }
+    it { Process.parse_arguments(%q("foo\ bar")).should eq(["foo\\ bar"]) }
+    it { Process.parse_arguments(%q('foo\ bar')).should eq(["foo\\ bar"]) }
+    it { Process.parse_arguments("\\").should eq(["\\"]) }
+    it { Process.parse_arguments(%q["foo bar" '\hello/' Fizz\ Buzz]).should eq(["foo bar", "\\hello/", "Fizz Buzz"]) }
+    it { Process.parse_arguments(%q[foo"bar"baz]).should eq(["foobarbaz"]) }
+    it { Process.parse_arguments(%q[foo'bar'baz]).should eq(["foobarbaz"]) }
+    it { Process.parse_arguments(%(this 'is a "'very wei"rd co"m"mand please" don't do t'h'a't p"leas"e)).should eq(["this", "is a \"very", "weird command please", "dont do that", "please"]) }
+
+    it "raises an error when double quote is unclosed" do
+      expect_raises ArgumentError, "Unmatched quote" do
+        Process.parse_arguments(%q["foo])
+      end
     end
 
-    pending_win32 "resolves relative executable" do
-      Process.find_executable(Path.new("bin", "crystal")).should eq(crystal_path)
-      Process.find_executable(Path.new("..", File.basename(pwd), "bin", "crystal")).should eq(crystal_path)
-    end
-
-    pending_win32 "searches within PATH" do
-      (path = Process.find_executable("ls")).should_not be_nil
-      path.not_nil!.should match(/#{File::SEPARATOR}ls$/)
-
-      (path = Process.find_executable("crystal")).should_not be_nil
-      path.not_nil!.should match(/#{File::SEPARATOR}crystal$/)
-
-      Process.find_executable("some_very_unlikely_file_to_exist").should be_nil
+    it "raises an error if single quote is unclosed" do
+      expect_raises ArgumentError, "Unmatched quote" do
+        Process.parse_arguments(%q['foo])
+      end
     end
   end
 end

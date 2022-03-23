@@ -160,6 +160,25 @@ module Crystal
 
     private def read_magic
       @io.read(magic = Bytes.new(4))
+
+      if MAGIC.empty?
+        # If constant initialization is not working (for example when an
+        # error occurred during runtime setup or a custom main function doesn't
+        # do the initialization), continuing the ELF reader results in a
+        # seg fault. This condition detects the uninitialized constant and
+        # and errors.
+        # A simple program to reproduce is:
+        # ```
+        # module Crystal
+        #   def self.main(&block)
+        #     raise "foo"
+        #   end
+        # end
+        # ```
+        Crystal::System.print_error "Error: %s\n", "Runtime is not initialized"
+        LibC.exit 1
+      end
+
       raise Error.new("Invalid magic number") unless magic == MAGIC
     end
 

@@ -700,13 +700,8 @@ describe "Code gen: closure" do
 
   it "allows passing an external function along" do
     codegen(%(
-      lib LibC
-        fun exit(c : Int32) : NoReturn
-      end
+      require "prelude"
 
-      def raise(a) : NoReturn
-        LibC.exit(1)
-      end
 
       lib LibA
         fun a(a : Void* -> Void*)
@@ -716,7 +711,9 @@ describe "Code gen: closure" do
         LibA.a(a)
       end
     ))
+  end
 
+  it "allows passing an external function along (2)" do
     codegen(%(
       lib LibFoo
         struct S

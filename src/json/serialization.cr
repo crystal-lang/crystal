@@ -60,9 +60,11 @@ module JSON
   #
   # `JSON::Field` properties:
   # * **ignore**: if `true` skip this field in serialization and deserialization (by default false)
+  # * **ignore_serialize**: If truthy, skip this field in serialization (default: `false`). The value can be any Crystal expression and is evaluated at runtime.
+  # * **ignore_deserialize**: if `true` skip this field in deserialization (by default false)
   # * **key**: the value of the key in the json object (by default the name of the instance variable)
   # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
-  # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
+  # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)`. Examples of converters are a `Time::Format` instance and `Time::EpochConverter` for `Time`.
   # * **presence**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
   # * **emit_null**: if `true`, emits a `null` value for nilable property (by default nulls are not emitted)
   #
@@ -144,7 +146,7 @@ module JSON
       end
 
       # When the type is inherited, carry over the `new`
-      # so it can compete with other possible intializes
+      # so it can compete with other possible initializes
 
       macro inherited
         def self.new(pull : ::JSON::PullParser)
@@ -158,7 +160,7 @@ module JSON
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::JSON::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
             {%
               properties[ivar.id] = {
                 type:        ivar.type,
@@ -183,7 +185,7 @@ module JSON
         begin
           pull.read_begin_object
         rescue exc : ::JSON::ParseException
-          raise ::JSON::MappingError.new(exc.message, self.class.to_s, nil, *%location, exc)
+          raise ::JSON::SerializableError.new(exc.message, self.class.to_s, nil, *%location, exc)
         end
         until pull.kind.end_object?
           %key_location = pull.location
@@ -212,7 +214,7 @@ module JSON
 
                 {% if value[:nilable] || value[:has_default] %} } {% end %}
               rescue exc : ::JSON::ParseException
-                raise ::JSON::MappingError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
+                raise ::JSON::SerializableError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
               end
           {% end %}
           else
@@ -224,7 +226,7 @@ module JSON
         {% for name, value in properties %}
           {% unless value[:nilable] || value[:has_default] %}
             if %var{name}.nil? && !%found{name} && !::Union({{value[:type]}}).nilable?
-              raise ::JSON::MappingError.new("Missing JSON attribute: {{value[:key].id}}", self.class.to_s, nil, *%location, nil)
+              raise ::JSON::SerializableError.new("Missing JSON attribute: {{value[:key].id}}", self.class.to_s, nil, *%location, nil)
             end
           {% end %}
 
@@ -235,7 +237,9 @@ module JSON
               @{{name}} = %var{name}
             {% end %}
           {% elsif value[:has_default] %}
-            @{{name}} = %var{name}.nil? ? {{value[:default]}} : %var{name}
+            if %found{name} && !%var{name}.nil?
+              @{{name}} = %var{name}
+            end
           {% else %}
             @{{name}} = (%var{name}).as({{value[:type]}})
           {% end %}
@@ -266,14 +270,15 @@ module JSON
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::JSON::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% unless ann && (ann[:ignore] || ann[:ignore_serialize] == true) %}
             {%
               properties[ivar.id] = {
-                type:      ivar.type,
-                key:       ((ann && ann[:key]) || ivar).id.stringify,
-                root:      ann && ann[:root],
-                converter: ann && ann[:converter],
-                emit_null: (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
+                type:             ivar.type,
+                key:              ((ann && ann[:key]) || ivar).id.stringify,
+                root:             ann && ann[:root],
+                converter:        ann && ann[:converter],
+                emit_null:        (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
+                ignore_serialize: ann && ann[:ignore_serialize],
               }
             %}
           {% end %}
@@ -283,42 +288,49 @@ module JSON
           {% for name, value in properties %}
             _{{name}} = @{{name}}
 
-            {% unless value[:emit_null] %}
-              unless _{{name}}.nil?
+            {% if value[:ignore_serialize] %}
+              unless {{ value[:ignore_serialize] }}
             {% end %}
 
-              json.field({{value[:key]}}) do
-                {% if value[:root] %}
-                  {% if value[:emit_null] %}
-                    if _{{name}}.nil?
-                      nil.to_json(json)
+              {% unless value[:emit_null] %}
+                unless _{{name}}.nil?
+              {% end %}
+
+                json.field({{value[:key]}}) do
+                  {% if value[:root] %}
+                    {% if value[:emit_null] %}
+                      if _{{name}}.nil?
+                        nil.to_json(json)
+                      else
+                    {% end %}
+
+                    json.object do
+                      json.field({{value[:root]}}) do
+                  {% end %}
+
+                  {% if value[:converter] %}
+                    if _{{name}}
+                      {{ value[:converter] }}.to_json(_{{name}}, json)
                     else
+                      nil.to_json(json)
+                    end
+                  {% else %}
+                    _{{name}}.to_json(json)
                   {% end %}
 
-                  json.object do
-                    json.field({{value[:root]}}) do
-                {% end %}
-
-                {% if value[:converter] %}
-                  if _{{name}}
-                    {{ value[:converter] }}.to_json(_{{name}}, json)
-                  else
-                    nil.to_json(json)
-                  end
-                {% else %}
-                  _{{name}}.to_json(json)
-                {% end %}
-
-                {% if value[:root] %}
-                  {% if value[:emit_null] %}
+                  {% if value[:root] %}
+                    {% if value[:emit_null] %}
+                      end
+                    {% end %}
+                      end
                     end
                   {% end %}
-                    end
-                  end
-                {% end %}
-              end
+                end
 
-            {% unless value[:emit_null] %}
+              {% unless value[:emit_null] %}
+                end
+              {% end %}
+            {% if value[:ignore_serialize] %}
               end
             {% end %}
           {% end %}
@@ -329,7 +341,7 @@ module JSON
 
     module Strict
       protected def on_unknown_json_attribute(pull, key, key_location)
-        raise ::JSON::MappingError.new("Unknown JSON attribute: #{key}", self.class.to_s, nil, *key_location, nil)
+        raise ::JSON::SerializableError.new("Unknown JSON attribute: #{key}", self.class.to_s, nil, *key_location, nil)
       end
     end
 
@@ -341,7 +353,7 @@ module JSON
         json_unmapped[key] = begin
           JSON::Any.new(pull)
         rescue exc : ::JSON::ParseException
-          raise ::JSON::MappingError.new(exc.message, self.class.to_s, key, *key_location, exc)
+          raise ::JSON::SerializableError.new(exc.message, self.class.to_s, key, *key_location, exc)
         end
       end
 
@@ -403,8 +415,19 @@ module JSON
             builder.start_object
             pull.read_object do |key|
               if key == {{field.id.stringify}}
-                discriminator_value = pull.read_string
+                value_kind = pull.kind
+                case value_kind
+                when .string?
+                  discriminator_value = pull.string_value
+                when .int?
+                  discriminator_value = pull.int_value
+                when .bool?
+                  discriminator_value = pull.bool_value
+                else
+                  raise ::JSON::SerializableError.new("JSON discriminator field '{{field.id}}' has an invalid value type of #{value_kind.to_s}", to_s, nil, *location, nil)
+                end
                 builder.field(key, discriminator_value)
+                pull.read_next
               else
                 builder.field(key) { pull.read_raw(builder) }
               end
@@ -414,17 +437,49 @@ module JSON
         end
 
         unless discriminator_value
-          raise ::JSON::MappingError.new("Missing JSON discriminator field '{{field.id}}'", to_s, nil, *location, nil)
+          raise ::JSON::SerializableError.new("Missing JSON discriminator field '{{field.id}}'", to_s, nil, *location, nil)
         end
 
         case discriminator_value
         {% for key, value in mapping %}
-          when {{key.id.stringify}}
-            {{value.id}}.from_json(json)
+          {% if mapping.is_a?(NamedTupleLiteral) %}
+            when {{key.id.stringify}}
+          {% else %}
+            {% if key.is_a?(StringLiteral) %}
+              when {{key}}
+            {% elsif key.is_a?(NumberLiteral) || key.is_a?(BoolLiteral) %}
+              when {{key.id}}
+            {% elsif key.is_a?(Path) %}
+              when {{key.resolve}}
+            {% else %}
+              {% key.raise "mapping keys must be one of StringLiteral, NumberLiteral, BoolLiteral, or Path, not #{key.class_name.id}" %}
+            {% end %}
+          {% end %}
+          {{value.id}}.from_json(json)
         {% end %}
         else
-          raise ::JSON::MappingError.new("Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}", to_s, nil, *location, nil)
+          raise ::JSON::SerializableError.new("Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}", to_s, nil, *location, nil)
         end
+      end
+    end
+  end
+
+  class SerializableError < ParseException
+    getter klass : String
+    getter attribute : String?
+
+    def initialize(message : String?, @klass : String, @attribute : String?, line_number : Int32, column_number : Int32, cause)
+      message = String.build do |io|
+        io << message
+        io << "\n  parsing "
+        io << klass
+        if attribute = @attribute
+          io << '#' << attribute
+        end
+      end
+      super(message, line_number, column_number, cause)
+      if cause
+        @line_number, @column_number = cause.location
       end
     end
   end

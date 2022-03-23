@@ -34,7 +34,7 @@ describe OpenSSL::SSL::HostnameValidation do
       OpenSSL::SSL::HostnameValidation.validate_hostname("example.com", openssl_create_cert(san: "IP:192.168.1.1,DNS:example.com")).should eq(OpenSSL::SSL::HostnameValidation::Result::MatchFound)
     end
 
-    it "fallbacks to CN entry (unless SAN entry is defined)" do
+    it "falls back to CN entry (unless SAN entry is defined)" do
       OpenSSL::SSL::HostnameValidation.validate_hostname("example.com", openssl_create_cert(subject: "CN=example.com")).should eq(OpenSSL::SSL::HostnameValidation::Result::MatchFound)
       OpenSSL::SSL::HostnameValidation.validate_hostname("example.com", openssl_create_cert(san: "DNS:example.org", subject: "CN=example.com")).should eq(OpenSSL::SSL::HostnameValidation::Result::MatchNotFound)
       OpenSSL::SSL::HostnameValidation.validate_hostname("example.org", openssl_create_cert(san: "DNS:example.org", subject: "CN=example.com")).should eq(OpenSSL::SSL::HostnameValidation::Result::MatchFound)

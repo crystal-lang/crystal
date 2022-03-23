@@ -26,7 +26,7 @@ class Log
     def initialize(@proc : (Log::Entry, IO) ->)
     end
 
-    def format(entry : Log::Entry, io : IO)
+    def format(entry : Log::Entry, io : IO) : Nil
       @proc.call(entry, io)
     end
   end
@@ -36,7 +36,9 @@ class Log
   #
   # This can be used to create efficient formatters:
   # ```
-  # struct MyFormat < Log::StaticFormat
+  # require "log"
+  #
+  # struct MyFormat < Log::StaticFormatter
   #   def run
   #     string "- "
   #     severity
@@ -46,8 +48,8 @@ class Log
   # end
   #
   # Log.setup(:info, Log::IOBackend.new(formatter: MyFormat))
-  # Log.info { "Hello" }    # => -    INFO: Hello
-  # Log.error { "Oh, no!" } # => -   ERROR: Oh, no!
+  # Log.info { "Hello" }    # => -   INFO: Hello
+  # Log.error { "Oh, no!" } # => -  ERROR: Oh, no!
   # ```
   #
   # There is also a helper macro to generate these formatters. Here's
@@ -62,17 +64,17 @@ class Log
     end
 
     # Write the entry timestamp in RFC3339 format
-    def timestamp
-      @entry.timestamp.to_rfc3339(@io)
+    def timestamp : Nil
+      @entry.timestamp.to_rfc3339(@io, fraction_digits: 6)
     end
 
     # Write a fixed string
-    def string(str)
+    def string(str) : Nil
       @io << str
     end
 
     # Write the message of the entry
-    def message
+    def message : Nil
       @io << @entry.message
     end
 
@@ -80,8 +82,8 @@ class Log
     #
     # This writes the severity in uppercase and left padded
     # with enough space so all the severities fit
-    def severity
-      @entry.severity.label.rjust(7, @io)
+    def severity : Nil
+      @entry.severity.label.rjust(@io, 6)
     end
 
     # Write the source for non-root entries
@@ -90,7 +92,9 @@ class Log
     # Parameters `before` and `after` can be provided to be written around
     # the value.
     # ```
-    # source(before: '[', after: ']') # => [http.server]
+    # Log.define_formatter TestFormatter, "#{source(before: '[', after: "] ")}#{message}"
+    # Log.setup(:info, Log::IOBackend.new(formatter: TestFormatter))
+    # Log.for("foo.bar").info { "Hello" } # => - [foo.bar] Hello
     # ```
     def source(*, before = nil, after = nil)
       if @entry.source.size > 0
@@ -103,8 +107,8 @@ class Log
     # It doesn't write any output if the entry data is empty.
     # Parameters `before` and `after` can be provided to be written around
     # the value.
-    def data(*, before = nil, after = nil)
-      if @entry.data.size > 0
+    def data(*, before = nil, after = nil) : Nil
+      unless @entry.data.empty?
         @io << before << @entry.data << after
       end
     end
@@ -115,7 +119,7 @@ class Log
     # Parameters `before` and `after` can be provided to be written around
     # the value.
     def context(*, before = nil, after = nil)
-      if @entry.context.size > 0
+      unless @entry.context.empty?
         @io << before << @entry.context << after
       end
     end
@@ -126,7 +130,7 @@ class Log
     # Parameters `before` and `after` can be provided to be written around
     # the value. `before` defaults to `'\n'` so the exception is written
     # on a separate line
-    def exception(*, before = '\n', after = nil)
+    def exception(*, before = '\n', after = nil) : Nil
       if ex = @entry.exception
         @io << before
         ex.inspect_with_backtrace(@io)
@@ -135,7 +139,7 @@ class Log
     end
 
     # Write the program name. See `Log.progname`.
-    def progname
+    def progname : Nil
       @io << Log.progname
     end
 
@@ -145,7 +149,7 @@ class Log
     end
 
     # Write the `Log::Entry` to the `IO` using this pattern
-    def self.format(entry, io)
+    def self.format(entry, io) : Nil
       new(entry, io).run
     end
 
@@ -180,17 +184,17 @@ end
 #
 # It writes log entries with the following format:
 # ```
-# 2020-05-07T17:40:07.994508000Z    INFO - my.source: Initializing everything
+# 2020-05-07T17:40:07.994508000Z   INFO - my.source: Initializing everything
 # ```
 #
 # When the entries have context data it's also written to the output:
 # ```
-# 2020-05-07T17:40:07.994508000Z    INFO - my.source: Initializing everything -- {"data" => 123}
+# 2020-05-07T17:40:07.994508000Z   INFO - my.source: Initializing everything -- {"data" => 123}
 # ```
 #
 # Exceptions are written in a separate line:
 # ```
-# 2020-05-07T17:40:07.994508000Z   ERROR - my.source: Something failed
+# 2020-05-07T17:40:07.994508000Z  ERROR - my.source: Something failed
 # Oh, no (Exception)
 #   from ...
 # ```

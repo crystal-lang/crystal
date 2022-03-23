@@ -43,10 +43,14 @@ describe "colorize" do
 
   it "colorizes foreground with 8-bit color" do
     colorize("hello").fore(Colorize::Color256.new(123u8)).to_s.should eq("\e[38;5;123mhello\e[0m")
+    colorize("hello").fore(123u8).to_s.should eq("\e[38;5;123mhello\e[0m")
+    colorize("hello", 123_u8).to_s.should eq("\e[38;5;123mhello\e[0m")
   end
 
   it "colorizes foreground with true color" do
     colorize("hello").fore(Colorize::ColorRGB.new(12u8, 34u8, 56u8)).to_s.should eq("\e[38;2;12;34;56mhello\e[0m")
+    colorize("hello").fore(12u8, 34u8, 56u8).to_s.should eq("\e[38;2;12;34;56mhello\e[0m")
+    colorize("hello", 12u8, 34u8, 56u8).to_s.should eq("\e[38;2;12;34;56mhello\e[0m")
   end
 
   it "colorizes background" do
@@ -70,10 +74,12 @@ describe "colorize" do
 
   it "colorizes background with 8-bit color" do
     colorize("hello").back(Colorize::Color256.new(123u8)).to_s.should eq("\e[48;5;123mhello\e[0m")
+    colorize("hello").back(123u8).to_s.should eq("\e[48;5;123mhello\e[0m")
   end
 
   it "colorizes background with true color" do
     colorize("hello").back(Colorize::ColorRGB.new(12u8, 34u8, 56u8)).to_s.should eq("\e[48;2;12;34;56mhello\e[0m")
+    colorize("hello").back(12u8, 34u8, 56u8).to_s.should eq("\e[48;2;12;34;56mhello\e[0m")
   end
 
   it "colorizes mode" do
@@ -119,40 +125,8 @@ describe "colorize" do
     end
   end
 
-  it "raises on unknown mode" do
-    expect_raises ArgumentError, "Unknown mode: bad" do
-      colorize("hello").mode(:bad)
-    end
-  end
-
   it "inspects" do
     colorize("hello", :red).inspect.should eq("\e[31m\"hello\"\e[0m")
-  end
-
-  describe "with_color deprecated top-level method" do
-    it "without args" do
-      io = IO::Memory.new
-      with_color.red.toggle(true).surround(io) do
-        io << "hello"
-        with_color.green.toggle(true).surround(io) do
-          io << "world"
-        end
-        io << "bye"
-      end
-      io.to_s.should eq("\e[31mhello\e[0;32mworld\e[0;31mbye\e[0m")
-    end
-
-    it "with args" do
-      io = IO::Memory.new
-      with_color(:red).toggle(true).surround(io) do
-        io << "hello"
-        with_color(:green).toggle(true).surround(io) do
-          io << "world"
-        end
-        io << "bye"
-      end
-      io.to_s.should eq("\e[31mhello\e[0;32mworld\e[0;31mbye\e[0m")
-    end
   end
 
   it "colorizes with surround" do

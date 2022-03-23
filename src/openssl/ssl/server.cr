@@ -82,7 +82,7 @@ class OpenSSL::SSL::Server
   # Closes this SSL server.
   #
   # Propagates to `wrapped` if `sync_close` is `true`.
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 

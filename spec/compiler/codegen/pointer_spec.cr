@@ -270,7 +270,7 @@ describe "Code gen: pointer" do
       ").to_i.should eq(1)
   end
 
-  it "codgens pointer as if condition inside union (1)" do
+  it "codegens pointer as if condition inside union (1)" do
     run(%(
       ptr = Pointer(Int32).new(0_u64) || Pointer(Float64).new(0_u64)
       if ptr
@@ -281,7 +281,7 @@ describe "Code gen: pointer" do
       )).to_i.should eq(2)
   end
 
-  it "codgens pointer as if condition inside union (2)" do
+  it "codegens pointer as if condition inside union (2)" do
     run(%(
       if 1 == 1
         ptr = Pointer(Int32).new(0_u64)
@@ -436,6 +436,24 @@ describe "Code gen: pointer" do
       bar.foo
       1
       ))
+  end
+
+  it "passes arguments correctly for typedef metaclass (#8544)" do
+    run <<-CR
+      lib LibFoo
+        type Foo = Void*
+      end
+
+      class Class
+        def foo(x)
+          x
+        end
+      end
+
+      x = 1
+      LibFoo::Foo.foo(x)
+      Pointer(Void).foo(x)
+      CR
   end
 
   it "generates correct code for Pointer.malloc(0) (#2905)" do
