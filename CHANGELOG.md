@@ -108,7 +108,6 @@
 ## Compiler
 
 - Fix compiler specs git integration for configurable default branch ([#11754](https://github.com/crystal-lang/crystal/pull/11754), thanks @yxhuvud)
-- Fix: Accept only option flags in `CRYSTAL_OPTS` ([#11780](https://github.com/crystal-lang/crystal/pull/11780), thanks @HertzDevil)
 - `Crystal::ToSVisitor`: Remove `decorate_*` methods ([#11724](https://github.com/crystal-lang/crystal/pull/11724), thanks @HertzDevil)
 - Use fewer symbols in the compiler source ([#11625](https://github.com/crystal-lang/crystal/pull/11625), thanks @HertzDevil)
 - Add support for `--m*` flags to `crystal spec` and `crystal eval` ([#11767](https://github.com/crystal-lang/crystal/pull/11767), thanks @yxhuvud)
