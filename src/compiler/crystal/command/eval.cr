@@ -3,7 +3,7 @@
 class Crystal::Command
   private def eval
     compiler = new_compiler
-    parse_with_crystal_opts do |opts|
+    OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal eval [options] [source]\n\nOptions:"
       setup_simple_compiler_options compiler, opts
     end

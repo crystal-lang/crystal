@@ -71,6 +71,7 @@ class Crystal::Command
       init
     when "build".starts_with?(command)
       options.shift
+      use_crystal_opts
       build
       report_warnings
       exit 1 if warnings_fail_on_exit?
@@ -94,6 +95,7 @@ class Crystal::Command
       env
     when command == "eval"
       options.shift
+      use_crystal_opts
       eval
     when command == "i" || command == "interactive"
       options.shift
@@ -105,9 +107,11 @@ class Crystal::Command
       {% end %}
     when command == "run"
       options.shift
+      use_crystal_opts
       run_command(single_file: false)
     when "spec/".starts_with?(command)
       options.shift
+      use_crystal_opts
       spec
     when "tool".starts_with?(command)
       options.shift
@@ -119,6 +123,7 @@ class Crystal::Command
       puts Crystal::Config.description
       exit
     when File.file?(command)
+      use_crystal_opts
       run_command(single_file: true)
     else
       if command.ends_with?(".cr")
@@ -330,7 +335,7 @@ class Crystal::Command
     cursor_location = nil
     output_format = nil
 
-    option_parser = parse_with_crystal_opts do |opts|
+    option_parser = OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
 
       unless no_codegen
@@ -636,52 +641,10 @@ class Crystal::Command
     Crystal.error msg, @color, exit_code: exit_code
   end
 
-  private def self.crystal_opts
-    ENV["CRYSTAL_OPTS"]?.try { |opts| Process.parse_arguments(opts) }
+  private def use_crystal_opts
+    @options = Process.parse_arguments(ENV.fetch("CRYSTAL_OPTS", "")).concat(options)
   rescue ex
     raise Error.new("Failed to parse CRYSTAL_OPTS: #{ex.message}")
-  end
-
-  # Constructs an `OptionParser` from the given block and runs it twice, first
-  # time with `CRYSTAL_OPTS`, second time with the given *options*.
-  #
-  # Only flags are accepted in the first run; positional arguments, invalid
-  # options (where they might be treated as normal arguments), and `--` are all
-  # disallowed. The option parser should not define any subcommands.
-  def self.parse_with_crystal_opts(options, & : OptionParser ->)
-    option_parser = OptionParser.new { |opts| yield opts }
-
-    if crystal_opts = self.crystal_opts
-      old_unknown_args = option_parser.@unknown_args
-      old_invalid_option = option_parser.@invalid_option
-      old_before_each = option_parser.@before_each
-
-      option_parser.unknown_args { }
-      option_parser.invalid_option { |opt| raise OptionParser::InvalidOption.new(opt) }
-      option_parser.before_each do |opt|
-        raise Error.new "CRYSTAL_OPTS may not contain --" if opt == "--"
-      end
-
-      option_parser.parse(crystal_opts)
-      unless crystal_opts.empty?
-        raise Error.new "CRYSTAL_OPTS may not contain positional arguments"
-      end
-
-      option_parser.unknown_args(&old_unknown_args) if old_unknown_args
-      option_parser.invalid_option(&old_invalid_option)
-      if old_before_each
-        option_parser.before_each(&old_before_each)
-      else
-        option_parser.before_each { }
-      end
-    end
-
-    option_parser.parse(options)
-    option_parser
-  end
-
-  private def parse_with_crystal_opts(& : OptionParser ->)
-    Command.parse_with_crystal_opts(@options) { |opts| yield opts }
   end
 
   private def new_compiler
