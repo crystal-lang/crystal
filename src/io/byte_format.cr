@@ -146,7 +146,7 @@ module IO::ByteFormat
 
         def self.decode(int : {{type.id}}.class, bytes : Bytes)
           buffer = uninitialized UInt8[{{bytesize}}]
-          bytes.to_slice[0, {{bytesize}}].copy_to(buffer.to_slice)
+          bytes.copy_to(buffer.to_unsafe, {{bytesize}})
           buffer.reverse! unless SystemEndian == self
           buffer.unsafe_as({{type.id}})
         end
