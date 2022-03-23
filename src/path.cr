@@ -1261,6 +1261,8 @@ struct Path
     # path: //share/share
     # part: 1122222 33333
 
+    # Grammar definition: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/62e862f4-2a51-452e-8eeb-dc4ff5ee33cc?redirectedfrom=MSDN
+
     return unless @name.size >= 5
 
     reader = Char::Reader.new(@name)
@@ -1271,11 +1273,25 @@ struct Path
     reader.next_char
 
     # 2. Consume first path component
+    # The first component is either an IP address or a hostname.
+    # Hostname follows the grammar of `reg-name` in [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986).
+    # TODO: Add support for IPv6 address grammar
     return if separators.includes?(reader.current_char)
     while true
       char = reader.current_char
       break if separators.includes?(char)
-      return unless char.ascii_letter?
+      if char == '%'
+        # percent encoded character
+        return unless reader.has_next?
+        reader.next_char
+        return unless reader.current_char.ascii_number?
+        return unless reader.has_next?
+        reader.next_char
+        return unless reader.current_char.ascii_number?
+      else
+        # unreserved / sub-delims
+        return unless char.ascii_alphanumeric? || char.in?('_', '.', '-', '~', '!', '$', ';', '=') || char.in?('&'..',')
+      end
       return unless reader.has_next?
       reader.next_char
     end
@@ -1287,11 +1303,12 @@ struct Path
     return unless reader.has_next?
     reader.next_char
 
-    # 3. Consume second path components
+    # 3. Consume second path component
+    # `share-name` in UNC grammar
     while true
       char = reader.current_char
       break if separators.includes?(char) || !reader.has_next?
-      return unless char.ascii_letter?
+      return unless char.ascii_alphanumeric? || char.in?(' ', '!', '-', '.', '@', '^', '_', '`', '{', '}', '~') || char.in?('#'..')') || char.ord.in?(0x80..0xFF)
       reader.next_char
     end
 
