@@ -502,5 +502,44 @@ describe "Semantic: warnings" do
         end
         CR
     end
+
+    it "informs warnings once per matching overload (1)" do
+      assert_warning <<-CR, "warning in line 6\nWarning: positional parameter 'y' corresponds to parameter 'x' of the overridden method"
+        abstract class Foo
+          abstract def foo(x : Int32)
+        end
+
+        class Bar < Foo
+          def foo(y : Int32 | Char); end
+          def foo(x : Int32 | String); end
+        end
+        CR
+    end
+
+    it "informs warnings once per matching overload (2)" do
+      assert_warning <<-CR, "warning in line 7\nWarning: positional parameter 'y' corresponds to parameter 'x' of the overridden method"
+        abstract class Foo
+          abstract def foo(x : Int32)
+        end
+
+        class Bar < Foo
+          def foo(x : Int32 | Char); end
+          def foo(y : Int32 | String); end
+        end
+        CR
+    end
+
+    it "informs warnings once per matching overload (3)" do
+      warnings_result(<<-CR).size.should eq(2)
+        abstract class Foo
+          abstract def foo(x : Int32)
+        end
+
+        class Bar < Foo
+          def foo(y : Int32 | Char); end
+          def foo(z : Int32 | String); end
+        end
+        CR
+    end
   end
 end

@@ -111,19 +111,22 @@ class Crystal::AbstractDefChecker
   # Returns `true` if `ancestor_type` implements `method` of `base` when computing
   # that information to check whether `target_type` implements `method` of `base`.
   def implements?(target_type : Type, ancestor_type : Type, method : Def, base : Type, method_free_vars)
+    implemented = false
     ancestor_type.defs.try &.each_value do |defs_with_metadata|
       defs_with_metadata.each do |def_with_metadata|
         a_def = def_with_metadata.def
         def_free_vars = free_var_nodes(a_def)
 
         if implements?(target_type, ancestor_type, a_def, def_free_vars, base, method, method_free_vars)
-          check_return_type(target_type, ancestor_type, a_def, base, method)
+          unless implemented
+            check_return_type(target_type, ancestor_type, a_def, base, method)
+            implemented = true
+          end
           check_positional_param_names(target_type, ancestor_type, a_def, base, method)
-          return true
         end
       end
     end
-    false
+    implemented
   end
 
   # Returns `true` if the method `t1#m1` implements `t2#m2` when computing
