@@ -124,7 +124,7 @@ struct UUID
   #
   # It is strongly recommended to use a cryptographically random source for
   # *random*, such as `Random::Secure`.
-  def self.random(random = Random::Secure, variant = Variant::RFC4122, version = Version::V4)
+  def self.random(random = Random::Secure, variant = Variant::RFC4122, version = Version::V4) : self
     new_bytes = uninitialized UInt8[16]
     random.random_bytes(new_bytes.to_slice)
 

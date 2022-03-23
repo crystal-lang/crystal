@@ -40,14 +40,9 @@ module Crystal
         if number_autocast
           case self_type = self.type?
           when IntegerType
-            case self_type.kind
-            when :i8, :u8, :i16, :u16, :i32, :u32, :i64, :u64
-              true
-            else
-              false
-            end
+            self_type.kind.bytesize <= 64
           when FloatType
-            self_type.kind == :f32
+            self_type.kind.f32?
           end
         else
           false
@@ -67,17 +62,17 @@ module Crystal
         # Float32 mantissa has 23 bits,
         # Float64 mantissa has 52 bits
         case self_type.kind
-        when :i8, :u8, :i16, :u16
-          # Less than 23 bits, so convertible to Float32 and Float64 without precision loss
+        when .i8?, .u8?, .i16?, .u16?
+          # Less than 23 bits, so convertable to Float32 and Float64 without precision loss
           true
-        when :i32, :u32
-          # Less than 52 bits, so convertible to Float64 without precision loss
-          other_type.kind == :f64
+        when .i32?, .u32?
+          # Less than 52 bits, so convertable to Float64 without precision loss
+          other_type.kind.f64?
         else
           false
         end
       when {FloatType, FloatType}
-        self_type.kind == :f32 && other_type.kind == :f64
+        self_type.kind.f32? && other_type.kind.f64?
       else
         false
       end
@@ -273,8 +268,8 @@ module Crystal
     def free_var?(node : Path)
       free_vars = @free_vars
       return false unless free_vars
-
-      !node.global? && node.names.size == 1 && free_vars.includes?(node.names.first)
+      name = node.single_name?
+      !name.nil? && free_vars.includes?(name)
     end
 
     def free_var?(any)

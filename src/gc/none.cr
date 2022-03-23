@@ -71,7 +71,7 @@ module GC
       raise RuntimeError.from_errno("_beginthreadex") if ret.null?
       ret.as(LibC::HANDLE)
     end
-  {% else %}
+  {% elsif !flag?(:wasm32) %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
       LibC.pthread_create(thread, attr, start, arg)

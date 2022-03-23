@@ -489,6 +489,12 @@ describe "Slice" do
     slice.to_a.should eq([1, 2, 3])
   end
 
+  it "does Bytes[]" do
+    slice = Bytes[]
+    slice.should be_a(Bytes)
+    slice.empty?.should be_true
+  end
+
   it "uses percent vars in [] macro (#2954)" do
     slices = itself(Slice[1, 2], Slice[3])
     slices[0].to_a.should eq([1, 2])
