@@ -104,7 +104,7 @@
 - Add docs for `String#[]` ([#11690](https://github.com/crystal-lang/crystal/pull/11690), thanks @wontruefree)
 - Allow explicit usage of `libiconv` ([#11876](https://github.com/crystal-lang/crystal/pull/11876), thanks @luislavena)
 - **(breaking-change)** Fix: Honour encoding in `IO::Memory#to_s` ([#11875](https://github.com/crystal-lang/crystal/pull/11875), thanks @straight-shoota)
-- Add `self` return type to UUID constructor methods ([#10539](https://github.com/crystal-lang/crystal/pull/10539), thanks @straight-shoota)
+- Add `self` return type to `UUID` constructor methods ([#10539](https://github.com/crystal-lang/crystal/pull/10539), thanks @straight-shoota)
 
 ### Time
 
