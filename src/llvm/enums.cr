@@ -430,10 +430,6 @@ module LLVM
     end
   end
 
-  enum ModuleFlag : Int32
-    Warning = 2
-  end
-
   struct Metadata
     enum Type : UInt32
       Dbg                   =  0 # "dbg"

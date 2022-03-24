@@ -280,6 +280,12 @@ struct Crystal::TypeDeclarationProcessor
         ann.raise "can't annotate #{name} in #{owner} because it was first defined in #{supervar.owner}"
       end
     else
+      owner.all_subclasses.each do |subclass|
+        if subclass.is_a?(InstanceVarContainer) && (subclass_var = subclass.instance_vars[name]?)
+          raise TypeException.new("instance variable '#{name}' of #{subclass_var.owner} is already defined in #{owner}", subclass_var.location || type_decl.location)
+        end
+      end
+
       declare_meta_type_var(owner.instance_vars, owner, name, type_decl, instance_var: true, check_nilable: !owner.module?)
       remove_error owner, name
 
@@ -384,6 +390,12 @@ struct Crystal::TypeDeclarationProcessor
     # the guessed type information for subclasses
     supervar = owner.lookup_instance_var?(name)
     return if supervar
+
+    owner.all_subclasses.each do |subclass|
+      if subclass.is_a?(InstanceVarContainer) && (subclass_var = subclass.instance_vars[name]?)
+        raise TypeException.new("instance variable '#{name}' of #{subclass_var.owner} is already defined in #{owner}", subclass_var.location || type_info.location)
+      end
+    end
 
     case owner
     when NonGenericClassType

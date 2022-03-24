@@ -70,7 +70,9 @@ module Crystal::System
   ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true)
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./wasi/process"
+{% elsif flag?(:unix) %}
   require "./unix/process"
 {% elsif flag?(:win32) %}
   require "./win32/process"

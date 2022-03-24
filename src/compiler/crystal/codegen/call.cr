@@ -126,13 +126,13 @@ class Crystal::CodeGenVisitor
       location = node.location
       end_location = node.end_location
       case default_value.name
-      when :__LINE__
+      when .magic_line?
         call_args << int32(MagicConstant.expand_line(location))
-      when :__END_LINE__
+      when .magic_end_line?
         call_args << int32(MagicConstant.expand_line(end_location))
-      when :__FILE__
+      when .magic_file?
         call_args << build_string_constant(MagicConstant.expand_file(location))
-      when :__DIR__
+      when .magic_dir?
         call_args << build_string_constant(MagicConstant.expand_dir(location))
       else
         default_value.raise "BUG: unknown magic constant: #{default_value.name}"
@@ -229,10 +229,10 @@ class Crystal::CodeGenVisitor
       # If we are passing variadic arguments there are some special rules
       if i >= target_def_args_size
         arg_type = arg.type.remove_indirection
-        if arg_type.is_a?(FloatType) && arg_type.kind == :f32
+        if arg_type.is_a?(FloatType) && arg_type.kind.bytesize < 64
           # Floats must be passed as doubles (there are no float varargs)
           call_arg = extend_float @program.float64, call_arg
-        elsif arg_type.is_a?(IntegerType) && arg_type.kind.in?(:i8, :u8, :i16, :u16)
+        elsif arg_type.is_a?(IntegerType) && arg_type.kind.bytesize < 32
           # Integer with a size less that `int` must be converted to `int`
           call_arg = extend_int arg_type, @program.int32, call_arg
         end
