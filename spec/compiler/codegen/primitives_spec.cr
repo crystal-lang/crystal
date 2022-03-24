@@ -351,7 +351,7 @@ describe "Code gen: primitives" do
         CR
     end
 
-    # TODO: remove after 1.3.0
+    # TODO: remove after 1.5.0
     it "codegens atomicrmw with symbols" do
       run(<<-CR).to_i.should eq(3)
         @[Primitive(:atomicrmw)]
