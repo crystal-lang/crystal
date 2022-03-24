@@ -686,4 +686,18 @@ describe "Semantic: exception" do
       end
       CR
   end
+
+  it "correctly types variable assigned inside nested exception handler (#9769)" do
+    assert_type(%(
+      int = 1
+      begin
+        begin
+          int = "a"
+        rescue
+        end
+      rescue
+      end
+      int
+    )) { union_of(int32, string) }
+  end
 end
