@@ -66,7 +66,7 @@ class Crypto::Bcrypt
   # ```
   # require "crypto/bcrypt"
   #
-  # password = Crypto::Bcrypt.new "secret", "AQIDBAUGBwgJCgsMDQ4PEA=="
+  # password = Crypto::Bcrypt.new "secret", "salt_of_16_chars"
   # password.digest
   # ```
   def self.new(password : String, salt : String, cost = DEFAULT_COST)
