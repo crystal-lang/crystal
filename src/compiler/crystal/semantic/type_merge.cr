@@ -72,7 +72,7 @@ module Crystal
     end
 
     def compact_types(types)
-      compact_types(types) { |type| type }
+      compact_types(types, &.itself)
     end
 
     def compact_types(objects)

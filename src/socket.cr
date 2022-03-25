@@ -71,7 +71,7 @@ class Socket < IO
   # ```
   def connect(host : String, port : Int, connect_timeout = nil) : Nil
     Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
-      connect(addrinfo, timeout: connect_timeout) { |error| error }
+      connect(addrinfo, timeout: connect_timeout, &.itself)
     end
   end
 
@@ -103,7 +103,7 @@ class Socket < IO
   # ```
   def bind(host : String, port : Int) : Nil
     Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
-      system_bind(addrinfo, "#{host}:#{port}") { |errno| errno }
+      system_bind(addrinfo, "#{host}:#{port}", &.itself)
     end
   end
 
@@ -117,7 +117,7 @@ class Socket < IO
   # ```
   def bind(port : Int)
     Addrinfo.resolve("::", port, @family, @type, @protocol) do |addrinfo|
-      system_bind(addrinfo, "::#{port}") { |errno| errno }
+      system_bind(addrinfo, "::#{port}", &.itself)
     end
   end
 

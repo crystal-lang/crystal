@@ -1259,7 +1259,7 @@ module Crystal
       case method
       when "expressions"
         interpret_check_args do
-          ArrayLiteral.map(@expressions) { |expression| expression }
+          ArrayLiteral.map(@expressions, &.itself)
         end
       else
         super
@@ -1956,7 +1956,7 @@ module Crystal
       when "named_args"
         interpret_check_args do
           if named_args = self.named_args
-            ArrayLiteral.map(named_args) { |arg| arg }
+            ArrayLiteral.map(named_args, &.itself)
           else
             Nop.new
           end

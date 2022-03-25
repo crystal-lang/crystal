@@ -2129,7 +2129,7 @@ class Array(T)
   end
 
   protected def to_lookup_hash
-    to_lookup_hash { |elem| elem }
+    to_lookup_hash &.itself
   end
 
   protected def to_lookup_hash(& : T -> U) forall U

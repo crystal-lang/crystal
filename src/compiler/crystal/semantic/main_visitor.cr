@@ -2206,7 +2206,7 @@ module Crystal
     # This also applies to 'while' conditions and also
     # to the else part of an if, but with filters inverted.
     def filter_vars(filters)
-      filter_vars(filters) { |filter| filter }
+      filter_vars(filters, &.itself)
     end
 
     def filter_vars(filters)

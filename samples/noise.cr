@@ -23,7 +23,7 @@ end
 struct Noise2DContext
   def initialize
     @rgradients = StaticArray(Vec2, 256).new { random_gradient }
-    @permutations = StaticArray(Int32, 256).new { |i| i }
+    @permutations = StaticArray(Int32, 256).new &.itself
     @permutations.shuffle!
   end
 

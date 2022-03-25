@@ -38,12 +38,12 @@ class TCPServer < TCPSocket
       self.reuse_address = true
       self.reuse_port = true if reuse_port
 
-      if errno = system_bind(addrinfo, "#{host}:#{port}") { |errno| errno }
+      if errno = system_bind(addrinfo, "#{host}:#{port}", &.itself)
         close
         next errno
       end
 
-      if errno = listen(backlog) { |errno| errno }
+      if errno = listen(backlog, &.itself)
         close
         next errno
       end
