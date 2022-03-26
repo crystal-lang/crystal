@@ -19,6 +19,16 @@ struct LLVM::Function
     LibLLVM.set_function_call_convention(self, cc)
   end
 
+  def add_attribute(kind : String, value : String, index = AttributeIndex::FunctionIndex)
+    {% if LibLLVM.has_constant?(:AttributeRef) %}
+      context = LibLLVM.get_module_context(LibLLVM.get_global_parent(self))
+      attribute_ref = LibLLVM.create_string_attribute(context, kind, kind.bytesize, value, value.bytesize)
+      LibLLVM.add_attribute_at_index(self, index, attribute_ref)
+    {% else %}
+      raise "Unsupported: can't set string attributes in LLVM < 3.9"
+    {% end %}
+  end
+
   def add_attribute(attribute : Attribute, index = AttributeIndex::FunctionIndex, type : Type? = nil)
     return if attribute.value == 0
     {% if LibLLVM.has_constant?(:AttributeRef) %}
