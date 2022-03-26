@@ -180,7 +180,7 @@ describe "Range" do
 
       v = (0.0..1.0).bsearch { |x| x > 0 }.not_nil!
       v.should be_close(0, 0.0001)
-      (0 < v).should be_true
+      v.should be > 0
 
       (-1.0..0.0).bsearch { |x| x >= 0 }.should eq 0.0
       (-1.0...0.0).bsearch { |x| x >= 0 }.should be_nil
