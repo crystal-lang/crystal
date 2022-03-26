@@ -508,8 +508,8 @@ module HTTP
         cookies << Cookie.new("x", "y")
 
         headers.get("Set-Cookie").size.should eq 2
-        headers.get("Set-Cookie").includes?("a=b").should be_true
-        headers.get("Set-Cookie").includes?("c=d").should be_true
+        headers.get("Set-Cookie").should contain("a=b")
+        headers.get("Set-Cookie").should contain("c=d")
 
         cookies.add_response_headers(headers)
 
@@ -527,8 +527,8 @@ module HTTP
         cookies.add_response_headers(headers)
         headers.get?("Set-Cookie").should_not be_nil
 
-        headers.get("Set-Cookie").includes?("a=b").should be_true
-        headers.get("Set-Cookie").includes?("c=d").should be_true
+        headers.get("Set-Cookie").should contain("a=b")
+        headers.get("Set-Cookie").should contain("c=d")
       end
 
       it "uses encode_www_form on Set-Cookie value" do
@@ -536,7 +536,7 @@ module HTTP
         cookies = Cookies.new
         cookies << Cookie.new("a", "b+c")
         cookies.add_response_headers(headers)
-        headers.get("Set-Cookie").includes?("a=b+c").should be_true
+        headers.get("Set-Cookie").should contain("a=b+c")
       end
 
       describe "when no cookies are set" do
