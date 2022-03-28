@@ -128,11 +128,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected #{actual_value.inspect} to be within #{@delta} of #{@expected_value}"
+      "Expected #{actual_value.inspect} to be within #{@delta} of #{@expected_value.inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected #{actual_value.inspect} not to be within #{@delta} of #{@expected_value}"
+      "Expected #{actual_value.inspect} not to be within #{@delta} of #{@expected_value.inspect}"
     end
   end
 
@@ -193,11 +193,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected #{actual_value.inspect} to be #{@op} #{@expected_value}"
+      "Expected #{actual_value.inspect} to be #{@op} #{@expected_value.inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected #{actual_value.inspect} not to be #{@op} #{@expected_value}"
+      "Expected #{actual_value.inspect} not to be #{@op} #{@expected_value.inspect}"
     end
   end
 
