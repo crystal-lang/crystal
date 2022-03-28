@@ -41,10 +41,11 @@ describe "__divti3" do
   test__divti3(2, -1, -2)
   test__divti3(-2, 1, -2)
   test__divti3(-2, -1, 2)
-  test__divti3(make_ti(-9223372036854775808, 0x0), 1, make_ti(-9223372036854775808, 0x0))
-  test__divti3(make_ti(-9223372036854775808, 0x0), -1, make_ti(-9223372036854775808, 0x0))
-  test__divti3(make_ti(-9223372036854775808, 0x0), -2, make_ti(0x4000000000000000, 0x0))
-  test__divti3(make_ti(-9223372036854775808, 0x0), 2, make_ti(-0x4000000000000000, 0x0))
+
+  test__divti3(0x80000000000000000000000000000000_u128.to_i128!, 1, 0x80000000000000000000000000000000_u128.to_i128!)
+  test__divti3(0x80000000000000000000000000000000_u128.to_i128!, -1, 0x80000000000000000000000000000000_u128.to_i128!)
+  test__divti3(0x80000000000000000000000000000000_u128.to_i128!, -2, 0x40000000000000000000000000000000_i128)
+  test__divti3(0x80000000000000000000000000000000_u128.to_i128!, 2, 0xC0000000000000000000000000000000_u128.to_i128!)
 end
 
 describe "__modti3" do
@@ -56,28 +57,28 @@ describe "__modti3" do
   test__modti3(-5, 3, -2)
   test__modti3(-5, -3, -2)
 
-  test__modti3(make_ti(-9223372036854775808, 0x0), 1, 0)
-  test__modti3(make_ti(-9223372036854775808, 0x0), -1, 0)
-  test__modti3(make_ti(-9223372036854775808, 0x0), 2, 0)
-  test__modti3(make_ti(-9223372036854775808, 0x0), -2, 0)
-  test__modti3(make_ti(-9223372036854775808, 0x0), 3, -2)
-  test__modti3(make_ti(-9223372036854775808, 0x0), -3, -2)
+  test__modti3(0x80000000000000000000000000000000_u128.to_i128!, 1, 0)
+  test__modti3(0x80000000000000000000000000000000_u128.to_i128!, -1, 0)
+  test__modti3(0x80000000000000000000000000000000_u128.to_i128!, 2, 0)
+  test__modti3(0x80000000000000000000000000000000_u128.to_i128!, -2, 0)
+  test__modti3(0x80000000000000000000000000000000_u128.to_i128!, 3, -2)
+  test__modti3(0x80000000000000000000000000000000_u128.to_i128!, -3, -2)
 end
 
 describe "__udivti3" do
   test__udivti3(0, 1, 0)
   test__udivti3(2, 1, 2)
 
-  test__udivti3(make_tu(0x0, 0x8000000000000000), 1, make_tu(0x0, 0x8000000000000000))
-  test__udivti3(make_tu(0x0, 0x8000000000000000), 2, make_tu(0x0, 0x4000000000000000))
-  test__udivti3(make_tu(0xffffffffffffffff, 0xffffffffffffffff), 2, make_tu(0x7fffffffffffffff, 0xffffffffffffffff))
+  test__udivti3(0x08000000000000000_u128, 1, 0x08000000000000000_u128)
+  test__udivti3(0x08000000000000000_u128, 2, 0x04000000000000000_u128)
+  test__udivti3(0xffffffffffffffffffffffffffffffff_u128, 2, 0x7fffffffffffffffffffffffffffffff_u128)
 end
 
 describe "__umodti3" do
   test__umodti3(0, 1, 0)
   test__umodti3(2, 1, 0)
 
-  test__umodti3(make_tu(0x0, 0x8000000000000000), 1, 0)
-  test__umodti3(make_tu(0x0, 0x8000000000000000), 2, 0)
-  test__umodti3(make_tu(0xffffffffffffffff, 0xffffffffffffffff), 2, 1)
+  test__umodti3(0x08000000000000000_u128, 1, 0)
+  test__umodti3(0x08000000000000000_u128, 2, 0)
+  test__umodti3(0xffffffffffffffffffffffffffffffff_u128, 2, 1)
 end
