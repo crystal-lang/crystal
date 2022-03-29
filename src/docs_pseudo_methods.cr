@@ -200,3 +200,21 @@ class Object
   def __crystal_pseudo_responds_to?(name : Symbol) : Bool
   end
 end
+
+struct Enum
+  # Returns the underlying value held by the enum instance.
+  #
+  # ```
+  # enum Color
+  #   Red
+  #   Green
+  #   Blue
+  # end
+  #
+  # Color::Red.value   # => 0
+  # Color::Green.value # => 1
+  # Color::Blue.value  # => 2
+  # ```
+  def __crystal_pseudo_value : Int
+  end
+end
