@@ -398,7 +398,7 @@ module Crystal
     it "namespace is divided by hyphen" do
       Crystal::Init::View.module_name("my-proj-name").should eq "My::Proj::Name"
     end
-    it "hyphen follwed by non-ascii letter is replaced by its character" do
+    it "hyphen followed by non-ascii letter is replaced by its character" do
       Crystal::Init::View.module_name("my-proj-1").should eq "My::Proj1"
     end
     it "underscore is ignored" do

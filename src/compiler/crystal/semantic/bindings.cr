@@ -84,7 +84,7 @@ module Crystal
         if self.global?
           from.raise "global variable '#{self.name}' must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
         else
-          from.raise "#{self.kind} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
+          from.raise "#{self.kind.to_s.underscore} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
         end
       when Def
         (self.return_type || self).raise "method #{self.short_reference} must return #{freeze_type} but it is returning #{invalid_type}", inner, Crystal::FrozenTypeException
@@ -326,7 +326,17 @@ module Crystal
       when UnionType
         haystack.union_types.any? { |sub| type_includes?(sub, needle) }
       when GenericClassInstanceType
-        haystack.type_vars.any? { |key, sub| sub.is_a?(Var) && type_includes?(sub.type, needle) }
+        splat_index = haystack.generic_type.splat_index
+        haystack.type_vars.each_with_index do |(_, sub), index|
+          if sub.is_a?(Var)
+            if index == splat_index
+              return true if sub.type.as(TupleInstanceType).tuple_types.any? { |sub2| type_includes?(sub2, needle) }
+            else
+              return true if type_includes?(sub.type, needle)
+            end
+          end
+        end
+        false
       else
         false
       end

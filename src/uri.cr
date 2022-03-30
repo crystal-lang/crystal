@@ -265,7 +265,7 @@ class URI
   # require "uri"
   #
   # uri = URI.parse "http://foo.com?id=30&limit=5#time=1305298413"
-  # uri.query_params # => URI::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
+  # uri.query_params # => URI::Params{"id" => ["30"], "limit" => ["5"]}
   # ```
   def query_params : URI::Params
     URI::Params.parse(@query || "")
@@ -477,7 +477,6 @@ class URI
 
     query = uri.query
     query = nil if query == @query
-    fragment = uri.fragment
 
     path = relativize_path(@path, uri.path)
 

@@ -262,9 +262,9 @@ class Crystal::CodeGenVisitor
   private def codegen_out_of_range(target_type : IntegerType, arg_type : FloatType, arg)
     min_value, max_value = target_type.range
     max_value = case arg_type.kind
-                when :f32
+                when .f32?
                   float32_upper_bound(max_value)
-                when :f64
+                when .f64?
                   float64_upper_bound(max_value)
                 else
                   raise "BUG: unknown float type"
@@ -307,7 +307,7 @@ class Crystal::CodeGenVisitor
   end
 
   private def codegen_out_of_range(target_type : FloatType, arg_type : IntegerType, arg)
-    if arg_type.kind == :u128 && target_type.kind == :f32
+    if arg_type.kind.u128? && target_type.kind.f32?
       # since Float32::MAX < UInt128::MAX
       # the value will be outside of the float range if
       # arg > Float32::MAX
@@ -668,7 +668,7 @@ class Crystal::CodeGenVisitor
 
   def codegen_convert(from_type : IntegerType, to_type : FloatType, arg, *, checked : Bool)
     if checked
-      if from_type.kind == :u128 && to_type.kind == :f32
+      if from_type.kind.u128? && to_type.kind.f32?
         overflow = codegen_out_of_range(to_type, from_type, arg)
         codegen_raise_overflow_cond(overflow)
       end
@@ -977,6 +977,9 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_proc_call(node, target_def, call_args)
+    location = @call_location
+    set_current_debug_location(location) if location && @debug.line_numbers?
+
     closure_ptr = call_args[0]
 
     # For non-closure args we use byval attribute and other things
@@ -1009,10 +1012,7 @@ class Crystal::CodeGenVisitor
     ctx_is_null = equal? ctx_ptr, llvm_context.void_pointer.null
     cond ctx_is_null, ctx_is_null_block, ctx_is_not_null_block
 
-    old_needs_value = @needs_value
-    @needs_value = true
-
-    phi_value = Phi.open(self, node, @needs_value) do |phi|
+    Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_proc_type(context.type)
 
@@ -1049,9 +1049,6 @@ class Crystal::CodeGenVisitor
       target_def.abi_info = old_abi_info
       target_def.c_calling_convention = old_c_calling_convention
     end
-
-    old_needs_value = @needs_value
-    phi_value
   end
 
   def codegen_extern_primitive_proc_call(target_def, args, fun_ptr)

@@ -207,19 +207,31 @@ class IO::Memory < IO
     @pos = @bytesize
   end
 
+  # :inherit:
   def gets_to_end : String
     return super if @encoding
 
     check_open
 
-    pos = Math.min(@pos, @bytesize)
-
-    if pos == @bytesize
+    if @pos >= @bytesize
       ""
     else
-      String.new(@buffer + @pos, @bytesize - @pos).tap do
-        @pos = @bytesize
-      end
+      str = String.new(@buffer + @pos, @bytesize - @pos)
+      @pos = @bytesize
+      str
+    end
+  end
+
+  # :inherit:
+  def getb_to_end : Bytes
+    check_open
+
+    if @pos >= @bytesize
+      Bytes[]
+    else
+      bytes = Slice.new(@buffer + @pos, @bytesize - @pos).dup
+      @pos = @bytesize
+      bytes
     end
   end
 
@@ -392,7 +404,15 @@ class IO::Memory < IO
   # io.to_s # => "123"
   # ```
   def to_s : String
-    String.new @buffer, @bytesize
+    if encoding = @encoding
+      {% if flag?(:without_iconv) %}
+        raise NotImplementedError.new("String.encode")
+      {% else %}
+        String.new to_slice, encoding: encoding.name, invalid: encoding.invalid
+      {% end %}
+    else
+      String.new @buffer, @bytesize
+    end
   end
 
   # Returns the underlying bytes.
@@ -415,7 +435,15 @@ class IO::Memory < IO
       new_bytesize = bytesize * 2
       resize_to_capacity(new_bytesize) if @capacity < new_bytesize
     end
-    io.write(to_slice)
+    if encoding = @encoding
+      {% if flag?(:without_iconv) %}
+        raise NotImplementedError.new("String.encode")
+      {% else %}
+        String.encode(to_slice, encoding.name, io.encoding, io, io.@encoding.try(&.invalid))
+      {% end %}
+    else
+      io.write(to_slice)
+    end
   end
 
   private def check_writeable
