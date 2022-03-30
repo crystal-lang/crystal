@@ -1,5 +1,5 @@
 require "spec"
-require "crystal/compiler_rt/shr"
+require "crystal/compiler_rt/shift"
 require "./spec_helper"
 
 # Ported from https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/test/builtins/Unit/ashrti3_test.c

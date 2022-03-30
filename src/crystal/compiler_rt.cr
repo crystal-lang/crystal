@@ -12,7 +12,7 @@ require "./compiler_rt/divmod128.cr"
 
 {% if flag?(:wasm32) %}
   # __ashlti3, __ashrti3 and __lshrti3 were only missing on wasm32
-  require "./compiler_rt/shr.cr"
+  require "./compiler_rt/shift.cr"
 {% end %}
 
 {% if flag?(:win32) && flag?(:bits64) %}
