@@ -40,8 +40,12 @@ module ENV
     value
   end
 
-  # Returns `true` if the environment variable named *key* exists and `false`
-  # if it doesn't.
+  # Returns `true` if the environment variable named *key* exists and `false` if it doesn't.
+  #
+  # ```
+  # ENV.has_key?("NOT_A_REAL_KEY") # => false
+  # ENV.has_key?("PATH")           # => true
+  # ```
   def self.has_key?(key : String) : Bool
     Crystal::System::Env.has_key?(key)
   end
