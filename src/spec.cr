@@ -127,7 +127,7 @@ end
 
 Spec.add_split_filter ENV["SPEC_SPLIT"]?
 
-{% unless flag?(:win32) %}
+{% unless flag?(:win32) || flag?(:wasm32) %}
   # TODO(windows): re-enable this once Signal is ported
   Signal::INT.trap { Spec.abort! }
 {% end %}

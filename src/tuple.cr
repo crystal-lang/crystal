@@ -94,6 +94,7 @@ struct Tuple
       args
     {% elsif @type.name(generic_args: false) == "Tuple()" %}
       # special case: empty tuple
+      # TODO: check against `Tuple()` directly after 1.4.0
       args
     {% else %}
       # explicitly provided type vars

@@ -2551,12 +2551,14 @@ describe "String" do
     string.should be(clone)
   end
 
-  it "allocates buffer of correct size when UInt8 is given to new (#3332)" do
-    String.new(255_u8) do |buffer|
-      LibGC.size(buffer).should be >= 255
-      {255, 0}
+  {% unless flag?(:wasm32) %}
+    it "allocates buffer of correct size when UInt8 is given to new (#3332)" do
+      String.new(255_u8) do |buffer|
+        LibGC.size(buffer).should be >= 255
+        {255, 0}
+      end
     end
-  end
+  {% end %}
 
   it "raises on String.new if returned bytesize is greater than capacity" do
     expect_raises ArgumentError, "Bytesize out of capacity bounds" do

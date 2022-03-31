@@ -45,6 +45,7 @@ require "enumerable"
 require "env"
 require "errno"
 require "winerror"
+require "wasi_error"
 require "file"
 require "float"
 require "gc"
@@ -71,7 +72,7 @@ require "range"
 require "reference"
 require "regex"
 require "set"
-{% unless flag?(:win32) %}
+{% unless flag?(:win32) || flag?(:wasm32) %}
   require "signal"
 {% end %}
 require "slice"
