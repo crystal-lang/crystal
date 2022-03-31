@@ -326,7 +326,17 @@ module Crystal
       when UnionType
         haystack.union_types.any? { |sub| type_includes?(sub, needle) }
       when GenericClassInstanceType
-        haystack.type_vars.any? { |key, sub| sub.is_a?(Var) && type_includes?(sub.type, needle) }
+        splat_index = haystack.generic_type.splat_index
+        haystack.type_vars.each_with_index do |(_, sub), index|
+          if sub.is_a?(Var)
+            if index == splat_index
+              return true if sub.type.as(TupleInstanceType).tuple_types.any? { |sub2| type_includes?(sub2, needle) }
+            else
+              return true if type_includes?(sub.type, needle)
+            end
+          end
+        end
+        false
       else
         false
       end

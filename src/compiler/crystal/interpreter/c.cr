@@ -27,16 +27,14 @@ module Crystal
   class IntegerType
     def ffi_type : FFI::Type
       case kind
-      when :i8  then FFI::Type.sint8
-      when :u8  then FFI::Type.uint8
-      when :i16 then FFI::Type.sint16
-      when :u16 then FFI::Type.uint16
-      when :i32 then FFI::Type.sint32
-      when :u32 then FFI::Type.uint32
-      when :i64 then FFI::Type.sint64
-      when :u64 then FFI::Type.uint64
-      when :f32 then FFI::Type.float
-      when :f64 then FFI::Type.double
+      when .i8?  then FFI::Type.sint8
+      when .u8?  then FFI::Type.uint8
+      when .i16? then FFI::Type.sint16
+      when .u16? then FFI::Type.uint16
+      when .i32? then FFI::Type.sint32
+      when .u32? then FFI::Type.uint32
+      when .i64? then FFI::Type.sint64
+      when .u64? then FFI::Type.uint64
       else
         raise "BUG: missing ffi_type for #{self} (#{self.class})"
       end
@@ -46,8 +44,8 @@ module Crystal
   class FloatType
     def ffi_type : FFI::Type
       case kind
-      when :f32 then FFI::Type.float
-      when :f64 then FFI::Type.double
+      when .f32? then FFI::Type.float
+      when .f64? then FFI::Type.double
       else
         raise "BUG: missing ffi_type for #{self} (#{self.class})"
       end

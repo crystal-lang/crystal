@@ -844,7 +844,7 @@ struct Int8
   #
   # ```
   # Int8.new "20"                        # => 20
-  # Int8.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int8:   20 (ArgumentError)
+  # Int8.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int8: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i8 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -895,7 +895,7 @@ struct Int16
   #
   # ```
   # Int16.new "20"                        # => 20
-  # Int16.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int16:   20 (ArgumentError)
+  # Int16.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int16: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i16 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -946,7 +946,7 @@ struct Int32
   #
   # ```
   # Int32.new "20"                        # => 20
-  # Int32.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int32:   20 (ArgumentError)
+  # Int32.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int32: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i32 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -997,7 +997,7 @@ struct Int64
   #
   # ```
   # Int64.new "20"                        # => 20
-  # Int64.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int64:   20 (ArgumentError)
+  # Int64.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int64: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i64 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -1049,7 +1049,7 @@ struct Int128
   #
   # ```
   # Int128.new "20"                        # => 20
-  # Int128.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int128:   20 (ArgumentError)
+  # Int128.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int128: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i128 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -1101,7 +1101,7 @@ struct UInt8
   #
   # ```
   # UInt8.new "20"                        # => 20
-  # UInt8.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt8:   20 (ArgumentError)
+  # UInt8.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt8: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u8 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -1156,7 +1156,7 @@ struct UInt16
   #
   # ```
   # UInt16.new "20"                        # => 20
-  # UInt16.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt16:   20 (ArgumentError)
+  # UInt16.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt16: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u16 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -1211,7 +1211,7 @@ struct UInt32
   #
   # ```
   # UInt32.new "20"                        # => 20
-  # UInt32.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt32:   20 (ArgumentError)
+  # UInt32.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt32: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u32 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -1266,7 +1266,7 @@ struct UInt64
   #
   # ```
   # UInt64.new "20"                        # => 20
-  # UInt64.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt64:   20 (ArgumentError)
+  # UInt64.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt64: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u64 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -1322,7 +1322,7 @@ struct UInt128
   #
   # ```
   # UInt128.new "20"                        # => 20
-  # UInt128.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt128:   20 (ArgumentError)
+  # UInt128.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt128: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u128 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal

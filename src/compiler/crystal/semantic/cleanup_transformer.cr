@@ -367,12 +367,16 @@ module Crystal
     end
 
     def transform(node : Path)
-      # Some constants might not have been cleaned up at this point because
-      # they don't have an explicit `Assign` node. One example is regex
-      # literals: a constant is created for them, but there's no `Assign` node.
-      if (const = node.target_const) && const.used? && !const.cleaned_up?
-        const.value = const.value.transform self
-        const.cleaned_up = true
+      if const = node.target_const
+        @program.check_deprecated_constant(const, node)
+
+        # Some constants might not have been cleaned up at this point because
+        # they don't have an explicit `Assign` node. One example is regex
+        # literals: a constant is created for them, but there's no `Assign` node.
+        if const.used? && !const.cleaned_up?
+          const.value = const.value.transform self
+          const.cleaned_up = true
+        end
       end
 
       node
@@ -502,8 +506,6 @@ module Crystal
       end
 
       if target_defs = node.target_defs
-        changed = false
-
         if target_defs.size == 1
           if target_defs[0].is_a?(External)
             check_args_are_not_closure node, "can't send closure to C function"
