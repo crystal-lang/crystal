@@ -73,14 +73,14 @@ module ENV
   # Returns an array of all the environment variable names.
   def self.keys : Array(String)
     keys = [] of String
-    each { |key, _| keys << key }
+    each { |key, v| keys << key }
     keys
   end
 
   # Returns an array of all the environment variable values.
   def self.values : Array(String)
     values = [] of String
-    each { |_, value| values << value }
+    each { |k, value| values << value }
     values
   end
 
@@ -109,6 +109,14 @@ module ENV
     end
   end
 
+  # Deletes all keys from enviroment.  Note this does not clear the environment
+  # from the parent process.
+  #
+  # ```
+  # ENV.size # => 56
+  # ENV.clear
+  # ENV.size # => 0
+  # ```
   def self.clear : Nil
     keys.each { |k| delete k }
   end
