@@ -99,7 +99,7 @@ lib LibGMP
   fun tdiv_qr_ui = __gmpz_tdiv_qr_ui(q : MPZ*, r : MPZ*, n : MPZ*, d : UI) : UI
 
   fun divisible_p = __gmpz_divisible_p(n : MPZ*, d : MPZ*) : Int
-  fun divisible_ui_p = __gmpz_divisible_ui_p(n : MPZ*, d : ULong) : Int
+  fun divisible_ui_p = __gmpz_divisible_ui_p(n : MPZ*, d : UI) : Int
 
   fun neg = __gmpz_neg(rop : MPZ*, op : MPZ*)
   fun abs = __gmpz_abs(rop : MPZ*, op : MPZ*)
