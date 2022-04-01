@@ -4,7 +4,7 @@ class Crystal::Command
   private def env
     var_names = [] of String
 
-    parse_with_crystal_opts do |opts|
+    OptionParser.parse(@options) do |opts|
       opts.banner = env_usage
 
       opts.on("-h", "--help", "Show this message") do
