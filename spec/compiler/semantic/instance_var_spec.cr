@@ -5500,6 +5500,37 @@ describe "Semantic: instance var" do
       CR
   end
 
+  it "looks up return type restriction in defining type, not instantiated type (#11961)" do
+    assert_type(%(
+      module Foo(T)
+        def foo : T
+          x = uninitialized T
+          x
+        end
+      end
+
+      module Bar(T)
+        include Foo(T)
+      end
+
+      struct Tuple
+        include Bar(Union(*T))
+      end
+
+      class Test
+        def initialize
+          @foo = 0
+        end
+
+        def test
+          @foo = {@foo, 0}.foo
+        end
+      end
+
+      Test.new.@foo
+      )) { int32 }
+  end
+
   describe "instance variable inherited from multiple parents" do
     context "with compatible type" do
       it "module and class, with declarations" do
