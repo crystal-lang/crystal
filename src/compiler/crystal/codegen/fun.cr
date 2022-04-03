@@ -203,7 +203,7 @@ class Crystal::CodeGenVisitor
       end
 
       if @program.has_flag?("wasm32")
-        if target_def.is_a? External && (wasm_import_module = target_def.wasm_import_module)
+        if target_def.is_a?(External) && (wasm_import_module = target_def.wasm_import_module)
           context.fun.add_target_dependent_attribute("wasm-import-name", target_def.real_name)
           context.fun.add_target_dependent_attribute("wasm-import-module", wasm_import_module)
         end
