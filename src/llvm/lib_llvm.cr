@@ -372,7 +372,6 @@ lib LibLLVM
     fun get_last_enum_attribute_kind = LLVMGetLastEnumAttributeKind : UInt
     fun get_enum_attribute_kind_for_name = LLVMGetEnumAttributeKindForName(name : Char*, s_len : LibC::SizeT) : UInt
     fun create_enum_attribute = LLVMCreateEnumAttribute(c : ContextRef, kind_id : UInt, val : UInt64) : AttributeRef
-    fun create_string_attribute = LLVMCreateStringAttribute(c : ContextRef, kind : Char*, kind_len : UInt32, val : Char*, val_len : UInt32) : AttributeRef
     fun add_attribute_at_index = LLVMAddAttributeAtIndex(f : ValueRef, idx : AttributeIndex, a : AttributeRef)
     fun get_enum_attribute_at_index = LLVMGetEnumAttributeAtIndex(f : ValueRef, idx : AttributeIndex, kind_id : UInt) : AttributeRef
     fun add_call_site_attribute = LLVMAddCallSiteAttribute(f : ValueRef, idx : AttributeIndex, value : AttributeRef)
