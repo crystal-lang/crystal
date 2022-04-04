@@ -1794,6 +1794,9 @@ module Crystal
     assert_syntax_error "def foo(**x, &x); end", "duplicated def parameter name: x"
     assert_syntax_error "def foo(x, **x); end", "duplicated def parameter name: x"
 
+    assert_syntax_error "fun foo(x : Int32, x : Int64); end", "duplicated fun parameter name: x"
+    assert_syntax_error "lib Foo; fun foo(x : Int32, x : Int64); end", "duplicated fun parameter name: x"
+
     assert_syntax_error "Set {1, 2, 3} of Int32"
     assert_syntax_error "Hash {foo: 1} of Int32 => Int32"
     assert_syntax_error "enum Foo < UInt16; end"

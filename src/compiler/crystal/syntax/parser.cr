@@ -5621,6 +5621,12 @@ module Crystal
               arg_type = parse_bare_proc_type
               skip_space_or_newline
 
+              args.each do |arg|
+                if arg.name == arg_name
+                  raise "duplicated fun parameter name: #{arg_name}", arg_location
+                end
+              end
+
               args << Arg.new(arg_name, nil, arg_type).at(arg_location)
 
               push_var_name arg_name if require_body
