@@ -382,6 +382,7 @@ module Crystal
     it_parses "def foo(x : U) : Int32 forall T, U; end", Def.new("foo", args: [Arg.new("x", restriction: "U".path)], return_type: "Int32".path, free_vars: %w(T U))
     assert_syntax_error "def foo(x : U) forall; end"
     assert_syntax_error "def foo(x : U) forall U,; end"
+    assert_syntax_error "def foo(x : U) forall U, U; end", "duplicated free variable name: U"
 
     it_parses "foo", "foo".call
     it_parses "foo()", "foo".call
