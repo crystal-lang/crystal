@@ -245,12 +245,17 @@ module Crystal
 
   class Path
     def restriction_of?(other : Path, owner, self_free_vars = nil, other_free_vars = nil)
-      return true if self == other
+      self_is_free_var = self_free_vars && self.single_name?.try { |name| self_free_vars.includes?(name) }
+      other_is_free_var = other_free_vars && other.single_name?.try { |name| other_free_vars.includes?(name) }
 
-      self_type = owner.lookup_path(self)
-      if self_type
-        other_type = owner.lookup_path(other)
-        if other_type
+      if self_is_free_var == other_is_free_var
+        # TODO: if both paths are free variables, we need to detect renamed
+        # variables properly instead of doing a plain name check
+        return true if self == other
+      end
+
+      if !self_is_free_var && (self_type = owner.lookup_path(self))
+        if !other_is_free_var && (other_type = owner.lookup_path(other))
           return self_type.restriction_of?(other_type, owner, self_free_vars, other_free_vars)
         else
           return true
@@ -261,11 +266,22 @@ module Crystal
     end
 
     def restriction_of?(other : Union, owner, self_free_vars = nil, other_free_vars = nil)
+      return false if self_free_vars && self.single_name?.try { |name| self_free_vars.includes?(name) }
+
       # `true` if this type is a restriction of any type in the union
       other.types.any? { |o| self.restriction_of?(o, owner, self_free_vars, other_free_vars) }
     end
 
     def restriction_of?(other : Generic, owner, self_free_vars = nil, other_free_vars = nil)
+      # ```
+      # def foo(param : T) forall T
+      # end
+      #
+      # def foo(param : Array(Foo))
+      # end
+      # ```
+      return false if self_free_vars && self.single_name?.try { |name| self_free_vars.includes?(name) }
+
       self_type = owner.lookup_path(self)
       if self_type
         other_type = owner.lookup_type?(other)
@@ -274,13 +290,6 @@ module Crystal
         end
       end
 
-      # ```
-      # def foo(param : T) forall T
-      # end
-      #
-      # def foo(param : Array(Foo))
-      # end
-      # ```
       false
     end
 
