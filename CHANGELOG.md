@@ -16,6 +16,8 @@
 - Remove useless assignments ([#11774](https://github.com/crystal-lang/crystal/pull/11774), thanks @IgorPolyakov)
 - Use "truthy" and "falsey" in more places in the documentation ([#11784](https://github.com/crystal-lang/crystal/pull/11784), thanks @HertzDevil)
 - Add missing code blocks for `self` in documentation ([#11718](https://github.com/crystal-lang/crystal/pull/11718), thanks @HertzDevil)
+- Add support for LLVM 14.0 ([#11905](https://github.com/crystal-lang/crystal/pull/11905), thanks @HertzDevil)
+- Fix code examples in doc comments (2022-03) ([#11927](https://github.com/crystal-lang/crystal/pull/11927), thanks @maiha)
 
 ### Collection
 
@@ -75,6 +77,7 @@
 - Add crash handler on Windows ([#11570](https://github.com/crystal-lang/crystal/pull/11570), thanks @HertzDevil)
 - Add specs for `NamedTuple#from` ([#11816](https://github.com/crystal-lang/crystal/pull/11816), thanks @straight-shoota)
 - Improve error for incompatible generic arguments for `WeakRef` ([#11911](https://github.com/crystal-lang/crystal/pull/11911), thanks @straight-shoota)
+- Add the wasm entrypoint defined in Crystal ([#11936](https://github.com/crystal-lang/crystal/pull/11936), thanks @lbguilherme)
 
 ### Serialization
 
@@ -93,6 +96,7 @@
 - Relax `ENV.fetch(key, &)`'s block restriction ([#11779](https://github.com/crystal-lang/crystal/pull/11779), thanks @HertzDevil)
 - Refactor target clauses for system implementations ([#11813](https://github.com/crystal-lang/crystal/pull/11813), thanks @straight-shoota)
 - Fix `Path` support for UNC shares ([#11827](https://github.com/crystal-lang/crystal/pull/11827), thanks @straight-shoota)
+- Fix regression for Linux older than 3.17: properly check that `getrandom` is available ([#11953](https://github.com/crystal-lang/crystal/pull/11953), thanks @lbguilherme)
 
 ### Text
 
@@ -105,6 +109,7 @@
 - Allow explicit usage of `libiconv` ([#11876](https://github.com/crystal-lang/crystal/pull/11876), thanks @luislavena)
 - **(breaking-change)** Fix: Honour encoding in `IO::Memory#to_s` ([#11875](https://github.com/crystal-lang/crystal/pull/11875), thanks @straight-shoota)
 - Add `self` return type to `UUID` constructor methods ([#10539](https://github.com/crystal-lang/crystal/pull/10539), thanks @straight-shoota)
+- Fix infinite loop for certain `StringPool` initial capacities ([#11929](https://github.com/crystal-lang/crystal/pull/11929), thanks @HertzDevil)
 
 ### Time
 
@@ -124,8 +129,10 @@
 - Remove useless assignments II ([#11843](https://github.com/crystal-lang/crystal/pull/11843), thanks @IgorPolyakov)
 - Limit the number of rendered overloads on signature mismatch ([#10890](https://github.com/crystal-lang/crystal/pull/10890), thanks @caspiano)
 - Support "can't infer type parameter" error for uninstantiated generic modules ([#11904](https://github.com/crystal-lang/crystal/pull/11904), thanks @HertzDevil)
-- Fix: Accept only option flags in `CRYSTAL_OPTS` ([#11780](https://github.com/crystal-lang/crystal/pull/11780), thanks @HertzDevil)
+- Fix: Accept only option flags in `CRYSTAL_OPTS` for build commands ([#11922](https://github.com/crystal-lang/crystal/pull/11922), thanks  @HertzDevil, @beta-ziliani)
 - Evaluate `LibLLVM::IS_LT_*` during macro expansion time ([#11913](https://github.com/crystal-lang/crystal/pull/11913), thanks @HertzDevil)
+- Fix incorrect var type inside nested exception handler ([#11928](https://github.com/crystal-lang/crystal/pull/11928), thanks @asterite)
+- Fix: Look up return type in defining type ([#11962](https://github.com/crystal-lang/crystal/pull/11962), thanks @asterite)
 
 ### Codegen
 
@@ -190,6 +197,10 @@
 - Improve section ordering in `scripts/github-changelog.cr` ([#11770](https://github.com/crystal-lang/crystal/pull/11770), thanks @straight-shoota)
 - Upload build artifacts to S3 bucket ([#11902](https://github.com/crystal-lang/crystal/pull/11902), thanks @matiasgarciaisaia, @straight-shoota)
 - Fix `make install` for BSD ([#11758](https://github.com/crystal-lang/crystal/pull/11758), thanks @straight-shoota)
+- Fix typo ([#11939](https://github.com/crystal-lang/crystal/pull/11939), thanks @taupiqueur)
+- [CI] Update to shards 0.17.0 ([#11930](https://github.com/crystal-lang/crystal/pull/11930), thanks @straight-shoota)
+- Use `be_empty` expectations in more specs ([#11937](https://github.com/crystal-lang/crystal/pull/11937), thanks @HertzDevil)
+- [CI] Update distribution-scripts ([#11969](https://github.com/crystal-lang/crystal/pull/11969), thanks @straight-shoota)
 
 # 1.3.2 (2022-01-18)
 
