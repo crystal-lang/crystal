@@ -2656,10 +2656,12 @@ module Crystal
       # we skip whitespace between the method name and the arg. The parenthesized
       # arg is transformed into a call with parenthesis: `foo (a)` becomes `foo(a)`.
       if node.args.size == 1 &&
+         @token.type.space? &&
          !node.named_args && !node.block_arg && !node.block &&
          (expressions = node.args[0].as?(Expressions)) &&
          expressions.keyword.paren? && expressions.expressions.size == 1
         skip_space
+        node.args[0] = expressions.expressions[0]
       end
 
       if @token.type.op_lparen?
