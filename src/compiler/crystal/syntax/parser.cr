@@ -2423,6 +2423,7 @@ module Crystal
             next_token_skip_space_or_newline
           end
 
+          key_location = @token.location
           first_key = parse_op_assign_no_control
           first_key = Splat.new(first_key).at(location) if first_is_splat
           case @token.type
@@ -2438,6 +2439,9 @@ module Crystal
               # It's a named tuple
               unless allow_of
                 raise "can't use named tuple syntax for Hash-like literal, use '=>'", @token
+              end
+              if first_key.value.empty?
+                raise "named tuple name cannot be empty", key_location
               end
               return parse_named_tuple(location, first_key.value)
             else
@@ -2603,6 +2607,7 @@ module Crystal
         next_token_skip_space_or_newline
 
         while !@token.type.op_rcurly?
+          key_location = @token.location
           key = @token.value.to_s
           if named_tuple_start?
             next_token_never_a_symbol
@@ -2610,6 +2615,10 @@ module Crystal
             key = parse_string_without_interpolation("named tuple name", want_skip_space: false)
           else
             raise "expected '}' or named tuple name, not #{@token}", @token
+          end
+
+          if key.empty?
+            raise "named tuple name cannot be empty", key_location
           end
 
           if @token.type.space?
@@ -3890,6 +3899,7 @@ module Crystal
       invalid_internal_name = nil
 
       if allow_external_name && (@token.type.ident? || string_literal_start?)
+        name_location = @token.location
         if @token.type.ident?
           if @token.keyword? && invalid_internal_name?(@token.value)
             invalid_internal_name = @token.dup
@@ -3900,6 +3910,11 @@ module Crystal
           external_name = parse_string_without_interpolation("external name")
           found_string_literal = true
         end
+
+        if external_name.empty?
+          raise "external parameter name cannot be empty", name_location
+        end
+
         found_space = @token.type.space? || @token.type.newline?
         skip_space
         do_next_token = false
@@ -4670,6 +4685,10 @@ module Crystal
           end
         end
 
+        if name.empty?
+          raise "named argument cannot have an empty name", location
+        end
+
         if named_args.any? { |arg| arg.name == name }
           raise "duplicated named argument: #{name}", location
         end
@@ -5020,6 +5039,7 @@ module Crystal
       named_args = [] of NamedArgument
 
       while @token.type != end_token
+        name_location = @token.location
         if named_tuple_start?
           name = @token.value.to_s
           next_token
@@ -5027,6 +5047,10 @@ module Crystal
           name = parse_string_without_interpolation("named argument")
         else
           raise "expected '#{end_token}' or named argument, not #{@token}", @token
+        end
+
+        if name.empty?
+          raise "named argument cannot have an empty name", name_location
         end
 
         if named_args.any? { |arg| arg.name == name }
@@ -5625,6 +5649,9 @@ module Crystal
 
               push_var_name arg_name if require_body
             else
+              if top_level
+                raise "top-level fun parameter must have a name", @token
+              end
               arg_type = parse_union_type
               args << Arg.new("", nil, arg_type).at(arg_type.location)
             end

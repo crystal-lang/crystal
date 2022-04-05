@@ -347,6 +347,7 @@ module Crystal
     it_parses "def foo(x @var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
     it_parses "def foo(x @@var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@@var".class_var, "var".var)] of ASTNode)
     assert_syntax_error "def foo(_ y); y; end"
+    assert_syntax_error "def foo(\"\" y); y; end", "external parameter name cannot be empty"
 
     it_parses %(def foo("bar qux" y); y; end), Def.new("foo", args: [Arg.new("y", external_name: "bar qux")], body: "y".var)
 
@@ -359,6 +360,8 @@ module Crystal
     assert_syntax_error "def foo(&a foo); end"
 
     it_parses "macro foo(**args)\n1\nend", Macro.new("foo", body: MacroLiteral.new("1\n"), double_splat: "args".arg)
+
+    assert_syntax_error "macro foo(\"\" y); end", "external parameter name cannot be empty"
 
     assert_syntax_error "macro foo(x, *); 1; end", "named parameters must follow bare *"
     assert_syntax_error "macro foo(**x, **y)", "only block parameter is allowed after double splat"
@@ -459,6 +462,8 @@ module Crystal
     it_parses "foo 1, a: 1, b: 2\n1", [Call.new(nil, "foo", [1.int32] of ASTNode, named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)]), 1.int32]
     it_parses "foo(a: 1\n)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)])
     it_parses "foo(\na: 1,\n)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)])
+
+    assert_syntax_error "foo(\"\": 1)", "named argument cannot have an empty name"
 
     it_parses %(foo("foo bar": 1, "baz": 2)), Call.new(nil, "foo", named_args: [NamedArgument.new("foo bar", 1.int32), NamedArgument.new("baz", 2.int32)])
     it_parses %(foo "foo bar": 1, "baz": 2), Call.new(nil, "foo", named_args: [NamedArgument.new("foo bar", 1.int32), NamedArgument.new("baz", 2.int32)])
@@ -619,6 +624,7 @@ module Crystal
     it_parses "Foo(X: U, Y: V)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("X", "U".path), NamedArgument.new("Y", "V".path)])
     assert_syntax_error "Foo(T, x: U)"
     assert_syntax_error "Foo(x: T y: U)"
+    assert_syntax_error "Foo(\"\": T)", "named argument cannot have an empty name"
 
     it_parses %(Foo("foo bar": U)), Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("foo bar", "U".path)])
     it_parses %(Foo("foo": U, "bar": V)), Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("foo", "U".path), NamedArgument.new("bar", "V".path)])
@@ -883,6 +889,7 @@ module Crystal
     it_parses "lib LibC\nfun SomeFun\nend", LibDef.new("LibC", [FunDef.new("SomeFun")] of ASTNode)
 
     it_parses "fun foo(x : Int32) : Int64\nx\nend", FunDef.new("foo", [Arg.new("x", restriction: "Int32".path)], "Int64".path, body: "x".var)
+    assert_syntax_error "fun foo(Int32); end", "top-level fun parameter must have a name"
     assert_syntax_error "fun Foo : Int64\nend"
 
     it_parses "lib LibC; {{ 1 }}; end", LibDef.new("LibC", body: [MacroExpression.new(1.int32)] of ASTNode)
@@ -1167,6 +1174,8 @@ module Crystal
     it_parses %({"foo": 1}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", 1.int32)])
     it_parses %({"foo": 1, "bar": 2}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", 1.int32), NamedTupleLiteral::Entry.new("bar", 2.int32)])
 
+    assert_syntax_error "{\"\": 1}", "named tuple name cannot be empty"
+    assert_syntax_error "{a: 1, \"\": 2}", "named tuple name cannot be empty"
     assert_syntax_error "{a: 1, a: 2}", "duplicated key: a"
     assert_syntax_error "{a[0]: 1}", "expecting token '=>', not ':'"
     assert_syntax_error "{a[]: 1}", "expecting token '=>', not ':'"
@@ -1427,6 +1436,8 @@ module Crystal
     it_parses "@[Foo(1, foo: 2\n)]", Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
     it_parses "@[Foo(\n1, foo: 2\n)]", Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
     it_parses "@[Foo::Bar]", Annotation.new(Path.new(["Foo", "Bar"]))
+
+    assert_syntax_error "@[Foo(\"\": 1)]"
 
     it_parses "lib LibC\n@[Bar]; end", LibDef.new("LibC", Annotation.new("Bar".path))
 
