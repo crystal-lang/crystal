@@ -24,6 +24,10 @@ private RNG_DATA_32 = [31541451u32, 0u32, 1u32, 234u32, 342475672u32, 863u32, 0x
 private RNG_DATA_64 = [148763248732657823u64, 18446744073709551615u64, 0u64,
                        32456325635673576u64, 2456245614625u64, 32452456246u64, 3956529762u64,
                        9823674982364u64, 234253464546456u64, 14345435645646u64]
+private RNG_DATA_128 = [128754786372150078811899827651424929082u128, 287310663052135213287488122041745566259u128,
+                        129681472900616682063524376235102159171u128, 316441316557354564287844305834964664416u128,
+                        137042429146512811775713901357546711305u128, 308256836474623807241882970141561527351u128,
+                        14572395642429569712823153944869064741u128, 303448328644279406964394144971876466575u128]
 
 describe "Random" do
   it "limited number" do
@@ -244,6 +248,19 @@ describe "Random" do
       expected -= 0x100 if a >= 0x80
       rng.rand(Int8::MIN..Int8::MAX).should eq expected
     end
+  end
+
+  it "works using U/Int128" do
+    rng = TestRNG.new(RNG_DATA_128)
+    RNG_DATA_128.each do |a|
+      rng.rand(UInt128::MIN..UInt128::MAX).should eq a
+    end
+
+    # (234_u128 << 96) + (1_u128 << 64) + 31541451_u128
+    TestRNG.new(RNG_DATA_32).rand(UInt128).should eq 18539390028356301740963025471691_u128
+
+    rand_in_range = TestRNG.new(RNG_DATA_32).rand(600_u128..700_u128)
+    (600..700).should contain(rand_in_range)
   end
 
   describe "random_bytes" do
