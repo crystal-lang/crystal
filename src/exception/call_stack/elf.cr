@@ -1,5 +1,7 @@
 require "crystal/elf"
-require "c/link"
+{% unless flag?(:wasm32) %}
+  require "c/link"
+{% end %}
 
 struct Exception::CallStack
   protected def self.load_debug_info_impl

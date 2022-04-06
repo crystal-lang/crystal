@@ -65,7 +65,7 @@ lib LibLLVMExt
                                                                             block : LibLLVM::BasicBlockRef) : LibLLVM::ValueRef
 
   fun di_builder_create_expression = LLVMExtDIBuilderCreateExpression(builder : DIBuilder,
-                                                                      addr : Int64*, length : SizeT) : LibLLVM::MetadataRef
+                                                                      addr : UInt64*, length : SizeT) : LibLLVM::MetadataRef
 
   fun di_builder_get_or_create_array = LLVMExtDIBuilderGetOrCreateArray(builder : DIBuilder, data : LibLLVM::MetadataRef*, length : SizeT) : LibLLVM::MetadataRef
   fun di_builder_create_enumerator = LLVMExtDIBuilderCreateEnumerator(builder : DIBuilder, name : Char*, value : Int64) : LibLLVM::MetadataRef

@@ -281,7 +281,7 @@ describe IO do
     it "reads all remaining content as bytes" do
       io = SimpleIOMemory.new(Bytes[0, 1, 3, 6, 10, 15])
       io.getb_to_end.should eq(Bytes[0, 1, 3, 6, 10, 15])
-      io.getb_to_end.should eq(Bytes.new(0))
+      io.getb_to_end.should eq(Bytes[])
       io.rewind
       bytes = io.getb_to_end
       bytes.should eq(Bytes[0, 1, 3, 6, 10, 15])

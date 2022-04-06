@@ -142,7 +142,8 @@ module Colorize
   # Resets the color and text decoration of the *io*.
   #
   # ```
-  # with_color.green.surround(io) do
+  # io = IO::Memory.new
+  # Colorize.with.green.surround(io) do
   #   io << "green"
   #   Colorize.reset
   #   io << " default"
@@ -421,12 +422,12 @@ struct Colorize::Object(T)
   #
   # io = IO::Memory.new
   #
-  # with_color.red.surround(io) do
+  # Colorize.with.red.surround(io) do
   #   io << "colorful"
-  #   with_color.green.bold.surround(io) do
+  #   Colorize.with.green.bold.surround(io) do
   #     io << " hello "
   #   end
-  #   with_color.blue.surround(io) do
+  #   Colorize.with.blue.surround(io) do
   #     io << "world"
   #   end
   #   io << " string"
