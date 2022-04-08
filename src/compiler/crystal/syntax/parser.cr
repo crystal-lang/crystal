@@ -36,7 +36,11 @@ module Crystal
       @def_nest = 0
       @fun_nest = 0
       @type_nest = 0
-      @call_args_nest = 0
+
+      # Keeps track of current call args starting locations,
+      # so if we parse a type declaration exactly at those points we
+      # know we don't need to declare those as local variables in those scopes.
+      @call_args_start_locations = [] of Location
       @temp_arg_count = 0
       @in_macro_expression = false
       @stop_on_yield = 0
@@ -4245,7 +4249,11 @@ module Crystal
           else
             if @no_type_declaration == 0 && @token.type.op_colon?
               declare_var = parse_type_declaration(Var.new(name).at(location))
-              push_var declare_var if @call_args_nest == 0
+
+              # Don't declare a local variable if it happens directly as an argument
+              # of a call, like `property foo : Int32` (we don't want `foo` to be a
+              # local variable afterwards.)
+              push_var declare_var unless @call_args_start_locations.includes?(location)
               declare_var
             elsif (!force_call && is_var)
               if @block_arg_name && !@uses_block_arg && name == @block_arg_name
@@ -4461,8 +4469,6 @@ module Crystal
       has_parentheses : Bool
 
     def parse_call_args(stop_on_do_after_space = false, allow_curly = false, control = false)
-      @call_args_nest += 1
-
       case @token.type
       when .op_lcurly?
         nil
@@ -4529,16 +4535,10 @@ module Crystal
       else
         nil
       end
-    ensure
-      @call_args_nest -= 1
     end
 
     def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token : Token::Kind = :OP_RPAREN,
                                        allow_beginless_range = false)
-      # This method is called by `parse_call_args`, so it increments once too much in this case.
-      # But it is no problem, because it decrements once too much.
-      @call_args_nest += 1
-
       if @token.keyword?(:end) && !next_comes_colon_space?
         return nil
       end
@@ -4631,8 +4631,6 @@ module Crystal
       end
 
       CallArgs.new args, nil, nil, nil, false, end_location, has_parentheses: false
-    ensure
-      @call_args_nest -= 1
     end
 
     def parse_call_args_named_args(location, args, first_name, allow_newline)
@@ -4704,6 +4702,8 @@ module Crystal
     end
 
     def parse_call_arg(found_double_splat = false)
+      @call_args_start_locations.push @token.location
+
       if @token.keyword?(:out)
         if found_double_splat
           raise "out argument not allowed after double splat"
@@ -4748,6 +4748,8 @@ module Crystal
 
         arg
       end
+    ensure
+      @call_args_start_locations.pop
     end
 
     def parse_out

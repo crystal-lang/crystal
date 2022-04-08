@@ -591,6 +591,21 @@ module Crystal
     it_parses "x : *T -> R", TypeDeclaration.new("x".var, ProcNotation.new(["T".path.splat] of ASTNode, "R".path))
     it_parses "def foo(x : *T -> R); end", Def.new("foo", args: [Arg.new("x", restriction: ProcNotation.new(["T".path.splat] of ASTNode, "R".path))])
 
+    it_parses "foo result : Int32; result", Expressions.new([
+      Call.new(nil, "foo", TypeDeclaration.new("result".var, "Int32".path)),
+      Call.new(nil, "result"),
+    ] of ASTNode)
+
+    it_parses "foo(
+        begin
+          result : Int32 = 1
+          result
+        end
+      )", Call.new(nil, "foo", Expressions.new([
+      TypeDeclaration.new("result".var, "Int32".path, 1.int32),
+      "result".var,
+    ] of ASTNode))
+
     it_parses "struct Foo; end", ClassDef.new("Foo".path, struct: true)
 
     it_parses "Foo()", Generic.new("Foo".path, [] of ASTNode)
