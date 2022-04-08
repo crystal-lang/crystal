@@ -280,6 +280,8 @@ class Dir
   end
 
   # Removes the directory at the given path.
+  # Returns true on success
+  # Returns false if the directory doesn't exist
   def self.delete?(path : Path | String) : Bool
     delete(path)
     true
