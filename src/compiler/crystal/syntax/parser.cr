@@ -4679,7 +4679,13 @@ module Crystal
         if @token.keyword?(:out)
           value = parse_out
         else
-          value = parse_op_assign
+          @call_args_start_locations << @token.location
+          value =
+            begin
+              parse_op_assign
+            ensure
+              @call_args_start_locations.pop
+            end
         end
 
         named_args << NamedArgument.new(name, value).at(location)

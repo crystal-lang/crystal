@@ -596,6 +596,11 @@ module Crystal
       Call.new(nil, "result"),
     ] of ASTNode)
 
+    it_parses "foo(x: result : Int32); result", Expressions.new([
+      Call.new(nil, "foo", named_args: [NamedArgument.new("x", TypeDeclaration.new("result".var, "Int32".path))]),
+      Call.new(nil, "result"),
+    ] of ASTNode)
+
     it_parses "foo(
         begin
           result : Int32 = 1
@@ -605,6 +610,16 @@ module Crystal
       TypeDeclaration.new("result".var, "Int32".path, 1.int32),
       "result".var,
     ] of ASTNode))
+
+    it_parses "foo(x:
+        begin
+          result : Int32 = 1
+          result
+        end
+      )", Call.new(nil, "foo", named_args: [NamedArgument.new("x", Expressions.new([
+      TypeDeclaration.new("result".var, "Int32".path, 1.int32),
+      "result".var,
+    ] of ASTNode))])
 
     it_parses "struct Foo; end", ClassDef.new("Foo".path, struct: true)
 
