@@ -280,8 +280,7 @@ class Dir
   end
 
   # Removes the directory at the given path.
-  # Returns true on success
-  # Returns false if the directory doesn't exist
+  # Returns `false` if the directory does not exist.
   def self.delete?(path : Path | String) : Bool
     Crystal::System::Dir.delete(path.to_s, raise_on_missing: false)
   end
