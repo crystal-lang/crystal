@@ -88,27 +88,22 @@ class File < IO::FileDescriptor
   # *mode* must be one of the following file open modes:
   #
   # ```text
-  # Mode    | Description
-  # --------+------------------------------------------------------
-  # r       | Read-only, starts at the beginning of the file.
-  # r+      | Read-write, starts at the beginning of the file.
-  # w       | Write-only, truncates existing file to zero length or
-  #         | creates a new file if the file doesn't exist.
-  # w+      | Read-write, truncates existing file to zero length or
-  #         | creates a new file if the file doesn't exist.
-  # a       | Write-only, all writes seek to the end of the file,
-  #         | creates a new file if the file doesn't exist.
-  # a+      | Read-write, all writes seek to the end of the file,
-  #         | creates a new file if the file doesn't exist.
-  # rb      | Same as 'r' but in binary file mode.
-  # r+b rb+ | Same as 'r+' but in binary file mode.
-  # wb      | Same as 'w' but in binary file mode.
-  # w+b wb+ | Same as 'w+' but in binary file mode.
-  # ab      | Same as 'a' but in binary file mode.
-  # a+b ab+ | Same as 'a+' but in binary file mode.
+  # Mode       | Description
+  # -----------+------------------------------------------------------
+  # r rb       | Read-only, starts at the beginning of the file.
+  # r+ r+b rb+ | Read-write, starts at the beginning of the file.
+  # w wb       | Write-only, truncates existing file to zero length or
+  #            | creates a new file if the file doesn't exist.
+  # w+ w+b wb+ | Read-write, truncates existing file to zero length or
+  #            | creates a new file if the file doesn't exist.
+  # a ab       | Write-only, all writes seek to the end of the file,
+  #            | creates a new file if the file doesn't exist.
+  # a+ a+b ab+ | Read-write, all writes seek to the end of the file,
+  #            | creates a new file if the file doesn't exist.
   # ```
   #
-  # In binary file mode, line endings are not converted to CRLF on Windows.
+  # Line endings are preserved on all platforms. The `b` mode flag has no
+  # effect; it is provided only for POSIX compatibility.
   def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     filename = filename.to_s
     fd = Crystal::System::File.open(filename, mode, perm)

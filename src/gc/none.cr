@@ -60,7 +60,7 @@ module GC
       reclaimed_bytes_before_gc: zero)
   end
 
-  {% unless flag?(:win32) %}
+  {% unless flag?(:win32) || flag?(:wasm32) %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
       LibC.pthread_create(thread, attr, start, arg)

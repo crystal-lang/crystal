@@ -1655,7 +1655,7 @@ class String
   end
 
   # :nodoc:
-  protected def self.encode(slice, from, to, io, invalid)
+  def self.encode(slice, from, to, io, invalid)
     IO::EncodingOptions.check_invalid(invalid)
 
     inbuf_ptr = slice.to_unsafe
