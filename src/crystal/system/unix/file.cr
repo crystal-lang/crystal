@@ -200,6 +200,13 @@ module Crystal::System::File
     end
   end
 
+  private def self.to_timespec(time : ::Time)
+    t = uninitialized LibC::Timespec
+    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
+    t.tv_nsec = typeof(t.tv_nsec).new(time.nanosecond)
+    t
+  end
+
   private def self.to_timeval(time : ::Time)
     t = uninitialized LibC::Timeval
     t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
