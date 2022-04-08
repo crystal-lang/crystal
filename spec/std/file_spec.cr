@@ -55,7 +55,7 @@ describe "File" do
     it "reads entire file from proc virtual filesystem" do
       str1 = File.open "/proc/self/cmdline", &.gets_to_end
       str2 = File.read "/proc/self/cmdline"
-      str2.empty?.should be_false
+      str2.should_not be_empty
       str2.should eq(str1)
     end
   {% end %}
@@ -700,8 +700,8 @@ describe "File" do
     end
   end
 
-  it "supports binary modes" do
-    with_tempfile("binary-modes.txt") do |path|
+  it "supports the `b` mode flag" do
+    with_tempfile("b-mode-flag.txt") do |path|
       File.open(path, "wb") do |f|
         f.write(Bytes[1, 3, 6, 10])
       end
@@ -786,6 +786,28 @@ describe "File" do
       file.tell.should eq(5)
       file.sync = true
       file.tell.should eq(5)
+    end
+  end
+
+  it "returns the current write position with tell" do
+    with_tempfile("delete-file.txt") do |filename|
+      File.open(filename, "w") do |file|
+        file.tell.should eq(0)
+        file.write "12345".to_slice
+        file.tell.should eq(5)
+        file.sync = true
+        file.tell.should eq(5)
+      end
+    end
+  end
+
+  it "returns the actual position with tell after append" do
+    with_tempfile("delete-file.txt") do |filename|
+      File.write(filename, "hello")
+      File.open(filename, "a") do |file|
+        file.write "12345".to_slice
+        file.tell.should eq(10)
+      end
     end
   end
 

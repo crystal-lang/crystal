@@ -4,7 +4,7 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "8328ae59292c05cf8c830a34b5b39ac46c43813e"
+    default: "b421c5a3f857247ed88251d0c6dbcca7337c4648"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
@@ -416,6 +416,22 @@ jobs:
           paths:
             - build
 
+  publish_nightly_artifacts:
+    docker:
+      - image: manastech/s3cmd:2.2-alpine
+    environment:
+      <<: *env
+      AWS_ACCESS_KEY_ID: AKIA2EEIIRCJCMOSW2XH
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          mkdir -p /tmp/upload
+          cd /tmp/workspace/build
+          cp crystal-*-darwin-universal.tar.gz /tmp/upload/crystal-nightly-darwin-universal.tar.gz
+          cp crystal-*-linux-x86_64.tar.gz /tmp/upload/crystal-nightly-linux-x86_64.tar.gz
+      - run: s3cmd put --recursive /tmp/upload/* s3://artifacts.crystal-lang.org/dist/
+
   dist_artifacts:
     docker:
       - image: buildpack-deps:xenial
@@ -571,6 +587,10 @@ workflows:
       - dist_docs:
           requires:
             - dist_docker
+      - publish_nightly_artifacts:
+          requires:
+            - dist_linux
+            - dist_darwin
       - dist_artifacts:
           requires:
             - dist_linux

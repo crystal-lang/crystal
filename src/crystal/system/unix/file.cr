@@ -103,10 +103,10 @@ module Crystal::System::File
   end
 
   def self.chown(path, uid : Int, gid : Int, follow_symlinks)
-    ret = if !follow_symlinks && ::File.symlink?(path)
-            LibC.lchown(path, uid, gid)
-          else
+    ret = if follow_symlinks
             LibC.chown(path, uid, gid)
+          else
+            LibC.lchown(path, uid, gid)
           end
     raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
   end
