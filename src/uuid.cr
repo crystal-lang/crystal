@@ -124,18 +124,33 @@ struct UUID
   #
   # It is strongly recommended to use a cryptographically random source for
   # *random*, such as `Random::Secure`.
-  def self.random(random = Random::Secure, variant = Variant::RFC4122, version = Version::V4)
+  def self.random(random = Random::Secure, variant = Variant::RFC4122, version = Version::V4) : self
     new_bytes = uninitialized UInt8[16]
     random.random_bytes(new_bytes.to_slice)
 
     new(new_bytes, variant, version)
   end
 
+  # Generates an empty UUID.
+  #
+  # ```
+  # UUID.empty # => UUID(00000000-0000-4000-0000-000000000000)
+  # ```
   def self.empty : self
     new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
   end
 
-  # Returns UUID variant.
+  # Returns UUID variant based on the [RFC4122 format](https://datatracker.ietf.org/doc/html/rfc4122#section-4.1).
+  # See also `#version`
+  #
+  # ```
+  # require "uuid"
+  #
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::NCS).variant       # => UUID::Variant::NCS
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::RFC4122).variant   # => UUID::Variant::RFC4122
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Microsoft).variant # => UUID::Variant::Microsoft
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Future).variant    # => UUID::Variant::Future
+  # ```
   def variant : UUID::Variant
     case
     when @bytes[8] & 0x80 == 0x00
@@ -151,7 +166,18 @@ struct UUID
     end
   end
 
-  # Returns version based on RFC4122 format. See also `#variant`.
+  # Returns version based on [RFC4122 format](https://datatracker.ietf.org/doc/html/rfc4122#section-4.1).
+  # See also `#variant`.
+  #
+  # ```
+  # require "uuid"
+  #
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V1).version # => UUID::Version::V1
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V2).version # => UUID::Version::V2
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V3).version # => UUID::Version::V3
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V4).version # => UUID::Version::V4
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V5).version # => UUID::Version::V5
+  # ```
   def version : UUID::Version
     case @bytes[6] >> 4
     when 1 then Version::V1
@@ -202,6 +228,16 @@ struct UUID
     @bytes.to_slice.hexstring
   end
 
+  # Returns a `String` that is a valid urn of *self*
+  #
+  # ```
+  # require "uuid"
+  #
+  # uuid = UUID.empty
+  # uuid.urn # => "urn:uuid:00000000-0000-4000-0000-000000000000"
+  # uuid2 = UUID.new("c49fc136-9362-4414-81a5-9a7e0fcca0f1")
+  # uuid2.urn # => "urn:uuid:c49fc136-9362-4414-81a5-9a7e0fcca0f1"
+  # ```
   def urn : String
     String.build(45) do |str|
       str << "urn:uuid:"

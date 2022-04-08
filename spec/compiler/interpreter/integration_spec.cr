@@ -4,31 +4,31 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "integration" do
     it "does Int32#to_s" do
-      interpret(<<-CODE, prelude: "prelude").should eq("123456789")
+      interpret(<<-CODE, prelude: "prelude").should eq(%("123456789"))
         123456789.to_s
       CODE
     end
 
     it "does Float64#to_s (simple)" do
-      interpret(<<-CODE, prelude: "prelude").should eq("1.5")
+      interpret(<<-CODE, prelude: "prelude").should eq(%("1.5"))
         1.5.to_s
       CODE
     end
 
     it "does Float64#to_s (complex)" do
-      interpret(<<-CODE, prelude: "prelude").should eq("123456789.12345")
+      interpret(<<-CODE, prelude: "prelude").should eq(%("123456789.12345"))
         123456789.12345.to_s
       CODE
     end
 
     it "does Range#to_a, Array#to_s" do
-      interpret(<<-CODE, prelude: "prelude").should eq("[1, 2, 3, 4, 5]")
+      interpret(<<-CODE, prelude: "prelude").should eq(%("[1, 2, 3, 4, 5]"))
         (1..5).to_a.to_s
       CODE
     end
 
     it "does some Hash methods" do
-      interpret(<<-CODE, prelude: "prelude").should eq(90)
+      interpret(<<-CODE, prelude: "prelude").should eq("90")
         h = {} of Int32 => Int32
         10.times do |i|
           h[i] = i * 2
@@ -38,7 +38,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does CSV" do
-      interpret(<<-CODE, prelude: "prelude").should eq((1..6).sum)
+      interpret(<<-CODE, prelude: "prelude").should eq((1..6).sum.to_s)
         require "csv"
 
         csv = CSV.new <<-CSV, headers: true
@@ -58,7 +58,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does JSON" do
-      interpret(<<-CODE, prelude: "prelude").should eq(6)
+      interpret(<<-CODE, prelude: "prelude").should eq("6")
         require "json"
 
         json = JSON.parse <<-JSON
@@ -69,7 +69,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does JSON::Serializable" do
-      interpret(<<-CODE, prelude: "prelude").should eq(3)
+      interpret(<<-CODE, prelude: "prelude").should eq("3")
         require "json"
 
         record Point, x : Int32, y : Int32 do
@@ -83,8 +83,8 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    pending "does YAML" do
-      interpret(<<-CODE, prelude: "prelude").should eq(6)
+    it "does YAML" do
+      interpret(<<-CODE, prelude: "prelude").should eq("6")
         require "yaml"
 
         yaml = YAML.parse <<-YAML
@@ -97,8 +97,8 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    pending "does YAML::Serializable" do
-      interpret(<<-CODE, prelude: "prelude").should eq(3)
+    it "does YAML::Serializable" do
+      interpret(<<-CODE, prelude: "prelude").should eq("3")
         require "yaml"
 
         record Point, x : Int32, y : Int32 do
@@ -114,7 +114,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     pending "does XML" do
-      interpret(<<-CODE, prelude: "prelude").should eq(3)
+      interpret(<<-CODE, prelude: "prelude").should eq("3")
         require "xml"
 
         doc = XML.parse(<<-XML
@@ -134,7 +134,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does String#includes?" do
-      interpret(<<-CODE, prelude: "prelude").should be_true
+      interpret(<<-CODE, prelude: "prelude").should eq("true")
         a = "Negative array size: -1"
         b = "Negative array size"
         a.includes?(b)
@@ -142,7 +142,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does IO.pipe (checks that StaticArray is passed correctly to C calls)" do
-      interpret(<<-CODE, prelude: "prelude").should eq("hello")
+      interpret(<<-CODE, prelude: "prelude").should eq(%("hello"))
         IO.pipe do |r, w|
           w.puts "hello"
           r.gets.not_nil!

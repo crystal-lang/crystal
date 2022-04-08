@@ -762,6 +762,27 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
+  it "does not consider global paths as free variables (1)" do
+    assert_error <<-CR, "undefined constant ::Foo"
+      def foo(x : ::Foo) forall Foo
+      end
+
+      foo(1)
+      CR
+  end
+
+  it "does not consider global paths as free variables (2)" do
+    assert_error <<-CR, "no overload matches"
+      class Foo
+      end
+
+      def foo(x : ::Foo) forall Foo
+      end
+
+      foo(1)
+      CR
+  end
+
   it "prefers more specific overload than one with free variables" do
     assert_type("
       require \"prelude\"

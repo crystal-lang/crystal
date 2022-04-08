@@ -2810,7 +2810,7 @@ describe "Semantic: instance var" do
     foo.instance_vars["@x"].type.should eq(result.program.int32)
 
     bar = result.program.types["Bar"].as(NonGenericClassType)
-    bar.instance_vars.empty?.should be_true
+    bar.instance_vars.should be_empty
   end
 
   it "infers type from custom array literal" do
@@ -3817,6 +3817,94 @@ describe "Semantic: instance var" do
       Foo.new("aaaa")
       ),
       "wrong number of arguments for 'Foo.new'"
+  end
+
+  it "infers from method on integer literal, with type annotation" do
+    assert_type(%(
+      struct Int32
+        def foo : Char
+          'a'
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = 1.foo
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { char }
+  end
+
+  it "infers from method in generic type, with type annotation" do
+    assert_type(%(
+      class Gen(T)
+        def foo : Gen(T)
+          self
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = Gen(Int32).new.foo
+        end
+      end
+
+      Foo.new.@x
+      )) { generic_class "Gen", int32 }
+  end
+
+  it "infers type by removing nil from || left side" do
+    assert_type(%(
+      struct Int32
+        def foo : Int32?
+          1
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = 1.foo || 2
+        end
+      end
+
+      Foo.new.@x
+      )) { int32 }
+  end
+
+  it "infers type from all call matches" do
+    assert_type(%(
+      class Base
+        def foo : Int32
+          1
+        end
+      end
+
+      class Sub1 < Base
+        def foo : Char
+          'a'
+        end
+      end
+
+      class Sub2 < Base
+        def foo
+          1 + 2
+        end
+      end
+
+      class Foo
+        def initialize(base : Base)
+          @x = base.foo
+        end
+      end
+
+      Foo.new(Base.new).@x
+      )) { union_of int32, char }
   end
 
   it "guesses inside macro if" do
@@ -5386,5 +5474,198 @@ describe "Semantic: instance var" do
       end
       ),
       "can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "errors when overriding inherited instance variable with incompatible type" do
+    assert_error <<-CR, "instance variable '@a' of A must be Int32, not (Char | Int32)"
+      class A
+        @a = 1
+      end
+
+      class B < A
+        @a = 'a'
+      end
+      CR
+  end
+
+  it "accepts overriding inherited instance variable with compatible type" do
+    semantic <<-CR
+      class A
+        @a = 1
+      end
+
+      class B < A
+        @a = 2
+      end
+      CR
+  end
+
+  it "looks up return type restriction in defining type, not instantiated type (#11961)" do
+    assert_type(%(
+      module Foo(T)
+        def foo : T
+          x = uninitialized T
+          x
+        end
+      end
+
+      module Bar(T)
+        include Foo(T)
+      end
+
+      struct Tuple
+        include Bar(Union(*T))
+      end
+
+      class Test
+        def initialize
+          @foo = 0
+        end
+
+        def test
+          @foo = {@foo, 0}.foo
+        end
+      end
+
+      Test.new.@foo
+      )) { int32 }
+  end
+
+  describe "instance variable inherited from multiple parents" do
+    context "with compatible type" do
+      it "module and class, with declarations" do
+        assert_error <<-CR, "instance variable '@a' of B is already defined in A"
+          module M
+            @a : Int32 = 1
+          end
+
+          class A
+            @a : Int32 = 2
+          end
+
+          class B < A
+            include M
+          end
+          CR
+      end
+
+      it "module and class, with definitions" do
+        assert_error <<-CR, "instance variable '@a' of B is already defined in A"
+          module M
+            @a = 1
+          end
+
+          class A
+            @a = 2
+          end
+
+          class B < A
+            include M
+          end
+          CR
+      end
+
+      it "accepts module and module, with definitions" do
+        semantic <<-CR
+          module M
+            @a = 1
+          end
+
+          module N
+            @a = 2
+          end
+
+          class B
+            include N
+            include M
+          end
+          CR
+      end
+
+      it "accepts module and module, with declarations" do
+        semantic <<-CR
+          module M
+            @a : Int32?
+          end
+
+          module N
+            @a : Int32?
+          end
+
+          class B
+            include N
+            include M
+          end
+          CR
+      end
+    end
+
+    context "with incompatible type" do
+      it "module and class, with definitions" do
+        assert_error <<-CR, "instance variable '@a' of B is already defined in A"
+          module M
+            @a = 'a'
+          end
+
+          class A
+            @a = 1
+          end
+
+          class B < A
+            include M
+          end
+          CR
+      end
+
+      it "module and class, with declarations" do
+        assert_error <<-CR, "instance variable '@a' of B is already defined in A"
+          module M
+            @a : Char = 'a'
+          end
+
+          class A
+            @a : Int32 = 1
+          end
+
+          class B < A
+            include M
+          end
+          CR
+      end
+
+      it "errors module and module, with definitions" do
+        assert_error <<-CR, "instance variable '@a' of B must be Char, not (Char | Int32)"
+          module M
+            @a = 'c'
+          end
+
+          module N
+            @a = 1
+          end
+
+          class B
+            include N
+            include M
+          end
+          CR
+      end
+
+      it "errors module and module, with declarations" do
+        assert_error <<-CR, "instance variable '@a' of B must be Int32, not (Char | Int32)"
+          module M
+            @a : Char = 'c'
+          end
+
+          module N
+            @a : Int32 = 1
+          end
+
+          class B
+            include N
+            include M
+          end
+          CR
+      end
+    end
   end
 end

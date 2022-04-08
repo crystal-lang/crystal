@@ -14,6 +14,22 @@ require "option_parser"
 # A Windows implementation is not yet available.
 class Crystal::Loader
   class LoadError < Exception
+    property args : Array(String)?
+    property search_paths : Array(String)?
+
+    def message
+      String.build do |io|
+        io << super
+        if args = @args
+          io << "\nLinker arguments: "
+          args.join(io, " ")
+        end
+        if search_paths = @search_paths
+          io << "\nSearch path: "
+          search_paths.join(io, Process::PATH_DELIMITER)
+        end
+      end
+    end
   end
 
   def self.new(search_paths : Array(String), libnames : Array(String), file_paths : Array(String)) : self
@@ -63,7 +79,7 @@ class Crystal::Loader
       return load_file(::Path[libname].expand)
     end
 
-    find_library_path(libname) do |library_path|
+    each_library_path(libname) do |library_path|
       handle = load_file?(library_path)
       return handle if handle
     end
@@ -77,14 +93,6 @@ class Crystal::Loader
 
     @handles << handle
     handle
-  end
-
-  private def find_library_path(libname)
-    each_library_path(libname) do |path|
-      if File.exists?(path)
-        yield path
-      end
-    end
   end
 
   private def each_library_path(libname)

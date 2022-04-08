@@ -18,7 +18,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets class for virtual_type type" do
-      interpret(<<-CODE, prelude: "prelude").should eq("Bar")
+      interpret(<<-CODE, prelude: "prelude").should eq(%("Bar"))
           class Foo; end
           class Bar < Foo; end
 
@@ -28,7 +28,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets class for virtual_type type (struct)" do
-      interpret(<<-CODE, prelude: "prelude").should eq("Baz")
+      interpret(<<-CODE, prelude: "prelude").should eq(%("Baz"))
           abstract struct Foo; end
           struct Bar < Foo; end
           struct Baz < Foo; end
@@ -59,7 +59,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets class_crystal_instance_type_id" do
-      interpret(<<-CODE, prelude: "prelude").should be_true
+      interpret(<<-CODE, prelude: "prelude").should eq("true")
         class Foo
         end
 

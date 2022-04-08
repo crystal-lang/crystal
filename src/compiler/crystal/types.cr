@@ -1289,9 +1289,9 @@ module Crystal
 
   class IntegerType < PrimitiveType
     getter rank : Int32
-    getter kind : Symbol
+    getter kind : NumberKind
 
-    def initialize(program, namespace, name, superclass, bytes, @rank, @kind)
+    def initialize(program, namespace, name, superclass, bytes, @rank, @kind : NumberKind)
       super(program, namespace, name, superclass, bytes)
     end
 
@@ -1313,25 +1313,25 @@ module Crystal
 
     def range
       case kind
-      when :i8
+      when .i8?
         {Int8::MIN, Int8::MAX}
-      when :i16
+      when .i16?
         {Int16::MIN, Int16::MAX}
-      when :i32
+      when .i32?
         {Int32::MIN, Int32::MAX}
-      when :i64
+      when .i64?
         {Int64::MIN, Int64::MAX}
-      when :i128
+      when .i128?
         {Int128::MIN, Int128::MAX}
-      when :u8
+      when .u8?
         {UInt8::MIN, UInt8::MAX}
-      when :u16
+      when .u16?
         {UInt16::MIN, UInt16::MAX}
-      when :u32
+      when .u32?
         {UInt32::MIN, UInt32::MAX}
-      when :u64
+      when .u64?
         {UInt64::MIN, UInt64::MAX}
-      when :u128
+      when .u128?
         {UInt128::MIN, UInt128::MAX}
       else
         raise "Bug: called 'range' for non-integer literal"
@@ -1347,14 +1347,14 @@ module Crystal
     end
 
     def kind
-      @bytes == 4 ? :f32 : :f64
+      @bytes == 4 ? NumberKind::F32 : NumberKind::F64
     end
 
     def range
       case kind
-      when :f32
+      when .f32?
         {Float32::MIN, Float32::MAX}
-      when :f64
+      when .f64?
         {Float64::MIN, Float64::MAX}
       else
         raise "Bug: called 'range' for non-float literal"

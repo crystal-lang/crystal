@@ -1,6 +1,10 @@
 require "../../support/syntax"
 
-private def it_lexes(string, type, *, slash_is_regex : Bool? = nil)
+private def t(kind : Crystal::Token::Kind)
+  kind
+end
+
+private def it_lexes(string, type : Token::Kind, *, slash_is_regex : Bool? = nil)
   it "lexes #{string.inspect}" do
     lexer = Lexer.new string
     unless (v = slash_is_regex).nil?
@@ -11,7 +15,7 @@ private def it_lexes(string, type, *, slash_is_regex : Bool? = nil)
   end
 end
 
-private def it_lexes(string, type, value)
+private def it_lexes(string, type : Token::Kind, value)
   it "lexes #{string.inspect}" do
     lexer = Lexer.new string
     token = lexer.next_token
@@ -20,7 +24,7 @@ private def it_lexes(string, type, value)
   end
 end
 
-private def it_lexes(string, type, value, number_kind)
+private def it_lexes(string, type : Token::Kind, value, number_kind : NumberKind)
   it "lexes #{string.inspect}" do
     lexer = Lexer.new string
     token = lexer.next_token
@@ -30,7 +34,7 @@ private def it_lexes(string, type, value, number_kind)
   end
 end
 
-private def it_lexes_many(values, type)
+private def it_lexes_many(values, type : Token::Kind)
   values.each do |value|
     it_lexes value, type, value
   end
@@ -72,11 +76,11 @@ private def it_lexes_f64(values)
   values.each { |value| it_lexes_number :f64, value }
 end
 
-private def it_lexes_number(number_kind, value : Array)
+private def it_lexes_number(number_kind : NumberKind, value : Array)
   it_lexes value[0], :NUMBER, value[1], number_kind
 end
 
-private def it_lexes_number(number_kind, value : String)
+private def it_lexes_number(number_kind : NumberKind, value : String)
   it_lexes value, :NUMBER, value, number_kind
 end
 
@@ -84,7 +88,7 @@ private def it_lexes_char(string, value)
   it "lexes #{string}" do
     lexer = Lexer.new string
     token = lexer.next_token
-    token.type.should eq(:CHAR)
+    token.type.should eq(t :CHAR)
     token.value.as(Char).should eq(value)
   end
 end
@@ -93,7 +97,7 @@ private def it_lexes_string(string, value)
   it "lexes #{string}" do
     lexer = Lexer.new string
     token = lexer.next_token
-    token.type.should eq(:DELIMITER_START)
+    token.type.should eq(t :DELIMITER_START)
 
     token = lexer.next_string_token(token.delimiter_state)
     token.value.should eq(value)
@@ -102,7 +106,13 @@ end
 
 private def it_lexes_operators(ops)
   ops.each do |op|
-    it_lexes op.to_s, op, slash_is_regex: false
+    it "lexes #{op.inspect}" do
+      lexer = Lexer.new op
+      lexer.slash_is_regex = false
+      token = lexer.next_token
+      token.type.operator?.should be_true
+      token.type.to_s.should eq(op)
+    end
   end
 end
 
@@ -150,21 +160,8 @@ describe "Lexer" do
                      :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
                      :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?,
                      :annotation, :verbatim]
-  it_lexes_idents ["ident", "something", "with_underscores", "_start_underscore", "with_1", "foo?", "bar!", "fooBar"]
-  it_lexes_idents [
-    "ä",       # L
-    "a\u0300", # Mn
-    "aः",      # Mc
-    "a٠",      # Nd
-    "a＿",      # Pc
-    "aⅧ",      # Nl
-  ]
-
-  assert_syntax_error "\u200B", "unknown token: '\\u200B'"
-  assert_syntax_error "ident\u200B", "unknown token: '\\u200B'"
-  assert_syntax_error ":\u200B", %(unexpected token: ":")
-  assert_syntax_error ":ident\u200B", "unknown token: '\\u200B'"
-
+  it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
+                   "❨╯°□°❩╯︵┻━┻"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?",
                    "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
   it_lexes_idents ["def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!",
@@ -263,18 +260,18 @@ describe "Lexer" do
   it_lexes_char "'\\\\'", '\\'
   assert_syntax_error "'", "unterminated char literal"
   assert_syntax_error "'\\", "unterminated char literal"
-  it_lexes_operators [:"=", :"<", :"<=", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"(", :")",
-                      :"==", :"!=", :"=~", :"!", :",", :".", :"..", :"...", :"&&", :"||",
-                      :"|", :"{", :"}", :"?", :":", :"+=", :"-=", :"*=", :"/=", :"%=", :"//=", :"&=",
-                      :"|=", :"^=", :"**=", :"<<", :">>", :"%", :"&", :"|", :"^", :"**", :"<<=",
-                      :">>=", :"~", :"[]", :"[]=", :"[", :"]", :"::", :"<=>", :"=>", :"||=",
-                      :"&&=", :"===", :";", :"->", :"[]?", :"{%", :"{{", :"%}", :"@[", :"!~",
-                      :"&+", :"&-", :"&*", :"&**", :"&+=", :"&-=", :"&*="]
-  it_lexes "!@foo", :"!"
-  it_lexes "+@foo", :"+"
-  it_lexes "-@foo", :"-"
-  it_lexes "&+@foo", :"&+"
-  it_lexes "&-@foo", :"&-"
+  it_lexes_operators ["=", "<", "<=", ">", ">=", "+", "-", "*", "/", "//", "(", ")",
+                      "==", "!=", "=~", "!", ",", ".", "..", "...", "&&", "||",
+                      "|", "{", "}", "?", ":", "+=", "-=", "*=", "/=", "%=", "//=", "&=",
+                      "|=", "^=", "**=", "<<", ">>", "%", "&", "|", "^", "**", "<<=",
+                      ">>=", "~", "[]", "[]=", "[", "]", "::", "<=>", "=>", "||=",
+                      "&&=", "===", ";", "->", "[]?", "{%", "{{", "%}", "@[", "!~",
+                      "&+", "&-", "&*", "&**", "&+=", "&-=", "&*="]
+  it_lexes "!@foo", :OP_BANG
+  it_lexes "+@foo", :OP_PLUS
+  it_lexes "-@foo", :OP_MINUS
+  it_lexes "&+@foo", :OP_AMP_PLUS
+  it_lexes "&-@foo", :OP_AMP_MINUS
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
   it_lexes_class_var "@@foo"
@@ -286,8 +283,8 @@ describe "Lexer" do
 
   it_lexes_global_match_data_index ["$1", "$10", "$1?", "$23?"]
 
-  it_lexes "$~", :"$~"
-  it_lexes "$?", :"$?"
+  it_lexes "$~", :OP_DOLLAR_TILDE
+  it_lexes "$?", :OP_DOLLAR_QUESTION
 
   assert_syntax_error "128_i8", "128 doesn't fit in an Int8"
   assert_syntax_error "-129_i8", "-129 doesn't fit in an Int8"
@@ -436,72 +433,72 @@ describe "Lexer" do
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"
     token = lexer.next_token
-    token.type.should eq(:"!")
+    token.type.should eq(t :OP_BANG)
     token = lexer.next_token
-    token.type.should eq(:INSTANCE_VAR)
+    token.type.should eq(t :INSTANCE_VAR)
     token.value.should eq("@foo")
   end
 
   it "lexes space after keyword" do
     lexer = Lexer.new "end 1"
     token = lexer.next_token
-    token.type.should eq(:IDENT)
+    token.type.should eq(t :IDENT)
     token.value.should eq(:end)
     token = lexer.next_token
-    token.type.should eq(:SPACE)
+    token.type.should eq(t :SPACE)
   end
 
   it "lexes space after char" do
     lexer = Lexer.new "'a' "
     token = lexer.next_token
-    token.type.should eq(:CHAR)
+    token.type.should eq(t :CHAR)
     token.value.should eq('a')
     token = lexer.next_token
-    token.type.should eq(:SPACE)
+    token.type.should eq(t :SPACE)
   end
 
   it "lexes comment and token" do
     lexer = Lexer.new "# comment\n="
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
+    token.type.should eq(t :NEWLINE)
     token = lexer.next_token
-    token.type.should eq(:"=")
+    token.type.should eq(t :OP_EQ)
   end
 
   it "lexes comment at the end" do
     lexer = Lexer.new "# comment"
     token = lexer.next_token
-    token.type.should eq(:EOF)
+    token.type.should eq(t :EOF)
   end
 
   it "lexes __LINE__" do
     lexer = Lexer.new "__LINE__"
     token = lexer.next_token
-    token.type.should eq(:__LINE__)
+    token.type.should eq(t :MAGIC_LINE)
   end
 
   it "lexes __FILE__" do
     lexer = Lexer.new "__FILE__"
     lexer.filename = "foo"
     token = lexer.next_token
-    token.type.should eq(:__FILE__)
+    token.type.should eq(t :MAGIC_FILE)
   end
 
   it "lexes __DIR__" do
     lexer = Lexer.new "__DIR__"
     token = lexer.next_token
-    token.type.should eq(:__DIR__)
+    token.type.should eq(t :MAGIC_DIR)
   end
 
   it "lexes dot and ident" do
     lexer = Lexer.new ".read"
     token = lexer.next_token
-    token.type.should eq(:".")
+    token.type.should eq(t :OP_PERIOD)
     token = lexer.next_token
-    token.type.should eq(:IDENT)
+    token.type.should eq(t :IDENT)
     token.value.should eq("read")
     token = lexer.next_token
-    token.type.should eq(:EOF)
+    token.type.should eq(t :EOF)
   end
 
   assert_syntax_error "/foo", "Unterminated regular expression"
@@ -511,31 +508,31 @@ describe "Lexer" do
   it "lexes utf-8 char" do
     lexer = Lexer.new "'á'"
     token = lexer.next_token
-    token.type.should eq(:CHAR)
+    token.type.should eq(t :CHAR)
     token.value.as(Char).ord.should eq(225)
   end
 
   it "lexes utf-8 multibyte char" do
     lexer = Lexer.new "'日'"
     token = lexer.next_token
-    token.type.should eq(:CHAR)
+    token.type.should eq(t :CHAR)
     token.value.as(Char).ord.should eq(26085)
   end
 
   it "doesn't raise if slash r with slash n" do
     lexer = Lexer.new("\r\n1")
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
+    token.type.should eq(t :NEWLINE)
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    token.type.should eq(t :NUMBER)
   end
 
   it "doesn't raise if many slash r with slash n" do
     lexer = Lexer.new("\r\n\r\n\r\n1")
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
+    token.type.should eq(t :NEWLINE)
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    token.type.should eq(t :NUMBER)
   end
 
   assert_syntax_error "\r1", "expected '\\n' after '\\r'"
@@ -543,99 +540,99 @@ describe "Lexer" do
   it "lexes char with unicode codepoint" do
     lexer = Lexer.new "'\\uFEDA'"
     token = lexer.next_token
-    token.type.should eq(:CHAR)
+    token.type.should eq(t :CHAR)
     token.value.as(Char).ord.should eq(0xFEDA)
   end
 
   it "lexes char with unicode codepoint and curly with zeros" do
     lexer = Lexer.new "'\\u{0}'"
     token = lexer.next_token
-    token.type.should eq(:CHAR)
+    token.type.should eq(t :CHAR)
     token.value.as(Char).ord.should eq(0)
   end
 
   it "lexes char with unicode codepoint and curly" do
     lexer = Lexer.new "'\\u{A5}'"
     token = lexer.next_token
-    token.type.should eq(:CHAR)
+    token.type.should eq(t :CHAR)
     token.value.as(Char).ord.should eq(0xA5)
   end
 
   it "lexes char with unicode codepoint and curly with six hex digits" do
     lexer = Lexer.new "'\\u{10FFFF}'"
     token = lexer.next_token
-    token.type.should eq(:CHAR)
+    token.type.should eq(t :CHAR)
     token.value.as(Char).ord.should eq(0x10FFFF)
   end
 
   it "lexes float then zero (bug)" do
     lexer = Lexer.new "2.5 0"
-    lexer.next_token.number_kind.should eq(:f64)
-    lexer.next_token.type.should eq(:SPACE)
+    lexer.next_token.number_kind.should eq(NumberKind::F64)
+    lexer.next_token.type.should eq(t :SPACE)
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
-    token.number_kind.should eq(:i32)
+    token.type.should eq(t :NUMBER)
+    token.number_kind.should eq(NumberKind::I32)
   end
 
   it "lexes symbol with quote" do
     lexer = Lexer.new %(:"\\"")
     token = lexer.next_token
-    token.type.should eq(:SYMBOL)
+    token.type.should eq(t :SYMBOL)
     token.value.should eq("\"")
   end
 
   it "lexes symbol with backslash (#2187)" do
     lexer = Lexer.new %(:"\\\\")
     token = lexer.next_token
-    token.type.should eq(:SYMBOL)
+    token.type.should eq(t :SYMBOL)
     token.value.should eq("\\")
   end
 
   it "lexes symbol followed by !=" do
     lexer = Lexer.new ":a!=:a"
     token = lexer.next_token
-    token.type.should eq(:SYMBOL)
+    token.type.should eq(t :SYMBOL)
     token.value.should eq("a")
     token = lexer.next_token
-    token.type.should eq(:"!=")
+    token.type.should eq(t :OP_BANG_EQ)
     token = lexer.next_token
-    token.type.should eq(:SYMBOL)
+    token.type.should eq(t :SYMBOL)
     token.value.should eq("a")
   end
 
   it "lexes symbol followed by ==" do
     lexer = Lexer.new ":a==:a"
     token = lexer.next_token
-    token.type.should eq(:SYMBOL)
+    token.type.should eq(t :SYMBOL)
     token.value.should eq("a")
     token = lexer.next_token
-    token.type.should eq(:"==")
+    token.type.should eq(t :OP_EQ_EQ)
     token = lexer.next_token
-    token.type.should eq(:SYMBOL)
+    token.type.should eq(t :SYMBOL)
     token.value.should eq("a")
   end
 
   it "lexes symbol followed by ===" do
     lexer = Lexer.new ":a===:a"
     token = lexer.next_token
-    token.type.should eq(:SYMBOL)
+    token.type.should eq(t :SYMBOL)
     token.value.should eq("a")
     token = lexer.next_token
-    token.type.should eq(:"===")
+    token.type.should eq(t :OP_EQ_EQ_EQ)
     token = lexer.next_token
-    token.type.should eq(:SYMBOL)
+    token.type.should eq(t :SYMBOL)
     token.value.should eq("a")
   end
 
   it "lexes != after identifier (#4815)" do
     lexer = Lexer.new("some_method!=5")
     token = lexer.next_token
-    token.type.should eq(:IDENT)
+    token.type.should eq(t :IDENT)
     token.value.should eq("some_method")
     token = lexer.next_token
-    token.type.should eq(:"!=")
+    token.type.should eq(t :OP_BANG_EQ)
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    token.type.should eq(t :NUMBER)
   end
 
   assert_syntax_error "'\\uFEDZ'", "expected hexadecimal character in unicode escape"
