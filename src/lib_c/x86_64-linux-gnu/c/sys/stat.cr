@@ -44,6 +44,8 @@ lib LibC
     __glibc_reserved : StaticArray(Long, 3)
   end
 
+  STAT_VER = 1
+
   fun chmod(file : Char*, mode : ModeT) : Int
   fun fstat(fd : Int, buf : Stat*) : Int
   fun __fxstat(ver : Int, fd : Int, buf : Stat*) : Int
