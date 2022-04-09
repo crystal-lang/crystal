@@ -202,7 +202,7 @@ module Crystal::System::File
             timevals[1] = to_timeval(mtime)
             LibC.futimes(fd, timevals)
           {% else %}
-            raise NotImplementedError.new("Missing futimens & futimes")
+            {% raise "Missing futimens & futimes" %}
           {% end %}
 
     if ret != 0
