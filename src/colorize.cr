@@ -129,9 +129,7 @@ module Colorize
   #
   # NOTE: This is by default disabled on non-TTY devices because they likely don't support ANSI escape codes.
   # This will also be disabled if the environment variable `TERM` is "dumb" or `NO_COLOR` contains any value.
-  class_property? enabled : Bool do
-    ENV["NO_COLOR"]?.nil?
-  end
+  class_property? enabled : Bool { !ENV.has_key?("NO_COLOR") }
 
   # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
   # and `STDERR.tty?` are `true` and the tty is not considered a dumb terminal.
