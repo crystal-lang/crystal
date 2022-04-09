@@ -191,19 +191,19 @@ module Crystal::System::File
   end
 
   def self.futimens(filename : String, fd : Int, atime : ::Time, mtime : ::Time) : Nil
-    ret = if LibC.responds_to?(:futimens)
+    ret = {% if LibC.has_method?("futimens") %}
             timespecs = uninitialized LibC::Timespec[2]
             timespecs[0] = to_timespec(atime)
             timespecs[1] = to_timespec(mtime)
             LibC.futimens(fd, timespecs)
-          elsif LibC.responds_to?(:futimes)
+          {% elsif LibC.has_method?("futimes") %}
             timevals = uninitialized LibC::Timeval[2]
             timevals[0] = to_timeval(atime)
             timevals[1] = to_timeval(mtime)
             LibC.futimes(fd, timevals)
-          else
+          {% else %}
             raise NotImplementedError.new("Missing futimens & futimes")
-          end
+          {% end %}
 
     if ret != 0
       raise ::File::Error.from_errno("Error setting time on file", file: filename)
