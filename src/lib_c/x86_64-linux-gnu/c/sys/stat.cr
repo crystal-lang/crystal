@@ -54,5 +54,6 @@ lib LibC
   fun mkfifo(path : Char*, mode : ModeT) : Int
   fun mknod(path : Char*, mode : ModeT, dev : DevT) : Int
   fun stat(file : Char*, buf : Stat*) : Int
+  fun __xstat(ver : Int, file : Char*, buf : Stat*) : Int
   fun umask(mask : ModeT) : ModeT
 end
