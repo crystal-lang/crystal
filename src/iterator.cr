@@ -11,7 +11,7 @@ require "./enumerable"
 # ```
 #
 # The above works, but creates many intermediate arrays: one for the *select* call,
-# one for the *map* call and one for the *take* call. A more efficient way is to invoke
+# one for the *map* call and one for the *first* call. A more efficient way is to invoke
 # `Range#each` without a block, which gives us an `Iterator` so we can process the operations
 # lazily:
 #
