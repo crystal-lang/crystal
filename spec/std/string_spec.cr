@@ -2616,8 +2616,8 @@ describe "String" do
       end
 
       it "flushes the shift state (#11992)" do
-        "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
-        "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
+        "\u{00CA}".encode("BIG5HKSCS").should eq(Bytes[0x88, 0x66])
+        "\u{00CA}\u{0304}".encode("BIG5HKSCS").should eq(Bytes[0x88, 0x62])
       end
 
       it "raises if wrong encoding" do
@@ -2658,8 +2658,8 @@ describe "String" do
       end
 
       it "decodes with shift state" do
-        String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
-        String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
+        String.new(Bytes[0x88, 0x66], "BIG5HKSCS").should eq("\u{00CA}")
+        String.new(Bytes[0x88, 0x62], "BIG5HKSCS").should eq("\u{00CA}\u{0304}")
       end
 
       it "decodes with skip" do
