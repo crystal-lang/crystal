@@ -61,6 +61,10 @@ module Crystal::System::Dir
     close(dir)
   end
 
+  def self.info(dir : DirHandle) : ::File::Info
+    Crystal::System::FileDescriptor.system_info dir.handle
+  end
+
   def self.close(dir : DirHandle, path : String) : Nil
     return if dir.handle == LibC::INVALID_HANDLE_VALUE
 

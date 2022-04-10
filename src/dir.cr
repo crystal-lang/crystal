@@ -164,6 +164,10 @@ class Dir
     self
   end
 
+  def info : File::Info
+    Crystal::System::Dir.info(@dir)
+  end
+
   # Closes the directory stream.
   def close : Nil
     return if @closed

@@ -75,6 +75,13 @@ describe "Dir" do
     end
   end
 
+  it "tests info on existing directory" do
+    Dir.open(datapath) do |dir|
+      info = dir.info
+      info.directory?.should be_true
+    end
+  end
+
   it "tests mkdir and delete with a new path" do
     with_tempfile("mkdir") do |path|
       Dir.mkdir(path, 0o700)

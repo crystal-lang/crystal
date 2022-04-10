@@ -31,6 +31,10 @@ module Crystal::System::Dir
     LibC.rewinddir(dir)
   end
 
+  def self.info(dir) : ::File::Info
+    Crystal::System::FileDescriptor.system_info LibC.dirfd(dir)
+  end
+
   def self.close(dir, path) : Nil
     if LibC.closedir(dir) != 0
       raise ::File::Error.from_errno("Error closing directory", file: path)
