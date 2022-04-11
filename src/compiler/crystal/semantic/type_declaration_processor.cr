@@ -122,6 +122,9 @@ struct Crystal::TypeDeclarationProcessor
     # of instance vars in extended modules
     @has_no_extenders = Set(Type).new
 
+    # All the types that we checked for duplicate variables
+    @duplicates_checked = Set(Type).new
+
     @type_decl_visitor = TypeDeclarationVisitor.new(@program, @explicit_instance_vars)
 
     @type_guess_visitor = TypeGuessVisitor.new(@program, @explicit_instance_vars,
@@ -154,6 +157,8 @@ struct Crystal::TypeDeclarationProcessor
     compute_non_nilable_instance_vars
 
     process_instance_vars_declarations
+
+    remove_duplicate_instance_vars_declarations
 
     # Check that instance vars that weren't initialized in an initialize,
     # but a superclass does initialize then, are nilable, and if not
@@ -280,12 +285,6 @@ struct Crystal::TypeDeclarationProcessor
         ann.raise "can't annotate #{name} in #{owner} because it was first defined in #{supervar.owner}"
       end
     else
-      owner.all_subclasses.each do |subclass|
-        if subclass.is_a?(InstanceVarContainer) && (subclass_var = subclass.instance_vars[name]?)
-          raise TypeException.new("instance variable '#{name}' of #{subclass_var.owner} is already defined in #{owner}", subclass_var.location || type_decl.location)
-        end
-      end
-
       declare_meta_type_var(owner.instance_vars, owner, name, type_decl, instance_var: true, check_nilable: !owner.module?)
       remove_error owner, name
 
@@ -390,12 +389,6 @@ struct Crystal::TypeDeclarationProcessor
     # the guessed type information for subclasses
     supervar = owner.lookup_instance_var?(name)
     return if supervar
-
-    owner.all_subclasses.each do |subclass|
-      if subclass.is_a?(InstanceVarContainer) && (subclass_var = subclass.instance_vars[name]?)
-        raise TypeException.new("instance variable '#{name}' of #{subclass_var.owner} is already defined in #{owner}", subclass_var.location || type_info.location)
-      end
-    end
 
     case owner
     when NonGenericClassType
@@ -629,6 +622,28 @@ struct Crystal::TypeDeclarationProcessor
     end
 
     nil
+  end
+
+  private def remove_duplicate_instance_vars_declarations
+    remove_duplicate_instance_vars_declarations(@program)
+  end
+
+  private def remove_duplicate_instance_vars_declarations(type : Type)
+    return unless @duplicates_checked.add?(type)
+
+    # If a class has an instance variable that already exists in a superclass, remove it.
+    # Ideally we should process instance variables in a top-down fashion, but it's tricky
+    # with modules and multiple-inheritance. Removing duplicates at the end is maybe
+    # a bit more expensive, but it's simpler.
+    if type.is_a?(InstanceVarContainer) && type.class? && !type.instance_vars.empty?
+      type.instance_vars.reject! do |name, ivar|
+        type.superclass.try &.lookup_instance_var?(name)
+      end
+    end
+
+    type.types?.try &.each_value do |nested_type|
+      remove_duplicate_instance_vars_declarations(nested_type)
+    end
   end
 
   private def check_nilable_instance_vars
