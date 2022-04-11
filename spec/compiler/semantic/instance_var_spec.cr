@@ -5668,7 +5668,7 @@ describe "Semantic: instance var" do
 
     context "with incompatible type" do
       it "module and class, with definitions" do
-        assert_error <<-CR, "instance variable '@a' of A must be Int32, not (Char | Int32)"
+        assert_error <<-CR, "instance variable '@a' of A, with B < A, is already declared as Int32 (trying to re-declare it in B as Char)"
           module M
             @a = 'a'
           end
@@ -5684,7 +5684,7 @@ describe "Semantic: instance var" do
       end
 
       it "module and class, with declarations" do
-        assert_error <<-CR, "instance variable '@a' of A must be Int32, not (Char | Int32)"
+        assert_error <<-CR, "instance variable '@a' of A, with B < A, is already declared as Int32 (trying to re-declare it in B as Char)"
           module M
             @a : Char = 'a'
           end

@@ -274,7 +274,7 @@ struct Crystal::TypeDeclarationProcessor
     if supervar && supervar.owner != owner
       # Redeclaring a variable with the same type is OK
       unless supervar.type.same?(type_decl.type)
-        raise TypeException.new("instance variable '#{name}' of #{supervar.owner}, with #{owner} < #{supervar.owner}, is already declared as #{supervar.type} (trying to re-declare as #{type_decl.type})", type_decl.location)
+        raise TypeException.new("instance variable '#{name}' of #{supervar.owner}, with #{owner} < #{supervar.owner}, is already declared as #{supervar.type} (trying to re-declare it in #{owner} as #{type_decl.type})", type_decl.location)
       end
 
       # Reject annotations to existing instance var
@@ -636,7 +636,17 @@ struct Crystal::TypeDeclarationProcessor
     # a bit more expensive, but it's simpler.
     if type.is_a?(InstanceVarContainer) && type.class? && !type.instance_vars.empty?
       type.instance_vars.reject! do |name, ivar|
-        type.superclass.try &.lookup_instance_var?(name)
+        supervar = type.superclass.try &.lookup_instance_var?(name)
+        if supervar && supervar.type != ivar.type
+          message = "instance variable '#{name}' of #{supervar.owner}, with #{type} < #{supervar.owner}, is already declared as #{supervar.type} (trying to re-declare it in #{type} as #{ivar.type})"
+          location = ivar.location || type.locations.try &.first
+          if location
+            raise TypeException.new(message)
+          else
+            raise TypeException.new(message)
+          end
+        end
+        supervar
       end
     end
 
