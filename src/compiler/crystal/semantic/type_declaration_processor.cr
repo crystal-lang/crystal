@@ -122,9 +122,6 @@ struct Crystal::TypeDeclarationProcessor
     # of instance vars in extended modules
     @has_no_extenders = Set(Type).new
 
-    # All the types that we checked for duplicate variables
-    @duplicates_checked = Set(Type).new
-
     @type_decl_visitor = TypeDeclarationVisitor.new(@program, @explicit_instance_vars)
 
     @type_guess_visitor = TypeGuessVisitor.new(@program, @explicit_instance_vars,
@@ -625,11 +622,13 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def remove_duplicate_instance_vars_declarations
-    remove_duplicate_instance_vars_declarations(@program)
+    # All the types that we checked for duplicate variables
+    duplicates_checked = Set(Type).new
+    remove_duplicate_instance_vars_declarations(@program, duplicates_checked)
   end
 
-  private def remove_duplicate_instance_vars_declarations(type : Type)
-    return unless @duplicates_checked.add?(type)
+  private def remove_duplicate_instance_vars_declarations(type : Type, duplicates_checked : Set(Type))
+    return unless duplicates_checked.add?(type)
 
     # If a class has an instance variable that already exists in a superclass, remove it.
     # Ideally we should process instance variables in a top-down fashion, but it's tricky
@@ -642,7 +641,7 @@ struct Crystal::TypeDeclarationProcessor
     end
 
     type.types?.try &.each_value do |nested_type|
-      remove_duplicate_instance_vars_declarations(nested_type)
+      remove_duplicate_instance_vars_declarations(nested_type, duplicates_checked)
     end
   end
 
