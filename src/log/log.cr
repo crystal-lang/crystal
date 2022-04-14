@@ -51,15 +51,15 @@ class Log
 
       dsl = Emitter.new(@source, severity, exception)
       result = yield dsl
-      entry =
-        case result
-        when Entry
-          result
-        else
-          dsl.emit(result.to_s)
-        end
 
-      backend.dispatch entry
+      case result
+      when Entry
+        backend.dispatch result
+      when Nil
+        # emit nothing
+      else
+        backend.dispatch dsl.emit(result.to_s)
+      end
     end
   {% end %}
 end
