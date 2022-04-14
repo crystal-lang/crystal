@@ -62,7 +62,7 @@ module Crystal::System::Dir
   end
 
   def self.info(dir : DirHandle) : ::File::Info
-    Crystal::System::FileDescriptor.system_info dir.handle
+    Crystal::System::FileDescriptor.system_info dir.handle, LibC::FILE_TYPE_DISK
   end
 
   def self.close(dir : DirHandle, path : String) : Nil
