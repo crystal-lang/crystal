@@ -107,16 +107,59 @@ struct UUID
     new(bytes, variant, version)
   end
 
+  def self.parse?(value : String, variant = nil, version = nil)
+    bytes = uninitialized UInt8[16]
+
+    case value.size
+    when 36 # Hyphenated
+      {8, 13, 18, 23}.each do |offset|
+        return if value[offset] != '-'
+      end
+      {0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34}.each_with_index do |offset, i|
+        if hex = hex_pair_at? value, offset
+          bytes[i] = hex
+        else
+          return
+        end
+      end
+    when 32 # Hexstring
+      16.times do |i|
+        if hex = hex_pair_at? value, i * 2
+          bytes[i] = hex
+        else
+          return
+        end
+      end
+    when 45 # URN
+      return unless value.starts_with? "urn:uuid:"
+      {9, 11, 13, 15, 18, 20, 23, 25, 28, 30, 33, 35, 37, 39, 41, 43}.each_with_index do |offset, i|
+        if hex = hex_pair_at? value, offset
+          bytes[i] = hex
+        else
+          return
+        end
+      end
+    else
+      return
+    end
+
+    new(bytes, variant, version)
+  end
+
   # Raises `ArgumentError` if string `value` at index `i` doesn't contain hex
   # digit followed by another hex digit.
   private def self.hex_pair_at(value : String, i) : UInt8
+    hex_pair_at?(value, i) || raise ArgumentError.new [
+      "Invalid hex character at position #{i * 2} or #{i * 2 + 1}",
+      "expected '0' to '9', 'a' to 'f' or 'A' to 'F'",
+    ].join(", ")
+  end
+
+  # Parses 2 hex digits from `value` at index `i` and `i + 1`, returning `nil`
+  # if one or both are not actually hex digits.
+  private def self.hex_pair_at?(value : String, i) : UInt8?
     if (ch1 = value[i].to_u8?(16)) && (ch2 = value[i + 1].to_u8?(16))
       ch1 * 16 + ch2
-    else
-      raise ArgumentError.new [
-        "Invalid hex character at position #{i * 2} or #{i * 2 + 1}",
-        "expected '0' to '9', 'a' to 'f' or 'A' to 'F'",
-      ].join(", ")
     end
   end
 
