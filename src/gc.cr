@@ -66,7 +66,9 @@ module GC
     gc_no : LibC::ULong,
     markers_m1 : LibC::ULong,
     bytes_reclaimed_since_gc : LibC::ULong,
-    reclaimed_bytes_before_gc : LibC::ULong
+    reclaimed_bytes_before_gc : LibC::ULong,
+    explicitly_freed_bytes_since_gc : LibC::ULong,
+    obtained_from_os_bytes : LibC::ULong
 
   # Allocates and clears *size* bytes of memory.
   #
