@@ -164,6 +164,7 @@ class Dir
     self
   end
 
+  # This method is faster than `.info` and avoids race conditions if a `Dir` is already open on POSIX systems, but not necessarily on windows.
   def info : File::Info
     Crystal::System::Dir.info(@dir, path)
   end
