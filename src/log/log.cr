@@ -33,18 +33,26 @@ class Log
     @backend = value
   end
 
-  {% for method, severity in {
-                               trace:  Severity::Trace,
-                               debug:  Severity::Debug,
-                               info:   Severity::Info,
-                               notice: Severity::Notice,
-                               warn:   Severity::Warn,
-                               error:  Severity::Error,
-                               fatal:  Severity::Fatal,
-                             } %}
-    # Logs a message if the logger's current severity is lower or equal to `{{severity}}`.
+  {% for method in %w(trace debug info notice warn error fatal) %}
+    {% severity = method.id.camelcase %}
+
+    # Logs a message if the logger's current severity is lower than or equal to
+    # `Severity::{{ severity }}`.
+    #
+    # The block is not called unless the current severity level would emit a
+    # message.
+    #
+    # Blocks which return nil do not emit anything:
+    #
+    # ```
+    # Log.{{method.id}} do
+    #   if false
+    #     "Nothing will be logged."
+    #   end
+    # end
+    # ```
     def {{method.id}}(*, exception : Exception? = nil)
-      severity = Severity.new({{severity}})
+      severity = Severity::{{severity}}
       return unless level <= severity
 
       return unless backend = @backend
