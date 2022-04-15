@@ -31,7 +31,7 @@ module Crystal::System::Dir
     LibC.rewinddir(dir)
   end
 
-  def self.info(dir) : ::File::Info
+  def self.info(dir, path) : ::File::Info
     Crystal::System::FileDescriptor.system_info LibC.dirfd(dir)
   end
 

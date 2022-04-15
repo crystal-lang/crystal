@@ -165,7 +165,7 @@ class Dir
   end
 
   def info : File::Info
-    Crystal::System::Dir.info(@dir)
+    Crystal::System::Dir.info(@dir, path)
   end
 
   # Closes the directory stream.
