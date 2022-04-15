@@ -42,7 +42,7 @@ class Log
     # The block is not called unless the current severity level would emit a
     # message.
     #
-    # Blocks which return nil do not emit anything:
+    # Blocks which return `nil` do not emit anything:
     #
     # ```
     # Log.{{method.id}} do
