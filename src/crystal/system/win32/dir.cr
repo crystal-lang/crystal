@@ -62,17 +62,29 @@ module Crystal::System::Dir
   end
 
   def self.info(dir : DirHandle) : ::File::Info
-    Crystal::System::FileDescriptor.system_info dir.handle, LibC::FILE_TYPE_DISK
+    if dir.handle == LibC::INVALID_HANDLE_VALUE
+      begin
+        handle = LibC.FindFirstFileW(dir.query, out data)
+        Crystal::System::FileDescriptor.system_info handle, LibC::FILE_TYPE_DISK
+      ensure
+        close handle rescue nil
+      end
+    else
+      Crystal::System::FileDescriptor.system_info dir.handle, LibC::FILE_TYPE_DISK
+    end
   end
 
   def self.close(dir : DirHandle, path : String) : Nil
-    return if dir.handle == LibC::INVALID_HANDLE_VALUE
+    close dir.handle
+    dir.handle = LibC::INVALID_HANDLE_VALUE
+  end
 
-    if LibC.FindClose(dir.handle) == 0
+  def self.close(handle : LibC::HANDLE, path : String) : Nil
+    return if handle == LibC::INVALID_HANDLE_VALUE
+
+    if LibC.FindClose(handle) == 0
       raise ::File::Error.from_winerror("Error closing directory", file: path)
     end
-
-    dir.handle = LibC::INVALID_HANDLE_VALUE
   end
 
   def self.current : String
