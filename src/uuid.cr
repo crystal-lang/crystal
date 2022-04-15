@@ -149,10 +149,7 @@ struct UUID
   # Raises `ArgumentError` if string `value` at index `i` doesn't contain hex
   # digit followed by another hex digit.
   private def self.hex_pair_at(value : String, i) : UInt8
-    hex_pair_at?(value, i) || raise ArgumentError.new [
-      "Invalid hex character at position #{i * 2} or #{i * 2 + 1}",
-      "expected '0' to '9', 'a' to 'f' or 'A' to 'F'",
-    ].join(", ")
+    hex_pair_at?(value, i) || raise ArgumentError.new "Invalid hex character at position #{i * 2} or #{i * 2 + 1}, expected '0' to '9', 'a' to 'f' or 'A' to 'F'"
   end
 
   # Parses 2 hex digits from `value` at index `i` and `i + 1`, returning `nil`
