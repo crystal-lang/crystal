@@ -77,7 +77,7 @@ struct UUID
 
   # Creates new UUID by decoding `value` string from hyphenated (ie `ba714f86-cac6-42c7-8956-bcf5105e1b81`),
   # hexstring (ie `89370a4ab66440c8add39e06f2bb6af6`) or URN (ie `urn:uuid:3f9eaf9e-cdb0-45cc-8ecb-0e5b2bfb0c20`)
-  # format, raising an `ArgumentError` if the string fors not match any of these formats.
+  # format, raising an `ArgumentError` if the string does not match any of these formats.
   def self.new(value : String, variant = nil, version = nil)
     bytes = uninitialized UInt8[16]
 
