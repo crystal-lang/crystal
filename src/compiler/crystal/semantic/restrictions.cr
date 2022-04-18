@@ -761,12 +761,13 @@ module Crystal
 
       generic_type = generic_type.as(GenericType)
 
-      if other.named_args
-        unless generic_type.is_a?(NamedTupleType)
-          other.raise "can only instantiate NamedTuple with named arguments"
-        end
-        # We match named tuples in NamedTupleInstanceType
+      # We match named tuples in NamedTupleInstanceType
+      if generic_type.is_a?(NamedTupleType)
         return nil
+      end
+
+      if other.named_args
+        other.raise "can only instantiate NamedTuple with named arguments"
       end
 
       # Consider the case of a splat in the type vars
@@ -911,7 +912,9 @@ module Crystal
       generic_type = get_generic_type(other, context)
       return super unless generic_type == self.generic_type
 
-      generic_type = generic_type.as(TupleType)
+      if other.named_args
+        other.raise "can only instantiate NamedTuple with named arguments"
+      end
 
       # Consider the case of a splat in the type vars
       splat_given = other.type_vars.any?(Splat)
@@ -971,9 +974,13 @@ module Crystal
       generic_type = get_generic_type(other, context)
       return super unless generic_type == self.generic_type
 
-      other_named_args = other.named_args
-      unless other_named_args
+      unless other.type_vars.empty?
         other.raise "can only instantiate NamedTuple with named arguments"
+      end
+
+      # Check for empty named tuples
+      unless other_named_args = other.named_args
+        return self.entries.empty? ? self : nil
       end
 
       # Check that the names are the same

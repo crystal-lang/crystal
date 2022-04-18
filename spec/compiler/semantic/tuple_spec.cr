@@ -318,6 +318,17 @@ describe "Semantic: tuples" do
     assert_type("Tuple(Int32, Float64)") { tuple_of([int32, float64]).metaclass }
   end
 
+  it "gives error when using named args on Tuple" do
+    assert_error %(
+      Tuple(x: Int32, y: Char)
+      ),
+      "can only use named arguments with NamedTuple"
+  end
+
+  it "doesn't error if Tuple has no args" do
+    assert_type("Tuple()") { tuple_of([] of Type).metaclass }
+  end
+
   it "types T as a tuple of metaclasses" do
     assert_type("
       struct Tuple
