@@ -194,10 +194,6 @@ describe "JSON serialization" do
       typeof(tuple).should eq(NamedTuple(a: FooPrivate))
     end
 
-    it "does for empty named tuple" do
-      typeof(NamedTuple.new).from_json(%({})).should eq(NamedTuple.new)
-    end
-
     it "does for BigInt" do
       big = BigInt.from_json("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)

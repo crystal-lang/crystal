@@ -302,11 +302,11 @@ def NamedTuple.new(pull : JSON::PullParser)
       {% end %}
     {% end %}
 
-    NamedTuple.new(
+    {
       {% for key in T.keys %}
         {{ key.id.stringify }}: %var{key.id},
       {% end %}
-    )
+    }
   {% end %}
 end
 

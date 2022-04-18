@@ -202,10 +202,6 @@ describe "YAML serialization" do
       typeof(tuple).should eq(NamedTuple(a: FooPrivate))
     end
 
-    it "does for empty named tuple" do
-      typeof(NamedTuple.new).from_yaml(%({})).should eq(NamedTuple.new)
-    end
-
     it "does for BigInt" do
       big = BigInt.from_yaml("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)
