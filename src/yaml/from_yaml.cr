@@ -187,9 +187,16 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   end
 
   {% begin %}
-    {% for key in T.keys %}
-      %var{key.id} = nil
-      %found{key.id} = false
+    {% for key, type in T %}
+      {% if type.nilable? %}
+        %var{key.id} = nil
+      {% else %}
+        %var{key.id} = uninitialized typeof(begin
+          value = uninitialized self
+          value[{{ key.symbolize }}]
+        end)
+        %found{key.id} = false
+      {% end %}
     {% end %}
 
     YAML::Schema::Core.each(node) do |key, value|
@@ -197,8 +204,10 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
       case key
         {% for key, type in T %}
           when {{key.stringify}}
-            %var{key.id} = {{type}}.new(ctx, value)
-            %found{key.id} = true
+            %var{key.id} = self[{{ key.symbolize }}].new(ctx, value)
+            {% unless type.nilable? %}
+              %found{key.id} = true
+            {% end %}
         {% end %}
       else
         # ignore the key
@@ -206,16 +215,18 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     end
 
     {% for key, type in T %}
-      if %var{key.id}.nil? && !%found{key.id} && !{{type.nilable?}}
-        node.raise "Missing yaml attribute: #{{{key.id.stringify}}}"
-      end
+      {% unless type.nilable? %}
+        unless %found{key.id}
+          node.raise "Missing yaml attribute: #{ {{ key.id.stringify }} }"
+        end
+      {% end %}
     {% end %}
 
-    {
-      {% for key, type in T %}
-        {{key.id.stringify}}: (%var{key.id}).as({{type}}),
+    NamedTuple.new(
+      {% for key in T.keys %}
+        {{ key.id.stringify }}: %var{key.id},
       {% end %}
-    }
+    )
   {% end %}
 end
 
