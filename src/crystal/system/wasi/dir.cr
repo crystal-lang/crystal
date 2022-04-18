@@ -99,7 +99,7 @@ module Crystal::System::Dir
   end
 
   def self.delete(path : String, raise_on_missing : Bool) : Bool
-    return if LibC.rmdir(path.check_no_null_byte) == 0
+    return true if LibC.rmdir(path.check_no_null_byte) == 0
 
     if !raise_on_missing && Errno.value == Errno::ENOENT
       false
