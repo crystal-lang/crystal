@@ -1384,8 +1384,15 @@ module Crystal
       literal.type == type
     end
 
-    def matches_partially?(type : Type) : Bool
-      literal.can_autocast_to?(type)
+    def matches_partially?(type : IntegerType | FloatType) : Bool
+      literal = self.literal
+
+      if literal.is_a?(NumberLiteral)
+        literal.representable_in?(type)
+      else
+        literal_type = literal.type
+        literal_type.is_a?(IntegerType | FloatType) && literal_type.subset_of?(type)
+      end
     end
   end
 
