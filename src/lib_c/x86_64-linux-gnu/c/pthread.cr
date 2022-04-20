@@ -6,7 +6,7 @@ require "./sys/types"
 # static libraries. So we just skip `pthread` entirely in interpreted mode.
 # The symbols are still available in the interpreter because they are loaded in the compiler.
 {% unless flag?(:interpreted) %}
-@[Link("pthread")]
+  @[Link("pthread")]
 {% end %}
 lib LibC
   PTHREAD_MUTEX_ERRORCHECK = 2
