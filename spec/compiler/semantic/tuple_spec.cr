@@ -314,6 +314,16 @@ describe "Semantic: tuples" do
     end
   end
 
+  describe "#[](Path)" do
+    it "works for tuple indexer" do
+      assert_type("A = 0; {1, 'a'}[A]") { int32 }
+    end
+
+    it "works for named tuple indexer" do
+      assert_type("A = :a; {a: 1, b: 'a'}[A]") { int32 }
+    end
+  end
+
   it "can name a tuple type" do
     assert_type("Tuple(Int32, Float64)") { tuple_of([int32, float64]).metaclass }
   end
