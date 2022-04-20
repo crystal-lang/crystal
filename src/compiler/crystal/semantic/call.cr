@@ -495,6 +495,15 @@ class Crystal::Call
   end
 
   def tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
+    index = tuple_indexer_helper_index(args.first, owner, instance_type, nilable)
+    return unless index
+
+    indexer_def = yield instance_type, index
+    indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
+    Matches.new([indexer_match] of Match, true)
+  end
+
+  private def tuple_indexer_helper_index(arg, owner, instance_type, nilable)
     arg = args.first
 
     # Make it work with constants too
@@ -553,9 +562,7 @@ class Crystal::Call
       return nil
     end
 
-    indexer_def = yield instance_type, index
-    indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-    Matches.new([indexer_match] of Match, true)
+    index
   end
 
   def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
