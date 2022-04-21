@@ -1391,7 +1391,7 @@ module Crystal
         literal.representable_in?(type)
       else
         literal_type = literal.type
-        literal_type.is_a?(IntegerType | FloatType) && literal_type.subset_of?(type)
+        (literal_type.is_a?(IntegerType) || literal_type.is_a?(FloatType)) && literal_type.subset_of?(type)
       end
     end
   end
