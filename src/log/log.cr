@@ -33,33 +33,30 @@ class Log
     @backend = value
   end
 
-  {% for method, severity in {
-                               trace:  Severity::Trace,
-                               debug:  Severity::Debug,
-                               info:   Severity::Info,
-                               notice: Severity::Notice,
-                               warn:   Severity::Warn,
-                               error:  Severity::Error,
-                               fatal:  Severity::Fatal,
-                             } %}
-    # Logs a message if the logger's current severity is lower or equal to `{{severity}}`.
-    def {{method.id}}(*, exception : Exception? = nil)
-      severity = Severity.new({{severity}})
-      return unless level <= severity
+  # Logs a message if the logger's current `level` is lower or equal to *severity*.
+  def log(severity : Severity, *, exception : Exception? = nil)
+    return unless level <= severity
+    return unless backend = @backend
 
-      return unless backend = @backend
+    dsl = Emitter.new(@source, severity, exception)
+    result = yield dsl
+    entry =
+      case result
+      when Entry
+        result
+      else
+        dsl.emit(result.to_s)
+      end
 
-      dsl = Emitter.new(@source, severity, exception)
-      result = yield dsl
-      entry =
-        case result
-        when Entry
-          result
-        else
-          dsl.emit(result.to_s)
-        end
+    backend.dispatch entry
+  end
 
-      backend.dispatch entry
+  {% for severity in %i[trace debug info notice warn error fatal] %}
+    # Logs a message if the logger's current `level` is lower or equal to `{{severity}}`.
+    def {{severity.id}}(*, exception : Exception? = nil)
+      log({{severity}}, exception: exception) do |dsl|
+        yield dsl
+      end
     end
   {% end %}
 end
