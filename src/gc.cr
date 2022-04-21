@@ -48,25 +48,25 @@ end
 
 module GC
   record Stats,
-    # collections : LibC::ULong,
-    # bytes_found : LibC::Long,
-    heap_size : LibC::ULong,
-    free_bytes : LibC::ULong,
-    unmapped_bytes : LibC::ULong,
-    bytes_since_gc : LibC::ULong,
-    total_bytes : LibC::ULong
+    # collections : UInt64,
+    # bytes_found : Int64,
+    heap_size : UInt64,
+    free_bytes : UInt64,
+    unmapped_bytes : UInt64,
+    bytes_since_gc : UInt64,
+    total_bytes : UInt64
 
   record ProfStats,
-    heap_size : LibC::ULong,
-    free_bytes : LibC::ULong,
-    unmapped_bytes : LibC::ULong,
-    bytes_since_gc : LibC::ULong,
-    bytes_before_gc : LibC::ULong,
-    non_gc_bytes : LibC::ULong,
-    gc_no : LibC::ULong,
-    markers_m1 : LibC::ULong,
-    bytes_reclaimed_since_gc : LibC::ULong,
-    reclaimed_bytes_before_gc : LibC::ULong
+    heap_size : UInt64,
+    free_bytes : UInt64,
+    unmapped_bytes : UInt64,
+    bytes_since_gc : UInt64,
+    bytes_before_gc : UInt64,
+    non_gc_bytes : UInt64,
+    gc_no : UInt64,
+    markers_m1 : UInt64,
+    bytes_reclaimed_since_gc : UInt64,
+    reclaimed_bytes_before_gc : UInt64
 
   # Allocates and clears *size* bytes of memory.
   #
