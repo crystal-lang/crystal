@@ -1,3 +1,17 @@
+# 1.4.1 (2022-04-21)
+
+## Standard Library
+
+### Runtime
+
+- Add `pthread` link annotations in lib bindings ([#12013](https://github.com/crystal-lang/crystal/pull/12013), thanks @straight-shoota)
+
+## Compiler
+
+### Semantic
+
+- Compiler: remove duplicate instance vars once we know them all ([#11995](https://github.com/crystal-lang/crystal/pull/11995), thanks @asterite)
+
 # 1.4.0 (2022-04-06)
 
 ## Language
