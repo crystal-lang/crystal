@@ -1339,66 +1339,174 @@ module Crystal
     end
   end
 
-  class NumberAutocastType
+  class AutocastType
+    # Returns `true` if this literal denotes a value of the *other* type.
+    abstract def matches_exactly?(other : Type)
+
+    # Returns `true` if this literal denotes a value that is convertible to the
+    # *other* type, but is itself not of that type.
+    abstract def matches_partially?(other : Type)
+
     def restrict(other, context)
-      if other.is_a?(IntegerType) || other.is_a?(FloatType)
-        # Check for an exact match, which can't produce an ambiguous call
-        if literal.type == other
-          set_exact_match(other)
-          other
-        elsif !exact_match? && literal.can_autocast_to?(other)
-          add_match(other)
-          other
-        else
-          literal.type.restrict(other, context)
-        end
+      restricted = literal.type.restrict(other, context)
+      return restricted.try(&.remove_literal) if restricted || !context.autocast_allowed?
+      restrict_literal(other, context).first.try(&.remove_literal)
+    end
+
+    # `#restrict_literal` returns two values: the result of restricting `self`
+    # to the given AST node or type, and whether the result is an exact match
+    # for that literal. An exact match has higher priority over partial matches.
+    # Note that at this point we don't need to consider non-autocasting matches.
+    #
+    # `#add_literal_matches` is invoked only immediately after a call signature
+    # is fully matched. This ensures failed signature matches do not count
+    # towards partial autocasting matches.
+
+    def restrict_literal(other : ASTNode, context)
+      {nil, false}
+    end
+
+    def restrict_literal(other : Type, context)
+      if matches_exactly?(other)
+        {other, true}
+      elsif matches_partially?(other)
+        {other, false}
       else
-        type = literal.type.restrict(other, context) ||
-               super(other, context)
-        if type == self
-          type = @match || literal.type
-        end
-        type
+        {nil, false}
       end
     end
 
-    def compatible_with?(type)
-      literal.type == type || literal.can_autocast_to?(type)
+    def restrict_literal(other : Nil, context)
+      # lack of restrictions
+      {literal.type, false}
+    end
+
+    def restrict_literal(other : Self, context)
+      restrict_literal(context.instantiated_type.instance_type, context)
+    end
+
+    def restrict_literal(other : Path, context)
+      if type = context.defining_type.lookup_path(other)
+        restrict_literal(type, context)
+      else
+        {nil, false}
+      end
+    end
+
+    def restrict_literal(other : Arg, context)
+      restrict_literal(other.type? || other.restriction, context)
+    end
+
+    # Given `x : T | U | ...`, if one of these variant types produces an exact
+    # match, we ignore the other variant types
+    def restrict_literal(other : Union, context)
+      types = [] of Type
+
+      other.types.each do |union_type|
+        restricted, exact = restrict_literal(union_type, context)
+        if restricted
+          return {restricted, true} if exact
+          types << restricted
+        end
+      end
+
+      {types.size > 0 ? program.type_merge_union_of(types) : nil, false}
+    end
+
+    def restrict_literal(other : UnionType, context)
+      types = [] of Type
+
+      other.union_types.each do |union_type|
+        restricted, exact = restrict_literal(union_type, context)
+        if restricted
+          return {restricted, true} if exact
+          types << restricted
+        end
+      end
+
+      {types.size > 0 ? program.type_merge_union_of(types) : nil, false}
+    end
+
+    def restrict_literal(other : AliasType, context)
+      aliased_type = other.remove_alias
+      if aliased_type != other
+        restrict_literal(aliased_type, context)
+      else
+        # recursive alias
+        {nil, false}
+      end
+    end
+
+    def add_literal_matches(other : ASTNode, context)
+    end
+
+    def add_literal_matches(other : Type, context)
+      if matches_exactly?(other)
+        set_exact_match(other)
+      elsif !exact_match? && matches_partially?(other)
+        add_match(other)
+      end
+    end
+
+    def add_literal_matches(other : Self, context)
+      add_literal_matches(context.instantiated_type.instance_type, context)
+    end
+
+    def add_literal_matches(other : Path, context)
+      if type = context.defining_type.lookup_path(other)
+        add_literal_matches(type, context)
+      end
+    end
+
+    def add_literal_matches(other : Arg, context)
+      if restriction = other.type? || other.restriction
+        add_literal_matches(restriction, context)
+      end
+    end
+
+    def add_literal_matches(other : Union, context)
+      other.types.each do |union_type|
+        add_literal_matches(union_type, context)
+      end
+    end
+
+    def add_literal_matches(other : UnionType, context)
+      other.union_types.each do |union_type|
+        add_literal_matches(union_type, context)
+      end
+    end
+
+    def add_literal_matches(other : AliasType, context)
+      aliased_type = other.remove_alias
+      add_literal_matches(aliased_type, context) unless aliased_type == other
+    end
+
+    def compatible_with?(type : UnionType)
+      type.union_types.all? { |union_type| compatible_with?(union_type) }
+    end
+
+    def compatible_with?(type : Type)
+      matches_exactly?(type) || matches_partially?(type)
+    end
+  end
+
+  class NumberAutocastType
+    def matches_exactly?(other : Type)
+      literal.type == other
+    end
+
+    def matches_partially?(other : Type)
+      literal.can_autocast_to?(other)
     end
   end
 
   class SymbolAutocastType
-    def restrict(other, context)
-      case other
-      when SymbolType
-        set_exact_match(other)
-        other
-      when EnumType
-        if !exact_match? && other.find_member(literal.value)
-          add_match(other)
-          other
-        else
-          literal.type.restrict(other, context)
-        end
-      else
-        type = literal.type.restrict(other, context) ||
-               super(other, context)
-        if type == self
-          type = @match || literal.type
-        end
-        type
-      end
+    def matches_exactly?(other : Type)
+      other.is_a?(SymbolType)
     end
 
-    def compatible_with?(type)
-      case type
-      when SymbolType
-        true
-      when EnumType
-        !!(type.find_member(literal.value))
-      else
-        false
-      end
+    def matches_partially?(other : Type)
+      other.is_a?(EnumType) && !!(other.find_member(literal.value))
     end
   end
 end

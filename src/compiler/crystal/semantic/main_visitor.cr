@@ -935,7 +935,13 @@ module Crystal
     def self.check_automatic_cast(program, value, var_type, assign = nil)
       if value.is_a?(NumberLiteral) && value.type != var_type
         literal_type = NumberAutocastType.new(program, value)
-        restricted = literal_type.restrict(var_type, MatchContext.new(value.type, value.type))
+        context = MatchContext.new(value.type, value.type, autocast_allowed: true)
+        restricted = literal_type.restrict(var_type, context)
+        if restricted && var_type
+          literal_type.add_literal_matches(var_type, context)
+          restricted = literal_type.match || restricted
+        end
+
         if restricted.is_a?(IntegerType) || restricted.is_a?(FloatType)
           value.type = restricted
           value.kind = restricted.kind
@@ -944,7 +950,13 @@ module Crystal
         end
       elsif value.is_a?(SymbolLiteral) && value.type != var_type
         literal_type = SymbolAutocastType.new(program, value)
-        restricted = literal_type.restrict(var_type, MatchContext.new(value.type, value.type))
+        context = MatchContext.new(value.type, value.type, autocast_allowed: true)
+        restricted = literal_type.restrict(var_type, context)
+        if restricted && var_type
+          literal_type.add_literal_matches(var_type, context)
+          restricted = literal_type.match || restricted
+        end
+
         if restricted.is_a?(EnumType)
           member = restricted.find_member(value.value).not_nil!
           path = Path.new(member.name)
