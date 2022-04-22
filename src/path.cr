@@ -114,6 +114,12 @@ struct Path
     new(name, *parts)
   end
 
+  # Creates a new `Path` of native kind or `nil`.
+  def self.[]?(name : String | Path | Nil) : Path?
+    return nil unless name
+    new(name)
+  end
+
   # :ditto:
   def self.new(parts : Enumerable) : Path
     new("").join(parts)

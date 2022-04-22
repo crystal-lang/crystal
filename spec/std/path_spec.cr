@@ -152,6 +152,12 @@ describe Path do
     Path["/foo", "bar", "baz"].should eq Path.new("/foo", "bar", "baz")
   end
 
+  it ".[]?" do
+    Path["foo"]?.should eq Path.new("foo")
+    Path["foo"]?.try(&.native?).should be_true
+    Path[nil]?.should eq nil
+  end
+
   describe "#parent" do
     assert_paths("/Users/foo/bar.cr", "/Users/foo", &.parent)
     assert_paths("Users/foo/bar.cr", "Users/foo", &.parent)
