@@ -11,13 +11,20 @@ require "crystal/system/file"
 # content = file.gets_to_end
 # file.close
 #
-# # Implicit close with `open`
+# # Implicit close with `open` and a block:
 # content = File.open("path/to/file") do |file|
 #   file.gets_to_end
 # end
 #
-# # Shortcut:
+# # Shortcut of the above:
 # content = File.read("path/to/file")
+# 
+# # Write to a file by opening with a "write mode" specified.
+# File.open("path/to/file", "w") do |file|
+#   file.print "hello"
+# end
+# # Content of file on disk will now be "hello".
+# See `self.new` for various options *mode* can be.
 # ```
 #
 # ## Temporary Files
