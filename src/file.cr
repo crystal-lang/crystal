@@ -18,7 +18,7 @@ require "crystal/system/file"
 #
 # # Shortcut of the above:
 # content = File.read("path/to/file")
-# 
+#
 # # Write to a file by opening with a "write mode" specified.
 # File.open("path/to/file", "w") do |file|
 #   file.print "hello"
