@@ -63,8 +63,8 @@ module Crystal::System::Dir
 
   def self.info(dir : DirHandle, path) : ::File::Info
     if dir.handle == LibC::INVALID_HANDLE_VALUE
+      handle = LibC.FindFirstFileW(dir.query, out data)
       begin
-        handle = LibC.FindFirstFileW(dir.query, out data)
         Crystal::System::FileDescriptor.system_info handle, LibC::FILE_TYPE_DISK
       ensure
         close(handle, path) rescue nil
