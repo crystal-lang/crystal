@@ -24,11 +24,11 @@ require "crystal/system/file"
 #   file.print "hello"
 # end
 # # Content of file on disk will now be "hello".
-# See `self.new` for various options *mode* can be.
 #
 # # Shortcut of the above:
 # File.write("path/to/file", "hello")
 # ```
+# See `new` for various options *mode* can be.
 #
 # ## Temporary Files
 #
