@@ -75,7 +75,7 @@ describe "Dir" do
     end
   end
 
-  it "tests info on existing directory" do
+  pending_win32 "tests info on existing directory" do
     Dir.open(datapath) do |dir|
       info = dir.info
       info.directory?.should be_true
