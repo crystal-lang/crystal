@@ -28,6 +28,7 @@ require "crystal/system/file"
 # # Shortcut of the above:
 # File.write("path/to/file", "hello")
 # ```
+#
 # See `new` for various options *mode* can be.
 #
 # ## Temporary Files
