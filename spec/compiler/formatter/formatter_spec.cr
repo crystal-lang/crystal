@@ -865,10 +865,18 @@ describe Crystal::Formatter do
   assert_format "#### ###"
   assert_format "#######"
 
-  assert_format "A = 1\nFOO = 2\n\nEX = 3", "A   = 1\nFOO = 2\n\nEX = 3"
-  assert_format "FOO = 2\nA = 1", "FOO = 2\nA   = 1"
-  assert_format "FOO = 2 + 3\nA = 1 - 10", "FOO = 2 + 3\nA   = 1 - 10"
-  assert_format "private FOO = 2\nprivate A = 1", "private FOO = 2\nprivate A   = 1"
+  assert_format "A = 1\nFOO = 2\n\nEX = 3", "A = 1\nFOO = 2\n\nEX = 3"
+  assert_format "FOO = 2\nA = 1", "FOO = 2\nA = 1"
+  assert_format "FOO = 2 + 3\nA = 1 - 10", "FOO = 2 + 3\nA = 1 - 10"
+  assert_format "private FOO = 2\nprivate A = 1", "private FOO = 2\nprivate A = 1"
+  assert_format "private FOO    =    2\nprivate A =   1", "private FOO = 2\nprivate A = 1"
+  assert_format "private FOO =    2\nprivate A    =1", "private FOO = 2\nprivate A = 1"
+  assert_format "private FOO    = 2\nprivate A=       1", "private FOO = 2\nprivate A = 1"
+  assert_format "private FOO=2\nprivate A =   1", "private FOO = 2\nprivate A = 1"
+  assert_format "FOO    =    2\nA  =   1","FOO = 2\nA = 1"
+  assert_format "FOO = 2\nA   = 1","FOO = 2\nA = 1"
+  assert_format "FOO = 2\nA =   1","FOO = 2\nA = 1"
+
   assert_format "enum Baz\nA = 1\nFOO = 2\n\nEX = 3\nend", "enum Baz\n  A   = 1\n  FOO = 2\n\n  EX = 3\nend"
   assert_format "enum Baz\nA = 1\nFOO\n\nEX = 3\nend", "enum Baz\n  A   = 1\n  FOO\n\n  EX = 3\nend"
 
@@ -1029,7 +1037,8 @@ describe Crystal::Formatter do
   assert_format "p = Foo[\n  1, 2, 3,\n  4, 5, 6\n]\n", "p = Foo[\n  1, 2, 3,\n  4, 5, 6,\n]"
   assert_format "[1, 2,\n  3, 4]\n", "[1, 2,\n 3, 4]"
   assert_format "{1 => 2,\n  3 => 4, # lala\n}\n", "{1 => 2,\n 3 => 4, # lala\n}"
-  assert_format "A = 10\nFOO = 123\nBARBAZ = 1234\n", "A      =   10\nFOO    =  123\nBARBAZ = 1234"
+  assert_format "A = 10\nFOO = 123\nBARBAZ = 1234\n", "A = 10\nFOO = 123\nBARBAZ = 1234"
+  assert_format "A = 10\nFOO =      123\nBARBAZ       = 1234\n", "A = 10\nFOO = 123\nBARBAZ = 1234"
   assert_format "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend\n", "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend"
   assert_format "1\n# hello\n\n\n", "1\n# hello"
   assert_format "def foo\n  a = 1; # foo\n  a = 2; # bar\nend\n", "def foo\n  a = 1 # foo\n  a = 2 # bar\nend"
@@ -1663,7 +1672,9 @@ describe Crystal::Formatter do
     end
     CODE
 
-  assert_format <<-CODE
+  # assert_format "def foo(x)\n  {% if true %}\n    # comment\n    Foo = 1\n    B   = 2\n  {% end %}\nend", "def foo(x)\n  {% if true %}\n    # comment\n    Foo = 1\n    B = 2\n  {% end %}\nend"
+
+  assert_format <<-BEFORE,
     def foo(x)
       {% if true %}
         # comment
@@ -1671,7 +1682,16 @@ describe Crystal::Formatter do
         B   = 2
       {% end %}
     end
-    CODE
+    BEFORE
+    <<-AFTER
+    def foo(x)
+      {% if true %}
+        # comment
+        Foo = 1
+        B = 2
+      {% end %}
+    end
+    AFTER
 
   assert_format <<-CODE
     def foo(x)

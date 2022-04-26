@@ -3282,11 +3282,10 @@ module Crystal
       accept target
       skip_space_or_newline
 
-      check_align = check_assign_length node.target
       slash_is_regex!
       write_token " ", :OP_EQ
       skip_space
-      accept_assign_value_after_equals node.value, check_align: check_align
+      accept_assign_value_after_equals node.value
 
       false
     end
