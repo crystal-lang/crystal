@@ -99,4 +99,5 @@ lib LibWasi
   fun fd_readdir = __wasi_fd_readdir(fd : Fd, buf : UInt8*, len : Size, cookie : UInt64, ret : Size*) : WasiError
   fun fd_close = __wasi_fd_close(fd : Fd) : WasiError
   fun random_get = __wasi_random_get(buf : UInt8*, len : Size) : WasiError
+  fun proc_exit = __wasi_proc_exit(code : Int32) : NoReturn
 end

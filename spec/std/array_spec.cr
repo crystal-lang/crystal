@@ -147,8 +147,8 @@ describe "Array" do
   end
 
   it "does *" do
-    (([] of Int32) * 10).empty?.should be_true
-    ([1, 2, 3] * 0).empty?.should be_true
+    (([] of Int32) * 10).should be_empty
+    ([1, 2, 3] * 0).should be_empty
     ([1] * 3).should eq([1, 1, 1])
     ([1, 2, 3] * 3).should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
     ([1, 2] * 10).should eq([1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
@@ -1319,7 +1319,7 @@ describe "Array" do
     it "truncates with index and count == 0" do
       a = [0, 1, 4, 9, 16, 25]
       a.truncate(2, 0).should be(a)
-      a.empty?.should be_true
+      a.should be_empty
     end
 
     it "truncates with index and count, not enough elements" do
@@ -1331,7 +1331,7 @@ describe "Array" do
     it "truncates with index == size and count" do
       a = [0, 1, 4, 9, 16, 25]
       a.truncate(6, 1).should be(a)
-      a.empty?.should be_true
+      a.should be_empty
     end
 
     it "truncates with index < 0 and count" do
@@ -1825,9 +1825,9 @@ describe "Array" do
 
     it "transposes empty array" do
       e = [] of Array(Int32)
-      e.transpose.empty?.should be_true
-      [e].transpose.empty?.should be_true
-      [e, e, e].transpose.empty?.should be_true
+      e.transpose.should be_empty
+      [e].transpose.should be_empty
+      [e, e, e].transpose.should be_empty
     end
 
     it "raises IndexError error when size of element is invalid" do
