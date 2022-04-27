@@ -40,7 +40,7 @@ describe "Exception" do
 
     _, output, error = compile_and_run_file(sample, ["--release"])
 
-    output.to_s.empty?.should be_true
+    output.to_s.should be_empty
     error.to_s.should contain("Unhandled exception: Oh no! (Exception)")
     error.to_s.should_not contain("Invalid memory access")
     error.to_s.should_not contain("Illegal instruction")
