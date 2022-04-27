@@ -304,10 +304,10 @@ describe Indexable do
       elems.should eq([{0, 0}, {0, 1}, {0, 2}, {1, 0}, {1, 1}, {1, 2}])
 
       elems = SafeIndexable.new(2).cartesian_product(SafeIndexable.new(0))
-      elems.empty?.should be_true
+      elems.should be_empty
 
       elems = SafeIndexable.new(0).cartesian_product(SafeIndexable.new(3))
-      elems.empty?.should be_true
+      elems.should be_empty
     end
 
     it "does with >1 other Indexables" do
@@ -325,7 +325,7 @@ describe Indexable do
       elems.should eq([[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]])
 
       elems = Indexable.cartesian_product(SafeNestedIndexable.new(2, 0))
-      elems.empty?.should be_true
+      elems.should be_empty
 
       elems = Indexable.cartesian_product(SafeNestedIndexable.new(0, 3))
       elems.should eq([[] of Int32])
@@ -351,12 +351,12 @@ describe Indexable do
       r = [] of Int32 | String
       indexable = SafeIndexable.new(3)
       indexable.each_cartesian(SafeStringIndexable.new(0)) { |a, b| r << a; r << b }
-      r.empty?.should be_true
+      r.should be_empty
 
       r = [] of Int32 | String
       indexable = SafeIndexable.new(0)
       indexable.each_cartesian(SafeStringIndexable.new(2)) { |a, b| r << a; r << b }
-      r.empty?.should be_true
+      r.should be_empty
     end
 
     it "does with 1 other Indexable, without block" do
@@ -414,15 +414,15 @@ describe Indexable do
 
       r = [] of Int32
       Indexable.each_cartesian(SafeNestedIndexable.new(3, 0)) { |v| r.concat(v) }
-      r.empty?.should be_true
+      r.should be_empty
 
       r = [] of Int32
       Indexable.each_cartesian(SafeNestedIndexable.new(0, 2)) { |v| r.concat(v) }
-      r.empty?.should be_true
+      r.should be_empty
 
       r = [] of Int32
       Indexable.each_cartesian(SafeNestedIndexable.new(0, 0)) { |v| r.concat(v) }
-      r.empty?.should be_true
+      r.should be_empty
     end
 
     it "does with reuse = true, with block" do
