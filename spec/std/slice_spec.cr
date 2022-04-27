@@ -492,7 +492,7 @@ describe "Slice" do
   it "does Bytes[]" do
     slice = Bytes[]
     slice.should be_a(Bytes)
-    slice.empty?.should be_true
+    slice.should be_empty
   end
 
   it "uses percent vars in [] macro (#2954)" do
@@ -598,7 +598,7 @@ describe "Slice" do
 
   it "creates empty slice" do
     slice = Slice(Int32).empty
-    slice.empty?.should be_true
+    slice.should be_empty
   end
 
   it "creates read-only slice" do
