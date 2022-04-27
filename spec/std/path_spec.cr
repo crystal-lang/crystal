@@ -29,6 +29,11 @@ end
 
 private def it_joins_path(path, parts, posix, windows = posix, file = __FILE__, line = __LINE__)
   assert_paths(path, posix, windows, %(resolving "#{parts}"), file, line, &.join(parts))
+  unless parts.is_a?(Enumerable)
+    # FIXME: Omitting the type cast results in Error: can't infer block return type, try to cast the block body with `as`.
+    assert_paths(path, posix, windows, %(resolving ["#{parts}"] ), file, line, &.join([parts]).as(Path))
+    assert_paths(path, posix, windows, %(resolving ["#{parts}"].each), file, line, &.join([parts].each).as(Path))
+  end
 end
 
 private def assert_paths(path, posix, windows = posix, label = nil, file = __FILE__, line = __LINE__, &block : Path -> _)
