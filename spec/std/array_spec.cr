@@ -1147,7 +1147,7 @@ describe "Array" do
       a = [1, 2, 3]
       a.shuffle!
       b = [1, 2, 3]
-      3.times { a.includes?(b.shift).should be_true }
+      3.times { a.should contain(b.shift) }
     end
 
     it "shuffle" do
@@ -1156,7 +1156,7 @@ describe "Array" do
       a.should_not be(b)
       a.should eq([1, 2, 3])
 
-      3.times { b.includes?(a.shift).should be_true }
+      3.times { b.should contain(a.shift) }
     end
 
     it "shuffle! with random" do
