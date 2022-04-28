@@ -495,7 +495,22 @@ class Crystal::Call
   end
 
   def tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
+    index = tuple_indexer_helper_index(args.first, owner, instance_type, nilable)
+    return unless index
+
+    indexer_def = yield instance_type, index
+    indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
+    Matches.new([indexer_match] of Match, true)
+  end
+
+  private def tuple_indexer_helper_index(arg, owner, instance_type, nilable)
     arg = args.first
+
+    # Make it work with constants too
+    while arg.is_a?(Path) && (target_const = arg.target_const)
+      arg = target_const.value
+    end
+
     if arg.is_a?(NumberLiteral) && arg.kind.i32?
       index = arg.value.to_i
       index += instance_type.size if index < 0
@@ -547,13 +562,18 @@ class Crystal::Call
       return nil
     end
 
-    indexer_def = yield instance_type, index
-    indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-    Matches.new([indexer_match] of Match, true)
+    index
   end
 
   def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
-    case arg = args.first
+    arg = args.first
+
+    # Make it work with constants too
+    while arg.is_a?(Path) && (target_const = arg.target_const)
+      arg = target_const.value
+    end
+
+    case arg
     when SymbolLiteral, StringLiteral
       name = arg.value
       index = instance_type.name_index(name)

@@ -146,6 +146,11 @@ describe Crystal::Formatter do
   assert_format "::Pointer(T)"
   assert_format "::StaticArray(T)"
 
+  assert_format "Tuple()"
+  assert_format "::Tuple()"
+  assert_format "NamedTuple()"
+  assert_format "::NamedTuple()"
+
   %w(if unless).each do |keyword|
     assert_format "#{keyword} a\n2\nend", "#{keyword} a\n  2\nend"
     assert_format "#{keyword} a\n2\n3\nend", "#{keyword} a\n  2\n  3\nend"

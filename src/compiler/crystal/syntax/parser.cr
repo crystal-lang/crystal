@@ -3685,7 +3685,9 @@ module Crystal
       free_vars = [] of String
       while true
         check :CONST
-        free_vars << @token.value.to_s
+        free_var = @token.value.to_s
+        raise "duplicated free variable name: #{free_var}", @token if free_vars.includes?(free_var)
+        free_vars << free_var
 
         next_token_skip_space
         if @token.type.op_comma?

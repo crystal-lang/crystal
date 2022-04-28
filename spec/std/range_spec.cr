@@ -92,11 +92,11 @@ describe "Range" do
   end
 
   it "is empty with .. and begin > end" do
-    (1..0).to_a.empty?.should be_true
+    (1..0).to_a.should be_empty
   end
 
   it "is empty with ... and begin > end" do
-    (1...0).to_a.empty?.should be_true
+    (1...0).to_a.should be_empty
   end
 
   it "is not empty with .. and begin == end" do
@@ -328,11 +328,11 @@ describe "Range" do
     end
 
     it "is empty with .. and begin > end" do
-      (1..0).each.to_a.empty?.should be_true
+      (1..0).each.to_a.should be_empty
     end
 
     it "is empty with ... and begin > end" do
-      (1...0).each.to_a.empty?.should be_true
+      (1...0).each.to_a.should be_empty
     end
 
     it "is not empty with .. and begin == end" do
@@ -376,11 +376,11 @@ describe "Range" do
     end
 
     it "is empty with .. and begin > end" do
-      (1..0).reverse_each.to_a.empty?.should be_true
+      (1..0).reverse_each.to_a.should be_empty
     end
 
     it "is empty with ... and begin > end" do
-      (1...0).reverse_each.to_a.empty?.should be_true
+      (1...0).reverse_each.to_a.should be_empty
     end
 
     it "is not empty with .. and begin == end" do
