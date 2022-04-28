@@ -262,10 +262,7 @@ struct Tuple
       case index
       {% for i in 0...T.size %}
       when {{ i }}, {{ i - T.size }}
-        typeof(begin
-          v = uninitialized self
-          v[{{ i }}]
-        end)
+        typeof(element_type({{ i }}))
       {% end %}
       end
     {% end %}

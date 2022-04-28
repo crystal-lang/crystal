@@ -233,10 +233,7 @@ struct NamedTuple
       case key
       {% for key in T %}
       when {{ key.symbolize }}, {{ key.stringify }}
-        typeof(begin
-          x = uninitialized self
-          x[{{ key.symbolize }}]
-        end)
+        typeof(element_type({{ key.symbolize }}))
       {% end %}
       end
     {% end %}
@@ -715,6 +712,6 @@ struct NamedTuple
   # NOTE: there should never be a need to call this method outside the standard library.
   private macro element_type(key)
     x = uninitialized self
-    x[{{ key.symbolize }}]
+    x[{{ key.id.symbolize }}]
   end
 end
