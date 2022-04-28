@@ -19,6 +19,7 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_140 = {{LibLLVM::VERSION.starts_with?("14.0")}}
     IS_130 = {{LibLLVM::VERSION.starts_with?("13.0")}}
     IS_120 = {{LibLLVM::VERSION.starts_with?("12.0")}}
     IS_111 = {{LibLLVM::VERSION.starts_with?("11.1")}}

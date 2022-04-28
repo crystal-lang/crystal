@@ -147,6 +147,12 @@ describe "JSON serialization" do
       tuple.should be_a(NamedTuple(x: Int32, y: String))
     end
 
+    it "does for empty named tuple" do
+      tuple = typeof(NamedTuple.new).from_json(%({}))
+      tuple.should eq(NamedTuple.new)
+      tuple.should be_a(typeof(NamedTuple.new))
+    end
+
     it "does for named tuple with nilable fields (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_json(%({"y": "hello"}))
       tuple.should eq({x: nil, y: "hello"})

@@ -10,7 +10,7 @@ class Crystal::Command
     check = false
     show_backtrace = false
 
-    OptionParser.parse(options) do |opts|
+    OptionParser.parse(@options) do |opts|
       opts.banner = "Usage: crystal tool format [options] [file or directory]\n\nOptions:"
 
       opts.on("--check", "Checks that formatting code produces no changes") do |f|

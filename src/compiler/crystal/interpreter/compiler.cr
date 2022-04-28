@@ -672,7 +672,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       # We inline simple constants.
       if const.value.simple_literal?
-        const.value.accept self
+        put_nil node: node
 
         # Not all non-trivial constants have a corresponding def:
         # for example ARGV_UNSAFE.
