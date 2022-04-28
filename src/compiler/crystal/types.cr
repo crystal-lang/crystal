@@ -1336,6 +1336,31 @@ module Crystal
         raise "Bug: called 'range' for non-integer literal"
       end
     end
+
+    # Returns true if every _finite_ member of this type is also exactly
+    # representable in the *other_type*. Used to define legal autocasts of
+    # number-typed variables
+    def subset_of?(other_type : IntegerType) : Bool
+      self_min, self_max = self.range
+      other_min, other_max = other_type.range
+      other_min <= self_min && self_max <= other_max
+    end
+
+    # :ditto:
+    def subset_of?(other_type : FloatType) : Bool
+      # Float32 mantissa has 23 bits,
+      # Float64 mantissa has 52 bits
+      case kind
+      when .i8?, .u8?, .i16?, .u16?
+        # Less than 23 bits, so convertable to Float32 and Float64 without precision loss
+        true
+      when .i32?, .u32?
+        # Less than 52 bits, so convertable to Float64 without precision loss
+        other_type.kind.f64?
+      else
+        false
+      end
+    end
   end
 
   class FloatType < PrimitiveType
@@ -1358,6 +1383,18 @@ module Crystal
       else
         raise "Bug: called 'range' for non-float literal"
       end
+    end
+
+    # Returns true if every _finite_ member of this type is also exactly
+    # representable in the *other_type*. Used to define legal autocasts of
+    # number-typed variables.
+    def subset_of?(other_type : IntegerType) : Bool
+      false
+    end
+
+    # :ditto:
+    def subset_of?(other_type : FloatType) : Bool
+      kind.f32? && other_type.kind.f64?
     end
   end
 

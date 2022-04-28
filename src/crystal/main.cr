@@ -130,3 +130,7 @@ end
 {% if flag?(:win32) %}
   require "./system/win32/wmain"
 {% end %}
+
+{% if flag?(:wasi) %}
+  require "./system/wasi/main"
+{% end %}

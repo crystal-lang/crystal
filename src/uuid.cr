@@ -146,10 +146,10 @@ struct UUID
   # ```
   # require "uuid"
   #
-  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::NCS).variant       # => NCS
-  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::RFC4122).variant   # => RFC4122
-  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Microsoft).variant # => Microsoft
-  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Future).variant    # => Future
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::NCS).variant       # => UUID::Variant::NCS
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::RFC4122).variant   # => UUID::Variant::RFC4122
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Microsoft).variant # => UUID::Variant::Microsoft
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Future).variant    # => UUID::Variant::Future
   # ```
   def variant : UUID::Variant
     case
@@ -172,11 +172,11 @@ struct UUID
   # ```
   # require "uuid"
   #
-  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V1).version # => V1
-  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V2).version # => V2
-  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V3).version # => V3
-  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V4).version # => V4
-  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V5).version # => V5
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V1).version # => UUID::Version::V1
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V2).version # => UUID::Version::V2
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V3).version # => UUID::Version::V3
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V4).version # => UUID::Version::V4
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V5).version # => UUID::Version::V5
   # ```
   def version : UUID::Version
     case @bytes[6] >> 4
