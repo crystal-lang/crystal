@@ -117,9 +117,13 @@ module Crystal::System::File
     end
   end
 
-  def self.delete(path)
+  def self.delete(path, *, raise_on_missing : Bool) : Bool
     err = LibC.unlink(path.check_no_null_byte)
-    if err == -1
+    if err != -1
+      true
+    elsif !raise_on_missing && Errno.value == Errno::ENOENT
+      false
+    else
       raise ::File::Error.from_errno("Error deleting file", file: path)
     end
   end

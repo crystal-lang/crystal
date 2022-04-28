@@ -367,7 +367,7 @@ describe "File" do
         File.chmod(path, 0o775)
         File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
       ensure
-        File.delete(path) if File.exists?(path)
+        File.delete?(path)
       end
     end
 
@@ -378,7 +378,7 @@ describe "File" do
         File.chmod(path, 0o664)
         File.info(path).permissions.should eq(normalize_permissions(0o664, directory: true))
       ensure
-        Dir.delete(path) if Dir.exists?(path)
+        Dir.delete?(path)
       end
     end
 
@@ -389,7 +389,7 @@ describe "File" do
         File.chmod(path, File::Permissions.flags(OwnerAll, GroupAll, OtherExecute, OtherRead))
         File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
       ensure
-        File.delete(path) if File.exists?(path)
+        File.delete?(path)
       end
     end
 
@@ -514,6 +514,16 @@ describe "File" do
         File.exists?(filename).should be_true
         File.delete(filename)
         File.exists?(filename).should be_false
+      end
+    end
+
+    it "deletes? a file" do
+      with_tempfile("delete-file.txt") do |filename|
+        File.open(filename, "w") { }
+        File.exists?(filename).should be_true
+        File.delete?(filename).should be_true
+        File.exists?(filename).should be_false
+        File.delete?(filename).should be_false
       end
     end
 

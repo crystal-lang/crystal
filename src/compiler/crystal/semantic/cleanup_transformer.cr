@@ -51,7 +51,7 @@ module Crystal
 
     def cleanup_files
       tempfiles.each do |tempfile|
-        File.delete(tempfile) rescue nil
+        File.delete?(tempfile)
       end
     end
   end
