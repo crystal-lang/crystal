@@ -191,10 +191,7 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
       {% if type.nilable? %}
         %var{key.id} = nil
       {% else %}
-        %var{key.id} = uninitialized typeof(begin
-          value = uninitialized self
-          value[{{ key.symbolize }}]
-        end)
+        %var{key.id} = uninitialized typeof(element_type({{ key.symbolize }}))
         %found{key.id} = false
       {% end %}
     {% end %}
