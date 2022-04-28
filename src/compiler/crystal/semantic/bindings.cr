@@ -326,7 +326,17 @@ module Crystal
       when UnionType
         haystack.union_types.any? { |sub| type_includes?(sub, needle) }
       when GenericClassInstanceType
-        haystack.type_vars.any? { |key, sub| sub.is_a?(Var) && type_includes?(sub.type, needle) }
+        splat_index = haystack.generic_type.splat_index
+        haystack.type_vars.each_with_index do |(_, sub), index|
+          if sub.is_a?(Var)
+            if index == splat_index
+              return true if sub.type.as(TupleInstanceType).tuple_types.any? { |sub2| type_includes?(sub2, needle) }
+            else
+              return true if type_includes?(sub.type, needle)
+            end
+          end
+        end
+        false
       else
         false
       end
@@ -520,7 +530,8 @@ module Crystal
     def update(from = nil)
       instance_type = self.instance_type
       if instance_type.is_a?(NamedTupleType)
-        entries = named_args.not_nil!.map do |named_arg|
+        entries = Array(NamedArgumentType).new(named_args.try(&.size) || 0)
+        named_args.try &.each do |named_arg|
           node = named_arg.value
 
           if node.is_a?(Path) && (syntax_replacement = node.syntax_replacement)
@@ -541,7 +552,7 @@ module Crystal
           Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
           node_type = node_type.virtual_type
 
-          NamedArgumentType.new(named_arg.name, node_type)
+          entries << NamedArgumentType.new(named_arg.name, node_type)
         end
 
         generic_type = instance_type.instantiate_named_args(entries)

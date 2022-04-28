@@ -49,34 +49,6 @@ module Crystal
         end
       end
     end
-
-    def can_autocast_to?(other_type)
-      self_type = self.type
-
-      case {self_type, other_type}
-      when {IntegerType, IntegerType}
-        self_min, self_max = self_type.range
-        other_min, other_max = other_type.range
-        other_min <= self_min && self_max <= other_max
-      when {IntegerType, FloatType}
-        # Float32 mantissa has 23 bits,
-        # Float64 mantissa has 52 bits
-        case self_type.kind
-        when .i8?, .u8?, .i16?, .u16?
-          # Less than 23 bits, so convertable to Float32 and Float64 without precision loss
-          true
-        when .i32?, .u32?
-          # Less than 52 bits, so convertable to Float64 without precision loss
-          other_type.kind.f64?
-        else
-          false
-        end
-      when {FloatType, FloatType}
-        self_type.kind.f32? && other_type.kind.f64?
-      else
-        false
-      end
-    end
   end
 
   class Var
@@ -268,8 +240,8 @@ module Crystal
     def free_var?(node : Path)
       free_vars = @free_vars
       return false unless free_vars
-
-      !node.global? && node.names.size == 1 && free_vars.includes?(node.names.first)
+      name = node.single_name?
+      !name.nil? && free_vars.includes?(name)
     end
 
     def free_var?(any)
@@ -856,22 +828,6 @@ module Crystal
 
     def clone_without_location
       self
-    end
-  end
-
-  class NumberLiteral
-    def can_autocast_to?(other_type)
-      case {self.type, other_type}
-      when {IntegerType, IntegerType}
-        min, max = other_type.range
-        min <= integer_value <= max
-      when {IntegerType, FloatType}
-        true
-      when {FloatType, FloatType}
-        true
-      else
-        false
-      end
     end
   end
 

@@ -113,6 +113,7 @@ struct Tuple
       args
     {% elsif @type.name(generic_args: false) == "Tuple()" %}
       # special case: empty tuple
+      # TODO: check against `Tuple()` directly after 1.4.0
       args
     {% else %}
       # explicitly provided type vars
@@ -120,10 +121,7 @@ struct Tuple
       {% begin %}
         {
           {% for i in 0...@type.size %}
-            args[{{ i }}].as(typeof(begin
-              x = uninitialized self
-              x[{{ i }}]
-            end)),
+            args[{{ i }}].as(typeof(element_type({{ i }}))),
           {% end %}
         }
       {% end %}
@@ -729,5 +727,19 @@ struct Tuple
     {% else %}
       self[{{T.size - 1}}]
     {% end %}
+  end
+
+  # Returns a value with the same type as the element at the given *index* of
+  # an instance of `self`. *index* must be an integer or range literal known at
+  # compile-time.
+  #
+  # The most common usage of this macro is to extract the appropriate element
+  # type in `Tuple`'s class methods. This macro works even if the corresponding
+  # element type is private.
+  #
+  # NOTE: there should never be a need to call this method outside the standard library.
+  private macro element_type(index)
+    x = uninitialized self
+    x[{{ index }}]
   end
 end

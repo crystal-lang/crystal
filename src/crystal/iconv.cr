@@ -1,4 +1,4 @@
-{% if flag?(:win32) %}
+{% if flag?(:use_libiconv) || flag?(:win32) %}
   require "./lib_iconv"
   private USE_LIBICONV = true
 {% else %}

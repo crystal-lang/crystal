@@ -1645,6 +1645,20 @@ module Crystal
         assert_macro("{{x.type_vars.map &.stringify}}", %(["A", "B"])) do |program|
           {x: TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))}
         end
+        assert_macro("{{x.type_vars.map &.stringify}}", %(["Int32", "String"])) do |program|
+          generic_class = GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"])
+          {x: TypeNode.new(generic_class.instantiate([program.int32, program.string] of TypeVar))}
+        end
+        assert_macro("{{x.type_vars.map &.stringify}}", %(["Tuple(Int32, String)"])) do |program|
+          generic_class = GenericClassType.new(program, program, "SomeType", program.object, ["T"])
+          generic_class.splat_index = 0
+          {x: TypeNode.new(generic_class.instantiate([program.int32, program.string] of TypeVar))}
+        end
+        assert_macro("{{x.type_vars.map &.stringify}}", %(["Tuple()"])) do |program|
+          generic_class = GenericClassType.new(program, program, "SomeType", program.object, ["T"])
+          generic_class.splat_index = 0
+          {x: TypeNode.new(generic_class.instantiate([] of TypeVar))}
+        end
       end
 
       it "executes class" do
@@ -2155,6 +2169,12 @@ module Crystal
       it "executes args when not empty" do
         assert_macro %({{x.args}}), "[SomeType, OtherType]", {x: ProcPointer.new(Var.new("some_object"), "method", [Path.new("SomeType"), Path.new("OtherType")] of ASTNode)}
       end
+
+      it "executes global?" do
+        assert_macro %({{x.global?}}), "false", {x: ProcPointer.new(nil, "method")}
+        assert_macro %({{x.global?}}), "true", {x: ProcPointer.new(nil, "method", global: true)}
+        assert_macro %({{x.global?}}), "false", {x: ProcPointer.new(Path.global("Foo"), "method")}
+      end
     end
 
     describe "def methods" do
@@ -2662,6 +2682,7 @@ module Crystal
 
       it "executes type_vars" do
         assert_macro %({{x.type_vars}}), "[T, U]", {x: Generic.new("Foo".path, ["T".path, "U".path] of ASTNode)}
+        assert_macro %({{x.type_vars}}), "[]", {x: Generic.new("Foo".path, [] of ASTNode)}
       end
 
       it "executes named_args" do

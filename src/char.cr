@@ -488,7 +488,6 @@ struct Char
   # 'b'.pred # => 'a'
   # 'ぃ'.pred # => 'あ'
   # ```
-  # ```
   #
   # This does not always return `codepoint - 1`. There is a gap in the
   # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
@@ -646,7 +645,7 @@ struct Char
   # digits wrapped in curly braces and no leading zeros.
   #
   # ```
-  # 'a'.unicode_escape      # => "\\u00E1"
+  # 'a'.unicode_escape      # => "\\u0061"
   # '\t'.unicode_escape     # => "\\u0009"
   # 'あ'.unicode_escape      # => "\\u3042"
   # '\u0012'.unicode_escape # => "\\u0012"

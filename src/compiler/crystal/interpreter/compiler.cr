@@ -672,7 +672,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       # We inline simple constants.
       if const.value.simple_literal?
-        const.value.accept self
+        put_nil node: node
 
         # Not all non-trivial constants have a corresponding def:
         # for example ARGV_UNSAFE.
@@ -2192,15 +2192,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       location = node.location
       end_location = node.end_location
       case default_value.name
-      when :__LINE__
+      when .magic_line?
         put_i32 MagicConstant.expand_line(location), node: node
-      when :__END_LINE__
+      when .magic_end_line?
         # TODO: not tested
         put_i32 MagicConstant.expand_line(end_location), node: node
-      when :__FILE__
+      when .magic_file?
         # TODO: not tested
         put_string MagicConstant.expand_file(location), node: node
-      when :__DIR__
+      when .magic_dir?
         # TODO: not tested
         put_string MagicConstant.expand_dir(location), node: node
       else

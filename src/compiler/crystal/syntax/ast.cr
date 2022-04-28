@@ -336,6 +336,25 @@ module Crystal
       end
     end
 
+    # Returns true if this literal is representable in the *other_type*. Used to
+    # define number literal autocasting.
+    #
+    # TODO: if *other_type* is a `FloatType` then precision loss and overflow
+    # may occur (#11710)
+    def representable_in?(other_type)
+      case {self.type, other_type}
+      when {IntegerType, IntegerType}
+        min, max = other_type.range
+        min <= integer_value <= max
+      when {IntegerType, FloatType}
+        true
+      when {FloatType, FloatType}
+        true
+      else
+        false
+      end
+    end
+
     def clone_without_location
       NumberLiteral.new(@value, @kind)
     end
@@ -1383,6 +1402,11 @@ module Crystal
       names.size == 1 && names.first == name
     end
 
+    # Returns this path's name if it has only one part and is not global
+    def single_name?
+      names.first if names.size == 1 && !global?
+    end
+
     def clone_without_location
       ident = Path.new(@names.clone, @global)
       ident
@@ -1720,8 +1744,9 @@ module Crystal
     property obj : ASTNode?
     property name : String
     property args : Array(ASTNode)
+    property? global : Bool
 
-    def initialize(@obj, @name, @args = [] of ASTNode)
+    def initialize(@obj, @name, @args = [] of ASTNode, @global = false)
     end
 
     def accept_children(visitor)
@@ -1730,10 +1755,10 @@ module Crystal
     end
 
     def clone_without_location
-      ProcPointer.new(@obj.clone, @name, @args.clone)
+      ProcPointer.new(@obj.clone, @name, @args.clone, @global)
     end
 
-    def_equals_and_hash @obj, @name, @args
+    def_equals_and_hash @obj, @name, @args, @global
   end
 
   class Union < ASTNode
@@ -2264,9 +2289,9 @@ module Crystal
   end
 
   class MagicConstant < ASTNode
-    property name : Symbol
+    property name : Token::Kind
 
-    def initialize(@name : Symbol)
+    def initialize(@name : Token::Kind)
     end
 
     def clone_without_location
@@ -2275,13 +2300,13 @@ module Crystal
 
     def expand_node(location, end_location)
       case name
-      when :__LINE__
+      when .magic_line?
         MagicConstant.expand_line_node(location)
-      when :__END_LINE__
+      when .magic_end_line?
         MagicConstant.expand_line_node(end_location)
-      when :__FILE__
+      when .magic_file?
         MagicConstant.expand_file_node(location)
-      when :__DIR__
+      when .magic_dir?
         MagicConstant.expand_dir_node(location)
       else
         raise "BUG: unknown magic constant: #{name}"

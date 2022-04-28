@@ -5,9 +5,17 @@
 # MUSL: On musl systems, libpthread is empty. The entire library is already included in libc.
 # The empty library is only available for POSIX compatibility. We don't need to link it.
 #
+# Darwin: `libpthread` is provided as part of `libsystem`. There's no reason to link it explicitly.
+#
+# Interpreter: Starting with glibc 2.34, `pthread` is integrated into `libc`
+# and may not even be available as a separate shared library.
+# There's always a static library for compiled mode, but `Crystal::Loader` does not support
+# static libraries. So we just skip `pthread` entirely. The symbols are still
+# available in the interpreter because they are loaded in the compiler.
+#
 # OTHERS: On other systems, we add the linker annotation here to make sure libpthread is loaded
 # before libgc which looks up symbols from libpthread.
-{% unless flag?(:win32) || flag?(:musl) %}
+{% unless flag?(:win32) || flag?(:musl) || flag?(:darwin) || (flag?(:interpreted) && flag?(:gnu)) %}
   @[Link("pthread")]
 {% end %}
 
@@ -20,7 +28,13 @@
 lib LibGC
   alias Int = LibC::Int
   alias SizeT = LibC::SizeT
-  alias Word = LibC::ULong
+  {% if flag?(:win32) && flag?(:bits64) %}
+    alias Word = LibC::ULongLong
+    alias SignedWord = LibC::LongLong
+  {% else %}
+    alias Word = LibC::ULong
+    alias SignedWord = LibC::Long
+  {% end %}
 
   struct StackBase
     mem_base : Void*
@@ -86,14 +100,14 @@ lib LibGC
 
   fun set_on_collection_event = GC_set_on_collection_event(cb : ->)
 
-  $gc_no = GC_gc_no : LibC::ULong
-  $bytes_found = GC_bytes_found : LibC::Long
+  $gc_no = GC_gc_no : Word
+  $bytes_found = GC_bytes_found : SignedWord
   # GC_on_collection_event isn't exported.  Can't collect totals without it.
   # bytes_allocd, heap_size, unmapped_bytes are macros
 
   fun size = GC_size(addr : Void*) : LibC::SizeT
 
-  {% unless flag?(:win32) %}
+  {% unless flag?(:win32) || flag?(:wasm32) %}
     # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
     fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*) : LibC::Int
     fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
