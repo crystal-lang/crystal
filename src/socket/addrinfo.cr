@@ -67,7 +67,7 @@ class Socket
                 raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", value.os_error)
               else
                 {% if flag?(:win32) && compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 %}
-                  # FIXME: Workardound for https://github.com/crystal-lang/crystal/issues/11047
+                  # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11047
                   array = StaticArray(UInt8, 0).new(0)
                 {% end %}
 
