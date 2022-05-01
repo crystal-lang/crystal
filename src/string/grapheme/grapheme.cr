@@ -95,7 +95,7 @@ class String
   # ```
   #
   # This combination of codepoints is common in some non-latin scripts. It's also
-  # often used with emojies to create customized combination. For example, the
+  # often used with emojis to create customized combination. For example, the
   # thumbs up sign `👍` (`U+1F44D`) combined with an emoji modifier such as
   # `U+1F3FC` assign a colour to the emoji.
   #
