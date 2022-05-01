@@ -4782,7 +4782,7 @@
 * Added `Pointer#clear` and use it to clear an `Array`'s values when doing `pop` and other shrinking methods.
 * Added `BigInt#to_s(base)`, `BigInt::cast` and bit operators (thanks @Exilor)
 * Allow invoking methods on a union class as long as all types in the union have it.
-* Allow specifying a def's return type. The compiler checks the return type only for that def for now (not for subclasses overrding the method). The return type appears in the documentation.
+* Allow specifying a def's return type. The compiler checks the return type only for that def for now (not for subclasses overriding the method). The return type appears in the documentation.
 * Allow constants and computed constants for a StaticArray length.
 * Allow class vars in enums.
 * Allow private and protected defs in enums.
