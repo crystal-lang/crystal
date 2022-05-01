@@ -1169,7 +1169,7 @@ class Crystal::Repl::Interpreter
       interpreter = Interpreter.new(self, compiled_def, stack_bottom, block_level)
 
       while @pry
-        # TODO: supoort multi-line expressions
+        # TODO: support multi-line expressions
 
         print "pry> "
         line = gets
