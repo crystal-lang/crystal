@@ -4774,7 +4774,7 @@
 * Added `crystal init` to quickly create a skeleton library or application (thanks @waterlink)
 * Added `--emit` flag to the compiler. Now you can easily see the generated LLVM IR, LLVM bitcode, assembly and object files.
 * Added `--no-color` flag to suppress color output, useful for editor tools.
-* Added macro vars: `%var` and `%var{x, y}` create uniqely named variables inside macros.
+* Added macro vars: `%var` and `%var{x, y}` create uniquely named variables inside macros.
 * Added [typed splats](https://github.com/crystal-lang/crystal/issues/291).
 * Added `Iterator` and many methods that return iterators, like `Array#each`, `Hash#each`, `Int#times`, `Int#step`, `String#each_char`, etc.
 * Added `sprintf` and improved `String#%` to support floats and float formatting.
