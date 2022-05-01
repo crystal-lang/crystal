@@ -844,7 +844,7 @@
 - Fix handling of arithmetic overflow in `BigDecimal#div`. ([#10628](https://github.com/crystal-lang/crystal/pull/10628), thanks @kellydanma)
 - Clarify behaviour of unsafe `Float`-to-number conversions. ([#10631](https://github.com/crystal-lang/crystal/pull/10631), thanks @HertzDevil)
 - Fix return type restriction for `Number#humanize` overload. ([#10633](https://github.com/crystal-lang/crystal/pull/10633), thanks @HertzDevil)
-- Fix `printf` float with with many digits. ([#10719](https://github.com/crystal-lang/crystal/pull/10719), thanks @straight-shoota)
+- Fix `printf` float with many digits. ([#10719](https://github.com/crystal-lang/crystal/pull/10719), thanks @straight-shoota)
 - Add `BigDecimal`'s missing rounding modes. ([#10798](https://github.com/crystal-lang/crystal/pull/10798), thanks @HertzDevil)
 - Add support for using big rational `#**` with unsigned ints. ([#10887](https://github.com/crystal-lang/crystal/pull/10887), thanks @stakach)
 - Add overflow detection to `BigFloat#to_i64` and `#to_u64`. ([#10630](https://github.com/crystal-lang/crystal/pull/10630), thanks @HertzDevil)
