@@ -241,7 +241,7 @@ class Crystal::Repl::Interpreter
     # variables for the current call frame begin.
     stack_bottom = @stack
 
-    # Shift stack to leave roomm for local vars.
+    # Shift stack to leave room for local vars.
     # Previous runs that wrote to local vars would have those values
     # written to @stack already (or property migrated thanks to `migrate_local_vars`)
     stack_bottom_after_local_vars = stack_bottom + @local_vars.max_bytesize
