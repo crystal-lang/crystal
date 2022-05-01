@@ -4473,7 +4473,7 @@
 * Added `Int#to_s(base)` for `base = 62` (thanks @jhass)
 * `JSON.parse` now returns `JSON::Any`, which allows traversal of JSON objects with less casts
 * Added `OpenSSL::PKCS5` (thanks @benoist)
-* MemoryIO can now be created to read/write from a Slice(UInt8). In this mode MemoryIO can't be exapnded, and can optionally be written. And when creating a MemoryIO from a String, it's non-resizeable and read-only.
+* MemoryIO can now be created to read/write from a Slice(UInt8). In this mode MemoryIO can't be expanded, and can optionally be written. And when creating a MemoryIO from a String, it's non-resizeable and read-only.
 * Added `Object#!~` (the opposite of `=~`)
 * `at_exit` now receives that exit status code in the block (thanks @MakeNowJust)
 * Allow using `Set` in JSON mappings (thanks @benoist)
