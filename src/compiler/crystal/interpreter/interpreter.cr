@@ -38,7 +38,7 @@ class Crystal::Repl::Interpreter
     real_frame_index : Int32,
     # This is a bit hacky, but...
     # Right now, when we produce an OverflowError we do it directly
-    # in the instruction that potentitally produces the overflow.
+    # in the instruction that potentially produces the overflow.
     # When we do that, the backtrace that is produced in that case
     # is incorrect because the backtrace computing logic assumes
     # an all call frames are, well, calls. But in this case it could
