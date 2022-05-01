@@ -4932,7 +4932,7 @@
 * Added `Regex.escape`.
 * Added `String#scan`.
 * Added `-e` switch to spec, to run specs that match a pattern.
-* Added `--fail-fast` swtich to spec.
+* Added `--fail-fast` switch to spec.
 * Added `HTTPClient#basic_auth`.
 * Added `DeclareVar`, `Def` and `Arg` macro methods.
 * Added `Time` and `TimeSpan` structs. `TimeWithZone` will come later.
