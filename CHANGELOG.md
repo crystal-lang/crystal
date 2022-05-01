@@ -4571,7 +4571,7 @@
 * Added `HTTP::Cookies` (thanks @netfeed)
 * Added `Tuple#reverse` (thanks @jhass)
 * Added `Number#clamp` (thanks @technorama)
-* Added serveral socket options (thanks @technorama)
+* Added several socket options (thanks @technorama)
 * Added `WebSocket.open` (thanks @kumpelblase2)
 * Added `Enum.flags` macro
 * Added support for sending chunked content in HTTP server (thanks @bcardiff)
