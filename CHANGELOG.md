@@ -4305,7 +4305,7 @@
 * Added `String#insert`
 * Added `Time::EpochConverter` and `Time::EpochMillisConverter`
 * Added `%s` (unix epoch) directive to `Time::Format`
-* `Time` now honours Dayling Saving and `ENV["TZ"]`
+* `Time` now honours Daylight Saving and `ENV["TZ"]`
 * Added `HTTP::Server::Response#cookies` (thanks @jhass)
 * Added `Array#bsearch`, `Array#bsearch_index` and `Range#bsearch` (thanks @MakeNowJust)
 * Added `Range#reverse_each` iterator (thanks @omninonsense)
