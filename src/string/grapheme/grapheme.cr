@@ -191,7 +191,7 @@ class String
     #
     # The rules are graphically displayed in a table on https://www.unicode.org/Public/13.0.0/ucd/auxiliary/GraphemeBreakTest.html
     #
-    # The implementation is insipred by https://github.com/JuliaStrings/utf8proc/blob/462093b3924c7491defc67fda4bc7a27baf9b088/utf8proc.c#L261
+    # The implementation is inspired by https://github.com/JuliaStrings/utf8proc/blob/462093b3924c7491defc67fda4bc7a27baf9b088/utf8proc.c#L261
     def self.break?(lbc : Property, tbc : Property) : Bool
       return true if lbc.start?                                                   # GB1
       return false if lbc.cr? && tbc.lf?                                          # GB3
