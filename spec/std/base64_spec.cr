@@ -157,7 +157,7 @@ describe "Base64" do
     end
   end
 
-  describe "scrict" do
+  describe "strict" do
     it "encode" do
       assert_prints base64_strict_encode("Now is the time for all good coders\nto learn Crystal"),
         "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA=="
