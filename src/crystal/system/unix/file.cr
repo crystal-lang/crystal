@@ -56,7 +56,7 @@ module Crystal::System::File
 
   def self.stat(path, stat)
     {% if LibC.has_method?(:__xstat) %}
-      LibC.__xstat(1, path, stat)
+      LibC.__xstat(LibC::STAT_VER, path, stat)
     {% else %}
       LibC.stat(path, stat)
     {% end %}
@@ -64,7 +64,7 @@ module Crystal::System::File
 
   def self.fstat(path, stat)
     {% if LibC.has_method?(:__fxstat) %}
-      LibC.__fxstat(1, path, stat)
+      LibC.__fxstat(LibC::STAT_VER, path, stat)
     {% else %}
       LibC.fstat(path, stat)
     {% end %}
@@ -72,7 +72,7 @@ module Crystal::System::File
 
   def self.lstat(path, stat)
     {% if LibC.has_method?(:__lxstat) %}
-      LibC.__lxstat(1, path, stat)
+      LibC.__lxstat(LibC::STAT_VER, path, stat)
     {% else %}
       LibC.lstat(path, stat)
     {% end %}
@@ -128,9 +128,13 @@ module Crystal::System::File
     end
   end
 
-  def self.delete(path)
+  def self.delete(path, *, raise_on_missing : Bool) : Bool
     err = LibC.unlink(path.check_no_null_byte)
-    if err == -1
+    if err != -1
+      true
+    elsif !raise_on_missing && Errno.value == Errno::ENOENT
+      false
+    else
       raise ::File::Error.from_errno("Error deleting file", file: path)
     end
   end
