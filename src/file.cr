@@ -751,7 +751,7 @@ class File < IO::FileDescriptor
       open(dst, "wb") do |d|
         # TODO use sendfile or copy_file_range syscall. See #8926, #8919
         IO.copy(s, d)
-        d.flush
+        d.flush # need to flush in case permissions are read-only
 
         # Set the permissions after the content is written in case src permissions is read-only
         d.chmod(s.info.permissions)
