@@ -1258,7 +1258,7 @@ class Crystal::CodeGenVisitor
       # parameter restrictions so that things don't go bad
       LLVM::AtomicOrdering.new(llvm_arg.const_int_get_sext_value.to_i32!)
     elsif node.is_a?(SymbolLiteral)
-      # TODO: remove after 1.3.0
+      # TODO: remove once support for 1.4 is dropped
       op = LLVM::AtomicOrdering.parse?(node.value)
       unless op
         node.raise "unknown atomic ordering: #{node.value}"
