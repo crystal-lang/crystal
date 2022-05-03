@@ -168,7 +168,7 @@ struct NamedTuple
   #
   # key = :year
   # Foo[key]      # => Int32
-  # Foo[key].zero # Error: undefined method '[]' for NamedTuple(name: String, year: Int32).class
+  # Foo[key].zero # Error: undefined method 'zero' for String.class (compile-time type is (Int32.class | String.class))
   #
   # key = "other"
   # Foo[key] # raises KeyError
