@@ -119,7 +119,7 @@ module Compress::Zip::FileInfo
     case compression_method
     when .stored?
       if uncompressed_size == 0 && data_descriptor?
-        raise NotImplementedError.new("can't use STORE with a 0 byte file")
+        raise Error.new("can't use STORE with a 0 byte file")
       else
         io = IO::Sized.new(io, uncompressed_size) unless is_sized
       end
