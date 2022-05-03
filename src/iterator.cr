@@ -10,8 +10,8 @@ require "./enumerable"
 # (1..10_000_000).select(&.even?).map { |x| x * 3 }.first(3) # => [6, 12, 18]
 # ```
 #
-# The above works, but creates many intermediate arrays: one for the *select* call,
-# one for the *map* call and one for the *first* call. A more efficient way is to invoke
+# The above works, but creates many intermediate arrays: one for the `select` call,
+# one for the `map` call and one for the `first` call. A more efficient way is to invoke
 # `Range#each` without a block, which gives us an `Iterator` so we can process the operations
 # lazily:
 #
