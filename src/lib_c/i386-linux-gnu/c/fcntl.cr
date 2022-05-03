@@ -18,6 +18,7 @@ lib LibC
   O_RDONLY   =       0o0
   O_RDWR     =       0o2
   O_WRONLY   =       0o1
+  AT_FDCWD   =      -100
 
   struct Flock
     l_type : Short

@@ -57,4 +57,5 @@ lib LibC
   fun stat(file : Char*, buf : Stat*) : Int
   fun __xstat(ver : Int, file : Char*, buf : Stat*) : Int
   fun umask(mask : ModeT) : ModeT
+  fun utimensat(fd : Int, path : Char*, times : Timespec[2], flag : Int) : Int
 end

@@ -3,21 +3,22 @@ require "./sys/stat"
 require "./unistd"
 
 lib LibC
-  F_GETFD    =       1
-  F_SETFD    =       2
-  F_GETFL    =       3
-  F_SETFL    =       4
-  FD_CLOEXEC =       1
-  O_CLOEXEC  = 0x20000
-  O_TRUNC    =  0x0400
-  O_CREAT    =  0x0200
-  O_NOFOLLOW =  0x0100
-  O_SYNC     =  0x0080
-  O_APPEND   =  0x0008
-  O_NONBLOCK =  0x0004
-  O_RDWR     =  0x0002
-  O_WRONLY   =  0x0001
-  O_RDONLY   =  0x0000
+  F_GETFD    =          1
+  F_SETFD    =          2
+  F_GETFL    =          3
+  F_SETFL    =          4
+  FD_CLOEXEC =          1
+  O_CLOEXEC  =    0x20000
+  O_TRUNC    =     0x0400
+  O_CREAT    =     0x0200
+  O_NOFOLLOW =     0x0100
+  O_SYNC     =     0x0080
+  O_APPEND   =     0x0008
+  O_NONBLOCK =     0x0004
+  O_RDWR     =     0x0002
+  O_WRONLY   =     0x0001
+  O_RDONLY   =     0x0000
+  AT_FDCWD   = 0xFFFAFDCD
 
   struct Flock
     l_start : OffT
