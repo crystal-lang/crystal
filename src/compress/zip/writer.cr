@@ -127,7 +127,7 @@ class Compress::Zip::Writer
 
     # rewrite the initial header and skip the data descriptor if the zip file is seekable
     # if *_size == 0 keep the data descriptor because unzip chokes
-    if true && header_pos && entry.compressed_size != 0 && entry.uncompressed_size != 0
+    if header_pos && entry.compressed_size != 0 && entry.uncompressed_size != 0
       entry.general_purpose_bit_flag &= ~(1_u32 << 3)
       cur_pos = @io.pos
       @io.pos = header_pos
