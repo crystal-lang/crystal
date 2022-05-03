@@ -87,12 +87,8 @@ class Compress::Zip::Writer
     entry.utf8_name = true
     entry.offset = @written
 
-    header_pos = nil
     # need a better way to detect seek capability
-    begin
-      header_pos = @io.pos
-    rescue
-    end
+    header_pos = @io.pos rescue nil
 
     @written += entry.to_io(@io)
 
