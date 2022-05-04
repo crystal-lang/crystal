@@ -623,18 +623,21 @@ module Crystal
           @str << ", " if printed_arg
           @current_arg_type = :splat if node.splat_index == i
           arg.accept self
+          @current_arg_type = :none
           printed_arg = true
         end
         if double_splat = node.double_splat
           @current_arg_type = :double_splat
           @str << ", " if printed_arg
           double_splat.accept self
+          @current_arg_type = :none
           printed_arg = true
         end
         if block_arg = node.block_arg
           @current_arg_type = :block_arg
           @str << ", " if printed_arg
           block_arg.accept self
+          @current_arg_type = :none
           printed_arg = true
         end
         @str << ')'
@@ -657,8 +660,6 @@ module Crystal
         @str << "end"
       end
       false
-    ensure
-      @current_arg_type = :none
     end
 
     def visit(node : Macro)
@@ -671,18 +672,21 @@ module Crystal
           @str << ", " if printed_arg
           @current_arg_type = :splat if i == node.splat_index
           arg.accept self
+          @current_arg_type = :none
           printed_arg = true
         end
         if double_splat = node.double_splat
           @str << ", " if printed_arg
           @current_arg_type = :double_splat
           double_splat.accept self
+          @current_arg_type = :none
           printed_arg = true
         end
         if block_arg = node.block_arg
           @str << ", " if printed_arg
           @current_arg_type = :block_arg
           block_arg.accept self
+          @current_arg_type = :none
         end
         @str << ')'
       end
@@ -696,8 +700,6 @@ module Crystal
       append_indent
       @str << "end"
       false
-    ensure
-      @current_arg_type = :none
     end
 
     def visit(node : MacroExpression)
