@@ -1010,8 +1010,9 @@ module Crystal
     property default_value : ASTNode?
     property restriction : ASTNode?
     property doc : String?
+    property parsed_annotations : Array(Annotation)?
 
-    def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil)
+    def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @parsed_annotations : Array(Annotation)? = nil)
       @external_name = external_name || @name
     end
 
@@ -1025,10 +1026,10 @@ module Crystal
     end
 
     def clone_without_location
-      Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone
+      Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone, @parsed_annotations.clone
     end
 
-    def_equals_and_hash name, default_value, restriction, external_name
+    def_equals_and_hash name, default_value, restriction, external_name, parsed_annotations
   end
 
   # The Proc notation in the type grammar:

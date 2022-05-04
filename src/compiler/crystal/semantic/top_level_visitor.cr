@@ -327,6 +327,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.doc ||= annotations_doc(annotations)
     check_ditto node, node.location
 
+    node.args.each &.accept self
+    node.double_splat.try &.accept self
+    node.block_arg.try &.accept self
+
     node.set_type @program.nil
 
     if node.name == "finished"
@@ -347,6 +351,16 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
+  def visit(node : Arg)
+    if anns = node.parsed_annotations
+      process_annotations anns do |annotation_type, ann|
+        node.add_annotation annotation_type, ann
+      end
+    end
+
+    false
+  end
+
   def visit(node : Def)
     check_outside_exp node, "declare def"
 
@@ -362,6 +376,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     node.doc ||= annotations_doc(annotations)
     check_ditto node, node.location
+
+    node.args.each &.accept self
+    node.double_splat.try &.accept self
+    node.block_arg.try &.accept self
 
     is_instance_method = false
 

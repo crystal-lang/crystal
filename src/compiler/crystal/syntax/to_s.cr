@@ -16,6 +16,14 @@ module Crystal
   class ToSVisitor < Visitor
     @str : IO
     @macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
+    @current_arg_type : DefArgType = :none
+
+    private enum DefArgType
+      NONE
+      SPLAT
+      DOUBLE_SPLAT
+      BLOCK_ARG
+    end
 
     def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false)
       @indent = 0
@@ -613,19 +621,19 @@ module Crystal
         printed_arg = false
         node.args.each_with_index do |arg, i|
           @str << ", " if printed_arg
-          @str << '*' if node.splat_index == i
+          @current_arg_type = :splat if node.splat_index == i
           arg.accept self
           printed_arg = true
         end
         if double_splat = node.double_splat
+          @current_arg_type = :double_splat
           @str << ", " if printed_arg
-          @str << "**"
           double_splat.accept self
           printed_arg = true
         end
         if block_arg = node.block_arg
+          @current_arg_type = :block_arg
           @str << ", " if printed_arg
-          @str << '&'
           block_arg.accept self
           printed_arg = true
         end
@@ -649,6 +657,8 @@ module Crystal
         @str << "end"
       end
       false
+    ensure
+      @current_arg_type = :none
     end
 
     def visit(node : Macro)
@@ -659,19 +669,19 @@ module Crystal
         printed_arg = false
         node.args.each_with_index do |arg, i|
           @str << ", " if printed_arg
-          @str << '*' if i == node.splat_index
+          @current_arg_type = :splat if i == node.splat_index
           arg.accept self
           printed_arg = true
         end
         if double_splat = node.double_splat
           @str << ", " if printed_arg
-          @str << "**"
+          @current_arg_type = :double_splat
           double_splat.accept self
           printed_arg = true
         end
         if block_arg = node.block_arg
           @str << ", " if printed_arg
-          @str << '&'
+          @current_arg_type = :block_arg
           block_arg.accept self
         end
         @str << ')'
@@ -686,6 +696,8 @@ module Crystal
       append_indent
       @str << "end"
       false
+    ensure
+      @current_arg_type = :none
     end
 
     def visit(node : MacroExpression)
@@ -771,6 +783,19 @@ module Crystal
     end
 
     def visit(node : Arg)
+      if parsed_annotations = node.parsed_annotations
+        parsed_annotations.each do |ann|
+          ann.accept self
+          @str << ' '
+        end
+      end
+
+      case @current_arg_type
+      when .splat?        then @str << '*'
+      when .double_splat? then @str << "**"
+      when .block_arg?    then @str << '&'
+      end
+
       if node.external_name != node.name
         visit_named_arg_name(node.external_name)
         @str << ' '
