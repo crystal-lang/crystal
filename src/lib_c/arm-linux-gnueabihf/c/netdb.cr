@@ -35,5 +35,4 @@ lib LibC
   fun freeaddrinfo(ai : Addrinfo*) : Void
   fun gai_strerror(ecode : Int) : Char*
   fun getaddrinfo(name : Char*, service : Char*, req : Addrinfo*, pai : Addrinfo**) : Int
-  fun getnameinfo(sa : Sockaddr*, salen : SocklenT, host : Char*, hostlen : SocklenT, serv : Char*, servlen : SocklenT, flags : Int) : Int
 end

@@ -52,9 +52,6 @@ lib LibC
   fun lstat(file : Char*, buf : Stat*) : Int
   fun __lxstat(ver : Int, file : Char*, buf : Stat*) : Int
   fun mkdir(path : Char*, mode : ModeT) : Int
-  fun mkfifo(path : Char*, mode : ModeT) : Int
-  fun mknod(path : Char*, mode : ModeT, dev : DevT) : Int
   fun stat(file : Char*, buf : Stat*) : Int
   fun __xstat(ver : Int, file : Char*, buf : Stat*) : Int
-  fun umask(mask : ModeT) : ModeT
 end

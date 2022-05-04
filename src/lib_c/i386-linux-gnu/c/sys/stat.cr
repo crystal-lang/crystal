@@ -49,8 +49,5 @@ lib LibC
   fun fstat = fstat64(fd : Int, buf : Stat*) : Int
   fun lstat = lstat64(file : Char*, buf : Stat*) : Int
   fun mkdir(path : Char*, mode : ModeT) : Int
-  fun mkfifo(path : Char*, mode : ModeT) : Int
-  fun mknod(path : Char*, mode : ModeT, dev : DevT) : Int
   fun stat = stat64(file : Char*, buf : Stat*) : Int
-  fun umask(mask : ModeT) : ModeT
 end
