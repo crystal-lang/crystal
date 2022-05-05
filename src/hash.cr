@@ -1816,20 +1816,28 @@ class Hash(K, V)
   end
 
   # Returns `true` if `self` is a subset of *other*.
-  def proper_subset_of?(other : Hash) : Bool
+  def proper_subset_of?(other : Hash(K2, V2)) : Bool forall K2, V2
     return false if other.size <= size
     all? do |key, value|
-      other_value = other.fetch(key) { return false }
-      other_value == value
+      if key.is_a?(K2)
+        other_value = other.fetch(key) { return false }
+        other_value == value
+      else
+        false
+      end
     end
   end
 
   # Returns `true` if `self` is a subset of *other* or equals to *other*.
-  def subset_of?(other : Hash) : Bool
+  def subset_of?(other : Hash(K2, V2)) : Bool forall K2, V2
     return false if other.size < size
     all? do |key, value|
-      other_value = other.fetch(key) { return false }
-      other_value == value
+      if key.is_a?(K2)
+        other_value = other.fetch(key) { return false }
+        other_value == value
+      else
+        false
+      end
     end
   end
 
