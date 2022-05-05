@@ -211,11 +211,11 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
       end
     {% end %}
 
-    {
+    NamedTuple.new(
       {% for key, type in T %}
         {{key.id.stringify}}: (%var{key.id}).as({{type}}),
       {% end %}
-    }
+    )
   {% end %}
 end
 

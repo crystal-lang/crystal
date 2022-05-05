@@ -173,7 +173,7 @@ struct LLVM::Type
           constraints.size,
           (has_side_effects ? 1 : 0),
           (is_align_stack ? 1 : 0),
-          LibLLVM::InlineAsmDialect::Intel
+          LibLLVM::InlineAsmDialect::ATT
         )
       {% else %}
         LibLLVM.get_inline_asm(
@@ -184,7 +184,7 @@ struct LLVM::Type
           constraints.size,
           (has_side_effects ? 1 : 0),
           (is_align_stack ? 1 : 0),
-          LibLLVM::InlineAsmDialect::Intel,
+          LibLLVM::InlineAsmDialect::ATT,
           (can_throw ? 1 : 0)
         )
       {% end %}

@@ -29,6 +29,11 @@ end
 
 private def it_joins_path(path, parts, posix, windows = posix, file = __FILE__, line = __LINE__)
   assert_paths(path, posix, windows, %(resolving "#{parts}"), file, line, &.join(parts))
+  unless parts.is_a?(Enumerable)
+    # FIXME: Omitting the type cast results in Error: can't infer block return type, try to cast the block body with `as`.
+    assert_paths(path, posix, windows, %(resolving ["#{parts}"] ), file, line, &.join([parts]).as(Path))
+    assert_paths(path, posix, windows, %(resolving ["#{parts}"].each), file, line, &.join([parts].each).as(Path))
+  end
 end
 
 private def assert_paths(path, posix, windows = posix, label = nil, file = __FILE__, line = __LINE__, &block : Path -> _)
@@ -396,6 +401,14 @@ describe Path do
     assert_paths("\\\\some\\share\\foo", nil, "\\\\some\\share", &.drive)
     assert_paths("\\\\\\not-a\\share", nil, nil, &.drive)
     assert_paths("\\\\not-a\\\\share", nil, nil, &.drive)
+
+    assert_paths("\\\\some$\\share\\", nil, "\\\\some$\\share", &.drive)
+    assert_paths("\\\\%10%20\\share\\", nil, "\\\\%10%20\\share", &.drive)
+    assert_paths("\\\\_.-~!$;=&'()*+,aB1\\ !-.@^_`{}~#$%&'()aB1\\", nil, "\\\\_.-~!$;=&'()*+,aB1\\ !-.@^_`{}~#$%&'()aB1", &.drive)
+    assert_paths("\\\\127.0.0.1\\share\\", nil, "\\\\127.0.0.1\\share", &.drive)
+    pending do
+      assert_paths("\\\\2001:4860:4860::8888\\share\\", nil, "\\\\2001:4860:4860::8888\\share", &.drive)
+    end
   end
 
   describe "#root" do
@@ -682,6 +695,11 @@ describe Path do
       it_expands_path("C:\\foo", "D:/C:\\foo", "C:\\foo", base: Path.windows("D:\\"))
       it_expands_path("C:/foo", "D:/C:/foo", "C:\\foo", base: "D:/")
       it_expands_path("C:\\foo", "D:/C:\\foo", "C:\\foo", base: "D:/")
+    end
+
+    describe "UNC path" do
+      it_expands_path("baz", "/foo/bar/baz", "\\\\foo\\bar\\baz", base: Path.windows("\\\\foo\\bar\\"))
+      it_expands_path("baz", "/foo$/bar/baz", "\\\\foo$\\bar\\baz", base: Path.windows("\\\\foo$\\bar\\"))
     end
 
     it "doesn't expand ~" do

@@ -37,4 +37,8 @@ module Crystal::System::File
   def self.mktemp(prefix, suffix, dir) : {LibC::Int, String}
     raise NotImplementedError.new "Crystal::System::File.mktemp"
   end
+
+  def self.delete(path : String, *, raise_on_missing : Bool) : Bool
+    raise NotImplementedError.new "Crystal::System::File.delete"
+  end
 end

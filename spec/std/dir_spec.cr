@@ -84,6 +84,16 @@ describe "Dir" do
     end
   end
 
+  it "tests mkdir and delete? with a new path" do
+    with_tempfile("mkdir") do |path|
+      Dir.mkdir(path, 0o700)
+      Dir.exists?(path).should be_true
+      Dir.delete?(path).should be_true
+      Dir.exists?(path).should be_false
+      Dir.delete?(path).should be_false
+    end
+  end
+
   it "tests mkdir and rmdir with a new path" do
     with_tempfile("mkdir") do |path|
       Dir.mkdir(path, 0o700)
@@ -521,7 +531,7 @@ describe "Dir" do
     end.should be_nil
     dir.close
 
-    filenames.includes?("f1.txt").should be_true
+    filenames.should contain("f1.txt")
   end
 
   it "opens with open" do
@@ -533,7 +543,7 @@ describe "Dir" do
       end.should be_nil
     end
 
-    filenames.includes?("f1.txt").should be_true
+    filenames.should contain("f1.txt")
   end
 
   describe "#path" do
@@ -546,9 +556,9 @@ describe "Dir" do
 
   it "lists entries" do
     filenames = Dir.entries(datapath("dir"))
-    filenames.includes?(".").should be_true
-    filenames.includes?("..").should be_true
-    filenames.includes?("f1.txt").should be_true
+    filenames.should contain(".")
+    filenames.should contain("..")
+    filenames.should contain("f1.txt")
   end
 
   it "lists children" do
@@ -567,9 +577,9 @@ describe "Dir" do
       filenames << filename
     end
 
-    filenames.includes?(".").should be_true
-    filenames.includes?("..").should be_true
-    filenames.includes?("f1.txt").should be_true
+    filenames.should contain(".")
+    filenames.should contain("..")
+    filenames.should contain("f1.txt")
   end
 
   it "gets child iterator" do
@@ -580,9 +590,9 @@ describe "Dir" do
       filenames << filename
     end
 
-    filenames.includes?(".").should be_false
-    filenames.includes?("..").should be_false
-    filenames.includes?("f1.txt").should be_true
+    filenames.should_not contain(".")
+    filenames.should_not contain("..")
+    filenames.should contain("f1.txt")
   end
 
   it "double close doesn't error" do
