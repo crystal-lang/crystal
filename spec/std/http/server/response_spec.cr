@@ -190,6 +190,10 @@ describe HTTP::Server::Response do
     response.close
     io.to_s.should eq("HTTP/1.1 404 Custom status\r\nContent-Length: 0\r\n\r\n")
     response.status_message.should eq "Custom status"
+
+    expect_raises(IO::Error, "Closed stream") do
+      response.status_message = "Other status"
+    end
   end
 
   it "changes status and others" do

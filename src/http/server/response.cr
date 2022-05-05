@@ -132,7 +132,10 @@ class HTTP::Server
     end
 
     # Sets the status message.
-    setter status_message : String?
+    def status_message=(status_message : String?)
+      check_headers
+      @status_message = status_message
+    end
 
     # Returns the status message.
     #
