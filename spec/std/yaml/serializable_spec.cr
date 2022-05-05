@@ -67,6 +67,21 @@ class YAMLAttrPersonEmittingNull
   property age : Int32?
 end
 
+struct YAMLAttrPersonWithSelectiveSerialization
+  include YAML::Serializable
+
+  property name : String
+
+  @[YAML::Field(ignore_serialize: true)]
+  property password : String
+
+  @[YAML::Field(ignore_deserialize: true)]
+  property generated : String = "generated-internally"
+
+  def initialize(@name : String, @password : String)
+  end
+end
+
 @[YAML::Serializable::Options(emit_nulls: true)]
 class YAMLAttrPersonEmittingNullsByOptions
   include YAML::Serializable
@@ -245,16 +260,12 @@ end
 
 private class YAMLAttrWithFinalize
   include YAML::Serializable
+  include FinalizeCounter
+
   property value : YAML::Any
 
   @[YAML::Field(ignore: true)]
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-  end
+  property key : String?
 end
 
 module YAMLAttrModule
@@ -302,6 +313,69 @@ class YAMLCircle < YAMLShape
   property x : Int32
   property y : Int32
   property radius : Int32
+end
+
+module YAMLNamespace
+  struct FooRequest
+    include YAML::Serializable
+
+    getter foo : Foo
+    getter bar = Bar.new
+  end
+
+  struct Foo
+    include YAML::Serializable
+    getter id = "id:foo"
+  end
+
+  struct Bar
+    include YAML::Serializable
+    getter id = "id:bar"
+
+    def initialize # Allow for default value above
+    end
+  end
+end
+
+class YAMLWithShape
+  include YAML::Serializable
+
+  property shape : YAMLShape
+end
+
+enum YAMLVariableDiscriminatorEnumFoo
+  Foo = 4
+end
+
+enum YAMLVariableDiscriminatorEnumFoo8 : UInt8
+  Foo = 1_8
+end
+
+class YAMLVariableDiscriminatorValueType
+  include YAML::Serializable
+
+  use_yaml_discriminator "type", {
+                                         0 => YAMLVariableDiscriminatorNumber,
+    "1"                                    => YAMLVariableDiscriminatorString,
+    true                                   => YAMLVariableDiscriminatorBool,
+    YAMLVariableDiscriminatorEnumFoo::Foo  => YAMLVariableDiscriminatorEnum,
+    YAMLVariableDiscriminatorEnumFoo8::Foo => YAMLVariableDiscriminatorEnum8,
+  }
+end
+
+class YAMLVariableDiscriminatorNumber < YAMLVariableDiscriminatorValueType
+end
+
+class YAMLVariableDiscriminatorString < YAMLVariableDiscriminatorValueType
+end
+
+class YAMLVariableDiscriminatorBool < YAMLVariableDiscriminatorValueType
+end
+
+class YAMLVariableDiscriminatorEnum < YAMLVariableDiscriminatorValueType
+end
+
+class YAMLVariableDiscriminatorEnum8 < YAMLVariableDiscriminatorValueType
 end
 
 describe "YAML::Serializable" do
@@ -404,6 +478,16 @@ describe "YAML::Serializable" do
     ex.location.should eq({3, 1})
   end
 
+  it "works with selective serialization" do
+    person = YAMLAttrPersonWithSelectiveSerialization.new("Vasya", "P@ssw0rd")
+    person.to_yaml.should eq "---\nname: Vasya\ngenerated: generated-internally\n"
+
+    person_yaml = "---\nname: Vasya\ngenerated: should not set\npassword: update\n"
+    person = YAMLAttrPersonWithSelectiveSerialization.from_yaml(person_yaml)
+    person.generated.should eq "generated-internally"
+    person.password.should eq "update"
+  end
+
   it "does to_yaml" do
     person = YAMLAttrPerson.from_yaml("---\nname: John\nage: 30\n")
     person2 = YAMLAttrPerson.from_yaml(person.to_yaml)
@@ -412,7 +496,7 @@ describe "YAML::Serializable" do
 
   it "doesn't emit null when doing to_yaml" do
     person = YAMLAttrPerson.from_yaml("---\nname: John\n")
-    (person.to_yaml =~ /age/).should be_falsey
+    person.to_yaml.should_not match /age/
   end
 
   it "raises if non-nilable attribute is nil" do
@@ -492,12 +576,12 @@ describe "YAML::Serializable" do
 
   it "emits null on request when doing to_yaml" do
     person = YAMLAttrPersonEmittingNull.from_yaml("---\nname: John\n")
-    (person.to_yaml =~ /age/).should be_truthy
+    person.to_yaml.should match /age/
   end
 
   it "emit_nulls option" do
     person = YAMLAttrPersonEmittingNullsByOptions.from_yaml("---\nname: John\n")
-    person.to_yaml.should eq "---\nname: John\nage: \nvalue1: \n"
+    person.to_yaml.should match /\A---\nname: John\nage: ?\nvalue1: ?\n\z/
   end
 
   it "parses yaml with Time::Format converter" do
@@ -528,7 +612,7 @@ describe "YAML::Serializable" do
 
   it "outputs with converter when nilable when emit_null is true" do
     yaml = YAMLAttrWithNilableTimeEmittingNull.new
-    yaml.to_yaml.should eq("---\nvalue: \n")
+    yaml.to_yaml.should match(/\A---\nvalue: ?\n\z/)
   end
 
   it "outputs YAML with properties key" do
@@ -554,6 +638,13 @@ describe "YAML::Serializable" do
 
     yaml = YAMLAttrWithAny.from_yaml({:obj => {:foo => :bar}}.to_yaml)
     yaml.obj["foo"].as_s.should eq("bar")
+
+    yaml = YAMLAttrWithAny.from_yaml("extra: &foo hello\nobj: *foo")
+    yaml.obj.as_s.should eq("hello")
+
+    expect_raises YAML::ParseException, "Unknown anchor 'foo' at line 1, column 6" do
+      YAMLAttrWithAny.from_yaml("obj: *foo")
+    end
   end
 
   it "parses yaml with problematic keys" do
@@ -654,6 +745,13 @@ describe "YAML::Serializable" do
 
       yaml = YAMLAttrWithDefaults.from_yaml(%({"a":null,"b":null}))
       yaml.a.should eq 11
+      yaml.b.should eq "Haha"
+
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":""}))
+      yaml.b.should eq ""
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":''}))
+      yaml.b.should eq ""
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":}))
       yaml.b.should eq "Haha"
     end
 
@@ -798,7 +896,7 @@ describe "YAML::Serializable" do
   end
 
   it "calls #finalize" do
-    assert_finalizes(:yaml) { YAMLAttrWithFinalize.from_yaml("---\nvalue: 1\n") }
+    assert_finalizes("yaml") { YAMLAttrWithFinalize.from_yaml("---\nvalue: 1\n") }
   end
 
   describe "work with module and inheritance" do
@@ -830,6 +928,38 @@ describe "YAML::Serializable" do
       expect_raises(YAML::ParseException, %(Unknown 'type' discriminator value: "unknown")) do
         YAMLShape.from_yaml(%({"type": "unknown"}))
       end
+    end
+
+    it "deserializes type which nests type with discriminator (#9849)" do
+      container = YAMLWithShape.from_yaml(%({"shape": {"type": "point", "x": 1, "y": 2}}))
+      point = container.shape.as(YAMLPoint)
+      point.x.should eq(1)
+      point.y.should eq(2)
+    end
+
+    it "deserializes with variable discriminator value type" do
+      object_number = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 0}))
+      object_number.should be_a(YAMLVariableDiscriminatorNumber)
+
+      object_string = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": "1"}))
+      object_string.should be_a(YAMLVariableDiscriminatorString)
+
+      object_bool = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": true}))
+      object_bool.should be_a(YAMLVariableDiscriminatorBool)
+
+      object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 4}))
+      object_enum.should be_a(YAMLVariableDiscriminatorEnum)
+
+      object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 18}))
+      object_enum.should be_a(YAMLVariableDiscriminatorEnum8)
+    end
+  end
+
+  describe "namespaced classes" do
+    it "lets default values use the object's own namespace" do
+      request = YAMLNamespace::FooRequest.from_yaml(%({"foo":{}}))
+      request.foo.id.should eq "id:foo"
+      request.bar.id.should eq "id:bar"
     end
   end
 end

@@ -21,7 +21,7 @@ module Crystal::Doc
     ANCHOR
   end
 
-  record TypeTemplate, type : Type, types : Array(Type) do
+  record TypeTemplate, type : Type, types : Array(Type), project_info : ProjectInfo do
     ECR.def_to_s "#{__DIR__}/html/type.html"
   end
 
@@ -45,16 +45,28 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/_other_types.html"
   end
 
-  record MainTemplate, body : String, types : Array(Type), repository_name : String do
+  record MainTemplate, body : String, types : Array(Type), project_info : ProjectInfo do
     ECR.def_to_s "#{__DIR__}/html/main.html"
   end
 
-  record HeadTemplate, base_path : String do
+  record HeadTemplate, project_info : ProjectInfo, current_type : Type? do
+    def base_path
+      if current_type = self.current_type
+        current_type.path_to ""
+      else
+        ""
+      end
+    end
+
     ECR.def_to_s "#{__DIR__}/html/_head.html"
   end
 
-  record SidebarTemplate, repository_name : String, types : Array(Type), current_type : Type? do
+  record SidebarTemplate, project_info : ProjectInfo, types : Array(Type), current_type : Type? do
     ECR.def_to_s "#{__DIR__}/html/_sidebar.html"
+  end
+
+  record Error404Template do
+    ECR.def_to_s "#{__DIR__}/html/404.html"
   end
 
   struct JsTypeTemplate
@@ -67,6 +79,10 @@ module Crystal::Doc
 
   struct JsNavigatorTemplate
     ECR.def_to_s "#{__DIR__}/html/js/_navigator.js"
+  end
+
+  struct JsVersionsTemplate
+    ECR.def_to_s "#{__DIR__}/html/js/_versions.js"
   end
 
   struct JsUsageModal

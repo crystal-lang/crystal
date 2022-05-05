@@ -8,10 +8,13 @@ module Crystal::System
   # def self.cpu_count
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./system/wasi/hostname"
+  require "./system/wasi/cpucount"
+{% elsif flag?(:unix) %}
   require "./system/unix/hostname"
 
-  {% if flag?(:freebsd) || flag?(:openbsd) %}
+  {% if flag?(:bsd) %}
     require "./system/unix/sysctl_cpucount"
   {% else %}
     require "./system/unix/sysconf_cpucount"

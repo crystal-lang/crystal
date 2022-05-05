@@ -6,6 +6,39 @@ private def yield_to(fiber)
   Crystal::Scheduler.resume(fiber)
 end
 
+private macro parallel(*jobs)
+  %channel = Channel(Exception | Nil).new
+
+  {% for job, i in jobs %}
+    %ret{i} = uninitialized typeof({{job}})
+    spawn do
+      begin
+        %ret{i} = {{job}}
+      rescue e : Exception
+        %channel.send e
+      else
+        %channel.send nil
+      end
+    end
+  {% end %}
+
+  {{ jobs.size }}.times do
+    %value = %channel.receive
+    if %value.is_a?(Exception)
+      raise Exception.new(
+        "An unhandled error occurred inside a `parallel` call",
+        cause: %value
+      )
+    end
+  end
+
+  {
+    {% for job, i in jobs %}
+      %ret{i},
+    {% end %}
+  }
+end
+
 describe Channel do
   it "creates unbuffered with no arguments" do
     Channel(Int32).new
@@ -585,11 +618,6 @@ describe "unbuffered" do
     Channel.select(ch1.receive_select_action, ch2.receive_select_action).should eq({0, 123})
   end
 
-  it "works with select else" do
-    ch1 = Channel(Int32).new
-    Channel.select({ch1.receive_select_action}, true).should eq({1, Channel::NotReady.new})
-  end
-
   it "can send and receive nil" do
     ch = Channel(Nil).new
     sender = Fiber.new { ch.send nil }
@@ -600,8 +628,9 @@ describe "unbuffered" do
   it "can be closed" do
     ch = Channel(Int32).new
     ch.closed?.should be_false
-    ch.close.should be_nil
+    ch.close.should be_true
     ch.closed?.should be_true
+    ch.close.should be_false
     expect_raises(Channel::ClosedError) { ch.receive }
   end
 

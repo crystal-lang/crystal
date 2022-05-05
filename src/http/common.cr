@@ -1,7 +1,7 @@
 require "mime/media_type"
 {% if !flag?(:without_zlib) %}
-  require "flate"
-  require "gzip"
+  require "compress/deflate"
+  require "compress/gzip"
 {% end %}
 
 module HTTP
@@ -61,9 +61,13 @@ module HTTP
           {% else %}
             case encoding
             when "gzip"
-              body = Gzip::Reader.new(body, sync_close: true)
+              body = Compress::Gzip::Reader.new(body, sync_close: true)
+              headers.delete("Content-Encoding")
+              headers.delete("Content-Length")
             when "deflate"
-              body = Flate::Reader.new(body, sync_close: true)
+              body = Compress::Deflate::Reader.new(body, sync_close: true)
+              headers.delete("Content-Encoding")
+              headers.delete("Content-Length")
             else
               # not a format we support
             end
@@ -239,7 +243,7 @@ module HTTP
   )
 
   # :nodoc:
-  def self.header_name(slice : Bytes)
+  def self.header_name(slice : Bytes) : String
     # Check if the header name is a common one.
     # If so we avoid having to allocate a string for it.
     if slice.size < 20
@@ -293,7 +297,7 @@ module HTTP
   def self.serialize_chunked_body(io, body)
     buf = uninitialized UInt8[8192]
     while (buf_length = body.read(buf.to_slice)) > 0
-      buf_length.to_s(16, io)
+      buf_length.to_s(io, 16)
       io << "\r\n"
       io.write(buf.to_slice[0, buf_length])
       io << "\r\n"
@@ -302,7 +306,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.content_length(headers)
+  def self.content_length(headers) : UInt64?
     length_headers = headers.get? "Content-Length"
     return nil unless length_headers
     first_header = length_headers[0]
@@ -313,7 +317,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.keep_alive?(message)
+  def self.keep_alive?(message) : Bool
     case message.headers["Connection"]?.try &.downcase
     when "keep-alive"
       true
@@ -329,7 +333,7 @@ module HTTP
     end
   end
 
-  def self.expect_continue?(headers)
+  def self.expect_continue?(headers) : Bool
     headers["Expect"]?.try(&.downcase) == "100-continue"
   end
 
@@ -375,7 +379,7 @@ module HTTP
   # quoted = %q(\"foo\\bar\")
   # HTTP.dequote_string(quoted) # => %q("foo\bar")
   # ```
-  def self.dequote_string(str)
+  def self.dequote_string(str) : String
     data = str.to_slice
     quoted_pair_index = data.index('\\'.ord)
     return str unless quoted_pair_index
@@ -383,7 +387,7 @@ module HTTP
     String.build do |io|
       while quoted_pair_index
         io.write(data[0, quoted_pair_index])
-        io << data[quoted_pair_index + 1].chr
+        io << data[quoted_pair_index + 1].unsafe_chr
 
         data += quoted_pair_index + 2
         quoted_pair_index = data.index('\\'.ord)
@@ -405,19 +409,19 @@ module HTTP
   # io.rewind
   # io.gets_to_end # => %q(\"foo\\\ bar\")
   # ```
-  def self.quote_string(string, io)
+  def self.quote_string(string, io) : Nil
     # Escaping rules: https://evolvis.org/pipermail/evolvis-platfrm-discuss/2014-November/000675.html
 
-    string.each_byte do |byte|
-      case byte
-      when '\t'.ord, ' '.ord, '"'.ord, '\\'.ord
+    string.each_char do |char|
+      case char
+      when '\t', ' ', '"', '\\'
         io << '\\'
-      when 0x00..0x1F, 0x7F
-        raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+      when '\u{00}'..'\u{1F}', '\u{7F}'
+        raise ArgumentError.new("String contained invalid character #{char.inspect}")
       else
         # output byte as is
       end
-      io.write_byte byte
+      io << char
     end
   end
 
@@ -430,7 +434,7 @@ module HTTP
   # string = %q("foo\ bar")
   # HTTP.quote_string(string) # => %q(\"foo\\\ bar\")
   # ```
-  def self.quote_string(string)
+  def self.quote_string(string) : String
     String.build do |io|
       quote_string(string, io)
     end

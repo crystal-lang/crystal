@@ -4,7 +4,7 @@ require "./parser_options"
 require "./html_parser_options"
 require "./save_options"
 
-@[Link("xml2")]
+@[Link("xml2", pkg_config: "libxml-2.0")]
 lib LibXML
   alias Int = LibC::Int
 
@@ -161,7 +161,7 @@ lib LibXML
     xmlCharEncodingHandlerPtr : Void*
     buffer : Void*
     conv : Void*
-    writter : Int
+    written : Int
     error : Int
   end
 

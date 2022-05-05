@@ -60,6 +60,7 @@ module LLVM
       ZExt
 
       @@kind_ids = load_llvm_kinds_from_names.as(Hash(Attribute, UInt32))
+      @@typed_attrs = load_llvm_typed_attributes.as(Array(Attribute))
 
       def each_kind(&block)
         return if value == 0
@@ -137,12 +138,34 @@ module LLVM
         kinds
       end
 
+      private def self.load_llvm_typed_attributes
+        typed_attrs = [] of Attribute
+
+        unless LibLLVM::IS_LT_120
+          # LLVM 12 introduced mandatory type parameters for byval and sret
+          typed_attrs << ByVal
+          typed_attrs << StructRet
+        end
+
+        unless LibLLVM::IS_LT_130
+          # LLVM 13 manadates type params for inalloca
+          typed_attrs << InAlloca
+        end
+
+        typed_attrs
+      end
+
       def self.kind_for(member)
         @@kind_ids[member]
       end
 
       def self.from_kind(kind)
         @@kind_ids.key_for(kind)
+      end
+
+      def self.requires_type?(kind)
+        member = from_kind(kind)
+        @@typed_attrs.includes?(member)
       end
     end
   {% else %}
@@ -197,13 +220,23 @@ module LLVM
     Appending
     Internal
     Private
-    DLLImport
-    DLLExport
+    DLLImport # obsolete
+    DLLExport # obsolete
     ExternalWeak
     Ghost
     Common
     LinkerPrivate
     LinkerPrivateWeak
+  end
+
+  enum DLLStorageClass
+    Default
+
+    # Function to be imported from DLL.
+    DLLImport
+
+    # Function to be accessible from DLL.
+    DLLExport
   end
 
   enum IntPredicate
@@ -378,6 +411,13 @@ module LLVM
     BitField            = 1 << 19
     NoReturn            = 1 << 20
     MainSubprogram      = 1 << 21
+    PassByValue         = 1 << 22
+    TypePassByReference = 1 << 23
+    EnumClass           = 1 << 24
+    Thunk               = 1 << 25
+    NonTrivial          = 1 << 26
+    BigEndian           = 1 << 27
+    LittleEndian        = 1 << 28
   end
 
   struct Value
@@ -414,7 +454,36 @@ module LLVM
     end
   end
 
-  enum ModuleFlag : Int32
-    Warning = 2
+  struct Metadata
+    enum Type : UInt32
+      Dbg                   =  0 # "dbg"
+      Tbaa                  =  1 # "tbaa"
+      Prof                  =  2 # "prof"
+      Fpmath                =  3 # "fpmath"
+      Range                 =  4 # "range"
+      TbaaStruct            =  5 # "tbaa.struct"
+      InvariantLoad         =  6 # "invariant.load"
+      AliasScope            =  7 # "alias.scope"
+      Noalias               =  8 # "noalias"
+      Nontemporal           =  9 # "nontemporal"
+      MemParallelLoopAccess = 10 # "llvm.mem.parallel_loop_access"
+      Nonnull               = 11 # "nonnull"
+      Dereferenceable       = 12 # "dereferenceable"
+      DereferenceableOrNull = 13 # "dereferenceable_or_null"
+      MakeImplicit          = 14 # "make.implicit"
+      Unpredictable         = 15 # "unpredictable"
+      InvariantGroup        = 16 # "invariant.group"
+      Align                 = 17 # "align"
+      Loop                  = 18 # "llvm.loop"
+      Type                  = 19 # "type"
+      SectionPrefix         = 20 # "section_prefix"
+      AbsoluteSymbol        = 21 # "absolute_symbol"
+      Associated            = 22 # "associated"
+      Callees               = 23 # "callees"
+      IrrLoop               = 24 # "irr_loop"
+      AccessGroup           = 25 # "llvm.access.group"
+      Callback              = 26 # "callback"
+      PreserveAccessIndex   = 27 # "llvm.preserve.*.access.index"
+    end
   end
 end

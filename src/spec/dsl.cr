@@ -2,41 +2,49 @@ require "colorize"
 require "option_parser"
 
 module Spec
-  private COLORS = {
-    success: :green,
-    fail:    :red,
-    error:   :red,
-    pending: :yellow,
-    comment: :cyan,
-    focus:   :cyan,
-    order:   :cyan,
+  # :nodoc:
+  enum InfoKind
+    Comment
+    Focus
+    Order
+  end
+
+  private STATUS_COLORS = {
+    Status::Success => :green,
+    Status::Fail    => :red,
+    Status::Error   => :red,
+    Status::Pending => :yellow,
+  }
+
+  private INFO_COLORS = {
+    InfoKind::Comment => :cyan,
+    InfoKind::Focus   => :cyan,
+    InfoKind::Order   => :cyan,
   }
 
   private LETTERS = {
-    success: '.',
-    fail:    'F',
-    error:   'E',
-    pending: '*',
+    Status::Success => '.',
+    Status::Fail    => 'F',
+    Status::Error   => 'E',
+    Status::Pending => '*',
   }
 
-  @@use_colors = true
-
   # :nodoc:
-  def self.color(str, status)
+  def self.color(str, status : Status)
     if use_colors?
-      str.colorize(COLORS[status])
+      str.colorize(STATUS_COLORS[status])
     else
       str
     end
   end
 
   # :nodoc:
-  def self.use_colors?
-    @@use_colors
-  end
-
-  # :nodoc:
-  def self.use_colors=(@@use_colors)
+  def self.color(str, kind : InfoKind)
+    if use_colors?
+      str.colorize(INFO_COLORS[kind])
+    else
+      str
+    end
   end
 
   # :nodoc:
@@ -54,6 +62,10 @@ module Spec
   end
 
   # :nodoc:
+  class ExamplePending < SpecError
+  end
+
+  # :nodoc:
   class NestingSpecError < SpecError
   end
 
@@ -63,46 +75,6 @@ module Spec
   def self.abort!
     @@aborted = true
     finish_run
-  end
-
-  # :nodoc:
-  class_getter randomizer_seed : UInt64?
-  class_getter randomizer : Random::PCG32?
-
-  # :nodoc:
-  def self.order=(mode)
-    seed =
-      case mode
-      when "default"
-        nil
-      when "random"
-        Random::Secure.rand(1..99999).to_u64 # 5 digits or less for simplicity
-      when UInt64
-        mode
-      else
-        raise ArgumentError.new("order must be either 'default', 'random', or a numeric seed value")
-      end
-
-    @@randomizer_seed = seed
-    @@randomizer = seed ? Random::PCG32.new(seed) : nil
-  end
-
-  # :nodoc:
-  def self.pattern=(pattern)
-    @@pattern = Regex.new(Regex.escape(pattern))
-  end
-
-  # :nodoc:
-  def self.line=(@@line : Int32)
-  end
-
-  # :nodoc:
-  def self.slowest=(@@slowest : Int32)
-  end
-
-  # :nodoc:
-  def self.slowest
-    @@slowest
   end
 
   # :nodoc:
@@ -126,22 +98,6 @@ module Spec
     "#{minutes}:#{seconds < 10 ? "0" : ""}#{seconds} minutes"
   end
 
-  # :nodoc:
-  def self.add_location(file, line)
-    locations = @@locations ||= {} of String => Array(Int32)
-    lines = locations[File.expand_path(file)] ||= [] of Int32
-    lines << line
-  end
-
-  # :nodoc:
-  def self.add_tag(tag)
-    if anti_tag = tag.lchop?('~')
-      (@@anti_tags ||= Set(String).new) << anti_tag
-    else
-      (@@tags ||= Set(String).new) << tag
-    end
-  end
-
   record SplitFilter, remainder : Int32, quotient : Int32
 
   @@split_filter : SplitFilter? = nil
@@ -155,14 +111,8 @@ module Spec
     end
   end
 
-  # :nodoc:
-  class_property? fail_fast = false
-
-  # :nodoc:
-  class_property? focus = false
-
   # Instructs the spec runner to execute the given block
-  # before each spec, regardless of where this method is invoked.
+  # before each spec in the spec suite.
   #
   # If multiple blocks are registered they run in the order
   # that they are given.
@@ -176,12 +126,11 @@ module Spec
   #
   # will print, just before each spec, 1 and then 2.
   def self.before_each(&block)
-    before_each = @@before_each ||= [] of ->
-    before_each << block
+    root_context.before_each(&block)
   end
 
   # Instructs the spec runner to execute the given block
-  # after each spec, regardless of where this method is invoked.
+  # after each spec in the spec suite.
   #
   # If multiple blocks are registered they run in the reversed
   # order that they are given.
@@ -195,8 +144,7 @@ module Spec
   #
   # will print, just after each spec, 2 and then 1.
   def self.after_each(&block)
-    after_each = @@after_each ||= [] of ->
-    after_each << block
+    root_context.after_each(&block)
   end
 
   # Instructs the spec runner to execute the given block
@@ -214,8 +162,7 @@ module Spec
   #
   # will print, just before the spec suite starts, 1 and then 2.
   def self.before_suite(&block)
-    before_suite = @@before_suite ||= [] of ->
-    before_suite << block
+    root_context.before_all(&block)
   end
 
   # Instructs the spec runner to execute the given block
@@ -233,28 +180,31 @@ module Spec
   #
   # will print, just after the spec suite ends, 2 and then 1.
   def self.after_suite(&block)
-    after_suite = @@after_suite ||= [] of ->
-    after_suite << block
+    root_context.after_all(&block)
   end
 
-  # :nodoc:
-  def self.run_before_each_hooks
-    @@before_each.try &.each &.call
-  end
-
-  # :nodoc:
-  def self.run_after_each_hooks
-    @@after_each.try &.reverse_each &.call
-  end
-
-  # :nodoc:
-  def self.run_before_suite_hooks
-    @@before_suite.try &.each &.call
-  end
-
-  # :nodoc:
-  def self.run_after_suite_hooks
-    @@after_suite.try &.reverse_each &.call
+  # Instructs the spec runner to execute the given block when each spec in the
+  # spec suite runs.
+  #
+  # The block must call `run` on the given `Example::Procsy` object.
+  #
+  # If multiple blocks are registered they run in the reversed
+  # order that they are given.
+  #
+  # ```
+  # require "spec"
+  #
+  # Spec.around_each do |example|
+  #   puts "runs before each sample"
+  #   example.run
+  #   puts "runs after each sample"
+  # end
+  #
+  # it { }
+  # it { }
+  # ```
+  def self.around_each(&block : Example::Procsy ->)
+    root_context.around_each(&block)
   end
 
   @@start_time : Time::Span? = nil
@@ -264,13 +214,45 @@ module Spec
     @@start_time = Time.monotonic
 
     at_exit do
+      log_setup
       maybe_randomize
       run_filters
-      run_before_suite_hooks
       root_context.run
-      run_after_suite_hooks
+    rescue ex
+      STDERR.print "Unhandled exception: "
+      ex.inspect_with_backtrace(STDERR)
+      STDERR.flush
+      @@aborted = true
     ensure
       finish_run
+    end
+  end
+
+  # :nodoc:
+  #
+  # Workaround for #8914
+  private macro defined?(t)
+    {% if t.resolve? %}
+      {{ yield }}
+    {% end %}
+  end
+
+  # :nodoc:
+  def self.log_setup
+  end
+
+  # :nodoc:
+  macro finished
+    # :nodoc:
+    #
+    # Initialized the log module for the specs.
+    # If the "log" module is required it is configured to emit no entries by default.
+    def self.log_setup
+      defined?(::Log) do
+        if Log.responds_to?(:setup)
+          Log.setup_from_env(default_level: :none)
+        end
+      end
     end
   end
 

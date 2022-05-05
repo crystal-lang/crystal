@@ -5,39 +5,43 @@ module Crystal
     # Raises otherwise.
     def as_{{short.id}} : {{type}}
       {% if immutable == true %}
-        @raw.as({{type}}).dup
+        @raw.as({{type}}).clone
       {% else %}
         @raw.as({{type}})
       {% end %}
     end
 
-    # Checks that the underlying value is `{{type}}`, and returns its value.
-    # Returns `nil` otherwise.
-    def as_{{short.id}}? : {{type}}?
-      {% if immutable == true %}
-        @raw.as?({{type}}).dup
-      {% else %}
-        @raw.as?({{type}})
-      {% end %}
-    end
+    {% if type.resolve != Nil %}
+      # Checks that the underlying value is `{{type}}`, and returns its value.
+      # Returns `nil` otherwise.
+      def as_{{short.id}}? : {{type}}?
+        {% if immutable == true %}
+          @raw.as?({{type}}).clone
+        {% else %}
+          @raw.as?({{type}})
+        {% end %}
+      end
+    {% end %}
   end
 
   # `Crystal.datum` macro is an internal helper to create data types that will hold
   # values of multiple kinds similar to `JSON::Any` and `YAML::Any`.
   #
-  # * **types**: contains a named tuple of prefixes and datatypes of each leaf
+  # * **types**: contains a named tuple of prefixes and data types of each leaf
   # * **hash_key_type** specifies the type used as the key of `Hash`
-  # * **immutable**: will generate honor immutability of the values via `.dup`
+  # * **immutable**: will generate honor immutability of the values via `.clone`
+  # * **target_type**: is the type where the macro is invoked (it's a workaround for #9099).
 
   # :nodoc:
-  macro datum(*, types, hash_key_type, immutable)
-    # All possible `{{@type}}` types.
+  macro datum(*, types, hash_key_type, immutable, target_type)
+
+    # All possible `{{target_type}}` types.
     alias Type = {% for short, type in types %}{{type}} | {% end %}Array(self) | Hash({{hash_key_type}}, self)
 
-    # Returns the raw underlying value, a `Raw`.
+    # Returns the raw underlying value, a `Type`.
     getter raw : Type
 
-    # Creates a `{{@type}}` that wraps the given `Raw`.
+    # Creates a `{{target_type}}` that wraps the given `Type`.
     def initialize(@raw : Type)
     end
 
@@ -102,39 +106,34 @@ module Crystal
 
     # Traverses the depth of a structure and returns the value.
     # Returns `nil` if not found.
-    def dig?(index_or_key, *subkeys)
-      if value = self[index_or_key]?
-        value.dig?(*subkeys)
-      end
+    def dig?(index_or_key, *subkeys) : self?
+      self[index_or_key]?.try &.dig?(*subkeys)
     end
 
     # :nodoc:
-    def dig?(index_or_key)
+    def dig?(index_or_key) : self?
       case @raw
       when Hash, Array
         self[index_or_key]?
+      else
+        nil
       end
     end
 
     # Traverses the depth of a structure and returns the value, otherwise raises.
-    def dig(index_or_key, *subkeys)
-      if (value = self[index_or_key]) && value.responds_to?(:dig)
-        return value.dig(*subkeys)
-      end
-      raise "#{self.class} value not diggable for key: #{index_or_key.inspect}"
+    def dig(index_or_key, *subkeys) : self
+      self[index_or_key].dig(*subkeys)
     end
 
     # :nodoc:
-    def dig(index_or_key)
+    def dig(index_or_key) : self
       self[index_or_key]
     end
 
-    # :nodoc:
     def inspect(io : IO) : Nil
       @raw.inspect(io)
     end
 
-    # :nodoc:
     def to_s(io : IO) : Nil
       @raw.to_s(io)
     end
@@ -157,12 +156,12 @@ module Crystal
     # See `Object#hash(hasher)`
     def_hash raw
 
-    # Returns a new `{{@type}}` instance with the `raw` value `dup`ed.
+    # Returns a new `{{target_type}}` instance with the `raw` value `dup`ed.
     def dup
       self.class.new(raw.dup)
     end
 
-    # Returns a new `{{@type}}` instance with the `raw` value `clone`ed.
+    # Returns a new `{{target_type}}` instance with the `raw` value `clone`ed.
     def clone
       self.class.new(raw.clone)
     end

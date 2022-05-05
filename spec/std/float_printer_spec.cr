@@ -27,6 +27,7 @@
 #   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 require "spec"
+require "./spec_helper"
 
 private def float_to_s(v)
   String.build(22) do |buff|
@@ -51,7 +52,7 @@ private def test_pair(v : UInt32, str, file = __FILE__, line = __LINE__)
 end
 
 private def test_pair(v : Float64 | Float32, str, file = __FILE__, line = __LINE__)
-  float_to_s(v).should eq(str), file, line
+  float_to_s(v).should eq(str), file: file, line: line
 end
 
 describe "#print Float64" do

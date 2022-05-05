@@ -1,43 +1,100 @@
 require "spec"
 require "socket"
 require "../../spec_helper"
+require "../../socket/spec_helper"
 require "../../../support/ssl"
 
 describe OpenSSL::SSL::Socket do
-  it "returns the cipher that is currently in use" do
-    tcp_server = TCPServer.new(0)
-    server_context, client_context = ssl_context_pair
+  describe OpenSSL::SSL::Socket::Server do
+    it "auto accept client by default" do
+      TCPServer.open("127.0.0.1", 0) do |tcp_server|
+        server_context, client_context = ssl_context_pair
 
-    OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|
-      spawn do
-        OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
+        spawn do
+          OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
+            socket.print "hello"
+          end
         end
-      end
 
-      client = server.accept
-      client.cipher.should_not be_empty
-      client.close
+        socket = tcp_server.accept
+        ssl_server = OpenSSL::SSL::Socket::Server.new(socket, server_context)
+        ssl_server.gets.should eq("hello")
+        ssl_server.close
+      end
     end
+
+    it "doesn't accept client when specified" do
+      TCPServer.open("127.0.0.1", 0) do |tcp_server|
+        server_context, client_context = ssl_context_pair
+
+        spawn do
+          OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
+            socket.print "hello"
+          end
+        end
+
+        socket = tcp_server.accept
+        ssl_server = OpenSSL::SSL::Socket::Server.new(socket, server_context, accept: false)
+        ssl_server.accept
+        ssl_server.gets.should eq("hello")
+        ssl_server.close
+      end
+    end
+  end
+end
+
+private alias Server = OpenSSL::SSL::Socket::Server
+private alias Client = OpenSSL::SSL::Socket::Client
+
+private def socket_test(server_tests, client_tests)
+  tcp_server = TCPServer.new("127.0.0.1", 0)
+  server_context, client_context = ssl_context_pair
+
+  OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|
+    spawn do
+      Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
+        client_tests.call(socket)
+      end
+    end
+
+    client = server.accept
+    server_tests.call(client)
+    client.close
+  end
+end
+
+describe OpenSSL::SSL::Socket do
+  it "returns the cipher that is currently in use" do
+    socket_test(
+      server_tests: ->(client : Server) {
+        client.cipher.should_not be_empty
+      },
+      client_tests: ->(client : Client) {}
+    )
   end
 
   it "returns the TLS version" do
-    tcp_server = TCPServer.new(0)
-    server_context, client_context = ssl_context_pair
+    socket_test(
+      server_tests: ->(client : Server) {
+        client.tls_version.should contain "TLS"
+      },
+      client_tests: ->(client : Client) {}
+    )
+  end
 
-    OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|
-      spawn do
-        OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
-        end
-      end
-
-      client = server.accept
-      client.tls_version.should contain "TLS"
-      client.close
-    end
+  it "returns the peer certificate" do
+    socket_test(
+      server_tests: ->(client : Server) {
+        client.peer_certificate.should be_nil
+      },
+      client_tests: ->(client : Client) {
+        client.peer_certificate.should_not be_nil
+      }
+    )
   end
 
   it "accepts clients that only write then close the connection" do
-    tcp_server = TCPServer.new(0)
+    tcp_server = TCPServer.new("127.0.0.1", 0)
     server_context, client_context = ssl_context_pair
     # in tls 1.3, if clients don't read anything and close the connection
     # the server still try and write to it a ticket, resulting in a "pipe failure"
@@ -59,7 +116,7 @@ describe OpenSSL::SSL::Socket do
   end
 
   it "closes connection to server that doesn't properly terminate SSL session" do
-    tcp_server = TCPServer.new(0)
+    tcp_server = TCPServer.new("127.0.0.1", 0)
     server_context, client_context = ssl_context_pair
     server_context.disable_session_resume_tickets # avoid Broken pipe
 
@@ -79,7 +136,7 @@ describe OpenSSL::SSL::Socket do
   end
 
   it "interprets graceful EOF of underlying socket as SSL termination" do
-    tcp_server = TCPServer.new(0)
+    tcp_server = TCPServer.new("127.0.0.1", 0)
     server_context, client_context = ssl_context_pair
     server_context.disable_session_resume_tickets # avoid Broken pipe
 

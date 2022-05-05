@@ -2,12 +2,11 @@
 
 require "ecr/macros"
 require "option_parser"
+require "./git"
 
 module Crystal
   module Init
-    WHICH_GIT_COMMAND = "which git >/dev/null"
-
-    class Error < ::Exception
+    class Error < Crystal::Error
       def self.new(message, opts : OptionParser)
         new("#{message}\n#{opts}\n")
       end
@@ -99,27 +98,15 @@ module Crystal
     end
 
     def self.fetch_author
-      if system(WHICH_GIT_COMMAND)
-        user_name = `git config --get user.name`.strip
-        user_name = nil if user_name.empty?
-      end
-      user_name || "your-name-here"
+      Crystal::Git.git_config("user.name") || "your-name-here"
     end
 
     def self.fetch_email
-      if system(WHICH_GIT_COMMAND)
-        user_email = `git config --get user.email`.strip
-        user_email = nil if user_email.empty?
-      end
-      user_email || "your-email-here"
+      Crystal::Git.git_config("user.email") || "your-email-here"
     end
 
     def self.fetch_github_name
-      if system(WHICH_GIT_COMMAND)
-        github_user = `git config --get github.user`.strip
-        github_user = nil if github_user.empty?
-      end
-      github_user || "your-github-user"
+      Crystal::Git.git_config("github.user") || "your-github-user"
     end
 
     def self.fetch_skeleton_type(opts, args)
@@ -220,7 +207,17 @@ module Crystal
       end
 
       def module_name
-        config.name.split('-').map(&.camelcase).join("::")
+        View.module_name(config.name)
+      end
+
+      def self.module_name(name)
+        name
+          .gsub(/[-_]([^a-z])/i, "\\1")
+          .split('-')
+          .compact_map do |name|
+            name.camelcase if name[0]?.try(&.ascii_letter?)
+          end
+          .join("::")
       end
 
       abstract def path
@@ -263,17 +260,11 @@ module Crystal
 
     class GitInitView < View
       def render
-        return unless system(WHICH_GIT_COMMAND)
-        return command if config.silent
-        puts command
+        Crystal::Git.git_command(["init", config.dir], output: config.silent ? Process::Redirect::Close : STDOUT)
       end
 
       def path
         ".git"
-      end
-
-      private def command
-        `git init #{config.dir}`
       end
     end
 
@@ -281,7 +272,7 @@ module Crystal
 
     macro template(name, template_path, destination_path)
       class {{name.id}} < View
-        ECR.def_to_s "{{TEMPLATE_DIR.id}}/{{template_path.id}}"
+        ECR.def_to_s {{"#{TEMPLATE_DIR.id}/#{template_path.id}"}}
 
         def path
           {{destination_path}}
@@ -295,7 +286,6 @@ module Crystal
     template EditorconfigView, "editorconfig.ecr", ".editorconfig"
     template LicenseView, "license.ecr", "LICENSE"
     template ReadmeView, "readme.md.ecr", "README.md"
-    template TravisView, "travis.yml.ecr", ".travis.yml"
     template ShardView, "shard.yml.ecr", "shard.yml"
 
     template SrcExampleView, "example.cr.ecr", "src/#{config.name}.cr"

@@ -24,8 +24,8 @@ module Crystal::TypedDefProcessor
     end
 
     if type.is_a?(GenericType)
-      type.generic_types.each_value do |instanced_type|
-        process_type instanced_type
+      type.each_instantiated_type do |instance|
+        process_type instance
       end
     end
 

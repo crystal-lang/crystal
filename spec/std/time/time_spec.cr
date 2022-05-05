@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "spec/helpers/iterate"
 
 CALENDAR_WEEK_TEST_DATA = [
   { {1981, 1, 1}, {1981, 1, 4} },
@@ -173,6 +174,22 @@ describe Time do
         end
       end
     end
+
+    it "accepts midnight 24:00" do
+      Time.utc(2020, 5, 21, 24, 0, 0).should eq Time.utc(2020, 5, 22, 0, 0, 0)
+
+      expect_raises ArgumentError, "Invalid time" do
+        Time.utc(2020, 5, 21, 24, 0, 0, nanosecond: 1)
+      end
+
+      expect_raises ArgumentError, "Invalid time" do
+        Time.utc(2020, 5, 21, 24, 0, 1)
+      end
+
+      expect_raises ArgumentError, "Invalid time" do
+        Time.utc(2020, 5, 21, 24, 1, 0)
+      end
+    end
   end
 
   it "UNIX_EPOCH" do
@@ -221,7 +238,7 @@ describe Time do
 
   it "#clone" do
     time = Time.local
-    (time == time.clone).should be_true
+    time.clone.should eq(time)
   end
 
   describe "#shift" do
@@ -279,7 +296,7 @@ describe Time do
       time.shift(0, 0).should eq time
     end
 
-    describe "irregular calendrical unit ratios" do
+    describe "irregular calendaric unit ratios" do
       it "shifts by a week if one day is left out" do
         # The week from 2011-12-25 to 2012-01-01 for example lasted only 6 days in Samoa,
         # because it skipped 2011-12-28 due to changing time zone from -11:00 to +13:00.
@@ -337,10 +354,9 @@ describe Time do
         end
       end
 
-      pending "out of range max (shift days)" do
-        # this will be fixed with raise on overflow
+      it "out of range max (shift days)" do
         time = Time.utc(2002, 2, 25, 15, 25, 13)
-        expect_raises ArgumentError do
+        expect_raises OverflowError do
           time.shift days: 10000000
         end
       end
@@ -352,10 +368,9 @@ describe Time do
         end
       end
 
-      pending "out of range min (shift days)" do
-        # this will be fixed with raise on overflow
+      it "out of range min (shift days)" do
         time = Time.utc(2002, 2, 25, 15, 25, 13)
-        expect_raises ArgumentError do
+        expect_raises OverflowError do
           time.shift days: -10000000
         end
       end
@@ -435,6 +450,11 @@ describe Time do
 
       Time.local(2020, 2, 5, 0, 13, location: zone).shift(months: 3).should eq Time.local(2020, 5, 5, 0, 13, location: zone)
     end
+
+    it "covers date boundaries with zone offset (#10869)" do
+      location = Time::Location.fixed(2 * 3600)
+      Time.local(2021, 7, 1, location: location).shift(months: 1).should eq Time.local(2021, 8, 1, location: location)
+    end
   end
 
   it "#time_of_day" do
@@ -495,6 +515,11 @@ describe Time do
       time = Time.local(Time::Location.fixed(1234))
       (time.to_utc <=> time).should eq(0)
     end
+  end
+
+  describe "#step" do
+    days = (1..24).map { |d| Time.utc(2020, 12, d) }.to_a
+    it_iterates "advent", days, Time.utc(2020, 12, 1).step(to: Time.utc(2020, 12, 24), by: 1.day)
   end
 
   describe "#to_unix" do
@@ -770,7 +795,7 @@ describe Time do
       end
     end
 
-    it "knows that typical non-century leap years are divisibly by 4" do
+    it "knows that typical non-century leap years are divisible by 4" do
       {1968, 1972, 2004, 2020}.each do |year|
         Time.leap_year?(year).should be_true
       end

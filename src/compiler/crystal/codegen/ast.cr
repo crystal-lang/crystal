@@ -5,31 +5,6 @@ module Crystal
     def no_returns?
       type?.try &.no_return?
     end
-
-    def zero?
-      false
-    end
-
-    def false?
-      false
-    end
-  end
-
-  class BoolLiteral
-    def false?
-      !value
-    end
-  end
-
-  class NumberLiteral
-    def zero?
-      case :kind
-      when :f32, :f64
-        value == "0.0"
-      else
-        value == "0"
-      end
-    end
   end
 
   class Def
@@ -111,8 +86,8 @@ module Crystal
     end
 
     private def compute_c_calling_convention
-      # One case where this is not true if for LLVM instrinsics.
-      # For example overflow intrincis return a tuple, like {i32, i1}:
+      # One case where this is not true if for LLVM intrinsics.
+      # For example overflow intrinsics return a tuple, like {i32, i1}:
       # in C ABI that is represented as i64, but we need to keep the original
       # type here, respecting LLVM types, not the C ABI.
       if self.is_a?(External)

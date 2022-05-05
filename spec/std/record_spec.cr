@@ -19,6 +19,12 @@ end
 
 private record Sub < Base, x : Int32
 
+private record CustomInitializer, id : Int32, active : Bool = false do
+  def initialize(*, __id id : Int32)
+    @id = id
+  end
+end
+
 describe "record" do
   it "defines record with type declarations" do
     ary = [2, 3]
@@ -74,5 +80,9 @@ describe "record" do
   it "can copy_with record with parent type" do
     rec = Sub.new 1
     rec.copy_with(x: 2).x.should eq(2)
+  end
+
+  it "uses the default values on the ivars" do
+    CustomInitializer.new(__id: 10).active.should be_false
   end
 end

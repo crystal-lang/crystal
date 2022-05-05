@@ -2,8 +2,8 @@
 
 class Crystal::Command
   private def eval
-    compiler = Compiler.new
-    OptionParser.parse(options) do |opts|
+    compiler = new_compiler
+    parse_with_crystal_opts do |opts|
       opts.banner = "Usage: crystal eval [options] [source]\n\nOptions:"
       setup_simple_compiler_options compiler, opts
     end
@@ -24,9 +24,9 @@ class Crystal::Command
 
     sources = [Compiler::Source.new("eval", program_source)]
 
-    output_filename = Crystal.tempfile "eval"
+    output_filename = Crystal.temp_executable "eval"
 
-    result = compiler.compile sources, output_filename
+    compiler.compile sources, output_filename
     execute output_filename, program_args, compiler
   end
 end

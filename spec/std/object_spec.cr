@@ -112,6 +112,16 @@ private class TestObject
   def []=(key, value)
     {key, value}
   end
+
+  annotation TestAnnotation
+  end
+
+  @[TestAnnotation]
+  property(x : Int32) { 1 }
+
+  def self.test_annotation_count
+    {{ @type.instance_vars.select(&.annotation(TestObject::TestAnnotation)).size }}
+  end
 end
 
 private class DelegatedTestObject
@@ -123,13 +133,7 @@ private class DelegatedTestObject
 end
 
 private class TestObjectWithFinalize
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-  end
+  include FinalizeCounter
 
   def_clone
 end
@@ -142,6 +146,20 @@ private class HashedTestObject
   end
 
   def_hash :a, :b
+end
+
+private struct NonReflexive
+  def ==(other)
+    false
+  end
+end
+
+private class DefEquals
+  def initialize
+    @x = NonReflexive.new
+  end
+
+  def_equals @x
 end
 
 describe Object do
@@ -470,7 +488,7 @@ describe Object do
 
   it "calls #finalize on #clone'd objects" do
     obj = TestObjectWithFinalize.new
-    assert_finalizes(:clone) { obj.clone }
+    assert_finalizes("clone") { obj.clone }
   end
 
   describe "def_hash" do
@@ -480,6 +498,19 @@ describe Object do
 
     it "shouldn't return same hash for different property values" do
       HashedTestObject.new(1, 2).hash.should_not eq HashedTestObject.new(3, 4).hash
+    end
+  end
+
+  it "applies annotation to lazy property (#9139)" do
+    TestObject.test_annotation_count.should eq(1)
+  end
+
+  describe "def_equals" do
+    it "compares by reference" do
+      x = DefEquals.new
+      y = DefEquals.new
+      (x == x).should be_true
+      (x == y).should be_false
     end
   end
 end

@@ -40,10 +40,12 @@ class Crystal::OnceState
   {% end %}
 end
 
+# :nodoc:
 fun __crystal_once_init : Void*
   Crystal::OnceState.new.as(Void*)
 end
 
+# :nodoc:
 fun __crystal_once(state : Void*, flag : Bool*, initializer : Void*)
   state.as(Crystal::OnceState).once(flag, initializer)
 end

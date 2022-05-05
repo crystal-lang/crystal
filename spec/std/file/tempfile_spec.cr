@@ -23,13 +23,13 @@ describe File do
       File.exists?(path).should be_false
       File.dirname(path).should eq Dir.tempdir
       File.extname(path).should eq(".bar")
-      File.basename(path).starts_with?("foo").should be_true
+      File.basename(path).should start_with("foo")
     end
 
     it "accepts prefix with separator" do
       path = File.tempname "foo/", nil
       File.dirname(path).should eq File.join(Dir.tempdir, "foo")
-      File.basename(path).starts_with?("foo").should be_false
+      File.basename(path).should_not start_with("foo")
     end
 
     it "accepts dir argument" do
@@ -69,7 +69,7 @@ describe File do
       tempfile.close
 
       File.extname(tempfile.path).should eq(".bar")
-      File.basename(tempfile.path).starts_with?("foo").should be_true
+      File.basename(tempfile.path).should start_with("foo")
 
       File.exists?(tempfile.path).should be_true
       File.read(tempfile.path).should eq("Hello!")
@@ -77,14 +77,14 @@ describe File do
       tempfile.try &.delete
     end
 
-    it "accepts dir argument" do
+    pending_win32 "accepts dir argument" do
       file = File.tempfile(dir: datapath)
       File.dirname(file.path).should eq(datapath)
     ensure
       file.try &.delete
     end
 
-    it "fails in unwritable folder" do
+    pending_win32 "fails in nonwriteable folder" do
       expect_raises(File::NotFoundError, "Error creating temporary file: '#{datapath("non-existing-folder")}/") do
         File.tempfile dir: datapath("non-existing-folder")
       end
@@ -127,7 +127,7 @@ describe File do
         tempfile.closed?.should be_true
 
         File.extname(tempfile.path).should eq(".bar")
-        File.basename(tempfile.path).starts_with?("foo").should be_true
+        File.basename(tempfile.path).should start_with("foo")
 
         File.exists?(tempfile.path).should be_true
       ensure

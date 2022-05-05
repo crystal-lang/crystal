@@ -1,13 +1,12 @@
 require "fiber"
 require "channel"
 require "crystal/scheduler"
-require "./concurrent/*"
 
 # Blocks the current fiber for the specified number of seconds.
 #
 # While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
-def sleep(seconds : Number)
+def sleep(seconds : Number) : Nil
   if seconds < 0
     raise ArgumentError.new "Sleep seconds must be positive"
   end
@@ -19,14 +18,14 @@ end
 #
 # While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
-def sleep(time : Time::Span)
+def sleep(time : Time::Span) : Nil
   Crystal::Scheduler.sleep(time)
 end
 
 # Blocks the current fiber forever.
 #
 # Meanwhile, other ready-to-execute fibers might start their execution.
-def sleep
+def sleep : Nil
   Crystal::Scheduler.reschedule
 end
 
@@ -105,7 +104,7 @@ macro spawn(call, *, name = nil, same_thread = false, &block)
   {% if call.is_a?(Call) %}
     ->(
       {% for arg, i in call.args %}
-        __arg{{i}} : typeof({{arg}}),
+        __arg{{i}} : typeof({{arg.is_a?(Splat) ? arg.exp : arg}}),
       {% end %}
       {% if call.named_args %}
         {% for narg, i in call.named_args %}
@@ -116,7 +115,7 @@ macro spawn(call, *, name = nil, same_thread = false, &block)
       spawn(name: {{name}}, same_thread: {{same_thread}}) do
         {% if call.receiver %}{{ call.receiver }}.{% end %}{{call.name}}(
           {% for arg, i in call.args %}
-            __arg{{i}},
+            {% if arg.is_a?(Splat) %}*{% end %}__arg{{i}},
           {% end %}
           {% if call.named_args %}
             {% for narg, i in call.named_args %}
@@ -125,93 +124,17 @@ macro spawn(call, *, name = nil, same_thread = false, &block)
           {% end %}
         )
       end
-    {% if call.named_args %}
-      }.call({{*call.args}}, {{*call.named_args.map(&.value)}})
-    {% else %}
-      }.call({{*call.args}})
-    {% end %}
+      }.call(
+        {% for arg in call.args %}
+          {{arg.is_a?(Splat) ? arg.exp : arg}},
+        {% end %}
+        {% if call.named_args %}
+          {{call.named_args.map(&.value).splat}}
+        {% end %}
+      )
   {% else %}
     spawn do
       {{call}}
     end
   {% end %}
-end
-
-# Wraps around exceptions re-raised from concurrent calls.
-# The original exception can be accessed via `#cause`.
-class ConcurrentExecutionException < Exception
-end
-
-# Runs the commands passed as arguments concurrently (in Fibers) and waits
-# for them to finish.
-#
-# ```
-# def say(word)
-#   puts word
-# end
-#
-# # Will print out the three words concurrently
-# parallel(
-#   say("concurrency"),
-#   say("is"),
-#   say("easy")
-# )
-# ```
-#
-# Can also be used to conveniently collect the return values of the
-# concurrent operations.
-#
-# ```
-# def concurrent_job(word)
-#   word
-# end
-#
-# a, b, c =
-#   parallel(
-#     concurrent_job("concurrency"),
-#     concurrent_job("is"),
-#     concurrent_job("easy")
-#   )
-#
-# a # => "concurrency"
-# b # => "is"
-# c # => "easy"
-# ```
-#
-# Due to the concurrent nature of this macro, it is highly recommended
-# to handle any exceptions within the concurrent calls. Unhandled
-# exceptions raised within the concurrent operations will be re-raised
-# inside the parent fiber as `ConcurrentExecutionException`, with the
-# `cause` attribute set to the original exception.
-macro parallel(*jobs)
-  %channel = Channel(Exception | Nil).new
-
-  {% for job, i in jobs %}
-    %ret{i} = uninitialized typeof({{job}})
-    spawn do
-      begin
-        %ret{i} = {{job}}
-      rescue e : Exception
-        %channel.send e
-      else
-        %channel.send nil
-      end
-    end
-  {% end %}
-
-  {{ jobs.size }}.times do
-    %value = %channel.receive
-    if %value.is_a?(Exception)
-      raise ConcurrentExecutionException.new(
-        "An unhandled error occurred inside a `parallel` call",
-        cause: %value
-      )
-    end
-  end
-
-  {
-    {% for job, i in jobs %}
-      %ret{i},
-    {% end %}
-  }
 end

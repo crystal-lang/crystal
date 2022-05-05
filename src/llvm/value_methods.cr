@@ -14,11 +14,16 @@ module LLVM::ValueMethods
     LibLLVM.get_value_kind(self)
   end
 
-  def add_instruction_attribute(index : Int, attribute : LLVM::Attribute, context : LLVM::Context)
+  def add_instruction_attribute(index : Int, attribute : LLVM::Attribute, context : LLVM::Context, type : LLVM::Type? = nil)
     return if attribute.value == 0
     {% if LibLLVM.has_constant?(:AttributeRef) %}
       attribute.each_kind do |kind|
-        attribute_ref = LibLLVM.create_enum_attribute(context, kind, 0)
+        if type && LLVM::Attribute.requires_type?(kind)
+          attribute_ref = LibLLVMExt.create_type_attribute(context, kind, type)
+        else
+          attribute_ref = LibLLVM.create_enum_attribute(context, kind, 0)
+        end
+
         LibLLVM.add_call_site_attribute(self, index, attribute_ref)
       end
     {% else %}
@@ -48,6 +53,10 @@ module LLVM::ValueMethods
 
   def linkage
     LibLLVM.get_linkage(self)
+  end
+
+  def dll_storage_class=(storage_class)
+    LibLLVM.set_dll_storage_class(self, storage_class)
   end
 
   def call_convention=(call_convention)
@@ -105,7 +114,6 @@ module LLVM::ValueMethods
 
   def inspect(io : IO) : Nil
     LLVM.to_io(LibLLVM.print_value_to_string(self), io)
-    self
   end
 
   def to_unsafe

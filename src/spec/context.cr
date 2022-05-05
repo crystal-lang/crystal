@@ -12,11 +12,113 @@ module Spec
       end
       children.shuffle!(randomizer)
     end
+
+    protected def internal_run
+      run_before_all_hooks
+      children.each &.run
+      run_after_all_hooks
+    end
+
+    protected def before_each(&block)
+      (@before_each ||= [] of ->) << block
+    end
+
+    protected def run_before_each_hooks
+      @before_each.try &.each &.call
+    end
+
+    protected def after_each(&block)
+      (@after_each ||= [] of ->) << block
+    end
+
+    protected def run_after_each_hooks
+      @after_each.try &.reverse_each &.call
+    end
+
+    protected def before_all(&block)
+      (@before_all ||= [] of ->) << block
+    end
+
+    protected def run_before_all_hooks
+      @before_all.try &.each &.call
+    end
+
+    protected def after_all(&block)
+      (@after_all ||= [] of ->) << block
+    end
+
+    protected def run_after_all_hooks
+      @after_all.try &.reverse_each &.call
+    end
+
+    protected def around_each(&block : Example::Procsy ->)
+      (@around_each ||= [] of Example::Procsy ->) << block
+    end
+
+    protected def run_around_each_hooks(procsy : Example::Procsy) : Bool
+      internal_run_around_each_hooks(procsy)
+    end
+
+    protected def internal_run_around_each_hooks(procsy : Example::Procsy) : Bool
+      around_each = @around_each
+      return false unless around_each
+
+      run_around_each_hook(around_each, procsy, 0)
+      true
+    end
+
+    protected def run_around_each_hook(around_each, procsy, index) : Nil
+      around_each[index].call(
+        if index == around_each.size - 1
+          # If we don't have any more hooks after this one, call the procsy
+          procsy
+        else
+          # Otherwise, create a procsy that will invoke the next hook
+          Example::Procsy.new(procsy.example) do
+            run_around_each_hook(around_each, procsy, index + 1)
+          end
+        end
+      )
+    end
+
+    protected def around_all(&block : ExampleGroup::Procsy ->)
+      (@around_all ||= [] of ExampleGroup::Procsy ->) << block
+    end
+
+    protected def run_around_all_hooks(procsy : ExampleGroup::Procsy) : Bool
+      around_all = @around_all
+      return false unless around_all
+
+      run_around_all_hook(around_all, procsy, 0)
+      true
+    end
+
+    protected def run_around_all_hook(around_all, procsy, index) : Nil
+      around_all[index].call(
+        if index == around_all.size - 1
+          # If we don't have any more hooks after this one, call the procsy
+          procsy
+        else
+          # Otherwise, create a procsy that will invoke the next hook
+          ExampleGroup::Procsy.new(procsy.example_group) do
+            run_around_all_hook(around_all, procsy, index + 1)
+          end
+        end
+      )
+    end
+  end
+
+  # :nodoc:
+  enum Status
+    Success
+    Fail
+    Error
+    Pending
   end
 
   # :nodoc:
   record Result,
-    kind : Symbol,
+    kind : Status,
     description : String,
     file : String,
     line : Int32,
@@ -29,31 +131,37 @@ module Spec
   end
 
   # :nodoc:
+  def self.current_context : Context
+    RootContext.current_context
+  end
+
+  # :nodoc:
   #
   # The root context is the main interface that the spec DSL interacts with.
   class RootContext < Context
     class_getter instance = RootContext.new
-    @@current_context : Context = @@instance
+    class_getter current_context : Context = @@instance
+
+    @results : Hash(Status, Array(Result))
+
+    def results_for(status : Status)
+      @results[status]
+    end
 
     def initialize
-      @results = {
-        success: [] of Result,
-        fail:    [] of Result,
-        error:   [] of Result,
-        pending: [] of Result,
-      }
+      @results = Status.values.to_h { |status| {status, [] of Result} }
     end
 
     def run
-      children.each &.run
+      internal_run
     end
 
-    def report(kind, full_description, file, line, elapsed = nil, ex = nil)
-      result = Result.new(kind, full_description, file, line, elapsed, ex)
+    def report(status : Status, full_description, file, line, elapsed = nil, ex = nil)
+      result = Result.new(status, full_description, file, line, elapsed, ex)
 
       report_formatters result
 
-      @results[result.kind] << result
+      @results[status] << result
     end
 
     def report_formatters(result)
@@ -61,7 +169,7 @@ module Spec
     end
 
     def succeeded
-      @results[:fail].empty? && @results[:error].empty?
+      results_for(:fail).empty? && results_for(:error).empty?
     end
 
     def finish(elapsed_time, aborted = false)
@@ -70,7 +178,7 @@ module Spec
     end
 
     def print_results(elapsed_time, aborted = false)
-      pendings = @results[:pending]
+      pendings = results_for(:pending)
       unless pendings.empty?
         puts
         puts "Pending:"
@@ -79,8 +187,8 @@ module Spec
         end
       end
 
-      failures = @results[:fail]
-      errors = @results[:error]
+      failures = results_for(:fail)
+      errors = results_for(:error)
 
       failures_and_errors = failures + errors
       unless failures_and_errors.empty?
@@ -115,14 +223,14 @@ module Spec
 
       if Spec.slowest
         puts
-        results = @results[:success] + @results[:fail]
+        results = results_for(:success) + results_for(:fail)
         top_n = results.sort_by { |res| -res.elapsed.not_nil!.to_f }[0..Spec.slowest.not_nil!]
         top_n_time = top_n.sum &.elapsed.not_nil!.total_seconds
         percent = (top_n_time * 100) / elapsed_time.total_seconds
-        puts "Top #{Spec.slowest} slowest examples (#{top_n_time} seconds, #{percent.round(2)}% of total time):"
+        puts "Top #{Spec.slowest} slowest examples (#{top_n_time.humanize} seconds, #{percent.round(2)}% of total time):"
         top_n.each do |res|
           puts "  #{res.description}"
-          res_elapsed = res.elapsed.not_nil!.total_seconds.to_s
+          res_elapsed = res.elapsed.not_nil!.total_seconds.humanize
           if Spec.use_colors?
             res_elapsed = res_elapsed.colorize.bold
           end
@@ -132,14 +240,14 @@ module Spec
 
       puts
 
-      success = @results[:success]
+      success = results_for(:success)
       total = pendings.size + failures.size + errors.size + success.size
 
       final_status = case
-                     when aborted                           then :error
-                     when (failures.size + errors.size) > 0 then :fail
-                     when pendings.size > 0                 then :pending
-                     else                                        :success
+                     when aborted                           then Status::Error
+                     when (failures.size + errors.size) > 0 then Status::Fail
+                     when pendings.size > 0                 then Status::Pending
+                     else                                        Status::Success
                      end
 
       puts "Aborted!".colorize.red if aborted
@@ -206,68 +314,8 @@ module Spec
       end
     end
 
-    def before_each(&block)
-      if @@current_context == self
-        raise "Can't call `before_each` outside of a describe/context"
-      end
-
-      @@current_context.before_each(&block)
-    end
-
-    def run_before_each_hooks
-      # Nothing
-    end
-
-    def after_each(&block)
-      if @@current_context == self
-        raise "Can't call `after_each` outside of a describe/context"
-      end
-
-      @@current_context.after_each(&block)
-    end
-
-    def run_after_each_hooks
-      # Nothing
-    end
-
-    def before_all(&block)
-      if @@current_context == self
-        raise "Can't call `before_all` outside of a describe/context"
-      end
-
-      @@current_context.before_all(&block)
-    end
-
-    def after_all(&block)
-      if @@current_context == self
-        raise "Can't call `after_all` outside of a describe/context"
-      end
-
-      @@current_context.after_all(&block)
-    end
-
-    def around_each(&block : Example::Procsy ->)
-      if @@current_context == self
-        raise "Can't call `around_each` outside of a describe/context"
-      end
-
-      @@current_context.around_each(&block)
-    end
-
-    def run_around_each_hooks(procsy : Example::Procsy) : Bool
-      false
-    end
-
-    def around_all(&block : ExampleGroup::Procsy ->)
-      if @@current_context == self
-        raise "Can't call `around_all` outside of a describe/context"
-      end
-
-      @@current_context.around_all(&block)
-    end
-
-    def run_around_all_hooks(procsy : ExampleGroup::Procsy) : Bool
-      false
+    protected def around_all(&block : ExampleGroup::Procsy ->)
+      raise "Can't call `around_all` outside of a describe/context"
     end
   end
 
@@ -291,52 +339,18 @@ module Spec
       Spec.formatters.each(&.pop)
     end
 
-    protected def internal_run
-      run_before_all_hooks
-      children.each &.run
-      run_after_all_hooks
-    end
-
-    protected def report(kind, description, file, line, elapsed = nil, ex = nil)
-      parent.report kind, "#{@description} #{description}", file, line, elapsed, ex
-    end
-
-    protected def before_each(&block)
-      (@before_each ||= [] of ->) << block
+    protected def report(status : Status, description, file, line, elapsed = nil, ex = nil)
+      parent.report status, "#{@description} #{description}", file, line, elapsed, ex
     end
 
     protected def run_before_each_hooks
       @parent.run_before_each_hooks
-      @before_each.try &.each &.call
-    end
-
-    protected def after_each(&block)
-      (@after_each ||= [] of ->) << block
+      super
     end
 
     protected def run_after_each_hooks
-      @after_each.try &.reverse_each &.call
+      super
       @parent.run_after_each_hooks
-    end
-
-    protected def before_all(&block)
-      (@before_all ||= [] of ->) << block
-    end
-
-    protected def run_before_all_hooks
-      @before_all.try &.each &.call
-    end
-
-    protected def after_all(&block)
-      (@after_all ||= [] of ->) << block
-    end
-
-    protected def run_after_all_hooks
-      @after_all.try &.reverse_each &.call
-    end
-
-    protected def around_each(&block : Example::Procsy ->)
-      (@around_each ||= [] of Example::Procsy ->) << block
     end
 
     protected def run_around_each_hooks(procsy : Example::Procsy) : Bool
@@ -352,54 +366,6 @@ module Spec
         end
       end)
       ran || internal_run_around_each_hooks(procsy)
-    end
-
-    protected def internal_run_around_each_hooks(procsy : Example::Procsy) : Bool
-      around_each = @around_each
-      return false unless around_each
-
-      run_around_each_hook(around_each, procsy, 0)
-      true
-    end
-
-    protected def run_around_each_hook(around_each, procsy, index) : Nil
-      around_each[index].call(
-        if index == around_each.size - 1
-          # If we don't have any more hooks after this one, call the procsy
-          procsy
-        else
-          # Otherwise, create a procsy that will invoke the next hook
-          Example::Procsy.new(procsy.example) do
-            run_around_each_hook(around_each, procsy, index + 1)
-          end
-        end
-      )
-    end
-
-    protected def around_all(&block : ExampleGroup::Procsy ->)
-      (@around_all ||= [] of ExampleGroup::Procsy ->) << block
-    end
-
-    protected def run_around_all_hooks(procsy : ExampleGroup::Procsy) : Bool
-      around_all = @around_all
-      return false unless around_all
-
-      run_around_all_hook(around_all, procsy, 0)
-      true
-    end
-
-    protected def run_around_all_hook(around_all, procsy, index) : Nil
-      around_all[index].call(
-        if index == around_all.size - 1
-          # If we don't have any more hooks after this one, call the procsy
-          procsy
-        else
-          # Otherwise, create a procsy that will invoke the next hook
-          ExampleGroup::Procsy.new(procsy.example_group) do
-            run_around_all_hook(around_all, procsy, index + 1)
-          end
-        end
-      )
     end
   end
 end
