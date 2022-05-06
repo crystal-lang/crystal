@@ -1072,10 +1072,10 @@ class Hash(K, V)
   # h = Hash(String, String).new
   # h["foo"] # raises KeyError
   # ```
-  def [](key)
+  def [](key : K)
     fetch(key) do
-      if (block = @block) && key.is_a?(K)
-        block.call(self, key.as(K))
+      if block = @block
+        block.call(self, key)
       else
         raise KeyError.new "Missing hash key: #{key.inspect}"
       end
@@ -1093,7 +1093,7 @@ class Hash(K, V)
   # h = Hash(String, String).new("bar")
   # h["foo"]? # => nil
   # ```
-  def []?(key)
+  def []?(key : K)
     fetch(key, nil)
   end
 
@@ -1143,7 +1143,7 @@ class Hash(K, V)
   # h.has_key?("foo") # => true
   # h.has_key?("bar") # => false
   # ```
-  def has_key?(key) : Bool
+  def has_key?(key : K) : Bool
     !!find_entry(key)
   end
 
@@ -1154,7 +1154,7 @@ class Hash(K, V)
   # h.has_value?("foo") # => false
   # h.has_value?("bar") # => true
   # ```
-  def has_value?(val) : Bool
+  def has_value?(val : K) : Bool
     each_value do |value|
       return true if value == val
     end
@@ -1169,7 +1169,7 @@ class Hash(K, V)
   # h.fetch("foo", "foo") # => "bar"
   # h.fetch("bar", "foo") # => "foo"
   # ```
-  def fetch(key, default)
+  def fetch(key : K, default)
     fetch(key) { default }
   end
 
@@ -1181,7 +1181,7 @@ class Hash(K, V)
   # h.fetch("bar") { "default value" }  # => "default value"
   # h.fetch("bar") { |key| key.upcase } # => "BAR"
   # ```
-  def fetch(key)
+  def fetch(key : K)
     entry = find_entry(key)
     entry ? entry.value : yield key
   end
@@ -1799,6 +1799,7 @@ class Hash(K, V)
     return false unless size == other.size
     each do |key, value|
       entry = other.find_entry(key)
+
       return false unless entry && entry.value == value
     end
     true
@@ -1806,30 +1807,29 @@ class Hash(K, V)
 
   # Returns `true` if `self` is a subset of *other*.
   def proper_subset_of?(other : Hash) : Bool
-    return false if other.size <= size
-    all? do |key, value|
-      other_value = other.fetch(key) { return false }
-      other_value == value
-    end
+    other.proper_superset_of?(self)
   end
 
   # Returns `true` if `self` is a subset of *other* or equals to *other*.
   def subset_of?(other : Hash) : Bool
-    return false if other.size < size
-    all? do |key, value|
-      other_value = other.fetch(key) { return false }
-      other_value == value
-    end
+    other.superset_of?(self)
   end
 
   # Returns `true` if *other* is a subset of `self`.
   def superset_of?(other : Hash) : Bool
-    other.subset_of?(self)
+    return false if other.size > size
+    other.all? do |key, value|
+      return false unless key.is_a?(K)
+
+      other_value = fetch(key) { return false }
+      other_value == value
+    end
   end
 
   # Returns `true` if *other* is a subset of `self` or equals to `self`.
   def proper_superset_of?(other : Hash) : Bool
-    other.proper_subset_of?(self)
+    return false if other.size >= size
+    superset_of?(other)
   end
 
   # See `Object#hash(hasher)`

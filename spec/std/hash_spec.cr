@@ -99,6 +99,12 @@ describe "Hash" do
       b = { {1 => 2} => 3 }
       a.should eq(b)
     end
+
+    it "compares with union type argument" do
+      a = { {1 => 2} => 3 }
+      b = { {1 => 2} => 3 } || {'a' => 3}
+      a.should eq(b)
+    end
   end
 
   context "subset/superset operators" do
@@ -119,6 +125,10 @@ describe "Hash" do
       it "handles edge case where both values are nil" do
         {"a" => nil}.proper_subset_of?({"b" => nil, "c" => nil}).should be_false
       end
+
+      it "union type argument" do
+        h1.proper_subset_of?(h2 || h4).should be_true
+      end
     end
 
     describe "#subset_of?" do
@@ -132,6 +142,10 @@ describe "Hash" do
 
       it "handles edge case where both values are nil" do
         {"a" => nil}.subset_of?({"b" => nil}).should be_false
+      end
+
+      it "union type argument" do
+        h1.subset_of?(h2 || h4).should be_true
       end
     end
 
