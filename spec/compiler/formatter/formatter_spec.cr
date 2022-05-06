@@ -879,7 +879,36 @@ describe Crystal::Formatter do
   assert_format "protected FOOBAR =  2\nprotected    BAR = 42", "protected FOOBAR =  2\nprotected    BAR = 42"
   assert_format "foo = 2\na =   1", "foo = 2\na =   1"
   assert_format "foo = 1\na = 123456789", "foo = 1\na = 123456789"
-
+  assert_format <<-BEFORE,
+    FOO =  # Comment
+           # Comment2
+           42
+    BEFORE
+    <<-AFTER
+    FOO =  # Comment
+           # Comment2
+           42
+    AFTER
+  assert_format <<-BEFORE,
+    FOO =  # Comment # Comment2
+           42
+    BEFORE
+    <<-AFTER
+    FOO =  # Comment # Comment2
+           42
+    AFTER
+  assert_format <<-BEFORE,
+    FOO =  # ```crystal
+           #   puts 1 + 2
+           # ```
+           42
+    BEFORE
+    <<-AFTER
+    FOO =  # ```crystal
+           #   puts 1 + 2
+           # ```
+           42
+    AFTER
   assert_format "1   # foo", "1 # foo"
   assert_format "1  # foo\n2  # bar", "1 # foo\n2 # bar"
   assert_format "1  #foo  \n2  #bar", "1 # foo\n2 # bar"

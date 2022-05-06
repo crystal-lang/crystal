@@ -3282,7 +3282,7 @@ module Crystal
       write_spaces
       slash_is_regex!
       write_token :OP_EQ
-      write_spaces_and_newlines
+      write_spaces_and_newlines_and_comments
 
       accept_assign_value_after_equals node.value, add_space: false
 
@@ -4563,17 +4563,19 @@ module Crystal
       end
     end
 
-    def write_spaces_and_newlines
+    def write_spaces_and_newlines_and_comments
       while true
         if @token.type.space?
           write @token.value
+          next_token
         elsif @token.type.newline?
           write_line
+          next_token
+        elsif @token.type.comment?
+          write_comment(needs_indent: false, consume_newline: false, next_comes_end: false)
         else
           break
         end
-
-        next_token
       end
     end
 
