@@ -177,6 +177,13 @@ describe "Set" do
     set3.should eq(Set{1, 3, 'b'})
   end
 
+  it "does - with union type argument" do
+    set1 = Set{1, 2, 3, 4, 'b'}
+    set2 = Set{2, 4, 5} || Set{'b'}
+    set3 = set1 - set2
+    set3.should eq(Set{1, 3, 'b'})
+  end
+
   it "does -" do
     set1 = Set{1, 2, 3, 4, 5}
     set2 = [2, 4, 6]

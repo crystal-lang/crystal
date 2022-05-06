@@ -132,7 +132,7 @@ struct Set(T)
   # s.includes? 5 # => true
   # s.includes? 9 # => false
   # ```
-  def includes?(object) : Bool
+  def includes?(object : T) : Bool
     @hash.has_key?(object)
   end
 
@@ -145,7 +145,7 @@ struct Set(T)
   # s.includes? 5 # => false
   # s.delete 5    # => false
   # ```
-  def delete(object) : Bool
+  def delete(object : T) : Bool
     @hash.delete(object) { return false }
     true
   end
@@ -254,10 +254,12 @@ struct Set(T)
   # Set{1, 2, 3, 4, 5} - Set{2, 4}               # => Set{1, 3, 5}
   # Set{'a', 'b', 'b', 'z'} - Set{'a', 'b', 'c'} # => Set{'z'}
   # ```
-  def -(other : Set) : Set(T)
+  def -(other : Set(U)) : Set(T) forall U
     set = Set(T).new
     each do |value|
-      set.add value unless other.includes?(value)
+      if value.is_a?(T) && !other.includes?(value)
+        set.add value
+      end
     end
     set
   end
@@ -319,7 +321,7 @@ struct Set(T)
   # ```
   def subtract(other : Enumerable) : self
     other.each do |value|
-      delete value
+      delete value if value.is_a? T
     end
     self
   end
