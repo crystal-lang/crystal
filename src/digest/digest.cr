@@ -152,7 +152,7 @@ abstract class Digest
   #
   # This method can only be called once and raises `FinalizedError` on subsequent calls.
   #
-  # NOTE: `.dup.final` call may be used to get an intermediate hash value.
+  # NOTE: `.dup.hexfinal` call may be used to get an intermediate hash value.
   def hexfinal : String
     sary = uninitialized StaticArray(UInt8, 64)
     tmp = sary.to_slice[0, digest_size]
