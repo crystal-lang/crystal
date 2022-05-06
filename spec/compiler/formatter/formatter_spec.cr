@@ -221,7 +221,7 @@ describe Crystal::Formatter do
   assert_format "def foo( x , & block  :   ->)\nend", "def foo(x, &block : ->)\nend"
   assert_format "def foo( x , & : Int32 )\nend", "def foo(x, & : Int32)\nend"
   assert_format "def foo( x , * y )\nend", "def foo(x, *y)\nend"
-  assert_format "class Bar\nprotected def foo(x)\na=b(c)\nend\nend", "class Bar\n  protected def foo(x)\n    a = b(c)\n  end\nend"
+  assert_format "class Bar\nprotected def foo(x)\na=b(c)\nend\nend", "class Bar\n  protected def foo(x)\n    a=b(c)\n  end\nend"
   assert_format "def foo=(x)\nend"
   assert_format "def +(x)\nend"
   assert_format "def   foo  :  Int32 \n  end", "def foo : Int32\nend"
@@ -424,7 +424,7 @@ describe Crystal::Formatter do
 
   assert_format "def foo(x =  __FILE__ )\nend", "def foo(x = __FILE__)\nend"
 
-  assert_format "a=1", "a = 1"
+  assert_format "a=1", "a=1"
 
   assert_format "while 1\n2\nend", "while 1\n  2\nend"
   assert_format "until 1\n2\nend", "until 1\n  2\nend"
@@ -437,7 +437,8 @@ describe Crystal::Formatter do
   assert_format "a = while 1\n2\nend", "a = while 1\n  2\nend"
   assert_format "a = case 1\nwhen 2\n3\nend", "a = case 1\n    when 2\n      3\n    end"
   assert_format "a = case 1\nwhen 2\n3\nelse\n4\nend", "a = case 1\n    when 2\n      3\n    else\n      4\n    end"
-  assert_format "a = \nif 1\n2\nend", "a =\n  if 1\n    2\n  end"
+  assert_format "a = \nif 1\n2\nend", "a =\nif 1\n  2\nend"
+  assert_format "a = \n  if 1\n    2\n  end", "a =\n  if 1\n    2\n  end"
   assert_format "a, b = \nif 1\n2\nend", "a, b =\n  if 1\n    2\n  end"
   assert_format "a = b = 1\na, b =\n  b, a"
 
@@ -860,55 +861,29 @@ describe Crystal::Formatter do
   assert_format "#### ###"
   assert_format "#######"
 
-  assert_format "A = 1\nFOO = 2\n\nEX = 3", "A = 1\nFOO = 2\n\nEX = 3"
-  assert_format "FOO = 2\nA = 1", "FOO = 2\nA = 1"
-  assert_format "FOO = 2 + 3\nA = 1 - 10", "FOO = 2 + 3\nA = 1 - 10"
-  assert_format "private FOO = 2\nprivate A = 1", "private FOO = 2\nprivate A = 1"
-  assert_format "private FOO    =    2\nprivate A =   1", "private FOO = 2\nprivate A = 1"
-  assert_format "private FOO =    2\nprivate A    =1", "private FOO = 2\nprivate A = 1"
-  assert_format "private FOO    = 2\nprivate A=       1", "private FOO    = 2\nprivate A=       1"
-  assert_format "private FOO=2\nprivate A =   1", "private FOO = 2\nprivate A = 1"
+  assert_format "A = 1\nFOO = 2\n\nEX = 3"
+  assert_format "FOO = 2\nA = 1"
+  assert_format "FOO = 2 + 3\nA = 1 - 10"
+  assert_format "private FOO = 2\nprivate A = 1"
+  assert_format "private FOO    =    2\nprivate A =   1"
+  assert_format "private FOO =    2\nprivate A    =1"
+  assert_format "private FOO    = 2\nprivate A=       1"
+  assert_format "private FOO=2\nprivate A =   1"
   assert_format "A =   \n  1", "A =\n  1"
   assert_format "a =   \n  1", "a =\n  1"
-  assert_format "a =     1", "a =     1"
-  assert_format "FOO    =    2\nA  =   1", "FOO    =    2\nA  =   1"
-  assert_format "FOO = 2\nA   = 1", "FOO = 2\nA   = 1"
-  assert_format "FOO = 2\nA =   1", "FOO = 2\nA =   1"
-  assert_format "private FOO    =       2", "private FOO    =       2"
-  assert_format "private FOOBAR =  2\nprivate    BAR = 42", "private FOOBAR =  2\nprivate    BAR = 42"
-  assert_format "protected FOOBAR =  2\nprotected    BAR = 42", "protected FOOBAR =  2\nprotected    BAR = 42"
-  assert_format "foo = 2\na =   1", "foo = 2\na =   1"
-  assert_format "foo = 1\na = 123456789", "foo = 1\na = 123456789"
-  assert_format <<-BEFORE,
-    FOO =  # Comment
-           # Comment2
-           42
-    BEFORE
-    <<-AFTER
-    FOO =  # Comment
-           # Comment2
-           42
-    AFTER
-  assert_format <<-BEFORE,
-    FOO =  # Comment # Comment2
-           42
-    BEFORE
-    <<-AFTER
-    FOO =  # Comment # Comment2
-           42
-    AFTER
-  assert_format <<-BEFORE,
-    FOO =  # ```crystal
-           #   puts 1 + 2
-           # ```
-           42
-    BEFORE
-    <<-AFTER
-    FOO =  # ```crystal
-           #   puts 1 + 2
-           # ```
-           42
-    AFTER
+  assert_format "a =     1"
+  assert_format "FOO    =    2\nA  =   1"
+  assert_format "FOO = 2\nA   = 1"
+  assert_format "FOO = 2\nA =   1"
+  assert_format "private FOO    =       2"
+  assert_format "private FOOBAR =  2\nprivate    BAR = 42", "private FOOBAR =  2\nprivate BAR = 42"
+  assert_format "protected FOOBAR =  2\nprotected BAR = 42"
+  assert_format "foo = 2\na =   1"
+  assert_format "foo = 1\na = 123456789"
+  assert_format "FOO =  # Comment\n       # Comment2\n       42"
+  assert_format "FOO =  # Comment # Comment2\n        42"
+  assert_format "FOO =  # ```crystal\n#   puts 1 + 2\n# ```\n           42"
+
   assert_format "1   # foo", "1 # foo"
   assert_format "1  # foo\n2  # bar", "1 # foo\n2 # bar"
   assert_format "1  #foo  \n2  #bar", "1 # foo\n2 # bar"
@@ -1066,7 +1041,7 @@ describe Crystal::Formatter do
   assert_format "p = Foo[\n  1, 2, 3,\n  4, 5, 6\n]\n", "p = Foo[\n  1, 2, 3,\n  4, 5, 6,\n]"
   assert_format "[1, 2,\n  3, 4]\n", "[1, 2,\n 3, 4]"
   assert_format "{1 => 2,\n  3 => 4, # lala\n}\n", "{1 => 2,\n 3 => 4, # lala\n}"
-  assert_format "A = 10\nFOO = 123\nBARBAZ = 1234\n", "A      =   10\nFOO    =  123\nBARBAZ = 1234"
+  assert_format "A = 10\nFOO = 123\nBARBAZ = 1234\n", "A = 10\nFOO = 123\nBARBAZ = 1234"
   assert_format "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend\n", "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend"
   assert_format "1\n# hello\n\n\n", "1\n# hello"
   assert_format "def foo\n  a = 1; # foo\n  a = 2; # bar\nend\n", "def foo\n  a = 1 # foo\n  a = 2 # bar\nend"
@@ -1085,7 +1060,7 @@ describe Crystal::Formatter do
   assert_format "{ A: 1 }\n", "{A: 1}"
   assert_format "class Foo\n  enum Bar\n  A; B; C;\n  D; E; F\nend\nend\n", "class Foo\n  enum Bar\n    A; B; C\n    D; E; F\n  end\nend"
   assert_format "x.is_a? T\n3\n", "x.is_a? T\n3"
-  assert_format "a = begin\n  1\nend\n\na =\nbegin\n  1\nend\n\na = if 1\n  2\nend\n\nb = 1\nb ||= begin\n  2\nend\n\nb ||= if 1\n  2\nend\n\nb += if 1\n  2\nend\n\nb +=\nif 1\n  2\nend\n\na, b = begin\n  1\nend\n\na, b =\nbegin\n  1\nend\n\nc[x] = begin\n  2\nend\n\nc[x] =\nbegin\n  2\nend\n\nc[x] = if 1\n  2\nend\n\nc[x] ||= begin 1\n  2\nend\n\nc[x] ||= if 1\n  2\nend\n\nc[x] += if 1\n  2\nend\n\nc[x] += begin 1\n  2\nend\n\nc[x] +=\nbegin\n  1\n  2\nend\n\nfoo.bar = begin\nend\n\nfoo.bar =\nbegin\nend\n\nfoo.bar = if\n  2\nend\n\nfoo.bar += begin\n  2\nend\n\nfoo.bar += if\n  2\nend\n\n", "a = begin\n  1\nend\n\na =\n  begin\n    1\n  end\n\na = if 1\n      2\n    end\n\nb = 1\nb ||= begin\n  2\nend\n\nb ||= if 1\n        2\n      end\n\nb += if 1\n       2\n     end\n\nb +=\n  if 1\n    2\n  end\n\na, b = begin\n  1\nend\n\na, b =\n  begin\n    1\n  end\n\nc[x] = begin\n  2\nend\n\nc[x] =\n  begin\n    2\n  end\n\nc[x] = if 1\n         2\n       end\n\nc[x] ||= begin\n  1\n  2\nend\n\nc[x] ||= if 1\n           2\n         end\n\nc[x] += if 1\n          2\n        end\n\nc[x] += begin\n  1\n  2\nend\n\nc[x] +=\n  begin\n    1\n    2\n  end\n\nfoo.bar = begin\n\nend\n\nfoo.bar =\n  begin\n\n  end\n\nfoo.bar = if 2\n          end\n\nfoo.bar += begin\n  2\nend\n\nfoo.bar += if 2\n           end"
+  assert_format "a = begin\n  1\nend\n\na =\nbegin\n  1\nend\n\na = if 1\n  2\nend\n\nb = 1\nb ||= begin\n  2\nend\n\nb ||= if 1\n  2\nend\n\nb += if 1\n  2\nend\n\nb +=\nif 1\n  2\nend\n\na, b = begin\n  1\nend\n\na, b =\nbegin\n  1\nend\n\nc[x] = begin\n  2\nend\n\nc[x] =\nbegin\n  2\nend\n\nc[x] = if 1\n  2\nend\n\nc[x] ||= begin 1\n  2\nend\n\nc[x] ||= if 1\n  2\nend\n\nc[x] += if 1\n  2\nend\n\nc[x] += begin 1\n  2\nend\n\nc[x] +=\nbegin\n  1\n  2\nend\n\nfoo.bar = begin\nend\n\nfoo.bar =\nbegin\nend\n\nfoo.bar = if\n  2\nend\n\nfoo.bar += begin\n  2\nend\n\nfoo.bar += if\n  2\nend\n\n" # , "a = begin\n  1\nend\n\na =\n  begin\n    1\n  end\n\na = if 1\n      2\n    end\n\nb = 1\nb ||= begin\n  2\nend\n\nb ||= if 1\n        2\n      end\n\nb += if 1\n       2\n     end\n\nb +=\n  if 1\n    2\n  end\n\na, b = begin\n  1\nend\n\na, b =\n  begin\n    1\n  end\n\nc[x] = begin\n  2\nend\n\nc[x] =\n  begin\n    2\n  end\n\nc[x] = if 1\n         2\n       end\n\nc[x] ||= begin\n  1\n  2\nend\n\nc[x] ||= if 1\n           2\n         end\n\nc[x] += if 1\n          2\n        end\n\nc[x] += begin\n  1\n  2\nend\n\nc[x] +=\n  begin\n    1\n    2\n  end\n\nfoo.bar = begin\n\nend\n\nfoo.bar =\n  begin\n\n  end\n\nfoo.bar = if 2\n          end\n\nfoo.bar += begin\n  2\nend\n\nfoo.bar += if 2\n           end"
   assert_format "module Foo\n  1 # bar\nend\n\nmodule Foo\n  1\n  # bar\nend\n\nmodule Foo\n  1\n\n  # bar\nend\n\nmodule Foo\n  1\n  2\n  # bar\nend\n\nmodule Foo\n  1\n  2\n\n  # bar\nend\n\nif 1\n  1\n  # bar\nend\n\nif 1\n  1\n\n  # bar\nend\n\n1\n2\n# foo\n\n1\n2\n\n# foo\n", "module Foo\n  1 # bar\nend\n\nmodule Foo\n  1\n  # bar\nend\n\nmodule Foo\n  1\n\n  # bar\nend\n\nmodule Foo\n  1\n  2\n  # bar\nend\n\nmodule Foo\n  1\n  2\n\n  # bar\nend\n\nif 1\n  1\n  # bar\nend\n\nif 1\n  1\n\n  # bar\nend\n\n1\n2\n# foo\n\n1\n2\n\n# foo"
   assert_format "begin\n  #hola\n  1\nend\n", "begin\n  # hola\n  1\nend"
   assert_format "begin\nend\n\n# a\n", "begin\n\nend\n\n# a"
@@ -1227,8 +1202,8 @@ describe Crystal::Formatter do
 
   assert_format "@x : A(B | C)?"
 
-  assert_format "page= <<-HTML\n  foo\nHTML", "page = <<-HTML\n  foo\nHTML"
-  assert_format "page= <<-HTML\n  \#{1}foo\nHTML", "page = <<-HTML\n  \#{1}foo\nHTML"
+  assert_format "page= <<-HTML\n  foo\nHTML"
+  assert_format "page= <<-HTML\n  \#{1}foo\nHTML"
 
   assert_format "self.as(Int32)"
   assert_format "foo.as ( Int32* )", "foo.as(Int32*)"
@@ -1402,7 +1377,7 @@ describe Crystal::Formatter do
   # #10734
   assert_format " <<-EOF\n 1\nEOF", "<<-EOF\n 1\nEOF"
   assert_format "  <<-EOF\n   1\n EOF", "<<-EOF\n  1\nEOF"
-  assert_format "x =  <<-EOF\n 1\nEOF", "x = <<-EOF\n 1\nEOF"
+  assert_format "x =  <<-EOF\n 1\nEOF"
   assert_format "  <<-EOF\n 1\n  2\n EOF", "<<-EOF\n1\n 2\nEOF"
 
   # #10735

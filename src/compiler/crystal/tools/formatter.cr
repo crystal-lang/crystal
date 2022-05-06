@@ -245,7 +245,7 @@ module Crystal
       node.expressions.each_with_index do |exp, i|
         is_assign = assign?(exp)
         if is_assign && !last_aligned_assign
-          # last_aligned_assign, max_length = find_assign_chunk(node.expressions, exp, i + 1)
+          last_aligned_assign, max_length = find_assign_chunk(node.expressions, exp, i + 1)
         else
           max_length = nil unless is_assign
         end
@@ -3282,8 +3282,13 @@ module Crystal
       write_spaces
       slash_is_regex!
       write_token :OP_EQ
-      write_spaces_and_newlines_and_comments
 
+      if @token.type.newline?
+        write_line
+        next_token
+      end
+
+      write_spaces_and_newlines_and_comments unless @token.type.newline?
       accept_assign_value_after_equals node.value, add_space: false
 
       false
@@ -3354,11 +3359,9 @@ module Crystal
     def visit(node : VisibilityModifier)
       case node.modifier
       when .private?
-        write_keyword :private
-        write_spaces
+        write_keyword :private, " "
       when .protected?
-        write_keyword :protected
-        write_spaces
+        write_keyword :protected, " "
       when .public?
         # no keyword needed
       end
