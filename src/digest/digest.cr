@@ -133,7 +133,7 @@ abstract class Digest
     final dst
   end
 
-  # Writes the final digest output to `dst`.
+  # Puts the final digest output into `dst`.
   #
   # Faster than the `Bytes` allocating version.
   # Use when hashing in loops.
