@@ -3274,29 +3274,15 @@ module Crystal
     end
 
     def visit(node : Assign)
-      pp "visit(node : Assign)"
-      # p node
-      # p @lexer
-      # puts "reader"
-      # p @lexer.reader.string
-
-      p node.target
-
       target = node.target
-
       @vars.last.add target.name if target.is_a?(Var)
 
       accept target
 
-      write_spaces_or_newline
-      # skip_space_or_newline
-
-      # check_align = check_assign_length node.target
-      slash_is_regex!
-      write_token "", :OP_EQ
-
       write_spaces
-      # skip_space
+      slash_is_regex!
+      write_token :OP_EQ
+      write_spaces_and_newlines
 
       accept_assign_value_after_equals node.value, add_space: false
 
@@ -3368,9 +3354,11 @@ module Crystal
     def visit(node : VisibilityModifier)
       case node.modifier
       when .private?
-        write_keyword :private, " "
+        write_keyword :private
+        write_spaces
       when .protected?
-        write_keyword :protected, " "
+        write_keyword :protected
+        write_spaces
       when .public?
         # no keyword needed
       end
@@ -4431,9 +4419,6 @@ module Crystal
       current_line_number = @lexer.line_number
       @token = @lexer.next_token
 
-      puts "next_token"
-      p @token
-
       if @token.type.delimiter_start?
         increment_lines(@lexer.line_number - current_line_number)
       elsif @token.type.newline?
@@ -4481,43 +4466,7 @@ module Crystal
       skip_space_or_newline
     end
 
-    def write_spaces(write_comma : Bool = false, consume_newline : Bool = true)
-      puts "write_spaces"
-
-      base_column = @column
-      has_space = false
-
-      if @token.type.space?
-        if @token.passed_backslash_newline
-          if write_comma
-            write ", "
-          else
-            write " "
-          end
-          write "\\"
-          write_line
-          @indent += 2 unless @passed_backslash_newline
-          write_indent
-          next_token
-          @passed_backslash_newline = true
-          if @token.type.space?
-            return skip_space(write_comma, consume_newline)
-          else
-            return false
-          end
-        else
-          spaces = @token.value.as(String)
-          spaces.size.times { write " " }
-        end
-
-        next_token
-        has_space = true
-      end
-    end
-
     def skip_space(write_comma : Bool = false, consume_newline : Bool = true)
-      puts "skip_space"
-
       base_column = @column
       has_space = false
 
@@ -4563,26 +4512,7 @@ module Crystal
       indent(indent) { skip_space(write_comma) }
     end
 
-    def write_spaces_or_newline(last : Bool = false, at_least_one : Bool = false, next_comes_end : Bool = false)
-      puts "write_spaces_or_newline"
-
-      while true
-        case @token.type
-        when .space?
-          puts "space!"
-          write @token.value
-          next_token
-        when .newline?
-          next_token
-        else
-          break
-        end
-      end
-    end
-
     def skip_space_or_newline(last : Bool = false, at_least_one : Bool = false, next_comes_end : Bool = false)
-      puts "skip_space_or_newline"
-
       just_wrote_line = @wrote_newline
       base_column = @column
       has_space = false
@@ -4624,6 +4554,27 @@ module Crystal
 
     def skip_space_or_newline(indent : Int32, last : Bool = false, at_least_one : Bool = false, next_comes_end : Bool = false)
       indent(indent) { skip_space_or_newline(last, at_least_one, next_comes_end) }
+    end
+
+    def write_spaces
+      while @token.type.space?
+        write @token.value
+        next_token
+      end
+    end
+
+    def write_spaces_and_newlines
+      while true
+        if @token.type.space?
+          write @token.value
+        elsif @token.type.newline?
+          write_line
+        else
+          break
+        end
+
+        next_token
+      end
     end
 
     def slash_is_regex!
