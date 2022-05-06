@@ -220,7 +220,7 @@ module MIME
     # If the same extension had a different type registered before, it needs to
     # be removed from the extensions list.
     if previous_type = @@types[extension]?
-      if extensions = @@extensions[parse_media_type(previous_type)]?
+      if (parsed_type = parse_media_type(previous_type)) && (extensions = @@extensions[parsed_type]?)
         extensions.delete(extension)
       end
     end

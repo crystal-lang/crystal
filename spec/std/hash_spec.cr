@@ -82,6 +82,10 @@ describe "Hash" do
       a.should_not eq(c)
       c.should_not eq(a)
       d.should_not eq(a)
+
+      # Checking unions
+      Hash(String | Int32, Nil){32 => nil}.should eq Hash(Int32, Nil){32 => nil}
+      Hash(String, Nil){"hi" => nil}.should eq Hash(String | Int32, Nil){"hi" => nil}
     end
 
     it do

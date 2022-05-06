@@ -46,7 +46,9 @@ class YAML::ParseContext
 
   private def read_alias_impl(node, expected_crystal_type_id, raise_on_alias)
     if node.is_a?(YAML::Nodes::Alias)
-      value = @anchors[node.anchor]?
+      if anchor = node.anchor
+        value = @anchors[anchor]?
+      end
 
       if value
         object_id, crystal_type_id = value
