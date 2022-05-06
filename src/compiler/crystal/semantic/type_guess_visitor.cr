@@ -868,7 +868,7 @@ module Crystal
         return_type = match.def.return_type
         next unless return_type
 
-        lookup_type?(return_type, match.context.instantiated_type)
+        lookup_type?(return_type, match.context.defining_type)
       end
 
       return nil if return_types.empty?

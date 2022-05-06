@@ -158,8 +158,12 @@ module Crystal::System::File
     end
   end
 
-  def self.delete(path : String) : Nil
-    if LibC._wunlink(to_windows_path(path)) != 0
+  def self.delete(path : String, *, raise_on_missing : Bool) : Bool
+    if LibC._wunlink(to_windows_path(path)) == 0
+      true
+    elsif !raise_on_missing && Errno.value == Errno::ENOENT
+      false
+    else
       raise ::File::Error.from_errno("Error deleting file", file: path)
     end
   end

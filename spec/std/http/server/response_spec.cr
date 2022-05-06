@@ -248,8 +248,8 @@ describe HTTP::Server::Response do
     response.headers["Foo"] = "Bar"
     response.cookies["Bar"] = "Foo"
     response.reset
-    response.headers.empty?.should be_true
-    response.cookies.empty?.should be_true
+    response.headers.should be_empty
+    response.cookies.should be_empty
   end
 
   it "writes cookie headers" do

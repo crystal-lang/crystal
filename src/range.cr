@@ -434,8 +434,8 @@ struct Range(B, E)
   # time instead of linear.
   #
   # ```
-  # (3..8).size  # => 5
-  # (3...8).size # => 6
+  # (3..8).size  # => 6
+  # (3...8).size # => 5
   # ```
   def size
     {% if B == Nil || E == Nil %}

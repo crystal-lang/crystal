@@ -164,7 +164,7 @@ describe Doc::Type do
     generator = Doc::Generator.new program, [""]
     macros_module = program.types["Crystal"].types["Macros"]
     astnode = generator.type(macros_module.types["ASTNode"])
-    astnode.ancestors.empty?.should be_true
+    astnode.ancestors.should be_empty
     # Sanity check: subclasses of ASTNode has the right ancestors
     generator.type(macros_module.types["Arg"]).ancestors.should eq([astnode])
   end

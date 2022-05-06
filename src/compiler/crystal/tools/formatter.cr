@@ -1093,8 +1093,6 @@ module Crystal
       check_open_paren
 
       name = node.name.as(Path)
-      first_name = name.global? && name.names.size == 1 && name.names.first
-
       if name.global? && @token.type.op_colon_colon?
         write "::"
         next_token_skip_space_or_newline
@@ -1146,6 +1144,9 @@ module Crystal
         write_token :OP_RSQUARE
         return false
       end
+
+      # NOTE: not `name.single_name?` as this is only for the expanded tuple literals
+      first_name = name.names.first if name.global? && name.names.size == 1
 
       # Check if it's {A, B} instead of Tuple(A, B)
       if first_name == "Tuple" && @token.value != "Tuple"
