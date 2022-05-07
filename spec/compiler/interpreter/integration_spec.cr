@@ -93,7 +93,7 @@ describe Crystal::Repl::Interpreter do
             - 2
             - 3
           YAML
-        yaml.as_h["a"].as_a.sum(&.as_i)
+        yaml["a"].as_a.sum(&.as_i)
       CODE
     end
 
