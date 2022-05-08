@@ -151,7 +151,7 @@ describe "Array" do
       end
 
       it "big array)" do
-        (((1..64).to_a + 'c') - ((2..63).to_a + [nil])).should eq [1, 64]
+        (((1..64).to_a + ['c']) - ((2..63).to_a + [nil])).should eq [1, 64]
       end
     end
   end
