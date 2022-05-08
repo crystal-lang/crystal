@@ -154,10 +154,14 @@ abstract class Digest
   #
   # NOTE: `.dup.hexfinal` call may be used to get an intermediate hash value.
   def hexfinal : String
-    sary = uninitialized StaticArray(UInt8, 64)
-    tmp = sary.to_slice[0, digest_size]
-    final tmp
-    tmp.hexstring
+    dsize = digest_size
+    string_size = dsize * 2
+    String.new(string_size) do |buffer|
+      tmp = Slice.new(buffer + dsize, dsize)
+      final tmp
+      tmp.hexstring buffer
+      {string_size, string_size}
+    end
   end
 
   # Writes a hexadecimal-encoded digest to `dst`.
@@ -174,8 +178,7 @@ abstract class Digest
       raise ArgumentError.new("Incorrect dst size: #{dst.bytesize}, expected: #{dsize * 2}")
     end
 
-    sary = uninitialized StaticArray(UInt8, 64)
-    tmp = sary.to_slice[0, dsize]
+    tmp = dst[dsize, dsize]
     final tmp
     tmp.hexstring dst
   end
