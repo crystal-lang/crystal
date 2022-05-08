@@ -5,7 +5,7 @@ require "base64"
 #
 # A `Digest` instance holds the state of an ongoing hash calculation.
 # It can receive new data to include in the hash via `#update`, `#<<`, or `#file`.
-# Once all data is included, use `#final` to get the hash. This will mark the
+# Once all data is included, use `#final` or `#hexfinal` to get the hash. This will mark the
 # ongoing calculation as finished. A finished calculation can't receive new data.
 #
 # A `digest.dup.final` call may be used to get an intermediate hash value.
@@ -125,7 +125,7 @@ abstract class Digest
 
   # Returns the final digest output.
   #
-  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  # `final` or `hexfinal` can only be called once and raises `FinalizedError` on subsequent calls.
   #
   # NOTE: `.dup.final` call may be used to get an intermediate hash value.
   def final : Bytes
@@ -138,7 +138,7 @@ abstract class Digest
   # Faster than the `Bytes` allocating version.
   # Use when hashing in loops.
   #
-  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  # `final` or `hexfinal` can only be called once and raises `FinalizedError` on subsequent calls.
   #
   # NOTE: `.dup.final(dst)` call may be used to get an intermediate hash value.
   def final(dst : Bytes) : Bytes
@@ -150,7 +150,7 @@ abstract class Digest
 
   # Returns a hexadecimal-encoded digest in a new `String`.
   #
-  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  # `final` or `hexfinal` can only be called once and raises `FinalizedError` on subsequent calls.
   #
   # NOTE: `.dup.hexfinal` call may be used to get an intermediate hash value.
   def hexfinal : String
@@ -165,7 +165,7 @@ abstract class Digest
   # Faster than the `String` allocating version.
   # Use when hashing in loops.
   #
-  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  # `final` or `hexfinal` can only be called once and raises `FinalizedError` on subsequent calls.
   #
   # NOTE: `.dup.final` call may be used to get an intermediate hash value.
   def hexfinal(dst : Bytes) : Nil
@@ -184,7 +184,7 @@ abstract class Digest
   #
   # Faster than the `String` allocating version.
   #
-  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  # `final` or `hexfinal` can only be called once and raises `FinalizedError` on subsequent calls.
   #
   # NOTE: `.dup.final` call may be used to get an intermediate hash value.
   def hexfinal(io : IO) : Nil
