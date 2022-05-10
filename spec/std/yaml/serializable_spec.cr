@@ -496,7 +496,7 @@ describe "YAML::Serializable" do
 
   it "doesn't emit null when doing to_yaml" do
     person = YAMLAttrPerson.from_yaml("---\nname: John\n")
-    (person.to_yaml =~ /age/).should be_falsey
+    person.to_yaml.should_not match /age/
   end
 
   it "raises if non-nilable attribute is nil" do
@@ -576,7 +576,7 @@ describe "YAML::Serializable" do
 
   it "emits null on request when doing to_yaml" do
     person = YAMLAttrPersonEmittingNull.from_yaml("---\nname: John\n")
-    (person.to_yaml =~ /age/).should be_truthy
+    person.to_yaml.should match /age/
   end
 
   it "emit_nulls option" do

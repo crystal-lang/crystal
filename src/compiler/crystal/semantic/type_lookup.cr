@@ -174,12 +174,13 @@ class Crystal::Type
 
       case instance_type
       when NamedTupleType
-        named_args = node.named_args
-        unless named_args
+        unless node.type_vars.empty?
           node.raise "can only instantiate NamedTuple with named arguments"
         end
 
-        entries = named_args.map do |named_arg|
+        named_args = node.named_args
+        entries = Array(NamedArgumentType).new(named_args.try(&.size) || 0)
+        named_args.try &.each do |named_arg|
           subnode = named_arg.value
 
           if subnode.is_a?(NumberLiteral)
@@ -191,7 +192,7 @@ class Crystal::Type
           type = type.not_nil!
 
           check_type_can_be_stored(subnode, type, "can't use #{type} as a generic type argument")
-          NamedArgumentType.new(named_arg.name, type.virtual_type)
+          entries << NamedArgumentType.new(named_arg.name, type.virtual_type)
         end
 
         begin
