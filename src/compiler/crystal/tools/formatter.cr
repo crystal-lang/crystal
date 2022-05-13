@@ -3283,12 +3283,7 @@ module Crystal
       slash_is_regex!
       write_token :OP_EQ
 
-      if @token.type.newline?
-        write_line
-        next_token
-      end
-
-      write_spaces_and_newlines_and_comments unless @token.type.newline?
+      write_spaces_and_newlines_and_comments
       accept_assign_value_after_equals node.value, add_space: false
 
       false
