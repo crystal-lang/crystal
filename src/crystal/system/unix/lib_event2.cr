@@ -1,8 +1,9 @@
 require "c/netdb"
 
-# MUSL: On musl systems, librt is empty. The entire library is already included in libc.
-# The empty library is only available for POSIX compatibility. We don't need to link it.
-{% if flag?(:linux) && !flag?(:musl) %}
+# On musl systems, librt is empty. The entire library is already included in libc.
+# On gnu systems, it's been integrated into `glibc` since 2.34 and it's not available
+# as a shared library.
+{% if flag?(:linux) && flag?(:gnu) && !flag?(:interpreted) %}
   @[Link("rt")]
 {% end %}
 
