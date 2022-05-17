@@ -3719,13 +3719,10 @@ module Crystal
       annotations = nil
 
       # Parse annotations first since they would be before any actual arg tokens.
-      case @token.type
-      when .op_at_lsquare?
-        # Do this in a loop to account for multiple annotations
-        while @token.type.op_at_lsquare?
-          (annotations ||= Array(Annotation).new) << parse_annotation
-          skip_space_or_newline
-        end
+      # Do this in a loop to account for multiple annotations.
+      while @token.type.op_at_lsquare?
+        (annotations ||= Array(Annotation).new) << parse_annotation
+        skip_space_or_newline
       end
 
       if @token.type.op_amp?

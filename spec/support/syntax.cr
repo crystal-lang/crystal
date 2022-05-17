@@ -58,8 +58,8 @@ class String
     Annotation.new path
   end
 
-  def arg(default_value = nil, restriction = nil, external_name = nil, parsed_annotations = nil)
-    Arg.new self, default_value: default_value, restriction: restriction, external_name: external_name, parsed_annotations: parsed_annotations
+  def arg(default_value = nil, restriction = nil, external_name = nil, annotations = nil)
+    Arg.new self, default_value: default_value, restriction: restriction, external_name: external_name, parsed_annotations: annotations
   end
 
   def call
