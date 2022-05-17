@@ -226,7 +226,7 @@ describe Crystal::Formatter do
   assert_format "def foo( x , & block  :   ->)\nend", "def foo(x, &block : ->)\nend"
   assert_format "def foo( x , & : Int32 )\nend", "def foo(x, & : Int32)\nend"
   assert_format "def foo( x , * y )\nend", "def foo(x, *y)\nend"
-  assert_format "class Bar\nprotected def foo(x)\na=b(c)\nend\nend", "class Bar\n  protected def foo(x)\n    a = b(c)\n  end\nend"
+  assert_format "class Bar\nprotected def foo(x)\na=b(c)\nend\nend", "class Bar\n  protected def foo(x)\n    a=b(c)\n  end\nend" # assert_format "class Bar\nprotected def foo(x)\na=b(c)\nend\nend", "class Bar\n  protected def foo(x)\n    a = b(c)\n  end\nend"
   assert_format "def foo=(x)\nend"
   assert_format "def +(x)\nend"
   assert_format "def   foo  :  Int32 \n  end", "def foo : Int32\nend"
@@ -429,7 +429,7 @@ describe Crystal::Formatter do
 
   assert_format "def foo(x =  __FILE__ )\nend", "def foo(x = __FILE__)\nend"
 
-  assert_format "a=1", "a = 1"
+  assert_format "a=1" #  assert_format "a=1", "a = 1"
 
   assert_format "while 1\n2\nend", "while 1\n  2\nend"
   assert_format "until 1\n2\nend", "until 1\n  2\nend"
@@ -442,7 +442,28 @@ describe Crystal::Formatter do
   assert_format "a = while 1\n2\nend", "a = while 1\n  2\nend"
   assert_format "a = case 1\nwhen 2\n3\nend", "a = case 1\n    when 2\n      3\n    end"
   assert_format "a = case 1\nwhen 2\n3\nelse\n4\nend", "a = case 1\n    when 2\n      3\n    else\n      4\n    end"
-  assert_format "a = \nif 1\n2\nend", "a =\n  if 1\n    2\n  end"
+
+  # assert_format "a = \nif 1\n2\nend", "a =\n  if 1\n    2\n  end"
+  assert_format <<-BEFORE, <<-AFTER
+  a =
+  if 1
+  2
+  end
+  BEFORE
+  a =
+    if 1
+      2
+    end
+  AFTER
+
+  assert_format <<-CODE
+  a =     if 1
+            2
+          end
+  CODE
+
+  assert_format "a =\n  if 1\n    2\n  end"
+
   assert_format "a, b = \nif 1\n2\nend", "a, b =\n  if 1\n    2\n  end"
   assert_format "a = b = 1\na, b =\n  b, a"
 
@@ -865,10 +886,10 @@ describe Crystal::Formatter do
   assert_format "#### ###"
   assert_format "#######"
 
-  assert_format "A = 1\nFOO = 2\n\nEX = 3", "A   = 1\nFOO = 2\n\nEX = 3"
-  assert_format "FOO = 2\nA = 1", "FOO = 2\nA   = 1"
-  assert_format "FOO = 2 + 3\nA = 1 - 10", "FOO = 2 + 3\nA   = 1 - 10"
-  assert_format "private FOO = 2\nprivate A = 1", "private FOO = 2\nprivate A   = 1"
+  assert_format "A = 1\nFOO = 2\n\nEX = 3"       # , "A   = 1\nFOO = 2\n\nEX = 3"
+  assert_format "FOO = 2\nA = 1"                 # , "FOO = 2\nA   = 1"
+  assert_format "FOO = 2 + 3\nA = 1 - 10"        # , "FOO = 2 + 3\nA   = 1 - 10"
+  assert_format "private FOO = 2\nprivate A = 1" # , "private FOO = 2\nprivate A   = 1"
   assert_format "enum Baz\nA = 1\nFOO = 2\n\nEX = 3\nend", "enum Baz\n  A   = 1\n  FOO = 2\n\n  EX = 3\nend"
   assert_format "enum Baz\nA = 1\nFOO\n\nEX = 3\nend", "enum Baz\n  A   = 1\n  FOO\n\n  EX = 3\nend"
 
@@ -1029,7 +1050,7 @@ describe Crystal::Formatter do
   assert_format "p = Foo[\n  1, 2, 3,\n  4, 5, 6\n]\n", "p = Foo[\n  1, 2, 3,\n  4, 5, 6,\n]"
   assert_format "[1, 2,\n  3, 4]\n", "[1, 2,\n 3, 4]"
   assert_format "{1 => 2,\n  3 => 4, # lala\n}\n", "{1 => 2,\n 3 => 4, # lala\n}"
-  assert_format "A = 10\nFOO = 123\nBARBAZ = 1234\n", "A      =   10\nFOO    =  123\nBARBAZ = 1234"
+  assert_format "A = 10\nFOO = 123\nBARBAZ = 1234\n", "A = 10\nFOO = 123\nBARBAZ = 1234" # , "A      =   10\nFOO    =  123\nBARBAZ = 1234"
   assert_format "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend\n", "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend"
   assert_format "1\n# hello\n\n\n", "1\n# hello"
   assert_format "def foo\n  a = 1; # foo\n  a = 2; # bar\nend\n", "def foo\n  a = 1 # foo\n  a = 2 # bar\nend"
@@ -1190,8 +1211,8 @@ describe Crystal::Formatter do
 
   assert_format "@x : A(B | C)?"
 
-  assert_format "page= <<-HTML\n  foo\nHTML", "page = <<-HTML\n  foo\nHTML"
-  assert_format "page= <<-HTML\n  \#{1}foo\nHTML", "page = <<-HTML\n  \#{1}foo\nHTML"
+  assert_format "page= <<-HTML\n  foo\nHTML"      # , "page = <<-HTML\n  foo\nHTML"
+  assert_format "page= <<-HTML\n  \#{1}foo\nHTML" # , "page = <<-HTML\n  \#{1}foo\nHTML"
 
   assert_format "self.as(Int32)"
   assert_format "foo.as ( Int32* )", "foo.as(Int32*)"
@@ -1365,7 +1386,7 @@ describe Crystal::Formatter do
   # #10734
   assert_format " <<-EOF\n 1\nEOF", "<<-EOF\n 1\nEOF"
   assert_format "  <<-EOF\n   1\n EOF", "<<-EOF\n  1\nEOF"
-  assert_format "x =  <<-EOF\n 1\nEOF", "x = <<-EOF\n 1\nEOF"
+  assert_format "x =  <<-EOF\n 1\nEOF" # , "x = <<-EOF\n 1\nEOF"
   assert_format "  <<-EOF\n 1\n  2\n EOF", "<<-EOF\n1\n 2\nEOF"
 
   # #10735

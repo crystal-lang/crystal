@@ -4597,9 +4597,16 @@ module Crystal
       while true
         case @token.type
         when .space?
-          puts "write space"
-          write @token.value
-          next_token
+          if wrote_new_line
+            # we dont write spaces if on new line
+            # because we let the indent handle spaces
+            puts "skip space"
+            skip_space
+          else
+            puts "write space"
+            write @token.value
+            next_token
+          end
         when .newline?
           puts "write newline"
           write_line
