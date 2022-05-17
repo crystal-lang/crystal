@@ -3280,13 +3280,26 @@ module Crystal
       @vars.last.add target.name if target.is_a?(Var)
 
       accept target
-      skip_space_or_newline
+      # skip_space_or_newline
+      write_spaces
 
-      check_align = check_assign_length node.target
       slash_is_regex!
-      write_token " ", :OP_EQ
-      skip_space
-      accept_assign_value_after_equals node.value, check_align: check_align
+
+      puts "prev EQ"
+      puts @token.type
+      puts @token.value
+
+      write_token :OP_EQ
+
+      puts "after EQ"
+      puts @token.type
+      puts @token.value
+
+      # skip_space
+      # accept_assign_value_after_equals node.value, check_align: check_align
+
+      wrote_new_line = write_spaces_and_newlines
+      accept_assign_value_after_equals_no_space node.value, wrote_new_line: wrote_new_line
 
       false
     end
@@ -3313,6 +3326,18 @@ module Crystal
       else
         write " "
         accept_assign_value value, check_align: check_align
+      end
+    end
+
+    def accept_assign_value_after_equals_no_space(value, wrote_new_line = false)
+      if wrote_new_line
+        puts "@column", @column
+        puts "@indent", @indent
+        puts "value", value
+
+        write_indent(@indent + 2, value)
+      else
+        accept_assign_value value
       end
     end
 
@@ -4553,6 +4578,42 @@ module Crystal
 
     def skip_space_or_newline(indent : Int32, last : Bool = false, at_least_one : Bool = false, next_comes_end : Bool = false)
       indent(indent) { skip_space_or_newline(last, at_least_one, next_comes_end) }
+    end
+
+    def write_spaces
+      while @token.type.space?
+        write @token.value
+        next_token
+      end
+    end
+
+    def write_spaces_and_newlines
+      puts "write_spaces_and_newlines"
+      puts @token.type
+      puts @token.type.newline?
+
+      wrote_new_line = false
+
+      while true
+        case @token.type
+        when .space?
+          puts "write space"
+          write @token.value
+          next_token
+        when .newline?
+          puts "write newline"
+          write_line
+          wrote_new_line = true
+          next_token
+        else
+          puts "else break"
+          puts "@token", @token
+          puts "@token.value", @token.value
+          break
+        end
+      end
+
+      wrote_new_line
     end
 
     def slash_is_regex!
