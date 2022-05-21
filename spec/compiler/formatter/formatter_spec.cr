@@ -442,25 +442,23 @@ describe Crystal::Formatter do
   assert_format "a = while 1\n2\nend", "a = while 1\n  2\nend"
   assert_format "a = case 1\nwhen 2\n3\nend", "a = case 1\n    when 2\n      3\n    end"
   assert_format "a = case 1\nwhen 2\n3\nelse\n4\nend", "a = case 1\n    when 2\n      3\n    else\n      4\n    end"
-
-  # assert_format "a = \nif 1\n2\nend", "a =\n  if 1\n    2\n  end"
   assert_format <<-BEFORE, <<-AFTER
-  a =
-  if 1
-  2
-  end
-  BEFORE
-  a =
+    a =
     if 1
-      2
+    2
     end
-  AFTER
+    BEFORE
+    a =
+      if 1
+        2
+      end
+    AFTER
 
   assert_format <<-CODE
-  a =     if 1
-            2
-          end
-  CODE
+    a =     if 1
+              2
+            end
+    CODE
 
   assert_format "a =\n  if 1\n    2\n  end"
 
@@ -469,7 +467,22 @@ describe Crystal::Formatter do
 
   assert_format %(require   "foo"), %(require "foo")
 
-  assert_format "private   getter   foo", "private getter foo"
+  assert_format "private   getter   foo", "private   getter foo"
+  assert_format "private   getter   foo  =   42", "private   getter foo  =   42"
+  assert_format <<-BEFORE, <<-AFTER
+    protected   getter   foo
+    private getter  bar
+    BEFORE
+    protected   getter foo
+    private getter bar
+    AFTER
+  assert_format <<-BEFORE, <<-AFTER
+    protected   getter   foo
+    private     getter   bar
+    BEFORE
+    protected   getter foo
+    private     getter bar
+    AFTER
 
   assert_format %("foo \#{ 1  +  2 }"), %("foo \#{1 + 2}")
   assert_format %("foo \#{ 1 } \#{ __DIR__ }"), %("foo \#{1} \#{__DIR__}")
@@ -886,10 +899,59 @@ describe Crystal::Formatter do
   assert_format "#### ###"
   assert_format "#######"
 
-  assert_format "A = 1\nFOO = 2\n\nEX = 3"       # , "A   = 1\nFOO = 2\n\nEX = 3"
-  assert_format "FOO = 2\nA = 1"                 # , "FOO = 2\nA   = 1"
-  assert_format "FOO = 2 + 3\nA = 1 - 10"        # , "FOO = 2 + 3\nA   = 1 - 10"
-  assert_format "private FOO = 2\nprivate A = 1" # , "private FOO = 2\nprivate A   = 1"
+  assert_format <<-CODE
+    A = 1
+    FOO = 2
+
+    EX = 3
+    CODE
+  assert_format "FOO = 2\nA = 1", "FOO = 2\nA = 1"
+  assert_format "FOO = 2 + 3\nA = 1 - 10", "FOO = 2 + 3\nA = 1 - 10"
+  assert_format "private FOO = 2\nprivate A = 1", "private FOO = 2\nprivate A = 1"
+  assert_format "private FOO    =    2\nprivate A =   1"
+  assert_format "private FOO =    2\nprivate A    =1"
+  assert_format "private FOO    = 2\nprivate A=       1", "private FOO    = 2\nprivate A=       1"
+  assert_format "private FOO=2\nprivate A =   1"
+  assert_format "A =   \n  1", "A =\n  1"
+  assert_format "a =   \n  1", "a =\n  1"
+  assert_format "a =     1", "a =     1"
+  assert_format <<-CODE
+    FOO    =    2
+    A  =   1
+    CODE
+  assert_format <<-CODE
+    FOO = 2
+    A   = 1
+    CODE
+  assert_format <<-CODE
+    FOO = 2
+    A =   1
+    CODE
+  assert_format <<-CODE
+    FOO =   2
+    A   =  42
+    CODE
+  assert_format <<-CODE
+    FOO =   2
+      A =   42
+    CODE
+  assert_format "private FOO    =       2"
+  assert_format <<-CODE
+    private FOOBAR =  2
+    private    BAR = 42
+    CODE
+  assert_format <<-CODE
+    private FOOBAR =     2
+    private BAR    =     42
+    CODE
+  assert_format "protected FOOBAR =  2\nprotected    BAR = 42", "protected FOOBAR =  2\nprotected    BAR = 42"
+  assert_format "foo = 2\na =   1", "foo = 2\na =   1"
+  assert_format "foo = 1\na = 123456789", "foo = 1\na = 123456789"
+
+  assert_format "A = 1\nFOO = 2\n\nEX = 3"
+  assert_format "FOO = 2\nA = 1"
+  assert_format "FOO = 2 + 3\nA = 1 - 10"
+  assert_format "private FOO = 2\nprivate A = 1"
   assert_format "enum Baz\nA = 1\nFOO = 2\n\nEX = 3\nend", "enum Baz\n  A   = 1\n  FOO = 2\n\n  EX = 3\nend"
   assert_format "enum Baz\nA = 1\nFOO\n\nEX = 3\nend", "enum Baz\n  A   = 1\n  FOO\n\n  EX = 3\nend"
 
@@ -1050,7 +1112,7 @@ describe Crystal::Formatter do
   assert_format "p = Foo[\n  1, 2, 3,\n  4, 5, 6\n]\n", "p = Foo[\n  1, 2, 3,\n  4, 5, 6,\n]"
   assert_format "[1, 2,\n  3, 4]\n", "[1, 2,\n 3, 4]"
   assert_format "{1 => 2,\n  3 => 4, # lala\n}\n", "{1 => 2,\n 3 => 4, # lala\n}"
-  assert_format "A = 10\nFOO = 123\nBARBAZ = 1234\n", "A = 10\nFOO = 123\nBARBAZ = 1234" # , "A      =   10\nFOO    =  123\nBARBAZ = 1234"
+  assert_format "A = 10\nFOO = 123\nBARBAZ = 1234\n", "A = 10\nFOO = 123\nBARBAZ = 1234"
   assert_format "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend\n", "enum Foo\n  A      =   10\n  FOO    =  123\n  BARBAZ = 1234\nend"
   assert_format "1\n# hello\n\n\n", "1\n# hello"
   assert_format "def foo\n  a = 1; # foo\n  a = 2; # bar\nend\n", "def foo\n  a = 1 # foo\n  a = 2 # bar\nend"
@@ -1211,8 +1273,8 @@ describe Crystal::Formatter do
 
   assert_format "@x : A(B | C)?"
 
-  assert_format "page= <<-HTML\n  foo\nHTML"      # , "page = <<-HTML\n  foo\nHTML"
-  assert_format "page= <<-HTML\n  \#{1}foo\nHTML" # , "page = <<-HTML\n  \#{1}foo\nHTML"
+  assert_format "page= <<-HTML\n  foo\nHTML"
+  assert_format "page= <<-HTML\n  \#{1}foo\nHTML"
 
   assert_format "self.as(Int32)"
   assert_format "foo.as ( Int32* )", "foo.as(Int32*)"
@@ -1386,7 +1448,7 @@ describe Crystal::Formatter do
   # #10734
   assert_format " <<-EOF\n 1\nEOF", "<<-EOF\n 1\nEOF"
   assert_format "  <<-EOF\n   1\n EOF", "<<-EOF\n  1\nEOF"
-  assert_format "x =  <<-EOF\n 1\nEOF" # , "x = <<-EOF\n 1\nEOF"
+  assert_format "x =  <<-EOF\n 1\nEOF"
   assert_format "  <<-EOF\n 1\n  2\n EOF", "<<-EOF\n1\n 2\nEOF"
 
   # #10735
