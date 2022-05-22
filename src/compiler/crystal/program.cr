@@ -500,7 +500,7 @@ module Crystal
         when  8 then int64
         when 16 then int128
         else
-          raise "BUG: Invalid int size: #{size}"
+          raise "BUG: invalid int size: #{size}"
         end
       else
         case size
@@ -510,7 +510,7 @@ module Crystal
         when  8 then uint64
         when 16 then uint128
         else
-          raise "BUG: Invalid int size: #{size}"
+          raise "BUG: invalid int size: #{size}"
         end
       end
     end

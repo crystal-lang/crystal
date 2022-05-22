@@ -496,7 +496,7 @@ module Crystal
         when .delimiter_end?
           break
         else
-          raise "Bug: unexpected token: #{@token.type}"
+          raise "BUG: unexpected token: #{@token.type}"
         end
       end
 
@@ -777,7 +777,7 @@ module Crystal
             next_token
             break
           else
-            raise "Bug: unexpected token #{@token.type}"
+            raise "BUG: unexpected token #{@token.type}"
           end
           count += 1
         end

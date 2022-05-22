@@ -17,7 +17,7 @@ class JSON::Lexer::StringBased < JSON::Lexer
     while true
       case next_char
       when '\0'
-        raise "Unterminated string"
+        raise "unterminated string"
       when '\\'
         return consume_string_slow_path start_pos
       when '"'

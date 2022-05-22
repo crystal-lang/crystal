@@ -289,25 +289,25 @@ describe "Lexer" do
   assert_syntax_error "128_i8", "128 doesn't fit in an Int8"
   assert_syntax_error "-129_i8", "-129 doesn't fit in an Int8"
   assert_syntax_error "256_u8", "256 doesn't fit in an UInt8"
-  assert_syntax_error "-1_u8", "Invalid negative value -1 for UInt8"
+  assert_syntax_error "-1_u8", "invalid negative value -1 for UInt8"
 
   assert_syntax_error "32768_i16", "32768 doesn't fit in an Int16"
   assert_syntax_error "-32769_i16", "-32769 doesn't fit in an Int16"
   assert_syntax_error "65536_u16", "65536 doesn't fit in an UInt16"
-  assert_syntax_error "-1_u16", "Invalid negative value -1 for UInt16"
+  assert_syntax_error "-1_u16", "invalid negative value -1 for UInt16"
 
   assert_syntax_error "2147483648_i32", "2147483648 doesn't fit in an Int32"
   assert_syntax_error "-2147483649_i32", "-2147483649 doesn't fit in an Int32"
   assert_syntax_error "4294967296_u32", "4294967296 doesn't fit in an UInt32"
-  assert_syntax_error "-1_u32", "Invalid negative value -1 for UInt32"
+  assert_syntax_error "-1_u32", "invalid negative value -1 for UInt32"
 
   assert_syntax_error "9223372036854775808_i64", "9223372036854775808 doesn't fit in an Int64"
   assert_syntax_error "-9223372036854775809_i64", "-9223372036854775809 doesn't fit in an Int64"
   assert_syntax_error "118446744073709551616_u64", "118446744073709551616 doesn't fit in an UInt64"
   assert_syntax_error "18446744073709551616_u64", "18446744073709551616 doesn't fit in an UInt64"
-  assert_syntax_error "-1_u64", "Invalid negative value -1 for UInt64"
-  assert_syntax_error "-0_u64", "Invalid negative value -0 for UInt64"
-  assert_syntax_error "-0u64", "Invalid negative value -0 for UInt64"
+  assert_syntax_error "-1_u64", "invalid negative value -1 for UInt64"
+  assert_syntax_error "-0_u64", "invalid negative value -0 for UInt64"
+  assert_syntax_error "-0u64", "invalid negative value -0 for UInt64"
 
   assert_syntax_error "18446744073709551616_i32", "18446744073709551616 doesn't fit in an Int32"
   assert_syntax_error "9999999999999999999_i32", "9999999999999999999 doesn't fit in an Int32"
@@ -339,7 +339,7 @@ describe "Lexer" do
   assert_syntax_error "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF doesn't fit in an UInt64, try using the suffix u128"
   assert_syntax_error "-0x80000000000000000000000000000000", "-0x80000000000000000000000000000000 doesn't fit in an Int64, try using the suffix i128"
   assert_syntax_error "-0x80000000000000000000000000000001", "-0x80000000000000000000000000000001 doesn't fit in an Int64"
-  assert_syntax_error "-1_u128", "Invalid negative value -1 for UInt128"
+  assert_syntax_error "-1_u128", "invalid negative value -1 for UInt128"
 
   assert_syntax_error "1__1", "consecutive underscores in numbers aren't allowed"
   assert_syntax_error "-3_", "trailing '_' in number"
@@ -417,8 +417,8 @@ describe "Lexer" do
   assert_syntax_error "4F64", %(unexpected token: "F64")
   assert_syntax_error "0F32", %(unexpected token: "F32")
 
-  assert_syntax_error "4.0_u32", "Invalid suffix u32 for decimal number"
-  assert_syntax_error "2e8i8", "Invalid suffix i8 for decimal number"
+  assert_syntax_error "4.0_u32", "invalid suffix u32 for decimal number"
+  assert_syntax_error "2e8i8", "invalid suffix i8 for decimal number"
 
   assert_syntax_error ".42", ".1 style number literal is not supported, put 0 before dot"
   assert_syntax_error "-.42", ".1 style number literal is not supported, put 0 before dot"
@@ -501,8 +501,8 @@ describe "Lexer" do
     token.type.should eq(t :EOF)
   end
 
-  assert_syntax_error "/foo", "Unterminated regular expression"
-  assert_syntax_error "/\\", "Unterminated regular expression"
+  assert_syntax_error "/foo", "unterminated regular expression"
+  assert_syntax_error "/\\", "unterminated regular expression"
   assert_syntax_error ":\"foo", "unterminated quoted symbol"
 
   it "lexes utf-8 char" do

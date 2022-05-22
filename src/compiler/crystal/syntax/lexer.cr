@@ -241,7 +241,7 @@ module Crystal
               when ident_part?(char)
                 # ok
               when char == '\0'
-                raise "Unexpected EOF on heredoc identifier"
+                raise "unexpected EOF on heredoc identifier"
               else
                 if char == '\'' && has_single_quote
                   found_closing_single_quote = true
@@ -1457,7 +1457,7 @@ module Crystal
 
     macro gen_check_int_fits_in_size(type, method, size, number_size, raw_number_string, start, pos_before_suffix, negative)
       {% if type.stringify.starts_with? "U" %}
-        raise "Invalid negative value #{string_range({{start}}, {{pos_before_suffix}})} for {{type}}", @token, (current_pos - {{start}}) if {{negative}}
+        raise "invalid negative value #{string_range({{start}}, {{pos_before_suffix}})} for {{type}}", @token, (current_pos - {{start}}) if {{negative}}
       {% end %}
 
       if !@token.value || {{number_size}} > {{size}} || ({{number_size}} == {{size}} && {{raw_number_string}}.to_{{method.id}}? == nil)
@@ -1567,7 +1567,7 @@ module Crystal
 
       if is_decimal
         @token.number_kind = NumberKind::F64 if suffix_size == 0
-        raise("Invalid suffix #{@token.number_kind} for decimal number", @token, (current_pos - start)) unless @token.number_kind.float?
+        raise("invalid suffix #{@token.number_kind} for decimal number", @token, (current_pos - start)) unless @token.number_kind.float?
         return
       end
 
@@ -1885,11 +1885,11 @@ module Crystal
 
     def raise_unterminated_quoted(delimiter_state)
       msg = case delimiter_state.kind
-            when .command? then "Unterminated command literal"
-            when .regex?   then "Unterminated regular expression"
+            when .command? then "unterminated command literal"
+            when .regex?   then "unterminated regular expression"
             when .heredoc?
-              "Unterminated heredoc: can't find \"#{delimiter_state.end}\" anywhere before the end of file"
-            when .string? then "Unterminated string literal"
+              "unterminated heredoc: can't find \"#{delimiter_state.end}\" anywhere before the end of file"
+            when .string? then "unterminated string literal"
             else
               ::raise "unreachable"
             end
@@ -2753,7 +2753,7 @@ module Crystal
     def next_char_no_column_increment
       char = @reader.next_char
       if error = @reader.error
-        ::raise InvalidByteSequenceError.new("Unexpected byte 0x#{error.to_s(16)} at position #{@reader.pos}, malformed UTF-8")
+        ::raise InvalidByteSequenceError.new("unexpected byte 0x#{error.to_s(16)} at position #{@reader.pos}, malformed UTF-8")
       end
       char
     end

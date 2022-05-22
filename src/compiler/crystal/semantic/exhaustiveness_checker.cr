@@ -241,7 +241,7 @@ struct Crystal::ExhaustivenessChecker
       elsif obj.is_a?(Generic) && when_cond.name == "class"
         TypePattern.new(obj.type.metaclass.devirtualize)
       else
-        raise "Bug: unknown pattern in exhaustive case"
+        raise "BUG: unknown pattern in exhaustive case"
       end
     when BoolLiteral
       BoolPattern.new(when_cond.value)
@@ -250,7 +250,7 @@ struct Crystal::ExhaustivenessChecker
     when Underscore
       UnderscorePattern.new
     else
-      raise "Bug: unknown pattern in exhaustive case"
+      raise "BUG: unknown pattern in exhaustive case"
     end
   end
 

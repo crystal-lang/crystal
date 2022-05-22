@@ -128,7 +128,7 @@ abstract class JSON::Lexer
     while true
       case next_char
       when '\0'
-        raise "Unterminated string"
+        raise "unterminated string"
       when '\\'
         consume_string_escape_sequence
       when '"'
@@ -152,7 +152,7 @@ abstract class JSON::Lexer
     while true
       case char = next_char
       when '\0'
-        raise "Unterminated string"
+        raise "unterminated string"
       when '\\'
         @buffer << consume_string_escape_sequence
       when '"'
@@ -193,7 +193,7 @@ abstract class JSON::Lexer
         hexnum1.unsafe_chr
       elsif hexnum1 < 0xdc00
         if next_char != '\\' || next_char != 'u'
-          raise "Unterminated UTF-16 sequence"
+          raise "unterminated UTF-16 sequence"
         end
         hexnum2 = read_hex_number
         unless 0xdc00 <= hexnum2 <= 0xdfff

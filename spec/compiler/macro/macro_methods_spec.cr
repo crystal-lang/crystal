@@ -2894,13 +2894,13 @@ module Crystal
       end
 
       it "raises on extra unparsed tokens before the type" do
-        expect_raises(Crystal::TypeException, %(Invalid type name: "100Foo")) do
+        expect_raises(Crystal::TypeException, %(invalid type name: "100Foo")) do
           assert_macro %({{parse_type "100Foo" }}), %(nil)
         end
       end
 
       it "raises on extra unparsed tokens after the type" do
-        expect_raises(Crystal::TypeException, %(Invalid type name: "Foo(Int32)100")) do
+        expect_raises(Crystal::TypeException, %(invalid type name: "Foo(Int32)100")) do
           assert_macro %({{parse_type "Foo(Int32)100" }}), %(nil)
         end
       end

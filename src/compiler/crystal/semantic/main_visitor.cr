@@ -437,7 +437,7 @@ module Crystal
         var.var = class_var
         class_var.thread_local = true if thread_local
       else
-        raise "Bug: unexpected var type: #{var.class}"
+        raise "BUG: unexpected var type: #{var.class}"
       end
 
       node.type = @program.nil
@@ -518,7 +518,7 @@ module Crystal
         class_var = visit_class_var var
         class_var.thread_local = true if thread_local
       else
-        raise "Bug: unexpected var type: #{var.class}"
+        raise "BUG: unexpected var type: #{var.class}"
       end
 
       node.type = @program.nil unless node.type?

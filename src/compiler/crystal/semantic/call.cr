@@ -29,7 +29,7 @@ class Crystal::Call
       end
     end
 
-    ::raise "Zero target defs for #{self}"
+    ::raise "zero target defs for #{self}"
   end
 
   def recalculate

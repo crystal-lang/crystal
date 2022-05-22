@@ -47,7 +47,7 @@ module Crystal
       when .f64?
         float64(value.to_f64)
       else
-        raise "Unsupported float type"
+        raise "unsupported float type"
       end
     end
 

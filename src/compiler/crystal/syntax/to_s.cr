@@ -505,7 +505,7 @@ module Crystal
       when StringInterpolation
         visit_interpolation exp, &.inspect_unquoted.gsub('`', "\\`")
       else
-        raise "Bug: shouldn't happen"
+        raise "BUG: shouldn't happen"
       end
       @str << '`'
       false
@@ -967,7 +967,7 @@ module Crystal
           @str << '\\' if exp.expressions.first?.as?(StringLiteral).try &.value[0]?.try &.ascii_whitespace?
           visit_interpolation(exp) { |s| Regex.append_source s, @str }
         else
-          raise "Bug: shouldn't happen"
+          raise "BUG: shouldn't happen"
         end
         @str << '/'
       end

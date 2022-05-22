@@ -237,7 +237,7 @@ describe "Lexer string" do
     token = lexer.next_token
     state = token.delimiter_state
 
-    expect_raises Crystal::SyntaxException, "Unterminated heredoc" do
+    expect_raises Crystal::SyntaxException, "unterminated heredoc" do
       loop do
         token = lexer.next_string_token state
         break if token.type.delimiter_end?
@@ -256,7 +256,7 @@ describe "Lexer string" do
   it "raises on unexpected EOF while lexing heredoc" do
     lexer = Lexer.new("<<-aaa")
 
-    expect_raises Crystal::SyntaxException, "Unexpected EOF on heredoc identifier" do
+    expect_raises Crystal::SyntaxException, "unexpected EOF on heredoc identifier" do
       lexer.next_token
     end
   end
