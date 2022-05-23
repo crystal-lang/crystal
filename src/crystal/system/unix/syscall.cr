@@ -65,10 +65,11 @@ module Crystal::System::Syscall
 	IORING_OP_URING_CMD       = 46u8
 
   # io_uring_enter() flags
-  IORING_ENTER_GETEVENTS = 1u32 << 0
-  IORING_ENTER_SQ_WAKEUP = 1u32 << 1
-  IORING_ENTER_SQ_WAIT   = 1u32 << 2
-  IORING_ENTER_EXT_ARG   = 1u32 << 3
+  IORING_ENTER_GETEVENTS       = 1u32 << 0
+  IORING_ENTER_SQ_WAKEUP       = 1u32 << 1
+  IORING_ENTER_SQ_WAIT         = 1u32 << 2
+  IORING_ENTER_EXT_ARG         = 1u32 << 3
+  IORING_ENTER_REGISTERED_RING = 1u32 << 4
 
   # io_uring_register() opcodes
   IORING_REGISTER_BUFFERS          =  0u32
@@ -91,6 +92,10 @@ module Crystal::System::Syscall
   IORING_REGISTER_IOWQ_AFF         = 17u32
   IORING_UNREGISTER_IOWQ_AFF       = 18u32
   IORING_REGISTER_IOWQ_MAX_WORKERS = 19u32
+	IORING_REGISTER_RING_FDS         = 20u32
+	IORING_UNREGISTER_RING_FDS       = 21u32
+	IORING_REGISTER_PBUF_RING        = 22u32
+	IORING_UNREGISTER_PBUF_RING      = 23u32
 
   @[Extern]
   struct IoSqringOffsets
@@ -133,13 +138,18 @@ module Crystal::System::Syscall
   end
 
   # IoUringParams#flags
-  IORING_SETUP_IOPOLL     = 1u32 << 0 # io_context is polled
-  IORING_SETUP_SQPOLL     = 1u32 << 1 # SQ poll thread
-  IORING_SETUP_SQ_AFF     = 1u32 << 2 # sq_thread_cpu is valid
-  IORING_SETUP_CQSIZE     = 1u32 << 3 # app defines CQ size
-  IORING_SETUP_CLAMP      = 1u32 << 4 # clamp SQ/CQ ring sizes
-  IORING_SETUP_ATTACH_WQ  = 1u32 << 5 # attach to existing wq
-  IORING_SETUP_R_DISABLED = 1u32 << 6 # start with ring disabled
+  IORING_SETUP_IOPOLL       = 1u32 << 0 # io_context is polled
+  IORING_SETUP_SQPOLL       = 1u32 << 1 # SQ poll thread
+  IORING_SETUP_SQ_AFF       = 1u32 << 2 # sq_thread_cpu is valid
+  IORING_SETUP_CQSIZE       = 1u32 << 3 # app defines CQ size
+  IORING_SETUP_CLAMP        = 1u32 << 4 # clamp SQ/CQ ring sizes
+  IORING_SETUP_ATTACH_WQ    = 1u32 << 5 # attach to existing wq
+  IORING_SETUP_R_DISABLED   = 1u32 << 6 # start with ring disabled
+  IORING_SETUP_SUBMIT_ALL   = 1u32 << 7 # continue submit on error
+  IORING_SETUP_COOP_TASKRUN = 1u32 << 8
+  IORING_SETUP_TASKRUN_FLAG = 1u32 << 9
+  IORING_SETUP_SQE128       = 1u32 << 10 # SQEs are 128 byte 
+  IORING_SETUP_CQE32        = 1u32 << 11 # CQEs are 32 byte
 
   # IoUringParams#features
   IORING_FEAT_SINGLE_MMAP     = 1u32 << 0
@@ -153,6 +163,8 @@ module Crystal::System::Syscall
   IORING_FEAT_EXT_ARG         = 1u32 << 8
   IORING_FEAT_NATIVE_WORKERS  = 1u32 << 9
   IORING_FEAT_RSRC_TAGS       = 1u32 << 10
+  IORING_FEAT_CQE_SKIP        = 1u32 << 11
+  IORING_FEAT_LINKED_FILE     = 1u32 << 12
 
   @[Extern]
   struct IoUringCqe
@@ -214,12 +226,13 @@ module Crystal::System::Syscall
   end
 
   # IoUringSqe#flags
-  IOSQE_FIXED_FILE    = 1u8 << 0 # use fixed fileset
-  IOSQE_IO_DRAIN      = 1u8 << 1 # issue after inflight IO
-  IOSQE_IO_LINK       = 1u8 << 2 # links next sqe
-  IOSQE_IO_HARDLINK   = 1u8 << 3 # like LINK, but stronger
-  IOSQE_ASYNC         = 1u8 << 4 # always go async
-  IOSQE_BUFFER_SELECT = 1u8 << 5 # select buffer from sqe->buf_group
+  IOSQE_FIXED_FILE       = 1u8 << 0 # use fixed fileset
+  IOSQE_IO_DRAIN         = 1u8 << 1 # issue after inflight IO
+  IOSQE_IO_LINK          = 1u8 << 2 # links next sqe
+  IOSQE_IO_HARDLINK      = 1u8 << 3 # like LINK, but stronger
+  IOSQE_ASYNC            = 1u8 << 4 # always go async
+  IOSQE_BUFFER_SELECT    = 1u8 << 5 # select buffer from sqe->buf_group
+  IOSQE_CQE_SKIP_SUCCESS = 1u8 << 6 # don't post CQE if request succeeded
 
   @[Extern]
   struct IoUringProbeOp
