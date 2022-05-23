@@ -80,11 +80,7 @@ module Crystal
     def parse
       next_token_skip_statement_end
 
-      expressions = parse_expressions.tap { check :EOF }
-
-      check :EOF
-
-      expressions
+      parse_expressions.tap { check :EOF }
     end
 
     def parse(mode : ParseMode)
