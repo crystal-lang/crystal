@@ -93,7 +93,7 @@ module Crystal::Doc
         path = path.rchop(".git")
         "https://github.com/#{path}/blob/%{refname}/%{path}#L%{line}"
       when "gitlab.com", "www.gitlab.com"
-        # Gitlab only resolves URLs with the canonical repo name without .git extension.
+        # GitLab only resolves URLs with the canonical repo name without .git extension.
         path = path.rchop(".git")
         "https://gitlab.com/#{path}/blob/%{refname}/%{path}#L%{line}"
       when "bitbucket.com", "www.bitbucket.com"

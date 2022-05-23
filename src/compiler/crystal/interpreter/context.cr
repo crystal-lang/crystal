@@ -119,7 +119,7 @@ class Crystal::Repl::Context
     end
   end
 
-  # This returns the CompiledDef that correspnds to __crystal_raise_overflow
+  # This returns the CompiledDef that corresponds to __crystal_raise_overflow
   getter(crystal_raise_overflow_compiled_def : CompiledDef) do
     call = Call.new(nil, "__crystal_raise_overflow", global: true)
     program.semantic(call)

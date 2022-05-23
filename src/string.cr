@@ -1152,7 +1152,7 @@ class String
 
   # Returns a new string built from *count* bytes starting at *start* byte.
   #
-  # *start* can can be negative to start counting
+  # *start* can be negative to start counting
   # from the end of the string.
   # If *count* is bigger than the number of bytes from *start* to `#bytesize`,
   # only remaining bytes are returned.
@@ -1212,7 +1212,7 @@ class String
 
   # Returns a substring starting from the *start* byte.
   #
-  # *start* can can be negative to start counting
+  # *start* can be negative to start counting
   # from the end of the string.
   #
   # This method should be avoided,
