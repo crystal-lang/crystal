@@ -113,8 +113,12 @@ module Crystal::System::Dir
     end
   end
 
-  def self.delete(path : String) : Nil
-    if LibC._wrmdir(to_windows_path(path)) == -1
+  def self.delete(path : String, *, raise_on_missing : Bool) : Bool
+    return true if LibC._wrmdir(to_windows_path(path)) == 0
+
+    if !raise_on_missing && Errno.value == Errno::ENOENT
+      false
+    else
       raise ::File::Error.from_errno("Unable to remove directory", file: path)
     end
   end

@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   x86_64-linux-job:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:1.3.2-build
+    container: crystallang/crystal:1.4.1-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
@@ -48,7 +48,7 @@ jobs:
             libs/mpir.lib
             libs/yaml.lib
             libs/xml2.lib
-          key: win-libs-${{ hashFiles('.github/workflows/win.yml') }}
+          key: win-libs-${{ hashFiles('.github/workflows/win.yml') }}-msvc-${{ env.VSCMD_VER }}
       - name: Download libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
         uses: actions/checkout@v2
@@ -177,7 +177,7 @@ jobs:
         working-directory: ./libxml2
         run: |
           cmake . -DBUILD_SHARED_LIBS=OFF -DLIBXML2_WITH_PROGRAMS=OFF -DLIBXML2_WITH_HTTP=OFF -DLIBXML2_WITH_FTP=OFF -DLIBXML2_WITH_TESTS=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
-          
+
           echo '<Project>
             <PropertyGroup>
               <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
@@ -213,7 +213,7 @@ jobs:
             libs/crypto.lib
             libs/ssl.lib
             libs/openssl_VERSION
-          key: win-openssl-libs-3.0.0
+          key: win-openssl-libs-3.0.0-msvc-${{ env.VSCMD_VER }}
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         uses: ilammy/setup-nasm@e2335e5fc95548c09cd2deea2768793e0e8f0941 # v1.2.1
@@ -246,7 +246,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: llvm
-          key: llvm-libs-13.0.0
+          key: llvm-libs-13.0.0-msvc-${{ env.VSCMD_VER }}
       - name: Download LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |

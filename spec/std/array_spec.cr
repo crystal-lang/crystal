@@ -144,6 +144,16 @@ describe "Array" do
     it "does with even larger arrays" do
       ((1..64).to_a - (1..32).to_a).should eq((33..64).to_a)
     end
+
+    context "with different types" do
+      it "small array" do
+        ([1, 2, 3, 'c'] - [2, nil]).should eq [1, 3, 'c']
+      end
+
+      it "big array" do
+        (((1..64).to_a + ['c']) - ((2..63).to_a + [nil])).should eq [1, 64, 'c']
+      end
+    end
   end
 
   it "does *" do
@@ -1147,16 +1157,16 @@ describe "Array" do
       a = [1, 2, 3]
       a.shuffle!
       b = [1, 2, 3]
-      3.times { a.includes?(b.shift).should be_true }
+      3.times { a.should contain(b.shift) }
     end
 
     it "shuffle" do
       a = [1, 2, 3]
       b = a.shuffle
-      a.same?(b).should be_false
+      a.should_not be(b)
       a.should eq([1, 2, 3])
 
-      3.times { b.includes?(a.shift).should be_true }
+      3.times { b.should contain(a.shift) }
     end
 
     it "shuffle! with random" do
@@ -1366,21 +1376,21 @@ describe "Array" do
       a = [1, 2, 2, 3, 1, 4, 5, 3]
       b = a.uniq
       b.should eq([1, 2, 3, 4, 5])
-      a.same?(b).should be_false
+      a.should_not be(b)
     end
 
     it "uniqs with block" do
       a = [-1, 1, 0, 2, -2]
       b = a.uniq &.abs
       b.should eq([-1, 0, 2])
-      a.same?(b).should be_false
+      a.should_not be(b)
     end
 
     it "uniqs with true" do
       a = [1, 2, 3]
       b = a.uniq { true }
       b.should eq([1])
-      a.same?(b).should be_false
+      a.should_not be(b)
     end
 
     it "uniqs large array" do

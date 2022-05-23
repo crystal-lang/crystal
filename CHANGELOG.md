@@ -1,3 +1,26 @@
+# 1.4.1 (2022-04-22)
+
+## Standard Library
+
+### Collection
+
+- Avoid compile-time error on empty `NamedTuple`s. ([#12007](https://github.com/crystal-lang/crystal/pull/12007), thanks @I3oris)
+
+### Files
+
+- Add missing fun def for `__xstat` ([#11985](https://github.com/crystal-lang/crystal/pull/11985), thanks @straight-shoota)
+
+### Runtime
+
+- Add `pthread` link annotations in lib bindings ([#12013](https://github.com/crystal-lang/crystal/pull/12013), thanks @straight-shoota)
+- Fix GC typedefs on Windows ([#11963](https://github.com/crystal-lang/crystal/pull/11963), thanks @HertzDevil)
+
+## Compiler
+
+### Semantic
+
+- Compiler: remove duplicate instance vars once we know them all ([#11995](https://github.com/crystal-lang/crystal/pull/11995), thanks @asterite)
+
 # 1.4.0 (2022-04-06)
 
 ## Language
