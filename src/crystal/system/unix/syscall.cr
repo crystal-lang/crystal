@@ -56,6 +56,13 @@ module Crystal::System::Syscall
   IORING_OP_MKDIRAT         = 37u8
   IORING_OP_SYMLINKAT       = 38u8
   IORING_OP_LINKAT          = 39u8
+	IORING_OP_MSG_RING        = 40u8
+	IORING_OP_FSETXATTR       = 41u8
+	IORING_OP_SETXATTR        = 42u8
+	IORING_OP_FGETXATTR       = 43u8
+	IORING_OP_GETXATTR        = 44u8
+	IORING_OP_SOCKET          = 45u8
+	IORING_OP_URING_CMD       = 46u8
 
   # io_uring_enter() flags
   IORING_ENTER_GETEVENTS = 1u32 << 0
