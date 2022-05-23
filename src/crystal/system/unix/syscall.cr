@@ -56,13 +56,13 @@ module Crystal::System::Syscall
   IORING_OP_MKDIRAT         = 37u8
   IORING_OP_SYMLINKAT       = 38u8
   IORING_OP_LINKAT          = 39u8
-	IORING_OP_MSG_RING        = 40u8
-	IORING_OP_FSETXATTR       = 41u8
-	IORING_OP_SETXATTR        = 42u8
-	IORING_OP_FGETXATTR       = 43u8
-	IORING_OP_GETXATTR        = 44u8
-	IORING_OP_SOCKET          = 45u8
-	IORING_OP_URING_CMD       = 46u8
+  IORING_OP_MSG_RING        = 40u8
+  IORING_OP_FSETXATTR       = 41u8
+  IORING_OP_SETXATTR        = 42u8
+  IORING_OP_FGETXATTR       = 43u8
+  IORING_OP_GETXATTR        = 44u8
+  IORING_OP_SOCKET          = 45u8
+  IORING_OP_URING_CMD       = 46u8
 
   # io_uring_enter() flags
   IORING_ENTER_GETEVENTS       = 1u32 << 0
@@ -92,10 +92,10 @@ module Crystal::System::Syscall
   IORING_REGISTER_IOWQ_AFF         = 17u32
   IORING_UNREGISTER_IOWQ_AFF       = 18u32
   IORING_REGISTER_IOWQ_MAX_WORKERS = 19u32
-	IORING_REGISTER_RING_FDS         = 20u32
-	IORING_UNREGISTER_RING_FDS       = 21u32
-	IORING_REGISTER_PBUF_RING        = 22u32
-	IORING_UNREGISTER_PBUF_RING      = 23u32
+  IORING_REGISTER_RING_FDS         = 20u32
+  IORING_UNREGISTER_RING_FDS       = 21u32
+  IORING_REGISTER_PBUF_RING        = 22u32
+  IORING_UNREGISTER_PBUF_RING      = 23u32
 
   @[Extern]
   struct IoSqringOffsets
@@ -148,7 +148,7 @@ module Crystal::System::Syscall
   IORING_SETUP_SUBMIT_ALL   = 1u32 << 7 # continue submit on error
   IORING_SETUP_COOP_TASKRUN = 1u32 << 8
   IORING_SETUP_TASKRUN_FLAG = 1u32 << 9
-  IORING_SETUP_SQE128       = 1u32 << 10 # SQEs are 128 byte 
+  IORING_SETUP_SQE128       = 1u32 << 10 # SQEs are 128 byte
   IORING_SETUP_CQE32        = 1u32 << 11 # CQEs are 32 byte
 
   # IoUringParams#features
