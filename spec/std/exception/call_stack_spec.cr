@@ -51,7 +51,7 @@ describe "Backtrace" do
 
     _, output, error = compile_and_run_file(sample)
 
-    output.to_s.empty?.should be_true
+    output.to_s.should be_empty
     error.to_s.should contain("IndexError")
   end
 
@@ -60,7 +60,7 @@ describe "Backtrace" do
 
     _, output, error = compile_and_run_file(sample)
 
-    output.to_s.empty?.should be_true
+    output.to_s.should be_empty
     error.to_s.should contain("Invalid memory access")
   end
 

@@ -361,30 +361,6 @@ module LLVM
     HiUser         = 0xff
   end
 
-  enum AtomicOrdering
-    NotAtomic              = 0
-    Unordered              = 1
-    Monotonic              = 2
-    Acquire                = 4
-    Release                = 5
-    AcquireRelease         = 6
-    SequentiallyConsistent = 7
-  end
-
-  enum AtomicRMWBinOp
-    Xchg
-    Add
-    Sub
-    And
-    Nand
-    Or
-    Xor
-    Max
-    Min
-    UMax
-    UMin
-  end
-
   enum DIFlags : UInt32
     Zero                = 0
     Private             = 1
@@ -487,3 +463,5 @@ module LLVM
     end
   end
 end
+
+require "./enums/*"
