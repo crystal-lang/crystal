@@ -221,10 +221,9 @@ class Crystal::System::IoUring
   # Obtains one free index from the submission queue for our use. If there is none
   # available then we should call into the kernel to process what is there. Retry
   # until the kernel has consumed at least one request so that we can write ours.
-  # If there are too many inflight requests, wait for then to complete before sending
-  # more. This check is only needed before the NODROP feature was implemented (Linux 5.5+)
   private def get_free_index : UInt32
-    # If there are too many in flight events, wait for some completions.
+    # If there are too many inflight requests, wait for then to complete before sending
+    # more. This check is only needed before the NODROP feature was implemented (Linux 5.5+)
     until @params.features & Syscall::IORING_FEAT_NODROP != 0 || @inflight < @params.cq_entries
       process_completion_events(blocking: true)
     end
@@ -406,10 +405,15 @@ class Crystal::System::IoUring
       fatal_error "Failed to send submission entries to the kernel: #{Errno.new(-ret)}"
     end
 
+    # Requests are dropped if they are malformed. We never send those. This is a hard error because if we do,
+    # then some Fiber will never wake up and the completion event won't ever be sent.
     if @submission_queue.dropped > 0
       fatal_error "Submission queue has dropped entries: #{@submission_queue.dropped}"
     end
 
+    # This is a hard error because if some completion event was dropped, the waiting Fiber will leak.
+    # Linux 5.5+ have the NODROP feature and it will never fail to send a completion for a submitted event.
+    # For Linux before 5.45 we keep track of the maximum inflight requests and we don't submit above the limit.
     if @completion_queue.overflow > 0
       fatal_error "Completion queue has overflown: #{@submission_queue.dropped}"
     end
@@ -426,7 +430,7 @@ class Crystal::System::IoUring
   # - `@head`: The next item the Kernel will read, unless it is equal to `@tail`.
   # - `@free`: The next item we can fetch for reuse, unless it is equal to `@head`.
   # All three pointers only move forward increasing by one each time (except for overflow). `@mask` is
-  # used on every access to `@array`.
+  # used on every access to `@array`. It holds that `@free` <= `@head` <= `@tail`.
   #
   # `@head` and `@tail` are pointers to where these values are actually stored in shared memory. Only the
   # Kernel updates ´@head.value`, so we must always use ACQUIRE atomics to read from it. Likewise only
@@ -491,7 +495,7 @@ class Crystal::System::IoUring
     def push(index : UInt32)
       # The two operations below are very careful because we must ensure the Kernel sees
       # the array update before it can see the `tail` update. The first write is volatile
-      # but not atomic. The second e a volatile atomic release.
+      # but not atomic. The second is a volatile atomic release.
       Atomic::Ops.store(@array.@pointer + (@tail.value & @mask), index, :not_atomic, true)
       Atomic::Ops.store(@tail, @tail.value &+ 1, :release, true)
     end
@@ -513,7 +517,7 @@ class Crystal::System::IoUring
   # we update `@head.value`, so updating it requires RELEASE atomics.
   #
   # `@overflow.value` stores the number of responses the Kernel discarted because there wasn't room in the
-  # queue to insert them. Since Linux 5.4 it should be always zero (NODROP feature).
+  # queue to insert them. Since Linux 5.5 it should be always zero (NODROP feature).
   private struct CompletionQueue
     @mask : UInt32
     @size : UInt32
@@ -542,7 +546,7 @@ class Crystal::System::IoUring
     end
 
     # Returns the number of responses the Kernel discarted because there wasn't room in the
-    # queue to insert them. Since Linux 5.4 it should be always zero (NODROP feature). If this is
+    # queue to insert them. Since Linux 5.5 it should be always zero (NODROP feature). If this is
     # not zero, then there is no way to know which event was dropped and we should abort().
     def overflow
       Atomic::Ops.load(@overflow, :acquire, false)
@@ -567,12 +571,6 @@ class Crystal::System::IoUring
   # Submits a NOP operation. It will complete as soon as possible. Useful for Fiber.yield.
   def nop
     submit_and_wait Syscall::IORING_OP_NOP do |sqe|
-    end
-  end
-
-  # Submits a NOP operation. You must must suspend the current Fiber.
-  def submit_nop
-    submit Syscall::IORING_OP_NOP do |sqe|
     end
   end
 
