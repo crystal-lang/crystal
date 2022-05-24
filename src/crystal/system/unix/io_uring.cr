@@ -413,7 +413,7 @@ class Crystal::System::IoUring
 
     # This is a hard error because if some completion event was dropped, the waiting Fiber will leak.
     # Linux 5.5+ have the NODROP feature and it will never fail to send a completion for a submitted event.
-    # For Linux before 5.45 we keep track of the maximum inflight requests and we don't submit above the limit.
+    # For Linux before 5.5 we keep track of the maximum inflight requests and we don't submit above the limit.
     if @completion_queue.overflow > 0
       fatal_error "Completion queue has overflown: #{@submission_queue.dropped}"
     end
