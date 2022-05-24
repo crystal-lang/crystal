@@ -468,7 +468,11 @@ describe Crystal::Formatter do
   assert_format %(require   "foo"), %(require "foo")
 
   assert_format "private   getter   foo", "private   getter foo"
-  assert_format "private   getter   foo  =   42", "private   getter foo  =   42"
+  assert_format <<-BEFORE, <<-AFTER
+    private   getter   foo  =   42
+    BEFORE
+    private   getter foo  =   42
+    AFTER
   assert_format <<-BEFORE, <<-AFTER
     protected   getter   foo
     private getter  bar
@@ -929,11 +933,18 @@ describe Crystal::Formatter do
     CODE
   assert_format <<-CODE
     FOO =   2
-    A   =  42
+    AB  =  42
+    C   =  24
     CODE
   assert_format <<-CODE
-    FOO =   2
-      A =   42
+    FOO   =   2
+     AB   =   42
+      C   =   24
+    CODE
+  assert_format <<-CODE
+    private   FOO = 2
+    protected  AB = 42
+                C = 24
     CODE
   assert_format "private FOO    =       2"
   assert_format <<-CODE

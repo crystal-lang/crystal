@@ -150,6 +150,10 @@ module Crystal
 
       # Variables for when we format macro code without interpolation
       @vars = [Set(String).new]
+
+      # Variable for counting space length skipped at the beginning of a line.
+      # This is needed for leaving variables and constants declarations as it is.
+      @last_skipped_space = 0
     end
 
     def end_visit_any(node)
@@ -289,6 +293,8 @@ module Crystal
           next_needs_indent = false
           @exp_needs_indent = true
         end
+
+        @last_skipped_space = 0
 
         if last?(i, node.expressions)
           last_found_comment = skip_space_or_newline last: true, next_comes_end: true
@@ -3279,14 +3285,12 @@ module Crystal
 
       @vars.last.add target.name if target.is_a?(Var)
 
+      write_last_skipped_spaces
       accept target
       write_spaces
 
       slash_is_regex!
       write_token :OP_EQ
-
-      # skip_space
-      # accept_assign_value_after_equals node.value, check_align: check_align
 
       wrote_newline = write_spaces_and_newlines
       accept_assign_value_after_equals_no_space node.value, wrote_newline: wrote_newline
@@ -4502,6 +4506,8 @@ module Crystal
           end
         end
 
+        @last_skipped_space = @token.value.as(String).size
+
         next_token
         has_space = true
       end
@@ -4572,6 +4578,12 @@ module Crystal
       while @token.type.space?
         write @token.value
         next_token
+      end
+    end
+
+    def write_last_skipped_spaces
+      if @last_write.empty? || !@last_write[-1].ascii_whitespace?
+        @last_skipped_space.times { write " " }
       end
     end
 
