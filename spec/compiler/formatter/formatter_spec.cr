@@ -865,17 +865,123 @@ describe Crystal::Formatter do
   assert_format "#### ###"
   assert_format "#######"
 
-  assert_format "A = 1\nFOO = 2\n\nEX = 3", "A = 1\nFOO = 2\n\nEX = 3"
-  assert_format "FOO = 2\nA = 1", "FOO = 2\nA = 1"
-  assert_format "FOO = 2 + 3\nA = 1 - 10", "FOO = 2 + 3\nA = 1 - 10"
-  assert_format "private FOO = 2\nprivate A = 1", "private FOO = 2\nprivate A = 1"
-  assert_format "private FOO    =    2\nprivate A =   1", "private FOO = 2\nprivate A = 1"
-  assert_format "private FOO =    2\nprivate A    =1", "private FOO = 2\nprivate A = 1"
-  assert_format "private FOO    = 2\nprivate A=       1", "private FOO = 2\nprivate A = 1"
-  assert_format "private FOO=2\nprivate A =   1", "private FOO = 2\nprivate A = 1"
-  assert_format "FOO    =    2\nA  =   1","FOO = 2\nA = 1"
-  assert_format "FOO = 2\nA   = 1","FOO = 2\nA = 1"
-  assert_format "FOO = 2\nA =   1","FOO = 2\nA = 1"
+  assert_format <<-CODE
+    A = 1
+    FOO = 2
+
+    EX = 3
+    CODE
+  assert_format <<-BEFORE, <<-AFTER
+    A   = 42
+    FOO =  2
+
+    EX  =  3
+    BEFORE
+    A = 42
+    FOO = 2
+
+    EX = 3
+    AFTER
+  assert_format <<-BEFORE, <<-AFTER
+    A   = 42
+    FOO = 2
+    BEFORE
+    A = 42
+    FOO = 2
+    AFTER
+  assert_format <<-CODE
+    FOO = 2
+    A = 1
+    CODE
+  assert_format <<-CODE
+    FOO = 2 + 3
+    A = 1 - 10
+    CODE
+  assert_format <<-CODE
+    private FOO = 2
+    private A = 1
+    CODE
+  assert_format <<-BEFORE, <<-AFTER
+    private   FOO    =    2
+    private  A =   1
+    BEFORE
+    private FOO = 2
+    private A = 1
+    AFTER
+  assert_format <<-BEFORE, <<-AFTER
+    protected   FOO    =    2
+    private  A =   1
+    BEFORE
+    protected FOO = 2
+    private A = 1
+    AFTER
+  assert_format <<-BEFORE, <<-AFTER
+    private FOO=    2
+    private A    =1
+    BEFORE
+    private FOO = 2
+    private A = 1
+    AFTER
+  assert_format <<-BEFORE, <<-AFTER
+    private FOO    = 2
+    private A=       1
+    BEFORE
+    private FOO = 2
+    private A = 1
+    AFTER
+  assert_format <<-BEFORE, <<-AFTER
+      private FOO=2
+      private BAR=1
+    BEFORE
+    private FOO = 2
+    private BAR = 1
+    AFTER
+  assert_format <<-CODE
+    FOO = 2
+    A = 1
+    CODE
+  assert_format <<-BEFORE, <<-AFTER
+    FOO    =    2
+    A =   1
+    BEFORE
+    FOO = 2
+    A = 1
+    AFTER
+  assert_format <<-BEFORE, <<-AFTER
+       FOO    =    2
+         A =   1
+    BEFORE
+    FOO = 2
+    A = 1
+    AFTER
+  assert_format <<-BEFORE, <<-AFTER
+    FOO=    2
+    A    =12345
+    BEFORE
+    FOO = 2
+    A = 12345
+    AFTER
+  assert_format <<-BEFORE, <<-AFTER
+    FOO    = 2
+    A=       1
+    BEFORE
+    FOO = 2
+    A = 1
+    AFTER
+  assert_format <<-BEFORE, <<-AFTER
+    FOO=2
+    BAR=4224
+    BEFORE
+    FOO = 2
+    BAR = 4224
+    AFTER
+  assert_format <<-BEFORE, <<-AFTER
+    FOO    =    2
+    BAR    =    1
+    BEFORE
+    FOO = 2
+    BAR = 1
+    AFTER
 
   assert_format "enum Baz\nA = 1\nFOO = 2\n\nEX = 3\nend", "enum Baz\n  A   = 1\n  FOO = 2\n\n  EX = 3\nend"
   assert_format "enum Baz\nA = 1\nFOO\n\nEX = 3\nend", "enum Baz\n  A   = 1\n  FOO\n\n  EX = 3\nend"
