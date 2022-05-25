@@ -25,10 +25,28 @@ struct BitArray
   #
   # *initial* optionally sets the starting value, `true` or `false`, for all bits
   # in the array.
-  def initialize(@size, initial : Bool = false)
+  def initialize(size : Int, initial : Bool = false)
+    raise ArgumentError.new("Negative bit array size: #{size}") if size < 0
+    @size = size.to_i
     value = initial ? UInt32::MAX : UInt32::MIN
     @bits = Pointer(UInt32).malloc(malloc_size, value)
     clear_unused_bits if initial
+  end
+
+  # Creates a new `BitArray` of *size* bits and invokes the given block once
+  # for each index of `self`, setting the bit at that index to `true` if the
+  # block is truthy.
+  #
+  # ```
+  # BitArray.new(5) { |i| i >= 3 }     # => BitArray[00011]
+  # BitArray.new(6) { |i| i if i < 2 } # => BitArray[110000]
+  # ```
+  def self.new(size : Int, & : Int32 -> _)
+    arr = new(size)
+    size.to_i.times do |i|
+      arr.unsafe_put(i, true) if yield i
+    end
+    arr
   end
 
   def ==(other : BitArray)

@@ -51,7 +51,7 @@ module Crystal
 
     def cleanup_files
       tempfiles.each do |tempfile|
-        File.delete(tempfile) rescue nil
+        File.delete?(tempfile)
       end
     end
   end
@@ -367,12 +367,16 @@ module Crystal
     end
 
     def transform(node : Path)
-      # Some constants might not have been cleaned up at this point because
-      # they don't have an explicit `Assign` node. One example is regex
-      # literals: a constant is created for them, but there's no `Assign` node.
-      if (const = node.target_const) && const.used? && !const.cleaned_up?
-        const.value = const.value.transform self
-        const.cleaned_up = true
+      if const = node.target_const
+        @program.check_deprecated_constant(const, node)
+
+        # Some constants might not have been cleaned up at this point because
+        # they don't have an explicit `Assign` node. One example is regex
+        # literals: a constant is created for them, but there's no `Assign` node.
+        if const.used? && !const.cleaned_up?
+          const.value = const.value.transform self
+          const.cleaned_up = true
+        end
       end
 
       node

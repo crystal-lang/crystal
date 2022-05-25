@@ -38,7 +38,7 @@ class Crystal::Repl::Interpreter
     real_frame_index : Int32,
     # This is a bit hacky, but...
     # Right now, when we produce an OverflowError we do it directly
-    # in the instruction that potentitally produces the overflow.
+    # in the instruction that potentially produces the overflow.
     # When we do that, the backtrace that is produced in that case
     # is incorrect because the backtrace computing logic assumes
     # an all call frames are, well, calls. But in this case it could
@@ -241,7 +241,7 @@ class Crystal::Repl::Interpreter
     # variables for the current call frame begin.
     stack_bottom = @stack
 
-    # Shift stack to leave roomm for local vars.
+    # Shift stack to leave room for local vars.
     # Previous runs that wrote to local vars would have those values
     # written to @stack already (or property migrated thanks to `migrate_local_vars`)
     stack_bottom_after_local_vars = stack_bottom + @local_vars.max_bytesize
@@ -1169,7 +1169,7 @@ class Crystal::Repl::Interpreter
       interpreter = Interpreter.new(self, compiled_def, stack_bottom, block_level)
 
       while @pry
-        # TODO: supoort multi-line expressions
+        # TODO: support multi-line expressions
 
         print "pry> "
         line = gets

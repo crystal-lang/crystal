@@ -394,6 +394,9 @@ module Crystal
         end
 
         {cmd, nil}
+      elsif program.has_flag? "wasm32"
+        link_flags = @link_flags || ""
+        { %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names }
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
@@ -712,7 +715,7 @@ module Crystal
         # If there's a memory buffer, it means we must create a .o from it
         if memory_buffer
           # Delete existing .o file. It cannot be used anymore.
-          File.delete(object_name) if File.exists?(object_name)
+          File.delete?(object_name)
           # Create the .bc file (for next compilations)
           File.write(bc_name, memory_buffer.to_slice)
           memory_buffer.dispose

@@ -368,8 +368,8 @@ describe HTTP::Server do
           File.exists?(path1).should be_false
           File.exists?(path2).should be_false
         ensure
-          File.delete(path1) if File.exists?(path1)
-          File.delete(path2) if File.exists?(path2)
+          File.delete?(path1)
+          File.delete?(path2)
         end
       end
     end

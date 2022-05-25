@@ -28,7 +28,13 @@
 lib LibGC
   alias Int = LibC::Int
   alias SizeT = LibC::SizeT
-  alias Word = LibC::ULong
+  {% if flag?(:win32) && flag?(:bits64) %}
+    alias Word = LibC::ULongLong
+    alias SignedWord = LibC::LongLong
+  {% else %}
+    alias Word = LibC::ULong
+    alias SignedWord = LibC::Long
+  {% end %}
 
   struct StackBase
     mem_base : Void*
@@ -94,14 +100,14 @@ lib LibGC
 
   fun set_on_collection_event = GC_set_on_collection_event(cb : ->)
 
-  $gc_no = GC_gc_no : LibC::ULong
-  $bytes_found = GC_bytes_found : LibC::Long
+  $gc_no = GC_gc_no : Word
+  $bytes_found = GC_bytes_found : SignedWord
   # GC_on_collection_event isn't exported.  Can't collect totals without it.
   # bytes_allocd, heap_size, unmapped_bytes are macros
 
   fun size = GC_size(addr : Void*) : LibC::SizeT
 
-  {% unless flag?(:win32) %}
+  {% unless flag?(:win32) || flag?(:wasm32) %}
     # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
     fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*) : LibC::Int
     fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
