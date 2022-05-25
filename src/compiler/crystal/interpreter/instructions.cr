@@ -3,7 +3,7 @@ require "./repl"
 # This is the list of every VM instruction.
 #
 # An instruction consists of:
-# - a name/opcode: the name is only for debugging purpsoes, in the bytecode
+# - a name/opcode: the name is only for debugging purposes, in the bytecode
 #   (bytes) it's just a number (a byte)
 # - operands: (default: []) values in the bytecode following the opcode.
 #   For example a `pop` instruction has an operand that tells it how many

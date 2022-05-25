@@ -2456,7 +2456,7 @@ module Crystal
     def consume_non_braced_unicode_escape
       codepoint = 0
       4.times do
-        hex_value = char_to_hex(next_char) { expected_hexacimal_character_in_unicode_escape }
+        hex_value = char_to_hex(next_char) { expected_hexadecimal_character_in_unicode_escape }
         codepoint = 16 * codepoint + hex_value
       end
       if 0xD800 <= codepoint <= 0xDFFF
@@ -2483,17 +2483,17 @@ module Crystal
             found_space = true
             break
           else
-            expected_hexacimal_character_in_unicode_escape
+            expected_hexadecimal_character_in_unicode_escape
           end
         else
-          hex_value = char_to_hex(char) { expected_hexacimal_character_in_unicode_escape }
+          hex_value = char_to_hex(char) { expected_hexadecimal_character_in_unicode_escape }
           codepoint = 16 * codepoint + hex_value
           found_digit = true
         end
       end
 
       if !found_digit
-        expected_hexacimal_character_in_unicode_escape
+        expected_hexadecimal_character_in_unicode_escape
       elsif codepoint > 0x10FFFF
         raise "invalid unicode codepoint (too large)"
       elsif 0xD800 <= codepoint <= 0xDFFF
@@ -2513,7 +2513,7 @@ module Crystal
       codepoint
     end
 
-    def expected_hexacimal_character_in_unicode_escape
+    def expected_hexadecimal_character_in_unicode_escape
       raise "expected hexadecimal character in unicode escape"
     end
 

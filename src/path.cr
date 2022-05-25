@@ -840,8 +840,8 @@ struct Path
     # Given that `File.join(arg1, arg2)` is the most common usage
     # it's good if we can optimize this case.
 
-    if part.is_a?(Path) && posix? && part.windows?
-      part = part.to_posix.to_s
+    if part.is_a?(Path)
+      part = part.to_kind(@kind).to_s
     else
       part = part.to_s
       part.check_no_null_byte
