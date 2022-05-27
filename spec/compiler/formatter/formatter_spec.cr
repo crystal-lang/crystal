@@ -793,8 +793,38 @@ describe Crystal::Formatter do
         bar(Int32) : Int32
     end
     AFTER
+  assert_format <<-BEFORE, <<-AFTER
+    lib Foo
+      fun foo =
+        bar(Int32,
+        Int32) : Int32
+    end
+    BEFORE
+    lib Foo
+      fun foo =
+        bar(Int32,
+            Int32) : Int32
+    end
+    AFTER
   assert_format "lib Foo\n  fun foo = bar(Int32) : Int32\nend"
-  assert_format "lib Foo\n  fun foo = \"bar\"(Int32) : Int32\nend"
+  assert_format <<-CODE
+    lib Foo
+      fun foo = "bar"(Int32) : Int32
+    end
+    CODE
+  assert_format <<-CODE
+    lib Foo
+      fun foo =
+        "bar"(Int32) : Int32
+    end
+    CODE
+  assert_format <<-CODE
+    lib Foo
+      fun foo =
+        "bar"(Int32) : Int32
+      # comment
+    end
+    CODE
   assert_format "lib Foo\n  $foo  :  Int32 \nend", "lib Foo\n  $foo : Int32\nend"
   assert_format "lib Foo\n  $foo = hello  :  Int32 \nend", "lib Foo\n  $foo = hello : Int32\nend"
   assert_format "lib Foo\nalias  Foo  =  Bar -> \n$a : Int32\nend", "lib Foo\n  alias Foo = Bar ->\n  $a : Int32\nend"
