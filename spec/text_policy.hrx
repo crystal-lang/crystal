@@ -47,9 +47,10 @@ Lorem ipsum dolor sit amet
 <==>
 
 
-<==> html-special-chars/fragment.html
+# Pending because libxml2 behaviour changed in 2.9.13 (https://gitlab.gnome.org/GNOME/libxml2/-/issues/339)
+<==> pending:html-special-chars/fragment.html
 <<foo>script>
-<==> html-special-chars/text.html
+<==> pending:html-special-chars/text.html
 &lt;script&gt;
 <==>
 

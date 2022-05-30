@@ -6,9 +6,10 @@ test
 <===>
 
 
-<===> fragment.html
+# Pending because libxml2 behaviour changed in 2.9.13 (https://gitlab.gnome.org/GNOME/libxml2/-/issues/339)
+<===> pending:fragment.html
 <<<><<script src=http://fake-evil.ru/test.js>
-<===> common.html
+<===> pending:common.html
 &lt;&lt;&lt;&gt;&lt;
 <===>
 
