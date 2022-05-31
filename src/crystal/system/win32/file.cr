@@ -135,6 +135,10 @@ module Crystal::System::File
     raise NotImplementedError.new("File.chown")
   end
 
+  def self.fchown(path : String, fd : Int, uid : Int32, gid : Int32) : Nil
+    raise NotImplementedError.new("File#chown")
+  end
+
   def self.chmod(path : String, mode : Int32 | ::File::Permissions) : Nil
     mode = ::File::Permissions.new(mode) unless mode.is_a? ::File::Permissions
 
@@ -156,6 +160,11 @@ module Crystal::System::File
     if LibC.SetFileAttributesW(to_windows_path(path), attributes) == 0
       raise ::File::Error.from_winerror("Error changing permissions", file: path)
     end
+  end
+
+  def self.fchmod(path : String, fd : Int, mode : Int32 | ::File::Permissions) : Nil
+    # TODO: use fd instead of path
+    chmod path, mode
   end
 
   def self.delete(path : String, *, raise_on_missing : Bool) : Bool
@@ -235,6 +244,11 @@ module Crystal::System::File
     ensure
       LibC.CloseHandle(handle)
     end
+  end
+
+  def self.futimens(path : String, fd : Int, access_time : ::Time, modification_time : ::Time) : Nil
+    # TODO: use fd instead of path
+    utime access_time, modification_time, path
   end
 
   private def system_truncate(size : Int) : Nil

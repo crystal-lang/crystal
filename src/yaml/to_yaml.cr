@@ -41,7 +41,7 @@ end
 
 module Iterator(T)
   # Converts the content of an iterator to YAML.
-  # The convertion is done in a lazy way.
+  # The conversion is done in a lazy way.
   # In contrast to `Iterator#to_json` this operation requires memory for the
   # for the complete YAML document
   def to_yaml(yaml : YAML::Nodes::Builder)

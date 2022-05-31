@@ -111,8 +111,19 @@ module Crystal::System::File
     raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
   end
 
+  def self.fchown(path, fd, uid : Int, gid : Int)
+    ret = LibC.fchown(fd, uid, gid)
+    raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
+  end
+
   def self.chmod(path, mode)
     if LibC.chmod(path, mode) == -1
+      raise ::File::Error.from_errno("Error changing permissions", file: path)
+    end
+  end
+
+  def self.fchmod(path, fd, mode)
+    if LibC.fchmod(fd, mode) == -1
       raise ::File::Error.from_errno("Error changing permissions", file: path)
     end
   end
@@ -181,6 +192,33 @@ module Crystal::System::File
     if ret != 0
       raise ::File::Error.from_errno("Error setting time on file", file: filename)
     end
+  end
+
+  def self.futimens(filename : String, fd : Int, atime : ::Time, mtime : ::Time) : Nil
+    ret = {% if LibC.has_method?("futimens") %}
+            timespecs = uninitialized LibC::Timespec[2]
+            timespecs[0] = to_timespec(atime)
+            timespecs[1] = to_timespec(mtime)
+            LibC.futimens(fd, timespecs)
+          {% elsif LibC.has_method?("futimes") %}
+            timevals = uninitialized LibC::Timeval[2]
+            timevals[0] = to_timeval(atime)
+            timevals[1] = to_timeval(mtime)
+            LibC.futimes(fd, timevals)
+          {% else %}
+            {% raise "Missing futimens & futimes" %}
+          {% end %}
+
+    if ret != 0
+      raise ::File::Error.from_errno("Error setting time on file", file: filename)
+    end
+  end
+
+  private def self.to_timespec(time : ::Time)
+    t = uninitialized LibC::Timespec
+    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
+    t.tv_nsec = typeof(t.tv_nsec).new(time.nanosecond)
+    t
   end
 
   private def self.to_timeval(time : ::Time)
