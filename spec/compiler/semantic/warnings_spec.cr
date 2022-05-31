@@ -535,7 +535,7 @@ describe "Semantic: warnings" do
         CR
     end
 
-    it "respects external parameter names" do
+    it "respects external names of positional parameters (1)" do
       assert_warning <<-CR, "warning in line 6\nWarning: positional parameter 'a' corresponds to parameter 'b' of the overridden method"
         abstract class Foo
           abstract def foo(b)
@@ -543,6 +543,42 @@ describe "Semantic: warnings" do
 
         class Bar < Foo
           def foo(a b); end
+        end
+        CR
+    end
+
+    it "respects external names of positional parameters (2)" do
+      assert_warning <<-CR, "warning in line 6\nWarning: positional parameter 'b' corresponds to parameter 'a' of the overridden method"
+        abstract class Foo
+          abstract def foo(a b)
+        end
+
+        class Bar < Foo
+          def foo(b); end
+        end
+        CR
+    end
+
+    it "doesn't warn if external parameter name matches (1)" do
+      warnings_result(<<-CR).should be_empty
+        abstract class Foo
+          abstract def foo(a)
+        end
+
+        class Bar < Foo
+          def foo(a b); end
+        end
+        CR
+    end
+
+    it "doesn't warn if external parameter name matches (2)" do
+      warnings_result(<<-CR).should be_empty
+        abstract class Foo
+          abstract def foo(a b)
+        end
+
+        class Bar < Foo
+          def foo(a c); end
         end
         CR
     end
