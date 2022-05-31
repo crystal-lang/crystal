@@ -104,18 +104,15 @@ describe "Semantic: named tuples" do
       "can only use named arguments with NamedTuple"
   end
 
-  it "gives error when using named args on Tuple" do
-    assert_error %(
-      Tuple(x: Int32, y: Char)
-      ),
-      "can only use named arguments with NamedTuple"
-  end
-
-  it "gives error when not using named args with NamedTuple" do
+  it "gives error when using positional args with NamedTuple" do
     assert_error %(
       NamedTuple(Int32, Char)
       ),
       "can only instantiate NamedTuple with named arguments"
+  end
+
+  it "doesn't error if NamedTuple has no args" do
+    assert_type("NamedTuple()") { named_tuple_of({} of String => Type).metaclass }
   end
 
   it "gets type at compile time" do

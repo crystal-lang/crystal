@@ -93,7 +93,7 @@ module Spec::Methods
   # it "test git" do
   #   cmd = Process.find_executable("git")
   #   pending!("git is not available") unless cmd
-  #   cmd.ends_with?("git").should be_true
+  #   cmd.should end_with("git")
   # end
   # ```
   def pending!(msg = "Cannot run example", file = __FILE__, line = __LINE__)

@@ -253,7 +253,7 @@ module Crystal
           return freeze_type
         end
 
-        # We also allow assining Proc(*T, NoReturn) to Proc(*T, U)
+        # We also allow assigning Proc(*T, NoReturn) to Proc(*T, U)
         if type.all? { |a_type|
              a_type.is_a?(ProcInstanceType) &&
              (a_type.return_type.is_a?(NoReturnType) || a_type.return_type == freeze_type.return_type) &&
@@ -530,7 +530,8 @@ module Crystal
     def update(from = nil)
       instance_type = self.instance_type
       if instance_type.is_a?(NamedTupleType)
-        entries = named_args.not_nil!.map do |named_arg|
+        entries = Array(NamedArgumentType).new(named_args.try(&.size) || 0)
+        named_args.try &.each do |named_arg|
           node = named_arg.value
 
           if node.is_a?(Path) && (syntax_replacement = node.syntax_replacement)
@@ -551,7 +552,7 @@ module Crystal
           Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
           node_type = node_type.virtual_type
 
-          NamedArgumentType.new(named_arg.name, node_type)
+          entries << NamedArgumentType.new(named_arg.name, node_type)
         end
 
         generic_type = instance_type.instantiate_named_args(entries)

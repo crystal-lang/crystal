@@ -5,9 +5,14 @@ require "./compiler_rt/float.cr"
 require "./compiler_rt/mul.cr"
 require "./compiler_rt/divmod128.cr"
 
-{% if flag?(:arm) %}
-  # __multi3 was only missing on arm
+{% if flag?(:arm) || flag?(:wasm32) %}
+  # __multi3 was only missing on arm and wasm32
   require "./compiler_rt/multi3.cr"
+{% end %}
+
+{% if flag?(:wasm32) %}
+  # __ashlti3, __ashrti3 and __lshrti3 were only missing on wasm32
+  require "./compiler_rt/shift.cr"
 {% end %}
 
 {% if flag?(:win32) && flag?(:bits64) %}

@@ -75,9 +75,9 @@ struct UUID
     new(uuid.bytes, variant, version)
   end
 
-  # Creates new UUID by decoding `value` string from hyphenated (ie. `ba714f86-cac6-42c7-8956-bcf5105e1b81`),
-  # hexstring (ie. `89370a4ab66440c8add39e06f2bb6af6`) or URN (ie. `urn:uuid:3f9eaf9e-cdb0-45cc-8ecb-0e5b2bfb0c20`)
-  # format.
+  # Creates new UUID by decoding `value` string from hyphenated (ie `ba714f86-cac6-42c7-8956-bcf5105e1b81`),
+  # hexstring (ie `89370a4ab66440c8add39e06f2bb6af6`) or URN (ie `urn:uuid:3f9eaf9e-cdb0-45cc-8ecb-0e5b2bfb0c20`)
+  # format, raising an `ArgumentError` if the string does not match any of these formats.
   def self.new(value : String, variant = nil, version = nil)
     bytes = uninitialized UInt8[16]
 
@@ -107,16 +107,59 @@ struct UUID
     new(bytes, variant, version)
   end
 
+  # Creates new UUID by decoding `value` string from hyphenated (ie `ba714f86-cac6-42c7-8956-bcf5105e1b81`),
+  # hexstring (ie `89370a4ab66440c8add39e06f2bb6af6`) or URN (ie `urn:uuid:3f9eaf9e-cdb0-45cc-8ecb-0e5b2bfb0c20`)
+  # format, returning `nil` if the string does not match any of these formats.
+  def self.parse?(value : String, variant = nil, version = nil) : UUID?
+    bytes = uninitialized UInt8[16]
+
+    case value.size
+    when 36 # Hyphenated
+      {8, 13, 18, 23}.each do |offset|
+        return if value[offset] != '-'
+      end
+      {0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34}.each_with_index do |offset, i|
+        if hex = hex_pair_at? value, offset
+          bytes[i] = hex
+        else
+          return
+        end
+      end
+    when 32 # Hexstring
+      16.times do |i|
+        if hex = hex_pair_at? value, i * 2
+          bytes[i] = hex
+        else
+          return
+        end
+      end
+    when 45 # URN
+      return unless value.starts_with? "urn:uuid:"
+      {9, 11, 13, 15, 18, 20, 23, 25, 28, 30, 33, 35, 37, 39, 41, 43}.each_with_index do |offset, i|
+        if hex = hex_pair_at? value, offset
+          bytes[i] = hex
+        else
+          return
+        end
+      end
+    else
+      return
+    end
+
+    new(bytes, variant, version)
+  end
+
   # Raises `ArgumentError` if string `value` at index `i` doesn't contain hex
   # digit followed by another hex digit.
   private def self.hex_pair_at(value : String, i) : UInt8
+    hex_pair_at?(value, i) || raise ArgumentError.new "Invalid hex character at position #{i * 2} or #{i * 2 + 1}, expected '0' to '9', 'a' to 'f' or 'A' to 'F'"
+  end
+
+  # Parses 2 hex digits from `value` at index `i` and `i + 1`, returning `nil`
+  # if one or both are not actually hex digits.
+  private def self.hex_pair_at?(value : String, i) : UInt8?
     if (ch1 = value[i].to_u8?(16)) && (ch2 = value[i + 1].to_u8?(16))
       ch1 * 16 + ch2
-    else
-      raise ArgumentError.new [
-        "Invalid hex character at position #{i * 2} or #{i * 2 + 1}",
-        "expected '0' to '9', 'a' to 'f' or 'A' to 'F'",
-      ].join(", ")
     end
   end
 
@@ -146,10 +189,10 @@ struct UUID
   # ```
   # require "uuid"
   #
-  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::NCS).variant       # => NCS
-  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::RFC4122).variant   # => RFC4122
-  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Microsoft).variant # => Microsoft
-  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Future).variant    # => Future
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::NCS).variant       # => UUID::Variant::NCS
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::RFC4122).variant   # => UUID::Variant::RFC4122
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Microsoft).variant # => UUID::Variant::Microsoft
+  # UUID.new(Slice.new(16, 0_u8), variant: UUID::Variant::Future).variant    # => UUID::Variant::Future
   # ```
   def variant : UUID::Variant
     case
@@ -172,11 +215,11 @@ struct UUID
   # ```
   # require "uuid"
   #
-  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V1).version # => V1
-  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V2).version # => V2
-  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V3).version # => V3
-  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V4).version # => V4
-  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V5).version # => V5
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V1).version # => UUID::Version::V1
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V2).version # => UUID::Version::V2
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V3).version # => UUID::Version::V3
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V4).version # => UUID::Version::V4
+  # UUID.new(Slice.new(16, 0_u8), version: UUID::Version::V5).version # => UUID::Version::V5
   # ```
   def version : UUID::Version
     case @bytes[6] >> 4
