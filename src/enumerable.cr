@@ -220,7 +220,7 @@ module Enumerable(T)
     end
   end
 
-  # Returns a copy of `self` with all `nil` elements removed.
+  # Returns an `Array` with all `nil` elements removed.
   #
   # ```
   # ["a", nil, "b", nil, "c", nil].compact # => ["a", "b", "c"]
