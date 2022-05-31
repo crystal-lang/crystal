@@ -9,8 +9,6 @@ require "c/handleapi"
 module Crystal::System::File
   def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : LibC::Int
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
-    oflag = open_flag(mode) | LibC::O_BINARY | LibC::O_NOINHERIT
-
     # Only the owner writable bit is used, since windows only supports
     # the read only attribute.
     if perm.owner_write?
@@ -19,11 +17,18 @@ module Crystal::System::File
       perm = LibC::S_IREAD
     end
 
-    fd = LibC._wopen(to_windows_path(filename), oflag, perm)
+    fd = open(filename, open_flag(mode), perm)
     if fd == -1
       raise ::File::Error.from_errno("Error opening file with mode '#{mode}'", file: filename)
     end
 
+    fd
+  end
+
+  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : LibC::Int
+    flags |= LibC::O_BINARY | LibC::O_NOINHERIT
+
+    fd = LibC._wopen(to_windows_path(filename), flags, perm)
     fd
   end
 

@@ -3,14 +3,20 @@ require "file/error"
 
 # :nodoc:
 module Crystal::System::File
-  def self.open(filename, mode, perm)
-    oflag = open_flag(mode) | LibC::O_CLOEXEC
-
-    fd = LibC.open(filename.check_no_null_byte, oflag, perm)
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions)
+    perm = ::File::Permissions.new(perm) if perm.is_a? Int32
+    fd = open(filename, open_flag(mode), perm)
     if fd < 0
       raise ::File::Error.from_errno("Error opening file with mode '#{mode}'", file: filename)
     end
     fd
+  end
+
+  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : LibC::Int
+    filename.check_no_null_byte
+    flags |= LibC::O_CLOEXEC
+
+    LibC.open(filename, flags, perm)
   end
 
   def self.mktemp(prefix, suffix, dir) : {LibC::Int, String}
