@@ -1,5 +1,16 @@
 require "../spec_helper"
 
+private def normalize_permissions(permissions, *, directory)
+  {% if flag?(:win32) %}
+    normalized_permissions = 0o444
+    normalized_permissions |= 0o222 if permissions.bits_set?(0o200)
+    normalized_permissions |= 0o111 if directory
+    File::Permissions.new(normalized_permissions)
+  {% else %}
+    File::Permissions.new(permissions)
+  {% end %}
+end
+
 describe File do
   describe ".tempname" do
     it "creates a path without creating the file" do
@@ -42,6 +53,7 @@ describe File do
     it "creates and writes" do
       tempfile = File.tempfile
       tempfile.print "Hello!"
+      tempfile.info.permissions.should eq normalize_permissions(0o600, directory: false)
       tempfile.close
 
       File.exists?(tempfile.path).should be_true
@@ -53,6 +65,7 @@ describe File do
     it "accepts single suffix argument" do
       tempfile = File.tempfile ".bar"
       tempfile.print "Hello!"
+      tempfile.info.permissions.should eq normalize_permissions(0o600, directory: false)
       tempfile.close
 
       File.extname(tempfile.path).should eq(".bar")
@@ -66,6 +79,7 @@ describe File do
     it "accepts prefix and suffix arguments" do
       tempfile = File.tempfile "foo", ".bar"
       tempfile.print "Hello!"
+      tempfile.info.permissions.should eq normalize_permissions(0o600, directory: false)
       tempfile.close
 
       File.extname(tempfile.path).should eq(".bar")
