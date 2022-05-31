@@ -220,6 +220,15 @@ module Enumerable(T)
     end
   end
 
+  # Returns a copy of `self` with all `nil` elements removed.
+  #
+  # ```
+  # ["a", nil, "b", nil, "c", nil].compact # => ["a", "b", "c"]
+  # ```
+  def compact
+    compact_map &.itself
+  end
+
   # Returns an `Array` with the results of running the block against each element
   # of the collection, removing `nil` values.
   #
