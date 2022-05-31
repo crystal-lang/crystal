@@ -489,6 +489,24 @@ struct Tuple
     {% end %}
   end
 
+  # Returns new `Tuple` without `nil` values.
+  #
+  # ```
+  # tuple = {nil, "hello", nil, nil, 42, nil}
+  # tuple.compact # => {"hello", 42}
+  # ```
+  def compact
+    {% begin %}
+      Tuple.new(
+        {% for i in 0...T.size %}
+          {% if T[i] != Nil %}
+            self[{{i}}],
+          {% end %}
+        {% end %}
+      )
+    {% end %}
+  end
+
   # Returns a new tuple where the elements are in reverse order.
   #
   # ```

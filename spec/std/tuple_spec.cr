@@ -226,6 +226,13 @@ describe "Tuple" do
     tuple2.should eq({11, 12, 14, 15})
   end
 
+  it "does compact" do
+    tuple = {nil, "hello", nil, nil, 42, nil}
+    tuple2 = tuple.compact
+    tuple2.is_a?(Tuple).should be_true
+    tuple2.should eq({"hello", 42})
+  end
+
   it "does reverse" do
     {1, 2.5, "a", 'c'}.reverse.should eq({'c', "a", 2.5, 1})
   end
