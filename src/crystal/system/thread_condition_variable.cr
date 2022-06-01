@@ -20,7 +20,9 @@ class Thread
   end
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./wasi/thread_condition_variable"
+{% elsif flag?(:unix) %}
   require "./unix/pthread_condition_variable"
 {% elsif flag?(:win32) %}
   require "./win32/thread_condition_variable"
