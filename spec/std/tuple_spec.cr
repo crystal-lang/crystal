@@ -226,11 +226,29 @@ describe "Tuple" do
     tuple2.should eq({11, 12, 14, 15})
   end
 
-  it "does compact" do
-    tuple = {nil, "hello", nil, nil, 42, nil}
-    tuple2 = tuple.compact
-    tuple2.is_a?(Tuple).should be_true
-    tuple2.should eq({"hello", 42})
+  describe "compact" do
+    it "accepts empty tuples" do
+      tuple = Tuple.new
+      tuple.is_a?(Tuple).should be_true
+
+      tuple2 = tuple.compact
+      tuple2.is_a?(Tuple).should be_true
+      tuple2.should eq(Tuple.new)
+    end
+
+    it "removes nil elements" do
+      tuple = {nil, "hello", nil, nil, 42, nil}
+      tuple2 = tuple.compact
+      tuple2.is_a?(Tuple).should be_true
+      tuple2.should eq({"hello", 42})
+    end
+
+    it "removes nilable values" do
+      tuple = {1 < 2 ? 1 : nil, 1 < 2 ? nil : 1}
+      tuple2 = tuple.compact
+      tuple2.is_a?(Tuple).should be_true
+      tuple2.should eq({1})
+    end
   end
 
   it "does reverse" do

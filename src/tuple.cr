@@ -496,15 +496,12 @@ struct Tuple
   # tuple.compact # => {"hello", 42}
   # ```
   def compact
-    {% begin %}
-      Tuple.new(
-        {% for i in 0...T.size %}
-          {% if T[i] != Nil %}
-            self[{{i}}],
-          {% end %}
-        {% end %}
-      )
+    ret = Tuple.new
+    {% for i in 0...T.size %}
+      %elem{i} = self[{{ i }}]
+      ret = ret + { %elem{i} } unless %elem{i}.nil?
     {% end %}
+    ret
   end
 
   # Returns a new tuple where the elements are in reverse order.
