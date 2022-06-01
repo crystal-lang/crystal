@@ -378,10 +378,8 @@ def sprintf(format_string, args : Array | Tuple) : String
   end
 end
 
-# Prints objects to `STDOUT`, each followed by a newline.
-#
-# If the string representation of an object ends with a newline, no additional
-# newline is printed for that object.
+# Prints *objects* to `STDOUT`, each followed by a newline character unless
+# the object is a `String` and already ends with a newline.
 #
 # See also: `IO#puts`.
 def puts(*objects) : Nil
@@ -504,7 +502,7 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% unless flag?(:preview_mt) %}
+{% unless flag?(:preview_mt) || flag?(:wasm32) %}
   class Process
     # :nodoc:
     #
@@ -525,29 +523,29 @@ end
   end
 {% end %}
 
-{% unless flag?(:win32) %}
-  # Background loop to cleanup unused fiber stacks.
-  spawn(name: "Fiber Clean Loop") do
-    loop do
-      sleep 5
-      Fiber.stack_pool.collect
+{% unless flag?(:interpreted) || flag?(:wasm32) %}
+  {% unless flag?(:win32) %}
+    # Background loop to cleanup unused fiber stacks.
+    spawn(name: "Fiber Clean Loop") do
+      loop do
+        sleep 5
+        Fiber.stack_pool.collect
+      end
     end
-  end
 
-  Signal.setup_default_handlers
-  LibExt.setup_sigfault_handler
-{% end %}
+    Signal.setup_default_handlers
+  {% end %}
 
-{% if !flag?(:win32) %}
-  # load dwarf on start up of the program is executed with CRYSTAL_LOAD_DWARF=1
-  # this will make dwarf available on print_frame that is used on __crystal_sigfault_handler
+  # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
+  # this will make debug info available on print_frame that is used by Crystal's segfault handler
   #
-  # - CRYSTAL_LOAD_DWARF=0 will never use dwarf information (See Exception::CallStack.load_dwarf)
-  # - CRYSTAL_LOAD_DWARF=1 will load dwarf on startup
-  # - Other values will load dwarf on demand: when the backtrace of the first exception is generated
-  Exception::CallStack.load_dwarf if ENV["CRYSTAL_LOAD_DWARF"]? == "1"
-{% end %}
+  # - CRYSTAL_LOAD_DEBUG_INFO=0 will never use debug info (See Exception::CallStack.load_debug_info)
+  # - CRYSTAL_LOAD_DEBUG_INFO=1 will load debug info on startup
+  # - Other values will load debug info on demand: when the backtrace of the first exception is generated
+  Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
+  Exception::CallStack.setup_crash_handler
 
-{% if flag?(:preview_mt) %}
-  Crystal::Scheduler.init_workers
+  {% if flag?(:preview_mt) %}
+    Crystal::Scheduler.init_workers
+  {% end %}
 {% end %}

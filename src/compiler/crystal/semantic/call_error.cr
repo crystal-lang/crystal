@@ -37,7 +37,10 @@ class Crystal::Path
 end
 
 class Crystal::Call
-  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_literals = false)
+  # :nodoc:
+  MAX_RENDERED_OVERLOADS = 20
+
+  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_autocast = false, number_autocast = true)
     obj = @obj
     with_scope = @with_scope
 
@@ -135,8 +138,8 @@ class Crystal::Call
 
     # If we made a lookup without the special rule for literals,
     # and we have literals in the call, try again with that special rule.
-    if with_literals == false && (args.any? { |arg| arg.is_a?(NumberLiteral) || arg.is_a?(SymbolLiteral) } ||
-       named_args.try &.any? { |arg| arg.value.is_a?(NumberLiteral) || arg.value.is_a?(SymbolLiteral) })
+    if with_autocast == false && (args.any?(&.supports_autocast? number_autocast) ||
+       named_args.try &.any? &.value.supports_autocast? number_autocast)
       ::raise RetryLookupWithLiterals.new
     end
 
@@ -161,7 +164,8 @@ class Crystal::Call
           uniq_arg_names = uniq_arg_names.size == 1 ? uniq_arg_names.first : nil
           unless missing.empty?
             msg << "\nCouldn't find overloads for these types:"
-            missing.each do |missing_types|
+
+            missing.first(MAX_RENDERED_OVERLOADS).each do |missing_types|
               if uniq_arg_names
                 signature_names = missing_types.map_with_index do |missing_type, i|
                   if i >= arg_types.size && (named_arg = named_args_types.try &.[i - arg_types.size]?)
@@ -177,6 +181,10 @@ class Crystal::Call
               msg << "\n - #{full_name(owner, def_name)}(#{signature_args}"
               msg << ", &block" if block
               msg << ')'
+            end
+
+            if missing.size > MAX_RENDERED_OVERLOADS
+              msg << "\nAnd #{missing.size - MAX_RENDERED_OVERLOADS} more..."
             end
           end
         end
@@ -497,14 +505,19 @@ class Crystal::Call
       printed = true
     end
 
-    if block_arg = a_def.block_arg
+    if a_def.yields
       str << ", " if printed
-      str << '&' << block_arg.name
-    elsif a_def.yields
-      str << ", " if printed
-      str << "&block"
+      str << '&'
+      if block_arg = a_def.block_arg
+        str << block_arg
+      end
     end
     str << ')'
+
+    if free_vars = a_def.free_vars
+      str << " forall "
+      free_vars.join(str, ", ")
+    end
   end
 
   def raise_matches_not_found_for_virtual_metaclass_new(owner)
@@ -539,10 +552,10 @@ class Crystal::Call
         index = a_macro.args.index { |arg| arg.external_name == named_arg.name }
         if index
           if index < args.size
-            raise "argument '#{named_arg.name}' already specified"
+            raise "argument for parameter '#{named_arg.name}' already specified"
           end
         else
-          raise "no argument named '#{named_arg.name}'"
+          raise "no parameter named '#{named_arg.name}'"
         end
       end
 
@@ -580,13 +593,13 @@ class Crystal::Call
       if found_index
         min_size = arg_types.size
         if found_index < min_size
-          raise "argument '#{named_arg.name}' already specified"
+          raise "argument for parameter '#{named_arg.name}' already specified"
         end
       elsif !a_def.double_splat
         similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.external_name))
 
         msg = String.build do |str|
-          str << "no argument named '"
+          str << "no parameter named '"
           str << named_arg.name
           str << '\''
           if similar_name
@@ -658,6 +671,10 @@ class Crystal::Call
     case owner
     when Program
       method_name
+    when owner.program.class_type
+      # Class's instance_type is Object, not Class, so we cannot treat it like
+      # other metaclasses
+      "#{owner}##{method_name}"
     when .metaclass?
       "#{owner.instance_type}.#{method_name}"
     else

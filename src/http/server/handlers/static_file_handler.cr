@@ -28,7 +28,7 @@ class HTTP::StaticFileHandler
     @directory_listing = !!directory_listing
   end
 
-  def call(context)
+  def call(context) : Nil
     unless context.request.method.in?("GET", "HEAD")
       if @fallthrough
         call_next(context)
@@ -113,7 +113,7 @@ class HTTP::StaticFileHandler
   private def redirect_to(context, url)
     context.response.status = :found
 
-    url = URI.encode(url.to_s)
+    url = URI.encode_path(url.to_s)
     context.response.headers.add "Location", url
   end
 

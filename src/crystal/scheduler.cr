@@ -92,11 +92,21 @@ class Crystal::Scheduler
     {% if flag?(:preview_mt) %}
       set_current_thread(fiber)
       GC.lock_read
+    {% elsif flag?(:interpreted) %}
+      # No need to change the stack bottom!
     {% else %}
       GC.set_stackbottom(fiber.@stack_bottom)
     {% end %}
 
     current, @current = @current, fiber
+
+    {% if flag?(:interpreted) %}
+      # TODO: ideally we could set this in the interpreter if the
+      # @context had a pointer back to the fiber.
+      # I also wonder why this isn't done always like that instead of in asm.
+      current.@context.resumable = 1
+    {% end %}
+
     Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
 
     {% if flag?(:preview_mt) %}
@@ -143,7 +153,7 @@ class Crystal::Scheduler
   protected def reschedule : Nil
     loop do
       if runnable = @lock.sync { @runnables.shift? }
-        unless runnable == Fiber.current
+        unless runnable == @current
           runnable.resume
         end
         break

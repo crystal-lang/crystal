@@ -14,6 +14,8 @@
 # language[:other] # compile time error
 # ```
 #
+# See [`NamedTuple` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/named_tuple.html) in the language reference.
+#
 # The compiler knows what types are in each key, so when indexing a named tuple
 # with a symbol literal the compiler will return the value for that key and
 # with the expected type, like in the above snippet. Indexing with a symbol
@@ -40,16 +42,14 @@ struct NamedTuple
       options
     {% elsif @type.name(generic_args: false) == "NamedTuple()" %}
       # special case: empty named tuple
+      # TODO: check against `NamedTuple()` directly after 1.5.0
       options
     {% else %}
       # explicitly provided type vars
       {% begin %}
         {
           {% for key in T %}
-            {{ key.stringify }}: options[{{ key.symbolize }}].as(typeof(begin
-              x = uninitialized self
-              x[{{ key.symbolize }}]
-            end)),
+            {{ key.stringify }}: options[{{ key.symbolize }}].as(typeof(element_type({{ key }}))),
           {% end %}
         }
       {% end %}
@@ -234,10 +234,10 @@ struct NamedTuple
   # :ditto:
   def merge(**other : **U) forall U
     {% begin %}
-    {
+    NamedTuple.new(
       {% for k in T %} {% unless U.keys.includes?(k) %} {{k.stringify}}: self[{{k.symbolize}}],{% end %} {% end %}
       {% for k in U %} {{k.stringify}}: other[{{k.symbolize}}], {% end %}
-    }
+    )
     {% end %}
   end
 
@@ -479,11 +479,15 @@ struct NamedTuple
   # tuple.map { |k, v| "#{k}: #{v}" } # => ["name: Crystal", "year: 2011"]
   # ```
   def map
-    array = Array(typeof(yield first_key_internal, first_value_internal)).new(size)
-    each do |k, v|
-      array.push yield k, v
-    end
-    array
+    {% if T.size == 0 %}
+      [] of NoReturn
+    {% else %}
+      [
+        {% for key in T %}
+          (yield {{ key.symbolize }}, self[{{ key.symbolize }}]),
+        {% end %}
+      ]
+    {% end %}
   end
 
   # Returns a new `Array` of tuples populated with each key-value pair.
@@ -492,12 +496,18 @@ struct NamedTuple
   # tuple = {name: "Crystal", year: 2011}
   # tuple.to_a # => [{:name, "Crystal"}, {:year, 2011}]
   # ```
+  #
+  # NOTE: `to_a` on an empty named tuple produces an `Array(Tuple(Symbol, NoReturn))`
   def to_a
-    ary = Array({typeof(first_key_internal), typeof(first_value_internal)}).new(size)
-    each do |key, value|
-      ary << {key.as(typeof(first_key_internal)), value.as(typeof(first_value_internal))}
-    end
-    ary
+    {% if T.size == 0 %}
+      [] of {Symbol, NoReturn}
+    {% else %}
+      [
+        {% for key in T %}
+          { {{key.symbolize}}, self[{{key.symbolize}}] },
+        {% end %}
+      ]
+    {% end %}
   end
 
   # Returns a `Hash` with the keys and values in this named tuple.
@@ -506,9 +516,11 @@ struct NamedTuple
   # tuple = {name: "Crystal", year: 2011}
   # tuple.to_h # => {:name => "Crystal", :year => 2011}
   # ```
+  #
+  # NOTE: `to_h` on an empty named tuple produces a `Hash(Symbol, NoReturn)`
   def to_h
     {% if T.size == 0 %}
-      {} of NoReturn => NoReturn
+      {} of Symbol => NoReturn
     {% else %}
       {
         {% for key in T %}
@@ -572,11 +584,11 @@ struct NamedTuple
   # Returns a named tuple with the same keys but with cloned values, using the `clone` method.
   def clone
     {% begin %}
-      {
+      NamedTuple.new(
         {% for key in T %}
           {{key.stringify}}: self[{{key.symbolize}}].clone,
         {% end %}
-      }
+      )
     {% end %}
   end
 
@@ -588,5 +600,19 @@ struct NamedTuple
   private def first_value_internal
     i = 0
     values[i]
+  end
+
+  # Returns a value with the same type as the value for the given *key* of an
+  # instance of `self`. *key* must be a symbol or string literal known at
+  # compile-time.
+  #
+  # The most common usage of this macro is to extract the appropriate element
+  # type in `NamedTuple`'s class methods. This macro works even if the
+  # corresponding element type is private.
+  #
+  # NOTE: there should never be a need to call this method outside the standard library.
+  private macro element_type(key)
+    x = uninitialized self
+    x[{{ key.symbolize }}]
   end
 end

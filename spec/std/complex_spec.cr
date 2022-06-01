@@ -170,6 +170,10 @@ describe "Complex" do
     c.hash.should eq(4_f64.hash)
   end
 
+  it "test zero" do
+    Complex.zero.should eq(Complex.new(0, 0))
+  end
+
   it "test zero?" do
     Complex.new(0, 0).zero?.should eq true
     Complex.new(0, 3.4).zero?.should eq false
@@ -177,8 +181,17 @@ describe "Complex" do
     Complex.new(1.2, 3.4).zero?.should eq false
   end
 
+  it "test additive_identity" do
+    Complex.additive_identity.should eq(Complex.new(0, 0))
+  end
+
+  it "test multiplicative_identity" do
+    Complex.multiplicative_identity.should eq(Complex.new(1, 0))
+  end
+
   it "rounds" do
-    (Complex.new(1.125, 0.875).round(2)).should eq(Complex.new(1.13, 0.88))
+    (Complex.new(1.125, 0.875).round(2)).should eq(Complex.new(1.12, 0.88))
+    (Complex.new(1.135, 0.865).round(2)).should eq(Complex.new(1.14, 0.86))
     (Complex.new(1.125, 0.875).round(digits: 1)).should eq(Complex.new(1.1, 0.9))
   end
 

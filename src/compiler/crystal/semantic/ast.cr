@@ -4,7 +4,6 @@ module Crystal
   def self.check_type_can_be_stored(node, type, msg)
     return if type.can_be_stored?
 
-    type = type.union_types.find { |t| !t.can_be_stored? } if type.is_a?(UnionType)
     node.raise "#{msg} yet, use a more specific type"
   end
 
@@ -29,6 +28,25 @@ module Crystal
         true
       else
         false
+      end
+    end
+
+    # `number_autocast` defines if casting numeric expressions to larger ones is enabled
+    def supports_autocast?(number_autocast : Bool = true)
+      case self
+      when NumberLiteral, SymbolLiteral
+        true
+      else
+        if number_autocast
+          case self_type = self.type?
+          when IntegerType
+            self_type.kind.bytesize <= 64
+          when FloatType
+            self_type.kind.f32?
+          end
+        else
+          false
+        end
       end
     end
   end
@@ -127,7 +145,7 @@ module Crystal
     property yield_vars : Array(Var)?
     property previous : DefWithMetadata?
     property next : Def?
-    getter special_vars : Set(String)?
+    property special_vars : Set(String)?
     property block_nest = 0
     getter? raises = false
     property? closure = false
@@ -222,8 +240,8 @@ module Crystal
     def free_var?(node : Path)
       free_vars = @free_vars
       return false unless free_vars
-
-      !node.global? && node.names.size == 1 && free_vars.includes?(node.names.first)
+      name = node.single_name?
+      !name.nil? && free_vars.includes?(name)
     end
 
     def free_var?(any)
@@ -543,21 +561,27 @@ module Crystal
     # not when reading it.
     property? no_init_flag = false
 
+    enum Kind
+      Class
+      Instance
+      Global
+    end
+
     def kind
       case name[0]
       when '@'
         if name[1] == '@'
-          :class
+          Kind::Class
         else
-          :instance
+          Kind::Instance
         end
       else
-        :global
+        Kind::Global
       end
     end
 
     def global?
-      kind == :global
+      kind.global?
     end
   end
 
@@ -705,12 +729,18 @@ module Crystal
   end
 
   class NilReason
+    enum Reason
+      UsedBeforeInitialized
+      UsedSelfBeforeInitialized
+      InitializedInRescue
+    end
+
     getter name : String
-    getter reason : Symbol
+    getter reason : Reason
     getter nodes : Array(ASTNode)?
     getter scope : Type?
 
-    def initialize(@name, @reason, @nodes = nil, @scope = nil)
+    def initialize(@name, @reason : Reason, @nodes = nil, @scope = nil)
     end
   end
 
@@ -792,28 +822,12 @@ module Crystal
     def initialize(@name, @type)
     end
 
-    def class_desc
+    def self.class_desc
       "MetaVar"
     end
 
     def clone_without_location
       self
-    end
-  end
-
-  class NumberLiteral
-    def can_be_autocast_to?(other_type)
-      case {self.type, other_type}
-      when {IntegerType, IntegerType}
-        min, max = other_type.range
-        min <= integer_value <= max
-      when {IntegerType, FloatType}
-        true
-      when {FloatType, FloatType}
-        true
-      else
-        false
-      end
     end
   end
 

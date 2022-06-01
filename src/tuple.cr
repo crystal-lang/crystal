@@ -13,6 +13,8 @@
 # tuple[2]                  # => 'x'
 # ```
 #
+# See [`Tuple` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/tuple.html) in the language reference.
+#
 # The compiler knows what types are in each position, so when indexing
 # a tuple with an integer literal the compiler will return
 # the value in that index and with the expected type, like in the above
@@ -92,16 +94,14 @@ struct Tuple
       args
     {% elsif @type.name(generic_args: false) == "Tuple()" %}
       # special case: empty tuple
+      # TODO: check against `Tuple()` directly after 1.4.0
       args
     {% else %}
       # explicitly provided type vars
       {% begin %}
         {
           {% for i in 0...@type.size %}
-            args[{{ i }}].as(typeof(begin
-              x = uninitialized self
-              x[{{ i }}]
-            end)),
+            args[{{ i }}].as(typeof(element_type({{ i }}))),
           {% end %}
         }
       {% end %}
@@ -253,7 +253,7 @@ struct Tuple
   # "hello"
   # 'x'
   # ```
-  def each : Nil
+  def each(& : Union(*T) ->) : Nil
     {% for i in 0...T.size %}
       yield self[{{i}}]
     {% end %}
@@ -460,7 +460,7 @@ struct Tuple
   # tuple = {1, 2.5, "a"}
   # tuple.map &.to_s # => {"1", "2.5", "a"}
   # ```
-  def map
+  def map(& : Union(*T) ->)
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
@@ -521,11 +521,39 @@ struct Tuple
   # "hello"
   # 1
   # ```
-  def reverse_each
+  def reverse_each(& : Union(*T) ->)
     {% for i in 1..T.size %}
       yield self[{{T.size - i}}]
     {% end %}
     nil
+  end
+
+  # :inherit:
+  def reduce
+    {% if T.empty? %}
+      raise Enumerable::EmptyError.new
+    {% else %}
+      memo = self[0]
+      {% for i in 1...T.size %}
+        memo = yield memo, self[{{ i }}]
+      {% end %}
+      memo
+    {% end %}
+  end
+
+  # :inherit:
+  def reduce(memo)
+    {% for i in 0...T.size %}
+      memo = yield memo, self[{{ i }}]
+    {% end %}
+    memo
+  end
+
+  # :inherit:
+  def reduce?
+    {% unless T.empty? %}
+      reduce { |memo, elem| yield memo, elem }
+    {% end %}
   end
 
   # Returns the first element of this tuple. Doesn't compile
@@ -586,5 +614,19 @@ struct Tuple
     {% else %}
       self[{{T.size - 1}}]
     {% end %}
+  end
+
+  # Returns a value with the same type as the element at the given *index* of
+  # an instance of `self`. *index* must be an integer or range literal known at
+  # compile-time.
+  #
+  # The most common usage of this macro is to extract the appropriate element
+  # type in `Tuple`'s class methods. This macro works even if the corresponding
+  # element type is private.
+  #
+  # NOTE: there should never be a need to call this method outside the standard library.
+  private macro element_type(index)
+    x = uninitialized self
+    x[{{ index }}]
   end
 end

@@ -235,6 +235,27 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
+  it "does not consider global paths as free variables (1)" do
+    assert_error <<-CR, "undefined constant ::Foo"
+      def foo(x : ::Foo) forall Foo
+      end
+
+      foo(1)
+      CR
+  end
+
+  it "does not consider global paths as free variables (2)" do
+    assert_error <<-CR, "no overload matches"
+      class Foo
+      end
+
+      def foo(x : ::Foo) forall Foo
+      end
+
+      foo(1)
+      CR
+  end
+
   it "prefers more specific overload than one with free variables" do
     assert_type("
       require \"prelude\"
@@ -892,6 +913,17 @@ describe "Semantic: def overload" do
       "no overload matches"
   end
 
+  it "errors if no overload matches on union against named arg with external param name (#10516)" do
+    assert_error %(
+      def f(a b : Int32)
+      end
+
+      a = 1 || nil
+      f(a: a)
+      ),
+      "no overload matches"
+  end
+
   it "dispatches with named arg" do
     assert_type(%(
       def f(a : Int32, b : Int32)
@@ -1030,7 +1062,7 @@ describe "Semantic: def overload" do
 			end
 
 			do_something value: 7.as(Int32 | Char)
-			)) { union_of float64, bool }
+			), inject_primitives: true) { union_of float64, bool }
   end
 
   it "resets free vars after a partial match is rejected (#10270)" do

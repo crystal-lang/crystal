@@ -98,21 +98,24 @@ module HTTP
     end
 
     describe "#to_set_cookie_header" do
-      it { HTTP::Cookie.new("x", "v$1").to_set_cookie_header.should eq "x=v$1; path=/" }
+      it { HTTP::Cookie.new("x", "v$1").to_set_cookie_header.should eq "x=v$1" }
 
-      it { HTTP::Cookie.new("x", "seven", domain: "127.0.0.1").to_set_cookie_header.should eq "x=seven; domain=127.0.0.1; path=/" }
+      it { HTTP::Cookie.new("x", "seven", domain: "127.0.0.1").to_set_cookie_header.should eq "x=seven; domain=127.0.0.1" }
 
-      it { HTTP::Cookie.new("x", "expiring", expires: Time.unix(1257894000)).to_set_cookie_header.should eq "x=expiring; path=/; expires=Tue, 10 Nov 2009 23:00:00 GMT" }
-      it { HTTP::Cookie.new("x", "expiring-1601", expires: Time.utc(1601, 1, 1, 1, 1, 1, nanosecond: 1)).to_set_cookie_header.should eq "x=expiring-1601; path=/; expires=Mon, 01 Jan 1601 01:01:01 GMT" }
+      it { HTTP::Cookie.new("x", "y", path: "/").to_set_cookie_header.should eq "x=y; path=/" }
+      it { HTTP::Cookie.new("x", "y", path: "/example").to_set_cookie_header.should eq "x=y; path=/example" }
+
+      it { HTTP::Cookie.new("x", "expiring", expires: Time.unix(1257894000)).to_set_cookie_header.should eq "x=expiring; expires=Tue, 10 Nov 2009 23:00:00 GMT" }
+      it { HTTP::Cookie.new("x", "expiring-1601", expires: Time.utc(1601, 1, 1, 1, 1, 1, nanosecond: 1)).to_set_cookie_header.should eq "x=expiring-1601; expires=Mon, 01 Jan 1601 01:01:01 GMT" }
 
       it "samesite" do
-        HTTP::Cookie.new("x", "samesite-default", samesite: nil).to_set_cookie_header.should eq "x=samesite-default; path=/"
-        HTTP::Cookie.new("x", "samesite-lax", samesite: :lax).to_set_cookie_header.should eq "x=samesite-lax; path=/; SameSite=Lax"
-        HTTP::Cookie.new("x", "samesite-strict", samesite: :strict).to_set_cookie_header.should eq "x=samesite-strict; path=/; SameSite=Strict"
-        HTTP::Cookie.new("x", "samesite-none", samesite: :none).to_set_cookie_header.should eq "x=samesite-none; path=/; SameSite=None"
+        HTTP::Cookie.new("x", "samesite-default", samesite: nil).to_set_cookie_header.should eq "x=samesite-default"
+        HTTP::Cookie.new("x", "samesite-lax", samesite: :lax).to_set_cookie_header.should eq "x=samesite-lax; SameSite=Lax"
+        HTTP::Cookie.new("x", "samesite-strict", samesite: :strict).to_set_cookie_header.should eq "x=samesite-strict; SameSite=Strict"
+        HTTP::Cookie.new("x", "samesite-none", samesite: :none).to_set_cookie_header.should eq "x=samesite-none; SameSite=None"
       end
 
-      it { HTTP::Cookie.new("empty-value", "").to_set_cookie_header.should eq "empty-value=; path=/" }
+      it { HTTP::Cookie.new("empty-value", "").to_set_cookie_header.should eq "empty-value=" }
     end
   end
 
@@ -122,7 +125,7 @@ module HTTP
         cookie = parse_first_cookie("key=value")
         cookie.name.should eq("key")
         cookie.value.should eq("value")
-        cookie.to_set_cookie_header.should eq("key=value; path=/")
+        cookie.to_set_cookie_header.should eq("key=value")
       end
 
       it "parse_set_cookie with space" do
@@ -135,28 +138,35 @@ module HTTP
         cookie = parse_first_cookie("key=")
         cookie.name.should eq("key")
         cookie.value.should eq("")
-        cookie.to_set_cookie_header.should eq("key=; path=/")
+        cookie.to_set_cookie_header.should eq("key=")
       end
 
       it "parses key=key=value" do
         cookie = parse_first_cookie("key=key=value")
         cookie.name.should eq("key")
         cookie.value.should eq("key=value")
-        cookie.to_set_cookie_header.should eq("key=key=value; path=/")
+        cookie.to_set_cookie_header.should eq("key=key=value")
       end
 
       it "parses key=key%3Dvalue" do
         cookie = parse_first_cookie("key=key%3Dvalue")
         cookie.name.should eq("key")
         cookie.value.should eq("key%3Dvalue")
-        cookie.to_set_cookie_header.should eq("key=key%3Dvalue; path=/")
+        cookie.to_set_cookie_header.should eq("key=key%3Dvalue")
       end
 
       it "parses special character in name" do
         cookie = parse_first_cookie("key%3Dvalue=value")
         cookie.name.should eq("key%3Dvalue")
         cookie.value.should eq("value")
-        cookie.to_set_cookie_header.should eq("key%3Dvalue=value; path=/")
+        cookie.to_set_cookie_header.should eq("key%3Dvalue=value")
+      end
+
+      it %(parses key="value") do
+        cookie = parse_first_cookie(%(key="value"))
+        cookie.name.should eq("key")
+        cookie.value.should eq("value")
+        cookie.to_set_cookie_header.should eq("key=value")
       end
 
       it "parses multiple cookies" do
@@ -184,7 +194,7 @@ module HTTP
         cookie.name.should eq("key")
         cookie.value.should eq("value")
         cookie.secure.should be_true
-        cookie.to_set_cookie_header.should eq("key=value; path=/; Secure")
+        cookie.to_set_cookie_header.should eq("key=value; Secure")
       end
 
       it "parses HttpOnly" do
@@ -192,7 +202,7 @@ module HTTP
         cookie.name.should eq("key")
         cookie.value.should eq("value")
         cookie.http_only.should be_true
-        cookie.to_set_cookie_header.should eq("key=value; path=/; HttpOnly")
+        cookie.to_set_cookie_header.should eq("key=value; HttpOnly")
       end
 
       describe "SameSite" do
@@ -202,7 +212,7 @@ module HTTP
             cookie.name.should eq "key"
             cookie.value.should eq "value"
             cookie.samesite.should eq HTTP::Cookie::SameSite::Lax
-            cookie.to_set_cookie_header.should eq "key=value; path=/; SameSite=Lax"
+            cookie.to_set_cookie_header.should eq "key=value; SameSite=Lax"
           end
         end
 
@@ -212,7 +222,7 @@ module HTTP
             cookie.name.should eq "key"
             cookie.value.should eq "value"
             cookie.samesite.should eq HTTP::Cookie::SameSite::Strict
-            cookie.to_set_cookie_header.should eq "key=value; path=/; SameSite=Strict"
+            cookie.to_set_cookie_header.should eq "key=value; SameSite=Strict"
           end
         end
 
@@ -222,7 +232,7 @@ module HTTP
             cookie.name.should eq "key"
             cookie.value.should eq "value"
             cookie.samesite.should be_nil
-            cookie.to_set_cookie_header.should eq "key=value; path=/"
+            cookie.to_set_cookie_header.should eq "key=value"
           end
         end
       end
@@ -232,7 +242,15 @@ module HTTP
         cookie.name.should eq("key")
         cookie.value.should eq("value")
         cookie.domain.should eq("www.example.com")
-        cookie.to_set_cookie_header.should eq("key=value; domain=www.example.com; path=/")
+        cookie.to_set_cookie_header.should eq("key=value; domain=www.example.com")
+      end
+
+      it "leading dots in domain names are ignored" do
+        cookie = parse_set_cookie("key=value; domain=.example.com")
+        cookie.name.should eq("key")
+        cookie.value.should eq("value")
+        cookie.domain.should eq("example.com")
+        cookie.to_set_cookie_header.should eq("key=value; domain=example.com")
       end
 
       it "parses expires iis" do
@@ -291,45 +309,78 @@ module HTTP
       end
 
       it "parse domain as IP" do
-        parse_set_cookie("a=1; domain=127.0.0.1; path=/; HttpOnly").domain.should eq "127.0.0.1"
+        parse_set_cookie("a=1; domain=127.0.0.1; HttpOnly").domain.should eq "127.0.0.1"
       end
 
-      it "parse max-age as seconds from current time" do
+      it "parse max-age as Time::Span" do
         cookie = parse_set_cookie("a=1; max-age=10")
-        delta = cookie.expires.not_nil! - Time.utc
-        delta.should be_close(10.seconds, 1.second)
+        cookie.max_age.should eq 10.seconds
 
         cookie = parse_set_cookie("a=1; max-age=0")
-        delta = Time.utc - cookie.expires.not_nil!
-        delta.should be_close(0.seconds, 1.second)
+        cookie.max_age.should eq 0.seconds
+      end
+    end
+
+    describe "expiration_time" do
+      it "sets expiration_time to be current when max-age=0" do
+        cookie = parse_set_cookie("bla=1; max-age=0")
+        expiration_time = cookie.expiration_time.should_not be_nil
+        expiration_time.should be_close(Time.utc, 1.seconds)
       end
 
-      it "parses large max-age (#8744)" do
-        cookie = parse_set_cookie("a=1; max-age=3153600000")
-        delta = cookie.expires.not_nil! - Time.utc
-        delta.should be_close(3153600000.seconds, 1.second)
+      it "sets expiration_time with old date" do
+        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan 1970 00:00:00 -0000")
+        cookie.expiration_time.should eq Time.utc(1970, 1, 1, 0, 0, 0)
+      end
+
+      it "sets future expiration_time with max-age" do
+        cookie = parse_set_cookie("bla=1; max-age=1")
+        cookie.expiration_time.not_nil!.should be > Time.utc
+      end
+
+      it "sets future expiration_time with max-age and future cookie creation time" do
+        cookie = parse_set_cookie("bla=1; max-age=1")
+        cookie_expiration = cookie.expiration_time.should_not be_nil
+        cookie_expiration.should be_close(Time.utc, 1.seconds)
+
+        cookie.expired?(time_reference: cookie.creation_time + 1.second).should be_true
+      end
+
+      it "sets future expiration_time with expires" do
+        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan 2020 00:00:00 -0000")
+        cookie.expiration_time.should eq Time.utc(2020, 1, 1, 0, 0, 0)
+      end
+
+      it "returns nil expiration_time when expires and max-age are not set" do
+        cookie = parse_set_cookie("bla=1")
+        cookie.expiration_time.should be_nil
       end
     end
 
     describe "expired?" do
-      it "by max-age=0" do
-        parse_set_cookie("bla=1; max-age=0").expired?.should eq true
+      it "expired when max-age=0" do
+        cookie = parse_set_cookie("bla=1; max-age=0")
+        cookie.expired?.should be_true
       end
 
-      it "by old date" do
-        parse_set_cookie("bla=1; expires=Thu, 01 Jan 1970 00:00:00 -0000").expired?.should eq true
+      it "expired with old expires date" do
+        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan 1970 00:00:00 -0000")
+        cookie.expired?.should be_true
       end
 
-      it "not expired" do
-        parse_set_cookie("bla=1; max-age=1").expired?.should eq false
+      it "not expired with future max-age" do
+        cookie = parse_set_cookie("bla=1; max-age=1")
+        cookie.expired?.should be_false
       end
 
-      it "not expired" do
-        parse_set_cookie("bla=1; expires=Thu, 01 Jan #{Time.utc.year + 2} 00:00:00 -0000").expired?.should eq false
+      it "not expired with future expires" do
+        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan #{Time.utc.year + 2} 00:00:00 -0000")
+        cookie.expired?.should be_false
       end
 
-      it "not expired" do
-        parse_set_cookie("bla=1").expired?.should eq false
+      it "not expired when max-age and expires are not provided" do
+        cookie = parse_set_cookie("bla=1")
+        cookie.expired?.should be_false
       end
     end
   end
@@ -450,20 +501,20 @@ module HTTP
     describe "adding response headers" do
       it "overwrites all pre-existing Set-Cookie headers" do
         headers = Headers.new
-        headers.add("Set-Cookie", "a=b; path=/")
-        headers.add("Set-Cookie", "c=d; path=/")
+        headers.add("Set-Cookie", "a=b")
+        headers.add("Set-Cookie", "c=d")
 
         cookies = Cookies.new
         cookies << Cookie.new("x", "y")
 
         headers.get("Set-Cookie").size.should eq 2
-        headers.get("Set-Cookie").includes?("a=b; path=/").should be_true
-        headers.get("Set-Cookie").includes?("c=d; path=/").should be_true
+        headers.get("Set-Cookie").should contain("a=b")
+        headers.get("Set-Cookie").should contain("c=d")
 
         cookies.add_response_headers(headers)
 
         headers.get("Set-Cookie").size.should eq 1
-        headers.get("Set-Cookie")[0].should eq "x=y; path=/"
+        headers.get("Set-Cookie")[0].should eq "x=y"
       end
 
       it "sets one Set-Cookie header per cookie" do
@@ -476,8 +527,8 @@ module HTTP
         cookies.add_response_headers(headers)
         headers.get?("Set-Cookie").should_not be_nil
 
-        headers.get("Set-Cookie").includes?("a=b; path=/").should be_true
-        headers.get("Set-Cookie").includes?("c=d; path=/").should be_true
+        headers.get("Set-Cookie").should contain("a=b")
+        headers.get("Set-Cookie").should contain("c=d")
       end
 
       it "uses encode_www_form on Set-Cookie value" do
@@ -485,13 +536,13 @@ module HTTP
         cookies = Cookies.new
         cookies << Cookie.new("a", "b+c")
         cookies.add_response_headers(headers)
-        headers.get("Set-Cookie").includes?("a=b+c; path=/").should be_true
+        headers.get("Set-Cookie").should contain("a=b+c")
       end
 
       describe "when no cookies are set" do
         it "does not set a Set-Cookie header" do
           headers = Headers.new
-          headers.add("Set-Cookie", "a=b; path=/")
+          headers.add("Set-Cookie", "a=b")
           cookies = Cookies.new
 
           headers.get?("Set-Cookie").should_not be_nil

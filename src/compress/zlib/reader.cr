@@ -58,7 +58,7 @@ class Compress::Zlib::Reader < IO
   end
 
   # See `IO#read`.
-  def unbuffered_read(slice : Bytes)
+  def unbuffered_read(slice : Bytes) : Int32
     check_open
 
     return 0 if slice.empty?
@@ -81,15 +81,15 @@ class Compress::Zlib::Reader < IO
   end
 
   # Always raises `IO::Error` because this is a read-only `IO`.
-  def unbuffered_write(slice : Bytes)
+  def unbuffered_write(slice : Bytes) : NoReturn
     raise IO::Error.new "Can't write to Compress::Zlib::Reader"
   end
 
-  def unbuffered_flush
+  def unbuffered_flush : NoReturn
     raise IO::Error.new "Can't flush Compress::Zlib::Reader"
   end
 
-  def unbuffered_close
+  def unbuffered_close : Nil
     return if @closed
     @closed = true
 
@@ -97,7 +97,7 @@ class Compress::Zlib::Reader < IO
     @io.close if @sync_close
   end
 
-  def unbuffered_rewind
+  def unbuffered_rewind : Nil
     check_open
 
     @io.rewind
