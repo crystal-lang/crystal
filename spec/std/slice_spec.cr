@@ -879,6 +879,24 @@ describe "Slice" do
 
       Slice.join(Slice[a, b, c]).should eq(Slice[1, 'a', "xyz"])
     end
+
+    it "concatenates an empty indexable of slices" do
+      a = Slice.join(Array(Slice(Int32)).new)
+      a.should be_a(Slice(Int32))
+      a.should be_empty
+
+      b = Slice.join(Deque(Slice(Int32)).new)
+      b.should be_a(Slice(Int32))
+      b.should be_empty
+    end
+  end
+
+  describe ".additive_identity" do
+    it "returns an empty slice" do
+      a = Slice(Int32).additive_identity
+      a.should be_a(Slice(Int32))
+      a.should be_empty
+    end
   end
 end
 

@@ -204,6 +204,13 @@ struct Slice(T)
     Slice.new(buf, total_size)
   end
 
+  # Returns the additive identity of this type.
+  #
+  # This is an empty slice.
+  def self.additive_identity : self
+    self.new(0)
+  end
+
   # :inherit:
   #
   # Raises if this slice is read-only.
