@@ -1645,6 +1645,13 @@ module Crystal
       if @token.type.op_eq?
         write " = "
         next_token_skip_space
+
+        if @token.type.newline?
+          write_line
+          next_token_skip_space_or_newline
+          write_indent(@indent + 2)
+        end
+
         if @token.type.delimiter_start?
           indent(@column, StringLiteral.new(node.real_name))
         else
