@@ -742,14 +742,20 @@ module Indexable(T)
     hasher
   end
 
-  # Returns the index of the first appearance of *value* in `self`
-  # starting from the given *offset*, or `nil` if the value is not in `self`.
+  # Returns the index of the first appearance of *obj* in `self`
+  # starting from the given *offset*, or `nil` if *obj* is not in `self`.
   #
   # ```
   # [1, 2, 3, 1, 2, 3].index(2, offset: 2) # => 4
   # ```
-  def index(object, offset : Int = 0)
-    index(offset) { |e| e == object }
+  def index(obj, offset : Int = 0)
+    index(offset) { |e| e == obj }
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#index(obj, offset)` instead")]
+  def index(*, object, offset : Int = 0)
+    index(object, offset)
   end
 
   # Returns the index of the first object in `self` for which the block
@@ -771,20 +777,26 @@ module Indexable(T)
     nil
   end
 
-  # Returns the index of the first appearance of *value* in `self`
+  # Returns the index of the first appearance of *obj* in `self`
   # starting from the given *offset*. Raises `Enumerable::NotFoundError` if
-  # *value* is not in `self`.
+  # *obj* is not in `self`.
   #
   # ```
   # [1, 2, 3, 1, 2, 3].index!(2, offset: 2) # => 4
   # ```
-  def index!(object, offset : Int = 0)
-    index(object, offset) || raise Enumerable::NotFoundError.new
+  def index!(obj, offset : Int = 0)
+    index(obj, offset) || raise Enumerable::NotFoundError.new
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#index!(obj, offset)` instead")]
+  def index!(*, object, offset : Int = 0)
+    index!(object, offset)
   end
 
   # Returns the index of the first object in `self` for which the block
   # is truthy, starting from the given *offset*. Raises
-  # `Enumerable::NotFoundError` if *value* is not in `self`.
+  # `Enumerable::NotFoundError` if no match is found.
   #
   # ```
   # [1, 2, 3, 1, 2, 3].index!(offset: 2) { |x| x < 2 } # => 3
