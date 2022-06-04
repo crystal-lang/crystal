@@ -273,7 +273,7 @@ struct BitArray
   # ba.rindex(true, offset: 8) # => 5
   # ba.rindex(true, offset: 4) # => nil
   # ```
-  def rindex(obj : Bool, offset = size - 1) : Int32?
+  def rindex(obj : Bool, offset : Int = size - 1) : Int32?
     offset = check_index_out_of_bounds(offset) { return nil }
     start_bit_index, start_sub_index = offset.divmod(32)
 
