@@ -227,7 +227,7 @@ struct BitArray
     c == 1
   end
 
-  # Returns the index of the first appearance of *object* in `self`
+  # Returns the index of the first appearance of *obj* in `self`
   # starting from the given *offset*, or `nil` if the value is not in `self`.
   #
   # ```
@@ -237,7 +237,7 @@ struct BitArray
   # ba.index(true, offset: 8)  # => 11
   # ba.index(true, offset: 12) # => nil
   # ```
-  def index(object : Bool, offset : Int = 0) : Int32?
+  def index(obj : Bool, offset : Int = 0) : Int32?
     offset = check_index_out_of_bounds(offset) { return nil }
     start_bit_index, start_sub_index = offset.divmod(32)
     end_bit_index, end_sub_index = (@size - 1).divmod(32)
@@ -255,13 +255,13 @@ struct BitArray
 
   private macro check_index_in_bits(bits_index, from, to)
     bits = @bits[{{ bits_index }}]
-    bits = ~bits if !object
+    bits = ~bits if !obj
     bits &= uint32_mask({{ from }}, {{ to }})
     return {{ bits_index }} * 32 + bits.trailing_zeros_count if bits != 0
   end
 
-  # Returns the index of the last appearance of *value* in `self`, or
-  # `nil` if *value* is not in `self`.
+  # Returns the index of the last appearance of *obj* in `self`, or
+  # `nil` if *obj* is not in `self`.
   #
   # If *offset* is given, the search starts from that index towards the
   # first elements in `self`.
@@ -273,7 +273,7 @@ struct BitArray
   # ba.rindex(true, offset: 8) # => 5
   # ba.rindex(true, offset: 4) # => nil
   # ```
-  def rindex(value : Bool, offset = size - 1) : Int32?
+  def rindex(obj : Bool, offset = size - 1) : Int32?
     offset = check_index_out_of_bounds(offset) { return nil }
     start_bit_index, start_sub_index = offset.divmod(32)
 
@@ -285,7 +285,7 @@ struct BitArray
 
   private macro check_rindex_in_bits(bits_index, from, to)
     bits = @bits[{{ bits_index }}]
-    bits = ~bits if !value
+    bits = ~bits if !obj
     bits &= uint32_mask({{ from }}, {{ to }})
     return {{ bits_index }} * 32 + 31 - bits.leading_zeros_count if bits != 0
   end
