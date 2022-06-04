@@ -23,4 +23,55 @@ module Container(T)
 
   # Returns the number of elements in this container.
   abstract def size
+
+  def self.cartesian_product(containers : Container(Container))
+    capacity = containers.product(&.size)
+    result = Array(Array(typeof(Enumerable.element_type Enumerable.element_type containers))).new(capacity)
+    each_cartesian(containers) do |product|
+      result << product
+    end
+    result
+  end
+
+  def self.each_cartesian(containers : Container(Container), reuse = false, &block)
+    lens = containers.map &.size
+    return if lens.any? &.zero?
+
+    containers = containers.map { |c| dup_as_array(c) }
+    n = containers.size
+    pool = Array.new(n) { |i| containers.unsafe_fetch(i).unsafe_fetch(0) }
+    indices = Array.new(n, 0)
+    reuse = Indexable(typeof(pool.first)).check_reuse(reuse, n)
+
+    while true
+      yield pool_slice(pool, n, reuse)
+
+      i = n
+
+      while true
+        i -= 1
+        return if i < 0
+        indices[i] += 1
+        if move_to_next = (indices[i] >= lens[i])
+          indices[i] = 0
+        end
+        pool[i] = containers[i].unsafe_fetch(indices[i])
+        break unless move_to_next
+      end
+    end
+  end
+end
+
+private def pool_slice(pool, size, reuse)
+  if reuse
+    reuse.clear
+    size.times { |i| reuse << pool[i] }
+    reuse
+  else
+    pool[0, size]
+  end
+end
+
+private def dup_as_array(a)
+  a.is_a?(Array) ? a.dup : a.to_a
 end
