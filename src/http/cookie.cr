@@ -220,7 +220,7 @@ module HTTP
   # Represents a collection of cookies as it can be present inside
   # a HTTP request or response.
   class Cookies
-    include Enumerable(Cookie)
+    include Container(Cookie)
 
     # Creates a new instance by parsing the `Cookie` and `Set-Cookie`
     # headers in the given `HTTP::Headers`.

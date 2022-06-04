@@ -7,10 +7,7 @@
 # Types including this module are typically `Array`-like types.
 module Indexable(T)
   include Iterable(T)
-  include Enumerable(T)
-
-  # Returns the number of elements in this container.
-  abstract def size
+  include Container(T)
 
   # Returns the element at the given *index*, without doing any bounds check.
   #

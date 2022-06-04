@@ -21,7 +21,7 @@
 # s2.subset_of? s1 # => true
 # ```
 struct Set(T)
-  include Enumerable(T)
+  include Container(T)
   include Iterable(T)
 
   # Creates a new, empty `Set`.

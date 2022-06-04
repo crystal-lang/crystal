@@ -3,7 +3,7 @@
 # Two headers are considered the same if their downcase representation is the same
 # (in which `_` is the downcase version of `-`).
 struct HTTP::Headers
-  include Enumerable({String, Array(String)})
+  include Container({String, Array(String)})
 
   # :nodoc:
   record Key, name : String do
@@ -153,6 +153,10 @@ struct HTTP::Headers
 
   def has_key?(key) : Bool
     @hash.has_key? wrap(key)
+  end
+
+  def size : Int32
+    @hash.size
   end
 
   def empty? : Bool

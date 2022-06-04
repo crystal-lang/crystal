@@ -33,7 +33,7 @@ require "crystal/hasher"
 # it was inserted into the `Hash` may lead to undefined behaviour. This can be
 # restored by re-indexing the hash with `#rehash`.
 class Hash(K, V)
-  include Enumerable({K, V})
+  include Container({K, V})
   include Iterable({K, V})
 
   # ===========================================================================
