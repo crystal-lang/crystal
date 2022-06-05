@@ -357,7 +357,10 @@ class Crystal::Repl::Context
   end
 
   getter(loader : Loader) {
-    args = Process.parse_arguments(program.lib_flags)
+    lib_flags = program.lib_flags
+    lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` }
+
+    args = Process.parse_arguments(lib_flags)
     # FIXME: Part 1: This is a workaround for initial integration of the interpreter:
     # The loader can't handle the static libgc.a usually shipped with crystal and loading as a shared library conflicts
     # with the compiler's own GC.
