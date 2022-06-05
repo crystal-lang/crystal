@@ -21,6 +21,61 @@ describe "Codegen: while" do
     run("a = 0; while a < 10; a &+= 1; break if a > 5; end; a").to_i.should eq(6)
   end
 
+  it "break with value" do
+    run(%(
+      struct Nil; def to_i!; 0; end; end
+
+      a = 0
+      b = while a < 10
+        a &+= 1
+        break a &+ 3
+      end
+      b.to_i!
+      )).to_i.should eq(4)
+  end
+
+  it "conditional break with value" do
+    run(%(
+      struct Nil; def to_i!; 0; end; end
+
+      a = 0
+      b = while a < 10
+        a &+= 1
+        break a &+ 3 if a > 5
+      end
+      b.to_i!
+      )).to_i.should eq(9)
+  end
+
+  it "break with value, condition fails" do
+    run(%(
+      a = while 1 == 2
+        break 1
+      end
+      a.nil?
+      )).to_b.should be_true
+  end
+
+  it "endless break with value" do
+    run(%(
+      a = 0
+      while true
+        a &+= 1
+        break a &+ 3
+      end
+      )).to_i.should eq(4)
+  end
+
+  it "endless conditional break with value" do
+    run(%(
+      a = 0
+      while true
+        a &+= 1
+        break a &+ 3 if a > 5
+      end
+      )).to_i.should eq(9)
+  end
+
   it "codegens endless while" do
     codegen "while true; end"
   end

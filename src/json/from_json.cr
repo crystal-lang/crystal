@@ -65,6 +65,57 @@ def Deque.from_json(string_or_io) : Nil
   end
 end
 
+module Iterator(T)
+  # Reads the content of a JSON array into an iterator in a lazy way.
+  # With this method it should be possible to process a huge JSON array, without
+  # the requirement that the whole array fits into memory.
+  #
+  # The following example produces a huge file, uses a lot of CPU but should not require much memory.
+  #
+  # ```
+  # File.open("/tmp/test.json", "w+") do |f|
+  #   (0..1_000_000_000).each.to_json(f)
+  # end
+  #
+  # File.open("/tmp/test.json", "r") do |f|
+  #   p Iterator(Int32).from_json(f).skip(1_000_000_000).to_a
+  # end
+  # ```
+  #
+  # WARNING: The `string_or_io` can't be used by anything else until the iterator is fully consumed.
+  def self.from_json(string_or_io)
+    Iterator(T).new(JSON::PullParser.new(string_or_io))
+  end
+
+  # Creates a new iterator which iterates over a JSON array. See also `Iterator#from_json`.
+  #
+  # WARNING: The `JSON::PullParser` can't be used by anything else until the iterator is fully consumed.
+  def self.new(pull : JSON::PullParser)
+    FromJson(T).new(pull)
+  end
+
+  private class FromJson(T)
+    include Iterator(T)
+
+    def initialize(@pull : JSON::PullParser)
+      @pull.read_begin_array
+      @end = false
+    end
+
+    def next
+      if @end
+        stop
+      elsif @pull.kind.end_array?
+        @pull.read_next
+        @end = true
+        stop
+      else
+        T.new(@pull)
+      end
+    end
+  end
+end
+
 def Nil.new(pull : JSON::PullParser)
   pull.read_null
 end
@@ -85,10 +136,15 @@ end
                        } %}
   def {{type.id}}.new(pull : JSON::PullParser)
     location = pull.location
-    value = pull.read_int
+    value =
+      {% if type == "UInt64" %}
+        pull.read_raw
+      {% else %}
+        pull.read_int
+      {% end %}
     begin
       value.to_{{method.id}}
-    rescue ex : OverflowError
+    rescue ex : OverflowError | ArgumentError
       raise JSON::ParseException.new("Can't read {{type.id}}", *location, ex)
     end
   end
@@ -109,7 +165,7 @@ def Float32.new(pull : JSON::PullParser)
   end
 end
 
-def Float32.from_json_object_key?(key : String)
+def Float32.from_json_object_key?(key : String) : Float32?
   key.to_f32?
 end
 
@@ -124,7 +180,7 @@ def Float64.new(pull : JSON::PullParser)
   end
 end
 
-def Float64.from_json_object_key?(key : String)
+def Float64.from_json_object_key?(key : String) : Float64?
   key.to_f64?
 end
 
@@ -136,7 +192,7 @@ def Path.new(pull : JSON::PullParser)
   new(pull.read_string)
 end
 
-def String.from_json_object_key?(key : String)
+def String.from_json_object_key?(key : String) : String
   key
 end
 
@@ -231,15 +287,15 @@ def NamedTuple.new(pull : JSON::PullParser)
 
     {% for key, type in T %}
       if %var{key.id}.nil? && !%found{key.id} && !{{type.nilable?}}
-        raise JSON::ParseException.new("Missing json attribute: {{key}}", *location)
+        raise JSON::ParseException.new("Missing json attribute: #{{{key.id.stringify}}}", *location)
       end
     {% end %}
 
-    {
+    NamedTuple.new(
       {% for key, type in T %}
-        {{key}}: (%var{key.id}).as({{type}}),
+        {{key.id.stringify}}: (%var{key.id}).as({{type}}),
       {% end %}
-    }
+    )
   {% end %}
 end
 
@@ -384,7 +440,7 @@ def Time.new(pull : JSON::PullParser)
 end
 
 struct Time::Format
-  def from_json(pull : JSON::PullParser)
+  def from_json(pull : JSON::PullParser) : Time
     string = pull.read_string
     parse(string, Time::Location::UTC)
   end
@@ -427,7 +483,7 @@ module Time::EpochMillisConverter
 end
 
 module String::RawConverter
-  def self.from_json(value : JSON::PullParser)
+  def self.from_json(value : JSON::PullParser) : String
     value.read_raw
   end
 end

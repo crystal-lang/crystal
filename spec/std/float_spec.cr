@@ -205,6 +205,50 @@ describe "Float" do
     end
   end
 
+  describe "#next_float" do
+    it "does for f64" do
+      0.0.next_float.should eq(5.0e-324) # smallest denormal (not MIN_POSITIVE)
+      1.0.next_float.should eq(1.0000000000000002)
+      (-1.0).next_float.should eq(-0.9999999999999999)
+      Float64::MAX.next_float.should eq(Float64::INFINITY)
+      Float64::INFINITY.next_float.should eq(Float64::INFINITY)
+      (-Float64::INFINITY).next_float.should eq(Float64::MIN)
+      Float64::NAN.next_float.nan?.should be_true
+    end
+
+    it "does for f32" do
+      0.0_f32.next_float.should eq(1.0e-45_f32) # smallest denormal (not MIN_POSITIVE)
+      1.0_f32.next_float.should eq(1.0000001_f32)
+      (-1.0_f32).next_float.should eq(-0.99999994_f32)
+      Float32::MAX.next_float.should eq(Float32::INFINITY)
+      Float32::INFINITY.next_float.should eq(Float32::INFINITY)
+      (-Float32::INFINITY).next_float.should eq(Float32::MIN)
+      Float32::NAN.next_float.nan?.should be_true
+    end
+  end
+
+  describe "#prev_float" do
+    it "does for f64" do
+      0.0.prev_float.should eq(-5.0e-324) # smallest denormal (not MIN_POSITIVE)
+      1.0.prev_float.should eq(0.9999999999999999)
+      (-1.0).prev_float.should eq(-1.0000000000000002)
+      Float64::MIN.prev_float.should eq(-Float64::INFINITY)
+      Float64::INFINITY.prev_float.should eq(Float64::MAX)
+      (-Float64::INFINITY).prev_float.should eq(-Float64::INFINITY)
+      Float64::NAN.prev_float.nan?.should be_true
+    end
+
+    it "does for f32" do
+      0.0_f32.prev_float.should eq(-1.0e-45_f32) # smallest denormal (not MIN_POSITIVE)
+      1.0_f32.prev_float.should eq(0.99999994_f32)
+      (-1.0_f32).prev_float.should eq(-1.0000001_f32)
+      Float32::MIN.prev_float.should eq(-Float32::INFINITY)
+      Float32::INFINITY.prev_float.should eq(Float32::MAX)
+      (-Float32::INFINITY).prev_float.should eq(-Float32::INFINITY)
+      Float32::NAN.prev_float.nan?.should be_true
+    end
+  end
+
   describe "#inspect" do
     it "does inspect for f64" do
       3.2.inspect.should eq("3.2")
@@ -235,12 +279,28 @@ describe "Float" do
     end
   end
 
-  it "casts" do
-    Float32.new(1_f64).should be_a(Float32)
-    Float32.new(1_f64).should eq(1)
+  describe ".new" do
+    it "String overload" do
+      Float32.new("1").should be_a(Float32)
+      Float32.new("1").should eq(1)
+      expect_raises ArgumentError, %(Invalid Float32: " 1 ") do
+        Float32.new(" 1 ", whitespace: false)
+      end
 
-    Float64.new(1_f32).should be_a(Float64)
-    Float64.new(1_f32).should eq(1)
+      Float64.new("1").should be_a(Float64)
+      Float64.new("1").should eq(1)
+      expect_raises ArgumentError, %(Invalid Float64: " 1 ") do
+        Float64.new(" 1 ", whitespace: false)
+      end
+    end
+
+    it "fallback overload" do
+      Float32.new(1_f64).should be_a(Float32)
+      Float32.new(1_f64).should eq(1)
+
+      Float64.new(1_f32).should be_a(Float64)
+      Float64.new(1_f32).should eq(1)
+    end
   end
 
   it "does nan?" do

@@ -128,11 +128,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected #{actual_value.inspect} to be within #{@delta} of #{@expected_value}"
+      "Expected #{actual_value.inspect} to be within #{@delta.inspect} of #{@expected_value.inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected #{actual_value.inspect} not to be within #{@delta} of #{@expected_value}"
+      "Expected #{actual_value.inspect} not to be within #{@delta.inspect} of #{@expected_value.inspect}"
     end
   end
 
@@ -153,46 +153,51 @@ module Spec
 
   # :nodoc:
   struct Be(T)
+    enum Relation
+      LessThan
+      LessOrEqual
+      GreaterThan
+      GreaterOrEqual
+    end
+
     def self.<(other)
-      Be.new(other, :"<")
+      Be.new(other, :less_than)
     end
 
     def self.<=(other)
-      Be.new(other, :"<=")
+      Be.new(other, :less_or_equal)
     end
 
     def self.>(other)
-      Be.new(other, :">")
+      Be.new(other, :greater_than)
     end
 
     def self.>=(other)
-      Be.new(other, :">=")
+      Be.new(other, :greater_or_equal)
     end
 
-    def initialize(@expected_value : T, @op : Symbol)
+    def initialize(@expected_value : T, @op : Relation)
     end
 
     def match(actual_value)
       case @op
-      when :"<"
+      in .less_than?
         actual_value < @expected_value
-      when :"<="
+      in .less_or_equal?
         actual_value <= @expected_value
-      when :">"
+      in .greater_than?
         actual_value > @expected_value
-      when :">="
+      in .greater_or_equal?
         actual_value >= @expected_value
-      else
-        false
       end
     end
 
     def failure_message(actual_value)
-      "Expected #{actual_value.inspect} to be #{@op} #{@expected_value}"
+      "Expected #{actual_value.inspect} to be #{@op} #{@expected_value.inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected #{actual_value.inspect} not to be #{@op} #{@expected_value}"
+      "Expected #{actual_value.inspect} not to be #{@op} #{@expected_value.inspect}"
     end
   end
 

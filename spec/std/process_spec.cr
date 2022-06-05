@@ -1,3 +1,5 @@
+{% skip_file if flag?(:wasm32) %}
+
 require "spec"
 require "process"
 require "./spec_helper"
@@ -165,7 +167,7 @@ describe Process do
   end
 
   pending_win32 "chroot raises when unprivileged" do
-    status, output = compile_and_run_source <<-'CODE'
+    status, output, _ = compile_and_run_source <<-'CODE'
       begin
         Process.chroot("/usr")
         puts "FAIL"

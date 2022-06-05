@@ -71,7 +71,7 @@ describe "Semantic: uninitialized" do
         buf = uninitialized Float64
       end
       ),
-      "variable 'buf' already declared with type Int32"
+      "variable 'buf' already declared with type Int32", inject_primitives: true
   end
 
   it "can uninitialize variable outside initialize (#2828)" do
