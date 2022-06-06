@@ -50,17 +50,6 @@ describe Crystal::Repl::Interpreter do
         CR
     end
 
-    it "provides shell expansion to ldflags" do
-      interpret(<<-CR).should eq 5
-        @[Link(ldflags: "`echo '-L#{SPEC_CRYSTAL_LOADER_LIB_PATH}'` -lsum")]
-        lib LibSum
-          fun sum_int(count : Int32, ...) : Int32
-        end
-
-        LibSum.sum_int(2, 1_u8, 4_i16)
-        CR
-    end
-
     after_all do
       FileUtils.rm_rf(SPEC_CRYSTAL_LOADER_LIB_PATH)
     end
