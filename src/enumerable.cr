@@ -220,12 +220,15 @@ module Enumerable(T)
     end
   end
 
-  # Returns an `Array` with all `nil` elements removed.
+  # Returns an `Enumerable` with all `nil` elements removed.
+  # If needed, the returned value can be converted to an `Array`
+  # using `Enumerable#to_a`.
   #
   # ```
-  # ["a", nil, "b", nil, "c", nil].compact # => ["a", "b", "c"]
+  # coll = ["a", nil, "b", nil, "c", nil].compact
+  # coll.to_a # => ["a", "b", "c"]
   # ```
-  def compact
+  def compact : Enumerable
     compact_map &.itself
   end
 
