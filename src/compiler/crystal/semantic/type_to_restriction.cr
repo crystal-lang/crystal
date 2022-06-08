@@ -71,7 +71,14 @@ module Crystal
       type.arg_types.each do |arg_type|
         type_vars.push(convert(arg_type) || Underscore.new)
       end
-      type_vars.push(convert(type.return_type) || Underscore.new)
+
+      if type.return_type.is_a?(NilType)
+        # Because there's some strange autocasting for Procs that return Nil,
+        # it's better if we don't do anything fancy here.
+        type_vars.push(Underscore.new)
+      else
+        type_vars.push(convert(type.return_type) || Underscore.new)
+      end
 
       Generic.new(
         Path.global("Proc"),
