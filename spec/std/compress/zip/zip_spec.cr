@@ -21,7 +21,7 @@ describe Compress::Zip do
       entry.crc32.should eq(0)
       entry.compressed_size.should eq(0)
       entry.uncompressed_size.should eq(0)
-      entry.extra.empty?.should be_false # Contains the timestamp extra as well
+      entry.extra.should_not be_empty # Contains the timestamp extra as well
       entry.io.gets_to_end.should eq("contents of foo")
 
       entry = zip.next_entry.not_nil!
