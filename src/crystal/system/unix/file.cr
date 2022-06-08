@@ -5,36 +5,23 @@ require "file/error"
 module Crystal::System::File
   def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions)
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
-    fd = open(filename, open_flag(mode), perm)
-    if fd < 0
-      raise ::File::Error.from_errno("Error opening file with mode '#{mode}'", file: filename)
+
+    fd, errno = open(filename, open_flag(mode), perm)
+
+    unless errno.none?
+      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", errno, file: filename)
     end
+
     fd
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : LibC::Int
+  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {LibC::Int, Errno}
     filename.check_no_null_byte
     flags |= LibC::O_CLOEXEC
 
-    LibC.open(filename, flags, perm)
-  end
+    fd = LibC.open(filename, flags, perm)
 
-  def self.mktemp(prefix, suffix, dir) : {LibC::Int, String}
-    prefix.try &.check_no_null_byte
-    suffix.try &.check_no_null_byte
-    dir.check_no_null_byte
-
-    dir = dir + ::File::SEPARATOR
-    path = "#{dir}#{prefix}.XXXXXX#{suffix}"
-
-    if suffix
-      fd = LibC.mkstemps(path, suffix.bytesize)
-    else
-      fd = LibC.mkstemp(path)
-    end
-
-    raise ::File::Error.from_errno("Error creating temporary file", file: path) if fd == -1
-    {fd, path}
+    {fd, fd < 0 ? Errno.value : Errno::NONE}
   end
 
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?

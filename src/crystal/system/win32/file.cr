@@ -17,31 +17,20 @@ module Crystal::System::File
       perm = LibC::S_IREAD
     end
 
-    fd = open(filename, open_flag(mode), perm)
-    if fd == -1
-      raise ::File::Error.from_errno("Error opening file with mode '#{mode}'", file: filename)
+    fd, errno = open(filename, open_flag(mode), ::File::Permissions.new(perm))
+    unless errno.none?
+      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", errno, file: filename)
     end
 
     fd
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : LibC::Int
+  def self.open(filename : String, flags : Int32, perm : ::File::Permissions) : {LibC::Int, Errno}
     flags |= LibC::O_BINARY | LibC::O_NOINHERIT
 
     fd = LibC._wopen(to_windows_path(filename), flags, perm)
-    fd
-  end
 
-  def self.mktemp(prefix : String?, suffix : String?, dir : String) : {LibC::Int, String}
-    path = "#{dir}#{::File::SEPARATOR}#{prefix}.#{::Random::Secure.hex}#{suffix}"
-
-    mode = LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL | LibC::O_BINARY | LibC::O_NOINHERIT
-    fd = LibC._wopen(to_windows_path(path), mode, ::File::DEFAULT_CREATE_PERMISSIONS)
-    if fd == -1
-      raise ::File::Error.from_errno("Error creating temporary file", file: path)
-    end
-
-    {fd, path}
+    {fd, fd == -1 ? Errno.value : Errno::NONE}
   end
 
   NOT_FOUND_ERRORS = {
