@@ -846,6 +846,10 @@ describe "String" do
     it { "foobar".rstrip('x').should eq("foobar") }
 
     it { "foobar".rstrip { |c| c == 'a' || c == 'r' }.should eq("foob") }
+
+    it "does not touch invalid code units in an otherwise ascii string" do
+      " \xA0 ".rstrip.should eq(" \xA0")
+    end
   end
 
   describe "lstrip" do
@@ -866,6 +870,10 @@ describe "String" do
     it { "barfoo".lstrip('x').should eq("barfoo") }
 
     it { "barfoo".lstrip { |c| c == 'a' || c == 'b' }.should eq("rfoo") }
+
+    it "does not touch invalid code units in an otherwise ascii string" do
+      " \xA0 ".lstrip.should eq("\xA0 ")
+    end
   end
 
   describe "empty?" do
@@ -1235,6 +1243,11 @@ describe "String" do
     it { "foobar".starts_with?('g').should be_false }
     it { "よし".starts_with?('よ').should be_true }
     it { "よし!".starts_with?("よし").should be_true }
+
+    it "treats first char as replacement char if invalid in an otherwise ascii string" do
+      "\xEEfoo".starts_with?('\u{EE}').should be_false
+      "\xEEfoo".starts_with?(Char::REPLACEMENT).should be_true
+    end
   end
 
   describe "ends_with?" do
@@ -1290,16 +1303,23 @@ describe "String" do
     end
   end
 
-  it "reverses string" do
-    "foobar".reverse.should eq("raboof")
-  end
+  describe "#reverse" do
+    it "reverses string" do
+      "foobar".reverse.should eq("raboof")
+    end
 
-  it "reverses utf-8 string" do
-    "こんにちは".reverse.should eq("はちにんこ")
-  end
+    it "reverses utf-8 string" do
+      "こんにちは".reverse.should eq("はちにんこ")
+    end
 
-  it "reverses taking grapheme clusters into account" do
-    "noël".reverse.should eq("lëon")
+    it "reverses taking grapheme clusters into account" do
+      "noël".reverse.should eq("lëon")
+    end
+
+    pending "converts invalid code units to replacement char" do
+      "!\xB0\xC2?".reverse.chars.should eq("?\uFFFD!".chars)
+      "\xC2\xB0\xB0\xC2?".reverse.chars.should eq("?\uFFFD\xC2\xB0".chars)
+    end
   end
 
   describe "sub" do
