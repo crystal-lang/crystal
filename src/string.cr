@@ -1316,7 +1316,8 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
+          byte = to_unsafe[i]
+          buffer[i] = byte < 0x80 ? byte.unsafe_chr.downcase.ord.to_u8! : byte
         end
         {@bytesize, @length}
       end
@@ -1351,7 +1352,8 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
+          byte = to_unsafe[i]
+          buffer[i] = byte < 0x80 ? byte.unsafe_chr.upcase.ord.to_u8! : byte
         end
         {@bytesize, @length}
       end
@@ -1387,13 +1389,15 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          byte = if i.zero?
-                   to_unsafe[i].unsafe_chr.upcase.ord.to_u8
-                 else
-                   to_unsafe[i].unsafe_chr.downcase.ord.to_u8
-                 end
+          byte = to_unsafe[i]
 
-          buffer[i] = byte
+          buffer[i] = if byte >= 0x80
+                        byte
+                      elsif i.zero?
+                        byte.unsafe_chr.upcase.ord.to_u8!
+                 else
+                        byte.unsafe_chr.downcase.ord.to_u8!
+                 end
         end
         {@bytesize, @length}
       end
@@ -1435,10 +1439,16 @@ class String
 
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          char = to_unsafe[i].unsafe_chr
+          byte = to_unsafe[i]
+          if byte < 0x80
+            char = byte.unsafe_chr
           replaced_char = upcase_next ? char.upcase : char.downcase
-          buffer[i] = replaced_char.ord.to_u8
-          upcase_next = char.whitespace?
+            buffer[i] = replaced_char.ord.to_u8!
+            upcase_next = char.ascii_whitespace?
+          else
+            buffer[i] = byte
+            upcase_next = false
+          end
         end
         {@bytesize, @length}
       end

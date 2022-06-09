@@ -601,6 +601,10 @@ describe "String" do
     it { "tschüß".downcase(Unicode::CaseOptions::Fold).should eq("tschüss") }
     it { "ΣίσυφοςﬁÆ".downcase(Unicode::CaseOptions::Fold).should eq("σίσυφοσfiæ") }
 
+    it "does not touch invalid code units in an otherwise ascii string" do
+      "\xB5!\xE0\xC1\xB5?".downcase.should eq("\xB5!\xE0\xC1\xB5?")
+    end
+
     describe "with IO" do
       it { String.build { |io| "HELLO!".downcase io }.should eq "hello!" }
       it { String.build { |io| "HELLO MAN!".downcase io }.should eq "hello man!" }
@@ -626,6 +630,10 @@ describe "String" do
     it { "ﬀ".upcase.should eq("FF") }
     it { "ňž".upcase.should eq("ŇŽ") } # #7922
 
+    it "does not touch invalid code units in an otherwise ascii string" do
+      "\xB5!\xE0\xC1\xB5?".upcase.should eq("\xB5!\xE0\xC1\xB5?")
+    end
+
     describe "with IO" do
       it { String.build { |io| "hello!".upcase io }.should eq "HELLO!" }
       it { String.build { |io| "hello man!".upcase io }.should eq "HELLO MAN!" }
@@ -646,6 +654,10 @@ describe "String" do
     it { "ﬄİ".capitalize.should eq("FFLi̇") }
     it { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
 
+    it "does not touch invalid code units in an otherwise ascii string" do
+      "\xB5!\xE0\xC1\xB5?".capitalize.should eq("\xB5!\xE0\xC1\xB5?")
+    end
+
     describe "with IO" do
       it { String.build { |io| "HELLO!".capitalize io }.should eq "Hello!" }
       it { String.build { |io| "HELLO MAN!".capitalize io }.should eq "Hello man!" }
@@ -663,6 +675,11 @@ describe "String" do
     it { "  spáçes before".titleize.should eq("  Spáçes Before") }
     it { "testá-se múitô".titleize.should eq("Testá-se Múitô") }
     it { "iO iO".titleize(Unicode::CaseOptions::Turkic).should eq("İo İo") }
+
+    it "does not touch invalid code units in an otherwise ascii string" do
+      "\xB5!\xE0\xC1\xB5?".titleize.should eq("\xB5!\xE0\xC1\xB5?")
+      "a\xA0b".titleize.should eq("A\xA0b")
+    end
 
     describe "with IO" do
       it { String.build { |io| "hEllO tAb\tworld".titleize io }.should eq "Hello Tab\tWorld" }
