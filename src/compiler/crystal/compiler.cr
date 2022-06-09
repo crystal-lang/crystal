@@ -340,11 +340,11 @@ module Crystal
     end
 
     private def linker_command(program : Program, object_names, output_filename, output_dir, expand = false)
-      if program.has_flag? "msvc"
-        lib_flags = program.lib_flags
-        # Execute and expand `subcommands`.
-        lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` } if expand
+      lib_flags = program.lib_flags
+      # Execute and expand `subcommands`.
+      lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` } if expand
 
+      if program.has_flag? "msvc"
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
 
@@ -396,12 +396,12 @@ module Crystal
         {cmd, nil}
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
-        { %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names }
+        { %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{lib_flags}), object_names }
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
 
-        { %(#{CC} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names }
+        { %(#{CC} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{lib_flags}), object_names }
       end
     end
 
