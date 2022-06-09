@@ -90,27 +90,6 @@ module Crystal
       self.class.class_desc
     end
 
-    def class_desc_is_a?(name)
-      # e.g. for `Splat < UnaryExpression < ASTNode` this produces:
-      #
-      # ```
-      # name.in?({class_desc, UnaryExpression.class_desc, ASTNode.class_desc})
-      # ```
-      #
-      # this assumes the macro AST node hierarchy matches exactly that of the
-      # compiler internal node types
-      {% begin %}
-        name.in?({
-          class_desc,
-          {% for t in @type.ancestors %}
-            {% if t <= Crystal::ASTNode %}
-              {{ t }}.class_desc,
-            {% end %}
-          {% end %}
-        })
-      {% end %}
-    end
-
     def pretty_print(pp)
       pp.text to_s
     end
