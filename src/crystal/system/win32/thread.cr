@@ -32,9 +32,6 @@ class Thread
       initflag: LibC::UInt.zero,
       thrdaddr: Pointer(LibC::UInt).null)
 
-    if @th.null?
-      raise RuntimeError.from_errno("_beginthreadex")
-    end
   end
 
   # Used once to initialize the thread object representing the main thread of
