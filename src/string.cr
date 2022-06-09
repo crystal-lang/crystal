@@ -2884,8 +2884,11 @@ class String
   end
 
   # Returns `true` if this string is equal to `*other*.
+  #
   # Comparison is done byte-per-byte: if a byte is different from the corresponding
-  # byte, `false` is returned and so on.
+  # byte, `false` is returned and so on. This means two strings containing invalid
+  # UTF-8 byte sequences may compare unequal, even when they both produce the
+  # Unicode replacement character at the same string indices.
   #
   # See `#compare` for more comparison options.
   def ==(other : self) : Bool
@@ -2899,8 +2902,10 @@ class String
   # Compares this string with *other*, returning `-1`, `0` or `1` depending on whether
   # this string is less, equal or greater than *other*.
   #
-  # Comparison is done byte-per-byte: if a byte is less then the other corresponding
-  # byte, `-1` is returned and so on.
+  # Comparison is done byte-per-byte: if a byte is less than the other corresponding
+  # byte, `-1` is returned and so on. This means two strings containing invalid
+  # UTF-8 byte sequences may compare unequal, even when they both produce the
+  # Unicode replacement character at the same string indices.
   #
   # If the strings are of different lengths, and the strings are equal when compared
   # up to the shortest length, then the longer string is considered greater than
@@ -2924,6 +2929,9 @@ class String
   # this string is less, equal or greater than *other*, optionally in a *case_insensitive*
   # manner.
   #
+  # Case-sensitive comparisons (`case_insensitive == false`) are equivalent to
+  # `#<=>` and are always done byte-per-byte.
+  #
   # ```
   # "abcdef".compare("abcde")   # => 1
   # "abcdef".compare("abcdef")  # => 0
@@ -2946,11 +2954,17 @@ class String
         byte2 = other.to_unsafe[position]
 
         # Lowercase both bytes
+        # Also reject any invalid code units
         if 65 <= byte1 <= 90
           byte1 += 32
+        elsif byte1 >= 0x80
+          return 1 if byte2 < 0x80
         end
+
         if 65 <= byte2 <= 90
           byte2 += 32
+        elsif byte2 >= 0x80
+          return byte1 < 0x80 ? -1 : 0
         end
 
         comparison = byte1 <=> byte2

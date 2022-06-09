@@ -2605,6 +2605,13 @@ describe "String" do
       "abc".compare("", case_insensitive: true).should eq(1)
       "abcA".compare("abca", case_insensitive: true).should eq(0)
     end
+
+    it "treats invalid code units as replacement char in an otherwise ascii string" do
+      "\xC0".compare("\xE0", case_insensitive: true).should eq(0)
+      "\xE0".compare("\xC0", case_insensitive: true).should eq(0)
+      "\xC0".compare("a", case_insensitive: true).should eq(1)
+      "a".compare("\xC0", case_insensitive: true).should eq(-1)
+    end
   end
 
   it "builds with write_byte" do
