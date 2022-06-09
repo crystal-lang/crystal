@@ -1249,6 +1249,11 @@ describe "String" do
     it { "よし".ends_with?('し').should be_true }
     it { "よし".ends_with?('な').should be_false }
     it { "あいう_".ends_with?('_').should be_true }
+
+    it "treats last char as replacement char if invalid in an otherwise ascii string" do
+      "foo\xEE".ends_with?('\u{EE}').should be_false
+      "foo\xEE".ends_with?(Char::REPLACEMENT).should be_true
+    end
   end
 
   describe "=~" do

@@ -4839,7 +4839,8 @@ class String
     return false unless bytesize > 0
 
     if char.ascii? || single_byte_optimizable?
-      return to_unsafe[bytesize - 1] == char.ord
+      byte = to_unsafe[bytesize - 1]
+      return byte < 0x80 ? byte == char.ord : char == Char::REPLACEMENT
     end
 
     bytes, count = String.char_bytes_and_bytesize(char)
