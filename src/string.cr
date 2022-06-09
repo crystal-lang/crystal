@@ -1395,9 +1395,9 @@ class String
                         byte
                       elsif i.zero?
                         byte.unsafe_chr.upcase.ord.to_u8!
-                 else
+                      else
                         byte.unsafe_chr.downcase.ord.to_u8!
-                 end
+                      end
         end
         {@bytesize, @length}
       end
@@ -1442,7 +1442,7 @@ class String
           byte = to_unsafe[i]
           if byte < 0x80
             char = byte.unsafe_chr
-          replaced_char = upcase_next ? char.upcase : char.downcase
+            replaced_char = upcase_next ? char.upcase : char.downcase
             buffer[i] = replaced_char.ord.to_u8!
             upcase_next = char.ascii_whitespace?
           else
