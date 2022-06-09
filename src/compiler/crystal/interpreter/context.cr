@@ -358,6 +358,7 @@ class Crystal::Repl::Context
 
   getter(loader : Loader) {
     lib_flags = program.lib_flags
+    # Execute and expand `subcommands`.
     lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` }
 
     args = Process.parse_arguments(lib_flags)
