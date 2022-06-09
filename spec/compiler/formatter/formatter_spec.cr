@@ -1036,6 +1036,8 @@ describe Crystal::Formatter do
   assert_format "foo (1)", "foo(1)"
   assert_format "foo (1), 2"
   assert_format "foo (1; 2)"
+  assert_format "foo ((1) ? 2 : 3)", "foo((1) ? 2 : 3)"
+  assert_format "foo((1..3))"
   assert_format "def foo(\n\n#foo\nx,\n\n#bar\nz\n)\nend", "def foo(\n  # foo\n  x,\n\n  # bar\n  z\n)\nend"
   assert_format "def foo(\nx, #foo\nz #bar\n)\nend", "def foo(\n  x, # foo\n  z  # bar\n)\nend"
   assert_format "a = 1;;; b = 2", "a = 1; b = 2"
