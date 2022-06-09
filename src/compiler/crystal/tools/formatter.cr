@@ -4072,10 +4072,10 @@ module Crystal
         accept name
       else
         write name
+        next_token
       end
 
-      next_token_skip_space_or_newline
-
+      skip_space
       write_token " ", :OP_EQ, " "
       skip_space_or_newline
 

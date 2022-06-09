@@ -733,7 +733,18 @@ describe Crystal::Formatter do
   assert_format "alias  Foo::Bar  =   Baz", "alias Foo::Bar = Baz"
   assert_format "alias A = (B)"
   assert_format "alias A = (B) -> C"
-
+  assert_format "alias Foo=Bar", "alias Foo = Bar"
+  assert_format "alias Foo= Bar", "alias Foo = Bar"
+  assert_format "alias Foo =Bar", "alias Foo = Bar"
+  assert_format "alias Foo::Bar=Baz", "alias Foo::Bar = Baz"
+  assert_format "alias Foo::Bar= Baz", "alias Foo::Bar = Baz"
+  assert_format "alias Foo::Bar =Baz", "alias Foo::Bar = Baz"
+  assert_format <<-BEFORE, <<-AFTER
+    alias Foo=
+    Bar
+    BEFORE
+    alias Foo = Bar
+    AFTER
   assert_format "lib Foo\nend"
   assert_format "lib Foo\ntype  Foo  =   Bar\nend", "lib Foo\n  type Foo = Bar\nend"
   assert_format "lib Foo\nfun foo\nend", "lib Foo\n  fun foo\nend"
