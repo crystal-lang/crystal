@@ -94,8 +94,9 @@ module Crystal
       generic_type = type.generic_type
       path = type_to_path(type.generic_type)
       type_vars = type.type_vars.map do |name, type_var|
-        type_var_type = type_var.type?
-        if type_var_type
+        if type_var.is_a?(NumberLiteral)
+          type_var.clone
+        elsif type_var_type = type_var.type?
           convert(type_var_type) || Underscore.new
         else
           Underscore.new

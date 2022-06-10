@@ -43,6 +43,7 @@ describe "Semantic: restrictions augmenter" do
   it_augments_for_ivar "Proc(Int32, Char)", "::Proc(::Int32, ::Char)"
   it_augments_for_ivar "Proc(Int32, Nil)", "::Proc(::Int32, _)"
   it_augments_for_ivar "Pointer(Void)", "::Pointer(::Void)"
+  it_augments_for_ivar "StaticArray(Int32, 8)", "::StaticArray(::Int32, 8)"
   it_augments_for_ivar "Char | Int32 | String", "::Char | ::Int32 | ::String"
   it_augments_for_ivar "Char | Int32 | String", "::Char | ::Int32 | ::String"
   it_augments_for_ivar "Int32.class", "::Int32.class"
