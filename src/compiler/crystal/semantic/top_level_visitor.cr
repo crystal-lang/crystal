@@ -31,7 +31,7 @@ require "./semantic_visitor"
 # might disappear in the future and we'll make consider everything as "maybe virtual".
 class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   # These are `new` methods (values) that was created from `initialize` methods (keys)
-  getter new_expansions = ({} of Def => Def).compare_by_identity
+  getter new_expansions : Hash(Def, Def) = ({} of Def => Def).compare_by_identity
 
   # All finished hooks and their scope
   record FinishedHook, scope : ModuleType, macro : Macro
