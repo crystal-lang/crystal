@@ -115,6 +115,13 @@ module Crystal
       )
     end
 
+    def convert(type : MetaclassType)
+      restriction = convert(type.instance_type)
+      return unless restriction
+
+      Metaclass.new(restriction)
+    end
+
     def convert(type : TypeParameter)
       Path.new(type.name)
     end
