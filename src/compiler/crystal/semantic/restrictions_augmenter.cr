@@ -40,7 +40,7 @@ module Crystal
       false
     end
 
-    def visit(node : If | Unless)
+    def visit(node : If)
       node.cond.accept self
       @conditional_nest += 1
       node.then.accept self
@@ -49,11 +49,24 @@ module Crystal
       false
     end
 
-    def visit(node : While | Until)
+    def visit(node : While)
       node.cond.accept self
       @conditional_nest += 1
       node.body.accept self
       @conditional_nest -= 1
+      false
+    end
+
+    def visit(node : Call)
+      node.obj.try &.accept self
+      node.args.each &.accept self
+      node.named_args.try &.each &.value.accept self
+      node.block.try do |block|
+        @conditional_nest += 1
+        block.accept self
+        @conditional_nest -= 1
+      end
+      node.block_arg.try &.accept self
       false
     end
 

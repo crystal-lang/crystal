@@ -5,6 +5,11 @@ private def expect_augment(before : String, after : String)
   result.node.to_s.should eq(after)
 end
 
+private def expect_no_augment(code : String)
+  result = semantic(code)
+  result.node.to_s.should eq(code)
+end
+
 private def it_augments_for_ivar(ivar_type : String, expected_type : String, file = __FILE__, line = __LINE__)
   it "augments #{ivar_type}", file, line do
     before = <<-BEFORE
@@ -184,5 +189,49 @@ describe "Semantic: restrictions augmenter" do
       AFTER
 
     expect_augment before, after
+  end
+
+  it "doesn't augment if assigned inside if" do
+    expect_no_augment <<-CODE
+      class Foo
+        @x : Int32
+        def initialize(value)
+          if value
+            @x = value
+          end
+        end
+      end
+      CODE
+  end
+
+  it "doesn't augment if assigned inside while" do
+    expect_no_augment <<-CODE
+      class Foo
+        @x : Int32
+        def initialize(value)
+          while false
+            @x = value
+          end
+        end
+      end
+      CODE
+  end
+
+  it "doesn't augment if assigned inside block" do
+    # No idea why to_s gives an extra newline here
+    expect_no_augment <<-CODE
+      def foo
+        yield
+      end
+      class Foo
+        @x : Int32
+        def initialize(value)
+          foo do
+            @x = value
+          end
+        end
+      end
+
+      CODE
   end
 end
