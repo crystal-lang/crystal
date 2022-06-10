@@ -68,15 +68,32 @@ module Crystal
       value = node.value
       current_type = @current_type
 
-      case target
-      when Var
+      if target.is_a?(Var)
         args_hash.delete(target.name)
+        return false
+      end
+
+      return false unless @conditional_nest == 0
+      return false unless value.is_a?(Var)
+
+      arg = args_hash[value.name]?
+      return false unless arg
+
+      case target
       when InstanceVar
-        if @conditional_nest == 0
-          process_assign_instance_var(target, value, current_type, current_def, args_hash)
-        end
+        return false unless current_type.is_a?(InstanceVarContainer)
+
+        ivar = current_type.instance_vars[target.name]?
+        return false unless ivar
+
+        augment(target, value, current_type, current_def, arg, ivar.type)
       when ClassVar
-        # TODO: apply same logic but for assignments to class vars
+        return false unless current_type.is_a?(ClassVarContainer)
+
+        cvar = current_type.class_vars[target.name]?
+        return false unless cvar
+
+        augment(target, value, current_type, current_def, arg, cvar.type)
       end
 
       false
@@ -86,19 +103,10 @@ module Crystal
       true
     end
 
-    private def process_assign_instance_var(target, value, current_type, current_def, args_hash)
-      return unless current_type.is_a?(InstanceVarContainer)
-      return unless value.is_a?(Var)
-
-      arg = args_hash[value.name]?
-      return unless arg
-
-      ivar = current_type.instance_vars[target.name]?
-      return unless ivar
-
+    private def augment(target, value, current_type, current_def, arg, type)
       converter = TypeToRestriction.new(current_type)
 
-      restriction = converter.convert(ivar.type)
+      restriction = converter.convert(type)
       return unless restriction
 
       arg.restriction = restriction

@@ -5,8 +5,8 @@ private def expect_augment(before : String, after : String)
   result.node.to_s.should eq(after)
 end
 
-private def it_augments_for_ivar(ivar_type : String, expected_type : String)
-  it "augments #{ivar_type}" do
+private def it_augments_for_ivar(ivar_type : String, expected_type : String, file = __FILE__, line = __LINE__)
+  it "augments #{ivar_type}", file, line do
     before = <<-BEFORE
       class Foo
         @x : #{ivar_type}
@@ -155,6 +155,28 @@ describe "Semantic: restrictions augmenter" do
         @x : Array(T)
         def initialize(value : ::Array(T))
           @x = value
+        end
+      end
+      AFTER
+
+    expect_augment before, after
+  end
+
+  it "augments for class var" do
+    before = <<-BEFORE
+      class Foo
+        @@x = 1
+        def self.set(value)
+          @@x = value
+        end
+      end
+      BEFORE
+
+    after = <<-AFTER
+      class Foo
+        @@x = 1
+        def self.set(value : ::Int32)
+          @@x = value
         end
       end
       AFTER
