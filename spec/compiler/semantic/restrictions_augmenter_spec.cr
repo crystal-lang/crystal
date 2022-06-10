@@ -5,8 +5,8 @@ private def expect_augment(before : String, after : String)
   result.node.to_s.should eq(after)
 end
 
-private def expect_no_augment(code : String)
-  result = semantic(code)
+private def expect_no_augment(code : String, flags = nil)
+  result = semantic(code, flags: flags)
   result.node.to_s.should eq(code)
 end
 
@@ -232,6 +232,17 @@ describe "Semantic: restrictions augmenter" do
         end
       end
 
+      CODE
+  end
+
+  it "doesn't augment if the without_restrictions_augmenter flag is present" do
+    expect_no_augment <<-CODE, flags: "without_restrictions_augmenter"
+      class Foo
+        @x : Int32
+        def initialize(value)
+          @x = value
+        end
+      end
       CODE
   end
 end
