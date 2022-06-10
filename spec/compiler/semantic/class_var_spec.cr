@@ -14,7 +14,7 @@ describe "Semantic: class var" do
 
       Foo.x = true
       ),
-      "class variable '@@x' of Foo must be Int32, not Bool"
+      "no overload matches 'Foo.x=' with type Bool"
   end
 
   it "declares class variable (2)" do
