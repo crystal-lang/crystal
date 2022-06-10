@@ -176,22 +176,14 @@ class Crystal::Doc::Type
             defs << method(def_with_metadata.def, false)
           end
         end
-        defs.sort! do |a, b|
-          compare_strings(a.name, b.name)
-        end
+        defs.sort_by! { |x| sort_order(x) }
       end
     end
   end
 
-  def compare_strings(a, b)
-    case {a[0].alphanumeric?, b[0].alphanumeric?}
-    when {true, false}
-      1
-    when {false, true}
-      -1
-    else
-      a.compare(b, case_insensitive: true)
-    end
+  private def sort_order(item)
+    # Sort operators first, then alphanumeric (case-insensitive).
+    {item.name[0].alphanumeric? ? 1 : 0, item.name.downcase}
   end
 
   @class_methods : Array(Method)?
@@ -214,9 +206,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      class_methods.sort! do |a, b|
-        compare_strings(a.name, b.name)
-      end
+      class_methods.sort_by! { |x| sort_order(x) }
     end
   end
 
@@ -240,9 +230,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      macros.sort! do |a, b|
-        compare_strings(a.name, b.name)
-      end
+      macros.sort_by! { |x| sort_order(x) }
     end
   end
 
