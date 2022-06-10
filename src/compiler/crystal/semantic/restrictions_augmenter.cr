@@ -96,7 +96,9 @@ module Crystal
       ivar = current_type.instance_vars[target.name]?
       return unless ivar
 
-      restriction = TypeToRestriction.convert(ivar.type)
+      converter = TypeToRestriction.new(current_type)
+
+      restriction = converter.convert(ivar.type)
       return unless restriction
 
       arg.restriction = restriction

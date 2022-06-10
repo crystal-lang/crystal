@@ -1,24 +1,33 @@
 require "../types"
 
 module Crystal
-  module TypeToRestriction
-    def self.convert(type : NilType)
+  # Allows converting a type to a restriction from the context a given type.
+  struct TypeToRestriction
+    # Initializes this converter to convert types relative to the given type.
+    def initialize(@from_type : Type)
+    end
+
+    def convert(type : NilType)
       Path.global("Nil")
     end
 
-    def self.convert(type : BoolType)
+    def convert(type : VoidType)
+      Path.global("Void")
+    end
+
+    def convert(type : BoolType)
       Path.global("Bool")
     end
 
-    def self.convert(type : CharType)
+    def convert(type : CharType)
       Path.global("Char")
     end
 
-    def self.convert(type : SymbolType)
+    def convert(type : SymbolType)
       Path.global("Symbol")
     end
 
-    def self.convert(type : IntegerType | FloatType)
+    def convert(type : IntegerType | FloatType)
       case type.kind
       in NumberKind::I8   then Path.global("Int8")
       in NumberKind::I16  then Path.global("Int16")
@@ -35,16 +44,11 @@ module Crystal
       end
     end
 
-    def self.convert(type : NonGenericClassType | NonGenericModuleType | EnumType)
-      return nil if type.private?
-
-      names = [] of String
-      append_namespace(type, names)
-      names << type.name
-      Path.global(names)
+    def convert(type : NonGenericClassType | NonGenericModuleType | EnumType)
+      type_to_path(type)
     end
 
-    def self.convert(type : TupleInstanceType)
+    def convert(type : TupleInstanceType)
       Generic.new(
         Path.global("Tuple"),
         type.tuple_types.map do |tuple_type|
@@ -53,7 +57,7 @@ module Crystal
       )
     end
 
-    def self.convert(type : NamedTupleInstanceType)
+    def convert(type : NamedTupleInstanceType)
       Generic.new(
         Path.global("NamedTuple"),
         type_vars: [] of ASTNode,
@@ -66,7 +70,7 @@ module Crystal
       )
     end
 
-    def self.convert(type : ProcInstanceType)
+    def convert(type : ProcInstanceType)
       type_vars = Array(ASTNode).new(type.arg_types.size + 1)
       type.arg_types.each do |arg_type|
         type_vars.push(convert(arg_type) || Underscore.new)
@@ -86,14 +90,9 @@ module Crystal
       )
     end
 
-    def self.convert(type : GenericInstanceType)
-      return nil if type.private?
-
+    def convert(type : GenericInstanceType)
       generic_type = type.generic_type
-      names = [] of String
-      append_namespace(generic_type, names)
-      names << generic_type.name
-      path = Path.global(names)
+      path = type_to_path(type.generic_type)
       type_vars = type.type_vars.map do |name, type_var|
         type_var_type = type_var.type?
         if type_var_type
@@ -105,7 +104,7 @@ module Crystal
       Generic.new(path, type_vars)
     end
 
-    def self.convert(type : UnionType)
+    def convert(type : UnionType)
       Union.new(
         type.union_types.map do |union_type|
           restriction = convert(union_type)
@@ -116,16 +115,60 @@ module Crystal
       )
     end
 
-    def self.convert(type : Type)
+    def convert(type : TypeParameter)
+      Path.new(type.name)
+    end
+
+    def convert(type : Type)
       nil
     end
 
-    private def self.append_namespace(type, names)
+    private def type_to_path(type)
+      common_namespace =
+        if fully_public?(type)
+          # If the type if fully public we can fully qualify the restriction
+          nil
+        else
+          # Otherwise, we need to use a relative path starting from `from_type`
+          common_namespace(type, @from_type)
+        end
+
+      names = [] of String
+      append_namespace(type, names, upto: common_namespace)
+      names << type.name
+
+      Path.new(names, global: !common_namespace)
+    end
+
+    private def common_namespace(type, from_type)
+      while true
+        return nil if type.is_a?(Program)
+
+        # If from_type is Foo::Bar and type is Foo::Bar::Baz
+        # we want to say that the common namespace Foo::Bar
+        return type if type == from_type
+
+        # If from_type is Foo::Bar and type is Foo::Baz
+        # we want to say that the common namespace is Foo
+        return type if type == from_type.namespace
+
+        type = type.namespace
+      end
+    end
+
+    private def append_namespace(type, names, upto = nil)
       namespace = type.namespace
       return if namespace.is_a?(Program)
+      return if namespace == upto
 
-      append_namespace(namespace, names)
+      append_namespace(namespace, names, upto)
       names << namespace.name
+    end
+
+    private def fully_public?(type)
+      return true if type.is_a?(Program)
+
+      !type.private? && fully_public?(type.namespace)
     end
   end
 end
