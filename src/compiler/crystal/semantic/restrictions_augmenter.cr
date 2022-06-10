@@ -8,7 +8,7 @@ module Crystal
     # restriction because... we can't be sure the assignment will happen!
     @conditional_nest = 0
 
-    def initialize(@program : Program, @new_expansions : Array({original: Def, expanded: Def}))
+    def initialize(@program : Program, @new_expansions : Hash(Def, Def))
       @current_type = @program
     end
 
@@ -128,12 +128,10 @@ module Crystal
       # auto-generated "new" so that it shows up in docs.
       return unless current_def.name == "initialize"
 
-      # TODO: we should probably store the expansions as a Hash from now on
-      expansion = @new_expansions.find { |expansion| expansion[:original].same?(current_def) }
+      expansion = @new_expansions[current_def]?
       return unless expansion
 
-      expanded = expansion[:expanded]
-      expansion_arg = expanded.args.find do |expansion_arg|
+      expansion_arg = expansion.args.find do |expansion_arg|
         expansion_arg.name == arg.name
       end
       return unless expansion_arg
