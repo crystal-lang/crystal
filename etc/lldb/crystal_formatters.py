@@ -9,9 +9,8 @@ class CrystalArraySyntheticProvider:
     def update(self):
         if self.valobj.type.is_pointer:
             self.valobj = self.valobj.Dereference()
-        self.size = int(self.valobj.child[0].value)
-        self.type = self.valobj.type
-        self.buffer = self.valobj.child[3]
+        self.size = int(self.valobj.GetChildMemberWithName('size').value)
+        self.buffer = self.valobj.GetChildMemberWithName('buffer')
 
     def num_children(self):
         size = 0 if self.size is None else self.size
@@ -42,16 +41,17 @@ def findType(name, module):
             return type
     return None
 
-
 def CrystalString_SummaryProvider(value, dict):
     error = lldb.SBError()
     if value.TypeIsPointerType():
         value = value.Dereference()
-    process = value.GetTarget().GetProcess()
-    byteSize = int(value.child[0].value)
-    len = int(value.child[1].value)
-    len = byteSize or len
-    strAddr = value.child[2].load_addr
+    target = value.GetTarget()
+    process = target.GetProcess()
+    len = int(value.GetChildMemberWithName('length').value) or int(value.GetChildMemberWithName('bytesize').value)
+    strAddr = value.GetChildMemberWithName('c').load_addr
+    if "x86_64-pc-windows-msvc" == target.triple:
+        # on windows, strings are prefixed by 4 bytes indicating the length
+        strAddr = strAddr + 4
     val = process.ReadCStringFromMemory(strAddr, len + 1, error)
     return '"%s"' % val
 
