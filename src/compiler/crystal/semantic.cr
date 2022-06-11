@@ -74,7 +74,7 @@ class Crystal::Program
       AbstractDefChecker.new(self).run
     end
 
-    unless @program.has_flag?("without_restrictions_augmenter")
+    unless @program.has_flag?("no_restrictions_augmenter")
       @progress_tracker.stage("Semantic (restrictions augmenter)") do
         node.accept RestrictionsAugmenter.new(self, new_expansions)
       end

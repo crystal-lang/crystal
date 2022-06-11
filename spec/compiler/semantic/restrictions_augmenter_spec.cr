@@ -235,8 +235,8 @@ describe "Semantic: restrictions augmenter" do
       CODE
   end
 
-  it "doesn't augment if the without_restrictions_augmenter flag is present" do
-    expect_no_augment <<-CODE, flags: "without_restrictions_augmenter"
+  it "doesn't augment if the no_restrictions_augmenter flag is present" do
+    expect_no_augment <<-CODE, flags: "no_restrictions_augmenter"
       class Foo
         @x : Int32
         def initialize(value)
