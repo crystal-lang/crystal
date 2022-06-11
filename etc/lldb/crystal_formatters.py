@@ -51,7 +51,7 @@ def CrystalString_SummaryProvider(value, dict):
     strAddr = value.GetChildMemberWithName('c').load_addr
     if "x86_64-pc-windows-msvc" == target.triple:
         # on windows, strings are prefixed by 4 bytes indicating the length
-        strAddr = strAddr + 4
+        strAddr += 4
     val = process.ReadCStringFromMemory(strAddr, len + 1, error)
     return '"%s"' % val
 
