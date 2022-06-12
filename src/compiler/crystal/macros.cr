@@ -367,6 +367,13 @@ module Crystal::Macros
     #
     # puts test # => prints StringLiteral
     # ```
+    #
+    # The returned name never refers to a generic instance even if the node has
+    # a generic macro type:
+    #
+    # ```
+    # {{ [1].class_name }} # => "ArrayLiteral"
+    # ```
     def class_name : StringLiteral
     end
 
@@ -428,6 +435,14 @@ module Crystal::Macros
     # {{ 1.is_a?(BoolLiteral) }}   # => false
     # {{ 1.is_a?(ASTNode) }}       # => true
     # {{ 1.is_a?(Int32) }}         # => false
+    # ```
+    #
+    # The meanings of generic type variables depend on the macro type used:
+    #
+    # ```
+    # {{ [1].is_a?(ArrayLiteral(NumberLiteral)) }}             # => true
+    # {{ {'a' => Foo}.is_a?(HashLiteral(CharLiteral, Path)) }} # => true
+    # {{ {a: Foo}.is_a?(NamedTupleLiteral(Path)) }}            # => true
     # ```
     def __crystal_pseudo_is_a?(type : TypeNode) : BoolLiteral
     end
@@ -580,7 +595,20 @@ module Crystal::Macros
   end
 
   # An array literal.
-  class ArrayLiteral < ASTNode
+  #
+  # `T` refers to the common macro type of the array literal's element nodes. An
+  # array literal is of type `ArrayLiteral(T)` if all element types are subtypes
+  # of `T`:
+  #
+  # ```
+  # {{ [1].is_a?(ArrayLiteral(NumberLiteral)) }} # => true
+  # {{ [1].is_a?(ArrayLiteral(StringLiteral)) }} # => false
+  # {{ [1].is_a?(ArrayLiteral(ASTNode)) }}       # => true
+  #
+  # {{ [1, Foo].is_a?(ArrayLiteral(NumberLiteral | Path)) }} # => true
+  # {{ [1, Foo].is_a?(ArrayLiteral(NumberLiteral)) }}        # => false
+  # ```
+  class ArrayLiteral(T) < ASTNode
     # Similar to `Enumerable#any?`
     def any?(&) : BoolLiteral
     end
@@ -721,7 +749,21 @@ module Crystal::Macros
   end
 
   # A hash literal.
-  class HashLiteral < ASTNode
+  #
+  # `K` and `V` refer to the common macro types of the hash literal's key and
+  # value nodes respectively. A hash literal is of type `HashLiteral(K, V)` if
+  # all key types are subtypes of `K` and all value types are subtypes of `V`:
+  #
+  # ```
+  # {{ {1 => Foo}.is_a?(HashLiteral(NumberLiteral, Path)) }} # => true
+  # {{ {1 => Foo}.is_a?(HashLiteral(NumberLiteral, Call)) }} # => false
+  # {{ {1 => Foo}.is_a?(HashLiteral(StringLiteral, Path)) }} # => false
+  # {{ {1 => Foo}.is_a?(HashLiteral(ASTNode, ASTNode)) }}    # => true
+  #
+  # {{ {1 => Foo, 'a' => nil}.is_a?(HashLiteral(NumberLiteral | CharLiteral, Path | NilLiteral)) }} # => true
+  # {{ {1 => Foo, 'a' => nil}.is_a?(HashLiteral(NumberLiteral, Path)) }}                            # => false
+  # ```
+  class HashLiteral(K, V) < ASTNode
     # Similar to `Hash#clear`
     def clear : HashLiteral
     end
@@ -792,7 +834,20 @@ module Crystal::Macros
   end
 
   # A named tuple literal.
-  class NamedTupleLiteral < ASTNode
+  #
+  # `V` refers to the common macro type of the named tuple literal's value
+  # nodes. A named tuple literal is of type `NamedTupleLiteral(V)` if all value
+  # types are subtypes of `V`:
+  #
+  # ```
+  # {{ {a: 1}.is_a?(NamedTupleLiteral(NumberLiteral)) }} # => true
+  # {{ {a: 1}.is_a?(NamedTupleLiteral(StringLiteral)) }} # => false
+  # {{ {a: 1}.is_a?(NamedTupleLiteral(ASTNode)) }}       # => true
+  #
+  # {{ {a: 1, b: Foo}.is_a?(TupleLiteral(NumberLiteral | Path)) }} # => true
+  # {{ {a: 1, b: Foo}.is_a?(TupleLiteral(NumberLiteral)) }}        # => false
+  # ```
+  class NamedTupleLiteral(V) < ASTNode
     # Similar to `NamedTuple#each`
     def each(&) : Nil
     end
@@ -882,6 +937,19 @@ module Crystal::Macros
   # A tuple literal.
   #
   # Its macro methods are nearly the same as `ArrayLiteral`.
+  #
+  # `T` refers to the common macro type of the tuple literal's element nodes. A
+  # tuple literal is of type `TupleLiteral(T)` if all element types are subtypes
+  # of `T`:
+  #
+  # ```
+  # {{ {1}.is_a?(TupleLiteral(NumberLiteral)) }} # => true
+  # {{ {1}.is_a?(TupleLiteral(StringLiteral)) }} # => false
+  # {{ {1}.is_a?(TupleLiteral(ASTNode)) }}       # => true
+  #
+  # {{ {1, Foo}.is_a?(TupleLiteral(NumberLiteral | Path)) }} # => true
+  # {{ {1, Foo}.is_a?(TupleLiteral(NumberLiteral)) }}        # => false
+  # ```
   class TupleLiteral < ASTNode
   end
 
