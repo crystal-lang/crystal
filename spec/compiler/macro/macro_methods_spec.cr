@@ -192,6 +192,10 @@ module Crystal
           assert_macro %({{ x.is_a?(ClassDef) }}), "true", {x: ClassDef.new("Foo".path)}
           assert_macro %({{ x.is_a?(ModuleDef) }}), "false", {x: ClassDef.new("Foo".path)}
         end
+
+        it "generic argument" do
+          assert_macro %({{ x.is_a?(ArrayLiteral) }}), "true", {x: ArrayLiteral.new(["Foo".path, "bar".call] of ASTNode)}
+        end
       end
     end
 
@@ -826,6 +830,24 @@ module Crystal
         assert_macro %({{[1, 2, 3].is_a?(ArrayLiteral)}}), "true"
         assert_macro %({{[1, 2, 3].is_a?(ASTNode)}}), "true"
         assert_macro %({{[1, 2, 3].is_a?(NumberLiteral)}}), "false"
+
+        assert_macro %({{[1, 2, 3].is_a?(ArrayLiteral(NumberLiteral))}}), "true"
+        assert_macro %({{[1, 2, 3].is_a?(ArrayLiteral(StringLiteral))}}), "false"
+        assert_macro %({{[1, 2, 3].is_a?(ArrayLiteral(NumberLiteral | BoolLiteral))}}), "true"
+        assert_macro %({{[1, 2, 3].is_a?(ArrayLiteral(NumberLiteral) | ArrayLiteral(BoolLiteral))}}), "true"
+        assert_macro %({{[1, 2, 3].is_a?(ArrayLiteral(NoReturn))}}), "false"
+        assert_macro %({{[1, 2, 3].is_a?(ArrayLiteral(ASTNode))}}), "true"
+
+        assert_macro %({{[1, 'a'].is_a?(ArrayLiteral(NumberLiteral))}}), "false"
+        assert_macro %({{[1, 'a'].is_a?(ArrayLiteral(CharLiteral))}}), "false"
+        assert_macro %({{[1, 'a'].is_a?(ArrayLiteral(NumberLiteral | CharLiteral))}}), "true"
+        assert_macro %({{[1, 'a'].is_a?(ArrayLiteral(NumberLiteral) | ArrayLiteral(CharLiteral))}}), "false"
+        assert_macro %({{[1, 'a'].is_a?(ArrayLiteral(NoReturn))}}), "false"
+        assert_macro %({{[1, 'a'].is_a?(ArrayLiteral(ASTNode))}}), "true"
+
+        assert_macro %({{x.is_a?(ArrayLiteral)}}), "true", {x: ArrayLiteral.new}
+        assert_macro %({{x.is_a?(ArrayLiteral(NoReturn))}}), "true", {x: ArrayLiteral.new}
+        assert_macro %({{x.is_a?(ArrayLiteral(StringLiteral))}}), "true", {x: ArrayLiteral.new}
       end
 
       it "creates an array literal with a var" do
@@ -948,6 +970,41 @@ module Crystal
         assert_macro %({{{:a => 1}.is_a?(HashLiteral)}}), "true"
         assert_macro %({{{:a => 1}.is_a?(ASTNode)}}), "true"
         assert_macro %({{{:a => 1}.is_a?(RangeLiteral)}}), "false"
+
+        assert_macro %({{ {"a" => 1, "b" => 2}.is_a?(HashLiteral(StringLiteral, NumberLiteral)) }}), "true"
+        assert_macro %({{ {"a" => 1, "b" => 2}.is_a?(HashLiteral(StringLiteral, StringLiteral)) }}), "false"
+        assert_macro %({{ {"a" => 1, "b" => 2}.is_a?(HashLiteral(StringLiteral, NumberLiteral | BoolLiteral)) }}), "true"
+        assert_macro %({{ {"a" => 1, "b" => 2}.is_a?(HashLiteral(StringLiteral, NumberLiteral) | HashLiteral(StringLiteral, BoolLiteral)) }}), "true"
+        assert_macro %({{ {"a" => 1, "b" => 2}.is_a?(HashLiteral(StringLiteral, NoReturn)) }}), "false"
+        assert_macro %({{ {"a" => 1, "b" => 2}.is_a?(HashLiteral(StringLiteral, ASTNode)) }}), "true"
+
+        assert_macro %({{ {"a" => 1, "b" => 'a'}.is_a?(HashLiteral(StringLiteral, NumberLiteral)) }}), "false"
+        assert_macro %({{ {"a" => 1, "b" => 'a'}.is_a?(HashLiteral(StringLiteral, CharLiteral)) }}), "false"
+        assert_macro %({{ {"a" => 1, "b" => 'a'}.is_a?(HashLiteral(StringLiteral, NumberLiteral | CharLiteral)) }}), "true"
+        assert_macro %({{ {"a" => 1, "b" => 'a'}.is_a?(HashLiteral(StringLiteral, NumberLiteral) | HashLiteral(StringLiteral, CharLiteral)) }}), "false"
+        assert_macro %({{ {"a" => 1, "b" => 'a'}.is_a?(HashLiteral(StringLiteral, NoReturn)) }}), "false"
+        assert_macro %({{ {"a" => 1, "b" => 'a'}.is_a?(HashLiteral(StringLiteral, ASTNode)) }}), "true"
+
+        assert_macro %({{ {1 => "a", 2 => "b"}.is_a?(HashLiteral(NumberLiteral, StringLiteral)) }}), "true"
+        assert_macro %({{ {1 => "a", 2 => "b"}.is_a?(HashLiteral(StringLiteral, StringLiteral)) }}), "false"
+        assert_macro %({{ {1 => "a", 2 => "b"}.is_a?(HashLiteral(NumberLiteral | BoolLiteral, StringLiteral)) }}), "true"
+        assert_macro %({{ {1 => "a", 2 => "b"}.is_a?(HashLiteral(NumberLiteral, StringLiteral) | HashLiteral(BoolLiteral, StringLiteral)) }}), "true"
+        assert_macro %({{ {1 => "a", 2 => "b"}.is_a?(HashLiteral(NoReturn, StringLiteral)) }}), "false"
+        assert_macro %({{ {1 => "a", 2 => "b"}.is_a?(HashLiteral(ASTNode, StringLiteral)) }}), "true"
+
+        assert_macro %({{ {1 => "a", 'a' => "b"}.is_a?(HashLiteral(NumberLiteral, StringLiteral)) }}), "false"
+        assert_macro %({{ {1 => "a", 'a' => "b"}.is_a?(HashLiteral(CharLiteral, StringLiteral)) }}), "false"
+        assert_macro %({{ {1 => "a", 'a' => "b"}.is_a?(HashLiteral(NumberLiteral | CharLiteral, StringLiteral)) }}), "true"
+        assert_macro %({{ {1 => "a", 'a' => "b"}.is_a?(HashLiteral(NumberLiteral, StringLiteral) | HashLiteral(CharLiteral, StringLiteral)) }}), "false"
+        assert_macro %({{ {1 => "a", 'a' => "b"}.is_a?(HashLiteral(NoReturn, StringLiteral)) }}), "false"
+        assert_macro %({{ {1 => "a", 'a' => "b"}.is_a?(HashLiteral(ASTNode, StringLiteral)) }}), "true"
+
+        assert_macro %({{ {1 => 'x', false => "y"}.is_a?(HashLiteral(NumberLiteral | BoolLiteral, CharLiteral | StringLiteral)) }}), "true"
+        assert_macro %({{ {1 => 'x', false => "y"}.is_a?(HashLiteral(ASTNode, ASTNode)) }}), "true"
+
+        assert_macro %({{x.is_a?(HashLiteral)}}), "true", {x: HashLiteral.new}
+        assert_macro %({{x.is_a?(HashLiteral(NoReturn, NoReturn))}}), "true", {x: HashLiteral.new}
+        assert_macro %({{x.is_a?(HashLiteral(StringLiteral, NumberLiteral))}}), "true", {x: HashLiteral.new}
       end
 
       it "executes []=" do
@@ -1078,6 +1135,24 @@ module Crystal
         assert_macro %({{{a: 1}.is_a?(NamedTupleLiteral)}}), "true"
         assert_macro %({{{a: 1}.is_a?(ASTNode)}}), "true"
         assert_macro %({{{a: 1}.is_a?(RangeLiteral)}}), "false"
+
+        assert_macro %({{ {a: 1, b: 2}.is_a?(NamedTupleLiteral(NumberLiteral)) }}), "true"
+        assert_macro %({{ {a: 1, b: 2}.is_a?(NamedTupleLiteral(StringLiteral)) }}), "false"
+        assert_macro %({{ {a: 1, b: 2}.is_a?(NamedTupleLiteral(NumberLiteral | BoolLiteral)) }}), "true"
+        assert_macro %({{ {a: 1, b: 2}.is_a?(NamedTupleLiteral(NumberLiteral) | NamedTupleLiteral(BoolLiteral)) }}), "true"
+        assert_macro %({{ {a: 1, b: 2}.is_a?(NamedTupleLiteral(NoReturn)) }}), "false"
+        assert_macro %({{ {a: 1, b: 2}.is_a?(NamedTupleLiteral(ASTNode)) }}), "true"
+
+        assert_macro %({{ {a: 1, b: 'a'}.is_a?(NamedTupleLiteral(NumberLiteral)) }}), "false"
+        assert_macro %({{ {a: 1, b: 'a'}.is_a?(NamedTupleLiteral(CharLiteral)) }}), "false"
+        assert_macro %({{ {a: 1, b: 'a'}.is_a?(NamedTupleLiteral(NumberLiteral | CharLiteral)) }}), "true"
+        assert_macro %({{ {a: 1, b: 'a'}.is_a?(NamedTupleLiteral(NumberLiteral) | NamedTupleLiteral(CharLiteral)) }}), "false"
+        assert_macro %({{ {a: 1, b: 'a'}.is_a?(NamedTupleLiteral(NoReturn)) }}), "false"
+        assert_macro %({{ {a: 1, b: 'a'}.is_a?(NamedTupleLiteral(ASTNode)) }}), "true"
+
+        assert_macro %({{x.is_a?(NamedTupleLiteral)}}), "true", {x: NamedTupleLiteral.new}
+        assert_macro %({{x.is_a?(NamedTupleLiteral(NoReturn))}}), "true", {x: NamedTupleLiteral.new}
+        assert_macro %({{x.is_a?(NamedTupleLiteral(StringLiteral))}}), "true", {x: NamedTupleLiteral.new}
       end
 
       it "executes []=" do
@@ -1333,6 +1408,24 @@ module Crystal
         assert_macro %({{ {1, 2, 3}.is_a?(TupleLiteral) }}), "true"
         assert_macro %({{ {1, 2, 3}.is_a?(ASTNode) }}), "true"
         assert_macro %({{ {1, 2, 3}.is_a?(ArrayLiteral) }}), "false"
+
+        assert_macro %({{ {1, 2, 3}.is_a?(TupleLiteral(NumberLiteral)) }}), "true"
+        assert_macro %({{ {1, 2, 3}.is_a?(TupleLiteral(StringLiteral)) }}), "false"
+        assert_macro %({{ {1, 2, 3}.is_a?(TupleLiteral(NumberLiteral | BoolLiteral)) }}), "true"
+        assert_macro %({{ {1, 2, 3}.is_a?(TupleLiteral(NumberLiteral) | TupleLiteral(BoolLiteral)) }}), "true"
+        assert_macro %({{ {1, 2, 3}.is_a?(TupleLiteral(NoReturn)) }}), "false"
+        assert_macro %({{ {1, 2, 3}.is_a?(TupleLiteral(ASTNode)) }}), "true"
+
+        assert_macro %({{ {1, 'a'}.is_a?(TupleLiteral(NumberLiteral)) }}), "false"
+        assert_macro %({{ {1, 'a'}.is_a?(TupleLiteral(CharLiteral)) }}), "false"
+        assert_macro %({{ {1, 'a'}.is_a?(TupleLiteral(NumberLiteral | CharLiteral)) }}), "true"
+        assert_macro %({{ {1, 'a'}.is_a?(TupleLiteral(NumberLiteral) | TupleLiteral(CharLiteral)) }}), "false"
+        assert_macro %({{ {1, 'a'}.is_a?(TupleLiteral(NoReturn)) }}), "false"
+        assert_macro %({{ {1, 'a'}.is_a?(TupleLiteral(ASTNode)) }}), "true"
+
+        assert_macro %({{x.is_a?(TupleLiteral)}}), "true", {x: TupleLiteral.new([] of ASTNode)}
+        assert_macro %({{x.is_a?(TupleLiteral(NoReturn))}}), "true", {x: TupleLiteral.new([] of ASTNode)}
+        assert_macro %({{x.is_a?(TupleLiteral(StringLiteral))}}), "true", {x: TupleLiteral.new([] of ASTNode)}
       end
 
       it "creates a tuple literal with a var" do

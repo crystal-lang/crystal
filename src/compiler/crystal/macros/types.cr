@@ -16,12 +16,13 @@ module Crystal
       @macro_types["StringLiteral"] = NonGenericMacroType.new self, "StringLiteral", ast_node
       @macro_types["StringInterpolation"] = NonGenericMacroType.new self, "StringInterpolation", ast_node
       @macro_types["SymbolLiteral"] = NonGenericMacroType.new self, "SymbolLiteral", ast_node
-      @macro_types["ArrayLiteral"] = NonGenericMacroType.new self, "ArrayLiteral", ast_node
-      @macro_types["HashLiteral"] = NonGenericMacroType.new self, "HashLiteral", ast_node
-      @macro_types["NamedTupleLiteral"] = NonGenericMacroType.new self, "NamedTupleLiteral", ast_node
       @macro_types["RangeLiteral"] = NonGenericMacroType.new self, "RangeLiteral", ast_node
       @macro_types["RegexLiteral"] = NonGenericMacroType.new self, "RegexLiteral", ast_node
-      @macro_types["TupleLiteral"] = NonGenericMacroType.new self, "TupleLiteral", ast_node
+
+      @macro_types["ArrayLiteral"] = GenericMacroType.new self, "ArrayLiteral", ast_node, %w(T)
+      @macro_types["HashLiteral"] = GenericMacroType.new self, "HashLiteral", ast_node, %w(K V)
+      @macro_types["TupleLiteral"] = GenericMacroType.new self, "TupleLiteral", ast_node, %w(T)
+      @macro_types["NamedTupleLiteral"] = GenericMacroType.new self, "NamedTupleLiteral", ast_node, %w(V)
 
       # Crystal::MetaMacroVar
       @macro_types["MetaVar"] = NonGenericMacroType.new self, "MetaVar", ast_node
@@ -123,6 +124,11 @@ module Crystal
 
     # Returns the macro type for a given AST node. This association is done
     # through `Crystal::ASTNode#class_desc`.
+    #
+    # For generic macro types like `ArrayLiteral`, this method always returns
+    # the uninstantiated macro type. Instead those AST nodes must override
+    # `ASTNode#macro_is_a?` to interpret the generic type variables in a type
+    # name appropriately.
     def node_macro_type(node : ASTNode) : MacroType
       @macro_types[node.class_desc]
     end
@@ -133,6 +139,14 @@ module Crystal
         macro_type = @macro_types[name.names.first]?
       end
       macro_type || macro_no_return
+    end
+
+    def lookup_macro_type(name : Generic)
+      generic_type = lookup_macro_type(name.name)
+      unless generic_type.is_a?(GenericMacroType)
+        name.raise "'#{name.name}' is not a generic macro type and cannot be instantiated"
+      end
+      generic_type.instantiate(name)
     end
 
     def lookup_macro_type(name : Union)
@@ -175,6 +189,69 @@ module Crystal
     end
   end
 
+  # A generic AST node type that may be instantiated with type variables, e.g.
+  # `ArrayLiteral`.
+  class GenericMacroType < MacroType
+    getter name : String
+    getter parent : MacroType?
+    getter type_params : Array(String)
+
+    def initialize(program, @name, @parent, @type_params)
+      super(program)
+    end
+
+    def instantiate(node : Generic)
+      positional_args = node.type_vars.map do |type_var|
+        case type_var
+        when Path, Generic, Union
+          @program.lookup_macro_type(type_var)
+        else
+          type_var.raise "type variable must be a Path, Generic, or Union, not #{type_var.class_desc}"
+        end
+      end
+
+      if named_args = node.named_args
+        node.raise "cannot instantiate a generic macro type with named arguments"
+      end
+
+      unless positional_args.size == @type_params.size
+        node.raise "wrong number of type vars for #{full_name} (given #{positional_args.size}, expected #{@type_params.size})"
+      end
+
+      GenericInstanceMacroType.new(@program, self, positional_args)
+    end
+
+    def to_s(io : IO) : Nil
+      io << @name
+    end
+
+    def full_name
+      String.build do |io|
+        io << self
+        io << '('
+        @type_params.join(io, ", ")
+        io << ')'
+      end
+    end
+  end
+
+  # An instance of a generic AST node type. This is used only when a type name
+  # explicitly mentions a generic instance; the macro type of a node like
+  # `[1, true]` is always just the uninstantiated `ArrayLiteral`, not something
+  # more specific such as `ArrayLiteral(NumberLiteral | BoolLiteral)`.
+  class GenericInstanceMacroType < MacroType
+    getter generic_type : GenericMacroType
+    getter type_vars : Array(MacroType)
+
+    def initialize(program, @generic_type, @type_vars)
+      super(program)
+    end
+
+    def to_s(io : IO) : Nil
+      io << @generic_type
+    end
+  end
+
   # The bottom type of AST nodes. No AST nodes are of this type. Meaningful as
   # a return type, e.g. `::raise`.
   class NoReturnMacroType < MacroType
@@ -201,10 +278,26 @@ module Crystal
   class MacroType
     # Returns true if *macro_type* is a subtype of *other*; that is, every AST
     # node instance of *macro_type* is also an instance of *other*.
-    def self.subtype?(macro_type : NonGenericMacroType, other : NonGenericMacroType)
+    def self.subtype?(macro_type : NonGenericMacroType | GenericMacroType, other : NonGenericMacroType | GenericMacroType)
       return true if macro_type == other
       parent = macro_type.parent
       !parent.nil? && subtype?(parent, other)
+    end
+
+    def self.subtype?(macro_type : GenericInstanceMacroType, other : NonGenericMacroType | GenericMacroType)
+      subtype?(macro_type.generic_type, other)
+    end
+
+    def self.subtype?(macro_type : GenericInstanceMacroType, other : GenericInstanceMacroType)
+      return false unless macro_type.generic_type == other.generic_type
+      return false unless macro_type.type_vars.size == other.type_vars.size
+
+      macro_type.type_vars.zip(other.type_vars) do |type_var, other_type_var|
+        # all generic macro types are covariant in all type arguments
+        return false unless subtype?(type_var, other_type_var)
+      end
+
+      true
     end
 
     def self.subtype?(macro_type : NoReturnMacroType, other : MacroType)
@@ -279,8 +372,63 @@ module Crystal
   end
 
   class ASTNode
+    def macro_is_a?(macro_type : UnionMacroType) : Bool
+      macro_type.union_macro_types.any? { |union_type| macro_is_a?(union_type) }
+    end
+
     def macro_is_a?(macro_type : MacroType) : Bool
       MacroType.subtype?(macro_type.program.node_macro_type(self), macro_type)
+    end
+  end
+
+  # `ArrayLiteral(T)`: `T` is inferred to be the union of element types
+  class ArrayLiteral
+    def macro_is_a?(macro_type : GenericInstanceMacroType) : Bool
+      program = macro_type.program
+      generic_type = program.node_macro_type(self).as(GenericMacroType)
+      return false unless macro_type.generic_type == generic_type
+
+      element_type = macro_type.type_vars[0]
+      elements.all? &.macro_is_a?(element_type)
+    end
+  end
+
+  # `TupleLiteral(T)`: `T` is inferred to be the union of element types
+  class TupleLiteral
+    def macro_is_a?(macro_type : GenericInstanceMacroType) : Bool
+      program = macro_type.program
+      generic_type = program.node_macro_type(self).as(GenericMacroType)
+      return false unless macro_type.generic_type == generic_type
+
+      element_type = macro_type.type_vars[0]
+      elements.all? &.macro_is_a?(element_type)
+    end
+  end
+
+  # `HashLiteral(K, V)`: `K` and `V` are inferred to be the union of key types
+  # and value types respectively
+  class HashLiteral
+    def macro_is_a?(macro_type : GenericInstanceMacroType) : Bool
+      program = macro_type.program
+      generic_type = program.node_macro_type(self).as(GenericMacroType)
+      return false unless macro_type.generic_type == generic_type
+
+      key_type, value_type = macro_type.type_vars
+      entries.all? do |entry|
+        entry.key.macro_is_a?(key_type) && entry.value.macro_is_a?(value_type)
+      end
+    end
+  end
+
+  # `NamedTupleLiteral(V)`: `V` is inferred to be the union of value types
+  class NamedTupleLiteral
+    def macro_is_a?(macro_type : GenericInstanceMacroType) : Bool
+      program = macro_type.program
+      generic_type = program.node_macro_type(self).as(GenericMacroType)
+      return false unless macro_type.generic_type == generic_type
+
+      value_type = macro_type.type_vars[0]
+      entries.all? &.value.macro_is_a?(value_type)
     end
   end
 end
