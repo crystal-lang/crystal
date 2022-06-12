@@ -5124,6 +5124,7 @@ module Crystal
         when .op_period?
           next_token_skip_space_or_newline
           check_ident :class
+          raise "cannot use metaclasses in macro types" if @in_macro_type_name
           next_token_skip_space
           type = Metaclass.new(type).at(type)
         when .op_question?

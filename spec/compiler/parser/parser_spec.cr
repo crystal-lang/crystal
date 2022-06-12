@@ -1926,6 +1926,7 @@ module Crystal
       end
     end
 
+    assert_syntax_error "{{ 1.is_a?(Foo.class) }}", "cannot use metaclasses in macro types"
     assert_syntax_error "{{ 1.is_a?(Foo*) }}", "cannot use `*` in macro types"
     assert_syntax_error "{{ 1.is_a?(Foo**) }}", "cannot use `*` in macro types"
     assert_syntax_error "{{ 1.is_a?(Foo?) }}", "cannot use `?` in macro types"
