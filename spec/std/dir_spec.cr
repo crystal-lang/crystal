@@ -493,7 +493,19 @@ describe "Dir" do
   end
 
   it ".current" do
-    Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
+    expected_dir = {% if flag? :freebsd %}
+                     # On FreeBSD, the /home directory is a symlink to /usr/home
+                     # which `Dir.current` follows but `pwd` does not by default.
+                     # Based on the man pages, the -P argument of the `pwd`
+                     # command also doesn't do the same thing than on Linux.
+                     `pwd -P`
+                   {% elsif flag? :win32 %}
+                     `cmd /c cd`
+                   {% else %}
+                     `pwd`
+                   {% end %}
+
+    Dir.current.should eq expected_dir.chomp
   end
 
   describe ".tempdir" do
