@@ -39,6 +39,7 @@ module Crystal
       @call_args_nest = 0
       @temp_arg_count = 0
       @in_macro_expression = false
+      @in_macro_type_name = false
       @stop_on_yield = 0
       @inside_c_struct = false
       @wants_doc = false
@@ -848,21 +849,26 @@ module Crystal
     end
 
     def parse_is_a(atomic)
-      next_token_skip_space
-
-      if @token.type.op_lparen?
-        next_token_skip_space_or_newline
-        type = parse_bare_proc_type
-        skip_space_or_newline
-        check :OP_RPAREN
-        end_location = token_end_location
+      old_in_macro_type_name, @in_macro_type_name = @in_macro_type_name, @in_macro_expression
+      begin
         next_token_skip_space
-      else
-        type = parse_union_type
-        end_location = type.end_location
-      end
 
-      IsA.new(atomic, type).at_end(end_location)
+        if @token.type.op_lparen?
+          next_token_skip_space_or_newline
+          type = parse_bare_proc_type
+          skip_space_or_newline
+          check :OP_RPAREN
+          end_location = token_end_location
+          next_token_skip_space
+        else
+          type = parse_union_type
+          end_location = type.end_location
+        end
+
+        IsA.new(atomic, type).at_end(end_location)
+      ensure
+        @in_macro_type_name = old_in_macro_type_name
+      end
     end
 
     def parse_as(atomic, klass = Cast)
@@ -4863,17 +4869,21 @@ module Crystal
       when .ident?
         case @token.value
         when :self
+          raise "cannot use `self` in macro types" if @in_macro_type_name
           next_token_skip_space
           Self.new.at(location)
         when "self?"
+          raise "cannot use `self` in macro types" if @in_macro_type_name
           next_token_skip_space
           make_nilable_type Self.new.at(location)
         when :typeof
+          raise "cannot use `typeof` in macro types" if @in_macro_type_name
           parse_typeof
         else
           unexpected_token
         end
       when .underscore?
+        raise "cannot use `_` in macro types" if @in_macro_type_name
         next_token_skip_space
         Underscore.new.at(location)
       when .const?, .op_colon_colon?
@@ -5139,6 +5149,7 @@ module Crystal
     end
 
     def parse_proc_type_output(input_types, location)
+      raise "cannot use `->` in macro types" if @in_macro_type_name
       has_output_type = type_start?(consume_newlines: false)
 
       check :OP_MINUS_GT
@@ -5153,6 +5164,7 @@ module Crystal
     end
 
     def make_nilable_type(type)
+      raise "cannot use `?` in macro types" if @in_macro_type_name
       Union.new([type, Path.global("Nil").at(type)]).at(type)
     end
 
@@ -5163,22 +5175,26 @@ module Crystal
     end
 
     def make_pointer_type(type)
+      raise "cannot use `*` in macro types" if @in_macro_type_name
       type = Generic.new(Path.global("Pointer").at(type), [type] of ASTNode).at(type)
       type.suffix = :asterisk
       type
     end
 
     def make_static_array_type(type, size)
+      raise "cannot use `[]` in macro types" if @in_macro_type_name
       type = Generic.new(Path.global("StaticArray").at(type), [type, size] of ASTNode).at(type)
       type.suffix = :bracket
       type
     end
 
     def make_tuple_type(types)
+      raise "cannot use `{}` in macro types" if @in_macro_type_name
       Generic.new(Path.global("Tuple"), types)
     end
 
     def make_named_tuple_type(named_args)
+      raise "cannot use `{}` in macro types" if @in_macro_type_name
       Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: named_args)
     end
 

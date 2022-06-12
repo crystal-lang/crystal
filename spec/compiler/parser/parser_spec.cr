@@ -1926,6 +1926,17 @@ module Crystal
       end
     end
 
+    assert_syntax_error "{{ 1.is_a?(Foo*) }}", "cannot use `*` in macro types"
+    assert_syntax_error "{{ 1.is_a?(Foo**) }}", "cannot use `*` in macro types"
+    assert_syntax_error "{{ 1.is_a?(Foo?) }}", "cannot use `?` in macro types"
+    assert_syntax_error "{{ 1.is_a?(Foo[1]) }}", "cannot use `[]` in macro types"
+    assert_syntax_error "{{ 1.is_a?(Foo -> Bar) }}", "cannot use `->` in macro types"
+    assert_syntax_error "{{ 1.is_a?({Foo}) }}", "cannot use `{}` in macro types"
+    assert_syntax_error "{{ 1.is_a?({a: Foo}) }}", "cannot use `{}` in macro types"
+    assert_syntax_error "{{ 1.is_a?(self) }}", "cannot use `self` in macro types"
+    assert_syntax_error "{{ 1.is_a?(self?) }}", "cannot use `self` in macro types"
+    assert_syntax_error "{{ 1.is_a?(_) }}", "cannot use `_` in macro types"
+
     assert_syntax_error "Foo{one: :two, three: :four}", "can't use named tuple syntax for Hash-like literal"
     assert_syntax_error "{one: :two, three: :four} of Symbol => Symbol"
     assert_syntax_error %(Hash{"foo": 1}), "can't use named tuple syntax for Hash-like literal"
