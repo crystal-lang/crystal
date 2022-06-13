@@ -11,7 +11,6 @@ class Crystal::Call
   property expanded : ASTNode?
   property expanded_macro : Macro?
   property? uses_with_scope = false
-  getter? raises = false
 
   class RetryLookupWithLiterals < ::Exception
   end
@@ -101,11 +100,6 @@ class Crystal::Call
     bind_to block.break if block
 
     if (parent_visitor = @parent_visitor) && matches
-      if parent_visitor.typed_def? && matches.any?(&.raises?)
-        @raises = true
-        parent_visitor.typed_def.raises = true
-      end
-
       matches.each do |match|
         match.special_vars.try &.each do |special_var_name|
           special_var = match.vars.not_nil![special_var_name]
@@ -1248,16 +1242,6 @@ class Crystal::Call
 
     type.as(SubclassObservable).add_subclass_observer(self)
     @subclass_notifier = type
-  end
-
-  def raises=(value)
-    if @raises != value
-      @raises = value
-      typed_def = parent_visitor.typed_def?
-      if typed_def
-        typed_def.raises = value
-      end
-    end
   end
 
   def super?
