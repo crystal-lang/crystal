@@ -46,12 +46,11 @@ def CrystalString_SummaryProvider(value, dict):
     if value.TypeIsPointerType():
         value = value.Dereference()
     target = value.GetTarget()
-    process = target.GetProcess()
-    len = int(value.GetChildMemberWithName('length').value) or int(value.GetChildMemberWithName('bytesize').value)
-    strAddr = value.GetChildMemberWithName('c').load_addr
     if "x86_64-pc-windows-msvc" == target.triple:
-        # on windows, strings are prefixed by 4 bytes indicating the length
-        strAddr += 4
+      value = value.CreateValueFromAddress(value.name, value.load_addr+4, value.type)
+    process = target.GetProcess()
+    len = int(value.GetChildMemberWithName('bytesize').value) or int(value.GetChildMemberWithName('length').value) 
+    strAddr = value.GetChildMemberWithName('c').load_addr
     val = process.ReadCStringFromMemory(strAddr, len + 1, error)
     return '"%s"' % val
 
