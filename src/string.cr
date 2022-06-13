@@ -1316,7 +1316,8 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
+          byte = to_unsafe[i]
+          buffer[i] = byte < 0x80 ? byte.unsafe_chr.downcase.ord.to_u8! : byte
         end
         {@bytesize, @length}
       end
@@ -1351,7 +1352,8 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
+          byte = to_unsafe[i]
+          buffer[i] = byte < 0x80 ? byte.unsafe_chr.upcase.ord.to_u8! : byte
         end
         {@bytesize, @length}
       end
@@ -1387,13 +1389,15 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          byte = if i.zero?
-                   to_unsafe[i].unsafe_chr.upcase.ord.to_u8
-                 else
-                   to_unsafe[i].unsafe_chr.downcase.ord.to_u8
-                 end
+          byte = to_unsafe[i]
 
-          buffer[i] = byte
+          buffer[i] = if byte >= 0x80
+                        byte
+                      elsif i.zero?
+                        byte.unsafe_chr.upcase.ord.to_u8!
+                      else
+                        byte.unsafe_chr.downcase.ord.to_u8!
+                      end
         end
         {@bytesize, @length}
       end
@@ -1435,10 +1439,16 @@ class String
 
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          char = to_unsafe[i].unsafe_chr
-          replaced_char = upcase_next ? char.upcase : char.downcase
-          buffer[i] = replaced_char.ord.to_u8
-          upcase_next = char.whitespace?
+          byte = to_unsafe[i]
+          if byte < 0x80
+            char = byte.unsafe_chr
+            replaced_char = upcase_next ? char.upcase : char.downcase
+            buffer[i] = replaced_char.ord.to_u8!
+            upcase_next = char.ascii_whitespace?
+          else
+            buffer[i] = byte
+            upcase_next = false
+          end
         end
         {@bytesize, @length}
       end
@@ -2882,8 +2892,11 @@ class String
   end
 
   # Returns `true` if this string is equal to `*other*.
+  #
   # Comparison is done byte-per-byte: if a byte is different from the corresponding
-  # byte, `false` is returned and so on.
+  # byte, `false` is returned and so on. This means two strings containing invalid
+  # UTF-8 byte sequences may compare unequal, even when they both produce the
+  # Unicode replacement character at the same string indices.
   #
   # See `#compare` for more comparison options.
   def ==(other : self) : Bool
@@ -2897,8 +2910,10 @@ class String
   # Compares this string with *other*, returning `-1`, `0` or `1` depending on whether
   # this string is less, equal or greater than *other*.
   #
-  # Comparison is done byte-per-byte: if a byte is less then the other corresponding
-  # byte, `-1` is returned and so on.
+  # Comparison is done byte-per-byte: if a byte is less than the other corresponding
+  # byte, `-1` is returned and so on. This means two strings containing invalid
+  # UTF-8 byte sequences may compare unequal, even when they both produce the
+  # Unicode replacement character at the same string indices.
   #
   # If the strings are of different lengths, and the strings are equal when compared
   # up to the shortest length, then the longer string is considered greater than
@@ -2922,6 +2937,9 @@ class String
   # this string is less, equal or greater than *other*, optionally in a *case_insensitive*
   # manner.
   #
+  # Case-sensitive comparisons (`case_insensitive == false`) are equivalent to
+  # `#<=>` and are always done byte-per-byte.
+  #
   # ```
   # "abcdef".compare("abcde")   # => 1
   # "abcdef".compare("abcdef")  # => 0
@@ -2944,11 +2962,17 @@ class String
         byte2 = other.to_unsafe[position]
 
         # Lowercase both bytes
+        # Also reject any invalid code units
         if 65 <= byte1 <= 90
           byte1 += 32
+        elsif byte1 >= 0x80
+          return 1 if byte2 < 0x80
         end
+
         if 65 <= byte2 <= 90
           byte2 += 32
+        elsif byte2 >= 0x80
+          return byte1 < 0x80 ? -1 : 0
         end
 
         comparison = byte1 <=> byte2
@@ -4837,7 +4861,8 @@ class String
     return false unless bytesize > 0
 
     if char.ascii? || single_byte_optimizable?
-      return to_unsafe[bytesize - 1] == char.ord
+      byte = to_unsafe[bytesize - 1]
+      return byte < 0x80 ? byte == char.ord : char == Char::REPLACEMENT
     end
 
     bytes, count = String.char_bytes_and_bytesize(char)
