@@ -506,7 +506,7 @@ struct Time::Format
         if alternatives.empty?
           raise "Expected #{char.inspect} but the end of the input was reached"
         else
-          raise "Expected one of #{({char} + alternatives).join(", ", &.inspect)} but reached the input end"
+          raise "Expected one of #{char.inspect}, #{alternatives.join(", ", &.inspect)} but reached the input end"
         end
       end
 
