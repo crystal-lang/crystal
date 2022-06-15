@@ -71,23 +71,21 @@ module Crystal
     end
 
     def convert(type : ProcInstanceType)
-      type_vars = Array(ASTNode).new(type.arg_types.size + 1)
-      type.arg_types.each do |arg_type|
-        type_vars.push(convert(arg_type) || Underscore.new)
-      end
+      inputs =
+        type.arg_types.map do |arg_type|
+          convert(arg_type) || Underscore.new
+        end
 
-      if type.return_type.is_a?(NilType)
-        # Because there's some strange autocasting for Procs that return Nil,
-        # it's better if we don't do anything fancy here.
-        type_vars.push(Underscore.new)
-      else
-        type_vars.push(convert(type.return_type) || Underscore.new)
-      end
+      output =
+        if type.return_type.is_a?(NilType)
+          # Because there's some strange autocasting for Procs that return Nil,
+          # it's better if we don't do anything fancy here.
+          Underscore.new
+        else
+          convert(type.return_type) || Underscore.new
+        end
 
-      Generic.new(
-        Path.global("Proc"),
-        type_vars: type_vars,
-      )
+      ProcNotation.new(inputs, output)
     end
 
     def convert(type : GenericInstanceType)
