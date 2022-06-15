@@ -1,11 +1,11 @@
 require "../../spec_helper"
 
 private def expect_augment(before : String, after : String)
-  result = semantic(before)
+  result = semantic(before, flags: "use_restrictions_augmenter")
   result.node.to_s.should eq(after)
 end
 
-private def expect_no_augment(code : String, flags = nil)
+private def expect_no_augment(code : String, flags = "use_restrictions_augmenter")
   result = semantic(code, flags: flags)
   result.node.to_s.should eq(code)
 end

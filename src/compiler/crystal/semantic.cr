@@ -74,7 +74,8 @@ class Crystal::Program
       AbstractDefChecker.new(self).run
     end
 
-    unless @program.has_flag?("no_restrictions_augmenter")
+    # FIXME: Temporarily deactivated due to https://github.com/crystal-lang/crystal/issues/12127
+    if @program.has_flag?("use_restrictions_augmenter")
       @progress_tracker.stage("Semantic (restrictions augmenter)") do
         node.accept RestrictionsAugmenter.new(self, new_expansions)
       end
