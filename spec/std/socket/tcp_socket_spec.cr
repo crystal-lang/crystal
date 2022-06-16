@@ -53,7 +53,7 @@ describe TCPSocket, tags: "network" do
     end
 
     describe "address resolution" do
-      pending_win32 "connects to localhost" do
+      it "connects to localhost" do
         port = unused_local_port
 
         TCPServer.open("localhost", port) do |server|

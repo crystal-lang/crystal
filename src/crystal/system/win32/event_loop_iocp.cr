@@ -52,11 +52,13 @@ module Crystal::EventLoop
 
       fiber = next_event.fiber
 
-      if next_event.timeout? && (select_action = fiber.timeout_select_action)
-        fiber.timeout_select_action = nil
-        select_action.time_expired(fiber)
-      else
-        Crystal::Scheduler.enqueue fiber
+      unless fiber.dead?
+        if next_event.timeout? && (select_action = fiber.timeout_select_action)
+          fiber.timeout_select_action = nil
+          select_action.time_expired(fiber)
+        else
+          Crystal::Scheduler.enqueue fiber
+        end
       end
     else
       Crystal::System.print_error "Warning: No runnables in scheduler. Exiting program.\n"

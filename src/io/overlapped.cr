@@ -1,5 +1,6 @@
 {% skip_file unless flag?(:win32) %}
 require "c/handleapi"
+require "crystal/system/thread_linked_list"
 
 module IO::Overlapped
   @read_timeout : Time::Span?
@@ -72,46 +73,86 @@ module IO::Overlapped
     end
 
     removed.times do |i|
-      overlapped_entry = overlapped_entries[i]
-      operation = overlapped_entry.lpOverlapped.as(OverlappedOperation*).value
-
-      yield operation.fiber
+      OverlappedOperation.schedule(overlapped_entries[i].lpOverlapped) { |fiber| yield fiber }
     end
 
     false
   end
 
-  @[Extern]
-  struct OverlappedOperation
-    @overlapped : LibC::WSAOVERLAPPED
-    @fiber : Void*
-
-    def initialize(@overlapped : LibC::WSAOVERLAPPED, fiber : Fiber)
-      @fiber = Box.box(fiber)
+  class OverlappedOperation
+    enum State
+      INITIALIZED
+      STARTED
+      DONE
+      CANCELD
     end
 
-    def fiber
-      raise "Invalid fiber:\n#{@overlapped} #{@overlapped.internal.to_s(16)}" if @fiber.null?
-      Box(Fiber).unbox(@fiber)
-    end
-  end
+    @overlapped = LibC::WSAOVERLAPPED.new
+    @fiber : Fiber? = nil
+    @state = State::INITIALIZED
+    property next : OverlappedOperation?
+    property previous : OverlappedOperation?
+    @@canceled = Thread::LinkedList(OverlappedOperation).new
 
-  def create_operation
-    overlapped = LibC::WSAOVERLAPPED.new
-    OverlappedOperation.new(overlapped, Fiber.current)
-  end
-
-  def get_overlapped_result(socket, operation)
-    flags = 0_u32
-    result = LibC.WSAGetOverlappedResult(socket, pointerof(operation).as(LibC::OVERLAPPED*), out bytes, false, pointerof(flags))
-    if result.zero?
-      error = WinError.wsa_value
-      yield error
-
-      raise IO::Error.from_os_error("WSAGetOverlappedResult", error)
+    def self.run(socket)
+      operation = OverlappedOperation.new
+      begin
+        yield operation
+      ensure
+        operation.done(socket)
+      end
     end
 
-    bytes
+    def self.schedule(overlapped : LibC::WSAOVERLAPPED*)
+      start = overlapped.as(Pointer(UInt8)) - offsetof(OverlappedOperation, @overlapped)
+      operation = Box(OverlappedOperation).unbox(start.as(Pointer(Void)))
+      operation.schedule { |fiber| yield fiber }
+    end
+
+    def start
+      raise Exception.new("Invalid state {@state}") unless @state == State::INITIALIZED
+      @fiber = Fiber.current
+      @state = State::STARTED
+      pointerof(@overlapped)
+    end
+
+    def result(socket)
+      raise Exception.new("Invalid state {@state}") unless @state == State::DONE || @state == State::STARTED
+      flags = 0_u32
+      result = LibC.WSAGetOverlappedResult(socket, pointerof(@overlapped), out bytes, false, pointerof(flags))
+      if result.zero?
+        error = WinError.wsa_value
+        yield error
+
+        raise IO::Error.from_os_error("WSAGetOverlappedResult", error)
+      end
+
+      bytes
+    end
+
+    protected def schedule
+      case @state
+      when State::STARTED
+        yield @fiber.not_nil!
+        @state = State::DONE
+      when State::CANCELD
+        @@canceled.delete(self)
+      else
+        raise Exception.new("Invalid state {@state}")
+      end
+    end
+
+    protected def done(socket)
+      case @state
+      when State::STARTED
+        # Microsoft documentation:
+        # The application must not free or reuse the OVERLAPPED structure associated with the canceled I/O operations until they have completed
+        if LibC.CancelIoEx(LibC::HANDLE.new(socket), pointerof(@overlapped)) != 0
+          @state = State::CANCELD
+          @@canceled.push(self) # to increase lifetime
+        end
+      end
+    end
   end
 
   # Returns `false` if the operation timed out.
@@ -130,66 +171,66 @@ module IO::Overlapped
   end
 
   def overlapped_operation(socket, method, timeout, connreset_is_error = true)
-    operation = create_operation
+    OverlappedOperation.run(socket) do |operation|
+      result = yield operation
 
-    result = yield pointerof(operation).as(LibC::OVERLAPPED*)
+      if result == LibC::SOCKET_ERROR
+        error = WinError.wsa_value
 
-    if result == LibC::SOCKET_ERROR
-      error = WinError.wsa_value
-
-      unless error.wsa_io_pending?
-        raise IO::Error.from_os_error(method, error)
+        unless error.wsa_io_pending?
+          raise IO::Error.from_os_error(method, error)
+        end
       end
-    end
 
-    schedule_overlapped(timeout)
+      schedule_overlapped(timeout)
 
-    get_overlapped_result(socket, operation) do |error|
-      case error
-      when .wsa_io_incomplete?
-        raise TimeoutError.new("#{method} timed out")
-      when .wsaeconnreset?
-        return 0_u32 unless connreset_is_error
+      operation.result(socket) do |error|
+        case error
+        when .wsa_io_incomplete?
+          raise TimeoutError.new("#{method} timed out")
+        when .wsaeconnreset?
+          return 0_u32 unless connreset_is_error
+        end
       end
     end
   end
 
   def overlapped_connect(socket, method)
-    operation = create_operation
+    OverlappedOperation.run(socket) do |operation|
+      yield operation
 
-    yield pointerof(operation).as(LibC::OVERLAPPED*)
+      schedule_overlapped(read_timeout || 1.seconds)
 
-    schedule_overlapped(read_timeout || 1.seconds)
-
-    get_overlapped_result(socket, operation) do |error|
-      case error
-      when .wsa_io_incomplete?, .wsaeconnrefused?
-        return ::Socket::ConnectError.from_os_error(method, error)
-      when .error_operation_aborted?
-        # FIXME: Not sure why this is necessary
-        return ::Socket::ConnectError.from_os_error(method, error)
+      operation.result(socket) do |error|
+        case error
+        when .wsa_io_incomplete?, .wsaeconnrefused?
+          return ::Socket::ConnectError.from_os_error(method, error)
+        when .error_operation_aborted?
+          # FIXME: Not sure why this is necessary
+          return ::Socket::ConnectError.from_os_error(method, error)
+        end
       end
-    end
 
-    nil
+      nil
+    end
   end
 
   def overlapped_accept(socket, method)
-    operation = create_operation
+    OverlappedOperation.run(socket) do |operation|
+      yield operation
 
-    yield pointerof(operation).as(LibC::OVERLAPPED*)
-
-    unless schedule_overlapped(read_timeout)
-      raise IO::TimeoutError.new("accept timed out")
-    end
-
-    get_overlapped_result(socket, operation) do |error|
-      case error
-      when .wsa_io_incomplete?, .wsaenotsock?
-        return false
+      unless schedule_overlapped(read_timeout)
+        raise IO::TimeoutError.new("accept timed out")
       end
-    end
 
-    true
+      operation.result(socket) do |error|
+        case error
+        when .wsa_io_incomplete?, .wsaenotsock?
+          return false
+        end
+      end
+
+      true
+    end
   end
 end
