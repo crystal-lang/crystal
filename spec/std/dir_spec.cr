@@ -187,6 +187,14 @@ describe "Dir" do
         datapath("dir", "subdir", "f1.txt"),
         datapath("dir", "subdir", "subdir2", "f2.txt"),
       ].sort
+
+      Dir["#{datapath}/dir/**/subdir2/f2.txt"].sort.should eq [
+        datapath("dir", "subdir", "subdir2", "f2.txt"),
+      ].sort
+
+      Dir["#{datapath}/dir/**/subdir2/*.txt"].sort.should eq [
+        datapath("dir", "subdir", "subdir2", "f2.txt"),
+      ].sort
     end
 
     it "tests double recursive matcher (#10807)" do
