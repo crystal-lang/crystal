@@ -1943,6 +1943,10 @@ describe "String" do
     ("%s" % span).should eq(span.to_s)
   end
 
+  it "doesn't stop at null character when doing '%'" do
+    ("1\u{0}%i\u{0}3" % 2).should eq("1\u00002\u00003")
+  end
+
   pending_win32 "does % with floats" do
     ("%f" % 123).should eq("123.000000")
 
@@ -2558,6 +2562,10 @@ describe "String" do
       expect_raises(ArgumentError, "Malformed name - unmatched parenthesis") do
         "change %{this" % {"this" => 1}
       end
+    end
+
+    it "doesn't raise on balanced curly with null byte" do
+      ("change %{this\u{0}}" % {"this\u{0}" => 1}).should eq("change 1")
     end
 
     it "applies formatting to %<...> placeholder" do
