@@ -93,7 +93,7 @@ describe Crystal::Loader do
     describe "#load_file" do
       it "finds function symbol" do
         loader = Crystal::Loader.new([] of String)
-        lib_handle = loader.load_file(File.join(SPEC_CRYSTAL_LOADER_LIB_PATH, "libfoo#{Crystal::Loader::SHARED_LIBRARY_EXTENSION}"))
+        lib_handle = loader.load_file(File.join(SPEC_CRYSTAL_LOADER_LIB_PATH, Crystal::Loader.library_filename("foo")))
         lib_handle.should_not be_nil
         loader.find_symbol?("foo").should_not be_nil
       ensure
@@ -113,7 +113,7 @@ describe Crystal::Loader do
 
       it "full path" do
         loader = Crystal::Loader.new([] of String)
-        lib_handle = loader.load_library(File.join(SPEC_CRYSTAL_LOADER_LIB_PATH, "libfoo#{Crystal::Loader::SHARED_LIBRARY_EXTENSION}"))
+        lib_handle = loader.load_library(File.join(SPEC_CRYSTAL_LOADER_LIB_PATH, Crystal::Loader.library_filename("foo")))
         lib_handle.should_not be_nil
         loader.find_symbol?("foo").should_not be_nil
       ensure

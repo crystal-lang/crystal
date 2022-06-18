@@ -50,6 +50,10 @@ class Crystal::Loader
     @handles = [] of Handle
   end
 
+  # def self.library_filename(libname : String) : String
+  #   raise NotImplementedError.new("library_filename")
+  # end
+
   # def find_symbol?(name : String) : Handle?
   #   raise NotImplementedError.new("find_symbol?")
   # end
@@ -79,7 +83,8 @@ class Crystal::Loader
       return load_file(::Path[libname].expand)
     end
 
-    each_library_path(libname) do |library_path|
+    @search_paths.each do |directory|
+      library_path = File.join(directory, Loader.library_filename(libname))
       handle = load_file?(library_path)
       return handle if handle
     end
@@ -93,12 +98,6 @@ class Crystal::Loader
 
     @handles << handle
     handle
-  end
-
-  private def each_library_path(libname)
-    @search_paths.each do |directory|
-      yield "#{directory}/lib#{libname}#{SHARED_LIBRARY_EXTENSION}"
-    end
   end
 
   def close_all : Nil

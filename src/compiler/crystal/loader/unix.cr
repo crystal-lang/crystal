@@ -35,12 +35,6 @@ class Crystal::Loader
     end
   end
 
-  SHARED_LIBRARY_EXTENSION = {% if flag?(:darwin) %}
-                               ".dylib"
-                             {% else %}
-                               ".so"
-                             {% end %}
-
   # Parses linker arguments in the style of `ld`.
   def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths) : self
     libnames = [] of String
@@ -69,6 +63,14 @@ class Crystal::Loader
       exc.search_paths = search_paths
       raise exc
     end
+  end
+
+  def self.library_filename(libname : String) : String
+    {% if flag?(:darwin) %}
+      "lib#{libname}.dylib"
+    {% else %}
+      "lib#{libname}.so"
+    {% end %}
   end
 
   def find_symbol?(name : String) : Handle?
