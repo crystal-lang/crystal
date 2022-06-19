@@ -133,6 +133,10 @@ module Crystal
       Path.global("NoReturn")
     end
 
+    def convert(type : VirtualType)
+      convert(type.base_type)
+    end
+
     def convert(type : Type)
       nil
     end
