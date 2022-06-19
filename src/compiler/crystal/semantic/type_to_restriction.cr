@@ -44,7 +44,7 @@ module Crystal
       end
     end
 
-    def convert(type : NonGenericClassType | NonGenericModuleType | EnumType)
+    def convert(type : NonGenericClassType | NonGenericModuleType | EnumType | AliasType)
       type_to_path(type)
     end
 

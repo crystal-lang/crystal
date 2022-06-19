@@ -245,4 +245,28 @@ describe "Semantic: restrictions augmenter" do
       end
       CODE
   end
+
+  it "augments recursive alias type (#12134)" do
+    before = <<-BEFORE
+      alias BasicObject = Array(BasicObject) | Hash(String, BasicObject)
+      class Foo
+        def initialize(value = Hash(String, BasicObject).new)
+          @x = value
+        end
+      end
+      BEFORE
+
+    # No idea why to_s gives an extra newline here
+    after = <<-AFTER
+      alias BasicObject = Array(BasicObject) | Hash(String, BasicObject)
+      class Foo
+        def initialize(value : ::Hash(::String, ::BasicObject) = Hash(String, BasicObject).new)
+          @x = value
+        end
+      end
+
+      AFTER
+
+    expect_augment before, after
+  end
 end
