@@ -149,7 +149,14 @@ module Crystal
       converted ? Splat.new(converted) : nil
     end
 
-    def convert(type : Type)
+    # These can't happen as instance var types
+    def convert(type : Crystal::GenericClassType |
+                       Crystal::GenericModuleType |
+                       Crystal::LibType |
+                       Crystal::AnnotationType |
+                       Crystal::Const |
+                       Crystal::NumberAutocastType |
+                       Crystal::SymbolAutocastType)
       nil
     end
 
