@@ -129,6 +129,10 @@ module Crystal
       Path.new(type.name)
     end
 
+    def convert(type : NoReturnType)
+      Path.global("NoReturn")
+    end
+
     def convert(type : Type)
       nil
     end

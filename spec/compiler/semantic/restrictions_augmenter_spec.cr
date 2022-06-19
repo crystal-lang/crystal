@@ -52,6 +52,7 @@ describe "Semantic: restrictions augmenter" do
   it_augments_for_ivar "Char | Int32 | String", "::Char | ::Int32 | ::String"
   it_augments_for_ivar "Char | Int32 | String", "::Char | ::Int32 | ::String"
   it_augments_for_ivar "Int32.class", "::Int32.class"
+  it_augments_for_ivar "NoReturn", "::NoReturn"
 
   it "augments relative public type" do
     before = <<-BEFORE
