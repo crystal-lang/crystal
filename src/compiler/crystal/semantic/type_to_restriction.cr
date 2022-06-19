@@ -144,6 +144,11 @@ module Crystal
       converted ? Metaclass.new(converted) : nil
     end
 
+    def convert(type : TypeSplat)
+      converted = convert(type.splatted_type)
+      converted ? Splat.new(converted) : nil
+    end
+
     def convert(type : Type)
       nil
     end

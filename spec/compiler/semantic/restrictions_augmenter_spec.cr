@@ -356,4 +356,26 @@ describe "Semantic: restrictions augmenter" do
 
     expect_augment before, after
   end
+
+  it "augments type splat" do
+    before = <<-BEFORE
+      class Foo(T)
+        @x : Array(*T)
+        def initialize(value)
+          @x = value
+        end
+      end
+      BEFORE
+
+    after = <<-AFTER
+      class Foo(T)
+        @x : Array(*T)
+        def initialize(value : ::Array(*T))
+          @x = value
+        end
+      end
+      AFTER
+
+    expect_augment before, after
+  end
 end
