@@ -54,6 +54,7 @@ describe "Semantic: restrictions augmenter" do
   it_augments_for_ivar "Int32.class", "::Int32.class"
   it_augments_for_ivar "NoReturn", "::NoReturn"
   it_augments_for_ivar "Array(Int32).class", "::Array(::Int32).class"
+  it_augments_for_ivar "Enumerable(Int32).class", "::Enumerable(::Int32).class"
 
   it "augments relative public type" do
     before = <<-BEFORE

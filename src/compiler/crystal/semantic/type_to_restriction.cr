@@ -137,7 +137,9 @@ module Crystal
       convert(type.base_type)
     end
 
-    def convert(type : VirtualMetaclassType | GenericClassInstanceMetaclassType)
+    def convert(type : VirtualMetaclassType |
+                       GenericClassInstanceMetaclassType |
+                       GenericModuleInstanceMetaclassType)
       converted = convert(type.instance_type)
       converted ? Metaclass.new(converted) : nil
     end
