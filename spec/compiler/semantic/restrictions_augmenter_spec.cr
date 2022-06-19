@@ -2,12 +2,12 @@ require "../../spec_helper"
 
 private def expect_augment(before : String, after : String)
   result = semantic(before)
-  result.node.to_s.should eq(after)
+  result.node.to_s.chomp.should eq(after.chomp)
 end
 
 private def expect_no_augment(code : String, flags = nil)
   result = semantic(code, flags: flags)
-  result.node.to_s.should eq(code)
+  result.node.to_s.chomp.should eq(code.chomp)
 end
 
 private def it_augments_for_ivar(ivar_type : String, expected_type : String, file = __FILE__, line = __LINE__)
@@ -218,7 +218,6 @@ describe "Semantic: restrictions augmenter" do
   end
 
   it "doesn't augment if assigned inside block" do
-    # No idea why to_s gives an extra newline here
     expect_no_augment <<-CODE
       def foo
         yield
@@ -231,7 +230,6 @@ describe "Semantic: restrictions augmenter" do
           end
         end
       end
-
       CODE
   end
 
@@ -256,7 +254,6 @@ describe "Semantic: restrictions augmenter" do
       end
       BEFORE
 
-    # No idea why to_s gives an extra newline here
     after = <<-AFTER
       alias BasicObject = Array(BasicObject) | Hash(String, BasicObject)
       class Foo
@@ -264,7 +261,34 @@ describe "Semantic: restrictions augmenter" do
           @x = value
         end
       end
+      AFTER
 
+    expect_augment before, after
+  end
+
+  it "augments typedef" do
+    before = <<-BEFORE
+      lib LibFoo
+        type X = Void*
+      end
+      class Foo
+        @x : LibFoo::X
+        def initialize(value)
+          @x = value
+        end
+      end
+      BEFORE
+
+    after = <<-AFTER
+      lib LibFoo
+        type X = Void*
+      end
+      class Foo
+        @x : LibFoo::X
+        def initialize(value : ::LibFoo::X)
+          @x = value
+        end
+      end
       AFTER
 
     expect_augment before, after
