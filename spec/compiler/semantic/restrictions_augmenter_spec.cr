@@ -324,4 +324,34 @@ describe "Semantic: restrictions augmenter" do
 
     expect_augment before, after
   end
+
+  it "augments virtual metaclass type" do
+    before = <<-BEFORE
+      class A
+      end
+      class B < A
+      end
+      class Foo
+        @x : A.class
+        def initialize(value)
+          @x = value
+        end
+      end
+      BEFORE
+
+    after = <<-AFTER
+      class A
+      end
+      class B < A
+      end
+      class Foo
+        @x : A.class
+        def initialize(value : ::A.class)
+          @x = value
+        end
+      end
+      AFTER
+
+    expect_augment before, after
+  end
 end
