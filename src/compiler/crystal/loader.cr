@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:unix) %}
+{% skip_file unless flag?(:unix) || flag?(:msvc) %}
 require "option_parser"
 
 # This loader component imitates the behaviour of `ld.so` for linking and loading
@@ -58,11 +58,15 @@ class Crystal::Loader
   #   raise NotImplementedError.new("find_symbol?")
   # end
 
-  # def load_file(path : String | ::Path) : Handle
+  # def load_file(path : String | ::Path) : Nil
   #   raise NotImplementedError.new("load_file")
   # end
 
-  # private def open_library(path : String) : Handle
+  # def load_file?(path : String | ::Path) : Bool
+  #   raise NotImplementedError.new("load_file?")
+  # end
+
+  # private def open_library(path : String) : Nil
   #   raise NotImplementedError.new("open_library")
   # end
 
@@ -74,30 +78,21 @@ class Crystal::Loader
     find_symbol?(name) || raise LoadError.new "undefined reference to `#{name}'"
   end
 
-  def load_library(libname : String) : Handle
+  def load_library(libname : String) : Nil
     load_library?(libname) || raise LoadError.new "cannot find -l#{libname}"
   end
 
-  def load_library?(libname : String) : Handle?
+  def load_library?(libname : String) : Bool
     if ::Path::SEPARATORS.any? { |separator| libname.includes?(separator) }
-      return load_file(::Path[libname].expand)
+      return load_file?(::Path[libname].expand)
     end
 
     @search_paths.each do |directory|
       library_path = File.join(directory, Loader.library_filename(libname))
-      handle = load_file?(library_path)
-      return handle if handle
+      return true if File.file?(library_path) && load_file?(library_path)
     end
 
-    nil
-  end
-
-  def load_file?(path : String | ::Path) : Handle?
-    handle = open_library(path.to_s)
-    return nil unless handle
-
-    @handles << handle
-    handle
+    false
   end
 
   def close_all : Nil
@@ -110,4 +105,6 @@ end
 
 {% if flag?(:unix) %}
   require "./loader/unix"
+{% elsif flag?(:msvc) %}
+  require "./loader/msvc"
 {% end %}

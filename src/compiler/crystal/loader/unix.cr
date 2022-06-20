@@ -80,11 +80,19 @@ class Crystal::Loader
     end
   end
 
-  def load_file(path : String | ::Path) : Handle
+  def load_file(path : String | ::Path) : Nil
     load_file?(path) || raise LoadError.new_dl_error "cannot load #{path}"
   end
 
-  def load_library(libname : String) : Handle
+  def load_file?(path : String | ::Path) : Bool
+    handle = open_library(path.to_s)
+    return false unless handle
+
+    @handles << handle
+    true
+  end
+
+  def load_library(libname : String) : Nil
     load_library?(libname) || raise LoadError.new_dl_error "cannot find -l#{libname}"
   end
 
