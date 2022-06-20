@@ -130,6 +130,23 @@ class Crystal::Repl::Compiler
 
       return unless @wants_value
 
+      if type.struct? && type.is_a?(VirtualType)
+        # TODO: instead of allocating a virtual struct, which we should
+        # never do because virtual structs are abstract and they shouldn't
+        # be instantiated, we should produce code that raises a runtime
+        # exception. See https://github.com/crystal-lang/crystal/issues/3835
+        # For now, though, we just do what codegen/primitives.cr does.
+        # Once we solve #3835 we'll solve it in both places.
+        indirect_type = type.remove_indirection
+        if indirect_type.is_a?(UnionType)
+          put_i32 type_id(type.base_type), node: node
+          push_zeros(aligned_sizeof_type(indirect_type) - 4, node: node)
+          return
+        end
+
+        type = indirect_type
+      end
+
       if type.struct?
         push_zeros(aligned_instance_sizeof_type(type), node: node)
       else

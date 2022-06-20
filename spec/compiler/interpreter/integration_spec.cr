@@ -149,5 +149,25 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "doesn't crash on virtual struct allocate (#12123)" do
+      interpret(<<-CODE, prelude: "prelude").should eq("nil")
+        require "log"
+
+        abstract struct Parent
+          extend Log::Formatter
+
+          def self.format(entry, io) : Nil
+            new
+          end
+        end
+
+        struct Child1 < Parent
+        end
+
+        struct Child2 < Parent
+        end
+      CODE
+    end
   end
 end
