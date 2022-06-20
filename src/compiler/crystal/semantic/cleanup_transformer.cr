@@ -997,9 +997,17 @@ module Crystal
     end
 
     def transform(node : Primitive)
-      if extra = node.extra
-        node.extra = extra.transform(self)
+      extra = node.extra
+      extra = extra.transform(self) if extra
+
+      # For `allocate` on a virtual abstract type we make `extra`
+      # be a call to `raise` at runtime. Here we just replace the
+      # "allocate" primitive with that raise call.
+      if node.name == "allocate" && extra
+        return extra
       end
+
+      node.extra = extra
       node
     end
 
