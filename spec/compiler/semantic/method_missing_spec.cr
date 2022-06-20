@@ -110,6 +110,7 @@ describe "Semantic: method_missing" do
       run do
         foo.bar
       end
-      ))
+      ),
+      "undefined method 'bar' for Int32")
   end
 end
