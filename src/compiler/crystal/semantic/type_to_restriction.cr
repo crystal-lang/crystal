@@ -44,7 +44,11 @@ module Crystal
       end
     end
 
-    def convert(type : NonGenericClassType | NonGenericModuleType | EnumType)
+    def convert(type : NonGenericClassType |
+                       NonGenericModuleType |
+                       EnumType |
+                       AliasType |
+                       TypeDefType)
       type_to_path(type)
     end
 
@@ -125,7 +129,34 @@ module Crystal
       Path.new(type.name)
     end
 
-    def convert(type : Type)
+    def convert(type : NoReturnType)
+      Path.global("NoReturn")
+    end
+
+    def convert(type : VirtualType)
+      convert(type.base_type)
+    end
+
+    def convert(type : VirtualMetaclassType |
+                       GenericClassInstanceMetaclassType |
+                       GenericModuleInstanceMetaclassType)
+      converted = convert(type.instance_type)
+      converted ? Metaclass.new(converted) : nil
+    end
+
+    def convert(type : TypeSplat)
+      converted = convert(type.splatted_type)
+      converted ? Splat.new(converted) : nil
+    end
+
+    # These can't happen as instance var types
+    def convert(type : Crystal::GenericClassType |
+                       Crystal::GenericModuleType |
+                       Crystal::LibType |
+                       Crystal::AnnotationType |
+                       Crystal::Const |
+                       Crystal::NumberAutocastType |
+                       Crystal::SymbolAutocastType)
       nil
     end
 

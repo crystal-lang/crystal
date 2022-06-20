@@ -2,12 +2,12 @@ require "../../spec_helper"
 
 private def expect_augment(before : String, after : String)
   result = semantic(before)
-  result.node.to_s.should eq(after)
+  result.node.to_s.chomp.should eq(after.chomp)
 end
 
 private def expect_no_augment(code : String, flags = nil)
   result = semantic(code, flags: flags)
-  result.node.to_s.should eq(code)
+  result.node.to_s.chomp.should eq(code.chomp)
 end
 
 private def it_augments_for_ivar(ivar_type : String, expected_type : String, file = __FILE__, line = __LINE__)
@@ -52,6 +52,9 @@ describe "Semantic: restrictions augmenter" do
   it_augments_for_ivar "Char | Int32 | String", "::Char | ::Int32 | ::String"
   it_augments_for_ivar "Char | Int32 | String", "::Char | ::Int32 | ::String"
   it_augments_for_ivar "Int32.class", "::Int32.class"
+  it_augments_for_ivar "NoReturn", "::NoReturn"
+  it_augments_for_ivar "Array(Int32).class", "::Array(::Int32).class"
+  it_augments_for_ivar "Enumerable(Int32).class", "::Enumerable(::Int32).class"
 
   it "augments relative public type" do
     before = <<-BEFORE
@@ -218,7 +221,6 @@ describe "Semantic: restrictions augmenter" do
   end
 
   it "doesn't augment if assigned inside block" do
-    # No idea why to_s gives an extra newline here
     expect_no_augment <<-CODE
       def foo
         yield
@@ -231,7 +233,6 @@ describe "Semantic: restrictions augmenter" do
           end
         end
       end
-
       CODE
   end
 
@@ -244,5 +245,137 @@ describe "Semantic: restrictions augmenter" do
         end
       end
       CODE
+  end
+
+  it "augments recursive alias type (#12134)" do
+    before = <<-BEFORE
+      alias BasicObject = Array(BasicObject) | Hash(String, BasicObject)
+      class Foo
+        def initialize(value = Hash(String, BasicObject).new)
+          @x = value
+        end
+      end
+      BEFORE
+
+    after = <<-AFTER
+      alias BasicObject = Array(BasicObject) | Hash(String, BasicObject)
+      class Foo
+        def initialize(value : ::Hash(::String, ::BasicObject) = Hash(String, BasicObject).new)
+          @x = value
+        end
+      end
+      AFTER
+
+    expect_augment before, after
+  end
+
+  it "augments typedef" do
+    before = <<-BEFORE
+      lib LibFoo
+        type X = Void*
+      end
+      class Foo
+        @x : LibFoo::X
+        def initialize(value)
+          @x = value
+        end
+      end
+      BEFORE
+
+    after = <<-AFTER
+      lib LibFoo
+        type X = Void*
+      end
+      class Foo
+        @x : LibFoo::X
+        def initialize(value : ::LibFoo::X)
+          @x = value
+        end
+      end
+      AFTER
+
+    expect_augment before, after
+  end
+
+  it "augments virtual type" do
+    before = <<-BEFORE
+      class A
+      end
+      class B < A
+      end
+      class Foo
+        @x : A
+        def initialize(value)
+          @x = value
+        end
+      end
+      BEFORE
+
+    after = <<-AFTER
+      class A
+      end
+      class B < A
+      end
+      class Foo
+        @x : A
+        def initialize(value : ::A)
+          @x = value
+        end
+      end
+      AFTER
+
+    expect_augment before, after
+  end
+
+  it "augments virtual metaclass type" do
+    before = <<-BEFORE
+      class A
+      end
+      class B < A
+      end
+      class Foo
+        @x : A.class
+        def initialize(value)
+          @x = value
+        end
+      end
+      BEFORE
+
+    after = <<-AFTER
+      class A
+      end
+      class B < A
+      end
+      class Foo
+        @x : A.class
+        def initialize(value : ::A.class)
+          @x = value
+        end
+      end
+      AFTER
+
+    expect_augment before, after
+  end
+
+  it "augments type splat" do
+    before = <<-BEFORE
+      class Foo(T)
+        @x : Array(*T)
+        def initialize(value)
+          @x = value
+        end
+      end
+      BEFORE
+
+    after = <<-AFTER
+      class Foo(T)
+        @x : Array(*T)
+        def initialize(value : ::Array(*T))
+          @x = value
+        end
+      end
+      AFTER
+
+    expect_augment before, after
   end
 end
