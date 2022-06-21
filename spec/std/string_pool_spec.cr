@@ -73,4 +73,20 @@ describe StringPool do
     s1.should be(s2)
     pool.size.should eq(1)
   end
+
+  it "doesn't fail if initial capacity is too small" do
+    pool = StringPool.new(initial_capacity: 0)
+    100.times do |i|
+      pool.get(i.to_s)
+    end
+    pool.size.should eq(100)
+  end
+
+  it "doesn't fail if initial capacity is not a power of 2" do
+    pool = StringPool.new(initial_capacity: 17)
+    100.times do |i|
+      pool.get(i.to_s)
+    end
+    pool.size.should eq(100)
+  end
 end

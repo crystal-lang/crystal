@@ -90,27 +90,6 @@ module Crystal
       self.class.class_desc
     end
 
-    def class_desc_is_a?(name)
-      # e.g. for `Splat < UnaryExpression < ASTNode` this produces:
-      #
-      # ```
-      # name.in?({class_desc, UnaryExpression.class_desc, ASTNode.class_desc})
-      # ```
-      #
-      # this assumes the macro AST node hierarchy matches exactly that of the
-      # compiler internal node types
-      {% begin %}
-        name.in?({
-          class_desc,
-          {% for t in @type.ancestors %}
-            {% if t <= Crystal::ASTNode %}
-              {{ t }}.class_desc,
-            {% end %}
-          {% end %}
-        })
-      {% end %}
-    end
-
     def pretty_print(pp)
       pp.text to_s
     end
@@ -333,6 +312,25 @@ module Crystal
       when .u128? then value.to_u128
       else
         raise "Bug: called 'integer_value' for non-integer literal"
+      end
+    end
+
+    # Returns true if this literal is representable in the *other_type*. Used to
+    # define number literal autocasting.
+    #
+    # TODO: if *other_type* is a `FloatType` then precision loss and overflow
+    # may occur (#11710)
+    def representable_in?(other_type)
+      case {self.type, other_type}
+      when {IntegerType, IntegerType}
+        min, max = other_type.range
+        min <= integer_value <= max
+      when {IntegerType, FloatType}
+        true
+      when {FloatType, FloatType}
+        true
+      else
+        false
       end
     end
 

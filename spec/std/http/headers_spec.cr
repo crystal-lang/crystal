@@ -68,7 +68,7 @@ describe HTTP::Headers do
   it "deletes" do
     headers = HTTP::Headers{"Foo" => "bar"}
     headers.delete("foo").should eq("bar")
-    headers.empty?.should be_true
+    headers.should be_empty
   end
 
   describe "#==" do

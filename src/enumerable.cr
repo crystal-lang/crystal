@@ -1761,8 +1761,7 @@ module Enumerable(T)
   # hash = {} of Char => Int32
   # words = ["Crystal", "Ruby"]
   # words.each { |word| word.chars.tally_by(hash, &.downcase) }
-  # hash
-  # => {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+  # hash # => {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
   # ```
   def tally_by(hash)
     each_with_object(hash) do |item, hash|
@@ -1793,8 +1792,7 @@ module Enumerable(T)
   # hash = {} of Char => Int32
   # words = ["crystal", "ruby"]
   # words.each { |word| word.chars.tally(hash) }
-  # hash
-  # => {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+  # hash # => {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
   # ```
   def tally(hash)
     tally_by(hash, &.itself)

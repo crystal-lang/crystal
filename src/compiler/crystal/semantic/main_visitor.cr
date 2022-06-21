@@ -65,7 +65,7 @@ module Crystal
     # Here we store the cumulative types of variables as we traverse the nodes.
     getter meta_vars : MetaVars
     property is_initialize : Bool
-    property exception_handler_vars : MetaVars? = nil
+    property all_exception_handler_vars : Array(MetaVars)? = nil
 
     private enum BlockKind
       None
@@ -250,7 +250,7 @@ module Crystal
       end
 
       if instance_type.double_variadic?
-        unless node.named_args
+        unless node.type_vars.empty?
           node.raise "can only instantiate NamedTuple with named arguments"
         end
       else
@@ -535,7 +535,7 @@ module Crystal
     def check_exception_handler_vars(var_name, node)
       # If inside a begin part of an exception handler, bind this type to
       # the variable that will be used in the rescue/else blocks.
-      if exception_handler_vars = @exception_handler_vars
+      @all_exception_handler_vars.try &.each do |exception_handler_vars|
         var = (exception_handler_vars[var_name] ||= MetaVar.new(var_name))
         var.bind_to(node)
       end
@@ -1072,7 +1072,7 @@ module Crystal
       block_visitor.fun_literal_context = @fun_literal_context
       block_visitor.parent = self
       block_visitor.with_scope = node.scope || with_scope
-      block_visitor.exception_handler_vars = @exception_handler_vars
+      block_visitor.all_exception_handler_vars = @all_exception_handler_vars
       block_visitor.file_module = @file_module
 
       block_scope = @scope
@@ -2643,17 +2643,21 @@ module Crystal
     end
 
     def visit(node : ExceptionHandler)
-      old_exception_handler_vars = @exception_handler_vars
-
       # Save old vars to know if new variables are declared inside begin/rescue/else
       before_body_vars = @vars.dup
 
       # Any variable assigned in the body (begin) will have, inside rescue
       # blocks, all types that were assigned to them, because we can't know at which
       # point an exception is raised.
+      # We have a stack of these, to take into account nested exception handlers.
+      all_exception_handler_vars = @all_exception_handler_vars ||= [] of MetaVars
+
       # We create different vars, though, to avoid changing the type of vars
       # before the handler.
-      exception_handler_vars = @exception_handler_vars = @vars.dup
+      exception_handler_vars = @vars.dup
+
+      all_exception_handler_vars.push exception_handler_vars
+
       exception_handler_vars.each do |name, var|
         new_var = new_meta_var(name)
         new_var.nil_if_read = var.nil_if_read?
@@ -2665,7 +2669,7 @@ module Crystal
 
       after_exception_handler_vars = @vars.dup
 
-      @exception_handler_vars = nil
+      all_exception_handler_vars.pop
 
       if node.rescues || node.else
         # Any variable introduced in the begin block is possibly nil
@@ -2787,8 +2791,6 @@ module Crystal
           node.bind_to a_rescue.body
         end
       end
-
-      @exception_handler_vars = old_exception_handler_vars
 
       false
     end
@@ -3304,7 +3306,7 @@ module Crystal
       # If a variable is being assigned to inside a block:
       # - if the variable is a new variable then there's no need to mark is a mutably
       #   closured because unless it gets assigned again it will be a different
-      #   variable alloction each time
+      #   variable allocation each time
       # - if the variable already existed but it's assigned in the same context
       #   as before, if it's not closured already then it still shouldn't
       #   be marked as mutably closured
