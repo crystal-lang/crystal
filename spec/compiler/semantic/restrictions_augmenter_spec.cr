@@ -378,4 +378,38 @@ describe "Semantic: restrictions augmenter" do
 
     expect_augment before, after
   end
+
+  it "doesn't crash on macro that yields and defines class (#12142)" do
+    before = <<-BEFORE
+      macro foo
+        {{yield}}
+      end
+      foo do
+        class Foo
+        end
+      end
+      class Bar
+        @x : Foo
+        def initialize(value)
+          @x = value
+        end
+      end
+      BEFORE
+
+    after = <<-AFTER
+      macro foo
+        {{ yield }}
+      end
+      class Foo
+      end
+      class Bar
+        @x : Foo
+        def initialize(value : ::Foo)
+          @x = value
+        end
+      end
+      AFTER
+
+    expect_augment before, after
+  end
 end
