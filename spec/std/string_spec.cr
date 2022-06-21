@@ -2828,7 +2828,67 @@ describe "String" do
 
     it "valid_encoding?" do
       "hello".valid_encoding?.should be_true
-      String.new(Bytes[255, 0]).valid_encoding?.should be_false
+      "hello\u{80}\u{7FF}\u{800}\u{FFFF}\u{10000}\u{10FFFF}".valid_encoding?.should be_true
+
+      # non-starters
+      String.new(Bytes[0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0x8F]).valid_encoding?.should be_false
+      String.new(Bytes[0x90]).valid_encoding?.should be_false
+      String.new(Bytes[0x9F]).valid_encoding?.should be_false
+      String.new(Bytes[0xA0]).valid_encoding?.should be_false
+      String.new(Bytes[0xAF]).valid_encoding?.should be_false
+
+      # incomplete, 2-byte
+      String.new(Bytes[0xC2]).valid_encoding?.should be_false
+      String.new(Bytes[0xC2, 0x00]).valid_encoding?.should be_false
+      String.new(Bytes[0xC2, 0xC2]).valid_encoding?.should be_false
+
+      # overlong, 2-byte
+      String.new(Bytes[0xC0, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xC1, 0xBF]).valid_encoding?.should be_false
+      String.new(Bytes[0xC2, 0x80]).valid_encoding?.should be_true
+
+      # incomplete, 3-byte
+      String.new(Bytes[0xE1]).valid_encoding?.should be_false
+      String.new(Bytes[0xE1, 0x00]).valid_encoding?.should be_false
+      String.new(Bytes[0xE1, 0xC2]).valid_encoding?.should be_false
+      String.new(Bytes[0xE1, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xE1, 0x80, 0x00]).valid_encoding?.should be_false
+      String.new(Bytes[0xE1, 0x80, 0xC2]).valid_encoding?.should be_false
+
+      # overlong, 3-byte
+      String.new(Bytes[0xE0, 0x80, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xE0, 0x9F, 0xBF]).valid_encoding?.should be_false
+      String.new(Bytes[0xE0, 0xA0, 0x80]).valid_encoding?.should be_true
+
+      # surrogate pairs
+      String.new(Bytes[0xED, 0x9F, 0xBF]).valid_encoding?.should be_true
+      String.new(Bytes[0xED, 0xA0, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xED, 0xBF, 0xBF]).valid_encoding?.should be_false
+      String.new(Bytes[0xEE, 0x80, 0x80]).valid_encoding?.should be_true
+
+      # incomplete, 4-byte
+      String.new(Bytes[0xF1]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x00]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0xC2]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x80, 0x00]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x80, 0xC2]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x80, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x80, 0x80, 0x00]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x80, 0x80, 0xC2]).valid_encoding?.should be_false
+
+      # overlong, 4-byte
+      String.new(Bytes[0xF0, 0x80, 0x80, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xF0, 0x8F, 0xBF, 0xBF]).valid_encoding?.should be_false
+      String.new(Bytes[0xF0, 0x90, 0x80, 0x80]).valid_encoding?.should be_true
+
+      # upper boundary, 4-byte
+      String.new(Bytes[0xF4, 0x8F, 0xBF, 0xBF]).valid_encoding?.should be_true
+      String.new(Bytes[0xF4, 0x90, 0x80, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xF5]).valid_encoding?.should be_false
+      String.new(Bytes[0xF8]).valid_encoding?.should be_false
+      String.new(Bytes[0xFF]).valid_encoding?.should be_false
     end
 
     it "scrubs" do

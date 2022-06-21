@@ -24,6 +24,91 @@ module Unicode
   end
 
   # :nodoc:
+  # Returns whether the given *bytes* refer to a correctly encoded UTF-8 string.
+  #
+  # The implementation here uses a shift-based DFA based on
+  # https://gist.github.com/pervognsen/218ea17743e1442e59bb60d29b1aa725.
+  # This loop is very tight and bypasses `Char::Reader` completely. The downside
+  # is that it does not compute anything else, such as the code points
+  # themselves or their count, because the required handling for invalid byte
+  # sequences would significantly slow down the loop.
+  def self.valid?(bytes : Bytes) : Bool
+    state = 0_u64
+    table = UTF8_ENCODING_DFA.to_unsafe
+    s = bytes.to_unsafe
+    e = s + bytes.size
+
+    # TODO: unroll?
+    while s < e
+      state = table[s.value].unsafe_shr(state & 0x3F)
+      return false if state & 0x3F == 6
+      s += 1
+    end
+
+    state & 0x3F == 0
+  end
+
+  private UTF8_ENCODING_DFA = begin
+    x = Array(UInt64).new(256)
+
+    # The same DFA transition table, with error state and unused bytes hidden:
+    #
+    #              accepted (initial state)
+    #              | 1 continuation byte left
+    #              | | 2 continuation bytes left
+    #              | | | E0-?? ??; disallow overlong encodings up to U+07FF
+    #              | | | | ED-?? ??; disallow surrogate pairs
+    #              | | | | | F0-?? ?? ??; disallow overlong encodings up to U+FFFF
+    #              | | | | | | 3 continuation bytes left
+    #              | | | | | | | F4-?? ?? ??; disallow codepoints above U+10FFFF
+    #              v v v v v v v v
+    #
+    #            | 0 2 3 4 5 6 7 8
+    # -----------+----------------
+    # 0x00..0x7F | 0 _ _ _ _ _ _ _
+    # 0x80..0x8F | _ 0 2 _ 2 _ 3 3
+    # 0x90..0x9F | _ 0 2 _ 2 3 3 _
+    # 0xA0..0xBF | _ 0 2 2 _ 3 3 _
+    # 0xC2..0xDF | 2 _ _ _ _ _ _ _
+    # 0xE0..0xE0 | 4 _ _ _ _ _ _ _
+    # 0xE1..0xEC | 3 _ _ _ _ _ _ _
+    # 0xED..0xED | 5 _ _ _ _ _ _ _
+    # 0xEE..0xEF | 3 _ _ _ _ _ _ _
+    # 0xF0..0xF0 | 6 _ _ _ _ _ _ _
+    # 0xF1..0xF3 | 7 _ _ _ _ _ _ _
+    # 0xF4..0xF4 | 8 _ _ _ _ _ _ _
+
+    {% for ch in 0x00..0x7F %} put1(x, dfa_state(0, 1, 1, 1, 1, 1, 1, 1, 1)); {% end %}
+    {% for ch in 0x80..0x8F %} put1(x, dfa_state(1, 1, 0, 2, 1, 2, 1, 3, 3)); {% end %}
+    {% for ch in 0x90..0x9F %} put1(x, dfa_state(1, 1, 0, 2, 1, 2, 3, 3, 1)); {% end %}
+    {% for ch in 0xA0..0xBF %} put1(x, dfa_state(1, 1, 0, 2, 2, 1, 3, 3, 1)); {% end %}
+    {% for ch in 0xC0..0xC1 %} put1(x, dfa_state(1, 1, 1, 1, 1, 1, 1, 1, 1)); {% end %}
+    {% for ch in 0xC2..0xDF %} put1(x, dfa_state(2, 1, 1, 1, 1, 1, 1, 1, 1)); {% end %}
+    {% for ch in 0xE0..0xE0 %} put1(x, dfa_state(4, 1, 1, 1, 1, 1, 1, 1, 1)); {% end %}
+    {% for ch in 0xE1..0xEC %} put1(x, dfa_state(3, 1, 1, 1, 1, 1, 1, 1, 1)); {% end %}
+    {% for ch in 0xED..0xED %} put1(x, dfa_state(5, 1, 1, 1, 1, 1, 1, 1, 1)); {% end %}
+    {% for ch in 0xEE..0xEF %} put1(x, dfa_state(3, 1, 1, 1, 1, 1, 1, 1, 1)); {% end %}
+    {% for ch in 0xF0..0xF0 %} put1(x, dfa_state(6, 1, 1, 1, 1, 1, 1, 1, 1)); {% end %}
+    {% for ch in 0xF1..0xF3 %} put1(x, dfa_state(7, 1, 1, 1, 1, 1, 1, 1, 1)); {% end %}
+    {% for ch in 0xF4..0xF4 %} put1(x, dfa_state(8, 1, 1, 1, 1, 1, 1, 1, 1)); {% end %}
+    {% for ch in 0xF5..0xFF %} put1(x, dfa_state(1, 1, 1, 1, 1, 1, 1, 1, 1)); {% end %}
+
+    x
+  end
+
+  private def self.put1(array : Array, value) : Nil
+    array << value
+  end
+
+  private macro dfa_state(*transitions)
+    {% x = 0_u64 %}
+    {% for tr, i in transitions %}
+      {% x |= (1_u64 << (i * 6)) * tr * 6 %}
+    {% end %}
+    {{ x }}
+  end
+
+  # :nodoc:
   def self.upcase(char : Char, options : CaseOptions) : Char
     result = check_upcase_ascii(char, options)
     return result if result
