@@ -30,8 +30,8 @@ require "./semantic_visitor"
 # subclasses or not and we can tag it as "virtual" (having subclasses), but that concept
 # might disappear in the future and we'll make consider everything as "maybe virtual".
 class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
-  # These are `new` methods (expanded) that was created from `initialize` methods (original)
-  getter new_expansions = [] of {original: Def, expanded: Def}
+  # These are `new` methods (values) that was created from `initialize` methods (keys)
+  getter new_expansions : Hash(Def, Def) = ({} of Def => Def).compare_by_identity
 
   # All finished hooks and their scope
   record FinishedHook, scope : ModuleType, macro : Macro
@@ -422,7 +422,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         target_type.metaclass.as(ModuleType).add_def(new_method)
 
         # And we register it to later complete it
-        new_expansions << {original: node, expanded: new_method}
+        new_expansions[node] = new_method
       end
 
       unless @method_added_running
