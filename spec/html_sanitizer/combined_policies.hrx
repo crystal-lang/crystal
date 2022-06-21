@@ -32,7 +32,7 @@ a b
 
 
 <===> malicious/fragment.html
-<b>Lo<!-- comment -->rem</b> <a href="javascript:pants" title="foo">ipsum</a> <a href="http://foo.com/"><strong>dolor</strong></a> sit<br/>amet <<foo>script>alert("hello world");</script>
+<b>Lo<!-- comment -->rem</b> <a href="javascript:pants" title="foo">ipsum</a> <a href="http://foo.com/"><strong>dolor</strong></a> sit<br/>amet &lt;script>alert("hello world");</script>
 <===> malicious/text.html
 Lorem ipsum dolor sit amet &lt;script&gt;alert(&quot;hello world&quot;);
 <===> malicious/inline.html
