@@ -190,7 +190,13 @@ abstract class Digest
   # `final` or `hexfinal` can only be called once and raises `FinalizedError` on subsequent calls.
   #
   # NOTE: `.dup.final` call may be used to get an intermediate hash value.
+  #
+  # This method is restricted to a maximum digest size of 64 bits. Implementations that allow
+  # a larger digest size should override this method to use a larger buffer.
   def hexfinal(io : IO) : Nil
+    if digest_size > 64
+      raise "Digest#hexfinal(IO) can't handle digest_size over 64 bits"
+    end
     sary = uninitialized StaticArray(UInt8, 128)
     tmp = sary.to_slice[0, digest_size * 2]
     hexfinal tmp

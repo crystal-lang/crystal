@@ -51,7 +51,7 @@ describe Digest::SHA512 do
       Digest::SHA512.hexdigest(string).should eq(hexstring)
     end
 
-    it "does ##hexdigest for #{string.inspect}" do
+    it "does #hexdigest for #{string.inspect}" do
       digest = Digest::SHA512.new
       hdst = Bytes.new digest.digest_size * 2
       digest.update string
