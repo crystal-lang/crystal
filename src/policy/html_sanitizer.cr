@@ -266,7 +266,9 @@ class Sanitize::Policy::HTMLSanitizer < Sanitize::Policy::Whitelist
     # Make sure special characters are properly encoded to avoid interpretation
     # of tweaked relative paths as "javascript:" URI (for example)
     if path = uri.path
-      uri.path = URI.encode(URI.decode(path))
+      uri.path = String.build do |io|
+        URI.encode(URI.decode(path), io) { |byte| URI.reserved?(byte) || URI.unreserved?(byte) }
+      end
     end
 
     uri.to_s
