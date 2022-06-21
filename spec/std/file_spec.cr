@@ -357,6 +357,11 @@ describe "File" do
     # changing owners requires special privileges, so we test that method calls do compile
     typeof(File.chown("/tmp/test"))
     typeof(File.chown("/tmp/test", uid: 1001, gid: 100, follow_symlinks: true))
+
+    File.open(File::NULL, "w") do |file|
+      typeof(file.chown)
+      typeof(file.chown(uid: 1001, gid: 100))
+    end
   end
 
   describe "chmod" do
@@ -368,6 +373,18 @@ describe "File" do
         File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
       ensure
         File.delete?(path)
+      end
+    end
+
+    it "changes file permissions with fchmod" do
+      path = datapath("chmod.txt")
+      begin
+        File.open(path, "w") do |file|
+          file.chmod(0o775)
+        end
+        File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
+      ensure
+        File.delete(path) if File.exists?(path)
       end
     end
 
@@ -1176,6 +1193,20 @@ describe "File" do
 
         info = File.info(path)
         info.modification_time.should eq(mtime)
+      end
+    end
+
+    it "sets times with futime" do
+      with_tempfile("utime-set.txt") do |path|
+        File.open(path, "w") do |file|
+          atime = Time.utc(2000, 1, 2)
+          mtime = Time.utc(2000, 3, 4)
+
+          file.utime(atime, mtime)
+
+          info = File.info(path)
+          info.modification_time.should eq(mtime)
+        end
       end
     end
 

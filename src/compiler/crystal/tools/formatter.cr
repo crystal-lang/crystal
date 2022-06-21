@@ -1645,6 +1645,13 @@ module Crystal
       if @token.type.op_eq?
         write " = "
         next_token_skip_space
+
+        if @token.type.newline?
+          write_line
+          next_token_skip_space_or_newline
+          write_indent(@indent + 2)
+        end
+
         if @token.type.delimiter_start?
           indent(@column, StringLiteral.new(node.real_name))
         else
@@ -2657,10 +2664,12 @@ module Crystal
       # we skip whitespace between the method name and the arg. The parenthesized
       # arg is transformed into a call with parenthesis: `foo (a)` becomes `foo(a)`.
       if node.args.size == 1 &&
+         @token.type.space? &&
          !node.named_args && !node.block_arg && !node.block &&
          (expressions = node.args[0].as?(Expressions)) &&
          expressions.keyword.paren? && expressions.expressions.size == 1
         skip_space
+        node.args[0] = expressions.expressions[0]
       end
 
       if @token.type.op_lparen?
@@ -4065,10 +4074,10 @@ module Crystal
         accept name
       else
         write name
+        next_token
       end
 
-      next_token_skip_space_or_newline
-
+      skip_space
       write_token " ", :OP_EQ, " "
       skip_space_or_newline
 

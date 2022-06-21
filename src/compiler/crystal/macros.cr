@@ -1596,8 +1596,10 @@ module Crystal::Macros
     end
   end
 
-  # class Self < ASTNode
-  # end
+  # The `self` expression. May appear in code, such as in an instance method,
+  # and in type names.
+  class Self < ASTNode
+  end
 
   # The base class of control expressions.
   abstract class ControlExpression < ASTNode
@@ -1727,8 +1729,10 @@ module Crystal::Macros
   # class MacroFor < ASTNode
   # end
 
-  # class Underscore < ASTNode
-  # end
+  # The `_` expression. May appear in code, such as an assignment target, and in
+  # type names.
+  class Underscore < ASTNode
+  end
 
   # class MagicConstant < ASTNode
   # end

@@ -334,6 +334,20 @@ describe "Semantic: proc" do
       ") { proc_of(int32) }
   end
 
+  it "allows passing NoReturn type for any return type, with Proc notation (#12126)" do
+    assert_type("
+      lib LibC
+        fun exit : NoReturn
+      end
+
+      def foo(f : Proc(Int32))
+        f.call
+      end
+
+      foo ->{ LibC.exit }
+      ", inject_primitives: true) { no_return }
+  end
+
   it "allows new on proc type" do
     assert_type("
       #{proc_new}

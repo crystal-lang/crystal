@@ -75,7 +75,7 @@ module IO::Overlapped
     bytes
   end
 
-  # Returns false the the operation timed out
+  # Returns `false` if the operation timed out.
   def schedule_overlapped(timeout : Time::Span?, line = __LINE__) : Bool
     Crystal::EventLoop.wait_completion(timeout.try(&.total_milliseconds) || LibC::INFINITE)
   end

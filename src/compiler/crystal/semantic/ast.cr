@@ -149,7 +149,7 @@ module Crystal
     property next : Def?
     property special_vars : Set(String)?
     property block_nest = 0
-    getter? raises = false
+    property? raises = false
     property? closure = false
     property? self_closured = false
     property? captured_block = false
@@ -185,17 +185,6 @@ module Crystal
     def add_special_var(name)
       special_vars = @special_vars ||= Set(String).new
       special_vars << name
-    end
-
-    def raises=(value)
-      if value != @raises
-        @raises = value
-        @observers.try &.each do |obs|
-          if obs.is_a?(Call)
-            obs.raises = value
-          end
-        end
-      end
     end
 
     # Returns the minimum and maximum number of arguments that must

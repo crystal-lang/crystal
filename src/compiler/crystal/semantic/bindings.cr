@@ -152,11 +152,6 @@ module Crystal
       propagate
     end
 
-    def unbind_all
-      @dependencies.try &.each &.remove_observer(self)
-      @dependencies = nil
-    end
-
     def unbind_from(nodes : Nil)
       # Nothing to do
     end
@@ -253,7 +248,7 @@ module Crystal
           return freeze_type
         end
 
-        # We also allow assining Proc(*T, NoReturn) to Proc(*T, U)
+        # We also allow assigning Proc(*T, NoReturn) to Proc(*T, U)
         if type.all? { |a_type|
              a_type.is_a?(ProcInstanceType) &&
              (a_type.return_type.is_a?(NoReturnType) || a_type.return_type == freeze_type.return_type) &&

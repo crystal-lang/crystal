@@ -2553,7 +2553,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         index, type = local_var.index, local_var.type
         pointerof_var(index, node: node)
       in ClosuredVar
-        node.raise "BUG: missing interpter out closured var"
+        node.raise "BUG: missing interpreter out closured var"
       end
     when InstanceVar
       compile_pointerof_ivar(node, exp.name)
