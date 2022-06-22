@@ -84,12 +84,12 @@ module IO::Overlapped
       INITIALIZED
       STARTED
       DONE
-      CANCELD
+      CANCELLED
     end
 
     @overlapped = LibC::WSAOVERLAPPED.new
     @fiber : Fiber? = nil
-    @state = State::INITIALIZED
+    @state : State = :initialized
     property next : OverlappedOperation?
     property previous : OverlappedOperation?
     @@canceled = Thread::LinkedList(OverlappedOperation).new
@@ -110,14 +110,14 @@ module IO::Overlapped
     end
 
     def start
-      raise Exception.new("Invalid state {@state}") unless @state == State::INITIALIZED
+      raise Exception.new("Invalid state #{@state}") unless @state.initialized?
       @fiber = Fiber.current
       @state = State::STARTED
       pointerof(@overlapped)
     end
 
     def result(socket)
-      raise Exception.new("Invalid state {@state}") unless @state == State::DONE || @state == State::STARTED
+      raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
       flags = 0_u32
       result = LibC.WSAGetOverlappedResult(socket, pointerof(@overlapped), out bytes, false, pointerof(flags))
       if result.zero?
@@ -132,23 +132,23 @@ module IO::Overlapped
 
     protected def schedule
       case @state
-      when State::STARTED
+      when .started?
         yield @fiber.not_nil!
-        @state = State::DONE
-      when State::CANCELD
+        @state = :done
+      when .cancelled?
         @@canceled.delete(self)
       else
-        raise Exception.new("Invalid state {@state}")
+        raise Exception.new("Invalid state #{@state}")
       end
     end
 
     protected def done(socket)
       case @state
-      when State::STARTED
+      when .started?
         # Microsoft documentation:
         # The application must not free or reuse the OVERLAPPED structure associated with the canceled I/O operations until they have completed
         if LibC.CancelIoEx(LibC::HANDLE.new(socket), pointerof(@overlapped)) != 0
-          @state = State::CANCELD
+          @state = :cancelled
           @@canceled.push(self) # to increase lifetime
         end
       end
