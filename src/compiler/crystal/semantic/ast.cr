@@ -121,6 +121,8 @@ module Crystal
   end
 
   class Arg
+    include Annotatable
+
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @type : Type? = nil)
       @external_name = external_name || @name
     end
