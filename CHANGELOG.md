@@ -5,6 +5,7 @@
 - Let constant tuple indexers work with constants ([#12012](https://github.com/crystal-lang/crystal/pull/12012), thanks @asterite)
 - Refactor restriction mechanism for autocasting ([#12014](https://github.com/crystal-lang/crystal/pull/12014), thanks @HertzDevil)
 - Support unions in `Crystal::Macros::ASTNode#is_a?` ([#12086](https://github.com/crystal-lang/crystal/pull/12086), thanks @HertzDevil)
+- Experimental: restriction augmenter ([#12103](https://github.com/crystal-lang/crystal/pull/12103), [#12136](https://github.com/crystal-lang/crystal/pull/12136), [#12143](https://github.com/crystal-lang/crystal/pull/12143), [#12130](https://github.com/crystal-lang/crystal/pull/12130), thanks @asterite)
 
 ## Standard Library
 
@@ -82,7 +83,6 @@
 
 - Clean up compiler warning specs ([#11916](https://github.com/crystal-lang/crystal/pull/11916), thanks @HertzDevil)
 - Add support for `NO_COLOR` to `Colorize` ([#11984](https://github.com/crystal-lang/crystal/pull/11984), thanks @didactic-drunk)
-- Experimental: restriction augmenter ([#12103](https://github.com/crystal-lang/crystal/pull/12103), thanks @asterite)
 - **(performance)** Use LLVM's new pass manager when possible ([#12116](https://github.com/crystal-lang/crystal/pull/12116), thanks @asterite)
 
 ### Generics
@@ -103,8 +103,8 @@
 
 ### Semantic
 
+- Compiler: don't use `with_scope` if Call has a receiver ([#12138](https://github.com/crystal-lang/crystal/pull/12138), thanks @asterite)
 - Compiler: fix proc return type restriction for Proc(...) ([#12129](https://github.com/crystal-lang/crystal/pull/12129), thanks @asterite)
-- Restriction augmenter: consider more types ([#12136](https://github.com/crystal-lang/crystal/pull/12136), thanks @asterite)
 - Compiler: simpler way to compute `Def#raises?` ([#12121](https://github.com/crystal-lang/crystal/pull/12121), thanks @asterite)
 - Remove unused `ASTNode#unbind_all` ([#12120](https://github.com/crystal-lang/crystal/pull/12120), thanks @asterite)
 
@@ -133,7 +133,6 @@
 - Samples: avoid `Symbol` variables ([#11923](https://github.com/crystal-lang/crystal/pull/11923), thanks @HertzDevil)
 - Use more specific expectations in specs ([#11951](https://github.com/crystal-lang/crystal/pull/11951), thanks @HertzDevil)
 - Use `contain` expectations in more specs ([#11950](https://github.com/crystal-lang/crystal/pull/11950), thanks @HertzDevil)
-- Restriction augmenter: use proc notation ([#12130](https://github.com/crystal-lang/crystal/pull/12130), thanks @asterite)
 
 # 1.4.1 (2022-04-22)
 
