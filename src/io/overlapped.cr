@@ -172,7 +172,7 @@ module IO::Overlapped
 
   def overlapped_operation(socket, method, timeout, connreset_is_error = true)
     OverlappedOperation.run(socket) do |operation|
-      result = yield operation
+      result = yield operation.start
 
       if result == LibC::SOCKET_ERROR
         error = WinError.wsa_value
@@ -197,7 +197,7 @@ module IO::Overlapped
 
   def overlapped_connect(socket, method)
     OverlappedOperation.run(socket) do |operation|
-      yield operation
+      yield operation.start
 
       schedule_overlapped(read_timeout || 1.seconds)
 
@@ -217,7 +217,7 @@ module IO::Overlapped
 
   def overlapped_accept(socket, method)
     OverlappedOperation.run(socket) do |operation|
-      yield operation
+      yield operation.start
 
       unless schedule_overlapped(read_timeout)
         raise IO::TimeoutError.new("accept timed out")

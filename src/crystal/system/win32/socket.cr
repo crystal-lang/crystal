@@ -108,9 +108,9 @@ module Crystal::System::Socket
       return yield ::Socket::BindError.from_wsa_error("Could not bind to '*'")
     end
 
-    error = overlapped_connect(fd, "ConnectEx") do |operation|
+    error = overlapped_connect(fd, "ConnectEx") do |overlapped|
       # This is: LibC.ConnectEx(fd, addr, addr.size, nil, 0, nil, overlapped)
-      result = Crystal::System::Socket.connect_ex.call(fd, addr.to_unsafe, addr.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, operation.start)
+      result = Crystal::System::Socket.connect_ex.call(fd, addr.to_unsafe, addr.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped)
 
       if result.zero?
         wsa_error = WinError.wsa_value
@@ -168,12 +168,12 @@ module Crystal::System::Socket
     buffer_size = 0
     output_buffer = Bytes.new(address_size * 2 + buffer_size)
 
-    success = overlapped_accept(fd, "AcceptEx") do |operation|
+    success = overlapped_accept(fd, "AcceptEx") do |overlapped|
       received_bytes = uninitialized UInt32
 
       result = Crystal::System::Socket.accept_ex.call(fd, client_socket,
         output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
-        address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), operation.start)
+        address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped)
 
       if result.zero?
         error = WinError.wsa_value
@@ -204,8 +204,8 @@ module Crystal::System::Socket
   private def system_send(message : Bytes) : Int32
     wsabuf = wsa_buffer(message)
 
-    bytes = overlapped_write(fd, "WSASend") do |operation|
-      LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, operation.start, nil)
+    bytes = overlapped_write(fd, "WSASend") do |overlapped|
+      LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
     end
 
     bytes.to_i32
@@ -213,8 +213,8 @@ module Crystal::System::Socket
 
   private def system_send_to(bytes : Bytes, addr : ::Socket::Address)
     wsabuf = wsa_buffer(bytes)
-    bytes_sent = overlapped_write(fd, "WSASendTo") do |operation|
-      LibC.WSASendTo(fd, pointerof(wsabuf), 1, out bytes_sent, 0, addr, addr.size, operation.start, nil)
+    bytes_sent = overlapped_write(fd, "WSASendTo") do |overlapped|
+      LibC.WSASendTo(fd, pointerof(wsabuf), 1, out bytes_sent, 0, addr, addr.size, overlapped, nil)
     end
     raise ::Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1
 
@@ -234,8 +234,8 @@ module Crystal::System::Socket
     wsabuf = wsa_buffer(bytes)
 
     flags = 0_u32
-    bytes_read = overlapped_read(fd, "WSARecvFrom") do |operation|
-      LibC.WSARecvFrom(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), operation.start, nil)
+    bytes_read = overlapped_read(fd, "WSARecvFrom") do |overlapped|
+      LibC.WSARecvFrom(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
     end
 
     {bytes_read.to_i32, sockaddr, addrlen}
@@ -341,9 +341,9 @@ module Crystal::System::Socket
   private def unbuffered_read(slice : Bytes)
     wsabuf = wsa_buffer(slice)
 
-    bytes_read = overlapped_operation(fd, "WSARecv", read_timeout, connreset_is_error: false) do |operation|
+    bytes_read = overlapped_operation(fd, "WSARecv", read_timeout, connreset_is_error: false) do |overlapped|
       flags = 0_u32
-      LibC.WSARecv(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), operation.start, nil)
+      LibC.WSARecv(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
     end
     bytes_read.to_i32
   end
@@ -351,8 +351,8 @@ module Crystal::System::Socket
   private def unbuffered_write(slice : Bytes)
     wsabuf = wsa_buffer(slice)
 
-    bytes = overlapped_write(fd, "WSASend") do |operation|
-      LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, operation.start, nil)
+    bytes = overlapped_write(fd, "WSASend") do |overlapped|
+      LibC.WSASend(fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
     end
     # we could return bytes (from WSAGetOverlappedResult) or bytes_sent
     bytes.to_i32
