@@ -1239,6 +1239,7 @@ module Crystal
       @inside_class_method = false
 
       if initialize_info
+        @initialize_infos[current_type] ||= [] of InitializeInfo
         @initialize_infos[current_type] << initialize_info
       end
 

@@ -22,7 +22,8 @@ class HTTP::WebSocketHandler
 
   def call(context) : Nil
     unless websocket_upgrade_request? context.request
-      return call_next context
+      call_next context
+      return
     end
 
     response = context.response
