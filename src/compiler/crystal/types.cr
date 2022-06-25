@@ -548,8 +548,12 @@ module Crystal
     def allows_instance_vars?
       case self
       when program.object, program.value, program.struct,
+           program.reference, program.class_type,
            program.number, program.int, program.float,
-           PrimitiveType, program.reference
+           program.tuple, program.named_tuple,
+           program.pointer, program.static_array,
+           program.union, program.enum, program.proc,
+           PrimitiveType
         false
       else
         true
