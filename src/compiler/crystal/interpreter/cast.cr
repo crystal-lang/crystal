@@ -63,11 +63,17 @@ class Crystal::Repl::Compiler
   end
 
   private def upcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : MixedUnionType)
-    # Copy the type id
+    # We have a type ID (8 bytes) in the stack.
+    # We need to put that into a union whose:
+    # - tag will be the type ID (8 bytes)
+    # - value will be the type ID (8 bytes) followed by zeros to fill up the union size
+
+    # We already have 8 bytes in the stack. That's the tag.
+    # Now we put the type ID again for the value. So far we have 16 bytes in total.
     dup 8, node: nil
 
     # Then fill out the rest of the union
-    remaining = aligned_sizeof_type(to) - 8
+    remaining = aligned_sizeof_type(to) - 16
     push_zeros remaining, node: nil if remaining > 0
   end
 
