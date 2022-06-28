@@ -6,10 +6,10 @@
 - Refactor restriction mechanism for autocasting ([#12014](https://github.com/crystal-lang/crystal/pull/12014), thanks @HertzDevil)
 - Support unions in `Crystal::Macros::ASTNode#is_a?` ([#12086](https://github.com/crystal-lang/crystal/pull/12086), thanks @HertzDevil)
 - Experimental: restriction augmenter ([#12103](https://github.com/crystal-lang/crystal/pull/12103), [#12136](https://github.com/crystal-lang/crystal/pull/12136), [#12143](https://github.com/crystal-lang/crystal/pull/12143), [#12130](https://github.com/crystal-lang/crystal/pull/12130), thanks @asterite)
+- **(breaking-change)** Warn on positional parameter mismatches for abstract def implementations ([#11915](https://github.com/crystal-lang/crystal/pull/11915), thanks @HertzDevil)
 
 ## Standard Library
 
-- **(breaking-change)** Warn on positional parameter mismatches for abstract def implementations ([#11915](https://github.com/crystal-lang/crystal/pull/11915), thanks @HertzDevil)
 - Support `Path` for `chdir` arg in `Process` methods ([#11932](https://github.com/crystal-lang/crystal/pull/11932), thanks @caspiano)
 - Add docs for `Enum#value` ([#11947](https://github.com/crystal-lang/crystal/pull/11947), thanks @lbguilherme)
 
