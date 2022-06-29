@@ -664,7 +664,7 @@ describe "Semantic: generic class" do
       Foo(String).foo(35.7)
       CR
 
-    error.to_s.lines.count(" - Foo(T).foo(x : Int32)").should eq(1)
+    error.to_s.lines.count(" - Foo(String).foo(x : Int32)").should eq(1)
   end
 
   # Given:
