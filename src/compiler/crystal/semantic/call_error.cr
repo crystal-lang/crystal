@@ -734,12 +734,7 @@ class Crystal::Call
       type_var = @type.type_vars[name]?
       return node unless type_var
 
-      # This isn't quite "correct", in the sense that we can end
-      # up with a Path that has "::" or parentheses in its name,
-      # but that's fine because we only do this for producing
-      # an error. We could use `TypeToRestriction` here but
-      # it's probably not worth it.
-      Path.new(type_var.type.to_s)
+      TypeNode.new(type_var.type)
     end
   end
 end
