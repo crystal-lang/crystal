@@ -154,7 +154,7 @@ class Crystal::Repl::Context
         end
 
         compiler = Compiler.new(self, compiled_def, top_level: false)
-        compiler.compile_def(a_def)
+        compiler.compile_def(compiled_def)
 
         {% if Debug::DECOMPILE %}
           puts "=== #{a_def.name} ==="
