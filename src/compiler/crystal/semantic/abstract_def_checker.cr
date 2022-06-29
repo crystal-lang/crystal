@@ -112,6 +112,7 @@ class Crystal::AbstractDefChecker
   # that information to check whether `target_type` implements `method` of `base`.
   def implements?(target_type : Type, ancestor_type : Type, method : Def, base : Type, method_free_vars)
     implemented = false
+    found_param_match = false
     ancestor_type.defs.try &.each_value do |defs_with_metadata|
       defs_with_metadata.each do |def_with_metadata|
         a_def = def_with_metadata.def
@@ -122,7 +123,11 @@ class Crystal::AbstractDefChecker
             check_return_type(target_type, ancestor_type, a_def, base, method)
             implemented = true
           end
-          check_positional_param_names(target_type, ancestor_type, a_def, base, method)
+
+          unless found_param_match
+            check_positional_param_names(target_type, ancestor_type, a_def, base, method)
+            found_param_match = true if same_parameters?(a_def, method)
+          end
         end
       end
     end
@@ -274,6 +279,45 @@ class Crystal::AbstractDefChecker
     end
 
     true
+  end
+
+  def same_parameters?(m1 : Def, m2 : Def)
+    return false unless m1.args.size == m2.args.size
+
+    splat_index = m1.splat_index
+    return false unless splat_index == m2.splat_index
+
+    named_args1 = nil
+    named_args2 = nil
+
+    m1.args.each_with_index do |arg1, i|
+      arg2 = m2.args[i]
+
+      if splat_index
+        if i > splat_index
+          # named parameters may be in any order
+          (named_args1 ||= [] of String) << arg1.external_name
+          (named_args2 ||= [] of String) << arg2.external_name
+          next
+        elsif i == splat_index
+          # single splat name may be different; bare splats must agree
+          return false unless (arg1.external_name != "") == (arg2.external_name != "")
+          next
+        end
+      end
+
+      # positional parameter name must agree
+      return false unless arg1.external_name == arg2.external_name
+    end
+
+    if named_args1 && named_args2
+      named_args1.sort!
+      named_args2.sort!
+      return false unless named_args1 == named_args2
+    end
+
+    # double splat name may be different
+    m1.double_splat.nil? == m2.double_splat.nil?
   end
 
   # Checks that the return type of `type#method` matches that of `base_type#base_method`
