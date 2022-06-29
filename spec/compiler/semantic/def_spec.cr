@@ -418,6 +418,27 @@ describe "Semantic: def" do
       ERROR
   end
 
+  it "replaces type parameters on error" do
+    assert_error %(
+      module Gen(T)
+        def foo(x : Gen(T))
+        end
+      end
+
+      class Foo
+        include Gen(Int32)
+      end
+
+      Foo.new.foo(1)
+      ),
+      <<-ERROR
+      no overload matches 'Foo#foo' with type Int32
+
+      Overloads are:
+       - Gen(Int32)#foo(x : Gen(Int32))
+      ERROR
+  end
+
   it "errors if declares def inside if" do
     assert_error %(
       if 1 == 2
@@ -540,7 +561,7 @@ describe "Semantic: def" do
       ),
       <<-ERROR
       Overloads are:
-       - Foo(T)#foo(x : T, y : U, z : V) forall U, V
+       - Foo(Int32)#foo(x : Int32, y : U, z : V) forall U, V
       ERROR
   end
 

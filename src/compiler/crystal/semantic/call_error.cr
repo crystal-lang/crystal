@@ -1,3 +1,5 @@
+require "../syntax/transformer"
+
 class Crystal::ASTNode
   def wrong_number_of_arguments(subject, given, expected)
     wrong_number_of "arguments", subject, given, expected
@@ -153,7 +155,7 @@ class Crystal::Call
       no_overload_matches_message(msg, full_name(owner, def_name), defs, args, arg_types, named_args_types)
 
       msg << "Overloads are:"
-      append_matches(defs, arg_types, msg)
+      append_matches(owner, defs, arg_types, msg)
 
       if matches
         cover = matches.cover
@@ -331,7 +333,7 @@ class Crystal::Call
         str << ")\n"
       end
       str << "Overloads are:"
-      append_matches(defs, arg_types, str)
+      append_matches(owner, defs, arg_types, str)
     end, inner: inner_exception)
   end
 
@@ -431,11 +433,11 @@ class Crystal::Call
     end
   end
 
-  def append_matches(defs, arg_types, str, *, matched_def = nil, argument_name = nil)
+  def append_matches(owner, defs, arg_types, str, *, matched_def = nil, argument_name = nil)
     defs.each do |a_def|
       next if a_def.abstract?
       str << "\n - "
-      append_def_full_name a_def.owner, a_def, arg_types, str
+      append_def_full_name owner, a_def, arg_types, str
       if defs.size > 1 && a_def.same?(matched_def)
         str << colorize(" (trying this one)").blue
       end
@@ -458,7 +460,37 @@ class Crystal::Call
   end
 
   def self.append_def_full_name(owner, a_def, arg_types, str)
-    str << full_name(owner, a_def.name)
+    # This is the possibly uninstantiated generic type where the method is defined
+    a_def_owner = a_def.owner
+
+    # This is the actual instantiated type where the method was instantiated
+    instantiated_owner = owner
+
+    owner.ancestors.each do |ancestor|
+      if a_def_owner == ancestor
+        instantiated_owner = ancestor
+        break
+      end
+
+      # If the method is defined in a generic uninstantiated type
+      # then the method instantiation happens on the instantiated generic
+      # type whose generic type is that uninstantiated one.
+      if a_def_owner.is_a?(GenericType) &&
+         ancestor.is_a?(GenericInstanceType) &&
+         ancestor.generic_type == a_def_owner
+        instantiated_owner = ancestor
+        break
+      end
+    end
+
+    type_vars_transformer =
+      if instantiated_owner.is_a?(GenericInstanceType)
+        ReplaceTypeParametersTransformer.new(instantiated_owner)
+      else
+        nil
+      end
+
+    str << full_name(instantiated_owner, a_def.name)
     str << '('
     printed = false
     a_def.args.each_with_index do |arg, i|
@@ -477,19 +509,21 @@ class Crystal::Call
         str << arg_type
       elsif res = arg.restriction
         str << " : "
-        if owner.is_a?(GenericClassInstanceType) && res.is_a?(Path) && res.names.size == 1 &&
-           (type_var = owner.type_vars[res.names[0]]?)
-          str << type_var.type
+
+        # If the actual owner is a generic instance type, try to replace
+        # type parameters in the restriction with the instantiated type vars.
+        if type_vars_transformer
+          res = res.clone.transform(type_vars_transformer)
+        end
+
+        # Try to use the full name if the argument type and the call
+        # argument type have the same string representation
+        res_to_s = res.to_s
+        if (arg_type = arg_types.try &.[i]?) && arg_type.to_s == res_to_s &&
+           (matching_type = a_def.owner.lookup_type?(res))
+          str << matching_type
         else
-          # Try to use the full name if the argument type and the call
-          # argument type have the same string representation
-          res_to_s = res.to_s
-          if (arg_type = arg_types.try &.[i]?) && arg_type.to_s == res_to_s &&
-             (matching_type = a_def.owner.lookup_type?(res))
-            str << matching_type
-          else
-            str << res_to_s
-          end
+          str << res_to_s
         end
       end
       if arg_default = arg.default_value
@@ -612,7 +646,7 @@ class Crystal::Call
 
           str << '\n'
           str << "Matches are:"
-          append_matches defs, arg_types, str, matched_def: a_def, argument_name: named_arg.name
+          append_matches owner, defs, arg_types, str, matched_def: a_def, argument_name: named_arg.name
         end
         raise msg
       end
@@ -684,5 +718,28 @@ class Crystal::Call
 
   private def colorize(obj)
     program.colorize(obj)
+  end
+
+  class ReplaceTypeParametersTransformer < Transformer
+    def initialize(@type : GenericInstanceType)
+    end
+
+    def transform(node : Path)
+      return node if node.global?
+
+      names = node.names
+      return node unless names.size == 1
+
+      name = node.names.first
+      type_var = @type.type_vars[name]?
+      return node unless type_var
+
+      # This isn't quite "correct", in the sense that we can end
+      # up with a Path that has "::" or parentheses in its name,
+      # but that's fine because we only do this for producing
+      # an error. We could use `TypeToRestriction` here but
+      # it's probably not worth it.
+      Path.new(type_var.type.to_s)
+    end
   end
 end
