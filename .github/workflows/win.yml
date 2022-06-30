@@ -224,7 +224,6 @@ jobs:
           (Get-FileHash -Algorithm SHA256 .\openssl.tar.gz).hash -eq "59eedfcb46c25214c9bd37ed6078297b4df01d012267fe9e9eee31f61bc70536"
           7z x openssl.tar.gz
           7z x openssl.tar
-          del pax_global_header
           mv openssl-* openssl
       - name: Build OpenSSL
         if: steps.cache-openssl.outputs.cache-hit != 'true'
