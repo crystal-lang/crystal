@@ -2030,7 +2030,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
 
-      compiled_block = CompiledBlock.new(block, @local_vars,
+      compiled_block = CompiledBlock.new(block,
         args_bytesize: block_args_bytesize,
         locals_bytesize_start: bytesize_before_block_local_vars,
         locals_bytesize_end: bytesize_after_block_local_vars,
@@ -2046,6 +2046,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiler.block_level = block_level + 1
 
       compiler.compile_block(block, target_def, @closure_context)
+
+      # Keep a copy of the local vars before exiting the block.
+      # Otherwise we'll lose reference to the block's vars (useful for pry)
+      compiled_block.local_vars = @local_vars.dup
 
       {% if Debug::DECOMPILE %}
         puts "=== #{target_def.owner}##{target_def.name}#block ==="

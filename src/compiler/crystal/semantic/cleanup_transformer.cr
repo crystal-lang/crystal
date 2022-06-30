@@ -66,6 +66,9 @@ module Crystal
   class CleanupTransformer < Transformer
     @transformed : Set(Def)
 
+    # The current method we are processing
+    @current_def : Def?
+
     def initialize(@program : Program)
       @transformed = Set(Def).new.compare_by_identity
       @exhaustiveness_checker = ExhaustivenessChecker.new(@program)
@@ -514,14 +517,22 @@ module Crystal
           end
         end
 
+        current_def = @current_def
+
         target_defs.each do |target_def|
           if @transformed.add?(target_def)
             node.bubbling_exception do
+              @current_def = target_def
               @def_nest_count += 1
               target_def.body = target_def.body.transform(self)
               @def_nest_count -= 1
+              @current_def = current_def
             end
           end
+
+          # If the current call targets a method that raises, the method
+          # where the call happens also raises.
+          current_def.raises = true if current_def && target_def.raises?
         end
 
         if node.target_defs.not_nil!.empty?
@@ -986,9 +997,17 @@ module Crystal
     end
 
     def transform(node : Primitive)
-      if extra = node.extra
-        node.extra = extra.transform(self)
+      extra = node.extra
+      extra = extra.transform(self) if extra
+
+      # For `allocate` on a virtual abstract type we make `extra`
+      # be a call to `raise` at runtime. Here we just replace the
+      # "allocate" primitive with that raise call.
+      if node.name == "allocate" && extra
+        return extra
       end
+
+      node.extra = extra
       node
     end
 

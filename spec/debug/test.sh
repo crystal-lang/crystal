@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # This file can be executed from the root of the working copy
 #
@@ -14,10 +14,11 @@
 #
 # The magic comments interpreted by the driver are:
 #
-#   * # break
 #   * # lldb-command:
 #   * # lldb-check:
 #
+# These comments should then be followed by a call to `debugger` which sets up
+# the actual breakpoint.
 
 set -euo pipefail
 

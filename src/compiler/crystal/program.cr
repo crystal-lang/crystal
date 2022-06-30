@@ -242,6 +242,9 @@ module Crystal
       types["Experimental"] = @experimental_annotation = AnnotationType.new self, self, "Experimental"
 
       define_crystal_constants
+
+      # definition in `macros/types.cr`
+      define_macro_types
     end
 
     # Returns a `LiteralExpander` useful to expand literal like arrays and hashes
