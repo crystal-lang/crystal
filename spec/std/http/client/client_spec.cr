@@ -180,7 +180,7 @@ module HTTP
       end
     end
 
-    it "will retry a broken socket" do
+    pending_win32 "will retry a broken socket" do
       server = HTTP::Server.new do |context|
         context.response.output.print "foo"
         context.response.output.close
@@ -277,7 +277,7 @@ module HTTP
       # the server if the socket is closed.
       test_server("localhost", 0, 0.5, write_response: false) do |server|
         client = Client.new("localhost", server.local_address.port)
-        expect_raises(IO::TimeoutError, "Read timed out") do
+        expect_raises(IO::TimeoutError, {% if flag?(:win32) %} "WSARecv timed out" {% else %} "Read timed out" {% end %}) do
           client.read_timeout = 0.001
           client.get("/?sleep=1")
         end
@@ -291,7 +291,7 @@ module HTTP
       # the server if the socket is closed.
       test_server("localhost", 0, 0, write_response: false) do |server|
         client = Client.new("localhost", server.local_address.port)
-        expect_raises(IO::TimeoutError, "Write timed out") do
+        expect_raises(IO::TimeoutError, {% if flag?(:win32) %} "WSASend timed out" {% else %} "Write timed out" {% end %}) do
           client.write_timeout = 0.001
           client.post("/", body: "a" * 5_000_000)
         end

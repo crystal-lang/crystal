@@ -81,7 +81,7 @@ describe HTTP::Server do
     ch.receive.should eq(:end)
   end
 
-  it "reuses the TCP port (SO_REUSEPORT)" do
+  pending_win32 "reuses the TCP port (SO_REUSEPORT)" do
     s1 = HTTP::Server.new { |ctx| }
     address = s1.bind_unused_port(reuse_port: true)
 
@@ -472,7 +472,7 @@ describe HTTP::Server do
     end
   end
 
-  describe "#remote_address / #local_address" do
+  pending_win32 describe: "#remote_address / #local_address" do
     it "for http server" do
       remote_address = nil
       local_address = nil
