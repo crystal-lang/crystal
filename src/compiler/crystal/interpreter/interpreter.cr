@@ -1187,14 +1187,20 @@ class Crystal::Repl::Interpreter
     gatherer.gather
     meta_vars = gatherer.meta_vars
     block_level = local_vars.block_level
+    owner = compiled_def.owner
 
     main_visitor = MainVisitor.new(
       @context.program,
       vars: meta_vars,
       meta_vars: meta_vars,
       typed_def: a_def)
-    main_visitor.scope = compiled_def.owner
-    main_visitor.path_lookup = compiled_def.owner # TODO: this is probably not right
+
+    # Scope is used for instance types, never for Program
+    unless owner.is_a?(Program)
+      main_visitor.scope = owner
+    end
+
+    main_visitor.path_lookup = owner
 
     interpreter = Interpreter.new(self, compiled_def, local_vars, stack_bottom, block_level)
 
