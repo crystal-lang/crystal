@@ -162,7 +162,7 @@ class Crystal::Repl::Interpreter
 
   # compiles the given code to bytecode, then interprets it by assuming the local variables
   # are defined in `meta_vars`.
-  def interpret(node : ASTNode, meta_vars : MetaVars) : Value
+  def interpret(node : ASTNode, meta_vars : MetaVars, scope : Type? = nil) : Value
     compiled_def = @compiled_def
 
     # Declare local variables
@@ -208,7 +208,9 @@ class Crystal::Repl::Interpreter
     # TODO: top_level or not
     compiler =
       if compiled_def
-        Compiler.new(@context, @local_vars, scope: compiled_def.owner, def: compiled_def.def)
+        Compiler.new(@context, @local_vars, scope: scope || compiled_def.owner, def: compiled_def.def)
+      elsif scope
+        Compiler.new(@context, @local_vars, scope: scope)
       else
         Compiler.new(@context, @local_vars)
       end
@@ -235,7 +237,9 @@ class Crystal::Repl::Interpreter
 
     value = interpret(node, node.type)
 
-    # TODO: actually execute any finished hooks
+    finished_hooks.each do |finished_hook|
+      interpret(finished_hook.node, meta_vars, finished_hook.scope.metaclass)
+    end
 
     value
   end
