@@ -202,6 +202,9 @@ class Crystal::Repl::Interpreter
       end
     end
 
+    finished_hooks = @context.program.finished_hooks.dup
+    @context.program.finished_hooks.clear
+
     # TODO: top_level or not
     compiler =
       if compiled_def
@@ -230,7 +233,11 @@ class Crystal::Repl::Interpreter
       end
     {% end %}
 
-    interpret(node, node.type)
+    value = interpret(node, node.type)
+
+    # TODO: actually execute any finished hooks
+
+    value
   end
 
   private def interpret(node : ASTNode, node_type : Type) : Value
