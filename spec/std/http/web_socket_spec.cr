@@ -1,6 +1,7 @@
 require "./spec_helper"
 require "../spec_helper"
 require "http/web_socket"
+require "http/server"
 require "random/secure"
 require "../../support/fibers"
 require "../../support/ssl"

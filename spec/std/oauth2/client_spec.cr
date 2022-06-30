@@ -1,5 +1,6 @@
 require "spec"
 require "oauth2"
+require "http/server"
 require "../http/spec_helper"
 
 describe OAuth2::Client do

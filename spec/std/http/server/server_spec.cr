@@ -1,6 +1,6 @@
 require "../spec_helper"
 require "http/server"
-require "http/client/response"
+require "http/client"
 require "../../../support/ssl"
 require "../../../support/channel"
 

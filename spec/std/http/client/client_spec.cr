@@ -3,6 +3,7 @@ require "../../socket/spec_helper"
 require "openssl"
 require "http/client"
 require "http/server"
+require "http/log"
 require "log/spec"
 
 private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true)
