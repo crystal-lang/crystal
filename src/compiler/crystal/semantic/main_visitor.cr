@@ -590,21 +590,8 @@ module Crystal
     end
 
     def undefined_instance_variable(owner, node)
-      similar_name = lookup_similar_instance_variable_name(node, owner)
+      similar_name = owner.lookup_similar_instance_var_name(node.name)
       program.undefined_instance_variable(node, owner, similar_name)
-    end
-
-    def lookup_similar_instance_variable_name(node, owner)
-      case owner
-      when NonGenericModuleType, GenericClassType, GenericModuleType
-        nil
-      else
-        Levenshtein.find(node.name) do |finder|
-          owner.all_instance_vars.each_key do |name|
-            finder.test(name)
-          end
-        end
-      end
     end
 
     def first_time_accessing_meta_type_var?(var)

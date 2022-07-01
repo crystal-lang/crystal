@@ -624,6 +624,19 @@ module Crystal
       (superclass.try(&.all_instance_vars_count) || 0) + instance_vars.size
     end
 
+    def lookup_similar_instance_var_name(ivar_name : String)
+      case self
+      when NonGenericModuleType, GenericClassType, GenericModuleType
+        nil
+      else
+        Levenshtein.find(ivar_name) do |finder|
+          self.all_instance_vars.each_key do |name|
+            finder.test(name)
+          end
+        end
+      end
+    end
+
     def add_subclass(subclass)
       raise "BUG: #{self} doesn't implement add_subclass"
     end
