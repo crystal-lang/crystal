@@ -226,6 +226,16 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "interprets return Nil with explicit return (#12178)" do
+      interpret(<<-CODE).should be_nil
+        def foo : Nil
+          return 1
+        end
+
+        foo
+      CODE
+    end
+
     it "interprets return implicit nil and Int32" do
       interpret(<<-CODE).should eq(10)
         def foo(x)
