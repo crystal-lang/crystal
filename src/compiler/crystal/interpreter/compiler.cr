@@ -2032,6 +2032,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       compiler.compile_block(compiled_block, target_def, @closure_context)
 
+      # Keep a copy of the local vars before exiting the block.
+      # Otherwise we'll lose reference to the block's vars (useful for pry)
+      compiled_block.local_vars = @local_vars.dup
+
       {% if Debug::DECOMPILE %}
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
         puts Disassembler.disassemble(@context, compiled_block.instructions, @local_vars)

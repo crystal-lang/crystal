@@ -25,3 +25,7 @@ long sum_int(int count, ...) {
 
   return total;
 }
+
+int simple_sum_int(int a, int b) {
+  return a + b;
+}

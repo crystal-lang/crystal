@@ -1,3 +1,4 @@
+{% skip_file if flag?(:win32) %}
 require "../spec_helper"
 require "socket"
 require "../../support/fibers"
