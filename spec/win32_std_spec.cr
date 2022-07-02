@@ -152,7 +152,7 @@ require "./std/mime/multipart/builder_spec.cr"
 require "./std/mime/multipart/parser_spec.cr"
 require "./std/mime/multipart_spec.cr"
 require "./std/mime_spec.cr"
-# require "./std/mutex_spec.cr" (failed codegen)
+require "./std/mutex_spec.cr"
 require "./std/named_tuple_spec.cr"
 require "./std/number_spec.cr"
 require "./std/oauth/access_token_spec.cr"
