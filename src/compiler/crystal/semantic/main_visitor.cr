@@ -649,7 +649,7 @@ module Crystal
     end
 
     private def lookup_instance_var(node)
-      lookup_instance_var(node, scope)
+      lookup_instance_var(node, @scope)
     end
 
     private def lookup_instance_var(node, scope)
