@@ -335,7 +335,12 @@ class Crystal::Repl::Context
   def ivar_offset(type : Type, name : String) : Int32
     ivar_index = type.index_of_instance_var(name).not_nil!
 
-    if type.passed_by_value?
+    if type.is_a?(VirtualType) && type.struct? && type.abstract?
+      # If the type is a virtual abstract struct then the type
+      # is actually represented as {type_id, value} so the offset
+      # of the instance var is behind type_id, which is 8 bytes
+      @program.offset_of(type.base_type, ivar_index).to_i32 + 8
+    elsif type.passed_by_value?
       @program.offset_of(type.sizeof_type, ivar_index).to_i32
     else
       @program.instance_offset_of(type.sizeof_type, ivar_index).to_i32
