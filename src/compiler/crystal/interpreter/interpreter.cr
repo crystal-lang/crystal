@@ -125,10 +125,10 @@ class Crystal::Repl::Interpreter
   end
 
   def self.new(interpreter : Interpreter, compiled_def : CompiledDef, stack : Pointer(UInt8), block_level : Int32)
-    new(interpreter, compiled_def, compiled_def.local_vars, stack, block_level)
+    new(interpreter, compiled_def, compiled_def.local_vars, compiled_def.closure_context, stack, block_level)
   end
 
-  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, local_vars : LocalVars, stack : Pointer(UInt8), @block_level : Int32)
+  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, local_vars : LocalVars, @closure_context : ClosureContext?, stack : Pointer(UInt8), @block_level : Int32)
     @context = interpreter.context
     @local_vars = local_vars.dup
     @argv = interpreter.@argv
@@ -210,6 +210,7 @@ class Crystal::Repl::Interpreter
         Compiler.new(@context, @local_vars)
       end
     compiler.block_level = @block_level
+    compiler.closure_context = @closure_context
     compiler.compile(node)
 
     @instructions = compiler.instructions
@@ -1177,6 +1178,17 @@ class Crystal::Repl::Interpreter
     meta_vars = gatherer.meta_vars
     block_level = local_vars.block_level
 
+    closure_context =
+      if compiled_block
+        compiled_block.closure_context
+      else
+        compiled_def.closure_context
+      end
+
+    closure_context.try &.vars.each do |name, (index, type)|
+      meta_vars[name] = MetaVar.new(name, type)
+    end
+
     main_visitor = MainVisitor.new(
       @context.program,
       vars: meta_vars,
@@ -1185,7 +1197,7 @@ class Crystal::Repl::Interpreter
     main_visitor.scope = compiled_def.owner
     main_visitor.path_lookup = compiled_def.owner # TODO: this is probably not right
 
-    interpreter = Interpreter.new(self, compiled_def, local_vars, stack_bottom, block_level)
+    interpreter = Interpreter.new(self, compiled_def, local_vars, closure_context, stack_bottom, block_level)
 
     while @pry
       # TODO: support multi-line expressions
