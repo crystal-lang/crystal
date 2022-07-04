@@ -237,5 +237,32 @@ describe Crystal::Repl::Interpreter do
         foo.x
       CODE
     end
+
+    it "does call receiver by value from VirtualType abstract struct to concrete struct (#12190)" do
+      interpret(<<-CODE).should eq(42)
+        abstract struct Base
+        end
+
+        struct A < Base
+          def initialize(@x : Int32)
+          end
+
+          def foo
+            @x
+          end
+        end
+
+        struct B < Base
+        end
+
+        v = A.new(42) || B.new
+
+        if v.is_a?(A)
+          v.foo
+        else
+          1
+        end
+      CODE
+    end
   end
 end
