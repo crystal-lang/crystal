@@ -22,11 +22,13 @@
 
 ### Concurrency
 
+- Windows: Event loop based on IOCP ([#12149](https://github.com/crystal-lang/crystal/pull/12149), thanks @straight-shoota, @wonderix, @yxhuvud, @HertzDevil)
 - Use enum instead of symbol for `Atomic` primitives ([#11583](https://github.com/crystal-lang/crystal/pull/11583), thanks @HertzDevil)
 - Allow `Enumerable(Channel)` parameter for  `Channel.send_first`, `.receive_first` ([#12101](https://github.com/crystal-lang/crystal/pull/12101), thanks @carlhoerberg)
 
 ### Crypto
 
+- **(performance)** Add faster `Digest#hexfinal` ([#9292](https://github.com/crystal-lang/crystal/pull/9292), thanks @didactic-drunk)
 - Handle OpenSSL 3.0 KTLS ctrl calls ([#12034](https://github.com/crystal-lang/crystal/pull/12034), thanks @1player)
 
 ### Files
@@ -50,6 +52,7 @@
 
 ### Networking
 
+- Enable more networking specs on Windows ([#12176](https://github.com/crystal-lang/crystal/pull/12176), thanks @HertzDevil)
 - Add specs for Windows directory separators in `StaticFileHandler` paths ([#11884](https://github.com/crystal-lang/crystal/pull/11884), thanks @straight-shoota)
 - Add property `HTTP::Server::Response#status_message` ([#10416](https://github.com/crystal-lang/crystal/pull/10416), thanks @straight-shoota)
 
@@ -70,8 +73,13 @@
 - Docs: Add more prominent note about path traversal in `File.tempfile` ([#12077](https://github.com/crystal-lang/crystal/pull/12077), thanks @straight-shoota)
 - Support `Enumerable` as argument to `File.join` ([#12102](https://github.com/crystal-lang/crystal/pull/12102), thanks @caspiano)
 
+### Runtime
+
+- Mention `#value` explicitly in `Pointer` overview. ([#12184](https://github.com/crystal-lang/crystal/pull/12184), thanks @elebow)
+
 ### Text
 
+- Add specs for `String#char_bytesize_at` ([#11872](https://github.com/crystal-lang/crystal/pull/11872), thanks @straight-shoota)
 - Flush shift state for `String#encode` ([#11993](https://github.com/crystal-lang/crystal/pull/11993), thanks @HertzDevil)
 - Handle invalid bytes in single-byte optimizable `String`s correctly ([#12108](https://github.com/crystal-lang/crystal/pull/12108), thanks @HertzDevil)
 - Fix: Don't stop on null byte in `String#%` ([#12125](https://github.com/crystal-lang/crystal/pull/12125), thanks @asterite)
@@ -93,8 +101,13 @@
 
 ### Interpreter
 
+- Fix: cast from virtual metaclass to union ([#12163](https://github.com/crystal-lang/crystal/pull/12163), thanks @asterite)
+- Allow inspect vars when inside a block ([#12165](https://github.com/crystal-lang/crystal/pull/12165), thanks @asterite)
+- Let pry see closured vars ([#12169](https://github.com/crystal-lang/crystal/pull/12169), thanks @asterite)
+- Fix caller ([#12182](https://github.com/crystal-lang/crystal/pull/12182), thanks @asterite)
+- Apply shell expansion in ldflags ([#12094](https://github.com/crystal-lang/crystal/pull/12094), thanks @mdwagner)
 - Fix expression value of constant assignment in interpreter ([#12016](https://github.com/crystal-lang/crystal/pull/12016), thanks @beta-ziliani)
-- Interpreter: Don't link `librt` and `libdl` on GNU systems ([#12038](https://github.com/crystal-lang/crystal/pull/12038), thanks @1player)
+- Fix: Don't link `librt` and `libdl` on GNU systems ([#12038](https://github.com/crystal-lang/crystal/pull/12038), thanks @1player)
 
 ### Parser
 
@@ -105,6 +118,7 @@
 
 ### Semantic
 
+- Compiler: raise when allocating an abstract virtual type ([#12141](https://github.com/crystal-lang/crystal/pull/12141), thanks @asterite)
 - Compiler: don't use `with_scope` if Call has a receiver ([#12138](https://github.com/crystal-lang/crystal/pull/12138), thanks @asterite)
 - Compiler: fix proc return type restriction for Proc(...) ([#12129](https://github.com/crystal-lang/crystal/pull/12129), thanks @asterite)
 - Compiler: simpler way to compute `Def#raises?` ([#12121](https://github.com/crystal-lang/crystal/pull/12121), thanks @asterite)
@@ -128,11 +142,16 @@
 
 ### Playground
 
+- Playground: fix `modalContenDom` typo ([#12188](https://github.com/crystal-lang/crystal/pull/12188), thanks @HertzDevil)
 - Fix: Unset executable bit from js/css files in playground ([#12053](https://github.com/crystal-lang/crystal/pull/12053), thanks @carlhoerberg)
 
 ## Other
 
-- Add faster `Digest#hexfinal` ([#9292](https://github.com/crystal-lang/crystal/pull/9292), thanks @didactic-drunk)
+- Fix positional parameter warnings in specs ([#12158](https://github.com/crystal-lang/crystal/pull/12158), thanks @straight-shoota)
+- Add Makefile for Windows ([#11773](https://github.com/crystal-lang/crystal/pull/11773), thanks @HertzDevil)
+- [CI] Update distribution-scripts ([#12155](https://github.com/crystal-lang/crystal/pull/12155), thanks @straight-shoota)
+- [CI] Add `update-distributions-scripts.sh` ([#12156](https://github.com/crystal-lang/crystal/pull/12156), thanks @straight-shoota)
+- Ignore `pax_global_header` on Windows CI ([#12173](https://github.com/crystal-lang/crystal/pull/12173), thanks @HertzDevil)
 - Windows CI: invalidate cached libraries on new MSVC release ([#12064](https://github.com/crystal-lang/crystal/pull/12064), thanks @HertzDevil)
 - Fix spelling ([#12040](https://github.com/crystal-lang/crystal/pull/12040), thanks @jsoref)
 - Update previous Crystal release - 1.4.1 ([#12029](https://github.com/crystal-lang/crystal/pull/12029), thanks @straight-shoota)
