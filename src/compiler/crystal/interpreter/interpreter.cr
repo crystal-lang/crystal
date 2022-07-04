@@ -1327,7 +1327,7 @@ class Crystal::Repl::Interpreter
         print ' '
       end
 
-      print line_number.colorize.blue
+      print @context.program.colorize(line_number).blue
       print ": "
       puts line
     end
