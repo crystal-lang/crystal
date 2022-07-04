@@ -123,10 +123,18 @@ module Crystal
 
     # TODO: this is 12 for non-x
 
-    {% if flag?(:bits64) %}
-      FFI_TRAMPOLINE_SIZE = 24
+    {% if compare_versions(`hash pkg-config 2> /dev/null && pkg-config --modversion libffi`.chomp, "3.4.0") >= 0 %}
+      {% if flag?(:bits64) %}
+        FFI_TRAMPOLINE_SIZE = 32
+      {% else %}
+        FFI_TRAMPOLINE_SIZE = 16
+      {% end %}
     {% else %}
-      FFI_TRAMPOLINE_SIZE = 12
+      {% if flag?(:bits64) %}
+        FFI_TRAMPOLINE_SIZE = 24
+      {% else %}
+        FFI_TRAMPOLINE_SIZE = 12
+      {% end %}
     {% end %}
 
     alias ClosureFun = Cif*, Void*, Void**, Void* -> Void
