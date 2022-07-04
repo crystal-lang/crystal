@@ -27,6 +27,10 @@ class Crystal::Command
         @color = false
         repl.program.color = false
       end
+
+      opts.on("--prelude ", "Use given file as prelude") do |prelude|
+        repl.prelude = prelude
+      end
     end
 
     if options.empty?
