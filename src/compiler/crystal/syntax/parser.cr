@@ -3921,6 +3921,8 @@ module Crystal
           raise "when specified, external name must be different than internal name", @token
         end
 
+        check_valid_param_name(arg_name)
+
         uses_arg = false
         do_next_token = true
       when .instance_var?
@@ -3984,6 +3986,7 @@ module Crystal
             raise "cannot use '#{invalid_internal_name}' as a parameter name", invalid_internal_name
           end
           arg_name = external_name
+          check_valid_param_name(arg_name)
         else
           unexpected_token
         end
@@ -4030,6 +4033,12 @@ module Crystal
         end
       else
         false
+      end
+    end
+
+    def check_valid_param_name(param_name)
+      if param_name.ends_with?(/\?|!/)
+        raise "invalid param name"
       end
     end
 
@@ -4351,6 +4360,7 @@ module Crystal
             end
 
             arg_name = @token.value.to_s
+            check_valid_param_name(arg_name)
 
             if all_names.includes?(arg_name)
               raise "duplicated block parameter name: #{arg_name}", @token
@@ -4372,6 +4382,7 @@ module Crystal
                 end
 
                 sub_arg_name = @token.value.to_s
+                check_valid_param_name(sub_arg_name)
 
                 if all_names.includes?(sub_arg_name)
                   raise "duplicated block parameter name: #{sub_arg_name}", @token
