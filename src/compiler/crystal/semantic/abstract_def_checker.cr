@@ -29,6 +29,9 @@ class Crystal::AbstractDefChecker
 
   def run
     check_types(@program)
+    @program.file_modules.each_value do |file_module|
+      check_types(file_module)
+    end
   end
 
   def check_types(type)
@@ -108,18 +111,22 @@ class Crystal::AbstractDefChecker
   # Returns `true` if `ancestor_type` implements `method` of `base` when computing
   # that information to check whether `target_type` implements `method` of `base`.
   def implements?(target_type : Type, ancestor_type : Type, method : Def, base : Type, method_free_vars)
+    implemented = false
     ancestor_type.defs.try &.each_value do |defs_with_metadata|
       defs_with_metadata.each do |def_with_metadata|
         a_def = def_with_metadata.def
         def_free_vars = free_var_nodes(a_def)
 
         if implements?(target_type, ancestor_type, a_def, def_free_vars, base, method, method_free_vars)
-          check_return_type(target_type, ancestor_type, a_def, base, method)
-          return true
+          unless implemented
+            check_return_type(target_type, ancestor_type, a_def, base, method)
+            implemented = true
+          end
+          check_positional_param_names(target_type, ancestor_type, a_def, base, method)
         end
       end
     end
-    false
+    implemented
   end
 
   # Returns `true` if the method `t1#m1` implements `t2#m2` when computing
@@ -317,6 +324,18 @@ class Crystal::AbstractDefChecker
     end
   end
 
+  def check_positional_param_names(target_type : Type, impl_type : Type, impl_method : Def, base_type : Type, base_method : Def)
+    impl_param_count = impl_method.splat_index || impl_method.args.size
+    base_param_count = base_method.splat_index || base_method.args.size
+    {impl_param_count, base_param_count}.min.times do |i|
+      impl_param = impl_method.args[i]
+      base_param = base_method.args[i]
+      unless impl_param.external_name == base_param.external_name
+        @program.report_warning(impl_param, "positional parameter '#{impl_param.external_name}' corresponds to parameter '#{base_param.external_name}' of the overridden method #{Call.def_full_name(base_type, base_method)}, which has a different name and may affect named argument passing")
+      end
+    end
+  end
+
   def replace_method_arg_paths_with_type_vars(base_type : Type, method : Def, generic_type : GenericInstanceType)
     replacer = ReplacePathWithTypeVar.new(base_type, generic_type)
 
@@ -357,10 +376,8 @@ class Crystal::AbstractDefChecker
     end
 
     def visit(node : Path)
-      if !node.global? && node.names.size == 1
+      if name = node.single_name?
         # Check if it matches any of the generic type vars
-        name = node.names.first
-
         type_var = @generic_type.type_vars[name]?
         if type_var.is_a?(Var)
           # Check that it's actually a type parameter on the base type

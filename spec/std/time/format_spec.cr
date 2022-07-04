@@ -204,6 +204,12 @@ describe Time::Format do
     Time.parse!("2017-12-01 20:15:13 +01:00", "%F %T %:z").to_s("%F %T %:z").should eq "2017-12-01 20:15:13 +01:00"
   end
 
+  it "gives nice error message when end of input is reached (#12047)" do
+    expect_raises(Time::Format::Error, "Expected '-' but the end of the input was reached") do
+      Time.parse!("2021-01", "%F")
+    end
+  end
+
   it "parses" do
     parse_time("2014", "%Y").year.should eq(2014)
     parse_time("19", "%C").year.should eq(1900)
@@ -519,6 +525,37 @@ describe Time::Format do
     end
     expect_raises(Time::Format::Error, "Invalid timezone") do
       Time.parse!("123456+01:00", "%3N%z")
+    end
+  end
+
+  it "parses day of year" do
+    parse_time("2006-001", "%Y-%j").should eq(Time.utc(2006, 1, 1))
+    parse_time("2006-032", "%Y-%j").should eq(Time.utc(2006, 2, 1))
+    parse_time("2006-059", "%Y-%j").should eq(Time.utc(2006, 2, 28))
+    parse_time("2006-060", "%Y-%j").should eq(Time.utc(2006, 3, 1))
+    parse_time("2006-200", "%Y-%j").should eq(Time.utc(2006, 7, 19))
+    parse_time("2006-365", "%Y-%j").should eq(Time.utc(2006, 12, 31))
+
+    parse_time("2004-001", "%Y-%j").should eq(Time.utc(2004, 1, 1))
+    parse_time("2004-032", "%Y-%j").should eq(Time.utc(2004, 2, 1))
+    parse_time("2004-059", "%Y-%j").should eq(Time.utc(2004, 2, 28))
+    parse_time("2004-060", "%Y-%j").should eq(Time.utc(2004, 2, 29))
+    parse_time("2004-061", "%Y-%j").should eq(Time.utc(2004, 3, 1))
+    parse_time("2004-200", "%Y-%j").should eq(Time.utc(2004, 7, 18))
+    parse_time("2004-365", "%Y-%j").should eq(Time.utc(2004, 12, 30))
+    parse_time("2004-366", "%Y-%j").should eq(Time.utc(2004, 12, 31))
+
+    expect_raises(Time::Format::Error, "Invalid day of year") do
+      parse_time("2006-000", "%Y-%j")
+    end
+    expect_raises(Time::Format::Error, "Invalid day of year") do
+      parse_time("2004-000", "%Y-%j")
+    end
+    expect_raises(Time::Format::Error, "Invalid day of year") do
+      parse_time("2006-366", "%Y-%j")
+    end
+    expect_raises(Time::Format::Error, "Invalid day of year") do
+      parse_time("2004-367", "%Y-%j")
     end
   end
 

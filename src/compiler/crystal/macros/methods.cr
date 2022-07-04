@@ -1246,6 +1246,8 @@ module Crystal
         interpret_check_args { MacroId.new(@name) }
       when "args"
         interpret_check_args { ArrayLiteral.map(@args, &.itself) }
+      when "global?"
+        interpret_check_args { BoolLiteral.new(@global) }
       else
         super
       end
@@ -1340,6 +1342,16 @@ module Crystal
         interpret_check_args { default_value || Nop.new }
       when "restriction"
         interpret_check_args { restriction || Nop.new }
+      when "annotation"
+        fetch_annotation(self, method, args, named_args, block) do |type|
+          self.annotation(type)
+        end
+      when "annotations"
+        fetch_annotation(self, method, args, named_args, block) do |type|
+          annotations = self.annotations(type)
+          return ArrayLiteral.new if annotations.nil?
+          ArrayLiteral.map(annotations, &.itself)
+        end
       else
         super
       end

@@ -12,6 +12,7 @@ module Crystal
     # If `true` compiler will error if warnings are found.
     property error_on_warnings : Bool = false
 
+    @deprecated_constants_detected = Set(String).new
     @deprecated_methods_detected = Set(String).new
     @deprecated_macros_detected = Set(String).new
 
@@ -46,6 +47,12 @@ module Crystal
       @program.warnings_exclude.any? do |path|
         filename.starts_with?(path)
       end
+    end
+
+    def check_deprecated_constant(const : Const, node : Path)
+      return unless @warnings.all?
+
+      check_deprecation(const, node, @deprecated_constants_detected)
     end
 
     def check_call_to_deprecated_macro(a_macro : Macro, call : Call)
@@ -148,6 +155,12 @@ module Crystal
       else
         "#{owner}##{name}"
       end
+    end
+  end
+
+  class Const
+    def short_reference
+      to_s
     end
   end
 

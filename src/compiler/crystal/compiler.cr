@@ -394,6 +394,9 @@ module Crystal
         end
 
         {cmd, nil}
+      elsif program.has_flag? "wasm32"
+        link_flags = @link_flags || ""
+        { %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names }
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
@@ -573,10 +576,24 @@ module Crystal
     end
 
     protected def optimize(llvm_mod)
+      {% if LibLLVM::IS_LT_130 %}
+        optimize_with_old_pass_manager(llvm_mod)
+      {% else %}
+        optimize_with_new_pass_manager(llvm_mod)
+      {% end %}
+    end
+
+    private def optimize_with_old_pass_manager(llvm_mod)
       fun_pass_manager = llvm_mod.new_function_pass_manager
       pass_manager_builder.populate fun_pass_manager
       fun_pass_manager.run llvm_mod
       module_pass_manager.run llvm_mod
+    end
+
+    private def optimize_with_new_pass_manager(llvm_mod)
+      LLVM::PassBuilderOptions.new do |options|
+        LLVM.run_passes(llvm_mod, "default<O3>", target_machine, options)
+      end
     end
 
     @module_pass_manager : LLVM::ModulePassManager?
@@ -712,7 +729,7 @@ module Crystal
         # If there's a memory buffer, it means we must create a .o from it
         if memory_buffer
           # Delete existing .o file. It cannot be used anymore.
-          File.delete(object_name) if File.exists?(object_name)
+          File.delete?(object_name)
           # Create the .bc file (for next compilations)
           File.write(bc_name, memory_buffer.to_slice)
           memory_buffer.dispose

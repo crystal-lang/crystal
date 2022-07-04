@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "spec/helpers/iterate"
 require "json"
 require "big"
 require "big/json"
@@ -67,6 +68,22 @@ describe "JSON serialization" do
       Deque(String).from_json(%(["a", "b"])).should eq(Deque.new(["a", "b"]))
     end
 
+    it "does Iterator(String)#from_json" do
+      assert_iterates_iterator ["a", "b"], Iterator(String).from_json(%(["a", "b"]))
+    end
+
+    it "raises an error Iterator(String)#from_json with invalid types" do
+      expect_raises(JSON::ParseException) do
+        Iterator(String).from_json(%([1, 2])).to_a
+      end
+    end
+
+    it "raises an error Iterator(String)#from_json with invalid JSON" do
+      expect_raises(JSON::ParseException) do
+        Iterator(String).from_json(%(["a")).to_a
+      end
+    end
+
     it "does Hash(String, String)#from_json" do
       Hash(String, String).from_json(%({"foo": "x", "bar": "y"})).should eq({"foo" => "x", "bar" => "y"})
     end
@@ -129,6 +146,12 @@ describe "JSON serialization" do
       tuple = NamedTuple(x: Int32, y: String).from_json(%({"y": "hello", "x": 1}))
       tuple.should eq({x: 1, y: "hello"})
       tuple.should be_a(NamedTuple(x: Int32, y: String))
+    end
+
+    it "does for empty named tuple" do
+      tuple = typeof(NamedTuple.new).from_json(%({}))
+      tuple.should eq(NamedTuple.new)
+      tuple.should be_a(typeof(NamedTuple.new))
     end
 
     it "does for named tuple with nilable fields (#8089)" do
@@ -521,6 +544,10 @@ describe "JSON serialization" do
 
     it "does for Set" do
       Set(Int32).new([1, 1, 2]).to_json.should eq("[1,2]")
+    end
+
+    it "does for Iterator" do
+      (1..3).each.to_json.should eq("[1,2,3]")
     end
 
     it "does for Hash" do

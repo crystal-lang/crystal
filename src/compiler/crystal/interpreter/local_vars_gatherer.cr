@@ -32,12 +32,8 @@ class Crystal::Repl::LocalVarsGatherer < Crystal::Visitor
   # in the `initialize` method.
   getter meta_vars : MetaVars
 
-  # What's the block level the `debugger` is currently in.
-  getter block_level : Int32
-
   def initialize(@location : Location, @def : Def)
     @meta_vars = MetaVars.new
-    @block_level = 0
   end
 
   def gather : Nil
@@ -91,7 +87,6 @@ class Crystal::Repl::LocalVarsGatherer < Crystal::Visitor
 
     old_block = @block
     @block = node
-    @block_level += 1
 
     node.args.each &.accept self
     node.body.accept self

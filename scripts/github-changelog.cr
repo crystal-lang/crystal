@@ -148,9 +148,17 @@ sections = array.group_by { |pr|
     when .starts_with?("topic:lang")
       break "Language"
     when .starts_with?("topic:compiler")
-      break "Compiler"
+      if label == "topic:compiler"
+        break "Compiler"
+      else
+        break "Compiler: #{label.lchop("topic:compiler:").titleize}"
+      end
     when .starts_with?("topic:tools")
-      break "Tools"
+      if label == "topic:tools"
+        break "Tools"
+      else
+        break "Tools: #{label.lchop("topic:tools:").titleize}"
+      end
     when .starts_with?("topic:stdlib")
       if label == "topic:stdlib"
         break "Standard Library"
@@ -163,11 +171,17 @@ sections = array.group_by { |pr|
   end || "Other"
 }
 
-titles = sections.keys.sort!
+titles = [] of String
+["Language", "Standard Library", "Compiler", "Tools", "Other"].each do |main_section|
+  titles.concat sections.each_key.select(&.starts_with?(main_section)).to_a.sort!
+end
+sections.keys.sort!.each do |section|
+  titles << section unless titles.includes?(section)
+end
 last_title1 = nil
 
 titles.each do |title|
-  prs = sections[title]
+  prs = sections[title]? || next
   title1, _, title2 = title.partition(": ")
   if title2.presence
     if title1 != last_title1
