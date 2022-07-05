@@ -130,7 +130,7 @@ describe "Code gen: union type" do
       a = b
       a.to_s
     ").to_string
-    value.includes?("Reference").should be_true
+    value.should contain("Reference")
   end
 
   it "assigns union to larger union when source is nilable 2" do

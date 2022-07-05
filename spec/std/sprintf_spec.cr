@@ -357,6 +357,10 @@ describe "::sprintf" do
     end
   end
 
+  it "doesn't stop at null character when doing '%'" do
+    assert_sprintf "1\u{0}%i\u{0}3", 2, "1\u00002\u00003"
+  end
+
   pending_win32 describe: "floats" do
     it "works" do
       assert_sprintf "%f", 123, "123.000000"
@@ -435,6 +439,10 @@ describe "::sprintf" do
 
     it "raises on unbalanced curly" do
       expect_raises(ArgumentError, "Malformed name - unmatched parenthesis") { sprintf("change %{this", {"this" => 1}) }
+    end
+
+    it "doesn't raise on balanced curly with null byte" do
+      assert_sprintf "change %{this\u{0}}", {"this\u{0}" => 1}, "change 1"
     end
   end
 

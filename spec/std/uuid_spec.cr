@@ -105,6 +105,23 @@ describe "UUID" do
     end
   end
 
+  describe "parsing strings" do
+    it "returns a properly parsed UUID" do
+      UUID.parse?("c20335c3-7f46-4126-aae9-f665434ad12b").to_s.should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
+    end
+
+    it "returns nil if it has the wrong number of characters" do
+      UUID.parse?("nope").should eq nil
+    end
+
+    it "returns nil if it has incorrect characters" do
+      UUID.parse?("c20335c3-7f46-4126-aae9-f665434ad12?").should eq nil
+      UUID.parse?("lol!wut?-asdf-fork-typo-omglolwtfbbq").should eq nil
+      UUID.parse?("lol!wut?asdfforktypoomglolwtfbbq").should eq nil
+      UUID.parse?("urn:uuid:lol!wut?-asdf-fork-typo-omglolwtfbbq").should eq nil
+    end
+  end
+
   it "initializes from UUID" do
     uuid = UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93")
     uuid = UUID.new(uuid, version: UUID::Version::V2, variant: UUID::Variant::Microsoft)

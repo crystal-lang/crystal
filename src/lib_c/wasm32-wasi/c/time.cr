@@ -29,4 +29,5 @@ lib LibC
   fun localtime_r(x0 : TimeT*, x1 : Tm*) : Tm*
   fun mktime(x0 : Tm*) : TimeT
   fun timegm(x0 : Tm*) : TimeT
+  fun futimes(fd : Int, times : Timeval[2]) : Int
 end

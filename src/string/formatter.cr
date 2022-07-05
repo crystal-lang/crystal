@@ -13,10 +13,8 @@ struct String::Formatter(A)
   end
 
   def format : Nil
-    while true
+    while @reader.has_next?
       case char = current_char
-      when '\0'
-        break
       when '%'
         consume_percent
       else
@@ -66,9 +64,11 @@ struct String::Formatter(A)
   private def consume_substitution_key(end_char)
     String.build do |io|
       loop do
-        case current_char
-        when '\0'
+        unless @reader.has_next?
           raise ArgumentError.new "Malformed name - unmatched parenthesis"
+        end
+
+        case current_char
         when end_char
           break
         else

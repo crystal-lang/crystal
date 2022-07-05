@@ -273,5 +273,22 @@ describe Crystal::Repl::Interpreter do
         end
         CODE
     end
+
+    it "puts virtual metaclass into union (#12162)" do
+      interpret(<<-CODE, prelude: "prelude").should eq(%("ActionA"))
+        class Action
+        end
+
+        class ActionA < Action
+        end
+
+        class ActionB < Action
+        end
+
+        x = ActionA || ActionB
+        y = x || Nil
+        y.to_s
+        CODE
+    end
   end
 end

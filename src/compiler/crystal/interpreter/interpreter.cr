@@ -7,6 +7,8 @@ class Crystal::Repl::Interpreter
   record CallFrame,
     # The CompiledDef related to this call frame
     compiled_def : CompiledDef,
+    # The CompiledBlock related to this call frame, if any
+    compiled_block : CompiledBlock?,
     # Instructions for this frame
     instructions : CompiledInstructions,
     # The pointer to the current instruction for this call frame.
@@ -38,7 +40,7 @@ class Crystal::Repl::Interpreter
     real_frame_index : Int32,
     # This is a bit hacky, but...
     # Right now, when we produce an OverflowError we do it directly
-    # in the instruction that potentitally produces the overflow.
+    # in the instruction that potentially produces the overflow.
     # When we do that, the backtrace that is produced in that case
     # is incorrect because the backtrace computing logic assumes
     # an all call frames are, well, calls. But in this case it could
@@ -122,9 +124,13 @@ class Crystal::Repl::Interpreter
     @compiled_def = nil
   end
 
-  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, stack : Pointer(UInt8), @block_level : Int32)
+  def self.new(interpreter : Interpreter, compiled_def : CompiledDef, stack : Pointer(UInt8), block_level : Int32)
+    new(interpreter, compiled_def, compiled_def.local_vars, compiled_def.closure_context, stack, block_level)
+  end
+
+  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, local_vars : LocalVars, @closure_context : ClosureContext?, stack : Pointer(UInt8), @block_level : Int32)
     @context = interpreter.context
-    @local_vars = compiled_def.local_vars.dup
+    @local_vars = local_vars.dup
     @argv = interpreter.@argv
 
     @instructions = CompiledInstructions.new
@@ -204,6 +210,7 @@ class Crystal::Repl::Interpreter
         Compiler.new(@context, @local_vars)
       end
     compiler.block_level = @block_level
+    compiler.closure_context = @closure_context
     compiler.compile(node)
 
     @instructions = compiler.instructions
@@ -241,7 +248,7 @@ class Crystal::Repl::Interpreter
     # variables for the current call frame begin.
     stack_bottom = @stack
 
-    # Shift stack to leave roomm for local vars.
+    # Shift stack to leave room for local vars.
     # Previous runs that wrote to local vars would have those values
     # written to @stack already (or property migrated thanks to `migrate_local_vars`)
     stack_bottom_after_local_vars = stack_bottom + @local_vars.max_bytesize
@@ -281,6 +288,7 @@ class Crystal::Repl::Interpreter
         instructions: instructions,
         local_vars: @local_vars,
       ),
+      compiled_block: nil,
       instructions: instructions,
       ip: ip,
       stack: stack,
@@ -527,6 +535,7 @@ class Crystal::Repl::Interpreter
 
     %call_frame = CallFrame.new(
       compiled_def: {{compiled_def}},
+      compiled_block: nil,
       instructions: {{compiled_def}}.instructions,
       ip: {{compiled_def}}.instructions.instructions.to_unsafe,
       # We need to adjust the call stack to start right
@@ -562,6 +571,7 @@ class Crystal::Repl::Interpreter
     %block_caller_frame_index = @call_stack.last.block_caller_frame_index
 
     copied_call_frame = @call_stack[%block_caller_frame_index].copy_with(
+      compiled_block: {{compiled_block}},
       instructions: {{compiled_block}}.instructions,
       ip: {{compiled_block}}.instructions.instructions.to_unsafe,
       stack: stack,
@@ -1132,107 +1142,127 @@ class Crystal::Repl::Interpreter
   end
 
   private def pry(ip, instructions, stack_bottom, stack)
-    call_frame = @call_stack.last
-    compiled_def = call_frame.compiled_def
-    a_def = compiled_def.def
-    local_vars = compiled_def.local_vars
     offset = (ip - instructions.instructions.to_unsafe).to_i32
     node = instructions.nodes[offset]?
     pry_node = @pry_node
-    if node && (location = node.location) && different_node_line?(node, pry_node)
-      whereami(a_def, location)
 
-      # puts
-      # puts Slice.new(stack_bottom, stack - stack_bottom).hexdump
-      # puts
+    return unless node
 
-      # Remember the portion from stack_bottom + local_vars.max_bytesize up to stack
-      # because it might happen that the child interpreter will overwrite some
-      # of that if we already have some values in the stack past the local vars
-      data_size = stack - (stack_bottom + local_vars.max_bytesize)
-      data = Pointer(Void).malloc(data_size).as(UInt8*)
-      data.copy_from(stack_bottom + local_vars.max_bytesize, data_size)
+    location = node.location
+    return unless location
 
-      gatherer = LocalVarsGatherer.new(location, a_def)
-      gatherer.gather
-      meta_vars = gatherer.meta_vars
-      block_level = gatherer.block_level
+    return unless different_node_line?(node, pry_node)
 
-      main_visitor = MainVisitor.new(
-        @context.program,
-        vars: meta_vars,
-        meta_vars: meta_vars,
-        typed_def: a_def)
-      main_visitor.scope = compiled_def.owner
-      main_visitor.path_lookup = compiled_def.owner # TODO: this is probably not right
+    call_frame = @call_stack.last
+    compiled_def = call_frame.compiled_def
+    compiled_block = call_frame.compiled_block
+    local_vars = compiled_block.try(&.local_vars) || compiled_def.local_vars
 
-      interpreter = Interpreter.new(self, compiled_def, stack_bottom, block_level)
+    a_def = compiled_def.def
 
-      while @pry
-        # TODO: supoort multi-line expressions
+    whereami(a_def, location)
 
-        print "pry> "
-        line = gets
-        unless line
-          self.pry = false
-          break
-        end
+    # puts
+    # puts Slice.new(stack_bottom, stack - stack_bottom).hexdump
+    # puts
 
-        case line
-        when "continue"
-          self.pry = false
-          break
-        when "step"
-          @pry_node = node
-          @pry_max_target_frame = nil
-          break
-        when "next"
-          @pry_node = node
-          @pry_max_target_frame = @call_stack.last.real_frame_index
-          break
-        when "finish"
-          @pry_node = node
-          @pry_max_target_frame = @call_stack.last.real_frame_index - 1
-          break
-        when "whereami"
-          whereami(a_def, location)
-          next
-        when "*d"
-          puts compiled_def.local_vars
-          puts Disassembler.disassemble(@context, compiled_def)
-          next
-        when "*s"
-          puts Slice.new(@stack, stack - @stack).hexdump
-          next
-        end
+    # Remember the portion from stack_bottom + local_vars.max_bytesize up to stack
+    # because it might happen that the child interpreter will overwrite some
+    # of that if we already have some values in the stack past the local vars
+    data_size = stack - (stack_bottom + local_vars.max_bytesize)
+    data = Pointer(Void).malloc(data_size).as(UInt8*)
+    data.copy_from(stack_bottom + local_vars.max_bytesize, data_size)
 
-        begin
-          parser = Parser.new(
-            line,
-            string_pool: @context.program.string_pool,
-            var_scopes: [interpreter.local_vars.names.to_set],
-          )
-          line_node = parser.parse
+    gatherer = LocalVarsGatherer.new(location, a_def)
+    gatherer.gather
+    meta_vars = gatherer.meta_vars
+    block_level = local_vars.block_level
 
-          line_node = @context.program.normalize(line_node)
-          line_node = @context.program.semantic(line_node, main_visitor: main_visitor)
-
-          value = interpreter.interpret(line_node, meta_vars)
-          puts value.to_s
-        rescue ex : Crystal::CodeError
-          ex.color = true
-          ex.error_trace = true
-          puts ex
-          next
-        rescue ex : Exception
-          ex.inspect_with_backtrace(STDOUT)
-          next
-        end
+    closure_context =
+      if compiled_block
+        compiled_block.closure_context
+      else
+        compiled_def.closure_context
       end
 
-      # Restore the stack data in case it tas overwritten
-      (stack_bottom + local_vars.max_bytesize).copy_from(data, data_size)
+    closure_context.try &.vars.each do |name, (index, type)|
+      meta_vars[name] = MetaVar.new(name, type)
     end
+
+    main_visitor = MainVisitor.new(
+      @context.program,
+      vars: meta_vars,
+      meta_vars: meta_vars,
+      typed_def: a_def)
+    main_visitor.scope = compiled_def.owner
+    main_visitor.path_lookup = compiled_def.owner # TODO: this is probably not right
+
+    interpreter = Interpreter.new(self, compiled_def, local_vars, closure_context, stack_bottom, block_level)
+
+    while @pry
+      # TODO: support multi-line expressions
+
+      print "pry> "
+      line = gets
+      unless line
+        self.pry = false
+        break
+      end
+
+      case line
+      when "continue"
+        self.pry = false
+        break
+      when "step"
+        @pry_node = node
+        @pry_max_target_frame = nil
+        break
+      when "next"
+        @pry_node = node
+        @pry_max_target_frame = @call_stack.last.real_frame_index
+        break
+      when "finish"
+        @pry_node = node
+        @pry_max_target_frame = @call_stack.last.real_frame_index - 1
+        break
+      when "whereami"
+        whereami(a_def, location)
+        next
+      when "*d"
+        puts local_vars
+        puts Disassembler.disassemble(@context, compiled_block || compiled_def)
+        next
+      when "*s"
+        puts Slice.new(@stack, stack - @stack).hexdump
+        next
+      end
+
+      begin
+        parser = Parser.new(
+          line,
+          string_pool: @context.program.string_pool,
+          var_scopes: [meta_vars.keys.to_set],
+        )
+        line_node = parser.parse
+
+        line_node = @context.program.normalize(line_node)
+        line_node = @context.program.semantic(line_node, main_visitor: main_visitor)
+
+        value = interpreter.interpret(line_node, meta_vars)
+        puts value.to_s
+      rescue ex : Crystal::CodeError
+        ex.color = true
+        ex.error_trace = true
+        puts ex
+        next
+      rescue ex : Exception
+        ex.inspect_with_backtrace(STDOUT)
+        next
+      end
+    end
+
+    # Restore the stack data in case it tas overwritten
+    (stack_bottom + local_vars.max_bytesize).copy_from(data, data_size)
   end
 
   private def whereami(a_def : Def, location : Location)

@@ -40,7 +40,7 @@ Issue tracker labels are sorted by category: community, kind, pr, status and top
 
 These are the issues where help from the community is most welcome. See above for a description on `newcomer`, `to-research`, `to-design`, `to-implement` and `to-document`.
 
-Label `in-progress` is used to signal that someone from the community is already working on the issue (since Github does not allow for a non-team member to be _assigned_ to an issue).
+Label `in-progress` is used to signal that someone from the community is already working on the issue (since GitHub does not allow for a non-team member to be _assigned_ to an issue).
 
 The label `shard-idea` refers to a feature proposal that, albeit good, is better suited as a separate shard rather than as part of the core library; so if you are looking for a shard of your own to start working on, these issues are good starting points.
 
