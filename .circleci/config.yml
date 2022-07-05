@@ -4,11 +4,11 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "b421c5a3f857247ed88251d0c6dbcca7337c4648"
+    default: "26cd7ec1a7a6a71368e3299e3bffed9b5f79ea67"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.3.2/crystal-1.3.2-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.4.1/crystal-1.4.1-1"
 
 defaults:
   environment: &env
@@ -32,7 +32,8 @@ defaults:
 
 jobs:
   test_linux:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -60,7 +61,8 @@ jobs:
             - docs
 
   test_alpine:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -102,7 +104,8 @@ jobs:
             - ~/Library/Caches/Homebrew/downloads
 
   test_preview_mt:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -247,7 +250,8 @@ jobs:
             - distribution-scripts
 
   dist_linux:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -329,7 +333,8 @@ jobs:
                 /tmp/workspace/build/crystal-*-docs.tar.gz
 
   dist_docker:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -344,7 +349,8 @@ jobs:
             - build
 
   publish_docker:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -398,7 +404,8 @@ jobs:
             snapcraft push /tmp/workspace/build/*.snap --release=$SNAP_CHANNEL
 
   dist_docs:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -443,7 +450,8 @@ jobs:
           destination: dist_packages
 
   test_dist_linux_on_docker:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux

@@ -11,6 +11,7 @@ lib LibC
 
   fun access(x0 : Char*, x1 : Int) : Int
   fun chdir(x0 : Char*) : Int
+  fun fchown(x0 : Int, x1 : UidT, x2 : GidT) : Int
   fun close(fd : Int) : Int
   fun _exit(x0 : Int) : NoReturn
   fun fdatasync(x0 : Int) : Int

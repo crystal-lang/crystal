@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "spec/helpers/iterate"
 require "json"
 require "big"
 require "big/json"
@@ -145,6 +146,12 @@ describe "JSON serialization" do
       tuple = NamedTuple(x: Int32, y: String).from_json(%({"y": "hello", "x": 1}))
       tuple.should eq({x: 1, y: "hello"})
       tuple.should be_a(NamedTuple(x: Int32, y: String))
+    end
+
+    it "does for empty named tuple" do
+      tuple = typeof(NamedTuple.new).from_json(%({}))
+      tuple.should eq(NamedTuple.new)
+      tuple.should be_a(typeof(NamedTuple.new))
     end
 
     it "does for named tuple with nilable fields (#8089)" do

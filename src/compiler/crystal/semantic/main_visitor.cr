@@ -250,7 +250,7 @@ module Crystal
       end
 
       if instance_type.double_variadic?
-        unless node.named_args
+        unless node.type_vars.empty?
           node.raise "can only instantiate NamedTuple with named arguments"
         end
       else
@@ -590,21 +590,8 @@ module Crystal
     end
 
     def undefined_instance_variable(owner, node)
-      similar_name = lookup_similar_instance_variable_name(node, owner)
+      similar_name = owner.lookup_similar_instance_var_name(node.name)
       program.undefined_instance_variable(node, owner, similar_name)
-    end
-
-    def lookup_similar_instance_variable_name(node, owner)
-      case owner
-      when NonGenericModuleType, GenericClassType, GenericModuleType
-        nil
-      else
-        Levenshtein.find(node.name) do |finder|
-          owner.all_instance_vars.each_key do |name|
-            finder.test(name)
-          end
-        end
-      end
     end
 
     def first_time_accessing_meta_type_var?(var)
@@ -640,7 +627,6 @@ module Crystal
     end
 
     def visit_read_instance_var(node)
-      node.visitor = self
       node.obj.accept self
       node.obj.add_observer node
       node.update
@@ -662,32 +648,22 @@ module Crystal
       var
     end
 
-    def lookup_instance_var(node)
-      lookup_instance_var node, @scope.try(&.remove_typedef)
+    private def lookup_instance_var(node)
+      lookup_instance_var(node, @scope)
     end
 
-    def lookup_instance_var(node, scope)
-      case scope
-      when Nil
+    private def lookup_instance_var(node, scope)
+      unless scope
         node.raise "can't use instance variables at the top level"
-      when Program
-        node.raise "can't use instance variables at the top level"
-      when PrimitiveType
-        node.raise "can't use instance variables inside primitive types (at #{scope})"
-      when EnumType
-        node.raise "can't use instance variables inside enums (at enum #{scope})"
-      when .metaclass?
-        node.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
-      when InstanceVarContainer
-        var = scope.lookup_instance_var?(node.name)
-        unless var
-          undefined_instance_variable(scope, node)
-        end
-        check_self_closured
-        var
-      else
-        node.raise "BUG: #{scope} is not an InstanceVarContainer"
       end
+
+      ivar = scope.remove_typedef.lookup_instance_var(node)
+      unless ivar
+        undefined_instance_variable(scope, node)
+      end
+
+      check_self_closured
+      ivar
     end
 
     def visit(node : Expressions)
@@ -1362,7 +1338,7 @@ module Crystal
       else
         node.scope = @scope || current_type.metaclass
       end
-      node.with_scope = with_scope
+      node.with_scope = with_scope unless node.obj
       node.parent_visitor = self
     end
 
@@ -2344,8 +2320,47 @@ module Crystal
       when PointerInstanceType
         node.raise "can't create instance of a pointer type"
       else
-        if !instance_type.virtual? && instance_type.abstract?
-          node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
+        if instance_type.abstract?
+          if instance_type.virtual?
+            # A call to "allocate" on a virtual type can happen if we have something like:
+            #
+            # ```
+            # abstract class Foo
+            # end
+            #
+            # class Bar < Foo
+            # end
+            #
+            # a = [] of Foo.class
+            # a << Bar
+            # a << Foo
+            #
+            # a.map(&.new)
+            # ```
+            #
+            # It's perfectly fine to have an array of `Foo.class`, and we can
+            # put `Foo` and `Bar` in it. We should also be able to call `new`
+            # on every element in the array. We'll have to trust the user doesn't
+            # put abstract types there. But if they are abstract, we make that
+            # call a runtime error.
+            base_type = instance_type.devirtualize
+
+            extra = Call.new(
+              nil,
+              "raise",
+              args: [StringLiteral.new("Can't instantiate abstract #{base_type.type_desc} #{base_type}")] of ASTNode,
+              global: true)
+            extra.accept self
+
+            # This `extra` will replace the Primitive node in CleanupTransformer later on.
+            node.extra = extra
+            node.type = @program.no_return
+            return
+          else
+            # If the type is not virtual then we know for sure that the type
+            # can't be instantiated, and we can produce a compile-time error.
+            node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
+          end
         end
 
         node.type = instance_type
@@ -3306,7 +3321,7 @@ module Crystal
       # If a variable is being assigned to inside a block:
       # - if the variable is a new variable then there's no need to mark is a mutably
       #   closured because unless it gets assigned again it will be a different
-      #   variable alloction each time
+      #   variable allocation each time
       # - if the variable already existed but it's assigned in the same context
       #   as before, if it's not closured already then it still shouldn't
       #   be marked as mutably closured

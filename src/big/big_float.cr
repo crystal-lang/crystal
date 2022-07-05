@@ -149,14 +149,17 @@ struct BigFloat < Float
     BigFloat.new { |mpf| LibGMP.mpf_abs(mpf, self) }
   end
 
+  # Rounds towards positive infinity.
   def ceil : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_ceil(mpf, self) }
   end
 
+  # Rounds towards negative infinity.
   def floor : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_floor(mpf, self) }
   end
 
+  # Rounds towards zero.
   def trunc : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_trunc(mpf, self) }
   end

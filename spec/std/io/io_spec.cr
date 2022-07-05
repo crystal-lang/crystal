@@ -2,9 +2,7 @@ require "../spec_helper"
 require "../../support/channel"
 require "spec/helpers/iterate"
 
-{% unless flag?(:win32) %}
-  require "socket"
-{% end %}
+require "socket"
 require "big"
 require "base64"
 
@@ -771,7 +769,7 @@ describe IO do
           io.gets_to_end.should eq("\r\nFoo\nBar")
         end
 
-        pending_win32 "gets ascii from socket (#9056)" do
+        it "gets ascii from socket (#9056)" do
           server = TCPServer.new "localhost", 0
           sock = TCPSocket.new "localhost", server.local_address.port
           begin

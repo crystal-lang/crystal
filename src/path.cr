@@ -840,8 +840,8 @@ struct Path
     # Given that `File.join(arg1, arg2)` is the most common usage
     # it's good if we can optimize this case.
 
-    if part.is_a?(Path) && posix? && part.windows?
-      part = part.to_posix.to_s
+    if part.is_a?(Path)
+      part = part.to_kind(@kind).to_s
     else
       part = part.to_s
       part.check_no_null_byte
@@ -926,69 +926,7 @@ struct Path
   #
   # See `join(part)` for details.
   def join(parts : Enumerable) : Path
-    if parts.is_a?(Indexable)
-      return self if parts.empty?
-
-      # If it's just a single part we can avoid one allocation of String.build
-      return join(parts.first) if parts.size == 1
-
-      # If we know how many parts we have we can compute an approximation of
-      # the string's capacity: this path's size plus the parts' size plus the
-      # separators between them
-      capacity = @name.bytesize +
-                 parts.sum(&.to_s.bytesize) +
-                 parts.size
-    else
-      capacity = 64
-    end
-
-    new_name = String.build(capacity) do |str|
-      str << @name
-      last_ended_with_separator = ends_with_separator?
-
-      parts.each_with_index do |part, index|
-        case part
-        when Path
-          # Every POSIX path is also a valid Windows path, so we only need to
-          # convert the other way around (see `#to_windows`, `#to_posix`).
-          part = part.to_posix if posix? && part.windows?
-          part = part.@name
-        else
-          part = part.to_s
-          part.check_no_null_byte
-        end
-
-        if part.empty?
-          if index == parts.size - 1
-            str << separators[0] unless last_ended_with_separator
-            last_ended_with_separator = true
-          else
-            last_ended_with_separator = false
-          end
-
-          next
-        end
-
-        byte_start = 0
-        byte_count = part.bytesize
-
-        case {starts_with_separator?(part), last_ended_with_separator}
-        when {true, true}
-          byte_start += 1
-          byte_count -= 1
-        when {false, false}
-          str << separators[0] unless str.bytesize == 0
-        else
-          # There's one separator, so nothing to do
-        end
-
-        last_ended_with_separator = ends_with_separator?(part)
-
-        str.write part.unsafe_byte_slice(byte_start, byte_count)
-      end
-    end
-
-    new_instance new_name
+    parts.reduce(self) { |path, part| path.join(part) }
   end
 
   # Appends the given *part* to this path and returns the joined path.

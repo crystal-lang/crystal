@@ -284,7 +284,13 @@ class Dir
 
   # Removes the directory at the given path.
   def self.delete(path : Path | String) : Nil
-    Crystal::System::Dir.delete(path.to_s)
+    Crystal::System::Dir.delete(path.to_s, raise_on_missing: true)
+  end
+
+  # Removes the directory at the given path.
+  # Returns `false` if the directory does not exist.
+  def self.delete?(path : Path | String) : Bool
+    Crystal::System::Dir.delete(path.to_s, raise_on_missing: false)
   end
 
   def to_s(io : IO) : Nil

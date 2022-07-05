@@ -119,7 +119,7 @@ class Crystal::Repl::Context
     end
   end
 
-  # This returns the CompiledDef that correspnds to __crystal_raise_overflow
+  # This returns the CompiledDef that corresponds to __crystal_raise_overflow
   getter(crystal_raise_overflow_compiled_def : CompiledDef) do
     call = Call.new(nil, "__crystal_raise_overflow", global: true)
     program.semantic(call)
@@ -154,7 +154,7 @@ class Crystal::Repl::Context
         end
 
         compiler = Compiler.new(self, compiled_def, top_level: false)
-        compiler.compile_def(a_def)
+        compiler.compile_def(compiled_def)
 
         {% if Debug::DECOMPILE %}
           puts "=== #{a_def.name} ==="
@@ -335,7 +335,12 @@ class Crystal::Repl::Context
   def ivar_offset(type : Type, name : String) : Int32
     ivar_index = type.index_of_instance_var(name).not_nil!
 
-    if type.passed_by_value?
+    if type.is_a?(VirtualType) && type.struct? && type.abstract?
+      # If the type is a virtual abstract struct then the type
+      # is actually represented as {type_id, value} so the offset
+      # of the instance var is behind type_id, which is 8 bytes
+      @program.offset_of(type.base_type, ivar_index).to_i32 + 8
+    elsif type.passed_by_value?
       @program.offset_of(type.sizeof_type, ivar_index).to_i32
     else
       @program.instance_offset_of(type.sizeof_type, ivar_index).to_i32
@@ -357,7 +362,11 @@ class Crystal::Repl::Context
   end
 
   getter(loader : Loader) {
-    args = Process.parse_arguments(program.lib_flags)
+    lib_flags = program.lib_flags
+    # Execute and expand `subcommands`.
+    lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` }
+
+    args = Process.parse_arguments(lib_flags)
     # FIXME: Part 1: This is a workaround for initial integration of the interpreter:
     # The loader can't handle the static libgc.a usually shipped with crystal and loading as a shared library conflicts
     # with the compiler's own GC.

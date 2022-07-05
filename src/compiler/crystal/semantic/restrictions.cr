@@ -1054,12 +1054,13 @@ module Crystal
 
       generic_type = generic_type.as(GenericType)
 
-      if other.named_args
-        unless generic_type.is_a?(NamedTupleType)
-          other.raise "can only instantiate NamedTuple with named arguments"
-        end
-        # We match named tuples in NamedTupleInstanceType
+      # We match named tuples in NamedTupleInstanceType
+      if generic_type.is_a?(NamedTupleType)
         return nil
+      end
+
+      if other.named_args
+        other.raise "can only instantiate NamedTuple with named arguments"
       end
 
       # Consider the case of a splat in the type vars
@@ -1204,7 +1205,9 @@ module Crystal
       generic_type = get_generic_type(other, context)
       return super unless generic_type == self.generic_type
 
-      generic_type = generic_type.as(TupleType)
+      if other.named_args
+        other.raise "can only instantiate NamedTuple with named arguments"
+      end
 
       # Consider the case of a splat in the type vars
       splat_given = other.type_vars.any?(Splat)
@@ -1264,9 +1267,13 @@ module Crystal
       generic_type = get_generic_type(other, context)
       return super unless generic_type == self.generic_type
 
-      other_named_args = other.named_args
-      unless other_named_args
+      unless other.type_vars.empty?
         other.raise "can only instantiate NamedTuple with named arguments"
+      end
+
+      # Check for empty named tuples
+      unless other_named_args = other.named_args
+        return self.entries.empty? ? self : nil
       end
 
       # Check that the names are the same
@@ -1589,13 +1596,21 @@ module Crystal
       end
 
       other.type_vars.each_with_index do |other_type_var, i|
-        # If checking the return type, any type matches Nil
-        if i == other.type_vars.size - 1 && nil_type?(other_type_var, context)
-          # Also, all other types matched, so the matching type is this proc type
-          # except that it has a Nil return type
-          new_proc_arg_types = arg_types.dup
-          new_proc_arg_types << program.nil_type
-          return program.proc_of(new_proc_arg_types)
+        # If checking the return type
+        if i == other.type_vars.size - 1
+          # any type matches Nil
+          if nil_type?(other_type_var, context)
+            # Also, all other types matched, so the matching type is this proc type
+            # except that it has a Nil return type
+            new_proc_arg_types = arg_types.dup
+            new_proc_arg_types << program.nil_type
+            return program.proc_of(new_proc_arg_types)
+          end
+
+          if return_type.no_return?
+            # Ok, NoReturn can be "cast" to anything
+            next
+          end
         end
 
         proc_type = arg_types[i]? || return_type
@@ -1632,66 +1647,70 @@ module Crystal
     end
   end
 
-  class NumberAutocastType
+  class AutocastType
+    # Returns true if the AST node associated with `self` denotes a value of the
+    # given *type*.
+    def matches_exactly?(type : Type) : Bool
+      false
+    end
+
+    # Returns true if the AST node associated with `self` denotes a value that
+    # may be interpreted in the given *type*, but is itself not of that type.
+    def matches_partially?(type : Type) : Bool
+      false
+    end
+
     def restrict(other, context)
-      if other.is_a?(IntegerType) || other.is_a?(FloatType)
-        # Check for an exact match, which can't produce an ambiguous call
-        if literal.type == other
+      if other.is_a?(Type)
+        if matches_exactly?(other)
           set_exact_match(other)
-          other
-        elsif !exact_match? && literal.can_autocast_to?(other)
+          return other
+        elsif !exact_match? && matches_partially?(other)
           add_match(other)
-          other
-        else
-          literal.type.restrict(other, context)
+          return other
         end
-      else
-        type = literal.type.restrict(other, context) ||
-               super(other, context)
-        if type == self
-          type = @match || literal.type
-        end
-        type
       end
+
+      literal_type = literal.type?
+      type = literal_type.try(&.restrict(other, context)) || super(other, context)
+      if type == self
+        # if *other* is an AST node (e.g. `Path`) or a complex type (e.g.
+        # `UnionType`), `@match` may be set from recursive calls to `#restrict`,
+        # so we propagate any exact matches found during those calls
+        type = @match || literal_type
+      end
+      type
     end
 
     def compatible_with?(type)
-      literal.type == type || literal.can_autocast_to?(type)
+      matches_exactly?(type) || matches_partially?(type)
+    end
+  end
+
+  class NumberAutocastType
+    def matches_exactly?(type : IntegerType | FloatType) : Bool
+      literal.type == type
+    end
+
+    def matches_partially?(type : IntegerType | FloatType) : Bool
+      literal = self.literal
+
+      if literal.is_a?(NumberLiteral)
+        literal.representable_in?(type)
+      else
+        literal_type = literal.type
+        (literal_type.is_a?(IntegerType) || literal_type.is_a?(FloatType)) && literal_type.subset_of?(type)
+      end
     end
   end
 
   class SymbolAutocastType
-    def restrict(other, context)
-      case other
-      when SymbolType
-        set_exact_match(other)
-        other
-      when EnumType
-        if !exact_match? && other.find_member(literal.value)
-          add_match(other)
-          other
-        else
-          literal.type.restrict(other, context)
-        end
-      else
-        type = literal.type.restrict(other, context) ||
-               super(other, context)
-        if type == self
-          type = @match || literal.type
-        end
-        type
-      end
+    def matches_exactly?(type : SymbolType) : Bool
+      true
     end
 
-    def compatible_with?(type)
-      case type
-      when SymbolType
-        true
-      when EnumType
-        !!(type.find_member(literal.value))
-      else
-        false
-      end
+    def matches_partially?(type : EnumType) : Bool
+      !type.find_member(literal.value).nil?
     end
   end
 end

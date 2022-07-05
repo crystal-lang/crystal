@@ -1502,9 +1502,9 @@ class Hash(K, V)
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather than returning a new one. Returns `self`.
-  def reject!(& : K, V ->) : self
-    each do |key, value|
-      delete(key) if yield(key, value)
+  def reject!(& : K, V -> _)
+    each_entry_with_index do |entry, index|
+      delete_entry_and_update_counts(index) if yield(entry.key, entry.value)
     end
     self
   end
