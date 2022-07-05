@@ -162,7 +162,7 @@ class Crystal::Repl::Interpreter
 
   # compiles the given code to bytecode, then interprets it by assuming the local variables
   # are defined in `meta_vars`.
-  def interpret(node : ASTNode, meta_vars : MetaVars) : Value
+  def interpret(node : ASTNode, meta_vars : MetaVars, scope : Type? = nil) : Value
     compiled_def = @compiled_def
 
     # Declare local variables
@@ -202,10 +202,15 @@ class Crystal::Repl::Interpreter
       end
     end
 
+    finished_hooks = @context.program.finished_hooks.dup
+    @context.program.finished_hooks.clear
+
     # TODO: top_level or not
     compiler =
       if compiled_def
-        Compiler.new(@context, @local_vars, scope: compiled_def.owner, def: compiled_def.def)
+        Compiler.new(@context, @local_vars, scope: scope || compiled_def.owner, def: compiled_def.def)
+      elsif scope
+        Compiler.new(@context, @local_vars, scope: scope)
       else
         Compiler.new(@context, @local_vars)
       end
@@ -231,7 +236,13 @@ class Crystal::Repl::Interpreter
       end
     {% end %}
 
-    interpret(node, node.type)
+    value = interpret(node, node.type)
+
+    finished_hooks.each do |finished_hook|
+      interpret(finished_hook.node, meta_vars, finished_hook.scope.metaclass)
+    end
+
+    value
   end
 
   private def interpret(node : ASTNode, node_type : Type) : Value
@@ -1177,6 +1188,7 @@ class Crystal::Repl::Interpreter
     gatherer.gather
     meta_vars = gatherer.meta_vars
     block_level = local_vars.block_level
+    owner = compiled_def.owner
 
     closure_context =
       if compiled_block
@@ -1194,8 +1206,13 @@ class Crystal::Repl::Interpreter
       vars: meta_vars,
       meta_vars: meta_vars,
       typed_def: a_def)
-    main_visitor.scope = compiled_def.owner
-    main_visitor.path_lookup = compiled_def.owner # TODO: this is probably not right
+
+    # Scope is used for instance types, never for Program
+    unless owner.is_a?(Program)
+      main_visitor.scope = owner
+    end
+
+    main_visitor.path_lookup = owner
 
     interpreter = Interpreter.new(self, compiled_def, local_vars, closure_context, stack_bottom, block_level)
 
