@@ -621,19 +621,6 @@ describe "Semantic: warnings" do
     end
 
     it "informs warnings once per matching overload (2)" do
-      assert_warning <<-CR, "warning in line 7\nWarning: positional parameter 'y' corresponds to parameter 'x' of the overridden method"
-        abstract class Foo
-          abstract def foo(x : Int32)
-        end
-
-        class Bar < Foo
-          def foo(x : Int32 | Char); end
-          def foo(y : Int32 | String); end
-        end
-        CR
-    end
-
-    it "informs warnings once per matching overload (3)" do
       warnings_result(<<-CR).size.should eq(2)
         abstract class Foo
           abstract def foo(x : Int32)
@@ -644,6 +631,102 @@ describe "Semantic: warnings" do
           def foo(z : Int32 | String); end
         end
         CR
+    end
+
+    describe "stops warning after implementation with matching parameters is found (#12150)" do
+      it "exact match" do
+        warnings_result(<<-CR).should be_empty
+          abstract class Foo
+            abstract def foo(x : Int32)
+          end
+
+          class Bar < Foo
+            def foo(x : Int32); end
+            def foo(y : Int32 | String); end
+          end
+          CR
+      end
+
+      it "contravariant restrictions" do
+        warnings_result(<<-CR).should be_empty
+          abstract class Foo
+            abstract def foo(x : Int32, y : Int32)
+          end
+
+          class Bar < Foo
+            def foo(x : Int32 | Char, y : Int); end
+            def foo(y : Int32 | String, z : Int32); end
+          end
+          CR
+      end
+
+      it "different single splats" do
+        warnings_result(<<-CR).should be_empty
+          abstract class Foo
+            abstract def foo(x : Int32, *y)
+          end
+
+          class Bar < Foo
+            def foo(x : Int32, *z); end
+            def foo(y : Int32 | String, *z); end
+          end
+          CR
+      end
+
+      it "reordered named parameters" do
+        warnings_result(<<-CR).should be_empty
+          abstract class Foo
+            abstract def foo(x : Int32, *, y : Int32, z : Int32)
+          end
+
+          class Bar < Foo
+            def foo(x : Int32, *, z : Int32, y : Int32); end
+            def foo(w : Int, *, y : Int32, z : Int32); end
+          end
+          CR
+      end
+    end
+
+    describe "continues warning if implementation with matching parameters is not found (#12150)" do
+      it "not a full implementation" do
+        assert_warning <<-CR, "warning in line 8\nWarning: positional parameter 'y' corresponds to parameter 'x' of the overridden method"
+          abstract class Foo
+            abstract def foo(x : Int32 | String)
+          end
+
+          class Bar < Foo
+            def foo(x : Int32); end
+            def foo(x : String); end
+            def foo(y : Int32 | String); end
+          end
+          CR
+      end
+
+      it "single splat" do
+        assert_warning <<-CR, "warning in line 7\nWarning: positional parameter 'y' corresponds to parameter 'x' of the overridden method"
+          abstract class Foo
+            abstract def foo(x : Int32)
+          end
+
+          class Bar < Foo
+            def foo(x : Int32, *y); end
+            def foo(y : Int32 | String); end
+          end
+          CR
+      end
+
+      it "double splat" do
+        assert_warning <<-CR, "warning in line 7\nWarning: positional parameter 'z' corresponds to parameter 'x' of the overridden method"
+          abstract class Foo
+            abstract def foo(x : Int32, *, y)
+          end
+
+          class Bar < Foo
+            def foo(x : Int32, **opts); end
+            def foo(z : Int32, *, y); end
+          end
+          CR
+      end
     end
   end
 end
