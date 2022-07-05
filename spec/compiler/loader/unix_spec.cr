@@ -90,20 +90,22 @@ describe Crystal::Loader do
       FileUtils.rm_rf(SPEC_CRYSTAL_LOADER_LIB_PATH)
     end
 
-    describe "#load_file?" do
+    describe "#load_file" do
       it "finds function symbol" do
         loader = Crystal::Loader.new([] of String)
-        loader.load_file?(File.join(SPEC_CRYSTAL_LOADER_LIB_PATH, Crystal::Loader.library_filename("foo"))).should be_true
+        lib_handle = loader.load_file(File.join(SPEC_CRYSTAL_LOADER_LIB_PATH, "libfoo#{Crystal::Loader::SHARED_LIBRARY_EXTENSION}"))
+        lib_handle.should_not be_nil
         loader.find_symbol?("foo").should_not be_nil
       ensure
         loader.close_all if loader
       end
     end
 
-    describe "#load_library?" do
+    describe "#load_library" do
       it "library name" do
         loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
-        loader.load_library?("foo").should be_true
+        lib_handle = loader.load_library("foo")
+        lib_handle.should_not be_nil
         loader.find_symbol?("foo").should_not be_nil
       ensure
         loader.close_all if loader
@@ -111,7 +113,8 @@ describe Crystal::Loader do
 
       it "full path" do
         loader = Crystal::Loader.new([] of String)
-        loader.load_library?(File.join(SPEC_CRYSTAL_LOADER_LIB_PATH, Crystal::Loader.library_filename("foo"))).should be_true
+        lib_handle = loader.load_library(File.join(SPEC_CRYSTAL_LOADER_LIB_PATH, "libfoo#{Crystal::Loader::SHARED_LIBRARY_EXTENSION}"))
+        lib_handle.should_not be_nil
         loader.find_symbol?("foo").should_not be_nil
       ensure
         loader.close_all if loader
@@ -122,7 +125,8 @@ describe Crystal::Loader do
         it "does not implicitly find dependencies" do
           build_c_dynlib(compiler_datapath("loader", "bar.c"))
           loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
-          loader.load_library?("bar").should be_true
+          lib_handle = loader.load_library("bar")
+          lib_handle.should_not be_nil
           loader.find_symbol?("bar").should_not be_nil
           loader.find_symbol?("foo").should be_nil
         ensure
@@ -134,11 +138,11 @@ describe Crystal::Loader do
         build_c_dynlib(compiler_datapath("loader", "foo2.c"))
 
         help_loader1 = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
-        help_loader1.load_library?("foo").should be_true
+        help_loader1.load_library("foo")
         foo_address = help_loader1.find_symbol?("foo").should_not be_nil
 
         help_loader2 = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH] of String)
-        help_loader2.load_library?("foo2").should be_true
+        help_loader2.load_library("foo2")
         foo2_address = help_loader2.find_symbol?("foo").should_not be_nil
 
         foo_address.should_not eq foo2_address

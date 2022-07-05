@@ -1,7 +1,6 @@
 #include <stdarg.h>
-#include "../visibility.h"
 
-EXPORT float sum_float(int count, ...) {
+float sum_float(int count, ...) {
   va_list args;
   float total = 0;
 
@@ -14,7 +13,7 @@ EXPORT float sum_float(int count, ...) {
   return total;
 }
 
-EXPORT long sum_int(int count, ...) {
+long sum_int(int count, ...) {
   va_list args;
   long total = 0;
 

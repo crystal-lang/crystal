@@ -1,9 +1,7 @@
-#include "../visibility.h"
-
-LOCAL int a() {
+int a() {
   return 41;
 }
 
-EXPORT int foo() {
+int foo() {
   return 42;
 }

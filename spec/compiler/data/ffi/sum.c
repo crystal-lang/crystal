@@ -1,17 +1,16 @@
 #include <stdarg.h>
-#include "../visibility.h"
 
-EXPORT int answer()
+int answer()
 {
     return 42;
 }
 
-EXPORT int sum(int a, int b, int c)
+int sum(int a, int b, int c)
 {
     return a + b + c;
 }
 
-EXPORT void sum_primitive_types(
+void sum_primitive_types(
     unsigned char a, signed char b,
     unsigned short c, signed short d,
     unsigned long e, signed long f,
@@ -33,13 +32,13 @@ struct test_struct
     int *p;
 };
 
-EXPORT int sum_struct(struct test_struct s)
+int sum_struct(struct test_struct s)
 {
     *s.p = s.b + s.s + s.i + s.j + s.f + s.d + *(s.p);
     return *s.p;
 }
 
-EXPORT int sum_array(int ary[4])
+int sum_array(int ary[4])
 {
     int sum = 0;
     for (int i = 0; i < 4; i++)
@@ -49,7 +48,7 @@ EXPORT int sum_array(int ary[4])
     return sum;
 }
 
-EXPORT int sum_variadic(int count, ...)
+int sum_variadic(int count, ...)
 {
     va_list ap;
     int j;
@@ -65,7 +64,7 @@ EXPORT int sum_variadic(int count, ...)
     return sum;
 }
 
-EXPORT struct test_struct make_struct(char b, short s, int i, long long j, float f, double d, void *p)
+struct test_struct make_struct(char b, short s, int i, long long j, float f, double d, void *p)
 {
     struct test_struct t;
     t.b = b;

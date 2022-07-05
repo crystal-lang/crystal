@@ -1,5 +1,3 @@
-#include "../visibility.h"
-
-EXPORT int foo() {
+int foo() {
   return 12;
 }
