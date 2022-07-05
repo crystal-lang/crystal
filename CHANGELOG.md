@@ -2,6 +2,7 @@
 
 ## Language
 
+- Fix `\{{...}}` syntax in macro inside comments ([#12175](https://github.com/crystal-lang/crystal/pull/12175), thanks @asterite)
 - Let constant tuple indexers work with constants ([#12012](https://github.com/crystal-lang/crystal/pull/12012), thanks @asterite)
 - Refactor restriction mechanism for autocasting ([#12014](https://github.com/crystal-lang/crystal/pull/12014), thanks @HertzDevil)
 - Support unions in `Crystal::Macros::ASTNode#is_a?` ([#12086](https://github.com/crystal-lang/crystal/pull/12086), thanks @HertzDevil)
@@ -22,6 +23,7 @@
 
 ### Concurrency
 
+- Windows: Always use `GC_set_stackbottom` on Windows ([#12186](https://github.com/crystal-lang/crystal/pull/12186), thanks @HertzDevil)
 - Windows: Event loop based on IOCP ([#12149](https://github.com/crystal-lang/crystal/pull/12149), thanks @straight-shoota, @wonderix, @yxhuvud, @HertzDevil)
 - Use enum instead of symbol for `Atomic` primitives ([#11583](https://github.com/crystal-lang/crystal/pull/11583), thanks @HertzDevil)
 - Allow `Enumerable(Channel)` parameter for  `Channel.send_first`, `.receive_first` ([#12101](https://github.com/crystal-lang/crystal/pull/12101), thanks @carlhoerberg)
@@ -101,6 +103,14 @@
 
 ### Interpreter
 
+- Fix instance var offset of virtual struct ([#12189](https://github.com/crystal-lang/crystal/pull/12189), thanks @asterite)
+- Handle explicit return when method type is Nil ([#12179](https://github.com/crystal-lang/crystal/pull/12179), thanks @asterite)
+- `Crystal::Loader`: don't check if file exists, leave that to dlopen ([#12207](https://github.com/crystal-lang/crystal/pull/12207), thanks @asterite)
+- Fix call receiver by value from VirtualType struct ([#12194](https://github.com/crystal-lang/crystal/pull/12194), thanks @asterite)
+- Clear finished hooks after intepreting ([#12174](https://github.com/crystal-lang/crystal/pull/12174), thanks @asterite)
+- Fix FFI bindings for libffi >= 3.4 ([#12192](https://github.com/crystal-lang/crystal/pull/12192), thanks @straight-shoota)
+- Fix `.class` for modules and unions ([#12205](https://github.com/crystal-lang/crystal/pull/12205), thanks @asterite)
+- Implement `Crystal::Loader` for MSVC ([#12140](https://github.com/crystal-lang/crystal/pull/12140), thanks @HertzDevil)
 - Fix: cast from virtual metaclass to union ([#12163](https://github.com/crystal-lang/crystal/pull/12163), thanks @asterite)
 - Allow inspect vars when inside a block ([#12165](https://github.com/crystal-lang/crystal/pull/12165), thanks @asterite)
 - Let pry see closured vars ([#12169](https://github.com/crystal-lang/crystal/pull/12169), thanks @asterite)
