@@ -217,7 +217,7 @@ class Fiber
   # Adds this fiber to the scheduler's runnables queue for the current thread.
   #
   # This signals to the scheduler that the fiber is eligible for being resumed
-  # the next time it has the opportunity to reschedule to an other fiber. There
+  # the next time it has the opportunity to reschedule to another fiber. There
   # are no guarantees when that will happen.
   def enqueue : Nil
     Crystal::Scheduler.enqueue(self)

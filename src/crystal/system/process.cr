@@ -52,10 +52,10 @@ struct Crystal::System::Process
   # def self.fork : ProcessInformation
 
   # Launches a child process with the command + args.
-  # def self.spawn(command_args : Args, env : Env?, clear_env : Bool, input : Stdio, output : Stdio, error : Stdio, chdir : String?) : ProcessInformation
+  # def self.spawn(command_args : Args, env : Env?, clear_env : Bool, input : Stdio, output : Stdio, error : Stdio, chdir : Path | String?) : ProcessInformation
 
   # Replaces the current process with a new one.
-  # def self.replace(command_args : Args, env : Env?, clear_env : Bool, input : Stdio, output : Stdio, error : Stdio, chdir : String?) : NoReturn
+  # def self.replace(command_args : Args, env : Env?, clear_env : Bool, input : Stdio, output : Stdio, error : Stdio, chdir : Path | String?) : NoReturn
 
   # Converts a command and array of arguments to the system-specific representation.
   # def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : Args
@@ -70,7 +70,9 @@ module Crystal::System
   ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true)
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./wasi/process"
+{% elsif flag?(:unix) %}
   require "./unix/process"
 {% elsif flag?(:win32) %}
   require "./win32/process"

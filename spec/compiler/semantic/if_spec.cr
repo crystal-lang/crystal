@@ -13,7 +13,7 @@ describe "Semantic: if" do
     assert_type("if 1 == 1; 1; else; 'a'; end", inject_primitives: true) { union_of(int32, char) }
   end
 
-  it "types and if with and and assignment" do
+  it "types `if` with `&&` and assignment" do
     assert_type("
       struct Number
         def abs

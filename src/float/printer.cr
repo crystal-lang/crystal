@@ -15,7 +15,7 @@ module Float::Printer
   # this directly.
   #
   # *point_range* designates the boundaries of scientific notation which is used
-  # for all values whose decmial point position is outside that range.
+  # for all values whose decimal point position is outside that range.
   def print(v : Float64 | Float32, io : IO, *, point_range = -3..15) : Nil
     d = IEEE.to_uint(v)
 
@@ -85,7 +85,6 @@ module Float::Printer
 
     # add fractional part digits
     io.write_string buffer.to_slice[i, length - i]
-    i = length
 
     # print trailing 0 if whole number or exp notation of power of ten
     if (decimal_exponent >= 0 && !exp_mode) || (exp != point && length == 1)

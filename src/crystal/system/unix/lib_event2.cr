@@ -1,6 +1,9 @@
 require "c/netdb"
 
-{% if flag?(:linux) %}
+# On musl systems, librt is empty. The entire library is already included in libc.
+# On gnu systems, it's been integrated into `glibc` since 2.34 and it's not available
+# as a shared library.
+{% if flag?(:linux) && flag?(:gnu) && !flag?(:interpreted) %}
   @[Link("rt")]
 {% end %}
 

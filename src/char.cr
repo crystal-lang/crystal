@@ -488,7 +488,6 @@ struct Char
   # 'b'.pred # => 'a'
   # 'ぃ'.pred # => 'あ'
   # ```
-  # ```
   #
   # This does not always return `codepoint - 1`. There is a gap in the
   # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
@@ -564,7 +563,7 @@ struct Char
   # '😀'.inspect      # => "'\u{1F600}'"
   # ```
   #
-  # See `#unicode_escape` for the format used to escape charactes without a
+  # See `#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#dump` additionally escapes all non-ASCII characters.
@@ -597,7 +596,7 @@ struct Char
   # '😀'.dump      # => "'\\u{1F600}'"
   # ```
   #
-  # See `#unicode_escape` for the format used to escape charactes without a
+  # See `#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#inspect` only escapes non-printable characters.
@@ -646,7 +645,7 @@ struct Char
   # digits wrapped in curly braces and no leading zeros.
   #
   # ```
-  # 'a'.unicode_escape      # => "\\u00E1"
+  # 'a'.unicode_escape      # => "\\u0061"
   # '\t'.unicode_escape     # => "\\u0009"
   # 'あ'.unicode_escape      # => "\\u3042"
   # '\u0012'.unicode_escape # => "\\u0012"

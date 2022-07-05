@@ -601,6 +601,10 @@ describe "String" do
     it { "tschüß".downcase(Unicode::CaseOptions::Fold).should eq("tschüss") }
     it { "ΣίσυφοςﬁÆ".downcase(Unicode::CaseOptions::Fold).should eq("σίσυφοσfiæ") }
 
+    it "does not touch invalid code units in an otherwise ascii string" do
+      "\xB5!\xE0\xC1\xB5?".downcase.should eq("\xB5!\xE0\xC1\xB5?")
+    end
+
     describe "with IO" do
       it { String.build { |io| "HELLO!".downcase io }.should eq "hello!" }
       it { String.build { |io| "HELLO MAN!".downcase io }.should eq "hello man!" }
@@ -626,6 +630,10 @@ describe "String" do
     it { "ﬀ".upcase.should eq("FF") }
     it { "ňž".upcase.should eq("ŇŽ") } # #7922
 
+    it "does not touch invalid code units in an otherwise ascii string" do
+      "\xB5!\xE0\xC1\xB5?".upcase.should eq("\xB5!\xE0\xC1\xB5?")
+    end
+
     describe "with IO" do
       it { String.build { |io| "hello!".upcase io }.should eq "HELLO!" }
       it { String.build { |io| "hello man!".upcase io }.should eq "HELLO MAN!" }
@@ -646,6 +654,10 @@ describe "String" do
     it { "ﬄİ".capitalize.should eq("FFLi̇") }
     it { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
 
+    it "does not touch invalid code units in an otherwise ascii string" do
+      "\xB5!\xE0\xC1\xB5?".capitalize.should eq("\xB5!\xE0\xC1\xB5?")
+    end
+
     describe "with IO" do
       it { String.build { |io| "HELLO!".capitalize io }.should eq "Hello!" }
       it { String.build { |io| "HELLO MAN!".capitalize io }.should eq "Hello man!" }
@@ -663,6 +675,11 @@ describe "String" do
     it { "  spáçes before".titleize.should eq("  Spáçes Before") }
     it { "testá-se múitô".titleize.should eq("Testá-se Múitô") }
     it { "iO iO".titleize(Unicode::CaseOptions::Turkic).should eq("İo İo") }
+
+    it "does not touch invalid code units in an otherwise ascii string" do
+      "\xB5!\xE0\xC1\xB5?".titleize.should eq("\xB5!\xE0\xC1\xB5?")
+      "a\xA0b".titleize.should eq("A\xA0b")
+    end
 
     describe "with IO" do
       it { String.build { |io| "hEllO tAb\tworld".titleize io }.should eq "Hello Tab\tWorld" }
@@ -829,6 +846,10 @@ describe "String" do
     it { "foobar".rstrip('x').should eq("foobar") }
 
     it { "foobar".rstrip { |c| c == 'a' || c == 'r' }.should eq("foob") }
+
+    it "does not touch invalid code units in an otherwise ascii string" do
+      " \xA0 ".rstrip.should eq(" \xA0")
+    end
   end
 
   describe "lstrip" do
@@ -849,6 +870,10 @@ describe "String" do
     it { "barfoo".lstrip('x').should eq("barfoo") }
 
     it { "barfoo".lstrip { |c| c == 'a' || c == 'b' }.should eq("rfoo") }
+
+    it "does not touch invalid code units in an otherwise ascii string" do
+      " \xA0 ".lstrip.should eq("\xA0 ")
+    end
   end
 
   describe "empty?" do
@@ -900,6 +925,7 @@ describe "String" do
       it { "日本語日本語".index("本語").should eq(1) }
       it { "\xFF\xFFcrystal".index("crystal").should eq(2) }
       it { "\xFD\x9A\xAD\x50NG".index("PNG").should eq(3) }
+      it { "🧲$".index("✅").should be_nil } # #11745
 
       describe "with offset" do
         it { "foobarbaz".index("ba", 4).should eq(6) }
@@ -1217,6 +1243,11 @@ describe "String" do
     it { "foobar".starts_with?('g').should be_false }
     it { "よし".starts_with?('よ').should be_true }
     it { "よし!".starts_with?("よし").should be_true }
+
+    it "treats first char as replacement char if invalid in an otherwise ascii string" do
+      "\xEEfoo".starts_with?('\u{EE}').should be_false
+      "\xEEfoo".starts_with?(Char::REPLACEMENT).should be_true
+    end
   end
 
   describe "ends_with?" do
@@ -1231,6 +1262,11 @@ describe "String" do
     it { "よし".ends_with?('し').should be_true }
     it { "よし".ends_with?('な').should be_false }
     it { "あいう_".ends_with?('_').should be_true }
+
+    it "treats last char as replacement char if invalid in an otherwise ascii string" do
+      "foo\xEE".ends_with?('\u{EE}').should be_false
+      "foo\xEE".ends_with?(Char::REPLACEMENT).should be_true
+    end
   end
 
   describe "=~" do
@@ -1267,16 +1303,23 @@ describe "String" do
     end
   end
 
-  it "reverses string" do
-    "foobar".reverse.should eq("raboof")
-  end
+  describe "#reverse" do
+    it "reverses string" do
+      "foobar".reverse.should eq("raboof")
+    end
 
-  it "reverses utf-8 string" do
-    "こんにちは".reverse.should eq("はちにんこ")
-  end
+    it "reverses utf-8 string" do
+      "こんにちは".reverse.should eq("はちにんこ")
+    end
 
-  it "reverses taking grapheme clusters into account" do
-    "noël".reverse.should eq("lëon")
+    it "reverses taking grapheme clusters into account" do
+      "noël".reverse.should eq("lëon")
+    end
+
+    pending "converts invalid code units to replacement char" do
+      "!\xB0\xC2?".reverse.chars.should eq("?\uFFFD!".chars)
+      "\xC2\xB0\xB0\xC2?".reverse.chars.should eq("?\uFFFD\xC2\xB0".chars)
+    end
   end
 
   describe "sub" do
@@ -1900,6 +1943,10 @@ describe "String" do
     ("%s" % span).should eq(span.to_s)
   end
 
+  it "doesn't stop at null character when doing '%'" do
+    ("1\u{0}%i\u{0}3" % 2).should eq("1\u00002\u00003")
+  end
+
   pending_win32 "does % with floats" do
     ("%f" % 123).should eq("123.000000")
 
@@ -2517,6 +2564,10 @@ describe "String" do
       end
     end
 
+    it "doesn't raise on balanced curly with null byte" do
+      ("change %{this\u{0}}" % {"this\u{0}" => 1}).should eq("change 1")
+    end
+
     it "applies formatting to %<...> placeholder" do
       res = "change %<this>.2f" % {"this" => 23.456}
       res.should eq "change 23.46"
@@ -2582,6 +2633,13 @@ describe "String" do
       "abc".compare("", case_insensitive: true).should eq(1)
       "abcA".compare("abca", case_insensitive: true).should eq(0)
     end
+
+    it "treats invalid code units as replacement char in an otherwise ascii string" do
+      "\xC0".compare("\xE0", case_insensitive: true).should eq(0)
+      "\xE0".compare("\xC0", case_insensitive: true).should eq(0)
+      "\xC0".compare("a", case_insensitive: true).should eq(1)
+      "a".compare("\xC0", case_insensitive: true).should eq(-1)
+    end
   end
 
   it "builds with write_byte" do
@@ -2613,6 +2671,13 @@ describe "String" do
         bytes = "Hello".encode("UCS-2LE")
         bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
       end
+
+      {% unless flag?(:musl) %}
+        it "flushes the shift state (#11992)" do
+          "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
+          "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
+        end
+      {% end %}
 
       it "raises if wrong encoding" do
         expect_raises ArgumentError, "Invalid encoding: FOO" do
@@ -2649,6 +2714,11 @@ describe "String" do
       it "decodes" do
         bytes = "Hello".encode("UTF-16LE")
         String.new(bytes, "UTF-16LE").should eq("Hello")
+      end
+
+      it "decodes with shift state" do
+        String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
+        String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
       end
 
       it "decodes with skip" do
@@ -2718,12 +2788,14 @@ describe "String" do
     string.should be(clone)
   end
 
-  it "allocates buffer of correct size when UInt8 is given to new (#3332)" do
-    String.new(255_u8) do |buffer|
-      LibGC.size(buffer).should be >= 255
-      {255, 0}
+  {% unless flag?(:wasm32) %}
+    it "allocates buffer of correct size when UInt8 is given to new (#3332)" do
+      String.new(255_u8) do |buffer|
+        LibGC.size(buffer).should be >= 255
+        {255, 0}
+      end
     end
-  end
+  {% end %}
 
   it "raises on String.new if returned bytesize is greater than capacity" do
     expect_raises ArgumentError, "Bytesize out of capacity bounds" do
@@ -2859,6 +2931,51 @@ describe "String" do
       it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(4...10).should eq("セキロ：ダイ トゥワイス") }
       it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(19..1) } }
       it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(-19..1) } }
+    end
+  end
+end
+
+class String
+  describe String do
+    it ".char_bytesize_at" do
+      String.char_bytesize_at(Bytes[0x00, 0].to_unsafe).should eq 1
+      String.char_bytesize_at(Bytes[0x7F, 0].to_unsafe).should eq 1
+      String.char_bytesize_at(Bytes[0x80, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xBF, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xC2, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xC3, 0].to_unsafe).should eq 1 # malformed
+
+      String.char_bytesize_at(Bytes[0xC2, 0x7F, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xC2, 0x80, 0].to_unsafe).should eq 2
+      String.char_bytesize_at(Bytes[0xDF, 0xBF, 0].to_unsafe).should eq 2
+      String.char_bytesize_at(Bytes[0xDF, 0xC0, 0].to_unsafe).should eq 1 # malformed
+
+      String.char_bytesize_at(Bytes[0xE0, 0xA0, 0x7F, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xE0, 0x9F, 0x8F, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xE0, 0xA0, 0x80, 0].to_unsafe).should eq 3
+      String.char_bytesize_at(Bytes[0xED, 0x9F, 0xBF, 0].to_unsafe).should eq 3
+      String.char_bytesize_at(Bytes[0xED, 0x9F, 0xC0, 0].to_unsafe).should eq 1 # surrogate
+      String.char_bytesize_at(Bytes[0xED, 0xBF, 0xBF, 0].to_unsafe).should eq 1 # surrogate
+      String.char_bytesize_at(Bytes[0xEE, 0x80, 0x80, 0].to_unsafe).should eq 3
+      String.char_bytesize_at(Bytes[0xEF, 0xBF, 0xBD, 0].to_unsafe).should eq 3
+      String.char_bytesize_at(Bytes[0xEF, 0xBF, 0xBF, 0].to_unsafe).should eq 3
+      String.char_bytesize_at(Bytes[0xEF, 0xBF, 0xC0, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xEF, 0xC0, 0xBF, 0].to_unsafe).should eq 1 # malformed
+
+      String.char_bytesize_at(Bytes[0xF0, 0x90, 0x80, 0x7F, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xF0, 0x90, 0x7F, 0x80, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xF0, 0x8F, 0x80, 0x80, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xF0, 0x90, 0x80, 0x80, 0].to_unsafe).should eq 4
+      String.char_bytesize_at(Bytes[0xF0, 0x9F, 0xBF, 0xBF, 0].to_unsafe).should eq 4
+      String.char_bytesize_at(Bytes[0xF3, 0x90, 0x80, 0x80, 0].to_unsafe).should eq 4
+      String.char_bytesize_at(Bytes[0xF4, 0x8F, 0xBD, 0xBF, 0].to_unsafe).should eq 4
+      String.char_bytesize_at(Bytes[0xF4, 0x8F, 0xBF, 0xBF, 0].to_unsafe).should eq 4
+      String.char_bytesize_at(Bytes[0xF4, 0x8F, 0xBF, 0xC0, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xF4, 0x8F, 0xC0, 0xBF, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xF4, 0x90, 0xBF, 0xBF, 0].to_unsafe).should eq 1 # malformed
+
+      String.char_bytesize_at(Bytes[0xF5, 0].to_unsafe).should eq 1 # out of codepoint range
+      String.char_bytesize_at(Bytes[0xFF, 0].to_unsafe).should eq 1 # out of codepoint range
     end
   end
 end

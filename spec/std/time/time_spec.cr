@@ -238,7 +238,7 @@ describe Time do
 
   it "#clone" do
     time = Time.local
-    (time == time.clone).should be_true
+    time.clone.should eq(time)
   end
 
   describe "#shift" do

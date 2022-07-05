@@ -17,7 +17,7 @@ function ModalDialog(options) {
 
   $("body").append(
     this.modalDom = $("<div>").addClass("modal modal-fixed-footer")
-      .append(this.modalContenDom = $("<div>").addClass("modal-content"))
+      .append(this.modalContentDom = $("<div>").addClass("modal-content"))
       .append($("<div>").addClass("modal-footer")
         .append($("<a>").text("Close")
           .addClass("modal-action modal-close waves-effect waves-green btn-flat")
@@ -39,7 +39,7 @@ function ModalDialog(options) {
 
   this.append = function() {
     for(var i = 0; i < arguments.length; i++) {
-      this.modalContenDom.append(arguments[i]);
+      this.modalContentDom.append(arguments[i]);
     }
     return this;
   }.bind(this);

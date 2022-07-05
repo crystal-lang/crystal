@@ -55,6 +55,8 @@ module Crystal
         interpret_env(node)
       when "flag?", "host_flag?"
         interpret_flag?(node)
+      when "parse_type"
+        interpret_parse_type(node)
       when "puts"
         interpret_puts(node)
       when "p", "pp"
@@ -153,6 +155,29 @@ module Crystal
                   raise "Bug: unexpected macro method #{node.name}"
                 end
         @last = BoolLiteral.new(flags.includes?(flag_name))
+      end
+    end
+
+    def interpret_parse_type(node)
+      interpret_check_args_toplevel do |arg|
+        arg.accept self
+        type_name = case last = @last
+                    when StringLiteral then last.value
+                    else
+                      arg.raise "argument to parse_type must be a StringLiteral, not #{last.class_desc}"
+                    end
+
+        arg.raise "argument to parse_type cannot be an empty value" if type_name.blank?
+
+        begin
+          parser = Crystal::Parser.new type_name
+          parser.next_token
+          type = parser.parse_bare_proc_type
+          parser.check :EOF
+          @last = type
+        rescue ex : Crystal::SyntaxException
+          arg.raise "Invalid type name: #{type_name.inspect}"
+        end
       end
     end
 
@@ -526,18 +551,18 @@ module Crystal
 
     def to_number
       case @kind
-      when :i8  then @value.to_i8
-      when :i16 then @value.to_i16
-      when :i32 then @value.to_i32
-      when :i64 then @value.to_i64
-      when :u8  then @value.to_u8
-      when :u16 then @value.to_u16
-      when :u32 then @value.to_u32
-      when :u64 then @value.to_u64
-      when :f32 then @value.to_f32
-      when :f64 then @value.to_f64
-      else
-        raise "Unknown kind: #{@kind}"
+      in .i8?   then @value.to_i8
+      in .i16?  then @value.to_i16
+      in .i32?  then @value.to_i32
+      in .i64?  then @value.to_i64
+      in .i128? then @value.to_i128
+      in .u8?   then @value.to_u8
+      in .u16?  then @value.to_u16
+      in .u32?  then @value.to_u32
+      in .u64?  then @value.to_u64
+      in .u128? then @value.to_u128
+      in .f32?  then @value.to_f32
+      in .f64?  then @value.to_f64
       end
     end
   end
@@ -1221,6 +1246,8 @@ module Crystal
         interpret_check_args { MacroId.new(@name) }
       when "args"
         interpret_check_args { ArrayLiteral.map(@args, &.itself) }
+      when "global?"
+        interpret_check_args { BoolLiteral.new(@global) }
       else
         super
       end
@@ -1315,6 +1342,16 @@ module Crystal
         interpret_check_args { default_value || Nop.new }
       when "restriction"
         interpret_check_args { restriction || Nop.new }
+      when "annotation"
+        fetch_annotation(self, method, args, named_args, block) do |type|
+          self.annotation(type)
+        end
+      when "annotations"
+        fetch_annotation(self, method, args, named_args, block) do |type|
+          annotations = self.annotations(type)
+          return ArrayLiteral.new if annotations.nil?
+          ArrayLiteral.map(annotations, &.itself)
+        end
       else
         super
       end

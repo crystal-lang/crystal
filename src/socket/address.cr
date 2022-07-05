@@ -244,6 +244,8 @@ class Socket
         addr.__u6_addr.__u6_addr8
       {% elsif flag?(:linux) && flag?(:musl) %}
         addr.__in6_union.__s6_addr
+      {% elsif flag?(:wasm32) %}
+        addr.s6_addr
       {% elsif flag?(:linux) %}
         addr.__in6_u.__u6_addr8
       {% elsif flag?(:win32) %}
@@ -329,19 +331,31 @@ class Socket
     getter path : String
 
     # :nodoc:
-    MAX_PATH_SIZE = LibC::SockaddrUn.new.sun_path.size - 1
+    MAX_PATH_SIZE = {% if flag?(:wasm32) %}
+                      0
+                    {% else %}
+                      LibC::SockaddrUn.new.sun_path.size - 1
+                    {% end %}
 
     def initialize(@path : String)
       if @path.bytesize + 1 > MAX_PATH_SIZE
         raise ArgumentError.new("Path size exceeds the maximum size of #{MAX_PATH_SIZE} bytes")
       end
       @family = Family::UNIX
-      @size = sizeof(LibC::SockaddrUn)
+      @size = {% if flag?(:wasm32) %}
+                1
+              {% else %}
+                sizeof(LibC::SockaddrUn)
+              {% end %}
     end
 
     # Creates an `UNIXSocket` from the internal OS representation.
     def self.from(sockaddr : LibC::Sockaddr*, addrlen) : UNIXAddress
-      new(sockaddr.as(LibC::SockaddrUn*), addrlen.to_i)
+      {% if flag?(:wasm32) %}
+        raise NotImplementedError.new "Socket::UnixAddress.from"
+      {% else %}
+        new(sockaddr.as(LibC::SockaddrUn*), addrlen.to_i)
+      {% end %}
     end
 
     # Parses a `Socket::UNIXAddress` from an URI.
@@ -383,11 +397,13 @@ class Socket
       parse URI.parse(uri)
     end
 
-    protected def initialize(sockaddr : LibC::SockaddrUn*, size)
-      @family = Family::UNIX
-      @path = String.new(sockaddr.value.sun_path.to_unsafe)
-      @size = size || sizeof(LibC::SockaddrUn)
-    end
+    {% unless flag?(:wasm32) %}
+      protected def initialize(sockaddr : LibC::SockaddrUn*, size)
+        @family = Family::UNIX
+        @path = String.new(sockaddr.value.sun_path.to_unsafe)
+        @size = size || sizeof(LibC::SockaddrUn)
+      end
+    {% end %}
 
     def_equals_and_hash path
 
@@ -396,10 +412,14 @@ class Socket
     end
 
     def to_unsafe : LibC::Sockaddr*
-      sockaddr = Pointer(LibC::SockaddrUn).malloc
-      sockaddr.value.sun_family = family
-      sockaddr.value.sun_path.to_unsafe.copy_from(@path.to_unsafe, @path.bytesize + 1)
-      sockaddr.as(LibC::Sockaddr*)
+      {% if flag?(:wasm32) %}
+        raise NotImplementedError.new "Socket::UnixAddress#to_unsafe"
+      {% else %}
+        sockaddr = Pointer(LibC::SockaddrUn).malloc
+        sockaddr.value.sun_family = family
+        sockaddr.value.sun_path.to_unsafe.copy_from(@path.to_unsafe, @path.bytesize + 1)
+        sockaddr.as(LibC::Sockaddr*)
+      {% end %}
     end
   end
 

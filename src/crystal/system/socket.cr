@@ -76,7 +76,9 @@ module Crystal::System::Socket
   # private def system_tcp_keepalive_count=(val : Int)
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./wasi/socket"
+{% elsif flag?(:unix) %}
   require "./unix/socket"
 {% elsif flag?(:win32) %}
   require "./win32/socket"

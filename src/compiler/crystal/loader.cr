@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:unix) %}
+{% skip_file unless flag?(:unix) || flag?(:msvc) %}
 require "option_parser"
 
 # This loader component imitates the behaviour of `ld.so` for linking and loading
@@ -14,6 +14,22 @@ require "option_parser"
 # A Windows implementation is not yet available.
 class Crystal::Loader
   class LoadError < Exception
+    property args : Array(String)?
+    property search_paths : Array(String)?
+
+    def message
+      String.build do |io|
+        io << super
+        if args = @args
+          io << "\nLinker arguments: "
+          args.join(io, " ")
+        end
+        if search_paths = @search_paths
+          io << "\nSearch path: "
+          search_paths.join(io, Process::PATH_DELIMITER)
+        end
+      end
+    end
   end
 
   def self.new(search_paths : Array(String), libnames : Array(String), file_paths : Array(String)) : self
@@ -34,15 +50,23 @@ class Crystal::Loader
     @handles = [] of Handle
   end
 
+  # def self.library_filename(libname : String) : String
+  #   raise NotImplementedError.new("library_filename")
+  # end
+
   # def find_symbol?(name : String) : Handle?
   #   raise NotImplementedError.new("find_symbol?")
   # end
 
-  # def load_file(path : String | ::Path) : Handle
+  # def load_file(path : String | ::Path) : Nil
   #   raise NotImplementedError.new("load_file")
   # end
 
-  # private def open_library(path : String) : Handle
+  # def load_file?(path : String | ::Path) : Bool
+  #   raise NotImplementedError.new("load_file?")
+  # end
+
+  # private def open_library(path : String) : Nil
   #   raise NotImplementedError.new("open_library")
   # end
 
@@ -54,43 +78,21 @@ class Crystal::Loader
     find_symbol?(name) || raise LoadError.new "undefined reference to `#{name}'"
   end
 
-  def load_library(libname : String) : Handle
+  def load_library(libname : String) : Nil
     load_library?(libname) || raise LoadError.new "cannot find -l#{libname}"
   end
 
-  def load_library?(libname : String) : Handle?
+  def load_library?(libname : String) : Bool
     if ::Path::SEPARATORS.any? { |separator| libname.includes?(separator) }
-      return load_file(::Path[libname].expand)
+      return load_file?(::Path[libname].expand)
     end
 
-    find_library_path(libname) do |library_path|
-      handle = load_file?(library_path)
-      return handle if handle
-    end
-
-    nil
-  end
-
-  def load_file?(path : String | ::Path) : Handle?
-    handle = open_library(path.to_s)
-    return nil unless handle
-
-    @handles << handle
-    handle
-  end
-
-  private def find_library_path(libname)
-    each_library_path(libname) do |path|
-      if File.exists?(path)
-        yield path
-      end
-    end
-  end
-
-  private def each_library_path(libname)
     @search_paths.each do |directory|
-      yield "#{directory}/lib#{libname}#{SHARED_LIBRARY_EXTENSION}"
+      library_path = File.join(directory, Loader.library_filename(libname))
+      return true if load_file?(library_path)
     end
+
+    false
   end
 
   def close_all : Nil
@@ -103,4 +105,6 @@ end
 
 {% if flag?(:unix) %}
   require "./loader/unix"
+{% elsif flag?(:msvc) %}
+  require "./loader/msvc"
 {% end %}

@@ -40,46 +40,13 @@ module Crystal
         if number_autocast
           case self_type = self.type?
           when IntegerType
-            case self_type.kind
-            when :i8, :u8, :i16, :u16, :i32, :u32, :i64, :u64
-              true
-            else
-              false
-            end
+            self_type.kind.bytesize <= 64
           when FloatType
-            self_type.kind == :f32
+            self_type.kind.f32?
           end
         else
           false
         end
-      end
-    end
-
-    def can_autocast_to?(other_type)
-      self_type = self.type
-
-      case {self_type, other_type}
-      when {IntegerType, IntegerType}
-        self_min, self_max = self_type.range
-        other_min, other_max = other_type.range
-        other_min <= self_min && self_max <= other_max
-      when {IntegerType, FloatType}
-        # Float32 mantissa has 23 bits,
-        # Float64 mantissa has 52 bits
-        case self_type.kind
-        when :i8, :u8, :i16, :u16
-          # Less than 23 bits, so convertable to Float32 and Float64 without precision loss
-          true
-        when :i32, :u32
-          # Less than 52 bits, so convertable to Float64 without precision loss
-          other_type.kind == :f64
-        else
-          false
-        end
-      when {FloatType, FloatType}
-        self_type.kind == :f32 && other_type.kind == :f64
-      else
-        false
       end
     end
   end
@@ -154,6 +121,8 @@ module Crystal
   end
 
   class Arg
+    include Annotatable
+
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @type : Type? = nil)
       @external_name = external_name || @name
     end
@@ -180,7 +149,7 @@ module Crystal
     property next : Def?
     property special_vars : Set(String)?
     property block_nest = 0
-    getter? raises = false
+    property? raises = false
     property? closure = false
     property? self_closured = false
     property? captured_block = false
@@ -216,17 +185,6 @@ module Crystal
     def add_special_var(name)
       special_vars = @special_vars ||= Set(String).new
       special_vars << name
-    end
-
-    def raises=(value)
-      if value != @raises
-        @raises = value
-        @observers.try &.each do |obs|
-          if obs.is_a?(Call)
-            obs.raises = value
-          end
-        end
-      end
     end
 
     # Returns the minimum and maximum number of arguments that must
@@ -273,8 +231,8 @@ module Crystal
     def free_var?(node : Path)
       free_vars = @free_vars
       return false unless free_vars
-
-      !node.global? && node.names.size == 1 && free_vars.includes?(node.names.first)
+      name = node.single_name?
+      !name.nil? && free_vars.includes?(name)
     end
 
     def free_var?(any)
@@ -594,21 +552,27 @@ module Crystal
     # not when reading it.
     property? no_init_flag = false
 
+    enum Kind
+      Class
+      Instance
+      Global
+    end
+
     def kind
       case name[0]
       when '@'
         if name[1] == '@'
-          :class
+          Kind::Class
         else
-          :instance
+          Kind::Instance
         end
       else
-        :global
+        Kind::Global
       end
     end
 
     def global?
-      kind == :global
+      kind.global?
     end
   end
 
@@ -855,22 +819,6 @@ module Crystal
 
     def clone_without_location
       self
-    end
-  end
-
-  class NumberLiteral
-    def can_autocast_to?(other_type)
-      case {self.type, other_type}
-      when {IntegerType, IntegerType}
-        min, max = other_type.range
-        min <= integer_value <= max
-      when {IntegerType, FloatType}
-        true
-      when {FloatType, FloatType}
-        true
-      else
-        false
-      end
     end
   end
 

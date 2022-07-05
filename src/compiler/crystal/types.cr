@@ -599,11 +599,11 @@ module Crystal
       end
     end
 
-    def lookup_instance_var(name)
+    def lookup_instance_var(name : String)
       lookup_instance_var?(name).not_nil!
     end
 
-    def lookup_instance_var?(name)
+    def lookup_instance_var?(name : String)
       superclass.try(&.lookup_instance_var?(name)) ||
         instance_vars[name]?
     end
@@ -622,6 +622,36 @@ module Crystal
 
     def all_instance_vars_count
       (superclass.try(&.all_instance_vars_count) || 0) + instance_vars.size
+    end
+
+    def lookup_similar_instance_var_name(ivar_name : String)
+      case self
+      when NonGenericModuleType, GenericClassType, GenericModuleType
+        nil
+      else
+        Levenshtein.find(ivar_name) do |finder|
+          self.all_instance_vars.each_key do |name|
+            finder.test(name)
+          end
+        end
+      end
+    end
+
+    def lookup_instance_var(node : InstanceVar | ReadInstanceVar | MetaVar)
+      case self
+      when Program
+        node.raise "can't use instance variables at the top level"
+      when PrimitiveType
+        node.raise "can't use instance variables inside primitive types (at #{self})"
+      when EnumType
+        node.raise "can't use instance variables inside enums (at enum #{self})"
+      when .metaclass?
+        node.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+      when InstanceVarContainer
+        lookup_instance_var?(node.name)
+      else
+        node.raise "BUG: #{self} is not an InstanceVarContainer"
+      end
     end
 
     def add_subclass(subclass)
@@ -1288,9 +1318,9 @@ module Crystal
 
   class IntegerType < PrimitiveType
     getter rank : Int32
-    getter kind : Symbol
+    getter kind : NumberKind
 
-    def initialize(program, namespace, name, superclass, bytes, @rank, @kind)
+    def initialize(program, namespace, name, superclass, bytes, @rank, @kind : NumberKind)
       super(program, namespace, name, superclass, bytes)
     end
 
@@ -1312,28 +1342,53 @@ module Crystal
 
     def range
       case kind
-      when :i8
+      when .i8?
         {Int8::MIN, Int8::MAX}
-      when :i16
+      when .i16?
         {Int16::MIN, Int16::MAX}
-      when :i32
+      when .i32?
         {Int32::MIN, Int32::MAX}
-      when :i64
+      when .i64?
         {Int64::MIN, Int64::MAX}
-      when :i128
+      when .i128?
         {Int128::MIN, Int128::MAX}
-      when :u8
+      when .u8?
         {UInt8::MIN, UInt8::MAX}
-      when :u16
+      when .u16?
         {UInt16::MIN, UInt16::MAX}
-      when :u32
+      when .u32?
         {UInt32::MIN, UInt32::MAX}
-      when :u64
+      when .u64?
         {UInt64::MIN, UInt64::MAX}
-      when :u128
+      when .u128?
         {UInt128::MIN, UInt128::MAX}
       else
         raise "Bug: called 'range' for non-integer literal"
+      end
+    end
+
+    # Returns true if every _finite_ member of this type is also exactly
+    # representable in the *other_type*. Used to define legal autocasts of
+    # number-typed variables
+    def subset_of?(other_type : IntegerType) : Bool
+      self_min, self_max = self.range
+      other_min, other_max = other_type.range
+      other_min <= self_min && self_max <= other_max
+    end
+
+    # :ditto:
+    def subset_of?(other_type : FloatType) : Bool
+      # Float32 mantissa has 23 bits,
+      # Float64 mantissa has 52 bits
+      case kind
+      when .i8?, .u8?, .i16?, .u16?
+        # Less than 23 bits, so convertable to Float32 and Float64 without precision loss
+        true
+      when .i32?, .u32?
+        # Less than 52 bits, so convertable to Float64 without precision loss
+        other_type.kind.f64?
+      else
+        false
       end
     end
   end
@@ -1346,18 +1401,30 @@ module Crystal
     end
 
     def kind
-      @bytes == 4 ? :f32 : :f64
+      @bytes == 4 ? NumberKind::F32 : NumberKind::F64
     end
 
     def range
       case kind
-      when :f32
+      when .f32?
         {Float32::MIN, Float32::MAX}
-      when :f64
+      when .f64?
         {Float64::MIN, Float64::MAX}
       else
         raise "Bug: called 'range' for non-float literal"
       end
+    end
+
+    # Returns true if every _finite_ member of this type is also exactly
+    # representable in the *other_type*. Used to define legal autocasts of
+    # number-typed variables.
+    def subset_of?(other_type : IntegerType) : Bool
+      false
+    end
+
+    # :ditto:
+    def subset_of?(other_type : FloatType) : Bool
+      kind.f32? && other_type.kind.f64?
     end
   end
 

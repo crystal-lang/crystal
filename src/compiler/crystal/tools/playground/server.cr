@@ -59,7 +59,7 @@ module Crystal::Playground
       compiler.color = false
       begin
         Log.info { "Instrumented code compilation started (session=#{@session_key}, tag=#{tag})." }
-        result = compiler.compile sources, output_filename
+        compiler.compile sources, output_filename
       rescue ex
         Log.info { "Instrumented code compilation failed (session=#{@session_key}, tag=#{tag})." }
 
@@ -158,7 +158,7 @@ module Crystal::Playground
       if process = @process
         Log.info { "Code execution killed (session=#{@session_key}, filename=#{@running_process_filename})." }
         @process = nil
-        File.delete @running_process_filename rescue nil
+        File.delete? @running_process_filename
         process.terminate rescue nil
       end
     end

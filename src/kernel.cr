@@ -502,7 +502,7 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% unless flag?(:preview_mt) %}
+{% unless flag?(:preview_mt) || flag?(:wasm32) %}
   class Process
     # :nodoc:
     #
@@ -523,7 +523,7 @@ end
   end
 {% end %}
 
-{% unless flag?(:interpreted) %}
+{% unless flag?(:interpreted) || flag?(:wasm32) %}
   {% unless flag?(:win32) %}
     # Background loop to cleanup unused fiber stacks.
     spawn(name: "Fiber Clean Loop") do
@@ -534,7 +534,6 @@ end
     end
 
     Signal.setup_default_handlers
-    Signal.setup_segfault_handler
   {% end %}
 
   # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
@@ -544,6 +543,7 @@ end
   # - CRYSTAL_LOAD_DEBUG_INFO=1 will load debug info on startup
   # - Other values will load debug info on demand: when the backtrace of the first exception is generated
   Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
+  Exception::CallStack.setup_crash_handler
 
   {% if flag?(:preview_mt) %}
     Crystal::Scheduler.init_workers
