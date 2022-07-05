@@ -57,8 +57,7 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v2
 
-      - name: Make compiler (special case only for wasm32, until next release).
-        if: ${{ matrix.target == 'wasm32-unknown-wasi' }}
+      - name: Build fresh compiler
         run: bin/ci with_build_env make
 
       - name: Run smoke test
