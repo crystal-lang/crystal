@@ -20,11 +20,20 @@
 class Crystal::Loader
   alias Handle = Void*
 
-  SHARED_LIBRARY_EXTENSION = {% if flag?(:darwin) %}
-                               ".dylib"
-                             {% else %}
-                               ".so"
-                             {% end %}
+  class LoadError
+    def self.new_dl_error(message)
+      if char_pointer = LibC.dlerror
+        new(String.build do |io|
+          io << message
+          io << " ("
+          io.write_string(Slice.new(char_pointer, LibC.strlen(char_pointer)))
+          io << ")"
+        end)
+      else
+        new message
+      end
+    end
+  end
 
   # Parses linker arguments in the style of `ld`.
   def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths) : self
@@ -56,6 +65,14 @@ class Crystal::Loader
     end
   end
 
+  def self.library_filename(libname : String) : String
+    {% if flag?(:darwin) %}
+      "lib#{libname}.dylib"
+    {% else %}
+      "lib#{libname}.so"
+    {% end %}
+  end
+
   def find_symbol?(name : String) : Handle?
     @handles.each do |handle|
       address = LibC.dlsym(handle, name)
@@ -63,8 +80,20 @@ class Crystal::Loader
     end
   end
 
-  def load_file(path : String | ::Path) : Handle
-    load_file?(path) || raise LoadError.new String.new(LibC.dlerror)
+  def load_file(path : String | ::Path) : Nil
+    load_file?(path) || raise LoadError.new_dl_error "cannot load #{path}"
+  end
+
+  def load_file?(path : String | ::Path) : Bool
+    handle = open_library(path.to_s)
+    return false unless handle
+
+    @handles << handle
+    true
+  end
+
+  def load_library(libname : String) : Nil
+    load_library?(libname) || raise LoadError.new_dl_error "cannot find -l#{libname}"
   end
 
   private def open_library(path : String)

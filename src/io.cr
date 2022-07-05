@@ -49,7 +49,7 @@ require "c/errno"
 # An `IO` can be set an encoding with the `#set_encoding` method. When this is
 # set, all string operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
 # `printf`) will write in the given encoding, and read from the given encoding.
-# Byte operations (`read`, `write`, `read_byte`, `write_byte`) never do
+# Byte operations (`read`, `write`, `read_byte`, `write_byte`, `getb_to_end`) never do
 # encoding/decoding operations.
 #
 # If an encoding is not set, the default one is UTF-8.
@@ -546,6 +546,7 @@ abstract class IO
   # ```
   # io = IO::Memory.new "hello world"
   # io.gets_to_end # => "hello world"
+  # io.gets_to_end # => ""
   # ```
   def gets_to_end : String
     String.build do |str|
@@ -563,6 +564,19 @@ abstract class IO
         end
       end
     end
+  end
+
+  # Reads the rest of this `IO` data as a writable `Bytes`.
+  #
+  # ```
+  # io = IO::Memory.new Bytes[0, 1, 3, 6, 10, 15]
+  # io.getb_to_end # => Bytes[0, 1, 3, 6, 10, 15]
+  # io.getb_to_end # => Bytes[]
+  # ```
+  def getb_to_end : Bytes
+    io = IO::Memory.new
+    IO.copy(self, io)
+    io.to_slice
   end
 
   # Reads a line from this `IO`. A line is terminated by the `\n` character.

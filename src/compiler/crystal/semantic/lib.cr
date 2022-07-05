@@ -28,10 +28,6 @@ class Crystal::Call
 
     self.unbind_from old_target_defs if old_target_defs
     self.bind_to untyped_defs
-
-    if (parent_visitor = @parent_visitor) && (ptyped_def = parent_visitor.typed_def?) && untyped_defs.try(&.any?(&.raises?))
-      ptyped_def.raises = true
-    end
   end
 
   def check_lib_call_named_args(external)

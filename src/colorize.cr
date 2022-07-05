@@ -37,11 +37,13 @@
 # ```
 # require "colorize"
 #
-# "foo".colorize(0, 255, 255) # => "foo" in aqua
+# "foo".colorize(0, 255, 255)      # => "foo" in aqua
+# "foo".colorize.fore(0, 255, 255) # => "foo" in aqua
 #
 # # This is the same as:
 #
-# "foo".colorize(Colorize::ColorRGB.new(0, 255, 255)) # => "foo" in aqua
+# "foo".colorize(Colorize::ColorRGB.new(0, 255, 255))      # => "foo" in aqua
+# "foo".colorize.fore(Colorize::ColorRGB.new(0, 255, 255)) # => "foo" in aqua
 # ```
 #
 # Or an 8-bit color:
@@ -49,7 +51,8 @@
 # ```
 # require "colorize"
 #
-# "foo".colorize(Colorize::Color256.new(208)) # => "foo" in orange
+# "foo".colorize(Colorize::Color256.new(208))      # => "foo" in orange
+# "foo".colorize.fore(Colorize::Color256.new(208)) # => "foo" in orange
 # ```
 #
 # It's also possible to change the text decoration:
@@ -125,21 +128,23 @@ module Colorize
   # ```
   #
   # NOTE: This is by default disabled on non-TTY devices because they likely don't support ANSI escape codes.
-  # This will also be disabled if the environment variable `TERM` is "dumb".
-  class_property? enabled : Bool = true
+  # This will also be disabled if the environment variable `TERM` is "dumb" or `NO_COLOR` contains any value.
+  class_property? enabled : Bool { !ENV.has_key?("NO_COLOR") }
 
   # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
   # and `STDERR.tty?` are `true` and the tty is not considered a dumb terminal.
   # This is determined by the environment variable called `TERM`.
   # If `TERM=dumb`, color won't be enabled.
+  # If `NO_COLOR` contains any value color won't be enabled conforming to https://no-color.org
   def self.on_tty_only!
-    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb"
+    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
   end
 
   # Resets the color and text decoration of the *io*.
   #
   # ```
-  # with_color.green.surround(io) do
+  # io = IO::Memory.new
+  # Colorize.with.green.surround(io) do
   #   io << "green"
   #   Colorize.reset
   #   io << " default"
@@ -169,8 +174,25 @@ module Colorize::ObjectExtensions
     Colorize::Object.new(self)
   end
 
-  # Turns `self` into a `Colorize::Object` and colors it with a color.
-  def colorize(fore)
+  # Wraps `self` in a `Colorize::Object` and colors it with the given `Color256`
+  # made up from the single *fore* byte.
+  def colorize(fore : UInt8)
+    Colorize::Object.new(self).fore(fore)
+  end
+
+  # Wraps `self` in a `Colorize::Object` and colors it with the given `Color256` made
+  # up from the given *r*ed, *g*reen and *b*lue values.
+  def colorize(r : UInt8, g : UInt8, b : UInt8)
+    Colorize::Object.new(self).fore(r, g, b)
+  end
+
+  # Wraps `self` in a `Colorize::Object` and colors it with the given *fore* `Color`.
+  def colorize(fore : Color)
+    Colorize::Object.new(self).fore(fore)
+  end
+
+  # Wraps `self` in a `Colorize::Object` and colors it with the given *fore* color.
+  def colorize(fore : Symbol)
     Colorize::Object.new(self).fore(fore)
   end
 end
@@ -329,6 +351,16 @@ struct Colorize::Object(T)
     self
   end
 
+  def fore(fore : UInt8)
+    @fore = Color256.new(fore)
+    self
+  end
+
+  def fore(r : UInt8, g : UInt8, b : UInt8)
+    @fore = ColorRGB.new(r, g, b)
+    self
+  end
+
   def back(color : Symbol) : self
     {% for name in COLORS %}
       if color == :{{name.id}}
@@ -341,6 +373,16 @@ struct Colorize::Object(T)
   end
 
   def back(@back : Color) : self
+    self
+  end
+
+  def back(back : UInt8)
+    @back = Color256.new(back)
+    self
+  end
+
+  def back(r : UInt8, g : UInt8, b : UInt8)
+    @back = ColorRGB.new(r, g, b)
     self
   end
 
@@ -381,12 +423,12 @@ struct Colorize::Object(T)
   #
   # io = IO::Memory.new
   #
-  # with_color.red.surround(io) do
+  # Colorize.with.red.surround(io) do
   #   io << "colorful"
-  #   with_color.green.bold.surround(io) do
+  #   Colorize.with.green.bold.surround(io) do
   #     io << " hello "
   #   end
-  #   with_color.blue.surround(io) do
+  #   Colorize.with.blue.surround(io) do
   #     io << "world"
   #   end
   #   io << " string"

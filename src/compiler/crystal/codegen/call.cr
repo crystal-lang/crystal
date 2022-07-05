@@ -126,13 +126,13 @@ class Crystal::CodeGenVisitor
       location = node.location
       end_location = node.end_location
       case default_value.name
-      when :__LINE__
+      when .magic_line?
         call_args << int32(MagicConstant.expand_line(location))
-      when :__END_LINE__
+      when .magic_end_line?
         call_args << int32(MagicConstant.expand_line(end_location))
-      when :__FILE__
+      when .magic_file?
         call_args << build_string_constant(MagicConstant.expand_file(location))
-      when :__DIR__
+      when .magic_dir?
         call_args << build_string_constant(MagicConstant.expand_dir(location))
       else
         default_value.raise "BUG: unknown magic constant: #{default_value.name}"
