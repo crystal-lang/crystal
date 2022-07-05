@@ -89,7 +89,7 @@ class Crystal::Loader
 
     @search_paths.each do |directory|
       library_path = File.join(directory, Loader.library_filename(libname))
-      return true if File.file?(library_path) && load_file?(library_path)
+      return true if load_file?(library_path)
     end
 
     false
