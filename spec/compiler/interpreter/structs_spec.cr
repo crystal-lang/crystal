@@ -238,6 +238,69 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "does call receiver by value from VirtualType abstract struct to concrete struct (#12190)" do
+      interpret(<<-CODE).should eq(42)
+        abstract struct Base
+        end
+
+        struct A < Base
+          def initialize(@x : Int32)
+          end
+
+          def foo
+            @x
+          end
+        end
+
+        struct B < Base
+        end
+
+        v = A.new(42) || B.new
+
+        if v.is_a?(A)
+          v.foo
+        else
+          1
+        end
+      CODE
+    end
+
+    it "does call receiver by value from VirtualType abstract struct to union" do
+      interpret(<<-CODE).should eq(42)
+        abstract struct Base
+        end
+
+        struct A < Base
+          def initialize(@x : Int32)
+          end
+
+          def foo
+            @x
+          end
+        end
+
+        struct B < Base
+          def initialize(@x : Int32)
+          end
+
+          def foo
+            @x
+          end
+        end
+
+        struct C < Base
+        end
+
+        v = A.new(42) || B.new(3)
+
+        if v.is_a?(A | B)
+          v.foo
+        else
+          1
+        end
+      CODE
+    end
+
     it "sets multiple instance vars in virtual abstract struct call (#12187)" do
       interpret(<<-CODE).should eq(6)
         abstract struct Foo

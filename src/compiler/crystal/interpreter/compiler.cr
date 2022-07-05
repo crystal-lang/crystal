@@ -2284,6 +2284,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       pointer_add_constant 8, node: obj
     elsif var_type.is_a?(MixedUnionType) && obj.type.is_a?(MixedUnionType)
       pointerof_local_var_or_closured_var(var, node: obj)
+    elsif var_type.is_a?(VirtualType) && var_type.struct? && var_type.abstract?
+      if obj.type.is_a?(MixedUnionType)
+        # If downcasting to a mix of the subtypes, it's a union type and it
+        # has the same representation as the virtual type
+        pointerof_local_var_or_closured_var(var, node: obj)
+      else
+        # A virtual struct is represented like {type_id, value}, and if we need
+        # to downcast to one of the struct types we need to skip the type_id header,
+        # which is 8 bytes.
+
+        # Get pointer of var
+        pointerof_local_var_or_closured_var(var, node: obj)
+
+        # Add 8 to it, to reach the value
+        pointer_add_constant 8, node: obj
+      end
     else
       obj.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type} (#{var_type.class} to #{obj.type.class})"
     end
