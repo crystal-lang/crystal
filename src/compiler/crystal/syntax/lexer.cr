@@ -2012,6 +2012,12 @@ module Crystal
             break
           when '{'
             break
+          when '\\'
+            if peek_next_char == '{'
+              break
+            else
+              char = next_char
+            end
           when '\0'
             raise "unterminated macro"
           else

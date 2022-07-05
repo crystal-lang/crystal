@@ -1303,7 +1303,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       def_type = merge_block_break_type(def_type, compiled_block.block)
     end
 
-    upcast node, exp_type, def_type
+    # Check if it's an explicit Nil return
+    if def_type.nil_type?
+      # In that case we don't need the return value, so we just pop it
+      pop aligned_sizeof_type(exp_type), node: node
+    else
+      upcast node, exp_type, def_type
+    end
 
     if @compiling_block
       leave_def aligned_sizeof_type(def_type), node: node
