@@ -49,6 +49,35 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "interprets class for module type (#12203)" do
+      interpret(<<-CODE).should eq("A")
+        class Class
+          def name : String
+            {{ @type.name.stringify }}
+          end
+        end
+
+        module M
+        end
+
+        class E
+          def initialize(@base : M)
+          end
+        end
+
+        abstract class P
+          include M
+        end
+
+        class A < P
+        end
+
+        e = E.new(A.new)
+        base = e.@base
+        base.class.name
+        CODE
+    end
+
     it "interprets crystal_type_id for nil" do
       interpret("nil.crystal_type_id").should eq(0)
     end
