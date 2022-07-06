@@ -31,7 +31,6 @@ class Thread
       arglist: self.as(Void*),
       initflag: LibC::UInt.zero,
       thrdaddr: Pointer(LibC::UInt).null)
-
   end
 
   # Used once to initialize the thread object representing the main thread of
