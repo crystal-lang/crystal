@@ -111,6 +111,11 @@ lib LibC
 
   alias WSAOVERLAPPED_COMPLETION_ROUTINE = Proc(DWORD, DWORD, WSAOVERLAPPED*, DWORD, Void)
 
+  struct Linger
+    l_onoff : UShort
+    l_linger : UShort
+  end
+
   fun accept(s : SOCKET, addr : Sockaddr*, addrlen : Int*) : SOCKET
   fun bind(s : SOCKET, addr : Sockaddr*, namelen : Int) : Int
   fun closesocket(s : SOCKET) : Int

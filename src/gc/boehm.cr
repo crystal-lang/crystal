@@ -91,7 +91,7 @@ lib LibGC
 
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
-  {% if flag?(:preview_mt) %}
+  {% if flag?(:preview_mt) || flag?(:win32) %}
     fun get_my_stackbottom = GC_get_my_stackbottom(sb : StackBase*) : ThreadHandle
     fun set_stackbottom = GC_set_stackbottom(th : ThreadHandle, sb : StackBase*) : ThreadHandle
   {% else %}
@@ -272,7 +272,7 @@ module GC
 
   # :nodoc:
   def self.current_thread_stack_bottom
-    {% if flag?(:preview_mt) %}
+    {% if flag?(:preview_mt) || flag?(:win32) %}
       th = LibGC.get_my_stackbottom(out sb)
       {th, sb.mem_base}
     {% else %}
@@ -286,6 +286,16 @@ module GC
       sb = LibGC::StackBase.new
       sb.mem_base = stack_bottom
       LibGC.set_stackbottom(thread_handle, pointerof(sb))
+    end
+  {% elsif flag?(:win32) %}
+    # this is necessary because Boehm GC does _not_ use `GC_stackbottom` on
+    # Windows when pushing all threads' stacks; instead `GC_set_stackbottom`
+    # must be used to associate the new bottom with the running thread
+    def self.set_stackbottom(stack_bottom : Void*)
+      sb = LibGC::StackBase.new
+      sb.mem_base = stack_bottom
+      # `nil` represents the current thread (i.e. the only one)
+      LibGC.set_stackbottom(nil, pointerof(sb))
     end
   {% else %}
     def self.set_stackbottom(stack_bottom : Void*)

@@ -21,6 +21,8 @@ class Crystal::Repl
     # Local variables for the block (they might reference variables outside of the block)
     property! local_vars : LocalVars
 
+    property closure_context : ClosureContext?
+
     def initialize(@block : Block,
                    @args_bytesize : Int32,
                    @locals_bytesize_start : Int32,

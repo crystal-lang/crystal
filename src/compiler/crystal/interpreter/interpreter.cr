@@ -1,6 +1,7 @@
 require "./repl"
 require "../ffi"
 require "colorize"
+require "../../../crystal/syntax_highlighter/colorize"
 
 # The ones that understands Crystal bytecode.
 class Crystal::Repl::Interpreter
@@ -125,10 +126,10 @@ class Crystal::Repl::Interpreter
   end
 
   def self.new(interpreter : Interpreter, compiled_def : CompiledDef, stack : Pointer(UInt8), block_level : Int32)
-    new(interpreter, compiled_def, compiled_def.local_vars, stack, block_level)
+    new(interpreter, compiled_def, compiled_def.local_vars, compiled_def.closure_context, stack, block_level)
   end
 
-  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, local_vars : LocalVars, stack : Pointer(UInt8), @block_level : Int32)
+  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, local_vars : LocalVars, @closure_context : ClosureContext?, stack : Pointer(UInt8), @block_level : Int32)
     @context = interpreter.context
     @local_vars = local_vars.dup
     @argv = interpreter.@argv
@@ -162,7 +163,7 @@ class Crystal::Repl::Interpreter
 
   # compiles the given code to bytecode, then interprets it by assuming the local variables
   # are defined in `meta_vars`.
-  def interpret(node : ASTNode, meta_vars : MetaVars) : Value
+  def interpret(node : ASTNode, meta_vars : MetaVars, scope : Type? = nil) : Value
     compiled_def = @compiled_def
 
     # Declare local variables
@@ -202,14 +203,20 @@ class Crystal::Repl::Interpreter
       end
     end
 
+    finished_hooks = @context.program.finished_hooks.dup
+    @context.program.finished_hooks.clear
+
     # TODO: top_level or not
     compiler =
       if compiled_def
-        Compiler.new(@context, @local_vars, scope: compiled_def.owner, def: compiled_def.def)
+        Compiler.new(@context, @local_vars, scope: scope || compiled_def.owner, def: compiled_def.def)
+      elsif scope
+        Compiler.new(@context, @local_vars, scope: scope)
       else
         Compiler.new(@context, @local_vars)
       end
     compiler.block_level = @block_level
+    compiler.closure_context = @closure_context
     compiler.compile(node)
 
     @instructions = compiler.instructions
@@ -230,7 +237,13 @@ class Crystal::Repl::Interpreter
       end
     {% end %}
 
-    interpret(node, node.type)
+    value = interpret(node, node.type)
+
+    finished_hooks.each do |finished_hook|
+      interpret(finished_hook.node, meta_vars, finished_hook.scope.metaclass)
+    end
+
+    value
   end
 
   private def interpret(node : ASTNode, node_type : Type) : Value
@@ -1176,16 +1189,33 @@ class Crystal::Repl::Interpreter
     gatherer.gather
     meta_vars = gatherer.meta_vars
     block_level = local_vars.block_level
+    owner = compiled_def.owner
+
+    closure_context =
+      if compiled_block
+        compiled_block.closure_context
+      else
+        compiled_def.closure_context
+      end
+
+    closure_context.try &.vars.each do |name, (index, type)|
+      meta_vars[name] = MetaVar.new(name, type)
+    end
 
     main_visitor = MainVisitor.new(
       @context.program,
       vars: meta_vars,
       meta_vars: meta_vars,
       typed_def: a_def)
-    main_visitor.scope = compiled_def.owner
-    main_visitor.path_lookup = compiled_def.owner # TODO: this is probably not right
 
-    interpreter = Interpreter.new(self, compiled_def, local_vars, stack_bottom, block_level)
+    # Scope is used for instance types, never for Program
+    unless owner.is_a?(Program)
+      main_visitor.scope = owner
+    end
+
+    main_visitor.path_lookup = owner
+
+    interpreter = Interpreter.new(self, compiled_def, local_vars, closure_context, stack_bottom, block_level)
 
     while @pry
       # TODO: support multi-line expressions
@@ -1238,6 +1268,9 @@ class Crystal::Repl::Interpreter
 
         value = interpreter.interpret(line_node, meta_vars)
         puts value.to_s
+      rescue ex : EscapingException
+        print "Unhandled exception: "
+        print ex
       rescue ex : Crystal::CodeError
         ex.color = true
         ex.error_trace = true
@@ -1266,17 +1299,34 @@ class Crystal::Repl::Interpreter
 
     puts
 
-    lines =
+    source =
       case filename
       in String
-        File.read_lines(filename)
+        File.read(filename)
       in VirtualFile
-        filename.source.lines.to_a
+        filename.source
       in Nil
         nil
       end
 
-    return unless lines
+    return unless source
+
+    if @context.program.color?
+      begin
+        # We highlight the entire file. We could try highlighting each
+        # individual line but that won't work well for heredocs and other
+        # constructs. Also, highlighting is pretty fast so it won't be noticeable.
+        #
+        # TODO: in reality if the heredoc starts way before the lines we show,
+        # we lose the command that flips the color on. We should probably do
+        # something better here, but for now this is good enough.
+        source = Crystal::SyntaxHighlighter::Colorize.highlight(source)
+      rescue
+        # Ignore highlight errors
+      end
+    end
+
+    lines = source.lines
 
     min_line_number = {location.line_number - 5, 1}.max
     max_line_number = {location.line_number + 5, lines.size}.min
@@ -1297,7 +1347,7 @@ class Crystal::Repl::Interpreter
         print ' '
       end
 
-      print line_number.colorize.blue
+      print @context.program.colorize(line_number).blue
       print ": "
       puts line
     end

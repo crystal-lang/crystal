@@ -39,7 +39,7 @@ function ModalDialog(options) {
 
   this.append = function() {
     for(var i = 0; i < arguments.length; i++) {
-      this.modalContenDom.append(arguments[i]);
+      this.modalContentDom.append(arguments[i]);
     }
     return this;
   }.bind(this);
