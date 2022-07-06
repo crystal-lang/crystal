@@ -7,12 +7,16 @@
 - Refactor restriction mechanism for autocasting ([#12014](https://github.com/crystal-lang/crystal/pull/12014), thanks @HertzDevil)
 - Support unions in `Crystal::Macros::ASTNode#is_a?` ([#12086](https://github.com/crystal-lang/crystal/pull/12086), thanks @HertzDevil)
 - Experimental: restriction augmenter ([#12103](https://github.com/crystal-lang/crystal/pull/12103), [#12136](https://github.com/crystal-lang/crystal/pull/12136), [#12143](https://github.com/crystal-lang/crystal/pull/12143), [#12130](https://github.com/crystal-lang/crystal/pull/12130), thanks @asterite)
-- **(breaking-change)** Warn on positional parameter mismatches for abstract def implementations ([#11915](https://github.com/crystal-lang/crystal/pull/11915), thanks @HertzDevil)
+- **(breaking-change)** Warn on positional parameter mismatches for abstract def implementations ([#11915](https://github.com/crystal-lang/crystal/pull/11915), [#12167](https://github.com/crystal-lang/crystal/pull/12167), thanks @HertzDevil)
+- Method/macro parameter annotation support ([#12044](https://github.com/crystal-lang/crystal/pull/12044), thanks @Blacksmoke16)
 
 ## Standard Library
 
 - Support `Path` for `chdir` arg in `Process` methods ([#11932](https://github.com/crystal-lang/crystal/pull/11932), thanks @caspiano)
 - Add docs for `Enum#value` ([#11947](https://github.com/crystal-lang/crystal/pull/11947), thanks @lbguilherme)
+- Fix positional parameter warnings in specs ([#12158](https://github.com/crystal-lang/crystal/pull/12158), thanks @straight-shoota)
+- Use more specific expectations in specs ([#11951](https://github.com/crystal-lang/crystal/pull/11951), thanks @HertzDevil)
+- Use `contain` expectations in more specs ([#11950](https://github.com/crystal-lang/crystal/pull/11950), thanks @HertzDevil)
 
 ### Collection
 
@@ -46,11 +50,6 @@
 ### Log
 
 - Change `Log` emitters to not emit event when block output is `nil` ([#12000](https://github.com/crystal-lang/crystal/pull/12000), thanks @robacarp)
-
-### Macros
-
-- Method/macro parameter annotation support ([#12044](https://github.com/crystal-lang/crystal/pull/12044), thanks @Blacksmoke16)
-- Document `Crystal::Macros::Self` and `Underscore` ([#12085](https://github.com/crystal-lang/crystal/pull/12085), thanks @HertzDevil)
 
 ### Networking
 
@@ -97,6 +96,10 @@
 - Add support for `NO_COLOR` to `Colorize` ([#11984](https://github.com/crystal-lang/crystal/pull/11984), thanks @didactic-drunk)
 - **(performance)** Use LLVM's new pass manager when possible ([#12116](https://github.com/crystal-lang/crystal/pull/12116), thanks @asterite)
 
+### Macros
+
+- Document `Crystal::Macros::Self` and `Underscore` ([#12085](https://github.com/crystal-lang/crystal/pull/12085), thanks @HertzDevil)
+
 ### Generics
 
 - Allow the empty instantiation `NamedTuple()` ([#12009](https://github.com/crystal-lang/crystal/pull/12009), thanks @HertzDevil)
@@ -127,12 +130,11 @@
 - **(breaking-change)** Disallow empty parameter and argument names ([#11971](https://github.com/crystal-lang/crystal/pull/11971), thanks @HertzDevil)
 - Disallow duplicate free variables in defs ([#11965](https://github.com/crystal-lang/crystal/pull/11965), thanks @HertzDevil)
 - Disallow duplicate `fun` parameter names ([#11967](https://github.com/crystal-lang/crystal/pull/11967), thanks @HertzDevil)
-- Remove redundant check for EOF on Crystal::Parser ([#12067](https://github.com/crystal-lang/crystal/pull/12067), thanks @lbguilherme)
+- Remove redundant check for EOF on `Crystal::Parser` ([#12067](https://github.com/crystal-lang/crystal/pull/12067), thanks @lbguilherme)
 
 ### Semantic
 
-- Compiler: don't check ivar read forms a closure in exp.@x ([#12183](https://github.com/crystal-lang/crystal/pull/12183), thanks @asterite)
-- Skip abstract def warnings after first def with matching parameter names ([#12167](https://github.com/crystal-lang/crystal/pull/12167), thanks @HertzDevil)
+- Compiler: don't check ivar read forms a closure in `exp.@x` ([#12183](https://github.com/crystal-lang/crystal/pull/12183), thanks @asterite)
 - Compiler: raise when allocating an abstract virtual type ([#12141](https://github.com/crystal-lang/crystal/pull/12141), thanks @asterite)
 - Compiler: don't use `with_scope` if Call has a receiver ([#12138](https://github.com/crystal-lang/crystal/pull/12138), thanks @asterite)
 - Compiler: fix proc return type restriction for Proc(...) ([#12129](https://github.com/crystal-lang/crystal/pull/12129), thanks @asterite)
@@ -163,18 +165,15 @@
 ## Other
 
 - [CI] Add build compiler step to smoke tests ([#11814](https://github.com/crystal-lang/crystal/pull/11814), thanks @straight-shoota)
-- Fix positional parameter warnings in specs ([#12158](https://github.com/crystal-lang/crystal/pull/12158), thanks @straight-shoota)
 - Add Makefile for Windows ([#11773](https://github.com/crystal-lang/crystal/pull/11773), thanks @HertzDevil)
 - [CI] Update distribution-scripts ([#12155](https://github.com/crystal-lang/crystal/pull/12155), thanks @straight-shoota)
 - [CI] Add `update-distributions-scripts.sh` ([#12156](https://github.com/crystal-lang/crystal/pull/12156), thanks @straight-shoota)
-- Ignore `pax_global_header` on Windows CI ([#12173](https://github.com/crystal-lang/crystal/pull/12173), thanks @HertzDevil)
-- Windows CI: invalidate cached libraries on new MSVC release ([#12064](https://github.com/crystal-lang/crystal/pull/12064), thanks @HertzDevil)
+- [CI] Ignore `pax_global_header` on Windows CI ([#12173](https://github.com/crystal-lang/crystal/pull/12173), thanks @HertzDevil)
+- [CI] Invalidate cached libraries on new MSVC release ([#12064](https://github.com/crystal-lang/crystal/pull/12064), thanks @HertzDevil)
 - Fix spelling ([#12040](https://github.com/crystal-lang/crystal/pull/12040), thanks @jsoref)
 - Update previous Crystal release - 1.4.1 ([#12029](https://github.com/crystal-lang/crystal/pull/12029), thanks @straight-shoota)
 - [CI] Pin version of ubuntu base image for circleci jobs ([#12030](https://github.com/crystal-lang/crystal/pull/12030), thanks @straight-shoota)
 - Samples: avoid `Symbol` variables ([#11923](https://github.com/crystal-lang/crystal/pull/11923), thanks @HertzDevil)
-- Use more specific expectations in specs ([#11951](https://github.com/crystal-lang/crystal/pull/11951), thanks @HertzDevil)
-- Use `contain` expectations in more specs ([#11950](https://github.com/crystal-lang/crystal/pull/11950), thanks @HertzDevil)
 
 # 1.4.1 (2022-04-22)
 
