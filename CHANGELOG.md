@@ -2,12 +2,12 @@
 
 ## Language
 
+- **(breaking-change)** Warn on positional parameter mismatches for abstract def implementations ([#11915](https://github.com/crystal-lang/crystal/pull/11915), [#12167](https://github.com/crystal-lang/crystal/pull/12167), thanks @HertzDevil)
 - Fix `\{{...}}` syntax in macro inside comments ([#12175](https://github.com/crystal-lang/crystal/pull/12175), thanks @asterite)
 - Let constant tuple indexers work with constants ([#12012](https://github.com/crystal-lang/crystal/pull/12012), thanks @asterite)
 - Refactor restriction mechanism for autocasting ([#12014](https://github.com/crystal-lang/crystal/pull/12014), thanks @HertzDevil)
 - Support unions in `Crystal::Macros::ASTNode#is_a?` ([#12086](https://github.com/crystal-lang/crystal/pull/12086), thanks @HertzDevil)
 - Experimental: restriction augmenter ([#12103](https://github.com/crystal-lang/crystal/pull/12103), [#12136](https://github.com/crystal-lang/crystal/pull/12136), [#12143](https://github.com/crystal-lang/crystal/pull/12143), [#12130](https://github.com/crystal-lang/crystal/pull/12130), thanks @asterite)
-- **(breaking-change)** Warn on positional parameter mismatches for abstract def implementations ([#11915](https://github.com/crystal-lang/crystal/pull/11915), [#12167](https://github.com/crystal-lang/crystal/pull/12167), thanks @HertzDevil)
 - Method/macro parameter annotation support ([#12044](https://github.com/crystal-lang/crystal/pull/12044), thanks @Blacksmoke16)
 
 ## Standard Library
@@ -137,7 +137,7 @@
 - Compiler: don't check ivar read forms a closure in `exp.@x` ([#12183](https://github.com/crystal-lang/crystal/pull/12183), thanks @asterite)
 - Compiler: raise when allocating an abstract virtual type ([#12141](https://github.com/crystal-lang/crystal/pull/12141), thanks @asterite)
 - Compiler: don't use `with_scope` if Call has a receiver ([#12138](https://github.com/crystal-lang/crystal/pull/12138), thanks @asterite)
-- Compiler: fix proc return type restriction for Proc(...) ([#12129](https://github.com/crystal-lang/crystal/pull/12129), thanks @asterite)
+- Compiler: fix proc return type restriction for `Proc(...)` ([#12129](https://github.com/crystal-lang/crystal/pull/12129), thanks @asterite)
 - Compiler: simpler way to compute `Def#raises?` ([#12121](https://github.com/crystal-lang/crystal/pull/12121), thanks @asterite)
 - Remove unused `ASTNode#unbind_all` ([#12120](https://github.com/crystal-lang/crystal/pull/12120), thanks @asterite)
 
