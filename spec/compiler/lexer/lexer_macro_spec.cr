@@ -412,6 +412,36 @@ describe "Lexer macro" do
     token.type.should eq(t :MACRO_END)
   end
 
+  it "lexes macro with curly escape in comment" do
+    lexer = Lexer.new("# good \\{{world}}\nend")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(t :MACRO_LITERAL)
+    token.value.should eq("# good ")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(t :MACRO_LITERAL)
+    token.value.should eq("{")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(t :MACRO_LITERAL)
+    token.value.should eq("{world}}\n")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(t :MACRO_END)
+  end
+
+  it "lexes macro with slash not followed by curly" do
+    lexer = Lexer.new("# good \\a\nend")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(t :MACRO_LITERAL)
+    token.value.should eq("# good \\a\n")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(t :MACRO_END)
+  end
+
   it "lexes macro with if as suffix" do
     lexer = Lexer.new("foo if bar end")
 

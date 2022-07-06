@@ -502,6 +502,14 @@ struct Time::Format
     end
 
     def char(char, *alternatives)
+      unless @reader.has_next?
+        if alternatives.empty?
+          raise "Expected #{char.inspect} but the end of the input was reached"
+        else
+          raise "Expected one of #{char.inspect}, #{alternatives.join(", ", &.inspect)} but reached the input end"
+        end
+      end
+
       unless char?(char, *alternatives)
         raise "Unexpected char: #{current_char.inspect}"
       end

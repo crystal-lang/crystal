@@ -2,9 +2,7 @@ require "../spec_helper"
 require "../../support/channel"
 require "spec/helpers/iterate"
 
-{% unless flag?(:win32) %}
-  require "socket"
-{% end %}
+require "socket"
 require "big"
 require "base64"
 
@@ -275,6 +273,21 @@ describe IO do
       io = SimpleIOMemory.new("foo\nbar\nbaz\n")
       io.gets.should eq("foo")
       io.gets_to_end.should eq("bar\nbaz\n")
+      io.gets_to_end.should eq("")
+    end
+
+    it "reads all remaining content as bytes" do
+      io = SimpleIOMemory.new(Bytes[0, 1, 3, 6, 10, 15])
+      io.getb_to_end.should eq(Bytes[0, 1, 3, 6, 10, 15])
+      io.getb_to_end.should eq(Bytes[])
+      io.rewind
+      bytes = io.getb_to_end
+      bytes.should eq(Bytes[0, 1, 3, 6, 10, 15])
+      bytes.read_only?.should be_false
+
+      io.rewind
+      io.write(Bytes[2, 4, 5])
+      bytes.should eq(Bytes[0, 1, 3, 6, 10, 15])
     end
 
     it "reads char" do
@@ -756,7 +769,7 @@ describe IO do
           io.gets_to_end.should eq("\r\nFoo\nBar")
         end
 
-        pending_win32 "gets ascii from socket (#9056)" do
+        it "gets ascii from socket (#9056)" do
           server = TCPServer.new "localhost", 0
           sock = TCPSocket.new "localhost", server.local_address.port
           begin

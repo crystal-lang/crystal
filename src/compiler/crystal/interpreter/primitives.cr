@@ -82,13 +82,19 @@ class Crystal::Repl::Compiler
       pointer_add(inner_sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
     when "class"
       obj = obj.not_nil!
-      type = obj.type
+      type = obj.type.remove_indirection
 
-      if type.is_a?(VirtualType)
+      case type
+      when VirtualType
         obj.accept self
         return unless @wants_value
 
-        put_metaclass aligned_sizeof_type(type), type.struct?, node: node
+        put_metaclass aligned_sizeof_type(type), false, node: node
+      when UnionType
+        obj.accept self
+        return unless @wants_value
+
+        put_metaclass aligned_sizeof_type(type), true, node: node
       else
         discard_value obj
         return unless @wants_value

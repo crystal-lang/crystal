@@ -3,7 +3,7 @@ require "./repl"
 # This is the list of every VM instruction.
 #
 # An instruction consists of:
-# - a name/opcode: the name is only for debugging purpsoes, in the bytecode
+# - a name/opcode: the name is only for debugging purposes, in the bytecode
 #   (bytes) it's just a number (a byte)
 # - operands: (default: []) values in the bytecode following the opcode.
 #   For example a `pop` instruction has an operand that tells it how many
@@ -1248,11 +1248,11 @@ require "./repl"
         end,
       },
       put_metaclass: {
-        operands:   [size : Int32, struct_type : Bool],
+        operands:   [size : Int32, union_type : Bool],
         push:       true,
         code:       begin
           type_id =
-            if struct_type
+            if union_type
               (stack - size).as(Int32*).value
             else
               (stack - size).as(Void**).value.as(Int32*).value

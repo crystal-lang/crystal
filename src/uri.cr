@@ -316,7 +316,7 @@ class URI
       #
       # host        = IP-literal / IPv4address / reg-name
       #
-      # The valid characters include unreserved, sub-delims, ':', '[', ']' (IPv6-Adress)
+      # The valid characters include unreserved, sub-delims, ':', '[', ']' (IPv6-Address)
       URI.encode(host, io) { |byte| URI.unreserved?(byte) || URI.sub_delim?(byte) || byte.unsafe_chr.in?(':', '[', ']') }
     end
 

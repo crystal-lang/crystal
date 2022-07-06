@@ -128,21 +128,23 @@ module Colorize
   # ```
   #
   # NOTE: This is by default disabled on non-TTY devices because they likely don't support ANSI escape codes.
-  # This will also be disabled if the environment variable `TERM` is "dumb".
-  class_property? enabled : Bool = true
+  # This will also be disabled if the environment variable `TERM` is "dumb" or `NO_COLOR` contains any value.
+  class_property? enabled : Bool { !ENV.has_key?("NO_COLOR") }
 
   # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
   # and `STDERR.tty?` are `true` and the tty is not considered a dumb terminal.
   # This is determined by the environment variable called `TERM`.
   # If `TERM=dumb`, color won't be enabled.
+  # If `NO_COLOR` contains any value color won't be enabled conforming to https://no-color.org
   def self.on_tty_only!
-    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb"
+    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb" && !ENV.has_key?("NO_COLOR")
   end
 
   # Resets the color and text decoration of the *io*.
   #
   # ```
-  # with_color.green.surround(io) do
+  # io = IO::Memory.new
+  # Colorize.with.green.surround(io) do
   #   io << "green"
   #   Colorize.reset
   #   io << " default"
@@ -421,12 +423,12 @@ struct Colorize::Object(T)
   #
   # io = IO::Memory.new
   #
-  # with_color.red.surround(io) do
+  # Colorize.with.red.surround(io) do
   #   io << "colorful"
-  #   with_color.green.bold.surround(io) do
+  #   Colorize.with.green.bold.surround(io) do
   #     io << " hello "
   #   end
-  #   with_color.blue.surround(io) do
+  #   Colorize.with.blue.surround(io) do
   #     io << "world"
   #   end
   #   io << " string"
