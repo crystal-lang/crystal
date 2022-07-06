@@ -103,6 +103,9 @@
 
 ### Interpreter
 
+- Add missing `EXPORT` in interpreter spec ([#12201](https://github.com/crystal-lang/crystal/pull/12201), thanks @HertzDevil)
+- Handle escaping exceptions in pry ([#12211](https://github.com/crystal-lang/crystal/pull/12211), thanks @asterite)
+- Allow some options, and colorize whereami ([#12198](https://github.com/crystal-lang/crystal/pull/12198), thanks @asterite)
 - Fix instance var offset of virtual struct ([#12189](https://github.com/crystal-lang/crystal/pull/12189), thanks @asterite)
 - Handle explicit return when method type is Nil ([#12179](https://github.com/crystal-lang/crystal/pull/12179), thanks @asterite)
 - `Crystal::Loader`: don't check if file exists, leave that to dlopen ([#12207](https://github.com/crystal-lang/crystal/pull/12207), thanks @asterite)
@@ -128,6 +131,8 @@
 
 ### Semantic
 
+- Compiler: don't check ivar read forms a closure in exp.@x ([#12183](https://github.com/crystal-lang/crystal/pull/12183), thanks @asterite)
+- Skip abstract def warnings after first def with matching parameter names ([#12167](https://github.com/crystal-lang/crystal/pull/12167), thanks @HertzDevil)
 - Compiler: raise when allocating an abstract virtual type ([#12141](https://github.com/crystal-lang/crystal/pull/12141), thanks @asterite)
 - Compiler: don't use `with_scope` if Call has a receiver ([#12138](https://github.com/crystal-lang/crystal/pull/12138), thanks @asterite)
 - Compiler: fix proc return type restriction for Proc(...) ([#12129](https://github.com/crystal-lang/crystal/pull/12129), thanks @asterite)
@@ -157,6 +162,7 @@
 
 ## Other
 
+- [CI] Add build compiler step to smoke tests ([#11814](https://github.com/crystal-lang/crystal/pull/11814), thanks @straight-shoota)
 - Fix positional parameter warnings in specs ([#12158](https://github.com/crystal-lang/crystal/pull/12158), thanks @straight-shoota)
 - Add Makefile for Windows ([#11773](https://github.com/crystal-lang/crystal/pull/11773), thanks @HertzDevil)
 - [CI] Update distribution-scripts ([#12155](https://github.com/crystal-lang/crystal/pull/12155), thanks @straight-shoota)
