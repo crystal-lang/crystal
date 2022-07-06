@@ -1268,6 +1268,9 @@ class Crystal::Repl::Interpreter
 
         value = interpreter.interpret(line_node, meta_vars)
         puts value.to_s
+      rescue ex : EscapingException
+        print "Unhandled exception: "
+        print ex
       rescue ex : Crystal::CodeError
         ex.color = true
         ex.error_trace = true
