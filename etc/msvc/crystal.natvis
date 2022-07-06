@@ -23,7 +23,7 @@
             <CustomListItems MaxItemsPerView="5000">
                 <Variable Name="i" InitialValue="first"/>
                 <Loop>
-                    <Break Condition="i >= size + deleted_count"/>
+                    <Break Condition="i &gt;= size + deleted_count"/>
                     <If Condition="entries[i].hash != 0">
                         <Item>entries[i]</Item>
                     </If>
