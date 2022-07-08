@@ -81,20 +81,24 @@ module Crystal::Repl::Multidispatch
 
     # Here we track which args perform autocasting.
     node.args.each_with_index do |arg, i|
-      next unless arg.is_a?(SymbolLiteral)
+      # Autocasting only happens from SymbolLiteral or NumberLiteral
+      next unless arg.is_a?(SymbolLiteral) || arg.is_a?(NumberLiteral)
 
-      non_symbol_type = nil
+      non_matching_type = nil
+
+      # Check if the call arg type is passed to a method arg type
+      # where the types don't match. That's when autocasting happens.
       target_defs.each do |target_def|
         arg_type = target_def.args[i].type
-        unless arg_type.is_a?(SymbolType)
-          non_symbol_type = arg_type
+        if arg_type != arg.type
+          non_matching_type = arg_type
           break
         end
       end
 
-      if non_symbol_type
+      if non_matching_type
         autocast_types ||= {} of Int32 => Type
-        autocast_types[i] = non_symbol_type
+        autocast_types[i] = non_matching_type
       end
     end
 

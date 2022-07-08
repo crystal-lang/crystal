@@ -63,5 +63,23 @@ describe Crystal::Repl::Interpreter do
         (Foo.new || Bar.new).foo(:green).value
         CODE
     end
+
+    it "autocasts int in multidispatch" do
+      interpret(<<-CODE).should eq(1)
+        class Foo
+          def foo(x : Int64)
+            x
+          end
+        end
+
+        class Bar
+          def foo(x : Int64)
+            x
+          end
+        end
+
+        (Foo.new || Bar.new).foo(1)
+        CODE
+    end
   end
 end
