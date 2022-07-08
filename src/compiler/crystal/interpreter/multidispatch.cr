@@ -71,6 +71,33 @@ module Crystal::Repl::Multidispatch
   end
 
   private def self.create_def_uncached(context : Context, node : Call, target_defs : Array(Def))
+    autocast_types = nil
+
+    # The generated multidispatch method should handle autocasted
+    # values. For example if an argument is a symbol but the target
+    # type is an enum, the multidispatch should handle enum values,
+    # not symbols. Autocasting will naturally happen right before
+    # the multidispatch is called.
+
+    # Here we track which args perform autocasting.
+    node.args.each_with_index do |arg, i|
+      next unless arg.is_a?(SymbolLiteral)
+
+      non_symbol_type = nil
+      target_defs.each do |target_def|
+        arg_type = target_def.args[i].type
+        unless arg_type.is_a?(SymbolType)
+          non_symbol_type = arg_type
+          break
+        end
+      end
+
+      if non_symbol_type
+        autocast_types ||= {} of Int32 => Type
+        autocast_types[i] = non_symbol_type
+      end
+    end
+
     obj = node.obj
     obj_type = obj.try(&.type) || node.scope
 
@@ -86,9 +113,9 @@ module Crystal::Repl::Multidispatch
 
     i = 0
 
-    node.args.each do |arg|
+    node.args.each_with_index do |arg, arg_index|
       def_arg = Arg.new("arg#{i}").at(node)
-      def_arg.type = arg.type
+      def_arg.type = autocast_types.try &.[arg_index]? || arg.type
       a_def.args << def_arg
       i += 1
     end
@@ -115,7 +142,10 @@ module Crystal::Repl::Multidispatch
         end
       end
 
-      node.args.each do |arg|
+      node.args.each_with_index do |arg, arg_index|
+        # If the argument was autocasted it will always match in a multidispatch
+        next if autocast_types.try &.[arg_index]?
+
         target_def_arg = target_def.args[i]
         condition = add_arg_condition(arg, target_def_arg, i, condition)
 
@@ -206,8 +236,11 @@ module Crystal::Repl::Multidispatch
 
     i = 0
 
-    node.args.each do |arg|
-      def_args["arg#{i}"] = MetaVar.new("arg#{i}", arg.type)
+    node.args.each_with_index do |arg, arg_index|
+      def_args["arg#{i}"] = MetaVar.new(
+        "arg#{i}",
+        autocast_types.try &.[arg_index]? || arg.type
+      )
       i += 1
     end
 
