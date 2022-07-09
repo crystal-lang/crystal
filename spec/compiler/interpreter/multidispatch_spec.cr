@@ -398,7 +398,7 @@ describe Crystal::Repl::Interpreter do
       interpret(<<-CODE).should eq(42)
         class A
           def then(&callback : Int32 -> Int32)
-            callback.call(10)
+            callback.call(70)
           end
         end
 
@@ -412,14 +412,14 @@ describe Crystal::Repl::Interpreter do
         b = B.new
 
         a_value = (a || b).then do |x|
-          x + 1
+          x + 3
         end
 
         b_value = (b || a).then do |x|
           x + 1
         end
 
-        a_value + b_value
+        a_value - b_value
       CODE
     end
   end
