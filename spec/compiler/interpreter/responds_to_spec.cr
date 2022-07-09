@@ -42,14 +42,10 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "doesn't crash if def body ends up with no type (#12219)" do
-      interpret(<<-CODE)
-        lib LibC
-          fun exit(Int32) : NoReturn
-        end
-
+      interpret(<<-CODE, prelude: "prelude").should eq("1")
         class Base
           def foo
-            LibC.exit(0)
+            raise "OH NO"
           end
         end
 
@@ -67,7 +63,12 @@ describe Crystal::Repl::Interpreter do
           include Moo
         end
 
-        Child.new.foo
+        begin
+          Child.new.foo
+          0
+        rescue
+          1
+        end
         CODE
     end
   end
