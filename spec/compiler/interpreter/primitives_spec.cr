@@ -200,6 +200,13 @@ describe Crystal::Repl::Interpreter do
         x
       CODE
     end
+
+    it "interprets local variable declaration (#12229)" do
+      interpret(<<-CODE).should eq(1)
+      a : Int32 = 1
+      a
+      CODE
+    end
   end
 
   context "conversion" do
