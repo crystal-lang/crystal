@@ -81,5 +81,26 @@ describe Crystal::Repl::Interpreter do
         (Foo.new || Bar.new).foo(1)
         CODE
     end
+
+    it "autocasts symbol to enum in ivar initializer (#12216)" do
+      interpret(<<-CODE).should eq(2)
+          enum Color
+            Red
+            Green
+            Blue
+          end
+
+          class Foo
+            @color : Color = :blue
+
+            def color
+              @color
+            end
+          end
+
+          foo = Foo.new
+          foo.color.value
+        CODE
+    end
   end
 end
