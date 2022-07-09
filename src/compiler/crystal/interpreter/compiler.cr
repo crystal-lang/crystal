@@ -214,17 +214,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       move_arg_to_closure_if_closured(node, node.block_arg.not_nil!.name)
     end
 
-    # Compiled Crystal supports a def's body being nil:
-    # it treats it as NoReturn. Here we do the same thing.
-    # In reality we should fix the compiler to avoid having
-    # nil in types, but that's a larger change and we can do
-    # it later. For now we just handle this specific case in
-    # the interpreter.
-    body_type = node.body.type?
-    unless body_type
-      node.body.type = @context.program.no_return
-    end
-
     node.body.accept self
 
     final_type = node.type
