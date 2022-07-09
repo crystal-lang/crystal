@@ -348,8 +348,8 @@ module Crystal
     assert_syntax_error "def foo(x, *); 1; end", "named parameters must follow bare *"
     it_parses "def foo(x, *, y, &); 1; end", Def.new("foo", args: ["x".arg, "".arg, "y".arg], body: 1.int32, splat_index: 1, block_arg: Arg.new(""), yields: 0)
 
-    assert_syntax_error "def foo(var = 1 : Int32); end", "the syntax for a parameter with a default value V and type T is `arg : T = V`"
-    assert_syntax_error "def foo(var = x : Int); end", "the syntax for a parameter with a default value V and type T is `arg : T = V`"
+    assert_syntax_error "def foo(var = 1 : Int32); end", "the syntax for a parameter with a default value V and type T is `param : T = V`"
+    assert_syntax_error "def foo(var = x : Int); end", "the syntax for a parameter with a default value V and type T is `param : T = V`"
 
     it_parses "def foo(**args)\n1\nend", Def.new("foo", body: 1.int32, double_splat: "args".arg)
     it_parses "def foo(x, **args)\n1\nend", Def.new("foo", body: 1.int32, args: ["x".arg], double_splat: "args".arg)
