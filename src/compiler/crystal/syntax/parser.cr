@@ -1826,17 +1826,17 @@ module Crystal
         return parse_fun_pointer unless @token.keyword?(:do)
       end
 
-      args = [] of Arg
+      params = [] of Arg
       if @token.type.op_lparen?
         next_token_skip_space_or_newline
         while !@token.type.op_rparen?
           param_location = @token.location
-          arg = parse_fun_literal_arg.at(param_location)
-          if args.any? &.name.==(arg.name)
-            raise "duplicated proc literal parameter name: #{arg.name}", param_location
+          param = parse_fun_literal_param.at(param_location)
+          if params.any? &.name.==(param.name)
+            raise "duplicated proc literal parameter name: #{param.name}", param_location
           end
 
-          args << arg
+          params << param
         end
         next_token_skip_space_or_newline
       end
@@ -1852,7 +1852,7 @@ module Crystal
       end
 
       with_lexical_var_scope do
-        push_vars args
+        push_vars params
 
         end_location = nil
 
@@ -1872,7 +1872,7 @@ module Crystal
           unexpected_token
         end
 
-        a_def = Def.new("->", args, body, return_type: return_type).at(location).at_end(end_location)
+        a_def = Def.new("->", params, body, return_type: return_type).at(location).at_end(end_location)
         ProcLiteral.new(a_def).at(location).at_end(end_location)
       end
     end
@@ -1889,7 +1889,7 @@ module Crystal
             next_token_skip_space_or_newline
             msg << ", ..." if @token.type.op_comma?
           else
-            msg << "arg : Type"
+            msg << "param : Type"
           end
           msg << ") { ... }"
         end
@@ -1898,7 +1898,7 @@ module Crystal
       end
     end
 
-    def parse_fun_literal_arg
+    def parse_fun_literal_param
       name = check_ident
       next_token_skip_space_or_newline
 
@@ -3056,7 +3056,7 @@ module Crystal
           next_token_skip_space
         end
 
-        args = [] of Arg
+        params = [] of Arg
 
         found_default_value = false
         found_splat = false
@@ -3070,7 +3070,7 @@ module Crystal
         when .op_lparen?
           next_token_skip_space_or_newline
           while !@token.type.op_rparen?
-            extras = parse_param(args,
+            extras = parse_param(params,
               extra_assigns: nil,
               parentheses: true,
               found_default_value: found_default_value,
@@ -3085,10 +3085,10 @@ module Crystal
               found_splat = true
             end
             if extras.double_splat
-              double_splat = args.pop
+              double_splat = params.pop
               found_double_splat = double_splat
             end
-            if block_arg = extras.block_arg
+            if block_param = extras.block_arg
               check :OP_RPAREN
               break
             elsif @token.type.op_comma?
@@ -3100,8 +3100,8 @@ module Crystal
             index += 1
           end
 
-          if splat_index == args.size - 1 && args.last.name.empty?
-            raise "named parameters must follow bare *", args.last.location.not_nil!
+          if splat_index == params.size - 1 && params.last.name.empty?
+            raise "named parameters must follow bare *", params.last.location.not_nil!
           end
 
           next_token
@@ -3129,7 +3129,7 @@ module Crystal
           body, end_location = parse_macro_body(name_location)
         end
 
-        node = Macro.new name, args, body, block_arg, splat_index, double_splat: double_splat
+        node = Macro.new name, params, body, block_param, splat_index, double_splat: double_splat
         node.name_location = name_location
         node.doc = doc
         node.end_location = end_location
@@ -3504,7 +3504,7 @@ module Crystal
         next_token_skip_space
       end
 
-      args = [] of Arg
+      params = [] of Arg
       extra_assigns = [] of ASTNode
 
       if @token.type.op_period?
@@ -3554,7 +3554,7 @@ module Crystal
       when .op_lparen?
         next_token_skip_space_or_newline
         while !@token.type.op_rparen?
-          extras = parse_param(args,
+          extras = parse_param(params,
             extra_assigns: extra_assigns,
             parentheses: true,
             found_default_value: found_default_value,
@@ -3570,11 +3570,11 @@ module Crystal
             found_splat = true
           end
           if extras.double_splat
-            double_splat = args.pop
+            double_splat = params.pop
             found_double_splat = double_splat
           end
-          if block_arg = extras.block_arg
-            compute_block_arg_yields block_arg
+          if block_param = extras.block_arg
+            compute_block_arg_yields block_param
             check :OP_RPAREN
             found_block = true
             break
@@ -3588,15 +3588,15 @@ module Crystal
         end
 
         if name.ends_with?('=')
-          if name != "[]=" && (args.size > 1 || found_splat || found_double_splat)
+          if name != "[]=" && (params.size > 1 || found_splat || found_double_splat)
             raise "setter method '#{name}' cannot have more than one parameter"
           elsif found_block
             raise "setter method '#{name}' cannot have a block"
           end
         end
 
-        if splat_index == args.size - 1 && args.last.name.empty?
-          raise "named parameters must follow bare *", args.last.location.not_nil!
+        if splat_index == params.size - 1 && params.last.name.empty?
+          raise "named parameters must follow bare *", params.last.location.not_nil!
         end
 
         next_token_skip_space
@@ -3667,7 +3667,7 @@ module Crystal
       @def_nest -= 1
       @doc_enabled = !!@wants_doc
 
-      node = Def.new name, args, body, receiver, block_arg, return_type, @is_macro_def, @yields, is_abstract, splat_index, double_splat: double_splat, free_vars: free_vars
+      node = Def.new name, params, body, receiver, block_param, return_type, @is_macro_def, @yields, is_abstract, splat_index, double_splat: double_splat, free_vars: free_vars
       node.name_location = name_location
       set_visibility node
       node.end_location = end_location
@@ -4341,11 +4341,11 @@ module Crystal
     def parse_block2
       location = @token.location
 
-      block_args = [] of Var
+      block_params = [] of Var
       all_names = [] of String
       extra_assigns = nil
       block_body = nil
-      arg_index = 0
+      param_index = 0
       splat_index = nil
 
       slash_is_regex!
@@ -4357,7 +4357,7 @@ module Crystal
             if splat_index
               raise "splat block parameter already specified", @token
             end
-            splat_index = arg_index
+            splat_index = param_index
             next_token
           end
 
@@ -4367,16 +4367,16 @@ module Crystal
               raise "cannot use '#{@token}' as a block parameter name", @token
             end
 
-            arg_name = @token.value.to_s
+            param_name = @token.value.to_s
 
-            if all_names.includes?(arg_name)
-              raise "duplicated block parameter name: #{arg_name}", @token
+            if all_names.includes?(param_name)
+              raise "duplicated block parameter name: #{param_name}", @token
             end
-            all_names << arg_name
+            all_names << param_name
           when .underscore?
-            arg_name = "_"
+            param_name = "_"
           when .op_lparen?
-            block_arg_name = temp_arg_name
+            block_param_name = temp_arg_name
 
             next_token_skip_space_or_newline
 
@@ -4388,26 +4388,26 @@ module Crystal
                   raise "cannot use '#{@token}' as a block parameter name", @token
                 end
 
-                sub_arg_name = @token.value.to_s
+                sub_param_name = @token.value.to_s
 
-                if all_names.includes?(sub_arg_name)
-                  raise "duplicated block parameter name: #{sub_arg_name}", @token
+                if all_names.includes?(sub_param_name)
+                  raise "duplicated block parameter name: #{sub_param_name}", @token
                 end
-                all_names << sub_arg_name
+                all_names << sub_param_name
               when .underscore?
-                sub_arg_name = "_"
+                sub_param_name = "_"
               else
                 raise "expecting block parameter name, not #{@token.type}", @token
               end
 
-              push_var_name sub_arg_name
+              push_var_name sub_param_name
               location = @token.location
 
-              unless sub_arg_name == "_"
+              unless sub_param_name == "_"
                 extra_assigns ||= [] of ASTNode
                 extra_assigns << Assign.new(
-                  Var.new(sub_arg_name).at(location),
-                  Call.new(Var.new(block_arg_name).at(location), "[]", NumberLiteral.new(i)).at(location)
+                  Var.new(sub_param_name).at(location),
+                  Call.new(Var.new(block_param_name).at(location), "[]", NumberLiteral.new(i)).at(location)
                 ).at(location)
               end
 
@@ -4425,13 +4425,13 @@ module Crystal
               i += 1
             end
 
-            arg_name = block_arg_name
+            param_name = block_param_name
           else
             raise "expecting block parameter name, not #{@token.type}", @token
           end
 
-          var = Var.new(arg_name).at(@token.location)
-          block_args << var
+          var = Var.new(param_name).at(@token.location)
+          block_params << var
 
           next_token_skip_space_or_newline
 
@@ -4445,7 +4445,7 @@ module Crystal
             raise "expecting ',' or '|', not #{@token}", @token
           end
 
-          arg_index += 1
+          param_index += 1
         end
         next_token_skip_statement_end
       else
@@ -4453,7 +4453,7 @@ module Crystal
       end
 
       with_lexical_var_scope do
-        push_vars block_args
+        push_vars block_params
 
         block_body = parse_expressions
 
@@ -4469,7 +4469,7 @@ module Crystal
         end
 
         block_body, end_location = yield block_body
-        Block.new(block_args, block_body, splat_index).at(location).at_end(end_location)
+        Block.new(block_params, block_body, splat_index).at(location).at_end(end_location)
       end
     end
 
@@ -5629,7 +5629,7 @@ module Crystal
           real_name = name
         end
 
-        args = [] of Arg
+        params = [] of Arg
         varargs = false
 
         if @token.type.op_lparen?
@@ -5643,30 +5643,30 @@ module Crystal
             end
 
             if @token.type.ident?
-              arg_name = @token.value.to_s
-              arg_location = @token.location
+              param_name = @token.value.to_s
+              param_location = @token.location
 
               next_token_skip_space_or_newline
               check :OP_COLON
               next_token_skip_space_or_newline
-              arg_type = parse_bare_proc_type
+              param_type = parse_bare_proc_type
               skip_space_or_newline
 
-              args.each do |arg|
-                if arg.name == arg_name
-                  raise "duplicated fun parameter name: #{arg_name}", arg_location
+              params.each do |param|
+                if param.name == param_name
+                  raise "duplicated fun parameter name: #{param_name}", param_location
                 end
               end
 
-              args << Arg.new(arg_name, nil, arg_type).at(arg_location)
+              params << Arg.new(param_name, nil, param_type).at(param_location)
 
-              push_var_name arg_name if require_body
+              push_var_name param_name if require_body
             else
               if top_level
                 raise "top-level fun parameter must have a name", @token
               end
-              arg_type = parse_union_type
-              args << Arg.new("", nil, arg_type).at(arg_type.location)
+              param_type = parse_union_type
+              params << Arg.new("", nil, param_type).at(param_type.location)
             end
 
             if @token.type.op_comma?
@@ -5705,7 +5705,7 @@ module Crystal
           end_location = token_end_location
         end
 
-        fun_def = FunDef.new name, args, return_type, varargs, body, real_name
+        fun_def = FunDef.new name, params, return_type, varargs, body, real_name
         fun_def.doc = doc
         fun_def.at(location).at_end(end_location)
       end
