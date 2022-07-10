@@ -1285,8 +1285,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Return)
-    exp = node.exp
+    compile_return(node, node.exp)
+  end
 
+  def compile_return(node, exp)
     exp_type =
       if exp
         request_value(exp)
@@ -2751,7 +2753,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       upcast node, exp_type, compiling_block.block.type
       leave aligned_sizeof_type(compiling_block.block.type), node: node
     else
-      node.raise "BUG: next without target while or block"
+      if @def.try(&.captured_block?)
+        # next inside a proc or captured block is like doing return
+        compile_return(node, exp)
+      else
+        node.raise "BUG: next without target while, block, and not inside captured_block"
+      end
     end
 
     false
