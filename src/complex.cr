@@ -140,8 +140,40 @@ struct Complex
     @real * @real + @imag * @imag
   end
 
+  # Returns the complex sign of `self`.
+  #
+  # If `self` is non-zero, the returned value has the same phase as `self` and
+  # absolute value `1.0`. If `self` is zero, returns `self`.
+  #
+  # The returned value's real and imaginary components always have the same
+  # signs as the respective components of `self`.
+  #
+  # ```
+  # require "complex"
+  #
+  # Complex.new(7, -24).sign        # => (0.28 - 0.96i)
+  # Complex.new(1.0 / 0.0, 24).sign # => (1.0 + 0.0i)
+  # Complex.new(-0.0, +0.0).sign    # => (-0.0 + 0.0i)
+  # ```
   def sign : Complex
-    self / abs
+    return self if zero?
+
+    if @real.nan? || @imag.nan?
+      return Complex.new(Math.copysign(Float64::NAN, @real), Math.copysign(Float64::NAN, @imag))
+    end
+
+    return Complex.new(@real.sign, @imag) if @real != 0 && @imag == 0
+    return Complex.new(@real, @imag.sign) if @real == 0 && @imag != 0
+
+    case {real_inf_sign = @real.infinite?, imag_inf_sign = @imag.infinite?}
+    when {Nil, Int32}
+      Complex.new(Math.copysign(0.0, @real), imag_inf_sign)
+    when {Int32, Nil}
+      Complex.new(real_inf_sign, Math.copysign(0.0, @imag))
+    else
+      # if both components are infinite, the phase angle is also well-defined
+      phase.cis
+    end
   end
 
   # Returns the phase of `self`.

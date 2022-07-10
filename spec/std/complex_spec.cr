@@ -2,6 +2,20 @@ require "spec"
 require "complex"
 require "../support/number"
 
+# exact equality, including component signs
+private def assert_complex_eq(z1 : Complex, z2 : Complex, *, file = __FILE__, line = __LINE__)
+  z1.should eq(z2), file: file, line: line
+  Math.copysign(1.0, z1.real).should eq(Math.copysign(1.0, z2.real)), file: file, line: line
+  Math.copysign(1.0, z1.imag).should eq(Math.copysign(1.0, z2.imag)), file: file, line: line
+end
+
+private def assert_complex_nan(z : Complex, sign : Complex, *, file = __FILE__, line = __LINE__)
+  z.real.nan?.should be_true, file: file, line: line
+  z.imag.nan?.should be_true, file: file, line: line
+  Math.copysign(1.0, z.real).should eq(sign.real), file: file, line: line
+  Math.copysign(1.0, z.imag).should eq(sign.imag), file: file, line: line
+end
+
 describe "Complex" do
   describe "as numbers" do
     it_can_convert_between([Complex], [Complex])
@@ -67,8 +81,83 @@ describe "Complex" do
     Complex.new(-1.1, 9).abs2.should eq(82.21)
   end
 
-  it "sign" do
-    Complex.new(-1.4, 7.7).sign.should eq(Complex.new(-0.17888543819998315, 0.9838699100999074))
+  describe "sign" do
+    it "finite, non-zero" do
+      Complex.new(-1.4, 7.7).sign.should be_close(Complex.new(-0.17888543819998315, 0.9838699100999074), 1e-14)
+      Complex.new(1.4, -7.7).sign.should be_close(Complex.new(0.17888543819998315, -0.9838699100999074), 1e-14)
+    end
+
+    it "complex zero" do
+      assert_complex_eq Complex.new(+0.0, +0.0).sign, Complex.new(+0.0, +0.0)
+      assert_complex_eq Complex.new(+0.0, -0.0).sign, Complex.new(+0.0, -0.0)
+      assert_complex_eq Complex.new(-0.0, +0.0).sign, Complex.new(-0.0, +0.0)
+      assert_complex_eq Complex.new(-0.0, -0.0).sign, Complex.new(-0.0, -0.0)
+    end
+
+    it "real zero" do
+      assert_complex_eq Complex.new(+0.0, +2.0).sign, Complex.new(+0.0, +1.0)
+      assert_complex_eq Complex.new(+0.0, -2.0).sign, Complex.new(+0.0, -1.0)
+      assert_complex_eq Complex.new(-0.0, +2.0).sign, Complex.new(-0.0, +1.0)
+      assert_complex_eq Complex.new(-0.0, -2.0).sign, Complex.new(-0.0, -1.0)
+    end
+
+    it "imaginary zero" do
+      assert_complex_eq Complex.new(+2.0, +0.0).sign, Complex.new(+1.0, +0.0)
+      assert_complex_eq Complex.new(+2.0, -0.0).sign, Complex.new(+1.0, -0.0)
+      assert_complex_eq Complex.new(-2.0, +0.0).sign, Complex.new(-1.0, +0.0)
+      assert_complex_eq Complex.new(-2.0, -0.0).sign, Complex.new(-1.0, -0.0)
+    end
+
+    it "infinity" do
+      inf = Float64::INFINITY
+
+      # 1st quadrant
+      assert_complex_eq Complex.new(+inf, +0.0).sign, Complex.new(+1.0, +0.0)
+      assert_complex_eq Complex.new(+inf, +1.0).sign, Complex.new(+1.0, +0.0)
+      assert_complex_eq Complex.new(+1.0, +inf).sign, Complex.new(+0.0, +1.0)
+      assert_complex_eq Complex.new(+0.0, +inf).sign, Complex.new(+0.0, +1.0)
+
+      # 2nd quadrant
+      assert_complex_eq Complex.new(-0.0, +inf).sign, Complex.new(-0.0, +1.0)
+      assert_complex_eq Complex.new(-1.0, +inf).sign, Complex.new(-0.0, +1.0)
+      assert_complex_eq Complex.new(-inf, +1.0).sign, Complex.new(-1.0, +0.0)
+      assert_complex_eq Complex.new(-inf, +0.0).sign, Complex.new(-1.0, +0.0)
+
+      # 3rd quadrant
+      assert_complex_eq Complex.new(-inf, -0.0).sign, Complex.new(-1.0, -0.0)
+      assert_complex_eq Complex.new(-inf, -1.0).sign, Complex.new(-1.0, -0.0)
+      assert_complex_eq Complex.new(-1.0, -inf).sign, Complex.new(-0.0, -1.0)
+      assert_complex_eq Complex.new(-0.0, -inf).sign, Complex.new(-0.0, -1.0)
+
+      # 4th quadrant
+      assert_complex_eq Complex.new(+0.0, -inf).sign, Complex.new(+0.0, -1.0)
+      assert_complex_eq Complex.new(+1.0, -inf).sign, Complex.new(+0.0, -1.0)
+      assert_complex_eq Complex.new(+inf, -1.0).sign, Complex.new(+1.0, -0.0)
+      assert_complex_eq Complex.new(+inf, -0.0).sign, Complex.new(+1.0, -0.0)
+
+      # diagonals
+      sqr = Math.sqrt(0.5)
+      Complex.new(+inf, +inf).sign.should be_close(Complex.new(+sqr, +sqr), 1e-14)
+      Complex.new(-inf, +inf).sign.should be_close(Complex.new(-sqr, +sqr), 1e-14)
+      Complex.new(-inf, -inf).sign.should be_close(Complex.new(-sqr, -sqr), 1e-14)
+      Complex.new(+inf, -inf).sign.should be_close(Complex.new(+sqr, -sqr), 1e-14)
+    end
+
+    it "not-a-number" do
+      pos_nan = Float64::NAN
+      neg_nan = Math.copysign(Float64::NAN, -1)
+
+      assert_complex_nan Complex.new(pos_nan, +0.0).sign, Complex.new(1, 1)
+      assert_complex_nan Complex.new(pos_nan, +1.0).sign, Complex.new(1, 1)
+      assert_complex_nan Complex.new(pos_nan, Float64::INFINITY).sign, Complex.new(1, 1)
+      assert_complex_nan Complex.new(-0.0, pos_nan).sign, Complex.new(-1, 1)
+      assert_complex_nan Complex.new(-1.0, pos_nan).sign, Complex.new(-1, 1)
+      assert_complex_nan Complex.new(-Float64::INFINITY, pos_nan).sign, Complex.new(-1, 1)
+      assert_complex_nan Complex.new(pos_nan, pos_nan).sign, Complex.new(1, 1)
+      assert_complex_nan Complex.new(pos_nan, neg_nan).sign, Complex.new(1, -1)
+      assert_complex_nan Complex.new(neg_nan, pos_nan).sign, Complex.new(-1, 1)
+      assert_complex_nan Complex.new(neg_nan, neg_nan).sign, Complex.new(-1, -1)
+    end
   end
 
   it "phase" do
