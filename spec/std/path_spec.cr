@@ -105,6 +105,9 @@ describe Path do
       Path.new(Path.new("foo"), "bar").should eq Path.new("foo", "bar")
       Path.new(Path.posix("foo"), "bar").should eq Path.new("foo", "bar")
       Path.new(Path.windows("foo"), "bar").should eq Path.new("foo", "bar")
+
+      # implicit conversion:
+      Path.windows("foo", Path.posix("bar\\baz")).should eq Path.windows("foo").join(Path.posix("bar\\baz").to_windows)
     end
   end
 
@@ -592,6 +595,7 @@ describe Path do
     it_joins_path("c:\\", "Program Files", "c:\\/Program Files", "c:\\Program Files")
 
     it_joins_path("foo", Path.windows("bar\\baz"), "foo/bar/baz", "foo\\bar\\baz")
+    it_joins_path("foo", Path.posix("bar\\baz"), "foo/bar\\baz", "foo\\bar\uF05Cbaz")
     it_joins_path("foo", Path.posix("bar/baz"), "foo/bar/baz", "foo\\bar/baz")
   end
 

@@ -144,6 +144,16 @@ describe "Array" do
     it "does with even larger arrays" do
       ((1..64).to_a - (1..32).to_a).should eq((33..64).to_a)
     end
+
+    context "with different types" do
+      it "small array" do
+        ([1, 2, 3, 'c'] - [2, nil]).should eq [1, 3, 'c']
+      end
+
+      it "big array" do
+        (((1..64).to_a + ['c']) - ((2..63).to_a + [nil])).should eq [1, 64, 'c']
+      end
+    end
   end
 
   it "does *" do

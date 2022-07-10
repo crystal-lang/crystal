@@ -19,32 +19,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   # and possibly parent context, to reach the variable with the given type.
   record ClosuredVar, indexes : Array(Int32), type : Type
 
-  # Information about closured variables in a given context.
-  class ClosureContext
-    # The variables closures in the closest context
-    getter vars : Hash(String, {Int32, Type})
-
-    # The self type, if captured, otherwise nil.
-    # Comes after vars, at the end of the closure (this closure never has a parent closure).
-    getter self_type : Type?
-
-    # The parent context, if any, where more closured variables might be reached
-    getter parent : ClosureContext?
-
-    # The total bytesize to hold all the immediate closure data.
-    # If this context has a parent context, it will come at the end of this
-    # data and occupy 8 bytes.
-    getter bytesize : Int32
-
-    def initialize(
-      @vars : Hash(String, {Int32, Type}),
-      @self_type : Type?,
-      @parent : ClosureContext?,
-      @bytesize : Int32
-    )
-    end
-  end
-
   # What's `self` when compiling a node.
   private getter scope : Type
 
@@ -103,7 +77,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   # ```
   property block_level = 0
 
-  @closure_context : ClosureContext?
+  property closure_context : ClosureContext?
 
   def initialize(
     @context : Context,
@@ -170,7 +144,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   # Compile bytecode instructions for the given block, where `target_def`
   # is the method that will yield to the block.
-  def compile_block(node : Block, target_def : Def, parent_closure_context : ClosureContext?) : Nil
+  def compile_block(compiled_block : CompiledBlock, target_def : Def, parent_closure_context : ClosureContext?) : Nil
+    node = compiled_block.block
+
     prepare_closure_context(node, parent_closure_context: parent_closure_context)
 
     @compiling_block = CompilingBlock.new(node, target_def)
@@ -211,10 +187,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # Use a dummy node so that pry stops at `end`
     leave aligned_sizeof_type(node), node: Nop.new.at(node.end_location)
+
+    # Keep a copy of the local vars before exiting the block.
+    # Otherwise we'll lose reference to the block's vars (useful for pry)
+    compiled_block.local_vars = @local_vars.dup
+    compiled_block.closure_context = @closure_context
   end
 
   # Compile bytecode instructions for the given method.
-  def compile_def(node : Def, parent_closure_context : ClosureContext? = nil, closure_owner = node) : Nil
+  def compile_def(compiled_def : CompiledDef, parent_closure_context : ClosureContext? = nil, closure_owner = compiled_def.def) : Nil
+    node = compiled_def.def
+
     prepare_closure_context(
       node,
       closure_owner: closure_owner,
@@ -259,6 +242,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # Use a dummy node so that pry stops at `end`
     leave aligned_sizeof_type(final_type), node: Nop.new.at(node.end_location)
+
+    compiled_def.closure_context = @closure_context
 
     @instructions
   end
@@ -1116,7 +1101,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       declare_local_vars(fake_def, compiled_def.local_vars, @context.program)
 
       compiler = Compiler.new(@context, compiled_def, top_level: true)
-      compiler.compile_def(fake_def, closure_owner: @context.program)
+      compiler.compile_def(compiled_def, closure_owner: @context.program)
 
       {% if Debug::DECOMPILE %}
         puts "=== #{def_name} ==="
@@ -1318,7 +1303,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       def_type = merge_block_break_type(def_type, compiled_block.block)
     end
 
-    upcast node, exp_type, def_type
+    # Check if it's an explicit Nil return
+    if def_type.nil_type?
+      # In that case we don't need the return value, so we just pop it
+      pop aligned_sizeof_type(exp_type), node: node
+    else
+      upcast node, exp_type, def_type
+    end
 
     if @compiling_block
       leave_def aligned_sizeof_type(def_type), node: node
@@ -1396,7 +1387,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     declare_local_vars(fake_def, compiled_def.local_vars)
 
     compiler = Compiler.new(@context, compiled_def, top_level: true)
-    compiler.compile_def(fake_def)
+    compiler.compile_def(compiled_def)
 
     {% if Debug::DECOMPILE %}
       puts "=== #{const} ==="
@@ -1976,7 +1967,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiler.compiled_block = compiled_block
 
     begin
-      compiler.compile_def(target_def)
+      compiler.compile_def(compiled_def)
     rescue ex : Crystal::CodeError
       node.raise "compiling #{node}", inner: ex
     end
@@ -2030,7 +2021,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
 
-      compiled_block = CompiledBlock.new(block, @local_vars,
+      compiled_block = CompiledBlock.new(block,
         args_bytesize: block_args_bytesize,
         locals_bytesize_start: bytesize_before_block_local_vars,
         locals_bytesize_end: bytesize_after_block_local_vars,
@@ -2045,7 +2036,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiler.compiled_block = @compiled_block
       compiler.block_level = block_level + 1
 
-      compiler.compile_block(block, target_def, @closure_context)
+      compiler.compile_block(compiled_block, target_def, @closure_context)
+
+      # Keep a copy of the local vars before exiting the block.
+      # Otherwise we'll lose reference to the block's vars (useful for pry)
+      compiled_block.local_vars = @local_vars.dup
 
       {% if Debug::DECOMPILE %}
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
@@ -2289,6 +2284,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       pointer_add_constant 8, node: obj
     elsif var_type.is_a?(MixedUnionType) && obj.type.is_a?(MixedUnionType)
       pointerof_local_var_or_closured_var(var, node: obj)
+    elsif var_type.is_a?(VirtualType) && var_type.struct? && var_type.abstract?
+      if obj.type.is_a?(MixedUnionType)
+        # If downcasting to a mix of the subtypes, it's a union type and it
+        # has the same representation as the virtual type
+        pointerof_local_var_or_closured_var(var, node: obj)
+      else
+        # A virtual struct is represented like {type_id, value}, and if we need
+        # to downcast to one of the struct types we need to skip the type_id header,
+        # which is 8 bytes.
+
+        # Get pointer of var
+        pointerof_local_var_or_closured_var(var, node: obj)
+
+        # Add 8 to it, to reach the value
+        pointer_add_constant 8, node: obj
+      end
     else
       obj.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type} (#{var_type.class} to #{obj.type.class})"
     end
@@ -2553,7 +2564,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         index, type = local_var.index, local_var.type
         pointerof_var(index, node: node)
       in ClosuredVar
-        node.raise "BUG: missing interpter out closured var"
+        node.raise "BUG: missing interpreter out closured var"
       end
     when InstanceVar
       compile_pointerof_ivar(node, exp.name)
@@ -2651,7 +2662,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     compiler = Compiler.new(@context, compiled_def, top_level: false)
     begin
-      compiler.compile_def(target_def, is_closure ? @closure_context : nil)
+      compiler.compile_def(compiled_def, is_closure ? @closure_context : nil)
     rescue ex : Crystal::CodeError
       node.raise "compiling #{node}", inner: ex
     end
@@ -2949,7 +2960,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     declare_local_vars(file_module, compiled_def.local_vars)
 
     compiler = Compiler.new(@context, compiled_def, top_level: true)
-    compiler.compile_def(a_def, closure_owner: file_module)
+    compiler.compile_def(compiled_def, closure_owner: file_module)
 
     @context.add_gc_reference(compiled_def)
 
