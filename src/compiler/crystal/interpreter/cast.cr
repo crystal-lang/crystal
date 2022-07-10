@@ -65,7 +65,7 @@ class Crystal::Repl::Compiler
     case from
     when TupleInstanceType, NamedTupleInstanceType
       unless to.union_types.any? &.==(from)
-        compatible_type = to.union_types.find { |ut| from.implements?(ut) }.not_nil!
+        compatible_type = to.union_types.find! { |ut| from.implements?(ut) }
         upcast(node, from, compatible_type)
         return upcast(node, compatible_type, to)
       end
