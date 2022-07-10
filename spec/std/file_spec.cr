@@ -462,7 +462,7 @@ describe "File" do
     end
 
     it "gets for pipe" do
-      IO.pipe do |r, w|
+      IO::FileDescriptor.pipe do |r, w|
         r.info.type.should eq(File::Type::Pipe)
         w.info.type.should eq(File::Type::Pipe)
       end
