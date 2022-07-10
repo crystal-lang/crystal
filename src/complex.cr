@@ -166,16 +166,15 @@ struct Complex
     return Complex.new(@real, @imag.sign) if @real == 0 && @imag != 0
 
     case {real_inf_sign = @real.infinite?, imag_inf_sign = @imag.infinite?}
-    when {Nil, Int32}
+    in {Nil, Nil}
+      phase.cis
+    in {Nil, Int32}
       Complex.new(Math.copysign(0.0, @real), imag_inf_sign)
-    when {Int32, Nil}
+    in {Int32, Nil}
       Complex.new(real_inf_sign, Math.copysign(0.0, @imag))
-    when {Int32, Int32}
+    in {Int32, Int32}
       sqrt = Math.sqrt(0.5)
       Complex.new(sqrt * real_inf_sign, sqrt * imag_inf_sign)
-    else
-      # if both components are infinite, the phase angle is also well-defined
-      phase.cis
     end
   end
 
