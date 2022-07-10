@@ -170,6 +170,9 @@ struct Complex
       Complex.new(Math.copysign(0.0, @real), imag_inf_sign)
     when {Int32, Nil}
       Complex.new(real_inf_sign, Math.copysign(0.0, @imag))
+    when {Int32, Int32}
+      sqrt = Math.sqrt(0.5)
+      Complex.new(sqrt * real_inf_sign, sqrt * imag_inf_sign)
     else
       # if both components are infinite, the phase angle is also well-defined
       phase.cis
