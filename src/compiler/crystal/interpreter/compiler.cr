@@ -2780,24 +2780,48 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     pop_obj = nil
 
-    # Check if tuple unpacking is needed
+    # Check if tuple unpacking is needed.
+    # This happens when a yield has only one expression that's a tuple
+    # type, and the block arguments are more than one.
+    #
+    # For example:
+    #
+    #     def foo
+    #       yield({1, 2})
+    #     end
+    #
+    #     foo do |x, y|
+    #     end
+    #
+    # If the first yield argument is a splat then no tuple unpacking is done:
+    #
+    #     def foo
+    #       yield(*{1, 2}) # no unpacking
+    #     end
+    #
+    #     foo do |x, y|
+    #     end
+    #
+    # Unless... the tuple has a single tuple inside it:
+    #
+    #     def foo
+    #       yield(*{ {1, 2} }) # unpacking 1 into x and 2 into y
+    #     end
+    #
+    #     foo do |x, y|
+    #     end
+    #
+    # That's all expressed in the logic below:
     if node.exps.size == 1 &&
        (exp = node.exps.first) &&
        (tuple_type = exp.type).is_a?(TupleInstanceType) &&
+       (!exp.is_a?(Splat) || (
+         exp.is_a?(Splat) &&
+         tuple_type.tuple_types.size == 1 &&
+         tuple_type.tuple_types.first.is_a?(TupleInstanceType)
+       )) &&
        block.args.size > 1
-      # If the first expression is a splat, and tuple unpacking is performed
-      # on the block side, then it must be that the splatted expression
-      # is a tuple which has another tuple as its only element. That's
-      # the tuple that's being splatted.
-      #
-      # That's something like:
-      #
-      #     def foo
-      #       yield *{ {1, 2} }
-      #     end
-      #
-      #     foo do |x, y|
-      #     end
+      # This is the case of `yield(*{ {1, 2}})`
       if exp.is_a?(Splat)
         exp = exp.exp
         tuple_type = tuple_type.tuple_types.first.as(TupleInstanceType)
