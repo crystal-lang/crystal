@@ -102,17 +102,24 @@ class Crystal::Repl::Compiler
         put_type type, node: node
       end
     when "object_crystal_type_id"
-      type =
+      type = obj.try(&.type) || scope
+
+      unless @wants_value
+        discard_value obj if obj
+        return
+      end
+
+      if type.is_a?(VirtualMetaclassType)
+        # For a virtual metaclass type, the value is already an int
+        # that's exactly the crystal_type_id, so there's nothing else to do.
         if obj
-          discard_value(obj)
-          obj.type
+          obj.accept self
         else
-          scope
+          put_self node: node
         end
-
-      return unless @wants_value
-
-      put_i32 type_id(type), node: node
+      else
+        put_i32 type_id(type), node: node
+      end
     when "class_crystal_instance_type_id"
       type =
         if obj
