@@ -1803,114 +1803,36 @@ require "./repl"
         push:       true,
         code:       LibIntrinsics.read_cycle_counter,
       },
-      interpreter_intrinsics_popcount8: {
-        pop_values: [value : Int8],
-        push:       true,
-        code:       LibIntrinsics.popcount8(value),
-      },
-      interpreter_intrinsics_popcount16: {
-        pop_values: [value : Int16],
-        push:       true,
-        code:       LibIntrinsics.popcount16(value),
-      },
-      interpreter_intrinsics_popcount32: {
-        pop_values: [value : Int32],
-        push:       true,
-        code:       LibIntrinsics.popcount32(value),
-      },
-      interpreter_intrinsics_popcount64: {
-        pop_values: [value : Int64],
-        push:       true,
-        code:       LibIntrinsics.popcount64(value),
-      },
-      interpreter_intrinsics_countleading8: {
-        pop_values: [src : Int8, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.countleading8(src, true)
-          else
-            LibIntrinsics.countleading8(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_countleading16: {
-        pop_values: [src : Int16, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.countleading16(src, true)
-          else
-            LibIntrinsics.countleading16(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_countleading32: {
-        pop_values: [src : Int32, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.countleading32(src, true)
-          else
-            LibIntrinsics.countleading32(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_countleading64: {
-        pop_values: [src : Int64, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.countleading64(src, true)
-          else
-            LibIntrinsics.countleading64(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_counttrailing8: {
-        pop_values: [src : Int8, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.counttrailing8(src, true)
-          else
-            LibIntrinsics.counttrailing8(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_counttrailing16: {
-        pop_values: [src : Int16, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.counttrailing16(src, true)
-          else
-            LibIntrinsics.counttrailing16(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_counttrailing32: {
-        pop_values: [src : Int32, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.counttrailing32(src, true)
-          else
-            LibIntrinsics.counttrailing32(src, false)
-          end
-        end,
-      },
-      interpreter_intrinsics_counttrailing64: {
-        pop_values: [src : Int64, zero_is_undef : Bool],
-        push:       true,
-        code:       begin
-          if zero_is_undef
-            LibIntrinsics.counttrailing64(src, true)
-          else
-            LibIntrinsics.counttrailing64(src, false)
-          end
-        end,
-      },
+
+      {% for n in [8, 16, 32, 64, 128] %}
+        interpreter_intrinsics_popcount{{n}}: {
+          pop_values: [value : Int{{n}}],
+          push:       true,
+          code:       LibIntrinsics.popcount{{n}}(value),
+        },
+        interpreter_intrinsics_countleading{{n}}: {
+          pop_values: [src : Int{{n}}, zero_is_undef : Bool],
+          push:       true,
+          code:       begin
+            if zero_is_undef
+              LibIntrinsics.countleading{{n}}(src, true)
+            else
+              LibIntrinsics.countleading{{n}}(src, false)
+            end
+          end,
+        },
+        interpreter_intrinsics_counttrailing{{n}}: {
+          pop_values: [src : Int{{n}}, zero_is_undef : Bool],
+          push:       true,
+          code:       begin
+            if zero_is_undef
+              LibIntrinsics.counttrailing{{n}}(src, true)
+            else
+              LibIntrinsics.counttrailing{{n}}(src, false)
+            end
+          end,
+        },
+      {% end %}
       libm_ceil_f32: {
         pop_values: [value : Float32],
         push:       true,
