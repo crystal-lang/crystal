@@ -1743,7 +1743,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         if obj
           request_value(obj)
         else
-          put_self(node: node)
+          if scope.struct? && scope.passed_by_value?
+            # Load the entire self from the pointer that's self
+            get_self_ivar 0, aligned_sizeof_type(scope), node: node
+          else
+            put_self(node: node)
+          end
         end
       end
 
