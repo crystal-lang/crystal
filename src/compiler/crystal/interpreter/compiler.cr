@@ -214,6 +214,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       move_arg_to_closure_if_closured(node, node.block_arg.not_nil!.name)
     end
 
+    # Compiled Crystal supports a def's body being nil:
+    # it treats it as NoReturn. Here we do the same thing.
+    # In reality we should fix the compiler to avoid having
+    # nil in types, but that's a larger change and we can do
+    # it later. For now we just handle this specific case in
+    # the interpreter.
     node.body.accept self
 
     final_type = node.type
@@ -1185,6 +1191,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : If)
+    # Compiled Crystal supports an if's type being nil:
+    # it treats it as NoReturn. Here we do the same thing.
+    # In reality we should fix the compiler to avoid having
+    # nil in types, but that's a larger change and we can do
+    # it later. For now we just handle this specific case in
+    # the interpreter.
+    node.type = @context.program.no_return unless node.type?
+
     if node.truthy?
       discard_value(node.cond)
       node.then.accept self
@@ -1285,8 +1299,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Return)
-    exp = node.exp
+    compile_return(node, node.exp)
+  end
 
+  def compile_return(node, exp)
     exp_type =
       if exp
         request_value(exp)
@@ -2751,7 +2767,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       upcast node, exp_type, compiling_block.block.type
       leave aligned_sizeof_type(compiling_block.block.type), node: node
     else
-      node.raise "BUG: next without target while or block"
+      if @def.try(&.captured_block?)
+        # next inside a proc or captured block is like doing return
+        compile_return(node, exp)
+      else
+        node.raise "BUG: next without target while, block, and not inside captured_block"
+      end
     end
 
     false

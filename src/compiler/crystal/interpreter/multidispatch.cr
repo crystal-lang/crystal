@@ -125,9 +125,16 @@ module Crystal::Repl::Multidispatch
     end
 
     block = node.block
+    block_fun_literal = block.try(&.fun_literal)
+
     if block
-      a_def.block_arg = Arg.new("")
-      a_def.yields = block.args.size
+      if block_fun_literal
+        a_def.block_arg = Arg.new("block_arg")
+        a_def.uses_block_arg = true
+      else
+        a_def.block_arg = Arg.new("")
+        a_def.yields = block.args.size
+      end
     end
 
     main_if = nil
@@ -178,14 +185,25 @@ module Crystal::Repl::Multidispatch
       call.type = target_def.type
 
       if block
-        block_args = block.args.map_with_index { |arg, i| Var.new("barg#{i}", arg.type) }
-        yield_args = Array(ASTNode).new(block_args.size)
-        block.args.each_index { |i| yield_args << Var.new("barg#{i}", block.args[i].type) }
+        if block_fun_literal
+          # We aren't going to recaluclate calls, so we prepare the call
+          # in a way that the interpreter is going to call it by passing
+          # the block_arg as an extra argument.
+          inner_block = Block.new
+          inner_block_fun_literal = Var.new("block_arg")
+          inner_block_fun_literal.type = block_fun_literal.type
+          inner_block.fun_literal = inner_block_fun_literal
+          call.block = inner_block
+        else
+          block_args = block.args.map_with_index { |arg, i| Var.new("barg#{i}", arg.type) }
+          yield_args = Array(ASTNode).new(block_args.size)
+          block.args.each_index { |i| yield_args << Var.new("barg#{i}", block.args[i].type) }
 
-        inner_block = Block.new(block_args, body: Yield.new(yield_args))
-        blocks << inner_block
+          inner_block = Block.new(block_args, body: Yield.new(yield_args))
+          blocks << inner_block
 
-        call.block = inner_block
+          call.block = inner_block
+        end
       end
 
       exps = call
@@ -246,6 +264,10 @@ module Crystal::Repl::Multidispatch
         autocast_types.try &.[arg_index]? || arg.type
       )
       i += 1
+    end
+
+    if block_fun_literal
+      def_args["block_arg"] = MetaVar.new("block_arg", block_fun_literal.type)
     end
 
     visitor = MultidispatchMainVisitor.new(context.program, def_args, a_def)
