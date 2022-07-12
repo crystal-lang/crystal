@@ -1,6 +1,7 @@
 require "./repl"
 require "../ffi"
 require "colorize"
+require "../../../crystal/syntax_highlighter/colorize"
 
 # The ones that understands Crystal bytecode.
 class Crystal::Repl::Interpreter
@@ -1278,6 +1279,9 @@ class Crystal::Repl::Interpreter
         local_vars = interpreter.local_vars
 
         puts value.to_s
+      rescue ex : EscapingException
+        print "Unhandled exception: "
+        print ex
       rescue ex : Crystal::CodeError
         ex.color = true
         ex.error_trace = true
@@ -1306,17 +1310,34 @@ class Crystal::Repl::Interpreter
 
     puts
 
-    lines =
+    source =
       case filename
       in String
-        File.read_lines(filename)
+        File.read(filename)
       in VirtualFile
-        filename.source.lines.to_a
+        filename.source
       in Nil
         nil
       end
 
-    return unless lines
+    return unless source
+
+    if @context.program.color?
+      begin
+        # We highlight the entire file. We could try highlighting each
+        # individual line but that won't work well for heredocs and other
+        # constructs. Also, highlighting is pretty fast so it won't be noticeable.
+        #
+        # TODO: in reality if the heredoc starts way before the lines we show,
+        # we lose the command that flips the color on. We should probably do
+        # something better here, but for now this is good enough.
+        source = Crystal::SyntaxHighlighter::Colorize.highlight(source)
+      rescue
+        # Ignore highlight errors
+      end
+    end
+
+    lines = source.lines
 
     min_line_number = {location.line_number - 5, 1}.max
     max_line_number = {location.line_number + 5, lines.size}.min
@@ -1337,7 +1358,7 @@ class Crystal::Repl::Interpreter
         print ' '
       end
 
-      print line_number.colorize.blue
+      print @context.program.colorize(line_number).blue
       print ": "
       puts line
     end

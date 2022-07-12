@@ -40,5 +40,36 @@ describe Crystal::Repl::Interpreter do
         a
         CODE
     end
+
+    it "doesn't crash if def body ends up with no type (#12219)" do
+      interpret(<<-CODE, prelude: "prelude").should eq("1")
+        class Base
+          def foo
+            raise "OH NO"
+          end
+        end
+
+        module Moo
+          def foo
+            if self.responds_to?(:bar)
+              self.bar
+            else
+              super &- 0_i64
+            end
+          end
+        end
+
+        class Child < Base
+          include Moo
+        end
+
+        begin
+          Child.new.foo
+          0
+        rescue
+          1
+        end
+        CODE
+    end
   end
 end
