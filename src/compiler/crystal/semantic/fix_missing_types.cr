@@ -63,11 +63,6 @@ class Crystal::FixMissingTypes < Crystal::Visitor
     false
   end
 
-  def visit(node : If)
-    node.type = @program.no_return unless node.type?
-    true
-  end
-
   def end_visit(node : Call)
     if expanded = node.expanded
       expanded.accept self
@@ -82,7 +77,6 @@ class Crystal::FixMissingTypes < Crystal::Visitor
     node.target_defs.try &.each do |target_def|
       if @fixed.add?(target_def)
         target_def.type = @program.no_return unless target_def.type?
-        target_def.body.type = @program.no_return unless target_def.body.type?
         target_def.accept_children self
       end
     end
