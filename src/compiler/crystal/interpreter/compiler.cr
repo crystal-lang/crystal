@@ -214,6 +214,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       move_arg_to_closure_if_closured(node, node.block_arg.not_nil!.name)
     end
 
+    # Compiled Crystal supports a def's body being nil:
+    # it treats it as NoReturn. Here we do the same thing.
+    # In reality we should fix the compiler to avoid having
+    # nil in types, but that's a larger change and we can do
+    # it later. For now we just handle this specific case in
+    # the interpreter.
     node.body.accept self
 
     final_type = node.type
@@ -1185,6 +1191,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : If)
+    # Compiled Crystal supports an if's type being nil:
+    # it treats it as NoReturn. Here we do the same thing.
+    # In reality we should fix the compiler to avoid having
+    # nil in types, but that's a larger change and we can do
+    # it later. For now we just handle this specific case in
+    # the interpreter.
+    node.type = @context.program.no_return unless node.type?
+
     if node.truthy?
       discard_value(node.cond)
       node.then.accept self
