@@ -57,16 +57,17 @@ class Crystal::Repl
         node = parser.parse
       rescue ex : Crystal::SyntaxException
         # TODO: improve this
-        if ex.message.in?("unexpected token: EOF", "expecting identifier 'end', not 'EOF'")
+        case ex.message
+        when "unexpected token: EOF",
+             "expecting identifier 'end', not 'EOF'"
           @nest = parser.type_nest + parser.def_nest + parser.fun_nest
           @buffer = new_buffer
           @line_number += 1
           @incomplete = @nest == 0
-        elsif ex.message == "expecting token ']', not 'EOF'"
-          @nest = parser.type_nest + parser.def_nest + parser.fun_nest
-          @buffer = new_buffer
-          @line_number += 1
-          @incomplete = true
+        when "expecting token ']', not 'EOF'",
+             "unterminated array literal",
+             "unterminated hash literal",
+             "unterminated tuple literal"
         else
           puts "Error: #{ex.message}"
           @nest = 0

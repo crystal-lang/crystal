@@ -1221,15 +1221,41 @@ class Crystal::Repl::Interpreter
 
     interpreter = Interpreter.new(self, compiled_def, local_vars, closure_context, stack_bottom, block_level)
 
-    while @pry
-      # TODO: support multi-line expressions
+    buffer = ""
+    incomplete = false
 
-      print "pry> "
+    while @pry
+      prompt = String.build do |io|
+        io.print "pry"
+        io.print '('
+        unless owner.is_a?(Program)
+          if owner.metaclass?
+            io.print owner.instance_type
+            io.print '.'
+          else
+            io.print owner
+            io.print '#'
+          end
+        end
+        io.print compiled_def.def.name
+        io.print ')'
+        io.print(incomplete ? '*' : '>')
+        io.print ' '
+      end
+      print prompt
+
       line = gets
       unless line
         self.pry = false
         break
       end
+
+      new_buffer =
+        if buffer.empty?
+          line
+        else
+          "#{buffer}\n#{line}"
+        end
 
       case line
       when "continue"
@@ -1261,11 +1287,33 @@ class Crystal::Repl::Interpreter
 
       begin
         parser = Parser.new(
-          line,
+          new_buffer,
           string_pool: @context.program.string_pool,
           var_scopes: [meta_vars.keys.to_set],
         )
-        line_node = parser.parse
+        begin
+          line_node = parser.parse
+        rescue ex : Crystal::SyntaxException
+          # TODO: improve this
+          case ex.message
+          when "unexpected token: EOF",
+               "expecting identifier 'end', not 'EOF'"
+            nest = parser.type_nest + parser.def_nest + parser.fun_nest
+            buffer = new_buffer
+            incomplete = nest == 0
+          when "expecting token ']', not 'EOF'",
+               "unterminated array literal",
+               "unterminated hash literal",
+               "unterminated tuple literal"
+          else
+            puts "Error: #{ex.message}"
+            buffer = ""
+            incomplete = false
+          end
+          next
+        else
+          buffer = ""
+        end
 
         vars_size_before_semantic = main_visitor.vars.size
 
