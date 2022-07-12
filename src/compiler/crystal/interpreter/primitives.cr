@@ -419,6 +419,9 @@ class Crystal::Repl::Compiler
     when "interpreter_intrinsics_popcount64"
       accept_call_args(node)
       interpreter_intrinsics_popcount64(node: node)
+    when "interpreter_intrinsics_popcount128"
+      accept_call_args(node)
+      interpreter_intrinsics_popcount128(node: node)
     when "interpreter_intrinsics_countleading8"
       accept_call_args(node)
       interpreter_intrinsics_countleading8(node: node)
@@ -431,6 +434,9 @@ class Crystal::Repl::Compiler
     when "interpreter_intrinsics_countleading64"
       accept_call_args(node)
       interpreter_intrinsics_countleading64(node: node)
+    when "interpreter_intrinsics_countleading128"
+      accept_call_args(node)
+      interpreter_intrinsics_countleading128(node: node)
     when "interpreter_intrinsics_counttrailing8"
       accept_call_args(node)
       interpreter_intrinsics_counttrailing8(node: node)
@@ -443,6 +449,9 @@ class Crystal::Repl::Compiler
     when "interpreter_intrinsics_counttrailing64"
       accept_call_args(node)
       interpreter_intrinsics_counttrailing64(node: node)
+    when "interpreter_intrinsics_counttrailing128"
+      accept_call_args(node)
+      interpreter_intrinsics_counttrailing128(node: node)
     when "interpreter_libm_ceil_f32"
       accept_call_args(node)
       libm_ceil_f32 node: node
