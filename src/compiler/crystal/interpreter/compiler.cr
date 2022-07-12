@@ -566,27 +566,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     target = node.target
     case target
     when Var
-      request_value(node.value)
-
-      # If it's the case of `x = a = 1` then we need to preserve the value
-      # of 1 in the stack because it will be assigned to `x` too
-      # (set_local removes the value from the stack)
-      if @wants_value
-        dup(aligned_sizeof_type(node.value), node: nil)
-      end
-
-      if target.special_var?
-        # We need to assign through the special var pointer
-        var = lookup_local_var("#{target.name}*")
-        var_type = var.type.as(PointerInstanceType).element_type
-
-        upcast node.value, node.value.type, var_type
-
-        get_local var.index, sizeof(Void*), node: node
-        pointer_set inner_sizeof_type(var_type), node: node
-      else
-        assign_to_var(target.name, node.value.type, node: node)
-      end
+      compile_assign_to_var(node, target, node.value)
     when InstanceVar
       if inside_method?
         request_value(node.value)
@@ -689,6 +669,30 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def compile_assign_to_var(node : ASTNode, target : ASTNode, value : ASTNode)
+    request_value(value)
+
+    # If it's the case of `x = a = 1` then we need to preserve the value
+    # of 1 in the stack because it will be assigned to `x` too
+    # (set_local removes the value from the stack)
+    if @wants_value
+      dup(aligned_sizeof_type(value), node: nil)
+    end
+
+    if target.special_var?
+      # We need to assign through the special var pointer
+      var = lookup_local_var("#{target.name}*")
+      var_type = var.type.as(PointerInstanceType).element_type
+
+      upcast value, value.type, var_type
+
+      get_local var.index, sizeof(Void*), node: node
+      pointer_set inner_sizeof_type(var_type), node: node
+    else
+      assign_to_var(target.name, value.type, node: node)
+    end
+  end
+
   private def assign_to_var(name : String, value_type : Type, *, node : ASTNode?)
     var = lookup_local_var_or_closured_var(name)
 
@@ -701,6 +705,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     in ClosuredVar
       assign_to_closured_var(var, node: node)
     end
+  end
+
+  def visit(node : TypeDeclaration)
+    var = node.var
+    return false unless var.is_a?(Var)
+
+    value = node.value
+    return false unless value
+
+    compile_assign_to_var(node, var, value)
+
+    false
   end
 
   def visit(node : Var)
@@ -2983,10 +2999,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : AnnotationDef)
-    false
-  end
-
-  def visit(node : TypeDeclaration)
     false
   end
 
