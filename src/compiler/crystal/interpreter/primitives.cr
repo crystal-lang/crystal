@@ -750,8 +750,8 @@ class Crystal::Repl::Compiler
     in {.f32?, .i128?}  then f32_to_f64(node: node); checked ? f64_to_i128(node: node) : f64_to_i128_bang(node: node)
     in {.f32?, .u8?}    then f32_to_f64(node: node); checked ? f64_to_u8(node: node) : f64_to_i64_bang(node: node)
     in {.f32?, .u16?}   then f32_to_f64(node: node); checked ? f64_to_u16(node: node) : f64_to_i64_bang(node: node)
-    in {.f32?, .u32?}   then f32_to_f64(node: node); checked ? f64_to_u32(node: node) : f64_to_i64_bang(node: node)
-    in {.f32?, .u64?}   then f32_to_f64(node: node); checked ? f64_to_u64(node: node) : f64_to_i64_bang(node: node)
+    in {.f32?, .u32?}   then checked ? (f32_to_f64(node: node); f64_to_u32(node: node)) : f32_to_u32_bang(node: node)
+    in {.f32?, .u64?}   then checked ? (f32_to_f64(node: node); f64_to_u64(node: node)) : f32_to_u64_bang(node: node)
     in {.f32?, .u128?}  then f32_to_f64(node: node); checked ? f64_to_u128(node: node) : f64_to_i128_bang(node: node)
     in {.f32?, .f32?}   then nop
     in {.f32?, .f64?}   then f32_to_f64(node: node)
@@ -762,8 +762,8 @@ class Crystal::Repl::Compiler
     in {.f64?, .i128?}  then checked ? f64_to_i128(node: node) : f64_to_i128_bang(node: node)
     in {.f64?, .u8?}    then checked ? f64_to_u8(node: node) : f64_to_i64_bang(node: node)
     in {.f64?, .u16?}   then checked ? f64_to_u16(node: node) : f64_to_i64_bang(node: node)
-    in {.f64?, .u32?}   then checked ? f64_to_u32(node: node) : f64_to_i64_bang(node: node)
-    in {.f64?, .u64?}   then checked ? f64_to_u64(node: node) : f64_to_i64_bang(node: node)
+    in {.f64?, .u32?}   then checked ? f64_to_u32(node: node) : f64_to_u32_bang(node: node)
+    in {.f64?, .u64?}   then checked ? f64_to_u64(node: node) : f64_to_u64_bang(node: node)
     in {.f64?, .u128?}  then checked ? f64_to_u128(node: node) : f64_to_i128_bang(node: node)
     in {.f64?, .f32?}   then checked ? f64_to_f32(node: node) : f64_to_f32_bang(node: node)
     in {.f64?, .f64?}   then nop

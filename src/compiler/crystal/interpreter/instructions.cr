@@ -290,6 +290,16 @@ require "./repl"
         push:       true,
         code:       value.to_f64,
       },
+      f32_to_u32_bang: {
+        pop_values: [value : Float32],
+        push:       true,
+        code:       value.to_u32!,
+      },
+      f32_to_u64_bang: {
+        pop_values: [value : Float32],
+        push:       true,
+        code:       value.to_u64!,
+      },
       f64_to_i8: {
         pop_values: [value : Float64],
         push:       true,
@@ -349,6 +359,12 @@ require "./repl"
         overflow:   true,
         code:       value.to_u32,
       },
+      f64_to_u32_bang: {
+        pop_values: [value : Float64],
+        push:       true,
+        overflow:   false,
+        code:       value.to_u32!,
+      },
       f64_to_u64: {
         pop_values: [value : Float64],
         push:       true,
@@ -359,6 +375,11 @@ require "./repl"
         pop_values: [value : Float64],
         push:       true,
         code:       value.to_i64!,
+      },
+      f64_to_u64_bang: {
+        pop_values: [value : Float64],
+        push:       true,
+        code:       value.to_u64!,
       },
       f64_to_f32: {
         pop_values: [value : Float64],
