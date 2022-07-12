@@ -1347,7 +1347,7 @@ class Crystal::Repl::Interpreter
           end
         end
 
-        value = interpreter.interpret(line_node, meta_vars, in_pry: true)
+        value = interpreter.interpret(line_node, meta_vars, in_pry: true).to_s
 
         # New local variables might have been declared during a pry session.
         # Remember them by asking them from the interpreter
@@ -1355,6 +1355,15 @@ class Crystal::Repl::Interpreter
         # to their new type)
         local_vars = interpreter.local_vars
 
+        if @context.program.color?
+          begin
+            value = Crystal::SyntaxHighlighter::Colorize.highlight(value)
+          rescue
+            # Ignore highlight errors
+          end
+        end
+
+        print "=> "
         puts value.to_s
       rescue ex : EscapingException
         print "Unhandled exception: "

@@ -97,7 +97,15 @@ class Crystal::Repl
       end
 
       begin
-        value = interpret(node)
+        value = interpret(node).to_s
+
+        if @context.program.color?
+          begin
+            value = Crystal::SyntaxHighlighter::Colorize.highlight(value)
+          rescue
+            # Ignore highlight errors
+          end
+        end
 
         print "=> "
         puts value
