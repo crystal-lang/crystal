@@ -35,6 +35,21 @@ class Crystal::Repl
         break
       end
 
+      # Go back one line to print it again colored
+      print "\033[F"
+      print prompt
+
+      colored_line = line
+      if @context.program.color?
+        begin
+          colored_line = Crystal::SyntaxHighlighter::Colorize.highlight(colored_line)
+        rescue
+          # Ignore highlight errors
+        end
+      end
+
+      puts colored_line
+
       new_buffer =
         if @buffer.empty?
           line
