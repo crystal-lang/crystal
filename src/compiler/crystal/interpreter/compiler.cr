@@ -2037,6 +2037,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
       block.vars.try &.each do |name, var|
+        # Special vars don't have scopes like regular block vars do
+        next if var.special_var?
+
         var_type = var.type?
         next unless var_type
 
