@@ -1267,8 +1267,22 @@ class Crystal::Repl::Interpreter
         )
         line_node = parser.parse
 
+        vars_size_before_semantic = main_visitor.vars.size
+
         line_node = @context.program.normalize(line_node)
         line_node = @context.program.semantic(line_node, main_visitor: main_visitor)
+
+        vars_size_after_semantic = main_visitor.vars.size
+
+        if vars_size_after_semantic > vars_size_before_semantic
+          # These are all temporary variables created by MainVisitor.
+          # Let's add them to local vars.
+          main_visitor.vars.each_with_index do |(name, var), index|
+            next unless index >= vars_size_before_semantic
+
+            interpreter.local_vars.declare(name, var.type)
+          end
+        end
 
         value = interpreter.interpret(line_node, meta_vars, in_pry: true)
 
