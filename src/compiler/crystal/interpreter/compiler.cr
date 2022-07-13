@@ -214,6 +214,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       move_arg_to_closure_if_closured(node, node.block_arg.not_nil!.name)
     end
 
+    # Compiled Crystal supports a def's body being nil:
+    # it treats it as NoReturn. Here we do the same thing.
+    # In reality we should fix the compiler to avoid having
+    # nil in types, but that's a larger change and we can do
+    # it later. For now we just handle this specific case in
+    # the interpreter.
     node.body.accept self
 
     final_type = node.type
@@ -560,27 +566,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     target = node.target
     case target
     when Var
-      request_value(node.value)
-
-      # If it's the case of `x = a = 1` then we need to preserve the value
-      # of 1 in the stack because it will be assigned to `x` too
-      # (set_local removes the value from the stack)
-      if @wants_value
-        dup(aligned_sizeof_type(node.value), node: nil)
-      end
-
-      if target.special_var?
-        # We need to assign through the special var pointer
-        var = lookup_local_var("#{target.name}*")
-        var_type = var.type.as(PointerInstanceType).element_type
-
-        upcast node.value, node.value.type, var_type
-
-        get_local var.index, sizeof(Void*), node: node
-        pointer_set inner_sizeof_type(var_type), node: node
-      else
-        assign_to_var(target.name, node.value.type, node: node)
-      end
+      compile_assign_to_var(node, target, node.value)
     when InstanceVar
       if inside_method?
         request_value(node.value)
@@ -683,6 +669,30 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def compile_assign_to_var(node : ASTNode, target : ASTNode, value : ASTNode)
+    request_value(value)
+
+    # If it's the case of `x = a = 1` then we need to preserve the value
+    # of 1 in the stack because it will be assigned to `x` too
+    # (set_local removes the value from the stack)
+    if @wants_value
+      dup(aligned_sizeof_type(value), node: nil)
+    end
+
+    if target.special_var?
+      # We need to assign through the special var pointer
+      var = lookup_local_var("#{target.name}*")
+      var_type = var.type.as(PointerInstanceType).element_type
+
+      upcast value, value.type, var_type
+
+      get_local var.index, sizeof(Void*), node: node
+      pointer_set inner_sizeof_type(var_type), node: node
+    else
+      assign_to_var(target.name, value.type, node: node)
+    end
+  end
+
   private def assign_to_var(name : String, value_type : Type, *, node : ASTNode?)
     var = lookup_local_var_or_closured_var(name)
 
@@ -695,6 +705,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     in ClosuredVar
       assign_to_closured_var(var, node: node)
     end
+  end
+
+  def visit(node : TypeDeclaration)
+    var = node.var
+    return false unless var.is_a?(Var)
+
+    value = node.value
+    return false unless value
+
+    compile_assign_to_var(node, var, value)
+
+    false
   end
 
   def visit(node : Var)
@@ -1185,6 +1207,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : If)
+    # Compiled Crystal supports an if's type being nil:
+    # it treats it as NoReturn. Here we do the same thing.
+    # In reality we should fix the compiler to avoid having
+    # nil in types, but that's a larger change and we can do
+    # it later. For now we just handle this specific case in
+    # the interpreter.
+    node.type = @context.program.no_return unless node.type?
+
     if node.truthy?
       discard_value(node.cond)
       node.then.accept self
@@ -1285,8 +1315,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Return)
-    exp = node.exp
+    compile_return(node, node.exp)
+  end
 
+  def compile_return(node, exp)
     exp_type =
       if exp
         request_value(exp)
@@ -1741,7 +1773,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         if obj
           request_value(obj)
         else
-          put_self(node: node)
+          if scope.struct? && scope.passed_by_value?
+            # Load the entire self from the pointer that's self
+            get_self_ivar 0, aligned_sizeof_type(scope), node: node
+          else
+            put_self(node: node)
+          end
         end
       end
 
@@ -2000,6 +2037,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
       block.vars.try &.each do |name, var|
+        # Special vars don't have scopes like regular block vars do
+        next if var.special_var?
+
         var_type = var.type?
         next unless var_type
 
@@ -2284,6 +2324,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       pointer_add_constant 8, node: obj
     elsif var_type.is_a?(MixedUnionType) && obj.type.is_a?(MixedUnionType)
       pointerof_local_var_or_closured_var(var, node: obj)
+    elsif var_type.is_a?(VirtualType) && var_type.struct? && var_type.abstract?
+      if obj.type.is_a?(MixedUnionType)
+        # If downcasting to a mix of the subtypes, it's a union type and it
+        # has the same representation as the virtual type
+        pointerof_local_var_or_closured_var(var, node: obj)
+      else
+        # A virtual struct is represented like {type_id, value}, and if we need
+        # to downcast to one of the struct types we need to skip the type_id header,
+        # which is 8 bytes.
+
+        # Get pointer of var
+        pointerof_local_var_or_closured_var(var, node: obj)
+
+        # Add 8 to it, to reach the value
+        pointer_add_constant 8, node: obj
+      end
     else
       obj.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type} (#{var_type.class} to #{obj.type.class})"
     end
@@ -2735,7 +2791,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       upcast node, exp_type, compiling_block.block.type
       leave aligned_sizeof_type(compiling_block.block.type), node: node
     else
-      node.raise "BUG: next without target while or block"
+      if @def.try(&.captured_block?)
+        # next inside a proc or captured block is like doing return
+        compile_return(node, exp)
+      else
+        node.raise "BUG: next without target while, block, and not inside captured_block"
+      end
     end
 
     false
@@ -2757,13 +2818,54 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     pop_obj = nil
 
-    # Check if tuple unpacking is needed
+    # Check if tuple unpacking is needed.
+    # This happens when a yield has only one expression that's a tuple
+    # type, and the block arguments are more than one.
+    #
+    # For example:
+    #
+    #     def foo
+    #       yield({1, 2})
+    #     end
+    #
+    #     foo do |x, y|
+    #     end
+    #
+    # If the first yield argument is a splat then no tuple unpacking is done:
+    #
+    #     def foo
+    #       yield(*{1, 2}) # no unpacking
+    #     end
+    #
+    #     foo do |x, y|
+    #     end
+    #
+    # Unless... the tuple has a single tuple inside it:
+    #
+    #     def foo
+    #       yield(*{ {1, 2} }) # unpacking 1 into x and 2 into y
+    #     end
+    #
+    #     foo do |x, y|
+    #     end
+    #
+    # That's all expressed in the logic below:
     if node.exps.size == 1 &&
-       !node.exps.first.is_a?(Splat) &&
-       (tuple_type = node.exps.first.type).is_a?(TupleInstanceType) &&
+       (exp = node.exps.first) &&
+       (tuple_type = exp.type).is_a?(TupleInstanceType) &&
+       (!exp.is_a?(Splat) || (
+         exp.is_a?(Splat) &&
+         tuple_type.tuple_types.size == 1 &&
+         tuple_type.tuple_types.first.is_a?(TupleInstanceType)
+       )) &&
        block.args.size > 1
+      # This is the case of `yield(*{ {1, 2}})`
+      if exp.is_a?(Splat)
+        exp = exp.exp
+        tuple_type = tuple_type.tuple_types.first.as(TupleInstanceType)
+      end
+
       # Accept the tuple
-      exp = node.exps.first
       request_value exp
 
       # We need to cast to the block var, not arg
@@ -2905,10 +3007,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : AnnotationDef)
-    false
-  end
-
-  def visit(node : TypeDeclaration)
     false
   end
 
