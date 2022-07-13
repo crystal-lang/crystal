@@ -421,5 +421,18 @@ describe Crystal::Repl::Interpreter do
         Foo.new.foo
       CODE
     end
+
+    it "does next inside captured block (#12226)" do
+      interpret(<<-CODE).should eq(1)
+        def foo(&block : -> _)
+          block.call
+        end
+
+        foo do
+          next 1
+          2
+        end
+      CODE
+    end
   end
 end

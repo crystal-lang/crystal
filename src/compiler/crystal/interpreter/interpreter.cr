@@ -163,21 +163,16 @@ class Crystal::Repl::Interpreter
 
   # compiles the given code to bytecode, then interprets it by assuming the local variables
   # are defined in `meta_vars`.
-  def interpret(node : ASTNode, meta_vars : MetaVars, scope : Type? = nil) : Value
+  def interpret(node : ASTNode, meta_vars : MetaVars, scope : Type? = nil, in_pry : Bool = false) : Value
     compiled_def = @compiled_def
 
-    # Declare local variables
-
-    # Don't declare local variables again if we are in the middle of pry
-    # TODO: this needs to be cleaned up. Local variables should always be
-    # declared, but migrating local variables should only be done for
-    # variables that aren't already declared duing a pry session.
-    unless compiled_def
+    # Declare or migrate local variables
+    if !compiled_def || in_pry
       migrate_local_vars(@local_vars, meta_vars)
 
       # TODO: is it okay to assume this is always the program? Probably not.
       # Check if we need a local variable for the closure context
-      if @context.program.vars.try &.any? { |name, var| var.type? && var.closure_in?(@context.program) }
+      if !in_pry && @context.program.vars.try &.any? { |name, var| var.type? && var.closure_in?(@context.program) }
         # The closure context is always a pointer to some memory
         @local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
       end
@@ -416,13 +411,11 @@ class Crystal::Repl::Interpreter
   end
 
   private def migrate_local_vars(current_local_vars, next_meta_vars)
-    # Always start with fresh variables, because union types might have changed
-    @local_vars = LocalVars.new(@context)
-
     # Check if any existing local variable size changed.
     # If so, it means we need to put them inside a union,
     # or make the union bigger.
     current_names = current_local_vars.names_at_block_level_zero
+
     needs_migration = current_names.any? do |current_name|
       next_meta_var = next_meta_vars[current_name]?
 
@@ -438,6 +431,9 @@ class Crystal::Repl::Interpreter
     end
 
     return unless needs_migration
+
+    # Always start with fresh variables, because union types might have changed
+    @local_vars = LocalVars.new(@context)
 
     current_memory = Pointer(UInt8).malloc(current_local_vars.current_bytesize)
     @stack.copy_to(current_memory, current_local_vars.current_bytesize)
@@ -1188,6 +1184,14 @@ class Crystal::Repl::Interpreter
     gatherer = LocalVarsGatherer.new(location, a_def)
     gatherer.gather
     meta_vars = gatherer.meta_vars
+
+    # Freeze the type of existing variables because they can't
+    # change during a pry session.
+    meta_vars.each do |name, var|
+      var_type = var.type?
+      var.freeze_type = var_type if var_type
+    end
+
     block_level = local_vars.block_level
     owner = compiled_def.owner
 
@@ -1263,10 +1267,31 @@ class Crystal::Repl::Interpreter
         )
         line_node = parser.parse
 
+        vars_size_before_semantic = main_visitor.vars.size
+
         line_node = @context.program.normalize(line_node)
         line_node = @context.program.semantic(line_node, main_visitor: main_visitor)
 
-        value = interpreter.interpret(line_node, meta_vars)
+        vars_size_after_semantic = main_visitor.vars.size
+
+        if vars_size_after_semantic > vars_size_before_semantic
+          # These are all temporary variables created by MainVisitor.
+          # Let's add them to local vars.
+          main_visitor.vars.each_with_index do |(name, var), index|
+            next unless index >= vars_size_before_semantic
+
+            interpreter.local_vars.declare(name, var.type)
+          end
+        end
+
+        value = interpreter.interpret(line_node, meta_vars, in_pry: true)
+
+        # New local variables might have been declared during a pry session.
+        # Remember them by asking them from the interpreter
+        # (the interpreter will keep adding those, or migrate new ones
+        # to their new type)
+        local_vars = interpreter.local_vars
+
         puts value.to_s
       rescue ex : EscapingException
         print "Unhandled exception: "
