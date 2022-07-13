@@ -196,8 +196,8 @@ lib LibGMP
   # # Conversion
   fun mpf_get_str = __gmpf_get_str(str : UInt8*, expptr : MpExp*, base : Int, n_digits : LibC::SizeT, op : MPF*) : UInt8*
   fun mpf_get_d = __gmpf_get_d(op : MPF*) : Double
-  fun mpf_set_d = __gmpf_set_d(op : MPF*, op : Double)
-  fun mpf_set = __gmpf_set(op : MPF*, op : MPF*)
+  fun mpf_set_d = __gmpf_set_d(rop : MPF*, op : Double)
+  fun mpf_set = __gmpf_set(rop : MPF*, op : MPF*)
   fun mpf_set_z = __gmpf_set_z(rop : MPF*, op : MPZ*)
   fun mpf_set_q = __gmpf_set_q(rop : MPF*, op : MPQ*)
   fun mpf_get_si = __gmpf_get_si(op : MPF*) : SI

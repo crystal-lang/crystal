@@ -511,7 +511,7 @@ describe "Slice" do
     a = Bytes[1, 2, 3]
     a.shuffle!
     b = [1, 2, 3]
-    3.times { a.includes?(b.shift).should be_true }
+    3.times { a.should contain(b.shift) }
   end
 
   it "does map" do
