@@ -12,14 +12,14 @@ private class SafeIndexableMutable
     @values = Array.new(size) { |i| [i + offset] }
   end
 
-  def unsafe_fetch(i)
-    raise IndexError.new unless 0 <= i < size
-    @values[i][0]
+  def unsafe_fetch(index)
+    raise IndexError.new unless 0 <= index < size
+    @values[index][0]
   end
 
-  def unsafe_put(i, value : Int32)
-    raise IndexError.new unless 0 <= i < size
-    @values[i] = [value]
+  def unsafe_put(index, value : Int32)
+    raise IndexError.new unless 0 <= index < size
+    @values[index] = [value]
   end
 end
 
@@ -37,14 +37,14 @@ private class SafeIndexableMutableFoo
     @values = Array.new(size) { [Foo.new] }
   end
 
-  def unsafe_fetch(i)
-    raise IndexError.new unless 0 <= i < size
-    @values[i][0]
+  def unsafe_fetch(index)
+    raise IndexError.new unless 0 <= index < size
+    @values[index][0]
   end
 
-  def unsafe_put(i, value : Foo)
-    raise IndexError.new unless 0 <= i < size
-    @values[i] = [value]
+  def unsafe_put(index, value : Foo)
+    raise IndexError.new unless 0 <= index < size
+    @values[index] = [value]
   end
 end
 

@@ -66,6 +66,8 @@ lib LibLLVM
   type PassManagerRef = Void*
   type PassRegistryRef = Void*
   type MemoryBufferRef = Void*
+  type PassBuilderOptionsRef = Void*
+  type ErrorRef = Void*
 
   struct JITCompilerOptions
     opt_level : UInt32
@@ -428,4 +430,10 @@ lib LibLLVM
   fun set_instr_param_alignment = LLVMSetInstrParamAlignment(instr : ValueRef, index : UInt, align : UInt)
 
   fun set_param_alignment = LLVMSetParamAlignment(arg : ValueRef, align : UInt)
+
+  {% unless LibLLVM::IS_LT_130 %}
+    fun run_passes = LLVMRunPasses(mod : ModuleRef, passes : UInt8*, tm : TargetMachineRef, options : PassBuilderOptionsRef) : ErrorRef
+    fun create_pass_builder_options = LLVMCreatePassBuilderOptions : PassBuilderOptionsRef
+    fun dispose_pass_builder_options = LLVMDisposePassBuilderOptions(options : PassBuilderOptionsRef)
+  {% end %}
 end

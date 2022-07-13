@@ -80,11 +80,7 @@ module Crystal
     def parse
       next_token_skip_statement_end
 
-      expressions = parse_expressions.tap { check :EOF }
-
-      check :EOF
-
-      expressions
+      parse_expressions.tap { check :EOF }
     end
 
     def parse(mode : ParseMode)
@@ -3725,9 +3721,18 @@ module Crystal
       double_splat : Bool
 
     def parse_arg(args, extra_assigns, parentheses, found_default_value, found_splat, found_double_splat, allow_restrictions)
+      annotations = nil
+
+      # Parse annotations first since they would be before any actual arg tokens.
+      # Do this in a loop to account for multiple annotations.
+      while @token.type.op_at_lsquare?
+        (annotations ||= Array(Annotation).new) << parse_annotation
+        skip_space_or_newline
+      end
+
       if @token.type.op_amp?
         next_token_skip_space_or_newline
-        block_arg = parse_block_arg(extra_assigns)
+        block_arg = parse_block_arg(extra_assigns, annotations)
         skip_space_or_newline
         # When block_arg.name is empty, this is an anonymous parameter.
         # An anonymous parameter should not conflict other parameters names.
@@ -3858,14 +3863,14 @@ module Crystal
 
       raise "BUG: arg_name is nil" unless arg_name
 
-      arg = Arg.new(arg_name, default_value, restriction, external_name: external_name).at(arg_location)
+      arg = Arg.new(arg_name, default_value, restriction, external_name: external_name, parsed_annotations: annotations).at(arg_location)
       args << arg
       push_var arg
 
       ArgExtras.new(nil, !!default_value, splat, !!double_splat)
     end
 
-    def parse_block_arg(extra_assigns)
+    def parse_block_arg(extra_assigns, annotations)
       name_location = @token.location
 
       if @token.type.op_rparen? || @token.type.newline? || @token.type.op_colon?
@@ -3886,7 +3891,7 @@ module Crystal
         type_spec = parse_bare_proc_type
       end
 
-      block_arg = Arg.new(arg_name, restriction: type_spec).at(name_location)
+      block_arg = Arg.new(arg_name, restriction: type_spec, parsed_annotations: annotations).at(name_location)
 
       push_var block_arg
 
@@ -5646,6 +5651,12 @@ module Crystal
               next_token_skip_space_or_newline
               arg_type = parse_bare_proc_type
               skip_space_or_newline
+
+              args.each do |arg|
+                if arg.name == arg_name
+                  raise "duplicated fun parameter name: #{arg_name}", arg_location
+                end
+              end
 
               args << Arg.new(arg_name, nil, arg_type).at(arg_location)
 

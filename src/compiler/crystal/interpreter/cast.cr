@@ -59,15 +59,33 @@ class Crystal::Repl::Compiler
   end
 
   private def upcast_distinct(node : ASTNode, from : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | GenericClassInstanceMetaclassType | MetaclassType, to : MixedUnionType)
+    # It might happen that `from` is not of the union but it's compatible with one of them.
+    # We need to first cast the value to the compatible type and to `to`.
+    # This same logic exists in codegen/cast.cr
+    case from
+    when TupleInstanceType, NamedTupleInstanceType
+      unless to.union_types.any? &.==(from)
+        compatible_type = to.union_types.find! { |ut| from.implements?(ut) }
+        upcast(node, from, compatible_type)
+        return upcast(node, compatible_type, to)
+      end
+    end
+
     put_in_union(type_id(from), aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
   private def upcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : MixedUnionType)
-    # Copy the type id
+    # We have a type ID (8 bytes) in the stack.
+    # We need to put that into a union whose:
+    # - tag will be the type ID (8 bytes)
+    # - value will be the type ID (8 bytes) followed by zeros to fill up the union size
+
+    # We already have 8 bytes in the stack. That's the tag.
+    # Now we put the type ID again for the value. So far we have 16 bytes in total.
     dup 8, node: nil
 
     # Then fill out the rest of the union
-    remaining = aligned_sizeof_type(to) - 8
+    remaining = aligned_sizeof_type(to) - 16
     push_zeros remaining, node: nil if remaining > 0
   end
 

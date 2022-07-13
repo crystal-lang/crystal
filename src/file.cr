@@ -788,7 +788,7 @@ class File < IO::FileDescriptor
   # File.join({"foo/", "/bar/", "/baz"})   # => "foo/bar/baz"
   # File.join(["/foo/", "/bar/", "/baz/"]) # => "/foo/bar/baz/"
   # ```
-  def self.join(parts : Array | Tuple) : String
+  def self.join(parts : Enumerable) : String
     Path.new(parts).to_s
   end
 

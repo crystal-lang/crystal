@@ -393,5 +393,34 @@ describe Crystal::Repl::Interpreter do
         ("" || nil).foo 1, file: ""
       CODE
     end
+
+    it "does multidispatch with captured block (#12217)" do
+      interpret(<<-CODE).should eq(42)
+        class A
+          def then(&callback : Int32 -> Int32)
+            callback.call(70)
+          end
+        end
+
+        class B < A
+          def then(&callback : Int32 -> Int32)
+            callback.call(30)
+          end
+        end
+
+        a = A.new
+        b = B.new
+
+        a_value = (a || b).then do |x|
+          x + 3
+        end
+
+        b_value = (b || a).then do |x|
+          x + 1
+        end
+
+        a_value - b_value
+      CODE
+    end
   end
 end
