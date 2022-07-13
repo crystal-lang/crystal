@@ -191,7 +191,7 @@ describe "select" do
     x.should eq 2
   end
 
-  pending_win32 "stress select with send/receive in multiple fibers" do
+  it "stress select with send/receive in multiple fibers" do
     fibers = 4
     msg_per_sender = 1000
     ch = Array.new(fibers) { Array.new(fibers) { Channel(Int32).new } }
