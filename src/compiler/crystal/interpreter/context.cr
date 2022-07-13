@@ -187,29 +187,26 @@ class Crystal::Repl::Context
   end
 
   private def create_instance_var_initializer_def(type : Type, initializer : InstanceVarInitializer)
-    a_def = Def.new("initialize_#{initializer.initializer.name}", args: [Arg.new("self")])
-    a_def.body = Assign.new(
-      InstanceVar.new(initializer.initializer.name),
-      initializer.initializer.value.clone,
-    )
+    # Creates a def that will assign the initializer's value to the instance variable.
+    # The initializer's value is fully typed already, so we don't need to type it
+    # again. We can just create the assignment and type those nodes for the
+    # interpreter compiler to be able to compile it.
+    value = initializer.initializer.value
 
-    a_def = program.normalize(a_def)
+    ivar = InstanceVar.new(initializer.initializer.name)
+    ivar.type = value.type
+
+    assign = Assign.new(ivar, value)
+    assign.type = value.type
+
+    a_def = Def.new("initialize_#{initializer.initializer.name}", args: [Arg.new("self", type: type)])
+    a_def.body = assign
+    a_def.type = program.nil_type
     a_def.owner = type
 
-    def_args = MetaVars.new
-    def_args["self"] = MetaVar.new("self", type)
-
-    visitor = MainVisitor.new(program, def_args, a_def)
-    visitor.untyped_def = a_def
-    visitor.scope = type
-    visitor.path_lookup = initializer.owner
-    # visitor.yield_vars = yield_vars
-    # visitor.match_context = match.context
-    # visitor.call = self
-    a_def.body.accept visitor
-
-    a_def.body = program.cleanup(a_def.body, inside_def: true)
-    a_def.type = program.nil_type
+    vars = initializer.initializer.meta_vars.clone
+    vars["self"] = MetaVar.new("self", type)
+    a_def.vars = vars
 
     a_def
   end
