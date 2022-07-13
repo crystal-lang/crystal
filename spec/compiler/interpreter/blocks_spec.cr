@@ -587,5 +587,17 @@ describe Crystal::Repl::Interpreter do
         a
       CODE
     end
+
+    it "interprets yield with splat, block with splat (#12227)" do
+      interpret(<<-CODE).should eq(1)
+        def foo
+          yield *{ {3, 2} }
+        end
+
+        foo do |x, y|
+          x &- y
+        end
+      CODE
+    end
   end
 end

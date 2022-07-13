@@ -71,6 +71,7 @@ lib LibIntrinsics
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_popcount64)] {% end %}
   fun popcount64 = "llvm.ctpop.i64"(src : Int64) : Int64
 
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_popcount128)] {% end %}
   fun popcount128 = "llvm.ctpop.i128"(src : Int128) : Int128
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_countleading8)] {% end %}
@@ -85,6 +86,7 @@ lib LibIntrinsics
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_countleading64)] {% end %}
   fun countleading64 = "llvm.ctlz.i64"(src : Int64, zero_is_undef : Bool) : Int64
 
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_countleading128)] {% end %}
   fun countleading128 = "llvm.ctlz.i128"(src : Int128, zero_is_undef : Bool) : Int128
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_counttrailing8)] {% end %}
@@ -98,6 +100,8 @@ lib LibIntrinsics
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_counttrailing64)] {% end %}
   fun counttrailing64 = "llvm.cttz.i64"(src : Int64, zero_is_undef : Bool) : Int64
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_counttrailing128)] {% end %}
   fun counttrailing128 = "llvm.cttz.i128"(src : Int128, zero_is_undef : Bool) : Int128
 
   fun va_start = "llvm.va_start"(ap : Void*)
