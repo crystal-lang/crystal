@@ -57,6 +57,8 @@ class LLVM::TargetMachine
       ABI::AArch64.new(self)
     when /arm/
       ABI::ARM.new(self)
+    when /wasm32/
+      ABI::Wasm32.new(self)
     else
       raise "Unsupported ABI for target triple: #{triple}"
     end

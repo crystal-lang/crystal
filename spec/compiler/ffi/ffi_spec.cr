@@ -1,4 +1,4 @@
-{% skip_file if !flag?(:unix) || flag?(:without_ffi) %}
+{% skip_file if !flag?(:unix) || flag?(:without_ffi) || flag?(:wasm32) %}
 
 require "../spec_helper"
 require "compiler/crystal/ffi"

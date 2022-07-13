@@ -273,5 +273,54 @@ describe Crystal::Repl::Interpreter do
         end
         CODE
     end
+
+    it "puts virtual metaclass into union (#12162)" do
+      interpret(<<-CODE, prelude: "prelude").should eq(%("ActionA"))
+        class Action
+        end
+
+        class ActionA < Action
+        end
+
+        class ActionB < Action
+        end
+
+        x = ActionA || ActionB
+        y = x || Nil
+        y.to_s
+        CODE
+    end
+
+    it "puts tuple type inside union of different tuple type (#12243)" do
+      interpret(<<-CODE, prelude: "prelude").should eq(%("{180}"))
+        class A
+          def initialize(@x : {Char | Int32}?)
+          end
+
+          def x
+            @x
+          end
+        end
+
+        x = A.new({180}).x
+        x.to_s
+      CODE
+    end
+
+    it "puts named tuple type inside union of different named tuple type (#12243)" do
+      interpret(<<-CODE, prelude: "prelude").should eq(%("{v: 180}"))
+        class A
+          def initialize(@x : {v: Char | Int32}?)
+          end
+
+          def x
+            @x
+          end
+        end
+
+        x = A.new({v: 180}).x
+        x.to_s
+      CODE
+    end
   end
 end

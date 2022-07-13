@@ -101,7 +101,7 @@ class Crystal::Scheduler
     current, @current = @current, fiber
 
     {% if flag?(:interpreted) %}
-      # TODO: ideally we could set this in the interprter if the
+      # TODO: ideally we could set this in the interpreter if the
       # @context had a pointer back to the fiber.
       # I also wonder why this isn't done always like that instead of in asm.
       current.@context.resumable = 1
