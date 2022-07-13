@@ -168,4 +168,52 @@ describe Doc::Type do
     # Sanity check: subclasses of ASTNode has the right ancestors
     generator.type(macros_module.types["Arg"]).ancestors.should eq([astnode])
   end
+
+  describe "#instance_methods" do
+    it "sorts operators first" do
+      program = semantic(<<-CODE).program
+        class Foo
+          def foo; end
+          def ~; end
+          def +; end
+        end
+        CODE
+
+      generator = Doc::Generator.new program, [""]
+      type = generator.type(program.types["Foo"])
+      type.instance_methods.map(&.name).should eq ["+", "~", "foo"]
+    end
+  end
+
+  describe "#class_methods" do
+    it "sorts operators first" do
+      program = semantic(<<-CODE).program
+        class Foo
+          def self.foo; end
+          def self.~; end
+          def self.+; end
+        end
+        CODE
+
+      generator = Doc::Generator.new program, [""]
+      type = generator.type(program.types["Foo"])
+      type.class_methods.map(&.name).should eq ["+", "~", "foo"]
+    end
+  end
+
+  describe "#macros" do
+    it "sorts operators first" do
+      program = semantic(<<-CODE).program
+        class Foo
+          macro foo; end
+          macro ~; end
+          macro +; end
+        end
+        CODE
+
+      generator = Doc::Generator.new program, [""]
+      type = generator.type(program.types["Foo"])
+      type.macros.map(&.name).should eq ["+", "~", "foo"]
+    end
+  end
 end

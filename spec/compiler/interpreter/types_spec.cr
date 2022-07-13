@@ -49,6 +49,35 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "interprets class for module type (#12203)" do
+      interpret(<<-CODE).should eq("A")
+        class Class
+          def name : String
+            {{ @type.name.stringify }}
+          end
+        end
+
+        module M
+        end
+
+        class E
+          def initialize(@base : M)
+          end
+        end
+
+        abstract class P
+          include M
+        end
+
+        class A < P
+        end
+
+        e = E.new(A.new)
+        base = e.@base
+        base.class.name
+        CODE
+    end
+
     it "interprets crystal_type_id for nil" do
       interpret("nil.crystal_type_id").should eq(0)
     end
@@ -56,6 +85,19 @@ describe Crystal::Repl::Interpreter do
     it "interprets crystal_type_id for non-nil" do
       context, repl_value = interpret_with_context("1.crystal_type_id")
       repl_value.value.should eq(context.type_id(context.program.int32))
+    end
+
+    it "interprets crystal_type_id for virtual metaclass type (#12228)" do
+      interpret(<<-CODE).should eq(true)
+        class P
+        end
+
+        class A < P
+        end
+
+        p = A.as(P.class)
+        p.crystal_type_id == A.crystal_type_id
+        CODE
     end
 
     it "interprets class_crystal_instance_type_id" do

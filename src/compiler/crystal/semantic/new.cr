@@ -3,8 +3,8 @@ module Crystal
     def define_new_methods(new_expansions)
       # Here we complete the body of `self.new` methods
       # created from `initialize` methods.
-      new_expansions.each do |expansion|
-        expansion[:expanded].fill_body_from_initialize(expansion[:original].owner)
+      new_expansions.each do |original, expanded|
+        expanded.fill_body_from_initialize(original.owner)
       end
 
       # We also need to define empty `new` methods for types
@@ -16,8 +16,7 @@ module Crystal
 
       # Once we are done with the expansions we mark `initialize` methods
       # without an explicit visibility as `protected`.
-      new_expansions.each do |expansion|
-        original = expansion[:original]
+      new_expansions.each do |original, expanded|
         original.visibility = Visibility::Protected if original.visibility.public?
       end
     end

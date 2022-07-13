@@ -119,7 +119,7 @@ class Crystal::Repl::Context
     end
   end
 
-  # This returns the CompiledDef that correspnds to __crystal_raise_overflow
+  # This returns the CompiledDef that corresponds to __crystal_raise_overflow
   getter(crystal_raise_overflow_compiled_def : CompiledDef) do
     call = Call.new(nil, "__crystal_raise_overflow", global: true)
     program.semantic(call)
@@ -154,7 +154,7 @@ class Crystal::Repl::Context
         end
 
         compiler = Compiler.new(self, compiled_def, top_level: false)
-        compiler.compile_def(a_def)
+        compiler.compile_def(compiled_def)
 
         {% if Debug::DECOMPILE %}
           puts "=== #{a_def.name} ==="
@@ -187,29 +187,26 @@ class Crystal::Repl::Context
   end
 
   private def create_instance_var_initializer_def(type : Type, initializer : InstanceVarInitializer)
-    a_def = Def.new("initialize_#{initializer.initializer.name}", args: [Arg.new("self")])
-    a_def.body = Assign.new(
-      InstanceVar.new(initializer.initializer.name),
-      initializer.initializer.value.clone,
-    )
+    # Creates a def that will assign the initializer's value to the instance variable.
+    # The initializer's value is fully typed already, so we don't need to type it
+    # again. We can just create the assignment and type those nodes for the
+    # interpreter compiler to be able to compile it.
+    value = initializer.initializer.value
 
-    a_def = program.normalize(a_def)
+    ivar = InstanceVar.new(initializer.initializer.name)
+    ivar.type = value.type
+
+    assign = Assign.new(ivar, value)
+    assign.type = value.type
+
+    a_def = Def.new("initialize_#{initializer.initializer.name}", args: [Arg.new("self", type: type)])
+    a_def.body = assign
+    a_def.type = program.nil_type
     a_def.owner = type
 
-    def_args = MetaVars.new
-    def_args["self"] = MetaVar.new("self", type)
-
-    visitor = MainVisitor.new(program, def_args, a_def)
-    visitor.untyped_def = a_def
-    visitor.scope = type
-    visitor.path_lookup = initializer.owner
-    # visitor.yield_vars = yield_vars
-    # visitor.match_context = match.context
-    # visitor.call = self
-    a_def.body.accept visitor
-
-    a_def.body = program.cleanup(a_def.body, inside_def: true)
-    a_def.type = program.nil_type
+    vars = initializer.initializer.meta_vars.clone
+    vars["self"] = MetaVar.new("self", type)
+    a_def.vars = vars
 
     a_def
   end
@@ -335,7 +332,12 @@ class Crystal::Repl::Context
   def ivar_offset(type : Type, name : String) : Int32
     ivar_index = type.index_of_instance_var(name).not_nil!
 
-    if type.passed_by_value?
+    if type.is_a?(VirtualType) && type.struct? && type.abstract?
+      # If the type is a virtual abstract struct then the type
+      # is actually represented as {type_id, value} so the offset
+      # of the instance var is behind type_id, which is 8 bytes
+      @program.offset_of(type.base_type, ivar_index).to_i32 + 8
+    elsif type.passed_by_value?
       @program.offset_of(type.sizeof_type, ivar_index).to_i32
     else
       @program.instance_offset_of(type.sizeof_type, ivar_index).to_i32
@@ -357,7 +359,11 @@ class Crystal::Repl::Context
   end
 
   getter(loader : Loader) {
-    args = Process.parse_arguments(program.lib_flags)
+    lib_flags = program.lib_flags
+    # Execute and expand `subcommands`.
+    lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` }
+
+    args = Process.parse_arguments(lib_flags)
     # FIXME: Part 1: This is a workaround for initial integration of the interpreter:
     # The loader can't handle the static libgc.a usually shipped with crystal and loading as a shared library conflicts
     # with the compiler's own GC.

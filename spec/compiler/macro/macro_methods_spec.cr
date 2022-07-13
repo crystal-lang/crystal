@@ -154,6 +154,45 @@ module Crystal
           assert_macro "{{ x.nil? }}", "true", {x: Nop.new}
         end
       end
+
+      describe "#is_a?" do
+        it "union argument" do
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral) }}), "true", {x: 1.int32}
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral) }}), "true", {x: "hello".string}
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral) }}), "false", {x: "hello".symbol}
+
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral | SymbolLiteral) }}), "true", {x: 1.int32}
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral | SymbolLiteral) }}), "true", {x: "hello".string}
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral | SymbolLiteral) }}), "true", {x: "hello".symbol}
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral | SymbolLiteral) }}), "false", {x: "hello".call}
+        end
+
+        it "union argument, mergeable" do
+          assert_macro %({{ x.is_a?(NumberLiteral | ASTNode) }}), "true", {x: 1.int32}
+          assert_macro %({{ x.is_a?(NumberLiteral | ASTNode) }}), "true", {x: "hello".string}
+        end
+
+        it "union argument, duplicate type" do
+          assert_macro %({{ x.is_a?(NumberLiteral | NumberLiteral) }}), "true", {x: 1.int32}
+          assert_macro %({{ x.is_a?(NumberLiteral | NumberLiteral) }}), "false", {x: "hello".string}
+        end
+
+        it "union argument, contains NoReturn" do
+          assert_macro %({{ x.is_a?(NumberLiteral | NoReturn) }}), "true", {x: 1.int32}
+          assert_macro %({{ x.is_a?(NumberLiteral | NoReturn) }}), "false", {x: "hello".string}
+        end
+
+        it "union argument, undefined types" do
+          assert_macro %({{ x.is_a?(NumberLiteral | String) }}), "true", {x: 1.int32}
+          assert_macro %({{ x.is_a?(NumberLiteral | String) }}), "false", {x: "hello".string}
+          assert_macro %({{ x.is_a?(Int32 | String) }}), "false", {x: 1.int32}
+        end
+
+        it "union argument, unimplemented types" do
+          assert_macro %({{ x.is_a?(ClassDef) }}), "true", {x: ClassDef.new("Foo".path)}
+          assert_macro %({{ x.is_a?(ModuleDef) }}), "false", {x: ClassDef.new("Foo".path)}
+        end
+      end
     end
 
     describe "number methods" do

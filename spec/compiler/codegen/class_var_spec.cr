@@ -542,7 +542,7 @@ describe "Codegen: class var" do
       )).to_i.should eq(1)
   end
 
-  it "codegens generic class class var" do
+  it "codegens generic class with class var" do
     run(%(
       class Foo(T)
         @@bar = 1
