@@ -338,5 +338,30 @@ describe Crystal::Repl::Interpreter do
         f.x + f.y + f.z
       CODE
     end
+
+    it "inlines struct method that returns self (#12253)" do
+      interpret(<<-CODE).should eq(42)
+        struct Foo
+          def initialize(@x : Int32)
+          end
+
+          def x
+            @x
+          end
+
+          def foo
+            me
+          end
+
+          def me
+            self
+          end
+        end
+
+        a = Foo.new(42)
+        b = a.foo
+        b.x
+      CODE
+    end
   end
 end
