@@ -131,7 +131,18 @@ class HTTP::Server
       @output.closed?
     end
 
-    @status_message : String?
+    # Sets the status message.
+    def status_message=(status_message : String?)
+      check_headers
+      @status_message = status_message
+    end
+
+    # Returns the status message.
+    #
+    # Defaults to description of `#status`.
+    def status_message : String?
+      @status_message || @status.description
+    end
 
     # Sends *status* and *message* as response.
     #
@@ -167,7 +178,7 @@ class HTTP::Server
     end
 
     protected def write_headers
-      @io << @version << ' ' << @status.code << ' ' << (@status_message || @status.description) << "\r\n"
+      @io << @version << ' ' << @status.code << ' ' << status_message << "\r\n"
       headers.each do |name, values|
         values.each do |value|
           @io << name << ": " << value << "\r\n"

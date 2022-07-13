@@ -237,5 +237,131 @@ describe Crystal::Repl::Interpreter do
         foo.x
       CODE
     end
+
+    it "does call receiver by value from VirtualType abstract struct to concrete struct (#12190)" do
+      interpret(<<-CODE).should eq(42)
+        abstract struct Base
+        end
+
+        struct A < Base
+          def initialize(@x : Int32)
+          end
+
+          def foo
+            @x
+          end
+        end
+
+        struct B < Base
+        end
+
+        v = A.new(42) || B.new
+
+        if v.is_a?(A)
+          v.foo
+        else
+          1
+        end
+      CODE
+    end
+
+    it "does call receiver by value from VirtualType abstract struct to union" do
+      interpret(<<-CODE).should eq(42)
+        abstract struct Base
+        end
+
+        struct A < Base
+          def initialize(@x : Int32)
+          end
+
+          def foo
+            @x
+          end
+        end
+
+        struct B < Base
+          def initialize(@x : Int32)
+          end
+
+          def foo
+            @x
+          end
+        end
+
+        struct C < Base
+        end
+
+        v = A.new(42) || B.new(3)
+
+        if v.is_a?(A | B)
+          v.foo
+        else
+          1
+        end
+      CODE
+    end
+
+    it "sets multiple instance vars in virtual abstract struct call (#12187)" do
+      interpret(<<-CODE).should eq(6)
+        abstract struct Foo
+          @x = 0
+          @y = 0
+          @z = 0
+
+          def set
+            @x = 1
+            @y = 2
+            @z = 3
+          end
+
+          def x
+            @x
+          end
+
+          def y
+            @y
+          end
+
+          def z
+            @z
+          end
+        end
+
+        struct Bar < Foo
+        end
+
+        struct Baz < Foo
+        end
+
+        f = Bar.new || Baz.new
+        f.set
+        f.x + f.y + f.z
+      CODE
+    end
+
+    it "inlines struct method that returns self (#12253)" do
+      interpret(<<-CODE).should eq(42)
+        struct Foo
+          def initialize(@x : Int32)
+          end
+
+          def x
+            @x
+          end
+
+          def foo
+            me
+          end
+
+          def me
+            self
+          end
+        end
+
+        a = Foo.new(42)
+        b = a.foo
+        b.x
+      CODE
+    end
   end
 end

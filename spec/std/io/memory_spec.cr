@@ -81,7 +81,7 @@ describe IO::Memory do
           io2 = IO::Memory.new
           io2.set_encoding "UTF-16LE"
 
-          io1.write_utf8 "abc😂".to_slice
+          io1.write_string "abc😂".to_slice
           io1.to_s io2
           byte_slice = io2.to_slice
           utf16_slice = Slice.new(byte_slice.to_unsafe.unsafe_as(Pointer(UInt16)), byte_slice.size // sizeof(UInt16))

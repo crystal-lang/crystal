@@ -1004,7 +1004,7 @@ describe "Enumerable" do
         [1].sample.should eq(1)
 
         x = SpecEnumerable.new.sample
-        [1, 2, 3].includes?(x).should be_true
+        [1, 2, 3].should contain(x)
       end
 
       it "samples with random" do
@@ -1035,7 +1035,7 @@ describe "Enumerable" do
         x = [1, 2, 3].sample(1)
         x.size.should eq(1)
         x = x.first
-        [1, 2, 3].includes?(x).should be_true
+        [1, 2, 3].should contain(x)
       end
 
       it "samples k elements out of n" do
@@ -1048,7 +1048,7 @@ describe "Enumerable" do
         set.size.should eq(3)
 
         set.each do |e|
-          a.includes?(e).should be_true
+          a.should contain(e)
         end
       end
 
@@ -1065,7 +1065,7 @@ describe "Enumerable" do
         set.size.should eq(3)
 
         set.each do |e|
-          a.includes?(e).should be_true
+          a.should contain(e)
         end
 
         SpecEmptyEnumerable.new.sample(1).should eq([] of Int32)

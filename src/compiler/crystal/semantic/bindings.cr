@@ -152,11 +152,6 @@ module Crystal
       propagate
     end
 
-    def unbind_all
-      @dependencies.try &.each &.remove_observer(self)
-      @dependencies = nil
-    end
-
     def unbind_from(nodes : Nil)
       # Nothing to do
     end
@@ -253,7 +248,7 @@ module Crystal
           return freeze_type
         end
 
-        # We also allow assining Proc(*T, NoReturn) to Proc(*T, U)
+        # We also allow assigning Proc(*T, NoReturn) to Proc(*T, U)
         if type.all? { |a_type|
              a_type.is_a?(ProcInstanceType) &&
              (a_type.return_type.is_a?(NoReturnType) || a_type.return_type == freeze_type.return_type) &&
@@ -692,8 +687,6 @@ module Crystal
   end
 
   class ReadInstanceVar
-    property! visitor : MainVisitor
-
     def update(from = nil)
       obj_type = obj.type?
       return unless obj_type
@@ -702,12 +695,21 @@ module Crystal
         if obj_type.is_a?(UnionType)
           obj_type.program.type_merge(
             obj_type.union_types.map do |union_type|
-              visitor.lookup_instance_var(self, union_type).type
+              lookup_instance_var(union_type).type
             end
           )
         else
-          visitor.lookup_instance_var(self, obj_type).type
+          lookup_instance_var(obj_type).type
         end
+    end
+
+    private def lookup_instance_var(type)
+      ivar = type.lookup_instance_var(self)
+      unless ivar
+        similar_name = type.lookup_similar_instance_var_name(name)
+        type.program.undefined_instance_variable(self, type, similar_name)
+      end
+      ivar
     end
   end
 

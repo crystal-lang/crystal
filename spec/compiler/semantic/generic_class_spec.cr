@@ -654,7 +654,7 @@ describe "Semantic: generic class" do
       )) { nilable int32 }
   end
 
-  it "doesn't duplicate overload on generic class class method (#2385)" do
+  it "doesn't duplicate overload on generic class with class method (#2385)" do
     error = assert_error <<-CR
       class Foo(T)
         def self.foo(x : Int32)
