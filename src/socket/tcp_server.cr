@@ -11,6 +11,7 @@ require "./tcp_socket"
 #   client.puts message
 # end
 #
+# "localhost" may defaults to ipv6 depending on your system. Use "127.0.0.1" for ipv4
 # server = TCPServer.new("localhost", 1234)
 # while client = server.accept?
 #   spawn handle_client(client)
