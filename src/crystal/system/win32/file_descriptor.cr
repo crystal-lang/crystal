@@ -59,14 +59,14 @@ module Crystal::System::FileDescriptor
     LibC::HANDLE.new(ret)
   end
 
-  private def system_info
-    handle = windows_handle
+  def self.system_info(handle, file_type = nil)
+    unless file_type
+      file_type = LibC.GetFileType(handle)
 
-    file_type = LibC.GetFileType(handle)
-
-    if file_type == LibC::FILE_TYPE_UNKNOWN
-      error = WinError.value
-      raise IO::Error.from_os_error("Unable to get info", error) unless error == WinError::ERROR_SUCCESS
+      if file_type == LibC::FILE_TYPE_UNKNOWN
+        error = WinError.value
+        raise IO::Error.from_os_error("Unable to get info", error) unless error == WinError::ERROR_SUCCESS
+      end
     end
 
     if file_type == LibC::FILE_TYPE_DISK
@@ -78,6 +78,10 @@ module Crystal::System::FileDescriptor
     else
       FileInfo.new(file_type)
     end
+  end
+
+  private def system_info
+    FileDescriptor.system_info windows_handle
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
