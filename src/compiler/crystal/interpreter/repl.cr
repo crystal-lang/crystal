@@ -37,18 +37,8 @@ class Crystal::Repl
       next unless node
 
       begin
-        value = interpret(node).to_s
-
-        if @context.program.color?
-          begin
-            value = Crystal::SyntaxHighlighter::Colorize.highlight(value)
-          rescue
-            # Ignore highlight errors
-          end
-        end
-
-        print "=> "
-        puts value
+        value = interpret(node)
+        prompt.display(value)
       rescue ex : EscapingException
         @nest = 0
         @buffer = ""
