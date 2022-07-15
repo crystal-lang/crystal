@@ -1854,6 +1854,15 @@ require "./repl"
           end,
         },
       {% end %}
+
+      {% for n in [16, 32, 64] %}
+        interpreter_intrinsics_bitreverse{{n}}: {
+          pop_values: [value : UInt{{n}}],
+          push:       true,
+          code:       LibIntrinsics.bitreverse{{n}}(value),
+        },
+      {% end %}
+
       libm_ceil_f32: {
         pop_values: [value : Float32],
         push:       true,
