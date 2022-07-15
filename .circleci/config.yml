@@ -73,7 +73,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: 12.4.0
+      xcode: 13.4.1
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
@@ -272,7 +272,7 @@ jobs:
 
   dist_darwin:
     macos:
-      xcode: 12.4.0
+      xcode: 13.4.1
     shell: /bin/bash --login -eo pipefail
     steps:
       - restore_cache:
