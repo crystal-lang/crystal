@@ -15,6 +15,10 @@ class Crystal::Repl::Compiler
     upcast_distinct(node, from, to)
   end
 
+  private def upcast(node : ASTNode, from : Nil, to : Type)
+    # Nothing to do when casting from nil (NoReturn), as it's NoReturn
+  end
+
   private def upcast_distinct(node : ASTNode, from : TypeDefType, to : Type)
     upcast_distinct node, from.typedef, to
   end
@@ -285,6 +289,10 @@ class Crystal::Repl::Compiler
     return if from == to
 
     downcast_distinct(node, from, to)
+  end
+
+  private def downcast(node : ASTNode, from : Type, to : Nil)
+    # Nothing to do when casting to nil (NoReturn)
   end
 
   private def downcast_distinct(node : ASTNode, from : Type, to : TypeDefType)

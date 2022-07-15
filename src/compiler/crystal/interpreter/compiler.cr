@@ -167,7 +167,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       block_var = node.vars.not_nil![arg.name]
 
       # If any block argument is closured, we need to store it in the closure
-      if block_var.type? && block_var.closure_in?(node)
+      if block_var.closure_in?(node)
         closured_var = lookup_closured_var(arg.name)
         assign_to_closured_var(closured_var, node: nil)
       else
@@ -749,7 +749,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         get_local index, aligned_sizeof_type(type), node: node
       end
 
-      downcast node, type, node.type
+      downcast node, type, node.type?
     in ClosuredVar
       if is_self && local_var.type.passed_by_value?
         node.raise "BUG: missing interpret read closured var with self"
@@ -1322,7 +1322,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     exp_type =
       if exp
         request_value(exp)
-        exp.type
+        exp.type?
       else
         put_nil node: node
         @context.program.nil_type
@@ -2041,7 +2041,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         next if var.special_var?
 
         var_type = var.type?
-        next unless var_type
+        var_type ||= @context.program.nil_type
 
         if var.closure_in?(block)
           needs_closure_context = true
@@ -3287,7 +3287,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @context.aligned_sizeof_type(node)
   end
 
-  private def aligned_sizeof_type(type : Type) : Int32
+  private def aligned_sizeof_type(type : Type?) : Int32
     @context.aligned_sizeof_type(type)
   end
 
@@ -3295,7 +3295,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @context.inner_sizeof_type(node)
   end
 
-  private def inner_sizeof_type(type : Type) : Int32
+  private def inner_sizeof_type(type : Type?) : Int32
     @context.inner_sizeof_type(type)
   end
 
