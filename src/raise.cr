@@ -100,21 +100,6 @@ end
   def throw_info : Void*
   end
 
-  # Raises the *exception*.
-  #
-  # This will set the exception's callstack if it hasn't been already.
-  # Re-raising a previously caught exception won't replace the callstack.
-  def raise(exception : Exception) : NoReturn
-    {% if flag?(:debug_raise) %}
-      STDERR.puts
-      STDERR.puts "Attempting to raise: "
-      exception.inspect_with_backtrace(STDERR)
-    {% end %}
-
-    exception.callstack ||= Exception::CallStack.new
-    LibC._CxxThrowException(pointerof(exception).as(Void*), throw_info)
-  end
-
   # :nodoc:
   @[Raises]
   fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
@@ -190,11 +175,6 @@ end
     LibC.exit(1)
     0u64
   end
-
-  def raise(exception : Exception) : NoReturn
-    LibC.printf("EXITING: Attempting to raise:\n#{exception.inspect_with_backtrace}")
-    LibC.exit(1)
-  end
 {% else %}
   # :nodoc:
   fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*) : LibUnwind::ReasonCode
@@ -229,7 +209,14 @@ end
   fun __crystal_get_exception(unwind_ex : LibUnwind::Exception*) : UInt64
     unwind_ex.value.exception_object.address
   end
+{% end %}
 
+{% if flag?(:wasm32) %}
+  def raise(exception : Exception) : NoReturn
+    LibC.printf("EXITING: Attempting to raise:\n#{exception.inspect_with_backtrace}")
+    LibC.exit(1)
+  end
+{% else %}
   # Raises the *exception*.
   #
   # This will set the exception's callstack if it hasn't been already.
@@ -251,16 +238,24 @@ def raise(message : String) : NoReturn
   raise Exception.new(message)
 end
 
-# :nodoc:
-{% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
-def raise_without_backtrace(exception : Exception) : NoReturn
-  unwind_ex = Pointer(LibUnwind::Exception).malloc
-  unwind_ex.value.exception_class = LibC::SizeT.zero
-  unwind_ex.value.exception_cleanup = LibC::SizeT.zero
-  unwind_ex.value.exception_object = exception.as(Void*)
-  unwind_ex.value.exception_type_id = exception.crystal_type_id
-  __crystal_raise(unwind_ex)
-end
+{% if flag?(:win32) %}
+  # :nodoc:
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
+  def raise_without_backtrace(exception : Exception) : NoReturn
+    LibC._CxxThrowException(pointerof(exception).as(Void*), throw_info)
+  end
+{% else %}
+  # :nodoc:
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
+  def raise_without_backtrace(exception : Exception) : NoReturn
+    unwind_ex = Pointer(LibUnwind::Exception).malloc
+    unwind_ex.value.exception_class = LibC::SizeT.zero
+    unwind_ex.value.exception_cleanup = LibC::SizeT.zero
+    unwind_ex.value.exception_object = exception.as(Void*)
+    unwind_ex.value.exception_type_id = exception.crystal_type_id
+    __crystal_raise(unwind_ex)
+  end
+{% end %}
 
 # :nodoc:
 fun __crystal_raise_string(message : UInt8*)
