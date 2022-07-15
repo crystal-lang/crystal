@@ -44,6 +44,7 @@ jobs:
             libs/pcre.lib
             libs/iconv.lib
             libs/gc.lib
+            libs/ffi.lib
             libs/z.lib
             libs/mpir.lib
             libs/yaml.lib
@@ -110,6 +111,37 @@ jobs:
           </Project>' > 'Override.props'
 
           MSBuild.exe /p:Platform=x64 /p:Configuration=ReleaseStatic libiconv.vcxproj
+      - name: Download libffi
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: winlibs/libffi
+          ref: libffi-3.3
+          path: libffi
+      - name: Build libffi
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        working-directory: ./libffi
+        run: |
+          echo '<Project>
+            <PropertyGroup>
+              <ForceImportAfterCppTargets>$(MsbuildThisFileDirectory)\Override.props</ForceImportAfterCppTargets>
+            </PropertyGroup>
+          </Project>' > 'Directory.Build.props'
+
+          echo '<Project>
+            <ItemDefinitionGroup Label="Configuration">
+              <ClCompile>
+                <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+                <DebugInformationFormat>None</DebugInformationFormat>
+                <WholeProgramOptimization>false</WholeProgramOptimization>
+              </ClCompile>
+              <Link>
+                <GenerateDebugInformation>false</GenerateDebugInformation>
+              </Link>
+            </ItemDefinitionGroup>
+          </Project>' > 'Override.props'
+
+          MSBuild.exe /p:PlatformToolset=v143 /p:Platform=x64 /p:Configuration=Release win32\vs16_x64\libffi-msvc.sln -target:libffi:Rebuild
       - name: Download zlib
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
@@ -200,6 +232,7 @@ jobs:
           mv pcre/Release/pcre.lib libs/
           mv libiconv/lib64/libiconvStatic.lib libs/iconv.lib
           mv bdwgc/Release/gc.lib libs/
+          mv libffi/win32/vs16_x64/x64/Release/libffi.lib libs/ffi.lib
           mv zlib/Release/zlibstatic.lib libs/z.lib
           mv mpir/lib/x64/Release/mpir.lib libs/
           mv libyaml/Release/yaml.lib libs/
