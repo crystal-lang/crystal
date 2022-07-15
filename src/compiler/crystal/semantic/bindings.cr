@@ -394,7 +394,25 @@ module Crystal
       to_type = to.type?
       return unless to_type
 
+      program = to_type.program
+
+      case to_type
+      when program.object
+        raise "can't cast to Object yet"
+      when program.reference
+        raise "can't cast to Reference yet"
+      when program.class_type
+        raise "can't cast to Class yet"
+      end
+
       obj_type = obj.type?
+
+      if obj_type.is_a?(PointerInstanceType)
+        to_type_instance_type = to_type.instance_type
+        if to_type_instance_type.is_a?(GenericType)
+          raise "can't cast #{obj_type} to #{to_type_instance_type}"
+        end
+      end
 
       @upcast = false
 
@@ -433,7 +451,25 @@ module Crystal
       to_type = to.type?
       return unless to_type
 
+      program = to_type.program
+
+      case to_type
+      when program.object
+        raise "can't cast to Object yet"
+      when program.reference
+        raise "can't cast to Reference yet"
+      when program.class_type
+        raise "can't cast to Class yet"
+      end
+
       obj_type = obj.type?
+
+      if obj_type.is_a?(PointerInstanceType)
+        to_type_instance_type = to_type.instance_type
+        if to_type_instance_type.is_a?(GenericType)
+          raise "can't cast #{obj_type} to #{to_type_instance_type}"
+        end
+      end
 
       @upcast = false
 
