@@ -110,7 +110,7 @@ class Process
   # `parse_arguments_windows` on Windows.
   def self.parse_arguments(line : String) : Array(String)
     {% if flag?(:unix) %}
-      parse_arguments_unix(line)
+      parse_arguments_posix(line)
     {% elsif flag?(:win32) %}
       parse_arguments_windows(line)
     {% else %}
