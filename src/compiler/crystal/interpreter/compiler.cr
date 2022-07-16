@@ -1992,7 +1992,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiled_def = CompiledDef.new(@context, target_def, owner, args_bytesize)
 
     # We don't cache defs that yield because we inline the block's contents
-    if block
+    if block && !block.fun_literal
       @context.add_gc_reference(compiled_def)
     else
       @context.defs[target_def] = compiled_def
