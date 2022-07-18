@@ -507,11 +507,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         link_annotation = LinkAnnotation.from(ann)
 
         if link_annotation.static?
-          @program.report_warning(ann, "specifying static linking for individual libraries is deprecated")
+          @program.warnings.try &.add_warning(ann, "specifying static linking for individual libraries is deprecated")
         end
 
         if ann.args.size > 1
-          @program.report_warning(ann, "using non-named arguments for Link annotations is deprecated")
+          @program.warnings.try &.add_warning(ann, "using non-named arguments for Link annotations is deprecated")
         end
 
         type.add_link_annotation(link_annotation)

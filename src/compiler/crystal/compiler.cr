@@ -15,11 +15,6 @@ module Crystal
     Default     = LineNumbers
   end
 
-  enum Warnings
-    All
-    None
-  end
-
   # Main interface to the compiler.
   #
   # A Compiler parses source code, type checks it and
@@ -109,14 +104,8 @@ module Crystal
     # and can later be used to generate API docs.
     property? wants_doc = false
 
-    # Which kind of warnings wants to be detected.
-    property warnings : Warnings = Warnings::All
-
-    # Paths to ignore for warnings detection.
-    property warnings_exclude : Array(String) = [] of String
-
-    # If `true` compiler will error if warnings are found.
-    property error_on_warnings : Bool = false
+    # Warning settings and all detected warnings.
+    property warnings = WarningCollection.new
 
     @[Flags]
     enum EmitTarget
@@ -218,8 +207,6 @@ module Crystal
       program.show_error_trace = show_error_trace?
       program.progress_tracker = @progress_tracker
       program.warnings = @warnings
-      program.warnings_exclude = @warnings_exclude.map { |p| File.expand_path p }
-      program.error_on_warnings = @error_on_warnings
       program
     end
 

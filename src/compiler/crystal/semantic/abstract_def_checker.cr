@@ -375,7 +375,7 @@ class Crystal::AbstractDefChecker
       impl_param = impl_method.args[i]
       base_param = base_method.args[i]
       unless impl_param.external_name == base_param.external_name
-        @program.report_warning(impl_param, "positional parameter '#{impl_param.external_name}' corresponds to parameter '#{base_param.external_name}' of the overridden method #{Call.def_full_name(base_type, base_method)}, which has a different name and may affect named argument passing")
+        @program.warnings.try &.add_warning(impl_param, "positional parameter '#{impl_param.external_name}' corresponds to parameter '#{base_param.external_name}' of the overridden method #{Call.def_full_name(base_type, base_method)}, which has a different name and may affect named argument passing")
       end
     end
   end
