@@ -130,7 +130,7 @@ module Crystal
     # Returns the macro type named by a given AST node in the macro language.
     def lookup_macro_type(name : Path)
       if name.names.size == 1
-        macro_type = @macro_types[name.names.first]?
+        macro_type = @macro_types[name.names.first.to_s]?
       end
       macro_type || macro_no_return
     end

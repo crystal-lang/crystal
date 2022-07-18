@@ -21,7 +21,7 @@ struct Crystal::TypeDeclarationProcessor
   # to determine nilable instance variables.
   class InitializeInfo
     getter :def
-    property instance_vars : Array(String)?
+    property instance_vars : Array(Ident)?
 
     def initialize(@def : Def)
     end
@@ -90,30 +90,30 @@ struct Crystal::TypeDeclarationProcessor
     #
     # In that case we remember that @x has a T node associated with it,
     # and only resolve it when instantiating the generic type.
-    @explicit_instance_vars = {} of Type => Hash(String, TypeDeclarationWithLocation)
+    @explicit_instance_vars = {} of Type => Hash(Ident, TypeDeclarationWithLocation)
 
     # The types we guess for instance vars, when not explicit
-    @guessed_instance_vars = {} of Type => Hash(String, InstanceVarTypeInfo)
+    @guessed_instance_vars = {} of Type => Hash(Ident, InstanceVarTypeInfo)
 
     # Info related to a type's initialize methods
     @initialize_infos = {} of Type => Array(InitializeInfo)
 
     # Instance variables that are initialized outside a method (at the class level)
-    @instance_vars_outside = {} of Type => Array(String)
+    @instance_vars_outside = {} of Type => Array(Ident)
 
     # Instance vars that are determined to be non-nilable because
     # they are initialized in at least one of the initialize methods.
-    @non_nilable_instance_vars = {} of Type => Array(String)
+    @non_nilable_instance_vars = {} of Type => Array(Ident)
 
     # Nilable variables there were detected to not be initialized in an initialize,
     # but a superclass does initialize it. It's only an error if the explicit/guessed
     # type is not nilable itself.
-    @nilable_instance_vars = {} of Type => Hash(String, InitializeInfo)
+    @nilable_instance_vars = {} of Type => Hash(Ident, InitializeInfo)
 
     # Errors related to types like Class, Int and Reference used for
     # instance variables. These are gathered by the guesser, and later
     # removed if an explicit type is found (in remove_error).
-    @errors = {} of Type => Hash(String, Error)
+    @errors = {} of Type => Hash(Ident, Error)
 
     # Types whose initialize methods are all macro defs
     @has_macro_def = Set(Type).new
@@ -522,7 +522,7 @@ struct Crystal::TypeDeclarationProcessor
             unless info.try &.instance_vars.try &.includes?(name)
               # Remember that this variable wasn't initialized here, and later error
               # if it turns out to be non-nilable
-              nilable_vars = @nilable_instance_vars[owner] ||= {} of String => InitializeInfo
+              nilable_vars = @nilable_instance_vars[owner] ||= {} of Ident => InitializeInfo
               nilable_vars[name] = info
             end
           end
@@ -531,14 +531,14 @@ struct Crystal::TypeDeclarationProcessor
     end
 
     # Get all instance vars assigned in all the initialize methods
-    all_instance_vars = [] of String
+    all_instance_vars = [] of Ident
     infos.each do |info|
       info.instance_vars.try { |ivars| all_instance_vars.concat(ivars) }
     end
     all_instance_vars.uniq!
 
     # Then check which ones are assigned in all of them
-    non_nilable = [] of String
+    non_nilable = [] of Ident
     all_instance_vars.each do |instance_var|
       infos.each do |info|
         # If an initialize calls another initialize, consider it like it initializes
@@ -564,7 +564,7 @@ struct Crystal::TypeDeclarationProcessor
           all_assigned = false
           # Remember that this variable wasn't initialized here, and later error
           # if it turns out to be non-nilable
-          nilable_vars = @nilable_instance_vars[owner] ||= {} of String => InitializeInfo
+          nilable_vars = @nilable_instance_vars[owner] ||= {} of Ident => InitializeInfo
           nilable_vars[instance_var] = info
           break
         end
@@ -598,7 +598,7 @@ struct Crystal::TypeDeclarationProcessor
 
   private def compute_non_nilable_outside_single(owner, non_nilable_outside)
     if vars = @instance_vars_outside[owner]?
-      non_nilable_outside ||= [] of String
+      non_nilable_outside ||= [] of Ident
       vars.each do |name|
         non_nilable_outside << name unless non_nilable_outside.includes?(name)
       end

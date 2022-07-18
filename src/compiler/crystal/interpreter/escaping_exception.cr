@@ -10,9 +10,16 @@ class Crystal::Repl::EscapingException < Exception
   def to_s(io : IO)
     type_id = @exception_pointer.as(Int32*).value
     type = @interpreter.context.type_from_id(type_id)
+    ex_ident = @interpreter.context.program.ident_pool.get("ex")
+    inspect_with_backtrace_ident = @interpreter.context.program.ident_pool.get("inspect_with_backtrace")
 
-    decl = UninitializedVar.new(Var.new("ex"), TypeNode.new(@interpreter.context.program.exception.virtual_type))
-    call = Call.new(Var.new("ex"), "inspect_with_backtrace")
+    decl = UninitializedVar.new(
+      Var.new(ex_ident),
+      TypeNode.new(@interpreter.context.program.exception.virtual_type))
+    call = Call.new(
+      Var.new(ex_ident),
+      inspect_with_backtrace_ident,
+    )
     exps = Expressions.new([decl, call] of ASTNode)
 
     begin

@@ -1,6 +1,6 @@
 module Crystal
   class RestrictionsAugmenter < Visitor
-    @args_hash : Hash(String, Arg)?
+    @args_hash : Hash(Ident, Arg)?
     @current_type : Type
     @def : Def?
 
@@ -10,6 +10,10 @@ module Crystal
 
     def initialize(@program : Program, @new_expansions : Hash(Def, Def))
       @current_type = @program
+    end
+
+    def ident_pool
+      @program.ident_pool
     end
 
     def visit(node : ExpandableNode)
@@ -29,7 +33,7 @@ module Crystal
 
     def visit(node : Def)
       @def = node
-      @args_hash = args_hash = {} of String => Arg
+      @args_hash = args_hash = {} of Ident => Arg
       node.args.each do |arg|
         next if arg.restriction
         args_hash[arg.name] = arg
@@ -130,7 +134,7 @@ module Crystal
 
       # If this is an initialize, we can also add a type restriction to the
       # auto-generated "new" so that it shows up in docs.
-      return unless current_def.name == "initialize"
+      return unless current_def.name == ident_pool._initialize
 
       expansion = @new_expansions[current_def]?
       return unless expansion

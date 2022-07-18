@@ -329,10 +329,10 @@ class Crystal::CodeGenVisitor
   end
 
   def class_var_global_name(class_var : MetaTypeVar)
-    "#{class_var.owner.llvm_name}#{class_var.name.gsub('@', ':')}"
+    "#{class_var.owner.llvm_name}#{class_var.name.to_s.gsub('@', ':')}"
   end
 
   def class_var_global_initialized_name(class_var : MetaTypeVar)
-    "#{class_var.owner.llvm_name}#{class_var.name.gsub('@', ':')}:init"
+    "#{class_var.owner.llvm_name}#{class_var.name.to_s.gsub('@', ':')}:init"
   end
 end

@@ -62,7 +62,7 @@ struct Symbol
   # Symbol.needs_quotes? "string"      # => false
   # Symbol.needs_quotes? "long string" # => true
   # ```
-  def self.needs_quotes?(string) : Bool
+  def self.needs_quotes?(string : String) : Bool
     case string
     when "+", "-", "*", "&+", "&-", "&*", "/", "//", "==", "<", "<=", ">", ">=", "!", "!=", "=~", "!~"
       false
@@ -78,7 +78,7 @@ struct Symbol
   # :nodoc:
   # Determines if a string needs to be quoted to be used for an external
   # parameter name or a named argument's key.
-  def self.needs_quotes_for_named_argument?(string) : Bool
+  def self.needs_quotes_for_named_argument?(string : String) : Bool
     case string
     when "", "_"
       true

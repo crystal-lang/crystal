@@ -47,7 +47,7 @@ module Crystal
     # All FileModules indexed by their filename.
     # These store file-private defs, and top-level variables in files other
     # than the main file.
-    getter file_modules = {} of String => FileModule
+    getter file_modules = {} of Ident => FileModule
 
     # Types that have instance vars initializers which need to be visited
     # (transformed) by `CleanupTransformer` once the semantic analysis finishes.
@@ -81,7 +81,7 @@ module Crystal
 
     # A String pool to avoid creating the same strings over and over.
     # This pool is passed to the parser, macro expander, etc.
-    getter string_pool = StringPool.new
+    getter ident_pool = IdentPool.new
 
     # The cache directory where temporary files are placed.
     setter cache_dir : String?
@@ -119,98 +119,98 @@ module Crystal
     property compiler : Compiler?
 
     def initialize
-      super(self, self, "main")
+      super(self, self, ident_pool._main)
 
       # Every crystal program comes with some predefined types that we initialize here,
       # like Object, Value, Reference, etc.
       types = self.types
 
-      types["Object"] = object = @object = NonGenericClassType.new self, self, "Object", nil
+      types[ident_pool.get("Object")] = object = @object = NonGenericClassType.new self, self, ident_pool.get("Object"), nil
       object.can_be_stored = false
       object.abstract = true
 
-      types["Reference"] = reference = @reference = NonGenericClassType.new self, self, "Reference", object
+      types[ident_pool.get("Reference")] = reference = @reference = NonGenericClassType.new self, self, ident_pool.get("Reference"), object
       reference.can_be_stored = false
 
-      types["Value"] = value = @value = NonGenericClassType.new self, self, "Value", object
+      types[ident_pool.get("Value")] = value = @value = NonGenericClassType.new self, self, ident_pool.get("Value"), object
       abstract_value_type(value)
 
-      types["Number"] = number = @number = NonGenericClassType.new self, self, "Number", value
+      types[ident_pool.get("Number")] = number = @number = NonGenericClassType.new self, self, ident_pool.get("Number"), value
       abstract_value_type(number)
 
-      types["NoReturn"] = @no_return = NoReturnType.new self, self, "NoReturn"
-      types["Void"] = @void = VoidType.new self, self, "Void"
-      types["Nil"] = nil_t = @nil = NilType.new self, self, "Nil", value, 1
-      types["Bool"] = @bool = BoolType.new self, self, "Bool", value, 1
-      types["Char"] = @char = CharType.new self, self, "Char", value, 4
+      types[ident_pool.get("NoReturn")] = @no_return = NoReturnType.new self, self, ident_pool.get("NoReturn")
+      types[ident_pool.get("Void")] = @void = VoidType.new self, self, ident_pool.get("Void")
+      types[ident_pool.get("Nil")] = nil_t = @nil = NilType.new self, self, ident_pool.get("Nil"), value, 1
+      types[ident_pool.get("Bool")] = @bool = BoolType.new self, self, ident_pool.get("Bool"), value, 1
+      types[ident_pool.get("Char")] = @char = CharType.new self, self, ident_pool.get("Char"), value, 4
 
-      types["Int"] = int = @int = NonGenericClassType.new self, self, "Int", number
+      types[ident_pool.get("Int")] = int = @int = NonGenericClassType.new self, self, ident_pool.get("Int"), number
       abstract_value_type(int)
 
-      types["Int8"] = @int8 = IntegerType.new self, self, "Int8", int, 1, 1, :i8
-      types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", int, 1, 2, :u8
-      types["Int16"] = @int16 = IntegerType.new self, self, "Int16", int, 2, 3, :i16
-      types["UInt16"] = @uint16 = IntegerType.new self, self, "UInt16", int, 2, 4, :u16
-      types["Int32"] = @int32 = IntegerType.new self, self, "Int32", int, 4, 5, :i32
-      types["UInt32"] = @uint32 = IntegerType.new self, self, "UInt32", int, 4, 6, :u32
-      types["Int64"] = @int64 = IntegerType.new self, self, "Int64", int, 8, 7, :i64
-      types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", int, 8, 8, :u64
-      types["Int128"] = @int128 = IntegerType.new self, self, "Int128", int, 16, 9, :i128
-      types["UInt128"] = @uint128 = IntegerType.new self, self, "UInt128", int, 16, 10, :u128
+      types[ident_pool.get("Int8")] = @int8 = IntegerType.new self, self, ident_pool.get("Int8"), int, 1, 1, :i8
+      types[ident_pool.get("UInt8")] = @uint8 = IntegerType.new self, self, ident_pool.get("UInt8"), int, 1, 2, :u8
+      types[ident_pool.get("Int16")] = @int16 = IntegerType.new self, self, ident_pool.get("Int16"), int, 2, 3, :i16
+      types[ident_pool.get("UInt16")] = @uint16 = IntegerType.new self, self, ident_pool.get("UInt16"), int, 2, 4, :u16
+      types[ident_pool.get("Int32")] = @int32 = IntegerType.new self, self, ident_pool.get("Int32"), int, 4, 5, :i32
+      types[ident_pool.get("UInt32")] = @uint32 = IntegerType.new self, self, ident_pool.get("UInt32"), int, 4, 6, :u32
+      types[ident_pool.get("Int64")] = @int64 = IntegerType.new self, self, ident_pool.get("Int64"), int, 8, 7, :i64
+      types[ident_pool.get("UInt64")] = @uint64 = IntegerType.new self, self, ident_pool.get("UInt64"), int, 8, 8, :u64
+      types[ident_pool.get("Int128")] = @int128 = IntegerType.new self, self, ident_pool.get("Int128"), int, 16, 9, :i128
+      types[ident_pool.get("UInt128")] = @uint128 = IntegerType.new self, self, ident_pool.get("UInt128"), int, 16, 10, :u128
 
-      types["Float"] = float = @float = NonGenericClassType.new self, self, "Float", number
+      types[ident_pool.get("Float")] = float = @float = NonGenericClassType.new self, self, ident_pool.get("Float"), number
       abstract_value_type(float)
 
-      types["Float32"] = @float32 = FloatType.new self, self, "Float32", float, 4, 9
-      types["Float64"] = @float64 = FloatType.new self, self, "Float64", float, 8, 10
+      types[ident_pool.get("Float32")] = @float32 = FloatType.new self, self, ident_pool.get("Float32"), float, 4, 9
+      types[ident_pool.get("Float64")] = @float64 = FloatType.new self, self, ident_pool.get("Float64"), float, 8, 10
 
-      types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", value, 4
-      types["Pointer"] = pointer = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
+      types[ident_pool.get("Symbol")] = @symbol = SymbolType.new self, self, ident_pool.get("Symbol"), value, 4
+      types[ident_pool.get("Pointer")] = pointer = @pointer = PointerType.new self, self, ident_pool.get("Pointer"), value, [ident_pool.get("T")]
       pointer.struct = true
       pointer.can_be_stored = false
 
-      types["Tuple"] = tuple = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
+      types[ident_pool.get("Tuple")] = tuple = @tuple = TupleType.new self, self, ident_pool.get("Tuple"), value, [ident_pool.get("T")]
       tuple.can_be_stored = false
 
-      types["NamedTuple"] = named_tuple = @named_tuple = NamedTupleType.new self, self, "NamedTuple", value, ["T"]
+      types[ident_pool.get("NamedTuple")] = named_tuple = @named_tuple = NamedTupleType.new self, self, ident_pool.get("NamedTuple"), value, [ident_pool.get("T")]
       named_tuple.can_be_stored = false
 
-      types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
+      types[ident_pool.get("StaticArray")] = static_array = @static_array = StaticArrayType.new self, self, ident_pool.get("StaticArray"), value, [ident_pool.get("T"), ident_pool.get("N")]
       static_array.struct = true
-      static_array.declare_instance_var("@buffer", static_array.type_parameter("T"))
+      static_array.declare_instance_var(ident_pool.get("@buffer"), static_array.type_parameter(ident_pool.get("T")))
       static_array.can_be_stored = false
 
-      types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
-      string.declare_instance_var("@bytesize", int32)
-      string.declare_instance_var("@length", int32)
-      string.declare_instance_var("@c", uint8)
+      types[ident_pool.get("String")] = string = @string = NonGenericClassType.new self, self, ident_pool.get("String"), reference
+      string.declare_instance_var(ident_pool.get("@bytesize"), int32)
+      string.declare_instance_var(ident_pool.get("@length"), int32)
+      string.declare_instance_var(ident_pool.get("@c"), uint8)
 
-      types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
+      types[ident_pool.get("Class")] = klass = @class = MetaclassType.new(self, object, value, ident_pool.get("Class"))
       klass.can_be_stored = false
 
-      types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
+      types[ident_pool.get("Struct")] = struct_t = @struct_t = NonGenericClassType.new self, self, ident_pool.get("Struct"), value
       abstract_value_type(struct_t)
 
-      types["Enumerable"] = @enumerable = GenericModuleType.new self, self, "Enumerable", ["T"]
-      types["Indexable"] = @indexable = GenericModuleType.new self, self, "Indexable", ["T"]
+      types[ident_pool.get("Enumerable")] = @enumerable = GenericModuleType.new self, self, ident_pool.get("Enumerable"), [ident_pool.get("T")]
+      types[ident_pool.get("Indexable")] = @indexable = GenericModuleType.new self, self, ident_pool.get("Indexable"), [ident_pool.get("T")]
 
-      types["Array"] = @array = GenericClassType.new self, self, "Array", reference, ["T"]
-      types["Hash"] = @hash_type = GenericClassType.new self, self, "Hash", reference, ["K", "V"]
-      types["Regex"] = @regex = NonGenericClassType.new self, self, "Regex", reference
-      types["Range"] = range = @range = GenericClassType.new self, self, "Range", struct_t, ["B", "E"]
+      types[ident_pool.get("Array")] = @array = GenericClassType.new self, self, ident_pool.get("Array"), reference, [ident_pool.get("T")]
+      types[ident_pool.get("Hash")] = @hash_type = GenericClassType.new self, self, ident_pool.get("Hash"), reference, [ident_pool.get("K"), ident_pool.get("V")]
+      types[ident_pool.get("Regex")] = @regex = NonGenericClassType.new self, self, ident_pool.get("Regex"), reference
+      types[ident_pool.get("Range")] = range = @range = GenericClassType.new self, self, ident_pool.get("Range"), struct_t, [ident_pool.get("B"), ident_pool.get("E")]
       range.struct = true
 
-      types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", reference
+      types[ident_pool.get("Exception")] = @exception = NonGenericClassType.new self, self, ident_pool.get("Exception"), reference
 
-      types["Enum"] = enum_t = @enum = NonGenericClassType.new self, self, "Enum", value
+      types[ident_pool.get("Enum")] = enum_t = @enum = NonGenericClassType.new self, self, ident_pool.get("Enum"), value
       abstract_value_type(enum_t)
 
-      types["Proc"] = @proc = ProcType.new self, self, "Proc", value, ["T", "R"]
-      types["Union"] = @union = GenericUnionType.new self, self, "Union", value, ["T"]
-      types["Crystal"] = @crystal = NonGenericModuleType.new self, self, "Crystal"
+      types[ident_pool.get("Proc")] = @proc = ProcType.new self, self, ident_pool.get("Proc"), value, [ident_pool.get("T"), ident_pool.get("R")]
+      types[ident_pool.get("Union")] = @union = GenericUnionType.new self, self, ident_pool.get("Union"), value, [ident_pool.get("T")]
+      types[ident_pool.get("Crystal")] = @crystal = NonGenericModuleType.new self, self, ident_pool.get("Crystal")
 
-      types["ARGC_UNSAFE"] = @argc = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new("argc", int32)
-      types["ARGV_UNSAFE"] = @argv = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new("argv", pointer_of(pointer_of(uint8)))
+      types[ident_pool.get("ARGC_UNSAFE")] = @argc = argc_unsafe = Const.new self, self, ident_pool.get("ARGC_UNSAFE"), Primitive.new(ident_pool._argc, int32)
+      types[ident_pool.get("ARGV_UNSAFE")] = @argv = argv_unsafe = Const.new self, self, ident_pool.get("ARGV_UNSAFE"), Primitive.new(ident_pool._argv, pointer_of(pointer_of(uint8)))
 
       argc_unsafe.no_init_flag = true
       argv_unsafe.no_init_flag = true
@@ -222,29 +222,33 @@ module Crystal
       const_initializers << argc_unsafe
       const_initializers << argv_unsafe
 
-      types["GC"] = gc = NonGenericModuleType.new self, self, "GC"
-      gc.metaclass.as(ModuleType).add_def Def.new("add_finalizer", [Arg.new("object")], Nop.new)
+      types[ident_pool.get("GC")] = gc = NonGenericModuleType.new self, self, ident_pool.get("GC")
+      gc.metaclass.as(ModuleType).add_def Def.new(ident_pool.get("add_finalizer"), [Arg.new(ident_pool.get("object"))], Nop.new)
 
       # Built-in annotations
-      types["AlwaysInline"] = @always_inline_annotation = AnnotationType.new self, self, "AlwaysInline"
-      types["CallConvention"] = @call_convention_annotation = AnnotationType.new self, self, "CallConvention"
-      types["Extern"] = @extern_annotation = AnnotationType.new self, self, "Extern"
-      types["Flags"] = @flags_annotation = AnnotationType.new self, self, "Flags"
-      types["Link"] = @link_annotation = AnnotationType.new self, self, "Link"
-      types["Naked"] = @naked_annotation = AnnotationType.new self, self, "Naked"
-      types["NoInline"] = @no_inline_annotation = AnnotationType.new self, self, "NoInline"
-      types["Packed"] = @packed_annotation = AnnotationType.new self, self, "Packed"
-      types["Primitive"] = @primitive_annotation = AnnotationType.new self, self, "Primitive"
-      types["Raises"] = @raises_annotation = AnnotationType.new self, self, "Raises"
-      types["ReturnsTwice"] = @returns_twice_annotation = AnnotationType.new self, self, "ReturnsTwice"
-      types["ThreadLocal"] = @thread_local_annotation = AnnotationType.new self, self, "ThreadLocal"
-      types["Deprecated"] = @deprecated_annotation = AnnotationType.new self, self, "Deprecated"
-      types["Experimental"] = @experimental_annotation = AnnotationType.new self, self, "Experimental"
+      types[ident_pool.get("AlwaysInline")] = @always_inline_annotation = AnnotationType.new self, self, ident_pool.get("AlwaysInline")
+      types[ident_pool.get("CallConvention")] = @call_convention_annotation = AnnotationType.new self, self, ident_pool.get("CallConvention")
+      types[ident_pool.get("Extern")] = @extern_annotation = AnnotationType.new self, self, ident_pool.get("Extern")
+      types[ident_pool.get("Flags")] = @flags_annotation = AnnotationType.new self, self, ident_pool.get("Flags")
+      types[ident_pool.get("Link")] = @link_annotation = AnnotationType.new self, self, ident_pool.get("Link")
+      types[ident_pool.get("Naked")] = @naked_annotation = AnnotationType.new self, self, ident_pool.get("Naked")
+      types[ident_pool.get("NoInline")] = @no_inline_annotation = AnnotationType.new self, self, ident_pool.get("NoInline")
+      types[ident_pool.get("Packed")] = @packed_annotation = AnnotationType.new self, self, ident_pool.get("Packed")
+      types[ident_pool.get("Primitive")] = @primitive_annotation = AnnotationType.new self, self, ident_pool.get("Primitive")
+      types[ident_pool.get("Raises")] = @raises_annotation = AnnotationType.new self, self, ident_pool.get("Raises")
+      types[ident_pool.get("ReturnsTwice")] = @returns_twice_annotation = AnnotationType.new self, self, ident_pool.get("ReturnsTwice")
+      types[ident_pool.get("ThreadLocal")] = @thread_local_annotation = AnnotationType.new self, self, ident_pool.get("ThreadLocal")
+      types[ident_pool.get("Deprecated")] = @deprecated_annotation = AnnotationType.new self, self, ident_pool.get("Deprecated")
+      types[ident_pool.get("Experimental")] = @experimental_annotation = AnnotationType.new self, self, ident_pool.get("Experimental")
 
       define_crystal_constants
 
       # definition in `macros/types.cr`
       define_macro_types
+    end
+
+    def string_pool
+      ident_pool.string_pool
     end
 
     # Returns a `LiteralExpander` useful to expand literal like arrays and hashes
@@ -258,7 +262,7 @@ module Crystal
     # This variable is bound to other nodes in the semantic phase for things
     # that need to be nilable, for example to a variable that's only declared
     # in one branch of an `if` expression.
-    getter(nil_var) { Var.new("<nil_var>", nil_type) }
+    getter(nil_var) { Var.new(ident_pool.nil_var_name, nil_type) }
 
     # Defines a predefined constant in the Crystal module, such as BUILD_DATE and VERSION.
     private def define_crystal_constants
@@ -278,16 +282,18 @@ module Crystal
       define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version
     end
 
-    private def define_crystal_string_constant(name, value)
+    private def define_crystal_string_constant(name : String, value)
       define_crystal_constant name, StringLiteral.new(value).tap(&.set_type(string))
     end
 
-    private def define_crystal_nil_constant(name)
+    private def define_crystal_nil_constant(name : String)
       define_crystal_constant name, NilLiteral.new.tap(&.set_type(self.nil))
     end
 
-    private def define_crystal_constant(name, value)
-      crystal.types[name] = const = Const.new self, crystal, name, value
+    private def define_crystal_constant(name : String, value)
+      ident = ident_pool.get(name)
+
+      crystal.types[ident] = const = Const.new self, crystal, ident, value
       const.no_init_flag = true
       predefined_constants << const
     end
@@ -552,9 +558,13 @@ module Crystal
 
     @temp_var_counter = 0
 
-    def new_temp_var_name
+    def new_temp_var_name : Ident
       @temp_var_counter += 1
-      "__temp_#{@temp_var_counter}"
+      ident("__temp_#{@temp_var_counter}")
+    end
+
+    def ident(string : String) : Ident
+      @ident_pool.get(string)
     end
 
     # Colorizes the given object, depending on whether this program
@@ -595,15 +605,23 @@ module Crystal
       end
     end
 
-    def lookup_private_matches(filename, signature, analyze_all = false)
+    def lookup_private_matches(filename : Ident, signature, analyze_all = false)
       file_module?(filename).try &.lookup_matches(signature, analyze_all: analyze_all)
     end
 
-    def file_module?(filename)
+    def file_module?(filename : String)
+      file_module?(ident_pool.get(filename))
+    end
+
+    def file_module?(filename : Ident)
       file_modules[filename]?
     end
 
-    def file_module(filename)
+    def file_module(filename : String)
+      file_module(ident_pool.get(filename))
+    end
+
+    def file_module(filename : Ident)
       file_modules[filename] ||= FileModule.new(self, self, filename)
     end
 

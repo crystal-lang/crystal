@@ -25,7 +25,7 @@ require "./repl"
 #   exists inside the block) are no longer reachable so:
 # - c can also be put in (16-24)
 class Crystal::Repl::LocalVars
-  record Key, name : String, block_level : Int32
+  record Key, name : Ident, block_level : Int32
 
   getter block_level : Int32
 
@@ -78,8 +78,8 @@ class Crystal::Repl::LocalVars
     @name_to_index.keys.map(&.name)
   end
 
-  def declare(name : String, type : Type) : Int32?
-    is_self = name == "self"
+  def declare(name : Ident, type : Type) : Int32?
+    is_self = name == @context.program.ident_pool._self
     return if is_self && type.is_a?(Program)
 
     key = Key.new(name, @block_level)
@@ -100,19 +100,19 @@ class Crystal::Repl::LocalVars
     index
   end
 
-  def name_to_index(name : String, block_level : Int32) : Int32
+  def name_to_index(name : Ident, block_level : Int32) : Int32
     @name_to_index[Key.new(name, block_level)]
   end
 
-  def name_to_index?(name : String, block_level : Int32) : Int32?
+  def name_to_index?(name : Ident, block_level : Int32) : Int32?
     @name_to_index[Key.new(name, block_level)]?
   end
 
-  def type(name : String, block_level : Int32) : Type
+  def type(name : Ident, block_level : Int32) : Type
     @types[Key.new(name, block_level)]
   end
 
-  def type?(name : String, block_level : Int32) : Type?
+  def type?(name : Ident, block_level : Int32) : Type?
     @types[Key.new(name, block_level)]?
   end
 

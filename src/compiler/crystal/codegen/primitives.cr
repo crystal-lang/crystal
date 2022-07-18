@@ -4,9 +4,9 @@ class Crystal::CodeGenVisitor
   # Can only happen in a Const or as an argument cast.
   def visit(node : Primitive)
     @last = case node.name
-            when "argc"
+            when ident_pool._argc
               @argc
-            when "argv"
+            when ident_pool._argv
               @argv
             else
               raise "BUG: unhandled primitive in codegen visit: #{node.name}"
@@ -17,65 +17,65 @@ class Crystal::CodeGenVisitor
     @call_location = call.try &.name_location
 
     @last = case node.name
-            when "binary"
+            when ident_pool._binary
               codegen_primitive_binary node, target_def, call_args
-            when "convert"
+            when ident_pool._convert
               codegen_primitive_convert node, target_def, call_args, checked: true
-            when "unchecked_convert"
+            when ident_pool._unchecked_convert
               codegen_primitive_convert node, target_def, call_args, checked: false
-            when "allocate"
+            when ident_pool._allocate
               codegen_primitive_allocate node, target_def, call_args
-            when "pointer_malloc"
+            when ident_pool._pointer_malloc
               codegen_primitive_pointer_malloc node, target_def, call_args
-            when "pointer_set"
+            when ident_pool._pointer_set
               codegen_primitive_pointer_set node, target_def, call_args
-            when "pointer_get"
+            when ident_pool._pointer_get
               codegen_primitive_pointer_get node, target_def, call_args
-            when "pointer_address"
+            when ident_pool._pointer_address
               codegen_primitive_pointer_address node, target_def, call_args
-            when "pointer_new"
+            when ident_pool._pointer_new
               codegen_primitive_pointer_new node, target_def, call_args
-            when "pointer_realloc"
+            when ident_pool._pointer_realloc
               codegen_primitive_pointer_realloc node, target_def, call_args
-            when "pointer_add"
+            when ident_pool._pointer_add
               codegen_primitive_pointer_add node, target_def, call_args
-            when "pointer_diff"
+            when ident_pool._pointer_diff
               codegen_primitive_pointer_diff node, target_def, call_args
-            when "struct_or_union_set"
+            when ident_pool._struct_or_union_set
               codegen_primitive_struct_or_union_set node, target_def, call_args
-            when "external_var_set"
+            when ident_pool._external_var_set
               codegen_primitive_external_var_set node, target_def, call_args
-            when "external_var_get"
+            when ident_pool._external_var_get
               codegen_primitive_external_var_get node, target_def, call_args
-            when "object_id"
+            when ident_pool._object_id
               codegen_primitive_object_id node, target_def, call_args
-            when "object_crystal_type_id"
+            when ident_pool._object_crystal_type_id
               codegen_primitive_object_crystal_type_id node, target_def, call_args
-            when "class_crystal_instance_type_id"
+            when ident_pool._class_crystal_instance_type_id
               codegen_primitive_class_crystal_instance_type_id node, target_def, call_args
-            when "symbol_to_s"
+            when ident_pool._symbol_to_s
               codegen_primitive_symbol_to_s node, target_def, call_args
-            when "class"
+            when ident_pool._class
               codegen_primitive_class node, target_def, call_args
-            when "proc_call"
+            when ident_pool._proc_call
               codegen_primitive_proc_call node, target_def, call_args
-            when "tuple_indexer_known_index"
+            when ident_pool._tuple_indexer_known_index
               codegen_primitive_tuple_indexer_known_index node, target_def, call_args
-            when "enum_value", "enum_new"
+            when ident_pool._enum_value, ident_pool._enum_new
               call_args[0]
-            when "cmpxchg"
+            when ident_pool._cmpxchg
               codegen_primitive_cmpxchg call, node, target_def, call_args
-            when "atomicrmw"
+            when ident_pool._atomicrmw
               codegen_primitive_atomicrmw call, node, target_def, call_args
-            when "fence"
+            when ident_pool._fence
               codegen_primitive_fence call, node, target_def, call_args
-            when "load_atomic"
+            when ident_pool._load_atomic
               codegen_primitive_load_atomic call, node, target_def, call_args
-            when "store_atomic"
+            when ident_pool._store_atomic
               codegen_primitive_store_atomic call, node, target_def, call_args
-            when "throw_info"
+            when ident_pool._throw_info
               cast_to void_ptr_throwinfo, @program.pointer_of(@program.void)
-            when "va_arg"
+            when ident_pool._va_arg
               codegen_va_arg call, node, target_def, call_args
             else
               raise "BUG: unhandled primitive in codegen: #{node.name}"
@@ -92,29 +92,29 @@ class Crystal::CodeGenVisitor
 
   def codegen_binary_op(op, t1 : BoolType, t2 : BoolType, p1, p2)
     case op
-    when "==" then builder.icmp LLVM::IntPredicate::EQ, p1, p2
-    when "!=" then builder.icmp LLVM::IntPredicate::NE, p1, p2
-    else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
+    when ident_pool.cmp_eq then builder.icmp LLVM::IntPredicate::EQ, p1, p2
+    when ident_pool.cmp_ne then builder.icmp LLVM::IntPredicate::NE, p1, p2
+    else                        raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
   def codegen_binary_op(op, t1 : CharType, t2 : CharType, p1, p2)
     case op
-    when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
-    when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-    when "<"  then return builder.icmp LLVM::IntPredicate::ULT, p1, p2
-    when "<=" then return builder.icmp LLVM::IntPredicate::ULE, p1, p2
-    when ">"  then return builder.icmp LLVM::IntPredicate::UGT, p1, p2
-    when ">=" then return builder.icmp LLVM::IntPredicate::UGE, p1, p2
-    else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
+    when ident_pool.cmp_eq  then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
+    when ident_pool.cmp_ne  then return builder.icmp LLVM::IntPredicate::NE, p1, p2
+    when ident_pool.cmp_lt  then return builder.icmp LLVM::IntPredicate::ULT, p1, p2
+    when ident_pool.cmp_let then return builder.icmp LLVM::IntPredicate::ULE, p1, p2
+    when ident_pool.cmp_gt  then return builder.icmp LLVM::IntPredicate::UGT, p1, p2
+    when ident_pool.cmp_get then return builder.icmp LLVM::IntPredicate::UGE, p1, p2
+    else                         raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
   def codegen_binary_op(op, t1 : SymbolType, t2 : SymbolType, p1, p2)
     case op
-    when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
-    when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-    else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
+    when ident_pool.cmp_eq then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
+    when ident_pool.cmp_ne then return builder.icmp LLVM::IntPredicate::NE, p1, p2
+    else                        raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
@@ -122,38 +122,50 @@ class Crystal::CodeGenVisitor
     # Comparisons are a bit trickier because we want to get comparisons
     # between signed and unsigned integers right.
     case op
-    when "<"  then return codegen_binary_op_lt(t1, t2, p1, p2)
-    when "<=" then return codegen_binary_op_lte(t1, t2, p1, p2)
-    when ">"  then return codegen_binary_op_gt(t1, t2, p1, p2)
-    when ">=" then return codegen_binary_op_gte(t1, t2, p1, p2)
-    when "==" then return codegen_binary_op_eq(t1, t2, p1, p2)
-    when "!=" then return codegen_binary_op_ne(t1, t2, p1, p2)
+    when ident_pool.cmp_lt  then return codegen_binary_op_lt(t1, t2, p1, p2)
+    when ident_pool.cmp_let then return codegen_binary_op_lte(t1, t2, p1, p2)
+    when ident_pool.cmp_gt  then return codegen_binary_op_gt(t1, t2, p1, p2)
+    when ident_pool.cmp_get then return codegen_binary_op_gte(t1, t2, p1, p2)
+    when ident_pool.cmp_eq  then return codegen_binary_op_eq(t1, t2, p1, p2)
+    when ident_pool.cmp_ne  then return codegen_binary_op_ne(t1, t2, p1, p2)
     end
 
     case op
-    when "+", "-", "*"
+    when ident_pool.plus,
+         ident_pool.minus,
+         ident_pool.star
       return codegen_binary_op_with_overflow(op, t1, t2, p1, p2)
     end
 
     tmax, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
 
     case op
-    when "&+"              then codegen_trunc_binary_op_result(t1, t2, builder.add(p1, p2))
-    when "&-"              then codegen_trunc_binary_op_result(t1, t2, builder.sub(p1, p2))
-    when "&*"              then codegen_trunc_binary_op_result(t1, t2, builder.mul(p1, p2))
-    when "/", "unsafe_div" then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2))
-    when "%", "unsafe_mod" then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2))
-    when "unsafe_shl"      then codegen_trunc_binary_op_result(t1, t2, builder.shl(p1, p2))
-    when "unsafe_shr"      then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.ashr(p1, p2) : builder.lshr(p1, p2))
-    when "|"               then codegen_trunc_binary_op_result(t1, t2, or(p1, p2))
-    when "&"               then codegen_trunc_binary_op_result(t1, t2, and(p1, p2))
-    when "^"               then codegen_trunc_binary_op_result(t1, t2, builder.xor(p1, p2))
-    else                        raise "BUG: trying to codegen #{t1} #{op} #{t2}"
+    when ident_pool.amp_plus
+      codegen_trunc_binary_op_result(t1, t2, builder.add(p1, p2))
+    when ident_pool.amp_minus
+      codegen_trunc_binary_op_result(t1, t2, builder.sub(p1, p2))
+    when ident_pool.amp_star
+      codegen_trunc_binary_op_result(t1, t2, builder.mul(p1, p2))
+    when ident_pool.slash, ident_pool._unsafe_div
+      codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2))
+    when ident_pool.percent, ident_pool._unsafe_mod
+      codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2))
+    when ident_pool._unsafe_shl
+      codegen_trunc_binary_op_result(t1, t2, builder.shl(p1, p2))
+    when ident_pool._unsafe_shr
+      codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.ashr(p1, p2) : builder.lshr(p1, p2))
+    when ident_pool.pipe
+      codegen_trunc_binary_op_result(t1, t2, or(p1, p2))
+    when ident_pool.amp
+      codegen_trunc_binary_op_result(t1, t2, and(p1, p2))
+    when ident_pool.hat
+      codegen_trunc_binary_op_result(t1, t2, builder.xor(p1, p2))
+    else raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
   def codegen_binary_op_with_overflow(op, t1, t2, p1, p2)
-    if op == "*"
+    if op == ident_pool.star
       if t1.unsigned? && t2.signed?
         return codegen_mul_unsigned_signed_with_overflow(t1, t2, p1, p2)
       elsif t1.signed? && t2.unsigned?
@@ -170,13 +182,13 @@ class Crystal::CodeGenVisitor
 
     llvm_op =
       case {calc_signed, op}
-      when {false, "+"} then "uadd"
-      when {false, "-"} then "usub"
-      when {false, "*"} then "umul"
-      when {true, "+"}  then "sadd"
-      when {true, "-"}  then "ssub"
-      when {true, "*"}  then "smul"
-      else                   raise "BUG: unknown overflow op"
+      when {false, ident_pool.plus}  then "uadd"
+      when {false, ident_pool.minus} then "usub"
+      when {false, ident_pool.star}  then "umul"
+      when {true, ident_pool.plus}   then "sadd"
+      when {true, ident_pool.minus}  then "ssub"
+      when {true, ident_pool.star}   then "smul"
+      else                                raise "BUG: unknown overflow op"
       end
 
     llvm_fun = binary_overflow_fun "llvm.#{llvm_op}.with.overflow.i#{calc_width}", calc_type
@@ -203,7 +215,7 @@ class Crystal::CodeGenVisitor
     )
     codegen_raise_overflow_cond overflow
 
-    return codegen_binary_op_with_overflow("*", t1, @program.int_type(false, t2.bytes), p1, p2)
+    return codegen_binary_op_with_overflow(ident_pool.star, t1, @program.int_type(false, t2.bytes), p1, p2)
   end
 
   def codegen_mul_signed_unsigned_with_overflow(t1, t2, p1, p2)
@@ -214,7 +226,7 @@ class Crystal::CodeGenVisitor
 
     # tmp is the abs value of the result
     # there is overflow when |result| > max + (negative ? 1 : 0)
-    tmp = codegen_binary_op_with_overflow("*", u1, t2, abs, p2)
+    tmp = codegen_binary_op_with_overflow(ident_pool.star, u1, t2, abs, p2)
     _, max = t1.range
     max_result = builder.add(int(max, t1), builder.zext(negative, llvm_type(t1)))
     overflow = codegen_binary_op_gt(u1, u1, tmp, max_result)
@@ -607,17 +619,17 @@ class Crystal::CodeGenVisitor
     end
 
     @last = case op
-            when "+"         then builder.fadd p1, p2
-            when "-"         then builder.fsub p1, p2
-            when "*"         then builder.fmul p1, p2
-            when "/", "fdiv" then builder.fdiv p1, p2
-            when "=="        then return builder.fcmp LLVM::RealPredicate::OEQ, p1, p2
-            when "!="        then return builder.fcmp LLVM::RealPredicate::UNE, p1, p2
-            when "<"         then return builder.fcmp LLVM::RealPredicate::OLT, p1, p2
-            when "<="        then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
-            when ">"         then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
-            when ">="        then return builder.fcmp LLVM::RealPredicate::OGE, p1, p2
-            else                  raise "BUG: trying to codegen #{t1} #{op} #{t2}"
+            when ident_pool.plus                    then builder.fadd p1, p2
+            when ident_pool.minus                   then builder.fsub p1, p2
+            when ident_pool.star                    then builder.fmul p1, p2
+            when ident_pool.slash, ident_pool._fdiv then builder.fdiv p1, p2
+            when ident_pool.cmp_eq                  then return builder.fcmp LLVM::RealPredicate::OEQ, p1, p2
+            when ident_pool.cmp_ne                  then return builder.fcmp LLVM::RealPredicate::UNE, p1, p2
+            when ident_pool.cmp_lt                  then return builder.fcmp LLVM::RealPredicate::OLT, p1, p2
+            when ident_pool.cmp_let                 then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
+            when ident_pool.cmp_gt                  then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
+            when ident_pool.cmp_get                 then return builder.fcmp LLVM::RealPredicate::OGE, p1, p2
+            else                                         raise "BUG: trying to codegen #{t1} #{op} #{t2}"
             end
     @last = trunc_float t1, @last if t1.rank < t2.rank
     @last
@@ -802,7 +814,7 @@ class Crystal::CodeGenVisitor
   end
 
   def struct_field_ptr(type, field_name, pointer)
-    index = type.index_of_instance_var('@' + field_name).not_nil!
+    index = type.index_of_instance_var(ident_pool.get('@' + field_name)).not_nil!
     aggregate_index pointer, index
   end
 
@@ -812,7 +824,7 @@ class Crystal::CodeGenVisitor
       if type.extern_union?
         union_field_ptr(field_type, call_args[0])
       else
-        name = target_def.name.rchop
+        name = target_def.name.to_s.rchop
         struct_field_ptr(type, name, call_args[0])
       end
     end
@@ -824,14 +836,14 @@ class Crystal::CodeGenVisitor
 
     # Check if we need to do a numeric conversion
     if (extra = node.extra)
-      existing_value = context.vars["value"]?
-      context.vars["value"] = LLVMVar.new(call_arg, node.type, true)
+      existing_value = context.vars[ident_pool._value]?
+      context.vars[ident_pool._value] = LLVMVar.new(call_arg, node.type, true)
       request_value { accept extra }
       call_arg = @last
-      context.vars["value"] = existing_value if existing_value
+      context.vars[ident_pool._value] = existing_value if existing_value
     end
 
-    var_name = '@' + target_def.name.rchop
+    var_name = ident_pool.get('@' + target_def.name.to_s.rchop)
     scope = context.type.as(NonGenericClassType)
     field_type = scope.instance_vars[var_name].type
 

@@ -23,7 +23,7 @@ class Crystal::Repl::ClassVars
   OFFSET_FROM_INITIALIZED = 8
 
   # Each class variable is determined by its owner and name
-  record Key, owner : Type, name : String
+  record Key, owner : Type, name : Ident
 
   # For each class variable we record its index and whether it
   # has an initializer, in the form of a CompiledDef (has the initializer
@@ -45,7 +45,7 @@ class Crystal::Repl::ClassVars
   # an initializer.
   # Note that at that index the `initializer` "bit" (8 bytes) should be stored,
   # and only after `OFFSET_FROM_INITIALIZER` the data should be stored.
-  def declare(owner : Type, name : String, type : Type, compiled_def : CompiledDef?) : Int32
+  def declare(owner : Type, name : Ident, type : Type, compiled_def : CompiledDef?) : Int32
     key = Key.new(owner, name)
 
     index = @bytesize
@@ -58,7 +58,7 @@ class Crystal::Repl::ClassVars
   end
 
   # Fetches a class variable, if it's there.
-  def fetch?(owner : Type, name : String) : Value?
+  def fetch?(owner : Type, name : Ident) : Value?
     @data[Key.new(owner, name)]?
   end
 

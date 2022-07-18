@@ -89,6 +89,10 @@ class Crystal::Repl::Context
     type_id(@program.string)
   end
 
+  def ident_pool
+    @program.ident_pool
+  end
+
   getter(throw_value_type : Type) do
     @program.static_array_of(@program.uint8, sizeof(Interpreter::ThrowValue))
   end
@@ -121,7 +125,7 @@ class Crystal::Repl::Context
 
   # This returns the CompiledDef that corresponds to __crystal_raise_overflow
   getter(crystal_raise_overflow_compiled_def : CompiledDef) do
-    call = Call.new(nil, "__crystal_raise_overflow", global: true)
+    call = Call.new(nil, ident_pool.get("__crystal_raise_overflow"), global: true)
     program.semantic(call)
 
     local_vars = LocalVars.new(self)
@@ -144,7 +148,7 @@ class Crystal::Repl::Context
         a_def = create_instance_var_initializer_def(type, initializer)
 
         compiled_def = CompiledDef.new(self, a_def, a_def.owner, sizeof(Pointer(Void)))
-        compiled_def.local_vars.declare("self", type)
+        compiled_def.local_vars.declare(ident_pool._self, type)
 
         initializer.initializer.meta_vars.each do |name, var|
           var_type = var.type?
@@ -199,13 +203,15 @@ class Crystal::Repl::Context
     assign = Assign.new(ivar, value)
     assign.type = value.type
 
-    a_def = Def.new("initialize_#{initializer.initializer.name}", args: [Arg.new("self", type: type)])
+    a_def = Def.new(
+      ident_pool.get("initialize_#{initializer.initializer.name}"),
+      args: [Arg.new(ident_pool._self, type: type)])
     a_def.body = assign
     a_def.type = program.nil_type
     a_def.owner = type
 
     vars = initializer.initializer.meta_vars.clone
-    vars["self"] = MetaVar.new("self", type)
+    vars[ident_pool._self] = MetaVar.new(ident_pool._self, type)
     a_def.vars = vars
 
     a_def
@@ -239,11 +245,11 @@ class Crystal::Repl::Context
     end
   end
 
-  def declare_class_var(owner : Type, name : String, type : Type, compiled_def : CompiledDef?) : Int32
+  def declare_class_var(owner : Type, name : Ident, type : Type, compiled_def : CompiledDef?) : Int32
     class_vars.declare(owner, name, type, compiled_def)
   end
 
-  def class_var_index_and_compiled_def(owner : Type, name : String) : {Int32, CompiledDef?}?
+  def class_var_index_and_compiled_def(owner : Type, name : Ident) : {Int32, CompiledDef?}?
     value = class_vars.fetch?(owner, name)
     if value
       {value.index, value.compiled_def}
@@ -329,7 +335,7 @@ class Crystal::Repl::Context
     @program.instance_offset_of(type.sizeof_type, index).to_i32
   end
 
-  def ivar_offset(type : Type, name : String) : Int32
+  def ivar_offset(type : Type, name : Ident) : Int32
     ivar_index = type.index_of_instance_var(name).not_nil!
 
     if type.is_a?(VirtualType) && type.struct? && type.abstract?
@@ -391,8 +397,8 @@ class Crystal::Repl::Context
     end
   }
 
-  def c_function(name : String)
-    loader.find_symbol(name)
+  def c_function(name : Ident)
+    loader.find_symbol(name.to_s)
   end
 
   def align(size : Int32) : Int32
@@ -402,5 +408,18 @@ class Crystal::Repl::Context
     else
       size + (8 - rem)
     end
+  end
+
+  # The variable name for closures allocated in a context
+  getter(closure_var_name : Ident) do
+    ident_pool.get(".closure_var")
+  end
+
+  # If a closure needs to be allocated, but we are in the context
+  # of a proc literal that also receives closure data in its hidden
+  # pointer, we declare that argument as ARG_NAME, and we copy
+  # that pointre into VAR_NAME.
+  getter(closure_arg_name : Ident) do
+    ident_pool.get(".closure_arg")
   end
 end

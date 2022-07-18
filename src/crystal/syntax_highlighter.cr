@@ -154,7 +154,7 @@ abstract class Crystal::SyntaxHighlighter
              :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
              :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
              :alias, :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
-             :with, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
+             :with, :super, :private, :asm, :nil?, :protected, :uninitialized,
              :annotation, :verbatim
           render :KEYWORD, token.to_s
         when :true, :false, :nil
@@ -162,7 +162,11 @@ abstract class Crystal::SyntaxHighlighter
         when :self
           render :SELF, token.to_s
         else
-          render :UNKNOWN, token.to_s
+          if token.value?("new")
+            render :KEYWORD, token.to_s
+          else
+            render :UNKNOWN, token.to_s
+          end
         end
       end
     when .op_plus?, .op_minus?, .op_star?, .op_amp_plus?, .op_amp_minus?, .op_amp_star?, .op_slash?, .op_slash_slash?,           # + - * &+ &- &* / //

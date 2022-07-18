@@ -51,7 +51,7 @@ require "../types"
 # multidispatch. However, we do need to analyze it to check if there's an ambiguity.
 
 module Crystal
-  record NamedArgumentType, name : String, type : Type do
+  record NamedArgumentType, name : Ident, type : Type do
     def self.from_args(named_args : Array(NamedArgument)?, with_autocast = false)
       named_args.try &.map do |named_arg|
         new(named_arg.name, named_arg.value.type(with_autocast: with_autocast))
@@ -60,7 +60,7 @@ module Crystal
   end
 
   record CallSignature,
-    name : String,
+    name : Ident,
     arg_types : Array(Type),
     block : Block?,
     named_args : Array(NamedArgumentType)?
@@ -74,7 +74,7 @@ module Crystal
 
       cover = matches.cover
 
-      is_new = owner.metaclass? && signature.name == "new"
+      is_new = owner.metaclass? && signature.name == ident_pool._new
       if is_new
         # For a `new` method we need to do this in case a `new` is defined
         # in a module type
@@ -160,7 +160,7 @@ module Crystal
       matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array, analyze_all: analyze_all)
       return matches unless matches.empty?
 
-      is_new = owner.metaclass? && signature.name == "new"
+      is_new = owner.metaclass? && signature.name == ident_pool._new
       if is_new
         # For a `new` method we need to do this in case a `new` is defined
         # in a module type
@@ -397,7 +397,7 @@ module Crystal
     end
 
     def lookup_matches(signature, owner = self, path_lookup = self, analyze_all = false)
-      is_new = virtual_metaclass? && signature.name == "new"
+      is_new = virtual_metaclass? && signature.name == ident_pool._new
 
       base_type_lookup = virtual_lookup(base_type)
       base_type_matches = base_type_lookup.lookup_matches(signature, self, analyze_all: analyze_all)
@@ -430,7 +430,7 @@ module Crystal
         # an incompatible initialize: if so, we return empty matches, because
         # all subtypes must have an initialize with the same number of arguments.
         if is_new && subtype_matches.empty?
-          other_initializers = subtype_lookup.instance_type.lookup_defs_with_modules("initialize")
+          other_initializers = subtype_lookup.instance_type.lookup_defs_with_modules(ident_pool._initialize)
           unless other_initializers.empty?
             return Matches.new(nil, false)
           end

@@ -10,18 +10,18 @@ class Crystal::Repl::Compiler
     obj = node.obj
 
     case body.name
-    when "unchecked_convert"
+    when ident_pool._unchecked_convert
       primitive_convert(node, body, checked: false)
-    when "convert"
+    when ident_pool._convert
       primitive_convert(node, body, checked: true)
-    when "binary"
+    when ident_pool._binary
       primitive_binary(node, body)
-    when "pointer_new"
+    when ident_pool._pointer_new
       accept_call_members(node)
       return false unless @wants_value
 
       pointer_new(node: node)
-    when "pointer_malloc"
+    when ident_pool._pointer_malloc
       discard_value(obj) if obj
       request_value(node.args.first)
 
@@ -33,7 +33,7 @@ class Crystal::Repl::Compiler
 
       pointer_malloc(element_size, node: node)
       pop(aligned_sizeof_type(scope_type), node: nil) unless @wants_value
-    when "pointer_realloc"
+    when ident_pool._pointer_realloc
       obj ? request_value(obj) : put_self(node: node)
       request_value(node.args.first)
 
@@ -45,7 +45,7 @@ class Crystal::Repl::Compiler
 
       pointer_realloc(element_size, node: node)
       pop(aligned_sizeof_type(scope_type), node: nil) unless @wants_value
-    when "pointer_set"
+    when ident_pool._pointer_set
       # Accept in reverse order so that it's easier for the interpreter
       obj = obj.not_nil!
       element_type = obj.type.as(PointerInstanceType).element_type
@@ -58,29 +58,29 @@ class Crystal::Repl::Compiler
       request_value(obj)
 
       pointer_set(inner_sizeof_type(element_type), node: node)
-    when "pointer_get"
+    when ident_pool._pointer_get
       element_type = obj.not_nil!.type.as(PointerInstanceType).element_type
 
       accept_call_members(node)
       return unless @wants_value
 
       pointer_get(inner_sizeof_type(element_type), node: node)
-    when "pointer_address"
+    when ident_pool._pointer_address
       accept_call_members(node)
       return unless @wants_value
 
       pointer_address(node: node)
-    when "pointer_diff"
+    when ident_pool._pointer_diff
       accept_call_members(node)
       return unless @wants_value
 
       pointer_diff(inner_sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
-    when "pointer_add"
+    when ident_pool._pointer_add
       accept_call_members(node)
       return unless @wants_value
 
       pointer_add(inner_sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
-    when "class"
+    when ident_pool._class
       obj = obj.not_nil!
       type = obj.type.remove_indirection
 
@@ -101,7 +101,7 @@ class Crystal::Repl::Compiler
 
         put_type type, node: node
       end
-    when "object_crystal_type_id"
+    when ident_pool._object_crystal_type_id
       type = obj.try(&.type) || scope
 
       unless @wants_value
@@ -120,7 +120,7 @@ class Crystal::Repl::Compiler
       else
         put_i32 type_id(type), node: node
       end
-    when "class_crystal_instance_type_id"
+    when ident_pool._class_crystal_instance_type_id
       type =
         if obj
           discard_value(obj)
@@ -132,7 +132,7 @@ class Crystal::Repl::Compiler
       return unless @wants_value
 
       put_i32 type_id(type.instance_type), node: node
-    when "allocate"
+    when ident_pool._allocate
       type =
         if obj
           discard_value(obj)
@@ -172,7 +172,7 @@ class Crystal::Repl::Compiler
           pop(sizeof(Pointer(Void)), node: nil)
         end
       end
-    when "tuple_indexer_known_index"
+    when ident_pool._tuple_indexer_known_index
       obj = obj.not_nil!
 
       type = obj.type
@@ -239,21 +239,21 @@ class Crystal::Repl::Compiler
           node.raise "BUG: missing handling of primitive #{body.name} for #{type}"
         end
       end
-    when "enum_value"
+    when ident_pool._enum_value
       accept_call_members(node)
-    when "enum_new"
+    when ident_pool._enum_new
       accept_call_args(node)
-    when "symbol_to_s"
+    when ident_pool._symbol_to_s
       accept_call_members(node)
       return unless @wants_value
 
       symbol_to_s(node: node)
-    when "object_id"
+    when ident_pool._object_id
       accept_call_members(node)
       return unless @wants_value
 
       pointer_address(node: node)
-    when "proc_call"
+    when ident_pool._proc_call
       node.args.each { |arg| request_value(arg) }
 
       obj ? request_value(obj) : put_self(node: node)
@@ -261,7 +261,7 @@ class Crystal::Repl::Compiler
       proc_call(node: node)
 
       pop(aligned_sizeof_type(node.type), node: nil) unless @wants_value
-    when "load_atomic"
+    when ident_pool._load_atomic
       node.args.each { |arg| request_value(arg) }
 
       pointer_instance_type = node.args.first.type.as(PointerInstanceType)
@@ -269,7 +269,7 @@ class Crystal::Repl::Compiler
       element_size = inner_sizeof_type(element_type)
 
       load_atomic(element_size, node: node)
-    when "store_atomic"
+    when ident_pool._store_atomic
       node.args.each { |arg| request_value(arg) }
 
       pointer_instance_type = node.args.first.type.as(PointerInstanceType)
@@ -277,7 +277,7 @@ class Crystal::Repl::Compiler
       element_size = inner_sizeof_type(element_type)
 
       store_atomic(element_size, node: node)
-    when "atomicrmw"
+    when ident_pool._atomicrmw
       node.args.each { |arg| request_value(arg) }
 
       pointer_instance_type = node.args[1].type.as(PointerInstanceType)
@@ -285,7 +285,7 @@ class Crystal::Repl::Compiler
       element_size = inner_sizeof_type(element_type)
 
       atomicrmw(element_size, node: node)
-    when "cmpxchg"
+    when ident_pool._cmpxchg
       node.args.each { |arg| request_value(arg) }
 
       pointer_instance_type = node.args[0].type.as(PointerInstanceType)
@@ -293,7 +293,7 @@ class Crystal::Repl::Compiler
       element_size = inner_sizeof_type(element_type)
 
       cmpxchg(element_size, node: node)
-    when "external_var_get"
+    when ident_pool._external_var_get
       return unless @wants_value
 
       external = node.target_def.as(External)
@@ -305,7 +305,7 @@ class Crystal::Repl::Compiler
 
       # Read from the pointer
       pointer_get(inner_sizeof_type(node), node: node)
-    when "external_var_set"
+    when ident_pool._external_var_set
       external = node.target_def.as(External)
 
       # pointer_set needs first arg, then obj
@@ -320,7 +320,7 @@ class Crystal::Repl::Compiler
 
       # Set the pointer's value
       pointer_set(inner_sizeof_type(node), node: node)
-    when "struct_or_union_set"
+    when ident_pool._struct_or_union_set
       obj = obj.not_nil!
       arg = node.args.first
 
@@ -336,7 +336,7 @@ class Crystal::Repl::Compiler
 
       type = obj.type.as(NonGenericClassType)
 
-      ivar_name = '@' + node.name.rchop # remove the '=' suffix
+      ivar_name = ident_pool.get('@' + node.name.to_s.rchop) # remove the '=' suffix
       ivar = type.lookup_instance_var(ivar_name)
       ivar_offset = ivar_offset(type, ivar_name)
       ivar_size = inner_sizeof_type(type.lookup_instance_var(ivar_name))
@@ -372,201 +372,201 @@ class Crystal::Repl::Compiler
       else
         pointer_set(inner_sizeof_type(ivar.type), node: node)
       end
-    when "interpreter_call_stack_unwind"
+    when ident_pool._interpreter_call_stack_unwind
       interpreter_call_stack_unwind(node: node)
-    when "interpreter_raise_without_backtrace"
+    when ident_pool._interpreter_raise_without_backtrace
       accept_call_args(node)
       interpreter_raise_without_backtrace(node: node)
-    when "interpreter_current_fiber"
+    when ident_pool._interpreter_current_fiber
       interpreter_current_fiber(node: node)
-    when "interpreter_spawn"
+    when ident_pool._interpreter_spawn
       accept_call_args(node)
       interpreter_spawn(node: node)
-    when "interpreter_fiber_swapcontext"
+    when ident_pool._interpreter_fiber_swapcontext
       accept_call_args(node)
       interpreter_fiber_swapcontext(node: node)
-    when "interpreter_intrinsics_memcpy"
+    when ident_pool._interpreter_intrinsics_memcpy
       accept_call_args(node)
       interpreter_intrinsics_memcpy(node: node)
-    when "interpreter_intrinsics_memmove"
+    when ident_pool._interpreter_intrinsics_memmove
       accept_call_args(node)
       interpreter_intrinsics_memmove(node: node)
-    when "interpreter_intrinsics_memset"
+    when ident_pool._interpreter_intrinsics_memset
       accept_call_args(node)
       interpreter_intrinsics_memset(node: node)
-    when "interpreter_intrinsics_debugtrap"
+    when ident_pool._interpreter_intrinsics_debugtrap
       interpreter_intrinsics_debugtrap(node: node)
-    when "interpreter_intrinsics_pause"
+    when ident_pool._interpreter_intrinsics_pause
       # TODO: given that this is interpreted, maybe `pause` can be nop instead of a real pause?
       {% if flag?(:i386) || flag?(:x86_64) %}
         interpreter_intrinsics_pause(node: node)
       {% end %}
-    when "interpreter_intrinsics_bswap32"
+    when ident_pool._interpreter_intrinsics_bswap32
       interpreter_intrinsics_bswap32(node: node)
-    when "interpreter_intrinsics_bswap16"
+    when ident_pool._interpreter_intrinsics_bswap16
       interpreter_intrinsics_bswap16(node: node)
-    when "interpreter_intrinsics_read_cycle_counter"
+    when ident_pool._interpreter_intrinsics_read_cycle_counter
       interpreter_intrinsics_read_cycle_counter(node: node)
-    when "interpreter_intrinsics_popcount8"
+    when ident_pool._interpreter_intrinsics_popcount8
       accept_call_args(node)
       interpreter_intrinsics_popcount8(node: node)
-    when "interpreter_intrinsics_popcount16"
+    when ident_pool._interpreter_intrinsics_popcount16
       accept_call_args(node)
       interpreter_intrinsics_popcount16(node: node)
-    when "interpreter_intrinsics_popcount32"
+    when ident_pool._interpreter_intrinsics_popcount32
       accept_call_args(node)
       interpreter_intrinsics_popcount32(node: node)
-    when "interpreter_intrinsics_popcount64"
+    when ident_pool._interpreter_intrinsics_popcount64
       accept_call_args(node)
       interpreter_intrinsics_popcount64(node: node)
-    when "interpreter_intrinsics_popcount128"
+    when ident_pool._interpreter_intrinsics_popcount128
       accept_call_args(node)
       interpreter_intrinsics_popcount128(node: node)
-    when "interpreter_intrinsics_countleading8"
+    when ident_pool._interpreter_intrinsics_countleading8
       accept_call_args(node)
       interpreter_intrinsics_countleading8(node: node)
-    when "interpreter_intrinsics_countleading16"
+    when ident_pool._interpreter_intrinsics_countleading16
       accept_call_args(node)
       interpreter_intrinsics_countleading16(node: node)
-    when "interpreter_intrinsics_countleading32"
+    when ident_pool._interpreter_intrinsics_countleading32
       accept_call_args(node)
       interpreter_intrinsics_countleading32(node: node)
-    when "interpreter_intrinsics_countleading64"
+    when ident_pool._interpreter_intrinsics_countleading64
       accept_call_args(node)
       interpreter_intrinsics_countleading64(node: node)
-    when "interpreter_intrinsics_countleading128"
+    when ident_pool._interpreter_intrinsics_countleading128
       accept_call_args(node)
       interpreter_intrinsics_countleading128(node: node)
-    when "interpreter_intrinsics_counttrailing8"
+    when ident_pool._interpreter_intrinsics_counttrailing8
       accept_call_args(node)
       interpreter_intrinsics_counttrailing8(node: node)
-    when "interpreter_intrinsics_counttrailing16"
+    when ident_pool._interpreter_intrinsics_counttrailing16
       accept_call_args(node)
       interpreter_intrinsics_counttrailing16(node: node)
-    when "interpreter_intrinsics_counttrailing32"
+    when ident_pool._interpreter_intrinsics_counttrailing32
       accept_call_args(node)
       interpreter_intrinsics_counttrailing32(node: node)
-    when "interpreter_intrinsics_counttrailing64"
+    when ident_pool._interpreter_intrinsics_counttrailing64
       accept_call_args(node)
       interpreter_intrinsics_counttrailing64(node: node)
-    when "interpreter_intrinsics_counttrailing128"
+    when ident_pool._interpreter_intrinsics_counttrailing128
       accept_call_args(node)
       interpreter_intrinsics_counttrailing128(node: node)
-    when "interpreter_intrinsics_bitreverse16"
+    when ident_pool._interpreter_intrinsics_bitreverse16
       accept_call_args(node)
       interpreter_intrinsics_bitreverse16(node: node)
-    when "interpreter_intrinsics_bitreverse32"
+    when ident_pool._interpreter_intrinsics_bitreverse32
       accept_call_args(node)
       interpreter_intrinsics_bitreverse32(node: node)
-    when "interpreter_intrinsics_bitreverse64"
+    when ident_pool._interpreter_intrinsics_bitreverse64
       accept_call_args(node)
       interpreter_intrinsics_bitreverse64(node: node)
-    when "interpreter_libm_ceil_f32"
+    when ident_pool._interpreter_libm_ceil_f32
       accept_call_args(node)
       libm_ceil_f32 node: node
-    when "interpreter_libm_ceil_f64"
+    when ident_pool._interpreter_libm_ceil_f64
       accept_call_args(node)
       libm_ceil_f64 node: node
-    when "interpreter_libm_cos_f32"
+    when ident_pool._interpreter_libm_cos_f32
       accept_call_args(node)
       libm_cos_f32 node: node
-    when "interpreter_libm_cos_f64"
+    when ident_pool._interpreter_libm_cos_f64
       accept_call_args(node)
       libm_cos_f64 node: node
-    when "interpreter_libm_exp_f32"
+    when ident_pool._interpreter_libm_exp_f32
       accept_call_args(node)
       libm_exp_f32 node: node
-    when "interpreter_libm_exp_f64"
+    when ident_pool._interpreter_libm_exp_f64
       accept_call_args(node)
       libm_exp_f64 node: node
-    when "interpreter_libm_exp2_f32"
+    when ident_pool._interpreter_libm_exp2_f32
       accept_call_args(node)
       libm_exp2_f32 node: node
-    when "interpreter_libm_exp2_f64"
+    when ident_pool._interpreter_libm_exp2_f64
       accept_call_args(node)
       libm_exp2_f64 node: node
-    when "interpreter_libm_floor_f32"
+    when ident_pool._interpreter_libm_floor_f32
       accept_call_args(node)
       libm_floor_f32 node: node
-    when "interpreter_libm_floor_f64"
+    when ident_pool._interpreter_libm_floor_f64
       accept_call_args(node)
       libm_floor_f64 node: node
-    when "interpreter_libm_log_f32"
+    when ident_pool._interpreter_libm_log_f32
       accept_call_args(node)
       libm_log_f32 node: node
-    when "interpreter_libm_log_f64"
+    when ident_pool._interpreter_libm_log_f64
       accept_call_args(node)
       libm_log_f64 node: node
-    when "interpreter_libm_log2_f32"
+    when ident_pool._interpreter_libm_log2_f32
       accept_call_args(node)
       libm_log2_f32 node: node
-    when "interpreter_libm_log2_f64"
+    when ident_pool._interpreter_libm_log2_f64
       accept_call_args(node)
       libm_log2_f64 node: node
-    when "interpreter_libm_log10_f32"
+    when ident_pool._interpreter_libm_log10_f32
       accept_call_args(node)
       libm_log10_f32 node: node
-    when "interpreter_libm_log10_f64"
+    when ident_pool._interpreter_libm_log10_f64
       accept_call_args(node)
       libm_log10_f64 node: node
-    when "interpreter_libm_round_f32"
+    when ident_pool._interpreter_libm_round_f32
       accept_call_args(node)
       libm_round_f32 node: node
-    when "interpreter_libm_round_f64"
+    when ident_pool._interpreter_libm_round_f64
       accept_call_args(node)
       libm_round_f64 node: node
-    when "interpreter_libm_rint_f32"
+    when ident_pool._interpreter_libm_rint_f32
       accept_call_args(node)
       libm_rint_f32 node: node
-    when "interpreter_libm_rint_f64"
+    when ident_pool._interpreter_libm_rint_f64
       accept_call_args(node)
       libm_rint_f64 node: node
-    when "interpreter_libm_sin_f32"
+    when ident_pool._interpreter_libm_sin_f32
       accept_call_args(node)
       libm_sin_f32 node: node
-    when "interpreter_libm_sin_f64"
+    when ident_pool._interpreter_libm_sin_f64
       accept_call_args(node)
       libm_sin_f64 node: node
-    when "interpreter_libm_sqrt_f32"
+    when ident_pool._interpreter_libm_sqrt_f32
       accept_call_args(node)
       libm_sqrt_f32 node: node
-    when "interpreter_libm_sqrt_f64"
+    when ident_pool._interpreter_libm_sqrt_f64
       accept_call_args(node)
       libm_sqrt_f64 node: node
-    when "interpreter_libm_trunc_f32"
+    when ident_pool._interpreter_libm_trunc_f32
       accept_call_args(node)
       libm_trunc_f32 node: node
-    when "interpreter_libm_trunc_f64"
+    when ident_pool._interpreter_libm_trunc_f64
       accept_call_args(node)
       libm_trunc_f64 node: node
-    when "interpreter_libm_powi_f32"
+    when ident_pool._interpreter_libm_powi_f32
       accept_call_args(node)
       libm_powi_f32 node: node
-    when "interpreter_libm_powi_f64"
+    when ident_pool._interpreter_libm_powi_f64
       accept_call_args(node)
       libm_powi_f64 node: node
-    when "interpreter_libm_min_f32"
+    when ident_pool._interpreter_libm_min_f32
       accept_call_args(node)
       libm_min_f32 node: node
-    when "interpreter_libm_min_f64"
+    when ident_pool._interpreter_libm_min_f64
       accept_call_args(node)
       libm_min_f64 node: node
-    when "interpreter_libm_max_f32"
+    when ident_pool._interpreter_libm_max_f32
       accept_call_args(node)
       libm_max_f32 node: node
-    when "interpreter_libm_max_f64"
+    when ident_pool._interpreter_libm_max_f64
       accept_call_args(node)
       libm_max_f64 node: node
-    when "interpreter_libm_pow_f32"
+    when ident_pool._interpreter_libm_pow_f32
       accept_call_args(node)
       libm_pow_f32 node: node
-    when "interpreter_libm_pow_f64"
+    when ident_pool._interpreter_libm_pow_f64
       accept_call_args(node)
       libm_pow_f64 node: node
-    when "interpreter_libm_copysign_f32"
+    when ident_pool._interpreter_libm_copysign_f32
       accept_call_args(node)
       libm_copysign_f32 node: node
-    when "interpreter_libm_copysign_f64"
+    when ident_pool._interpreter_libm_copysign_f64
       accept_call_args(node)
       libm_copysign_f64 node: node
     else
@@ -787,18 +787,36 @@ class Crystal::Repl::Compiler
     end
 
     case node.name
-    when "+", "&+", "-", "&-", "*", "&*", "^", "|", "&", "unsafe_shl", "unsafe_shr", "unsafe_div", "unsafe_mod"
+    when ident_pool.plus,
+         ident_pool.amp_plus,
+         ident_pool.minus,
+         ident_pool.amp_minus,
+         ident_pool.star,
+         ident_pool.amp_star,
+         ident_pool.hat,
+         ident_pool.pipe,
+         ident_pool.amp,
+         ident_pool._unsafe_shl,
+         ident_pool._unsafe_shr,
+         ident_pool._unsafe_div,
+         ident_pool._unsafe_mod
       primitive_binary_op_math(node, body, node.name)
-    when "<", "<=", ">", ">=", "==", "!="
+    when ident_pool.cmp_lt,
+         ident_pool.cmp_let,
+         ident_pool.cmp_gt,
+         ident_pool.cmp_get,
+         ident_pool.cmp_eq,
+         ident_pool.cmp_ne
       primitive_binary_op_cmp(node, body, node.name)
-    when "/", "fdiv"
+    when ident_pool.slash,
+         ident_pool._fdiv
       primitive_binary_float_div(node, body)
     else
       node.raise "BUG: missing handling of binary op #{node.name}"
     end
   end
 
-  private def primitive_binary_op_math(node : ASTNode, body : Primitive, op : String)
+  private def primitive_binary_op_math(node : ASTNode, body : Primitive, op : Ident)
     obj = node.obj
     arg = node.args.first
 
@@ -808,7 +826,7 @@ class Crystal::Repl::Compiler
     primitive_binary_op_math(obj_type, arg_type, obj, arg, node, op)
   end
 
-  private def primitive_binary_op_math(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
+  private def primitive_binary_op_math(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : Ident)
     kind = extend_int(left_type, right_type, left_node, right_node, node)
     if kind.is_a?(MixedNumberKind)
       case kind
@@ -822,19 +840,19 @@ class Crystal::Repl::Compiler
           primitive_convert(node, right_type.kind, :i64, checked: false)
 
           case node.name
-          when "+"          then add_u64_i64(node: node)
-          when "&+"         then add_wrap_i64(node: node)
-          when "-"          then sub_u64_i64(node: node)
-          when "&-"         then sub_wrap_i64(node: node)
-          when "*"          then mul_u64_i64(node: node)
-          when "&*"         then mul_wrap_i64(node: node)
-          when "^"          then xor_i64(node: node)
-          when "|"          then or_i64(node: node)
-          when "&"          then and_i64(node: node)
-          when "unsafe_shl" then unsafe_shl_i64(node: node)
-          when "unsafe_shr" then unsafe_shr_u64_i64(node: node)
-          when "unsafe_div" then unsafe_div_u64_i64(node: node)
-          when "unsafe_mod" then unsafe_mod_u64_i64(node: node)
+          when ident_pool.plus        then add_u64_i64(node: node)
+          when ident_pool.amp_plus    then add_wrap_i64(node: node)
+          when ident_pool.minus       then sub_u64_i64(node: node)
+          when ident_pool.amp_minus   then sub_wrap_i64(node: node)
+          when ident_pool.star        then mul_u64_i64(node: node)
+          when ident_pool.amp_star    then mul_wrap_i64(node: node)
+          when ident_pool.hat         then xor_i64(node: node)
+          when ident_pool.pipe        then or_i64(node: node)
+          when ident_pool.amp         then and_i64(node: node)
+          when ident_pool._unsafe_shl then unsafe_shl_i64(node: node)
+          when ident_pool._unsafe_shr then unsafe_shr_u64_i64(node: node)
+          when ident_pool._unsafe_div then unsafe_div_u64_i64(node: node)
+          when ident_pool._unsafe_mod then unsafe_mod_u64_i64(node: node)
           else
             node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
           end
@@ -849,19 +867,19 @@ class Crystal::Repl::Compiler
           right_node.accept self
 
           case node.name
-          when "+"          then add_i64_u64(node: node)
-          when "&+"         then add_wrap_i64(node: node)
-          when "-"          then sub_i64_u64(node: node)
-          when "&-"         then sub_wrap_i64(node: node)
-          when "*"          then mul_i64_u64(node: node)
-          when "&*"         then mul_wrap_i64(node: node)
-          when "^"          then xor_i64(node: node)
-          when "|"          then or_i64(node: node)
-          when "&"          then and_i64(node: node)
-          when "unsafe_shl" then unsafe_shl_i64(node: node)
-          when "unsafe_shr" then unsafe_shr_i64_u64(node: node)
-          when "unsafe_div" then unsafe_div_i64_u64(node: node)
-          when "unsafe_mod" then unsafe_mod_i64_u64(node: node)
+          when ident_pool.plus        then add_i64_u64(node: node)
+          when ident_pool.amp_plus    then add_wrap_i64(node: node)
+          when ident_pool.minus       then sub_i64_u64(node: node)
+          when ident_pool.amp_minus   then sub_wrap_i64(node: node)
+          when ident_pool.star        then mul_i64_u64(node: node)
+          when ident_pool.amp_star    then mul_wrap_i64(node: node)
+          when ident_pool.hat         then xor_i64(node: node)
+          when ident_pool.pipe        then or_i64(node: node)
+          when ident_pool.amp         then and_i64(node: node)
+          when ident_pool._unsafe_shl then unsafe_shl_i64(node: node)
+          when ident_pool._unsafe_shr then unsafe_shr_i64_u64(node: node)
+          when ident_pool._unsafe_div then unsafe_div_i64_u64(node: node)
+          when ident_pool._unsafe_mod then unsafe_mod_i64_u64(node: node)
           else
             node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
           end
@@ -878,19 +896,19 @@ class Crystal::Repl::Compiler
           primitive_convert(node, right_type.kind, :i128, checked: false)
 
           case node.name
-          when "+"          then add_u128_i128(node: node)
-          when "&+"         then add_wrap_i128(node: node)
-          when "-"          then sub_u128_i128(node: node)
-          when "&-"         then sub_wrap_i128(node: node)
-          when "*"          then mul_u128_i128(node: node)
-          when "&*"         then mul_wrap_i128(node: node)
-          when "^"          then xor_i128(node: node)
-          when "|"          then or_i128(node: node)
-          when "&"          then and_i128(node: node)
-          when "unsafe_shl" then unsafe_shl_i128(node: node)
-          when "unsafe_shr" then unsafe_shr_u128_i128(node: node)
-          when "unsafe_div" then unsafe_div_u128_i128(node: node)
-          when "unsafe_mod" then unsafe_mod_u128_i128(node: node)
+          when ident_pool.plus        then add_u128_i128(node: node)
+          when ident_pool.amp_plus    then add_wrap_i128(node: node)
+          when ident_pool.minus       then sub_u128_i128(node: node)
+          when ident_pool.amp_minus   then sub_wrap_i128(node: node)
+          when ident_pool.star        then mul_u128_i128(node: node)
+          when ident_pool.amp_star    then mul_wrap_i128(node: node)
+          when ident_pool.hat         then xor_i128(node: node)
+          when ident_pool.pipe        then or_i128(node: node)
+          when ident_pool.amp         then and_i128(node: node)
+          when ident_pool._unsafe_shl then unsafe_shl_i128(node: node)
+          when ident_pool._unsafe_shr then unsafe_shr_u128_i128(node: node)
+          when ident_pool._unsafe_div then unsafe_div_u128_i128(node: node)
+          when ident_pool._unsafe_mod then unsafe_mod_u128_i128(node: node)
           else
             node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
           end
@@ -905,19 +923,19 @@ class Crystal::Repl::Compiler
           right_node.accept self
 
           case node.name
-          when "+"          then add_i128_u128(node: node)
-          when "&+"         then add_wrap_i128(node: node)
-          when "-"          then sub_i128_u128(node: node)
-          when "&-"         then sub_wrap_i128(node: node)
-          when "*"          then mul_i128_u128(node: node)
-          when "&*"         then mul_wrap_i128(node: node)
-          when "^"          then xor_i128(node: node)
-          when "|"          then or_i128(node: node)
-          when "&"          then and_i128(node: node)
-          when "unsafe_shl" then unsafe_shl_i128(node: node)
-          when "unsafe_shr" then unsafe_shr_i128_u128(node: node)
-          when "unsafe_div" then unsafe_div_i128_u128(node: node)
-          when "unsafe_mod" then unsafe_mod_i128_u128(node: node)
+          when ident_pool.plus        then add_i128_u128(node: node)
+          when ident_pool.amp_plus    then add_wrap_i128(node: node)
+          when ident_pool.minus       then sub_i128_u128(node: node)
+          when ident_pool.amp_minus   then sub_wrap_i128(node: node)
+          when ident_pool.star        then mul_i128_u128(node: node)
+          when ident_pool.amp_star    then mul_wrap_i128(node: node)
+          when ident_pool.hat         then xor_i128(node: node)
+          when ident_pool.pipe        then or_i128(node: node)
+          when ident_pool.amp         then and_i128(node: node)
+          when ident_pool._unsafe_shl then unsafe_shl_i128(node: node)
+          when ident_pool._unsafe_shr then unsafe_shr_i128_u128(node: node)
+          when ident_pool._unsafe_div then unsafe_div_i128_u128(node: node)
+          when ident_pool._unsafe_mod then unsafe_mod_i128_u128(node: node)
           else
             node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
           end
@@ -933,12 +951,16 @@ class Crystal::Repl::Compiler
     end
 
     if kind != left_type.kind
-      checked = node.name.in?("+", "-", "*")
+      checked = node.name.in?(
+        ident_pool.plus,
+        ident_pool.minus,
+        ident_pool.star,
+      )
       primitive_convert(node, kind, left_type.kind, checked: checked)
     end
   end
 
-  private def primitive_binary_op_math(left_type : IntegerType, right_type : FloatType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
+  private def primitive_binary_op_math(left_type : IntegerType, right_type : FloatType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : Ident)
     left_node ? left_node.accept(self) : put_self(node: node)
     primitive_convert node, left_type.kind, right_type.kind, checked: false
     right_node.accept self
@@ -946,7 +968,7 @@ class Crystal::Repl::Compiler
     primitive_binary_op_math(node, right_type.kind, op)
   end
 
-  private def primitive_binary_op_math(left_type : FloatType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
+  private def primitive_binary_op_math(left_type : FloatType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : Ident)
     left_node ? left_node.accept(self) : put_self(node: node)
     right_node.accept self
     primitive_convert right_node, right_type.kind, left_type.kind, checked: false
@@ -954,7 +976,7 @@ class Crystal::Repl::Compiler
     primitive_binary_op_math(node, left_type.kind, op)
   end
 
-  private def primitive_binary_op_math(left_type : FloatType, right_type : FloatType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
+  private def primitive_binary_op_math(left_type : FloatType, right_type : FloatType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : Ident)
     if left_type == right_type
       left_node ? left_node.accept(self) : put_self(node: node)
       right_node.accept self
@@ -980,130 +1002,130 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private def primitive_binary_op_math(node : ASTNode, kind : NumberKind, op : String)
+  private def primitive_binary_op_math(node : ASTNode, kind : NumberKind, op : Ident)
     case kind
     when .i32?
       case op
-      when "+"          then add_i32(node: node)
-      when "&+"         then add_wrap_i32(node: node)
-      when "-"          then sub_i32(node: node)
-      when "&-"         then sub_wrap_i32(node: node)
-      when "*"          then mul_i32(node: node)
-      when "&*"         then mul_wrap_i32(node: node)
-      when "^"          then xor_i32(node: node)
-      when "|"          then or_i32(node: node)
-      when "&"          then and_i32(node: node)
-      when "unsafe_shl" then unsafe_shl_i32(node: node)
-      when "unsafe_shr" then unsafe_shr_i32(node: node)
-      when "unsafe_div" then unsafe_div_i32(node: node)
-      when "unsafe_mod" then unsafe_mod_i32(node: node)
+      when ident_pool.plus        then add_i32(node: node)
+      when ident_pool.amp_plus    then add_wrap_i32(node: node)
+      when ident_pool.minus       then sub_i32(node: node)
+      when ident_pool.amp_minus   then sub_wrap_i32(node: node)
+      when ident_pool.star        then mul_i32(node: node)
+      when ident_pool.amp_star    then mul_wrap_i32(node: node)
+      when ident_pool.hat         then xor_i32(node: node)
+      when ident_pool.pipe        then or_i32(node: node)
+      when ident_pool.amp         then and_i32(node: node)
+      when ident_pool._unsafe_shl then unsafe_shl_i32(node: node)
+      when ident_pool._unsafe_shr then unsafe_shr_i32(node: node)
+      when ident_pool._unsafe_div then unsafe_div_i32(node: node)
+      when ident_pool._unsafe_mod then unsafe_mod_i32(node: node)
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
     when .u32?
       case op
-      when "+"          then add_u32(node: node)
-      when "&+"         then add_wrap_i32(node: node)
-      when "-"          then sub_u32(node: node)
-      when "&-"         then sub_wrap_i32(node: node)
-      when "*"          then mul_u32(node: node)
-      when "&*"         then mul_wrap_i32(node: node)
-      when "^"          then xor_i32(node: node)
-      when "|"          then or_i32(node: node)
-      when "&"          then and_i32(node: node)
-      when "unsafe_shl" then unsafe_shl_i32(node: node)
-      when "unsafe_shr" then unsafe_shr_u32(node: node)
-      when "unsafe_div" then unsafe_div_u32(node: node)
-      when "unsafe_mod" then unsafe_mod_u32(node: node)
+      when ident_pool.plus        then add_u32(node: node)
+      when ident_pool.amp_plus    then add_wrap_i32(node: node)
+      when ident_pool.minus       then sub_u32(node: node)
+      when ident_pool.amp_minus   then sub_wrap_i32(node: node)
+      when ident_pool.star        then mul_u32(node: node)
+      when ident_pool.amp_star    then mul_wrap_i32(node: node)
+      when ident_pool.hat         then xor_i32(node: node)
+      when ident_pool.pipe        then or_i32(node: node)
+      when ident_pool.amp         then and_i32(node: node)
+      when ident_pool._unsafe_shl then unsafe_shl_i32(node: node)
+      when ident_pool._unsafe_shr then unsafe_shr_u32(node: node)
+      when ident_pool._unsafe_div then unsafe_div_u32(node: node)
+      when ident_pool._unsafe_mod then unsafe_mod_u32(node: node)
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
     when .i64?
       case op
-      when "+"          then add_i64(node: node)
-      when "&+"         then add_wrap_i64(node: node)
-      when "-"          then sub_i64(node: node)
-      when "&-"         then sub_wrap_i64(node: node)
-      when "*"          then mul_i64(node: node)
-      when "&*"         then mul_wrap_i64(node: node)
-      when "^"          then xor_i64(node: node)
-      when "|"          then or_i64(node: node)
-      when "&"          then and_i64(node: node)
-      when "unsafe_shl" then unsafe_shl_i64(node: node)
-      when "unsafe_shr" then unsafe_shr_i64(node: node)
-      when "unsafe_div" then unsafe_div_i64(node: node)
-      when "unsafe_mod" then unsafe_mod_i64(node: node)
+      when ident_pool.plus        then add_i64(node: node)
+      when ident_pool.amp_plus    then add_wrap_i64(node: node)
+      when ident_pool.minus       then sub_i64(node: node)
+      when ident_pool.amp_minus   then sub_wrap_i64(node: node)
+      when ident_pool.star        then mul_i64(node: node)
+      when ident_pool.amp_star    then mul_wrap_i64(node: node)
+      when ident_pool.hat         then xor_i64(node: node)
+      when ident_pool.pipe        then or_i64(node: node)
+      when ident_pool.amp         then and_i64(node: node)
+      when ident_pool._unsafe_shl then unsafe_shl_i64(node: node)
+      when ident_pool._unsafe_shr then unsafe_shr_i64(node: node)
+      when ident_pool._unsafe_div then unsafe_div_i64(node: node)
+      when ident_pool._unsafe_mod then unsafe_mod_i64(node: node)
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
     when .u64?
       case op
-      when "+"          then add_u64(node: node)
-      when "&+"         then add_wrap_i64(node: node)
-      when "-"          then sub_u64(node: node)
-      when "&-"         then sub_wrap_i64(node: node)
-      when "*"          then mul_u64(node: node)
-      when "&*"         then mul_wrap_i64(node: node)
-      when "^"          then xor_i64(node: node)
-      when "|"          then or_i64(node: node)
-      when "&"          then and_i64(node: node)
-      when "unsafe_shl" then unsafe_shl_i64(node: node)
-      when "unsafe_shr" then unsafe_shr_u64(node: node)
-      when "unsafe_div" then unsafe_div_u64(node: node)
-      when "unsafe_mod" then unsafe_mod_u64(node: node)
+      when ident_pool.plus        then add_u64(node: node)
+      when ident_pool.amp_plus    then add_wrap_i64(node: node)
+      when ident_pool.minus       then sub_u64(node: node)
+      when ident_pool.amp_minus   then sub_wrap_i64(node: node)
+      when ident_pool.star        then mul_u64(node: node)
+      when ident_pool.amp_star    then mul_wrap_i64(node: node)
+      when ident_pool.hat         then xor_i64(node: node)
+      when ident_pool.pipe        then or_i64(node: node)
+      when ident_pool.amp         then and_i64(node: node)
+      when ident_pool._unsafe_shl then unsafe_shl_i64(node: node)
+      when ident_pool._unsafe_shr then unsafe_shr_u64(node: node)
+      when ident_pool._unsafe_div then unsafe_div_u64(node: node)
+      when ident_pool._unsafe_mod then unsafe_mod_u64(node: node)
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
     when .i128?
       case op
-      when "+"          then add_i128(node: node)
-      when "&+"         then add_wrap_i128(node: node)
-      when "-"          then sub_i128(node: node)
-      when "&-"         then sub_wrap_i128(node: node)
-      when "*"          then mul_i128(node: node)
-      when "&*"         then mul_wrap_i128(node: node)
-      when "^"          then xor_i128(node: node)
-      when "|"          then or_i128(node: node)
-      when "&"          then and_i128(node: node)
-      when "unsafe_shl" then unsafe_shl_i128(node: node)
-      when "unsafe_shr" then unsafe_shr_i128(node: node)
-      when "unsafe_div" then unsafe_div_i128(node: node)
-      when "unsafe_mod" then unsafe_mod_i128(node: node)
+      when ident_pool.plus        then add_i128(node: node)
+      when ident_pool.amp_plus    then add_wrap_i128(node: node)
+      when ident_pool.minus       then sub_i128(node: node)
+      when ident_pool.amp_minus   then sub_wrap_i128(node: node)
+      when ident_pool.star        then mul_i128(node: node)
+      when ident_pool.amp_star    then mul_wrap_i128(node: node)
+      when ident_pool.hat         then xor_i128(node: node)
+      when ident_pool.pipe        then or_i128(node: node)
+      when ident_pool.amp         then and_i128(node: node)
+      when ident_pool._unsafe_shl then unsafe_shl_i128(node: node)
+      when ident_pool._unsafe_shr then unsafe_shr_i128(node: node)
+      when ident_pool._unsafe_div then unsafe_div_i128(node: node)
+      when ident_pool._unsafe_mod then unsafe_mod_i128(node: node)
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
     when .u128?
       case op
-      when "+"          then add_u128(node: node)
-      when "&+"         then add_wrap_i128(node: node)
-      when "-"          then sub_u128(node: node)
-      when "&-"         then sub_wrap_i128(node: node)
-      when "*"          then mul_u128(node: node)
-      when "&*"         then mul_wrap_i128(node: node)
-      when "^"          then xor_i128(node: node)
-      when "|"          then or_i128(node: node)
-      when "&"          then and_i128(node: node)
-      when "unsafe_shl" then unsafe_shl_i128(node: node)
-      when "unsafe_shr" then unsafe_shr_u128(node: node)
-      when "unsafe_div" then unsafe_div_u128(node: node)
-      when "unsafe_mod" then unsafe_mod_u128(node: node)
+      when ident_pool.plus        then add_u128(node: node)
+      when ident_pool.amp_plus    then add_wrap_i128(node: node)
+      when ident_pool.minus       then sub_u128(node: node)
+      when ident_pool.amp_minus   then sub_wrap_i128(node: node)
+      when ident_pool.star        then mul_u128(node: node)
+      when ident_pool.amp_star    then mul_wrap_i128(node: node)
+      when ident_pool.hat         then xor_i128(node: node)
+      when ident_pool.pipe        then or_i128(node: node)
+      when ident_pool.amp         then and_i128(node: node)
+      when ident_pool._unsafe_shl then unsafe_shl_i128(node: node)
+      when ident_pool._unsafe_shr then unsafe_shr_u128(node: node)
+      when ident_pool._unsafe_div then unsafe_div_u128(node: node)
+      when ident_pool._unsafe_mod then unsafe_mod_u128(node: node)
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
     when .f32?
       # TODO: not tested
       case op
-      when "+" then add_f32(node: node)
-      when "-" then sub_f32(node: node)
-      when "*" then mul_f32(node: node)
+      when ident_pool.plus  then add_f32(node: node)
+      when ident_pool.minus then sub_f32(node: node)
+      when ident_pool.star  then mul_f32(node: node)
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
     when .f64?
       case op
-      when "+" then add_f64(node: node)
-      when "-" then sub_f64(node: node)
-      when "*" then mul_f64(node: node)
+      when ident_pool.plus  then add_f64(node: node)
+      when ident_pool.minus then sub_f64(node: node)
+      when ident_pool.star  then mul_f64(node: node)
       else
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
@@ -1112,11 +1134,11 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private def primitive_binary_op_math(left_type : Type, right_type : Type, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
+  private def primitive_binary_op_math(left_type : Type, right_type : Type, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : Ident)
     node.raise "BUG: primitive_binary_op_math called with #{left_type} #{op} #{right_type}"
   end
 
-  private def primitive_binary_op_cmp(node : ASTNode, body : Primitive, op : String)
+  private def primitive_binary_op_cmp(node : ASTNode, body : Primitive, op : Ident)
     obj = node.obj.not_nil!
     arg = node.args.first
 
@@ -1126,7 +1148,7 @@ class Crystal::Repl::Compiler
     primitive_binary_op_cmp(obj_type, arg_type, obj, arg, node, op)
   end
 
-  private def primitive_binary_op_cmp(left_type : BoolType, right_type : BoolType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : String)
+  private def primitive_binary_op_cmp(left_type : BoolType, right_type : BoolType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : Ident)
     left_node.accept self
     right_node.accept self
 
@@ -1134,7 +1156,7 @@ class Crystal::Repl::Compiler
     primitive_binary_op_cmp_op(node, op)
   end
 
-  private def primitive_binary_op_cmp(left_type : CharType, right_type : CharType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : String)
+  private def primitive_binary_op_cmp(left_type : CharType, right_type : CharType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : Ident)
     left_node.accept self
     right_node.accept self
 
@@ -1142,7 +1164,7 @@ class Crystal::Repl::Compiler
     primitive_binary_op_cmp_op(node, op)
   end
 
-  private def primitive_binary_op_cmp(left_type : SymbolType, right_type : SymbolType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : String)
+  private def primitive_binary_op_cmp(left_type : SymbolType, right_type : SymbolType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : Ident)
     left_node.accept self
     right_node.accept self
 
@@ -1150,7 +1172,7 @@ class Crystal::Repl::Compiler
     primitive_binary_op_cmp_op(node, op)
   end
 
-  private def primitive_binary_op_cmp(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : String)
+  private def primitive_binary_op_cmp(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : Ident)
     kind = extend_int(left_type, right_type, left_node, right_node, node)
     if kind.is_a?(MixedNumberKind)
       case kind
@@ -1217,7 +1239,7 @@ class Crystal::Repl::Compiler
     primitive_binary_op_cmp_op(node, op)
   end
 
-  private def primitive_binary_op_cmp(left_type : FloatType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : String)
+  private def primitive_binary_op_cmp(left_type : FloatType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : Ident)
     left_node.accept self
     right_node.accept self
     primitive_convert right_node, right_type.kind, left_type.kind, checked: false
@@ -1225,7 +1247,7 @@ class Crystal::Repl::Compiler
     primitive_binary_op_cmp_float(node, left_type.kind, op)
   end
 
-  private def primitive_binary_op_cmp(left_type : IntegerType, right_type : FloatType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : String)
+  private def primitive_binary_op_cmp(left_type : IntegerType, right_type : FloatType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : Ident)
     left_node.accept self
     primitive_convert(left_node, left_type.kind, right_type.kind, checked: false)
     right_node.accept self
@@ -1233,7 +1255,7 @@ class Crystal::Repl::Compiler
     primitive_binary_op_cmp_float(node, right_type.kind, op)
   end
 
-  private def primitive_binary_op_cmp(left_type : FloatType, right_type : FloatType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : String)
+  private def primitive_binary_op_cmp(left_type : FloatType, right_type : FloatType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : Ident)
     if left_type == right_type
       left_node.accept self
       right_node.accept self
@@ -1256,11 +1278,11 @@ class Crystal::Repl::Compiler
     primitive_binary_op_cmp_float(node, kind, op)
   end
 
-  private def primitive_binary_op_cmp(left_type : Type, right_type : Type, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : String)
+  private def primitive_binary_op_cmp(left_type : Type, right_type : Type, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : Ident)
     left_node.raise "BUG: primitive_binary_op_cmp called with #{left_type} #{op} #{right_type}"
   end
 
-  private def primitive_binary_op_cmp_float(node : ASTNode, kind : NumberKind, op : String)
+  private def primitive_binary_op_cmp_float(node : ASTNode, kind : NumberKind, op : Ident)
     case kind
     when .f32? then cmp_f32(node: node)
     when .f64? then cmp_f64(node: node)
@@ -1271,14 +1293,14 @@ class Crystal::Repl::Compiler
     primitive_binary_op_cmp_op(node, op)
   end
 
-  private def primitive_binary_op_cmp_op(node : ASTNode, op : String)
+  private def primitive_binary_op_cmp_op(node : ASTNode, op : Ident)
     case op
-    when "==" then cmp_eq(node: node)
-    when "!=" then cmp_neq(node: node)
-    when "<"  then cmp_lt(node: node)
-    when "<=" then cmp_le(node: node)
-    when ">"  then cmp_gt(node: node)
-    when ">=" then cmp_ge(node: node)
+    when ident_pool.cmp_eq  then cmp_eq(node: node)
+    when ident_pool.cmp_ne  then cmp_neq(node: node)
+    when ident_pool.cmp_lt  then cmp_lt(node: node)
+    when ident_pool.cmp_let then cmp_le(node: node)
+    when ident_pool.cmp_gt  then cmp_gt(node: node)
+    when ident_pool.cmp_get then cmp_ge(node: node)
     else
       node.raise "BUG: missing handling of binary #{op}"
     end

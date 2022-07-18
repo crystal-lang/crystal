@@ -4,10 +4,6 @@ require "./instructions"
 # The compiler is in charge of turning Crystal AST into bytecode,
 # which is just a stream of bytes that tells the interpreter what to do.
 class Crystal::Repl::Compiler < Crystal::Visitor
-  # The name we use for the variable where we store the
-  # `with ... yield` scope of calls without an `obj`.
-  WITH_SCOPE = ".with_scope"
-
   # A block that's being compiled: what's the block,
   # and which def will invoke it.
   record CompilingBlock, block : Block, target_def : Def
@@ -149,6 +145,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     )
   end
 
+  def ident_pool
+    @context.ident_pool
+  end
+
   # Compile bytecode instructions for the given node.
   def compile(node : ASTNode) : Nil
     # If at the top-level, check if there's closure data
@@ -173,7 +173,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # as the first block argument.
     with_scope = node.scope
     if with_scope
-      index = @local_vars.name_to_index(WITH_SCOPE, @block_level)
+      index = @local_vars.name_to_index(with_scope_name, @block_level)
       set_local index, aligned_sizeof_type(with_scope), node: nil
     end
 
@@ -272,7 +272,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @instructions
   end
 
-  private def move_arg_to_closure_if_closured(node : Def, arg_name : String)
+  private def move_arg_to_closure_if_closured(node : Def, arg_name : Ident)
     var = node.vars.not_nil![arg_name]
     return unless var.type?
     return unless var.closure_in?(node)
@@ -594,7 +594,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           dup(aligned_sizeof_type(node.value), node: nil)
         end
 
-        closure_self = lookup_closured_var?("self")
+        closure_self = lookup_closured_var?(ident_pool._self)
         if closure_self
           if closure_self.type.passed_by_value?
             node.raise "BUG: missing interpret assig closured instance var of pass-by-value"
@@ -699,7 +699,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if target.special_var?
       # We need to assign through the special var pointer
-      var = lookup_local_var("#{target.name}*")
+      var = lookup_local_var(ident_pool.get("#{target.name}*"))
       var_type = var.type.as(PointerInstanceType).element_type
 
       upcast value, value.type, var_type
@@ -711,7 +711,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   end
 
-  private def assign_to_var(name : String, value_type : Type, *, node : ASTNode?)
+  private def assign_to_var(name : Ident, value_type : Type, *, node : ASTNode?)
     var = lookup_local_var_or_closured_var(name)
 
     # Before assigning to the var we must potentially box inside a union
@@ -740,7 +740,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Var)
     return false unless @wants_value
 
-    is_self = node.name == "self"
+    is_self = node.name == ident_pool._self
 
     # This is the case of "self" that refers to a metaclass,
     # particularly when outside of a method.
@@ -779,17 +779,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  def lookup_local_var_or_closured_var(name : String) : LocalVar | ClosuredVar
+  def lookup_local_var_or_closured_var(name : Ident) : LocalVar | ClosuredVar
     lookup_local_var?(name) ||
       lookup_closured_var?(name) ||
       raise("BUG: can't find closured var or local var #{name}")
   end
 
-  def lookup_local_var(name : String) : LocalVar
+  def lookup_local_var(name : Ident) : LocalVar
     lookup_local_var?(name) || raise("BUG: can't find local var #{name}")
   end
 
-  def lookup_local_var?(name : String) : LocalVar?
+  def lookup_local_var?(name : Ident) : LocalVar?
     block_level = @block_level
     while block_level >= 0
       index = @local_vars.name_to_index?(name, block_level)
@@ -804,11 +804,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     nil
   end
 
-  def lookup_closured_var(name : String) : ClosuredVar
+  def lookup_closured_var(name : Ident) : ClosuredVar
     lookup_closured_var?(name) || raise("BUG: can't find closured var #{name}")
   end
 
-  def lookup_closured_var?(name : String) : ClosuredVar?
+  def lookup_closured_var?(name : Ident) : ClosuredVar?
     closure_context = @closure_context
     return unless closure_context
 
@@ -821,8 +821,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     ClosuredVar.new(indexes, type)
   end
 
-  def lookup_closured_var?(name : String, closure_context : ClosureContext, indexes : Array(Int32))
-    if name == "self" && (closure_self_type = closure_context.self_type)
+  def lookup_closured_var?(name : Ident, closure_context : ClosureContext, indexes : Array(Int32))
+    if name == ident_pool._self && (closure_self_type = closure_context.self_type)
       indexes << closure_context.bytesize - aligned_sizeof_type(closure_self_type)
       return closure_self_type
     end
@@ -876,14 +876,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     pointer_malloc 1, node: nil
 
     # Store the pointer in the closure context local variable
-    index = @local_vars.name_to_index(Closure::VAR_NAME, @block_level)
+    index = @local_vars.name_to_index(@context.closure_var_name, @block_level)
     set_local index, sizeof(Void*), node: nil
 
     # If there's a closured self type, store it now
     if closure_self_type
       # Load self
       # (pointer_set expects the value to come before the pointer)
-      local_self_index = @local_vars.name_to_index("self", 0)
+      local_self_index = @local_vars.name_to_index(ident_pool._self, 0)
       get_local local_self_index, aligned_sizeof_type(closure_self_type), node: nil
 
       # Get the closure pointer
@@ -905,14 +905,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       while true
         # Only at block level 0 we have a proc closure data
         if block_level == 0
-          parent_index = @local_vars.name_to_index?(Closure::ARG_NAME, block_level)
+          parent_index = @local_vars.name_to_index?(@context.closure_arg_name, block_level)
           break if parent_index
         end
 
         block_level -= 1
         break if block_level < 0
 
-        parent_index = @local_vars.name_to_index?(Closure::VAR_NAME, block_level)
+        parent_index = @local_vars.name_to_index?(@context.closure_var_name, block_level)
         break if parent_index
       end
 
@@ -930,7 +930,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def compute_closured_vars(vars, closure_owner)
-    closured_vars = {} of String => {Int32, Type}
+    closured_vars = {} of Ident => {Int32, Type}
     closure_var_index = 0
 
     vars.try &.each do |name, var|
@@ -995,7 +995,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # so we must search in parent blocks or the enclosing method
     block_level = @block_level
     while block_level >= 0
-      closure_var_index = @local_vars.name_to_index?(Closure::VAR_NAME, block_level)
+      closure_var_index = @local_vars.name_to_index?(@context.closure_var_name, block_level)
       return closure_var_index if closure_var_index
 
       block_level -= 1
@@ -1011,7 +1011,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private def compile_instance_var(node : InstanceVar)
     return false unless @wants_value
 
-    closured_self = lookup_closured_var?("self")
+    closured_self = lookup_closured_var?(ident_pool._self)
     if closured_self
       ivar_offset, ivar_size = get_closured_self_pointer(closured_self, node.name, node: node)
       pointer_get ivar_size, node: node
@@ -1025,7 +1025,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  private def get_closured_self_pointer(closured_self : ClosuredVar, name : String, *, node : ASTNode?)
+  private def get_closured_self_pointer(closured_self : ClosuredVar, name : Ident, *, node : ASTNode?)
     ivar_offset = ivar_offset(closured_self.type, name)
     ivar_size = inner_sizeof_type(closured_self.type.lookup_instance_var(name))
 
@@ -1126,7 +1126,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # It seems class variables initializers aren't cleaned up...
       value = @context.program.cleanup(value)
 
-      def_name = "#{var.owner}::#{var.name}"
+      def_name = ident_pool.get("#{var.owner}::#{var.name}")
 
       fake_def = Def.new(def_name)
       fake_def.owner = var.owner
@@ -1483,7 +1483,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  private def compile_pointerof_var(node : ASTNode, name : String)
+  private def compile_pointerof_var(node : ASTNode, name : Ident)
     var = lookup_local_var_or_closured_var(name)
     case var
     in LocalVar
@@ -1494,8 +1494,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   end
 
-  private def compile_pointerof_ivar(node : ASTNode, name : String)
-    closure_self = lookup_closured_var?("self")
+  private def compile_pointerof_ivar(node : ASTNode, name : Ident)
+    closure_self = lookup_closured_var?(ident_pool._self)
     if closure_self
       get_closured_self_pointer(closure_self, name, node: node)
       return
@@ -1573,7 +1573,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       call = Call.new(
         nil,
-        "__crystal_raise_cast_failed",
+        ident_pool.get("__crystal_raise_cast_failed"),
         [
           TypeNode.new(obj_type),
           TypeNode.new(@context.program.string),
@@ -1673,7 +1673,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     filtered_type
   end
 
-  private def responds_to(node : ASTNode, type : Type, name : String)
+  private def responds_to(node : ASTNode, type : Type, name : Ident)
     type = type.remove_indirection
     filtered_type = type.filter_by_responds_to(name).not_nil!
 
@@ -1751,7 +1751,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     with_scope = node.with_scope
 
     if !obj && with_scope && node.uses_with_scope?
-      obj = Var.new(WITH_SCOPE, with_scope)
+      obj = Var.new(with_scope_name, with_scope)
     end
 
     target_defs = node.target_defs
@@ -1788,7 +1788,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       return false
     end
 
-    if body.is_a?(Var) && body.name == "self"
+    if body.is_a?(Var) && body.name == ident_pool._self
       # We also inline calls that simply return "self"
 
       if @wants_value
@@ -1971,7 +1971,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       args_bytesize += aligned_sizeof_type(obj_type)
     end
 
-    multidispatch_self = target_def.args.first?.try &.name == "self"
+    multidispatch_self = target_def.args.first?.try &.name == ident_pool._self
 
     i = 0
 
@@ -2055,7 +2055,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # as the first block argument.
       with_scope = block.scope
       if with_scope
-        @local_vars.declare(WITH_SCOPE, with_scope)
+        @local_vars.declare(with_scope_name, with_scope)
       end
 
       block.vars.try &.each do |name, var|
@@ -2076,7 +2076,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
       if needs_closure_context
-        @local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
+        @local_vars.declare(@context.closure_var_name, @context.program.pointer_of(@context.program.void))
       end
 
       bytesize_after_block_local_vars = @local_vars.current_bytesize
@@ -2191,7 +2191,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     with_scope = node.with_scope
 
     if !obj && with_scope && node.uses_with_scope?
-      obj = Var.new(WITH_SCOPE, with_scope)
+      obj = Var.new(with_scope_name, with_scope)
     end
 
     if obj
@@ -2211,7 +2211,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_def_args = target_def.args
-    multidispatch_self = target_def_args.first?.try &.name == "self"
+    multidispatch_self = target_def_args.first?.try &.name == ident_pool._self
 
     i = 0
 
@@ -2275,7 +2275,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if arg.is_a?(SymbolLiteral) && target_def_var_type.is_a?(EnumType)
       symbol_name = arg.value.underscore
       target_def_var_type.types.each do |enum_name, enum_value|
-        if enum_name.underscore == symbol_name
+        if enum_name.to_s.underscore == symbol_name
           request_value(enum_value.as(Const).value)
           return
         end
@@ -2314,8 +2314,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def compile_pointerof_node(obj : Var, owner : Type) : Nil
-    if obj.name == "self"
-      self_type = @def.not_nil!.vars.not_nil!["self"].type
+    if obj.name == ident_pool._self
+      self_type = @def.not_nil!.vars.not_nil![ident_pool._self].type
       if self_type.passed_by_value? && in_multidispatch?
         # Inside a multidispatch "self" is already a pointer.
         get_local 0, sizeof(Void*), node: obj
@@ -2390,7 +2390,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     with_scope = call.with_scope
 
     if !call_obj && with_scope && call.uses_with_scope?
-      call_obj = Var.new(WITH_SCOPE, with_scope)
+      call_obj = Var.new(with_scope_name, with_scope)
     end
 
     target_defs = call.target_defs
@@ -2406,7 +2406,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     target_def = target_defs.first
     body = target_def.body
 
-    if body.is_a?(Primitive) && body.name == "pointer_get"
+    if body.is_a?(Primitive) && body.name == ident_pool._pointer_get
       # We don't want pointer.value to return a copy of something
       # if we are calling through it
       call_obj = call_obj.not_nil!
@@ -2431,7 +2431,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       return
     end
 
-    if body.is_a?(Var) && body.name == "self"
+    if body.is_a?(Var) && body.name == ident_pool._self
       # We also inline calls that simply return "self"
       if call_obj
         compile_pointerof_node(call_obj, owner)
@@ -2470,9 +2470,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     special_vars = owner.is_a?(Def) ? owner.special_vars : nil
 
     # First declare self, if there is one
-    self_var = vars_owner.vars.try &.["self"]?
+    self_var = vars_owner.vars.try &.[ident_pool._self]?
     if self_var
-      local_vars.declare("self", self_var.type)
+      local_vars.declare(ident_pool._self, self_var.type)
     end
 
     # Then define def arguments because those will come in order from calls
@@ -2484,7 +2484,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
         # The self arg can appear if it's a multidispatch, and we don't want
         # to declare it twice.
-        next if arg.name == "self"
+        next if arg.name == ident_pool._self
 
         if var.closure_in?(owner)
           needs_closure_context = true
@@ -2521,7 +2521,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if owner.is_a?(Def) && (special_vars = owner.special_vars)
       special_vars.each do |special_var|
         var = vars_owner.vars.not_nil![special_var]
-        local_vars.declare("#{var.name}*", @context.program.pointer_of(var.type))
+        local_vars.declare(ident_pool.get("#{var.name}*"), @context.program.pointer_of(var.type))
       end
     end
 
@@ -2531,7 +2531,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       next unless var_type
 
       # Skip if the var was already declared because it's also an argument
-      next if name == "self"
+      next if name == ident_pool._self
       next if owner.is_a?(Def) && owner.args.any? { |arg| arg.name == name }
 
       # TODO (optimization): don't declare local var if it's closured,
@@ -2547,12 +2547,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     needs_closure_context ||= owner.is_a?(Def) && owner.self_closured?
 
     if needs_closure_context
-      local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
+      local_vars.declare(@context.closure_var_name, @context.program.pointer_of(@context.program.void))
     end
   end
 
-  private def closured_arg_name(name : String)
-    "^#{name}"
+  private def closured_arg_name(name : Ident)
+    ident_pool.get("^#{name}")
   end
 
   private def initialize_const_if_needed(const)
@@ -2697,10 +2697,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # Declare the closure context arg and var, if any
     if is_closure || needs_closure_context
       if is_closure && needs_closure_context
-        compiled_def.local_vars.declare(Closure::ARG_NAME, @context.program.pointer_of(@context.program.void))
+        compiled_def.local_vars.declare(@context.closure_arg_name, @context.program.pointer_of(@context.program.void))
       end
 
-      compiled_def.local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
+      compiled_def.local_vars.declare(@context.closure_var_name, @context.program.pointer_of(@context.program.void))
     end
 
     # Then declare all variables
@@ -3119,7 +3119,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   # TODO: block.break shouldn't exist: the type should be merged in target_def
   private def merge_block_break_type(def_type : Type, block : Block)
-    block_break_type = block.break.type?
+    block_break_type = block.break(ident_pool).type?
     if block_break_type
       @context.program.type_merge([def_type, block_break_type] of Type) ||
         @context.program.no_return
@@ -3189,7 +3189,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def put_self(*, node : ASTNode)
-    closured_self = lookup_closured_var?("self")
+    closured_self = lookup_closured_var?(ident_pool._self)
     if closured_self
       read_from_closured_var(closured_self, node: node)
       return
@@ -3326,7 +3326,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @context.aligned_instance_sizeof_type(type)
   end
 
-  private def ivar_offset(type : Type, name : String) : Int32
+  private def ivar_offset(type : Type, name : Ident) : Int32
     if type.extern_union?
       0
     else
@@ -3345,7 +3345,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     first_arg = a_def.args.first?
     return false unless first_arg
 
-    first_arg.name == "self"
+    first_arg.name == ident_pool._self
   end
 
   private macro nop
@@ -3357,5 +3357,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     value = yield
     @node_override = old_node_override
     value
+  end
+
+  # The name we use for the variable where we store the
+  # `with ... yield` scope of calls without an `obj`.
+  def with_scope_name
+    ident_pool.get(".with_scope")
   end
 end

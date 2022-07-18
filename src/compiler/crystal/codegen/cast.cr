@@ -500,7 +500,7 @@ class Crystal::CodeGenVisitor
     symbol = @symbols_by_index[index].underscore
 
     to_type.types.each do |name, value|
-      if name.underscore == symbol
+      if name.to_s.underscore == symbol
         accept(value.as(Const).value)
         return @last
       end

@@ -10,6 +10,10 @@ struct Crystal::Repl::Value
   def initialize(@interpreter : Interpreter, @pointer : Pointer(UInt8), @type : Type)
   end
 
+  def ident_pool
+    @interpreter.ident_pool
+  end
+
   # This is a fail-safe way of getting a Crystal value for well-known
   # types like ints, floats, chars, tuples, classes and pointers.
   def value
@@ -76,8 +80,10 @@ struct Crystal::Repl::Value
   # This is done by interpreting a call to `inspect` (not `to_s`)
   # on this value.
   def to_s(io : IO)
-    decl = UninitializedVar.new(Var.new("x"), TypeNode.new(@type))
-    call = Call.new(Var.new("x"), "inspect")
+    x_ident = ident_pool._x
+
+    decl = UninitializedVar.new(Var.new(x_ident), TypeNode.new(@type))
+    call = Call.new(Var.new(x_ident), ident_pool._inspect)
     exps = Expressions.new([decl, call] of ASTNode)
 
     begin

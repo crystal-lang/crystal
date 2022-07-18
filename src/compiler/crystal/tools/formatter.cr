@@ -96,7 +96,7 @@ module Crystal
     property indent
     property subformat_nesting = 0
 
-    def initialize(source)
+    def initialize(source, @ident_pool : IdentPool = IdentPool.new)
       @lexer = Lexer.new(source)
       @lexer.comments_enabled = true
       @lexer.count_whitespace = true
@@ -149,7 +149,7 @@ module Crystal
       @no_rstrip_lines = Set(Int32).new
 
       # Variables for when we format macro code without interpolation
-      @vars = [Set(String).new]
+      @vars = [Set(Ident).new]
     end
 
     def end_visit_any(node)
@@ -982,7 +982,7 @@ module Crystal
 
     def format_named_argument_name(name)
       if @token.type.delimiter_start?
-        StringLiteral.new(name).accept self
+        StringLiteral.new(name.to_s).accept self
       else
         write @token
         @lexer.wants_symbol = false
@@ -1149,7 +1149,7 @@ module Crystal
       first_name = name.names.first if name.global? && name.names.size == 1
 
       # Check if it's {A, B} instead of Tuple(A, B)
-      if first_name == "Tuple" && @token.value != "Tuple"
+      if first_name == @ident_pool._Tuple && !@token.value?(@ident_pool._Tuple)
         write_token :OP_LCURLY
         found_comment = skip_space_or_newline
         write_space_at_end = false
@@ -1173,7 +1173,7 @@ module Crystal
       end
 
       # Check if it's {x: A, y: B} instead of NamedTuple(x: A, y: B)
-      if first_name == "NamedTuple" && @token.value != "NamedTuple"
+      if first_name == @ident_pool._NamedTuple && !@token.value?(@ident_pool._NamedTuple)
         write_token :OP_LCURLY
         skip_space_or_newline
         named_args = node.named_args.not_nil!
@@ -1239,7 +1239,7 @@ module Crystal
     def visit(node : Union)
       check_open_paren
 
-      if @token.type.ident? && @token.value == "self?" && node.types.size == 2 &&
+      if @token.type.ident? && @token.value?(@ident_pool._self?) && node.types.size == 2 &&
          node.types[0].is_a?(Self) && node.types[1].to_s == "::Nil"
         write "self?"
         next_token
@@ -1438,7 +1438,7 @@ module Crystal
     def visit(node : Def)
       @implicit_exception_handler_indent = @indent
       @inside_def += 1
-      @vars.push Set(String).new
+      @vars.push Set(Ident).new
 
       write_keyword :abstract, " " if node.abstract?
 
@@ -1653,7 +1653,7 @@ module Crystal
         end
 
         if @token.type.delimiter_start?
-          indent(@column, StringLiteral.new(node.real_name))
+          indent(@column, StringLiteral.new(node.real_name.to_s))
         else
           write node.real_name
           next_token_skip_space
@@ -2188,11 +2188,11 @@ module Crystal
         mode = Parser::ParseMode::Normal
       end
 
-      parser = Parser.new(source, var_scopes: @vars.clone)
+      parser = Parser.new(source, @ident_pool, var_scopes: @vars.clone)
       # parser.filename = formatter.filename
       nodes = parser.parse(mode)
 
-      formatter = Formatter.new(source)
+      formatter = Formatter.new(source, @ident_pool)
       formatter.inside_lib = @inside_lib
       formatter.inside_enum = @inside_enum
       formatter.inside_struct_or_union = @inside_struct_or_union
@@ -2229,7 +2229,7 @@ module Crystal
           if node.external_name.empty?
             write "_"
           elsif @token.type.delimiter_start?
-            accept StringLiteral.new(node.external_name)
+            accept StringLiteral.new(node.external_name.to_s)
           else
             write @token.value
           end
@@ -2397,14 +2397,18 @@ module Crystal
 
     def visit(node : Call)
       # This is the case of `...`
-      if node.name == "`"
+      if node.name == @ident_pool.backtick
         accept node.args.first
         return false
       end
 
       special_call =
         case node.name
-        when "as", "as?", "is_a?", "nil?", "responds_to?"
+        when @ident_pool._as,
+             @ident_pool._as?,
+             @ident_pool._is_a?,
+             @ident_pool._nil?,
+             @ident_pool._responds_to?
           true
         else
           false
@@ -2418,7 +2422,7 @@ module Crystal
       end
 
       # Consider the case of `as T`, that is, casting `self` without an explicit `self`
-      if special_call && obj.is_a?(Var) && obj.name == "self" && !@token.keyword?(:self)
+      if special_call && obj.is_a?(Var) && obj.name == @ident_pool._self && !@token.keyword?(:self)
         obj = nil
       end
 
@@ -2427,7 +2431,7 @@ module Crystal
       base_indent = @indent
 
       # Special case: $1, $2, ...
-      if @token.type.global_match_data_index? && (node.name == "[]" || node.name == "[]?") && obj.is_a?(Global)
+      if @token.type.global_match_data_index? && (node.name == @ident_pool.brackets || node.name == @ident_pool.brackets_question) && obj.is_a?(Global)
         write "$"
         write @token.value
         next_token
@@ -2438,7 +2442,7 @@ module Crystal
 
       if obj
         {Token::Kind::OP_BANG, Token::Kind::OP_PLUS, Token::Kind::OP_MINUS, Token::Kind::OP_TILDE, Token::Kind::OP_AMP_PLUS, Token::Kind::OP_AMP_MINUS}.each do |op|
-          if node.name == op.to_s && @token.type == op && node.args.empty?
+          if node.name.to_s == op.to_s && @token.type == op && node.args.empty?
             write op
             next_token_skip_space_or_newline
             accept obj
@@ -2453,7 +2457,7 @@ module Crystal
         if @token.type.space?
           needs_space = true
         else
-          needs_space = node.name != "*" && node.name != "/" && node.name != "**" && node.name != "//"
+          needs_space = node.name != @ident_pool.star && node.name != @ident_pool.slash && node.name != @ident_pool.star_star && node.name != @ident_pool.slash_slash
         end
 
         slash_is_not_regex!
@@ -2475,7 +2479,7 @@ module Crystal
 
             args = node.args
 
-            if node.name == "[]="
+            if node.name == @ident_pool.brackets_equal
               last_arg = args.pop
             end
 
@@ -2496,7 +2500,7 @@ module Crystal
             end
             write_token :OP_RSQUARE
 
-            if node.name == "[]?"
+            if node.name == @ident_pool.brackets_question
               skip_space
 
               # This might not be present in the case of `x[y] ||= z`
@@ -2519,7 +2523,7 @@ module Crystal
             write "[]"
             next_token
 
-            if node.name == "[]="
+            if node.name == @ident_pool.brackets_equal
               skip_space_or_newline
               write_token " ", :OP_EQ, " "
               skip_space_or_newline
@@ -2582,17 +2586,17 @@ module Crystal
       end
 
       # This is for foo &.[bar] and &.[bar]?, or foo.[bar] and foo.[bar]?
-      if (node.name == "[]" || node.name == "[]?") && @token.type.op_lsquare?
+      if (node.name == @ident_pool.brackets || node.name == @ident_pool.brackets_question) && @token.type.op_lsquare?
         write "["
         next_token_skip_space_or_newline
         format_call_args(node, false, base_indent)
         write_token :OP_RSQUARE
-        write_token :OP_QUESTION if node.name == "[]?"
+        write_token :OP_QUESTION if node.name == @ident_pool.brackets
         return false
       end
 
       # This is for foo.[bar] = baz
-      if node.name == "[]=" && @token.type.op_lsquare?
+      if node.name == @ident_pool.brackets_equal && @token.type.op_lsquare?
         write "["
         next_token_skip_space_or_newline
         args = node.args
@@ -2607,7 +2611,7 @@ module Crystal
       end
 
       # This is for foo.[] = bar
-      if node.name == "[]=" && @token.type.op_lsquare_rsquare?
+      if node.name == @ident_pool.brackets_equal && @token.type.op_lsquare_rsquare?
         write_token :OP_LSQUARE_RSQUARE
         next_token_skip_space_or_newline
         write " ="
@@ -2619,7 +2623,7 @@ module Crystal
       assignment = Lexer.setter?(node.name)
 
       if assignment
-        write node.name.rchop
+        write node.name.to_s.rchop
       else
         write node.name
       end
@@ -3013,9 +3017,9 @@ module Crystal
         when IsA
           if body.obj.is_a?(Var)
             if body.nil_check?
-              call = Call.new(nil, "nil?")
+              call = Call.new(nil, @ident_pool._nil?)
             else
-              call = Call.new(nil, "is_a?", args: [body.const] of ASTNode)
+              call = Call.new(nil, @ident_pool._is_a?, args: [body.const] of ASTNode)
             end
             accept call
           else
@@ -3024,7 +3028,7 @@ module Crystal
           end
         when RespondsTo
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "responds_to?", args: [SymbolLiteral.new(body.name.to_s)] of ASTNode)
+            call = Call.new(nil, @ident_pool._responds_to?, args: [SymbolLiteral.new(body.name.to_s)] of ASTNode)
             accept call
           else
             clear_object(body)
@@ -3032,7 +3036,7 @@ module Crystal
           end
         when Cast
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "as", args: [body.to] of ASTNode)
+            call = Call.new(nil, @ident_pool._as, args: [body.to] of ASTNode)
             accept call
           else
             clear_object(body)
@@ -3040,7 +3044,7 @@ module Crystal
           end
         when NilableCast
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "as?", args: [body.to] of ASTNode)
+            call = Call.new(nil, @ident_pool._as?, args: [body.to] of ASTNode)
             accept call
           else
             clear_object(body)
@@ -3056,7 +3060,7 @@ module Crystal
           end
         when Not
           if body.exp.is_a?(Var)
-            call = Call.new(nil, "!")
+            call = Call.new(nil, @ident_pool.bang)
             accept call
           else
             clear_object(body)
@@ -3202,14 +3206,14 @@ module Crystal
 
     def visit(node : IsA)
       if node.nil_check?
-        visit Call.new(node.obj, "nil?")
+        visit Call.new(node.obj, @ident_pool._nil?)
       else
-        visit Call.new(node.obj, "is_a?", node.const)
+        visit Call.new(node.obj, @ident_pool._is_a?, node.const)
       end
     end
 
     def visit(node : RespondsTo)
-      visit Call.new(node.obj, "responds_to?", SymbolLiteral.new(node.name))
+      visit Call.new(node.obj, @ident_pool._responds_to?, SymbolLiteral.new(node.name.to_s))
     end
 
     def visit(node : Or)
@@ -3848,31 +3852,31 @@ module Crystal
     end
 
     def visit(node : Cast)
-      visit Call.new(node.obj, "as", node.to)
+      visit Call.new(node.obj, @ident_pool._as, node.to)
     end
 
     def visit(node : NilableCast)
-      visit Call.new(node.obj, "as?", node.to)
+      visit Call.new(node.obj, @ident_pool._as?, node.to)
     end
 
     def visit(node : TypeOf)
-      visit Call.new(nil, "typeof", node.expressions)
+      visit Call.new(nil, @ident_pool._typeof, node.expressions)
     end
 
     def visit(node : SizeOf)
-      visit Call.new(nil, "sizeof", node.exp)
+      visit Call.new(nil, @ident_pool._sizeof, node.exp)
     end
 
     def visit(node : InstanceSizeOf)
-      visit Call.new(nil, "instance_sizeof", node.exp)
+      visit Call.new(nil, @ident_pool._instance_sizeof, node.exp)
     end
 
     def visit(node : OffsetOf)
-      visit Call.new(nil, "offsetof", [node.offsetof_type, node.offset])
+      visit Call.new(nil, @ident_pool._offsetof, [node.offsetof_type, node.offset])
     end
 
     def visit(node : PointerOf)
-      visit Call.new(nil, "pointerof", node.exp)
+      visit Call.new(nil, @ident_pool._pointerof, node.exp)
     end
 
     def visit(node : Underscore)

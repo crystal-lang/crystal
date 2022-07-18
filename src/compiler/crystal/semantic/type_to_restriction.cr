@@ -7,40 +7,44 @@ module Crystal
     def initialize(@from_type : Type)
     end
 
+    def ident_pool
+      @from_type.ident_pool
+    end
+
     def convert(type : NilType)
-      Path.global("Nil")
+      Path.global(ident_pool._Nil)
     end
 
     def convert(type : VoidType)
-      Path.global("Void")
+      Path.global(ident_pool._Void)
     end
 
     def convert(type : BoolType)
-      Path.global("Bool")
+      Path.global(ident_pool._Bool)
     end
 
     def convert(type : CharType)
-      Path.global("Char")
+      Path.global(ident_pool._Char)
     end
 
     def convert(type : SymbolType)
-      Path.global("Symbol")
+      Path.global(ident_pool._Symbol)
     end
 
     def convert(type : IntegerType | FloatType)
       case type.kind
-      in NumberKind::I8   then Path.global("Int8")
-      in NumberKind::I16  then Path.global("Int16")
-      in NumberKind::I32  then Path.global("Int32")
-      in NumberKind::I64  then Path.global("Int64")
-      in NumberKind::I128 then Path.global("Int128")
-      in NumberKind::U8   then Path.global("UInt8")
-      in NumberKind::U16  then Path.global("UInt16")
-      in NumberKind::U32  then Path.global("UInt32")
-      in NumberKind::U64  then Path.global("UInt64")
-      in NumberKind::U128 then Path.global("UInt128")
-      in NumberKind::F32  then Path.global("Float32")
-      in NumberKind::F64  then Path.global("Float64")
+      in NumberKind::I8   then Path.global(ident_pool._Int8)
+      in NumberKind::I16  then Path.global(ident_pool._Int16)
+      in NumberKind::I32  then Path.global(ident_pool._Int32)
+      in NumberKind::I64  then Path.global(ident_pool._Int64)
+      in NumberKind::I128 then Path.global(ident_pool._Int128)
+      in NumberKind::U8   then Path.global(ident_pool._UInt8)
+      in NumberKind::U16  then Path.global(ident_pool._UInt16)
+      in NumberKind::U32  then Path.global(ident_pool._UInt32)
+      in NumberKind::U64  then Path.global(ident_pool._UInt64)
+      in NumberKind::U128 then Path.global(ident_pool._UInt128)
+      in NumberKind::F32  then Path.global(ident_pool._Float32)
+      in NumberKind::F64  then Path.global(ident_pool._Float64)
       end
     end
 
@@ -54,7 +58,7 @@ module Crystal
 
     def convert(type : TupleInstanceType)
       Generic.new(
-        Path.global("Tuple"),
+        Path.global(ident_pool._Tuple),
         type.tuple_types.map do |tuple_type|
           convert(tuple_type) || Underscore.new
         end
@@ -63,7 +67,7 @@ module Crystal
 
     def convert(type : NamedTupleInstanceType)
       Generic.new(
-        Path.global("NamedTuple"),
+        Path.global(ident_pool._NamedTuple),
         type_vars: [] of ASTNode,
         named_args: type.entries.map do |entry|
           NamedArgument.new(
@@ -130,7 +134,7 @@ module Crystal
     end
 
     def convert(type : NoReturnType)
-      Path.global("NoReturn")
+      Path.global(ident_pool._NoReturn)
     end
 
     def convert(type : VirtualType)
@@ -170,7 +174,7 @@ module Crystal
           common_namespace(type, @from_type)
         end
 
-      names = [] of String
+      names = [] of Ident
       append_namespace(type, names, upto: common_namespace)
       names << type.name
 

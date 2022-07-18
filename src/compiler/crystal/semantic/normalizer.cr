@@ -24,6 +24,10 @@ module Crystal
     def initialize(@program)
     end
 
+    def ident_pool
+      @program.ident_pool
+    end
+
     def before_transform(node)
       @dead_code = false
     end
@@ -121,7 +125,13 @@ module Crystal
 
     def comparison?(name)
       case name
-      when "<=", "<", "!=", "==", "===", ">", ">="
+      when ident_pool.cmp_let,
+           ident_pool.cmp_lt,
+           ident_pool.cmp_ne,
+           ident_pool.cmp_eq,
+           ident_pool.cmp_case_eq,
+           ident_pool.cmp_gt,
+           ident_pool.cmp_get
         true
       else
         false
@@ -223,7 +233,7 @@ module Crystal
 
       target = node.target
       if target.is_a?(Call)
-        if target.name == "[]"
+        if target.name == ident_pool.brackets
           transform_op_assign_index(node, target)
         else
           transform_op_assign_call(node, target)
@@ -259,20 +269,20 @@ module Crystal
       call.name_location = node.name_location
 
       case node.op
-      when "||"
+      when ident_pool.pipe_pipe
         # Special: tmp.exp || tmp.exp=(b)
         #
         # (3) = tmp.exp=(b)
-        right = Call.new(tmp.clone, "#{target.name}=", node.value).at(node)
+        right = Call.new(tmp.clone, ident_pool.get("#{target.name}="), node.value).at(node)
         right.name_location = node.name_location
 
         # (4) = (2) || (3)
         call = Or.new(call, right).at(node)
-      when "&&"
+      when ident_pool.amp_amp
         # Special: tmp.exp && tmp.exp=(b)
         #
         # (3) = tmp.exp=(b)
-        right = Call.new(tmp.clone, "#{target.name}=", node.value).at(node)
+        right = Call.new(tmp.clone, ident_pool.get("#{target.name}="), node.value).at(node)
         right.name_location = node.name_location
 
         # (4) = (2) && (3)
@@ -283,7 +293,7 @@ module Crystal
         call.name_location = node.name_location
 
         # (4) = tmp.exp=((3))
-        call = Call.new(tmp.clone, "#{target.name}=", call).at(node)
+        call = Call.new(tmp.clone, ident_pool.get("#{target.name}="), call).at(node)
         call.name_location = node.name_location
       end
 
@@ -333,41 +343,41 @@ module Crystal
       end
 
       case node.op
-      when "||"
+      when ident_pool.pipe_pipe
         # Special: tmp[tmp1, tmp2, ...]? || (tmp[tmp1, tmp2, ...] = b)
         #
         # (2) = tmp[tmp1, tmp2, ...]?
-        call = Call.new(tmp.clone, "[]?", tmp_args).at(node)
+        call = Call.new(tmp.clone, ident_pool.brackets_question, tmp_args).at(node)
         call.name_location = node.name_location
 
         # (3) = tmp[tmp1, tmp2, ...] = b
         args = Array(ASTNode).new(tmp_args.size + 1)
         tmp_args.each { |arg| args << arg.clone }
         args << node.value
-        right = Call.new(tmp.clone, "[]=", args).at(node)
+        right = Call.new(tmp.clone, ident_pool.brackets_equal, args).at(node)
         right.name_location = node.name_location
 
         # (3) = (2) || (4)
         call = Or.new(call, right).at(node)
-      when "&&"
+      when ident_pool.amp_amp
         # Special: tmp[tmp1, tmp2, ...]? && (tmp[tmp1, tmp2, ...] = b)
         #
         # (2) = tmp[tmp1, tmp2, ...]?
-        call = Call.new(tmp.clone, "[]?", tmp_args).at(node)
+        call = Call.new(tmp.clone, ident_pool.brackets_question, tmp_args).at(node)
         call.name_location = node.name_location
 
         # (3) = tmp[tmp1, tmp2, ...] = b
         args = Array(ASTNode).new(tmp_args.size + 1)
         tmp_args.each { |arg| args << arg.clone }
         args << node.value
-        right = Call.new(tmp.clone, "[]=", args).at(node)
+        right = Call.new(tmp.clone, ident_pool.brackets_equal, args).at(node)
         right.name_location = node.name_location
 
         # (3) = (2) && (4)
         call = And.new(call, right).at(node)
       else
         # (2) = tmp[tmp1, tmp2, ...]
-        call = Call.new(tmp.clone, "[]", tmp_args).at(node)
+        call = Call.new(tmp.clone, ident_pool.brackets, tmp_args).at(node)
         call.name_location = node.name_location
 
         # (3) = (2) + b
@@ -378,7 +388,7 @@ module Crystal
         args = Array(ASTNode).new(tmp_args.size + 1)
         tmp_args.each { |arg| args << arg.clone }
         args << call
-        call = Call.new(tmp.clone, "[]=", args).at(node)
+        call = Call.new(tmp.clone, ident_pool.brackets_equal, args).at(node)
         call.name_location = node.name_location
       end
 
@@ -396,13 +406,13 @@ module Crystal
 
     def transform_op_assign_simple(node, target)
       case node.op
-      when "&&"
+      when ident_pool.amp_amp
         # (1) a = b
         assign = Assign.new(target, node.value).at(node)
 
         # a && (1)
         And.new(target.clone, assign).at(node)
-      when "||"
+      when ident_pool.pipe_pipe
         # (1) a = b
         assign = Assign.new(target, node.value).at(node)
 

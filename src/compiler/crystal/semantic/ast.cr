@@ -52,7 +52,7 @@ module Crystal
   end
 
   class Var
-    def initialize(@name : String, @type : Type)
+    def initialize(@name : Ident, @type : Type)
     end
 
     def_equals name, type?
@@ -60,10 +60,10 @@ module Crystal
 
   # Fictitious node to represent primitives
   class Primitive < ASTNode
-    getter name : String
+    getter name : Ident
     property extra : ASTNode?
 
-    def initialize(@name : String, @type : Type? = nil)
+    def initialize(@name : Ident, @type : Type? = nil)
     end
 
     def clone_without_location
@@ -77,12 +77,12 @@ module Crystal
   class TupleIndexer < Primitive
     getter index : TupleInstanceType::Index
 
-    def initialize(@index)
-      super("tuple_indexer_known_index")
+    def initialize(name : Ident, @index)
+      super(name)
     end
 
     def clone_without_location
-      TupleIndexer.new(index)
+      TupleIndexer.new(name, index)
     end
 
     def_equals_and_hash index
@@ -123,7 +123,7 @@ module Crystal
   class Arg
     include Annotatable
 
-    def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @type : Type? = nil)
+    def initialize(@name : Ident, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : Ident? = nil, @type : Type? = nil)
       @external_name = external_name || @name
     end
 
@@ -147,7 +147,7 @@ module Crystal
     property yield_vars : Array(Var)?
     property previous : DefWithMetadata?
     property next : Def?
-    property special_vars : Set(String)?
+    property special_vars : Set(Ident)?
     property block_nest = 0
     property? raises = false
     property? closure = false
@@ -183,7 +183,7 @@ module Crystal
     end
 
     def add_special_var(name)
-      special_vars = @special_vars ||= Set(String).new
+      special_vars = @special_vars ||= Set(Ident).new
       special_vars << name
     end
 
@@ -427,7 +427,7 @@ module Crystal
   class MetaVar < ASTNode
     include SpecialVar
 
-    property name : String
+    property name : Ident
 
     # This is the context of the variable: who allocates it.
     # It can either be the Program (for top level variables),
@@ -455,7 +455,7 @@ module Crystal
     # Can be Var or MetaVar.
     property(local_vars) { [] of ASTNode }
 
-    def initialize(@name : String, @type : Type? = nil)
+    def initialize(@name : Ident, @type : Type? = nil)
     end
 
     # Marks this variable as closured.
@@ -516,7 +516,7 @@ module Crystal
     end
   end
 
-  alias MetaVars = Hash(String, MetaVar)
+  alias MetaVars = Hash(Ident, MetaVar)
 
   # A variable belonging to a type: a global,
   # class or instance variable (globals belong to the program).
@@ -559,9 +559,9 @@ module Crystal
     end
 
     def kind
-      case name[0]
+      case name.to_s[0]
       when '@'
-        if name[1] == '@'
+        if name.to_s[1] == '@'
           Kind::Class
         else
           Kind::Instance
@@ -614,7 +614,9 @@ module Crystal
     property fun_literal : ASTNode?
     property? visited = false
 
-    getter(:break) { Var.new("%break") }
+    def break(ident_pool : IdentPool)
+      @break ||= Var.new(ident_pool.get("%break"))
+    end
   end
 
   class While
@@ -676,7 +678,7 @@ module Crystal
   end
 
   class External < Def
-    property real_name : String
+    property real_name : Ident
     property! fun_def : FunDef
     property call_convention : LLVM::CallConvention?
 
@@ -689,12 +691,12 @@ module Crystal
     # `@[ThreadLocal]`. This property is `true` in that case.
     property? thread_local = false
 
-    def initialize(name : String, args : Array(Arg), body, @real_name : String)
+    def initialize(name : Ident, args : Array(Arg), body, @real_name : Ident)
       super(name, args, body, nil, nil, nil)
     end
 
     def mangled_name(program, obj_type)
-      real_name
+      real_name.to_s
     end
 
     def compatible_with?(other)
@@ -726,7 +728,7 @@ module Crystal
       InitializedInRescue
     end
 
-    getter name : String
+    getter name : Ident
     getter reason : Reason
     getter nodes : Array(ASTNode)?
     getter scope : Type?
@@ -742,9 +744,9 @@ module Crystal
   # Fictitious node that means "all these nodes come from this file"
   class FileNode < ASTNode
     property node : ASTNode
-    property filename : String
+    property filename : Ident
 
-    def initialize(@node : ASTNode, @filename : String)
+    def initialize(@node : ASTNode, @filename : Ident)
     end
 
     def accept_children(visitor)
@@ -788,7 +790,11 @@ module Crystal
   class MacroId < ASTNode
     property value : String
 
-    def initialize(@value)
+    def self.new(value : Ident)
+      new(value.to_s)
+    end
+
+    def initialize(@value : String)
     end
 
     def to_macro_id
@@ -804,7 +810,7 @@ module Crystal
 
   # Fictitious node representing a variable in macros
   class MetaMacroVar < ASTNode
-    property name : String
+    property name : Ident
     property default_value : ASTNode?
 
     # The instance variable associated with this meta macro var

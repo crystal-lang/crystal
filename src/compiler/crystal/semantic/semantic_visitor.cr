@@ -27,6 +27,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     @in_is_a = false
   end
 
+  def ident_pool
+    @program.ident_pool
+  end
+
   # Transform require to its source code.
   # The source code can be a Nop if the file was already required.
   def visit(node : Require)
@@ -51,7 +55,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       nodes = Array(ASTNode).new(filenames.size)
       filenames.each do |filename|
         if @program.requires.add?(filename)
-          parser = Parser.new File.read(filename), @program.string_pool
+          parser = Parser.new File.read(filename), @program.ident_pool
           parser.filename = filename
           parser.wants_doc = @program.wants_doc?
           parsed_nodes = parser.parse
@@ -59,7 +63,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
           # We must type the node immediately, in case a file requires another
           # *before* one of the files in `filenames`
           parsed_nodes.accept self
-          nodes << FileNode.new(parsed_nodes, filename)
+          nodes << FileNode.new(parsed_nodes, ident_pool.get(filename))
         end
       end
       expanded = Expressions.from(nodes)
@@ -240,7 +244,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   end
 
   # Returns free variables
-  def free_vars : Hash(String, TypeVar)?
+  def free_vars : Hash(Ident, TypeVar)?
     nil
   end
 
@@ -343,7 +347,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
              end
 
     # We could do Set.new(@vars.keys) but that creates an intermediate array
-    local_vars = Set(String).new(initial_capacity: @vars.size)
+    local_vars = Set(Ident).new(initial_capacity: @vars.size)
     @vars.each_key { |key| local_vars << key }
 
     generated_nodes = @program.parse_macro_source(expanded_macro, macro_expansion_pragmas, the_macro, node, local_vars,
@@ -426,7 +430,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       return expanded
     end
 
-    the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
+    the_macro = Macro.new(program.ident_pool.get("macro_#{node.object_id}"), [] of Arg, node).at(node.location)
 
     skip_macro_exception = nil
 
@@ -471,9 +475,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     # level primitive.
     # We also have the same problem with File::Flags, which
     # is an enum marked with Flags annotation.
-    if ann.path.single?("Primitive")
+    if ann.path.single?(@program.ident_pool._Primitive)
       type = @program.primitive_annotation
-    elsif ann.path.single?("Flags")
+    elsif ann.path.single?(@program.ident_pool._Flags)
       type = @program.flags_annotation
     else
       type = lookup_type(ann.path)

@@ -466,7 +466,7 @@ class Crystal::Call
       str << '*' if a_def.splat_index == i
 
       if arg.external_name != arg.name
-        str << (arg.external_name.presence || '_')
+        str << (arg.external_name.try(&.to_s).presence || '_')
         str << ' '
       end
 

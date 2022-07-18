@@ -81,7 +81,7 @@ class Crystal::CodeGenVisitor
         if obj && obj.type.passed_as_self?
           call_args << downcast(@last, target_def.owner, obj.type, true)
         else
-          if node.uses_with_scope? && (yield_scope = context.vars["%scope"]?)
+          if node.uses_with_scope? && (yield_scope = context.vars[ident_pool.percent_scope]?)
             call_args << downcast(yield_scope.pointer, target_def.owner, node.with_scope.not_nil!, true)
           else
             call_args << llvm_self(owner)
@@ -349,7 +349,7 @@ class Crystal::CodeGenVisitor
       obj_type_id = @last
     elsif node.uses_with_scope? && (with_scope = node.with_scope)
       owner = with_scope
-      obj_type_id = context.vars["%scope"].pointer
+      obj_type_id = context.vars[ident_pool.percent_scope].pointer
     else
       owner = node.scope
       obj_type_id = llvm_self
@@ -358,19 +358,19 @@ class Crystal::CodeGenVisitor
 
     # Create self var if available
     if node_obj
-      new_vars["%self"] = LLVMVar.new(@last, node_obj.type, true)
+      new_vars[ident_pool.percent_self] = LLVMVar.new(@last, node_obj.type, true)
     end
 
     # Get type if of args and create arg vars
     arg_type_ids = node.args.map_with_index do |arg, i|
       @needs_value = true
       accept arg
-      new_vars["%arg#{i}"] = LLVMVar.new(@last, arg.type, true)
+      new_vars[ident_pool.get("%arg#{i}")] = LLVMVar.new(@last, arg.type, true)
       type_id(@last, arg.type)
     end
 
     # Reuse this call for each dispatch branch
-    call = Call.new(node_obj ? Var.new("%self") : nil, node.name, node.args.map_with_index { |arg, i| Var.new("%arg#{i}").as(ASTNode) }, node.block).at(node)
+    call = Call.new(node_obj ? Var.new(ident_pool.percent_self) : nil, node.name, node.args.map_with_index { |arg, i| Var.new(ident_pool.get("%arg#{i}")).as(ASTNode) }, node.block).at(node)
     call.scope = with_scope || node.scope
     call.with_scope = with_scope
     call.uses_with_scope = node.uses_with_scope?
@@ -416,8 +416,8 @@ class Crystal::CodeGenVisitor
           call.args.zip(a_def.args) do |call_arg, a_def_arg|
             call_arg.set_type(a_def_arg.type)
           end
-          if (node_block = node.block) && node_block.break.type?
-            call.set_type(@program.type_merge [a_def.type, node_block.break.type] of Type)
+          if (node_block = node.block) && node_block.break(ident_pool).type?
+            call.set_type(@program.type_merge [a_def.type, node_block.break(ident_pool).type] of Type)
           else
             call.set_type(a_def.type)
           end
@@ -474,7 +474,7 @@ class Crystal::CodeGenVisitor
       inline_call_return_value target_def, body
       true
     when Var
-      if body.name == "self"
+      if body.name == ident_pool._self
         return true unless @needs_value
 
         @last = self_type.passed_as_self? ? call_args.first : type_id(self_type)

@@ -105,7 +105,7 @@ module Crystal
     @needs_type_filters : Int32
     @typeof_nest : Int32
     @found_self_in_initialize_call : Array(ASTNode)?
-    @used_ivars_in_calls_in_initialize : Hash(String, Array(ASTNode))?
+    @used_ivars_in_calls_in_initialize : Hash(Ident, Array(ASTNode))?
     @block_context : Block?
     @while_vars : MetaVars?
 
@@ -118,7 +118,7 @@ module Crystal
       @needs_type_filters = 0
       @typeof_nest = 0
       @is_initialize = !!(typed_def && (
-        typed_def.name == "initialize" ||
+        typed_def.name == program.ident_pool._initialize ||
         typed_def.name.starts_with?("initialize:") # Because of expanded methods from named args
       ))
       @found_self_in_initialize_call = nil
@@ -190,7 +190,7 @@ module Crystal
           type.visited = true
 
           meta_vars = MetaVars.new
-          const_def = Def.new("const", [] of Arg)
+          const_def = Def.new(@program.ident_pool._const, [] of Arg)
           type_visitor = MainVisitor.new(@program, meta_vars, const_def)
           type_visitor.current_type = type.namespace
           type_visitor.inside_constant = true
@@ -355,7 +355,7 @@ module Crystal
     def visit(node : Var)
       var = @vars[node.name]?
       if var
-        if var.type?.is_a?(Program) && node.name == "self"
+        if var.type?.is_a?(Program) && node.name == @program.ident_pool._self
           node.raise "there's no self in this scope"
         end
 
@@ -378,7 +378,7 @@ module Crystal
         if needs_type_filters?
           @type_filters = TypeFilters.truthy(node)
         end
-      elsif node.name == "self"
+      elsif node.name == @program.ident_pool._self
         current_type = current_type()
         if current_type.is_a?(Program)
           node.raise "there's no self in this scope"
@@ -577,8 +577,11 @@ module Crystal
       # into the current scope, and it would be annoying
       # to ask the user to always invoke `not_nil!` on it)
       case node.name
-      when "$~", "$?"
-        expanded = Call.new(Var.new(node.name).at(node), "not_nil!").at(node)
+      when @program.ident_pool.dollar_tilde, @program.ident_pool.dollar_question
+        expanded = Call.new(
+          Var.new(node.name).at(node),
+          @program.ident_pool._not_nil!,
+        ).at(node)
         expanded.accept self
         node.bind_to expanded
         node.expanded = expanded
@@ -689,7 +692,7 @@ module Crystal
 
       if @is_initialize && !@found_self_in_initialize_call
         value = node.value
-        if value.is_a?(Var) && value.name == "self"
+        if value.is_a?(Var) && value.name == ident_pool._self
           @found_self_in_initialize_call = [value] of ASTNode
         end
       end
@@ -958,7 +961,7 @@ module Crystal
       if block.fun_literal
         block_arg_name = typed_def.block_arg.not_nil!.name
         block_var = Var.new(block_arg_name).at(node.location)
-        call = Call.new(block_var, "call", node.exps).at(node.location)
+        call = Call.new(block_var, ident_pool._call, node.exps).at(node.location)
         call.accept self
         node.bind_to call
         node.expanded = call
@@ -1219,14 +1222,14 @@ module Crystal
         node.raise "undefined fun '#{node.name}' for #{obj_type}" unless matching_fun
 
         call.args = matching_fun.args.map_with_index do |arg, i|
-          Var.new("arg#{i}", arg.type).as(ASTNode)
+          Var.new(ident_pool.get("arg#{i}"), arg.type).as(ASTNode)
         end
       else
         call.args = node.args.map_with_index do |arg, i|
           arg.accept self
           arg_type = arg.type
           MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
-          Var.new("arg#{i}", arg_type.virtual_type).as(ASTNode)
+          Var.new(ident_pool.get("arg#{i}"), arg_type.virtual_type).as(ASTNode)
         end
       end
 
@@ -1438,10 +1441,10 @@ module Crystal
       return if @typeof_nest > 0
 
       node_obj = node.obj
-      if !node_obj || (node_obj.is_a?(Var) && node_obj.name == "self")
+      if !node_obj || (node_obj.is_a?(Var) && node_obj.name == ident_pool._self)
         # Special case: when calling self.class a class method will be invoked
         # and there's no possibility of accessing instance vars, so we ignore this case.
-        if node.name == "class" && node.args.empty?
+        if node.name == ident_pool._class && node.args.empty?
           return
         end
 
@@ -1460,7 +1463,7 @@ module Crystal
         # Check if any argument is "self"
         unless @found_self_in_initialize_call
           node.args.each do |arg|
-            if arg.is_a?(Var) && arg.name == "self"
+            if arg.is_a?(Var) && arg.name == ident_pool._self
               @found_self_in_initialize_call = [node] of ASTNode
               return
             end
@@ -1520,7 +1523,7 @@ module Crystal
 
       instance_type = obj_type.instance_type.remove_typedef
 
-      if node.name == "new"
+      if node.name == ident_pool._new
         case instance_type
         when .extern?
           if instance_type.namespace.is_a?(LibType) && (named_args = node.named_args)
@@ -1547,13 +1550,13 @@ module Crystal
 
       temp_name = @program.new_temp_var_name
 
-      new_call = Call.new(node.obj, "new").at(node.location)
+      new_call = Call.new(node.obj, ident_pool._new).at(node.location)
 
       new_assign = Assign.new(Var.new(temp_name).at(node), new_call).at(node)
       exps << new_assign
 
       named_args.each do |named_arg|
-        assign_call = Call.new(Var.new(temp_name).at(named_arg), "#{named_arg.name}=", named_arg.value).at(named_arg)
+        assign_call = Call.new(Var.new(temp_name).at(named_arg), ident_pool.get("#{named_arg.name}="), named_arg.value).at(named_arg)
         if loc = named_arg.location
           assign_call.location = loc
           assign_call.name_location = loc
@@ -1573,7 +1576,7 @@ module Crystal
     end
 
     class InstanceVarsCollector < Visitor
-      getter ivars : Hash(String, Array(ASTNode))?
+      getter ivars : Hash(Ident, Array(ASTNode))?
       getter found_self : Array(ASTNode)?
       @scope : Type
       @in_super : Int32
@@ -1587,6 +1590,10 @@ module Crystal
         @callstack = [a_def] of ASTNode
       end
 
+      def ident_pool
+        @scope.ident_pool
+      end
+
       def node_in_callstack(node)
         nodes = [] of ASTNode
         nodes.concat @callstack
@@ -1596,7 +1603,7 @@ module Crystal
 
       def visit(node : InstanceVar)
         unless @vars.has_key?(node.name)
-          ivars = @ivars ||= Hash(String, Array(ASTNode)).new
+          ivars = @ivars ||= Hash(Ident, Array(ASTNode)).new
           unless ivars.has_key?(node.name)
             ivars[node.name] = node_in_callstack(node)
           end
@@ -1604,7 +1611,7 @@ module Crystal
       end
 
       def visit(node : Var)
-        if @in_super == 0 && node.name == "self"
+        if @in_super == 0 && node.name == ident_pool._self
           @found_self = node_in_callstack(node)
         end
         false
@@ -1619,11 +1626,11 @@ module Crystal
         obj = node.obj
 
         # Skip class method
-        if obj.is_a?(Var) && obj.name == "self" && node.name == "class" && node.args.empty?
+        if obj.is_a?(Var) && obj.name == ident_pool._self && node.name == ident_pool._class && node.args.empty?
           return false
         end
 
-        if obj && !(obj.is_a?(Var) && obj.name == "self")
+        if obj && !(obj.is_a?(Var) && obj.name == ident_pool._self)
           # not a self-instance method: only verify arguments
           return true
         end
@@ -1728,7 +1735,7 @@ module Crystal
       if const.is_a?(Path) && const.target_const
         obj = node.obj.clone.at(node.obj)
         const = node.const.clone.at(node.const)
-        comp = Call.new(const, "===", obj).at(node.location)
+        comp = Call.new(const, ident_pool.cmp_case_eq, obj).at(node.location)
         comp.accept self
         node.syntax_replacement = comp
         node.bind_to comp
@@ -1887,7 +1894,7 @@ module Crystal
     #   - Don't use the type of a branch that is unreachable (ends with return,
     #     break or with a call that is NoReturn)
     def merge_if_vars(node, cond_vars, then_vars, else_vars, before_then_vars, before_else_vars, then_unreachable, else_unreachable)
-      all_vars_names = Set(String).new
+      all_vars_names = Set(Ident).new
       then_vars.each_key do |name|
         all_vars_names << name
       end
@@ -1999,7 +2006,7 @@ module Crystal
 
       # `node.body` may reset this status, so we capture them in a set
       # (we don't need the full MetaVars at the moment)
-      after_cond_vars_nil_if_read = Set(String).new
+      after_cond_vars_nil_if_read = Set(Ident).new
       @vars.each do |name, var|
         after_cond_vars_nil_if_read << name if var.nil_if_read?
       end
@@ -2185,7 +2192,7 @@ module Crystal
       if block = @block
         node.target = block.call.not_nil!
 
-        block.break.bind_to(node_exp_or_nil_literal(node))
+        block.break(ident_pool).bind_to(node_exp_or_nil_literal(node))
 
         bind_vars @vars, block.after_vars, block.args
       elsif target_while = @while_stack.last?
@@ -2254,33 +2261,33 @@ module Crystal
       end
 
       case node.name
-      when "allocate"
+      when ident_pool._allocate
         visit_allocate node
-      when "pointer_malloc"
+      when ident_pool._pointer_malloc
         visit_pointer_malloc node
-      when "pointer_set"
+      when ident_pool._pointer_set
         visit_pointer_set node
-      when "pointer_new"
+      when ident_pool._pointer_new
         visit_pointer_new node
-      when "argc"
+      when ident_pool._argc
         # Already typed
-      when "argv"
+      when ident_pool._argv
         # Already typed
-      when "struct_or_union_set"
+      when ident_pool._struct_or_union_set
         visit_struct_or_union_set node
-      when "external_var_set"
+      when ident_pool._external_var_set
         # Nothing to do
-      when "external_var_get"
+      when ident_pool._external_var_get
         # Nothing to do
-      when "class"
+      when ident_pool._class
         node.type = scope.metaclass
-      when "enum_value"
+      when ident_pool._enum_value
         # Nothing to do
-      when "enum_new"
+      when ident_pool._enum_new
         # Nothing to do
-      when "throw_info"
+      when ident_pool._throw_info
         node.type = program.pointer_of(program.void)
-      when "va_arg"
+      when ident_pool._va_arg
         visit_va_arg node
       else
         node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
@@ -2330,7 +2337,7 @@ module Crystal
 
             extra = Call.new(
               nil,
-              "raise",
+              ident_pool._raise,
               args: [StringLiteral.new("Can't instantiate abstract #{base_type.type_desc} #{base_type}")] of ASTNode,
               global: true)
             extra.accept self
@@ -2367,7 +2374,7 @@ module Crystal
         return
       end
 
-      value = @vars["value"]
+      value = @vars[ident_pool._value]
 
       scope.var.bind_to value
       node.bind_to value
@@ -2384,9 +2391,9 @@ module Crystal
     def visit_struct_or_union_set(node)
       scope = @scope.as(NonGenericClassType)
 
-      field_name = call.not_nil!.name.rchop
-      expected_type = scope.instance_vars['@' + field_name].type
-      value = @vars["value"]
+      field_name = call.not_nil!.name.to_s.rchop
+      expected_type = scope.instance_vars[ident_pool.get('@' + field_name)].type
+      value = @vars[ident_pool._value]
       actual_type = value.type
 
       node.type = actual_type
@@ -2410,7 +2417,7 @@ module Crystal
         end
       end
 
-      unsafe_call = Conversions.to_unsafe(node, Var.new("value").at(node), self, actual_type, expected_type)
+      unsafe_call = Conversions.to_unsafe(node, Var.new(ident_pool._value).at(node), self, actual_type, expected_type)
       if unsafe_call
         node.extra = unsafe_call
         return
@@ -2420,7 +2427,7 @@ module Crystal
     end
 
     def convert_struct_or_union_numeric_argument(node, unaliased_type, expected_type, actual_type)
-      Conversions.numeric_argument(node, Var.new("value"), self, unaliased_type, expected_type, actual_type)
+      Conversions.numeric_argument(node, Var.new(ident_pool._value), self, unaliased_type, expected_type, actual_type)
     end
 
     def visit(node : PointerOf)
@@ -3091,7 +3098,7 @@ module Crystal
     def check_closured(var, mark_as_mutably_closured : Bool = false)
       return if @typeof_nest > 0
 
-      if var.name == "self"
+      if var.name == @program.ident_pool._self
         check_self_closured
         return
       end
@@ -3345,9 +3352,9 @@ module Crystal
     end
 
     def lookup_similar_class_variable_name(node, owner)
-      Levenshtein.find(node.name) do |finder|
+      Levenshtein.find(node.name.to_s) do |finder|
         owner.class_vars.each_key do |name|
-          finder.test(name)
+          finder.test(name.to_s)
         end
       end
     end

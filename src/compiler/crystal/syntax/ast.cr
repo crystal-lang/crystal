@@ -365,6 +365,12 @@ module Crystal
     def initialize(@value : String)
     end
 
+    def self.new(ident : Ident)
+      # {% raise "OH NO!" %}
+      # TODO: remove me
+      new(ident.to_s)
+    end
+
     def clone_without_location
       StringLiteral.new(@value)
     end
@@ -486,7 +492,7 @@ module Crystal
 
     def_equals_and_hash @entries
 
-    record Entry, key : String, value : ASTNode
+    record Entry, key : Ident, value : ASTNode
   end
 
   class RangeLiteral < ASTNode
@@ -562,9 +568,9 @@ module Crystal
   class Var < ASTNode
     include SpecialVar
 
-    property name : String
+    property name : Ident
 
-    def initialize(@name : String)
+    def initialize(@name : Ident)
     end
 
     def name_size
@@ -624,7 +630,7 @@ module Crystal
   #
   class Call < ASTNode
     property obj : ASTNode?
-    property name : String
+    property name : Ident
     property args : Array(ASTNode)
     property block : Block?
     property block_arg : ASTNode?
@@ -637,25 +643,25 @@ module Crystal
     property? expansion = false
     property? has_parentheses = false
 
-    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
+    def initialize(@obj, @name : Ident, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
       if block = @block
         block.call = self
       end
     end
 
-    def self.new(obj, name, arg : ASTNode)
+    def self.new(obj, name : Ident, arg : ASTNode)
       new obj, name, [arg] of ASTNode
     end
 
-    def self.new(obj, name, arg1 : ASTNode, arg2 : ASTNode)
+    def self.new(obj, name : Ident, arg1 : ASTNode, arg2 : ASTNode)
       new obj, name, [arg1, arg2] of ASTNode
     end
 
-    def self.global(name, arg : ASTNode)
+    def self.global(name : Ident, arg : ASTNode)
       new nil, name, [arg] of ASTNode, global: true
     end
 
-    def self.global(name, arg1 : ASTNode, arg2 : ASTNode)
+    def self.global(name : Ident, arg1 : ASTNode, arg2 : ASTNode)
       new nil, name, [arg1, arg2] of ASTNode, global: true
     end
 
@@ -696,10 +702,10 @@ module Crystal
   end
 
   class NamedArgument < ASTNode
-    property name : String
+    property name : Ident
     property value : ASTNode
 
-    def initialize(@name : String, @value : ASTNode)
+    def initialize(@name : Ident, @value : ASTNode)
     end
 
     def accept_children(visitor)
@@ -819,7 +825,7 @@ module Crystal
   #     target '+=' value
   class OpAssign < ASTNode
     property target : ASTNode
-    property op : String
+    property op : Ident
     property value : ASTNode
     property name_location : Location?
 
@@ -875,7 +881,7 @@ module Crystal
 
   # An instance variable.
   class InstanceVar < ASTNode
-    property name : String
+    property name : Ident
 
     def initialize(@name)
     end
@@ -893,7 +899,7 @@ module Crystal
 
   class ReadInstanceVar < ASTNode
     property obj : ASTNode
-    property name : String
+    property name : Ident
 
     def initialize(@obj, @name)
     end
@@ -910,7 +916,7 @@ module Crystal
   end
 
   class ClassVar < ASTNode
-    property name : String
+    property name : Ident
 
     def initialize(@name)
     end
@@ -924,7 +930,7 @@ module Crystal
 
   # A global variable.
   class Global < ASTNode
-    property name : String
+    property name : Ident
 
     def initialize(@name)
     end
@@ -984,14 +990,14 @@ module Crystal
     include SpecialVar
 
     # The internal name
-    property name : String
-    property external_name : String
+    property name : Ident
+    property external_name : Ident
     property default_value : ASTNode?
     property restriction : ASTNode?
     property doc : String?
     property parsed_annotations : Array(Annotation)?
 
-    def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @parsed_annotations : Array(Annotation)? = nil)
+    def initialize(@name : Ident, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : Ident? = nil, @parsed_annotations : Array(Annotation)? = nil)
       @external_name = external_name || @name
     end
 
@@ -1044,9 +1050,9 @@ module Crystal
   #     'end'
   #
   class Def < ASTNode
-    property free_vars : Array(String)?
+    property free_vars : Array(Ident)?
     property receiver : ASTNode?
-    property name : String
+    property name : Ident
     property args : Array(Arg)
     property double_splat : Arg?
     property body : ASTNode
@@ -1099,7 +1105,7 @@ module Crystal
   end
 
   class Macro < ASTNode
-    property name : String
+    property name : Ident
     property args : Array(Arg)
     property body : ASTNode
     property double_splat : Arg?
@@ -1236,7 +1242,7 @@ module Crystal
 
   class RespondsTo < ASTNode
     property obj : ASTNode
-    property name : String
+    property name : Ident
 
     def initialize(@obj, @name)
     end
@@ -1357,14 +1363,14 @@ module Crystal
   #     const [ '::' const ]*
   #
   class Path < ASTNode
-    property names : Array(String)
+    property names : Array(Ident)
     property? global : Bool
     property visibility = Visibility::Public
 
-    def initialize(@names : Array, @global = false)
+    def initialize(@names : Array(Ident), @global = false)
     end
 
-    def self.new(name : String, global = false)
+    def self.new(name : Ident, global = false)
       new [name], global
     end
 
@@ -1388,6 +1394,7 @@ module Crystal
     end
 
     def clone_without_location
+      # TODO: do we need to clone the names here? Maybe not!
       ident = Path.new(@names.clone, @global)
       ident
     end
@@ -1405,7 +1412,7 @@ module Crystal
     property name : Path
     property body : ASTNode
     property superclass : ASTNode?
-    property type_vars : Array(String)?
+    property type_vars : Array(Ident)?
     property name_location : Location?
     property doc : String?
     property splat_index : Int32?
@@ -1440,7 +1447,7 @@ module Crystal
   class ModuleDef < ASTNode
     property name : Path
     property body : ASTNode
-    property type_vars : Array(String)?
+    property type_vars : Array(Ident)?
     property splat_index : Int32?
     property name_location : Location?
     property doc : String?
@@ -1650,7 +1657,7 @@ module Crystal
   class Rescue < ASTNode
     property body : ASTNode
     property types : Array(ASTNode)?
-    property name : String?
+    property name : Ident?
 
     def initialize(body = nil, @types = nil, @name = nil)
       @body = Expressions.from body
@@ -1722,7 +1729,7 @@ module Crystal
 
   class ProcPointer < ASTNode
     property obj : ASTNode?
-    property name : String
+    property name : Ident
     property args : Array(ASTNode)
     property? global : Bool
 
@@ -1872,7 +1879,7 @@ module Crystal
   end
 
   class LibDef < ASTNode
-    property name : String
+    property name : Ident
     property body : ASTNode
     property name_location : Location?
     property visibility = Visibility::Public
@@ -1895,11 +1902,11 @@ module Crystal
   end
 
   class FunDef < ASTNode
-    property name : String
+    property name : Ident
     property args : Array(Arg)
     property return_type : ASTNode?
     property body : ASTNode?
-    property real_name : String
+    property real_name : Ident
     property doc : String?
     property? varargs : Bool
 
@@ -1920,7 +1927,7 @@ module Crystal
   end
 
   class TypeDef < ASTNode
-    property name : String
+    property name : Ident
     property type_spec : ASTNode
     property name_location : Location?
 
@@ -1942,7 +1949,7 @@ module Crystal
 
   # A c struct/union definition inside a lib declaration
   class CStructOrUnionDef < ASTNode
-    property name : String
+    property name : Ident
     property body : ASTNode
     property? union : Bool
 
@@ -1984,9 +1991,9 @@ module Crystal
   end
 
   class ExternalVar < ASTNode
-    property name : String
+    property name : Ident
     property type_spec : ASTNode
-    property real_name : String?
+    property real_name : Ident?
 
     def initialize(@name, @type_spec, @real_name = nil)
     end
@@ -2226,10 +2233,10 @@ module Crystal
 
   # A uniquely named variable inside a macro (like %var)
   class MacroVar < ASTNode
-    property name : String
+    property name : Ident
     property exps : Array(ASTNode)?
 
-    def initialize(@name : String, @exps = nil)
+    def initialize(@name : Ident, @exps = nil)
     end
 
     def accept_children(visitor)

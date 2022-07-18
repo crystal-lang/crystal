@@ -174,7 +174,7 @@ module Crystal
     end
 
     property type : Kind
-    property value : Char | String | Symbol | Nil
+    property value : Char | Ident | String | Symbol | Nil
     property number_kind : NumberKind
     property line_number : Int32
     property column_number : Int32
@@ -248,7 +248,7 @@ module Crystal
       end
     end
 
-    def initialize
+    def initialize(@ident_pool : IdentPool)
       @type = Kind::EOF
       @number_kind = NumberKind::I32
       @line_number = 0
@@ -282,8 +282,12 @@ module Crystal
       @type.ident? && @value.is_a?(Symbol)
     end
 
-    def keyword?(keyword)
-      @type.ident? && @value == keyword
+    def keyword?(keyword : String)
+      @type.ident? && (value = @value).is_a?(String) && value == keyword
+    end
+
+    def keyword?(keyword : Symbol)
+      @type.ident? && (value = @value).is_a?(Symbol) && value == keyword
     end
 
     def copy_from(other)
@@ -296,6 +300,25 @@ module Crystal
       @delimiter_state = other.delimiter_state
       @macro_state = other.macro_state
       @doc_buffer = other.doc_buffer
+    end
+
+    def ident : Ident
+      @ident_pool.get(to_s)
+    end
+
+    def value?(other : Ident)
+      value = @value
+      value.is_a?(Ident) && value == other
+    end
+
+    def value?(other : Symbol)
+      value = @value
+      value.is_a?(Symbol) && value == other
+    end
+
+    def value?(other : String)
+      value = @value
+      value.is_a?(String) && value == other
     end
 
     def to_s(io : IO) : Nil

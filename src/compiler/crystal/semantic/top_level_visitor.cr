@@ -85,7 +85,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node_superclass = node.superclass
     if node_superclass
       if type_vars = node.type_vars
-        free_vars = {} of String => TypeVar
+        free_vars = {} of Ident => TypeVar
         type_vars.each do |type_var|
           free_vars[type_var] = type.as(GenericType).type_parameter(type_var)
         end
@@ -162,7 +162,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
           ann.named_args.try &.each do |named_arg|
             case named_arg.name
-            when "union"
+            when ident_pool._union
               value = named_arg.value
               if value.is_a?(BoolLiteral)
                 type.extern_union = value.value
@@ -333,7 +333,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     node.set_type @program.nil
 
-    if node.name == "finished"
+    if node.name == ident_pool._finished
       unless node.args.empty?
         node.raise "wrong number of parameters for macro '#{node.name}' (given #{node.args.size}, expected 0)"
       end
@@ -388,7 +388,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
                     is_instance_method = true
                     current_type
                   when Var
-                    unless receiver.name == "self"
+                    unless receiver.name == ident_pool._self
                       receiver.raise "def receiver can only be a Type or self"
                     end
                     current_type.metaclass
@@ -417,11 +417,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
     end
 
-    if target_type.struct? && !target_type.metaclass? && node.name == "finalize"
+    if target_type.struct? && !target_type.metaclass? && node.name == ident_pool._finalize
       node.raise "structs can't have finalizers because they are not tracked by the GC"
     end
 
-    if target_type.is_a?(EnumType) && node.name == "initialize"
+    if target_type.is_a?(EnumType) && node.name == ident_pool._initialize
       node.raise "enums can't define an `initialize` method, try using `def self.new`"
     end
 
@@ -435,7 +435,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       # a type defines a `finalize` method, but defining it now
       # allows `previous_def` for a next `def self.new` definition
       # to find this method.
-      if node.name == "initialize"
+      if node.name == ident_pool._initialize
         new_method = node.expand_new_signature_from_initialize(target_type)
         target_type.metaclass.as(ModuleType).add_def(new_method)
 
@@ -445,7 +445,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       unless @method_added_running
         @method_added_running = true
-        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", [node] of ASTNode).at(node.location)
+        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, ident_pool._method_added, [node] of ASTNode).at(node.location)
         @method_added_running = false
       end
     end
@@ -463,7 +463,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       arg.raise "expected Primitive argument to be a symbol literal"
     end
 
-    value = arg.value
+    value = ident_pool.get(arg.value)
 
     primitive = Primitive.new(value)
     primitive.location = node.location
@@ -504,7 +504,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     process_annotations(annotations) do |annotation_type, ann|
       case annotation_type
       when @program.link_annotation
-        link_annotation = LinkAnnotation.from(ann)
+        link_annotation = LinkAnnotation.from(ann, ident_pool)
 
         if link_annotation.static?
           @program.report_warning(ann, "specifying static linking for individual libraries is deprecated")
@@ -634,7 +634,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     num_members = enum_type.types.size
     if num_members > 0 && enum_type.flags?
       # skip None & All, they doesn't count as members for @[Flags] enums
-      num_members = enum_type.types.count { |(name, _)| !name.in?("None", "All") }
+      num_members = enum_type.types.count { |(name, _)| !name.in?(ident_pool._None, ident_pool._All) }
     end
 
     if num_members == 0
@@ -643,18 +643,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     unless existed
       if enum_type.flags?
-        unless enum_type.types["None"]?
+        unless enum_type.types[ident_pool._None]?
           none = NumberLiteral.new("0", enum_base_type.kind)
           none.type = enum_type
-          enum_type.add_constant Arg.new("None", default_value: none)
+          enum_type.add_constant Arg.new(ident_pool._None, default_value: none)
 
           define_enum_none_question_method(enum_type, node)
         end
 
-        unless enum_type.types["All"]?
+        unless enum_type.types[ident_pool._All]?
           all = NumberLiteral.new(all_value.to_s, enum_base_type.kind)
           all.type = enum_type
-          enum_type.add_constant Arg.new("All", default_value: all)
+          enum_type.add_constant Arg.new(ident_pool._All, default_value: all)
         end
       end
 
@@ -701,9 +701,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
 
       if is_flags && !@in_lib
-        if member.name == "None" && counter != 0
+        if member.name == ident_pool._None && counter != 0
           member.raise "flags enum can't redefine None member to non-0"
-        elsif member.name == "All"
+        elsif member.name == ident_pool._All
           member.raise "flags enum can't redefine All member. None and All are autogenerated"
         end
       end
@@ -754,15 +754,15 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def define_enum_question_method(enum_type, member, is_flags)
-    method_name = is_flags ? "includes?" : "=="
-    body = Call.new(Var.new("self").at(member), method_name, Path.new(member.name).at(member)).at(member)
-    a_def = Def.new("#{member.name.underscore}?", body: body).at(member)
+    method_name = is_flags ? ident_pool._includes? : ident_pool.cmp_eq
+    body = Call.new(Var.new(ident_pool._self).at(member), method_name, Path.new(member.name).at(member)).at(member)
+    a_def = Def.new(ident_pool.get("#{member.name.to_s.underscore}?"), body: body).at(member)
     enum_type.add_def a_def
   end
 
   def define_enum_none_question_method(enum_type, node)
-    body = Call.new(Call.new(nil, "value").at(node), "==", NumberLiteral.new(0)).at(node)
-    a_def = Def.new("none?", body: body).at(node)
+    body = Call.new(Call.new(nil, ident_pool._value).at(node), ident_pool.cmp_eq, NumberLiteral.new(0)).at(node)
+    a_def = Def.new(ident_pool._none?, body: body).at(node)
     enum_type.add_def a_def
   end
 

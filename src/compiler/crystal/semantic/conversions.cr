@@ -1,7 +1,9 @@
 module Crystal::Conversions
   def self.numeric_argument(node, var, visitor, unaliased_type, expected_type, actual_type)
+    ident_pool = actual_type.ident_pool
+
     convert_call_name = "to_#{unaliased_type.kind}!"
-    convert_call = Call.new(var, convert_call_name).at(node)
+    convert_call = Call.new(var, ident_pool.get(convert_call_name)).at(node)
 
     begin
       convert_call.accept visitor
@@ -34,7 +36,7 @@ module Crystal::Conversions
   end
 
   def self.try_to_unsafe(target, visitor)
-    unsafe_call = Call.new(target, "to_unsafe").at(target)
+    unsafe_call = Call.new(target, visitor.ident_pool._to_unsafe).at(target)
     begin
       unsafe_call.accept visitor
     rescue ex : TypeException

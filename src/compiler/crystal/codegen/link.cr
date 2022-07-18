@@ -12,7 +12,7 @@ module Crystal
       @static
     end
 
-    def self.from(ann : Annotation)
+    def self.from(ann : Annotation, ident_pool : IdentPool)
       args = ann.args
       named_args = ann.named_args
 
@@ -52,23 +52,23 @@ module Crystal
         value = named_arg.value
 
         case named_arg.name
-        when "lib"
+        when ident_pool._lib
           named_arg.raise "'lib' link argument already specified" if count > 0
           named_arg.raise "'lib' link argument must be a String" unless value.is_a?(StringLiteral)
           lib_name = value.value
-        when "ldflags"
+        when ident_pool._ldflags
           named_arg.raise "'ldflags' link argument already specified" if count > 1
           named_arg.raise "'ldflags' link argument must be a String" unless value.is_a?(StringLiteral)
           lib_ldflags = value.value
-        when "static"
+        when ident_pool._static
           named_arg.raise "'static' link argument already specified" if count > 2
           named_arg.raise "'static' link argument must be a Bool" unless value.is_a?(BoolLiteral)
           lib_static = value.value
-        when "framework"
+        when ident_pool._framework
           named_arg.raise "'framework' link argument already specified" if count > 3
           named_arg.raise "'framework' link argument must be a String" unless value.is_a?(StringLiteral)
           lib_framework = value.value
-        when "pkg_config"
+        when ident_pool._pkg_config
           named_arg.raise "'pkg_config' link argument must be a String" unless value.is_a?(StringLiteral)
           lib_pkg_config = value.value
         else

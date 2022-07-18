@@ -77,6 +77,10 @@ module Crystal
       @last_is_falsey = false
     end
 
+    def ident_pool
+      @program.ident_pool
+    end
+
     def inside_def!
       @def_nest_count += 1
     end
@@ -710,7 +714,7 @@ module Crystal
     end
 
     def build_raise(msg : String, node : ASTNode)
-      call = Call.global("raise", StringLiteral.new(msg).at(node)).at(node)
+      call = Call.global(ident_pool._raise, StringLiteral.new(msg).at(node)).at(node)
       call.accept MainVisitor.new(@program)
       call
     end
@@ -1003,7 +1007,7 @@ module Crystal
       # For `allocate` on a virtual abstract type we make `extra`
       # be a call to `raise` at runtime. Here we just replace the
       # "allocate" primitive with that raise call.
-      if node.name == "allocate" && extra
+      if node.name == ident_pool._allocate && extra
         return extra
       end
 

@@ -67,7 +67,7 @@ class Crystal::Call
     missing_args = [] of String
     covered.each_with_index do |value, index|
       unless value
-        missing_args << external.args[index].name
+        missing_args << external.args[index].name.to_s
       end
     end
 
@@ -118,7 +118,7 @@ class Crystal::Call
             call_arg.exp.type = arg_type.element_type
           else
             var = parent_visitor.lookup_var_or_instance_var(call_arg.exp)
-            var.bind_to Var.new("out", arg_type.element_type)
+            var.bind_to Var.new(ident_pool._out, arg_type.element_type)
             call_arg.exp.bind_to var
             parent_visitor.bind_meta_var(call_arg.exp)
           end

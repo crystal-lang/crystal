@@ -1,6 +1,6 @@
 require "./token"
 require "../exception"
-require "string_pool"
+require "./ident_pool"
 
 module Crystal
   class Lexer
@@ -18,7 +18,7 @@ module Crystal
     @filename : String | VirtualFile | Nil
     @stacked_filename : String | VirtualFile | Nil
     @token_end_location : Location?
-    @string_pool : StringPool
+    @ident_pool : IdentPool
 
     # This is an interface for storing data associated to a heredoc
     module HeredocItem
@@ -52,10 +52,12 @@ module Crystal
       end
     end
 
-    def initialize(string, string_pool : StringPool? = nil)
+    def initialize(string, ident_pool : IdentPool? = nil)
+      ident_pool ||= IdentPool.new
+
       @reader = Char::Reader.new(string)
-      @token = Token.new
-      @temp_token = Token.new
+      @token = Token.new(ident_pool)
+      @temp_token = Token.new(ident_pool)
       @line_number = 1
       @column_number = 1
       @filename = ""
@@ -67,7 +69,7 @@ module Crystal
       @wants_raw = false
       @wants_def_or_macro_name = false
       @wants_symbol = true
-      @string_pool = string_pool || StringPool.new
+      @ident_pool = ident_pool
 
       # When lexing macro tokens, when we encounter `#{` inside
       # a string we push the current delimiter here and reset
@@ -2849,7 +2851,7 @@ module Crystal
     end
 
     def string_range_from_pool(start_pos, end_pos)
-      @string_pool.get slice_range(start_pos, end_pos)
+      @ident_pool.get slice_range(start_pos, end_pos)
     end
 
     def slice_range(start_pos)
@@ -2860,6 +2862,10 @@ module Crystal
       Slice.new(@reader.string.to_unsafe + start_pos, end_pos - start_pos)
     end
 
+    def ident(string : String)
+      @ident_pool.get(string)
+    end
+
     def self.ident_start?(char)
       char.ascii_letter? || char == '_' || char.ord > 0x9F
     end
@@ -2868,12 +2874,20 @@ module Crystal
       ident_start?(char) || char.ascii_number?
     end
 
-    def self.ident?(name)
+    def self.ident?(name : String)
       !!name[0]?.try { |char| ident_start?(char) }
     end
 
-    def self.setter?(name)
+    def self.ident?(name : Ident)
+      ident?(name.to_s)
+    end
+
+    def self.setter?(name : String)
       ident?(name) && name.ends_with?('=')
+    end
+
+    def self.setter?(name : Ident)
+      setter?(name.to_s)
     end
 
     private delegate ident_start?, ident_part?, to: Lexer

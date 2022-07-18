@@ -71,6 +71,8 @@ module Crystal::Repl::Multidispatch
   end
 
   private def self.create_def_uncached(context : Context, node : Call, target_defs : Array(Def))
+    ident_pool = context.ident_pool
+
     autocast_types = nil
 
     # The generated multidispatch method should handle autocasted
@@ -108,7 +110,7 @@ module Crystal::Repl::Multidispatch
     a_def = Def.new(node.name).at(node)
 
     unless obj_type.is_a?(Program)
-      self_arg = Arg.new("self").at(node)
+      self_arg = Arg.new(ident_pool._self).at(node)
       self_arg.type = obj_type
       a_def.args << self_arg
     end
@@ -118,7 +120,7 @@ module Crystal::Repl::Multidispatch
     i = 0
 
     node.args.each_with_index do |arg, arg_index|
-      def_arg = Arg.new("arg#{i}").at(node)
+      def_arg = Arg.new(ident_pool.get("arg#{i}")).at(node)
       def_arg.type = autocast_types.try &.[arg_index]? || arg.type
       a_def.args << def_arg
       i += 1
@@ -129,10 +131,10 @@ module Crystal::Repl::Multidispatch
 
     if block
       if block_fun_literal
-        a_def.block_arg = Arg.new("block_arg")
+        a_def.block_arg = Arg.new(ident_pool.get("block_arg"))
         a_def.uses_block_arg = true
       else
-        a_def.block_arg = Arg.new("")
+        a_def.block_arg = Arg.new(ident_pool.empty)
         a_def.yields = block.args.size
       end
     end
@@ -149,7 +151,7 @@ module Crystal::Repl::Multidispatch
 
       unless obj_type.is_a?(Program)
         unless obj_type.implements?(target_def.owner)
-          condition = IsA.new(Var.new("self"), TypeNode.new(target_def.owner))
+          condition = IsA.new(Var.new(ident_pool._self), TypeNode.new(target_def.owner))
         end
       end
 
@@ -158,7 +160,7 @@ module Crystal::Repl::Multidispatch
         next if autocast_types.try &.[arg_index]?
 
         target_def_arg = target_def.args[i]
-        condition = add_arg_condition(arg, target_def_arg, i, condition)
+        condition = add_arg_condition(ident_pool, arg, target_def_arg, i, condition)
 
         i += 1
       end
@@ -169,7 +171,7 @@ module Crystal::Repl::Multidispatch
 
       i = 0
       node.args.each do
-        call_args << Var.new("arg#{i}")
+        call_args << Var.new(ident_pool.get("arg#{i}"))
         i += 1
       end
 
@@ -177,7 +179,7 @@ module Crystal::Repl::Multidispatch
         if obj_type.is_a?(Program)
           nil
         else
-          Var.new("self")
+          Var.new(ident_pool._self)
         end
 
       call = Call.new(call_obj, node.name, call_args)
@@ -190,14 +192,14 @@ module Crystal::Repl::Multidispatch
           # in a way that the interpreter is going to call it by passing
           # the block_arg as an extra argument.
           inner_block = Block.new
-          inner_block_fun_literal = Var.new("block_arg")
+          inner_block_fun_literal = Var.new(ident_pool.get("block_arg"))
           inner_block_fun_literal.type = block_fun_literal.type
           inner_block.fun_literal = inner_block_fun_literal
           call.block = inner_block
         else
-          block_args = block.args.map_with_index { |arg, i| Var.new("barg#{i}", arg.type) }
+          block_args = block.args.map_with_index { |arg, i| Var.new(ident_pool.get("barg#{i}"), arg.type) }
           yield_args = Array(ASTNode).new(block_args.size)
-          block.args.each_index { |i| yield_args << Var.new("barg#{i}", block.args[i].type) }
+          block.args.each_index { |i| yield_args << Var.new(ident_pool.get("barg#{i}"), block.args[i].type) }
 
           inner_block = Block.new(block_args, body: Yield.new(yield_args))
           blocks << inner_block
@@ -217,15 +219,15 @@ module Crystal::Repl::Multidispatch
         # $~ = $~
         # .value
         # ```
-        all_special_vars ||= Set(String).new
+        all_special_vars ||= Set(Ident).new
         all_special_vars.concat(special_vars)
 
-        assign = Assign.new(Var.new(".value"), call)
+        assign = Assign.new(Var.new(ident_pool.get(".value")), call)
         expressions = [assign] of ASTNode
         special_vars.each do |special_var|
           expressions << Assign.new(Var.new(special_var), Var.new(special_var))
         end
-        expressions << Var.new(".value")
+        expressions << Var.new(ident_pool.get(".value"))
         exps = Expressions.new(expressions)
       end
 
@@ -253,21 +255,21 @@ module Crystal::Repl::Multidispatch
     def_args = MetaVars.new
 
     unless obj_type.is_a?(Program)
-      def_args["self"] = MetaVar.new("self", obj_type)
+      def_args[ident_pool._self] = MetaVar.new(ident_pool._self, obj_type)
     end
 
     i = 0
 
     node.args.each_with_index do |arg, arg_index|
-      def_args["arg#{i}"] = MetaVar.new(
-        "arg#{i}",
+      def_args[ident_pool.get("arg#{i}")] = MetaVar.new(
+        ident_pool.get("arg#{i}"),
         autocast_types.try &.[arg_index]? || arg.type
       )
       i += 1
     end
 
     if block_fun_literal
-      def_args["block_arg"] = MetaVar.new("block_arg", block_fun_literal.type)
+      def_args[ident_pool.get("block_arg")] = MetaVar.new(ident_pool.get("block_arg"), block_fun_literal.type)
     end
 
     visitor = MultidispatchMainVisitor.new(context.program, def_args, a_def)
@@ -294,9 +296,9 @@ module Crystal::Repl::Multidispatch
     a_def
   end
 
-  private def self.add_arg_condition(arg, target_def_arg, i, condition)
+  private def self.add_arg_condition(ident_pool, arg, target_def_arg, i, condition)
     unless arg.type.implements?(target_def_arg.type)
-      is_a = IsA.new(Var.new("arg#{i}"), TypeNode.new(target_def_arg.type))
+      is_a = IsA.new(Var.new(ident_pool.get("arg#{i}")), TypeNode.new(target_def_arg.type))
       if condition
         condition = And.new(condition, is_a)
       else

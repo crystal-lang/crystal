@@ -3,6 +3,14 @@ require "../../src/compiler/crystal/syntax"
 
 include Crystal
 
+private class Globals
+  class_property ident_pool = IdentPool.new
+end
+
+def spec_ident_pool
+  Globals.ident_pool
+end
+
 struct Number
   def int32
     NumberLiteral.new to_s, :i32
@@ -45,13 +53,18 @@ class Array
   end
 
   def path
-    Crystal::Path.new self
+    case self
+    in Array(String)
+      Crystal::Path.new map(&.i)
+    in Array(Ident)
+      Crystal::Path.new self
+    end
   end
 end
 
 class String
   def var
-    Var.new self
+    Var.new i
   end
 
   def ann
@@ -59,35 +72,35 @@ class String
   end
 
   def arg(default_value = nil, restriction = nil, external_name = nil, annotations = nil)
-    Arg.new self, default_value: default_value, restriction: restriction, external_name: external_name, parsed_annotations: annotations
+    Arg.new i, default_value: default_value, restriction: restriction, external_name: external_name, parsed_annotations: annotations
   end
 
   def call
-    Call.new nil, self
+    Call.new nil, i
   end
 
   def call(args : Array)
-    Call.new nil, self, args
+    Call.new nil, i, args
   end
 
   def call(arg : ASTNode)
-    Call.new nil, self, [arg] of ASTNode
+    Call.new nil, i, [arg] of ASTNode
   end
 
   def call(arg1 : ASTNode, arg2 : ASTNode)
-    Call.new nil, self, [arg1, arg2] of ASTNode
+    Call.new nil, i, [arg1, arg2] of ASTNode
   end
 
   def path(global = false)
-    Crystal::Path.new self, global
+    Crystal::Path.new i, global
   end
 
   def instance_var
-    InstanceVar.new self
+    InstanceVar.new i
   end
 
   def class_var
-    ClassVar.new self
+    ClassVar.new i
   end
 
   def string
@@ -115,17 +128,21 @@ class String
   end
 
   def static_array_of(size : ASTNode)
-    Generic.new(Crystal::Path.global("StaticArray"), [path, size] of ASTNode)
+    Generic.new(Crystal::Path.global(spec_ident_pool._StaticArray), [path, size] of ASTNode)
   end
 
   def macro_literal
     MacroLiteral.new(self)
   end
+
+  def i
+    spec_ident_pool.get(self)
+  end
 end
 
 class Crystal::ASTNode
   def pointer_of
-    Generic.new(Crystal::Path.global("Pointer"), [self] of ASTNode)
+    Generic.new(Crystal::Path.global(spec_ident_pool._Pointer), [self] of ASTNode)
   end
 
   def splat

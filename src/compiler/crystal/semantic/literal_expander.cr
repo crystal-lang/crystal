@@ -4,6 +4,10 @@ module Crystal
       @regexes = [] of {String, Regex::Options}
     end
 
+    def ident_pool
+      @program.ident_pool
+    end
+
     # Converts an array literal to creating an Array and storing the values:
     #
     # From:
@@ -48,21 +52,21 @@ module Crystal
 
       capacity = node.elements.count { |elem| !elem.is_a?(Splat) }
 
-      generic = Generic.new(Path.global("Array"), type_var).at(node)
+      generic = Generic.new(Path.global(ident_pool._Array), type_var).at(node)
 
       if node.elements.any?(Splat)
         ary_var = new_temp_var.at(node)
 
-        ary_instance = Call.new(generic, "new", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
+        ary_instance = Call.new(generic, ident_pool._new, args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
 
         exps = Array(ASTNode).new(node.elements.size + 2)
         exps << Assign.new(ary_var.clone, ary_instance).at(node)
 
         node.elements.each do |elem|
           if elem.is_a?(Splat)
-            exps << Call.new(ary_var.clone, "concat", elem.exp.clone).at(node)
+            exps << Call.new(ary_var.clone, ident_pool._concat, elem.exp.clone).at(node)
           else
-            exps << Call.new(ary_var.clone, "<<", elem.clone).at(node)
+            exps << Call.new(ary_var.clone, ident_pool.shift_left, elem.clone).at(node)
           end
         end
 
@@ -70,13 +74,13 @@ module Crystal
 
         Expressions.new(exps).at(node)
       elsif capacity.zero?
-        Call.new(generic, "new").at(node)
+        Call.new(generic, ident_pool._new).at(node)
       else
         ary_var = new_temp_var.at(node)
 
-        ary_instance = Call.new(generic, "unsafe_build", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
+        ary_instance = Call.new(generic, ident_pool._unsafe_build, args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
 
-        buffer = Call.new(ary_var, "to_unsafe")
+        buffer = Call.new(ary_var, ident_pool._to_unsafe)
         buffer_var = new_temp_var.at(node)
 
         exps = Array(ASTNode).new(node.elements.size + 3)
@@ -84,7 +88,7 @@ module Crystal
         exps << Assign.new(buffer_var, buffer).at(node)
 
         node.elements.each_with_index do |elem, i|
-          exps << Call.new(buffer_var.clone, "[]=", NumberLiteral.new(i).at(node), elem.clone).at(node)
+          exps << Call.new(buffer_var.clone, ident_pool.brackets_equal, NumberLiteral.new(i).at(node), elem.clone).at(node)
         end
 
         exps << ary_var.clone
@@ -96,7 +100,7 @@ module Crystal
     def typeof_exp(node : ArrayLiteral)
       type_exps = node.elements.map do |elem|
         if elem.is_a?(Splat)
-          Call.new(Path.global("Enumerable").at(node), "element_type", elem.exp.clone).at(node)
+          Call.new(Path.global(ident_pool._Enumerable).at(node), ident_pool._element_type, elem.exp.clone).at(node)
         else
           elem.clone
         end
@@ -137,7 +141,7 @@ module Crystal
     def expand_named(node : ArrayLiteral)
       temp_var = new_temp_var
 
-      constructor = Call.new(node.name, "new").at(node)
+      constructor = Call.new(node.name, ident_pool._new).at(node)
 
       if node.elements.empty?
         return constructor
@@ -148,11 +152,11 @@ module Crystal
       node.elements.each do |elem|
         if elem.is_a?(Splat)
           yield_var = new_temp_var
-          each_body = Call.new(temp_var.clone, "<<", yield_var.clone).at(node)
+          each_body = Call.new(temp_var.clone, ident_pool.shift_left, yield_var.clone).at(node)
           each_block = Block.new(args: [yield_var], body: each_body).at(node)
-          exps << Call.new(elem.exp.clone, "each", block: each_block).at(node)
+          exps << Call.new(elem.exp.clone, ident_pool._each, block: each_block).at(node)
         else
-          exps << Call.new(temp_var.clone, "<<", elem.clone).at(node)
+          exps << Call.new(temp_var.clone, ident_pool.shift_left, elem.clone).at(node)
         end
       end
       exps << temp_var.clone
@@ -189,8 +193,8 @@ module Crystal
         type_vars = [typeof_key, typeof_value] of ASTNode
       end
 
-      generic = Generic.new(Path.global("Hash"), type_vars).at(node)
-      constructor = Call.new(generic, "new").at(node)
+      generic = Generic.new(Path.global(ident_pool._Hash), type_vars).at(node)
+      constructor = Call.new(generic, ident_pool._new).at(node)
 
       if node.entries.empty?
         constructor
@@ -200,7 +204,7 @@ module Crystal
         exps = Array(ASTNode).new(node.entries.size + 2)
         exps << Assign.new(temp_var.clone, constructor).at(node)
         node.entries.each do |entry|
-          exps << Call.new(temp_var.clone, "[]=", entry.key.clone, entry.value.clone).at(node)
+          exps << Call.new(temp_var.clone, ident_pool.brackets_equal, entry.key.clone, entry.value.clone).at(node)
         end
         exps << temp_var.clone
         Expressions.new(exps).at(node)
@@ -231,7 +235,7 @@ module Crystal
     # If `T` is an uninstantiated generic type, its type arguments are injected
     # by `MainVisitor` with `typeof`s.
     def expand_named(node : HashLiteral)
-      constructor = Call.new(node.name, "new").at(node)
+      constructor = Call.new(node.name, ident_pool._new).at(node)
 
       if node.entries.empty?
         return constructor
@@ -242,7 +246,7 @@ module Crystal
       exps = Array(ASTNode).new(node.entries.size + 2)
       exps << Assign.new(temp_var.clone, constructor).at(node)
       node.entries.each do |entry|
-        exps << Call.new(temp_var.clone, "[]=", [entry.key.clone, entry.value.clone] of ASTNode).at(node)
+        exps << Call.new(temp_var.clone, ident_pool.brackets_equal, [entry.key.clone, entry.value.clone] of ASTNode).at(node)
       end
       exps << temp_var.clone
 
@@ -272,7 +276,7 @@ module Crystal
 
         key = {string, node.options}
         index = @regexes.index(key) || @regexes.size
-        const_name = "$Regex:#{index}"
+        const_name = ident_pool.get("$Regex:#{index}")
 
         if index == @regexes.size
           @regexes << key
@@ -375,9 +379,9 @@ module Crystal
     #
     #    Range.new(1, 3, false)
     def expand(node : RangeLiteral)
-      path = Path.global("Range").at(node)
+      path = Path.global(ident_pool._Range).at(node)
       bool = BoolLiteral.new(node.exclusive?).at(node)
-      Call.new(path, "new", [node.from, node.to, bool]).at(node)
+      Call.new(path, ident_pool._new, [node.from, node.to, bool]).at(node)
     end
 
     # Convert an interpolation to a call to `String.interpolation`
@@ -396,7 +400,7 @@ module Crystal
       # result is just fine.
       pieces = node.expressions
       combine_contiguous_string_literals(pieces)
-      Call.new(Path.global("String").at(node), "interpolation", pieces).at(node)
+      Call.new(Path.global(ident_pool._String).at(node), ident_pool._interpolation, pieces).at(node)
     end
 
     private def combine_contiguous_string_literals(pieces)
@@ -584,7 +588,7 @@ module Crystal
       value_name = @program.new_temp_var_name
 
       targets = [Var.new(index_name).at(node), Var.new(value_name).at(node)] of ASTNode
-      channel = Path.global("Channel").at(node)
+      channel = Path.global(ident_pool._Channel).at(node)
 
       tuple_values = [] of ASTNode
       case_whens = [] of When
@@ -616,10 +620,10 @@ module Crystal
       if node_else = node.else
         case_else = node_else.clone
       else
-        case_else = Call.new(nil, "raise", args: [StringLiteral.new("BUG: invalid select index")] of ASTNode, global: true).at(node)
+        case_else = Call.new(nil, ident_pool._raise, args: [StringLiteral.new("BUG: invalid select index")] of ASTNode, global: true).at(node)
       end
 
-      call_name = node.else ? "non_blocking_select" : "select"
+      call_name = node.else ? ident_pool._non_blocking_select : ident_pool._select
       call_args = [TupleLiteral.new(tuple_values).at(node)] of ASTNode
 
       call = Call.new(channel, call_name, call_args).at(node)
@@ -629,15 +633,17 @@ module Crystal
       Expressions.from([multi, a_case] of ASTNode).at(node)
     end
 
-    def select_action_name(name)
-      case name
-      when .ends_with? "!"
-        name[0...-1] + "_select_action!"
-      when .ends_with? "?"
-        name[0...-1] + "_select_action?"
-      else
-        name + "_select_action"
-      end
+    def select_action_name(name) : Ident
+      ident_pool.get(
+        case name
+        when .ends_with? "!"
+          name.to_s[0...-1] + "_select_action!"
+        when .ends_with? "?"
+          name.to_s[0...-1] + "_select_action?"
+        else
+          name.to_s + "_select_action"
+        end
+      )
     end
 
     # Transform a multi assign into many assigns.
@@ -699,14 +705,14 @@ module Crystal
 
         # raise ... if temp.size < ...
         if raise_on_count_mismatch
-          size_call = Call.new(temp_var.clone, "size").at(value)
+          size_call = Call.new(temp_var.clone, ident_pool._size).at(value)
           if middle_splat
-            size_comp = Call.new(size_call, "<", NumberLiteral.new(node.targets.size - 1)).at(value)
+            size_comp = Call.new(size_call, ident_pool.cmp_lt, NumberLiteral.new(node.targets.size - 1)).at(value)
           else
-            size_comp = Call.new(size_call, "!=", NumberLiteral.new(node.targets.size)).at(value)
+            size_comp = Call.new(size_call, ident_pool.cmp_ne, NumberLiteral.new(node.targets.size)).at(value)
           end
-          index_error = Call.new(Path.global("IndexError"), "new", StringLiteral.new("Multiple assignment count mismatch")).at(value)
-          raise_call = Call.global("raise", index_error).at(value)
+          index_error = Call.new(Path.global(ident_pool._IndexError), ident_pool._new, StringLiteral.new("Multiple assignment count mismatch")).at(value)
+          raise_call = Call.global(ident_pool._raise, index_error).at(value)
           assigns << If.new(size_comp, raise_call).at(value)
         end
 
@@ -722,7 +728,7 @@ module Crystal
           else
             indexer = NumberLiteral.new(splat_index && i > splat_index ? i - node.targets.size : i)
           end
-          call = Call.new(temp_var.clone, "[]", indexer).at(value)
+          call = Call.new(temp_var.clone, ident_pool.brackets, indexer).at(value)
           assigns << transform_multi_assign_target(target, call)
         end
 
@@ -775,7 +781,7 @@ module Crystal
               end
               next
             end
-            value = Call.new(Path.global("Tuple").at(node), "new", node.values[i..i - node.targets.size])
+            value = Call.new(Path.global(ident_pool._Tuple).at(node), ident_pool._new, node.values[i..i - node.targets.size])
           else
             value = node.values[splat_index && i > splat_index ? i - node.targets.size : i]
           end
@@ -797,7 +803,7 @@ module Crystal
       end
 
       if target.is_a?(Call)
-        target.name = "#{target.name}="
+        target.name = ident_pool.get("#{target.name}=")
         target.args << value
         target
       else
@@ -819,18 +825,18 @@ module Crystal
 
       case cond
       when NilLiteral
-        return IsA.new(right_side, Path.global("Nil"))
+        return IsA.new(right_side, Path.global(ident_pool._Nil))
       when Path, Generic
         return IsA.new(right_side, cond)
       when Call
         obj = cond.obj
         case obj
         when Path
-          if cond.name == "class"
+          if cond.name == ident_pool._class
             return IsA.new(right_side, Metaclass.new(obj).at(obj))
           end
         when Generic
-          if cond.name == "class"
+          if cond.name == ident_pool._class
             return IsA.new(right_side, Metaclass.new(obj).at(obj))
           end
         else
@@ -840,7 +846,7 @@ module Crystal
         # no special treatment
       end
 
-      Call.new(cond, "===", right_side)
+      Call.new(cond, ident_pool.cmp_case_eq, right_side)
     end
 
     macro check_implicit_obj(type)
@@ -914,7 +920,7 @@ module Crystal
       end
 
       body = Call.new(obj, node.name, call_args, global: node.global?).at(node)
-      proc_literal = ProcLiteral.new(Def.new("->", def_args, body).at(node)).at(node)
+      proc_literal = ProcLiteral.new(Def.new(ident_pool.arrow, def_args, body).at(node)).at(node)
       proc_literal.proc_pointer = node
 
       if assign
@@ -925,11 +931,11 @@ module Crystal
     end
 
     private def regex_new_call(node, value)
-      Call.new(Path.global("Regex").at(node), "new", value, regex_options(node)).at(node)
+      Call.new(Path.global(ident_pool._Regex).at(node), ident_pool._new, value, regex_options(node)).at(node)
     end
 
     private def regex_options(node)
-      Call.new(Path.global(["Regex", "Options"]).at(node), "new", NumberLiteral.new(node.options.value).at(node)).at(node)
+      Call.new(Path.global([ident_pool._Regex, ident_pool._Options]).at(node), ident_pool._new, NumberLiteral.new(node.options.value).at(node)).at(node)
     end
 
     def expand(node)

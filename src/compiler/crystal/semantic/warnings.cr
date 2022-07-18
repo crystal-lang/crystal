@@ -95,7 +95,7 @@ module Crystal
 
     private def compiler_expanded_call(node : Call)
       # Compiler generates a `_.initialize` call in `new`
-      node.obj.as?(Var).try { |v| v.name == "_" } && node.name == "initialize"
+      node.obj.as?(Var).try { |v| v.name == ident_pool.underscore } && node.name == ident_pool._initialize
     end
   end
 

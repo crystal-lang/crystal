@@ -131,7 +131,7 @@ module Crystal
                 else
                   0
                 end
-        di_builder.create_enumerator(name, value)
+        di_builder.create_enumerator(name.to_s, value)
       end
       elements = di_builder.get_or_create_array(elements)
       di_builder.create_enumeration_type(nil, original_type.to_s, nil, 1, 32, 32, elements, get_debug_type(type.base_type))
@@ -154,7 +154,7 @@ module Crystal
           # FIXME structs like LibC::PthreadMutexT generate huge offset values
           next if offset > UInt64::MAX // 8u64
 
-          member = di_builder.create_member_type(nil, name[1..-1], nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
+          member = di_builder.create_member_type(nil, name.to_s[1..-1], nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
       end
@@ -289,7 +289,7 @@ module Crystal
           # FIXME structs like LibC::PthreadMutexT generate huge offset values
           next if offset > UInt64::MAX // 8u64
 
-          member = di_builder.create_member_type(nil, ivar.name, nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
+          member = di_builder.create_member_type(nil, ivar.name.to_s, nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
       end
@@ -319,14 +319,14 @@ module Crystal
       return alloca unless @debug.variables?
 
       declare_local(arg_type, alloca, location) do |scope, file, line_number, debug_type|
-        di_builder.create_parameter_variable scope, arg_name, arg_no, file, line_number, debug_type
+        di_builder.create_parameter_variable scope, arg_name.to_s, arg_no, file, line_number, debug_type
       end
     end
 
     def declare_variable(var_name, var_type, alloca, location, basic_block : LLVM::BasicBlock? = nil)
       return false unless @debug.variables?
       declare_local(var_type, alloca, location, basic_block) do |scope, file, line_number, debug_type|
-        di_builder.create_auto_variable scope, var_name, file, line_number, debug_type, align_of(var_type)
+        di_builder.create_auto_variable scope, var_name.to_s, file, line_number, debug_type, align_of(var_type)
       end
     end
 
@@ -470,7 +470,7 @@ module Crystal
 
       file, dir = file_and_dir(filename)
       scope = di_builder.create_file(file, dir)
-      fn_metadata = di_builder.create_function(scope, fun_name, fun_name, scope,
+      fn_metadata = di_builder.create_function(scope, fun_name.to_s, fun_name.to_s, scope,
         line_number, fun_metadata_type(debug_types), true, true,
         line_number, LLVM::DIFlags::Zero, is_optimized, func)
       fun_metadatas[func] = [FunMetadata.new(filename, fn_metadata)]

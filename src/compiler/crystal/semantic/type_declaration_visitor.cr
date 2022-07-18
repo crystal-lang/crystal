@@ -28,16 +28,16 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   getter instance_vars
 
   def initialize(mod,
-                 @instance_vars : Hash(Type, Hash(String, TypeDeclarationWithLocation)))
+                 @instance_vars : Hash(Type, Hash(Ident, TypeDeclarationWithLocation)))
     super(mod)
 
     # The type of class variables. The last one wins.
     # This is type => variables.
-    @class_vars = {} of ClassVarContainer => Hash(String, TypeDeclarationWithLocation)
+    @class_vars = {} of ClassVarContainer => Hash(Ident, TypeDeclarationWithLocation)
 
     # A hash of all defined funs, so we can detect when
     # a fun is redefined with a different signature
-    @externals = {} of String => External
+    @externals = {} of Ident => External
   end
 
   def visit(node : Alias)
@@ -63,7 +63,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     end
 
     included_type.instance_vars.each_value do |var|
-      field_name = var.name[1..-1]
+      field_name = ident_pool.get(var.name.to_s[1..-1])
       if type.lookup_instance_var?(var.name)
         node.raise "struct #{included_type} has a field named '#{field_name}', which #{type} already defines"
       end
@@ -181,7 +181,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     end
 
     field_name = node.var.as(Var).name
-    var_name = '@' + field_name
+    var_name = ident_pool.get('@' + field_name.to_s)
 
     if type.lookup_instance_var?(var_name)
       node.raise "#{type.type_desc} #{type} already defines a field named '#{field_name}'"
@@ -193,7 +193,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
   def declare_c_struct_or_union_field(type, field_name, var, location)
     type.instance_vars[var.name] = var
-    type.add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new("struct_or_union_set").at(location))
+    type.add_def Def.new(ident_pool.get("#{field_name}="), [Arg.new(ident_pool._value)], Primitive.new(ident_pool._struct_or_union_set).at(location))
     type.add_def Def.new(field_name, body: InstanceVar.new(var.name))
   end
 
@@ -236,7 +236,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
     var_type = lookup_type(node.declared_type)
     var_type = check_declare_var_type(node, var_type, "an instance variable")
-    owner_vars = @instance_vars[owner] ||= {} of String => TypeDeclarationWithLocation
+    owner_vars = @instance_vars[owner] ||= {} of Ident => TypeDeclarationWithLocation
     type_decl = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!,
       false, annotations)
     owner_vars[var.name] = type_decl
@@ -246,7 +246,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     owner = class_var_owner(node)
     var_type = lookup_type(node.declared_type)
     var_type = check_declare_var_type(node, var_type, "a class variable")
-    owner_vars = @class_vars[owner] ||= {} of String => TypeDeclarationWithLocation
+    owner_vars = @class_vars[owner] ||= {} of Ident => TypeDeclarationWithLocation
     owner_vars[var.name] = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!, uninitialized, nil)
   end
 

@@ -174,7 +174,7 @@ class Crystal::Repl::Interpreter
       # Check if we need a local variable for the closure context
       if !in_pry && @context.program.vars.try &.any? { |name, var| var.type? && var.closure_in?(@context.program) }
         # The closure context is always a pointer to some memory
-        @local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
+        @local_vars.declare(@context.closure_var_name, @context.program.pointer_of(@context.program.void))
       end
 
       meta_vars.each do |name, meta_var|
@@ -280,7 +280,7 @@ class Crystal::Repl::Interpreter
     if compiled_def
       a_def = compiled_def.def
     else
-      a_def = Def.new("<top-level>", body: node)
+      a_def = Def.new(ident_pool.get("<top-level>"), body: node)
       a_def.owner = program
       a_def.vars = program.vars
     end
@@ -1096,13 +1096,16 @@ class Crystal::Repl::Interpreter
       #
       # And we inject their values in the stack.
 
-      fiber_type = @context.program.types["Fiber"]
+      fiber_type = @context.program.types[ident_pool._Fiber]
       nil_type = @context.program.nil_type
       proc_type = @context.program.proc_of([fiber_type, nil_type] of Type)
 
-      fiber_main_decl = UninitializedVar.new(Var.new("fiber_main"), TypeNode.new(proc_type))
-      fiber_decl = UninitializedVar.new(Var.new("fiber"), TypeNode.new(fiber_type))
-      call = Call.new(Var.new("fiber_main"), "call", Var.new("fiber"))
+      fiber_main_ident = ident_pool.get("fiber_main")
+      fiber_ident = ident_pool.get("fiber")
+
+      fiber_main_decl = UninitializedVar.new(Var.new(fiber_main_ident), TypeNode.new(proc_type))
+      fiber_decl = UninitializedVar.new(Var.new(fiber_ident), TypeNode.new(fiber_type))
+      call = Call.new(Var.new(fiber_main_ident), ident_pool._call, Var.new(fiber_ident))
       exps = Expressions.new([fiber_main_decl, fiber_decl, call] of ASTNode)
 
       meta_vars = MetaVars.new
@@ -1181,7 +1184,7 @@ class Crystal::Repl::Interpreter
     data = Pointer(Void).malloc(data_size).as(UInt8*)
     data.copy_from(stack_bottom + local_vars.max_bytesize, data_size)
 
-    gatherer = LocalVarsGatherer.new(location, a_def)
+    gatherer = LocalVarsGatherer.new(location, a_def, ident_pool)
     gatherer.gather
     meta_vars = gatherer.meta_vars
 
@@ -1262,7 +1265,7 @@ class Crystal::Repl::Interpreter
       begin
         parser = Parser.new(
           line,
-          string_pool: @context.program.string_pool,
+          ident_pool: @context.ident_pool,
           var_scopes: [meta_vars.keys.to_set],
         )
         line_node = parser.parse
@@ -1384,5 +1387,9 @@ class Crystal::Repl::Interpreter
     return true if node.location.not_nil!.filename != previous_node.location.not_nil!.filename
 
     node.location.not_nil!.line_number != previous_node.location.not_nil!.line_number
+  end
+
+  def ident_pool
+    @context.ident_pool
   end
 end

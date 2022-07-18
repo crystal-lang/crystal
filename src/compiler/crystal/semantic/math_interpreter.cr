@@ -6,6 +6,10 @@ struct Crystal::MathInterpreter
   def initialize(@path_lookup : Type, @visitor : SemanticVisitor? = nil, @target_type : IntegerType? = nil)
   end
 
+  def ident_pool
+    @path_lookup.ident_pool
+  end
+
   def interpret(node : NumberLiteral)
     case node.kind
     when .signed_int?, .unsigned_int?
@@ -42,8 +46,8 @@ struct Crystal::MathInterpreter
         left = interpret(obj)
 
         case node.name
-        when "+" then +left
-        when "-"
+        when ident_pool.plus then +left
+        when ident_pool.minus
           case left
           when Int8   then -left
           when Int16  then -left
@@ -53,7 +57,7 @@ struct Crystal::MathInterpreter
           else
             interpret_call_macro(node)
           end
-        when "~" then ~left
+        when ident_pool.tilde then ~left
         else
           interpret_call_macro(node)
         end
@@ -62,20 +66,20 @@ struct Crystal::MathInterpreter
         right = interpret(node.args.first)
 
         case node.name
-        when "+"  then left + right
-        when "-"  then left - right
-        when "*"  then left * right
-        when "&+" then left &+ right
-        when "&-" then left &- right
-        when "&*" then left &* right
+        when ident_pool.plus      then left + right
+        when ident_pool.minus     then left - right
+        when ident_pool.star      then left * right
+        when ident_pool.amp_plus  then left &+ right
+        when ident_pool.amp_minus then left &- right
+        when ident_pool.amp_star  then left &* right
           # MathInterpreter only works with Integer and left / right : Float
           # when "/"  then left / right
-        when "//" then left // right
-        when "&"  then left & right
-        when "|"  then left | right
-        when "<<" then left << right
-        when ">>" then left >> right
-        when "%"  then left % right
+        when ident_pool.slash_slash then left // right
+        when ident_pool.amp         then left & right
+        when ident_pool.pipe        then left | right
+        when ident_pool.shift_left  then left << right
+        when ident_pool.shift_right then left >> right
+        when ident_pool.percent     then left % right
         else
           interpret_call_macro(node)
         end

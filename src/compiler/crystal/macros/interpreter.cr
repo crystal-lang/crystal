@@ -1,11 +1,11 @@
 module Crystal
   class MacroInterpreter < Visitor
     getter last : ASTNode
-    property free_vars : Hash(String, TypeVar)?
+    property free_vars : Hash(Ident, TypeVar)?
     property macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))? = nil
 
     def self.new(program, scope : Type, path_lookup : Type, a_macro : Macro, call, a_def : Def? = nil, in_macro = false)
-      vars = {} of String => ASTNode
+      vars = {} of Ident => ASTNode
       splat_index = a_macro.splat_index
       double_splat = a_macro.double_splat
 
@@ -72,17 +72,21 @@ module Crystal
       new(program, scope, path_lookup, a_macro.location, vars, call.block, a_def, in_macro)
     end
 
-    record MacroVarKey, name : String, exps : Array(ASTNode)?
+    record MacroVarKey, name : Ident, exps : Array(ASTNode)?
 
     def initialize(@program : Program,
                    @scope : Type, @path_lookup : Type, @location : Location?,
-                   @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil,
+                   @vars = {} of Ident => ASTNode, @block : Block? = nil, @def : Def? = nil,
                    @in_macro = false)
       @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug}}`
       @last = Nop.new
     end
 
-    def define_var(name : String, value : ASTNode) : Nil
+    def ident_pool
+      @program.ident_pool
+    end
+
+    def define_var(name : Ident, value : ASTNode) : Nil
       @vars[name] = value
     end
 
@@ -283,7 +287,7 @@ module Crystal
 
       key = MacroVarKey.new(node.name, exps)
 
-      macro_vars = @macro_vars ||= {} of MacroVarKey => String
+      macro_vars = @macro_vars ||= {} of MacroVarKey => Ident
       macro_var = macro_vars[key] ||= @program.new_temp_var_name
       @str << macro_var
       false
@@ -384,7 +388,7 @@ module Crystal
         if node.exps.empty?
           @last = block.body.clone
         else
-          block_vars = {} of String => ASTNode
+          block_vars = {} of Ident => ASTNode
           node.exps.each_with_index do |exp, i|
             if block_arg = block.args[i]?
               block_vars[block_arg.name] = accept exp.clone
@@ -437,7 +441,7 @@ module Crystal
         if node.names.size == 1
           case path_lookup
           when UnionType
-            produce_tuple = node.names.first == "T"
+            produce_tuple = node.names.first == ident_pool._T
           when GenericInstanceType
             produce_tuple = ((splat_index = path_lookup.splat_index) &&
                              path_lookup.type_vars.keys.index(node.names.first) == splat_index) ||
@@ -507,13 +511,13 @@ module Crystal
 
     def visit(node : Splat)
       node.exp.accept self
-      @last = @last.interpret("splat", [] of ASTNode, nil, nil, self, node.location)
+      @last = @last.interpret(ident_pool.get("splat"), [] of ASTNode, nil, nil, self, node.location)
       false
     end
 
     def visit(node : DoubleSplat)
       node.exp.accept self
-      @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self, node.location)
+      @last = @last.interpret(ident_pool.get("double_splat"), [] of ASTNode, nil, nil, self, node.location)
       false
     end
 
@@ -526,12 +530,12 @@ module Crystal
 
     def visit(node : InstanceVar)
       case node.name
-      when "@type"
+      when ident_pool.at_type
         target = @scope == @program.class_type ? @scope : @scope.instance_type
         @last = TypeNode.new(target.devirtualize)
-      when "@top_level"
+      when ident_pool.at_top_level
         @last = TypeNode.new(@program)
-      when "@def"
+      when ident_pool.at_def
         @last = @def || NilLiteral.new
       else
         node.raise "unknown macro instance var: '#{node.name}'"
@@ -583,9 +587,7 @@ module Crystal
     end
 
     class ReplaceBlockVarsTransformer < Transformer
-      @vars : Hash(String, ASTNode)
-
-      def initialize(@vars)
+      def initialize(@vars : Hash(Ident, ASTNode))
       end
 
       def transform(node : MacroExpression)

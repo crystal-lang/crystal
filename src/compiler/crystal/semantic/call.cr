@@ -19,6 +19,10 @@ class Crystal::Call
     scope.program
   end
 
+  def ident_pool
+    program.ident_pool
+  end
+
   def target_def
     if defs = @target_defs
       if defs.size == 1
@@ -79,7 +83,7 @@ class Crystal::Call
     block = @block
 
     unbind_from @target_defs if @target_defs
-    unbind_from block.break if block
+    unbind_from block.break(ident_pool) if block
 
     @target_defs = nil
 
@@ -598,7 +602,7 @@ class Crystal::Call
         arg_type.tuple_types.each_with_index do |tuple_type, index|
           num = NumberLiteral.new(index)
           num.type = program.int32
-          tuple_indexer = Call.new(arg.exp, "[]", num).at(arg)
+          tuple_indexer = Call.new(arg.exp, ident_pool.brackets, num).at(arg)
           parent_visitor.prepare_call(tuple_indexer)
           tuple_indexer.recalculate
           new_args << tuple_indexer
@@ -611,10 +615,10 @@ class Crystal::Call
         end
 
         arg_type.entries.each do |entry|
-          sym = SymbolLiteral.new(entry.name)
+          sym = SymbolLiteral.new(entry.name.to_s)
           sym.type = program.symbol
           program.symbols.add sym.value
-          tuple_indexer = Call.new(arg.exp, "[]", sym).at(arg)
+          tuple_indexer = Call.new(arg.exp, ident_pool.brackets, sym).at(arg)
           parent_visitor.prepare_call(tuple_indexer)
           tuple_indexer.recalculate
           new_args << tuple_indexer
@@ -633,11 +637,11 @@ class Crystal::Call
       vars = [] of Var
       args = [] of ASTNode
       block_arg_type.arg_types.map_with_index do |type, i|
-        arg = Var.new("__arg#{i}").at(block_arg)
+        arg = Var.new(ident_pool.get("__arg#{i}")).at(block_arg)
         vars << arg
         args << arg
       end
-      block = Block.new(vars, Call.new(block_arg.clone, "call", args).at(block_arg)).at(block_arg)
+      block = Block.new(vars, Call.new(block_arg.clone, ident_pool._call, args).at(block_arg)).at(block_arg)
       block.vars = self.before_vars
       self.block = block
     else
@@ -1100,7 +1104,7 @@ class Crystal::Call
       yield
     rescue ex : Crystal::CodeError
       if obj = @obj
-        if name == "initialize"
+        if name == ident_pool._initialize
           # Avoid putting 'initialize' in the error trace
           # because it's most likely that this is happening
           # inside a generated 'new' method
@@ -1245,10 +1249,10 @@ class Crystal::Call
   end
 
   def super?
-    !obj && name == "super"
+    !obj && name == ident_pool._super
   end
 
   def previous_def?
-    !obj && name == "previous_def"
+    !obj && name == ident_pool._previous_def
   end
 end

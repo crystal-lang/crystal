@@ -2,6 +2,10 @@ struct Crystal::ExhaustivenessChecker
   def initialize(@program : Program)
   end
 
+  def ident_pool
+    @program.ident_pool
+  end
+
   def check(node : Case)
     cond = node.cond.not_nil!
 
@@ -235,10 +239,10 @@ struct Crystal::ExhaustivenessChecker
       # In the future it would be wise to mark these as non-redefinable
       # so this checks are sounds.
       if obj.is_a?(ImplicitObj) && when_cond.name.ends_with?('?')
-        EnumMemberNamePattern.new(when_cond.name.rchop)
-      elsif obj.is_a?(Path) && when_cond.name == "class"
+        EnumMemberNamePattern.new(when_cond.name.to_s.rchop)
+      elsif obj.is_a?(Path) && when_cond.name == ident_pool._class
         TypePattern.new(obj.type.metaclass.devirtualize)
-      elsif obj.is_a?(Generic) && when_cond.name == "class"
+      elsif obj.is_a?(Generic) && when_cond.name == ident_pool._class
         TypePattern.new(obj.type.metaclass.devirtualize)
       else
         raise "Bug: unknown pattern in exhaustive case"
@@ -457,7 +461,7 @@ struct Crystal::ExhaustivenessChecker
       when EnumMemberPattern
         @members.delete(pattern.member)
       when EnumMemberNamePattern
-        @members.reject! { |member| member.name.underscore == pattern.name }
+        @members.reject! { |member| member.name.to_s.underscore == pattern.name }
       when UnderscorePattern
         @members.clear
       when TypePattern, BoolPattern
@@ -485,7 +489,7 @@ struct Crystal::ExhaustivenessChecker
         end
       when EnumMemberNamePattern
         subtargets.each do |member, targets|
-          if member.name.underscore == pattern.name
+          if member.name.to_s.underscore == pattern.name
             targets.each &.cover(patterns, index + 1)
           end
         end

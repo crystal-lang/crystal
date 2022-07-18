@@ -227,7 +227,7 @@ module Crystal
   end
 
   class RespondsToTypeFilter < TypeFilter
-    def initialize(@name : String)
+    def initialize(@name : Ident)
     end
 
     def apply(other)
@@ -267,8 +267,8 @@ module Crystal
   end
 
   struct TypeFilters
-    protected getter pos = {} of String => TypeFilter
-    protected getter neg = {} of String => TypeFilter
+    protected getter pos = {} of Ident => TypeFilter
+    protected getter neg = {} of Ident => TypeFilter
 
     protected def initialize
     end
@@ -357,7 +357,7 @@ module Crystal
     end
 
     private def self.common_keys(filters1, filters2)
-      keys = [] of String
+      keys = [] of Ident
       if filters1
         keys.concat(filters1.pos.keys)
         keys.concat(filters1.neg.keys)

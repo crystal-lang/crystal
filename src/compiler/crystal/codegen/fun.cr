@@ -48,7 +48,7 @@ class Crystal::CodeGenVisitor
     new_fun
   end
 
-  def codegen_fun(mangled_name, target_def, self_type, is_exported_fun = false, fun_module_info = type_module(self_type), is_fun_literal = false, is_closure = false)
+  def codegen_fun(mangled_name : String, target_def, self_type, is_exported_fun = false, fun_module_info = type_module(self_type), is_fun_literal = false, is_closure = false)
     old_position = insert_block
     old_entry_block = @entry_block
     old_alloca_block = @alloca_block
@@ -107,7 +107,7 @@ class Crystal::CodeGenVisitor
         end
 
         if !is_fun_literal && self_type.passed_as_self?
-          context.vars["self"] = LLVMVar.new(context.fun.params.first, self_type, true)
+          context.vars[ident_pool._self] = LLVMVar.new(context.fun.params.first, self_type, true)
         end
 
         if is_closure
@@ -132,7 +132,7 @@ class Crystal::CodeGenVisitor
 
               # Self always comes as the first parameter, unless it's a closure:
               # then it will be fetched from the closure data.
-              if name == "self" && !is_closure
+              if name == ident_pool._self && !is_closure
                 declare_debug_for_function_argument(name, var.type, 1, var.pointer, location)
                 # Method debug parameters are skipped as they were defined in create_local_copy_of_fun_args()
                 # due to LLVM variable dominance issue in some closure cases
@@ -229,7 +229,7 @@ class Crystal::CodeGenVisitor
     codegen_return target_def.body.type?
   end
 
-  def codegen_fun_signature(mangled_name, target_def, self_type, is_fun_literal, is_closure)
+  def codegen_fun_signature(mangled_name : String, target_def, self_type, is_fun_literal, is_closure)
     if !is_closure && (external = target_def.c_calling_convention?)
       codegen_fun_signature_external(mangled_name, external)
     else
@@ -237,13 +237,13 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def codegen_fun_signature_non_external(mangled_name, target_def, self_type, is_fun_literal, is_closure)
+  def codegen_fun_signature_non_external(mangled_name : String, target_def, self_type, is_fun_literal, is_closure)
     is_primitive = target_def.body.is_a?(Primitive)
 
     args = Array(Arg).new(target_def.args.size + 1)
 
     if !is_fun_literal && self_type.passed_as_self?
-      args.push Arg.new("self", type: self_type)
+      args.push Arg.new(ident_pool._self, type: self_type)
     end
 
     args.concat target_def.args
@@ -307,13 +307,13 @@ class Crystal::CodeGenVisitor
 
     args.each_with_index do |arg, i|
       param = context.fun.params[i + offset]
-      param.name = arg.name
+      param.name = arg.name.to_s
     end
 
     args
   end
 
-  def codegen_fun_signature_external(mangled_name, target_def)
+  def codegen_fun_signature_external(mangled_name : String, target_def)
     args = target_def.args.dup
 
     # This is the case where we declared a fun that was not used and now we
@@ -361,7 +361,7 @@ class Crystal::CodeGenVisitor
     i = 0
     args.each do |arg|
       param = context.fun.params[i + offset]
-      param.name = arg.name
+      param.name = arg.name.to_s
 
       abi_arg_type = abi_info.arg_types[i]
 
@@ -428,7 +428,7 @@ class Crystal::CodeGenVisitor
         def_var = def_vars.try &.[var.name]?
         next if def_var && !def_var.closured?
 
-        self.context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
+        self.context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name.to_s), var.type)
       end
 
       if (closure_parent_context = context.closure_parent_context) &&
@@ -439,7 +439,7 @@ class Crystal::CodeGenVisitor
         offset = context.closure_parent_context ? 1 : 0
         self_value = gep(closure_ptr, 0, closure_vars.size + offset, "self")
         self_value = load(self_value) unless context.type.passed_by_value?
-        self.context.vars["self"] = LLVMVar.new(self_value, closure_self, true)
+        self.context.vars[ident_pool._self] = LLVMVar.new(self_value, closure_self, true)
       end
     end
   end
@@ -470,7 +470,7 @@ class Crystal::CodeGenVisitor
   def create_local_copy_of_block_self(self_type, call_args)
     args_base_index = 0
     if self_type.passed_as_self?
-      context.vars["self"] = LLVMVar.new(call_args[0], self_type, true)
+      context.vars[ident_pool._self] = LLVMVar.new(call_args[0], self_type, true)
       args_base_index = 1
     end
     args_base_index
@@ -485,7 +485,7 @@ class Crystal::CodeGenVisitor
   def create_local_copy_of_arg(target_def, target_def_vars, arg, value, index)
     # An argument name can be "_" in the case of a captured block,
     # and we must ignore these
-    return if arg.name == "_"
+    return if arg.name == ident_pool.underscore
 
     target_def_var = target_def_vars.try &.[arg.name]
     location = target_def_var.try(&.location) || target_def.location

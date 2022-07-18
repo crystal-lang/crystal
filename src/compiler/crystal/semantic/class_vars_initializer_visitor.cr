@@ -3,7 +3,7 @@ require "./semantic_visitor"
 module Crystal
   class ClassVarInitializer
     getter owner : ClassVarContainer,
-      name : String,
+      name : Ident,
       meta_vars : MetaVars
     property node : ASTNode
 
@@ -119,7 +119,7 @@ module Crystal
     def initialize(mod)
       super(mod)
 
-      @class_vars = {} of ClassVarContainer => Hash(String, {ASTNode, ASTNode})
+      @class_vars = {} of ClassVarContainer => Hash(Ident, {ASTNode, ASTNode})
     end
 
     def visit_any(node)
@@ -152,7 +152,7 @@ module Crystal
 
     def type_class_var(target, node, value)
       owner = class_var_owner(target)
-      cvars = @class_vars[owner] ||= {} of String => {ASTNode, ASTNode}
+      cvars = @class_vars[owner] ||= {} of Ident => {ASTNode, ASTNode}
       existing = cvars[target.name]?
       cvars[target.name] = {node.as(ASTNode), value}
       if existing

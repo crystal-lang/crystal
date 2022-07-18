@@ -30,6 +30,8 @@ module Crystal
     end
 
     def define_default_new_single(type)
+      ident_pool = type.ident_pool
+
       check = case type
               when self.object, self.value, self.number, self.int, self.float,
                    self.struct, self.enum, self.tuple, self.proc
@@ -43,12 +45,12 @@ module Crystal
       if check
         type = type.as(ModuleType)
 
-        self_initialize_methods = type.lookup_defs_without_parents("initialize")
-        self_new_methods = type.metaclass.lookup_defs_without_parents("new")
+        self_initialize_methods = type.lookup_defs_without_parents(ident_pool._initialize)
+        self_new_methods = type.metaclass.lookup_defs_without_parents(ident_pool._new)
 
         # Check to see if a default `new` needs to be defined
-        initialize_methods = type.lookup_defs("initialize", lookup_ancestors_for_new: true)
-        new_methods = type.metaclass.lookup_defs("new", lookup_ancestors_for_new: true)
+        initialize_methods = type.lookup_defs(ident_pool._initialize, lookup_ancestors_for_new: true)
+        new_methods = type.metaclass.lookup_defs(ident_pool._new, lookup_ancestors_for_new: true)
         has_new_or_initialize = !initialize_methods.empty? || !new_methods.empty?
 
         if !has_new_or_initialize
@@ -134,7 +136,7 @@ module Crystal
     def expand_new_signature_from_initialize(instance_type)
       def_args = args.clone
 
-      new_def = Def.new("new", def_args, Nop.new).at(self)
+      new_def = Def.new(instance_type.ident_pool._new, def_args, Nop.new).at(self)
       new_def.splat_index = splat_index
       new_def.double_splat = double_splat.clone
       new_def.yields = yields
@@ -155,6 +157,8 @@ module Crystal
     end
 
     def fill_body_from_initialize(instance_type)
+      ident_pool = instance_type.ident_pool
+
       if instance_type.is_a?(GenericClassType)
         generic_type_args = instance_type.type_vars.map_with_index do |type_var, i|
           arg = Path.new(type_var).as(ASTNode).at(self)
@@ -162,9 +166,9 @@ module Crystal
           arg
         end
         new_generic = Generic.new(Path.new(instance_type.name), generic_type_args)
-        alloc = Call.new(new_generic, "allocate").at(self)
+        alloc = Call.new(new_generic, ident_pool._allocate).at(self)
       else
-        alloc = Call.new(nil, "allocate").at(self)
+        alloc = Call.new(nil, ident_pool._allocate).at(self)
       end
 
       # This creates:
@@ -173,7 +177,7 @@ module Crystal
       #    x.initialize ..., &block
       #    GC.add_finalizer x if x.responds_to? :finalize
       #    x
-      obj = Var.new("_")
+      obj = Var.new(ident_pool.underscore)
 
       new_vars = [] of ASTNode
       named_args = nil
@@ -200,21 +204,25 @@ module Crystal
       end
 
       assign = Assign.new(obj.clone, alloc).at(self)
-      init = Call.new(obj.clone, "initialize", new_vars, named_args: named_args).at(self)
+      init = Call.new(obj.clone, ident_pool._initialize, new_vars, named_args: named_args).at(self)
 
       # If the initialize yields, call it with a block
       # that yields those arguments.
       if block_args_count = self.yields
-        block_args = Array.new(block_args_count) { |i| Var.new("_arg#{i}") }
-        vars = Array.new(block_args_count) { |i| Var.new("_arg#{i}").at(self).as(ASTNode) }
+        block_args = Array.new(block_args_count) { |i|
+          Var.new(ident_pool.get("_arg#{i}"))
+        }
+        vars = Array.new(block_args_count) { |i|
+          Var.new(ident_pool.get("_arg#{i}")).at(self).as(ASTNode)
+        }
         init.block = Block.new(block_args, Yield.new(vars).at(self)).at(self)
       end
 
       exps = Array(ASTNode).new(4)
       exps << assign
       exps << init
-      exps << If.new(RespondsTo.new(obj.clone, "finalize").at(self),
-        Call.new(Path.global("GC").at(self), "add_finalizer", obj.clone).at(self))
+      exps << If.new(RespondsTo.new(obj.clone, ident_pool._finalize).at(self),
+        Call.new(Path.global(ident_pool._GC).at(self), ident_pool._add_finalizer, obj.clone).at(self))
       exps << obj
 
       # Forward block argument if any
@@ -227,6 +235,8 @@ module Crystal
     end
 
     def self.argless_new(instance_type)
+      ident_pool = instance_type.ident_pool
+
       loc = instance_type.locations.try &.first?
 
       # This creates:
@@ -236,24 +246,26 @@ module Crystal
       #      GC.add_finalizer x if x.responds_to? :finalize
       #      x
       #    end
-      var = Var.new("x").at(loc)
-      alloc = Call.new(nil, "allocate").at(loc)
+      var = Var.new(ident_pool._x).at(loc)
+      alloc = Call.new(nil, ident_pool._allocate).at(loc)
       assign = Assign.new(var, alloc).at(loc)
 
-      call = Call.new(Path.global("GC").at(loc), "add_finalizer", var.clone).at(loc)
+      call = Call.new(Path.global(ident_pool._GC).at(loc), ident_pool._add_finalizer, var.clone).at(loc)
       exps = Array(ASTNode).new(3)
       exps << assign
-      exps << If.new(RespondsTo.new(var.clone, "finalize").at(loc), call).at(loc)
+      exps << If.new(RespondsTo.new(var.clone, ident_pool._finalize).at(loc), call).at(loc)
       exps << var.clone
 
-      a_def = Def.new("new", body: exps).at(loc)
+      a_def = Def.new(ident_pool._new, body: exps).at(loc)
       a_def.new = true
       a_def
     end
 
     def self.argless_initialize(instance_type)
+      ident_pool = instance_type.ident_pool
+
       loc = instance_type.locations.try &.first?
-      Def.new("initialize", body: Nop.new).at(loc)
+      Def.new(ident_pool._initialize, body: Nop.new).at(loc)
     end
 
     def expand_new_default_arguments(instance_type, args_size, named_args)

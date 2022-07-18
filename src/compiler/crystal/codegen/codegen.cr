@@ -143,7 +143,7 @@ module Crystal
       end
     end
 
-    alias LLVMVars = Hash(String, LLVMVar)
+    alias LLVMVars = Hash(Ident, LLVMVar)
 
     record Handler, node : ExceptionHandler, context : Context
     record StringKey, mod : LLVM::Module, string : String
@@ -259,6 +259,10 @@ module Crystal
       emit_vars_debug_info(@program.vars) if @debug.variables?
     end
 
+    def ident_pool
+      @program.ident_pool
+    end
+
     getter llvm_context
 
     def new_builder(llvm_context)
@@ -304,7 +308,8 @@ module Crystal
       end
 
       def visit(node : FunDef)
-        case node.name
+        # TODO: use ident?
+        case node.name.to_s
         when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME,
              @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME,
              ONCE_INIT, ONCE
@@ -344,7 +349,7 @@ module Crystal
       end
 
       @unused_fun_defs.each do |node|
-        codegen_fun node.real_name, node.external, @program, is_exported_fun: true
+        codegen_fun node.real_name.to_s, node.external, @program, is_exported_fun: true
       end
 
       env_dump = ENV["DUMP"]?
@@ -409,14 +414,14 @@ module Crystal
         node.external.dead = true
 
         if node.external.used?
-          codegen_fun node.real_name, node.external, @program, is_exported_fun: true
+          codegen_fun node.real_name.to_s, node.external, @program, is_exported_fun: true
         else
           # If the fun is not invoked we codegen it at the end so
           # we don't have issues with constants being used before
           # they are declared.
           # But, apparently, llvm requires us to define them so that
           # calls can find them, so we do so.
-          codegen_fun node.real_name, node.external, @program, is_exported_fun: false
+          codegen_fun node.real_name.to_s, node.external, @program, is_exported_fun: false
           @unused_fun_defs << node
         end
       end
@@ -428,7 +433,7 @@ module Crystal
       with_context(Context.new(context.fun, context.type)) do
         file_module = @program.file_module(node.filename)
         if vars = file_module.vars?
-          set_current_debug_location Location.new(node.filename, 1, 1) if @debug.line_numbers?
+          set_current_debug_location Location.new(node.filename.to_s, 1, 1) if @debug.line_numbers?
           alloca_vars vars, file_module
 
           emit_vars_debug_info(vars) if @debug.variables?
@@ -1212,7 +1217,7 @@ module Crystal
         # Special variables always have an extra pointer
         already_loaded = (node.special_var? ? false : var.already_loaded)
         @last = downcast var.pointer, node.type, var.type, already_loaded
-      elsif node.name == "self"
+      elsif node.name == ident_pool._self
         if node.type.metaclass?
           @last = type_id(node.type)
         else
@@ -1379,7 +1384,7 @@ module Crystal
     def type_cast_exception_call(from_type, to_type, node, var_name)
       pieces = [
         StringLiteral.new("cast from ").at(node),
-        Call.new(Var.new(var_name).at(node), "class").at(node),
+        Call.new(Var.new(var_name).at(node), ident_pool._class).at(node),
         StringLiteral.new(" to #{to_type} failed").at(node),
       ] of ASTNode
 
@@ -1387,8 +1392,8 @@ module Crystal
         pieces << StringLiteral.new(", at #{location.expanded_location}:#{location.line_number}").at(node)
       end
 
-      ex = Call.new(Path.global("TypeCastError").at(node), "new", StringInterpolation.new(pieces).at(node)).at(node)
-      call = Call.global("raise", ex).at(node)
+      ex = Call.new(Path.global(ident_pool._TypeCastError).at(node), ident_pool._new, StringInterpolation.new(pieces).at(node)).at(node)
+      call = Call.global(ident_pool._raise, ex).at(node)
       call = @program.normalize(call)
 
       meta_vars = MetaVars.new
@@ -1400,7 +1405,7 @@ module Crystal
 
     def cant_pass_closure_to_c_exception_call
       @cant_pass_closure_to_c_exception_call ||= begin
-        call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(UNKNOWN_LOCATION)
+        call = Call.global(ident_pool._raise, StringLiteral.new("passing a closure to C is not allowed")).at(UNKNOWN_LOCATION)
         @program.visit_main call
         call.raise "::raise must be of NoReturn return type!" unless call.type.is_a?(NoReturnType)
         call
@@ -1442,9 +1447,9 @@ module Crystal
     end
 
     def declare_lib_var(name, type, thread_local)
-      var = @llvm_mod.globals[name]?
+      var = @llvm_mod.globals[name.to_s]?
       unless var
-        var = llvm_mod.globals.add(llvm_c_return_type(type), name)
+        var = llvm_mod.globals.add(llvm_c_return_type(type), name.to_s)
         var.linkage = LLVM::Linkage::External
         if @program.has_flag?("win32") && @program.has_flag?("preview_dll")
           var.dll_storage_class = LLVM::DLLStorageClass::DLLImport
@@ -1505,13 +1510,13 @@ module Crystal
 
       malloc_closure closured_vars, block_context, block_context.closure_parent_context
 
-      old_scope = block_context.vars["%scope"]?
+      old_scope = block_context.vars[ident_pool.percent_scope]?
 
       if node_scope = node.scope
         request_value do
           accept node_scope
         end
-        block_context.vars["%scope"] = LLVMVar.new(@last, node_scope.type)
+        block_context.vars[ident_pool.percent_scope] = LLVMVar.new(@last, node_scope.type)
       end
 
       # First accept all yield expressions and assign them to block vars
@@ -1563,7 +1568,7 @@ module Crystal
             exp_value = exp_values.first[0]
             exp_type.tuple_types.each_with_index do |tuple_type, i|
               arg = block.args[i]?
-              if arg && arg.name != "_"
+              if arg && arg.name != ident_pool.underscore
                 t_type = tuple_type
                 t_value = codegen_tuple_indexer(exp_type, exp_value, i)
                 block_var = block_context.vars[arg.name]
@@ -1572,7 +1577,7 @@ module Crystal
             end
           else
             exp_values.each_with_index do |(exp_value, exp_type), i|
-              if (arg = block.args[i]?) && arg.name != "_"
+              if (arg = block.args[i]?) && arg.name != ident_pool.underscore
                 block_var = block_context.vars[arg.name]
                 assign block_var.pointer, block_var.type, exp_type, exp_value
               end
@@ -1600,7 +1605,7 @@ module Crystal
       end
 
       if old_scope
-        block_context.vars["%scope"] = old_scope
+        block_context.vars[ident_pool.percent_scope] = old_scope
       end
 
       false
@@ -1732,7 +1737,7 @@ module Crystal
     private UNKNOWN_LOCATION = Location.new("??", 0, 0)
 
     def llvm_self(type = context.type)
-      self_var = context.vars["self"]?
+      self_var = context.vars[ident_pool._self]?
       if self_var
         downcast self_var.pointer, type, self_var.type, true
       else
@@ -1808,7 +1813,7 @@ module Crystal
       in_alloca_block do
         # Allocate all variables which are not closured and don't belong to an outer closure
         vars.each do |name, var|
-          next if name == "self" || context.vars[name]?
+          next if name == ident_pool._self || context.vars[name]?
 
           var_type = var.type? || @program.nil
 
@@ -1876,7 +1881,7 @@ module Crystal
         closure_type = @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil))
         closure_ptr = malloc closure_type
         closure_vars.each_with_index do |var, i|
-          current_context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
+          current_context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name.to_s), var.type)
         end
         closure_skip_parent = false
 
@@ -1937,7 +1942,7 @@ module Crystal
     end
 
     def alloca(type, name = "")
-      in_alloca_block { builder.alloca type, name }
+      in_alloca_block { builder.alloca type, name.to_s }
     end
 
     def in_alloca_block

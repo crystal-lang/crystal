@@ -41,35 +41,35 @@ class Crystal::Type
   # ```
   #
   # If `self` is `Foo` and `Bar(Baz)` is given, the result will be `Foo::Bar(Baz)`.
-  def lookup_type(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type
+  def lookup_type(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(Ident, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type
     TypeLookup.new(self, self_type, true, allow_typeof, free_vars, find_root_generic_type_parameters).lookup(node).not_nil!
   end
 
   # Similar to `lookup_type`, but returns `nil` if a type can't be found.
-  def lookup_type?(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type?
+  def lookup_type?(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(Ident, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type?
     TypeLookup.new(self, self_type, false, allow_typeof, free_vars, find_root_generic_type_parameters).lookup(node)
   end
 
   # Similar to `lookup_type`, but the result might also be an ASTNode, for example when
   # looking `N` relative to a StaticArray.
-  def lookup_type_var(node : Path, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true, remove_alias = true) : Type | ASTNode
+  def lookup_type_var(node : Path, free_vars : Hash(Ident, TypeVar)? = nil, find_root_generic_type_parameters = true, remove_alias = true) : Type | ASTNode
     TypeLookup.new(self, self.instance_type, true, false, free_vars, find_root_generic_type_parameters, remove_alias).lookup_type_var(node).not_nil!
   end
 
   # Similar to `lookup_type_var`, but might return `nil`.
-  def lookup_type_var?(node : Path, free_vars : Hash(String, TypeVar)? = nil, raise = false, find_root_generic_type_parameters = true) : Type | ASTNode | Nil
+  def lookup_type_var?(node : Path, free_vars : Hash(Ident, TypeVar)? = nil, raise = false, find_root_generic_type_parameters = true) : Type | ASTNode | Nil
     TypeLookup.new(self, self.instance_type, raise, false, free_vars, find_root_generic_type_parameters).lookup_type_var?(node)
   end
 
   private struct TypeLookup
-    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @free_vars : Hash(String, TypeVar)? = nil, @find_root_generic_type_parameters = true, @remove_alias = true)
+    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @free_vars : Hash(Ident, TypeVar)? = nil, @find_root_generic_type_parameters = true, @remove_alias = true)
       @in_generic_args = 0
 
       # If we are looking types inside a non-instantiated generic type,
       # for example Hash(K, V), we want to find K and V as type parameters
       # of that type.
       if @find_root_generic_type_parameters && root.is_a?(GenericType)
-        free_vars ||= {} of String => TypeVar
+        free_vars ||= {} of Ident => TypeVar
         root.type_vars.each do |type_var|
           free_vars[type_var] ||= root.type_parameter(type_var)
         end
@@ -372,7 +372,9 @@ class Crystal::Type
         end
       end
 
-      meta_vars = MetaVars{"self" => MetaVar.new("self", @self_type)}
+      self_ident = @root.program.ident_pool._self
+
+      meta_vars = MetaVars{self_ident => MetaVar.new(self_ident, @self_type)}
       visitor = MainVisitor.new(program, meta_vars)
       expressions = node.expressions.clone
       begin

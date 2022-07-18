@@ -30,7 +30,7 @@ module Crystal
     @splat : Arg?
 
     @args_hash_initialized = true
-    @args_hash = {} of String => Arg
+    @args_hash = {} of Ident => Arg
 
     # Before checking types, we set this to nil.
     # Afterwards, this is non-nil if an error was found
@@ -44,21 +44,21 @@ module Crystal
     # See more comments in `lookup_type?` below.
     @dont_find_root_generic_type_parameters = 0
 
-    def initialize(mod,
-                   @explicit_instance_vars : Hash(Type, Hash(String, TypeDeclarationWithLocation)),
-                   @guessed_instance_vars : Hash(Type, Hash(String, InstanceVarTypeInfo)),
+    def initialize(program,
+                   @explicit_instance_vars : Hash(Type, Hash(Ident, TypeDeclarationWithLocation)),
+                   @guessed_instance_vars : Hash(Type, Hash(Ident, InstanceVarTypeInfo)),
                    @initialize_infos : Hash(Type, Array(InitializeInfo)),
-                   @instance_vars_outside : Hash(Type, Array(String)),
-                   @errors : Hash(Type, Hash(String, Error)))
-      super(mod)
+                   @instance_vars_outside : Hash(Type, Array(Ident)),
+                   @errors : Hash(Type, Hash(Ident, Error)))
+      super(program)
 
-      @class_vars = {} of ClassVarContainer => Hash(String, TypeInfo)
+      @class_vars = {} of ClassVarContainer => Hash(Ident, TypeInfo)
 
       # Was `self` access found? If so, instance variables assigned after it
       # don't go to an InitializeInfo (they are considered as not being assigned
       # in that initialize)
       @found_self = false
-      @has_self_visitor = HasSelfVisitor.new
+      @has_self_visitor = HasSelfVisitor.new(program.ident_pool)
 
       # This is to prevent infinite resolution of constants, like in
       #
@@ -75,6 +75,10 @@ module Crystal
 
       @outside_def = true
       @inside_class_method = false
+    end
+
+    def ident_pool
+      @program.ident_pool
     end
 
     def visit(node : Var)
@@ -142,7 +146,7 @@ module Crystal
         super
       else
         # If it's "self.class", don't consider this as self being passed to a method
-        return false if self_dot_class?(node)
+        return false if self_dot_class?(node, ident_pool)
 
         guess_type_call_lib_out(node)
         true
@@ -228,8 +232,8 @@ module Crystal
         end
 
       if error = @error
-        errors = @errors[current_type] ||= {} of String => Error
-        errors[target.to_s] ||= error
+        errors = @errors[current_type] ||= {} of Ident => Error
+        errors[ident_pool.get(target.to_s)] ||= error
       end
 
       result
@@ -272,7 +276,7 @@ module Crystal
             node.targets.zip(type.tuple_types) do |target, tuple_type|
               case target
               when InstanceVar
-                owner_vars = @guessed_instance_vars[current_type] ||= {} of String => InstanceVarTypeInfo
+                owner_vars = @guessed_instance_vars[current_type] ||= {} of Ident => InstanceVarTypeInfo
                 add_instance_var_type_info(owner_vars, target.name, tuple_type, target)
               when ClassVar
                 owner = class_var_owner(target)
@@ -280,7 +284,7 @@ module Crystal
                 # If the class variable already exists no need to guess its type
                 next if owner.class_vars[target.name]?
 
-                owner_vars = @class_vars[owner] ||= {} of String => TypeInfo
+                owner_vars = @class_vars[owner] ||= {} of Ident => TypeInfo
                 add_type_info(owner_vars, target.name, tuple_type, target)
               else
                 # TODO: can this be reached?
@@ -301,7 +305,7 @@ module Crystal
 
       type = guess_type(value)
       if type
-        owner_vars = @class_vars[owner] ||= {} of String => TypeInfo
+        owner_vars = @class_vars[owner] ||= {} of Ident => TypeInfo
         add_type_info(owner_vars, target.name, type, target)
       end
       type
@@ -332,14 +336,14 @@ module Crystal
 
     def add_to_initialize_info(name)
       if !@found_self && (initialize_info = @initialize_info)
-        vars = initialize_info.instance_vars ||= [] of String
+        vars = initialize_info.instance_vars ||= [] of Ident
         vars << name unless vars.includes?(name)
       end
     end
 
     def process_assign_instance_var(owner, target, value)
       if @outside_def
-        outside_vars = @instance_vars_outside[owner] ||= [] of String
+        outside_vars = @instance_vars_outside[owner] ||= [] of Ident
         outside_vars << target.name unless outside_vars.includes?(target.name)
       end
 
@@ -354,7 +358,7 @@ module Crystal
       # For non-generic class we can solve the type now
       type = guess_type(value)
       if type
-        owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
+        owner_vars = @guessed_instance_vars[owner] ||= {} of Ident => InstanceVarTypeInfo
         add_instance_var_type_info(owner_vars, target.name, type, target)
       end
       type
@@ -362,7 +366,7 @@ module Crystal
 
     def process_uninitialized_instance_var(owner, target, value)
       if @outside_def
-        outside_vars = @instance_vars_outside[owner] ||= [] of String
+        outside_vars = @instance_vars_outside[owner] ||= [] of Ident
         outside_vars << target.name unless outside_vars.includes?(target.name)
       end
 
@@ -375,7 +379,7 @@ module Crystal
       # For non-generic class we can solve the type now
       type = lookup_type?(value)
       if type
-        owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
+        owner_vars = @guessed_instance_vars[owner] ||= {} of Ident => InstanceVarTypeInfo
         add_instance_var_type_info(owner_vars, target.name, type, target)
       end
       type
@@ -388,7 +392,7 @@ module Crystal
         return existing.type.as(Type)
       end
 
-      owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
+      owner_vars = @guessed_instance_vars[owner] ||= {} of Ident => InstanceVarTypeInfo
       add_instance_var_type_info(owner_vars, target.name, type, target)
     end
 
@@ -638,7 +642,7 @@ module Crystal
 
       # If it's something like T.new, guess T.
       # If it's something like T(X).new, guess T(X).
-      if node.name == "new" && obj && (obj.is_a?(Path) || obj.is_a?(Generic))
+      if node.name == ident_pool._new && obj && (obj.is_a?(Path) || obj.is_a?(Generic))
         type = lookup_type?(obj)
         if type
           # See if the "new" method has a return type annotation, and use it if so
@@ -651,7 +655,7 @@ module Crystal
       end
 
       # If it's `new(...)` and this is a non-generic class type, guess it to be that class
-      if node.name == "new" && !obj && (
+      if node.name == ident_pool._new && !obj && (
            current_type.is_a?(NonGenericClassType) ||
            current_type.is_a?(PrimitiveType) ||
            current_type.is_a?(GenericClassInstanceType)
@@ -666,8 +670,8 @@ module Crystal
 
       # If it's Pointer(T).malloc or Pointer(T).null, guess it to Pointer(T)
       if obj.is_a?(Generic) &&
-         (name = obj.name).is_a?(Path) && name.single?("Pointer") &&
-         (node.name == "malloc" || node.name == "null")
+         (name = obj.name).is_a?(Path) && name.single?(ident_pool._Pointer) &&
+         (node.name == ident_pool._malloc || node.name == ident_pool._null)
         type = lookup_type?(obj)
         return type if type.is_a?(PointerInstanceType)
       end
@@ -698,7 +702,7 @@ module Crystal
       obj = node.obj
 
       if node.args.size == 2 && obj.is_a?(Path) &&
-         obj.single?("Pointer") && node.name == "malloc"
+         obj.single?(ident_pool._Pointer) && node.name == ident_pool._malloc
         type = lookup_type_no_check?(obj)
         if type.is_a?(PointerType)
           element_type = guess_type(node.args[1])
@@ -782,7 +786,7 @@ module Crystal
 
       # If it's a "new" method without arguments, keep the first one
       # (might happen that a parent new is found here)
-      if node.name == "new" && node.args.empty? && !node.named_args && !node.block
+      if node.name == ident_pool._new && node.args.empty? && !node.named_args && !node.block
         defs = [defs.first]
       end
 
@@ -902,7 +906,7 @@ module Crystal
     end
 
     def guess_type(node : Var)
-      if node.name == "self"
+      if node.name == ident_pool._self
         if current_type.is_a?(NonGenericClassType)
           return current_type.virtual_type
         else
@@ -1113,7 +1117,7 @@ module Crystal
     end
 
     def check_var_is_self(node : Var)
-      @found_self = true if node.name == "self"
+      @found_self = true if node.name == ident_pool._self
     end
 
     def lookup_type?(node, root = nil)
@@ -1228,7 +1232,7 @@ module Crystal
       @splat_index = node.splat_index
       @args_hash_initialized = false
 
-      if !node.receiver && node.name == "initialize" && !current_type.is_a?(Program)
+      if !node.receiver && node.name == ident_pool._initialize && !current_type.is_a?(Program)
         initialize_info = @initialize_info = InitializeInfo.new(node)
       end
 
@@ -1326,7 +1330,7 @@ module Crystal
   class HasSelfVisitor < Visitor
     getter has_self
 
-    def initialize
+    def initialize(@ident_pool : IdentPool)
       @has_self = false
     end
 
@@ -1336,13 +1340,13 @@ module Crystal
 
     def visit(node : Call)
       # If it's "self.class", don't consider this as self being passed to a method
-      return false if self_dot_class?(node)
+      return false if self_dot_class?(node, @ident_pool)
 
       true
     end
 
     def visit(node : Var)
-      if node.name == "self"
+      if node.name == @ident_pool._self
         @has_self = true
       end
     end
@@ -1370,7 +1374,7 @@ module Crystal
   end
 end
 
-private def self_dot_class?(node : Crystal::Call)
+private def self_dot_class?(node : Crystal::Call, ident_pool : Crystal::IdentPool)
   obj = node.obj
-  obj.is_a?(Crystal::Var) && obj.name == "self" && node.name == "class" && node.args.empty?
+  obj.is_a?(Crystal::Var) && obj.name == ident_pool._self && node.name == ident_pool._class && node.args.empty?
 end

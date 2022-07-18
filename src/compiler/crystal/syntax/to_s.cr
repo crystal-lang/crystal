@@ -330,7 +330,7 @@ module Crystal
     UNARY_OPERATORS = {"+", "-", "~", "&+", "&-"}
 
     def visit_call(node, ignore_obj = false)
-      if node.name == "`"
+      if node.name.to_s == "`"
         visit_backtick(node.args[0])
         return false
       end
@@ -347,27 +347,27 @@ module Crystal
         node_obj = nil
       end
 
-      if node_obj && (node.name == "[]" || node.name == "[]?") && !block
+      if node_obj && (node.name.to_s == "[]" || node.name.to_s == "[]?") && !block
         in_parenthesis(need_parens, node_obj)
 
         @str << "["
         visit_args(node)
-        if node.name == "[]"
+        if node.name.to_s == "[]"
           @str << "]"
         else
           @str << "]?"
         end
-      elsif node_obj && node.name == "[]=" && !node.args.empty? && !block
+      elsif node_obj && node.name.to_s == "[]=" && !node.args.empty? && !block
         in_parenthesis(need_parens, node_obj)
 
         @str << "["
         visit_args(node, exclude_last: true)
         @str << "] = "
         node.args.last.accept self
-      elsif node_obj && node.name.in?(UNARY_OPERATORS) && node.args.empty? && !node.named_args && !node.block_arg && !block
+      elsif node_obj && node.name.to_s.in?(UNARY_OPERATORS) && node.args.empty? && !node.named_args && !node.block_arg && !block
         @str << node.name
         in_parenthesis(need_parens, node_obj)
-      elsif node_obj && !Lexer.ident?(node.name) && node.name != "~" && node.args.size == 1 && !node.named_args && !node.block_arg && !block
+      elsif node_obj && !Lexer.ident?(node.name) && node.name.to_s != "~" && node.args.size == 1 && !node.named_args && !node.block_arg && !block
         in_parenthesis(need_parens, node_obj)
 
         arg = node.args[0]
@@ -381,7 +381,7 @@ module Crystal
           @str << '.'
         end
         if Lexer.setter?(node.name)
-          @str << node.name.rchop
+          @str << node.name.to_s.rchop
           @str << " = "
           node.args.join(@str, ", ", &.accept self)
         else
@@ -397,7 +397,7 @@ module Crystal
       if block
         # Check if this is foo &.bar
         first_block_arg = block.args.first?
-        if first_block_arg && block.args.size == 1 && block.args.first.name.starts_with?("__arg")
+        if first_block_arg && block.args.size == 1 && block.args.first.name.to_s.starts_with?("__arg")
           block_body = block.body
           if block_body.is_a?(Call)
             block_obj = block_body.obj
@@ -458,7 +458,7 @@ module Crystal
         when 0
           !Lexer.ident?(obj.name)
         else
-          case obj.name
+          case obj.name.to_s
           when "[]", "[]?", "<", "<=", ">", ">="
             false
           else
@@ -842,7 +842,7 @@ module Crystal
       name = node.name
 
       if @inside_lib && (name.is_a?(Path) && name.names.size == 1)
-        case name.names.first
+        case name.names.first.to_s
         when "Pointer"
           node.type_vars.first.accept self
           @str << '*'
@@ -885,7 +885,7 @@ module Crystal
     end
 
     def visit_named_arg_name(name)
-      if Symbol.needs_quotes_for_named_argument?(name)
+      if Symbol.needs_quotes_for_named_argument?(name.to_s)
         name.inspect(@str)
       else
         @str << name
@@ -1123,7 +1123,7 @@ module Crystal
       else
         @str << node.name
         @str << " = "
-        if Symbol.needs_quotes_for_named_argument?(node.real_name)
+        if Symbol.needs_quotes_for_named_argument?(node.real_name.to_s)
           node.real_name.inspect(@str)
         else
           @str << node.real_name
@@ -1281,7 +1281,7 @@ module Crystal
     def visit(node : RespondsTo)
       node.obj.accept self
       @str << ".responds_to?("
-      visit_symbol_literal_value node.name
+      visit_symbol_literal_value node.name.to_s
       @str << ')'
       false
     end

@@ -32,13 +32,13 @@ class Crystal::Repl::LocalVarsGatherer < Crystal::Visitor
   # in the `initialize` method.
   getter meta_vars : MetaVars
 
-  def initialize(@location : Location, @def : Def)
+  def initialize(@location : Location, @def : Def, @ident_pool : IdentPool)
     @meta_vars = MetaVars.new
   end
 
   def gather : Nil
-    self_var = @def.vars.try &.["self"]?
-    @meta_vars["self"] = self_var.clone if self_var
+    self_var = @def.vars.try &.[@ident_pool._self]?
+    @meta_vars[@ident_pool._self] = self_var.clone if self_var
 
     @def.args.each do |arg|
       var = @def.vars.try &.[arg.name]?
@@ -100,7 +100,7 @@ class Crystal::Repl::LocalVarsGatherer < Crystal::Visitor
     true
   end
 
-  private def add_var(name : String)
+  private def add_var(name : Ident)
     var =
       if block = @block
         block.vars.try &.[name]?

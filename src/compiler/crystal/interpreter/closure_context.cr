@@ -2,7 +2,7 @@ class Crystal::Repl
   # Information about closured variables in a given context.
   class ClosureContext
     # The variables closures in the closest context
-    getter vars : Hash(String, {Int32, Type})
+    getter vars : Hash(Ident, {Int32, Type})
 
     # The self type, if captured, otherwise nil.
     # Comes after vars, at the end of the closure (this closure never has a parent closure).
@@ -17,7 +17,7 @@ class Crystal::Repl
     getter bytesize : Int32
 
     def initialize(
-      @vars : Hash(String, {Int32, Type}),
+      @vars : Hash(Ident, {Int32, Type}),
       @self_type : Type?,
       @parent : ClosureContext?,
       @bytesize : Int32

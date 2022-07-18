@@ -27,6 +27,10 @@ class Crystal::AbstractDefChecker
     @all_checked = Set(Type).new
   end
 
+  def ident_pool
+    @program.ident_pool
+  end
+
   def run
     check_types(@program)
     @program.file_modules.each_value do |file_module|
@@ -296,12 +300,12 @@ class Crystal::AbstractDefChecker
       if splat_index
         if i > splat_index
           # named parameters may be in any order
-          (named_args1 ||= [] of String) << arg1.external_name
-          (named_args2 ||= [] of String) << arg2.external_name
+          (named_args1 ||= [] of Ident) << arg1.external_name
+          (named_args2 ||= [] of Ident) << arg2.external_name
           next
         elsif i == splat_index
           # single splat name may be different; bare splats must agree
-          return false unless (arg1.external_name != "") == (arg2.external_name != "")
+          return false unless (arg1.external_name != ident_pool.empty) == (arg2.external_name != ident_pool.empty)
           next
         end
       end
