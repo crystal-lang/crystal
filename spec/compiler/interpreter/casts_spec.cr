@@ -322,5 +322,18 @@ describe Crystal::Repl::Interpreter do
         x.to_s
       CODE
     end
+
+    it "casts from mixed union type to nilable proc type (#12283)" do
+      interpret(<<-CODE).should eq("b")
+        message = ->{ "b" }.as(String | Proc(String) | Nil)
+        if message.is_a?(String)
+          "a"
+        elsif message.is_a?(Proc(String))
+          message.call
+        else
+          "c"
+        end
+      CODE
+    end
   end
 end
