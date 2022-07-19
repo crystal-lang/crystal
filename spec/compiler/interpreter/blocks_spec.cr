@@ -599,5 +599,23 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "caches method with captured block (#12276)" do
+      interpret(<<-CODE).should eq(42)
+        def execute(x, &block : -> Int32)
+          if x
+            execute(false) do
+              block.call
+            end
+          else
+            yield
+          end
+        end
+
+        execute(true) do
+          42
+        end
+      CODE
+    end
   end
 end
