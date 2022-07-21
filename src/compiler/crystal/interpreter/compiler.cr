@@ -169,14 +169,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     @compiling_block = CompilingBlock.new(node, target_def)
 
-    # If it's `with ... yield` we pass the "with" scope
-    # as the first block argument.
-    with_scope = node.scope
-    if with_scope
-      index = @local_vars.name_to_index(WITH_SCOPE, @block_level)
-      set_local index, aligned_sizeof_type(with_scope), node: nil
-    end
-
     # Right when we enter a block we have the block arguments in the stack:
     # we need to copy the values to the respective block arguments, which
     # are really local variables inside the enclosing method.
@@ -193,6 +185,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         # Don't use location so we don't pry break on a block arg (useless)
         set_local index, aligned_sizeof_type(block_var), node: nil
       end
+    end
+
+    # If it's `with ... yield` we pass the "with" scope
+    # as the first block argument... which is the last thing we want to pop.
+    with_scope = node.scope
+    if with_scope
+      index = @local_vars.name_to_index(WITH_SCOPE, @block_level)
+      set_local index, aligned_sizeof_type(with_scope), node: nil
     end
 
     node.body.accept self
@@ -2106,6 +2106,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       {% if Debug::DECOMPILE %}
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
+        puts compiled_block.local_vars
         puts Disassembler.disassemble(@context, compiled_block.instructions, @local_vars)
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
       {% end %}
