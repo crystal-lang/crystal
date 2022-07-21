@@ -79,6 +79,24 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   property closure_context : ClosureContext?
 
+  # An ASTNode to override the node associated with an instruction.
+  # This is useful when values are inlined. For example if we have a constant
+  # like:
+  #
+  #     TWO = 2
+  #
+  # When the constant is referenced in code:
+  #
+  #     x = TWO
+  #
+  # we simply produce a value of 2 (the constant isn't actually stored anywhere.)
+  # But we don't want the debugger to jump to that "2".
+  # Instead, we make it so that the location of that "2" is the location
+  # of the mention of TWO.
+  #
+  # We do the same thing when inlining a method that only returns an instance variable.
+  @node_override : ASTNode?
+
   def initialize(
     @context : Context,
     @local_vars : LocalVars,
@@ -151,14 +169,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     @compiling_block = CompilingBlock.new(node, target_def)
 
-    # If it's `with ... yield` we pass the "with" scope
-    # as the first block argument.
-    with_scope = node.scope
-    if with_scope
-      index = @local_vars.name_to_index(WITH_SCOPE, @block_level)
-      set_local index, aligned_sizeof_type(with_scope), node: nil
-    end
-
     # Right when we enter a block we have the block arguments in the stack:
     # we need to copy the values to the respective block arguments, which
     # are really local variables inside the enclosing method.
@@ -175,6 +185,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         # Don't use location so we don't pry break on a block arg (useless)
         set_local index, aligned_sizeof_type(block_var), node: nil
       end
+    end
+
+    # If it's `with ... yield` we pass the "with" scope
+    # as the first block argument... which is the last thing we want to pop.
+    with_scope = node.scope
+    if with_scope
+      index = @local_vars.name_to_index(WITH_SCOPE, @block_level)
+      set_local index, aligned_sizeof_type(with_scope), node: nil
     end
 
     node.body.accept self
@@ -1385,7 +1403,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if const = node.target_const
       if const.value.simple_literal?
-        const.value.accept self
+        with_node_override(node) do
+          const.value.accept self
+        end
       elsif const == @context.program.argc
         argc_unsafe(node: node)
       elsif const == @context.program.argv
@@ -1754,10 +1774,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if body.is_a?(InstanceVar)
       # Inline the call, so that it also works fine when wanting to take a pointer through things
       # (this is how compiled Crystal works too
-      if obj
-        compile_read_instance_var(node, obj, body.name, owner: target_def.owner)
-      else
-        compile_instance_var(body)
+      with_node_override(node) do
+        if obj
+          compile_read_instance_var(node, obj, body.name, owner: target_def.owner)
+        else
+          compile_instance_var(body)
+        end
       end
 
       # We still have to accept the call arguments, but discard their values
@@ -1992,7 +2014,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiled_def = CompiledDef.new(@context, target_def, owner, args_bytesize)
 
     # We don't cache defs that yield because we inline the block's contents
-    if block
+    if block && !block.fun_literal
       @context.add_gc_reference(compiled_def)
     else
       @context.defs[target_def] = compiled_def
@@ -2084,6 +2106,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       {% if Debug::DECOMPILE %}
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
+        puts compiled_block.local_vars
         puts Disassembler.disassemble(@context, compiled_block.instructions, @local_vars)
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
       {% end %}
@@ -3070,6 +3093,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         {{*operands}}, *, node : ASTNode?
       {% end %}
     ) : Nil
+      node = @node_override || node
       @instructions.nodes[instructions_index] = node if node
 
       append OpCode::{{ name.id.upcase }}
@@ -3326,5 +3350,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private macro nop
+  end
+
+  private def with_node_override(node_override : ASTNode)
+    old_node_override = @node_override
+    @node_override = node_override
+    value = yield
+    @node_override = old_node_override
+    value
   end
 end

@@ -1221,17 +1221,32 @@ class Crystal::Repl::Interpreter
 
     interpreter = Interpreter.new(self, compiled_def, local_vars, closure_context, stack_bottom, block_level)
 
-    while @pry
-      # TODO: support multi-line expressions
+    prompt = Prompt.new(@context, show_nest: false)
 
-      print "pry> "
-      line = gets
-      unless line
+    while @pry
+      prefix = String.build do |io|
+        io.print "pry"
+        io.print '('
+        unless owner.is_a?(Program)
+          if owner.metaclass?
+            io.print owner.instance_type
+            io.print '.'
+          else
+            io.print owner
+            io.print '#'
+          end
+        end
+        io.print compiled_def.def.name
+        io.print ')'
+      end
+
+      input = prompt.prompt(prefix)
+      unless input
         self.pry = false
         break
       end
 
-      case line
+      case input
       when "continue"
         self.pry = false
         break
@@ -1260,12 +1275,11 @@ class Crystal::Repl::Interpreter
       end
 
       begin
-        parser = Parser.new(
-          line,
-          string_pool: @context.program.string_pool,
+        line_node = prompt.parse(
+          input: input,
           var_scopes: [meta_vars.keys.to_set],
         )
-        line_node = parser.parse
+        next unless line_node
 
         vars_size_before_semantic = main_visitor.vars.size
 
@@ -1292,7 +1306,7 @@ class Crystal::Repl::Interpreter
         # to their new type)
         local_vars = interpreter.local_vars
 
-        puts value.to_s
+        prompt.display(value)
       rescue ex : EscapingException
         print "Unhandled exception: "
         print ex

@@ -452,6 +452,15 @@ class Crystal::Repl::Compiler
     when "interpreter_intrinsics_counttrailing128"
       accept_call_args(node)
       interpreter_intrinsics_counttrailing128(node: node)
+    when "interpreter_intrinsics_bitreverse16"
+      accept_call_args(node)
+      interpreter_intrinsics_bitreverse16(node: node)
+    when "interpreter_intrinsics_bitreverse32"
+      accept_call_args(node)
+      interpreter_intrinsics_bitreverse32(node: node)
+    when "interpreter_intrinsics_bitreverse64"
+      accept_call_args(node)
+      interpreter_intrinsics_bitreverse64(node: node)
     when "interpreter_libm_ceil_f32"
       accept_call_args(node)
       libm_ceil_f32 node: node

@@ -49,8 +49,13 @@ lib LibIntrinsics
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_read_cycle_counter)] {% end %}
   fun read_cycle_counter = "llvm.readcyclecounter" : UInt64
 
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bitreverse64)] {% end %}
   fun bitreverse64 = "llvm.bitreverse.i64"(id : UInt64) : UInt64
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bitreverse32)] {% end %}
   fun bitreverse32 = "llvm.bitreverse.i32"(id : UInt32) : UInt32
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bitreverse16)] {% end %}
   fun bitreverse16 = "llvm.bitreverse.i16"(id : UInt16) : UInt16
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap32)] {% end %}

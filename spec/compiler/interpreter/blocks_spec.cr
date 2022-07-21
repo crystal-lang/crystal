@@ -514,6 +514,24 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "interprets with ... yield with extra arguments (#12296)" do
+      interpret(<<-CODE).should eq(1)
+        class Object
+          def itself
+            self
+          end
+        end
+
+        def build
+          with 1 yield 2
+        end
+
+        build do |t|
+          itself
+        end
+      CODE
+    end
+
     it "interprets yield with splat (1)" do
       interpret(<<-CODE).should eq((2 - 3) * 4)
         def foo
@@ -637,6 +655,24 @@ describe Crystal::Repl::Interpreter do
         end
 
         foo
+      CODE
+    end
+
+    it "caches method with captured block (#12276)" do
+      interpret(<<-CODE).should eq(42)
+        def execute(x, &block : -> Int32)
+          if x
+            execute(false) do
+              block.call
+            end
+          else
+            yield
+          end
+        end
+
+        execute(true) do
+          42
+        end
       CODE
     end
   end
