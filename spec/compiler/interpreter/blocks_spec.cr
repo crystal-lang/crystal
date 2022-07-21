@@ -618,6 +618,46 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "considers block arg without type as having NoReturn type (#12270)" do
+      interpret(<<-CODE).should eq(42)
+        def bar
+          if ptr = nil
+            yield ptr
+          else
+            42
+          end
+        end
+
+        def foo
+          bar do |obj|
+            obj
+          end
+        end
+
+        foo
+      CODE
+    end
+
+    it "considers block arg without type as having NoReturn type (2) (#12270)" do
+      interpret(<<-CODE).should eq(42)
+        def bar
+          if ptr = nil
+            yield ptr
+          else
+            42
+          end
+        end
+
+        def foo
+          bar do |obj|
+            return obj
+          end
+        end
+
+        foo
+      CODE
+    end
+
     it "caches method with captured block (#12276)" do
       interpret(<<-CODE).should eq(42)
         def execute(x, &block : -> Int32)
