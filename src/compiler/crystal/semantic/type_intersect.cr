@@ -97,11 +97,15 @@ module Crystal
       restricted.try(&.metaclass)
     end
 
-    def self.common_descendent(type1 : GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType, type2 : MetaclassType)
+    def self.common_descendent(type1 : GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType, type2 : MetaclassType | VirtualMetaclassType)
       return type1 if type1.instance_type.generic_type.metaclass == type2
 
       restricted = common_descendent(type1.instance_type, type2.instance_type)
       restricted ? type1 : nil
+    end
+
+    def self.common_descendent(type1 : MetaclassType | VirtualMetaclassType, type2 : GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType)
+      common_descendent(type2, type1)
     end
 
     def self.common_descendent(type1 : UnionType, type2 : Type)

@@ -371,11 +371,7 @@ class Crystal::Repl::Compiler
     # Nothing to do
   end
 
-  private def downcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : MetaclassType)
-    # Nothing to do
-  end
-
-  private def downcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : VirtualMetaclassType)
+  private def downcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType)
     # Nothing to do
   end
 
