@@ -150,6 +150,10 @@ module Crystal
 
       # Variables for when we format macro code without interpolation
       @vars = [Set(String).new]
+
+      # Variable for counting space length skipped at the beginning of a line.
+      # This is needed for leaving variables and constants declarations as it is.
+      @last_skipped_space = 0
     end
 
     def end_visit_any(node)
@@ -289,6 +293,8 @@ module Crystal
           next_needs_indent = false
           @exp_needs_indent = true
         end
+
+        @last_skipped_space = 0
 
         if last?(i, node.expressions)
           last_found_comment = skip_space_or_newline last: true, next_comes_end: true
@@ -3288,14 +3294,15 @@ module Crystal
 
       @vars.last.add target.name if target.is_a?(Var)
 
+      write_last_skipped_spaces
       accept target
-      skip_space_or_newline
+      write_spaces
 
-      check_align = check_assign_length node.target
       slash_is_regex!
-      write_token " ", :OP_EQ
-      skip_space
-      accept_assign_value_after_equals node.value, check_align: check_align
+      write_token :OP_EQ
+
+      wrote_newline = write_spaces_and_newlines
+      accept_assign_value_after_equals_no_space node.value, wrote_newline: wrote_newline
 
       false
     end
@@ -3322,6 +3329,14 @@ module Crystal
       else
         write " "
         accept_assign_value value, check_align: check_align
+      end
+    end
+
+    def accept_assign_value_after_equals_no_space(value, wrote_newline = false)
+      if wrote_newline
+        write_indent(@indent + 2, value)
+      else
+        accept_assign_value value
       end
     end
 
@@ -3365,9 +3380,11 @@ module Crystal
     def visit(node : VisibilityModifier)
       case node.modifier
       when .private?
-        write_keyword :private, " "
+        write_keyword :private
+        write_spaces
       when .protected?
-        write_keyword :protected, " "
+        write_keyword :protected
+        write_spaces
       when .public?
         # no keyword needed
       end
@@ -4498,6 +4515,8 @@ module Crystal
           end
         end
 
+        @last_skipped_space = @token.value.as(String).size
+
         next_token
         has_space = true
       end
@@ -4562,6 +4581,45 @@ module Crystal
 
     def skip_space_or_newline(indent : Int32, last : Bool = false, at_least_one : Bool = false, next_comes_end : Bool = false)
       indent(indent) { skip_space_or_newline(last, at_least_one, next_comes_end) }
+    end
+
+    def write_spaces
+      while @token.type.space?
+        write @token.value
+        next_token
+      end
+    end
+
+    def write_last_skipped_spaces
+      if @last_write.empty? || !@last_write[-1].ascii_whitespace?
+        @last_skipped_space.times { write " " }
+      end
+    end
+
+    def write_spaces_and_newlines
+      wrote_newline = false
+
+      while true
+        case @token.type
+        when .space?
+          if wrote_newline
+            # we do not write spaces after newline
+            # because we let the indent handle spaces
+            skip_space
+          else
+            write @token.value
+            next_token
+          end
+        when .newline?
+          write_line
+          wrote_newline = true
+          next_token
+        else
+          break
+        end
+      end
+
+      wrote_newline
     end
 
     def slash_is_regex!
