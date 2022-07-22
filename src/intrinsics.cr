@@ -110,16 +110,34 @@ lib LibIntrinsics
   fun counttrailing128 = "llvm.cttz.i128"(src : Int128, zero_is_undef : Bool) : Int128
 
   {% if compare_versions(Crystal::LLVM_VERSION, "7.0.0") >= 0 %}
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshl8)] {% end %}
     fun fshl8 = "llvm.fshl.i8"(a : UInt8, b : UInt8, count : UInt8) : UInt8
+
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshl16)] {% end %}
     fun fshl16 = "llvm.fshl.i16"(a : UInt16, b : UInt16, count : UInt16) : UInt16
+
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshl32)] {% end %}
     fun fshl32 = "llvm.fshl.i32"(a : UInt32, b : UInt32, count : UInt32) : UInt32
+
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshl64)] {% end %}
     fun fshl64 = "llvm.fshl.i64"(a : UInt64, b : UInt64, count : UInt64) : UInt64
+
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshl128)] {% end %}
     fun fshl128 = "llvm.fshl.i128"(a : UInt128, b : UInt128, count : UInt128) : UInt128
 
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr8)] {% end %}
     fun fshr8 = "llvm.fshr.i8"(a : UInt8, b : UInt8, count : UInt8) : UInt8
+
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr16)] {% end %}
     fun fshr16 = "llvm.fshr.i16"(a : UInt16, b : UInt16, count : UInt16) : UInt16
+
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr32)] {% end %}
     fun fshr32 = "llvm.fshr.i32"(a : UInt32, b : UInt32, count : UInt32) : UInt32
+
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr64)] {% end %}
     fun fshr64 = "llvm.fshr.i64"(a : UInt64, b : UInt64, count : UInt64) : UInt64
+
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_fshr128)] {% end %}
     fun fshr128 = "llvm.fshr.i128"(a : UInt128, b : UInt128, count : UInt128) : UInt128
   {% end %}
 
