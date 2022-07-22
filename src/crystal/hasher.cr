@@ -88,13 +88,9 @@ struct Crystal::Hasher
   private C1 = 0xacd5ad43274593b9_u64
   private C2 = 0x6956abd6ed268a3d_u64
 
-  private def rotl32(v : UInt64)
-    (v << 32) | (v >> 32)
-  end
-
   private def permute(v : UInt64)
-    @a = rotl32(@a ^ v) &* C1
-    @b = (rotl32(@b) ^ v) &* C2
+    @a = (@a ^ v).rotate_left(32) &* C1
+    @b = (@b.rotate_left(32) ^ v) &* C2
     self
   end
 
