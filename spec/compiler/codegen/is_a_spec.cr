@@ -894,4 +894,15 @@ describe "Codegen: is_a?" do
       x.is_a?(Union(B, C))
     )).to_b.should be_false
   end
+
+  it "restricts union metaclass to metaclass (#12295)" do
+    run(%(
+      x = true ? Union(String | Int32) : String
+      if x.is_a?(String.class)
+        1
+      else
+        2
+      end
+    )).to_i.should eq(2)
+  end
 end
