@@ -905,4 +905,21 @@ describe "Codegen: is_a?" do
       end
     )).to_i.should eq(2)
   end
+
+  it "does is_a? for generic type against generic class instance type (#12304)" do
+    run(%(
+      require "prelude"
+
+      class A
+      end
+
+      class B(T) < A
+      end
+
+      a = B(Int32).new.as(A)
+      b = a.as(B)
+
+      b.is_a?(B(Int32))
+    )).to_b.should be_true
+  end
 end
