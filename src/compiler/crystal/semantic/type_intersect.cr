@@ -72,6 +72,10 @@ module Crystal
       common_descendent_instance_and_generic(type1, type2)
     end
 
+    def self.common_descendent(type1 : GenericClassType, type2 : GenericClassInstanceType)
+      common_descendent(type2, type1)
+    end
+
     def self.common_descendent(type1 : GenericInstanceType, type2 : GenericInstanceType)
       common_descendent_generic_instances(type1, type2) ||
         common_descendent_base(type1, type2)
