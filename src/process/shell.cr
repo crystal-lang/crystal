@@ -218,17 +218,16 @@ class Process
             else
               quote = !quote
             end
-            reader.next_char
-          elsif backslash_count > 0
+          else
             backslash_count.times { str << '\\' }
-          elsif reader.has_next?
+            break unless reader.has_next?
+            # `current_char` is neither '\\' nor '"'
             char = reader.current_char
             break if char.in?(' ', '\t') && !quote
             str << char
-            reader.next_char
-          else
-            break
           end
+
+          reader.next_char
         end
       end
 
