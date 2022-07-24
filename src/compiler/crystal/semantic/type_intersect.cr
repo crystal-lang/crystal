@@ -100,6 +100,12 @@ module Crystal
     def self.common_descendent(type1 : GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType, type2 : MetaclassType | VirtualMetaclassType)
       return type1 if type1.instance_type.generic_type.metaclass == type2
 
+      # Special case: a GenericInstanceMetaclass with a union type is
+      # the metaclass of a union type, for example Union(String | Int32).class.
+      # In that case the intersection of that type with a non-union metaclass
+      # will never match: it must also be another union type.
+      return nil if type1.instance_type.is_a?(UnionType)
+
       restricted = common_descendent(type1.instance_type, type2.instance_type)
       restricted ? type1 : nil
     end
