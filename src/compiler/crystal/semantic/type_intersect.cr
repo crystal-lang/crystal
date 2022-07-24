@@ -2,21 +2,6 @@ require "../program"
 
 module Crystal
   class Type
-    # Given two types T and U, returns a common descendent V such that V <= T
-    # and V <= U. This is the same as:
-    #
-    # ```
-    # typeof(begin
-    #   x = uninitialized T
-    #   x.is_a?(U) ? x : raise ""
-    # end)
-    # ```
-    #
-    # except that `nil` is returned if the above produces `NoReturn`.
-    def self.common_descendent(type1 : Type, type2 : Type)
-      common_descendent_base(type1, type2)
-    end
-
     def self.common_descendent(type1 : TupleInstanceType, type2 : TupleInstanceType)
       type1.implements?(type2) ? type1 : nil
     end
@@ -207,6 +192,14 @@ module Crystal
       type1
     end
 
+    def self.common_descendent(type1 : GenericType, type2 : GenericInstanceType)
+      type2.implements?(type1) ? type2 : type1
+    end
+
+    def self.common_descendent(type1 : GenericInstanceType, type2 : GenericType)
+      common_descendent(type2, type1)
+    end
+
     def self.common_descendent(type1 : GenericClassType, type2 : GenericClassType)
       return type1 if type1 == type2
 
@@ -229,6 +222,21 @@ module Crystal
 
     def self.common_descendent(type1 : Type, type2 : GenericClassType)
       common_descendent_instance_and_generic(type1, type2)
+    end
+
+    # Given two types T and U, returns a common descendent V such that V <= T
+    # and V <= U. This is the same as:
+    #
+    # ```
+    # typeof(begin
+    #   x = uninitialized T
+    #   x.is_a?(U) ? x : raise ""
+    # end)
+    # ```
+    #
+    # except that `nil` is returned if the above produces `NoReturn`.
+    def self.common_descendent(type1 : Type, type2 : Type)
+      common_descendent_base(type1, type2)
     end
 
     private def self.common_descendent_base(type1, type2)
