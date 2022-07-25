@@ -4491,7 +4491,7 @@ module Crystal
           write_indent
           next_token
           @passed_backslash_newline = true
-          if @token.type.space?
+          if @token.type.space? || @token.type.comment?
             return skip_space(write_comma, consume_newline)
           else
             return false
@@ -4620,7 +4620,7 @@ module Crystal
 
     def write_comment(needs_indent = true, consume_newline = true, next_comes_end = false)
       while @token.type.comment?
-        empty_line = @line_output.to_s.strip.empty?
+        empty_line = @line_output.empty?
         if empty_line
           write_indent if needs_indent
         end
