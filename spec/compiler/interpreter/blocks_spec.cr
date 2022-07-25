@@ -532,6 +532,28 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "counts with ... yield scope in block args bytesize (#12316)" do
+      interpret(<<-CODE).should eq(42)
+        class Object
+          def itself
+            self
+          end
+        end
+
+        def foo
+          bar(21, with 10 yield 8)
+        end
+
+        def bar(x, y)
+          x &* y
+        end
+
+        foo do |x|
+          itself &- x
+        end
+      CODE
+    end
+
     it "interprets yield with splat (1)" do
       interpret(<<-CODE).should eq((2 - 3) * 4)
         def foo

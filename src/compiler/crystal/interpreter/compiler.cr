@@ -2081,6 +2081,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
 
+      # If it's `with ... yield` we pass the "with" scope
+      # as the first block argument, so we must count it too
+      # for the total blocks_args_bytesize.
+      if with_scope
+        block_args_bytesize += aligned_sizeof_type(with_scope)
+      end
+
       compiled_block = CompiledBlock.new(block,
         args_bytesize: block_args_bytesize,
         locals_bytesize_start: bytesize_before_block_local_vars,
