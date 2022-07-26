@@ -508,7 +508,7 @@ describe "Dir" do
   end
 
   it ".current" do
-    Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
+    Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "env pwd -P" }}}`.chomp)
   end
 
   describe ".tempdir" do
