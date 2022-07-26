@@ -68,11 +68,13 @@ class HTTP::StaticFileHandler
       return
     end
 
+    return call_next(context) unless file_info
+
     if @directory_listing && is_dir
       context.response.content_type = "text/html"
       directory_listing(context.response, request_path, file_path)
     elsif is_file
-      last_modified = file_info.not_nil!.modification_time
+      last_modified = file_info.modification_time
       add_cache_headers(context.response.headers, last_modified)
 
       if cache_request?(context, last_modified)
@@ -97,11 +99,11 @@ class HTTP::StaticFileHandler
         end
       end
 
-      context.response.content_length = file_info.not_nil!.size
+      context.response.content_length = file_info.size
       File.open(file_path) do |file|
         IO.copy(file, context.response)
       end
-    else
+    else # Not a normal file (FIFO/device/socket)
       call_next(context)
     end
   end
