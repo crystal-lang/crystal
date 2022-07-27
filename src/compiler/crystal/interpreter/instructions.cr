@@ -1853,6 +1853,16 @@ require "./repl"
             end
           end,
         },
+        interpreter_intrinsics_fshl{{n}}: {
+          pop_values: [a : UInt{{n}}, b : UInt{{n}}, count : UInt{{n}}],
+          push:       true,
+          code:       LibIntrinsics.fshl{{n}}(a, b, count),
+        },
+        interpreter_intrinsics_fshr{{n}}: {
+          pop_values: [a : UInt{{n}}, b : UInt{{n}}, count : UInt{{n}}],
+          push:       true,
+          code:       LibIntrinsics.fshr{{n}}(a, b, count),
+        },
       {% end %}
 
       {% for n in [16, 32, 64] %}
