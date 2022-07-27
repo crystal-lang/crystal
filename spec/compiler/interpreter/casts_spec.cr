@@ -335,5 +335,15 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "does as? with no resulting type (#12327)" do
+      interpret(<<-CODE).should eq(42)
+        if nil.as?(Int32)
+          0
+        else
+          42
+        end
+        CODE
+    end
   end
 end
