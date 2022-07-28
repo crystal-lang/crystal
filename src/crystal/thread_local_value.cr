@@ -1,4 +1,5 @@
 # :nodoc:
+{% if flag?(:preview_mt) %}
 struct Crystal::ThreadLocalValue(T)
   @values = Hash(Thread, T).new
   @mutex = Crystal::SpinLock.new
@@ -31,3 +32,25 @@ struct Crystal::ThreadLocalValue(T)
     end
   end
 end
+{% else %}
+struct Crystal::ThreadLocalValue(T)
+  @value : T? = nil
+
+  def get(&block : -> T)
+    @value ||= yield
+  end
+
+  def get?
+    @value
+  end
+
+  def set(value : T)
+    @value = value
+  end
+
+  def consume_each
+    @value.try { |v| yield v }
+    @value = nil
+  end
+end
+{% end %}
