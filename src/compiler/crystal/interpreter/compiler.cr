@@ -1606,13 +1606,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : NilableCast)
-    node.obj.accept self
-
     obj_type = node.obj.type
     to_type = node.to.type.virtual_type
 
     # TODO: check the proper conditions in codegen
     if obj_type == to_type
+      node.obj.accept self
+
       return false
     end
 
@@ -1620,9 +1620,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     unless filtered_type
       # If .as?(...) has no resulting type we must cast
       # whatever type we have to nil.
+      discard_value node.obj
       upcast node.obj, @context.program.nil_type, node.type
       return false
     end
+
+    node.obj.accept self
 
     # Check if obj is a `to_type`
     dup aligned_sizeof_type(node.obj), node: nil
