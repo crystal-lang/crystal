@@ -260,16 +260,12 @@ end
 
 private class YAMLAttrWithFinalize
   include YAML::Serializable
+  include FinalizeCounter
+
   property value : YAML::Any
 
   @[YAML::Field(ignore: true)]
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-  end
+  property key : String?
 end
 
 module YAMLAttrModule
@@ -500,7 +496,7 @@ describe "YAML::Serializable" do
 
   it "doesn't emit null when doing to_yaml" do
     person = YAMLAttrPerson.from_yaml("---\nname: John\n")
-    (person.to_yaml =~ /age/).should be_falsey
+    person.to_yaml.should_not match /age/
   end
 
   it "raises if non-nilable attribute is nil" do
@@ -580,7 +576,7 @@ describe "YAML::Serializable" do
 
   it "emits null on request when doing to_yaml" do
     person = YAMLAttrPersonEmittingNull.from_yaml("---\nname: John\n")
-    (person.to_yaml =~ /age/).should be_truthy
+    person.to_yaml.should match /age/
   end
 
   it "emit_nulls option" do
@@ -642,6 +638,13 @@ describe "YAML::Serializable" do
 
     yaml = YAMLAttrWithAny.from_yaml({:obj => {:foo => :bar}}.to_yaml)
     yaml.obj["foo"].as_s.should eq("bar")
+
+    yaml = YAMLAttrWithAny.from_yaml("extra: &foo hello\nobj: *foo")
+    yaml.obj.as_s.should eq("hello")
+
+    expect_raises YAML::ParseException, "Unknown anchor 'foo' at line 1, column 6" do
+      YAMLAttrWithAny.from_yaml("obj: *foo")
+    end
   end
 
   it "parses yaml with problematic keys" do
@@ -893,7 +896,7 @@ describe "YAML::Serializable" do
   end
 
   it "calls #finalize" do
-    assert_finalizes(:yaml) { YAMLAttrWithFinalize.from_yaml("---\nvalue: 1\n") }
+    assert_finalizes("yaml") { YAMLAttrWithFinalize.from_yaml("---\nvalue: 1\n") }
   end
 
   describe "work with module and inheritance" do

@@ -2,7 +2,7 @@ require "c/pwd"
 require "../unix"
 
 module Crystal::System::User
-  private GETPW_R_SIZE_MAX = 1024 * 16
+  GETPW_R_SIZE_MAX = 1024 * 16
 
   private def from_struct(pwd)
     user = String.new(pwd.pw_gecos).partition(',')[0]

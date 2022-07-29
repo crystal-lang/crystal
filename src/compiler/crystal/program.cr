@@ -191,6 +191,9 @@ module Crystal
       types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
       abstract_value_type(struct_t)
 
+      types["Enumerable"] = @enumerable = GenericModuleType.new self, self, "Enumerable", ["T"]
+      types["Indexable"] = @indexable = GenericModuleType.new self, self, "Indexable", ["T"]
+
       types["Array"] = @array = GenericClassType.new self, self, "Array", reference, ["T"]
       types["Hash"] = @hash_type = GenericClassType.new self, self, "Hash", reference, ["K", "V"]
       types["Regex"] = @regex = NonGenericClassType.new self, self, "Regex", reference
@@ -239,6 +242,9 @@ module Crystal
       types["Experimental"] = @experimental_annotation = AnnotationType.new self, self, "Experimental"
 
       define_crystal_constants
+
+      # definition in `macros/types.cr`
+      define_macro_types
     end
 
     # Returns a `LiteralExpander` useful to expand literal like arrays and hashes
@@ -450,8 +456,8 @@ module Crystal
     end
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64 int128
-                     uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer array static_array
-                     exception tuple named_tuple proc union enum range regex crystal
+                     uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer enumerable indexable
+                     array static_array exception tuple named_tuple proc union enum range regex crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation
@@ -471,21 +477,20 @@ module Crystal
       @hash_type.not_nil!
     end
 
-    def type_from_literal_kind(kind)
+    def type_from_literal_kind(kind : NumberKind)
       case kind
-      when :i8   then int8
-      when :i16  then int16
-      when :i32  then int32
-      when :i64  then int64
-      when :i128 then int128
-      when :u8   then uint8
-      when :u16  then uint16
-      when :u32  then uint32
-      when :u64  then uint64
-      when :u128 then uint128
-      when :f32  then float32
-      when :f64  then float64
-      else            raise "Invalid node kind: #{kind}"
+      in .i8?   then int8
+      in .i16?  then int16
+      in .i32?  then int32
+      in .i64?  then int64
+      in .i128? then int128
+      in .u8?   then uint8
+      in .u16?  then uint16
+      in .u32?  then uint32
+      in .u64?  then uint64
+      in .u128? then uint128
+      in .f32?  then float32
+      in .f64?  then float64
       end
     end
 
@@ -516,14 +521,16 @@ module Crystal
     # Returns the `IntegerType` that matches the given Int value
     def int?(int)
       case int
-      when Int8   then int8
-      when Int16  then int16
-      when Int32  then int32
-      when Int64  then int64
-      when UInt8  then uint8
-      when UInt16 then uint16
-      when UInt32 then uint32
-      when UInt64 then uint64
+      when Int8    then int8
+      when Int16   then int16
+      when Int32   then int32
+      when Int64   then int64
+      when Int128  then int128
+      when UInt8   then uint8
+      when UInt16  then uint16
+      when UInt32  then uint32
+      when UInt64  then uint64
+      when UInt128 then uint128
       else
         nil
       end

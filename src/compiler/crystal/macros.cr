@@ -153,6 +153,35 @@ module Crystal::Macros
   def host_flag?(name) : BoolLiteral
   end
 
+  # Parses *type_name* into a `Path`, `Generic` (also used for unions), `ProcNotation`, or `Metaclass`.
+  #
+  # The `#resolve` method could then be used to resolve the value into a `TypeNode`, if the *type_name* represents a type,
+  # otherwise the value of the constant.
+  #
+  # A compile time error is raised if the type/constant does not actually exist,
+  # or if a required generic argument was not provided.
+  #
+  # ```
+  # class Foo; end
+  #
+  # struct Some::Namespace::Foo; end
+  #
+  # module Bar(T); end
+  #
+  # MY_CONST = 1234
+  #
+  # {{ parse_type("Foo").resolve.class? }}                                   # => true
+  # {{ parse_type("Some::Namespace::Foo").resolve.struct? }}                 # => true
+  # {{ parse_type("Foo|Some::Namespace::Foo").resolve.union_types.size }}    # => 2
+  # {{ parse_type("Bar(Int32)|Foo").resolve.union_types[0].type_vars.size }} # => 1
+  # {{ parse_type("MY_CONST").resolve }}                                     # => 1234
+  #
+  # {{ parse_type("MissingType").resolve }}   # Error: undefined constant MissingType
+  # {{ parse_type("UNKNOWN_CONST").resolve }} # Error: undefined constant UNKNOWN_CONST
+  # ```
+  def parse_type(type_name : StringLiteral) : Path | Generic | ProcNotation | Metaclass
+  end
+
   # Prints AST nodes at compile-time. Useful for debugging macros.
   def puts(*expressions) : Nop
   end
@@ -186,7 +215,12 @@ module Crystal::Macros
   def `(command) : MacroId
   end
 
-  # :ditto:
+  # Executes a system command and returns the output as a `MacroId`.
+  # Gives a compile-time error if the command failed to execute.
+  #
+  # ```
+  # {{ system("echo hi") }} # => "hi\n"
+  # ```
   def system(command) : MacroId
   end
 
@@ -223,8 +257,8 @@ module Crystal::Macros
   #
   # The file denoted by *filename* must be a valid Crystal program.
   # This macro invocation passes *args* to the program as regular
-  # program arguments. The program must output a valid Crystal expression.
-  # This output is the result of this macro invocation, as a `MacroId`.
+  # program arguments. This output is the result of this macro invocation,
+  # as a `MacroId`.
   #
   # The `run` macro is useful when the subset of available macro methods
   # are not enough for your purposes and you need something more powerful.
@@ -1080,6 +1114,16 @@ module Crystal::Macros
 
   # A def argument.
   class Arg < ASTNode
+    # Returns the last `Annotation` with the given `type`
+    # attached to this arg or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this arg, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    end
+
     # Returns the external name of this argument.
     #
     # For example, for `def write(to file)` returns `to`.
@@ -1528,6 +1572,11 @@ module Crystal::Macros
     # Returns the name of the method this proc points to.
     def name : MacroId
     end
+
+    # Returns true if this proc pointer refers to a global method (starts with
+    # `::` and does not have a receiver).
+    def global? : BoolLiteral
+    end
   end
 
   # A type union, like `(Int32 | String)`.
@@ -1547,8 +1596,10 @@ module Crystal::Macros
     end
   end
 
-  # class Self < ASTNode
-  # end
+  # The `self` expression. May appear in code, such as in an instance method,
+  # and in type names.
+  class Self < ASTNode
+  end
 
   # The base class of control expressions.
   abstract class ControlExpression < ASTNode
@@ -1678,8 +1729,10 @@ module Crystal::Macros
   # class MacroFor < ASTNode
   # end
 
-  # class Underscore < ASTNode
-  # end
+  # The `_` expression. May appear in code, such as an assignment target, and in
+  # type names.
+  class Underscore < ASTNode
+  end
 
   # class MagicConstant < ASTNode
   # end

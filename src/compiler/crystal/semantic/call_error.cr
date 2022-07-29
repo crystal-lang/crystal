@@ -37,7 +37,10 @@ class Crystal::Path
 end
 
 class Crystal::Call
-  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_autocast = false, number_autocast = false)
+  # :nodoc:
+  MAX_RENDERED_OVERLOADS = 20
+
+  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_autocast = false, number_autocast = true)
     obj = @obj
     with_scope = @with_scope
 
@@ -161,7 +164,8 @@ class Crystal::Call
           uniq_arg_names = uniq_arg_names.size == 1 ? uniq_arg_names.first : nil
           unless missing.empty?
             msg << "\nCouldn't find overloads for these types:"
-            missing.each do |missing_types|
+
+            missing.first(MAX_RENDERED_OVERLOADS).each do |missing_types|
               if uniq_arg_names
                 signature_names = missing_types.map_with_index do |missing_type, i|
                   if i >= arg_types.size && (named_arg = named_args_types.try &.[i - arg_types.size]?)
@@ -177,6 +181,10 @@ class Crystal::Call
               msg << "\n - #{full_name(owner, def_name)}(#{signature_args}"
               msg << ", &block" if block
               msg << ')'
+            end
+
+            if missing.size > MAX_RENDERED_OVERLOADS
+              msg << "\nAnd #{missing.size - MAX_RENDERED_OVERLOADS} more..."
             end
           end
         end

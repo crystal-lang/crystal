@@ -1,5 +1,3 @@
-{% skip_file if flag?(:without_playground) %}
-
 require "http/server"
 require "log"
 require "ecr/macros"
@@ -61,7 +59,7 @@ module Crystal::Playground
       compiler.color = false
       begin
         Log.info { "Instrumented code compilation started (session=#{@session_key}, tag=#{tag})." }
-        result = compiler.compile sources, output_filename
+        compiler.compile sources, output_filename
       rescue ex
         Log.info { "Instrumented code compilation failed (session=#{@session_key}, tag=#{tag})." }
 
@@ -160,7 +158,7 @@ module Crystal::Playground
       if process = @process
         Log.info { "Code execution killed (session=#{@session_key}, filename=#{@running_process_filename})." }
         @process = nil
-        File.delete @running_process_filename rescue nil
+        File.delete? @running_process_filename
         process.terminate rescue nil
       end
     end
@@ -214,23 +212,12 @@ module Crystal::Playground
   end
 
   abstract class PlaygroundPage
-    @resources = [] of Resource
+    getter styles = [] of String
+    getter scripts = [] of String
 
     def render_with_layout(io, &block)
       ECR.embed "#{__DIR__}/views/layout.html.ecr", io
     end
-
-    protected def add_resource(kind, src)
-      @resources << Resource.new(kind, src)
-    end
-
-    def each_resource(kind)
-      @resources.each do |res|
-        yield res if res.kind == kind
-      end
-    end
-
-    record Resource, kind : Symbol, src : String
   end
 
   class FileContentPage < PlaygroundPage
@@ -363,10 +350,10 @@ module Crystal::Playground
 
     def load_resources(page : PlaygroundPage)
       Dir["playground/resources/*.css"].each do |file|
-        page.add_resource :css, "/workbook/#{file}"
+        page.styles << "/workbook/#{file}"
       end
       Dir["playground/resources/*.js"].each do |file|
-        page.add_resource :js, "/workbook/#{file}"
+        page.scripts << "/workbook/#{file}"
       end
     end
   end
@@ -469,8 +456,8 @@ module Crystal::Playground
 
       agent_ws = PathWebSocketHandler.new "/agent" do |ws, context|
         match_data = context.request.path.not_nil!.match(/\/(\d+)\/(\d+)$/).not_nil!
-        session_key = match_data[1]?.try(&.to_i)
-        tag = match_data[2]?.try(&.to_i)
+        session_key = match_data[1].to_i
+        tag = match_data[2].to_i
         Log.info { "#{context.request.path} WebSocket connected (session=#{session_key}, tag=#{tag})" }
 
         session = @sessions[session_key]

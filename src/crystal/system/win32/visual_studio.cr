@@ -13,7 +13,20 @@ module Crystal::System::VisualStudio
     # unused fields not mapped
   end
 
+  @@found_msvc = false
+
+  @@msvc_path : ::Path?
+
   def self.find_latest_msvc_path : ::Path?
+    if !@@found_msvc
+      @@found_msvc = true
+      @@msvc_path = find_latest_msvc_path_impl
+    end
+
+    @@msvc_path
+  end
+
+  private def self.find_latest_msvc_path_impl
     # ported from https://github.com/microsoft/vswhere/wiki/Find-VC
     # Copyright (C) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
     if vs_installations = get_vs_installations
@@ -31,7 +44,7 @@ module Crystal::System::VisualStudio
 
   private def self.get_vs_installations : Array(Installation)?
     if vswhere_path = find_vswhere
-      vc_install_json = `#{::Process.quote(vswhere_path)} -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -sort -format json`.chomp
+      vc_install_json = `#{::Process.quote(vswhere_path)} -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -products * -sort -format json`.chomp
       return if !$?.success? || vc_install_json.empty?
 
       Array(Installation).from_json(vc_install_json)

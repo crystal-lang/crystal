@@ -132,7 +132,7 @@ module Crystal
     # * llvm-bc: LLVM bitcode
     # * llvm-ir: LLVM IR
     # * obj: object file
-    property emit : EmitTarget?
+    property emit_targets : EmitTarget = EmitTarget::None
 
     # Base filename to use for `emit` output.
     property emit_base_filename : String?
@@ -268,7 +268,7 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || @emit
+        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || !@emit_targets.none?
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
@@ -328,9 +328,7 @@ module Crystal
 
       optimize llvm_mod if @release
 
-      if emit = @emit
-        unit.emit(emit, emit_base_filename || output_filename)
-      end
+      unit.emit(@emit_targets, emit_base_filename || output_filename)
 
       target_machine.emit_obj_to_file llvm_mod, object_name
 
@@ -376,6 +374,7 @@ module Crystal
         {% end %}
 
         link_args << "/DEBUG:FULL /PDBALTPATH:%_PDB%" unless debug.none?
+        link_args << "/INCREMENTAL:NO /STACK:0x800000"
         link_args << lib_flags
         @link_flags.try { |flags| link_args << flags }
 
@@ -387,7 +386,7 @@ module Crystal
           # TODO: Use a proper way to write encoded text to a file when that's supported.
           # The first character is the BOM; it will be converted in the same endianness as the rest.
           args_16 = "\ufeff#{args}".to_utf16
-          args_bytes = args_16.to_unsafe.as(UInt8*).to_slice(args_16.bytesize)
+          args_bytes = args_16.to_unsafe_bytes
 
           args_filename = "#{output_dir}/linker_args.txt"
           File.write(args_filename, args_bytes)
@@ -395,6 +394,9 @@ module Crystal
         end
 
         {cmd, nil}
+      elsif program.has_flag? "wasm32"
+        link_flags = @link_flags || ""
+        { %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names }
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
@@ -416,10 +418,7 @@ module Crystal
           first_unit = units.first
           first_unit.compile
           reused << first_unit.name if first_unit.reused_previous_compilation?
-
-          if emit = @emit
-            first_unit.emit(emit, emit_base_filename || output_filename)
-          end
+          first_unit.emit(@emit_targets, emit_base_filename || output_filename)
         else
           reused = codegen_many_units(program, units, target_triple)
         end
@@ -577,10 +576,24 @@ module Crystal
     end
 
     protected def optimize(llvm_mod)
+      {% if LibLLVM::IS_LT_130 %}
+        optimize_with_old_pass_manager(llvm_mod)
+      {% else %}
+        optimize_with_new_pass_manager(llvm_mod)
+      {% end %}
+    end
+
+    private def optimize_with_old_pass_manager(llvm_mod)
       fun_pass_manager = llvm_mod.new_function_pass_manager
       pass_manager_builder.populate fun_pass_manager
       fun_pass_manager.run llvm_mod
       module_pass_manager.run llvm_mod
+    end
+
+    private def optimize_with_new_pass_manager(llvm_mod)
+      LLVM::PassBuilderOptions.new do |options|
+        LLVM.run_passes(llvm_mod, "default<O3>", target_machine, options)
+      end
     end
 
     @module_pass_manager : LLVM::ModulePassManager?
@@ -694,7 +707,7 @@ module Crystal
 
         must_compile = true
         can_reuse_previous_compilation =
-          !compiler.emit && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
+          compiler.emit_targets.none? && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
 
         memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
 
@@ -716,7 +729,7 @@ module Crystal
         # If there's a memory buffer, it means we must create a .o from it
         if memory_buffer
           # Delete existing .o file. It cannot be used anymore.
-          File.delete(object_name) if File.exists?(object_name)
+          File.delete?(object_name)
           # Create the .bc file (for next compilations)
           File.write(bc_name, memory_buffer.to_slice)
           memory_buffer.dispose
@@ -737,17 +750,17 @@ module Crystal
         llvm_mod.print_to_file ll_name if compiler.dump_ll?
       end
 
-      def emit(emit_target : EmitTarget, output_filename)
-        if emit_target.asm?
+      def emit(emit_targets : EmitTarget, output_filename)
+        if emit_targets.asm?
           compiler.target_machine.emit_asm_to_file llvm_mod, "#{output_filename}.s"
         end
-        if emit_target.llvm_bc?
+        if emit_targets.llvm_bc?
           FileUtils.cp(bc_name, "#{output_filename}.bc")
         end
-        if emit_target.llvm_ir?
+        if emit_targets.llvm_ir?
           llvm_mod.print_to_file "#{output_filename}.ll"
         end
-        if emit_target.obj?
+        if emit_targets.obj?
           FileUtils.cp(object_name, output_filename + @object_extension)
         end
       end

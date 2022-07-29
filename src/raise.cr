@@ -170,6 +170,31 @@ end
 
     __crystal_continue_unwind
   end
+{% elsif flag?(:wasm32) %}
+  # :nodoc:
+  fun __crystal_personality
+    LibC.printf("EXITING: __crystal_personality called")
+    LibC.exit(1)
+  end
+
+  # :nodoc:
+  @[Raises]
+  fun __crystal_raise(ex : Void*) : NoReturn
+    LibC.printf("EXITING: __crystal_raise called")
+    LibC.exit(1)
+  end
+
+  # :nodoc:
+  fun __crystal_get_exception(ex : Void*) : UInt64
+    LibC.printf("EXITING: __crystal_get_exception called")
+    LibC.exit(1)
+    0u64
+  end
+
+  def raise(exception : Exception) : NoReturn
+    LibC.printf("EXITING: Attempting to raise:\n#{exception.inspect_with_backtrace}")
+    LibC.exit(1)
+  end
 {% else %}
   # :nodoc:
   fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*) : LibUnwind::ReasonCode
@@ -189,7 +214,7 @@ end
   end
 {% end %}
 
-{% unless flag?(:win32) %}
+{% unless flag?(:win32) || flag?(:wasm32) %}
   # :nodoc:
   @[Raises]
   fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
@@ -217,18 +242,24 @@ end
     {% end %}
 
     exception.callstack ||= Exception::CallStack.new
-    unwind_ex = Pointer(LibUnwind::Exception).malloc
-    unwind_ex.value.exception_class = LibC::SizeT.zero
-    unwind_ex.value.exception_cleanup = LibC::SizeT.zero
-    unwind_ex.value.exception_object = exception.as(Void*)
-    unwind_ex.value.exception_type_id = exception.crystal_type_id
-    __crystal_raise(unwind_ex)
+    raise_without_backtrace(exception)
   end
 {% end %}
 
 # Raises an Exception with the *message*.
 def raise(message : String) : NoReturn
   raise Exception.new(message)
+end
+
+# :nodoc:
+{% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
+def raise_without_backtrace(exception : Exception) : NoReturn
+  unwind_ex = Pointer(LibUnwind::Exception).malloc
+  unwind_ex.value.exception_class = LibC::SizeT.zero
+  unwind_ex.value.exception_cleanup = LibC::SizeT.zero
+  unwind_ex.value.exception_object = exception.as(Void*)
+  unwind_ex.value.exception_type_id = exception.crystal_type_id
+  __crystal_raise(unwind_ex)
 end
 
 # :nodoc:
@@ -240,3 +271,9 @@ end
 fun __crystal_raise_overflow : NoReturn
   raise OverflowError.new
 end
+
+{% if flag?(:interpreted) %}
+  def __crystal_raise_cast_failed(obj, type_name : String, location : String)
+    raise TypeCastError.new("cast from #{obj.class} to #{type_name} failed, at #{location}")
+  end
+{% end %}

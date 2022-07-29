@@ -209,8 +209,8 @@ LLVMValueRef LLVMExtDIBuilderInsertDeclareAtEnd(
 }
 
 LLVMMetadataRef LLVMExtDIBuilderCreateExpression(
-    DIBuilderRef Dref, int64_t *Addr, size_t Length) {
-  return wrap(Dref->createExpression(ArrayRef<int64_t>(Addr, Length)));
+    DIBuilderRef Dref, uint64_t *Addr, size_t Length) {
+  return wrap(Dref->createExpression(ArrayRef<uint64_t>(Addr, Length)));
 }
 
 LLVMMetadataRef LLVMExtDIBuilderCreateEnumerationType(
@@ -587,8 +587,12 @@ LLVMBool LLVMExtCreateMCJITCompilerForModule(
     for (auto &F : *Mod) {
       auto Attrs = F.getAttributes();
       StringRef Value = options.NoFramePointerElim ? "all" : "none";
-      Attrs = Attrs.addAttribute(F.getContext(), AttributeList::FunctionIndex,
-                                 "frame-pointer", Value);
+      #if LLVM_VERSION_GE(14, 0)
+        Attrs = Attrs.addFnAttribute(F.getContext(), "frame-pointer", Value);
+      #else
+        Attrs = Attrs.addAttribute(F.getContext(), AttributeList::FunctionIndex,
+                                   "frame-pointer", Value);
+      #endif
       F.setAttributes(Attrs);
     }
 

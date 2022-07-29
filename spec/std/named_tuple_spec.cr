@@ -66,6 +66,14 @@ describe "NamedTuple" do
     expect_raises(TypeCastError, /cast from String to Int32 failed/) do
       {foo: Int32, bar: Int32}.from({:foo => 1, :bar => "foo"})
     end
+
+    t = {foo: Int32, bar: Int32}.from({"foo" => 1, :bar => 2})
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
+
+    t = {foo: Int32, bar: Int32}.from({"foo" => 1, :bar => 2} of String | Int32 | Symbol => Int32)
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
   end
 
   it "gets size" do
@@ -373,6 +381,9 @@ describe "NamedTuple" do
 
     tup2 = {"foo bar": 1}
     tup2.clone.should eq(tup2)
+
+    tup3 = NamedTuple.new
+    tup3.clone.should eq(tup3)
   end
 
   it "does keys" do
@@ -394,6 +405,10 @@ describe "NamedTuple" do
     a = {one: 1, two: 2, three: 3, four: 4, five: 5, "im \"string": "works"}
     b = {two: "Two", three: true, "new one": "ok"}
     a.merge(b).merge(four: "Four").merge(NamedTuple.new).should eq({one: 1, two: "Two", three: true, four: "Four", five: 5, "new one": "ok", "im \"string": "works"})
+  end
+
+  it "merges two empty named tuples" do
+    NamedTuple.new.merge(NamedTuple.new).should eq(NamedTuple.new)
   end
 
   it "does types" do

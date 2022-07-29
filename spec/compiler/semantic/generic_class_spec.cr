@@ -509,7 +509,7 @@ describe "Semantic: generic class" do
       "use a more specific type"
   end
 
-  pending_win32 "errors on too nested generic instance" do
+  it "errors on too nested generic instance" do
     assert_error %(
       class Foo(T)
       end
@@ -523,7 +523,7 @@ describe "Semantic: generic class" do
       "generic type too nested"
   end
 
-  pending_win32 "errors on too nested generic instance, with union type" do
+  it "errors on too nested generic instance, with union type" do
     assert_error %(
       class Foo(T)
       end
@@ -537,7 +537,7 @@ describe "Semantic: generic class" do
       "generic type too nested"
   end
 
-  pending_win32 "errors on too nested tuple instance" do
+  it "errors on too nested tuple instance" do
     assert_error %(
       def foo
         {typeof(foo)}
@@ -654,7 +654,7 @@ describe "Semantic: generic class" do
       )) { nilable int32 }
   end
 
-  it "doesn't duplicate overload on generic class class method (#2385)" do
+  it "doesn't duplicate overload on generic class with class method (#2385)" do
     error = assert_error <<-CR
       class Foo(T)
         def self.foo(x : Int32)
@@ -1146,6 +1146,19 @@ describe "Semantic: generic class" do
       f = Foo(1).new
       f.foo
       )) { generic_class "Foo", 1.int32 }
+  end
+
+  it "can use type var that resolves to number in restriction using Int128" do
+    assert_type(%(
+      class Foo(N)
+        def foo : Foo(N)
+          self
+        end
+      end
+
+      f = Foo(1_i128).new
+      f.foo
+      )) { generic_class "Foo", 1.int128 }
   end
 
   it "doesn't consider unbound generic instantiations as concrete (#7200)" do
