@@ -8,8 +8,8 @@
 # record Point, x : Int32, y : Int32
 #
 # p = Point.new 1, 2 # => #<Point(@x=1, @y=2)>
-# p.x # => 1
-# p.y # => 2
+# p.x                # => 1
+# p.y                # => 2
 # ```
 #
 # The *properties* are a sequence of type declarations (`x : Int32`, `x : Int32 = 0`)
