@@ -1189,16 +1189,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  private def compile_pointerof_read_instance_var(obj, name)
-    type = obj.type
-
-    ivar = type.lookup_instance_var(name)
-    ivar_offset = ivar_offset(type, name)
+  private def compile_pointerof_read_instance_var(obj, obj_type, name)
+    ivar = obj_type.lookup_instance_var(name)
+    ivar_offset = ivar_offset(obj_type, name)
     ivar_size = inner_sizeof_type(ivar)
 
     # Get a pointer to the object
-    if type.passed_by_value?
-      compile_pointerof_node(obj, obj.type)
+    if obj_type.passed_by_value?
+      compile_pointerof_node(obj, obj_type)
     else
       request_value(obj)
     end
@@ -1469,7 +1467,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when ClassVar
       compile_pointerof_class_var(node, exp)
     when ReadInstanceVar
-      compile_pointerof_read_instance_var(exp.obj, exp.name)
+      compile_pointerof_read_instance_var(exp.obj, exp.obj.type, exp.name)
     when Call
       # lib external var
       external = exp.dependencies.first.as(External)
@@ -2388,7 +2386,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def compile_pointerof_node(obj : ReadInstanceVar, owner : Type) : Nil
-    compile_pointerof_read_instance_var(obj.obj, obj.name)
+    compile_pointerof_read_instance_var(obj.obj, obj.obj.type, obj.name)
   end
 
   private def compile_pointerof_node(call : Call, owner : Type) : Nil
@@ -2427,7 +2425,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # Inline the call, so that it also works fine when wanting to
       # take a pointer through things (this is how compiled Crystal works too
       if call_obj
-        compile_pointerof_read_instance_var(call_obj, body.name)
+        compile_pointerof_read_instance_var(call_obj, target_def.owner, body.name)
       else
         compile_pointerof_ivar(body, body.name)
       end
