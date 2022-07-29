@@ -1604,37 +1604,47 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : NilableCast)
-    # TODO: not tested
-    node.obj.accept self
-
     obj_type = node.obj.type
     to_type = node.to.type.virtual_type
 
     # TODO: check the proper conditions in codegen
     if obj_type == to_type
-      nop
-    else
-      # Check if obj is a `to_type`
-      dup aligned_sizeof_type(node.obj), node: nil
-      is_a(node, obj_type, to_type)
+      node.obj.accept self
 
-      # If so, branch
-      branch_if 0, node: nil
-      cond_jump_location = patch_location
-
-      # Otherwise it's nil
-      put_nil node: nil
-      pop aligned_sizeof_type(node.obj), node: nil
-      upcast node.obj, @context.program.nil_type, node.type
-      jump 0, node: nil
-      otherwise_jump_location = patch_location
-
-      patch_jump(cond_jump_location)
-      downcast node.obj, obj_type, to_type
-      upcast node.obj, to_type, node.type
-
-      patch_jump(otherwise_jump_location)
+      return false
     end
+
+    filtered_type = obj_type.filter_by(to_type)
+    unless filtered_type
+      # If .as?(...) has no resulting type we must cast
+      # whatever type we have to nil.
+      discard_value node.obj
+      upcast node.obj, @context.program.nil_type, node.type
+      return false
+    end
+
+    node.obj.accept self
+
+    # Check if obj is a `to_type`
+    dup aligned_sizeof_type(node.obj), node: nil
+    filter_type(node, obj_type, filtered_type)
+
+    # If so, branch
+    branch_if 0, node: nil
+    cond_jump_location = patch_location
+
+    # Otherwise it's nil
+    put_nil node: nil
+    pop aligned_sizeof_type(node.obj), node: nil
+    upcast node.obj, @context.program.nil_type, node.type
+    jump 0, node: nil
+    otherwise_jump_location = patch_location
+
+    patch_jump(cond_jump_location)
+    downcast node.obj, obj_type, to_type
+    upcast node.obj, to_type, node.type
+
+    patch_jump(otherwise_jump_location)
 
     false
   end
