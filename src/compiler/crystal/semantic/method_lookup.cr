@@ -40,13 +40,13 @@ require "../types"
 # def foo(x : Int64)
 # end
 #
-# def foo(x : *Int64)
+# def foo(*x : Int64)
 # end
 #
 # foo(1)
 # ```
 #
-# In this case there's no ambiguity: 1 means `Int64`. However, the first overload
+# In this case there's no ambiguity: 1 means `Int64`. The first overload
 # is an exact match and there's no need to consider the second overload in the
 # multidispatch. However, we do need to analyze it to check if there's an ambiguity.
 
@@ -107,7 +107,7 @@ module Crystal
 
     def lookup_matches_without_parents(signature, owner = self, path_lookup = self, matches_array = nil, analyze_all = false)
       if defs = self.defs.try &.[signature.name]?
-        context = MatchContext.new(owner, path_lookup)
+        context = MatchContext.new(owner, path_lookup, autocast_allowed: analyze_all)
 
         exact_match = nil
 
@@ -140,7 +140,7 @@ module Crystal
               break unless analyze_all
             end
 
-            context = MatchContext.new(owner, path_lookup)
+            context = MatchContext.new(owner, path_lookup, autocast_allowed: analyze_all)
           else
             context.defining_type = path_lookup if macro_owner
             context.def_free_vars = nil
@@ -227,6 +227,7 @@ module Crystal
 
       matched_arg_types = nil
       matched_named_arg_types = nil
+      autocast_args = nil
 
       # If there's a restriction on a splat (that's not a splat restriction),
       # zero splatted args don't match
@@ -248,12 +249,15 @@ module Crystal
         end
 
         match_arg_type = arg_type.restrict(arg, context)
-        if match_arg_type
-          matched_arg_types ||= [] of Type
-          matched_arg_types.push match_arg_type
-          mandatory_args[arg_index] = true if mandatory_args
-        else
-          return nil
+        return nil unless match_arg_type
+
+        matched_arg_types ||= [] of Type
+        matched_arg_types.push match_arg_type
+        mandatory_args[arg_index] = true if mandatory_args
+
+        if arg_type.is_a?(AutocastType)
+          autocast_args ||= [] of {AutocastType, ASTNode}
+          autocast_args << {arg_type, arg}
         end
       end
 
@@ -261,9 +265,7 @@ module Crystal
       if splat_arg_types && splat_restriction.is_a?(Splat)
         tuple_type = context.instantiated_type.program.tuple_of(splat_arg_types)
         match_arg_type = tuple_type.restrict(splat_restriction.exp, context)
-        unless match_arg_type
-          return nil
-        end
+        return nil unless match_arg_type
 
         matched_arg_types ||= [] of Type
         matched_arg_types.concat(splat_arg_types)
@@ -298,27 +300,32 @@ module Crystal
               end
             end
 
-            match_arg_type = named_arg.type.restrict(a_def.args[found_index], context)
-            unless match_arg_type
-              return nil
-            end
+            named_arg_type = named_arg.type
+            match_arg_type = named_arg_type.restrict(a_def.args[found_index], context)
+            return nil unless match_arg_type
 
             matched_named_arg_types ||= [] of NamedArgumentType
             matched_named_arg_types << NamedArgumentType.new(named_arg.name, match_arg_type)
+
+            if named_arg_type.is_a?(AutocastType)
+              autocast_args ||= [] of {AutocastType, ASTNode}
+              autocast_args << {named_arg_type, a_def.args[found_index]}
+            end
           else
             # If there's a double splat it's OK, the named arg will be put there
-            if a_def.double_splat
-              match_arg_type = named_arg.type
+            if double_splat
+              match_arg_type = named_arg_type = named_arg.type
 
-              # If there's a restriction on the double splat, check that it matches
-              if double_splat_restriction
-                if double_splat_entries
-                  double_splat_entries << named_arg
-                else
-                  match_arg_type = named_arg.type.restrict(double_splat_restriction, context)
-                  unless match_arg_type
-                    return nil
-                  end
+              if double_splat_entries
+                double_splat_entries << named_arg
+              else
+                # If there's a restriction on the double splat, check that it matches
+                match_arg_type = named_arg_type.restrict(double_splat_restriction, context)
+                return nil unless match_arg_type
+
+                if named_arg_type.is_a?(AutocastType)
+                  autocast_args ||= [] of {AutocastType, ASTNode}
+                  autocast_args << {named_arg_type, double_splat}
                 end
               end
 
@@ -338,9 +345,7 @@ module Crystal
       if double_splat_entries && double_splat_restriction.is_a?(DoubleSplat)
         named_tuple_type = context.instantiated_type.program.named_tuple_of(double_splat_entries)
         value = named_tuple_type.restrict(double_splat_restriction.exp, context)
-        unless value
-          return nil
-        end
+        return nil unless value
       end
 
       # Check that all mandatory args were specified
@@ -363,10 +368,14 @@ module Crystal
       # new ones when there are free vars.
       context = context.clone if context.free_vars
 
+      autocast_args.try &.each do |(arg, restriction)|
+        arg.add_autocast_matches(restriction, context)
+      end
+
       Match.new(a_def, (matched_arg_types || arg_types), context, matched_named_arg_types)
     end
 
-    def matches_exactly?(match : Match, *, with_autocast : Bool = false)
+    def matches_exactly?(match : Match)
       arg_types_equal = self.arg_types.equals?(match.arg_types) do |x, y|
         x.compatible_with?(y)
       end
