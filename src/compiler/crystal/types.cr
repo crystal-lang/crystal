@@ -96,6 +96,8 @@ module Crystal
         true
       when NonGenericClassType
         !self.struct?
+      when GenericClassType
+        !self.struct?
       when GenericClassInstanceType
         !self.struct?
       when VirtualType
