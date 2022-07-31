@@ -2686,7 +2686,7 @@ module Crystal
     end
 
     delegate remove_typedef, pointer?, defs,
-      macros, reference_link?, parents, to: typedef
+      macros, reference_like?, parents, to: typedef
 
     def remove_indirection
       self
