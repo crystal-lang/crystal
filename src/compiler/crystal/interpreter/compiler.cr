@@ -597,7 +597,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         closure_self = lookup_closured_var?("self")
         if closure_self
           if closure_self.type.passed_by_value?
-            node.raise "BUG: missing interpret assig closured instance var of pass-by-value"
+            ivar_offset, ivar_size = get_closured_self_pointer(closure_self, target.name, node: node)
+            pointer_set ivar_size, node: node
           else
             ivar_offset = ivar_offset(closure_self.type, target.name)
             ivar = closure_self.type.lookup_instance_var(target.name)
@@ -769,11 +770,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       downcast node, type, node.type?
     in ClosuredVar
-      if is_self && local_var.type.passed_by_value?
-        node.raise "BUG: missing interpret read closured var with self"
-      else
-        read_from_closured_var(local_var, node: node)
-      end
+      read_from_closured_var(local_var, node: node)
     end
 
     false
@@ -884,7 +881,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # Load self
       # (pointer_set expects the value to come before the pointer)
       local_self_index = @local_vars.name_to_index("self", 0)
-      get_local local_self_index, aligned_sizeof_type(closure_self_type), node: nil
+      if closure_self_type.passed_by_value?
+        # First load the pointer to self
+        get_local local_self_index, sizeof(Pointer(Void)), node: nil
+
+        # Then load the entire self
+        pointer_get aligned_sizeof_type(closure_self_type), node: nil
+      else
+        get_local local_self_index, aligned_sizeof_type(closure_self_type), node: nil
+      end
 
       # Get the closure pointer
       get_local index, sizeof(Void*), node: nil
@@ -1030,15 +1035,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     ivar_size = inner_sizeof_type(closured_self.type.lookup_instance_var(name))
 
     if closured_self.type.passed_by_value?
-      node.raise "BUG: missing interpret read closured instance var of pass-by-value"
+      # Read self pointer from closured self
+      closured_var = lookup_closured_var("self")
+      read_closured_var_pointer(closured_var, node: node)
     else
       # Read self pointer
       read_from_closured_var(closured_self, node: node)
+    end
 
-      # Now offset it to reach the instance var
-      if ivar_offset > 0
-        pointer_add_constant ivar_offset, node: node
-      end
+    # Now offset it to reach the instance var
+    if ivar_offset > 0
+      pointer_add_constant ivar_offset, node: node
     end
 
     {ivar_offset, ivar_size}
