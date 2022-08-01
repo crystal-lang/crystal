@@ -1641,8 +1641,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     otherwise_jump_location = patch_location
 
     patch_jump(cond_jump_location)
-    downcast node.obj, obj_type, to_type
-    upcast node.obj, to_type, node.type
+    downcast node.obj, obj_type, node.non_nilable_type
+    upcast node.obj, node.non_nilable_type, node.type
 
     patch_jump(otherwise_jump_location)
 

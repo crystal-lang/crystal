@@ -355,5 +355,21 @@ describe Crystal::Repl::Interpreter do
         end
         CODE
     end
+
+    it "does as? with a type that can't match (#12346)" do
+      interpret(<<-CODE).should eq(1)
+        abstract class A
+        end
+
+        class B < A
+        end
+
+        class C < A
+        end
+
+        a = B.new || C.new
+        a.as?(B | Int32) ? 1 : 2
+        CODE
+    end
   end
 end
