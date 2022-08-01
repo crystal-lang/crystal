@@ -371,5 +371,86 @@ describe Crystal::Repl::Interpreter do
         a.as?(B | Int32) ? 1 : 2
         CODE
     end
+
+    it "upcasts mixed union with tuple to mixed union with compatible tuple (1) (#12331)" do
+      interpret(<<-CODE).should eq(1)
+        class Foo
+          def initialize(@tuple : Tuple(Int32?) | Tuple(Int32, Int32))
+          end
+
+          def tuple
+            @tuple
+          end
+        end
+
+        a = {1} || {1, 1}
+        foo = Foo.new(a)
+        tuple = foo.tuple
+        if tuple.is_a?(Tuple(Int32?))
+          value = tuple[0]
+          if value
+            value
+          else
+            2
+          end
+        else
+          3
+        end
+      CODE
+    end
+
+    it "upcasts mixed union with tuple to mixed union with compatible tuple (2) (#12331)" do
+      interpret(<<-CODE).should eq(2)
+        class Foo
+          def initialize(@tuple : Tuple(Int32?) | Tuple(Int32, Int32))
+          end
+
+          def tuple
+            @tuple
+          end
+        end
+
+        a = {nil} || {1, 1}
+        foo = Foo.new(a)
+        tuple = foo.tuple
+        if tuple.is_a?(Tuple(Int32?))
+          value = tuple[0]
+          if value
+            value
+          else
+            2
+          end
+        else
+          3
+        end
+      CODE
+    end
+
+    it "upcasts mixed union with tuple to mixed union with compatible tuple (3) (#12331)" do
+      interpret(<<-CODE).should eq(3)
+        class Foo
+          def initialize(@tuple : Tuple(Int32?) | Tuple(Int32, Int32))
+          end
+
+          def tuple
+            @tuple
+          end
+        end
+
+        a = {1, 1} || {1}
+        foo = Foo.new(a)
+        tuple = foo.tuple
+        if tuple.is_a?(Tuple(Int32?))
+          value = tuple[0]
+          if value
+            value
+          else
+            2
+          end
+        else
+          3
+        end
+      CODE
+    end
   end
 end
