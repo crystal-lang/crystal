@@ -23,6 +23,8 @@ module Unicode
     Fold
   end
 
+  private UNROLL = 64
+
   # :nodoc:
   # Returns whether the given *bytes* refer to a correctly encoded UTF-8 string.
   #
@@ -38,7 +40,14 @@ module Unicode
     s = bytes.to_unsafe
     e = s + bytes.size
 
-    # TODO: unroll?
+    while s + UNROLL <= e
+      {% for i in 0...UNROLL %}
+        state = table[s[{{ i }}]].unsafe_shr(state & 0x3F)
+      {% end %}
+      return false if state & 0x3F == 6
+      s += UNROLL
+    end
+
     while s < e
       state = table[s.value].unsafe_shr(state & 0x3F)
       return false if state & 0x3F == 6
