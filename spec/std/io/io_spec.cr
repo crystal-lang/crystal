@@ -966,8 +966,14 @@ describe IO do
     end
   end
 
-  {% unless flag?(:win32) %}
-    typeof(STDIN.cooked { })
-    typeof(STDIN.cooked!)
+  typeof(STDIN.noecho { })
+  typeof(STDIN.noecho!)
+  {% if flag?(:win32) %}
+    typeof(STDIN.echo { })
+    typeof(STDIN.echo!)
   {% end %}
+  typeof(STDIN.cooked { })
+  typeof(STDIN.cooked!)
+  typeof(STDIN.raw { })
+  typeof(STDIN.raw!)
 end
