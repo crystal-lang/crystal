@@ -4946,12 +4946,7 @@ class String
   # Returns `true` if this String is encoded correctly
   # according to the UTF-8 encoding.
   def valid_encoding? : Bool
-    reader = Char::Reader.new(self)
-    while reader.has_next?
-      return false if reader.error
-      reader.next_char
-    end
-    true
+    Unicode.valid?(to_slice)
   end
 
   # Returns a String where bytes that are invalid in the
