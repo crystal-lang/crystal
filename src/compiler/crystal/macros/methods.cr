@@ -1603,7 +1603,7 @@ module Crystal
       when "struct?"
         interpret_check_args { BoolLiteral.new(type.class? && type.struct?) }
       when "nilable?"
-        interpret_check_args { BoolLiteral.new(type.program.nil_type.implements?(type)) }
+        interpret_check_args { BoolLiteral.new(type.nilable?) }
       when "union_types"
         interpret_check_args { TypeNode.union_types(self) }
       when "name"

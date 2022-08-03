@@ -193,6 +193,10 @@ module Crystal
       self.is_a?(NilType)
     end
 
+    def nilable?
+      nil_type? || program.nil_type.implements?(self)
+    end
+
     def bool_type?
       self.is_a?(BoolType)
     end
