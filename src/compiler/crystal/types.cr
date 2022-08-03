@@ -193,10 +193,6 @@ module Crystal
       self.is_a?(NilType)
     end
 
-    def nilable?
-      self.is_a?(NilType) || (self.is_a?(UnionType) && self.union_types.any?(&.nil_type?))
-    end
-
     def bool_type?
       self.is_a?(BoolType)
     end

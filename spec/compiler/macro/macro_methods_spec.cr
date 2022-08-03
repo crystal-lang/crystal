@@ -2070,17 +2070,61 @@ module Crystal
           end
         end
       end
+
       describe "#nilable?" do
         it false do
           assert_macro("{{x.nilable?}}", "false") do |program|
             {x: TypeNode.new(program.string)}
           end
+
+          assert_macro("{{x.nilable?}}", "false") do |program|
+            {x: TypeNode.new(program.union_of(program.string, program.int32))}
+          end
+
+          assert_macro("{{x.nilable?}}", "false") do |program|
+            {x: TypeNode.new(program.no_return)}
+          end
+
+          assert_macro("{{x.nilable?}}", "false") do |program|
+            {x: TypeNode.new(program.class_type)}
+          end
+
+          assert_macro("{{x.nilable?}}", "false") do |program|
+            {x: TypeNode.new(program.reference)}
+          end
         end
 
         it true do
           assert_macro("{{x.nilable?}}", "true") do |program|
+            {x: TypeNode.new(program.nil_type)}
+          end
+
+          assert_macro("{{x.nilable?}}", "true") do |program|
             {x: TypeNode.new(program.union_of(program.string, program.nil))}
           end
+
+          assert_macro("{{x.nilable?}}", "true") do |program|
+            {x: TypeNode.new(program.value)}
+          end
+
+          assert_macro("{{x.nilable?}}", "true") do |program|
+            {x: TypeNode.new(program.object)}
+          end
+
+          assert_macro("{{x.nilable?}}", "true") do |program|
+            mod = NonGenericModuleType.new(program, program, "SomeModule")
+            program.nil_type.include mod
+            {x: TypeNode.new(mod)}
+          end
+
+          assert_type(<<-CR) { int32 }
+            class Foo(T)
+            end
+
+            alias Bar = Foo(Bar)?
+
+            {{ Bar.nilable? ? 1 : 'a' }}
+            CR
         end
       end
 
