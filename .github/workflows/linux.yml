@@ -134,7 +134,6 @@ jobs:
       - name: Test std specs with interpreter
         run: bin/ci with_build_env 'bin/crystal i spec/interpreter_std_spec.cr'
 
-
   check_format:
     env:
       ARCH: x86_64
