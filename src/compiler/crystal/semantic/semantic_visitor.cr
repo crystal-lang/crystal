@@ -12,6 +12,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   property! scope : Type
   setter scope
 
+  property vars : MetaVars
+
   @path_lookup : Type?
   @untyped_def : Def?
   @typed_def : Def?

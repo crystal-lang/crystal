@@ -1,6 +1,7 @@
 require "./spec_helper"
 require "big"
 require "spec/helpers/iterate"
+require "../support/number"
 
 private macro it_converts_to_s(num, str, **opts)
   it {{ "converts #{num} to #{str}" }} do
@@ -379,6 +380,50 @@ describe "Int" do
     it { (8000 << -1).should eq(4000) }
   end
 
+  describe "#rotate_left" do
+    it { 0x87654321_u32.rotate_left(1).should eq(0x0ECA8643_u32) }
+    it { 0x87654321_u32.rotate_left(2).should eq(0x1D950C86_u32) }
+    it { 0x87654321_u32.rotate_left(-1).should eq(0xC3B2A190_u32) }
+    it { 0x87654321_u32.rotate_left(-2).should eq(0x61D950C8_u32) }
+    it { 0x87654321_u32.rotate_left(32).should eq(0x87654321_u32) }
+
+    it { -0x789ABCDF.rotate_left(1).should eq(0x0ECA8643) }
+    it { -0x789ABCDF.rotate_left(2).should eq(0x1D950C86) }
+    it { -0x789ABCDF.rotate_left(-1).should eq(-0x3C4D5E70) }
+    it { -0x789ABCDF.rotate_left(-2).should eq(0x61D950C8) }
+    it { -0x789ABCDF.rotate_left(32).should eq(-0x789ABCDF) }
+
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it do
+        x = ({{ int }}.new(1) << (sizeof({{ int }}) * 8 - 1)).rotate_left(1)
+        x.should be_a({{ int }})
+        x.should eq({{ int }}.new(1))
+      end
+    {% end %}
+  end
+
+  describe "#rotate_right" do
+    it { 0x87654321_u32.rotate_right(1).should eq(0xC3B2A190_u32) }
+    it { 0x87654321_u32.rotate_right(2).should eq(0x61D950C8_u32) }
+    it { 0x87654321_u32.rotate_right(-1).should eq(0x0ECA8643_u32) }
+    it { 0x87654321_u32.rotate_right(-2).should eq(0x1D950C86_u32) }
+    it { 0x87654321_u32.rotate_right(32).should eq(0x87654321_u32) }
+
+    it { -0x789ABCDF.rotate_right(1).should eq(-0x3C4D5E70) }
+    it { -0x789ABCDF.rotate_right(2).should eq(0x61D950C8) }
+    it { -0x789ABCDF.rotate_right(-1).should eq(0x0ECA8643) }
+    it { -0x789ABCDF.rotate_right(-2).should eq(0x1D950C86) }
+    it { -0x789ABCDF.rotate_right(32).should eq(-0x789ABCDF) }
+
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it do
+        x = {{ int }}.new(1).rotate_right(1)
+        x.should be_a({{ int }})
+        x.should eq({{ int }}.new(1) << (sizeof({{ int }}) * 8 - 1))
+      end
+    {% end %}
+  end
+
   describe "to" do
     it "does upwards" do
       a = 0
@@ -411,49 +456,49 @@ describe "Int" do
     it "String overload" do
       Int8.new("1").should be_a(Int8)
       Int8.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int8: " 1 ") do
         Int8.new(" 1 ", whitespace: false)
       end
 
       Int16.new("1").should be_a(Int16)
       Int16.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int16: " 1 ") do
         Int16.new(" 1 ", whitespace: false)
       end
 
       Int32.new("1").should be_a(Int32)
       Int32.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int32: " 1 ") do
         Int32.new(" 1 ", whitespace: false)
       end
 
       Int64.new("1").should be_a(Int64)
       Int64.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int64: " 1 ") do
         Int64.new(" 1 ", whitespace: false)
       end
 
       UInt8.new("1").should be_a(UInt8)
       UInt8.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt8: " 1 ") do
         UInt8.new(" 1 ", whitespace: false)
       end
 
       UInt16.new("1").should be_a(UInt16)
       UInt16.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt16: " 1 ") do
         UInt16.new(" 1 ", whitespace: false)
       end
 
       UInt32.new("1").should be_a(UInt32)
       UInt32.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt32: " 1 ") do
         UInt32.new(" 1 ", whitespace: false)
       end
 
       UInt64.new("1").should be_a(UInt64)
       UInt64.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt64: " 1 ") do
         UInt64.new(" 1 ", whitespace: false)
       end
     end

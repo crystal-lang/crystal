@@ -10,35 +10,34 @@ class Crystal::Command
     check = false
     show_backtrace = false
 
-    option_parser =
-      OptionParser.parse(options) do |opts|
-        opts.banner = "Usage: crystal tool format [options] [file or directory]\n\nOptions:"
+    OptionParser.parse(@options) do |opts|
+      opts.banner = "Usage: crystal tool format [options] [file or directory]\n\nOptions:"
 
-        opts.on("--check", "Checks that formatting code produces no changes") do |f|
-          check = true
-        end
-
-        opts.on("-i <path>", "--include <path>", "Include path") do |f|
-          includes << f
-        end
-
-        opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
-          excludes << f
-        end
-
-        opts.on("-h", "--help", "Show this message") do
-          puts opts
-          exit
-        end
-
-        opts.on("--no-color", "Disable colored output") do
-          @color = false
-        end
-
-        opts.on("--show-backtrace", "Show backtrace on a bug (used only for debugging)") do
-          show_backtrace = true
-        end
+      opts.on("--check", "Checks that formatting code produces no changes") do |f|
+        check = true
       end
+
+      opts.on("-i <path>", "--include <path>", "Include path") do |f|
+        includes << f
+      end
+
+      opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
+        excludes << f
+      end
+
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        exit
+      end
+
+      opts.on("--no-color", "Disable colored output") do
+        @color = false
+      end
+
+      opts.on("--show-backtrace", "Show backtrace on a bug (used only for debugging)") do
+        show_backtrace = true
+      end
+    end
 
     files = options
 
