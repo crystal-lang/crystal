@@ -204,7 +204,7 @@ end
 threads_num = 4
 fibers_num = 1_000
 loops_num = 20
-mode : Mode = :run
+mode = Mode::Run
 
 OptionParser.parse do |parser|
   parser.on("-i", "--ips", "Benchmark with ips") { mode = :ips }
