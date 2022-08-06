@@ -109,11 +109,12 @@ module Crystal
       end
     end
 
-    def complex_elem_temp_vars(elems : Array(ASTNode))
+    def complex_elem_temp_vars(elems : Array, &)
       temp_vars = nil
       count = 0
 
       elems.each_with_index do |elem, i|
+        elem = yield elem
         elem = elem.exp if elem.is_a?(Splat)
         next if elem.is_a?(Var) || elem.is_a?(InstanceVar) || elem.is_a?(ClassVar) || elem.simple_literal?
 
@@ -123,6 +124,10 @@ module Crystal
       end
 
       {temp_vars, count}
+    end
+
+    def complex_elem_temp_vars(elems : Array(ASTNode))
+      complex_elem_temp_vars(elems, &.itself)
     end
 
     def typeof_exp(node : ArrayLiteral, temp_vars : Array(Var?)? = nil)
@@ -230,11 +235,14 @@ module Crystal
     #     hash[c] = d
     #     hash
     def expand(node : HashLiteral)
+      key_temp_vars, key_temp_var_count = complex_elem_temp_vars(node.entries, &.key)
+      value_temp_vars, value_temp_var_count = complex_elem_temp_vars(node.entries, &.value)
+
       if of = node.of
         type_vars = [of.key, of.value] of ASTNode
       else
-        typeof_key = TypeOf.new(node.entries.map { |x| x.key.clone.as(ASTNode) }).at(node)
-        typeof_value = TypeOf.new(node.entries.map { |x| x.value.clone.as(ASTNode) }).at(node)
+        typeof_key = TypeOf.new(node.entries.map_with_index { |x, i| (key_temp_vars.try(&.[i]) || x.key).clone.as(ASTNode) }).at(node)
+        typeof_value = TypeOf.new(node.entries.map_with_index { |x, i| (value_temp_vars.try(&.[i]) || x.value).clone.as(ASTNode) }).at(node)
         type_vars = [typeof_key, typeof_value] of ASTNode
       end
 
@@ -244,14 +252,28 @@ module Crystal
       if node.entries.empty?
         constructor
       else
-        temp_var = new_temp_var
+        hash_var = new_temp_var
 
-        exps = Array(ASTNode).new(node.entries.size + 2)
-        exps << Assign.new(temp_var.clone, constructor).at(node)
-        node.entries.each do |entry|
-          exps << Call.new(temp_var.clone, "[]=", entry.key.clone, entry.value.clone).at(node)
+        exps = Array(ASTNode).new(node.entries.size + key_temp_var_count + value_temp_var_count + 2)
+        key_temp_vars.try &.each_with_index do |key_temp_var, i|
+          next unless key_temp_var
+          key_exp = node.entries[i].key
+          exps << Assign.new(key_temp_var, key_exp.clone).at(key_temp_var)
         end
-        exps << temp_var.clone
+        value_temp_vars.try &.each_with_index do |value_temp_var, i|
+          next unless value_temp_var
+          value_exp = node.entries[i].value
+          exps << Assign.new(value_temp_var, value_exp.clone).at(value_temp_var)
+        end
+        exps << Assign.new(hash_var.clone, constructor).at(node)
+
+        node.entries.each_with_index do |entry, i|
+          key_exp = key_temp_vars.try(&.[i]) || entry.key
+          value_exp = value_temp_vars.try(&.[i]) || entry.value
+          exps << Call.new(hash_var.clone, "[]=", [key_exp.clone, value_exp.clone] of ASTNode).at(node)
+        end
+
+        exps << hash_var
         Expressions.new(exps).at(node)
       end
     end
