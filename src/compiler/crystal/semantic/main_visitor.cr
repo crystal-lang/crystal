@@ -2930,21 +2930,7 @@ module Crystal
       if name = node.name
         name.accept self
         type = name.type.instance_type
-
-        case type
-        when GenericClassType
-          generic_type = TypeNode.new(type).at(node.location)
-          type_of_keys = TypeOf.new(node.entries.map { |x| x.key.as(ASTNode) }).at(node.location)
-          type_of_values = TypeOf.new(node.entries.map { |x| x.value.as(ASTNode) }).at(node.location)
-          generic = Generic.new(generic_type, [type_of_keys, type_of_values] of ASTNode).at(node.location)
-
-          node.name = generic
-        when GenericClassInstanceType
-          # Nothing
-        else
-          node.name = TypeNode.new(name.type).at(node.location)
-        end
-
+        generic_type = TypeNode.new(type).at(node.location) if type.is_a?(GenericClassType)
         expand_named(node, generic_type)
       else
         expand(node)

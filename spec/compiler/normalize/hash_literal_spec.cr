@@ -33,4 +33,26 @@ describe "Normalize: hash literal" do
       __temp_3
       CR
   end
+
+  it "hoists complex element expressions, hash-like" do
+    assert_expand_named "Foo{[1] => 2, 3 => [4]}", <<-CR
+      __temp_1 = [1]
+      __temp_2 = [4]
+      __temp_3 = Foo.new
+      __temp_3[__temp_1] = 2
+      __temp_3[3] = __temp_2
+      __temp_3
+      CR
+  end
+
+  it "hoists complex element expressions, hash-like generic" do
+    assert_expand_named "Foo{[1] => 2, 3 => [4]}", <<-CR, generic: "Foo"
+      __temp_1 = [1]
+      __temp_2 = [4]
+      __temp_3 = Foo(typeof(__temp_1, 3), typeof(2, __temp_2)).new
+      __temp_3[__temp_1] = 2
+      __temp_3[3] = __temp_2
+      __temp_3
+      CR
+  end
 end
