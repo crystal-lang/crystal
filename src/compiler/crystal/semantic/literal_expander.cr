@@ -33,17 +33,20 @@ module Crystal
     #
     # To:
     #
-    #     ary = ::Array(typeof(1, ::Enumerable.element_type(exp2), ::Enumerable.element_type(exp3), 4)).new(2)
+    #     temp1 = exp2
+    #     temp2 = exp3
+    #     ary = ::Array(typeof(1, ::Enumerable.element_type(temp1), ::Enumerable.element_type(temp2), 4)).new(2)
     #     ary << 1
-    #     ary.concat(exp2)
-    #     ary.concat(exp3)
+    #     ary.concat(temp1)
+    #     ary.concat(temp2)
     #     ary << 4
     #     ary
     def expand(node : ArrayLiteral)
+      elem_temp_vars, elem_temp_var_count = complex_elem_temp_vars(node.elements)
       if node_of = node.of
         type_var = node_of
       else
-        type_var = typeof_exp(node)
+        type_var = typeof_exp(node, elem_temp_vars)
       end
 
       capacity = node.elements.count { |elem| !elem.is_a?(Splat) }
@@ -55,18 +58,25 @@ module Crystal
 
         ary_instance = Call.new(generic, "new", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
 
-        exps = Array(ASTNode).new(node.elements.size + 2)
+        exps = Array(ASTNode).new(node.elements.size + elem_temp_var_count + 2)
+        elem_temp_vars.try &.each_with_index do |elem_temp_var, i|
+          next unless elem_temp_var
+          elem_exp = node.elements[i]
+          elem_exp = elem_exp.exp if elem_exp.is_a?(Splat)
+          exps << Assign.new(elem_temp_var, elem_exp.clone).at(elem_temp_var)
+        end
         exps << Assign.new(ary_var.clone, ary_instance).at(node)
 
-        node.elements.each do |elem|
+        node.elements.each_with_index do |elem, i|
+          temp_var = elem_temp_vars.try &.[i]
           if elem.is_a?(Splat)
-            exps << Call.new(ary_var.clone, "concat", elem.exp.clone).at(node)
+            exps << Call.new(ary_var.clone, "concat", (temp_var || elem.exp).clone).at(node)
           else
-            exps << Call.new(ary_var.clone, "<<", elem.clone).at(node)
+            exps << Call.new(ary_var.clone, "<<", (temp_var || elem).clone).at(node)
           end
         end
 
-        exps << ary_var.clone
+        exps << ary_var
 
         Expressions.new(exps).at(node)
       elsif capacity.zero?
@@ -79,12 +89,18 @@ module Crystal
         buffer = Call.new(ary_var, "to_unsafe")
         buffer_var = new_temp_var.at(node)
 
-        exps = Array(ASTNode).new(node.elements.size + 3)
+        exps = Array(ASTNode).new(node.elements.size + (elem_temp_vars.try(&.count(&.itself)) || 0) + 3)
+        elem_temp_vars.try &.each_with_index do |elem_temp_var, i|
+          next unless elem_temp_var
+          elem_exp = node.elements[i]
+          exps << Assign.new(elem_temp_var, elem_exp.clone).at(elem_temp_var)
+        end
         exps << Assign.new(ary_var.clone, ary_instance).at(node)
         exps << Assign.new(buffer_var, buffer).at(node)
 
         node.elements.each_with_index do |elem, i|
-          exps << Call.new(buffer_var.clone, "[]=", NumberLiteral.new(i).at(node), elem.clone).at(node)
+          temp_var = elem_temp_vars.try &.[i]
+          exps << Call.new(buffer_var.clone, "[]=", NumberLiteral.new(i).at(node), (temp_var || elem).clone).at(node)
         end
 
         exps << ary_var.clone
@@ -93,12 +109,29 @@ module Crystal
       end
     end
 
-    def typeof_exp(node : ArrayLiteral)
-      type_exps = node.elements.map do |elem|
+    def complex_elem_temp_vars(elems : Array(ASTNode))
+      temp_vars = nil
+      count = 0
+
+      elems.each_with_index do |elem, i|
+        elem = elem.exp if elem.is_a?(Splat)
+        next if elem.is_a?(Var) || elem.is_a?(InstanceVar) || elem.is_a?(ClassVar) || elem.simple_literal?
+
+        temp_vars ||= Array(Var?).new(elems.size, nil)
+        temp_vars[i] = new_temp_var.at(elem)
+        count += 1
+      end
+
+      {temp_vars, count}
+    end
+
+    def typeof_exp(node : ArrayLiteral, temp_vars : Array(Var?)? = nil)
+      type_exps = node.elements.map_with_index do |elem, i|
+        temp_var = temp_vars.try &.[i]
         if elem.is_a?(Splat)
-          Call.new(Path.global("Enumerable").at(node), "element_type", elem.exp.clone).at(node)
+          Call.new(Path.global("Enumerable").at(node), "element_type", (temp_var || elem.exp).clone).at(node)
         else
-          elem.clone
+          (temp_var || elem).clone
         end
       end
 
