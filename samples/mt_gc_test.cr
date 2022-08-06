@@ -207,8 +207,8 @@ loops_num = 20
 mode = Mode::Run
 
 OptionParser.parse do |parser|
-  parser.on("-i", "--ips", "Benchmark with ips") { mode = :ips }
-  parser.on("-m", "--measure", "Benchmark with measure") { mode = :measure }
+  parser.on("-i", "--ips", "Benchmark with ips") { mode = Mode::Ips }
+  parser.on("-m", "--measure", "Benchmark with measure") { mode = Mode::Measure }
   parser.on("-f FIBERS", "--fibers=FIBERS", "Specifies the number of fibers") { |v| fibers_num = v.to_i }
   parser.on("-t THREADS", "--threads=THREADS", "Specifies the number of threads") { |v| threads_num = v.to_i }
   parser.on("-l LOOPS", "--loops=LOOPS", "Specifies the number of loops") { |v| loops_num = v.to_i }
