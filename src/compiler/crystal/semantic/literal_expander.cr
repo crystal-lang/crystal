@@ -165,30 +165,46 @@ module Crystal
     #     ary << 4
     #     ary
     #
-    # If `T` is an uninstantiated generic type, its type argument is injected by
-    # `MainVisitor` with a `typeof`.
-    def expand_named(node : ArrayLiteral)
-      temp_var = new_temp_var
+    # If `T` is an uninstantiated generic type, injects a `typeof` with the
+    # element types.
+    def expand_named(node : ArrayLiteral, generic_type : ASTNode?)
+      elem_temp_vars, elem_temp_var_count = complex_elem_temp_vars(node.elements)
+      if generic_type
+        type_of = typeof_exp(node, elem_temp_vars)
+        node_name = Generic.new(generic_type, type_of).at(node.location)
+      else
+        node_name = node.name
+      end
 
-      constructor = Call.new(node.name, "new").at(node)
-
+      constructor = Call.new(node_name, "new").at(node)
       if node.elements.empty?
         return constructor
       end
 
-      exps = Array(ASTNode).new(node.elements.size + 2)
-      exps << Assign.new(temp_var.clone, constructor).at(node)
-      node.elements.each do |elem|
+      ary_var = new_temp_var.at(node)
+
+      exps = Array(ASTNode).new(node.elements.size + elem_temp_var_count + 2)
+      elem_temp_vars.try &.each_with_index do |elem_temp_var, i|
+        next unless elem_temp_var
+        elem_exp = node.elements[i]
+        elem_exp = elem_exp.exp if elem_exp.is_a?(Splat)
+        exps << Assign.new(elem_temp_var, elem_exp.clone).at(elem_temp_var)
+      end
+      exps << Assign.new(ary_var.clone, constructor).at(node)
+
+      node.elements.each_with_index do |elem, i|
+        temp_var = elem_temp_vars.try &.[i]
         if elem.is_a?(Splat)
           yield_var = new_temp_var
-          each_body = Call.new(temp_var.clone, "<<", yield_var.clone).at(node)
+          each_body = Call.new(ary_var.clone, "<<", yield_var.clone).at(node)
           each_block = Block.new(args: [yield_var], body: each_body).at(node)
-          exps << Call.new(elem.exp.clone, "each", block: each_block).at(node)
+          exps << Call.new((temp_var || elem.exp).clone, "each", block: each_block).at(node)
         else
-          exps << Call.new(temp_var.clone, "<<", elem.clone).at(node)
+          exps << Call.new(ary_var.clone, "<<", (temp_var || elem).clone).at(node)
         end
       end
-      exps << temp_var.clone
+
+      exps << ary_var
 
       Expressions.new(exps).at(node)
     end
@@ -261,9 +277,9 @@ module Crystal
     #     hash[c] = d
     #     hash
     #
-    # If `T` is an uninstantiated generic type, its type arguments are injected
-    # by `MainVisitor` with `typeof`s.
-    def expand_named(node : HashLiteral)
+    # If `T` is an uninstantiated generic type, injects a `typeof` with the
+    # element types.
+    def expand_named(node : HashLiteral, generic_type : ASTNode?)
       constructor = Call.new(node.name, "new").at(node)
 
       if node.entries.empty?
