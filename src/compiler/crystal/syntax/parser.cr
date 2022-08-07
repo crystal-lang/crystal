@@ -3911,7 +3911,7 @@ module Crystal
           if @token.keyword? && invalid_internal_name?(@token.value)
             invalid_internal_name = @token.dup
           end
-          external_name = @token.type.ident? ? @token.value.to_s : ""
+          external_name = @token.value.to_s
           next_token
         else
           external_name = parse_string_without_interpolation("external name")

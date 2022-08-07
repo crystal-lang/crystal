@@ -74,7 +74,9 @@ class Crystal::Loader
       # (https://docs.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-search-order)
       handle = open_library(dll)
       return false unless handle
+
       @handles << handle
+      @loaded_libraries << dll
     end
 
     true

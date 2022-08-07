@@ -565,6 +565,61 @@ describe "Restrictions" do
           CR
       end
     end
+
+    describe "Union" do
+      it "handles redefinitions (1) (#12330)" do
+        assert_type(<<-CR) { bool }
+          def foo(x : Int32 | String)
+            'a'
+          end
+
+          def foo(x : ::Int32 | String)
+            true
+          end
+
+          foo(1)
+          CR
+      end
+
+      it "handles redefinitions (2) (#12330)" do
+        assert_type(<<-CR) { bool }
+          def foo(x : Int32 | String)
+            'a'
+          end
+
+          def foo(x : String | Int32)
+            true
+          end
+
+          foo(1)
+          CR
+      end
+
+      it "orders union before generic (#12330)" do
+        assert_type(<<-CR) { bool }
+          module Foo(T)
+          end
+
+          class Bar1
+            include Foo(Int32)
+          end
+
+          class Bar2
+            include Foo(Int32)
+          end
+
+          def foo(x : Foo(Int32))
+            'a'
+          end
+
+          def foo(x : Bar1 | Bar2)
+            true
+          end
+
+          foo(Bar1.new)
+          CR
+      end
+    end
   end
 
   it "self always matches instance type in restriction" do

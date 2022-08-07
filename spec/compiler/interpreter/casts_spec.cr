@@ -290,5 +290,167 @@ describe Crystal::Repl::Interpreter do
         y.to_s
         CODE
     end
+
+    it "puts tuple type inside union of different tuple type (#12243)" do
+      interpret(<<-CODE, prelude: "prelude").should eq(%("{180}"))
+        class A
+          def initialize(@x : {Char | Int32}?)
+          end
+
+          def x
+            @x
+          end
+        end
+
+        x = A.new({180}).x
+        x.to_s
+      CODE
+    end
+
+    it "puts named tuple type inside union of different named tuple type (#12243)" do
+      interpret(<<-CODE, prelude: "prelude").should eq(%("{v: 180}"))
+        class A
+          def initialize(@x : {v: Char | Int32}?)
+          end
+
+          def x
+            @x
+          end
+        end
+
+        x = A.new({v: 180}).x
+        x.to_s
+      CODE
+    end
+
+    it "casts from mixed union type to nilable proc type (#12283)" do
+      interpret(<<-CODE).should eq("b")
+        message = ->{ "b" }.as(String | Proc(String) | Nil)
+        if message.is_a?(String)
+          "a"
+        elsif message.is_a?(Proc(String))
+          message.call
+        else
+          "c"
+        end
+      CODE
+    end
+
+    it "does as? with no resulting type (#12327)" do
+      interpret(<<-CODE).should eq(42)
+        if nil.as?(Int32)
+          0
+        else
+          42
+        end
+        CODE
+    end
+
+    it "does as? with no resulting type, not from nil (#12327)" do
+      interpret(<<-CODE).should eq(42)
+        if 1.as?(String)
+          0
+        else
+          42
+        end
+        CODE
+    end
+
+    it "does as? with a type that can't match (#12346)" do
+      interpret(<<-CODE).should eq(1)
+        abstract class A
+        end
+
+        class B < A
+        end
+
+        class C < A
+        end
+
+        a = B.new || C.new
+        a.as?(B | Int32) ? 1 : 2
+        CODE
+    end
+
+    it "upcasts mixed union with tuple to mixed union with compatible tuple (1) (#12331)" do
+      interpret(<<-CODE).should eq(1)
+        class Foo
+          def initialize(@tuple : Tuple(Int32?) | Tuple(Int32, Int32))
+          end
+
+          def tuple
+            @tuple
+          end
+        end
+
+        a = {1} || {1, 1}
+        foo = Foo.new(a)
+        tuple = foo.tuple
+        if tuple.is_a?(Tuple(Int32?))
+          value = tuple[0]
+          if value
+            value
+          else
+            2
+          end
+        else
+          3
+        end
+      CODE
+    end
+
+    it "upcasts mixed union with tuple to mixed union with compatible tuple (2) (#12331)" do
+      interpret(<<-CODE).should eq(2)
+        class Foo
+          def initialize(@tuple : Tuple(Int32?) | Tuple(Int32, Int32))
+          end
+
+          def tuple
+            @tuple
+          end
+        end
+
+        a = {nil} || {1, 1}
+        foo = Foo.new(a)
+        tuple = foo.tuple
+        if tuple.is_a?(Tuple(Int32?))
+          value = tuple[0]
+          if value
+            value
+          else
+            2
+          end
+        else
+          3
+        end
+      CODE
+    end
+
+    it "upcasts mixed union with tuple to mixed union with compatible tuple (3) (#12331)" do
+      interpret(<<-CODE).should eq(3)
+        class Foo
+          def initialize(@tuple : Tuple(Int32?) | Tuple(Int32, Int32))
+          end
+
+          def tuple
+            @tuple
+          end
+        end
+
+        a = {1, 1} || {1}
+        foo = Foo.new(a)
+        tuple = foo.tuple
+        if tuple.is_a?(Tuple(Int32?))
+          value = tuple[0]
+          if value
+            value
+          else
+            2
+          end
+        else
+          3
+        end
+      CODE
+    end
   end
 end
