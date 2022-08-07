@@ -28,4 +28,18 @@ describe IO::FileDescriptor do
       end
     end
   end
+
+  it "does not close if close_on_finalize is false" do
+    pipes = [] of IO::FileDescriptor
+    assert_finalizes("fd") do
+      a, b = IO.pipe
+      a.close_on_finalize = false
+      pipes << b
+      a
+    end
+
+    pipes.each do |p|
+      p.puts "123"
+    end
+  end
 end
