@@ -89,7 +89,7 @@ module Crystal
         buffer = Call.new(ary_var, "to_unsafe")
         buffer_var = new_temp_var.at(node)
 
-        exps = Array(ASTNode).new(node.elements.size + (elem_temp_vars.try(&.count(&.itself)) || 0) + 3)
+        exps = Array(ASTNode).new(node.elements.size + elem_temp_var_count + 3)
         elem_temp_vars.try &.each_with_index do |elem_temp_var, i|
           next unless elem_temp_var
           elem_exp = node.elements[i]
