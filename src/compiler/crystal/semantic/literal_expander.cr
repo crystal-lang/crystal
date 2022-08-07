@@ -214,68 +214,11 @@ module Crystal
       Expressions.new(exps).at(node)
     end
 
-    # Converts a hash literal into creating a Hash and assigning keys and values:
+    # Converts a hash literal into creating a Hash and assigning keys and values.
     #
-    # From:
-    #
-    #     {} of K => V
-    #
-    # To:
-    #
-    #     Hash(K, V).new
-    #
-    # From:
-    #
-    #     {a => b, c => d}
-    #
-    # To:
-    #
-    #     hash = ::Hash(typeof(a, c), typeof(b, d)).new
-    #     hash[a] = b
-    #     hash[c] = d
-    #     hash
+    # Equivalent to a hash-like literal using `::Hash`.
     def expand(node : HashLiteral)
-      key_temp_vars, key_temp_var_count = complex_elem_temp_vars(node.entries, &.key)
-      value_temp_vars, value_temp_var_count = complex_elem_temp_vars(node.entries, &.value)
-
-      if of = node.of
-        type_vars = [of.key, of.value] of ASTNode
-      else
-        typeof_key = TypeOf.new(node.entries.map_with_index { |x, i| (key_temp_vars.try(&.[i]) || x.key).clone.as(ASTNode) }).at(node)
-        typeof_value = TypeOf.new(node.entries.map_with_index { |x, i| (value_temp_vars.try(&.[i]) || x.value).clone.as(ASTNode) }).at(node)
-        type_vars = [typeof_key, typeof_value] of ASTNode
-      end
-
-      generic = Generic.new(Path.global("Hash"), type_vars).at(node)
-      constructor = Call.new(generic, "new").at(node)
-
-      if node.entries.empty?
-        constructor
-      else
-        hash_var = new_temp_var
-
-        exps = Array(ASTNode).new(node.entries.size + key_temp_var_count + value_temp_var_count + 2)
-        key_temp_vars.try &.each_with_index do |key_temp_var, i|
-          next unless key_temp_var
-          key_exp = node.entries[i].key
-          exps << Assign.new(key_temp_var, key_exp.clone).at(key_temp_var)
-        end
-        value_temp_vars.try &.each_with_index do |value_temp_var, i|
-          next unless value_temp_var
-          value_exp = node.entries[i].value
-          exps << Assign.new(value_temp_var, value_exp.clone).at(value_temp_var)
-        end
-        exps << Assign.new(hash_var.clone, constructor).at(node)
-
-        node.entries.each_with_index do |entry, i|
-          key_exp = key_temp_vars.try(&.[i]) || entry.key
-          value_exp = value_temp_vars.try(&.[i]) || entry.value
-          exps << Call.new(hash_var.clone, "[]=", [key_exp.clone, value_exp.clone] of ASTNode).at(node)
-        end
-
-        exps << hash_var
-        Expressions.new(exps).at(node)
-      end
+      expand_named(node, Path.global("Hash"))
     end
 
     # Converts a hash-like literal into creating a Hash and assigning keys and values:
@@ -290,6 +233,14 @@ module Crystal
     #
     # From:
     #
+    #     {} of K => V
+    #
+    # To:
+    #
+    #     ::Hash(K, V).new
+    #
+    # From:
+    #
     #     T{a => b, c => d}
     #
     # To:
@@ -299,24 +250,31 @@ module Crystal
     #     hash[c] = d
     #     hash
     #
-    # If `T` is an uninstantiated generic type, injects a `typeof` with the
-    # element types.
+    # Or if `T` is an uninstantiated generic type:
+    #
+    #     hash = T(typeof(a, c), typeof(b, d)).new
+    #     hash[a] = b
+    #     hash[c] = d
+    #     hash
     def expand_named(node : HashLiteral, generic_type : ASTNode?)
       key_temp_vars, key_temp_var_count = complex_elem_temp_vars(node.entries, &.key)
       value_temp_vars, value_temp_var_count = complex_elem_temp_vars(node.entries, &.value)
-      if generic_type
+
+      if of = node.of
+        # `generic_type` is nil here
+        type_vars = [of.key, of.value] of ASTNode
+        generic = Generic.new(Path.global("Hash"), type_vars).at(node)
+      elsif generic_type
+        # `node.entries` is non-empty here
         typeof_key = TypeOf.new(node.entries.map_with_index { |x, i| (key_temp_vars.try(&.[i]) || x.key).clone.as(ASTNode) }).at(node)
         typeof_value = TypeOf.new(node.entries.map_with_index { |x, i| (value_temp_vars.try(&.[i]) || x.value).clone.as(ASTNode) }).at(node)
-        node_name = Generic.new(generic_type, [typeof_key, typeof_value] of ASTNode).at(node.location)
+        generic = Generic.new(generic_type, [typeof_key, typeof_value] of ASTNode).at(node)
       else
-        node_name = node.name
+        generic = node.name
       end
 
-      constructor = Call.new(node_name, "new").at(node)
-
-      if node.entries.empty?
-        return constructor
-      end
+      constructor = Call.new(generic, "new").at(node)
+      return constructor if node.entries.empty?
 
       hash_var = new_temp_var
 
