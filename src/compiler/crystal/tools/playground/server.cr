@@ -473,8 +473,19 @@ module Crystal::Playground
       end
 
 
-      address = @host
-      address = "localhost" if address == "127.0.0.1" || address == "localhost" || address == nil
+     # get extact ip returned from bind_tcp
+      server = HTTP::Server.new do |context|
+          context.response.content_type = "text/plain"
+          context.response.print "Hello world!"
+      end
+      address = server.bind_tcp @host || Socket::IPAddress::LOOPBACK, @port
+      if (ip = address).is_a?(String) # String
+        ip = ip.split(":")[0]
+      else # Socket::IPAddress
+        ip = (ip = address).address.split(":")[0]
+      end
+      server.close
+
 
 
       client_ws = PathWebSocketHandler.new "/client" do |ws, context|
@@ -484,7 +495,7 @@ module Crystal::Playground
           ws.close :policy_violation, "Invalid Request Origin"
         else
           @sessions_key += 1
-          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, address.to_s)
+          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, ip)
           Log.info { "/client WebSocket connected as session=#{@sessions_key}" }
 
           ws.on_message do |message|
