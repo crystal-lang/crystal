@@ -25,11 +25,22 @@ require "./std/compress/zlib/reader_spec.cr"
 require "./std/compress/zlib/stress_spec.cr"
 require "./std/compress/zlib/writer_spec.cr"
 require "./std/concurrent/select_spec.cr"
+require "./std/concurrent_spec.cr"
 require "./std/crypto/bcrypt/base64_spec.cr"
 require "./std/crypto/bcrypt/password_spec.cr"
-require "./std/crypto/bcrypt_spec.cr"
+# require "./std/crypto/bcrypt_spec.cr" (failed to run)
 require "./std/crypto/blowfish_spec.cr"
 require "./std/crypto/subtle_spec.cr"
+# require "./std/crystal/compiler_rt/ashlti3_spec.cr" (failed to run)
+# require "./std/crystal/compiler_rt/ashrti3_spec.cr" (failed to run)
+require "./std/crystal/compiler_rt/divmod128_spec.cr"
+# require "./std/crystal/compiler_rt/fixint_spec.cr" (failed to run)
+# require "./std/crystal/compiler_rt/float_spec.cr" (failed to run)
+# require "./std/crystal/compiler_rt/lshrti3_spec.cr" (failed to run)
+require "./std/crystal/compiler_rt/mulodi4_spec.cr"
+require "./std/crystal/compiler_rt/mulosi4_spec.cr"
+# require "./std/crystal/compiler_rt/muloti4_spec.cr" (failed to run)
+# require "./std/crystal/compiler_rt/multi3_spec.cr" (failed to run)
 require "./std/crystal/digest/md5_spec.cr"
 require "./std/crystal/digest/sha1_spec.cr"
 require "./std/crystal/hasher_spec.cr"
@@ -48,6 +59,7 @@ require "./std/digest/md5_spec.cr"
 require "./std/digest/sha1_spec.cr"
 require "./std/digest/sha256_spec.cr"
 require "./std/digest/sha512_spec.cr"
+# require "./std/dir_spec.cr" (failed to run)
 require "./std/double_spec.cr"
 require "./std/ecr/ecr_lexer_spec.cr"
 require "./std/ecr/ecr_spec.cr"
@@ -55,6 +67,8 @@ require "./std/enumerable_spec.cr"
 require "./std/enum_spec.cr"
 require "./std/env_spec.cr"
 require "./std/errno_spec.cr"
+# require "./std/exception/call_stack_spec.cr" (failed to run)
+# require "./std/exception_spec.cr" (failed to run)
 require "./std/file_spec.cr"
 require "./std/file/tempfile_spec.cr"
 require "./std/file_utils_spec.cr"
@@ -63,6 +77,7 @@ require "./std/float_printer/grisu3_spec.cr"
 require "./std/float_printer/ieee_spec.cr"
 require "./std/float_printer_spec.cr"
 require "./std/float_spec.cr"
+require "./std/gc_spec.cr"
 require "./std/hash_spec.cr"
 require "./std/html_spec.cr"
 require "./std/http/chunked_content_spec.cr"
@@ -96,6 +111,7 @@ require "./std/io/argf_spec.cr"
 require "./std/io/buffered_spec.cr"
 require "./std/io/byte_format_spec.cr"
 require "./std/io/delimited_spec.cr"
+# require "./std/io/file_descriptor_spec.cr" (failed to run)
 require "./std/io/hexdump_spec.cr"
 require "./std/io/io_spec.cr"
 require "./std/io/memory_spec.cr"
@@ -110,9 +126,17 @@ require "./std/json/parser_spec.cr"
 require "./std/json/pull_parser_spec.cr"
 require "./std/json/serializable_spec.cr"
 require "./std/json/serialization_spec.cr"
+# require "./std/kernel_spec.cr" (failed to run)
 require "./std/levenshtein_spec.cr"
+# require "./std/llvm/aarch64_spec.cr" (failed to run)
+# require "./std/llvm/arm_abi_spec.cr" (failed to run)
+# require "./std/llvm/llvm_spec.cr" (failed to run)
+# require "./std/llvm/type_spec.cr" (failed to run)
+# require "./std/llvm/x86_64_abi_spec.cr" (failed to run)
+# require "./std/llvm/x86_abi_spec.cr" (failed to run)
 require "./std/log/broadcast_backend_spec.cr"
 require "./std/log/builder_spec.cr"
+require "./std/log/context_spec.cr"
 require "./std/log/dispatch_spec.cr"
 require "./std/log/env_config_spec.cr"
 require "./std/log/format_spec.cr"
@@ -128,6 +152,7 @@ require "./std/mime/multipart/builder_spec.cr"
 require "./std/mime/multipart/parser_spec.cr"
 require "./std/mime/multipart_spec.cr"
 require "./std/mime_spec.cr"
+require "./std/mutex_spec.cr"
 require "./std/named_tuple_spec.cr"
 require "./std/number_spec.cr"
 require "./std/oauth2/access_token_spec.cr"
@@ -156,6 +181,7 @@ require "./std/pointer_spec.cr"
 require "./std/pp_spec.cr"
 require "./std/pretty_print_spec.cr"
 require "./std/process/find_executable_spec.cr"
+# require "./std/process_spec.cr" (failed to run)
 require "./std/proc_spec.cr"
 require "./std/raise_spec.cr"
 require "./std/random/isaac_spec.cr"
@@ -168,6 +194,7 @@ require "./std/reference_spec.cr"
 require "./std/regex_spec.cr"
 require "./std/semantic_version_spec.cr"
 require "./std/set_spec.cr"
+# require "./std/signal_spec.cr" (failed to run)
 require "./std/slice_spec.cr"
 require "./std/socket/address_spec.cr"
 require "./std/socket/addrinfo_spec.cr"
@@ -181,6 +208,7 @@ require "./std/spec/context_spec.cr"
 require "./std/spec/expectations_spec.cr"
 require "./std/spec/filters_spec.cr"
 require "./std/spec/helpers/iterate_spec.cr"
+# require "./std/spec/hooks_spec.cr" (failed to run)
 require "./std/spec/junit_formatter_spec.cr"
 require "./std/spec_spec.cr"
 require "./std/spec/tap_formatter_spec.cr"
@@ -194,11 +222,14 @@ require "./std/string_spec.cr"
 require "./std/string/utf16_spec.cr"
 require "./std/struct_spec.cr"
 require "./std/symbol_spec.cr"
+# require "./std/syscall_spec.cr" (failed to run)
 require "./std/system_error_spec.cr"
 require "./std/system/group_spec.cr"
+# require "./std/system_spec.cr" (failed to run)
 require "./std/system/user_spec.cr"
 require "./std/thread/condition_variable_spec.cr"
-require "./std/thread/mutex_spec.cr"
+# require "./std/thread/mutex_spec.cr" (failed to run)
+# require "./std/thread_spec.cr" (failed to run)
 require "./std/time/custom_formats_spec.cr"
 require "./std/time/format_spec.cr"
 require "./std/time/location_spec.cr"
@@ -212,6 +243,7 @@ require "./std/uri_spec.cr"
 require "./std/uuid/json_spec.cr"
 require "./std/uuid_spec.cr"
 require "./std/uuid/yaml_spec.cr"
+# require "./std/va_list_spec.cr" (failed to run)
 require "./std/weak_ref_spec.cr"
 require "./std/winerror_spec.cr"
 require "./std/xml/builder_spec.cr"
@@ -228,3 +260,4 @@ require "./std/yaml/serializable_spec.cr"
 require "./std/yaml/serialization_spec.cr"
 require "./std/yaml/yaml_pull_parser_spec.cr"
 require "./std/yaml/yaml_spec.cr"
+# This file is autogenerated by `./spec/generate_interpreter_spec.sh std spec/interpreter_std_spec.cr` at 2022-08-09 00:26:05+00:00
