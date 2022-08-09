@@ -10,12 +10,12 @@ module Crystal::Playground
   class Session
     getter tag : Int32
 
-    def initialize(@ws : HTTP::WebSocket, @session_key : Int32, @port : Int32, @host : String = "localhost")
+    def initialize(@ws : HTTP::WebSocket, @session_key : Int32, @port : Int32, @host : String? = "localhost")
       @running_process_filename = ""
       @tag = 0
     end
 
-    def self.instrument_and_prelude(session_key, port, tag, source, host : String = "localhost")
+    def self.instrument_and_prelude(session_key, port, tag, source, host : String? = "localhost")
       ast = Parser.new(source).parse
 
       instrumented = Playground::AgentInstrumentorTransformer.transform(ast).to_s
@@ -473,20 +473,6 @@ module Crystal::Playground
       end
 
 
-     # get extact ip returned from bind_tcp
-      server = HTTP::Server.new do |context|
-          context.response.content_type = "text/plain"
-          context.response.print "Hello world!"
-      end
-      address = server.bind_tcp @host || Socket::IPAddress::LOOPBACK, @port
-      if (ip = address).is_a?(String) # String
-        ip = ip.split(":")[0]
-      else # Socket::IPAddress
-        ip = (ip = address).address.split(":")[0]
-      end
-      server.close
-
-
 
       client_ws = PathWebSocketHandler.new "/client" do |ws, context|
         origin = context.request.headers["Origin"]
@@ -495,7 +481,7 @@ module Crystal::Playground
           ws.close :policy_violation, "Invalid Request Origin"
         else
           @sessions_key += 1
-          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, host: ip)
+          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, host: @host)
           Log.info { "/client WebSocket connected as session=#{@sessions_key}" }
 
           ws.on_message do |message|
@@ -535,6 +521,7 @@ module Crystal::Playground
 
       address = server.bind_tcp @host || Socket::IPAddress::LOOPBACK, @port
       @port = address.port
+      @host = address.address
 
       puts "Listening on http://#{address}"
       if address.unspecified?
