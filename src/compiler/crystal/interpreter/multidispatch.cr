@@ -142,7 +142,7 @@ module Crystal::Repl::Multidispatch
 
     blocks = [] of Block
 
-    target_defs.each do |target_def|
+    target_defs.each_with_index do |target_def, target_def_index|
       i = 0
 
       condition = nil
@@ -177,11 +177,16 @@ module Crystal::Repl::Multidispatch
           next
         end
 
-        target_def_arg = target_def.args[i]
+        # Make sure to cast the argument to the target def arg's type
+        # in the last case, where the argument's type is not restricted by an if is_a?
+        if target_def_index == target_defs.size - 1
+          target_def_arg = target_def.args[i]
 
-        # Make sure to always cast the argument to the target def arg's type
-        cast = Cast.new(var, TypeNode.new(target_def_arg.type))
-        call_args << cast
+          cast = Cast.new(var, TypeNode.new(target_def_arg.type))
+          call_args << cast
+        else
+          call_args << var
+        end
 
         i += 1
       end
