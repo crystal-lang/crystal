@@ -168,8 +168,21 @@ module Crystal::Repl::Multidispatch
       call_args = [] of ASTNode
 
       i = 0
-      node.args.each do
-        call_args << Var.new("arg#{i}")
+      node.args.each_with_index do |arg, arg_index|
+        var = Var.new("arg#{i}")
+
+        # If the argument was autocasted it will always match in a multidispatch
+        if autocast_types.try &.[arg_index]?
+          call_args << var
+          next
+        end
+
+        target_def_arg = target_def.args[i]
+
+        # Make sure to always cast the argument to the target def arg's type
+        cast = Cast.new(var, TypeNode.new(target_def_arg.type))
+        call_args << cast
+
         i += 1
       end
 
