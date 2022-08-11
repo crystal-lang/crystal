@@ -21,7 +21,6 @@ module Crystal::Playground
       instrumented = Playground::AgentInstrumentorTransformer.transform(ast).to_s
       Log.info { "Code instrumentation (session=#{session_key}, tag=#{tag}).\n#{instrumented}" }
 
-      
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
 
