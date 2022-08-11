@@ -1780,7 +1780,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     body = target_def.body
     if body.is_a?(Primitive)
-      visit_primitive(node, body)
+      visit_primitive(node, body, target_def)
       return false
     end
 
