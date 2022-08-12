@@ -151,17 +151,17 @@
 
     macro cooked_from_tc_mode!
       mode.c_iflag |= (Termios::InputMode::BRKINT |
-                      Termios::InputMode::ISTRIP |
-                      Termios::InputMode::ICRNL  |
-                      Termios::InputMode::IXON).value
+                       Termios::InputMode::ISTRIP |
+                       Termios::InputMode::ICRNL |
+                       Termios::InputMode::IXON).value
       mode.c_oflag |= Termios::OutputMode::OPOST.value
-      mode.c_lflag |= (Termios::LocalMode::ECHO   |
-                      Termios::LocalMode::ECHOE  |
-                      Termios::LocalMode::ECHOK  |
-                      Termios::LocalMode::ECHONL |
-                      Termios::LocalMode::ICANON |
-                      Termios::LocalMode::ISIG   |
-                      Termios::LocalMode::IEXTEN).value
+      mode.c_lflag |= (Termios::LocalMode::ECHO |
+                       Termios::LocalMode::ECHOE |
+                       Termios::LocalMode::ECHOK |
+                       Termios::LocalMode::ECHONL |
+                       Termios::LocalMode::ICANON |
+                       Termios::LocalMode::ISIG |
+                       Termios::LocalMode::IEXTEN).value
       LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
     end
 
