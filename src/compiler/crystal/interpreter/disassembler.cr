@@ -7,6 +7,10 @@ module Crystal::Repl::Disassembler
     disassemble(context, compiled_def.instructions, compiled_def.local_vars)
   end
 
+  def self.disassemble(context : Context, compiled_block : CompiledBlock) : String
+    disassemble(context, compiled_block.instructions, compiled_block.local_vars)
+  end
+
   def self.disassemble(context : Context, instructions : CompiledInstructions, local_vars : LocalVars) : String
     String.build do |io|
       exception_handlers = instructions.exception_handlers

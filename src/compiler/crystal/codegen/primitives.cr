@@ -726,17 +726,6 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_allocate(node, target_def, call_args)
     type = node.type
 
-    # Edge case: if a virtual struct has only one concrete subclass, its
-    # type indirection (how we represent it for codegen) turns out not to be
-    # a union type but just a single type. In that case we just need to create
-    # this concrete type, without creating the base type and then casting it back.
-    if type.is_a?(VirtualType) && type.struct?
-      indirect_type = type.remove_indirection
-      if !indirect_type.is_a?(UnionType)
-        return @last = allocate_aggregate indirect_type
-      end
-    end
-
     base_type = type.is_a?(VirtualType) ? type.base_type : type
 
     allocate_aggregate base_type

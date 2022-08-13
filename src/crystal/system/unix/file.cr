@@ -14,6 +14,10 @@ module Crystal::System::File
   end
 
   def self.mktemp(prefix, suffix, dir) : {LibC::Int, String}
+    prefix.try &.check_no_null_byte
+    suffix.try &.check_no_null_byte
+    dir.check_no_null_byte
+
     dir = dir + ::File::SEPARATOR
     path = "#{dir}#{prefix}.XXXXXX#{suffix}"
 

@@ -75,6 +75,13 @@ describe "Dir" do
     end
   end
 
+  pending_win32 "tests info on existing directory" do
+    Dir.open(datapath) do |dir|
+      info = dir.info
+      info.directory?.should be_true
+    end
+  end
+
   it "tests mkdir and delete with a new path" do
     with_tempfile("mkdir") do |path|
       Dir.mkdir(path, 0o700)
@@ -185,6 +192,14 @@ describe "Dir" do
         datapath("dir", "f2.txt"),
         datapath("dir", "g2.txt"),
         datapath("dir", "subdir", "f1.txt"),
+        datapath("dir", "subdir", "subdir2", "f2.txt"),
+      ].sort
+
+      Dir["#{datapath}/dir/**/subdir2/f2.txt"].sort.should eq [
+        datapath("dir", "subdir", "subdir2", "f2.txt"),
+      ].sort
+
+      Dir["#{datapath}/dir/**/subdir2/*.txt"].sort.should eq [
         datapath("dir", "subdir", "subdir2", "f2.txt"),
       ].sort
     end

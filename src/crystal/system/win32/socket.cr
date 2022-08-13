@@ -341,7 +341,7 @@ module Crystal::System::Socket
   private def unbuffered_read(slice : Bytes)
     wsabuf = wsa_buffer(slice)
 
-    bytes_read = overlapped_read(fd, "WSARecv") do |overlapped|
+    bytes_read = overlapped_operation(fd, "WSARecv", read_timeout, connreset_is_error: false) do |overlapped|
       flags = 0_u32
       LibC.WSARecv(fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
     end
