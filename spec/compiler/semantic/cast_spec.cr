@@ -396,4 +396,15 @@ describe "Semantic: cast" do
       end
       )) { nilable types["Bar"] }
   end
+
+  it "doesn't eagerly try to check cast type (#12268)" do
+    assert_type(%(
+      bar = 1
+      if bar.is_a?(Char)
+        pointerof(bar).as(Pointer(typeof(bar)))
+      else
+        bar
+      end
+      )) { int32 }
+  end
 end

@@ -292,29 +292,27 @@ class Crystal::Repl::Context
   end
 
   def aligned_sizeof_type(node : ASTNode) : Int32
-    type = node.type?
-    if type
-      aligned_sizeof_type(node.type)
-    else
-      node.raise "BUG: missing type for #{node} (#{node.class})"
-    end
+    aligned_sizeof_type(node.type?)
   end
 
   def aligned_sizeof_type(type : Type) : Int32
     align(inner_sizeof_type(type))
   end
 
+  def aligned_sizeof_type(type : Nil) : Int32
+    0
+  end
+
   def inner_sizeof_type(node : ASTNode) : Int32
-    type = node.type?
-    if type
-      inner_sizeof_type(node.type)
-    else
-      node.raise "BUG: missing type for #{node} (#{node.class})"
-    end
+    inner_sizeof_type(node.type?)
   end
 
   def inner_sizeof_type(type : Type) : Int32
     @program.size_of(type.sizeof_type).to_i32
+  end
+
+  def inner_sizeof_type(type : Nil) : Int32
+    0
   end
 
   def aligned_instance_sizeof_type(type : Type) : Int32
@@ -370,6 +368,13 @@ class Crystal::Repl::Context
     args.delete("-lgc")
 
     Crystal::Loader.parse(args).tap do |loader|
+      if ENV["CRYSTAL_INTERPRETER_LOADER_INFO"]?.presence
+        STDERR.puts "Crystal::Loader loaded libraries:"
+        loader.loaded_libraries.each do |path|
+          STDERR.puts "      #{path}"
+        end
+      end
+
       # FIXME: Part 2: This is a workaround for initial integration of the interpreter:
       # We append a handle to the current executable (i.e. the compiler program)
       # to the loader's handle list. This gives the loader access to all the symbols in the compiler program,
@@ -377,6 +382,10 @@ class Crystal::Repl::Context
       # This probably won't work for a fully statically linked compiler.
       # But `Crystal::Loader` currently doesn't support that anyways.
       loader.load_current_program_handle
+
+      if ENV["CRYSTAL_INTERPRETER_LOADER_INFO"]?.presence
+        STDERR.puts "      current program handle"
+      end
     end
   }
 
