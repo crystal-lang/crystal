@@ -386,7 +386,7 @@ module Crystal
           # TODO: Use a proper way to write encoded text to a file when that's supported.
           # The first character is the BOM; it will be converted in the same endianness as the rest.
           args_16 = "\ufeff#{args}".to_utf16
-          args_bytes = args_16.to_unsafe.as(UInt8*).to_slice(args_16.bytesize)
+          args_bytes = args_16.to_unsafe_bytes
 
           args_filename = "#{output_dir}/linker_args.txt"
           File.write(args_filename, args_bytes)

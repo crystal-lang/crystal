@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        crystal_bootstrap_version: [1.2.2, 1.3.2, 1.4.1]
+        crystal_bootstrap_version: [1.2.2, 1.3.2, 1.4.1, 1.5.0]
         include:
           # libffi is only available starting from the 1.2.2 build images
           - crystal_bootstrap_version: 1.0.0
@@ -127,6 +127,12 @@ jobs:
 
       - name: Test interpreter
         run: bin/ci with_build_env 'make deps && bin/crystal build -o interpreter_spec spec/compiler/interpreter_spec.cr && ./interpreter_spec'
+
+      - name: Build interpreter
+        run: bin/ci with_build_env 'make interpreter=1 release=1'
+
+      - name: Test std specs with interpreter
+        run: bin/ci with_build_env 'bin/crystal i spec/interpreter_std_spec.cr'
 
   test_compatibility:
     env:

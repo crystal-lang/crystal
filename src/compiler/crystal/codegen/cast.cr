@@ -301,14 +301,6 @@ class Crystal::CodeGenVisitor
     value
   end
 
-  def downcast_distinct(value, to_type : MixedUnionType, from_type : VirtualType)
-    # This happens if the restriction is a union:
-    # we keep each of the union types as the result, we don't fully merge
-    union_ptr = alloca llvm_type(to_type)
-    store_in_union to_type, union_ptr, from_type, value
-    union_ptr
-  end
-
   def downcast_distinct(value, to_type : ReferenceUnionType, from_type : VirtualType)
     # This happens if the restriction is a union:
     # we keep each of the union types as the result, we don't fully merge
