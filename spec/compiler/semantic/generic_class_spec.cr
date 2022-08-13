@@ -132,6 +132,48 @@ describe "Semantic: generic class" do
       ), inject_primitives: false) { int32 }
   end
 
+  it "a", focus: true do
+    assert_type(%(
+      class Foo(T)
+        def initialize(@value : T)
+        end
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      Bar.new(25).@value
+      ), inject_primitives: false) { int32 }
+  end
+
+  it "accesses generic type argument from superclass, inherited #initialize (1)", focus: true do
+    assert_type(%(
+      class Foo(T)
+        def initialize(@value : T)
+        end
+      end
+
+      class Bar(U) < Foo(U)
+      end
+
+      Bar.new(25).@value
+      ), inject_primitives: false) { int32 }
+  end
+
+  it "accesses generic type argument from superclass, inherited #initialize (2)", focus: true do
+    assert_type(%(
+      class Foo(T)
+        def initialize(@value : T)
+        end
+      end
+
+      class Bar(U) < Foo(U)
+      end
+
+      Bar(Int32).new(25).@value
+      ), inject_primitives: false) { int32 }
+  end
+
   it "inherits from generic with instantiation with instance var" do
     assert_type(%(
       class Foo(T)
