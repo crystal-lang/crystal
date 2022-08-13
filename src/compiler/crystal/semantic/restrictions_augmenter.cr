@@ -58,6 +58,10 @@ module Crystal
     end
 
     def visit(node : Call)
+      if expanded = node.expanded
+        return expanded.accept self
+      end
+
       node.obj.try &.accept self
       node.args.each &.accept self
       node.named_args.try &.each &.value.accept self

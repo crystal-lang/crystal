@@ -1,5 +1,3 @@
-{% skip_file if flag?(:win32) %}
-
 require "base64"
 require "http/web_socket"
 

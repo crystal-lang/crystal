@@ -1114,6 +1114,16 @@ module Crystal::Macros
 
   # A def argument.
   class Arg < ASTNode
+    # Returns the last `Annotation` with the given `type`
+    # attached to this arg or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this arg, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    end
+
     # Returns the external name of this argument.
     #
     # For example, for `def write(to file)` returns `to`.

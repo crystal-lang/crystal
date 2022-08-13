@@ -2672,10 +2672,19 @@ describe "String" do
         bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
       end
 
-      {% unless flag?(:musl) %}
+      {% unless flag?(:musl) || flag?(:freebsd) %}
         it "flushes the shift state (#11992)" do
           "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
+        end
+      {% end %}
+
+      # FreeBSD iconv encoder expects ISO/IEC 10646 compatibility code points,
+      # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
+      {% if flag?(:freebsd) %}
+        it "flushes the shift state (#11992)" do
+          "\u{F329}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
+          "\u{F325}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
         end
       {% end %}
 
@@ -2716,10 +2725,21 @@ describe "String" do
         String.new(bytes, "UTF-16LE").should eq("Hello")
       end
 
-      it "decodes with shift state" do
-        String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
-        String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
-      end
+      {% unless flag?(:freebsd) %}
+        it "decodes with shift state" do
+          String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
+          String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
+        end
+      {% end %}
+
+      # FreeBSD iconv decoder returns ISO/IEC 10646-1:2000 code points,
+      # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
+      {% if flag?(:freebsd) %}
+        it "decodes with shift state" do
+          String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
+          String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{F325}")
+        end
+      {% end %}
 
       it "decodes with skip" do
         bytes = Bytes[186, 195, 255, 202, 199]
@@ -2991,6 +3011,51 @@ describe "String" do
       it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(4...10).should eq("セキロ：ダイ トゥワイス") }
       it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(19..1) } }
       it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(-19..1) } }
+    end
+  end
+end
+
+class String
+  describe String do
+    it ".char_bytesize_at" do
+      String.char_bytesize_at(Bytes[0x00, 0].to_unsafe).should eq 1
+      String.char_bytesize_at(Bytes[0x7F, 0].to_unsafe).should eq 1
+      String.char_bytesize_at(Bytes[0x80, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xBF, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xC2, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xC3, 0].to_unsafe).should eq 1 # malformed
+
+      String.char_bytesize_at(Bytes[0xC2, 0x7F, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xC2, 0x80, 0].to_unsafe).should eq 2
+      String.char_bytesize_at(Bytes[0xDF, 0xBF, 0].to_unsafe).should eq 2
+      String.char_bytesize_at(Bytes[0xDF, 0xC0, 0].to_unsafe).should eq 1 # malformed
+
+      String.char_bytesize_at(Bytes[0xE0, 0xA0, 0x7F, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xE0, 0x9F, 0x8F, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xE0, 0xA0, 0x80, 0].to_unsafe).should eq 3
+      String.char_bytesize_at(Bytes[0xED, 0x9F, 0xBF, 0].to_unsafe).should eq 3
+      String.char_bytesize_at(Bytes[0xED, 0x9F, 0xC0, 0].to_unsafe).should eq 1 # surrogate
+      String.char_bytesize_at(Bytes[0xED, 0xBF, 0xBF, 0].to_unsafe).should eq 1 # surrogate
+      String.char_bytesize_at(Bytes[0xEE, 0x80, 0x80, 0].to_unsafe).should eq 3
+      String.char_bytesize_at(Bytes[0xEF, 0xBF, 0xBD, 0].to_unsafe).should eq 3
+      String.char_bytesize_at(Bytes[0xEF, 0xBF, 0xBF, 0].to_unsafe).should eq 3
+      String.char_bytesize_at(Bytes[0xEF, 0xBF, 0xC0, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xEF, 0xC0, 0xBF, 0].to_unsafe).should eq 1 # malformed
+
+      String.char_bytesize_at(Bytes[0xF0, 0x90, 0x80, 0x7F, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xF0, 0x90, 0x7F, 0x80, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xF0, 0x8F, 0x80, 0x80, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xF0, 0x90, 0x80, 0x80, 0].to_unsafe).should eq 4
+      String.char_bytesize_at(Bytes[0xF0, 0x9F, 0xBF, 0xBF, 0].to_unsafe).should eq 4
+      String.char_bytesize_at(Bytes[0xF3, 0x90, 0x80, 0x80, 0].to_unsafe).should eq 4
+      String.char_bytesize_at(Bytes[0xF4, 0x8F, 0xBD, 0xBF, 0].to_unsafe).should eq 4
+      String.char_bytesize_at(Bytes[0xF4, 0x8F, 0xBF, 0xBF, 0].to_unsafe).should eq 4
+      String.char_bytesize_at(Bytes[0xF4, 0x8F, 0xBF, 0xC0, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xF4, 0x8F, 0xC0, 0xBF, 0].to_unsafe).should eq 1 # malformed
+      String.char_bytesize_at(Bytes[0xF4, 0x90, 0xBF, 0xBF, 0].to_unsafe).should eq 1 # malformed
+
+      String.char_bytesize_at(Bytes[0xF5, 0].to_unsafe).should eq 1 # out of codepoint range
+      String.char_bytesize_at(Bytes[0xFF, 0].to_unsafe).should eq 1 # out of codepoint range
     end
   end
 end

@@ -394,7 +394,25 @@ module Crystal
       to_type = to.type?
       return unless to_type
 
+      program = to_type.program
+
+      case to_type
+      when program.object
+        raise "can't cast to Object yet"
+      when program.reference
+        raise "can't cast to Reference yet"
+      when program.class_type
+        raise "can't cast to Class yet"
+      end
+
       obj_type = obj.type?
+
+      if obj_type.is_a?(PointerInstanceType)
+        to_type_instance_type = to_type.instance_type
+        if to_type_instance_type.is_a?(GenericType)
+          raise "can't cast #{obj_type} to #{to_type_instance_type}"
+        end
+      end
 
       @upcast = false
 
@@ -433,7 +451,25 @@ module Crystal
       to_type = to.type?
       return unless to_type
 
+      program = to_type.program
+
+      case to_type
+      when program.object
+        raise "can't cast to Object yet"
+      when program.reference
+        raise "can't cast to Reference yet"
+      when program.class_type
+        raise "can't cast to Class yet"
+      end
+
       obj_type = obj.type?
+
+      if obj_type.is_a?(PointerInstanceType)
+        to_type_instance_type = to_type.instance_type
+        if to_type_instance_type.is_a?(GenericType)
+          raise "can't cast #{obj_type} to #{to_type_instance_type}"
+        end
+      end
 
       @upcast = false
 
@@ -687,8 +723,6 @@ module Crystal
   end
 
   class ReadInstanceVar
-    property! visitor : MainVisitor
-
     def update(from = nil)
       obj_type = obj.type?
       return unless obj_type
@@ -697,12 +731,21 @@ module Crystal
         if obj_type.is_a?(UnionType)
           obj_type.program.type_merge(
             obj_type.union_types.map do |union_type|
-              visitor.lookup_instance_var(self, union_type).type
+              lookup_instance_var(union_type).type
             end
           )
         else
-          visitor.lookup_instance_var(self, obj_type).type
+          lookup_instance_var(obj_type).type
         end
+    end
+
+    private def lookup_instance_var(type)
+      ivar = type.lookup_instance_var(self)
+      unless ivar
+        similar_name = type.lookup_similar_instance_var_name(name)
+        type.program.undefined_instance_variable(self, type, similar_name)
+      end
+      ivar
     end
   end
 
