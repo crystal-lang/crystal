@@ -174,6 +174,7 @@ module Crystal::Repl::Multidispatch
         # If the argument was autocasted it will always match in a multidispatch
         if autocast_types.try &.[arg_index]?
           call_args << var
+          i += 1
           next
         end
 
