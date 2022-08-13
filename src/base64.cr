@@ -203,6 +203,7 @@ module Base64
     bytes = chars.to_unsafe
     size = data.size
     cstr = data.to_unsafe
+    return if cstr.null? || size == 0
     endcstr = cstr + size - size % 3 - 3
 
     # process bunch of full triples
