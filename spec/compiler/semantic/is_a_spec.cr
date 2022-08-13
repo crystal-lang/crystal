@@ -240,4 +240,22 @@ describe "Semantic: is_a?" do
       end
       ))
   end
+
+  it "does is_a? from virtual metaclass to generic metaclass (#12302)" do
+    assert_type(%(
+      class A
+      end
+
+      class B(T) < A
+      end
+
+      x = B(String).new.as(A).class
+
+      if x.is_a?(B(String).class)
+        x
+      else
+        nil
+      end
+      ), inject_primitives: true) { nilable generic_class("B", string).metaclass }
+  end
 end

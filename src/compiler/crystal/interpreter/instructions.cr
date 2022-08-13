@@ -1285,7 +1285,7 @@ require "./repl"
       },
       # >>> Allocate (2)
 
-      # <<< Unions (5)
+      # <<< Unions (7)
       put_in_union: {
         operands:   [type_id : Int32, from_size : Int32, union_size : Int32],
         code:       begin
@@ -1369,7 +1369,17 @@ require "./repl"
           value
         end,
       },
-      # >>> Unions (5)
+      get_union_type_id: {
+        operands:   [union_size : Int32],
+        push:       true,
+        code:       (stack - union_size).as(Int32*).value,
+      },
+      put_union_type_id: {
+        operands:   [type_id : Int32, union_size : Int32],
+        push:       false,
+        code:       (stack - union_size).as(Int32*).value = type_id,
+      },
+      # >>> Unions (7)
 
       # <<< is_a? (3)
       reference_is_a: {
@@ -1852,6 +1862,16 @@ require "./repl"
               LibIntrinsics.counttrailing{{n}}(src, false)
             end
           end,
+        },
+        interpreter_intrinsics_fshl{{n}}: {
+          pop_values: [a : UInt{{n}}, b : UInt{{n}}, count : UInt{{n}}],
+          push:       true,
+          code:       LibIntrinsics.fshl{{n}}(a, b, count),
+        },
+        interpreter_intrinsics_fshr{{n}}: {
+          pop_values: [a : UInt{{n}}, b : UInt{{n}}, count : UInt{{n}}],
+          push:       true,
+          code:       LibIntrinsics.fshr{{n}}(a, b, count),
         },
       {% end %}
 

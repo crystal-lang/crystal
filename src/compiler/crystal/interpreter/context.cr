@@ -292,29 +292,27 @@ class Crystal::Repl::Context
   end
 
   def aligned_sizeof_type(node : ASTNode) : Int32
-    type = node.type?
-    if type
-      aligned_sizeof_type(node.type)
-    else
-      node.raise "BUG: missing type for #{node} (#{node.class})"
-    end
+    aligned_sizeof_type(node.type?)
   end
 
   def aligned_sizeof_type(type : Type) : Int32
     align(inner_sizeof_type(type))
   end
 
+  def aligned_sizeof_type(type : Nil) : Int32
+    0
+  end
+
   def inner_sizeof_type(node : ASTNode) : Int32
-    type = node.type?
-    if type
-      inner_sizeof_type(node.type)
-    else
-      node.raise "BUG: missing type for #{node} (#{node.class})"
-    end
+    inner_sizeof_type(node.type?)
   end
 
   def inner_sizeof_type(type : Type) : Int32
     @program.size_of(type.sizeof_type).to_i32
+  end
+
+  def inner_sizeof_type(type : Nil) : Int32
+    0
   end
 
   def aligned_instance_sizeof_type(type : Type) : Int32

@@ -514,6 +514,46 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "interprets with ... yield with extra arguments (#12296)" do
+      interpret(<<-CODE).should eq(1)
+        class Object
+          def itself
+            self
+          end
+        end
+
+        def build
+          with 1 yield 2
+        end
+
+        build do |t|
+          itself
+        end
+      CODE
+    end
+
+    it "counts with ... yield scope in block args bytesize (#12316)" do
+      interpret(<<-CODE).should eq(42)
+        class Object
+          def itself
+            self
+          end
+        end
+
+        def foo
+          bar(21, with 10 yield 8)
+        end
+
+        def bar(x, y)
+          x &* y
+        end
+
+        foo do |x|
+          itself &- x
+        end
+      CODE
+    end
+
     it "interprets yield with splat (1)" do
       interpret(<<-CODE).should eq((2 - 3) * 4)
         def foo
@@ -596,6 +636,64 @@ describe Crystal::Repl::Interpreter do
 
         foo do |x, y|
           x &- y
+        end
+      CODE
+    end
+
+    it "considers block arg without type as having NoReturn type (#12270)" do
+      interpret(<<-CODE).should eq(42)
+        def bar
+          if ptr = nil
+            yield ptr
+          else
+            42
+          end
+        end
+
+        def foo
+          bar do |obj|
+            obj
+          end
+        end
+
+        foo
+      CODE
+    end
+
+    it "considers block arg without type as having NoReturn type (2) (#12270)" do
+      interpret(<<-CODE).should eq(42)
+        def bar
+          if ptr = nil
+            yield ptr
+          else
+            42
+          end
+        end
+
+        def foo
+          bar do |obj|
+            return obj
+          end
+        end
+
+        foo
+      CODE
+    end
+
+    it "caches method with captured block (#12276)" do
+      interpret(<<-CODE).should eq(42)
+        def execute(x, &block : -> Int32)
+          if x
+            execute(false) do
+              block.call
+            end
+          else
+            yield
+          end
+        end
+
+        execute(true) do
+          42
         end
       CODE
     end
