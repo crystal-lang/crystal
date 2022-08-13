@@ -1683,4 +1683,30 @@ describe "Semantic: module" do
       ),
       "wrong number of arguments"
   end
+
+  it "gives helpful error message when generic type var is missing" do
+    assert_error %(
+      module Foo(T)
+        def self.foo
+          T.bar
+        end
+      end
+
+      Foo.foo
+      ),
+      "can't infer the type parameter T for the generic module Foo(T). Please provide it explicitly"
+  end
+
+  it "gives helpful error message when generic type var is missing in block spec" do
+    assert_error %(
+      module Foo(T)
+        def self.foo(&block : T -> )
+          block
+        end
+      end
+
+      Foo.foo { |x| }
+      ),
+      "can't infer the type parameter T for the generic module Foo(T). Please provide it explicitly"
+  end
 end

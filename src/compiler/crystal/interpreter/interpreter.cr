@@ -1,12 +1,15 @@
 require "./repl"
 require "../ffi"
 require "colorize"
+require "../../../crystal/syntax_highlighter/colorize"
 
 # The ones that understands Crystal bytecode.
 class Crystal::Repl::Interpreter
   record CallFrame,
     # The CompiledDef related to this call frame
     compiled_def : CompiledDef,
+    # The CompiledBlock related to this call frame, if any
+    compiled_block : CompiledBlock?,
     # Instructions for this frame
     instructions : CompiledInstructions,
     # The pointer to the current instruction for this call frame.
@@ -38,7 +41,7 @@ class Crystal::Repl::Interpreter
     real_frame_index : Int32,
     # This is a bit hacky, but...
     # Right now, when we produce an OverflowError we do it directly
-    # in the instruction that potentitally produces the overflow.
+    # in the instruction that potentially produces the overflow.
     # When we do that, the backtrace that is produced in that case
     # is incorrect because the backtrace computing logic assumes
     # an all call frames are, well, calls. But in this case it could
@@ -122,9 +125,13 @@ class Crystal::Repl::Interpreter
     @compiled_def = nil
   end
 
-  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, stack : Pointer(UInt8), @block_level : Int32)
+  def self.new(interpreter : Interpreter, compiled_def : CompiledDef, stack : Pointer(UInt8), block_level : Int32)
+    new(interpreter, compiled_def, compiled_def.local_vars, compiled_def.closure_context, stack, block_level)
+  end
+
+  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, local_vars : LocalVars, @closure_context : ClosureContext?, stack : Pointer(UInt8), @block_level : Int32)
     @context = interpreter.context
-    @local_vars = compiled_def.local_vars.dup
+    @local_vars = local_vars.dup
     @argv = interpreter.@argv
 
     @instructions = CompiledInstructions.new
@@ -156,21 +163,16 @@ class Crystal::Repl::Interpreter
 
   # compiles the given code to bytecode, then interprets it by assuming the local variables
   # are defined in `meta_vars`.
-  def interpret(node : ASTNode, meta_vars : MetaVars) : Value
+  def interpret(node : ASTNode, meta_vars : MetaVars, scope : Type? = nil, in_pry : Bool = false) : Value
     compiled_def = @compiled_def
 
-    # Declare local variables
-
-    # Don't declare local variables again if we are in the middle of pry
-    # TODO: this needs to be cleaned up. Local variables should always be
-    # declared, but migrating local variables should only be done for
-    # variables that aren't already declared duing a pry session.
-    unless compiled_def
+    # Declare or migrate local variables
+    if !compiled_def || in_pry
       migrate_local_vars(@local_vars, meta_vars)
 
       # TODO: is it okay to assume this is always the program? Probably not.
       # Check if we need a local variable for the closure context
-      if @context.program.vars.try &.any? { |name, var| var.type? && var.closure_in?(@context.program) }
+      if !in_pry && @context.program.vars.try &.any? { |name, var| var.type? && var.closure_in?(@context.program) }
         # The closure context is always a pointer to some memory
         @local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
       end
@@ -196,14 +198,20 @@ class Crystal::Repl::Interpreter
       end
     end
 
+    finished_hooks = @context.program.finished_hooks.dup
+    @context.program.finished_hooks.clear
+
     # TODO: top_level or not
     compiler =
       if compiled_def
-        Compiler.new(@context, @local_vars, scope: compiled_def.owner, def: compiled_def.def)
+        Compiler.new(@context, @local_vars, scope: scope || compiled_def.owner, def: compiled_def.def)
+      elsif scope
+        Compiler.new(@context, @local_vars, scope: scope)
       else
         Compiler.new(@context, @local_vars)
       end
     compiler.block_level = @block_level
+    compiler.closure_context = @closure_context
     compiler.compile(node)
 
     @instructions = compiler.instructions
@@ -224,7 +232,13 @@ class Crystal::Repl::Interpreter
       end
     {% end %}
 
-    interpret(node, node.type)
+    value = interpret(node, node.type)
+
+    finished_hooks.each do |finished_hook|
+      interpret(finished_hook.node, meta_vars, finished_hook.scope.metaclass)
+    end
+
+    value
   end
 
   private def interpret(node : ASTNode, node_type : Type) : Value
@@ -241,7 +255,7 @@ class Crystal::Repl::Interpreter
     # variables for the current call frame begin.
     stack_bottom = @stack
 
-    # Shift stack to leave roomm for local vars.
+    # Shift stack to leave room for local vars.
     # Previous runs that wrote to local vars would have those values
     # written to @stack already (or property migrated thanks to `migrate_local_vars`)
     stack_bottom_after_local_vars = stack_bottom + @local_vars.max_bytesize
@@ -281,6 +295,7 @@ class Crystal::Repl::Interpreter
         instructions: instructions,
         local_vars: @local_vars,
       ),
+      compiled_block: nil,
       instructions: instructions,
       ip: ip,
       stack: stack,
@@ -396,13 +411,11 @@ class Crystal::Repl::Interpreter
   end
 
   private def migrate_local_vars(current_local_vars, next_meta_vars)
-    # Always start with fresh variables, because union types might have changed
-    @local_vars = LocalVars.new(@context)
-
     # Check if any existing local variable size changed.
     # If so, it means we need to put them inside a union,
     # or make the union bigger.
     current_names = current_local_vars.names_at_block_level_zero
+
     needs_migration = current_names.any? do |current_name|
       next_meta_var = next_meta_vars[current_name]?
 
@@ -418,6 +431,9 @@ class Crystal::Repl::Interpreter
     end
 
     return unless needs_migration
+
+    # Always start with fresh variables, because union types might have changed
+    @local_vars = LocalVars.new(@context)
 
     current_memory = Pointer(UInt8).malloc(current_local_vars.current_bytesize)
     @stack.copy_to(current_memory, current_local_vars.current_bytesize)
@@ -527,6 +543,7 @@ class Crystal::Repl::Interpreter
 
     %call_frame = CallFrame.new(
       compiled_def: {{compiled_def}},
+      compiled_block: nil,
       instructions: {{compiled_def}}.instructions,
       ip: {{compiled_def}}.instructions.instructions.to_unsafe,
       # We need to adjust the call stack to start right
@@ -562,6 +579,7 @@ class Crystal::Repl::Interpreter
     %block_caller_frame_index = @call_stack.last.block_caller_frame_index
 
     copied_call_frame = @call_stack[%block_caller_frame_index].copy_with(
+      compiled_block: {{compiled_block}},
       instructions: {{compiled_block}}.instructions,
       ip: {{compiled_block}}.instructions.instructions.to_unsafe,
       stack: stack,
@@ -1132,107 +1150,179 @@ class Crystal::Repl::Interpreter
   end
 
   private def pry(ip, instructions, stack_bottom, stack)
-    call_frame = @call_stack.last
-    compiled_def = call_frame.compiled_def
-    a_def = compiled_def.def
-    local_vars = compiled_def.local_vars
     offset = (ip - instructions.instructions.to_unsafe).to_i32
     node = instructions.nodes[offset]?
     pry_node = @pry_node
-    if node && (location = node.location) && different_node_line?(node, pry_node)
-      whereami(a_def, location)
 
-      # puts
-      # puts Slice.new(stack_bottom, stack - stack_bottom).hexdump
-      # puts
+    return unless node
 
-      # Remember the portion from stack_bottom + local_vars.max_bytesize up to stack
-      # because it might happen that the child interpreter will overwrite some
-      # of that if we already have some values in the stack past the local vars
-      data_size = stack - (stack_bottom + local_vars.max_bytesize)
-      data = Pointer(Void).malloc(data_size).as(UInt8*)
-      data.copy_from(stack_bottom + local_vars.max_bytesize, data_size)
+    location = node.location
+    return unless location
 
-      gatherer = LocalVarsGatherer.new(location, a_def)
-      gatherer.gather
-      meta_vars = gatherer.meta_vars
-      block_level = gatherer.block_level
+    return unless different_node_line?(node, pry_node)
 
-      main_visitor = MainVisitor.new(
-        @context.program,
-        vars: meta_vars,
-        meta_vars: meta_vars,
-        typed_def: a_def)
-      main_visitor.scope = compiled_def.owner
-      main_visitor.path_lookup = compiled_def.owner # TODO: this is probably not right
+    call_frame = @call_stack.last
+    compiled_def = call_frame.compiled_def
+    compiled_block = call_frame.compiled_block
+    local_vars = compiled_block.try(&.local_vars) || compiled_def.local_vars
 
-      interpreter = Interpreter.new(self, compiled_def, stack_bottom, block_level)
+    a_def = compiled_def.def
 
-      while @pry
-        # TODO: supoort multi-line expressions
+    whereami(a_def, location)
 
-        print "pry> "
-        line = gets
-        unless line
-          self.pry = false
-          break
-        end
+    # puts
+    # puts Slice.new(stack_bottom, stack - stack_bottom).hexdump
+    # puts
 
-        case line
-        when "continue"
-          self.pry = false
-          break
-        when "step"
-          @pry_node = node
-          @pry_max_target_frame = nil
-          break
-        when "next"
-          @pry_node = node
-          @pry_max_target_frame = @call_stack.last.real_frame_index
-          break
-        when "finish"
-          @pry_node = node
-          @pry_max_target_frame = @call_stack.last.real_frame_index - 1
-          break
-        when "whereami"
-          whereami(a_def, location)
-          next
-        when "*d"
-          puts compiled_def.local_vars
-          puts Disassembler.disassemble(@context, compiled_def)
-          next
-        when "*s"
-          puts Slice.new(@stack, stack - @stack).hexdump
-          next
-        end
+    # Remember the portion from stack_bottom + local_vars.max_bytesize up to stack
+    # because it might happen that the child interpreter will overwrite some
+    # of that if we already have some values in the stack past the local vars
+    data_size = stack - (stack_bottom + local_vars.max_bytesize)
+    data = Pointer(Void).malloc(data_size).as(UInt8*)
+    data.copy_from(stack_bottom + local_vars.max_bytesize, data_size)
 
-        begin
-          parser = Parser.new(
-            line,
-            string_pool: @context.program.string_pool,
-            var_scopes: [interpreter.local_vars.names.to_set],
-          )
-          line_node = parser.parse
+    gatherer = LocalVarsGatherer.new(location, a_def)
+    gatherer.gather
+    meta_vars = gatherer.meta_vars
 
-          line_node = @context.program.normalize(line_node)
-          line_node = @context.program.semantic(line_node, main_visitor: main_visitor)
+    # Freeze the type of existing variables because they can't
+    # change during a pry session.
+    meta_vars.each do |name, var|
+      var_type = var.type?
+      var.freeze_type = var_type if var_type
+    end
 
-          value = interpreter.interpret(line_node, meta_vars)
-          puts value.to_s
-        rescue ex : Crystal::CodeError
-          ex.color = true
-          ex.error_trace = true
-          puts ex
-          next
-        rescue ex : Exception
-          ex.inspect_with_backtrace(STDOUT)
-          next
-        end
+    block_level = local_vars.block_level
+    owner = compiled_def.owner
+
+    closure_context =
+      if compiled_block
+        compiled_block.closure_context
+      else
+        compiled_def.closure_context
       end
 
-      # Restore the stack data in case it tas overwritten
-      (stack_bottom + local_vars.max_bytesize).copy_from(data, data_size)
+    closure_context.try &.vars.each do |name, (index, type)|
+      meta_vars[name] = MetaVar.new(name, type)
     end
+
+    main_visitor = MainVisitor.new(
+      @context.program,
+      vars: meta_vars,
+      meta_vars: meta_vars,
+      typed_def: a_def)
+
+    # Scope is used for instance types, never for Program
+    unless owner.is_a?(Program)
+      main_visitor.scope = owner
+    end
+
+    main_visitor.path_lookup = owner
+
+    interpreter = Interpreter.new(self, compiled_def, local_vars, closure_context, stack_bottom, block_level)
+
+    prompt = Prompt.new(@context, show_nest: false)
+
+    while @pry
+      prefix = String.build do |io|
+        io.print "pry"
+        io.print '('
+        unless owner.is_a?(Program)
+          if owner.metaclass?
+            io.print owner.instance_type
+            io.print '.'
+          else
+            io.print owner
+            io.print '#'
+          end
+        end
+        io.print compiled_def.def.name
+        io.print ')'
+      end
+
+      input = prompt.prompt(prefix)
+      unless input
+        self.pry = false
+        break
+      end
+
+      case input
+      when "continue"
+        self.pry = false
+        break
+      when "step"
+        @pry_node = node
+        @pry_max_target_frame = nil
+        break
+      when "next"
+        @pry_node = node
+        @pry_max_target_frame = @call_stack.last.real_frame_index
+        break
+      when "finish"
+        @pry_node = node
+        @pry_max_target_frame = @call_stack.last.real_frame_index - 1
+        break
+      when "whereami"
+        whereami(a_def, location)
+        next
+      when "*d"
+        puts local_vars
+        puts Disassembler.disassemble(@context, compiled_block || compiled_def)
+        next
+      when "*s"
+        puts Slice.new(@stack, stack - @stack).hexdump
+        next
+      end
+
+      begin
+        line_node = prompt.parse(
+          input: input,
+          var_scopes: [meta_vars.keys.to_set],
+        )
+        next unless line_node
+
+        vars_size_before_semantic = main_visitor.vars.size
+
+        line_node = @context.program.normalize(line_node)
+        line_node = @context.program.semantic(line_node, main_visitor: main_visitor)
+
+        vars_size_after_semantic = main_visitor.vars.size
+
+        if vars_size_after_semantic > vars_size_before_semantic
+          # These are all temporary variables created by MainVisitor.
+          # Let's add them to local vars.
+          main_visitor.vars.each_with_index do |(name, var), index|
+            next unless index >= vars_size_before_semantic
+
+            interpreter.local_vars.declare(name, var.type)
+          end
+        end
+
+        value = interpreter.interpret(line_node, meta_vars, in_pry: true)
+
+        # New local variables might have been declared during a pry session.
+        # Remember them by asking them from the interpreter
+        # (the interpreter will keep adding those, or migrate new ones
+        # to their new type)
+        local_vars = interpreter.local_vars
+
+        prompt.display(value)
+      rescue ex : EscapingException
+        print "Unhandled exception: "
+        print ex
+      rescue ex : Crystal::CodeError
+        ex.color = true
+        ex.error_trace = true
+        puts ex
+        next
+      rescue ex : Exception
+        ex.inspect_with_backtrace(STDOUT)
+        next
+      end
+    end
+
+    # Restore the stack data in case it tas overwritten
+    (stack_bottom + local_vars.max_bytesize).copy_from(data, data_size)
   end
 
   private def whereami(a_def : Def, location : Location)
@@ -1248,17 +1338,34 @@ class Crystal::Repl::Interpreter
 
     puts
 
-    lines =
+    source =
       case filename
       in String
-        File.read_lines(filename)
+        File.read(filename)
       in VirtualFile
-        filename.source.lines.to_a
+        filename.source
       in Nil
         nil
       end
 
-    return unless lines
+    return unless source
+
+    if @context.program.color?
+      begin
+        # We highlight the entire file. We could try highlighting each
+        # individual line but that won't work well for heredocs and other
+        # constructs. Also, highlighting is pretty fast so it won't be noticeable.
+        #
+        # TODO: in reality if the heredoc starts way before the lines we show,
+        # we lose the command that flips the color on. We should probably do
+        # something better here, but for now this is good enough.
+        source = Crystal::SyntaxHighlighter::Colorize.highlight(source)
+      rescue
+        # Ignore highlight errors
+      end
+    end
+
+    lines = source.lines
 
     min_line_number = {location.line_number - 5, 1}.max
     max_line_number = {location.line_number + 5, lines.size}.min
@@ -1279,7 +1386,7 @@ class Crystal::Repl::Interpreter
         print ' '
       end
 
-      print line_number.colorize.blue
+      print @context.program.colorize(line_number).blue
       print ": "
       puts line
     end

@@ -3,6 +3,12 @@ require "./spec_helper"
 
 describe Crystal::Repl::Interpreter do
   context "constants" do
+    it "returns nil in the assignment" do
+      interpret(<<-CODE).should eq(nil)
+        A = 123
+      CODE
+    end
+
     it "interprets constant literal" do
       interpret(<<-CODE).should eq(123)
         A = 123

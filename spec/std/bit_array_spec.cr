@@ -3,9 +3,7 @@ require "bit_array"
 require "spec/helpers/iterate"
 
 private def from_int(size : Int32, int : Int)
-  ba = BitArray.new(size)
-  (0).upto(size - 1) { |i| ba[i] = int.bit(size - i - 1) > 0 }
-  ba
+  BitArray.new(size) { |i| int.bit(size - i - 1) > 0 }
 end
 
 private def assert_no_unused_bits(ba : BitArray, *, file = __FILE__, line = __LINE__)
@@ -28,6 +26,46 @@ private def assert_rotates!(from : BitArray, to : BitArray, *, file = __FILE__, 
 end
 
 describe "BitArray" do
+  describe ".new" do
+    context "without block" do
+      it "initializes with initial value" do
+        ary = BitArray.new(64, false)
+        ary.size.times { |i| ary[i].should be_false }
+
+        ary = BitArray.new(64, true)
+        ary.size.times { |i| ary[i].should be_true }
+      end
+
+      it "initializes with false by default" do
+        ary = BitArray.new(64)
+        ary.size.times { |i| ary[i].should be_false }
+      end
+
+      it "initializes with non-Int32 size" do
+        BitArray.new(5_i8).size.should eq(5)
+        BitArray.new(5_u64).size.should eq(5)
+      end
+
+      it "initializes with unused bits cleared" do
+        ary = BitArray.new(3, true)
+        assert_no_unused_bits ary
+      end
+    end
+
+    context "with block" do
+      it "initializes elements with block" do
+        BitArray.new(5) { |i| i >= 3 }.to_a.should eq([false, false, false, true, true])
+        BitArray.new(6) { |i| i < 2 ? "" : nil }.to_a.should eq([true, true, false, false, false, false])
+        BitArray.new(7_i64, &.even?).to_a.should eq([true, false, true, false, true, false, true])
+      end
+    end
+
+    it "raises if size is negative" do
+      expect_raises(ArgumentError) { BitArray.new(-1) }
+      expect_raises(ArgumentError) { BitArray.new(-2) { true } }
+    end
+  end
+
   it "has size" do
     ary = BitArray.new(100)
     ary.size.should eq(100)
@@ -443,18 +481,38 @@ describe "BitArray" do
   end
 
   describe "#tally" do
-    it "tallies the number of set and cleared bits" do
-      from_int(0, 0).tally.should eq({} of Bool => Int32)
-      from_int(1, 0b0).tally.should eq({false => 1})
-      from_int(1, 0b1).tally.should eq({true => 1})
-      from_int(2, 0b00).tally.should eq({false => 2})
-      from_int(2, 0b01).tally.should eq({true => 1, false => 1})
-      from_int(2, 0b10).tally.should eq({true => 1, false => 1})
-      from_int(2, 0b11).tally.should eq({true => 2})
-      from_int(32, 0b00000000_00000000_00000000_00000000_u32).tally.should eq({false => 32})
-      from_int(32, 0b11000101_00010111_11000001_00011101_u32).tally.should eq({true => 15, false => 17})
-      from_int(32, 0b11111111_11111111_11111111_11111111_u32).tally.should eq({true => 32})
-      from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64).tally.should eq({true => 10, false => 35})
+    context "without block" do
+      it "tallies the number of set and cleared bits" do
+        from_int(0, 0).tally.should eq({} of Bool => Int32)
+        from_int(1, 0b0).tally.should eq({false => 1})
+        from_int(1, 0b1).tally.should eq({true => 1})
+        from_int(2, 0b00).tally.should eq({false => 2})
+        from_int(2, 0b01).tally.should eq({true => 1, false => 1})
+        from_int(2, 0b10).tally.should eq({true => 1, false => 1})
+        from_int(2, 0b11).tally.should eq({true => 2})
+        from_int(32, 0b00000000_00000000_00000000_00000000_u32).tally.should eq({false => 32})
+        from_int(32, 0b11000101_00010111_11000001_00011101_u32).tally.should eq({true => 15, false => 17})
+        from_int(32, 0b11111111_11111111_11111111_11111111_u32).tally.should eq({true => 32})
+        from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64).tally.should eq({true => 10, false => 35})
+      end
+
+      it "tallies into the given hash" do
+        hash = {false => 0}
+        ary = from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64)
+        ary.tally(hash).should be(hash)
+        hash.should eq({true => 10, false => 35})
+        ary.tally(hash).should be(hash)
+        hash.should eq({true => 20, false => 70})
+
+        hash = {true => -4_i64}
+        ary.tally(hash).should be(hash)
+        hash.should eq({true => 6_i64, false => 35})
+      end
+
+      it "doesn't add key into the tally hash if element doesn't exist" do
+        from_int(3, 0b111).tally({true => 0}).has_key?(false).should be_false
+        from_int(3, 0b000).tally({false => 0}).has_key?(true).should be_false
+      end
     end
   end
 
@@ -806,16 +864,6 @@ describe "BitArray" do
     ary[4] = true
     ary.to_s.should eq("BitArray[10101000]")
     ary.inspect.should eq("BitArray[10101000]")
-  end
-
-  it "initializes with true by default" do
-    ary = BitArray.new(64, true)
-    ary.size.times { |i| ary[i].should be_true }
-  end
-
-  it "initializes with unused bits cleared" do
-    ary = BitArray.new(3, true)
-    assert_no_unused_bits ary
   end
 
   it "reads bits from slice" do

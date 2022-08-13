@@ -269,7 +269,7 @@ struct Complex
     zero
   end
 
-  def multiplicative_identity : self
+  def self.multiplicative_identity : self
     new 1, 0
   end
 

@@ -25,10 +25,28 @@ struct BitArray
   #
   # *initial* optionally sets the starting value, `true` or `false`, for all bits
   # in the array.
-  def initialize(@size, initial : Bool = false)
+  def initialize(size : Int, initial : Bool = false)
+    raise ArgumentError.new("Negative bit array size: #{size}") if size < 0
+    @size = size.to_i
     value = initial ? UInt32::MAX : UInt32::MIN
     @bits = Pointer(UInt32).malloc(malloc_size, value)
     clear_unused_bits if initial
+  end
+
+  # Creates a new `BitArray` of *size* bits and invokes the given block once
+  # for each index of `self`, setting the bit at that index to `true` if the
+  # block is truthy.
+  #
+  # ```
+  # BitArray.new(5) { |i| i >= 3 }     # => BitArray[00011]
+  # BitArray.new(6) { |i| i if i < 2 } # => BitArray[110000]
+  # ```
+  def self.new(size : Int, & : Int32 -> _)
+    arr = new(size)
+    size.to_i.times do |i|
+      arr.unsafe_put(i, true) if yield i
+    end
+    arr
   end
 
   def ==(other : BitArray)
@@ -225,11 +243,21 @@ struct BitArray
 
   # :inherit:
   def tally : Hash(Bool, Int32)
-    tallies = Hash(Bool, Int32).new
+    tally(Hash(Bool, Int32).new)
+  end
+
+  # :inherit:
+  def tally(hash)
     ones_count = count(true)
-    tallies[true] = ones_count if ones_count > 0
-    tallies[false] = @size - ones_count if ones_count < @size
-    tallies
+    if ones_count > 0
+      count = hash.fetch(true) { typeof(hash[true]).zero }
+      hash[true] = count + ones_count
+    end
+    if ones_count < @size
+      count = hash.fetch(false) { typeof(hash[false]).zero }
+      hash[false] = count + @size - ones_count
+    end
+    hash
   end
 
   # :inherit:
@@ -410,7 +438,8 @@ struct BitArray
         #     hgfedcba mlkjihgf nopqrstu
         #     hgfedcba fghijklm nopqrstu
         (malloc_size - 1).downto(1) do |i|
-          @bits[i] = Intrinsics.bitreverse32((@bits[i] << offset) | (@bits[i - 1] >> (32 - offset)))
+          # fshl(a, b, count) = (a << count) | (b >> (N - count))
+          @bits[i] = Intrinsics.bitreverse32(Intrinsics.fshl32(@bits[i], @bits[i - 1], offset))
         end
 
         # last group:
@@ -447,7 +476,8 @@ struct BitArray
       temp = @bits[0]
       malloc_size = self.malloc_size
       (malloc_size - 1).times do |i|
-        @bits[i] = (@bits[i] >> n) | (@bits[i + 1] << (32 - n))
+        # fshr(a, b, count) = (b >> count) | (a << (N - count))
+        @bits[i] = Intrinsics.fshr32(@bits[i + 1], @bits[i], n)
       end
 
       end_sub_index = (size - 1) % 32 + 1
@@ -485,11 +515,11 @@ struct BitArray
         #
         #     BA...... ........ ........ ........ -> ........ ........ ........ .GFEDCBA
         #     00000000 00000000 00000000 000GFEDC -> 00000000 00000000 00000000 000.....
-        temp = (@bits[malloc_size - 1] << (n - end_sub_index)) | (@bits[malloc_size - 2] >> (32 + end_sub_index - n))
+        temp = Intrinsics.fshl32(@bits[malloc_size - 1], @bits[malloc_size - 2], n - end_sub_index)
       end
 
       (malloc_size - 1).downto(1) do |i|
-        @bits[i] = (@bits[i] << n) | (@bits[i - 1] >> (32 - n))
+        @bits[i] = Intrinsics.fshl32(@bits[i], @bits[i - 1], n)
       end
       @bits[0] = (@bits[0] << n) | temp
 

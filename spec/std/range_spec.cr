@@ -92,11 +92,11 @@ describe "Range" do
   end
 
   it "is empty with .. and begin > end" do
-    (1..0).to_a.empty?.should be_true
+    (1..0).to_a.should be_empty
   end
 
   it "is empty with ... and begin > end" do
-    (1...0).to_a.empty?.should be_true
+    (1...0).to_a.should be_empty
   end
 
   it "is not empty with .. and begin == end" do
@@ -180,7 +180,7 @@ describe "Range" do
 
       v = (0.0..1.0).bsearch { |x| x > 0 }.not_nil!
       v.should be_close(0, 0.0001)
-      (0 < v).should be_true
+      v.should be > 0
 
       (-1.0..0.0).bsearch { |x| x >= 0 }.should eq 0.0
       (-1.0...0.0).bsearch { |x| x >= 0 }.should be_nil
@@ -328,11 +328,11 @@ describe "Range" do
     end
 
     it "is empty with .. and begin > end" do
-      (1..0).each.to_a.empty?.should be_true
+      (1..0).each.to_a.should be_empty
     end
 
     it "is empty with ... and begin > end" do
-      (1...0).each.to_a.empty?.should be_true
+      (1...0).each.to_a.should be_empty
     end
 
     it "is not empty with .. and begin == end" do
@@ -376,11 +376,11 @@ describe "Range" do
     end
 
     it "is empty with .. and begin > end" do
-      (1..0).reverse_each.to_a.empty?.should be_true
+      (1..0).reverse_each.to_a.should be_empty
     end
 
     it "is empty with ... and begin > end" do
-      (1...0).reverse_each.to_a.empty?.should be_true
+      (1...0).reverse_each.to_a.should be_empty
     end
 
     it "is not empty with .. and begin == end" do
@@ -414,7 +414,7 @@ describe "Range" do
     it "samples a float range as a distribution" do
       r = (1.2..3.4)
       x = r.sample
-      r.includes?(x).should be_true
+      r.should contain(x)
 
       r.sample(Random.new(1)).should be_close(2.9317256017544837, 1e-12)
     end
@@ -422,13 +422,13 @@ describe "Range" do
     it "samples a range with nilable types" do
       r = ((true ? 1 : nil)..(true ? 4 : nil))
       x = r.sample
-      r.includes?(x).should be_true
+      r.should contain(x)
 
       ((true ? 1 : nil)...(true ? 2 : nil)).sample.should eq(1)
 
       r = ((true ? 1.2 : nil)..(true ? 3.4 : nil))
       x = r.sample
-      r.includes?(x).should be_true
+      r.should contain(x)
     end
   end
 
