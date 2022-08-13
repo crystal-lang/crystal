@@ -159,4 +159,24 @@ describe Crystal::Repl::Interpreter do
         expression.value.foo
       CODE
   end
+
+  it "downcasts virtual type to its only type (#12351)" do
+    interpret(<<-CODE).should eq(1)
+      abstract class A
+      end
+
+      class B < A
+        def x
+          1
+        end
+      end
+
+      def foo(b : B)
+        b = 1
+      end
+
+      b = B.new.as(A)
+      foo(b)
+      CODE
+  end
 end
