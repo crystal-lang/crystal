@@ -120,7 +120,7 @@ module Unicode
     {% else %}
       {% x = [] of Nil %}
       {% for tr, i in transitions %}
-        {% x << "((1_u64 << #{i * 6}) * #{tr * 6})" %}
+        {% x << "(#{tr * 6}_u64 << #{i * 6})" %}
       {% end %}
       {{ x.join(" | ").id }}
     {% end %}
