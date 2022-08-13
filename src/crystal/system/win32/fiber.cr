@@ -13,7 +13,7 @@ module Crystal::System::Fiber
   end
 
   def self.free_stack(stack : Void*, stack_size) : Nil
-    if LibC.VirtualFree(stack, stack_size, LibC::MEM_RELEASE) == 0
+    if LibC.VirtualFree(stack, 0, LibC::MEM_RELEASE) == 0
       raise RuntimeError.from_winerror("VirtualFree")
     end
   end

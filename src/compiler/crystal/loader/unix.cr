@@ -89,6 +89,7 @@ class Crystal::Loader
     return false unless handle
 
     @handles << handle
+    @loaded_libraries << path.to_s
     true
   end
 

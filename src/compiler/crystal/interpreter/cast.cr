@@ -15,6 +15,10 @@ class Crystal::Repl::Compiler
     upcast_distinct(node, from, to)
   end
 
+  private def upcast(node : ASTNode, from : Nil, to : Type)
+    # Nothing to do when casting from nil (NoReturn), as it's NoReturn
+  end
+
   private def upcast_distinct(node : ASTNode, from : TypeDefType, to : Type)
     upcast_distinct node, from.typedef, to
   end
@@ -31,8 +35,44 @@ class Crystal::Repl::Compiler
       needs_value_cast_inside_union?(from_element, to)
     end
 
-    if needs_union_value_cast # Compute the values that need a cast
-      node.raise "BUG: missing mixed union upcast from #{from} to #{to}"
+    if needs_union_value_cast
+      # Compute the values that need a cast
+      types_needing_cast = from.union_types.select do |union_type|
+        needs_value_cast_inside_union?(union_type, to)
+      end
+
+      end_jumps = [] of Int32
+
+      types_needing_cast.each do |type_needing_cast|
+        # Find compatible type
+        compatible_type = to.union_types.find! { |union_type| type_needing_cast.implements?(union_type) }
+
+        # Get the type id of the "from" union
+        from_type_id = get_union_type_id(aligned_sizeof_type(from), node: node)
+
+        # Check if `from_type_id` is the same as `type_needing_cast`
+        put_i32 type_id(type_needing_cast), node: node
+        cmp_i32 node: node
+        cmp_eq node: node
+
+        # If they are not the same, continue
+        branch_unless 0, node: nil
+        cond_jump_location = patch_location
+
+        # We need to upcast from type_needing_cast to compatible_type
+        upcast(node, type_needing_cast, compatible_type)
+
+        # Then we need to set the correct union type id
+        put_union_type_id(type_id(compatible_type), aligned_sizeof_type(to), node: node)
+
+        # Then jump to the end
+        jump 0, node: nil
+        end_jumps << patch_location
+
+        # The unless above should jump here, which is the start
+        # of the next if, or just the end
+        patch_jump(cond_jump_location)
+      end
     end
 
     # Putting a smaller union type inside a bigger one is just extending the value
@@ -40,6 +80,15 @@ class Crystal::Repl::Compiler
 
     if difference > 0
       push_zeros(difference, node: nil)
+    end
+
+    # If needs_union_value_cast was true, we have a bunch of
+    # if .. then that need to jump to the end of everything.
+    # Here we do that.
+    if end_jumps
+      end_jumps.each do |end_jump|
+        patch_jump(end_jump)
+      end
     end
   end
 
@@ -59,6 +108,18 @@ class Crystal::Repl::Compiler
   end
 
   private def upcast_distinct(node : ASTNode, from : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | GenericClassInstanceMetaclassType | MetaclassType, to : MixedUnionType)
+    # It might happen that `from` is not of the union but it's compatible with one of them.
+    # We need to first cast the value to the compatible type and to `to`.
+    # This same logic exists in codegen/cast.cr
+    case from
+    when TupleInstanceType, NamedTupleInstanceType
+      unless to.union_types.any? &.==(from)
+        compatible_type = to.union_types.find! { |ut| from.implements?(ut) }
+        upcast(node, from, compatible_type)
+        return upcast(node, compatible_type, to)
+      end
+    end
+
     put_in_union(type_id(from), aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
@@ -275,6 +336,10 @@ class Crystal::Repl::Compiler
     downcast_distinct(node, from, to)
   end
 
+  private def downcast(node : ASTNode, from : Type, to : Nil)
+    # Nothing to do when casting to nil (NoReturn)
+  end
+
   private def downcast_distinct(node : ASTNode, from : Type, to : TypeDefType)
     downcast_distinct node, from, to.typedef
   end
@@ -298,7 +363,7 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | GenericClassInstanceMetaclassType | NilableType | NilableReferenceUnionType | ReferenceUnionType | MetaclassType | VirtualType | VirtualMetaclassType)
+  private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | GenericClassInstanceMetaclassType | NilableType | NilableProcType | NilableReferenceUnionType | ReferenceUnionType | MetaclassType | VirtualType | VirtualMetaclassType)
     remove_from_union(aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
@@ -351,11 +416,7 @@ class Crystal::Repl::Compiler
     # Nothing to do
   end
 
-  private def downcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : MetaclassType)
-    # Nothing to do
-  end
-
-  private def downcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : VirtualMetaclassType)
+  private def downcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType)
     # Nothing to do
   end
 

@@ -23,11 +23,8 @@ class File
       io << Time.local.to_s("%Y%m%d")
       io << '-'
 
-      {% unless flag?(:win32) %}
-        # TODO: Remove this once Process is implemented
-        io << Process.pid
-        io << '-'
-      {% end %}
+      io << Process.pid
+      io << '-'
 
       io << Random.rand(0x100000000).to_s(36)
 

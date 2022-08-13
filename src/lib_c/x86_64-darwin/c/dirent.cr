@@ -20,4 +20,5 @@ lib LibC
   fun opendir = "opendir$INODE64"(x0 : Char*) : DIR*
   fun readdir = "readdir$INODE64"(x0 : DIR*) : Dirent*
   fun rewinddir(x0 : DIR*) : Void
+  fun dirfd(dirp : DIR*) : Int
 end
