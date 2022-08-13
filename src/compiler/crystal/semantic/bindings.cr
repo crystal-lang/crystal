@@ -152,11 +152,6 @@ module Crystal
       propagate
     end
 
-    def unbind_all
-      @dependencies.try &.each &.remove_observer(self)
-      @dependencies = nil
-    end
-
     def unbind_from(nodes : Nil)
       # Nothing to do
     end
@@ -253,7 +248,7 @@ module Crystal
           return freeze_type
         end
 
-        # We also allow assining Proc(*T, NoReturn) to Proc(*T, U)
+        # We also allow assigning Proc(*T, NoReturn) to Proc(*T, U)
         if type.all? { |a_type|
              a_type.is_a?(ProcInstanceType) &&
              (a_type.return_type.is_a?(NoReturnType) || a_type.return_type == freeze_type.return_type) &&
@@ -399,7 +394,25 @@ module Crystal
       to_type = to.type?
       return unless to_type
 
+      program = to_type.program
+
+      case to_type
+      when program.object
+        raise "can't cast to Object yet"
+      when program.reference
+        raise "can't cast to Reference yet"
+      when program.class_type
+        raise "can't cast to Class yet"
+      end
+
       obj_type = obj.type?
+
+      if obj_type.is_a?(PointerInstanceType)
+        to_type_instance_type = to_type.instance_type
+        if to_type_instance_type.is_a?(GenericType)
+          raise "can't cast #{obj_type} to #{to_type_instance_type}"
+        end
+      end
 
       @upcast = false
 
@@ -438,7 +451,25 @@ module Crystal
       to_type = to.type?
       return unless to_type
 
+      program = to_type.program
+
+      case to_type
+      when program.object
+        raise "can't cast to Object yet"
+      when program.reference
+        raise "can't cast to Reference yet"
+      when program.class_type
+        raise "can't cast to Class yet"
+      end
+
       obj_type = obj.type?
+
+      if obj_type.is_a?(PointerInstanceType)
+        to_type_instance_type = to_type.instance_type
+        if to_type_instance_type.is_a?(GenericType)
+          raise "can't cast #{obj_type} to #{to_type_instance_type}"
+        end
+      end
 
       @upcast = false
 
@@ -530,7 +561,8 @@ module Crystal
     def update(from = nil)
       instance_type = self.instance_type
       if instance_type.is_a?(NamedTupleType)
-        entries = named_args.not_nil!.map do |named_arg|
+        entries = Array(NamedArgumentType).new(named_args.try(&.size) || 0)
+        named_args.try &.each do |named_arg|
           node = named_arg.value
 
           if node.is_a?(Path) && (syntax_replacement = node.syntax_replacement)
@@ -551,7 +583,7 @@ module Crystal
           Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
           node_type = node_type.virtual_type
 
-          NamedArgumentType.new(named_arg.name, node_type)
+          entries << NamedArgumentType.new(named_arg.name, node_type)
         end
 
         generic_type = instance_type.instantiate_named_args(entries)
@@ -691,8 +723,6 @@ module Crystal
   end
 
   class ReadInstanceVar
-    property! visitor : MainVisitor
-
     def update(from = nil)
       obj_type = obj.type?
       return unless obj_type
@@ -701,12 +731,21 @@ module Crystal
         if obj_type.is_a?(UnionType)
           obj_type.program.type_merge(
             obj_type.union_types.map do |union_type|
-              visitor.lookup_instance_var(self, union_type).type
+              lookup_instance_var(union_type).type
             end
           )
         else
-          visitor.lookup_instance_var(self, obj_type).type
+          lookup_instance_var(obj_type).type
         end
+    end
+
+    private def lookup_instance_var(type)
+      ivar = type.lookup_instance_var(self)
+      unless ivar
+        similar_name = type.lookup_similar_instance_var_name(name)
+        type.program.undefined_instance_variable(self, type, similar_name)
+      end
+      ivar
     end
   end
 
