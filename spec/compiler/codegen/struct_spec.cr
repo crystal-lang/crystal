@@ -460,6 +460,8 @@ describe "Code gen: struct" do
 
   it "codegens virtual struct metaclass (#2551) (4)" do
     run(%(
+      require "prelude"
+
       abstract struct Foo
         def initialize
           @x = 21
@@ -631,6 +633,8 @@ describe "Code gen: struct" do
 
   it "can call new on abstract struct with single child (#7309)" do
     codegen(%(
+      require "prelude"
+
       abstract struct Foo
         @x = 1
       end

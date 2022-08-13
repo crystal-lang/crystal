@@ -423,6 +423,7 @@ module Crystal
 
       case matched_type
       when Const
+        @program.check_deprecated_constant(matched_type, node)
         matched_type.value
       when Type
         matched_type = matched_type.remove_alias
@@ -518,8 +519,8 @@ module Crystal
 
     def visit(node : IsA)
       node.obj.accept self
-      const_name = node.const.to_s
-      @last = BoolLiteral.new(@last.class_desc_is_a?(const_name))
+      macro_type = @program.lookup_macro_type(node.const)
+      @last = BoolLiteral.new(@last.macro_is_a?(macro_type))
       false
     end
 

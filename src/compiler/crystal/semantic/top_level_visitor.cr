@@ -30,8 +30,8 @@ require "./semantic_visitor"
 # subclasses or not and we can tag it as "virtual" (having subclasses), but that concept
 # might disappear in the future and we'll make consider everything as "maybe virtual".
 class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
-  # These are `new` methods (expanded) that was created from `initialize` methods (original)
-  getter new_expansions = [] of {original: Def, expanded: Def}
+  # These are `new` methods (values) that was created from `initialize` methods (keys)
+  getter new_expansions : Hash(Def, Def) = ({} of Def => Def).compare_by_identity
 
   # All finished hooks and their scope
   record FinishedHook, scope : ModuleType, macro : Macro
@@ -327,6 +327,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.doc ||= annotations_doc(annotations)
     check_ditto node, node.location
 
+    node.args.each &.accept self
+    node.double_splat.try &.accept self
+    node.block_arg.try &.accept self
+
     node.set_type @program.nil
 
     if node.name == "finished"
@@ -347,6 +351,16 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
+  def visit(node : Arg)
+    if anns = node.parsed_annotations
+      process_annotations anns do |annotation_type, ann|
+        node.add_annotation annotation_type, ann
+      end
+    end
+
+    false
+  end
+
   def visit(node : Def)
     check_outside_exp node, "declare def"
 
@@ -362,6 +376,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     node.doc ||= annotations_doc(annotations)
     check_ditto node, node.location
+
+    node.args.each &.accept self
+    node.double_splat.try &.accept self
+    node.block_arg.try &.accept self
 
     is_instance_method = false
 
@@ -422,7 +440,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         target_type.metaclass.as(ModuleType).add_def(new_method)
 
         # And we register it to later complete it
-        new_expansions << {original: node, expanded: new_method}
+        new_expansions[node] = new_method
       end
 
       unless @method_added_running
@@ -791,6 +809,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     const = Const.new(@program, scope, name, value)
     const.private = true if target.visibility.private?
+
+    process_annotations(annotations) do |annotation_type, ann|
+      # annotations on constants are inaccessible in macros so we only add deprecations
+      const.add_annotation(annotation_type, ann) if annotation_type == @program.deprecated_annotation
+    end
 
     check_ditto node, node.location
     attach_doc const, node, annotations

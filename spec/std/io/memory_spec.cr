@@ -61,6 +61,37 @@ describe IO::Memory do
       # Ensure that the buffer is resized, otherwise the spec doesn't work
       io.@capacity.should_not eq old_capacity
     end
+
+    {% if flag?(:without_iconv) %}
+      pending "encoding"
+    {% else %}
+      describe "encoding" do
+        it "returns String" do
+          io = IO::Memory.new
+          io.set_encoding "UTF-16LE"
+          io << "abc"
+          io.to_s.should eq "abc"
+          io.to_slice.should eq Bytes[0x61, 0, 0x62, 0, 0x63, 0]
+        end
+
+        it "writes to IO" do
+          io1 = IO::Memory.new
+          io1.set_encoding "UTF-32LE"
+
+          io2 = IO::Memory.new
+          io2.set_encoding "UTF-16LE"
+
+          io1.write_string "abc😂".to_slice
+          io1.to_s io2
+          byte_slice = io2.to_slice
+          utf16_slice = byte_slice.unsafe_slice_of(UInt16)
+
+          String.from_utf16(utf16_slice).should eq "abc😂"
+          byte_slice.should eq Bytes[0x61, 0, 0x62, 0, 0x63, 0, 0x3D, 0xD8, 0x02, 0xDE]
+          utf16_slice.should eq Slice[0x0061, 0x0062, 0x0063, 0xD83D, 0xDE02]
+        end
+      end
+    {% end %}
   end
 
   it "reads single line content" do
@@ -361,7 +392,7 @@ describe IO::Memory do
   it "consumes with getb_to_end" do
     io = IO::Memory.new(Bytes[0, 1, 3, 6, 10, 15])
     io.getb_to_end.should eq(Bytes[0, 1, 3, 6, 10, 15])
-    io.getb_to_end.should eq(Bytes.new(0))
+    io.getb_to_end.should eq(Bytes[])
     io.seek(3)
     bytes = io.getb_to_end
     bytes.should eq(Bytes[6, 10, 15])
@@ -372,7 +403,7 @@ describe IO::Memory do
     bytes.should eq(Bytes[6, 10, 15])
 
     io.seek(10)
-    io.getb_to_end.should eq(Bytes.new(0))
+    io.getb_to_end.should eq(Bytes[])
   end
 
   it "peeks" do

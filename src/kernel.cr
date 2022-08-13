@@ -502,7 +502,7 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% unless flag?(:preview_mt) %}
+{% unless flag?(:preview_mt) || flag?(:wasm32) %}
   class Process
     # :nodoc:
     #
@@ -523,16 +523,16 @@ end
   end
 {% end %}
 
-{% unless flag?(:interpreted) %}
-  {% unless flag?(:win32) %}
-    # Background loop to cleanup unused fiber stacks.
-    spawn(name: "Fiber Clean Loop") do
-      loop do
-        sleep 5
-        Fiber.stack_pool.collect
-      end
+{% unless flag?(:interpreted) || flag?(:wasm32) %}
+  # Background loop to cleanup unused fiber stacks.
+  spawn(name: "Fiber Clean Loop") do
+    loop do
+      sleep 5
+      Fiber.stack_pool.collect
     end
+  end
 
+  {% unless flag?(:win32) %}
     Signal.setup_default_handlers
   {% end %}
 

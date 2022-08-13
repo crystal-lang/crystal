@@ -20,4 +20,5 @@ lib LibC
   fun opendir(name : Char*) : DIR*
   fun readdir(dirp : DIR*) : Dirent*
   fun rewinddir(x0 : DIR*) : Void
+  fun dirfd(dirp : DIR*) : Int
 end

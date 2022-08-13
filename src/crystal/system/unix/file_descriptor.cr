@@ -63,7 +63,7 @@ module Crystal::System::FileDescriptor
     r
   end
 
-  private def system_info
+  def self.system_info(fd)
     stat = uninitialized LibC::Stat
     ret = File.fstat(fd, pointerof(stat))
 
@@ -72,6 +72,10 @@ module Crystal::System::FileDescriptor
     end
 
     FileInfo.new(stat)
+  end
+
+  private def system_info
+    FileDescriptor.system_info fd
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil

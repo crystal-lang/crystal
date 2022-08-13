@@ -116,23 +116,12 @@ def assert_no_errors(*args, **opts)
   semantic(*args, **opts)
 end
 
-def warnings_result(code, *, file = __FILE__)
-  compiler = create_spec_compiler
-  compiler.warnings = Warnings::All
-  compiler.error_on_warnings = false
-  compiler.prelude = "empty" # avoid issues in the current std lib
-  compiler.color = false
-  apply_program_flags(compiler.flags)
-
-  with_temp_executable("crystal-spec-output", file: file) do |output_filename|
-    result = compiler.compile Compiler::Source.new("code.cr", code), output_filename
-
-    return result.program.warning_failures
-  end
+def warnings_result(code)
+  semantic(code).program.warning_failures
 end
 
 def assert_warning(code, message, *, file = __FILE__, line = __LINE__)
-  warning_failures = warnings_result(code, file: file)
+  warning_failures = warnings_result(code)
   warning_failures.size.should eq(1), file: file, line: line
   warning_failures[0].should start_with(message), file: file, line: line
 end
