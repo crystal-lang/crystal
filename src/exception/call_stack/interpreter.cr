@@ -17,7 +17,7 @@ struct Exception::CallStack
 
   def self.decode_line_number(pc)
     _, line, column, file = pc
-    {line, column, file}
+    {file, line, column}
   end
 
   def self.decode_function_name(pc)

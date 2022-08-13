@@ -41,23 +41,28 @@ module GC
   end
 
   def self.stats : GC::Stats
-    zero = LibC::ULong.new(0)
-    Stats.new(zero, zero, zero, zero, zero)
+    Stats.new(
+      # collections: 0,
+      # bytes_found: 0,
+      heap_size: 0,
+      free_bytes: 0,
+      unmapped_bytes: 0,
+      bytes_since_gc: 0,
+      total_bytes: 0)
   end
 
   def self.prof_stats
-    zero = LibC::ULong.new(0)
     ProfStats.new(
-      heap_size: zero,
-      free_bytes: zero,
-      unmapped_bytes: zero,
-      bytes_since_gc: zero,
-      bytes_before_gc: zero,
-      non_gc_bytes: zero,
-      gc_no: zero,
-      markers_m1: zero,
-      bytes_reclaimed_since_gc: zero,
-      reclaimed_bytes_before_gc: zero)
+      heap_size: 0,
+      free_bytes: 0,
+      unmapped_bytes: 0,
+      bytes_since_gc: 0,
+      bytes_before_gc: 0,
+      non_gc_bytes: 0,
+      gc_no: 0,
+      markers_m1: 0,
+      bytes_reclaimed_since_gc: 0,
+      reclaimed_bytes_before_gc: 0)
   end
 
   {% unless flag?(:win32) || flag?(:wasm32) %}

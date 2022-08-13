@@ -29,6 +29,11 @@ end
 
 private def it_joins_path(path, parts, posix, windows = posix, file = __FILE__, line = __LINE__)
   assert_paths(path, posix, windows, %(resolving "#{parts}"), file, line, &.join(parts))
+  unless parts.is_a?(Enumerable)
+    # FIXME: Omitting the type cast results in Error: can't infer block return type, try to cast the block body with `as`.
+    assert_paths(path, posix, windows, %(resolving ["#{parts}"] ), file, line, &.join([parts]).as(Path))
+    assert_paths(path, posix, windows, %(resolving ["#{parts}"].each), file, line, &.join([parts].each).as(Path))
+  end
 end
 
 private def assert_paths(path, posix, windows = posix, label = nil, file = __FILE__, line = __LINE__, &block : Path -> _)
@@ -100,6 +105,9 @@ describe Path do
       Path.new(Path.new("foo"), "bar").should eq Path.new("foo", "bar")
       Path.new(Path.posix("foo"), "bar").should eq Path.new("foo", "bar")
       Path.new(Path.windows("foo"), "bar").should eq Path.new("foo", "bar")
+
+      # implicit conversion:
+      Path.windows("foo", Path.posix("bar\\baz")).should eq Path.windows("foo").join(Path.posix("bar\\baz").to_windows)
     end
   end
 
@@ -587,6 +595,7 @@ describe Path do
     it_joins_path("c:\\", "Program Files", "c:\\/Program Files", "c:\\Program Files")
 
     it_joins_path("foo", Path.windows("bar\\baz"), "foo/bar/baz", "foo\\bar\\baz")
+    it_joins_path("foo", Path.posix("bar\\baz"), "foo/bar\\baz", "foo\\bar\uF05Cbaz")
     it_joins_path("foo", Path.posix("bar/baz"), "foo/bar/baz", "foo\\bar/baz")
   end
 

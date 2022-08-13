@@ -481,18 +481,38 @@ describe "BitArray" do
   end
 
   describe "#tally" do
-    it "tallies the number of set and cleared bits" do
-      from_int(0, 0).tally.should eq({} of Bool => Int32)
-      from_int(1, 0b0).tally.should eq({false => 1})
-      from_int(1, 0b1).tally.should eq({true => 1})
-      from_int(2, 0b00).tally.should eq({false => 2})
-      from_int(2, 0b01).tally.should eq({true => 1, false => 1})
-      from_int(2, 0b10).tally.should eq({true => 1, false => 1})
-      from_int(2, 0b11).tally.should eq({true => 2})
-      from_int(32, 0b00000000_00000000_00000000_00000000_u32).tally.should eq({false => 32})
-      from_int(32, 0b11000101_00010111_11000001_00011101_u32).tally.should eq({true => 15, false => 17})
-      from_int(32, 0b11111111_11111111_11111111_11111111_u32).tally.should eq({true => 32})
-      from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64).tally.should eq({true => 10, false => 35})
+    context "without block" do
+      it "tallies the number of set and cleared bits" do
+        from_int(0, 0).tally.should eq({} of Bool => Int32)
+        from_int(1, 0b0).tally.should eq({false => 1})
+        from_int(1, 0b1).tally.should eq({true => 1})
+        from_int(2, 0b00).tally.should eq({false => 2})
+        from_int(2, 0b01).tally.should eq({true => 1, false => 1})
+        from_int(2, 0b10).tally.should eq({true => 1, false => 1})
+        from_int(2, 0b11).tally.should eq({true => 2})
+        from_int(32, 0b00000000_00000000_00000000_00000000_u32).tally.should eq({false => 32})
+        from_int(32, 0b11000101_00010111_11000001_00011101_u32).tally.should eq({true => 15, false => 17})
+        from_int(32, 0b11111111_11111111_11111111_11111111_u32).tally.should eq({true => 32})
+        from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64).tally.should eq({true => 10, false => 35})
+      end
+
+      it "tallies into the given hash" do
+        hash = {false => 0}
+        ary = from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64)
+        ary.tally(hash).should be(hash)
+        hash.should eq({true => 10, false => 35})
+        ary.tally(hash).should be(hash)
+        hash.should eq({true => 20, false => 70})
+
+        hash = {true => -4_i64}
+        ary.tally(hash).should be(hash)
+        hash.should eq({true => 6_i64, false => 35})
+      end
+
+      it "doesn't add key into the tally hash if element doesn't exist" do
+        from_int(3, 0b111).tally({true => 0}).has_key?(false).should be_false
+        from_int(3, 0b000).tally({false => 0}).has_key?(true).should be_false
+      end
     end
   end
 

@@ -1093,8 +1093,6 @@ module Crystal
       check_open_paren
 
       name = node.name.as(Path)
-      first_name = name.global? && name.names.size == 1 && name.names.first
-
       if name.global? && @token.type.op_colon_colon?
         write "::"
         next_token_skip_space_or_newline
@@ -1146,6 +1144,9 @@ module Crystal
         write_token :OP_RSQUARE
         return false
       end
+
+      # NOTE: not `name.single_name?` as this is only for the expanded tuple literals
+      first_name = name.names.first if name.global? && name.names.size == 1
 
       # Check if it's {A, B} instead of Tuple(A, B)
       if first_name == "Tuple" && @token.value != "Tuple"
@@ -1644,6 +1645,13 @@ module Crystal
       if @token.type.op_eq?
         write " = "
         next_token_skip_space
+
+        if @token.type.newline?
+          write_line
+          next_token_skip_space_or_newline
+          write_indent(@indent + 2)
+        end
+
         if @token.type.delimiter_start?
           indent(@column, StringLiteral.new(node.real_name))
         else
@@ -2656,10 +2664,12 @@ module Crystal
       # we skip whitespace between the method name and the arg. The parenthesized
       # arg is transformed into a call with parenthesis: `foo (a)` becomes `foo(a)`.
       if node.args.size == 1 &&
+         @token.type.space? &&
          !node.named_args && !node.block_arg && !node.block &&
          (expressions = node.args[0].as?(Expressions)) &&
          expressions.keyword.paren? && expressions.expressions.size == 1
         skip_space
+        node.args[0] = expressions.expressions[0]
       end
 
       if @token.type.op_lparen?
@@ -3284,7 +3294,7 @@ module Crystal
       check_align = check_assign_length node.target
       slash_is_regex!
       write_token " ", :OP_EQ
-      skip_space
+      skip_space(consume_newline: false)
       accept_assign_value_after_equals node.value, check_align: check_align
 
       false
@@ -4064,10 +4074,10 @@ module Crystal
         accept name
       else
         write name
+        next_token
       end
 
-      next_token_skip_space_or_newline
-
+      skip_space
       write_token " ", :OP_EQ, " "
       skip_space_or_newline
 
@@ -4481,7 +4491,7 @@ module Crystal
           write_indent
           next_token
           @passed_backslash_newline = true
-          if @token.type.space?
+          if @token.type.space? || @token.type.comment?
             return skip_space(write_comma, consume_newline)
           else
             return false
@@ -4610,7 +4620,7 @@ module Crystal
 
     def write_comment(needs_indent = true, consume_newline = true, next_comes_end = false)
       while @token.type.comment?
-        empty_line = @line_output.to_s.strip.empty?
+        empty_line = @line_output.empty?
         if empty_line
           write_indent if needs_indent
         end

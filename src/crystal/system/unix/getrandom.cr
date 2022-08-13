@@ -26,7 +26,7 @@ module Crystal::System::Random
   private def self.init
     @@initialized = true
 
-    if sys_getrandom(Bytes.new(16)) >= 0
+    if has_sys_getrandom
       @@getrandom_available = true
     else
       urandom = ::File.open("/dev/urandom", "r")
@@ -36,6 +36,13 @@ module Crystal::System::Random
       urandom.sync = true # don't buffer bytes
       @@urandom = urandom
     end
+  end
+
+  private def self.has_sys_getrandom
+    sys_getrandom(Bytes.new(16))
+    true
+  rescue
+    false
   end
 
   # Reads n random bytes using the Linux `getrandom(2)` syscall.

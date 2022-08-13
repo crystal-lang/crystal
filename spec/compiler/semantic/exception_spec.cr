@@ -265,6 +265,29 @@ describe "Semantic: exception" do
     a_def.not_nil!.raises?.should be_true
   end
 
+  it "marks method that calls another method that raises as raises, recursively" do
+    result = assert_type(%(
+      @[Raises]
+      def foo
+        1
+      end
+
+      def bar
+        foo
+      end
+
+      def baz
+        bar
+      end
+
+      foo
+      bar
+      baz
+      )) { int32 }
+    call = result.node.as(Expressions).expressions.last.as(Call)
+    call.target_defs.not_nil!.first.raises?.should be_true
+  end
+
   it "marks proc literal as raises" do
     result = assert_type("->{ 1 }.call", inject_primitives: true) { int32 }
     call = result.node.as(Expressions).last.as(Call)

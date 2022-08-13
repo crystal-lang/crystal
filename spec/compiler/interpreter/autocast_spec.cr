@@ -39,5 +39,68 @@ describe Crystal::Repl::Interpreter do
           foo(12)
         CODE
     end
+
+    it "autocasts symbol to enum in multidispatch (#11782)" do
+      interpret(<<-CODE).should eq(1)
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        class Foo
+          def foo(x : Color)
+            x
+          end
+        end
+
+        class Bar
+          def foo(x : Color)
+            x
+          end
+        end
+
+        (Foo.new || Bar.new).foo(:green).value
+        CODE
+    end
+
+    it "autocasts int in multidispatch" do
+      interpret(<<-CODE).should eq(1)
+        class Foo
+          def foo(x : Int64)
+            x
+          end
+        end
+
+        class Bar
+          def foo(x : Int64)
+            x
+          end
+        end
+
+        (Foo.new || Bar.new).foo(1)
+        CODE
+    end
+
+    it "autocasts symbol to enum in ivar initializer (#12216)" do
+      interpret(<<-CODE).should eq(2)
+          enum Color
+            Red
+            Green
+            Blue
+          end
+
+          class Foo
+            @color : Color = :blue
+
+            def color
+              @color
+            end
+          end
+
+          foo = Foo.new
+          foo.color.value
+        CODE
+    end
   end
 end
