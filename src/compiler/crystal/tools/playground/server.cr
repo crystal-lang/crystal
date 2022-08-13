@@ -158,7 +158,7 @@ module Crystal::Playground
       if process = @process
         Log.info { "Code execution killed (session=#{@session_key}, filename=#{@running_process_filename})." }
         @process = nil
-        File.delete @running_process_filename rescue nil
+        File.delete? @running_process_filename
         process.terminate rescue nil
       end
     end

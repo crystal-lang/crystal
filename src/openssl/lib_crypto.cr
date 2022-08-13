@@ -71,10 +71,13 @@ lib LibCrypto
   EVP_MAX_KEY_LENGTH = 32
   EVP_MAX_IV_LENGTH  = 16
 
-  CTRL_EOF   =  2
-  CTRL_PUSH  =  6
-  CTRL_POP   =  7
-  CTRL_FLUSH = 11
+  CTRL_EOF           =  2
+  CTRL_PUSH          =  6
+  CTRL_POP           =  7
+  CTRL_FLUSH         = 11
+  CTRL_SET_KTLS_SEND = 72
+  CTRL_GET_KTLS_SEND = 73
+  CTRL_GET_KTLS_RECV = 76
 
   alias BioMethodWrite = (Bio*, Char*, SizeT, SizeT*) -> Int
   alias BioMethodWriteOld = (Bio*, Char*, Int) -> Int

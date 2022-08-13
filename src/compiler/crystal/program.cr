@@ -38,11 +38,12 @@ module Crystal
     #
     # Here x will be {Int32}, then {{Int32}}, etc.
     #
-    # The way we detect this is by remembering the type of the splat,
+    # The way we detect this is by remembering the types of the splat,
     # associated to a def's object id (the UInt64), and on an instantiation
-    # we compare the new type with the previous one and check if it contains
-    # the previous type.
-    getter splat_expansions : Hash(Def, Type) = ({} of Def => Type).compare_by_identity
+    # we compare the new type with the previous ones and check if they all
+    # contain each other once the method is invoked a number of times recursively
+    # (currently 5 times or more).
+    getter splat_expansions : Hash(Def, Array(Type)) = ({} of Def => Array(Type)).compare_by_identity
 
     # All FileModules indexed by their filename.
     # These store file-private defs, and top-level variables in files other
@@ -242,6 +243,9 @@ module Crystal
       types["Experimental"] = @experimental_annotation = AnnotationType.new self, self, "Experimental"
 
       define_crystal_constants
+
+      # definition in `macros/types.cr`
+      define_macro_types
     end
 
     # Returns a `LiteralExpander` useful to expand literal like arrays and hashes

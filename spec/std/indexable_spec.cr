@@ -8,9 +8,9 @@ private class SafeIndexable
   def initialize(@size : Int32, @offset = 0_i32)
   end
 
-  def unsafe_fetch(i) : Int32
-    raise IndexError.new unless 0 <= i < size
-    (i + @offset).to_i
+  def unsafe_fetch(index) : Int32
+    raise IndexError.new unless 0 <= index < size
+    (index + @offset).to_i
   end
 end
 
@@ -22,8 +22,8 @@ private class SafeNestedIndexable
   def initialize(@size : Int32, @inner_size : Int32)
   end
 
-  def unsafe_fetch(i)
-    raise IndexError.new unless 0 <= i < size
+  def unsafe_fetch(index)
+    raise IndexError.new unless 0 <= index < size
     SafeIndexable.new(@inner_size)
   end
 end
@@ -36,9 +36,9 @@ private class SafeStringIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_fetch(i) : String
-    raise IndexError.new unless 0 <= i < size
-    i.to_s
+  def unsafe_fetch(index) : String
+    raise IndexError.new unless 0 <= index < size
+    index.to_s
   end
 end
 
@@ -50,9 +50,9 @@ private class SafeMixedIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_fetch(i) : String | Int32
-    raise IndexError.new unless 0 <= i < size
-    i.to_s
+  def unsafe_fetch(index) : String | Int32
+    raise IndexError.new unless 0 <= index < size
+    index.to_s
   end
 end
 
@@ -64,12 +64,12 @@ private class SafeRecursiveIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_fetch(i) : SafeRecursiveIndexable | Int32
-    raise IndexError.new unless 0 <= i < size
-    if (i % 2) == 0
-      SafeRecursiveIndexable.new(i)
+  def unsafe_fetch(index) : SafeRecursiveIndexable | Int32
+    raise IndexError.new unless 0 <= index < size
+    if (index % 2) == 0
+      SafeRecursiveIndexable.new(index)
     else
-      i
+      index
     end
   end
 end

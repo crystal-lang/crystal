@@ -149,5 +149,19 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "does caller" do
+      interpret(<<-CODE, prelude: "prelude").should eq(%(":6:5 in 'bar'"))
+        def foo
+          bar
+        end
+
+        def bar
+          caller[0]
+        end
+
+        foo
+      CODE
+    end
   end
 end

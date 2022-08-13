@@ -287,10 +287,10 @@ module Crystal
   end
 
   class Union
-    def restriction_of?(other : Path, owner)
-      # For a union to be considered before a path,
+    def restriction_of?(other, owner)
+      # For a union to be considered before another restriction,
       # all types in the union must be considered before
-      # that path.
+      # that restriction.
       # For example when using all subtypes of a parent type.
       types.all? &.restriction_of?(other, owner)
     end
@@ -1303,13 +1303,21 @@ module Crystal
       end
 
       other.type_vars.each_with_index do |other_type_var, i|
-        # If checking the return type, any type matches Nil
-        if i == other.type_vars.size - 1 && nil_type?(other_type_var, context)
-          # Also, all other types matched, so the matching type is this proc type
-          # except that it has a Nil return type
-          new_proc_arg_types = arg_types.dup
-          new_proc_arg_types << program.nil_type
-          return program.proc_of(new_proc_arg_types)
+        # If checking the return type
+        if i == other.type_vars.size - 1
+          # any type matches Nil
+          if nil_type?(other_type_var, context)
+            # Also, all other types matched, so the matching type is this proc type
+            # except that it has a Nil return type
+            new_proc_arg_types = arg_types.dup
+            new_proc_arg_types << program.nil_type
+            return program.proc_of(new_proc_arg_types)
+          end
+
+          if return_type.no_return?
+            # Ok, NoReturn can be "cast" to anything
+            next
+          end
         end
 
         proc_type = arg_types[i]? || return_type
