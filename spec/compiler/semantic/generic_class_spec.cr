@@ -132,7 +132,7 @@ describe "Semantic: generic class" do
       ), inject_primitives: false) { int32 }
   end
 
-  it "a", focus: true do
+  it "uses inherited #initialize from superclass when generic type parameters are identical" do
     assert_type(%(
       class Foo(T)
         def initialize(@value : T)
@@ -146,7 +146,7 @@ describe "Semantic: generic class" do
       ), inject_primitives: false) { int32 }
   end
 
-  it "accesses generic type argument from superclass, inherited #initialize (1)", focus: true do
+  pending "accesses generic type argument from superclass, inherited #initialize (1) (#5243)" do
     assert_type(%(
       class Foo(T)
         def initialize(@value : T)
@@ -160,7 +160,7 @@ describe "Semantic: generic class" do
       ), inject_primitives: false) { int32 }
   end
 
-  it "accesses generic type argument from superclass, inherited #initialize (2)", focus: true do
+  it "accesses generic type argument from superclass, inherited #initialize (2) (#5243)" do
     assert_type(%(
       class Foo(T)
         def initialize(@value : T)
