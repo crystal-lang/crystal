@@ -25,6 +25,7 @@ verbose ?=      ## Run specs in verbose mode
 junit_output ?= ## Path to output junit results
 static ?=       ## Enable static linking
 interpreter ?=  ## Enable interpreter feature
+check ?=        ## Enable only check when running format
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
