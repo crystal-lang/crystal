@@ -22,5 +22,11 @@ describe Crystal::Repl::Interpreter do
         a.class[:a].foo
       CODE
     end
+
+    it "discards named tuple (#12383)" do
+      interpret(<<-CODE).should eq(3)
+        1 + ({a: 1, b: 2, c: 3, d: 4}; 2)
+      CODE
+    end
   end
 end
