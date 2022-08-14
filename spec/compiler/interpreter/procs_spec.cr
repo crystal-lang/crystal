@@ -100,4 +100,18 @@ describe Crystal::Repl::Interpreter do
       proc.call(bar)
     CODE
   end
+
+  it "does call without receiver inside closure" do
+    interpret(<<-CODE).should eq(42)
+      struct Proc
+        def foo
+          ->{
+            call
+          }
+        end
+      end
+
+      ->{ 42 }.foo.call
+    CODE
+  end
 end
