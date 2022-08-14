@@ -260,7 +260,7 @@ class Crystal::Repl::Compiler
         request_value(arg)
 
         # Cast call argument to proc's type
-        # (this same logic is done in codegen/primtiives.cr)
+        # (this same logic is done in codegen/primitives.cr)
         proc_arg_type = proc_type.arg_types[arg_index]
         target_def_arg_type = target_def.args[arg_index].type
         if proc_arg_type != target_def_arg_type
