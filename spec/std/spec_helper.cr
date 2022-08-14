@@ -78,7 +78,11 @@ end
 def compile_file(source_file, *, bin_name = "executable_file", flags = %w(), file = __FILE__)
   with_temp_executable(bin_name, file: file) do |executable_file|
     compiler = ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal"
-    Process.run(compiler, ["build"] + flags + ["-o", executable_file, source_file])
+    Process.run(compiler, ["build"] + flags + ["-o", executable_file, source_file], env: {
+      "CRYSTAL_PATH"         => Crystal::PATH,
+      "CRYSTAL_LIBRARY_PATH" => Crystal::LIBRARY_PATH,
+      "CRYSTAL_CACHE_DIR"    => Crystal::CACHE_DIR,
+    }, error: Process::Redirect::Inherit)
     File.exists?(executable_file).should be_true
 
     yield executable_file

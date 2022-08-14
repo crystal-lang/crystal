@@ -49,9 +49,14 @@ module Crystal
     # Def free variables, unbound (`def (X, Y) ...`)
     property def_free_vars : Array(String)?
 
+    # The type that represents `self` (overriding `instantiated_type`), used to
+    # resolve restrictions properly when a macro def is about to be copied to a
+    # subtype
+    property self_restriction_type : Type?
+
     getter? autocast_allowed : Bool
 
-    def initialize(@instantiated_type, @defining_type, @free_vars = nil, @def_free_vars = nil, @autocast_allowed = false)
+    def initialize(@instantiated_type, @defining_type, @free_vars = nil, @def_free_vars = nil, @self_restriction_type = nil, @autocast_allowed = false)
     end
 
     def get_free_var(name)
@@ -93,7 +98,7 @@ module Crystal
     end
 
     def clone
-      MatchContext.new(@instantiated_type, @defining_type, @free_vars.dup, @def_free_vars.dup, @autocast_allowed)
+      MatchContext.new(@instantiated_type, @defining_type, @free_vars.dup, @def_free_vars.dup, @self_restriction_type, @autocast_allowed)
     end
   end
 

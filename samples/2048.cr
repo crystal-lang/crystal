@@ -380,4 +380,5 @@ class Game
   end
 end
 
+at_exit { STDIN.cooked! }
 Game.new.run

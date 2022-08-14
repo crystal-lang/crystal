@@ -2672,10 +2672,19 @@ describe "String" do
         bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
       end
 
-      {% unless flag?(:musl) %}
+      {% unless flag?(:musl) || flag?(:freebsd) %}
         it "flushes the shift state (#11992)" do
           "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
+        end
+      {% end %}
+
+      # FreeBSD iconv encoder expects ISO/IEC 10646 compatibility code points,
+      # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
+      {% if flag?(:freebsd) %}
+        it "flushes the shift state (#11992)" do
+          "\u{F329}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
+          "\u{F325}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
         end
       {% end %}
 
@@ -2716,10 +2725,21 @@ describe "String" do
         String.new(bytes, "UTF-16LE").should eq("Hello")
       end
 
-      it "decodes with shift state" do
-        String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
-        String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
-      end
+      {% unless flag?(:freebsd) %}
+        it "decodes with shift state" do
+          String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
+          String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
+        end
+      {% end %}
+
+      # FreeBSD iconv decoder returns ISO/IEC 10646-1:2000 code points,
+      # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
+      {% if flag?(:freebsd) %}
+        it "decodes with shift state" do
+          String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
+          String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{F325}")
+        end
+      {% end %}
 
       it "decodes with skip" do
         bytes = Bytes[186, 195, 255, 202, 199]
