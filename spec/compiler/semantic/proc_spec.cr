@@ -1307,6 +1307,14 @@ describe "Semantic: proc" do
       foo
     )) { union_of proc_of(string), proc_of(nil_type), nil_type }
   end
+
+  it "types Proc(*T, Void) as Proc(*T, Nil)" do
+    assert_type(%(
+      #{proc_new}
+
+      Proc(Int32, Void).new { |x| x }
+      )) { proc_of(int32, nil_type) }
+  end
 end
 
 private def proc_new
