@@ -142,6 +142,7 @@ describe "ASTNode#to_s" do
   expect_to_s "foo[x, y, a: 1, b: 2] = z"
   expect_to_s %(@[Foo(1, 2, a: 1, b: 2)])
   expect_to_s %(lib Foo\nend)
+  expect_to_s %(lib LibC\n  fun getchar(Int, Float)\nend)
   expect_to_s %(fun foo(a : Void, b : Void, ...) : Void\n\nend)
   expect_to_s %(lib Foo\n  struct Foo\n    a : Void\n    b : Void\n  end\nend)
   expect_to_s %(lib Foo\n  union Foo\n    a : Int\n    b : Int32\n  end\nend)

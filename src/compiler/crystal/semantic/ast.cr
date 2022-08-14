@@ -171,6 +171,9 @@ module Crystal
 
     @macro_owner : Type?
 
+    # Used to override the meaning of `self` in restrictions
+    property self_restriction_type : Type?
+
     def macro_owner=(@macro_owner)
     end
 

@@ -402,6 +402,11 @@ class Crystal::Repl::Compiler
     # Nothing to do
   end
 
+  private def downcast_distinct(node : ASTNode, from : ProcInstanceType, to : ProcInstanceType)
+    # Nothing to do
+    # This is when Proc(T) is casted to Proc(Nil)
+  end
+
   private def downcast_distinct(node : ASTNode, from : NilableProcType, to : NilType)
     # TODO: not tested
     pop 16, node: nil
