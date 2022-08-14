@@ -609,7 +609,7 @@ class HTTP::Client
     response
   end
 
-  # Executes a request request and yields an `HTTP::Client::Response` to the block.
+  # Executes a request and yields an `HTTP::Client::Response` to the block.
   # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
   #
   # ```
@@ -879,7 +879,7 @@ class HTTP::Client
 
   # This method is called when executing the request. Although it can be
   # redefined, it is recommended to use the `def_around_exec` macro to be
-  # able to add new behaviors without loosing prior existing ones.
+  # able to add new behaviors without losing prior existing ones.
   protected def around_exec(request)
     yield
   end

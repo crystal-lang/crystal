@@ -37,7 +37,10 @@ class Crystal::Path
 end
 
 class Crystal::Call
-  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_literals = false)
+  # :nodoc:
+  MAX_RENDERED_OVERLOADS = 20
+
+  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_autocast = false, number_autocast = true)
     obj = @obj
     with_scope = @with_scope
 
@@ -135,8 +138,8 @@ class Crystal::Call
 
     # If we made a lookup without the special rule for literals,
     # and we have literals in the call, try again with that special rule.
-    if with_literals == false && (args.any? { |arg| arg.is_a?(NumberLiteral) || arg.is_a?(SymbolLiteral) } ||
-       named_args.try &.any? { |arg| arg.value.is_a?(NumberLiteral) || arg.value.is_a?(SymbolLiteral) })
+    if with_autocast == false && (args.any?(&.supports_autocast? number_autocast) ||
+       named_args.try &.any? &.value.supports_autocast? number_autocast)
       ::raise RetryLookupWithLiterals.new
     end
 
@@ -161,7 +164,8 @@ class Crystal::Call
           uniq_arg_names = uniq_arg_names.size == 1 ? uniq_arg_names.first : nil
           unless missing.empty?
             msg << "\nCouldn't find overloads for these types:"
-            missing.each do |missing_types|
+
+            missing.first(MAX_RENDERED_OVERLOADS).each do |missing_types|
               if uniq_arg_names
                 signature_names = missing_types.map_with_index do |missing_type, i|
                   if i >= arg_types.size && (named_arg = named_args_types.try &.[i - arg_types.size]?)
@@ -177,6 +181,10 @@ class Crystal::Call
               msg << "\n - #{full_name(owner, def_name)}(#{signature_args}"
               msg << ", &block" if block
               msg << ')'
+            end
+
+            if missing.size > MAX_RENDERED_OVERLOADS
+              msg << "\nAnd #{missing.size - MAX_RENDERED_OVERLOADS} more..."
             end
           end
         end
@@ -641,15 +649,21 @@ class Crystal::Call
 
   def check_recursive_splat_call(a_def, args)
     if a_def.splat_index
-      current_splat_type = args.values.last.type
-      if previous_splat_type = program.splat_expansions[a_def]?
-        if current_splat_type.has_in_type_vars?(previous_splat_type)
-          raise "recursive splat expansion: #{previous_splat_type}, #{current_splat_type}, ..."
-        end
+      previous_splat_types = program.splat_expansions[a_def] ||= [] of Type
+      previous_splat_types.push(args.values.last.type)
+
+      # This is just an heuristic, but if a same method is called recursively
+      # 5 times or more, and the splat type keeps expanding and containing
+      # previous splat types, there's a high chance it will recurse forever.
+      if previous_splat_types.size >= 5 &&
+         previous_splat_types.each.cons_pair.all? { |t1, t2| t2.has_in_type_vars?(t1) }
+        a_def.raise "recursive splat expansion: #{previous_splat_types.join(", ")}, ..."
       end
-      program.splat_expansions[a_def] = current_splat_type
+
       yield
-      program.splat_expansions.delete a_def
+
+      previous_splat_types.pop
+      program.splat_expansions.delete a_def if previous_splat_types.empty?
     else
       yield
     end

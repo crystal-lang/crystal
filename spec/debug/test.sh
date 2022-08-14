@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # This file can be executed from the root of the working copy
 #
@@ -14,10 +14,11 @@
 #
 # The magic comments interpreted by the driver are:
 #
-#   * # break
 #   * # lldb-command:
 #   * # lldb-check:
 #
+# These comments should then be followed by a call to `debugger` which sets up
+# the actual breakpoint.
 
 set -euo pipefail
 
@@ -25,10 +26,10 @@ SCRIPT_PATH="$(realpath "$0")"
 SCRIPT_ROOT="$(dirname "$SCRIPT_PATH")"
 
 BUILD_DIR=$SCRIPT_ROOT/../../.build
-crystal=$SCRIPT_ROOT/../../bin/crystal
+crystal=${CRYSTAL_SPEC_COMPILER_BIN:-$SCRIPT_ROOT/../../bin/crystal}
 driver=$BUILD_DIR/debug_driver
 mkdir -p $BUILD_DIR
-$crystal build $SCRIPT_ROOT/driver.cr -o $driver
+"$crystal" build $SCRIPT_ROOT/driver.cr -o $driver
 
 $driver $SCRIPT_ROOT/top_level.cr
 $driver $SCRIPT_ROOT/strings.cr

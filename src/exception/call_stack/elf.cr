@@ -1,8 +1,10 @@
 require "crystal/elf"
-require "c/link"
+{% unless flag?(:wasm32) %}
+  require "c/link"
+{% end %}
 
 struct Exception::CallStack
-  protected def self.load_dwarf_impl
+  protected def self.load_debug_info_impl
     phdr_callback = LibC::DlPhdrCallback.new do |info, size, data|
       # The first entry is the header for the current program
       read_dwarf_sections(info.value.addr)

@@ -30,6 +30,25 @@ module Crystal
         false
       end
     end
+
+    # `number_autocast` defines if casting numeric expressions to larger ones is enabled
+    def supports_autocast?(number_autocast : Bool = true)
+      case self
+      when NumberLiteral, SymbolLiteral
+        true
+      else
+        if number_autocast
+          case self_type = self.type?
+          when IntegerType
+            self_type.kind.bytesize <= 64
+          when FloatType
+            self_type.kind.f32?
+          end
+        else
+          false
+        end
+      end
+    end
   end
 
   class Var
@@ -102,6 +121,8 @@ module Crystal
   end
 
   class Arg
+    include Annotatable
+
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @type : Type? = nil)
       @external_name = external_name || @name
     end
@@ -126,9 +147,9 @@ module Crystal
     property yield_vars : Array(Var)?
     property previous : DefWithMetadata?
     property next : Def?
-    getter special_vars : Set(String)?
+    property special_vars : Set(String)?
     property block_nest = 0
-    getter? raises = false
+    property? raises = false
     property? closure = false
     property? self_closured = false
     property? captured_block = false
@@ -164,17 +185,6 @@ module Crystal
     def add_special_var(name)
       special_vars = @special_vars ||= Set(String).new
       special_vars << name
-    end
-
-    def raises=(value)
-      if value != @raises
-        @raises = value
-        @observers.try &.each do |obs|
-          if obs.is_a?(Call)
-            obs.raises = value
-          end
-        end
-      end
     end
 
     # Returns the minimum and maximum number of arguments that must
@@ -221,8 +231,8 @@ module Crystal
     def free_var?(node : Path)
       free_vars = @free_vars
       return false unless free_vars
-
-      !node.global? && node.names.size == 1 && free_vars.includes?(node.names.first)
+      name = node.single_name?
+      !name.nil? && free_vars.includes?(name)
     end
 
     def free_var?(any)
@@ -542,21 +552,27 @@ module Crystal
     # not when reading it.
     property? no_init_flag = false
 
+    enum Kind
+      Class
+      Instance
+      Global
+    end
+
     def kind
       case name[0]
       when '@'
         if name[1] == '@'
-          :class
+          Kind::Class
         else
-          :instance
+          Kind::Instance
         end
       else
-        :global
+        Kind::Global
       end
     end
 
     def global?
-      kind == :global
+      kind.global?
     end
   end
 
@@ -704,12 +720,18 @@ module Crystal
   end
 
   class NilReason
+    enum Reason
+      UsedBeforeInitialized
+      UsedSelfBeforeInitialized
+      InitializedInRescue
+    end
+
     getter name : String
-    getter reason : Symbol
+    getter reason : Reason
     getter nodes : Array(ASTNode)?
     getter scope : Type?
 
-    def initialize(@name, @reason, @nodes = nil, @scope = nil)
+    def initialize(@name, @reason : Reason, @nodes = nil, @scope = nil)
     end
   end
 
@@ -797,22 +819,6 @@ module Crystal
 
     def clone_without_location
       self
-    end
-  end
-
-  class NumberLiteral
-    def can_be_autocast_to?(other_type)
-      case {self.type, other_type}
-      when {IntegerType, IntegerType}
-        min, max = other_type.range
-        min <= integer_value <= max
-      when {IntegerType, FloatType}
-        true
-      when {FloatType, FloatType}
-        true
-      else
-        false
-      end
     end
   end
 

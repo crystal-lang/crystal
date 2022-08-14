@@ -1,5 +1,9 @@
-{% if flag?(:win32) %}
+{% if flag?(:wasi) %}
+  require "./wasi/file_descriptor"
+{% elsif flag?(:unix) %}
+  require "./unix/file_descriptor"
+{% elsif flag?(:win32) %}
   require "./win32/file_descriptor"
 {% else %}
-  require "./unix/file_descriptor"
+  {% raise "No Crystal::System::FileDescriptor implementation available" %}
 {% end %}

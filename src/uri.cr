@@ -221,7 +221,14 @@ class URI
   # uri.request_target # => "/?foo=bar"
   # ```
   def request_target : String
-    String.build do |str|
+    # Minimal size is 1 for an empty path (`"/"`)
+    string_size = @path.empty? ? 1 : @path.bytesize
+    if query = @query
+      # Add 1 for the query designator (`?`)
+      string_size += query.bytesize + 1
+    end
+
+    String.build(string_size) do |str|
       if @path.empty?
         str << "/" unless opaque?
       else
@@ -258,7 +265,7 @@ class URI
   # require "uri"
   #
   # uri = URI.parse "http://foo.com?id=30&limit=5#time=1305298413"
-  # uri.query_params # => URI::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
+  # uri.query_params # => URI::Params{"id" => ["30"], "limit" => ["5"]}
   # ```
   def query_params : URI::Params
     URI::Params.parse(@query || "")
@@ -309,7 +316,7 @@ class URI
       #
       # host        = IP-literal / IPv4address / reg-name
       #
-      # The valid characters include unreserved, sub-delims, ':', '[', ']' (IPv6-Adress)
+      # The valid characters include unreserved, sub-delims, ':', '[', ']' (IPv6-Address)
       URI.encode(host, io) { |byte| URI.unreserved?(byte) || URI.sub_delim?(byte) || byte.unsafe_chr.in?(':', '[', ']') }
     end
 
@@ -430,14 +437,8 @@ class URI
       if path.empty?
         path = base
       elsif !base.empty?
-        path = String.build do |io|
-          if base.ends_with?('/')
-            io << base
-          elsif pos = base.rindex('/')
-            io << base[0..pos]
-          end
-          io << path
-        end
+        out_base = base.ends_with?('/') ? base : base[0..base.rindex('/')]
+        path = String.interpolation(out_base, path)
       end
     end
     remove_dot_segments(path)
@@ -476,7 +477,6 @@ class URI
 
     query = uri.query
     query = nil if query == @query
-    fragment = uri.fragment
 
     path = relativize_path(@path, uri.path)
 
@@ -514,26 +514,26 @@ class URI
       end
     end
 
-    tmp = dst_path.join('/')
     # calculate
     if base_path.empty?
       if dst_path.empty?
         "./"
       elsif dst_path.first.includes?(':') # (see RFC2396 Section 5)
-        String.build do |io|
+        string_size = 1 + dst_path.sum(&.bytesize) + dst_path.size
+        String.build(string_size) do |io|
           io << "./"
           dst_path.join(io, '/')
         end
       else
-        string = dst_path.join('/')
-        if string == ""
+        if dst_path.empty? || dst_path.first.empty?
           "./"
         else
-          string
+          dst_path.join('/')
         end
       end
     else
-      String.build do |io|
+      string_size = 3 * base_path.size + dst_path.sum(&.bytesize) + dst_path.size - 1
+      String.build(string_size) do |io|
         base_path.size.times { io << "../" }
         dst_path.join(io, '/')
       end

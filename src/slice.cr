@@ -34,7 +34,7 @@ struct Slice(T)
     # TODO: there should be a better way to check this, probably
     # asking if @type was instantiated or if T is defined
     {% if @type.name != "Slice(T)" && T < Number %}
-      {{T}}.slice({{*args}}, read_only: {{read_only}})
+      {{T}}.slice({{args.splat(", ")}}read_only: {{read_only}})
     {% else %}
       %ptr = Pointer(typeof({{*args}})).malloc({{args.size}})
       {% for arg, i in args %}
@@ -406,9 +406,43 @@ struct Slice(T)
   # :inherit:
   #
   # Raises if this slice is read-only.
+  def fill(value : T, start : Int, count : Int) : self
+    # since `#[]` requires exactly *count* elements but we allow fewer here, we
+    # must normalize the indices beforehand
+    start, count = normalize_start_and_count(start, count)
+    self[start, count].fill(value)
+    self
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def fill(value : T, range : Range) : self
+    fill(value, *Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
   def fill(*, offset : Int = 0, & : Int32 -> T) : self
     check_writable
     super { |i| yield i }
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def fill(start : Int, count : Int, & : Int32 -> T) : self
+    check_writable
+    super(start, count) { |i| yield i }
+  end
+
+  # :inherit:
+  #
+  # Raises if this slice is read-only.
+  def fill(range : Range, & : Int32 -> T) : self
+    check_writable
+    super(range) { |i| yield i }
   end
 
   def copy_from(source : Pointer(T), count)
@@ -427,7 +461,7 @@ struct Slice(T)
   # Copies the contents of this slice into *target*.
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred
-  # e.g. dest.size < self.size.
+  # e.g. `dest.size < self.size`.
   #
   # ```
   # src = Slice['a', 'a', 'a']
@@ -497,15 +531,62 @@ struct Slice(T)
     to_s(io)
   end
 
-  # Returns a hexstring representation of this slice, assuming it's
-  # a `Slice(UInt8)`.
+  # Returns a new `Slice` pointing at the same contents as `self`, but
+  # reinterpreted as elements of the given *type*.
+  #
+  # The returned slice never refers to more memory than `self`; if the last
+  # bytes of `self` do not fit into a `U`, they are excluded from the returned
+  # slice.
+  #
+  # WARNING: This method is **unsafe**: elements are reinterpreted using
+  # `#unsafe_as`, and the resulting slice may not be properly aligned.
+  # Additionally, the same elements may produce different results depending on
+  # the system endianness.
   #
   # ```
-  # slice = UInt8.slice(97, 62, 63, 8, 255)
-  # slice.hexstring # => "613e3f08ff"
+  # # assume little-endian system
+  # bytes = Bytes[0x01, 0x02, 0x03, 0x04, 0xFF, 0xFE]
+  # bytes.unsafe_slice_of(Int8)  # => Slice[1_i8, 2_i8, 3_i8, 4_i8, -1_i8, -2_i8]
+  # bytes.unsafe_slice_of(Int16) # => Slice[513_i16, 1027_i16, -257_i16]
+  # bytes.unsafe_slice_of(Int32) # => Slice[0x04030201]
+  # ```
+  def unsafe_slice_of(type : U.class) : Slice(U) forall U
+    Slice.new(to_unsafe.unsafe_as(Pointer(U)), bytesize // sizeof(U), read_only: @read_only)
+  end
+
+  # Returns a new `Bytes` pointing at the same contents as `self`.
+  #
+  # WARNING: This method is **unsafe**: the returned slice is writable if `self`
+  # is also writable, and modifications through the returned slice may violate
+  # the binary representations of Crystal objects. Additionally, the same
+  # elements may produce different results depending on the system endianness.
+  #
+  # ```
+  # # assume little-endian system
+  # ints = Slice[0x01020304, 0x05060708]
+  # bytes = ints.to_unsafe_bytes # => Bytes[0x04, 0x03, 0x02, 0x01, 0x08, 0x07, 0x06, 0x05]
+  # bytes[2] = 0xAD
+  # ints # => Slice[0x01AD0304, 0x05060708]
+  # ```
+  def to_unsafe_bytes : Bytes
+    unsafe_slice_of(UInt8)
+  end
+
+  # Returns a hexstring representation of this slice.
+  #
+  # `self` must be a `Slice(UInt8)`. To call this method on other `Slice`s,
+  # `#to_unsafe_bytes` should be used first.
+  #
+  # ```
+  # UInt8.slice(97, 62, 63, 8, 255).hexstring # => "613e3f08ff"
+  #
+  # # assume little-endian system
+  # Int16.slice(97, 62, 1000, -2).to_unsafe_bytes.hexstring # => "61003e00e803feff"
   # ```
   def hexstring : String
-    self.as(Slice(UInt8))
+    {% unless T == UInt8 %}
+      {% raise "Can only call `#hexstring` on Slice(UInt8), not #{@type}" %}
+    {% end %}
 
     str_size = size * 2
     String.new(str_size) do |buffer|
@@ -516,7 +597,9 @@ struct Slice(T)
 
   # :nodoc:
   def hexstring(buffer) : Nil
-    self.as(Slice(UInt8))
+    {% unless T == UInt8 %}
+      {% raise "Can only call `#hexstring` on Slice(UInt8), not #{@type}" %}
+    {% end %}
 
     offset = 0
     each do |v|
@@ -528,16 +611,26 @@ struct Slice(T)
     nil
   end
 
-  # Returns a hexdump of this slice, assuming it's a `Slice(UInt8)`.
+  # Returns a hexdump of this slice.
+  #
+  # `self` must be a `Slice(UInt8)`. To call this method on other `Slice`s,
+  # `#to_unsafe_bytes` should be used first.
+  #
   # This method is specially useful for debugging binary data and
   # incoming/outgoing data in protocols.
   #
   # ```
   # slice = UInt8.slice(97, 62, 63, 8, 255)
   # slice.hexdump # => "00000000  61 3e 3f 08 ff                                    a>?..\n"
+  #
+  # # assume little-endian system
+  # slice = Int16.slice(97, 62, 1000, -2)
+  # slice.to_unsafe_bytes.hexdump # => "00000000  61 00 3e 00 e8 03 fe ff                           a.>.....\n"
   # ```
   def hexdump : String
-    self.as(Slice(UInt8))
+    {% unless T == UInt8 %}
+      {% raise "Can only call `#hexdump` on Slice(UInt8), not #{@type}" %}
+    {% end %}
 
     return "" if empty?
 
@@ -564,7 +657,11 @@ struct Slice(T)
     end
   end
 
-  # Writes a hexdump of this slice, assuming it's a `Slice(UInt8)`, to the given *io*.
+  # Writes a hexdump of this slice to the given *io*.
+  #
+  # `self` must be a `Slice(UInt8)`. To call this method on other `Slice`s,
+  # `#to_unsafe_bytes` should be used first.
+  #
   # This method is specially useful for debugging binary data and
   # incoming/outgoing data in protocols.
   #
@@ -581,7 +678,9 @@ struct Slice(T)
   # 00000000  61 3e 3f 08 ff                                    a>?..
   # ```
   def hexdump(io : IO)
-    self.as(Slice(UInt8))
+    {% unless T == UInt8 %}
+      {% raise "Can only call `#hexdump` on Slice(UInt8), not #{@type}" %}
+    {% end %}
 
     return 0 if empty?
 
@@ -833,7 +932,7 @@ struct Slice(T)
   # The sort mechanism is implemented as [*merge sort*](https://en.wikipedia.org/wiki/Merge_sort).
   # It is stable, which is typically a good default.
   #
-  # Stablility means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # Stability means that two elements which compare equal (i.e. `a <=> b == 0`)
   # keep their original relation. Stable sort guarantees that `[a, b].sort!`
   # always results in `[a, b]` (given they compare equal). With unstable sort,
   # the result could also be `[b, a]`.
@@ -864,7 +963,7 @@ struct Slice(T)
   # It does not guarantee stability between equally comparing elements.
   # This offers higher performance but may be unexpected in some situations.
   #
-  # Stablility means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # Stability means that two elements which compare equal (i.e. `a <=> b == 0`)
   # keep their original relation. Stable sort guarantees that `[a, b].sort!`
   # always results in `[a, b]` (given they compare equal). With unstable sort,
   # the result could also be `[b, a]`.
@@ -902,7 +1001,7 @@ struct Slice(T)
   # The sort mechanism is implemented as [*merge sort*](https://en.wikipedia.org/wiki/Merge_sort).
   # It is stable, which is typically a good default.
   #
-  # Stablility means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # Stability means that two elements which compare equal (i.e. `a <=> b == 0`)
   # keep their original relation. Stable sort guarantees that `[a, b].sort!`
   # always results in `[a, b]` (given they compare equal). With unstable sort,
   # the result could also be `[b, a]`.
@@ -946,7 +1045,7 @@ struct Slice(T)
   # It does not guarantee stability between equally comparing elements.
   # This offers higher performance but may be unexpected in some situations.
   #
-  # Stablility means that two elements which compare equal (i.e. `a <=> b == 0`)
+  # Stability means that two elements which compare equal (i.e. `a <=> b == 0`)
   # keep their original relation. Stable sort guarantees that `[a, b].sort!`
   # always results in `[a, b]` (given they compare equal). With unstable sort,
   # the result could also be `[b, a]`.

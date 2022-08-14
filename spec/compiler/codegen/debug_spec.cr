@@ -16,31 +16,6 @@ describe "Code gen: debug" do
       ), debug: Crystal::Debug::All)
   end
 
-  it "codegens abstract struct with module include (#11385)" do
-    codegen(%(
-      module FooInterface
-      end
-
-      class Foo
-        include FooInterface
-      end
-
-      abstract struct Bar
-        include FooInterface
-
-        @a : FooInterface
-
-        def initialize(@a : FooInterface); end
-      end
-
-      class Baz
-        @b : FooInterface = Foo.new
-      end
-
-      Baz.new
-      ), debug: Crystal::Debug::All)
-  end
-
   it "inlines instance var access through getter in debug mode" do
     run(%(
       struct Bar
@@ -251,5 +226,54 @@ describe "Code gen: debug" do
 
       LibFoo.foo = ->{ }
       ), debug: Crystal::Debug::All)
+  end
+
+  it "doesn't fail on constant read calls (#11416)" do
+    codegen(%(
+      require "prelude"
+
+      class Foo
+        def foo
+        end
+      end
+
+      def a_foo
+        Foo.new
+      end
+
+      THE_FOO.foo
+
+      THE_FOO = a_foo
+      ), debug: Crystal::Debug::All)
+  end
+
+  it "doesn't fail on splat expansions inside array-like literals" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def each
+          yield 1
+          yield 2
+          yield 3
+        end
+      end
+
+      class Bar
+        @bar = 0
+
+        def <<(value)
+          @bar = @bar &* 10 &+ value
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      x = Foo.new
+      y = Bar{*x}
+      y.bar
+      ), debug: Crystal::Debug::All).to_i.should eq(123)
   end
 end
