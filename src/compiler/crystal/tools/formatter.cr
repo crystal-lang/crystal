@@ -1694,8 +1694,8 @@ module Crystal
 
       format_def_args node
 
-      if all_macro_literals?(node.body)
-        format_all_macro_literals(node, macro_node_line)
+      if macro_literal_source = macro_literal_contents(node.body)
+        format_macro_literal_only(node, macro_literal_source, macro_node_line)
       else
         format_macro_body node
       end
@@ -1703,36 +1703,7 @@ module Crystal
       false
     end
 
-    private def all_macro_literals?(node)
-      case node
-      when MacroLiteral
-        true
-      when Expressions
-        node.expressions.all? { |subnode| all_macro_literals?(subnode) }
-      else
-        false
-      end
-    end
-
-    private def gather_macro_literal_values(node)
-      String.build do |io|
-        gather_macro_literal_values(node, io)
-      end
-    end
-
-    private def gather_macro_literal_values(node, io)
-      case node
-      when MacroLiteral
-        io << node.value
-      when Expressions
-        node.expressions.each { |subnode| gather_macro_literal_values(subnode, io) }
-      else
-        false
-      end
-    end
-
-    private def format_all_macro_literals(node, macro_node_line)
-      source = gather_macro_literal_values(node.body)
+    private def format_macro_literal_only(node, source, macro_node_line)
       begin
         # Only format the macro contents if it's valid Crystal code
         Parser.new(source).parse
