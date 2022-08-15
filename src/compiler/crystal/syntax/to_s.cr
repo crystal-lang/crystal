@@ -1519,9 +1519,10 @@ module Crystal
 
     def accept_with_indent(node : Expressions)
       with_indent do
+        append_indent if node.keyword.begin?
         node.accept self
       end
-      newline if node.keyword.paren?
+      newline unless node.keyword.none?
     end
 
     def accept_with_indent(node : Nop)
