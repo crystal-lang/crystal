@@ -256,7 +256,7 @@ class String
 
     # Try to reclaim some memory if capacity is bigger than what was requested
     if bytesize < capacity
-      str = str.realloc(bytesize.to_u32 + HEADER_SIZE + 1)
+      str = GC.realloc(str, bytesize.to_u32 + HEADER_SIZE + 1)
     end
 
     str_header = str.as({Int32, Int32, Int32}*)
