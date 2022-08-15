@@ -122,6 +122,12 @@ describe Crystal::Repl::Interpreter do
         b[0].foo + b[1].bar
       CODE
     end
+
+    it "discards tuple (#12383)" do
+      interpret(<<-CODE).should eq(3)
+        1 + ({1, 2, 3, 4}; 2)
+      CODE
+    end
   end
 end
 

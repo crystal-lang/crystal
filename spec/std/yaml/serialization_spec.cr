@@ -17,6 +17,12 @@ enum YAMLSpecFlagEnum
   OneHundred
 end
 
+private record FooPrivate, x : Int32 do
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+    new(Int32.new(ctx, node))
+  end
+end
+
 alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
 
 puts YAML.libyaml_version
@@ -144,14 +150,26 @@ describe "YAML serialization" do
       array[2].should eq({"foo" => 1, "bar" => 2})
     end
 
-    it "does Tuple#from_yaml" do
-      Tuple(Int32, String, Bool).from_yaml("---\n- 1\n- foo\n- true\n").should eq({1, "foo", true})
+    it "does for tuple" do
+      tuple = Tuple(Int32, String, Bool).from_yaml("---\n- 1\n- foo\n- true\n")
+      tuple.should eq({1, "foo", true})
+      typeof(tuple).should eq(Tuple(Int32, String, Bool))
+    end
+
+    it "does for tuple with file-private type" do
+      tuple = Tuple(FooPrivate).from_yaml %([1])
+      tuple.should eq({FooPrivate.new(1)})
+      typeof(tuple).should eq(Tuple(FooPrivate))
+    end
+
+    it "does for empty tuple" do
+      typeof(Tuple.new).from_yaml("[]").should eq(Tuple.new)
     end
 
     it "does for named tuple" do
       tuple = NamedTuple(x: Int32, y: String).from_yaml(%({"y": "hello", "x": 1}))
       tuple.should eq({x: 1, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32, y: String))
     end
 
     it "does for empty named tuple" do
@@ -163,25 +181,31 @@ describe "YAML serialization" do
     it "does for named tuple with nilable fields (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_yaml(%({"y": "hello"}))
       tuple.should eq({x: nil, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
     it "does for named tuple with nilable fields and null (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_yaml(%({"y": "hello", "x": null}))
       tuple.should eq({x: nil, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
     it "does for named tuple with spaces in key (#10918)" do
       tuple = NamedTuple(a: Int32, "xyz b-23": Int32).from_yaml %{{"a": 1, "xyz b-23": 2}}
       tuple.should eq({a: 1, "xyz b-23": 2})
-      tuple.should be_a NamedTuple(a: Int32, "xyz b-23": Int32)
+      typeof(tuple).should eq(NamedTuple(a: Int32, "xyz b-23": Int32))
     end
 
     it "does for named tuple with spaces in key and quote char (#10918)" do
       tuple = NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32).from_yaml %{{"a": 1, "xyz \\"foo\\" b-23": 2}}
       tuple.should eq({a: 1, "xyz \"foo\" b-23": 2})
-      tuple.should be_a NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32)
+      typeof(tuple).should eq(NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32))
+    end
+
+    it "does for named tuple with file-private type" do
+      tuple = NamedTuple(a: FooPrivate).from_yaml %({"a": 1})
+      tuple.should eq({a: FooPrivate.new(1)})
+      typeof(tuple).should eq(NamedTuple(a: FooPrivate))
     end
 
     it "does for BigInt" do

@@ -96,6 +96,8 @@ module Crystal
         true
       when NonGenericClassType
         !self.struct?
+      when GenericClassType
+        !self.struct?
       when GenericClassInstanceType
         !self.struct?
       when VirtualType
@@ -548,8 +550,12 @@ module Crystal
     def allows_instance_vars?
       case self
       when program.object, program.value, program.struct,
+           program.reference, program.class_type,
            program.number, program.int, program.float,
-           PrimitiveType, program.reference
+           program.tuple, program.named_tuple,
+           program.pointer, program.static_array,
+           program.union, program.enum, program.proc,
+           PrimitiveType
         false
       else
         true
@@ -2313,6 +2319,13 @@ module Crystal
         type_var
       end
       return_type = types.pop
+
+      # Transform Proc(*T, Void) to Proc(*T, Nil) as Void has
+      # only a special meaning in Pointer(Void)
+      if return_type == @program.void
+        return_type = @program.nil_type
+      end
+
       instance = ProcInstanceType.new(program, types, return_type)
       generic_types[type_vars] = instance
       instance.after_initialize
@@ -2680,7 +2693,7 @@ module Crystal
     end
 
     delegate remove_typedef, pointer?, defs,
-      macros, reference_link?, parents, to: typedef
+      macros, reference_like?, parents, to: typedef
 
     def remove_indirection
       self

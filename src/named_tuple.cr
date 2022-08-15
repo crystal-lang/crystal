@@ -613,6 +613,6 @@ struct NamedTuple
   # NOTE: there should never be a need to call this method outside the standard library.
   private macro element_type(key)
     x = uninitialized self
-    x[{{ key.symbolize }}]
+    x[{{ key.id.symbolize }}]
   end
 end

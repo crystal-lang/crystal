@@ -78,5 +78,22 @@ describe Crystal::Repl::Interpreter do
         $? || "oops"
       CODE
     end
+
+    it "sets special var inside call inside block (#12250)" do
+      interpret(<<-CODE).should eq("hey")
+        class Object; def not_nil!; self; end; end
+
+        def foo
+          $? = "hey"
+        end
+
+        def bar
+          yield
+        end
+
+        bar { foo }
+        $? || "oops"
+      CODE
+    end
   end
 end

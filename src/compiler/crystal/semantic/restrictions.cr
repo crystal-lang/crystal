@@ -287,10 +287,10 @@ module Crystal
   end
 
   class Union
-    def restriction_of?(other : Path, owner)
-      # For a union to be considered before a path,
+    def restriction_of?(other, owner)
+      # For a union to be considered before another restriction,
       # all types in the union must be considered before
-      # that path.
+      # that restriction.
       # For example when using all subtypes of a parent type.
       types.all? &.restriction_of?(other, owner)
     end
@@ -439,7 +439,8 @@ module Crystal
     end
 
     def restrict(other : Self, context)
-      restrict(context.instantiated_type.instance_type, context)
+      self_type = context.self_restriction_type || context.instantiated_type
+      restrict(self_type.instance_type, context)
     end
 
     def restrict(other : TypeOf, context)
