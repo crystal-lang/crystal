@@ -1317,7 +1317,7 @@ class String
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
           byte = to_unsafe[i]
-          buffer[i] = byte < 0x80 ? byte.unsafe_chr.downcase.ord.to_u8! : byte
+          buffer[i] = 'A'.ord <= byte <= 'Z'.ord ? byte + 32 : byte
         end
         {@bytesize, @length}
       end
@@ -1353,7 +1353,7 @@ class String
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
           byte = to_unsafe[i]
-          buffer[i] = byte < 0x80 ? byte.unsafe_chr.upcase.ord.to_u8! : byte
+          buffer[i] = 'a'.ord <= byte <= 'z'.ord ? byte - 32 : byte
         end
         {@bytesize, @length}
       end
