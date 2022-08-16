@@ -144,7 +144,7 @@ describe "Complex" do
     end
 
     it "not-a-number" do
-      pos_nan = Float64::NAN
+      pos_nan = Math.copysign(Float64::NAN, 1)
       neg_nan = Math.copysign(Float64::NAN, -1)
 
       assert_complex_nan Complex.new(pos_nan, +0.0).sign, Complex.new(1, 1)
