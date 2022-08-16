@@ -59,7 +59,7 @@ describe "Complex" do
     Complex.new(+Float64::INFINITY, +Float64::INFINITY).to_s.should eq("Infinity + Infinityi")
     Complex.new(-Float64::INFINITY, -Float64::INFINITY).to_s.should eq("-Infinity - Infinityi")
 
-    pos_nan = Float64::NAN
+    pos_nan = Math.copysign(Float64::NAN, 1)
     neg_nan = Math.copysign(Float64::NAN, -1)
     Complex.new(pos_nan, pos_nan).to_s.should eq("NaN + NaNi")
     Complex.new(neg_nan, neg_nan).to_s.should eq("-NaN - NaNi")
@@ -75,7 +75,7 @@ describe "Complex" do
     Complex.new(+Float64::INFINITY, +Float64::INFINITY).inspect.should eq("(Infinity + Infinityi)")
     Complex.new(-Float64::INFINITY, -Float64::INFINITY).inspect.should eq("(-Infinity - Infinityi)")
 
-    pos_nan = Float64::NAN
+    pos_nan = Math.copysign(Float64::NAN, 1)
     neg_nan = Math.copysign(Float64::NAN, -1)
     Complex.new(pos_nan, pos_nan).inspect.should eq("(NaN + NaNi)")
     Complex.new(neg_nan, neg_nan).inspect.should eq("(-NaN - NaNi)")
