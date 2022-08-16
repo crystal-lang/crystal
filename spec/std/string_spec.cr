@@ -1857,124 +1857,6 @@ describe "String" do
     end
   end
 
-  it "does %" do
-    ("foo" % 1).should eq("foo")
-    ("foo %d" % 1).should eq("foo 1")
-    ("%d" % 123).should eq("123")
-    ("%+d" % 123).should eq("+123")
-    ("%+d" % -123).should eq("-123")
-    ("% d" % 123).should eq(" 123")
-    ("%i" % 123).should eq("123")
-    ("%+i" % 123).should eq("+123")
-    ("%+i" % -123).should eq("-123")
-    ("% i" % 123).should eq(" 123")
-    ("%20d" % 123).should eq("                 123")
-    ("%20d" % -123).should eq("                -123")
-    ("%20d" % 0).should eq("                   0")
-    ("%+20d" % 123).should eq("                +123")
-    ("%+20d" % -123).should eq("                -123")
-    ("%+20d" % 0).should eq("                  +0")
-    ("% 20d" % 123).should eq("                 123")
-    ("%020d" % 123).should eq("00000000000000000123")
-    ("%020d" % -123).should eq("0000000000000000-123")
-    ("%020d" % 0).should eq("00000000000000000000")
-    ("%+020d" % 123).should eq("+0000000000000000123")
-    ("%+020d" % -123).should eq("-0000000000000000123")
-    ("%+020d" % 0).should eq("+0000000000000000000")
-    ("% 020d" % 123).should eq(" 0000000000000000123")
-    ("% 020d" % 0).should eq(" 0000000000000000000")
-    ("%-d" % 123).should eq("123")
-    ("%-d" % 0).should eq("0")
-    ("%-20d" % 123).should eq("123                 ")
-    ("%-20d" % -123).should eq("-123                ")
-    ("%-20d" % 0).should eq("0                   ")
-    ("%-+20d" % 123).should eq("+123                ")
-    ("%-+20d" % -123).should eq("-123                ")
-    ("%-+20d" % 0).should eq("+0                  ")
-    ("%- 20d" % 123).should eq(" 123                ")
-    ("%- 20d" % -123).should eq("-123                ")
-    ("%- 20d" % 0).should eq(" 0                  ")
-    ("%s" % 'a').should eq("a")
-    ("%-s" % 'a').should eq("a")
-    ("%20s" % 'a').should eq("                   a")
-    ("%-20s" % 'a').should eq("a                   ")
-    ("%*s" % [10, 123]).should eq("       123")
-    ("%*s" % [-10, 123]).should eq("123       ")
-    ("%.5s" % "foo bar baz").should eq("foo b")
-    ("%.*s" % [5, "foo bar baz"]).should eq("foo b")
-    ("%*.*s" % [20, 5, "foo bar baz"]).should eq("               foo b")
-    ("%-*.*s" % [20, 5, "foo bar baz"]).should eq("foo b               ")
-
-    ("%%%d" % 1).should eq("%1")
-    ("foo %d bar %s baz %d goo" % [1, "hello", 2]).should eq("foo 1 bar hello baz 2 goo")
-
-    ("%b" % 123).should eq("1111011")
-    ("%+b" % 123).should eq("+1111011")
-    ("% b" % 123).should eq(" 1111011")
-    ("%-b" % 123).should eq("1111011")
-    ("%10b" % 123).should eq("   1111011")
-    ("%-10b" % 123).should eq("1111011   ")
-
-    ("%o" % 123).should eq("173")
-    ("%+o" % 123).should eq("+173")
-    ("% o" % 123).should eq(" 173")
-    ("%-o" % 123).should eq("173")
-    ("%6o" % 123).should eq("   173")
-    ("%-6o" % 123).should eq("173   ")
-
-    ("%x" % 123).should eq("7b")
-    ("%+x" % 123).should eq("+7b")
-    ("% x" % 123).should eq(" 7b")
-    ("%-x" % 123).should eq("7b")
-    ("%6x" % 123).should eq("    7b")
-    ("%-6x" % 123).should eq("7b    ")
-
-    ("%X" % 123).should eq("7B")
-    ("%+X" % 123).should eq("+7B")
-    ("% X" % 123).should eq(" 7B")
-    ("%-X" % 123).should eq("7B")
-    ("%6X" % 123).should eq("    7B")
-    ("%-6X" % 123).should eq("7B    ")
-
-    ("こんに%xちは" % 123).should eq("こんに7bちは")
-    ("こんに%Xちは" % 123).should eq("こんに7Bちは")
-
-    span = 1.second
-    ("%s" % span).should eq(span.to_s)
-  end
-
-  it "doesn't stop at null character when doing '%'" do
-    ("1\u{0}%i\u{0}3" % 2).should eq("1\u00002\u00003")
-  end
-
-  pending_win32 "does % with floats" do
-    ("%f" % 123).should eq("123.000000")
-
-    ("%g" % 123).should eq("123")
-    ("%12f" % 123.45).should eq("  123.450000")
-    ("%-12f" % 123.45).should eq("123.450000  ")
-    ("% f" % 123.45).should eq(" 123.450000")
-    ("%+f" % 123).should eq("+123.000000")
-    ("%012f" % 123).should eq("00123.000000")
-    ("%.f" % 1234.56).should eq("1235")
-    ("%.2f" % 1234.5678).should eq("1234.57")
-    ("%10.2f" % 1234.5678).should eq("   1234.57")
-    ("%*.2f" % [10, 1234.5678]).should eq("   1234.57")
-    ("%0*.2f" % [10, 1234.5678]).should eq("0001234.57")
-    ("%e" % 123.45).should eq("1.234500e+02")
-    ("%E" % 123.45).should eq("1.234500E+02")
-    ("%G" % 12345678.45).should eq("1.23457E+07")
-    ("%a" % 12345678.45).should eq("0x1.78c29ce666666p+23")
-    ("%A" % 12345678.45).should eq("0X1.78C29CE666666P+23")
-    ("%100.50g" % 123.45).should eq("                                                  123.4500000000000028421709430404007434844970703125")
-
-    ("%.2f" % 2.536_f32).should eq("2.54")
-    ("%0*.*f" % [10, 2, 2.536_f32]).should eq("0000002.54")
-    expect_raises(ArgumentError, "Expected dynamic value '*' to be an Int - \"not a number\" (String)") do
-      "%*f" % ["not a number", 2.536_f32]
-    end
-  end
-
   it "escapes chars" do
     "\a"[0].should eq('\a')
     "\b"[0].should eq('\b')
@@ -2391,15 +2273,9 @@ describe "String" do
     end
   end
 
-  it "uses sprintf from top-level" do
-    sprintf("Hello %d world", 123).should eq("Hello 123 world")
-    sprintf("Hello %d world", [123]).should eq("Hello 123 world")
-  end
-
-  pending_win32 "formats floats (#1562)" do
-    sprintf("%12.2f %12.2f %6.2f %.2f" % {2.0, 3.0, 4.0, 5.0}).should eq("        2.00         3.00   4.00 5.00")
-
-    sprintf("%f", 1e15).should eq("1000000000000000.000000")
+  it "does %" do
+    ("Hello %d world" % 123).should eq("Hello 123 world")
+    ("Hello %d world" % [123]).should eq("Hello 123 world")
   end
 
   it "does each_char" do
@@ -2522,58 +2398,6 @@ describe "String" do
       "これ".byte_index_to_char_index(6).should eq(2)
       "これ".byte_index_to_char_index(7).should be_nil
       "これ".byte_index_to_char_index(1).should be_nil
-    end
-  end
-
-  context "%" do
-    it "substitutes one placeholder" do
-      res = "change %{this}" % {"this" => "nothing"}
-      res.should eq "change nothing"
-
-      res = "change %{this}" % {this: "nothing"}
-      res.should eq "change nothing"
-    end
-
-    it "substitutes multiple placeholder" do
-      res = "change %{this} and %{more}" % {"this" => "nothing", "more" => "something"}
-      res.should eq "change nothing and something"
-
-      res = "change %{this} and %{more}" % {this: "nothing", more: "something"}
-      res.should eq "change nothing and something"
-    end
-
-    it "throws an error when the key is not found" do
-      expect_raises KeyError do
-        "change %{this}" % {"that" => "wrong key"}
-      end
-
-      expect_raises KeyError do
-        "change %{this}" % {that: "wrong key"}
-      end
-    end
-
-    it "raises if expecting hash or named tuple but not given" do
-      expect_raises(ArgumentError, "One hash or named tuple required") do
-        "change %{this}" % "this"
-      end
-    end
-
-    it "raises on unbalanced curly" do
-      expect_raises(ArgumentError, "Malformed name - unmatched parenthesis") do
-        "change %{this" % {"this" => 1}
-      end
-    end
-
-    it "doesn't raise on balanced curly with null byte" do
-      ("change %{this\u{0}}" % {"this\u{0}" => 1}).should eq("change 1")
-    end
-
-    it "applies formatting to %<...> placeholder" do
-      res = "change %<this>.2f" % {"this" => 23.456}
-      res.should eq "change 23.46"
-
-      res = "change %<this>.2f" % {this: 23.456}
-      res.should eq "change 23.46"
     end
   end
 
