@@ -72,7 +72,7 @@ private class SimpleIOMemory < IO
 
   private def resize_to_capacity(capacity)
     @capacity = capacity
-    @buffer = @buffer.realloc(@capacity)
+    @buffer = GC.realloc(@buffer, @capacity)
   end
 end
 
