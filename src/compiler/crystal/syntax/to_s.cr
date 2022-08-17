@@ -1132,7 +1132,7 @@ module Crystal
       if node.args.size > 0
         @str << '('
         node.args.join(@str, ", ") do |arg|
-          if arg_name = arg.name
+          if arg_name = arg.name.presence
             @str << arg_name << " : "
           end
           arg.restriction.not_nil!.accept self
@@ -1519,9 +1519,10 @@ module Crystal
 
     def accept_with_indent(node : Expressions)
       with_indent do
+        append_indent if node.keyword.begin?
         node.accept self
       end
-      newline if node.keyword.paren?
+      newline unless node.keyword.none?
     end
 
     def accept_with_indent(node : Nop)

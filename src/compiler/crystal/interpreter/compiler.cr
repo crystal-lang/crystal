@@ -380,6 +380,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : TupleLiteral)
+    unless @wants_value
+      node.elements.each do |element|
+        discard_value element
+      end
+
+      return false
+    end
+
     type = node.type.as(TupleInstanceType)
 
     # A tuple potentially has the values packed (unaligned).
@@ -412,6 +420,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : NamedTupleLiteral)
+    unless @wants_value
+      node.entries.each do |entry|
+        discard_value entry.value
+      end
+
+      return false
+    end
+
     type = node.type.as(NamedTupleInstanceType)
 
     # This logic is similar to TupleLiteral.
@@ -2244,7 +2260,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       target_def_arg = target_def_args[i]
       target_def_var_type = target_def.vars.not_nil![target_def_arg.name].type
 
-      compile_call_arg(arg, arg_type, target_def_var_type)
+      compile_call_arg(arg, arg_type, target_def_arg.type, target_def_var_type)
 
       i += 1
     end
@@ -2291,7 +2307,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   end
 
-  private def compile_call_arg(arg, arg_type, target_def_var_type)
+  private def compile_call_arg(arg, arg_type, target_def_arg_type, target_def_var_type)
     # Check autocasting from symbol to enum
     if arg.is_a?(SymbolLiteral) && target_def_var_type.is_a?(EnumType)
       symbol_name = arg.value.underscore
@@ -2318,7 +2334,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     request_value(arg)
 
-    # We need to cast the argument to the target_def variable
+    # We first cast the argument to the def's arg type,
+    # which is the external methods' type.
+    downcast arg, arg_type, target_def_arg_type
+
+    # Then we need to cast the argument to the target_def variable
     # corresponding to the argument. If for example we have this:
     #
     # ```
@@ -2331,7 +2351,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     #
     # Then the actual type of `x` inside `foo` is (Int32 | Nil),
     # and we must cast `1` to it.
-    upcast arg, arg_type, target_def_var_type
+    upcast arg, target_def_arg_type, target_def_var_type
   end
 
   private def compile_pointerof_node(obj : Var, owner : Type) : Nil

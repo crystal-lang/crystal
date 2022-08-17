@@ -54,5 +54,20 @@ describe Crystal::Repl::Interpreter do
         2
       CODE
     end
+
+    it "can downcast Proc(T) to Proc(Nil)" do
+      interpret(<<-CODE)
+        class Foo
+          def initialize(@proc : ->)
+          end
+
+          def call
+            @proc.call
+          end
+        end
+
+        Foo.new(->{ 1 }).call
+        CODE
+    end
   end
 end

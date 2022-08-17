@@ -217,23 +217,33 @@ end
 # Flag     | Applies to    | Meaning
 # ---------+---------------+--------------------------------------------
 # space    | bdiouxX       | Add a leading space character to
-#          | aAeEfgG       | non-negative numbers.
-#          | (numeric fmt) | For o, x, X, b, use
-#          |               | a minus sign with absolute value for
-#          |               | negative values.
+#          | aAeEfgG       | non-negative numbers. Has no effect if the plus
+#          | (numeric fmt) | flag is also given.
+# ---------+---------------+-----------------------------------------
+# #        | boxX          | Use an alternative format.
+#          | aAeEfgG       | For x, X, b, prefix any non-zero result with
+#          |               | 0x, 0X, or 0b respectively.
+#          |               | For o, prefix any non-zero result with 0o. Note
+#          |               | that this prefix is different from C and Ruby.
+#          |               | For a, A, e, E, f, g, G,
+#          |               | force a decimal point to be added,
+#          |               | even if no digits follow.
+#          |               | For g and G, do not remove trailing zeros.
 # ---------+---------------+--------------------------------------------
 # +        | bdiouxX       | Add a leading plus sign to non-negative
 #          | aAeEfgG       | numbers.
-#          | (numeric fmt) | For o, x, X, b, use
-#          |               | a minus sign with absolute value for
-#          |               | negative values.
+#          | (numeric fmt) |
 # ---------+---------------+--------------------------------------------
 # -        | all           | Left-justify the result of this conversion.
 # ---------+---------------+--------------------------------------------
-# 0 (zero) | bdiouxX       | Pad with zeros, not spaces.
-#          | aAeEfgG       | For o, x, X, b, radix-1
-#          | (numeric fmt) | is used for negative numbers formatted as
-#          |               | complements.
+# 0 (zero) | bdiouxX       | Pad with zeros, not spaces. Has no effect if the
+#          | aAeEfgG       | number is left-justified, or a precision is given
+#          | (numeric fmt) | to an integer field type.
+# ---------+---------------+-----------------------------------------
+# *        | all           | Use the next argument as the field width or
+#          |               | precision. If width is negative, set the minus flag
+#          |               | and use the argument's absolute value as field
+#          |               | width. If precision is negative, it is ignored.
 # ```
 #
 # Examples of flags:
@@ -263,7 +273,7 @@ end
 # sprintf "% x", 123  # => " 7b"
 # sprintf "% x", -123 # => "-7b"
 # sprintf "%X", 123   # => "7B"
-# sprintf "%#X", -123 # => "-7B"
+# sprintf "%#X", -123 # => "-0X7B"
 # ```
 #
 # Binary number conversion:
@@ -277,6 +287,7 @@ end
 # sprintf "%+ b", 123  # => "+ 1111011"
 # sprintf "% b", -123  # => "-1111011"
 # sprintf "%+ b", -123 # => "-1111011"
+# sprintf "%#b", 123   # => "0b1111011"
 # ```
 #
 # Floating point conversion:
@@ -310,8 +321,8 @@ end
 # sprintf "%-20d", 123  # => "123                 "
 # sprintf "%-+20d", 123 # => "+123                "
 # sprintf "%- 20d", 123 # => " 123                "
-# sprintf "%020x", -123 # => "00000000000000000-7b"
-# sprintf "%020X", -123 # => "00000000000000000-7B"
+# sprintf "%020x", -123 # => "-000000000000000007b"
+# sprintf "%020X", -123 # => "-000000000000000007B"
 # ```
 #
 # For numeric fields, the precision controls the number of decimal places
@@ -325,18 +336,18 @@ end
 # Precision for `d`, `o`, `x` and `b` is
 # minimum number of digits:
 # ```
-# sprintf "%20.8d", 123   # => "                 123"
-# sprintf "%020.8d", 123  # => "00000000000000000123"
-# sprintf "%20.8o", 123   # => "                 173"
-# sprintf "%020.8o", 123  # => "00000000000000000173"
-# sprintf "%20.8x", 123   # => "                  7b"
-# sprintf "%020.8x", 123  # => "0000000000000000007b"
-# sprintf "%20.8b", 123   # => "             1111011"
-# sprintf "%20.8d", -123  # => "                -123"
-# sprintf "%020.8d", -123 # => "0000000000000000-123"
-# sprintf "%20.8o", -123  # => "                -173"
-# sprintf "%20.8x", -123  # => "                 -7b"
-# sprintf "%20.8b", -11   # => "               -1011"
+# sprintf "%20.8d", 123   # => "            00000123"
+# sprintf "%020.8d", 123  # => "            00000123"
+# sprintf "%20.8o", 123   # => "            00000173"
+# sprintf "%020.8o", 123  # => "            00000173"
+# sprintf "%20.8x", 123   # => "            0000007b"
+# sprintf "%020.8x", 123  # => "            0000007b"
+# sprintf "%20.8b", 123   # => "            01111011"
+# sprintf "%20.8d", -123  # => "           -00000123"
+# sprintf "%020.8d", -123 # => "           -00000123"
+# sprintf "%20.8o", -123  # => "           -00000173"
+# sprintf "%20.8x", -123  # => "           -0000007b"
+# sprintf "%20.8b", -11   # => "           -00001011"
 # ```
 #
 # Precision for `e` is number of digits after the decimal point:
