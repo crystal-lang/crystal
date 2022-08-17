@@ -41,6 +41,7 @@ lib LibC
   fun SetFileAttributesW(lpFileName : LPWSTR, dwFileAttributes : DWORD) : BOOL
   fun GetFileAttributesExW(lpFileName : LPWSTR, fInfoLevelId : GET_FILEEX_INFO_LEVELS, lpFileInformation : Void*) : BOOL
 
+  CREATE_ALWAYS = 2
   OPEN_EXISTING = 3
 
   FILE_ATTRIBUTE_NORMAL      =       0x80
@@ -50,9 +51,15 @@ lib LibC
   FILE_SHARE_WRITE  = 0x2
   FILE_SHARE_DELETE = 0x4
 
+  GENERIC_READ  = 0x80000000
+  GENERIC_WRITE = 0x40000000
+
   fun CreateFileW(lpFileName : LPWSTR, dwDesiredAccess : DWORD, dwShareMode : DWORD,
                   lpSecurityAttributes : SECURITY_ATTRIBUTES*, dwCreationDisposition : DWORD,
                   dwFlagsAndAttributes : DWORD, hTemplateFile : HANDLE) : HANDLE
+
+  fun _open_osfhandle(osfhandle : HANDLE, flags : LibC::Int) : LibC::Int
+  fun _setmode(fd : LibC::Int, mode : LibC::Int) : LibC::Int
 
   fun ReadFile(hFile : HANDLE, lpBuffer : Void*, nNumberOfBytesToRead : DWORD, lpNumberOfBytesRead : DWORD*, lpOverlapped : OVERLAPPED*) : BOOL
 

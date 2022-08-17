@@ -30,11 +30,27 @@ module Crystal::System::File
   def self.mktemp(prefix : String?, suffix : String?, dir : String) : {LibC::Int, String}
     path = "#{dir}#{::File::SEPARATOR}#{prefix}.#{::Random::Secure.hex}#{suffix}"
 
-    mode = LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL | LibC::O_BINARY | LibC::O_NOINHERIT
-    fd = LibC._wopen(to_windows_path(path), mode, ::File::DEFAULT_CREATE_PERMISSIONS)
+    handle = LibC.CreateFileW(
+      to_windows_path(path),
+      LibC::GENERIC_READ | LibC::GENERIC_WRITE,
+      LibC::FILE_SHARE_READ | LibC::FILE_SHARE_WRITE | LibC::FILE_SHARE_DELETE, # UNIX semantics
+      nil,
+      LibC::CREATE_ALWAYS,
+      LibC::FILE_ATTRIBUTE_NORMAL,
+      LibC::HANDLE.null
+    )
+
+    if handle == LibC::INVALID_HANDLE_VALUE
+       raise ::File::Error.from_winerror("Error creating temporary file", file: path)
+    end
+
+    fd = LibC._open_osfhandle(handle, LibC::O_CREAT | LibC::O_TRUNC | LibC::O_RDWR | LibC::O_BINARY)
+
     if fd == -1
       raise ::File::Error.from_errno("Error creating temporary file", file: path)
     end
+
+    LibC._setmode fd, LibC::O_BINARY
 
     {fd, path}
   end
