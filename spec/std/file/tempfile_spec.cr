@@ -50,6 +50,20 @@ describe File do
       tempfile.try &.delete
     end
 
+    it "allows deleting while open" do
+      tempfile = File.tempfile
+      path = tempfile.path
+      tempfile.delete
+
+      File.exists?(path).should be_false
+    ensure
+      tempfile.try do |tf|
+        if File.exists? tf.path
+          tf.delete
+        end
+      end
+    end
+
     it "accepts single suffix argument" do
       tempfile = File.tempfile ".bar"
       tempfile.print "Hello!"
