@@ -19,6 +19,11 @@ module Float::Printer
   def print(v : Float64 | Float32, io : IO, *, point_range = -3..15) : Nil
     d = IEEE.to_uint(v)
 
+    if IEEE.nan?(d)
+      io << "NaN"
+      return
+    end
+
     if IEEE.sign(d) < 0
       io << '-'
       v = -v
@@ -27,11 +32,8 @@ module Float::Printer
     if v == 0.0
       io << "0.0"
     elsif IEEE.special?(d)
-      if IEEE.inf?(d)
-        io << "Infinity"
-      else
-        io << "NaN"
-      end
+      # not-a-numbers already handled above
+      io << "Infinity"
     else
       internal(v, io, point_range)
     end
