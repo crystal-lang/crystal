@@ -31,8 +31,7 @@ module Float::Printer
 
     if v == 0.0
       io << "0.0"
-    elsif IEEE.special?(d)
-      # not-a-numbers already handled above
+    elsif IEEE.inf?(d)
       io << "Infinity"
     else
       internal(v, io, point_range)
