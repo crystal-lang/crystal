@@ -434,5 +434,85 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "gets ivar of self closured struct (#12341)" do
+      interpret(<<-CODE).should eq(860)
+        def closure(&block : -> Int32)
+          block
+        end
+
+        struct Foo
+          @a = 10
+          @b = 20
+          @c = 30
+          @d = 40
+
+          def foo
+            block = closure do
+              (@a &+ @b) &* @c &- @d
+            end
+            block.call
+          end
+        end
+
+        foo = Foo.new
+        foo.foo
+      CODE
+    end
+
+    it "sets ivar of self closured struct (#12341)" do
+      interpret(<<-CODE).should eq(1) # Yes, not 2. A closured struct's value can't change.
+        def closure(&block)
+          block
+        end
+
+        struct Foo
+          @count = 1
+
+          def foo
+            closure do
+              @count = 2
+            end
+          end
+
+          def count
+            @count
+          end
+        end
+
+        foo = Foo.new
+        foo.foo
+        foo.count
+      CODE
+    end
+
+    it "reads self closured struct (#12341)" do
+      interpret(<<-CODE).should eq(860)
+        def closure(&block : -> _)
+          block
+        end
+
+        struct Foo
+          @a = 10
+          @b = 20
+          @c = 30
+          @d = 40
+
+          def foo
+            closure do
+              self
+            end.call
+          end
+
+          def value
+            (@a &+ @b) &* @c &- @d
+          end
+        end
+
+        foo = Foo.new
+        bar = foo.foo
+        bar.value
+      CODE
+    end
   end
 end

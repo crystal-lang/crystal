@@ -15,9 +15,9 @@ module Crystal::System::Dir
       name = String.new(entry.value.d_name.to_unsafe)
 
       dir = case entry.value.d_type
-            when LibC::DT_DIR                    then true
-            when LibC::DT_UNKNOWN, LibC::DT_LINK then nil
-            else                                      false
+            when LibC::DT_DIR                   then true
+            when LibC::DT_UNKNOWN, LibC::DT_LNK then nil
+            else                                     false
             end
       Entry.new(name, dir)
     elsif Errno.value != Errno::NONE

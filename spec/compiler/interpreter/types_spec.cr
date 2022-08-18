@@ -38,6 +38,25 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "does class method on virtual metaclass casted to generic metaclass (#12302)" do
+      interpret(<<-CODE).should eq(42)
+        class A
+          def self.foo
+            1
+          end
+        end
+
+        class B(T) < A
+          def self.foo
+            42
+          end
+        end
+
+        b = B(String).new.as(A)
+        b.class.foo
+      CODE
+    end
+
     it "discards class for virtual_type type" do
       interpret(<<-CODE).should eq(2)
           class Foo; end

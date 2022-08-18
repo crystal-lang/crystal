@@ -881,6 +881,32 @@ struct Int8
     Intrinsics.counttrailing8(self, false)
   end
 
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl8(self, self, n.to_i8!).to_i8!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr8(self, self, n.to_i8!).to_i8!
+  end
+
   def clone
     self
   end
@@ -930,6 +956,32 @@ struct Int16
 
   def trailing_zeros_count
     Intrinsics.counttrailing16(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl16(self, self, n.to_i16!).to_i16!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr16(self, self, n.to_i16!).to_i16!
   end
 
   def clone
@@ -983,6 +1035,32 @@ struct Int32
     Intrinsics.counttrailing32(self, false)
   end
 
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl32(self, self, n.to_i32!).to_i32!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr32(self, self, n.to_i32!).to_i32!
+  end
+
   def clone
     self
   end
@@ -1032,6 +1110,32 @@ struct Int64
 
   def trailing_zeros_count
     Intrinsics.counttrailing64(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl64(self, self, n.to_i64!).to_i64!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr64(self, self, n.to_i64!).to_i64!
   end
 
   def clone
@@ -1085,6 +1189,32 @@ struct Int128
 
   def trailing_zeros_count
     Intrinsics.counttrailing128(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl128(self, self, n.to_i128!).to_i128!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr128(self, self, n.to_i128!).to_i128!
   end
 
   def clone
@@ -1142,6 +1272,32 @@ struct UInt8
     Intrinsics.counttrailing8(self, false)
   end
 
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl8(self, self, n.to_u8!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr8(self, self, n.to_u8!)
+  end
+
   def clone
     self
   end
@@ -1195,6 +1351,32 @@ struct UInt16
 
   def trailing_zeros_count
     Intrinsics.counttrailing16(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl16(self, self, n.to_u16!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr16(self, self, n.to_u16!)
   end
 
   def clone
@@ -1252,6 +1434,32 @@ struct UInt32
     Intrinsics.counttrailing32(self, false)
   end
 
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl32(self, self, n.to_u32!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr32(self, self, n.to_u32!)
+  end
+
   def clone
     self
   end
@@ -1305,6 +1513,32 @@ struct UInt64
 
   def trailing_zeros_count
     Intrinsics.counttrailing64(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl64(self, self, n.to_u64!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr64(self, self, n.to_u64!)
   end
 
   def clone
@@ -1362,6 +1596,32 @@ struct UInt128
 
   def trailing_zeros_count
     Intrinsics.counttrailing128(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl128(self, self, n.to_u128!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr128(self, self, n.to_u128!)
   end
 
   def clone

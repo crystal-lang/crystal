@@ -461,6 +461,36 @@ class Crystal::Repl::Compiler
     when "interpreter_intrinsics_bitreverse64"
       accept_call_args(node)
       interpreter_intrinsics_bitreverse64(node: node)
+    when "interpreter_intrinsics_fshl8"
+      accept_call_args(node)
+      interpreter_intrinsics_fshl8(node: node)
+    when "interpreter_intrinsics_fshl16"
+      accept_call_args(node)
+      interpreter_intrinsics_fshl16(node: node)
+    when "interpreter_intrinsics_fshl32"
+      accept_call_args(node)
+      interpreter_intrinsics_fshl32(node: node)
+    when "interpreter_intrinsics_fshl64"
+      accept_call_args(node)
+      interpreter_intrinsics_fshl64(node: node)
+    when "interpreter_intrinsics_fshl128"
+      accept_call_args(node)
+      interpreter_intrinsics_fshl128(node: node)
+    when "interpreter_intrinsics_fshr8"
+      accept_call_args(node)
+      interpreter_intrinsics_fshr8(node: node)
+    when "interpreter_intrinsics_fshr16"
+      accept_call_args(node)
+      interpreter_intrinsics_fshr16(node: node)
+    when "interpreter_intrinsics_fshr32"
+      accept_call_args(node)
+      interpreter_intrinsics_fshr32(node: node)
+    when "interpreter_intrinsics_fshr64"
+      accept_call_args(node)
+      interpreter_intrinsics_fshr64(node: node)
+    when "interpreter_intrinsics_fshr128"
+      accept_call_args(node)
+      interpreter_intrinsics_fshr128(node: node)
     when "interpreter_libm_ceil_f32"
       accept_call_args(node)
       libm_ceil_f32 node: node

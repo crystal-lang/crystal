@@ -422,5 +422,18 @@ describe Crystal::Repl::Interpreter do
         a_value - b_value
       CODE
     end
+
+    it "casts multidispatch argument to the def's arg type" do
+      interpret(<<-CODE)
+        def foo(a : String) forall T
+        end
+
+        def foo(a)
+          a
+        end
+
+        foo("b" || nil)
+      CODE
+    end
   end
 end

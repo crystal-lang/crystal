@@ -410,13 +410,17 @@ describe IO do
       str.read_fully?(slice).should be_nil
     end
 
-    it "raises if trying to read to an IO not opened for reading" do
-      IO.pipe do |r, w|
-        expect_raises(IO::Error, "File not open for reading") do
-          w.gets
+    # pipe(2) returns bidirectional file descriptors on FreeBSD,
+    # gate this test behind the platform flag.
+    {% unless flag?(:freebsd) %}
+      it "raises if trying to read to an IO not opened for reading" do
+        IO.pipe do |r, w|
+          expect_raises(IO::Error, "File not open for reading") do
+            w.gets
+          end
         end
       end
-    end
+    {% end %}
 
     describe ".same_content?" do
       it "compares two ios, one way (true)" do
@@ -531,16 +535,20 @@ describe IO do
       io.read_byte.should be_nil
     end
 
-    it "raises if trying to write to an IO not opened for writing" do
-      IO.pipe do |r, w|
-        # unless sync is used the flush on close triggers the exception again
-        r.sync = true
+    # pipe(2) returns bidirectional file descriptors on FreeBSD,
+    # gate this test behind the platform flag.
+    {% unless flag?(:freebsd) %}
+      it "raises if trying to write to an IO not opened for writing" do
+        IO.pipe do |r, w|
+          # unless sync is used the flush on close triggers the exception again
+          r.sync = true
 
-        expect_raises(IO::Error, "File not open for writing") do
-          r << "hello"
+          expect_raises(IO::Error, "File not open for writing") do
+            r << "hello"
+          end
         end
       end
-    end
+    {% end %}
   end
 
   {% unless flag?(:without_iconv) %}
@@ -689,7 +697,7 @@ describe IO do
         it "says invalid byte sequence" do
           io = SimpleIOMemory.new(Slice.new(1, 255_u8))
           io.set_encoding("EUC-JP")
-          expect_raises ArgumentError, {% if flag?(:musl) %}"Incomplete multibyte sequence"{% else %}"Invalid multibyte sequence"{% end %} do
+          expect_raises ArgumentError, {% if flag?(:musl) || flag?(:freebsd) %}"Incomplete multibyte sequence"{% else %}"Invalid multibyte sequence"{% end %} do
             io.read_char
           end
         end
@@ -958,8 +966,12 @@ describe IO do
     end
   end
 
-  {% unless flag?(:win32) %}
-    typeof(STDIN.cooked { })
-    typeof(STDIN.cooked!)
-  {% end %}
+  typeof(STDIN.noecho { })
+  typeof(STDIN.noecho!)
+  typeof(STDIN.echo { })
+  typeof(STDIN.echo!)
+  typeof(STDIN.cooked { })
+  typeof(STDIN.cooked!)
+  typeof(STDIN.raw { })
+  typeof(STDIN.raw!)
 end
