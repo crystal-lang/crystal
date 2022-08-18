@@ -45,6 +45,32 @@ lib LibC
     GetFileExMaxInfoLevel
   end
 
+  enum FILE_INFO_BY_HANDLE_CLASS
+    FileBasicInfo
+    FileStandardInfo
+    FileNameInfo
+    FileRenameInfo
+    FileDispositionInfo
+    FileAllocationInfo
+    FileEndOfFileInfo
+    FileStreamInfo
+    FileCompressionInfo
+    FileAttributeTagInfo
+    FileIdBothDirectoryInfo
+    FileIdBothDirectoryRestartInfo
+    FileIoPriorityHintInfo
+    FileRemoteProtocolInfo
+    FileFullDirectoryInfo
+    FileFullDirectoryRestartInfo
+    FileStorageInfo
+    FileAlignmentInfo
+    FileIdInfo
+    FileIdExtdDirectoryInfo
+    FileIdExtdDirectoryRestartInfo
+    FileDispositionInfoEx
+    MaximumFileInfoByHandlesClass
+end
+
   STATUS_PENDING = 0x103
   STILL_ACTIVE   = STATUS_PENDING
 end

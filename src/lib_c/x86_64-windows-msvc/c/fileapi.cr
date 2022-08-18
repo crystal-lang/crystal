@@ -37,6 +37,7 @@ lib LibC
   end
 
   fun GetFileInformationByHandle(hFile : HANDLE, lpFileInformation : BY_HANDLE_FILE_INFORMATION*) : BOOL
+  fun SetFileInformationByHandle(hFile : HANDLE, fileInformationClass : FILE_INFO_BY_HANDLE_CLASS, lpFileInformation : Void*, dwBufferSize : DWORD) : BOOL
   fun GetFileAttributesW(lpFileName : LPWSTR) : DWORD
   fun SetFileAttributesW(lpFileName : LPWSTR, dwFileAttributes : DWORD) : BOOL
   fun GetFileAttributesExW(lpFileName : LPWSTR, fInfoLevelId : GET_FILEEX_INFO_LEVELS, lpFileInformation : Void*) : BOOL
@@ -46,6 +47,7 @@ lib LibC
 
   FILE_ATTRIBUTE_NORMAL      =       0x80
   FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
+  FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000
 
   FILE_SHARE_READ   = 0x1
   FILE_SHARE_WRITE  = 0x2

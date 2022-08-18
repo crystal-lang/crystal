@@ -41,4 +41,8 @@ lib LibC
   MOVEFILE_FAIL_IF_NOT_TRACKABLE = 0x20_u32
 
   fun MoveFileExW(lpExistingFileName : LPWSTR, lpNewFileName : LPWSTR, dwFlags : DWORD) : BOOL
+
+  struct FileDispositionInfo
+    delete_file : BOOL
+  end
 end

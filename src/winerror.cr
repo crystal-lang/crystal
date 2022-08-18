@@ -355,6 +355,7 @@ enum WinError : UInt32
   ERROR_DELETE_PENDING                                          =        303_u32
   ERROR_MR_MID_NOT_FOUND                                        =        317_u32
   ERROR_SCOPE_NOT_FOUND                                         =        318_u32
+  ERROR_DIRECTORY_NOT_SUPPORTED                                 =        336_u32
   ERROR_INVALID_ADDRESS                                         =        487_u32
   ERROR_ARITHMETIC_OVERFLOW                                     =        534_u32
   ERROR_PIPE_CONNECTED                                          =        535_u32

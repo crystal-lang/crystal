@@ -47,7 +47,7 @@ module Crystal::System::File
     fd = LibC._open_osfhandle(handle, LibC::O_CREAT | LibC::O_TRUNC | LibC::O_RDWR | LibC::O_BINARY)
 
     if fd == -1
-      raise ::File::Error.from_errno("Error creating temporary file", file: path)
+      raise ::File::Error.from_winerror("Error creating temporary file", file: path)
     end
 
     LibC._setmode fd, LibC::O_BINARY
@@ -184,13 +184,53 @@ module Crystal::System::File
   end
 
   def self.delete(path : String, *, raise_on_missing : Bool) : Bool
-    if LibC._wunlink(to_windows_path(path)) == 0
-      true
-    elsif !raise_on_missing && Errno.value == Errno::ENOENT
-      false
-    else
-      raise ::File::Error.from_errno("Error deleting file", file: path)
+    handle = LibC.CreateFileW(
+      to_windows_path(path),
+      LibC::FILE_READ_ATTRIBUTES | LibC::FILE_WRITE_ATTRIBUTES | LibC::DELETE,
+      LibC::FILE_SHARE_READ | LibC::FILE_SHARE_WRITE | LibC::FILE_SHARE_DELETE, # UNIX semantics
+      nil,
+      LibC::OPEN_EXISTING,
+      LibC::FILE_FLAG_OPEN_REPARSE_POINT | LibC::FILE_FLAG_BACKUP_SEMANTICS,
+      LibC::HANDLE.null
+    )
+
+    if handle == LibC::INVALID_HANDLE_VALUE
+       raise ::File::Error.from_winerror("Error deleting file", file: path)
     end
+
+    if LibC.GetFileInformationByHandle(handle, out file_info) == 0
+      LibC.CloseHandle handle
+      raise ::File::Error.from_winerror("Error deleting file", file: path)
+    end
+
+    if file_info.dwFileAttributes & LibC::FILE_ATTRIBUTE_DIRECTORY != 0
+      LibC.CloseHandle handle
+      raise ::File::Error.from_os_error("Error deleting file", WinError::ERROR_DIRECTORY_NOT_SUPPORTED, file: path)
+    end
+
+    disposition = LibC::FileDispositionInfo.new
+    disposition.delete_file = true
+
+    status = LibC.SetFileInformationByHandle(
+      handle,
+      LibC::FILE_INFO_BY_HANDLE_CLASS::FileDispositionInfo,
+      pointerof(disposition).as(Void*),
+      sizeof(LibC::FileDispositionInfo)
+    )
+
+    if status == 0
+      LibC.CloseHandle handle
+
+      if !raise_on_missing && Errno.value = Errno::ENOENT
+        return false
+      end
+
+       raise ::File::Error.from_winerror("Error deleting file", file: path)
+    end
+
+    LibC.CloseHandle handle
+
+    true
   end
 
   def self.real_path(path : String) : String
