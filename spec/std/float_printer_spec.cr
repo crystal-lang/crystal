@@ -61,7 +61,7 @@ describe "#print Float64" do
   it { test_str "Infinity" }
 
   it { test_pair 0x7ff8000000000000_u64, "NaN" }
-  it { test_pair 0xfff8000000000000_u64, "-NaN" }
+  it { test_pair 0xfff8000000000000_u64, "NaN" }
 
   it { test_str "0.01" }
   it { test_str "0.1" }
@@ -127,7 +127,7 @@ describe "#print Float32" do
   it { test_pair Float32::INFINITY, "Infinity" }
   it { test_pair -Float32::INFINITY, "-Infinity" }
   it { test_pair 0x7fc00000_u32, "NaN" }
-  it { test_pair 0xffc80000_u32, "-NaN" }
+  it { test_pair 0xffc80000_u32, "NaN" }
   it { test_pair 0.000001_f32, "1.0e-6" }
   it { test_pair -0.0001_f32, "-0.0001" }
   it { test_pair -0.00001_f32, "-1.0e-5" }
