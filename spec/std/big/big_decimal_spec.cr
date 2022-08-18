@@ -109,6 +109,74 @@ describe BigDecimal do
     expect_raises(InvalidBigDecimalException) do
       BigDecimal.new("1.2a")
     end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1ee1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("e+e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1e1e")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1 e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("..e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("-..e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("e+5")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new(".e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new(".e+1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("-.e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1e.")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1e0.1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1e+")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1.1e-")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("-")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1.0e")
+    end
   end
 
   it "performs arithmetic with bigdecimals" do
@@ -219,32 +287,32 @@ describe BigDecimal do
   end
 
   it "can be converted from other types" do
-    1.to_big_d.should eq (BigDecimal.new(1))
-    "1.5".to_big_d.should eq (BigDecimal.new(15, 1))
-    "+1.5".to_big_d.should eq (BigDecimal.new(15, 1))
-    BigInt.new(15).to_big_d.should eq (BigDecimal.new(15, 0))
-    1.5.to_big_d.should eq (BigDecimal.new(15, 1))
-    1.5.to_big_f.to_big_d.should eq (BigDecimal.new(15, 1))
+    1.to_big_d.should eq(BigDecimal.new(1))
+    "1.5".to_big_d.should eq(BigDecimal.new(15, 1))
+    "+1.5".to_big_d.should eq(BigDecimal.new(15, 1))
+    BigInt.new(15).to_big_d.should eq(BigDecimal.new(15, 0))
+    1.5.to_big_d.should eq(BigDecimal.new(15, 1))
+    1.5.to_big_f.to_big_d.should eq(BigDecimal.new(15, 1))
     1.5.to_big_r.to_big_d.should eq(BigDecimal.new(15, 1))
   end
 
   it "can be converted from scientific notation" do
-    "10.01e1".to_big_d.should eq (BigDecimal.new("100.1"))
-    "10.01e-1".to_big_d.should eq (BigDecimal.new("1.001"))
-    "6.033e2".to_big_d.should eq (BigDecimal.new("603.3"))
-    "603.3e-2".to_big_d.should eq (BigDecimal.new("6.033"))
-    "-0.123e12".to_big_d.should eq (BigDecimal.new("-123000000000"))
-    "0.123e12".to_big_d.should eq (BigDecimal.new("123000000000"))
-    "0.123e+12".to_big_d.should eq (BigDecimal.new("123000000000"))
-    "-0.123e-7".to_big_d.should eq (BigDecimal.new("-0.0000000123"))
-    "-0.1e-7".to_big_d.should eq (BigDecimal.new("-0.00000001"))
-    "0.1e-7".to_big_d.should eq (BigDecimal.new("0.00000001"))
-    "1.0e-8".to_big_d.should eq (BigDecimal.new("0.00000001"))
-    "10e-8".to_big_d.should eq (BigDecimal.new("0.0000001"))
-    "1.0e+8".to_big_d.should eq (BigDecimal.new("100000000"))
-    "10e+8".to_big_d.should eq (BigDecimal.new("1000000000"))
-    "10E+8".to_big_d.should eq (BigDecimal.new("1000000000"))
-    "10E8".to_big_d.should eq (BigDecimal.new("1000000000"))
+    "10.01e1".to_big_d.should eq(BigDecimal.new("100.1"))
+    "10.01e-1".to_big_d.should eq(BigDecimal.new("1.001"))
+    "6.033e2".to_big_d.should eq(BigDecimal.new("603.3"))
+    "603.3e-2".to_big_d.should eq(BigDecimal.new("6.033"))
+    "-0.123e12".to_big_d.should eq(BigDecimal.new("-123000000000"))
+    "0.123e12".to_big_d.should eq(BigDecimal.new("123000000000"))
+    "0.123e+12".to_big_d.should eq(BigDecimal.new("123000000000"))
+    "-0.123e-7".to_big_d.should eq(BigDecimal.new("-0.0000000123"))
+    "-0.1e-7".to_big_d.should eq(BigDecimal.new("-0.00000001"))
+    "0.1e-7".to_big_d.should eq(BigDecimal.new("0.00000001"))
+    "1.0e-8".to_big_d.should eq(BigDecimal.new("0.00000001"))
+    "10e-8".to_big_d.should eq(BigDecimal.new("0.0000001"))
+    "1.0e+8".to_big_d.should eq(BigDecimal.new("100000000"))
+    "10e+8".to_big_d.should eq(BigDecimal.new("1000000000"))
+    "10E+8".to_big_d.should eq(BigDecimal.new("1000000000"))
+    "10E8".to_big_d.should eq(BigDecimal.new("1000000000"))
   end
 
   it "is comparable with other types" do

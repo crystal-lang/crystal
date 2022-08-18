@@ -251,6 +251,16 @@ struct Complex
     new 0, 0
   end
 
+  # Returns `true` if the complex number is zero.
+  # This means the real and imaginary are both zero.
+  #
+  # ```
+  # require "complex"
+  #
+  # Complex.new(0, 0).zero? # => true
+  # Complex.new(1, 0).zero? # => false
+  # Complex.new(0, 1).zero? # => false
+  # ````
   def zero? : Bool
     @real == 0 && @imag == 0
   end
@@ -259,7 +269,7 @@ struct Complex
     zero
   end
 
-  def multiplicative_identity : self
+  def self.multiplicative_identity : self
     new 1, 0
   end
 

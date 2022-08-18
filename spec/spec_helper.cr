@@ -4,7 +4,7 @@ ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
 
 require "spec"
 
-require "../src/compiler/crystal/**"
+require "compiler/requires"
 require "./support/syntax"
 require "./support/tempfile"
 require "./support/win32"
@@ -85,26 +85,28 @@ def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
   to_nodes
 end
 
-def assert_expand(from : String, to, *, file = __FILE__, line = __LINE__)
-  assert_expand Parser.parse(from), to, file: file, line: line
+def assert_expand(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)
+  assert_expand Parser.parse(from), to, flags: flags, file: file, line: line
 end
 
-def assert_expand(from_nodes : ASTNode, to, *, file = __FILE__, line = __LINE__)
-  to_nodes = LiteralExpander.new(new_program).expand(from_nodes)
+def assert_expand(from_nodes : ASTNode, to, *, flags = nil, file = __FILE__, line = __LINE__)
+  program = new_program
+  program.flags.concat(flags.split) if flags
+  to_nodes = LiteralExpander.new(program).expand(from_nodes)
   to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
 end
 
-def assert_expand_second(from : String, to, *, file = __FILE__, line = __LINE__)
+def assert_expand_second(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)
   node = (Parser.parse(from).as(Expressions))[1]
-  assert_expand node, to, file: file, line: line
+  assert_expand node, to, flags: flags, file: file, line: line
 end
 
-def assert_expand_third(from : String, to, *, file = __FILE__, line = __LINE__)
+def assert_expand_third(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)
   node = (Parser.parse(from).as(Expressions))[2]
-  assert_expand node, to, file: file, line: line
+  assert_expand node, to, flags: flags, file: file, line: line
 end
 
-def assert_error(str, message = nil, *, inject_primitives = false, file = __FILE__, line = __LINE__, flags = nil)
+def assert_error(str, message = nil, *, inject_primitives = false, flags = nil, file = __FILE__, line = __LINE__)
   expect_raises TypeException, message, file, line do
     semantic str, inject_primitives: inject_primitives, flags: flags
   end
@@ -114,23 +116,12 @@ def assert_no_errors(*args, **opts)
   semantic(*args, **opts)
 end
 
-def warnings_result(code, *, file = __FILE__)
-  compiler = create_spec_compiler
-  compiler.warnings = Warnings::All
-  compiler.error_on_warnings = false
-  compiler.prelude = "empty" # avoid issues in the current std lib
-  compiler.color = false
-  apply_program_flags(compiler.flags)
-
-  with_temp_executable("crystal-spec-output", file: file) do |output_filename|
-    result = compiler.compile Compiler::Source.new("code.cr", code), output_filename
-
-    return result.program.warning_failures
-  end
+def warnings_result(code)
+  semantic(code).program.warning_failures
 end
 
 def assert_warning(code, message, *, file = __FILE__, line = __LINE__)
-  warning_failures = warnings_result(code, file: file)
+  warning_failures = warnings_result(code)
   warning_failures.size.should eq(1), file: file, line: line
   warning_failures[0].should start_with(message), file: file, line: line
 end

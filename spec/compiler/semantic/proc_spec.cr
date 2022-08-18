@@ -334,6 +334,20 @@ describe "Semantic: proc" do
       ") { proc_of(int32) }
   end
 
+  it "allows passing NoReturn type for any return type, with Proc notation (#12126)" do
+    assert_type("
+      lib LibC
+        fun exit : NoReturn
+      end
+
+      def foo(f : Proc(Int32))
+        f.call
+      end
+
+      foo ->{ LibC.exit }
+      ", inject_primitives: true) { no_return }
+  end
+
   it "allows new on proc type" do
     assert_type("
       #{proc_new}
@@ -775,7 +789,7 @@ describe "Semantic: proc" do
       ), inject_primitives: true) { int32 }
   end
 
-  %w(Object Value Reference Number Int Float Struct Proc Tuple Enum StaticArray Pointer).each do |type|
+  %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
     it "disallows #{type} in procs" do
       assert_error %(
         ->(x : #{type}) { }
@@ -819,65 +833,67 @@ describe "Semantic: proc" do
     end
   end
 
-  describe "Class" do
-    # FIXME: Class reports as Object type in two of these examples.
-    # This should be fixed and the specs inlined with the above.
-    # See https://github.com/crystal-lang/crystal/pull/10688#issuecomment-852931558
-    it "disallows Class in procs" do
-      assert_error %(
-        ->(x : Class) { }
-        ),
-        "can't use Object as a Proc argument type"
-    end
+  it "allows metaclass in procs" do
+    assert_type(<<-CR) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+      class Foo
+      end
 
-    it "disallows Class in proc return types" do
-      assert_error %(
-        -> : Class { }
-        ),
-        "can't use Class as a Proc argument type"
-    end
+      ->(x : Foo.class) { x.new }
+      CR
+  end
 
-    it "disallows Class in captured block" do
-      assert_error %(
-        def foo(&block : Class ->)
-        end
+  it "allows metaclass in proc return types" do
+    assert_type(<<-CR) { proc_of(types["Foo"].metaclass) }
+      class Foo
+      end
 
-        foo {}
-        ),
-        "can't use Class as a Proc argument type"
-    end
+      -> : Foo.class { Foo }
+      CR
+  end
 
-    it "disallows Class in proc pointer" do
-      assert_error %(
-        def foo(x)
-        end
+  it "allows metaclass in captured block" do
+    assert_type(<<-CR) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+      class Foo
+      end
 
-        ->foo(Class)
-        ),
-        "can't use Object as a Proc argument type"
-    end
+      def foo(&block : Foo.class -> Foo)
+        block
+      end
 
-    it "disallows Class in proc notation parameter type" do
-      assert_error "x : Class ->", "can't use Class as a Proc argument type"
-    end
+      foo { |x| x.new }
+      CR
+  end
 
-    it "disallows Class in proc notation return type" do
-      assert_error "x : -> Class", "can't use Class as a Proc argument type"
-    end
+  it "allows metaclass in proc pointer" do
+    assert_type(<<-CR) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+      class Foo
+      end
+
+      def foo(x : Foo.class)
+        x.new
+      end
+
+      ->foo(Foo.class)
+      CR
   end
 
   it "allows metaclass in proc notation parameter type" do
-    assert_type(<<-CR) { proc_of(int32.metaclass, nil_type) }
+    assert_type(<<-CR) { proc_of(types["Foo"].metaclass, nil_type) }
+      class Foo
+      end
+
       #{proc_new}
 
-      x : Int32.class -> = Proc(Int32.class, Nil).new { }
+      x : Foo.class -> = Proc(Foo.class, Nil).new { }
       x
       CR
   end
 
   it "allows metaclass in proc notation return type" do
-    assert_type(<<-CR) { proc_of(int32.metaclass) }
-      x : -> Int32.class = ->{ Int32 }
+    assert_type(<<-CR) { proc_of(types["Foo"].metaclass) }
+      class Foo
+      end
+      x : -> Foo.class = ->{ Foo }
       x
       CR
   end
@@ -1290,6 +1306,14 @@ describe "Semantic: proc" do
 
       foo
     )) { union_of proc_of(string), proc_of(nil_type), nil_type }
+  end
+
+  it "types Proc(*T, Void) as Proc(*T, Nil)" do
+    assert_type(%(
+      #{proc_new}
+
+      Proc(Int32, Void).new { |x| x }
+      )) { proc_of(int32, nil_type) }
   end
 end
 
