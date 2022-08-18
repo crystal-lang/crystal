@@ -968,10 +968,8 @@ describe IO do
 
   typeof(STDIN.noecho { })
   typeof(STDIN.noecho!)
-  {% if flag?(:win32) %}
-    typeof(STDIN.echo { })
-    typeof(STDIN.echo!)
-  {% end %}
+  typeof(STDIN.echo { })
+  typeof(STDIN.echo!)
   typeof(STDIN.cooked { })
   typeof(STDIN.cooked!)
   typeof(STDIN.raw { })

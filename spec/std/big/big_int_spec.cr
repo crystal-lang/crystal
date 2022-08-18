@@ -632,6 +632,29 @@ describe "BigInt" do
       end
     end
   end
+
+  describe "#divisible_by?" do
+    it { 0.to_big_i.divisible_by?(0).should be_true }
+    it { 0.to_big_i.divisible_by?(1).should be_true }
+    it { 0.to_big_i.divisible_by?(-1).should be_true }
+    it { 0.to_big_i.divisible_by?(0.to_big_i).should be_true }
+    it { 0.to_big_i.divisible_by?(1.to_big_i).should be_true }
+    it { 0.to_big_i.divisible_by?((-1).to_big_i).should be_true }
+
+    it { 135.to_big_i.divisible_by?(0).should be_false }
+    it { 135.to_big_i.divisible_by?(1).should be_true }
+    it { 135.to_big_i.divisible_by?(2).should be_false }
+    it { 135.to_big_i.divisible_by?(3).should be_true }
+    it { 135.to_big_i.divisible_by?(4).should be_false }
+    it { 135.to_big_i.divisible_by?(5).should be_true }
+    it { 135.to_big_i.divisible_by?(135).should be_true }
+    it { 135.to_big_i.divisible_by?(270).should be_false }
+
+    it { "100000000000000000000000000000000".to_big_i.divisible_by?("4294967296".to_big_i).should be_true }
+    it { "100000000000000000000000000000000".to_big_i.divisible_by?("8589934592".to_big_i).should be_false }
+    it { "100000000000000000000000000000000".to_big_i.divisible_by?("23283064365386962890625".to_big_i).should be_true }
+    it { "100000000000000000000000000000000".to_big_i.divisible_by?("116415321826934814453125".to_big_i).should be_false }
+  end
 end
 
 describe "BigInt Math" do

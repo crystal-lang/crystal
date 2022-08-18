@@ -10,12 +10,12 @@ module Crystal::Playground
   class Session
     getter tag : Int32
 
-    def initialize(@ws : HTTP::WebSocket, @session_key : Int32, @port : Int32)
+    def initialize(@ws : HTTP::WebSocket, @session_key : Int32, @port : Int32, @host : String? = "localhost")
       @running_process_filename = ""
       @tag = 0
     end
 
-    def self.instrument_and_prelude(session_key, port, tag, source)
+    def self.instrument_and_prelude(session_key, port, tag, source, host : String? = "localhost")
       ast = Parser.new(source).parse
 
       instrumented = Playground::AgentInstrumentorTransformer.transform(ast).to_s
@@ -25,7 +25,7 @@ module Crystal::Playground
         require "compiler/crystal/tools/playground/agent"
 
         class Crystal::Playground::Agent
-          @@instance = Crystal::Playground::Agent.new("ws://localhost:#{port}/agent/#{session_key}/#{tag}", #{tag})
+          @@instance = Crystal::Playground::Agent.new("ws://#{host}:#{port}/agent/#{session_key}/#{tag}", #{tag})
 
           def self.instance
             @@instance
@@ -48,7 +48,7 @@ module Crystal::Playground
 
       @tag = tag
       begin
-        sources = self.class.instrument_and_prelude(@session_key, @port, tag, source)
+        sources = self.class.instrument_and_prelude(@session_key, @port, tag, source, host: @host)
       rescue ex : Crystal::CodeError
         send_exception ex, tag
         return
@@ -478,7 +478,7 @@ module Crystal::Playground
           ws.close :policy_violation, "Invalid Request Origin"
         else
           @sessions_key += 1
-          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port)
+          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, host: @host)
           Log.info { "/client WebSocket connected as session=#{@sessions_key}" }
 
           ws.on_message do |message|
@@ -518,6 +518,7 @@ module Crystal::Playground
 
       address = server.bind_tcp @host || Socket::IPAddress::LOOPBACK, @port
       @port = address.port
+      @host = address.address
 
       puts "Listening on http://#{address}"
       if address.unspecified?
