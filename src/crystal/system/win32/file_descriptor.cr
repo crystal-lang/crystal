@@ -74,9 +74,9 @@ module Crystal::System::FileDescriptor
         raise IO::Error.from_winerror("Unable to get info")
       end
 
-      FileInfo.new(file_info, file_type)
+      ::File::Info.new(file_info, file_type)
     else
-      FileInfo.new(file_type)
+      ::File::Info.new(file_type)
     end
   end
 
