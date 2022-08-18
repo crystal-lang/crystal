@@ -41,7 +41,7 @@ module Crystal::System::File
     )
 
     if handle == LibC::INVALID_HANDLE_VALUE
-       raise ::File::Error.from_winerror("Error creating temporary file", file: path)
+      raise ::File::Error.from_winerror("Error creating temporary file", file: path)
     end
 
     fd = LibC._open_osfhandle(handle, LibC::O_CREAT | LibC::O_TRUNC | LibC::O_RDWR | LibC::O_BINARY)
@@ -195,7 +195,11 @@ module Crystal::System::File
     )
 
     if handle == LibC::INVALID_HANDLE_VALUE
-       raise ::File::Error.from_winerror("Error deleting file", file: path)
+      if !raise_on_missing && WinError.value.error_file_not_found?
+        return false
+      end
+
+      raise ::File::Error.from_winerror("Error deleting file", file: path)
     end
 
     if LibC.GetFileInformationByHandle(handle, out file_info) == 0
@@ -220,12 +224,7 @@ module Crystal::System::File
 
     if status == 0
       LibC.CloseHandle handle
-
-      if !raise_on_missing && Errno.value = Errno::ENOENT
-        return false
-      end
-
-       raise ::File::Error.from_winerror("Error deleting file", file: path)
+      raise ::File::Error.from_winerror("Error deleting file", file: path)
     end
 
     LibC.CloseHandle handle
