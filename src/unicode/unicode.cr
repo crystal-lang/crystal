@@ -23,6 +23,8 @@ module Unicode
     Fold
   end
 
+  # Normalization forms available for `String#unicode_normalize` and
+  # `String#unicode_normalized?`.
   enum NormalizationForm
     # Canonical decomposition.
     NFD

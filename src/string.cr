@@ -1498,7 +1498,10 @@ class String
   end
 
   private def do_unicode_normalize(io, form)
-    codepoints = [] of Int32
+    # the maximum number of code points after any normalization is `3 * size` as
+    # required by the Unicode standard; allow a single reallocation as the
+    # majority of strings have only few characters that aren't normalized
+    codepoints = Array(Int32).new((size * 3 + 1) // 2)
 
     each_char do |char|
       case form

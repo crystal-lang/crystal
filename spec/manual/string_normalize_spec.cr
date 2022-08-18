@@ -2,7 +2,7 @@ require "spec"
 require "http/client"
 require "../support/string"
 
-UCD_ROOT = "http://www.unicode.org/Public/13.0.0/ucd/"
+UCD_ROOT = "http://www.unicode.org/Public/#{Unicode::VERSION}/ucd/"
 
 private struct CodepointsEqualExpectation
   @expected_value : Array(Int32)
@@ -29,14 +29,11 @@ end
 
 # same as `assert_prints`, but uses `CodepointsEqualExpectation` instead of `eq`
 private macro assert_prints_codepoints(call, str, desc, *, file = __FILE__, line = __LINE__)
-  %str = ({{ str }}).as(String)
-  %file = {{ file }}
-  %line = {{ line }}
-  %expectation = CodepointsEqualExpectation.new(%str, {{ desc }})
+  %expectation = CodepointsEqualExpectation.new(({{ str }}).as(String), {{ desc }})
 
   %result = {{ call }}
-  %result.should be_a(String), file: %file, line: %line
-  %result.should %expectation, file: %file, line: %line
+  %result.should be_a(String), file: {{ file }}, line: {{ line }}
+  %result.should %expectation, file: {{ file }}, line: {{ line }}
 
   String.build do |io|
     {% if call.receiver %}{{ call.receiver }}.{% end %}{{ call.name }}(
@@ -44,7 +41,7 @@ private macro assert_prints_codepoints(call, str, desc, *, file = __FILE__, line
       {% for arg in call.args %} {{ arg }}, {% end %}
       {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: {{ narg.value }}, {% end %} {% end %}
     ) {{ call.block }}
-  end.should %expectation, file: %file, line: %line
+  end.should %expectation, file: {{ file }}, line: {{ line }}
 
   {% unless flag?(:win32) %}
     string_build_via_utf16 do |io|
@@ -53,7 +50,7 @@ private macro assert_prints_codepoints(call, str, desc, *, file = __FILE__, line
         {% for arg in call.args %} {{ arg }}, {% end %}
         {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: {{ narg.value }}, {% end %} {% end %}
       ) {{ call.block }}
-    end.should %expectation, file: %file, line: %line
+    end.should %expectation, file: {{ file }}, line: {{ line }}
   {% end %}
 end
 
@@ -114,7 +111,7 @@ end
 
 describe String do
   describe "#unicode_normalize" do
-    it "official test cases" do
+    context "official test cases" do
       url = "#{UCD_ROOT}NormalizationTest.txt"
       body = HTTP::Client.get(url).body
       body.each_line do |line|
@@ -122,11 +119,13 @@ describe String do
         next if line.empty?
         next if line.starts_with?('#') || line.starts_with?('@')
 
-        pieces = line.split(';', limit: 6)
-        (0..4).each do |i|
-          pieces[i] = pieces[i].split(' ').join &.to_i(16).chr
+        it line do
+          pieces = line.split(';', limit: 6)
+          (0..4).each do |i|
+            pieces[i] = pieces[i].split(' ').join &.to_i(16).chr
+          end
+          assert_normalizes pieces[0], pieces[1], pieces[2], pieces[3], pieces[4]
         end
-        assert_normalizes pieces[0], pieces[1], pieces[2], pieces[3], pieces[4]
       end
     end
   end
