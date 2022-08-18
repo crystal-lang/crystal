@@ -62,7 +62,7 @@ describe "Complex" do
     pos_nan = Math.copysign(Float64::NAN, 1)
     neg_nan = Math.copysign(Float64::NAN, -1)
     Complex.new(pos_nan, pos_nan).to_s.should eq("NaN + NaNi")
-    Complex.new(neg_nan, neg_nan).to_s.should eq("-NaN - NaNi")
+    Complex.new(neg_nan, neg_nan).to_s.should eq("NaN + NaNi")
   end
 
   it "inspect" do
@@ -78,7 +78,7 @@ describe "Complex" do
     pos_nan = Math.copysign(Float64::NAN, 1)
     neg_nan = Math.copysign(Float64::NAN, -1)
     Complex.new(pos_nan, pos_nan).inspect.should eq("(NaN + NaNi)")
-    Complex.new(neg_nan, neg_nan).inspect.should eq("(-NaN - NaNi)")
+    Complex.new(neg_nan, neg_nan).inspect.should eq("(NaN + NaNi)")
   end
 
   it "abs" do
