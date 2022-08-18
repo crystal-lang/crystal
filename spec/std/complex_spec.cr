@@ -9,11 +9,9 @@ private def assert_complex_eq(z1 : Complex, z2 : Complex, *, file = __FILE__, li
   Math.copysign(1.0, z1.imag).should eq(Math.copysign(1.0, z2.imag)), file: file, line: line
 end
 
-private def assert_complex_nan(z : Complex, sign : Complex, *, file = __FILE__, line = __LINE__)
+private def assert_complex_nan(z : Complex, *, file = __FILE__, line = __LINE__)
   z.real.nan?.should be_true, file: file, line: line
   z.imag.nan?.should be_true, file: file, line: line
-  Math.copysign(1.0, z.real).should eq(sign.real), file: file, line: line
-  Math.copysign(1.0, z.imag).should eq(sign.imag), file: file, line: line
 end
 
 describe "Complex" do
@@ -144,19 +142,16 @@ describe "Complex" do
     end
 
     it "not-a-number" do
-      pos_nan = Math.copysign(Float64::NAN, 1)
-      neg_nan = Math.copysign(Float64::NAN, -1)
-
-      assert_complex_nan Complex.new(pos_nan, +0.0).sign, Complex.new(1, 1)
-      assert_complex_nan Complex.new(pos_nan, +1.0).sign, Complex.new(1, 1)
-      assert_complex_nan Complex.new(pos_nan, Float64::INFINITY).sign, Complex.new(1, 1)
-      assert_complex_nan Complex.new(-0.0, pos_nan).sign, Complex.new(-1, 1)
-      assert_complex_nan Complex.new(-1.0, pos_nan).sign, Complex.new(-1, 1)
-      assert_complex_nan Complex.new(-Float64::INFINITY, pos_nan).sign, Complex.new(-1, 1)
-      assert_complex_nan Complex.new(pos_nan, pos_nan).sign, Complex.new(1, 1)
-      assert_complex_nan Complex.new(pos_nan, neg_nan).sign, Complex.new(1, -1)
-      assert_complex_nan Complex.new(neg_nan, pos_nan).sign, Complex.new(-1, 1)
-      assert_complex_nan Complex.new(neg_nan, neg_nan).sign, Complex.new(-1, -1)
+      assert_complex_nan Complex.new(Float64::NAN, +0.0).sign
+      assert_complex_nan Complex.new(Float64::NAN, +1.0).sign
+      assert_complex_nan Complex.new(Float64::NAN, Float64::INFINITY).sign
+      assert_complex_nan Complex.new(-0.0, Float64::NAN).sign
+      assert_complex_nan Complex.new(-1.0, Float64::NAN).sign
+      assert_complex_nan Complex.new(-Float64::INFINITY, Float64::NAN).sign
+      assert_complex_nan Complex.new(Float64::NAN, Float64::NAN).sign
+      assert_complex_nan Complex.new(Float64::NAN, Float64::NAN).sign
+      assert_complex_nan Complex.new(Float64::NAN, Float64::NAN).sign
+      assert_complex_nan Complex.new(Float64::NAN, Float64::NAN).sign
     end
   end
 

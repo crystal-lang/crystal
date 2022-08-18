@@ -159,7 +159,7 @@ struct Complex
     return self if zero?
 
     if @real.nan? || @imag.nan?
-      return Complex.new(Math.copysign(Float64::NAN, @real), Math.copysign(Float64::NAN, @imag))
+      return Complex.new(Float64::NAN, Float64::NAN)
     end
 
     return Complex.new(@real.sign, @imag) if @real != 0 && @imag == 0
