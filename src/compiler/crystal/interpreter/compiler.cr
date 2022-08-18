@@ -380,6 +380,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : TupleLiteral)
+    unless @wants_value
+      node.elements.each do |element|
+        discard_value element
+      end
+
+      return false
+    end
+
     type = node.type.as(TupleInstanceType)
 
     # A tuple potentially has the values packed (unaligned).
@@ -412,6 +420,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : NamedTupleLiteral)
+    unless @wants_value
+      node.entries.each do |entry|
+        discard_value entry.value
+      end
+
+      return false
+    end
+
     type = node.type.as(NamedTupleInstanceType)
 
     # This logic is similar to TupleLiteral.
