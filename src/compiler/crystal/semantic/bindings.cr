@@ -133,7 +133,10 @@ module Crystal
           in Nil
             @dependencies = nodes.map &.as(ASTNode)
           in ASTNode
-            @dependencies = [dependencies, *nodes] of ASTNode
+            new_dependencies = Array(ASTNode).new(nodes.size + 1)
+            new_dependencies.push(dependencies)
+            new_dependencies.concat(nodes)
+            @dependencies = new_dependencies
           in Array(ASTNode)
             dependencies.concat nodes
           end
