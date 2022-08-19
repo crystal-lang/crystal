@@ -166,6 +166,9 @@ end
 # %<name>[flags][width][.precision]type
 # ```
 #
+# The percent sign itself is escaped by `%%`. No format modifiers are allowed,
+# and no arguments are consumed.
+#
 # The field type controls how the corresponding argument value is to be
 # interpreted, while the flags modify that interpretation.
 #
@@ -208,7 +211,6 @@ end
 #   s   | Argument is a string to be substituted. If the format
 #       | sequence contains a precision, at most that many characters
 #       | will be copied.
-#   %   | A percent sign itself will be displayed. No argument taken.
 # ```
 #
 # Flags modify the behavior of the format specifiers:
