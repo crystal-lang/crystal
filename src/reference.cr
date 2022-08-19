@@ -137,10 +137,18 @@ class Reference
   module ExecRecursive
     alias Registry = Hash({UInt64, Symbol}, Bool)
 
-    @@exec_recursive : Crystal::ThreadLocalValue(Registry) = Crystal::ThreadLocalValue(Registry).new
+    {% if flag?(:preview_mt) %}
+      @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
+    {% else %}
+      @@exec_recursive = Registry.new
+    {% end %}
 
     def self.hash
-      @@exec_recursive.get { Registry.new }
+      {% if flag?(:preview_mt) %}
+        @@exec_recursive.get { Registry.new }
+      {% else %}
+        @@exec_recursive
+      {% end %}
     end
   end
 
@@ -161,10 +169,18 @@ class Reference
   module ExecRecursiveClone
     alias Registry = Hash(UInt64, UInt64)
 
-    @@exec_recursive : Crystal::ThreadLocalValue(Registry) = Crystal::ThreadLocalValue(Registry).new
- 
+    {% if flag?(:preview_mt) %}
+      @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
+    {% else %}
+      @@exec_recursive = Registry.new
+    {% end %}
+
     def self.hash
-      @@exec_recursive.get { Registry.new } 
+      {% if flag?(:preview_mt) %}
+        @@exec_recursive.get { Registry.new }
+      {% else %}
+        @@exec_recursive
+      {% end %}
     end
   end
 
