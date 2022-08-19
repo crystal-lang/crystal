@@ -2,7 +2,7 @@ module Crystal
   class ASTNode
     property dependencies : Nil | ASTNode | Array(ASTNode)
     property freeze_type : Type?
-    property observers : Array(ASTNode)?
+    property observers : Nil | ASTNode | Array(ASTNode)
     property enclosing_call : Call?
 
     @dirty = false
@@ -211,12 +211,27 @@ module Crystal
     end
 
     def add_observer(observer)
-      observers = @observers ||= [] of ASTNode
-      observers.push observer
+      observers = @observers
+      case observers
+      in Nil
+        @observers = observer
+      in ASTNode
+        @observers = [observers, observer]
+      in Array(ASTNode)
+        observers.push observer
+      end
     end
 
     def remove_observer(observer)
-      @observers.try &.reject! &.same?(observer)
+      observers = @observers
+      case observers
+      in Nil
+        # Nothing to do
+      in ASTNode
+        @observers = nil if observers.same?(observer)
+      in Array(ASTNode)
+        observers.reject! &.same?(observer)
+      end
     end
 
     def set_enclosing_call(enclosing_call)
@@ -238,9 +253,28 @@ module Crystal
     end
 
     def notify_observers
-      @observers.try &.each &.update self
+      observers = @observers
+      case observers
+      in Nil
+        # Nothing to do
+      in ASTNode
+        observers.update self
+      in Array(ASTNode)
+        observers.each &.update self
+      end
+
       @enclosing_call.try &.recalculate
-      @observers.try &.each &.propagate
+
+      observers = @observers
+      case observers
+      in Nil
+        # Nothing to do
+      in ASTNode
+        observers.propagate
+      in Array(ASTNode)
+        observers.each &.propagate
+      end
+
       @enclosing_call.try &.propagate
     end
 
