@@ -70,4 +70,48 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
   end
+
+  it "casts proc call arguments to proc arg types (#12350)" do
+    interpret(<<-CODE).should eq(42)
+      abstract struct Base
+      end
+
+      struct Foo < Base
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      struct Bar < Base
+      end
+
+      proc = ->(base : Base) {
+        if base.is_a?(Foo)
+          base.x
+        else
+          0
+        end
+      }
+
+      bar = Foo.new(42)
+      proc.call(bar)
+    CODE
+  end
+
+  it "does call without receiver inside closure" do
+    interpret(<<-CODE).should eq(42)
+      struct Proc
+        def foo
+          ->{
+            call
+          }
+        end
+      end
+
+      ->{ 42 }.foo.call
+    CODE
+  end
 end
