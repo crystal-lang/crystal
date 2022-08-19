@@ -1494,7 +1494,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compile_pointerof_read_instance_var(exp.obj, exp.obj.type, exp.name)
     when Call
       # lib external var
-      external = exp.dependencies.first.as(External)
+      external = exp.dependencies.as(External)
       fn = @context.c_function(external.real_name)
 
       # Put the symbol address, which is a pointer

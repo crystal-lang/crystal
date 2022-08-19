@@ -367,8 +367,7 @@ module Crystal
           var.bind_to(@program.nil_var)
           var.nil_if_read = false
 
-          meta_var.bind_to(@program.nil_var) unless meta_var.dependencies.try &.any? &.same?(@program.nil_var)
-          node.bind_to(@program.nil_var)
+          bind_to_program_nil_var(meta_var)
         end
 
         check_mutably_closured meta_var, var
@@ -390,6 +389,18 @@ module Crystal
         node.bind_to special_var
       else
         node.raise "read before assignment to local variable '#{node.name}'"
+      end
+    end
+
+    private def bind_to_program_nil_var(node)
+      dependencies = node.dependencies
+      case dependencies
+      in Nil
+        node.bind_to(@program.nil_var)
+      in ASTNode
+        node.bind_to(@program.nil_var) unless dependencies.same?(@program.nil_var)
+      in Array(ASTNode)
+        node.bind_to(@program.nil_var) unless dependencies.try &.any? &.same?(@program.nil_var)
       end
     end
 
@@ -1249,7 +1260,7 @@ module Crystal
         # It can happen that this call is inside an ArrayLiteral or HashLiteral,
         # was expanded but isn't bound to the expansion because the call (together
         # with its expansion) was cloned.
-        if (expanded = node.expanded) && (!node.dependencies? || !node.type?)
+        if (expanded = node.expanded) && (!node.dependencies || !node.type?)
           node.bind_to(expanded)
         end
 
@@ -3271,7 +3282,7 @@ module Crystal
     def define_special_var(name, value)
       meta_var, _ = assign_to_meta_var(name)
       meta_var.bind_to value
-      meta_var.bind_to program.nil_var unless meta_var.dependencies.any? &.same?(program.nil_var)
+      bind_to_program_nil_var(meta_var)
       meta_var.assigned_to = true
       check_closured meta_var
 

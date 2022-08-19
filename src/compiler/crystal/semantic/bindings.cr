@@ -1,6 +1,6 @@
 module Crystal
   class ASTNode
-    property! dependencies : Array(ASTNode)
+    property dependencies : Nil | ASTNode | Array(ASTNode)
     property freeze_type : Type?
     property observers : Array(ASTNode)?
     property enclosing_call : Call?
@@ -104,20 +104,43 @@ module Crystal
     end
 
     def bind_to(node : ASTNode)
-      bind(node) do |dependencies|
-        dependencies.push node
+      bind(node) do
+        dependencies = @dependencies
+        case dependencies
+        in Nil
+          @dependencies = node
+        in ASTNode
+          @dependencies = [dependencies, node] of ASTNode
+        in Array(ASTNode)
+          dependencies.push node
+        end
+
         node.add_observer self
         node
       end
     end
 
     def bind_to(nodes : Array)
-      return if nodes.empty?
+      case nodes.size
+      when 0
+        return
+      when 1
+        bind_to(nodes.first)
+      else
+        bind do
+          dependencies = @dependencies
+          case dependencies
+          in Nil
+            @dependencies = nodes.map &.as(ASTNode)
+          in ASTNode
+            @dependencies = [dependencies, *nodes] of ASTNode
+          in Array(ASTNode)
+            dependencies.concat nodes
+          end
 
-      bind do |dependencies|
-        dependencies.concat nodes
-        nodes.each &.add_observer self
-        nodes.first
+          nodes.each &.add_observer self
+          nodes.first
+        end
       end
     end
 
@@ -129,15 +152,19 @@ module Crystal
         raise_frozen_type freeze_type, from_type, from
       end
 
-      dependencies = @dependencies ||= [] of ASTNode
+      node = yield
 
-      node = yield dependencies
+      dependencies = @dependencies
+      new_type =
+        case dependencies
+        in Nil
+          nil
+        in ASTNode
+          dependencies.type?
+        in Array(ASTNode)
+          Type.merge dependencies
+        end
 
-      if dependencies.size == 1
-        new_type = node.type?
-      else
-        new_type = Type.merge dependencies
-      end
       new_type = map_type(new_type) if new_type
 
       if new_type && (freeze_type = @freeze_type)
@@ -157,12 +184,29 @@ module Crystal
     end
 
     def unbind_from(node : ASTNode)
-      @dependencies.try &.reject! &.same?(node)
+      dependencies = @dependencies
+      case dependencies
+      in Nil
+        # Nothing to do
+      in ASTNode
+        @dependencies = nil if dependencies.same?(node)
+      in Array(ASTNode)
+        dependencies.reject! &.same?(node)
+      end
       node.remove_observer self
     end
 
     def unbind_from(nodes : Array(ASTNode))
-      @dependencies.try &.reject! { |dep| nodes.any? &.same?(dep) }
+      dependencies = @dependencies
+      case dependencies
+      in Nil
+        # Nothing to do
+      in ASTNode
+        @dependencies = nil if nodes.any? &.same?(dependencies)
+      in Array(ASTNode)
+        dependencies.reject! { |dep| nodes.any? &.same?(dep) }
+      end
+
       nodes.each &.remove_observer self
     end
 
@@ -203,7 +247,17 @@ module Crystal
     def update(from = nil)
       return if @type && @type.same? from.try &.type?
 
-      new_type = Type.merge dependencies
+      dependencies = @dependencies
+      new_type =
+        case dependencies
+        in Nil
+          nil
+        in ASTNode
+          dependencies.type?
+        in Array(ASTNode)
+          Type.merge dependencies
+        end
+
       new_type = map_type(new_type) if new_type
 
       if new_type && (freeze_type = @freeze_type)
@@ -268,15 +322,28 @@ module Crystal
       visited = Set(ASTNode).new.compare_by_identity
       owner_trace << node if node.type?.try &.includes_type?(owner)
       visited.add node
-      while deps = node.dependencies?
-        dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
-        if dependencies.size > 0
-          node = dependencies.first
-          nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
-          owner_trace << node if node
-          visited.add node
-        else
-          break
+      while deps = node.dependencies
+        case deps
+        in ASTNode
+          dep = deps
+          if dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep)
+            node = dep
+            nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
+            owner_trace << node if node
+            visited.add node
+          else
+            break
+          end
+        in Array(ASTNode)
+          dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
+          if dependencies.size > 0
+            node = dependencies.first
+            nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
+            owner_trace << node if node
+            visited.add node
+          else
+            break
+          end
         end
       end
 

@@ -1015,7 +1015,7 @@ module Crystal
       node = super
 
       unless node.type?
-        if dependencies = node.dependencies?
+        if dependencies = node.dependencies
           node.unbind_from node.dependencies
         end
 
