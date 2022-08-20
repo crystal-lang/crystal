@@ -84,6 +84,8 @@ describe Crystal::SyntaxHighlighter::HTML do
     it_highlights %("foo"), %(<span class="s">&quot;foo&quot;</span>)
     it_highlights %("<>"), %(<span class="s">&quot;&lt;&gt;&quot;</span>)
     it_highlights %("foo\#{bar}baz"), %(<span class="s">&quot;foo</span><span class="i">\#{</span>bar<span class="i">}</span><span class="s">baz&quot;</span>)
+    it_highlights %("foo\#{[1, bar, "str"]}baz"), %(<span class="s">&quot;foo</span><span class="i">\#{</span>[<span class="n">1</span>, bar, <span class="s">&quot;str&quot;</span>]<span class="i">}</span><span class="s">baz&quot;</span>)
+    it_highlights %("nest1\#{foo + "nest2\#{1 + 1}bar"}baz"), %(<span class="s">&quot;nest1</span><span class="i">\#{</span>foo <span class="o">+</span> <span class="s">&quot;nest2</span><span class="i">\#{</span><span class="n">1</span> <span class="o">+</span> <span class="n">1</span><span class="i">}</span><span class="s">bar&quot;</span><span class="i">}</span><span class="s">baz&quot;</span>)
     it_highlights "/foo/xim", %(<span class="s">/foo/</span>xim)
     it_highlights "`foo`", %(<span class="s">`foo`</span>)
     it_highlights "%(foo)", %(<span class="s">%(foo)</span>)
