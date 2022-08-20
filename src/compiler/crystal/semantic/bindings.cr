@@ -129,17 +129,7 @@ module Crystal
 
       node = yield
 
-      dependencies = @dependencies.value
-      new_type =
-        case dependencies
-        in Nil
-          nil
-        in ASTNode
-          dependencies.type?
-        in Array(ASTNode)
-          Type.merge dependencies
-        end
-
+      new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
 
       if new_type && (freeze_type = @freeze_type)
@@ -162,6 +152,18 @@ module Crystal
     def unbind_from(nodes : Enumerable(ASTNode)) : Nil
       @dependencies = @dependencies.without(nodes)
       nodes.each &.remove_observer self
+    end
+
+    private def type_from_dependencies : Type?
+      dependencies = @dependencies.value
+      case dependencies
+      in Nil
+        nil
+      in ASTNode
+        dependencies.type?
+      in Array(ASTNode)
+        Type.merge dependencies
+      end
     end
 
     def add_observer(observer : ASTNode) : Nil
@@ -201,16 +203,7 @@ module Crystal
       return if @type && @type.same? from.try &.type?
 
       dependencies = @dependencies.value
-      new_type =
-        case dependencies
-        in Nil
-          nil
-        in ASTNode
-          dependencies.type?
-        in Array(ASTNode)
-          Type.merge dependencies
-        end
-
+      new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
 
       if new_type && (freeze_type = @freeze_type)
