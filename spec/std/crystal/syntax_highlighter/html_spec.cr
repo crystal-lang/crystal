@@ -74,6 +74,10 @@ describe Crystal::SyntaxHighlighter::HTML do
       it_highlights "1 #{op} 2", %(<span class="n">1</span> <span class="o">#{HTML.escape(op)}</span> <span class="n">2</span>)
     end
 
+    it_highlights %(1/2), %(<span class="n">1</span><span class="o">/</span><span class="n">2</span>)
+    it_highlights %(1 /2), %(<span class="n">1</span> <span class="o">/</span><span class="n">2</span>)
+    it_highlights %(1/ 2), %(<span class="n">1</span><span class="o">/</span> <span class="n">2</span>)
+
     it_highlights %("foo"), %(<span class="s">&quot;foo&quot;</span>)
     it_highlights %("<>"), %(<span class="s">&quot;&lt;&gt;&quot;</span>)
     it_highlights %("foo\#{bar}baz"), %(<span class="s">&quot;foo</span><span class="i">\#{</span>bar<span class="i">}</span><span class="s">baz&quot;</span>)
