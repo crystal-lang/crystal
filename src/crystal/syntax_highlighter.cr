@@ -184,6 +184,8 @@ abstract class Crystal::SyntaxHighlighter
       render :OPERATOR, token.to_s
     when .underscore?
       render :UNDERSCORE, "_"
+    when .global_match_data_index?
+      render :UNKNOWN, "$" + token.value.to_s
     else
       render :UNKNOWN, token.to_s
     end

@@ -78,6 +78,9 @@ describe Crystal::SyntaxHighlighter::HTML do
     it_highlights %(1 /2), %(<span class="n">1</span> <span class="o">/</span><span class="n">2</span>)
     it_highlights %(1/ 2), %(<span class="n">1</span><span class="o">/</span> <span class="n">2</span>)
 
+    it_highlights %($1), %($1)
+    it_highlights %($2?), %($2?)
+
     it_highlights %("foo"), %(<span class="s">&quot;foo&quot;</span>)
     it_highlights %("<>"), %(<span class="s">&quot;&lt;&gt;&quot;</span>)
     it_highlights %("foo\#{bar}baz"), %(<span class="s">&quot;foo</span><span class="i">\#{</span>bar<span class="i">}</span><span class="s">baz&quot;</span>)
