@@ -112,6 +112,8 @@ module Crystal
     end
 
     def bind_to(nodes : Array)
+      return if nodes.empty?
+
       bind do
         @dependencies = @dependencies.with(nodes)
         nodes.each &.add_observer self
