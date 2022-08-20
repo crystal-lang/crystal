@@ -91,36 +91,19 @@ struct ZeroOneOrMany(T)
     end
   end
 
-  def without(element : T) : ZeroOneOrMany(T)
+  def reject(&block : T -> _)
     value = @value
     case value
     in Nil
       self
     in T
-      if value.same?(element)
+      if yield value
         ZeroOneOrMany(T).new
       else
         self
       end
     in Array(T)
-      value.reject!(&.same?(element))
-      ZeroOneOrMany(T).new(value)
-    end
-  end
-
-  def without(elements : Enumerable(T)) : ZeroOneOrMany(T)
-    value = @value
-    case value
-    in Nil
-      self
-    in T
-      if elements.any? &.same?(value)
-        ZeroOneOrMany(T).new
-      else
-        self
-      end
-    in Array(T)
-      value.reject! { |element| elements.any? &.same?(element) }
+      value.reject! { |element| yield element }
       ZeroOneOrMany(T).new(value)
     end
   end

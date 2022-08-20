@@ -145,12 +145,14 @@ module Crystal
     end
 
     def unbind_from(node : ASTNode) : Nil
-      @dependencies = @dependencies.without(node)
+      @dependencies = @dependencies.reject &.same?(node)
       node.remove_observer self
     end
 
     def unbind_from(nodes : Enumerable(ASTNode)) : Nil
-      @dependencies = @dependencies.without(nodes)
+      @dependencies = @dependencies.reject { |dependency|
+        nodes.any? &.same?(dependency)
+      }
       nodes.each &.remove_observer self
     end
 
@@ -171,7 +173,7 @@ module Crystal
     end
 
     def remove_observer(observer : ASTNode) : Nil
-      @observers = @observers.without(observer)
+      @observers = @observers.reject &.same?(observer)
     end
 
     def set_enclosing_call(enclosing_call)
