@@ -177,10 +177,12 @@ abstract class Crystal::SyntaxHighlighter
           render :UNKNOWN, token.to_s
         end
       end
-    when .op_plus?, .op_minus?, .op_star?, .op_amp_plus?, .op_amp_minus?, .op_amp_star?, .op_slash?, .op_slash_slash?,           # + - * &+ &- &* / //
-         .op_eq?, .op_eq_eq?, .op_lt?, .op_lt_eq?, .op_gt?, .op_gt_eq?, .op_bang?, .op_bang_eq?, .op_eq_tilde?, .op_bang_tilde?, # = == < <= > >= ! != =~ !~
-         .op_amp?, .op_bar?, .op_caret?, .op_tilde?, .op_star_star?, .op_gt_gt?, .op_lt_lt?, .op_percent?,                       # & | ^ ~ ** >> << %
-         .op_lsquare_rsquare?, .op_lsquare_rsquare_question?, .op_lsquare_rsquare_eq?, .op_lt_eq_gt?, .op_eq_eq_eq?              # [] []? []= <=> ===
+    when .op_lparen?, .op_rparen?, .op_lsquare?, .op_rsquare?, .op_lcurly?, .op_rcurly?, .op_at_lsquare?, # ( ) { } [ ] @[
+         .op_comma?, .op_period?, .op_period_period?, .op_period_period_period?,                          # , . .. ...
+         .op_colon?, .op_semicolon?, .op_question?, .op_grave?                                            # : ; ? `
+      render :UNKNOWN, token.to_s
+    when .operator?
+      # Colorize every operator except those above
       render :OPERATOR, token.to_s
     when .underscore?
       render :UNDERSCORE, "_"

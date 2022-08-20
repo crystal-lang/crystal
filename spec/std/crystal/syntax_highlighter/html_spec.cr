@@ -68,8 +68,9 @@ describe Crystal::SyntaxHighlighter::HTML do
     it_highlights "def foo", %(<span class="k">def</span> <span class="m">foo</span>)
 
     %w(
-      + - * &+ &- &* / // = == < <= > >= ! != =~ !~ & | ^ ~ **
-      >> << % [] []? []= <=> ===
+      + - * &+ &- &* &** / // = == < <= > >= ! != =~ !~ & | ^ ~ **
+      >> << % [] []? []= <=> === && ||
+      += -= *= /= //= &= |= ^= **= >>= <<= %= &+= &-= &*= &&= ||=
     ).each do |op|
       it_highlights "1 #{op} 2", %(<span class="n">1</span> <span class="o">#{HTML.escape(op)}</span> <span class="n">2</span>)
     end

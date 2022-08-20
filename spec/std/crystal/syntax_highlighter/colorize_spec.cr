@@ -73,8 +73,9 @@ describe Crystal::SyntaxHighlighter::Colorize do
     it_highlights "def foo", %(\e[91mdef\e[0m \e[92mfoo\e[0m)
 
     %w(
-      + - * &+ &- &* / // = == < <= > >= ! != =~ !~ & | ^ ~ **
-      >> << % [] []? []= <=> ===
+      + - * &+ &- &* &** / // = == < <= > >= ! != =~ !~ & | ^ ~ **
+      >> << % [] []? []= <=> === && ||
+      += -= *= /= //= &= |= ^= **= >>= <<= %= &+= &-= &*= &&= ||=
     ).each do |op|
       it_highlights "1 #{op} 2", %(\e[35m1\e[0m \e[91m#{op}\e[0m \e[35m2\e[0m)
     end
