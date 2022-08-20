@@ -87,7 +87,9 @@ abstract class Crystal::SyntaxHighlighter
 
       case token.type
       when .delimiter_start?
-        if token.raw == "/" && slash_is_not_regex(last_token_type)
+        if last_is_def && token.raw.in?("`", "/")
+          render :IDENT, token.raw
+        elsif token.raw == "/" && slash_is_not_regex(last_token_type)
           render :OPERATOR, token.raw
         elsif token.delimiter_state.kind.heredoc?
           heredoc_stack << token.dup
@@ -179,10 +181,21 @@ abstract class Crystal::SyntaxHighlighter
       end
     when .op_lparen?, .op_rparen?, .op_lsquare?, .op_rsquare?, .op_lcurly?, .op_rcurly?, .op_at_lsquare?, # ( ) { } [ ] @[
          .op_comma?, .op_period?, .op_period_period?, .op_period_period_period?,                          # , . .. ...
-         .op_colon?, .op_semicolon?, .op_question?, .op_grave?                                            # : ; ? `
+         .op_colon?, .op_semicolon?, .op_question?                                                        # : ; ?
+      # Operators that should not be colorized
       render :UNKNOWN, token.to_s
+    when .op_lsquare_rsquare?, .op_lsquare_rsquare_question?, .op_lsquare_rsquare_eq?, .op_lt_eq_gt?,        # [] []? []= <=>
+         .op_plus?, .op_minus?, .op_star?, .op_slash?, .op_slash_slash?,                                     # + - * / //
+         .op_eq_eq?, .op_lt?, .op_lt_eq?, .op_gt?, .op_gt_eq?, .op_bang_eq?, .op_eq_tilde?, .op_bang_tilde?, # == < <= > >= != =~ !~
+         .op_amp?, .op_bar?, .op_caret?, .op_tilde?, .op_star_star?, .op_gt_gt?, .op_lt_lt?, .op_percent?    # & | ^ ~ ** >> << %
+      # Operators acceptable in def
+      if last_is_def
+        render :IDENT, token.to_s
+      else
+        render :OPERATOR, token.to_s
+      end
     when .operator?
-      # Colorize every operator except those above
+      # Colorize any other operator
       render :OPERATOR, token.to_s
     when .underscore?
       render :UNDERSCORE, "_"

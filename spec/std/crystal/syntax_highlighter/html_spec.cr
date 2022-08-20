@@ -68,6 +68,15 @@ describe Crystal::SyntaxHighlighter::HTML do
     it_highlights "def foo", %(<span class="k">def</span> <span class="m">foo</span>)
 
     %w(
+      [] []? []= <=>
+      + - * /
+      == < <= > >= != =~ !~
+      & | ^ ~ ** >> << %
+    ).each do |op|
+      it_highlights %(def #{op}), %(<span class="k">def</span> <span class="m">#{op}</span>)
+    end
+
+    %w(
       + - * &+ &- &* &** / // = == < <= > >= ! != =~ !~ & | ^ ~ **
       >> << % [] []? []= <=> === && ||
       += -= *= /= //= &= |= ^= **= >>= <<= %= &+= &-= &*= &&= ||=
