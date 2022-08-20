@@ -597,19 +597,6 @@ module Crystal
       program.undefined_instance_variable(node, owner, similar_name)
     end
 
-    def first_time_accessing_meta_type_var?(var)
-      return false if var.uninitialized?
-
-      if var.freeze_type
-        deps = var.dependencies?
-        # If no dependencies, it's the case of a global for a regex literal.
-        # If there are dependencies and it's just one, it's the same var
-        deps ? deps.size == 1 : false
-      else
-        !var.dependencies?
-      end
-    end
-
     def visit(node : InstanceVar)
       var = lookup_instance_var node
       node.bind_to(var)
