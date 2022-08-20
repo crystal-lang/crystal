@@ -567,7 +567,7 @@ module Crystal
                 instance_var_ptr (node_exp.obj.type), node_exp.name, @last
               when Call
                 # lib external var
-                extern = node_exp.dependencies.as(External)
+                extern = node_exp.dependencies.first.as(External)
                 var = get_external_var(extern)
                 check_c_fun extern.type, var
               else
@@ -1933,15 +1933,7 @@ module Crystal
     end
 
     def bound_to_mod_nil?(var)
-      dependencies = var.dependencies
-      case dependencies
-      in Nil
-        false
-      in ASTNode
-        dependencies.same?(@program.nil_var)
-      in Array(ASTNode)
-        dependencies.any? &.same?(@program.nil_var)
-      end
+      var.dependencies.any? &.same?(@program.nil_var)
     end
 
     def alloca(type, name = "")

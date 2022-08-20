@@ -393,15 +393,7 @@ module Crystal
     end
 
     private def bind_to_program_nil_var(node)
-      dependencies = node.dependencies
-      case dependencies
-      in Nil
-        node.bind_to(@program.nil_var)
-      in ASTNode
-        node.bind_to(@program.nil_var) unless dependencies.same?(@program.nil_var)
-      in Array(ASTNode)
-        node.bind_to(@program.nil_var) unless dependencies.try &.any? &.same?(@program.nil_var)
-      end
+      node.bind_to(@program.nil_var) unless node.dependencies.any? &.same?(@program.nil_var)
     end
 
     def visit(node : TypeDeclaration)

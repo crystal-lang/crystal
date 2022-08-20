@@ -78,7 +78,9 @@ class Crystal::Call
 
     block = @block
 
-    unbind_from @target_defs if @target_defs
+    if target_defs = @target_defs
+      unbind_from target_defs
+    end
     unbind_from block.break if block
 
     @target_defs = nil

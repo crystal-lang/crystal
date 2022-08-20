@@ -1,8 +1,8 @@
 module Crystal
   class ASTNode
-    property dependencies : Nil | ASTNode | Array(ASTNode)
+    property dependencies = ZeroOneOrMany(ASTNode).new
     property freeze_type : Type?
-    property observers : Nil | ASTNode | Array(ASTNode)
+    property observers = ZeroOneOrMany(ASTNode).new
     property enclosing_call : Call?
 
     @dirty = false
@@ -105,45 +105,17 @@ module Crystal
 
     def bind_to(node : ASTNode)
       bind(node) do
-        dependencies = @dependencies
-        case dependencies
-        in Nil
-          @dependencies = node
-        in ASTNode
-          @dependencies = [dependencies, node] of ASTNode
-        in Array(ASTNode)
-          dependencies.push node
-        end
-
+        @dependencies = @dependencies.with(node)
         node.add_observer self
         node
       end
     end
 
     def bind_to(nodes : Array)
-      case nodes.size
-      when 0
-        return
-      when 1
-        bind_to(nodes.first)
-      else
-        bind do
-          dependencies = @dependencies
-          case dependencies
-          in Nil
-            @dependencies = nodes.map &.as(ASTNode)
-          in ASTNode
-            new_dependencies = Array(ASTNode).new(nodes.size + 1)
-            new_dependencies.push(dependencies)
-            new_dependencies.concat(nodes)
-            @dependencies = new_dependencies
-          in Array(ASTNode)
-            dependencies.concat nodes
-          end
-
-          nodes.each &.add_observer self
-          nodes.first
-        end
+      bind do
+        @dependencies = @dependencies.with(nodes)
+        nodes.each &.add_observer self
+        nodes.first
       end
     end
 
@@ -157,7 +129,7 @@ module Crystal
 
       node = yield
 
-      dependencies = @dependencies
+      dependencies = @dependencies.value
       new_type =
         case dependencies
         in Nil
@@ -182,59 +154,22 @@ module Crystal
       propagate
     end
 
-    def unbind_from(nodes : Nil)
-      # Nothing to do
-    end
-
-    def unbind_from(node : ASTNode)
-      dependencies = @dependencies
-      case dependencies
-      in Nil
-        # Nothing to do
-      in ASTNode
-        @dependencies = nil if dependencies.same?(node)
-      in Array(ASTNode)
-        dependencies.reject! &.same?(node)
-      end
+    def unbind_from(node : ASTNode) : Nil
+      @dependencies = @dependencies.without(node)
       node.remove_observer self
     end
 
-    def unbind_from(nodes : Array(ASTNode))
-      dependencies = @dependencies
-      case dependencies
-      in Nil
-        # Nothing to do
-      in ASTNode
-        @dependencies = nil if nodes.any? &.same?(dependencies)
-      in Array(ASTNode)
-        dependencies.reject! { |dep| nodes.any? &.same?(dep) }
-      end
-
+    def unbind_from(nodes : Enumerable(ASTNode)) : Nil
+      @dependencies = @dependencies.without(nodes)
       nodes.each &.remove_observer self
     end
 
-    def add_observer(observer)
-      observers = @observers
-      case observers
-      in Nil
-        @observers = observer
-      in ASTNode
-        @observers = [observers, observer]
-      in Array(ASTNode)
-        observers.push observer
-      end
+    def add_observer(observer : ASTNode) : Nil
+      @observers = @observers.with(observer)
     end
 
-    def remove_observer(observer)
-      observers = @observers
-      case observers
-      in Nil
-        # Nothing to do
-      in ASTNode
-        @observers = nil if observers.same?(observer)
-      in Array(ASTNode)
-        observers.reject! &.same?(observer)
-      end
+    def remove_observer(observer : ASTNode) : Nil
+      @observers = @observers.without(observer)
     end
 
     def set_enclosing_call(enclosing_call)
@@ -256,35 +191,16 @@ module Crystal
     end
 
     def notify_observers
-      observers = @observers
-      case observers
-      in Nil
-        # Nothing to do
-      in ASTNode
-        observers.update self
-      in Array(ASTNode)
-        observers.each &.update self
-      end
-
+      @observers.each &.update self
       @enclosing_call.try &.recalculate
-
-      observers = @observers
-      case observers
-      in Nil
-        # Nothing to do
-      in ASTNode
-        observers.propagate
-      in Array(ASTNode)
-        observers.each &.propagate
-      end
-
+      @observers.each &.propagate
       @enclosing_call.try &.propagate
     end
 
     def update(from = nil)
       return if @type && @type.same? from.try &.type?
 
-      dependencies = @dependencies
+      dependencies = @dependencies.value
       new_type =
         case dependencies
         in Nil
@@ -360,27 +276,14 @@ module Crystal
       owner_trace << node if node.type?.try &.includes_type?(owner)
       visited.add node
       while deps = node.dependencies
-        case deps
-        in ASTNode
-          dep = deps
-          if dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep)
-            node = dep
-            nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
-            owner_trace << node if node
-            visited.add node
-          else
-            break
-          end
-        in Array(ASTNode)
-          dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
-          if dependencies.size > 0
-            node = dependencies.first
-            nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
-            owner_trace << node if node
-            visited.add node
-          else
-            break
-          end
+        dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
+        if dependencies.size > 0
+          node = dependencies.first
+          nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
+          owner_trace << node if node
+          visited.add node
+        else
+          break
         end
       end
 
