@@ -268,8 +268,8 @@ module Crystal
       visited = Set(ASTNode).new.compare_by_identity
       owner_trace << node if node.type?.try &.includes_type?(owner)
       visited.add node
-      while deps = node.dependencies
-        dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
+      until node.dependencies.empty?
+        dependencies = node.dependencies.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
         if dependencies.size > 0
           node = dependencies.first
           nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
