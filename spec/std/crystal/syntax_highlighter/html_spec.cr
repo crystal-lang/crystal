@@ -76,6 +76,8 @@ describe Crystal::SyntaxHighlighter::HTML do
       it_highlights %(def #{op}), %(<span class="k">def</span> <span class="m">#{op}</span>)
     end
 
+    it_highlights %(def //), %(<span class="k">def</span> <span class="m">/</span><span class="m">/</span>)
+
     %w(
       + - * &+ &- &* &** / // = == < <= > >= ! != =~ !~ & | ^ ~ **
       >> << % [] []? []= <=> === && ||

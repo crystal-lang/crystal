@@ -87,11 +87,19 @@ abstract class Crystal::SyntaxHighlighter
 
       case token.type
       when .delimiter_start?
-        if last_is_def && token.raw.in?("`", "/")
-          render :IDENT, token.raw
-        elsif token.raw == "/" && slash_is_not_regex(last_token_type)
+        case
+        when last_is_def && token.raw == "`"
+          render :IDENT, token.raw # colorize 'def `'
+        when last_is_def && token.raw == "/"
+          render :IDENT, token.raw # colorize 'def /'
+
+          if lexer.current_char == '/'
+            render :IDENT, "/" # colorize 'def //'
+            lexer.reader.next_char if lexer.reader.has_next?
+          end
+        when token.raw == "/" && slash_is_not_regex(last_token_type)
           render :OPERATOR, token.raw
-        elsif token.delimiter_state.kind.heredoc?
+        when token.delimiter_state.kind.heredoc?
           heredoc_stack << token.dup
           highlight_token token, last_is_def
         else

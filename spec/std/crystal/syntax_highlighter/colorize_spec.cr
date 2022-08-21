@@ -81,6 +81,8 @@ describe Crystal::SyntaxHighlighter::Colorize do
       it_highlights %(def #{op}), %(\e[91mdef\e[0m \e[92m#{op}\e[0m)
     end
 
+    it_highlights %(def //), %(\e[91mdef\e[0m \e[92m/\e[0m\e[92m/\e[0m)
+
     %w(
       + - * &+ &- &* &** / // = == < <= > >= ! != =~ !~ & | ^ ~ **
       >> << % [] []? []= <=> === && ||
