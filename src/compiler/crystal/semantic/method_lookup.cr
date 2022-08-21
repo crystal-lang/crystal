@@ -66,7 +66,7 @@ module Crystal
     named_args : Array(NamedArgumentType)?
 
   class Type
-    def lookup_matches(signature, owner = self, path_lookup = self, matches_array = nil, analyze_all = false)
+    def lookup_matches(signature, owner = self, path_lookup = self, matches_array = ZeroOneOrMany(Match).new, analyze_all = false)
       matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array, analyze_all: analyze_all)
       return matches if matches.cover_all?
 
@@ -105,7 +105,7 @@ module Crystal
       Matches.new(matches_array, cover, owner, false)
     end
 
-    def lookup_matches_without_parents(signature, owner = self, path_lookup = self, matches_array = nil, analyze_all = false)
+    def lookup_matches_without_parents(signature, owner = self, path_lookup = self, matches_array = ZeroOneOrMany(Match).new, analyze_all = false)
       if defs = self.defs.try &.[signature.name]?
         context = MatchContext.new(owner, path_lookup)
 
@@ -129,8 +129,7 @@ module Crystal
           next if exact_match
 
           if match
-            matches_array ||= [] of Match
-            matches_array << match
+            matches_array = matches_array.with(match)
 
             # If the argument types are compatible with the match's argument types,
             # we are done. We don't just compare types with ==, there is a special case:
@@ -158,7 +157,7 @@ module Crystal
       Matches.new(matches_array, Cover.create(signature, matches_array), owner)
     end
 
-    def lookup_matches_with_modules(signature, owner = self, path_lookup = self, matches_array = nil, analyze_all = false)
+    def lookup_matches_with_modules(signature, owner = self, path_lookup = self, matches_array = ZeroOneOrMany(Match).new, analyze_all = false)
       matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array, analyze_all: analyze_all)
       return matches unless matches.empty?
 
@@ -434,7 +433,7 @@ module Crystal
         if is_new && subtype_matches.empty?
           other_initializers = subtype_lookup.instance_type.lookup_defs_with_modules("initialize")
           unless other_initializers.empty?
-            return Matches.new(nil, false)
+            return Matches.new(ZeroOneOrMany(Match).new, false)
           end
         end
 
@@ -442,7 +441,7 @@ module Crystal
         # def, we need to copy it to the subclass so that @name, @instance_vars and other
         # macro vars resolve correctly.
         if subtype_matches.empty?
-          new_subtype_matches = nil
+          new_subtype_matches = ZeroOneOrMany(Match).new
 
           base_type_matches.each do |base_type_match|
             if base_type_match.def.macro_def?
@@ -474,8 +473,9 @@ module Crystal
                   changes << Change.new(change_owner, cloned_def)
                 end
 
-                new_subtype_matches ||= [] of Match
-                new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
+                new_subtype_matches = new_subtype_matches.with(
+                  Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
+                )
               end
 
               # Reset the `self` restriction override
@@ -483,7 +483,7 @@ module Crystal
             end
           end
 
-          if new_subtype_matches
+          unless new_subtype_matches.empty?
             subtype_matches = Matches.new(new_subtype_matches, Cover.create(signature, new_subtype_matches))
           end
         end
@@ -508,7 +508,7 @@ module Crystal
             # We need to insert the matches before the previous ones
             # because subtypes are more specific matches
             if matches
-              subtype_matches_matches.concat matches
+              subtype_matches_matches = subtype_matches_matches.with(matches)
             end
             matches = subtype_matches_matches
           end
