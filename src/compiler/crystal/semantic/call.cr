@@ -7,7 +7,7 @@ class Crystal::Call
   property! scope : Type
   property with_scope : Type?
   property! parent_visitor : MainVisitor
-  property target_defs : Array(Def)?
+  property target_defs = ZeroOneOrMany(Def).new
   property expanded : ASTNode?
   property expanded_macro : Macro?
   property? uses_with_scope = false
@@ -20,15 +20,14 @@ class Crystal::Call
   end
 
   def target_def
-    if defs = @target_defs
-      if defs.size == 1
-        return defs.first
-      else
-        ::raise "#{defs.size} target defs for #{self}"
-      end
+    case target_defs.size
+    when 0
+      ::raise "Zero target defs for #{self}"
+    when 1
+      target_defs.first
+    else
+      ::raise "#{target_defs.size} target defs for #{self}"
     end
-
-    ::raise "Zero target defs for #{self}"
   end
 
   def recalculate
@@ -78,12 +77,10 @@ class Crystal::Call
 
     block = @block
 
-    if target_defs = @target_defs
-      unbind_from target_defs
-    end
+    unbind_from target_defs unless target_defs.empty?
     unbind_from block.break if block
 
-    @target_defs = nil
+    @target_defs = ZeroOneOrMany(Def).new
 
     if block_arg = @block_arg
       replace_block_arg_with_block(block_arg)
@@ -94,9 +91,10 @@ class Crystal::Call
     # If @target_defs is set here it means there was a recalculation
     # fired as a result of a recalculation. We keep the last one.
 
-    return if @target_defs
+    return unless target_defs.empty?
 
-    @target_defs = matches
+    # TODO: optimize zero one or many
+    @target_defs = ZeroOneOrMany(Def).new(matches)
 
     bind_to matches if matches
     bind_to block.break if block

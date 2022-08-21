@@ -1785,7 +1785,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_defs = node.target_defs
-    unless target_defs
+    if target_defs.empty?
       node.raise "BUG: no target defs"
     end
 
@@ -2436,7 +2436,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_defs = call.target_defs
-    unless target_defs
+    if target_defs.empty?
       call.raise "BUG: no target defs"
     end
 
