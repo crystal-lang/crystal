@@ -12,7 +12,7 @@
 # so the original value might mutate in that case!
 #
 # TODO: add tests for this type.
-struct ZeroOneOrMany(T)
+struct Crystal::ZeroOneOrMany(T)
   include Enumerable(T)
 
   getter value : Nil | T | Array(T)
