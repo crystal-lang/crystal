@@ -60,7 +60,7 @@ struct String::Formatter(A)
 
   private def consume_formatted_substitution
     key = consume_substitution_key '>'
-    target_arg = arg_at(key)
+    args_are :named
     next_char
     flags = consume_flags
     consume_type flags, key
