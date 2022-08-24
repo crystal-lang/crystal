@@ -1,7 +1,29 @@
 module Crystal
   class ASTNode
+    # A node whose type can be frozen.
+    # When frozen, trying to change the node's type to something
+    # that doesn't match `freeze_type` will produce a compilation error.
+    # This is used for checking a method's return type, a block's
+    # expected type, instance and class vars expected types,
+    # and local vars with a type declaration.
+    module Freezable
+      property freeze_type : Type?
+    end
+
+    # By default nodes don't have their type frozen.
+    def freeze_type
+      nil
+    end
+  end
+
+  {% for name in %w(Block MetaVar MetaTypeVar Def) %}
+    class {{name.id}}
+      include Freezable
+    end
+  {% end %}
+
+  class ASTNode
     property! dependencies : Array(ASTNode)
-    property freeze_type : Type?
     property observers : Array(ASTNode)?
     property enclosing_call : Call?
 
@@ -14,7 +36,7 @@ module Crystal
     end
 
     def type?
-      @type || @freeze_type
+      @type || freeze_type
     end
 
     def type(*, with_autocast = false)
@@ -41,7 +63,7 @@ module Crystal
 
     def set_type(type : Type)
       type = type.remove_alias_if_simple
-      if !type.no_return? && (freeze_type = @freeze_type) && !type.implements?(freeze_type)
+      if !type.no_return? && (freeze_type = self.freeze_type) && !type.implements?(freeze_type)
         raise_frozen_type freeze_type, type, self
       end
       @type = type
@@ -55,11 +77,11 @@ module Crystal
       set_type type
     rescue ex : FrozenTypeException
       # See if we can find where the mismatched type came from
-      if from && !ex.inner && (freeze_type = @freeze_type) && type.is_a?(UnionType) && type.includes_type?(freeze_type) && type.union_types.size == 2
+      if from && !ex.inner && (freeze_type = self.freeze_type) && type.is_a?(UnionType) && type.includes_type?(freeze_type) && type.union_types.size == 2
         other_type = type.union_types.find { |type| type != freeze_type }
         trace = from.find_owner_trace(freeze_type.program, other_type)
         ex.inner = trace
-      elsif from && !ex.inner && (freeze_type = @freeze_type)
+      elsif from && !ex.inner && (freeze_type = self.freeze_type)
         trace = from.find_owner_trace(freeze_type.program, type)
         ex.inner = trace
       end
@@ -140,7 +162,7 @@ module Crystal
       end
       new_type = map_type(new_type) if new_type
 
-      if new_type && (freeze_type = @freeze_type)
+      if new_type && (freeze_type = self.freeze_type)
         new_type = restrict_type_to_freeze_type(freeze_type, new_type)
       end
 
@@ -206,7 +228,7 @@ module Crystal
       new_type = Type.merge dependencies
       new_type = map_type(new_type) if new_type
 
-      if new_type && (freeze_type = @freeze_type)
+      if new_type && (freeze_type = self.freeze_type)
         new_type = restrict_type_to_freeze_type(freeze_type, new_type)
       end
 
