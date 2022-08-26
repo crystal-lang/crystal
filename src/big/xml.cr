@@ -2,8 +2,8 @@ require "xml"
 require "big"
 
 struct BigInt
-  def self.new(node : XML::Node)
-    new(node.content)
+  def self.new(parser : XML::PullParser)
+    new(parser.read_string)
   end
 
   def self.from_xml_object_key?(key : String) : BigInt?
@@ -22,8 +22,8 @@ struct BigInt
 end
 
 struct BigFloat
-  def self.new(node : XML::Node)
-    new(node.content)
+  def self.new(parser : XML::PullParser)
+    new(parser.read_string)
   end
 
   def self.from_xml_object_key?(key : String) : BigFloat?
@@ -42,8 +42,8 @@ struct BigFloat
 end
 
 struct BigDecimal
-  def self.new(node : XML::Node)
-    new(node.content)
+  def self.new(parser : XML::PullParser)
+    new(parser.read_string)
   end
 
   def self.from_xml_object_key?(key : String) : BigDecimal?

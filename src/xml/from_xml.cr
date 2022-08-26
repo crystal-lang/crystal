@@ -1,43 +1,75 @@
 require "uuid"
 
-def Object.from_xml(string_or_io)
-  new XML.parse(string_or_io)
+def Object.from_xml(string : String)
+  new XML::PullParser.new string
 end
 
-def Array.from_xml(string_or_io) : Nil
-  parser = XML.parse(string_or_io)
-  new(parser) do |node|
-    yield node
+def Array.from_xml(stirng : String) : Nil
+  parser = XML::PullParser.new string
+  new(parser) do |reader|
+    yield reader
   end
   nil
 end
 
-def Nil.new(node : XML::Node)
-  node.read
-  nil
+def Array.new(parser : XML::PullParser)
+  parser.read_array
 end
 
-def Bool.new(node : XML::Node)
-  case node.content
-  when "t", "true"
-    true
-  when "f", "false"
-    false
-  else
-    raise XML::SerializableError.new(
-      "failed to parse bool",
-      Bool.name,
-      nil,
-      Int32::MIN
-    )
+def Enum.new(reader : XML::Reader)
+  puts "TODO: EMUN"
+end
+
+module Iterator(T)
+  def self.from_xml(string_or_io)
+    puts "FROM XML"
+    iterator(T).new(XML::Reader.new(string_or_io))
+  end
+
+  def self.new(reader : XML::Reader)
+    puts "NEW"
+    FromXml(T).new(reader)
+  end
+
+  private class FromXml(T)
+    include Iterator(T)
+
+    def initialize(@reader : XML::Reader)
+      puts "INIT"
+      @reader.read
+      @end = false
+    end
+
+    def next
+      puts "NEXT"
+      loop do
+        break if @end
+
+        case @reader.node_type
+        when .end_element? # NOTE: go to end of element
+          @reader.read
+          @end = true
+        else
+          return T.new(@reader)
+        end
+        @reader.read
+      end
+    end
   end
 end
 
-def Union.new(node : XML::Node)
+def Bool.new(parser : XML::PullParser) : Bool
+  parser.read_bool
+end
+
+def Union.new(parser : XML::PullParser)
+  location = parser.location
+  value = parser.read_raw
+
   {% begin %}
-    case content = node.content
+    case value
     {% if T.includes? Nil %}
-    when .blank?
+    when ""
       return nil
     {% end %}
     {% if T.includes? Bool %}
@@ -63,11 +95,11 @@ def Union.new(node : XML::Node)
     {% type_order = [Int64, UInt64, Int32, UInt32, Int16, UInt16, Int8, UInt8, Float64, Float32] %}
     {% for type in type_order.select { |t| T.includes? t } %}
       when .to_{{numeral_methods[type].id}}?
-        return content.not_nil!.to_{{numeral_methods[type].id}}
+        return value.not_nil!.to_{{numeral_methods[type].id}}
     {% end %}
     {% if T.includes? String %}
     else
-      return node.content
+      return value.to_s
     {% else %}
     else
       # no priority type
@@ -84,7 +116,7 @@ def Union.new(node : XML::Node)
     {% if non_primitives.size == 1 %}
       return {{non_primitives[0]}}.new(node)
     {% else %}
-      string = node.content
+      string = parser.read_string
       {% for type in non_primitives %}
         begin
           return {{type}}.from_xml(string)
@@ -92,24 +124,19 @@ def Union.new(node : XML::Node)
           # Ignore
         end
       {% end %}
-      raise XML::Error.new("Couldn't parse #{self} from #{string}", 0)
+      raise XML::Error.new("Couldn't parse #{self} from #{string}", *location)
     {% end %}
   {% end %}
 end
 
-def Time.new(node : XML::Node)
-  Time::Format::ISO_8601_DATE_TIME.parse(node.content)
+def Time.new(parser : XML::PullParser)
+  Time::Format::ISO_8601_DATE_TIME.parse(parser.read_string)
 end
 
 struct Time::Format
-  def from_xml(node : XML::Node) : Time
-    string = node.content
-    parse(string, Time::Location::UTC)
+  def from_xml(parser : XML::PullParser) : Time
+    parse(parser.read_string, Time::Location::UTC)
   end
-end
-
-def Nil.new(node : XML::Node)
-  nil
 end
 
 {% for type, method in {
@@ -122,11 +149,17 @@ end
                          "UInt32" => "u32",
                          "UInt64" => "u64",
                        } %}
-  def {{type.id}}.new(node : XML::Node)
+  def {{type.id}}.new(parser : XML::PullParser)
+    value = {% if type == "UInt64" %}
+      parser.read_raw
+    {% else %}
+      parser.read_int
+    {% end %}
+
     begin
       value.to_{{method.id}}
     rescue ex : OverflowError | ArgumentError
-      raise XML::ParseException.new("Can't read {{type.id}}", nil, ex)
+      raise XML::ParseException.new("Can't read {{type.id}}", parser.line_number, parser.column_number, ex)
     end
   end
 
@@ -135,46 +168,44 @@ end
   end
 {% end %}
 
-def Nil.new(node : XML::Node)
+def Nil.new(parser : XML::PullParser) : Nil
   nil
 end
 
-def Int32.new(node : XML::Node)
-  node.content.to_i
+def Int32.new(parser : XML::PullParser) : Int32
+  parser.read_int.to_i32
 end
 
-def Array.new(node : XML::Node)
+def Array.new(reader : XML::Reader)
   ary = new
-  new(node) do |element|
+  new(reader) do |element|
     ary << element
   end
   ary
 end
 
-def Array.new(node : XML::Node)
-  begin
-    if node.document?
-      root = node.root
-      if root.nil?
-        raise ::XML::SerializableError.new("Missing XML root document", self.class.to_s, nil, 0)
-      else
-        children = root.children
-      end
-    else
-      children = node.children
+def Array.new(reader : XML::Reader)
+  results = Array(T).new
+
+  loop do
+    case reader.node_type
+    when .element?
+      reader.read
+      results << T.new(reader)
+    when .end_element?
+      reader.read
+      break
+    when .none?
+      break
     end
-  rescue exc : ::XML::Error
-    raise ::XML::SerializableError.new(exc.message, self.class.to_s, nil, exc.line_number)
+    reader.read
   end
 
-  children.each do |child|
-    next unless child.element?
-    yield T.new(child)
-  end
+  results
 end
 
-def String.new(node : XML::Node)
-  node.content
+def String.new(parser : XML::PullParser) : String
+  parser.read_string
 end
 
 def Object.from_xml(string_or_io, root : String)
@@ -184,8 +215,8 @@ def Object.from_xml(string_or_io, root : String)
   end
 end
 
-def UUID.new(node : XML::Node)
-  UUID.new(node.content)
+def UUID.new(parser : XML::PullParser)
+  UUID.new(parser.read_string)
 end
 
 def Hash.new(node : XML::Node)
@@ -219,19 +250,19 @@ def Hash.new(node : XML::Node)
 end
 
 module Time::EpochConverter
-  def self.from_xml(node : XML::Node) : Time
-    Time.unix(node.content.to_i)
+  def self.from_xml(parser : XML::PullParser) : Time
+    Time.unix(parser.read_int)
   end
 end
 
 module Time::EpochMillisConverter
-  def self.from_xml(node : XML::Node) : Time
-    Time.unix_ms(node.content.to_i64)
+  def self.from_xml(parser : XML::PullParser) : Time
+    Time.unix_ms(parser.read_int)
   end
 end
 
 module String::RawConverter
-  def self.from_xml(node : XML::Node) : String
-    node.content.to_s
+  def self.from_xml(parser : XML::PullParser) : String
+    parser.read_raw
   end
 end
