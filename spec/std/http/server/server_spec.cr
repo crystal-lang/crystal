@@ -92,7 +92,12 @@ describe HTTP::Server do
     s2.close
   end
 
-  it "binds to different ports" do
+  # This one sometimes fails in interpreted mode with:
+  #
+  #    server failed to start within 00:00:05 (Exception)
+  #
+  # Maybe the interpreter is too slow for it.
+  pending_interpreter "binds to different ports" do
     server = HTTP::Server.new do |context|
       context.response.print "Test Server (#{context.request.local_address})"
     end
