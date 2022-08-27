@@ -302,7 +302,7 @@ describe HTTP::Server do
   end
 
   describe "#bind_tls" do
-    it "binds SSL server context" do
+    pending_interpreter "binds SSL server context" do
       server = HTTP::Server.new do |context|
         context.response.puts "Test Server (#{context.request.local_address})"
         context.response.close
