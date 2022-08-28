@@ -25,6 +25,7 @@ verbose ?=       ## Run specs in verbose mode
 junit_output ?=  ## Path to output junit results
 static ?=        ## Enable static linking
 interpreter ?=   ## Enable interpreter feature
+check ?=         ## Enable only check when running format
 profile ?= future## Compatibility profile (future|current|legacy)
 
 ifeq ($(profile),future)
@@ -122,6 +123,10 @@ crystal: $(O)/crystal ## Build the compiler
 .PHONY: deps llvm_ext
 deps: $(DEPS) ## Build dependencies
 llvm_ext: $(LLVM_EXT_OBJ)
+
+.PHONY: format
+format: ## Format sources
+	./bin/crystal tool format$(if $(check), --check) src spec samples
 
 .PHONY: install
 install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR

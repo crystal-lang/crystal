@@ -439,7 +439,8 @@ module Crystal
     end
 
     def restrict(other : Self, context)
-      restrict(context.instantiated_type.instance_type, context)
+      self_type = context.self_restriction_type || context.instantiated_type
+      restrict(self_type.instance_type, context)
     end
 
     def restrict(other : TypeOf, context)
