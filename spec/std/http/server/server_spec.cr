@@ -1,6 +1,6 @@
 require "../spec_helper"
 require "http/server"
-require "http/client/response"
+require "http/client"
 require "../../../support/ssl"
 require "../../../support/channel"
 
@@ -81,7 +81,7 @@ describe HTTP::Server do
     ch.receive.should eq(:end)
   end
 
-  it "reuses the TCP port (SO_REUSEPORT)" do
+  pending_win32 "reuses the TCP port (SO_REUSEPORT)" do
     s1 = HTTP::Server.new { |ctx| }
     address = s1.bind_unused_port(reuse_port: true)
 
@@ -368,8 +368,8 @@ describe HTTP::Server do
           File.exists?(path1).should be_false
           File.exists?(path2).should be_false
         ensure
-          File.delete(path1) if File.exists?(path1)
-          File.delete(path2) if File.exists?(path2)
+          File.delete?(path1)
+          File.delete?(path2)
         end
       end
     end
@@ -472,7 +472,7 @@ describe HTTP::Server do
     end
   end
 
-  describe "#remote_address / #local_address" do
+  pending_win32 describe: "#remote_address / #local_address" do
     it "for http server" do
       remote_address = nil
       local_address = nil

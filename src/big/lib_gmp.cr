@@ -98,6 +98,9 @@ lib LibGMP
   fun tdiv_qr = __gmpz_tdiv_qr(q : MPZ*, r : MPZ*, n : MPZ*, d : MPZ*)
   fun tdiv_qr_ui = __gmpz_tdiv_qr_ui(q : MPZ*, r : MPZ*, n : MPZ*, d : UI) : UI
 
+  fun divisible_p = __gmpz_divisible_p(n : MPZ*, d : MPZ*) : Int
+  fun divisible_ui_p = __gmpz_divisible_ui_p(n : MPZ*, d : UI) : Int
+
   fun neg = __gmpz_neg(rop : MPZ*, op : MPZ*)
   fun abs = __gmpz_abs(rop : MPZ*, op : MPZ*)
 
@@ -139,6 +142,7 @@ lib LibGMP
   fun gcd_ui = __gmpz_gcd_ui(rop : MPZ*, op1 : MPZ*, op2 : UI) : UI
   fun lcm = __gmpz_lcm(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun lcm_ui = __gmpz_lcm_ui(rop : MPZ*, op1 : MPZ*, op2 : UI)
+  fun remove = __gmpz_remove(rop : MPZ*, op : MPZ*, f : MPZ*) : BitcntT
 
   # MPQ
   struct MPQ
@@ -196,8 +200,8 @@ lib LibGMP
   # # Conversion
   fun mpf_get_str = __gmpf_get_str(str : UInt8*, expptr : MpExp*, base : Int, n_digits : LibC::SizeT, op : MPF*) : UInt8*
   fun mpf_get_d = __gmpf_get_d(op : MPF*) : Double
-  fun mpf_set_d = __gmpf_set_d(op : MPF*, op : Double)
-  fun mpf_set = __gmpf_set(op : MPF*, op : MPF*)
+  fun mpf_set_d = __gmpf_set_d(rop : MPF*, op : Double)
+  fun mpf_set = __gmpf_set(rop : MPF*, op : MPF*)
   fun mpf_set_z = __gmpf_set_z(rop : MPF*, op : MPZ*)
   fun mpf_set_q = __gmpf_set_q(rop : MPF*, op : MPQ*)
   fun mpf_get_si = __gmpf_get_si(op : MPF*) : SI

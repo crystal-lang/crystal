@@ -2810,7 +2810,7 @@ describe "Semantic: instance var" do
     foo.instance_vars["@x"].type.should eq(result.program.int32)
 
     bar = result.program.types["Bar"].as(NonGenericClassType)
-    bar.instance_vars.empty?.should be_true
+    bar.instance_vars.should be_empty
   end
 
   it "infers type from custom array literal" do
@@ -4237,7 +4237,7 @@ describe "Semantic: instance var" do
       )) { generic_class "Bar", int32 }
   end
 
-  %w(Object Reference).each do |type|
+  %w(Object Reference Class).each do |type|
     it "errors if declaring var in #{type}" do
       assert_error %(
         class #{type}
@@ -4248,7 +4248,12 @@ describe "Semantic: instance var" do
     end
   end
 
-  %w(Value Number Int Float Int32).each do |type|
+  [
+    "Value", "Number", "Int", "Float", "Int32",
+    "Tuple(*T)", "NamedTuple(T)", "Enum",
+    "Pointer(T)", "StaticArray(T, N)",
+    "Proc(*T, R)", "Union(*T)",
+  ].each do |type|
     it "errors if declaring var in #{type}" do
       assert_error %(
         struct #{type}
@@ -5500,10 +5505,59 @@ describe "Semantic: instance var" do
       CR
   end
 
+  it "looks up return type restriction in defining type, not instantiated type (#11961)" do
+    assert_type(%(
+      module Foo(T)
+        def foo : T
+          x = uninitialized T
+          x
+        end
+      end
+
+      module Bar(T)
+        include Foo(T)
+      end
+
+      struct Tuple
+        include Bar(Union(*T))
+      end
+
+      class Test
+        def initialize
+          @foo = 0
+        end
+
+        def test
+          @foo = {@foo, 0}.foo
+        end
+      end
+
+      Test.new.@foo
+      )) { int32 }
+  end
+
+  it "inferrs Proc(Void) to Proc(Nil)" do
+    assert_type(%(
+      struct Proc
+        def self.new(&block : self)
+          block
+        end
+      end
+
+      class Foo
+        def initialize
+          @proc = Proc(Void).new { 1 }
+        end
+      end
+
+      Foo.new.@proc
+      )) { proc_of(nil_type) }
+  end
+
   describe "instance variable inherited from multiple parents" do
     context "with compatible type" do
       it "module and class, with declarations" do
-        assert_error <<-CR, "instance variable '@a' of B is already defined in A"
+        result = assert_type(%(
           module M
             @a : Int32 = 1
           end
@@ -5515,11 +5569,71 @@ describe "Semantic: instance var" do
           class B < A
             include M
           end
-          CR
+
+          B.new.@a
+          )) { int32 }
+
+        program = result.program
+        program.types["A"].instance_vars.size.should eq(1)
+        program.types["B"].instance_vars.size.should eq(0)
+      end
+
+      it "module and class, with declarations (2)" do
+        result = assert_type(%(
+          module M
+            @a = 1
+          end
+
+          class A
+            include M
+          end
+
+          class B < A
+            @a = 1
+          end
+
+          B.new.@a
+          )) { int32 }
+
+        program = result.program
+        program.types["A"].instance_vars.size.should eq(1)
+        program.types["B"].instance_vars.size.should eq(0)
+      end
+
+      it "module and class, with declarations (3)" do
+        result = assert_type(%(
+          module M
+            @a = 1
+          end
+
+          class A
+            include M
+          end
+
+          class B < A
+            @a = 1
+          end
+
+          class C
+            @a = 1
+          end
+
+          class D < C
+            include M
+          end
+
+          {B.new.@a, D.new.@a}
+          )) { tuple_of [int32, int32] }
+
+        program = result.program
+        program.types["A"].instance_vars.size.should eq(1)
+        program.types["B"].instance_vars.size.should eq(0)
+        program.types["C"].instance_vars.size.should eq(1)
+        program.types["D"].instance_vars.size.should eq(0)
       end
 
       it "module and class, with definitions" do
-        assert_error <<-CR, "instance variable '@a' of B is already defined in A"
+        result = assert_type(%(
           module M
             @a = 1
           end
@@ -5531,7 +5645,13 @@ describe "Semantic: instance var" do
           class B < A
             include M
           end
-          CR
+
+          B.new.@a
+          )) { int32 }
+
+        program = result.program
+        program.types["A"].instance_vars.size.should eq(1)
+        program.types["B"].instance_vars.size.should eq(0)
       end
 
       it "accepts module and module, with definitions" do
@@ -5571,7 +5691,7 @@ describe "Semantic: instance var" do
 
     context "with incompatible type" do
       it "module and class, with definitions" do
-        assert_error <<-CR, "instance variable '@a' of B is already defined in A"
+        assert_error <<-CR, "instance variable '@a' of A, with B < A, is already declared as Int32 (trying to re-declare it in B as Char)"
           module M
             @a = 'a'
           end
@@ -5587,7 +5707,7 @@ describe "Semantic: instance var" do
       end
 
       it "module and class, with declarations" do
-        assert_error <<-CR, "instance variable '@a' of B is already defined in A"
+        assert_error <<-CR, "instance variable '@a' of A, with B < A, is already declared as Int32 (trying to re-declare it in B as Char)"
           module M
             @a : Char = 'a'
           end

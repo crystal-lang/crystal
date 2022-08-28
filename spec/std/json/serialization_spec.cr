@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "spec/helpers/iterate"
 require "json"
 require "big"
 require "big/json"
@@ -17,6 +18,12 @@ enum JSONSpecFlagEnum
   One
   Two
   OneHundred
+end
+
+private record FooPrivate, x : Int32 do
+  def self.new(json : JSON::PullParser)
+    new(Int32.new(json))
+  end
 end
 
 describe "JSON serialization" do
@@ -138,37 +145,59 @@ describe "JSON serialization" do
     it "does for tuple" do
       tuple = Tuple(Int32, String).from_json(%([1, "hello"]))
       tuple.should eq({1, "hello"})
-      tuple.should be_a(Tuple(Int32, String))
+      typeof(tuple).should eq(Tuple(Int32, String))
+    end
+
+    it "does for tuple with file-private type" do
+      tuple = Tuple(FooPrivate).from_json %([1])
+      tuple.should eq({FooPrivate.new(1)})
+      typeof(tuple).should eq(Tuple(FooPrivate))
+    end
+
+    it "does for empty tuple" do
+      typeof(Tuple.new).from_json("[]").should eq(Tuple.new)
     end
 
     it "does for named tuple" do
       tuple = NamedTuple(x: Int32, y: String).from_json(%({"y": "hello", "x": 1}))
       tuple.should eq({x: 1, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32, y: String))
+    end
+
+    it "does for empty named tuple" do
+      tuple = typeof(NamedTuple.new).from_json(%({}))
+      tuple.should eq(NamedTuple.new)
+      tuple.should be_a(typeof(NamedTuple.new))
     end
 
     it "does for named tuple with nilable fields (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_json(%({"y": "hello"}))
       tuple.should eq({x: nil, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
     it "does for named tuple with nilable fields and null (#8089)" do
       tuple = NamedTuple(x: Int32?, y: String).from_json(%({"y": "hello", "x": null}))
       tuple.should eq({x: nil, y: "hello"})
-      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+      typeof(tuple).should eq(NamedTuple(x: Int32?, y: String))
     end
 
     it "does for named tuple with spaces in key (#10918)" do
       tuple = NamedTuple(a: Int32, "xyz b-23": Int32).from_json %{{"a": 1, "xyz b-23": 2}}
       tuple.should eq({a: 1, "xyz b-23": 2})
-      tuple.should be_a NamedTuple(a: Int32, "xyz b-23": Int32)
+      typeof(tuple).should eq(NamedTuple(a: Int32, "xyz b-23": Int32))
     end
 
     it "does for named tuple with spaces in key and quote char (#10918)" do
       tuple = NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32).from_json %{{"a": 1, "xyz \\"foo\\" b-23": 2}}
       tuple.should eq({a: 1, "xyz \"foo\" b-23": 2})
-      tuple.should be_a NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32)
+      typeof(tuple).should eq(NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32))
+    end
+
+    it "does for named tuple with file-private type" do
+      tuple = NamedTuple(a: FooPrivate).from_json %({"a": 1})
+      tuple.should eq({a: FooPrivate.new(1)})
+      typeof(tuple).should eq(NamedTuple(a: FooPrivate))
     end
 
     it "does for BigInt" do
