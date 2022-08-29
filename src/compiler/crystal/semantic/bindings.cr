@@ -111,7 +111,7 @@ module Crystal
       end
     end
 
-    def bind_to(nodes : Array)
+    def bind_to(nodes : Indexable)
       return if nodes.empty?
 
       bind do |dependencies|
