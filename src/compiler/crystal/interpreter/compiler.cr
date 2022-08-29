@@ -137,13 +137,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def self.new(
     context : Context,
     compiled_def : CompiledDef,
-    top_level : Bool
+    top_level : Bool,
+    scope : Type = compiled_def.owner
   )
     new(
       context: context,
       local_vars: compiled_def.local_vars,
       instructions: compiled_def.instructions,
-      scope: compiled_def.owner,
+      scope: scope,
       def: compiled_def.def,
       top_level: top_level,
     )
@@ -380,6 +381,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : TupleLiteral)
+    unless @wants_value
+      node.elements.each do |element|
+        discard_value element
+      end
+
+      return false
+    end
+
     type = node.type.as(TupleInstanceType)
 
     # A tuple potentially has the values packed (unaligned).
@@ -412,6 +421,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : NamedTupleLiteral)
+    unless @wants_value
+      node.entries.each do |entry|
+        discard_value entry.value
+      end
+
+      return false
+    end
+
     type = node.type.as(NamedTupleInstanceType)
 
     # This logic is similar to TupleLiteral.
@@ -1780,7 +1797,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     body = target_def.body
     if body.is_a?(Primitive)
-      visit_primitive(node, body)
+      visit_primitive(node, body, target_def)
       return false
     end
 
@@ -2747,7 +2764,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiled_def.local_vars.declare(name, var_type)
     end
 
-    compiler = Compiler.new(@context, compiled_def, top_level: false)
+    compiler = Compiler.new(@context, compiled_def, scope: scope, top_level: false)
     begin
       compiler.compile_def(compiled_def, is_closure ? @closure_context : nil)
     rescue ex : Crystal::CodeError
