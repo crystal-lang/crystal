@@ -74,7 +74,7 @@ struct Crystal::ZeroOneOrMany(T)
     end
   end
 
-  def with(element : T) : ZeroOneOrMany(T)
+  def +(element : T) : ZeroOneOrMany(T)
     value = @value
     case value
     in Nil
@@ -87,7 +87,7 @@ struct Crystal::ZeroOneOrMany(T)
     end
   end
 
-  def with(elements : Indexable(T)) : ZeroOneOrMany(T)
+  def +(elements : Indexable(T)) : ZeroOneOrMany(T)
     value = @value
     case value
     in Nil

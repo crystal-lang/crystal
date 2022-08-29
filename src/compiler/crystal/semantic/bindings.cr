@@ -105,7 +105,7 @@ module Crystal
 
     def bind_to(node : ASTNode)
       bind(node) do
-        @dependencies = @dependencies.with(node)
+        @dependencies += node
         node.add_observer self
         node
       end
@@ -113,8 +113,8 @@ module Crystal
 
     def bind_to(node1 : ASTNode, node2 : ASTNode)
       bind do
-        @dependencies = @dependencies.with(node1)
-        @dependencies = @dependencies.with(node2)
+        @dependencies += node1
+        @dependencies += node2
         node1.add_observer self
         node2.add_observer self
         node1
@@ -125,7 +125,7 @@ module Crystal
       return if nodes.empty?
 
       bind do
-        @dependencies = @dependencies.with(nodes)
+        @dependencies += nodes
         nodes.each &.add_observer self
         nodes.first
       end
@@ -181,7 +181,7 @@ module Crystal
     end
 
     def add_observer(observer : ASTNode) : Nil
-      @observers = @observers.with(observer)
+      @observers += observer
     end
 
     def remove_observer(observer : ASTNode) : Nil

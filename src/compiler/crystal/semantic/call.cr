@@ -205,9 +205,7 @@ class Crystal::Call
   def lookup_matches_in(owner : UnionType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false) : ZeroOneOrMany(Def)
     matches = ZeroOneOrMany(Def).new
     owner.union_types.each { |type|
-      matches = matches.with(
-        lookup_matches_in(type, arg_types, named_args_types, search_in_parents: search_in_parents, with_autocast: with_autocast)
-      )
+      matches += lookup_matches_in(type, arg_types, named_args_types, search_in_parents: search_in_parents, with_autocast: with_autocast)
     }
     matches
   end
@@ -436,7 +434,7 @@ class Crystal::Call
         end
       end
 
-      typed_defs = typed_defs.with(typed_def)
+      typed_defs += typed_def
     end
 
     typed_defs
