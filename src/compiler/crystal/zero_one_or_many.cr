@@ -13,7 +13,7 @@
 #
 # TODO: add tests for this type.
 struct Crystal::ZeroOneOrMany(T)
-  include Enumerable(T)
+  include Indexable(T)
 
   getter value : Nil | T | Array(T)
 
@@ -34,6 +34,18 @@ struct Crystal::ZeroOneOrMany(T)
       else
         values
       end
+  end
+
+  def unsafe_fetch(index : Int)
+    value = @value
+    case value
+    in Nil
+      raise "BUG: called ZeroOneOrMany#unsafe_fetch but value is nil"
+    in T
+      value
+    in Array(T)
+      value.unsafe_fetch(index)
+    end
   end
 
   def each(& : T ->)
@@ -75,11 +87,18 @@ struct Crystal::ZeroOneOrMany(T)
     end
   end
 
-  def with(elements : Enumerable(T)) : ZeroOneOrMany(T)
+  def with(elements : Indexable(T)) : ZeroOneOrMany(T)
     value = @value
     case value
     in Nil
-      ZeroOneOrMany(T).new(elements.map(&.as(T)))
+      case elements.size
+      when 0
+        self
+      when 1
+        ZeroOneOrMany(T).new(elements.first)
+      else
+        ZeroOneOrMany(T).new(elements.map(&.as(T)))
+      end
     in T
       new_elements = Array(T).new(elements.size + 1)
       new_elements.push(value)

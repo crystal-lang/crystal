@@ -111,7 +111,17 @@ module Crystal
       end
     end
 
-    def bind_to(nodes : Enumerable(ASTNode))
+    def bind_to(node1 : ASTNode, node2 : ASTNode)
+      bind do
+        @dependencies = @dependencies.with(node1)
+        @dependencies = @dependencies.with(node2)
+        node1.add_observer self
+        node2.add_observer self
+        node1
+      end
+    end
+
+    def bind_to(nodes : Indexable(ASTNode))
       return if nodes.empty?
 
       bind do
