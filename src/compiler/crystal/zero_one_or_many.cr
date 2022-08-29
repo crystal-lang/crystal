@@ -10,8 +10,6 @@
 # around when using the above methods as the internal
 # array might be mutated (for performance reasons),
 # so the original value might mutate in that case!
-#
-# TODO: add tests for this type.
 struct Crystal::ZeroOneOrMany(T)
   include Indexable(T)
 
