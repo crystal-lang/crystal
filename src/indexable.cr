@@ -742,20 +742,14 @@ module Indexable(T)
     hasher
   end
 
-  # Returns the index of the first appearance of *obj* in `self`
-  # starting from the given *offset*, or `nil` if *obj* is not in `self`.
+  # Returns the index of the first appearance of *object* in `self`
+  # starting from the given *offset*, or `nil` if *object* is not in `self`.
   #
   # ```
   # [1, 2, 3, 1, 2, 3].index(2, offset: 2) # => 4
   # ```
-  def index(obj, offset : Int = 0)
-    index(offset) { |e| e == obj }
-  end
-
-  # :ditto:
-  @[Deprecated("Use `#index(obj, offset)` instead")]
-  def index(*, object, offset : Int = 0)
-    index(object, offset)
+  def index(object, offset : Int = 0)
+    index(offset) { |e| e == object }
   end
 
   # Returns the index of the first object in `self` for which the block
