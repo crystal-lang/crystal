@@ -3,12 +3,6 @@ require "crystal/compiler_rt/multi3"
 
 # Ported from https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/test/builtins/Unit/multi3_test.c
 
-# TODO: Replace helper methods with literals once possible
-
-private def make_ti(a : Int128, b : Int128)
-  (a << 64) + b
-end
-
 it ".__multi3" do
   __multi3(0, 0).should eq 0
   __multi3(0, 1).should eq 0
@@ -46,7 +40,7 @@ it ".__multi3" do
   __multi3(2097152, -4398046511103).should eq -9223372036852678656
   __multi3(-2097152, -4398046511103).should eq 9223372036852678656
   __multi3(
-    make_ti(0x00000000000000B5, 0x04F333F9DE5BE000),
-    make_ti(0x0000000000000000, 0x00B504F333F9DE5B)
-  ).should eq make_ti(0x7FFFFFFFFFFFF328, 0xDF915DA296E8A000)
+    0x00000000000000B504F333F9DE5BE000_i128,
+    0x000000000000000000B504F333F9DE5B_i128
+  ).should eq 0x7FFFFFFFFFFFF328DF915DA296E8A000_i128
 end

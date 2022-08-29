@@ -51,20 +51,20 @@ describe "__fixdfti" do
   test__fixdfti(hexfloat("0x1.FFFFFEp+62"), 0x7FFFFF8000000000_u64)
   test__fixdfti(hexfloat("0x1.FFFFFCp+62"), 0x7FFFFF0000000000_u64)
 
-  test__fixdfti(hexfloat("-0x1.FFFFFEp+62"), make_ti(0xFFFFFFFFFFFFFFFF_u64, 0x8000008000000000_u64))
-  test__fixdfti(hexfloat("-0x1.FFFFFCp+62"), make_ti(0xFFFFFFFFFFFFFFFF_u64, 0x8000010000000000_u64))
+  test__fixdfti(hexfloat("-0x1.FFFFFEp+62"), 0xFFFFFFFFFFFFFFFF8000008000000000_u128.to_i128!)
+  test__fixdfti(hexfloat("-0x1.FFFFFCp+62"), 0xFFFFFFFFFFFFFFFF8000010000000000_u128.to_i128!)
 
   test__fixdfti(hexfloat("0x1.FFFFFFFFFFFFFp+62"), 0x7FFFFFFFFFFFFC00_u64)
   test__fixdfti(hexfloat("0x1.FFFFFFFFFFFFEp+62"), 0x7FFFFFFFFFFFF800_u64)
 
-  test__fixdfti(hexfloat("-0x1.FFFFFFFFFFFFFp+62"), make_ti(0xFFFFFFFFFFFFFFFF_u64, 0x8000000000000400_u64))
-  test__fixdfti(hexfloat("-0x1.FFFFFFFFFFFFEp+62"), make_ti(0xFFFFFFFFFFFFFFFF_u64, 0x8000000000000800_u64))
+  test__fixdfti(hexfloat("-0x1.FFFFFFFFFFFFFp+62"), 0xFFFFFFFFFFFFFFFF8000000000000400_u128.to_i128!)
+  test__fixdfti(hexfloat("-0x1.FFFFFFFFFFFFEp+62"), 0xFFFFFFFFFFFFFFFF8000000000000800_u128.to_i128!)
 
-  test__fixdfti(hexfloat("0x1.FFFFFFFFFFFFFp+126"), make_ti(0x7FFFFFFFFFFFFC00_u64, 0))
-  test__fixdfti(hexfloat("0x1.FFFFFFFFFFFFEp+126"), make_ti(0x7FFFFFFFFFFFF800_u64, 0))
+  test__fixdfti(hexfloat("0x1.FFFFFFFFFFFFFp+126"), 0x7FFFFFFFFFFFFC000000000000000000_i128)
+  test__fixdfti(hexfloat("0x1.FFFFFFFFFFFFEp+126"), 0x7FFFFFFFFFFFF8000000000000000000_i128)
 
-  test__fixdfti(hexfloat("-0x1.FFFFFFFFFFFFFp+126"), make_ti(0x8000000000000400_u64, 0))
-  test__fixdfti(hexfloat("-0x1.FFFFFFFFFFFFEp+126"), make_ti(0x8000000000000800_u64, 0))
+  test__fixdfti(hexfloat("-0x1.FFFFFFFFFFFFFp+126"), 0x80000000000004000000000000000000_u128.to_i128!)
+  test__fixdfti(hexfloat("-0x1.FFFFFFFFFFFFEp+126"), 0x80000000000008000000000000000000_u128.to_i128!)
 end
 
 describe "__fixsfti" do
@@ -88,14 +88,14 @@ describe "__fixsfti" do
   test__fixsfti(hexfloat("0x1.FFFFFEp+62_f32"), 0x7FFFFF8000000000_u64)
   test__fixsfti(hexfloat("0x1.FFFFFCp+62_f32"), 0x7FFFFF0000000000_u64)
 
-  test__fixsfti(hexfloat("-0x1.FFFFFEp+62_f32"), make_ti(0xFFFFFFFFFFFFFFFF_u64, 0x8000008000000000_u64))
-  test__fixsfti(hexfloat("-0x1.FFFFFCp+62_f32"), make_ti(0xFFFFFFFFFFFFFFFF_u64, 0x8000010000000000_u64))
+  test__fixsfti(hexfloat("-0x1.FFFFFEp+62_f32"), 0xFFFFFFFFFFFFFFFF8000008000000000_u128.to_i128!)
+  test__fixsfti(hexfloat("-0x1.FFFFFCp+62_f32"), 0xFFFFFFFFFFFFFFFF8000010000000000_u128.to_i128!)
 
-  test__fixsfti(hexfloat("0x1.FFFFFEp+126_f32"), make_ti(0x7FFFFF8000000000_u64, 0))
-  test__fixsfti(hexfloat("0x1.FFFFFCp+126_f32"), make_ti(0x7FFFFF0000000000_u64, 0))
+  test__fixsfti(hexfloat("0x1.FFFFFEp+126_f32"), 0x7FFFFF80000000000000000000000000_i128)
+  test__fixsfti(hexfloat("0x1.FFFFFCp+126_f32"), 0x7FFFFF00000000000000000000000000_i128)
 
-  test__fixsfti(hexfloat("-0x1.FFFFFEp+126_f32"), make_ti(0x8000008000000000_u64, 0))
-  test__fixsfti(hexfloat("-0x1.FFFFFCp+126_f32"), make_ti(0x8000010000000000_u64, 0))
+  test__fixsfti(hexfloat("-0x1.FFFFFEp+126_f32"), 0x80000080000000000000000000000000_u128.to_i128!)
+  test__fixsfti(hexfloat("-0x1.FFFFFCp+126_f32"), 0x80000100000000000000000000000000_u128.to_i128!)
 end
 
 describe "__fixunsdfti" do
@@ -119,11 +119,11 @@ describe "__fixunsdfti" do
   test__fixunsdfti(hexfloat("0x1.FFFFFFFFFFFFFp+62"), 0x7FFFFFFFFFFFFC00_u64)
   test__fixunsdfti(hexfloat("0x1.FFFFFFFFFFFFEp+62"), 0x7FFFFFFFFFFFF800_u64)
 
-  test__fixunsdfti(hexfloat("0x1.FFFFFFFFFFFFFp+127"), make_tu(0xFFFFFFFFFFFFF800_u64, 0))
-  test__fixunsdfti(hexfloat("0x1.0000000000000p+127"), make_tu(0x8000000000000000_u64, 0))
-  test__fixunsdfti(hexfloat("0x1.FFFFFFFFFFFFFp+126"), make_tu(0x7FFFFFFFFFFFFC00_u64, 0))
-  test__fixunsdfti(hexfloat("0x1.FFFFFFFFFFFFEp+126"), make_tu(0x7FFFFFFFFFFFF800_u64, 0))
-  test__fixunsdfti(hexfloat("0x1.0000000000000p+128"), make_tu(0xFFFFFFFFFFFFFFFF_u64, 0xFFFFFFFFFFFFFFFF_u64))
+  test__fixunsdfti(hexfloat("0x1.FFFFFFFFFFFFFp+127"), 0xFFFFFFFFFFFFF8000000000000000000_u128)
+  test__fixunsdfti(hexfloat("0x1.0000000000000p+127"), 0x80000000000000000000000000000000_u128)
+  test__fixunsdfti(hexfloat("0x1.FFFFFFFFFFFFFp+126"), 0x7FFFFFFFFFFFFC000000000000000000_u128)
+  test__fixunsdfti(hexfloat("0x1.FFFFFFFFFFFFEp+126"), 0x7FFFFFFFFFFFF8000000000000000000_u128)
+  test__fixunsdfti(hexfloat("0x1.0000000000000p+128"), 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF_u128)
 end
 
 describe "__fixunssfti" do
@@ -144,8 +144,8 @@ describe "__fixunssfti" do
   test__fixunssfti(hexfloat("0x1.FFFFFEp+62_f32"), 0x7FFFFF8000000000_u64)
   test__fixunssfti(hexfloat("0x1.FFFFFCp+62_f32"), 0x7FFFFF0000000000_u64)
 
-  test__fixunssfti(hexfloat("0x1.FFFFFEp+127_f32"), make_tu(0xFFFFFF0000000000_u64, 0))
-  test__fixunssfti(hexfloat("0x1.000000p+127_f32"), make_tu(0x8000000000000000_u64, 0))
-  test__fixunssfti(hexfloat("0x1.FFFFFEp+126_f32"), make_tu(0x7FFFFF8000000000_u64, 0))
-  test__fixunssfti(hexfloat("0x1.FFFFFCp+126_f32"), make_tu(0x7FFFFF0000000000_u64, 0))
+  test__fixunssfti(hexfloat("0x1.FFFFFEp+127_f32"), 0xFFFFFF00000000000000000000000000_u128)
+  test__fixunssfti(hexfloat("0x1.000000p+127_f32"), 0x80000000000000000000000000000000_u128)
+  test__fixunssfti(hexfloat("0x1.FFFFFEp+126_f32"), 0x7FFFFF80000000000000000000000000_u128)
+  test__fixunssfti(hexfloat("0x1.FFFFFCp+126_f32"), 0x7FFFFF00000000000000000000000000_u128)
 end
