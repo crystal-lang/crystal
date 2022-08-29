@@ -52,11 +52,33 @@ describe "Complex" do
   it "to_s" do
     Complex.new(1.25, 8.2).to_s.should eq("1.25 + 8.2i")
     Complex.new(1.25, -8.2).to_s.should eq("1.25 - 8.2i")
+
+    Complex.new(+0.0, +0.0).to_s.should eq("0.0 + 0.0i")
+    Complex.new(-0.0, -0.0).to_s.should eq("-0.0 - 0.0i")
+
+    Complex.new(+Float64::INFINITY, +Float64::INFINITY).to_s.should eq("Infinity + Infinityi")
+    Complex.new(-Float64::INFINITY, -Float64::INFINITY).to_s.should eq("-Infinity - Infinityi")
+
+    pos_nan = Math.copysign(Float64::NAN, 1)
+    neg_nan = Math.copysign(Float64::NAN, -1)
+    Complex.new(pos_nan, pos_nan).to_s.should eq("NaN + NaNi")
+    Complex.new(neg_nan, neg_nan).to_s.should eq("NaN + NaNi")
   end
 
   it "inspect" do
     Complex.new(1.25, 8.2).inspect.should eq("(1.25 + 8.2i)")
     Complex.new(1.25, -8.2).inspect.should eq("(1.25 - 8.2i)")
+
+    Complex.new(+0.0, +0.0).inspect.should eq("(0.0 + 0.0i)")
+    Complex.new(-0.0, -0.0).inspect.should eq("(-0.0 - 0.0i)")
+
+    Complex.new(+Float64::INFINITY, +Float64::INFINITY).inspect.should eq("(Infinity + Infinityi)")
+    Complex.new(-Float64::INFINITY, -Float64::INFINITY).inspect.should eq("(-Infinity - Infinityi)")
+
+    pos_nan = Math.copysign(Float64::NAN, 1)
+    neg_nan = Math.copysign(Float64::NAN, -1)
+    Complex.new(pos_nan, pos_nan).inspect.should eq("(NaN + NaNi)")
+    Complex.new(neg_nan, neg_nan).inspect.should eq("(NaN + NaNi)")
   end
 
   it "abs" do
