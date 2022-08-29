@@ -1,15 +1,5 @@
 # An Array(T)-like type that's optimized for the case of
 # frequently having zero or one elements.
-#
-# It's a struct, so if you have a ZeroOneOrMany and you
-# want to mutate, you have to use `with` or `without`
-# and overwrite the value you have with what you get
-# from those methods.
-#
-# Warning: you should never keep the original value
-# around when using the above methods as the internal
-# array might be mutated (for performance reasons),
-# so the original value might mutate in that case!
 struct Crystal::ZeroOneOrMany(T)
   include Indexable(T)
 
@@ -20,18 +10,6 @@ struct Crystal::ZeroOneOrMany(T)
   end
 
   def initialize(@value : T)
-  end
-
-  protected def initialize(values : Array(T))
-    @value =
-      case values.size
-      when 0
-        nil
-      when 1
-        values.first
-      else
-        values
-      end
   end
 
   def unsafe_fetch(index : Int)
@@ -72,56 +50,64 @@ struct Crystal::ZeroOneOrMany(T)
     end
   end
 
-  def +(element : T) : ZeroOneOrMany(T)
+  def <<(element : T) : self
+    push(element)
+  end
+
+  def push(element : T) : self
     value = @value
     case value
     in Nil
-      ZeroOneOrMany(T).new(element)
+      @value = element
     in T
-      ZeroOneOrMany(T).new([value, element] of T)
+      @value = [value, element] of T
     in Array(T)
       value.push element
-      self
     end
+    self
   end
 
-  def +(elements : Indexable(T)) : ZeroOneOrMany(T)
+  def concat(elements : Indexable(T)) : self
     value = @value
     case value
     in Nil
       case elements.size
       when 0
-        self
+        # Nothing to do
       when 1
-        ZeroOneOrMany(T).new(elements.first)
+        @value = elements.first
       else
-        ZeroOneOrMany(T).new(elements.map(&.as(T)))
+        @value = elements.map(&.as(T)).to_a
       end
     in T
-      new_elements = Array(T).new(elements.size + 1)
-      new_elements.push(value)
-      new_elements.concat(elements)
-      ZeroOneOrMany.new(new_elements)
+      new_value = Array(T).new(elements.size + 1)
+      new_value.push(value)
+      new_value.concat(elements)
+      @value = new_value
     in Array(T)
       value.concat(elements)
-      self
     end
+    self
   end
 
-  def reject(&block : T -> _)
+  def reject!(&block : T -> _) : self
     value = @value
     case value
     in Nil
-      self
+      # Nothing to do
     in T
       if yield value
-        ZeroOneOrMany(T).new
-      else
-        self
+        @value = nil
       end
     in Array(T)
       value.reject! { |element| yield element }
-      ZeroOneOrMany(T).new(value)
+      case value.size
+      when 0
+        @value = nil
+      when 1
+        @value = value.first
+      end
     end
+    self
   end
 end
