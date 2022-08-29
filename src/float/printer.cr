@@ -41,7 +41,7 @@ module Float::Printer
     significand, decimal_exponent = Dragonbox.to_decimal(v)
 
     # generate `significand.to_s` in a reasonably fast manner
-    str = StaticArray(UInt8, BUFFER_SIZE).new(0_u8)
+    str = uninitialized UInt8[BUFFER_SIZE]
     ptr = str.to_unsafe + BUFFER_SIZE
     while significand > 0
       ptr -= 1
