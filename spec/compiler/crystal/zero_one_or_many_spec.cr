@@ -15,33 +15,6 @@ describe Crystal::ZeroOneOrMany do
       ary.to_a.should eq([1])
       ary.value.should be_a(Int32)
     end
-
-    it "creates with an empty array" do
-      ary = Crystal::ZeroOneOrMany.new([] of Int32)
-      ary.size.should eq(0)
-      ary.value.should be_nil
-    end
-
-    it "creates with an array of one value" do
-      ary = Crystal::ZeroOneOrMany.new([1])
-      ary.size.should eq(1)
-      ary.to_a.should eq([1])
-      ary.value.should be_a(Int32)
-    end
-
-    it "creates with an array of more than one value" do
-      elements = [1, 2, 3]
-
-      ary = Crystal::ZeroOneOrMany.new(elements)
-      ary.size.should eq(3)
-      ary.to_a.should eq([1, 2, 3])
-      ary.value.should be_a(Array(Int32))
-
-      # Mutating the original array changes ZeroOneOrMany,
-      # but this is according to the type's description.
-      elements.pop
-      ary.to_a.should eq([1, 2])
-    end
   end
 
   describe "as Indexable" do
@@ -58,7 +31,8 @@ describe Crystal::ZeroOneOrMany do
     end
 
     it "when there's two values" do
-      ary = Crystal::ZeroOneOrMany.new([1, 2])
+      ary = Crystal::ZeroOneOrMany(Int32).new
+      ary += [1, 2]
       ary[0].should eq(1)
       ary[1].should eq(2)
       expect_raises(IndexError) { ary[2] }
@@ -77,7 +51,8 @@ describe Crystal::ZeroOneOrMany do
     end
 
     it "when there's two values" do
-      ary = Crystal::ZeroOneOrMany.new([1, 2])
+      ary = Crystal::ZeroOneOrMany(Int32).new
+      ary += [1, 2]
       ary.sum.should eq(3)
     end
   end
@@ -96,15 +71,10 @@ describe Crystal::ZeroOneOrMany do
     end
 
     it "when there's two values" do
-      elements = [1, 2]
-
-      ary = Crystal::ZeroOneOrMany.new(elements)
+      ary = Crystal::ZeroOneOrMany(Int32).new
+      ary += [1, 2]
       ary += 3
       ary.to_a.should eq([1, 2, 3])
-
-      # Elements was also mutated, but this is expected
-      # according to the type's description.
-      elements.should eq([1, 2, 3])
     end
   end
 
@@ -138,7 +108,8 @@ describe Crystal::ZeroOneOrMany do
     end
 
     it "when there's two values" do
-      ary = Crystal::ZeroOneOrMany.new([1, 2])
+      ary = Crystal::ZeroOneOrMany(Int32).new
+      ary += [1, 2]
       ary += [3, 4]
       ary.to_a.should eq([1, 2, 3, 4])
       ary.value.should be_a(Array(Int32))
@@ -168,38 +139,27 @@ describe Crystal::ZeroOneOrMany do
     end
 
     it "when there are three values and none matches" do
-      ary = Crystal::ZeroOneOrMany(Int32).new([1, 2, 3])
+      ary = Crystal::ZeroOneOrMany(Int32).new
+      ary += [1, 2, 3]
       ary = ary.reject { |x| x == 4 }
       ary.to_a.should eq([1, 2, 3])
       ary.value.should be_a(Array(Int32))
     end
 
     it "when there are three values and two match" do
-      elements = [1, 2, 3]
-
-      ary = Crystal::ZeroOneOrMany(Int32).new(elements)
+      ary = Crystal::ZeroOneOrMany(Int32).new
+      ary += [1, 2, 3]
       ary = ary.reject { |x| x < 3 }
       ary.to_a.should eq([3])
       ary.value.should be_a(Int32)
-
-      # Note: elements is also mutated.
-      # This is fine: the owner of elements becomes ZeroOneOrMany
-      # per the type's description.
-      elements.should eq([3])
     end
 
     it "when there are three values and all match" do
-      elements = [1, 2, 3]
-
-      ary = Crystal::ZeroOneOrMany(Int32).new(elements)
+      ary = Crystal::ZeroOneOrMany(Int32).new
+      ary += [1, 2, 3]
       ary = ary.reject { |x| x < 4 }
       ary.empty?.should be_true
       ary.value.should be_nil
-
-      # Note: elements is also mutated.
-      # This is fine: the owner of elements becomes ZeroOneOrMany
-      # per the type's description.
-      elements.empty?.should be_true
     end
   end
 end

@@ -22,7 +22,7 @@ struct Crystal::ZeroOneOrMany(T)
   def initialize(@value : T)
   end
 
-  def initialize(values : Array(T))
+  protected def initialize(values : Array(T))
     @value =
       case values.size
       when 0
