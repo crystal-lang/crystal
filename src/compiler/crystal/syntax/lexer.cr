@@ -1,6 +1,7 @@
 require "./token"
 require "../exception"
 require "string_pool"
+require "../warnings"
 
 module Crystal
   class Lexer
@@ -52,7 +53,10 @@ module Crystal
       end
     end
 
-    def initialize(string, string_pool : StringPool? = nil)
+    # Warning settings and all detected warnings.
+    property warnings : WarningCollection
+
+    def initialize(string, string_pool : StringPool? = nil, @warnings = WarningCollection.new)
       @reader = Char::Reader.new(string)
       @token = Token.new
       @temp_token = Token.new
@@ -1473,6 +1477,10 @@ module Crystal
       raise "#{string_range(start, pos_before_suffix)} doesn't fit in an #{type}, try using the suffix #{alternative}", @token, (current_pos - start)
     end
 
+    def warn_large_uint64_literal(start, pos_before_suffix)
+      @warnings.add_warning_at(@token.location, "#{string_range(start, pos_before_suffix)} doesn't fit in an Int64, try using the suffix u64 or i128")
+    end
+
     private def scan_number(start, negative = false)
       @token.type = :NUMBER
       base = 10
@@ -1584,12 +1592,17 @@ module Crystal
                                elsif negative
                                  raise_value_doesnt_fit_in(Int64, start, pos_before_suffix, "i128")
                                else
+                                 warn_large_uint64_literal(start, pos_before_suffix)
                                  NumberKind::U64
                                end
                              when 20
                                raise_value_doesnt_fit_in(Int64, start, pos_before_suffix, "i128") if negative
-                               raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix, "i128") unless raw_number_string.to_u64?
-                               NumberKind::U64
+                               if raw_number_string.to_u64?
+                                 warn_large_uint64_literal(start, pos_before_suffix)
+                                 NumberKind::U64
+                               else
+                                 raise_value_doesnt_fit_in(UInt64, start, pos_before_suffix, "i128")
+                               end
                              when 21..38
                                raise_value_doesnt_fit_in(negative ? Int64 : UInt64, start, pos_before_suffix, "i128")
                              when 39
