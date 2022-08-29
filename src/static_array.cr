@@ -408,12 +408,11 @@ struct StaticArray(T, N)
     array
   end
 
-  # :inherit:
-  def index(obj, offset : Int = 0)
+  def index(object, offset : Int = 0)
     # Optimize for the case of looking for a byte in a byte slice
     if T.is_a?(UInt8.class) &&
-       (obj.is_a?(UInt8) || (obj.is_a?(Int) && 0 <= obj < 256))
-      return to_slice.fast_index(obj, offset)
+       (object.is_a?(UInt8) || (object.is_a?(Int) && 0 <= object < 256))
+      return to_slice.fast_index(object, offset)
     end
 
     super

@@ -788,12 +788,6 @@ module Indexable(T)
     index(obj, offset) || raise Enumerable::NotFoundError.new
   end
 
-  # :ditto:
-  @[Deprecated("Use `#index!(obj, offset)` instead")]
-  def index!(*, object, offset : Int = 0)
-    index!(object, offset)
-  end
-
   # Returns the index of the first object in `self` for which the block
   # is truthy, starting from the given *offset*. Raises
   # `Enumerable::NotFoundError` if no match is found.
