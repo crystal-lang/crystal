@@ -24,36 +24,79 @@ describe "Tuple" do
     {1}.empty?.should be_false
   end
 
-  it "does []" do
-    a = {1, 2.5}
-    i = 0
-    a[i].should eq(1)
-    i = 1
-    a[i].should eq(2.5)
-    i = -1
-    a[i].should eq(2.5)
-    i = -2
-    a[i].should eq(1)
+  describe "#[] with non-literal index" do
+    it "gets tuple element" do
+      a = {1, 2.5}
+      i = 0
+      a[i].should eq(1)
+      i = 1
+      a[i].should eq(2.5)
+      i = -1
+      a[i].should eq(2.5)
+      i = -2
+      a[i].should eq(1)
+      typeof(a[i]).should eq(Int32 | Float64)
+    end
+
+    it "raises index out of bounds" do
+      a = {1, 2.5}
+      i = 2
+      expect_raises(IndexError) { a[i] }
+      i = -3
+      expect_raises(IndexError) { a[i] }
+    end
   end
 
-  it "does [] raises index out of bounds" do
-    a = {1, 2.5}
-    i = 2
-    expect_raises(IndexError) { a[i] }
-    i = -3
-    expect_raises(IndexError) { a[i] }
+  describe "#[]? with non-literal index" do
+    it "gets tuple element or nil" do
+      a = {1, 2.5}
+      i = 0
+      a[i]?.should eq(1)
+      i = -1
+      a[i]?.should eq(2.5)
+      i = 2
+      a[i]?.should be_nil
+      i = -3
+      a[i]?.should be_nil
+      typeof(a[i]?).should eq(Int32 | Float64 | Nil)
+    end
   end
 
-  it "does []?" do
-    a = {1, 2}
-    i = 1
-    a[i]?.should eq(2)
-    i = -1
-    a[i]?.should eq(2)
-    i = 2
-    a[i]?.should be_nil
-    i = -3
-    a[i]?.should be_nil
+  describe ".[] with non-literal index" do
+    it "gets tuple metaclass element" do
+      a = Tuple(Int32, Float64)
+      i = 0
+      a[i].should eq(Int32)
+      i = 1
+      a[i].should eq(Float64)
+      i = -1
+      a[i].should eq(Float64)
+      i = -2
+      a[i].should eq(Int32)
+    end
+
+    it "raises index out of bounds" do
+      a = Tuple(Int32, Float64)
+      i = 2
+      expect_raises(IndexError) { a[i] }
+      i = -3
+      expect_raises(IndexError) { a[i] }
+    end
+  end
+
+  describe ".[]? with non-literal index" do
+    it "gets tuple metaclass element or nil" do
+      a = Tuple(Int32, Float64)
+      i = 0
+      a[i]?.should eq(Int32)
+      i = -1
+      a[i]?.should eq(Float64)
+      i = 2
+      a[i]?.should be_nil
+      i = -3
+      a[i]?.should be_nil
+      typeof(a[i]?).should eq(Union(Int32.class, Float64.class, Nil))
+    end
   end
 
   it "does at" do

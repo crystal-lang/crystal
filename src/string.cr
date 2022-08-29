@@ -1317,7 +1317,7 @@ class String
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
           byte = to_unsafe[i]
-          buffer[i] = byte < 0x80 ? byte.unsafe_chr.downcase.ord.to_u8! : byte
+          buffer[i] = 'A'.ord <= byte <= 'Z'.ord ? byte + 32 : byte
         end
         {@bytesize, @length}
       end
@@ -1353,7 +1353,7 @@ class String
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
           byte = to_unsafe[i]
-          buffer[i] = byte < 0x80 ? byte.unsafe_chr.upcase.ord.to_u8! : byte
+          buffer[i] = 'a'.ord <= byte <= 'z'.ord ? byte - 32 : byte
         end
         {@bytesize, @length}
       end
@@ -4946,12 +4946,7 @@ class String
   # Returns `true` if this String is encoded correctly
   # according to the UTF-8 encoding.
   def valid_encoding? : Bool
-    reader = Char::Reader.new(self)
-    while reader.has_next?
-      return false if reader.error
-      reader.next_char
-    end
-    true
+    Unicode.valid?(to_slice)
   end
 
   # Returns a String where bytes that are invalid in the

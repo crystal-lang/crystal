@@ -72,7 +72,7 @@ module Crystal::System::FileDescriptor
       raise IO::Error.from_errno("Unable to get info")
     end
 
-    FileInfo.new(stat)
+    ::File::Info.new(stat)
   end
 
   private def system_info
