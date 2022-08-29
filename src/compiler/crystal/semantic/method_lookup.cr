@@ -129,7 +129,7 @@ module Crystal
           next if exact_match
 
           if match
-            matches_array = matches_array.with(match)
+            matches_array.push(match)
 
             # If the argument types are compatible with the match's argument types,
             # we are done. We don't just compare types with ==, there is a special case:
@@ -473,7 +473,7 @@ module Crystal
                   changes << Change.new(change_owner, cloned_def)
                 end
 
-                new_subtype_matches = new_subtype_matches.with(
+                new_subtype_matches.push(
                   Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
                 )
               end
@@ -508,7 +508,7 @@ module Crystal
             # We need to insert the matches before the previous ones
             # because subtypes are more specific matches
             if matches
-              subtype_matches_matches = subtype_matches_matches.with(matches)
+              subtype_matches_matches.concat(matches)
             end
             matches = subtype_matches_matches
           end

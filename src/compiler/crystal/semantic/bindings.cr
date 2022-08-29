@@ -105,17 +105,17 @@ module Crystal
 
     def bind_to(node : ASTNode)
       bind(node) do
-        @dependencies = @dependencies.with(node)
+        @dependencies.push(node)
         node.add_observer self
         node
       end
     end
 
-    def bind_to(nodes : Enumerable(ASTNode))
+    def bind_to(nodes : Indexable(ASTNode))
       return if nodes.empty?
 
       bind do
-        @dependencies = @dependencies.with(nodes)
+        @dependencies.concat(nodes)
         nodes.each &.add_observer self
         nodes.first
       end
@@ -147,12 +147,12 @@ module Crystal
     end
 
     def unbind_from(node : ASTNode) : Nil
-      @dependencies = @dependencies.reject &.same?(node)
+      @dependencies.reject! &.same?(node)
       node.remove_observer self
     end
 
     def unbind_from(nodes : Enumerable(ASTNode)) : Nil
-      @dependencies = @dependencies.reject { |dependency|
+      @dependencies.reject! { |dependency|
         nodes.any? &.same?(dependency)
       }
       nodes.each &.remove_observer self
@@ -171,11 +171,11 @@ module Crystal
     end
 
     def add_observer(observer : ASTNode) : Nil
-      @observers = @observers.with(observer)
+      @observers.push(observer)
     end
 
     def remove_observer(observer : ASTNode) : Nil
-      @observers = @observers.reject &.same?(observer)
+      @observers.reject! &.same?(observer)
     end
 
     def set_enclosing_call(enclosing_call)
