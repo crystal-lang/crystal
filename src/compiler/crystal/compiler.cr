@@ -386,7 +386,7 @@ module Crystal
           # TODO: Use a proper way to write encoded text to a file when that's supported.
           # The first character is the BOM; it will be converted in the same endianness as the rest.
           args_16 = "\ufeff#{args}".to_utf16
-          args_bytes = args_16.to_unsafe.as(UInt8*).to_slice(args_16.bytesize)
+          args_bytes = args_16.to_unsafe_bytes
 
           args_filename = "#{output_dir}/linker_args.txt"
           File.write(args_filename, args_bytes)
@@ -576,10 +576,24 @@ module Crystal
     end
 
     protected def optimize(llvm_mod)
+      {% if LibLLVM::IS_LT_130 %}
+        optimize_with_old_pass_manager(llvm_mod)
+      {% else %}
+        optimize_with_new_pass_manager(llvm_mod)
+      {% end %}
+    end
+
+    private def optimize_with_old_pass_manager(llvm_mod)
       fun_pass_manager = llvm_mod.new_function_pass_manager
       pass_manager_builder.populate fun_pass_manager
       fun_pass_manager.run llvm_mod
       module_pass_manager.run llvm_mod
+    end
+
+    private def optimize_with_new_pass_manager(llvm_mod)
+      LLVM::PassBuilderOptions.new do |options|
+        LLVM.run_passes(llvm_mod, "default<O3>", target_machine, options)
+      end
     end
 
     @module_pass_manager : LLVM::ModulePassManager?

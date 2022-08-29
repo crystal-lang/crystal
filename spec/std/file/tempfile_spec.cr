@@ -90,6 +90,18 @@ describe File do
       end
     end
 
+    it "rejects null byte" do
+      expect_raises(ArgumentError, "String contains null byte") do
+        File.tempfile("foo\0")
+      end
+      expect_raises(ArgumentError, "String contains null byte") do
+        File.tempfile("foo", "bar\0")
+      end
+      expect_raises(ArgumentError, "String contains null byte") do
+        File.tempfile("foo", "bar", dir: "baz\0")
+      end
+    end
+
     describe "with block" do
       it "closes file" do
         filepath = nil

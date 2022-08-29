@@ -2,7 +2,12 @@ require "spec"
 require "../spec_helper"
 require "../../support/fibers"
 
-private def wait_for(timeout = 5.seconds)
+private def wait_for
+  timeout = {% if flag?(:interpreted) %}
+              25.seconds
+            {% else %}
+              5.seconds
+            {% end %}
   now = Time.monotonic
 
   until yield

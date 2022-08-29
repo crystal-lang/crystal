@@ -4237,7 +4237,7 @@ describe "Semantic: instance var" do
       )) { generic_class "Bar", int32 }
   end
 
-  %w(Object Reference).each do |type|
+  %w(Object Reference Class).each do |type|
     it "errors if declaring var in #{type}" do
       assert_error %(
         class #{type}
@@ -4248,7 +4248,12 @@ describe "Semantic: instance var" do
     end
   end
 
-  %w(Value Number Int Float Int32).each do |type|
+  [
+    "Value", "Number", "Int", "Float", "Int32",
+    "Tuple(*T)", "NamedTuple(T)", "Enum",
+    "Pointer(T)", "StaticArray(T, N)",
+    "Proc(*T, R)", "Union(*T)",
+  ].each do |type|
     it "errors if declaring var in #{type}" do
       assert_error %(
         struct #{type}
@@ -5529,6 +5534,24 @@ describe "Semantic: instance var" do
 
       Test.new.@foo
       )) { int32 }
+  end
+
+  it "inferrs Proc(Void) to Proc(Nil)" do
+    assert_type(%(
+      struct Proc
+        def self.new(&block : self)
+          block
+        end
+      end
+
+      class Foo
+        def initialize
+          @proc = Proc(Void).new { 1 }
+        end
+      end
+
+      Foo.new.@proc
+      )) { proc_of(nil_type) }
   end
 
   describe "instance variable inherited from multiple parents" do

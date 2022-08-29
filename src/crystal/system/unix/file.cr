@@ -14,6 +14,10 @@ module Crystal::System::File
   end
 
   def self.mktemp(prefix, suffix, dir) : {LibC::Int, String}
+    prefix.try &.check_no_null_byte
+    suffix.try &.check_no_null_byte
+    dir.check_no_null_byte
+
     dir = dir + ::File::SEPARATOR
     path = "#{dir}#{prefix}.XXXXXX#{suffix}"
 
@@ -36,7 +40,7 @@ module Crystal::System::File
     end
 
     if ret == 0
-      FileInfo.new(stat)
+      ::File::Info.new(stat)
     else
       if Errno.value.in?(Errno::ENOENT, Errno::ENOTDIR)
         return nil

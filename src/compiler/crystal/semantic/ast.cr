@@ -121,6 +121,8 @@ module Crystal
   end
 
   class Arg
+    include Annotatable
+
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @type : Type? = nil)
       @external_name = external_name || @name
     end
@@ -147,7 +149,7 @@ module Crystal
     property next : Def?
     property special_vars : Set(String)?
     property block_nest = 0
-    getter? raises = false
+    property? raises = false
     property? closure = false
     property? self_closured = false
     property? captured_block = false
@@ -169,6 +171,9 @@ module Crystal
 
     @macro_owner : Type?
 
+    # Used to override the meaning of `self` in restrictions
+    property self_restriction_type : Type?
+
     def macro_owner=(@macro_owner)
     end
 
@@ -183,17 +188,6 @@ module Crystal
     def add_special_var(name)
       special_vars = @special_vars ||= Set(String).new
       special_vars << name
-    end
-
-    def raises=(value)
-      if value != @raises
-        @raises = value
-        @observers.try &.each do |obs|
-          if obs.is_a?(Call)
-            obs.raises = value
-          end
-        end
-      end
     end
 
     # Returns the minimum and maximum number of arguments that must
