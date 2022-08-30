@@ -390,12 +390,12 @@ describe "String" do
     end
 
     describe "to_u64" do
-      it { "18446744073709551615".to_u64.should eq(18446744073709551615) }
+      it { "18446744073709551615".to_u64.should eq(18446744073709551615u64) }
       it { "0".to_u64.should eq(0) }
       it { expect_raises(ArgumentError) { "18446744073709551616".to_u64 } }
       it { expect_raises(ArgumentError) { "-1".to_u64 } }
 
-      it { "18446744073709551615".to_u64?.should eq(18446744073709551615) }
+      it { "18446744073709551615".to_u64?.should eq(18446744073709551615u64) }
       it { "18446744073709551616".to_u64?.should be_nil }
       it { "18446744073709551616".to_u64 { 0 }.should eq(0) }
     end

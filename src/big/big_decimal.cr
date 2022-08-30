@@ -704,7 +704,7 @@ struct Int
   # Converts `self` to `BigDecimal`.
   # ```
   # require "big"
-  # 12123415151254124124.to_big_d
+  # 123456789012345678.to_big_d
   # ```
   def to_big_d : BigDecimal
     BigDecimal.new(self)
