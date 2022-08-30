@@ -133,7 +133,7 @@ def assert_no_errors(*args, **opts)
 end
 
 def warnings_result(code)
-  semantic(code).program.warning_failures
+  semantic(code).program.warnings.infos
 end
 
 def assert_warning(code, message, *, file = __FILE__, line = __LINE__)

@@ -592,30 +592,26 @@ class Crystal::Command
   end
 
   private def setup_compiler_warning_options(opts, compiler)
-    compiler.warnings_exclude << Crystal.normalize_path "lib"
-    warnings_exclude_default = true
-    opts.on("--warnings all|none", "Which warnings detect. (default: all)") do |w|
-      compiler.warnings = case w
-                          when "all"
-                            Crystal::Warnings::All
-                          when "none"
-                            Crystal::Warnings::None
-                          else
-                            error "--warnings should be all, or none"
-                            raise "unreachable"
-                          end
+    opts.on("--warnings all|none", "Which warnings to detect. (default: all)") do |w|
+      compiler.warnings.level = case w
+                                when "all"
+                                  Crystal::WarningLevel::All
+                                when "none"
+                                  Crystal::WarningLevel::None
+                                else
+                                  error "--warnings should be all, or none"
+                                  raise "unreachable"
+                                end
     end
     opts.on("--error-on-warnings", "Treat warnings as errors.") do |w|
-      compiler.error_on_warnings = true
+      compiler.warnings.error_on_warnings = true
     end
     opts.on("--exclude-warnings <path>", "Exclude warnings from path (default: lib)") do |f|
-      if warnings_exclude_default
-        # if an --exclude-warnings is used explicitly, then we remove the default value
-        compiler.warnings_exclude.clear
-        warnings_exclude_default = false
-      end
-      compiler.warnings_exclude << Crystal.normalize_path f
+      compiler.warnings.exclude_lib_path = false
+      compiler.warnings.exclude_path(f)
     end
+
+    compiler.warnings.exclude_lib_path = true
   end
 
   private def validate_emit_values(values)

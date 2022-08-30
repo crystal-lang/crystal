@@ -12,15 +12,6 @@ module Crystal
       ::raise exception_type.for_node(self, message, inner)
     end
 
-    def warning(message, inner = nil, exception_type = Crystal::TypeException)
-      # TODO extract message formatting from exceptions
-      String.build do |io|
-        exception = exception_type.for_node(self, message, inner)
-        exception.warning = true
-        exception.append_to_s(io, nil)
-      end
-    end
-
     def simple_literal?
       case self
       when Nop, NilLiteral, BoolLiteral, NumberLiteral, CharLiteral,
@@ -170,6 +161,9 @@ module Crystal
     property? new = false
 
     @macro_owner : Type?
+
+    # Used to override the meaning of `self` in restrictions
+    property self_restriction_type : Type?
 
     def macro_owner=(@macro_owner)
     end

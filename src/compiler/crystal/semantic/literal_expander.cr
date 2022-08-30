@@ -86,7 +86,7 @@ module Crystal
 
         ary_instance = Call.new(generic, "unsafe_build", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
 
-        buffer = Call.new(ary_var, "to_unsafe")
+        buffer = Call.new(ary_var, "to_unsafe").at(node)
         buffer_var = new_temp_var.at(node)
 
         exps = Array(ASTNode).new(node.elements.size + elem_temp_var_count + 3)
