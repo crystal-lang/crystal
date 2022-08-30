@@ -449,7 +449,7 @@ class Crystal::Call
   def check_return_type(typed_def, typed_def_return_type, match, match_owner)
     return_type = lookup_node_type(match.context, typed_def_return_type)
     return_type = program.nil if return_type.void?
-    typed_def.freeze_type = return_type
+    typed_def_return_type.type = return_type
     typed_def.type = return_type if return_type.no_return? || return_type.nil_type?
   end
 

@@ -139,7 +139,6 @@ module Crystal
     property previous : DefWithMetadata?
     property next : Def?
     property special_vars : Set(String)?
-    property freeze_type : Type?
     property block_nest = 0
     property? raises = false
     property? closure = false
@@ -165,6 +164,10 @@ module Crystal
 
     # Used to override the meaning of `self` in restrictions
     property self_restriction_type : Type?
+
+    def freeze_type
+      return_type.try &.type?
+    end
 
     def macro_owner=(@macro_owner)
     end
