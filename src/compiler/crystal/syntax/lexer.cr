@@ -56,7 +56,8 @@ module Crystal
     # Warning settings and all detected warnings.
     property warnings : WarningCollection
 
-    def initialize(string, string_pool : StringPool? = nil, @warnings = WarningCollection.new)
+    def initialize(string, string_pool : StringPool? = nil, warnings : WarningCollection? = nil)
+      @warnings = warnings || WarningCollection.new
       @reader = Char::Reader.new(string)
       @token = Token.new
       @temp_token = Token.new

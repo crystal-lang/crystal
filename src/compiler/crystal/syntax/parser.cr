@@ -24,7 +24,7 @@ module Crystal
       new(str, string_pool, var_scopes).parse
     end
 
-    def initialize(str, string_pool : StringPool? = nil, @var_scopes = [Set(String).new], warnings = WarningCollection.new)
+    def initialize(str, string_pool : StringPool? = nil, @var_scopes = [Set(String).new], warnings : WarningCollection? = nil)
       super(str, string_pool, warnings)
       @unclosed_stack = [] of Unclosed
       @calls_super = false
