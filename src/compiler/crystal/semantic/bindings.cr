@@ -1,28 +1,5 @@
 module Crystal
   class ASTNode
-    # A node whose type can be frozen.
-    # When frozen, trying to change the node's type to something
-    # that doesn't match `freeze_type` will produce a compilation error.
-    # This is used for checking a method's return type, a block's
-    # expected type, instance and class vars expected types,
-    # and local vars with a type declaration.
-    module Freezable
-      property freeze_type : Type?
-    end
-
-    # By default nodes don't have their type frozen.
-    def freeze_type
-      nil
-    end
-  end
-
-  {% for name in %w(Block MetaVar MetaTypeVar Def) %}
-    class {{name.id}}
-      include Freezable
-    end
-  {% end %}
-
-  class ASTNode
     property! dependencies : Array(ASTNode)
     property observers : Array(ASTNode)?
     property enclosing_call : Call?
@@ -91,6 +68,10 @@ module Crystal
       else
         ::raise ex
       end
+    end
+
+    def freeze_type
+      nil
     end
 
     def raise_frozen_type(freeze_type, invalid_type, from)
