@@ -89,128 +89,128 @@ private def traverse_eh_table(leb, start, ip, actions)
   return nil
 end
 
-{% unless flag?(:interpreted) %}
-  {% if flag?(:win32) %}
-    require "exception/lib_unwind"
+{% if flag?(:interpreted) %}
+  # interpreter does not need `__crystal_personality`
+{% elsif flag?(:win32) %}
+  require "exception/lib_unwind"
 
-    lib LibC
-      fun _CxxThrowException(ex : Void*, throw_info : Void*) : NoReturn
+  lib LibC
+    fun _CxxThrowException(ex : Void*, throw_info : Void*) : NoReturn
+  end
+
+  @[Primitive(:throw_info)]
+  def throw_info : Void*
+  end
+
+  # :nodoc:
+  @[Raises]
+  fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
+    LibC.printf("EXITING: __crystal_raise called")
+    LibC.exit(1)
+  end
+{% elsif flag?(:arm) %}
+  # On ARM EHABI the personality routine is responsible for actually
+  # unwinding a single stack frame before returning (ARM EHABI Sec. 6.1).
+  private macro __crystal_continue_unwind
+    if LibUnwind.__gnu_unwind_frame(ucb, context) != LibUnwind::ReasonCode::NO_REASON
+      return LibUnwind::ReasonCode::FAILURE
     end
+    #puts "continue"
+    return LibUnwind::ReasonCode::CONTINUE_UNWIND
+  end
 
-    @[Primitive(:throw_info)]
-    def throw_info : Void*
-    end
+  # :nodoc:
+  fun __crystal_personality(state : LibUnwind::State, ucb : LibUnwind::ControlBlock*, context : LibUnwind::Context) : LibUnwind::ReasonCode
+    # puts "\n__crystal_personality(#{state}, #{ucb}, #{context})"
 
-    # :nodoc:
-    @[Raises]
-    fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
-      LibC.printf("EXITING: __crystal_raise called")
-      LibC.exit(1)
-    end
-  {% elsif flag?(:arm) %}
-    # On ARM EHABI the personality routine is responsible for actually
-    # unwinding a single stack frame before returning (ARM EHABI Sec. 6.1).
-    private macro __crystal_continue_unwind
-      if LibUnwind.__gnu_unwind_frame(ucb, context) != LibUnwind::ReasonCode::NO_REASON
-        return LibUnwind::ReasonCode::FAILURE
-      end
-      #puts "continue"
-      return LibUnwind::ReasonCode::CONTINUE_UNWIND
-    end
-
-    # :nodoc:
-    fun __crystal_personality(state : LibUnwind::State, ucb : LibUnwind::ControlBlock*, context : LibUnwind::Context) : LibUnwind::ReasonCode
-      # puts "\n__crystal_personality(#{state}, #{ucb}, #{context})"
-
-      case LibUnwind::State.new(state.value & LibUnwind::State::ACTION_MASK.value)
-      when LibUnwind::State::VIRTUAL_UNWIND_FRAME
-        if state.force_unwind?
-          __crystal_continue_unwind
-        else
-          actions = LibUnwind::Action::SEARCH_PHASE
-        end
-      when LibUnwind::State::UNWIND_FRAME_STARTING
-        actions = LibUnwind::Action::HANDLER_FRAME
-      when LibUnwind::State::UNWIND_FRAME_RESUME
+    case LibUnwind::State.new(state.value & LibUnwind::State::ACTION_MASK.value)
+    when LibUnwind::State::VIRTUAL_UNWIND_FRAME
+      if state.force_unwind?
         __crystal_continue_unwind
       else
-        exit(-1)
+        actions = LibUnwind::Action::SEARCH_PHASE
       end
-
-      if state.force_unwind?
-        actions |= LibUnwind::Action::FORCE_UNWIND
-      end
-
-      start = __crystal_get_region_start(ucb)
-      lsd = __crystal_get_language_specific_data(ucb)
-
-      ip = __crystal_unwind_get_ip(context)
-      leb = LEBReader.new(lsd)
-
-      reason = traverse_eh_table(leb, start, ip, actions) do |unwind_ip|
-        __crystal_unwind_set_gr(context, LibUnwind::EH_REGISTER_0, ucb.address.to_u32)
-        __crystal_unwind_set_gr(context, LibUnwind::EH_REGISTER_1, ucb.value.exception_type_id.to_u32)
-        __crystal_unwind_set_ip(context, unwind_ip)
-      end
-      return reason if reason
-
+    when LibUnwind::State::UNWIND_FRAME_STARTING
+      actions = LibUnwind::Action::HANDLER_FRAME
+    when LibUnwind::State::UNWIND_FRAME_RESUME
       __crystal_continue_unwind
-    end
-  {% elsif flag?(:wasm32) %}
-    # :nodoc:
-    fun __crystal_personality
-      LibC.printf("EXITING: __crystal_personality called")
-      LibC.exit(1)
+    else
+      exit(-1)
     end
 
-    # :nodoc:
-    @[Raises]
-    fun __crystal_raise(ex : Void*) : NoReturn
-      LibC.printf("EXITING: __crystal_raise called")
-      LibC.exit(1)
+    if state.force_unwind?
+      actions |= LibUnwind::Action::FORCE_UNWIND
     end
 
-    # :nodoc:
-    fun __crystal_get_exception(ex : Void*) : UInt64
-      LibC.printf("EXITING: __crystal_get_exception called")
-      LibC.exit(1)
-      0u64
-    end
-  {% else %}
-    # :nodoc:
-    fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*) : LibUnwind::ReasonCode
-      start = LibUnwind.get_region_start(context)
-      ip = LibUnwind.get_ip(context)
-      lsd = LibUnwind.get_language_specific_data(context)
+    start = __crystal_get_region_start(ucb)
+    lsd = __crystal_get_language_specific_data(ucb)
 
-      leb = LEBReader.new(lsd)
-      reason = traverse_eh_table(leb, start, ip, actions) do |unwind_ip|
-        LibUnwind.set_gr(context, LibUnwind::EH_REGISTER_0, exception_object.address)
-        LibUnwind.set_gr(context, LibUnwind::EH_REGISTER_1, exception_object.value.exception_type_id)
-        LibUnwind.set_ip(context, unwind_ip)
-      end
-      return reason if reason
+    ip = __crystal_unwind_get_ip(context)
+    leb = LEBReader.new(lsd)
 
-      return LibUnwind::ReasonCode::CONTINUE_UNWIND
+    reason = traverse_eh_table(leb, start, ip, actions) do |unwind_ip|
+      __crystal_unwind_set_gr(context, LibUnwind::EH_REGISTER_0, ucb.address.to_u32)
+      __crystal_unwind_set_gr(context, LibUnwind::EH_REGISTER_1, ucb.value.exception_type_id.to_u32)
+      __crystal_unwind_set_ip(context, unwind_ip)
     end
-  {% end %}
+    return reason if reason
 
-  {% unless flag?(:win32) || flag?(:wasm32) %}
-    # :nodoc:
-    @[Raises]
-    fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
-      ret = LibUnwind.raise_exception(unwind_ex)
-      Crystal::System.print_error "Failed to raise an exception: %s\n", ret.to_s
-      Exception::CallStack.print_backtrace
-      Crystal::System.print_exception("\nTried to raise:", unwind_ex.value.exception_object.as(Exception))
-      LibC.exit(ret)
-    end
+    __crystal_continue_unwind
+  end
+{% elsif flag?(:wasm32) %}
+  # :nodoc:
+  fun __crystal_personality
+    LibC.printf("EXITING: __crystal_personality called")
+    LibC.exit(1)
+  end
 
-    # :nodoc:
-    fun __crystal_get_exception(unwind_ex : LibUnwind::Exception*) : UInt64
-      unwind_ex.value.exception_object.address
+  # :nodoc:
+  @[Raises]
+  fun __crystal_raise(ex : Void*) : NoReturn
+    LibC.printf("EXITING: __crystal_raise called")
+    LibC.exit(1)
+  end
+
+  # :nodoc:
+  fun __crystal_get_exception(ex : Void*) : UInt64
+    LibC.printf("EXITING: __crystal_get_exception called")
+    LibC.exit(1)
+    0u64
+  end
+{% else %}
+  # :nodoc:
+  fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*) : LibUnwind::ReasonCode
+    start = LibUnwind.get_region_start(context)
+    ip = LibUnwind.get_ip(context)
+    lsd = LibUnwind.get_language_specific_data(context)
+
+    leb = LEBReader.new(lsd)
+    reason = traverse_eh_table(leb, start, ip, actions) do |unwind_ip|
+      LibUnwind.set_gr(context, LibUnwind::EH_REGISTER_0, exception_object.address)
+      LibUnwind.set_gr(context, LibUnwind::EH_REGISTER_1, exception_object.value.exception_type_id)
+      LibUnwind.set_ip(context, unwind_ip)
     end
-  {% end %}
+    return reason if reason
+
+    return LibUnwind::ReasonCode::CONTINUE_UNWIND
+  end
+{% end %}
+
+{% unless flag?(:win32) || flag?(:wasm32) %}
+  # :nodoc:
+  @[Raises]
+  fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
+    ret = LibUnwind.raise_exception(unwind_ex)
+    Crystal::System.print_error "Failed to raise an exception: %s\n", ret.to_s
+    Exception::CallStack.print_backtrace
+    Crystal::System.print_exception("\nTried to raise:", unwind_ex.value.exception_object.as(Exception))
+    LibC.exit(ret)
+  end
+
+  # :nodoc:
+  fun __crystal_get_exception(unwind_ex : LibUnwind::Exception*) : UInt64
+    unwind_ex.value.exception_object.address
+  end
 {% end %}
 
 {% if flag?(:wasm32) %}
