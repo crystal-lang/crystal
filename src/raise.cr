@@ -196,7 +196,7 @@ end
   end
 {% end %}
 
-{% unless flag?(:win32) || flag?(:wasm32) %}
+{% unless flag?(:interpreted) || flag?(:win32) || flag?(:wasm32) %}
   # :nodoc:
   @[Raises]
   fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
