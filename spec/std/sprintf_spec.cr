@@ -379,8 +379,8 @@ describe "::sprintf" do
     assert_sprintf "1\u{0}%i\u{0}3", 2, "1\u00002\u00003"
   end
 
-  pending_win32 describe: "floats" do
-    it "works" do
+  describe "floats" do
+    pending_win32 "works" do
       assert_sprintf "%f", 123, "123.000000"
 
       assert_sprintf "%g", 123, "123"
@@ -412,6 +412,101 @@ describe "::sprintf" do
       assert_sprintf "%12.2f %12.2f %6.2f %.2f", [2.0, 3.0, 4.0, 5.0], "        2.00         3.00   4.00 5.00"
 
       assert_sprintf "%f", 1e15, "1000000000000000.000000"
+    end
+
+    [Float32, Float64].each do |float|
+      it "infinities" do
+        pos_inf = float.new(1) / float.new(0)
+        neg_inf = float.new(-1) / float.new(0)
+
+        assert_sprintf "%f", pos_inf, "inf"
+        assert_sprintf "%a", pos_inf, "inf"
+        assert_sprintf "%e", pos_inf, "inf"
+        assert_sprintf "%g", pos_inf, "inf"
+        assert_sprintf "%A", pos_inf, "INF"
+        assert_sprintf "%E", pos_inf, "INF"
+        assert_sprintf "%G", pos_inf, "INF"
+
+        assert_sprintf "%f", neg_inf, "-inf"
+        assert_sprintf "%G", neg_inf, "-INF"
+
+        assert_sprintf "%2f", pos_inf, "inf"
+        assert_sprintf "%4f", pos_inf, " inf"
+        assert_sprintf "%6f", pos_inf, "   inf"
+        assert_sprintf "%2f", neg_inf, "-inf"
+        assert_sprintf "%4f", neg_inf, "-inf"
+        assert_sprintf "%6f", neg_inf, "  -inf"
+
+        assert_sprintf "% f", pos_inf, " inf"
+        assert_sprintf "% 2f", pos_inf, " inf"
+        assert_sprintf "% 4f", pos_inf, " inf"
+        assert_sprintf "% 6f", pos_inf, "   inf"
+        assert_sprintf "% f", neg_inf, "-inf"
+        assert_sprintf "% 2f", neg_inf, "-inf"
+        assert_sprintf "% 4f", neg_inf, "-inf"
+        assert_sprintf "% 6f", neg_inf, "  -inf"
+
+        assert_sprintf "%+f", pos_inf, "+inf"
+        assert_sprintf "%+2f", pos_inf, "+inf"
+        assert_sprintf "%+4f", pos_inf, "+inf"
+        assert_sprintf "%+6f", pos_inf, "  +inf"
+        assert_sprintf "%+f", neg_inf, "-inf"
+        assert_sprintf "%+2f", neg_inf, "-inf"
+        assert_sprintf "%+4f", neg_inf, "-inf"
+        assert_sprintf "%+6f", neg_inf, "  -inf"
+
+        assert_sprintf "%+ f", pos_inf, "+inf"
+
+        assert_sprintf "%-4f", pos_inf, "inf "
+        assert_sprintf "%-6f", pos_inf, "inf   "
+        assert_sprintf "%-4f", neg_inf, "-inf"
+        assert_sprintf "%-6f", neg_inf, "-inf  "
+
+        assert_sprintf "% -4f", pos_inf, " inf"
+        assert_sprintf "% -6f", pos_inf, " inf  "
+        assert_sprintf "% -4f", neg_inf, "-inf"
+        assert_sprintf "% -6f", neg_inf, "-inf  "
+
+        assert_sprintf "%-+4f", pos_inf, "+inf"
+        assert_sprintf "%-+6f", pos_inf, "+inf  "
+        assert_sprintf "%-+4f", neg_inf, "-inf"
+        assert_sprintf "%-+6f", neg_inf, "-inf  "
+
+        assert_sprintf "%-+ 6f", pos_inf, "+inf  "
+
+        assert_sprintf "%06f", pos_inf, "   inf"
+        assert_sprintf "%-06f", pos_inf, "inf   "
+        assert_sprintf "%06f", neg_inf, "  -inf"
+        assert_sprintf "%-06f", neg_inf, "-inf  "
+
+        assert_sprintf "%.1f", pos_inf, "inf"
+
+        assert_sprintf "%#f", pos_inf, "inf"
+      end
+
+      it "not-a-numbers" do
+        pos_nan = Math.copysign(float.new(0) / float.new(0), 1)
+        neg_nan = Math.copysign(float.new(0) / float.new(0), -1)
+
+        assert_sprintf "%f", pos_nan, "nan"
+        assert_sprintf "%a", pos_nan, "nan"
+        assert_sprintf "%e", pos_nan, "nan"
+        assert_sprintf "%g", pos_nan, "nan"
+        assert_sprintf "%A", pos_nan, "NAN"
+        assert_sprintf "%E", pos_nan, "NAN"
+        assert_sprintf "%G", pos_nan, "NAN"
+
+        assert_sprintf "%f", neg_nan, "nan"
+        assert_sprintf "%a", neg_nan, "nan"
+        assert_sprintf "%e", neg_nan, "nan"
+        assert_sprintf "%g", neg_nan, "nan"
+        assert_sprintf "%A", neg_nan, "NAN"
+        assert_sprintf "%E", neg_nan, "NAN"
+        assert_sprintf "%G", neg_nan, "NAN"
+
+        assert_sprintf "%+f", pos_nan, "+nan"
+        assert_sprintf "%+f", neg_nan, "+nan"
+      end
     end
   end
 

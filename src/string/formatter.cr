@@ -286,16 +286,36 @@ struct String::Formatter(A)
     if arg.responds_to?(:to_f64)
       float = arg.is_a?(Float64) ? arg : arg.to_f64
 
-      format_buf = recreate_float_format_string(flags)
+      if sign = float.infinite?
+        float_special("inf", sign, flags)
+      elsif float.nan?
+        float_special("nan", 1, flags)
+      else
+        format_buf = recreate_float_format_string(flags)
 
-      len = LibC.snprintf(nil, 0, format_buf, float) + 1
-      temp_buf = temp_buf(len)
-      LibC.snprintf(temp_buf, len, format_buf, float)
+        len = LibC.snprintf(nil, 0, format_buf, float) + 1
+        temp_buf = temp_buf(len)
+        LibC.snprintf(temp_buf, len, format_buf, float)
 
-      @io.write_string Slice.new(temp_buf, len - 1)
+        @io.write_string Slice.new(temp_buf, len - 1)
+      end
     else
       raise ArgumentError.new("Expected a float, not #{arg.inspect}")
     end
+  end
+
+  # Formats infinities and not-a-numbers
+  private def float_special(str, sign, flags)
+    str = str.upcase if flags.type.in?('A', 'E', 'G')
+    str_size = str.bytesize
+    str_size += 1 if sign < 0 || (flags.plus || flags.space)
+
+    flags.zero = false
+    pad(str_size, flags) if flags.left_padding?
+    write_plus_or_space(sign, flags)
+    @io << '-' if sign < 0
+    @io << str
+    pad(str_size, flags) if flags.right_padding?
   end
 
   # Here we rebuild the original format string, like %f or %.2g and use snprintf
