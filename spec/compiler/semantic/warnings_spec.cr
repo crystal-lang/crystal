@@ -729,4 +729,12 @@ describe "Semantic: warnings" do
       end
     end
   end
+
+  it "exposes syntax warnings" do
+    assert_warning UInt64::MAX.to_s, "Warning: #{UInt64::MAX} doesn't fit in an Int64, try using the suffix u64 or i128"
+  end
+
+  it "exposes syntax warnings after macro interpolation" do
+    assert_warning "0x8000_0000_0000_000{{ 0 }}", "Warning: 0x8000_0000_0000_0000 doesn't fit in an Int64, try using the suffix u64 or i128"
+  end
 end

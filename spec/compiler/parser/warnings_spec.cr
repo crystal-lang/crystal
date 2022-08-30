@@ -13,7 +13,7 @@ end
 describe "Parser warnings" do
   it "warns on suffix-less UInt64 literals > Int64::MAX" do
     values = [
-      "9223372036854775808",  # Int64::MAX + 1
+      "9223372036854775808", # Int64::MAX + 1
       "9999999999999999999",
       "10000000000000000000",
       "18446744073709551615", # UInt64::MAX
