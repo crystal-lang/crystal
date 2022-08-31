@@ -1903,8 +1903,6 @@ module Crystal
         next if then_var.same?(else_var)
 
         cond_var = cond_vars[name]?
-        before_then_var = before_then_vars[name]?
-        before_else_var = before_else_vars[name]?
 
         # Only copy `nil_if_read` from each branch if it's not unreachable
         then_var_nil_if_read = !then_unreachable && then_var.try(&.nil_if_read?)
@@ -1912,10 +1910,13 @@ module Crystal
         if_var_nil_if_read = !!(then_var_nil_if_read || else_var_nil_if_read)
 
         # Check if no types were changes in either then 'then' and 'else' branches
-        if cond_var && then_var.same?(before_then_var) && else_var.same?(before_else_var) && !then_unreachable && !else_unreachable
-          cond_var.nil_if_read = if_var_nil_if_read
-          @vars[name] = cond_var
-          next
+        if cond_var && !then_unreachable && !else_unreachable
+          if then_var.same?(before_then_vars[name]?) &&
+             else_var.same?(before_else_vars[name]?)
+            cond_var.nil_if_read = if_var_nil_if_read
+            @vars[name] = cond_var
+            next
+          end
         end
 
         if_var = MetaVar.new(name)
