@@ -1896,14 +1896,15 @@ module Crystal
       end
 
       all_vars_names.each do |name|
-        cond_var = cond_vars[name]?
         then_var = then_vars[name]?
-        before_then_var = before_then_vars[name]?
         else_var = else_vars[name]?
-        before_else_var = before_else_vars[name]?
 
         # Check whether the var didn't change at all
         next if then_var.same?(else_var)
+
+        cond_var = cond_vars[name]?
+        before_then_var = before_then_vars[name]?
+        before_else_var = before_else_vars[name]?
 
         # Only copy `nil_if_read` from each branch if it's not unreachable
         then_var_nil_if_read = !then_unreachable && then_var.try(&.nil_if_read?)
