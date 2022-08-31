@@ -1894,10 +1894,9 @@ module Crystal
       end
 
       else_vars.each do |name, else_var|
-        then_var = then_vars[name]?
-        next if then_var
+        next if then_vars.has_key?(name)
 
-        merge_if_var(name, node, cond_vars, then_var, else_var, before_then_vars, before_else_vars, then_unreachable, else_unreachable)
+        merge_if_var(name, node, cond_vars, nil, else_var, before_then_vars, before_else_vars, then_unreachable, else_unreachable)
       end
     end
 
