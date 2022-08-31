@@ -422,4 +422,17 @@ describe "Float" do
     (nan <=> 1_i32).should be_nil
     (nan <=> 1_i64).should be_nil
   end
+
+  it "#abs" do
+    Math.copysign(1, 0.0.abs).should eq 1
+    Math.copysign(1, -0.0.abs).should eq 1
+
+    0.1.abs.should eq 0.1
+    -0.1.abs.should eq 0.1
+
+    Float64::MAX.abs.should eq Float64::MAX
+    Float64::MIN.abs.should eq -Float64::MIN
+    Float64::INFINITY.abs.should eq Float64::INFINITY
+    (-Float64::INFINITY).abs.should eq Float64::INFINITY
+  end
 end
