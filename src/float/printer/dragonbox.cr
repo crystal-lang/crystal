@@ -202,20 +202,6 @@ module Float::Printer::Dragonbox
       SHIFT_AMOUNT        =           27
     end
 
-    def self.divisible_by_power_of_5?(x : UInt32, exp : Int)
-      mod_inv, max_quotient = CACHED_POWERS_OF_5_TABLE_U32[exp]
-      x &* mod_inv <= max_quotient
-    end
-
-    def self.divisible_by_power_of_5?(x : UInt64, exp : Int)
-      mod_inv, max_quotient = CACHED_POWERS_OF_5_TABLE_U64[exp]
-      x &* mod_inv <= max_quotient
-    end
-
-    def self.divisible_by_power_of_2?(x : Int::Unsigned, exp : Int)
-      x.trailing_zeros_count >= exp
-    end
-
     # N == 1
     def self.check_divisibility_and_divide_by_pow10_k1(n : UInt32)
       n &*= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::MAGIC_NUMBER
@@ -294,9 +280,6 @@ module Float::Printer::Dragonbox
 
     DIVISIBILITY_CHECK_BY_5_THRESHOLD                   =  39
     CASE_FC_PM_HALF_LOWER_THRESHOLD                     =  -1
-    CASE_FC_PM_HALF_UPPER_THRESHOLD                     =   6
-    CASE_FC_LOWER_THRESHOLD                             =  -2
-    CASE_FC_UPPER_THRESHOLD                             =   6
     SHORTER_INTERVAL_TIE_LOWER_THRESHOLD                = -35
     SHORTER_INTERVAL_TIE_UPPER_THRESHOLD                = -35
     CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_LOWER_THRESHOLD =   2
@@ -326,9 +309,6 @@ module Float::Printer::Dragonbox
 
     DIVISIBILITY_CHECK_BY_5_THRESHOLD                   =  86
     CASE_FC_PM_HALF_LOWER_THRESHOLD                     =  -2
-    CASE_FC_PM_HALF_UPPER_THRESHOLD                     =   9
-    CASE_FC_LOWER_THRESHOLD                             =  -4
-    CASE_FC_UPPER_THRESHOLD                             =   9
     SHORTER_INTERVAL_TIE_LOWER_THRESHOLD                = -77
     SHORTER_INTERVAL_TIE_UPPER_THRESHOLD                = -77
     CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_LOWER_THRESHOLD =   2
@@ -377,10 +357,24 @@ module Float::Printer::Dragonbox
         end
       else
         two_fl = two_fc - 1
-        xi_parity, is_x_integer = compute_mul_parity(two_fl, cache, beta_minus_1)
-        unless !xi_parity && (!is_closed || !is_x_integer)
-          ret_exponent = minus_k + ImplInfo::KAPPA + 1
-          return {significand, ret_exponent}
+
+        if !is_closed || exponent < ImplInfo::CASE_FC_PM_HALF_LOWER_THRESHOLD || exponent > ImplInfo::DIVISIBILITY_CHECK_BY_5_THRESHOLD
+          # If the left endpoint is not included, the condition for
+          # success is z^(f) < delta^(f) (odd parity).
+          # Otherwise, the inequalities on exponent ensure that
+          # x is not an integer, so if z^(f) >= delta^(f) (even parity), we in fact
+          # have strict inequality.
+          parity, _ = compute_mul_parity(two_fl, cache, beta_minus_1)
+          if parity
+            ret_exponent = minus_k + ImplInfo::KAPPA + 1
+            return {significand, ret_exponent}
+          end
+        else
+          xi_parity, is_x_integer = compute_mul_parity(two_fl, cache, beta_minus_1)
+          unless !xi_parity && !is_x_integer
+            ret_exponent = minus_k + ImplInfo::KAPPA + 1
+            return {significand, ret_exponent}
+          end
         end
       end
 
