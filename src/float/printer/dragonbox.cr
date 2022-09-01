@@ -552,28 +552,27 @@ module Float::Printer::Dragonbox
         exponent += ImplInfo::EXPONENT_BIAS - ImplInfo::SIGNIFICAND_BITS
 
         # Shorter interval case; proceed like Schubfach.
-        # One might think this condition is wrong,
-        # since when exponent_bits == 1 and two_fc == 0,
-        # the interval is actullay regular.
-        # However, it turns out that this seemingly wrong condition
-        # is actually fine, because the end result is anyway the same.
+        # One might think this condition is wrong, since when exponent_bits == 1
+        # and two_fc == 0, the interval is actullay regular. However, it turns out
+        # that this seemingly wrong condition is actually fine, because the end
+        # result is anyway the same.
         #
         # [binary32]
-        # floor( (fc-1/2) * 2^e ) = 1.175'494'28... * 10^-38
-        # floor( (fc-1/4) * 2^e ) = 1.175'494'31... * 10^-38
-        # floor(    fc    * 2^e ) = 1.175'494'35... * 10^-38
-        # floor( (fc+1/2) * 2^e ) = 1.175'494'42... * 10^-38
+        # (fc-1/2) * 2^e = 1.175'494'28... * 10^-38
+        # (fc-1/4) * 2^e = 1.175'494'31... * 10^-38
+        #    fc    * 2^e = 1.175'494'35... * 10^-38
+        # (fc+1/2) * 2^e = 1.175'494'42... * 10^-38
         #
         # Hence, shorter_interval_case will return 1.175'494'4 * 10^-38.
-        # 1.175'494'3 * 10^-38 is also a correct shortest representation
-        # that will be rejected if we assume shorter interval,
-        # but 1.175'494'4 * 10^-38 is closer to the true value so it doesn't matter.
+        # 1.175'494'3 * 10^-38 is also a correct shortest representation that will
+        # be rejected if we assume shorter interval, but 1.175'494'4 * 10^-38 is
+        # closer to the true value so it doesn't matter.
         #
         # [binary64]
-        # floor( (fc-1/2) * 2^e ) = 2.225'073'858'507'201'13... * 10^-308
-        # floor( (fc-1/4) * 2^e ) = 2.225'073'858'507'201'25... * 10^-308
-        # floor(    fc    * 2^e ) = 2.225'073'858'507'201'38... * 10^-308
-        # floor( (fc+1/2) * 2^e ) = 2.225'073'858'507'201'63... * 10^-308
+        # (fc-1/2) * 2^e = 2.225'073'858'507'201'13... * 10^-308
+        # (fc-1/4) * 2^e = 2.225'073'858'507'201'25... * 10^-308
+        #    fc    * 2^e = 2.225'073'858'507'201'38... * 10^-308
+        # (fc+1/2) * 2^e = 2.225'073'858'507'201'63... * 10^-308
         #
         # Hence, shorter_interval_case will return 2.225'073'858'507'201'4 * 10^-308.
         # This is indeed of the shortest length, and it is the unique one
