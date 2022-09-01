@@ -393,7 +393,7 @@ module Float::Printer::Dragonbox
       if divisible_by_10_to_the_kappa
         # Check z^(f) >= epsilon^(f)
         # We have either yi == zi - epsiloni or yi == (zi - epsiloni) - 1,
-        # where yi == zi - epsiloni if and only if z^(f) >= epsilon^(f)
+        # where yi == zi - epsiloni if and only if z^(f) >= epsilon^(f).
         # Since there are only 2 possibilities, we only need to care about the parity.
         # Also, zi and r should have the same parity since the divisor
         # is an even number.
