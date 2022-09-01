@@ -228,8 +228,7 @@ module Float::Printer::Dragonbox
 
       # The lowest N bits of n must be zero, and
       # (n & comparison_mask) >> N must be at most threshold.
-      masked = n & comparison_mask
-      c = masked.rotate_right(1)
+      c = (n & comparison_mask).rotate_right(1)
 
       n >>= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::SHIFT_AMOUNT
       {n, c <= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::THRESHOLD}
@@ -245,8 +244,7 @@ module Float::Printer::Dragonbox
 
       # The lowest N bits of n must be zero, and
       # (n & comparison_mask) >> N must be at most threshold.
-      masked = n & comparison_mask
-      c = masked.rotate_right(2)
+      c = (n & comparison_mask).rotate_right(2)
 
       n >>= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::SHIFT_AMOUNT
       {n, c <= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::THRESHOLD}
