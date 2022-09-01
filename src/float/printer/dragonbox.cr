@@ -218,22 +218,36 @@ module Float::Printer::Dragonbox
       x.trailing_zeros_count >= exp
     end
 
+    # N == 1
     def self.check_divisibility_and_divide_by_pow10_k1(n : UInt32)
-      bits_for_comparison = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::BITS_FOR_COMPARISON
-      comparison_mask = ~(UInt32::MAX << bits_for_comparison)
-
       n &*= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::MAGIC_NUMBER
-      c = ((n >> 1) | (n << (bits_for_comparison - 1))) & comparison_mask
+
+      # Mask for the lowest (N + bits_for_comparison)-bits.
+      bits_for_comparison = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::BITS_FOR_COMPARISON
+      comparison_mask = ~(UInt32::MAX << (1 + bits_for_comparison))
+
+      # The lowest N bits of n must be zero, and
+      # (n & comparison_mask) >> N must be at most threshold.
+      masked = n & comparison_mask
+      c = masked.rotate_right(1)
+
       n >>= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::SHIFT_AMOUNT
       {n, c <= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::THRESHOLD}
     end
 
+    # N == 2
     def self.check_divisibility_and_divide_by_pow10_k2(n : UInt32)
-      bits_for_comparison = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::BITS_FOR_COMPARISON
-      comparison_mask = ~(UInt32::MAX << bits_for_comparison)
-
       n &*= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::MAGIC_NUMBER
-      c = ((n >> 2) | (n << (bits_for_comparison - 2))) & comparison_mask
+
+      # Mask for the lowest (N + bits_for_comparison)-bits.
+      bits_for_comparison = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::BITS_FOR_COMPARISON
+      comparison_mask = ~(UInt32::MAX << (2 + bits_for_comparison))
+
+      # The lowest N bits of n must be zero, and
+      # (n & comparison_mask) >> N must be at most threshold.
+      masked = n & comparison_mask
+      c = masked.rotate_right(2)
+
       n >>= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::SHIFT_AMOUNT
       {n, c <= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::THRESHOLD}
     end
