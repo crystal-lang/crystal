@@ -162,11 +162,11 @@ module Crystal
   end
 
   class Type
-    def self.merge(nodes : Array(ASTNode))
+    def self.merge(nodes : Array(ASTNode)) : Type?
       nodes.find(&.type?).try &.type.program.type_merge(nodes)
     end
 
-    def self.merge(types : Array(Type))
+    def self.merge(types : Array(Type)) : Type?
       if types.size == 0
         nil
       else
@@ -174,7 +174,7 @@ module Crystal
       end
     end
 
-    def self.merge!(types_or_nodes)
+    def self.merge!(types_or_nodes) : Type
       merge(types_or_nodes).not_nil!
     end
 
