@@ -178,8 +178,8 @@ module Crystal
       merge(types_or_nodes).not_nil!
     end
 
-    def self.merge!(type1 : Type, type2 : Type)
-      merge!([type1, type2])
+    def self.merge!(type1 : Type, type2 : Type) : Type
+      type1.program.type_merge(type1, type2).not_nil!
     end
 
     # Given two non-union types T and U, returns their least common ancestor
