@@ -5,65 +5,58 @@ module Crystal
     def type_merge(types : Array(Type?))
       case types.size
       when 0
-        return nil
+        nil
       when 1
-        return types.first
+        types.first
       when 2
         # Merging two types is the most common case, so we optimize it
         first, second = types
-        did_merge, merged_type = type_merge_two(first, second)
-        return merged_type if did_merge
+        type_merge_two(first, second)
       else
-        # combined_union_of
+        combined_union_of compact_types(types)
       end
-
-      combined_union_of compact_types(types)
     end
 
     def type_merge(nodes : Array(ASTNode))
       case nodes.size
       when 0
-        return nil
+        nil
       when 1
-        return nodes.first.type?
+        nodes.first.type?
       when 2
         # Merging two types is the most common case, so we optimize it
         first, second = nodes
-        did_merge, merged_type = type_merge_two(first.type?, second.type?)
-        return merged_type if did_merge
+        type_merge_two(first.type?, second.type?)
       else
-        # combined_union_of
+        combined_union_of compact_types(nodes, &.type?)
       end
-
-      combined_union_of compact_types(nodes, &.type?)
     end
 
     def type_merge_two(first, second)
       if first == second
         # Same, so return any of them
-        return {true, first}
+        return first
       end
 
       unless first
         # First is nil, so return second
-        return {true, second}
+        return second
       end
 
       unless second
         # Second is nil, so return first
-        return {true, first}
+        return first
       end
 
       if first.nil_type? && second.is_a?(UnionType) && second.union_types.includes?(first)
-        return true, second
+        return second
       end
 
       if second.nil_type? && first.is_a?(UnionType) && first.union_types.includes?(second)
-        return true, first
+        return first
       end
 
-      # puts "#{first} vs. #{second}"
-      {false, nil}
+      combined_union_of compact_types({first, second})
     end
 
     def type_merge_union_of(types : Array(Type))
