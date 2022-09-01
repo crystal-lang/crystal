@@ -41,30 +41,32 @@ module Crystal
     def type_merge_two(first, second)
       if first == second
         # Same, so return any of them
-        {true, first}
-      elsif first
-        if second
-          # first and second not nil and different
-          if first.opaque_id > second.opaque_id
-            first, second = second, first
-          end
-
-          if first.nil_type?
-            if second.is_a?(UnionType) && second.union_types.includes?(first)
-              return true, second
-            end
-          end
-
-          # puts "#{first} vs. #{second}"
-          {false, nil}
-        else
-          # Second is nil, so return first
-          {true, first}
-        end
-      else
-        # First is nil, so return second
-        {true, second}
+        return {true, first}
       end
+
+      unless first
+        # First is nil, so return second
+        return {true, second}
+      end
+
+      unless second
+        # Second is nil, so return first
+        return {true, first}
+      end
+
+      # first and second not nil and different
+      if first.opaque_id > second.opaque_id
+        first, second = second, first
+      end
+
+      if first.nil_type?
+        if second.is_a?(UnionType) && second.union_types.includes?(first)
+          return true, second
+        end
+      end
+
+      # puts "#{first} vs. #{second}"
+      {false, nil}
     end
 
     def type_merge_union_of(types : Array(Type))
