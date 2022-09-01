@@ -246,11 +246,11 @@ module Float::Printer::Dragonbox
     end
 
     def remove_exponent_bits(u : D::CarrierUInt, exponent_bits)
-      D::SignedSignificand.new!(u ^ (D::CarrierUInt.new!(exponent_bits) << D::SIGNIFICAND_BITS))
+      u ^ (D::CarrierUInt.new!(exponent_bits) << D::SIGNIFICAND_BITS)
     end
 
-    def remove_sign_bit_and_shift(s : D::SignedSignificand)
-      D::CarrierUInt.new!(s) << 1
+    def remove_sign_bit_and_shift(u : D::CarrierUInt)
+      u << 1
     end
 
     def check_divisibility_and_divide_by_pow10(n : UInt32)
@@ -275,7 +275,6 @@ module Float::Printer::Dragonbox
     DECIMAL_DIGITS   =    9
 
     alias CarrierUInt = UInt32
-    alias SignedSignificand = Int32
     CARRIER_BITS = 32
 
     KAPPA =   1
@@ -308,7 +307,6 @@ module Float::Printer::Dragonbox
     DECIMAL_DIGITS   =    17
 
     alias CarrierUInt = UInt64
-    alias SignedSignificand = Int64
     CARRIER_BITS = 64
 
     KAPPA =    2
