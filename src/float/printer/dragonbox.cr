@@ -205,13 +205,13 @@ module Float::Printer::Dragonbox
     end
 
     def self.divisible_by_power_of_5?(x : UInt32, exp : Int)
-      mod_inv, max_quotients = CACHED_POWERS_OF_5_TABLE_U32[exp]
-      x &* mod_inv <= max_quotients
+      mod_inv, max_quotient = CACHED_POWERS_OF_5_TABLE_U32[exp]
+      x &* mod_inv <= max_quotient
     end
 
     def self.divisible_by_power_of_5?(x : UInt64, exp : Int)
-      mod_inv, max_quotients = CACHED_POWERS_OF_5_TABLE_U64[exp]
-      x &* mod_inv <= max_quotients
+      mod_inv, max_quotient = CACHED_POWERS_OF_5_TABLE_U64[exp]
+      x &* mod_inv <= max_quotient
     end
 
     def self.divisible_by_power_of_2?(x : Int::Unsigned, exp : Int)
