@@ -106,21 +106,19 @@ module Crystal
       @type
     end
 
-    def bind_to(node : ASTNode)
+    def bind_to(node : ASTNode) : Nil
       bind(node) do |dependencies|
         dependencies.push node
         node.add_observer self
-        node
       end
     end
 
-    def bind_to(nodes : Indexable)
+    def bind_to(nodes : Indexable) : Nil
       return if nodes.empty?
 
       bind do |dependencies|
         dependencies.concat nodes
         nodes.each &.add_observer self
-        nodes.first
       end
     end
 
@@ -134,7 +132,7 @@ module Crystal
 
       dependencies = @dependencies ||= [] of ASTNode
 
-      node = yield dependencies
+      yield dependencies
 
       new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
