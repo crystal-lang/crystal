@@ -108,14 +108,19 @@ module Crystal
     end
 
     def convert(type : UnionType)
-      Union.new(
+      converted_union_types =
         type.union_types.map do |union_type|
           restriction = convert(union_type)
           return unless restriction
 
           restriction.as(ASTNode)
         end
-      )
+
+      if type.union_types.any?(&.is_a?(TypeSplat))
+        Generic.new(Path.global("Union"), converted_union_types)
+      else
+        Union.new(converted_union_types)
+      end
     end
 
     def convert(type : MetaclassType)
