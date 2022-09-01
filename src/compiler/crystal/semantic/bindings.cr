@@ -136,11 +136,7 @@ module Crystal
 
       node = yield dependencies
 
-      if dependencies.size == 1
-        new_type = node.type?
-      else
-        new_type = Type.merge dependencies
-      end
+      new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
 
       if new_type && (freeze_type = self.freeze_type)
@@ -153,6 +149,10 @@ module Crystal
       set_type_from(new_type, from)
       @dirty = true
       propagate
+    end
+
+    def type_from_dependencies : Type?
+      Type.merge dependencies
     end
 
     def unbind_from(nodes : Nil)
@@ -206,7 +206,7 @@ module Crystal
     def update(from = nil)
       return if @type && @type.same? from.try &.type?
 
-      new_type = Type.merge dependencies
+      new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
 
       if new_type && (freeze_type = self.freeze_type)
