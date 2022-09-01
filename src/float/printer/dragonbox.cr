@@ -80,34 +80,32 @@ module Float::Printer::Dragonbox
       ac &+ (intermediate >> 32) &+ (ad >> 32) &+ (bc >> 32)
     end
 
-    # Get upper 64-bits of multiplication of a 64-bit unsigned integer and a 128-bit unsigned integer.
-    def self.umul192_upper64(x : UInt64, y : UInt128) : UInt64
-      g0 = umul128(x, y.high)
-      g0.unsafe_add! umul128_upper64(x, y.low)
-      g0.high
+    # Get upper 128-bits of multiplication of a 64-bit unsigned integer and a 128-bit unsigned integer.
+    def self.umul192_upper128(x : UInt64, y : UInt128) : UInt128
+      r = umul128(x, y.high)
+      r.unsafe_add!(umul128_upper64(x, y.low))
+      r
     end
 
-    # Get upper 32-bits of multiplication of a 32-bit unsigned integer and a 64-bit unsigned integer.
-    def self.umul96_upper32(x : UInt32, y : UInt64) : UInt32
-      # a = 0_u32
-      b = x
-      c = (y >> 32).to_u32!
-      d = y.to_u32!
+    # Get upper 64-bits of multiplication of a 32-bit unsigned integer and a 64-bit unsigned integer.
+    def self.umul96_upper64(x : UInt32, y : UInt64) : UInt64
+      yh = (y >> 32).to_u32!
+      yl = y.to_u32!
 
-      # ac = 0_u64
-      bc = umul64(b, c)
-      # ad = 0_u64
-      bd = umul64(b, d)
+      xyh = umul64(x, yh)
+      xyl = umul64(x, yl)
 
-      intermediate = (bd >> 32) &+ bc
-      (intermediate >> 32).to_u32!
+      xyh &+ (xyl >> 32)
     end
 
     # Get middle 64-bits of multiplication of a 64-bit unsigned integer and a 128-bit unsigned integer.
-    def self.umul192_middle64(x : UInt64, y : UInt128) : UInt64
-      g01 = x &* y.high
-      g10 = umul128_upper64(x, y.low)
-      g01 &+ g10
+    def self.umul192_lower128(x : UInt64, y : UInt128) : UInt128
+      high = x &* y.high
+      high_low = umul128(x, y.low)
+      UInt128.new(
+        high: high &+ high_low.high,
+        low: high_low.low,
+      )
     end
 
     # Get lower 64-bits of multiplication of a 32-bit unsigned integer and a 64-bit unsigned integer.
@@ -356,8 +354,7 @@ module Float::Printer::Dragonbox
       # Compute zi and deltai.
       # 10^kappa <= deltai < 10^(kappa + 1)
       deltai = compute_delta(cache, beta_minus_1)
-      two_fr = two_fc | 1
-      zi = compute_mul(two_fr << beta_minus_1, cache)
+      zi, is_z_integer = compute_mul((two_fc | 1) << beta_minus_1, cache)
 
       # Step 2: Try larger divisor
       big_divisor = ImplInfo::BIG_DIVISOR
@@ -371,7 +368,7 @@ module Float::Printer::Dragonbox
         # do nothing
       when .<(deltai)
         # Exclude the right endpoint if necessary.
-        if r == 0 && !is_closed && is_product_integer_pm_half?(two_fr, exponent, minus_k)
+        if r == 0 && is_z_integer && !is_closed
           significand -= 1
           r = big_divisor
         else
@@ -379,11 +376,9 @@ module Float::Printer::Dragonbox
           return {significand, ret_exponent}
         end
       else
-        # r == deltai; compare fractional parts.
-        # Check conditions in the order different from the paper
-        # to take advantage of short-circuiting.
         two_fl = two_fc - 1
-        unless (!is_closed || !is_product_integer_pm_half?(two_fl, exponent, minus_k)) && !compute_mul_parity(two_fl, cache, beta_minus_1)
+        xi_parity, is_x_integer = compute_mul_parity(two_fl, cache, beta_minus_1)
+        unless !xi_parity && (!is_closed || !is_x_integer)
           ret_exponent = minus_k + ImplInfo::KAPPA + 1
           return {significand, ret_exponent}
         end
@@ -409,9 +404,10 @@ module Float::Printer::Dragonbox
         # Since there are only 2 possibilities, we only need to care about the parity.
         # Also, zi and r should have the same parity since the divisor
         # is an even number.
-        if compute_mul_parity(two_fc, cache, beta_minus_1) != approx_y_parity
+        yi_parity, is_y_integer = compute_mul_parity(two_fc, cache, beta_minus_1)
+        if yi_parity != approx_y_parity
           significand -= 1
-        elsif prefer_round_down?(significand) && is_product_integer?(two_fc, exponent, minus_k)
+        elsif prefer_round_down?(significand) && is_y_integer
           # If z^(f) >= epsilon^(f), we might have a tie
           # when z^(f) == epsilon^(f), or equivalently, when y is an integer.
           # For tie-to-up case, we can just choose the upper one.
@@ -460,12 +456,17 @@ module Float::Printer::Dragonbox
       {significand, ret_exponent}
     end
 
-    def self.compute_mul(u, cache)
+    def self.compute_mul(u, cache) # : {result: ImplInfo::CarrierUInt, is_integer: Bool}
       {% if F == Float32 %}
-        WUInt.umul96_upper32(u, cache)
+        r = WUInt.umul96_upper64(u, cache)
+        {
+          ImplInfo::CarrierUInt.new!(r >> 32),
+          ImplInfo::CarrierUInt.new!(r) == 0,
+        }
       {% else %}
         # F == Float64
-        WUInt.umul192_upper64(u, cache)
+        r = WUInt.umul192_upper128(u, cache)
+        {r.high, r.low == 0}
       {% end %}
     end
 
@@ -478,12 +479,20 @@ module Float::Printer::Dragonbox
       {% end %}
     end
 
-    def self.compute_mul_parity(two_f, cache, beta_minus_1) : Bool
+    def self.compute_mul_parity(two_f, cache, beta_minus_1) # : {parity: Bool, is_integer: Bool}
       {% if F == Float32 %}
-        ((WUInt.umul96_lower64(two_f, cache) >> (64 - beta_minus_1)) & 1) != 0
+        r = WUInt.umul96_lower64(two_f, cache)
+        {
+          ((r >> (64 - beta_minus_1)) & 1) != 0,
+          UInt32.new!(r >> (32 - beta_minus_1)) == 0,
+        }
       {% else %}
         # F == Float64
-        ((WUInt.umul192_middle64(two_f, cache) >> (64 - beta_minus_1)) & 1) != 0
+        r = WUInt.umul192_lower128(two_f, cache)
+        {
+          ((r.high >> (64 - beta_minus_1)) & 1) != 0,
+          (r.high << beta_minus_1) | (r.low >> (64 - beta_minus_1)) == 0,
+        }
       {% end %}
     end
 
@@ -527,30 +536,6 @@ module Float::Printer::Dragonbox
     def self.is_left_endpoint_integer_shorter_interval?(exponent)
       ImplInfo::CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_LOWER_THRESHOLD <=
         exponent <= ImplInfo::CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_UPPER_THRESHOLD
-    end
-
-    def self.is_product_integer_pm_half?(two_f, exponent, minus_k)
-      # Case I: f = fc +- 1/2
-
-      return false if exponent < ImplInfo::CASE_FC_PM_HALF_LOWER_THRESHOLD
-      # For k >= 0
-      return true if exponent <= ImplInfo::CASE_FC_PM_HALF_UPPER_THRESHOLD
-      # For k < 0
-      return false if exponent > ImplInfo::DIVISIBILITY_CHECK_BY_5_THRESHOLD
-      Div.divisible_by_power_of_5?(two_f, minus_k)
-    end
-
-    def self.is_product_integer?(two_f, exponent, minus_k)
-      # Case II: f = fc + 1
-      # Case III: f = fc
-
-      # Exponent for 5 is negative
-      return false if exponent > ImplInfo::DIVISIBILITY_CHECK_BY_5_THRESHOLD
-      return Div.divisible_by_power_of_5?(two_f, minus_k) if exponent > ImplInfo::CASE_FC_UPPER_THRESHOLD
-      # Both exponents are nonnegative
-      return true if exponent >= ImplInfo::CASE_FC_LOWER_THRESHOLD
-      # Exponent for 2 is negative
-      Div.divisible_by_power_of_2?(two_f, minus_k - exponent + 1)
     end
 
     def self.to_decimal(signed_significand_bits, exponent_bits)
