@@ -11,7 +11,7 @@ module Crystal
       when 2
         # Merging two types is the most common case, so we optimize it
         first, second = types
-        type_merge_two(first, second)
+        type_merge(first, second)
       else
         combined_union_of compact_types(types)
       end
@@ -26,13 +26,13 @@ module Crystal
       when 2
         # Merging two types is the most common case, so we optimize it
         first, second = nodes
-        type_merge_two(first.type?, second.type?)
+        type_merge(first.type?, second.type?)
       else
         combined_union_of compact_types(nodes, &.type?)
       end
     end
 
-    def type_merge_two(first : Type?, second : Type?) : Type?
+    def type_merge(first : Type?, second : Type?) : Type?
       if first == second
         # Same, so return any of them
         return first
