@@ -33,28 +33,20 @@ module Crystal
     end
 
     def type_merge(first : Type?, second : Type?) : Type?
-      if first == second
-        # Same, so return any of them
-        return first
-      end
+      # Same, so return any of them
+      return first if first == second
 
-      unless first
-        # First is nil, so return second
-        return second
-      end
+      # First is nil, so return second
+      return second unless first
 
-      unless second
-        # Second is nil, so return first
-        return first
-      end
+      # Second is nil, so return first
+      return first unless second
 
-      if first.no_return?
-        return second
-      end
+      # NoReturn is removed from unions
+      return second if first.no_return?
+      return first if second.no_return?
 
-      if second.no_return?
-        return first
-      end
+      # Check if a non-union type is part of a union type
       if !first.is_a?(UnionType) && second.is_a?(UnionType) && second.union_types.includes?(first)
         return second
       end
@@ -63,6 +55,7 @@ module Crystal
         return first
       end
 
+      # General case
       combined_union_of compact_types({first, second})
     end
 
