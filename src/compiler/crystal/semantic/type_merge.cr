@@ -54,15 +54,12 @@ module Crystal
         return {true, first}
       end
 
-      # first and second not nil and different
-      if first.opaque_id > second.opaque_id
-        first, second = second, first
+      if first.nil_type? && second.is_a?(UnionType) && second.union_types.includes?(first)
+        return true, second
       end
 
-      if first.nil_type?
-        if second.is_a?(UnionType) && second.union_types.includes?(first)
-          return true, second
-        end
+      if second.nil_type? && first.is_a?(UnionType) && first.union_types.includes?(second)
+        return true, first
       end
 
       # puts "#{first} vs. #{second}"
