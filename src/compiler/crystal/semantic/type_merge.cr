@@ -48,11 +48,11 @@ module Crystal
         return first
       end
 
-      if first.nil_type? && second.is_a?(UnionType) && second.union_types.includes?(first)
+      if !first.is_a?(UnionType) && second.is_a?(UnionType) && second.union_types.includes?(first)
         return second
       end
 
-      if second.nil_type? && first.is_a?(UnionType) && first.union_types.includes?(second)
+      if !second.is_a?(UnionType) && first.is_a?(UnionType) && first.union_types.includes?(second)
         return first
       end
 
