@@ -343,8 +343,8 @@ module Float::Printer::Dragonbox
   end
 
   private module Impl(F, ImplInfo)
-    def self.break_rounding_tie(significand)
-      significand % 2 == 0 ? significand : significand - 1
+    def self.prefer_round_down?(significand)
+      significand % 2 != 0
     end
 
     def self.compute_nearest_normal(two_fc, exponent, is_closed)
@@ -413,11 +413,11 @@ module Float::Printer::Dragonbox
         # is an even number.
         if compute_mul_parity(two_fc, cache, beta_minus_1) != approx_y_parity
           significand -= 1
-        elsif is_product_integer?(two_fc, exponent, minus_k)
+        elsif prefer_round_down?(significand) && is_product_integer?(two_fc, exponent, minus_k)
           # If z^(f) >= epsilon^(f), we might have a tie
           # when z^(f) == epsilon^(f), or equivalently, when y is an integer.
           # For tie-to-up case, we can just choose the upper one.
-          significand = break_rounding_tie(significand)
+          significand -= 1
         end
       end
 
@@ -453,8 +453,8 @@ module Float::Printer::Dragonbox
       ret_exponent = minus_k
 
       # When tie occurs, choose one of them according to the rule.
-      if ImplInfo::SHORTER_INTERVAL_TIE_LOWER_THRESHOLD <= exponent <= ImplInfo::SHORTER_INTERVAL_TIE_UPPER_THRESHOLD
-        significand = break_rounding_tie(significand)
+      if prefer_round_down?(significand) && (ImplInfo::SHORTER_INTERVAL_TIE_LOWER_THRESHOLD <= exponent <= ImplInfo::SHORTER_INTERVAL_TIE_UPPER_THRESHOLD)
+        significand -= 1
       elsif significand < xi
         significand += 1
       end
