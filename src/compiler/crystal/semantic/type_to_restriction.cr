@@ -116,7 +116,7 @@ module Crystal
           restriction.as(ASTNode)
         end
 
-      if type.union_types.any?(&.is_a?(TypeSplat))
+      if type.union_types.any?(TypeSplat)
         Generic.new(Path.global("Union"), converted_union_types)
       else
         Union.new(converted_union_types)
