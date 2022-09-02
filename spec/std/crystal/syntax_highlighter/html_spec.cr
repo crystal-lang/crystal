@@ -90,6 +90,12 @@ describe Crystal::SyntaxHighlighter::HTML do
     it_highlights %(1 /2), %(<span class="n">1</span> <span class="o">/</span><span class="n">2</span>)
     it_highlights %(1/ 2), %(<span class="n">1</span><span class="o">/</span> <span class="n">2</span>)
 
+    it_highlights %(a/b), %(a<span class="o">/</span>b)
+    it_highlights %(a/ b), %(a<span class="o">/</span> b)
+    it_highlights %(a / b), %(a <span class="o">/</span> b)
+
+    it_highlights %(a /b/), %(a <span class="s">/b/</span>)
+
     it_highlights %($1), %($1)
     it_highlights %($2?), %($2?)
 

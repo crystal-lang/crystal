@@ -69,18 +69,19 @@ abstract class Crystal::SyntaxHighlighter
     end
   end
 
-  private def slash_is_not_regex(last_token_type type)
+  private def slash_is_not_regex(last_token_type type, space_before)
     return nil if type.nil?
 
     type.number? || type.const? || type.instance_var? ||
-      type.class_var? || type.ident? || type.op_rparen? ||
-      type.op_rsquare? || type.op_rcurly?
+      type.class_var? || type.op_rparen? ||
+      type.op_rsquare? || type.op_rcurly? || !space_before
   end
 
   private def highlight_normal_state(lexer, break_on_rcurly = false)
     last_is_def = false
     heredoc_stack = [] of Token
     last_token_type = nil
+    space_before = false
 
     while true
       token = lexer.next_token
@@ -97,7 +98,7 @@ abstract class Crystal::SyntaxHighlighter
             render :IDENT, "/" # colorize 'def //'
             lexer.reader.next_char if lexer.reader.has_next?
           end
-        when token.raw == "/" && slash_is_not_regex(last_token_type)
+        when token.raw == "/" && slash_is_not_regex(last_token_type, space_before)
           render :OPERATOR, token.raw
         when token.delimiter_state.kind.heredoc?
           heredoc_stack << token.dup
@@ -144,6 +145,7 @@ abstract class Crystal::SyntaxHighlighter
         last_token_type = token.type
         last_is_def = token.keyword? :def
       end
+      space_before = token.type.space?
     end
   end
 

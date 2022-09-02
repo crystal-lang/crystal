@@ -95,6 +95,12 @@ describe Crystal::SyntaxHighlighter::Colorize do
     it_highlights %(1 /2), %(\e[35m1\e[0m \e[91m/\e[0m\e[35m2\e[0m)
     it_highlights %(1/ 2), %(\e[35m1\e[0m\e[91m/\e[0m \e[35m2\e[0m)
 
+    it_highlights %(a/b), %(a\e[91m/\e[0mb)
+    it_highlights %(a/ b), %(a\e[91m/\e[0m b)
+    it_highlights %(a / b), %(a \e[91m/\e[0m b)
+
+    it_highlights %(a /b/), %(a \e[93m/b/\e[0m)
+
     it_highlights %($1), %($1)
     it_highlights %($2?), %($2?)
 
