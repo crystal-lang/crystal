@@ -21,7 +21,7 @@ module Crystal
   # optionally generates an executable.
   class Compiler
     CC = ENV["CC"]? || "cc"
-    CL = "cl.exe"
+    CL = ENV["CL"]? || "cl.exe"
 
     # A source to the compiler: its filename and source code.
     record Source,
