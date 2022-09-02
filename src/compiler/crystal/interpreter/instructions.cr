@@ -2016,12 +2016,12 @@ require "./repl"
       libm_powi_f32: {
         pop_values: [value : Float32, power : Int32],
         push:       true,
-        code:       LibM.powi_f32(value, power),
+        code:       {% if flag?(:win32) %} LibM.pow_f32(value, power.to_f32) {% else %} LibM.powi_f32(value, power) {% end %},
       },
       libm_powi_f64: {
         pop_values: [value : Float64, power : Int32],
         push:       true,
-        code:       LibM.powi_f64(value, power),
+        code:       {% if flag?(:win32) %} LibM.pow_f64(value, power.to_f64) {% else %} LibM.powi_f64(value, power) {% end %},
       },
       libm_min_f32: {
         pop_values: [value1 : Float32, value2 : Float32],

@@ -4,6 +4,9 @@ require "../../support/fibers"
 
 private def wait_for
   timeout = {% if flag?(:interpreted) %}
+              # TODO: it's not clear why some interpreter specs
+              # take more than 5 seconds to bind to a server.
+              # See #12429.
               25.seconds
             {% else %}
               5.seconds
