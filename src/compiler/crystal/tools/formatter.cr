@@ -3015,7 +3015,7 @@ module Crystal
             if body.nil_check?
               call = Call.new(nil, "nil?")
             else
-              call = Call.new(nil, "is_a?", args: [body.const] of ASTNode)
+              call = Call.new(nil, "is_a?", body.const)
             end
             accept call
           else
@@ -3024,7 +3024,7 @@ module Crystal
           end
         when RespondsTo
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "responds_to?", args: [SymbolLiteral.new(body.name.to_s)] of ASTNode)
+            call = Call.new(nil, "responds_to?", SymbolLiteral.new(body.name.to_s))
             accept call
           else
             clear_object(body)
@@ -3032,7 +3032,7 @@ module Crystal
           end
         when Cast
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "as", args: [body.to] of ASTNode)
+            call = Call.new(nil, "as", body.to)
             accept call
           else
             clear_object(body)
@@ -3040,7 +3040,7 @@ module Crystal
           end
         when NilableCast
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "as?", args: [body.to] of ASTNode)
+            call = Call.new(nil, "as?", body.to)
             accept call
           else
             clear_object(body)

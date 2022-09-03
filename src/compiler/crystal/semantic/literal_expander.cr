@@ -53,7 +53,7 @@ module Crystal
       if node.elements.any?(Splat)
         ary_var = new_temp_var.at(node)
 
-        ary_instance = Call.new(generic, "new", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
+        ary_instance = Call.new(generic, "new", NumberLiteral.new(capacity).at(node)).at(node)
 
         exps = Array(ASTNode).new(node.elements.size + 2)
         exps << Assign.new(ary_var.clone, ary_instance).at(node)
@@ -74,7 +74,7 @@ module Crystal
       else
         ary_var = new_temp_var.at(node)
 
-        ary_instance = Call.new(generic, "unsafe_build", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
+        ary_instance = Call.new(generic, "unsafe_build", NumberLiteral.new(capacity).at(node)).at(node)
 
         buffer = Call.new(ary_var, "to_unsafe").at(node)
         buffer_var = new_temp_var.at(node)
@@ -242,7 +242,7 @@ module Crystal
       exps = Array(ASTNode).new(node.entries.size + 2)
       exps << Assign.new(temp_var.clone, constructor).at(node)
       node.entries.each do |entry|
-        exps << Call.new(temp_var.clone, "[]=", [entry.key.clone, entry.value.clone] of ASTNode).at(node)
+        exps << Call.new(temp_var.clone, "[]=", entry.key.clone, entry.value.clone).at(node)
       end
       exps << temp_var.clone
 
@@ -377,7 +377,7 @@ module Crystal
     def expand(node : RangeLiteral)
       path = Path.global("Range").at(node)
       bool = BoolLiteral.new(node.exclusive?).at(node)
-      Call.new(path, "new", [node.from, node.to, bool]).at(node)
+      Call.new(path, "new", node.from, node.to, bool).at(node)
     end
 
     # Convert an interpolation to a call to `String.interpolation`
@@ -616,13 +616,14 @@ module Crystal
       if node_else = node.else
         case_else = node_else.clone
       else
-        case_else = Call.new(nil, "raise", args: [StringLiteral.new("BUG: invalid select index")] of ASTNode, global: true).at(node)
+        case_else = Call.new(nil, "raise", StringLiteral.new("BUG: invalid select index"), global: true).at(node)
       end
 
-      call_name = node.else ? "non_blocking_select" : "select"
-      call_args = [TupleLiteral.new(tuple_values).at(node)] of ASTNode
-
-      call = Call.new(channel, call_name, call_args).at(node)
+      call = Call.new(
+        channel,
+        node.else ? "non_blocking_select" : "select",
+        TupleLiteral.new(tuple_values).at(node),
+      ).at(node)
       multi = MultiAssign.new(targets, [call] of ASTNode)
       case_cond = Var.new(index_name).at(node)
       a_case = Case.new(case_cond, case_whens, case_else, exhaustive: false).at(node)

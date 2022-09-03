@@ -2331,7 +2331,7 @@ module Crystal
             extra = Call.new(
               nil,
               "raise",
-              args: [StringLiteral.new("Can't instantiate abstract #{base_type.type_desc} #{base_type}")] of ASTNode,
+              StringLiteral.new("Can't instantiate abstract #{base_type.type_desc} #{base_type}"),
               global: true)
             extra.accept self
 
