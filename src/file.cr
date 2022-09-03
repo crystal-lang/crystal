@@ -136,9 +136,9 @@ class File < IO::FileDescriptor
   #
   # File.symlink("foo", "bar")
   # File.info?("bar", follow_symlinks: false).try(&.type.symlink?) # => true
-  #
-  # Use `#info` if the `File` is already open.
   # ```
+  #
+  # Use `IO::FileDescriptor#info` if the file is already open.
   def self.info?(path : Path | String, follow_symlinks = true) : Info?
     Crystal::System::File.info?(path.to_s, follow_symlinks)
   end
@@ -156,9 +156,9 @@ class File < IO::FileDescriptor
   #
   # File.symlink("foo", "bar")
   # File.info("bar", follow_symlinks: false).type.symlink? # => true
-  #
-  # Use `#info` if the `File` is already open.
   # ```
+  #
+  # Use `IO::FileDescriptor#info` if the file is already open.
   def self.info(path : Path | String, follow_symlinks = true) : Info
     Crystal::System::File.info(path.to_s, follow_symlinks)
   end

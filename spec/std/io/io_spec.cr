@@ -72,7 +72,7 @@ private class SimpleIOMemory < IO
 
   private def resize_to_capacity(capacity)
     @capacity = capacity
-    @buffer = @buffer.realloc(@capacity)
+    @buffer = GC.realloc(@buffer, @capacity)
   end
 end
 
@@ -966,8 +966,12 @@ describe IO do
     end
   end
 
-  {% unless flag?(:win32) %}
-    typeof(STDIN.cooked { })
-    typeof(STDIN.cooked!)
-  {% end %}
+  typeof(STDIN.noecho { })
+  typeof(STDIN.noecho!)
+  typeof(STDIN.echo { })
+  typeof(STDIN.echo!)
+  typeof(STDIN.cooked { })
+  typeof(STDIN.cooked!)
+  typeof(STDIN.raw { })
+  typeof(STDIN.raw!)
 end

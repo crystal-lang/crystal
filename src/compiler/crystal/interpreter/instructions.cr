@@ -1285,7 +1285,7 @@ require "./repl"
       },
       # >>> Allocate (2)
 
-      # <<< Unions (5)
+      # <<< Unions (7)
       put_in_union: {
         operands:   [type_id : Int32, from_size : Int32, union_size : Int32],
         code:       begin
@@ -1369,7 +1369,17 @@ require "./repl"
           value
         end,
       },
-      # >>> Unions (5)
+      get_union_type_id: {
+        operands:   [union_size : Int32],
+        push:       true,
+        code:       (stack - union_size).as(Int32*).value,
+      },
+      put_union_type_id: {
+        operands:   [type_id : Int32, union_size : Int32],
+        push:       false,
+        code:       (stack - union_size).as(Int32*).value = type_id,
+      },
+      # >>> Unions (7)
 
       # <<< is_a? (3)
       reference_is_a: {
@@ -2006,12 +2016,12 @@ require "./repl"
       libm_powi_f32: {
         pop_values: [value : Float32, power : Int32],
         push:       true,
-        code:       LibM.powi_f32(value, power),
+        code:       {% if flag?(:win32) %} LibM.pow_f32(value, power.to_f32) {% else %} LibM.powi_f32(value, power) {% end %},
       },
       libm_powi_f64: {
         pop_values: [value : Float64, power : Int32],
         push:       true,
-        code:       LibM.powi_f64(value, power),
+        code:       {% if flag?(:win32) %} LibM.pow_f64(value, power.to_f64) {% else %} LibM.powi_f64(value, power) {% end %},
       },
       libm_min_f32: {
         pop_values: [value1 : Float32, value2 : Float32],

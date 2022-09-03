@@ -74,9 +74,9 @@ module Crystal::System::FileDescriptor
         raise IO::Error.from_winerror("Unable to get info")
       end
 
-      FileInfo.new(file_info, file_type)
+      ::File::Info.new(file_info, file_type)
     else
-      FileInfo.new(file_type)
+      ::File::Info.new(file_type)
     end
   end
 
@@ -175,7 +175,9 @@ module Crystal::System::FileDescriptor
     handle = LibC._get_osfhandle(fd)
     if handle != -1
       handle = LibC::HANDLE.new(handle)
-      if LibC.GetConsoleMode(handle, out old_mode) != 0
+      # TODO: use `out old_mode` after implementing interpreter out closured var
+      old_mode = uninitialized LibC::DWORD
+      if LibC.GetConsoleMode(handle, pointerof(old_mode)) != 0
         console_handle = true
         if fd == 1 || fd == 2 # STDOUT or STDERR
           if LibC.SetConsoleMode(handle, old_mode | LibC::ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0
@@ -194,6 +196,43 @@ module Crystal::System::FileDescriptor
       io.flush_on_newline = true
     end
     io
+  end
+
+  private def system_echo(enable : Bool, & : ->)
+    system_console_mode(enable, LibC::ENABLE_ECHO_INPUT, 0) { yield }
+  end
+
+  private def system_raw(enable : Bool, & : ->)
+    system_console_mode(enable, LibC::ENABLE_VIRTUAL_TERMINAL_INPUT, LibC::ENABLE_PROCESSED_INPUT | LibC::ENABLE_LINE_INPUT | LibC::ENABLE_ECHO_INPUT) { yield }
+  end
+
+  @[AlwaysInline]
+  private def system_console_mode(enable, on_mask, off_mask)
+    windows_handle = self.windows_handle
+    if LibC.GetConsoleMode(windows_handle, out old_mode) == 0
+      raise IO::Error.from_winerror("GetConsoleMode")
+    end
+
+    old_on_bits = old_mode & on_mask
+    old_off_bits = old_mode & off_mask
+    if enable
+      return yield if old_on_bits == on_mask && old_off_bits == 0
+      new_mode = (old_mode | on_mask) & ~off_mask
+    else
+      return yield if old_on_bits == 0 && old_off_bits == off_mask
+      new_mode = (old_mode | off_mask) & ~on_mask
+    end
+
+    if LibC.SetConsoleMode(windows_handle, new_mode) == 0
+      raise IO::Error.from_winerror("SetConsoleMode")
+    end
+
+    ret = yield
+    if LibC.GetConsoleMode(windows_handle, pointerof(old_mode)) != 0
+      new_mode = (old_mode & ~on_mask & ~off_mask) | old_on_bits | old_off_bits
+      LibC.SetConsoleMode(windows_handle, new_mode)
+    end
+    ret
   end
 end
 

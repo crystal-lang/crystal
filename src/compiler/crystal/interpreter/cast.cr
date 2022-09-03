@@ -35,8 +35,44 @@ class Crystal::Repl::Compiler
       needs_value_cast_inside_union?(from_element, to)
     end
 
-    if needs_union_value_cast # Compute the values that need a cast
-      node.raise "BUG: missing mixed union upcast from #{from} to #{to}"
+    if needs_union_value_cast
+      # Compute the values that need a cast
+      types_needing_cast = from.union_types.select do |union_type|
+        needs_value_cast_inside_union?(union_type, to)
+      end
+
+      end_jumps = [] of Int32
+
+      types_needing_cast.each do |type_needing_cast|
+        # Find compatible type
+        compatible_type = to.union_types.find! { |union_type| type_needing_cast.implements?(union_type) }
+
+        # Get the type id of the "from" union
+        from_type_id = get_union_type_id(aligned_sizeof_type(from), node: node)
+
+        # Check if `from_type_id` is the same as `type_needing_cast`
+        put_i32 type_id(type_needing_cast), node: node
+        cmp_i32 node: node
+        cmp_eq node: node
+
+        # If they are not the same, continue
+        branch_unless 0, node: nil
+        cond_jump_location = patch_location
+
+        # We need to upcast from type_needing_cast to compatible_type
+        upcast(node, type_needing_cast, compatible_type)
+
+        # Then we need to set the correct union type id
+        put_union_type_id(type_id(compatible_type), aligned_sizeof_type(to), node: node)
+
+        # Then jump to the end
+        jump 0, node: nil
+        end_jumps << patch_location
+
+        # The unless above should jump here, which is the start
+        # of the next if, or just the end
+        patch_jump(cond_jump_location)
+      end
     end
 
     # Putting a smaller union type inside a bigger one is just extending the value
@@ -44,6 +80,15 @@ class Crystal::Repl::Compiler
 
     if difference > 0
       push_zeros(difference, node: nil)
+    end
+
+    # If needs_union_value_cast was true, we have a bunch of
+    # if .. then that need to jump to the end of everything.
+    # Here we do that.
+    if end_jumps
+      end_jumps.each do |end_jump|
+        patch_jump(end_jump)
+      end
     end
   end
 
@@ -355,6 +400,11 @@ class Crystal::Repl::Compiler
 
   private def downcast_distinct(node : ASTNode, from : NilableProcType, to : ProcInstanceType)
     # Nothing to do
+  end
+
+  private def downcast_distinct(node : ASTNode, from : ProcInstanceType, to : ProcInstanceType)
+    # Nothing to do
+    # This is when Proc(T) is casted to Proc(Nil)
   end
 
   private def downcast_distinct(node : ASTNode, from : NilableProcType, to : NilType)
