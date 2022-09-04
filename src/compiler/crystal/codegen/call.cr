@@ -69,9 +69,7 @@ class Crystal::CodeGenVisitor
     # Always accept obj: even if it's not passed as self this might
     # involve intermediate calls with side effects.
     if obj
-      request_value do
-        accept obj
-      end
+      request_value(obj)
     end
 
     # First self.
@@ -95,9 +93,7 @@ class Crystal::CodeGenVisitor
 
     # Then the arguments.
     node.args.zip(target_def.args) do |arg, def_arg|
-      request_value do
-        accept arg
-      end
+      request_value(arg)
 
       if arg.type.void?
         call_arg = int8(0)
@@ -184,9 +180,7 @@ class Crystal::CodeGenVisitor
           arg.raise "BUG: out argument was #{exp}"
         end
       else
-        request_value do
-          accept arg
-        end
+        request_value(arg)
 
         if arg.type.void?
           call_arg = int8(0)
@@ -320,9 +314,7 @@ class Crystal::CodeGenVisitor
           # Reset vars that are declared inside the def and are nilable
           reset_nilable_vars(target_def)
 
-          request_value do
-            accept target_def.body
-          end
+          request_value(target_def.body)
 
           phi.add @last, target_def.body.type?, last: true
         end
@@ -347,9 +339,7 @@ class Crystal::CodeGenVisitor
     # Get type_id of obj or owner
     if node_obj = node.obj
       owner = node_obj.type
-      request_value do
-        accept node_obj
-      end
+      request_value(node_obj)
       obj_type_id = @last
     elsif node.uses_with_scope? && (with_scope = node.with_scope)
       owner = with_scope
@@ -367,9 +357,7 @@ class Crystal::CodeGenVisitor
 
     # Get type if of args and create arg vars
     arg_type_ids = node.args.map_with_index do |arg, i|
-      request_value do
-        accept arg
-      end
+      request_value(arg)
       new_vars["%arg#{i}"] = LLVMVar.new(@last, arg.type, true)
       type_id(@last, arg.type)
     end
