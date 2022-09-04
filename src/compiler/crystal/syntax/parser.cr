@@ -1262,8 +1262,14 @@ module Crystal
           ary = ArrayLiteral.new(tuple_or_hash.elements, name: type).at(tuple_or_hash.location)
           return ary
         when HashLiteral
-          tuple_or_hash.name = type
-          return tuple_or_hash
+          if tuple_or_hash.entries.empty?
+            # an empty literal is ambiguous, we're picking ArrayLiteral for simplicity
+            ary = ArrayLiteral.new([] of ASTNode, name: type).at(tuple_or_hash.location)
+            return ary
+          else
+            tuple_or_hash.name = type
+            return tuple_or_hash
+          end
         else
           raise "BUG: tuple_or_hash should be tuple or hash, not #{tuple_or_hash}"
         end
@@ -2406,7 +2412,7 @@ module Crystal
       if @token.type.op_rcurly?
         end_location = token_end_location
         next_token_skip_space
-        new_hash_literal([] of HashLiteral::Entry, line, column, end_location)
+        new_hash_literal([] of HashLiteral::Entry, line, column, end_location, allow_of: allow_of)
       else
         if named_tuple_start?
           unless allow_of

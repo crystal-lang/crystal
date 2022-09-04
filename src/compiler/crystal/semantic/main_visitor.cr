@@ -2923,12 +2923,26 @@ module Crystal
         case type
         when GenericClassType
           generic_type = TypeNode.new(type).at(node.location)
-          type_of = @program.literal_expander.typeof_exp(node)
+
+          if node.elements.empty?
+            type_of = [] of ASTNode
+          else
+            type_of = @program.literal_expander.typeof_exp(node)
+          end
+
           generic = Generic.new(generic_type, type_of).at(node.location)
+
           node.name = generic
         when GenericClassInstanceType
+          if node.elements.empty? && !(type.has_def?("<<") || type.has_def?("[]="))
+            node.raise "Type #{type} does not support array-like or hash-like literal"
+          end
           # Nothing
         else
+          if node.elements.empty? && !(type.has_def?("<<") || type.has_def?("[]="))
+            node.raise "Type #{type} does not support array-like or hash-like literal"
+          end
+
           node.name = TypeNode.new(name.type).at(node.location)
         end
 
