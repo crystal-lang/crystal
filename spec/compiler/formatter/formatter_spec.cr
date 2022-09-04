@@ -260,12 +260,51 @@ describe Crystal::Formatter do
   assert_format "def foo\n  1\n  #\n\n\nrescue\nend", "def foo\n  1\n  #\nrescue\nend"
 
   assert_format "def foo(@[MyAnn] v); end"
+  assert_format "def foo(@[MyAnn] &); end"
+  assert_format "def foo(@[MyAnn] &block); end"
+  assert_format "def foo(@[MyAnn] & : String -> Nil); end"
   assert_format "def foo(  @[MyAnn]  v  ); end", "def foo(@[MyAnn] v); end"
   assert_format "def foo(@[AnnOne] @[AnnTwo] v); end"
   assert_format "def foo(@[AnnOne]   @[AnnTwo] v); end", "def foo(@[AnnOne] @[AnnTwo] v); end"
+  assert_format "def foo(@[AnnOne]   @[AnnTwo]   &  ); end", "def foo(@[AnnOne] @[AnnTwo] &); end"
+  assert_format "def foo(@[AnnOne]   @[AnnTwo]   &block : Int32 ->  ); end", "def foo(@[AnnOne] @[AnnTwo] &block : Int32 ->); end"
   assert_format <<-CRYSTAL
   def foo(
     @[MyAnn] bar
+  ); end
+  CRYSTAL
+
+  assert_format <<-CRYSTAL
+  def foo(
+    foo,
+    @[MyAnn] &block
+  ); end
+  CRYSTAL
+
+  assert_format <<-CRYSTAL
+  def foo(
+    foo,
+    @[MyAnn]
+    &block
+  ); end
+  CRYSTAL
+
+  assert_format <<-CRYSTAL
+  def foo(
+    foo,
+
+    @[MyAnn]
+    &block
+  ); end
+  CRYSTAL
+
+  assert_format <<-CRYSTAL
+  def foo(
+    foo,
+
+    @[MyAnn]
+    @[MyAnn]
+    & : Nil -> Nil
   ); end
   CRYSTAL
 
