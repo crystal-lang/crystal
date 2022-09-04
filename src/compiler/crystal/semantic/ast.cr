@@ -139,6 +139,7 @@ module Crystal
     property previous : DefWithMetadata?
     property next : Def?
     property special_vars : Set(String)?
+    property freeze_type : Type?
     property block_nest = 0
     property? raises = false
     property? closure = false
@@ -428,6 +429,8 @@ module Crystal
     # a Def or a Block.
     property context : ASTNode | NonGenericModuleType | Nil
 
+    property freeze_type : Type?
+
     # True if we need to mark this variable as nilable
     # if this variable is read.
     property? nil_if_read = false
@@ -526,6 +529,8 @@ module Crystal
     # The (optional) initial value of a class variable
     property initializer : ClassVarInitializer?
 
+    property freeze_type : Type?
+
     # Flag used during codegen to indicate the initializer is simple
     # and doesn't require a call to a function
     property? simple_initializer = false
@@ -606,6 +611,7 @@ module Crystal
     property after_vars : MetaVars?
     property context : Def | NonGenericModuleType | Nil
     property fun_literal : ASTNode?
+    property freeze_type : Type?
     property? visited = false
 
     getter(:break) { Var.new("%break") }

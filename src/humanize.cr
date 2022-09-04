@@ -56,7 +56,7 @@ struct Number
     int_size = integer.size
     dec_size = decimals.size
 
-    io << '-' if self < 0
+    io << '-' if number.is_a?(Float::Primitive) ? Math.copysign(1, number) < 0 : number < 0
 
     start = int_size % group
     start += group if start == 0

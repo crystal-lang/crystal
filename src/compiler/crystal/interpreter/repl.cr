@@ -139,7 +139,7 @@ class Crystal::Repl
 
   private def interpret_crystal_exit(exception : EscapingException)
     decl = UninitializedVar.new(Var.new("ex"), TypeNode.new(@context.program.exception.virtual_type))
-    call = Call.new(Path.global("Crystal"), "exit", [NumberLiteral.new(1), Var.new("ex")] of ASTNode)
+    call = Call.new(Path.global("Crystal"), "exit", NumberLiteral.new(1), Var.new("ex"))
     exps = Expressions.new([decl, call] of ASTNode)
 
     begin

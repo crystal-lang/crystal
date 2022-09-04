@@ -347,6 +347,9 @@ struct Pointer(T)
   # ptr = ptr.realloc(8)
   # ptr # [1, 2, 3, 4, 0, 0, 0, 0]
   # ```
+  #
+  # WARNING: Memory allocated using `GC.malloc` or `GC.malloc_atomic` must be
+  # reallocated using `GC.realloc` instead.
   def realloc(size : Int)
     if size < 0
       raise ArgumentError.new("Negative size")

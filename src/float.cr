@@ -275,6 +275,10 @@ struct Float64
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float64
 
+  def abs
+    Math.copysign(self, 1)
+  end
+
   def ceil : Float64
     LibM.ceil_f64(self)
   end
@@ -328,7 +332,8 @@ struct Float64
   end
 
   def to_s : String
-    String.build(22) do |buffer|
+    # the longest `Float64` strings are of the form `-1.2345678901234567e+123`
+    String.build(24) do |buffer|
       Printer.print(self, buffer)
     end
   end
