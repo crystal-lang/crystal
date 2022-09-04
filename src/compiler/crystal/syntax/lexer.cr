@@ -17,7 +17,7 @@ module Crystal
     property wants_symbol : Bool
     @filename : String | VirtualFile | Nil
     @stacked_filename : String | VirtualFile | Nil
-    @token_end_location : Location?
+    @token_end_line_and_column : LineAndColumn?
     @string_pool : StringPool
 
     # This is an interface for storing data associated to a heredoc
@@ -1317,8 +1317,8 @@ module Crystal
       @token
     end
 
-    def token_end_location
-      @token_end_location ||= Location.new(@filename, @line_number, @column_number - 1)
+    def token_end_line_and_column
+      @token_end_line_and_column ||= LineAndColumn.new(@line_number, @column_number - 1)
     end
 
     def slash_is_regex!
@@ -2793,7 +2793,7 @@ module Crystal
       @token.passed_backslash_newline = false
       @token.doc_buffer = nil unless @token.type.space? || @token.type.newline?
       @token.invalid_escape = false
-      @token_end_location = nil
+      @token_end_line_and_column = nil
     end
 
     def next_token_skip_space

@@ -5,9 +5,31 @@ module Crystal
     # if the location is not known.
     property location : Location?
 
+    # The line and column where the node ends.
+    # The file where the node ends is always that of
+    # `location`.
+    property end_line_and_column = LineAndColumn.empty
+
     # The location where this node ends, or `nil`
     # if the location is not known.
-    property end_location : Location?
+    def end_location : Location?
+      location = @location
+      if location && !end_line_and_column.empty?
+        Location.new(location.filename, end_line_and_column.line, end_line_and_column.column)
+      else
+        nil
+      end
+    end
+
+    # Clears the end line and column information.
+    def end_line_and_column=(line_and_column : Nil)
+      @end_line_and_column = LineAndColumn.empty
+    end
+
+    # Sets this node's line and column information from the given `location`.
+    def end_line_and_column=(location : Location)
+      @end_line_and_column = LineAndColumn.new(location.line_number, location.column_number)
+    end
 
     # Updates this node's location and returns `self`
     def at(@location : Location?)
@@ -18,19 +40,31 @@ module Crystal
     # of `node`, and returns `self`
     def at(node : ASTNode)
       @location = node.location
-      @end_location = node.end_location
+      @end_line_and_column = node.end_line_and_column
       self
     end
 
     # Updates this node's end location and returns `self`
-    def at_end(@end_location : Location?)
+    def at_end(@end_line_and_column : LineAndColumn)
+      self
+    end
+
+    # Clears this node's end location and returns `self`
+    def at_end(end_line_and_column : Nil)
+      @end_line_and_column = LineAndColumn.empty
+      self
+    end
+
+    # Updates this node's end location to that of `location` and returns `self`.
+    def at_end(location : Location)
+      @end_line_and_column = LineAndColumn.new(location.line_number, location.column_number)
       self
     end
 
     # Sets this node's end location to those of `node` and
     # returns self
     def at_end(node : ASTNode)
-      @end_location = node.end_location
+      @end_line_and_column = node.end_line_and_column
       self
     end
 
@@ -39,7 +73,7 @@ module Crystal
     def clone
       clone = clone_without_location
       clone.location = location
-      clone.end_location = end_location
+      clone.end_line_and_column = end_line_and_column
       clone.doc = doc
       clone
     end
@@ -164,8 +198,8 @@ module Crystal
       @location || @expressions.first?.try &.location
     end
 
-    def end_location
-      @end_location || @expressions.last?.try &.end_location
+    def end_line_and_column
+      @end_line_and_column.or(@expressions.last?.try &.end_line_and_column)
     end
 
     # It yields first node if this holds only one node, or yields `nil`.
@@ -803,8 +837,8 @@ module Crystal
       @value.accept visitor
     end
 
-    def end_location
-      @end_location || value.end_location
+    def end_line_and_column
+      @end_line_and_column.or(value.end_line_and_column)
     end
 
     def clone_without_location
@@ -835,8 +869,8 @@ module Crystal
       @value.accept visitor
     end
 
-    def end_location
-      @end_location || value.end_location
+    def end_line_and_column
+      @end_line_and_column.or(value.end_line_and_column)
     end
 
     def clone_without_location
@@ -862,8 +896,8 @@ module Crystal
       @values.each &.accept visitor
     end
 
-    def end_location
-      @end_location || @values.last.end_location
+    def end_line_and_column
+      @end_line_and_column.or(@values.last.end_line_and_column)
     end
 
     def ==(other : self)
@@ -956,8 +990,8 @@ module Crystal
       @right.accept visitor
     end
 
-    def end_location
-      @end_location || @right.end_location
+    def end_line_and_column
+      @end_line_and_column.or(@right.end_line_and_column)
     end
 
     def_equals_and_hash left, right
@@ -1788,8 +1822,8 @@ module Crystal
       @exp.try &.accept visitor
     end
 
-    def end_location
-      @end_location || @exp.try(&.end_location)
+    def end_line_and_column
+      @end_line_and_column.or(@exp.try(&.end_line_and_column))
     end
 
     def_equals_and_hash exp
@@ -1830,8 +1864,8 @@ module Crystal
       Yield.new(@exps.clone, @scope.clone, @has_parentheses)
     end
 
-    def end_location
-      @end_location || @exps.last?.try(&.end_location)
+    def end_line_and_column
+      @end_line_and_column.or(@exps.last?.try(&.end_line_and_column))
     end
 
     def_equals_and_hash @exps, @scope, @has_parentheses
@@ -1851,8 +1885,8 @@ module Crystal
       Include.new(@name)
     end
 
-    def end_location
-      @end_location || @name.end_location
+    def end_line_and_column
+      @end_line_and_column.or(@name.end_line_and_column)
     end
 
     def_equals_and_hash name
@@ -1872,8 +1906,8 @@ module Crystal
       Extend.new(@name)
     end
 
-    def end_location
-      @end_location || @name.end_location
+    def end_line_and_column
+      @end_line_and_column.or(@name.end_line_and_column)
     end
 
     def_equals_and_hash name
@@ -2064,8 +2098,8 @@ module Crystal
       Cast.new(@obj.clone, @to.clone)
     end
 
-    def end_location
-      @end_location || @to.end_location
+    def end_line_and_column
+      @end_line_and_column.or(@to.end_line_and_column)
     end
 
     def_equals_and_hash @obj, @to
@@ -2088,8 +2122,8 @@ module Crystal
       NilableCast.new(@obj.clone, @to.clone)
     end
 
-    def end_location
-      @end_location || @to.end_location
+    def end_line_and_column
+      @end_line_and_column.or(@to.end_line_and_column)
     end
 
     def_equals_and_hash @obj, @to
