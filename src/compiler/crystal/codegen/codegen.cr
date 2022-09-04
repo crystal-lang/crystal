@@ -1590,10 +1590,11 @@ module Crystal
           context.next_phi = phi
           context.closure_parent_context = block_context.closure_parent_context
 
-          @needs_value = true
-          set_ensure_exception_handler(block)
+          request_value do
+            set_ensure_exception_handler(block)
 
-          accept block.body
+            accept block.body
+          end
         end
 
         phi.add @last, block.body.type?, last: true
