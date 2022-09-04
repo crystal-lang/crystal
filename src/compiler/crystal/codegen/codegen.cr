@@ -859,9 +859,7 @@ module Crystal
 
             position_at_end while_block
 
-            request_value(false) do
-              accept node.body
-            end
+            discard_value(node.body)
             br while_block
           end
         else
@@ -883,9 +881,7 @@ module Crystal
 
             position_at_end body_block
 
-            request_value(false) do
-              accept node.body
-            end
+            discard_value(node.body)
             br while_block
 
             position_at_end fail_block
@@ -2262,6 +2258,12 @@ module Crystal
 
     def request_value(node : ASTNode)
       request_value do
+        accept node
+      end
+    end
+
+    def discard_value(node : ASTNode)
+      request_value(false) do
         accept node
       end
     end
