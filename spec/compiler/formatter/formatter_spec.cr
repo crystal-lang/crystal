@@ -1,8 +1,8 @@
 require "spec"
 require "../../../src/compiler/crystal/formatter"
 
-private def assert_format(input, output = input, strict = false, file = __FILE__, line = __LINE__)
-  it "formats #{input.inspect}", file, line do
+private def assert_format(input, output = input, strict = false, file = __FILE__, line = __LINE__, focus : Bool = false)
+  it "formats #{input.inspect}", file, line, focus: focus do
     output = "#{output}\n" unless strict
     result = Crystal.format(input)
     unless result == output
@@ -258,6 +258,138 @@ describe Crystal::Formatter do
   assert_format "def foo\n  1 #\nrescue\nend"
   assert_format "def foo\n  1 #\nrescue\nend"
   assert_format "def foo\n  1\n  #\n\n\nrescue\nend", "def foo\n  1\n  #\nrescue\nend"
+
+  assert_format "def foo(@[MyAnn] v); end"
+  assert_format "def foo(  @[MyAnn]  v  ); end", "def foo(@[MyAnn] v); end"
+  assert_format "def foo(@[AnnOne] @[AnnTwo] v); end"
+  assert_format "def foo(@[AnnOne]   @[AnnTwo] v); end", "def foo(@[AnnOne] @[AnnTwo] v); end"
+  assert_format <<-CRYSTAL
+  def foo(
+    @[MyAnn] bar
+  ); end
+  CRYSTAL
+
+  assert_format <<-BEFORE, <<-AFTER
+  def foo(
+     @[MyAnn]   bar
+  ); end
+  BEFORE
+  def foo(
+    @[MyAnn] bar
+  ); end
+  AFTER
+
+  assert_format <<-CRYSTAL
+  def foo(
+    @[MyAnn]
+    bar
+  ); end
+  CRYSTAL
+
+  assert_format <<-CRYSTAL
+  def foo(
+    @[MyAnn]
+    @[MyAnn]
+    bar
+  ); end
+  CRYSTAL
+
+  assert_format <<-CRYSTAL
+  def foo(
+    @[MyAnn]
+    @[MyAnn]
+    bar,
+    @[MyAnn] baz
+  ); end
+  CRYSTAL
+
+  assert_format <<-CRYSTAL
+  def foo(
+    @[MyAnn]
+    @[MyAnn]
+    bar,
+
+    @[MyAnn] baz
+  ); end
+  CRYSTAL
+
+  assert_format <<-BEFORE, <<-AFTER
+  def foo(
+     @[MyAnn]
+   bar
+  ); end
+  BEFORE
+  def foo(
+    @[MyAnn]
+    bar
+  ); end
+  AFTER
+
+  assert_format <<-BEFORE, <<-AFTER
+  def foo(
+     @[MyAnn]    
+   bar
+  ); end
+  BEFORE
+  def foo(
+    @[MyAnn]
+    bar
+  ); end
+  AFTER
+
+  assert_format <<-BEFORE
+  def foo(
+    @[MyAnn]
+    @[MyAnn]
+    bar,
+    @[MyAnn] @[MyAnn] baz,
+    @[MyAnn]
+    @[MyAnn]
+    biz
+  ); end
+  BEFORE
+
+  assert_format <<-BEFORE
+  def foo(
+    @[MyAnn]
+    @[MyAnn]
+    bar,
+
+    @[MyAnn] @[MyAnn] baz,
+
+    @[MyAnn]
+    @[MyAnn]
+    biz
+  ); end
+  BEFORE
+
+  assert_format <<-BEFORE, <<-AFTER
+  def foo(
+    @[MyAnn]  
+    @[MyAnn]  
+    bar,
+
+    @[MyAnn]  @[MyAnn]  baz,
+
+    @[MyAnn]
+
+    @[MyAnn]
+
+    biz
+  ); end
+  BEFORE
+  def foo(
+    @[MyAnn]
+    @[MyAnn]
+    bar,
+
+    @[MyAnn] @[MyAnn] baz,
+
+    @[MyAnn]
+    @[MyAnn]
+    biz
+  ); end
+  AFTER
 
   assert_format "loop do\n  1\nrescue\n  2\nend"
   assert_format "loop do\n  1\n  loop do\n    2\n  rescue\n    3\n  end\n  4\nend"
