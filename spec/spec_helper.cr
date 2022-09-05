@@ -106,6 +106,22 @@ def assert_expand_third(from : String, to, *, flags = nil, file = __FILE__, line
   assert_expand node, to, flags: flags, file: file, line: line
 end
 
+def assert_expand_named(from : String, to, *, generic = nil, flags = nil, file = __FILE__, line = __LINE__)
+  program = new_program
+  program.flags.concat(flags.split) if flags
+  from_nodes = Parser.parse(from)
+  generic_type = generic.path if generic
+  case from_nodes
+  when ArrayLiteral
+    to_nodes = LiteralExpander.new(program).expand_named(from_nodes, generic_type)
+  when HashLiteral
+    to_nodes = LiteralExpander.new(program).expand_named(from_nodes, generic_type)
+  else
+    fail "Expected: ArrayLiteral | HashLiteral, got: #{from_nodes.class}", file: file, line: line
+  end
+  to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+end
+
 def assert_error(str, message = nil, *, inject_primitives = false, flags = nil, file = __FILE__, line = __LINE__)
   expect_raises TypeException, message, file, line do
     semantic str, inject_primitives: inject_primitives, flags: flags
