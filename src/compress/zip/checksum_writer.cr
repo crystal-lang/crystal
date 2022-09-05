@@ -3,27 +3,27 @@ module Compress::Zip
   # checksum while writing to an underlying IO.
   private class ChecksumWriter < IO
     getter count = 0_u32
-    getter crc32 = Digest::CRC32.initial
+    getter crc32 = ::Digest::CRC32.initial
     getter! io : IO
 
     def initialize(@compute_crc32 = false)
     end
 
-    def read(slice : Bytes)
+    def read(slice : Bytes) : NoReturn
       raise IO::Error.new "Can't read from Zip::Writer entry"
     end
 
-    def write(slice : Bytes) : UInt64
-      return 0u64 if slice.empty?
+    def write(slice : Bytes) : Nil
+      return if slice.empty?
 
       @count += slice.size
-      @crc32 = Digest::CRC32.update(slice, @crc32) if @compute_crc32
+      @crc32 = ::Digest::CRC32.update(slice, @crc32) if @compute_crc32
       io.write(slice)
     end
 
     def io=(@io)
       @count = 0_u32
-      @crc32 = Digest::CRC32.initial
+      @crc32 = ::Digest::CRC32.initial
     end
   end
 end

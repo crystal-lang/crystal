@@ -1,13 +1,5 @@
-{% skip_file if flag?(:win32) %}
-
 require "base64"
 require "http/web_socket"
-
-{% if flag?(:without_openssl) %}
-  require "digest/sha1"
-{% else %}
-  require "openssl/sha1"
-{% end %}
 
 # A handler which adds websocket functionality to an `HTTP::Server`.
 #
@@ -26,7 +18,7 @@ class HTTP::WebSocketHandler
   def initialize(&@proc : WebSocket, Server::Context ->)
   end
 
-  def call(context)
+  def call(context) : Nil
     unless websocket_upgrade_request? context.request
       return call_next context
     end

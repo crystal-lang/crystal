@@ -54,8 +54,12 @@ class String
     Var.new self
   end
 
-  def arg(default_value = nil, restriction = nil, external_name = nil)
-    Arg.new self, default_value: default_value, restriction: restriction, external_name: external_name
+  def ann
+    Annotation.new path
+  end
+
+  def arg(default_value = nil, restriction = nil, external_name = nil, annotations = nil)
+    Arg.new self, default_value: default_value, restriction: restriction, external_name: external_name, parsed_annotations: annotations
   end
 
   def call
@@ -154,8 +158,11 @@ def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile =
   end
 end
 
-def parse(string, wants_doc = false)
+def parse(string, wants_doc = false, filename = nil)
   parser = Parser.new(string)
   parser.wants_doc = wants_doc
+  if filename
+    parser.filename = filename
+  end
   parser.parse
 end

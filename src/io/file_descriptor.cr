@@ -7,7 +7,7 @@ class IO::FileDescriptor < IO
 
   # The raw file-descriptor. It is defined to be an `Int`, but its size is
   # platform-specific.
-  def fd
+  def fd : Int
     @volatile_fd.get
   end
 
@@ -25,13 +25,13 @@ class IO::FileDescriptor < IO
         end
     end
 
-    unless blocking || {{flag?(:win32)}}
+    unless blocking || {{ flag?(:win32) || flag?(:wasi) }}
       self.blocking = false
     end
   end
 
   # :nodoc:
-  def self.from_stdio(fd)
+  def self.from_stdio(fd) : self
     Crystal::System::FileDescriptor.from_stdio(fd)
   end
 
@@ -43,7 +43,7 @@ class IO::FileDescriptor < IO
     self.system_blocking = value
   end
 
-  def close_on_exec?
+  def close_on_exec? : Bool
     system_close_on_exec?
   end
 
@@ -61,7 +61,25 @@ class IO::FileDescriptor < IO
     end
   {% end %}
 
-  def info
+  # Returns a `File::Info` object for this file descriptor, or raises
+  # `IO::Error` in case of an error.
+  #
+  # Certain fields like the file size may not be updated until an explicit
+  # flush.
+  #
+  # ```
+  # File.write("testfile", "abc")
+  #
+  # file = File.new("testfile", "a")
+  # file.info.size # => 3
+  # file << "defgh"
+  # file.info.size # => 3
+  # file.flush
+  # file.info.size # => 8
+  # ```
+  #
+  # Use `File.info` if the file is not open and a path to the file is available.
+  def info : File::Info
     system_info
   end
 
@@ -113,10 +131,10 @@ class IO::FileDescriptor < IO
   # file.gets(2) # => "he"
   # file.pos     # => 2
   # ```
-  def pos
+  protected def unbuffered_pos : Int64
     check_open
 
-    system_pos - @in_buffer_rem.size
+    system_pos
   end
 
   # Sets the current position (in bytes) in this `IO`.
@@ -133,17 +151,71 @@ class IO::FileDescriptor < IO
     value
   end
 
+  # Flushes all data written to this File Descriptor to the disk device so that
+  # all changed information can be retrieved even if the system
+  # crashes or is rebooted. The call blocks until the device reports that
+  # the transfer has completed.
+  # To reduce disk activity the *flush_metadata* parameter can be set to false,
+  # then the syscall *fdatasync* will be used and only data required for
+  # subsequent data retrieval is flushed. Metadata such as modified time and
+  # access time is not written.
+  #
+  # NOTE: Metadata is flushed even when *flush_metadata* is false on Windows
+  # and DragonFly BSD.
+  def fsync(flush_metadata = true) : Nil
+    flush
+    system_fsync(flush_metadata)
+  end
+
+  # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
+  # TODO: always use non-blocking locks, yield fiber until resource becomes available
+
+  def flock_shared(blocking = true)
+    flock_shared blocking
+    begin
+      yield
+    ensure
+      flock_unlock
+    end
+  end
+
+  # Places a shared advisory lock. More than one process may hold a shared lock for a given file descriptor at a given time.
+  # `IO::Error` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
+  def flock_shared(blocking = true) : Nil
+    system_flock_shared(blocking)
+  end
+
+  def flock_exclusive(blocking = true)
+    flock_exclusive blocking
+    begin
+      yield
+    ensure
+      flock_unlock
+    end
+  end
+
+  # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file descriptor at a given time.
+  # `IO::Error` is raised if *blocking* is set to `false` and any existing lock is set.
+  def flock_exclusive(blocking = true) : Nil
+    system_flock_exclusive(blocking)
+  end
+
+  # Removes an existing advisory lock held by this process.
+  def flock_unlock : Nil
+    system_flock_unlock
+  end
+
   def finalize
     return if closed?
 
     close rescue nil
   end
 
-  def closed?
+  def closed? : Bool
     @closed
   end
 
-  def tty?
+  def tty? : Bool
     system_tty?
   end
 

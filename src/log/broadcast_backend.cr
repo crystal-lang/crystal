@@ -11,17 +11,22 @@ class Log::BroadcastBackend < Log::Backend
 
   @backends = Hash(Log::Backend, Severity).new
 
-  def append(backend : Log::Backend, level : Severity)
+  def initialize
+    super(:direct)
+  end
+
+  def append(backend : Log::Backend, level : Severity) : Nil
     @backends[backend] = level
   end
 
-  def write(entry : Entry)
+  def write(entry : Entry) : Nil
     @backends.each do |backend, level|
-      backend.write(entry) if (@level || level) <= entry.severity
+      backend.dispatch(entry) if (@level || level) <= entry.severity
     end
   end
 
-  def close
+  def close : Nil
+    @backends.each_key &.close
   end
 
   # :nodoc:
@@ -31,18 +36,13 @@ class Log::BroadcastBackend < Log::Backend
 
   # :nodoc:
   def single_backend?
-    first_backend = @backends.first_key?
-    first_level = @backends[first_backend]
-
-    if first_backend && @backends.size == 1
-      {first_backend, first_level}
-    else
-      nil
+    if @backends.size == 1
+      @backends.first
     end
   end
 
   # :nodoc:
-  def remove(backend : Log::Backend)
+  def remove(backend : Log::Backend) : Nil
     @backends.delete(backend)
   end
 end

@@ -159,7 +159,7 @@ describe Log do
       entry.exception.should eq(ex)
     end
 
-    it "can be used with message and metada explicitly" do
+    it "can be used with message and metadata explicitly" do
       backend = Log::MemoryBackend.new
       log = Log.new("a", backend, :notice)
 
@@ -256,6 +256,15 @@ describe Log do
       entry.message.should eq("")
       entry.data.should eq(m({a: 1}))
       entry.exception.should be_nil
+    end
+
+    it "does not emit anything when a nil is emitted" do
+      backend = Log::MemoryBackend.new
+      log = Log.new("a", backend, :notice)
+
+      log.notice { nil }
+
+      backend.entries.should be_empty
     end
   end
 end

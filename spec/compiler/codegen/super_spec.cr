@@ -440,4 +440,19 @@ describe "Codegen: super" do
       (Foo || Bar).bar(true)
       ))
   end
+
+  it "calls super on an object (#10004)" do
+    run(%(
+      class Foo
+        @foo = 42
+
+        def super
+          @foo
+        end
+
+      end
+
+      Foo.new.super
+      )).to_i.should eq(42)
+  end
 end

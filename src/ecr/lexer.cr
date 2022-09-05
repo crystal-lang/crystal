@@ -32,7 +32,7 @@ class ECR::Lexer
     @column_number = 1
   end
 
-  def next_token
+  def next_token : Token
     copy_location_info_to_token
 
     case current_char

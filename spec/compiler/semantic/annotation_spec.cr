@@ -963,7 +963,7 @@ describe "Semantic: annotation" do
           end
 
           def foo
-            {% if @type.instance_vars.first.annotations(Foo) %}
+            {% if @type.instance_vars.first.annotation(Foo) %}
               1
             {% else %}
               'a'
@@ -1125,13 +1125,13 @@ describe "Semantic: annotation" do
         "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention"
     end
 
-    it "doesn't carry link attribute from lib to fun" do
-      semantic(%(
+    it "doesn't carry link annotation from lib to fun" do
+      assert_no_errors <<-CR
         @[Link("foo")]
         lib LibFoo
           fun foo
         end
-      ))
+        CR
     end
 
     it "finds annotation in generic parent (#7885)" do
@@ -1149,6 +1149,95 @@ describe "Semantic: annotation" do
         {{ Child.superclass.annotation(Ann)[0] }}
       )) { int32 }
     end
+
+    it "finds annotation on method arg" do
+      assert_type(%(
+        annotation Ann; end
+
+        def foo(
+          @[Ann] foo : Int32
+        )
+        end
+
+        {% if @top_level.methods.find(&.name.==("foo")).args.first.annotation(Ann) %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "finds annotation on method splat arg" do
+      assert_type(%(
+        annotation Ann; end
+
+        def foo(
+          id : Int32,
+          @[Ann] *nums : Int32
+        )
+        end
+
+        {% if @top_level.methods.find(&.name.==("foo")).args[1].annotation(Ann) %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "finds annotation on method double splat arg" do
+      assert_type(%(
+        annotation Ann; end
+
+        def foo(
+          id : Int32,
+          @[Ann] **nums
+        )
+        end
+
+        {% if @top_level.methods.find(&.name.==("foo")).double_splat.annotation(Ann) %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "finds annotation on an restricted method block arg" do
+      assert_type(%(
+        annotation Ann; end
+
+        def foo(
+          id : Int32,
+          @[Ann] &block : Int32 ->
+        )
+          yield 10
+        end
+
+        {% if @top_level.methods.find(&.name.==("foo")).block_arg.annotation(Ann) %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+  end
+
+  it "errors when annotate instance variable in subclass" do
+    assert_error %(
+      annotation Foo
+      end
+
+      class Base
+        @x : Nil
+      end
+
+      class Child < Base
+        @[Foo]
+        @x : Nil
+      end
+      ),
+      "can't annotate @x in Child because it was first defined in Base"
   end
 
   it "errors if wanting to add type inside annotation (1) (#8614)" do
@@ -1178,13 +1267,13 @@ describe "Semantic: annotation" do
   end
 
   it "doesn't bleed annotation from class into class variable (#8314)" do
-    semantic(%(
+    assert_no_errors <<-CR
       annotation Attr; end
 
       @[Attr]
       class Bar
         @@x = 0
       end
-      ))
+      CR
   end
 end

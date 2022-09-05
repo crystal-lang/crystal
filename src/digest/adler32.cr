@@ -1,4 +1,5 @@
 require "lib_z"
+require "./digest"
 
 # Implements the Adler32 checksum algorithm.
 module Digest::Adler32

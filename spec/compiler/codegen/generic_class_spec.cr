@@ -96,7 +96,76 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(1)
   end
 
-  it "codegens statis array size after instantiating" do
+  it "runs generic instance var initializers in superclass's metaclass context (#4753)" do
+    run(%(
+      class Bar(T)
+        def x
+          {% if T == Int32 %} 1 {% else %} 2 {% end %}
+        end
+      end
+
+      class FooBase(T)
+        @bar = Bar(T).new
+
+        def bar
+          @bar
+        end
+      end
+
+      class Foo(T) < FooBase(T)
+      end
+
+      Foo(Int32).new.bar.x
+      )).to_i.should eq(1)
+  end
+
+  it "runs generic instance var initializers in superclass's metaclass context (2) (#6482)" do
+    run(%(
+      class Bar(T)
+        def x
+          {% if T == FooBase(Int32) %} 1 {% else %} 2 {% end %}
+        end
+      end
+
+      class FooBase(T)
+        @bar = Bar(FooBase(T)).new
+
+        def bar
+          @bar
+        end
+      end
+
+      class Foo(T) < FooBase(T)
+      end
+
+      Foo(Int32).new.bar.x
+      )).to_i.should eq(1)
+  end
+
+  it "doesn't run generic instance var initializers in formal superclass's context (#4753)" do
+    run(%(
+      class Foo(T)
+        @foo = T.new
+
+        def foo
+          @foo
+        end
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz
+        def baz
+          7
+        end
+      end
+
+      Bar(Baz).new.foo.baz
+      )).to_i.should eq(7)
+  end
+
+  it "codegens static array size after instantiating" do
     run(%(
       struct StaticArray(T, N)
         def size
@@ -400,5 +469,44 @@ describe "Code gen: generic class type" do
         x(f.baz)
       end
       ))
+  end
+
+  it "doesn't override guessed instance var in generic type if already declared in superclass (#9431)" do
+    codegen(%(
+      class Foo
+        @x = 0
+      end
+
+      class Bar(T) < Foo
+        @x = 0
+      end
+
+      class Baz < Bar(Int32)
+        @valid = true
+      end
+
+      Baz.new
+      ))
+  end
+
+  it "codegens compile-time interpreted generic int128" do
+    run(%(
+      require "prelude"
+
+      CONST = 1_i128 + 2_i128
+      class Foo(T)
+        def initialize()
+        end
+
+        def t_incr
+          T + 1
+        end
+      end
+
+      class Bar < Foo(CONST)
+      end
+
+      Bar.new.t_incr
+      )).to_i.should eq(4)
   end
 end

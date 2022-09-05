@@ -30,10 +30,10 @@ class IO::Stapled < IO
   end
 
   # Reads a slice from `reader`.
-  def read(slice : Bytes)
+  def read(slice : Bytes) : Int32
     check_open
 
-    @reader.read(slice)
+    @reader.read(slice).to_i32
   end
 
   # Gets a string from `reader`.
@@ -51,14 +51,14 @@ class IO::Stapled < IO
   end
 
   # Skips `reader`.
-  def skip(bytes_count : Int) : UInt64
+  def skip(bytes_count : Int) : Nil
     check_open
 
     @reader.skip(bytes_count)
   end
 
   # Skips `reader`.
-  def skip_to_end : UInt64
+  def skip_to_end : Nil
     check_open
 
     @reader.skip_to_end
@@ -72,10 +72,10 @@ class IO::Stapled < IO
   end
 
   # Writes a slice to `writer`.
-  def write(slice : Bytes) : UInt64
+  def write(slice : Bytes) : Nil
     check_open
 
-    return 0u64 if slice.empty?
+    return if slice.empty?
 
     @writer.write(slice)
   end

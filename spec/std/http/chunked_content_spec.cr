@@ -34,7 +34,7 @@ describe HTTP::ChunkedContent do
     mem = IO::Memory.new("4\r\n123\n\r\n0\r\n\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
-    content.skip(2).should eq(2)
+    content.skip(2)
     content.read_char.should eq('3')
 
     expect_raises(IO::EOFError) do
@@ -198,7 +198,7 @@ describe HTTP::ChunkedContent do
       expect_raises(IO::Error, "Trailing headers too long") do
         chunked.gets
       end
-      chunked.headers.empty?.should be_true
+      chunked.headers.should be_empty
     end
 
     it "fails for long combined headers" do

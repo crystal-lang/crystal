@@ -38,32 +38,31 @@ class Compress::Deflate::Writer < IO
   end
 
   # Always raises `IO::Error` because this is a write-only `IO`.
-  def read(slice : Bytes)
+  def read(slice : Bytes) : NoReturn
     raise "Can't read from Flate::Writer"
   end
 
   # See `IO#write`.
-  def write(slice : Bytes) : UInt64
+  def write(slice : Bytes) : Nil
     check_open
 
-    return 0u64 if slice.empty?
+    return if slice.empty?
 
     @stream.avail_in = slice.size
     @stream.next_in = slice
     consume_output LibZ::Flush::NO_FLUSH
-
-    slice.size.to_u64
   end
 
   # See `IO#flush`.
-  def flush
+  def flush : Nil
     return if @closed
 
     consume_output LibZ::Flush::SYNC_FLUSH
+    @output.flush
   end
 
   # Closes this writer. Must be invoked after all data has been written.
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 
@@ -78,11 +77,10 @@ class Compress::Deflate::Writer < IO
   end
 
   # Returns `true` if this IO is closed.
-  def closed?
+  def closed? : Bool
     @closed
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     to_s(io)
   end

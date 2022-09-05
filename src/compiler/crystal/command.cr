@@ -10,6 +10,7 @@
 
 require "json"
 require "./command/*"
+require "./tools/*"
 
 class Crystal::Command
   USAGE = <<-USAGE
@@ -21,6 +22,7 @@ class Crystal::Command
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
+        i/interactive            starts interactive Crystal
         play                     starts Crystal playground server
         run (default)            build and run program
         spec                     build and run specs (in spec directory)
@@ -50,6 +52,7 @@ class Crystal::Command
   end
 
   private getter options
+  @compiler : Compiler?
 
   def initialize(@options : Array(String))
     @color = ENV["TERM"]? != "dumb"
@@ -63,20 +66,19 @@ class Crystal::Command
     when !command
       puts USAGE
       exit
-    when "init".starts_with?(command)
+    when command == "init"
       options.shift
       init
     when "build".starts_with?(command)
       options.shift
-      use_crystal_opts
-      result = build
-      report_warnings result
-      exit 1 if warnings_fail_on_exit?(result)
-      result
+      build
+      report_warnings
+      exit 1 if warnings_fail_on_exit?
     when "play".starts_with?(command)
       options.shift
       {% if flag?(:without_playground) %}
         puts "Crystal was compiled without playground support"
+        puts "Try the online code evaluation and sharing tool at https://play.crystal-lang.org"
         exit 1
       {% else %}
         playground
@@ -92,15 +94,20 @@ class Crystal::Command
       env
     when command == "eval"
       options.shift
-      use_crystal_opts
       eval
-    when "run".starts_with?(command)
+    when command == "i" || command == "interactive"
       options.shift
-      use_crystal_opts
+      {% if flag?(:without_interpreter) %}
+        STDERR.puts "Crystal was compiled without interpreter support"
+        exit 1
+      {% else %}
+        repl
+      {% end %}
+    when command == "run"
+      options.shift
       run_command(single_file: false)
     when "spec/".starts_with?(command)
       options.shift
-      use_crystal_opts
       spec
     when "tool".starts_with?(command)
       options.shift
@@ -112,7 +119,6 @@ class Crystal::Command
       puts Crystal::Config.description
       exit
     when File.file?(command)
-      use_crystal_opts
       run_command(single_file: true)
     else
       if command.ends_with?(".cr")
@@ -121,9 +127,9 @@ class Crystal::Command
         error "unknown command: #{command}"
       end
     end
-  rescue ex : Crystal::LocationlessException
-    error ex.message
-  rescue ex : Crystal::Exception
+  rescue ex : Crystal::CodeError
+    report_warnings
+
     ex.color = @color
     ex.error_trace = @error_trace
     if @config.try(&.output_format) == "json"
@@ -132,9 +138,15 @@ class Crystal::Command
       STDERR.puts ex
     end
     exit 1
+  rescue ex : Crystal::Error
+    report_warnings
+
+    error ex.message
   rescue ex : OptionParser::Exception
     error ex.message
   rescue ex
+    report_warnings
+
     ex.inspect_with_backtrace STDERR
     error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/crystal-lang/crystal/issues"
   end
@@ -183,16 +195,16 @@ class Crystal::Command
   private def hierarchy
     config, result = compile_no_codegen "tool hierarchy", hierarchy: true, top_level: true
     @progress_tracker.stage("Tool (hierarchy)") do
-      Crystal.print_hierarchy result.program, config.hierarchy_exp, config.output_format
+      Crystal.print_hierarchy result.program, STDOUT, config.hierarchy_exp, config.output_format
     end
   end
 
   private def run_command(single_file = false)
     config = create_compiler "run", run: true, single_file: single_file
     if config.specified_output
-      result = config.compile
-      report_warnings result
-      exit 1 if warnings_fail_on_exit?(result)
+      config.compile
+      report_warnings
+      exit 1 if warnings_fail_on_exit?
       return
     end
 
@@ -201,8 +213,8 @@ class Crystal::Command
     result = config.compile output_filename
 
     unless config.compiler.no_codegen?
-      report_warnings result
-      exit 1 if warnings_fail_on_exit?(result)
+      report_warnings
+      exit 1 if warnings_fail_on_exit?
 
       execute output_filename, config.arguments, config.compiler
     end
@@ -230,7 +242,7 @@ class Crystal::Command
       begin
         elapsed = Time.measure do
           Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
-            {% unless flag?(:win32) %}
+            {% unless flag?(:win32) || flag?(:wasm32) %}
               # Ignore the signal so we don't exit the running process
               # (the running process can still handle this signal)
               ::Signal::INT.ignore # do
@@ -239,12 +251,20 @@ class Crystal::Command
         end
         {$?, elapsed}
       ensure
-        File.delete(output_filename) rescue nil
+        File.delete?(output_filename)
+
+        # Delete related PDB generated by MSVC, if any exist
+        {% if flag?(:msvc) %}
+          unless compiler.debug.none?
+            basename = output_filename.rchop(".exe")
+            File.delete?("#{basename}.pdb")
+          end
+        {% end %}
 
         # Delete related dwarf generated by dsymutil, if any exist
         {% if flag?(:darwin) %}
           unless compiler.debug.none?
-            File.delete("#{output_filename}.dwarf") rescue nil
+            File.delete?("#{output_filename}.dwarf")
           end
         {% end %}
       end
@@ -297,7 +317,7 @@ class Crystal::Command
   private def create_compiler(command, no_codegen = false, run = false,
                               hierarchy = false, cursor_command = false,
                               single_file = false)
-    compiler = Compiler.new
+    compiler = new_compiler
     compiler.progress_tracker = @progress_tracker
     link_flags = [] of String
     filenames = [] of String
@@ -310,7 +330,7 @@ class Crystal::Command
     cursor_location = nil
     output_format = nil
 
-    option_parser = OptionParser.parse(options) do |opts|
+    option_parser = parse_with_crystal_opts do |opts|
       opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
 
       unless no_codegen
@@ -325,12 +345,6 @@ class Crystal::Command
         opts.on("--no-debug", "Skip any symbolic debug info") do
           compiler.debug = Crystal::Debug::None
         end
-        {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-          opts.on("--lto=FLAG", "Use ThinLTO --lto=thin") do |flag|
-            error "--lto=thin is the only lto supported option" unless flag == "thin"
-            compiler.thin_lto = true
-          end
-        {% end %}
       end
 
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
@@ -342,7 +356,7 @@ class Crystal::Command
         valid_emit_values.map! { |v| v.gsub('_', '-').downcase }
 
         opts.on("--emit [#{valid_emit_values.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
-          compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
+          compiler.emit_targets |= validate_emit_values(emit_values.split(',').map(&.strip))
         end
       end
 
@@ -379,24 +393,7 @@ class Crystal::Command
         opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |some_link_flags|
           link_flags << some_link_flags
         end
-        opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
-          compiler.mcpu = cpu
-        end
-        opts.on("--mattr CPU", "Target specific features") do |features|
-          compiler.mattr = features
-        end
-        opts.on("--mcmodel MODEL", "Target specific code model") do |mcmodel|
-          compiler.mcmodel = case mcmodel
-                             when "default" then LLVM::CodeModel::Default
-                             when "small"   then LLVM::CodeModel::Small
-                             when "kernel"  then LLVM::CodeModel::Kernel
-                             when "medium"  then LLVM::CodeModel::Medium
-                             when "large"   then LLVM::CodeModel::Large
-                             else
-                               error "--mcmodel should be one of: default, kernel, small, medium, large"
-                               raise "unreachable"
-                             end
-        end
+        target_specific_opts(opts, compiler)
         setup_compiler_warning_options(opts, compiler)
       end
 
@@ -460,6 +457,13 @@ class Crystal::Command
       opts.on("--stdin-filename ", "Source file name to be read from STDIN") do |stdin_filename|
         has_stdin_filename = true
         filenames << stdin_filename
+      end
+
+      if single_file
+        opts.before_each do |arg|
+          opts.stop if !arg.starts_with?('-') && arg.ends_with?(".cr")
+          opts.stop if File.file?(arg)
+        end
       end
 
       opts.unknown_args do |before, after|
@@ -557,35 +561,57 @@ class Crystal::Command
       @color = false
       compiler.color = false
     end
+    target_specific_opts(opts, compiler)
     setup_compiler_warning_options(opts, compiler)
     opts.invalid_option { }
   end
 
+  private def target_specific_opts(opts, compiler)
+    opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
+      if cpu == "native"
+        compiler.mcpu = LLVM.host_cpu_name
+      else
+        compiler.mcpu = cpu
+      end
+    end
+    opts.on("--mattr CPU", "Target specific features") do |features|
+      compiler.mattr = features
+    end
+    opts.on("--mcmodel MODEL", "Target specific code model") do |mcmodel|
+      compiler.mcmodel = case mcmodel
+                         when "default" then LLVM::CodeModel::Default
+                         when "small"   then LLVM::CodeModel::Small
+                         when "kernel"  then LLVM::CodeModel::Kernel
+                         when "medium"  then LLVM::CodeModel::Medium
+                         when "large"   then LLVM::CodeModel::Large
+                         else
+                           error "--mcmodel should be one of: default, kernel, small, medium, large"
+                           raise "unreachable"
+                         end
+    end
+  end
+
   private def setup_compiler_warning_options(opts, compiler)
-    compiler.warnings_exclude << Crystal.normalize_path "lib"
-    warnings_exclude_default = true
-    opts.on("--warnings all|none", "Which warnings detect. (default: all)") do |w|
-      compiler.warnings = case w
-                          when "all"
-                            Crystal::Warnings::All
-                          when "none"
-                            Crystal::Warnings::None
-                          else
-                            error "--warnings should be all, or none"
-                            raise "unreachable"
-                          end
+    opts.on("--warnings all|none", "Which warnings to detect. (default: all)") do |w|
+      compiler.warnings.level = case w
+                                when "all"
+                                  Crystal::WarningLevel::All
+                                when "none"
+                                  Crystal::WarningLevel::None
+                                else
+                                  error "--warnings should be all, or none"
+                                  raise "unreachable"
+                                end
     end
     opts.on("--error-on-warnings", "Treat warnings as errors.") do |w|
-      compiler.error_on_warnings = true
+      compiler.warnings.error_on_warnings = true
     end
     opts.on("--exclude-warnings <path>", "Exclude warnings from path (default: lib)") do |f|
-      if warnings_exclude_default
-        # if an --exclude-warnings is used explicitly, then we remove the default value
-        compiler.warnings_exclude.clear
-        warnings_exclude_default = false
-      end
-      compiler.warnings_exclude << Crystal.normalize_path f
+      compiler.warnings.exclude_lib_path = false
+      compiler.warnings.exclude_path(f)
     end
+
+    compiler.warnings.exclude_lib_path = true
   end
 
   private def validate_emit_values(values)
@@ -606,7 +632,55 @@ class Crystal::Command
     Crystal.error msg, @color, exit_code: exit_code
   end
 
-  private def use_crystal_opts
-    @options = ENV.fetch("CRYSTAL_OPTS", "").split.concat(options)
+  private def self.crystal_opts
+    ENV["CRYSTAL_OPTS"]?.try { |opts| Process.parse_arguments(opts) }
+  rescue ex
+    raise Error.new("Failed to parse CRYSTAL_OPTS: #{ex.message}")
+  end
+
+  # Constructs an `OptionParser` from the given block and runs it twice, first
+  # time with `CRYSTAL_OPTS`, second time with the given *options*.
+  #
+  # Only flags are accepted in the first run; positional arguments, invalid
+  # options (where they might be treated as normal arguments), and `--` are all
+  # disallowed. The option parser should not define any subcommands.
+  def self.parse_with_crystal_opts(options, & : OptionParser ->)
+    option_parser = OptionParser.new { |opts| yield opts }
+
+    if crystal_opts = self.crystal_opts
+      old_unknown_args = option_parser.@unknown_args
+      old_invalid_option = option_parser.@invalid_option
+      old_before_each = option_parser.@before_each
+
+      option_parser.unknown_args { }
+      option_parser.invalid_option { |opt| raise OptionParser::InvalidOption.new(opt) }
+      option_parser.before_each do |opt|
+        raise Error.new "CRYSTAL_OPTS may not contain --" if opt == "--"
+      end
+
+      option_parser.parse(crystal_opts)
+      unless crystal_opts.empty?
+        raise Error.new "CRYSTAL_OPTS may not contain positional arguments"
+      end
+
+      option_parser.unknown_args(&old_unknown_args) if old_unknown_args
+      option_parser.invalid_option(&old_invalid_option)
+      if old_before_each
+        option_parser.before_each(&old_before_each)
+      else
+        option_parser.before_each { }
+      end
+    end
+
+    option_parser.parse(options)
+    option_parser
+  end
+
+  private def parse_with_crystal_opts(& : OptionParser ->)
+    Command.parse_with_crystal_opts(@options) { |opts| yield opts }
+  end
+
+  private def new_compiler
+    @compiler = Compiler.new
   end
 end

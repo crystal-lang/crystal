@@ -7,12 +7,6 @@
 # to also add them to `docs_main.cr` if their content needs to
 # appear in the API docs.
 
-private macro no_win(stmt)
-  {% unless flag?(:win32) %}
-    {{stmt}}
-  {% end %}
-end
-
 # This list requires ordered statements
 require "crystal/once"
 require "lib_c"
@@ -25,14 +19,17 @@ require "comparable"
 require "exception"
 require "iterable"
 require "iterator"
+require "steppable"
 require "indexable"
 require "string"
 require "number"
+require "primitives"
 
 # Alpha-sorted list
 require "annotations"
 require "array"
 require "atomic"
+require "base64"
 require "bool"
 require "box"
 require "char"
@@ -47,7 +44,8 @@ require "enum"
 require "enumerable"
 require "env"
 require "errno"
-require "ext"
+require "winerror"
+require "wasi_error"
 require "file"
 require "float"
 require "gc"
@@ -57,14 +55,13 @@ require "intrinsics"
 require "io"
 require "kernel"
 require "math/math"
-no_win require "mutex"
+require "mutex"
 require "named_tuple"
 require "nil"
 require "humanize"
 require "path"
 require "pointer"
 require "pretty_print"
-require "primitives"
 require "proc"
 require "process"
 require "raise"
@@ -73,7 +70,9 @@ require "range"
 require "reference"
 require "regex"
 require "set"
-no_win require "signal"
+{% unless flag?(:win32) || flag?(:wasm32) %}
+  require "signal"
+{% end %}
 require "slice"
 require "static_array"
 require "struct"

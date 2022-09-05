@@ -13,7 +13,12 @@ module Crystal::System::Dir
     Errno.value = Errno::NONE
     if entry = LibC.readdir(dir)
       name = String.new(entry.value.d_name.to_unsafe)
-      dir = entry.value.d_type == LibC::DT_DIR
+
+      dir = case entry.value.d_type
+            when LibC::DT_DIR                   then true
+            when LibC::DT_UNKNOWN, LibC::DT_LNK then nil
+            else                                     false
+            end
       Entry.new(name, dir)
     elsif Errno.value != Errno::NONE
       raise ::File::Error.from_errno("Error reading directory entries", file: path)
@@ -24,6 +29,10 @@ module Crystal::System::Dir
 
   def self.rewind(dir) : Nil
     LibC.rewinddir(dir)
+  end
+
+  def self.info(dir, path) : ::File::Info
+    Crystal::System::FileDescriptor.system_info LibC.dirfd(dir)
   end
 
   def self.close(dir, path) : Nil
@@ -61,8 +70,12 @@ module Crystal::System::Dir
     end
   end
 
-  def self.delete(path : String) : Nil
-    if LibC.rmdir(path.check_no_null_byte) == -1
+  def self.delete(path : String, *, raise_on_missing : Bool) : Bool
+    return true if LibC.rmdir(path.check_no_null_byte) == 0
+
+    if !raise_on_missing && Errno.value == Errno::ENOENT
+      false
+    else
       raise ::File::Error.from_errno("Unable to remove directory", file: path)
     end
   end

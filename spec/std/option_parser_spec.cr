@@ -85,6 +85,109 @@ describe "OptionParser" do
     expect_capture_option ["-f", "-g -h"], "-f FLAG", "-g -h"
   end
 
+  describe "Consumption of flags following an ungiven optional argument" do
+    context "Given a short option with an optional value" do
+      it "doesn't eat a following short option" do
+        flag = nil
+        not_eaten = [] of String
+        args = ["-f", "-g", "-i"]
+        OptionParser.parse(args) do |opts|
+          opts.on("-f [FLAG]", "some flag") do |flag_value|
+            flag = flag_value
+          end
+          opts.on("-g", "shouldn't be eaten") do
+            not_eaten << "-g"
+          end
+          opts.on("-i", "shouldn't be eaten") do
+            not_eaten << "-i"
+          end
+        end
+        flag.should eq("")
+        not_eaten.should eq(["-g", "-i"])
+        args.size.should eq(0)
+      end
+
+      it "doesn't eat a following long option" do
+        flag = nil
+        not_eaten = [] of String
+        args = ["-f", "--g-long", "-i"]
+        OptionParser.parse(args) do |opts|
+          opts.on("-f [FLAG]", "some flag") do |flag_value|
+            flag = flag_value
+          end
+          opts.on("-g", "--g-long", "shouldn't be eaten") do
+            not_eaten << "--g-long"
+          end
+          opts.on("-i", "shouldn't be eaten") do
+            not_eaten << "-i"
+          end
+        end
+        flag.should eq("")
+        not_eaten.should eq(["--g-long", "-i"])
+        args.size.should eq(0)
+      end
+
+      it "does eat a value that looks like an option" do
+        flag = nil
+        not_eaten = [] of String
+        args = ["-f", "--not-an-option--", "-i"]
+        OptionParser.parse(args) do |opts|
+          opts.on("-f [FLAG]", "some flag") do |flag_value|
+            flag = flag_value
+          end
+          opts.on("-i", "shouldn't be eaten") do
+            not_eaten << "-i"
+          end
+        end
+        flag.should eq("--not-an-option--")
+        not_eaten.should eq(["-i"])
+        args.size.should eq(0)
+      end
+    end
+
+    context "Given a long option with an optional value" do
+      it "doesn't eat further short options" do
+        flag = nil
+        not_eaten = [] of String
+        args = ["--long-flag", "-g", "-i"]
+        OptionParser.parse(args) do |opts|
+          opts.on("--long-flag [FLAG]", "some flag") do |flag_value|
+            flag = flag_value
+          end
+          opts.on("-g", "shouldn't be eaten") do
+            not_eaten << "-g"
+          end
+          opts.on("-i", "shouldn't be eaten") do
+            not_eaten << "-i"
+          end
+        end
+        flag.should eq("")
+        not_eaten.should eq(["-g", "-i"])
+        args.size.should eq(0)
+      end
+
+      it "doesn't eat further long options" do
+        flag = nil
+        not_eaten = [] of String
+        args = ["--long-flag", "--g-long", "-i"]
+        OptionParser.parse(args) do |opts|
+          opts.on("--long-flag [FLAG]", "some flag") do |flag_value|
+            flag = flag_value
+          end
+          opts.on("--g-long", "shouldn't be eaten") do
+            not_eaten << "--g-long"
+          end
+          opts.on("-i", "shouldn't be eaten") do
+            not_eaten << "-i"
+          end
+        end
+        flag.should eq("")
+        not_eaten.should eq(["--g-long", "-i"])
+        args.size.should eq(0)
+      end
+    end
+  end
+
   it "raises if missing required option with space" do
     expect_missing_option ["-f"], "-f FLAG", "-f"
   end
@@ -143,6 +246,32 @@ describe "OptionParser" do
 
   it "doesn't raise if required option is not specified with separated short flag" do
     expect_doesnt_capture_option [] of String, "-f FLAG"
+  end
+
+  describe "gnu_optional_args" do
+    it "doesn't get optional argument for short flag after space" do
+      flag = nil
+      args = %w(-f 123)
+      OptionParser.parse(args, gnu_optional_args: true) do |opts|
+        opts.on("-f [FLAG]", "some flag") do |flag_value|
+          flag = flag_value
+        end
+      end
+      flag.should eq("")
+      args.should eq(%w(123))
+    end
+
+    it "doesn't get optional argument for long flag after space" do
+      flag = nil
+      args = %w(--f 123)
+      OptionParser.parse(args, gnu_optional_args: true) do |opts|
+        opts.on("--f [FLAG]", "some flag") do |flag_value|
+          flag = flag_value
+        end
+      end
+      flag.should eq("")
+      args.should eq(%w(123))
+    end
   end
 
   it "parses argument when only referenced in long flag" do
@@ -222,10 +351,47 @@ describe "OptionParser" do
       USAGE
   end
 
+  it "does to_s with multi line description (#5832)" do
+    parser = OptionParser.parse([] of String) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("--very_long_option_kills=formatter", "long flag with\nmultiline description") do
+      end
+      opts.on("-f", "--flag", "some flag with\nmultiline description") do
+      end
+      opts.on("-g[FLAG]", "some other flag") do
+      end
+    end
+    parser.to_s.should eq <<-USAGE
+      Usage: foo
+          --very_long_option_kills=formatter
+                                           long flag with
+                                           multiline description
+          -f, --flag                       some flag with
+                                           multiline description
+          -g[FLAG]                         some other flag
+      USAGE
+  end
+
   it "raises on invalid option" do
     expect_raises OptionParser::InvalidOption, "Invalid option: -j" do
       OptionParser.parse(["-f", "-j"]) do |opts|
         opts.on("-f", "some flag") { }
+      end
+    end
+  end
+
+  it "raises on invalid option if value is given to none value handler (short flag, #9553) " do
+    expect_raises OptionParser::InvalidOption, "Invalid option: -foo" do
+      OptionParser.parse(["-foo"]) do |opts|
+        opts.on("-f", "some flag") { }
+      end
+    end
+  end
+
+  it "raises on invalid option if value is given to none value handler (long flag, #9553)" do
+    expect_raises OptionParser::InvalidOption, "Invalid option: --foo=bar" do
+      OptionParser.parse(["--foo=bar"]) do |opts|
+        opts.on("-foo", "some flag") { }
       end
     end
   end
@@ -570,6 +736,16 @@ describe "OptionParser" do
           --help                           Help
           -f, --foo                        Foo
       USAGE
+  end
+
+  it "handles subcommands with hyphen" do
+    subcommand = false
+    OptionParser.parse(%w(sub-command)) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("sub-command", "Subcommand description") { subcommand = true }
+    end
+
+    subcommand.should be_true
   end
 
   it "stops when asked" do

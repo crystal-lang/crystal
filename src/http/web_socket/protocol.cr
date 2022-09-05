@@ -2,8 +2,10 @@ require "socket"
 require "http/client"
 require "http/headers"
 require "base64"
-{% if !flag?(:without_openssl) %}
-  require "openssl"
+{% if flag?(:without_openssl) %}
+  require "crystal/digest/sha1"
+{% else %}
+  require "openssl/sha1"
 {% end %}
 require "uri"
 
@@ -52,8 +54,8 @@ class HTTP::WebSocket::Protocol
       @pos = 0
     end
 
-    def write(slice : Bytes) : UInt64
-      return 0u64 if slice.empty?
+    def write(slice : Bytes) : Nil
+      return if slice.empty?
 
       count = Math.min(@buffer.size - @pos, slice.size)
       (@buffer + @pos).copy_from(slice.to_unsafe, count)
@@ -66,17 +68,15 @@ class HTTP::WebSocket::Protocol
       if count < slice.size
         write(slice + count)
       end
-
-      slice.size.to_u64
     end
 
-    def read(slice : Bytes)
+    def read(slice : Bytes) : NoReturn
       raise "This IO is write-only"
     end
 
-    def flush(final = true)
+    def flush(final = true) : Nil
       @websocket.send(
-        @buffer + (@pos % @buffer.size),
+        @buffer[0...@pos],
         @opcode,
         flags: final ? Flags::FINAL : Flags::None,
         flush: final
@@ -86,11 +86,11 @@ class HTTP::WebSocket::Protocol
     end
   end
 
-  def send(data : String)
+  def send(data : String) : Nil
     send(data.to_slice, Opcode::TEXT)
   end
 
-  def send(data : Bytes)
+  def send(data : Bytes) : Nil
     send(data, Opcode::BINARY)
   end
 
@@ -100,13 +100,13 @@ class HTTP::WebSocket::Protocol
     stream_io.flush
   end
 
-  def send(data : Bytes, opcode : Opcode, flags = Flags::FINAL, flush = true)
+  def send(data : Bytes, opcode : Opcode, flags = Flags::FINAL, flush = true) : Nil
     write_header(data.size, opcode, flags)
     write_payload(data)
     @io.flush if flush
   end
 
-  def receive(buffer : Bytes)
+  def receive(buffer : Bytes) : PacketInfo
     if @remaining == 0
       opcode = read_header
     else
@@ -227,7 +227,7 @@ class HTTP::WebSocket::Protocol
     end
   end
 
-  def pong(message = nil)
+  def pong(message = nil) : Nil
     if message
       send(message.to_slice, Opcode::PONG)
     else
@@ -235,7 +235,7 @@ class HTTP::WebSocket::Protocol
     end
   end
 
-  def close(code : CloseCode? = nil, message = nil)
+  def close(code : CloseCode? = nil, message = nil) : Nil
     return if @io.closed?
 
     if message
@@ -259,7 +259,7 @@ class HTTP::WebSocket::Protocol
     @io.close if @sync_close
   end
 
-  def close(code : Int, message = nil)
+  def close(code : Int, message = nil) : Nil
     close(CloseCode.new(code), message)
   end
 
@@ -298,7 +298,7 @@ class HTTP::WebSocket::Protocol
       handshake.to_io(socket)
       socket.flush
 
-      handshake_response = HTTP::Client::Response.from_io(socket)
+      handshake_response = HTTP::Client::Response.from_io(socket, ignore_body: true)
       unless handshake_response.status.switching_protocols?
         raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status.code}.")
       end
@@ -318,8 +318,11 @@ class HTTP::WebSocket::Protocol
   def self.new(uri : URI | String, headers = HTTP::Headers.new)
     uri = URI.parse(uri) if uri.is_a?(String)
 
-    if (host = uri.hostname) && (path = uri.full_path)
+    if (host = uri.hostname) && (path = uri.request_target)
       tls = uri.scheme.in?("https", "wss")
+      if (user = uri.user) && (password = uri.password)
+        headers["Authorization"] ||= "Basic #{Base64.strict_encode("#{user}:#{password}")}"
+      end
       return new(host, path, uri.port, tls, headers)
     end
 
@@ -328,7 +331,7 @@ class HTTP::WebSocket::Protocol
 
   def self.key_challenge(key)
     {% if flag?(:without_openssl) %}
-      Digest::SHA1.base64digest(key + GUID)
+      ::Crystal::Digest::SHA1.base64digest(key + GUID)
     {% else %}
       Base64.strict_encode(OpenSSL::SHA1.hash(key + GUID))
     {% end %}

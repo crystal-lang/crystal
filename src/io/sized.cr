@@ -13,7 +13,7 @@ class IO::Sized < IO
   property? sync_close : Bool
 
   # The number of remaining bytes to be read.
-  getter read_remaining : UInt64
+  property read_remaining : UInt64
   getter? closed : Bool
 
   # Creates a new `IO::Sized` which wraps *io*, and can read a maximum of
@@ -25,16 +25,16 @@ class IO::Sized < IO
     @read_remaining = read_size.to_u64
   end
 
-  def read(slice : Bytes)
+  def read(slice : Bytes) : Int32
     check_open
 
     count = {slice.size.to_u64, @read_remaining}.min
-    bytes_read = @io.read slice[0, count]
+    bytes_read = @io.read(slice[0, count]).to_i32
     @read_remaining -= bytes_read
     bytes_read
   end
 
-  def read_byte
+  def read_byte : UInt8?
     check_open
 
     if @read_remaining > 0
@@ -46,7 +46,7 @@ class IO::Sized < IO
     end
   end
 
-  def peek
+  def peek : Bytes?
     check_open
 
     return Bytes.empty if @read_remaining == 0 # EOF
@@ -61,8 +61,7 @@ class IO::Sized < IO
     peek
   end
 
-  def skip(bytes_count : Int) : UInt64
-    bytes_count = bytes_count.to_u64
+  def skip(bytes_count) : Nil
     check_open
 
     if bytes_count <= @read_remaining
@@ -71,15 +70,13 @@ class IO::Sized < IO
     else
       raise IO::EOFError.new
     end
-
-    bytes_count
   end
 
   def write(slice : Bytes) : NoReturn
     raise IO::Error.new "Can't write to IO::Sized"
   end
 
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 

@@ -4,6 +4,7 @@ require "c/fileapi"
 require "c/sys/utime"
 require "c/sys/stat"
 require "c/winbase"
+require "c/handleapi"
 
 module Crystal::System::File
   def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : LibC::Int
@@ -51,7 +52,7 @@ module Crystal::System::File
     if NOT_FOUND_ERRORS.includes? error
       return nil
     else
-      raise ::File::Error.from_winerror(message, error, file: path)
+      raise ::File::Error.from_os_error(message, error, file: path)
     end
   end
 
@@ -78,7 +79,7 @@ module Crystal::System::File
         end
 
         if find_data.dwReserved0.bits_set? REPARSE_TAG_NAME_SURROGATE_MASK
-          return FileInfo.new(find_data)
+          return ::File::Info.new(find_data)
         end
       end
     end
@@ -100,7 +101,7 @@ module Crystal::System::File
         raise ::File::Error.from_winerror("Unable to get file info", file: path)
       end
 
-      FileInfo.new(file_info, LibC::FILE_TYPE_DISK)
+      ::File::Info.new(file_info, LibC::FILE_TYPE_DISK)
     ensure
       LibC.CloseHandle(handle)
     end
@@ -134,6 +135,10 @@ module Crystal::System::File
     raise NotImplementedError.new("File.chown")
   end
 
+  def self.fchown(path : String, fd : Int, uid : Int32, gid : Int32) : Nil
+    raise NotImplementedError.new("File#chown")
+  end
+
   def self.chmod(path : String, mode : Int32 | ::File::Permissions) : Nil
     mode = ::File::Permissions.new(mode) unless mode.is_a? ::File::Permissions
 
@@ -157,8 +162,17 @@ module Crystal::System::File
     end
   end
 
-  def self.delete(path : String) : Nil
-    if LibC._wunlink(to_windows_path(path)) != 0
+  def self.fchmod(path : String, fd : Int, mode : Int32 | ::File::Permissions) : Nil
+    # TODO: use fd instead of path
+    chmod path, mode
+  end
+
+  def self.delete(path : String, *, raise_on_missing : Bool) : Bool
+    if LibC._wunlink(to_windows_path(path)) == 0
+      true
+    elsif !raise_on_missing && Errno.value == Errno::ENOENT
+      false
+    else
       raise ::File::Error.from_errno("Error deleting file", file: path)
     end
   end
@@ -179,7 +193,7 @@ module Crystal::System::File
     end
 
     unless exists? real_path
-      raise ::File::Error.from_errno("Error resolving real path", Errno::ENOENT, file: path)
+      raise ::File::Error.from_os_error("Error resolving real path", Errno::ENOENT, file: path)
     end
 
     real_path
@@ -187,14 +201,14 @@ module Crystal::System::File
 
   def self.link(old_path : String, new_path : String) : Nil
     if LibC.CreateHardLinkW(to_windows_path(new_path), to_windows_path(old_path), nil) == 0
-      raise ::File::Error.from_winerror("Error creating hard link", file: old_path, other: new_path)
+      raise ::File::Error.from_winerror("Error creating link", file: old_path, other: new_path)
     end
   end
 
   def self.symlink(old_path : String, new_path : String) : Nil
     # TODO: support directory symlinks (copy Go's stdlib logic here)
-    if LibC.CreateSymbolicLinkW(to_windows_path(new_path), to_windows_path(old_path), 0) == 0
-      raise ::File::Error.from_winerror("Error creating symbolic link", file: old_path, other: new_path)
+    if LibC.CreateSymbolicLinkW(to_windows_path(new_path), to_windows_path(old_path), LibC::SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE) == 0
+      raise ::File::Error.from_winerror("Error creating symlink", file: old_path, other: new_path)
     end
   end
 
@@ -202,20 +216,39 @@ module Crystal::System::File
     raise NotImplementedError.new("readlink")
   end
 
-  def self.rename(old_path : String, new_path : String) : Nil
+  def self.rename(old_path : String, new_path : String) : ::File::Error?
     if LibC.MoveFileExW(to_windows_path(old_path), to_windows_path(new_path), LibC::MOVEFILE_REPLACE_EXISTING) == 0
-      raise ::File::Error.from_winerror("Error renaming file", file: old_path, other: new_path)
+      ::File::Error.from_winerror("Error renaming file", file: old_path, other: new_path)
     end
   end
 
   def self.utime(access_time : ::Time, modification_time : ::Time, path : String) : Nil
-    times = LibC::Utimbuf64.new
-    times.actime = access_time.to_unix
-    times.modtime = modification_time.to_unix
-
-    if LibC._wutime64(to_windows_path(path), pointerof(times)) != 0
-      raise ::File::Error.from_errno("Error setting time on file", file: path)
+    atime = Crystal::System::Time.to_filetime(access_time)
+    mtime = Crystal::System::Time.to_filetime(modification_time)
+    handle = LibC.CreateFileW(
+      to_windows_path(path),
+      LibC::FILE_WRITE_ATTRIBUTES,
+      LibC::FILE_SHARE_READ | LibC::FILE_SHARE_WRITE | LibC::FILE_SHARE_DELETE,
+      nil,
+      LibC::OPEN_EXISTING,
+      LibC::FILE_FLAG_BACKUP_SEMANTICS,
+      LibC::HANDLE.null
+    )
+    if handle == LibC::INVALID_HANDLE_VALUE
+      raise ::File::Error.from_winerror("Error setting time on file", file: path)
     end
+    begin
+      if LibC.SetFileTime(handle, nil, pointerof(atime), pointerof(mtime)) == 0
+        raise ::File::Error.from_winerror("Error setting time on file", file: path)
+      end
+    ensure
+      LibC.CloseHandle(handle)
+    end
+  end
+
+  def self.futimens(path : String, fd : Int, access_time : ::Time, modification_time : ::Time) : Nil
+    # TODO: use fd instead of path
+    utime access_time, modification_time, path
   end
 
   private def system_truncate(size : Int) : Nil
@@ -241,6 +274,8 @@ module Crystal::System::File
   end
 
   private def system_fsync(flush_metadata = true) : Nil
-    raise NotImplementedError.new("File#fsync")
+    if LibC._commit(fd) != 0
+      raise IO::Error.from_errno("Error syncing file")
+    end
   end
 end

@@ -1,25 +1,19 @@
-{% unless flag?(:win32) %}
-  @[Link("pthread")]
-  lib LibC
-  end
-{% end %}
-
 module GC
   def self.init
   end
 
   # :nodoc:
-  def self.malloc(size : LibC::SizeT)
+  def self.malloc(size : LibC::SizeT) : Void*
     LibC.malloc(size)
   end
 
   # :nodoc:
-  def self.malloc_atomic(size : LibC::SizeT)
+  def self.malloc_atomic(size : LibC::SizeT) : Void*
     LibC.malloc(size)
   end
 
   # :nodoc:
-  def self.realloc(pointer : Void*, size : LibC::SizeT)
+  def self.realloc(pointer : Void*, size : LibC::SizeT) : Void*
     LibC.realloc(pointer, size)
   end
 
@@ -32,38 +26,46 @@ module GC
   def self.disable
   end
 
-  def self.free(pointer : Void*)
+  def self.free(pointer : Void*) : Nil
     LibC.free(pointer)
   end
 
-  def self.is_heap_ptr(pointer : Void*)
+  def self.is_heap_ptr(pointer : Void*) : Bool
     false
   end
 
   def self.add_finalizer(object)
   end
 
-  def self.stats
-    zero = LibC::ULong.new(0)
-    Stats.new(zero, zero, zero, zero, zero)
+  def self.register_disappearing_link(pointer : Void**)
+  end
+
+  def self.stats : GC::Stats
+    Stats.new(
+      # collections: 0,
+      # bytes_found: 0,
+      heap_size: 0,
+      free_bytes: 0,
+      unmapped_bytes: 0,
+      bytes_since_gc: 0,
+      total_bytes: 0)
   end
 
   def self.prof_stats
-    zero = LibC::ULong.new(0)
     ProfStats.new(
-      heap_size: zero,
-      free_bytes: zero,
-      unmapped_bytes: zero,
-      bytes_since_gc: zero,
-      bytes_before_gc: zero,
-      non_gc_bytes: zero,
-      gc_no: zero,
-      markers_m1: zero,
-      bytes_reclaimed_since_gc: zero,
-      reclaimed_bytes_before_gc: zero)
+      heap_size: 0,
+      free_bytes: 0,
+      unmapped_bytes: 0,
+      bytes_since_gc: 0,
+      bytes_before_gc: 0,
+      non_gc_bytes: 0,
+      gc_no: 0,
+      markers_m1: 0,
+      bytes_reclaimed_since_gc: 0,
+      reclaimed_bytes_before_gc: 0)
   end
 
-  {% unless flag?(:win32) %}
+  {% unless flag?(:win32) || flag?(:wasm32) %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
       LibC.pthread_create(thread, attr, start, arg)
@@ -83,7 +85,7 @@ module GC
   {% end %}
 
   # :nodoc:
-  def self.current_thread_stack_bottom
+  def self.current_thread_stack_bottom : {Void*, Void*}
     {Pointer(Void).null, Pointer(Void).null}
   end
 

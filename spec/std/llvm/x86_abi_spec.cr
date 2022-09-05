@@ -13,6 +13,7 @@ private def abi
            {% end %}
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
+  machine.enable_global_isel = false
   LLVM::ABI::X86.new(machine)
 end
 

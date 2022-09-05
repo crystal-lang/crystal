@@ -37,7 +37,7 @@ class Compress::Gzip::Writer < IO
   # Creates a new writer to the given *io*.
   def initialize(@io : IO, @level = Compress::Gzip::DEFAULT_COMPRESSION, @sync_close = false)
     # CRC32 of written data
-    @crc32 = Digest::CRC32.initial
+    @crc32 = ::Digest::CRC32.initial
 
     # Total size of the original (uncompressed) input data modulo 2^32.
     @isize = 0
@@ -63,34 +63,32 @@ class Compress::Gzip::Writer < IO
   end
 
   # Always raises `IO::Error` because this is a write-only `IO`.
-  def read(slice : Bytes)
+  def read(slice : Bytes) : NoReturn
     raise IO::Error.new("Can't read from Gzip::Writer")
   end
 
   # See `IO#write`.
-  def write(slice : Bytes) : UInt64
+  def write(slice : Bytes) : Nil
     check_open
 
-    return 0u64 if slice.empty?
+    return if slice.empty?
 
     flate_io = write_header
     flate_io.write(slice)
 
     # Update CRC32 and total data size
-    @crc32 = Digest::CRC32.update(slice, @crc32)
+    @crc32 = ::Digest::CRC32.update(slice, @crc32)
 
     # Using wrapping addition here because isize is only 32 bits wide but
     # uncompressed data size can be bigger.
     @isize &+= slice.size
-
-    slice.size.to_u64
   end
 
   # Flushes data, forcing writing the gzip header if no
   # data has been written yet.
   #
   # See `IO#flush`.
-  def flush
+  def flush : Nil
     check_open
 
     flate_io = write_header
@@ -98,7 +96,7 @@ class Compress::Gzip::Writer < IO
   end
 
   # Closes this writer. Must be invoked after all data has been written.
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 

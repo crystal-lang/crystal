@@ -101,8 +101,14 @@ describe "Code gen: alias" do
       ))
   end
 
-  it "lazyly solves aliases (#1346)" do
+  it "lazily solves aliases (#1346)" do
     run(%(
+      struct Proc
+        def self.new(&block : self)
+          block
+        end
+      end
+
       class Session; end
 
       alias CmdHandler = Proc(Session, Int32)
