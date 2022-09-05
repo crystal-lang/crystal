@@ -124,8 +124,8 @@ class Crystal::AbstractDefChecker
             implemented = true
           end
 
-          unless found_param_match
-            check_positional_param_names(target_type, ancestor_type, a_def, base, method)
+          unless found_param_match || target_type.abstract? || target_type.module?
+            check_positional_param_names(a_def, base, method)
             found_param_match = true if same_parameters?(a_def, method)
           end
         end
@@ -368,7 +368,7 @@ class Crystal::AbstractDefChecker
     end
   end
 
-  def check_positional_param_names(target_type : Type, impl_type : Type, impl_method : Def, base_type : Type, base_method : Def)
+  def check_positional_param_names(impl_method : Def, base_type : Type, base_method : Def)
     impl_param_count = impl_method.splat_index || impl_method.args.size
     base_param_count = base_method.splat_index || base_method.args.size
     {impl_param_count, base_param_count}.min.times do |i|
