@@ -1548,7 +1548,7 @@ module Crystal
             next if arg.external_name.empty? # skip empty splat argument.
           end
 
-          self.format_parameter_annotations arg
+          format_parameter_annotations(arg)
 
           arg.accept self
           to_skip += 1 if @last_arg_is_skip
@@ -1567,7 +1567,7 @@ module Crystal
 
       if block_arg
         wrote_newline = format_def_arg(wrote_newline, false) do
-          self.format_parameter_annotations block_arg
+          format_parameter_annotations(block_arg)
           write_token :OP_AMP
           skip_space_or_newline
 
