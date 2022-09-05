@@ -921,7 +921,7 @@ module Crystal::Macros
 
     # Returns an array of all annotations attached to this
     # variable, or an empty `ArrayLiteral` if there are none.
-    def all_annotations : ArrayLiteral(Annotation)
+    def annotations : ArrayLiteral(Annotation)
     end
   end
 
@@ -1129,6 +1129,11 @@ module Crystal::Macros
     def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
 
+    # Returns an array of all annotations attached to this
+    # arg, or an empty `ArrayLiteral` if there are none.
+    def annotations : ArrayLiteral(Annotation)
+    end
+
     # Returns the external name of this argument.
     #
     # For example, for `def write(to file)` returns `to`.
@@ -1235,7 +1240,7 @@ module Crystal::Macros
 
     # Returns an array of all annotations attached to this
     # method, or an empty `ArrayLiteral` if there are none.
-    def all_annotations : ArrayLiteral(Annotation)
+    def annotations : ArrayLiteral(Annotation)
     end
   end
 
@@ -1993,7 +1998,7 @@ module Crystal::Macros
 
     # Returns an array of all annotations attached to this
     # type, or an empty `ArrayLiteral` if there are none.
-    def all_annotations : ArrayLiteral(Annotation)
+    def annotations : ArrayLiteral(Annotation)
     end
 
     # Returns the number of elements in this tuple type or tuple metaclass type.
