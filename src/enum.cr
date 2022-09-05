@@ -98,7 +98,7 @@
 #   Blue
 # end
 #
-# Color::Red.value # => UInt8
+# Color::Red.value # : UInt8
 # ```
 #
 # NOTE: Only `Int::Primitive` based types are allowed.
