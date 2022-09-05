@@ -89,7 +89,7 @@
 #
 # ### Changing the Base Type
 #
-# The type of the underlying enum value is `Int32` by default, but it can be changed:
+# The type of the underlying enum value is `Int32` by default, but it can be changed to any type in `Int::Primitive`.
 #
 # ```
 # enum Color : UInt8
@@ -100,8 +100,6 @@
 #
 # Color::Red.value # : UInt8
 # ```
-#
-# NOTE: Only `Int::Primitive` based types are allowed.
 struct Enum
   include Comparable(self)
 
