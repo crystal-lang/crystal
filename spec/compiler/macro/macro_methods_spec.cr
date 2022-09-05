@@ -1,10 +1,10 @@
 require "../../spec_helper"
 
-private def declare_class_var(container : ClassVarContainer, name, var_type : Type, annotations = nil)
+private def declare_class_var(container : ClassVarContainer, name, var_type : Type, applied_annotations = nil)
   var = MetaTypeVar.new(name)
   var.owner = container
   var.type = var_type
-  var.annotations = annotations
+  var.applied_annotations = applied_annotations
   var.bind_to var
   var.freeze_type = var_type
   container.class_vars[name] = var
