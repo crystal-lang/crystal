@@ -1,5 +1,5 @@
 {% if flag?(:win32) %}
-  @[Link("libcmt")]
+  @[Link({{ flag?(:preview_dll) ? "ucrt" : "libucrt" }})]
 {% end %}
 lib LibC
   alias Char = UInt8
@@ -10,12 +10,14 @@ lib LibC
   alias Int = Int32
   alias UInt = UInt32
 
-  {% if flag?(:win32) || flag?(:i386) || flag?(:arm) %}
+  {% if flag?(:bits32) || flag?(:win32) %}
     alias Long = Int32
     alias ULong = UInt32
-  {% elsif flag?(:x86_64) || flag?(:aarch64) %}
+  {% elsif flag?(:bits64) %}
     alias Long = Int64
     alias ULong = UInt64
+  {% else %}
+    {% raise "Architecture with unsupported word size" %}
   {% end %}
 
   alias LongLong = Int64

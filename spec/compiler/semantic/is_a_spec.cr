@@ -65,7 +65,7 @@ describe "Semantic: is_a?" do
       else
         a.ord
       end
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "applies filter inside block" do
@@ -128,7 +128,7 @@ describe "Semantic: is_a?" do
       else
         2
       end
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "checks union with union" do
@@ -151,7 +151,7 @@ describe "Semantic: is_a?" do
       else
         a.foo
       end
-      ") { union_of(int32, char) }
+      ", inject_primitives: true) { union_of(int32, char) }
   end
 
   it "restricts in assignment" do
@@ -185,7 +185,7 @@ describe "Semantic: is_a?" do
       end
 
       z
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types if is_a? preceded by return if (preserves nops)" do
@@ -198,7 +198,7 @@ describe "Semantic: is_a?" do
       end
 
       coco
-      )) { nil_type }
+      ), inject_primitives: true) { nil_type }
   end
 
   it "restricts type inside if else when used with module type" do
@@ -222,7 +222,7 @@ describe "Semantic: is_a?" do
       else
         false
       end
-      )) { bool }
+      ), inject_primitives: true) { bool }
   end
 
   it "doesn't fail on untyped is_a (#10317)" do
@@ -239,5 +239,23 @@ describe "Semantic: is_a?" do
         Sup.new.is_a?(Sup)
       end
       ))
+  end
+
+  it "does is_a? from virtual metaclass to generic metaclass (#12302)" do
+    assert_type(%(
+      class A
+      end
+
+      class B(T) < A
+      end
+
+      x = B(String).new.as(A).class
+
+      if x.is_a?(B(String).class)
+        x
+      else
+        nil
+      end
+      ), inject_primitives: true) { nilable generic_class("B", string).metaclass }
   end
 end

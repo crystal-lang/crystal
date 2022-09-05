@@ -92,6 +92,7 @@ class Crystal::CodeGenVisitor
       global = declare_class_var(class_var)
       global = ensure_class_var_in_this_module(global, class_var)
       if init_func
+        set_current_debug_location initializer.node if @debug.line_numbers?
         call init_func
       end
       return global
@@ -121,6 +122,8 @@ class Crystal::CodeGenVisitor
       discard = false
       new_func = in_main do
         define_main_function(init_function_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|
+          set_internal_fun_debug_location(func, init_function_name, node.location)
+
           with_cloned_context do
             # "self" in a constant is the class_var owner
             context.type = class_var.owner
@@ -163,6 +166,7 @@ class Crystal::CodeGenVisitor
   end
 
   def read_class_var(node : ClassVar)
+    set_current_debug_location node if @debug.line_numbers?
     read_class_var(node.var)
   end
 
@@ -223,6 +227,8 @@ class Crystal::CodeGenVisitor
   def create_read_virtual_class_var_ptr_function(fun_name, class_var, owner)
     in_main do
       define_main_function(fun_name, [llvm_context.int32], llvm_type(class_var.type).pointer) do |func|
+        set_internal_fun_debug_location(func, fun_name)
+
         self_type_id = func.params[0]
 
         cmp = equal?(self_type_id, type_id(owner.base_type))
@@ -268,6 +274,8 @@ class Crystal::CodeGenVisitor
   def create_read_virtual_metaclass_var_ptr_function(fun_name, class_var, owner)
     in_main do
       define_main_function(fun_name, [llvm_context.int32], llvm_type(class_var.type).pointer) do |func|
+        set_internal_fun_debug_location(func, fun_name)
+
         self_type_id = func.params[0]
 
         cmp = equal?(self_type_id, type_id(owner.base_type.metaclass))
@@ -313,6 +321,7 @@ class Crystal::CodeGenVisitor
 
     in_main do
       define_main_function(fun_name, ([] of LLVM::Type), llvm_type(class_var.type).pointer) do |func|
+        set_internal_fun_debug_location(func, fun_name, initializer.node.location)
         init_func = check_main_fun init_func.name, init_func
         ret lazy_initialize_class_var(initializer.node, init_func, global, initialized_flag)
       end
@@ -320,10 +329,10 @@ class Crystal::CodeGenVisitor
   end
 
   def class_var_global_name(class_var : MetaTypeVar)
-    "#{class_var.owner}#{class_var.name.gsub('@', ':')}"
+    "#{class_var.owner.llvm_name}#{class_var.name.gsub('@', ':')}"
   end
 
   def class_var_global_initialized_name(class_var : MetaTypeVar)
-    "#{class_var.owner}#{class_var.name.gsub('@', ':')}:init"
+    "#{class_var.owner.llvm_name}#{class_var.name.gsub('@', ':')}:init"
   end
 end

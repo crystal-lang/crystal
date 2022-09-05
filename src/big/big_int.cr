@@ -344,6 +344,35 @@ struct BigInt < Int
     {the_q, the_r}
   end
 
+  def divisible_by?(number : BigInt) : Bool
+    LibGMP.divisible_p(self, number) != 0
+  end
+
+  def divisible_by?(number : LibGMP::ULong) : Bool
+    LibGMP.divisible_ui_p(self, number) != 0
+  end
+
+  def divisible_by?(number : Int) : Bool
+    if 0 <= number <= LibGMP::ULong::MAX
+      LibGMP.divisible_ui_p(self, number) != 0
+    elsif LibGMP::Long::MIN < number < 0
+      LibGMP.divisible_ui_p(self, number.abs) != 0
+    else
+      divisible_by?(number.to_big_i)
+    end
+  end
+
+  # :nodoc:
+  # returns `{reduced, count}` such that `self % (number ** count) == 0`,
+  # `self % (number ** (count + 1)) != 0`, and `reduced == self / (number ** count)`
+  def factor_by(number : Int) : {BigInt, UInt64}
+    return {self, 0_u64} unless divisible_by?(number)
+
+    reduced = BigInt.new
+    count = LibGMP.remove(reduced, self, number.to_big_i)
+    {reduced, count.to_u64}
+  end
+
   def ~ : BigInt
     BigInt.new { |mpz| LibGMP.com(mpz, self) }
   end
@@ -429,7 +458,25 @@ struct BigInt < Int
       if precision <= count
         len = count + (negative ? 1 : 0)
         String.new(len + 1) do |buffer| # null terminator required by GMP
+          buffer[len - 1] = 0
           LibGMP.get_str(buffer, upcase ? -base : base, self)
+
+          # `sizeinbase` may be 1 greater than the exact value
+          if buffer[len - 1] == 0
+            if precision == count
+              # In this case the exact `count` is `precision - 1`, i.e. one zero
+              # should be inserted at the beginning of the number
+              # e.g. precision = 3, count = 3, exact count = 2
+              # "85\0\0" -> "085\0" for positive
+              # "-85\0\0" -> "-085\0" for negative
+              start = buffer + (negative ? 1 : 0)
+              start.move_to(start + 1, count - 1)
+              start.value = '0'.ord.to_u8
+            else
+              len -= 1
+            end
+          end
+
           base62_swapcase(Slice.new(buffer, len)) if base == 62
           {len, len}
         end
@@ -439,14 +486,28 @@ struct BigInt < Int
           # e.g. precision = 13, count = 8
           # "_____12345678\0" for positive
           # "_____-12345678\0" for negative
-          LibGMP.get_str(buffer + precision - count, upcase ? -base : base, self)
+          buffer[len - 1] = 0
+          start = buffer + precision - count
+          LibGMP.get_str(start, upcase ? -base : base, self)
+
+          # `sizeinbase` may be 1 greater than the exact value
+          if buffer[len - 1] == 0
+            # e.g. precision = 7, count = 3, exact count = 2
+            # "____85\0\0" -> "____885\0" for positive
+            # "____-85\0\0" -> "____-885\0" for negative
+            # `start` will be zero-filled later
+            count -= 1
+            start += 1 if negative
+            start.move_to(start + 1, count)
+          end
+
           base62_swapcase(Slice.new(buffer + len - count, count)) if base == 62
 
           if negative
             buffer.value = '-'.ord.to_u8
             buffer += 1
           end
-          Intrinsics.memset(buffer, '0'.ord.to_u8, precision - count, false)
+          Slice.new(buffer, precision - count).fill('0'.ord.to_u8)
 
           {len, len}
         end
@@ -471,6 +532,9 @@ struct BigInt < Int
       ptr = LibGMP.get_str(nil, upcase ? -base : base, self)
       negative = self < 0
 
+      # `sizeinbase` may be 1 greater than the exact value
+      count -= 1 if ptr[count + (negative ? 0 : -1)] == 0
+
       if precision <= count
         buffer = Slice.new(ptr, count + (negative ? 1 : 0))
       else
@@ -484,7 +548,7 @@ struct BigInt < Int
       end
 
       base62_swapcase(buffer) if base == 62
-      io.write_utf8 buffer
+      io.write_string buffer
     end
   end
 
@@ -500,7 +564,6 @@ struct BigInt < Int
     end
   end
 
-  # :nodoc:
   def digits(base = 10) : Array(Int32)
     if self < 0
       raise ArgumentError.new("Can't request digits of negative number")

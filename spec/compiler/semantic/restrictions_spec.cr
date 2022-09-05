@@ -495,6 +495,61 @@ describe "Restrictions" do
           )) { tuple_of([int32, bool]) }
       end
     end
+
+    describe "Union" do
+      it "handles redefinitions (1) (#12330)" do
+        assert_type(<<-CR) { bool }
+          def foo(x : Int32 | String)
+            'a'
+          end
+
+          def foo(x : ::Int32 | String)
+            true
+          end
+
+          foo(1)
+          CR
+      end
+
+      it "handles redefinitions (2) (#12330)" do
+        assert_type(<<-CR) { bool }
+          def foo(x : Int32 | String)
+            'a'
+          end
+
+          def foo(x : String | Int32)
+            true
+          end
+
+          foo(1)
+          CR
+      end
+
+      it "orders union before generic (#12330)" do
+        assert_type(<<-CR) { bool }
+          module Foo(T)
+          end
+
+          class Bar1
+            include Foo(Int32)
+          end
+
+          class Bar2
+            include Foo(Int32)
+          end
+
+          def foo(x : Foo(Int32))
+            'a'
+          end
+
+          def foo(x : Bar1 | Bar2)
+            true
+          end
+
+          foo(Bar1.new)
+          CR
+      end
+    end
   end
 
   it "self always matches instance type in restriction" do
@@ -754,7 +809,7 @@ describe "Restrictions" do
 
       a = 1 || "foo" || true
       foo(a.class)
-      )) { union_of([uint8, uint16, uint32] of Type) }
+      ), inject_primitives: true) { union_of([uint8, uint16, uint32] of Type) }
   end
 
   it "restricts class union type to overloads with classes (2)" do
@@ -773,7 +828,7 @@ describe "Restrictions" do
 
       a = 1 || "foo"
       foo(a.class)
-      )) { union_of([uint8, uint16] of Type) }
+      ), inject_primitives: true) { union_of([uint8, uint16] of Type) }
   end
 
   it "makes metaclass subclass pass parent metaclass restriction (#2079)" do
@@ -915,5 +970,51 @@ describe "Restrictions" do
       x = uninitialized C
       foo x
       )) { int32 }
+  end
+
+  it "errors if using Tuple with named args" do
+    assert_error <<-CR, "can only instantiate NamedTuple with named arguments"
+      def foo(x : Tuple(a: Int32))
+      end
+
+      foo({1})
+      CR
+  end
+
+  it "doesn't error if using Tuple with no args" do
+    assert_type(<<-CR) { tuple_of([] of Type) }
+      def foo(x : Tuple())
+        x
+      end
+
+      def bar(*args : *T) forall T
+        args
+      end
+
+      foo(bar)
+      CR
+  end
+
+  it "errors if using NamedTuple with positional args" do
+    assert_error <<-CR, "can only instantiate NamedTuple with named arguments"
+      def foo(x : NamedTuple(Int32))
+      end
+
+      foo({a: 1})
+      CR
+  end
+
+  it "doesn't error if using NamedTuple with no args" do
+    assert_type(<<-CR) { named_tuple_of({} of String => Type) }
+      def foo(x : NamedTuple())
+        x
+      end
+
+      def bar(**opts : **T) forall T
+        opts
+      end
+
+      foo(bar)
+      CR
   end
 end

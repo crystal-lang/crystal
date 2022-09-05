@@ -64,7 +64,7 @@ class String::Builder < IO
     nil
   end
 
-  def write_utf8(slice : Bytes) : Nil
+  def write_string(slice : Bytes) : Nil
     write(slice)
   end
 
@@ -128,6 +128,6 @@ class String::Builder < IO
 
   private def resize_to_capacity(capacity)
     @capacity = capacity
-    @buffer = @buffer.realloc(@capacity)
+    @buffer = GC.realloc(@buffer, @capacity)
   end
 end

@@ -54,9 +54,20 @@ describe "Semantic: splat" do
       "not yet supported"
   end
 
-  it "errors if splatting non-tuple type" do
+  it "errors if splatting non-tuple type in call arguments" do
     assert_error %(
       foo *1
+      ),
+      "argument to splat must be a tuple, not Int32"
+  end
+
+  it "errors if splatting non-tuple type in return values" do
+    assert_error %(
+      def foo
+        return *1
+      end
+
+      foo
       ),
       "argument to splat must be a tuple, not Int32"
   end
@@ -76,6 +87,16 @@ describe "Semantic: splat" do
       )) { tuple_of [int32] of TypeVar }
   end
 
+  it "forwards tuple in return statement" do
+    assert_type(%(
+      def foo(*args)
+        return args, *args
+      end
+
+      foo 1, 'a'
+      )) { tuple_of([tuple_of([int32, char]), int32, char]) }
+  end
+
   it "can splat after type filter left it as a tuple (#442)" do
     assert_type(%(
       def output(x, y)
@@ -88,7 +109,7 @@ describe "Semantic: splat" do
       else
         4
       end
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if doesn't match splat with type restriction" do

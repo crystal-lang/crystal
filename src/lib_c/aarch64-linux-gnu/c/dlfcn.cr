@@ -1,4 +1,7 @@
-@[Link("dl")]
+{% unless flag?(:interpreted) %}
+  @[Link("dl")]
+{% end %}
+
 lib LibC
   RTLD_LAZY    = 0x00001
   RTLD_NOW     = 0x00002

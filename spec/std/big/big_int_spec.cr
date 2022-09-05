@@ -392,11 +392,27 @@ describe "BigInt" do
       it_converts_to_s 2.to_big_i, "00002", precision: 5
       it_converts_to_s 2.to_big_i, "#{"0" * 199}2", precision: 200
 
-      it_converts_to_s -1.to_big_i, "-1", precision: 0
-      it_converts_to_s -1.to_big_i, "-1", precision: 1
-      it_converts_to_s -1.to_big_i, "-01", precision: 2
-      it_converts_to_s -1.to_big_i, "-00001", precision: 5
-      it_converts_to_s -1.to_big_i, "-#{"0" * 199}1", precision: 200
+      it_converts_to_s (-1).to_big_i, "-1", precision: 0
+      it_converts_to_s (-1).to_big_i, "-1", precision: 1
+      it_converts_to_s (-1).to_big_i, "-01", precision: 2
+      it_converts_to_s (-1).to_big_i, "-00001", precision: 5
+      it_converts_to_s (-1).to_big_i, "-#{"0" * 199}1", precision: 200
+
+      it_converts_to_s 85.to_big_i, "85", precision: 0
+      it_converts_to_s 85.to_big_i, "85", precision: 1
+      it_converts_to_s 85.to_big_i, "85", precision: 2
+      it_converts_to_s 85.to_big_i, "085", precision: 3
+      it_converts_to_s 85.to_big_i, "0085", precision: 4
+      it_converts_to_s 85.to_big_i, "00085", precision: 5
+      it_converts_to_s 85.to_big_i, "#{"0" * 198}85", precision: 200
+
+      it_converts_to_s (-85).to_big_i, "-85", precision: 0
+      it_converts_to_s (-85).to_big_i, "-85", precision: 1
+      it_converts_to_s (-85).to_big_i, "-85", precision: 2
+      it_converts_to_s (-85).to_big_i, "-085", precision: 3
+      it_converts_to_s (-85).to_big_i, "-0085", precision: 4
+      it_converts_to_s (-85).to_big_i, "-00085", precision: 5
+      it_converts_to_s (-85).to_big_i, "-#{"0" * 198}85", precision: 200
 
       it_converts_to_s 123.to_big_i, "123", precision: 0
       it_converts_to_s 123.to_big_i, "123", precision: 1
@@ -615,6 +631,29 @@ describe "BigInt" do
         -123.to_big_i.digits
       end
     end
+  end
+
+  describe "#divisible_by?" do
+    it { 0.to_big_i.divisible_by?(0).should be_true }
+    it { 0.to_big_i.divisible_by?(1).should be_true }
+    it { 0.to_big_i.divisible_by?(-1).should be_true }
+    it { 0.to_big_i.divisible_by?(0.to_big_i).should be_true }
+    it { 0.to_big_i.divisible_by?(1.to_big_i).should be_true }
+    it { 0.to_big_i.divisible_by?((-1).to_big_i).should be_true }
+
+    it { 135.to_big_i.divisible_by?(0).should be_false }
+    it { 135.to_big_i.divisible_by?(1).should be_true }
+    it { 135.to_big_i.divisible_by?(2).should be_false }
+    it { 135.to_big_i.divisible_by?(3).should be_true }
+    it { 135.to_big_i.divisible_by?(4).should be_false }
+    it { 135.to_big_i.divisible_by?(5).should be_true }
+    it { 135.to_big_i.divisible_by?(135).should be_true }
+    it { 135.to_big_i.divisible_by?(270).should be_false }
+
+    it { "100000000000000000000000000000000".to_big_i.divisible_by?("4294967296".to_big_i).should be_true }
+    it { "100000000000000000000000000000000".to_big_i.divisible_by?("8589934592".to_big_i).should be_false }
+    it { "100000000000000000000000000000000".to_big_i.divisible_by?("23283064365386962890625".to_big_i).should be_true }
+    it { "100000000000000000000000000000000".to_big_i.divisible_by?("116415321826934814453125".to_big_i).should be_false }
   end
 end
 

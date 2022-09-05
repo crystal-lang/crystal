@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 require "iterator"
 
 struct StructIter
@@ -295,7 +296,7 @@ describe Iterator do
     it "cycles an empty array" do
       ary = [] of Int32
       values = ary.each.cycle.to_a
-      values.empty?.should be_true
+      values.should be_empty
     end
 
     it "cycles N times" do
