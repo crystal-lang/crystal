@@ -1179,7 +1179,7 @@ module Crystal
           ArrayLiteral.map(annotations, &.itself)
         end
       when "all_annotations"
-        interpret_argless_method(method, args) do
+        interpret_check_args do
           annotations = self.var.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
@@ -1412,7 +1412,7 @@ module Crystal
           ArrayLiteral.map(annotations, &.itself)
         end
       when "all_annotations"
-        interpret_argless_method(method, args) do
+        interpret_check_args do
           annotations = self.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
@@ -1676,7 +1676,7 @@ module Crystal
           ArrayLiteral.map(annotations, &.itself)
         end
       when "all_annotations"
-        interpret_argless_method(method, args) do
+        interpret_check_args do
           annotations = self.type.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)

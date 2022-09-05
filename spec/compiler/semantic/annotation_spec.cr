@@ -129,7 +129,7 @@ describe "Semantic: annotation" do
         module Moo
         end
 
-        {% if Moo.all_annotations.map(&.name) ==[Foo.id, Bar.id] %}
+        {% if Moo.all_annotations.map(&.name.id) == [Foo.id, Bar.id] %}
           1
         {% else %}
           'a'
@@ -147,7 +147,7 @@ describe "Semantic: annotation" do
         class Moo
         end
 
-        {% if Moo.all_annotations.map(&.name) == [Foo.id, Bar.id] %}
+        {% if Moo.all_annotations.map(&.name.id) == [Foo.id, Bar.id] %}
           1
         {% else %}
           'a'
@@ -165,7 +165,7 @@ describe "Semantic: annotation" do
         struct Moo
         end
 
-        {% if Moo.all_annotations.map(&.name) == [Foo.id, Bar.id] %}
+        {% if Moo.all_annotations.map(&.name.id) == [Foo.id, Bar.id] %}
           1
         {% else %}
           'a'
@@ -184,7 +184,7 @@ describe "Semantic: annotation" do
           A = 1
         end
 
-        {% if Moo.all_annotations.map(&.name) == [Foo.id, Bar.id] %}
+        {% if Moo.all_annotations.map(&.name.id) == [Foo.id, Bar.id] %}
           1
         {% else %}
           'a'
@@ -203,7 +203,7 @@ describe "Semantic: annotation" do
           A = 1
         end
 
-        {% if Moo.all_annotations.map(&.name) == [Foo.id, Bar.id] %}
+        {% if Moo.all_annotations.map(&.name.id) == [Foo.id, Bar.id] %}
           1
         {% else %}
           'a'
