@@ -12,40 +12,6 @@ describe "Semantic: annotation" do
     type.name.should eq("Foo")
   end
 
-  describe "#name" do
-    it "returns the name of an annotation" do
-      assert_type(%(
-        annotation Foo; end
-
-        @[Foo]
-        class Bar
-        end
-
-        {% if Bar.annotation(Foo).name == Foo.id %}
-          1
-        {% else %}
-          'a'
-        {% end %}
-      )) { int32 }
-    end
-
-    it "returns the name of an annotation within a namespace" do
-      assert_type(%(
-        annotation Test::Foo; end
-
-        @[Test::Foo]
-        class Bar
-        end
-
-        {% if Bar.annotation(Test::Foo).name == Test::Foo.id %}
-          1
-        {% else %}
-          'a'
-        {% end %}
-      )) { int32 }
-    end
-  end
-
   describe "arguments" do
     describe "#args" do
       it "returns an empty TupleLiteral if there are none defined" do
