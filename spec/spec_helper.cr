@@ -48,9 +48,10 @@ def assert_type(str, *, inject_primitives = false, flags = nil, file = __FILE__,
 end
 
 def semantic(code : String, wants_doc = false, inject_primitives = false, flags = nil, filename = nil)
-  node = parse(code, wants_doc: wants_doc, filename: filename)
+  warnings = WarningCollection.new
+  node = parse(code, wants_doc: wants_doc, filename: filename, warnings: warnings)
   node = inject_primitives(node) if inject_primitives
-  semantic node, wants_doc: wants_doc, flags: flags
+  semantic node, warnings: warnings, wants_doc: wants_doc, flags: flags
 end
 
 private def inject_primitives(node : ASTNode)
@@ -66,8 +67,9 @@ private def inject_primitives(node : ASTNode)
   end
 end
 
-def semantic(node : ASTNode, wants_doc = false, flags = nil)
+def semantic(node : ASTNode, *, warnings = nil, wants_doc = false, flags = nil)
   program = new_program
+  program.warnings = warnings if warnings
   program.flags.concat(flags.split) if flags
   program.wants_doc = wants_doc
   node = program.normalize node
@@ -139,7 +141,7 @@ end
 def assert_warning(code, message, *, file = __FILE__, line = __LINE__)
   warning_failures = warnings_result(code)
   warning_failures.size.should eq(1), file: file, line: line
-  warning_failures[0].should start_with(message), file: file, line: line
+  warning_failures[0].should contain(message), file: file, line: line
 end
 
 def assert_macro(macro_body, expected, args = nil, *, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)

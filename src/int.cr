@@ -6,8 +6,8 @@
 #
 # An integer literal is an optional `+` or `-` sign, followed by
 # a sequence of digits and underscores, optionally followed by a suffix.
-# If no suffix is present, the literal's type is the lowest between `Int32`, `Int64` and `UInt64`
-# in which the number fits:
+# If no suffix is present, the literal's type is `Int32`, or `Int64` if the
+# number doesn't fit into an `Int32`:
 #
 # ```
 # 1 # Int32
@@ -25,9 +25,13 @@
 # +10 # Int32
 # -20 # Int32
 #
-# 2147483648          # Int64
-# 9223372036854775808 # UInt64
+# 2147483648 # Int64
 # ```
+#
+# Literals without a suffix that are larger than `Int64::MAX` represent a
+# `UInt64` if the number fits, e.g. `9223372036854775808` and
+# `0x80000000_00000000`. This behavior is deprecated and will become an error in
+# the future.
 #
 # The underscore `_` before the suffix is optional.
 #

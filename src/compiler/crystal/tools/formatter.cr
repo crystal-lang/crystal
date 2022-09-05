@@ -1,15 +1,21 @@
 require "../syntax"
 
 module Crystal
-  def self.format(source, filename = nil)
-    Crystal::Formatter.format(source, filename: filename)
+  def self.format(source, filename = nil, report_warnings : IO? = nil)
+    Crystal::Formatter.format(source, filename: filename, report_warnings: report_warnings)
   end
 
   class Formatter < Visitor
-    def self.format(source, filename = nil)
+    def self.format(source, filename = nil, report_warnings : IO? = nil)
       parser = Parser.new(source)
       parser.filename = filename
       nodes = parser.parse
+
+      # the formatter merely parses the same source again, it shouldn't
+      # introduce any new syntax warnings the parser cannot find
+      if report_warnings
+        parser.warnings.report(report_warnings)
+      end
 
       formatter = new(source)
       formatter.skip_space_or_newline
