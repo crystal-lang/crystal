@@ -2,8 +2,19 @@ require "c/stdio"
 
 # :nodoc:
 struct String::Formatter(A)
+  private enum Mode
+    None
+
+    # `%s`, index type is `Nil`
+    Sequential
+
+    # `%{a}` or `%<b>s`, index type is `String`
+    Named
+  end
+
   @format_buf : Pointer(UInt8)?
   @temp_buf : Pointer(UInt8)?
+  @arg_mode : Mode = :none
 
   def initialize(string, @args : A, @io : IO)
     @reader = Char::Reader.new(string)
@@ -18,7 +29,7 @@ struct String::Formatter(A)
       when '%'
         consume_percent
       else
-        char char
+        @io << char
       end
       next_char
     end
@@ -32,33 +43,27 @@ struct String::Formatter(A)
     when '<'
       next_char
       consume_formatted_substitution
+    when '%'
+      @io << '%'
     else
       flags = consume_flags
-      consume_type flags
+      consume_type flags, nil
     end
   end
 
   private def consume_substitution
     key = consume_substitution_key '}'
-    arg = current_arg
-    if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
-      @io << arg[key]
-    else
-      raise ArgumentError.new "One hash or named tuple required"
-    end
+    # note: "`@io << (arg_at(key))` has no type" without this `arg` variable
+    arg = arg_at(key)
+    @io << arg
   end
 
   private def consume_formatted_substitution
     key = consume_substitution_key '>'
+    args_are :named
     next_char
-    arg = current_arg
-    if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
-      target_arg = arg[key]
-    else
-      raise ArgumentError.new "One hash or named tuple required"
-    end
     flags = consume_flags
-    consume_type flags, target_arg, true
+    consume_type flags, key
   end
 
   private def consume_substitution_key(end_char)
@@ -146,10 +151,9 @@ struct String::Formatter(A)
   end
 
   private def consume_dynamic_value
-    value = current_arg
+    value = arg_at(nil)
     if value.is_a?(Int)
       next_char
-      next_arg
       value.to_i
     else
       raise ArgumentError.new("Expected dynamic value '*' to be an Int - #{value.inspect} (#{value.class.inspect})")
@@ -174,48 +178,44 @@ struct String::Formatter(A)
     {num, size}
   end
 
-  private def consume_type(flags, arg = nil, arg_specified = false)
+  private def consume_type(flags, index)
+    arg = arg_at(index)
+
     case char = current_char
     when 'c'
-      char flags, arg, arg_specified
+      char flags, arg
     when 's'
-      string flags, arg, arg_specified
+      string flags, arg
     when 'b'
       flags.base = 2
       flags.type = char
-      int flags, arg, arg_specified
+      int flags, arg
     when 'o'
       flags.base = 8
       flags.type = char
-      int flags, arg, arg_specified
+      int flags, arg
     when 'd', 'i'
       flags.base = 10
-      int flags, arg, arg_specified
+      int flags, arg
     when 'x', 'X'
       flags.base = 16
       flags.type = char
-      int flags, arg, arg_specified
+      int flags, arg
     when 'a', 'A', 'e', 'E', 'f', 'g', 'G'
       flags.type = char
-      float flags, arg, arg_specified
-    when '%'
-      char '%'
+      float flags, arg
     else
       raise ArgumentError.new("Malformed format string - %#{char.inspect}")
     end
   end
 
-  def char(flags, arg, arg_specified) : Nil
-    arg = next_arg unless arg_specified
-
+  def char(flags, arg) : Nil
     pad 1, flags if flags.left_padding?
     @io << arg
     pad 1, flags if flags.right_padding?
   end
 
-  def string(flags, arg, arg_specified) : Nil
-    arg = next_arg unless arg_specified
-
+  def string(flags, arg) : Nil
     if precision = flags.precision
       arg = arg.to_s[0...precision]
     end
@@ -225,9 +225,7 @@ struct String::Formatter(A)
     pad arg.to_s.size, flags if flags.right_padding?
   end
 
-  def int(flags, arg, arg_specified) : Nil
-    arg = next_arg unless arg_specified
-
+  def int(flags, arg) : Nil
     raise ArgumentError.new("Expected an integer, not #{arg.inspect}") unless arg.responds_to?(:to_i)
     int = arg.is_a?(Int) ? arg : arg.to_i
 
@@ -284,9 +282,7 @@ struct String::Formatter(A)
   end
 
   # We don't actually format the float ourselves, we delegate to snprintf
-  def float(flags, arg, arg_specified) : Nil
-    arg = next_arg unless arg_specified
-
+  def float(flags, arg) : Nil
     if arg.responds_to?(:to_f64)
       float = arg.is_a?(Float64) ? arg : arg.to_f64
 
@@ -367,16 +363,33 @@ struct String::Formatter(A)
     pad size, flags
   end
 
-  def char(char) : Nil
-    @io << char
+  private def arg_at(index : Nil)
+    args_are :sequential
+    arg = @args.fetch(@arg_index) { raise ArgumentError.new("Too few arguments") }
+    @arg_index += 1
+    arg
   end
 
-  private def current_arg
-    @args.fetch(@arg_index) { raise ArgumentError.new("Too few arguments") }
+  private def arg_at(index : String)
+    args_are :named
+    args = @args
+    # note: "index '0' out of bounds for empty tuple" without the `is_a?` check
+    # TODO: use `Tuple()` once support for 1.0.0 is dropped
+    if args.size == 1 && !args.is_a?(Tuple(*typeof(Tuple.new)))
+      arg = args[0]
+      if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
+        return arg[index]
+      end
+    end
+    raise ArgumentError.new "One hash or named tuple required"
   end
 
-  def next_arg
-    current_arg.tap { @arg_index += 1 }
+  private def args_are(mode : Mode)
+    if @arg_mode.none?
+      @arg_mode = mode
+    elsif mode != @arg_mode
+      raise ArgumentError.new "Cannot mix #{@arg_mode.to_s.downcase} parameters with #{mode.to_s.downcase} ones"
+    end
   end
 
   private def current_char

@@ -35,6 +35,24 @@ describe "::sprintf" do
     assert_sprintf "%%*%%", [1, 2, 3], "%*%"
   end
 
+  it "doesn't accept modifiers for %%" do
+    expect_raises(ArgumentError) { sprintf("%0%") }
+    expect_raises(ArgumentError) { sprintf("%+%") }
+    expect_raises(ArgumentError) { sprintf("%-%") }
+    expect_raises(ArgumentError) { sprintf("% %") }
+    expect_raises(ArgumentError) { sprintf("%#%") }
+    expect_raises(ArgumentError) { sprintf("%.0%") }
+    expect_raises(ArgumentError) { sprintf("%*%", 1) }
+
+    expect_raises(ArgumentError) { sprintf("%<a>0%") }
+    expect_raises(ArgumentError) { sprintf("%<a>+%") }
+    expect_raises(ArgumentError) { sprintf("%<a>-%") }
+    expect_raises(ArgumentError) { sprintf("%<a> %") }
+    expect_raises(ArgumentError) { sprintf("%<a>#%") }
+    expect_raises(ArgumentError) { sprintf("%<a>.0%") }
+    expect_raises(ArgumentError) { sprintf("%<a>*%", 1) }
+  end
+
   context "integers" do
     context "base specifier" do
       it "supports base 2" do
@@ -532,6 +550,13 @@ describe "::sprintf" do
       expect_raises(ArgumentError, "One hash or named tuple required") { sprintf("change %{this}", "this") }
     end
 
+    it "doesn't raise if 1-element list of hash or named tuple given" do
+      assert_sprintf "change %{this}", [{"this" => "nothing"}], "change nothing"
+      assert_sprintf "change %{this}", [{this: "nothing"}], "change nothing"
+      assert_sprintf "change %{this}", { {"this" => "nothing"} }, "change nothing"
+      assert_sprintf "change %{this}", { {this: "nothing"} }, "change nothing"
+    end
+
     it "raises on unbalanced curly" do
       expect_raises(ArgumentError, "Malformed name - unmatched parenthesis") { sprintf("change %{this", {"this" => 1}) }
     end
@@ -539,12 +564,35 @@ describe "::sprintf" do
     it "doesn't raise on balanced curly with null byte" do
       assert_sprintf "change %{this\u{0}}", {"this\u{0}" => 1}, "change 1"
     end
+
+    it "raises if sequential parameters also given" do
+      expect_raises(ArgumentError, "Cannot mix named parameters with sequential ones") { sprintf("%{this}%d", {"this" => 1}) }
+    end
+
+    it "doesn't raise if formatted substitution also given" do
+      assert_sprintf "%{foo}%<bar>s", {"foo" => "x", "bar" => "y"}, "xy"
+    end
   end
 
   context "formatted substitution" do
     it "applies formatting to %<...> placeholder" do
       assert_sprintf "change %<this>.2f", {"this" => 23.456}, "change 23.46"
       assert_sprintf "change %<this>.2f", {this: 23.456}, "change 23.46"
+    end
+
+    it "raises if sequential parameters also given" do
+      expect_raises(ArgumentError, "Cannot mix named parameters with sequential ones") { sprintf("%<this>d%d", {"this" => 1}) }
+    end
+
+    it "doesn't raise if plain substitution also given" do
+      assert_sprintf "%<foo>s%{bar}", {"foo" => "x", "bar" => "y"}, "xy"
+    end
+  end
+
+  context "sequential parameters" do
+    it "raises if named parameters also given" do
+      expect_raises(ArgumentError, "Cannot mix sequential parameters with named ones") { sprintf("%d%{this}", 1) }
+      expect_raises(ArgumentError, "Cannot mix sequential parameters with named ones") { sprintf("%d%<this>d", 1) }
     end
   end
 end
