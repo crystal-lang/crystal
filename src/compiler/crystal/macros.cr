@@ -946,10 +946,6 @@ module Crystal::Macros
     def args : TupleLiteral
     end
 
-    # Returns the name of this annotation.
-    def name : MacroId
-    end
-
     # Returns a `NamedTupleLiteral` representing the named arguments on `self`.
     def named_args : NamedTupleLiteral
     end
