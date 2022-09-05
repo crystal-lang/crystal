@@ -169,7 +169,6 @@ class IO::Memory < IO
     string
   end
 
-  # :nodoc:
   def read_byte : UInt8?
     check_open
 
@@ -184,7 +183,6 @@ class IO::Memory < IO
     end
   end
 
-  # :nodoc:
   def peek : Bytes
     check_open
 
@@ -203,27 +201,37 @@ class IO::Memory < IO
     end
   end
 
-  # :nodoc:
   def skip_to_end : Nil
     check_open
 
     @pos = @bytesize
   end
 
-  # :nodoc:
+  # :inherit:
   def gets_to_end : String
     return super if @encoding
 
     check_open
 
-    pos = Math.min(@pos, @bytesize)
-
-    if pos == @bytesize
+    if @pos >= @bytesize
       ""
     else
-      String.new(@buffer + @pos, @bytesize - @pos).tap do
-        @pos = @bytesize
-      end
+      str = String.new(@buffer + @pos, @bytesize - @pos)
+      @pos = @bytesize
+      str
+    end
+  end
+
+  # :inherit:
+  def getb_to_end : Bytes
+    check_open
+
+    if @pos >= @bytesize
+      Bytes[]
+    else
+      bytes = Slice.new(@buffer + @pos, @bytesize - @pos).dup
+      @pos = @bytesize
+      bytes
     end
   end
 
@@ -242,7 +250,7 @@ class IO::Memory < IO
   # io = IO::Memory.new "hello"
   # io.clear # raises IO::Error
   # ```
-  def clear
+  def clear : Nil
     check_open
     check_resizeable
     @bytesize = 0
@@ -372,7 +380,7 @@ class IO::Memory < IO
   # io.close
   # io.gets_to_end # raises IO::Error (closed stream)
   # ```
-  def close
+  def close : Nil
     @closed = true
   end
 
@@ -396,7 +404,15 @@ class IO::Memory < IO
   # io.to_s # => "123"
   # ```
   def to_s : String
-    String.new @buffer, @bytesize
+    if encoding = @encoding
+      {% if flag?(:without_iconv) %}
+        raise NotImplementedError.new("String.encode")
+      {% else %}
+        String.new to_slice, encoding: encoding.name, invalid: encoding.invalid
+      {% end %}
+    else
+      String.new @buffer, @bytesize
+    end
   end
 
   # Returns the underlying bytes.
@@ -413,7 +429,21 @@ class IO::Memory < IO
 
   # Appends this internal buffer to the given `IO`.
   def to_s(io : IO) : Nil
-    io.write(to_slice)
+    if io == self
+      # When appending to itself, we need to pull the resize up before taking
+      # pointer to the buffer. It would become invalid when a resize happens during `#write`.
+      new_bytesize = bytesize * 2
+      resize_to_capacity(new_bytesize) if @capacity < new_bytesize
+    end
+    if encoding = @encoding
+      {% if flag?(:without_iconv) %}
+        raise NotImplementedError.new("String.encode")
+      {% else %}
+        String.encode(to_slice, encoding.name, io.encoding, io, io.@encoding.try(&.invalid))
+      {% end %}
+    else
+      io.write(to_slice)
+    end
   end
 
   private def check_writeable
@@ -430,6 +460,6 @@ class IO::Memory < IO
 
   private def resize_to_capacity(capacity)
     @capacity = capacity
-    @buffer = @buffer.realloc(@capacity)
+    @buffer = GC.realloc(@buffer, @capacity)
   end
 end

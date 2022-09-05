@@ -64,6 +64,16 @@ class String::Builder < IO
     nil
   end
 
+  def write_string(slice : Bytes) : Nil
+    write(slice)
+  end
+
+  def set_encoding(encoding : String, invalid : Symbol? = nil) : Nil
+    unless utf8_encoding?(encoding, invalid)
+      raise "Can't change encoding of String::Builder"
+    end
+  end
+
   def buffer : Pointer(UInt8)
     @buffer + String::HEADER_SIZE
   end
@@ -118,6 +128,6 @@ class String::Builder < IO
 
   private def resize_to_capacity(capacity)
     @capacity = capacity
-    @buffer = @buffer.realloc(@capacity)
+    @buffer = GC.realloc(@buffer, @capacity)
   end
 end

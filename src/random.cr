@@ -242,19 +242,28 @@ module Random
     {% end %}
   {% end %}
 
-  # Returns a random `Float64` which is greater than or equal to `0`
+  # Returns a random `Float` which is greater than or equal to `0`
   # and less than *max*.
   #
   # ```
   # Random.new.rand(3.5)    # => 2.88938
   # Random.new.rand(10.725) # => 7.70147
   # ```
-  def rand(max : Float) : Float64
+  def rand(max : Float64) : Float64
     unless max > 0
       raise ArgumentError.new "Invalid bound for rand: #{max}"
     end
     max_prec = 1u64 << 53 # Float64, excluding mantissa, has 2^53 values
     rand(max_prec) / max_prec.to_f64 * max
+  end
+
+  # :ditto:
+  def rand(max : Float32) : Float32
+    unless max > 0
+      raise ArgumentError.new "Invalid bound for rand: #{max}"
+    end
+    max_prec = 1u32 << 24 # Float32, excluding mantissa, has 2^24 values
+    rand(max_prec) / max_prec.to_f32 * max
   end
 
   # Returns a random integer in the given *range*.

@@ -24,6 +24,8 @@ module HTTP
     property http_only : Bool
     property samesite : SameSite?
     property extension : String?
+    property max_age : Time::Span?
+    getter creation_time : Time
 
     def_equals_and_hash name, value, path, expires, domain, secure, http_only, samesite, extension
 
@@ -33,11 +35,13 @@ module HTTP
     def initialize(name : String, value : String, @path : String? = nil,
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool = false, @http_only : Bool = false,
-                   @samesite : SameSite? = nil, @extension : String? = nil)
+                   @samesite : SameSite? = nil, @extension : String? = nil,
+                   @max_age : Time::Span? = nil, @creation_time = Time.utc)
       validate_name(name)
       @name = name
       validate_value(value)
       @value = value
+      raise IO::Error.new("Invalid max_age") if @max_age.try { |max_age| max_age < Time::Span.zero }
     end
 
     # Sets the name of this cookie.
@@ -53,7 +57,7 @@ module HTTP
       name.each_byte do |byte|
         # valid characters for cookie-name per https://tools.ietf.org/html/rfc6265#section-4.1.1
         # and https://tools.ietf.org/html/rfc2616#section-2.2
-        # "!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUWVXYZ^_`abcdefghijklmnopqrstuvwxyz|~"
+        # "!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ^_`abcdefghijklmnopqrstuvwxyz|~"
         unless (0x21...0x7f).includes?(byte) && byte != 0x22 && byte != 0x28 && byte != 0x29 && byte != 0x2c && byte != 0x2f && !(0x3a..0x40).includes?(byte) && !(0x5b..0x5d).includes?(byte) && byte != 0x7b && byte != 0x7d
           raise IO::Error.new("Invalid cookie name")
         end
@@ -81,6 +85,7 @@ module HTTP
     def to_set_cookie_header : String
       path = @path
       expires = @expires
+      max_age = @max_age
       domain = @domain
       samesite = @samesite
       String.build do |header|
@@ -88,6 +93,7 @@ module HTTP
         header << "; domain=#{domain}" if domain
         header << "; path=#{path}" if path
         header << "; expires=#{HTTP.format_time(expires)}" if expires
+        header << "; max-age=#{max_age.to_i}" if max_age
         header << "; Secure" if @secure
         header << "; HttpOnly" if @http_only
         header << "; SameSite=#{samesite}" if samesite
@@ -96,20 +102,35 @@ module HTTP
     end
 
     def to_cookie_header : String
-      String.build do |io|
+      String.build(@name.bytesize + @value.bytesize + 1) do |io|
         to_cookie_header(io)
       end
     end
 
-    def to_cookie_header(io)
+    def to_cookie_header(io) : Nil
       io << @name
       io << '='
       io << @value
     end
 
-    def expired? : Bool
-      if e = expires
-        e <= Time.utc
+    # Returns the expiration time of this cookie.
+    def expiration_time : Time?
+      if max_age = @max_age
+        @creation_time + max_age
+      else
+        @expires
+      end
+    end
+
+    # Returns the expiration status of this cookie as a `Bool`.
+    #
+    # *time_reference* can be passed to use a different reference time for
+    # comparison. Default is the current time (`Time.utc`).
+    def expired?(time_reference = Time.utc) : Bool
+      if @max_age.try &.zero?
+        true
+      elsif expiration_time = self.expiration_time
+        expiration_time <= time_reference
       else
         false
       end
@@ -141,7 +162,7 @@ module HTTP
         SameSiteAV     = /SameSite=(?<samesite>\w+)/i
         SecureAV       = /(?<secure>Secure)/i
         PathAV         = /Path=(?<path>#{PathValue})/i
-        DomainAV       = /Domain=(?<domain>#{DomainValue})/i
+        DomainAV       = /Domain=\.?(?<domain>#{DomainValue})/i
         MaxAgeAV       = /Max-Age=(?<max_age>[0-9]*)/i
         ExpiresAV      = /Expires=(?<expires>#{SaneCookieDate})/i
         CookieAV       = /(?:#{ExpiresAV}|#{MaxAgeAV}|#{DomainAV}|#{PathAV}|#{SecureAV}|#{HttpOnlyAV}|#{SameSiteAV}|#{ExtensionAV})/
@@ -171,11 +192,8 @@ module HTTP
         match = header.match(SetCookieString)
         return unless match
 
-        expires = if max_age = match["max_age"]?
-                    Time.utc + max_age.to_i64.seconds
-                  else
-                    parse_time(match["expires"]?)
-                  end
+        expires = parse_time(match["expires"]?)
+        max_age = match["max_age"]?.try(&.to_i64.seconds)
 
         Cookie.new(
           match["name"], match["value"],
@@ -185,7 +203,8 @@ module HTTP
           secure: match["secure"]? != nil,
           http_only: match["http_only"]? != nil,
           samesite: match["samesite"]?.try { |v| SameSite.parse? v },
-          extension: match["extension"]?
+          extension: match["extension"]?,
+          max_age: max_age,
         )
       end
 

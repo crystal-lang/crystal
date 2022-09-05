@@ -52,18 +52,13 @@ let
   # Hashes obtained using `nix-prefetch-url --unpack <url>`
   latestCrystalBinary = genericBinary ({
     x86_64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.0.0/crystal-1.0.0-1-darwin-x86_64.tar.gz";
-      sha256 = "sha256:1ff05f7v31r7xw4xk1a5zns77k3hrgdb9cn15w2zsps83iqlq81i";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.5.0/crystal-1.5.0-1-darwin-universal.tar.gz";
+      sha256 = "sha256:15h1qg4wa3zbp8p9vkvcqmy7ba1sc995r5z6d0yhx0h7nkgaw607";
     };
 
     x86_64-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.0.0/crystal-1.0.0-1-linux-x86_64.tar.gz";
-      sha256 = "sha256:13940gjs1zl29wrhngzylhckxgzb8xh16bniqik5lslp6qpljqy4";
-    };
-
-    i686-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.0.0/crystal-1.0.0-1-linux-i686.tar.gz";
-      sha256 = "sha256:18xg2nxg68cx0ngidpzy68wa5zqmcz0xfm0im5sg8j8bnj8ccg35";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.5.0/crystal-1.5.0-1-linux-x86_64.tar.gz";
+      sha256 = "sha256:1xp1bbljwbff5zf585bz1cbkcb1whswl4fljakfxr7cbaw31jg9y";
     };
   }.${pkgs.stdenv.system});
 
@@ -92,31 +87,14 @@ let
     };
   }."llvm_${toString llvm}");
 
-  libatomic_ops = builtins.fetchurl {
-    url = "https://github.com/ivmai/libatomic_ops/releases/download/v7.6.10/libatomic_ops-7.6.10.tar.gz";
-    sha256 = "1bwry043f62pc4mgdd37zx3fif19qyrs8f5bw7qxlmkzh5hdyzjq";
-  };
-
   boehmgc = pkgs.stdenv.mkDerivation rec {
     pname = "boehm-gc";
-    version = "8.0.4";
+    version = "8.2.0";
 
     src = builtins.fetchTarball {
       url = "https://github.com/ivmai/bdwgc/releases/download/v${version}/gc-${version}.tar.gz";
-      sha256 = "16ic5dwfw51r5lcl88vx3qrkg3g2iynblazkri3sl9brnqiyzjk7";
+      sha256 = "0f3m27sfc4wssdvk32vivdg64b04ydw0slxm45zdv23qddrihxq4";
     };
-
-    patches = [
-      (pkgs.fetchpatch {
-        url = "https://github.com/ivmai/bdwgc/commit/5668de71107022a316ee967162bc16c10754b9ce.patch";
-        sha256 = "02f0rlxl4fsqk1xiq0pabkhwydnmyiqdik2llygkc6ixhxbii8xw";
-      })
-    ];
-
-    postUnpack = ''
-      mkdir $sourceRoot/libatomic_ops
-      tar -xzf ${libatomic_ops} -C $sourceRoot/libatomic_ops --strip-components 1
-    '';
 
     configureFlags = [
       "--disable-debug"
@@ -142,6 +120,7 @@ pkgs.stdenv.mkDerivation rec {
     latestCrystalBinary
     pkgconfig
     llvm_suite.llvm
+    pkgs.libffi
   ];
 
   LLVM_CONFIG = "${llvm_suite.llvm}/bin/llvm-config";

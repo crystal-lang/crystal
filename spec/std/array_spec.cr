@@ -3,6 +3,40 @@ require "spec/helpers/iterate"
 
 private alias RecursiveArray = Array(RecursiveArray)
 
+private class Spaceship
+  getter value : Float64
+
+  def initialize(@value : Float64, @return_nil = false)
+  end
+
+  def <=>(other : Spaceship)
+    return nil if @return_nil
+
+    value <=> other.value
+  end
+end
+
+private def is_stable_sort(*, mutable, &block)
+  n = 42
+  # [Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(0), ..., Spaceship.new(n - 1)]
+  arr = Array.new(n * 2) { |i| Spaceship.new((i % n).to_f) }
+  # [Spaceship.new(0), Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(n - 1)]
+  expected = Array.new(n * 2) { |i| arr[i % 2 * n + i // 2] }
+
+  if mutable
+    yield arr
+    result = arr
+  else
+    result = yield arr
+    result.should_not eq(arr)
+  end
+
+  result.size.should eq(expected.size)
+  expected.zip(result) do |exp, res|
+    res.should be(exp) # reference-equality is necessary to check sorting is stable.
+  end
+end
+
 describe "Array" do
   describe "new" do
     it "creates with default value" do
@@ -110,11 +144,21 @@ describe "Array" do
     it "does with even larger arrays" do
       ((1..64).to_a - (1..32).to_a).should eq((33..64).to_a)
     end
+
+    context "with different types" do
+      it "small array" do
+        ([1, 2, 3, 'c'] - [2, nil]).should eq [1, 3, 'c']
+      end
+
+      it "big array" do
+        (((1..64).to_a + ['c']) - ((2..63).to_a + [nil])).should eq [1, 64, 'c']
+      end
+    end
   end
 
   it "does *" do
-    (([] of Int32) * 10).empty?.should be_true
-    ([1, 2, 3] * 0).empty?.should be_true
+    (([] of Int32) * 10).should be_empty
+    ([1, 2, 3] * 0).should be_empty
     ([1] * 3).should eq([1, 1, 1])
     ([1, 2, 3] * 3).should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
     ([1, 2] * 10).should eq([1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
@@ -422,6 +466,7 @@ describe "Array" do
   it "find the element by using binary search" do
     [2, 5, 7, 10].bsearch { |x| x >= 4 }.should eq 5
     [2, 5, 7, 10].bsearch { |x| x > 10 }.should be_nil
+    [2, 5, 7, 10].bsearch { |x| x >= 4 ? 1 : nil }.should eq 5
   end
 
   it "find the index by using binary search" do
@@ -662,134 +707,35 @@ describe "Array" do
     a.equals?(d, &f).should be_false
   end
 
-  describe "fill" do
-    it "replaces all values" do
-      a = ['a', 'b', 'c']
-      expected = ['x', 'x', 'x']
-      a.fill('x').should eq(expected)
-      a = [1, 2, 3]
-      expected = [0, 0, 0]
-      a.fill(0).should eq(expected)
-      a = [1.0, 2.0, 3.0]
-      expected = [0, 0, 0]
-      a.fill(0).should eq(expected)
-    end
+  describe "#fill" do
+    it "replaces values in a subrange" do
+      a = [0, 1, 2, 3, 4]
+      a.fill(7).should be(a)
+      a.should eq([7, 7, 7, 7, 7])
 
-    it "replaces only values between index and size" do
-      a = ['a', 'b', 'c']
-      expected = ['x', 'x', 'c']
-      a.fill('x', 0, 2).should eq(expected)
-      a = [1, 2, 3]
-      expected = [0, 0, 3]
-      a.fill(0, 0, 2).should eq(expected)
-      a = [1.0, 2.0, 3.0]
-      expected = [0, 0, 3]
-      a.fill(0, 0, 2).should eq(expected)
-    end
+      a = [0, 1, 2, 3, 4]
+      a.fill(7, 1, 2).should be(a)
+      a.should eq([0, 7, 7, 3, 4])
 
-    it "replaces only values between index and size (2)" do
-      a = ['a', 'b', 'c']
-      expected = ['a', 'x', 'x']
-      a.fill('x', 1, 2).should eq(expected)
-      a = [1, 2, 3]
-      expected = [1, 0, 0]
-      a.fill(0, 1, 2).should eq(expected)
-      a = [1.0, 2.0, 3.0]
-      expected = [1, 0, 0]
-      a.fill(0, 1, 2).should eq(expected)
-    end
+      a = [0, 1, 2, 3, 4]
+      a.fill(7, 2..3).should be(a)
+      a.should eq([0, 1, 7, 7, 4])
 
-    it "replaces all values from index onwards" do
-      a = ['a', 'b', 'c']
-      expected = ['a', 'x', 'x']
-      a.fill('x', -2).should eq(expected)
-      a = [1, 2, 3]
-      expected = [1, 0, 0]
-      a.fill(0, -2).should eq(expected)
-      a = [1.0, 2.0, 3.0]
-      expected = [1, 0, 0]
-      a.fill(0, -2).should eq(expected)
-    end
+      a = [0, 0, 0, 0, 0]
+      a.fill { |i| i + 7 }.should be(a)
+      a.should eq([7, 8, 9, 10, 11])
 
-    it "raises when given big negative number (#4539)" do
-      expect_raises(IndexError) do
-        ['a', 'b', 'c'].fill('x', -4)
-      end
-      expect_raises(IndexError) do
-        [1, 2, 3].fill(0, -4)
-      end
-      expect_raises(IndexError) do
-        [1.0, 2.0, 3.0].fill(0, -4)
-      end
-    end
+      a = [0, 0, 0, 0, 0]
+      a.fill(offset: 2) { |i| i * i }.should be(a)
+      a.should eq([4, 9, 16, 25, 36])
 
-    it "replaces only values between negative index and size" do
-      a = ['a', 'b', 'c']
-      expected = ['a', 'b', 'x']
-      a.fill('x', -1, 1).should eq(expected)
-      a = [1, 2, 3]
-      expected = [1, 2, 0]
-      a.fill(0, -1, 1).should eq(expected)
-      a = [1.0, 2.0, 3.0]
-      expected = [1, 2, 0]
-      a.fill(0, -1, 1).should eq(expected)
-    end
+      a = [0, 0, 0, 0, 0]
+      a.fill(1, 2) { |i| i + 7 }.should be(a)
+      a.should eq([0, 8, 9, 0, 0])
 
-    it "raises when given big negative number in from/count (#4539)" do
-      expect_raises(IndexError) do
-        ['a', 'b', 'c'].fill('x', -4, 1)
-      end
-      expect_raises(IndexError) do
-        [1, 2, 3].fill(0, -4, 1)
-      end
-      expect_raises(IndexError) do
-        [1.0, 2.0, 3.0].fill(0, -4, 1)
-      end
-    end
-
-    it "replaces only values in range" do
-      a = ['a', 'b', 'c']
-      expected = ['x', 'x', 'c']
-      a.fill('x', -3..1).should eq(expected)
-      a = [1, 2, 3]
-      expected = [0, 0, 3]
-      a.fill(0, -3..1).should eq(expected)
-      a = [1.0, 2.0, 3.0]
-      expected = [0, 0, 3]
-      a.fill(0, -3..1).should eq(expected)
-    end
-
-    it "replaces only values in range without end" do
-      a = ['a', 'b', 'c']
-      expected = ['a', 'x', 'x']
-      a.fill('x', 1..nil).should eq(expected)
-      a = [1, 2, 3]
-      expected = [1, 0, 0]
-      a.fill(0, 1..nil).should eq(expected)
-      a = [1.0, 2.0, 3.0]
-      expected = [1, 0, 0]
-      a.fill(0, 1..nil).should eq(expected)
-    end
-
-    it "replaces only values in range begin" do
-      a = ['a', 'b', 'c']
-      expected = ['x', 'x', 'c']
-      a.fill('x', nil..1).should eq(expected)
-      a = [1, 2, 3]
-      expected = [0, 0, 3]
-      a.fill(0, nil..1).should eq(expected)
-      a = [1.0, 2.0, 3.0]
-      expected = [0, 0, 3]
-      a.fill(0, nil..1).should eq(expected)
-    end
-
-    it "works with a block" do
-      a = [3, 6, 9]
-      a.clone.fill { 0 }.should eq([0, 0, 0])
-      a.clone.fill { |i| i }.should eq([0, 1, 2])
-      a.clone.fill(1) { |i| i ** i }.should eq([3, 1, 4])
-      a.clone.fill(1, 1) { |i| i ** i }.should eq([3, 1, 9])
-      a.clone.fill(1..1) { |i| i ** i }.should eq([3, 1, 9])
+      a = [0, 0, 0, 0, 0]
+      a.fill(2..3) { |i| i + 7 }.should be(a)
+      a.should eq([0, 0, 9, 10, 0])
     end
   end
 
@@ -1211,16 +1157,16 @@ describe "Array" do
       a = [1, 2, 3]
       a.shuffle!
       b = [1, 2, 3]
-      3.times { a.includes?(b.shift).should be_true }
+      3.times { a.should contain(b.shift) }
     end
 
     it "shuffle" do
       a = [1, 2, 3]
       b = a.shuffle
-      a.same?(b).should be_false
+      a.should_not be(b)
       a.should eq([1, 2, 3])
 
-      3.times { b.includes?(a.shift).should be_true }
+      3.times { b.should contain(a.shift) }
     end
 
     it "shuffle! with random" do
@@ -1237,64 +1183,100 @@ describe "Array" do
   end
 
   describe "sort" do
-    it "sort without block" do
-      a = [3, 4, 1, 2, 5, 6]
-      b = a.sort
-      b.should eq([1, 2, 3, 4, 5, 6])
-      a.should_not eq(b)
-    end
+    {% for sort in ["sort".id, "unstable_sort".id] %}
+      describe {{ "##{sort}" }} do
+        it "without block" do
+          a = [3, 4, 1, 2, 5, 6]
+          b = a.{{ sort }}
+          b.should eq([1, 2, 3, 4, 5, 6])
+          a.should_not eq(b)
+        end
 
-    it "sort with a block" do
-      a = ["foo", "a", "hello"]
-      b = a.sort { |x, y| x.size <=> y.size }
-      b.should eq(["a", "foo", "hello"])
-      a.should_not eq(b)
-    end
-  end
+        it "with a block" do
+          a = ["foo", "a", "hello"]
+          b = a.{{ sort }} { |x, y| x.size <=> y.size }
+          b.should eq(["a", "foo", "hello"])
+          a.should_not eq(b)
+        end
 
-  describe "sort!" do
-    it "sort! without block" do
-      a = [3, 4, 1, 2, 5, 6]
-      a.sort!
-      a.should eq([1, 2, 3, 4, 5, 6])
-    end
+        {% if sort == "sort" %}
+          it "stable sort without a block" do
+            is_stable_sort(mutable: false, &.sort)
+          end
 
-    it "sort! with a block" do
-      a = ["foo", "a", "hello"]
-      a.sort! { |x, y| x.size <=> y.size }
-      a.should eq(["a", "foo", "hello"])
-    end
-  end
+          it "stable sort with a block" do
+            is_stable_sort(mutable: false, &.sort { |a, b| a.value <=> b.value })
+          end
+        {% end %}
+      end
 
-  describe "sort_by" do
-    it "sorts by" do
-      a = ["foo", "a", "hello"]
-      b = a.sort_by &.size
-      b.should eq(["a", "foo", "hello"])
-      a.should_not eq(b)
-    end
+      describe {{ "##{sort}!" }} do
+        it "without block" do
+          a = [3, 4, 1, 2, 5, 6]
+          a.{{ sort.id }}!
+          a.should eq([1, 2, 3, 4, 5, 6])
+        end
 
-    it "unpacks tuple" do
-      a = [{"d", 4}, {"a", 1}, {"c", 3}, {"e", 5}, {"b", 2}]
-      b = a.sort_by { |x, y| y }
-      b.should eq([{"a", 1}, {"b", 2}, {"c", 3}, {"d", 4}, {"e", 5}])
-      a.should_not eq(b)
-    end
-  end
+        it "with a block" do
+          a = ["foo", "a", "hello"]
+          a.{{ sort.id }}! { |x, y| x.size <=> y.size }
+          a.should eq(["a", "foo", "hello"])
+        end
 
-  describe "sort_by!" do
-    it "sorts by!" do
-      a = ["foo", "a", "hello"]
-      a.sort_by! &.size
-      a.should eq(["a", "foo", "hello"])
-    end
+        {% if sort == "sort" %}
+          it "stable sort without a block" do
+            is_stable_sort(mutable: true, &.sort!)
+          end
 
-    it "calls given block exactly once for each element" do
-      calls = Hash(String, Int32).new(0)
-      a = ["foo", "a", "hello"]
-      a.sort_by! { |e| calls[e] += 1; e.size }
-      calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
-    end
+          it "stable sort with a block" do
+            is_stable_sort(mutable: true, &.sort! { |a, b| a.value <=> b.value })
+          end
+        {% end %}
+      end
+
+      describe {{ "##{sort}_by" }} do
+        it "sorts" do
+          a = ["foo", "a", "hello"]
+          b = a.{{ sort }}_by(&.size)
+          b.should eq(["a", "foo", "hello"])
+          a.should_not eq(b)
+        end
+
+        it "unpacks tuple" do
+          a = [{"d", 4}, {"a", 1}, {"c", 3}, {"e", 5}, {"b", 2}]
+          b = a.{{ sort }}_by { |x, y| y }
+          b.should eq([{"a", 1}, {"b", 2}, {"c", 3}, {"d", 4}, {"e", 5}])
+          a.should_not eq(b)
+        end
+
+        {% if sort == "sort" %}
+          it "stable sort" do
+            is_stable_sort(mutable: false, &.sort_by(&.value))
+          end
+        {% end %}
+      end
+
+      describe {{ "##{sort}_by!" }} do
+        it "sorts" do
+          a = ["foo", "a", "hello"]
+          a.{{ sort }}_by!(&.size)
+          a.should eq(["a", "foo", "hello"])
+        end
+
+        it "calls given block exactly once for each element" do
+          calls = Hash(String, Int32).new(0)
+          a = ["foo", "a", "hello"]
+          a.{{ sort }}_by! { |e| calls[e] += 1; e.size }
+          calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+        end
+
+        {% if sort == "sort" %}
+          it "stable sort" do
+            is_stable_sort(mutable: true, &.sort_by!(&.value))
+          end
+        {% end %}
+      end
+    {% end %}
   end
 
   describe "swap" do
@@ -1347,7 +1329,7 @@ describe "Array" do
     it "truncates with index and count == 0" do
       a = [0, 1, 4, 9, 16, 25]
       a.truncate(2, 0).should be(a)
-      a.empty?.should be_true
+      a.should be_empty
     end
 
     it "truncates with index and count, not enough elements" do
@@ -1359,7 +1341,7 @@ describe "Array" do
     it "truncates with index == size and count" do
       a = [0, 1, 4, 9, 16, 25]
       a.truncate(6, 1).should be(a)
-      a.empty?.should be_true
+      a.should be_empty
     end
 
     it "truncates with index < 0 and count" do
@@ -1394,21 +1376,21 @@ describe "Array" do
       a = [1, 2, 2, 3, 1, 4, 5, 3]
       b = a.uniq
       b.should eq([1, 2, 3, 4, 5])
-      a.same?(b).should be_false
+      a.should_not be(b)
     end
 
     it "uniqs with block" do
       a = [-1, 1, 0, 2, -2]
       b = a.uniq &.abs
       b.should eq([-1, 0, 2])
-      a.same?(b).should be_false
+      a.should_not be(b)
     end
 
     it "uniqs with true" do
       a = [1, 2, 3]
       b = a.uniq { true }
       b.should eq([1])
-      a.same?(b).should be_false
+      a.should_not be(b)
     end
 
     it "uniqs large array" do
@@ -1524,6 +1506,14 @@ describe "Array" do
         a.clear
       end
       a.@capacity.should eq(3)
+    end
+
+    it "unshift of large array does not corrupt elements" do
+      a = Array.new(300, &.itself)
+      a.@capacity.should eq(300)
+      a.unshift 1
+      a.@capacity.should be > 300
+      a[-1].should eq(299)
     end
   end
 
@@ -1845,25 +1835,34 @@ describe "Array" do
 
     it "transposes empty array" do
       e = [] of Array(Int32)
-      e.transpose.empty?.should be_true
-      [e].transpose.empty?.should be_true
-      [e, e, e].transpose.empty?.should be_true
+      e.transpose.should be_empty
+      [e].transpose.should be_empty
+      [e, e, e].transpose.should be_empty
     end
 
     it "raises IndexError error when size of element is invalid" do
       expect_raises(IndexError) { [[1], [1, 2]].transpose }
       expect_raises(IndexError) { [[1, 2], [1]].transpose }
     end
+
+    it "transposes array of tuples" do
+      [{1, 1.0}].transpose.should eq([[1], [1.0]])
+      [{1}, {1.0}].transpose.should eq([[1, 1.0]])
+      [{1, 1.0}, {'a', "aaa"}].transpose.should eq([[1, 'a'], [1.0, "aaa"]])
+
+      typeof([{1, 1.0}].transpose).should eq(Array(Array(Int32 | Float64)))
+      typeof([{1}, {1.0}].transpose).should eq(Array(Array(Int32 | Float64)))
+      typeof([{1, 1.0}, {'a', "aaa"}].transpose).should eq(Array(Array(String | Int32 | Float64 | Char)))
+    end
   end
 
   describe "rotate" do
     it "rotate!" do
       a = [1, 2, 3]
-      a.rotate!; a.should eq([2, 3, 1])
-      a.rotate!; a.should eq([3, 1, 2])
-      a.rotate!; a.should eq([1, 2, 3])
-      a.rotate!; a.should eq([2, 3, 1])
-      a.rotate!.should eq(a)
+      a.rotate!.should be(a); a.should eq([2, 3, 1])
+      a.rotate!.should be(a); a.should eq([3, 1, 2])
+      a.rotate!.should be(a); a.should eq([1, 2, 3])
+      a.rotate!.should be(a); a.should eq([2, 3, 1])
     end
 
     it "rotate" do
@@ -2058,6 +2057,32 @@ describe "Array" do
 
     expect_raises(ArgumentError, "Attempt to skip negative size") do
       ary.skip(-1)
+    end
+  end
+
+  describe "capacity re-sizing" do
+    it "initializes an array capacity to INITIAL_CAPACITY" do
+      a = [] of Int32
+      a.push(1)
+      a.@capacity.should eq(3)
+    end
+
+    it "doubles capacity for arrays smaller than CAPACITY_THRESHOLD" do
+      a = Array.new(255, 1)
+      a.push(1)
+      a.@capacity.should eq(255 * 2)
+    end
+
+    it "uses slow growth heuristic for arrays larger than CAPACITY_THRESHOLD" do
+      a = Array.new(512, 1)
+      a.push(1)
+      # ~63% larger
+      a.@capacity.should eq(832)
+
+      b = Array.new(4096, 1)
+      b.push(1)
+      # ~30% larger, starts converging toward 25%
+      b.@capacity.should eq(5312)
     end
   end
 end
