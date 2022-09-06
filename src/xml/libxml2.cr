@@ -315,10 +315,10 @@ lib LibXML
 end
 
 LibXML.xmlGcMemSetup(
-  ->(ptr) { GC.free(ptr) },
-  ->(size) { GC.malloc(size) },
-  ->(size) { GC.malloc(size) },
-  ->(ptr, size) { GC.realloc(ptr, size) },
+  ->(ptr) { LibC.free(ptr) },
+  ->(size) { LibC.malloc(size) },
+  ->(size) { LibC.malloc(size) },
+  ->(ptr, size) { LibC.realloc(ptr, size) },
   ->(str) {
     len = LibC.strlen(str) + 1
     copy = Pointer(UInt8).malloc(len)
