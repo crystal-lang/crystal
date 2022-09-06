@@ -68,7 +68,7 @@ module Crystal
     end
   end
 
-  class RechableVisitor < Visitor
+  class ReachableVisitor < Visitor
     @visited_typed_defs : Set(Def)
 
     def initialize(@context_visitor : Crystal::ContextVisitor)
@@ -154,7 +154,7 @@ module Crystal
 
         if @def_with_yield
           @context = Hash(String, Type).new
-          result.node.accept(RechableVisitor.new(self))
+          result.node.accept(ReachableVisitor.new(self))
         end
 
         # TODO should apply only if user is really in some of the nodes of the main expressions

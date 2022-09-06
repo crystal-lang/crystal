@@ -130,5 +130,11 @@ module LLVM
     string
   end
 
+  {% unless LibLLVM::IS_LT_130 %}
+    def self.run_passes(module mod : Module, passes : String, target_machine : TargetMachine, options : PassBuilderOptions)
+      LibLLVM.run_passes(mod, passes, target_machine, options)
+    end
+  {% end %}
+
   DEBUG_METADATA_VERSION = 3
 end

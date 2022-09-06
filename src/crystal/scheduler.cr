@@ -107,7 +107,7 @@ class Crystal::Scheduler
     current, @current = @current, fiber
 
     {% if flag?(:interpreted) %}
-      # TODO: ideally we could set this in the interprter if the
+      # TODO: ideally we could set this in the interpreter if the
       # @context had a pointer back to the fiber.
       # I also wonder why this isn't done always like that instead of in asm.
       current.@context.resumable = 1
@@ -136,11 +136,7 @@ class Crystal::Scheduler
 
   private def fatal_resume_error(fiber, message)
     Crystal::System.print_error "\nFATAL: #{message}: #{fiber}\n"
-    {% unless flag?(:win32) %}
-      # FIXME: Enable when caller is supported on win32
-      caller.each { |line| Crystal::System.print_error "  from #{line}\n" }
-    {% end %}
-
+    caller.each { |line| Crystal::System.print_error "  from #{line}\n" }
     exit 1
   end
 

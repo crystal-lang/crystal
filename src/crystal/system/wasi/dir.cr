@@ -64,6 +64,10 @@ module Crystal::System::Dir
     dir.end_pos = dir.pos = dir.buf.size.to_u32
   end
 
+  def self.info(dir, path) : ::File::Info
+    Crystal::System::FileDescriptor.system_info dir.fd
+  end
+
   def self.close(dir, path) : Nil
     err = LibWasi.fd_close(dir.fd)
     raise ::File::Error.from_os_error("Error closing directory", err, file: path) unless err.success?
@@ -98,8 +102,12 @@ module Crystal::System::Dir
     end
   end
 
-  def self.delete(path : String) : Nil
-    if LibC.rmdir(path.check_no_null_byte) == -1
+  def self.delete(path : String, raise_on_missing : Bool) : Bool
+    return true if LibC.rmdir(path.check_no_null_byte) == 0
+
+    if !raise_on_missing && Errno.value == Errno::ENOENT
+      false
+    else
       raise ::File::Error.from_errno("Unable to remove directory", file: path)
     end
   end

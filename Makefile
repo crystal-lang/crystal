@@ -25,6 +25,7 @@ verbose ?=      ## Run specs in verbose mode
 junit_output ?= ## Path to output junit results
 static ?=       ## Enable static linking
 interpreter ?=  ## Enable interpreter feature
+check ?=        ## Enable only check when running format
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
@@ -78,23 +79,6 @@ check_llvm_config = $(eval \
 .PHONY: all
 all: crystal ## Build all files (currently crystal only) [default]
 
-.PHONY: help
-help: ## Show this help
-	@echo
-	@printf '\033[34mtargets:\033[0m\n'
-	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) |\
-		sort |\
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
-	@echo
-	@printf '\033[34moptional variables:\033[0m\n'
-	@grep -hE '^[a-zA-Z_-]+ \?=.*?## .*$$' $(MAKEFILE_LIST) |\
-		sort |\
-		awk 'BEGIN {FS = " \\?=.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
-	@echo
-	@printf '\033[34mrecipes:\033[0m\n'
-	@grep -hE '^##.*$$' $(MAKEFILE_LIST) |\
-		awk 'BEGIN {FS = "## "}; /^## [a-zA-Z_-]/ {printf "  \033[36m%s\033[0m\n", $$2}; /^##  / {printf "  %s\n", $$2}'
-
 .PHONY: spec
 spec: $(O)/all_spec ## Run all specs
 	$(O)/all_spec $(SPEC_FLAGS)
@@ -111,11 +95,12 @@ compiler_spec: $(O)/compiler_spec ## Run compiler specs
 primitives_spec: $(O)/primitives_spec ## Run primitives specs
 	$(O)/primitives_spec $(SPEC_FLAGS)
 
-.PHONY: smoke_test ## Build specs as a smoke test
+.PHONY: smoke_test
+smoke_test: ## Build specs as a smoke test
 smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal
 
-.PHONY: samples ## Build example programs
-samples:
+.PHONY: samples
+samples: ## Build example programs
 	$(MAKE) -C samples
 
 .PHONY: docs
@@ -129,6 +114,10 @@ crystal: $(O)/crystal ## Build the compiler
 .PHONY: deps llvm_ext
 deps: $(DEPS) ## Build dependencies
 llvm_ext: $(LLVM_EXT_OBJ)
+
+.PHONY: format
+format: ## Format sources
+	./bin/crystal tool format$(if $(check), --check) src spec samples
 
 .PHONY: install
 install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
@@ -148,6 +137,8 @@ install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -m 644 etc/completion.bash "$(DESTDIR)$(PREFIX)/share/bash-completion/completions/crystal"
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(PREFIX)/share/zsh/site-functions/"
 	$(INSTALL) -m 644 etc/completion.zsh "$(DESTDIR)$(PREFIX)/share/zsh/site-functions/_crystal"
+	$(INSTALL) -d -m 0755 "$(DESTDIR)$(PREFIX)/share/fish/vendor_completions.d/"
+	$(INSTALL) -m 644 etc/completion.fish "$(DESTDIR)$(PREFIX)/share/fish/vendor_completions.d/crystal.fish"
 
 .PHONY: uninstall
 uninstall: ## Uninstall the compiler from DESTDIR
@@ -216,3 +207,20 @@ clean_crystal: ## Clean up crystal built files
 .PHONY: clean_cache
 clean_cache: ## Clean up CRYSTAL_CACHE_DIR files
 	rm -rf $(shell ./bin/crystal env CRYSTAL_CACHE_DIR)
+
+.PHONY: help
+help: ## Show this help
+	@echo
+	@printf '\033[34mtargets:\033[0m\n'
+	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) |\
+		sort |\
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo
+	@printf '\033[34moptional variables:\033[0m\n'
+	@grep -hE '^[a-zA-Z_-]+ \?=.*?## .*$$' $(MAKEFILE_LIST) |\
+		sort |\
+		awk 'BEGIN {FS = " \\?=.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo
+	@printf '\033[34mrecipes:\033[0m\n'
+	@grep -hE '^##.*$$' $(MAKEFILE_LIST) |\
+		awk 'BEGIN {FS = "## "}; /^## [a-zA-Z_-]/ {printf "  \033[36m%s\033[0m\n", $$2}; /^##  / {printf "  %s\n", $$2}'

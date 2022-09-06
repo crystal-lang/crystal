@@ -183,8 +183,8 @@ class Crystal::CodeGenVisitor
           # If the rescue restriction matches, codegen the rescue block.
           position_at_end this_rescue_block
 
-          # On windows, we are "inside" the catchpad block. It's difficult to track when to catchret when
-          # codegenning the entire rescue body, so we catchret early and execute the rescue bodies "outside" the
+          # On windows, we are "inside" the catchpad block. It's difficult to track when to catch_ret when
+          # codegenning the entire rescue body, so we catch_ret early and execute the rescue bodies "outside" the
           # rescue block.
           if catch_pad = @catch_pad
             catch_ret_target_block = new_block "this_rescue_target"

@@ -41,15 +41,29 @@ class Crystal::EventLoop
     next_event = @@queue.min_by { |e| e.wake_at }
 
     if next_event
-      sleep_time = next_event.wake_at - Time.monotonic
+      now = Time.monotonic
 
-      if sleep_time > Time::Span.zero
-        LibC.Sleep(sleep_time.total_milliseconds)
+      if next_event.wake_at > now
+        sleep_time = next_event.wake_at - now
+        timed_out = IO::Overlapped.wait_queued_completions(sleep_time.total_milliseconds) do |fiber|
+          Crystal::Scheduler.enqueue fiber
+        end
+
+        return unless timed_out
       end
 
       dequeue next_event
 
-      Crystal::Scheduler.enqueue next_event.fiber
+      fiber = next_event.fiber
+
+      unless fiber.dead?
+        if next_event.timeout? && (select_action = fiber.timeout_select_action)
+          fiber.timeout_select_action = nil
+          select_action.time_expired(fiber)
+        else
+          Crystal::Scheduler.enqueue fiber
+        end
+      end
     else
       Crystal::System.print_error "Warning: No runnables in scheduler. Exiting program.\n"
       ::exit
@@ -84,14 +98,18 @@ class Crystal::EventLoop
   def self.create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
     Crystal::IocpEvent.new(Fiber.current)
   end
+
+  def self.create_timeout_event(fiber)
+    Crystal::Event.new(fiber, timeout: true)
+  end
 end
 
 struct Crystal::IocpEvent < Crystal::Event
   getter fiber
   getter wake_at
+  getter? timeout
 
-  def initialize(@fiber : Fiber)
-    @wake_at = Time.monotonic
+  def initialize(@fiber : Fiber, @wake_at = Time.monotonic, *, @timeout = false)
   end
 
   # Frees the event
@@ -99,6 +117,10 @@ struct Crystal::IocpEvent < Crystal::Event
     Crystal::EventLoop.dequeue(self)
   end
 
+  def delete
+    free
+  end
+  
   def add(time_span : Time::Span?) : Nil
     @wake_at = time_span ? Time.monotonic + time_span : Time.monotonic
     Crystal::EventLoop.enqueue(self)

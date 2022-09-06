@@ -6,85 +6,39 @@ class Crystal::Repl
   def initialize
     @program = Program.new
     @context = Context.new(@program)
-    @nest = 0
-    @incomplete = false
     @line_number = 1
     @main_visitor = MainVisitor.new(@program)
 
     @interpreter = Interpreter.new(@context)
-
-    @buffer = ""
   end
 
   def run
     load_prelude
 
-    while true
-      prompt = String.build do |io|
-        io.print "icr:#{@line_number}:#{@nest}"
-        io.print(@incomplete ? '*' : '>')
-        io.print ' '
-        io.print "  " * @nest if @nest > 0
-      end
+    prompt = Prompt.new(@context, show_nest: true)
 
-      print prompt
-      line = gets
-      unless line
+    while true
+      input = prompt.prompt("icr:#{prompt.line_number}")
+      unless input
         # Explicitly call exit on ctrl+D so at_exit handlers run
         interpret_exit
         break
       end
 
-      new_buffer =
-        if @buffer.empty?
-          line
-        else
-          "#{@buffer}\n#{line}"
-        end
-
-      if new_buffer.blank?
-        @line_number += 1
+      if input.blank?
+        prompt.line_number += 1
         next
       end
 
-      parser = Parser.new(
-        new_buffer,
-        string_pool: @program.string_pool,
-        var_scopes: [@interpreter.local_vars.names_at_block_level_zero.to_set]
+      node = prompt.parse(
+        input: input,
+        var_scopes: [@interpreter.local_vars.names_at_block_level_zero.to_set],
       )
-
-      begin
-        node = parser.parse
-      rescue ex : Crystal::SyntaxException
-        # TODO: improve this
-        if ex.message.in?("unexpected token: EOF", "expecting identifier 'end', not 'EOF'")
-          @nest = parser.type_nest + parser.def_nest + parser.fun_nest
-          @buffer = new_buffer
-          @line_number += 1
-          @incomplete = @nest == 0
-        elsif ex.message == "expecting token ']', not 'EOF'"
-          @nest = parser.type_nest + parser.def_nest + parser.fun_nest
-          @buffer = new_buffer
-          @line_number += 1
-          @incomplete = true
-        else
-          puts "Error: #{ex.message}"
-          @nest = 0
-          @buffer = ""
-          @incomplete = false
-        end
-        next
-      else
-        @nest = 0
-        @buffer = ""
-        @line_number += 1
-      end
+      next unless node
 
       begin
         value = interpret(node)
-
-        print "=> "
-        puts value
+        prompt.display(value)
       rescue ex : EscapingException
         @nest = 0
         @buffer = ""
@@ -173,9 +127,12 @@ class Crystal::Repl
   end
 
   private def parse_code(code, filename = "")
-    parser = Parser.new code, @program.string_pool
+    warnings = @program.warnings.dup
+    warnings.infos = [] of String
+    parser = Parser.new code, @program.string_pool, warnings: warnings
     parser.filename = filename
     parsed_nodes = parser.parse
+    warnings.report(STDOUT)
     @program.normalize(parsed_nodes, inside_exp: false)
   end
 
@@ -185,7 +142,7 @@ class Crystal::Repl
 
   private def interpret_crystal_exit(exception : EscapingException)
     decl = UninitializedVar.new(Var.new("ex"), TypeNode.new(@context.program.exception.virtual_type))
-    call = Call.new(Path.global("Crystal"), "exit", [NumberLiteral.new(1), Var.new("ex")] of ASTNode)
+    call = Call.new(Path.global("Crystal"), "exit", NumberLiteral.new(1), Var.new("ex"))
     exps = Expressions.new([decl, call] of ASTNode)
 
     begin

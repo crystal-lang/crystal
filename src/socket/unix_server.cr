@@ -81,7 +81,7 @@ class UNIXServer < UNIXSocket
     super()
   ensure
     if delete && (path = @path)
-      File.delete(path) if File.exists?(path)
+      File.delete?(path)
       @path = nil
     end
   end

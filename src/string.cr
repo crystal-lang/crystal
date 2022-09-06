@@ -256,7 +256,7 @@ class String
 
     # Try to reclaim some memory if capacity is bigger than what was requested
     if bytesize < capacity
-      str = str.realloc(bytesize.to_u32 + HEADER_SIZE + 1)
+      str = GC.realloc(str, bytesize.to_u32 + HEADER_SIZE + 1)
     end
 
     str_header = str.as({Int32, Int32, Int32}*)
@@ -459,7 +459,7 @@ class String
 
   # Same as `#to_i` but returns an `Int64` or the block's value.
   def to_i64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ Int64, UInt64, 9223372036854775807, 9223372036854775808
+    gen_to_ Int64, UInt64, 9223372036854775807, 9223372036854775808u64
   end
 
   # Same as `#to_i` but returns an `UInt64`.
@@ -1152,7 +1152,7 @@ class String
 
   # Returns a new string built from *count* bytes starting at *start* byte.
   #
-  # *start* can can be negative to start counting
+  # *start* can be negative to start counting
   # from the end of the string.
   # If *count* is bigger than the number of bytes from *start* to `#bytesize`,
   # only remaining bytes are returned.
@@ -1212,7 +1212,7 @@ class String
 
   # Returns a substring starting from the *start* byte.
   #
-  # *start* can can be negative to start counting
+  # *start* can be negative to start counting
   # from the end of the string.
   #
   # This method should be avoided,
@@ -1316,7 +1316,8 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
+          byte = to_unsafe[i]
+          buffer[i] = 'A'.ord <= byte <= 'Z'.ord ? byte + 32 : byte
         end
         {@bytesize, @length}
       end
@@ -1351,7 +1352,8 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
+          byte = to_unsafe[i]
+          buffer[i] = 'a'.ord <= byte <= 'z'.ord ? byte - 32 : byte
         end
         {@bytesize, @length}
       end
@@ -1387,13 +1389,15 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          byte = if i.zero?
-                   to_unsafe[i].unsafe_chr.upcase.ord.to_u8
-                 else
-                   to_unsafe[i].unsafe_chr.downcase.ord.to_u8
-                 end
+          byte = to_unsafe[i]
 
-          buffer[i] = byte
+          buffer[i] = if byte >= 0x80
+                        byte
+                      elsif i.zero?
+                        byte.unsafe_chr.upcase.ord.to_u8!
+                      else
+                        byte.unsafe_chr.downcase.ord.to_u8!
+                      end
         end
         {@bytesize, @length}
       end
@@ -1435,10 +1439,16 @@ class String
 
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          char = to_unsafe[i].unsafe_chr
-          replaced_char = upcase_next ? char.upcase : char.downcase
-          buffer[i] = replaced_char.ord.to_u8
-          upcase_next = char.whitespace?
+          byte = to_unsafe[i]
+          if byte < 0x80
+            char = byte.unsafe_chr
+            replaced_char = upcase_next ? char.upcase : char.downcase
+            buffer[i] = replaced_char.ord.to_u8!
+            upcase_next = char.ascii_whitespace?
+          else
+            buffer[i] = byte
+            upcase_next = false
+          end
         end
         {@bytesize, @length}
       end
@@ -1461,6 +1471,77 @@ class String
       replaced_char = upcase_next ? char.upcase(options) : char.downcase(options)
       io << replaced_char
       upcase_next = char.whitespace?
+    end
+  end
+
+  # Returns the result of normalizing this `String` according to the given
+  # [Unicode normalization form](https://unicode.org/reports/tr15/).
+  #
+  # ```
+  # str = "\u{1E9B}\u{0323}"                # => "ẛ̣"
+  # str.unicode_normalize.codepoints        # => [0x1E9B, 0x0323]
+  # str.unicode_normalize(:nfd).codepoints  # => [0x017F, 0x0323, 0x0307]
+  # str.unicode_normalize(:nfkc).codepoints # => [0x1E69]
+  # str.unicode_normalize(:nfkd).codepoints # => [0x0073, 0x0323, 0x0307]
+  # ```
+  def unicode_normalize(form : Unicode::NormalizationForm = :nfc) : String
+    return self if Unicode.quick_check_normalized(self, form).yes?
+    String.build { |io| do_unicode_normalize(io, form) }
+  end
+
+  # Normalizes this `String` according to the given
+  # [Unicode normalization form](https://unicode.org/reports/tr15/) and
+  # writes the result to the given *io*.
+  def unicode_normalize(io : IO, form : Unicode::NormalizationForm = :nfc) : Nil
+    return io << self if Unicode.quick_check_normalized(self, form).yes?
+    do_unicode_normalize(io, form)
+  end
+
+  private def do_unicode_normalize(io, form)
+    # the maximum number of code points after any normalization is `3 * size` as
+    # required by the Unicode standard; allow a single reallocation as the
+    # majority of strings have only few characters that aren't normalized
+    codepoints = Array(Int32).new((size * 3 + 1) // 2)
+
+    each_char do |char|
+      case form
+      in .nfc?, .nfd?
+        Unicode.canonical_decompose(codepoints, char)
+      in .nfkc?, .nfkd?
+        Unicode.compatibility_decompose(codepoints, char)
+      end
+    end
+
+    Unicode.canonical_order!(codepoints)
+
+    case form
+    in .nfc?, .nfkc?
+      Unicode.canonical_compose!(codepoints) { |char| io << char }
+    in .nfd?, .nfkd?
+      codepoints.each { |codepoint| io << codepoint.unsafe_chr }
+    end
+  end
+
+  # Returns whether this `String` is in the given
+  # [Unicode normalization form](https://unicode.org/reports/tr15/).
+  #
+  # ```
+  # foo = "\u{00E0}"              # => "à"
+  # foo.unicode_normalized?       # => true
+  # foo.unicode_normalized?(:nfd) # => false
+  #
+  # bar = "\u{0061}\u{0300}"      # => "à"
+  # bar.unicode_normalized?       # => false
+  # bar.unicode_normalized?(:nfd) # => true
+  # ```
+  def unicode_normalized?(form : Unicode::NormalizationForm = :nfc) : Bool
+    case Unicode.quick_check_normalized(self, form)
+    in .yes?
+      true
+    in .no?
+      false
+    in .maybe?
+      self == String.build { |io| do_unicode_normalize(io, form) }
     end
   end
 
@@ -1672,6 +1753,14 @@ class String
         end
         io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
       end
+
+      outbuf_ptr = outbuf.to_unsafe
+      outbytesleft = LibC::SizeT.new(outbuf.size)
+      err = iconv.convert(Pointer(UInt8*).null, Pointer(LibC::SizeT).null, pointerof(outbuf_ptr), pointerof(outbytesleft))
+      if err == Crystal::Iconv::ERROR
+        iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
+      end
+      io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
     end
   end
 
@@ -2874,8 +2963,11 @@ class String
   end
 
   # Returns `true` if this string is equal to `*other*.
+  #
   # Comparison is done byte-per-byte: if a byte is different from the corresponding
-  # byte, `false` is returned and so on.
+  # byte, `false` is returned and so on. This means two strings containing invalid
+  # UTF-8 byte sequences may compare unequal, even when they both produce the
+  # Unicode replacement character at the same string indices.
   #
   # See `#compare` for more comparison options.
   def ==(other : self) : Bool
@@ -2889,8 +2981,10 @@ class String
   # Compares this string with *other*, returning `-1`, `0` or `1` depending on whether
   # this string is less, equal or greater than *other*.
   #
-  # Comparison is done byte-per-byte: if a byte is less then the other corresponding
-  # byte, `-1` is returned and so on.
+  # Comparison is done byte-per-byte: if a byte is less than the other corresponding
+  # byte, `-1` is returned and so on. This means two strings containing invalid
+  # UTF-8 byte sequences may compare unequal, even when they both produce the
+  # Unicode replacement character at the same string indices.
   #
   # If the strings are of different lengths, and the strings are equal when compared
   # up to the shortest length, then the longer string is considered greater than
@@ -2914,6 +3008,9 @@ class String
   # this string is less, equal or greater than *other*, optionally in a *case_insensitive*
   # manner.
   #
+  # Case-sensitive comparisons (`case_insensitive == false`) are equivalent to
+  # `#<=>` and are always done byte-per-byte.
+  #
   # ```
   # "abcdef".compare("abcde")   # => 1
   # "abcdef".compare("abcdef")  # => 0
@@ -2936,11 +3033,17 @@ class String
         byte2 = other.to_unsafe[position]
 
         # Lowercase both bytes
+        # Also reject any invalid code units
         if 65 <= byte1 <= 90
           byte1 += 32
+        elsif byte1 >= 0x80
+          return 1 if byte2 < 0x80
         end
+
         if 65 <= byte2 <= 90
           byte2 += 32
+        elsif byte2 >= 0x80
+          return byte1 < 0x80 ? -1 : 0
         end
 
         comparison = byte1 <=> byte2
@@ -4829,7 +4932,8 @@ class String
     return false unless bytesize > 0
 
     if char.ascii? || single_byte_optimizable?
-      return to_unsafe[bytesize - 1] == char.ord
+      byte = to_unsafe[bytesize - 1]
+      return byte < 0x80 ? byte == char.ord : char == Char::REPLACEMENT
     end
 
     bytes, count = String.char_bytes_and_bytesize(char)
@@ -4913,12 +5017,7 @@ class String
   # Returns `true` if this String is encoded correctly
   # according to the UTF-8 encoding.
   def valid_encoding? : Bool
-    reader = Char::Reader.new(self)
-    while reader.has_next?
-      return false if reader.error
-      reader.next_char
-    end
-    true
+    Unicode.valid?(to_slice)
   end
 
   # Returns a String where bytes that are invalid in the

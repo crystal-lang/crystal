@@ -55,9 +55,7 @@ require "intrinsics"
 require "io"
 require "kernel"
 require "math/math"
-{% unless flag?(:win32) %}
-  require "mutex"
-{% end %}
+require "mutex"
 require "named_tuple"
 require "nil"
 require "humanize"

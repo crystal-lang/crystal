@@ -1,6 +1,7 @@
 require "./spec_helper"
 require "big"
 require "spec/helpers/iterate"
+require "../support/number"
 
 private macro it_converts_to_s(num, str, **opts)
   it {{ "converts #{num} to #{str}" }} do
@@ -377,6 +378,50 @@ describe "Int" do
     it { (8000 << 2).should eq(32000) }
     it { (8000 << 32).should eq(0) }
     it { (8000 << -1).should eq(4000) }
+  end
+
+  describe "#rotate_left" do
+    it { 0x87654321_u32.rotate_left(1).should eq(0x0ECA8643_u32) }
+    it { 0x87654321_u32.rotate_left(2).should eq(0x1D950C86_u32) }
+    it { 0x87654321_u32.rotate_left(-1).should eq(0xC3B2A190_u32) }
+    it { 0x87654321_u32.rotate_left(-2).should eq(0x61D950C8_u32) }
+    it { 0x87654321_u32.rotate_left(32).should eq(0x87654321_u32) }
+
+    it { -0x789ABCDF.rotate_left(1).should eq(0x0ECA8643) }
+    it { -0x789ABCDF.rotate_left(2).should eq(0x1D950C86) }
+    it { -0x789ABCDF.rotate_left(-1).should eq(-0x3C4D5E70) }
+    it { -0x789ABCDF.rotate_left(-2).should eq(0x61D950C8) }
+    it { -0x789ABCDF.rotate_left(32).should eq(-0x789ABCDF) }
+
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it do
+        x = ({{ int }}.new(1) << (sizeof({{ int }}) * 8 - 1)).rotate_left(1)
+        x.should be_a({{ int }})
+        x.should eq({{ int }}.new(1))
+      end
+    {% end %}
+  end
+
+  describe "#rotate_right" do
+    it { 0x87654321_u32.rotate_right(1).should eq(0xC3B2A190_u32) }
+    it { 0x87654321_u32.rotate_right(2).should eq(0x61D950C8_u32) }
+    it { 0x87654321_u32.rotate_right(-1).should eq(0x0ECA8643_u32) }
+    it { 0x87654321_u32.rotate_right(-2).should eq(0x1D950C86_u32) }
+    it { 0x87654321_u32.rotate_right(32).should eq(0x87654321_u32) }
+
+    it { -0x789ABCDF.rotate_right(1).should eq(-0x3C4D5E70) }
+    it { -0x789ABCDF.rotate_right(2).should eq(0x61D950C8) }
+    it { -0x789ABCDF.rotate_right(-1).should eq(0x0ECA8643) }
+    it { -0x789ABCDF.rotate_right(-2).should eq(0x1D950C86) }
+    it { -0x789ABCDF.rotate_right(32).should eq(-0x789ABCDF) }
+
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it do
+        x = {{ int }}.new(1).rotate_right(1)
+        x.should be_a({{ int }})
+        x.should eq({{ int }}.new(1) << (sizeof({{ int }}) * 8 - 1))
+      end
+    {% end %}
   end
 
   describe "to" do
