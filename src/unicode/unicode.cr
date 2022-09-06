@@ -23,6 +23,29 @@ module Unicode
     Fold
   end
 
+  # Normalization forms available for `String#unicode_normalize` and
+  # `String#unicode_normalized?`.
+  enum NormalizationForm
+    # Canonical decomposition.
+    NFD
+
+    # Canonical decomposition, followed by canonical composition.
+    NFC
+
+    # Compatibility decomposition.
+    NFKD
+
+    # Compatibility decomposition, followed by canonical composition.
+    NFKC
+  end
+
+  # :nodoc:
+  enum QuickCheckResult
+    Yes
+    No
+    Maybe
+  end
+
   private UNROLL = 64
 
   # :nodoc:
@@ -315,31 +338,242 @@ module Unicode
     in_any_category?(char.ord, category_Mn, category_Me, category_Mc)
   end
 
+  # :nodoc:
+  def self.canonical_decompose(all_codepoints : Array(Int32), char : Char)
+    canonical_decompose(all_codepoints, char.ord)
+  end
+
+  private def self.canonical_decompose(all_codepoints : Array(Int32), codepoint : Int32)
+    if Hangul.canonical_decompose(all_codepoints, codepoint)
+      # do nothing
+    elsif mapping = canonical_decompositions[codepoint]?
+      first, second = mapping
+      canonical_decompose(all_codepoints, first)
+      canonical_decompose(all_codepoints, second) unless second.zero?
+    else
+      all_codepoints << codepoint
+    end
+  end
+
+  # :nodoc:
+  def self.compatibility_decompose(all_codepoints : Array(Int32), char : Char)
+    compatibility_decompose(all_codepoints, char.ord)
+  end
+
+  private def self.compatibility_decompose(all_codepoints : Array(Int32), codepoint : Int32)
+    if Hangul.canonical_decompose(all_codepoints, codepoint)
+      # do nothing
+    elsif mapping = canonical_decompositions[codepoint]?
+      first, second = mapping
+      compatibility_decompose(all_codepoints, first)
+      compatibility_decompose(all_codepoints, second) unless second.zero?
+    elsif mapping = compatibility_decompositions[codepoint]?
+      index, count = mapping
+      count.times do |i|
+        part = compatibility_decomposition_data.unsafe_fetch(index + i)
+        compatibility_decompose(all_codepoints, part)
+      end
+    else
+      all_codepoints << codepoint
+    end
+  end
+
+  # :nodoc:
+  def self.canonical_order!(codepoints : Array(Int32))
+    canonical_order!(Slice.new(codepoints.to_unsafe, codepoints.size))
+  end
+
+  private def self.canonical_order!(codepoints : Slice(Int32))
+    i = 0
+
+    # if `i == codepoints.size - 1` there cannot be a subsequence of 2
+    # orderable codepoints, so we skip the last codepoint
+    while i < codepoints.size - 1
+      i_ord = codepoints.unsafe_fetch(i)
+      i_ccc = canonical_combining_class(i_ord)
+      if i_ccc == 0
+        i += 1
+        next
+      end
+
+      j = i + 1
+      j_ord = codepoints.unsafe_fetch(j)
+      j_ccc = canonical_combining_class(j_ord)
+      if j_ccc == 0
+        i += 2
+        next
+      end
+
+      # subsequence of at least 2 codepoints with non-zero ccc; sort by their
+      # ccc in ascending order (we hand-roll our own `sort_by!` so avoid
+      # recomputing `i_ccc` and `j_ccc`)
+      cccs = [{i_ord, i_ccc}, {j_ord, j_ccc}]
+      j += 1
+      while j < codepoints.size
+        j_ord = codepoints.unsafe_fetch(j)
+        j_ccc = canonical_combining_class(j_ord)
+        break if j_ccc == 0
+        cccs << {j_ord, j_ccc}
+        j += 1
+      end
+
+      cccs.sort! { |x, y| x[1] <=> y[1] }
+      cccs.each_with_index do |(ord, _), k|
+        codepoints.unsafe_put(i + k, ord)
+      end
+
+      i = j + 1 # we can skip one codepoint as its ccc must be 0
+    end
+  end
+
+  # :nodoc:
+  def self.canonical_compose!(codepoints : Array(Int32), & : Char ->)
+    canonical_compose!(Slice.new(codepoints.to_unsafe, codepoints.size)) { |x| yield x.unsafe_chr }
+  end
+
+  private def self.canonical_compose!(codepoints : Slice(Int32), & : Int32 ->)
+    l_pos = 0
+    l = codepoints.unsafe_fetch(l_pos)
+    l_ccc = 0_u8
+
+    (1...codepoints.size).each do |c_pos|
+      c = codepoints.unsafe_fetch(c_pos)
+      c_ccc = canonical_combining_class(c)
+
+      if (c_ccc > l_ccc || l_ccc == 0) && (combined = canonical_composition(l, c))
+        l = combined
+        l_ccc = canonical_combining_class(l)
+        codepoints.unsafe_put(c_pos, -1)
+      elsif c_ccc == 0
+        yield l
+        while true
+          l_pos += 1
+          break if l_pos == c_pos
+          l = codepoints.unsafe_fetch(l_pos)
+          yield l unless l == -1
+        end
+        l = c
+        l_ccc = 0_u8
+      else
+        l_ccc = c_ccc
+      end
+    end
+
+    yield l
+    while true
+      l_pos += 1
+      break if l_pos == codepoints.size
+      l = codepoints.unsafe_fetch(l_pos)
+      yield l unless l == -1
+    end
+  end
+
+  # :nodoc:
+  def self.quick_check_normalized(str : String, form : NormalizationForm) : QuickCheckResult
+    result = QuickCheckResult::Yes
+    return result if str.ascii_only?
+    last_ccc = 0_u8
+
+    str.each_codepoint do |codepoint|
+      ccc = canonical_combining_class(codepoint)
+      return QuickCheckResult::No if last_ccc > ccc && ccc != 0
+
+      allowed = case form
+                in .nfc?
+                  search_ranges(nfc_quick_check, codepoint) { |x| x[2] }
+                in .nfd?
+                  search_ranges(nfd_quick_check, codepoint) { QuickCheckResult::No }
+                in .nfkc?
+                  search_ranges(nfkc_quick_check, codepoint) { |x| x[2] }
+                in .nfkd?
+                  search_ranges(nfkd_quick_check, codepoint) { QuickCheckResult::No }
+                end
+
+      if allowed
+        return QuickCheckResult::No if allowed.no?
+        result = QuickCheckResult::Maybe if allowed.maybe?
+      end
+
+      last_ccc = ccc
+    end
+
+    result
+  end
+
+  private def self.canonical_combining_class(codepoint : Int32) : UInt8
+    search_ranges(canonical_combining_classes, codepoint) || 0_u8
+  end
+
+  private def self.canonical_composition(first : Int32, second : Int32)
+    Hangul.canonical_composition(first, second) || canonical_compositions[(first.to_i64 << 21) | second]?
+  end
+
+  # For the meanings of these constants refer to the Unicode Standard, Chapter
+  # 3.12 "Conjoining Jamo Behavior", in particular the subsection "Sample Code
+  # for Hangul Algorithms"
+  private module Hangul
+    S_BASE  = 0xAC00
+    L_BASE  = 0x1100
+    V_BASE  = 0x1161
+    T_BASE  = 0x11A7
+    L_COUNT =     19
+    V_COUNT =     21
+    T_COUNT =     28
+    N_COUNT = V_COUNT * T_COUNT # 588
+    S_COUNT = L_COUNT * N_COUNT # 11172
+
+    def self.canonical_decompose(all_codepoints : Array(Int32), codepoint : Int32)
+      return false unless Hangul::S_BASE <= codepoint < Hangul::S_BASE + Hangul::S_COUNT
+      s_index = codepoint - S_BASE
+
+      l = L_BASE + s_index // N_COUNT
+      v = V_BASE + (s_index % N_COUNT) // T_COUNT
+      t = T_BASE + s_index % T_COUNT
+
+      all_codepoints << l
+      all_codepoints << v
+      all_codepoints << t unless t == T_BASE
+
+      true
+    end
+
+    def self.canonical_composition(first : Int32, second : Int32)
+      # <L, V> composition
+      if (L_BASE <= first < L_BASE + L_COUNT) && (V_BASE <= second < V_BASE + V_COUNT)
+        l_index = first - L_BASE
+        v_index = second - V_BASE
+        lv_index = l_index * N_COUNT + v_index * T_COUNT
+        return S_BASE + lv_index
+      end
+
+      # <LV, T> composition (note that t_index cannot be zero)
+      s_index = first - S_BASE
+      if (0 <= s_index < S_COUNT) && s_index % T_COUNT == 0 && (T_BASE < second < T_BASE + T_COUNT)
+        t_index = second - T_BASE
+        return first + t_index
+      end
+    end
+  end
+
   private def self.search_ranges(haystack, needle)
-    value = haystack.bsearch { |low, high, delta| needle <= high }
+    value = haystack.bsearch { |v| needle <= v[1] }
     if value && value[0] <= needle <= value[1]
-      value[2]
+      yield value
     else
       nil
     end
+  end
+
+  private def self.search_ranges(haystack, needle)
+    search_ranges(haystack, needle) { |value| value[2] }
   end
 
   private def self.search_alternate(haystack, needle)
-    value = haystack.bsearch { |low, high| needle <= high }
-    if value && value[0] <= needle <= value[1]
-      value[0]
-    else
-      nil
-    end
+    search_ranges(haystack, needle) { |value| value[0] }
   end
 
   private def self.in_category?(needle, haystack)
-    value = haystack.bsearch { |low, high, stride| needle <= high }
-    if value && value[0] <= needle <= value[1]
-      (needle - value[0]).divisible_by?(value[2])
-    else
-      false
-    end
+    !!search_ranges(haystack, needle) { |value| (needle - value[0]).divisible_by?(value[2]) }
   end
 
   private def self.in_any_category?(needle, *haystacks) : Bool
