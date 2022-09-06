@@ -38,10 +38,10 @@ struct Crystal::ZeroOneOrMany(T)
     value = @value
     case value
     in Nil
-      raise "BUG: called ZeroOneOrMany#unsafe_fetch but value is nil"
+      raise IndexError.new("Called ZeroOneOrMany#unsafe_fetch but value is nil")
     in T
       if index != 0
-        raise "BUG: called ZeroOneOrMany#unsafe_fetch with index != 0 but value is not an array"
+        raise IndexError.new("Called ZeroOneOrMany#unsafe_fetch with index != 0 but value is not an array")
       end
 
       value
