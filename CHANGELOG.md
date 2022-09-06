@@ -1,3 +1,41 @@
+# 1.5.1 (2022-09-06)
+
+## Standard Library
+
+- Fix `Class#nilable?` for recursive unions and root types ([#12353](https://github.com/crystal-lang/crystal/pull/12353), thanks @HertzDevil)
+
+### Numeric
+
+- Fix `Float#abs` and `Number#format` for `-0.0` ([#12424](https://github.com/crystal-lang/crystal/pull/12424), thanks @straight-shoota)
+
+### Text
+
+- Fix null dereference when passing empty slice to Base64.encode ([#12377](https://github.com/crystal-lang/crystal/pull/12377), thanks @dscottboggs)
+
+## Compiler
+
+- Do not check abstract def parameter names on abstract types and modules ([#12434](https://github.com/crystal-lang/crystal/pull/12434), thanks @HertzDevil)
+
+### Codegen
+
+- Compiler/codegen: reset `@needs_value` ([#12444](https://github.com/crystal-lang/crystal/pull/12444), thanks @asterite)
+
+### Semantic
+
+- Compiler: don't eagerly check cast type ([#12272](https://github.com/crystal-lang/crystal/pull/12272), thanks @asterite)
+- Fix type restriction augmenter for `Union(*T)` and similar ([#12438](https://github.com/crystal-lang/crystal/pull/12438), thanks @asterite)
+
+## Tools
+
+### Formatter
+
+- Formatter: Fix assign followed by comment ([#12319](https://github.com/crystal-lang/crystal/pull/12319), thanks @straight-shoota)
+
+## Other
+
+- Update distribution-scripts ([#12359](https://github.com/crystal-lang/crystal/pull/12359), thanks @straight-shoota)
+- Update distribution-scripts ([#12333](https://github.com/crystal-lang/crystal/pull/12333), thanks @straight-shoota)
+
 # 1.5.0 (2022-07-06)
 
 ## Language
