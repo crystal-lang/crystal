@@ -20,8 +20,8 @@ class Compress::Deflate::Writer < IO
 
     @buf = uninitialized UInt8[8192] # output buffer used by zlib
     @stream = LibZ::ZStream.new
-    @stream.zalloc = LibZ::AllocFunc.new { |opaque, items, size| GC.malloc(items * size) }
-    @stream.zfree = LibZ::FreeFunc.new { |opaque, address| GC.free(address) }
+    @stream.zalloc = LibZ::AllocFunc.new { |opaque, items, size| LibC.malloc(items * size) }
+    @stream.zfree = LibZ::FreeFunc.new { |opaque, address| LibC.free(address) }
     @closed = false
     ret = LibZ.deflateInit2(pointerof(@stream), level, LibZ::Z_DEFLATED, -LibZ::MAX_BITS, LibZ::DEF_MEM_LEVEL,
       strategy.value, LibZ.zlibVersion, sizeof(LibZ::ZStream))

@@ -31,6 +31,6 @@ end
 
 # TODO(interpreted): remove this unless
 {% unless flag?(:interpreted) %}
-  LibPCRE.pcre_malloc = ->GC.malloc(LibC::SizeT)
-  LibPCRE.pcre_free = ->GC.free(Void*)
+  LibPCRE.pcre_malloc = ->(size) { LibC.malloc(size) }
+  LibPCRE.pcre_free = ->(ptr) { LibC.free(ptr) }
 {% end %}
