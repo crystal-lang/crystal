@@ -143,7 +143,7 @@ module Crystal
       when .op_comma?
         unless last_is_target
           unexpected_token if lhs_splat_index
-          raise "Multiple assignment is not allowed for constants" if last.is_a?(Path)
+          raise "multiple assignment is not allowed for constants" if last.is_a?(Path)
           unexpected_token
         end
       when .newline?, .op_semicolon?
@@ -219,9 +219,9 @@ module Crystal
       values.concat exps[assign_index + 1..-1]
       if values.size != 1
         if lhs_splat_index
-          raise "Multiple assignment count mismatch", location if targets.size - 1 > values.size
+          raise "multiple assignment count mismatch", location if targets.size - 1 > values.size
         else
-          raise "Multiple assignment count mismatch", location if targets.size != values.size
+          raise "multiple assignment count mismatch", location if targets.size != values.size
         end
       end
 
@@ -1001,7 +1001,7 @@ module Crystal
         end
         location = @token.location
         index = value.to_i?
-        raise "Index $#{value} doesn't fit in an Int32" unless index
+        raise "index $#{value} doesn't fit in an Int32" unless index
         node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(index))
       when .magic_line?
         node_and_next_token MagicConstant.expand_line_node(@token.location)
@@ -2095,13 +2095,13 @@ module Crystal
         when .eof?
           case delimiter_state.kind
           when .command?
-            raise "Unterminated command"
+            raise "unterminated command"
           when .regex?
-            raise "Unterminated regular expression"
+            raise "unterminated regular expression"
           when .heredoc?
-            raise "Unterminated heredoc"
+            raise "unterminated heredoc"
           else
-            raise "Unterminated string literal"
+            raise "unterminated string literal"
           end
         else
           line_number = @token.line_number
@@ -2122,7 +2122,7 @@ module Crystal
 
           skip_space_or_newline
           if !@token.type.op_rcurly?
-            raise "Unterminated string interpolation"
+            raise "unterminated string interpolation"
           end
 
           @token.delimiter_state = delimiter_state
@@ -2324,7 +2324,7 @@ module Crystal
           next_token
           break
         else
-          raise "Unterminated #{elements_type.downcase} array literal"
+          raise "unterminated #{elements_type.downcase} array literal"
         end
       end
 

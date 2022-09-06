@@ -106,7 +106,7 @@ abstract class Crystal::SyntaxHighlighter
 
             case token.type
             when .eof?
-              raise "Unterminated heredoc"
+              raise "unterminated heredoc"
             else
               highlight_token token, last_is_def
             end
@@ -211,9 +211,9 @@ abstract class Crystal::SyntaxHighlighter
           break
         when .eof?
           if token.delimiter_state.kind.string_array?
-            raise "Unterminated string array literal"
+            raise "unterminated string array literal"
           else # .symbol_array?
-            raise "Unterminated symbol array literal"
+            raise "unterminated symbol array literal"
           end
         else
           raise "Bug: shouldn't happen"

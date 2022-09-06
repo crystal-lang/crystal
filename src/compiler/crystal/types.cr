@@ -1369,7 +1369,7 @@ module Crystal
       when .u128?
         {UInt128::MIN, UInt128::MAX}
       else
-        raise "Bug: called 'range' for non-integer literal"
+        raise "BUG: called 'range' for non-integer literal"
       end
     end
 
@@ -1417,7 +1417,7 @@ module Crystal
       when .f64?
         {Float64::MIN, Float64::MAX}
       else
-        raise "Bug: called 'range' for non-float literal"
+        raise "BUG: called 'range' for non-float literal"
       end
     end
 

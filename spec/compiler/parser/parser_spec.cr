@@ -192,8 +192,8 @@ module Crystal
     assert_syntax_error "1 == 2, a = 4"
     assert_syntax_error "x : String, a = 4"
     assert_syntax_error "b, 1 == 2, a = 4"
-    assert_syntax_error "a = 1, 2, 3", "Multiple assignment count mismatch"
-    assert_syntax_error "a = 1, b = 2", "Multiple assignment count mismatch"
+    assert_syntax_error "a = 1, 2, 3", "multiple assignment count mismatch"
+    assert_syntax_error "a = 1, b = 2", "multiple assignment count mismatch"
 
     assert_syntax_error "*a"
     assert_syntax_error "*a if true"
@@ -202,10 +202,10 @@ module Crystal
     assert_syntax_error "*1, a = 2"
     assert_syntax_error "*a, *b = 1", "splat assignment already specified"
 
-    assert_syntax_error "*a, b, c, d = 1, 2", "Multiple assignment count mismatch"
-    assert_syntax_error "a, b, *c, d = 1, 2", "Multiple assignment count mismatch"
-    assert_syntax_error "*a, b, c, d, e = 1, 2", "Multiple assignment count mismatch"
-    assert_syntax_error "a, b, c, d, *e = 1, 2, 3", "Multiple assignment count mismatch"
+    assert_syntax_error "*a, b, c, d = 1, 2", "multiple assignment count mismatch"
+    assert_syntax_error "a, b, *c, d = 1, 2", "multiple assignment count mismatch"
+    assert_syntax_error "*a, b, c, d, e = 1, 2", "multiple assignment count mismatch"
+    assert_syntax_error "a, b, c, d, *e = 1, 2, 3", "multiple assignment count mismatch"
 
     it_parses "def foo\n1\nend", Def.new("foo", body: 1.int32)
     it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], 1.int32)
@@ -1176,7 +1176,7 @@ module Crystal
     it_parses "$~ = 1", Assign.new("$~".var, 1.int32)
 
     assert_syntax_error "$2147483648"
-    assert_syntax_error "$99999999999999999999999?", "Index $99999999999999999999999 doesn't fit in an Int32"
+    assert_syntax_error "$99999999999999999999999?", "index $99999999999999999999999 doesn't fit in an Int32"
 
     it_parses "foo /a/", Call.new(nil, "foo", regex("a"))
     it_parses "foo(/a/)", Call.new(nil, "foo", regex("a"))
@@ -1629,8 +1629,8 @@ module Crystal
     it_parses "<<-EOF.x\n  foo\nEOF", Call.new("  foo".string_interpolation, "x")
     it_parses "<<-'EOF'.x\n  foo\nEOF", Call.new("  foo".string_interpolation, "x")
 
-    assert_syntax_error "<<-FOO\n1\nFOO.bar", "Unterminated heredoc: can't find \"FOO\" anywhere before the end of file"
-    assert_syntax_error "<<-FOO\n1\nFOO + 2", "Unterminated heredoc: can't find \"FOO\" anywhere before the end of file"
+    assert_syntax_error "<<-FOO\n1\nFOO.bar", "unterminated heredoc: can't find \"FOO\" anywhere before the end of file"
+    assert_syntax_error "<<-FOO\n1\nFOO + 2", "unterminated heredoc: can't find \"FOO\" anywhere before the end of file"
 
     it_parses "<<-FOO\n\t1\n\tFOO", "1".string_interpolation
     it_parses "<<-FOO\n \t1\n \tFOO", "1".string_interpolation
@@ -1874,7 +1874,7 @@ module Crystal
     assert_syntax_error "self += 1",
       "can't change the value of self"
     assert_syntax_error "FOO, BAR = 1, 2",
-      "Multiple assignment is not allowed for constants"
+      "multiple assignment is not allowed for constants"
     assert_syntax_error "self, x = 1, 2",
       "can't change the value of self"
     assert_syntax_error "x, self = 1, 2",
@@ -2128,18 +2128,18 @@ module Crystal
       it_parses "%i(foo(bar) baz)", (["foo(bar)".symbol, "baz".symbol] of ASTNode).array_of(Path.global("Symbol"))
       it_parses "%i{foo\\nbar baz}", (["foo\\nbar".symbol, "baz".symbol] of ASTNode).array_of(Path.global("Symbol"))
 
-      assert_syntax_error "%w(", "Unterminated string array literal"
+      assert_syntax_error "%w(", "unterminated string array literal"
       assert_syntax_error "%w{one}}", "expecting token 'EOF', not '}'"
-      assert_syntax_error "%w{{one}", "Unterminated string array literal"
-      assert_syntax_error "%i(", "Unterminated symbol array literal"
+      assert_syntax_error "%w{{one}", "unterminated string array literal"
+      assert_syntax_error "%i(", "unterminated symbol array literal"
       assert_syntax_error "%i{one}}", "expecting token 'EOF', not '}'"
-      assert_syntax_error "%i{{one}", "Unterminated symbol array literal"
-      assert_syntax_error "%x(", "Unterminated command literal"
-      assert_syntax_error "%r(", "Unterminated regular expression"
-      assert_syntax_error "%q(", "Unterminated string literal"
-      assert_syntax_error "%Q(", "Unterminated string literal"
-      assert_syntax_error "<<-HEREDOC", "Unexpected EOF on heredoc identifier"
-      assert_syntax_error "<<-HEREDOC\n", "Unterminated heredoc"
+      assert_syntax_error "%i{{one}", "unterminated symbol array literal"
+      assert_syntax_error "%x(", "unterminated command literal"
+      assert_syntax_error "%r(", "unterminated regular expression"
+      assert_syntax_error "%q(", "unterminated string literal"
+      assert_syntax_error "%Q(", "unterminated string literal"
+      assert_syntax_error "<<-HEREDOC", "unexpected EOF on heredoc identifier"
+      assert_syntax_error "<<-HEREDOC\n", "unterminated heredoc"
 
       assert_syntax_error "[1\n,2]", "expecting token ']', not ','"
       assert_syntax_error "{1\n,2}", "expecting token '}', not ','"

@@ -152,7 +152,7 @@ module Crystal
                 when "host_flag?"
                   @program.host_flags
                 else
-                  raise "Bug: unexpected macro method #{node.name}"
+                  raise "BUG: unexpected macro method #{node.name}"
                 end
         @last = BoolLiteral.new(flags.includes?(flag_name))
       end
@@ -176,7 +176,7 @@ module Crystal
           parser.check :EOF
           @last = type
         rescue ex : Crystal::SyntaxException
-          arg.raise "Invalid type name: #{type_name.inspect}"
+          arg.raise "invalid type name: #{type_name.inspect}"
         end
       end
     end
@@ -620,7 +620,7 @@ module Crystal
           when StringLiteral, MacroId
             return BoolLiteral.new(interpret_compare(arg) > 0)
           else
-            raise "Can't compare StringLiteral with #{arg.class_desc}"
+            raise "can't compare StringLiteral with #{arg.class_desc}"
           end
         end
       when "<"
@@ -629,7 +629,7 @@ module Crystal
           when StringLiteral, MacroId
             return BoolLiteral.new(interpret_compare(arg) < 0)
           else
-            raise "Can't compare StringLiteral with #{arg.class_desc}"
+            raise "can't compare StringLiteral with #{arg.class_desc}"
           end
         end
       when "+"

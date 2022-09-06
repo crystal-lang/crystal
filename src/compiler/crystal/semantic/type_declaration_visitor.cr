@@ -152,7 +152,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     when ClassVar
       declare_class_var(node, var, false)
     else
-      raise "Unexpected TypeDeclaration var type: #{var.class}"
+      raise "unexpected TypeDeclaration var type: #{var.class}"
     end
 
     false

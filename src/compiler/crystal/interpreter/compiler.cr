@@ -939,7 +939,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
       unless parent_index
-        raise "Can't find parent closure index"
+        raise "can't find parent closure index"
       end
 
       get_local parent_index, sizeof(Void*), node: nil

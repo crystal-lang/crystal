@@ -1059,7 +1059,7 @@ module Crystal
                 target.raise "BUG: missing var #{target}"
               end
             else
-              node.raise "Unknown assign target in codegen: #{target}"
+              node.raise "unknown assign target in codegen: #{target}"
             end
 
       @last = last

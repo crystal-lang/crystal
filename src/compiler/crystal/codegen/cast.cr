@@ -498,7 +498,7 @@ class Crystal::CodeGenVisitor
       end
     end
 
-    raise "Bug: expected to find enum member of #{to_type} matching symbol #{symbol}"
+    raise "BUG: expected to find enum member of #{to_type} matching symbol #{symbol}"
   end
 
   def downcast_distinct(value, to_type : Type, from_type : Type)

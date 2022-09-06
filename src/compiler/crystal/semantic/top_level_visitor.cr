@@ -157,7 +157,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           end
 
           unless ann.args.empty?
-            ann.raise "Extern annotation can't have positional arguments, only named arguments: 'union'"
+            ann.raise "extern annotation can't have positional arguments, only named arguments: 'union'"
           end
 
           ann.named_args.try &.each do |named_arg|
@@ -167,7 +167,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
               if value.is_a?(BoolLiteral)
                 type.extern_union = value.value
               else
-                value.raise "Extern 'union' annotation must be a boolean, not #{value.class_desc}"
+                value.raise "extern 'union' annotation must be a boolean, not #{value.class_desc}"
               end
             else
               named_arg.raise "unknown Extern named argument, valid arguments are: 'union'"

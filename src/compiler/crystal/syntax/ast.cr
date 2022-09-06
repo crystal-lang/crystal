@@ -277,7 +277,7 @@ module Crystal
       when UInt128 then U128
       when Float32 then F32
       when Float64 then F64
-      else              raise "Unsupported Number type for NumberLiteral: #{number.class}"
+      else              raise "unsupported Number type for NumberLiteral: #{number.class}"
       end
     end
   end
@@ -311,7 +311,7 @@ module Crystal
       when .u64?  then value.to_u64
       when .u128? then value.to_u128
       else
-        raise "Bug: called 'integer_value' for non-integer literal"
+        raise "BUG: called 'integer_value' for non-integer literal"
       end
     end
 
