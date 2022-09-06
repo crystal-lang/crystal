@@ -267,6 +267,7 @@ class Regex
 
   def finalize
     LibPCRE.free_study @extra
+    LibC.free @re.as(Void*)
   end
 
   # Determines Regex's source validity. If it is, `nil` is returned.
@@ -279,6 +280,7 @@ class Regex
   def self.error?(source) : String?
     re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
     if re
+      LibC.free re.as(Void*)
       nil
     else
       "#{String.new(errptr)} at #{erroffset}"

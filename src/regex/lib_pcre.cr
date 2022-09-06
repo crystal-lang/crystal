@@ -21,16 +21,4 @@ lib LibPCRE
   INFO_NAMEENTRYSIZE = 7
   INFO_NAMECOUNT     = 8
   INFO_NAMETABLE     = 9
-
-  alias Malloc = LibC::SizeT -> Void*
-  alias Free = Void* ->
-
-  $pcre_malloc : Malloc
-  $pcre_free : Free
 end
-
-# TODO(interpreted): remove this unless
-{% unless flag?(:interpreted) %}
-  LibPCRE.pcre_malloc = ->GC.malloc(LibC::SizeT)
-  LibPCRE.pcre_free = ->GC.free(Void*)
-{% end %}
