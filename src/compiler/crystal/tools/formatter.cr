@@ -1595,27 +1595,27 @@ module Crystal
     end
 
     private def format_parameter_annotations(node)
-      if anns = node.parsed_annotations
-        anns.each do |ann|
-          ann.accept self
+      return unless (anns = node.parsed_annotations)
 
-          skip_space
+      anns.each do |ann|
+        ann.accept self
 
-          if @token.type.newline?
-            write_line
-            write_indent
-          else
-            write " "
-          end
-
-          skip_space_or_newline
-        end
+        skip_space
 
         if @token.type.newline?
-          skip_space_or_newline
           write_line
           write_indent
+        else
+          write " "
         end
+
+        skip_space_or_newline
+      end
+
+      if @token.type.newline?
+        skip_space_or_newline
+        write_line
+        write_indent
       end
     end
 
