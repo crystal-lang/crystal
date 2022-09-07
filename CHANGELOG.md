@@ -1,4 +1,4 @@
-# 1.5.1 (2022-09-06)
+# 1.5.1 (2022-09-07)
 
 ## Standard Library
 
@@ -10,7 +10,7 @@
 
 ### Text
 
-- Fix null dereference when passing empty slice to Base64.encode ([#12377](https://github.com/crystal-lang/crystal/pull/12377), thanks @dscottboggs)
+- Fix null dereference when passing empty slice to `Base64.encode` ([#12377](https://github.com/crystal-lang/crystal/pull/12377), thanks @dscottboggs)
 
 ## Compiler
 
@@ -30,6 +30,7 @@
 ### Formatter
 
 - Formatter: Fix assign followed by comment ([#12319](https://github.com/crystal-lang/crystal/pull/12319), thanks @straight-shoota)
+- Handle formatting annotated method parameters ([#12446](https://github.com/crystal-lang/crystal/pull/12446), thanks @Blacksmoke16)
 
 ## Other
 
