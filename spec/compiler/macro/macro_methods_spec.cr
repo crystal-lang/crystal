@@ -2949,6 +2949,10 @@ module Crystal
           assert_macro %({{parse_type :Foo }}), %(nil)
         end
       end
+
+      it "exposes syntax warnings" do
+        assert_warning %({% parse_type "Foo(0x8000_0000_0000_0000)" %}), "Warning: 0x8000_0000_0000_0000 doesn't fit in an Int64, try using the suffix u64 or i128"
+      end
     end
 
     describe "printing" do

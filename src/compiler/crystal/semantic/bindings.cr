@@ -106,21 +106,19 @@ module Crystal
       @type
     end
 
-    def bind_to(node : ASTNode)
+    def bind_to(node : ASTNode) : Nil
       bind(node) do
         @dependencies.push node
         node.add_observer self
-        node
       end
     end
 
-    def bind_to(nodes : Indexable(ASTNode))
+    def bind_to(nodes : Indexable(ASTNode)) : Nil
       return if nodes.empty?
 
       bind do
         @dependencies.concat nodes
         nodes.each &.add_observer self
-        nodes.first
       end
     end
 
@@ -132,7 +130,7 @@ module Crystal
         raise_frozen_type freeze_type, from_type, from
       end
 
-      node = yield
+      yield
 
       new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
@@ -149,6 +147,14 @@ module Crystal
       propagate
     end
 
+    def type_from_dependencies : Type?
+      Type.merge dependencies
+    end
+
+    def unbind_from(nodes : Nil) : Nil
+      # Nothing to do
+    end
+
     def unbind_from(node : ASTNode) : Nil
       @dependencies.reject! &.same?(node)
       node.remove_observer self
@@ -159,18 +165,6 @@ module Crystal
         nodes.any? &.same?(dependency)
       }
       nodes.each &.remove_observer self
-    end
-
-    private def type_from_dependencies : Type?
-      dependencies = @dependencies.value
-      case dependencies
-      in Nil
-        nil
-      in ASTNode
-        dependencies.type?
-      in Array(ASTNode)
-        Type.merge dependencies
-      end
     end
 
     def add_observer(observer : ASTNode) : Nil
@@ -209,7 +203,6 @@ module Crystal
     def update(from = nil)
       return if @type && @type.same? from.try &.type?
 
-      dependencies = @dependencies.value
       new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
 

@@ -256,7 +256,7 @@ class String
 
     # Try to reclaim some memory if capacity is bigger than what was requested
     if bytesize < capacity
-      str = str.realloc(bytesize.to_u32 + HEADER_SIZE + 1)
+      str = GC.realloc(str, bytesize.to_u32 + HEADER_SIZE + 1)
     end
 
     str_header = str.as({Int32, Int32, Int32}*)
@@ -459,7 +459,7 @@ class String
 
   # Same as `#to_i` but returns an `Int64` or the block's value.
   def to_i64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ Int64, UInt64, 9223372036854775807, 9223372036854775808
+    gen_to_ Int64, UInt64, 9223372036854775807, 9223372036854775808u64
   end
 
   # Same as `#to_i` but returns an `UInt64`.

@@ -1,15 +1,21 @@
 require "../syntax"
 
 module Crystal
-  def self.format(source, filename = nil)
-    Crystal::Formatter.format(source, filename: filename)
+  def self.format(source, filename = nil, report_warnings : IO? = nil)
+    Crystal::Formatter.format(source, filename: filename, report_warnings: report_warnings)
   end
 
   class Formatter < Visitor
-    def self.format(source, filename = nil)
+    def self.format(source, filename = nil, report_warnings : IO? = nil)
       parser = Parser.new(source)
       parser.filename = filename
       nodes = parser.parse
+
+      # the formatter merely parses the same source again, it shouldn't
+      # introduce any new syntax warnings the parser cannot find
+      if report_warnings
+        parser.warnings.report(report_warnings)
+      end
 
       formatter = new(source)
       formatter.skip_space_or_newline
@@ -1548,6 +1554,8 @@ module Crystal
             next if arg.external_name.empty? # skip empty splat argument.
           end
 
+          format_parameter_annotations(arg)
+
           arg.accept self
           to_skip += 1 if @last_arg_is_skip
         end
@@ -1565,6 +1573,7 @@ module Crystal
 
       if block_arg
         wrote_newline = format_def_arg(wrote_newline, false) do
+          format_parameter_annotations(block_arg)
           write_token :OP_AMP
           skip_space_or_newline
 
@@ -1589,6 +1598,31 @@ module Crystal
       @indent = old_indent
 
       to_skip
+    end
+
+    private def format_parameter_annotations(node)
+      return unless (anns = node.parsed_annotations)
+
+      anns.each do |ann|
+        ann.accept self
+
+        skip_space
+
+        if @token.type.newline?
+          write_line
+          write_indent
+        else
+          write " "
+        end
+
+        skip_space_or_newline
+      end
+
+      if @token.type.newline?
+        skip_space_or_newline
+        write_line
+        write_indent
+      end
     end
 
     def format_def_arg(wrote_newline, has_more)
@@ -3015,7 +3049,7 @@ module Crystal
             if body.nil_check?
               call = Call.new(nil, "nil?")
             else
-              call = Call.new(nil, "is_a?", args: [body.const] of ASTNode)
+              call = Call.new(nil, "is_a?", body.const)
             end
             accept call
           else
@@ -3024,7 +3058,7 @@ module Crystal
           end
         when RespondsTo
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "responds_to?", args: [SymbolLiteral.new(body.name.to_s)] of ASTNode)
+            call = Call.new(nil, "responds_to?", SymbolLiteral.new(body.name.to_s))
             accept call
           else
             clear_object(body)
@@ -3032,7 +3066,7 @@ module Crystal
           end
         when Cast
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "as", args: [body.to] of ASTNode)
+            call = Call.new(nil, "as", body.to)
             accept call
           else
             clear_object(body)
@@ -3040,7 +3074,7 @@ module Crystal
           end
         when NilableCast
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "as?", args: [body.to] of ASTNode)
+            call = Call.new(nil, "as?", body.to)
             accept call
           else
             clear_object(body)

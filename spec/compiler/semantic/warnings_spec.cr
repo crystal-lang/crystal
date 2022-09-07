@@ -728,5 +728,45 @@ describe "Semantic: warnings" do
           CR
       end
     end
+
+    it "doesn't warn if current type is abstract (#12266)" do
+      warnings_result(<<-CR).should be_empty
+        class Foo
+          def foo(x); end
+        end
+
+        abstract class Bar < Foo
+          abstract def foo(y)
+        end
+
+        abstract class Baz < Bar
+        end
+        CR
+    end
+
+    it "doesn't warn if current type is a module (#12266)" do
+      warnings_result(<<-CR).should be_empty
+        module Foo
+          def foo(x); end # Warning: positional parameter 'x' corresponds to parameter 'y' of the overridden method Bar#foo(y), which has a different name and may affect named argument passing
+        end
+
+        module Bar
+          include Foo
+          abstract def foo(y)
+        end
+
+        module Baz
+          include Bar
+        end
+        CR
+    end
+  end
+
+  it "exposes syntax warnings" do
+    assert_warning UInt64::MAX.to_s, "Warning: #{UInt64::MAX} doesn't fit in an Int64, try using the suffix u64 or i128"
+  end
+
+  it "exposes syntax warnings after macro interpolation" do
+    assert_warning "{% begin %}0x8000_0000_0000_000{{ 0 }}{% end %}", "Warning: 0x8000_0000_0000_0000 doesn't fit in an Int64, try using the suffix u64 or i128"
   end
 end
