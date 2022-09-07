@@ -21,4 +21,6 @@ lib LibPCRE
   INFO_NAMEENTRYSIZE = 7
   INFO_NAMECOUNT     = 8
   INFO_NAMETABLE     = 9
+
+  $free = pcre_free : Void* ->
 end
