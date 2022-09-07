@@ -1548,6 +1548,8 @@ module Crystal
             next if arg.external_name.empty? # skip empty splat argument.
           end
 
+          format_parameter_annotations(arg)
+
           arg.accept self
           to_skip += 1 if @last_arg_is_skip
         end
@@ -1565,6 +1567,7 @@ module Crystal
 
       if block_arg
         wrote_newline = format_def_arg(wrote_newline, false) do
+          format_parameter_annotations(block_arg)
           write_token :OP_AMP
           skip_space_or_newline
 
@@ -1589,6 +1592,31 @@ module Crystal
       @indent = old_indent
 
       to_skip
+    end
+
+    private def format_parameter_annotations(node)
+      return unless (anns = node.parsed_annotations)
+
+      anns.each do |ann|
+        ann.accept self
+
+        skip_space
+
+        if @token.type.newline?
+          write_line
+          write_indent
+        else
+          write " "
+        end
+
+        skip_space_or_newline
+      end
+
+      if @token.type.newline?
+        skip_space_or_newline
+        write_line
+        write_indent
+      end
     end
 
     def format_def_arg(wrote_newline, has_more)
