@@ -19,6 +19,7 @@
 ### Codegen
 
 - Compiler/codegen: reset `@needs_value` ([#12444](https://github.com/crystal-lang/crystal/pull/12444), thanks @asterite)
+- Fix `homogeneous_aggregate?` check for aarch64 types ([#12445](https://github.com/crystal-lang/crystal/pull/12445), thanks @mattrberry)
 
 ### Semantic
 
