@@ -517,6 +517,7 @@ class Socket < IO
   end
 
   # Returns `true` if the string represents a valid IPv4 or IPv6 address.
+  @[Deprecated("Use `IPAddress.valid?` instead")]
   def self.ip?(string : String)
     addr = LibC::In6Addr.new
     ptr = pointerof(addr).as(Void*)
