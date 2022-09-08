@@ -29,7 +29,7 @@ class Compress::Deflate::Writer < IO
   def finalize
     return if closed?
 
-    close rescue nil
+    LibZ.deflateEnd(pointerof(@stream))
   end
 
   # Creates a new writer for the given *io*, yields it to the given block,

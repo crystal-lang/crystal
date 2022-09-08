@@ -32,7 +32,7 @@ class Compress::Deflate::Reader < IO
   def finalize
     return if closed?
 
-    close rescue nil
+    LibZ.inflateEnd(pointerof(@stream))
   end
 
   # Creates a new reader from the given *io*, yields it to the given block,
