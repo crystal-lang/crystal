@@ -34,11 +34,17 @@ module Crystal::System::File
       else
         raise "Invalid file open mode: '#{mode}'"
       end
+    when 3
+      # POSIX allows both `+b` and `b+`: https://pubs.opengroup.org/onlinepubs/9699919799/functions/fopen.html
+      unless mode.ends_with?("+b") || mode.ends_with?("b+")
+        raise "Invalid file open mode: '#{mode}'"
+      end
+      m = LibC::O_RDWR
     else
       raise "Invalid file open mode: '#{mode}'"
     end
 
-    oflag = m | o
+    m | o
   end
 
   # Closes the internal file descriptor without notifying libevent.
@@ -49,7 +55,9 @@ module Crystal::System::File
   # def file_descriptor_close
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./wasi/file"
+{% elsif flag?(:unix) %}
   require "./unix/file"
 {% elsif flag?(:win32) %}
   require "./win32/file"

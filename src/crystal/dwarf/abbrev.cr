@@ -165,36 +165,65 @@ module Crystal
       end
     end
 
+    # DWARF data encoding format.
     enum FORM : UInt32
-      Addr        = 0x01 # address
-      Block2      = 0x03 # block
-      Block4      = 0x04 # block
-      Data2       = 0x05 # constant
-      Data4       = 0x06 # constant
-      Data8       = 0x07 # constant
-      String      = 0x08 # string
-      Block       = 0x09 # block
-      Block1      = 0x0a # block
-      Data1       = 0x0b # constant
-      Flag        = 0x0c # flag
-      Sdata       = 0x0d # constant
-      Strp        = 0x0e # string
-      Udata       = 0x0f # constant
-      RefAddr     = 0x10 # reference
-      Ref1        = 0x11 # reference
-      Ref2        = 0x12 # reference
-      Ref4        = 0x13 # reference
-      Ref8        = 0x14 # reference
-      RefUdata    = 0x15 # reference
-      Indirect    = 0x16 # (see Section 7.5.3)
+      # value formats
+      Addr     = 0x01 # address
+      Block2   = 0x03 # block
+      Block4   = 0x04 # block
+      Data2    = 0x05 # constant
+      Data4    = 0x06 # constant
+      Data8    = 0x07 # constant
+      String   = 0x08 # string
+      Block    = 0x09 # block
+      Block1   = 0x0a # block
+      Data1    = 0x0b # constant
+      Flag     = 0x0c # flag
+      Sdata    = 0x0d # constant
+      Strp     = 0x0e # string
+      Udata    = 0x0f # constant
+      RefAddr  = 0x10 # reference
+      Ref1     = 0x11 # reference
+      Ref2     = 0x12 # reference
+      Ref4     = 0x13 # reference
+      Ref8     = 0x14 # reference
+      RefUdata = 0x15 # reference
+      Indirect = 0x16 # (see Section 7.5.3)
+
+      # The following are new in DWARF 4.
       SecOffset   = 0x17 # lineptr, loclistptr, macptr, rangelistptr
       Exprloc     = 0x18 # exprloc
       FlagPresent = 0x19 # flag
       RefSig8     = 0x20 # reference
+
+      # The following are new in DWARF 5.
+      Strx          = 0x1a
+      Addrx         = 0x1b
+      Refsup4       = 0x1c
+      StrpSup       = 0x1d
+      Data16        = 0x1e
+      LineStrp      = 0x1f
+      ImplicitConst = 0x21
+      Loclistx      = 0x22
+      Rnglistx      = 0x23
+      Refsup8       = 0x24
+      Strx1         = 0x25
+      Strx2         = 0x26
+      Strx3         = 0x27
+      Strx4         = 0x28
+      Addrx1        = 0x29
+      Addrx2        = 0x2a
+      Addrx3        = 0x2b
+      Addrx4        = 0x2c
+
+      # Extensions for multi-file compression (.dwz)
+      # http://www.dwarfstd.org/ShowIssue.php?issue=120604.1
+      Gnurefalt  = 0x1f20
+      GnustrpAlt = 0x1f21
     end
 
     struct Abbrev
-      record Attribute, at : AT, form : FORM
+      record Attribute, at : AT, form : FORM, value : Int32
 
       property code : UInt32
       property tag : TAG
@@ -224,7 +253,12 @@ module Crystal
             at = AT.new(DWARF.read_unsigned_leb128(io))
             form = FORM.new(DWARF.read_unsigned_leb128(io))
             break if at.value == 0 && form.value == 0
-            abbrev.attributes << Attribute.new(at, form)
+            if form.implicit_const?
+              value = DWARF.read_signed_leb128(io)
+            else
+              value = 0
+            end
+            abbrev.attributes << Attribute.new(at, form, value)
           end
 
           abbreviations << abbrev

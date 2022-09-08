@@ -7,7 +7,7 @@ class IO::FileDescriptor < IO
 
   # The raw file-descriptor. It is defined to be an `Int`, but its size is
   # platform-specific.
-  def fd
+  def fd : Int
     @volatile_fd.get
   end
 
@@ -25,13 +25,13 @@ class IO::FileDescriptor < IO
         end
     end
 
-    unless blocking || {{flag?(:win32)}}
+    unless blocking || {{ flag?(:win32) || flag?(:wasi) }}
       self.blocking = false
     end
   end
 
   # :nodoc:
-  def self.from_stdio(fd)
+  def self.from_stdio(fd) : self
     Crystal::System::FileDescriptor.from_stdio(fd)
   end
 
@@ -43,7 +43,7 @@ class IO::FileDescriptor < IO
     self.system_blocking = value
   end
 
-  def close_on_exec?
+  def close_on_exec? : Bool
     system_close_on_exec?
   end
 
@@ -61,7 +61,25 @@ class IO::FileDescriptor < IO
     end
   {% end %}
 
-  def info
+  # Returns a `File::Info` object for this file descriptor, or raises
+  # `IO::Error` in case of an error.
+  #
+  # Certain fields like the file size may not be updated until an explicit
+  # flush.
+  #
+  # ```
+  # File.write("testfile", "abc")
+  #
+  # file = File.new("testfile", "a")
+  # file.info.size # => 3
+  # file << "defgh"
+  # file.info.size # => 3
+  # file.flush
+  # file.info.size # => 8
+  # ```
+  #
+  # Use `File.info` if the file is not open and a path to the file is available.
+  def info : File::Info
     system_info
   end
 
@@ -113,10 +131,10 @@ class IO::FileDescriptor < IO
   # file.gets(2) # => "he"
   # file.pos     # => 2
   # ```
-  def pos
+  protected def unbuffered_pos : Int64
     check_open
 
-    system_pos - @in_buffer_rem.size
+    system_pos
   end
 
   # Sets the current position (in bytes) in this `IO`.
@@ -163,7 +181,7 @@ class IO::FileDescriptor < IO
 
   # Places a shared advisory lock. More than one process may hold a shared lock for a given file descriptor at a given time.
   # `IO::Error` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
-  def flock_shared(blocking = true)
+  def flock_shared(blocking = true) : Nil
     system_flock_shared(blocking)
   end
 
@@ -178,12 +196,12 @@ class IO::FileDescriptor < IO
 
   # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file descriptor at a given time.
   # `IO::Error` is raised if *blocking* is set to `false` and any existing lock is set.
-  def flock_exclusive(blocking = true)
+  def flock_exclusive(blocking = true) : Nil
     system_flock_exclusive(blocking)
   end
 
   # Removes an existing advisory lock held by this process.
-  def flock_unlock
+  def flock_unlock : Nil
     system_flock_unlock
   end
 
@@ -193,11 +211,11 @@ class IO::FileDescriptor < IO
     close rescue nil
   end
 
-  def closed?
+  def closed? : Bool
     @closed
   end
 
-  def tty?
+  def tty? : Bool
     system_tty?
   end
 

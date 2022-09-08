@@ -12,6 +12,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   property! scope : Type
   setter scope
 
+  property vars : MetaVars
+
   @path_lookup : Type?
   @untyped_def : Def?
   @typed_def : Def?
@@ -49,7 +51,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       nodes = Array(ASTNode).new(filenames.size)
       filenames.each do |filename|
         if @program.requires.add?(filename)
-          parser = Parser.new File.read(filename), @program.string_pool
+          parser = @program.new_parser(File.read(filename))
           parser.filename = filename
           parser.wants_doc = @program.wants_doc?
           parsed_nodes = parser.parse
@@ -72,8 +74,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     message = "can't find file '#{ex.filename}'"
     notes = [] of String
 
-    # FIXME: as(String) should not be necessary
-    if ex.filename.as(String).starts_with? '.'
+    if ex.filename.starts_with? '.'
       if relative_to
         message += " relative to '#{relative_to}'"
       end
@@ -308,14 +309,14 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
     expansion_scope = (macro_scope || @scope || current_type)
 
-    args = expand_macro_arguments(node, expansion_scope)
+    args, named_args = expand_macro_arguments(node, expansion_scope)
 
     @exp_nest -= 1
     generated_nodes = expand_macro(the_macro, node, visibility: node.visibility, accept: accept) do
-      old_args = node.args
-      node.args = args
+      old_args, old_named_args = node.args, node.named_args
+      node.args, node.named_args = args, named_args
       expanded_macro, macro_expansion_pragmas = @program.expand_macro the_macro, node, expansion_scope, expansion_scope, @untyped_def
-      node.args = old_args
+      node.args, node.named_args = old_args, old_named_args
       {expanded_macro, macro_expansion_pragmas}
     end
     @exp_nest += 1
@@ -367,7 +368,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     def initialize(@doc)
     end
 
-    def visit(node : ClassDef | ModuleDef | EnumDef | Def | FunDef | AnnotationDef | Alias | Assign | Call)
+    def visit(node : ClassDef | ModuleDef | EnumDef | Def | FunDef | Macro | AnnotationDef | Alias | Assign | Call)
       node.doc ||= @doc
       false
     end
@@ -377,33 +378,44 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
   end
 
-  def expand_macro_arguments(node, expansion_scope)
+  def expand_macro_arguments(call, expansion_scope)
     # If any argument is a MacroExpression, solve it first and
     # replace Path with Const/TypeNode if it denotes such thing
-    args = node.args
-    if args.any? &.is_a?(MacroExpression)
+    args = call.args
+    named_args = call.named_args
+
+    if args.any?(MacroExpression) || named_args.try &.any? &.value.is_a?(MacroExpression)
       @exp_nest -= 1
       args = args.map do |arg|
-        if arg.is_a?(MacroExpression)
-          arg.accept self
-          expanded = arg.expanded.not_nil!
-          if expanded.is_a?(Path)
-            expanded_type = expansion_scope.lookup_path(expanded)
-            case expanded_type
-            when Const
-              expanded = expanded_type.value
-            when Type
-              expanded = TypeNode.new(expanded_type)
-            end
-          end
-          expanded
-        else
-          arg
-        end
+        expand_macro_argument(arg, expansion_scope)
+      end
+      named_args = named_args.try &.map do |named_arg|
+        value = expand_macro_argument(named_arg.value, expansion_scope)
+        NamedArgument.new(named_arg.name, value)
       end
       @exp_nest += 1
     end
-    args
+
+    {args, named_args}
+  end
+
+  def expand_macro_argument(node, expansion_scope)
+    if node.is_a?(MacroExpression)
+      node.accept self
+      expanded = node.expanded.not_nil!
+      if expanded.is_a?(Path)
+        expanded_type = expansion_scope.lookup_path(expanded)
+        case expanded_type
+        when Const
+          expanded = expanded_type.value
+        when Type
+          expanded = TypeNode.new(expanded_type)
+        end
+      end
+      expanded
+    else
+      node
+    end
   end
 
   def expand_inline_macro(node, mode = nil, accept = true)

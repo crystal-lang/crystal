@@ -2,7 +2,6 @@ require "spec"
 require "big"
 require "complex"
 require "../support/number"
-require "../support/iterate"
 
 describe "Number" do
   {% for number_type in BUILTIN_NUMBER_TYPES %}
@@ -21,6 +20,11 @@ describe "Number" do
       1234.567.significant(5).should be_close(1234.6, 1e-7)
       1234.567.significant(6).should eq(1234.57)
       1234.567.significant(7).should eq(1234.567)
+
+      123.456789.significant(5).should eq(123.46)
+      0.000123456789.significant(3).should eq 0.000123
+      0.123456789.significant(4).should eq 0.1235
+      1.23456789.significant(2).should eq 1.2
     end
 
     it "2 base" do
@@ -38,6 +42,7 @@ describe "Number" do
     it "preserves type" do
       123.significant(2).should eq(120)
       123.significant(2).should be_a(Int32)
+      0.significant(1).should be_a(Int32)
     end
   end
 
@@ -130,7 +135,7 @@ describe "Number" do
     end
 
     it "handle medium amount of digits" do
-      1.098765432109876543210987654321.round(15).should eq(1.098765432109877)
+      1.098765432109876543210987654321.round(15).should eq(1.098765432109876)
       1.098765432109876543210987654321.round(21).should eq(1.098765432109876543211)
       6543210987654321.0.round(-15).should eq(7000000000000000.0)
     end
@@ -210,20 +215,20 @@ describe "Number" do
         2.5.round(:ties_away).should eq 3.0
       end
 
-      it "default (=ties_away)" do
-        -2.5.round.should eq -3.0
+      it "default (=ties_even)" do
+        -2.5.round.should eq -2.0
         -1.5.round.should eq -2.0
         -1.0.round.should eq -1.0
         -0.9.round.should eq -1.0
-        -0.5.round.should eq -1.0
+        -0.5.round.should eq 0.0
         -0.1.round.should eq 0.0
         0.0.round.should eq 0.0
         0.1.round.should eq 0.0
-        0.5.round.should eq 1.0
+        0.5.round.should eq 0.0
         0.9.round.should eq 1.0
         1.0.round.should eq 1.0
         1.5.round.should eq 2.0
-        2.5.round.should eq 3.0
+        2.5.round.should eq 2.0
       end
     end
 
@@ -414,13 +419,31 @@ describe "Number" do
     ary[2].should eq(300.to_u8!)
   end
 
-  it "test zero?" do
-    0.zero?.should eq true
-    0.0.zero?.should eq true
-    0f32.zero?.should eq true
-    1.zero?.should eq false
-    1.0.zero?.should eq false
-    1f32.zero?.should eq false
+  it "#zero?" do
+    0.zero?.should be_true
+    0.0.zero?.should be_true
+    0_f32.zero?.should be_true
+    1.zero?.should be_false
+    1.0.zero?.should be_false
+    1f32.zero?.should be_false
+  end
+
+  it "#positive?" do
+    1.positive?.should be_true
+    1.0.positive?.should be_true
+    0.positive?.should be_false
+    0.0.positive?.should be_false
+    -1.positive?.should be_false
+    -1.1.positive?.should be_false
+  end
+
+  it "#negative?" do
+    1.negative?.should be_false
+    1.0.negative?.should be_false
+    0.negative?.should be_false
+    0.0.negative?.should be_false
+    -1.negative?.should be_true
+    -1.1.negative?.should be_true
   end
 
   describe "#step" do

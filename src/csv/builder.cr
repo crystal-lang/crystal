@@ -60,7 +60,7 @@ class CSV::Builder
   end
 
   # Appends the given values as a single row, and then a newline.
-  def row(values : Enumerable)
+  def row(values : Enumerable) : Nil
     row do |row|
       values.each do |value|
         row << value
@@ -69,7 +69,7 @@ class CSV::Builder
   end
 
   # :ditto:
-  def row(*values)
+  def row(*values) : Nil
     row values
   end
 
@@ -84,12 +84,12 @@ class CSV::Builder
   def quote_cell(value : String)
     append_cell do
       @io << @quote_char
-      value.each_byte do |byte|
-        case byte
+      value.each_char do |char|
+        case char
         when @quote_char
           @io << @quote_char << @quote_char
         else
-          @io.write_byte byte
+          @io << char
         end
       end
       @io << @quote_char
@@ -111,7 +111,7 @@ class CSV::Builder
     end
 
     # Appends the given value to this row.
-    def <<(value : String)
+    def <<(value : String) : Nil
       if needs_quotes?(value)
         @builder.quote_cell value
       else
@@ -120,7 +120,7 @@ class CSV::Builder
     end
 
     # :ditto:
-    def <<(value : Nil | Bool | Number)
+    def <<(value : Nil | Bool | Number) : Nil
       case @quoting
       when .all?
         @builder.cell { |io|
@@ -134,24 +134,24 @@ class CSV::Builder
     end
 
     # :ditto:
-    def <<(value)
+    def <<(value) : Nil
       self << value.to_s
     end
 
     # Appends the given values to this row.
-    def concat(values : Enumerable)
+    def concat(values : Enumerable) : Nil
       values.each do |value|
         self << value
       end
     end
 
     # :ditto:
-    def concat(*values)
+    def concat(*values) : Nil
       concat values
     end
 
     # Appends a comma, thus skipping a cell.
-    def skip_cell
+    def skip_cell : Nil
       self << nil
     end
 

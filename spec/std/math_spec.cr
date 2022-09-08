@@ -41,6 +41,17 @@ describe "Math" do
       Math.sqrt(4_f32).should eq(2)
       Math.sqrt(4).should eq(2)
     end
+
+    it "isqrt" do
+      Math.isqrt(9).should eq(3)
+      Math.isqrt(8).should eq(2)
+      Math.isqrt(4).should eq(2)
+      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64] %}
+        %val = {{type}}.new 42
+        %exp = {{type}}.new 6
+        Math.isqrt(%val).should eq(%exp)
+      {% end %}
+    end
   end
 
   describe "Exponents" do
@@ -55,7 +66,7 @@ describe "Math" do
     end
 
     it "expm1" do
-      Math.expm1(0.99_f32).should be_close(1.6912344723492623, 1e-7)
+      Math.expm1(0.99_f32).should be_close(1.6912344723492623, 1e-6)
       Math.expm1(0.99).should be_close(1.6912344723492623, 1e-7)
     end
 
@@ -257,10 +268,41 @@ describe "Math" do
 
   # pw2ceil
 
-  describe "Rounding up to powers of 2" do
-    it "pw2ceil" do
+  describe ".pw2ceil" do
+    it "Int32" do
+      Math.pw2ceil(-1).should eq 1
       Math.pw2ceil(33).should eq(64)
       Math.pw2ceil(128).should eq(128)
+      Math.pw2ceil(0).should eq 1
+      Math.pw2ceil(1).should eq 1
+      Math.pw2ceil(2).should eq 2
+      Math.pw2ceil(3).should eq 4
+      Math.pw2ceil(4).should eq 4
+      Math.pw2ceil(5).should eq 8
+      # 1073741824 is the largest power of 2 that fits into Int32
+      Math.pw2ceil(1073741824).should eq 1073741824
+      Math.pw2ceil(1073741824 - 1).should eq 1073741824
+      expect_raises(OverflowError) do
+        Math.pw2ceil(1073741824 + 1)
+      end
+    end
+
+    it "Int64" do
+      Math.pw2ceil(-1_i64).should eq 1
+      Math.pw2ceil(33_i64).should eq(64)
+      Math.pw2ceil(128_i64).should eq(128)
+      Math.pw2ceil(0_i64).should eq 1
+      Math.pw2ceil(1_i64).should eq 1
+      Math.pw2ceil(2_i64).should eq 2
+      Math.pw2ceil(3_i64).should eq 4
+      Math.pw2ceil(4_i64).should eq 4
+      Math.pw2ceil(5_i64).should eq 8
+      # 4611686018427387904 is the largest power of 2 that fits into Int64
+      Math.pw2ceil(4611686018427387904).should eq 4611686018427387904
+      Math.pw2ceil(4611686018427387904 - 1).should eq 4611686018427387904
+      expect_raises(OverflowError) do
+        Math.pw2ceil(4611686018427387904 + 1)
+      end
     end
   end
 

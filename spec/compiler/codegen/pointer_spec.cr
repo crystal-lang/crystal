@@ -438,6 +438,24 @@ describe "Code gen: pointer" do
       ))
   end
 
+  it "passes arguments correctly for typedef metaclass (#8544)" do
+    run <<-CR
+      lib LibFoo
+        type Foo = Void*
+      end
+
+      class Class
+        def foo(x)
+          x
+        end
+      end
+
+      x = 1
+      LibFoo::Foo.foo(x)
+      Pointer(Void).foo(x)
+      CR
+  end
+
   it "generates correct code for Pointer.malloc(0) (#2905)" do
     run(%(
       require "prelude"

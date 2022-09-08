@@ -3,7 +3,7 @@ require "../blowfish"
 
 # :nodoc:
 class Crypto::Bcrypt::Blowfish < Crypto::Blowfish
-  def enhance_key_schedule(data, key, cost)
+  def enhance_key_schedule(data, key, cost) : Nil
     enhance_key_schedule(data, key)
 
     (1_u32 << cost).times do
@@ -12,7 +12,7 @@ class Crypto::Bcrypt::Blowfish < Crypto::Blowfish
     end
   end
 
-  def enhance_key_schedule(data, key)
+  def enhance_key_schedule(data, key) : Nil
     pos = 0
 
     0.upto(17) do |i|
