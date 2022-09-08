@@ -8,6 +8,9 @@ struct String::Formatter(A)
     # `%s`, index type is `Nil`
     Sequential
 
+    # `%1$s`, index type is `Int32`
+    Numbered
+
     # `%{a}` or `%<b>s`, index type is `String`
     Named
   end
@@ -85,14 +88,14 @@ struct String::Formatter(A)
   end
 
   private def consume_flags
-    flags = consume_format_flags
-    flags = consume_width(flags)
+    flags = consume_format_flags_and_width
     flags = consume_precision(flags)
     flags
   end
 
-  private def consume_format_flags
+  private def consume_format_flags_and_width
     flags = Flags.new
+
     while true
       case current_char
       when ' '
@@ -105,27 +108,30 @@ struct String::Formatter(A)
         flags.minus = true
       when '0'
         flags.zero = true
+      when '1'..'9'
+        val, size = consume_number
+        if current_char == '$'
+          args_are :numbered
+          raise ArgumentError.new("Cannot specify parameter number more than once") if flags.index
+          flags.index = val
+          next_char
+          next
+        else
+          flags.width = val
+          flags.width_size = size
+          break
+        end
+      when '*'
+        val = consume_dynamic_value
+        flags.width = val
+        flags.width_size = val.to_s.size
+        break
       else
         break
       end
       next_char
     end
-    flags
-  end
 
-  private def consume_width(flags)
-    case current_char
-    when '1'..'9'
-      num, size = consume_number
-      flags.width = num
-      flags.width_size = size
-    when '*'
-      val = consume_dynamic_value
-      flags.width = val
-      flags.width_size = val.to_s.size
-    else
-      # no width
-    end
     flags
   end
 
@@ -151,9 +157,17 @@ struct String::Formatter(A)
   end
 
   private def consume_dynamic_value
-    value = arg_at(nil)
-    if value.is_a?(Int)
+    next_char
+    if current_char.in?('0'..'9')
+      index, _ = consume_number
+      unless current_char == '$'
+        raise ArgumentError.new("Expected '$' after dynamic value '*' with parameter number")
+      end
       next_char
+    end
+
+    value = arg_at(index)
+    if value.is_a?(Int)
       value.to_i
     else
       raise ArgumentError.new("Expected dynamic value '*' to be an Int - #{value.inspect} (#{value.class.inspect})")
@@ -179,7 +193,9 @@ struct String::Formatter(A)
   end
 
   private def consume_type(flags, index)
-    arg = arg_at(index)
+    # if coming from `%<foo>...`, then we already have `@arg_mode.named?`, so
+    # supplying numbered parameters will raise
+    arg = arg_at(flags.index || index)
 
     case char = current_char
     when 'c'
@@ -370,6 +386,12 @@ struct String::Formatter(A)
     arg
   end
 
+  private def arg_at(index : Int)
+    args_are :numbered
+    raise ArgumentError.new "Parameter number cannot be 0" if index == 0
+    @args.fetch(index - 1) { raise ArgumentError.new("Too few arguments") }
+  end
+
   private def arg_at(index : String)
     args_are :named
     args = @args
@@ -432,6 +454,7 @@ struct String::Formatter(A)
     property space : Bool, sharp : Bool, plus : Bool, minus : Bool, zero : Bool, base : Int32
     property width : Int32, width_size : Int32
     property type : Char, precision : Int32?, precision_size : Int32
+    property index : Int32?
 
     def initialize
       @space = @sharp = @plus = @minus = @zero = false
