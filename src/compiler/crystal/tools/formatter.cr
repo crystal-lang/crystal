@@ -1,15 +1,21 @@
 require "../syntax"
 
 module Crystal
-  def self.format(source, filename = nil)
-    Crystal::Formatter.format(source, filename: filename)
+  def self.format(source, filename = nil, report_warnings : IO? = nil)
+    Crystal::Formatter.format(source, filename: filename, report_warnings: report_warnings)
   end
 
   class Formatter < Visitor
-    def self.format(source, filename = nil)
+    def self.format(source, filename = nil, report_warnings : IO? = nil)
       parser = Parser.new(source)
       parser.filename = filename
       nodes = parser.parse
+
+      # the formatter merely parses the same source again, it shouldn't
+      # introduce any new syntax warnings the parser cannot find
+      if report_warnings
+        parser.warnings.report(report_warnings)
+      end
 
       formatter = new(source)
       formatter.skip_space_or_newline
@@ -1707,6 +1713,8 @@ module Crystal
     def visit(node : Macro)
       reset_macro_state
 
+      macro_node_line = @line
+
       write_keyword :macro, " "
 
       write node.name
@@ -1720,9 +1728,47 @@ module Crystal
 
       format_def_args node
 
-      format_macro_body node
+      if macro_literal_source = macro_literal_contents(node.body)
+        format_macro_literal_only(node, macro_literal_source, macro_node_line)
+      else
+        format_macro_body node
+      end
 
       false
+    end
+
+    private def format_macro_literal_only(node, source, macro_node_line)
+      begin
+        # Only format the macro contents if it's valid Crystal code
+        Parser.new(source).parse
+
+        formatter, value = subformat(source)
+
+        # The formatted contents might have heredocs for which we must preserve
+        # trailing spaces, so here we copy those from the formatter we used
+        # to format the contents to this formatter (we add one because we insert
+        # a newline before the contents).
+        formatter.no_rstrip_lines.each do |line|
+          @no_rstrip_lines.add(macro_node_line + line + 1)
+        end
+
+        write_line
+        write value
+
+        next_macro_token
+
+        until @token.type.macro_end?
+          next_macro_token
+        end
+
+        skip_space_or_newline
+        check :MACRO_END
+        write_indent
+        write "end"
+        next_token
+      rescue ex : Crystal::SyntaxException
+        format_macro_body node
+      end
     end
 
     def format_macro_body(node)
@@ -3043,7 +3089,7 @@ module Crystal
             if body.nil_check?
               call = Call.new(nil, "nil?")
             else
-              call = Call.new(nil, "is_a?", args: [body.const] of ASTNode)
+              call = Call.new(nil, "is_a?", body.const)
             end
             accept call
           else
@@ -3052,7 +3098,7 @@ module Crystal
           end
         when RespondsTo
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "responds_to?", args: [SymbolLiteral.new(body.name.to_s)] of ASTNode)
+            call = Call.new(nil, "responds_to?", SymbolLiteral.new(body.name.to_s))
             accept call
           else
             clear_object(body)
@@ -3060,7 +3106,7 @@ module Crystal
           end
         when Cast
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "as", args: [body.to] of ASTNode)
+            call = Call.new(nil, "as", body.to)
             accept call
           else
             clear_object(body)
@@ -3068,7 +3114,7 @@ module Crystal
           end
         when NilableCast
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "as?", args: [body.to] of ASTNode)
+            call = Call.new(nil, "as?", body.to)
             accept call
           else
             clear_object(body)

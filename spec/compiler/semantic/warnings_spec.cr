@@ -227,12 +227,12 @@ describe "Semantic: warnings" do
             CR
 
           compiler = create_spec_compiler
-          compiler.warnings = Warnings::All
-          compiler.warnings_exclude << Crystal.normalize_path "lib"
+          compiler.warnings.level = :all
+          compiler.warnings.exclude_lib_path = true
           compiler.prelude = "empty"
           result = compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
 
-          result.program.warning_failures.size.should eq(1)
+          compiler.warnings.infos.size.should eq(1)
         end
       end
     end
@@ -396,12 +396,12 @@ describe "Semantic: warnings" do
           )
 
           compiler = create_spec_compiler
-          compiler.warnings = Warnings::All
-          compiler.warnings_exclude << Crystal.normalize_path "lib"
+          compiler.warnings.level = :all
+          compiler.warnings.exclude_lib_path = true
           compiler.prelude = "empty"
           result = compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
 
-          result.program.warning_failures.size.should eq(1)
+          compiler.warnings.infos.size.should eq(1)
         end
       end
     end
@@ -760,5 +760,13 @@ describe "Semantic: warnings" do
         end
         CR
     end
+  end
+
+  it "exposes syntax warnings" do
+    assert_warning UInt64::MAX.to_s, "Warning: #{UInt64::MAX} doesn't fit in an Int64, try using the suffix u64 or i128"
+  end
+
+  it "exposes syntax warnings after macro interpolation" do
+    assert_warning "{% begin %}0x8000_0000_0000_000{{ 0 }}{% end %}", "Warning: 0x8000_0000_0000_0000 doesn't fit in an Int64, try using the suffix u64 or i128"
   end
 end

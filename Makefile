@@ -25,6 +25,7 @@ verbose ?=      ## Run specs in verbose mode
 junit_output ?= ## Path to output junit results
 static ?=       ## Enable static linking
 interpreter ?=  ## Enable interpreter feature
+check ?=        ## Enable only check when running format
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
@@ -114,6 +115,10 @@ crystal: $(O)/crystal ## Build the compiler
 deps: $(DEPS) ## Build dependencies
 llvm_ext: $(LLVM_EXT_OBJ)
 
+.PHONY: format
+format: ## Format sources
+	./bin/crystal tool format$(if $(check), --check) src spec samples
+
 .PHONY: install
 install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -d -m 0755 "$(BINDIR)/"
@@ -132,6 +137,8 @@ install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -m 644 etc/completion.bash "$(DESTDIR)$(PREFIX)/share/bash-completion/completions/crystal"
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(PREFIX)/share/zsh/site-functions/"
 	$(INSTALL) -m 644 etc/completion.zsh "$(DESTDIR)$(PREFIX)/share/zsh/site-functions/_crystal"
+	$(INSTALL) -d -m 0755 "$(DESTDIR)$(PREFIX)/share/fish/vendor_completions.d/"
+	$(INSTALL) -m 644 etc/completion.fish "$(DESTDIR)$(PREFIX)/share/fish/vendor_completions.d/crystal.fish"
 
 .PHONY: uninstall
 uninstall: ## Uninstall the compiler from DESTDIR

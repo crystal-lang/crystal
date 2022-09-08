@@ -7,7 +7,7 @@ class Crystal::Call
   property! scope : Type
   property with_scope : Type?
   property! parent_visitor : MainVisitor
-  property target_defs : Array(Def)?
+  property target_defs = ZeroOneOrMany(Def).new
   property expanded : ASTNode?
   property expanded_macro : Macro?
   property? uses_with_scope = false
@@ -20,15 +20,14 @@ class Crystal::Call
   end
 
   def target_def
-    if defs = @target_defs
-      if defs.size == 1
-        return defs.first
-      else
-        ::raise "#{defs.size} target defs for #{self}"
-      end
+    case target_defs.size
+    when 0
+      ::raise "Zero target defs for #{self}"
+    when 1
+      target_defs.first
+    else
+      ::raise "#{target_defs.size} target defs for #{self}"
     end
-
-    ::raise "Zero target defs for #{self}"
   end
 
   def recalculate
@@ -78,10 +77,10 @@ class Crystal::Call
 
     block = @block
 
-    unbind_from @target_defs if @target_defs
+    unbind_from target_defs unless target_defs.empty?
     unbind_from block.break if block
 
-    @target_defs = nil
+    @target_defs = ZeroOneOrMany(Def).new
 
     if block_arg = @block_arg
       replace_block_arg_with_block(block_arg)
@@ -92,11 +91,12 @@ class Crystal::Call
     # If @target_defs is set here it means there was a recalculation
     # fired as a result of a recalculation. We keep the last one.
 
-    return if @target_defs
+    return unless target_defs.empty?
 
+    # TODO: optimize zero one or many
     @target_defs = matches
 
-    bind_to matches if matches
+    bind_to matches unless matches.empty?
     bind_to block.break if block
 
     if (parent_visitor = @parent_visitor) && matches
@@ -109,13 +109,13 @@ class Crystal::Call
     end
   end
 
-  def lookup_matches
+  def lookup_matches : ZeroOneOrMany(Def)
     lookup_matches(with_autocast: false)
   rescue ex : RetryLookupWithLiterals
     lookup_matches(with_autocast: true)
   end
 
-  def lookup_matches(*, with_autocast = false)
+  def lookup_matches(*, with_autocast = false) : ZeroOneOrMany(Def)
     if args.any? { |arg| arg.is_a?(Splat) || arg.is_a?(DoubleSplat) }
       lookup_matches_with_splat(with_autocast)
     else
@@ -133,7 +133,7 @@ class Crystal::Call
     end
   end
 
-  def lookup_matches_with_splat(with_autocast)
+  def lookup_matches_with_splat(with_autocast) : ZeroOneOrMany(Def)
     # Check if all splat are of tuples
     arg_types = Array(Type).new(args.size * 2)
     named_args_types = nil
@@ -184,7 +184,7 @@ class Crystal::Call
     lookup_matches_without_splat arg_types, named_args_types, with_autocast: with_autocast
   end
 
-  def lookup_matches_without_splat(arg_types, named_args_types, with_autocast)
+  def lookup_matches_without_splat(arg_types, named_args_types, with_autocast) : ZeroOneOrMany(Def)
     if obj = @obj
       lookup_matches_in(obj.type, arg_types, named_args_types, with_autocast: with_autocast)
     elsif name == "super"
@@ -198,15 +198,19 @@ class Crystal::Call
     end
   end
 
-  def lookup_matches_in(owner : AliasType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
+  def lookup_matches_in(owner : AliasType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false) : ZeroOneOrMany(Def)
     lookup_matches_in(owner.remove_alias, arg_types, named_args_types, search_in_parents: search_in_parents, with_autocast: with_autocast)
   end
 
-  def lookup_matches_in(owner : UnionType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
-    owner.union_types.flat_map { |type| lookup_matches_in(type, arg_types, named_args_types, search_in_parents: search_in_parents, with_autocast: with_autocast) }
+  def lookup_matches_in(owner : UnionType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false) : ZeroOneOrMany(Def)
+    matches = ZeroOneOrMany(Def).new
+    owner.union_types.each { |type|
+      matches.concat lookup_matches_in(type, arg_types, named_args_types, search_in_parents: search_in_parents, with_autocast: with_autocast)
+    }
+    matches
   end
 
-  def lookup_matches_in(owner : Program, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
+  def lookup_matches_in(owner : Program, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false) : ZeroOneOrMany(Def)
     lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents: search_in_parents, with_autocast: with_autocast)
   end
 
@@ -214,26 +218,26 @@ class Crystal::Call
     lookup_matches_in program, arg_types, named_args_types, search_in_parents: search_in_parents, with_autocast: with_autocast
   end
 
-  def lookup_matches_in(owner : NonGenericModuleType | GenericModuleInstanceType | GenericType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
+  def lookup_matches_in(owner : NonGenericModuleType | GenericModuleInstanceType | GenericType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false) : ZeroOneOrMany(Def)
     attach_subclass_observer owner
 
     including_types = owner.including_types
     if including_types
       lookup_matches_in(including_types, arg_types, named_args_types, search_in_parents: search_in_parents, with_autocast: with_autocast)
     else
-      [] of Def
+      ZeroOneOrMany(Def).new
     end
   end
 
-  def lookup_matches_in(owner : LibType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
+  def lookup_matches_in(owner : LibType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false) : ZeroOneOrMany(Def)
     raise "lib fun call is not supported in dispatch"
   end
 
-  def lookup_matches_in(owner : Type, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
+  def lookup_matches_in(owner : Type, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false) : ZeroOneOrMany(Def)
     lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents: search_in_parents, with_autocast: with_autocast)
   end
 
-  def lookup_matches_with_scope_in(owner, arg_types, named_args_types, with_autocast = false)
+  def lookup_matches_with_scope_in(owner, arg_types, named_args_types, with_autocast = false) : ZeroOneOrMany(Def)
     signature = CallSignature.new(name, arg_types, block, named_args_types)
 
     matches = lookup_matches_checking_expansion(owner, signature, with_autocast: with_autocast)
@@ -251,7 +255,7 @@ class Crystal::Call
     instantiate signature, matches, owner, self_type: nil, with_autocast: with_autocast
   end
 
-  def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents, search_in_toplevel = true, with_autocast = false)
+  def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents, search_in_toplevel = true, with_autocast = false) : ZeroOneOrMany(Def)
     signature = CallSignature.new(def_name, arg_types, block, named_args_types)
 
     matches = check_tuple_indexer(owner, def_name, args, arg_types)
@@ -353,12 +357,13 @@ class Crystal::Call
     end
   end
 
-  def instantiate(signature, matches, owner, self_type, with_autocast)
+  def instantiate(signature, matches, owner, self_type, with_autocast) : ZeroOneOrMany(Def)
     matches.each &.remove_literals if with_autocast
 
     block = @block
 
-    typed_defs = Array(Def).new(matches.size)
+    # TODO: use map
+    typed_defs = ZeroOneOrMany(Def).new
 
     matches.each do |match|
       check_visibility match
@@ -396,8 +401,8 @@ class Crystal::Call
           check_return_type(typed_def, typed_def_return_type, match, match_owner)
         end
 
-        check_recursive_splat_call match.def, typed_def_args do
-          bubbling_exception do
+        bubbling_exception do
+          check_recursive_splat_call match.def, typed_def_args do
             visitor = MainVisitor.new(program, typed_def_args, typed_def)
             visitor.yield_vars = yield_vars
             visitor.match_context = match.context
@@ -453,7 +458,7 @@ class Crystal::Call
     typed_def.type = return_type if return_type.no_return? || return_type.nil_type?
   end
 
-  def check_tuple_indexer(owner, def_name, args, arg_types)
+  def check_tuple_indexer(owner, def_name, args, arg_types) : Matches?
     return unless args.size == 1
 
     case def_name
@@ -488,13 +493,13 @@ class Crystal::Call
     end
   end
 
-  def tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
+  def tuple_indexer_helper(args, arg_types, owner, instance_type, nilable) : Matches?
     index = tuple_indexer_helper_index(args.first, owner, instance_type, nilable)
     return unless index
 
     indexer_def = yield instance_type, index
     indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-    Matches.new([indexer_match] of Match, true)
+    Matches.new(ZeroOneOrMany(Match).new(indexer_match), true)
   end
 
   private def tuple_indexer_helper_index(arg, owner, instance_type, nilable)
@@ -574,7 +579,7 @@ class Crystal::Call
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-        return Matches.new([indexer_match] of Match, true)
+        return Matches.new(ZeroOneOrMany(Match).new(indexer_match), true)
       else
         raise "missing key '#{name}' for named tuple #{owner}"
       end
@@ -705,7 +710,7 @@ class Crystal::Call
     signature = CallSignature.new(previous.name, arg_types, block, named_args_types)
     context = MatchContext.new(scope, scope, def_free_vars: previous.free_vars)
     match = Match.new(previous, arg_types, context, named_args_types)
-    matches = Matches.new([match] of Match, true)
+    matches = Matches.new(ZeroOneOrMany(Match).new(match), true)
 
     unless signature.match(previous_item, context)
       raise_matches_not_found scope, previous.name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast")

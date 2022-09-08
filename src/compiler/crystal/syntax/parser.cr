@@ -24,8 +24,8 @@ module Crystal
       new(str, string_pool, var_scopes).parse
     end
 
-    def initialize(str, string_pool : StringPool? = nil, @var_scopes = [Set(String).new])
-      super(str, string_pool)
+    def initialize(str, string_pool : StringPool? = nil, @var_scopes = [Set(String).new], warnings : WarningCollection? = nil)
+      super(str, string_pool, warnings)
       @unclosed_stack = [] of Unclosed
       @calls_super = false
       @calls_initialize = false
@@ -3911,7 +3911,7 @@ module Crystal
           if @token.keyword? && invalid_internal_name?(@token.value)
             invalid_internal_name = @token.dup
           end
-          external_name = @token.type.ident? ? @token.value.to_s : ""
+          external_name = @token.value.to_s
           next_token
         else
           external_name = parse_string_without_interpolation("external name")

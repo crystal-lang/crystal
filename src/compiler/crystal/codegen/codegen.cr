@@ -18,7 +18,7 @@ module Crystal
 
   class Program
     def run(code, filename = nil, debug = Debug::Default)
-      parser = Parser.new(code)
+      parser = new_parser(code)
       parser.filename = filename
       node = parser.parse
       node = normalize node

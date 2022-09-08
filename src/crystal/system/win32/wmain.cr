@@ -2,8 +2,10 @@ require "c/stringapiset"
 require "c/winnls"
 require "c/stdlib"
 
-# we have both `main` and `wmain`, so we must choose an unambiguous entry point
-@[Link(ldflags: "/ENTRY:wmainCRTStartup")]
+{% begin %}
+  # we have both `main` and `wmain`, so we must choose an unambiguous entry point
+  @[Link({{ flag?(:preview_dll) ? "msvcrt" : "libcmt" }}, ldflags: "/ENTRY:wmainCRTStartup")]
+{% end %}
 lib LibCrystalMain
 end
 

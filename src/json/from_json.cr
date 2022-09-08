@@ -266,9 +266,13 @@ end
 
 def NamedTuple.new(pull : JSON::PullParser)
   {% begin %}
-    {% for key in T.keys %}
-      %var{key.id} = nil
-      %found{key.id} = false
+    {% for key, type in T %}
+      {% if type.nilable? %}
+        %var{key.id} = nil
+      {% else %}
+        %var{key.id} = uninitialized typeof(element_type({{ key.symbolize }}))
+        %found{key.id} = false
+      {% end %}
     {% end %}
 
     location = pull.location
@@ -277,8 +281,10 @@ def NamedTuple.new(pull : JSON::PullParser)
       case key
         {% for key, type in T %}
           when {{key.stringify}}
-            %var{key.id} = {{type}}.new(pull)
-            %found{key.id} = true
+            %var{key.id} = self[{{ key.symbolize }}].new(pull)
+            {% unless type.nilable? %}
+              %found{key.id} = true
+            {% end %}
         {% end %}
       else
         pull.skip
@@ -286,14 +292,16 @@ def NamedTuple.new(pull : JSON::PullParser)
     end
 
     {% for key, type in T %}
-      if %var{key.id}.nil? && !%found{key.id} && !{{type.nilable?}}
-        raise JSON::ParseException.new("Missing json attribute: #{{{key.id.stringify}}}", *location)
-      end
+      {% unless type.nilable? %}
+        unless %found{key.id}
+          raise JSON::ParseException.new("Missing json attribute: #{ {{ key.id.stringify }} }", *location)
+        end
+      {% end %}
     {% end %}
 
     NamedTuple.new(
-      {% for key, type in T %}
-        {{key.id.stringify}}: (%var{key.id}).as({{type}}),
+      {% for key in T.keys %}
+        {{ key.id.stringify }}: %var{key.id},
       {% end %}
     )
   {% end %}
