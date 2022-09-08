@@ -858,7 +858,7 @@ describe Crystal::Formatter do
   assert_format "macro foo( x , y )\nend", "macro foo(x, y)\nend"
   assert_format "macro foo( x  =   1, y  =  2,  &block)\nend", "macro foo(x = 1, y = 2, &block)\nend"
   assert_format "macro foo\n  1 + 2\nend"
-  assert_format "macro foo\n  if 1\n 1 + 2\n end\nend"
+  assert_format "macro foo\n  if 1\n 1 + 2\n end\nend", "macro foo\n  if 1\n    1 + 2\n  end\nend"
   assert_format "macro foo\n  {{1 + 2}}\nend", "macro foo\n  {{1 + 2}}\nend"
   assert_format "macro foo\n  {{ 1 + 2 }}\nend", "macro foo\n  {{ 1 + 2 }}\nend"
   assert_format "macro foo\n  {% 1 + 2 %}\nend", "macro foo\n  {% 1 + 2 %}\nend"
@@ -894,6 +894,9 @@ describe Crystal::Formatter do
   assert_format "macro foo\n  {% if 1 %} 2 {% elsif 3 %} 4 {% else %} 5 {% end %}\nend"
   assert_format "macro [](x)\nend"
   assert_format "macro foo\n  {% if true %}if true{% end %}\n  {% if true %}end{% end %}\nend"
+  assert_format "macro foo\n    1  +  2 \n    end", "macro foo\n  1 + 2\nend"
+  assert_format "class Foo\n macro foo\n    1  +  2 \n    end\n end", "class Foo\n  macro foo\n    1 + 2\n  end\nend"
+  assert_format "macro foo\n    def   bar  \n  end \n    end", "macro foo\n  def bar\n  end\nend"
 
   assert_format "def foo\na = bar do\n1\nend\nend", "def foo\n  a = bar do\n    1\n  end\nend"
   assert_format "def foo\nend\ndef bar\nend", "def foo\nend\n\ndef bar\nend"
@@ -1198,7 +1201,7 @@ describe Crystal::Formatter do
   assert_format "def   foo(x   :  self ?) \n  end", "def foo(x : self?)\nend"
   assert_format "def foo(x : (self)?)\nend"
 
-  assert_format "  macro foo\n  end\n\n  :+", "macro foo\n  end\n\n:+"
+  assert_format "  macro foo\n  end\n\n  :+", "macro foo\nend\n\n:+"
   assert_format "[\n1, # a\n2, # b\n 3 # c\n]", "[\n  1, # a\n  2, # b\n  3, # c\n]"
   assert_format "[\n  a() # b\n]", "[\n  a(), # b\n]"
   assert_format "[\n  a(), # b\n]", "[\n  a(), # b\n]"
@@ -1695,6 +1698,14 @@ describe Crystal::Formatter do
     "    hello  \n" +
     "  FOO\n" +
     "{% end %}"
+  )
+  assert_format(
+    "macro foo\n" +
+    "  {{x}}" +
+    "  <<-FOO\n" +
+    "    hello  \n" +
+    "  FOO\n" +
+    "end"
   )
 
   # But remove trailing space in macro expression.
