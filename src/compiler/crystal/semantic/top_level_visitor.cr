@@ -443,7 +443,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         new_expansions[node] = new_method
       end
 
-      unless @method_added_running
+      if !@method_added_running && has_hooks?(target_type.metaclass)
         @method_added_running = true
         run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", node).at(node.location)
         @method_added_running = false
@@ -1041,6 +1041,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     rescue ex : TypeException
       node.raise "at '#{kind}' hook", ex
     end
+  end
+
+  def has_hooks?(type_with_hooks)
+    hooks = type_with_hooks.as?(ModuleType).try &.hooks
+    hooks && !hooks.empty?
   end
 
   def run_hooks(type_with_hooks, current_type, kind : HookKind, node, call = nil)
