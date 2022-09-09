@@ -117,6 +117,28 @@ class Crystal::Call
       end
     end
 
+    # Check if a named argument is missing in all overloads
+    if call_errors.all?(MissingNamedArguments)
+      call_errors = call_errors.map &.as(MissingNamedArguments)
+      all_missing_names = call_errors.flat_map(&.names)
+      missing_names_in_all_overloads = all_missing_names.select do |missing_name|
+        call_errors.all? &.names.includes?(missing_name)
+      end.uniq
+      unless missing_names_in_all_overloads.empty?
+        raise(String.build do |str|
+          str << (if missing_names_in_all_overloads.size == 1
+            "missing argument: #{missing_names_in_all_overloads.first}"
+          else
+            "missing arguments: #{missing_names_in_all_overloads.join ", "}"
+          end)
+          str.puts
+          str.puts
+          str << "Overloads are:"
+          append_matches(defs, arg_types, str)
+        end, inner: inner_exception)
+      end
+    end
+
     # Don't say "wrong number of arguments" when there are named args in this call
     if !named_args_types && call_errors.all?(WrongNumberOfArguments)
       raise_matches_not_found_named_args(owner, def_name, defs, arg_types, named_args_types, inner_exception)

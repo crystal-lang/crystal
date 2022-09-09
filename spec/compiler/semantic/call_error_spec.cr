@@ -31,4 +31,24 @@ describe "Call errors" do
       ),
       "'foo' is expected to be invoked with a block, but no block was given"
   end
+
+  it "says missing named argument" do
+    assert_error %(
+      def foo(*, x)
+      end
+
+      foo
+      ),
+      "missing argument: x"
+  end
+
+  it "says missing named arguments" do
+    assert_error %(
+      def foo(*, x, y)
+      end
+
+      foo
+      ),
+      "missing arguments: x, y"
+  end
 end
