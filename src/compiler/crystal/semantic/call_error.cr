@@ -120,10 +120,10 @@ class Crystal::Call
     # Check if a named argument is missing in all overloads
     if call_errors.all?(MissingNamedArguments)
       call_errors = call_errors.map &.as(MissingNamedArguments)
-      all_missing_names = call_errors.flat_map(&.names)
+      all_missing_names = call_errors.flat_map(&.names).uniq
       missing_names_in_all_overloads = all_missing_names.select do |missing_name|
         call_errors.all? &.names.includes?(missing_name)
-      end.uniq
+      end
       unless missing_names_in_all_overloads.empty?
         raise(String.build do |str|
           str << (if missing_names_in_all_overloads.size == 1
@@ -131,6 +131,43 @@ class Crystal::Call
           else
             "missing arguments: #{missing_names_in_all_overloads.join ", "}"
           end)
+          str.puts
+          str.puts
+          str << "Overloads are:"
+          append_matches(defs, arg_types, str)
+        end, inner: inner_exception)
+      end
+    end
+
+    # Check if a named argument was specified but it doesn't exist
+    # in any of the overloads
+    if call_errors.all?(ExtraNamedArguments)
+      call_errors = call_errors.map &.as(ExtraNamedArguments)
+      all_extra_names = call_errors.flat_map(&.names).uniq
+      extra_names_in_all_overloads = all_extra_names.select do |extra_name|
+        call_errors.all? &.names.includes?(extra_name)
+      end
+      unless extra_names_in_all_overloads.empty?
+        raise(String.build do |str|
+          quoted_extra_names = extra_names_in_all_overloads.map { |name| "'#{name}'" }
+
+          str << (if extra_names_in_all_overloads.size == 1
+            "no parameter named #{quoted_extra_names.first}"
+          else
+            "no parameters named #{quoted_extra_names.join ", "}"
+          end)
+
+          # Show did you mean for the simplest case for now
+          if extra_names_in_all_overloads.size == 1 && call_errors.size == 1
+            extra_name = extra_names_in_all_overloads.first
+            name_index = call_errors.first.names.index(extra_name).not_nil!
+            similar_name = call_errors.first.similar_names[name_index]
+            if similar_name
+              str.puts
+              str << "Did you mean '#{similar_name}'?"
+            end
+          end
+
           str.puts
           str.puts
           str << "Overloads are:"
@@ -224,6 +261,7 @@ class Crystal::Call
   record WrongNumberOfArguments
   record MissingNamedArguments, names : Array(String)
   record BlockMismatch
+  record ExtraNamedArguments, names : Array(String), similar_names : Array(String?)
 
   private def compute_call_error_reason(owner, a_def, arg_types, named_args_types)
     if (block && !a_def.yields) || (!block && a_def.yields)
@@ -238,6 +276,29 @@ class Crystal::Call
     missing_named_args = extract_missing_named_args(a_def, named_args)
     if missing_named_args
       return MissingNamedArguments.new(missing_named_args)
+    end
+
+    extra_named_argument_names = [] of String
+    extra_named_argument_similar_names = [] of String?
+
+    named_args.try &.each do |named_arg|
+      found_index = a_def.args.index { |arg| arg.external_name == named_arg.name }
+      if found_index
+        min_size = arg_types.size
+        if found_index < min_size
+          # TODO
+          # raise "argument for parameter '#{named_arg.name}' already specified"
+        end
+      elsif !a_def.double_splat
+        similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.external_name))
+
+        extra_named_argument_names << named_arg.name
+        extra_named_argument_similar_names << similar_name
+      end
+    end
+
+    unless extra_named_argument_names.empty?
+      return ExtraNamedArguments.new(extra_named_argument_names, extra_named_argument_similar_names)
     end
   end
 

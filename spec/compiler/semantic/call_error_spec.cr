@@ -51,4 +51,24 @@ describe "Call errors" do
       ),
       "missing arguments: x, y"
   end
+
+  it "says no parameter named" do
+    assert_error %(
+      def foo
+      end
+
+      foo(x: 1)
+      ),
+      "no parameter named 'x'"
+  end
+
+  it "says no parameters named" do
+    assert_error %(
+      def foo
+      end
+
+      foo(x: 1, y: 2)
+      ),
+      "no parameters named 'x', 'y'"
+  end
 end
