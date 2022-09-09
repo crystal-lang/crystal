@@ -103,6 +103,8 @@ describe Crystal::SyntaxHighlighter::Colorize do
 
     it_highlights %($1), %($1)
     it_highlights %($2?), %($2?)
+    it_highlights %($?), %($?)
+    it_highlights %($~), %($~)
 
     it_highlights %("foo"), %(\e[93m"foo"\e[0m)
     it_highlights %("<>"), %(\e[93m"<>"\e[0m)

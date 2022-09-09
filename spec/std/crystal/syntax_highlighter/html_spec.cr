@@ -98,6 +98,8 @@ describe Crystal::SyntaxHighlighter::HTML do
 
     it_highlights %($1), %($1)
     it_highlights %($2?), %($2?)
+    it_highlights %($?), %($?)
+    it_highlights %($~), %($~)
 
     it_highlights %("foo"), %(<span class="s">&quot;foo&quot;</span>)
     it_highlights %("<>"), %(<span class="s">&quot;&lt;&gt;&quot;</span>)
