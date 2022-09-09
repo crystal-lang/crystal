@@ -108,6 +108,15 @@ class Crystal::Call
       compute_call_error_reason(owner, a_def, arg_types, named_args_types)
     end
 
+    # Check block mismatch for all overloads
+    if call_errors.all?(BlockMismatch)
+      if block
+        raise "'#{full_name(owner, def_name)}' is not expected to be invoked with a block, but a block was given"
+      else
+        raise "'#{full_name(owner, def_name)}' is expected to be invoked with a block, but no block was given"
+      end
+    end
+
     # Don't say "wrong number of arguments" when there are named args in this call
     if !named_args_types && call_errors.all?(WrongNumberOfArguments)
       raise_matches_not_found_named_args(owner, def_name, defs, arg_types, named_args_types, inner_exception)
@@ -122,12 +131,6 @@ class Crystal::Call
       if message = single_def_error_message(defs, named_args)
         raise message
       else
-        if block && defs_matching_args_size.all? { |a_def| !a_def.yields }
-          raise "'#{full_name(owner, def_name)}' is not expected to be invoked with a block, but a block was given"
-        elsif !block && defs_matching_args_size.all?(&.yields)
-          raise "'#{full_name(owner, def_name)}' is expected to be invoked with a block, but no block was given"
-        end
-
         # Only check for named args mismatch if there's just one overload for
         # the method name, otherwise the error might not be correct
         if named_args_types && defs.one?
@@ -197,11 +200,22 @@ class Crystal::Call
   end
 
   record WrongNumberOfArguments
+  record MissingNamedArguments, names : Array(String)
+  record BlockMismatch
 
   private def compute_call_error_reason(owner, a_def, arg_types, named_args_types)
+    if (block && !a_def.yields) || (!block && a_def.yields)
+      return BlockMismatch.new
+    end
+
     min_size, max_size = a_def.min_max_args_sizes
     unless min_size <= arg_types.size <= max_size
       return WrongNumberOfArguments.new
+    end
+
+    missing_named_args = extract_missing_named_args(a_def, named_args)
+    if missing_named_args
+      return MissingNamedArguments.new(missing_named_args)
     end
   end
 
@@ -361,7 +375,7 @@ class Crystal::Call
   end
 
   def missing_argument_message(a_def, named_args)
-    missing_args = extract_missing_args(a_def, named_args)
+    missing_args = extract_missing_named_args(a_def, named_args)
     return unless missing_args
 
     if missing_args.size == 1
@@ -371,7 +385,7 @@ class Crystal::Call
     end
   end
 
-  def extract_missing_args(a_def, named_args)
+  def extract_missing_named_args(a_def, named_args)
     splat_index = a_def.splat_index
     return if !splat_index && !named_args
     return if splat_index == a_def.args.size - 1
