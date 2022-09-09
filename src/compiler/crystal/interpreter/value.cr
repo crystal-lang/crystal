@@ -2,7 +2,7 @@ require "./repl"
 
 # A value produced by the interpreter, essentially
 # a pointer to some data coupled with type information.
-# Based on the type we know how to interprter the data in `pointer`.
+# Based on the type we know how to interpreter the data in `pointer`.
 struct Crystal::Repl::Value
   getter pointer : Pointer(UInt8)
   getter type : Type

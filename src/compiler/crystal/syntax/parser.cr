@@ -24,8 +24,8 @@ module Crystal
       new(str, string_pool, var_scopes).parse
     end
 
-    def initialize(str, string_pool : StringPool? = nil, @var_scopes = [Set(String).new])
-      super(str, string_pool)
+    def initialize(str, string_pool : StringPool? = nil, @var_scopes = [Set(String).new], warnings : WarningCollection? = nil)
+      super(str, string_pool, warnings)
       @unclosed_stack = [] of Unclosed
       @calls_super = false
       @calls_initialize = false
@@ -80,11 +80,7 @@ module Crystal
     def parse
       next_token_skip_statement_end
 
-      expressions = parse_expressions.tap { check :EOF }
-
-      check :EOF
-
-      expressions
+      parse_expressions.tap { check :EOF }
     end
 
     def parse(mode : ParseMode)
@@ -1924,14 +1920,22 @@ module Crystal
     def parse_fun_pointer
       location = @token.location
 
+      global = false
+      if @token.type.op_colon_colon?
+        next_token_skip_space_or_newline
+        global = true
+      end
+
       case @token.type
       when .ident?
         name = @token.value.to_s
+        global_call = global
         if consume_def_equals_sign_skip_space
           name = "#{name}="
         elsif @token.type.op_period?
+          raise "ProcPointer of local variable cannot be global", location if global
           if name != "self" && !var_in_scope?(name)
-            raise "undefined variable '#{name}'", location.line_number, location.column_number
+            raise "undefined variable '#{name}'", location
           end
           obj = Var.new(name)
 
@@ -1939,17 +1943,19 @@ module Crystal
           name = "#{name}=" if consume_def_equals_sign_skip_space
         end
       when .const?
-        obj = parse_generic
+        obj = parse_generic global: global, location: location, expression: false
         check :OP_PERIOD
         name = consume_def_or_macro_name
         name = "#{name}=" if consume_def_equals_sign_skip_space
       when .instance_var?
+        raise "ProcPointer of instance variable cannot be global", location if global
         obj = InstanceVar.new(@token.value.to_s)
         next_token_skip_space
         check :OP_PERIOD
         name = consume_def_or_macro_name
         name = "#{name}=" if consume_def_equals_sign_skip_space
       when .class_var?
+        raise "ProcPointer of class variable cannot be global", location if global
         obj = ClassVar.new(@token.value.to_s)
         next_token_skip_space
         check :OP_PERIOD
@@ -1972,7 +1978,7 @@ module Crystal
         types = [] of ASTNode
       end
 
-      ProcPointer.new(obj, name, types)
+      ProcPointer.new(obj, name, types, !!global_call)
     end
 
     record Piece,
@@ -2412,6 +2418,7 @@ module Crystal
             next_token_skip_space_or_newline
           end
 
+          key_location = @token.location
           first_key = parse_op_assign_no_control
           first_key = Splat.new(first_key).at(location) if first_is_splat
           case @token.type
@@ -2427,6 +2434,9 @@ module Crystal
               # It's a named tuple
               unless allow_of
                 raise "can't use named tuple syntax for Hash-like literal, use '=>'", @token
+              end
+              if first_key.value.empty?
+                raise "named tuple name cannot be empty", key_location
               end
               return parse_named_tuple(location, first_key.value)
             else
@@ -2592,6 +2602,7 @@ module Crystal
         next_token_skip_space_or_newline
 
         while !@token.type.op_rcurly?
+          key_location = @token.location
           key = @token.value.to_s
           if named_tuple_start?
             next_token_never_a_symbol
@@ -2599,6 +2610,10 @@ module Crystal
             key = parse_string_without_interpolation("named tuple name", want_skip_space: false)
           else
             raise "expected '}' or named tuple name, not #{@token}", @token
+          end
+
+          if key.empty?
+            raise "named tuple name cannot be empty", key_location
           end
 
           if @token.type.space?
@@ -3658,7 +3673,9 @@ module Crystal
       free_vars = [] of String
       while true
         check :CONST
-        free_vars << @token.value.to_s
+        free_var = @token.value.to_s
+        raise "duplicated free variable name: #{free_var}", @token if free_vars.includes?(free_var)
+        free_vars << free_var
 
         next_token_skip_space
         if @token.type.op_comma?
@@ -3687,9 +3704,18 @@ module Crystal
       double_splat : Bool
 
     def parse_arg(args, extra_assigns, parentheses, found_default_value, found_splat, found_double_splat, allow_restrictions)
+      annotations = nil
+
+      # Parse annotations first since they would be before any actual arg tokens.
+      # Do this in a loop to account for multiple annotations.
+      while @token.type.op_at_lsquare?
+        (annotations ||= Array(Annotation).new) << parse_annotation
+        skip_space_or_newline
+      end
+
       if @token.type.op_amp?
         next_token_skip_space_or_newline
-        block_arg = parse_block_arg(extra_assigns)
+        block_arg = parse_block_arg(extra_assigns, annotations)
         skip_space_or_newline
         # When block_arg.name is empty, this is an anonymous parameter.
         # An anonymous parameter should not conflict other parameters names.
@@ -3820,14 +3846,14 @@ module Crystal
 
       raise "BUG: arg_name is nil" unless arg_name
 
-      arg = Arg.new(arg_name, default_value, restriction, external_name: external_name).at(arg_location)
+      arg = Arg.new(arg_name, default_value, restriction, external_name: external_name, parsed_annotations: annotations).at(arg_location)
       args << arg
       push_var arg
 
       ArgExtras.new(nil, !!default_value, splat, !!double_splat)
     end
 
-    def parse_block_arg(extra_assigns)
+    def parse_block_arg(extra_assigns, annotations)
       name_location = @token.location
 
       if @token.type.op_rparen? || @token.type.newline? || @token.type.op_colon?
@@ -3848,7 +3874,7 @@ module Crystal
         type_spec = parse_bare_proc_type
       end
 
-      block_arg = Arg.new(arg_name, restriction: type_spec).at(name_location)
+      block_arg = Arg.new(arg_name, restriction: type_spec, parsed_annotations: annotations).at(name_location)
 
       push_var block_arg
 
@@ -3863,16 +3889,22 @@ module Crystal
       invalid_internal_name = nil
 
       if allow_external_name && (@token.type.ident? || string_literal_start?)
+        name_location = @token.location
         if @token.type.ident?
           if @token.keyword? && invalid_internal_name?(@token.value)
             invalid_internal_name = @token.dup
           end
-          external_name = @token.type.ident? ? @token.value.to_s : ""
+          external_name = @token.value.to_s
           next_token
         else
           external_name = parse_string_without_interpolation("external name")
           found_string_literal = true
         end
+
+        if external_name.empty?
+          raise "external parameter name cannot be empty", name_location
+        end
+
         found_space = @token.type.space? || @token.type.newline?
         skip_space
         do_next_token = false
@@ -4643,6 +4675,10 @@ module Crystal
           end
         end
 
+        if name.empty?
+          raise "named argument cannot have an empty name", location
+        end
+
         if named_args.any? { |arg| arg.name == name }
           raise "duplicated named argument: #{name}", location
         end
@@ -4967,7 +5003,7 @@ module Crystal
       args = [] of ASTNode
       if named_tuple_start? || string_literal_start?
         named_args = parse_named_type_args(:OP_RPAREN)
-      else
+      elsif !@token.type.op_rparen?
         args << parse_type_splat { parse_type_arg }
         while @token.type.op_comma?
           next_token_skip_space_or_newline
@@ -4993,6 +5029,7 @@ module Crystal
       named_args = [] of NamedArgument
 
       while @token.type != end_token
+        name_location = @token.location
         if named_tuple_start?
           name = @token.value.to_s
           next_token
@@ -5000,6 +5037,10 @@ module Crystal
           name = parse_string_without_interpolation("named argument")
         else
           raise "expected '#{end_token}' or named argument, not #{@token}", @token
+        end
+
+        if name.empty?
+          raise "named argument cannot have an empty name", name_location
         end
 
         if named_args.any? { |arg| arg.name == name }
@@ -5594,10 +5635,19 @@ module Crystal
               arg_type = parse_bare_proc_type
               skip_space_or_newline
 
+              args.each do |arg|
+                if arg.name == arg_name
+                  raise "duplicated fun parameter name: #{arg_name}", arg_location
+                end
+              end
+
               args << Arg.new(arg_name, nil, arg_type).at(arg_location)
 
               push_var_name arg_name if require_body
             else
+              if top_level
+                raise "top-level fun parameter must have a name", @token
+              end
               arg_type = parse_union_type
               args << Arg.new("", nil, arg_type).at(arg_type.location)
             end

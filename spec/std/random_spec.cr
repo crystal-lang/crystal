@@ -180,7 +180,7 @@ describe "Random" do
   it "allows creating a new default random with a seed" do
     values = Array.new(2) do
       rand = Random.new(1234)
-      {rand.rand, rand.rand(0xffffffffffffffff), rand.rand(2), rand.rand(-5i8..5i8)}
+      {rand.rand, rand.rand(0xffffffffffffffffu64), rand.rand(2), rand.rand(-5i8..5i8)}
     end
 
     values[0].should eq values[1]
@@ -253,7 +253,7 @@ describe "Random" do
       rng.random_bytes(1).should eq Bytes[0x3e]
       rng.random_bytes(4).should eq Bytes[1, 0, 0, 0]
       rng.random_bytes(3).should eq Bytes[0x78, 0x56, 0x34]
-      rng.random_bytes(0).should eq Bytes.new(0)
+      rng.random_bytes(0).should eq Bytes[]
 
       rng = TestRNG.new([12u8, 255u8, 11u8, 5u8, 122u8, 200u8, 192u8])
       rng.random_bytes(7).should eq Bytes[12, 255, 11, 5, 122, 200, 192]

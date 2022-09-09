@@ -466,6 +466,13 @@ class Hash(K, V)
 
   # Finds an entry with the given key.
   protected def find_entry(key) : Entry(K, V)?
+    if entry_index = find_entry_with_index(key)
+      return entry_index[0]
+    end
+  end
+
+  # Finds an entry (and its index) with the given key.
+  protected def find_entry_with_index(key) : {Entry(K, V), Int32}?
     # Empty hash table so there's no way it's there
     if @indices_size_pow2 == 0
       return nil
@@ -473,7 +480,7 @@ class Hash(K, V)
 
     # No indices allocated yet so do linear scan
     if @indices.null?
-      return find_entry_linear_scan(key)
+      return find_entry_with_index_linear_scan(key)
     end
 
     hash = key_hash(key)
@@ -492,7 +499,7 @@ class Hash(K, V)
       entry = get_entry(entry_index)
       if entry_matches?(entry, hash, key)
         # It does!
-        return entry
+        return entry, entry_index
       else
         # Nope, move on to the next slot
         index = next_index(index)
@@ -501,18 +508,18 @@ class Hash(K, V)
   end
 
   # Finds an Entry with the given key by doing a linear scan.
-  private def find_entry_linear_scan(key) : Entry(K, V)?
+  private def find_entry_with_index_linear_scan(key) : {Entry(K, V), Int32}?
     # If we have less than 8 elements we avoid computing the hash
     # code and directly compare the keys (might be cheaper than
     # computing a hash code of a complex structure).
     if entries_size <= 8
-      each_entry_with_index do |entry|
-        return entry if entry_matches?(entry, key)
+      each_entry_with_index do |entry, index|
+        return entry, index if entry_matches?(entry, key)
       end
     else
       hash = key_hash(key)
-      each_entry_with_index do |entry|
-        return entry if entry_matches?(entry, hash, key)
+      each_entry_with_index do |entry, index|
+        return entry, index if entry_matches?(entry, hash, key)
       end
     end
 
@@ -1010,6 +1017,45 @@ class Hash(K, V)
     updated_entry ? updated_entry.value : yield key
   end
 
+  # Updates the current value of *key* with the value returned by the given block
+  # (the current value is used as input for the block).
+  #
+  # If no entry for *key* is present, but there's a default value (or default block)
+  # then that default value is used as input for the given block.
+  #
+  # If no entry for *key* is present and the hash has no default value, it raises `KeyError`.
+  #
+  # It returns the value used as input for the given block
+  # (ie. the old value if key present, or the default value)
+  #
+  # ```
+  # h = {"a" => 0, "b" => 1}
+  # h.update("b") { |v| v + 41 } # => 1
+  # h["b"]                       # => 42
+  #
+  # h = Hash(String, Int32).new(40)
+  # h.update("foo") { |v| v + 2 } # => 40
+  # h["foo"]                      # => 42
+  #
+  # h = {} of String => Int32
+  # h.update("a") { 42 } # raises KeyError
+  # ```
+  #
+  # See `#transform_values!` for updating *all* the values.
+  def update(key : K, & : V -> V) : V
+    if entry_index = find_entry_with_index(key)
+      entry, index = entry_index
+      set_entry(index, Entry(K, V).new(entry.hash, entry.key, yield entry.value))
+      entry.value
+    elsif block = @block
+      default_value = block.call(self, key)
+      upsert(key, yield default_value)
+      default_value
+    else
+      raise KeyError.new "Missing hash key: #{key.inspect}"
+    end
+  end
+
   # Returns the value for the key given by *key*.
   # If not found, returns the default value given by `Hash.new`, otherwise raises `KeyError`.
   #
@@ -1456,9 +1502,9 @@ class Hash(K, V)
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather than returning a new one. Returns `self`.
-  def reject!(& : K, V ->) : self
-    each do |key, value|
-      delete(key) if yield(key, value)
+  def reject!(& : K, V -> _)
+    each_entry_with_index do |entry, index|
+      delete_entry_and_update_counts(index) if yield(entry.key, entry.value)
     end
     self
   end
@@ -1591,6 +1637,7 @@ class Hash(K, V)
   # hash.transform_values! { |value| value + 1 }
   # hash # => {:a => 2, :b => 3, :c => 4}
   # ```
+  # See `#update` for updating a *single* value.
   def transform_values!(& : V -> V) : self
     each_entry_with_index do |entry, i|
       new_value = yield entry.value

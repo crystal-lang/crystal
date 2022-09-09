@@ -1,6 +1,7 @@
 require "./spec_helper"
 require "../spec_helper"
 require "http/web_socket"
+require "http/server"
 require "random/secure"
 require "../../support/fibers"
 require "../../support/ssl"
@@ -350,7 +351,7 @@ describe HTTP::WebSocket do
     end
   end
 
-  each_ip_family do |family, _, any_address|
+  each_ip_family do |family, local_address|
     it "negotiates over HTTP correctly" do
       address_chan = Channel(Socket::IPAddress).new
       close_chan = Channel({Int32, String}).new
@@ -373,7 +374,7 @@ describe HTTP::WebSocket do
         end
 
         http_server = http_ref = HTTP::Server.new([ws_handler])
-        address = http_server.bind_tcp(any_address, 0)
+        address = http_server.bind_tcp(local_address, 0)
         address_chan.send(address)
         http_server.listen
       end
@@ -419,7 +420,7 @@ describe HTTP::WebSocket do
 
         http_server = http_ref = HTTP::Server.new([ws_handler])
 
-        address = http_server.bind_tls(any_address, context: server_context)
+        address = http_server.bind_tls(local_address, context: server_context)
         address_chan.send(address)
         http_server.listen
       end

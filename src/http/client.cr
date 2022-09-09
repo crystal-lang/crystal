@@ -609,7 +609,7 @@ class HTTP::Client
     response
   end
 
-  # Executes a request request and yields an `HTTP::Client::Response` to the block.
+  # Executes a request and yields an `HTTP::Client::Response` to the block.
   # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
   #
   # ```
