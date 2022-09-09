@@ -133,9 +133,7 @@ class Crystal::CodeGenVisitor
 
             alloca_vars initializer.meta_vars
 
-            request_value do
-              accept node
-            end
+            request_value(node)
 
             node_type = node.type
 
@@ -166,6 +164,7 @@ class Crystal::CodeGenVisitor
   end
 
   def read_class_var(node : ClassVar)
+    set_current_debug_location node if @debug.line_numbers?
     read_class_var(node.var)
   end
 
@@ -328,10 +327,10 @@ class Crystal::CodeGenVisitor
   end
 
   def class_var_global_name(class_var : MetaTypeVar)
-    "#{class_var.owner}#{class_var.name.gsub('@', ':')}"
+    "#{class_var.owner.llvm_name}#{class_var.name.gsub('@', ':')}"
   end
 
   def class_var_global_initialized_name(class_var : MetaTypeVar)
-    "#{class_var.owner}#{class_var.name.gsub('@', ':')}:init"
+    "#{class_var.owner.llvm_name}#{class_var.name.gsub('@', ':')}:init"
   end
 end

@@ -28,6 +28,8 @@ describe Number do
     it { assert_prints 0.0.format(decimal_places: 1), "0.0" }
     it { assert_prints 0.0.format(decimal_places: 1, only_significant: true), "0.0" }
 
+    it { assert_prints 0.01.format(decimal_places: 1), "0.0" }
+
     it { assert_prints 123.45.format, "123.45" }
     it { assert_prints 123.45.format(separator: ','), "123,45" }
     it { assert_prints 123.45.format(decimal_places: 3), "123.450" }
@@ -43,6 +45,35 @@ describe Number do
     it { assert_prints 1e15.to_i64.format(decimal_places: 7), "1,000,000,000,000,000.0000000" }
     it { assert_prints 1e-5.format(decimal_places: 7), "0.0000100" }
     it { assert_prints 1e-4.format(decimal_places: 7), "0.0001000" }
+
+    it { assert_prints -1.format, "-1" }
+    it { assert_prints -12.format, "-12" }
+    it { assert_prints -123.format, "-123" }
+    it { assert_prints -1234.format, "-1,234" }
+
+    it { assert_prints -1.format(decimal_places: 1), "-1.0" }
+    it { assert_prints -1.format(decimal_places: 1, only_significant: true), "-1.0" }
+
+    it { assert_prints -0.0.format(decimal_places: 1), "-0.0" }
+    it { assert_prints -0.0.format(decimal_places: 1, only_significant: true), "-0.0" }
+
+    it { assert_prints -0.01.format(decimal_places: 1), "-0.0" }
+
+    it { assert_prints -123.45.format, "-123.45" }
+    it { assert_prints -123.45.format(separator: ','), "-123,45" }
+    it { assert_prints -123.45.format(decimal_places: 3), "-123.450" }
+    it { assert_prints -123.45.format(decimal_places: 3, only_significant: true), "-123.45" }
+    it { assert_prints -123.4567.format(decimal_places: 3), "-123.457" }
+
+    it { assert_prints -123_456.format, "-123,456" }
+    it { assert_prints -123_456.format(delimiter: '.'), "-123.456" }
+
+    it { assert_prints -123_456.789.format, "-123,456.789" }
+
+    it { assert_prints -1e15.format(decimal_places: 7), "-1,000,000,000,000,000.0000000" }
+    it { assert_prints -1e15.to_i64.format(decimal_places: 7), "-1,000,000,000,000,000.0000000" }
+    it { assert_prints -1e-5.format(decimal_places: 7), "-0.0000100" }
+    it { assert_prints -1e-4.format(decimal_places: 7), "-0.0001000" }
 
     it { assert_prints Float64::MAX.format, "179,769,313,486,231,570,814,527,423,731,704,356,798,070,567,525,844,996,598,917,476,803,157,260,780,028,538,760,589,558,632,766,878,171,540,458,953,514,382,464,234,321,326,889,464,182,768,467,546,703,537,516,986,049,910,576,551,282,076,245,490,090,389,328,944,075,868,508,455,133,942,304,583,236,903,222,948,165,808,559,332,123,348,274,797,826,204,144,723,168,738,177,180,919,299,881,250,404,026,184,124,858,368.0" }
     it { assert_prints Float64::MIN.format, "-179,769,313,486,231,570,814,527,423,731,704,356,798,070,567,525,844,996,598,917,476,803,157,260,780,028,538,760,589,558,632,766,878,171,540,458,953,514,382,464,234,321,326,889,464,182,768,467,546,703,537,516,986,049,910,576,551,282,076,245,490,090,389,328,944,075,868,508,455,133,942,304,583,236,903,222,948,165,808,559,332,123,348,274,797,826,204,144,723,168,738,177,180,919,299,881,250,404,026,184,124,858,368.0" }

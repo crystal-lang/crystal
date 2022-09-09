@@ -66,7 +66,7 @@ describe "Math" do
     end
 
     it "expm1" do
-      Math.expm1(0.99_f32).should be_close(1.6912344723492623, 1e-7)
+      Math.expm1(0.99_f32).should be_close(1.6912344723492623, 1e-6)
       Math.expm1(0.99).should be_close(1.6912344723492623, 1e-7)
     end
 

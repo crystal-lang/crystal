@@ -100,7 +100,11 @@ module Crystal
 
   class Program
     def object_extension
-      has_flag?("windows") ? ".obj" : ".o"
+      case
+      when has_flag?("windows") then ".obj"
+      when has_flag?("wasm32")  then ".wasm"
+      else                           ".o"
+      end
     end
 
     def lib_flags
@@ -108,17 +112,27 @@ module Crystal
     end
 
     private def lib_flags_windows
-      String.build do |flags|
-        link_annotations.reverse_each do |ann|
-          if ldflags = ann.ldflags
-            flags << ' ' << ldflags
-          end
+      flags = [] of String
 
-          if libname = ann.lib
-            flags << ' ' << Process.quote_windows("#{libname}.lib")
-          end
+      # Add CRYSTAL_LIBRARY_PATH locations, so the linker preferentially
+      # searches user-given library paths.
+      if has_flag?("msvc")
+        CrystalLibraryPath.paths.each do |path|
+          flags << Process.quote_windows("/LIBPATH:#{path}")
         end
       end
+
+      link_annotations.reverse_each do |ann|
+        if ldflags = ann.ldflags
+          flags << ldflags
+        end
+
+        if libname = ann.lib
+          flags << Process.quote_windows("#{libname}.lib")
+        end
+      end
+
+      flags.join(" ")
     end
 
     private def lib_flags_posix

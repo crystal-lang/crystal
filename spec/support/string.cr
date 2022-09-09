@@ -5,17 +5,16 @@
 # `String`. This method is mainly used by `assert_prints` to test the behaviour
 # of string-generating methods under different encodings.
 #
-# This method cannot be used on Windows systems, because IO encoding is not
-# supported yet.
+# Raises if the `without_iconv` flag is set.
 def string_build_via_utf16(& : IO -> _)
-  {% if flag?(:win32) %}
+  {% if flag?(:without_iconv) %}
     raise NotImplementedError.new("string_build_via_utf16")
   {% else %}
     io = IO::Memory.new
     io.set_encoding(IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian ? "UTF-16LE" : "UTF-16BE")
     yield io
     byte_slice = io.to_slice
-    utf16_slice = Slice.new(byte_slice.to_unsafe.unsafe_as(Pointer(UInt16)), byte_slice.size // sizeof(UInt16))
+    utf16_slice = byte_slice.unsafe_slice_of(UInt16)
     String.from_utf16(utf16_slice)
   {% end %}
 end
@@ -29,8 +28,8 @@ end
 # * `String.build { |io| foo.bar(io, *args, **opts) }` should be equal to *str*.
 # * `string_build_via_utf16 { |io| foo.bar(io, *args, **opts) }` should be equal
 #   to *str*; that is, the `IO` overload should not fail when the `IO` argument
-#   uses a non-default encoding. This case is skipped on Windows systems,
-#   because IO encoding is not supported yet.
+#   uses a non-default encoding. This case is skipped if the `without_iconv`
+#   flag is set.
 macro assert_prints(call, str, *, file = __FILE__, line = __LINE__)
   %str = ({{ str }}).as(String)
   %file = {{ file }}
@@ -48,7 +47,7 @@ macro assert_prints(call, str, *, file = __FILE__, line = __LINE__)
     ) {{ call.block }}
   end.should eq(%str), file: %file, line: %line
 
-  {% unless flag?(:win32) %}
+  {% unless flag?(:without_iconv) %}
     string_build_via_utf16 do |io|
       {% if call.receiver %}{{ call.receiver }}.{% end %}{{ call.name }}(
         io,

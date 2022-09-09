@@ -893,12 +893,12 @@ describe "Semantic: annotation" do
     end
 
     it "doesn't carry link annotation from lib to fun" do
-      semantic(%(
+      assert_no_errors <<-CR
         @[Link("foo")]
         lib LibFoo
           fun foo
         end
-      ))
+        CR
     end
 
     it "finds annotation in generic parent (#7885)" do
@@ -914,6 +914,78 @@ describe "Semantic: annotation" do
         end
 
         {{ Child.superclass.annotation(Ann)[0] }}
+      )) { int32 }
+    end
+
+    it "finds annotation on method arg" do
+      assert_type(%(
+        annotation Ann; end
+
+        def foo(
+          @[Ann] foo : Int32
+        )
+        end
+
+        {% if @top_level.methods.find(&.name.==("foo")).args.first.annotation(Ann) %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "finds annotation on method splat arg" do
+      assert_type(%(
+        annotation Ann; end
+
+        def foo(
+          id : Int32,
+          @[Ann] *nums : Int32
+        )
+        end
+
+        {% if @top_level.methods.find(&.name.==("foo")).args[1].annotation(Ann) %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "finds annotation on method double splat arg" do
+      assert_type(%(
+        annotation Ann; end
+
+        def foo(
+          id : Int32,
+          @[Ann] **nums
+        )
+        end
+
+        {% if @top_level.methods.find(&.name.==("foo")).double_splat.annotation(Ann) %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "finds annotation on an restricted method block arg" do
+      assert_type(%(
+        annotation Ann; end
+
+        def foo(
+          id : Int32,
+          @[Ann] &block : Int32 ->
+        )
+          yield 10
+        end
+
+        {% if @top_level.methods.find(&.name.==("foo")).block_arg.annotation(Ann) %}
+          1
+        {% else %}
+          'a'
+        {% end %}
       )) { int32 }
     end
   end
@@ -962,13 +1034,13 @@ describe "Semantic: annotation" do
   end
 
   it "doesn't bleed annotation from class into class variable (#8314)" do
-    semantic(%(
+    assert_no_errors <<-CR
       annotation Attr; end
 
       @[Attr]
       class Bar
         @@x = 0
       end
-      ))
+      CR
   end
 end

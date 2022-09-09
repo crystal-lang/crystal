@@ -65,6 +65,57 @@ def Deque.from_json(string_or_io) : Nil
   end
 end
 
+module Iterator(T)
+  # Reads the content of a JSON array into an iterator in a lazy way.
+  # With this method it should be possible to process a huge JSON array, without
+  # the requirement that the whole array fits into memory.
+  #
+  # The following example produces a huge file, uses a lot of CPU but should not require much memory.
+  #
+  # ```
+  # File.open("/tmp/test.json", "w+") do |f|
+  #   (0..1_000_000_000).each.to_json(f)
+  # end
+  #
+  # File.open("/tmp/test.json", "r") do |f|
+  #   p Iterator(Int32).from_json(f).skip(1_000_000_000).to_a
+  # end
+  # ```
+  #
+  # WARNING: The `string_or_io` can't be used by anything else until the iterator is fully consumed.
+  def self.from_json(string_or_io)
+    Iterator(T).new(JSON::PullParser.new(string_or_io))
+  end
+
+  # Creates a new iterator which iterates over a JSON array. See also `Iterator#from_json`.
+  #
+  # WARNING: The `JSON::PullParser` can't be used by anything else until the iterator is fully consumed.
+  def self.new(pull : JSON::PullParser)
+    FromJson(T).new(pull)
+  end
+
+  private class FromJson(T)
+    include Iterator(T)
+
+    def initialize(@pull : JSON::PullParser)
+      @pull.read_begin_array
+      @end = false
+    end
+
+    def next
+      if @end
+        stop
+      elsif @pull.kind.end_array?
+        @pull.read_next
+        @end = true
+        stop
+      else
+        T.new(@pull)
+      end
+    end
+  end
+end
+
 def Nil.new(pull : JSON::PullParser)
   pull.read_null
 end
@@ -85,10 +136,15 @@ end
                        } %}
   def {{type.id}}.new(pull : JSON::PullParser)
     location = pull.location
-    value = pull.read_int
+    value =
+      {% if type == "UInt64" %}
+        pull.read_raw
+      {% else %}
+        pull.read_int
+      {% end %}
     begin
       value.to_{{method.id}}
-    rescue ex : OverflowError
+    rescue ex : OverflowError | ArgumentError
       raise JSON::ParseException.new("Can't read {{type.id}}", *location, ex)
     end
   end
@@ -210,9 +266,13 @@ end
 
 def NamedTuple.new(pull : JSON::PullParser)
   {% begin %}
-    {% for key in T.keys %}
-      %var{key.id} = nil
-      %found{key.id} = false
+    {% for key, type in T %}
+      {% if type.nilable? %}
+        %var{key.id} = nil
+      {% else %}
+        %var{key.id} = uninitialized typeof(element_type({{ key.symbolize }}))
+        %found{key.id} = false
+      {% end %}
     {% end %}
 
     location = pull.location
@@ -221,8 +281,10 @@ def NamedTuple.new(pull : JSON::PullParser)
       case key
         {% for key, type in T %}
           when {{key.stringify}}
-            %var{key.id} = {{type}}.new(pull)
-            %found{key.id} = true
+            %var{key.id} = self[{{ key.symbolize }}].new(pull)
+            {% unless type.nilable? %}
+              %found{key.id} = true
+            {% end %}
         {% end %}
       else
         pull.skip
@@ -230,16 +292,18 @@ def NamedTuple.new(pull : JSON::PullParser)
     end
 
     {% for key, type in T %}
-      if %var{key.id}.nil? && !%found{key.id} && !{{type.nilable?}}
-        raise JSON::ParseException.new("Missing json attribute: #{{{key.id.stringify}}}", *location)
-      end
+      {% unless type.nilable? %}
+        unless %found{key.id}
+          raise JSON::ParseException.new("Missing json attribute: #{ {{ key.id.stringify }} }", *location)
+        end
+      {% end %}
     {% end %}
 
-    {
-      {% for key, type in T %}
-        {{key.id.stringify}}: (%var{key.id}).as({{type}}),
+    NamedTuple.new(
+      {% for key in T.keys %}
+        {{ key.id.stringify }}: %var{key.id},
       {% end %}
-    }
+    )
   {% end %}
 end
 

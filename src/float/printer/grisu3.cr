@@ -32,6 +32,7 @@ require "./diy_fp"
 require "./ieee"
 require "./cached_powers"
 
+@[Deprecated("Use `Float::Printer::Dragonbox` instead")]
 module Float::Printer::Grisu3
   extend self
 

@@ -44,7 +44,7 @@ class Compress::Zip::File
   end
 
   # Opens a `Zip::File` for reading from the given *filename*.
-  def self.new(filename : String)
+  def self.new(filename : Path | String)
     new(::File.new(filename), sync_close: true)
   end
 
@@ -57,21 +57,21 @@ class Compress::Zip::File
 
   # Opens a `Zip::File` for reading from the given *filename*, yields
   # it to the given block, and closes it at the end.
-  def self.open(filename : String)
+  def self.open(filename : Path | String)
     zip = new filename
     yield zip ensure zip.close
   end
 
   # Returns the entry that has the given filename, or
   # raises `KeyError` if no such entry exists.
-  def [](filename : String) : Entry
+  def [](filename : Path | String) : Entry
     self[filename]? || raise(KeyError.new("Missing zip entry: #{filename}"))
   end
 
   # Returns the entry that has the given filename, or
   # `nil` if no such entry exists.
-  def []?(filename : String) : Entry?
-    @entries_by_filename[filename]?
+  def []?(filename : Path | String) : Entry?
+    @entries_by_filename[filename.to_s]?
   end
 
   # Closes this zip file.
