@@ -98,22 +98,24 @@ class Crystal::Call
       raise_undefined_method(owner, def_name, obj)
     end
 
-    real_args_size = arg_types.size
-
     # If it's on an initialize method and there's a similar method name, it's probably a typo
     if (def_name == "initialize" || def_name == "new") && (similar_def = owner.instance_type.lookup_similar_def("initialize", self.args.size, block))
       inner_msg = colorize("do you maybe have a typo in this '#{similar_def.name}' method?").yellow.bold.to_s
       inner_exception = TypeException.for_node(similar_def, inner_msg)
     end
 
-    defs_matching_args_size = defs.select do |a_def|
-      min_size, max_size = a_def.min_max_args_sizes
-      min_size <= real_args_size <= max_size
+    call_errors = defs.map do |a_def|
+      compute_call_error_reason(owner, a_def, arg_types, named_args_types)
     end
 
     # Don't say "wrong number of arguments" when there are named args in this call
-    if defs_matching_args_size.empty? && !named_args_types
-      raise_matches_not_found_named_args(owner, def_name, defs, real_args_size, arg_types, named_args_types, inner_exception)
+    if !named_args_types && call_errors.all?(WrongNumberOfArguments)
+      raise_matches_not_found_named_args(owner, def_name, defs, arg_types, named_args_types, inner_exception)
+    end
+
+    defs_matching_args_size = defs.select do |a_def|
+      min_size, max_size = a_def.min_max_args_sizes
+      min_size <= arg_types.size <= max_size
     end
 
     if defs_matching_args_size.size > 0
@@ -192,6 +194,15 @@ class Crystal::Call
     end
 
     raise message, owner_trace
+  end
+
+  record WrongNumberOfArguments
+
+  private def compute_call_error_reason(owner, a_def, arg_types, named_args_types)
+    min_size, max_size = a_def.min_max_args_sizes
+    unless min_size <= arg_types.size <= max_size
+      return WrongNumberOfArguments.new
+    end
   end
 
   private def no_overload_matches_message(io, full_name, defs, args, arg_types, named_args_types)
@@ -290,7 +301,7 @@ class Crystal::Call
     raise error_msg, owner_trace
   end
 
-  private def raise_matches_not_found_named_args(owner, def_name, defs, real_args_size, arg_types, named_args_types, inner_exception)
+  private def raise_matches_not_found_named_args(owner, def_name, defs, arg_types, named_args_types, inner_exception)
     all_arguments_sizes = [] of Int32
     min_splat = Int32::MAX
     defs.each do |a_def|
@@ -314,7 +325,7 @@ class Crystal::Call
         str << "wrong number of arguments for '"
         str << full_name(owner, def_name)
         str << "' (given "
-        str << real_args_size
+        str << arg_types.size
         str << ", expected "
 
         # If we have 2, 3, 4, show it as 2..4
@@ -392,9 +403,6 @@ class Crystal::Call
     return if missing_args.size.zero?
 
     missing_args
-  end
-
-  def append_error_when_no_matching_defs(owner, def_name, all_arguments_sizes, real_args_size, min_splat, defs, io)
   end
 
   def check_abstract_def_error(owner, matches, defs, def_name)
