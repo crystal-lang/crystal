@@ -230,7 +230,7 @@ module Crystal
     end
 
     private def parse(program, source : Source)
-      parser = Parser.new(source.code, program.string_pool)
+      parser = program.new_parser(source.code)
       parser.filename = source.filename
       parser.wants_doc = wants_doc?
       parser.parse

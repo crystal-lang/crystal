@@ -78,6 +78,8 @@ class Crystal::Repl::Prompt
       @line_number += 1
       @incomplete = false
 
+      parser.warnings.report(STDOUT)
+
       node
     rescue ex : Crystal::SyntaxException
       # TODO: improve this

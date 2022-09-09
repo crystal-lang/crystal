@@ -1153,7 +1153,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       def_name = "#{var.owner}::#{var.name}"
 
       fake_def = Def.new(def_name)
-      fake_def.owner = var.owner
+      fake_def.owner = var.owner.metaclass
       fake_def.vars = initializer.meta_vars
       fake_def.body = value
       fake_def.bind_to(value)
@@ -1164,7 +1164,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # program, but this needs to be fixed in the main compiler first
       declare_local_vars(fake_def, compiled_def.local_vars, @context.program)
 
-      compiler = Compiler.new(@context, compiled_def, top_level: true)
+      compiler = Compiler.new(@context, compiled_def, scope: fake_def.owner, top_level: true)
       compiler.compile_def(compiled_def, closure_owner: @context.program)
 
       {% if Debug::DECOMPILE %}
@@ -1785,7 +1785,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_defs = node.target_defs
-    unless target_defs
+    if target_defs.empty?
       node.raise "BUG: no target defs"
     end
 
@@ -2436,7 +2436,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_defs = call.target_defs
-    unless target_defs
+    if target_defs.empty?
       call.raise "BUG: no target defs"
     end
 

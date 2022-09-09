@@ -35,6 +35,24 @@ describe "::sprintf" do
     assert_sprintf "%%*%%", [1, 2, 3], "%*%"
   end
 
+  it "doesn't accept modifiers for %%" do
+    expect_raises(ArgumentError) { sprintf("%0%") }
+    expect_raises(ArgumentError) { sprintf("%+%") }
+    expect_raises(ArgumentError) { sprintf("%-%") }
+    expect_raises(ArgumentError) { sprintf("% %") }
+    expect_raises(ArgumentError) { sprintf("%#%") }
+    expect_raises(ArgumentError) { sprintf("%.0%") }
+    expect_raises(ArgumentError) { sprintf("%*%", 1) }
+
+    expect_raises(ArgumentError) { sprintf("%<a>0%") }
+    expect_raises(ArgumentError) { sprintf("%<a>+%") }
+    expect_raises(ArgumentError) { sprintf("%<a>-%") }
+    expect_raises(ArgumentError) { sprintf("%<a> %") }
+    expect_raises(ArgumentError) { sprintf("%<a>#%") }
+    expect_raises(ArgumentError) { sprintf("%<a>.0%") }
+    expect_raises(ArgumentError) { sprintf("%<a>*%", 1) }
+  end
+
   context "integers" do
     context "base specifier" do
       it "supports base 2" do
@@ -532,6 +550,13 @@ describe "::sprintf" do
       expect_raises(ArgumentError, "One hash or named tuple required") { sprintf("change %{this}", "this") }
     end
 
+    it "doesn't raise if 1-element list of hash or named tuple given" do
+      assert_sprintf "change %{this}", [{"this" => "nothing"}], "change nothing"
+      assert_sprintf "change %{this}", [{this: "nothing"}], "change nothing"
+      assert_sprintf "change %{this}", { {"this" => "nothing"} }, "change nothing"
+      assert_sprintf "change %{this}", { {this: "nothing"} }, "change nothing"
+    end
+
     it "raises on unbalanced curly" do
       expect_raises(ArgumentError, "Malformed name - unmatched parenthesis") { sprintf("change %{this", {"this" => 1}) }
     end
@@ -539,12 +564,100 @@ describe "::sprintf" do
     it "doesn't raise on balanced curly with null byte" do
       assert_sprintf "change %{this\u{0}}", {"this\u{0}" => 1}, "change 1"
     end
+
+    it "raises if sequential parameters also given" do
+      expect_raises(ArgumentError, "Cannot mix named parameters with sequential ones") { sprintf("%{this}%d", {"this" => 1}) }
+    end
+
+    it "raises if numbered parameters also given" do
+      expect_raises(ArgumentError, "Cannot mix named parameters with numbered ones") { sprintf("%{this} %1$d", {"this" => 1}) }
+    end
+
+    it "doesn't raise if formatted substitution also given" do
+      assert_sprintf "%{foo}%<bar>s", {"foo" => "x", "bar" => "y"}, "xy"
+    end
   end
 
   context "formatted substitution" do
     it "applies formatting to %<...> placeholder" do
       assert_sprintf "change %<this>.2f", {"this" => 23.456}, "change 23.46"
       assert_sprintf "change %<this>.2f", {this: 23.456}, "change 23.46"
+    end
+
+    it "raises if sequential parameters also given" do
+      expect_raises(ArgumentError, "Cannot mix named parameters with sequential ones") { sprintf("%<this>d%d", {"this" => 1}) }
+    end
+
+    it "raises if numbered parameters also given" do
+      expect_raises(ArgumentError, "Cannot mix named parameters with numbered ones") { sprintf("%<this>1$d", {"this" => 1}) }
+      expect_raises(ArgumentError, "Cannot mix named parameters with numbered ones") { sprintf("%<this>*1$d", {"this" => 1}) }
+      expect_raises(ArgumentError, "Cannot mix named parameters with numbered ones") { sprintf("%<this>.*1$d", {"this" => 1}) }
+      expect_raises(ArgumentError, "Cannot mix named parameters with numbered ones") { sprintf("%<this>d %1$d", {"this" => 1}) }
+    end
+
+    it "doesn't raise if plain substitution also given" do
+      assert_sprintf "%<foo>s%{bar}", {"foo" => "x", "bar" => "y"}, "xy"
+    end
+  end
+
+  context "sequential parameters" do
+    it "raises if named parameters also given" do
+      expect_raises(ArgumentError, "Cannot mix sequential parameters with named ones") { sprintf("%d%{this}", 1) }
+      expect_raises(ArgumentError, "Cannot mix sequential parameters with named ones") { sprintf("%d%<this>d", 1) }
+    end
+
+    it "raises if numbered parameters also given" do
+      expect_raises(ArgumentError, "Cannot mix sequential parameters with numbered ones") { sprintf("%d %1$d", 1) }
+    end
+  end
+
+  context "numbered parameters" do
+    it "gets argument at specified index" do
+      assert_sprintf "%2$d %3$x %1$s", ["foo", 123, 0xabc], "123 abc foo"
+    end
+
+    it "gets width and precision specifier at specified index" do
+      assert_sprintf "%2$*1$d", [5, 123], "  123"
+      assert_sprintf "%2$.*1$s", [5, "abcdefghij"], "abcde"
+      assert_sprintf "%-3$*1$.*2$s", [10, 5, "abcdefghij"], "abcde     "
+    end
+
+    it "raises if index is out of bounds" do
+      expect_raises(ArgumentError, "Too few arguments") { sprintf("%1$d") }
+      expect_raises(ArgumentError, "Too few arguments") { sprintf("%5$d", 1, 2, 3, 4) }
+    end
+
+    it "raises if index is zero" do
+      expect_raises(ArgumentError) { sprintf("%0$d") }
+      expect_raises(ArgumentError) { sprintf("%1$*0$d", 1) }
+      expect_raises(ArgumentError) { sprintf("%1$.*0$d", 1) }
+    end
+
+    it "can be used before flags" do
+      assert_sprintf "%1$ d", 123, " 123"
+      assert_sprintf "%1$+d", 123, "+123"
+      assert_sprintf "%1$5d", 123, "  123"
+      assert_sprintf "%1$-5d", 123, "123  "
+      assert_sprintf "%1$#x", 123, "0x7b"
+    end
+
+    it "raises if multiple indices specified" do
+      expect_raises(ArgumentError, "Cannot specify parameter number more than once") { sprintf("%1$2$d", 1, 2) }
+      expect_raises(ArgumentError, "Cannot specify parameter number more than once") { sprintf("%1$-2$d", 1, 2) }
+    end
+
+    it "raises if used as width or precision specifier of a sequential parameter" do
+      expect_raises(ArgumentError, "Cannot mix numbered parameters with sequential ones") { sprintf("%*1$d", 1) }
+      expect_raises(ArgumentError, "Cannot mix numbered parameters with sequential ones") { sprintf("%.*1$d", 1) }
+    end
+
+    it "raises if sequential parameters also given" do
+      expect_raises(ArgumentError, "Cannot mix numbered parameters with sequential ones") { sprintf("%1$d %d", 1) }
+    end
+
+    it "raises if named parameters also given" do
+      expect_raises(ArgumentError, "Cannot mix numbered parameters with named ones") { sprintf("%1$d %{this}", 1) }
+      expect_raises(ArgumentError, "Cannot mix numbered parameters with named ones") { sprintf("%1$d %<this>d", 1) }
     end
   end
 end

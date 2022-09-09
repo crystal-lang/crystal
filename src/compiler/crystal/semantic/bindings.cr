@@ -1,7 +1,7 @@
 module Crystal
   class ASTNode
-    property! dependencies : Array(ASTNode)
-    property observers : Array(ASTNode)?
+    property dependencies = ZeroOneOrMany(ASTNode).new
+    property observers = ZeroOneOrMany(ASTNode).new
     property enclosing_call : Call?
 
     @dirty = false
@@ -106,21 +106,19 @@ module Crystal
       @type
     end
 
-    def bind_to(node : ASTNode)
-      bind(node) do |dependencies|
-        dependencies.push node
+    def bind_to(node : ASTNode) : Nil
+      bind(node) do
+        @dependencies.push node
         node.add_observer self
-        node
       end
     end
 
-    def bind_to(nodes : Indexable)
+    def bind_to(nodes : Indexable(ASTNode)) : Nil
       return if nodes.empty?
 
-      bind do |dependencies|
-        dependencies.concat nodes
+      bind do
+        @dependencies.concat nodes
         nodes.each &.add_observer self
-        nodes.first
       end
     end
 
@@ -132,15 +130,9 @@ module Crystal
         raise_frozen_type freeze_type, from_type, from
       end
 
-      dependencies = @dependencies ||= [] of ASTNode
+      yield
 
-      node = yield dependencies
-
-      if dependencies.size == 1
-        new_type = node.type?
-      else
-        new_type = Type.merge dependencies
-      end
+      new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
 
       if new_type && (freeze_type = self.freeze_type)
@@ -155,27 +147,32 @@ module Crystal
       propagate
     end
 
-    def unbind_from(nodes : Nil)
+    def type_from_dependencies : Type?
+      Type.merge dependencies
+    end
+
+    def unbind_from(nodes : Nil) : Nil
       # Nothing to do
     end
 
-    def unbind_from(node : ASTNode)
-      @dependencies.try &.reject! &.same?(node)
+    def unbind_from(node : ASTNode) : Nil
+      @dependencies.reject! &.same?(node)
       node.remove_observer self
     end
 
-    def unbind_from(nodes : Array(ASTNode))
-      @dependencies.try &.reject! { |dep| nodes.any? &.same?(dep) }
+    def unbind_from(nodes : Enumerable(ASTNode)) : Nil
+      @dependencies.reject! { |dependency|
+        nodes.any? &.same?(dependency)
+      }
       nodes.each &.remove_observer self
     end
 
-    def add_observer(observer)
-      observers = @observers ||= [] of ASTNode
-      observers.push observer
+    def add_observer(observer : ASTNode) : Nil
+      @observers.push observer
     end
 
-    def remove_observer(observer)
-      @observers.try &.reject! &.same?(observer)
+    def remove_observer(observer : ASTNode) : Nil
+      @observers.reject! &.same?(observer)
     end
 
     def set_enclosing_call(enclosing_call)
@@ -197,16 +194,16 @@ module Crystal
     end
 
     def notify_observers
-      @observers.try &.each &.update self
+      @observers.each &.update self
       @enclosing_call.try &.recalculate
-      @observers.try &.each &.propagate
+      @observers.each &.propagate
       @enclosing_call.try &.propagate
     end
 
     def update(from = nil)
       return if @type && @type.same? from.try &.type?
 
-      new_type = Type.merge dependencies
+      new_type = type_from_dependencies
       new_type = map_type(new_type) if new_type
 
       if new_type && (freeze_type = self.freeze_type)
@@ -271,8 +268,8 @@ module Crystal
       visited = Set(ASTNode).new.compare_by_identity
       owner_trace << node if node.type?.try &.includes_type?(owner)
       visited.add node
-      while deps = node.dependencies?
-        dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
+      until node.dependencies.empty?
+        dependencies = node.dependencies.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
         if dependencies.size > 0
           node = dependencies.first
           nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)

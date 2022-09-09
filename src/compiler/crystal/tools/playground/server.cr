@@ -16,6 +16,7 @@ module Crystal::Playground
     end
 
     def self.instrument_and_prelude(session_key, port, tag, source, host : String? = "localhost")
+      # TODO: figure out how syntax warnings should be reported
       ast = Parser.new(source).parse
 
       instrumented = Playground::AgentInstrumentorTransformer.transform(ast).to_s
