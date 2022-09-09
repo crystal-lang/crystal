@@ -104,108 +104,16 @@ class Crystal::Call
       inner_exception = TypeException.for_node(similar_def, inner_msg)
     end
 
+    # Check why each def can't be called with this Call (what's the error?)
     call_errors = defs.map do |a_def|
       compute_call_error_reason(owner, a_def, arg_types, named_args_types)
     end
 
-    # Check block mismatch for all overloads
-    if call_errors.all?(BlockMismatch)
-      if block
-        raise "'#{full_name(owner, def_name)}' is not expected to be invoked with a block, but a block was given"
-      else
-        raise "'#{full_name(owner, def_name)}' is expected to be invoked with a block, but no block was given"
-      end
-    end
-
-    # Check if a named argument is missing in all overloads
-    if call_errors.all?(MissingNamedArguments)
-      call_errors = call_errors.map &.as(MissingNamedArguments)
-      all_missing_names = call_errors.flat_map(&.names).uniq
-      missing_names_in_all_overloads = all_missing_names.select do |missing_name|
-        call_errors.all? &.names.includes?(missing_name)
-      end
-      unless missing_names_in_all_overloads.empty?
-        raise(String.build do |str|
-          str << (if missing_names_in_all_overloads.size == 1
-            "missing argument: #{missing_names_in_all_overloads.first}"
-          else
-            "missing arguments: #{missing_names_in_all_overloads.join ", "}"
-          end)
-          str.puts
-          str.puts
-          str << "Overloads are:"
-          append_matches(defs, arg_types, str)
-        end, inner: inner_exception)
-      end
-    end
-
-    # Check if a named argument was specified but it doesn't exist
-    # in any of the overloads
-    if call_errors.all?(ExtraNamedArguments)
-      call_errors = call_errors.map &.as(ExtraNamedArguments)
-      all_extra_names = call_errors.flat_map(&.names).uniq
-      extra_names_in_all_overloads = all_extra_names.select do |extra_name|
-        call_errors.all? &.names.includes?(extra_name)
-      end
-      unless extra_names_in_all_overloads.empty?
-        raise(String.build do |str|
-          quoted_extra_names = extra_names_in_all_overloads.map { |name| "'#{name}'" }
-
-          str << (if quoted_extra_names.size == 1
-            "no parameter named #{quoted_extra_names.first}"
-          else
-            "no parameters named #{quoted_extra_names.join ", "}"
-          end)
-
-          # Show did you mean for the simplest case for now
-          if extra_names_in_all_overloads.size == 1 && call_errors.size == 1
-            extra_name = extra_names_in_all_overloads.first
-            name_index = call_errors.first.names.index(extra_name).not_nil!
-            similar_name = call_errors.first.similar_names[name_index]
-            if similar_name
-              str.puts
-              str << "Did you mean '#{similar_name}'?"
-            end
-          end
-
-          str.puts
-          str.puts
-          str << "Overloads are:"
-          append_matches(defs, arg_types, str)
-        end, inner: inner_exception)
-      end
-    end
-
-    # Check if a named argument was already specified positionaly
-    if call_errors.all?(ArgumentsAlreadySpecified)
-      call_errors = call_errors.map &.as(ArgumentsAlreadySpecified)
-      all_names = call_errors.flat_map(&.names).uniq
-      all_names_in_all_overloads = all_names.select do |name|
-        call_errors.all? &.names.includes?(name)
-      end
-
-      unless all_names_in_all_overloads.empty?
-        raise(String.build do |str|
-          quoted_names = all_names.map { |name| "'#{name}'" }
-
-          str << (if quoted_names.size == 1
-            "argument for parameter #{quoted_names.first} already specified"
-          else
-            "arguments for parameters #{quoted_names.join ", "} already specified"
-          end)
-
-          str.puts
-          str.puts
-          str << "Overloads are:"
-          append_matches(defs, arg_types, str)
-        end, inner: inner_exception)
-      end
-    end
-
-    # Don't say "wrong number of arguments" when there are named args in this call
-    if !named_args_types && call_errors.all?(WrongNumberOfArguments)
-      raise_matches_not_found_named_args(owner, def_name, defs, arg_types, named_args_types, inner_exception)
-    end
+    check_block_mismatch(call_errors, owner, def_name)
+    check_missing_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
+    check_extra_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
+    check_arguments_already_specified(call_errors, owner, defs, arg_types, inner_exception)
+    check_wrong_number_of_arguments(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
 
     # If we made a lookup without the special rule for literals,
     # and we have literals in the call, try again with that special rule.
@@ -263,6 +171,118 @@ class Crystal::Call
     end
 
     raise message, owner_trace
+  end
+
+  private def check_block_mismatch(call_errors, owner, def_name)
+    return unless call_errors.all?(BlockMismatch)
+
+    error_message =
+      if block
+        "'#{full_name(owner, def_name)}' is not expected to be invoked with a block, but a block was given"
+      else
+        "'#{full_name(owner, def_name)}' is expected to be invoked with a block, but no block was given"
+      end
+
+    raise error_message
+  end
+
+  private def check_missing_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
+    return unless call_errors.all?(MissingNamedArguments)
+
+    call_errors = call_errors.map &.as(MissingNamedArguments)
+    all_missing_names = call_errors.flat_map(&.names).uniq
+    missing_names_in_all_overloads = all_missing_names.select do |missing_name|
+      call_errors.all? &.names.includes?(missing_name)
+    end
+    return if missing_names_in_all_overloads.empty?
+
+    error_message = String.build do |str|
+      if missing_names_in_all_overloads.size == 1
+        str << "missing argument: #{missing_names_in_all_overloads.first}"
+      else
+        str << "missing arguments: #{missing_names_in_all_overloads.join ", "}"
+      end
+      str.puts
+      str.puts
+      str << "Overloads are:"
+      append_matches(defs, arg_types, str)
+    end
+
+    raise error_message, inner: inner_exception
+  end
+
+  private def check_extra_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
+    return unless call_errors.all?(ExtraNamedArguments)
+
+    call_errors = call_errors.map &.as(ExtraNamedArguments)
+    all_extra_names = call_errors.flat_map(&.names).uniq
+    extra_names_in_all_overloads = all_extra_names.select do |extra_name|
+      call_errors.all? &.names.includes?(extra_name)
+    end
+    return if extra_names_in_all_overloads.empty?
+
+    error_message = String.build do |str|
+      quoted_extra_names = extra_names_in_all_overloads.map { |name| "'#{name}'" }
+
+      if quoted_extra_names.size == 1
+        str << "no parameter named #{quoted_extra_names.first}"
+      else
+        str << "no parameters named #{quoted_extra_names.join ", "}"
+      end
+
+      # Show did you mean for the simplest case for now
+      if extra_names_in_all_overloads.size == 1 && call_errors.size == 1
+        extra_name = extra_names_in_all_overloads.first
+        name_index = call_errors.first.names.index(extra_name).not_nil!
+        similar_name = call_errors.first.similar_names[name_index]
+        if similar_name
+          str.puts
+          str << "Did you mean '#{similar_name}'?"
+        end
+      end
+
+      str.puts
+      str.puts
+      str << "Overloads are:"
+      append_matches(defs, arg_types, str)
+    end
+
+    raise error_message, inner: inner_exception
+  end
+
+  private def check_arguments_already_specified(call_errors, owner, defs, arg_types, inner_exception)
+    return unless call_errors.all?(ArgumentsAlreadySpecified)
+
+    call_errors = call_errors.map &.as(ArgumentsAlreadySpecified)
+    all_names = call_errors.flat_map(&.names).uniq
+    all_names_in_all_overloads = all_names.select do |name|
+      call_errors.all? &.names.includes?(name)
+    end
+    return if all_names_in_all_overloads.empty?
+
+    error_message = String.build do |str|
+      quoted_names = all_names.map { |name| "'#{name}'" }
+
+      if quoted_names.size == 1
+        str << "argument for parameter #{quoted_names.first} already specified"
+      else
+        str << "arguments for parameters #{quoted_names.join ", "} already specified"
+      end
+
+      str.puts
+      str.puts
+      str << "Overloads are:"
+      append_matches(defs, arg_types, str)
+    end
+
+    raise error_message, inner: inner_exception
+  end
+
+  private def check_wrong_number_of_arguments(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
+    # Don't say "wrong number of arguments" when there are named args in this call
+    if !named_args_types && call_errors.all?(WrongNumberOfArguments)
+      raise_matches_not_found_named_args(owner, def_name, defs, arg_types, named_args_types, inner_exception)
+    end
   end
 
   record WrongNumberOfArguments
