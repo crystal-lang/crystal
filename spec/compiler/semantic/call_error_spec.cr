@@ -71,4 +71,14 @@ describe "Call errors" do
       ),
       "no parameters named 'x', 'y'"
   end
+
+  it "says argument already specified" do
+    assert_error %(
+      def foo(x)
+      end
+
+      foo(1, x: 2)
+      ),
+      "argument for parameter 'x' already specified"
+  end
 end

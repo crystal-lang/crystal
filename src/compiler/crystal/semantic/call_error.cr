@@ -151,7 +151,7 @@ class Crystal::Call
         raise(String.build do |str|
           quoted_extra_names = extra_names_in_all_overloads.map { |name| "'#{name}'" }
 
-          str << (if extra_names_in_all_overloads.size == 1
+          str << (if quoted_extra_names.size == 1
             "no parameter named #{quoted_extra_names.first}"
           else
             "no parameters named #{quoted_extra_names.join ", "}"
@@ -176,28 +176,35 @@ class Crystal::Call
       end
     end
 
+    # Check if a named argument was already specified positionaly
+    if call_errors.all?(ArgumentsAlreadySpecified)
+      call_errors = call_errors.map &.as(ArgumentsAlreadySpecified)
+      all_names = call_errors.flat_map(&.names).uniq
+      all_names_in_all_overloads = all_names.select do |name|
+        call_errors.all? &.names.includes?(name)
+      end
+
+      unless all_names_in_all_overloads.empty?
+        raise(String.build do |str|
+          quoted_names = all_names.map { |name| "'#{name}'" }
+
+          str << (if quoted_names.size == 1
+            "argument for parameter #{quoted_names.first} already specified"
+          else
+            "arguments for parameters #{quoted_names.join ", "} already specified"
+          end)
+
+          str.puts
+          str.puts
+          str << "Overloads are:"
+          append_matches(defs, arg_types, str)
+        end, inner: inner_exception)
+      end
+    end
+
     # Don't say "wrong number of arguments" when there are named args in this call
     if !named_args_types && call_errors.all?(WrongNumberOfArguments)
       raise_matches_not_found_named_args(owner, def_name, defs, arg_types, named_args_types, inner_exception)
-    end
-
-    defs_matching_args_size = defs.select do |a_def|
-      min_size, max_size = a_def.min_max_args_sizes
-      min_size <= arg_types.size <= max_size
-    end
-
-    if defs_matching_args_size.size > 0
-      if message = single_def_error_message(defs, named_args)
-        raise message
-      else
-        # Only check for named args mismatch if there's just one overload for
-        # the method name, otherwise the error might not be correct
-        if named_args_types && defs.one?
-          defs_matching_args_size.each do |a_def|
-            check_named_args_mismatch owner, arg_types, named_args_types, a_def
-          end
-        end
-      end
     end
 
     # If we made a lookup without the special rule for literals,
@@ -262,6 +269,7 @@ class Crystal::Call
   record MissingNamedArguments, names : Array(String)
   record BlockMismatch
   record ExtraNamedArguments, names : Array(String), similar_names : Array(String?)
+  record ArgumentsAlreadySpecified, names : Array(String)
 
   private def compute_call_error_reason(owner, a_def, arg_types, named_args_types)
     if (block && !a_def.yields) || (!block && a_def.yields)
@@ -278,16 +286,16 @@ class Crystal::Call
       return MissingNamedArguments.new(missing_named_args)
     end
 
+    arguments_already_specified = [] of String
     extra_named_argument_names = [] of String
     extra_named_argument_similar_names = [] of String?
 
-    named_args.try &.each do |named_arg|
+    named_args_types.try &.each do |named_arg|
       found_index = a_def.args.index { |arg| arg.external_name == named_arg.name }
       if found_index
         min_size = arg_types.size
         if found_index < min_size
-          # TODO
-          # raise "argument for parameter '#{named_arg.name}' already specified"
+          arguments_already_specified << named_arg.name
         end
       elsif !a_def.double_splat
         similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.external_name))
@@ -295,6 +303,10 @@ class Crystal::Call
         extra_named_argument_names << named_arg.name
         extra_named_argument_similar_names << similar_name
       end
+    end
+
+    unless arguments_already_specified.empty?
+      return ArgumentsAlreadySpecified.new(arguments_already_specified)
     end
 
     unless extra_named_argument_names.empty?
@@ -689,38 +701,6 @@ class Crystal::Call
     end
 
     wrong_number_of_arguments "macro '#{def_name}'", args.size, all_arguments_sizes.join(", ")
-  end
-
-  def check_named_args_mismatch(owner, arg_types, named_args, a_def)
-    named_args.each do |named_arg|
-      found_index = a_def.args.index { |arg| arg.external_name == named_arg.name }
-      if found_index
-        min_size = arg_types.size
-        if found_index < min_size
-          raise "argument for parameter '#{named_arg.name}' already specified"
-        end
-      elsif !a_def.double_splat
-        similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.external_name))
-
-        msg = String.build do |str|
-          str << "no parameter named '"
-          str << named_arg.name
-          str << '\''
-          if similar_name
-            str << '\n'
-            str << "Did you mean '#{similar_name}'?"
-            str << '\n'
-          end
-
-          defs = owner.lookup_defs(a_def.name)
-
-          str << '\n'
-          str << "Matches are:"
-          append_matches defs, arg_types, str, matched_def: a_def, argument_name: named_arg.name
-        end
-        raise msg
-      end
-    end
   end
 
   def check_visibility(match)
