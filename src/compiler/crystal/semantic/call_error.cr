@@ -449,48 +449,14 @@ class Crystal::Call
       def_arg = a_def.args[i]?
       next unless def_arg
 
-      restricted = arg_type.restrict(def_arg, match_context)
-      unless restricted
-        expected_type = def_arg.type?
-        unless expected_type
-          restriction = def_arg.restriction
-          if restriction
-            expected_type = instantiated_owner.lookup_type?(restriction, free_vars: match_context.free_vars)
-          end
-        end
-        expected_type ||= def_arg.restriction.not_nil!
-        expected_type = expected_type.devirtualize if expected_type.is_a?(Type)
-
-        arguments_type_mismatch << ArgumentTypeMismatch.new(
-          index_or_name: i,
-          expected_type: expected_type,
-          actual_type: arg_type,
-        )
-      end
+      check_argument_type_mismatch(def_arg, i, arg_type, match_context, arguments_type_mismatch)
     end
 
     named_args_types.try &.each do |named_arg|
       def_arg = a_def.args.find &.external_name.==(named_arg.name)
       next unless def_arg
 
-      restricted = named_arg.type.restrict(def_arg, match_context)
-      unless restricted
-        expected_type = def_arg.type?
-        unless expected_type
-          restriction = def_arg.restriction
-          if restriction
-            expected_type = instantiated_owner.lookup_type?(restriction, free_vars: match_context.free_vars)
-          end
-        end
-        expected_type ||= def_arg.restriction.not_nil!
-        expected_type = expected_type.devirtualize if expected_type.is_a?(Type)
-
-        arguments_type_mismatch << ArgumentTypeMismatch.new(
-          index_or_name: named_arg.name,
-          expected_type: expected_type,
-          actual_type: named_arg.type,
-        )
-      end
+      check_argument_type_mismatch(def_arg, named_arg.name, named_arg.type, match_context, arguments_type_mismatch)
     end
 
     unless arguments_type_mismatch.empty?
@@ -498,6 +464,27 @@ class Crystal::Call
     end
 
     nil
+  end
+
+  private def check_argument_type_mismatch(def_arg, index_or_name, arg_type, match_context, arguments_type_mismatch)
+    restricted = arg_type.restrict(def_arg, match_context)
+    unless restricted
+      expected_type = def_arg.type?
+      unless expected_type
+        restriction = def_arg.restriction
+        if restriction
+          expected_type = match_context.instantiated_type.lookup_type?(restriction, free_vars: match_context.free_vars)
+        end
+      end
+      expected_type ||= def_arg.restriction.not_nil!
+      expected_type = expected_type.devirtualize if expected_type.is_a?(Type)
+
+      arguments_type_mismatch << ArgumentTypeMismatch.new(
+        index_or_name: index_or_name,
+        expected_type: expected_type,
+        actual_type: arg_type,
+      )
+    end
   end
 
   private def no_overload_matches_message(io, full_name, defs, args, arg_types, named_args_types)
