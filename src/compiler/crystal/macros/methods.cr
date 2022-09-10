@@ -1174,7 +1174,7 @@ module Crystal
         end
       when "annotations"
         fetch_annotations(self, method, args, named_args, block) do |type|
-          annotations = type ? self.var.annotations(type) : self.var.annotations
+          annotations = type ? self.var.annotations(type) : self.var.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1348,7 +1348,7 @@ module Crystal
         end
       when "annotations"
         fetch_annotations(self, method, args, named_args, block) do |type|
-          annotations = type ? self.annotations(type) : self.annotations
+          annotations = type ? self.annotations(type) : self.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1401,7 +1401,7 @@ module Crystal
         end
       when "annotations"
         fetch_annotations(self, method, args, named_args, block) do |type|
-          annotations = type ? self.annotations(type) : self.annotations
+          annotations = type ? self.annotations(type) : self.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1659,7 +1659,7 @@ module Crystal
         end
       when "annotations"
         fetch_annotations(self, method, args, named_args, block) do |type|
-          annotations = type ? self.type.annotations(type) : self.type.annotations
+          annotations = type ? self.type.annotations(type) : self.type.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end

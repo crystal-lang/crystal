@@ -308,11 +308,11 @@ module Crystal
       raise "BUG: #{self} doesn't implement add_instance_var_initializer"
     end
 
-    def declare_instance_var(name, type : Type, applied_annotations = nil)
+    def declare_instance_var(name, type : Type, annotations = nil)
       var = MetaTypeVar.new(name)
       var.owner = self
       var.type = type
-      var.applied_annotations = applied_annotations
+      var.annotations = annotations
       var.bind_to var
       var.freeze_type = type
       instance_vars[name] = var
@@ -1629,7 +1629,7 @@ module Crystal
         else
           instance_var_type = ivar_type.replace_type_parameters(instance)
         end
-        instance.declare_instance_var(name, instance_var_type, ivar.applied_annotations)
+        instance.declare_instance_var(name, instance_var_type, ivar.annotations)
       end
 
       run_instance_vars_initializers self, self, instance
@@ -1967,7 +1967,7 @@ module Crystal
     getter generic_type : GenericType
     getter type_vars : Hash(String, ASTNode)
 
-    delegate :annotation, :annotations, to: generic_type
+    delegate :annotation, :annotations, :all_annotations, to: generic_type
 
     def initialize(program, @generic_type, @type_vars)
       super(program)
