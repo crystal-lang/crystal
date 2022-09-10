@@ -451,9 +451,18 @@ class Crystal::Call
 
       restricted = arg_type.restrict(def_arg, match_context)
       unless restricted
+        expected_type = def_arg.type?
+        unless expected_type
+          restriction = def_arg.restriction
+          if restriction
+            expected_type = a_def_owner.lookup_type?(restriction, free_vars: match_context.free_vars)
+          end
+        end
+        expected_type ||= def_arg.restriction.not_nil!
+
         arguments_type_mismatch << ArgumentTypeMismatch.new(
           index_or_name: i,
-          expected_type: def_arg.type? || def_arg.restriction.not_nil!,
+          expected_type: expected_type,
           actual_type: arg_type,
         )
       end
@@ -465,9 +474,18 @@ class Crystal::Call
 
       restricted = named_arg.type.restrict(def_arg, match_context)
       unless restricted
+        expected_type = def_arg.type?
+        unless expected_type
+          restriction = def_arg.restriction
+          if restriction
+            expected_type = a_def_owner.lookup_type?(restriction, free_vars: match_context.free_vars)
+          end
+        end
+        expected_type ||= def_arg.restriction.not_nil!
+
         arguments_type_mismatch << ArgumentTypeMismatch.new(
           index_or_name: named_arg.name,
-          expected_type: def_arg.type? || def_arg.restriction.not_nil!,
+          expected_type: expected_type,
           actual_type: named_arg.type,
         )
       end

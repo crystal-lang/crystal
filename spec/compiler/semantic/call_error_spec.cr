@@ -130,4 +130,24 @@ describe "Call errors" do
       ),
       "expected argument 'x' to 'foo' to be Int32, not Char"
   end
+
+  it "replaces free variables in positional argument" do
+    assert_error %(
+      def foo(x : T, y : T) forall T
+      end
+
+      foo(1, 'a')
+      ),
+      "expected second argument to 'foo' to be Int32, not Char"
+  end
+
+  it "replaces free variables in named argument" do
+    assert_error %(
+      def foo(x : T, y : T) forall T
+      end
+
+      foo(x: 1, y: 'a')
+      ),
+      "expected argument 'y' to 'foo' to be Int32, not Char"
+  end
 end
