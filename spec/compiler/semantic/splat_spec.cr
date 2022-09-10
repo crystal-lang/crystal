@@ -339,7 +339,7 @@ describe "Semantic: splat" do
 
       bar 1, "a", 1.7
       ),
-      "no overload matches 'foo' with types Char, Int32, String, Float64"
+      "expected first argument to 'foo' to be Int, not Char"
   end
 
   it "doesn't crash on non-match (#2521)" do
@@ -545,7 +545,7 @@ describe "Semantic: splat" do
       foo = Foo(Int32, String).new
       method(foo)
       ),
-      "no overload matches"
+      "expected first argument to 'method' to be Foo(Tuple(Int32, String)), not Foo(Int32, String)"
   end
 
   it "matches partially instantiated generic with splat in generic type" do
@@ -746,7 +746,7 @@ describe "Semantic: splat" do
 
       foo(1)
       ),
-      "no overload matches"
+      "expected first argument to 'foo' to be Union(*T), not Int32"
   end
 
   it "matches typed before non-typed (1) (#3134)" do

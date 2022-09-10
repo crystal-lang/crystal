@@ -833,7 +833,7 @@ describe "Semantic: class" do
 
       Foo.new 'a'
       ),
-      "no overload matches"
+      "expected first argument to 'Foo.new' to be Int32, not Char"
   end
 
   it "correctly types #680" do

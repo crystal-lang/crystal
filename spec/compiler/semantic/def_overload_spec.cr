@@ -245,7 +245,7 @@ describe "Semantic: def overload" do
   end
 
   it "does not consider global paths as free variables (2)" do
-    assert_error <<-CR, "no overload matches"
+    assert_error <<-CR, "expected first argument to 'foo' to be Foo, not Int32"
       class Foo
       end
 
@@ -563,7 +563,7 @@ describe "Semantic: def overload" do
 
       foo Foo(Int32 | Float64).new
       ",
-      "no overload matches"
+      "expected first argument to 'foo' to be Foo(Int32), not Foo(Float64 | Int32)"
   end
 
   it "gets free variable from union restriction" do
@@ -747,7 +747,7 @@ describe "Semantic: def overload" do
 
       foo({1, 2})
       ",
-      "no overload matches"
+      "expected first argument to 'foo' to be ::Tuple(X, Y, Z), not Tuple(Int32, Int32)"
   end
 
   it "matches tuples of different sizes" do
@@ -834,7 +834,7 @@ describe "Semantic: def overload" do
 
       Foo.new('a')
       ),
-      "no overload matches"
+      "expected first argument to 'Foo.new' to be Int, not Char"
   end
 
   it "finds method after including module in generic module (#1201)" do
@@ -1033,7 +1033,7 @@ describe "Semantic: def overload" do
 
       foo(1, 'a')
       ),
-      "no overload matches"
+      "expected second argument to 'foo' to be Int32, not Char"
   end
 
   it "errors when binding free variable to different types (2)" do
@@ -1046,7 +1046,7 @@ describe "Semantic: def overload" do
 
       foo(1, Gen(Char).new)
       ),
-      "no overload matches"
+      "expected second argument to 'foo' to be Gen(Int32), not Gen(Char)"
   end
 
   it "overloads with named argument (#4465)" do

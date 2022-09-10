@@ -459,6 +459,7 @@ class Crystal::Call
           end
         end
         expected_type ||= def_arg.restriction.not_nil!
+        expected_type = expected_type.devirtualize if expected_type.is_a?(Type)
 
         arguments_type_mismatch << ArgumentTypeMismatch.new(
           index_or_name: i,
@@ -482,6 +483,7 @@ class Crystal::Call
           end
         end
         expected_type ||= def_arg.restriction.not_nil!
+        expected_type = expected_type.devirtualize if expected_type.is_a?(Type)
 
         arguments_type_mismatch << ArgumentTypeMismatch.new(
           index_or_name: named_arg.name,
