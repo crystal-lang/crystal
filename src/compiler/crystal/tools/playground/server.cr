@@ -531,6 +531,8 @@ module Crystal::Playground
       rescue ex
         raise Playground::Error.new(ex.message)
       end
+    rescue e : Socket::BindError
+      raise Playground::Error.new(e.message)
     end
 
     private def accept_request?(origin)
