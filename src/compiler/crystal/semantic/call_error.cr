@@ -117,6 +117,8 @@ class Crystal::Call
     end
 
     check_block_mismatch(call_errors, owner, def_name)
+    call_errors.reject!(BlockMismatch)
+
     check_missing_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
     check_extra_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
     check_arguments_already_specified(call_errors, owner, defs, arg_types, inner_exception)
@@ -588,6 +590,8 @@ class Crystal::Call
     all_arguments_sizes = [] of Int32
     min_splat = Int32::MAX
     defs.each do |a_def|
+      next if (block && !a_def.yields) || (!block && a_def.yields)
+
       min_size, max_size = a_def.min_max_args_sizes
       if max_size == Int32::MAX
         min_splat = Math.min(min_size, min_splat)

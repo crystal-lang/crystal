@@ -11,6 +11,20 @@ describe "Call errors" do
       "wrong number of arguments for 'foo' (given 0, expected 1)"
   end
 
+  it "says wrong number of arguments even if other overloads don't match by block" do
+    assert_error %(
+      def foo(x)
+      end
+
+      def foo(x, y)
+        yield
+      end
+
+      foo
+      ),
+      "wrong number of arguments for 'foo' (given 0, expected 1)"
+  end
+
   it "says not expected to be invoked with a block" do
     assert_error %(
       def foo
