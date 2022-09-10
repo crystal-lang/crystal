@@ -1,6 +1,10 @@
 require "c/dirent"
 
 module Crystal::System::Dir
+  {% begin %}
+    PATH_MAX = {% if LibC.has_constant?("PATH_MAX") %}LibC::PATH_MAX{% else %}0x1000{% end %}
+  {% end %}
+
   def self.open(path : String) : LibC::DIR*
     dir = LibC.opendir(path.check_no_null_byte)
     raise ::File::Error.from_errno("Error opening directory", file: path) unless dir
@@ -66,13 +70,12 @@ module Crystal::System::Dir
       return pwd
     end
 
-    unless dir = LibC.getcwd(nil, 0)
-      raise ::File::Error.from_errno("Error getting current directory", file: "./")
+    String.new(PATH_MAX) do |buffer|
+      unless LibC.getcwd(buffer, PATH_MAX)
+        raise ::File::Error.from_errno("Error getting current directory", file: "./")
+      end
+      {LibC.strlen(buffer), 0}
     end
-
-    dir_str = String.new(dir)
-    LibC.free(dir.as(Void*))
-    dir_str
   end
 
   def self.current=(path : String)
