@@ -54,4 +54,26 @@ describe Crystal::Repl::Interpreter do
       FileUtils.rm_rf(SPEC_CRYSTAL_LOADER_LIB_PATH)
     end
   end
+
+  context "command expansion" do
+    before_all do
+      FileUtils.mkdir_p(SPEC_CRYSTAL_LOADER_LIB_PATH)
+      build_c_dynlib(compiler_datapath("interpreter", "sum.c"))
+    end
+
+    it "expands ldflags" do
+      interpret(<<-CR).should eq 4
+        @[Link(ldflags: "-L#{SPEC_CRYSTAL_LOADER_LIB_PATH} -l`echo sum`")]
+        lib LibSum
+          fun simple_sum_int(a : Int32, b : Int32) : Int32
+        end
+
+        LibSum.simple_sum_int(2, 2)
+        CR
+    end
+
+    after_all do
+      FileUtils.rm_rf(SPEC_CRYSTAL_LOADER_LIB_PATH)
+    end
+  end
 end

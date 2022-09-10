@@ -726,17 +726,6 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_allocate(node, target_def, call_args)
     type = node.type
 
-    # Edge case: if a virtual struct has only one concrete subclass, its
-    # type indirection (how we represent it for codegen) turns out not to be
-    # a union type but just a single type. In that case we just need to create
-    # this concrete type, without creating the base type and then casting it back.
-    if type.is_a?(VirtualType) && type.struct?
-      indirect_type = type.remove_indirection
-      if !indirect_type.is_a?(UnionType)
-        return @last = allocate_aggregate indirect_type
-      end
-    end
-
     base_type = type.is_a?(VirtualType) ? type.base_type : type
 
     allocate_aggregate base_type
@@ -837,7 +826,7 @@ class Crystal::CodeGenVisitor
     if (extra = node.extra)
       existing_value = context.vars["value"]?
       context.vars["value"] = LLVMVar.new(call_arg, node.type, true)
-      request_value { accept extra }
+      request_value(extra)
       call_arg = @last
       context.vars["value"] = existing_value if existing_value
     end
@@ -1162,10 +1151,11 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_cmpxchg(call, node, target_def, call_args)
     call = check_atomic_call(call, target_def)
-    success_ordering = atomic_ordering_from_symbol_literal(call.args[-2])
-    failure_ordering = atomic_ordering_from_symbol_literal(call.args[-1])
+    ptr, cmp, new, success_ordering, failure_ordering = call_args
 
-    ptr, cmp, new, _, _ = call_args
+    success_ordering = atomic_ordering_get_const(call.args[-2], success_ordering)
+    failure_ordering = atomic_ordering_get_const(call.args[-1], failure_ordering)
+
     value = builder.cmpxchg(ptr, cmp, new, success_ordering, failure_ordering)
     value_ptr = alloca llvm_type(node.type)
     store extract_value(value, 0), gep(value_ptr, 0, 0)
@@ -1175,17 +1165,20 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_atomicrmw(call, node, target_def, call_args)
     call = check_atomic_call(call, target_def)
-    op = atomicrwm_bin_op_from_symbol_literal(call.args[0])
-    ordering = atomic_ordering_from_symbol_literal(call.args[-2])
+    op, ptr, val, ordering, _ = call_args
+
+    op = atomicrwm_bin_op_get_const(call.args[0], op)
+    ordering = atomic_ordering_get_const(call.args[-2], ordering)
     singlethread = bool_from_bool_literal(call.args[-1])
 
-    _, ptr, val, _, _ = call_args
     builder.atomicrmw(op, ptr, val, ordering, singlethread)
   end
 
   def codegen_primitive_fence(call, node, target_def, call_args)
     call = check_atomic_call(call, target_def)
-    ordering = atomic_ordering_from_symbol_literal(call.args[0])
+    ordering, _ = call_args
+
+    ordering = atomic_ordering_get_const(call.args[0], ordering)
     singlethread = bool_from_bool_literal(call.args[1])
 
     builder.fence(ordering, singlethread)
@@ -1194,10 +1187,10 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_load_atomic(call, node, target_def, call_args)
     call = check_atomic_call(call, target_def)
-    ordering = atomic_ordering_from_symbol_literal(call.args[-2])
-    volatile = bool_from_bool_literal(call.args[-1])
+    ptr, ordering, _ = call_args
 
-    ptr, _, _ = call_args
+    ordering = atomic_ordering_get_const(call.args[-2], ordering)
+    volatile = bool_from_bool_literal(call.args[-1])
 
     inst = builder.load(ptr)
     inst.ordering = ordering
@@ -1208,10 +1201,10 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_store_atomic(call, node, target_def, call_args)
     call = check_atomic_call(call, target_def)
-    ordering = atomic_ordering_from_symbol_literal(call.args[-2])
-    volatile = bool_from_bool_literal(call.args[-1])
+    ptr, value, ordering, _ = call_args
 
-    ptr, value, _, _ = call_args
+    ordering = atomic_ordering_get_const(call.args[-2], ordering)
+    volatile = bool_from_bool_literal(call.args[-1])
 
     inst = builder.store(value, ptr)
     inst.ordering = ordering
@@ -1246,30 +1239,39 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def atomic_ordering_from_symbol_literal(node)
-    unless node.is_a?(SymbolLiteral)
-      node.raise "BUG: expected symbol literal"
-    end
+  def atomic_ordering_get_const(node, llvm_arg)
+    node.raise "atomic ordering must be a constant" unless llvm_arg.constant?
 
-    ordering = LLVM::AtomicOrdering.parse?(node.value)
-    unless ordering
-      node.raise "unknown atomic ordering: #{node.value}"
+    if node.type.implements?(@program.enum) && llvm_arg.type.kind.integer? && llvm_arg.type.int_width == 32
+      # any `Int32` enum will do, it is up to `Atomic::Ops` to use appropriate
+      # parameter restrictions so that things don't go bad
+      LLVM::AtomicOrdering.new(llvm_arg.const_int_get_sext_value.to_i32!)
+    elsif node.is_a?(SymbolLiteral)
+      # TODO: remove once support for 1.4 is dropped
+      op = LLVM::AtomicOrdering.parse?(node.value)
+      unless op
+        node.raise "unknown atomic ordering: #{node.value}"
+      end
+      op
+    else
+      node.raise "BUG: unknown atomic ordering: #{node}"
     end
-
-    ordering
   end
 
-  def atomicrwm_bin_op_from_symbol_literal(node)
-    unless node.is_a?(SymbolLiteral)
-      node.raise "BUG: expected symbol literal"
-    end
+  def atomicrwm_bin_op_get_const(node, llvm_arg)
+    node.raise "atomic rwm bin op must be a constant" unless llvm_arg.constant?
 
-    op = LLVM::AtomicRMWBinOp.parse?(node.value)
-    unless op
-      node.raise "unknown atomic rwm bin op: #{node.value}"
+    if node.type.implements?(@program.enum) && llvm_arg.type.kind.integer? && llvm_arg.type.int_width == 32
+      LLVM::AtomicRMWBinOp.new(llvm_arg.const_int_get_sext_value.to_i32!)
+    elsif node.is_a?(SymbolLiteral)
+      op = LLVM::AtomicRMWBinOp.parse?(node.value)
+      unless op
+        node.raise "unknown atomic rwm bin op: #{node.value}"
+      end
+      op
+    else
+      node.raise "BUG: unknown atomic rwm bin op: #{node}"
     end
-
-    op
   end
 
   def bool_from_bool_literal(node)

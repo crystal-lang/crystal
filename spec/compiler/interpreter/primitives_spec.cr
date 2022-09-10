@@ -200,6 +200,13 @@ describe Crystal::Repl::Interpreter do
         x
       CODE
     end
+
+    it "interprets local variable declaration (#12229)" do
+      interpret(<<-CODE).should eq(1)
+      a : Int32 = 1
+      a
+      CODE
+    end
   end
 
   context "conversion" do
@@ -309,7 +316,7 @@ describe Crystal::Repl::Interpreter do
       assert_overflows 1_i16 + 32767
       assert_overflows 1_u32 + 4294967295
       assert_overflows 1_i32 + 2147483647
-      assert_overflows 1_u64 + 18446744073709551615
+      assert_overflows 1_u64 + 18446744073709551615u64
       assert_overflows 1_i64 + 9223372036854775807
     end
 
@@ -321,7 +328,7 @@ describe Crystal::Repl::Interpreter do
       assert_overflows 1_u32 - 2
       assert_overflows 1_i32 - 2147483650
       assert_overflows 1_u64 - 2
-      assert_overflows 1_i64 - 9223372036854775810
+      assert_overflows 1_i64 - 9223372036854775810u64
     end
 
     context "*" do
