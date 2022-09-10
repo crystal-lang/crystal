@@ -81,4 +81,53 @@ describe "Call errors" do
       ),
       "argument for parameter 'x' already specified"
   end
+
+  it "says type mismatch for positional argument" do
+    assert_error %(
+      def foo(x : Int32, y : Int32)
+      end
+
+      foo(1, 'a')
+      ),
+      "expected second argument to 'foo' to be Int32, not Char"
+  end
+
+  it "says type mismatch for positional argument with two options" do
+    assert_error %(
+      def foo(x : Int32)
+      end
+
+      def foo(x : String)
+      end
+
+      foo('a')
+      ),
+      "expected first argument to 'foo' to be Int32 or String, not Char"
+  end
+
+  it "says type mismatch for positional argument with three options" do
+    assert_error %(
+      def foo(x : Int32)
+      end
+
+      def foo(x : String)
+      end
+
+      def foo(x : Bool)
+      end
+
+      foo('a')
+      ),
+      "expected first argument to 'foo' to be Bool, Int32 or String, not Char"
+  end
+
+  it "says type mismatch for named argument " do
+    assert_error %(
+      def foo(x : Int32, y : Int32)
+      end
+
+      foo(y: 1, x: 'a')
+      ),
+      "expected argument 'x' to 'foo' to be Int32, not Char"
+  end
 end

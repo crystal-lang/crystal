@@ -98,6 +98,13 @@ class Crystal::Call
       raise_undefined_method(owner, def_name, obj)
     end
 
+    # If we made a lookup without the special rule for literals,
+    # and we have literals in the call, try again with that special rule.
+    if with_autocast == false && (args.any?(&.supports_autocast? number_autocast) ||
+       named_args.try &.any? &.value.supports_autocast? number_autocast)
+      ::raise RetryLookupWithLiterals.new
+    end
+
     # If it's on an initialize method and there's a similar method name, it's probably a typo
     if (def_name == "initialize" || def_name == "new") && (similar_def = owner.instance_type.lookup_similar_def("initialize", self.args.size, block))
       inner_msg = colorize("do you maybe have a typo in this '#{similar_def.name}' method?").yellow.bold.to_s
@@ -114,13 +121,7 @@ class Crystal::Call
     check_extra_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
     check_arguments_already_specified(call_errors, owner, defs, arg_types, inner_exception)
     check_wrong_number_of_arguments(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
-
-    # If we made a lookup without the special rule for literals,
-    # and we have literals in the call, try again with that special rule.
-    if with_autocast == false && (args.any?(&.supports_autocast? number_autocast) ||
-       named_args.try &.any? &.value.supports_autocast? number_autocast)
-      ::raise RetryLookupWithLiterals.new
-    end
+    check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
 
     if args.size == 1 && args.first.type.includes_type?(program.nil)
       owner_trace = args.first.find_owner_trace(program, program.nil)
@@ -279,10 +280,84 @@ class Crystal::Call
   end
 
   private def check_wrong_number_of_arguments(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
-    # Don't say "wrong number of arguments" when there are named args in this call
-    if !named_args_types && call_errors.all?(WrongNumberOfArguments)
-      raise_matches_not_found_named_args(owner, def_name, defs, arg_types, named_args_types, inner_exception)
+    return unless call_errors.all?(WrongNumberOfArguments)
+
+    raise_matches_not_found_named_args(owner, def_name, defs, arg_types, named_args_types, inner_exception)
+  end
+
+  private def check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
+    return unless call_errors.all?(ArgumentsTypeMismatch)
+
+    call_errors = call_errors.map &.as(ArgumentsTypeMismatch)
+    argument_type_mismatches = call_errors.flat_map(&.errors)
+
+    all_indexes_or_names = argument_type_mismatches.map(&.index_or_name).uniq
+    indexes_or_names_in_all_overloads = all_indexes_or_names.select do |index_or_name|
+      call_errors.all? &.errors.any? &.index_or_name.==(index_or_name)
     end
+
+    return if indexes_or_names_in_all_overloads.empty?
+
+    # Only show the first error. We'll still list all overloads.
+    index_or_name = indexes_or_names_in_all_overloads.first
+
+    mismatches = argument_type_mismatches.select(&.index_or_name.==(index_or_name))
+    expected_types = mismatches.map(&.expected_type).uniq.sort_by(&.to_s)
+    actual_type = mismatches.first.actual_type
+
+    arg =
+      case index_or_name
+      in Int32
+        args[index_or_name]?
+      in String
+        named_args.try &.find(&.name.==(index_or_name))
+      end
+
+    error_message = String.build do |str|
+      argument_name =
+        case index_or_name
+        in Int32
+          case index_or_name
+          when 0 then "first argument"
+          when 1 then "second argument"
+          when 2 then "third argument"
+          when 3 then "fourth argument"
+          when 4 then "fifth argument"
+          when 5 then "sixth argument"
+          when 6 then "seventh argument"
+          else        "argument #{index_or_name + 1}"
+          end
+        in String
+          "argument '#{index_or_name}'"
+        end
+
+      str << "expected "
+      str << argument_name
+      str << " to '"
+      str << full_name(owner, def_name)
+      str << "' to be "
+      if expected_types.size == 1
+        str << expected_types.first
+      else
+        expected_types.each_with_index do |expected_type, i|
+          if i == expected_types.size - 1
+            str << " or "
+          elsif i > 0
+            str << ", "
+          end
+          str << expected_type
+        end
+      end
+      str << ", not "
+      str << actual_type
+
+      str.puts
+      str.puts
+      str << "Overloads are:"
+      append_matches(defs, arg_types, str)
+    end
+
+    (arg || self).raise(error_message, inner_exception)
   end
 
   record WrongNumberOfArguments
@@ -290,15 +365,19 @@ class Crystal::Call
   record BlockMismatch
   record ExtraNamedArguments, names : Array(String), similar_names : Array(String?)
   record ArgumentsAlreadySpecified, names : Array(String)
+  record ArgumentsTypeMismatch, errors : Array(ArgumentTypeMismatch)
+  record ArgumentTypeMismatch, index_or_name : (Int32 | String), expected_type : Type | ASTNode, actual_type : Type
 
   private def compute_call_error_reason(owner, a_def, arg_types, named_args_types)
     if (block && !a_def.yields) || (!block && a_def.yields)
       return BlockMismatch.new
     end
 
-    min_size, max_size = a_def.min_max_args_sizes
-    unless min_size <= arg_types.size <= max_size
-      return WrongNumberOfArguments.new
+    if !named_args_types
+      min_size, max_size = a_def.min_max_args_sizes
+      unless min_size <= arg_types.size <= max_size
+        return WrongNumberOfArguments.new
+      end
     end
 
     missing_named_args = extract_missing_named_args(a_def, named_args)
@@ -332,6 +411,73 @@ class Crystal::Call
     unless extra_named_argument_names.empty?
       return ExtraNamedArguments.new(extra_named_argument_names, extra_named_argument_similar_names)
     end
+
+    # For now let's not deal with splats
+    return if a_def.splat_index
+
+    a_def_owner = a_def.owner
+
+    # This is the actual instantiated type where the method was instantiated
+    instantiated_owner = owner
+
+    owner.ancestors.each do |ancestor|
+      if a_def_owner == ancestor
+        instantiated_owner = ancestor
+        break
+      end
+
+      # If the method is defined in a generic uninstantiated type
+      # then the method instantiation happens on the instantiated generic
+      # type whose generic type is that uninstantiated one.
+      if a_def_owner.is_a?(GenericType) &&
+         ancestor.is_a?(GenericInstanceType) &&
+         ancestor.generic_type == a_def_owner
+        instantiated_owner = ancestor
+        break
+      end
+    end
+
+    match_context = MatchContext.new(
+      instantiated_type: instantiated_owner,
+      defining_type: a_def.owner,
+      def_free_vars: a_def.free_vars,
+    )
+
+    arguments_type_mismatch = [] of ArgumentTypeMismatch
+
+    arg_types.each_with_index do |arg_type, i|
+      def_arg = a_def.args[i]?
+      next unless def_arg
+
+      restricted = arg_type.restrict(def_arg, match_context)
+      unless restricted
+        arguments_type_mismatch << ArgumentTypeMismatch.new(
+          index_or_name: i,
+          expected_type: def_arg.type? || def_arg.restriction.not_nil!,
+          actual_type: arg_type,
+        )
+      end
+    end
+
+    named_args_types.try &.each do |named_arg|
+      def_arg = a_def.args.find &.external_name.==(named_arg.name)
+      next unless def_arg
+
+      restricted = named_arg.type.restrict(def_arg, match_context)
+      unless restricted
+        arguments_type_mismatch << ArgumentTypeMismatch.new(
+          index_or_name: named_arg.name,
+          expected_type: def_arg.type? || def_arg.restriction.not_nil!,
+          actual_type: named_arg.type,
+        )
+      end
+    end
+
+    unless arguments_type_mismatch.empty?
+      return ArgumentsTypeMismatch.new(arguments_type_mismatch)
+    end
+
+    nil
   end
 
   private def no_overload_matches_message(io, full_name, defs, args, arg_types, named_args_types)
