@@ -317,25 +317,16 @@ class Crystal::Call
       end
 
     error_message = String.build do |str|
-      argument_name =
+      argument_description =
         case index_or_name
         in Int32
-          case index_or_name
-          when 0 then "first argument"
-          when 1 then "second argument"
-          when 2 then "third argument"
-          when 3 then "fourth argument"
-          when 4 then "fifth argument"
-          when 5 then "sixth argument"
-          when 6 then "seventh argument"
-          else        "argument #{index_or_name + 1}"
-          end
+          "##{index_or_name + 1}"
         in String
-          "argument '#{index_or_name}'"
+          "'#{index_or_name}'"
         end
 
-      str << "expected "
-      str << argument_name
+      str << "expected argument "
+      str << argument_description
       str << " to '"
       str << full_name(owner, def_name)
       str << "' to be "

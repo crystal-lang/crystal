@@ -103,7 +103,7 @@ describe "Call errors" do
 
       foo(1, 'a')
       ),
-      "expected second argument to 'foo' to be Int32, not Char"
+      "expected argument #2 to 'foo' to be Int32, not Char"
   end
 
   it "says type mismatch for positional argument with two options" do
@@ -116,7 +116,7 @@ describe "Call errors" do
 
       foo('a')
       ),
-      "expected first argument to 'foo' to be Int32 or String, not Char"
+      "expected argument #1 to 'foo' to be Int32 or String, not Char"
   end
 
   it "says type mismatch for positional argument with three options" do
@@ -132,7 +132,7 @@ describe "Call errors" do
 
       foo('a')
       ),
-      "expected first argument to 'foo' to be Bool, Int32 or String, not Char"
+      "expected argument #1 to 'foo' to be Bool, Int32 or String, not Char"
   end
 
   it "says type mismatch for named argument " do
@@ -152,7 +152,7 @@ describe "Call errors" do
 
       foo(1, 'a')
       ),
-      "expected second argument to 'foo' to be Int32, not Char"
+      "expected argument #2 to 'foo' to be Int32, not Char"
   end
 
   it "replaces free variables in named argument" do
@@ -174,7 +174,7 @@ describe "Call errors" do
 
       Foo(Int32).foo('a')
       ),
-      "expected first argument to 'Foo(Int32).foo' to be Int32, not Char"
+      "expected argument #1 to 'Foo(Int32).foo' to be Int32, not Char"
   end
 
   it "replaces generic type var in named argument" do
@@ -202,6 +202,6 @@ describe "Call errors" do
 
       foo("hello")
       ),
-      "expected first argument to 'foo' to be Char or Int32, not String"
+      "expected argument #1 to 'foo' to be Char or Int32, not String"
   end
 end

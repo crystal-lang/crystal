@@ -39,7 +39,7 @@ describe "Semantic: automatic cast" do
 
       foo(2147483648_i64)
       ),
-      "expected first argument to 'foo' to be Int32, not Int64"
+      "expected argument #1 to 'foo' to be Int32, not Int64"
   end
 
   it "casts literal integer (Int32 -> Float32)" do
@@ -208,7 +208,7 @@ describe "Semantic: automatic cast" do
 
       foo(:four)
       ),
-      "expected first argument to 'foo' to be Foo, not Symbol"
+      "expected argument #1 to 'foo' to be Foo, not Symbol"
   end
 
   it "says ambiguous call for symbol" do
@@ -419,7 +419,7 @@ describe "Semantic: automatic cast" do
       a = 1 || Zed.new
       a + 2
       ),
-      "expected first argument to 'Zed#+' to be Char, not Int32",
+      "expected argument #1 to 'Zed#+' to be Char, not Int32",
       inject_primitives: true
   end
 
@@ -449,7 +449,7 @@ describe "Semantic: automatic cast" do
       a = 1 || Zed.new
       a + :red
       ),
-      "expected first argument to 'Zed#+' to be Char, not Symbol"
+      "expected argument #1 to 'Zed#+' to be Char, not Symbol"
   end
 
   it "can use automatic cast with `with ... yield` (#7736)" do
@@ -650,7 +650,7 @@ describe "Semantic: automatic cast" do
       x = 1_i64
       foo(x)
       ),
-      "expected first argument to 'foo' to be Int32, not Int64"
+      "expected argument #1 to 'foo' to be Int32, not Int64"
   end
 
   it "doesn't cast integer variable to larger type (not #9565)" do
@@ -662,7 +662,7 @@ describe "Semantic: automatic cast" do
       x = 1_i32
       foo(x)
       ),
-      "expected first argument to 'foo' to be Int64, not Int32",
+      "expected argument #1 to 'foo' to be Int64, not Int32",
       flags: "no_number_autocast"
   end
 

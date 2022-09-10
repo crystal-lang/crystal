@@ -260,7 +260,7 @@ describe "Semantic: def" do
       a = Pointer(Node).new(0_u64)
       foo a
       ),
-      "expected first argument to 'foo' to be Pointer(Node), not Node",
+      "expected argument #1 to 'foo' to be Pointer(Node), not Node",
       inject_primitives: true
   end
 
@@ -375,7 +375,7 @@ describe "Semantic: def" do
 
       Foo.bar
       ),
-      "expected first argument to 'foo' to be String, not Int32"
+      "expected argument #1 to 'foo' to be String, not Int32"
   end
 
   it "gives correct error for methods in Class" do

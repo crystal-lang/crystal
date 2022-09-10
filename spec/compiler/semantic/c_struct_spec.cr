@@ -379,7 +379,7 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = Foo.new
       ),
-      "expected first argument to 'Int32#+' to be Float32, Float64, Int128, Int16, Int32, Int64, Int8, UInt128, UInt16, UInt32, UInt64 or UInt8, not Char",
+      "expected argument #1 to 'Int32#+' to be Float32, Float64, Int128, Int16, Int32, Int64, Int8, UInt128, UInt16, UInt32, UInt64 or UInt8, not Char",
       inject_primitives: true
   end
 

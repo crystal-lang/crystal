@@ -245,7 +245,7 @@ describe "Semantic: def overload" do
   end
 
   it "does not consider global paths as free variables (2)" do
-    assert_error <<-CR, "expected first argument to 'foo' to be Foo, not Int32"
+    assert_error <<-CR, "expected argument #1 to 'foo' to be Foo, not Int32"
       class Foo
       end
 
@@ -563,7 +563,7 @@ describe "Semantic: def overload" do
 
       foo Foo(Int32 | Float64).new
       ",
-      "expected first argument to 'foo' to be Foo(Int32), not Foo(Float64 | Int32)"
+      "expected argument #1 to 'foo' to be Foo(Int32), not Foo(Float64 | Int32)"
   end
 
   it "gets free variable from union restriction" do
@@ -747,7 +747,7 @@ describe "Semantic: def overload" do
 
       foo({1, 2})
       ",
-      "expected first argument to 'foo' to be ::Tuple(X, Y, Z), not Tuple(Int32, Int32)"
+      "expected argument #1 to 'foo' to be ::Tuple(X, Y, Z), not Tuple(Int32, Int32)"
   end
 
   it "matches tuples of different sizes" do
@@ -799,7 +799,7 @@ describe "Semantic: def overload" do
 
       Bar.new.foo(1.5)
       ),
-      "no overload matches"
+      "expected argument #1 to 'Bar#foo' to be Int32, not Float64"
   end
 
   it "doesn't match with wrong number of type arguments (#313)" do
@@ -834,7 +834,7 @@ describe "Semantic: def overload" do
 
       Foo.new('a')
       ),
-      "expected first argument to 'Foo.new' to be Int, not Char"
+      "expected argument #1 to 'Foo.new' to be Int, not Char"
   end
 
   it "finds method after including module in generic module (#1201)" do
@@ -1033,7 +1033,7 @@ describe "Semantic: def overload" do
 
       foo(1, 'a')
       ),
-      "expected second argument to 'foo' to be Int32, not Char"
+      "expected argument #2 to 'foo' to be Int32, not Char"
   end
 
   it "errors when binding free variable to different types (2)" do
@@ -1046,7 +1046,7 @@ describe "Semantic: def overload" do
 
       foo(1, Gen(Char).new)
       ),
-      "expected second argument to 'foo' to be Gen(Int32), not Gen(Char)"
+      "expected argument #2 to 'foo' to be Gen(Int32), not Gen(Char)"
   end
 
   it "overloads with named argument (#4465)" do

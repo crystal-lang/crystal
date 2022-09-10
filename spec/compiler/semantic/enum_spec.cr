@@ -30,7 +30,7 @@ describe "Semantic: enum" do
 
       foo 1
       ),
-      "expected first argument to 'foo' to be Foo, not Int32"
+      "expected argument #1 to 'foo' to be Foo, not Int32"
   end
 
   it "finds method in enum type" do
