@@ -286,7 +286,8 @@ class Crystal::Call
   end
 
   private def check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
-    return unless call_errors.all?(ArgumentsTypeMismatch)
+    call_errors = call_errors.select(ArgumentsTypeMismatch)
+    return if call_errors.empty?
 
     call_errors = call_errors.map &.as(ArgumentsTypeMismatch)
     argument_type_mismatches = call_errors.flat_map(&.errors)

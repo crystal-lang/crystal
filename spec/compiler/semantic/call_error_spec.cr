@@ -174,4 +174,20 @@ describe "Call errors" do
       ),
       "expected argument 'y' to 'Foo(Int32).foo' to be Int32, not Char"
   end
+
+  it "says type mismatch for positional argument even if there are overloads that don't match" do
+    assert_error %(
+      def foo(x : Int32)
+      end
+
+      def foo(x : Char)
+      end
+
+      def foo(x : Char, y : Int32)
+      end
+
+      foo("hello")
+      ),
+      "expected first argument to 'foo' to be Char or Int32, not String"
+  end
 end
