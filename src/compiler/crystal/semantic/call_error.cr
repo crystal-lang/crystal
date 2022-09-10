@@ -277,8 +277,7 @@ class Crystal::Call
       if obj.is_a?(InstanceVar)
         scope = self.scope
         ivar = scope.lookup_instance_var(obj.name)
-        deps = ivar.dependencies?
-        if deps && deps.size == 1 && deps.first.same?(program.nil_var)
+        if ivar.dependencies.size == 1 && ivar.dependencies.first.same?(program.nil_var)
           similar_name = scope.lookup_similar_instance_var_name(ivar.name)
           if similar_name
             msg << colorize(" (#{ivar.name} was never assigned a value, did you mean #{similar_name}?)").yellow.bold
@@ -649,15 +648,21 @@ class Crystal::Call
 
   def check_recursive_splat_call(a_def, args)
     if a_def.splat_index
-      current_splat_type = args.values.last.type
-      if previous_splat_type = program.splat_expansions[a_def]?
-        if current_splat_type.has_in_type_vars?(previous_splat_type)
-          raise "recursive splat expansion: #{previous_splat_type}, #{current_splat_type}, ..."
-        end
+      previous_splat_types = program.splat_expansions[a_def] ||= [] of Type
+      previous_splat_types.push(args.values.last.type)
+
+      # This is just an heuristic, but if a same method is called recursively
+      # 5 times or more, and the splat type keeps expanding and containing
+      # previous splat types, there's a high chance it will recurse forever.
+      if previous_splat_types.size >= 5 &&
+         previous_splat_types.each.cons_pair.all? { |t1, t2| t2.has_in_type_vars?(t1) }
+        a_def.raise "recursive splat expansion: #{previous_splat_types.join(", ")}, ..."
       end
-      program.splat_expansions[a_def] = current_splat_type
+
       yield
-      program.splat_expansions.delete a_def
+
+      previous_splat_types.pop
+      program.splat_expansions.delete a_def if previous_splat_types.empty?
     else
       yield
     end

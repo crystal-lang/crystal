@@ -613,12 +613,12 @@ describe "JSON mapping" do
 
   it "doesn't emit null by default when doing to_json" do
     person = JSONAttrPerson.from_json(%({"name": "John"}))
-    (person.to_json =~ /age/).should be_falsey
+    person.to_json.should_not match /age/
   end
 
   it "emits null on request when doing to_json" do
     person = JSONAttrPersonEmittingNull.from_json(%({"name": "John"}))
-    (person.to_json =~ /age/).should be_truthy
+    person.to_json.should match /age/
   end
 
   it "emit_nulls option" do

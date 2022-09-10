@@ -10,7 +10,7 @@ class Crystal::Command
     check = false
     show_backtrace = false
 
-    parse_with_crystal_opts do |opts|
+    OptionParser.parse(@options) do |opts|
       opts.banner = "Usage: crystal tool format [options] [file or directory]\n\nOptions:"
 
       opts.on("--check", "Checks that formatting code produces no changes") do |f|
@@ -155,7 +155,7 @@ class Crystal::Command
 
     # This method is for mocking `Crystal.format` in test.
     private def format(filename, source)
-      Crystal.format(source, filename: filename)
+      Crystal.format(source, filename: filename, report_warnings: STDERR)
     end
 
     private def error(msg)

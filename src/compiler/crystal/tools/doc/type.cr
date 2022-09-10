@@ -176,9 +176,14 @@ class Crystal::Doc::Type
             defs << method(def_with_metadata.def, false)
           end
         end
-        defs.sort_by!(&.name.downcase)
+        defs.sort_by! { |x| sort_order(x) }
       end
     end
+  end
+
+  private def sort_order(item)
+    # Sort operators first, then alphanumeric (case-insensitive).
+    {item.name[0].alphanumeric? ? 1 : 0, item.name.downcase}
   end
 
   @class_methods : Array(Method)?
@@ -201,7 +206,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      class_methods.sort_by!(&.name.downcase)
+      class_methods.sort_by! { |x| sort_order(x) }
     end
   end
 
@@ -225,7 +230,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      macros.sort_by!(&.name.downcase)
+      macros.sort_by! { |x| sort_order(x) }
     end
   end
 

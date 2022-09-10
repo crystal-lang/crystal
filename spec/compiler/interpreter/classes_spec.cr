@@ -127,4 +127,56 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
   end
+
+  it "inlines instance var access from virtual type with a single type (#39520)" do
+    interpret(<<-CODE).should eq(1)
+        struct Int32
+          def foo
+            1
+          end
+        end
+
+        struct Char
+          def foo
+            2
+          end
+        end
+
+        abstract class Expression
+        end
+
+        class ValueExpression < Expression
+          def initialize
+            @value = 1 || 'a'
+          end
+
+          def value
+            @value
+          end
+        end
+
+        expression = ValueExpression.new.as(Expression)
+        expression.value.foo
+      CODE
+  end
+
+  it "downcasts virtual type to its only type (#12351)" do
+    interpret(<<-CODE).should eq(1)
+      abstract class A
+      end
+
+      class B < A
+        def x
+          1
+        end
+      end
+
+      def foo(b : B)
+        b = 1
+      end
+
+      b = B.new.as(A)
+      foo(b)
+      CODE
+  end
 end
