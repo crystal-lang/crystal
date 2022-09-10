@@ -150,4 +150,28 @@ describe "Call errors" do
       ),
       "expected argument 'y' to 'foo' to be Int32, not Char"
   end
+
+  it "replaces generic type var in positional argument" do
+    assert_error %(
+      class Foo(T)
+        def self.foo(x : T)
+        end
+      end
+
+      Foo(Int32).foo('a')
+      ),
+      "expected first argument to 'Foo(Int32).foo' to be Int32, not Char"
+  end
+
+  it "replaces generic type var in named argument" do
+    assert_error %(
+      class Foo(T)
+        def self.foo(x : T, y : T)
+        end
+      end
+
+      Foo(Int32).foo(x: 1, y: 'a')
+      ),
+      "expected argument 'y' to 'Foo(Int32).foo' to be Int32, not Char"
+  end
 end

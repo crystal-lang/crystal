@@ -439,7 +439,7 @@ class Crystal::Call
 
     match_context = MatchContext.new(
       instantiated_type: instantiated_owner,
-      defining_type: a_def.owner,
+      defining_type: instantiated_owner,
       def_free_vars: a_def.free_vars,
     )
 
@@ -455,7 +455,7 @@ class Crystal::Call
         unless expected_type
           restriction = def_arg.restriction
           if restriction
-            expected_type = a_def_owner.lookup_type?(restriction, free_vars: match_context.free_vars)
+            expected_type = instantiated_owner.lookup_type?(restriction, free_vars: match_context.free_vars)
           end
         end
         expected_type ||= def_arg.restriction.not_nil!
@@ -478,7 +478,7 @@ class Crystal::Call
         unless expected_type
           restriction = def_arg.restriction
           if restriction
-            expected_type = a_def_owner.lookup_type?(restriction, free_vars: match_context.free_vars)
+            expected_type = instantiated_owner.lookup_type?(restriction, free_vars: match_context.free_vars)
           end
         end
         expected_type ||= def_arg.restriction.not_nil!
