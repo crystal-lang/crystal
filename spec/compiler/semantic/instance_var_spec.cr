@@ -5536,6 +5536,31 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
+  it "looks up self restriction in instantiated type, not defined type" do
+    assert_type(<<-CR) { types["Foo2"] }
+      class Foo1
+        def foo : self
+          self
+        end
+      end
+
+      class Foo2 < Foo1
+      end
+
+      class Bar
+        def initialize
+          @x = Foo2.new
+        end
+
+        def bar
+          @x = @x.foo
+        end
+      end
+
+      Bar.new.bar
+      CR
+  end
+
   it "inferrs Proc(Void) to Proc(Nil)" do
     assert_type(%(
       struct Proc
