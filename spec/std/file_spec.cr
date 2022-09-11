@@ -536,7 +536,7 @@ describe "File" do
 
     pending_win32 "deletes an open file" do
       with_tempfile("delete-file.txt") do |filename|
-        file = File.open filename
+        file = File.open filename, "w"
         File.exists?(file.path).should be_true
         file.delete
         File.exists?(file.path).should be_false
