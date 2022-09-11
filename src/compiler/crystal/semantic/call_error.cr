@@ -190,74 +190,66 @@ class Crystal::Call
   end
 
   private def check_missing_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
-    return unless call_errors.all?(MissingNamedArguments)
-
-    call_errors = call_errors.map &.as(MissingNamedArguments)
-    all_missing_names = call_errors.flat_map(&.names).uniq
-    missing_names_in_all_overloads = all_missing_names.select do |missing_name|
-      call_errors.all? &.names.includes?(missing_name)
-    end
-    return if missing_names_in_all_overloads.empty?
-
-    raise_no_overload_matches(self, defs, arg_types, inner_exception) do |str|
-      if missing_names_in_all_overloads.size == 1
-        str << "missing argument: #{missing_names_in_all_overloads.first}"
-      else
-        str << "missing arguments: #{missing_names_in_all_overloads.join ", "}"
+    gather_names_in_all_overloads(call_errors, MissingNamedArguments) do |call_errors, names|
+      raise_no_overload_matches(self, defs, arg_types, inner_exception) do |str|
+        if names.size == 1
+          str << "missing argument: #{names.first}"
+        else
+          str << "missing arguments: #{names.join ", "}"
+        end
       end
     end
   end
 
   private def check_extra_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
-    return unless call_errors.all?(ExtraNamedArguments)
+    gather_names_in_all_overloads(call_errors, ExtraNamedArguments) do |call_errors, names|
+      raise_no_overload_matches(self, defs, arg_types, inner_exception) do |str|
+        quoted_names = names.map { |name| "'#{name}'" }
 
-    call_errors = call_errors.map &.as(ExtraNamedArguments)
-    all_extra_names = call_errors.flat_map(&.names).uniq
-    extra_names_in_all_overloads = all_extra_names.select do |extra_name|
-      call_errors.all? &.names.includes?(extra_name)
-    end
-    return if extra_names_in_all_overloads.empty?
+        if quoted_names.size == 1
+          str << "no parameter named #{quoted_names.first}"
+        else
+          str << "no parameters named #{quoted_names.join ", "}"
+        end
 
-    raise_no_overload_matches(self, defs, arg_types, inner_exception) do |str|
-      quoted_extra_names = extra_names_in_all_overloads.map { |name| "'#{name}'" }
-
-      if quoted_extra_names.size == 1
-        str << "no parameter named #{quoted_extra_names.first}"
-      else
-        str << "no parameters named #{quoted_extra_names.join ", "}"
-      end
-
-      # Show did you mean for the simplest case for now
-      if extra_names_in_all_overloads.size == 1 && call_errors.size == 1
-        extra_name = extra_names_in_all_overloads.first
-        name_index = call_errors.first.names.index(extra_name).not_nil!
-        similar_name = call_errors.first.similar_names[name_index]
-        if similar_name
-          str.puts
-          str << "Did you mean '#{similar_name}'?"
+        # Show did you mean for the simplest case for now
+        if names.size == 1 && call_errors.size == 1
+          extra_name = names.first
+          name_index = call_errors.first.names.index(extra_name).not_nil!
+          similar_name = call_errors.first.similar_names[name_index]
+          if similar_name
+            str.puts
+            str << "Did you mean '#{similar_name}'?"
+          end
         end
       end
     end
   end
 
   private def check_arguments_already_specified(call_errors, owner, defs, arg_types, inner_exception)
-    return unless call_errors.all?(ArgumentsAlreadySpecified)
+    gather_names_in_all_overloads(call_errors, ArgumentsAlreadySpecified) do |call_errors, names|
+      raise_no_overload_matches(self, defs, arg_types, inner_exception) do |str|
+        quoted_names = names.map { |name| "'#{name}'" }
 
-    call_errors = call_errors.map &.as(ArgumentsAlreadySpecified)
-    all_names = call_errors.flat_map(&.names).uniq
-    all_names_in_all_overloads = all_names.select do |name|
-      call_errors.all? &.names.includes?(name)
-    end
-    return if all_names_in_all_overloads.empty?
-
-    raise_no_overload_matches(self, defs, arg_types, inner_exception) do |str|
-      quoted_names = all_names.map { |name| "'#{name}'" }
-
-      if quoted_names.size == 1
-        str << "argument for parameter #{quoted_names.first} already specified"
-      else
-        str << "arguments for parameters #{quoted_names.join ", "} already specified"
+        if quoted_names.size == 1
+          str << "argument for parameter #{quoted_names.first} already specified"
+        else
+          str << "arguments for parameters #{quoted_names.join ", "} already specified"
+        end
       end
+    end
+  end
+
+  private def gather_names_in_all_overloads(call_errors, error_type : T.class) forall T
+    return unless call_errors.all?(T)
+
+    call_errors = call_errors.map &.as(T)
+    all_names = call_errors.flat_map(&.names).uniq
+    all_names.select do |missing_name|
+      call_errors.all? &.names.includes?(missing_name)
+    end
+    unless all_names.empty?
+      yield call_errors, all_names
     end
   end
 
