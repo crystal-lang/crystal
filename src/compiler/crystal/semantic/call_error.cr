@@ -245,11 +245,11 @@ class Crystal::Call
 
     call_errors = call_errors.map &.as(T)
     all_names = call_errors.flat_map(&.names).uniq
-    all_names.select do |missing_name|
+    names_in_all_overloads = all_names.select do |missing_name|
       call_errors.all? &.names.includes?(missing_name)
     end
-    unless all_names.empty?
-      yield call_errors, all_names
+    unless names_in_all_overloads.empty?
+      yield call_errors, names_in_all_overloads
     end
   end
 
