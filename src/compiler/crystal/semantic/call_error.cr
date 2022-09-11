@@ -305,25 +305,20 @@ class Crystal::Call
           "'#{index_or_name}'"
         end
 
-      str << "expected argument "
-      str << argument_description
-      str << " to '"
-      str << full_name(owner, def_name)
-      str << "' to be "
-      if expected_types.size == 1
-        str << expected_types.first
-      else
-        expected_types.each_with_index do |expected_type, i|
-          if i == expected_types.size - 1
-            str << " or "
-          elsif i > 0
-            str << ", "
-          end
-          str << expected_type
-        end
+      str << "expected argument #{argument_description} to '#{full_name(owner, def_name)}' to be "
+      to_sentence(str, expected_types, " or ")
+      str << ", not #{actual_type}"
+    end
+  end
+
+  private def to_sentence(str : IO, elements : Array, last_connector : String)
+    elements.each_with_index do |element, i|
+      if i == elements.size - 1 && elements.size > 1
+        str << last_connector
+      elsif i > 0
+        str << ", "
       end
-      str << ", not "
-      str << actual_type
+      str << element
     end
   end
 
