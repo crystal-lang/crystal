@@ -199,19 +199,13 @@ class Crystal::Call
     end
     return if missing_names_in_all_overloads.empty?
 
-    error_message = String.build do |str|
+    raise_no_overload_matches(self, defs, arg_types, inner_exception) do |str|
       if missing_names_in_all_overloads.size == 1
         str << "missing argument: #{missing_names_in_all_overloads.first}"
       else
         str << "missing arguments: #{missing_names_in_all_overloads.join ", "}"
       end
-      str.puts
-      str.puts
-      str << "Overloads are:"
-      append_matches(defs, arg_types, str)
     end
-
-    raise error_message, inner: inner_exception
   end
 
   private def check_extra_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
@@ -224,7 +218,7 @@ class Crystal::Call
     end
     return if extra_names_in_all_overloads.empty?
 
-    error_message = String.build do |str|
+    raise_no_overload_matches(self, defs, arg_types, inner_exception) do |str|
       quoted_extra_names = extra_names_in_all_overloads.map { |name| "'#{name}'" }
 
       if quoted_extra_names.size == 1
@@ -243,14 +237,7 @@ class Crystal::Call
           str << "Did you mean '#{similar_name}'?"
         end
       end
-
-      str.puts
-      str.puts
-      str << "Overloads are:"
-      append_matches(defs, arg_types, str)
     end
-
-    raise error_message, inner: inner_exception
   end
 
   private def check_arguments_already_specified(call_errors, owner, defs, arg_types, inner_exception)
@@ -263,7 +250,7 @@ class Crystal::Call
     end
     return if all_names_in_all_overloads.empty?
 
-    error_message = String.build do |str|
+    raise_no_overload_matches(self, defs, arg_types, inner_exception) do |str|
       quoted_names = all_names.map { |name| "'#{name}'" }
 
       if quoted_names.size == 1
@@ -271,14 +258,7 @@ class Crystal::Call
       else
         str << "arguments for parameters #{quoted_names.join ", "} already specified"
       end
-
-      str.puts
-      str.puts
-      str << "Overloads are:"
-      append_matches(defs, arg_types, str)
     end
-
-    raise error_message, inner: inner_exception
   end
 
   private def check_wrong_number_of_arguments(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
@@ -316,7 +296,7 @@ class Crystal::Call
         named_args.try &.find(&.name.==(index_or_name))
       end
 
-    error_message = String.build do |str|
+    raise_no_overload_matches(arg || self, defs, arg_types, inner_exception) do |str|
       argument_description =
         case index_or_name
         in Int32
@@ -344,6 +324,12 @@ class Crystal::Call
       end
       str << ", not "
       str << actual_type
+    end
+  end
+
+  private def raise_no_overload_matches(node, defs, arg_types, inner_exception)
+    error_message = String.build do |str|
+      yield str
 
       str.puts
       str.puts
@@ -351,7 +337,7 @@ class Crystal::Call
       append_matches(defs, arg_types, str)
     end
 
-    (arg || self).raise(error_message, inner_exception)
+    node.raise(error_message, inner_exception)
   end
 
   record WrongNumberOfArguments
