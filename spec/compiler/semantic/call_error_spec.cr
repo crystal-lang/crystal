@@ -135,6 +135,19 @@ describe "Call errors" do
       "expected argument #1 to 'foo' to be Bool, Int32 or String, not Char"
   end
 
+  it "says type mismatch and unflattens unions" do
+    assert_error %(
+      def foo(x : Int32 | Char)
+      end
+
+      def foo(x : String | Symbol)
+      end
+
+      foo(true)
+      ),
+      "expected argument #1 to 'foo' to be Char, Int32, String or Symbol, not Bool"
+  end
+
   it "says type mismatch for named argument " do
     assert_error %(
       def foo(x : Int32, y : Int32)
