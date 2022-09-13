@@ -208,7 +208,7 @@ describe "Semantic: automatic cast" do
 
       foo(:four)
       ),
-      "expected argument #1 to 'foo' to be Foo, not Symbol"
+      "expected argument #1 symbol to 'foo' to match a Foo enum member"
   end
 
   it "says ambiguous call for symbol" do
