@@ -841,7 +841,7 @@ describe "Restrictions" do
 
       foo GenericChild(Base).new
       ),
-      "no overload matches"
+      "expected argument #1 to 'foo' to be GenericBase(Child), not GenericChild(Base)"
   end
 
   it "allows passing recursive type to free var (#1076)" do
@@ -1008,7 +1008,7 @@ describe "Restrictions" do
       y = uninitialized UInt8[11]
       foo(x, y)
       ),
-      "no overload matches"
+      "expected argument #2 to 'foo' to be StaticArray(UInt8, 10), not StaticArray(UInt8, 11)"
   end
 
   it "gives precedence to T.class over Class (#7392)" do
