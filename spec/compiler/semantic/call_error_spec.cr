@@ -257,4 +257,20 @@ describe "Call errors" do
       ),
       "expected argument #1 symbol to 'foo' to match a Color enum member.\n\nSome options are: :red, :green, :blue, :violet and :purple"
   end
+
+  it "says type mismatch for symbol against enum, named argument case" do
+    assert_error %(
+      enum Color
+        Red
+        Green
+        Blue
+      end
+
+      def foo(x : Color)
+      end
+
+      foo(x: :rred)
+      ),
+      "expected argument 'x' symbol to 'foo' to match a Color enum member.\n\nDid you mean :red?"
+  end
 end

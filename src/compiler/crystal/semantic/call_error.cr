@@ -289,11 +289,14 @@ class Crystal::Call
       end
 
     enum_types = expected_types.select(EnumType)
-    if actual_type.is_a?(SymbolType) &&
-       arg.is_a?(SymbolLiteral) &&
-       enum_types.size == 1
-      symbol = arg.value
+    if actual_type.is_a?(SymbolType) && enum_types.size == 1
       enum_type = enum_types.first
+
+      if arg.is_a?(SymbolLiteral)
+        symbol = arg.value
+      elsif arg.is_a?(NamedArgument) && (named_arg_value = arg.value).is_a?(SymbolLiteral)
+        symbol = named_arg_value.value
+      end
     end
 
     raise_no_overload_matches(arg || self, defs, arg_types, inner_exception) do |str|
