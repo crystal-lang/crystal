@@ -288,6 +288,14 @@ class Crystal::Call
         named_args.try &.find(&.name.==(index_or_name))
       end
 
+    enum_types = expected_types.select(EnumType)
+    if actual_type.is_a?(SymbolType) &&
+       arg.is_a?(SymbolLiteral) &&
+       enum_types.size == 1
+      symbol = arg.value
+      enum_type = enum_types.first
+    end
+
     raise_no_overload_matches(arg || self, defs, arg_types, inner_exception) do |str|
       argument_description =
         case index_or_name
@@ -297,9 +305,13 @@ class Crystal::Call
           "'#{index_or_name}'"
         end
 
-      str << "expected argument #{argument_description} to '#{full_name(owner, def_name)}' to be "
-      to_sentence(str, expected_types, " or ")
-      str << ", not #{actual_type}"
+      if symbol && enum_type
+        str << "expected argument #{argument_description} symbol to '#{full_name(owner, def_name)}' to match a #{enum_type} enum member."
+      else
+        str << "expected argument #{argument_description} to '#{full_name(owner, def_name)}' to be "
+        to_sentence(str, expected_types, " or ")
+        str << ", not #{actual_type}"
+      end
     end
   end
 
@@ -449,7 +461,7 @@ class Crystal::Call
       arguments_type_mismatch << ArgumentTypeMismatch.new(
         index_or_name: index_or_name,
         expected_type: expected_type,
-        actual_type: arg_type,
+        actual_type: arg_type.remove_literal,
       )
     end
   end
