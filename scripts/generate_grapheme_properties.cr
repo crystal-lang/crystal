@@ -46,14 +46,10 @@ end
 
 def parse_emoji(body)
   emoji = Array(RRange).new
-  extended = false
   body.each_line do |line|
     next unless line = line.strip.presence
-    unless extended
-      extended = line.ends_with?("Extended_Pictographic ; No")
-      next unless extended
-    end
     next if line.starts_with?('#')
+    next unless line.includes?("; Extended_Pictographic")
 
     data = line.split.first.split(';')
     fields = data.first.split("..")
