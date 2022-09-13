@@ -5,6 +5,9 @@ class Spec::JUnitFormatter
   property started_at
 end
 
+private class MyException < Exception
+end
+
 describe "JUnit Formatter" do
   it "reports successful results" do
     output = build_report_with_no_timestamp do |f|
@@ -59,14 +62,14 @@ describe "JUnit Formatter" do
 
   it "reports errors" do
     output = build_report_with_no_timestamp do |f|
-      f.report Spec::Result.new(:error, "should do something", "spec/some_spec.cr", 33, nil, nil)
+      f.report Spec::Result.new(:error, "should do something", "spec/some_spec.cr", 33, nil, MyException.new("foo"))
     end
 
     expected = <<-XML
                  <?xml version="1.0"?>
                  <testsuite tests="1" skipped="0" errors="1" failures="0" time="0.0" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something">
-                     <error/>
+                     <error message="foo" type="MyException"></error>
                    </testcase>
                  </testsuite>
                  XML

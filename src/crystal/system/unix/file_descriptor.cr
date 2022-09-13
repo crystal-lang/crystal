@@ -1,5 +1,6 @@
 require "c/fcntl"
 require "io/evented"
+require "termios"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
@@ -63,12 +64,19 @@ module Crystal::System::FileDescriptor
     r
   end
 
-  private def system_info
-    if LibC.fstat(fd, out stat) != 0
+  def self.system_info(fd)
+    stat = uninitialized LibC::Stat
+    ret = File.fstat(fd, pointerof(stat))
+
+    if ret != 0
       raise IO::Error.from_errno("Unable to get info")
     end
 
-    FileInfo.new(stat)
+    ::File::Info.new(stat)
+  end
+
+  private def system_info
+    FileDescriptor.system_info fd
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
@@ -180,5 +188,47 @@ module Crystal::System::FileDescriptor
     io.close_on_exec = true
     io.sync = true
     io
+  end
+
+  private def system_echo(enable : Bool, & : ->)
+    system_console_mode do |mode|
+      if enable
+        mode.c_lflag |= Termios::LocalMode.flags(ECHO, ECHOE, ECHOK, ECHONL).value
+      else
+        mode.c_lflag &= ~(Termios::LocalMode.flags(ECHO, ECHOE, ECHOK, ECHONL).value)
+      end
+      if LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode)) != 0
+        raise IO::Error.from_errno("tcsetattr")
+      end
+      yield
+    end
+  end
+
+  private def system_raw(enable : Bool, & : ->)
+    system_console_mode do |mode|
+      if enable
+        LibC.cfmakeraw(pointerof(mode))
+      else
+        mode.c_iflag |= Termios::InputMode.flags(BRKINT, ISTRIP, ICRNL, IXON).value
+        mode.c_oflag |= Termios::OutputMode::OPOST.value
+        mode.c_lflag |= Termios::LocalMode.flags(ECHO, ECHOE, ECHOK, ECHONL, ICANON, ISIG, IEXTEN).value
+      end
+      if LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode)) != 0
+        raise IO::Error.from_errno("tcsetattr")
+      end
+      yield
+    end
+  end
+
+  @[AlwaysInline]
+  private def system_console_mode(&)
+    if LibC.tcgetattr(fd, out mode) != 0
+      raise IO::Error.from_errno("tcgetattr")
+    end
+
+    before = mode
+    ret = yield mode
+    LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(before))
+    ret
   end
 end

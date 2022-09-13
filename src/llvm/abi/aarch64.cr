@@ -18,16 +18,16 @@ class LLVM::ABI::AArch64 < LLVM::ABI
   end
 
   def homogeneous_aggregate?(type)
-    homog_agg = case type
-                when Type::Kind::Float
-                  return {type, 1}
-                when Type::Kind::Double
-                  return {type, 1}
-                when Type::Kind::Array
-                  check_array(type)
-                when Type::Kind::Struct
-                  check_struct(type)
-                end
+    homog_agg : {Type, UInt64}? = case type.kind
+    when Type::Kind::Float
+      return {type, 1_u64}
+    when Type::Kind::Double
+      return {type, 1_u64}
+    when Type::Kind::Array
+      check_array(type)
+    when Type::Kind::Struct
+      check_struct(type)
+    end
 
     # Ensure we have at most four uniquely addressable members
     if homog_agg
@@ -54,7 +54,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
     return if elements.empty?
 
     base_type = nil
-    members = 0
+    members = 0_u64
 
     elements.each do |element|
       opt_homog_agg = homogeneous_aggregate?(element)

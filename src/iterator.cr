@@ -10,8 +10,8 @@ require "./enumerable"
 # (1..10_000_000).select(&.even?).map { |x| x * 3 }.first(3) # => [6, 12, 18]
 # ```
 #
-# The above works, but creates many intermediate arrays: one for the *select* call,
-# one for the *map* call and one for the *take* call. A more efficient way is to invoke
+# The above works, but creates many intermediate arrays: one for the `select` call,
+# one for the `map` call and one for the `first` call. A more efficient way is to invoke
 # `Range#each` without a block, which gives us an `Iterator` so we can process the operations
 # lazily:
 #
@@ -382,12 +382,14 @@ module Iterator(T)
   # interest is to be used in a read-only fashion.
   #
   # Chunks of two items can be iterated using `#cons_pair`, an optimized
-  # implementation for the special case of `size == 2` which avoids heap
+  # implementation for the special case of `n == 2` which avoids heap
   # allocations.
   def cons(n : Int, reuse = false)
     raise ArgumentError.new "Invalid cons size: #{n}" if n <= 0
     if reuse.nil? || reuse.is_a?(Bool)
-      Cons(typeof(self), T, typeof(n), Array(T)).new(self, n, Array(T).new(n), reuse)
+      # we use an initial capacity of n * 2, because a second iteration would
+      # have reallocated the array to that capacity anyway
+      Cons(typeof(self), T, typeof(n), Array(T)).new(self, n, Array(T).new(n * 2), reuse)
     else
       Cons(typeof(self), T, typeof(n), typeof(reuse)).new(self, n, reuse, reuse)
     end
@@ -431,7 +433,7 @@ module Iterator(T)
   #
   # Chunks of more than two items can be iterated using `#cons`.
   # This method is just an optimized implementation for the special case of
-  # `size == 2` to avoid heap allocations.
+  # `n == 2` to avoid heap allocations.
   def cons_pair : Iterator({T, T})
     ConsTuple(typeof(self), T).new(self)
   end

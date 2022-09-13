@@ -39,6 +39,7 @@ class UNIXServer < UNIXSocket
       raise error
     end
 
+    return if type == Type::DGRAM
     listen(backlog) do |error|
       close
       raise error
@@ -80,7 +81,7 @@ class UNIXServer < UNIXSocket
     super()
   ensure
     if delete && (path = @path)
-      File.delete(path) if File.exists?(path)
+      File.delete?(path)
       @path = nil
     end
   end

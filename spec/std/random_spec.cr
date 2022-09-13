@@ -1,7 +1,5 @@
 require "./spec_helper"
-{% unless flag?(:win32) %}
-  require "big"
-{% end %}
+require "big"
 
 private class TestRNG(T)
   include Random
@@ -41,7 +39,7 @@ describe "Random" do
     end
   end
 
-  pending_win32 "limited BigInt" do
+  it "limited BigInt" do
     rand(1.to_big_i).should eq(0.to_big_i)
 
     x = rand(2.to_big_i)
@@ -49,7 +47,7 @@ describe "Random" do
     x.should be < 2
   end
 
-  pending_win32 "limited large BigInt" do
+  it "limited large BigInt" do
     max = "1234567890123456789012345".to_big_i
     x = rand(max)
     x.should be >= 0
@@ -62,8 +60,16 @@ describe "Random" do
     x.should be <= 1
   end
 
-  it "limited float number" do
-    x = rand(3.5)
+  it "limited Float32 number" do
+    x = rand(3.5_f32)
+    x.should be_a Float32
+    x.should be >= 0
+    x.should be < 3.5
+  end
+
+  it "limited Float64 number" do
+    x = rand(3.5_f64)
+    x.should be_a Float64
     x.should be >= 0
     x.should be < 3.5
   end
@@ -104,7 +110,7 @@ describe "Random" do
     end
   end
 
-  pending_win32 "does with BigInt range" do
+  it "does with BigInt range" do
     [1.to_big_i...2.to_big_i,
      -"1234567890123456789012345".to_big_i...7.to_big_i,
      -7.to_big_i..."1234567890123456789012345".to_big_i].each do |range|
@@ -146,7 +152,7 @@ describe "Random" do
       end
     end
 
-    pending_win32 "BigInt range" do
+    it "BigInt range" do
       expect_raises ArgumentError, "Invalid range for rand: #{1.to_big_i...1.to_big_i}" do
         rand(1.to_big_i...1.to_big_i)
       end
@@ -174,7 +180,7 @@ describe "Random" do
   it "allows creating a new default random with a seed" do
     values = Array.new(2) do
       rand = Random.new(1234)
-      {rand.rand, rand.rand(0xffffffffffffffff), rand.rand(2), rand.rand(-5i8..5i8)}
+      {rand.rand, rand.rand(0xffffffffffffffffu64), rand.rand(2), rand.rand(-5i8..5i8)}
     end
 
     values[0].should eq values[1]
@@ -247,7 +253,7 @@ describe "Random" do
       rng.random_bytes(1).should eq Bytes[0x3e]
       rng.random_bytes(4).should eq Bytes[1, 0, 0, 0]
       rng.random_bytes(3).should eq Bytes[0x78, 0x56, 0x34]
-      rng.random_bytes(0).should eq Bytes.new(0)
+      rng.random_bytes(0).should eq Bytes[]
 
       rng = TestRNG.new([12u8, 255u8, 11u8, 5u8, 122u8, 200u8, 192u8])
       rng.random_bytes(7).should eq Bytes[12, 255, 11, 5, 122, 200, 192]

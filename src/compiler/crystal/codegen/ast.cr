@@ -5,31 +5,6 @@ module Crystal
     def no_returns?
       type?.try &.no_return?
     end
-
-    def zero?
-      false
-    end
-
-    def false?
-      false
-    end
-  end
-
-  class BoolLiteral
-    def false?
-      !value
-    end
-  end
-
-  class NumberLiteral
-    def zero?
-      case :kind
-      when :f32, :f64
-        value == "0.0"
-      else
-        value == "0"
-      end
-    end
   end
 
   class Def
