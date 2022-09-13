@@ -277,14 +277,14 @@ class Crystal::Call
     index_or_name = indexes_or_names_in_all_overloads.first
 
     mismatches = argument_type_mismatches.select(&.index_or_name.==(index_or_name))
-    expected_types = mismatches.map(&.expected_type).uniq
+    expected_types = mismatches.map(&.expected_type).uniq!
     expected_types = expected_types.flat_map do |expected_type|
       if expected_type.is_a?(UnionType)
         expected_type.union_types
       else
         expected_type
       end
-    end.uniq
+    end.uniq!
     expected_types.sort_by!(&.to_s)
     actual_type = mismatches.first.actual_type
 
