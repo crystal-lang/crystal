@@ -317,12 +317,8 @@ class Crystal::Call
         similar_name = Levenshtein.find(symbol.underscore, options)
         if similar_name
           str << "Did you mean :#{similar_name}?"
-        else
-          if options.size <= 5
-            str << "Options are: "
-          else
-            str << "Some options are: "
-          end
+        elsif options.size <= 10
+          str << "Options are: "
           to_sentence(str, options.first(5).map { |o| ":#{o}" }, " and ")
         end
       else
