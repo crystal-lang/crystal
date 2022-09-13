@@ -218,6 +218,6 @@ describe "Call errors" do
 
       foo(:rred)
       ),
-      "expected argument #1 symbol to 'foo' to match a Color enum member."
+      "expected argument #1 symbol to 'foo' to match a Color enum member.\n\nDid you mean :red?"
   end
 end

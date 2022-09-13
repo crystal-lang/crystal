@@ -307,6 +307,13 @@ class Crystal::Call
 
       if symbol && enum_type
         str << "expected argument #{argument_description} symbol to '#{full_name(owner, def_name)}' to match a #{enum_type} enum member."
+
+        similar_name = Levenshtein.find(symbol.underscore, enum_type.types.map(&.[1].name.underscore))
+        if similar_name
+          str.puts
+          str.puts
+          str << "Did you mean :#{similar_name}?"
+        end
       else
         str << "expected argument #{argument_description} to '#{full_name(owner, def_name)}' to be "
         to_sentence(str, expected_types, " or ")
