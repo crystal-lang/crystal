@@ -550,20 +550,20 @@ struct Int
     UptoIterator(typeof(self), typeof(to)).new(self, to)
   end
 
-  # Calls the given block with each integer value from self down to limit;
-  def downto(limit, &block : self ->) : Nil
-    return unless self >= limit
+  # Calls the given block with each integer value from self down to `to`;
+  def downto(to, &block : self ->) : Nil
+    return unless self >= to
     x = self
     while true
       yield x
-      return if x == limit
+      return if x == to
       x -= 1
     end
   end
 
-  # Get an iterator for counting down from self to limit
-  def downto(limit)
-    DowntoIterator(typeof(self), typeof(limit)).new(self, limit)
+  # Get an iterator for counting down from self to `to`
+  def downto(to)
+    DowntoIterator(typeof(self), typeof(to)).new(self, to)
   end
 
   def to(to, &block : self ->) : Nil
@@ -822,19 +822,19 @@ struct Int
     include Iterator(T)
 
     @from : T
-    @limit : N
+    @to : N
     @current : T
     @done : Bool
 
-    def initialize(@from : T, @limit : N)
+    def initialize(@from : T, @to : N)
       @current = @from
-      @done = !(@from >= @limit)
+      @done = !(@from >= @to)
     end
 
     def next
       return stop if @done
       value = @current
-      @done = @current == @limit
+      @done = @current == @to
       @current -= 1 unless @done
       value
     end
