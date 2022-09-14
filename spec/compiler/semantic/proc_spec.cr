@@ -164,7 +164,7 @@ describe "Semantic: proc" do
 
       foo ->(x : Int32) { x }
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int32, Int32)"
   end
 
   it "has proc literal as restriction and errors if input is different" do
@@ -175,7 +175,7 @@ describe "Semantic: proc" do
 
       foo ->(x : Int64) { x.to_f }
       ",
-      "no overload matches", inject_primitives: true
+      "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int64, Float64)", inject_primitives: true
   end
 
   it "has proc literal as restriction and errors if sizes are different" do
@@ -186,7 +186,7 @@ describe "Semantic: proc" do
 
       foo ->(x : Int32, y : Int32) { x.to_f }
       ",
-      "no overload matches", inject_primitives: true
+      "expected argument #1 to 'foo' to be Proc(Int32, Float64), not Proc(Int32, Int32, Float64)", inject_primitives: true
   end
 
   it "allows passing nil as proc callback if it is a lib alias" do

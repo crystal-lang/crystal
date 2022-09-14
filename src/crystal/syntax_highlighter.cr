@@ -148,19 +148,12 @@ abstract class Crystal::SyntaxHighlighter
         render :IDENT, token.to_s
       else
         case token.value
-        when :def, :if, :else, :elsif, :end,
-             :class, :module, :include, :extend,
-             :while, :until, :do, :yield, :return, :unless, :next, :break, :begin,
-             :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
-             :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
-             :alias, :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
-             :with, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
-             :annotation, :verbatim
-          render :KEYWORD, token.to_s
-        when :true, :false, :nil
+        when Keyword::TRUE, Keyword::FALSE, Keyword::NIL
           render :PRIMITIVE_LITERAL, token.to_s
-        when :self
+        when Keyword::SELF
           render :SELF, token.to_s
+        when Keyword
+          render :KEYWORD, token.to_s
         else
           render :UNKNOWN, token.to_s
         end
