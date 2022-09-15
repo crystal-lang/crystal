@@ -319,7 +319,7 @@ class Crystal::Call
           str << "Did you mean :#{similar_name}?"
         elsif options.size <= 10
           str << "Options are: "
-          to_sentence(str, options.first(5).map { |o| ":#{o}" }, " and ")
+          to_sentence(str, options.map { |o| ":#{o}" }, " and ")
         end
       else
         str << "expected argument #{argument_description} to '#{full_name(owner, def_name)}' to be "
