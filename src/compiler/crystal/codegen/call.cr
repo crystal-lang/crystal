@@ -18,7 +18,7 @@ class Crystal::CodeGenVisitor
 
     owner = node.super? ? node.scope : node.target_def.owner
 
-    call_args, has_out = prepare_call_args node, owner
+    call_args = prepare_call_args node, owner
 
     # It can happen that one of the arguments caused an unreachable
     # to happen, so we must stop here
@@ -33,17 +33,6 @@ class Crystal::CodeGenVisitor
       end
     else
       codegen_call(node, node.target_def, owner, call_args)
-    end
-
-    # Now we move out values to the variables. This can be done automatically
-    # because if declared inside a while, for example, the variable is nilable.
-    if has_out
-      node.args.zip(call_args) do |node_arg, call_arg|
-        if node_arg.is_a?(Out) && (exp = node_arg.exp).is_a?(Var)
-          node_var = context.vars[exp.name]
-          assign node_var.pointer, node_var.type, node_arg.type, to_lhs(call_arg, node_arg.type)
-        end
-      end
     end
 
     false
@@ -139,7 +128,7 @@ class Crystal::CodeGenVisitor
 
     @needs_value = old_needs_value
 
-    {call_args, false}
+    call_args
   end
 
   def call_abi_info(target_def, node)
@@ -153,7 +142,6 @@ class Crystal::CodeGenVisitor
   end
 
   def prepare_call_args_external(node, target_def, owner)
-    has_out = false
     abi_info = call_abi_info(target_def, node)
 
     call_args = Array(LLVM::Value).new(node.args.size + 1)
@@ -168,14 +156,16 @@ class Crystal::CodeGenVisitor
 
     node.args.each_with_index do |arg, i|
       if arg.is_a?(Out)
-        has_out = true
         case exp = arg.exp
-        when Var, Underscore
-          # For out arguments we reserve the space. After the call
-          # we move the value to the variable.
-          call_arg = alloca(llvm_type(arg.type))
+        when Var
+          # Just get a pointer to the variable
+          call_arg = context.vars[exp.name].pointer
         when InstanceVar
+          # Just get a pointer to the instance variable
           call_arg = instance_var_ptr(type, exp.name, llvm_self_ptr)
+        when Underscore
+          # Allocate stack memory, but discard the value
+          call_arg = alloca(llvm_type(arg.type))
         else
           arg.raise "BUG: out argument was #{exp}"
         end
@@ -240,7 +230,7 @@ class Crystal::CodeGenVisitor
 
     @needs_value = old_needs_value
 
-    {call_args, has_out}
+    call_args
   end
 
   def codegen_direct_abi_call(call_arg, abi_arg_type)
