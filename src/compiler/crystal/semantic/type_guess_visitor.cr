@@ -868,7 +868,7 @@ module Crystal
         return_type = match.def.return_type
         next unless return_type
 
-        lookup_type?(return_type, match.context.defining_type)
+        lookup_type?(return_type, match.context.defining_type, match.context.instantiated_type.instance_type)
       end
 
       return nil if return_types.empty?
@@ -1116,7 +1116,7 @@ module Crystal
       @found_self = true if node.name == "self"
     end
 
-    def lookup_type?(node, root = nil)
+    def lookup_type?(node, root = nil, self_type = nil)
       find_root_generic_type_parameters =
         @dont_find_root_generic_type_parameters == 0
 
@@ -1158,6 +1158,7 @@ module Crystal
 
       type = root.lookup_type?(
         node,
+        self_type: self_type || root.instance_type,
         allow_typeof: false,
         find_root_generic_type_parameters: find_root_generic_type_parameters
       )
