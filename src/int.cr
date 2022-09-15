@@ -561,9 +561,9 @@ struct Int
     end
   end
 
-  # Get an iterator for counting down from self to limit
-  def downto(limit)
-    DowntoIterator(typeof(self), typeof(limit)).new(self, limit)
+  # Get an iterator for counting down from self to `to`
+  def downto(to)
+    DowntoIterator(typeof(self), typeof(to)).new(self, to)
   end
 
   def to(to, &block : self ->) : Nil
