@@ -309,7 +309,7 @@ class Crystal::Call
         end
 
       if symbol && enum_type
-        str << "expected argument #{argument_description} symbol to '#{full_name(owner, def_name)}' to match a #{enum_type} enum member."
+        str << "expected argument #{argument_description} to '#{full_name(owner, def_name)}' to match a member of enum #{enum_type}."
         str.puts
         str.puts
 

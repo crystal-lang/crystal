@@ -218,7 +218,7 @@ describe "Call errors" do
 
       foo(:rred)
       ),
-      "expected argument #1 symbol to 'foo' to match a Color enum member.\n\nDid you mean :red?"
+      "expected argument #1 to 'foo' to match a member of enum Color.\n\nDid you mean :red?"
   end
 
   it "says type mismatch for symbol against enum (list all possibilities when 10 or less)" do
@@ -236,7 +236,7 @@ describe "Call errors" do
 
       foo(:hello_world)
       ),
-      "expected argument #1 symbol to 'foo' to match a Color enum member.\n\nOptions are: :red, :green, :blue, :violet and :purple"
+      "expected argument #1 to 'foo' to match a member of enum Color.\n\nOptions are: :red, :green, :blue, :violet and :purple"
   end
 
   it "says type mismatch for symbol against enum, named argument case" do
@@ -252,6 +252,6 @@ describe "Call errors" do
 
       foo(x: :rred)
       ),
-      "expected argument 'x' symbol to 'foo' to match a Color enum member.\n\nDid you mean :red?"
+      "expected argument 'x' to 'foo' to match a member of enum Color.\n\nDid you mean :red?"
   end
 end
