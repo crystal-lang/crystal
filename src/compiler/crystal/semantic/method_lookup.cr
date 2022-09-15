@@ -250,6 +250,12 @@ module Crystal
 
         match_arg_type = arg_type.restrict(arg, context)
         if match_arg_type
+          if !named_args && !splat_arg_types && match_arg_type.same?(arg_type) && arg_types.size == 1
+            # Optimization: no need to create matched_arg_types if
+            # the call has a single argument and it exactly matches the restriction
+            break
+          end
+
           matched_arg_types ||= [] of Type
           matched_arg_types.push match_arg_type
           mandatory_args[arg_index] = true if mandatory_args
