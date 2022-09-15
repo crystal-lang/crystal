@@ -94,14 +94,14 @@ _canonicalize_file_path() {
 
 ##############################################################################
 
-# Based on https://stackoverflow.com/a/294025
+# Based on http://stackoverflow.com/q/370047/641451
 remove_path_item() {
   local path item
 
   path="$1"
   item="$2"
 
-  echo "$path" | tr ":" "\n" | sed "s:^$item\$::" | tr "\n" ":" | sed 's|:$||' | sed 's|^:||'
+  printf "$path" | awk -v RS=: -v ORS=: '$0 != "'$item'"' | sed 's/:$//'
 }
 
 ##############################################################################
