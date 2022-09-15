@@ -822,19 +822,19 @@ struct Int
     include Iterator(T)
 
     @from : T
-    @limit : N
+    @to : N
     @current : T
     @done : Bool
 
-    def initialize(@from : T, @limit : N)
+    def initialize(@from : T, @to : N)
       @current = @from
-      @done = !(@from >= @limit)
+      @done = !(@from >= @to)
     end
 
     def next
       return stop if @done
       value = @current
-      @done = @current == @limit
+      @done = @current == @to
       @current -= 1 unless @done
       value
     end
