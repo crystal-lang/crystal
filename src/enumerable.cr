@@ -588,6 +588,50 @@ module Enumerable(T)
     h
   end
 
+  # ```
+  # a = (0..10).to_a
+  # a.group_by_with_index { |e, i| i//5 } # => {0 => [0, 1, 2, 3, 4], 1 => [5, 6, 7, 8, 9], 2 => [10]}
+  # ```
+  def group_by_with_index(& : T, Int32|Int64 -> U) forall U
+    h = Hash(U, Array(T)).new
+    each_with_index do |e, i|
+      v = yield e, i
+      if h.has_key?(v)
+        h[v].push(e)
+      else
+        h[v] = [e]
+      end
+    end
+    h
+  end
+
+  # split array to n parts
+  #
+  # ```
+  # a = (0..10).to_a
+  # a.split_array(100) # => [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10]]
+  # a.split_array(3) # => [[0, 1, 2], [3, 4, 5], [6, 7, 8, 9, 10]]
+  # a.split_array(5) # => [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9, 10]]
+  # ```
+ def split_array(n : Int) : Array(Array(T)) 
+    raise ArgumentError.new("Can't split arrat to negative number of parts") if n < 0
+    
+    block_size = size//n
+    block_size = 1 if block_size == 0
+    ary = Array(Array(T)).new(n)
+    return ary if n == 0
+
+    each_slice(block_size) do |slice|
+        ary << slice    
+    end
+    if ary.size == n + 1
+        ary[..-3] << (ary[-2] + ary[-1])
+    else
+        ary
+    end
+  end
+
+
   # Returns an `Array` with chunks in the given size, eventually filled up
   # with given value or `nil`.
   #

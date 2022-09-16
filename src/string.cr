@@ -1394,9 +1394,9 @@ class String
           buffer[i] = if byte >= 0x80
                         byte
                       elsif i.zero?
-                        byte.unsafe_chr.upcase.ord.to_u8!
+                        'a'.ord <= byte <= 'z'.ord ? byte - 32 : byte 
                       else
-                        byte.unsafe_chr.downcase.ord.to_u8!
+                        'A'.ord <= byte <= 'Z'.ord ? byte + 32 : byte
                       end
         end
         {@bytesize, @length}
