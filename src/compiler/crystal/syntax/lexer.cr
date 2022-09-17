@@ -66,6 +66,7 @@ module Crystal
       @filename = ""
       @wants_regex = true
       @doc_enabled = false
+      @comment_is_doc = true
       @comments_enabled = false
       @count_whitespace = false
       @slash_is_regex = true
@@ -96,6 +97,16 @@ module Crystal
     end
 
     def next_token
+      # Check previous token:
+      if @token.type.newline? || @token.type.eof?
+        # 1) After a newline or at the start of the stream (:EOF), a following comment can be a doc comment
+        @comment_is_doc = true
+      elsif !@token.type.space?
+        # 2) Any non-space token prevents a following comment from being a doc
+        # comment.
+        @comment_is_doc = false
+      end
+
       reset_token
 
       # Skip comments
@@ -112,7 +123,7 @@ module Crystal
           consume_loc_pragma
           start = current_pos
         else
-          if @doc_enabled
+          if @doc_enabled && @comment_is_doc
             consume_doc
           elsif @comments_enabled
             return consume_comment(start)
