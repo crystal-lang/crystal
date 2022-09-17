@@ -2,14 +2,14 @@
 # that contains test cases for Unicode grapheme clusters based on the default
 # Grapheme_Cluster_Break Test
 
-# http://www.unicode.org/Public/13.0.0/ucd/auxiliary/GraphemeBreakTest.txt
+# http://www.unicode.org/Public/x.y.z/ucd/auxiliary/GraphemeBreakTest.txt
 
 require "http/client"
 require "../src/compiler/crystal/formatter"
 
-UCD_ROOT = Path.posix("http://www.unicode.org/Public/13.0.0/ucd/")
+UCD_ROOT = "http://www.unicode.org/Public/#{Unicode::VERSION}/ucd/"
 
-url = UCD_ROOT.join("auxiliary/GraphemeBreakTest.txt").to_s
+url = "#{UCD_ROOT}auxiliary/GraphemeBreakTest.txt"
 
 path = "#{__DIR__}/../spec/std/string/grapheme_break_spec.cr"
 
