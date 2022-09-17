@@ -1511,13 +1511,18 @@ module Crystal
           pos_after_prefix = current_pos
           # Enforce number after prefix (disallow ex. "0x", "0x_1")
           raise("unexpected '_' in number", @token, (current_pos - start)) if current_char == '_'
-          raise("numeric literal without digits", @token, (current_pos - start)) unless String::CHAR_TO_DIGIT[current_char.ord].to_u8! < base
+
+          digit = String::CHAR_TO_DIGIT[current_char.ord]?
+          raise("numeric literal without digits", @token, (current_pos - start)) unless digit && digit.to_u8! < base
         end
       end
 
       # Consume number
       loop do
-        while String::CHAR_TO_DIGIT[current_char.ord].to_u8! < base
+        loop do
+          digit = String::CHAR_TO_DIGIT[current_char.ord]?
+          break unless digit && digit.to_u8! < base
+
           number_size += 1 unless number_size == 0 && current_char == '0'
           next_char
           last_is_underscore = false

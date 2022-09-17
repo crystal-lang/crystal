@@ -246,6 +246,9 @@ describe "Lexer" do
   it_lexes_number :i32, ["0_i32", "0"]
   it_lexes_number :i8, ["0i8", "0"]
 
+  it_lexes_i32 [["0🔮", "0"], ["12341234🔮", "12341234"], ["0x3🔮", "3"]]
+  assert_syntax_error "0b🔮", "numeric literal without digits"
+
   it_lexes_char "'a'", 'a'
   it_lexes_char "'\\a'", '\a'
   it_lexes_char "'\\b'", '\b'
