@@ -43,7 +43,7 @@ describe "Semantic: nilable instance var" do
       p.value = Baz.new
       p.value.foo + 1
       ),
-      "can't infer the type of instance variable '@foo' of Foo"
+      "can't infer the type of instance variable '@foo' of Foo", inject_primitives: true
   end
 
   it "says instance var was not initialized in all of the initialize methods, with var declaration" do
@@ -203,7 +203,7 @@ describe "Semantic: nilable instance var" do
       end
 
       Test.new.a
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "marks instance var as nilable if assigned inside captured block (#1696)" do

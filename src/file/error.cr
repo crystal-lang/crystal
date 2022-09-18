@@ -5,24 +5,24 @@ class File::Error < IO::Error
   getter file : String
   getter other : String?
 
-  private def self.new_from_errno(message, errno, **opts)
-    case errno
-    when Errno::ENOENT
+  private def self.new_from_os_error(message, os_error, **opts)
+    case os_error
+    when Errno::ENOENT, WinError::ERROR_FILE_NOT_FOUND, WinError::ERROR_PATH_NOT_FOUND
       File::NotFoundError.new(message, **opts)
-    when Errno::EEXIST
+    when Errno::EEXIST, WinError::ERROR_ALREADY_EXISTS
       File::AlreadyExistsError.new(message, **opts)
-    when Errno::EACCES
+    when Errno::EACCES, WinError::ERROR_PRIVILEGE_NOT_HELD
       File::AccessDeniedError.new(message, **opts)
     else
-      super message, errno, **opts
+      super message, os_error, **opts
     end
   end
 
-  protected def self.build_message(message, *, file : String)
+  protected def self.build_message(message, *, file : String) : String
     "#{message}: '#{file.inspect_unquoted}'"
   end
 
-  protected def self.build_message(message, *, file : String, other : String)
+  protected def self.build_message(message, *, file : String, other : String) : String
     "#{message}: '#{file.inspect_unquoted}' -> '#{other.inspect_unquoted}'"
   end
 

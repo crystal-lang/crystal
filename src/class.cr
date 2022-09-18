@@ -54,7 +54,7 @@ class Class
   # Number > Number # => false
   # Number > Object # => false
   # ```
-  def >(other : T.class) forall T
+  def >(other : T.class) : Bool forall T
     # This is so that the method is expanded differently for each type
     {% @type %}
     other._lt(self)
@@ -135,14 +135,18 @@ class Class
     typeof(t, u)
   end
 
-  # Returns `true` if this class is `Nil`.
+  # Returns `true` if `nil` is an instance of this type.
   #
   # ```
-  # Int32.nilable? # => false
-  # Nil.nilable?   # => true
+  # Int32.nilable?            # => false
+  # Nil.nilable?              # => true
+  # (Int32 | String).nilable? # => false
+  # (Int32 | Nil).nilable?    # => true
+  # NoReturn.nilable?         # => false
+  # Value.nilable?            # => true
   # ```
-  def nilable?
-    self == ::Nil
+  def nilable? : Bool
+    {{ @type >= Nil }}
   end
 
   def to_s(io : IO) : Nil

@@ -4,11 +4,7 @@ require "./parser_options"
 require "./html_parser_options"
 require "./save_options"
 
-{% if compare_versions(Crystal::VERSION, "0.35.0-0") >= 0 %}
-  @[Link("xml2", pkg_config: "libxml-2.0")]
-{% else %}
-  @[Link("xml2")]
-{% end %}
+@[Link("xml2", pkg_config: "libxml-2.0")]
 lib LibXML
   alias Int = LibC::Int
 
@@ -165,7 +161,7 @@ lib LibXML
     xmlCharEncodingHandlerPtr : Void*
     buffer : Void*
     conv : Void*
-    writter : Int
+    written : Int
     error : Int
   end
 

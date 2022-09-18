@@ -36,7 +36,7 @@ class Compress::Zip::Reader
   end
 
   # Creates a new reader from the given *filename*.
-  def self.new(filename : String)
+  def self.new(filename : Path | String)
     new(::File.new(filename), sync_close: true)
   end
 
@@ -49,7 +49,7 @@ class Compress::Zip::Reader
 
   # Creates a new reader from the given *filename*, yields it to the given block,
   # and closes it at the end.
-  def self.open(filename : String)
+  def self.open(filename : Path | String)
     reader = new(filename)
     yield reader ensure reader.close
   end
@@ -101,7 +101,7 @@ class Compress::Zip::Reader
   end
 
   # Closes this zip reader.
-  def close
+  def close : Nil
     return if @closed
     @closed = true
     @io.close if @sync_close

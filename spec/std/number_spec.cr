@@ -2,7 +2,6 @@ require "spec"
 require "big"
 require "complex"
 require "../support/number"
-require "../support/iterate"
 
 describe "Number" do
   {% for number_type in BUILTIN_NUMBER_TYPES %}
@@ -21,6 +20,11 @@ describe "Number" do
       1234.567.significant(5).should be_close(1234.6, 1e-7)
       1234.567.significant(6).should eq(1234.57)
       1234.567.significant(7).should eq(1234.567)
+
+      123.456789.significant(5).should eq(123.46)
+      0.000123456789.significant(3).should eq 0.000123
+      0.123456789.significant(4).should eq 0.1235
+      1.23456789.significant(2).should eq 1.2
     end
 
     it "2 base" do
@@ -38,6 +42,7 @@ describe "Number" do
     it "preserves type" do
       123.significant(2).should eq(120)
       123.significant(2).should be_a(Int32)
+      0.significant(1).should be_a(Int32)
     end
   end
 
@@ -53,12 +58,31 @@ describe "Number" do
       15.151.round.should eq(15)
     end
 
-    it "infinity" do
-      Float64::INFINITY.round.infinite?.should eq(1)
-      Float32::INFINITY.round.infinite?.should eq(1)
-      (-Float64::INFINITY).round.infinite?.should eq(-1)
-      (-Float32::INFINITY).round.infinite?.should eq(-1)
+    it "infinity Float64" do
+      Float64::INFINITY.round.should eq Float64::INFINITY
+      Float64::INFINITY.round(digits: 0).should eq Float64::INFINITY
+      Float64::INFINITY.round(digits: 3).should eq Float64::INFINITY
+      Float64::INFINITY.round(digits: -3).should eq Float64::INFINITY
+      (-Float64::INFINITY).round.should eq -Float64::INFINITY
+      (-Float64::INFINITY).round(digits: 0).should eq -Float64::INFINITY
+      (-Float64::INFINITY).round(digits: 3).should eq -Float64::INFINITY
+      (-Float64::INFINITY).round(digits: -3).should eq -Float64::INFINITY
     end
+
+    {% if compare_versions(Crystal::VERSION, "0.36.1") > 0 %}
+      it "infinity Float32" do
+        Float32::INFINITY.round.should eq Float32::INFINITY
+        Float32::INFINITY.round(digits: 0).should eq Float32::INFINITY
+        Float32::INFINITY.round(digits: 3).should eq Float32::INFINITY
+        Float32::INFINITY.round(digits: -3).should eq Float32::INFINITY
+        (-Float32::INFINITY).round.should eq -Float32::INFINITY
+        (-Float32::INFINITY).round(digits: 0).should eq -Float32::INFINITY
+        (-Float32::INFINITY).round(digits: 3).should eq -Float32::INFINITY
+        (-Float32::INFINITY).round(digits: -3).should eq -Float32::INFINITY
+      end
+    {% else %}
+      pending "infinity Float32"
+    {% end %}
 
     it "nan" do
       Float64::NAN.round.nan?.should be_true
@@ -111,9 +135,158 @@ describe "Number" do
     end
 
     it "handle medium amount of digits" do
-      1.098765432109876543210987654321.round(15).should eq(1.098765432109877)
+      1.098765432109876543210987654321.round(15).should eq(1.098765432109876)
       1.098765432109876543210987654321.round(21).should eq(1.098765432109876543211)
       6543210987654321.0.round(-15).should eq(7000000000000000.0)
+    end
+
+    describe "rounding modes" do
+      it "to_zero" do
+        -1.5.round(:to_zero).should eq -1.0
+        -1.0.round(:to_zero).should eq -1.0
+        -0.9.round(:to_zero).should eq 0.0
+        -0.5.round(:to_zero).should eq 0.0
+        -0.1.round(:to_zero).should eq 0.0
+        0.0.round(:to_zero).should eq 0.0
+        0.1.round(:to_zero).should eq 0.0
+        0.5.round(:to_zero).should eq 0.0
+        0.9.round(:to_zero).should eq 0.0
+        1.0.round(:to_zero).should eq 1.0
+        1.5.round(:to_zero).should eq 1.0
+      end
+
+      it "to_positive" do
+        -1.5.round(:to_positive).should eq -1.0
+        -1.0.round(:to_positive).should eq -1.0
+        -0.9.round(:to_positive).should eq 0.0
+        -0.5.round(:to_positive).should eq 0.0
+        -0.1.round(:to_positive).should eq 0.0
+        0.0.round(:to_positive).should eq 0.0
+        0.1.round(:to_positive).should eq 1.0
+        0.5.round(:to_positive).should eq 1.0
+        0.9.round(:to_positive).should eq 1.0
+        1.0.round(:to_positive).should eq 1.0
+        1.5.round(:to_positive).should eq 2.0
+      end
+
+      it "to_negative" do
+        -1.5.round(:to_negative).should eq -2.0
+        -1.0.round(:to_negative).should eq -1.0
+        -0.9.round(:to_negative).should eq -1.0
+        -0.5.round(:to_negative).should eq -1.0
+        -0.1.round(:to_negative).should eq -1.0
+        0.0.round(:to_negative).should eq 0.0
+        0.1.round(:to_negative).should eq 0.0
+        0.5.round(:to_negative).should eq 0.0
+        0.9.round(:to_negative).should eq 0.0
+        1.0.round(:to_negative).should eq 1.0
+        1.5.round(:to_negative).should eq 1.0
+      end
+
+      it "ties_even" do
+        -2.5.round(:ties_even).should eq -2.0
+        -1.5.round(:ties_even).should eq -2.0
+        -1.0.round(:ties_even).should eq -1.0
+        -0.9.round(:ties_even).should eq -1.0
+        -0.5.round(:ties_even).should eq 0.0
+        -0.1.round(:ties_even).should eq 0.0
+        0.0.round(:ties_even).should eq 0.0
+        0.1.round(:ties_even).should eq 0.0
+        0.5.round(:ties_even).should eq 0.0
+        0.9.round(:ties_even).should eq 1.0
+        1.0.round(:ties_even).should eq 1.0
+        1.5.round(:ties_even).should eq 2.0
+        2.5.round(:ties_even).should eq 2.0
+      end
+
+      it "ties_away" do
+        -2.5.round(:ties_away).should eq -3.0
+        -1.5.round(:ties_away).should eq -2.0
+        -1.0.round(:ties_away).should eq -1.0
+        -0.9.round(:ties_away).should eq -1.0
+        -0.5.round(:ties_away).should eq -1.0
+        -0.1.round(:ties_away).should eq 0.0
+        0.0.round(:ties_away).should eq 0.0
+        0.1.round(:ties_away).should eq 0.0
+        0.5.round(:ties_away).should eq 1.0
+        0.9.round(:ties_away).should eq 1.0
+        1.0.round(:ties_away).should eq 1.0
+        1.5.round(:ties_away).should eq 2.0
+        2.5.round(:ties_away).should eq 3.0
+      end
+
+      it "default (=ties_even)" do
+        -2.5.round.should eq -2.0
+        -1.5.round.should eq -2.0
+        -1.0.round.should eq -1.0
+        -0.9.round.should eq -1.0
+        -0.5.round.should eq 0.0
+        -0.1.round.should eq 0.0
+        0.0.round.should eq 0.0
+        0.1.round.should eq 0.0
+        0.5.round.should eq 0.0
+        0.9.round.should eq 1.0
+        1.0.round.should eq 1.0
+        1.5.round.should eq 2.0
+        2.5.round.should eq 2.0
+      end
+    end
+
+    describe "with digits" do
+      it "to_zero" do
+        12.345.round(-1, mode: :to_zero).should eq 10
+        12.345.round(0, mode: :to_zero).should eq 12
+        12.345.round(1, mode: :to_zero).should eq 12.3
+        12.345.round(2, mode: :to_zero).should eq 12.34
+        -12.345.round(-1, mode: :to_zero).should eq -10
+        -12.345.round(0, mode: :to_zero).should eq -12
+        -12.345.round(1, mode: :to_zero).should eq -12.3
+        -12.345.round(2, mode: :to_zero).should eq -12.34
+      end
+
+      it "to_positive" do
+        12.345.round(-1, mode: :to_positive).should eq 20
+        12.345.round(0, mode: :to_positive).should eq 13
+        12.345.round(1, mode: :to_positive).should eq 12.4
+        12.345.round(2, mode: :to_positive).should eq 12.35
+        -12.345.round(-1, mode: :to_positive).should eq -10
+        -12.345.round(0, mode: :to_positive).should eq -12
+        -12.345.round(1, mode: :to_positive).should eq -12.3
+        -12.345.round(2, mode: :to_positive).should eq -12.34
+      end
+
+      it "to_negative" do
+        12.345.round(-1, mode: :to_negative).should eq 10
+        12.345.round(0, mode: :to_negative).should eq 12
+        12.345.round(1, mode: :to_negative).should eq 12.3
+        12.345.round(2, mode: :to_negative).should eq 12.34
+        -12.345.round(-1, mode: :to_negative).should eq -20
+        -12.345.round(0, mode: :to_negative).should eq -13
+        -12.345.round(1, mode: :to_negative).should eq -12.4
+        -12.345.round(2, mode: :to_negative).should eq -12.35
+      end
+
+      it "ties_away" do
+        13.825.round(-1, mode: :ties_away).should eq 10
+        13.825.round(0, mode: :ties_away).should eq 14
+        13.825.round(1, mode: :ties_away).should eq 13.8
+        13.825.round(2, mode: :ties_away).should eq 13.83
+        -13.825.round(-1, mode: :ties_away).should eq -10
+        -13.825.round(0, mode: :ties_away).should eq -14
+        -13.825.round(1, mode: :ties_away).should eq -13.8
+        -13.825.round(2, mode: :ties_away).should eq -13.83
+      end
+
+      it "ties_even" do
+        15.255.round(-1, mode: :ties_even).should eq 20
+        15.255.round(0, mode: :ties_even).should eq 15
+        15.255.round(1, mode: :ties_even).should eq 15.3
+        15.255.round(2, mode: :ties_even).should eq 15.26
+        -15.255.round(-1, mode: :ties_even).should eq -20
+        -15.255.round(0, mode: :ties_even).should eq -15
+        -15.255.round(1, mode: :ties_even).should eq -15.3
+        -15.255.round(2, mode: :ties_even).should eq -15.26
+      end
     end
 
     describe "base" do
@@ -130,6 +303,48 @@ describe "Number" do
         15.159.round(0, base: 8).should eq(15.0)
       end
     end
+  end
+
+  describe "#round_even" do
+    -2.5.round_even.should eq -2.0
+    -1.5.round_even.should eq -2.0
+    -1.0.round_even.should eq -1.0
+    -0.9.round_even.should eq -1.0
+    -0.5.round_even.should eq -0.0
+    -0.1.round_even.should eq 0.0
+    0.0.round_even.should eq 0.0
+    0.1.round_even.should eq 0.0
+    0.5.round_even.should eq 0.0
+    0.9.round_even.should eq 1.0
+    1.0.round_even.should eq 1.0
+    1.5.round_even.should eq 2.0
+    2.5.round_even.should eq 2.0
+
+    1.round_even.should eq 1
+    1.round_even.should be_a(Int32)
+    1_u8.round_even.should be_a(UInt8)
+    1_f32.round_even.should be_a(Float32)
+  end
+
+  describe "#round_away" do
+    -2.5.round_away.should eq -3.0
+    -1.5.round_away.should eq -2.0
+    -1.0.round_away.should eq -1.0
+    -0.9.round_away.should eq -1.0
+    -0.5.round_away.should eq -1.0
+    -0.1.round_away.should eq 0.0
+    0.0.round_away.should eq 0.0
+    0.1.round_away.should eq 0.0
+    0.5.round_away.should eq 1.0
+    0.9.round_away.should eq 1.0
+    1.0.round_away.should eq 1.0
+    1.5.round_away.should eq 2.0
+    2.5.round_away.should eq 3.0
+
+    1.round_away.should eq 1
+    1.round_away.should be_a(Int32)
+    1_u8.round_away.should be_a(UInt8)
+    1_f32.round_away.should be_a(Float32)
   end
 
   it "gives the absolute value" do
@@ -204,13 +419,31 @@ describe "Number" do
     ary[2].should eq(300.to_u8!)
   end
 
-  it "test zero?" do
-    0.zero?.should eq true
-    0.0.zero?.should eq true
-    0f32.zero?.should eq true
-    1.zero?.should eq false
-    1.0.zero?.should eq false
-    1f32.zero?.should eq false
+  it "#zero?" do
+    0.zero?.should be_true
+    0.0.zero?.should be_true
+    0_f32.zero?.should be_true
+    1.zero?.should be_false
+    1.0.zero?.should be_false
+    1f32.zero?.should be_false
+  end
+
+  it "#positive?" do
+    1.positive?.should be_true
+    1.0.positive?.should be_true
+    0.positive?.should be_false
+    0.0.positive?.should be_false
+    -1.positive?.should be_false
+    -1.1.positive?.should be_false
+  end
+
+  it "#negative?" do
+    1.negative?.should be_false
+    1.0.negative?.should be_false
+    0.negative?.should be_false
+    0.0.negative?.should be_false
+    -1.negative?.should be_true
+    -1.1.negative?.should be_true
   end
 
   describe "#step" do

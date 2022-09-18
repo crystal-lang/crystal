@@ -2,7 +2,7 @@ require "digest/digest"
 
 # Implements the MD5 digest algorithm.
 #
-# Warning: MD5 is no longer a cryptographically secure hash, and should not be
+# WARNING: MD5 is no longer a cryptographically secure hash, and should not be
 # used in security-related components, like password hashing. For passwords, see
 # `Crypto::Bcrypt::Password`. For a generic cryptographic hash, use SHA-256 via
 # `OpenSSL::Digest.new("SHA256")`.
@@ -105,31 +105,27 @@ class Crystal::Digest::MD5 < ::Digest
     y ^ (x | (~z))
   end
 
-  private def rotate_left(x, n)
-    (x << n) | (x >> (32 - n))
-  end
-
   private def ff(a, b, c, d, x, s, ac)
     a &+= f(b, c, d) &+ x &+ ac.to_u32
-    a = rotate_left a, s
+    a = a.rotate_left s
     a &+= b
   end
 
   private def gg(a, b, c, d, x, s, ac)
     a &+= g(b, c, d) &+ x &+ ac.to_u32
-    a = rotate_left a, s
+    a = a.rotate_left s
     a &+= b
   end
 
   private def hh(a, b, c, d, x, s, ac)
     a &+= h(b, c, d) &+ x &+ ac.to_u32
-    a = rotate_left a, s
+    a = a.rotate_left s
     a &+= b
   end
 
   private def ii(a, b, c, d, x, s, ac)
     a &+= i(b, c, d) &+ x &+ ac.to_u32
-    a = rotate_left a, s
+    a = a.rotate_left s
     a &+= b
   end
 

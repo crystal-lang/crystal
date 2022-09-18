@@ -6,10 +6,10 @@
 # This script will
 #   * run the compiler_spec using the flag
 #   * build the compiler to have the flag available (in case the flag is introduced in this version)
-#   * run the std_spec with and without the flag
+#   * run the std_spec and primitives_spec with and without the flag
 #   * check the compiler_spec built with and without the flag (eg: the specs build with the flag can generate a compiler without the flag)
 #   * build a 2nd generation of the compiler using the flag
-#   * repeat the checks for the std_spec and compiler_spec with and without the flag
+#   * repeat the checks for the spec suites with and without the flag
 
 set -eux
 
@@ -27,6 +27,8 @@ md5 .build/crystal
 # run specs
 make clean_cache std_spec
 make clean_cache std_spec FLAGS="-D$COMPILER_FLAG"
+make clean_cache primitives_spec
+make clean_cache primitives_spec FLAGS="-D$COMPILER_FLAG"
 
 # test compiler_specs
 make clean_cache
@@ -47,6 +49,8 @@ md5 .build/crystal
 # run specs
 make clean_cache std_spec
 make clean_cache std_spec FLAGS="-D$COMPILER_FLAG"
+make clean_cache primitives_spec
+make clean_cache primitives_spec FLAGS="-D$COMPILER_FLAG"
 
 # run compiler specs
 make clean_cache

@@ -146,7 +146,7 @@ class OAuth2::AccessToken
       request = HTTP::Request.new "GET", "/some/resource.json", headers
       token.authenticate request, false
       auth = request.headers["Authorization"]
-      (auth =~ /MAC id=".+?", nonce=".+?", ts=".+?", mac=".+?"/).should be_truthy
+      auth.should match /MAC id=".+?", nonce=".+?", ts=".+?", mac=".+?"/
     end
 
     it "computes signature" do

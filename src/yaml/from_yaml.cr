@@ -187,9 +187,13 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   end
 
   {% begin %}
-    {% for key in T.keys %}
-      %var{key.id} = nil
-      %found{key.id} = false
+    {% for key, type in T %}
+      {% if type.nilable? %}
+        %var{key.id} = nil
+      {% else %}
+        %var{key.id} = uninitialized typeof(element_type({{ key.symbolize }}))
+        %found{key.id} = false
+      {% end %}
     {% end %}
 
     YAML::Schema::Core.each(node) do |key, value|
@@ -197,8 +201,10 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
       case key
         {% for key, type in T %}
           when {{key.stringify}}
-            %var{key.id} = {{type}}.new(ctx, value)
-            %found{key.id} = true
+            %var{key.id} = self[{{ key.symbolize }}].new(ctx, value)
+            {% unless type.nilable? %}
+              %found{key.id} = true
+            {% end %}
         {% end %}
       else
         # ignore the key
@@ -206,29 +212,60 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     end
 
     {% for key, type in T %}
-      if %var{key.id}.nil? && !%found{key.id} && !{{type.nilable?}}
-        node.raise "Missing yaml attribute: {{key}}"
-      end
+      {% unless type.nilable? %}
+        unless %found{key.id}
+          node.raise "Missing yaml attribute: #{ {{ key.id.stringify }} }"
+        end
+      {% end %}
     {% end %}
 
-    {
-      {% for key, type in T %}
-        {{key}}: (%var{key.id}).as({{type}}),
+    NamedTuple.new(
+      {% for key in T.keys %}
+        {{ key.id.stringify }}: %var{key.id},
       {% end %}
-    }
+    )
   {% end %}
 end
 
+# Reads a serialized enum member by name from *ctx* and *node*.
+#
+# See `#to_yaml` for reference.
+#
+# Raises `YAML::ParseException` if the deserialization fails.
 def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-  unless node.is_a?(YAML::Nodes::Scalar)
-    node.raise "Expected scalar, not #{node.kind}"
+  {% if @type.annotation(Flags) %}
+    if node.is_a?(YAML::Nodes::Sequence)
+      value = {{ @type }}::None
+      node.each do |element|
+        string = parse_scalar(ctx, element, String)
+
+        value |= parse?(string) || element.raise "Unknown enum #{self} value: #{string.inspect}"
+      end
+
+      value
+    else
+      node.raise "Expected sequence, not #{node.kind}"
+    end
+  {% else %}
+    string = parse_scalar(ctx, node, String)
+    parse?(string) || node.raise "Unknown enum #{self} value: #{string.inspect}"
+  {% end %}
+end
+
+module Enum::ValueConverter(T)
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
+    from_yaml(ctx, node)
   end
 
-  string = node.value
-  if value = string.to_i64?
-    from_value(value)
-  else
-    parse(string)
+  # Reads a serialized enum member by value from *ctx* and *node*.
+  #
+  # See `.to_yaml` for reference.
+  #
+  # Raises `YAML::ParseException` if the deserialization fails.
+  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
+    value = parse_scalar ctx, node, Int64
+
+    T.from_value?(value) || node.raise "Unknown enum #{T} value: #{value}"
   end
 end
 
@@ -307,18 +344,24 @@ module Time::EpochMillisConverter
 end
 
 module YAML::ArrayConverter(Converter)
+  private struct WithInstance(T)
+    def from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Array
+      unless node.is_a?(YAML::Nodes::Sequence)
+        node.raise "Expected sequence, not #{node.kind}"
+      end
+
+      ary = Array(typeof(@converter.from_yaml(ctx, node))).new
+
+      node.each do |value|
+        ary << @converter.from_yaml(ctx, value)
+      end
+
+      ary
+    end
+  end
+
   def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Array
-    unless node.is_a?(YAML::Nodes::Sequence)
-      node.raise "Expected sequence, not #{node.kind}"
-    end
-
-    ary = Array(typeof(Converter.from_yaml(ctx, node))).new
-
-    node.each do |value|
-      ary << Converter.from_yaml(ctx, value)
-    end
-
-    ary
+    WithInstance.new(Converter).from_yaml(ctx, node)
   end
 end
 

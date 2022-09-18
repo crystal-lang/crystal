@@ -1,7 +1,7 @@
 module Crystal
   class TypeFilteredNode < ASTNode
     def initialize(@filter : TypeFilter, @node : ASTNode)
-      @dependencies = [@node] of ASTNode
+      @dependencies = ZeroOneOrMany.new(@node)
       node.add_observer self
       update(@node)
     end
@@ -189,9 +189,13 @@ module Crystal
 
       resulting_types = other_types - types
 
-      # Special case: not truthy (falsey) can also be bool
-      if @filter.is_a?(TruthyFilter) && (bool_type = types.find(&.bool_type?))
-        resulting_types << bool_type
+      # Special case: not truthy (falsey) can also be bool or pointer
+      if @filter.is_a?(TruthyFilter)
+        types.each do |type|
+          if type.bool_type? || type.pointer?
+            resulting_types << type
+          end
+        end
       end
 
       case resulting_types.size
