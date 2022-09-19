@@ -18,7 +18,7 @@ jobs:
           LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground -Dwithout_iconv -Dwithout_interpreter
 
       - name: Upload Crystal object file
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: objs
           path: crystal.obj
@@ -311,7 +311,7 @@ jobs:
           echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
 
       - name: Download Crystal object file
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: objs
       - name: Build LLVM extensions
@@ -356,7 +356,7 @@ jobs:
           rm crystal/src/llvm/ext/llvm_ext.obj
 
       - name: Upload Crystal binaries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: crystal
           path: crystal
