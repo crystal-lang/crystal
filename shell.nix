@@ -127,7 +127,7 @@ pkgs.stdenv.mkDerivation rec {
     pkgs.libffi
   ];
 
-  LLVM_CONFIG = "${llvm_suite.llvm}/bin/llvm-config";
+  LLVM_CONFIG = "${llvm_suite.llvm.dev}/bin/llvm-config";
 
   MACOSX_DEPLOYMENT_TARGET = "10.11";
 }
