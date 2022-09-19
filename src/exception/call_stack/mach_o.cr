@@ -101,7 +101,7 @@ struct Exception::CallStack
       end
     end
 
-    program = String.new(buffer)
+    program = File.real_path(String.new(buffer))
 
     LibC._dyld_image_count.times do |i|
       if program == String.new(LibC._dyld_get_image_name(i))
