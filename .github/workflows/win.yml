@@ -38,7 +38,7 @@ jobs:
 
       - name: Cache libraries
         id: cache-libs
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
             libs/pcre.lib
@@ -240,7 +240,7 @@ jobs:
 
       - name: Cache OpenSSL
         id: cache-openssl
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             libs/crypto.lib
@@ -275,7 +275,7 @@ jobs:
 
       - name: Cache LLVM
         id: cache-llvm
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: llvm
           key: llvm-libs-13.0.0-msvc-${{ env.VSCMD_VER }}
