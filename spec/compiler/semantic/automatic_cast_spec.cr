@@ -106,6 +106,16 @@ describe "Semantic: automatic cast" do
       )) { int64 }
   end
 
+  it "casts literal integer through union" do
+    assert_type(%(
+      def foo(x : Int64 | String)
+        x
+      end
+
+      foo(12345)
+      )) { int64 }
+  end
+
   it "casts literal integer through alias with union" do
     assert_type(%(
       alias A = Int64 | String
@@ -115,6 +125,30 @@ describe "Semantic: automatic cast" do
       end
 
       foo(12345)
+      )) { int64 }
+  end
+
+  it "casts literal integer through self restriction" do
+    assert_type(%(
+      struct Int64
+        def self.foo(x : self)
+          x
+        end
+      end
+
+      Int64.foo(12345)
+      )) { int64 }
+  end
+
+  it "casts literal integer through generic type argument" do
+    assert_type(%(
+      class Foo(T)
+        def foo(x : T)
+          x
+        end
+      end
+
+      Foo(Int64).new.foo(12345)
       )) { int64 }
   end
 
@@ -177,7 +211,23 @@ describe "Semantic: automatic cast" do
       )) { types["Foo"] }
   end
 
-  it "casts literal integer through alias with union" do
+  it "casts symbol literal through union" do
+    assert_type(%(
+      enum Foo
+        One
+        Two
+        Three
+      end
+
+      def foo(x : Foo | String)
+        x
+      end
+
+      foo(:two)
+      )) { types["Foo"] }
+  end
+
+  it "casts symbol literal through alias with union" do
     assert_type(%(
       enum Foo
         One
@@ -450,6 +500,62 @@ describe "Semantic: automatic cast" do
       a + :red
       ),
       "expected argument #1 to 'Zed#+' to be Char, not Symbol"
+  end
+
+  it "doesn't say 'ambiguous call' when only one exact match exists" do
+    assert_type(%(
+      def foo(x : Int8, y : Char)
+        true
+      end
+
+      def foo(x : UInt8, y : String)
+        1.5
+      end
+
+      foo(1, 'a')
+      )) { bool }
+  end
+
+  it "doesn't say 'ambiguous call' when only one exact match exists (2)" do
+    assert_type(%(
+      def foo(x : Char, y : Int8)
+        true
+      end
+
+      def foo(x : String, y : UInt8)
+        1.5
+      end
+
+      foo('a', 1)
+      )) { bool }
+  end
+
+  it "doesn't say 'ambiguous call' when only one exact match exists (3)" do
+    assert_type(%(
+      def foo(x : Int8, y : Char)
+        true
+      end
+
+      def foo(x : UInt8, y : String)
+        1.5
+      end
+
+      foo(y: 'a', x: 1)
+      )) { bool }
+  end
+
+  it "doesn't say 'ambiguous call' when only one exact match exists (4)" do
+    assert_type(%(
+      def foo(x : Char, y : Int8)
+        true
+      end
+
+      def foo(x : String, y : UInt8)
+        1.5
+      end
+
+      foo(y: 1, x: 'a')
+      )) { bool }
   end
 
   it "can use automatic cast with `with ... yield` (#7736)" do

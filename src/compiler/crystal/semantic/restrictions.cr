@@ -1380,30 +1380,146 @@ module Crystal
       false
     end
 
+    def compatible_with?(type)
+      matches_exactly?(type) || matches_partially?(type)
+    end
+
     def restrict(other, context)
-      if other.is_a?(Type)
-        if matches_exactly?(other)
-          set_exact_match(other)
-          return other
-        elsif !exact_match? && matches_partially?(other)
-          add_match(other)
-          return other
+      if restricted = literal.type.restrict(other, context)
+        return restricted.remove_literal
+      end
+
+      return nil unless context.autocast_allowed?
+      restricted, _ = restrict_with_autocast(other, context)
+      restricted.try(&.remove_literal)
+    end
+
+    # Returns two values: the result of restricting `self` against the given AST
+    # node or type, and whether the result is an exact match. An exact match has
+    # higher priority over partial matches.
+    # Note that at this point we don't need to consider non-autocasting matches.
+    private def restrict_with_autocast(other : ASTNode, context)
+      {nil, false}
+    end
+
+    private def restrict_with_autocast(other : Type, context)
+      if matches_exactly?(other)
+        {other, true}
+      elsif matches_partially?(other)
+        {other, false}
+      else
+        {nil, false}
+      end
+    end
+
+    private def restrict_with_autocast(other : Nil, context)
+      # lack of restrictions
+      {literal.type, false}
+    end
+
+    private def restrict_with_autocast(other : Self, context)
+      restrict_with_autocast(context.instantiated_type.instance_type, context)
+    end
+
+    private def restrict_with_autocast(other : Path, context)
+      if type = context.defining_type.lookup_path(other)
+        restrict_with_autocast(type, context)
+      else
+        {nil, false}
+      end
+    end
+
+    private def restrict_with_autocast(other : Arg, context)
+      restrict_with_autocast(other.type? || other.restriction, context)
+    end
+
+    # Given `x : T | U | ...`, if one of these variant types produces an exact
+    # match, we ignore the other variant types
+    private def restrict_with_autocast(other : Union, context)
+      types = [] of Type
+
+      other.types.each do |union_type|
+        restricted, exact = restrict_with_autocast(union_type, context)
+        if restricted
+          return {restricted, true} if exact
+          types << restricted
         end
       end
 
-      literal_type = literal.type?
-      type = literal_type.try(&.restrict(other, context)) || super(other, context)
-      if type == self
-        # if *other* is an AST node (e.g. `Path`) or a complex type (e.g.
-        # `UnionType`), `@match` may be set from recursive calls to `#restrict`,
-        # so we propagate any exact matches found during those calls
-        type = @match || literal_type
-      end
-      type
+      {types.size > 0 ? program.type_merge_union_of(types) : nil, false}
     end
 
-    def compatible_with?(type)
-      matches_exactly?(type) || matches_partially?(type)
+    private def restrict_with_autocast(other : UnionType, context)
+      types = [] of Type
+
+      other.union_types.each do |union_type|
+        restricted, exact = restrict_with_autocast(union_type, context)
+        if restricted
+          return {restricted, true} if exact
+          types << restricted
+        end
+      end
+
+      {types.size > 0 ? program.type_merge_union_of(types) : nil, false}
+    end
+
+    private def restrict_with_autocast(other : AliasType, context)
+      aliased_type = other.remove_alias
+      if aliased_type != other
+        restrict_with_autocast(aliased_type, context)
+      else
+        # recursive alias
+        {nil, false}
+      end
+    end
+
+    # Updates `self` to indicate that an exact or partial autocast match has
+    # been found.
+    #
+    # This used to be part of `#restrict`; it is now called separately on all
+    # autocast call arguments after the entire call matches.
+    def add_autocast_matches(other : Type, context)
+      if matches_exactly?(other)
+        set_exact_match(other)
+      elsif !exact_match? && matches_partially?(other)
+        add_match(other)
+      end
+    end
+
+    def add_autocast_matches(other : ASTNode, context)
+    end
+
+    def add_autocast_matches(other : Self, context)
+      add_autocast_matches(context.instantiated_type.instance_type, context)
+    end
+
+    def add_autocast_matches(other : Path, context)
+      if type = context.defining_type.lookup_path(other)
+        add_autocast_matches(type, context)
+      end
+    end
+
+    def add_autocast_matches(other : Arg, context)
+      if restriction = other.type? || other.restriction
+        add_autocast_matches(restriction, context)
+      end
+    end
+
+    def add_autocast_matches(other : Union, context)
+      other.types.each do |union_type|
+        add_autocast_matches(union_type, context)
+      end
+    end
+
+    def add_autocast_matches(other : UnionType, context)
+      other.union_types.each do |union_type|
+        add_autocast_matches(union_type, context)
+      end
+    end
+
+    def add_autocast_matches(other : AliasType, context)
+      aliased_type = other.remove_alias
+      add_autocast_matches(aliased_type, context) unless aliased_type == other
     end
   end
 
