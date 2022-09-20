@@ -175,7 +175,9 @@ module Crystal::System::FileDescriptor
     handle = LibC._get_osfhandle(fd)
     if handle != -1
       handle = LibC::HANDLE.new(handle)
-      if LibC.GetConsoleMode(handle, out old_mode) != 0
+      # TODO: use `out old_mode` after implementing interpreter out closured var
+      old_mode = uninitialized LibC::DWORD
+      if LibC.GetConsoleMode(handle, pointerof(old_mode)) != 0
         console_handle = true
         if fd == 1 || fd == 2 # STDOUT or STDERR
           if LibC.SetConsoleMode(handle, old_mode | LibC::ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0

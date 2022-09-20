@@ -137,13 +137,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def self.new(
     context : Context,
     compiled_def : CompiledDef,
-    top_level : Bool
+    top_level : Bool,
+    scope : Type = compiled_def.owner
   )
     new(
       context: context,
       local_vars: compiled_def.local_vars,
       instructions: compiled_def.instructions,
-      scope: compiled_def.owner,
+      scope: scope,
       def: compiled_def.def,
       top_level: top_level,
     )
@@ -1152,7 +1153,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       def_name = "#{var.owner}::#{var.name}"
 
       fake_def = Def.new(def_name)
-      fake_def.owner = var.owner
+      fake_def.owner = var.owner.metaclass
       fake_def.vars = initializer.meta_vars
       fake_def.body = value
       fake_def.bind_to(value)
@@ -1163,7 +1164,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # program, but this needs to be fixed in the main compiler first
       declare_local_vars(fake_def, compiled_def.local_vars, @context.program)
 
-      compiler = Compiler.new(@context, compiled_def, top_level: true)
+      compiler = Compiler.new(@context, compiled_def, scope: fake_def.owner, top_level: true)
       compiler.compile_def(compiled_def, closure_owner: @context.program)
 
       {% if Debug::DECOMPILE %}
@@ -1784,7 +1785,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_defs = node.target_defs
-    unless target_defs
+    if target_defs.empty?
       node.raise "BUG: no target defs"
     end
 
@@ -1796,7 +1797,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     body = target_def.body
     if body.is_a?(Primitive)
-      visit_primitive(node, body)
+      visit_primitive(node, body, target_def)
       return false
     end
 
@@ -2435,7 +2436,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_defs = call.target_defs
-    unless target_defs
+    if target_defs.empty?
       call.raise "BUG: no target defs"
     end
 
@@ -2763,7 +2764,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiled_def.local_vars.declare(name, var_type)
     end
 
-    compiler = Compiler.new(@context, compiled_def, top_level: false)
+    compiler = Compiler.new(@context, compiled_def, scope: scope, top_level: false)
     begin
       compiler.compile_def(compiled_def, is_closure ? @closure_context : nil)
     rescue ex : Crystal::CodeError

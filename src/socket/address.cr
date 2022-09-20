@@ -82,11 +82,11 @@ class Socket
     @addr : LibC::In6Addr | LibC::InAddr
 
     def initialize(@address : String, @port : Int32)
-      if addr = ip6?(address)
+      if addr = IPAddress.address_v6?(address)
         @addr = addr
         @family = Family::INET6
         @size = sizeof(LibC::SockaddrIn6)
-      elsif addr = ip4?(address)
+      elsif addr = IPAddress.address_v4?(address)
         @addr = addr
         @family = Family::INET
         @size = sizeof(LibC::SockaddrIn)
@@ -164,12 +164,29 @@ class Socket
         {% end %}
     end
 
-    private def ip6?(address)
+    # Returns `true` if *address* is a valid IPv4 or IPv6 address.
+    def self.valid?(address : String) : Bool
+      valid_v4?(address) || valid_v6?(address)
+    end
+
+    # Returns `true` if *address* is a valid IPv4 address.
+    def self.valid_v6?(address : String) : Bool
+      !address_v6?(address).nil?
+    end
+
+    # :nodoc:
+    protected def self.address_v6?(address : String)
       addr = uninitialized LibC::In6Addr
       addr if LibC.inet_pton(LibC::AF_INET6, address, pointerof(addr)) == 1
     end
 
-    private def ip4?(address)
+    # Returns `true` if *address* is a valid IPv5 address.
+    def self.valid_v4?(address : String) : Bool
+      !address_v4?(address).nil?
+    end
+
+    # :nodoc:
+    protected def self.address_v4?(address : String)
       addr = uninitialized LibC::InAddr
       addr if LibC.inet_pton(LibC::AF_INET, address, pointerof(addr)) == 1
     end
@@ -424,6 +441,7 @@ class Socket
   end
 
   # Returns `true` if the string represents a valid IPv4 or IPv6 address.
+  @[Deprecated("Use `IPAddress.valid?` instead")]
   def self.ip?(string : String)
     addr = LibC::In6Addr.new
     ptr = pointerof(addr).as(Void*)

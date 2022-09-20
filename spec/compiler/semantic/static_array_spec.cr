@@ -153,6 +153,6 @@ describe "Semantic: static array" do
       n = uninitialized StaticArray(Int32, 10)
       fn(n)
       ),
-      "no overload matches"
+      "expected argument #1 to 'fn' to be StaticArray(Int32, 11), not StaticArray(Int32, 10)"
   end
 end

@@ -496,6 +496,76 @@ describe "Restrictions" do
       end
     end
 
+    describe "free variables" do
+      it "inserts path before free variable with same name" do
+        assert_type(<<-CR) { tuple_of([char, bool]) }
+          def foo(x : Int32) forall Int32
+            true
+          end
+
+          def foo(x : Int32)
+            'a'
+          end
+
+          {foo(1), foo("")}
+          CR
+      end
+
+      it "keeps path before free variable with same name" do
+        assert_type(<<-CR) { tuple_of([char, bool]) }
+          def foo(x : Int32)
+            'a'
+          end
+
+          def foo(x : Int32) forall Int32
+            true
+          end
+
+          {foo(1), foo("")}
+          CR
+      end
+
+      it "inserts path before free variable even if free var resolves to a more specialized type" do
+        assert_type(<<-CR) { tuple_of([int32, int32, bool]) }
+          class Foo
+          end
+
+          class Bar < Foo
+          end
+
+          def foo(x : Bar) forall Bar
+            true
+          end
+
+          def foo(x : Foo)
+            1
+          end
+
+          {foo(Foo.new), foo(Bar.new), foo('a')}
+          CR
+      end
+
+      it "keeps path before free variable even if free var resolves to a more specialized type" do
+        assert_type(<<-CR) { tuple_of([int32, int32, bool]) }
+          class Foo
+          end
+
+          class Bar < Foo
+          end
+
+          def foo(x : Foo)
+            1
+          end
+
+          def foo(x : Bar) forall Bar
+            true
+          end
+
+          {foo(Foo.new), foo(Bar.new), foo('a')}
+          CR
+      end
+    end
+
     describe "Union" do
       it "handles redefinitions (1) (#12330)" do
         assert_type(<<-CR) { bool }
@@ -771,7 +841,7 @@ describe "Restrictions" do
 
       foo GenericChild(Base).new
       ),
-      "no overload matches"
+      "expected argument #1 to 'foo' to be GenericBase(Child), not GenericChild(Base)"
   end
 
   it "allows passing recursive type to free var (#1076)" do
@@ -938,7 +1008,7 @@ describe "Restrictions" do
       y = uninitialized UInt8[11]
       foo(x, y)
       ),
-      "no overload matches"
+      "expected argument #2 to 'foo' to be StaticArray(UInt8, 10), not StaticArray(UInt8, 11)"
   end
 
   it "gives precedence to T.class over Class (#7392)" do

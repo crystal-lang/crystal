@@ -309,7 +309,7 @@ describe "Semantic: super" do
 
       Bar.new(1, 2)
       ),
-      "no overload matches 'Foo#initialize'"
+      "expected argument #1 to 'Foo#initialize' to be Char, not Int32"
   end
 
   it "calls super in module method (1) (#556)" do

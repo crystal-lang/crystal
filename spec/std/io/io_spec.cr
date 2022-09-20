@@ -72,7 +72,7 @@ private class SimpleIOMemory < IO
 
   private def resize_to_capacity(capacity)
     @capacity = capacity
-    @buffer = @buffer.realloc(@capacity)
+    @buffer = GC.realloc(@buffer, @capacity)
   end
 end
 
@@ -922,11 +922,11 @@ describe IO do
 
   pending_win32 describe: "#close" do
     it "aborts 'read' in a different thread" do
-      ch = Channel(Symbol).new(1)
+      ch = Channel(SpecChannelStatus).new(1)
 
       IO.pipe do |read, write|
         f = spawn do
-          ch.send :start
+          ch.send :begin
           read.gets
         rescue
           ch.send :end
@@ -934,20 +934,20 @@ describe IO do
 
         schedule_timeout ch
 
-        ch.receive.should eq(:start)
+        ch.receive.begin?.should be_true
         wait_until_blocked f
 
         read.close
-        ch.receive.should eq(:end)
+        ch.receive.end?.should be_true
       end
     end
 
     it "aborts 'write' in a different thread" do
-      ch = Channel(Symbol).new(1)
+      ch = Channel(SpecChannelStatus).new(1)
 
       IO.pipe do |read, write|
         f = spawn do
-          ch.send :start
+          ch.send :begin
           loop do
             write.puts "some line"
           end
@@ -957,11 +957,11 @@ describe IO do
 
         schedule_timeout ch
 
-        ch.receive.should eq(:start)
+        ch.receive.begin?.should be_true
         wait_until_blocked f
 
         write.close
-        ch.receive.should eq(:end)
+        ch.receive.end?.should be_true
       end
     end
   end

@@ -127,9 +127,12 @@ class Crystal::Repl
   end
 
   private def parse_code(code, filename = "")
-    parser = Parser.new code, @program.string_pool
+    warnings = @program.warnings.dup
+    warnings.infos = [] of String
+    parser = Parser.new code, @program.string_pool, warnings: warnings
     parser.filename = filename
     parsed_nodes = parser.parse
+    warnings.report(STDOUT)
     @program.normalize(parsed_nodes, inside_exp: false)
   end
 
@@ -139,7 +142,7 @@ class Crystal::Repl
 
   private def interpret_crystal_exit(exception : EscapingException)
     decl = UninitializedVar.new(Var.new("ex"), TypeNode.new(@context.program.exception.virtual_type))
-    call = Call.new(Path.global("Crystal"), "exit", [NumberLiteral.new(1), Var.new("ex")] of ASTNode)
+    call = Call.new(Path.global("Crystal"), "exit", NumberLiteral.new(1), Var.new("ex"))
     exps = Expressions.new([decl, call] of ASTNode)
 
     begin

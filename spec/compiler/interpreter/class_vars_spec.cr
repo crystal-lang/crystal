@@ -126,5 +126,23 @@ describe Crystal::Repl::Interpreter do
         a
       CODE
     end
+
+    it "finds self in class var initializer (#12439)" do
+      interpret(<<-CODE).should eq(42)
+        class Foo
+          @@value : Int32 = self.int
+
+          def self.value
+            @@value
+          end
+
+          def self.int
+            42
+          end
+        end
+
+        Foo.value
+      CODE
+    end
   end
 end

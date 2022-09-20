@@ -256,7 +256,7 @@ class String
 
     # Try to reclaim some memory if capacity is bigger than what was requested
     if bytesize < capacity
-      str = str.realloc(bytesize.to_u32 + HEADER_SIZE + 1)
+      str = GC.realloc(str, bytesize.to_u32 + HEADER_SIZE + 1)
     end
 
     str_header = str.as({Int32, Int32, Int32}*)
@@ -459,7 +459,7 @@ class String
 
   # Same as `#to_i` but returns an `Int64` or the block's value.
   def to_i64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ Int64, UInt64, 9223372036854775807, 9223372036854775808
+    gen_to_ Int64, UInt64, 9223372036854775807, 9223372036854775808u64
   end
 
   # Same as `#to_i` but returns an `UInt64`.
@@ -1471,6 +1471,77 @@ class String
       replaced_char = upcase_next ? char.upcase(options) : char.downcase(options)
       io << replaced_char
       upcase_next = char.whitespace?
+    end
+  end
+
+  # Returns the result of normalizing this `String` according to the given
+  # [Unicode normalization form](https://unicode.org/reports/tr15/).
+  #
+  # ```
+  # str = "\u{1E9B}\u{0323}"                # => "ẛ̣"
+  # str.unicode_normalize.codepoints        # => [0x1E9B, 0x0323]
+  # str.unicode_normalize(:nfd).codepoints  # => [0x017F, 0x0323, 0x0307]
+  # str.unicode_normalize(:nfkc).codepoints # => [0x1E69]
+  # str.unicode_normalize(:nfkd).codepoints # => [0x0073, 0x0323, 0x0307]
+  # ```
+  def unicode_normalize(form : Unicode::NormalizationForm = :nfc) : String
+    return self if Unicode.quick_check_normalized(self, form).yes?
+    String.build { |io| do_unicode_normalize(io, form) }
+  end
+
+  # Normalizes this `String` according to the given
+  # [Unicode normalization form](https://unicode.org/reports/tr15/) and
+  # writes the result to the given *io*.
+  def unicode_normalize(io : IO, form : Unicode::NormalizationForm = :nfc) : Nil
+    return io << self if Unicode.quick_check_normalized(self, form).yes?
+    do_unicode_normalize(io, form)
+  end
+
+  private def do_unicode_normalize(io, form)
+    # the maximum number of code points after any normalization is `3 * size` as
+    # required by the Unicode standard; allow a single reallocation as the
+    # majority of strings have only few characters that aren't normalized
+    codepoints = Array(Int32).new((size * 3 + 1) // 2)
+
+    each_char do |char|
+      case form
+      in .nfc?, .nfd?
+        Unicode.canonical_decompose(codepoints, char)
+      in .nfkc?, .nfkd?
+        Unicode.compatibility_decompose(codepoints, char)
+      end
+    end
+
+    Unicode.canonical_order!(codepoints)
+
+    case form
+    in .nfc?, .nfkc?
+      Unicode.canonical_compose!(codepoints) { |char| io << char }
+    in .nfd?, .nfkd?
+      codepoints.each { |codepoint| io << codepoint.unsafe_chr }
+    end
+  end
+
+  # Returns whether this `String` is in the given
+  # [Unicode normalization form](https://unicode.org/reports/tr15/).
+  #
+  # ```
+  # foo = "\u{00E0}"              # => "à"
+  # foo.unicode_normalized?       # => true
+  # foo.unicode_normalized?(:nfd) # => false
+  #
+  # bar = "\u{0061}\u{0300}"      # => "à"
+  # bar.unicode_normalized?       # => false
+  # bar.unicode_normalized?(:nfd) # => true
+  # ```
+  def unicode_normalized?(form : Unicode::NormalizationForm = :nfc) : Bool
+    case Unicode.quick_check_normalized(self, form)
+    in .yes?
+      true
+    in .no?
+      false
+    in .maybe?
+      self == String.build { |io| do_unicode_normalize(io, form) }
     end
   end
 

@@ -1571,4 +1571,20 @@ describe "Code gen: block" do
       end
     )).to_i.should eq(1)
   end
+
+  it "(bug) doesn't set needs_value to true on every yield (#12442)" do
+    run(%(
+      def foo
+        if true
+          yield
+        end
+
+        1
+      end
+
+      foo do
+        1
+      end
+      )).to_i.should eq(1)
+  end
 end
