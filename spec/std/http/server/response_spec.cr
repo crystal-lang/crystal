@@ -96,7 +96,7 @@ describe HTTP::Server::Response do
     io = IO::Memory.new
     response = Response.new(io)
     str = "1234567890"
-    slices = (8192 // 10)
+    slices = (IO::DEFAULT_BUFFER_SIZE // 10)
     slices.times do
       response.print(str)
     end
