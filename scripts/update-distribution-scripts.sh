@@ -43,7 +43,7 @@ git add .circleci/config.yml
 
 message="Updates \`distribution-scripts\` dependency to https://github.com/crystal-lang/distribution-scripts/commit/$reference"
 log=$($GIT_DS log $old_reference..$reference --format="%s" | sed "s/.*(/crystal-lang\/distribution-scripts/;s/^/* /;s/.$//")
-message=$(printf "$message\n\nThis includes the following changes:\n\n$log")
+message=$(printf "%s\n\nThis includes the following changes:\n\n%s" "$message" "$log")
 
 git commit -m "Update distribution-scripts" -m "$message"
 
