@@ -96,13 +96,15 @@ describe HTTP::Server::Response do
     io = IO::Memory.new
     response = Response.new(io)
     str = "1234567890"
-    1000.times do
+    slices = (8192 // 10)
+    slices.times do
       response.print(str)
     end
+    response.print(str)
     response.close
-    first_chunk = str * 819
-    second_chunk = str * 181
-    io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n1ffe\r\n#{first_chunk}\r\n712\r\n#{second_chunk}\r\n0\r\n\r\n")
+    first_chunk = str * slices
+    second_chunk = str
+    io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n#{(first_chunk.bytesize).to_s(16)}\r\n#{first_chunk}\r\n#{(second_chunk.bytesize).to_s(16)}\r\n#{second_chunk}\r\n0\r\n\r\n")
   end
 
   it "prints with content length" do
