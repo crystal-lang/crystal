@@ -2209,4 +2209,20 @@ describe Crystal::Formatter do
     # comment
     end
     CODE
+
+  # #12493
+  assert_format <<-CODE
+    select
+    # when foo
+    when bar
+      break
+    end
+    CODE
+
+  assert_format <<-CODE
+    select # some comment
+    when bar
+      break
+    end
+    CODE
 end
