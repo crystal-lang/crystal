@@ -59,7 +59,7 @@ require "c/errno"
 # in the given encoding.
 abstract class IO
   # Default size used for generic stream buffers.
-  DEFAULT_BUFFER_SIZE = 4096
+  DEFAULT_BUFFER_SIZE = 32768
 
   # Argument to a `seek` operation.
   enum Seek
