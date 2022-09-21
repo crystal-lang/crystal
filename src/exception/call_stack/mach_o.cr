@@ -104,7 +104,7 @@ struct Exception::CallStack
     program = File.real_path(String.new(buffer))
 
     LibC._dyld_image_count.times do |i|
-      if program == String.new(LibC._dyld_get_image_name(i))
+      if program == File.real_path(String.new(LibC._dyld_get_image_name(i)))
         return LibC._dyld_get_image_vmaddr_slide(i)
       end
     end
