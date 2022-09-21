@@ -3843,9 +3843,8 @@ module Crystal
     def visit(node : Select)
       slash_is_regex!
       write_keyword :select
+      skip_space_write_line
       skip_space_or_newline
-      skip_semicolon
-      write_line
 
       node.whens.each do |a_when|
         needs_indent = false
