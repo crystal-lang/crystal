@@ -37,11 +37,15 @@ CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD 2> /dev/null)
 CRYSTAL_CONFIG_PATH := '$$ORIGIN/../share/crystal/src'
 SOURCE_DATE_EPOCH := $(shell (git show -s --format=%ct HEAD || stat -c "%Y" Makefile || stat -f "%m" Makefile) 2> /dev/null)
+ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
+  EXPORT_CC ?= CC="$(CC) -fuse-ld=lld"
+endif
 EXPORTS := \
   CRYSTAL_CONFIG_BUILD_COMMIT="$(CRYSTAL_CONFIG_BUILD_COMMIT)" \
 	CRYSTAL_CONFIG_PATH=$(CRYSTAL_CONFIG_PATH) \
 	SOURCE_DATE_EPOCH="$(SOURCE_DATE_EPOCH)"
 EXPORTS_BUILD := \
+	$(EXPORT_CC) \
 	CRYSTAL_CONFIG_LIBRARY_PATH=$(CRYSTAL_CONFIG_LIBRARY_PATH)
 SHELL = sh
 LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
@@ -59,10 +63,6 @@ MANDIR ?= $(DESTDIR)$(PREFIX)/share/man
 LIBDIR ?= $(DESTDIR)$(PREFIX)/lib
 DATADIR ?= $(DESTDIR)$(PREFIX)/share/crystal
 INSTALL ?= /usr/bin/install
-
-ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
-  EXPORT_CC ?= CC="$(CC) -fuse-ld=lld"
-endif
 
 ifeq ($(or $(TERM),$(TERM),dumb),dumb)
   colorize = $(shell printf >&2 "$1")

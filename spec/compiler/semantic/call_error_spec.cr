@@ -204,4 +204,54 @@ describe "Call errors" do
       ),
       "expected argument #1 to 'foo' to be Char or Int32, not String"
   end
+
+  it "says type mismatch for symbol against enum (did you mean)" do
+    assert_error %(
+      enum Color
+        Red
+        Green
+        Blue
+      end
+
+      def foo(x : Color)
+      end
+
+      foo(:rred)
+      ),
+      "expected argument #1 to 'foo' to match a member of enum Color.\n\nDid you mean :red?"
+  end
+
+  it "says type mismatch for symbol against enum (list all possibilities when 10 or less)" do
+    assert_error %(
+      enum Color
+        Red
+        Green
+        Blue
+        Violet
+        Purple
+      end
+
+      def foo(x : Color)
+      end
+
+      foo(:hello_world)
+      ),
+      "expected argument #1 to 'foo' to match a member of enum Color.\n\nOptions are: :red, :green, :blue, :violet and :purple"
+  end
+
+  it "says type mismatch for symbol against enum, named argument case" do
+    assert_error %(
+      enum Color
+        Red
+        Green
+        Blue
+      end
+
+      def foo(x : Color)
+      end
+
+      foo(x: :rred)
+      ),
+      "expected argument 'x' to 'foo' to match a member of enum Color.\n\nDid you mean :red?"
+  end
 end
