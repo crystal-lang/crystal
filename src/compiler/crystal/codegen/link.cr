@@ -1,12 +1,15 @@
 module Crystal
-  struct LinkAnnotation
+  class LinkAnnotation
     getter lib : String?
     getter pkg_config : String?
     getter ldflags : String?
     getter framework : String?
+    property resolved_flag : String?
 
     def initialize(@lib = nil, @pkg_config = @lib, @ldflags = nil, @static = false, @framework = nil)
     end
+
+    def_equals_and_hash @lib, pkg_config, ldflags, framework, resolved_flag
 
     def static?
       @static
@@ -148,19 +151,39 @@ module Crystal
         flags << Process.quote_posix("-L#{path}")
       end
 
+      # Resolve link flags concurrently.
+      channel = Channel(Exception?).new
+      link_annotations = self.link_annotations
+      link_annotations.each do |ann|
+        spawn do
+          # First, check pkg-config for the pkg-config module name if provided, then
+          # check pkg-config with the lib name, then fall back to -lname
+          if (pkg_config_name = ann.pkg_config) && (flag = pkg_config(pkg_config_name, static_build))
+            ann.resolved_flag = flag
+          elsif (lib_name = ann.lib) && (flag = pkg_config(lib_name, static_build))
+            ann.resolved_flag = flag
+          elsif (lib_name = ann.lib)
+            ann.resolved_flag = Process.quote_posix("-l#{lib_name}")
+          end
+          channel.send nil
+        rescue exc
+          channel.send exc
+        end
+      end
+
+      link_annotations.size.times do
+        if exc = channel.receive
+          raise exc
+        end
+      end
+
       link_annotations.reverse_each do |ann|
         if ldflags = ann.ldflags
           flags << ldflags
         end
 
-        # First, check pkg-config for the pkg-config module name if provided, then
-        # check pkg-config with the lib name, then fall back to -lname
-        if (pkg_config_name = ann.pkg_config) && (flag = pkg_config(pkg_config_name, static_build))
-          flags << flag
-        elsif (lib_name = ann.lib) && (flag = pkg_config(lib_name, static_build))
-          flags << flag
-        elsif (lib_name = ann.lib)
-          flags << Process.quote_posix("-l#{lib_name}")
+        if resolved_flag = ann.resolved_flag
+          flags << resolved_flag
         end
 
         if framework = ann.framework

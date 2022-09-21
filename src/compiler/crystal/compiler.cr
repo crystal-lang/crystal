@@ -400,6 +400,20 @@ module Crystal
       target_triple = target_machine.triple
       reused = [] of String
 
+      # We check again because maybe this directory was created in between (maybe with a macro run)
+      if Dir.exists?(output_filename)
+        error "can't use `#{output_filename}` as output filename because it's a directory"
+      end
+
+      output_filename = File.expand_path(output_filename)
+
+      # Kick off linker library name resolution to overlap with time take to compile
+      # On some platforms, name resolution can take some time that is mostly spent waiting
+      linker_command_channel = Channel(Tuple(String, Array(String)?)).new
+      spawn do
+        linker_command_channel.send(linker_command(program, object_names, output_filename, output_dir, expand: true))
+      end
+
       @progress_tracker.stage("Codegen (bc+obj)") do
         @progress_tracker.stage_progress_total = units.size
 
@@ -413,16 +427,10 @@ module Crystal
         end
       end
 
-      # We check again because maybe this directory was created in between (maybe with a macro run)
-      if Dir.exists?(output_filename)
-        error "can't use `#{output_filename}` as output filename because it's a directory"
-      end
-
-      output_filename = File.expand_path(output_filename)
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
-          linker_command = linker_command(program, object_names, output_filename, output_dir, expand: true)
+          linker_command = linker_command_channel.receive
 
           process_wrapper(*linker_command) do |command, args|
             Process.run(command, args, shell: true,
