@@ -11,7 +11,14 @@ class IO::FileDescriptor < IO
     @volatile_fd.get
   end
 
-  def initialize(fd, blocking = nil)
+  # Whether or not to close the file descriptor when this object is finalized.
+  # Disabling this is useful in order to create an IO wrapper over a file
+  # descriptor returned from a C API that keeps ownership of the descriptor. Do
+  # note that, if the fd is closed by its owner at any point, any IO operations
+  # will then fail.
+  property? close_on_finalize : Bool
+
+  def initialize(fd, blocking = nil, *, @close_on_finalize = true)
     @volatile_fd = Atomic.new(fd)
     @closed = system_closed?
 
@@ -206,7 +213,7 @@ class IO::FileDescriptor < IO
   end
 
   def finalize
-    return if closed?
+    return if closed? || !close_on_finalize?
 
     close rescue nil
   end
