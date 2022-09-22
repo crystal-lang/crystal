@@ -550,7 +550,7 @@ struct Int
     UptoIterator(typeof(self), typeof(to)).new(self, to)
   end
 
-  # Calls the given block with each integer value from self down to `to`
+  # Calls the given block with each integer value from self down to `to`.
   def downto(to, &block : self ->) : Nil
     return unless self >= to
     x = self
