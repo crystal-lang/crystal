@@ -561,7 +561,7 @@ struct Int
     end
   end
 
-  # Get an iterator for counting down from self to `to`
+  # Get an iterator for counting down from self to `to`.
   def downto(to)
     DowntoIterator(typeof(self), typeof(to)).new(self, to)
   end
