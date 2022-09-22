@@ -1,4 +1,5 @@
 {% skip_file if flag?(:without_interpreter) %}
+require "../config"
 
 # Implementation of the `crystal repl` command
 
@@ -34,6 +35,7 @@ class Crystal::Command
     end
 
     if options.empty?
+      welcome
       repl.run
     else
       filename = options.shift
@@ -41,7 +43,15 @@ class Crystal::Command
         error "File '#{filename}' doesn't exist"
       end
 
+      welcome
       repl.run_file(filename, options)
     end
+  end
+
+  private def welcome
+    formatted_sha = "[#{Config.build_commit}] " if Config.build_commit
+    puts "Crystal interpreter #{Config.version} #{formatted_sha}(#{Config.date}).\n" \
+         "EXPERIMENTAL SOFTWARE: if you find a bug, please consider opening a ticket in\n" \
+         "https://github.com/crystal-lang/crystal/issues/new/"
   end
 end
