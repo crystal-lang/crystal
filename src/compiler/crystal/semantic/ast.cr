@@ -682,6 +682,7 @@ module Crystal
     property real_name : String
     property! fun_def : FunDef
     property call_convention : LLVM::CallConvention?
+    property wasm_import_module : String?
 
     property? dead = false
     property? used = false
