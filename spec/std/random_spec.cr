@@ -180,7 +180,7 @@ describe "Random" do
   it "allows creating a new default random with a seed" do
     values = Array.new(2) do
       rand = Random.new(1234)
-      {rand.rand, rand.rand(0xffffffffffffffff), rand.rand(2), rand.rand(-5i8..5i8)}
+      {rand.rand, rand.rand(0xffffffffffffffffu64), rand.rand(2), rand.rand(-5i8..5i8)}
     end
 
     values[0].should eq values[1]

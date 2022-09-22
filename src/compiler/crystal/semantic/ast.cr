@@ -12,15 +12,6 @@ module Crystal
       ::raise exception_type.for_node(self, message, inner)
     end
 
-    def warning(message, inner = nil, exception_type = Crystal::TypeException)
-      # TODO extract message formatting from exceptions
-      String.build do |io|
-        exception = exception_type.for_node(self, message, inner)
-        exception.warning = true
-        exception.append_to_s(io, nil)
-      end
-    end
-
     def simple_literal?
       case self
       when Nop, NilLiteral, BoolLiteral, NumberLiteral, CharLiteral,
@@ -148,6 +139,7 @@ module Crystal
     property previous : DefWithMetadata?
     property next : Def?
     property special_vars : Set(String)?
+    property freeze_type : Type?
     property block_nest = 0
     property? raises = false
     property? closure = false
@@ -170,6 +162,9 @@ module Crystal
     property? new = false
 
     @macro_owner : Type?
+
+    # Used to override the meaning of `self` in restrictions
+    property self_restriction_type : Type?
 
     def macro_owner=(@macro_owner)
     end
@@ -434,6 +429,8 @@ module Crystal
     # a Def or a Block.
     property context : ASTNode | NonGenericModuleType | Nil
 
+    property freeze_type : Type?
+
     # True if we need to mark this variable as nilable
     # if this variable is read.
     property? nil_if_read = false
@@ -532,6 +529,8 @@ module Crystal
     # The (optional) initial value of a class variable
     property initializer : ClassVarInitializer?
 
+    property freeze_type : Type?
+
     # Flag used during codegen to indicate the initializer is simple
     # and doesn't require a call to a function
     property? simple_initializer = false
@@ -612,6 +611,7 @@ module Crystal
     property after_vars : MetaVars?
     property context : Def | NonGenericModuleType | Nil
     property fun_literal : ASTNode?
+    property freeze_type : Type?
     property? visited = false
 
     getter(:break) { Var.new("%break") }

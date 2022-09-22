@@ -25,6 +25,7 @@ verbose ?=      ## Run specs in verbose mode
 junit_output ?= ## Path to output junit results
 static ?=       ## Enable static linking
 interpreter ?=  ## Enable interpreter feature
+check ?=        ## Enable only check when running format
 
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
@@ -114,6 +115,10 @@ crystal: $(O)\crystal.exe ## Build the compiler
 .PHONY: deps llvm_ext
 deps: $(DEPS) ## Build dependencies
 llvm_ext: $(LLVM_EXT_OBJ)
+
+.PHONY: format
+format: ## Format sources
+	.\bin\crystal tool format$(if $(check), --check) src spec samples
 
 .PHONY: install
 install: $(O)\crystal.exe ## Install the compiler at prefix

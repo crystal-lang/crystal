@@ -367,8 +367,7 @@ module Crystal
           var.bind_to(@program.nil_var)
           var.nil_if_read = false
 
-          meta_var.bind_to(@program.nil_var) unless meta_var.dependencies.try &.any? &.same?(@program.nil_var)
-          node.bind_to(@program.nil_var)
+          bind_to_program_nil_var(meta_var)
         end
 
         check_mutably_closured meta_var, var
@@ -391,6 +390,10 @@ module Crystal
       else
         node.raise "read before assignment to local variable '#{node.name}'"
       end
+    end
+
+    private def bind_to_program_nil_var(node)
+      node.bind_to(@program.nil_var) unless node.dependencies.any? &.same?(@program.nil_var)
     end
 
     def visit(node : TypeDeclaration)
@@ -592,19 +595,6 @@ module Crystal
     def undefined_instance_variable(owner, node)
       similar_name = owner.lookup_similar_instance_var_name(node.name)
       program.undefined_instance_variable(node, owner, similar_name)
-    end
-
-    def first_time_accessing_meta_type_var?(var)
-      return false if var.uninitialized?
-
-      if var.freeze_type
-        deps = var.dependencies?
-        # If no dependencies, it's the case of a global for a regex literal.
-        # If there are dependencies and it's just one, it's the same var
-        deps ? deps.size == 1 : false
-      else
-        !var.dependencies?
-      end
     end
 
     def visit(node : InstanceVar)
@@ -1249,7 +1239,7 @@ module Crystal
         # It can happen that this call is inside an ArrayLiteral or HashLiteral,
         # was expanded but isn't bound to the expansion because the call (together
         # with its expansion) was cloned.
-        if (expanded = node.expanded) && (!node.dependencies? || !node.type?)
+        if (expanded = node.expanded) && (node.dependencies.empty? || !node.type?)
           node.bind_to(expanded)
         end
 
@@ -1779,23 +1769,6 @@ module Crystal
       node.to.accept self
       @in_type_args -= 1
 
-      case node.to.type?
-      when @program.object
-        node.raise "can't cast to Object yet"
-      when @program.reference
-        node.raise "can't cast to Reference yet"
-      when @program.class_type
-        node.raise "can't cast to Class yet"
-      end
-
-      obj_type = node.obj.type?
-      if obj_type.is_a?(PointerInstanceType)
-        to_type = node.to.type.instance_type
-        if to_type.is_a?(GenericType)
-          node.raise "can't cast #{obj_type} to #{to_type}"
-        end
-      end
-
       node.obj.add_observer node
       node.update
 
@@ -1890,7 +1863,7 @@ module Crystal
 
       @unreachable = then_unreachable && else_unreachable
 
-      node.bind_to [node.then, node.else]
+      node.bind_to({node.then, node.else})
 
       false
     end
@@ -1904,85 +1877,88 @@ module Crystal
     #   - Don't use the type of a branch that is unreachable (ends with return,
     #     break or with a call that is NoReturn)
     def merge_if_vars(node, cond_vars, then_vars, else_vars, before_then_vars, before_else_vars, then_unreachable, else_unreachable)
-      all_vars_names = Set(String).new
-      then_vars.each_key do |name|
-        all_vars_names << name
-      end
-      else_vars.each_key do |name|
-        all_vars_names << name
-      end
-
-      all_vars_names.each do |name|
-        cond_var = cond_vars[name]?
-        then_var = then_vars[name]?
-        before_then_var = before_then_vars[name]?
+      then_vars.each do |name, then_var|
         else_var = else_vars[name]?
-        before_else_var = before_else_vars[name]?
 
-        # Check whether the var didn't change at all
-        next if then_var.same?(else_var)
-
-        if_var = MetaVar.new(name)
-
-        # Only copy `nil_if_read` from each branch if it's not unreachable
-        then_var_nil_if_read = !then_unreachable && then_var.try(&.nil_if_read?)
-        else_var_nil_if_read = !else_unreachable && else_var.try(&.nil_if_read?)
-
-        if_var.nil_if_read = !!(then_var_nil_if_read || else_var_nil_if_read)
-
-        # Check if no types were changes in either then 'then' and 'else' branches
-        if cond_var && then_var.same?(before_then_var) && else_var.same?(before_else_var) && !then_unreachable && !else_unreachable
-          cond_var.nil_if_read = if_var.nil_if_read?
-          @vars[name] = cond_var
-          next
-        end
-
-        if then_var && else_var
-          if then_unreachable
-            if_var.bind_to conditional_no_return(node.then, then_var)
-          else
-            if_var.bind_to then_var
-          end
-
-          if else_unreachable
-            if_var.bind_to conditional_no_return(node.else, else_var)
-          else
-            if_var.bind_to else_var
-          end
-        elsif then_var
-          if then_unreachable
-            if_var.bind_to conditional_no_return(node.then, then_var)
-          else
-            if_var.bind_to then_var
-          end
-
-          if cond_var
-            if_var.bind_to cond_var
-          elsif !else_unreachable
-            if_var.bind_to program.nil_var
-            if_var.nil_if_read = true
-          else
-            if_var.bind_to conditional_no_return(node.else, @program.nil_var)
-          end
-        elsif else_var
-          if else_unreachable
-            if_var.bind_to conditional_no_return(node.else, else_var)
-          else
-            if_var.bind_to else_var
-          end
-
-          if cond_var
-            if_var.bind_to cond_var
-          elsif !then_unreachable
-            if_var.bind_to program.nil_var
-            if_var.nil_if_read = true
-          else
-            if_var.bind_to conditional_no_return(node.then, @program.nil_var)
-          end
-        end
-
-        @vars[name] = if_var
+        merge_if_var(name, node, cond_vars, then_var, else_var, before_then_vars, before_else_vars, then_unreachable, else_unreachable)
       end
+
+      else_vars.each do |name, else_var|
+        next if then_vars.has_key?(name)
+
+        merge_if_var(name, node, cond_vars, nil, else_var, before_then_vars, before_else_vars, then_unreachable, else_unreachable)
+      end
+    end
+
+    def merge_if_var(name, node, cond_vars, then_var, else_var, before_then_vars, before_else_vars, then_unreachable, else_unreachable)
+      # Check whether the var didn't change at all
+      return if then_var.same?(else_var)
+
+      cond_var = cond_vars[name]?
+
+      # Only copy `nil_if_read` from each branch if it's not unreachable
+      then_var_nil_if_read = !then_unreachable && then_var.try(&.nil_if_read?)
+      else_var_nil_if_read = !else_unreachable && else_var.try(&.nil_if_read?)
+      if_var_nil_if_read = !!(then_var_nil_if_read || else_var_nil_if_read)
+
+      # Check if no types were changes in either then 'then' and 'else' branches
+      if cond_var && !then_unreachable && !else_unreachable
+        if then_var.same?(before_then_vars[name]?) &&
+           else_var.same?(before_else_vars[name]?)
+          cond_var.nil_if_read = if_var_nil_if_read
+          @vars[name] = cond_var
+          return
+        end
+      end
+
+      if_var = MetaVar.new(name)
+      if_var.nil_if_read = if_var_nil_if_read
+
+      if then_var && else_var
+        if then_unreachable
+          if_var.bind_to conditional_no_return(node.then, then_var)
+        else
+          if_var.bind_to then_var
+        end
+
+        if else_unreachable
+          if_var.bind_to conditional_no_return(node.else, else_var)
+        else
+          if_var.bind_to else_var
+        end
+      elsif then_var
+        if then_unreachable
+          if_var.bind_to conditional_no_return(node.then, then_var)
+        else
+          if_var.bind_to then_var
+        end
+
+        if cond_var
+          if_var.bind_to cond_var
+        elsif !else_unreachable
+          if_var.bind_to program.nil_var
+          if_var.nil_if_read = true
+        else
+          if_var.bind_to conditional_no_return(node.else, @program.nil_var)
+        end
+      elsif else_var
+        if else_unreachable
+          if_var.bind_to conditional_no_return(node.else, else_var)
+        else
+          if_var.bind_to else_var
+        end
+
+        if cond_var
+          if_var.bind_to cond_var
+        elsif !then_unreachable
+          if_var.bind_to program.nil_var
+          if_var.nil_if_read = true
+        else
+          if_var.bind_to conditional_no_return(node.then, @program.nil_var)
+        end
+      end
+
+      @vars[name] = if_var
     end
 
     def conditional_no_return(node, var)
@@ -2348,7 +2324,7 @@ module Crystal
             extra = Call.new(
               nil,
               "raise",
-              args: [StringLiteral.new("Can't instantiate abstract #{base_type.type_desc} #{base_type}")] of ASTNode,
+              StringLiteral.new("Can't instantiate abstract #{base_type.type_desc} #{base_type}"),
               global: true)
             extra.accept self
 
@@ -2936,20 +2912,8 @@ module Crystal
       if name = node.name
         name.accept self
         type = name.type.instance_type
-
-        case type
-        when GenericClassType
-          generic_type = TypeNode.new(type).at(node.location)
-          type_of = @program.literal_expander.typeof_exp(node)
-          generic = Generic.new(generic_type, type_of).at(node.location)
-          node.name = generic
-        when GenericClassInstanceType
-          # Nothing
-        else
-          node.name = TypeNode.new(name.type).at(node.location)
-        end
-
-        expand_named(node)
+        generic_type = TypeNode.new(type).at(node.location) if type.is_a?(GenericClassType)
+        expand_named(node, generic_type)
       else
         expand(node)
       end
@@ -2959,22 +2923,8 @@ module Crystal
       if name = node.name
         name.accept self
         type = name.type.instance_type
-
-        case type
-        when GenericClassType
-          generic_type = TypeNode.new(type).at(node.location)
-          type_of_keys = TypeOf.new(node.entries.map { |x| x.key.as(ASTNode) }).at(node.location)
-          type_of_values = TypeOf.new(node.entries.map { |x| x.value.as(ASTNode) }).at(node.location)
-          generic = Generic.new(generic_type, [type_of_keys, type_of_values] of ASTNode).at(node.location)
-
-          node.name = generic
-        when GenericClassInstanceType
-          # Nothing
-        else
-          node.name = TypeNode.new(name.type).at(node.location)
-        end
-
-        expand_named(node)
+        generic_type = TypeNode.new(type).at(node.location) if type.is_a?(GenericClassType)
+        expand_named(node, generic_type)
       else
         expand(node)
       end
@@ -3039,8 +2989,8 @@ module Crystal
       expand(node) { @program.literal_expander.expand node }
     end
 
-    def expand_named(node)
-      expand(node) { @program.literal_expander.expand_named node }
+    def expand_named(node, generic_type)
+      expand(node) { @program.literal_expander.expand_named node, generic_type }
     end
 
     def expand(node)
@@ -3288,7 +3238,7 @@ module Crystal
     def define_special_var(name, value)
       meta_var, _ = assign_to_meta_var(name)
       meta_var.bind_to value
-      meta_var.bind_to program.nil_var unless meta_var.dependencies.any? &.same?(program.nil_var)
+      bind_to_program_nil_var(meta_var)
       meta_var.assigned_to = true
       check_closured meta_var
 

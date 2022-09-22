@@ -443,9 +443,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         new_expansions[node] = new_method
       end
 
-      unless @method_added_running
+      if !@method_added_running && has_hooks?(target_type.metaclass)
         @method_added_running = true
-        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", [node] of ASTNode).at(node.location)
+        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", node).at(node.location)
         @method_added_running = false
       end
     end
@@ -507,11 +507,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         link_annotation = LinkAnnotation.from(ann)
 
         if link_annotation.static?
-          @program.report_warning(ann, "specifying static linking for individual libraries is deprecated")
+          @program.warnings.add_warning(ann, "specifying static linking for individual libraries is deprecated")
         end
 
         if ann.args.size > 1
-          @program.report_warning(ann, "using non-named arguments for Link annotations is deprecated")
+          @program.warnings.add_warning(ann, "using non-named arguments for Link annotations is deprecated")
         end
 
         type.add_link_annotation(link_annotation)
@@ -1041,6 +1041,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     rescue ex : TypeException
       node.raise "at '#{kind}' hook", ex
     end
+  end
+
+  def has_hooks?(type_with_hooks)
+    hooks = type_with_hooks.as?(ModuleType).try &.hooks
+    hooks && !hooks.empty?
   end
 
   def run_hooks(type_with_hooks, current_type, kind : HookKind, node, call = nil)

@@ -8,14 +8,14 @@ env:
 
 jobs:
   x86_64-darwin-test:
-    runs-on: macos-10.15
+    runs-on: macos-11
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
 
-      - uses: cachix/install-nix-action@v14
+      - uses: cachix/install-nix-action@v17
         with:
-          install_url: https://releases.nixos.org/nix/nix-2.4/install
+          install_url: https://releases.nixos.org/nix/nix-2.9.2/install
           extra_nix_config: |
             experimental-features = nix-command
       - uses: cachix/cachix-action@v10

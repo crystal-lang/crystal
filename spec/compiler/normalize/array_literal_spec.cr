@@ -56,4 +56,49 @@ describe "Normalize: array literal" do
       __temp_1
       CR
   end
+
+  it "hoists complex element expressions" do
+    assert_expand "[[1]]", <<-CR
+      __temp_1 = [1]
+      __temp_2 = ::Array(typeof(__temp_1)).unsafe_build(1)
+      __temp_3 = __temp_2.to_unsafe
+      __temp_3[0] = __temp_1
+      __temp_2
+      CR
+  end
+
+  it "hoists complex element expressions, with splat" do
+    assert_expand "[*[1]]", <<-CR
+      __temp_1 = [1]
+      __temp_2 = ::Array(typeof(::Enumerable.element_type(__temp_1))).new(0)
+      __temp_2.concat(__temp_1)
+      __temp_2
+      CR
+  end
+
+  it "hoists complex element expressions, array-like" do
+    assert_expand_named "Foo{[1], *[2]}", <<-CR
+      __temp_1 = [1]
+      __temp_2 = [2]
+      __temp_3 = Foo.new
+      __temp_3 << __temp_1
+      __temp_2.each do |__temp_4|
+        __temp_3 << __temp_4
+      end
+      __temp_3
+      CR
+  end
+
+  it "hoists complex element expressions, array-like generic" do
+    assert_expand_named "Foo{[1], *[2]}", <<-CR, generic: "Foo"
+      __temp_1 = [1]
+      __temp_2 = [2]
+      __temp_3 = Foo(typeof(__temp_1, ::Enumerable.element_type(__temp_2))).new
+      __temp_3 << __temp_1
+      __temp_2.each do |__temp_4|
+        __temp_3 << __temp_4
+      end
+      __temp_3
+      CR
+  end
 end

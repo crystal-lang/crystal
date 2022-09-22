@@ -37,7 +37,7 @@ module Crystal
       filename
     end
 
-    delegate report_warning_at, to: @program
+    delegate warnings, to: @program
 
     def interpret_top_level_call(node)
       interpret_top_level_call?(node) ||
@@ -170,7 +170,7 @@ module Crystal
         arg.raise "argument to parse_type cannot be an empty value" if type_name.blank?
 
         begin
-          parser = Crystal::Parser.new type_name
+          parser = @program.new_parser type_name
           parser.next_token
           type = parser.parse_bare_proc_type
           parser.check :EOF
@@ -2199,7 +2199,7 @@ module Crystal
           ArrayLiteral.map(@names) { |name| MacroId.new(name) }
         end
       when "global"
-        interpreter.report_warning_at(name_loc, "Deprecated Path#global. Use `#global?` instead")
+        interpreter.warnings.add_warning_at(name_loc, "Deprecated Path#global. Use `#global?` instead")
         interpret_check_args { BoolLiteral.new(@global) }
       when "global?"
         interpret_check_args { BoolLiteral.new(@global) }

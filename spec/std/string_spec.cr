@@ -390,12 +390,12 @@ describe "String" do
     end
 
     describe "to_u64" do
-      it { "18446744073709551615".to_u64.should eq(18446744073709551615) }
+      it { "18446744073709551615".to_u64.should eq(18446744073709551615u64) }
       it { "0".to_u64.should eq(0) }
       it { expect_raises(ArgumentError) { "18446744073709551616".to_u64 } }
       it { expect_raises(ArgumentError) { "-1".to_u64 } }
 
-      it { "18446744073709551615".to_u64?.should eq(18446744073709551615) }
+      it { "18446744073709551615".to_u64?.should eq(18446744073709551615u64) }
       it { "18446744073709551616".to_u64?.should be_nil }
       it { "18446744073709551616".to_u64 { 0 }.should eq(0) }
     end
@@ -1857,124 +1857,6 @@ describe "String" do
     end
   end
 
-  it "does %" do
-    ("foo" % 1).should eq("foo")
-    ("foo %d" % 1).should eq("foo 1")
-    ("%d" % 123).should eq("123")
-    ("%+d" % 123).should eq("+123")
-    ("%+d" % -123).should eq("-123")
-    ("% d" % 123).should eq(" 123")
-    ("%i" % 123).should eq("123")
-    ("%+i" % 123).should eq("+123")
-    ("%+i" % -123).should eq("-123")
-    ("% i" % 123).should eq(" 123")
-    ("%20d" % 123).should eq("                 123")
-    ("%20d" % -123).should eq("                -123")
-    ("%20d" % 0).should eq("                   0")
-    ("%+20d" % 123).should eq("                +123")
-    ("%+20d" % -123).should eq("                -123")
-    ("%+20d" % 0).should eq("                  +0")
-    ("% 20d" % 123).should eq("                 123")
-    ("%020d" % 123).should eq("00000000000000000123")
-    ("%020d" % -123).should eq("0000000000000000-123")
-    ("%020d" % 0).should eq("00000000000000000000")
-    ("%+020d" % 123).should eq("+0000000000000000123")
-    ("%+020d" % -123).should eq("-0000000000000000123")
-    ("%+020d" % 0).should eq("+0000000000000000000")
-    ("% 020d" % 123).should eq(" 0000000000000000123")
-    ("% 020d" % 0).should eq(" 0000000000000000000")
-    ("%-d" % 123).should eq("123")
-    ("%-d" % 0).should eq("0")
-    ("%-20d" % 123).should eq("123                 ")
-    ("%-20d" % -123).should eq("-123                ")
-    ("%-20d" % 0).should eq("0                   ")
-    ("%-+20d" % 123).should eq("+123                ")
-    ("%-+20d" % -123).should eq("-123                ")
-    ("%-+20d" % 0).should eq("+0                  ")
-    ("%- 20d" % 123).should eq(" 123                ")
-    ("%- 20d" % -123).should eq("-123                ")
-    ("%- 20d" % 0).should eq(" 0                  ")
-    ("%s" % 'a').should eq("a")
-    ("%-s" % 'a').should eq("a")
-    ("%20s" % 'a').should eq("                   a")
-    ("%-20s" % 'a').should eq("a                   ")
-    ("%*s" % [10, 123]).should eq("       123")
-    ("%*s" % [-10, 123]).should eq("123       ")
-    ("%.5s" % "foo bar baz").should eq("foo b")
-    ("%.*s" % [5, "foo bar baz"]).should eq("foo b")
-    ("%*.*s" % [20, 5, "foo bar baz"]).should eq("               foo b")
-    ("%-*.*s" % [20, 5, "foo bar baz"]).should eq("foo b               ")
-
-    ("%%%d" % 1).should eq("%1")
-    ("foo %d bar %s baz %d goo" % [1, "hello", 2]).should eq("foo 1 bar hello baz 2 goo")
-
-    ("%b" % 123).should eq("1111011")
-    ("%+b" % 123).should eq("+1111011")
-    ("% b" % 123).should eq(" 1111011")
-    ("%-b" % 123).should eq("1111011")
-    ("%10b" % 123).should eq("   1111011")
-    ("%-10b" % 123).should eq("1111011   ")
-
-    ("%o" % 123).should eq("173")
-    ("%+o" % 123).should eq("+173")
-    ("% o" % 123).should eq(" 173")
-    ("%-o" % 123).should eq("173")
-    ("%6o" % 123).should eq("   173")
-    ("%-6o" % 123).should eq("173   ")
-
-    ("%x" % 123).should eq("7b")
-    ("%+x" % 123).should eq("+7b")
-    ("% x" % 123).should eq(" 7b")
-    ("%-x" % 123).should eq("7b")
-    ("%6x" % 123).should eq("    7b")
-    ("%-6x" % 123).should eq("7b    ")
-
-    ("%X" % 123).should eq("7B")
-    ("%+X" % 123).should eq("+7B")
-    ("% X" % 123).should eq(" 7B")
-    ("%-X" % 123).should eq("7B")
-    ("%6X" % 123).should eq("    7B")
-    ("%-6X" % 123).should eq("7B    ")
-
-    ("こんに%xちは" % 123).should eq("こんに7bちは")
-    ("こんに%Xちは" % 123).should eq("こんに7Bちは")
-
-    span = 1.second
-    ("%s" % span).should eq(span.to_s)
-  end
-
-  it "doesn't stop at null character when doing '%'" do
-    ("1\u{0}%i\u{0}3" % 2).should eq("1\u00002\u00003")
-  end
-
-  pending_win32 "does % with floats" do
-    ("%f" % 123).should eq("123.000000")
-
-    ("%g" % 123).should eq("123")
-    ("%12f" % 123.45).should eq("  123.450000")
-    ("%-12f" % 123.45).should eq("123.450000  ")
-    ("% f" % 123.45).should eq(" 123.450000")
-    ("%+f" % 123).should eq("+123.000000")
-    ("%012f" % 123).should eq("00123.000000")
-    ("%.f" % 1234.56).should eq("1235")
-    ("%.2f" % 1234.5678).should eq("1234.57")
-    ("%10.2f" % 1234.5678).should eq("   1234.57")
-    ("%*.2f" % [10, 1234.5678]).should eq("   1234.57")
-    ("%0*.2f" % [10, 1234.5678]).should eq("0001234.57")
-    ("%e" % 123.45).should eq("1.234500e+02")
-    ("%E" % 123.45).should eq("1.234500E+02")
-    ("%G" % 12345678.45).should eq("1.23457E+07")
-    ("%a" % 12345678.45).should eq("0x1.78c29ce666666p+23")
-    ("%A" % 12345678.45).should eq("0X1.78C29CE666666P+23")
-    ("%100.50g" % 123.45).should eq("                                                  123.4500000000000028421709430404007434844970703125")
-
-    ("%.2f" % 2.536_f32).should eq("2.54")
-    ("%0*.*f" % [10, 2, 2.536_f32]).should eq("0000002.54")
-    expect_raises(ArgumentError, "Expected dynamic value '*' to be an Int - \"not a number\" (String)") do
-      "%*f" % ["not a number", 2.536_f32]
-    end
-  end
-
   it "escapes chars" do
     "\a"[0].should eq('\a')
     "\b"[0].should eq('\b')
@@ -2391,15 +2273,9 @@ describe "String" do
     end
   end
 
-  it "uses sprintf from top-level" do
-    sprintf("Hello %d world", 123).should eq("Hello 123 world")
-    sprintf("Hello %d world", [123]).should eq("Hello 123 world")
-  end
-
-  pending_win32 "formats floats (#1562)" do
-    sprintf("%12.2f %12.2f %6.2f %.2f" % {2.0, 3.0, 4.0, 5.0}).should eq("        2.00         3.00   4.00 5.00")
-
-    sprintf("%f", 1e15).should eq("1000000000000000.000000")
+  it "does %" do
+    ("Hello %d world" % 123).should eq("Hello 123 world")
+    ("Hello %d world" % [123]).should eq("Hello 123 world")
   end
 
   it "does each_char" do
@@ -2525,58 +2401,6 @@ describe "String" do
     end
   end
 
-  context "%" do
-    it "substitutes one placeholder" do
-      res = "change %{this}" % {"this" => "nothing"}
-      res.should eq "change nothing"
-
-      res = "change %{this}" % {this: "nothing"}
-      res.should eq "change nothing"
-    end
-
-    it "substitutes multiple placeholder" do
-      res = "change %{this} and %{more}" % {"this" => "nothing", "more" => "something"}
-      res.should eq "change nothing and something"
-
-      res = "change %{this} and %{more}" % {this: "nothing", more: "something"}
-      res.should eq "change nothing and something"
-    end
-
-    it "throws an error when the key is not found" do
-      expect_raises KeyError do
-        "change %{this}" % {"that" => "wrong key"}
-      end
-
-      expect_raises KeyError do
-        "change %{this}" % {that: "wrong key"}
-      end
-    end
-
-    it "raises if expecting hash or named tuple but not given" do
-      expect_raises(ArgumentError, "One hash or named tuple required") do
-        "change %{this}" % "this"
-      end
-    end
-
-    it "raises on unbalanced curly" do
-      expect_raises(ArgumentError, "Malformed name - unmatched parenthesis") do
-        "change %{this" % {"this" => 1}
-      end
-    end
-
-    it "doesn't raise on balanced curly with null byte" do
-      ("change %{this\u{0}}" % {"this\u{0}" => 1}).should eq("change 1")
-    end
-
-    it "applies formatting to %<...> placeholder" do
-      res = "change %<this>.2f" % {"this" => 23.456}
-      res.should eq "change 23.46"
-
-      res = "change %<this>.2f" % {this: 23.456}
-      res.should eq "change 23.46"
-    end
-  end
-
   it "raises if string capacity is negative" do
     expect_raises(ArgumentError, "Negative capacity") do
       String.new(-1) { |buf| {0, 0} }
@@ -2672,10 +2496,19 @@ describe "String" do
         bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
       end
 
-      {% unless flag?(:musl) %}
+      {% unless flag?(:musl) || flag?(:freebsd) %}
         it "flushes the shift state (#11992)" do
           "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
           "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
+        end
+      {% end %}
+
+      # FreeBSD iconv encoder expects ISO/IEC 10646 compatibility code points,
+      # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
+      {% if flag?(:freebsd) %}
+        it "flushes the shift state (#11992)" do
+          "\u{F329}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
+          "\u{F325}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
         end
       {% end %}
 
@@ -2716,10 +2549,21 @@ describe "String" do
         String.new(bytes, "UTF-16LE").should eq("Hello")
       end
 
-      it "decodes with shift state" do
-        String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
-        String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
-      end
+      {% unless flag?(:freebsd) %}
+        it "decodes with shift state" do
+          String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
+          String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
+        end
+      {% end %}
+
+      # FreeBSD iconv decoder returns ISO/IEC 10646-1:2000 code points,
+      # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
+      {% if flag?(:freebsd) %}
+        it "decodes with shift state" do
+          String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
+          String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{F325}")
+        end
+      {% end %}
 
       it "decodes with skip" do
         bytes = Bytes[186, 195, 255, 202, 199]
@@ -2828,7 +2672,67 @@ describe "String" do
 
     it "valid_encoding?" do
       "hello".valid_encoding?.should be_true
-      String.new(Bytes[255, 0]).valid_encoding?.should be_false
+      "hello\u{80}\u{7FF}\u{800}\u{FFFF}\u{10000}\u{10FFFF}".valid_encoding?.should be_true
+
+      # non-starters
+      String.new(Bytes[0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0x8F]).valid_encoding?.should be_false
+      String.new(Bytes[0x90]).valid_encoding?.should be_false
+      String.new(Bytes[0x9F]).valid_encoding?.should be_false
+      String.new(Bytes[0xA0]).valid_encoding?.should be_false
+      String.new(Bytes[0xAF]).valid_encoding?.should be_false
+
+      # incomplete, 2-byte
+      String.new(Bytes[0xC2]).valid_encoding?.should be_false
+      String.new(Bytes[0xC2, 0x00]).valid_encoding?.should be_false
+      String.new(Bytes[0xC2, 0xC2]).valid_encoding?.should be_false
+
+      # overlong, 2-byte
+      String.new(Bytes[0xC0, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xC1, 0xBF]).valid_encoding?.should be_false
+      String.new(Bytes[0xC2, 0x80]).valid_encoding?.should be_true
+
+      # incomplete, 3-byte
+      String.new(Bytes[0xE1]).valid_encoding?.should be_false
+      String.new(Bytes[0xE1, 0x00]).valid_encoding?.should be_false
+      String.new(Bytes[0xE1, 0xC2]).valid_encoding?.should be_false
+      String.new(Bytes[0xE1, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xE1, 0x80, 0x00]).valid_encoding?.should be_false
+      String.new(Bytes[0xE1, 0x80, 0xC2]).valid_encoding?.should be_false
+
+      # overlong, 3-byte
+      String.new(Bytes[0xE0, 0x80, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xE0, 0x9F, 0xBF]).valid_encoding?.should be_false
+      String.new(Bytes[0xE0, 0xA0, 0x80]).valid_encoding?.should be_true
+
+      # surrogate pairs
+      String.new(Bytes[0xED, 0x9F, 0xBF]).valid_encoding?.should be_true
+      String.new(Bytes[0xED, 0xA0, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xED, 0xBF, 0xBF]).valid_encoding?.should be_false
+      String.new(Bytes[0xEE, 0x80, 0x80]).valid_encoding?.should be_true
+
+      # incomplete, 4-byte
+      String.new(Bytes[0xF1]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x00]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0xC2]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x80, 0x00]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x80, 0xC2]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x80, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x80, 0x80, 0x00]).valid_encoding?.should be_false
+      String.new(Bytes[0xF1, 0x80, 0x80, 0xC2]).valid_encoding?.should be_false
+
+      # overlong, 4-byte
+      String.new(Bytes[0xF0, 0x80, 0x80, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xF0, 0x8F, 0xBF, 0xBF]).valid_encoding?.should be_false
+      String.new(Bytes[0xF0, 0x90, 0x80, 0x80]).valid_encoding?.should be_true
+
+      # upper boundary, 4-byte
+      String.new(Bytes[0xF4, 0x8F, 0xBF, 0xBF]).valid_encoding?.should be_true
+      String.new(Bytes[0xF4, 0x90, 0x80, 0x80]).valid_encoding?.should be_false
+      String.new(Bytes[0xF5]).valid_encoding?.should be_false
+      String.new(Bytes[0xF8]).valid_encoding?.should be_false
+      String.new(Bytes[0xFF]).valid_encoding?.should be_false
     end
 
     it "scrubs" do

@@ -133,9 +133,7 @@ class Crystal::CodeGenVisitor
 
             alloca_vars initializer.meta_vars
 
-            request_value do
-              accept node
-            end
+            request_value(node)
 
             node_type = node.type
 
