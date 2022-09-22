@@ -3,33 +3,27 @@ require "../types"
 
 # Here is the logic for deciding two things:
 #
-# 1. Whether a method should come before another one
-#    when considering overloads.
-#    This is what `restriction_of?` is for.
-# 2. What's the resulting type of filtering a type
-#    by a restriction.
+# 1. Whether a method should come before another one when considering overloads.
+#    This is what `compare_strictness` and `restriction_of?` are for.
+# 2. What's the resulting type of filtering a type by a restriction.
 #    This is what `restrict` is for.
 #
-# If `a.restriction_of?(b)` is true, it means that
-# `a` should come before `b` when considering restrictions.
-# This applies almost always to AST nodes, which are
-# sometimes resolved to see if a type inherits another
-# one (and so it should be considered before that type),
-# but can apply to types when arguments have a fixed
-# type (mostly for primitive methods, though we should
+# If `a.restriction_of?(b)` is true, it means that `a` should come before `b`
+# when considering restrictions. This applies almost always to AST nodes, which
+# are sometimes resolved to see if a type inherits another one (and so it should
+# be considered before that type), but can apply to types when arguments have a
+# fixed type (mostly for primitive methods and abstract defs, though we should
 # get rid of this to simplify things).
-# A similar logic applies to a `Def`, where this logic
-# is applied for each of the arguments, though here
-# the number of arguments, splat index and other factors
-# are considered.
-# If `a.restriction_of?(b) == true` and `b.restriction_of?(a) == true`,
-# for `a` and `b` being `Def`s, then it means `a` and `b` are equivalent,
-# and so when adding `b` to a types methods it will replace `a`.
 #
-# The method `restrict` is different in that the return
-# value is not a boolean, but a type, and computing it
-# might be a bit more expensive. For example when restricting
-# `Int32 | String` against `Int32`, the result is `Int32`.
+# A similar logic applies to a `Def`, where this logic is applied for each of
+# the arguments, though here the number of arguments, splat index and other
+# factors are considered. If `a.compare_strictness(b) == 0`, for `a` and `b`
+# being `Def`s, then it means `a` and `b` are equivalent, and so when adding `b`
+# to a type's methods it will replace `a`.
+#
+# The method `restrict` is different in that the return value is not a boolean,
+# but a type, and computing it might be a bit more expensive. For example when
+# restricting `Int32 | String` against `Int32`, the result is `Int32`.
 
 module Crystal
   class ASTNode
@@ -65,7 +59,306 @@ module Crystal
   end
 
   struct DefWithMetadata
-    def restriction_of?(other : DefWithMetadata, owner)
+    # Compares two defs based on overload order. Has a return value similar to
+    # `Comparable`; that is, `self.compare_strictness(other)` returns:
+    #
+    # * `-1` if `self` is a stricter def than *other*;
+    # * `1` if *other* is a stricter def than `self`;
+    # * `0` if `self` and *other* are equivalent defs;
+    # * `nil` if neither def is stricter than the other.
+    def compare_strictness(other : DefWithMetadata, self_owner, *, other_owner = self_owner)
+      unless self_owner.program.has_flag?("preview_overload_order")
+        return compare_strictness_old(other, self_owner, other_owner: other_owner)
+      end
+
+      # If one yields and the other doesn't, neither is stricter than the other
+      return nil unless self.yields == other.yields
+
+      # We don't check for incompatible defs from positional parameters here,
+      # because doing so would break transitivity, e.g.
+      #
+      #     def f(x = 0); end
+      #     def f(x, y, z = 0); end
+      #
+      # The two defs are indeed incompatible, but their order can be defined
+      # through the intermediate overload `def f(x, y = 0); end`.
+
+      self_named_args = self.named_arguments
+      other_named_args = other.named_arguments
+
+      # Required named parameter in self, no corresponding named parameter in
+      # other; neither is stricter than the other
+      unless other.def.double_splat
+        self_named_args.try &.each do |self_arg|
+          unless self_arg.default_value
+            unless other_named_args.try &.any?(&.external_name.== self_arg.external_name)
+              return nil
+            end
+          end
+        end
+      end
+
+      unless self.def.double_splat
+        other_named_args.try &.each do |other_arg|
+          unless other_arg.default_value
+            unless self_named_args.try &.any?(&.external_name.== other_arg.external_name)
+              return nil
+            end
+          end
+        end
+      end
+
+      self_stricter = true
+      other_stricter = true
+
+      # Compare all corresponding parameters based on subsumption order
+      each_corresponding_param(other, self_named_args, other_named_args) do |self_arg, other_arg|
+        self_restriction = self_arg.type? || self_arg.restriction
+        other_restriction = other_arg.type? || other_arg.restriction
+
+        case {self_restriction, other_restriction}
+        when {nil, nil}
+          # Check other corresponding parameters
+        when {nil, _}
+          self_is_not_stricter
+        when {_, nil}
+          other_is_not_stricter
+        else
+          self_is_not_stricter unless self_restriction.restriction_of?(other_restriction, self_owner)
+          other_is_not_stricter unless other_restriction.restriction_of?(self_restriction, other_owner)
+        end
+      end
+
+      # The overload order is fully defined at this point if either def already
+      # isn't stricter than the other
+      return stricter_pair_to_num(self_stricter, other_stricter) if !self_stricter || !other_stricter
+
+      # Combine the specificities from positional and all named signatures
+      self_stricter, other_stricter = compare_specific_positional(other)
+
+      if self_named_args || other_named_args
+        self_named_args.try &.each do |self_arg|
+          other_arg = other_named_args.try &.find(&.external_name.== self_arg.external_name)
+          self_n, other_n = compare_specific_named(other, self_arg, other_arg)
+          self_is_not_stricter if !self_n
+          other_is_not_stricter if !other_n
+        end
+
+        other_named_args.try &.each do |other_arg|
+          next if self_named_args.try &.any?(&.external_name.== other_arg.external_name)
+          self_n, other_n = compare_specific_named(other, nil, other_arg)
+          self_is_not_stricter if !self_n
+          other_is_not_stricter if !other_n
+        end
+      else
+        # If there are no named parameters at all, `(**ns)` is less specific than `()`
+        if self.def.double_splat && !other.def.double_splat
+          self_is_not_stricter
+        elsif other.def.double_splat && !self.def.double_splat
+          other_is_not_stricter
+        end
+      end
+
+      stricter_pair_to_num(self_stricter, other_stricter)
+    end
+
+    private macro self_is_not_stricter
+      self_stricter = false
+      return nil if !other_stricter
+    end
+
+    private macro other_is_not_stricter
+      other_stricter = false
+      return nil if !self_stricter
+    end
+
+    # Compares two defs based on whether one def's positional parameters are
+    # more specific than the other's.
+    #
+    # Required parameters are more specific than optional parameters, and single
+    # splat parameters are the least specific.
+    def compare_specific_positional(other : DefWithMetadata)
+      # If self has more required positional parameters than other, the last
+      # one in self must correspond to an optional or splat parameter in other,
+      # otherwise other has no corresponding parameter and `compare_strictness`
+      # would have already returned; hence, self is stricter than other in this
+      # case.
+      if self.min_size > other.min_size
+        self_is_stricter
+      elsif other.min_size > self.min_size
+        other_is_stricter
+      end
+
+      # Bare splats aren't single splat parameters
+      if self_splat_index = self.def.splat_index
+        self_splat_index = nil if self.def.args[self_splat_index].name.empty?
+      end
+      if other_splat_index = other.def.splat_index
+        other_splat_index = nil if other.def.args[other_splat_index].name.empty?
+      end
+
+      case {self_splat_index, other_splat_index}
+      in {nil, nil}
+        # Consider `(x0, x1 = 0, x2 = 0)` and `(y0, y1 = 0)`; both overloads can
+        # take 1 or 2 arguments, but only self could take 3, so other is stricter
+        # than self.
+        if self.max_size > other.max_size
+          other_is_stricter
+        elsif other.max_size > self.max_size
+          self_is_stricter
+        end
+      in {nil, Int32}
+        # other has a splat parameter, self doesn't; self is stricter than the other
+        self_is_stricter
+      in {Int32, nil}
+        # self has a splat parameter, other doesn't; other is stricter than self
+        other_is_stricter
+      in {Int32, Int32}
+        # Consider `(x0, *xs)` and `(y0, y1 = 0, *ys)`; here `y1` corresponds to
+        # `xs`, and splat parameter is less specific than optional parameter, so
+        # other is stricter than self.
+        if self_splat_index < other_splat_index
+          other_is_stricter
+        elsif other_splat_index < self_splat_index
+          self_is_stricter
+        end
+      end
+
+      no_differences
+    end
+
+    # Compares two defs based on whether one def's given named parameter is more
+    # specific than the other's.
+    def compare_specific_named(other : DefWithMetadata, self_arg : Arg?, other_arg : Arg?)
+      self_arg_required = self_arg && !self_arg.default_value
+      other_arg_required = other_arg && !other_arg.default_value
+
+      # `n` is required in self, but not required in other; `n`'s corresponding
+      # parameter in other must be optional or splat, so self is stricter than
+      # the other
+      if self_arg_required && !other_arg_required
+        self_is_stricter
+      elsif other_arg_required && !self_arg_required
+        other_is_stricter
+      end
+
+      self_arg_optional = self_arg && self_arg.default_value
+      other_arg_optional = other_arg && other_arg.default_value
+
+      case {self.def.double_splat, other.def.double_splat}
+      in {nil, nil}
+        # Consider `(*, n = 0)` and `()`; both overloads can take no named
+        # arguments, but only self could take `n`, so other is stricter than
+        # self.
+        if self_arg_optional && !other_arg_optional
+          other_is_stricter
+        elsif other_arg_optional && !self_arg_optional
+          self_is_stricter
+        end
+      in {nil, Arg}
+        # other has a splat parameter, self doesn't; self is stricter than the other
+        self_is_stricter
+      in {Arg, nil}
+        # self has a splat parameter, other doesn't; other is stricter than self
+        other_is_stricter
+      in {Arg, Arg}
+        # Consider `(*, **ms)` and `(*, n = 0, **ns)`; here `n` corresponds to
+        # `ms`, and splat parameter is less specific than optional parameter, so
+        # other is stricter than self.
+        if self_arg_optional && !other_arg_optional
+          self_is_stricter
+        elsif other_arg_optional && !self_arg_optional
+          other_is_stricter
+        end
+      end
+
+      no_differences
+    end
+
+    private macro self_is_stricter
+      return {true, false}
+    end
+
+    private macro other_is_stricter
+      return {false, true}
+    end
+
+    private macro no_differences
+      return {true, true}
+    end
+
+    # Yields each pair of corresponding parameters between `self` and *other*.
+    def each_corresponding_param(other : DefWithMetadata, self_named_args, other_named_args)
+      self_arg_index = 0
+      other_arg_index = 0
+
+      # Traverse through positional parameters, including single splats
+      while self_arg_index < self.def.args.size && other_arg_index < other.def.args.size
+        self_arg = self.def.args[self_arg_index]
+        self_splatting = (self_arg_index == self.def.splat_index)
+        break if self_splatting && self_arg.name.empty? # Start of named parameters
+
+        other_arg = other.def.args[other_arg_index]
+        other_splatting = (other_arg_index == other.def.splat_index)
+        break if other_splatting && other_arg.name.empty? # Start of named parameters
+
+        yield self_arg, other_arg
+
+        break if self_splatting && other_splatting # Both are splat parameters
+
+        self_arg_index += 1 unless self_splatting
+        other_arg_index += 1 unless other_splatting
+      end
+
+      # Traverse through named parameters
+      self_double_splat = self.def.double_splat
+      other_double_splat = other.def.double_splat
+
+      self_named_args.try &.each do |self_arg|
+        other_arg = other_named_args.try &.find(&.external_name.== self_arg.external_name)
+        other_arg ||= other_double_splat
+        next unless other_arg
+
+        yield self_arg, other_arg
+      end
+
+      if self_double_splat
+        # Pair self's double splat with any remaining named parameters in other
+        other_named_args.try &.each do |other_arg|
+          next if self_named_args.try &.any?(&.external_name.== other_arg.external_name)
+
+          yield self_double_splat, other_arg
+        end
+
+        # Double splats themselves are also corresponding named parameters
+        if other_double_splat
+          yield self_double_splat, other_double_splat
+        end
+      end
+    end
+
+    def stricter_pair_to_num(self_stricter, other_stricter)
+      case {self_stricter, other_stricter}
+      in {true, true}   then 0
+      in {true, false}  then -1
+      in {false, true}  then 1
+      in {false, false} then nil
+      end
+    end
+
+    def named_arguments
+      if (splat_index = self.def.splat_index) && splat_index != self.def.args.size - 1
+        self.def.args[splat_index + 1..]
+      end
+    end
+
+    def compare_strictness_old(other : DefWithMetadata, self_owner, *, other_owner = self_owner)
+      self_stricter = old_restriction_of?(other, self_owner)
+      other_stricter = other.old_restriction_of?(self, other_owner)
+      stricter_pair_to_num(self_stricter, other_stricter)
+    end
+
+    def old_restriction_of?(other : DefWithMetadata, owner)
       # This is how multiple defs are sorted by 'restrictions' (?)
 
       # If one yields and the other doesn't, none is stricter than the other
