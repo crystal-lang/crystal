@@ -35,7 +35,7 @@ class Crystal::Command
     end
 
     if options.empty?
-      welcome
+      splash
       repl.run
     else
       filename = options.shift
@@ -43,12 +43,12 @@ class Crystal::Command
         error "File '#{filename}' doesn't exist"
       end
 
-      welcome
+      splash
       repl.run_file(filename, options)
     end
   end
 
-  private def welcome
+  private def splash
     formatted_sha = "[#{Config.build_commit}] " if Config.build_commit
     puts "Crystal interpreter #{Config.version} #{formatted_sha}(#{Config.date}).\n" \
          "EXPERIMENTAL SOFTWARE: if you find a bug, please consider opening a ticket in\n" \
