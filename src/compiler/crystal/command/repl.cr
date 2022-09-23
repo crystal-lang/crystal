@@ -49,9 +49,11 @@ class Crystal::Command
   end
 
   private def splash
+    return unless STDOUT.tty?
+
     formatted_sha = "[#{Config.build_commit}] " if Config.build_commit
-    puts "Crystal interpreter #{Config.version} #{formatted_sha}(#{Config.date}).\n" \
-         "EXPERIMENTAL SOFTWARE: if you find a bug, please consider opening a ticket in\n" \
-         "https://github.com/crystal-lang/crystal/issues/new/"
+    STDERR.puts "Crystal interpreter #{Config.version} #{formatted_sha}(#{Config.date}).\n" \
+                "EXPERIMENTAL SOFTWARE: if you find a bug, please consider opening a ticket in\n" \
+                "https://github.com/crystal-lang/crystal/issues/new/"
   end
 end
