@@ -139,9 +139,12 @@ module Crystal
       @meta_vars = meta_vars
     end
 
-    def initialize(program, *, from_main_visitor : MainVisitor)
-      super(program, from_main_visitor.@vars)
+    def initialize(*, from_main_visitor : MainVisitor)
+      super(from_main_visitor.@program, from_main_visitor.@vars)
       @meta_vars = from_main_visitor.@meta_vars
+      @typed_def = from_main_visitor.@typed_def
+      @scope = from_main_visitor.@scope
+      @path_lookup = from_main_visitor.@path_lookup
     end
 
     def visit_any(node)

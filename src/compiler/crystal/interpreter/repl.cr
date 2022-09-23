@@ -95,7 +95,7 @@ class Crystal::Repl
   end
 
   private def interpret(node : ASTNode)
-    @main_visitor = MainVisitor.new(@program, from_main_visitor: @main_visitor)
+    @main_visitor = MainVisitor.new(from_main_visitor: @main_visitor)
 
     node = @program.normalize(node)
     node = @program.semantic(node, main_visitor: @main_visitor)
