@@ -115,7 +115,7 @@ class HTTP::StaticFileHandler
   end
 
   private def redirect_to(context, url)
-    context.response.redirect url
+    context.response.redirect url.to_s
   end
 
   private def add_cache_headers(response_headers : HTTP::Headers, last_modified : Time) : Nil

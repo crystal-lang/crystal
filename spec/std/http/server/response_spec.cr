@@ -350,7 +350,7 @@ describe HTTP::Server::Response do
   end
 
   describe "#redirect" do
-    ["/path", URI.parse("/path"), Path.posix("/path")].each do |location|
+    ["/path", URI.parse("/path")].each do |location|
       it "#{location.class} location" do
         io = IO::Memory.new
         response = Response.new(io)
