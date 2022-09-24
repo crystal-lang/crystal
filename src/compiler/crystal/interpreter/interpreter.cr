@@ -1185,9 +1185,10 @@ class Crystal::Repl::Interpreter
     # Remember the portion from stack_bottom + local_vars.max_bytesize up to stack
     # because it might happen that the child interpreter will overwrite some
     # of that if we already have some values in the stack past the local vars
-    data_size = stack - (stack_bottom + local_vars.max_bytesize)
+    original_local_vars_max_bytesize = local_vars.max_bytesize
+    data_size = stack - (stack_bottom + original_local_vars_max_bytesize)
     data = Pointer(Void).malloc(data_size).as(UInt8*)
-    data.copy_from(stack_bottom + local_vars.max_bytesize, data_size)
+    data.copy_from(stack_bottom + original_local_vars_max_bytesize, data_size)
 
     gatherer = LocalVarsGatherer.new(location, a_def)
     gatherer.gather
@@ -1330,7 +1331,7 @@ class Crystal::Repl::Interpreter
     end
 
     # Restore the stack data in case it tas overwritten
-    (stack_bottom + local_vars.max_bytesize).copy_from(data, data_size)
+    (stack_bottom + original_local_vars_max_bytesize).copy_from(data, data_size)
   end
 
   private def whereami(a_def : Def, location : Location)
