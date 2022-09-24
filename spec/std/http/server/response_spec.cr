@@ -348,4 +348,56 @@ describe HTTP::Server::Response do
       end
     end
   end
+
+  describe "#redirect" do
+    ["/path", URI.parse("/path"), Path.posix("/path")].each do |location|
+      it "#{location.class} location" do
+        io = IO::Memory.new
+        response = Response.new(io)
+        response.redirect(location)
+        io.to_s.should eq("HTTP/1.1 302 Found\r\nLocation: /path\r\nContent-Length: 0\r\n\r\n")
+      end
+    end
+
+    it "encodes special characters" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.redirect("https://example.com/path\nfoo bar")
+      io.to_s.should eq("HTTP/1.1 302 Found\r\nLocation: https://example.com/path%0Afoo%20bar\r\nContent-Length: 0\r\n\r\n")
+    end
+
+    it "permanent redirect" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.redirect("/path", status: :moved_permanently)
+      io.to_s.should eq("HTTP/1.1 301 Moved Permanently\r\nLocation: /path\r\nContent-Length: 0\r\n\r\n")
+    end
+
+    it "with header" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.headers["Foo"] = "Bar"
+      response.redirect("/path", status: :moved_permanently)
+      io.to_s.should eq("HTTP/1.1 301 Moved Permanently\r\nFoo: Bar\r\nLocation: /path\r\nContent-Length: 0\r\n\r\n")
+    end
+
+    it "fails if headers already sent" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.puts "foo"
+      response.flush
+      expect_raises(IO::Error, "Headers already sent") do
+        response.redirect("/path")
+      end
+    end
+
+    it "fails if closed" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.close
+      expect_raises(IO::Error, "Closed stream") do
+        response.redirect("/path")
+      end
+    end
+  end
 end
