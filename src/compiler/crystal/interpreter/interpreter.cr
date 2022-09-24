@@ -169,8 +169,8 @@ class Crystal::Repl::Interpreter
     # Declare or migrate local variables
     # TODO: we should also migrate variables if we are outside of a block
     # in a pry session, but that's tricky so we'll leave it for later.
-    if (!compiled_def || in_pry) && @local_vars.block_level == 0
-      migrate_local_vars(@local_vars, meta_vars)
+    if (!compiled_def || in_pry)
+      migrate_local_vars(@local_vars, meta_vars) if @local_vars.block_level == 0
 
       # TODO: is it okay to assume this is always the program? Probably not.
       # Check if we need a local variable for the closure context
@@ -189,7 +189,13 @@ class Crystal::Repl::Interpreter
         # Closured vars don't belong in the local variables table
         next if meta_var.closured?
 
-        existing_type = @local_vars.type?(name, 0)
+        # Check if the var already exists from the current block upwards
+        existing_type = nil
+        @local_vars.block_level.downto(0) do |level|
+          existing_type = @local_vars.type?(name, level)
+          break if existing_type
+        end
+
         if existing_type
           if existing_type != meta_var.type
             raise "BUG: can't change type of local variable #{name} from #{existing_type} to #{meta_var.type} yet"
