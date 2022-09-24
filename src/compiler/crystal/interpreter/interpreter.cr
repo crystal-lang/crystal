@@ -167,7 +167,9 @@ class Crystal::Repl::Interpreter
     compiled_def = @compiled_def
 
     # Declare or migrate local variables
-    if !compiled_def || in_pry
+    # TODO: we should also migrate variables if we are outside of a block
+    # in a pry session, but that's tricky so we'll leave it for later.
+    if (!compiled_def || in_pry) && @local_vars.block_level == 0
       migrate_local_vars(@local_vars, meta_vars)
 
       # TODO: is it okay to assume this is always the program? Probably not.
