@@ -218,33 +218,35 @@ describe "Restrictions" do
     end
 
     describe "Metaclass vs Path" do
-      it "inserts metaclass before Class" do
-        assert_type(%(
-          def foo(a : Class)
-            1
-          end
+      {% for type in [Object, Value, Class] %}
+        it "inserts metaclass before {{ type }}" do
+          assert_type(%(
+            def foo(a : {{ type }})
+              1
+            end
 
-          def foo(a : Int32.class)
-            true
-          end
+            def foo(a : Int32.class)
+              true
+            end
 
-          foo(Int32)
-          )) { bool }
-      end
+            foo(Int32)
+            )) { bool }
+        end
 
-      it "keeps metaclass before Class" do
-        assert_type(%(
-          def foo(a : Int32.class)
-            true
-          end
+        it "keeps metaclass before {{ type }}" do
+          assert_type(%(
+            def foo(a : Int32.class)
+              true
+            end
 
-          def foo(a : Class)
-            1
-          end
+            def foo(a : {{ type }})
+              1
+            end
 
-          foo(Int32)
-          )) { bool }
-      end
+            foo(Int32)
+            )) { bool }
+        end
+      {% end %}
 
       it "doesn't error if path is undefined and method is not called (1) (#12516)" do
         assert_no_errors <<-CR
