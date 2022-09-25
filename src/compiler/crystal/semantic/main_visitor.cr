@@ -169,6 +169,8 @@ module Crystal
     end
 
     def visit(node : Path)
+      return if node.type?
+
       lookup_scope = @path_lookup || @scope || @current_type
 
       # If the lookup scope is a generic type, like Foo(T), we don't
@@ -2943,6 +2945,12 @@ module Crystal
     end
 
     def visit(node : StringInterpolation)
+      # Eagerly solve Paths before expansion to see if
+      # we can inline some content.
+      node.expressions.each do |exp|
+        exp.accept self if exp.is_a?(Path)
+      end
+
       expand(node)
 
       # This allows some methods to be resolved even if the interpolated expressions doesn't
