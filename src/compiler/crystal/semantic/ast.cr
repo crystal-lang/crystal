@@ -12,15 +12,6 @@ module Crystal
       ::raise exception_type.for_node(self, message, inner)
     end
 
-    def warning(message, inner = nil, exception_type = Crystal::TypeException)
-      # TODO extract message formatting from exceptions
-      String.build do |io|
-        exception = exception_type.for_node(self, message, inner)
-        exception.warning = true
-        exception.append_to_s(io, nil)
-      end
-    end
-
     def simple_literal?
       case self
       when Nop, NilLiteral, BoolLiteral, NumberLiteral, CharLiteral,
@@ -148,6 +139,7 @@ module Crystal
     property previous : DefWithMetadata?
     property next : Def?
     property special_vars : Set(String)?
+    property freeze_type : Type?
     property block_nest = 0
     property? raises = false
     property? closure = false
@@ -171,6 +163,9 @@ module Crystal
 
     @macro_owner : Type?
 
+    # Used to override the meaning of `self` in restrictions
+    property self_restriction_type : Type?
+
     def macro_owner=(@macro_owner)
     end
 
@@ -187,19 +182,22 @@ module Crystal
       special_vars << name
     end
 
-    # Returns the minimum and maximum number of arguments that must
-    # be passed to this method.
+    # Returns the minimum and maximum number of positional arguments that must
+    # be passed to this method, assuming positional parameters are not matched
+    # by named arguments.
     def min_max_args_sizes
       max_size = args.size
       default_value_index = args.index(&.default_value)
       min_size = default_value_index || max_size
       splat_index = self.splat_index
       if splat_index
+        min_size = {default_value_index || splat_index, splat_index}.min
         if args[splat_index].name.empty?
-          min_size = {default_value_index || splat_index, splat_index}.min
           max_size = splat_index
         else
-          min_size -= 1 unless default_value_index && default_value_index < splat_index
+          if splat_restriction = args[splat_index].restriction
+            min_size += 1 unless splat_restriction.is_a?(Splat) || default_value_index.try(&.< splat_index)
+          end
           max_size = Int32::MAX
         end
       end
@@ -434,6 +432,8 @@ module Crystal
     # a Def or a Block.
     property context : ASTNode | NonGenericModuleType | Nil
 
+    property freeze_type : Type?
+
     # True if we need to mark this variable as nilable
     # if this variable is read.
     property? nil_if_read = false
@@ -532,6 +532,8 @@ module Crystal
     # The (optional) initial value of a class variable
     property initializer : ClassVarInitializer?
 
+    property freeze_type : Type?
+
     # Flag used during codegen to indicate the initializer is simple
     # and doesn't require a call to a function
     property? simple_initializer = false
@@ -612,6 +614,7 @@ module Crystal
     property after_vars : MetaVars?
     property context : Def | NonGenericModuleType | Nil
     property fun_literal : ASTNode?
+    property freeze_type : Type?
     property? visited = false
 
     getter(:break) { Var.new("%break") }
@@ -679,6 +682,7 @@ module Crystal
     property real_name : String
     property! fun_def : FunDef
     property call_convention : LLVM::CallConvention?
+    property wasm_import_module : String?
 
     property? dead = false
     property? used = false

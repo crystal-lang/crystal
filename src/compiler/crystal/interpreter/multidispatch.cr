@@ -39,7 +39,7 @@ require "../semantic/main_visitor"
 # end
 # ```
 module Crystal::Repl::Multidispatch
-  def self.create_def(context : Context, node : Call, target_defs : Array(Def))
+  def self.create_def(context : Context, node : Call, target_defs : ZeroOneOrMany(Def))
     if node.block
       a_def = create_def_uncached(context, node, target_defs)
 
@@ -70,7 +70,7 @@ module Crystal::Repl::Multidispatch
     a_def
   end
 
-  private def self.create_def_uncached(context : Context, node : Call, target_defs : Array(Def))
+  private def self.create_def_uncached(context : Context, node : Call, target_defs : ZeroOneOrMany(Def))
     autocast_types = nil
 
     # The generated multidispatch method should handle autocasted
@@ -142,7 +142,7 @@ module Crystal::Repl::Multidispatch
 
     blocks = [] of Block
 
-    target_defs.each do |target_def|
+    target_defs.each_with_index do |target_def, target_def_index|
       i = 0
 
       condition = nil
@@ -168,8 +168,27 @@ module Crystal::Repl::Multidispatch
       call_args = [] of ASTNode
 
       i = 0
-      node.args.each do
-        call_args << Var.new("arg#{i}")
+      node.args.each_with_index do |arg, arg_index|
+        var = Var.new("arg#{i}")
+
+        # If the argument was autocasted it will always match in a multidispatch
+        if autocast_types.try &.[arg_index]?
+          call_args << var
+          i += 1
+          next
+        end
+
+        # Make sure to cast the argument to the target def arg's type
+        # in the last case, where the argument's type is not restricted by an if is_a?
+        if target_def_index == target_defs.size - 1
+          target_def_arg = target_def.args[i]
+
+          cast = Cast.new(var, TypeNode.new(target_def_arg.type))
+          call_args << cast
+        else
+          call_args << var
+        end
+
         i += 1
       end
 
@@ -181,7 +200,7 @@ module Crystal::Repl::Multidispatch
         end
 
       call = Call.new(call_obj, node.name, call_args)
-      call.target_defs = [target_def]
+      call.target_defs = ZeroOneOrMany(Def).new(target_def)
       call.type = target_def.type
 
       if block

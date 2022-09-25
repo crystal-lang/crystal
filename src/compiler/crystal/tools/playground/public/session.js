@@ -294,7 +294,22 @@ Playground.Session = function(options) {
     tabSize: 2,
     viewportMargin: Infinity,
     dragDrop: false, // dragDrop functionality is implemented to capture drop anywhere and replace source
-    value: options.source
+    value: options.source,
+    // indent using spaces, see https://github.com/codemirror/codemirror5/issues/988
+    extraKeys: {
+      Tab: (cm) => {
+        if (cm.getMode().name === 'null') {
+          cm.execCommand('insertTab');
+        } else {
+          if (cm.somethingSelected()) {
+            cm.execCommand('indentMore');
+          } else {
+            cm.execCommand('insertSoftTab');
+          }
+        }
+      },
+      'Shift-Tab': (cm) => cm.execCommand('indentLess')
+    }
   });
   this.editor._playgroundSession = this;
 

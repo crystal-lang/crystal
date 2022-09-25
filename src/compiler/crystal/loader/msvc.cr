@@ -60,6 +60,8 @@ class Crystal::Loader
   end
 
   def load_file?(path : String | ::Path) : Bool
+    return false unless File.file?(path)
+
     # On Windows, each `.lib` import library may reference any number of `.dll`
     # files, whose base names may not match the library's. Thus it is necessary
     # to extract this information from the library archive itself.

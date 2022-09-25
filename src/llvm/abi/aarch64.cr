@@ -18,7 +18,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
   end
 
   def homogeneous_aggregate?(type) : {Type, UInt64}?
-    homog_agg = case type
+    homog_agg = case type.kind
                 when Type::Kind::Float
                   return {type, 1_u64}
                 when Type::Kind::Double

@@ -79,7 +79,7 @@ module Crystal::System::File
         end
 
         if find_data.dwReserved0.bits_set? REPARSE_TAG_NAME_SURROGATE_MASK
-          return FileInfo.new(find_data)
+          return ::File::Info.new(find_data)
         end
       end
     end
@@ -101,7 +101,7 @@ module Crystal::System::File
         raise ::File::Error.from_winerror("Unable to get file info", file: path)
       end
 
-      FileInfo.new(file_info, LibC::FILE_TYPE_DISK)
+      ::File::Info.new(file_info, LibC::FILE_TYPE_DISK)
     ensure
       LibC.CloseHandle(handle)
     end

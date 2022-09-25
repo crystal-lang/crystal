@@ -643,12 +643,16 @@ module Crystal
       end
     end
 
-    def self.new(obj, name, arg : ASTNode)
-      new obj, name, [arg] of ASTNode
+    def self.new(obj, name, arg : ASTNode, global = false)
+      new obj, name, [arg] of ASTNode, global: global
     end
 
     def self.new(obj, name, arg1 : ASTNode, arg2 : ASTNode)
       new obj, name, [arg1, arg2] of ASTNode
+    end
+
+    def self.new(obj, name, arg1 : ASTNode, arg2 : ASTNode, arg3 : ASTNode)
+      new obj, name, [arg1, arg2, arg3] of ASTNode
     end
 
     def self.global(name, arg : ASTNode)
@@ -1366,6 +1370,10 @@ module Crystal
 
     def self.new(name : String, global = false)
       new [name], global
+    end
+
+    def self.new(name1 : String, name2 : String, global = false)
+      new [name1, name2], global
     end
 
     def self.global(names)
