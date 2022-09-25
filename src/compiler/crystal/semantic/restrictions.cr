@@ -702,11 +702,11 @@ module Crystal
     end
 
     def restriction_of?(other : Path, owner, self_free_vars = nil, other_free_vars = nil)
-      other_type = owner.lookup_type(other)
-
-      # Special case: when comparing Foo.class to Class, Foo.class has precedence
-      if other_type == other_type.program.class_type
-        return true
+      if other_type = owner.lookup_type?(other)
+        # Special case: when comparing Foo.class to Class, Foo.class has precedence
+        if other_type == other_type.program.class_type
+          return true
+        end
       end
 
       super

@@ -217,6 +217,56 @@ describe "Restrictions" do
       end
     end
 
+    describe "Metaclass vs Path" do
+      it "inserts metaclass before Class" do
+        assert_type(%(
+          def foo(a : Class)
+            1
+          end
+
+          def foo(a : Int32.class)
+            true
+          end
+
+          foo(Int32)
+          )) { bool }
+      end
+
+      it "keeps metaclass before Class" do
+        assert_type(%(
+          def foo(a : Int32.class)
+            true
+          end
+
+          def foo(a : Class)
+            1
+          end
+
+          foo(Int32)
+          )) { bool }
+      end
+
+      it "doesn't error if path is undefined and method is not called (1) (#12516)" do
+        assert_no_errors <<-CR
+          def foo(a : Int32.class)
+          end
+
+          def foo(a : Foo)
+          end
+          CR
+      end
+
+      it "doesn't error if path is undefined and method is not called (2) (#12516)" do
+        assert_no_errors <<-CR
+          def foo(a : Foo)
+          end
+
+          def foo(a : Int32.class)
+          end
+          CR
+      end
+    end
+
     describe "Path vs Path" do
       it "inserts typed Path before untyped Path" do
         assert_type(%(
@@ -1009,20 +1059,6 @@ describe "Restrictions" do
       foo(x, y)
       ),
       "expected argument #2 to 'foo' to be StaticArray(UInt8, 10), not StaticArray(UInt8, 11)"
-  end
-
-  it "gives precedence to T.class over Class (#7392)" do
-    assert_type(%(
-      def foo(x : Class)
-        'a'
-      end
-
-      def foo(x : Int32.class)
-        1
-      end
-
-      foo(Int32)
-      )) { int32 }
   end
 
   it "restricts aliased typedef type (#9474)" do
