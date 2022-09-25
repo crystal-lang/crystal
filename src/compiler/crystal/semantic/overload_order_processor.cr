@@ -70,8 +70,9 @@ class Crystal::OverloadOrderingProcessor
     type.defs.try &.each do |method, overloads|
       next unless overloads.size > 1
 
-      # simply re-add all overloads one by one (if the overload order is
-      # transitive we could sort the overloads in-place, see #10711)
+      # simply re-add all overloads one by one
+      # TODO: if the overload order is confirmed to be transitive, we could sort
+      # the overloads in-place
       unordered = overloads.dup
       overloads.clear
       unordered.each do |item|

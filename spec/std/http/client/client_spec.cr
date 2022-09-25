@@ -238,6 +238,38 @@ module HTTP
       end
     end
 
+    it "will not retry when closed (non-block) (#12464)" do
+      requests = 0
+      server_channel = Channel(Nil).new
+
+      client = HTTP::Client.new("127.0.0.1", 0)
+      client.before_request do
+        requests += 1
+        raise IO::Error.new("foobar")
+      end
+
+      expect_raises(IO::Error, "foobar") do
+        client.not_nil!.get(path: "/")
+      end
+      requests.should eq 1
+    end
+
+    it "will not retry when closed (block) (#12464)" do
+      requests = 0
+      server_channel = Channel(Nil).new
+
+      client = HTTP::Client.new("127.0.0.1", 0)
+      client.before_request do
+        requests += 1
+        raise IO::Error.new("foobar")
+      end
+
+      expect_raises(IO::Error, "foobar") do
+        client.not_nil!.get(path: "/") { }
+      end
+      requests.should eq 1
+    end
+
     it "doesn't read the body if request was HEAD" do
       resp_get = test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)

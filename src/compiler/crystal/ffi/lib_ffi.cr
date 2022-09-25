@@ -121,22 +121,23 @@ module Crystal
     $ffi_type_double : Type
     $ffi_type_pointer : Type
 
-    # TODO: this is 12 for non-x
+    # We're treating ffi_closure as an opaque type because we do not need to interact
+    # with it directly and only pass a pointer around. We only need to allocate
+    # the memory, but the memory size differs based on target and ABI version (https://github.com/libffi/libffi/pull/540)
+    # We define the maximum possible size for each target and allocate that amount
+    # of memory, even if less would suffice. Overallocating a couple of bytes should
+    # not cause any issues
+    # https://github.com/crystal-lang/crystal/pull/12192#issuecomment-1173993292
+    # https://github.com/libffi/libffi/blob/ddc6764386b29449d941b2b18d000f2987a9d848/doc/libffi.texi#L815
+    type Closure = Void
 
     {% if flag?(:bits64) %}
-      FFI_TRAMPOLINE_SIZE = 24
+      SIZEOF_CLOSURE = 56
     {% else %}
-      FFI_TRAMPOLINE_SIZE = 12
+      SIZEOF_CLOSURE = 40
     {% end %}
 
     alias ClosureFun = Cif*, Void*, Void**, Void* -> Void
-
-    struct Closure
-      tramp : LibC::Char[FFI_TRAMPOLINE_SIZE]
-      cif : Cif*
-      fun : ClosureFun
-      user_data : Void*
-    end
 
     fun prep_cif = ffi_prep_cif(
       cif : Cif*,

@@ -63,7 +63,7 @@ module Crystal
         args: args_nodes,
         named_args: named_args_nodes,
         block: block_node.is_a?(Block) ? block_node : nil)
-      fake_call = Call.new(nil, "method_missing", [call] of ASTNode)
+      fake_call = Call.new(nil, "method_missing", call)
 
       expanded_macro, macro_expansion_pragmas = program.expand_macro method_missing, fake_call, self, self
 

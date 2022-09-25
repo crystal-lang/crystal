@@ -127,6 +127,27 @@ class YAMLAttrWithNilableTimeEmittingNull
   end
 end
 
+class YAMLAttrWithTimeArray1
+  include YAML::Serializable
+
+  @[YAML::Field(converter: YAML::ArrayConverter(Time::EpochConverter))]
+  property value : Array(Time)
+end
+
+class YAMLAttrWithTimeArray2
+  include YAML::Serializable
+
+  @[YAML::Field(converter: YAML::ArrayConverter.new(Time::EpochConverter))]
+  property value : Array(Time)
+end
+
+class YAMLAttrWithTimeArray3
+  include YAML::Serializable
+
+  @[YAML::Field(converter: YAML::ArrayConverter.new(Time::Format.new("%F %T")))]
+  property value : Array(Time)
+end
+
 class YAMLAttrWithPropertiesKey
   include YAML::Serializable
 
@@ -816,6 +837,32 @@ describe "YAML::Serializable" do
     yaml.value.should be_a(Time)
     yaml.value.should eq(Time.unix_ms(1459860483856))
     yaml.to_yaml.should eq("---\nvalue: 1459860483856\n")
+  end
+
+  describe YAML::ArrayConverter do
+    it "uses converter metaclass" do
+      string = %(---\nvalue:\n- 1459859781\n)
+      yaml = YAMLAttrWithTimeArray1.from_yaml(string)
+      yaml.value.should be_a(Array(Time))
+      yaml.value.should eq([Time.unix(1459859781)])
+      yaml.to_yaml.should eq(string)
+    end
+
+    it "uses converter instance with nested converter metaclass" do
+      string = %(---\nvalue:\n- 1459859781\n)
+      yaml = YAMLAttrWithTimeArray2.from_yaml(string)
+      yaml.value.should be_a(Array(Time))
+      yaml.value.should eq([Time.unix(1459859781)])
+      yaml.to_yaml.should eq(string)
+    end
+
+    it "uses converter instance with nested converter instance" do
+      string = %(---\nvalue:\n- 2014-10-31 23:37:16\n)
+      yaml = YAMLAttrWithTimeArray3.from_yaml(string)
+      yaml.value.should be_a(Array(Time))
+      yaml.value.map(&.to_s).should eq(["2014-10-31 23:37:16 UTC"])
+      yaml.to_yaml.should eq(string)
+    end
   end
 
   it "parses nilable union" do
