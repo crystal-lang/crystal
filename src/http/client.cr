@@ -58,6 +58,8 @@
 # client.close
 # ```
 #
+# WARNING: The implementation of `HTTP::Client` does not support concurrent requests.
+#
 # ### Compression
 #
 # If `compress` isn't set to `false`, and no `Accept-Encoding` header is explicitly specified,
