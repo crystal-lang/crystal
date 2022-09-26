@@ -15,6 +15,8 @@ describe "Normalize: string interpolation" do
 
   it "replaces string constant" do
     result = semantic(%(
+      def String.interpolation(*args); ""; end
+
       OBJ = "world"
 
       "hello \#{OBJ}"
@@ -26,6 +28,8 @@ describe "Normalize: string interpolation" do
 
   it "replaces string constant that results from macro expansion" do
     result = semantic(%(
+      def String.interpolation(*args); ""; end
+
       OBJ = {% if 1 + 1 == 2 %} "world" {% else %} "bug" {% end %}
 
       "hello \#{OBJ}"
@@ -37,6 +41,8 @@ describe "Normalize: string interpolation" do
 
   it "replaces through multiple levels" do
     result = semantic(%(
+      def String.interpolation(*args); ""; end
+
       OBJ1 = "ld"
       OBJ2 = "wor\#{OBJ1}"
 

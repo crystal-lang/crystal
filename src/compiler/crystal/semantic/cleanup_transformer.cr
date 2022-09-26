@@ -249,6 +249,56 @@ module Crystal
       nil
     end
 
+    def transform(node : StringInterpolation)
+      # See if we can solve all the pieces to string literals.
+      # If that's the case, we can replace the entire interpolation
+      # with a single string literal.
+      pieces = node.expressions.dup
+      solve_string_interpolation_expressions(pieces)
+
+      if pieces.all?(StringLiteral)
+        string = pieces.join(&.as(StringLiteral).value)
+        string_literal = StringLiteral.new(string).at(node)
+        string_literal.type = @program.string
+        return string_literal
+      end
+
+      if expanded = node.expanded
+        return expanded.transform(self)
+      end
+      node
+    end
+
+    private def solve_string_interpolation_expressions(pieces : Array(ASTNode))
+      pieces.each_with_index do |piece, i|
+        replacement = solve_string_interpolation_expression(piece)
+        next unless replacement
+
+        pieces[i] = replacement
+      end
+    end
+
+    private def solve_string_interpolation_expression(piece : ASTNode) : StringLiteral?
+      if piece.is_a?(ExpandableNode)
+        expanded = piece.expanded
+        if expanded
+          return solve_string_interpolation_expression(expanded)
+        end
+      end
+
+      case piece
+      when Path
+        target_const = piece.target_const
+        if target_const
+          return solve_string_interpolation_expression(target_const.value)
+        end
+      when StringLiteral
+        return piece
+      end
+
+      nil
+    end
+
     def transform(node : ExpandableNode)
       if expanded = node.expanded
         return expanded.transform(self)

@@ -447,48 +447,8 @@ module Crystal
       # and having pieces in a different representation but same end
       # result is just fine.
       pieces = node.expressions
-      solve_string_interpolation_expressions(pieces)
       combine_contiguous_string_literals(pieces)
-
-      # If we are left with a single string literal, expand to that.
-      if pieces.size == 1 && pieces.all?(StringLiteral)
-        return pieces.first
-      end
-
       Call.new(Path.global("String").at(node), "interpolation", pieces).at(node)
-    end
-
-    private def solve_string_interpolation_expressions(pieces : Array(ASTNode))
-      pieces.each_with_index do |piece, i|
-        replacement = solve_string_interpolation_expression(piece)
-        next unless replacement
-
-        pieces[i] = replacement
-      end
-    end
-
-    # Check if a string interpolation piece resolves at compile-time
-    # to a string literal, or something that can be turned into a string
-    # literal.
-    private def solve_string_interpolation_expression(piece : ASTNode) : StringLiteral?
-      if piece.is_a?(ExpandableNode)
-        expanded = piece.expanded
-        if expanded
-          return solve_string_interpolation_expression(expanded)
-        end
-      end
-
-      case piece
-      when Path
-        target_const = piece.target_const
-        if target_const
-          return solve_string_interpolation_expression(target_const.value)
-        end
-      when StringLiteral
-        return piece
-      end
-
-      nil
     end
 
     private def combine_contiguous_string_literals(pieces)
