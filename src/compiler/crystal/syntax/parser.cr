@@ -3891,9 +3891,11 @@ module Crystal
       do_next_token = true
       found_string_literal = false
       invalid_internal_name = nil
+      external_name_token = nil
 
       if allow_external_name && (@token.type.ident? || string_literal_start?)
         name_location = @token.location
+        external_name_token = @token.dup
         if @token.type.ident?
           if @token.keyword? && invalid_internal_name?(@token.value)
             invalid_internal_name = @token.dup
@@ -3924,6 +3926,8 @@ module Crystal
         if arg_name == external_name
           raise "when specified, external name must be different than internal name", @token
         end
+
+        check_valid_param_name
 
         uses_arg = false
         do_next_token = true
@@ -3988,6 +3992,10 @@ module Crystal
             raise "cannot use '#{invalid_internal_name}' as a parameter name", invalid_internal_name
           end
           arg_name = external_name
+          if external_name_token.nil?
+            raise "missing external name token"
+          end
+          check_valid_param_name(external_name_token)
         else
           unexpected_token
         end
@@ -4034,6 +4042,13 @@ module Crystal
         end
       else
         false
+      end
+    end
+
+    def check_valid_param_name(token : Token = @token)
+      param_name = token.value.to_s
+      if param_name[-1]?.in?('?', '!')
+        warnings.add_warning_at(token.location, "invalid parameter name: #{param_name}")
       end
     end
 
@@ -4359,6 +4374,7 @@ module Crystal
             end
 
             arg_name = @token.value.to_s
+            check_valid_param_name
 
             if all_names.includes?(arg_name)
               raise "duplicated block parameter name: #{arg_name}", @token
@@ -4380,6 +4396,7 @@ module Crystal
                 end
 
                 sub_arg_name = @token.value.to_s
+                check_valid_param_name
 
                 if all_names.includes?(sub_arg_name)
                   raise "duplicated block parameter name: #{sub_arg_name}", @token
