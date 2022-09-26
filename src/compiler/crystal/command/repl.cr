@@ -35,7 +35,7 @@ class Crystal::Command
     end
 
     if options.empty?
-      splash
+      show_banner
       repl.run
     else
       filename = options.shift
@@ -43,13 +43,13 @@ class Crystal::Command
         error "File '#{filename}' doesn't exist"
       end
 
-      splash
+      show_banner
       repl.run_file(filename, options)
     end
   end
 
-  private def splash
-    return unless STDOUT.tty? && STDERR.tty? && !ENV.has_key?("CRYSTAL_NO_SPLASH")
+  private def show_banner
+    return unless STDOUT.tty? && STDERR.tty? && !ENV.has_key?("CRYSTAL_INTERPRETER_SKIP_BANNER")
 
     formatted_sha = "[#{Config.build_commit}] " if Config.build_commit
     STDERR.puts "Crystal interpreter #{Config.version} #{formatted_sha}(#{Config.date}).\n" \
