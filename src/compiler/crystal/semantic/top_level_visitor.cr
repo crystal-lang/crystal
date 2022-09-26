@@ -501,6 +501,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     type.private = true if node.visibility.private?
 
+    wasm_import_module = nil
+
     process_annotations(annotations) do |annotation_type, ann|
       case annotation_type
       when @program.link_annotation
@@ -513,6 +515,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         if ann.args.size > 1
           @program.warnings.add_warning(ann, "using non-named arguments for Link annotations is deprecated")
         end
+
+        if wasm_import_module && link_annotation.wasm_import_module
+          ann.raise "multiple wasm import modules specified for lib #{node.name}"
+        end
+
+        wasm_import_module = link_annotation.wasm_import_module
 
         type.add_link_annotation(link_annotation)
       when @program.call_convention_annotation
@@ -919,6 +927,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     scope = current_type
     if !call_convention && scope.is_a?(LibType)
       call_convention = scope.call_convention
+    end
+
+    if scope.is_a?(LibType)
+      external.wasm_import_module = scope.wasm_import_module
     end
 
     # We fill the arguments and return type in TypeDeclarationVisitor

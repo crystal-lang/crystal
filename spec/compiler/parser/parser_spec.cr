@@ -249,8 +249,8 @@ module Crystal
       it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
       it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
 
-      assert_syntax_error "foo { |#{kw})| }", "cannot use '#{kw}' as a block parameter name", 1, 8
-      assert_syntax_error "foo { |(#{kw}))| }", "cannot use '#{kw}' as a block parameter name", 1, 9
+      assert_syntax_error "foo { |#{kw}| }", "cannot use '#{kw}' as a block parameter name", 1, 8
+      assert_syntax_error "foo { |(#{kw})| }", "cannot use '#{kw}' as a block parameter name", 1, 9
     end
 
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
@@ -348,8 +348,8 @@ module Crystal
     assert_syntax_error "def foo(x, *); 1; end", "named parameters must follow bare *"
     it_parses "def foo(x, *, y, &); 1; end", Def.new("foo", args: ["x".arg, "".arg, "y".arg], body: 1.int32, splat_index: 1, block_arg: Arg.new(""), yields: 0)
 
-    assert_syntax_error "def foo(var = 1 : Int32); end", "the syntax for a parameter with a default value V and type T is `arg : T = V`"
-    assert_syntax_error "def foo(var = x : Int); end", "the syntax for a parameter with a default value V and type T is `arg : T = V`"
+    assert_syntax_error "def foo(var = 1 : Int32); end", "the syntax for a parameter with a default value V and type T is `param : T = V`"
+    assert_syntax_error "def foo(var = x : Int); end", "the syntax for a parameter with a default value V and type T is `param : T = V`"
 
     it_parses "def foo(**args)\n1\nend", Def.new("foo", body: 1.int32, double_splat: "args".arg)
     it_parses "def foo(x, **args)\n1\nend", Def.new("foo", body: 1.int32, args: ["x".arg], double_splat: "args".arg)
@@ -1915,8 +1915,9 @@ module Crystal
     assert_syntax_error "/foo)/", "invalid regex"
     assert_syntax_error "def =\nend"
     assert_syntax_error "def foo; A = 1; end", "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
-    assert_syntax_error "{1, ->{ |x| x } }", %(unexpected token: "|")
-    assert_syntax_error "{1, ->do\n|x| x\end }", %(unexpected token: "|")
+    assert_syntax_error "{1, ->{ |x| x } }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(x : Type) { ... }"
+    assert_syntax_error "{1, ->do\n|x| x\end }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(x : Type) { ... }"
+    assert_syntax_error "{1, ->{ |_| x } }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(param : Type) { ... }"
 
     assert_syntax_error "1 while 3", "trailing `while` is not supported"
     assert_syntax_error "1 until 3", "trailing `until` is not supported"
