@@ -182,7 +182,7 @@ class HTTP::Server
     #
     # Raises `IO::Error` if the response is closed or headers were already
     # sent.
-    def redirect(location : String | URI | Path, status : HTTP::Status = :found)
+    def redirect(location : String | URI, status : HTTP::Status = :found)
       check_headers
 
       self.status = status
