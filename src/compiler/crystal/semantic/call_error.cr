@@ -288,6 +288,17 @@ class Crystal::Call
         named_args.try &.find(&.name.==(index_or_name))
       end
 
+    enum_types = expected_types.select(EnumType)
+    if actual_type.is_a?(SymbolType) && enum_types.size == 1
+      enum_type = enum_types.first
+
+      if arg.is_a?(SymbolLiteral)
+        symbol = arg.value
+      elsif arg.is_a?(NamedArgument) && (named_arg_value = arg.value).is_a?(SymbolLiteral)
+        symbol = named_arg_value.value
+      end
+    end
+
     raise_no_overload_matches(arg || self, defs, arg_types, inner_exception) do |str|
       argument_description =
         case index_or_name
@@ -297,9 +308,24 @@ class Crystal::Call
           "'#{index_or_name}'"
         end
 
-      str << "expected argument #{argument_description} to '#{full_name(owner, def_name)}' to be "
-      to_sentence(str, expected_types, " or ")
-      str << ", not #{actual_type}"
+      if symbol && enum_type
+        str << "expected argument #{argument_description} to '#{full_name(owner, def_name)}' to match a member of enum #{enum_type}."
+        str.puts
+        str.puts
+
+        options = enum_type.types.map(&.[1].name.underscore)
+        similar_name = Levenshtein.find(symbol.underscore, options)
+        if similar_name
+          str << "Did you mean :#{similar_name}?"
+        elsif options.size <= 10
+          str << "Options are: "
+          to_sentence(str, options.map { |o| ":#{o}" }, " and ")
+        end
+      else
+        str << "expected argument #{argument_description} to '#{full_name(owner, def_name)}' to be "
+        to_sentence(str, expected_types, " or ")
+        str << ", not #{actual_type}"
+      end
     end
   end
 
@@ -449,7 +475,7 @@ class Crystal::Call
       arguments_type_mismatch << ArgumentTypeMismatch.new(
         index_or_name: index_or_name,
         expected_type: expected_type,
-        actual_type: arg_type,
+        actual_type: arg_type.remove_literal,
       )
     end
   end

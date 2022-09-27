@@ -1281,6 +1281,8 @@ class Crystal::Repl::Interpreter
         )
         next unless line_node
 
+        main_visitor = MainVisitor.new(from_main_visitor: main_visitor)
+
         vars_size_before_semantic = main_visitor.vars.size
 
         line_node = @context.program.normalize(line_node)
