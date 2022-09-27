@@ -125,6 +125,27 @@ module YAML
   # field, and the rest of the fields, and their meaning, depend on its value.
   #
   # You can use `YAML::Serializable.use_yaml_discriminator` for this use case.
+  #
+  # ### `after_initialize` method
+  #
+  # after_initialize is a method that runs after initialization and can be used
+  # as a hook to post-process the initialized object.
+  #
+  # Example:
+  # ```
+  # require "yaml"
+  #
+  # class Person
+  #   include YAML::Serializable
+  #   @name : String
+  #
+  #   def after_initialize
+  #     @name = @name.upcase
+  #   end
+  # end
+  #
+  # pp Person.from_yaml("---\nname: Jane\n") # => #<Person:0x7f630cb92e80 @name="JANE">
+  # ```
   module Serializable
     annotation Options
     end
