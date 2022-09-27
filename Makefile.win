@@ -212,9 +212,9 @@ clean_cache: ## Clean up CRYSTAL_CACHE_DIR files
 rc: ## Write compiler resource script to standard output
 	$(eval comma := ,)
 	$(eval ver_comma := $(subst .,$(comma),$(subst -dev,,$(CRYSTAL_VERSION))))
-	$(eval build_date := $(shell git show -s --format=%cs HEAD))
-	$(eval build_year := $(firstword $(subst -, ,$(build_date))))
-	$(eval ver_full := $(CRYSTAL_VERSION)$(if $(CRYSTAL_CONFIG_BUILD_COMMIT), [$(CRYSTAL_CONFIG_BUILD_COMMIT)])$(if $(build_date), ($(build_date))))
+	$(eval source_date := $(shell git show -s --format=%cs HEAD))
+	$(eval source_year := $(firstword $(subst -, ,$(source_date))))
+	$(eval ver_full := $(CRYSTAL_VERSION)$(if $(CRYSTAL_CONFIG_BUILD_COMMIT), [$(CRYSTAL_CONFIG_BUILD_COMMIT)])$(if $(source_date), ($(source_date))))
 	@setlocal EnableDelayedExpansion &\
 	echo #include ^<windows.h^>&\
 	echo.&\
@@ -242,7 +242,7 @@ rc: ## Write compiler resource script to standard output
 	echo             VALUE "InternalName",     "crystal.exe"&\
 	echo             VALUE "OriginalFilename", "crystal.exe"&\
 	echo             VALUE "CompanyName",      "Manas Technology Solutions"&\
-	echo             VALUE "LegalCopyright",   "Copyright 2012-$(build_year) Manas Technology Solutions"&\
+	echo             VALUE "LegalCopyright",   "Copyright 2012-$(source_year) Manas Technology Solutions"&\
 	echo         END&\
 	echo     END&\
 	echo     BLOCK "VarFileInfo"&\
