@@ -408,11 +408,11 @@ struct Range(B, E)
       min = self.begin
       max = self.end
 
-      if (exclusive? && max <= min) || (!exclusive? && max < min)
+      if exclusive? ? max <= min : max < min
         raise ArgumentError.new "Invalid range for rand: #{self}"
       end
 
-      max -= 1 if self.exclusive?
+      max -= 1 if exclusive?
 
       available = max - min + 1
 
@@ -427,8 +427,7 @@ struct Range(B, E)
 
       # If we must return all values in the range...
       if possible == available
-        result = Array(B).new(possible)
-        each { |value| result << value }
+        result = Array(B).new(possible) { |i| min + i }
         result.shuffle!(random)
         return result
       end
@@ -438,7 +437,7 @@ struct Range(B, E)
       min = self.begin
       max = self.end
 
-      if (exclusive? ? max <= min : max < min)
+      if exclusive? ? max <= min : max < min
         raise ArgumentError.new "Invalid range for rand: #{self}"
       end
 
@@ -457,51 +456,6 @@ struct Range(B, E)
         super
       end
     {% end %}
-  end
-
-  # :nodoc:
-  def sample_old(n : Int, random = Random::DEFAULT)
-    {% if B == Nil || E == Nil %}
-      {% raise "Can't sample an open range" %}
-    {% end %}
-
-    if self.begin.nil? || self.end.nil?
-      raise ArgumentError.new("Can't sample an open range")
-    end
-
-    if n < 0
-      raise ArgumentError.new "Can't sample negative number of elements"
-    end
-
-    case n
-    when 0
-      [] of B
-    when 1
-      [sample(random)]
-    else
-      raise ArgumentError.new("Can't sample negative number of elements") if n < 0
-
-      # Unweighted reservoir sampling:
-      # https://en.wikipedia.org/wiki/Reservoir_sampling#Simple_algorithm
-      # "Algorithm L" does not provide any performance improvements on Enumerable,
-      # because it is not possible to discard multiple elements at once
-
-      ary = Array(B).new(n)
-      return ary if n == 0
-
-      each_with_index do |elem, i|
-        if i < n
-          ary << elem
-        else
-          j = random.rand(i + 1)
-          if j < n
-            ary.to_unsafe[j] = elem
-          end
-        end
-      end
-
-      ary.shuffle!(random)
-    end
   end
 
   private def range_sample(n, random)
