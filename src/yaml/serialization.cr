@@ -128,7 +128,7 @@ module YAML
   #
   # ### `after_initialize` method
   #
-  # after_initialize is a method that runs after initialization and can be used
+  # `#after_initialize` is a method that runs after initialization and can be used
   # as a hook to post-process the initialized object.
   #
   # Example:
@@ -137,14 +137,15 @@ module YAML
   #
   # class Person
   #   include YAML::Serializable
-  #   @name : String
+  #   getter name : String
   #
   #   def after_initialize
   #     @name = @name.upcase
   #   end
   # end
   #
-  # pp Person.from_yaml("---\nname: Jane\n") # => #<Person:0x7f630cb92e80 @name="JANE">
+  # person = Person.from_yaml "---\nname: Jane\n"
+  # person.name # => "JANE"
   # ```
   module Serializable
     annotation Options
