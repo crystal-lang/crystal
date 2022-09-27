@@ -15,9 +15,9 @@ module Crystal::System::Dir
       name = String.new(entry.value.d_name.to_unsafe)
 
       dir = case entry.value.d_type
-            when LibC::DT_DIR                    then true
-            when LibC::DT_UNKNOWN, LibC::DT_LINK then nil
-            else                                      false
+            when LibC::DT_DIR                   then true
+            when LibC::DT_UNKNOWN, LibC::DT_LNK then nil
+            else                                     false
             end
       Entry.new(name, dir)
     elsif Errno.value != Errno::NONE
@@ -31,6 +31,10 @@ module Crystal::System::Dir
     LibC.rewinddir(dir)
   end
 
+  def self.info(dir, path) : ::File::Info
+    Crystal::System::FileDescriptor.system_info LibC.dirfd(dir)
+  end
+
   def self.close(dir, path) : Nil
     if LibC.closedir(dir) != 0
       raise ::File::Error.from_errno("Error closing directory", file: path)
@@ -38,6 +42,15 @@ module Crystal::System::Dir
   end
 
   def self.current : String
+    # If $PWD is set and it matches the current path, use that.
+    # This helps telling apart symlinked paths.
+    if (pwd = ENV["PWD"]?) && pwd.starts_with?("/") &&
+       (pwd_info = ::Crystal::System::File.info?(pwd, follow_symlinks: true)) &&
+       (dot_info = ::Crystal::System::File.info?(".", follow_symlinks: true)) &&
+       pwd_info.same_file?(dot_info)
+      return pwd
+    end
+
     unless dir = LibC.getcwd(nil, 0)
       raise ::File::Error.from_errno("Error getting current directory", file: "./")
     end
@@ -66,8 +79,12 @@ module Crystal::System::Dir
     end
   end
 
-  def self.delete(path : String) : Nil
-    if LibC.rmdir(path.check_no_null_byte) == -1
+  def self.delete(path : String, *, raise_on_missing : Bool) : Bool
+    return true if LibC.rmdir(path.check_no_null_byte) == 0
+
+    if !raise_on_missing && Errno.value == Errno::ENOENT
+      false
+    else
       raise ::File::Error.from_errno("Unable to remove directory", file: path)
     end
   end

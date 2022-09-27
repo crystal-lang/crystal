@@ -8,7 +8,7 @@ struct String::Grapheme
   # :nodoc:
   #
   # The Grapheme Cluster Break Property values
-  # http://www.unicode.org/reports/tr29/tr29-37.html#Grapheme_Cluster_Break_Property_Values
+  # http://www.unicode.org/reports/tr29/#Grapheme_Cluster_Break_Property_Values
   enum Property
     Start
     Any
@@ -47,9 +47,9 @@ struct String::Grapheme
   # ranges in this slice are numerically sorted.
   #
   # These ranges were taken from
-  # http://www.unicode.org/Public/UCD/latest/ucd/auxiliary/GraphemeBreakProperty.txt
+  # http://www.unicode.org/Public/<%= Unicode::VERSION %>/ucd/auxiliary/GraphemeBreakProperty.txt
   # as well as
-  # http://www.unicode.org/Public/13.0.0/ucd/emoji/emoji-data.txt
+  # http://www.unicode.org/Public/<%= Unicode::VERSION %>/ucd/emoji/emoji-data.txt
   # ("Extended_Pictographic" only). See
   # https://www.unicode.org/license.html for the Unicode license agreement.
   @@codepoints : Array(Tuple(Int32, Int32, Property))?

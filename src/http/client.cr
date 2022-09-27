@@ -585,12 +585,13 @@ class HTTP::Client
   private def exec_internal(request)
     begin
       response = exec_internal_single(request)
-    rescue IO::Error
+    rescue exc : IO::Error
+      raise exc if @io.nil? # do not retry if client was closed
       response = nil
     end
     return handle_response(response) if response
 
-    # Server probably closed the connection, so retry one
+    # Server probably closed the connection, so retry once
     close
     request.body.try &.rewind
     response = exec_internal_single(request)
@@ -609,7 +610,7 @@ class HTTP::Client
     response
   end
 
-  # Executes a request request and yields an `HTTP::Client::Response` to the block.
+  # Executes a request and yields an `HTTP::Client::Response` to the block.
   # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
   #
   # ```
@@ -650,7 +651,7 @@ class HTTP::Client
     begin
       decompress = send_request(request)
     rescue ex : IO::Error
-      return yield nil if ignore_io_error
+      return yield nil if ignore_io_error && !@io.nil? # ignore_io_error only if client was not closed
       raise ex
     end
     HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
@@ -879,7 +880,7 @@ class HTTP::Client
 
   # This method is called when executing the request. Although it can be
   # redefined, it is recommended to use the `def_around_exec` macro to be
-  # able to add new behaviors without loosing prior existing ones.
+  # able to add new behaviors without losing prior existing ones.
   protected def around_exec(request)
     yield
   end

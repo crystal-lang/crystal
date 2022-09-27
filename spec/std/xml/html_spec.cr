@@ -29,7 +29,7 @@ describe XML do
     h1 = body.children.find { |node| node.name == "h1" }.not_nil!
 
     attrs = h1.attributes
-    attrs.empty?.should be_false
+    attrs.should_not be_empty
     attrs.size.should eq(1)
 
     attr = attrs[0]

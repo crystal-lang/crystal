@@ -74,7 +74,7 @@ describe "Semantic: module" do
 
       Bar.new.foo(1.5)
       ",
-      "no overload matches"
+      "expected argument #1 to 'Bar#foo' to be Int, not Float64"
   end
 
   it "includes module but not generic" do
@@ -143,7 +143,7 @@ describe "Semantic: module" do
 
       Bar(Int32).new.foo(1.5)
       ",
-      "no overload matches"
+      "expected argument #1 to 'Bar(Int32)#foo' to be Int32, not Float64"
   end
 
   it "reports can't use instance variables inside module" do
@@ -307,7 +307,8 @@ describe "Semantic: module" do
       end
 
       Baz1.new.foo Baz2.new
-      ", "no overload matches"
+      ",
+      "expected argument #1 to 'Baz1#foo' to be Bar(Int32), not Baz2"
   end
 
   it "includes generic module with self (check argument superclass type, success)" do
@@ -1617,7 +1618,7 @@ describe "Semantic: module" do
 
       Gen(Foo.class).foo(Moo)
       ),
-      "no overload matches"
+      "expected argument #1 to 'Gen(Foo.class).foo' to be Foo.class, not Moo:Module"
   end
 
   it "extends module from generic class and calls class method (#7167)" do
@@ -1682,5 +1683,31 @@ describe "Semantic: module" do
       Foo.new
       ),
       "wrong number of arguments"
+  end
+
+  it "gives helpful error message when generic type var is missing" do
+    assert_error %(
+      module Foo(T)
+        def self.foo
+          T.bar
+        end
+      end
+
+      Foo.foo
+      ),
+      "can't infer the type parameter T for the generic module Foo(T). Please provide it explicitly"
+  end
+
+  it "gives helpful error message when generic type var is missing in block spec" do
+    assert_error %(
+      module Foo(T)
+        def self.foo(&block : T -> )
+          block
+        end
+      end
+
+      Foo.foo { |x| }
+      ),
+      "can't infer the type parameter T for the generic module Foo(T). Please provide it explicitly"
   end
 end

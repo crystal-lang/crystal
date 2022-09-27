@@ -43,6 +43,7 @@ lib LibC
                      bInheritHandles : BOOL, dwCreationFlags : DWORD,
                      lpEnvironment : Void*, lpCurrentDirectory : LPWSTR,
                      lpStartupInfo : STARTUPINFOW*, lpProcessInformation : PROCESS_INFORMATION*) : BOOL
+  fun SetThreadStackGuarantee(stackSizeInBytes : DWORD*) : BOOL
   fun GetProcessTimes(hProcess : HANDLE, lpCreationTime : FILETIME*, lpExitTime : FILETIME*,
                       lpKernelTime : FILETIME*, lpUserTime : FILETIME*) : BOOL
 

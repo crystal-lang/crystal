@@ -136,7 +136,7 @@ struct Float32
   #
   # ```
   # Float32.new "20"                        # => 20.0
-  # Float32.new "  20  ", whitespace: false # => Unhandled exception: Invalid Float32:   20 (ArgumentError)
+  # Float32.new "  20  ", whitespace: false # raises ArgumentError: Invalid Float32: "  20  "
   # ```
   def self.new(value : String, whitespace : Bool = true, strict : Bool = true) : self
     value.to_f32 whitespace: whitespace, strict: strict
@@ -155,10 +155,12 @@ struct Float32
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float32
   Number.expand_div [Float64], Float64
 
+  # Rounds towards positive infinity.
   def ceil : Float32
     LibM.ceil_f32(self)
   end
 
+  # Rounds towards negative infinity.
   def floor : Float32
     LibM.floor_f32(self)
   end
@@ -177,6 +179,7 @@ struct Float32
     LibM.round_f32(self)
   end
 
+  # Rounds towards zero.
   def trunc : Float32
     LibM.trunc_f32(self)
   end
@@ -253,7 +256,7 @@ struct Float64
   #
   # ```
   # Float64.new "20"                        # => 20.0
-  # Float64.new "  20  ", whitespace: false # => Unhandled exception: Invalid Float64:   20 (ArgumentError)
+  # Float64.new "  20  ", whitespace: false # raises ArgumentError: Invalid Float64: "  20  "
   # ```
   def self.new(value : String, whitespace : Bool = true, strict : Bool = true) : self
     value.to_f64 whitespace: whitespace, strict: strict
@@ -271,6 +274,10 @@ struct Float64
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float64
+
+  def abs
+    Math.copysign(self, 1)
+  end
 
   def ceil : Float64
     LibM.ceil_f64(self)
@@ -325,7 +332,8 @@ struct Float64
   end
 
   def to_s : String
-    String.build(22) do |buffer|
+    # the longest `Float64` strings are of the form `-1.2345678901234567e+123`
+    String.build(24) do |buffer|
       Printer.print(self, buffer)
     end
   end

@@ -95,18 +95,17 @@ class String
   # ```
   #
   # This combination of codepoints is common in some non-latin scripts. It's also
-  # often used with emojies to create customized combination. For example, the
+  # often used with emojis to create customized combination. For example, the
   # thumbs up sign `👍` (`U+1F44D`) combined with an emoji modifier such as
   # `U+1F3FC` assign a colour to the emoji.
   #
   # Instances of this type can be acquired via `String#each_grapheme` or `String#graphemes`.
   #
   # The algorithm to determine boundaries between grapheme clusters is specified
-  # in the [Unicode Standard Annex #29](https://www.unicode.org/reports/tr29/tr29-37.html#Grapheme_Cluster_Boundaries),
-  # and implemented in Version Unicode 13.0.0.
+  # in the [Unicode Standard Annex #29](https://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries).
   @[Experimental("The grapheme API is still under development. Join the discussion at [#11610](https://github.com/crystal-lang/crystal/issues/11610).")]
   struct Grapheme
-    # For efficency reasons we avoid allocating a string for graphemes consisting
+    # For efficiency reasons we avoid allocating a string for graphemes consisting
     # of only a single character.
     # As a trade-off, this leads to multi dispatch on this ivar. But that's
     # acceptable compared to the allocation overhead.
@@ -189,9 +188,9 @@ class String
     # an E_Modifier class codepoint and an incorrectly missing break between two
     # REGIONAL_INDICATOR class code points if such support does not exist in the caller.
     #
-    # The rules are graphically displayed in a table on https://www.unicode.org/Public/13.0.0/ucd/auxiliary/GraphemeBreakTest.html
+    # The rules are graphically displayed in a table on https://www.unicode.org/Public/UCD/latest/ucd/auxiliary/GraphemeBreakTest.html
     #
-    # The implementation is insipred by https://github.com/JuliaStrings/utf8proc/blob/462093b3924c7491defc67fda4bc7a27baf9b088/utf8proc.c#L261
+    # The implementation is inspired by https://github.com/JuliaStrings/utf8proc/blob/462093b3924c7491defc67fda4bc7a27baf9b088/utf8proc.c#L261
     def self.break?(lbc : Property, tbc : Property) : Bool
       return true if lbc.start?                                                   # GB1
       return false if lbc.cr? && tbc.lf?                                          # GB3

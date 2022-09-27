@@ -15,7 +15,7 @@ abstract class OpenSSL::SSL::Socket < IO
           {% if LibSSL.has_method?(:ssl_get0_param) %}
             param = LibSSL.ssl_get0_param(@ssl)
 
-            if ::Socket.ip?(hostname)
+            if ::Socket::IPAddress.valid?(hostname)
               unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
                 raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
               end
@@ -266,7 +266,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   # Returns the `OpenSSL::X509::Certificate` the peer presented, if a
-  # connection was esablished.
+  # connection was established.
   #
   # NOTE: Due to the protocol definition, a TLS/SSL server will always send a
   # certificate, if present. A client will only send a certificate when

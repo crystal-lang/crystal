@@ -14,7 +14,7 @@ def string_build_via_utf16(& : IO -> _)
     io.set_encoding(IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian ? "UTF-16LE" : "UTF-16BE")
     yield io
     byte_slice = io.to_slice
-    utf16_slice = Slice.new(byte_slice.to_unsafe.unsafe_as(Pointer(UInt16)), byte_slice.size // sizeof(UInt16))
+    utf16_slice = byte_slice.unsafe_slice_of(UInt16)
     String.from_utf16(utf16_slice)
   {% end %}
 end

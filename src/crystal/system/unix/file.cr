@@ -6,11 +6,7 @@ module Crystal::System::File
   def self.open(filename, mode, perm)
     oflag = open_flag(mode) | LibC::O_CLOEXEC
 
-    if perm.is_a?(::File::Permissions)
-      perm = perm.value
-    end
-
-    fd = LibC.open(filename.check_no_null_byte, oflag, LibC::ModeT.new(perm))
+    fd = LibC.open(filename.check_no_null_byte, oflag, perm)
     if fd < 0
       raise ::File::Error.from_errno("Error opening file with mode '#{mode}'", file: filename)
     end
@@ -18,6 +14,10 @@ module Crystal::System::File
   end
 
   def self.mktemp(prefix, suffix, dir) : {LibC::Int, String}
+    prefix.try &.check_no_null_byte
+    suffix.try &.check_no_null_byte
+    dir.check_no_null_byte
+
     dir = dir + ::File::SEPARATOR
     path = "#{dir}#{prefix}.XXXXXX#{suffix}"
 
@@ -40,7 +40,7 @@ module Crystal::System::File
     end
 
     if ret == 0
-      FileInfo.new(stat)
+      ::File::Info.new(stat)
     else
       if Errno.value.in?(Errno::ENOENT, Errno::ENOTDIR)
         return nil
@@ -60,7 +60,7 @@ module Crystal::System::File
 
   def self.stat(path, stat)
     {% if LibC.has_method?(:__xstat) %}
-      LibC.__xstat(1, path, stat)
+      LibC.__xstat(LibC::STAT_VER, path, stat)
     {% else %}
       LibC.stat(path, stat)
     {% end %}
@@ -68,7 +68,7 @@ module Crystal::System::File
 
   def self.fstat(path, stat)
     {% if LibC.has_method?(:__fxstat) %}
-      LibC.__fxstat(1, path, stat)
+      LibC.__fxstat(LibC::STAT_VER, path, stat)
     {% else %}
       LibC.fstat(path, stat)
     {% end %}
@@ -76,7 +76,7 @@ module Crystal::System::File
 
   def self.lstat(path, stat)
     {% if LibC.has_method?(:__lxstat) %}
-      LibC.__lxstat(1, path, stat)
+      LibC.__lxstat(LibC::STAT_VER, path, stat)
     {% else %}
       LibC.lstat(path, stat)
     {% end %}
@@ -107,11 +107,16 @@ module Crystal::System::File
   end
 
   def self.chown(path, uid : Int, gid : Int, follow_symlinks)
-    ret = if !follow_symlinks && ::File.symlink?(path)
-            LibC.lchown(path, uid, gid)
-          else
+    ret = if follow_symlinks
             LibC.chown(path, uid, gid)
+          else
+            LibC.lchown(path, uid, gid)
           end
+    raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
+  end
+
+  def self.fchown(path, fd, uid : Int, gid : Int)
+    ret = LibC.fchown(fd, uid, gid)
     raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
   end
 
@@ -121,9 +126,19 @@ module Crystal::System::File
     end
   end
 
-  def self.delete(path)
+  def self.fchmod(path, fd, mode)
+    if LibC.fchmod(fd, mode) == -1
+      raise ::File::Error.from_errno("Error changing permissions", file: path)
+    end
+  end
+
+  def self.delete(path, *, raise_on_missing : Bool) : Bool
     err = LibC.unlink(path.check_no_null_byte)
-    if err == -1
+    if err != -1
+      true
+    elsif !raise_on_missing && Errno.value == Errno::ENOENT
+      false
+    else
       raise ::File::Error.from_errno("Error deleting file", file: path)
     end
   end
@@ -181,6 +196,33 @@ module Crystal::System::File
     if ret != 0
       raise ::File::Error.from_errno("Error setting time on file", file: filename)
     end
+  end
+
+  def self.futimens(filename : String, fd : Int, atime : ::Time, mtime : ::Time) : Nil
+    ret = {% if LibC.has_method?("futimens") %}
+            timespecs = uninitialized LibC::Timespec[2]
+            timespecs[0] = to_timespec(atime)
+            timespecs[1] = to_timespec(mtime)
+            LibC.futimens(fd, timespecs)
+          {% elsif LibC.has_method?("futimes") %}
+            timevals = uninitialized LibC::Timeval[2]
+            timevals[0] = to_timeval(atime)
+            timevals[1] = to_timeval(mtime)
+            LibC.futimes(fd, timevals)
+          {% else %}
+            {% raise "Missing futimens & futimes" %}
+          {% end %}
+
+    if ret != 0
+      raise ::File::Error.from_errno("Error setting time on file", file: filename)
+    end
+  end
+
+  private def self.to_timespec(time : ::Time)
+    t = uninitialized LibC::Timespec
+    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
+    t.tv_nsec = typeof(t.tv_nsec).new(time.nanosecond)
+    t
   end
 
   private def self.to_timeval(time : ::Time)

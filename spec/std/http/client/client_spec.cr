@@ -3,6 +3,7 @@ require "../../socket/spec_helper"
 require "openssl"
 require "http/client"
 require "http/server"
+require "http/log"
 require "log/spec"
 
 private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true)
@@ -179,7 +180,7 @@ module HTTP
       end
     end
 
-    it "will retry a broken socket" do
+    pending_win32 "will retry a broken socket" do
       server = HTTP::Server.new do |context|
         context.response.output.print "foo"
         context.response.output.close
@@ -237,6 +238,38 @@ module HTTP
       end
     end
 
+    it "will not retry when closed (non-block) (#12464)" do
+      requests = 0
+      server_channel = Channel(Nil).new
+
+      client = HTTP::Client.new("127.0.0.1", 0)
+      client.before_request do
+        requests += 1
+        raise IO::Error.new("foobar")
+      end
+
+      expect_raises(IO::Error, "foobar") do
+        client.not_nil!.get(path: "/")
+      end
+      requests.should eq 1
+    end
+
+    it "will not retry when closed (block) (#12464)" do
+      requests = 0
+      server_channel = Channel(Nil).new
+
+      client = HTTP::Client.new("127.0.0.1", 0)
+      client.before_request do
+        requests += 1
+        raise IO::Error.new("foobar")
+      end
+
+      expect_raises(IO::Error, "foobar") do
+        client.not_nil!.get(path: "/") { }
+      end
+      requests.should eq 1
+    end
+
     it "doesn't read the body if request was HEAD" do
       resp_get = test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
@@ -276,7 +309,7 @@ module HTTP
       # the server if the socket is closed.
       test_server("localhost", 0, 0.5, write_response: false) do |server|
         client = Client.new("localhost", server.local_address.port)
-        expect_raises(IO::TimeoutError, "Read timed out") do
+        expect_raises(IO::TimeoutError, {% if flag?(:win32) %} "WSARecv timed out" {% else %} "Read timed out" {% end %}) do
           client.read_timeout = 0.001
           client.get("/?sleep=1")
         end
@@ -290,7 +323,7 @@ module HTTP
       # the server if the socket is closed.
       test_server("localhost", 0, 0, write_response: false) do |server|
         client = Client.new("localhost", server.local_address.port)
-        expect_raises(IO::TimeoutError, "Write timed out") do
+        expect_raises(IO::TimeoutError, {% if flag?(:win32) %} "WSASend timed out" {% else %} "Write timed out" {% end %}) do
           client.write_timeout = 0.001
           client.post("/", body: "a" * 5_000_000)
         end
