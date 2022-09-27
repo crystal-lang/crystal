@@ -58,7 +58,7 @@
 # client.close
 # ```
 #
-# WARNING: The implementation of `HTTP::Client` does not support concurrent requests.
+# WARNING: A single `HTTP::Client` instance is not safe for concurrent use by multiple fibers.
 #
 # ### Compression
 #
