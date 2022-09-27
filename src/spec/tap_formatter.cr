@@ -4,20 +4,18 @@ class Spec::TAPFormatter < Spec::Formatter
 
   def report(result)
     case result.kind
-    when :success
+    in .success?
       @io << "ok"
-    when :fail, :error
+    in .fail?, .error?
       @io << "not ok"
-    when :pending
+    in .pending?
       @io << "ok"
-    else
-      # shouldn't happen (TODO: maybe turn this into an enum?)
     end
 
     @counter += 1
 
     @io << ' ' << @counter << " -"
-    if result.kind == :pending
+    if result.kind.pending?
       @io << " # SKIP"
     end
     @io << ' ' << result.description

@@ -1,6 +1,39 @@
 require "spec"
 require "./spec_helper"
 
+describe "PROGRAM_NAME" do
+  it "works for UTF-8 name" do
+    with_tempfile("source_file") do |source_file|
+      if ENV["IN_NIX_SHELL"]?
+        pending! "Example is broken in Nix shell (#12332)"
+      end
+
+      File.write(source_file, "File.basename(PROGRAM_NAME).inspect(STDOUT)")
+
+      compile_file(source_file, bin_name: "×‽😂") do |executable_file|
+        output = IO::Memory.new
+        Process.run(executable_file, output: output).success?.should be_true
+        output.to_s.should eq(File.basename(executable_file).inspect)
+      end
+    end
+  end
+end
+
+describe "ARGV" do
+  it "accepts UTF-8 command-line arguments" do
+    with_tempfile("source_file") do |source_file|
+      File.write(source_file, "ARGV.inspect(STDOUT)")
+
+      compile_file(source_file) do |executable_file|
+        args = ["×‽😂", "あ×‽😂い"]
+        output = IO::Memory.new
+        Process.run(executable_file, args, output: output).success?.should be_true
+        output.to_s.should eq(args.inspect)
+      end
+    end
+  end
+end
+
 describe "exit" do
   it "exits normally with status 0" do
     status, _, _ = compile_and_run_source "exit"
@@ -210,8 +243,8 @@ describe "at_exit" do
   end
 end
 
-pending_win32 describe: "seg fault" do
-  it "reports SIGSEGV" do
+describe "hardware exception" do
+  it "reports invalid memory access" do
     status, _, error = compile_and_run_source <<-'CODE'
       puts Pointer(Int64).null.value
     CODE
@@ -232,7 +265,7 @@ pending_win32 describe: "seg fault" do
       # will address this.
       status, _, error = compile_and_run_source <<-'CODE'
       def foo
-        y = StaticArray(Int8,512).new(0)
+        y = StaticArray(Int8, 512).new(0)
         foo
       end
       foo
@@ -243,10 +276,10 @@ pending_win32 describe: "seg fault" do
     end
   {% end %}
 
-  it "detects stack overflow on a fiber stack" do
+  pending_win32 "detects stack overflow on a fiber stack" do
     status, _, error = compile_and_run_source <<-'CODE'
       def foo
-        y = StaticArray(Int8,512).new(0)
+        y = StaticArray(Int8, 512).new(0)
         foo
       end
 

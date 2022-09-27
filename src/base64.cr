@@ -203,6 +203,7 @@ module Base64
     bytes = chars.to_unsafe
     size = data.size
     cstr = data.to_unsafe
+    return if cstr.null? || size == 0
     endcstr = cstr + size - size % 3 - 3
 
     # process bunch of full triples
@@ -275,7 +276,7 @@ module Base64
       bytes += 1
     end
 
-    # If the amount of base64 characters is not divisable by 4, the remainder of the previous loop is handled here
+    # If the amount of base64 characters is not divisible by 4, the remainder of the previous loop is handled here
     unread_bytes = (fin - bytes) % 4
     case unread_bytes
     when 1

@@ -132,11 +132,9 @@ describe "Primitives: Int" do
   end
 
   describe "#to_f" do
-    {% if BUILTIN_INTEGER_TYPES.includes?(UInt128) %}
-      it "raises on overflow for UInt128#to_f32" do
-        expect_raises(OverflowError) { UInt128::MAX.to_f32 }
-        expect_raises(OverflowError) { (UInt128::MAX // 2).to_f32 }
-      end
-    {% end %}
+    it "raises on overflow for UInt128#to_f32" do
+      expect_raises(OverflowError) { UInt128::MAX.to_f32 }
+      expect_raises(OverflowError) { Float32::MAX.to_u128.succ.to_f32 } # Float32::MAX == 2 ** 128 - 2 ** 104
+    end
   end
 end

@@ -98,6 +98,32 @@ describe "Semantic: pointer" do
       "recursive pointerof expansion"
   end
 
+  it "detects recursive pointerof expansion (3)" do
+    assert_error <<-CR, "recursive pointerof expansion"
+      x = {1}
+      x = pointerof(x)
+      CR
+  end
+
+  it "detects recursive pointerof expansion (4)" do
+    assert_error <<-CR, "recursive pointerof expansion"
+      x = 1
+      x = {pointerof(x)}
+      CR
+  end
+
+  it "doesn't crash if pointerof expansion type has generic splat parameter (#11808)" do
+    assert_type(<<-CR) { pointer_of(union_of int32, generic_class("Foo", string)) }
+      class Foo(*T)
+      end
+
+      x = 1
+      pointer = pointerof(x)
+      x = Foo(String).new
+      pointer
+      CR
+  end
+
   it "can assign nil to void pointer" do
     assert_type(%(
       ptr = Pointer(Void).malloc(1_u64)

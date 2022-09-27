@@ -120,6 +120,17 @@ end
 # Invokes `Crystal.main`.
 #
 # Can be redefined. See `Crystal.main` for examples.
+#
+# On Windows the actual entry point is `wmain`, but there is no need to redefine
+# that. See the file required below for details.
 fun main(argc : Int32, argv : UInt8**) : Int32
   Crystal.main(argc, argv)
 end
+
+{% if flag?(:win32) %}
+  require "./system/win32/wmain"
+{% end %}
+
+{% if flag?(:wasi) %}
+  require "./system/wasi/main"
+{% end %}

@@ -44,8 +44,6 @@ class Crystal::Repl::Context
   # the proc in this Hash.
   getter ffi_closure_to_compiled_def : Hash(Void*, CompiledDef)
 
-  @pkg_config_path : String?
-
   def initialize(@program : Program)
     @program.flags << "interpreted"
 
@@ -56,8 +54,6 @@ class Crystal::Repl::Context
 
     @lib_functions = {} of External => LibFunction
     @lib_functions.compare_by_identity
-
-    @dl_handles = {} of LibType => Void*
 
     @symbol_to_index = {} of String => Int32
     @symbols = [] of String
@@ -77,8 +73,6 @@ class Crystal::Repl::Context
       Context.ffi_closure_fun(cif, ret, args, user_data)
       nil
     end
-
-    @pkg_config_path = Process.find_executable("pkg-config")
 
     # This is a stack pool, for checkout_stack.
     @stack_pool = [] of UInt8*
@@ -125,7 +119,7 @@ class Crystal::Repl::Context
     end
   end
 
-  # This returns the CompiledDef that correspnds to __crystal_raise_overflow
+  # This returns the CompiledDef that corresponds to __crystal_raise_overflow
   getter(crystal_raise_overflow_compiled_def : CompiledDef) do
     call = Call.new(nil, "__crystal_raise_overflow", global: true)
     program.semantic(call)
@@ -160,7 +154,7 @@ class Crystal::Repl::Context
         end
 
         compiler = Compiler.new(self, compiled_def, top_level: false)
-        compiler.compile_def(a_def)
+        compiler.compile_def(compiled_def)
 
         {% if Debug::DECOMPILE %}
           puts "=== #{a_def.name} ==="
@@ -193,29 +187,26 @@ class Crystal::Repl::Context
   end
 
   private def create_instance_var_initializer_def(type : Type, initializer : InstanceVarInitializer)
-    a_def = Def.new("initialize_#{initializer.initializer.name}", args: [Arg.new("self")])
-    a_def.body = Assign.new(
-      InstanceVar.new(initializer.initializer.name),
-      initializer.initializer.value.clone,
-    )
+    # Creates a def that will assign the initializer's value to the instance variable.
+    # The initializer's value is fully typed already, so we don't need to type it
+    # again. We can just create the assignment and type those nodes for the
+    # interpreter compiler to be able to compile it.
+    value = initializer.initializer.value
 
-    a_def = program.normalize(a_def)
+    ivar = InstanceVar.new(initializer.initializer.name)
+    ivar.type = value.type
+
+    assign = Assign.new(ivar, value)
+    assign.type = value.type
+
+    a_def = Def.new("initialize_#{initializer.initializer.name}", args: [Arg.new("self", type: type)])
+    a_def.body = assign
+    a_def.type = program.nil_type
     a_def.owner = type
 
-    def_args = MetaVars.new
-    def_args["self"] = MetaVar.new("self", type)
-
-    visitor = MainVisitor.new(program, def_args, a_def)
-    visitor.untyped_def = a_def
-    visitor.scope = type
-    visitor.path_lookup = initializer.owner
-    # visitor.yield_vars = yield_vars
-    # visitor.match_context = match.context
-    # visitor.call = self
-    a_def.body.accept visitor
-
-    a_def.body = program.cleanup(a_def.body, inside_def: true)
-    a_def.type = program.nil_type
+    vars = initializer.initializer.meta_vars.clone
+    vars["self"] = MetaVar.new("self", type)
+    a_def.vars = vars
 
     a_def
   end
@@ -301,29 +292,27 @@ class Crystal::Repl::Context
   end
 
   def aligned_sizeof_type(node : ASTNode) : Int32
-    type = node.type?
-    if type
-      aligned_sizeof_type(node.type)
-    else
-      node.raise "BUG: missing type for #{node} (#{node.class})"
-    end
+    aligned_sizeof_type(node.type?)
   end
 
   def aligned_sizeof_type(type : Type) : Int32
     align(inner_sizeof_type(type))
   end
 
+  def aligned_sizeof_type(type : Nil) : Int32
+    0
+  end
+
   def inner_sizeof_type(node : ASTNode) : Int32
-    type = node.type?
-    if type
-      inner_sizeof_type(node.type)
-    else
-      node.raise "BUG: missing type for #{node} (#{node.class})"
-    end
+    inner_sizeof_type(node.type?)
   end
 
   def inner_sizeof_type(type : Type) : Int32
     @program.size_of(type.sizeof_type).to_i32
+  end
+
+  def inner_sizeof_type(type : Nil) : Int32
+    0
   end
 
   def aligned_instance_sizeof_type(type : Type) : Int32
@@ -341,7 +330,12 @@ class Crystal::Repl::Context
   def ivar_offset(type : Type, name : String) : Int32
     ivar_index = type.index_of_instance_var(name).not_nil!
 
-    if type.passed_by_value?
+    if type.is_a?(VirtualType) && type.struct? && type.abstract?
+      # If the type is a virtual abstract struct then the type
+      # is actually represented as {type_id, value} so the offset
+      # of the instance var is behind type_id, which is 8 bytes
+      @program.offset_of(type.base_type, ivar_index).to_i32 + 8
+    elsif type.passed_by_value?
       @program.offset_of(type.sizeof_type, ivar_index).to_i32
     else
       @program.instance_offset_of(type.sizeof_type, ivar_index).to_i32
@@ -362,17 +356,42 @@ class Crystal::Repl::Context
     @id_to_type[id]
   end
 
-  def c_function(lib_type : LibType, name : String)
-    handle = lib_type_handle(lib_type)
-    unless handle
-      raise "Can't find dynamic library for #{lib_type}"
-    end
+  getter(loader : Loader) {
+    lib_flags = program.lib_flags
+    # Execute and expand `subcommands`.
+    lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` }
 
-    fn = LibC.dlsym(handle, name)
-    if fn.null?
-      raise "dlsym failed for lib: #{lib_type}, name: #{name.inspect}: #{String.new(LibC.dlerror)}"
+    args = Process.parse_arguments(lib_flags)
+    # FIXME: Part 1: This is a workaround for initial integration of the interpreter:
+    # The loader can't handle the static libgc.a usually shipped with crystal and loading as a shared library conflicts
+    # with the compiler's own GC.
+    # (MSVC doesn't seem to have this issue)
+    args.delete("-lgc")
+
+    Crystal::Loader.parse(args).tap do |loader|
+      if ENV["CRYSTAL_INTERPRETER_LOADER_INFO"]?.presence
+        STDERR.puts "Crystal::Loader loaded libraries:"
+        loader.loaded_libraries.each do |path|
+          STDERR.puts "      #{path}"
+        end
+      end
+
+      # FIXME: Part 2: This is a workaround for initial integration of the interpreter:
+      # We append a handle to the current executable (i.e. the compiler program)
+      # to the loader's handle list. This gives the loader access to all the symbols in the compiler program,
+      # including those from statically linked libraries like libgc.
+      # This probably won't work for a fully statically linked compiler.
+      # But `Crystal::Loader` currently doesn't support that anyways.
+      loader.load_current_program_handle
+
+      if ENV["CRYSTAL_INTERPRETER_LOADER_INFO"]?.presence
+        STDERR.puts "      current program handle"
+      end
     end
-    fn
+  }
+
+  def c_function(name : String)
+    loader.find_symbol(name)
   end
 
   def align(size : Int32) : Int32
@@ -382,112 +401,5 @@ class Crystal::Repl::Context
     else
       size + (8 - rem)
     end
-  end
-
-  private def lib_type_handle(lib_type)
-    pkg_config_path = @pkg_config_path
-
-    handle = @dl_handles[lib_type]?
-    return handle if handle
-
-    lib_type.link_annotations.try &.each do |link_annotation|
-      if ld_flags = link_annotation.ldflags
-        if ld_flags.starts_with?('`') && ld_flags.ends_with?('`')
-          handle = handle_from_ld_flags_command(ld_flags[1...-1])
-        else
-          handle = handle_from_ld_flags(ld_flags)
-        end
-      elsif (pkg_config_name = link_annotation.pkg_config) && pkg_config_path
-        handle = handle_from_pkg_config(pkg_config_path, pkg_config_name)
-      elsif (lib_name = link_annotation.lib) && pkg_config_path
-        handle = handle_from_pkg_config(pkg_config_path, lib_name)
-      end
-
-      break if handle
-    end
-
-    # If we can't find a handle, let's use one for the current binary
-    unless handle
-      handle = LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
-      handle = nil if handle.null?
-    end
-
-    @dl_handles[lib_type] = handle if handle
-
-    handle
-  end
-
-  # Returns the result of running `pkg-config mod` but returns nil if
-  # the module does not exist.
-  private def pkg_config(pkg_config_path : String, mod : String) : String?
-    return unless (Process.run(pkg_config_path, {mod}).success? rescue nil)
-
-    args = ["--libs"]
-    args << mod
-
-    process = Process.new(pkg_config_path, args, input: :close, output: :pipe, error: :inherit)
-    flags = process.output.gets_to_end.chomp
-    status = process.wait
-    return unless status.success?
-
-    flags
-  end
-
-  private def handle_from_pkg_config(pkg_config_path, pkg_config_name)
-    ld_flags = pkg_config(pkg_config_path, pkg_config_name)
-    return unless ld_flags
-
-    handle_from_ld_flags(ld_flags)
-  end
-
-  private def handle_from_ld_flags_command(command : String)
-    process = Process.new(command, shell: true, output: :pipe)
-    output = process.output.gets_to_end.chomp
-    status = process.wait
-    return unless status.success?
-
-    handle_from_ld_flags(output)
-  end
-
-  private def handle_from_ld_flags(flags : String)
-    # I don't know if this is the correct way to do this, but it works!
-    # For example:
-    #
-    # ```
-    # $ pkg-config --libs gmp
-    # -L/usr/local/Cellar/gmp/6.2.1/lib -lgmp
-    # ```
-    #
-    # So, in Mac we search for a file named
-    # /usr/local/Cellar/gmp/6.2.1/lib/libgmp.dylib
-    args = Process.parse_arguments(flags)
-
-    path = nil
-    name = nil
-
-    args.each do |arg|
-      if piece = arg.lchop?("-L")
-        path = piece
-      elsif piece = arg.lchop?("-l")
-        name = piece
-      end
-    end
-
-    return unless path && name
-
-    lib_path : String?
-    {% if flag?(:darwin) %}
-      lib_path = File.join(path, "lib#{name}.dylib")
-    {% elsif flag?(:unix) %}
-      lib_path = File.join(path, "lib#{name}.so")
-    {% else %}
-      {% raise "Can't load dynamic libraries" %}
-    {% end %}
-    return unless File.exists?(lib_path)
-
-    handle = LibC.dlopen(lib_path, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
-    return if handle.null?
-
-    handle
   end
 end

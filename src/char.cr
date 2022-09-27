@@ -488,7 +488,6 @@ struct Char
   # 'b'.pred # => 'a'
   # 'ぃ'.pred # => 'あ'
   # ```
-  # ```
   #
   # This does not always return `codepoint - 1`. There is a gap in the
   # range of Unicode scalars: The surrogate codepoints `U+D800` through `U+DFFF`.
@@ -513,6 +512,9 @@ struct Char
 
   # Returns `true` if this char is an ASCII control character.
   #
+  # This includes the *C0 control codes* (`U+0000` through `U+001F`) and the
+  # *Delete* character (`U+007F`).
+  #
   # ```
   # ('\u0000'..'\u0019').each do |char|
   #   char.control? # => true
@@ -523,7 +525,7 @@ struct Char
   # end
   # ```
   def ascii_control? : Bool
-    ord < 0x20 || (0x7F <= ord <= 0x9F)
+    ord < 0x20 || ord == 0x7F
   end
 
   # Returns `true` if this char is a control character according to unicode.
@@ -561,7 +563,7 @@ struct Char
   # '😀'.inspect      # => "'\u{1F600}'"
   # ```
   #
-  # See `#unicode_escape` for the format used to escape charactes without a
+  # See `#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#dump` additionally escapes all non-ASCII characters.
@@ -594,7 +596,7 @@ struct Char
   # '😀'.dump      # => "'\\u{1F600}'"
   # ```
   #
-  # See `#unicode_escape` for the format used to escape charactes without a
+  # See `#unicode_escape` for the format used to escape characters without a
   # special escape sequence.
   #
   # * `#inspect` only escapes non-printable characters.
@@ -643,7 +645,7 @@ struct Char
   # digits wrapped in curly braces and no leading zeros.
   #
   # ```
-  # 'a'.unicode_escape      # => "\\u00E1"
+  # 'a'.unicode_escape      # => "\\u0061"
   # '\t'.unicode_escape     # => "\\u0009"
   # 'あ'.unicode_escape      # => "\\u3042"
   # '\u0012'.unicode_escape # => "\\u0012"
@@ -873,10 +875,11 @@ struct Char
   # 'あ'.to_s # => "あ"
   # ```
   def to_s : String
-    String.new(4) do |buffer|
+    bytesize = self.bytesize
+    String.new(bytesize) do |buffer|
       appender = buffer.appender
       each_byte { |byte| appender << byte }
-      {appender.size, 1}
+      {bytesize, 1}
     end
   end
 

@@ -441,6 +441,22 @@ describe "Code gen: class" do
       )).to_i.should eq('a'.ord)
   end
 
+  it "never considers read instance var as closure (#12181)" do
+    codegen(%(
+      class Foo
+        @x = 1
+      end
+
+      def bug
+        ->{
+          Foo.new.@x
+        }
+      end
+
+      bug
+      ))
+  end
+
   it "runs with nilable instance var" do
     run("
       struct Nil

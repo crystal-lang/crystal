@@ -261,12 +261,20 @@ class Regex
     @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES | Options::UCP), out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
     @extra = LibPCRE.study(@re, LibPCRE::STUDY_JIT_COMPILE, out studyerrptr)
-    raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.null? && studyerrptr
+    if @extra.null? && studyerrptr
+      {% unless flag?(:interpreted) %}
+        LibPCRE.free.call @re.as(Void*)
+      {% end %}
+      raise ArgumentError.new("#{String.new(studyerrptr)}")
+    end
     LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
   end
 
   def finalize
     LibPCRE.free_study @extra
+    {% unless flag?(:interpreted) %}
+      LibPCRE.free.call @re.as(Void*)
+    {% end %}
   end
 
   # Determines Regex's source validity. If it is, `nil` is returned.
@@ -279,6 +287,9 @@ class Regex
   def self.error?(source) : String?
     re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
     if re
+      {% unless flag?(:interpreted) %}
+        LibPCRE.free.call re.as(Void*)
+      {% end %}
       nil
     else
       "#{String.new(errptr)} at #{erroffset}"

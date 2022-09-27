@@ -6,8 +6,8 @@
 #
 # An integer literal is an optional `+` or `-` sign, followed by
 # a sequence of digits and underscores, optionally followed by a suffix.
-# If no suffix is present, the literal's type is the lowest between `Int32`, `Int64` and `UInt64`
-# in which the number fits:
+# If no suffix is present, the literal's type is `Int32`, or `Int64` if the
+# number doesn't fit into an `Int32`:
 #
 # ```
 # 1 # Int32
@@ -25,9 +25,13 @@
 # +10 # Int32
 # -20 # Int32
 #
-# 2147483648          # Int64
-# 9223372036854775808 # UInt64
+# 2147483648 # Int64
 # ```
+#
+# Literals without a suffix that are larger than `Int64::MAX` represent a
+# `UInt64` if the number fits, e.g. `9223372036854775808` and
+# `0x80000000_00000000`. This behavior is deprecated and will become an error in
+# the future.
 #
 # The underscore `_` before the suffix is optional.
 #
@@ -844,7 +848,7 @@ struct Int8
   #
   # ```
   # Int8.new "20"                        # => 20
-  # Int8.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int8:   20 (ArgumentError)
+  # Int8.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int8: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i8 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -881,6 +885,32 @@ struct Int8
     Intrinsics.counttrailing8(self, false)
   end
 
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl8(self, self, n.to_i8!).to_i8!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr8(self, self, n.to_i8!).to_i8!
+  end
+
   def clone
     self
   end
@@ -895,7 +925,7 @@ struct Int16
   #
   # ```
   # Int16.new "20"                        # => 20
-  # Int16.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int16:   20 (ArgumentError)
+  # Int16.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int16: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i16 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -932,6 +962,32 @@ struct Int16
     Intrinsics.counttrailing16(self, false)
   end
 
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl16(self, self, n.to_i16!).to_i16!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr16(self, self, n.to_i16!).to_i16!
+  end
+
   def clone
     self
   end
@@ -946,7 +1002,7 @@ struct Int32
   #
   # ```
   # Int32.new "20"                        # => 20
-  # Int32.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int32:   20 (ArgumentError)
+  # Int32.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int32: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i32 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -983,6 +1039,32 @@ struct Int32
     Intrinsics.counttrailing32(self, false)
   end
 
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl32(self, self, n.to_i32!).to_i32!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr32(self, self, n.to_i32!).to_i32!
+  end
+
   def clone
     self
   end
@@ -997,7 +1079,7 @@ struct Int64
   #
   # ```
   # Int64.new "20"                        # => 20
-  # Int64.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int64:   20 (ArgumentError)
+  # Int64.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int64: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i64 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -1034,6 +1116,32 @@ struct Int64
     Intrinsics.counttrailing64(self, false)
   end
 
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl64(self, self, n.to_i64!).to_i64!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr64(self, self, n.to_i64!).to_i64!
+  end
+
   def clone
     self
   end
@@ -1049,7 +1157,7 @@ struct Int128
   #
   # ```
   # Int128.new "20"                        # => 20
-  # Int128.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int128:   20 (ArgumentError)
+  # Int128.new "  20  ", whitespace: false # raises ArgumentError: Invalid Int128: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_i128 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -1087,6 +1195,32 @@ struct Int128
     Intrinsics.counttrailing128(self, false)
   end
 
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl128(self, self, n.to_i128!).to_i128!
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr128(self, self, n.to_i128!).to_i128!
+  end
+
   def clone
     self
   end
@@ -1101,7 +1235,7 @@ struct UInt8
   #
   # ```
   # UInt8.new "20"                        # => 20
-  # UInt8.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt8:   20 (ArgumentError)
+  # UInt8.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt8: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u8 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -1142,6 +1276,32 @@ struct UInt8
     Intrinsics.counttrailing8(self, false)
   end
 
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl8(self, self, n.to_u8!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr8(self, self, n.to_u8!)
+  end
+
   def clone
     self
   end
@@ -1156,7 +1316,7 @@ struct UInt16
   #
   # ```
   # UInt16.new "20"                        # => 20
-  # UInt16.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt16:   20 (ArgumentError)
+  # UInt16.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt16: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u16 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -1197,6 +1357,32 @@ struct UInt16
     Intrinsics.counttrailing16(self, false)
   end
 
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl16(self, self, n.to_u16!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr16(self, self, n.to_u16!)
+  end
+
   def clone
     self
   end
@@ -1211,7 +1397,7 @@ struct UInt32
   #
   # ```
   # UInt32.new "20"                        # => 20
-  # UInt32.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt32:   20 (ArgumentError)
+  # UInt32.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt32: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u32 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -1252,6 +1438,32 @@ struct UInt32
     Intrinsics.counttrailing32(self, false)
   end
 
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl32(self, self, n.to_u32!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr32(self, self, n.to_u32!)
+  end
+
   def clone
     self
   end
@@ -1266,7 +1478,7 @@ struct UInt64
   #
   # ```
   # UInt64.new "20"                        # => 20
-  # UInt64.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt64:   20 (ArgumentError)
+  # UInt64.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt64: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u64 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -1307,6 +1519,32 @@ struct UInt64
     Intrinsics.counttrailing64(self, false)
   end
 
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl64(self, self, n.to_u64!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr64(self, self, n.to_u64!)
+  end
+
   def clone
     self
   end
@@ -1322,7 +1560,7 @@ struct UInt128
   #
   # ```
   # UInt128.new "20"                        # => 20
-  # UInt128.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt128:   20 (ArgumentError)
+  # UInt128.new "  20  ", whitespace: false # raises ArgumentError: Invalid UInt128: "  20  "
   # ```
   def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
     value.to_u128 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
@@ -1362,6 +1600,32 @@ struct UInt128
 
   def trailing_zeros_count
     Intrinsics.counttrailing128(self, false)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the most significant
+  # bit's direction. Negative shifts are equivalent to `rotate_right(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_left(3)  # => 0b01101010
+  # 0b01001101_u8.rotate_left(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_left(11) # => 0b01101010
+  # 0b01001101_u8.rotate_left(-1) # => 0b10100110
+  # ```
+  def rotate_left(n : Int) : self
+    Intrinsics.fshl128(self, self, n.to_u128!)
+  end
+
+  # Returns the bitwise rotation of `self` *n* times in the least significant
+  # bit's direction. Negative shifts are equivalent to `rotate_left(-n)`.
+  #
+  # ```
+  # 0b01001101_u8.rotate_right(3)  # => 0b10101001
+  # 0b01001101_u8.rotate_right(8)  # => 0b01001101
+  # 0b01001101_u8.rotate_right(11) # => 0b10101001
+  # 0b01001101_u8.rotate_right(-1) # => 0b10011010
+  # ```
+  def rotate_right(n : Int) : self
+    Intrinsics.fshr128(self, self, n.to_u128!)
   end
 
   def clone
