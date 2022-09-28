@@ -128,8 +128,8 @@ module YAML
   #
   # ### `after_initialize` method
   #
-  # `#after_initialize` is a method that runs after initialization and can be used
-  # as a hook to post-process the initialized object.
+  # `#after_initialize` is a method that runs after an instance is deserialized
+  # from YAML. It can be used as a hook to post-process the initialized object.
   #
   # Example:
   # ```
