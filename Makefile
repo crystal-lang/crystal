@@ -26,7 +26,7 @@ junit_output ?= ## Path to output junit results
 static ?=       ## Enable static linking
 interpreter ?=  ## Enable interpreter feature
 check ?=        ## Enable only check when running format
-order ?=        ## Enable order for spec execution (values: "default" | "random" | seed number)
+order ?=random  ## Enable order for spec execution (values: "default" | "random" | seed number)
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
