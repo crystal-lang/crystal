@@ -228,7 +228,7 @@ class Object
   # for example using [`if var`](https://crystal-lang.org/reference/syntax_and_semantics/if_var.html).
   # `not_nil!` is only meant as a last resort when there's no other way to explain this to the compiler.
   # Either way, consider instead raising a concrete exception with a descriptive message.
-  def not_nil!
+  def not_nil!(message = nil)
     self
   end
 
