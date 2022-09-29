@@ -688,11 +688,7 @@ class HTTP::Client
     {% if flag?(:without_zlib) %}
       false
     {% else %}
-      if compress? && !request.headers.has_key?("Accept-Encoding")
-        true
-      else
-        false
-      end
+      compress? && !request.headers.has_key?("Accept-Encoding")
     {% end %}
   end
 
