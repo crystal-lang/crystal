@@ -19,7 +19,7 @@ jobs:
       - name: Check LibSSL version
         run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
       - name: Run OpenSSL specs
-        run: crystal spec --order=random spec/std/openssl/
+        run: bin/crystal spec --order=random spec/std/openssl/
   openssl111:
     runs-on: ubuntu-latest
     name: "OpenSSL 1.1.1"
@@ -32,7 +32,7 @@ jobs:
       - name: Check LibSSL version
         run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
       - name: Run OpenSSL specs
-        run: crystal spec --order=random spec/std/openssl/
+        run: bin/crystal spec --order=random spec/std/openssl/
   libressl31:
     runs-on: ubuntu-latest
     name: "LibreSSL 3.1"
@@ -47,7 +47,7 @@ jobs:
       - name: Check LibSSL version
         run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
       - name: Run OpenSSL specs
-        run: crystal spec --order=random spec/std/openssl/
+        run: bin/crystal spec --order=random spec/std/openssl/
   libressl34:
     runs-on: ubuntu-latest
     name: "LibreSSL 3.4"
@@ -67,4 +67,4 @@ jobs:
       - name: Check LibSSL version
         run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
       - name: Run OpenSSL specs
-        run: crystal spec --order=random spec/std/openssl/
+        run: bin/crystal spec --order=random spec/std/openssl/
