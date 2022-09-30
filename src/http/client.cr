@@ -58,6 +58,8 @@
 # client.close
 # ```
 #
+# WARNING: A single `HTTP::Client` instance is not safe for concurrent use by multiple fibers.
+#
 # ### Compression
 #
 # If `compress` isn't set to `false`, and no `Accept-Encoding` header is explicitly specified,

@@ -452,5 +452,35 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "upcasts in nilable cast (#12532)" do
+      interpret(<<-CODE).should eq(2)
+        struct Nil
+          def foo
+            0
+          end
+        end
+
+        module A
+          def foo
+            1
+          end
+        end
+
+        class B
+          include A
+
+          def foo
+            2
+          end
+        end
+
+        class C
+          include A
+        end
+
+        B.new.as?(A).foo
+        CODE
+    end
   end
 end

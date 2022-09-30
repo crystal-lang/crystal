@@ -1649,6 +1649,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     node.obj.accept self
 
+    if node.upcast?
+      upcast node.obj, obj_type, node.non_nilable_type
+      upcast node.obj, node.non_nilable_type, node.type
+      return
+    end
+
     # Check if obj is a `to_type`
     dup aligned_sizeof_type(node.obj), node: nil
     filter_type(node, obj_type, filtered_type)
