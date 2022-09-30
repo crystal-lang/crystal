@@ -138,7 +138,7 @@ module YAML
       end
 
       private def self.new_from_yaml_node(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-        ctx.read_alias(node, \{{@type}}) do |obj|
+        ctx.read_alias(node, self) do |obj|
           return obj
         end
 
