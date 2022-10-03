@@ -421,6 +421,8 @@ module Crystal
       output_filename = File.expand_path(output_filename)
 
       @progress_tracker.stage("Codegen (linking)") do
+        # Ensures that the linking step is reproducible from verbose output.
+        print_command(%(cd "${@}"), output_dir) if verbose?
         Dir.cd(output_dir) do
           linker_command = linker_command(program, object_names, output_filename, output_dir, expand: true)
 
