@@ -109,7 +109,7 @@ describe Crystal::Repl::Interpreter do
           x
         end
 
-        x = 1
+        x = 1_i32
         foo(x)
         CODE
     end
@@ -120,7 +120,7 @@ describe Crystal::Repl::Interpreter do
           x
         end
 
-        x = 1
+        x = 1_i32
         foo(x)
         CODE
     end
