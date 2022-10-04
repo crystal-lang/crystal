@@ -646,7 +646,7 @@ class Crystal::Repl::Compiler
     to_kind = integer_or_float_kind(to_type)
 
     unless from_kind && to_kind
-      node.raise "BUG: missing handling of unchecked_convert for #{from_type} (#{node.name})"
+      node.raise "BUG: missing handling of unchecked_convert for #{from_type} (#{node})"
     end
 
     primitive_convert(node, from_kind, to_kind, checked: checked)
