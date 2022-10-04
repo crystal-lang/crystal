@@ -1,5 +1,3 @@
-{% skip_file if flag?(:win32) %}
-
 require "base64"
 require "http/web_socket"
 
@@ -20,7 +18,7 @@ class HTTP::WebSocketHandler
   def initialize(&@proc : WebSocket, Server::Context ->)
   end
 
-  def call(context)
+  def call(context) : Nil
     unless websocket_upgrade_request? context.request
       return call_next context
     end

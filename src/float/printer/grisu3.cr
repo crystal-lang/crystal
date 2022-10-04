@@ -32,6 +32,7 @@ require "./diy_fp"
 require "./ieee"
 require "./cached_powers"
 
+@[Deprecated("Use `Float::Printer::Dragonbox` instead")]
 module Float::Printer::Grisu3
   extend self
 
@@ -53,7 +54,7 @@ module Float::Printer::Grisu3
   # representable number to the input.
   #
   # Modifies the generated digits in the buffer to approach (round towards) *w*.
-  def round_weed(buffer_ptr, length, distance_too_high_w, unsafe_interval, rest, ten_kappa, unit)
+  def round_weed(buffer_ptr, length, distance_too_high_w, unsafe_interval, rest, ten_kappa, unit) : Bool
     buffer = buffer_ptr.to_slice(128)
     small_distance = distance_too_high_w - unit
     big_distance = distance_too_high_w + unit

@@ -2,19 +2,26 @@ require "./printer/*"
 
 # :nodoc:
 #
-# `Float::Printer` is based on Grisu3 algorithm described in the 2004 paper
-# "Printing Floating-Point Numbers Quickly and Accurately with Integers" by
-# Florian Loitsch.
+# `Float::Printer` is based on the [Dragonbox](https://github.com/jk-jeon/dragonbox)
+# algorithm developed by Junekey Jeon around 2020-2021.
 module Float::Printer
   extend self
-  BUFFER_SIZE = 128
+  BUFFER_SIZE = 17 # maximum number of decimal digits required
 
   # Converts `Float` *v* to a string representation and prints it onto *io*.
   #
   # It is used by `Float64#to_s` and it is probably not necessary to use
   # this directly.
-  def print(v : Float64 | Float32, io : IO) : Nil
+  #
+  # *point_range* designates the boundaries of scientific notation which is used
+  # for all values whose decimal point position is outside that range.
+  def print(v : Float64 | Float32, io : IO, *, point_range = -3..15) : Nil
     d = IEEE.to_uint(v)
+
+    if IEEE.nan?(d)
+      io << "NaN"
+      return
+    end
 
     if IEEE.sign(d) < 0
       io << '-'
@@ -23,38 +30,37 @@ module Float::Printer
 
     if v == 0.0
       io << "0.0"
-    elsif IEEE.special?(d)
-      if IEEE.inf?(d)
-        io << "Infinity"
-      else
-        io << "NaN"
-      end
+    elsif IEEE.inf?(d)
+      io << "Infinity"
     else
-      internal(v, io)
+      internal(v, io, point_range)
     end
   end
 
-  private def internal(v : Float64 | Float32, io : IO)
-    buffer = StaticArray(UInt8, BUFFER_SIZE).new(0_u8)
-    success, decimal_exponent, length = Grisu3.grisu3(v, buffer.to_unsafe)
+  private def internal(v : Float64 | Float32, io : IO, point_range)
+    significand, decimal_exponent = Dragonbox.to_decimal(v)
 
-    unless success
-      # grisu3 does not work for ~0.5% of floats
-      # when this happens, fallback to another, slower approach
-      if v.class == Float64
-        LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%.17g", v)
-      else
-        LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%g", v.to_f64)
-      end
-      len = LibC.strlen(buffer)
-      io.write_utf8 buffer.to_slice[0, len]
-      return
+    # generate `significand.to_s` in a reasonably fast manner
+    str = uninitialized UInt8[BUFFER_SIZE]
+    ptr = str.to_unsafe + BUFFER_SIZE
+    while significand > 0
+      ptr -= 1
+      ptr.value = 48_u8 &+ significand.unsafe_mod(10).to_u8!
+      significand = significand.unsafe_div(10)
     end
+
+    # remove trailing zeros
+    buffer = str.to_slice[ptr - str.to_unsafe..]
+    while buffer.size > 1 && buffer.unsafe_fetch(buffer.size - 1) === '0'
+      buffer = buffer[..-2]
+      decimal_exponent += 1
+    end
+    length = buffer.size
 
     point = decimal_exponent + length
 
     exp = point
-    exp_mode = point > 15 || point < -3
+    exp_mode = !point_range.includes?(point)
     point = 1 if exp_mode
 
     # add leading zero
@@ -65,11 +71,11 @@ module Float::Printer
     # add integer part digits
     if decimal_exponent > 0 && !exp_mode
       # whole number but not big enough to be exp form
-      io.write_utf8 buffer.to_slice[i, length - i]
+      io.write_string buffer.to_slice[i, length - i]
       i = length
       (point - length).times { io << '0' }
     elsif i < point
-      io.write_utf8 buffer.to_slice[i, point - i]
+      io.write_string buffer.to_slice[i, point - i]
       i = point
     end
 
@@ -81,8 +87,7 @@ module Float::Printer
     end
 
     # add fractional part digits
-    io.write_utf8 buffer.to_slice[i, length - i]
-    i = length
+    io.write_string buffer.to_slice[i, length - i]
 
     # print trailing 0 if whole number or exp notation of power of ten
     if (decimal_exponent >= 0 && !exp_mode) || (exp != point && length == 1)

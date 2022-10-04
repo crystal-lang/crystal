@@ -61,6 +61,82 @@ describe "Restrictions" do
       mod.t("Axx+").restrict(mod.t("Mxx"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("Bxx+"), mod.t("Cxx+")))
     end
 
+    it "restricts module with another module" do
+      mod = Program.new
+      mod.semantic parse("
+        module Mxx; end
+        module Nxx; end
+        class Axx; include Mxx; end
+        class Bxx; include Nxx; end
+        class Cxx; include Mxx; include Nxx; end
+        class Dxx < Axx; include Nxx; end
+        class Exx < Bxx; include Mxx; end
+      ")
+
+      mod.t("Mxx").restrict(mod.t("Nxx"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
+    end
+
+    it "restricts generic module instance with another module" do
+      mod = Program.new
+      mod.semantic parse("
+        module Mxx(T); end
+        module Nxx; end
+        class Axx; include Mxx(Int32); end
+        class Bxx; include Nxx; end
+        class Cxx; include Mxx(Int32); include Nxx; end
+        class Dxx < Axx; include Nxx; end
+        class Exx < Bxx; include Mxx(Int32); end
+      ")
+
+      result = mod.generic_module("Mxx", mod.int32).restrict(mod.t("Nxx"), MatchContext.new(mod, mod))
+      result.should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
+    end
+
+    it "restricts generic module instance with another generic module instance" do
+      mod = Program.new
+      mod.semantic parse("
+        module Mxx(T); end
+        module Nxx(T); end
+        class Axx; include Mxx(Int32); end
+        class Bxx; include Nxx(Int32); end
+        class Cxx; include Mxx(Int32); include Nxx(Int32); end
+        class Dxx < Axx; include Nxx(Int32); end
+        class Exx < Bxx; include Mxx(Int32); end
+        class Fxx; include Mxx(Int32); include Nxx(Char); end
+        class Gxx; include Mxx(Char); include Nxx(Int32); end
+      ")
+
+      result = mod.generic_module("Mxx", mod.int32).restrict(mod.generic_module("Nxx", mod.int32), MatchContext.new(mod, mod))
+      result.should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
+    end
+
+    it "restricts generic module instance with class" do
+      mod = Program.new
+      mod.semantic parse("
+        module Mxx(T); end
+        module Nxx; end
+        class Axx; include Mxx(Int32); end
+        class Bxx; include Nxx; end
+        class Cxx; include Mxx(Int32); include Nxx; end
+        class Dxx < Axx; include Nxx; end
+        class Exx < Bxx; include Mxx(Int32); end
+      ")
+
+      result = mod.generic_module("Mxx", mod.int32).restrict(mod.t("Nxx"), MatchContext.new(mod, mod))
+      result.should eq(mod.union_of(mod.t("Cxx"), mod.t("Dxx"), mod.t("Exx")))
+    end
+
+    it "restricts module through generic include (#4287)" do
+      mod = Program.new
+      mod.semantic parse("
+        module Axx; end
+        module Bxx(T); include Axx; end
+        class Cxx; include Bxx(Int32); end
+      ")
+
+      mod.t("Axx").restrict(mod.t("Cxx"), MatchContext.new(mod, mod)).should eq(mod.t("Cxx"))
+    end
+
     it "restricts class against uninstantiated generic base class through multiple inheritance (1) (#9660)" do
       mod = Program.new
       mod.semantic parse("
@@ -138,6 +214,58 @@ describe "Restrictions" do
 
           foo(Int32)
           )) { bool }
+      end
+    end
+
+    describe "Metaclass vs Path" do
+      {% for type in [Object, Value, Class] %}
+        it "inserts metaclass before {{ type }}" do
+          assert_type(%(
+            def foo(a : {{ type }})
+              1
+            end
+
+            def foo(a : Int32.class)
+              true
+            end
+
+            foo(Int32)
+            )) { bool }
+        end
+
+        it "keeps metaclass before {{ type }}" do
+          assert_type(%(
+            def foo(a : Int32.class)
+              true
+            end
+
+            def foo(a : {{ type }})
+              1
+            end
+
+            foo(Int32)
+            )) { bool }
+        end
+      {% end %}
+
+      it "doesn't error if path is undefined and method is not called (1) (#12516)" do
+        assert_no_errors <<-CR
+          def foo(a : Int32.class)
+          end
+
+          def foo(a : Foo)
+          end
+          CR
+      end
+
+      it "doesn't error if path is undefined and method is not called (2) (#12516)" do
+        assert_no_errors <<-CR
+          def foo(a : Foo)
+          end
+
+          def foo(a : Int32.class)
+          end
+          CR
       end
     end
 
@@ -419,6 +547,131 @@ describe "Restrictions" do
           )) { tuple_of([int32, bool]) }
       end
     end
+
+    describe "free variables" do
+      it "inserts path before free variable with same name" do
+        assert_type(<<-CR) { tuple_of([char, bool]) }
+          def foo(x : Int32) forall Int32
+            true
+          end
+
+          def foo(x : Int32)
+            'a'
+          end
+
+          {foo(1), foo("")}
+          CR
+      end
+
+      it "keeps path before free variable with same name" do
+        assert_type(<<-CR) { tuple_of([char, bool]) }
+          def foo(x : Int32)
+            'a'
+          end
+
+          def foo(x : Int32) forall Int32
+            true
+          end
+
+          {foo(1), foo("")}
+          CR
+      end
+
+      it "inserts path before free variable even if free var resolves to a more specialized type" do
+        assert_type(<<-CR) { tuple_of([int32, int32, bool]) }
+          class Foo
+          end
+
+          class Bar < Foo
+          end
+
+          def foo(x : Bar) forall Bar
+            true
+          end
+
+          def foo(x : Foo)
+            1
+          end
+
+          {foo(Foo.new), foo(Bar.new), foo('a')}
+          CR
+      end
+
+      it "keeps path before free variable even if free var resolves to a more specialized type" do
+        assert_type(<<-CR) { tuple_of([int32, int32, bool]) }
+          class Foo
+          end
+
+          class Bar < Foo
+          end
+
+          def foo(x : Foo)
+            1
+          end
+
+          def foo(x : Bar) forall Bar
+            true
+          end
+
+          {foo(Foo.new), foo(Bar.new), foo('a')}
+          CR
+      end
+    end
+
+    describe "Union" do
+      it "handles redefinitions (1) (#12330)" do
+        assert_type(<<-CR) { bool }
+          def foo(x : Int32 | String)
+            'a'
+          end
+
+          def foo(x : ::Int32 | String)
+            true
+          end
+
+          foo(1)
+          CR
+      end
+
+      it "handles redefinitions (2) (#12330)" do
+        assert_type(<<-CR) { bool }
+          def foo(x : Int32 | String)
+            'a'
+          end
+
+          def foo(x : String | Int32)
+            true
+          end
+
+          foo(1)
+          CR
+      end
+
+      it "orders union before generic (#12330)" do
+        assert_type(<<-CR) { bool }
+          module Foo(T)
+          end
+
+          class Bar1
+            include Foo(Int32)
+          end
+
+          class Bar2
+            include Foo(Int32)
+          end
+
+          def foo(x : Foo(Int32))
+            'a'
+          end
+
+          def foo(x : Bar1 | Bar2)
+            true
+          end
+
+          foo(Bar1.new)
+          CR
+      end
+    end
   end
 
   it "self always matches instance type in restriction" do
@@ -640,7 +893,7 @@ describe "Restrictions" do
 
       foo GenericChild(Base).new
       ),
-      "no overload matches"
+      "expected argument #1 to 'foo' to be GenericBase(Child), not GenericChild(Base)"
   end
 
   it "allows passing recursive type to free var (#1076)" do
@@ -678,7 +931,7 @@ describe "Restrictions" do
 
       a = 1 || "foo" || true
       foo(a.class)
-      )) { union_of([uint8, uint16, uint32] of Type) }
+      ), inject_primitives: true) { union_of([uint8, uint16, uint32] of Type) }
   end
 
   it "restricts class union type to overloads with classes (2)" do
@@ -697,7 +950,7 @@ describe "Restrictions" do
 
       a = 1 || "foo"
       foo(a.class)
-      )) { union_of([uint8, uint16] of Type) }
+      ), inject_primitives: true) { union_of([uint8, uint16] of Type) }
   end
 
   it "makes metaclass subclass pass parent metaclass restriction (#2079)" do
@@ -807,21 +1060,7 @@ describe "Restrictions" do
       y = uninitialized UInt8[11]
       foo(x, y)
       ),
-      "no overload matches"
-  end
-
-  it "gives precedence to T.class over Class (#7392)" do
-    assert_type(%(
-      def foo(x : Class)
-        'a'
-      end
-
-      def foo(x : Int32.class)
-        1
-      end
-
-      foo(Int32)
-      )) { int32 }
+      "expected argument #2 to 'foo' to be StaticArray(UInt8, 10), not StaticArray(UInt8, 11)"
   end
 
   it "restricts aliased typedef type (#9474)" do
@@ -839,5 +1078,51 @@ describe "Restrictions" do
       x = uninitialized C
       foo x
       )) { int32 }
+  end
+
+  it "errors if using Tuple with named args" do
+    assert_error <<-CR, "can only instantiate NamedTuple with named arguments"
+      def foo(x : Tuple(a: Int32))
+      end
+
+      foo({1})
+      CR
+  end
+
+  it "doesn't error if using Tuple with no args" do
+    assert_type(<<-CR) { tuple_of([] of Type) }
+      def foo(x : Tuple())
+        x
+      end
+
+      def bar(*args : *T) forall T
+        args
+      end
+
+      foo(bar)
+      CR
+  end
+
+  it "errors if using NamedTuple with positional args" do
+    assert_error <<-CR, "can only instantiate NamedTuple with named arguments"
+      def foo(x : NamedTuple(Int32))
+      end
+
+      foo({a: 1})
+      CR
+  end
+
+  it "doesn't error if using NamedTuple with no args" do
+    assert_type(<<-CR) { named_tuple_of({} of String => Type) }
+      def foo(x : NamedTuple())
+        x
+      end
+
+      def bar(**opts : **T) forall T
+        opts
+      end
+
+      foo(bar)
+      CR
   end
 end

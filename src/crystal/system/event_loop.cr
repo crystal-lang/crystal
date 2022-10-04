@@ -28,7 +28,9 @@ struct Crystal::Event
   # def add(time_span : Time::Span?) : Nil
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:wasi) %}
+  require "./wasi/event_loop"
+{% elsif flag?(:unix) %}
   require "./unix/event_loop_libevent"
 {% elsif flag?(:win32) %}
   require "./win32/event_loop_iocp"

@@ -138,7 +138,7 @@ module YAML
       end
 
       private def self.new_from_yaml_node(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-        ctx.read_alias(node, \{{@type}}) do |obj|
+        ctx.read_alias(node, self) do |obj|
           return obj
         end
 
@@ -403,6 +403,12 @@ module YAML
           {% for key, value in mapping %}
             {% if key.is_a?(Path) %}
               {% key = key.resolve %}
+            {% end %}
+            {% if key.is_a?(NumberLiteral) %}
+              # An enum value is always a typed NumberLiteral and stringifies with type
+              # suffix unless it's Int32.
+              # TODO: Replace this workaround with NumberLiteral#to_number after the next release
+              {% key = key.id.split("_")[0] %}
             {% end %}
             when {{key.id.stringify}}
               return {{value.id}}.new(ctx, node)

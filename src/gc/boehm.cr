@@ -2,7 +2,20 @@
   require "crystal/rw_lock"
 {% end %}
 
-{% unless flag?(:win32) %}
+# MUSL: On musl systems, libpthread is empty. The entire library is already included in libc.
+# The empty library is only available for POSIX compatibility. We don't need to link it.
+#
+# Darwin: `libpthread` is provided as part of `libsystem`. There's no reason to link it explicitly.
+#
+# Interpreter: Starting with glibc 2.34, `pthread` is integrated into `libc`
+# and may not even be available as a separate shared library.
+# There's always a static library for compiled mode, but `Crystal::Loader` does not support
+# static libraries. So we just skip `pthread` entirely. The symbols are still
+# available in the interpreter because they are loaded in the compiler.
+#
+# OTHERS: On other systems, we add the linker annotation here to make sure libpthread is loaded
+# before libgc which looks up symbols from libpthread.
+{% unless flag?(:win32) || flag?(:musl) || flag?(:darwin) || (flag?(:interpreted) && flag?(:gnu)) %}
   @[Link("pthread")]
 {% end %}
 
@@ -15,7 +28,13 @@
 lib LibGC
   alias Int = LibC::Int
   alias SizeT = LibC::SizeT
-  alias Word = LibC::ULong
+  {% if flag?(:win32) && flag?(:bits64) %}
+    alias Word = LibC::ULongLong
+    alias SignedWord = LibC::LongLong
+  {% else %}
+    alias Word = LibC::ULong
+    alias SignedWord = LibC::Long
+  {% end %}
 
   struct StackBase
     mem_base : Void*
@@ -72,7 +91,7 @@ lib LibGC
 
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
-  {% if flag?(:preview_mt) %}
+  {% if flag?(:preview_mt) || flag?(:win32) %}
     fun get_my_stackbottom = GC_get_my_stackbottom(sb : StackBase*) : ThreadHandle
     fun set_stackbottom = GC_set_stackbottom(th : ThreadHandle, sb : StackBase*) : ThreadHandle
   {% else %}
@@ -81,14 +100,14 @@ lib LibGC
 
   fun set_on_collection_event = GC_set_on_collection_event(cb : ->)
 
-  $gc_no = GC_gc_no : LibC::ULong
-  $bytes_found = GC_bytes_found : LibC::Long
+  $gc_no = GC_gc_no : Word
+  $bytes_found = GC_bytes_found : SignedWord
   # GC_on_collection_event isn't exported.  Can't collect totals without it.
   # bytes_allocd, heap_size, unmapped_bytes are macros
 
   fun size = GC_size(addr : Void*) : LibC::SizeT
 
-  {% unless flag?(:win32) %}
+  {% unless flag?(:win32) || flag?(:wasm32) %}
     # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
     fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*) : LibC::Int
     fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
@@ -120,7 +139,7 @@ module GC
     LibGC.realloc(ptr, size)
   end
 
-  def self.init
+  def self.init : Nil
     {% unless flag?(:win32) %}
       LibGC.set_handle_fork(1)
     {% end %}
@@ -128,6 +147,16 @@ module GC
 
     LibGC.set_start_callback ->do
       GC.lock_write
+    end
+    # By default the GC warns on big allocations/reallocations. This
+    # is of limited use and pollutes program output with warnings.
+    LibGC.set_warn_proc ->(msg, v) do
+      start = "GC Warning: Repeated allocation of very large block"
+      # This implements `String#starts_with?` without allocating a `String` (#11728)
+      format_string = Slice.new(msg, Math.min(LibC.strlen(msg), start.bytesize))
+      unless format_string == start.to_slice
+        LibC.printf msg, v
+      end
     end
   end
 
@@ -147,11 +176,11 @@ module GC
     LibGC.disable
   end
 
-  def self.free(pointer : Void*)
+  def self.free(pointer : Void*) : Nil
     LibGC.free(pointer)
   end
 
-  def self.add_finalizer(object : Reference)
+  def self.add_finalizer(object : Reference) : Nil
     add_finalizer_impl(object)
   end
 
@@ -221,7 +250,7 @@ module GC
     # :nodoc:
     def self.pthread_join(thread : LibC::PthreadT) : Void*
       ret = LibGC.pthread_join(thread, out value)
-      raise RuntimeError.from_errno("pthread_join", Errno.new(ret)) unless ret == 0
+      raise RuntimeError.from_os_error("pthread_join", Errno.new(ret)) unless ret == 0
       value
     end
 
@@ -233,7 +262,7 @@ module GC
 
   # :nodoc:
   def self.current_thread_stack_bottom
-    {% if flag?(:preview_mt) %}
+    {% if flag?(:preview_mt) || flag?(:win32) %}
       th = LibGC.get_my_stackbottom(out sb)
       {th, sb.mem_base}
     {% else %}
@@ -247,6 +276,16 @@ module GC
       sb = LibGC::StackBase.new
       sb.mem_base = stack_bottom
       LibGC.set_stackbottom(thread_handle, pointerof(sb))
+    end
+  {% elsif flag?(:win32) %}
+    # this is necessary because Boehm GC does _not_ use `GC_stackbottom` on
+    # Windows when pushing all threads' stacks; instead `GC_set_stackbottom`
+    # must be used to associate the new bottom with the running thread
+    def self.set_stackbottom(stack_bottom : Void*)
+      sb = LibGC::StackBase.new
+      sb.mem_base = stack_bottom
+      # `nil` represents the current thread (i.e. the only one)
+      LibGC.set_stackbottom(nil, pointerof(sb))
     end
   {% else %}
     def self.set_stackbottom(stack_bottom : Void*)
@@ -283,12 +322,12 @@ module GC
   end
 
   # :nodoc:
-  def self.push_stack(stack_top, stack_bottom)
+  def self.push_stack(stack_top, stack_bottom) : Nil
     LibGC.push_all_eager(stack_top, stack_bottom)
   end
 
   # :nodoc:
-  def self.before_collect(&block)
+  def self.before_collect(&block) : Nil
     @@curr_push_other_roots = block
     @@prev_push_other_roots = LibGC.get_push_other_roots
 
@@ -299,20 +338,22 @@ module GC
   end
 
   # pushes the stack of pending fibers when the GC wants to collect memory:
-  GC.before_collect do
-    Fiber.unsafe_each do |fiber|
-      fiber.push_gc_roots unless fiber.running?
-    end
-
-    {% if flag?(:preview_mt) %}
-      Thread.unsafe_each do |thread|
-        if scheduler = thread.@scheduler
-          fiber = scheduler.@current
-          GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
-        end
+  {% unless flag?(:interpreted) %}
+    GC.before_collect do
+      Fiber.unsafe_each do |fiber|
+        fiber.push_gc_roots unless fiber.running?
       end
-    {% end %}
 
-    GC.unlock_write
-  end
+      {% if flag?(:preview_mt) %}
+        Thread.unsafe_each do |thread|
+          if scheduler = thread.@scheduler
+            fiber = scheduler.@current
+            GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
+          end
+        end
+      {% end %}
+
+      GC.unlock_write
+    end
+  {% end %}
 end

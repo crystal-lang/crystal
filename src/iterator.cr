@@ -10,8 +10,8 @@ require "./enumerable"
 # (1..10_000_000).select(&.even?).map { |x| x * 3 }.first(3) # => [6, 12, 18]
 # ```
 #
-# The above works, but creates many intermediate arrays: one for the *select* call,
-# one for the *map* call and one for the *take* call. A more efficient way is to invoke
+# The above works, but creates many intermediate arrays: one for the `select` call,
+# one for the `map` call and one for the `first` call. A more efficient way is to invoke
 # `Range#each` without a block, which gives us an `Iterator` so we can process the operations
 # lazily:
 #
@@ -144,6 +144,113 @@ module Iterator(T)
   # are no more elements.
   abstract def next
 
+  # Returns an iterator that returns the prefix sums of the original iterator's
+  # elements.
+  #
+  # Expects `T` to respond to the `#+` method.
+  #
+  # ```
+  # iter = (3..6).each.accumulate
+  # iter.next # => 3
+  # iter.next # => 7
+  # iter.next # => 12
+  # iter.next # => 18
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def accumulate
+    accumulate { |x, y| x + y }
+  end
+
+  # Returns an iterator that returns *initial* and its prefix sums with the
+  # original iterator's elements.
+  #
+  # Expects `U` to respond to the `#+` method.
+  #
+  # ```
+  # iter = (3..6).each.accumulate(7)
+  # iter.next # => 7
+  # iter.next # => 10
+  # iter.next # => 14
+  # iter.next # => 19
+  # iter.next # => 25
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def accumulate(initial : U) forall U
+    accumulate(initial) { |x, y| x + y }
+  end
+
+  # Returns an iterator that accumulates the original iterator's elements by
+  # the given *block*.
+  #
+  # For each element of the original iterator the block is passed an accumulator
+  # value and the element. The result becomes the new value for the accumulator
+  # and is then returned. The initial value for the accumulator is the first
+  # element of the original iterator.
+  #
+  # ```
+  # iter = %w(the quick brown fox).each.accumulate { |x, y| "#{x}, #{y}" }
+  # iter.next # => "the"
+  # iter.next # => "the, quick"
+  # iter.next # => "the, quick, brown"
+  # iter.next # => "the, quick, brown, fox"
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def accumulate(&block : T, T -> T)
+    Accumulate(typeof(self), T).new(self, block)
+  end
+
+  # Returns an iterator that accumulates *initial* with the original iterator's
+  # elements by the given *block*.
+  #
+  # Similar to `#accumulate(&block : T, T -> T)`, except the initial value is
+  # provided by an argument and needs not have the same type as the elements of
+  # the original iterator. This initial value is returned first.
+  #
+  # ```
+  # iter = [4, 3, 2].each.accumulate("X") { |x, y| x * y }
+  # iter.next # => "X"
+  # iter.next # => "XXXX"
+  # iter.next # => "XXXXXXXXXXXX"
+  # iter.next # => "XXXXXXXXXXXXXXXXXXXXXXXX"
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def accumulate(initial : U, &block : U, T -> U) forall U
+    AccumulateInit(typeof(self), T, U).new(self, initial, block)
+  end
+
+  private class AccumulateInit(I, T, U)
+    include Iterator(U)
+
+    @acc : U | Iterator::Stop
+
+    def initialize(@iterator : I, @acc : U, @func : U, T -> U)
+    end
+
+    def next
+      old_acc = @acc
+      return old_acc if old_acc.is_a?(Iterator::Stop)
+      elem = @iterator.next
+      @acc = elem.is_a?(Iterator::Stop) ? elem : @func.call(old_acc, elem)
+      old_acc
+    end
+  end
+
+  private class Accumulate(I, T)
+    include Iterator(T)
+    include IteratorWrapper
+
+    @acc : T | Iterator::Stop = Iterator::Stop::INSTANCE
+
+    def initialize(@iterator : I, @func : T, T -> T)
+    end
+
+    def next
+      elem = wrapped_next
+      old_acc = @acc
+      @acc = old_acc.is_a?(Iterator::Stop) ? elem : @func.call(old_acc, elem)
+    end
+  end
+
   # Returns an iterator that returns elements from the original iterator until
   # it is exhausted and then returns the elements of the second iterator.
   # Compared to `.chain(Iterator(Iter))`, it has better performance when the quantity of
@@ -275,12 +382,14 @@ module Iterator(T)
   # interest is to be used in a read-only fashion.
   #
   # Chunks of two items can be iterated using `#cons_pair`, an optimized
-  # implementation for the special case of `size == 2` which avoids heap
+  # implementation for the special case of `n == 2` which avoids heap
   # allocations.
   def cons(n : Int, reuse = false)
     raise ArgumentError.new "Invalid cons size: #{n}" if n <= 0
     if reuse.nil? || reuse.is_a?(Bool)
-      Cons(typeof(self), T, typeof(n), Array(T)).new(self, n, Array(T).new(n), reuse)
+      # we use an initial capacity of n * 2, because a second iteration would
+      # have reallocated the array to that capacity anyway
+      Cons(typeof(self), T, typeof(n), Array(T)).new(self, n, Array(T).new(n * 2), reuse)
     else
       Cons(typeof(self), T, typeof(n), typeof(reuse)).new(self, n, reuse, reuse)
     end
@@ -324,7 +433,7 @@ module Iterator(T)
   #
   # Chunks of more than two items can be iterated using `#cons`.
   # This method is just an optimized implementation for the special case of
-  # `size == 2` to avoid heap allocations.
+  # `n == 2` to avoid heap allocations.
   def cons_pair : Iterator({T, T})
     ConsTuple(typeof(self), T).new(self)
   end
@@ -483,7 +592,7 @@ module Iterator(T)
   # iter = ["a", "b", "c"].each
   # iter.each { |x| print x, " " } # Prints "a b c"
   # ```
-  def each : Nil
+  def each(& : T ->) : Nil
     while true
       value = self.next
       break if value.is_a?(Stop)

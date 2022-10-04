@@ -1,4 +1,5 @@
 require "./basetsd"
+require "c/wtypesbase"
 
 lib LibC
   CREATE_UNICODE_ENVIRONMENT = 0x00000400
@@ -31,6 +32,7 @@ lib LibC
     hStdError : HANDLE
   end
 
+  fun GetCurrentThread : HANDLE
   fun GetCurrentThreadStackLimits(lowLimit : ULONG_PTR*, highLimit : ULONG_PTR*) : Void
   fun GetCurrentProcess : HANDLE
   fun GetCurrentProcessId : DWORD
@@ -41,6 +43,7 @@ lib LibC
                      bInheritHandles : BOOL, dwCreationFlags : DWORD,
                      lpEnvironment : Void*, lpCurrentDirectory : LPWSTR,
                      lpStartupInfo : STARTUPINFOW*, lpProcessInformation : PROCESS_INFORMATION*) : BOOL
+  fun SetThreadStackGuarantee(stackSizeInBytes : DWORD*) : BOOL
   fun GetProcessTimes(hProcess : HANDLE, lpCreationTime : FILETIME*, lpExitTime : FILETIME*,
                       lpKernelTime : FILETIME*, lpUserTime : FILETIME*) : BOOL
 
