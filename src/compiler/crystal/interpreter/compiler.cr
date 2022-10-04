@@ -2341,9 +2341,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     request_value(arg)
 
-    # We first cast the argument to the def's arg type,
-    # which is the external methods' type.
-    downcast arg, arg_type, target_def_arg_type
+    # Check number autocast but for variables
+    if arg_type != target_def_arg_type && arg_type.is_a?(IntegerType | FloatType) && target_def_arg_type.is_a?(IntegerType | FloatType)
+      primitive_convert(arg, arg_type, target_def_arg_type, checked: false)
+    else
+      # We first cast the argument to the def's arg type,
+      # which is the external methods' type.
+      downcast arg, arg_type, target_def_arg_type
+    end
 
     # Then we need to cast the argument to the target_def variable
     # corresponding to the argument. If for example we have this:
