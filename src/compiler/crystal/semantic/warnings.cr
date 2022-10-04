@@ -17,10 +17,10 @@ module Crystal
       check_deprecation(const, node, @deprecated_constants_detected)
     end
 
-    def check_call_to_deprecated_macro(node : Macro, call : Call)
+    def check_call_to_deprecated_macro(a_macro : Macro, call : Call)
       return unless @warnings.level.all?
 
-      check_deprecation(node, call, @deprecated_macros_detected)
+      check_deprecation(a_macro, call, @deprecated_macros_detected)
     end
 
     def check_call_to_deprecated_method(node : Call)
@@ -65,20 +65,6 @@ module Crystal
 
         @warnings.infos << use_site.warning(full_message)
       end
-    end
-
-    private def validate_call_to_deprecated_node(node : ASTNode, location : Location?, short_reference : String, deprecated_annotation : DeprecatedAnnotation, & : String -> Bool) : Nil
-      return if self.ignore_warning_due_to_location? location
-      warning_key = location.try { |l| "#{short_reference} #{l}" }
-
-      # skip warning if the call site was already informed
-      # if there is no location information just inform it.
-      return if !warning_key || !yield(warning_key)
-
-      message = deprecated_annotation.message
-      message = message ? " #{message}" : ""
-
-      self.warning_failures << node.warning "Deprecated #{short_reference}.#{message}"
     end
 
     private def compiler_expanded_call(node : Call)
