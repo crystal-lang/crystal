@@ -1910,6 +1910,9 @@ module Crystal
     assert_syntax_error "x, self = 1, 2",
       "can't change the value of self"
 
+    assert_syntax_error "A = B = 1",
+      "can't declare a constant within the declaration of another constant"
+
     assert_syntax_error "macro foo(x : Int32); end"
 
     assert_syntax_error "/foo)/", "invalid regex"

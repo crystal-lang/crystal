@@ -424,6 +424,10 @@ module Crystal
 
             push_var atomic
 
+            if atomic.is_a?(Path) && atomic_value.is_a?(Assign) && atomic_value.target.is_a?(Path)
+              raise "can't declare a constant within the declaration of another constant"
+            end
+
             atomic = Assign.new(atomic, atomic_value).at(location)
             atomic.doc = doc
             atomic
