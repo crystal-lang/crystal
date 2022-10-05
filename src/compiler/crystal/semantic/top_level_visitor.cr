@@ -303,10 +303,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     annotations = read_annotations
 
-    process_annotations(annotations) do |annotation_type, ann|
-      node.add_annotation(annotation_type, ann)
-    end
-
     scope, name, existing_type = lookup_type_def(node)
 
     if existing_type

@@ -1,34 +1,6 @@
 require "../spec_helper"
 
 describe "Semantic: warnings" do
-  describe "deprecated aliases" do
-    it "detects deprecated aliases" do
-      assert_warning <<-CR,
-        struct SomeType; end
-
-        @[Deprecated]
-        alias OtherType = SomeType
-
-        OtherType.new
-        CR
-        "warning in line 4\nWarning: Deprecated alias OtherType."
-    end
-
-    it "detects deprecated namespaced aliases" do
-      assert_warning <<-CR,
-        struct SomeType; end
-
-        module MyNamespace
-          @[Deprecated]
-          alias OtherType = SomeType
-        end
-
-        MyNamespace::OtherType.new
-        CR
-        "warning in line 5\nWarning: Deprecated alias MyNamespace::OtherType."
-    end
-  end
-
   describe "deprecated annotations" do
     it "detects deprecated annotations" do
       assert_warning <<-CR,

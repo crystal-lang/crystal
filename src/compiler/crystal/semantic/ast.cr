@@ -675,8 +675,6 @@ module Crystal
   end
 
   class Alias
-    include Annotatable
-
     property! resolved_type : AliasType
   end
 

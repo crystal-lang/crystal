@@ -126,12 +126,6 @@ module Crystal
       {@last_is_truthy, @last_is_falsey}
     end
 
-    def transform(node : Alias)
-      @program.check_call_to_deprecated_alias node
-
-      node
-    end
-
     def transform(node : AnnotationDef)
       @program.check_call_to_deprecated_annotation node
 
