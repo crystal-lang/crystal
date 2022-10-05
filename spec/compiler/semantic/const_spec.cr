@@ -366,6 +366,15 @@ describe "Semantic: const" do
       "can't declare constant dynamically"
   end
 
+  it "errors on dynamic constant assignment inside a block assigned to a constant (#2874)" do
+    assert_error %(
+      A = do
+        B = 1
+      end
+      ),
+      "can't declare constant dynamically"
+  end
+
   it "errors on dynamic constant assignment inside if" do
     assert_error %(
       if 1 == 1
