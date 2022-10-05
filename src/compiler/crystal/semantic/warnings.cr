@@ -34,7 +34,7 @@ module Crystal
     def check_call_to_deprecated_annotation(node : AnnotationDef) : Nil
       return unless @warnings.level.all?
 
-      check_deprecation(node, node.name, @deprecated_aliases_detected)
+      check_deprecation(node, node.name, @deprecated_annotations_detected)
     end
 
     private def check_deprecation(object, use_site, detects)
