@@ -18,7 +18,7 @@ it ".__powisf2" do
   __powisf2(0, 2).should eq 0
   __powisf2(0, 3).should eq 0
   __powisf2(0, 4).should eq 0
-  __powisf2(0, Int32::MAX -1).should eq 0
+  __powisf2(0, Int32::MAX - 1).should eq 0
   __powisf2(0, Int32::MAX).should eq 0
   __powisf2(-0.0, 1).should eq -0.0
   __powisf2(-0.0, 2).should eq 0
