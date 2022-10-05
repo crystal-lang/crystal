@@ -368,7 +368,7 @@ describe "Semantic: const" do
 
   it "errors on dynamic constant assignment inside a block assigned to a constant (#2874)" do
     assert_error %(
-      A = do
+      A = begin
         B = 1
       end
       ),
