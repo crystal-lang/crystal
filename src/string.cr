@@ -4910,6 +4910,16 @@ class String
     !!($~ = re.match_at_byte_index(self, 0, Regex::Options::ANCHORED))
   end
 
+  # Returns `true` if this string starts with one of the *prefixes* given.
+  #
+  # ```
+  # "hello".start_with?("heaven", "hell")     #=> true
+  # "hello".start_with?("heaven", "paradise") #=> false
+  #```
+  def starts_with?(*prefixes)
+    prefixes.any? { |e| self.starts_with?(e) }
+  end
+
   # Returns `true` if this string ends with the given *str*.
   #
   # ```
@@ -4958,6 +4968,16 @@ class String
   # ```
   def ends_with?(re : Regex) : Bool
     !!($~ = /#{re}\z/.match(self))
+  end
+
+  # Returns `true` if this string ends with one of the *suffixes* given.
+  #
+  # ```
+  # "hello".end_with?("heaven", "ello")     #=> true
+  # "hello".end_with?("heaven", "paradise") #=> false
+  # ```
+  def ends_with?(*suffixes)
+    suffixes.any? { |e| self.ends_with?(e) }
   end
 
   # Interpolates *other* into the string using top-level `::sprintf`.

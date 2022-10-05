@@ -1243,6 +1243,10 @@ describe "String" do
     it { "foobar".starts_with?('g').should be_false }
     it { "よし".starts_with?('よ').should be_true }
     it { "よし!".starts_with?("よし").should be_true }
+    it { "foobar".starts_with?("foo", "bar").should be_true }
+    it { "foobar".starts_with?("foox", "bar").should be_false }
+    it { "foobar".starts_with?('f', "bar").should be_true }
+    it { "foobar".starts_with?("bar", /foo/).should be_true }
 
     it "treats first char as replacement char if invalid in an otherwise ascii string" do
       "\xEEfoo".starts_with?('\u{EE}').should be_false
@@ -1262,6 +1266,11 @@ describe "String" do
     it { "よし".ends_with?('し').should be_true }
     it { "よし".ends_with?('な').should be_false }
     it { "あいう_".ends_with?('_').should be_true }
+    it { "foobar".ends_with?("baz", "bar").should be_true }
+    it { "foobar".ends_with?("foo", "baz").should be_false }
+    it { "foobar".ends_with?('r', "baz").should be_true }
+    it { "foobar".ends_with?("foo", /bar/).should be_true }
+
 
     it "treats last char as replacement char if invalid in an otherwise ascii string" do
       "foo\xEE".ends_with?('\u{EE}').should be_false
