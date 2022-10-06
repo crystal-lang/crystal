@@ -3,6 +3,7 @@ name: WebAssembly CI
 on: [push, pull_request]
 
 env:
+  TRAVIS_OS_NAME: linux
   SPEC_SPLIT_DOTS: 160
 
 jobs:
