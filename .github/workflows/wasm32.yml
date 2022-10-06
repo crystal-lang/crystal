@@ -3,23 +3,15 @@ name: WebAssembly CI
 on: [push, pull_request]
 
 env:
-  TRAVIS_OS_NAME: linux
-  ARCH: x86_64
-  ARCH_CMD: linux64
   SPEC_SPLIT_DOTS: 160
 
 jobs:
   wasm32-test:
     runs-on: ubuntu-latest
+    container: crystallang/crystal:1.5.0-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
-
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
 
       - name: Install wasmtime
         run: curl https://wasmtime.dev/install.sh -sSf | sudo bash
@@ -35,7 +27,7 @@ jobs:
           curl -L https://github.com/lbguilherme/wasm-libs/releases/download/0.0.2/wasm32-wasi-libs.tar.gz | tar -C wasm32-wasi-libs -xz
 
       - name: Build spec/primitives_spec.cr
-        run: bin/ci with_build_env ./bin/crystal build spec/primitives_spec.cr -o primitives_spec.wasm --target wasm32-wasi -Dwasm32_mock_expect_raises
+        run: bin/crystal build spec/primitives_spec.cr -o primitives_spec.wasm --target wasm32-wasi -Dwasm32_mock_expect_raises
         env:
           CRYSTAL_LIBRARY_PATH: ${{ github.workspace }}/wasm32-wasi-libs
 
@@ -43,7 +35,7 @@ jobs:
         run: wasmtime run primitives_spec.wasm
 
       - name: Build spec/wasm32_std_spec.cr
-        run: bin/ci with_build_env ./bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi
+        run: bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi
         env:
           CRYSTAL_LIBRARY_PATH: ${{ github.workspace }}/wasm32-wasi-libs
 
