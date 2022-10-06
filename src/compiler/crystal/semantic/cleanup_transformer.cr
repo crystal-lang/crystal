@@ -280,8 +280,7 @@ module Crystal
 
     private def solve_string_interpolation_expression(piece : ASTNode) : StringLiteral?
       if piece.is_a?(ExpandableNode)
-        expanded = piece.expanded
-        if expanded
+        if expanded = piece.expanded
           return solve_string_interpolation_expression(expanded)
         end
       end
