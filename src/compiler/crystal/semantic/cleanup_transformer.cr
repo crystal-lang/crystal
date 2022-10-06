@@ -287,8 +287,7 @@ module Crystal
 
       case piece
       when Path
-        target_const = piece.target_const
-        if target_const
+        if target_const = piece.target_const
           return solve_string_interpolation_expression(target_const.value)
         end
       when StringLiteral
