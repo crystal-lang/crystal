@@ -1019,24 +1019,18 @@ module Crystal
       #       ...
       #     end
       #
-      # then the body was transformed to an Expressions that will
-      # start with a bunch of MultiAssign nodes. These nodes
-      # are marked with a special `unpack_expansion` boolean
-      # set to true, so that we can treat these variables
-      # as block arguments (we don't want to override existing local variables)
-      body = node.body
-
-      # The normalizer will always transform such block bodies to an Expressions
-      if body.is_a?(Expressions)
-        expressions = body.expressions
-        expressions.each do |exp|
-          break unless exp.is_a?(MultiAssign) && exp.unpack_expansion?
-
-          ignored_vars_after_block ||= node.args.dup
-
-          exp.targets.each do |target|
-            handle_unpacked_block_argument(node, target, meta_vars, before_block_vars, ignored_vars_after_block)
-          end
+      # it was transformed to unpack the block vars inside the body:
+      #
+      #     do |__temp_1|
+      #       x, y = __temp_1
+      #       ...
+      #     end
+      #
+      # We need to treat these variables as block arguments (so they don't override existing local variables).
+      if unpacks = node.unpacks
+        ignored_vars_after_block = node.args.dup
+        unpacks.each_value do |unpack|
+          handle_unpacked_block_argument(node, unpack, meta_vars, before_block_vars, ignored_vars_after_block)
         end
       end
 

@@ -479,8 +479,6 @@ module Crystal
         node.body = Expressions.new(extra_expressions).at(node.body)
       end
 
-      node.unpacks = nil
-
       node
     end
 
@@ -504,7 +502,7 @@ module Crystal
         end
       end
       values = [Var.new(var_name).at(expressions)] of ASTNode
-      MultiAssign.new(targets, values, unpack_expansion: true).at(expressions)
+      MultiAssign.new(targets, values).at(expressions)
     end
   end
 end

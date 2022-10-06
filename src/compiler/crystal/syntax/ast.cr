@@ -859,9 +859,8 @@ module Crystal
   class MultiAssign < ASTNode
     property targets : Array(ASTNode)
     property values : Array(ASTNode)
-    property? unpack_expansion : Bool
 
-    def initialize(@targets, @values, @unpack_expansion = false)
+    def initialize(@targets, @values)
     end
 
     def accept_children(visitor)
@@ -874,10 +873,10 @@ module Crystal
     end
 
     def clone_without_location
-      MultiAssign.new(@targets.clone, @values.clone, @unpack_expansion)
+      MultiAssign.new(@targets.clone, @values.clone)
     end
 
-    def_equals_and_hash @targets, @values, @unpack_expansion
+    def_equals_and_hash @targets, @values
   end
 
   # An instance variable.
