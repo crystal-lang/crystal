@@ -1911,7 +1911,21 @@ module Crystal
       "can't change the value of self"
 
     assert_syntax_error "A = B = 1",
-      "can't declare a constant within the declaration of another constant"
+      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
+    assert_syntax_error "A = (B = 1)",
+      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
+    assert_syntax_error "A = foo(B = 1)",
+      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
+    assert_syntax_error "A = foo { B = 1 }",
+      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
+    assert_syntax_error "A = begin; B = 1; end",
+      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
+    assert_syntax_error "A = begin; 1; rescue; B = 1; end",
+      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
+    assert_syntax_error "A = begin; 1; rescue; 1; else; B = 1; end",
+      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
+    assert_syntax_error "A = begin; 1; ensure; B = 1; end",
+      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
 
     assert_syntax_error "macro foo(x : Int32); end"
 

@@ -422,8 +422,8 @@ module Crystal
               end
             end
 
-            if atomic.is_a?(Path) && atomic_value.is_a?(Assign) && atomic_value.target.is_a?(Path)
-              raise "can't declare a constant within the declaration of another constant"
+            if atomic.is_a?(Path) && invalid_constant_declaration?(atomic_value)
+              raise "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
             end
 
             push_var atomic
@@ -462,6 +462,22 @@ module Crystal
       end
 
       atomic
+    end
+
+    def invalid_constant_declaration?(exp)
+      case exp
+      when Assign      then exp.target.is_a?(Path)
+      when Expressions then invalid_constant_declaration?(exp.expressions)
+      when Rescue      then invalid_constant_declaration?(exp.body)
+      when Call
+        invalid_constant_declaration?({exp.args, exp.named_args.try &.map(&.value), exp.block.try(&.body)})
+      when ExceptionHandler
+        invalid_constant_declaration?({exp.body, exp.rescues, exp.else, exp.ensure})
+      when Enumerable
+        exp.any? { |sub_exp| invalid_constant_declaration?(sub_exp) }
+      else
+        false
+      end
     end
 
     def parse_question_colon
