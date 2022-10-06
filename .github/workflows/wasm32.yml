@@ -4,6 +4,8 @@ on: [push, pull_request]
 
 env:
   TRAVIS_OS_NAME: linux
+  ARCH: x86_64
+  ARCH_CMD: linux64
   SPEC_SPLIT_DOTS: 160
 
 jobs:
