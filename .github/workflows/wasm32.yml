@@ -14,28 +14,22 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install wasmtime
-        run: curl https://wasmtime.dev/install.sh -sSf | sudo bash
-
-      - name: Install wasm-ld
         run: |
-          sudo apt-get install -y lld
-          sudo ln -s $(which wasm-ld-15 || which wasm-ld-14 || which wasm-ld-13 || which wasm-ld-12 || which wasm-ld-11 || which wasm-ld-10) /usr/bin/wasm-ld
+          apt-get update
+          apt-get install -y curl
+          curl https://wasmtime.dev/install.sh -sSf | bash
+
+      - name: Add wasm-ld symlink
+        run: |
+          ln -s $(which wasm-ld-15 || which wasm-ld-14 || which wasm-ld-13 || which wasm-ld-12 || which wasm-ld-11 || which wasm-ld-10) /usr/bin/wasm-ld
 
       - name: Download wasm32 libs
         run: |
           mkdir wasm32-wasi-libs
           curl -L https://github.com/lbguilherme/wasm-libs/releases/download/0.0.2/wasm32-wasi-libs.tar.gz | tar -C wasm32-wasi-libs -xz
 
-      - name: Build spec/primitives_spec.cr
-        run: bin/crystal build spec/primitives_spec.cr -o primitives_spec.wasm --target wasm32-wasi -Dwasm32_mock_expect_raises
-        env:
-          CRYSTAL_LIBRARY_PATH: ${{ github.workspace }}/wasm32-wasi-libs
-
-      - name: Run primitives_spec.wasm
-        run: wasmtime run primitives_spec.wasm
-
       - name: Build spec/wasm32_std_spec.cr
-        run: bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi
+        run: bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi -Dwasm32_mock_expect_raises
         env:
           CRYSTAL_LIBRARY_PATH: ${{ github.workspace }}/wasm32-wasi-libs
 
