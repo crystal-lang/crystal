@@ -171,7 +171,7 @@ class Crystal::Scheduler
   protected def yield : Nil
     # TODO: Fiber switching and libevent for wasm32
     {% unless flag?(:wasm32) %}
-    sleep(0.seconds)
+      sleep(0.seconds)
     {% end %}
   end
 
