@@ -1064,8 +1064,7 @@ module Crystal
       case node
       when Expressions
         @str << "("
-        node.expressions.each_with_index do |exp, j|
-          @str << ", " if j > 0
+        node.expressions.join(@str, ", ") do |exp|
           visit_unpack exp
         end
         @str << ")"
