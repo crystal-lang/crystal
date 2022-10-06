@@ -24,6 +24,9 @@ jobs:
       - name: Install wasmtime
         run: curl https://wasmtime.dev/install.sh -sSf | sudo bash
 
+      - name: Install wasm-ld
+        run: sudo apt-get install -y lld
+
       - name: Download wasm32 libs
         run: |
           mkdir wasm32-wasi-libs
