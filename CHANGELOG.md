@@ -82,6 +82,7 @@
 
 - Fix YAML serialization class name ambiguity ([#12537](https://github.com/crystal-lang/crystal/pull/12537), thanks @hugopl)
 - Allow non-type converter instances in `ArrayConverter` and `HashValueConverter` ([#10638](https://github.com/crystal-lang/crystal/pull/10638), thanks @HertzDevil)
+- Document `after_initialize` method for `yaml` and `json` serializers ([#12530](https://github.com/crystal-lang/crystal/pull/12530), thanks @analogsalad)
 
 ### System
 
@@ -181,6 +182,10 @@
 - Interpreter: introduce a `Prompt` type ([#12288](https://github.com/crystal-lang/crystal/pull/12288), thanks @asterite)
 - Interpreter: missing `i += 1` ([#12381](https://github.com/crystal-lang/crystal/pull/12381), thanks @asterite)
 - Support building the interpreter on Windows ([#12397](https://github.com/crystal-lang/crystal/pull/12397), thanks @HertzDevil)
+- Don't exit in interpreter spec and change type from `Nil` to `NoReturn` in `FixMissingTypes` ([#12230](https://github.com/crystal-lang/crystal/pull/12230), thanks @asterite)
+- Interpreter: fix multidispatch with captured block ([#12236](https://github.com/crystal-lang/crystal/pull/12236), thanks @asterite)
+- Interpreter: don't change compiled mode logic ([#12252](https://github.com/crystal-lang/crystal/pull/12252), thanks @asterite)
+- Wait more in `HTTP::Server` specs in interpreted mode ([#12420](https://github.com/crystal-lang/crystal/pull/12420), thanks @asterite)
 
 ### Parser
 
