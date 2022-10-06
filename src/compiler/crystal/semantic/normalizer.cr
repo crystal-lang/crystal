@@ -475,11 +475,8 @@ module Crystal
       when Expressions
         body.expressions = extra_expressions + body.expressions
       else
-        new_expressions = Array(ASTNode).new(extra_expressions.size + 1)
-        new_expressions.concat(extra_expressions)
-        new_expressions.push(node.body)
-
-        node.body = Expressions.new(new_expressions).at(node.body)
+        extra_expressions << node.body
+        node.body = Expressions.new(extra_expressions).at(node.body)
       end
 
       node.unpacks = nil
