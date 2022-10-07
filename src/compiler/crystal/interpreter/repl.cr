@@ -142,14 +142,14 @@ class Crystal::Repl
   end
 
   private def handle_structural_changes(show_output : Bool = true)
-    puts "Structural change detected. Replyaing session...", &.dark_gray if show_output
+    puts "Structural change detected. Replaying session...", &.dark_gray if show_output
 
     begin
       value = replay
       puts "Session replayed!", &.dark_gray if show_output
       value
     rescue ex : Crystal::Error
-      puts "An error happened while replyaing with the recent structural changes:", &.yellow
+      puts "An error happened while replaying with the recent structural changes:", &.yellow
       puts ex
       puts "Continuing without the last input.", &.dark_gray
 
