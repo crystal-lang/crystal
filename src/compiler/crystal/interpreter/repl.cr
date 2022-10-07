@@ -10,6 +10,19 @@ class Crystal::Repl
     @main_visitor = MainVisitor.new(@program)
 
     @interpreter = Interpreter.new(@context)
+
+    # This is a workaround until we find a better solution.
+    #
+    # We keep old interpreters in memory because if we don't,
+    # once the memory is no longer used the finalizers in that program
+    # will run, but the memory won't be there anymore.
+    #
+    # See https://github.com/crystal-lang/crystal/issues/11580
+    @old_interpreters = [] of Interpreter
+
+    # Nodes we successfully interpreted. These will be replayed
+    # when we detect structural changes.
+    @past_nodes = [] of ASTNode
   end
 
   def run
@@ -36,6 +49,9 @@ class Crystal::Repl
       )
       next unless node
 
+      # Add to past nodes right way: we'll pop it if we encounter errors.
+      @past_nodes << node.clone
+
       begin
         value = interpret(node)
         prompt.display(value)
@@ -51,7 +67,7 @@ class Crystal::Repl
         @buffer = ""
         @line_number += 1
 
-        ex.color = true
+        ex.color = true if @program.color?
         ex.error_trace = true
         puts ex
       rescue ex : Exception
@@ -94,22 +110,65 @@ class Crystal::Repl
     interpret_and_exit_on_error(node)
   end
 
-  private def interpret(node : ASTNode)
+  private def interpret(node : ASTNode, check_structural_changes : Bool = true)
     @main_visitor = MainVisitor.new(from_main_visitor: @main_visitor)
 
-    node = @program.normalize(node)
-    node = @program.semantic(node, main_visitor: @main_visitor)
+    begin
+      node = @program.normalize(node)
+      node = @program.semantic(node, main_visitor: @main_visitor)
+    rescue ex : Crystal::Error
+      # Don't show the error right away: they might have happened
+      # because of structural changes that aren't compatible with
+      # the current code.
+    end
+
+    if check_structural_changes && has_structural_changes?(node)
+      return handle_structural_changes
+    end
+
+    if ex
+      # If an error happened with the last node we tried to interpreter,
+      # don't consider it for future replays.
+      @past_nodes.pop
+      raise ex
+    end
+
     @interpreter.interpret(node, @main_visitor.meta_vars)
   end
 
+  private def handle_structural_changes(show_output : Bool = true)
+    puts "Structural change detected. Replyaing session...", &.dark_gray if show_output
+
+    reset_interpreter
+
+    expressions = Expressions.new
+    expressions.expressions << parse_prelude
+    expressions.expressions.concat(@past_nodes.clone)
+
+    begin
+      value = interpret(expressions, check_structural_changes: false)
+      puts "Session replayed!", &.dark_gray if show_output
+      return value
+    rescue ex : Crystal::Error
+      puts "An error happened while replyaing with the recent structural changes:", &.yellow
+      puts ex
+      puts "Continuing without the last input.", &.dark_gray
+
+      # Note: no need to pop the last node because it was removed
+      # in the past `interpret` call.
+
+      return handle_structural_changes(show_output: false)
+    end
+  end
+
   private def interpret_and_exit_on_error(node : ASTNode)
-    interpret(node)
+    interpret(node, check_structural_changes: false)
   rescue ex : EscapingException
     # First run at_exit handlers by calling Crystal.exit
     interpret_crystal_exit(ex)
     exit 1
   rescue ex : Crystal::CodeError
-    ex.color = true
+    ex.color = true if @program.color?
     ex.error_trace = true
     puts ex
     exit 1
@@ -153,6 +212,43 @@ class Crystal::Repl
       end
     rescue ex
       puts "Error while calling Crystal.exit: #{ex.message}"
+    end
+  end
+
+  private def has_structural_changes?(node : ASTNode)
+    detector = StructuralChangesDetector.new
+    node.accept detector
+    detector.has_structural_changes?
+  end
+
+  private def reset_interpreter
+    # Keep the old interpreter around. See comment on this instance
+    # var initialization.
+    @old_interpreters << @interpreter
+    @program = Program.new
+    @context = Context.new(@program)
+    @interpreter = Interpreter.new(@context)
+    @main_visitor = MainVisitor.new(@program)
+  end
+
+  private def puts(message : String, &)
+    if @program.color?
+      ::puts(yield message.colorize)
+    else
+      ::puts message
+    end
+  end
+
+  class StructuralChangesDetector < Visitor
+    getter? has_structural_changes = false
+
+    def visit(node : Require | ClassDef | ModuleDef | Def | EnumDef | LibDef | FunDef | Include | Extend | Macro | AnnotationDef | Alias)
+      @has_structural_changes = true
+      false
+    end
+
+    def visit(node : ASTNode)
+      true
     end
   end
 end
