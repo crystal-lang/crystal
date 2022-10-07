@@ -35,4 +35,6 @@ jobs:
           CRYSTAL_LIBRARY_PATH: ${{ github.workspace }}/wasm32-wasi-libs
 
       - name: Run wasm32_std_spec.wasm
-        run: wasmtime run wasm32_std_spec.wasm
+        run: |
+          . ~/.bashrc
+          wasmtime run wasm32_std_spec.wasm
