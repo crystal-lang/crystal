@@ -38,6 +38,11 @@ class Crystal::Repl
         break
       end
 
+      if input == "reload!"
+        reload!
+        next
+      end
+
       if input.blank?
         prompt.line_number += 1
         next
@@ -54,7 +59,7 @@ class Crystal::Repl
 
       begin
         value = interpret(node)
-        prompt.display(value)
+        prompt.display(value) if value
       rescue ex : EscapingException
         @nest = 0
         @buffer = ""
@@ -139,16 +144,10 @@ class Crystal::Repl
   private def handle_structural_changes(show_output : Bool = true)
     puts "Structural change detected. Replyaing session...", &.dark_gray if show_output
 
-    reset_interpreter
-
-    expressions = Expressions.new
-    expressions.expressions << parse_prelude
-    expressions.expressions.concat(@past_nodes.clone)
-
     begin
-      value = interpret(expressions, check_structural_changes: false)
+      value = replay
       puts "Session replayed!", &.dark_gray if show_output
-      return value
+      value
     rescue ex : Crystal::Error
       puts "An error happened while replyaing with the recent structural changes:", &.yellow
       puts ex
@@ -157,8 +156,31 @@ class Crystal::Repl
       # Note: no need to pop the last node because it was removed
       # in the past `interpret` call.
 
-      return handle_structural_changes(show_output: false)
+      handle_structural_changes(show_output: false)
+
+      nil
     end
+  end
+
+  private def reload!
+    begin
+      replay
+    rescue ex : Crystal::Error
+      puts "An error happened while reloading:", &.yellow
+      puts ex
+      puts "Aborting... bye! 👋", &.yellow
+      exit 1
+    end
+  end
+
+  private def replay
+    reset_interpreter
+
+    expressions = Expressions.new
+    expressions.expressions << parse_prelude
+    expressions.expressions.concat(@past_nodes.clone)
+
+    interpret(expressions, check_structural_changes: false)
   end
 
   private def interpret_and_exit_on_error(node : ASTNode)
