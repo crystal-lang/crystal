@@ -61,6 +61,9 @@ class Crystal::Repl
         value = interpret_with_structural_changes_check(node)
         prompt.display(value) if value
       rescue ex : EscapingException
+        # We don't want to replay something that raised a runtime exception...
+        @past_nodes.pop
+
         @nest = 0
         @buffer = ""
         @line_number += 1
