@@ -348,6 +348,64 @@ describe "Semantic: macro" do
       CR
   end
 
+  it "preserves correct self in restriction when macro def is to be instantiated in subtypes (#5044)" do
+    assert_type(%(
+      class Foo
+        def foo(x)
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo(x : self)
+          {{ @type }}
+          "x"
+        end
+      end
+
+      class Baz < Bar
+      end
+
+      class Baz2 < Bar
+      end
+
+      (Baz.new || Baz2.new).foo(Baz.new)
+      )) { string }
+  end
+
+  it "doesn't affect self restrictions outside the macro def being instantiated in subtypes" do
+    assert_type(%(
+      class Foo
+        def foo(other) : Bool
+          {% @type %}
+          false
+        end
+      end
+
+      class Bar1 < Foo
+        def bar1
+          1
+        end
+
+        def foo(other : self)
+          other.bar1
+        end
+      end
+
+      class Bar2 < Foo
+        def bar2
+          ""
+        end
+
+        def foo(other : self)
+          other.bar2
+        end
+      end
+
+      Foo.new.as(Foo).foo(Bar1.new)
+      )) { union_of int32, bool }
+  end
+
   it "errors if non-existent named arg" do
     assert_error(<<-CR, "no parameter named 'y'")
       macro foo(x = 1)

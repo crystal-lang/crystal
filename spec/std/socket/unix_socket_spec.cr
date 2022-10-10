@@ -76,7 +76,7 @@ describe UNIXSocket do
       # BUG: shrink the socket buffers first
       left.write_timeout = 0.0001
       right.read_timeout = 0.0001
-      buf = ("a" * 4096).to_slice
+      buf = ("a" * IO::DEFAULT_BUFFER_SIZE).to_slice
 
       expect_raises(IO::TimeoutError, "Write timed out") do
         loop { left.write buf }

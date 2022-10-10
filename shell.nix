@@ -19,13 +19,13 @@
 # $ nix-shell --pure --arg musl true
 #
 
-{llvm ? 10, musl ? false, system ? builtins.currentSystem}:
+{llvm ? 11, musl ? false, system ? builtins.currentSystem}:
 
 let
   nixpkgs = import (builtins.fetchTarball {
-    name = "nixpkgs-20.03";
-    url = "https://github.com/NixOS/nixpkgs/archive/2d580cd2793a7b5f4b8b6b88fb2ccec700ee1ae6.tar.gz";
-    sha256 = "1nbanzrir1y0yi2mv70h60sars9scwmm0hsxnify2ldpczir9n37";
+    name = "nixpkgs-22.05";
+    url = "https://github.com/NixOS/nixpkgs/archive/22.05.tar.gz";
+    sha256 = "0d643wp3l77hv2pmg2fi7vyxn4rwy0iyr8djcw1h5x72315ck9ik";
   }) {
     inherit system;
   };
@@ -52,19 +52,23 @@ let
   # Hashes obtained using `nix-prefetch-url --unpack <url>`
   latestCrystalBinary = genericBinary ({
     x86_64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.4.1/crystal-1.4.1-1-darwin-universal.tar.gz";
-      sha256 = "sha256:0ckbsgr1y64w0yj80dn8v7zi6zqdlpin35l742rrblhzbdhdkalw";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.5.0/crystal-1.5.0-1-darwin-universal.tar.gz";
+      sha256 = "sha256:15h1qg4wa3zbp8p9vkvcqmy7ba1sc995r5z6d0yhx0h7nkgaw607";
     };
 
     x86_64-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.4.1/crystal-1.4.1-1-linux-x86_64.tar.gz";
-      sha256 = "sha256:1j5b2f4s2g8c1x7mhvsdzzjw878x0kkbrih4plxlzg3hmijvrnwj";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.5.0/crystal-1.5.0-1-linux-x86_64.tar.gz";
+      sha256 = "sha256:1xp1bbljwbff5zf585bz1cbkcb1whswl4fljakfxr7cbaw31jg9y";
     };
   }.${pkgs.stdenv.system});
 
   pkgconfig = pkgs.pkgconfig;
 
   llvm_suite = ({
+    llvm_11 = {
+      llvm = pkgs.llvm_11;
+      extra = [ pkgs.lld_11 pkgs.lldb_11 ];
+    };
     llvm_10 = {
       llvm = pkgs.llvm_10;
       extra = [ pkgs.lld_10 pkgs.lldb_10 ];
@@ -108,7 +112,7 @@ let
 
   stdLibDeps = with pkgs; [
       boehmgc gmp libevent libiconv libxml2 libyaml openssl pcre zlib
-    ] ++ stdenv.lib.optionals stdenv.isDarwin [ libiconv ];
+    ] ++ lib.optionals stdenv.isDarwin [ libiconv ];
 
   tools = [ pkgs.hostname pkgs.git llvm_suite.extra ];
 in
@@ -123,7 +127,7 @@ pkgs.stdenv.mkDerivation rec {
     pkgs.libffi
   ];
 
-  LLVM_CONFIG = "${llvm_suite.llvm}/bin/llvm-config";
+  LLVM_CONFIG = "${llvm_suite.llvm.dev}/bin/llvm-config";
 
   MACOSX_DEPLOYMENT_TARGET = "10.11";
 }

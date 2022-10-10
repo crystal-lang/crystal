@@ -742,8 +742,8 @@ module Indexable(T)
     hasher
   end
 
-  # Returns the index of the first appearance of *value* in `self`
-  # starting from the given *offset*, or `nil` if the value is not in `self`.
+  # Returns the index of the first appearance of *object* in `self`
+  # starting from the given *offset*, or `nil` if *object* is not in `self`.
   #
   # ```
   # [1, 2, 3, 1, 2, 3].index(2, offset: 2) # => 4
@@ -769,6 +769,28 @@ module Indexable(T)
       end
     end
     nil
+  end
+
+  # Returns the index of the first appearance of *obj* in `self`
+  # starting from the given *offset*. Raises `Enumerable::NotFoundError` if
+  # *obj* is not in `self`.
+  #
+  # ```
+  # [1, 2, 3, 1, 2, 3].index!(2, offset: 2) # => 4
+  # ```
+  def index!(obj, offset : Int = 0)
+    index(obj, offset) || raise Enumerable::NotFoundError.new
+  end
+
+  # Returns the index of the first object in `self` for which the block
+  # is truthy, starting from the given *offset*. Raises
+  # `Enumerable::NotFoundError` if no match is found.
+  #
+  # ```
+  # [1, 2, 3, 1, 2, 3].index!(offset: 2) { |x| x < 2 } # => 3
+  # ```
+  def index!(offset : Int = 0, & : T ->)
+    index(offset) { |e| yield e } || raise Enumerable::NotFoundError.new
   end
 
   # Returns the last element of `self` if it's not empty, or raises `IndexError`.

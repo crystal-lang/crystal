@@ -738,13 +738,13 @@ describe Iterator do
 
   describe "flatten" do
     it "flattens an iterator of mixed-type iterators" do
-      iter = [(1..2).each, ('a'..'b').each, {:c => 3}.each].each.flatten
+      iter = [(1..2).each, ('a'..'b').each, {"c" => 3}.each].each.flatten
 
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq('a')
       iter.next.should eq('b')
-      iter.next.should eq({:c, 3})
+      iter.next.should eq({"c", 3})
 
       iter.next.should be_a(Iterator::Stop)
     end

@@ -23,11 +23,10 @@ class Crystal::Call
     obj_type.used = true
     external.used = true
 
-    untyped_defs = [external] of Def
-    @target_defs = untyped_defs
+    @target_defs = ZeroOneOrMany(Def).new(external)
 
-    self.unbind_from old_target_defs if old_target_defs
-    self.bind_to untyped_defs
+    self.unbind_from old_target_defs unless old_target_defs.empty?
+    self.bind_to external
   end
 
   def check_lib_call_named_args(external)

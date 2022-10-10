@@ -4,6 +4,10 @@ require "./spec_helper"
 describe "PROGRAM_NAME" do
   it "works for UTF-8 name" do
     with_tempfile("source_file") do |source_file|
+      if ENV["IN_NIX_SHELL"]?
+        pending! "Example is broken in Nix shell (#12332)"
+      end
+
       File.write(source_file, "File.basename(PROGRAM_NAME).inspect(STDOUT)")
 
       compile_file(source_file, bin_name: "×‽😂") do |executable_file|

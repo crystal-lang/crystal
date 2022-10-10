@@ -1,5 +1,6 @@
 require "c/processthreadsapi"
 require "c/handleapi"
+require "c/synchapi"
 require "process/shell"
 
 struct Crystal::System::Process

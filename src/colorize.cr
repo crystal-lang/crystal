@@ -146,7 +146,7 @@ module Colorize
   # io = IO::Memory.new
   # Colorize.with.green.surround(io) do
   #   io << "green"
-  #   Colorize.reset
+  #   Colorize.reset(io)
   #   io << " default"
   # end
   # ```

@@ -135,7 +135,7 @@ module OpenSSL::SSL::HostnameValidation
     end
 
     # fail match when hostname is an IP address
-    if ::Socket.ip?(hostname)
+    if ::Socket::IPAddress.valid?(hostname)
       return false
     end
 
