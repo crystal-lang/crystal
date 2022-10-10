@@ -331,7 +331,7 @@ module Crystal
         # 1. Find out what's the type with the largest alignment
         # 2. Find out what's the type's size
         # 3. Have the first member of the union be an array
-        #    of ints that match that alignemnt, up to that type's
+        #    of ints that match that alignment, up to that type's
         #    size, followed by another member that is just bytes
         #    to fill the rest of the union's size.
         #
