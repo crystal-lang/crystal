@@ -358,6 +358,9 @@ module Crystal
       stricter_pair_to_num(self_stricter, other_stricter)
     end
 
+    # this is part of `Crystal::Def#min_max_args_sizes` before #10711, provided
+    # that `-Dpreview_overload_order` is not in effect
+    # TODO: figure out if this can be derived from `self.min_size`
     def old_min_args_size
       if splat_index = self.def.splat_index
         args = self.def.args
