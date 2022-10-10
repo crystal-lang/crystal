@@ -169,7 +169,7 @@ class Socket
       valid_v4?(address) || valid_v6?(address)
     end
 
-    # Returns `true` if *address* is a valid IPv4 address.
+    # Returns `true` if *address* is a valid IPv6 address.
     def self.valid_v6?(address : String) : Bool
       !address_v6?(address).nil?
     end
@@ -180,7 +180,7 @@ class Socket
       addr if LibC.inet_pton(LibC::AF_INET6, address, pointerof(addr)) == 1
     end
 
-    # Returns `true` if *address* is a valid IPv5 address.
+    # Returns `true` if *address* is a valid IPv4 address.
     def self.valid_v4?(address : String) : Bool
       !address_v4?(address).nil?
     end
