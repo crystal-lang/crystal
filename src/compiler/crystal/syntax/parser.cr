@@ -36,6 +36,7 @@ module Crystal
       @def_nest = 0
       @fun_nest = 0
       @type_nest = 0
+      @is_constant_assignment = false
 
       # Keeps track of current call args starting locations,
       # so if we parse a type declaration exactly at those points we
@@ -370,9 +371,11 @@ module Crystal
           else
             break unless can_be_assigned?(atomic)
 
-            if atomic.is_a?(Path) && (inside_def? || inside_fun?)
+            if atomic.is_a?(Path) && (inside_def? || inside_fun? || @is_constant_assignment)
               raise "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
             end
+
+            @is_constant_assignment = true if atomic.is_a?(Path)
 
             if atomic.is_a?(Var) && atomic.name == "self"
               raise "can't change the value of self", location
@@ -422,9 +425,7 @@ module Crystal
               end
             end
 
-            if atomic.is_a?(Path) && invalid_constant_declaration?(atomic_value)
-              raise "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
-            end
+            @is_constant_assignment = false if atomic.is_a?(Path)
 
             push_var atomic
 
@@ -462,22 +463,6 @@ module Crystal
       end
 
       atomic
-    end
-
-    def invalid_constant_declaration?(exp)
-      case exp
-      when Assign      then exp.target.is_a?(Path)
-      when Expressions then invalid_constant_declaration?(exp.expressions)
-      when Rescue      then invalid_constant_declaration?(exp.body)
-      when Call
-        invalid_constant_declaration?({exp.args, exp.named_args.try &.map(&.value), exp.block.try(&.body)})
-      when ExceptionHandler
-        invalid_constant_declaration?({exp.body, exp.rescues, exp.else, exp.ensure})
-      when Enumerable
-        exp.any? { |sub_exp| invalid_constant_declaration?(sub_exp) }
-      else
-        false
-      end
     end
 
     def parse_question_colon

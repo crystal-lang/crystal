@@ -1910,23 +1910,6 @@ module Crystal
     assert_syntax_error "x, self = 1, 2",
       "can't change the value of self"
 
-    assert_syntax_error "A = B = 1",
-      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
-    assert_syntax_error "A = (B = 1)",
-      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
-    assert_syntax_error "A = foo(B = 1)",
-      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
-    assert_syntax_error "A = foo { B = 1 }",
-      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
-    assert_syntax_error "A = begin; B = 1; end",
-      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
-    assert_syntax_error "A = begin; 1; rescue; B = 1; end",
-      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
-    assert_syntax_error "A = begin; 1; rescue; 1; else; B = 1; end",
-      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
-    assert_syntax_error "A = begin; 1; ensure; B = 1; end",
-      "can't declare a constant within the declaration of another constant. Constants can only be declared at the top level or inside other types."
-
     assert_syntax_error "macro foo(x : Int32); end"
 
     assert_syntax_error "/foo)/", "invalid regex"
@@ -1935,6 +1918,16 @@ module Crystal
     assert_syntax_error "{1, ->{ |x| x } }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(x : Type) { ... }"
     assert_syntax_error "{1, ->do\n|x| x\end }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(x : Type) { ... }"
     assert_syntax_error "{1, ->{ |_| x } }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(param : Type) { ... }"
+
+    # #2874
+    assert_syntax_error "A = B = 1", "dynamic constant assignment"
+    assert_syntax_error "A = (B = 1)", "dynamic constant assignment"
+    assert_syntax_error "A = foo(B = 1)", "dynamic constant assignment"
+    assert_syntax_error "A = foo { B = 1 }", "dynamic constant assignment"
+    assert_syntax_error "A = begin; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; rescue; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; rescue; 1; else; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; ensure; B = 1; end", "dynamic constant assignment"
 
     assert_syntax_error "1 while 3", "trailing `while` is not supported"
     assert_syntax_error "1 until 3", "trailing `until` is not supported"
