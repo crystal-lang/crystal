@@ -109,7 +109,7 @@ class Crystal::Codegen::Target
   end
 
   def gnu?
-    environment_parts.any? &.in?("gnu", "gnueabi", "gnueabihf")
+    (linux? && !musl?) || environment_parts.any? &.in?("gnu", "gnueabi", "gnueabihf")
   end
 
   def musl?
