@@ -18,7 +18,7 @@ jobs:
           apt-get update
           apt-get install -y curl
           touch ~/.bashrc
-          curl https://wasmtime.dev/install.sh -sSf | bash
+          curl https://wasmtime.dev/install.sh -sSf | bash -s - --version v1.0.1
 
       - name: Add wasm-ld symlink
         run: |
