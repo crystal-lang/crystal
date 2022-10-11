@@ -56,6 +56,11 @@ let
       sha256 = "sha256:15h1qg4wa3zbp8p9vkvcqmy7ba1sc995r5z6d0yhx0h7nkgaw607";
     };
 
+    aarch64-darwin = {
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.5.0/crystal-1.5.0-1-darwin-universal.tar.gz";
+      sha256 = "sha256:15h1qg4wa3zbp8p9vkvcqmy7ba1sc995r5z6d0yhx0h7nkgaw607";
+    };
+
     x86_64-linux = {
       url = "https://github.com/crystal-lang/crystal/releases/download/1.5.0/crystal-1.5.0-1-linux-x86_64.tar.gz";
       sha256 = "sha256:1xp1bbljwbff5zf585bz1cbkcb1whswl4fljakfxr7cbaw31jg9y";
@@ -65,6 +70,18 @@ let
   pkgconfig = pkgs.pkgconfig;
 
   llvm_suite = ({
+    llvm_14 = {
+      llvm = pkgs.llvm_14;
+      extra = [ pkgs.lld_14 ]; # lldb marked as broken
+    };
+    llvm_13 = {
+      llvm = pkgs.llvm_13;
+      extra = [ pkgs.lld_13 ]; # lldb marked as broken
+    };
+    llvm_12 = {
+      llvm = pkgs.llvm_12;
+      extra = [ pkgs.lld_12 pkgs.lldb_12 ];
+    };
     llvm_11 = {
       llvm = pkgs.llvm_11;
       extra = [ pkgs.lld_11 pkgs.lldb_11 ];
@@ -75,19 +92,19 @@ let
     };
     llvm_9 = {
       llvm = pkgs.llvm_9;
-      extra = [ ]; # lldb it fails to compile on Darwin
+      extra = [ pkgs.lld_9 ]; # lldb marked as broken
     };
     llvm_8 = {
       llvm = pkgs.llvm_8;
-      extra = [ ]; # lldb it fails to compile on Darwin
+      extra = [ pkgs.lld_8 ]; # lldb marked as broken
     };
     llvm_7 = {
-      llvm = pkgs.llvm;
-      extra = [ pkgs.lldb ];
+      llvm = pkgs.llvm_7;
+      extra = [ pkgs.lld_7 ]; # lldb it fails to compile on Darwin
     };
     llvm_6 = {
       llvm = pkgs.llvm_6;
-      extra = [ ]; # lldb it fails to compile on Darwin
+      extra = [ pkgs.lld_6 ]; # lldb it fails to compile on Darwin
     };
   }."llvm_${toString llvm}");
 
