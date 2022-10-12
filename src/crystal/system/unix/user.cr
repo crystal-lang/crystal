@@ -24,7 +24,10 @@ module Crystal::System::User
   private def from_id?(id : String)
     id = id.to_u32?
     return unless id
+    from_id? id: id
+  end
 
+  private def from_id?(id : UInt32)
     pwd = uninitialized LibC::Passwd
     pwd_pointer = pointerof(pwd)
     System.retry_with_buffer("getpwuid_r", GETPW_R_SIZE_MAX) do |buf|
@@ -32,5 +35,9 @@ module Crystal::System::User
     end
 
     from_struct(pwd) if pwd_pointer
+  end
+
+  private def find_current
+    from_id?(id: LibC.getuid).not_nil!
   end
 end
