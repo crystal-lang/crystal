@@ -473,31 +473,25 @@ module Crystal::Playground
       end
 
       client_ws = PathWebSocketHandler.new "/client" do |ws, context|
-        origin = context.request.headers["Origin"]
-        if !accept_request?(origin)
-          Log.warn { "Invalid Request Origin: #{origin}" }
-          ws.close :policy_violation, "Invalid Request Origin"
-        else
-          @sessions_key += 1
-          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, host: @host)
-          Log.info { "/client WebSocket connected as session=#{@sessions_key}" }
+        @sessions_key += 1
+        @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, host: @host)
+        Log.info { "/client WebSocket connected as session=#{@sessions_key}" }
 
-          ws.on_message do |message|
-            json = JSON.parse(message)
-            case json["type"].as_s
-            when "run"
-              source = json["source"].as_s
-              tag = json["tag"].as_i
-              session.run source, tag
-            when "stop"
-              session.stop
-            when "format"
-              source = json["source"].as_s
-              tag = json["tag"].as_i
-              session.format source, tag
-            else
-              # TODO: maybe raise because it's an unexpected message?
-            end
+        ws.on_message do |message|
+          json = JSON.parse(message)
+          case json["type"].as_s
+          when "run"
+            source = json["source"].as_s
+            tag = json["tag"].as_i
+            session.run source, tag
+          when "stop"
+            session.stop
+          when "format"
+            source = json["source"].as_s
+            tag = json["tag"].as_i
+            session.format source, tag
+          else
+            # TODO: maybe raise because it's an unexpected message?
           end
         end
       end
@@ -533,17 +527,6 @@ module Crystal::Playground
       end
     rescue e : Socket::BindError
       raise Playground::Error.new(e.message)
-    end
-
-    private def accept_request?(origin)
-      case @host
-      when nil
-        origin == "http://127.0.0.1:#{@port}" || origin == "http://localhost:#{@port}"
-      when "0.0.0.0"
-        true
-      else
-        origin == "http://#{@host}:#{@port}"
-      end
     end
   end
 end
