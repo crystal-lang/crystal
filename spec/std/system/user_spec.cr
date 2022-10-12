@@ -7,6 +7,11 @@ USER_NAME = {{ `id -un`.stringify.chomp }}
 USER_ID   = {{ `id -u`.stringify.chomp }}
 
 describe System::User do
+  describe ".current_user_name" do
+    name = System::User.current_user_name
+    name.should eq(USER_NAME)
+  end
+
   describe ".find_by(*, name)" do
     it "returns a user by name" do
       user = System::User.find_by(name: USER_NAME)
