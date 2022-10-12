@@ -8,15 +8,16 @@ require "../loader/spec_helper"
 
 # FFI stores a widened return value in `ffi_call` for integral C return types,
 # so we must use an integer type matching the register size
+
 {% begin %}
   {% if flag?(:x86_64) %}
-    alias FFISarg = Int64
+    alias Crystal::LibFFI::Sarg = Int64
   {% elsif flag?(:i386) %}
-    alias FFISarg = Int32
+    alias Crystal::LibFFI::Sarg = Int32
   {% elsif flag?(:aarch64) %}
-    alias FFISarg = Int64
+    alias Crystal::LibFFI::Sarg = Int64
   {% elsif flag?(:arm) %}
-    alias FFISarg = Int32
+    alias Crystal::LibFFI::Sarg = Int32
   {% else %}
     {% raise "Unsupported target for ffi_sarg" %}
   {% end %}
@@ -49,7 +50,7 @@ describe Crystal::FFI::CallInterface do
       loader = Crystal::Loader.new([SPEC_CRYSTAL_LOADER_LIB_PATH])
       loader.load_library "sum"
       function_pointer = loader.find_symbol("answer")
-      return_value = FFISarg.new(0)
+      return_value = Crystal::LibFFI::Sarg.new(0)
       call_interface.call(function_pointer, Pointer(Pointer(Void)).null, pointerof(return_value).as(Void*))
       return_value.should eq 42
     ensure
@@ -65,7 +66,7 @@ describe Crystal::FFI::CallInterface do
       loader.load_library "sum"
       function_pointer = loader.find_symbol("sum")
 
-      return_value = FFISarg.new(0)
+      return_value = Crystal::LibFFI::Sarg.new(0)
       args = Int32[1, 3, 5]
       arg_pointers = StaticArray(Pointer(Void), 3).new { |i| (args.to_unsafe + i).as(Void*) }
       call_interface.call(function_pointer, arg_pointers.to_unsafe, pointerof(return_value).as(Void*))
@@ -176,7 +177,7 @@ describe Crystal::FFI::CallInterface do
         Pointer(Void).null,
       ]
 
-      return_value = FFISarg.new(0)
+      return_value = Crystal::LibFFI::Sarg.new(0)
       call_interface.call(function_pointer, arg_pointers.to_unsafe, pointerof(return_value).as(Void*))
       return_value.should eq 50
       pointer_value.should eq 50
@@ -200,7 +201,7 @@ describe Crystal::FFI::CallInterface do
         loader.load_library "sum"
         function_pointer = loader.find_symbol("sum_array")
 
-        return_value = FFISarg.new(0)
+        return_value = Crystal::LibFFI::Sarg.new(0)
 
         ary = [1, 2, 3, 4]
 
@@ -225,7 +226,7 @@ describe Crystal::FFI::CallInterface do
       loader.load_library "sum"
       function_pointer = loader.find_symbol("sum_variadic")
 
-      return_value = FFISarg.new(0)
+      return_value = Crystal::LibFFI::Sarg.new(0)
       args = Int32[3, 1, 3, 5]
       arg_pointers = StaticArray(Pointer(Void), 4).new { |i| (args.to_unsafe + i).as(Void*) }
       call_interface.call(function_pointer, arg_pointers.to_unsafe, pointerof(return_value).as(Void*))
@@ -241,7 +242,7 @@ describe Crystal::FFI::CallInterface do
       loader.load_library "sum"
       function_pointer = loader.find_symbol("sum_variadic")
 
-      return_value = FFISarg.new(1)
+      return_value = Crystal::LibFFI::Sarg.new(1)
       count = 0
       arg_pointer = pointerof(count).as(Void*)
       call_interface.call(function_pointer, pointerof(arg_pointer), pointerof(return_value).as(Void*))
