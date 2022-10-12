@@ -10,7 +10,7 @@ require "crystal/system/user"
 # System::User.find_by name: "root"
 # System::User.find_by id: "0"
 # ```
-class System::User
+struct System::User
   # Raised on user lookup failure.
   class NotFoundError < Exception
   end
