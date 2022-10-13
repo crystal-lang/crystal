@@ -19,13 +19,22 @@ module Crystal::System
     end
   end
 
-  def self.getpwuid(id : UInt32)
+  # Return the password file entry for a given system user id
+  #
+  # Returns nil if there is no matching entry is found and
+  # raises a RuntimeError on failure
+  def self.getpwuid(id : UInt32) : LibC::Passwd?
     pwd = uninitialized LibC::Passwd
     pwd_pointer = pointerof(pwd)
+    ret = nil
     System.retry_with_buffer("getpwuid_r", GETPW_R_SIZE_MAX) do |buf|
-      LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
+      ret = LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
     end
 
-    pwd if pwd_pointer
+    return pwd if pwd_pointer
+
+    if ret && ret != 0
+      raise RuntimeError.from_os_error("getpwuid_r", Errno.new(ret))
+    end
   end
 end
