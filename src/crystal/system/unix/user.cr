@@ -23,12 +23,7 @@ module Crystal::System::User
     id = id.to_u32?
     return unless id
 
-    pwd = uninitialized LibC::Passwd
-    pwd_pointer = pointerof(pwd)
-    System.retry_with_buffer("getpwuid_r", GETPW_R_SIZE_MAX) do |buf|
-      LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
-    end
-
-    from_struct(pwd) if pwd_pointer
+    pwd = Crystal::System.getpwuid(id)
+    from_struct(pwd) if pwd
   end
 end

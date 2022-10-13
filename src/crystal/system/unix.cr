@@ -18,4 +18,14 @@ module Crystal::System
       end
     end
   end
+
+  def self.getpwuid(id : UInt32)
+    pwd = uninitialized LibC::Passwd
+    pwd_pointer = pointerof(pwd)
+    System.retry_with_buffer("getpwuid_r", GETPW_R_SIZE_MAX) do |buf|
+      LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
+    end
+
+    pwd if pwd_pointer
+  end
 end
