@@ -5,7 +5,7 @@ private alias Target = Crystal::Codegen::Target
 
 describe Crystal::Codegen::Target do
   it "parses incomplete triples" do
-    target = Target.new("x86_64-linux-gnu")
+    target = Target.new("x86_64-linux")
     target.to_s.should eq("x86_64-unknown-linux-gnu")
     target.pointer_bit_width.should eq(64)
     target.linux?.should be_true
