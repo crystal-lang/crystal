@@ -23,4 +23,11 @@ describe System do
       cpu_count.should eq(shell_cpus)
     end
   end
+
+  {% if flag?(:unix) %}
+    describe ".current_user_name" do
+      name = System.current_user_name
+      name.should eq({{ `id -un`.stringify.chomp }})
+    end
+  {% end %}
 end

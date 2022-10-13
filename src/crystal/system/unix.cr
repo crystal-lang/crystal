@@ -1,5 +1,7 @@
 # :nodoc:
 module Crystal::System
+  GETPW_R_SIZE_MAX = 1024 * 16
+
   def self.retry_with_buffer(function_name, max_buffer)
     initial_buf = uninitialized UInt8[1024]
     buf = initial_buf
