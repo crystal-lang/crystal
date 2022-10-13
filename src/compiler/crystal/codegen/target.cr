@@ -33,7 +33,7 @@ class Crystal::Codegen::Target
       # no need to tweak the architecture
     end
 
-    if linux? && !musl? && !gnu?
+    if linux? && environment_parts.size == 1
       case @vendor
       when "suse", "redhat", "slackware", "amazon", "unknown", "montavista", "mti"
         # Build string instead of setting it as "linux-gnu"
