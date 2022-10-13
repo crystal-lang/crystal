@@ -40,13 +40,6 @@ class System::User
   private def initialize(@username, @id, @group_id, @name, @home_directory, @shell)
   end
 
-  # Returns the current user's name as a string
-  #
-  # Raises `NotFoundError` if the current user cannot be determined
-  def self.current_user_name : String
-    find_current_user_name || raise NotFoundError.new("Cannot determine current user")
-  end
-
   # Returns the user associated with the given username.
   #
   # Raises `NotFoundError` if no such user exists.
