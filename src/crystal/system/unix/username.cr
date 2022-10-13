@@ -1,5 +1,3 @@
-require "c/pwd"
-
 module Crystal::System
   def self.username
     if pwd = getpwuid(LibC.getuid)

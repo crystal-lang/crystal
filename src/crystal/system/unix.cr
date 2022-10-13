@@ -1,3 +1,5 @@
+require "c/pwd"
+
 # :nodoc:
 module Crystal::System
   GETPW_R_SIZE_MAX = 1024 * 16
