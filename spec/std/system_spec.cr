@@ -25,9 +25,11 @@ describe System do
   end
 
   {% if flag?(:unix) %}
-    describe ".current_user_name" do
-      name = System.current_user_name
-      name.should eq({{ `id -un`.stringify.chomp }})
+    describe ".username" do
+      it "returns the current user's username" do
+        name = System.username
+        name.should eq({{ `id -un`.stringify.chomp }})
+      end
     end
   {% end %}
 end

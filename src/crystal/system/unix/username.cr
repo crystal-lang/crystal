@@ -1,7 +1,7 @@
 require "c/pwd"
 
 module Crystal::System
-  def self.current_user_name
+  def self.username
     if pwd = getpwuid(LibC.getuid)
       String.new(pwd.pw_name)
     else

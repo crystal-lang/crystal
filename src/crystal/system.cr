@@ -7,8 +7,8 @@ module Crystal::System
   #
   # def self.cpu_count
 
-  def current_user_name
-    raise "No Crystal::System.current_user_name implementation available"
+  def self.username
+    raise "No Crystal::System.username implementation available"
   end
 end
 

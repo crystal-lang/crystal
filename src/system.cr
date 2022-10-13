@@ -27,9 +27,9 @@ module System
   # to the operating system
   #
   # ```
-  # System.current_user_name # => "crystaler"
+  # System.username # => "crystaler"
   # ```
-  def self.current_user_name : String
-    Crystal::System.current_user_name
+  def self.username : String
+    Crystal::System.username
   end
 end
