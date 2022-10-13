@@ -13,12 +13,6 @@ describe Crystal::Codegen::Target do
     target.gnu?.should be_true
   end
 
-  it "parses triples without libc" do
-    target = Target.new("x86_64-suse-linux")
-    target.gnu?.should be_true
-    target.musl?.should be_false
-  end
-
   it "normalizes triples" do
     Target.new("i686-unknown-linux-gnu").to_s.should eq("i386-unknown-linux-gnu")
     Target.new("amd64-unknown-openbsd").to_s.should eq("x86_64-unknown-openbsd")
