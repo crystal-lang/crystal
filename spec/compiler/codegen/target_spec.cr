@@ -5,7 +5,7 @@ private alias Target = Crystal::Codegen::Target
 
 describe Crystal::Codegen::Target do
   it "parses incomplete triples" do
-    target = Target.new("x86_64-linux")
+    target = Target.new("x86_64-linux-gnu")
     target.to_s.should eq("x86_64-unknown-linux-gnu")
     target.pointer_bit_width.should eq(64)
     target.linux?.should be_true
@@ -17,6 +17,7 @@ describe Crystal::Codegen::Target do
     Target.new("i686-unknown-linux-gnu").to_s.should eq("i386-unknown-linux-gnu")
     Target.new("amd64-unknown-openbsd").to_s.should eq("x86_64-unknown-openbsd")
     Target.new("arm64-apple-darwin20.2.0").to_s.should eq("aarch64-apple-darwin20.2.0")
+    Target.new("x86_68-suse-linux").to_s.should eq("x86_68-suse-linux-gnu")
   end
 
   it "parses freebsd version" do
