@@ -38,7 +38,7 @@ class Crystal::Codegen::Target
       when "suse", "redhat", "slackware", "amazon", "unknown", "montavista", "mti"
         # Build string instead of setting it as "linux-gnu"
         # since "linux6E" & "linuxspe" are available.
-        @environment = "#{environment}-gnu"
+        @environment = "#{@environment}-gnu"
       else
         # no need to tweak the environment
       end
