@@ -37,7 +37,7 @@ module Crystal::System::User
     from_struct(pwd) if pwd_pointer
   end
 
-  private def find_current
-    from_id?(id: LibC.getuid).not_nil!
+  private def find_current?
+    from_id?(id: LibC.getuid)
   end
 end

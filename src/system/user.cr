@@ -41,8 +41,10 @@ class System::User
   end
 
   # Returns the current real user of the current process
+  #
+  # Raises `NotFoundError` if the current user cannot be determined.
   def self.current : System::User
-    find_current
+    find_current? || raise NotFoundError.new("Could not determine current user")
   end
 
   # Returns the user associated with the given username.

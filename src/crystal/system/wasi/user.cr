@@ -7,7 +7,7 @@ module Crystal::System::User
     raise NotImplementedError.new("Crystal::System::User#from_id?")
   end
 
-  private def find_current
+  private def find_current?
     raise NotImplementedError.new("Crystal::System::User#find_current")
   end
 end
