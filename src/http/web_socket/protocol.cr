@@ -152,7 +152,7 @@ class HTTP::WebSocket::Protocol
     until remaining_data.empty?
       # How much data can we write?
       # Either IO::DEFAULT_BUFFER_SIZE or whatever remains.
-      chunk_size = {remaining_data.size, IO::DEFAULT_BUFFER_SIZE}.min
+      chunk_size = Math.min(remaining_data.size, IO::DEFAULT_BUFFER_SIZE)
 
       # Mask the data
       chunk = remaining_data[0, chunk_size]
