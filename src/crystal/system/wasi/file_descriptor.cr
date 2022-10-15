@@ -11,10 +11,6 @@ module Crystal::System::FileDescriptor
     raise NotImplementedError.new "Crystal::System::FileDescriptor.pipe"
   end
 
-  def self.system_info(fd)
-    raise NotImplementedError.new "Crystal::System::FileDescriptor.system_info"
-  end
-
   private def system_reopen(other : IO::FileDescriptor)
     raise NotImplementedError.new "Crystal::System::FileDescriptor#system_reopen"
   end

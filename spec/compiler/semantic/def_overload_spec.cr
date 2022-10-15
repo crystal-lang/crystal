@@ -1645,6 +1645,34 @@ describe "Semantic: def overload" do
       "no overload matches"
   end
 
+  it "treats single splats with same restriction as equivalent (#12579)" do
+    assert_type(<<-CR) { int32 }
+      def foo(*x : Int32)
+        'a'
+      end
+
+      def foo(*x : Int32)
+        1
+      end
+
+      foo(1)
+      CR
+  end
+
+  it "treats single splats with same restriction as equivalent (2) (#12579)" do
+    assert_type(<<-CR) { int32 }
+      def foo(*x : Int32)
+        'a'
+      end
+
+      def foo(*y : Int32)
+        1
+      end
+
+      foo(1)
+      CR
+  end
+
   describe "without `-Dpreview_overload_order`" do
     it "orders overloads as soon as they are defined" do
       assert_type(<<-CR) { bool }

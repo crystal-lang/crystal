@@ -358,16 +358,35 @@ module Crystal
       stricter_pair_to_num(self_stricter, other_stricter)
     end
 
+    # this is part of `Crystal::Def#min_max_args_sizes` before #10711, provided
+    # that `-Dpreview_overload_order` is not in effect
+    # TODO: figure out if this can be derived from `self.min_size`
+    def old_min_args_size
+      if splat_index = self.def.splat_index
+        args = self.def.args
+        unless args[splat_index].name.empty?
+          default_value_index = args.index(&.default_value)
+          min_size = default_value_index || args.size
+          min_size -= 1 unless default_value_index.try(&.< splat_index)
+          return min_size
+        end
+      end
+      self.min_size
+    end
+
     def old_restriction_of?(other : DefWithMetadata, owner)
       # This is how multiple defs are sorted by 'restrictions' (?)
 
       # If one yields and the other doesn't, none is stricter than the other
       return false unless yields == other.yields
 
+      self_min_size = old_min_args_size
+      other_min_size = other.old_min_args_size
+
       # A def with more required arguments than the other comes first
-      if min_size > other.max_size
+      if self_min_size > other.max_size
         return true
-      elsif other.min_size > max_size
+      elsif other_min_size > max_size
         return false
       end
 
@@ -395,7 +414,7 @@ module Crystal
       end
 
       if self_splat_index && other_splat_index
-        min = Math.min(min_size, other.min_size)
+        min = Math.min(self_min_size, other_min_size)
       else
         min = Math.min(max_size, other.max_size)
       end
@@ -702,11 +721,11 @@ module Crystal
     end
 
     def restriction_of?(other : Path, owner, self_free_vars = nil, other_free_vars = nil)
-      other_type = owner.lookup_type(other)
-
-      # Special case: when comparing Foo.class to Class, Foo.class has precedence
-      if other_type == other_type.program.class_type
-        return true
+      if other_type = owner.lookup_type?(other)
+        # Special case: all metaclasses are subtypes of Class
+        if other_type.program.class_type.implements?(other_type)
+          return true
+        end
       end
 
       super

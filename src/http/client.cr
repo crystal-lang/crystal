@@ -58,6 +58,8 @@
 # client.close
 # ```
 #
+# WARNING: A single `HTTP::Client` instance is not safe for concurrent use by multiple fibers.
+#
 # ### Compression
 #
 # If `compress` isn't set to `false`, and no `Accept-Encoding` header is explicitly specified,
@@ -583,8 +585,9 @@ class HTTP::Client
   end
 
   private def exec_internal(request)
+    implicit_compression = implicit_compression?(request)
     begin
-      response = exec_internal_single(request)
+      response = exec_internal_single(request, implicit_compression: implicit_compression)
     rescue exc : IO::Error
       raise exc if @io.nil? # do not retry if client was closed
       response = nil
@@ -594,15 +597,15 @@ class HTTP::Client
     # Server probably closed the connection, so retry once
     close
     request.body.try &.rewind
-    response = exec_internal_single(request)
+    response = exec_internal_single(request, implicit_compression: implicit_compression)
     return handle_response(response) if response
 
     raise IO::EOFError.new("Unexpected end of http response")
   end
 
-  private def exec_internal_single(request)
-    decompress = send_request(request)
-    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress)
+  private def exec_internal_single(request, implicit_compression = false)
+    send_request(request)
+    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: implicit_compression)
   end
 
   private def handle_response(response)
@@ -630,7 +633,8 @@ class HTTP::Client
   end
 
   private def exec_internal(request, &block : Response -> T) : T forall T
-    exec_internal_single(request, ignore_io_error: true) do |response|
+    implicit_compression = implicit_compression?(request)
+    exec_internal_single(request, ignore_io_error: true, implicit_compression: implicit_compression) do |response|
       if response
         return handle_response(response) { yield response }
       end
@@ -639,7 +643,7 @@ class HTTP::Client
     # Server probably closed the connection, so retry once
     close
     request.body.try &.rewind
-    exec_internal_single(request) do |response|
+    exec_internal_single(request, implicit_compression: implicit_compression) do |response|
       if response
         return handle_response(response) { yield response }
       end
@@ -647,14 +651,14 @@ class HTTP::Client
     raise IO::EOFError.new("Unexpected end of http response")
   end
 
-  private def exec_internal_single(request, ignore_io_error = false)
+  private def exec_internal_single(request, ignore_io_error = false, implicit_compression = false)
     begin
-      decompress = send_request(request)
+      send_request(request)
     rescue ex : IO::Error
       return yield nil if ignore_io_error && !@io.nil? # ignore_io_error only if client was not closed
       raise ex
     end
-    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
+    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: implicit_compression) do |response|
       yield response
     end
   end
@@ -667,25 +671,26 @@ class HTTP::Client
   end
 
   private def send_request(request)
-    decompress = set_defaults request
+    set_defaults request
     run_before_request_callbacks(request)
     request.to_io(io)
     io.flush
-    decompress
   end
 
   private def set_defaults(request)
     request.headers["Host"] ||= host_header
     request.headers["User-Agent"] ||= "Crystal"
+
+    if implicit_compression?(request)
+      request.headers["Accept-Encoding"] = "gzip, deflate"
+    end
+  end
+
+  private def implicit_compression?(request)
     {% if flag?(:without_zlib) %}
       false
     {% else %}
-      if compress? && !request.headers.has_key?("Accept-Encoding")
-        request.headers["Accept-Encoding"] = "gzip, deflate"
-        true
-      else
-        false
-      end
+      compress? && !request.headers.has_key?("Accept-Encoding")
     {% end %}
   end
 
