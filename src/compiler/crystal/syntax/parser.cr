@@ -1637,6 +1637,10 @@ module Crystal
       name = parse_path
       skip_space
 
+      unexpected_token unless @token.type.op_lt? ||     # Inheritance
+                              @token.type.op_lparen? || # Generic Arguments
+                              @token.type.newline? || @token.type.op_semicolon?
+
       type_vars, splat_index = parse_type_vars
 
       superclass = nil
@@ -1649,6 +1653,8 @@ module Crystal
         else
           superclass = parse_generic
         end
+
+        unexpected_token unless @token.type.newline? || @token.type.op_semicolon? || @token.type.space?
       end
       skip_statement_end
 
