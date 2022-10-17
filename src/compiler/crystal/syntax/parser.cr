@@ -1639,7 +1639,7 @@ module Crystal
 
       unexpected_token unless @token.type.op_lt? ||     # Inheritance
                               @token.type.op_lparen? || # Generic Arguments
-                              @token.type.newline? || @token.type.op_semicolon?
+                              is_statement_end?
 
       type_vars, splat_index = parse_type_vars
 
@@ -1654,7 +1654,7 @@ module Crystal
           superclass = parse_generic
         end
 
-        unexpected_token unless @token.type.newline? || @token.type.op_semicolon? || @token.type.space?
+        unexpected_token unless @token.type.space? || is_statement_end?
       end
       skip_statement_end
 
@@ -1672,6 +1672,10 @@ module Crystal
       class_def.end_location = end_location
       set_visibility class_def
       class_def
+    end
+
+    def is_statement_end?
+      @token.type.newline? || @token.type.op_semicolon? || @token.keyword?(:end)
     end
 
     def parse_type_vars
