@@ -731,7 +731,7 @@ class Crystal::CodeGenVisitor
     allocate_aggregate base_type
 
     unless type.struct?
-      type_id_ptr = aggregate_index(@last, 0)
+      type_id_ptr = aggregate_index(llvm_struct_type(type), @last, 0)
       store type_id(base_type), type_id_ptr
     end
 
@@ -798,19 +798,22 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_pointer_add(node, target_def, call_args)
-    gep call_args[0], call_args[1]
+    type = context.type.as(PointerInstanceType)
+
+    # `llvm_embedded_type` needed to treat `Void*` like `UInt8*`
+    gep llvm_embedded_type(type.element_type), call_args[0], call_args[1]
   end
 
   def struct_field_ptr(type, field_name, pointer)
     index = type.index_of_instance_var('@' + field_name).not_nil!
-    aggregate_index pointer, index
+    aggregate_index llvm_type(type), pointer, index
   end
 
   def codegen_primitive_struct_or_union_set(node, target_def, call_args)
     set_aggregate_field(node, target_def, call_args) do |field_type|
       type = context.type.as(NonGenericClassType)
       if type.extern_union?
-        union_field_ptr(field_type, call_args[0])
+        union_field_ptr(type, field_type, call_args[0])
       else
         name = target_def.name.rchop
         struct_field_ptr(type, name, call_args[0])
@@ -848,8 +851,8 @@ class Crystal::CodeGenVisitor
     original_call_arg
   end
 
-  def union_field_ptr(field_type, pointer)
-    ptr = aggregate_index pointer, 0
+  def union_field_ptr(union_type, field_type, pointer)
+    ptr = aggregate_index llvm_type(union_type), pointer, 0
     if field_type.is_a?(ProcInstanceType)
       bit_cast ptr, @llvm_typer.proc_type(field_type).pointer
     else
@@ -912,7 +915,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_symbol_to_s(node, target_def, call_args)
-    load(gep @llvm_mod.globals[SYMBOL_TABLE_NAME], int(0), call_args[0])
+    load(gep @llvm_typer.llvm_type(@program.string).array(@symbol_table_values.size), @llvm_mod.globals[SYMBOL_TABLE_NAME], int(0), call_args[0])
   end
 
   def codegen_primitive_class(node, target_def, call_args)
@@ -1065,7 +1068,7 @@ class Crystal::CodeGenVisitor
       abi_arg_type = abi_info.arg_types[index]
       case abi_arg_type.kind
       in .direct?
-        call_arg = codegen_direct_abi_call(call_arg, abi_arg_type)
+        call_arg = codegen_direct_abi_call(arg.type, call_arg, abi_arg_type)
         if cast = abi_arg_type.cast
           null_fun_types << cast
         else
@@ -1089,10 +1092,13 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_pointer_diff(node, target_def, call_args)
+    type = context.type.as(PointerInstanceType)
     p0 = ptr2int(call_args[0], llvm_context.int64)
     p1 = ptr2int(call_args[1], llvm_context.int64)
     sub = builder.sub p0, p1
-    builder.exact_sdiv sub, ptr2int(gep(call_args[0].type.null_pointer, 1), llvm_context.int64)
+    # `llvm_embedded_type` needed to treat `Void*` like `UInt8*`
+    offsetted = gep(llvm_embedded_type(type.element_type), call_args[0].type.null_pointer, 1)
+    builder.exact_sdiv sub, ptr2int(offsetted, llvm_context.int64)
   end
 
   def codegen_primitive_tuple_indexer_known_index(node, target_def, call_args)
@@ -1103,9 +1109,10 @@ class Crystal::CodeGenVisitor
   def codegen_tuple_indexer(type, value, index : Range)
     case type
     when TupleInstanceType
+      struct_type = llvm_type(type)
       tuple_types = type.tuple_types[index].map &.as(Type)
       allocate_tuple(@program.tuple_of(tuple_types).as(TupleInstanceType)) do |tuple_type, i|
-        ptr = aggregate_index value, index.begin + i
+        ptr = aggregate_index struct_type, value, index.begin + i
         tuple_value = to_lhs ptr, tuple_type
         {tuple_type, tuple_value}
       end
@@ -1123,10 +1130,10 @@ class Crystal::CodeGenVisitor
   def codegen_tuple_indexer(type, value, index : Int32)
     case type
     when TupleInstanceType
-      ptr = aggregate_index value, index
+      ptr = aggregate_index llvm_type(type), value, index
       to_lhs ptr, type.tuple_types[index]
     when NamedTupleInstanceType
-      ptr = aggregate_index value, index
+      ptr = aggregate_index llvm_type(type), value, index
       to_lhs ptr, type.entries[index].type
     else
       type = type.instance_type
@@ -1157,9 +1164,11 @@ class Crystal::CodeGenVisitor
     failure_ordering = atomic_ordering_get_const(call.args[-1], failure_ordering)
 
     value = builder.cmpxchg(ptr, cmp, new, success_ordering, failure_ordering)
-    value_ptr = alloca llvm_type(node.type)
-    store extract_value(value, 0), gep(value_ptr, 0, 0)
-    store extract_value(value, 1), gep(value_ptr, 0, 1)
+    value_type = node.type.as(TupleInstanceType)
+    struct_type = llvm_type(value_type)
+    value_ptr = alloca struct_type
+    store extract_value(value, 0), gep(struct_type, value_ptr, 0, 0)
+    store extract_value(value, 1), gep(struct_type, value_ptr, 0, 1)
     value_ptr
   end
 

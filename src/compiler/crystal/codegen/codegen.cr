@@ -533,13 +533,15 @@ module Crystal
     def visit(node : NamedTupleLiteral)
       request_value do
         type = node.type.as(NamedTupleInstanceType)
-        struct_type = alloca llvm_type(type)
+        struct_type = llvm_type(type)
+        tuple = alloca struct_type
         node.entries.each do |entry|
           accept entry.value
           index = type.name_index(entry.key).not_nil!
-          assign aggregate_index(struct_type, index), type.entries[index].type, entry.value.type, @last
+          entry_type = type.entries[index].type
+          assign aggregate_index(struct_type, tuple, index), entry_type, entry.value.type, @last
         end
-        @last = struct_type
+        @last = tuple
       end
       false
     end
@@ -1625,9 +1627,10 @@ module Crystal
     end
 
     def make_fun(type, fun_ptr, ctx_ptr)
-      closure_ptr = alloca llvm_type(type)
-      store fun_ptr, gep(closure_ptr, 0, 0)
-      store ctx_ptr, gep(closure_ptr, 0, 1)
+      struct_type = llvm_type(type)
+      closure_ptr = alloca struct_type
+      store fun_ptr, aggregate_index(struct_type, closure_ptr, 0)
+      store ctx_ptr, aggregate_index(struct_type, closure_ptr, 1)
       load(closure_ptr)
     end
 
@@ -1857,12 +1860,12 @@ module Crystal
         closure_type = @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil))
         closure_ptr = malloc closure_type
         closure_vars.each_with_index do |var, i|
-          current_context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
+          current_context.vars[var.name] = LLVMVar.new(gep(closure_type, closure_ptr, 0, i, var.name), var.type)
         end
         closure_skip_parent = false
 
         if parent_closure_type
-          store parent_context.not_nil!.closure_ptr.not_nil!, gep(closure_ptr, 0, closure_vars.size, "parent")
+          store parent_context.not_nil!.closure_ptr.not_nil!, gep(closure_type, closure_ptr, 0, closure_vars.size, "parent")
         end
 
         if self_closured
@@ -1870,7 +1873,7 @@ module Crystal
           self_value = llvm_self
           self_value = load self_value if current_context.type.passed_by_value?
 
-          store self_value, gep(closure_ptr, 0, closure_vars.size + offset, "self")
+          store self_value, gep(closure_type, closure_ptr, 0, closure_vars.size + offset, "self")
 
           current_context.closure_self = current_context.type
         end
@@ -1988,12 +1991,13 @@ module Crystal
     end
 
     def allocate_tuple(type)
-      struct_type = alloca llvm_type(type)
+      struct_type = llvm_type(type)
+      tuple = alloca struct_type
       type.tuple_types.each_with_index do |tuple_type, i|
         exp_type, value = yield tuple_type, i
-        assign aggregate_index(struct_type, i), tuple_type, exp_type, value
+        assign aggregate_index(struct_type, tuple, i), tuple_type, exp_type, value
       end
-      struct_type
+      tuple
     end
 
     def run_instance_vars_initializers(real_type, type : ClassType | GenericClassInstanceType, type_ptr)
@@ -2189,13 +2193,15 @@ module Crystal
       type.passed_by_value? ? load value : value
     end
 
-    def aggregate_index(ptr, index)
-      gep ptr, 0, index
+    # *type* is the pointee type of *ptr* (not the type of the returned
+    # element)
+    def aggregate_index(type : LLVM::Type, ptr : LLVM::Value, index : Int32)
+      gep type, ptr, 0, index
     end
 
     def instance_var_ptr(type, name, pointer)
       if type.extern_union?
-        return union_field_ptr(type.instance_vars[name].type, pointer)
+        return union_field_ptr(type, type.instance_vars[name].type, pointer)
       end
 
       index = type.index_of_instance_var(name).not_nil!
@@ -2204,21 +2210,24 @@ module Crystal
         index += 1
       end
 
+      target_type = type
       if type.is_a?(VirtualType)
         if type.struct?
           if (_type = type.remove_indirection).is_a?(UnionType)
             # For a struct we need to cast the second part of the union to the base type
             _, value_ptr = union_type_and_value_pointer(pointer, _type)
-            pointer = bit_cast value_ptr, llvm_type(type.base_type).pointer
+            target_type = type.base_type
+            pointer = bit_cast value_ptr, llvm_type(target_type).pointer
           else
             # Nothing, there's only one subclass so it's the struct already
           end
         else
-          pointer = cast_to pointer, type.base_type
+          target_type = type.base_type
+          pointer = cast_to pointer, target_type
         end
       end
 
-      aggregate_index pointer, index
+      aggregate_index llvm_struct_type(target_type), pointer, index
     end
 
     def process_finished_hooks

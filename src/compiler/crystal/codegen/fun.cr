@@ -101,7 +101,10 @@ class Crystal::CodeGenVisitor
 
         if is_closure
           clear_current_debug_location if @debug.line_numbers?
-          setup_closure_vars target_def.vars, context.closure_vars.not_nil!
+          void_ptr = context.fun.params.first
+          closure_type = llvm_typer.copy_type(context.closure_type.not_nil!)
+          closure_ptr = bit_cast void_ptr, closure_type.pointer
+          setup_closure_vars target_def.vars, context.closure_vars.not_nil!, self.context, closure_type, closure_ptr
         else
           context.reset_closure
         end
@@ -114,7 +117,7 @@ class Crystal::CodeGenVisitor
           # In the case of a closure proc literal (-> { ... }), the closure_ptr is not
           # the one of the parent context, it's the last parameter of this proc literal.
           closure_parent_context = old_context.clone
-          closure_parent_context.closure_ptr = fun_literal_closure_ptr
+          closure_parent_context.closure_ptr = closure_ptr.not_nil!
           context.closure_parent_context = closure_parent_context
         end
 
@@ -426,10 +429,10 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def setup_closure_vars(def_vars, closure_vars, context = self.context, closure_ptr = fun_literal_closure_ptr)
+  def setup_closure_vars(def_vars, closure_vars, context, closure_type, closure_ptr)
     if context.closure_skip_parent
       parent_context = context.closure_parent_context.not_nil!
-      setup_closure_vars(def_vars, parent_context.closure_vars.not_nil!, parent_context, closure_ptr)
+      setup_closure_vars(def_vars, parent_context.closure_vars.not_nil!, parent_context, closure_type, closure_ptr)
     else
       closure_vars.each_with_index do |var, i|
         # A closured var in this context might have the same name as
@@ -439,16 +442,18 @@ class Crystal::CodeGenVisitor
         def_var = def_vars.try &.[var.name]?
         next if def_var && !def_var.closured?
 
-        self.context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
+        self.context.vars[var.name] = LLVMVar.new(gep(closure_type, closure_ptr, 0, i, var.name), var.type)
       end
 
       if (closure_parent_context = context.closure_parent_context) &&
          (parent_vars = closure_parent_context.closure_vars)
-        parent_closure_ptr = gep(closure_ptr, 0, closure_vars.size, "parent_ptr")
-        setup_closure_vars(def_vars, parent_vars, closure_parent_context, load(parent_closure_ptr, "parent"))
+        parent_closure_type = llvm_typer.copy_type(closure_parent_context.closure_type.not_nil!)
+        parent_closure_ptr = gep(closure_type, closure_ptr, 0, closure_vars.size, "parent_ptr")
+        parent_closure = load(parent_closure_ptr, "parent")
+        setup_closure_vars(def_vars, parent_vars, closure_parent_context, parent_closure_type, parent_closure)
       elsif closure_self = context.closure_self
         offset = context.closure_parent_context ? 1 : 0
-        self_value = gep(closure_ptr, 0, closure_vars.size + offset, "self")
+        self_value = gep(closure_type, closure_ptr, 0, closure_vars.size + offset, "self")
         self_value = load(self_value) unless context.type.passed_by_value?
         self.context.vars["self"] = LLVMVar.new(self_value, closure_self, true)
       end

@@ -205,7 +205,7 @@ class Crystal::CodeGenVisitor
       abi_arg_type = abi_info.arg_types[i]
       case abi_arg_type.kind
       in .direct?
-        call_arg = codegen_direct_abi_call(call_arg, abi_arg_type) unless arg.type.nil_type?
+        call_arg = codegen_direct_abi_call(arg.type, call_arg, abi_arg_type) unless arg.type.nil_type?
       in .indirect?
         call_arg = codegen_indirect_abi_call(call_arg, abi_arg_type) unless arg.type.nil_type?
       in .ignore?
@@ -233,11 +233,11 @@ class Crystal::CodeGenVisitor
     call_args
   end
 
-  def codegen_direct_abi_call(call_arg, abi_arg_type)
+  def codegen_direct_abi_call(call_arg_type, call_arg, abi_arg_type)
     if cast = abi_arg_type.cast
       final_value = alloca cast
       final_value_casted = bit_cast final_value, llvm_context.void_pointer
-      gep_call_arg = bit_cast gep(call_arg, 0, 0), llvm_context.void_pointer
+      gep_call_arg = bit_cast gep(llvm_type(call_arg_type), call_arg, 0, 0), llvm_context.void_pointer
       size = @abi.size(abi_arg_type.type)
       size = @program.bits64? ? int64(size) : int32(size)
       align = @abi.align(abi_arg_type.type)

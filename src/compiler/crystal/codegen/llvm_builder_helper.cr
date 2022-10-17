@@ -79,20 +79,36 @@ module Crystal
       builder.icmp LLVM::IntPredicate::NE, value, value.type.null
     end
 
-    def gep(ptr, index0 : Int32, name = "")
+    def gep(ptr : LLVM::Value, index0 : Int32, name = "")
       gep ptr, int32(index0), name
     end
 
-    def gep(ptr, index0 : LLVM::Value, name = "")
+    def gep(ptr : LLVM::Value, index0 : LLVM::Value, name = "")
       builder.inbounds_gep ptr, index0, name
     end
 
-    def gep(ptr, index0 : Int32, index1 : Int32, name = "")
+    def gep(ptr : LLVM::Value, index0 : Int32, index1 : Int32, name = "")
       gep ptr, int32(index0), int32(index1), name
     end
 
-    def gep(ptr, index0 : LLVM::Value, index1 : LLVM::Value, name = "")
+    def gep(ptr : LLVM::Value, index0 : LLVM::Value, index1 : LLVM::Value, name = "")
       builder.inbounds_gep ptr, index0, index1, name
+    end
+
+    def gep(type : LLVM::Type, ptr : LLVM::Value, index0 : Int32, name = "")
+      gep type, ptr, int32(index0), name
+    end
+
+    def gep(type : LLVM::Type, ptr : LLVM::Value, index0 : LLVM::Value, name = "")
+      builder.inbounds_gep type, ptr, index0, name
+    end
+
+    def gep(type : LLVM::Type, ptr : LLVM::Value, index0 : Int32, index1 : Int32, name = "")
+      gep type, ptr, int32(index0), int32(index1), name
+    end
+
+    def gep(type : LLVM::Type, ptr : LLVM::Value, index0 : LLVM::Value, index1 : LLVM::Value, name = "")
+      builder.inbounds_gep type, ptr, index0, index1, name
     end
 
     def call(func, name : String = "")
