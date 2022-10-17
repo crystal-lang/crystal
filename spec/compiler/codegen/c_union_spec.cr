@@ -214,4 +214,30 @@ describe "Code gen: c union" do
       foo.read_int
       )).to_i.should eq(42)
   end
+
+  it "moves unions around correctly (#12550)" do
+    run(%(
+      require "prelude"
+
+      lib Lib
+        struct Foo
+          x : UInt8
+          y : UInt16
+        end
+
+        union Bar
+          foo : Foo
+          padding : UInt8[6] # larger than `Foo`
+        end
+      end
+
+      def foo
+        a = uninitialized Lib::Bar
+        a.padding.fill { |i| 1_u8 + i }
+        a
+      end
+
+      foo.padding.sum
+      )).to_i.should eq((1..6).sum)
+  end
 end

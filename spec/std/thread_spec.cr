@@ -1,3 +1,5 @@
+{% skip_file if flag?(:win32) %} # FIXME: enable after #11647
+
 require "spec"
 
 {% if flag?(:musl) %}
