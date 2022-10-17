@@ -49,7 +49,7 @@ class Crystal::Command
   end
 
   private def show_banner
-    return unless STDOUT.tty? && STDERR.tty? && !ENV.has_key?("CRYSTAL_INTERPRETER_SKIP_BANNER")
+    return unless STDERR.tty? && !ENV.has_key?("CRYSTAL_INTERPRETER_SKIP_BANNER")
 
     formatted_sha = "[#{Config.build_commit}] " if Config.build_commit
     STDERR.puts "Crystal interpreter #{Config.version} #{formatted_sha}(#{Config.date}).\n" \
