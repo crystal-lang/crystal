@@ -9,12 +9,17 @@ class Crystal::Command
     includes = [] of String
     check = false
     show_backtrace = false
+    format_stdin = false
 
     OptionParser.parse(@options) do |opts|
-      opts.banner = "Usage: crystal tool format [options] [file or directory]\n\nOptions:"
+      opts.banner = "Usage: crystal tool format [options] [file or directory]...\n\nOptions:"
 
       opts.on("--check", "Checks that formatting code produces no changes") do |f|
         check = true
+      end
+
+      opts.on("-", "--stdin", "Format STDIN to STDOUT") do
+        format_stdin = true
       end
 
       opts.on("-i <path>", "--include <path>", "Include path") do |f|
@@ -47,8 +52,10 @@ class Crystal::Command
       excludes,
       check,
       show_backtrace,
+      format_stdin,
       @color,
     )
+
     format_command.run
     exit format_command.status_code
   end
@@ -65,12 +72,11 @@ class Crystal::Command
       includes = [] of String, excludes = [] of String,
       @check : Bool = false,
       @show_backtrace : Bool = false,
+      @format_stdin : Bool = false,
       @color : Bool = true,
       # stdio is injectable for testing
       @stdin : IO = STDIN, @stdout : IO = STDOUT, @stderr : IO = STDERR
     )
-      @format_stdin = files.size == 1 && files[0] == "-"
-
       includes.map! { |p| Crystal.normalize_path p }
       excludes.map! { |p| Crystal.normalize_path p }
       excludes = excludes - includes

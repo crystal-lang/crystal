@@ -17,7 +17,7 @@ describe Crystal::Command::FormatCommand do
     stdout = IO::Memory.new
     stderr = IO::Memory.new
 
-    format_command = Crystal::Command::FormatCommand.new(["-"], stdin: stdin, stdout: stdout, stderr: stderr)
+    format_command = Crystal::Command::FormatCommand.new([] of String, format_stdin: true, stdin: stdin, stdout: stdout, stderr: stderr)
     format_command.run
     format_command.status_code.should eq(0)
     stdout.to_s.should eq("if true\n  1\nend\n")
@@ -29,7 +29,7 @@ describe Crystal::Command::FormatCommand do
     stdout = IO::Memory.new
     stderr = IO::Memory.new
 
-    format_command = Crystal::Command::FormatCommand.new(["-"], stdin: stdin, stdout: stdout, stderr: stderr)
+    format_command = Crystal::Command::FormatCommand.new([] of String, format_stdin: true, stdin: stdin, stdout: stdout, stderr: stderr)
     format_command.run
     format_command.status_code.should eq(0)
     stdout.to_s.should eq("if true\n  1\nend\n")
@@ -41,7 +41,7 @@ describe Crystal::Command::FormatCommand do
     stdout = IO::Memory.new
     stderr = IO::Memory.new
 
-    format_command = Crystal::Command::FormatCommand.new(["-"], stdin: stdin, stdout: stdout, stderr: stderr)
+    format_command = Crystal::Command::FormatCommand.new([] of String, format_stdin: true, stdin: stdin, stdout: stdout, stderr: stderr)
     format_command.run
     format_command.status_code.should eq(1)
     stdout.to_s.should be_empty
@@ -53,7 +53,7 @@ describe Crystal::Command::FormatCommand do
     stdout = IO::Memory.new
     stderr = IO::Memory.new
 
-    format_command = Crystal::Command::FormatCommand.new(["-"], stdin: stdin, stdout: stdout, stderr: stderr)
+    format_command = Crystal::Command::FormatCommand.new([] of String, format_stdin: true, stdin: stdin, stdout: stdout, stderr: stderr)
     format_command.run
     format_command.status_code.should eq(1)
     stdout.to_s.should be_empty
@@ -65,7 +65,7 @@ describe Crystal::Command::FormatCommand do
     stdout = IO::Memory.new
     stderr = IO::Memory.new
 
-    format_command = BuggyFormatCommand.new(["-"], stdin: stdin, stdout: stdout, stderr: stderr)
+    format_command = BuggyFormatCommand.new([] of String, format_stdin: true, stdin: stdin, stdout: stdout, stderr: stderr)
     format_command.run
     format_command.status_code.should eq(1)
     stdout.to_s.should be_empty
@@ -77,7 +77,7 @@ describe Crystal::Command::FormatCommand do
     stdout = IO::Memory.new
     stderr = IO::Memory.new
 
-    format_command = BuggyFormatCommand.new(["-"], show_backtrace: true, stdin: stdin, stdout: stdout, stderr: stderr)
+    format_command = BuggyFormatCommand.new([] of String, format_stdin: true, show_backtrace: true, stdin: stdin, stdout: stdout, stderr: stderr)
     format_command.run
     format_command.status_code.should eq(1)
     stdout.to_s.should be_empty
