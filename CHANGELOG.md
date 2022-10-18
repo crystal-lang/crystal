@@ -1,3 +1,36 @@
+# 1.6.1 (2022-10-19)
+
+## Compiler
+
+### Interpreter
+
+- Interpreter (repl): migrate types even if their size remains the same ([#12581](https://github.com/crystal-lang/crystal/pull/12581), thanks @asterite)
+- Unbreak the interpreter on FreeBSD ([#12600](https://github.com/crystal-lang/crystal/pull/12600), thanks @dmgk)
+- Fix FFI specs on release builds ([#12601](https://github.com/crystal-lang/crystal/pull/12601), thanks @HertzDevil)
+- Adding welcome message to the interpreter ([#12511](https://github.com/crystal-lang/crystal/pull/12511), thanks @beta-ziliani)
+
+### Semantic
+
+- Treat single splats with same restriction as equivalent ([#12584](https://github.com/crystal-lang/crystal/pull/12584), thanks @HertzDevil)
+
+## Tools
+
+### Formatter
+
+- Formatter: escape backslashes in macro literals when subformatting ([#12582](https://github.com/crystal-lang/crystal/pull/12582), thanks @asterite)
+
+### Playground
+
+- Fix origin validation in playground server for localhost ([#12599](https://github.com/crystal-lang/crystal/pull/12599), thanks @straight-shoota)
+
+## Other
+
+- Fix doc typos in `Socket::IPAddress` ([#12583](https://github.com/crystal-lang/crystal/pull/12583), thanks @Blacksmoke16)
+- Fix building Wasm32 on Crystal 1.6 (Regression) ([#12580](https://github.com/crystal-lang/crystal/pull/12580), thanks @lbguilherme)
+- Bump version to 1.6.1-dev ([#12588](https://github.com/crystal-lang/crystal/pull/12588), thanks @straight-shoota)
+- Disable failing specs on Windows CI ([#12585](https://github.com/crystal-lang/crystal/pull/12585), thanks @HertzDevil)
+- Detect `llvm-configXX` while building compiler ([#12602](https://github.com/crystal-lang/crystal/pull/12602), thanks @HertzDevil)
+
 # 1.6.0 (2022-10-06)
 
 ## Language
