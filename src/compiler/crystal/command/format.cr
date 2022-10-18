@@ -12,14 +12,14 @@ class Crystal::Command
 
     OptionParser.parse(@options) do |opts|
       opts.banner = <<-USAGE
-        Usage: crystal tool format [options] [file or directory ...]
+        Usage: crystal tool format [options] [- | file or directory ...]
 
         Formats Crystal code in place.
 
         If a file or directory is omitted,
         Crystal source files beneath the working directory are formatted.
 
-        Use '-' in place of a file or directory to format STDIN to STDOUT.
+        To format STDIN to STDOUT, use '-' in place of any path arguments.
 
         Options:
         USAGE
