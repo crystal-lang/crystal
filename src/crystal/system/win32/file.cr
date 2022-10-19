@@ -50,7 +50,7 @@ module Crystal::System::File
   private def self.check_not_found_error(message, path)
     error = WinError.value
     if NOT_FOUND_ERRORS.includes? error
-      return nil
+      nil
     else
       raise ::File::Error.from_os_error(message, error, file: path)
     end

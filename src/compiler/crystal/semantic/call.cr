@@ -579,7 +579,7 @@ class Crystal::Call
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-        return Matches.new(ZeroOneOrMany(Match).new(indexer_match), true)
+        Matches.new(ZeroOneOrMany(Match).new(indexer_match), true)
       else
         raise "missing key '#{name}' for named tuple #{owner}"
       end

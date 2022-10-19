@@ -120,7 +120,7 @@ module Float::Printer::IEEE
              {(w.frac << 1) - 1, w.exp - 1}
            end
     m_minus = DiyFP.new(f << (e - m_plus.exp), m_plus.exp)
-    return {minus: m_minus, plus: m_plus}
+    {minus: m_minus, plus: m_plus}
   end
 
   def normalized_boundaries(v : Float32) : {minus: DiyFP, plus: DiyFP}
@@ -139,7 +139,7 @@ module Float::Printer::IEEE
              {(w.frac << 1) - 1, w.exp - 1}
            end
     m_minus = DiyFP.new(f << (e - m_plus.exp), m_plus.exp)
-    return {minus: m_minus, plus: m_plus}
+    {minus: m_minus, plus: m_plus}
   end
 
   def frac_and_exp(v : Float64) : {UInt64, Int32}

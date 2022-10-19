@@ -156,7 +156,7 @@ module Float::Printer::Grisu3
     #   Since too_low = too_high - unsafe_interval this is equivalent to
     #      [too_high - unsafe_interval + 4 ulp; too_high - 2 ulp]
     #   Conceptually we have: rest ~= too_high - buffer
-    return (2 &* unit <= rest) && (rest <= unsafe_interval &- 4 &* unit)
+    (2 &* unit <= rest) && (rest <= unsafe_interval &- 4 &* unit)
   end
 
   # Generates the digits of input number *w*.

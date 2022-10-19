@@ -1398,7 +1398,8 @@ module Crystal
       expansion.accept self
       node.expanded = expansion
       node.bind_to(expanded)
-      return false
+
+      false
     end
 
     # If it's a super or previous_def call inside an initialize we treat

@@ -64,7 +64,7 @@ module ENV
   # the *key* does not exist.
   def self.fetch(key : String, &block : String -> T) : String | T forall T
     if value = Crystal::System::Env.get(key)
-      return value
+      value
     else
       yield key
     end

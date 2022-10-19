@@ -27,11 +27,11 @@ module Crystal::System::Dir
       handle = LibC.FindFirstFileW(dir.query, out data)
       if handle != LibC::INVALID_HANDLE_VALUE
         dir.handle = handle
-        return data_to_entry(data)
+        data_to_entry(data)
       else
         error = WinError.value
         if error == WinError::ERROR_FILE_NOT_FOUND
-          return nil
+          nil
         else
           raise ::File::Error.from_os_error("Error reading directory entries", error, file: path)
         end
@@ -39,11 +39,11 @@ module Crystal::System::Dir
     else
       # Use FindNextFile
       if LibC.FindNextFileW(dir.handle, out data_) != 0
-        return data_to_entry(data_)
+        data_to_entry(data_)
       else
         error = WinError.value
         if error == WinError::ERROR_NO_MORE_FILES
-          return nil
+          nil
         else
           raise ::File::Error.from_os_error("Error reading directory entries", error, file: path)
         end

@@ -1807,7 +1807,7 @@ module Crystal
       write_indent
       write "end"
       next_token
-      return false
+      false
     end
 
     def visit(node : MacroLiteral)
@@ -3489,18 +3489,15 @@ module Crystal
         skip_semicolon_or_space_or_newline
         check_end
         write "; end"
-        next_token
-        return false
       else
         skip_space_or_newline
         check_end
         write_line
         write_indent
         write "end"
-        next_token
-        return false
       end
 
+      next_token
       false
     end
 
@@ -4319,25 +4316,25 @@ module Crystal
 
     def visit(node : Block)
       # Handled in format_block
-      return false
+      false
     end
 
     def visit(node : When)
       # Handled in format_when
-      return false
+      false
     end
 
     def visit(node : Rescue)
       # Handled in visit(node : ExceptionHandler)
-      return false
+      false
     end
 
     def visit(node : MacroId)
-      return false
+      false
     end
 
     def visit(node : MetaVar)
-      return false
+      false
     end
 
     def visit(node : Asm)

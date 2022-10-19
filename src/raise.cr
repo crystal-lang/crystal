@@ -86,7 +86,7 @@ private def traverse_eh_table(leb, start, ip, actions)
     end
   end
 
-  return nil
+  nil
 end
 
 {% if flag?(:interpreted) %}

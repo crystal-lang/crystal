@@ -3425,7 +3425,7 @@ module Crystal
       end
 
       a_then, a_else = a_else, a_then if is_unless
-      return MacroIf.new(cond, a_then, a_else).at_end(token_end_location)
+      MacroIf.new(cond, a_then, a_else).at_end(token_end_location)
     end
 
     def parse_expression_inside_macro
@@ -4653,7 +4653,7 @@ module Crystal
       else
         skip_space
       end
-      return CallArgs.new args, nil, nil, named_args, false, end_location, has_parentheses: allow_newline
+      CallArgs.new args, nil, nil, named_args, false, end_location, has_parentheses: allow_newline
     end
 
     def parse_named_args(location, first_name = nil, allow_newline = false)

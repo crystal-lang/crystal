@@ -987,8 +987,7 @@ class String
 
     byte_index = char_index_to_byte_index(index)
     if byte_index && byte_index < @bytesize
-      reader = Char::Reader.new(self, pos: byte_index)
-      return reader.current_char
+      Char::Reader.new(self, pos: byte_index).current_char
     else
       yield
     end
@@ -1088,9 +1087,9 @@ class String
 
     case count
     when 0
-      return self
+      self
     when size
-      return ""
+      ""
     else
       if single_byte_optimizable?
         byte_delete_at(start, count, count)

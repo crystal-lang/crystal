@@ -300,7 +300,7 @@ struct HTTP::Headers
   end
 
   def valid_value?(value) : Bool
-    return invalid_value_char(value).nil?
+    invalid_value_char(value).nil?
   end
 
   forward_missing_to @hash
