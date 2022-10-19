@@ -134,6 +134,16 @@ describe "Semantic: metaclass" do
       bar_class.should be_a_proper_subtype_of(foo_class)
     end
 
+    it "virtual metaclass type with virtual type (#12628)" do
+      mod = semantic(%(
+        class Base; end
+        class Impl < Base; end
+        )).program
+
+      base = mod.types["Base"]
+      base.virtual_type!.metaclass.implements?(base).should be_false
+    end
+
     it "generic classes (1)" do
       mod = semantic(%(
         class Foo(T); end

@@ -3512,10 +3512,6 @@ module Crystal
       nil
     end
 
-    def implements?(other_type)
-      super || base_type.implements?(other_type)
-    end
-
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       instance_type.to_s_with_options(io, codegen: codegen)
       io << ".class"

@@ -423,4 +423,16 @@ describe "Code gen: cast" do
       A.as(A.class)
       ))
   end
+
+  it "cast virtual metaclass type to nilable virtual instance type (#12628)" do
+    run(<<-CR).to_s.should eq "nil"
+      abstract struct Base
+      end
+
+      struct Impl < Base
+      end
+
+      Base.as(Base | Base.class).as?(Base | Impl)
+      CR
+  end
 end
