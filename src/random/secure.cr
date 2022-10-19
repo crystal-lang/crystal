@@ -27,7 +27,7 @@ module Random::Secure
     Crystal::System::Random.random_bytes(buf)
   end
 
-  {% for type in [UInt8, UInt16, UInt32, UInt64, UInt128] %}
+  {% for type in Int::Unsigned.union_types %}
     # Generates a random integer of a given type. The number of bytes to
     # generate can be limited; by default it will generate as many bytes as
     # needed to fill the integer size.
@@ -55,7 +55,7 @@ module Random::Secure
     end
   {% end %}
 
-  {% for type in [Int8, Int16, Int32, Int64, Int128] %}
+  {% for type in Int::Signed.union_types %}
     private def rand_type(type : {{type}}.class, needed_bytes = sizeof({{type}})) : {{type}}
       result = rand_type({{"U#{type}".id}}, needed_bytes)
       {{type}}.new!(result)
