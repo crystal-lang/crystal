@@ -98,12 +98,13 @@ module Crystal
 
     @unreachable = false
     @is_initialize = false
+    @inside_is_a = false
     @in_type_args = 0
 
-    @while_stack : Array(While)
+    @while_stack = [] of While
     @type_filters : TypeFilters?
-    @needs_type_filters : Int32
-    @typeof_nest : Int32
+    @needs_type_filters = 0
+    @typeof_nest = 0
     @found_self_in_initialize_call : Array(ASTNode)?
     @used_ivars_in_calls_in_initialize : Hash(String, Array(ASTNode))?
     @block_context : Block?
@@ -114,16 +115,10 @@ module Crystal
 
     def initialize(program, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
       super(program, vars)
-      @while_stack = [] of While
-      @needs_type_filters = 0
-      @typeof_nest = 0
       @is_initialize = !!(typed_def && (
         typed_def.name == "initialize" ||
         typed_def.name.starts_with?("initialize:") # Because of expanded methods from named args
       ))
-      @found_self_in_initialize_call = nil
-      @used_ivars_in_calls_in_initialize = nil
-      @inside_is_a = false
 
       # We initialize meta_vars from vars given in the constructor.
       # We store those meta vars either in the typed def or in the program
@@ -142,6 +137,14 @@ module Crystal
       end
 
       @meta_vars = meta_vars
+    end
+
+    def initialize(*, from_main_visitor : MainVisitor)
+      super(from_main_visitor.@program, from_main_visitor.@vars)
+      @meta_vars = from_main_visitor.@meta_vars
+      @typed_def = from_main_visitor.@typed_def
+      @scope = from_main_visitor.@scope
+      @path_lookup = from_main_visitor.@path_lookup
     end
 
     def visit_any(node)
@@ -367,8 +370,7 @@ module Crystal
           var.bind_to(@program.nil_var)
           var.nil_if_read = false
 
-          meta_var.bind_to(@program.nil_var) unless meta_var.dependencies.try &.any? &.same?(@program.nil_var)
-          node.bind_to(@program.nil_var)
+          bind_to_program_nil_var(meta_var)
         end
 
         check_mutably_closured meta_var, var
@@ -391,6 +393,10 @@ module Crystal
       else
         node.raise "read before assignment to local variable '#{node.name}'"
       end
+    end
+
+    private def bind_to_program_nil_var(node)
+      node.bind_to(@program.nil_var) unless node.dependencies.any? &.same?(@program.nil_var)
     end
 
     def visit(node : TypeDeclaration)
@@ -592,19 +598,6 @@ module Crystal
     def undefined_instance_variable(owner, node)
       similar_name = owner.lookup_similar_instance_var_name(node.name)
       program.undefined_instance_variable(node, owner, similar_name)
-    end
-
-    def first_time_accessing_meta_type_var?(var)
-      return false if var.uninitialized?
-
-      if var.freeze_type
-        deps = var.dependencies?
-        # If no dependencies, it's the case of a global for a regex literal.
-        # If there are dependencies and it's just one, it's the same var
-        deps ? deps.size == 1 : false
-      else
-        !var.dependencies?
-      end
     end
 
     def visit(node : InstanceVar)
@@ -1249,7 +1242,7 @@ module Crystal
         # It can happen that this call is inside an ArrayLiteral or HashLiteral,
         # was expanded but isn't bound to the expansion because the call (together
         # with its expansion) was cloned.
-        if (expanded = node.expanded) && (!node.dependencies? || !node.type?)
+        if (expanded = node.expanded) && (node.dependencies.empty? || !node.type?)
           node.bind_to(expanded)
         end
 
@@ -3248,7 +3241,7 @@ module Crystal
     def define_special_var(name, value)
       meta_var, _ = assign_to_meta_var(name)
       meta_var.bind_to value
-      meta_var.bind_to program.nil_var unless meta_var.dependencies.any? &.same?(program.nil_var)
+      bind_to_program_nil_var(meta_var)
       meta_var.assigned_to = true
       check_closured meta_var
 

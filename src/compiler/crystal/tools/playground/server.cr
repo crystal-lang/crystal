@@ -531,11 +531,13 @@ module Crystal::Playground
       rescue ex
         raise Playground::Error.new(ex.message)
       end
+    rescue e : Socket::BindError
+      raise Playground::Error.new(e.message)
     end
 
     private def accept_request?(origin)
       case @host
-      when nil
+      when nil, "localhost", "127.0.0.1"
         origin == "http://127.0.0.1:#{@port}" || origin == "http://localhost:#{@port}"
       when "0.0.0.0"
         true

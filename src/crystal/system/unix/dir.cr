@@ -42,6 +42,15 @@ module Crystal::System::Dir
   end
 
   def self.current : String
+    # If $PWD is set and it matches the current path, use that.
+    # This helps telling apart symlinked paths.
+    if (pwd = ENV["PWD"]?) && pwd.starts_with?("/") &&
+       (pwd_info = ::Crystal::System::File.info?(pwd, follow_symlinks: true)) &&
+       (dot_info = ::Crystal::System::File.info?(".", follow_symlinks: true)) &&
+       pwd_info.same_file?(dot_info)
+      return pwd
+    end
+
     unless dir = LibC.getcwd(nil, 0)
       raise ::File::Error.from_errno("Error getting current directory", file: "./")
     end

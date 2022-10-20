@@ -69,16 +69,38 @@ abstract class Crystal::SyntaxHighlighter
     end
   end
 
+  private def slash_is_not_regex(last_token_type type, space_before)
+    return nil if type.nil?
+
+    type.number? || type.const? || type.instance_var? ||
+      type.class_var? || type.op_rparen? ||
+      type.op_rsquare? || type.op_rcurly? || !space_before
+  end
+
   private def highlight_normal_state(lexer, break_on_rcurly = false)
     last_is_def = false
     heredoc_stack = [] of Token
+    last_token_type = nil
+    space_before = false
 
     while true
       token = lexer.next_token
 
       case token.type
       when .delimiter_start?
-        if token.delimiter_state.kind.heredoc?
+        case
+        when last_is_def && token.raw == "`"
+          render :IDENT, token.raw # colorize 'def `'
+        when last_is_def && token.raw == "/"
+          render :IDENT, token.raw # colorize 'def /'
+
+          if lexer.current_char == '/'
+            render :IDENT, "/" # colorize 'def //'
+            lexer.reader.next_char if lexer.reader.has_next?
+          end
+        when token.raw == "/" && slash_is_not_regex(last_token_type, space_before)
+          render :OPERATOR, token.raw
+        when token.delimiter_state.kind.heredoc?
           heredoc_stack << token.dup
           highlight_token token, last_is_def
         else
@@ -120,8 +142,10 @@ abstract class Crystal::SyntaxHighlighter
       end
 
       unless token.type.space?
+        last_token_type = token.type
         last_is_def = token.keyword? :def
       end
+      space_before = token.type.space?
     end
   end
 
@@ -148,30 +172,38 @@ abstract class Crystal::SyntaxHighlighter
         render :IDENT, token.to_s
       else
         case token.value
-        when :def, :if, :else, :elsif, :end,
-             :class, :module, :include, :extend,
-             :while, :until, :do, :yield, :return, :unless, :next, :break, :begin,
-             :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
-             :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
-             :alias, :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
-             :with, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
-             :annotation, :verbatim
-          render :KEYWORD, token.to_s
-        when :true, :false, :nil
+        when Keyword::TRUE, Keyword::FALSE, Keyword::NIL
           render :PRIMITIVE_LITERAL, token.to_s
-        when :self
+        when Keyword::SELF
           render :SELF, token.to_s
+        when Keyword
+          render :KEYWORD, token.to_s
         else
           render :UNKNOWN, token.to_s
         end
       end
-    when .op_plus?, .op_minus?, .op_star?, .op_amp_plus?, .op_amp_minus?, .op_amp_star?, .op_slash?, .op_slash_slash?,           # + - * &+ &- &* / //
-         .op_eq?, .op_eq_eq?, .op_lt?, .op_lt_eq?, .op_gt?, .op_gt_eq?, .op_bang?, .op_bang_eq?, .op_eq_tilde?, .op_bang_tilde?, # = == < <= > >= ! != =~ !~
-         .op_amp?, .op_bar?, .op_caret?, .op_tilde?, .op_star_star?, .op_gt_gt?, .op_lt_lt?, .op_percent?,                       # & | ^ ~ ** >> << %
-         .op_lsquare_rsquare?, .op_lsquare_rsquare_question?, .op_lsquare_rsquare_eq?, .op_lt_eq_gt?, .op_eq_eq_eq?              # [] []? []= <=> ===
+    when .op_lparen?, .op_rparen?, .op_lsquare?, .op_rsquare?, .op_lcurly?, .op_rcurly?, .op_at_lsquare?, # ( ) { } [ ] @[
+         .op_comma?, .op_period?, .op_period_period?, .op_period_period_period?,                          # , . .. ...
+         .op_colon?, .op_semicolon?, .op_question?, .op_dollar_question?, .op_dollar_tilde?               # : ; ? $? $~
+      # Operators that should not be colorized
+      render :UNKNOWN, token.to_s
+    when .op_lsquare_rsquare?, .op_lsquare_rsquare_question?, .op_lsquare_rsquare_eq?, .op_lt_eq_gt?,        # [] []? []= <=>
+         .op_plus?, .op_minus?, .op_star?, .op_slash?, .op_slash_slash?,                                     # + - * / //
+         .op_eq_eq?, .op_lt?, .op_lt_eq?, .op_gt?, .op_gt_eq?, .op_bang_eq?, .op_eq_tilde?, .op_bang_tilde?, # == < <= > >= != =~ !~
+         .op_amp?, .op_bar?, .op_caret?, .op_tilde?, .op_star_star?, .op_gt_gt?, .op_lt_lt?, .op_percent?    # & | ^ ~ ** >> << %
+      # Operators acceptable in def
+      if last_is_def
+        render :IDENT, token.to_s
+      else
+        render :OPERATOR, token.to_s
+      end
+    when .operator?
+      # Colorize any other operator
       render :OPERATOR, token.to_s
     when .underscore?
       render :UNDERSCORE, "_"
+    when .global_match_data_index?
+      render :UNKNOWN, "$" + token.value.to_s
     else
       render :UNKNOWN, token.to_s
     end

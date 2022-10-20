@@ -65,7 +65,9 @@ class Crystal::SyntaxHighlighter::Colorize < Crystal::SyntaxHighlighter
 
   def render_interpolation(&)
     colorize :INTERPOLATION, "\#{"
-    yield
+    @colorize.fore(:default).surround(@io) do
+      yield
+    end
     colorize :INTERPOLATION, "}"
   end
 

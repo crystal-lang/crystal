@@ -1649,6 +1649,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     node.obj.accept self
 
+    if node.upcast?
+      upcast node.obj, obj_type, node.non_nilable_type
+      upcast node.obj, node.non_nilable_type, node.type
+      return
+    end
+
     # Check if obj is a `to_type`
     dup aligned_sizeof_type(node.obj), node: nil
     filter_type(node, obj_type, filtered_type)
@@ -1785,7 +1791,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_defs = node.target_defs
-    unless target_defs
+    if target_defs.empty?
       node.raise "BUG: no target defs"
     end
 
@@ -2335,9 +2341,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     request_value(arg)
 
-    # We first cast the argument to the def's arg type,
-    # which is the external methods' type.
-    downcast arg, arg_type, target_def_arg_type
+    # Check number autocast but for non-literals
+    if arg_type != target_def_arg_type && arg_type.is_a?(IntegerType | FloatType) && target_def_arg_type.is_a?(IntegerType | FloatType)
+      primitive_convert(arg, arg_type, target_def_arg_type, checked: false)
+    else
+      # We first cast the argument to the def's arg type,
+      # which is the external methods' type.
+      downcast arg, arg_type, target_def_arg_type
+    end
 
     # Then we need to cast the argument to the target_def variable
     # corresponding to the argument. If for example we have this:
@@ -2436,7 +2447,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_defs = call.target_defs
-    unless target_defs
+    if target_defs.empty?
       call.raise "BUG: no target defs"
     end
 

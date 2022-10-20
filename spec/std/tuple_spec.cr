@@ -123,7 +123,7 @@ describe "Tuple" do
     end
 
     it "works with mixed types" do
-      {1, "a", 1.0, :a}.values_at(0, 1, 2, 3).should eq({1, "a", 1.0, :a})
+      {1, "a", 1.0, false}.values_at(0, 1, 2, 3).should eq({1, "a", 1.0, false})
     end
   end
 

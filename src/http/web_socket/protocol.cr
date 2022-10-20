@@ -13,7 +13,7 @@ require "uri"
 class HTTP::WebSocket::Protocol
   GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
-  @[Flags]
+  @[::Flags]
   enum Flags : UInt8
     FINAL = 0x80
     RSV1  = 0x40

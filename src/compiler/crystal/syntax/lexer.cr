@@ -66,6 +66,7 @@ module Crystal
       @filename = ""
       @wants_regex = true
       @doc_enabled = false
+      @comment_is_doc = true
       @comments_enabled = false
       @count_whitespace = false
       @slash_is_regex = true
@@ -96,6 +97,16 @@ module Crystal
     end
 
     def next_token
+      # Check previous token:
+      if @token.type.newline? || @token.type.eof?
+        # 1) After a newline or at the start of the stream (:EOF), a following comment can be a doc comment
+        @comment_is_doc = true
+      elsif !@token.type.space?
+        # 2) Any non-space token prevents a following comment from being a doc
+        # comment.
+        @comment_is_doc = false
+      end
+
       reset_token
 
       # Skip comments
@@ -112,7 +123,7 @@ module Crystal
           consume_loc_pragma
           start = current_pos
         else
-          if @doc_enabled
+          if @doc_enabled && @comment_is_doc
             consume_doc
           elsif @comments_enabled
             return consume_comment(start)
@@ -858,7 +869,7 @@ module Crystal
             next_char
             next_char
             @token.type = :IDENT
-            @token.value = :as?
+            @token.value = :as_question
             return @token
           else
             return check_ident_or_keyword(:as, start)
@@ -994,7 +1005,7 @@ module Crystal
           end
         when 's'
           if next_char == '_' && next_char == 'a' && next_char == '?'
-            return check_ident_or_keyword(:is_a?, start)
+            return check_ident_or_keyword(:is_a_question, start)
           end
         else
           # scan_ident
@@ -1040,7 +1051,7 @@ module Crystal
           when 'l'
             if peek_next_char == '?'
               next_char
-              return check_ident_or_keyword(:nil?, start)
+              return check_ident_or_keyword(:nil_question, start)
             else
               return check_ident_or_keyword(:nil, start)
             end
@@ -1105,7 +1116,7 @@ module Crystal
               end
             when 'p'
               if next_char == 'o' && next_char == 'n' && next_char == 'd' && next_char == 's' && next_char == '_' && next_char == 't' && next_char == 'o' && next_char == '?'
-                return check_ident_or_keyword(:responds_to?, start)
+                return check_ident_or_keyword(:responds_to_question, start)
               end
             else
               # scan_ident
@@ -1426,13 +1437,13 @@ module Crystal
       end
     end
 
-    def check_ident_or_keyword(symbol, start)
+    def check_ident_or_keyword(keyword : Keyword, start)
       if ident_part_or_end?(peek_next_char)
         scan_ident(start)
       else
         next_char
         @token.type = :IDENT
-        @token.value = symbol
+        @token.value = keyword
       end
       @token
     end
@@ -1511,13 +1522,18 @@ module Crystal
           pos_after_prefix = current_pos
           # Enforce number after prefix (disallow ex. "0x", "0x_1")
           raise("unexpected '_' in number", @token, (current_pos - start)) if current_char == '_'
-          raise("numeric literal without digits", @token, (current_pos - start)) unless String::CHAR_TO_DIGIT[current_char.ord].to_u8! < base
+
+          digit = String::CHAR_TO_DIGIT[current_char.ord]?
+          raise("numeric literal without digits", @token, (current_pos - start)) unless digit && digit.to_u8! < base
         end
       end
 
       # Consume number
       loop do
-        while String::CHAR_TO_DIGIT[current_char.ord].to_u8! < base
+        loop do
+          digit = String::CHAR_TO_DIGIT[current_char.ord]?
+          break unless digit && digit.to_u8! < base
+
           number_size += 1 unless number_size == 0 && current_char == '0'
           next_char
           last_is_underscore = false
