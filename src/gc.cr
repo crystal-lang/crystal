@@ -47,6 +47,16 @@ fun __crystal_realloc64(ptr : Void*, size : UInt64) : Void*
 end
 
 module GC
+{% if flag?(:i386) %}
+  record Stats,
+    # collections : UInt64,
+    # bytes_found : Int64,
+    heap_size : UInt32,
+    free_bytes : UInt32,
+    unmapped_bytes : UInt32,
+    bytes_since_gc : UInt32,
+    total_bytes : UInt32
+{% else %}
   record Stats,
     # collections : UInt64,
     # bytes_found : Int64,
@@ -55,7 +65,7 @@ module GC
     unmapped_bytes : UInt64,
     bytes_since_gc : UInt64,
     total_bytes : UInt64
-
+{% end %}
   record ProfStats,
     heap_size : UInt64,
     free_bytes : UInt64,
