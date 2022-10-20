@@ -29,7 +29,7 @@ class Crystal::IoUringEventLoop < Crystal::EventLoop
   def create_timeout_event(fiber) : Crystal::Event
     Crystal::IoUringEvent.new(io_uring, :timeout, 0) do |res|
       next if res == -Errno::ECANCELED.value
-      if (select_action = fiber.timeout_select_action)
+      if select_action = fiber.timeout_select_action
         fiber.timeout_select_action = nil
         select_action.time_expired(fiber)
       else
