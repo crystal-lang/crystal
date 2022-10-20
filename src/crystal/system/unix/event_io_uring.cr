@@ -28,15 +28,15 @@ struct Crystal::IoUringEvent < Crystal::Event
     timeout = nil if timeout == Time::Span::ZERO
 
     case @type
-    when .resume?, .timeout?
+    in .resume?, .timeout?
       if timeout
         @io_uring.timeout(timeout, @callback)
       else
         @io_uring.nop(@callback)
       end
-    when .readable_fd?
+    in .readable_fd?
       @io_uring.wait_readable(@fd, @callback, timeout: timeout)
-    when .writable_fd?
+    in .writable_fd?
       @io_uring.wait_writable(@fd, @callback, timeout: timeout)
     end
   end
