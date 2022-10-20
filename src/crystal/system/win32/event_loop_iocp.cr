@@ -120,9 +120,9 @@ struct Crystal::IocpEvent < Crystal::Event
   def delete
     free
   end
-  
-  def add(time_span : Time::Span?) : Nil
-    @wake_at = time_span ? Time.monotonic + time_span : Time.monotonic
+
+  def add(timeout : Time::Span?) : Nil
+    @wake_at = timeout ? Time.monotonic + timeout : Time.monotonic
     Crystal::EventLoop.enqueue(self)
   end
 end

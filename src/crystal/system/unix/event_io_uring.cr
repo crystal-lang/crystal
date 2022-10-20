@@ -24,20 +24,20 @@ struct Crystal::IoUringEvent < Crystal::Event
     end
   end
 
-  def add(time_span : Time::Span?) : Nil
-    time_span = nil if time_span == Time::Span::ZERO
+  def add(timeout : Time::Span?) : Nil
+    timeout = nil if timeout == Time::Span::ZERO
 
     case @type
     when .resume?, .timeout?
-      if time_span
-        @io_uring.timeout(time_span, @callback)
+      if timeout
+        @io_uring.timeout(timeout, @callback)
       else
         @io_uring.nop(@callback)
       end
     when .readable_fd?
-      @io_uring.wait_readable(@fd, @callback, timeout: time_span)
+      @io_uring.wait_readable(@fd, @callback, timeout: timeout)
     when .writable_fd?
-      @io_uring.wait_writable(@fd, @callback, timeout: time_span)
+      @io_uring.wait_writable(@fd, @callback, timeout: timeout)
     end
   end
 end
