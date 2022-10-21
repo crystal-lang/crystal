@@ -142,6 +142,8 @@ describe "Semantic: metaclass" do
 
       base = mod.types["Base"]
       base.virtual_type!.metaclass.implements?(base).should be_false
+      base.virtual_type!.metaclass.implements?(base.metaclass).should be_true
+      base.virtual_type!.metaclass.implements?(base.metaclass.virtual_type!).should be_true
     end
 
     it "generic classes (1)" do
