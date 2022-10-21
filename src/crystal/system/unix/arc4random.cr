@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:bsd) %}
+{% skip_file unless flag?(:bsd) || flag?(:darwin) %}
 
 require "c/stdlib"
 
