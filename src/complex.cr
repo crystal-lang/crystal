@@ -98,8 +98,8 @@ struct Complex
   # ```
   def to_s(io : IO) : Nil
     io << @real
-    io << (@imag >= 0 ? " + " : " - ")
-    io << @imag.abs
+    io << (@imag.nan? || Math.copysign(1.0, @imag) > 0 ? " + " : " - ")
+    io << Math.copysign(@imag, 1.0)
     io << 'i'
   end
 
@@ -140,8 +140,42 @@ struct Complex
     @real * @real + @imag * @imag
   end
 
+  # Returns the complex sign of `self`.
+  #
+  # If `self` is non-zero, the returned value has the same phase as `self` and
+  # absolute value `1.0`. If `self` is zero, returns `self`.
+  #
+  # The returned value's real and imaginary components always have the same
+  # signs as the respective components of `self`.
+  #
+  # ```
+  # require "complex"
+  #
+  # Complex.new(7, -24).sign        # => (0.28 - 0.96i)
+  # Complex.new(1.0 / 0.0, 24).sign # => (1.0 + 0.0i)
+  # Complex.new(-0.0, +0.0).sign    # => (-0.0 + 0.0i)
+  # ```
   def sign : Complex
-    self / abs
+    return self if zero?
+
+    if @real.nan? || @imag.nan?
+      return Complex.new(Float64::NAN, Float64::NAN)
+    end
+
+    return Complex.new(@real.sign, @imag) if @real != 0 && @imag == 0
+    return Complex.new(@real, @imag.sign) if @real == 0 && @imag != 0
+
+    case {real_inf_sign = @real.infinite?, imag_inf_sign = @imag.infinite?}
+    in {Nil, Nil}
+      phase.cis
+    in {Nil, Int32}
+      Complex.new(Math.copysign(0.0, @real), imag_inf_sign)
+    in {Int32, Nil}
+      Complex.new(real_inf_sign, Math.copysign(0.0, @imag))
+    in {Int32, Int32}
+      sqrt = Math.sqrt(0.5)
+      Complex.new(sqrt * real_inf_sign, sqrt * imag_inf_sign)
+    end
   end
 
   # Returns the phase of `self`.
@@ -251,6 +285,16 @@ struct Complex
     new 0, 0
   end
 
+  # Returns `true` if the complex number is zero.
+  # This means the real and imaginary are both zero.
+  #
+  # ```
+  # require "complex"
+  #
+  # Complex.new(0, 0).zero? # => true
+  # Complex.new(1, 0).zero? # => false
+  # Complex.new(0, 1).zero? # => false
+  # ````
   def zero? : Bool
     @real == 0 && @imag == 0
   end
@@ -259,7 +303,7 @@ struct Complex
     zero
   end
 
-  def multiplicative_identity : self
+  def self.multiplicative_identity : self
     new 1, 0
   end
 

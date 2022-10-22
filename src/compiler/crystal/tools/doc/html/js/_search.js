@@ -41,25 +41,36 @@ CrystalDocs.runQuery = function(query) {
       });
     }
 
-    type.instance_methods.forEach(function(method) {
-      searchMethod(method, type, "instance_method", query, results);
-    })
-    type.class_methods.forEach(function(method) {
-      searchMethod(method, type, "class_method", query, results);
-    })
-    type.constructors.forEach(function(constructor) {
-      searchMethod(constructor, type, "constructor", query, results);
-    })
-    type.macros.forEach(function(macro) {
-      searchMethod(macro, type, "macro", query, results);
-    })
-    type.constants.forEach(function(constant){
-      searchConstant(constant, type, query, results);
-    });
-
-    type.types.forEach(function(subtype){
-      searchType(subtype, query, results);
-    });
+    if (type.instance_methods) {
+      type.instance_methods.forEach(function(method) {
+        searchMethod(method, type, "instance_method", query, results);
+      })
+    }
+    if (type.class_methods) {
+      type.class_methods.forEach(function(method) {
+        searchMethod(method, type, "class_method", query, results);
+      })
+    }
+    if (type.constructors) {
+      type.constructors.forEach(function(constructor) {
+        searchMethod(constructor, type, "constructor", query, results);
+      })
+    }
+    if (type.macros) {
+      type.macros.forEach(function(macro) {
+        searchMethod(macro, type, "macro", query, results);
+      })
+    }
+    if (type.constants) {
+      type.constants.forEach(function(constant){
+        searchConstant(constant, type, query, results);
+      });
+    }
+    if (type.types) {
+      type.types.forEach(function(subtype){
+        searchType(subtype, query, results);
+      });
+    }
   };
 
   function searchMethod(method, type, kind, query, results) {
@@ -71,13 +82,15 @@ CrystalDocs.runQuery = function(query) {
       matchedFields.push("name");
     }
 
-    method.args.forEach(function(arg){
-      var argMatches = query.matches(arg.external_name);
-      if (argMatches) {
-        matches = matches.concat(argMatches);
-        matchedFields.push("args");
-      }
-    });
+    if (method.args) {
+      method.args.forEach(function(arg){
+        var argMatches = query.matches(arg.external_name);
+        if (argMatches) {
+          matches = matches.concat(argMatches);
+          matchedFields.push("args");
+        }
+      });
+    }
 
     var docMatches = query.matches(type.doc);
     if(docMatches){
@@ -126,14 +139,14 @@ CrystalDocs.runQuery = function(query) {
         matches = matches.concat(typeMatches);
       }
       results.push({
-        id: constant.html_id,
+        id: constant.id,
         type: type.full_name,
         result_type: "constant",
         name: constant.name,
         full_name: type.full_name + "#" + constant.name,
         value: constant.value,
         summary: constant.summary,
-        href: type.path + "#" + constant.html_id,
+        href: type.path + "#" + constant.id,
         matched_fields: matchedFields,
         matched_terms: matches
       });

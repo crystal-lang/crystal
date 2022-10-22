@@ -112,7 +112,7 @@ module Random
     rand_int(max)
   end
 
-  {% for size in [8, 16, 32, 64] %}
+  {% for size in [8, 16, 32, 64, 128] %}
     {% utype = "UInt#{size}".id %}
     {% for type in ["Int#{size}".id, utype] %}
       private def rand_int(max : {{type}}) : {{type}}
@@ -226,7 +226,9 @@ module Random
           end
           span += 1
         end
-        range.begin + {{type}}.new!(rand_int(span))
+        # this addition never overflows because `rand_int` is unsigned and
+        # `rand_int <= range.end - range.begin <= type::MAX - range.begin`
+        range.begin &+ rand_int(span)
       end
 
       # Generates a random integer in range `{{type}}::MIN..{{type}}::MAX`.
@@ -242,19 +244,28 @@ module Random
     {% end %}
   {% end %}
 
-  # Returns a random `Float64` which is greater than or equal to `0`
+  # Returns a random `Float` which is greater than or equal to `0`
   # and less than *max*.
   #
   # ```
   # Random.new.rand(3.5)    # => 2.88938
   # Random.new.rand(10.725) # => 7.70147
   # ```
-  def rand(max : Float) : Float64
+  def rand(max : Float64) : Float64
     unless max > 0
       raise ArgumentError.new "Invalid bound for rand: #{max}"
     end
     max_prec = 1u64 << 53 # Float64, excluding mantissa, has 2^53 values
     rand(max_prec) / max_prec.to_f64 * max
+  end
+
+  # :ditto:
+  def rand(max : Float32) : Float32
+    unless max > 0
+      raise ArgumentError.new "Invalid bound for rand: #{max}"
+    end
+    max_prec = 1u32 << 24 # Float32, excluding mantissa, has 2^24 values
+    rand(max_prec) / max_prec.to_f32 * max
   end
 
   # Returns a random integer in the given *range*.
@@ -290,14 +301,16 @@ module Random
   end
 
   {% for type, values in {
-                           "Int8".id   => %w(20 -66 89 19),
-                           "UInt8".id  => %w(186 221 127 245),
-                           "Int16".id  => %w(-32554 32169 -20152 -7686),
-                           "UInt16".id => %w(39546 44091 2874 17348),
-                           "Int32".id  => %w(1870830079 -1043532158 -867180637 -1216773590),
-                           "UInt32".id => %w(3147957137 4245108745 2207809043 3184391838),
-                           "Int64".id  => %w(4438449217673515190 8514493061600538358 -4874671083204037318 -7825896160729246667),
-                           "UInt64".id => %w(15004487597684511003 12027825265648206103 11303949506191212698 6228566501671148658),
+                           "Int8".id    => %w(20 -66 89 19),
+                           "UInt8".id   => %w(186 221 127 245),
+                           "Int16".id   => %w(-32554 32169 -20152 -7686),
+                           "UInt16".id  => %w(39546 44091 2874 17348),
+                           "Int32".id   => %w(1870830079 -1043532158 -867180637 -1216773590),
+                           "UInt32".id  => %w(3147957137 4245108745 2207809043 3184391838),
+                           "Int64".id   => %w(4438449217673515190 8514493061600538358 -4874671083204037318 -7825896160729246667),
+                           "UInt64".id  => %w(15004487597684511003 12027825265648206103 11303949506191212698 6228566501671148658),
+                           "Int128".id  => %w(-33248638598154624979861619415313153263 7715345987200799268985566794637461715 51883986405785085023723116953594906714 -63505201678563022521901409748929046368),
+                           "UInt128".id => %w(209016375821699277802308597707088869733 168739091726124084850659068882871627438 293712757766410232411790495845165436283 15480005665598870938163293877660434201),
                          } %}
     # Returns a random {{type}}
     #

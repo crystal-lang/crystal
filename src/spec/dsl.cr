@@ -2,27 +2,46 @@ require "colorize"
 require "option_parser"
 
 module Spec
-  private COLORS = {
-    success: :green,
-    fail:    :red,
-    error:   :red,
-    pending: :yellow,
-    comment: :cyan,
-    focus:   :cyan,
-    order:   :cyan,
+  # :nodoc:
+  enum InfoKind
+    Comment
+    Focus
+    Order
+  end
+
+  private STATUS_COLORS = {
+    Status::Success => :green,
+    Status::Fail    => :red,
+    Status::Error   => :red,
+    Status::Pending => :yellow,
+  }
+
+  private INFO_COLORS = {
+    InfoKind::Comment => :cyan,
+    InfoKind::Focus   => :cyan,
+    InfoKind::Order   => :cyan,
   }
 
   private LETTERS = {
-    success: '.',
-    fail:    'F',
-    error:   'E',
-    pending: '*',
+    Status::Success => '.',
+    Status::Fail    => 'F',
+    Status::Error   => 'E',
+    Status::Pending => '*',
   }
 
   # :nodoc:
-  def self.color(str, status)
+  def self.color(str, status : Status)
     if use_colors?
-      str.colorize(COLORS[status])
+      str.colorize(STATUS_COLORS[status])
+    else
+      str
+    end
+  end
+
+  # :nodoc:
+  def self.color(str, kind : InfoKind)
+    if use_colors?
+      str.colorize(INFO_COLORS[kind])
     else
       str
     end
@@ -111,7 +130,7 @@ module Spec
   end
 
   # Instructs the spec runner to execute the given block
-  # after each spec spec in the spec suite.
+  # after each spec in the spec suite.
   #
   # If multiple blocks are registered they run in the reversed
   # order that they are given.

@@ -104,8 +104,7 @@ class Crystal::Doc::Method
       other_defs_with_metadata = ancestor.defs.try &.[@def.name]?
       other_defs_with_metadata.try &.each do |other_def_with_metadata|
         # If we find an ancestor method with the same signature
-        if def_with_metadata.restriction_of?(other_def_with_metadata, type.type) &&
-           other_def_with_metadata.restriction_of?(def_with_metadata, ancestor)
+        if def_with_metadata.compare_strictness(other_def_with_metadata, self_owner: type.type, other_owner: ancestor) == 0
           other_def = other_def_with_metadata.def
           doc = other_def.doc
           return DocInfo.new(doc, @generator.type(ancestor)) if doc
@@ -198,7 +197,7 @@ class Crystal::Doc::Method
   end
 
   def anchor
-    "#" + URI.encode(id)
+    "#" + URI.encode_path(id)
   end
 
   def to_s(io : IO) : Nil
@@ -299,7 +298,7 @@ class Crystal::Doc::Method
     if default_value = arg.default_value
       io << " = "
       if html.highlight?
-        io << Highlighter.highlight(default_value.to_s)
+        io << SyntaxHighlighter::HTML.highlight!(default_value.to_s)
       else
         io << default_value
       end
@@ -322,13 +321,13 @@ class Crystal::Doc::Method
     builder.object do
       builder.field "html_id", id
       builder.field "name", name
-      builder.field "doc", doc
-      builder.field "summary", formatted_summary
+      builder.field "doc", doc unless doc.nil?
+      builder.field "summary", formatted_summary unless formatted_summary.nil?
       builder.field "abstract", abstract?
-      builder.field "args", args
-      builder.field "args_string", args_to_s
-      builder.field "args_html", args_to_html
-      builder.field "location", location
+      builder.field "args", args unless args.empty?
+      builder.field "args_string", args_to_s unless args.empty?
+      builder.field "args_html", args_to_html unless args.empty?
+      builder.field "location", location unless location.nil?
       builder.field "def", self.def
     end
   end

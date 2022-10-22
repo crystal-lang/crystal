@@ -88,7 +88,7 @@ module Crystal
         SYMTAB_SHNDX  = 18
       end
 
-      @[Flags]
+      @[::Flags]
       enum Flags : UInt64
         WRITE            =        0x1
         ALLOC            =        0x2

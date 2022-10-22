@@ -58,23 +58,24 @@ class Socket
     # an `Exception` (e.g. a `Socket` or `nil`).
     def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil)
       getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
-        error = nil
-
         loop do
           value = yield addrinfo.not_nil!
 
           if value.is_a?(Exception)
-            error = value
+            unless addrinfo = addrinfo.try(&.next?)
+              if value.is_a?(Socket::ConnectError)
+                raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", value.os_error)
+              else
+                {% if flag?(:win32) && compare_versions(Crystal::LLVM_VERSION, "13.0.0") < 0 %}
+                  # FIXME: Workaround for https://github.com/crystal-lang/crystal/issues/11047
+                  array = StaticArray(UInt8, 0).new(0)
+                {% end %}
+
+                raise value
+              end
+            end
           else
             return value
-          end
-
-          unless addrinfo = addrinfo.try(&.next?)
-            if error.is_a?(Socket::ConnectError)
-              raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", error.os_error)
-            else
-              raise error if error
-            end
           end
         end
       end
@@ -88,7 +89,7 @@ class Socket
 
       @[Deprecated("Use `.from_os_error` instead")]
       def self.new(error_code : Int32, message, domain)
-        from_os_error(message, Errno.new(error_code), domain: domain)
+        from_os_error(message, Errno.new(error_code), domain: domain, type: nil, service: nil, protocol: nil)
       end
 
       @[Deprecated("Use `.from_os_error` instead")]
@@ -97,6 +98,10 @@ class Socket
       end
 
       protected def self.new_from_os_error(message : String?, os_error, *, domain, type, service, protocol, **opts)
+        new(message, **opts)
+      end
+
+      protected def self.new_from_os_error(message : String?, os_error, *, domain, **opts)
         new(message, **opts)
       end
 
@@ -124,53 +129,62 @@ class Socket
     end
 
     private def self.getaddrinfo(domain, service, family, type, protocol, timeout)
-      # RFC 3986 says:
-      # > When a non-ASCII registered name represents an internationalized domain name
-      # > intended for resolution via the DNS, the name must be transformed to the IDNA
-      # > encoding [RFC3490] prior to name lookup.
-      domain = URI::Punycode.to_ascii domain
+      {% if flag?(:wasm32) %}
+        raise NotImplementedError.new "Socket::Addrinfo.getaddrinfo"
+      {% else %}
+        # RFC 3986 says:
+        # > When a non-ASCII registered name represents an internationalized domain name
+        # > intended for resolution via the DNS, the name must be transformed to the IDNA
+        # > encoding [RFC3490] prior to name lookup.
+        domain = URI::Punycode.to_ascii domain
 
-      hints = LibC::Addrinfo.new
-      hints.ai_family = (family || Family::UNSPEC).to_i32
-      hints.ai_socktype = type
-      hints.ai_protocol = protocol
-      hints.ai_flags = 0
+        hints = LibC::Addrinfo.new
+        hints.ai_family = (family || Family::UNSPEC).to_i32
+        hints.ai_socktype = type
+        hints.ai_protocol = protocol
+        hints.ai_flags = 0
 
-      if service.is_a?(Int)
-        hints.ai_flags |= LibC::AI_NUMERICSERV
-      end
-
-      # On OS X < 10.12, the libsystem implementation of getaddrinfo segfaults
-      # if AI_NUMERICSERV is set, and servname is NULL or 0.
-      {% if flag?(:darwin) %}
-        if (service == 0 || service == nil) && (hints.ai_flags & LibC::AI_NUMERICSERV)
+        if service.is_a?(Int)
           hints.ai_flags |= LibC::AI_NUMERICSERV
-          service = "00"
         end
-      {% end %}
 
-      ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
-      unless ret.zero?
-        {% if flag?(:posix) %}
-          # EAI_SYSTEM is not defined on win32
-          if ret == LibC::EAI_SYSTEM
-            raise Error.from_errno message, domain: domain
+        # On OS X < 10.12, the libsystem implementation of getaddrinfo segfaults
+        # if AI_NUMERICSERV is set, and servname is NULL or 0.
+        {% if flag?(:darwin) %}
+          if (service == 0 || service == nil) && (hints.ai_flags & LibC::AI_NUMERICSERV)
+            hints.ai_flags |= LibC::AI_NUMERICSERV
+            service = "00"
+          end
+        {% end %}
+        {% if flag?(:win32) %}
+          if service.is_a?(Int) && service < 0
+            raise Error.from_os_error(nil, WinError::WSATYPE_NOT_FOUND, domain: domain, type: type, protocol: protocol, service: service)
           end
         {% end %}
 
-        error = {% if flag?(:win32) %}
-                  WinError.new(ret.to_u32!)
-                {% else %}
-                  Errno.new(ret)
-                {% end %}
-        raise Error.from_os_error(nil, error, domain: domain, type: type, protocol: protocol, service: service)
-      end
+        ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
+        unless ret.zero?
+          {% if flag?(:unix) %}
+            # EAI_SYSTEM is not defined on win32
+            if ret == LibC::EAI_SYSTEM
+              raise Error.from_os_error nil, Errno.value, domain: domain
+            end
+          {% end %}
 
-      begin
-        yield new(ptr)
-      ensure
-        LibC.freeaddrinfo(ptr)
-      end
+          error = {% if flag?(:win32) %}
+                    WinError.new(ret.to_u32!)
+                  {% else %}
+                    Errno.new(ret)
+                  {% end %}
+          raise Error.from_os_error(nil, error, domain: domain, type: type, protocol: protocol, service: service)
+        end
+
+        begin
+          yield new(ptr)
+        ensure
+          LibC.freeaddrinfo(ptr)
+        end
+      {% end %}
     end
 
     # Resolves *domain* for the TCP protocol and returns an `Array` of possible
