@@ -419,7 +419,7 @@ class Crystal::Repl::Interpreter
   end
 
   private def migrate_local_vars(current_local_vars, next_meta_vars)
-    # Check if any existing local variable size changed.
+    # Check if any existing local variable type changed.
     # If so, it means we need to put them inside a union,
     # or make the union bigger.
     current_names = current_local_vars.names_at_block_level_zero
@@ -435,7 +435,7 @@ class Crystal::Repl::Interpreter
 
       current_type = current_local_vars.type(current_name, 0)
       next_type = next_meta_vars[current_name].type
-      aligned_sizeof_type(current_type) != aligned_sizeof_type(next_type)
+      current_type != next_type
     end
 
     return unless needs_migration
