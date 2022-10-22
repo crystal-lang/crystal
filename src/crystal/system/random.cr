@@ -14,7 +14,7 @@ end
   require "./wasi/random"
 {% elsif flag?(:linux) %}
   require "./unix/getrandom"
-{% elsif flag?(:bsd) %}
+{% elsif flag?(:bsd) || flag?(:darwin) %}
   require "./unix/arc4random"
 {% elsif flag?(:unix) %}
   require "./unix/urandom"
