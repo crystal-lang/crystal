@@ -86,6 +86,20 @@
 #   puts "Got blue"
 # end
 # ```
+#
+# ### Changing the Base Type
+#
+# The type of the underlying enum value is `Int32` by default, but it can be changed to any type in `Int::Primitive`.
+#
+# ```
+# enum Color : UInt8
+#   Red
+#   Green
+#   Blue
+# end
+#
+# Color::Red.value # : UInt8
+# ```
 struct Enum
   include Comparable(self)
 

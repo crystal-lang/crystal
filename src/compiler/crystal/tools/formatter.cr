@@ -1817,7 +1817,16 @@ module Crystal
         @no_rstrip_lines.add line
       end
 
-      write @token.raw
+      raw = @token.raw
+
+      # If the macro literal has a backlash, but we are subformatting
+      # a macro, we need to escape it (if it got here unescaped it was escaped to
+      # begin with.)
+      if @subformat_nesting > 0
+        raw = raw.gsub("\\", "\\" * (@subformat_nesting + 1))
+      end
+
+      write raw
       next_macro_token
       false
     end
