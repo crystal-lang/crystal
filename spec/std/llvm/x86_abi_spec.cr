@@ -1,3 +1,5 @@
+{% skip_file if flag?(:win32) %} # 32-bit windows is not supported
+
 require "spec"
 require "llvm"
 

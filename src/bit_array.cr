@@ -227,6 +227,69 @@ struct BitArray
     c == 1
   end
 
+  # Returns the index of the first appearance of *obj* in `self`
+  # starting from the given *offset*, or `nil` if the value is not in `self`.
+  #
+  # ```
+  # ba = BitArray.new(16)
+  # ba[5] = ba[11] = true
+  # ba.index(true)             # => 5
+  # ba.index(true, offset: 8)  # => 11
+  # ba.index(true, offset: 12) # => nil
+  # ```
+  def index(obj : Bool, offset : Int = 0) : Int32?
+    offset = check_index_out_of_bounds(offset) { return nil }
+    start_bit_index, start_sub_index = offset.divmod(32)
+    end_bit_index, end_sub_index = (@size - 1).divmod(32)
+
+    if start_bit_index == end_bit_index
+      check_index_in_bits(start_bit_index, start_sub_index, end_sub_index)
+    else
+      check_index_in_bits(start_bit_index, start_sub_index, 31)
+      (start_bit_index + 1..end_bit_index - 1).each do |i|
+        check_index_in_bits(i, 0, 31)
+      end
+      check_index_in_bits(end_bit_index, 0, end_sub_index)
+    end
+  end
+
+  private macro check_index_in_bits(bits_index, from, to)
+    bits = @bits[{{ bits_index }}]
+    bits = ~bits if !obj
+    bits &= uint32_mask({{ from }}, {{ to }})
+    return {{ bits_index }} * 32 + bits.trailing_zeros_count if bits != 0
+  end
+
+  # Returns the index of the last appearance of *obj* in `self`, or
+  # `nil` if *obj* is not in `self`.
+  #
+  # If *offset* is given, the search starts from that index towards the
+  # first elements in `self`.
+  #
+  # ```
+  # ba = BitArray.new(16)
+  # ba[5] = ba[11] = true
+  # ba.rindex(true)            # => 11
+  # ba.rindex(true, offset: 8) # => 5
+  # ba.rindex(true, offset: 4) # => nil
+  # ```
+  def rindex(obj : Bool, offset : Int = size - 1) : Int32?
+    offset = check_index_out_of_bounds(offset) { return nil }
+    start_bit_index, start_sub_index = offset.divmod(32)
+
+    check_rindex_in_bits(start_bit_index, 0, start_sub_index)
+    (start_bit_index - 1).downto(0) do |i|
+      check_rindex_in_bits(i, 0, 31)
+    end
+  end
+
+  private macro check_rindex_in_bits(bits_index, from, to)
+    bits = @bits[{{ bits_index }}]
+    bits = ~bits if !obj
+    bits &= uint32_mask({{ from }}, {{ to }})
+    return {{ bits_index }} * 32 + 31 - bits.leading_zeros_count if bits != 0
+  end
+
   # Returns the number of times that *item* is present in the bit array.
   #
   # ```

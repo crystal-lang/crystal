@@ -315,12 +315,7 @@ class Crystal::Repl::Compiler
     # Nothing to do
   end
 
-  private def upcast_distinct(node : ASTNode, from : MetaclassType, to : VirtualMetaclassType)
-    # TODO: not tested
-  end
-
-  private def upcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : VirtualMetaclassType)
-    # TODO: not tested
+  private def upcast_distinct(node : ASTNode, from : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType, to : VirtualMetaclassType)
   end
 
   private def upcast_distinct(node : ASTNode, from : Type, to : Type)
@@ -400,6 +395,11 @@ class Crystal::Repl::Compiler
 
   private def downcast_distinct(node : ASTNode, from : NilableProcType, to : ProcInstanceType)
     # Nothing to do
+  end
+
+  private def downcast_distinct(node : ASTNode, from : ProcInstanceType, to : ProcInstanceType)
+    # Nothing to do
+    # This is when Proc(T) is casted to Proc(Nil)
   end
 
   private def downcast_distinct(node : ASTNode, from : NilableProcType, to : NilType)

@@ -151,7 +151,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   def classify_struct(tys, cls, i, off, packed) : Nil
     field_off = off
     tys.each do |ty|
-      field_off = align(field_off, ty) unless packed
+      field_off = align_offset(field_off, ty) unless packed
       classify(ty, cls, i, field_off)
       field_off += size(ty)
     end
@@ -269,61 +269,11 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   end
 
   def align(type : Type) : Int32
-    case type.kind
-    when Type::Kind::Integer
-      (type.int_width + 7) // 8
-    when Type::Kind::Float
-      4
-    when Type::Kind::Double
-      8
-    when Type::Kind::Pointer
-      8
-    when Type::Kind::Struct
-      if type.packed_struct?
-        1
-      else
-        type.struct_element_types.reduce(1) do |memo, elem|
-          Math.max(memo, align(elem))
-        end
-      end
-    when Type::Kind::Array
-      align type.element_type
-    else
-      raise "Unhandled Type::Kind in align: #{type.kind}"
-    end
+    align(type, 8)
   end
 
   def size(type : Type) : Int32
-    case type.kind
-    when Type::Kind::Integer
-      (type.int_width + 7) // 8
-    when Type::Kind::Float
-      4
-    when Type::Kind::Double
-      8
-    when Type::Kind::Pointer
-      8
-    when Type::Kind::Struct
-      if type.packed_struct?
-        type.struct_element_types.reduce(0) do |memo, elem|
-          memo + size(elem)
-        end
-      else
-        size = type.struct_element_types.reduce(0) do |memo, elem|
-          align(memo, elem) + size(elem)
-        end
-        align(size, type)
-      end
-    when Type::Kind::Array
-      size(type.element_type) * type.array_size
-    else
-      raise "Unhandled Type::Kind in size: #{type.kind}"
-    end
-  end
-
-  def align(offset, type) : Int32
-    align = align(type)
-    (offset + align - 1) // align * align
+    size(type, 8)
   end
 
   enum RegClass

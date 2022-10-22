@@ -47,7 +47,7 @@ module Crystal
       KEXT_BUNDLE = 0xb
     end
 
-    @[Flags]
+    @[::Flags]
     enum Flags : UInt32
       NOUNDEFS                =       0x1
       INCRLINK                =       0x2

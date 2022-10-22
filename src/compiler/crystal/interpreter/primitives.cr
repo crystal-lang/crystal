@@ -6,7 +6,7 @@ require "./compiler"
 # (for example `caller`, or doing a fiber context switch.)
 
 class Crystal::Repl::Compiler
-  private def visit_primitive(node, body, wants_struct_pointer = false)
+  private def visit_primitive(node, body, target_def)
     obj = node.obj
 
     case body.name
@@ -254,7 +254,19 @@ class Crystal::Repl::Compiler
 
       pointer_address(node: node)
     when "proc_call"
-      node.args.each { |arg| request_value(arg) }
+      proc_type = (obj.try(&.type) || scope).as(ProcInstanceType)
+
+      node.args.each_with_index do |arg, arg_index|
+        request_value(arg)
+
+        # Cast call argument to proc's type
+        # (this same logic is done in codegen/primitives.cr)
+        proc_arg_type = proc_type.arg_types[arg_index]
+        target_def_arg_type = target_def.args[arg_index].type
+        if proc_arg_type != target_def_arg_type
+          upcast(arg, target_def_arg_type, proc_arg_type)
+        end
+      end
 
       obj ? request_value(obj) : put_self(node: node)
 
@@ -634,7 +646,7 @@ class Crystal::Repl::Compiler
     to_kind = integer_or_float_kind(to_type)
 
     unless from_kind && to_kind
-      node.raise "BUG: missing handling of unchecked_convert for #{from_type} (#{node.name})"
+      node.raise "BUG: missing handling of unchecked_convert for #{from_type} (#{node})"
     end
 
     primitive_convert(node, from_kind, to_kind, checked: checked)
