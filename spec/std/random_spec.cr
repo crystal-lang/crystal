@@ -255,6 +255,11 @@ describe "Random" do
     end
   end
 
+  it "works with span exceeding int type's range" do
+    rng = TestRNG.new(RNG_DATA_8)
+    rng.rand(-100_i8..100_i8).should eq(53_i8)
+  end
+
   it "works using U/Int128" do
     rng = TestRNG.new(RNG_DATA_128)
     RNG_DATA_128.each do |a|

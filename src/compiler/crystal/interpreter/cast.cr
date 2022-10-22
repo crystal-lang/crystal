@@ -315,12 +315,7 @@ class Crystal::Repl::Compiler
     # Nothing to do
   end
 
-  private def upcast_distinct(node : ASTNode, from : MetaclassType, to : VirtualMetaclassType)
-    # TODO: not tested
-  end
-
-  private def upcast_distinct(node : ASTNode, from : VirtualMetaclassType, to : VirtualMetaclassType)
-    # TODO: not tested
+  private def upcast_distinct(node : ASTNode, from : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType, to : VirtualMetaclassType)
   end
 
   private def upcast_distinct(node : ASTNode, from : Type, to : Type)

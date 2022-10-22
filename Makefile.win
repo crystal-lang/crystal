@@ -32,6 +32,7 @@ MAKEFLAGS += --no-builtin-rules
 
 SHELL := cmd.exe
 CXX := cl.exe
+RC := rc.exe
 
 GLOB = $(shell dir $1 /B /S)
 MKDIR = if not exist $1 mkdir $1
@@ -173,14 +174,22 @@ $(O)\primitives_spec.exe: $(O)\crystal.exe $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@$(call MKDIR,"$(O)")
 	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\primitives_spec.cr
 
-$(O)\crystal.exe: $(DEPS) $(SOURCES)
+$(O)\crystal.exe: $(DEPS) $(SOURCES) $(O)\crystal.res
 	$(call check_llvm_config)
 	@$(call MKDIR,"$(O)")
 	$(call export_vars)
 	$(call export_build_vars)
-	.\bin\crystal build $(FLAGS) -o "$(O)\crystal-next.exe" src\compiler\crystal.cr -D without_openssl -D without_zlib -D without_playground --link-flags=/PDBALTPATH:crystal.pdb
+	.\bin\crystal build $(FLAGS) -o "$(O)\crystal-next.exe" src\compiler\crystal.cr -D without_openssl -D without_zlib -D without_playground --link-flags=/PDBALTPATH:crystal.pdb "--link-flags=$(realpath $(O)\crystal.res)"
 	$(call MV,"$(O)\crystal-next.exe","$@")
 	$(call MV,"$(O)\crystal-next.pdb","$(O)\crystal.pdb")
+
+$(O)\crystal.res: $(O)\crystal.rc
+	@$(call MKDIR,"$(O)")
+	$(RC) /Fo "$@" "$<"
+
+$(O)\crystal.rc: $(MAKEFILE_LIST)
+	@$(call MKDIR,"$(O)")
+	$(MAKE) -s -f $(MAKEFILE_LIST) rc > "$@"
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)\llvm_ext.cc
 	$(call check_llvm_config)
@@ -198,6 +207,49 @@ clean_crystal: ## Clean up crystal built files
 .PHONY: clean_cache
 clean_cache: ## Clean up CRYSTAL_CACHE_DIR files
 	$(call RMDIR,"$(shell .\bin\crystal env CRYSTAL_CACHE_DIR)")
+
+.PHONY: rc
+rc: ## Write compiler resource script to standard output
+	$(eval comma := ,)
+	$(eval ver_comma := $(subst .,$(comma),$(subst -dev,,$(CRYSTAL_VERSION))))
+	$(eval source_date := $(shell git show -s --format=%cs HEAD))
+	$(eval source_year := $(firstword $(subst -, ,$(source_date))))
+	$(eval ver_full := $(CRYSTAL_VERSION)$(if $(CRYSTAL_CONFIG_BUILD_COMMIT), [$(CRYSTAL_CONFIG_BUILD_COMMIT)])$(if $(source_date), ($(source_date))))
+	@setlocal EnableDelayedExpansion &\
+	echo #include ^<windows.h^>&\
+	echo.&\
+	set "_dir=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))" &\
+	echo 1 ICON ^"!_dir:/=\\!src\\compiler\\crystal\\tools\\playground\\public\\favicon.ico^"&\
+	echo.&\
+	echo VS_VERSION_INFO VERSIONINFO&\
+	echo     PRODUCTVERSION $(ver_comma),0&\
+	echo     FILEVERSION    $(ver_comma),1&\
+	echo     FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK&\
+	echo     FILEFLAGS      $(if $(findstring -dev,$(CRYSTAL_VERSION)),VS_FF_PRERELEASE,0)&\
+	echo     FILEOS         VOS_NT_WINDOWS32&\
+	echo     FILETYPE       VFT_APP&\
+	echo     FILESUBTYPE    VFT2_UNKNOWN&\
+	echo BEGIN&\
+	echo     BLOCK "StringFileInfo"&\
+	echo     BEGIN&\
+	echo         BLOCK "040904B0"&\
+	echo         BEGIN&\
+	echo             VALUE "ProductName",      "Crystal"&\
+	echo             VALUE "ProductVersion",   "$(ver_full)"&\
+	echo             VALUE "FileVersion",      "$(ver_full)"&\
+	echo             VALUE "FileDescription",  "Crystal$(if $(LLVM_CONFIG), $(shell $(LLVM_CONFIG) --host-target))"&\
+	echo             VALUE "Comments",         "$(if $(LLVM_VERSION),LLVM $(LLVM_VERSION))"&\
+	echo             VALUE "InternalName",     "crystal.exe"&\
+	echo             VALUE "OriginalFilename", "crystal.exe"&\
+	echo             VALUE "CompanyName",      "Manas Technology Solutions"&\
+	echo             VALUE "LegalCopyright",   "Copyright 2012-$(source_year) Manas Technology Solutions"&\
+	echo         END&\
+	echo     END&\
+	echo     BLOCK "VarFileInfo"&\
+	echo     BEGIN&\
+	echo         VALUE "Translation", 0x0409, 0x04B0&\
+	echo     END&\
+	echo END
 
 .PHONY: help
 help: ## Show this help
