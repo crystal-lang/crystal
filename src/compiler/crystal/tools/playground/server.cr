@@ -537,7 +537,7 @@ module Crystal::Playground
 
     private def accept_request?(origin)
       case @host
-      when nil
+      when nil, "localhost", "127.0.0.1"
         origin == "http://127.0.0.1:#{@port}" || origin == "http://localhost:#{@port}"
       when "0.0.0.0"
         true
