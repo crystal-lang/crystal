@@ -1,7 +1,4 @@
-require "c/dlfcn"
-require "c/stdio"
-require "c/string"
-require "../lib_unwind"
+require "../../crystal/system/print_error"
 
 # :nodoc:
 struct Exception::CallStack
