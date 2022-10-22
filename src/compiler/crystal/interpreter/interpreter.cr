@@ -167,8 +167,10 @@ class Crystal::Repl::Interpreter
     compiled_def = @compiled_def
 
     # Declare or migrate local variables
+    # TODO: we should also migrate variables if we are outside of a block
+    # in a pry session, but that's tricky so we'll leave it for later.
     if !compiled_def || in_pry
-      migrate_local_vars(@local_vars, meta_vars)
+      migrate_local_vars(@local_vars, meta_vars) if @local_vars.block_level == 0
 
       # TODO: is it okay to assume this is always the program? Probably not.
       # Check if we need a local variable for the closure context
@@ -187,7 +189,13 @@ class Crystal::Repl::Interpreter
         # Closured vars don't belong in the local variables table
         next if meta_var.closured?
 
-        existing_type = @local_vars.type?(name, 0)
+        # Check if the var already exists from the current block upwards
+        existing_type = nil
+        @local_vars.block_level.downto(0) do |level|
+          existing_type = @local_vars.type?(name, level)
+          break if existing_type
+        end
+
         if existing_type
           if existing_type != meta_var.type
             raise "BUG: can't change type of local variable #{name} from #{existing_type} to #{meta_var.type} yet"
@@ -411,7 +419,7 @@ class Crystal::Repl::Interpreter
   end
 
   private def migrate_local_vars(current_local_vars, next_meta_vars)
-    # Check if any existing local variable size changed.
+    # Check if any existing local variable type changed.
     # If so, it means we need to put them inside a union,
     # or make the union bigger.
     current_names = current_local_vars.names_at_block_level_zero
@@ -427,7 +435,7 @@ class Crystal::Repl::Interpreter
 
       current_type = current_local_vars.type(current_name, 0)
       next_type = next_meta_vars[current_name].type
-      aligned_sizeof_type(current_type) != aligned_sizeof_type(next_type)
+      current_type != next_type
     end
 
     return unless needs_migration
@@ -1177,9 +1185,10 @@ class Crystal::Repl::Interpreter
     # Remember the portion from stack_bottom + local_vars.max_bytesize up to stack
     # because it might happen that the child interpreter will overwrite some
     # of that if we already have some values in the stack past the local vars
-    data_size = stack - (stack_bottom + local_vars.max_bytesize)
+    original_local_vars_max_bytesize = local_vars.max_bytesize
+    data_size = stack - (stack_bottom + original_local_vars_max_bytesize)
     data = Pointer(Void).malloc(data_size).as(UInt8*)
-    data.copy_from(stack_bottom + local_vars.max_bytesize, data_size)
+    data.copy_from(stack_bottom + original_local_vars_max_bytesize, data_size)
 
     gatherer = LocalVarsGatherer.new(location, a_def)
     gatherer.gather
@@ -1324,7 +1333,7 @@ class Crystal::Repl::Interpreter
     end
 
     # Restore the stack data in case it tas overwritten
-    (stack_bottom + local_vars.max_bytesize).copy_from(data, data_size)
+    (stack_bottom + original_local_vars_max_bytesize).copy_from(data, data_size)
   end
 
   private def whereami(a_def : Def, location : Location)

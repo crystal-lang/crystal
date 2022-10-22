@@ -2225,4 +2225,15 @@ describe Crystal::Formatter do
       break
     end
     CODE
+
+  # #12378
+  assert_format <<-CODE
+    macro foo
+      macro bar
+        \\{% begin %}
+          \\\\{% puts %}
+        \\{% end %}
+      end
+    end
+    CODE
 end
