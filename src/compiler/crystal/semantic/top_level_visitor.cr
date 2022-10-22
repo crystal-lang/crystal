@@ -443,7 +443,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         new_expansions[node] = new_method
       end
 
-      unless @method_added_running
+      if !@method_added_running && has_hooks?(target_type.metaclass)
         @method_added_running = true
         run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", node).at(node.location)
         @method_added_running = false
@@ -501,6 +501,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     type.private = true if node.visibility.private?
 
+    wasm_import_module = nil
+
     process_annotations(annotations) do |annotation_type, ann|
       case annotation_type
       when @program.link_annotation
@@ -513,6 +515,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         if ann.args.size > 1
           @program.warnings.add_warning(ann, "using non-named arguments for Link annotations is deprecated")
         end
+
+        if wasm_import_module && link_annotation.wasm_import_module
+          ann.raise "multiple wasm import modules specified for lib #{node.name}"
+        end
+
+        wasm_import_module = link_annotation.wasm_import_module
 
         type.add_link_annotation(link_annotation)
       when @program.call_convention_annotation
@@ -921,6 +929,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       call_convention = scope.call_convention
     end
 
+    if scope.is_a?(LibType)
+      external.wasm_import_module = scope.wasm_import_module
+    end
+
     # We fill the arguments and return type in TypeDeclarationVisitor
     external.doc = node.doc
     external.call_convention = call_convention
@@ -1041,6 +1053,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     rescue ex : TypeException
       node.raise "at '#{kind}' hook", ex
     end
+  end
+
+  def has_hooks?(type_with_hooks)
+    hooks = type_with_hooks.as?(ModuleType).try &.hooks
+    hooks && !hooks.empty?
   end
 
   def run_hooks(type_with_hooks, current_type, kind : HookKind, node, call = nil)

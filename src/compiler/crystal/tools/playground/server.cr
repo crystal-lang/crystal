@@ -16,6 +16,7 @@ module Crystal::Playground
     end
 
     def self.instrument_and_prelude(session_key, port, tag, source, host : String? = "localhost")
+      # TODO: figure out how syntax warnings should be reported
       ast = Parser.new(source).parse
 
       instrumented = Playground::AgentInstrumentorTransformer.transform(ast).to_s
@@ -530,11 +531,13 @@ module Crystal::Playground
       rescue ex
         raise Playground::Error.new(ex.message)
       end
+    rescue e : Socket::BindError
+      raise Playground::Error.new(e.message)
     end
 
     private def accept_request?(origin)
       case @host
-      when nil
+      when nil, "localhost", "127.0.0.1"
         origin == "http://127.0.0.1:#{@port}" || origin == "http://localhost:#{@port}"
       when "0.0.0.0"
         true

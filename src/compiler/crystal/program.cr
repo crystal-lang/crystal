@@ -248,6 +248,12 @@ module Crystal
       define_macro_types
     end
 
+    # Returns a new `Parser` for the given *source*, sharing the string pool and
+    # warnings with this program.
+    def new_parser(source : String, var_scopes = [Set(String).new])
+      Parser.new(source, string_pool, var_scopes, warnings)
+    end
+
     # Returns a `LiteralExpander` useful to expand literal like arrays and hashes
     # into simpler forms.
     getter(literal_expander) { LiteralExpander.new self }

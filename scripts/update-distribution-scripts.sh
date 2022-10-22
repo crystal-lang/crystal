@@ -5,7 +5,11 @@
 #
 # Usage:
 #
-#    scripts/update-distribution_scripts.sh [REF]
+#    scripts/update-distribution_scripts.sh [REF [BRANCH]]
+#
+# Parameters:
+# * REF: Git commit SHA in distribution-scripts (default: HEAD)
+# * BRANCH: Branch name for CI branch in crystal (default: ci/update-distribution-scripts)
 #
 # Requirements:
 # * packages: git gh sed
@@ -20,13 +24,13 @@ GIT_DS="git --git-dir=$DISTRIBUTION_SCRIPTS_WORK_DIR"
 
 $GIT_DS fetch origin master
 
-if [ -z "${1:-}"]; then
+if [ "${1:-"HEAD"}" = "HEAD" ]; then
   reference=$($GIT_DS rev-list origin/master | head -1)
 else
   reference=${1}
 fi
 
-branch="ci/update-distribution-scripts"
+branch="${2:-"ci/update-distribution-scripts"}"
 
 git switch -C "$branch" master
 
@@ -38,8 +42,8 @@ sed -i -E "/distribution-scripts-version:/{n;n;n;s/default: \".*\"/default: \"$r
 git add .circleci/config.yml
 
 message="Updates \`distribution-scripts\` dependency to https://github.com/crystal-lang/distribution-scripts/commit/$reference"
-log=$($GIT_DS log $old_reference..$reference --format="%s" | sed "s/.*(/\* crystal-lang\/distribution-scripts/;s/.$//")
-message="$message\n\nThis includes the following changes:\n\n$log"
+log=$($GIT_DS log $old_reference..$reference --format="%s" | sed "s/.*(/crystal-lang\/distribution-scripts/;s/^/* /;s/.$//")
+message=$(printf "%s\n\nThis includes the following changes:\n\n%s" "$message" "$log")
 
 git commit -m "Update distribution-scripts" -m "$message"
 
@@ -47,6 +51,10 @@ git show
 
 git push -u upstream "$branch"
 
+# Confirm creating pull request
+echo "Create pull request for branch $branch? [y/N]"
+read -r REPLY
 
-# Create pull request
-gh pr create -R crystal-lang/crystal --fill --label "topic:infrastructure" --assignee "@me"
+if [ "$REPLY" = "y" ]; then
+  gh pr create -R crystal-lang/crystal --fill --label "topic:infrastructure" --assignee "@me"
+fi

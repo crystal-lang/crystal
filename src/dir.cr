@@ -176,7 +176,12 @@ class Dir
     @closed = true
   end
 
-  # Returns the current working directory.
+  # Returns an absolute path to the current working directory.
+  #
+  # The result is similar to the shell commands `pwd` (POSIX) and `cd` (Windows).
+  #
+  # On POSIX systems, it respects the environment value `$PWD` if available and
+  # if it points to the current working directory.
   def self.current : String
     Crystal::System::Dir.current
   end

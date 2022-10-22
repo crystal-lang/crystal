@@ -15,7 +15,7 @@ require "../subtle"
 #
 # See `Crypto::Bcrypt` for hints to select the cost when generating hashes.
 class Crypto::Bcrypt::Password
-  private SUPPORTED_VERSIONS = ["2", "2a", "2b"]
+  private SUPPORTED_VERSIONS = ["2", "2a", "2b", "2y"]
 
   # Hashes a password.
   #

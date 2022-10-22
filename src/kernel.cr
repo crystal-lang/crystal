@@ -142,14 +142,19 @@ end
 # being replaced by values from *args* formatted according to the specifier.
 #
 # Within the format string, any characters other than format specifiers
-# (specifiers beginning with `%`) are copied to the result.
-# The formatter supports positional format specifiers (`%.1f`),
-# formatted substitution (`%<name>.1f`) and plain substitution (`%{name}`).
+# (specifiers beginning with `%`) are copied to the result. The formatter
+# supports the following kinds of format specifiers:
 #
-# Substitutions expect the first argument to be a `Hash` or `NamedTuple` to
-# resolve substitution names.
-# Positional specifiers correspond to the positional values in the method
-# arguments, or the array supplied as first argument.
+# * Sequential (`%.1f`). The first `%` consumes the first argument, the second
+#   consumes the second argument, and so on.
+# * Positional (`%3$.1f`). The one-based argument index is specified as part of
+#   the flags.
+# * Named substitution (`%<name>.1f`, `%{name}`). The angle bracket form accepts
+#   flags and the curly bracket form doesn't. Exactly one `Hash` or `NamedTuple`
+#   must be passed as the argument.
+#
+# Mixing of different kinds of format specifiers is disallowed, except that the
+# two named forms may be used together.
 #
 # A simple format specifier consists of a percent sign, followed by optional flags,
 # width, and precision indicators, then terminated with a field type
@@ -165,6 +170,9 @@ end
 # ```text
 # %<name>[flags][width][.precision]type
 # ```
+#
+# The percent sign itself is escaped by `%%`. No format modifiers are allowed,
+# and no arguments are consumed.
 #
 # The field type controls how the corresponding argument value is to be
 # interpreted, while the flags modify that interpretation.
@@ -208,18 +216,17 @@ end
 #   s   | Argument is a string to be substituted. If the format
 #       | sequence contains a precision, at most that many characters
 #       | will be copied.
-#   %   | A percent sign itself will be displayed. No argument taken.
 # ```
 #
 # Flags modify the behavior of the format specifiers:
 #
 # ```text
 # Flag     | Applies to    | Meaning
-# ---------+---------------+--------------------------------------------
+# ---------+---------------+----------------------------------------------------
 # space    | bdiouxX       | Add a leading space character to
 #          | aAeEfgG       | non-negative numbers. Has no effect if the plus
 #          | (numeric fmt) | flag is also given.
-# ---------+---------------+-----------------------------------------
+# ---------+---------------+----------------------------------------------------
 # #        | boxX          | Use an alternative format.
 #          | aAeEfgG       | For x, X, b, prefix any non-zero result with
 #          |               | 0x, 0X, or 0b respectively.
@@ -229,21 +236,28 @@ end
 #          |               | force a decimal point to be added,
 #          |               | even if no digits follow.
 #          |               | For g and G, do not remove trailing zeros.
-# ---------+---------------+--------------------------------------------
+# ---------+---------------+----------------------------------------------------
 # +        | bdiouxX       | Add a leading plus sign to non-negative
 #          | aAeEfgG       | numbers.
 #          | (numeric fmt) |
-# ---------+---------------+--------------------------------------------
+# ---------+---------------+----------------------------------------------------
 # -        | all           | Left-justify the result of this conversion.
-# ---------+---------------+--------------------------------------------
+# ---------+---------------+----------------------------------------------------
 # 0 (zero) | bdiouxX       | Pad with zeros, not spaces. Has no effect if the
 #          | aAeEfgG       | number is left-justified, or a precision is given
 #          | (numeric fmt) | to an integer field type.
-# ---------+---------------+-----------------------------------------
+# ---------+---------------+----------------------------------------------------
 # *        | all           | Use the next argument as the field width or
 #          |               | precision. If width is negative, set the minus flag
 #          |               | and use the argument's absolute value as field
 #          |               | width. If precision is negative, it is ignored.
+# ---------+---------------+----------------------------------------------------
+# 1$ 2$ 3$ | all           | As a flag, specifies the one-based argument index
+# ...      |               | for a positional format specifier.
+#          |               | Immediately after *, use the argument at the given
+#          |               | one-based index as the width or precision, instead
+#          |               | of the next argument. The entire format string must
+#          |               | also use positional format specifiers throughout.
 # ```
 #
 # Examples of flags:
@@ -374,9 +388,10 @@ end
 #
 # Additional examples:
 # ```
-# sprintf "%d %04x", 123, 123             # => "123 007b"
-# sprintf "%08b '%4s'", 123, 123          # => "01111011 ' 123'"
-# sprintf "%+g:% g:%-g", 1.23, 1.23, 1.23 # => "+1.23: 1.23:1.23"
+# sprintf "%d %04x", 123, 123                 # => "123 007b"
+# sprintf "%08b '%4s'", 123, 123              # => "01111011 ' 123'"
+# sprintf "%+g:% g:%-g", 1.23, 1.23, 1.23     # => "+1.23: 1.23:1.23"
+# sprintf "%-3$*1$.*2$s", 10, 5, "abcdefghij" # => "abcde     "
 # ```
 def sprintf(format_string, *args) : String
   sprintf format_string, args

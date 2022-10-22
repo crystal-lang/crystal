@@ -327,6 +327,33 @@ module Crystal
           @structs[llvm_name] = a_struct
         end
 
+        # We are going to represent the union like this:
+        # 1. Find out what's the type with the largest alignment
+        # 2. Find out what's the type's size
+        # 3. Have the first member of the union be an array
+        #    of ints that match that alignment, up to that type's
+        #    size, followed by another member that is just bytes
+        #    to fill the rest of the union's size.
+        #
+        # So for example if we have this:
+        #
+        # struct Foo
+        #   x : Int8
+        #   y : Int32
+        # end
+        #
+        # union Bar
+        #   foo : Foo
+        #   padding : UInt8[24]
+        # end
+        #
+        # We have that for Bar, the largest alignment of its types
+        # is 4 (for Foo's Int32). Foo's size is 8 bytes (4 for x, 4 for y).
+        # Then for the first union member we'll have [2 x i32].
+        # The total size of the union is 24 bytes. We already filled
+        # 8 bytes so we still need 16 bytes.
+        # The resulting union is { [2 x i32], [16 x i8] }.
+
         max_size = 0
         max_align = 0
         max_align_type = nil
@@ -351,8 +378,10 @@ module Crystal
           end
         end
 
-        max_align_type = max_align_type.not_nil!
-        union_fill = [max_align_type] of LLVM::Type
+        filler = @llvm_context.int(max_align * 8)
+        filler_size = max_align_type_size // max_align
+
+        union_fill = [filler.array(filler_size)] of LLVM::Type
         if max_align_type_size < max_size
           union_fill << @llvm_context.int8.array(max_size - max_align_type_size)
         end

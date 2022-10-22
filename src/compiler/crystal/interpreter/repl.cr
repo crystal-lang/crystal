@@ -95,6 +95,8 @@ class Crystal::Repl
   end
 
   private def interpret(node : ASTNode)
+    @main_visitor = MainVisitor.new(from_main_visitor: @main_visitor)
+
     node = @program.normalize(node)
     node = @program.semantic(node, main_visitor: @main_visitor)
     @interpreter.interpret(node, @main_visitor.meta_vars)
@@ -127,9 +129,12 @@ class Crystal::Repl
   end
 
   private def parse_code(code, filename = "")
-    parser = Parser.new code, @program.string_pool
+    warnings = @program.warnings.dup
+    warnings.infos = [] of String
+    parser = Parser.new code, @program.string_pool, warnings: warnings
     parser.filename = filename
     parsed_nodes = parser.parse
+    warnings.report(STDOUT)
     @program.normalize(parsed_nodes, inside_exp: false)
   end
 
