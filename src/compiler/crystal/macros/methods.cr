@@ -2542,14 +2542,22 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
   when "+"
     interpret_check_args(node: object) do |arg|
       case arg
-      when Crystal::TupleLiteral
-        other_elements = arg.elements
-      when Crystal::ArrayLiteral
-        other_elements = arg.elements
+      when Crystal::TupleLiteral then other_elements = arg.elements
+      when Crystal::ArrayLiteral then other_elements = arg.elements
       else
         arg.raise "argument to `#{klass}#+` must be a tuple or array, not #{arg.class_desc}:\n\n#{arg}"
       end
       klass.new(object.elements + other_elements)
+    end
+  when "-"
+    interpret_check_args(node: object) do |arg|
+      case arg
+      when Crystal::TupleLiteral then other_elements = arg.elements
+      when Crystal::ArrayLiteral then other_elements = arg.elements
+      else
+        arg.raise "argument to `#{klass}#-` must be a tuple or array, not #{arg.class_desc}:\n\n#{arg}"
+      end
+      klass.new(object.elements - other_elements)
     end
   else
     nil
