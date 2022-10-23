@@ -701,7 +701,6 @@ module Crystal
             end_location = token_end_location
 
             @wants_regex = false
-            has_parentheses = false
             next_token
 
             space_consumed = false
@@ -2607,8 +2606,6 @@ module Crystal
       first_value = parse_op_assign
       skip_space_or_newline
 
-      end_location = nil
-
       entries = [] of NamedTupleLiteral::Entry
       entries << NamedTupleLiteral::Entry.new(first_key, first_value)
 
@@ -3483,7 +3480,6 @@ module Crystal
 
       receiver = nil
       @yields = nil
-      name_line_number = @token.line_number
       name_location = @token.location
       receiver_location = @token.location
       end_location = token_end_location
@@ -3775,7 +3771,6 @@ module Crystal
 
       if splat && (@token.type.op_comma? || @token.type.op_rparen?)
         param_name = ""
-        uses_param = false
         allow_restrictions = false
       else
         param_location = @token.location
@@ -3876,9 +3871,6 @@ module Crystal
         param_name, external_name, found_space, uses_param = parse_param_name(name_location, extra_assigns, allow_external_name: false)
         @uses_block_arg = true if uses_param
       end
-
-      inputs = nil
-      output = nil
 
       if @token.type.op_colon?
         next_token_skip_space_or_newline

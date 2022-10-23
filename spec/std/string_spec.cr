@@ -1332,7 +1332,7 @@ describe "String" do
     end
 
     it "subs char with string" do
-      replaced = "foobar".sub do |char|
+      "foobar".sub do |char|
         char.should eq 'f'
         "some"
       end.should eq("someoobar")

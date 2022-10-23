@@ -813,7 +813,6 @@ module Crystal
 
       # Try to guess from the method's body, but now
       # the current lookup type is obj_type
-      type = nil
       old_type_override = @type_override
       @type_override = obj_type
 

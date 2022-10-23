@@ -35,7 +35,7 @@ describe "Semantic: class" do
   end
 
   it "types generic of generic type" do
-    result = assert_type("
+    assert_type("
       class Foo(T)
         def set
           @coco = 2

@@ -934,7 +934,7 @@ module Crystal
         node.raise "can't use `yield` outside a method"
       end
 
-      if ctx = @fun_literal_context
+      if @fun_literal_context
         node.raise <<-MSG
           can't use `yield` inside a proc literal or captured block
 

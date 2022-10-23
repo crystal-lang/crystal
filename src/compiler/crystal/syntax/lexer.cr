@@ -2293,10 +2293,8 @@ module Crystal
     def skip_macro_whitespace
       start = current_pos
       while current_char.ascii_whitespace?
-        whitespace = true
         if current_char == '\n'
           incr_line_number 0
-          beginning_of_line = true
         end
         next_char
       end

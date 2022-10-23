@@ -1537,7 +1537,7 @@ module Crystal
       output = other.output
 
       # Consider the case of a splat in the type vars
-      if inputs && (splat_given = inputs.any?(Splat))
+      if inputs && inputs.any?(Splat)
         i = 0
         inputs.each do |input|
           if input.is_a?(Splat)

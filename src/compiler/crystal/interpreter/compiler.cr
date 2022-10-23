@@ -981,7 +981,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def read_closured_var_pointer(closured_var : ClosuredVar, *, node : ASTNode?)
-    indexes, type = closured_var.indexes, closured_var.type
+    indexes = closured_var.indexes
 
     # First load the closure pointer
     closure_var_index = get_closure_var_index
@@ -2474,9 +2474,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # We don't want pointer.value to return a copy of something
       # if we are calling through it
       call_obj = call_obj.not_nil!
-
-      element_type = call_obj.type.as(PointerInstanceType).element_type
-
       request_value(call_obj)
       return
     end
@@ -2687,8 +2684,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       local_var = lookup_local_var_or_closured_var(exp.name)
       case local_var
       in LocalVar
-        index, type = local_var.index, local_var.type
-        pointerof_var(index, node: node)
+        pointerof_var(local_var.index, node: node)
       in ClosuredVar
         node.raise "BUG: missing interpreter out closured var"
       end
@@ -2753,8 +2749,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       compiled_def.local_vars.declare(arg.name, var_type)
     end
-
-    a_def = @def
 
     needs_closure_context = (target_def.vars.try &.any? { |name, var| var.type? && var.closure_in?(target_def) })
 

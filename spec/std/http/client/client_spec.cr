@@ -240,7 +240,6 @@ module HTTP
 
     it "will not retry when closed (non-block) (#12464)" do
       requests = 0
-      server_channel = Channel(Nil).new
 
       client = HTTP::Client.new("127.0.0.1", 0)
       client.before_request do
@@ -256,7 +255,6 @@ module HTTP
 
     it "will not retry when closed (block) (#12464)" do
       requests = 0
-      server_channel = Channel(Nil).new
 
       client = HTTP::Client.new("127.0.0.1", 0)
       client.before_request do
