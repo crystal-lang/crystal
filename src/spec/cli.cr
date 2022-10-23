@@ -5,9 +5,6 @@ require "option_parser"
 
 module Spec
   # :nodoc:
-  class_property? use_colors = true
-
-  # :nodoc:
   class_property pattern : Regex?
 
   # :nodoc:
@@ -110,7 +107,7 @@ module Spec
         configure_formatter("tap")
       end
       opts.on("--no-color", "Disable colored output") do
-        Spec.use_colors = false
+        Colorize.enabled = false
       end
       opts.unknown_args do |args|
       end
