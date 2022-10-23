@@ -177,11 +177,11 @@ module Crystal::System::File
     end
   end
 
-  def self.real_path(path : String) : String
+  def self.realpath(path : String) : String
     # TODO: read links using https://msdn.microsoft.com/en-us/library/windows/desktop/aa364571(v=vs.85).aspx
     win_path = to_windows_path(path)
 
-    real_path = System.retry_wstr_buffer do |buffer, small_buf|
+    realpath = System.retry_wstr_buffer do |buffer, small_buf|
       len = LibC.GetFullPathNameW(win_path, buffer.size, buffer, nil)
       if 0 < len < buffer.size
         break String.from_utf16(buffer[0, len])
@@ -192,11 +192,11 @@ module Crystal::System::File
       end
     end
 
-    unless exists? real_path
+    unless exists? realpath
       raise ::File::Error.from_os_error("Error resolving real path", Errno::ENOENT, file: path)
     end
 
-    real_path
+    realpath
   end
 
   def self.link(old_path : String, new_path : String) : Nil
