@@ -730,7 +730,7 @@ class Crystal::Call
   end
 
   def def_full_name(owner, a_def, arg_types = nil)
-    Call.def_full_name(owner, a_def, arg_types = nil)
+    Call.def_full_name(owner, a_def, arg_types)
   end
 
   def self.def_full_name(owner, a_def, arg_types = nil)
@@ -778,7 +778,7 @@ class Crystal::Call
       end
       if arg_default = arg.default_value
         str << " = "
-        str << arg.default_value
+        str << arg_default
       end
       printed = true
     end

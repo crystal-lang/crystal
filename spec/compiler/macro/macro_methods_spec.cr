@@ -3052,13 +3052,13 @@ module Crystal
       it "returns true if file exists" do
         run(%q<
           {{file_exists?("#{__DIR__}/../data/build")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(10)
+          >, filename: __FILE__).to_i.should eq(10)
       end
 
       it "returns false if file doesn't exist" do
         run(%q<
           {{file_exists?("#{__DIR__}/../data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
 
@@ -3066,13 +3066,13 @@ module Crystal
       it "reads file (exists)" do
         run(%q<
           {{file_exists?("spec/compiler/data/build")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(10)
+          >, filename: __FILE__).to_i.should eq(10)
       end
 
       it "reads file (doesn't exist)" do
         run(%q<
           {{file_exists?("spec/compiler/data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
   end
@@ -3082,7 +3082,7 @@ module Crystal
       it "reads file (exists)" do
         run(%q<
           {{read_file("#{__DIR__}/../data/build")}}
-          >, filename = __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
+          >, filename: __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
       end
 
       it "reads file (doesn't exist)" do
@@ -3097,7 +3097,7 @@ module Crystal
       it "reads file (exists)" do
         run(%q<
           {{read_file("spec/compiler/data/build")}}
-          >, filename = __FILE__).to_string.should eq(File.read("spec/compiler/data/build"))
+          >, filename: __FILE__).to_string.should eq(File.read("spec/compiler/data/build"))
       end
 
       it "reads file (doesn't exist)" do
@@ -3114,7 +3114,7 @@ module Crystal
       it "reads file (doesn't exist)" do
         run(%q<
           {{read_file?("#{__DIR__}/../data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
 
@@ -3122,7 +3122,7 @@ module Crystal
       it "reads file (doesn't exist)" do
         run(%q<
           {{read_file?("spec/compiler/data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
   end
