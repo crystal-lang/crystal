@@ -1968,7 +1968,7 @@ module Crystal
     getter generic_type : GenericType
     getter type_vars : Hash(String, ASTNode)
 
-    delegate :annotation, :annotations, to: generic_type
+    delegate :annotation, :annotations, :all_annotations, to: generic_type
 
     def initialize(program, @generic_type, @type_vars)
       super(program)
