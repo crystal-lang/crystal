@@ -1155,8 +1155,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       fake_def = Def.new(def_name)
       fake_def.owner = var.owner.metaclass
       fake_def.vars = initializer.meta_vars
-      fake_def.body = value
-      fake_def.bind_to(value)
+
+      # Check if we need to upcast the value to the class var's type
+      fake_def.body =
+        if value.type? == var.type
+          value
+        else
+          cast = Cast.new(value, TypeNode.new(var.type))
+          cast.upcast = true
+          cast.type = var.type
+          cast
+        end
+
+      fake_def.bind_to(fake_def.body)
 
       compiled_def = CompiledDef.new(@context, fake_def, fake_def.owner, 0)
 
