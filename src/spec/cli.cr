@@ -106,7 +106,10 @@ module Spec
       opts.on("--tap", "Generate TAP output (Test Anything Protocol)") do
         configure_formatter("tap")
       end
-      opts.on("--no-color", "Disable colored output") do
+      opts.on("--color", "Enabled ANSI colored output") do
+        Colorize.enabled = true
+      end
+      opts.on("--no-color", "Disable ANSI colored output") do
         Colorize.enabled = false
       end
       opts.unknown_args do |args|
