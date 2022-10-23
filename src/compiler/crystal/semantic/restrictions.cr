@@ -511,7 +511,7 @@ module Crystal
 
     def required_named_arguments
       if (splat_index = self.def.splat_index) && splat_index != self.def.args.size - 1
-        self.def.args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by &.external_name
+        self.def.args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by! &.external_name
       else
         nil
       end
@@ -548,7 +548,7 @@ module Crystal
 
     def required_named_arguments
       if (splat_index = self.splat_index) && splat_index != args.size - 1
-        args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by &.external_name
+        args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by! &.external_name
       else
         nil
       end
