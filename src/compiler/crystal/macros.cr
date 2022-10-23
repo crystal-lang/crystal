@@ -1829,12 +1829,14 @@ module Crystal::Macros
     def union? : BoolLiteral
     end
 
-    # Returns `true` if `self` is nilable (if it has `Nil` amongst its types), otherwise `false`.
+    # Returns `true` if `nil` is an instance of `self`, otherwise `false`.
     #
     # ```
     # {{String.nilable?}}                   # => false
     # {{String?.nilable?}}                  # => true
     # {{Union(String, Bool, Nil).nilable?}} # => true
+    # {{NoReturn.nilable?}}                 # => false
+    # {{Value.nilable?}}                    # => true
     # ```
     def nilable? : BoolLiteral
     end

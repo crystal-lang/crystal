@@ -194,7 +194,7 @@ module Crystal
     end
 
     def nilable?
-      self.is_a?(NilType) || (self.is_a?(UnionType) && self.union_types.any?(&.nil_type?))
+      nil_type? || program.nil_type.implements?(self)
     end
 
     def bool_type?
