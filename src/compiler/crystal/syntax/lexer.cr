@@ -1362,9 +1362,7 @@ module Crystal
         start_pos = current_pos
       end
 
-      while char != '\n' && char != '\0'
-        char = next_char_no_column_increment
-      end
+      skip_comment
 
       if doc_buffer = @token.doc_buffer
         doc_buffer << '\n'
