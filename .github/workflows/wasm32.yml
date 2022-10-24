@@ -42,5 +42,4 @@ jobs:
 
       - name: Run wasm32_std_spec.wasm
         run: |
-          . ~/.bashrc
           wasmtime run wasm32_std_spec.wasm
