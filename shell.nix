@@ -57,8 +57,8 @@ let
     };
 
     aarch64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.5.0/crystal-1.5.0-1-darwin-universal.tar.gz";
-      sha256 = "sha256:15h1qg4wa3zbp8p9vkvcqmy7ba1sc995r5z6d0yhx0h7nkgaw607";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.6.1/crystal-1.6.1-1-darwin-universal.tar.gz";
+      sha256 = "sha256:0pnakhi4hc50fw6dz0n110zpibgwjb91mf6n63fhys8hby7fg73p";
     };
 
     x86_64-linux = {
