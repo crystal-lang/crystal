@@ -14,15 +14,14 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install wasmtime
-        run: |
-          apt-get update
-          apt-get install -y curl
-          touch ~/.bashrc
-          curl https://wasmtime.dev/install.sh -sSf | bash -s - --version v2.0.0
+        uses: mwilliamson/setup-wasmtime-action@v1
+        with:
+          wasmtime-version: "2.0.0"
 
       - name: Install LLVM 13
         run: |
-          apt-get install -y lsb-release wget software-properties-common gnupg
+          apt-get update
+          apt-get install -y curl lsb-release wget software-properties-common gnupg
           curl -O https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           ./llvm.sh 13
