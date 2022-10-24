@@ -20,9 +20,13 @@ jobs:
           touch ~/.bashrc
           curl https://wasmtime.dev/install.sh -sSf | bash -s - --version v2.0.0
 
-      - name: Add wasm-ld symlink
+      - name: Install LLVM 13
         run: |
-          ln -s $(which wasm-ld-15 || which wasm-ld-14 || which wasm-ld-13 || which wasm-ld-12 || which wasm-ld-11 || which wasm-ld-10) /usr/bin/wasm-ld
+          apt-get install -y lsb-release wget software-properties-common gnupg
+          curl -O https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          ./llvm.sh 13
+          ln -s $(which wasm-ld-13) /usr/bin/wasm-ld
 
       - name: Download wasm32 libs
         run: |
