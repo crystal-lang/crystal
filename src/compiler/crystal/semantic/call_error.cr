@@ -244,7 +244,7 @@ class Crystal::Call
     return unless call_errors.all?(T)
 
     call_errors = call_errors.map &.as(T)
-    all_names = call_errors.flat_map(&.names).uniq
+    all_names = call_errors.flat_map(&.names).uniq!
     names_in_all_overloads = all_names.select do |missing_name|
       call_errors.all? &.names.includes?(missing_name)
     end
@@ -266,7 +266,7 @@ class Crystal::Call
     call_errors = call_errors.map &.as(ArgumentsTypeMismatch)
     argument_type_mismatches = call_errors.flat_map(&.errors)
 
-    all_indexes_or_names = argument_type_mismatches.map(&.index_or_name).uniq
+    all_indexes_or_names = argument_type_mismatches.map(&.index_or_name).uniq!
     indexes_or_names_in_all_overloads = all_indexes_or_names.select do |index_or_name|
       call_errors.all? &.errors.any? &.index_or_name.==(index_or_name)
     end
@@ -277,7 +277,7 @@ class Crystal::Call
     index_or_name = indexes_or_names_in_all_overloads.first
 
     mismatches = argument_type_mismatches.select(&.index_or_name.==(index_or_name))
-    expected_types = mismatches.map(&.expected_type).uniq.sort_by(&.to_s)
+    expected_types = mismatches.map(&.expected_type).uniq!.sort_by!(&.to_s)
     actual_type = mismatches.first.actual_type
 
     arg =
