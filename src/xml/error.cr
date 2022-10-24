@@ -49,7 +49,7 @@ class XML::Error < Exception
     ensure
       # This class var is an optimization. It avoids allocation of an empty error array
       # in the happy case that there are no errors.
-      if @@empty_errors.any?
+      if !@@empty_errors.empty?
         @@empty_errors = [] of XML::Error
       end
       @@errors = old_errors
