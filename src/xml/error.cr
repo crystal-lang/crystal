@@ -33,20 +33,26 @@ class XML::Error < Exception
     {% end %}
   }
 
-  # :nodoc:
-  def self.set_errors(node)
-    if errors = self.errors
-      node.errors = errors
-    end
+  def self.errors : Array(XML::Error)?
+    @@errors.any? ? @@errors : nil
   end
 
-  def self.errors : Array(XML::Error)?
-    if @@errors.empty?
-      nil
-    else
-      errors = @@errors.dup
-      @@errors.clear
-      errors
+  @@empty_errors = [] of XML::Error
+
+  def self.collect(& : -> LibXML::Doc*) : {LibXML::Doc*, Array(XML::Error)?}
+    old_errors, @@errors = @@errors, @@empty_errors
+
+    begin
+      doc = yield
+
+      {doc, self.errors}
+    ensure
+      # This class var is an optimization. It avoids allocation of an empty error array
+      # in the happy case that there are no errors.
+      if @@empty_errors.any?
+        @@empty_errors = [] of XML::Error
+      end
+      @@errors = old_errors
     end
   end
 end

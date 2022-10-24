@@ -169,6 +169,19 @@ describe XML do
     errors[0].to_s.should eq("Opening and ending tag mismatch: people line 1 and foo")
   end
 
+  it "resets errors" do
+    reader = XML::Reader.new(%{<foo></bar>}) # Invalid XML
+    reader.read
+    reader.expand?
+    # At this point, `XML::Error.errors` contains the errors from the reader. They should not leak into `XML.parse`.
+    XML::Error.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: foo line 1 and bar"]
+
+    xml = XML.parse(%(<people></people>))
+    xml.errors.should be_nil
+
+    XML::Error.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: foo line 1 and bar"]
+  end
+
   describe "#namespace" do
     describe "when the node has a namespace" do
       describe "with a prefix" do
