@@ -382,7 +382,7 @@ module Spec
     # If *message* is a regular expression, it is used to match the error message.
     #
     # It returns the rescued exception.
-    {% if flag?(:wasm32_mock_expect_raises) %}
+    {% if flag?(:wasm32) %}
       def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__, &) forall T
         # TODO: Enable "expect_raises" for wasm32 after exceptions are working.
       end
