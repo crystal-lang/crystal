@@ -1804,8 +1804,17 @@ module Enumerable(T)
   # (1..5).to_a # => [1, 2, 3, 4, 5]
   # ```
   def to_a
-    ary = [] of T
-    each { |e| ary << e }
+    to_a(&.itself)
+  end
+
+  # Returns an `Array` with all the elements returned from the *block*.
+  #
+  # ```
+  # (1..5).to_a { |i| i * 2 } # => [2, 4, 6, 8, 10]
+  # ```
+  def to_a(& : T -> U) forall U
+    ary = [] of U
+    each { |e| ary << yield e }
     ary
   end
 
