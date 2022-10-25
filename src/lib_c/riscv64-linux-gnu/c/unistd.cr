@@ -14,6 +14,7 @@ lib LibC
   fun access(name : Char*, type : Int) : Int
   fun chdir(path : Char*) : Int
   fun chown(file : Char*, owner : UidT, group : GidT) : Int
+  fun fchown(x0 : Int, x1 : UidT, x2 : GidT) : Int
   fun close(fd : Int) : Int
   fun dup2(fd : Int, fd2 : Int) : Int
   fun _exit(status : Int) : NoReturn

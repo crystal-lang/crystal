@@ -3,7 +3,7 @@ require "../stdint"
 
 lib LibC
   alias BlkcntT = Long
-  alias BlksizeT = Long
+  alias BlksizeT = Int
   alias ClockT = Long
   alias ClockidT = Int
   alias DevT = ULong
@@ -11,12 +11,12 @@ lib LibC
   alias IdT = UInt
   alias InoT = ULong
   alias ModeT = UInt
-  alias NlinkT = ULong
+  alias NlinkT = UInt
   alias OffT = Long
   alias PidT = Int
 
   union PthreadAttrT
-    __size : StaticArray(Char, 56)
+    __size : StaticArray(Char, 64)
     __align : Long
   end
 
@@ -34,23 +34,23 @@ lib LibC
   union PthreadCondT
     __data : PthreadCondTData
     __size : StaticArray(Char, 48)
-    __align : LongLong
+    __align : Long
   end
 
   union PthreadCondattrT
-    __size : StaticArray(Char, 4)
+    __size : StaticArray(Char, 8)
     __align : Int
   end
 
   union PthreadMutexT
     __data : Void*
-    __size : StaticArray(Char, 40)
+    __size : StaticArray(Char, 48)
     __align : Long
   end
 
   union PthreadMutexattrT
-    __size : StaticArray(Char, 4)
-    __align : Int
+    __size : StaticArray(Char, 8)
+    __align : Long
   end
 
   alias PthreadT = ULong

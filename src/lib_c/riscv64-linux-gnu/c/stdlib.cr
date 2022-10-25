@@ -19,7 +19,8 @@ lib LibC
   fun realloc(ptr : Void*, size : SizeT) : Void*
   fun realpath(name : Char*, resolved : Char*) : Char*
   fun setenv(name : Char*, value : Char*, replace : Int) : Int
-  fun strtof(nptr : Char*, endptr : Char**) : Float
   fun strtod(nptr : Char*, endptr : Char**) : Double
+  fun strtof(nptr : Char*, endptr : Char**) : Float
+  fun strtol(nptr : Char*, endptr : Char**, base : Int) : Long
   fun unsetenv(name : Char*) : Int
 end

@@ -2,7 +2,7 @@ require "../abi"
 
 # Based on
 # https://github.com/rust-lang/rust/blob/a6bd5ae57eb0421373a4f3aa69ac56fb5c549383/src/librustc_target/abi/call/riscv.rs
-class LLVM::ABI::RISCV < LLVM::ABI
+class LLVM::ABI::RISCV64 < LLVM::ABI
 
   def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context) : LLVM::ABI::FunctionType
     xlen = target_data.abi_size(rty)
