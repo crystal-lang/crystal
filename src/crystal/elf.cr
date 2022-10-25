@@ -49,6 +49,7 @@ module Crystal
       IA_64   = 0x32
       X86_64  = 0x3E
       AARCH64 = 0xB7
+      RISCV   = 0xF3
     end
 
     enum Endianness

@@ -161,6 +161,8 @@ class Crystal::Codegen::Target
       end
     when "wasm32"
       LLVM.init_webassembly
+    when "riscv64"
+      LLVM.init_riscv64
     else
       raise Target::Error.new("Unsupported architecture for target triple: #{self}")
     end

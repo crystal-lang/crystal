@@ -60,6 +60,13 @@ module Crystal
         {% else %}
           DEFAULT = SYSV
         {% end %}
+      {% elsif flag?(:riscv64) %}
+        LP64
+        LP64F
+        LP64D
+        LP64Q
+
+        DEFAULT = LP64D
       {% else %}
         {% raise "Unsupported target for ABI" %}
       {% end %}
