@@ -219,6 +219,11 @@ lib LibLLVM
   fun initialize_webassembly_target = LLVMInitializeWebAssemblyTarget
   fun initialize_webassembly_target_info = LLVMInitializeWebAssemblyTargetInfo
   fun initialize_webassembly_target_mc = LLVMInitializeWebAssemblyTargetMC
+  fun initialize_riscv64_asm_printer = LLVMInitializeRISCVAsmPrinter
+  fun initialize_riscv64_asm_parser = LLVMInitializeRISCVAsmParser
+  fun initialize_riscv64_target = LLVMInitializeRISCVTarget
+  fun initialize_riscv64_target_info = LLVMInitializeRISCVTargetInfo
+  fun initialize_riscv64_target_mc = LLVMInitializeRISCVTargetMC
   fun initialize_native_target = LLVMInitializeNativeTarget
   fun is_constant = LLVMIsConstant(val : ValueRef) : Int32
   fun is_function_var_arg = LLVMIsFunctionVarArg(ty : TypeRef) : Int32

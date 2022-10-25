@@ -54,6 +54,8 @@ class LLVM::TargetMachine
       ABI::ARM.new(self)
     when /wasm32/
       ABI::Wasm32.new(self)
+    when /riscv/
+      ABI::RISCV.new(self)
     else
       raise "Unsupported ABI for target triple: #{triple}"
     end
