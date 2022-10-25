@@ -29,8 +29,6 @@ class Crystal::Codegen::Target
       @architecture = "aarch64"
     when .starts_with?("arm")
       @architecture = "arm"
-    when .starts_with?("riscv64")
-      @architecture = "riscv64"
     else
       # no need to tweak the architecture
     end
@@ -165,7 +163,14 @@ class Crystal::Codegen::Target
       LLVM.init_webassembly
     when "riscv64"
       LLVM.init_riscv64
-      features += "+gc"
+      if !features.includes?("g") && ( !features.includes?("f") && !features.includes?("d") )
+        raise Target::Error.new("riscv64 without -mattr=+f,+d is unsupported")
+      end
+    when "riscv64gc"
+      LLVM.init_riscv64
+      features += ",+m,+a,+c,+f,+d"
+      # Wait LLVM use new RISC-V spec
+      # features += ",+g,+c"
     else
       raise Target::Error.new("Unsupported architecture for target triple: #{self}")
     end
