@@ -65,6 +65,12 @@ describe "ECR" do
     io.to_s.should eq("string with -%")
   end
 
+  it "does not raise an error: expected '\n' after '\r' on Windows" do
+    io = IO::Memory.new
+    ECR.embed "#{__DIR__}/../data/test_template7.ecr", io
+    io.to_s.should eq("\nstring")
+  end
+
   it ".render" do
     ECR.render("#{__DIR__}/../data/test_template2.ecr").should eq("123")
   end
