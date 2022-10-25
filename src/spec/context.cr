@@ -255,8 +255,6 @@ module Spec
       puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
       puts Spec.color("Only running `focus: true`", :focus) if Spec.focus?
 
-      print_order_message
-
       unless failures_and_errors.empty?
         puts
         puts "Failed examples:"
@@ -266,6 +264,8 @@ module Spec
           puts Spec.color(" # #{fail.description}", :comment)
         end
       end
+
+      print_order_message
     end
 
     def print_order_message
