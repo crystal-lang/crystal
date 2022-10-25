@@ -28,6 +28,13 @@ class XML::Reader
     )
   end
 
+  def finalize
+    if reader = @reader
+      LibXML.xmlFreeTextReader(reader)
+      @reader = Pointer(Void).null.as(LibXML::XMLTextReader)
+    end
+  end
+
   # Moves the reader to the next node.
   def read : Bool
     LibXML.xmlTextReaderRead(@reader) == 1
