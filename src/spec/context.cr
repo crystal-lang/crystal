@@ -153,6 +153,8 @@ module Spec
     end
 
     def run
+      print_order_message
+
       internal_run
     end
 
