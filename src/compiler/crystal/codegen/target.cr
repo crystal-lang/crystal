@@ -29,6 +29,8 @@ class Crystal::Codegen::Target
       @architecture = "aarch64"
     when .starts_with?("arm")
       @architecture = "arm"
+    when .starts_with?("riscv64")
+      @architecture = "riscv64"
     else
       # no need to tweak the architecture
     end
