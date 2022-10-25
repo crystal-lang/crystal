@@ -180,6 +180,8 @@ describe XML do
     xml.errors.should be_nil
 
     XML::Error.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: foo line 1 and bar"]
+  ensure
+    reader.try &.close
   end
 
   describe "#namespace" do

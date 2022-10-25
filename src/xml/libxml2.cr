@@ -95,6 +95,7 @@ lib LibXML
   fun xmlParserInputBufferCreateIO(ioread : (Void*, UInt8*, Int) -> Int, ioclose : Void* -> Int, ioctx : Void*, enc : Int) : InputBuffer
   fun xmlNewTextReader(input : InputBuffer, uri : UInt8*) : XMLTextReader
 
+  fun xmlFreeTextReader(reader : XMLTextReader) : Void
   fun xmlReaderForMemory(buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : XMLTextReader
   fun xmlReaderForIO(ioread : (Void*, UInt8*, Int) -> Int, ioclose : Void* -> Int, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : XMLTextReader
 

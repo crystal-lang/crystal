@@ -1,6 +1,36 @@
 require "./libxml2"
 require "./parser_options"
 
+# `XML::Reader` is a low-level XML parser interface for iterating the contents of
+# an XML document.
+#
+# ```cr
+# require "xml"
+#
+# reader = XML::Reader.new(<<-XML)
+#   <message>Hello XML!</message>
+#   XML
+# begin
+#   reader.read
+#   reader.name # => "message"
+#   reader.read
+#   reader.value # => "Hello XML!"
+# ensure
+#   reader.close
+# end
+# ```
+#
+# This is an alternative approach to `XML.parse` which parses an entire document
+# into an XML data structure.
+# `XML::Reader` offers more control and does not need to store the XML document
+# in memory entirely. The latter is especially useful for large documents with
+# the `IO`-based constructor.
+#
+# `XML::Reader` uses a global error state. It's not recommended to use two instances
+# of `XML::Reader` simultaneously (neither intermixed nor in concurrent fibers or threads)
+# because error messages would mix up.
+#
+# NOTE: The user is required to call `#close` when the reader instance is finished.
 class XML::Reader
   # Creates a new reader from a string.
   #
@@ -169,5 +199,33 @@ class XML::Reader
   # Returns a reference to the underlying `LibXML::XMLTextReader`.
   def to_unsafe
     @reader
+  end
+
+  # Returns the errors reported while parsing. Returns `nil` if there are no errors.
+  #
+  # Errors in the parser implementation are global and this method returns just `XML::Error.errors`.
+  # When mixing
+  #
+  # `#close` resets the error state.
+  def errors : Array(XML::Error)?
+    XML::Error.errors
+  end
+
+  # Closes the reader and releases its resources.
+  #
+  # Resets global error state in `XML::Reader.errors`.
+  def close : Nil
+    errors.try &.clear
+
+    if reader = @reader
+      LibXML.xmlFreeTextReader(reader)
+      @reader = Pointer(Void).null.as(LibXML::XMLTextReader)
+    end
+  end
+
+  def finalize
+    if reader = @reader
+      LibXML.xmlFreeTextReader(reader)
+    end
   end
 end

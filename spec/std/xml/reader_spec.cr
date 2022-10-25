@@ -26,6 +26,8 @@ module XML
           reader.name.should eq("people")
           reader.read.should be_true
           reader.name.should eq("#text")
+        ensure
+          reader.try &.close
         end
 
         it "can be initialized from an io" do
@@ -36,6 +38,8 @@ module XML
           reader.name.should eq("people")
           reader.read.should be_true
           reader.name.should eq("#text")
+        ensure
+          reader.try &.close
         end
       end
 
@@ -47,6 +51,8 @@ module XML
           reader.name.should eq("people")
           reader.read.should be_true
           reader.name.should eq("person")
+        ensure
+          reader.try &.close
         end
 
         it "can be initialized from an io" do
@@ -57,6 +63,8 @@ module XML
           reader.name.should eq("people")
           reader.read.should be_true
           reader.name.should eq("person")
+        ensure
+          reader.try &.close
         end
       end
     end
@@ -126,6 +134,8 @@ module XML
         reader.node_type.should eq(XML::Reader::Type::END_ELEMENT)
         reader.name.should eq("people")
         reader.read.should be_false
+      ensure
+        reader.try &.close
       end
 
       it "reads all non-blank nodes with NOBLANKS option" do
@@ -171,6 +181,8 @@ module XML
         reader.node_type.should eq(XML::Reader::Type::END_ELEMENT)
         reader.name.should eq("people")
         reader.read.should be_false
+      ensure
+        reader.try &.close
       end
     end
 
@@ -204,6 +216,8 @@ module XML
         reader.node_type.should eq(XML::Reader::Type::END_ELEMENT)
         reader.name.should eq("people")
         reader.next.should be_false
+      ensure
+        reader.try &.close
       end
     end
 
@@ -228,6 +242,8 @@ module XML
         reader.node_type.should eq(XML::Reader::Type::SIGNIFICANT_WHITESPACE)
         reader.name.should eq("#text")
         reader.next_sibling.should be_false
+      ensure
+        reader.try &.close
       end
     end
 
@@ -237,6 +253,8 @@ module XML
         reader.node_type.should eq(XML::Reader::Type::NONE)
         reader.read
         reader.node_type.should eq(XML::Reader::Type::ELEMENT)
+      ensure
+        reader.try &.close
       end
     end
 
@@ -246,6 +264,8 @@ module XML
         reader.name.should eq("")
         reader.read
         reader.name.should eq("root")
+      ensure
+        reader.try &.close
       end
     end
 
@@ -258,6 +278,8 @@ module XML
         reader = Reader.new("<root></root>")
         reader.read
         reader.empty_element?.should be_false
+      ensure
+        reader.try &.close
       end
     end
 
@@ -271,6 +293,8 @@ module XML
         reader.has_attributes?.should be_false
         reader.read # </root>
         reader.has_attributes?.should be_true
+      ensure
+        reader.try &.close
       end
     end
 
@@ -285,6 +309,8 @@ module XML
         reader.read # </root>
         # This is weird, since has_attributes? will be true.
         reader.attributes_count.should eq(0)
+      ensure
+        reader.try &.close
       end
     end
 
@@ -306,6 +332,8 @@ module XML
         reader.name.should eq("id")
         reader.value.should eq("1")
         reader.read.should be_false
+      ensure
+        reader.try &.close
       end
     end
 
@@ -332,6 +360,8 @@ module XML
         reader.name.should eq("id")
         reader.value.should eq("1")
         reader.read.should be_false
+      ensure
+        reader.try &.close
       end
     end
 
@@ -358,6 +388,8 @@ module XML
         reader.name.should eq("id2")
         reader.value.should eq("2")
         reader.read.should be_false
+      ensure
+        reader.try &.close
       end
     end
 
@@ -377,6 +409,8 @@ module XML
         expect_raises(KeyError) { reader["id"] }
         reader.read # </root>
         reader["id"].should eq("1")
+      ensure
+        reader.try &.close
       end
     end
 
@@ -396,6 +430,8 @@ module XML
         reader["id"]?.should be_nil
         reader.read # </root>
         reader["id"]?.should eq("1")
+      ensure
+        reader.try &.close
       end
     end
 
@@ -422,6 +458,8 @@ module XML
         reader.node_type.should eq(XML::Reader::Type::END_ELEMENT)
         reader.name.should eq("root")
         reader.read.should be_false
+      ensure
+        reader.try &.close
       end
     end
 
@@ -435,6 +473,8 @@ module XML
         reader.depth.should eq(1)
         reader.read # </root>
         reader.depth.should eq(0)
+      ensure
+        reader.try &.close
       end
     end
 
@@ -453,6 +493,8 @@ module XML
         reader.read # </root>
         reader.read_inner_xml.should eq("")
         reader.read.should be_false
+      ensure
+        reader.try &.close
       end
     end
 
@@ -472,6 +514,8 @@ module XML
         # Note that the closing element is transformed into a self-closing one.
         reader.read_outer_xml.should eq("<root/>")
         reader.read.should be_false
+      ensure
+        reader.try &.close
       end
     end
 
@@ -482,6 +526,8 @@ module XML
         expect_raises XML::Error, "Couldn't find end of Start Tag root" do
           reader.expand
         end
+      ensure
+        reader.try &.close
       end
 
       it "parses the content of the node and subtree" do
@@ -491,6 +537,8 @@ module XML
         node.should be_a(XML::Node)
         node.attributes["id"].content.should eq("1")
         node.xpath_node("child").should be_a(XML::Node)
+      ensure
+        reader.try &.close
       end
 
       it "is only available until the next read" do
@@ -503,6 +551,8 @@ module XML
         reader.read # <subchild/>
         reader.read # </child>
         node.xpath_node("subchild").should be_nil
+      ensure
+        reader.try &.close
       end
     end
 
@@ -515,6 +565,8 @@ module XML
         node.should be_a(XML::Node)
         node.not_nil!.attributes["id"].content.should eq("1")
         node.not_nil!.xpath_node("child").should be_a(XML::Node)
+      ensure
+        reader.try &.close
       end
 
       it "is only available until the next read" do
@@ -527,6 +579,8 @@ module XML
         reader.read # <subchild/>
         reader.read # </child>
         node.not_nil!.xpath_node("subchild").should be_nil
+      ensure
+        reader.try &.close
       end
     end
 
@@ -543,6 +597,8 @@ module XML
         reader.read # </root>
         reader.move_to_first_attribute.should be_true
         reader.value.should eq("1")
+      ensure
+        reader.try &.close
       end
     end
 
@@ -550,7 +606,48 @@ module XML
       it "returns a pointer to the underlying LibXML::XMLTextReader" do
         reader = Reader.new("<root/>")
         reader.to_unsafe.should be_a(LibXML::XMLTextReader)
+      ensure
+        reader.try(&.close)
       end
+    end
+  end
+
+  describe "#errors" do
+    it "makes errors accessible" do
+      XML::Error.errors.try &.clear
+      reader = XML::Reader.new(%(<people></foo>))
+      reader.read
+      reader.expand?
+
+      reader.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+    ensure
+      reader.try(&.close)
+    end
+  end
+
+  describe "#close" do
+    it "clears errors" do
+      XML::Error.errors.try &.clear
+      reader = XML::Reader.new(%(<people></foo>))
+      reader.read
+      reader.expand?
+
+      XML::Error.errors.should_not be_nil
+
+      reader.close
+      XML::Error.errors.should be_nil
+    end
+
+    it "frees XMLTextReader" do
+      XML::Error.errors.try &.clear
+      reader = XML::Reader.new(%(<people></foo>))
+      reader.read
+      reader.expand?
+
+      reader.to_unsafe.null?.should be_false
+
+      reader.close
+      reader.to_unsafe.null?.should be_true
     end
   end
 end
