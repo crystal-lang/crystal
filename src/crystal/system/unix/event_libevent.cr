@@ -5,7 +5,7 @@ require "./lib_event2"
 {% end %}
 
 # :nodoc:
-struct Crystal::LibEventEvent < Crystal::Event
+struct Crystal::LibEvent::Event < Crystal::EventLoop::Event
   VERSION = String.new(LibEvent2.event_get_version)
 
   def self.callback(&block : Int32, LibEvent2::EventFlags, Void* ->)
@@ -53,7 +53,7 @@ struct Crystal::LibEventEvent < Crystal::Event
 
     def new_event(s : Int32, flags : LibEvent2::EventFlags, data, &callback : LibEvent2::Callback)
       event = LibEvent2.event_new(@base, s, flags, callback, data.as(Void*))
-      Crystal::LibEventEvent.new(event)
+      Crystal::LibEvent::Event.new(event)
     end
 
     def run_loop : Nil

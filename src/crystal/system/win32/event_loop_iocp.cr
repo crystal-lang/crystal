@@ -4,13 +4,13 @@ require "crystal/system/print_error"
 # :nodoc:
 abstract class Crystal::EventLoop
   def self.create
-    Crystal::IocpEventLoop.new
+    Crystal::Iocp::EventLoop.new
   end
 end
 
 # :nodoc:
-class Crystal::IocpEventLoop < Crystal::EventLoop
-  @queue = Deque(Crystal::IocpEvent).new
+class Crystal::Iocp::EventLoop < Crystal::EventLoop
+  @queue = Deque(Crystal::Iocp::Event).new
 
   # Returns the base IO Completion Port
   getter iocp : LibC::HANDLE do
@@ -78,37 +78,37 @@ class Crystal::IocpEventLoop < Crystal::EventLoop
   def after_fork : Nil
   end
 
-  def enqueue(event : Crystal::IocpEvent)
+  def enqueue(event : Crystal::Iocp::Event)
     unless @queue.includes?(event)
       @queue << event
     end
   end
 
-  def dequeue(event : Crystal::IocpEvent)
+  def dequeue(event : Crystal::Iocp::Event)
     @queue.delete(event)
   end
 
   # Create a new resume event for a fiber.
-  def create_resume_event(fiber : Fiber) : Crystal::Event
-    Crystal::IocpEvent.new(fiber)
+  def create_resume_event(fiber : Fiber) : Crystal::EventLoop::Event
+    Crystal::Iocp::Event.new(fiber)
   end
 
   # Creates a write event for a file descriptor.
-  def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
-    Crystal::IocpEvent.new(Fiber.current)
+  def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
+    Crystal::Iocp::Event.new(Fiber.current)
   end
 
   # Creates a read event for a file descriptor.
-  def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
-    Crystal::IocpEvent.new(Fiber.current)
+  def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
+    Crystal::Iocp::Event.new(Fiber.current)
   end
 
-  def create_timeout_event(fiber) : Crystal::Event
-    Crystal::IocpEvent.new(fiber, timeout: true)
+  def create_timeout_event(fiber) : Crystal::EventLoop::Event
+    Crystal::Iocp::Event.new(fiber, timeout: true)
   end
 end
 
-struct Crystal::IocpEvent < Crystal::Event
+struct Crystal::Iocp::Event < Crystal::EventLoop::Event
   getter fiber
   getter wake_at
   getter? timeout

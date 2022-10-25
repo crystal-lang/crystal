@@ -158,10 +158,10 @@ module IO::Overlapped
   # Returns `false` if the operation timed out.
   def schedule_overlapped(timeout : Time::Span?, line = __LINE__) : Bool
     if timeout
-      timeout_event = Crystal::IocpEvent.new(Fiber.current)
+      timeout_event = Crystal::Iocp::Event.new(Fiber.current)
       timeout_event.add(timeout)
     else
-      timeout_event = Crystal::IocpEvent.new(Fiber.current, Time::Span::MAX)
+      timeout_event = Crystal::Iocp::Event.new(Fiber.current, Time::Span::MAX)
     end
     Crystal::Scheduler.event_loop.enqueue(timeout_event)
 

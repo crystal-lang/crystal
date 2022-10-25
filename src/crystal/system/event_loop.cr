@@ -11,25 +11,24 @@ abstract class Crystal::EventLoop
   {% end %}
 
   # Create a new resume event for a fiber.
-  abstract def create_resume_event(fiber : Fiber) : Crystal::Event
+  abstract def create_resume_event(fiber : Fiber) : Event
 
   # Creates a timeout_event.
-  abstract def create_timeout_event(fiber : Fiber) : Crystal::Event
+  abstract def create_timeout_event(fiber : Fiber) : Event
 
   # Creates a write event for a file descriptor.
-  abstract def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
+  abstract def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Event
 
   # Creates a read event for a file descriptor.
-  abstract def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
-end
+  abstract def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Event
 
-# :nodoc:
-abstract struct Crystal::Event
-  # Frees the event.
-  abstract def free : Nil
+  abstract struct Event
+    # Frees the event.
+    abstract def free : Nil
 
-  # Adds a new timeout to this event.
-  abstract def add(timeout : Time::Span?) : Nil
+    # Adds a new timeout to this event.
+    abstract def add(timeout : Time::Span?) : Nil
+  end
 end
 
 {% if flag?(:wasi) %}
