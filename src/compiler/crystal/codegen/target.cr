@@ -53,7 +53,7 @@ class Crystal::Codegen::Target
 
   def pointer_bit_width
     case @architecture
-    when "x86_64", "aarch64"
+    when "x86_64", "aarch64", "riscv64"
       64
     else
       32
@@ -165,6 +165,7 @@ class Crystal::Codegen::Target
       LLVM.init_webassembly
     when "riscv64"
       LLVM.init_riscv64
+      features += "+gc"
     else
       raise Target::Error.new("Unsupported architecture for target triple: #{self}")
     end
