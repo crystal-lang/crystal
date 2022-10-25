@@ -204,7 +204,7 @@ class XML::Reader
   # Returns the errors reported while parsing. Returns `nil` if there are no errors.
   #
   # Errors in the parser implementation are global and this method returns just `XML::Error.errors`.
-  # When mixing
+  # When multiple `XML::Reader` instances are used simultaneously, their errors will be mixed.
   #
   # `#close` resets the error state.
   def errors : Array(XML::Error)?
