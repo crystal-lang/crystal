@@ -255,9 +255,7 @@ module Spec
       puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
       puts Spec.color("Only running `focus: true`", :focus) if Spec.focus?
 
-      if randomizer_seed = Spec.randomizer_seed
-        puts Spec.color("Randomized with seed: #{randomizer_seed}", :order)
-      end
+      print_order_message
 
       unless failures_and_errors.empty?
         puts
@@ -267,6 +265,12 @@ module Spec
           print Spec.color("crystal spec #{Spec.relative_file(fail.file)}:#{fail.line}", :error)
           puts Spec.color(" # #{fail.description}", :comment)
         end
+      end
+    end
+
+    def print_order_message
+      if randomizer_seed = Spec.randomizer_seed
+        puts Spec.color("Randomized with seed: #{randomizer_seed}", :order)
       end
     end
 
