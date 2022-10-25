@@ -4,7 +4,7 @@ require "./parser_options"
 # `XML::Reader` is a low-level XML parser interface for iterating the contents of
 # an XML document.
 #
-# ```cr
+# ```
 # require "xml"
 #
 # reader = XML::Reader.new(<<-XML)
