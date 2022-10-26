@@ -16,7 +16,6 @@ class XML::Error < Exception
     nil
   end
 
-
   def self.collect(errors, &)
     LibXML.xmlSetStructuredErrorFunc Box.box(errors), ->(ctx, error) {
       Box(Array(XML::Error)).unbox(ctx) << XML::Error.new(error)

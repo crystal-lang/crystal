@@ -3,7 +3,7 @@ require "./parser_options"
 
 # `XML::Reader` is a parser for XML that iterates a XML document.
 #
-# ```cr
+# ```
 # require "xml"
 #
 # reader = XML::Reader.new(<<-XML)
