@@ -21,7 +21,7 @@ require "./parser_options"
 # in memory entirely. The latter is especially useful for large documents with
 # the `IO`-based constructor.
 #
-# This type is not concurrency-safe.
+# WARNING: This type is not concurrency-safe.
 class XML::Reader
   # Returns the errors reported while parsing.
   getter errors = [] of XML::Error
