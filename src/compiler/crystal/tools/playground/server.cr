@@ -231,7 +231,7 @@ module Crystal::Playground
                   File.read(@filename)
                 end
 
-      if extname == ".md" || extname == ".cr"
+      if extname.in?(".md", ".cr")
         content = Markd.to_html(content)
       end
       content
@@ -534,7 +534,7 @@ module Crystal::Playground
     private def accept_request?(origin)
       case @host
       when nil, "localhost", "127.0.0.1"
-        origin == "http://127.0.0.1:#{@port}" || origin == "http://localhost:#{@port}"
+        origin.in?("http://127.0.0.1:#{@port}", "http://localhost:#{@port}")
       when "0.0.0.0"
         true
       else

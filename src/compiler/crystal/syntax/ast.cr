@@ -295,7 +295,7 @@ module Crystal
     end
 
     def has_sign?
-      @value[0] == '+' || @value[0] == '-'
+      @value[0].in?('+', '-')
     end
 
     def integer_value

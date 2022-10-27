@@ -275,7 +275,7 @@ abstract class JSON::Lexer
       char = next_char
     end
 
-    if char == 'e' || char == 'E'
+    if char.in?('e', 'E')
       consume_exponent
     else
       @token.kind = :float

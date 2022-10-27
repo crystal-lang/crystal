@@ -252,7 +252,7 @@ module Base64
     bytes_begin = bytes
 
     # Get the position of the last valid base64 character (rstrip '\n', '\r' and '=')
-    while (size > 0) && (sym = bytes[size - 1]) && (sym == NL || sym == NR || sym == PAD)
+    while (size > 0) && (sym = bytes[size - 1]) && sym.in?(NL, NR, PAD)
       size -= 1
     end
 

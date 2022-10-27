@@ -224,7 +224,7 @@ surface = SDL.set_video_mode WIDTH, HEIGHT, 32, LibSDL::DOUBLEBUF | LibSDL::HWSU
 first = true
 while true
   SDL.poll_events do |event|
-    if event.type == LibSDL::QUIT || event.type == LibSDL::KEYDOWN
+    if event.type.in?(LibSDL::QUIT, LibSDL::KEYDOWN)
       SDL.quit
       exit
     end
