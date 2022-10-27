@@ -37,7 +37,7 @@ abstract class Digest
     #   ctx.update "f"
     #   ctx.update "oo"
     # end
-    # digest.hexfinal # => "acbd18db4cc2f85cedef654fccc4a4d8"
+    # digest.hexstring # => "acbd18db4cc2f85cedef654fccc4a4d8"
     # ```
     def digest(& : self ->) : Bytes
       context = new
