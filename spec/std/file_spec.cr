@@ -442,7 +442,7 @@ describe "File" do
       info.type.should eq(File::Type::Directory)
     end
 
-    # TODO: support stating nul on windows
+    # TODO: support stating null on windows
     pending_win32 "gets for a character device" do
       info = File.info(File::NULL)
       info.type.should eq(File::Type::CharacterDevice)
@@ -934,14 +934,13 @@ describe "File" do
     end
   end
 
-  # TODO: implement flock on windows
   describe "flock" do
-    pending_win32 "exclusively locks a file" do
+    it "exclusively locks a file" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_exclusive do
             # BUG: check for EWOULDBLOCK when exception filters are implemented
-            expect_raises(IO::Error, "Error applying or removing file lock") do
+            expect_raises(IO::Error, "Error applying file lock") do
               file2.flock_exclusive(blocking: false) { }
             end
           end
@@ -949,7 +948,7 @@ describe "File" do
       end
     end
 
-    pending_win32 "shared locks a file" do
+    it "shared locks a file" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_shared do

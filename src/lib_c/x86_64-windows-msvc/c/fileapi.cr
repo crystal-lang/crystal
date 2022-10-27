@@ -77,4 +77,12 @@ lib LibC
 
   fun SetFileTime(hFile : HANDLE, lpCreationTime : FILETIME*,
                   lpLastAccessTime : FILETIME*, lpLastWriteTime : FILETIME*) : BOOL
+
+  fun LockFileEx(hFile : HANDLE, dwFlags : DWORD, dwReserved : DWORD,
+                 nNumberOfBytesToLockLow : DWORD, nNumberOfBytesToLockHigh : DWORD,
+                 lpOverlapped : OVERLAPPED*) : BOOL
+
+  fun UnlockFileEx(hFile : HANDLE, dwReserved : DWORD,
+                   nNumberOfBytesToLockLow : DWORD, nNumberOfBytesToLockHigh : DWORD,
+                   lpOverlapped : OVERLAPPED*) : BOOL
 end
