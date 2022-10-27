@@ -193,7 +193,7 @@ class Fiber
   # The fiber's proc has terminated, and the fiber is now considered dead. The
   # fiber is impossible to resume, ever.
   def dead? : Bool
-    @alive == false
+    !@alive
   end
 
   # Immediately resumes execution of this fiber.

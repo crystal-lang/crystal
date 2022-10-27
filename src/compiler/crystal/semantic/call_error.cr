@@ -100,7 +100,7 @@ class Crystal::Call
 
     # If we made a lookup without the special rule for literals,
     # and we have literals in the call, try again with that special rule.
-    if with_autocast == false && (args.any?(&.supports_autocast? number_autocast) ||
+    if !with_autocast && (args.any?(&.supports_autocast? number_autocast) ||
        named_args.try &.any? &.value.supports_autocast? number_autocast)
       ::raise RetryLookupWithLiterals.new
     end
