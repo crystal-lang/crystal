@@ -84,9 +84,6 @@ module Crystal
     # This pool is passed to the parser, macro expander, etc.
     getter string_pool = StringPool.new
 
-    # The cache directory where temporary files are placed.
-    setter cache_dir : String?
-
     # Here we store constants, in the
     # order that they are used. They will be initialized as soon
     # as the program starts, before the main code.
