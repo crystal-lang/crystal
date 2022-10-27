@@ -895,7 +895,7 @@ module Crystal
       end
 
       it "executes of" do
-        assert_macro %({{ x.of }}), %(Int64), {x: ArrayLiteral.new([] of ASTNode, of: Path.new(["Int64"]))}
+        assert_macro %({{ x.of }}), %(Int64), {x: ArrayLiteral.new([] of ASTNode, of: Path.new("Int64"))}
       end
 
       it "executes of (nop)" do
@@ -903,7 +903,7 @@ module Crystal
       end
 
       it "executes type" do
-        assert_macro %({{ x.type }}), %(Deque), {x: ArrayLiteral.new([] of ASTNode, name: Path.new(["Deque"]))}
+        assert_macro %({{ x.type }}), %(Deque), {x: ArrayLiteral.new([] of ASTNode, name: Path.new("Deque"))}
       end
 
       it "executes type (nop)" do
@@ -963,7 +963,7 @@ module Crystal
       end
 
       it "executes of_key" do
-        of = HashLiteral::Entry.new(Path.new(["String"]), Path.new(["UInt8"]))
+        of = HashLiteral::Entry.new(Path.new("String"), Path.new("UInt8"))
         assert_macro %({{ x.of_key }}), %(String), {x: HashLiteral.new([] of HashLiteral::Entry, of: of)}
       end
 
@@ -972,7 +972,7 @@ module Crystal
       end
 
       it "executes of_value" do
-        of = HashLiteral::Entry.new(Path.new(["String"]), Path.new(["UInt8"]))
+        of = HashLiteral::Entry.new(Path.new("String"), Path.new("UInt8"))
         assert_macro %({{ x.of_value }}), %(UInt8), {x: HashLiteral.new([] of HashLiteral::Entry, of: of)}
       end
 
@@ -981,7 +981,7 @@ module Crystal
       end
 
       it "executes type" do
-        assert_macro %({{ x.type }}), %(Headers), {x: HashLiteral.new([] of HashLiteral::Entry, name: Path.new(["Headers"]))}
+        assert_macro %({{ x.type }}), %(Headers), {x: HashLiteral.new([] of HashLiteral::Entry, name: Path.new("Headers"))}
       end
 
       it "executes type (nop)" do
@@ -2070,17 +2070,61 @@ module Crystal
           end
         end
       end
+
       describe "#nilable?" do
         it false do
           assert_macro("{{x.nilable?}}", "false") do |program|
             {x: TypeNode.new(program.string)}
           end
+
+          assert_macro("{{x.nilable?}}", "false") do |program|
+            {x: TypeNode.new(program.union_of(program.string, program.int32))}
+          end
+
+          assert_macro("{{x.nilable?}}", "false") do |program|
+            {x: TypeNode.new(program.no_return)}
+          end
+
+          assert_macro("{{x.nilable?}}", "false") do |program|
+            {x: TypeNode.new(program.class_type)}
+          end
+
+          assert_macro("{{x.nilable?}}", "false") do |program|
+            {x: TypeNode.new(program.reference)}
+          end
         end
 
         it true do
           assert_macro("{{x.nilable?}}", "true") do |program|
+            {x: TypeNode.new(program.nil_type)}
+          end
+
+          assert_macro("{{x.nilable?}}", "true") do |program|
             {x: TypeNode.new(program.union_of(program.string, program.nil))}
           end
+
+          assert_macro("{{x.nilable?}}", "true") do |program|
+            {x: TypeNode.new(program.value)}
+          end
+
+          assert_macro("{{x.nilable?}}", "true") do |program|
+            {x: TypeNode.new(program.object)}
+          end
+
+          assert_macro("{{x.nilable?}}", "true") do |program|
+            mod = NonGenericModuleType.new(program, program, "SomeModule")
+            program.nil_type.include mod
+            {x: TypeNode.new(mod)}
+          end
+
+          assert_type(<<-CR) { int32 }
+            class Foo(T)
+            end
+
+            alias Bar = Foo(Bar)?
+
+            {{ Bar.nilable? ? 1 : 'a' }}
+            CR
         end
       end
 
@@ -2795,7 +2839,7 @@ module Crystal
     describe "path methods" do
       it "executes names" do
         assert_macro %({{x.names}}), %([String]), {x: Path.new("String")}
-        assert_macro %({{x.names}}), %([Foo, Bar]), {x: Path.new(["Foo", "Bar"])}
+        assert_macro %({{x.names}}), %([Foo, Bar]), {x: Path.new("Foo", "Bar")}
       end
 
       it "executes global?" do
@@ -2828,7 +2872,7 @@ module Crystal
     describe "annotation methods" do
       it "executes name" do
         assert_macro %({{x.name}}), %(Foo), {x: Annotation.new(Path.new("Foo"))}
-        assert_macro %({{x.name}}), %(Foo::Bar), {x: Annotation.new(Path.new(["Foo", "Bar"]))}
+        assert_macro %({{x.name}}), %(Foo::Bar), {x: Annotation.new(Path.new("Foo", "Bar"))}
       end
 
       it "executes [] with NumberLiteral" do
@@ -2948,6 +2992,10 @@ module Crystal
         expect_raises(Crystal::TypeException, "argument to parse_type must be a StringLiteral, not SymbolLiteral") do
           assert_macro %({{parse_type :Foo }}), %(nil)
         end
+      end
+
+      it "exposes syntax warnings" do
+        assert_warning %({% parse_type "Foo(0x8000_0000_0000_0000)" %}), "Warning: 0x8000_0000_0000_0000 doesn't fit in an Int64, try using the suffix u64 or i128"
       end
     end
 

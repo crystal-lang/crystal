@@ -1289,9 +1289,9 @@ describe "Enumerable" do
 
   describe "to_h" do
     it "for tuples" do
-      hash = Tuple.new({:a, 1}, {:c, 2}).to_h
-      hash.should be_a(Hash(Symbol, Int32))
-      hash.should eq({:a => 1, :c => 2})
+      hash = Tuple.new({"a", 1}, {"c", 2}).to_h
+      hash.should be_a(Hash(String, Int32))
+      hash.should eq({"a" => 1, "c" => 2})
 
       hash = Tuple.new({1, 1.0}, {'a', "aaa"}).to_h
       hash.should be_a(Hash(Int32 | Char, Float64 | String))
@@ -1299,7 +1299,7 @@ describe "Enumerable" do
     end
 
     it "for array" do
-      [[:a, :b], [:c, :d]].to_h.should eq({:a => :b, :c => :d})
+      [['a', 'b'], ['c', 'd']].to_h.should eq({'a' => 'b', 'c' => 'd'})
     end
 
     it "with block" do

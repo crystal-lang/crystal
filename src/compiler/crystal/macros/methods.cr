@@ -37,7 +37,7 @@ module Crystal
       filename
     end
 
-    delegate report_warning_at, to: @program
+    delegate warnings, to: @program
 
     def interpret_top_level_call(node)
       interpret_top_level_call?(node) ||
@@ -170,7 +170,7 @@ module Crystal
         arg.raise "argument to parse_type cannot be an empty value" if type_name.blank?
 
         begin
-          parser = Crystal::Parser.new type_name
+          parser = @program.new_parser type_name
           parser.next_token
           type = parser.parse_bare_proc_type
           parser.check :EOF
@@ -1173,8 +1173,8 @@ module Crystal
           self.var.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.var.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.var.annotations(type) : self.var.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1347,8 +1347,8 @@ module Crystal
           self.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.annotations(type) : self.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1400,8 +1400,8 @@ module Crystal
           self.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.annotations(type) : self.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1658,8 +1658,8 @@ module Crystal
           self.type.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.type.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.type.annotations(type) : self.type.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -2199,7 +2199,7 @@ module Crystal
           ArrayLiteral.map(@names) { |name| MacroId.new(name) }
         end
       when "global"
-        interpreter.report_warning_at(name_loc, "Deprecated Path#global. Use `#global?` instead")
+        interpreter.warnings.add_warning_at(name_loc, "Deprecated Path#global. Use `#global?` instead")
         interpret_check_args { BoolLiteral.new(@global) }
       when "global?"
         interpret_check_args { BoolLiteral.new(@global) }
@@ -2677,6 +2677,26 @@ end
 
 private def fetch_annotation(node, method, args, named_args, block)
   interpret_check_args(node: node) do |arg|
+    unless arg.is_a?(Crystal::TypeNode)
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
+    end
+
+    type = arg.type
+    unless type.is_a?(Crystal::AnnotationType)
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be an annotation type, not #{type} (#{type.type_desc})"
+    end
+
+    value = yield type
+    value || Crystal::NilLiteral.new
+  end
+end
+
+private def fetch_annotations(node, method, args, named_args, block)
+  interpret_check_args(node: node, min_count: 0) do |arg|
+    unless arg
+      return yield(nil) || Crystal::NilLiteral.new
+    end
+
     unless arg.is_a?(Crystal::TypeNode)
       args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
     end

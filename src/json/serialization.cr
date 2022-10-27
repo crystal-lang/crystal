@@ -126,6 +126,28 @@ module JSON
   # field, and the rest of the fields, and their meaning, depend on its value.
   #
   # You can use `JSON::Serializable.use_json_discriminator` for this use case.
+  #
+  # ### `after_initialize` method
+  #
+  # `#after_initialize` is a method that runs after an instance is deserialized
+  # from JSON. It can be used as a hook to post-process the initialized object.
+  #
+  # Example:
+  # ```
+  # require "json"
+  #
+  # class Person
+  #   include JSON::Serializable
+  #   getter name : String
+  #
+  #   def after_initialize
+  #     @name = @name.upcase
+  #   end
+  # end
+  #
+  # person = Person.from_json %({"name": "Jane"})
+  # person.name # => "JANE"
+  # ```
   module Serializable
     annotation Options
     end

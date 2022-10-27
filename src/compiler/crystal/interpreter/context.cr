@@ -365,6 +365,7 @@ class Crystal::Repl::Context
     # FIXME: Part 1: This is a workaround for initial integration of the interpreter:
     # The loader can't handle the static libgc.a usually shipped with crystal and loading as a shared library conflicts
     # with the compiler's own GC.
+    # (MSVC doesn't seem to have this issue)
     args.delete("-lgc")
 
     Crystal::Loader.parse(args).tap do |loader|

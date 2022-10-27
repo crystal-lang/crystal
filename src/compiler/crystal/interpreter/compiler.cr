@@ -137,13 +137,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def self.new(
     context : Context,
     compiled_def : CompiledDef,
-    top_level : Bool
+    top_level : Bool,
+    scope : Type = compiled_def.owner
   )
     new(
       context: context,
       local_vars: compiled_def.local_vars,
       instructions: compiled_def.instructions,
-      scope: compiled_def.owner,
+      scope: scope,
       def: compiled_def.def,
       top_level: top_level,
     )
@@ -380,6 +381,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : TupleLiteral)
+    unless @wants_value
+      node.elements.each do |element|
+        discard_value element
+      end
+
+      return false
+    end
+
     type = node.type.as(TupleInstanceType)
 
     # A tuple potentially has the values packed (unaligned).
@@ -412,6 +421,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : NamedTupleLiteral)
+    unless @wants_value
+      node.entries.each do |entry|
+        discard_value entry.value
+      end
+
+      return false
+    end
+
     type = node.type.as(NamedTupleInstanceType)
 
     # This logic is similar to TupleLiteral.
@@ -1136,10 +1153,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       def_name = "#{var.owner}::#{var.name}"
 
       fake_def = Def.new(def_name)
-      fake_def.owner = var.owner
+      fake_def.owner = var.owner.metaclass
       fake_def.vars = initializer.meta_vars
-      fake_def.body = value
-      fake_def.bind_to(value)
+
+      # Check if we need to upcast the value to the class var's type
+      fake_def.body =
+        if value.type? == var.type
+          value
+        else
+          cast = Cast.new(value, TypeNode.new(var.type))
+          cast.upcast = true
+          cast.type = var.type
+          cast
+        end
+
+      fake_def.bind_to(fake_def.body)
 
       compiled_def = CompiledDef.new(@context, fake_def, fake_def.owner, 0)
 
@@ -1147,7 +1175,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # program, but this needs to be fixed in the main compiler first
       declare_local_vars(fake_def, compiled_def.local_vars, @context.program)
 
-      compiler = Compiler.new(@context, compiled_def, top_level: true)
+      compiler = Compiler.new(@context, compiled_def, scope: fake_def.owner, top_level: true)
       compiler.compile_def(compiled_def, closure_owner: @context.program)
 
       {% if Debug::DECOMPILE %}
@@ -1632,6 +1660,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     node.obj.accept self
 
+    if node.upcast?
+      upcast node.obj, obj_type, node.non_nilable_type
+      upcast node.obj, node.non_nilable_type, node.type
+      return
+    end
+
     # Check if obj is a `to_type`
     dup aligned_sizeof_type(node.obj), node: nil
     filter_type(node, obj_type, filtered_type)
@@ -1768,7 +1802,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_defs = node.target_defs
-    unless target_defs
+    if target_defs.empty?
       node.raise "BUG: no target defs"
     end
 
@@ -1780,7 +1814,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     body = target_def.body
     if body.is_a?(Primitive)
-      visit_primitive(node, body)
+      visit_primitive(node, body, target_def)
       return false
     end
 
@@ -2318,9 +2352,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     request_value(arg)
 
-    # We first cast the argument to the def's arg type,
-    # which is the external methods' type.
-    downcast arg, arg_type, target_def_arg_type
+    # Check number autocast but for non-literals
+    if arg_type != target_def_arg_type && arg_type.is_a?(IntegerType | FloatType) && target_def_arg_type.is_a?(IntegerType | FloatType)
+      primitive_convert(arg, arg_type, target_def_arg_type, checked: false)
+    else
+      # We first cast the argument to the def's arg type,
+      # which is the external methods' type.
+      downcast arg, arg_type, target_def_arg_type
+    end
 
     # Then we need to cast the argument to the target_def variable
     # corresponding to the argument. If for example we have this:
@@ -2419,7 +2458,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_defs = call.target_defs
-    unless target_defs
+    if target_defs.empty?
       call.raise "BUG: no target defs"
     end
 
@@ -2747,7 +2786,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiled_def.local_vars.declare(name, var_type)
     end
 
-    compiler = Compiler.new(@context, compiled_def, top_level: false)
+    compiler = Compiler.new(@context, compiled_def, scope: scope, top_level: false)
     begin
       compiler.compile_def(compiled_def, is_closure ? @closure_context : nil)
     rescue ex : Crystal::CodeError

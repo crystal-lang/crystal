@@ -249,6 +249,54 @@ module Crystal
       nil
     end
 
+    def transform(node : StringInterpolation)
+      # See if we can solve all the pieces to string literals.
+      # If that's the case, we can replace the entire interpolation
+      # with a single string literal.
+      pieces = node.expressions.dup
+      solve_string_interpolation_expressions(pieces)
+
+      if pieces.all?(StringLiteral)
+        string = pieces.join(&.as(StringLiteral).value)
+        string_literal = StringLiteral.new(string).at(node)
+        string_literal.type = @program.string
+        return string_literal
+      end
+
+      if expanded = node.expanded
+        return expanded.transform(self)
+      end
+      node
+    end
+
+    private def solve_string_interpolation_expressions(pieces : Array(ASTNode))
+      pieces.each_with_index do |piece, i|
+        replacement = solve_string_interpolation_expression(piece)
+        next unless replacement
+
+        pieces[i] = replacement
+      end
+    end
+
+    private def solve_string_interpolation_expression(piece : ASTNode) : StringLiteral?
+      if piece.is_a?(ExpandableNode)
+        if expanded = piece.expanded
+          return solve_string_interpolation_expression(expanded)
+        end
+      end
+
+      case piece
+      when Path
+        if target_const = piece.target_const
+          return solve_string_interpolation_expression(target_const.value)
+        end
+      when StringLiteral
+        return piece
+      end
+
+      nil
+    end
+
     def transform(node : ExpandableNode)
       if expanded = node.expanded
         return expanded.transform(self)
@@ -508,43 +556,42 @@ module Crystal
         return exps
       end
 
-      if target_defs = node.target_defs
-        if target_defs.size == 1
-          if target_defs[0].is_a?(External)
-            check_args_are_not_closure node, "can't send closure to C function"
-          elsif obj_type && obj_type.extern? && node.name.ends_with?('=')
-            check_args_are_not_closure node, "can't set closure as C #{obj_type.type_desc} member"
+      target_defs = node.target_defs
+      if target_defs.size == 1
+        if target_defs.first.is_a?(External)
+          check_args_are_not_closure node, "can't send closure to C function"
+        elsif obj_type && obj_type.extern? && node.name.ends_with?('=')
+          check_args_are_not_closure node, "can't set closure as C #{obj_type.type_desc} member"
+        end
+      end
+
+      current_def = @current_def
+
+      target_defs.each do |target_def|
+        if @transformed.add?(target_def)
+          node.bubbling_exception do
+            @current_def = target_def
+            @def_nest_count += 1
+            target_def.body = target_def.body.transform(self)
+            @def_nest_count -= 1
+            @current_def = current_def
           end
         end
 
-        current_def = @current_def
+        # If the current call targets a method that raises, the method
+        # where the call happens also raises.
+        current_def.raises = true if current_def && target_def.raises?
+      end
 
-        target_defs.each do |target_def|
-          if @transformed.add?(target_def)
-            node.bubbling_exception do
-              @current_def = target_def
-              @def_nest_count += 1
-              target_def.body = target_def.body.transform(self)
-              @def_nest_count -= 1
-              @current_def = current_def
-            end
-          end
-
-          # If the current call targets a method that raises, the method
-          # where the call happens also raises.
-          current_def.raises = true if current_def && target_def.raises?
+      if target_defs.empty?
+        exps = [] of ASTNode
+        if obj = node.obj
+          exps.push obj
         end
-
-        if node.target_defs.not_nil!.empty?
-          exps = [] of ASTNode
-          if obj = node.obj
-            exps.push obj
-          end
-          node.args.each { |arg| exps.push arg }
-          call_exps = Expressions.from exps
-          call_exps.set_type(exps.last.type?) unless exps.empty?
-          return call_exps
-        end
+        node.args.each { |arg| exps.push arg }
+        call_exps = Expressions.from exps
+        call_exps.set_type(exps.last.type?) unless exps.empty?
+        return call_exps
       end
 
       node.replace_splats
@@ -1015,10 +1062,7 @@ module Crystal
       node = super
 
       unless node.type?
-        if dependencies = node.dependencies?
-          node.unbind_from node.dependencies
-        end
-
+        node.unbind_from node.dependencies
         node.bind_to node.expressions
       end
 

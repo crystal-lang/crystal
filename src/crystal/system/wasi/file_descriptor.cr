@@ -11,11 +11,15 @@ module Crystal::System::FileDescriptor
     raise NotImplementedError.new "Crystal::System::FileDescriptor.pipe"
   end
 
-  def self.system_info(fd)
-    raise NotImplementedError.new "Crystal::System::FileDescriptor.system_info"
+  private def system_reopen(other : IO::FileDescriptor)
+    raise NotImplementedError.new "Crystal::System::FileDescriptor#system_reopen"
   end
 
-  private def system_reopen(other : IO::FileDescriptor)
-    raise NotImplementedError.new "Crystal::System::FileDescriptor.system_reopen"
+  private def system_echo(enable : Bool, & : ->)
+    raise NotImplementedError.new "Crystal::System::FileDescriptor#system_echo"
+  end
+
+  private def system_raw(enable : Bool, & : ->)
+    raise NotImplementedError.new "Crystal::System::FileDescriptor#system_raw"
   end
 end
