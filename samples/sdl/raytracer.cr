@@ -222,19 +222,24 @@ SDL.hide_cursor
 surface = SDL.set_video_mode WIDTH, HEIGHT, 32, LibSDL::DOUBLEBUF | LibSDL::HWSURFACE | LibSDL::ASYNCBLIT
 
 first = true
-while true
-  SDL.poll_events do |event|
-    if event.type.in?(LibSDL::QUIT, LibSDL::KEYDOWN)
-      SDL.quit
-      exit
+
+begin
+  while true
+    SDL.poll_events do |event|
+      if event.type.in?(LibSDL::QUIT, LibSDL::KEYDOWN)
+        SDL.quit
+        exit
+      end
+    end
+
+    if first
+      start = SDL.ticks
+      render scene, surface
+      ms = SDL.ticks - start
+      puts "Rendered in #{ms} ms"
+      first = false
     end
   end
-
-  if first
-    start = SDL.ticks
-    render scene, surface
-    ms = SDL.ticks - start
-    puts "Rendered in #{ms} ms"
-    first = false
-  end
+ensure
+  SDL.quit
 end
