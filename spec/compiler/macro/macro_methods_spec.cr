@@ -1392,13 +1392,13 @@ module Crystal
 
       describe "#-" do
         context "with TupleLiteral argument" do
-          it "removes the elements in RHS from LHS into an ArrayLiteral" do
+          it "removes the elements in RHS from LHS into a TupleLiteral" do
             assert_macro %({{ {1, 2, 3, 4} - {1, 3, 5} }}), %({2, 4})
           end
         end
 
         context "with ArrayLiteral argument" do
-          it "removes the elements in RHS from LHS into an ArrayLiteral" do
+          it "removes the elements in RHS from LHS into a TupleLiteral" do
             assert_macro %({{ {1, 2, 3, 4} - [1, 3, 5] }}), %({2, 4})
           end
         end
