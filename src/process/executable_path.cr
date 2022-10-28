@@ -31,7 +31,7 @@ class Process
   def self.executable_path : String?
     if executable = executable_path_impl
       begin
-        File.real_path(executable)
+        File.realpath(executable)
       rescue File::Error
       end
     end

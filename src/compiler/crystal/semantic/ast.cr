@@ -182,19 +182,22 @@ module Crystal
       special_vars << name
     end
 
-    # Returns the minimum and maximum number of arguments that must
-    # be passed to this method.
+    # Returns the minimum and maximum number of positional arguments that must
+    # be passed to this method, assuming positional parameters are not matched
+    # by named arguments.
     def min_max_args_sizes
       max_size = args.size
       default_value_index = args.index(&.default_value)
       min_size = default_value_index || max_size
       splat_index = self.splat_index
       if splat_index
+        min_size = {default_value_index || splat_index, splat_index}.min
         if args[splat_index].name.empty?
-          min_size = {default_value_index || splat_index, splat_index}.min
           max_size = splat_index
         else
-          min_size -= 1 unless default_value_index && default_value_index < splat_index
+          if splat_restriction = args[splat_index].restriction
+            min_size += 1 unless splat_restriction.is_a?(Splat) || default_value_index.try(&.< splat_index)
+          end
           max_size = Int32::MAX
         end
       end
@@ -679,6 +682,7 @@ module Crystal
     property real_name : String
     property! fun_def : FunDef
     property call_convention : LLVM::CallConvention?
+    property wasm_import_module : String?
 
     property? dead = false
     property? used = false

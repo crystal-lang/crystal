@@ -68,15 +68,44 @@ describe Crystal::SyntaxHighlighter::HTML do
     it_highlights "def foo", %(<span class="k">def</span> <span class="m">foo</span>)
 
     %w(
-      + - * &+ &- &* / // = == < <= > >= ! != =~ !~ & | ^ ~ **
-      >> << % [] []? []= <=> ===
+      [] []? []= <=>
+      + - * /
+      == < <= > >= != =~ !~
+      & | ^ ~ ** >> << %
+    ).each do |op|
+      it_highlights %(def #{op}), %(<span class="k">def</span> <span class="m">#{op}</span>)
+    end
+
+    it_highlights %(def //), %(<span class="k">def</span> <span class="m">/</span><span class="m">/</span>)
+
+    %w(
+      + - * &+ &- &* &** / // = == < <= > >= ! != =~ !~ & | ^ ~ **
+      >> << % [] []? []= <=> === && ||
+      += -= *= /= //= &= |= ^= **= >>= <<= %= &+= &-= &*= &&= ||=
     ).each do |op|
       it_highlights "1 #{op} 2", %(<span class="n">1</span> <span class="o">#{HTML.escape(op)}</span> <span class="n">2</span>)
     end
 
+    it_highlights %(1/2), %(<span class="n">1</span><span class="o">/</span><span class="n">2</span>)
+    it_highlights %(1 /2), %(<span class="n">1</span> <span class="o">/</span><span class="n">2</span>)
+    it_highlights %(1/ 2), %(<span class="n">1</span><span class="o">/</span> <span class="n">2</span>)
+
+    it_highlights %(a/b), %(a<span class="o">/</span>b)
+    it_highlights %(a/ b), %(a<span class="o">/</span> b)
+    it_highlights %(a / b), %(a <span class="o">/</span> b)
+
+    it_highlights %(a /b/), %(a <span class="s">/b/</span>)
+
+    it_highlights %($1), %($1)
+    it_highlights %($2?), %($2?)
+    it_highlights %($?), %($?)
+    it_highlights %($~), %($~)
+
     it_highlights %("foo"), %(<span class="s">&quot;foo&quot;</span>)
     it_highlights %("<>"), %(<span class="s">&quot;&lt;&gt;&quot;</span>)
     it_highlights %("foo\#{bar}baz"), %(<span class="s">&quot;foo</span><span class="i">\#{</span>bar<span class="i">}</span><span class="s">baz&quot;</span>)
+    it_highlights %("foo\#{[1, bar, "str"]}baz"), %(<span class="s">&quot;foo</span><span class="i">\#{</span>[<span class="n">1</span>, bar, <span class="s">&quot;str&quot;</span>]<span class="i">}</span><span class="s">baz&quot;</span>)
+    it_highlights %("nest1\#{foo + "nest2\#{1 + 1}bar"}baz"), %(<span class="s">&quot;nest1</span><span class="i">\#{</span>foo <span class="o">+</span> <span class="s">&quot;nest2</span><span class="i">\#{</span><span class="n">1</span> <span class="o">+</span> <span class="n">1</span><span class="i">}</span><span class="s">bar&quot;</span><span class="i">}</span><span class="s">baz&quot;</span>)
     it_highlights "/foo/xim", %(<span class="s">/foo/</span>xim)
     it_highlights "`foo`", %(<span class="s">`foo`</span>)
     it_highlights "%(foo)", %(<span class="s">%(foo)</span>)

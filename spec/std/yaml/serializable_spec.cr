@@ -317,6 +317,17 @@ class YAMLAttrModuleTest2 < YAMLAttrModuleTest
   end
 end
 
+module YAMLAttrModuleWithSameNameClass
+  class YAMLAttrModuleWithSameNameClass
+  end
+
+  class Test
+    include YAML::Serializable
+
+    property foo = 42
+  end
+end
+
 abstract class YAMLShape
   include YAML::Serializable
 
@@ -951,6 +962,10 @@ describe "YAML::Serializable" do
     it { YAMLAttrModuleTest.from_yaml(%({"phoo": 20})).to_tuple.should eq({10, 20}) }
     it { YAMLAttrModuleTest2.from_yaml(%({"phoo": 20, "bar": 30})).to_tuple.should eq({10, 20, 30}) }
     it { YAMLAttrModuleTest2.from_yaml(%({"bar": 30, "moo": 40})).to_tuple.should eq({40, 15, 30}) }
+  end
+
+  describe "work with inned class using same module name" do
+    it { YAMLAttrModuleWithSameNameClass::Test.from_yaml(%({"foo": 42})).foo.should eq(42) }
   end
 
   describe "use_yaml_discriminator" do

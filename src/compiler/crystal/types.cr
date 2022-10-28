@@ -194,7 +194,7 @@ module Crystal
     end
 
     def nilable?
-      self.is_a?(NilType) || (self.is_a?(UnionType) && self.union_types.any?(&.nil_type?))
+      nil_type? || program.nil_type.implements?(self)
     end
 
     def bool_type?
@@ -912,19 +912,20 @@ module Crystal
       defs = (@defs ||= {} of String => Array(DefWithMetadata))
       list = defs[a_def.name] ||= [] of DefWithMetadata
       list.each_with_index do |ex_item, i|
-        if item.restriction_of?(ex_item, self)
-          if ex_item.restriction_of?(item, self)
-            # The two defs have the same signature so item overrides ex_item.
-            list[i] = item
-            a_def.previous = ex_item
-            a_def.doc ||= ex_item.def.doc
-            ex_item.def.next = a_def
-            return ex_item.def
-          else
-            # item has a new signature, stricter than ex_item.
-            list.insert(i, item)
-            return nil
-          end
+        case item.compare_strictness(ex_item, self)
+        when nil
+          # Incompatible defs; do nothing
+        when 0
+          # The two defs have the same signature so item overrides ex_item.
+          list[i] = item
+          a_def.previous = ex_item
+          a_def.doc ||= ex_item.def.doc
+          ex_item.def.next = a_def
+          return ex_item.def
+        when .< 0
+          # item has a new signature, stricter than ex_item.
+          list.insert(i, item)
+          return nil
         end
       end
 
@@ -1967,7 +1968,7 @@ module Crystal
     getter generic_type : GenericType
     getter type_vars : Hash(String, ASTNode)
 
-    delegate :annotation, :annotations, to: generic_type
+    delegate :annotation, :annotations, :all_annotations, to: generic_type
 
     def initialize(program, @generic_type, @type_vars)
       super(program)
@@ -2679,6 +2680,10 @@ module Crystal
 
     def type_desc
       "lib"
+    end
+
+    def wasm_import_module
+      (@link_annotations.try &.find &.wasm_import_module).try &.wasm_import_module
     end
   end
 

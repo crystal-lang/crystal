@@ -1155,8 +1155,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       fake_def = Def.new(def_name)
       fake_def.owner = var.owner.metaclass
       fake_def.vars = initializer.meta_vars
-      fake_def.body = value
-      fake_def.bind_to(value)
+
+      # Check if we need to upcast the value to the class var's type
+      fake_def.body =
+        if value.type? == var.type
+          value
+        else
+          cast = Cast.new(value, TypeNode.new(var.type))
+          cast.upcast = true
+          cast.type = var.type
+          cast
+        end
+
+      fake_def.bind_to(fake_def.body)
 
       compiled_def = CompiledDef.new(@context, fake_def, fake_def.owner, 0)
 
@@ -1648,6 +1659,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     node.obj.accept self
+
+    if node.upcast?
+      upcast node.obj, obj_type, node.non_nilable_type
+      upcast node.obj, node.non_nilable_type, node.type
+      return
+    end
 
     # Check if obj is a `to_type`
     dup aligned_sizeof_type(node.obj), node: nil
@@ -2335,9 +2352,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     request_value(arg)
 
-    # We first cast the argument to the def's arg type,
-    # which is the external methods' type.
-    downcast arg, arg_type, target_def_arg_type
+    # Check number autocast but for non-literals
+    if arg_type != target_def_arg_type && arg_type.is_a?(IntegerType | FloatType) && target_def_arg_type.is_a?(IntegerType | FloatType)
+      primitive_convert(arg, arg_type, target_def_arg_type, checked: false)
+    else
+      # We first cast the argument to the def's arg type,
+      # which is the external methods' type.
+      downcast arg, arg_type, target_def_arg_type
+    end
 
     # Then we need to cast the argument to the target_def variable
     # corresponding to the argument. If for example we have this:
