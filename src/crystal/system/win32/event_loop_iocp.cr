@@ -34,7 +34,7 @@ module Crystal::EventLoop
 
   # Runs the event loop.
   def self.run_once : Nil
-    next_event = @@queue.min_by { |e| e.wake_at }
+    next_event = @@queue.min_by(&.wake_at)
 
     if next_event
       now = Time.monotonic

@@ -404,12 +404,12 @@ describe "Hash" do
     describe "if block is given," do
       it "returns the first key with the given value" do
         hash = {"foo" => "bar", "baz" => "bar"}
-        hash.key_for("bar") { |value| value.upcase }.should eq("foo")
+        hash.key_for("bar", &.upcase).should eq("foo")
       end
 
       it "yields the argument if no hash key pairs with the value" do
         hash = {"foo" => "bar"}
-        hash.key_for("qux") { |value| value.upcase }.should eq("QUX")
+        hash.key_for("qux", &.upcase).should eq("QUX")
       end
     end
   end
@@ -842,7 +842,7 @@ describe "Hash" do
   it "transforms keys with type casting" do
     h1 = {"a" => 1, "b" => 2, "c" => 3}
 
-    h2 = h1.transform_keys { |x| x.to_s.upcase }
+    h2 = h1.transform_keys(&.to_s.upcase)
     h2.should be_a(Hash(String, Int32))
     h2.should eq({"A" => 1, "B" => 2, "C" => 3})
   end
@@ -865,7 +865,7 @@ describe "Hash" do
   it "transforms values with type casting values" do
     h1 = {"a" => 1, "b" => 2, "c" => 3}
 
-    h2 = h1.transform_values { |x| x.to_s }
+    h2 = h1.transform_values(&.to_s)
     h2.should be_a(Hash(String, String))
     h2.should eq({"a" => "1", "b" => "2", "c" => "3"})
   end

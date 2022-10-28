@@ -228,7 +228,7 @@ module HTTP
     # See `HTTP::Request#cookies` and `HTTP::Client::Response#cookies`.
     @[Deprecated("Use `.from_client_headers` or `.from_server_headers` instead.")]
     def self.from_headers(headers) : self
-      new.tap { |cookies| cookies.fill_from_headers(headers) }
+      new.tap(&.fill_from_headers(headers))
     end
 
     # Filling cookies by parsing the `Cookie` and `Set-Cookie`
@@ -244,7 +244,7 @@ module HTTP
     #
     # See `HTTP::Client::Response#cookies`.
     def self.from_client_headers(headers) : self
-      new.tap { |cookies| cookies.fill_from_client_headers(headers) }
+      new.tap(&.fill_from_client_headers(headers))
     end
 
     # Filling cookies by parsing the `Cookie` headers in the given `HTTP::Headers`.
@@ -261,7 +261,7 @@ module HTTP
     #
     # See `HTTP::Request#cookies`.
     def self.from_server_headers(headers) : self
-      new.tap { |cookies| cookies.fill_from_server_headers(headers) }
+      new.tap(&.fill_from_server_headers(headers))
     end
 
     # Filling cookies by parsing the `Set-Cookie` headers in the given `HTTP::Headers`.
