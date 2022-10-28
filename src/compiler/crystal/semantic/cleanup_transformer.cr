@@ -771,7 +771,7 @@ module Crystal
 
       # If the yield has a no-return expression, the yield never happens:
       # replace it with a series of expressions up to the one that no-returns.
-      no_return_index = node.exps.index &.no_returns?
+      no_return_index = node.exps.index { |exp| !exp.type? || exp.no_returns? }
       if no_return_index
         exps = Expressions.new(node.exps[0, no_return_index + 1])
         exps.bind_to(exps.expressions.last)
