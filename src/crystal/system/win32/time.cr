@@ -69,7 +69,7 @@ module Crystal::System::Time
 
   def self.load_localtime : ::Time::Location?
     if LibC.GetTimeZoneInformation(out info) != LibC::TIME_ZONE_ID_UNKNOWN
-      initialize_location_from_TZI(info)
+      initialize_location_from_tzi(info)
     end
   end
 
@@ -77,7 +77,7 @@ module Crystal::System::Time
     [] of String
   end
 
-  private def self.initialize_location_from_TZI(info)
+  private def self.initialize_location_from_tzi(info)
     stdname, dstname = normalize_zone_names(info)
 
     if info.standardDate.wMonth == 0_u16
