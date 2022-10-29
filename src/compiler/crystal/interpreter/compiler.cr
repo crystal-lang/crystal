@@ -1103,7 +1103,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def dispatch_class_var(owner : Type, metaclass : Bool, node : ASTNode)
-    types = owner.all_subclasses.select(ClassVarContainer)
+    types = owner.all_subclasses.select { |t| t.is_a?(ClassVarContainer) }
     types.push(owner)
     types.sort_by! { |type| -type.depth }
 
