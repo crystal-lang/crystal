@@ -2559,7 +2559,7 @@ module Crystal
     end
 
     def name_type(name)
-      @entries.find(&.name.==(name)).not_nil!.type
+      @entries.find!(&.name.==(name)).type
     end
 
     def tuple_indexer(index)
