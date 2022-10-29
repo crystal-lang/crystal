@@ -1553,6 +1553,7 @@ module Crystal
           raise("unexpected '_' in number", @token, (current_pos - start)) if peek_next_char == '_'
           break unless peek_next_char.in?('0'..'9')
         when 'i', 'u', 'f'
+          break if current_char == 'f' && base != 10
           before_suffix_pos = current_pos
           @token.number_kind = consume_number_suffix
           next_char
