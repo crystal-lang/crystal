@@ -425,8 +425,8 @@ class Channel(T)
     # This is to avoid deadlocks between concurrent `select` calls
     ops_locks = ops
       .to_a
-      .uniq(&.lock_object_id)
-      .sort_by(&.lock_object_id)
+      .uniq!(&.lock_object_id)
+      .sort_by!(&.lock_object_id)
 
     ops_locks.each &.lock
 

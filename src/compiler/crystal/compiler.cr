@@ -194,7 +194,6 @@ module Crystal
       @program = program = Program.new
       program.compiler = self
       program.filename = sources.first.filename
-      program.cache_dir = CacheDir.instance.directory_for(sources)
       program.codegen_target = codegen_target
       program.target_machine = target_machine
       program.flags << "release" if release?
