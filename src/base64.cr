@@ -258,7 +258,7 @@ module Base64
 
     # Process combinations of four characters until there aren't any left
     fin = bytes + size - 4
-    while true
+    loop do
       break if bytes > fin
 
       # Move the pointer by one byte until there is a valid base64 character

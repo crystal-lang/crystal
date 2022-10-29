@@ -70,7 +70,7 @@ class Context
 
     # increase/decrease stack depending on the expected_depth
     # when reached, notify and yield control
-    while true
+    loop do
       if context.expected_depth < depth
         return
       elsif context.expected_depth > depth
@@ -142,7 +142,7 @@ class Context
   def create_thread(queue_index)
     Thread.new do
       # this loop will iterate once per #run_until_depth
-      while true
+      loop do
         # wait for queues to be ready
         while @threads_state.get != State::Run
         end

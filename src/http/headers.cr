@@ -104,7 +104,7 @@ struct HTTP::Headers
 
   private def includes_word_in_header_value?(word, value)
     offset = 0
-    while true
+    loop do
       start = value.index(word, offset)
       return false unless start
       offset = start + word.size

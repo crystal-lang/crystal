@@ -554,7 +554,7 @@ abstract class IO
   def gets_to_end : String
     String.build do |str|
       if decoder = decoder()
-        while true
+        loop do
           decoder.read(self)
           break if decoder.out_slice.empty?
 
@@ -745,7 +745,7 @@ abstract class IO
 
     buffer = String::Builder.new
     total = 0
-    while true
+    loop do
       info = read_char_with_bytesize
       unless info
         return buffer.empty? ? nil : buffer.to_s
@@ -819,7 +819,7 @@ abstract class IO
     total_bytes = 0
 
     buffer = String::Builder.new
-    while true
+    loop do
       unless byte = read_utf8_byte
         return buffer.empty? ? nil : buffer.to_s
       end
@@ -1201,7 +1201,7 @@ abstract class IO
     buf1 = uninitialized UInt8[1024]
     buf2 = uninitialized UInt8[1024]
 
-    while true
+    loop do
       read1 = stream1.read(buf1.to_slice)
       read2 = stream2.read_fully?(buf2.to_slice[0, read1])
       return false unless read2

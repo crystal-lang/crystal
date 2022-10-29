@@ -183,7 +183,7 @@ module Crystal
     end
 
     private def common_namespace(type, from_type)
-      while true
+      loop do
         return nil if type.is_a?(Program)
 
         # If from_type is Foo::Bar and type is Foo::Bar::Baz

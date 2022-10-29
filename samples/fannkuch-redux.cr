@@ -7,13 +7,13 @@ def fannkuch(n)
   q = w.dup
   s = w.dup
 
-  while true
+  loop do
     # Copy and flip.
     q1 = w[1] # Cache 1st element.
     if q1 != 1
       q = w.dup
       flips = 1
-      while true
+      loop do
         qq = q[q1]
         if qq == 1 # ... until 1st element is 1.
           sum = sum + sign * flips
@@ -24,7 +24,7 @@ def fannkuch(n)
         if q1 >= 4
           i, j = 2, q1 - 1
 
-          while true
+          loop do
             q.swap i, j
             i = i + 1
             j = j - 1

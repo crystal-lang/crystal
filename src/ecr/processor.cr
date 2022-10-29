@@ -16,7 +16,7 @@ module ECR
     token = lexer.next_token
 
     String.build do |str|
-      while true
+      loop do
         case token.type
         when .string?
           string = token.value

@@ -75,7 +75,7 @@ class ECR::Lexer
 
   private def consume_string
     start_pos = current_pos
-    while true
+    loop do
       case current_char
       when '\0'
         break
@@ -99,7 +99,7 @@ class ECR::Lexer
 
   private def consume_control(is_output, is_escape)
     start_pos = current_pos
-    while true
+    loop do
       case current_char
       when '\0'
         if is_output

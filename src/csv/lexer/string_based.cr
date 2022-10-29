@@ -23,7 +23,7 @@ class CSV::Lexer::StringBased < CSV::Lexer
   private def consume_unquoted_cell
     start_pos = @reader.pos
     end_pos = start_pos
-    while true
+    loop do
       case next_char
       when @separator
         end_pos = @reader.pos

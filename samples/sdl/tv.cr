@@ -131,7 +131,7 @@ rects = parse_rectangles
 puts "Rects: #{rects.size}"
 
 begin
-  while true
+  loop do
     SDL.poll_events do |event|
       if event.type == LibSDL::QUIT || event.type == LibSDL::KEYDOWN
         ms = SDL.ticks - start

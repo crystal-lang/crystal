@@ -247,7 +247,7 @@ module Indexable(T)
     indices = Array.new(n, 0)
     indices[-1] -= 1
 
-    while true
+    loop do
       i = n - 1
       indices[i] += 1
 
@@ -310,12 +310,12 @@ module Indexable(T)
     indices = Array.new(n, 0)
     reuse = Indexable(typeof(pool.first)).check_reuse(reuse, n)
 
-    while true
+    loop do
       yield pool_slice(pool, n, reuse)
 
       i = n
 
-      while true
+      loop do
         i -= 1
         return if i < 0
         indices[i] += 1
@@ -1018,7 +1018,7 @@ module Indexable(T)
     cycles = (n - size + 1..n).to_a.reverse!
     yield pool_slice(pool, size, reuse)
 
-    while true
+    loop do
       stop = true
       i = size - 1
       while i >= 0
@@ -1113,7 +1113,7 @@ module Indexable(T)
 
     yield pool_slice(pool, size, reuse)
 
-    while true
+    loop do
       stop = true
       i = size - 1
       while i >= 0
@@ -1222,7 +1222,7 @@ module Indexable(T)
 
     yield pool_slice(pool, size, reuse)
 
-    while true
+    loop do
       stop = true
 
       i = size - 1

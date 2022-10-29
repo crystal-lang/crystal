@@ -99,7 +99,7 @@ struct Exception::CallStack
     cur_proc = LibC.GetCurrentProcess
     cur_thread = LibC.GetCurrentThread
 
-    while true
+    loop do
       ret = LibC.StackWalk64(
         machine_type,
         cur_proc,

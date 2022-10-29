@@ -196,7 +196,7 @@ class Process
     reader = Char::Reader.new(line)
     quote = false
 
-    while true
+    loop do
       # skip whitespace
       while reader.current_char.in?(' ', '\t')
         reader.next_char
@@ -204,7 +204,7 @@ class Process
       break unless reader.has_next?
 
       token = String.build do |str|
-        while true
+        loop do
           backslash_count = 0
           while reader.current_char == '\\'
             backslash_count += 1

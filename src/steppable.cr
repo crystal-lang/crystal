@@ -50,7 +50,7 @@ module Steppable
 
       yield current
 
-      while true
+      loop do
         # only proceed if difference to limit is at least as big as step size to
         # avoid potential overflow errors.
         sign = ((limit - step) <=> current).try(&.sign)
@@ -60,7 +60,7 @@ module Steppable
         yield current
       end
     else
-      while true
+      loop do
         yield current
         current += step
       end

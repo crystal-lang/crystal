@@ -1494,7 +1494,7 @@ struct Time
     end
 
     month = 1
-    while true
+    loop do
       days_in_month = days_per_month[month]
       break if total_days < days_in_month
 

@@ -1215,7 +1215,7 @@ struct Path
     # Hostname follows the grammar of `reg-name` in [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986).
     # TODO: Add support for IPv6 address grammar
     return if separators.includes?(reader.current_char)
-    while true
+    loop do
       char = reader.current_char
       break if separators.includes?(char)
       if char == '%'
@@ -1243,7 +1243,7 @@ struct Path
 
     # 3. Consume second path component
     # `share-name` in UNC grammar
-    while true
+    loop do
       char = reader.current_char
       break if separators.includes?(char) || !reader.has_next?
       return unless char.ascii_alphanumeric? || char.in?(' ', '!', '-', '.', '@', '^', '_', '`', '{', '}', '~') || char.in?('#'..')') || char.ord.in?(0x80..0xFF)

@@ -462,7 +462,7 @@ class JSON::PullParser
   private def read_next_internal
     current_kind = @kind
 
-    while true
+    loop do
       case token.kind
       when .null?
         @kind = :null

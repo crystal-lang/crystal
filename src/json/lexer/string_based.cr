@@ -14,7 +14,7 @@ class JSON::Lexer::StringBased < JSON::Lexer
   private def consume_string
     start_pos = current_pos
 
-    while true
+    loop do
       case next_char
       when '\0'
         raise "Unterminated string"

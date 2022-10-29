@@ -15,7 +15,7 @@ class CSV::Lexer::IOBased < CSV::Lexer
 
   private def consume_unquoted_cell
     @buffer.clear
-    while true
+    loop do
       case current_char
       when @separator
         check_last_empty_column

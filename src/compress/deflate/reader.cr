@@ -63,7 +63,7 @@ class Compress::Deflate::Reader < IO
     return 0 if slice.empty?
     return 0 if @end
 
-    while true
+    loop do
       if @stream.avail_in == 0
         # Try to peek into the underlying IO, so we can feed more
         # data into zlib

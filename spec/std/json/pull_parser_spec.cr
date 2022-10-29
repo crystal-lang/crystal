@@ -177,7 +177,7 @@ describe JSON::PullParser do
   it "prevents stack overflow for arrays" do
     parser = JSON::PullParser.new(("[" * 513) + ("]" * 513))
     expect_raises JSON::ParseException, "Nesting of 513 is too deep" do
-      while true
+      loop do
         break if parser.kind.eof?
         parser.read_next
       end
@@ -187,7 +187,7 @@ describe JSON::PullParser do
   it "prevents stack overflow for hashes" do
     parser = JSON::PullParser.new((%({"x": ) * 513) + ("}" * 513))
     expect_raises JSON::ParseException, "Nesting of 513 is too deep" do
-      while true
+      loop do
         break if parser.kind.eof?
         parser.read_next
       end

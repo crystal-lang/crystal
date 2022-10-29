@@ -292,7 +292,7 @@ module Indexable::Mutable(T)
       tmp = unsafe_fetch(i)
       j = i
 
-      while true
+      loop do
         k = j + n
         k -= size if k >= size
         break if k == i

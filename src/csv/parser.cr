@@ -59,7 +59,7 @@ class CSV::Parser
   end
 
   private def next_row_internal(token, row)
-    while true
+    loop do
       case token.kind
       when Token::Kind::Cell
         row << token.value

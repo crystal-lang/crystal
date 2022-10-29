@@ -240,7 +240,7 @@ module Crystal
 
             end_here = 0
 
-            while true
+            loop do
               char = next_char
               case
               when char == '\r'
@@ -576,7 +576,7 @@ module Crystal
             column = @column_number
             start = current_pos + 1
             io = IO::Memory.new
-            while true
+            loop do
               char = next_char
               case char
               when '\\'
@@ -1384,7 +1384,7 @@ module Crystal
       start_pos = current_pos
       @token.type = :SPACE
       next_char
-      while true
+      loop do
         case current_char
         when ' ', '\t'
           next_char
@@ -1416,7 +1416,7 @@ module Crystal
         return
       end
 
-      while true
+      loop do
         case current_char
         when '\n'
           next_char_no_column_increment
@@ -1784,7 +1784,7 @@ module Crystal
               @token.line_number = @line_number
 
               # Skip until the next non-whitespace char
-              while true
+              loop do
                 char = next_char
                 case char
                 when '\0'
@@ -2027,7 +2027,7 @@ module Crystal
         comment = true
         char = current_char
         char = next_char if current_char == '#'
-        while true
+        loop do
           case char
           when '\n'
             comment = false
@@ -2393,7 +2393,7 @@ module Crystal
 
       end_here = 0
 
-      while true
+      loop do
         char = next_char
         case
         when char == '\r'
@@ -2480,7 +2480,7 @@ module Crystal
 
     def consume_string_unicode_brace_escape
       String.build do |str|
-        while true
+        loop do
           str << consume_braced_unicode_escape(allow_spaces: true).chr
           break unless current_char == ' '
         end
@@ -2567,7 +2567,7 @@ module Crystal
     def next_string_array_token
       reset_token
 
-      while true
+      loop do
         if current_char == '\n'
           next_char
           incr_line_number 1
@@ -2590,7 +2590,7 @@ module Crystal
       value = String::Builder.new
 
       escaped = false
-      while true
+      loop do
         case current_char
         when Char::ZERO
           break # raise is handled by parser
@@ -2657,7 +2657,7 @@ module Crystal
 
         filename_pos = current_pos
 
-        while true
+        loop do
           case current_char
           when '"'
             break
@@ -2680,7 +2680,7 @@ module Crystal
         next_char
 
         line_number = 0
-        while true
+        loop do
           case current_char
           when '0'..'9'
             line_number = 10 * line_number + (current_char - '0').to_i
@@ -2694,7 +2694,7 @@ module Crystal
         end
 
         column_number = 0
-        while true
+        loop do
           case current_char
           when '0'..'9'
             column_number = 10 * column_number + (current_char - '0').to_i

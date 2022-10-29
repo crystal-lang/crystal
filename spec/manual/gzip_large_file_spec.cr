@@ -27,7 +27,7 @@ it "Gzip file larger than UInt32::MAX" do
   Compress::Gzip::Reader.open(read) do |reader|
     slice = Slice.new(1024, 0_u8)
 
-    while true
+    loop do
       read_bytes = reader.read(slice)
       break if read_bytes == 0
       bytes_read += read_bytes

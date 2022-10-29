@@ -96,7 +96,7 @@ struct String::Formatter(A)
   private def consume_format_flags_and_width
     flags = Flags.new
 
-    while true
+    loop do
       case current_char
       when ' '
         flags.space = true
@@ -178,7 +178,7 @@ struct String::Formatter(A)
     num = current_char - '0'
     size = 1
     next_char
-    while true
+    loop do
       case char = current_char
       when '0'..'9'
         num *= 10

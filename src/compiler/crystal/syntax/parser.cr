@@ -283,7 +283,7 @@ module Crystal
     end
 
     def parse_expression_suffix(atomic, location)
-      while true
+      loop do
         case @token.type
         when .space?
           next_token
@@ -349,7 +349,7 @@ module Crystal
 
       atomic = parse_question_colon
 
-      while true
+      loop do
         name_location = @token.location
 
         case @token.type
@@ -495,7 +495,7 @@ module Crystal
         exp = parse_or
       end
 
-      while true
+      loop do
         case @token.type
         when .op_period_period?
           exp = new_range(exp, location, false)
@@ -563,7 +563,7 @@ module Crystal
       location = @token.location
 
       left = parse_mul_or_div
-      while true
+      loop do
         case @token.type
         when .space?
           next_token
@@ -637,7 +637,7 @@ module Crystal
     end
 
     def parse_atomic_method_suffix(atomic, location)
-      while true
+      loop do
         case @token.type
         when .space?
           next_token
@@ -1354,7 +1354,7 @@ module Crystal
       if @token.keyword?(:rescue)
         rescues = [] of Rescue
         found_catch_all = false
-        while true
+        loop do
           begin_location ||= @token.location
           location = @token.location
           a_rescue = parse_rescue
@@ -1456,7 +1456,7 @@ module Crystal
 
     def parse_rescue_types
       types = [] of ASTNode
-      while true
+      loop do
         types << parse_generic
         skip_space
         if @token.type.op_bar?
@@ -1796,7 +1796,7 @@ module Crystal
       # ```
       @stop_on_do = false
 
-      while true
+      loop do
         exps << parse_expression
         case @token.type
         when .op_rparen?
@@ -2028,7 +2028,7 @@ module Crystal
       delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
 
       if want_skip_space && delimiter_state.kind.string?
-        while true
+        loop do
           passed_backslash_newline = @token.passed_backslash_newline
           skip_space
 
@@ -2091,7 +2091,7 @@ module Crystal
     def consume_delimiter(pieces, delimiter_state, has_interpolation)
       options = Regex::Options::None
       token_end_location = nil
-      while true
+      loop do
         case @token.type
         when .string?
           pieces << Piece.new(@token.value.to_s, @token.line_number)
@@ -2150,7 +2150,7 @@ module Crystal
 
     def consume_regex_options
       options = Regex::Options::None
-      while true
+      loop do
         case current_char
         when 'i'
           options |= Regex::Options::IGNORE_CASE
@@ -2328,7 +2328,7 @@ module Crystal
     def parse_string_or_symbol_array(klass, elements_type)
       strings = [] of ASTNode
 
-      while true
+      loop do
         next_string_array_token
         case @token.type
         when .string?
@@ -2694,7 +2694,7 @@ module Crystal
       # All when expressions, so we can detect duplicates
       when_exps = Set(ASTNode).new
 
-      while true
+      loop do
         case @token.value
         when Keyword::WHEN, Keyword::IN
           if exhaustive.nil?
@@ -2716,7 +2716,7 @@ module Crystal
           if cond.is_a?(TupleLiteral)
             raise "splat is not allowed inside case expression" if cond.elements.any?(Splat)
 
-            while true
+            loop do
               if @token.type.op_lcurly?
                 curly_location = @token.location
 
@@ -2724,7 +2724,7 @@ module Crystal
 
                 tuple_elements = [] of ASTNode
 
-                while true
+                loop do
                   exp = parse_when_expression(cond, single: false, exhaustive: exhaustive)
                   check_valid_exhaustive_expression(exp) if exhaustive
 
@@ -2758,7 +2758,7 @@ module Crystal
               break if when_expression_end
             end
           else
-            while true
+            loop do
               exp = parse_when_expression(cond, single: true, exhaustive: exhaustive)
               check_valid_exhaustive_expression(exp) if exhaustive
 
@@ -2905,7 +2905,7 @@ module Crystal
 
       whens = [] of Select::When
 
-      while true
+      loop do
         case @token.value
         when Keyword::WHEN
           slash_is_regex!
@@ -3147,7 +3147,7 @@ module Crystal
 
       pieces = [] of ASTNode
 
-      while true
+      loop do
         next_macro_token macro_state, skip_whitespace
         macro_state = @token.macro_state
         if macro_state.yields
@@ -3210,7 +3210,7 @@ module Crystal
       next_token
 
       exps = [] of ASTNode
-      while true
+      loop do
         exps << parse_expression_inside_macro
         skip_space
         case @token.type
@@ -3296,7 +3296,7 @@ module Crystal
 
         vars = [] of Var
 
-        while true
+        loop do
           var = case @token.type
                 when .underscore?
                   "_"
@@ -3685,7 +3685,7 @@ module Crystal
 
     def parse_def_free_vars
       free_vars = [] of String
-      while true
+      loop do
         check :CONST
         free_var = @token.value.to_s
         raise "duplicated free variable name: #{free_var}", @token if free_vars.includes?(free_var)
@@ -4353,7 +4353,7 @@ module Crystal
       next_token_skip_space
       if @token.type.op_bar?
         next_token_skip_space_or_newline
-        while true
+        loop do
           if @token.type.op_star?
             if splat_index
               raise "splat block parameter already specified", @token
@@ -4382,7 +4382,7 @@ module Crystal
             next_token_skip_space_or_newline
 
             i = 0
-            while true
+            loop do
               case @token.type
               when .ident?
                 if @token.keyword? && invalid_internal_name?(@token.value)
@@ -4668,7 +4668,7 @@ module Crystal
 
     def parse_named_args(location, first_name = nil, allow_newline = false)
       named_args = [] of NamedArgument
-      while true
+      loop do
         if first_name
           name = first_name
           first_name = nil
@@ -5369,7 +5369,7 @@ module Crystal
 
     def parse_asm_operands
       operands = [] of AsmOperand
-      while true
+      loop do
         operands << parse_asm_operand
         if @token.type.op_comma?
           next_token_skip_space_or_newline
@@ -5391,7 +5391,7 @@ module Crystal
 
     def parse_asm_clobbers
       clobbers = [] of String
-      while true
+      loop do
         clobbers << parse_string_without_interpolation("asm clobber")
         skip_space_or_newline
         if @token.type.op_comma?
@@ -5407,7 +5407,7 @@ module Crystal
       alignstack = false
       intel = false
       can_throw = false
-      while true
+      loop do
         location = @token.location
         option = parse_string_without_interpolation("asm option")
         skip_space_or_newline
@@ -5522,7 +5522,7 @@ module Crystal
 
     private def parse_lib_body_expressions
       expressions = [] of ASTNode
-      while true
+      loop do
         skip_statement_end
         break if end_token?
         expressions << parse_lib_body_exp
@@ -5846,7 +5846,7 @@ module Crystal
     private def parse_c_struct_or_union_body_expressions
       exps = [] of ASTNode
 
-      while true
+      loop do
         case @token.type
         when .ident?
           case @token.value

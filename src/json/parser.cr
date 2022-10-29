@@ -45,7 +45,7 @@ class JSON::Parser
 
     nest do
       unless token.kind.end_array?
-        while true
+        loop do
           ary << parse_value
 
           case token.kind
@@ -73,7 +73,7 @@ class JSON::Parser
 
     nest do
       unless token.kind.end_object?
-        while true
+        loop do
           check :string
           key = token.string_value
 

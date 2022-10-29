@@ -67,7 +67,7 @@ class Compress::Zip::Reader
       skip_data_descriptor(last_entry)
     end
 
-    while true
+    loop do
       signature = read UInt32
 
       case signature

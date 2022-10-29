@@ -3,7 +3,7 @@ lib Foo
 end
 
 def raise(msg)
-  while true
+  loop do
   end
 end
 

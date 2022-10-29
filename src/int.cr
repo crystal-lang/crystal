@@ -539,7 +539,7 @@ struct Int
   def upto(to, &block : self ->) : Nil
     return unless self <= to
     x = self
-    while true
+    loop do
       yield x
       return if x == to
       x += 1
@@ -553,7 +553,7 @@ struct Int
   def downto(to, &block : self ->) : Nil
     return unless self >= to
     x = self
-    while true
+    loop do
       yield x
       return if x == to
       x -= 1

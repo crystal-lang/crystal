@@ -442,7 +442,7 @@ class File < IO::FileDescriptor
     strlen = path.bytesize
     escaped = false
 
-    while true
+    loop do
       pnext = preader.has_next?
       snext = sreader.has_next?
 

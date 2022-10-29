@@ -53,7 +53,7 @@ abstract class Crystal::SyntaxHighlighter
   end
 
   private def consume_space_or_newline(lexer)
-    while true
+    loop do
       char = lexer.current_char
       case char
       when '\n'
@@ -83,7 +83,7 @@ abstract class Crystal::SyntaxHighlighter
     last_token_type = nil
     space_before = false
 
-    while true
+    loop do
       token = lexer.next_token
 
       case token.type
@@ -212,7 +212,7 @@ abstract class Crystal::SyntaxHighlighter
   private def highlight_delimiter_state(lexer, token, *, heredoc = false)
     render_delimiter do
       render :DELIMITER_START, token.raw unless heredoc
-      while true
+      loop do
         token = lexer.next_string_token(token.delimiter_state)
         case token.type
         when .delimiter_end?
@@ -232,7 +232,7 @@ abstract class Crystal::SyntaxHighlighter
   private def highlight_string_array(lexer, token)
     render_string_array do
       render :STRING_ARRAY_START, token.raw
-      while true
+      loop do
         consume_space_or_newline(lexer)
         token = lexer.next_string_array_token
         case token.type

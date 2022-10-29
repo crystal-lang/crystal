@@ -454,7 +454,7 @@ describe HTTP::Server do
         TCPSocket.open(address.address, address.port) do |socket|
           socket << "GET / HTTP/1.1\r\n\r\n"
 
-          while true
+          loop do
             line = socket.gets || break
             break if line.empty?
           end

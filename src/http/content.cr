@@ -216,7 +216,7 @@ module HTTP
     private def read_trailer
       max_size = @max_headers_size
 
-      while true
+      loop do
         line = @io.read_line(max_size + 1, chomp: true)
         break if line.empty?
         max_size -= line.bytesize

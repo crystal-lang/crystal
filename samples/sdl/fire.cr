@@ -351,7 +351,7 @@ turn_right = Array.new(MainPoint::COUNT, false)
 speed_up = Array.new(MainPoint::COUNT, false)
 speed_down = Array.new(MainPoint::COUNT, false)
 
-while true
+loop do
   SDL.poll_events do |event|
     case event.type
     when LibSDL::QUIT

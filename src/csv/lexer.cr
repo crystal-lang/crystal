@@ -103,7 +103,7 @@ abstract class CSV::Lexer
 
   private def consume_quoted_cell
     @buffer.clear
-    while true
+    loop do
       case char = next_char
       when '\0'
         raise "Unclosed quote"

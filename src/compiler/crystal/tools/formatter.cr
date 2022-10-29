@@ -481,7 +481,7 @@ module Crystal
       write @token.raw
       next_string_token
 
-      while true
+      loop do
         case @token.type
         when .string?
           if @token.invalid_escape
@@ -699,7 +699,7 @@ module Crystal
     end
 
     def format_regex_modifiers
-      while true
+      loop do
         char = @lexer.current_char
         case char
         when 'i', 'm', 'x'
@@ -713,7 +713,7 @@ module Crystal
 
     def space_slash_newline?
       pos, line, col = @lexer.current_pos, @lexer.line_number, @lexer.column_number
-      while true
+      loop do
         char = @lexer.current_char
         case char
         when ' ', '\t'
@@ -733,7 +733,7 @@ module Crystal
 
     def space_newline?
       pos, line, col = @lexer.current_pos, @lexer.line_number, @lexer.column_number
-      while true
+      loop do
         char = @lexer.current_char
         case char
         when ' ', '\t'
@@ -762,7 +762,7 @@ module Crystal
         first = true
         write @token.raw
         count = 0
-        while true
+        loop do
           has_space_newline = space_newline?
           if has_space_newline
             write_line
@@ -1271,7 +1271,7 @@ module Crystal
           skip_space_or_newline
         end
 
-        while true
+        loop do
           case @token.type
           when .op_bar?
             write " | "
@@ -3208,7 +3208,7 @@ module Crystal
           write "("
           next_token_skip_space_or_newline
 
-          while true
+          loop do
             case @token.type
             when .ident?
               underscore = false
@@ -4605,7 +4605,7 @@ module Crystal
       base_column = @column
       has_space = false
       newlines = 0
-      while true
+      loop do
         case @token.type
         when .space?
           has_space = true
@@ -4666,7 +4666,7 @@ module Crystal
 
     def skip_semicolon_or_space
       found_comment = false
-      while true
+      loop do
         case @token.type
         when .op_semicolon?
           next_token
@@ -4680,7 +4680,7 @@ module Crystal
     end
 
     def skip_semicolon_or_space_or_newline
-      while true
+      loop do
         case @token.type
         when .op_semicolon?
           next_token

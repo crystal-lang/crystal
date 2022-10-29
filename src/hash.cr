@@ -368,7 +368,7 @@ class Hash(K, V)
     # Fit the hash value into an index in `@indices`
     index = fit_in_indices(hash)
 
-    while true
+    loop do
       entry_index = get_index(index)
 
       # If the index entry is empty...
@@ -431,7 +431,7 @@ class Hash(K, V)
 
     # Fit hash into `@indices` size
     index = fit_in_indices(hash)
-    while true
+    loop do
       entry_index = get_index(index)
 
       # If we find an empty index slot, there's no such key
@@ -487,7 +487,7 @@ class Hash(K, V)
 
     # Fit hash into `@indices` size
     index = fit_in_indices(hash)
-    while true
+    loop do
       entry_index = get_index(index)
 
       # If we find an empty index slot, there's no such key
@@ -2020,7 +2020,7 @@ class Hash(K, V)
     end
 
     def base_next
-      while true
+      loop do
         if @index < @hash.entries_size
           entry = @hash.entries[@index]
           if entry.deleted?

@@ -207,7 +207,7 @@ module Crystal
 
       # Decodes the compressed matrix of addresses to line numbers.
       private def decode_sequences(size)
-        while true
+        loop do
           pos = @io.tell
           offset = pos - @offset
           break unless offset < size

@@ -83,7 +83,7 @@ class Compress::Gzip::Reader < IO
 
     return 0 if slice.empty?
 
-    while true
+    loop do
       flate_io = @flate_io
       return 0 unless flate_io
 

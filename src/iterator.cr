@@ -353,7 +353,7 @@ module Iterator(T)
     end
 
     def next
-      while true
+      loop do
         value = wrapped_next
         mapped_value = @func.call(value)
 
@@ -593,7 +593,7 @@ module Iterator(T)
   # iter.each { |x| print x, " " } # Prints "a b c"
   # ```
   def each(& : T ->) : Nil
-    while true
+    loop do
       value = self.next
       break if value.is_a?(Stop)
       yield value
@@ -927,7 +927,7 @@ module Iterator(T)
     end
 
     def next
-      while true
+      loop do
         value = wrapped_next
         unless @func.call(value)
           return value
@@ -984,7 +984,7 @@ module Iterator(T)
     end
 
     def next
-      while true
+      loop do
         value = wrapped_next
         if @func.call(value)
           return value
@@ -1001,7 +1001,7 @@ module Iterator(T)
     end
 
     def next
-      while true
+      loop do
         value = wrapped_next
         if value.is_a?(T)
           return value
@@ -1063,7 +1063,7 @@ module Iterator(T)
     end
 
     def next
-      while true
+      loop do
         value = wrapped_next
         return value if @returned_false
         unless @func.call(value)
@@ -1288,7 +1288,7 @@ module Iterator(T)
     end
 
     def next
-      while true
+      loop do
         value = wrapped_next
         transformed = @func.call value
 
@@ -1588,7 +1588,7 @@ module Iterator(T)
         @clear_on_next = false
       end
 
-      while true
+      loop do
         value = @iterator.next
 
         if value.is_a?(Stop)
@@ -1698,7 +1698,7 @@ module Iterator(T)
         @value_to_add = nil
       end
 
-      while true
+      loop do
         value = @iterator.next
 
         if value.is_a?(Stop)
@@ -1817,7 +1817,7 @@ module Iterator(T)
         return end_value if v1.is_a?(Stop)
       end
 
-      while true
+      loop do
         @values << v1
 
         v2 = @iterator.next

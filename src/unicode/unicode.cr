@@ -446,7 +446,7 @@ module Unicode
         codepoints.unsafe_put(c_pos, -1)
       elsif c_ccc == 0
         yield l
-        while true
+        loop do
           l_pos += 1
           break if l_pos == c_pos
           l = codepoints.unsafe_fetch(l_pos)
@@ -460,7 +460,7 @@ module Unicode
     end
 
     yield l
-    while true
+    loop do
       l_pos += 1
       break if l_pos == codepoints.size
       l = codepoints.unsafe_fetch(l_pos)

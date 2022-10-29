@@ -125,7 +125,7 @@ abstract class JSON::Lexer
   # Since we are skipping we don't care about a
   # string's contents, so we just move forward.
   private def consume_string_skip
-    while true
+    loop do
       case next_char
       when '\0'
         raise "Unterminated string"
@@ -149,7 +149,7 @@ abstract class JSON::Lexer
   private def consume_string_with_buffer
     @buffer.clear
     yield
-    while true
+    loop do
       case char = next_char
       when '\0'
         raise "Unterminated string"

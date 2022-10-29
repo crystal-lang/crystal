@@ -3254,7 +3254,7 @@ class String
       pointer += 1
     end
 
-    while true
+    loop do
       # check hash equality and real string equality
       if hash == search_hash && head_pointer.memcmp(search.to_unsafe, search.bytesize) == 0
         return char_index
@@ -3309,7 +3309,7 @@ class String
       reader = Char::Reader.new(self, pos: byte_index)
     end
 
-    while true
+    loop do
       if reader.current_char == search
         return offset
       elsif reader.has_previous?
@@ -3355,7 +3355,7 @@ class String
       hash = hash &* PRIME_RK &+ byte
     end
 
-    while true
+    loop do
       # check hash equality and real string equality
       if hash == search_hash && char_index <= offset &&
          pointer.memcmp(search.to_unsafe, search.bytesize) == 0
@@ -3552,7 +3552,7 @@ class String
       pointer += 1
     end
 
-    while true
+    loop do
       # check hash equality and real string equality
       if hash == search_hash && head_pointer.memcmp(search.to_unsafe, search.bytesize) == 0
         return offset

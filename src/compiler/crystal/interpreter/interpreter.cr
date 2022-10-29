@@ -313,7 +313,7 @@ class Crystal::Repl::Interpreter
       overflow_offset: 0,
     )
 
-    while true
+    loop do
       {% if Debug::TRACE %}
         puts "-" * 80
 

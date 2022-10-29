@@ -924,7 +924,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if parent_closure_context
       # Find the closest parent closure
       block_level = @block_level
-      while true
+      loop do
         # Only at block level 0 we have a proc closure data
         if block_level == 0
           parent_index = @local_vars.name_to_index?(Closure::ARG_NAME, block_level)

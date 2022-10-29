@@ -17,7 +17,7 @@ class Crystal::Repl
 
     prompt = Prompt.new(@context, show_nest: true)
 
-    while true
+    loop do
       input = prompt.prompt("icr:#{prompt.line_number}")
       unless input
         # Explicitly call exit on ctrl+D so at_exit handlers run

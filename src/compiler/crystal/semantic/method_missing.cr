@@ -177,7 +177,7 @@ end
 
 private def starts_with_def?(source)
   lexer = Crystal::Lexer.new(source)
-  while true
+  loop do
     token = lexer.next_token
     return true if token.keyword?(:def)
     break if token.type.eof?

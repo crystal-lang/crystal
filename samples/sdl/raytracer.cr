@@ -222,7 +222,7 @@ SDL.hide_cursor
 surface = SDL.set_video_mode WIDTH, HEIGHT, 32, LibSDL::DOUBLEBUF | LibSDL::HWSURFACE | LibSDL::ASYNCBLIT
 
 first = true
-while true
+loop do
   SDL.poll_events do |event|
     if event.type == LibSDL::QUIT || event.type == LibSDL::KEYDOWN
       SDL.quit

@@ -27,7 +27,7 @@ private struct LEBReader
   def read_uleb128 : UInt64
     result = 0_u64
     shift = 0
-    while true
+    loop do
       byte = read_uint8
       result |= ((0x7f_u64 & byte) << shift)
       break if (byte & 0x80_u8) == 0
