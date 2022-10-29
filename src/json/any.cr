@@ -18,7 +18,7 @@
 # which return `nil` when the underlying value type won't match.
 struct JSON::Any
   # All possible JSON types.
-  alias Type = Nil | Bool | Int64 | Float64 | String | Array(Any) | Hash(String, Any)
+  alias Type = Nil | Bool | Int64 | Float64 | String | Array(JSON::Any) | Hash(String, JSON::Any)
 
   # Reads a `JSON::Any` value from the given pull parser.
   def self.new(pull : JSON::PullParser)
@@ -224,25 +224,25 @@ struct JSON::Any
 
   # Checks that the underlying value is `Array`, and returns its value.
   # Raises otherwise.
-  def as_a : Array(Any)
+  def as_a : Array(JSON::Any)
     @raw.as(Array)
   end
 
   # Checks that the underlying value is `Array`, and returns its value.
   # Returns `nil` otherwise.
-  def as_a? : Array(Any)?
+  def as_a? : Array(JSON::Any)?
     as_a if @raw.is_a?(Array)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
   # Raises otherwise.
-  def as_h : Hash(String, Any)
+  def as_h : Hash(String, JSON::Any)
     @raw.as(Hash)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
   # Returns `nil` otherwise.
-  def as_h? : Hash(String, Any)?
+  def as_h? : Hash(String, JSON::Any)?
     as_h if @raw.is_a?(Hash)
   end
 
@@ -283,12 +283,12 @@ struct JSON::Any
 
   # Returns a new JSON::Any instance with the `raw` value `dup`ed.
   def dup
-    Any.new(raw.dup)
+    JSON::Any.new(raw.dup)
   end
 
   # Returns a new JSON::Any instance with the `raw` value `clone`ed.
   def clone
-    Any.new(raw.clone)
+    JSON::Any.new(raw.clone)
   end
 end
 
