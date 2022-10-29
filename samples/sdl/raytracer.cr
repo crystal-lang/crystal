@@ -122,11 +122,11 @@ def trace(ray, scene, depth)
     end
 
     reflection_ratio = obj.reflection
-    normE5 = normal * 1.0e-5
+    norm_e5 = normal * 1.0e-5
 
     scene.lights.each do |lgt|
       light_direction = (lgt.position - point_of_hit).normalize
-      r = Ray.new(point_of_hit + normE5, light_direction)
+      r = Ray.new(point_of_hit + norm_e5, light_direction)
 
       # go through the scene check whether we're blocked from the lights
       blocked = scene.objects.any? &.intersects? r
@@ -146,7 +146,7 @@ def trace(ray, scene, depth)
     # compute reflection
     if depth < MAX_DEPTH && reflection_ratio > 0
       reflection_direction = ray.dir - normal * 2.0 * dot_normal_ray
-      reflection = trace(Ray.new(point_of_hit + normE5, reflection_direction), scene, depth + 1)
+      reflection = trace(Ray.new(point_of_hit + norm_e5, reflection_direction), scene, depth + 1)
       result += reflection * fresneleffect
     end
 
