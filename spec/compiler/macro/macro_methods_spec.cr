@@ -865,8 +865,18 @@ module Crystal
         assert_macro %({{ [1, 2, 3].includes?(4) }}), %(false)
       end
 
-      it "executes +" do
-        assert_macro %({{ [1, 2] + [3, 4, 5] }}), %([1, 2, 3, 4, 5])
+      describe "#+" do
+        context "with TupleLiteral argument" do
+          it "concatenates the literals into an ArrayLiteral" do
+            assert_macro %({{ [1, 2] + {3, 4, 5} }}), %([1, 2, 3, 4, 5])
+          end
+        end
+
+        context "with ArrayLiteral argument" do
+          it "concatenates the literals into an ArrayLiteral" do
+            assert_macro %({{ [1, 2] + [3, 4, 5] }}), %([1, 2, 3, 4, 5])
+          end
+        end
       end
 
       it "executes [] with range" do
@@ -1372,8 +1382,18 @@ module Crystal
         assert_macro %({{ {1, 2, 3}.includes?(4) }}), %(false)
       end
 
-      it "executes +" do
-        assert_macro %({{ {1, 2} + {3, 4, 5} }}), %({1, 2, 3, 4, 5})
+      describe "#+" do
+        context "with TupleLiteral argument" do
+          it "concatenates the literals into a TupleLiteral" do
+            assert_macro %({{ {1, 2} + {3, 4, 5} }}), %({1, 2, 3, 4, 5})
+          end
+        end
+
+        context "with ArrayLiteral argument" do
+          it "concatenates the literals into a TupleLiteral" do
+            assert_macro %({{ {1, 2} + [3, 4, 5] }}), %({1, 2, 3, 4, 5})
+          end
+        end
       end
     end
 
