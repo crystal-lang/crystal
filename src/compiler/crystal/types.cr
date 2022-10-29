@@ -2555,7 +2555,7 @@ module Crystal
     end
 
     def name_index(name)
-      @entries.index &.name.==(name)
+      @entries.index(&.name.==(name))
     end
 
     def name_type(name)

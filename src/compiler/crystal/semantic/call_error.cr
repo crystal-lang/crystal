@@ -215,7 +215,7 @@ class Crystal::Call
         # Show did you mean for the simplest case for now
         if names.size == 1 && call_errors.size == 1
           extra_name = names.first
-          name_index = call_errors.first.names.index(extra_name).not_nil!
+          name_index = call_errors.first.names.index!(extra_name)
           similar_name = call_errors.first.similar_names[name_index]
           if similar_name
             str.puts
