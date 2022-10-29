@@ -78,7 +78,7 @@ module Crystal::System::WindowsRegistry
       if 0 <= length <= buffer.size
         return String.from_utf16(buffer[0, length // 2 - 1])
       elsif small_buf && length > 0
-        next length
+        length
       else
         raise RuntimeError.new("RegQueryValueExW retry buffer")
       end

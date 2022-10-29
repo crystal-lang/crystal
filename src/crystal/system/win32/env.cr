@@ -36,7 +36,7 @@ module Crystal::System::Env
       if 0 < length < buffer.size
         return String.from_utf16(buffer[0, length])
       elsif small_buf && length > 0
-        next length
+        length
       else
         case last_error = WinError.value
         when WinError::ERROR_SUCCESS

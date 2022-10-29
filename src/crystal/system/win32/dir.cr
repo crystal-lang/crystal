@@ -93,7 +93,7 @@ module Crystal::System::Dir
       if 0 < len < buffer.size
         return String.from_utf16(buffer[0, len])
       elsif small_buf && len > 0
-        next len
+        len
       else
         raise ::File::Error.from_winerror("Error getting current directory", file: "./")
       end
@@ -114,7 +114,7 @@ module Crystal::System::Dir
       if 0 < len < buffer.size
         break String.from_utf16(buffer[0, len])
       elsif small_buf && len > 0
-        next len
+        len
       else
         raise RuntimeError.from_winerror("Error getting temporary directory")
       end

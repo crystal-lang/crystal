@@ -186,7 +186,7 @@ module Crystal::System::File
       if 0 < len < buffer.size
         break String.from_utf16(buffer[0, len])
       elsif small_buf && len > 0
-        next len
+        len
       else
         raise ::File::Error.from_winerror("Error resolving real path", file: path)
       end
