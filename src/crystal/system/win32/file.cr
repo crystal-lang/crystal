@@ -279,7 +279,7 @@ module Crystal::System::File
       lpOverlapped: pointerof(overlapped),
     )
     if ret == 0
-      raise IO::Error.from_errno("Error removing file lock")
+      raise IO::Error.from_errno("Error applying or removing file lock")
     end
   end
 
@@ -304,7 +304,7 @@ module Crystal::System::File
     )
 
     if ret == 0
-      raise IO::Error.from_errno("Error applying file lock")
+      raise IO::Error.from_errno("Error applying or removing file lock")
     end
   end
 
