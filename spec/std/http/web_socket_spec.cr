@@ -182,8 +182,8 @@ describe HTTP::WebSocket do
 
   describe "send" do
     it "sends long data with correct header" do
-      size = UInt16::MAX.to_u64 + 1
-      big_string = "a" * size
+      big_string = "abcdefghijklmnopqrstuvwxyz" * (IO::DEFAULT_BUFFER_SIZE // 4)
+      size = big_string.size
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.send(big_string)
@@ -194,7 +194,7 @@ describe HTTP::WebSocket do
       8.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
       received_size.should eq(size)
       size.times do |i|
-        bytes[10 + i].should eq('a'.ord)
+        bytes[10 + i].should eq(big_string[i].ord)
       end
     end
 
@@ -285,8 +285,8 @@ describe HTTP::WebSocket do
     end
 
     it "sends long data with correct header" do
-      size = UInt16::MAX.to_u64 + 1
-      big_string = "a" * size
+      big_string = "abcdefghijklmnopqrstuvwxyz" * (IO::DEFAULT_BUFFER_SIZE // 4)
+      size = big_string.size
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io, masked: true)
       ws.send(big_string)
@@ -298,7 +298,7 @@ describe HTTP::WebSocket do
       8.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
       received_size.should eq(size)
       size.times do |i|
-        (bytes[14 + i] ^ bytes[10 + (i % 4)]).should eq('a'.ord)
+        (bytes[14 + i] ^ bytes[10 + (i % 4)]).should eq(big_string[i].ord)
       end
     end
   end

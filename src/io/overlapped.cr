@@ -58,7 +58,7 @@ module IO::Overlapped
     else
       timeout = timeout.to_u64
     end
-    result = LibC.GetQueuedCompletionStatusEx(Crystal::EventLoop.iocp, overlapped_entries, overlapped_entries.size, out removed, timeout, false)
+    result = LibC.GetQueuedCompletionStatusEx(Crystal::Scheduler.event_loop.iocp, overlapped_entries, overlapped_entries.size, out removed, timeout, false)
     if result == 0
       error = WinError.value
       if timeout && error.wait_timeout?
@@ -157,12 +157,17 @@ module IO::Overlapped
 
   # Returns `false` if the operation timed out.
   def schedule_overlapped(timeout : Time::Span?, line = __LINE__) : Bool
-    timeout_event = Crystal::IocpEvent.new(Fiber.current)
-    timeout_event.add(timeout || Time::Span::MAX)
+    if timeout
+      timeout_event = Crystal::Iocp::Event.new(Fiber.current)
+      timeout_event.add(timeout)
+    else
+      timeout_event = Crystal::Iocp::Event.new(Fiber.current, Time::Span::MAX)
+    end
+    Crystal::Scheduler.event_loop.enqueue(timeout_event)
 
     Crystal::Scheduler.reschedule
 
-    Crystal::EventLoop.dequeue(timeout_event)
+    Crystal::Scheduler.event_loop.dequeue(timeout_event)
   end
 
   def overlapped_operation(socket, method, timeout, connreset_is_error = true)

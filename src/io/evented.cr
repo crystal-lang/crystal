@@ -12,8 +12,8 @@ module IO::Evented
   @readers = Crystal::ThreadLocalValue(Deque(Fiber)).new
   @writers = Crystal::ThreadLocalValue(Deque(Fiber)).new
 
-  @read_event = Crystal::ThreadLocalValue(Crystal::Event).new
-  @write_event = Crystal::ThreadLocalValue(Crystal::Event).new
+  @read_event = Crystal::ThreadLocalValue(Crystal::EventLoop::Event).new
+  @write_event = Crystal::ThreadLocalValue(Crystal::EventLoop::Event).new
 
   # Returns the time to wait when reading before raising an `IO::TimeoutError`.
   def read_timeout : Time::Span?

@@ -119,11 +119,9 @@ module Crystal::Playground
     end
 
     def send(message)
-      begin
-        @ws.send(message)
-      rescue ex : IO::Error
-        Log.warn { "Unable to send message (session=#{@session_key})." }
-      end
+      @ws.send(message)
+    rescue ex : IO::Error
+      Log.warn { "Unable to send message (session=#{@session_key})." }
     end
 
     def send_with_json_builder
@@ -226,21 +224,19 @@ module Crystal::Playground
     end
 
     def content
-      begin
-        extname = File.extname(@filename)
-        content = if extname == ".cr"
-                    crystal_source_to_markdown(@filename)
-                  else
-                    File.read(@filename)
-                  end
+      extname = File.extname(@filename)
+      content = if extname == ".cr"
+                  crystal_source_to_markdown(@filename)
+                else
+                  File.read(@filename)
+                end
 
-        if extname == ".md" || extname == ".cr"
-          content = Markd.to_html(content)
-        end
-        content
-      rescue e
-        e.message || "Error: generating content for #{@filename}"
+      if extname == ".md" || extname == ".cr"
+        content = Markd.to_html(content)
       end
+      content
+    rescue e
+      e.message || "Error: generating content for #{@filename}"
     end
 
     def to_s(io : IO) : Nil
@@ -394,6 +390,22 @@ module Crystal::Playground
   class EnvironmentHandler
     include HTTP::Handler
 
+    DEFAULT_SOURCE = <<-CR
+      def find_string(text, word)
+        (0..text.size-word.size).each do |i|
+          { i, text[i..i+word.size-1] }
+          if text[i..i+word.size-1] == word
+            return i
+          end
+        end
+
+        nil
+      end
+
+      find_string "Crystal is awesome!", "awesome"
+      find_string "Crystal is awesome!", "not sure"
+      CR
+
     def initialize(@server : Playground::Server)
     end
 
@@ -401,31 +413,17 @@ module Crystal::Playground
       case {context.request.method, context.request.resource}
       when {"GET", "/environment.js"}
         context.response.headers["Content-Type"] = "application/javascript"
-        context.response.puts %(Environment = {})
 
-        context.response.puts %(Environment.version = #{Crystal::Config.description.inspect})
-
-        defaultSource = <<-CR
-          def find_string(text, word)
-            (0..text.size-word.size).each do |i|
-              { i, text[i..i+word.size-1] }
-              if text[i..i+word.size-1] == word
-                return i
-              end
-            end
-
-            nil
-          end
-
-          find_string "Crystal is awesome!", "awesome"
-          find_string "Crystal is awesome!", "not sure"
-          CR
-        context.response.puts "Environment.defaultSource = #{defaultSource.inspect}"
+        context.response.puts <<-JS
+          Environment = {}
+          Environment.version = #{Crystal::Config.description.inspect}
+          Environment.defaultSource = #{DEFAULT_SOURCE.inspect}
+          JS
 
         if source = @server.source
-          context.response.puts "Environment.source = #{source.code.inspect};"
+          context.response.puts "Environment.source = #{source.code.inspect}"
         else
-          context.response.puts "Environment.source = null;"
+          context.response.puts "Environment.source = null"
         end
       else
         call_next(context)

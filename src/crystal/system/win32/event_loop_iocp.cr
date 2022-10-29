@@ -1,19 +1,23 @@
 require "c/ioapiset"
 require "crystal/system/print_error"
 
-class Crystal::EventLoop
-  @@queue = Deque(Event).new
+# :nodoc:
+abstract class Crystal::EventLoop
+  def self.create
+    Crystal::Iocp::EventLoop.new
+  end
+end
+
+# :nodoc:
+class Crystal::Iocp::EventLoop < Crystal::EventLoop
+  @queue = Deque(Crystal::Iocp::Event).new
 
   # Returns the base IO Completion Port
-  class_getter iocp : LibC::HANDLE do
+  getter iocp : LibC::HANDLE do
     create_completion_port(LibC::INVALID_HANDLE_VALUE, nil)
   end
 
-  def self.create
-    Crystal::EventLoop
-  end
-
-  def self.create_completion_port(handle : LibC::HANDLE, parent : LibC::HANDLE? = iocp)
+  def create_completion_port(handle : LibC::HANDLE, parent : LibC::HANDLE? = iocp)
     iocp = LibC.CreateIoCompletionPort(handle, parent, nil, 0)
     if iocp.null?
       raise IO::Error.from_winerror("CreateIoCompletionPort")
@@ -22,7 +26,7 @@ class Crystal::EventLoop
   end
 
   # This is a temporary stub as a stand in for fiber swapping required for concurrency
-  def self.wait_completion(timeout = nil)
+  def wait_completion(timeout = nil)
     result = LibC.GetQueuedCompletionStatusEx(iocp, out io_entry, 1, out removed, timeout, false)
     if result == 0
       error = WinError.value
@@ -37,8 +41,8 @@ class Crystal::EventLoop
   end
 
   # Runs the event loop.
-  def self.run_once : Nil
-    next_event = @@queue.min_by { |e| e.wake_at }
+  def run_once : Nil
+    next_event = @queue.min_by { |e| e.wake_at }
 
     if next_event
       now = Time.monotonic
@@ -71,40 +75,40 @@ class Crystal::EventLoop
   end
 
   # Reinitializes the event loop after a fork.
-  def self.after_fork : Nil
+  def after_fork : Nil
   end
 
-  def self.enqueue(event : Event)
-    unless @@queue.includes?(event)
-      @@queue << event
+  def enqueue(event : Crystal::Iocp::Event)
+    unless @queue.includes?(event)
+      @queue << event
     end
   end
 
-  def self.dequeue(event : Event)
-    @@queue.delete(event)
+  def dequeue(event : Crystal::Iocp::Event)
+    @queue.delete(event)
   end
 
   # Create a new resume event for a fiber.
-  def self.create_resume_event(fiber : Fiber) : Crystal::Event
-    Crystal::IocpEvent.new(fiber)
+  def create_resume_event(fiber : Fiber) : Crystal::EventLoop::Event
+    Crystal::Iocp::Event.new(fiber)
   end
 
   # Creates a write event for a file descriptor.
-  def self.create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
-    Crystal::IocpEvent.new(Fiber.current)
+  def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
+    Crystal::Iocp::Event.new(Fiber.current)
   end
 
   # Creates a read event for a file descriptor.
-  def self.create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
-    Crystal::IocpEvent.new(Fiber.current)
+  def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
+    Crystal::Iocp::Event.new(Fiber.current)
   end
 
-  def self.create_timeout_event(fiber)
-    Crystal::Event.new(fiber, timeout: true)
+  def create_timeout_event(fiber) : Crystal::EventLoop::Event
+    Crystal::Iocp::Event.new(fiber, timeout: true)
   end
 end
 
-struct Crystal::IocpEvent < Crystal::Event
+struct Crystal::Iocp::Event < Crystal::EventLoop::Event
   getter fiber
   getter wake_at
   getter? timeout
@@ -114,7 +118,7 @@ struct Crystal::IocpEvent < Crystal::Event
 
   # Frees the event
   def free : Nil
-    Crystal::EventLoop.dequeue(self)
+    Crystal::Scheduler.event_loop.dequeue(self)
   end
 
   def delete
@@ -123,6 +127,6 @@ struct Crystal::IocpEvent < Crystal::Event
 
   def add(timeout : Time::Span?) : Nil
     @wake_at = timeout ? Time.monotonic + timeout : Time.monotonic
-    Crystal::EventLoop.enqueue(self)
+    Crystal::Scheduler.event_loop.enqueue(self)
   end
 end

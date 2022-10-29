@@ -1173,8 +1173,8 @@ module Crystal
           self.var.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.var.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.var.annotations(type) : self.var.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1347,8 +1347,8 @@ module Crystal
           self.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.annotations(type) : self.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1400,8 +1400,8 @@ module Crystal
           self.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.annotations(type) : self.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1658,8 +1658,8 @@ module Crystal
           self.type.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.type.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.type.annotations(type) : self.type.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -2677,6 +2677,26 @@ end
 
 private def fetch_annotation(node, method, args, named_args, block)
   interpret_check_args(node: node) do |arg|
+    unless arg.is_a?(Crystal::TypeNode)
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
+    end
+
+    type = arg.type
+    unless type.is_a?(Crystal::AnnotationType)
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be an annotation type, not #{type} (#{type.type_desc})"
+    end
+
+    value = yield type
+    value || Crystal::NilLiteral.new
+  end
+end
+
+private def fetch_annotations(node, method, args, named_args, block)
+  interpret_check_args(node: node, min_count: 0) do |arg|
+    unless arg
+      return yield(nil) || Crystal::NilLiteral.new
+    end
+
     unless arg.is_a?(Crystal::TypeNode)
       args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
     end

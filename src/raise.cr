@@ -216,6 +216,7 @@ end
 {% if flag?(:wasm32) %}
   def raise(exception : Exception) : NoReturn
     LibC.printf("EXITING: Attempting to raise:\n#{exception.inspect_with_backtrace}")
+    LibIntrinsics.debugtrap
     LibC.exit(1)
   end
 {% else %}
