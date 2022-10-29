@@ -2904,6 +2904,7 @@ module Crystal
       skip_statement_end
 
       whens = [] of Select::When
+      a_else = nil
 
       loop do
         case @token.value

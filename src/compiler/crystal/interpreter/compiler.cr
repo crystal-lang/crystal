@@ -921,6 +921,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       pointer_set aligned_sizeof_type(closure_self_type), node: nil
     end
 
+    parent_index = nil
+
     if parent_closure_context
       # Find the closest parent closure
       block_level = @block_level
