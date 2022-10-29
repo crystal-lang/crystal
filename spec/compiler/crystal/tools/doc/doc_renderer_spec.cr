@@ -85,7 +85,7 @@ describe Doc::MarkdDocRenderer do
       {base, base_foo}.each do |obj|
         assert_code_link(obj, "(0..baz)")
         assert_code_link(obj, "(0...baz)")
-        assert_code_link(obj, "0...baz")
+        assert_code_link(obj, "0..baz")
         assert_code_link(obj, "0...baz")
       end
     end
