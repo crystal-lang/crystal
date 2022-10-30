@@ -1371,7 +1371,7 @@ module Crystal
 
     def skip_comment
       char = current_char
-      while char != '\n' && char != '\0'
+      while !char.in?('\n', '\0')
         char = next_char_no_column_increment
       end
     end
