@@ -2508,7 +2508,7 @@ module Crystal
       base_indent = @indent
 
       # Special case: $1, $2, ...
-      if @token.type.global_match_data_index? && (node.name == "[]" || node.name == "[]?") && obj.is_a?(Global)
+      if @token.type.global_match_data_index? && node.name.in?("[]", "[]?") && obj.is_a?(Global)
         write "$"
         write @token.value
         next_token
@@ -2663,7 +2663,7 @@ module Crystal
       end
 
       # This is for foo &.[bar] and &.[bar]?, or foo.[bar] and foo.[bar]?
-      if (node.name == "[]" || node.name == "[]?") && @token.type.op_lsquare?
+      if node.name.in?("[]", "[]?") && @token.type.op_lsquare?
         write "["
         next_token_skip_space_or_newline
         format_call_args(node, false, base_indent)
@@ -4741,7 +4741,7 @@ module Crystal
               @current_doc_comment = nil
             else
               # Normalize crystal language tag
-              if language == "cr" || language == "crystal"
+              if language.in?("cr", "crystal")
                 value = value.rchop(language)
                 language = ""
               end

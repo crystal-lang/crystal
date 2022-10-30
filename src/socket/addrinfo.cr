@@ -151,7 +151,7 @@ class Socket
         # On OS X < 10.12, the libsystem implementation of getaddrinfo segfaults
         # if AI_NUMERICSERV is set, and servname is NULL or 0.
         {% if flag?(:darwin) %}
-          if (service == 0 || service == nil) && (hints.ai_flags & LibC::AI_NUMERICSERV)
+          if service.in?(0, nil) && (hints.ai_flags & LibC::AI_NUMERICSERV)
             hints.ai_flags |= LibC::AI_NUMERICSERV
             service = "00"
           end

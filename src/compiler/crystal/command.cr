@@ -95,7 +95,7 @@ class Crystal::Command
     when command == "eval"
       options.shift
       eval
-    when command == "i" || command == "interactive"
+    when command.in?("i", "interactive")
       options.shift
       {% if flag?(:without_interpreter) %}
         STDERR.puts "Crystal was compiled without interpreter support"
