@@ -317,7 +317,7 @@ end
 LibXML.xmlGcMemSetup(
   ->GC.free,
   ->GC.malloc(LibC::SizeT),
-  ->GC.malloc(LibC::SizeT),
+  ->GC.malloc_atomic(LibC::SizeT),
   ->GC.realloc(Void*, LibC::SizeT),
   ->(str) {
     len = LibC.strlen(str) + 1
