@@ -89,7 +89,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     return false if cls.empty?
 
     cl = cls.first
-    cl == RegClass::Memory || cl == RegClass::X87 || cl == RegClass::ComplexX87
+    cl.in?(RegClass::Memory, RegClass::X87, RegClass::ComplexX87)
   end
 
   def sret?(cls) : Bool
@@ -161,7 +161,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     i = 0
     ty_kind = ty.kind
     e = cls.size
-    if e > 2 && (ty_kind == Type::Kind::Struct || ty_kind == Type::Kind::Array)
+    if e > 2 && ty_kind.in?(Type::Kind::Struct, Type::Kind::Array)
       if cls[i].sse?
         i += 1
         while i < e

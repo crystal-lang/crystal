@@ -133,7 +133,7 @@ puts "Rects: #{rects.size}"
 begin
   while true
     SDL.poll_events do |event|
-      if event.type == LibSDL::QUIT || event.type == LibSDL::KEYDOWN
+      if event.type.in?(LibSDL::QUIT, LibSDL::KEYDOWN)
         ms = SDL.ticks - start
         puts "#{frames} frames in #{ms} ms"
         puts "Average FPS: #{frames / (ms * 0.001)}"

@@ -67,7 +67,7 @@ class Crystal::Call
     # Another special case: `new` and `initialize` are only looked up one level,
     # so we must find the first one defined.
     new_owner = owner
-    while defs.empty? && (def_name == "initialize" || def_name == "new")
+    while defs.empty? && def_name.in?("initialize", "new")
       new_owner = new_owner.superclass
       if new_owner
         defs = new_owner.lookup_defs(def_name)
@@ -100,13 +100,13 @@ class Crystal::Call
 
     # If we made a lookup without the special rule for literals,
     # and we have literals in the call, try again with that special rule.
-    if with_autocast == false && (args.any?(&.supports_autocast? number_autocast) ||
+    if !with_autocast && (args.any?(&.supports_autocast? number_autocast) ||
        named_args.try &.any? &.value.supports_autocast? number_autocast)
       ::raise RetryLookupWithLiterals.new
     end
 
     # If it's on an initialize method and there's a similar method name, it's probably a typo
-    if (def_name == "initialize" || def_name == "new") && (similar_def = owner.instance_type.lookup_similar_def("initialize", self.args.size, block))
+    if def_name.in?("initialize", "new") && (similar_def = owner.instance_type.lookup_similar_def("initialize", self.args.size, block))
       inner_msg = colorize("do you maybe have a typo in this '#{similar_def.name}' method?").yellow.bold.to_s
       inner_exception = TypeException.for_node(similar_def, inner_msg)
     end

@@ -115,7 +115,7 @@ module MIME::Multipart
 
         0.upto(transport_padding_crlf.bytesize - 3) do |i| # 3 constant to ignore "\r\n" at end
           byte = transport_padding_crlf.to_unsafe[i]
-          fail("padding contained non-whitespace character") unless byte == ' '.ord || byte == '\t'.ord
+          fail("padding contained non-whitespace character") unless byte.in?(' '.ord, '\t'.ord)
         end
       end
 
