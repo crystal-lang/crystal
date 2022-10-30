@@ -1385,8 +1385,7 @@ module Crystal
         when ' ', '\t'
           next_char
         when '\\'
-          case next_char
-          when '\r', '\n'
+          if next_char.in?('\r', '\n')
             handle_slash_r_slash_n_or_slash_n
             next_char
             incr_line_number
@@ -1855,13 +1854,7 @@ module Crystal
       string_end = delimiter_state.end
       string_nest = delimiter_state.nest
 
-      while current_char != string_end &&
-            current_char != string_nest &&
-            current_char != '\0' &&
-            current_char != '\\' &&
-            current_char != '#' &&
-            current_char != '\r' &&
-            current_char != '\n'
+      while !current_char.in?(string_end, string_nest, '\0', '\\', '#', '\r', '\n')
         next_char
       end
 
@@ -1873,7 +1866,7 @@ module Crystal
       old_pos = current_pos
       old_column = @column_number
 
-      while current_char == ' ' || current_char == '\t'
+      while current_char.in?(' ', '\t')
         next_char
       end
 
@@ -2057,27 +2050,27 @@ module Crystal
 
       if !delimiter_state && current_char == '%' && ident_start?(peek_next_char)
         char = next_char
-        if char == 'q' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+        if char == 'q' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
           delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
           next_char
-        elsif char == 'Q' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+        elsif char == 'Q' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
           delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
           next_char
-        elsif char == 'i' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+        elsif char == 'i' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
           delimiter_state = Token::DelimiterState.new(:symbol_array, char, closing_char, 1)
           next_char
-        elsif char == 'w' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+        elsif char == 'w' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
           delimiter_state = Token::DelimiterState.new(:string_array, char, closing_char, 1)
           next_char
-        elsif char == 'x' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+        elsif char == 'x' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
           delimiter_state = Token::DelimiterState.new(:command, char, closing_char, 1)
           next_char
-        elsif char == 'r' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+        elsif char == 'r' && peek_next_char.in?('(', '<', '[', '{', '|')
           next_char
           delimiter_state = Token::DelimiterState.new(:regex, char, closing_char, 1)
           next_char
@@ -2128,7 +2121,9 @@ module Crystal
 
       char = current_char
 
-      until char == '{' || char == '\0' || (char == '\\' && ((peek = peek_next_char) == '{' || peek == '%')) || (whitespace && !delimiter_state && char == 'e')
+      until char.in?('{', '\0') ||
+            (char == '\\' && peek_next_char.in?('{', '%')) ||
+            (whitespace && !delimiter_state && char == 'e')
         case char
         when '\n'
           incr_line_number 0
