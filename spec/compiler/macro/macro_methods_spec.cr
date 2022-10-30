@@ -879,6 +879,20 @@ module Crystal
         end
       end
 
+      describe "#-" do
+        context "with TupleLiteral argument" do
+          it "removes the elements in RHS from LHS into an ArrayLiteral" do
+            assert_macro %({{ [1, 2, 3, 4] - {1, 3, 5} }}), %([2, 4])
+          end
+        end
+
+        context "with ArrayLiteral argument" do
+          it "removes the elements in RHS from LHS into an ArrayLiteral" do
+            assert_macro %({{ [1, 2, 3, 4] - [1, 3, 5] }}), %([2, 4])
+          end
+        end
+      end
+
       it "executes [] with range" do
         assert_macro %({{ [1, 2, 3, 4][1...-1] }}), %([2, 3])
       end
@@ -1392,6 +1406,20 @@ module Crystal
         context "with ArrayLiteral argument" do
           it "concatenates the literals into a TupleLiteral" do
             assert_macro %({{ {1, 2} + [3, 4, 5] }}), %({1, 2, 3, 4, 5})
+          end
+        end
+      end
+
+      describe "#-" do
+        context "with TupleLiteral argument" do
+          it "removes the elements in RHS from LHS into a TupleLiteral" do
+            assert_macro %({{ {1, 2, 3, 4} - {1, 3, 5} }}), %({2, 4})
+          end
+        end
+
+        context "with ArrayLiteral argument" do
+          it "removes the elements in RHS from LHS into a TupleLiteral" do
+            assert_macro %({{ {1, 2, 3, 4} - [1, 3, 5] }}), %({2, 4})
           end
         end
       end
