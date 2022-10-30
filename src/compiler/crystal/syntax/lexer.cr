@@ -1256,9 +1256,7 @@ module Crystal
           case next_char
           when 'D'
             if char_sequence?('I', 'R', '_', '_')
-              if ident_part_or_end?(peek_next_char)
-                scan_ident(start)
-              else
+              unless ident_part_or_end?(peek_next_char)
                 next_char
                 @token.type = :MAGIC_DIR
                 return @token
@@ -1266,9 +1264,7 @@ module Crystal
             end
           when 'E'
             if char_sequence?('N', 'D', '_', 'L', 'I', 'N', 'E', '_', '_')
-              if ident_part_or_end?(peek_next_char)
-                scan_ident(start)
-              else
+              unless ident_part_or_end?(peek_next_char)
                 next_char
                 @token.type = :MAGIC_END_LINE
                 return @token
@@ -1276,9 +1272,7 @@ module Crystal
             end
           when 'F'
             if char_sequence?('I', 'L', 'E', '_', '_')
-              if ident_part_or_end?(peek_next_char)
-                scan_ident(start)
-              else
+              unless ident_part_or_end?(peek_next_char)
                 next_char
                 @token.type = :MAGIC_FILE
                 return @token
@@ -1286,9 +1280,7 @@ module Crystal
             end
           when 'L'
             if char_sequence?('I', 'N', 'E', '_', '_')
-              if ident_part_or_end?(peek_next_char)
-                scan_ident(start)
-              else
+              unless ident_part_or_end?(peek_next_char)
                 next_char
                 @token.type = :MAGIC_LINE
                 return @token
