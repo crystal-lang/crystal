@@ -896,8 +896,8 @@ describe "buffered" do
       ch.receive.should eq 1
     end
     Fiber.yield # required to let the receiving fiber start
-    ch.send?(1).should be_true
-    ch.send?(2).should be_false
+    ch.try_send(1).should be_true
+    ch.try_send(2).should be_false
   end
 
   it "can send non blocking to buffered channel" do
@@ -906,8 +906,8 @@ describe "buffered" do
       ch.receive.should eq 1
     end
     Fiber.yield # required to let the receiving fiber start
-    ch.send?(1).should be_true
-    ch.send?(2).should be_true
-    ch.send?(3).should be_false
+    ch.try_send(1).should be_true
+    ch.try_send(2).should be_true
+    ch.try_send(3).should be_false
   end
 end
