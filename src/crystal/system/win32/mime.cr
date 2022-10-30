@@ -1,7 +1,7 @@
 require "./windows_registry"
 
 module Crystal::System::MIME
-  CONTENT_TYPE = "Content Type".to_utf16
+  CONTENT_TYPE = System.to_wstr("Content Type")
 
   # Load MIME types from operating system source.
   def self.load

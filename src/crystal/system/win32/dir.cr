@@ -18,7 +18,7 @@ module Crystal::System::Dir
       raise ::File::Error.from_os_error("Error opening directory", Errno::ENOENT, file: path)
     end
 
-    DirHandle.new(LibC::INVALID_HANDLE_VALUE, to_windows_path(path + "\\*"))
+    DirHandle.new(LibC::INVALID_HANDLE_VALUE, System.to_wstr(path + "\\*"))
   end
 
   def self.next_entry(dir : DirHandle, path : String) : Entry?
@@ -101,7 +101,7 @@ module Crystal::System::Dir
   end
 
   def self.current=(path : String) : String
-    if LibC.SetCurrentDirectoryW(to_windows_path(path)) == 0
+    if LibC.SetCurrentDirectoryW(System.to_wstr(path)) == 0
       raise ::File::Error.from_winerror("Error while changing directory", file: path)
     end
 
@@ -124,22 +124,18 @@ module Crystal::System::Dir
   end
 
   def self.create(path : String, mode : Int32) : Nil
-    if LibC._wmkdir(to_windows_path(path)) == -1
+    if LibC._wmkdir(System.to_wstr(path)) == -1
       raise ::File::Error.from_errno("Unable to create directory", file: path)
     end
   end
 
   def self.delete(path : String, *, raise_on_missing : Bool) : Bool
-    return true if LibC._wrmdir(to_windows_path(path)) == 0
+    return true if LibC._wrmdir(System.to_wstr(path)) == 0
 
     if !raise_on_missing && Errno.value == Errno::ENOENT
       false
     else
       raise ::File::Error.from_errno("Unable to remove directory", file: path)
     end
-  end
-
-  private def self.to_windows_path(path : String) : LibC::LPWSTR
-    path.check_no_null_byte.to_utf16.to_unsafe
   end
 end
