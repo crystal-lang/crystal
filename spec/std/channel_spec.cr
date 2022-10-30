@@ -889,4 +889,25 @@ describe "buffered" do
     ch = Channel(Int32).new(10)
     ch.pretty_inspect.should eq("#<Channel(Int32):0x#{ch.object_id.to_s(16)}>")
   end
+
+  it "can send non blocking" do
+    ch = Channel(Int32).new
+    spawn do
+      ch.receive.should eq 1
+    end
+    Fiber.yield # required to let the receiving fiber start
+    ch.send?(1).should be_true
+    ch.send?(2).should be_false
+  end
+
+  it "can send non blocking to buffered channel" do
+    ch = Channel(Int32).new(1)
+    spawn do
+      ch.receive.should eq 1
+    end
+    Fiber.yield # required to let the receiving fiber start
+    ch.send?(1).should be_true
+    ch.send?(2).should be_true
+    ch.send?(3).should be_false
+  end
 end
