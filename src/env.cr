@@ -128,7 +128,7 @@ module ENV
   end
 
   def self.pretty_print(pp)
-    pp.list("{", keys.sort, "}") do |key|
+    pp.list("{", keys.sort!, "}") do |key|
       pp.group do
         key.pretty_print(pp)
         pp.text " =>"
