@@ -218,6 +218,23 @@ class Object
     in?(values)
   end
 
+  # Returns `true` if `self` is not included in the *collection* argument.
+  #
+  # ```
+  # 1000.not_in?(0..100)     # => true
+  # 1000.not_in?({0, 1, 10}) # => true
+  # 1000.not_in?(0, 1, 10)   # => true
+  # 1000.not_in?(:foo, :bar) # => false
+  # ```
+  def not_in?(collection : Object) : Bool
+    !in?(collection)
+  end
+
+  # :ditto:
+  def not_in?(*values : Object) : Bool
+    !in?(values)
+  end
+
   # Returns `self`.
   #
   # `Nil` overrides this method and raises `NilAssertionError`, see `Nil#not_nil!`.

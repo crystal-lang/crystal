@@ -162,6 +162,13 @@ private class DefEquals
   def_equals @x
 end
 
+@[Flags]
+private enum TestInEnum
+  A
+  B
+  C
+end
+
 describe Object do
   describe "delegate" do
     it "delegates" do
@@ -479,6 +486,28 @@ describe Object do
       "o".in?("foo").should be_true
       'o'.in?("foo").should be_true
       'x'.in?("foo").should be_false
+      TestInEnum::A.in?(TestInEnum::A | TestInEnum::B).should be_true
+    end
+  end
+
+  describe "#not_in?" do
+    it "works with Enumerable-s" do
+      "foo".not_in?(["foo", "bar"]).should be_false
+      "bar".not_in?({"foo", "baz"}).should be_true
+      42.not_in?(0..100).should be_false
+      4242.not_in?(0..100).should be_true
+    end
+
+    it "works with splatted arguments" do
+      "baz".not_in?("foo", "bar").should be_true
+      1.not_in?(1, 10, 100).should be_false
+    end
+
+    it "works with other objects implementing #excludes?" do
+      "o".not_in?("foo").should be_false
+      'o'.not_in?("foo").should be_false
+      'x'.not_in?("foo").should be_true
+      TestInEnum::A.not_in?(TestInEnum::A | TestInEnum::B).should be_false
     end
   end
 
