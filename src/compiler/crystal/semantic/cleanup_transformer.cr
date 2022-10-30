@@ -253,7 +253,7 @@ module Crystal
       string = node.expressions.join do |exp|
         if !(transformed_piece = solve_string_interpolation_expression(exp)).nil?
           # Valid piece, continue joining
-          transformed_piece
+          next transformed_piece
         elsif expanded = node.expanded
           # Invalid piece, transform expansion and exit early
           return expanded.transform(self)
