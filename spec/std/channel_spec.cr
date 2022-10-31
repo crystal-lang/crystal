@@ -910,4 +910,10 @@ describe "buffered" do
     ch.try_send(2).should be_true
     ch.try_send(3).should be_false
   end
+
+  it "can try send to a closed channel" do
+    ch = Channel(Int32).new
+    ch.close
+    ch.try_send?(1).should be_false
+  end
 end
