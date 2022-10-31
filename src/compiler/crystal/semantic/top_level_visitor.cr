@@ -1057,7 +1057,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def has_hooks?(type_with_hooks)
     hooks = type_with_hooks.as?(ModuleType).try &.hooks
-    hooks && !hooks.empty?
+    !hooks.nil? && !hooks.empty?
   end
 
   def run_hooks(type_with_hooks, current_type, kind : HookKind, node, call = nil)

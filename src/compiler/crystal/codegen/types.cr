@@ -29,9 +29,9 @@ module Crystal
       when VirtualType
         self.struct?
       when NonGenericModuleType
-        self.including_types.try &.passed_by_value?
+        !!self.including_types.try &.passed_by_value?
       when GenericModuleInstanceType
-        self.including_types.try &.passed_by_value?
+        !!self.including_types.try &.passed_by_value?
       when GenericClassInstanceType
         self.generic_type.passed_by_value?
       when TypeDefType
