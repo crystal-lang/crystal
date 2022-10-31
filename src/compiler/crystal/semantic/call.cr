@@ -1167,7 +1167,7 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    strict_check = body.is_a?(Primitive) && (body.name == "proc_call" || body.name == "pointer_set")
+    strict_check = body.is_a?(Primitive) && body.name.in?("proc_call", "pointer_set")
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]

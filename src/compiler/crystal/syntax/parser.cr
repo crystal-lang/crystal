@@ -241,7 +241,7 @@ module Crystal
         !exp.has_parentheses? && (
           (exp.args.empty? && !exp.named_args) ||
             Lexer.setter?(exp.name) ||
-            exp.name == "[]" || exp.name == "[]="
+            exp.name.in?("[]", "[]=")
         )
       else
         false
@@ -701,7 +701,6 @@ module Crystal
             end_location = token_end_location
 
             @wants_regex = false
-            has_parentheses = false
             next_token
 
             space_consumed = false
@@ -2218,7 +2217,7 @@ module Crystal
         this_piece_is_in_new_line = line_number != previous_line_number
         next_piece_is_in_new_line = i == pieces.size - 1 || pieces[i + 1].line_number != line_number
         if value.is_a?(String)
-          if value == "\n" || value == "\r\n"
+          if value.in?("\n", "\r\n")
             current_line << value
             if this_piece_is_in_new_line || next_piece_is_in_new_line
               line = current_line.to_s
@@ -2606,8 +2605,6 @@ module Crystal
 
       first_value = parse_op_assign
       skip_space_or_newline
-
-      end_location = nil
 
       entries = [] of NamedTupleLiteral::Entry
       entries << NamedTupleLiteral::Entry.new(first_key, first_value)
@@ -3483,7 +3480,6 @@ module Crystal
 
       receiver = nil
       @yields = nil
-      name_line_number = @token.line_number
       name_location = @token.location
       receiver_location = @token.location
       end_location = token_end_location
@@ -3775,7 +3771,6 @@ module Crystal
 
       if splat && (@token.type.op_comma? || @token.type.op_rparen?)
         param_name = ""
-        uses_param = false
         allow_restrictions = false
       else
         param_location = @token.location
@@ -3876,9 +3871,6 @@ module Crystal
         param_name, external_name, found_space, uses_param = parse_param_name(name_location, extra_assigns, allow_external_name: false)
         @uses_block_arg = true if uses_param
       end
-
-      inputs = nil
-      output = nil
 
       if @token.type.op_colon?
         next_token_skip_space_or_newline
@@ -4298,7 +4290,7 @@ module Crystal
       while current_char.ascii_whitespace?
         next_char_no_column_increment
       end
-      comes_plus_or_minus = current_char == '+' || current_char == '-'
+      comes_plus_or_minus = current_char.in?('+', '-')
       self.current_pos = pos
       comes_plus_or_minus
     end

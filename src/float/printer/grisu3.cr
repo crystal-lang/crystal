@@ -315,8 +315,6 @@ module Float::Printer::Grisu3
   # digits might correctly yield *v* when read again, the closest will be
   # computed.
   def grisu3(v : Float64 | Float32, buffer_p) : {Bool, Int32, Int32}
-    buffer = buffer_p.to_slice(128)
-
     w = DiyFP.from_f_normalized(v)
 
     # boundary_minus and boundary_plus are the boundaries between v and its

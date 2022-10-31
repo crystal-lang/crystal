@@ -607,7 +607,7 @@ describe "Semantic: virtual" do
   end
 
   it "uses virtual type as generic type if class is abstract" do
-    result = assert_type("
+    assert_type("
       abstract class Foo
       end
 
@@ -619,7 +619,7 @@ describe "Semantic: virtual" do
   end
 
   it "uses virtual type as generic type if class is abstract even in union" do
-    result = assert_type("
+    assert_type("
       abstract class Foo
       end
 

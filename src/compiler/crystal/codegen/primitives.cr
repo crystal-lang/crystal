@@ -748,7 +748,7 @@ class Crystal::CodeGenVisitor
 
     old_debug_location = @current_debug_location
     if @debug.line_numbers? && (location = node.location)
-      set_current_debug_location(node.location)
+      set_current_debug_location(location)
     end
 
     if type.element_type.has_inner_pointers?

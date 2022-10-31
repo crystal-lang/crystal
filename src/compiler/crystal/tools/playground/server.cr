@@ -231,7 +231,7 @@ module Crystal::Playground
                   File.read(@filename)
                 end
 
-      if extname == ".md" || extname == ".cr"
+      if extname.in?(".md", ".cr")
         content = Markd.to_html(content)
       end
       content
@@ -390,6 +390,22 @@ module Crystal::Playground
   class EnvironmentHandler
     include HTTP::Handler
 
+    DEFAULT_SOURCE = <<-CR
+      def find_string(text, word)
+        (0..text.size-word.size).each do |i|
+          { i, text[i..i+word.size-1] }
+          if text[i..i+word.size-1] == word
+            return i
+          end
+        end
+
+        nil
+      end
+
+      find_string "Crystal is awesome!", "awesome"
+      find_string "Crystal is awesome!", "not sure"
+      CR
+
     def initialize(@server : Playground::Server)
     end
 
@@ -397,31 +413,17 @@ module Crystal::Playground
       case {context.request.method, context.request.resource}
       when {"GET", "/environment.js"}
         context.response.headers["Content-Type"] = "application/javascript"
-        context.response.puts %(Environment = {})
 
-        context.response.puts %(Environment.version = #{Crystal::Config.description.inspect})
-
-        defaultSource = <<-CR
-          def find_string(text, word)
-            (0..text.size-word.size).each do |i|
-              { i, text[i..i+word.size-1] }
-              if text[i..i+word.size-1] == word
-                return i
-              end
-            end
-
-            nil
-          end
-
-          find_string "Crystal is awesome!", "awesome"
-          find_string "Crystal is awesome!", "not sure"
-          CR
-        context.response.puts "Environment.defaultSource = #{defaultSource.inspect}"
+        context.response.puts <<-JS
+          Environment = {}
+          Environment.version = #{Crystal::Config.description.inspect}
+          Environment.defaultSource = #{DEFAULT_SOURCE.inspect}
+          JS
 
         if source = @server.source
-          context.response.puts "Environment.source = #{source.code.inspect};"
+          context.response.puts "Environment.source = #{source.code.inspect}"
         else
-          context.response.puts "Environment.source = null;"
+          context.response.puts "Environment.source = null"
         end
       else
         call_next(context)
@@ -534,7 +536,7 @@ module Crystal::Playground
     private def accept_request?(origin)
       case @host
       when nil, "localhost", "127.0.0.1"
-        origin == "http://127.0.0.1:#{@port}" || origin == "http://localhost:#{@port}"
+        origin.in?("http://localhost:#{@port}", "http://127.0.0.1:#{@port}")
       when "0.0.0.0"
         true
       else

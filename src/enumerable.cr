@@ -190,7 +190,7 @@ module Enumerable(T)
 
       def same_as?(key) : Bool
         return false unless @initialized
-        return false if key == Alone || key == Drop
+        return false if key.in?(Alone, Drop)
         @key == key
       end
 

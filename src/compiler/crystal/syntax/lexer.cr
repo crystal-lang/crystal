@@ -630,7 +630,7 @@ module Crystal
               while ident_part?(next_char)
                 # Nothing to do
               end
-              if current_char == '?' || ((current_char == '!' || current_char == '=') && peek_next_char != '=')
+              if current_char == '?' || (current_char.in?('!', '=') && peek_next_char != '=')
                 next_char
               end
               @token.type = :SYMBOL
@@ -1450,7 +1450,7 @@ module Crystal
       while ident_part?(current_char)
         next_char
       end
-      if (current_char == '?' || current_char == '!') && peek_next_char != '='
+      if current_char.in?('?', '!') && peek_next_char != '='
         next_char
       end
       @token.type = :IDENT
@@ -1896,7 +1896,7 @@ module Crystal
         end
 
         if reached_end &&
-           (current_char == '\n' || current_char == '\0' ||
+           (current_char.in?('\n', '\0') ||
            (current_char == '\r' && peek_next_char == '\n' && next_char))
           @token.type = :DELIMITER_END
           @token.delimiter_state = delimiter_state.with_heredoc_indent(indent)
@@ -2251,7 +2251,7 @@ module Crystal
               whitespace = false
               beginning_of_line = true
             else
-              whitespace = char.ascii_whitespace? || char == ';' || char == '(' || char == '[' || char == '{'
+              whitespace = char.ascii_whitespace? || char.in?(';', '(', '[', '{')
               if beginning_of_line && !whitespace
                 beginning_of_line = false
               end
@@ -2293,10 +2293,8 @@ module Crystal
     def skip_macro_whitespace
       start = current_pos
       while current_char.ascii_whitespace?
-        whitespace = true
         if current_char == '\n'
           incr_line_number 0
-          beginning_of_line = true
         end
         next_char
       end
@@ -2907,7 +2905,7 @@ module Crystal
     private delegate ident_start?, ident_part?, to: Lexer
 
     def ident_part_or_end?(char)
-      ident_part?(char) || char == '?' || char == '!'
+      ident_part?(char) || char.in?('?', '!')
     end
 
     def peek_not_ident_part_or_end_next_char
