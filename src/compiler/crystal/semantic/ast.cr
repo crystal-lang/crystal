@@ -471,7 +471,6 @@ module Crystal
       # bind all previously related local vars to it so that
       # they get all types assigned to it.
       local_vars.each &.bind_to self
-      local_vars = nil
     end
 
     # True if this variable belongs to the given context

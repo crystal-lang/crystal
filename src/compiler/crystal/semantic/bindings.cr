@@ -576,7 +576,7 @@ module Crystal
           node_type = node.type?
           return unless node_type
 
-          if node.is_a?(Path) && (target_const = node.target_const)
+          if node.is_a?(Path) && node.target_const
             node.raise "can't use constant as type for NamedTuple"
           end
 

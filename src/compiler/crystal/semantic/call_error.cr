@@ -730,7 +730,7 @@ class Crystal::Call
   end
 
   def def_full_name(owner, a_def, arg_types = nil)
-    Call.def_full_name(owner, a_def, arg_types = nil)
+    Call.def_full_name(owner, a_def, arg_types)
   end
 
   def self.def_full_name(owner, a_def, arg_types = nil)
@@ -778,7 +778,7 @@ class Crystal::Call
       end
       if arg_default = arg.default_value
         str << " = "
-        str << arg.default_value
+        str << arg_default
       end
       printed = true
     end
@@ -805,8 +805,6 @@ class Crystal::Call
   end
 
   def raise_matches_not_found_for_virtual_metaclass_new(owner)
-    arg_types = args.map &.type
-
     owner.each_concrete_type do |concrete_type|
       defs = concrete_type.instance_type.lookup_defs_with_modules("initialize")
       defs = defs.select { |a_def| a_def.args.size != args.size }
@@ -819,8 +817,7 @@ class Crystal::Call
   end
 
   def check_macro_wrong_number_of_arguments(def_name)
-    obj = self.obj
-    return if obj && !obj.is_a?(Path)
+    return if (obj = self.obj) && !obj.is_a?(Path)
 
     macros = in_macro_target &.lookup_macros(def_name)
     return unless macros.is_a?(Array(Macro))

@@ -7,7 +7,7 @@ class Crystal::Command
   private def repl
     repl = Repl.new
 
-    option_parser = parse_with_crystal_opts do |opts|
+    parse_with_crystal_opts do |opts|
       opts.banner = "Usage: crystal i [options] [programfile] [arguments]\n\nOptions:"
 
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|

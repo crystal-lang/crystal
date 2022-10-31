@@ -23,7 +23,6 @@ class LLVM::ABI::X86_64 < LLVM::ABI
       ret_ty = ArgType.direct(context.void)
     end
 
-    arg_tys = Array(LLVM::Type).new(atys.size)
     arg_tys = atys.map do |arg_type|
       abi_type, needed_int_regs, needed_sse_regs = x86_64_type(arg_type, Attribute::ByVal, context) { |cls| pass_by_val?(cls) }
       if available_int_regs >= needed_int_regs && available_sse_regs >= needed_sse_regs

@@ -58,7 +58,7 @@ describe TCPSocket, tags: "network" do
 
         TCPServer.open("localhost", port) do |server|
           TCPSocket.open("localhost", port) do |client|
-            sock = server.accept
+            server.accept
           end
         end
       end
