@@ -81,6 +81,15 @@ describe Doc::MarkdDocRenderer do
       end
     end
 
+    it "doesn't spuriously match range literals" do
+      {base, base_foo}.each do |obj|
+        assert_code_link(obj, "(0..baz)")
+        assert_code_link(obj, "(0...baz)")
+        assert_code_link(obj, "0..baz")
+        assert_code_link(obj, "0...baz")
+      end
+    end
+
     it "doesn't find substrings for methods" do
       assert_code_link(base_foo, "not bar")
       assert_code_link(base_foo, "bazzy")
