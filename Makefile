@@ -16,21 +16,30 @@
 CRYSTAL ?= crystal ## which previous crystal compiler use
 LLVM_CONFIG ?=     ## llvm-config command path to use
 
-release ?=      ## Compile in release mode
-stats ?=        ## Enable statistics output
-progress ?=     ## Enable progress output
-threads ?=      ## Maximum number of threads to use
-debug ?=        ## Add symbolic debug info
-verbose ?=      ## Run specs in verbose mode
-junit_output ?= ## Path to output junit results
-static ?=       ## Enable static linking
-interpreter ?=  ## Enable interpreter feature
-check ?=        ## Enable only check when running format
+release ?=       ## Compile in release mode
+stats ?=         ## Enable statistics output
+progress ?=      ## Enable progress output
+threads ?=       ## Maximum number of threads to use
+debug ?=         ## Add symbolic debug info
+verbose ?=       ## Run specs in verbose mode
+junit_output ?=  ## Path to output junit results
+static ?=        ## Enable static linking
+interpreter ?=   ## Enable interpreter feature
+check ?=         ## Enable only check when running format
+profile ?= future## Compatibility profile (future|current|legacy)
+
+ifeq ($(profile),future)
+  LANG_FLAGS := -Dstrict_multi_assign
+else ifeq ($(profile),legacy)
+  LANG_FLAGS := -Dno_number_autocast
+else ifneq ($(profile),current)
+  $(error Expected profile to be one of 'future', 'current', or 'legacy', got: $(profile))
+endif
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
-override FLAGS += -D strict_multi_assign $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )$(if $(interpreter),,-Dwithout_interpreter )
+override FLAGS += $(LANG_FLAGS) $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )$(if $(interpreter),,-Dwithout_interpreter )
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler --exclude-warnings spec/primitives
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
@@ -101,7 +110,7 @@ smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal
 
 .PHONY: samples
 samples: ## Build example programs
-	$(MAKE) -C samples
+	$(MAKE) -C samples FLAGS=$(LANG_FLAGS)
 
 .PHONY: docs
 docs: ## Generate standard library documentation

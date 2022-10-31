@@ -1,5 +1,6 @@
 CRYSTAL := ../bin/crystal## Crystal compiler to use
 O := .build## Output directory
+FLAGS ?=## Additional compiler flags
 
 BUILDABLE_SOURCES := $(wildcard *.cr llvm/*.cr compiler/*.cr)
 NONLINK_SOURCES := $(wildcard sdl/*.cr)
@@ -15,11 +16,11 @@ build: $(BUILDABLE_BINARIES) $(NONLINK_BINARIES) ## Build sample binaries
 
 $(O)/%: %.cr
 	mkdir -p $(shell dirname $@)
-	$(CRYSTAL) build $< -o $@
+	$(CRYSTAL) build $(FLAGS) $< -o $@
 
 $(O)/%.o: %.cr
 	mkdir -p $(shell dirname $@)
-	$(CRYSTAL) build --cross-compile $< -o $(patsubst %.o,%,$@)
+	$(CRYSTAL) build $(FLAGS) --cross-compile $< -o $(patsubst %.o,%,$@)
 
 .PHONY: clean
 clean: ## Remove build artifacts
