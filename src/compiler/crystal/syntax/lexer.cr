@@ -2957,7 +2957,7 @@ module Crystal
       is_slash_r
     end
 
-    def char_sequence?(*tokens, column_increment : Bool = true)
+    private def char_sequence?(*tokens, column_increment : Bool = true)
       tokens.all? do |token|
         token == (column_increment ? next_char : next_char_no_column_increment)
       end
