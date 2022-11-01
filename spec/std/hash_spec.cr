@@ -1257,7 +1257,7 @@ describe "Hash" do
     it { {"a" => 2, "b" => 3}.reject(["b", "a"]).should eq({} of String => Int32) }
     it "does not change current hash" do
       h = {"a" => 3, "b" => 6, "c" => 9}
-      h2 = h.reject("b", "c")
+      h.reject("b", "c")
       h.should eq({"a" => 3, "b" => 6, "c" => 9})
     end
   end
@@ -1282,7 +1282,7 @@ describe "Hash" do
     it { {"a" => 2, "b" => 3}.select(Set{"b", "a"}).should eq({"a" => 2, "b" => 3}) }
     it "does not change current hash" do
       h = {"a" => 3, "b" => 6, "c" => 9}
-      h2 = h.select("b", "c")
+      h.select("b", "c")
       h.should eq({"a" => 3, "b" => 6, "c" => 9})
     end
   end

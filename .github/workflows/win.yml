@@ -5,10 +5,10 @@ on: [push, pull_request]
 jobs:
   x86_64-linux-job:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:1.5.0-build
+    container: crystallang/crystal:1.6.1-build
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Build C extensions
         run: |
@@ -18,7 +18,7 @@ jobs:
           LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground -Dwithout_iconv -Dwithout_interpreter
 
       - name: Upload Crystal object file
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: objs
           path: crystal.obj
@@ -34,11 +34,11 @@ jobs:
         uses: ilammy/msvc-dev-cmd@ed94116c4d30d2091601b81f339a2eaa1c2ba0a6
 
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Cache libraries
         id: cache-libs
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
             libs/pcre.lib
@@ -52,14 +52,14 @@ jobs:
           key: win-libs-${{ hashFiles('.github/workflows/win.yml') }}-msvc-${{ env.VSCMD_VER }}
       - name: Download libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: ivmai/bdwgc
           ref: v8.2.0
           path: bdwgc
       - name: Download libatomic_ops
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: ivmai/libatomic_ops
           ref: v7.6.10
@@ -85,7 +85,7 @@ jobs:
           cmake --build . --config Release
       - name: Download libiconv
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: pffang/libiconv-for-Windows
           ref: 9b7aba8da6e125ef33912fa4412779279f204003 # master @ 2021-08-24
@@ -113,7 +113,7 @@ jobs:
           MSBuild.exe /p:Platform=x64 /p:Configuration=ReleaseStatic libiconv.vcxproj
       - name: Download libffi
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: winlibs/libffi
           ref: libffi-3.3
@@ -157,7 +157,7 @@ jobs:
           cmake --build . --config Release
       - name: Download mpir
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: BrianGladman/mpir
           ref: d9c9a842be6475bef74324f367ce2c5a78c55d06  # master @ 2021-10-14
@@ -199,7 +199,7 @@ jobs:
           cmake --build . --config Release
       - name: Download libxml2
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: GNOME/libxml2
           ref: a230b728f1289dd24c1666856ac4fb55579c6dfb  # master @ 2020-05-04
@@ -240,7 +240,7 @@ jobs:
 
       - name: Cache OpenSSL
         id: cache-openssl
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             libs/crypto.lib
@@ -275,7 +275,7 @@ jobs:
 
       - name: Cache LLVM
         id: cache-llvm
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: llvm
           key: llvm-libs-13.0.0-msvc-${{ env.VSCMD_VER }}
@@ -311,7 +311,7 @@ jobs:
           echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
 
       - name: Download Crystal object file
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: objs
       - name: Build LLVM extensions
@@ -328,14 +328,14 @@ jobs:
           make -f Makefile.win -B
 
       - name: Download shards release
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: crystal-lang/shards
           ref: v0.17.0
           path: shards
 
       - name: Download molinillo release
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: crystal-lang/crystal-molinillo
           ref: v0.2.0
@@ -356,7 +356,7 @@ jobs:
           rm crystal/src/llvm/ext/llvm_ext.obj
 
       - name: Upload Crystal binaries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: crystal
           path: crystal

@@ -34,7 +34,7 @@ struct Exception::CallStack
 
   def self.setup_crash_handler
     LibC.AddVectoredExceptionHandler(1, ->(exception_info) do
-      case status = exception_info.value.exceptionRecord.value.exceptionCode
+      case exception_info.value.exceptionRecord.value.exceptionCode
       when LibC::EXCEPTION_ACCESS_VIOLATION
         addr = exception_info.value.exceptionRecord.value.exceptionInformation[1]
         Crystal::System.print_error "Invalid memory access (C0000005) at address 0x%llx\n", addr

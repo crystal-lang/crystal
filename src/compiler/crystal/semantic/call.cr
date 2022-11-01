@@ -1101,21 +1101,19 @@ class Crystal::Call
   end
 
   def bubbling_exception
-    begin
-      yield
-    rescue ex : Crystal::CodeError
-      if obj = @obj
-        if name == "initialize"
-          # Avoid putting 'initialize' in the error trace
-          # because it's most likely that this is happening
-          # inside a generated 'new' method
-          ::raise ex
-        else
-          raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
-        end
+    yield
+  rescue ex : Crystal::CodeError
+    if obj = @obj
+      if name == "initialize"
+        # Avoid putting 'initialize' in the error trace
+        # because it's most likely that this is happening
+        # inside a generated 'new' method
+        ::raise ex
       else
-        raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
+        raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
       end
+    else
+      raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
     end
   end
 
@@ -1169,7 +1167,7 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    strict_check = body.is_a?(Primitive) && (body.name == "proc_call" || body.name == "pointer_set")
+    strict_check = body.is_a?(Primitive) && body.name.in?("proc_call", "pointer_set")
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]

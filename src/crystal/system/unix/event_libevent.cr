@@ -5,7 +5,7 @@ require "./lib_event2"
 {% end %}
 
 # :nodoc:
-struct Crystal::Event
+struct Crystal::LibEvent::Event < Crystal::EventLoop::Event
   VERSION = String.new(LibEvent2.event_get_version)
 
   def self.callback(&block : Int32, LibEvent2::EventFlags, Void* ->)
@@ -16,23 +16,19 @@ struct Crystal::Event
     @freed = false
   end
 
-  def add(timeout : LibC::Timeval? = nil)
+  def add(timeout : Time::Span?) : Nil
     if timeout
-      timeout_copy = timeout
-      LibEvent2.event_add(@event, pointerof(timeout_copy))
+      timeval = LibC::Timeval.new(
+        tv_sec: LibC::TimeT.new(timeout.total_seconds),
+        tv_usec: timeout.nanoseconds // 1_000
+      )
+      LibEvent2.event_add(@event, pointerof(timeval))
     else
       LibEvent2.event_add(@event, nil)
     end
   end
 
-  def add(timeout : Time::Span)
-    add LibC::Timeval.new(
-      tv_sec: LibC::TimeT.new(timeout.total_seconds),
-      tv_usec: timeout.nanoseconds // 1_000
-    )
-  end
-
-  def free
+  def free : Nil
     LibEvent2.event_free(@event) unless @freed
     @freed = true
   end
@@ -49,7 +45,7 @@ struct Crystal::Event
       @base = LibEvent2.event_base_new
     end
 
-    def reinit
+    def reinit : Nil
       unless LibEvent2.event_reinit(@base) == 0
         raise "Error reinitializing libevent"
       end
@@ -57,18 +53,18 @@ struct Crystal::Event
 
     def new_event(s : Int32, flags : LibEvent2::EventFlags, data, &callback : LibEvent2::Callback)
       event = LibEvent2.event_new(@base, s, flags, callback, data.as(Void*))
-      Event.new(event)
+      Crystal::LibEvent::Event.new(event)
     end
 
-    def run_loop
+    def run_loop : Nil
       LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::None)
     end
 
-    def run_once
+    def run_once : Nil
       LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::Once)
     end
 
-    def loop_break
+    def loop_break : Nil
       LibEvent2.event_base_loopbreak(@base)
     end
 
