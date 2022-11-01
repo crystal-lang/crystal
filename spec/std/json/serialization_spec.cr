@@ -414,7 +414,7 @@ describe "JSON serialization" do
       Union(Bool, Array(Int32)).from_json(%(true)).should be_true
     end
 
-    {% for type in Int::Primitive.union_types.reject { |t| t == UInt128 || t == Int128 } %}
+    {% for type in Int::Primitive.union_types - [UInt128, Int128] %}
       it "deserializes union with {{type}} (fast path)" do
         Union({{type}}, Array(Int32)).from_json(%(#{ {{type}}::MAX })).should eq({{type}}::MAX)
       end

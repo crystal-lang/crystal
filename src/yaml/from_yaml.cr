@@ -56,7 +56,7 @@ def Bool.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   parse_scalar(ctx, node, self)
 end
 
-{% for type in Int::Primitive.union_types.reject { |t| t == UInt128 || t == Int128 } %}
+{% for type in Int::Primitive.union_types - [UInt128, Int128] %}
   def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     {{type.id}}.new! parse_scalar(ctx, node, Int64)
   end
