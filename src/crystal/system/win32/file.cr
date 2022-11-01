@@ -265,24 +265,6 @@ module Crystal::System::File
     flock(blocking, exclusive: true)
   end
 
-  private def system_flock_unlock : Nil
-    handle = LibC._get_osfhandle(fd)
-    raise IO::Error.from_errno("_get_osfhandle") if handle == -1
-    handle = LibC::HANDLE.new(handle)
-    overlapped = LibC::OVERLAPPED.new
-
-    ret = LibC.UnlockFileEx(
-      hFile: handle,
-      dwReserved: 0,
-      nNumberOfBytesToLockLow: 0xFFFF_FFFF,
-      nNumberOfBytesToLockHigh: 0xFFFF_FFFF,
-      lpOverlapped: pointerof(overlapped),
-    )
-    if ret == 0
-      raise IO::Error.from_errno("Error applying or removing file lock")
-    end
-  end
-
   private def flock(blocking : Bool, exclusive : Bool)
     lock_flags = 0
     lock_flags |= LibC::LOCKFILE_FAIL_IMMEDIATELY unless blocking
@@ -300,9 +282,29 @@ module Crystal::System::File
       dwReserved: 0,
       nNumberOfBytesToLockLow: 0xFFFF_FFFF,
       nNumberOfBytesToLockHigh: 0xFFFF_FFFF,
+      # lpOverlapped must be provided despite the synchronous use of this method.
       lpOverlapped: pointerof(overlapped),
     )
+    if ret == 0
+      raise IO::Error.from_errno("Error applying or removing file lock")
+    end
+  end
 
+  private def system_flock_unlock : Nil
+    handle = LibC._get_osfhandle(fd)
+    raise IO::Error.from_errno("_get_osfhandle") if handle == -1
+    handle = LibC::HANDLE.new(handle)
+
+    overlapped = LibC::OVERLAPPED.new
+
+    ret = LibC.UnlockFileEx(
+      hFile: handle,
+      dwReserved: 0,
+      nNumberOfBytesToLockLow: 0xFFFF_FFFF,
+      nNumberOfBytesToLockHigh: 0xFFFF_FFFF,
+      # lpOverlapped must be provided despite the synchronous use of this method.
+      lpOverlapped: pointerof(overlapped),
+    )
     if ret == 0
       raise IO::Error.from_errno("Error applying or removing file lock")
     end
