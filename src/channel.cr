@@ -276,9 +276,7 @@ class Channel(T)
     case send_internal(value)
     in .delivered?
       true
-    in .closed?
-      false
-    in .none?
+    in .closed?, .none?
       false
     end
   ensure
