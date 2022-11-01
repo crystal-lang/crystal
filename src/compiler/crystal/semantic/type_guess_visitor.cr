@@ -419,7 +419,7 @@ module Crystal
         info.add_annotations(annotations) if annotations
         vars[name] = info
       else
-        info.type = Type.merge!([info.type, type])
+        info.type = Type.merge!(info.type, type)
         info.outside_def = true if @outside_def
         info.add_annotations(annotations) if annotations
         vars[name] = info
