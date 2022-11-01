@@ -827,14 +827,13 @@ module Crystal
           @token.type = :OP_DOLLAR_QUESTION
         when .ascii_number?
           start = current_pos
-          char = next_char
-          if char == '0'
-            char = next_char
+          if current_char == '0'
+            next_char
           else
-            while char.ascii_number?
-              char = next_char
+            while next_char.ascii_number?
+              # Nothing to do
             end
-            char = next_char if char == '?'
+            next_char if current_char == '?'
           end
           @token.type = :GLOBAL_MATCH_DATA_INDEX
           @token.value = string_range_from_pool(start)

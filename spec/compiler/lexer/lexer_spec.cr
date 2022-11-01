@@ -284,7 +284,9 @@ describe "Lexer" do
                     ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?", ":[]=", ":<=>", ":===",
                     ":&+", ":&-", ":&*", ":&**"]
 
-  it_lexes_global_match_data_index ["$1", "$10", "$1?", "$23?"]
+  it_lexes_global_match_data_index ["$1", "$10", "$1?", "$10?", "$23?"]
+  assert_syntax_error "$01", %(unexpected token: "1")
+  assert_syntax_error "$0?"
 
   it_lexes "$~", :OP_DOLLAR_TILDE
   it_lexes "$?", :OP_DOLLAR_QUESTION
