@@ -406,7 +406,7 @@ struct Crystal::TypeDeclarationProcessor
     when NonGenericModuleType
       type = type_info.type
       if nilable_instance_var?(owner, name)
-        type = Type.merge!(type, @program.nil)
+        type = Type.merge!([type, @program.nil])
       end
 
       # Same as above, only Nil makes no sense
@@ -423,7 +423,7 @@ struct Crystal::TypeDeclarationProcessor
     when GenericClassType
       type = type_info.type
       if nilable_instance_var?(owner, name)
-        type = Type.merge!(type, @program.nil)
+        type = Type.merge!([type, @program.nil])
       end
 
       # Same as above, only Nil makes no sense
@@ -442,7 +442,7 @@ struct Crystal::TypeDeclarationProcessor
     when GenericModuleType
       type = type_info.type
       if nilable_instance_var?(owner, name)
-        type = Type.merge!(type, @program.nil)
+        type = Type.merge!([type, @program.nil])
       end
 
       declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true, annotations: type_info.annotations)
