@@ -175,6 +175,7 @@ module Crystal
           next_char
           @token.type = :NEWLINE
           incr_line_number
+          reset_regex_flags = false
           consume_newlines
         else
           raise "expected '\\n' after '\\r'"

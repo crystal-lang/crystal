@@ -664,4 +664,24 @@ describe "Lexer" do
   assert_syntax_error %("\\x1z"), "invalid hex escape"
 
   assert_syntax_error %("hi\\)
+
+  it "lexes regex after \\n" do
+    lexer = Lexer.new("\n/=/")
+    lexer.slash_is_regex = true
+    token = lexer.next_token
+    token.type.should eq(t :NEWLINE)
+    token = lexer.next_token
+    token.type.should eq(t :DELIMITER_START)
+    token.delimiter_state.kind.should eq(Token::DelimiterKind::REGEX)
+  end
+
+  it "lexes regex after \\r\\n" do
+    lexer = Lexer.new("\r\n/=/")
+    lexer.slash_is_regex = true
+    token = lexer.next_token
+    token.type.should eq(t :NEWLINE)
+    token = lexer.next_token
+    token.type.should eq(t :DELIMITER_START)
+    token.delimiter_state.kind.should eq(Token::DelimiterKind::REGEX)
+  end
 end
