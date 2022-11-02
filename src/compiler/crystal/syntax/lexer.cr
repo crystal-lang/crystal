@@ -219,64 +219,7 @@ module Crystal
           when '='
             next_char :OP_LT_LT_EQ
           when '-'
-            has_single_quote = false
-            found_closing_single_quote = false
-
-            char = next_char
-            start_here = current_pos
-
-            if char == '\''
-              has_single_quote = true
-              char = next_char
-              start_here = current_pos
-            end
-
-            unless ident_part?(char)
-              raise "heredoc identifier starts with invalid character"
-            end
-
-            end_here = 0
-
-            while true
-              char = next_char
-              case
-              when char == '\r'
-                if peek_next_char == '\n'
-                  end_here = current_pos
-                  next_char
-                  break
-                else
-                  raise "expecting '\\n' after '\\r'"
-                end
-              when char == '\n'
-                end_here = current_pos
-                break
-              when ident_part?(char)
-                # ok
-              when char == '\0'
-                raise "Unexpected EOF on heredoc identifier"
-              else
-                if char == '\'' && has_single_quote
-                  found_closing_single_quote = true
-                  end_here = current_pos
-                  next_char
-                  break
-                elsif has_single_quote
-                  # wait until another quote
-                else
-                  end_here = current_pos
-                  break
-                end
-              end
-            end
-
-            if has_single_quote && !found_closing_single_quote
-              raise "expecting closing single quote"
-            end
-
-            here = string_range(start_here, end_here)
-
-            delimited_pair :heredoc, here, here, start, allow_escapes: !has_single_quote, advance: false
+            consume_heredoc_start
           else
             @token.type = :OP_LT_LT
           end
@@ -462,186 +405,12 @@ module Crystal
         reset_regex_flags = false
         next_char :OP_SEMICOLON
       when ':'
-        char = next_char
-
-        if @wants_symbol
-          case char
-          when ':'
-            next_char :OP_COLON_COLON
-          when '+'
-            next_char_and_symbol "+"
-          when '-'
-            next_char_and_symbol "-"
-          when '*'
-            if next_char == '*'
-              next_char_and_symbol "**"
-            else
-              symbol "*"
-            end
-          when '/'
-            case next_char
-            when '/'
-              next_char_and_symbol "//"
-            else
-              symbol "/"
-            end
-          when '='
-            case next_char
-            when '='
-              if next_char == '='
-                next_char_and_symbol "==="
-              else
-                symbol "=="
-              end
-            when '~'
-              next_char_and_symbol "=~"
-            else
-              unknown_token
-            end
-          when '!'
-            case next_char
-            when '='
-              next_char_and_symbol "!="
-            when '~'
-              next_char_and_symbol "!~"
-            else
-              symbol "!"
-            end
-          when '<'
-            case next_char
-            when '='
-              if next_char == '>'
-                next_char_and_symbol "<=>"
-              else
-                symbol "<="
-              end
-            when '<'
-              next_char_and_symbol "<<"
-            else
-              symbol "<"
-            end
-          when '>'
-            case next_char
-            when '='
-              next_char_and_symbol ">="
-            when '>'
-              next_char_and_symbol ">>"
-            else
-              symbol ">"
-            end
-          when '&'
-            case next_char
-            when '+'
-              next_char_and_symbol "&+"
-            when '-'
-              next_char_and_symbol "&-"
-            when '*'
-              case next_char
-              when '*'
-                next_char_and_symbol "&**"
-              else
-                symbol "&*"
-              end
-            else
-              symbol "&"
-            end
-          when '|'
-            next_char_and_symbol "|"
-          when '^'
-            next_char_and_symbol "^"
-          when '~'
-            next_char_and_symbol "~"
-          when '%'
-            next_char_and_symbol "%"
-          when '['
-            if next_char == ']'
-              case next_char
-              when '='
-                next_char_and_symbol "[]="
-              when '?'
-                next_char_and_symbol "[]?"
-              else
-                symbol "[]"
-              end
-            else
-              unknown_token
-            end
-          when '"'
-            line = @line_number
-            column = @column_number
-            start = current_pos + 1
-            io = IO::Memory.new
-            while true
-              char = next_char
-              case char
-              when '\\'
-                case char = next_char
-                when 'a'
-                  io << '\a'
-                when 'b'
-                  io << '\b'
-                when 'n'
-                  io << '\n'
-                when 'r'
-                  io << '\r'
-                when 't'
-                  io << '\t'
-                when 'v'
-                  io << '\v'
-                when 'f'
-                  io << '\f'
-                when 'e'
-                  io << '\e'
-                when 'x'
-                  io.write_byte consume_string_hex_escape
-                when 'u'
-                  io << consume_string_unicode_escape
-                when '0', '1', '2', '3', '4', '5', '6', '7'
-                  io.write_byte consume_octal_escape(char)
-                when '\n'
-                  incr_line_number nil
-                  io << '\n'
-                when '\0'
-                  raise "unterminated quoted symbol", line, column
-                else
-                  io << char
-                end
-              when '"'
-                break
-              when '\0'
-                raise "unterminated quoted symbol", line, column
-              else
-                io << char
-              end
-            end
-
-            @token.type = :SYMBOL
-            @token.value = io.to_s
-            next_char
-            set_token_raw_from_start(start - 2)
-          else
-            if ident_start?(char)
-              start = current_pos
-              while ident_part?(next_char)
-                # Nothing to do
-              end
-              if current_char == '?' || (current_char.in?('!', '=') && peek_next_char != '=')
-                next_char
-              end
-              @token.type = :SYMBOL
-              @token.value = string_range_from_pool(start)
-              set_token_raw_from_start(start - 1)
-            else
-              @token.type = :OP_COLON
-            end
-          end
+        if next_char == ':'
+          next_char :OP_COLON_COLON
+        elsif @wants_symbol
+          consume_symbol
         else
-          case char
-          when ':'
-            next_char :OP_COLON_COLON
-          else
-            @token.type = :OP_COLON
-          end
+          @token.type = :OP_COLON
         end
       when '~'
         next_char :OP_TILDE
@@ -795,19 +564,11 @@ module Crystal
         when '['
           next_char :OP_AT_LSQUARE
         else
-          class_var = false
           if current_char == '@'
-            class_var = true
             next_char
-          end
-          if ident_start?(current_char)
-            while ident_part?(next_char)
-              # Nothing to do
-            end
-            @token.type = class_var ? Token::Kind::CLASS_VAR : Token::Kind::INSTANCE_VAR
-            @token.value = string_range_from_pool(start)
+            consume_variable :CLASS_VAR, start
           else
-            unknown_token
+            consume_variable :INSTANCE_VAR, start
           end
         end
       when '$'
@@ -833,15 +594,7 @@ module Crystal
           @token.type = :GLOBAL_MATCH_DATA_INDEX
           @token.value = string_range_from_pool(start)
         else
-          if ident_start?(current_char)
-            while ident_part?(next_char)
-              # Nothing to do
-            end
-            @token.type = :GLOBAL
-            @token.value = string_range_from_pool(start)
-          else
-            unknown_token
-          end
+          consume_variable :GLOBAL, start
         end
       when 'a'
         case next_char
@@ -2738,6 +2491,254 @@ module Crystal
         end
       else
         raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...">)
+      end
+    end
+
+    private def consume_heredoc_start
+      start = current_pos - 2
+
+      has_single_quote = false
+      found_closing_single_quote = false
+
+      char = next_char
+      start_here = current_pos
+
+      if char == '\''
+        has_single_quote = true
+        char = next_char
+        start_here = current_pos
+      end
+
+      unless ident_part?(char)
+        raise "heredoc identifier starts with invalid character"
+      end
+
+      end_here = 0
+
+      while true
+        char = next_char
+        case
+        when char == '\r'
+          if peek_next_char == '\n'
+            end_here = current_pos
+            next_char
+            break
+          else
+            raise "expecting '\\n' after '\\r'"
+          end
+        when char == '\n'
+          end_here = current_pos
+          break
+        when ident_part?(char)
+          # ok
+        when char == '\0'
+          raise "Unexpected EOF on heredoc identifier"
+        else
+          if char == '\'' && has_single_quote
+            found_closing_single_quote = true
+            end_here = current_pos
+            next_char
+            break
+          elsif has_single_quote
+            # wait until another quote
+          else
+            end_here = current_pos
+            break
+          end
+        end
+      end
+
+      if has_single_quote && !found_closing_single_quote
+        raise "expecting closing single quote"
+      end
+
+      here = string_range(start_here, end_here)
+
+      delimited_pair :heredoc, here, here, start, allow_escapes: !has_single_quote, advance: false
+    end
+
+    private def consume_symbol
+      case char = current_char
+      when ':'
+        next_char :OP_COLON_COLON
+      when '+'
+        next_char_and_symbol "+"
+      when '-'
+        next_char_and_symbol "-"
+      when '*'
+        if next_char == '*'
+          next_char_and_symbol "**"
+        else
+          symbol "*"
+        end
+      when '/'
+        case next_char
+        when '/'
+          next_char_and_symbol "//"
+        else
+          symbol "/"
+        end
+      when '='
+        case next_char
+        when '='
+          if next_char == '='
+            next_char_and_symbol "==="
+          else
+            symbol "=="
+          end
+        when '~'
+          next_char_and_symbol "=~"
+        else
+          unknown_token
+        end
+      when '!'
+        case next_char
+        when '='
+          next_char_and_symbol "!="
+        when '~'
+          next_char_and_symbol "!~"
+        else
+          symbol "!"
+        end
+      when '<'
+        case next_char
+        when '='
+          if next_char == '>'
+            next_char_and_symbol "<=>"
+          else
+            symbol "<="
+          end
+        when '<'
+          next_char_and_symbol "<<"
+        else
+          symbol "<"
+        end
+      when '>'
+        case next_char
+        when '='
+          next_char_and_symbol ">="
+        when '>'
+          next_char_and_symbol ">>"
+        else
+          symbol ">"
+        end
+      when '&'
+        case next_char
+        when '+'
+          next_char_and_symbol "&+"
+        when '-'
+          next_char_and_symbol "&-"
+        when '*'
+          case next_char
+          when '*'
+            next_char_and_symbol "&**"
+          else
+            symbol "&*"
+          end
+        else
+          symbol "&"
+        end
+      when '|'
+        next_char_and_symbol "|"
+      when '^'
+        next_char_and_symbol "^"
+      when '~'
+        next_char_and_symbol "~"
+      when '%'
+        next_char_and_symbol "%"
+      when '['
+        if next_char == ']'
+          case next_char
+          when '='
+            next_char_and_symbol "[]="
+          when '?'
+            next_char_and_symbol "[]?"
+          else
+            symbol "[]"
+          end
+        else
+          unknown_token
+        end
+      when '"'
+        line = @line_number
+        column = @column_number
+        start = current_pos + 1
+        io = IO::Memory.new
+        while true
+          char = next_char
+          case char
+          when '\\'
+            case char = next_char
+            when 'a'
+              io << '\a'
+            when 'b'
+              io << '\b'
+            when 'n'
+              io << '\n'
+            when 'r'
+              io << '\r'
+            when 't'
+              io << '\t'
+            when 'v'
+              io << '\v'
+            when 'f'
+              io << '\f'
+            when 'e'
+              io << '\e'
+            when 'x'
+              io.write_byte consume_string_hex_escape
+            when 'u'
+              io << consume_string_unicode_escape
+            when '0', '1', '2', '3', '4', '5', '6', '7'
+              io.write_byte consume_octal_escape(char)
+            when '\n'
+              incr_line_number nil
+              io << '\n'
+            when '\0'
+              raise "unterminated quoted symbol", line, column
+            else
+              io << char
+            end
+          when '"'
+            break
+          when '\0'
+            raise "unterminated quoted symbol", line, column
+          else
+            io << char
+          end
+        end
+
+        @token.type = :SYMBOL
+        @token.value = io.to_s
+        next_char
+        set_token_raw_from_start(start - 2)
+      else
+        if ident_start?(char)
+          start = current_pos
+          while ident_part?(next_char)
+            # Nothing to do
+          end
+          if current_char == '?' || (current_char.in?('!', '=') && peek_next_char != '=')
+            next_char
+          end
+          @token.type = :SYMBOL
+          @token.value = string_range_from_pool(start)
+          set_token_raw_from_start(start - 1)
+        else
+          @token.type = :OP_COLON
+        end
+      end
+    end
+
+    private def consume_variable(token_type : Token::Kind, start)
+      if ident_start?(current_char)
+        while ident_part?(next_char)
+          # Nothing to do
+        end
+        @token.type = token_type
+        @token.value = string_range_from_pool(start)
+      else
+        unknown_token
       end
     end
 
