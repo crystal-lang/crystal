@@ -253,8 +253,8 @@ jobs:
       - name: Download OpenSSL
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         run: |
-          iwr https://www.openssl.org/source/openssl-3.0.0.tar.gz -OutFile openssl.tar.gz
-          (Get-FileHash -Algorithm SHA256 .\openssl.tar.gz).hash -eq "59eedfcb46c25214c9bd37ed6078297b4df01d012267fe9e9eee31f61bc70536"
+          iwr https://www.openssl.org/source/openssl-3.0.7.tar.gz -OutFile openssl.tar.gz
+          (Get-FileHash -Algorithm SHA256 .\openssl.tar.gz).hash -eq "83049d042a260e696f62406ac5c08bf706fd84383f945cf21bd61e9ed95c396e"
           7z x openssl.tar.gz
           7z x openssl.tar
           mv openssl-* openssl
