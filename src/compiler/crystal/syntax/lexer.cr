@@ -338,8 +338,6 @@ module Crystal
           @token.type = :OP_STAR
         end
       when '/'
-        line = @line_number
-        column = @column_number
         char = next_char
         if (@wants_def_or_macro_name || !@slash_is_regex) && char == '/'
           case next_char
