@@ -294,15 +294,11 @@ module Crystal
         elsif @wants_def_or_macro_name
           @token.type = :OP_SLASH
         elsif @slash_is_regex
-          @token.type = :DELIMITER_START
-          @token.delimiter_state = Token::DelimiterState.new(:regex, '/', '/')
-          @token.raw = "/"
+          delimited_pair :regex, '/', '/', start, advance: false
         elsif char.ascii_whitespace? || char == '\0'
           @token.type = :OP_SLASH
         elsif @wants_regex
-          @token.type = :DELIMITER_START
-          @token.delimiter_state = Token::DelimiterState.new(:regex, '/', '/')
-          @token.raw = "/"
+          delimited_pair :regex, '/', '/', start, advance: false
         else
           @token.type = :OP_SLASH
         end
@@ -545,17 +541,14 @@ module Crystal
         end
         next_char
         set_token_raw_from_start(start)
-      when '"', '`'
-        delimiter = current_char
-        if delimiter == '`' && @wants_def_or_macro_name
+      when '`'
+        if @wants_def_or_macro_name
           next_char :OP_GRAVE
         else
-          next_char
-          @token.type = :DELIMITER_START
-          delimiter_kind = delimiter == '`' ? Token::DelimiterKind::COMMAND : Token::DelimiterKind::STRING
-          @token.delimiter_state = Token::DelimiterState.new(delimiter_kind, delimiter, delimiter)
-          set_token_raw_from_start(start)
+          delimited_pair :command, '`', '`', start
         end
+      when '"'
+        delimited_pair :string, '"', '"', start
       when '0'..'9'
         scan_number start
       when '@'
