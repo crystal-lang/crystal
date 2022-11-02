@@ -995,6 +995,10 @@ module Crystal
           node_and_next_token Global.new(var.name).at(location)
         end
       when .global_match_data_index?
+        if peek_ahead { next_token_skip_space; @token.type.op_eq? }
+          raise "global match data cannot be assigned"
+        end
+
         value = @token.value.to_s
         if value_prefix = value.rchop? '?'
           method = "[]?"
