@@ -246,7 +246,7 @@ jobs:
             libs/crypto.lib
             libs/ssl.lib
             libs/openssl_VERSION
-          key: win-openssl-libs-3.0.0-msvc-${{ env.VSCMD_VER }}
+          key: win-openssl-libs-3.0.7-msvc-${{ env.VSCMD_VER }}
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         uses: ilammy/setup-nasm@e2335e5fc95548c09cd2deea2768793e0e8f0941 # v1.2.1
@@ -271,7 +271,7 @@ jobs:
         run: |
           cp openssl/libcrypto.lib libs/crypto.lib
           cp openssl/libssl.lib libs/ssl.lib
-          [IO.File]::WriteAllLines("libs/openssl_VERSION", "3.0.0")
+          [IO.File]::WriteAllLines("libs/openssl_VERSION", "3.0.7")
 
       - name: Cache LLVM
         id: cache-llvm
