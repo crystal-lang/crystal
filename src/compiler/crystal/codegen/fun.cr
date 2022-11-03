@@ -1,7 +1,7 @@
 require "./codegen"
 
 class Crystal::CodeGenVisitor
-  def target_def_fun(target_def, self_type)
+  def target_def_fun(target_def, self_type) : LLVM::Function
     mangled_name = target_def.mangled_name(@program, self_type)
     self_type_mod = type_module(self_type).mod
 
@@ -37,8 +37,6 @@ class Crystal::CodeGenVisitor
       return_type,
       func.varargs?
     )
-
-    p2 = new_fun.params.to_a
 
     func.params.to_a.each_with_index do |p1, index|
       attrs = new_fun.attributes(index + 1)
@@ -84,6 +82,7 @@ class Crystal::CodeGenVisitor
       needs_body = !target_def.is_a?(External) || is_exported_fun
       if needs_body
         emit_def_debug_metadata target_def unless @debug.none?
+        set_current_debug_location target_def if @debug.line_numbers?
 
         context.fun.add_attribute LLVM::Attribute::UWTable
         if @program.has_flag?("darwin")
@@ -124,7 +123,6 @@ class Crystal::CodeGenVisitor
 
         if @debug.variables? && !target_def.naked?
           in_alloca_block do
-            args_offset = !is_fun_literal && self_type.passed_as_self? ? 2 : 1
             location = target_def.location
             context.vars.each do |name, var|
               next if var.debug_variable_created
@@ -198,6 +196,17 @@ class Crystal::CodeGenVisitor
           context.fun = new_fun
         else
           clear_current_debug_location
+        end
+      end
+
+      if @program.has_flag?("wasm32")
+        if target_def.is_a?(External) && (wasm_import_module = target_def.wasm_import_module)
+          context.fun.add_target_dependent_attribute("wasm-import-name", target_def.real_name)
+          context.fun.add_target_dependent_attribute("wasm-import-module", wasm_import_module)
+        end
+
+        if is_exported_fun
+          context.fun.add_target_dependent_attribute("wasm-export-name", mangled_name)
         end
       end
 
@@ -365,7 +374,7 @@ class Crystal::CodeGenVisitor
       abi_arg_type = abi_info.arg_types[i]
 
       if attr = abi_arg_type.attr
-        context.fun.add_attribute(attr, i + offset + 1)
+        context.fun.add_attribute(attr, i + offset + 1, abi_arg_type.type)
       end
 
       i += 1 unless abi_arg_type.kind == LLVM::ABI::ArgKind::Ignore
@@ -373,7 +382,7 @@ class Crystal::CodeGenVisitor
 
     # This is for sret
     if (attr = abi_info.return_type.attr) && attr == LLVM::Attribute::StructRet
-      context.fun.add_attribute(attr, 1)
+      context.fun.add_attribute(attr, 1, abi_info.return_type.type)
     end
 
     args
@@ -505,11 +514,17 @@ class Crystal::CodeGenVisitor
       # If it's an extern struct on a def that must be codegened with C ABI
       # compatibility, and it's not passed byval, we must cast the value
       if target_def.c_calling_convention? && arg.type.extern? && !context.fun.attributes(index + 1).by_val?
-        pointer = alloca(llvm_type(var_type), arg.name)
-        casted_pointer = bit_cast pointer, value.type.pointer
-        store value, casted_pointer
-        pointer = declare_debug_for_function_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
-        context.vars[arg.name] = LLVMVar.new(pointer, var_type)
+        # ... unless it's passed indirectly (ie. as a pointer to memory allocated by the caller)
+        if target_def.abi_info? && abi_info(target_def).arg_types[index].kind.indirect?
+          value = declare_debug_for_function_argument(arg.name, var_type, index + 1, value, location) unless target_def.naked?
+          context.vars[arg.name] = LLVMVar.new(value, var_type)
+        else
+          pointer = alloca(llvm_type(var_type), arg.name)
+          casted_pointer = bit_cast pointer, value.type.pointer
+          store value, casted_pointer
+          pointer = declare_debug_for_function_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
+          context.vars[arg.name] = LLVMVar.new(pointer, var_type)
+        end
         return
       elsif arg.special_var?
         value = declare_debug_for_function_argument(arg.name, var_type, index + 1, value, location) unless target_def.naked?

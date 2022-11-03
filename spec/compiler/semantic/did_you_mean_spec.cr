@@ -102,7 +102,7 @@ describe "Semantic: did you mean" do
   end
 
   it "doesn't suggest for operator" do
-    error = assert_error <<-CR,
+    error = assert_error <<-CR
       class Foo
         def +
         end
@@ -110,7 +110,6 @@ describe "Semantic: did you mean" do
 
       Foo.new.a
       CR
-      inject_primitives: false
 
     error.to_s.should_not contain("Did you mean")
   end

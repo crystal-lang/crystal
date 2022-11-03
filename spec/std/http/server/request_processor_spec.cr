@@ -237,7 +237,7 @@ describe HTTP::Server::RequestProcessor do
     input = RaiseIOError.new
     output = IO::Memory.new
     processor.process(input, output)
-    output.rewind.gets_to_end.empty?.should be_true
+    output.rewind.gets_to_end.should be_empty
   end
 
   it "handles IO::Error while writing" do

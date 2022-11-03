@@ -1,3 +1,5 @@
+{% skip_file if flag?(:wasm32) %}
+
 require "spec"
 require "process"
 require "./spec_helper"
@@ -165,7 +167,7 @@ describe Process do
   end
 
   pending_win32 "chroot raises when unprivileged" do
-    status, output = compile_and_run_source <<-'CODE'
+    status, output, _ = compile_and_run_source <<-'CODE'
       begin
         Process.chroot("/usr")
         puts "FAIL"
@@ -440,28 +442,75 @@ describe Process do
     end
   end
 
-  describe "parse_arguments" do
-    it { Process.parse_arguments("").should eq(%w[]) }
-    it { Process.parse_arguments(" ").should eq(%w[]) }
-    it { Process.parse_arguments("foo").should eq(%w[foo]) }
-    it { Process.parse_arguments("foo bar").should eq(%w[foo bar]) }
-    it { Process.parse_arguments(%q("foo bar" 'foo bar' baz)).should eq(["foo bar", "foo bar", "baz"]) }
-    it { Process.parse_arguments(%q("foo bar"'foo bar'baz)).should eq(["foo barfoo barbaz"]) }
-    it { Process.parse_arguments(%q(foo\ bar)).should eq(["foo bar"]) }
-    it { Process.parse_arguments(%q("foo\ bar")).should eq(["foo\\ bar"]) }
-    it { Process.parse_arguments(%q('foo\ bar')).should eq(["foo\\ bar"]) }
-    it { Process.parse_arguments("\\").should eq(["\\"]) }
-    it { Process.parse_arguments(%q["foo bar" '\hello/' Fizz\ Buzz]).should eq(["foo bar", "\\hello/", "Fizz Buzz"]) }
+  {% if flag?(:unix) %}
+    describe ".parse_arguments" do
+      it "uses the native platform rules" do
+        Process.parse_arguments(%q[a\ b'c']).should eq [%q[a bc]]
+      end
+    end
+  {% elsif flag?(:win32) %}
+    describe ".parse_arguments" do
+      it "uses the native platform rules" do
+        Process.parse_arguments(%q[a\ b'c']).should eq [%q[a\], %q[b'c']]
+      end
+    end
+  {% else %}
+    pending ".parse_arguments"
+  {% end %}
+
+  describe ".parse_arguments_posix" do
+    it { Process.parse_arguments_posix(%q[]).should eq([] of String) }
+    it { Process.parse_arguments_posix(%q[ ]).should eq([] of String) }
+    it { Process.parse_arguments_posix(%q[foo]).should eq [%q[foo]] }
+    it { Process.parse_arguments_posix(%q[foo bar]).should eq [%q[foo], %q[bar]] }
+    it { Process.parse_arguments_posix(%q["foo bar" 'foo bar' baz]).should eq [%q[foo bar], %q[foo bar], %q[baz]] }
+    it { Process.parse_arguments_posix(%q["foo bar"'foo bar'baz]).should eq [%q[foo barfoo barbaz]] }
+    it { Process.parse_arguments_posix(%q[foo\ bar]).should eq [%q[foo bar]] }
+    it { Process.parse_arguments_posix(%q["foo\ bar"]).should eq [%q[foo\ bar]] }
+    it { Process.parse_arguments_posix(%q['foo\ bar']).should eq [%q[foo\ bar]] }
+    it { Process.parse_arguments_posix(%q[\]).should eq [%q[\]] }
+    it { Process.parse_arguments_posix(%q["foo bar" '\hello/' Fizz\ Buzz]).should eq [%q[foo bar], %q[\hello/], %q[Fizz Buzz]] }
+    it { Process.parse_arguments_posix(%q[foo"bar"baz]).should eq [%q[foobarbaz]] }
+    it { Process.parse_arguments_posix(%q[foo'bar'baz]).should eq [%q[foobarbaz]] }
+    it { Process.parse_arguments_posix(%q[this 'is a "'very wei"rd co"m"mand please" don't do t'h'a't p"leas"e]).should eq [%q[this], %q[is a "very], %q[weird command please], %q[dont do that], %q[please]] }
 
     it "raises an error when double quote is unclosed" do
       expect_raises ArgumentError, "Unmatched quote" do
-        Process.parse_arguments(%q["foo])
+        Process.parse_arguments_posix(%q["foo])
       end
     end
 
     it "raises an error if single quote is unclosed" do
       expect_raises ArgumentError, "Unmatched quote" do
-        Process.parse_arguments(%q['foo])
+        Process.parse_arguments_posix(%q['foo])
+      end
+    end
+  end
+
+  describe ".parse_arguments_windows" do
+    it { Process.parse_arguments_windows(%q[]).should eq([] of String) }
+    it { Process.parse_arguments_windows(%q[ ]).should eq([] of String) }
+    it { Process.parse_arguments_windows(%q[foo]).should eq [%q[foo]] }
+    it { Process.parse_arguments_windows(%q[foo bar]).should eq [%q[foo], %q[bar]] }
+    it { Process.parse_arguments_windows(%q["foo bar" 'foo bar' baz]).should eq [%q[foo bar], %q['foo], %q[bar'], %q[baz]] }
+    it { Process.parse_arguments_windows(%q["foo bar"baz]).should eq [%q[foo barbaz]] }
+    it { Process.parse_arguments_windows(%q[foo"bar baz"]).should eq [%q[foobar baz]] }
+    it { Process.parse_arguments_windows(%q[foo\bar]).should eq [%q[foo\bar]] }
+    it { Process.parse_arguments_windows(%q[foo\ bar]).should eq [%q[foo\], %q[bar]] }
+    it { Process.parse_arguments_windows(%q[foo\\bar]).should eq [%q[foo\\bar]] }
+    it { Process.parse_arguments_windows(%q[foo\\\bar]).should eq [%q[foo\\\bar]] }
+    it { Process.parse_arguments_windows(%q[ /LIBPATH:C:\crystal\lib ]).should eq [%q[/LIBPATH:C:\crystal\lib]] }
+    it { Process.parse_arguments_windows(%q[a\\\b d"e f"g h]).should eq [%q[a\\\b], %q[de fg], %q[h]] }
+    it { Process.parse_arguments_windows(%q[a\\\"b c d]).should eq [%q[a\"b], %q[c], %q[d]] }
+    it { Process.parse_arguments_windows(%q[a\\\\"b c" d e]).should eq [%q[a\\b c], %q[d], %q[e]] }
+    it { Process.parse_arguments_windows(%q["foo bar" '\hello/' Fizz\ Buzz]).should eq [%q[foo bar], %q['\hello/'], %q[Fizz\], %q[Buzz]] }
+    it { Process.parse_arguments_windows(%q[this 'is a "'very wei"rd co"m"mand please" don't do t'h'a't p"leas"e"]).should eq [%q[this], %q['is], %q[a], %q['very weird], %q[command], %q[please don't do t'h'a't please]] }
+
+    it "raises an error if double quote is unclosed" do
+      expect_raises ArgumentError, "Unmatched quote" do
+        Process.parse_arguments_windows(%q["foo])
+        Process.parse_arguments_windows(%q[\"foo])
+        Process.parse_arguments_windows(%q["f\"oo\\\"])
       end
     end
   end

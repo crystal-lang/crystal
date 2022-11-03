@@ -2,7 +2,7 @@ require "../../../spec_helper"
 require "http/server/handler"
 require "http/client/response"
 
-private def handle(request, fallthrough = true, directory_listing = true, ignore_body = false)
+private def handle(request, fallthrough = true, directory_listing = true, ignore_body = false, decompress = true)
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
@@ -10,7 +10,7 @@ private def handle(request, fallthrough = true, directory_listing = true, ignore
   handler.call context
   response.close
   io.rewind
-  HTTP::Client::Response.from_io(io, ignore_body)
+  HTTP::Client::Response.from_io(io, ignore_body, decompress)
 end
 
 describe HTTP::StaticFileHandler do
@@ -20,6 +20,16 @@ describe HTTP::StaticFileHandler do
     response = handle HTTP::Request.new("GET", "/test.txt"), ignore_body: false
     response.status_code.should eq(200)
     response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
+  end
+
+  it "handles forbidden characters in windows paths" do
+    response = handle HTTP::Request.new("GET", "/foo\\bar.txt"), ignore_body: false
+    response.status_code.should eq 404
+
+    # This file can't be checkout out from git on Windows, thus we need to create it here.
+    File.touch(Path[datapath("static_file_handler"), Path.posix("back\\slash.txt")])
+    response = handle HTTP::Request.new("GET", "/back\\slash.txt"), ignore_body: false
+    response.status_code.should eq 200
   end
 
   it "adds Etag header" do
@@ -256,7 +266,7 @@ describe HTTP::StaticFileHandler do
     File.touch datapath("static_file_handler", "test.txt.gz"), modification_time + 1.second
 
     headers = HTTP::Headers{"Accept-Encoding" => "gzip"}
-    response = handle HTTP::Request.new("GET", "/test.txt", headers)
+    response = handle HTTP::Request.new("GET", "/test.txt", headers), decompress: false
     response.headers["Content-Encoding"].should eq("gzip")
   end
 
@@ -265,7 +275,7 @@ describe HTTP::StaticFileHandler do
     File.touch datapath("static_file_handler", "test.txt.gz"), modification_time - 1.microsecond
 
     headers = HTTP::Headers{"Accept-Encoding" => "gzip"}
-    response = handle HTTP::Request.new("GET", "/test.txt", headers)
+    response = handle HTTP::Request.new("GET", "/test.txt", headers), decompress: false
     response.headers["Content-Encoding"].should eq("gzip")
   end
 

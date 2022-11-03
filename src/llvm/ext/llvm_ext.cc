@@ -209,8 +209,8 @@ LLVMValueRef LLVMExtDIBuilderInsertDeclareAtEnd(
 }
 
 LLVMMetadataRef LLVMExtDIBuilderCreateExpression(
-    DIBuilderRef Dref, int64_t *Addr, size_t Length) {
-  return wrap(Dref->createExpression(ArrayRef<int64_t>(Addr, Length)));
+    DIBuilderRef Dref, uint64_t *Addr, size_t Length) {
+  return wrap(Dref->createExpression(ArrayRef<uint64_t>(Addr, Length)));
 }
 
 LLVMMetadataRef LLVMExtDIBuilderCreateEnumerationType(
@@ -351,16 +351,54 @@ void LLVMMetadataReplaceAllUsesWith2(
 void LLVMExtSetCurrentDebugLocation(
   LLVMBuilderRef Bref, unsigned Line, unsigned Col, LLVMMetadataRef Scope,
   LLVMMetadataRef InlinedAt) {
+#if LLVM_VERSION_GE(12, 0)
+  if (!Scope)
+    unwrap(Bref)->SetCurrentDebugLocation(DebugLoc());
+  else
+    unwrap(Bref)->SetCurrentDebugLocation(
+      DILocation::get(unwrap<MDNode>(Scope)->getContext(), Line, Col,
+                      unwrapDI<DILocalScope>(Scope),
+                      unwrapDI<DILocation>(InlinedAt)));
+#else
   unwrap(Bref)->SetCurrentDebugLocation(
       DebugLoc::get(Line, Col, Scope ? unwrap<MDNode>(Scope) : nullptr,
                     InlinedAt ? unwrap<MDNode>(InlinedAt) : nullptr));
+#endif
 }
+
+#if LLVM_VERSION_GE(3, 9)
+// A backported LLVMCreateTypeAttribute for LLVM < 13
+// from https://github.com/llvm/llvm-project/blob/bb8ce25e88218be60d2a4ea9c9b0b721809eff27/llvm/lib/IR/Core.cpp#L167
+LLVMAttributeRef LLVMExtCreateTypeAttribute(
+  LLVMContextRef C, unsigned KindID, LLVMTypeRef Ty) {
+  auto &Ctx = *unwrap(C);
+  auto AttrKind = (Attribute::AttrKind)KindID;
+#if LLVM_VERSION_GE(12, 0)
+  return wrap(Attribute::get(Ctx, AttrKind, unwrap(Ty)));
+#else
+  return wrap(Attribute::get(Ctx, AttrKind));
+#endif
+}
+#endif
 
 LLVMValueRef LLVMExtBuildCmpxchg(
     LLVMBuilderRef B, LLVMValueRef PTR, LLVMValueRef Cmp, LLVMValueRef New,
     LLVMAtomicOrdering SuccessOrdering, LLVMAtomicOrdering FailureOrdering) {
+#if LLVM_VERSION_GE(13, 0)
+  return wrap(
+    unwrap(B)->CreateAtomicCmpXchg(
+      unwrap(PTR),
+      unwrap(Cmp),
+      unwrap(New),
+      llvm::MaybeAlign(),
+      (llvm::AtomicOrdering)SuccessOrdering,
+      (llvm::AtomicOrdering)FailureOrdering
+    )
+  );
+#else
   return wrap(unwrap(B)->CreateAtomicCmpXchg(unwrap(PTR), unwrap(Cmp), unwrap(New),
     (llvm::AtomicOrdering)SuccessOrdering, (llvm::AtomicOrdering)FailureOrdering));
+#endif
 }
 
 void LLVMExtSetOrdering(LLVMValueRef MemAccessInst, LLVMAtomicOrdering Ordering) {
@@ -425,10 +463,15 @@ OperandBundleDef *LLVMExtBuildOperandBundleDef(
 #endif
 }
 
-LLVMValueRef LLVMExtBuildCall(
-    LLVMBuilderRef B, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
+LLVMValueRef LLVMExtBuildCall2(
+    LLVMBuilderRef B, LLVMTypeRef Ty, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
     OperandBundleDef *Bundle, const char *Name) {
-#if LLVM_VERSION_GE(3, 8)
+#if LLVM_VERSION_GE(8, 0)
+  unsigned Len = Bundle ? 1 : 0;
+  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
+  return wrap(unwrap(B)->CreateCall(
+       (llvm::FunctionType*) unwrap(Ty), unwrap(Fn), makeArrayRef(unwrap(Args), NumArgs), Bundles, Name));
+#elif LLVM_VERSION_GE(3, 8)
   unsigned Len = Bundle ? 1 : 0;
   ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
   return wrap(unwrap(B)->CreateCall(
@@ -438,11 +481,17 @@ LLVMValueRef LLVMExtBuildCall(
 #endif
 }
 
-LLVMValueRef LLVMExtBuildInvoke(
-    LLVMBuilderRef B, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
+LLVMValueRef LLVMExtBuildInvoke2(
+    LLVMBuilderRef B,  LLVMTypeRef Ty, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
     LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch, OperandBundleDef *Bundle,
     const char *Name) {
-#if LLVM_VERSION_GE(3, 8)
+#if LLVM_VERSION_GE(8, 0)
+  unsigned Len = Bundle ? 1 : 0;
+  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
+  return wrap(unwrap(B)->CreateInvoke((llvm::FunctionType*) unwrap(Ty), unwrap(Fn), unwrap(Then), unwrap(Catch),
+                                      makeArrayRef(unwrap(Args), NumArgs),
+                                      Bundles, Name));
+#elif LLVM_VERSION_GE(3, 8)
   unsigned Len = Bundle ? 1 : 0;
   ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
   return wrap(unwrap(B)->CreateInvoke(unwrap(Fn), unwrap(Then), unwrap(Catch),
@@ -453,14 +502,17 @@ LLVMValueRef LLVMExtBuildInvoke(
 #endif
 }
 
-
 void LLVMExtWriteBitcodeWithSummaryToFile(LLVMModuleRef mref, const char *File) {
 #if LLVM_VERSION_GE(4, 0)
   // https://github.com/ldc-developers/ldc/pull/1840/files
   Module *m = unwrap(mref);
 
   std::error_code EC;
+#if LLVM_VERSION_GE(13, 0)
+  raw_fd_ostream OS(File, EC, sys::fs::OF_None);
+#else
   raw_fd_ostream OS(File, EC, sys::fs::F_None);
+#endif
   if (EC) return;
 
   llvm::ModuleSummaryIndex moduleSummaryIndex = llvm::buildModuleSummaryIndex(*m, nullptr, nullptr);
@@ -535,8 +587,12 @@ LLVMBool LLVMExtCreateMCJITCompilerForModule(
     for (auto &F : *Mod) {
       auto Attrs = F.getAttributes();
       StringRef Value = options.NoFramePointerElim ? "all" : "none";
-      Attrs = Attrs.addAttribute(F.getContext(), AttributeList::FunctionIndex,
-                                 "frame-pointer", Value);
+      #if LLVM_VERSION_GE(14, 0)
+        Attrs = Attrs.addFnAttribute(F.getContext(), "frame-pointer", Value);
+      #else
+        Attrs = Attrs.addAttribute(F.getContext(), AttributeList::FunctionIndex,
+                                   "frame-pointer", Value);
+      #endif
       F.setAttributes(Attrs);
     }
 

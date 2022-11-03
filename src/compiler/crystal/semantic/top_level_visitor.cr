@@ -30,8 +30,8 @@ require "./semantic_visitor"
 # subclasses or not and we can tag it as "virtual" (having subclasses), but that concept
 # might disappear in the future and we'll make consider everything as "maybe virtual".
 class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
-  # These are `new` methods (expanded) that was created from `initialize` methods (original)
-  getter new_expansions = [] of {original: Def, expanded: Def}
+  # These are `new` methods (values) that was created from `initialize` methods (keys)
+  getter new_expansions : Hash(Def, Def) = ({} of Def => Def).compare_by_identity
 
   # All finished hooks and their scope
   record FinishedHook, scope : ModuleType, macro : Macro
@@ -63,14 +63,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if type_vars = node.type_vars
         if type.is_a?(GenericType)
-          type_type_vars = type.type_vars
-          if type_vars != type_type_vars
-            if type_type_vars.size == 1
-              node.raise "type var must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
-            else
-              node.raise "type vars must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
-            end
-          end
+          check_reopened_generic(type, node, type_vars)
         else
           node.raise "#{name} is not a generic #{type.type_desc}"
         end
@@ -116,7 +109,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         find_root_generic_type_parameters: false).devirtualize
       case superclass
       when GenericClassType
-        node_superclass.raise "wrong number of type vars for #{superclass} (given 0, expected #{superclass.type_vars.size})"
+        node_superclass.raise "generic type arguments must be specified when inheriting #{superclass}"
       when NonGenericClassType, GenericClassInstanceType
         if superclass == @program.enum
           node_superclass.raise "can't inherit Enum. Use the enum keyword to define enums"
@@ -217,7 +210,15 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type = type.remove_alias
 
       unless type.module?
-        node.raise "#{type} is not a module, it's a #{type.type_desc}"
+        node.raise "#{name} is not a module, it's a #{type.type_desc}"
+      end
+
+      if type_vars = node.type_vars
+        if type.is_a?(GenericType)
+          check_reopened_generic(type, node, type_vars)
+        else
+          node.raise "#{name} is not a generic module"
+        end
       end
 
       type = type.as(ModuleType)
@@ -246,6 +247,29 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     false
+  end
+
+  private def check_reopened_generic(generic, node, new_type_vars)
+    generic_type_vars = generic.type_vars
+    if new_type_vars != generic_type_vars || node.splat_index != generic.splat_index
+      msg = String.build do |io|
+        io << "type var"
+        io << 's' if generic_type_vars.size > 1
+        io << " must be "
+        generic_type_vars.each_with_index do |var, i|
+          io << ", " if i > 0
+          io << '*' if i == generic.splat_index
+          var.to_s(io)
+        end
+        io << ", not "
+        new_type_vars.each_with_index do |var, i|
+          io << ", " if i > 0
+          io << '*' if i == node.splat_index
+          var.to_s(io)
+        end
+      end
+      node.raise msg
+    end
   end
 
   def visit(node : AnnotationDef)
@@ -303,9 +327,16 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.doc ||= annotations_doc(annotations)
     check_ditto node, node.location
 
+    node.args.each &.accept self
+    node.double_splat.try &.accept self
+    node.block_arg.try &.accept self
+
     node.set_type @program.nil
 
     if node.name == "finished"
+      unless node.args.empty?
+        node.raise "wrong number of parameters for macro '#{node.name}' (given #{node.args.size}, expected 0)"
+      end
       @finished_hooks << FinishedHook.new(current_type, node)
       return false
     end
@@ -313,8 +344,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     target = current_type.metaclass.as(ModuleType)
     begin
       target.add_macro node
-    rescue ex : Crystal::Exception
+    rescue ex : Crystal::CodeError
       node.raise ex.message
+    end
+
+    false
+  end
+
+  def visit(node : Arg)
+    if anns = node.parsed_annotations
+      process_annotations anns do |annotation_type, ann|
+        node.add_annotation annotation_type, ann
+      end
     end
 
     false
@@ -335,6 +376,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     node.doc ||= annotations_doc(annotations)
     check_ditto node, node.location
+
+    node.args.each &.accept self
+    node.double_splat.try &.accept self
+    node.block_arg.try &.accept self
 
     is_instance_method = false
 
@@ -381,6 +426,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     target_type.add_def node
+
     node.set_type @program.nil
 
     if is_instance_method
@@ -394,12 +440,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         target_type.metaclass.as(ModuleType).add_def(new_method)
 
         # And we register it to later complete it
-        new_expansions << {original: node, expanded: new_method}
+        new_expansions[node] = new_method
       end
 
-      unless @method_added_running
+      if !@method_added_running && has_hooks?(target_type.metaclass)
         @method_added_running = true
-        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", [node] of ASTNode).at(node.location)
+        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", node).at(node.location)
         @method_added_running = false
       end
     end
@@ -418,10 +464,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     value = arg.value
-
-    unless node.body.is_a?(Nop)
-      node.raise "method marked as Primitive must have an empty body"
-    end
 
     primitive = Primitive.new(value)
     primitive.location = node.location
@@ -459,18 +501,26 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     type.private = true if node.visibility.private?
 
+    wasm_import_module = nil
+
     process_annotations(annotations) do |annotation_type, ann|
       case annotation_type
       when @program.link_annotation
         link_annotation = LinkAnnotation.from(ann)
 
         if link_annotation.static?
-          @program.report_warning(ann, "specifying static linking for individual libraries is deprecated")
+          @program.warnings.add_warning(ann, "specifying static linking for individual libraries is deprecated")
         end
 
         if ann.args.size > 1
-          @program.report_warning(ann, "using non-named arguments for Link annotations is deprecated")
+          @program.warnings.add_warning(ann, "using non-named arguments for Link annotations is deprecated")
         end
+
+        if wasm_import_module && link_annotation.wasm_import_module
+          ann.raise "multiple wasm import modules specified for lib #{node.name}"
+        end
+
+        wasm_import_module = link_annotation.wasm_import_module
 
         type.add_link_annotation(link_annotation)
       when @program.call_convention_annotation
@@ -633,18 +683,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit_enum_member(node, member, counter, all_value, overflow, **options)
     case member
     when MacroIf
-      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum)
+      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
       visit_enum_member(node, expanded, counter, all_value, overflow, **options)
     when MacroExpression
-      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum)
+      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
       visit_enum_member(node, expanded, counter, all_value, overflow, **options)
     when MacroFor
-      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum)
+      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
       visit_enum_member(node, expanded, counter, all_value, overflow, **options)
     when Expressions
       visit_enum_members(node, member.expressions, counter, all_value, overflow, **options)
     when Arg
-      existed = options[:existed]
       enum_type = options[:enum_type]
       base_type = options[:enum_base_type]
       is_flags = options[:is_flags]
@@ -669,7 +718,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if default_value.is_a?(Crystal::NumberLiteral)
         enum_base_kind = base_type.kind
-        if (enum_base_kind == :i32) && (enum_base_kind != default_value.kind)
+        if (enum_base_kind.i32?) && (enum_base_kind != default_value.kind)
           default_value.raise "enum value must be an Int32"
         end
       end
@@ -769,6 +818,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     const = Const.new(@program, scope, name, value)
     const.private = true if target.visibility.private?
 
+    process_annotations(annotations) do |annotation_type, ann|
+      # annotations on constants are inaccessible in macros so we only add deprecations
+      const.add_annotation(annotation_type, ann) if annotation_type == @program.deprecated_annotation
+    end
+
     check_ditto node, node.location
     attach_doc const, node, annotations
 
@@ -803,7 +857,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.raise "can only use 'private' for types"
       end
     when Assign
-      if (target = exp.target).is_a?(Path)
+      if exp.target.is_a?(Path)
         if node.modifier.private?
           return false
         else
@@ -859,6 +913,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     process_def_annotations(external, annotations) do |annotation_type, ann|
       if annotation_type == @program.call_convention_annotation
         call_convention = parse_call_convention(ann, call_convention)
+      elsif annotation_type == @program.primitive_annotation
+        process_primitive_annotation(external, ann)
       else
         ann.raise "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention"
       end
@@ -871,6 +927,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     scope = current_type
     if !call_convention && scope.is_a?(LibType)
       call_convention = scope.call_convention
+    end
+
+    if scope.is_a?(LibType)
+      external.wasm_import_module = scope.wasm_import_module
     end
 
     # We fill the arguments and return type in TypeDeclarationVisitor
@@ -903,8 +963,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def visit(node : MultiAssign)
     node.targets.each do |target|
-      if target.is_a?(Var)
-        @vars[target.name] = MetaVar.new(target.name)
+      var = target.is_a?(Splat) ? target.exp : target
+      if var.is_a?(Var)
+        @vars[var.name] = MetaVar.new(var.name)
       end
       target.accept self
     end
@@ -973,13 +1034,13 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def include_in(current_type, node, kind)
+  def include_in(current_type, node, kind : HookKind)
     node_name = node.name
 
     type = lookup_type(node_name)
     case type
     when GenericModuleType
-      node.raise "wrong number of type vars for #{type} (given 0, expected #{type.type_vars.size})"
+      node.raise "generic type arguments must be specified when including #{type}"
     when .module?
       # OK
     else
@@ -994,7 +1055,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
   end
 
-  def run_hooks(type_with_hooks, current_type, kind, node, call = nil)
+  def has_hooks?(type_with_hooks)
+    hooks = type_with_hooks.as?(ModuleType).try &.hooks
+    hooks && !hooks.empty?
+  end
+
+  def run_hooks(type_with_hooks, current_type, kind : HookKind, node, call = nil)
     type_with_hooks.as?(ModuleType).try &.hooks.try &.each do |hook|
       next if hook.kind != kind
 
@@ -1009,7 +1075,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node.add_hook_expansion(expansion)
     end
 
-    if kind == :inherited
+    if kind.inherited?
       # In the case of:
       #
       #    class A(X); end
@@ -1064,20 +1130,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def check_ditto(node : Def | Assign | FunDef | Const | Macro, location : Location?) : Nil
     return if !@program.wants_doc?
-    stripped_doc = node.doc.try &.strip
-    if stripped_doc == ":ditto:"
-      node.doc = @last_doc
-    elsif stripped_doc == "ditto"
-      # TODO: remove after 0.34.0
-      if location
-        # Show one line above to highlight the ditto line
-        location = Location.new(location.filename, location.line_number - 1, location.column_number)
+
+    if stripped_doc = node.doc.try &.strip
+      if stripped_doc == ":ditto:"
+        node.doc = @last_doc
+        return
+      elsif appendix = stripped_doc.lchop?(":ditto:\n")
+        node.doc = "#{@last_doc}\n\n#{appendix.lchop('\n')}"
+        return
       end
-      @program.report_warning_at location, "`ditto` is no longer supported. Use `:ditto:` instead"
-      node.doc = @last_doc
-    else
-      @last_doc = node.doc
     end
+
+    @last_doc = node.doc
   end
 
   def annotations_doc(annotations)
@@ -1150,7 +1214,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     unless target_type
       next_type = base_type
       path.names.each do |name|
-        next_type = base_type.lookup_path_item(name, lookup_in_namespace: false, include_private: true, location: path.location)
+        next_type = base_type.lookup_path_item(name, lookup_self: false, lookup_in_namespace: false, include_private: true, location: path.location)
         if next_type
           if next_type.is_a?(ASTNode)
             path.raise "expected #{name} to be a type"

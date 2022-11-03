@@ -1,8 +1,8 @@
 require "llvm"
-require "../exception"
+require "../error"
 
 class Crystal::Codegen::Target
-  class Error < Crystal::LocationlessException
+  class Error < Crystal::Error
   end
 
   getter architecture : String
@@ -25,6 +25,8 @@ class Crystal::Codegen::Target
       @architecture = "i386"
     when "amd64"
       @architecture = "x86_64"
+    when "arm64"
+      @architecture = "aarch64"
     when .starts_with?("arm")
       @architecture = "arm"
     else
@@ -94,12 +96,16 @@ class Crystal::Codegen::Target
     @environment.starts_with?("linux")
   end
 
+  def wasi?
+    @environment.starts_with?("wasi")
+  end
+
   def bsd?
     freebsd? || netbsd? || openbsd? || dragonfly?
   end
 
   def unix?
-    macos? || bsd? || linux?
+    macos? || bsd? || linux? || wasi?
   end
 
   def gnu?
@@ -142,6 +148,8 @@ class Crystal::Codegen::Target
       if cpu.empty? && !features.includes?("fp") && armhf?
         features += "+vfp2"
       end
+    when "wasm32"
+      LLVM.init_webassembly
     else
       raise Target::Error.new("Unsupported architecture for target triple: #{self}")
     end

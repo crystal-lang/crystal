@@ -42,9 +42,9 @@ module Crystal
 
     def float(value, type)
       case type.kind
-      when :f32
+      when .f32?
         float32(value.to_f32)
-      when :f64
+      when .f64?
         float64(value.to_f64)
       else
         raise "Unsupported float type"
@@ -103,7 +103,7 @@ module Crystal
       call(func, [arg], name)
     end
 
-    def call(func, args : Array(LLVM::Value), name : String = "")
+    def call(func : LLVM::Function, args : Array(LLVM::Value), name : String = "")
       if catch_pad = @catch_pad
         funclet = builder.build_operand_bundle_def("funclet", [catch_pad])
       else
@@ -113,7 +113,7 @@ module Crystal
       builder.call(func, args, bundle: funclet, name: name)
     end
 
-    def invoke(func, args : Array(LLVM::Value), a_then, a_catch, name : String = "")
+    def invoke(func : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, name : String = "")
       if catch_pad = @catch_pad
         funclet = builder.build_operand_bundle_def("funclet", [catch_pad])
       else
