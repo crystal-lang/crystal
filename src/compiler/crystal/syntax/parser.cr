@@ -264,9 +264,19 @@ module Crystal
         raise "can't assign to constant in multiple assignment", exp.location.not_nil!
       end
 
-      if exp.is_a?(Call) && !exp.obj && exp.args.empty?
-        exp = Var.new(exp.name).at(exp)
+      if exp.is_a?(Call)
+        case obj = exp.obj
+        when Nil
+          if exp.args.empty?
+            exp = Var.new(exp.name).at(exp)
+          end
+        when Global
+          if obj.name == "$~" && exp.name == "[]"
+            raise "global match data cannot be assigned to", obj.location.not_nil!
+          end
+        end
       end
+
       if exp.is_a?(Var)
         if exp.name == "self"
           raise "can't change the value of self", exp.location.not_nil!
@@ -996,7 +1006,7 @@ module Crystal
         end
       when .global_match_data_index?
         if peek_ahead { next_token_skip_space; @token.type.op_eq? }
-          raise "global match data cannot be assigned"
+          raise "global match data cannot be assigned to"
         end
 
         value = @token.value.to_s
