@@ -246,15 +246,15 @@ jobs:
             libs/crypto.lib
             libs/ssl.lib
             libs/openssl_VERSION
-          key: win-openssl-libs-3.0.0-msvc-${{ env.VSCMD_VER }}
+          key: win-openssl-libs-3.0.7-msvc-${{ env.VSCMD_VER }}
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         uses: ilammy/setup-nasm@e2335e5fc95548c09cd2deea2768793e0e8f0941 # v1.2.1
       - name: Download OpenSSL
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         run: |
-          iwr https://www.openssl.org/source/openssl-3.0.0.tar.gz -OutFile openssl.tar.gz
-          (Get-FileHash -Algorithm SHA256 .\openssl.tar.gz).hash -eq "59eedfcb46c25214c9bd37ed6078297b4df01d012267fe9e9eee31f61bc70536"
+          iwr https://www.openssl.org/source/openssl-3.0.7.tar.gz -OutFile openssl.tar.gz
+          (Get-FileHash -Algorithm SHA256 .\openssl.tar.gz).hash -eq "83049d042a260e696f62406ac5c08bf706fd84383f945cf21bd61e9ed95c396e"
           7z x openssl.tar.gz
           7z x openssl.tar
           mv openssl-* openssl
@@ -271,7 +271,7 @@ jobs:
         run: |
           cp openssl/libcrypto.lib libs/crypto.lib
           cp openssl/libssl.lib libs/ssl.lib
-          [IO.File]::WriteAllLines("libs/openssl_VERSION", "3.0.0")
+          [IO.File]::WriteAllLines("libs/openssl_VERSION", "3.0.7")
 
       - name: Cache LLVM
         id: cache-llvm
