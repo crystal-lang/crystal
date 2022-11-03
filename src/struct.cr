@@ -64,15 +64,18 @@ struct Struct
   # p1 == p3 # => false
   # ```
   def ==(other) : Bool
-    # TODO: This is a workaround for https://github.com/crystal-lang/crystal/issues/5249
-    if other.is_a?(self)
-      {% for ivar in @type.instance_vars %}
-        return false unless @{{ivar.id}} == other.@{{ivar.id}}
-      {% end %}
-      return true
-    else
-      return false
-    end
+    {% begin %}
+      # TODO: This is a workaround for https://github.com/crystal-lang/crystal/issues/5249
+      # and https://github.com/crystal-lang/crystal/issues/4269
+      if other.is_a?({{ @type.type_vars.empty? ? "self".id : @type.name(generic_args: false) }})
+        {% for ivar in @type.instance_vars %}
+          return false unless @{{ivar.id}} == other.@{{ivar.id}}
+        {% end %}
+        return true
+      else
+        return false
+      end
+    {% end %}
   end
 
   # See `Object#hash(hasher)`
