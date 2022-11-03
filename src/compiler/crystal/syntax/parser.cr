@@ -199,21 +199,21 @@ module Crystal
         unexpected_token
       end
 
-      targets = exps[0...assign_index].map { |exp| multiassign_left_hand(exp) }
+      targets = exps[0...assign_index].map { |exp| multi_assign_left_hand(exp) }
 
       assign = exps[assign_index]
       values = [] of ASTNode
 
       case assign
       when Assign
-        targets << multiassign_left_hand(assign.target)
+        targets << multi_assign_left_hand(assign.target)
         values << assign.value
       when Call
         assign.name = assign.name.byte_slice(0, assign.name.bytesize - 1)
         targets << assign
         values << assign.args.pop
       else
-        raise "BUG: multiassign index expression can only be Assign or Call"
+        raise "BUG: multi_assign index expression can only be Assign or Call"
       end
 
       if lhs_splat_index
@@ -259,7 +259,7 @@ module Crystal
       end
     end
 
-    def multiassign_left_hand(exp)
+    def multi_assign_left_hand(exp)
       if exp.is_a?(Path)
         raise "can't assign to constant in multiple assignment", exp.location.not_nil!
       end
