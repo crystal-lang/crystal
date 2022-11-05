@@ -940,10 +940,10 @@ describe "File" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_exclusive do
-            # BUG: check for EWOULDBLOCK when exception filters are implemented
-            expect_raises(IO::Error, "Error applying or removing file lock") do
+            exc = expect_raises(IO::Error, "Error applying file lock: file is already locked") do
               file2.flock_exclusive(blocking: false) { }
             end
+            exc.os_error.should eq Errno::EWOULDBLOCK
           end
         end
       end
@@ -955,6 +955,40 @@ describe "File" do
           file1.flock_shared do
             file2.flock_shared(blocking: false) { }
           end
+        end
+      end
+    end
+
+    it "#flock_shared non-blocking" do
+      File.open(datapath("test_file.txt")) do |file1|
+        File.open(datapath("test_file.txt")) do |file2|
+          done = Channel(Nil).new
+          file1.flock_exclusive
+
+          spawn do
+            file1.flock_unlock
+            done.send nil
+          end
+
+          file2.flock_shared
+          done.receive
+        end
+      end
+    end
+
+    it "#flock_exclusive non-blocking" do
+      File.open(datapath("test_file.txt")) do |file1|
+        File.open(datapath("test_file.txt")) do |file2|
+          done = Channel(Nil).new
+          file1.flock_exclusive
+
+          spawn do
+            file1.flock_unlock
+            done.send nil
+          end
+
+          file2.flock_exclusive
+          done.receive
         end
       end
     end
