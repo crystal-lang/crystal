@@ -434,15 +434,15 @@ module Crystal
     end
 
     private def void_lib_call?(node)
-      return unless node.is_a?(Call)
+      return false unless node.is_a?(Call)
 
       obj = node.obj
-      return unless obj.is_a?(Path)
+      return false unless obj.is_a?(Path)
 
       type = obj.type?
-      return unless type.is_a?(LibType)
+      return false unless type.is_a?(LibType)
 
-      node.type?.try &.nil_type?
+      !!node.type?.try &.nil_type?
     end
 
     def transform(node : Global)

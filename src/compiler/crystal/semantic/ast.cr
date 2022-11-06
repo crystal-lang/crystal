@@ -34,6 +34,8 @@ module Crystal
             self_type.kind.bytesize <= 64
           when FloatType
             self_type.kind.f32?
+          else
+            false
           end
         else
           false
