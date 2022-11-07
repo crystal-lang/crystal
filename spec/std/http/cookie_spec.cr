@@ -38,34 +38,33 @@ module HTTP
         expect_raises IO::Error, "Invalid cookie name" do
           HTTP::Cookie.new("\t", "")
         end
-        # more extensive specs on #name=
       end
 
       it "raises on invalid value" do
         expect_raises IO::Error, "Invalid cookie value" do
           HTTP::Cookie.new("x", %(foo\rbar))
         end
-        # more extensive specs on #value=
       end
     end
 
     describe "#name=" do
       it "raises on invalid name" do
         cookie = HTTP::Cookie.new("x", "")
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = ""
-        end
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = "\t"
-        end
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = "\r"
-        end
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = "a\nb"
-        end
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = "a\rb"
+        invalid_names = [
+          '"', ',', ';', '\\',
+          ' ', '\r', '\t', '\n',
+          '{', '}',
+          (':'..'@').to_a,
+          ('['..']').to_a,
+        ].flatten.map { |c| "a#{c}b" }
+
+        # name cannot be empty
+        invalid_names << ""
+
+        invalid_names.each do |invalid_name|
+          expect_raises IO::Error, "Invalid cookie name" do
+            cookie.name = invalid_name
+          end
         end
       end
     end
@@ -73,26 +72,15 @@ module HTTP
     describe "#value=" do
       it "raises on invalid value" do
         cookie = HTTP::Cookie.new("x", "")
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = %(foo\rbar)
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = %(foo"bar)
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo;bar"
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo\\bar"
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo\\bar"
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo bar"
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo,bar"
+        invalid_values = {
+          '"', ',', ';', '\\',   # invalid printable ascii characters
+          ' ', '\r', '\t', '\n', # non-printable ascii characters
+        }.map { |c| "foo#{c}bar" }
+
+        invalid_values.each do |invalid_value|
+          expect_raises IO::Error, "Invalid cookie value" do
+            cookie.value = invalid_value
+          end
         end
       end
     end
