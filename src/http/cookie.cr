@@ -58,7 +58,7 @@ module HTTP
         # valid characters for cookie-name per https://tools.ietf.org/html/rfc6265#section-4.1.1
         # and https://tools.ietf.org/html/rfc2616#section-2.2
         # "!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ^_`abcdefghijklmnopqrstuvwxyz|~"
-        if !valid_cookie_value_byte?(byte) || byte.in?(0x3a..0x40, 0x5b..0x5d, 0x7b, 0x7d)
+        if !valid_cookie_value_byte?(byte) || byte.in?(0x3a..0x40) || byte.in?(0x5b..0x5d) || byte.in?(0x7b, 0x7d)
           raise IO::Error.new("Invalid cookie name")
         end
       end
