@@ -1,3 +1,5 @@
+require "llvm/enums/atomic"
+
 # A value that may be updated atomically.
 #
 # Only primitive integer types, reference types or nilable reference types
@@ -52,7 +54,7 @@ struct Atomic(T)
   # atomic.add(2) # => 1
   # atomic.get    # => 3
   # ```
-  def add(value : T)
+  def add(value : T) : T
     Ops.atomicrmw(:add, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -63,7 +65,7 @@ struct Atomic(T)
   # atomic.sub(2) # => 9
   # atomic.get    # => 7
   # ```
-  def sub(value : T)
+  def sub(value : T) : T
     Ops.atomicrmw(:sub, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -74,7 +76,7 @@ struct Atomic(T)
   # atomic.and(3) # => 5
   # atomic.get    # => 1
   # ```
-  def and(value : T)
+  def and(value : T) : T
     Ops.atomicrmw(:and, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -85,7 +87,7 @@ struct Atomic(T)
   # atomic.nand(3) # => 5
   # atomic.get     # => -2
   # ```
-  def nand(value : T)
+  def nand(value : T) : T
     Ops.atomicrmw(:nand, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -96,7 +98,7 @@ struct Atomic(T)
   # atomic.or(2) # => 5
   # atomic.get   # => 7
   # ```
-  def or(value : T)
+  def or(value : T) : T
     Ops.atomicrmw(:or, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -107,7 +109,7 @@ struct Atomic(T)
   # atomic.xor(3) # => 5
   # atomic.get    # => 6
   # ```
-  def xor(value : T)
+  def xor(value : T) : T
     Ops.atomicrmw(:xor, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -172,7 +174,7 @@ struct Atomic(T)
   # atomic.set(10) # => 10
   # atomic.get     # => 10
   # ```
-  def set(value : T)
+  def set(value : T) : T
     Ops.store(pointerof(@value), value.as(T), :sequentially_consistent, true)
     value
   end
@@ -184,11 +186,11 @@ struct Atomic(T)
   # atomic.lazy_set(10) # => 10
   # atomic.get          # => 10
   # ```
-  def lazy_set(@value : T)
+  def lazy_set(@value : T) : T
   end
 
   # Atomically returns this atomic's value.
-  def get
+  def get : T
     Ops.load(pointerof(@value), :sequentially_consistent, true)
   end
 
@@ -202,23 +204,23 @@ struct Atomic(T)
     # Defines methods that directly map to LLVM instructions related to atomic operations.
 
     @[Primitive(:cmpxchg)]
-    def self.cmpxchg(ptr : T*, cmp : T, new : T, success_ordering : Symbol, failure_ordering : Symbol) : {T, Bool} forall T
+    def self.cmpxchg(ptr : T*, cmp : T, new : T, success_ordering : LLVM::AtomicOrdering, failure_ordering : LLVM::AtomicOrdering) : {T, Bool} forall T
     end
 
     @[Primitive(:atomicrmw)]
-    def self.atomicrmw(op : Symbol, ptr : T*, val : T, ordering : Symbol, singlethread : Bool) : T forall T
+    def self.atomicrmw(op : LLVM::AtomicRMWBinOp, ptr : T*, val : T, ordering : LLVM::AtomicOrdering, singlethread : Bool) : T forall T
     end
 
     @[Primitive(:fence)]
-    def self.fence(ordering : Symbol, singlethread : Bool) : Nil
+    def self.fence(ordering : LLVM::AtomicOrdering, singlethread : Bool) : Nil
     end
 
     @[Primitive(:load_atomic)]
-    def self.load(ptr : T*, ordering : Symbol, volatile : Bool) : T forall T
+    def self.load(ptr : T*, ordering : LLVM::AtomicOrdering, volatile : Bool) : T forall T
     end
 
     @[Primitive(:store_atomic)]
-    def self.store(ptr : T*, value : T, ordering : Symbol, volatile : Bool) : Nil forall T
+    def self.store(ptr : T*, value : T, ordering : LLVM::AtomicOrdering, volatile : Bool) : Nil forall T
     end
   end
 end

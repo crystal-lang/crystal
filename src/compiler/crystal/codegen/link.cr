@@ -4,8 +4,9 @@ module Crystal
     getter pkg_config : String?
     getter ldflags : String?
     getter framework : String?
+    getter wasm_import_module : String?
 
-    def initialize(@lib = nil, @pkg_config = @lib, @ldflags = nil, @static = false, @framework = nil)
+    def initialize(@lib = nil, @pkg_config = @lib, @ldflags = nil, @static = false, @framework = nil, @wasm_import_module = nil)
     end
 
     def static?
@@ -25,6 +26,7 @@ module Crystal
       lib_static = false
       lib_pkg_config = nil
       lib_framework = nil
+      lib_wasm_import_module = nil
       count = 0
 
       args.each do |arg|
@@ -71,28 +73,43 @@ module Crystal
         when "pkg_config"
           named_arg.raise "'pkg_config' link argument must be a String" unless value.is_a?(StringLiteral)
           lib_pkg_config = value.value
+        when "wasm_import_module"
+          named_arg.raise "'wasm_import_module' link argument must be a String" unless value.is_a?(StringLiteral)
+          lib_wasm_import_module = value.value
         else
-          named_arg.raise "unknown link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config' and 'framework')"
+          named_arg.raise "unknown link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config', 'framework', and 'wasm_import_module')"
         end
       end
 
-      new(lib_name, lib_pkg_config, lib_ldflags, lib_static, lib_framework)
+      new(lib_name, lib_pkg_config, lib_ldflags, lib_static, lib_framework, lib_wasm_import_module)
     end
   end
 
   class CrystalLibraryPath
+    def self.default_paths : Array(String)
+      paths = ENV.fetch("CRYSTAL_LIBRARY_PATH", Crystal::Config.library_path).split(Process::PATH_DELIMITER, remove_empty: true)
+
+      CrystalPath.expand_paths(paths)
+
+      paths
+    end
+
     def self.default_path : String
-      ENV.fetch("CRYSTAL_LIBRARY_PATH", Crystal::Config.library_path)
+      default_paths.join(Process::PATH_DELIMITER)
     end
 
     class_getter paths : Array(String) do
-      default_path.split(Process::PATH_DELIMITER, remove_empty: true)
+      default_paths
     end
   end
 
   class Program
     def object_extension
-      has_flag?("windows") ? ".obj" : ".o"
+      case
+      when has_flag?("windows") then ".obj"
+      when has_flag?("wasm32")  then ".wasm"
+      else                           ".o"
+      end
     end
 
     def lib_flags
@@ -100,17 +117,27 @@ module Crystal
     end
 
     private def lib_flags_windows
-      String.build do |flags|
-        link_annotations.reverse_each do |ann|
-          if ldflags = ann.ldflags
-            flags << ' ' << ldflags
-          end
+      flags = [] of String
 
-          if libname = ann.lib
-            flags << ' ' << Process.quote_windows("#{libname}.lib")
-          end
+      # Add CRYSTAL_LIBRARY_PATH locations, so the linker preferentially
+      # searches user-given library paths.
+      if has_flag?("msvc")
+        CrystalLibraryPath.paths.each do |path|
+          flags << Process.quote_windows("/LIBPATH:#{path}")
         end
       end
+
+      link_annotations.reverse_each do |ann|
+        if ldflags = ann.ldflags
+          flags << ldflags
+        end
+
+        if libname = ann.lib
+          flags << Process.quote_windows("#{libname}.lib")
+        end
+      end
+
+      flags.join(" ")
     end
 
     private def lib_flags_posix

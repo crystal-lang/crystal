@@ -1,4 +1,4 @@
-{% unless flag?(:win32) %}
+{% unless flag?(:without_iconv) %}
   require "crystal/iconv"
 {% end %}
 
@@ -12,22 +12,27 @@ class IO
       EncodingOptions.check_invalid(invalid)
     end
 
-    def self.check_invalid(invalid)
+    def self.check_invalid(invalid) : Nil
       if invalid && invalid != :skip
         raise ArgumentError.new "Valid values for `invalid` option are `nil` and `:skip`, not #{invalid.inspect}"
       end
     end
   end
+end
 
-  {% skip_file if flag?(:win32) %}
+{% if flag?(:without_iconv) %}
+  require "./encoding_stubs"
+  {% skip_file %}
+{% end %}
 
+class IO
   private class Encoder
     def initialize(@encoding_options : EncodingOptions)
       @iconv = Crystal::Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
       @closed = false
     end
 
-    def write(io, slice : Bytes)
+    def write(io, slice : Bytes) : Nil
       inbuf_ptr = slice.to_unsafe
       inbytesleft = LibC::SizeT.new(slice.size)
       outbuf = uninitialized UInt8[1024]
@@ -42,7 +47,7 @@ class IO
       end
     end
 
-    def close
+    def close : Nil
       return if @closed
       @closed = true
       @iconv.close
@@ -71,7 +76,7 @@ class IO
       @closed = false
     end
 
-    def read(io)
+    def read(io) : Nil
       loop do
         return unless @out_slice.empty?
 
@@ -130,7 +135,7 @@ class IO
       @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
     end
 
-    def read_byte(io)
+    def read_byte(io) : UInt8?
       read(io)
       if out_slice.empty?
         nil
@@ -141,7 +146,7 @@ class IO
       end
     end
 
-    def read_utf8(io, slice)
+    def read_utf8(io, slice) : Int32
       count = 0
       until slice.empty?
         read(io)
@@ -156,7 +161,7 @@ class IO
       count
     end
 
-    def gets(io, delimiter : UInt8, limit : Int, chomp)
+    def gets(io, delimiter : UInt8, limit : Int, chomp) : String?
       read(io)
       return nil if @out_slice.empty?
 
@@ -224,21 +229,21 @@ class IO
       string
     end
 
-    def write(io)
+    def write(io) : Nil
       io.write @out_slice
       @out_slice = Bytes.empty
     end
 
-    def write(io, numbytes)
+    def write(io, numbytes) : Nil
       io.write @out_slice[0, numbytes]
       @out_slice += numbytes
     end
 
-    def advance(numbytes)
+    def advance(numbytes) : Nil
       @out_slice += numbytes
     end
 
-    def close
+    def close : Nil
       return if @closed
       @closed = true
 

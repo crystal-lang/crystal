@@ -20,7 +20,7 @@ require "crystal/system/time"
 # There are several methods to retrieve a `Time` instance representing the
 # current time:
 #
-# ```crystal
+# ```
 # Time.utc                                        # returns the current time in UTC
 # Time.local Time::Location.load("Europe/Berlin") # returns the current time in time zone Europe/Berlin
 # Time.local                                      # returns the current time in current time zone
@@ -216,6 +216,7 @@ struct Time
   end
 
   include Comparable(Time)
+  include Steppable
 
   # :nodoc:
   DAYS_MONTH = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
@@ -549,7 +550,7 @@ struct Time
   # tokyo.inspect    # => "2019-01-01 00:00:00.0 +09:00 Asia/Tokyo"
   # new_york.inspect # => "2019-01-01 00:00:00.0 -05:00 America/New_York"
   # ```
-  def to_local_in(location : Location)
+  def to_local_in(location : Location) : Time
     local_seconds = offset_seconds
     local_seconds -= Time.zone_offset_at(local_seconds, location)
 
@@ -703,7 +704,7 @@ struct Time
       # are applied to the equivalent UTC representation of this local time.
       seconds += offset_seconds
     else
-      year, month, day, _ = to_utc.year_month_day_day_year
+      year, month, day, _ = year_month_day_day_year
 
       year += years
 
@@ -722,8 +723,7 @@ struct Time
       end
 
       seconds += Time.absolute_days(year, month, day).to_i64 * SECONDS_PER_DAY
-      seconds += @seconds % SECONDS_PER_DAY
-      seconds += offset
+      seconds += offset_seconds % SECONDS_PER_DAY
     end
 
     # FIXME: These operations currently don't have overflow checks applied.
@@ -1091,14 +1091,6 @@ struct Time
     Format.new(format).format(self, io)
   end
 
-  # Formats this `Time` according to the pattern in *format* to the given *io*.
-  #
-  # See `Time::Format` for details.
-  @[Deprecated("Use `#to_s(io : IO, format : String)` instead")]
-  def to_s(format : String, io : IO) : Nil
-    to_s(io, format)
-  end
-
   # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
@@ -1121,12 +1113,16 @@ struct Time
   #
   # Number of seconds decimals can be selected with *fraction_digits*.
   # Values accepted are 0 (the default, no decimals), 3 (milliseconds), 6 (microseconds) or 9 (nanoseconds).
-  def to_rfc3339(io : IO, *, fraction_digits : Int = 0)
+  def to_rfc3339(io : IO, *, fraction_digits : Int = 0) : Nil
     Format::RFC_3339.format(to_utc, io, fraction_digits)
   end
 
   # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
-  def self.parse_rfc3339(time : String)
+  #
+  # ```
+  # Time.parse_rfc3339("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50.0 UTC
+  # ```
+  def self.parse_rfc3339(time : String) : self
     Format::RFC_3339.parse(time)
   end
 
@@ -1136,6 +1132,10 @@ struct Time
   # In ISO 8601 for examples, field delimiters (`-`, `:`) are optional.
   #
   # Use `#to_rfc3339` to format a `Time` according to .
+  #
+  # ```
+  # Time.parse_iso8601("2016-02-15T04:35:50Z") # => 2016-02-15 04:35:50.0 UTC
+  # ```
   def self.parse_iso8601(time : String)
     Format::ISO_8601_DATE_TIME.parse(time)
   end
@@ -1147,7 +1147,7 @@ struct Time
   # ```
   #
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
-  def to_rfc2822
+  def to_rfc2822 : String
     Format::RFC_2822.format(to_utc)
   end
 
@@ -1162,7 +1162,11 @@ struct Time
   # Parse time format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
   #
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
-  def self.parse_rfc2822(time : String)
+  #
+  # ```
+  # Time.parse_rfc2822("Mon, 15 Feb 2016 04:35:50 UTC") # => 2016-02-15 04:35:50.0 UTC
+  # ```
+  def self.parse_rfc2822(time : String) : self
     Format::RFC_2822.parse(time)
   end
 
@@ -1364,7 +1368,7 @@ struct Time
 
   # Returns a copy of this `Time` representing the end of the semester.
   def at_end_of_semester : Time
-    year, month = year_month_day_day_year
+    year, month, _, _ = year_month_day_day_year
     if month <= 6
       month, day = 6, 30
     else
@@ -1375,7 +1379,7 @@ struct Time
 
   # Returns a copy of this `Time` representing the end of the quarter.
   def at_end_of_quarter : Time
-    year, month = year_month_day_day_year
+    year, month, _, _ = year_month_day_day_year
     if month <= 3
       month, day = 3, 31
     elsif month <= 6
@@ -1401,18 +1405,18 @@ struct Time
   def_at_end(hour) { Time.local(year, month, day, hour, 59, 59, nanosecond: 999_999_999, location: location) }
 
   # Returns a copy of this `Time` representing the end of the minute.
-  def at_end_of_minute
+  def at_end_of_minute : Time
     Time.new(seconds: total_seconds - second + 59, nanoseconds: 999_999_999, location: location)
   end
 
   # Returns a copy of this `Time` representing the end of the second.
-  def at_end_of_second
+  def at_end_of_second : Time
     Time.new(seconds: total_seconds, nanoseconds: 999_999_999, location: location)
   end
 
   # Returns a copy of this `Time` representing midday (`12:00`) of the same day.
   def at_midday : Time
-    year, month, day = year_month_day_day_year
+    year, month, day, _ = year_month_day_day_year
     Time.local(year, month, day, 12, 0, 0, nanosecond: 0, location: location)
   end
 
@@ -1508,7 +1512,7 @@ struct Time
     zone, range = location.lookup_with_boundaries(unix)
 
     if zone.offset != 0
-      case utc = unix - zone.offset
+      case unix - zone.offset
       when .<(range[0])
         zone = location.lookup(range[0] - 1)
       when .>=(range[1])

@@ -109,8 +109,16 @@ module Spec
   end
 
   # :nodoc:
+  enum Status
+    Success
+    Fail
+    Error
+    Pending
+  end
+
+  # :nodoc:
   record Result,
-    kind : Symbol,
+    kind : Status,
     description : String,
     file : String,
     line : Int32,
@@ -134,25 +142,26 @@ module Spec
     class_getter instance = RootContext.new
     class_getter current_context : Context = @@instance
 
+    @results : Hash(Status, Array(Result))
+
+    def results_for(status : Status)
+      @results[status]
+    end
+
     def initialize
-      @results = {
-        success: [] of Result,
-        fail:    [] of Result,
-        error:   [] of Result,
-        pending: [] of Result,
-      }
+      @results = Status.values.to_h { |status| {status, [] of Result} }
     end
 
     def run
       internal_run
     end
 
-    def report(kind, full_description, file, line, elapsed = nil, ex = nil)
-      result = Result.new(kind, full_description, file, line, elapsed, ex)
+    def report(status : Status, full_description, file, line, elapsed = nil, ex = nil)
+      result = Result.new(status, full_description, file, line, elapsed, ex)
 
       report_formatters result
 
-      @results[result.kind] << result
+      @results[status] << result
     end
 
     def report_formatters(result)
@@ -160,7 +169,7 @@ module Spec
     end
 
     def succeeded
-      @results[:fail].empty? && @results[:error].empty?
+      results_for(:fail).empty? && results_for(:error).empty?
     end
 
     def finish(elapsed_time, aborted = false)
@@ -169,7 +178,7 @@ module Spec
     end
 
     def print_results(elapsed_time, aborted = false)
-      pendings = @results[:pending]
+      pendings = results_for(:pending)
       unless pendings.empty?
         puts
         puts "Pending:"
@@ -178,8 +187,8 @@ module Spec
         end
       end
 
-      failures = @results[:fail]
-      errors = @results[:error]
+      failures = results_for(:fail)
+      errors = results_for(:error)
 
       failures_and_errors = failures + errors
       unless failures_and_errors.empty?
@@ -214,14 +223,14 @@ module Spec
 
       if Spec.slowest
         puts
-        results = @results[:success] + @results[:fail]
+        results = results_for(:success) + results_for(:fail)
         top_n = results.sort_by { |res| -res.elapsed.not_nil!.to_f }[0..Spec.slowest.not_nil!]
         top_n_time = top_n.sum &.elapsed.not_nil!.total_seconds
         percent = (top_n_time * 100) / elapsed_time.total_seconds
-        puts "Top #{Spec.slowest} slowest examples (#{top_n_time} seconds, #{percent.round(2)}% of total time):"
+        puts "Top #{Spec.slowest} slowest examples (#{top_n_time.humanize} seconds, #{percent.round(2)}% of total time):"
         top_n.each do |res|
           puts "  #{res.description}"
-          res_elapsed = res.elapsed.not_nil!.total_seconds.to_s
+          res_elapsed = res.elapsed.not_nil!.total_seconds.humanize
           if Spec.use_colors?
             res_elapsed = res_elapsed.colorize.bold
           end
@@ -231,14 +240,14 @@ module Spec
 
       puts
 
-      success = @results[:success]
+      success = results_for(:success)
       total = pendings.size + failures.size + errors.size + success.size
 
       final_status = case
-                     when aborted                           then :error
-                     when (failures.size + errors.size) > 0 then :fail
-                     when pendings.size > 0                 then :pending
-                     else                                        :success
+                     when aborted                           then Status::Error
+                     when (failures.size + errors.size) > 0 then Status::Fail
+                     when pendings.size > 0                 then Status::Pending
+                     else                                        Status::Success
                      end
 
       puts "Aborted!".colorize.red if aborted
@@ -330,8 +339,8 @@ module Spec
       Spec.formatters.each(&.pop)
     end
 
-    protected def report(kind, description, file, line, elapsed = nil, ex = nil)
-      parent.report kind, "#{@description} #{description}", file, line, elapsed, ex
+    protected def report(status : Status, description, file, line, elapsed = nil, ex = nil)
+      parent.report status, "#{@description} #{description}", file, line, elapsed, ex
     end
 
     protected def run_before_each_hooks

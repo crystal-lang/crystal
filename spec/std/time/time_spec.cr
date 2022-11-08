@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "spec/helpers/iterate"
 
 CALENDAR_WEEK_TEST_DATA = [
   { {1981, 1, 1}, {1981, 1, 4} },
@@ -237,7 +238,7 @@ describe Time do
 
   it "#clone" do
     time = Time.local
-    (time == time.clone).should be_true
+    time.clone.should eq(time)
   end
 
   describe "#shift" do
@@ -353,10 +354,9 @@ describe Time do
         end
       end
 
-      pending "out of range max (shift days)" do
-        # this will be fixed with raise on overflow
+      it "out of range max (shift days)" do
         time = Time.utc(2002, 2, 25, 15, 25, 13)
-        expect_raises ArgumentError do
+        expect_raises OverflowError do
           time.shift days: 10000000
         end
       end
@@ -368,10 +368,9 @@ describe Time do
         end
       end
 
-      pending "out of range min (shift days)" do
-        # this will be fixed with raise on overflow
+      it "out of range min (shift days)" do
         time = Time.utc(2002, 2, 25, 15, 25, 13)
-        expect_raises ArgumentError do
+        expect_raises OverflowError do
           time.shift days: -10000000
         end
       end
@@ -451,6 +450,11 @@ describe Time do
 
       Time.local(2020, 2, 5, 0, 13, location: zone).shift(months: 3).should eq Time.local(2020, 5, 5, 0, 13, location: zone)
     end
+
+    it "covers date boundaries with zone offset (#10869)" do
+      location = Time::Location.fixed(2 * 3600)
+      Time.local(2021, 7, 1, location: location).shift(months: 1).should eq Time.local(2021, 8, 1, location: location)
+    end
   end
 
   it "#time_of_day" do
@@ -511,6 +515,11 @@ describe Time do
       time = Time.local(Time::Location.fixed(1234))
       (time.to_utc <=> time).should eq(0)
     end
+  end
+
+  describe "#step" do
+    days = (1..24).map { |d| Time.utc(2020, 12, d) }.to_a
+    it_iterates "advent", days, Time.utc(2020, 12, 1).step(to: Time.utc(2020, 12, 24), by: 1.day)
   end
 
   describe "#to_unix" do

@@ -4,9 +4,9 @@ require "../types"
 module Crystal
   struct Cover
     getter signature : CallSignature
-    getter matches : Array(Match)
+    getter matches : ZeroOneOrMany(Match)
 
-    def self.create(signature, matches)
+    def self.create(signature : CallSignature, matches : ZeroOneOrMany(Match))
       if matches
         matches.empty? ? false : Cover.new(signature, matches)
       else
@@ -14,7 +14,7 @@ module Crystal
       end
     end
 
-    def initialize(@signature, @matches)
+    def initialize(@signature : CallSignature, @matches : ZeroOneOrMany(Match))
     end
 
     def all?
@@ -63,7 +63,7 @@ module Crystal
         end
 
         signature.named_args.try &.each_with_index do |named_arg, i|
-          arg = match.def.args.find(&.name.==(named_arg.name))
+          arg = match.def.args.find(&.external_name.==(named_arg.name))
           if arg && (arg.type? || arg.restriction)
             indices[args_size + i] = true
           end
@@ -277,7 +277,7 @@ module Crystal
     delegate cover, cover_size, to: aliased_type
   end
 
-  class LiteralType
+  class AutocastType
     delegate cover, cover_size, to: (@match || literal.type)
   end
 end

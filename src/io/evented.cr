@@ -12,8 +12,8 @@ module IO::Evented
   @readers = Crystal::ThreadLocalValue(Deque(Fiber)).new
   @writers = Crystal::ThreadLocalValue(Deque(Fiber)).new
 
-  @read_event = Crystal::ThreadLocalValue(Crystal::Event).new
-  @write_event = Crystal::ThreadLocalValue(Crystal::Event).new
+  @read_event = Crystal::ThreadLocalValue(Crystal::EventLoop::Event).new
+  @write_event = Crystal::ThreadLocalValue(Crystal::EventLoop::Event).new
 
   # Returns the time to wait when reading before raising an `IO::TimeoutError`.
   def read_timeout : Time::Span?
@@ -98,7 +98,7 @@ module IO::Evented
   end
 
   # :nodoc:
-  def resume_read(timed_out = false)
+  def resume_read(timed_out = false) : Nil
     @read_timed_out = timed_out
 
     if reader = @readers.get?.try &.shift?
@@ -107,7 +107,7 @@ module IO::Evented
   end
 
   # :nodoc:
-  def resume_write(timed_out = false)
+  def resume_write(timed_out = false) : Nil
     @write_timed_out = timed_out
 
     if writer = @writers.get?.try &.shift?
@@ -116,7 +116,7 @@ module IO::Evented
   end
 
   # :nodoc:
-  def wait_readable(timeout = @read_timeout)
+  def wait_readable(timeout = @read_timeout) : Nil
     wait_readable(timeout: timeout) { raise TimeoutError.new("Read timed out") }
   end
 
@@ -136,12 +136,12 @@ module IO::Evented
   end
 
   private def add_read_event(timeout = @read_timeout) : Nil
-    event = @read_event.get { Crystal::EventLoop.create_fd_read_event(self) }
+    event = @read_event.get { Crystal::Scheduler.event_loop.create_fd_read_event(self) }
     event.add timeout
   end
 
   # :nodoc:
-  def wait_writable(timeout = @write_timeout)
+  def wait_writable(timeout = @write_timeout) : Nil
     wait_writable(timeout: timeout) { raise TimeoutError.new("Write timed out") }
   end
 
@@ -161,15 +161,15 @@ module IO::Evented
   end
 
   private def add_write_event(timeout = @write_timeout) : Nil
-    event = @write_event.get { Crystal::EventLoop.create_fd_write_event(self) }
+    event = @write_event.get { Crystal::Scheduler.event_loop.create_fd_write_event(self) }
     event.add timeout
   end
 
-  def evented_reopen
+  def evented_reopen : Nil
     evented_close
   end
 
-  def evented_close
+  def evented_close : Nil
     @read_event.consume_each &.free
 
     @write_event.consume_each &.free

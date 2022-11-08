@@ -11,7 +11,7 @@ class CSV::Lexer::StringBased < CSV::Lexer
     end
   end
 
-  def rewind
+  def rewind : Nil
     super
     @reader.pos = 0
     if @reader.current_char == '\n'

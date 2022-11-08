@@ -3,8 +3,9 @@ require "./sys/types"
 lib LibC
   type DIR = Void
 
-  DT_UNKNOWN = 0
-  DT_DIR     = 4
+  DT_UNKNOWN =  0
+  DT_DIR     =  4
+  DT_LNK     = 10
 
   struct Dirent
     d_ino : InoT
@@ -18,4 +19,5 @@ lib LibC
   fun opendir(name : Char*) : DIR*
   fun readdir = readdir64(dirp : DIR*) : Dirent*
   fun rewinddir(dirp : DIR*) : Void
+  fun dirfd(dirp : DIR*) : Int
 end

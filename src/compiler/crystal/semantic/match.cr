@@ -46,12 +46,15 @@ module Crystal
     # Any instance variables associated with the method instantiation
     getter free_vars : Hash(String, TypeVar)?
 
-    getter? strict : Bool
-
     # Def free variables, unbound (`def (X, Y) ...`)
     property def_free_vars : Array(String)?
 
-    def initialize(@instantiated_type, @defining_type, @free_vars = nil, @strict = false, @def_free_vars = nil)
+    # The type that represents `self` (overriding `instantiated_type`), used to
+    # resolve restrictions properly when a macro def is about to be copied to a
+    # subtype
+    property self_restriction_type : Type?
+
+    def initialize(@instantiated_type, @defining_type, @free_vars = nil, @def_free_vars = nil, @self_restriction_type = nil)
     end
 
     def get_free_var(name)
@@ -93,7 +96,7 @@ module Crystal
     end
 
     def clone
-      MatchContext.new(@instantiated_type, @defining_type, @free_vars.dup, @strict, @def_free_vars.dup)
+      MatchContext.new(@instantiated_type, @defining_type, @free_vars.dup, @def_free_vars.dup, @self_restriction_type)
     end
   end
 
@@ -127,7 +130,7 @@ module Crystal
   struct Matches
     include Enumerable(Match)
 
-    property matches : Array(Match)?
+    property matches : ZeroOneOrMany(Match)
     property cover : Bool | Cover | Nil
     property owner : Type?
 
@@ -136,32 +139,25 @@ module Crystal
 
     def cover_all?
       cover = @cover
-      matches = @matches
-      @success && matches && matches.size > 0 && (cover == true || (cover.is_a?(Cover) && cover.all?))
+      @success && !@matches.empty? && (cover == true || (cover.is_a?(Cover) && cover.all?))
     end
 
     def empty?
-      return true unless @success
-
-      if matches = @matches
-        matches.empty?
-      else
-        true
-      end
+      !@success || matches.empty?
     end
 
     def each
-      @success && @matches.try &.each do |match|
+      @success && @matches.each do |match|
         yield match
       end
     end
 
     def size
-      @matches.try(&.size) || 0
+      @matches.size
     end
 
     def [](*args)
-      Matches.new(@matches.try &.[](*args), @cover, @owner, @success)
+      Matches.new(@matches.[*args], @cover, @owner, @success)
     end
   end
 end

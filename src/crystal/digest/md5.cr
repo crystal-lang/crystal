@@ -2,7 +2,7 @@ require "digest/digest"
 
 # Implements the MD5 digest algorithm.
 #
-# Warning: MD5 is no longer a cryptographically secure hash, and should not be
+# WARNING: MD5 is no longer a cryptographically secure hash, and should not be
 # used in security-related components, like password hashing. For passwords, see
 # `Crypto::Bcrypt::Password`. For a generic cryptographic hash, use SHA-256 via
 # `OpenSSL::Digest.new("SHA256")`.
@@ -30,22 +30,22 @@ class Crystal::Digest::MD5 < ::Digest
     update(data.to_unsafe, data.bytesize.to_u32)
   end
 
-  private def update(inBuf, inLen)
+  private def update(in_buf, in_len)
     tmp_in = uninitialized UInt32[16]
 
     # compute number of bytes mod 64
     mdi = (@i[0] >> 3) & 0x3F
 
     # update number of bits
-    @i[1] &+= 1 if (@i[0] &+ (inLen << 3)) < @i[0]
-    @i[0] &+= (inLen << 3)
-    @i[1] &+= (inLen >> 29)
+    @i[1] &+= 1 if (@i[0] &+ (in_len << 3)) < @i[0]
+    @i[0] &+= (in_len << 3)
+    @i[1] &+= (in_len >> 29)
 
-    inLen.times do
+    in_len.times do
       # add new character to buffer, increment mdi
-      @in[mdi] = inBuf.value
+      @in[mdi] = in_buf.value
       mdi += 1
-      inBuf += 1
+      in_buf += 1
 
       # transform if necessary
       if mdi == 0x40
@@ -105,31 +105,27 @@ class Crystal::Digest::MD5 < ::Digest
     y ^ (x | (~z))
   end
 
-  private def rotate_left(x, n)
-    (x << n) | (x >> (32 - n))
-  end
-
   private def ff(a, b, c, d, x, s, ac)
     a &+= f(b, c, d) &+ x &+ ac.to_u32
-    a = rotate_left a, s
+    a = a.rotate_left s
     a &+= b
   end
 
   private def gg(a, b, c, d, x, s, ac)
     a &+= g(b, c, d) &+ x &+ ac.to_u32
-    a = rotate_left a, s
+    a = a.rotate_left s
     a &+= b
   end
 
   private def hh(a, b, c, d, x, s, ac)
     a &+= h(b, c, d) &+ x &+ ac.to_u32
-    a = rotate_left a, s
+    a = a.rotate_left s
     a &+= b
   end
 
   private def ii(a, b, c, d, x, s, ac)
     a &+= i(b, c, d) &+ x &+ ac.to_u32
-    a = rotate_left a, s
+    a = a.rotate_left s
     a &+= b
   end
 

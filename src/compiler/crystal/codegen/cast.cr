@@ -204,11 +204,7 @@ class Crystal::CodeGenVisitor
     store cast_to(value, target_type), target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : MetaclassType, value)
-    store value, target_pointer
-  end
-
-  def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : VirtualMetaclassType, value)
+  def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : MetaclassType | GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType | VirtualMetaclassType, value)
     store value, target_pointer
   end
 
@@ -229,18 +225,6 @@ class Crystal::CodeGenVisitor
   end
 
   def assign_distinct(target_pointer, target_type : NilableProcType, value_type : TypeDefType, value)
-    assign_distinct target_pointer, target_type, value_type.typedef, value
-  end
-
-  def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : NilType, value)
-    store llvm_type(target_type).null, target_pointer
-  end
-
-  def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : PointerInstanceType, value)
-    store value, target_pointer
-  end
-
-  def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : TypeDefType, value)
     assign_distinct target_pointer, target_type, value_type.typedef, value
   end
 
@@ -283,7 +267,7 @@ class Crystal::CodeGenVisitor
   end
 
   def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
-    raise "BUG: trying to assign #{target_type} <- #{value_type}"
+    raise "BUG: trying to assign #{target_type} (#{target_type.class}) <- #{value_type} (#{value_type.class})"
   end
 
   def downcast(value, to_type, from_type : VoidType, already_loaded)
@@ -317,14 +301,6 @@ class Crystal::CodeGenVisitor
     value
   end
 
-  def downcast_distinct(value, to_type : MixedUnionType, from_type : VirtualType)
-    # This happens if the restriction is a union:
-    # we keep each of the union types as the result, we don't fully merge
-    union_ptr = alloca llvm_type(to_type)
-    store_in_union to_type, union_ptr, from_type, value
-    union_ptr
-  end
-
   def downcast_distinct(value, to_type : ReferenceUnionType, from_type : VirtualType)
     # This happens if the restriction is a union:
     # we keep each of the union types as the result, we don't fully merge
@@ -351,17 +327,9 @@ class Crystal::CodeGenVisitor
     downcast_distinct value, to_type.typedef, from_type
   end
 
-  def downcast_distinct(value, to_type : PointerInstanceType, from_type : NilablePointerType)
-    value
-  end
-
   def downcast_distinct(value, to_type : PointerInstanceType, from_type : PointerInstanceType)
     # cast of a pointer being cast to Void*
     bit_cast value, llvm_context.void_pointer
-  end
-
-  def downcast_distinct(value, to_type : TypeDefType, from_type : NilablePointerType)
-    downcast_distinct value, to_type.typedef, from_type
   end
 
   def downcast_distinct(value, to_type : ReferenceUnionType, from_type : ReferenceUnionType)
@@ -534,7 +502,7 @@ class Crystal::CodeGenVisitor
   end
 
   def downcast_distinct(value, to_type : Type, from_type : Type)
-    raise "BUG: trying to downcast #{to_type} <- #{from_type}"
+    raise "BUG: trying to downcast #{to_type} (#{to_type.class}) <- #{from_type} (#{from_type.class})"
   end
 
   def upcast(value, to_type, from_type)
@@ -582,18 +550,6 @@ class Crystal::CodeGenVisitor
   end
 
   def upcast_distinct(value, to_type : NilableProcType, from_type : TypeDefType)
-    upcast_distinct value, to_type, from_type.typedef
-  end
-
-  def upcast_distinct(value, to_type : NilablePointerType, from_type : NilType)
-    llvm_type(to_type).null
-  end
-
-  def upcast_distinct(value, to_type : NilablePointerType, from_type : PointerInstanceType)
-    value
-  end
-
-  def upcast_distinct(value, to_type : NilablePointerType, from_type : TypeDefType)
     upcast_distinct value, to_type, from_type.typedef
   end
 
@@ -701,6 +657,6 @@ class Crystal::CodeGenVisitor
   end
 
   def upcast_distinct(value, to_type : Type, from_type : Type)
-    raise "BUG: trying to upcast #{to_type} <- #{from_type}"
+    raise "BUG: trying to upcast #{to_type} (#{to_type.class}) <- #{from_type} (#{from_type.class})"
   end
 end

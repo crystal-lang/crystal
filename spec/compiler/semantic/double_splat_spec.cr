@@ -202,32 +202,4 @@ describe "Semantic: double splat" do
       test(x: 7)
       )) { named_tuple_of({} of String => Type) }
   end
-
-  it "matches typed before non-typed (1) (#3134)" do
-    assert_type(%(
-      def bar(**args)
-        "free"
-      end
-
-      def bar(**args : Int32)
-        1
-      end
-
-      {bar(x: 1, y: 2), bar(x: 'a', y: 1)}
-      )) { tuple_of([int32, string]) }
-  end
-
-  it "matches typed before non-typed (1) (#3134)" do
-    assert_type(%(
-      def bar(**args : Int32)
-        1
-      end
-
-      def bar(**args)
-        "free"
-      end
-
-      {bar(x: 1, y: 2), bar(x: 'a', y: 1)}
-      )) { tuple_of([int32, string]) }
-  end
 end

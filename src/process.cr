@@ -41,14 +41,6 @@ class Process
     Crystal::System::Process.ppid.to_i64
   end
 
-  # Sends a *signal* to the processes identified by the given *pids*.
-  @[Deprecated("Use #signal instead")]
-  def self.kill(signal : Signal, *pids : Int)
-    pids.each do |pid|
-      signal(signal, pid)
-    end
-  end
-
   # Sends *signal* to the process identified by *pid*.
   def self.signal(signal : Signal, pid : Int) : Nil
     Crystal::System::Process.signal(pid, signal.value)
@@ -129,7 +121,7 @@ class Process
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil) : Process::Status
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
     status = new(command, args, env, clear_env, shell, input, output, error, chdir).wait
     $? = status
     status
@@ -155,7 +147,7 @@ class Process
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : String? = nil)
+               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil)
     process = new(command, args, env, clear_env, shell, input, output, error, chdir)
     begin
       value = yield process
@@ -187,7 +179,7 @@ class Process
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-                input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : String? = nil) : NoReturn
+                input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : Path | String? = nil) : NoReturn
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
 
     input = exec_stdio_to_fd(input, for: STDIN)
@@ -252,7 +244,7 @@ class Process
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-                 input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil)
+                 input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil)
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
 
     fork_input = stdio_to_fd(input, for: STDIN)
@@ -262,9 +254,9 @@ class Process
     pid = Crystal::System::Process.spawn(command_args, env, clear_env, fork_input, fork_output, fork_error, chdir)
     @process_info = Crystal::System::Process.new(pid)
 
-    fork_input.close unless fork_input == input || fork_input == STDIN
-    fork_output.close unless fork_output == output || fork_output == STDOUT
-    fork_error.close unless fork_error == error || fork_error == STDERR
+    fork_input.close unless fork_input.in?(input, STDIN)
+    fork_output.close unless fork_output.in?(output, STDOUT)
+    fork_error.close unless fork_error.in?(error, STDERR)
   end
 
   def finalize
@@ -317,18 +309,12 @@ class Process
     end
   end
 
-  private def initialize(pid)
+  private def initialize(pid : LibC::PidT)
     @process_info = Crystal::System::Process.new(pid)
   end
 
-  # See also: `Process.kill`
-  @[Deprecated("Use #signal instead")]
-  def kill(sig = Signal::TERM)
-    signal sig
-  end
-
   # Sends *signal* to this process.
-  def signal(signal : Signal)
+  def signal(signal : Signal) : Nil
     Crystal::System::Process.signal(@process_info.pid, signal)
   end
 
@@ -349,17 +335,17 @@ class Process
 
   # Whether the process is still registered in the system.
   # Note that this returns `true` for processes in the zombie or similar state.
-  def exists?
+  def exists? : Bool
     @process_info.exists?
   end
 
   # Whether this process is already terminated.
-  def terminated?
+  def terminated? : Bool
     !exists?
   end
 
   # Closes any system resources (e.g. pipes) held for the child process.
-  def close
+  def close : Nil
     close_io @input
     close_io @output
     close_io @error
@@ -367,7 +353,7 @@ class Process
   end
 
   # Asks this process to terminate gracefully
-  def terminate
+  def terminate : Nil
     @process_info.terminate
   end
 
@@ -463,11 +449,14 @@ end
 # Standard input, and error are inherited.
 # The special `$?` variable is set to a `Process::Status` associated with this execution.
 #
-# Example:
+# It is impossible to call this method with any regular call syntax. There is an associated literal type which calls the method with the literal content as command:
 #
 # ```
-# `echo hi` # => "hi\n"
+# `echo hi`   # => "hi\n"
+# $?.success? # => true
 # ```
+#
+# See [`Command` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/command.html) in the language reference.
 def `(command) : String
   process = Process.new(command, shell: true, input: Process::Redirect::Inherit, output: Process::Redirect::Pipe, error: Process::Redirect::Inherit)
   output = process.output.gets_to_end

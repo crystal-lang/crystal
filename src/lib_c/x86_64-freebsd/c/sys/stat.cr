@@ -31,43 +31,27 @@ lib LibC
   struct Stat
     st_dev : DevT
     st_ino : InoT
-    {% if flag?(:freebsd11) %}
-      st_mode : ModeT
-      st_nlink : NlinkT
-    {% else %}
-      st_nlink : NlinkT
-      st_mode : ModeT
-      st_pad0 : UShort
-    {% end %}
+    st_nlink : NlinkT
+    st_mode : ModeT
+    st_pad0 : UShort
     st_uid : UidT
     st_gid : GidT
-    {% if !flag?(:freebsd11) %}
-      st_pad1 : UInt
-    {% end %}
+    st_pad1 : UInt
     st_rdev : DevT
     st_atim : Timespec
     st_mtim : Timespec
     st_ctim : Timespec
-    {% if !flag?(:freebsd11) %}
-      st_birthtim : Timespec
-    {% end %}
+    st_birthtim : Timespec
     st_size : OffT
     st_blocks : BlkcntT
     st_blksize : BlksizeT
     st_flags : FflagsT
-    {% if flag?(:freebsd11) %}
-      st_gen : UInt
-      st_lspare : Int
-      st_birthtim : Timespec
-      __reserved_17 : UInt
-      __reserved_18 : UInt
-    {% else %}
-      st_gen : ULong
-      st_spare : StaticArray(ULong, 10)
-    {% end %}
+    st_gen : ULong
+    st_spare : StaticArray(ULong, 10)
   end
 
   fun chmod(x0 : Char*, x1 : ModeT) : Int
+  fun fchmod(x0 : Int, x1 : ModeT) : Int
   fun fstat(x0 : Int, x1 : Stat*) : Int
   fun lstat(x0 : Char*, x1 : Stat*) : Int
   fun mkdir(x0 : Char*, x1 : ModeT) : Int
