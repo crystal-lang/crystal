@@ -12,14 +12,14 @@ private class SafeIndexableMutable
     @values = Array.new(size) { |i| [i + offset] }
   end
 
-  def unsafe_fetch(i)
-    raise IndexError.new unless 0 <= i < size
-    @values[i][0]
+  def unsafe_fetch(index)
+    raise IndexError.new unless 0 <= index < size
+    @values[index][0]
   end
 
-  def unsafe_put(i, value : Int32)
-    raise IndexError.new unless 0 <= i < size
-    @values[i] = [value]
+  def unsafe_put(index, value : Int32)
+    raise IndexError.new unless 0 <= index < size
+    @values[index] = [value]
   end
 end
 
@@ -37,14 +37,14 @@ private class SafeIndexableMutableFoo
     @values = Array.new(size) { [Foo.new] }
   end
 
-  def unsafe_fetch(i)
-    raise IndexError.new unless 0 <= i < size
-    @values[i][0]
+  def unsafe_fetch(index)
+    raise IndexError.new unless 0 <= index < size
+    @values[index][0]
   end
 
-  def unsafe_put(i, value : Foo)
-    raise IndexError.new unless 0 <= i < size
-    @values[i] = [value]
+  def unsafe_put(index, value : Foo)
+    raise IndexError.new unless 0 <= index < size
+    @values[index] = [value]
   end
 end
 
@@ -161,39 +161,179 @@ describe Indexable::Mutable do
     context "without block" do
       it "sets all elements to the same value" do
         coll = SafeIndexableMutable.new(5)
-        coll.fill(4)
+        coll.fill(4).should be(coll)
         coll.to_a.should eq([4, 4, 4, 4, 4])
 
         coll = SafeIndexableMutableFoo.new(5)
         foo = Foo.new
-        coll.fill(foo)
+        coll.fill(foo).should be(coll)
         coll.to_a.should eq([foo, foo, foo, foo, foo])
+      end
+    end
+
+    context "without block, with start + count" do
+      it "sets a subrange of elements to the same value" do
+        coll = SafeIndexableMutable.new(5)
+        coll.fill(7, 2, 2).should be(coll)
+        coll.to_a.should eq([0, 1, 7, 7, 4])
+
+        coll = SafeIndexableMutableFoo.new(5)
+        foos = coll.to_a
+        foo = Foo.new
+        coll.fill(foo, -4, 2).should be(coll)
+        coll.to_a.should eq([foos[0], foo, foo, foos[3], foos[4]])
+      end
+
+      it "sets zero elements" do
+        coll = SafeIndexableMutable.new(5)
+        coll.fill(7, 1, 0).to_a.should eq([0, 1, 2, 3, 4])
+        coll.fill(7, 5, 0).to_a.should eq([0, 1, 2, 3, 4])
+        coll.fill(7, -3, 0).to_a.should eq([0, 1, 2, 3, 4])
+        coll.fill(7, -5, 0).to_a.should eq([0, 1, 2, 3, 4])
+        coll.fill(7, 4, -1).to_a.should eq([0, 1, 2, 3, 4])
+
+        coll = SafeIndexableMutableFoo.new(5)
+        foo = Foo.new
+        coll.fill(foo, 1, 0).should_not contain(foo)
+        coll.fill(foo, 5, 0).should_not contain(foo)
+        coll.fill(foo, -3, 0).should_not contain(foo)
+        coll.fill(foo, -5, 0).should_not contain(foo)
+        coll.fill(foo, 4, -1).should_not contain(foo)
+      end
+
+      it "raises on out of bound start index" do
+        expect_raises(IndexError) { SafeIndexableMutable.new(5).fill(7, 6, 1) }
+        expect_raises(IndexError) { SafeIndexableMutable.new(5).fill(7, -6, 1) }
+      end
+    end
+
+    context "without block, with range" do
+      it "sets a subrange of elements to the same value" do
+        coll = SafeIndexableMutable.new(5)
+        coll.fill(7, 2..3).should be(coll)
+        coll.to_a.should eq([0, 1, 7, 7, 4])
+
+        coll = SafeIndexableMutableFoo.new(5)
+        foos = coll.to_a
+        foo = Foo.new
+        coll.fill(foo, -4...-2).should be(coll)
+        coll.to_a.should eq([foos[0], foo, foo, foos[3], foos[4]])
+      end
+
+      it "sets zero elements" do
+        coll = SafeIndexableMutable.new(5)
+        coll.fill(7, 1..0).to_a.should eq([0, 1, 2, 3, 4])
+        coll.fill(7, 5...5).to_a.should eq([0, 1, 2, 3, 4])
+        coll.fill(7, -3...1).to_a.should eq([0, 1, 2, 3, 4])
+        coll.fill(7, -5..-6).to_a.should eq([0, 1, 2, 3, 4])
+
+        coll = SafeIndexableMutableFoo.new(5)
+        foo = Foo.new
+        coll.fill(foo, 1..0).should_not contain(foo)
+        coll.fill(foo, 5...5).should_not contain(foo)
+        coll.fill(foo, -3...1).should_not contain(foo)
+        coll.fill(foo, -5..-6).should_not contain(foo)
+      end
+
+      it "raises on out of bound start index" do
+        expect_raises(IndexError) { SafeIndexableMutable.new(5).fill(7, 6..7) }
+        expect_raises(IndexError) { SafeIndexableMutable.new(5).fill(7, -6..-1) }
       end
     end
 
     context "with block" do
       it "yields index to the block and sets all elements" do
-        coll = SafeIndexableMutable.new(5)
-        coll.fill { |i| i * i }
+        coll = SafeIndexableMutable.new(5, offset: 10)
+        coll.fill { |i| i * i }.should be(coll)
         coll.to_a.should eq([0, 1, 4, 9, 16])
 
         coll = SafeIndexableMutableFoo.new(5)
         foo = Foo.new
-        coll.fill { foo }
+        coll.fill { foo }.should be(coll)
         coll.to_a.should eq([foo, foo, foo, foo, foo])
       end
     end
 
     context "with block + offset" do
       it "yields index plus offset to the block and sets all elements" do
-        coll = SafeIndexableMutable.new(5)
-        coll.fill(offset: 7) { |i| i * i }
+        coll = SafeIndexableMutable.new(5, offset: 10)
+        coll.fill(offset: 7) { |i| i * i }.should be(coll)
         coll.to_a.should eq([49, 64, 81, 100, 121])
 
         coll = SafeIndexableMutableFoo.new(5)
         foos = coll.to_a
-        coll.fill(offset: -2) { |i| foos[i] }
+        coll.fill(offset: -2) { |i| foos[i] }.should be(coll)
         coll.to_a.should eq([foos[-2], foos[-1], foos[0], foos[1], foos[2]])
+      end
+    end
+
+    context "with block + start + count" do
+      it "yields index to the block and sets elements in a subrange" do
+        coll = SafeIndexableMutable.new(5, offset: 10)
+        coll.fill(2, 2) { |i| i + 7 }.should be(coll)
+        coll.to_a.should eq([10, 11, 9, 10, 14])
+
+        coll = SafeIndexableMutableFoo.new(5)
+        foos = coll.to_a
+        foo = Foo.new
+        coll.fill(-4, 2) { foo }.should be(coll)
+        coll.to_a.should eq([foos[0], foo, foo, foos[3], foos[4]])
+      end
+
+      it "sets zero elements" do
+        coll = SafeIndexableMutable.new(5, offset: 10)
+        coll.fill(1, 0) { |i| i + 7 }.to_a.should eq([10, 11, 12, 13, 14])
+        coll.fill(5, 0) { |i| i + 7 }.to_a.should eq([10, 11, 12, 13, 14])
+        coll.fill(-3, 0) { |i| i + 7 }.to_a.should eq([10, 11, 12, 13, 14])
+        coll.fill(-5, 0) { |i| i + 7 }.to_a.should eq([10, 11, 12, 13, 14])
+        coll.fill(4, -1) { |i| i + 7 }.to_a.should eq([10, 11, 12, 13, 14])
+
+        coll = SafeIndexableMutableFoo.new(5)
+        foo = Foo.new
+        coll.fill(1, 0) { foo }.should_not contain(foo)
+        coll.fill(5, 0) { foo }.should_not contain(foo)
+        coll.fill(-3, 0) { foo }.should_not contain(foo)
+        coll.fill(-5, 0) { foo }.should_not contain(foo)
+        coll.fill(4, -1) { foo }.should_not contain(foo)
+      end
+
+      it "raises on out of bound start index" do
+        expect_raises(IndexError) { SafeIndexableMutable.new(5).fill(6, 1, &.itself) }
+        expect_raises(IndexError) { SafeIndexableMutable.new(5).fill(-6, 1, &.itself) }
+      end
+    end
+
+    context "with block + range" do
+      it "yields index to the block and sets elements in a subrange" do
+        coll = SafeIndexableMutable.new(5, offset: 10)
+        coll.fill(2..3) { |i| i + 7 }.should be(coll)
+        coll.to_a.should eq([10, 11, 9, 10, 14])
+
+        coll = SafeIndexableMutableFoo.new(5)
+        foos = coll.to_a
+        foo = Foo.new
+        coll.fill(-4...-2) { foo }.should be(coll)
+        coll.to_a.should eq([foos[0], foo, foo, foos[3], foos[4]])
+      end
+
+      it "sets zero elements" do
+        coll = SafeIndexableMutable.new(5, offset: 10)
+        coll.fill(1..0) { |i| i + 7 }.to_a.should eq([10, 11, 12, 13, 14])
+        coll.fill(5...5) { |i| i + 7 }.to_a.should eq([10, 11, 12, 13, 14])
+        coll.fill(-3...1) { |i| i + 7 }.to_a.should eq([10, 11, 12, 13, 14])
+        coll.fill(-5..-6) { |i| i + 7 }.to_a.should eq([10, 11, 12, 13, 14])
+
+        coll = SafeIndexableMutableFoo.new(5)
+        foo = Foo.new
+        coll.fill(1..0) { foo }.should_not contain(foo)
+        coll.fill(5...5) { foo }.should_not contain(foo)
+        coll.fill(-3...1) { foo }.should_not contain(foo)
+        coll.fill(-5..-6) { foo }.should_not contain(foo)
+      end
+
+      it "raises on out of bound start index" do
+        expect_raises(IndexError) { SafeIndexableMutable.new(5).fill(6..7, &.itself) }
+        expect_raises(IndexError) { SafeIndexableMutable.new(5).fill(-6..-1, &.itself) }
       end
     end
   end

@@ -209,8 +209,8 @@ LLVMValueRef LLVMExtDIBuilderInsertDeclareAtEnd(
 }
 
 LLVMMetadataRef LLVMExtDIBuilderCreateExpression(
-    DIBuilderRef Dref, int64_t *Addr, size_t Length) {
-  return wrap(Dref->createExpression(ArrayRef<int64_t>(Addr, Length)));
+    DIBuilderRef Dref, uint64_t *Addr, size_t Length) {
+  return wrap(Dref->createExpression(ArrayRef<uint64_t>(Addr, Length)));
 }
 
 LLVMMetadataRef LLVMExtDIBuilderCreateEnumerationType(
@@ -384,8 +384,21 @@ LLVMAttributeRef LLVMExtCreateTypeAttribute(
 LLVMValueRef LLVMExtBuildCmpxchg(
     LLVMBuilderRef B, LLVMValueRef PTR, LLVMValueRef Cmp, LLVMValueRef New,
     LLVMAtomicOrdering SuccessOrdering, LLVMAtomicOrdering FailureOrdering) {
+#if LLVM_VERSION_GE(13, 0)
+  return wrap(
+    unwrap(B)->CreateAtomicCmpXchg(
+      unwrap(PTR),
+      unwrap(Cmp),
+      unwrap(New),
+      llvm::MaybeAlign(),
+      (llvm::AtomicOrdering)SuccessOrdering,
+      (llvm::AtomicOrdering)FailureOrdering
+    )
+  );
+#else
   return wrap(unwrap(B)->CreateAtomicCmpXchg(unwrap(PTR), unwrap(Cmp), unwrap(New),
     (llvm::AtomicOrdering)SuccessOrdering, (llvm::AtomicOrdering)FailureOrdering));
+#endif
 }
 
 void LLVMExtSetOrdering(LLVMValueRef MemAccessInst, LLVMAtomicOrdering Ordering) {
@@ -495,7 +508,11 @@ void LLVMExtWriteBitcodeWithSummaryToFile(LLVMModuleRef mref, const char *File) 
   Module *m = unwrap(mref);
 
   std::error_code EC;
+#if LLVM_VERSION_GE(13, 0)
+  raw_fd_ostream OS(File, EC, sys::fs::OF_None);
+#else
   raw_fd_ostream OS(File, EC, sys::fs::F_None);
+#endif
   if (EC) return;
 
   llvm::ModuleSummaryIndex moduleSummaryIndex = llvm::buildModuleSummaryIndex(*m, nullptr, nullptr);
@@ -570,8 +587,12 @@ LLVMBool LLVMExtCreateMCJITCompilerForModule(
     for (auto &F : *Mod) {
       auto Attrs = F.getAttributes();
       StringRef Value = options.NoFramePointerElim ? "all" : "none";
-      Attrs = Attrs.addAttribute(F.getContext(), AttributeList::FunctionIndex,
-                                 "frame-pointer", Value);
+      #if LLVM_VERSION_GE(14, 0)
+        Attrs = Attrs.addFnAttribute(F.getContext(), "frame-pointer", Value);
+      #else
+        Attrs = Attrs.addAttribute(F.getContext(), AttributeList::FunctionIndex,
+                                   "frame-pointer", Value);
+      #endif
       F.setAttributes(Attrs);
     }
 

@@ -69,6 +69,7 @@ module Crystal
 
     def initialize(@entries : Array(String) = CrystalPath.default_paths, codegen_target = Config.host_target)
       add_target_path(codegen_target)
+      @current_dir = Dir.current
     end
 
     private def add_target_path(codegen_target)
@@ -118,7 +119,7 @@ module Crystal
       end
 
       each_file_expansion(filename, relative_to) do |path|
-        absolute_path = File.expand_path(path)
+        absolute_path = File.expand_path(path, dir: @current_dir)
         return absolute_path if File.exists?(absolute_path)
       end
 
@@ -190,7 +191,7 @@ module Crystal
       dirs.sort!
 
       files.each do |file|
-        files_accumulator << File.expand_path(file)
+        files_accumulator << File.expand_path(file, dir: @current_dir)
       end
 
       dirs.each do |subdir|

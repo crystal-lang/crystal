@@ -32,6 +32,7 @@ require "./diy_fp"
 require "./ieee"
 require "./cached_powers"
 
+@[Deprecated("Use `Float::Printer::Dragonbox` instead")]
 module Float::Printer::Grisu3
   extend self
 
@@ -314,8 +315,6 @@ module Float::Printer::Grisu3
   # digits might correctly yield *v* when read again, the closest will be
   # computed.
   def grisu3(v : Float64 | Float32, buffer_p) : {Bool, Int32, Int32}
-    buffer = buffer_p.to_slice(128)
-
     w = DiyFP.from_f_normalized(v)
 
     # boundary_minus and boundary_plus are the boundaries between v and its

@@ -6,7 +6,7 @@ require "./guiddef"
 lib LibC
   alias SOCKET = UINT_PTR
 
-  # -2147195266 is the value after convertion to long, actual value 2147772030 with type unsigned
+  # -2147195266 is the value after conversion to long, actual value 2147772030 with type unsigned
   FIONBIO = -2147195266
 
   struct WSAData
@@ -114,6 +114,11 @@ lib LibC
   WSA_FLAG_OVERLAPPED = 0x01
 
   alias WSAOVERLAPPED_COMPLETION_ROUTINE = Proc(DWORD, DWORD, WSAOVERLAPPED*, DWORD, Void)
+
+  struct Linger
+    l_onoff : UShort
+    l_linger : UShort
+  end
 
   fun accept(s : SOCKET, addr : Sockaddr*, addrlen : Int*) : SOCKET
   fun bind(s : SOCKET, addr : Sockaddr*, namelen : Int) : Int

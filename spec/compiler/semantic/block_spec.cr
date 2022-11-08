@@ -443,7 +443,7 @@ describe "Block inference" do
         end
         false
       end
-    ") { union_of(int32, bool) }
+    ", inject_primitives: true) { union_of(int32, bool) }
   end
 
   it "ignores block parameter if not used" do
@@ -455,7 +455,7 @@ describe "Block inference" do
       foo do |x|
         x + 1
       end
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "allows yielding multiple types when a union is expected" do
@@ -494,7 +494,7 @@ describe "Block inference" do
         a + 1
       end
       foo.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "passes #233: block with initialize with default args" do
@@ -658,7 +658,7 @@ describe "Block inference" do
       foo do |x|
         x + 1
       end
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if alias is not a fun type" do
@@ -746,7 +746,7 @@ describe "Block inference" do
       end
 
       extra
-      )) { nilable(int32) }
+      ), inject_primitives: true) { nilable(int32) }
   end
 
   it "ignores void return type (#427)" do
@@ -827,7 +827,7 @@ describe "Block inference" do
       foo = Foo.new(100)
       block = f.call(foo)
       block.call
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "uses block var with same name as local var" do
@@ -935,7 +935,7 @@ describe "Block inference" do
       end
 
       bar &->foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors if declares class inside captured block" do
@@ -1051,7 +1051,7 @@ describe "Block inference" do
       }
 
       foo.call
-      )) { union_of int32, float64 }
+      ), inject_primitives: true) { union_of int32, float64 }
   end
 
   it "errors if returns from captured block" do
@@ -1113,7 +1113,7 @@ describe "Block inference" do
       end
 
       f.call
-      )) { union_of int32, float64 }
+      ), inject_primitives: true) { union_of int32, float64 }
   end
 
   it "sets captured block type to that of restriction" do
@@ -1311,7 +1311,7 @@ describe "Block inference" do
       foo do |x, y|
         x + y
       end
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "auto-unpacks tuple, captured block" do
@@ -1324,11 +1324,11 @@ describe "Block inference" do
       foo do |x, y|
         {x, y}
       end
-      )) { tuple_of([int32, char]) }
+      ), inject_primitives: true) { tuple_of([int32, char]) }
   end
 
   it "auto-unpacks tuple, captured empty block" do
-    semantic(%(
+    assert_no_errors <<-CR, inject_primitives: true
       def foo(&block : {Int32, Char} -> _)
         tup = {1, 'a'}
         block.call tup
@@ -1336,7 +1336,7 @@ describe "Block inference" do
 
       foo do |x, y|
       end
-      ))
+      CR
   end
 
   it "auto-unpacks tuple, captured block with multiple statements" do
@@ -1350,7 +1350,7 @@ describe "Block inference" do
         z = x < y
         {x, y, z}
       end
-      )) { tuple_of([float64, int32, bool]) }
+      ), inject_primitives: true) { tuple_of([float64, int32, bool]) }
   end
 
   it "auto-unpacks tuple, less than max, captured block" do
@@ -1363,7 +1363,7 @@ describe "Block inference" do
       foo do |x, y|
         {x, y}
       end
-      )) { tuple_of([int32, char]) }
+      ), inject_primitives: true) { tuple_of([int32, char]) }
   end
 
   it "doesn't auto-unpack tuple, more args" do
@@ -1466,6 +1466,29 @@ describe "Block inference" do
       )) { tuple_of([tuple_of([int32, int32]), tuple_of([int32, int32]).metaclass]) }
   end
 
+  it "reports mismatch with generic argument type in output type" do
+    assert_error(<<-CR, "expected block to return String, not Int32")
+      class Foo(T)
+        def foo(&block : -> T)
+        end
+      end
+
+      Foo(String).new.foo { 1 }
+      CR
+  end
+
+  it "reports mismatch with generic argument type in input type" do
+    assert_error(<<-CR, "argument #1 of yield expected to be String, not Int32")
+      class Foo(T)
+        def foo(&block : T -> )
+          yield 1
+        end
+      end
+
+      Foo(String).new.foo {}
+      CR
+  end
+
   it "correctly types unpacked tuple block arg after block (#3339)" do
     assert_type(%(
       def foo
@@ -1477,7 +1500,7 @@ describe "Block inference" do
 
       end
       i
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 
   it "can infer block type given that the method has a return type (#7160)" do
@@ -1509,14 +1532,14 @@ describe "Block inference" do
   end
 
   it "doesn't crash on cleaning up typeof node without dependencies (#8669)" do
-    semantic(%(
+    assert_no_errors <<-CR
       def foo(&)
       end
 
       foo do
         typeof(bar)
       end
-      ))
+      CR
   end
 
   it "respects block arg restriction when block has a splat parameter (#6473)" do
@@ -1552,7 +1575,7 @@ describe "Block inference" do
   end
 
   it "allows underscore in block return type even if the return type can't be computed" do
-    semantic(%(
+    assert_no_errors <<-CR
       def foo(& : -> _)
         yield
       end
@@ -1564,11 +1587,11 @@ describe "Block inference" do
       end
 
       recursive
-      ))
+      CR
   end
 
   it "doesn't fail with 'already had enclosing call' (#11200)" do
-    semantic(%(
+    assert_no_errors <<-CR
       def capture(&block)
         block
       end
@@ -1593,6 +1616,6 @@ describe "Block inference" do
 
       foo = Bar(Bool).new.as(Foo)
       foo.foo
-      ))
+      CR
   end
 end

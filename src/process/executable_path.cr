@@ -9,7 +9,16 @@ class Process
   INITIAL_PATH = ENV["PATH"]?
 
   # :nodoc:
-  INITIAL_PWD = Dir.current
+  #
+  # Working directory at program start. Nil if working directory does not exist.
+  #
+  # Used for `Exception::CallStack::CURRENT_DIR`
+  # and `Process.executable_path_impl` on openbsd.
+  INITIAL_PWD = begin
+    Dir.current
+  rescue File::NotFoundError
+    nil
+  end
 
   # Returns an absolute path to the executable file of the currently running
   # program. This is in opposition to `PROGRAM_NAME` which may be a relative or
@@ -22,7 +31,7 @@ class Process
   def self.executable_path : String?
     if executable = executable_path_impl
       begin
-        File.real_path(executable)
+        File.realpath(executable)
       rescue File::Error
       end
     end
@@ -166,7 +175,9 @@ end
   # openbsd, ...
   class Process
     private def self.executable_path_impl
-      find_executable(PROGRAM_NAME, INITIAL_PATH, INITIAL_PWD)
+      if pwd = INITIAL_PWD
+        find_executable(PROGRAM_NAME, INITIAL_PATH, pwd)
+      end
     end
   end
 {% end %}

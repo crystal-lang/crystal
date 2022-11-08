@@ -15,8 +15,13 @@ end
 # The general idea and some of the arithmetic algorithms were adapted from
 # the MIT/APACHE-licensed [bigdecimal-rs](https://github.com/akubera/bigdecimal-rs).
 struct BigDecimal < Number
-  ZERO                       = BigInt.new(0)
-  TEN                        = BigInt.new(10)
+  private TWO_I  = BigInt.new(2)
+  private FIVE_I = BigInt.new(5)
+  private TEN_I  = BigInt.new(10)
+
+  DEFAULT_PRECISION = 100_u64
+
+  @[Deprecated("Use `DEFAULT_PRECISION` instead")]
   DEFAULT_MAX_DIV_ITERATIONS = 100_u64
 
   include Comparable(Int)
@@ -75,23 +80,27 @@ struct BigDecimal < Number
     # Check str's validity and find index of 'e'
     exponent_index = nil
 
+    input_length = str.bytesize
+
     str.each_char_with_index do |char, index|
+      final_character = index == input_length - 1
+      first_character = index == 0
       case char
       when '-'
-        unless index == 0 || exponent_index == index - 1
+        unless (first_character && !final_character) || (exponent_index == index - 1 && !final_character)
           raise InvalidBigDecimalException.new(str, "Unexpected '-' character")
         end
       when '+'
-        unless exponent_index == index - 1
+        if final_character || exponent_index != index - 1
           raise InvalidBigDecimalException.new(str, "Unexpected '+' character")
         end
       when '.'
-        if decimal_index
+        if decimal_index || exponent_index
           raise InvalidBigDecimalException.new(str, "Unexpected '.' character")
         end
         decimal_index = index
       when 'e', 'E'
-        if exponent_index
+        if first_character || final_character || exponent_index || decimal_index == index - 1
           raise InvalidBigDecimalException.new(str, "Unexpected #{char.inspect} character")
         end
         exponent_index = index
@@ -102,7 +111,7 @@ struct BigDecimal < Number
       end
     end
 
-    decimal_end_index = (exponent_index || str.bytesize) - 1
+    decimal_end_index = (exponent_index || input_length) - 1
     if decimal_index
       decimal_count = (decimal_end_index - decimal_index).to_u64
 
@@ -161,7 +170,7 @@ struct BigDecimal < Number
     end
   end
 
-  def +(other : Int) : BigDecimal
+  def +(other : Number) : BigDecimal
     self + BigDecimal.new(other)
   end
 
@@ -177,7 +186,7 @@ struct BigDecimal < Number
     end
   end
 
-  def -(other : Int) : BigDecimal
+  def -(other : Number) : BigDecimal
     self - BigDecimal.new(other)
   end
 
@@ -185,7 +194,7 @@ struct BigDecimal < Number
     BigDecimal.new(@value * other.value, @scale + other.scale)
   end
 
-  def *(other : Int) : BigDecimal
+  def *(other : Number) : BigDecimal
     self * BigDecimal.new(other)
   end
 
@@ -196,40 +205,95 @@ struct BigDecimal < Number
   Number.expand_div [BigInt, BigFloat], BigDecimal
   Number.expand_div [BigRational], BigRational
 
-  # Divides `self` with another `BigDecimal`, with a optionally configurable *max_div_iterations*, which
-  # defines a maximum number of iterations in case the division is not exact.
+  # Divides `self` with another `BigDecimal`, with an optionally configurable
+  # *precision*.
+  #
+  # When the division is inexact, the returned value's scale is never greater
+  # than `scale - other.scale + precision`.
   #
   # ```
   # BigDecimal.new(1).div(BigDecimal.new(2))    # => BigDecimal(@value=5, @scale=2)
   # BigDecimal.new(1).div(BigDecimal.new(3), 5) # => BigDecimal(@value=33333, @scale=5)
   # ```
-  def div(other : BigDecimal, max_div_iterations = DEFAULT_MAX_DIV_ITERATIONS) : BigDecimal
+  def div(other : BigDecimal, precision = DEFAULT_PRECISION) : BigDecimal
     check_division_by_zero other
+    return self if @value.zero?
     other.factor_powers_of_ten
+
+    # ```
+    #    (a / 10 ** b) / (c / 10 ** d)
+    # == (a / c) / 10 ** (b - d)
+    # == (a * 10 ** scale_add // c) / 10 ** (b - d + scale_add)
+    # ```
+    #
+    # We want to find the minimum `scale_add` such that:
+    #
+    # - `b - d + scale_add >= 0`
+    # - `a * 10 ** scale_add % c == 0`
+    #
+    # If this is not possible, we let the returned number's scale be
+    # `{b - d, 0}.max + precision`.
 
     numerator, denominator = @value, other.@value
     scale = if @scale >= other.scale
               @scale - other.scale
             else
-              numerator *= TEN ** (other.scale - @scale)
+              numerator *= power_ten_to(other.scale - @scale)
               0
             end
 
+    # Attempt division first; if `a % c == 0`, we're done.
     quotient, remainder = numerator.divmod(denominator)
-    if remainder == ZERO
+    if remainder.zero?
       return BigDecimal.new(normalize_quotient(other, quotient), scale)
     end
 
-    remainder = remainder * TEN
-    i = 0
-    while remainder != ZERO && i < max_div_iterations
-      inner_quotient, inner_remainder = remainder.divmod(denominator)
-      quotient = quotient * TEN + inner_quotient
-      remainder = inner_remainder * TEN
-      i += 1
+    # `c == denominator_reduced * 2 ** denominator_exp2 * 5 ** denominator_exp5`
+    denominator_reduced, denominator_exp2 = denominator.factor_by(TWO_I)
+
+    # Heuristic: for low powers of 5 we perform the divisions ourselves, since
+    # `BigInt#factor_by` can be slower
+    case denominator_reduced
+    when 1
+      denominator_exp5 = 0_u64
+    when 5
+      denominator_reduced = denominator_reduced // FIVE_I
+      denominator_exp5 = 1_u64
+    when 25
+      denominator_reduced = denominator_reduced // FIVE_I // FIVE_I
+      denominator_exp5 = 2_u64
+    else
+      denominator_reduced, denominator_exp5 = denominator_reduced.factor_by(FIVE_I)
     end
 
-    BigDecimal.new(normalize_quotient(other, quotient), scale + i)
+    if denominator_reduced != 1
+      # If `c` has any prime factor other than 2 or 5, then division will always
+      # be inexact; use *precision*.
+      scale_add = precision.to_u64
+    elsif denominator_exp2 <= 1 && denominator_exp5 <= 1
+      # Heuristic: if `denominator` is one of 2, 5, or 10, then `scale_add` must
+      # be 1 because `remainder` can never be divisible by 10. Thus we could
+      # skip the `factor_by` and `power_ten_to` calls here.
+      quotient = numerator * TEN_I // denominator
+      return BigDecimal.new(normalize_quotient(other, quotient), scale + 1)
+    else
+      # `a = ... * 10 ** numerator_exp10`
+      # For `a * 10 ** scale_add` to be divisible by `c`, it must be the case
+      # `numerator_exp10 + scale_add` is greater than `denominator_exp2` and
+      # `denominator_exp5`
+      _, numerator_exp10 = remainder.factor_by(TEN_I)
+      scale_add = {denominator_exp2, denominator_exp5}.max - numerator_exp10
+      scale_add = precision.to_u64 if scale_add > precision
+    end
+
+    quotient = numerator * power_ten_to(scale_add) // denominator
+    BigDecimal.new(normalize_quotient(other, quotient), scale + scale_add)
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#div(other : BigDecimal, precision = DEFAULT_PRECISION)` instead")]
+  def div(other : BigDecimal, *, max_div_iterations = DEFAULT_MAX_DIV_ITERATIONS) : BigDecimal
+    div(other, max_div_iterations)
   end
 
   def <=>(other : BigDecimal) : Int32
@@ -419,7 +483,7 @@ struct BigDecimal < Number
   end
 
   def to_big_r : BigRational
-    BigRational.new(self.value, BigDecimal::TEN ** self.scale)
+    BigRational.new(@value, power_ten_to(@scale))
   end
 
   # Converts to `Int64`. Truncates anything on the right side of the decimal point.
@@ -488,7 +552,7 @@ struct BigDecimal < Number
   end
 
   private def to_big_u!
-    (@value.abs // TEN ** @scale)
+    (@value.abs // power_ten_to(@scale))
   end
 
   # Converts to `UInt64`. Truncates anything on the right side of the decimal point.
@@ -615,18 +679,21 @@ struct BigDecimal < Number
   end
 
   private def power_ten_to(x : Int) : Int
-    TEN ** x
+    TEN_I ** x
   end
 
   # Factors out any extra powers of ten in the internal representation.
   # For instance, value=100 scale=2 => value=1 scale=0
   protected def factor_powers_of_ten
-    while @scale > 0
-      quotient, remainder = value.divmod(TEN)
-      break if remainder != 0
-
-      @value = quotient
-      @scale = @scale - 1
+    if @scale > 0
+      reduced, exp = value.factor_by(TEN_I)
+      if exp <= @scale
+        @value = reduced
+        @scale -= exp
+      else
+        @value //= power_ten_to(@scale)
+        @scale = 0
+      end
     end
   end
 end
@@ -637,7 +704,7 @@ struct Int
   # Converts `self` to `BigDecimal`.
   # ```
   # require "big"
-  # 12123415151254124124.to_big_d
+  # 123456789012345678.to_big_d
   # ```
   def to_big_d : BigDecimal
     BigDecimal.new(self)

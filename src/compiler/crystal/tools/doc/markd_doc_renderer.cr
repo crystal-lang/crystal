@@ -44,13 +44,11 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
     end
   end
 
-  def code(node : Markd::Node, entering : Bool)
-    tag("code") do
-      if in_link?(node)
-        output(node.text)
-      else
-        literal(expand_code_links(node.text))
-      end
+  def code_body(node : Markd::Node)
+    if in_link?(node)
+      output(node.text)
+    else
+      literal(expand_code_links(escape(node.text)))
     end
   end
 
@@ -76,9 +74,9 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
 
     # Check Type#method(...) or Type or #method(...)
     text.gsub %r(
-      ((?:\B::)?\b[A-Z]\w+(?:\:\:[A-Z]\w+)*|\B|(?<=\bself))([#.])([\w<=>+\-*\/\[\]&|?!^~]+[?!]?)(?:\((.*?)\))?
+      ((?:\B::)?\b[A-Z]\w*(?:\:\:[A-Z]\w*)*|\B|(?<=\bself))(?<!\.)([#.])([\w<=>+\-*\/\[\]&|?!^~]+[?!]?)(?:\((.*?)\))?
         |
-      ((?:\B::)?\b[A-Z]\w+(?:\:\:[A-Z]\w+)*)
+      ((?:\B::)?\b[A-Z]\w*(?:\:\:[A-Z]\w*)*)
       )x do |match_text|
       if $5?
         # Type
@@ -90,7 +88,7 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
       end
 
       type_name = $1.presence
-      kind = $2 == "#" ? :instance : :class
+      instance_methods_first = $2 == "#"
       method_name = $3
       method_args = $4? || ""
 
@@ -98,14 +96,14 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
         # Type#method(...)
         another_type = @type.lookup_path(type_name)
         if another_type && @type.must_be_included?
-          method = lookup_method another_type, method_name, method_args, kind
+          method = lookup_method another_type, method_name, method_args, instance_methods_first
           if method
             next method_link method, match_text
           end
         end
       else
         # #method(...)
-        method = lookup_method @type, method_name, method_args, kind
+        method = lookup_method @type, method_name, method_args, instance_methods_first
         if method && method.must_be_included?
           next method_link method, match_text
         end
@@ -115,39 +113,21 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
     end
   end
 
-  def code_block(node : Markd::Node, entering : Bool)
-    languages = node.fence_language ? node.fence_language.split : nil
-    code_tag_attrs = attrs(node)
-    pre_tag_attrs = if @options.prettyprint
-                      {"class" => "prettyprint"}
-                    else
-                      nil
-                    end
-
-    language = languages.try &.first?.try &.strip
-    language = nil if language.try &.empty?
-
+  def code_block_language(languages)
+    language = languages.try(&.first?).try(&.strip.presence)
     if language.nil? || language == "cr"
       language = "crystal"
     end
+    language
+  end
 
-    if language
-      code_tag_attrs ||= {} of String => String
-      code_tag_attrs["class"] = "language-#{escape(language)}"
+  def code_block_body(node : Markd::Node, language : String?)
+    code = node.text.chomp
+    if language == "crystal"
+      literal(SyntaxHighlighter::HTML.highlight! code)
+    else
+      output(code)
     end
-
-    newline
-    tag("pre", pre_tag_attrs) do
-      tag("code", code_tag_attrs) do
-        code = node.text.chomp
-        if language == "crystal"
-          literal(Highlighter.highlight code)
-        else
-          output(code)
-        end
-      end
-    end
-    newline
   end
 
   private def type_link(type, text)
@@ -158,7 +138,7 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
     %(<a href="#{method.type.path_from(@type)}#{method.anchor}">#{text}</a>)
   end
 
-  private def lookup_method(type, name, args, kind = nil)
+  private def lookup_method(type, name, args, instance_methods_first = true)
     case args
     when ""
       args_count = nil
@@ -169,11 +149,10 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
     end
 
     base_match =
-      case kind
-      when :class
-        type.lookup_class_method(name, args_count) || type.lookup_method(name, args_count)
-      else
+      if instance_methods_first
         type.lookup_method(name, args_count) || type.lookup_class_method(name, args_count)
+      else
+        type.lookup_class_method(name, args_count) || type.lookup_method(name, args_count)
       end
     base_match ||
       type.lookup_macro(name, args_count) ||

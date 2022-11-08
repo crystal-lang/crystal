@@ -121,7 +121,7 @@ class Process
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil) : Process::Status
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
     status = new(command, args, env, clear_env, shell, input, output, error, chdir).wait
     $? = status
     status
@@ -136,7 +136,7 @@ class Process
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : String? = nil)
+               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil)
     process = new(command, args, env, clear_env, shell, input, output, error, chdir)
     begin
       value = yield process
@@ -154,7 +154,7 @@ class Process
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-                input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : String? = nil) : NoReturn
+                input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : Path | String? = nil) : NoReturn
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
 
     input = exec_stdio_to_fd(input, for: STDIN)
@@ -219,7 +219,7 @@ class Process
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-                 input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil)
+                 input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil)
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
 
     fork_input = stdio_to_fd(input, for: STDIN)
@@ -229,9 +229,9 @@ class Process
     pid = Crystal::System::Process.spawn(command_args, env, clear_env, fork_input, fork_output, fork_error, chdir)
     @process_info = Crystal::System::Process.new(pid)
 
-    fork_input.close unless fork_input == input || fork_input == STDIN
-    fork_output.close unless fork_output == output || fork_output == STDOUT
-    fork_error.close unless fork_error == error || fork_error == STDERR
+    fork_input.close unless fork_input.in?(input, STDIN)
+    fork_output.close unless fork_output.in?(output, STDOUT)
+    fork_error.close unless fork_error.in?(error, STDERR)
   end
 
   def finalize

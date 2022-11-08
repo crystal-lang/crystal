@@ -3,7 +3,7 @@ require "./codegen"
 class Crystal::CodeGenVisitor
   class Context
     property fun : LLVM::Function
-    property fun_debug_params = [] of LibLLVMExt::Metadata
+    property fun_debug_params = [] of LibLLVM::MetadataRef
     property type : Type
     property vars : Hash(String, LLVMVar)
     property return_type : Type?

@@ -44,6 +44,6 @@ module Crystal::Conversions
   end
 
   def self.to_unsafe_lookup_failed?(ex)
-    ex.message.try(&.includes?("undefined method 'to_unsafe'"))
+    !!ex.message.try(&.includes?("undefined method 'to_unsafe'"))
   end
 end

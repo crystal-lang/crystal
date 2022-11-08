@@ -77,7 +77,7 @@ class Deque(T)
   # ```
   # Deque.new(3) { |i| (i + 1) ** 2 } # => Deque{1, 4, 9}
   # ```
-  def self.new(size : Int, &block : Int32 -> T)
+  def self.new(size : Int, & : Int32 -> T)
     if size < 0
       raise ArgumentError.new("Negative deque size: #{size}")
     end
@@ -198,7 +198,7 @@ class Deque(T)
   end
 
   # Modifies `self`, keeping only the elements in the collection for which the
-  # passed block returns `true`. Returns `self`.
+  # passed block is truthy. Returns `self`.
   #
   # ```
   # a = Deque{1, 6, 2, 4, 8}
@@ -207,7 +207,7 @@ class Deque(T)
   # ```
   #
   # See also: `Deque#select`.
-  def select!
+  def select!(& : T ->) : self
     reject! { |elem| !yield(elem) }
   end
 
@@ -226,7 +226,7 @@ class Deque(T)
   end
 
   # Modifies `self`, deleting the elements in the collection for which the
-  # passed block returns `true`. Returns `self`.
+  # passed block is truthy. Returns `self`.
   #
   # ```
   # a = Deque{1, 6, 2, 4, 8}
@@ -235,7 +235,7 @@ class Deque(T)
   # ```
   #
   # See also: `Deque#reject`.
-  def reject!
+  def reject!(& : T ->) : self
     internal_delete { |e| yield e }
     self
   end
@@ -338,7 +338,7 @@ class Deque(T)
   # Yields each item in this deque, from first to last.
   #
   # Do not modify the deque while using this variant of `each`!
-  def each : Nil
+  def each(& : T ->) : Nil
     halfs do |r|
       r.each do |i|
         yield @buffer[i]
