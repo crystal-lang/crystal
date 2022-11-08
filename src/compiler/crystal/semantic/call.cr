@@ -837,7 +837,7 @@ class Crystal::Call
       block_arg_restriction_type = lookup_node_type(match.context, block_arg_restriction).remove_typedef
       unless block_arg_restriction_type.is_a?(ProcInstanceType)
         if block_arg_restriction_type.is_a?(ProcType)
-          block_arg_restriction.raise "can't create instance of generic class #{block_arg_restriction_type} without specifying its type vars"
+          block_arg_restriction.raise "can't create an instance of generic class #{block_arg_restriction_type} without specifying its type vars"
         else
           block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_restriction_type}"
         end
