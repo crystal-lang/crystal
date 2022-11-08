@@ -54,9 +54,9 @@ module HTTP
           '"', ',', ';', '\\',
           ' ', '\r', '\t', '\n',
           '{', '}',
-          (':'..'@').to_a,
-          ('['..']').to_a,
-        ].flatten.map { |c| "a#{c}b" }
+          (':'..'@').each,
+          ('['..']').each,
+        ].flat_map { |c| "a#{c}b" }
 
         # name cannot be empty
         invalid_names << ""
