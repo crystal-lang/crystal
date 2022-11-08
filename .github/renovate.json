@@ -1,6 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:base"
+  "extends": ["config:base"],
+  "packageRules": [
+    {
+      "groupName": "GH Actions",
+      "matchManagers": ["github-actions"],
+      "schedule": ["after 5am and before 8am on Wednesday"]
+    }
   ]
 }
