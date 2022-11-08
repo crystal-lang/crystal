@@ -5,6 +5,7 @@
     {
       "groupName": "GH Actions",
       "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["major", "minor", "patch", "digest"],
       "schedule": ["after 5am and before 8am on Wednesday"]
     }
   ]
