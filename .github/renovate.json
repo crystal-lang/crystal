@@ -3,6 +3,10 @@
   "extends": ["config:base"],
   "packageRules": [
     {
+      "matchDatasources": ["docker"],
+      "enabled": false
+    },
+    {
       "groupName": "GH Actions",
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["major", "minor", "patch", "digest"],
