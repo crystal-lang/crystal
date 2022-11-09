@@ -1,13 +1,4 @@
-{% skip_file if flag?(:linux) && !flag?(:interpreted) && flag?(:force_iouring) %}
-
 require "./event_libevent"
-
-# :nodoc:
-abstract class Crystal::EventLoop
-  def self.create
-    Crystal::LibEvent::EventLoop.new
-  end
-end
 
 # :nodoc:
 class Crystal::LibEvent::EventLoop < Crystal::EventLoop
