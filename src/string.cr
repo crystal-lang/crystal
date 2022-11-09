@@ -3282,6 +3282,11 @@ class String
     self.match(search, offset).try &.begin
   end
 
+  # Same as `index` but raises NilAssertionError if no index found
+  def index!(search, offset = 0) : Int32
+    index(search, offset) || raise NilAssertionError.new
+  end
+
   # Returns the index of the _last_ appearance of *search* in the string,
   # If *offset* is present, it defines the position to _end_ the search
   # (characters beyond this point are ignored).
@@ -3386,6 +3391,11 @@ class String
     end
 
     match_result.try &.begin
+  end
+
+  # Same as `rindex` but raises NilAssertionError if no index found
+  def rindex!(search, offset = size - 1) : Int32
+    rindex(search, offset) || raise NilAssertionError.new
   end
 
   # Searches separator or pattern (`Regex`) in the string, and returns
