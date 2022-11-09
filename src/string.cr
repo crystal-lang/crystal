@@ -3282,6 +3282,13 @@ class String
     self.match(search, offset).try &.begin
   end
 
+  # :ditto:
+  #
+  # Raises `IndexError` if there is no *search* occurence in `self`.
+  def index!(search, offset = 0) : Int32
+    index(search, offset) || raise IndexError.new
+  end
+
   # Returns the index of the _last_ appearance of *search* in the string,
   # If *offset* is present, it defines the position to _end_ the search
   # (characters beyond this point are ignored).
@@ -3386,6 +3393,27 @@ class String
     end
 
     match_result.try &.begin
+  end
+
+  # :ditto:
+  #
+  # Raises `IndexError` if there is no *search* occurence in `self`.
+  def rindex!(search : Regex, offset = size) : Int32
+    rindex(search, offset) || raise IndexError.new
+  end
+
+  # :ditto:
+  #
+  # Raises `IndexError` if there is no *search* occurence in `self`.
+  def rindex!(search : String, offset = size - search.size) : Int32
+    rindex(search, offset) || raise IndexError.new
+  end
+
+  # :ditto:
+  #
+  # Raises `IndexError` if there is no *search* occurence in `self`.
+  def rindex!(search : Char, offset = size - 1) : Int32
+    rindex(search, offset) || raise IndexError.new
   end
 
   # Searches separator or pattern (`Regex`) in the string, and returns

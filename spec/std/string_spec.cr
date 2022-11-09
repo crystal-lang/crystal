@@ -967,6 +967,78 @@ describe "String" do
     end
   end
 
+  describe "#index!" do
+    describe "by char" do
+      it { "foo".index!('o').should eq(1) }
+      it do
+        expect_raises(IndexError) do
+          "foo".index!('g')
+        end
+      end
+
+      describe "with offset" do
+        it { "foobarbaz".index!('a', 5).should eq(7) }
+        it { "foobarbaz".index!('a', -4).should eq(7) }
+        it do
+          expect_raises(IndexError) do
+            "foo".index!('g', 1)
+          end
+        end
+        it do
+          expect_raises(IndexError) do
+            "foo".index!('g', -20)
+          end
+        end
+      end
+    end
+
+    describe "by string" do
+      it { "foo bar".index!("o b").should eq(2) }
+      it { "foo".index!("").should eq(0) }
+      it { "foo".index!("foo").should eq(0) }
+      it do
+        expect_raises(IndexError) do
+          "foo".index!("fg")
+        end
+      end
+
+      describe "with offset" do
+        it { "foobarbaz".index!("ba", 4).should eq(6) }
+        it { "foobarbaz".index!("ba", -5).should eq(6) }
+        it do
+          expect_raises(IndexError) do
+            "foo".index!("ba", 1)
+          end
+        end
+        it do
+          expect_raises(IndexError) do
+            "foo".index!("ba", -20)
+          end
+        end
+      end
+    end
+
+    describe "by regex" do
+      it { "string 12345".index!(/\d+/).should eq(7) }
+      it { "12345".index!(/\d/).should eq(0) }
+      it do
+        expect_raises(IndexError) do
+          "Hello, world!".index!(/\d/)
+        end
+      end
+
+      describe "with offset" do
+        it { "abcDef".index!(/[A-Z]/).should eq(3) }
+        it { "foobarbaz".index!(/ba/, -5).should eq(6) }
+        it do
+          expect_raises(IndexError) do
+            "Foo".index!(/[A-Z]/, 1)
+          end
+        end
+      end
+    end
+  end
+
   describe "#rindex" do
     describe "by char" do
       it { "bbbb".rindex('b').should eq(3) }
@@ -1043,6 +1115,70 @@ describe "String" do
         it { "bbbb".rindex(/b/, -5).should be_nil }
         it { "bbbb".rindex(/b/, -4).should eq(0) }
         it { "日本語日本語".rindex(/日本/, 2).should eq(0) }
+      end
+    end
+  end
+
+  describe "#rindex!" do
+    describe "by char" do
+      it { "bbbb".rindex!('b').should eq(3) }
+      it { "foobar".rindex!('a').should eq(4) }
+      it do
+        expect_raises(IndexError) do
+          "foobar".rindex!('g')
+        end
+      end
+
+      describe "with offset" do
+        it { "bbbb".rindex!('b', 2).should eq(2) }
+        it do
+          expect_raises(IndexError) do
+            "abbbb".rindex!('b', 0)
+          end
+        end
+      end
+    end
+
+    describe "by string" do
+      it { "bbbb".rindex!("b").should eq(3) }
+      it { "foo baro baz".rindex!("o b").should eq(7) }
+      it do
+        expect_raises(IndexError) do
+          "foo baro baz".rindex!("fg")
+        end
+      end
+
+      describe "with offset" do
+        it { "bbbb".rindex!("b", 2).should eq(2) }
+        it do
+          expect_raises(IndexError) do
+            "abbbb".rindex!("b", 0)
+          end
+        end
+        it do
+          expect_raises(IndexError) do
+            "bbbb".rindex!("b", -5)
+          end
+        end
+      end
+    end
+
+    describe "by regex" do
+      it { "bbbb".rindex!(/b/).should eq(3) }
+      it { "a43b53".rindex!(/\d+/).should eq(4) }
+      it do
+        expect_raises(IndexError) do
+          "bbbb".rindex!(/\d/)
+        end
+      end
+
+      describe "with offset" do
+        it { "bbbb".rindex!(/b/, 2).should eq(2) }
+        it do
+          expect_raises(IndexError) do
+            "abbbb".rindex!(/b/, 0)
+          end
+        end
       end
     end
   end
