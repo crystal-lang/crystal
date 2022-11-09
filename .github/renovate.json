@@ -1,6 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:base"],
+  "separateMajorMinor": false,
   "packageRules": [
     {
       "matchDatasources": ["docker"],
@@ -9,7 +10,6 @@
     {
       "groupName": "GH Actions",
       "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["major", "minor", "patch", "digest"],
       "schedule": ["after 5am and before 8am on Wednesday"]
     }
   ]
