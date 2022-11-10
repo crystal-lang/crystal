@@ -3284,7 +3284,7 @@ class String
 
   # :ditto:
   #
-  # Raises `IndexError` if there is no *search* occurence in `self`.
+  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
   def index!(search, offset = 0) : Int32
     index(search, offset) || raise Enumerable::NotFoundError.new
   end
@@ -3397,21 +3397,17 @@ class String
 
   # :ditto:
   #
-  # Raises `IndexError` if there is no *search* occurence in `self`.
+  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
   def rindex!(search : Regex, offset = size) : Int32
     rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
   # :ditto:
-  #
-  # Raises `IndexError` if there is no *search* occurence in `self`.
   def rindex!(search : String, offset = size - search.size) : Int32
     rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
   # :ditto:
-  #
-  # Raises `IndexError` if there is no *search* occurence in `self`.
   def rindex!(search : Char, offset = size - 1) : Int32
     rindex(search, offset) || raise Enumerable::NotFoundError.new
   end

@@ -981,7 +981,7 @@ describe "String" do
         it { "foobarbaz".index!('a', -4).should eq(7) }
         it do
           expect_raises(Enumerable::NotFoundError) do
-            "foo".index!('g', 1)
+            "foo".index!('f', 1)
           end
         end
         it do
