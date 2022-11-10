@@ -3286,7 +3286,7 @@ class String
   #
   # Raises `IndexError` if there is no *search* occurence in `self`.
   def index!(search, offset = 0) : Int32
-    index(search, offset) || raise IndexError.new
+    index(search, offset) || raise Enumerable::NotFoundError.new
   end
 
   # Returns the index of the _last_ appearance of *search* in the string,
@@ -3399,21 +3399,21 @@ class String
   #
   # Raises `IndexError` if there is no *search* occurence in `self`.
   def rindex!(search : Regex, offset = size) : Int32
-    rindex(search, offset) || raise IndexError.new
+    rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
   # :ditto:
   #
   # Raises `IndexError` if there is no *search* occurence in `self`.
   def rindex!(search : String, offset = size - search.size) : Int32
-    rindex(search, offset) || raise IndexError.new
+    rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
   # :ditto:
   #
   # Raises `IndexError` if there is no *search* occurence in `self`.
   def rindex!(search : Char, offset = size - 1) : Int32
-    rindex(search, offset) || raise IndexError.new
+    rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
   # Searches separator or pattern (`Regex`) in the string, and returns

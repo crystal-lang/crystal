@@ -971,7 +971,7 @@ describe "String" do
     describe "by char" do
       it { "foo".index!('o').should eq(1) }
       it do
-        expect_raises(IndexError) do
+        expect_raises(Enumerable::NotFoundError) do
           "foo".index!('g')
         end
       end
@@ -980,12 +980,12 @@ describe "String" do
         it { "foobarbaz".index!('a', 5).should eq(7) }
         it { "foobarbaz".index!('a', -4).should eq(7) }
         it do
-          expect_raises(IndexError) do
+          expect_raises(Enumerable::NotFoundError) do
             "foo".index!('g', 1)
           end
         end
         it do
-          expect_raises(IndexError) do
+          expect_raises(Enumerable::NotFoundError) do
             "foo".index!('g', -20)
           end
         end
@@ -997,7 +997,7 @@ describe "String" do
       it { "foo".index!("").should eq(0) }
       it { "foo".index!("foo").should eq(0) }
       it do
-        expect_raises(IndexError) do
+        expect_raises(Enumerable::NotFoundError) do
           "foo".index!("fg")
         end
       end
@@ -1006,12 +1006,12 @@ describe "String" do
         it { "foobarbaz".index!("ba", 4).should eq(6) }
         it { "foobarbaz".index!("ba", -5).should eq(6) }
         it do
-          expect_raises(IndexError) do
+          expect_raises(Enumerable::NotFoundError) do
             "foo".index!("ba", 1)
           end
         end
         it do
-          expect_raises(IndexError) do
+          expect_raises(Enumerable::NotFoundError) do
             "foo".index!("ba", -20)
           end
         end
@@ -1022,7 +1022,7 @@ describe "String" do
       it { "string 12345".index!(/\d+/).should eq(7) }
       it { "12345".index!(/\d/).should eq(0) }
       it do
-        expect_raises(IndexError) do
+        expect_raises(Enumerable::NotFoundError) do
           "Hello, world!".index!(/\d/)
         end
       end
@@ -1031,7 +1031,7 @@ describe "String" do
         it { "abcDef".index!(/[A-Z]/).should eq(3) }
         it { "foobarbaz".index!(/ba/, -5).should eq(6) }
         it do
-          expect_raises(IndexError) do
+          expect_raises(Enumerable::NotFoundError) do
             "Foo".index!(/[A-Z]/, 1)
           end
         end
@@ -1124,7 +1124,7 @@ describe "String" do
       it { "bbbb".rindex!('b').should eq(3) }
       it { "foobar".rindex!('a').should eq(4) }
       it do
-        expect_raises(IndexError) do
+        expect_raises(Enumerable::NotFoundError) do
           "foobar".rindex!('g')
         end
       end
@@ -1132,7 +1132,7 @@ describe "String" do
       describe "with offset" do
         it { "bbbb".rindex!('b', 2).should eq(2) }
         it do
-          expect_raises(IndexError) do
+          expect_raises(Enumerable::NotFoundError) do
             "abbbb".rindex!('b', 0)
           end
         end
@@ -1143,7 +1143,7 @@ describe "String" do
       it { "bbbb".rindex!("b").should eq(3) }
       it { "foo baro baz".rindex!("o b").should eq(7) }
       it do
-        expect_raises(IndexError) do
+        expect_raises(Enumerable::NotFoundError) do
           "foo baro baz".rindex!("fg")
         end
       end
@@ -1151,12 +1151,12 @@ describe "String" do
       describe "with offset" do
         it { "bbbb".rindex!("b", 2).should eq(2) }
         it do
-          expect_raises(IndexError) do
+          expect_raises(Enumerable::NotFoundError) do
             "abbbb".rindex!("b", 0)
           end
         end
         it do
-          expect_raises(IndexError) do
+          expect_raises(Enumerable::NotFoundError) do
             "bbbb".rindex!("b", -5)
           end
         end
@@ -1167,7 +1167,7 @@ describe "String" do
       it { "bbbb".rindex!(/b/).should eq(3) }
       it { "a43b53".rindex!(/\d+/).should eq(4) }
       it do
-        expect_raises(IndexError) do
+        expect_raises(Enumerable::NotFoundError) do
           "bbbb".rindex!(/\d/)
         end
       end
@@ -1175,7 +1175,7 @@ describe "String" do
       describe "with offset" do
         it { "bbbb".rindex!(/b/, 2).should eq(2) }
         it do
-          expect_raises(IndexError) do
+          expect_raises(Enumerable::NotFoundError) do
             "abbbb".rindex!(/b/, 0)
           end
         end
