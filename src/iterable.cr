@@ -36,6 +36,13 @@ module Iterable(T)
     each.cons(count, reuse)
   end
 
+  # Same as `each.cons_pair`.
+  #
+  # See also: `Iterator#cons_pair`.
+  def each_cons_pair
+    each.cons_pair
+  end
+
   # Same as `each.with_index(offset)`.
   def each_with_index(offset = 0)
     each.with_index(offset)
