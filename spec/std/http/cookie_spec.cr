@@ -51,7 +51,7 @@ module HTTP
       it "raises on invalid name" do
         cookie = HTTP::Cookie.new("x", "")
         invalid_names = [
-          '"', ',', ';', '\\',
+          '"', '(', ')', ',', '/',
           ' ', '\r', '\t', '\n',
           '{', '}',
           (':'..'@').each,
