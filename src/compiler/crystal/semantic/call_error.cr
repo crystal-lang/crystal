@@ -125,6 +125,9 @@ class Crystal::Call
     check_wrong_number_of_arguments(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
 
     has_extra_types = check_extra_types_arguments_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
+
+    # Give a general "no overload matches" error if more types than expected were given to some arguments
+    # (doing otherwise has led to some misleading errors)
     unless has_extra_types
       check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
     end
