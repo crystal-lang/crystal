@@ -123,8 +123,11 @@ class Crystal::Call
     check_extra_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
     check_arguments_already_specified(call_errors, owner, defs, arg_types, inner_exception)
     check_wrong_number_of_arguments(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
-    check_extra_types_arguments_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
-    check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
+
+    has_extra_types = check_extra_types_arguments_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
+    unless has_extra_types
+      check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
+    end
 
     if args.size == 1 && args.first.type.includes_type?(program.nil)
       owner_trace = args.first.find_owner_trace(program, program.nil)
@@ -262,19 +265,36 @@ class Crystal::Call
 
   private def check_extra_types_arguments_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
     call_errors = call_errors.select(ArgumentsTypeMismatch)
-    return if call_errors.empty?
+    return false if call_errors.empty?
 
     call_errors = call_errors.map &.as(ArgumentsTypeMismatch)
     argument_type_mismatches = call_errors.flat_map(&.errors)
 
     argument_type_mismatches.select!(&.extra_types)
+    return false if argument_type_mismatches.empty?
 
-    target_error = argument_type_mismatches.first?
-    return unless target_error
+    argument_type_mismatches.each do |target_error|
+      index_or_name = target_error.index_or_name
 
-    index_or_name = target_error.index_or_name
+      mismatches = argument_type_mismatches.select(&.index_or_name.==(index_or_name))
+      expected_types = mismatches.map(&.expected_type).uniq!
+      actual_type = mismatches.first.actual_type
 
-    raise_argument_type_mismatch(index_or_name, argument_type_mismatches, owner, defs, def_name, arg_types, inner_exception)
+      actual_types =
+        if actual_type.is_a?(UnionType)
+          actual_type.union_types
+        else
+          [actual_type] of Type
+        end
+
+      # It could happen that a type that's missing in one overload is actually
+      # covered in another overload, and eventually all overloads are covered
+      next if expected_types.to_set == actual_types.to_set
+
+      raise_argument_type_mismatch(index_or_name, actual_type, expected_types.sort_by!(&.to_s), owner, defs, def_name, arg_types, inner_exception)
+    end
+
+    true
   end
 
   private def check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
@@ -294,14 +314,14 @@ class Crystal::Call
     # Only show the first error. We'll still list all overloads.
     index_or_name = indexes_or_names_in_all_overloads.first
 
-    raise_argument_type_mismatch(index_or_name, argument_type_mismatches, owner, defs, def_name, arg_types, inner_exception)
-  end
-
-  private def raise_argument_type_mismatch(index_or_name, argument_type_mismatches, owner, defs, def_name, arg_types, inner_exception)
     mismatches = argument_type_mismatches.select(&.index_or_name.==(index_or_name))
     expected_types = mismatches.map(&.expected_type).uniq!.sort_by!(&.to_s)
     actual_type = mismatches.first.actual_type
 
+    raise_argument_type_mismatch(index_or_name, actual_type, expected_types, owner, defs, def_name, arg_types, inner_exception)
+  end
+
+  private def raise_argument_type_mismatch(index_or_name, actual_type, expected_types, owner, defs, def_name, arg_types, inner_exception)
     arg =
       case index_or_name
       in Int32
