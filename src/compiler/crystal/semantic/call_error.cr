@@ -123,14 +123,8 @@ class Crystal::Call
     check_extra_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
     check_arguments_already_specified(call_errors, owner, defs, arg_types, inner_exception)
     check_wrong_number_of_arguments(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
-
-    has_extra_types = check_extra_types_arguments_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
-
-    # Give a general "no overload matches" error if more types than expected were given to some arguments
-    # (doing otherwise has led to some misleading errors)
-    unless has_extra_types
-      check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
-    end
+    check_extra_types_arguments_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
+    check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
 
     if args.size == 1 && args.first.type.includes_type?(program.nil)
       owner_trace = args.first.find_owner_trace(program, program.nil)
@@ -268,13 +262,13 @@ class Crystal::Call
 
   private def check_extra_types_arguments_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
     call_errors = call_errors.select(ArgumentsTypeMismatch)
-    return false if call_errors.empty?
+    return if call_errors.empty?
 
     call_errors = call_errors.map &.as(ArgumentsTypeMismatch)
     argument_type_mismatches = call_errors.flat_map(&.errors)
 
     argument_type_mismatches.select!(&.extra_types)
-    return false if argument_type_mismatches.empty?
+    return if argument_type_mismatches.empty?
 
     argument_type_mismatches.each do |target_error|
       index_or_name = target_error.index_or_name
@@ -292,12 +286,12 @@ class Crystal::Call
 
       # It could happen that a type that's missing in one overload is actually
       # covered in another overload, and eventually all overloads are covered
-      next if expected_types.to_set == actual_types.to_set
+      if expected_types.to_set == actual_types.to_set
+        expected_types = [target_error.expected_type]
+      end
 
       raise_argument_type_mismatch(index_or_name, actual_type, expected_types.sort_by!(&.to_s), owner, defs, def_name, arg_types, inner_exception)
     end
-
-    true
   end
 
   private def check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)

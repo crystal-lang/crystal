@@ -281,11 +281,7 @@ describe "Call errors" do
       "expected argument #1 to 'foo' to be Char or Int32, not (Char | Int32 | Nil)"
   end
 
-  it "doesn't error on argument if actual type matches all expected types in different overloads" do
-    # This could be improved to say "expected argument #2 to 'foo' to be Int32, not (Int32 | Nil)
-    # but it's tricky or it might be misleading because the argument #2 can be nil, just not
-    # for this overload (and with a different argument type for the third position).
-    # In practice it's maybe unlikely that such oveloads actually exist.
+  it "errors on argument if argument matches in all overloads but with different types in other arguments" do
     assert_error %(
       def foo(x : String, y : Int32, w : Int32)
       end
@@ -295,6 +291,6 @@ describe "Call errors" do
 
       foo("a", 1 || nil, 1)
       ),
-      "no overload matches"
+      "expected argument #2 to 'foo' to be Int32, not (Int32 | Nil)"
   end
 end
