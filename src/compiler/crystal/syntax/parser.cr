@@ -199,21 +199,21 @@ module Crystal
         unexpected_token
       end
 
-      targets = exps[0...assign_index].map { |exp| multiassign_left_hand(exp) }
+      targets = exps[0...assign_index].map { |exp| multi_assign_left_hand(exp) }
 
       assign = exps[assign_index]
       values = [] of ASTNode
 
       case assign
       when Assign
-        targets << multiassign_left_hand(assign.target)
+        targets << multi_assign_left_hand(assign.target)
         values << assign.value
       when Call
         assign.name = assign.name.byte_slice(0, assign.name.bytesize - 1)
         targets << assign
         values << assign.args.pop
       else
-        raise "BUG: multiassign index expression can only be Assign or Call"
+        raise "BUG: multi_assign index expression can only be Assign or Call"
       end
 
       if lhs_splat_index
@@ -259,14 +259,24 @@ module Crystal
       end
     end
 
-    def multiassign_left_hand(exp)
+    def multi_assign_left_hand(exp)
       if exp.is_a?(Path)
         raise "can't assign to constant in multiple assignment", exp.location.not_nil!
       end
 
-      if exp.is_a?(Call) && !exp.obj && exp.args.empty?
-        exp = Var.new(exp.name).at(exp)
+      if exp.is_a?(Call)
+        case obj = exp.obj
+        when Nil
+          if exp.args.empty?
+            exp = Var.new(exp.name).at(exp)
+          end
+        when Global
+          if obj.name == "$~" && exp.name == "[]"
+            raise "global match data cannot be assigned to", obj.location.not_nil!
+          end
+        end
       end
+
       if exp.is_a?(Var)
         if exp.name == "self"
           raise "can't change the value of self", exp.location.not_nil!
@@ -995,6 +1005,10 @@ module Crystal
           node_and_next_token Global.new(var.name).at(location)
         end
       when .global_match_data_index?
+        if peek_ahead { next_token_skip_space; @token.type.op_eq? }
+          raise "global match data cannot be assigned to"
+        end
+
         value = @token.value.to_s
         if value_prefix = value.rchop? '?'
           method = "[]?"
