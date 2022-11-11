@@ -121,7 +121,7 @@ describe "Semantic: def" do
 
       foo 1 || 1.5
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Int, not (Float64 | Int32)"
   end
 
   it "reports no overload matches 2" do
@@ -134,7 +134,7 @@ describe "Semantic: def" do
 
       foo(1 || 'a', 1 || 1.5)
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Int, not (Char | Int32)"
   end
 
   it "reports no block given" do
