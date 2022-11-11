@@ -384,7 +384,7 @@ describe "Semantic: virtual" do
       f = Bar1.new || Bar2.new || Baz.new
       foo(f)
       ",
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Bar1 or Baz, not Foo"
   end
 
   it "checks cover in every concrete subclass" do
@@ -446,7 +446,7 @@ describe "Semantic: virtual" do
       f = Bar1.new || Bar2.new || Baz.new
       f.foo(f)
       ",
-      "no overload matches"
+      "expected argument #1 to 'Baz#foo' to be Bar1 or Baz, not Foo"
   end
 
   it "checks cover in every concrete subclass 3" do

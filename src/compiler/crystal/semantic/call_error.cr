@@ -363,7 +363,7 @@ class Crystal::Call
       else
         str << "expected argument #{argument_description} to '#{full_name(owner, def_name)}' to be "
         to_sentence(str, expected_types, " or ")
-        str << ", not #{actual_type}"
+        str << ", not #{actual_type.devirtualize}"
       end
     end
   end
