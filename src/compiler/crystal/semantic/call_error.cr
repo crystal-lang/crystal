@@ -264,33 +264,17 @@ class Crystal::Call
     call_errors = call_errors.select(ArgumentsTypeMismatch)
     return if call_errors.empty?
 
-    # Find the first error where there are extra types given
-    target_error = nil
-    call_errors.each do |call_error|
-      call_error.errors.each do |error|
-        if error.extra_types
-          target_error = error
-          break
-        end
-      end
-      break if target_error
-    end
+    call_errors = call_errors.map &.as(ArgumentsTypeMismatch)
+    argument_type_mismatches = call_errors.flat_map(&.errors)
 
+    argument_type_mismatches.select!(&.extra_types)
+
+    target_error = argument_type_mismatches.first?
     return unless target_error
 
-    # Find all errors for that index or name
-    all_target_errors = call_errors.flat_map do |call_error|
-      call_error.errors.select do |error|
-        error.extra_types &&
-          error.index_or_name == target_error.index_or_name
-      end
-    end
-
     index_or_name = target_error.index_or_name
-    expected_types = all_target_errors.map(&.expected_type).uniq!.sort_by!(&.to_s)
-    actual_type = target_error.actual_type
 
-    raise_argument_type_mismatch(index_or_name, actual_type, expected_types, owner, defs, def_name, arg_types, inner_exception)
+    raise_argument_type_mismatch(index_or_name, argument_type_mismatches, owner, defs, def_name, arg_types, inner_exception)
   end
 
   private def check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
@@ -310,14 +294,14 @@ class Crystal::Call
     # Only show the first error. We'll still list all overloads.
     index_or_name = indexes_or_names_in_all_overloads.first
 
+    raise_argument_type_mismatch(index_or_name, argument_type_mismatches, owner, defs, def_name, arg_types, inner_exception)
+  end
+
+  private def raise_argument_type_mismatch(index_or_name, argument_type_mismatches, owner, defs, def_name, arg_types, inner_exception)
     mismatches = argument_type_mismatches.select(&.index_or_name.==(index_or_name))
     expected_types = mismatches.map(&.expected_type).uniq!.sort_by!(&.to_s)
     actual_type = mismatches.first.actual_type
 
-    raise_argument_type_mismatch(index_or_name, actual_type, expected_types, owner, defs, def_name, arg_types, inner_exception)
-  end
-
-  private def raise_argument_type_mismatch(index_or_name, actual_type, expected_types, owner, defs, def_name, arg_types, inner_exception)
     arg =
       case index_or_name
       in Int32
