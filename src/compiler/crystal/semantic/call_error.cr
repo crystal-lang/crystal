@@ -264,6 +264,7 @@ class Crystal::Call
     call_errors = call_errors.select(ArgumentsTypeMismatch)
     return if call_errors.empty?
 
+    # Find the first error where there are extra types given
     target_error = nil
     call_errors.each do |call_error|
       call_error.errors.each do |error|
@@ -277,8 +278,16 @@ class Crystal::Call
 
     return unless target_error
 
+    # Find all errors for that index or name
+    all_target_errors = call_errors.flat_map do |call_error|
+      call_error.errors.select do |error|
+        error.extra_types &&
+          error.index_or_name == target_error.index_or_name
+      end
+    end
+
     index_or_name = target_error.index_or_name
-    expected_types = [target_error.expected_type]
+    expected_types = all_target_errors.map(&.expected_type).uniq!.sort_by!(&.to_s)
     actual_type = target_error.actual_type
 
     raise_argument_type_mismatch(index_or_name, actual_type, expected_types, owner, defs, def_name, arg_types, inner_exception)
