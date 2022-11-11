@@ -254,4 +254,17 @@ describe "Call errors" do
       ),
       "expected argument 'x' to 'foo' to match a member of enum Color.\n\nDid you mean :red?"
   end
+
+  it "errors on argument if more types are given than expected" do
+    assert_error %(
+      def foo(x : Int32)
+      end
+
+      def foo(x : Char)
+      end
+
+      foo(1 || nil)
+      ),
+      "expected argument #1 to 'foo' to be Int32, not (Int32 | Nil)"
+  end
 end
