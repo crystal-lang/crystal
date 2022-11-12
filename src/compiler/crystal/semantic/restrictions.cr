@@ -1474,7 +1474,7 @@ module Crystal
 
       restricted = typedef.restrict(other, context)
       if restricted == typedef
-        return self
+        self
       elsif restricted.is_a?(UnionType)
         program.type_merge(restricted.union_types.map { |t| t == typedef ? self : t })
       else

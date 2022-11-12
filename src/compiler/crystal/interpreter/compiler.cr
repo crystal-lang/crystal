@@ -1992,7 +1992,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       pop aligned_sizeof_type(node), node: nil
     end
 
-    return false
+    false
   end
 
   private def create_compiled_def(node : Call, target_def : Def)

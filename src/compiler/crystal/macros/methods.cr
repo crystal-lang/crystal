@@ -342,9 +342,9 @@ module Crystal
 
     def to_string(context)
       case self
-      when StringLiteral then return self.value
-      when SymbolLiteral then return self.value
-      when MacroId       then return self.value
+      when StringLiteral then self.value
+      when SymbolLiteral then self.value
+      when MacroId       then self.value
       else
         raise "expected #{context} to be a StringLiteral, SymbolLiteral or MacroId, not #{class_desc}"
       end
