@@ -1,3 +1,103 @@
+# Implementation inspired from https://github.com/crystal-term/screen/blob/master/src/term-screen.cr.
+module Reply::Term::Size
+  extend self
+
+  DEFAULT_SIZE = {27, 80}
+
+  def width
+    self.size[0]
+  end
+
+  def height
+    self.size[1]
+  end
+
+  private def check_size(size)
+    if size && (rows = size[0]) && (cols = size[1]) && rows != 0 && cols != 0
+      {rows, cols}
+    end
+  end
+
+  {% if flag?(:win32) %}
+    def size : {Int32, Int32}
+      check_size(size_from_screen_buffer) ||
+        check_size(size_from_ansicon) ||
+        DEFAULT_SIZE
+    end
+
+    # Detect terminal size Windows GetConsoleScreenBufferInfo
+    private def size_from_screen_buffer
+      LibC.GetConsoleScreenBufferInfo(LibC.GetStdHandle(LibC::STD_OUTPUT_HANDLE), out csbi)
+      col = csbi.srWindow.right - csbi.srWindow.left + 1
+      row = csbi.srWindow.bottom - csbi.srWindow.top + 1
+
+      {col.to_i32, row.to_i32}
+    end
+
+    # Detect terminal size from Windows ANSICON
+    private def size_from_ansicon
+      return unless ENV["ANSICON"]?.to_s =~ /\((.*)x(.*)\)/
+
+      rows, cols = [$2, $1].map(&.to_i)
+      {rows, cols}
+    end
+  {% else %}
+    def size : {Int32, Int32}
+      size_from_ioctl(0) ||   # STDIN
+        size_from_ioctl(1) || # STDOUT
+        size_from_ioctl(2) || # STDERR
+        check_size(size_from_tput) ||
+        check_size(size_from_stty) ||
+        check_size(size_from_env) ||
+        DEFAULT_SIZE
+    end
+
+    # Read terminal size from Unix ioctl
+    private def size_from_ioctl(fd)
+      winsize = uninitialized LibC::Winsize
+      ret = LibC.ioctl(fd, LibC::TIOCGWINSZ, pointerof(winsize))
+      return if ret < 0
+
+      {winsize.ws_col.to_i32, winsize.ws_row.to_i32}
+    end
+
+    # Detect terminal size from tput utility
+    private def size_from_tput
+      return unless STDOUT.tty?
+
+      lines = `tput lines`.to_i?
+      cols = `tput cols`.to_i?
+
+      {lines, cols}
+    rescue
+      nil
+    end
+
+    # Detect terminal size from stty utility
+    private def size_from_stty
+      return unless STDOUT.tty?
+
+      parts = `stty size`.split(/\s+/)
+      return unless parts.size > 1
+      lines, cols = parts.map(&.to_i?)
+
+      {lines, cols}
+    rescue
+      nil
+    end
+
+    # Detect terminal size from environment
+    private def size_from_env
+      return unless ENV["COLUMNS"]?.to_s =~ /^\d+$/
+
+      rows = ENV["LINES"]? || ENV["ROWS"]?
+      cols = ENV["COLUMNS"]?
+
+      {rows.try &.to_i?, cols.try &.to_i?}
+    end
+  {% end %}
+end
+
 {% if flag?(:win32) %}
   lib LibC
     struct COORD
@@ -25,23 +125,13 @@
     fun GetConsoleScreenBufferInfo(hConsoleOutput : Void*, lpConsoleScreenBufferInfo : CONSOLE_SCREEN_BUFFER_INFO*) : Void
     fun GetStdHandle(nStdHandle : UInt32) : Void*
   end
-
-  module Reply::Term::Size
-    def self.size : {Int32, Int32}
-      LibC.GetConsoleScreenBufferInfo(LibC.GetStdHandle(LibC::STD_OUTPUT_HANDLE), out csbi)
-      col = csbi.srWindow.right - csbi.srWindow.left + 1
-      row = csbi.srWindow.bottom - csbi.srWindow.top + 1
-
-      {col.to_i32, row.to_i32}
-    end
-  end
 {% else %}
   lib LibC
     struct Winsize
-      row : LibC::Short
-      col : LibC::Short
-      x_pixel : LibC::Short
-      y_pixel : LibC::Short
+      ws_row : UShort
+      ws_col : UShort
+      ws_xpixel : UShort
+      ws_ypixel : UShort
     end
 
     # TIOCGWINSZ is a magic number passed to ioctl that requests the current
@@ -55,26 +145,6 @@
       {% end %}
     {% end %}
 
-    fun ioctl(fd : LibC::Int, request : LibC::SizeT, winsize : LibC::Winsize*) : LibC::Int
-  end
-
-  module Reply::Term::Size
-    # Gets the terminals width
-    def self.size : {Int32, Int32}
-      ret = LibC.ioctl(1, LibC::TIOCGWINSZ, out screen_size)
-      raise "Error retrieving terminal size: ioctl TIOCGWINSZ: #{Errno.value}" if ret < 0
-
-      {screen_size.col.to_i32, screen_size.row.to_i32}
-    end
+    fun ioctl(fd : Int, request : ULong, ...) : Int
   end
 {% end %}
-
-module Reply::Term::Size
-  def self.width
-    size[0]
-  end
-
-  def self.height
-    size[1]
-  end
-end
