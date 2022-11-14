@@ -114,16 +114,16 @@ module Reply
 
       io = IO::Memory.new
       history.save(io)
-      io.to_s.should eq <<-'HISTORY'
-        foo
-        \\
-        bar\
-        "baz" \\\
-        "\\n\\\\"\
-        \
-        \\
-        a\\\\\\b
-        HISTORY
+      io.to_s.should eq(
+        %q(foo) + "\n" +
+        %q(\\) + "\n" +
+        %q(bar\) + "\n" +
+        %q("baz" \\\) + "\n" +
+        %q("\\n\\\\"\) + "\n" +
+        %q(\) + "\n" +
+        %q(\\) + "\n" +
+        %q(a\\\\\\b)
+      )
 
       io.rewind
       history.load(io)
