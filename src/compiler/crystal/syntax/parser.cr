@@ -1238,12 +1238,7 @@ module Crystal
     end
 
     def new_node_check_type_declaration(klass)
-      new_node_check_type_declaration(klass) { }
-    end
-
-    def new_node_check_type_declaration(klass)
       name = @token.value.to_s
-      yield name
       var = klass.new(name).at(@token.location)
       var.end_location = token_end_location
       @wants_regex = false
