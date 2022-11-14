@@ -54,7 +54,7 @@ class XML::Reader
 
   # Moves the reader to the next node.
   def read : Bool
-    Error.collect(@errors) { LibXML.xmlTextReaderRead(@reader) == 1 }
+    collect_errors { LibXML.xmlTextReaderRead(@reader) == 1 }
   end
 
   # Moves the reader to the next node while skipping subtrees.
@@ -70,7 +70,7 @@ class XML::Reader
     if result == -1
       node = LibXML.xmlTextReaderCurrentNode(@reader)
       if node.null?
-        Error.collect(@errors) { LibXML.xmlTextReaderRead(@reader) == 1 }
+        collect_errors { LibXML.xmlTextReaderRead(@reader) == 1 }
       elsif !node.value.next.null?
         LibXML.xmlTextReaderNext(@reader) == 1
       else
@@ -147,7 +147,7 @@ class XML::Reader
 
   # Returns the node's XML content including subtrees.
   def read_inner_xml : String
-    xml = Error.collect(@errors) { LibXML.xmlTextReaderReadInnerXml(@reader) }
+    xml = collect_errors { LibXML.xmlTextReaderReadInnerXml(@reader) }
     xml ? String.new(xml) : ""
   end
 
@@ -163,7 +163,7 @@ class XML::Reader
     # to avoid doing an extra C call each time.
     return "" if node_type.none?
 
-    xml = Error.collect(@errors) { LibXML.xmlTextReaderReadOuterXml(@reader) }
+    xml = collect_errors { LibXML.xmlTextReaderReadOuterXml(@reader) }
     xml ? String.new(xml) : ""
   end
 
@@ -193,5 +193,11 @@ class XML::Reader
   # Returns a reference to the underlying `LibXML::XMLTextReader`.
   def to_unsafe
     @reader
+  end
+
+  private def collect_errors
+    Error.collect(@errors) { yield }.tap do
+      Error.add_errors(@errors)
+    end
   end
 end

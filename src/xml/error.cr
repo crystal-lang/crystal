@@ -11,9 +11,22 @@ class XML::Error < Exception
     super(message)
   end
 
-  @[Deprecated("XML errors are no longer collected in a global array. Access them directly in the respective context via `XML::Reader#errors` or `XML::Node#errors` instead.")]
+  @@errors = [] of self
+
+  # :nodoc:
+  protected def self.add_errors(errors)
+    @@errors.concat(errors)
+  end
+
+  @[Deprecated("XML errors collected in the class variable is deprecated. They are accessible directly in the respective context via via `XML::Reader#errors` and `XML::Node#errors`.")]
   def self.errors : Array(XML::Error)?
-    nil
+    if @@errors.empty?
+      nil
+    else
+      errors = @@errors.dup
+      @@errors.clear
+      errors
+    end
   end
 
   def self.collect(errors, &)
