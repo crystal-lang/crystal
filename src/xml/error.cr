@@ -41,16 +41,12 @@ class XML::Error < Exception
         raise error
       {% end %}
     }
-    LibXML.xmlSetStructuredErrorFunc Box.box(errors), ->(ctx, error) {
-      Box(Array(XML::Error)).unbox(ctx) << XML::Error.new(error)
-    }
 
     begin
       collect(errors) do
         yield
       end
     ensure
-      LibXML.xmlSetStructuredErrorFunc nil, nil
       LibXML.xmlSetGenericErrorFunc nil, nil
     end
   end
