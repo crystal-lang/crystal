@@ -1571,8 +1571,16 @@ class Hash(K, V)
   # h1 == h2 == h3 == h4 # => true
   # h1                   # => {"a" => 1, "c" => 3}
   # ```
+  def select!(keys : Array | Tuple) : self
+    each_key { |k| delete(k) unless k.in?(keys) }
+    self
+  end
+
+  # :ditto:
   def select!(keys : Enumerable) : self
-    each { |k, v| delete(k) unless keys.includes?(k) }
+    # Convert enumerable to a set to prevent exhaustion of elements
+    key_set = keys.to_set
+    each_key { |k| delete(k) unless k.in?(key_set) }
     self
   end
 
