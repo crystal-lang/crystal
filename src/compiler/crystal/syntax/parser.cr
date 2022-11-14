@@ -1201,7 +1201,11 @@ module Crystal
       if next_comes_colon_space?
         name = @token.value.to_s
         var = Var.new(name).at(@token.location)
-        next_token_skip_space
+        next_token
+        unless @token.type.space?
+          warnings.add_warning_at(@token.location, "space required before colon in type declaration")
+        end
+        skip_space
         check :OP_COLON
         type_declaration = parse_type_declaration(var)
         set_visibility type_declaration
@@ -1242,9 +1246,14 @@ module Crystal
       var = klass.new(name).at(@token.location)
       var.end_location = token_end_location
       @wants_regex = false
-      next_token_skip_space
+      next_token
+      space_after_name = @token.type.space?
+      skip_space
 
       if @no_type_declaration == 0 && @token.type.op_colon?
+        unless space_after_name
+          warnings.add_warning_at(@token.location, "space required before colon in type declaration")
+        end
         parse_type_declaration(var)
       else
         var
@@ -3601,7 +3610,9 @@ module Crystal
           raise "named parameters must follow bare *", params.last.location.not_nil!
         end
 
-        next_token_skip_space
+        next_token
+        space_after_rparens = @token.type.space?
+        skip_space
         if @token.type.symbol?
           raise "a space is mandatory between ':' and return type", @token
         end
@@ -3628,6 +3639,9 @@ module Crystal
       end
 
       if @token.type.op_colon?
+        unless space_after_rparens
+          warnings.add_warning_at @token.location, "space required before colon in return type restriction"
+        end
         next_token_skip_space
         return_type = parse_bare_proc_type
         end_location = return_type.end_location
@@ -3882,6 +3896,9 @@ module Crystal
       end
 
       if @token.type.op_colon?
+        unless found_space
+          warnings.add_warning_at @token.location, "space required before colon in type restriction"
+        end
         next_token_skip_space_or_newline
 
         location = @token.location
@@ -4183,7 +4200,8 @@ module Crystal
       @wants_regex = false
       next_token
 
-      if @token.type.space?
+      name_followed_by_space = @token.type.space?
+      if name_followed_by_space
         # We don't want the next token to be a regex literal if the call's name is
         # a variable in the current scope (it's unlikely that there will be a method
         # with that name that accepts a regex as a first argument).
@@ -4264,6 +4282,9 @@ module Crystal
             end
           else
             if @no_type_declaration == 0 && @token.type.op_colon?
+              unless name_followed_by_space
+                warnings.add_warning_at(@token.location, "space required before colon in type declaration")
+              end
               declare_var = parse_type_declaration(Var.new(name).at(location))
 
               # Don't declare a local variable if it happens directly as an argument

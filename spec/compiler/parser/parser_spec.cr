@@ -32,6 +32,15 @@ private def assert_end_location(source, line_number = 1, column_number = source.
   end
 end
 
+private def parser_warnings(code)
+  warnings = WarningCollection.new
+  parser = Parser.new(code, warnings: warnings)
+  parser.filename = "test.cr"
+  node = parser.parse
+
+  warnings
+end
+
 module Crystal
   describe "Parser" do
     it_parses "nil", NilLiteral.new
@@ -2410,5 +2419,20 @@ module Crystal
         exps.expressions[1].location.not_nil!.line_number.should eq(7)
       end
     end
+  end
+
+  it "warns on missing space before colon in type restriction" do
+    parser_warnings("def foo(&block: Foo)\nend").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in type restriction"]
+    parser_warnings("def foo(&: Foo)\nend").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in type restriction"]
+  end
+
+  it "warns on missing space before colon in type declaration" do
+    parser_warnings("x: Int32").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in type declaration"]
+    parser_warnings("class Foo\n@x: Int32\nend").infos.should eq ["warning in test.cr:2\nWarning: space required before colon in type declaration"]
+    parser_warnings("class Foo\n@@x: Int32\nend").infos.should eq ["warning in test.cr:2\nWarning: space required before colon in type declaration"]
+  end
+
+  it "warns on missing space before colon in return type restriction" do
+    parser_warnings("def foo: Foo\nend").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in return type restriction"]
   end
 end
