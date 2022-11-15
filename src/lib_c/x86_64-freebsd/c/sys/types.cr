@@ -3,10 +3,10 @@ require "../stdint"
 
 lib LibC
   alias BlkcntT = Long
-  alias BlksizeT = UInt
+  alias BlksizeT = Int
   alias ClockT = Int
   alias ClockidT = Int
-  alias DevT = UInt
+  alias DevT = ULong
   alias GidT = UInt
   alias IdT = Long
   alias InoT = ULong

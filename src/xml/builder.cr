@@ -275,7 +275,7 @@ class XML::Builder
 
   # Sets the quote char to use, either `'` or `"`.
   def quote_char=(char : Char)
-    unless char == '\'' || char == '"'
+    unless char.in?('\'', '"')
       raise ArgumentError.new("Quote char must be ' or \", not #{char}")
     end
 

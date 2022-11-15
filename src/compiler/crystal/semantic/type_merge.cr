@@ -46,12 +46,11 @@ module Crystal
       return second if first.no_return?
       return first if second.no_return?
 
-      # Check if a non-union type is part of a union type
-      if !first.is_a?(UnionType) && second.is_a?(UnionType) && second.union_types.includes?(first)
+      if first.nil_type? && second.is_a?(UnionType) && second.union_types.includes?(first)
         return second
       end
 
-      if !second.is_a?(UnionType) && first.is_a?(UnionType) && first.union_types.includes?(second)
+      if second.nil_type? && first.is_a?(UnionType) && first.union_types.includes?(second)
         return first
       end
 

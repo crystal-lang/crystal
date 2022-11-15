@@ -43,7 +43,7 @@ module Crystal::System::File
       ::File::Info.new(stat)
     else
       if Errno.value.in?(Errno::ENOENT, Errno::ENOTDIR)
-        return nil
+        nil
       else
         raise ::File::Error.from_errno("Unable to get file info", file: path)
       end

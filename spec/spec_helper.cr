@@ -80,7 +80,6 @@ end
 def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
   program = new_program
   program.flags.concat(flags.split) if flags
-  normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
   to_nodes = program.normalize(from_nodes)
   to_nodes.to_s.strip.should eq(to.strip), file: file, line: line

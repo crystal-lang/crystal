@@ -12,6 +12,12 @@ require "crystal/system/thread"
 # Only the class methods are public and safe to use. Instance methods are
 # protected and must never be called directly.
 class Crystal::Scheduler
+  @event_loop = Crystal::EventLoop.create
+
+  def self.event_loop
+    Thread.current.scheduler.@event_loop
+  end
+
   def self.current_fiber : Fiber
     Thread.current.scheduler.@current
   end
@@ -154,7 +160,7 @@ class Crystal::Scheduler
         end
         break
       else
-        Crystal::EventLoop.run_once
+        @event_loop.run_once
       end
     end
 

@@ -292,7 +292,7 @@ module Crystal
       when VirtualMetaclassType
         implements?(other_type.base_type.metaclass)
       else
-        parents.try &.any? &.implements?(other_type)
+        !!parents.try &.any? &.implements?(other_type)
       end
     end
 
@@ -339,7 +339,7 @@ module Crystal
     # Returns true if `self` and *other* are in the same namespace.
     def same_namespace?(other)
       top_namespace(self) == top_namespace(other) ||
-        parents.try &.any? { |parent| parent.same_namespace?(other) }
+        !!parents.try &.any? { |parent| parent.same_namespace?(other) }
     end
 
     private def top_namespace(type)
@@ -462,11 +462,11 @@ module Crystal
     end
 
     def has_def?(name)
-      has_def_without_parents?(name) || parents.try(&.any?(&.has_def?(name)))
+      has_def_without_parents?(name) || !!parents.try(&.any?(&.has_def?(name)))
     end
 
     def has_def_without_parents?(name)
-      defs.try(&.has_key?(name))
+      !!defs.try(&.has_key?(name))
     end
 
     record DefInMacroLookup
@@ -3513,7 +3513,7 @@ module Crystal
     end
 
     def implements?(other_type)
-      super || base_type.implements?(other_type)
+      base_type.metaclass.implements?(other_type)
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil

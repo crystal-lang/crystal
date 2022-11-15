@@ -35,10 +35,10 @@ module Spec
             MSG
         end
 
-        return <<-MSG
-          Expected size: #{expected_value.size}
-               got size: #{actual_value.size}
-          MSG
+        <<-MSG
+        Expected size: #{expected_value.size}
+              got size: #{actual_value.size}
+        MSG
       else
         expected = expected_value.inspect
         got = actual_value.inspect

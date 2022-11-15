@@ -1,3 +1,22 @@
+# 1.6.2 (2022-11-03)
+
+## Language
+
+- Fix `VirtualMetaclassType#implements?` to ignore base type ([#12632](https://github.com/crystal-lang/crystal/pull/12632), thanks @straight-shoota)
+
+## Compiler
+
+- Compiler: handle yield expressions without a type ([#12679](https://github.com/crystal-lang/crystal/pull/12679), thanks @asterite)
+- Partial revert "Compiler: refactor and slightly optimize merging two types (#12436)" ([#12709](https://github.com/crystal-lang/crystal/pull/12709), thanks @caspiano)
+
+### Semantic
+
+- Compiler: ignore type filters when accepting cast for `obj` and `to` ([#12668](https://github.com/crystal-lang/crystal/pull/12668), thanks @asterite)
+
+## Other
+
+- **(security)** CI: Update to OpenSSL 3.0.7 for bundled lib on Windows ([#12712](https://github.com/crystal-lang/crystal/pull/12712), thanks @beta-ziliani)
+
 # 1.6.1 (2022-10-21)
 
 ## Compiler

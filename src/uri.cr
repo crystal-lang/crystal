@@ -608,7 +608,7 @@ class URI
         result.pop if result.size > 0
         # D.  if the input buffer consists only of "." or "..", then remove
         #     that from the input buffer; otherwise,
-      elsif path == ".." || path == "."
+      elsif path.in?("..", ".")
         path = ""
         # E.  move the first path segment in the input buffer to the end of
         #     the output buffer, including the initial "/" character (if
@@ -718,6 +718,10 @@ class URI
   # Returns `true` if this URI's *port* is the default port for
   # its *scheme*.
   private def default_port?
-    (scheme = @scheme) && (port = @port) && port == URI.default_port(scheme)
+    if (scheme = @scheme) && (port = @port)
+      port == URI.default_port(scheme)
+    else
+      false
+    end
   end
 end
