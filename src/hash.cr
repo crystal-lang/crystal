@@ -1571,7 +1571,7 @@ class Hash(K, V)
   # h1 == h2 == h3 == h4 # => true
   # h1                   # => {"a" => 1, "c" => 3}
   # ```
-  def select!(keys : Array | Tuple) : self
+  def select!(keys : Indexable) : self
     each_key { |k| delete(k) unless k.in?(keys) }
     self
   end
