@@ -1437,7 +1437,7 @@ describe "Semantic: def overload" do
       a = 1 || nil
       f(a: a)
       ),
-      "no overload matches"
+      "expected argument 'a' to 'f' to be Int32, not (Int32 | Nil)"
   end
 
   it "errors if no overload matches on union against named arg with external param name (#10516)" do
@@ -1448,7 +1448,7 @@ describe "Semantic: def overload" do
       a = 1 || nil
       f(a: a)
       ),
-      "no overload matches"
+      "expected argument 'a' to 'f' to be Int32, not (Int32 | Nil)"
   end
 
   it "dispatches with named arg" do
@@ -1642,7 +1642,7 @@ describe "Semantic: def overload" do
       x = uninitialized Foo
       foo(x)
       ),
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Bar, not Foo"
   end
 
   it "treats single splats with same restriction as equivalent (#12579)" do

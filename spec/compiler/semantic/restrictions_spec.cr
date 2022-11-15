@@ -750,7 +750,7 @@ describe "Restrictions" do
 
       bar(1 || "")
       ),
-      "no overload matches"
+      "expected argument #1 to 'bar' to be String, not (Int32 | String)"
   end
 
   it "errors on T::Type that's union when used from type restriction" do
