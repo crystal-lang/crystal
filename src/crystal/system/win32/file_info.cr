@@ -89,8 +89,4 @@ module Crystal::System::FileInfo
       @file_attributes.nFileIndexHigh == other.file_attributes.nFileIndexHigh &&
       @file_attributes.nFileIndexLow == other.file_attributes.nFileIndexLow
   end
-
-  private def to_windows_path(path : String) : LibC::LPWSTR
-    path.check_no_null_byte.to_utf16.to_unsafe
-  end
 end

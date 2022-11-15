@@ -456,7 +456,7 @@ module Iterator(T)
         self.next
       else
         value = {last_elem, elem}
-        @last_elem, elem = elem, @last_elem
+        @last_elem = elem
         value
       end
     end

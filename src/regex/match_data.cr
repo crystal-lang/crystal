@@ -397,7 +397,7 @@ class Regex
       return false unless regex == other.regex
       return false unless string == other.string
 
-      return @ovector.memcmp(other.@ovector, size * 2) == 0
+      @ovector.memcmp(other.@ovector, size * 2) == 0
     end
 
     # See `Object#hash(hasher)`

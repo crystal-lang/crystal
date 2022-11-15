@@ -550,6 +550,7 @@ struct Int
     UptoIterator(typeof(self), typeof(to)).new(self, to)
   end
 
+  # Calls the given block with each integer value from self down to `to`.
   def downto(to, &block : self ->) : Nil
     return unless self >= to
     x = self
@@ -560,6 +561,7 @@ struct Int
     end
   end
 
+  # Get an iterator for counting down from self to `to`.
   def downto(to)
     DowntoIterator(typeof(self), typeof(to)).new(self, to)
   end

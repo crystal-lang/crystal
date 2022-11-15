@@ -94,12 +94,7 @@ describe "Semantic: abstract def" do
 
       Bar.new.foo(1 || 'a')
       ),
-      <<-MSG
-      Overloads are:
-       - Bar#foo(x : Int32)
-      Couldn't find overloads for these types:
-       - Bar#foo(x : Char)
-      MSG
+      "expected argument #1 to 'Bar#foo' to be Int32, not (Char | Int32)"
   end
 
   it "errors if using abstract def on non-abstract class" do

@@ -112,7 +112,7 @@ module Crystal
 
     private def read_magic
       magic = @io.read_bytes(UInt32)
-      unless magic == MAGIC_64 || magic == CIGAM_64 || magic == MAGIC || magic == CIGAM
+      unless magic.in?(MAGIC_64, CIGAM_64, MAGIC, CIGAM)
         raise Error.new("Invalid magic number")
       end
       magic
@@ -123,7 +123,7 @@ module Crystal
     end
 
     def endianness
-      if @magic == MAGIC_64 || @magic == MAGIC
+      if @magic.in?(MAGIC_64, MAGIC)
         IO::ByteFormat::SystemEndian
       elsif IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian
         IO::ByteFormat::BigEndian

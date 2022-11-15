@@ -128,7 +128,7 @@ module HTTP
     end
 
     name, value = parse_header(line)
-    return HeaderLine.new name: name, value: value, bytesize: line.bytesize
+    HeaderLine.new name: name, value: value, bytesize: line.bytesize
   end
 
   private def self.check_content_type_charset(body, headers)

@@ -579,7 +579,7 @@ class Crystal::Call
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-        return Matches.new(ZeroOneOrMany(Match).new(indexer_match), true)
+        Matches.new(ZeroOneOrMany(Match).new(indexer_match), true)
       else
         raise "missing key '#{name}' for named tuple #{owner}"
       end
@@ -1167,7 +1167,7 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    strict_check = body.is_a?(Primitive) && (body.name == "proc_call" || body.name == "pointer_set")
+    strict_check = body.is_a?(Primitive) && body.name.in?("proc_call", "pointer_set")
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]

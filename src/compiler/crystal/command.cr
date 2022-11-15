@@ -95,7 +95,7 @@ class Crystal::Command
     when command == "eval"
       options.shift
       eval
-    when command == "i" || command == "interactive"
+    when command.in?("i", "interactive")
       options.shift
       {% if flag?(:without_interpreter) %}
         STDERR.puts "Crystal was compiled without interpreter support"
@@ -210,7 +210,7 @@ class Crystal::Command
 
     output_filename = Crystal.temp_executable(config.output_filename)
 
-    result = config.compile output_filename
+    config.compile output_filename
 
     unless config.compiler.no_codegen?
       report_warnings
