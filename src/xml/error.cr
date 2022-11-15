@@ -18,7 +18,7 @@ class XML::Error < Exception
     @@errors.concat(errors)
   end
 
-  @[Deprecated("XML errors collected in the class variable is deprecated. They are accessible directly in the respective context via via `XML::Reader#errors` and `XML::Node#errors`.")]
+  @[Deprecated("This class accessor is deprecated. XML errors are accessible directly in the respective context via `XML::Reader#errors` and `XML::Node#errors`.")]
   def self.errors : Array(XML::Error)?
     if @@errors.empty?
       nil
