@@ -1203,7 +1203,7 @@ module Crystal
         var = Var.new(name).at(@token.location)
         next_token
         unless @token.type.space?
-          warnings.add_warning_at(@token.location, "space required before colon in type declaration")
+          warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
         end
         skip_space
         check :OP_COLON
@@ -1252,7 +1252,7 @@ module Crystal
 
       if @no_type_declaration == 0 && @token.type.op_colon?
         unless space_after_name
-          warnings.add_warning_at(@token.location, "space required before colon in type declaration")
+          warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
         end
         parse_type_declaration(var)
       else
@@ -3640,7 +3640,7 @@ module Crystal
 
       if @token.type.op_colon?
         unless space_after_rparens
-          warnings.add_warning_at @token.location, "space required before colon in return type restriction"
+          warnings.add_warning_at @token.location, "space required before colon in return type restriction (run `crystal tool format` to fix this)"
         end
         next_token_skip_space
         return_type = parse_bare_proc_type
@@ -3897,7 +3897,7 @@ module Crystal
 
       if @token.type.op_colon?
         unless found_space
-          warnings.add_warning_at @token.location, "space required before colon in type restriction"
+          warnings.add_warning_at @token.location, "space required before colon in type restriction (run `crystal tool format` to fix this)"
         end
         next_token_skip_space_or_newline
 
@@ -4283,7 +4283,7 @@ module Crystal
           else
             if @no_type_declaration == 0 && @token.type.op_colon?
               unless name_followed_by_space
-                warnings.add_warning_at(@token.location, "space required before colon in type declaration")
+                warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
               end
               declare_var = parse_type_declaration(Var.new(name).at(location))
 
