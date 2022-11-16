@@ -2,7 +2,7 @@
 module Reply::Term::Size
   extend self
 
-  DEFAULT_SIZE = {27, 80}
+  DEFAULT_SIZE = {80, 27}
 
   def width
     self.size[0]
@@ -13,8 +13,8 @@ module Reply::Term::Size
   end
 
   private def check_size(size)
-    if size && (rows = size[0]) && (cols = size[1]) && rows != 0 && cols != 0
-      {rows, cols}
+    if size && (cols = size[0]) && (rows = size[1]) && cols != 0 && rows != 0
+      {cols, rows}
     end
   end
 
@@ -28,10 +28,10 @@ module Reply::Term::Size
     # Detect terminal size Windows GetConsoleScreenBufferInfo
     private def size_from_screen_buffer
       LibC.GetConsoleScreenBufferInfo(LibC.GetStdHandle(LibC::STD_OUTPUT_HANDLE), out csbi)
-      col = csbi.srWindow.right - csbi.srWindow.left + 1
-      row = csbi.srWindow.bottom - csbi.srWindow.top + 1
+      cols = csbi.srWindow.right - csbi.srWindow.left + 1
+      rows = csbi.srWindow.bottom - csbi.srWindow.top + 1
 
-      {col.to_i32, row.to_i32}
+      {cols.to_i32, rows.to_i32}
     end
 
     # Detect terminal size from Windows ANSICON
@@ -39,7 +39,7 @@ module Reply::Term::Size
       return unless ENV["ANSICON"]?.to_s =~ /\((.*)x(.*)\)/
 
       rows, cols = [$2, $1].map(&.to_i)
-      {rows, cols}
+      {cols, rows}
     end
   {% else %}
     def size : {Int32, Int32}
@@ -68,7 +68,7 @@ module Reply::Term::Size
       lines = `tput lines`.to_i?
       cols = `tput cols`.to_i?
 
-      {lines, cols}
+      {cols, lines}
     rescue
       nil
     end
@@ -81,7 +81,7 @@ module Reply::Term::Size
       return unless parts.size > 1
       lines, cols = parts.map(&.to_i?)
 
-      {lines, cols}
+      {cols, lines}
     rescue
       nil
     end
@@ -93,7 +93,7 @@ module Reply::Term::Size
       rows = ENV["LINES"]? || ENV["ROWS"]?
       cols = ENV["COLUMNS"]?
 
-      {rows.try &.to_i?, cols.try &.to_i?}
+      {cols.try &.to_i?, rows.try &.to_i?}
     end
   {% end %}
 end
