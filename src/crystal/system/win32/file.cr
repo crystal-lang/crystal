@@ -124,7 +124,7 @@ module Crystal::System::File
   end
 
   def self.executable?(path) : Bool
-    LibC.GetBinaryTypeW(to_windows_path(path), out result) != 0
+    LibC.GetBinaryTypeW(System.to_wstr(path), out result) != 0
   end
 
   private def self.accessible?(path, mode)
