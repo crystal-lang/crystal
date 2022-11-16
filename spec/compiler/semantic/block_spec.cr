@@ -1608,4 +1608,15 @@ describe "Block inference" do
       foo.foo
       CR
   end
+
+  it "renders expected block return type of a free variable on mismatch" do
+    assert_error(<<-CR, "expected block to return Int64, not String")
+      struct Foo
+        def bar(arg : U, &block : -> U) forall U
+        end
+      end
+
+      Foo.new.bar(1_i64) { "hi" }
+      CR
+  end
 end
