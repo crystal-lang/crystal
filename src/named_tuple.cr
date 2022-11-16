@@ -676,8 +676,7 @@ struct NamedTuple
     {% for key in T %}
       return false unless self[{{key.symbolize}}] == other[{{key.symbolize}}]?
     {% end %}
-
-    return true
+    true
   end
 
   # Returns a named tuple with the same keys but with cloned values, using the `clone` method.

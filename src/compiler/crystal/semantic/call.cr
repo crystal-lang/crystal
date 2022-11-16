@@ -579,7 +579,7 @@ class Crystal::Call
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-        return Matches.new(ZeroOneOrMany(Match).new(indexer_match), true)
+        Matches.new(ZeroOneOrMany(Match).new(indexer_match), true)
       else
         raise "missing key '#{name}' for named tuple #{owner}"
       end
@@ -665,11 +665,11 @@ class Crystal::Call
       parents = lookup.base_type.ancestors
     when NonGenericModuleType
       ancestors = parent_visitor.scope.ancestors
-      index_of_ancestor = ancestors.index(lookup).not_nil!
+      index_of_ancestor = ancestors.index!(lookup)
       parents = ancestors[index_of_ancestor + 1..-1]
     when GenericModuleType
       ancestors = parent_visitor.scope.ancestors
-      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(GenericModuleInstanceType) && ancestor.generic_type == lookup }.not_nil!
+      index_of_ancestor = ancestors.index! { |ancestor| ancestor.is_a?(GenericModuleInstanceType) && ancestor.generic_type == lookup }
       parents = ancestors[index_of_ancestor + 1..-1]
     when GenericType
       ancestors = parent_visitor.scope.ancestors
@@ -1216,7 +1216,7 @@ class Crystal::Call
     end
 
     named_args_types.try &.each do |named_arg|
-      arg = typed_def.args.find { |arg| arg.external_name == named_arg.name }.not_nil!
+      arg = typed_def.args.find! { |arg| arg.external_name == named_arg.name }
 
       type = named_arg.type
       var = MetaVar.new(arg.name, type)

@@ -89,7 +89,7 @@ class Crystal::Loader
   end
 
   private def open_library(path : String)
-    LibC.LoadLibraryExW(path.check_no_null_byte.to_utf16, nil, 0)
+    LibC.LoadLibraryExW(System.to_wstr(path), nil, 0)
   end
 
   def load_current_program_handle
