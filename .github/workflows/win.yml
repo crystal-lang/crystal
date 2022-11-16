@@ -31,7 +31,7 @@ jobs:
         run: |
           git config --global core.autocrlf false
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@ed94116c4d30d2091601b81f339a2eaa1c2ba0a6 # v1.4.1
+        uses: ilammy/msvc-dev-cmd@7315a94840631165970262a99c72cfb48a65d25d # v1.12.0
 
       - name: Download Crystal source
         uses: actions/checkout@v3
@@ -249,7 +249,7 @@ jobs:
           key: win-openssl-libs-3.0.7-msvc-${{ env.VSCMD_VER }}
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true'
-        uses: ilammy/setup-nasm@e2335e5fc95548c09cd2deea2768793e0e8f0941 # v1.2.1
+        uses: ilammy/setup-nasm@321e6ed62a1fc77024a3bd853deb33645e8b22c4 # v1.4.0
       - name: Download OpenSSL
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         run: |
