@@ -54,7 +54,7 @@ struct BitArray
     # NOTE: If BitArray implements resizing, there may be more than 1 binary
     # representation and their hashes for equivalent BitArrays after a downsize as the
     # discarded bits may not have been zeroed.
-    return LibC.memcmp(@bits, other.@bits, bytesize) == 0
+    LibC.memcmp(@bits, other.@bits, bytesize) == 0
   end
 
   def unsafe_fetch(index : Int) : Bool

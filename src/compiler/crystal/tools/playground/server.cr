@@ -22,7 +22,7 @@ module Crystal::Playground
       instrumented = Playground::AgentInstrumentorTransformer.transform(ast).to_s
       Log.info { "Code instrumentation (session=#{session_key}, tag=#{tag}).\n#{instrumented}" }
 
-      prelude = %(
+      prelude = <<-CR
         require "compiler/crystal/tools/playground/agent"
 
         class Crystal::Playground::Agent
@@ -36,7 +36,7 @@ module Crystal::Playground
         def _p
           Crystal::Playground::Agent.instance
         end
-        )
+        CR
 
       [
         Compiler::Source.new("playground_prelude", prelude),
@@ -449,7 +449,7 @@ module Crystal::Playground
     end
 
     def start
-      playground_dir = File.dirname(CrystalPath.new.find("compiler/crystal/tools/playground/server.cr").not_nil![0])
+      playground_dir = File.dirname(__FILE__)
       views_dir = File.join(playground_dir, "views")
       public_dir = File.join(playground_dir, "public")
 

@@ -161,14 +161,14 @@ module Crystal
 
       if @contexts.empty?
         if @found_untyped_def
-          return ContextResult.new("failed", "no context information found (methods which are never called don't have a context)")
+          ContextResult.new("failed", "no context information found (methods which are never called don't have a context)")
         else
-          return ContextResult.new("failed", "no context information found")
+          ContextResult.new("failed", "no context information found")
         end
       else
         res = ContextResult.new("ok", "#{@contexts.size} possible context#{@contexts.size > 1 ? "s" : ""} found")
         res.contexts = @contexts
-        return res
+        res
       end
     end
 

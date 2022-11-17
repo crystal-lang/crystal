@@ -38,8 +38,6 @@ class Crystal::CodeGenVisitor
       func.varargs?
     )
 
-    p2 = new_fun.params.to_a
-
     func.params.to_a.each_with_index do |p1, index|
       attrs = new_fun.attributes(index + 1)
       new_fun.add_attribute(attrs, index + 1) unless attrs.value == 0
@@ -125,7 +123,6 @@ class Crystal::CodeGenVisitor
 
         if @debug.variables? && !target_def.naked?
           in_alloca_block do
-            args_offset = !is_fun_literal && self_type.passed_as_self? ? 2 : 1
             location = target_def.location
             context.vars.each do |name, var|
               next if var.debug_variable_created

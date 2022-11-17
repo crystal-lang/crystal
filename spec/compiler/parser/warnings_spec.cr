@@ -3,7 +3,7 @@ require "../../support/syntax"
 private def assert_parser_warning(source, message, *, file = __FILE__, line = __LINE__)
   parser = Parser.new(source)
   parser.filename = "/foo/bar/baz.cr"
-  node = parser.parse
+  parser.parse
 
   warnings = parser.warnings.infos
   warnings.size.should eq(1), file: file, line: line

@@ -2754,15 +2754,15 @@ module Crystal
       end
     end
 
-    describe "multiassign methods" do
-      multiassign_node = MultiAssign.new(["foo".var, "bar".var] of ASTNode, [2.int32, "a".string] of ASTNode)
+    describe "multi_assign methods" do
+      multi_assign_node = MultiAssign.new(["foo".var, "bar".var] of ASTNode, [2.int32, "a".string] of ASTNode)
 
       it "executes targets" do
-        assert_macro %({{x.targets}}), %([foo, bar]), {x: multiassign_node}
+        assert_macro %({{x.targets}}), %([foo, bar]), {x: multi_assign_node}
       end
 
       it "executes values" do
-        assert_macro %({{x.values}}), %([2, "a"]), {x: multiassign_node}
+        assert_macro %({{x.values}}), %([2, "a"]), {x: multi_assign_node}
       end
     end
 
@@ -3100,13 +3100,13 @@ module Crystal
       it "returns true if file exists" do
         run(%q<
           {{file_exists?("#{__DIR__}/../data/build")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(10)
+          >, filename: __FILE__).to_i.should eq(10)
       end
 
       it "returns false if file doesn't exist" do
         run(%q<
           {{file_exists?("#{__DIR__}/../data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
 
@@ -3114,13 +3114,13 @@ module Crystal
       it "reads file (exists)" do
         run(%q<
           {{file_exists?("spec/compiler/data/build")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(10)
+          >, filename: __FILE__).to_i.should eq(10)
       end
 
       it "reads file (doesn't exist)" do
         run(%q<
           {{file_exists?("spec/compiler/data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
   end
@@ -3130,7 +3130,7 @@ module Crystal
       it "reads file (exists)" do
         run(%q<
           {{read_file("#{__DIR__}/../data/build")}}
-          >, filename = __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
+          >, filename: __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
       end
 
       it "reads file (doesn't exist)" do
@@ -3145,7 +3145,7 @@ module Crystal
       it "reads file (exists)" do
         run(%q<
           {{read_file("spec/compiler/data/build")}}
-          >, filename = __FILE__).to_string.should eq(File.read("spec/compiler/data/build"))
+          >, filename: __FILE__).to_string.should eq(File.read("spec/compiler/data/build"))
       end
 
       it "reads file (doesn't exist)" do
@@ -3162,7 +3162,7 @@ module Crystal
       it "reads file (doesn't exist)" do
         run(%q<
           {{read_file?("#{__DIR__}/../data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
 
@@ -3170,7 +3170,7 @@ module Crystal
       it "reads file (doesn't exist)" do
         run(%q<
           {{read_file?("spec/compiler/data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
   end

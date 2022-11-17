@@ -98,11 +98,11 @@ module Crystal
       result.node.accept(self)
 
       if @locations.empty?
-        return ImplementationResult.new("failed", "no implementations or method call found")
+        ImplementationResult.new("failed", "no implementations or method call found")
       else
         res = ImplementationResult.new("ok", "#{@locations.size} implementation#{@locations.size > 1 ? "s" : ""} found")
         res.implementations = @locations.map { |loc| ImplementationTrace.build(loc) }
-        return res
+        res
       end
     end
 

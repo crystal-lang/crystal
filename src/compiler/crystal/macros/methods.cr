@@ -342,9 +342,9 @@ module Crystal
 
     def to_string(context)
       case self
-      when StringLiteral then return self.value
-      when SymbolLiteral then return self.value
-      when MacroId       then return self.value
+      when StringLiteral then self.value
+      when SymbolLiteral then self.value
+      when MacroId       then self.value
       else
         raise "expected #{context} to be a StringLiteral, SymbolLiteral or MacroId, not #{class_desc}"
       end
@@ -2500,7 +2500,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
         case arg = from
         when Crystal::NumberLiteral
           index = arg.to_number.to_i
-          value = object.elements[index]? || Crystal::NilLiteral.new
+          object.elements[index]? || Crystal::NilLiteral.new
         when Crystal::RangeLiteral
           range = arg.interpret_to_nilable_range(interpreter)
           begin
