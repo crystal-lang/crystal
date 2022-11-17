@@ -342,9 +342,9 @@ module Crystal
 
     def to_string(context)
       case self
-      when StringLiteral then return self.value
-      when SymbolLiteral then return self.value
-      when MacroId       then return self.value
+      when StringLiteral then self.value
+      when SymbolLiteral then self.value
+      when MacroId       then self.value
       else
         raise "expected #{context} to be a StringLiteral, SymbolLiteral or MacroId, not #{class_desc}"
       end
@@ -1173,8 +1173,8 @@ module Crystal
           self.var.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.var.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.var.annotations(type) : self.var.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1347,8 +1347,8 @@ module Crystal
           self.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.annotations(type) : self.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1400,8 +1400,8 @@ module Crystal
           self.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.annotations(type) : self.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1658,8 +1658,8 @@ module Crystal
           self.type.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, named_args, block) do |type|
-          annotations = self.type.annotations(type)
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.type.annotations(type) : self.type.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -2500,7 +2500,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
         case arg = from
         when Crystal::NumberLiteral
           index = arg.to_number.to_i
-          value = object.elements[index]? || Crystal::NilLiteral.new
+          object.elements[index]? || Crystal::NilLiteral.new
         when Crystal::RangeLiteral
           range = arg.interpret_to_nilable_range(interpreter)
           begin
@@ -2542,14 +2542,22 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
   when "+"
     interpret_check_args(node: object) do |arg|
       case arg
-      when Crystal::TupleLiteral
-        other_elements = arg.elements
-      when Crystal::ArrayLiteral
-        other_elements = arg.elements
+      when Crystal::TupleLiteral then other_elements = arg.elements
+      when Crystal::ArrayLiteral then other_elements = arg.elements
       else
         arg.raise "argument to `#{klass}#+` must be a tuple or array, not #{arg.class_desc}:\n\n#{arg}"
       end
       klass.new(object.elements + other_elements)
+    end
+  when "-"
+    interpret_check_args(node: object) do |arg|
+      case arg
+      when Crystal::TupleLiteral then other_elements = arg.elements
+      when Crystal::ArrayLiteral then other_elements = arg.elements
+      else
+        arg.raise "argument to `#{klass}#-` must be a tuple or array, not #{arg.class_desc}:\n\n#{arg}"
+      end
+      klass.new(object.elements - other_elements)
     end
   else
     nil
@@ -2677,6 +2685,26 @@ end
 
 private def fetch_annotation(node, method, args, named_args, block)
   interpret_check_args(node: node) do |arg|
+    unless arg.is_a?(Crystal::TypeNode)
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
+    end
+
+    type = arg.type
+    unless type.is_a?(Crystal::AnnotationType)
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be an annotation type, not #{type} (#{type.type_desc})"
+    end
+
+    value = yield type
+    value || Crystal::NilLiteral.new
+  end
+end
+
+private def fetch_annotations(node, method, args, named_args, block)
+  interpret_check_args(node: node, min_count: 0) do |arg|
+    unless arg
+      return yield(nil) || Crystal::NilLiteral.new
+    end
+
     unless arg.is_a?(Crystal::TypeNode)
       args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
     end

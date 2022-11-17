@@ -298,7 +298,7 @@ end
 # sprintf "%b", -123   # => "-1111011"
 # sprintf "%#b", 0     # => "0"
 # sprintf "% b", 123   # => " 1111011"
-# sprintf "%+ b", 123  # => "+ 1111011"
+# sprintf "%+ b", 123  # => "+1111011"
 # sprintf "% b", -123  # => "-1111011"
 # sprintf "%+ b", -123 # => "-1111011"
 # sprintf "%#b", 123   # => "0b1111011"
@@ -540,7 +540,7 @@ end
         ->Crystal::SignalChildHandler.after_fork,
 
         # reinit event loop:
-        ->Crystal::EventLoop.after_fork,
+        ->{ Crystal::Scheduler.event_loop.after_fork },
 
         # more clean ups (may depend on event loop):
         ->Random::DEFAULT.new_seed,

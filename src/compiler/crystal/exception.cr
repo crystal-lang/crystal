@@ -30,15 +30,15 @@ module Crystal
       if filename.is_a? VirtualFile
         loc = filename.expanded_location
         if loc
-          return true_filename loc.filename
+          true_filename loc.filename
         else
-          return ""
+          ""
         end
       else
         if filename
-          return filename
+          filename
         else
-          return ""
+          ""
         end
       end
     end
@@ -261,7 +261,7 @@ module Crystal
         source_slice = source.lines[from_index...to_index]
         source_slice, spaces_removed = minimize_indentation(source_slice)
 
-        io << Crystal.with_line_numbers(source_slice, line_number, @color, line_number_start = from_index + 1)
+        io << Crystal.with_line_numbers(source_slice, line_number, @color, from_index + 1)
         offset = OFFSET_FROM_LINE_NUMBER_DECORATOR + line_number.to_s.chars.size - spaces_removed
         append_error_indicator(io, offset, @column_number, @size)
       end

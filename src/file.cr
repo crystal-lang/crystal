@@ -611,8 +611,14 @@ class File < IO::FileDescriptor
   end
 
   # Resolves the real path of *path* by following symbolic links.
+  def self.realpath(path : Path | String) : String
+    Crystal::System::File.realpath(path.to_s)
+  end
+
+  # :ditto:
+  @[Deprecated("Use `.realpath` instead.")]
   def self.real_path(path : Path | String) : String
-    Crystal::System::File.real_path(path.to_s)
+    realpath(path)
   end
 
   # Creates a new link (also known as a hard link) at *new_path* to an existing file

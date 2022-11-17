@@ -249,6 +249,54 @@ module Crystal
       nil
     end
 
+    def transform(node : StringInterpolation)
+      # See if we can solve all the pieces to string literals.
+      # If that's the case, we can replace the entire interpolation
+      # with a single string literal.
+      pieces = node.expressions.dup
+      solve_string_interpolation_expressions(pieces)
+
+      if pieces.all?(StringLiteral)
+        string = pieces.join(&.as(StringLiteral).value)
+        string_literal = StringLiteral.new(string).at(node)
+        string_literal.type = @program.string
+        return string_literal
+      end
+
+      if expanded = node.expanded
+        return expanded.transform(self)
+      end
+      node
+    end
+
+    private def solve_string_interpolation_expressions(pieces : Array(ASTNode))
+      pieces.each_with_index do |piece, i|
+        replacement = solve_string_interpolation_expression(piece)
+        next unless replacement
+
+        pieces[i] = replacement
+      end
+    end
+
+    private def solve_string_interpolation_expression(piece : ASTNode) : StringLiteral?
+      if piece.is_a?(ExpandableNode)
+        if expanded = piece.expanded
+          return solve_string_interpolation_expression(expanded)
+        end
+      end
+
+      case piece
+      when Path
+        if target_const = piece.target_const
+          return solve_string_interpolation_expression(target_const.value)
+        end
+      when StringLiteral
+        return piece
+      end
+
+      nil
+    end
+
     def transform(node : ExpandableNode)
       if expanded = node.expanded
         return expanded.transform(self)
@@ -386,15 +434,15 @@ module Crystal
     end
 
     private def void_lib_call?(node)
-      return unless node.is_a?(Call)
+      return false unless node.is_a?(Call)
 
       obj = node.obj
-      return unless obj.is_a?(Path)
+      return false unless obj.is_a?(Path)
 
       type = obj.type?
-      return unless type.is_a?(LibType)
+      return false unless type.is_a?(LibType)
 
-      node.type?.try &.nil_type?
+      !!node.type?.try &.nil_type?
     end
 
     def transform(node : Global)
@@ -723,7 +771,7 @@ module Crystal
 
       # If the yield has a no-return expression, the yield never happens:
       # replace it with a series of expressions up to the one that no-returns.
-      no_return_index = node.exps.index &.no_returns?
+      no_return_index = node.exps.index { |exp| !exp.type? || exp.no_returns? }
       if no_return_index
         exps = Expressions.new(node.exps[0, no_return_index + 1])
         exps.bind_to(exps.expressions.last)

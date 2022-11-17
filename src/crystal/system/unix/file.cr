@@ -43,7 +43,7 @@ module Crystal::System::File
       ::File::Info.new(stat)
     else
       if Errno.value.in?(Errno::ENOENT, Errno::ENOTDIR)
-        return nil
+        nil
       else
         raise ::File::Error.from_errno("Unable to get file info", file: path)
       end
@@ -143,10 +143,10 @@ module Crystal::System::File
     end
   end
 
-  def self.real_path(path)
-    real_path_ptr = LibC.realpath(path, nil)
-    raise ::File::Error.from_errno("Error resolving real path", file: path) unless real_path_ptr
-    String.new(real_path_ptr).tap { LibC.free(real_path_ptr.as(Void*)) }
+  def self.realpath(path)
+    realpath_ptr = LibC.realpath(path, nil)
+    raise ::File::Error.from_errno("Error resolving real path", file: path) unless realpath_ptr
+    String.new(realpath_ptr).tap { LibC.free(realpath_ptr.as(Void*)) }
   end
 
   def self.link(old_path, new_path)

@@ -86,7 +86,7 @@ private def traverse_eh_table(leb, start, ip, actions)
     end
   end
 
-  return nil
+  nil
 end
 
 {% if flag?(:interpreted) %}
@@ -216,6 +216,7 @@ end
 {% if flag?(:wasm32) %}
   def raise(exception : Exception) : NoReturn
     LibC.printf("EXITING: Attempting to raise:\n#{exception.inspect_with_backtrace}")
+    LibIntrinsics.debugtrap
     LibC.exit(1)
   end
 {% else %}

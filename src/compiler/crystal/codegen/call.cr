@@ -462,7 +462,7 @@ class Crystal::CodeGenVisitor
 
         @last = self_type.passed_as_self? ? call_args.first : type_id(self_type)
         inline_call_return_value target_def, body
-        return true
+        true
       else
         false
       end

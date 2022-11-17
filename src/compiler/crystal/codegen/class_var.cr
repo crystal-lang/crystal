@@ -210,7 +210,7 @@ class Crystal::CodeGenVisitor
     global_name = class_var_global_name(class_var)
     global = get_global global_name, class_var.type, class_var
     global = ensure_class_var_in_this_module(global, class_var)
-    return global
+    global
   end
 
   def read_virtual_class_var_ptr(class_var, owner)

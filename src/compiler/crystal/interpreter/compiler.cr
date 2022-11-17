@@ -981,7 +981,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def read_closured_var_pointer(closured_var : ClosuredVar, *, node : ASTNode?)
-    indexes, type = closured_var.indexes, closured_var.type
+    indexes = closured_var.indexes
 
     # First load the closure pointer
     closure_var_index = get_closure_var_index
@@ -1155,8 +1155,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       fake_def = Def.new(def_name)
       fake_def.owner = var.owner.metaclass
       fake_def.vars = initializer.meta_vars
-      fake_def.body = value
-      fake_def.bind_to(value)
+
+      # Check if we need to upcast the value to the class var's type
+      fake_def.body =
+        if value.type? == var.type
+          value
+        else
+          cast = Cast.new(value, TypeNode.new(var.type))
+          cast.upcast = true
+          cast.type = var.type
+          cast
+        end
+
+      fake_def.bind_to(fake_def.body)
 
       compiled_def = CompiledDef.new(@context, fake_def, fake_def.owner, 0)
 
@@ -1981,7 +1992,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       pop aligned_sizeof_type(node), node: nil
     end
 
-    return false
+    false
   end
 
   private def create_compiled_def(node : Call, target_def : Def)
@@ -2463,9 +2474,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # We don't want pointer.value to return a copy of something
       # if we are calling through it
       call_obj = call_obj.not_nil!
-
-      element_type = call_obj.type.as(PointerInstanceType).element_type
-
       request_value(call_obj)
       return
     end
@@ -2676,8 +2684,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       local_var = lookup_local_var_or_closured_var(exp.name)
       case local_var
       in LocalVar
-        index, type = local_var.index, local_var.type
-        pointerof_var(index, node: node)
+        pointerof_var(local_var.index, node: node)
       in ClosuredVar
         node.raise "BUG: missing interpreter out closured var"
       end
@@ -2742,8 +2749,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       compiled_def.local_vars.declare(arg.name, var_type)
     end
-
-    a_def = @def
 
     needs_closure_context = (target_def.vars.try &.any? { |name, var| var.type? && var.closure_in?(target_def) })
 
