@@ -1,11 +1,13 @@
 class XML::XPathContext
+  getter errors = [] of XML::Error
+
   def initialize(node : Node)
     @ctx = LibXML.xmlXPathNewContext(node.to_unsafe.value.doc)
     @ctx.value.node = node.to_unsafe
   end
 
   def evaluate(search_path : String)
-    xpath = LibXML.xmlXPathEvalExpression(search_path, self)
+    xpath = XML::Error.collect_generic(@errors) { LibXML.xmlXPathEvalExpression(search_path, self) }
     unless xpath
       {% if flag?(:arm) || flag?(:aarch64) %}
         if errors = XML::Error.errors
