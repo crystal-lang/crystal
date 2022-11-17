@@ -1936,6 +1936,16 @@ module Crystal
     assert_syntax_error "{1, ->do\n|x| x\end }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(x : Type) { ... }"
     assert_syntax_error "{1, ->{ |_| x } }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(param : Type) { ... }"
 
+    # #2874
+    assert_syntax_error "A = B = 1", "dynamic constant assignment"
+    assert_syntax_error "A = (B = 1)", "dynamic constant assignment"
+    assert_syntax_error "A = foo(B = 1)", "dynamic constant assignment"
+    assert_syntax_error "A = foo { B = 1 }", "dynamic constant assignment"
+    assert_syntax_error "A = begin; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; rescue; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; rescue; 1; else; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; ensure; B = 1; end", "dynamic constant assignment"
+
     assert_syntax_error "1 while 3", "trailing `while` is not supported"
     assert_syntax_error "1 until 3", "trailing `until` is not supported"
     assert_syntax_error "x++", "postfix increment is not supported, use `exp += 1`"
