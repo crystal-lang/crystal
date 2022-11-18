@@ -959,7 +959,7 @@ describe "File" do
       end
     end
 
-    it "#flock_shared non-blocking" do
+    pending_win32 "#flock_shared soft blocking fiber" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           done = Channel(Nil).new
@@ -976,7 +976,7 @@ describe "File" do
       end
     end
 
-    it "#flock_exclusive non-blocking" do
+    pending_win32 "#flock_exclusive soft blocking fiber" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           done = Channel(Nil).new
