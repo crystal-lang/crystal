@@ -849,6 +849,13 @@ module Indexable(T)
     rindex(offset) { |elem| elem == value }
   end
 
+  # :ditto:
+  #
+  # Raises `Enumerable::NotFoundError` if *value* is not in `self`.
+  def rindex!(value, offset : Int = 0)
+    rindex(value, offset) || raise Enumerable::NotFoundError.new
+  end
+
   # Returns the index of the first object in `self` for which the block
   # is truthy, starting from the last object, or `nil` if no match
   # is found.
@@ -870,6 +877,13 @@ module Indexable(T)
       end
     end
     nil
+  end
+
+  # :ditto:
+  #
+  # Raises `Enumerable::NotFoundError` if no match is found.
+  def rindex!(offset = size - 1, & : T ->)
+    rindex(offset) { |i| yield i } || raise Enumerable::NotFoundError.new
   end
 
   # Optimized version of `Enumerable#sample` that runs in O(1) time.
