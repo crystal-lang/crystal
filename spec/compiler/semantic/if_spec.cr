@@ -255,8 +255,8 @@ describe "Semantic: if" do
       end
 
       a = Bar.new.as(Foo)
-      if b.as?(M)
-        b.m
+      if a.as?(M)
+        a.m
       else
         nil
       end
