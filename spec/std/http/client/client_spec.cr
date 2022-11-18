@@ -181,7 +181,7 @@ module HTTP
     end
 
     it "ensures closing the response when breaking out of block" do
-      server = HTTP::Server.new {}
+      server = HTTP::Server.new { }
       address = server.bind_unused_port "127.0.0.1"
 
       run_server(server) do
