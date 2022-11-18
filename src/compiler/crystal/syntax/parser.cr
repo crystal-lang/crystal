@@ -3440,7 +3440,7 @@ module Crystal
           node = parse_if_after_condition cond, location, true
         end
         skip_space_or_newline
-        check :"%}"
+        check :OP_PERCENT_RCURLY
         return MacroExpression.new(node, output: false).at_end(token_end_location)
       end
 
