@@ -215,8 +215,8 @@ struct Pointer(T)
     self
   end
 
-  # Copies *count* elements from `self` into *source*.
-  # *source* and `self` may overlap; the copy is always done in a non-destructive manner.
+  # Copies *count* elements from `self` into *target*.
+  # *target* and `self` may overlap; the copy is always done in a non-destructive manner.
   #
   # ```
   # ptr1 = Pointer.malloc(4) { |i| i + 1 } # ptr1 -> [1, 2, 3, 4]

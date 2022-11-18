@@ -11,7 +11,7 @@ require "crystal/system/random"
 # [1, 5, 6].shuffle(Random::Secure) # => [6, 1, 5]
 # ```
 #
-# On OpenBSD, it uses [`arc4random`](https://man.openbsd.org/arc4random),
+# On BSD-based systems and macOS/Darwin, it uses [`arc4random`](https://man.openbsd.org/arc4random),
 # on Linux [`getrandom`](http://man7.org/linux/man-pages/man2/getrandom.2.html) (if the kernel supports it),
 # on Windows [`RtlGenRandom`](https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-rtlgenrandom),
 # and falls back to reading from `/dev/urandom` on UNIX systems.

@@ -84,7 +84,7 @@ module Crystal
       end
     end
 
-    def find(filename, relative_to = nil) : Array(String)?
+    def find(filename, relative_to = nil) : Array(String)
       relative_to = File.dirname(relative_to) if relative_to.is_a?(String)
 
       if filename.starts_with? '.'

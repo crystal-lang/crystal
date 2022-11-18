@@ -253,6 +253,17 @@ module Crystal
       assert_syntax_error "foo { |(#{kw})| }", "cannot use '#{kw}' as a block parameter name", 1, 9
     end
 
+    describe "literals in class definitions" do
+      # #11209
+      %w("a" 'a' [1] {1} {|a|a} ->{} ->(x : Bar){} :Bar :bar %x() %w() %()).each do |invalid|
+        assert_syntax_error "class Foo#{invalid}; end"
+        assert_syntax_error "class Foo#{invalid} < Baz; end"
+        assert_syntax_error "class Foo#{invalid} < self; end"
+        assert_syntax_error "class Foo < Baz#{invalid}; end"
+        assert_syntax_error "class Foo < self#{invalid}; end"
+      end
+    end
+
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
     it_parses "def self.foo()\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
     it_parses "def self.foo=\n1\nend", Def.new("foo=", body: 1.int32, receiver: "self".var)
@@ -1197,16 +1208,27 @@ module Crystal
     it_parses "1.=~(2)", Call.new(1.int32, "=~", 2.int32)
     it_parses "def =~; end", Def.new("=~", [] of Arg)
 
-    it_parses "$~", Global.new("$~")
-    it_parses "$~.foo", Call.new(Global.new("$~"), "foo")
-    it_parses "$0", Call.new(Global.new("$~"), "[]", 0.int32)
-    it_parses "$1", Call.new(Global.new("$~"), "[]", 1.int32)
-    it_parses "$1?", Call.new(Global.new("$~"), "[]?", 1.int32)
-    it_parses "foo $1", Call.new(nil, "foo", Call.new(Global.new("$~"), "[]", 1.int32))
-    it_parses "$~ = 1", Assign.new("$~".var, 1.int32)
+    describe "global regex match data" do
+      it_parses "$~", Global.new("$~")
+      it_parses "$~.foo", Call.new(Global.new("$~"), "foo")
+      it_parses "$0", Call.new(Global.new("$~"), "[]", 0.int32)
+      it_parses "$1", Call.new(Global.new("$~"), "[]", 1.int32)
+      it_parses "$1?", Call.new(Global.new("$~"), "[]?", 1.int32)
+      it_parses "foo $1", Call.new(nil, "foo", Call.new(Global.new("$~"), "[]", 1.int32))
+      it_parses "$~ = 1", Assign.new("$~".var, 1.int32)
 
-    assert_syntax_error "$2147483648"
-    assert_syntax_error "$99999999999999999999999?", "Index $99999999999999999999999 doesn't fit in an Int32"
+      assert_syntax_error "$0 = 1", "global match data cannot be assigned to"
+      assert_syntax_error "$0, $1 = [1, 2]", "global match data cannot be assigned to"
+      assert_syntax_error "$0, a = {1, 2}", "global match data cannot be assigned to"
+
+      assert_syntax_error "$2147483648"
+      assert_syntax_error "$99999999999999999999999?", "Index $99999999999999999999999 doesn't fit in an Int32"
+
+      it_parses "$?", Global.new("$?")
+      it_parses "$?.foo", Call.new(Global.new("$?"), "foo")
+      it_parses "foo $?", Call.new(nil, "foo", Global.new("$?"))
+      it_parses "$? = 1", Assign.new("$?".var, 1.int32)
+    end
 
     it_parses "foo /a/", Call.new(nil, "foo", regex("a"))
     it_parses "foo(/a/)", Call.new(nil, "foo", regex("a"))
@@ -1217,11 +1239,6 @@ module Crystal
     it_parses "foo(/ /, / /)", Call.new(nil, "foo", [regex(" "), regex(" ")] of ASTNode)
     it_parses "foo a, / /", Call.new(nil, "foo", ["a".call, regex(" ")] of ASTNode)
     it_parses "foo /;/", Call.new(nil, "foo", regex(";"))
-
-    it_parses "$?", Global.new("$?")
-    it_parses "$?.foo", Call.new(Global.new("$?"), "foo")
-    it_parses "foo $?", Call.new(nil, "foo", Global.new("$?"))
-    it_parses "$? = 1", Assign.new("$?".var, 1.int32)
 
     it_parses "foo out x; x", [Call.new(nil, "foo", Out.new("x".var)), "x".var]
     it_parses "foo(out x); x", [Call.new(nil, "foo", Out.new("x".var)), "x".var]
@@ -1918,6 +1935,16 @@ module Crystal
     assert_syntax_error "{1, ->{ |x| x } }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(x : Type) { ... }"
     assert_syntax_error "{1, ->do\n|x| x\end }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(x : Type) { ... }"
     assert_syntax_error "{1, ->{ |_| x } }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(param : Type) { ... }"
+
+    # #2874
+    assert_syntax_error "A = B = 1", "dynamic constant assignment"
+    assert_syntax_error "A = (B = 1)", "dynamic constant assignment"
+    assert_syntax_error "A = foo(B = 1)", "dynamic constant assignment"
+    assert_syntax_error "A = foo { B = 1 }", "dynamic constant assignment"
+    assert_syntax_error "A = begin; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; rescue; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; rescue; 1; else; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; ensure; B = 1; end", "dynamic constant assignment"
 
     assert_syntax_error "1 while 3", "trailing `while` is not supported"
     assert_syntax_error "1 until 3", "trailing `until` is not supported"

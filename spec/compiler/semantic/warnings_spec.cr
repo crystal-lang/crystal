@@ -260,7 +260,7 @@ describe "Semantic: warnings" do
           compiler.warnings.level = :all
           compiler.warnings.exclude_lib_path = true
           compiler.prelude = "empty"
-          result = compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
+          compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
 
           compiler.warnings.infos.size.should eq(1)
         end
@@ -429,7 +429,7 @@ describe "Semantic: warnings" do
           compiler.warnings.level = :all
           compiler.warnings.exclude_lib_path = true
           compiler.prelude = "empty"
-          result = compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
+          compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
 
           compiler.warnings.infos.size.should eq(1)
         end

@@ -864,7 +864,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.raise "can only use 'private' for types"
       end
     when Assign
-      if (target = exp.target).is_a?(Path)
+      if exp.target.is_a?(Path)
         if node.modifier.private?
           return false
         else
@@ -1064,7 +1064,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def has_hooks?(type_with_hooks)
     hooks = type_with_hooks.as?(ModuleType).try &.hooks
-    hooks && !hooks.empty?
+    !hooks.nil? && !hooks.empty?
   end
 
   def run_hooks(type_with_hooks, current_type, kind : HookKind, node, call = nil)

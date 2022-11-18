@@ -202,7 +202,6 @@ module Crystal
       end
 
       old_indent = @indent
-      base_indent = old_indent
       next_needs_indent = false
 
       has_newline = false
@@ -220,7 +219,6 @@ module Crystal
           @indent += 2
           write_line unless wrote_newline
           next_token_skip_space_or_newline
-          base_indent = @indent
           next_needs_indent = true
           has_newline = true
         end
@@ -238,7 +236,6 @@ module Crystal
           end
         end
         has_begin = true
-        base_indent = @indent
         next_needs_indent = true
         has_newline = true
       end
@@ -555,7 +552,6 @@ module Crystal
       @last_is_heredoc = is_heredoc
 
       heredoc_line = @line
-      heredoc_end = @line
 
       # To detect the first content of interpolation of string literal correctly,
       # we should consume the first string token if this token contains only removed indentation of heredoc.
@@ -851,7 +847,6 @@ module Crystal
           write_space_at_end = true
         end
 
-        start_line = @line
         if next_needs_indent
           write_indent(offset, element)
         else
@@ -1475,7 +1470,7 @@ module Crystal
         skip_space
         write_token " ", :OP_COLON, " "
         skip_space_or_newline
-        accept node.return_type.not_nil!
+        accept return_type
       end
 
       if free_vars = node.free_vars
@@ -1738,37 +1733,35 @@ module Crystal
     end
 
     private def format_macro_literal_only(node, source, macro_node_line)
-      begin
-        # Only format the macro contents if it's valid Crystal code
-        Parser.new(source).parse
+      # Only format the macro contents if it's valid Crystal code
+      Parser.new(source).parse
 
-        formatter, value = subformat(source)
+      formatter, value = subformat(source)
 
-        # The formatted contents might have heredocs for which we must preserve
-        # trailing spaces, so here we copy those from the formatter we used
-        # to format the contents to this formatter (we add one because we insert
-        # a newline before the contents).
-        formatter.no_rstrip_lines.each do |line|
-          @no_rstrip_lines.add(macro_node_line + line + 1)
-        end
-
-        write_line
-        write value
-
-        next_macro_token
-
-        until @token.type.macro_end?
-          next_macro_token
-        end
-
-        skip_space_or_newline
-        check :MACRO_END
-        write_indent
-        write "end"
-        next_token
-      rescue ex : Crystal::SyntaxException
-        format_macro_body node
+      # The formatted contents might have heredocs for which we must preserve
+      # trailing spaces, so here we copy those from the formatter we used
+      # to format the contents to this formatter (we add one because we insert
+      # a newline before the contents).
+      formatter.no_rstrip_lines.each do |line|
+        @no_rstrip_lines.add(macro_node_line + line + 1)
       end
+
+      write_line
+      write value
+
+      next_macro_token
+
+      until @token.type.macro_end?
+        next_macro_token
+      end
+
+      skip_space_or_newline
+      check :MACRO_END
+      write_indent
+      write "end"
+      next_token
+    rescue ex : Crystal::SyntaxException
+      format_macro_body node
     end
 
     def format_macro_body(node)
@@ -1807,7 +1800,7 @@ module Crystal
       write_indent
       write "end"
       next_token
-      return false
+      false
     end
 
     def visit(node : MacroLiteral)
@@ -1817,7 +1810,16 @@ module Crystal
         @no_rstrip_lines.add line
       end
 
-      write @token.raw
+      raw = @token.raw
+
+      # If the macro literal has a backlash, but we are subformatting
+      # a macro, we need to escape it (if it got here unescaped it was escaped to
+      # begin with.)
+      if @subformat_nesting > 0
+        raw = raw.gsub("\\", "\\" * (@subformat_nesting + 1))
+      end
+
+      write raw
       next_macro_token
       false
     end
@@ -2064,7 +2066,6 @@ module Crystal
       write_macro_slashes
       write "{% "
 
-      macro_state = @macro_state
       next_token_skip_space_or_newline
 
       write_keyword :for, " "
@@ -2501,7 +2502,7 @@ module Crystal
       base_indent = @indent
 
       # Special case: $1, $2, ...
-      if @token.type.global_match_data_index? && (node.name == "[]" || node.name == "[]?") && obj.is_a?(Global)
+      if @token.type.global_match_data_index? && node.name.in?("[]", "[]?") && obj.is_a?(Global)
         write "$"
         write @token.value
         next_token
@@ -2656,7 +2657,7 @@ module Crystal
       end
 
       # This is for foo &.[bar] and &.[bar]?, or foo.[bar] and foo.[bar]?
-      if (node.name == "[]" || node.name == "[]?") && @token.type.op_lsquare?
+      if node.name.in?("[]", "[]?") && @token.type.op_lsquare?
         write "["
         next_token_skip_space_or_newline
         format_call_args(node, false, base_indent)
@@ -2707,7 +2708,6 @@ module Crystal
         next_token
         if @token.type.op_lparen?
           write "=("
-          has_parentheses = true
           slash_is_regex!
           next_token
           format_call_args(node, true, base_indent)
@@ -2726,7 +2726,6 @@ module Crystal
       ends_with_newline = false
       has_args = !node.args.empty? || node.named_args
 
-      column = @indent
       has_newlines = false
       found_comment = false
 
@@ -3480,18 +3479,15 @@ module Crystal
         skip_semicolon_or_space_or_newline
         check_end
         write "; end"
-        next_token
-        return false
       else
         skip_space_or_newline
         check_end
         write_line
         write_indent
         write "end"
-        next_token
-        return false
       end
 
+      next_token
       false
     end
 
@@ -4310,25 +4306,25 @@ module Crystal
 
     def visit(node : Block)
       # Handled in format_block
-      return false
+      false
     end
 
     def visit(node : When)
       # Handled in format_when
-      return false
+      false
     end
 
     def visit(node : Rescue)
       # Handled in visit(node : ExceptionHandler)
-      return false
+      false
     end
 
     def visit(node : MacroId)
-      return false
+      false
     end
 
     def visit(node : MetaVar)
-      return false
+      false
     end
 
     def visit(node : Asm)
@@ -4734,7 +4730,7 @@ module Crystal
               @current_doc_comment = nil
             else
               # Normalize crystal language tag
-              if language == "cr" || language == "crystal"
+              if language.in?("cr", "crystal")
                 value = value.rchop(language)
                 language = ""
               end

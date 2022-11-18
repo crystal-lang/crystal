@@ -482,5 +482,19 @@ describe Crystal::Repl::Interpreter do
         B.new.as?(A).foo
         CODE
     end
+
+    it "upcasts GenericClassInstanceMetaclassType to VirtualMetaclassType" do
+      interpret(<<-CODE).should eq(2)
+        class Foo
+          def self.foo; 1; end
+        end
+
+        class Gen(T) < Foo
+          def self.foo; 2; end
+        end
+
+        Gen(Int32).as(Foo.class).foo
+        CODE
+    end
   end
 end

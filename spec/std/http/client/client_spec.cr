@@ -240,7 +240,6 @@ module HTTP
 
     it "will not retry when closed (non-block) (#12464)" do
       requests = 0
-      server_channel = Channel(Nil).new
 
       client = HTTP::Client.new("127.0.0.1", 0)
       client.before_request do
@@ -256,7 +255,6 @@ module HTTP
 
     it "will not retry when closed (block) (#12464)" do
       requests = 0
-      server_channel = Channel(Nil).new
 
       client = HTTP::Client.new("127.0.0.1", 0)
       client.before_request do
@@ -339,7 +337,7 @@ module HTTP
       end
     end
 
-    it "tests write_timeout" do
+    pending_win32 "tests write_timeout" do
       # Here we don't want to write a response on the server side because
       # it doesn't make sense to try to write because the client will already
       # timeout on read. Writing a response could lead on an exception in
@@ -353,7 +351,7 @@ module HTTP
       end
     end
 
-    it "tests connect_timeout" do
+    pending_win32 "tests connect_timeout" do
       test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         client.connect_timeout = 0.5

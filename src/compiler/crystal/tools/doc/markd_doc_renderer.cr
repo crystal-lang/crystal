@@ -74,9 +74,9 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
 
     # Check Type#method(...) or Type or #method(...)
     text.gsub %r(
-      ((?:\B::)?\b[A-Z]\w+(?:\:\:[A-Z]\w+)*|\B|(?<=\bself))([#.])([\w<=>+\-*\/\[\]&|?!^~]+[?!]?)(?:\((.*?)\))?
+      ((?:\B::)?\b[A-Z]\w*(?:\:\:[A-Z]\w*)*|\B|(?<=\bself))(?<!\.)([#.])([\w<=>+\-*\/\[\]&|?!^~]+[?!]?)(?:\((.*?)\))?
         |
-      ((?:\B::)?\b[A-Z]\w+(?:\:\:[A-Z]\w+)*)
+      ((?:\B::)?\b[A-Z]\w*(?:\:\:[A-Z]\w*)*)
       )x do |match_text|
       if $5?
         # Type
