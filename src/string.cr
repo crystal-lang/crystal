@@ -256,7 +256,7 @@ class String
 
     # Try to reclaim some memory if capacity is bigger than what was requested
     if bytesize < capacity
-      str = str.realloc(bytesize.to_u32 + HEADER_SIZE + 1)
+      str = GC.realloc(str, bytesize.to_u32 + HEADER_SIZE + 1)
     end
 
     str_header = str.as({Int32, Int32, Int32}*)
@@ -359,7 +359,7 @@ class String
 
   # Same as `#to_i` but returns an `Int8`.
   def to_i8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int8
-    to_i8(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int8: #{self}") }
+    to_i8(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int8: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `Int8` or `nil`.
@@ -374,7 +374,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt8`.
   def to_u8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt8
-    to_u8(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt8: #{self}") }
+    to_u8(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt8: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `UInt8` or `nil`.
@@ -389,7 +389,7 @@ class String
 
   # Same as `#to_i` but returns an `Int16`.
   def to_i16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int16
-    to_i16(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int16: #{self}") }
+    to_i16(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int16: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `Int16` or `nil`.
@@ -404,7 +404,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt16`.
   def to_u16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt16
-    to_u16(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt16: #{self}") }
+    to_u16(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt16: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `UInt16` or `nil`.
@@ -419,7 +419,7 @@ class String
 
   # Same as `#to_i`.
   def to_i32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int32
-    to_i32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int32: #{self}") }
+    to_i32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int32: #{self.inspect}") }
   end
 
   # Same as `#to_i`.
@@ -434,7 +434,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt32`.
   def to_u32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt32
-    to_u32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt32: #{self}") }
+    to_u32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt32: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `UInt32` or `nil`.
@@ -449,7 +449,7 @@ class String
 
   # Same as `#to_i` but returns an `Int64`.
   def to_i64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int64
-    to_i64(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int64: #{self}") }
+    to_i64(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int64: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `Int64` or `nil`.
@@ -459,12 +459,12 @@ class String
 
   # Same as `#to_i` but returns an `Int64` or the block's value.
   def to_i64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ Int64, UInt64, 9223372036854775807, 9223372036854775808
+    gen_to_ Int64, UInt64, 9223372036854775807, 9223372036854775808u64
   end
 
   # Same as `#to_i` but returns an `UInt64`.
   def to_u64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt64
-    to_u64(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt64: #{self}") }
+    to_u64(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt64: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `UInt64` or `nil`.
@@ -479,7 +479,7 @@ class String
 
   # Same as `#to_i` but returns an `Int128`.
   def to_i128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int128
-    to_i128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int128: #{self}") }
+    to_i128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int128: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `Int128` or `nil`.
@@ -494,7 +494,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt128`.
   def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt128
-    to_u128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt128: #{self}") }
+    to_u128(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid UInt128: #{self.inspect}") }
   end
 
   # Same as `#to_i` but returns an `UInt128` or `nil`.
@@ -685,13 +685,13 @@ class String
   # " 1.2".to_f(whitespace: false) # raises ArgumentError
   # "1.2foo".to_f(strict: false)   # => 1.2
   # ```
-  def to_f(whitespace : Bool = true, strict : Bool = true)
+  def to_f(whitespace : Bool = true, strict : Bool = true) : Float64
     to_f64(whitespace: whitespace, strict: strict)
   end
 
   # :ditto:
   def to_f64(whitespace : Bool = true, strict : Bool = true) : Float64
-    to_f64?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float64: #{self}")
+    to_f64?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float64: #{self.inspect}")
   end
 
   # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
@@ -710,7 +710,7 @@ class String
   # " 1.2".to_f?(whitespace: false) # => nil
   # "1.2foo".to_f?(strict: false)   # => 1.2
   # ```
-  def to_f?(whitespace : Bool = true, strict : Bool = true)
+  def to_f?(whitespace : Bool = true, strict : Bool = true) : Float64?
     to_f64?(whitespace: whitespace, strict: strict)
   end
 
@@ -723,12 +723,12 @@ class String
   end
 
   # Same as `#to_f` but returns a Float32.
-  def to_f32(whitespace : Bool = true, strict : Bool = true)
-    to_f32?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float32: #{self}")
+  def to_f32(whitespace : Bool = true, strict : Bool = true) : Float32
+    to_f32?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float32: #{self.inspect}")
   end
 
   # Same as `#to_f?` but returns a Float32.
-  def to_f32?(whitespace : Bool = true, strict : Bool = true)
+  def to_f32?(whitespace : Bool = true, strict : Bool = true) : Float32?
     to_f_impl(whitespace: whitespace, strict: strict) do
       v = LibC.strtof self, out endptr
       {v, endptr}
@@ -736,7 +736,7 @@ class String
   end
 
   private def to_f_impl(whitespace : Bool = true, strict : Bool = true)
-    return unless whitespace || '0' <= self[0] <= '9' || self[0] == '-' || self[0] == '+'
+    return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+')
 
     v, endptr = yield
 
@@ -875,7 +875,7 @@ class String
   end
 
   # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of bounds.
-  def []?(start : Int, count : Int)
+  def []?(start : Int, count : Int) : String?
     return byte_slice?(start, count) if single_byte_optimizable?
 
     start, count = Indexable.normalize_start_and_count(start, count, size) { return nil }
@@ -987,8 +987,7 @@ class String
 
     byte_index = char_index_to_byte_index(index)
     if byte_index && byte_index < @bytesize
-      reader = Char::Reader.new(self, pos: byte_index)
-      return reader.current_char
+      Char::Reader.new(self, pos: byte_index).current_char
     else
       yield
     end
@@ -1088,9 +1087,9 @@ class String
 
     case count
     when 0
-      return self
+      self
     when size
-      return ""
+      ""
     else
       if single_byte_optimizable?
         byte_delete_at(start, count, count)
@@ -1134,7 +1133,7 @@ class String
     reader = Char::Reader.new(self)
     i = 0
 
-    reader.each do |char|
+    reader.each do
       if i == start
         start_pos = reader.pos
       elsif i == start + count
@@ -1152,7 +1151,7 @@ class String
 
   # Returns a new string built from *count* bytes starting at *start* byte.
   #
-  # *start* can can be negative to start counting
+  # *start* can be negative to start counting
   # from the end of the string.
   # If *count* is bigger than the number of bytes from *start* to `#bytesize`,
   # only remaining bytes are returned.
@@ -1212,7 +1211,7 @@ class String
 
   # Returns a substring starting from the *start* byte.
   #
-  # *start* can can be negative to start counting
+  # *start* can be negative to start counting
   # from the end of the string.
   #
   # This method should be avoided,
@@ -1316,7 +1315,8 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
+          byte = to_unsafe[i]
+          buffer[i] = 'A'.ord <= byte <= 'Z'.ord ? byte + 32 : byte
         end
         {@bytesize, @length}
       end
@@ -1351,7 +1351,8 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
+          byte = to_unsafe[i]
+          buffer[i] = 'a'.ord <= byte <= 'z'.ord ? byte - 32 : byte
         end
         {@bytesize, @length}
       end
@@ -1387,13 +1388,15 @@ class String
     if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          byte = if i.zero?
-                   to_unsafe[i].unsafe_chr.upcase.ord.to_u8
-                 else
-                   to_unsafe[i].unsafe_chr.downcase.ord.to_u8
-                 end
+          byte = to_unsafe[i]
 
-          buffer[i] = byte
+          buffer[i] = if byte >= 0x80
+                        byte
+                      elsif i.zero?
+                        byte.unsafe_chr.upcase.ord.to_u8!
+                      else
+                        byte.unsafe_chr.downcase.ord.to_u8!
+                      end
         end
         {@bytesize, @length}
       end
@@ -1435,10 +1438,16 @@ class String
 
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          char = to_unsafe[i].unsafe_chr
-          replaced_char = upcase_next ? char.upcase : char.downcase
-          buffer[i] = replaced_char.ord.to_u8
-          upcase_next = char.whitespace?
+          byte = to_unsafe[i]
+          if byte < 0x80
+            char = byte.unsafe_chr
+            replaced_char = upcase_next ? char.upcase : char.downcase
+            buffer[i] = replaced_char.ord.to_u8!
+            upcase_next = char.ascii_whitespace?
+          else
+            buffer[i] = byte
+            upcase_next = false
+          end
         end
         {@bytesize, @length}
       end
@@ -1461,6 +1470,77 @@ class String
       replaced_char = upcase_next ? char.upcase(options) : char.downcase(options)
       io << replaced_char
       upcase_next = char.whitespace?
+    end
+  end
+
+  # Returns the result of normalizing this `String` according to the given
+  # [Unicode normalization form](https://unicode.org/reports/tr15/).
+  #
+  # ```
+  # str = "\u{1E9B}\u{0323}"                # => "ẛ̣"
+  # str.unicode_normalize.codepoints        # => [0x1E9B, 0x0323]
+  # str.unicode_normalize(:nfd).codepoints  # => [0x017F, 0x0323, 0x0307]
+  # str.unicode_normalize(:nfkc).codepoints # => [0x1E69]
+  # str.unicode_normalize(:nfkd).codepoints # => [0x0073, 0x0323, 0x0307]
+  # ```
+  def unicode_normalize(form : Unicode::NormalizationForm = :nfc) : String
+    return self if Unicode.quick_check_normalized(self, form).yes?
+    String.build { |io| do_unicode_normalize(io, form) }
+  end
+
+  # Normalizes this `String` according to the given
+  # [Unicode normalization form](https://unicode.org/reports/tr15/) and
+  # writes the result to the given *io*.
+  def unicode_normalize(io : IO, form : Unicode::NormalizationForm = :nfc) : Nil
+    return io << self if Unicode.quick_check_normalized(self, form).yes?
+    do_unicode_normalize(io, form)
+  end
+
+  private def do_unicode_normalize(io, form)
+    # the maximum number of code points after any normalization is `3 * size` as
+    # required by the Unicode standard; allow a single reallocation as the
+    # majority of strings have only few characters that aren't normalized
+    codepoints = Array(Int32).new((size * 3 + 1) // 2)
+
+    each_char do |char|
+      case form
+      in .nfc?, .nfd?
+        Unicode.canonical_decompose(codepoints, char)
+      in .nfkc?, .nfkd?
+        Unicode.compatibility_decompose(codepoints, char)
+      end
+    end
+
+    Unicode.canonical_order!(codepoints)
+
+    case form
+    in .nfc?, .nfkc?
+      Unicode.canonical_compose!(codepoints) { |char| io << char }
+    in .nfd?, .nfkd?
+      codepoints.each { |codepoint| io << codepoint.unsafe_chr }
+    end
+  end
+
+  # Returns whether this `String` is in the given
+  # [Unicode normalization form](https://unicode.org/reports/tr15/).
+  #
+  # ```
+  # foo = "\u{00E0}"              # => "à"
+  # foo.unicode_normalized?       # => true
+  # foo.unicode_normalized?(:nfd) # => false
+  #
+  # bar = "\u{0061}\u{0300}"      # => "à"
+  # bar.unicode_normalized?       # => false
+  # bar.unicode_normalized?(:nfd) # => true
+  # ```
+  def unicode_normalized?(form : Unicode::NormalizationForm = :nfc) : Bool
+    case Unicode.quick_check_normalized(self, form)
+    in .yes?
+      true
+    in .no?
+      false
+    in .maybe?
+      self == String.build { |io| do_unicode_normalize(io, form) }
     end
   end
 
@@ -1655,7 +1735,7 @@ class String
   end
 
   # :nodoc:
-  protected def self.encode(slice, from, to, io, invalid)
+  def self.encode(slice, from, to, io, invalid)
     IO::EncodingOptions.check_invalid(invalid)
 
     inbuf_ptr = slice.to_unsafe
@@ -1672,6 +1752,14 @@ class String
         end
         io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
       end
+
+      outbuf_ptr = outbuf.to_unsafe
+      outbytesleft = LibC::SizeT.new(outbuf.size)
+      err = iconv.convert(Pointer(UInt8*).null, Pointer(LibC::SizeT).null, pointerof(outbuf_ptr), pointerof(outbytesleft))
+      if err == Crystal::Iconv::ERROR
+        iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
+      end
+      io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
     end
   end
 
@@ -1855,7 +1943,7 @@ class String
   # ```
   # "bcadefcba".strip { |c| 'a' <= c <= 'c' } # => "def"
   # ```
-  def strip(&block : Char -> _)
+  def strip(&block : Char -> _) : String
     return self if empty?
 
     excess_left = calc_excess_left { |c| yield c }
@@ -1914,7 +2002,7 @@ class String
   # ```
   # "bcadefcba".rstrip { |c| 'a' <= c <= 'c' } # => "bcadef"
   # ```
-  def rstrip(&block : Char -> _)
+  def rstrip(&block : Char -> _) : String
     return self if empty?
 
     excess_right = calc_excess_right { |c| yield c }
@@ -1968,7 +2056,7 @@ class String
   # ```
   # "bcadefcba".lstrip { |c| 'a' <= c <= 'c' } # => "defcba"
   # ```
-  def lstrip(&block : Char -> _)
+  def lstrip(&block : Char -> _) : String
     return self if empty?
 
     excess_left = calc_excess_left { |c| yield c }
@@ -2139,7 +2227,7 @@ class String
   # "hello".sub { |char| char + 1 } # => "iello"
   # "hello".sub { "hi" }            # => "hiello"
   # ```
-  def sub(&block : Char -> _)
+  def sub(&block : Char -> _) : String
     return self if empty?
 
     String.build(bytesize) do |buffer|
@@ -2184,7 +2272,7 @@ class String
   # ```
   # "hello".sub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 ello"
   # ```
-  def sub(pattern : Regex)
+  def sub(pattern : Regex) : String
     sub_append(pattern) do |str, match, buffer|
       $~ = match
       buffer << yield str, match
@@ -2271,7 +2359,7 @@ class String
   # ```
   # "hello yellow".sub("ll") { "dd" } # => "heddo yellow"
   # ```
-  def sub(string : String, &block)
+  def sub(string : String, &block) : String
     index = self.byte_index(string)
     return self unless index
 
@@ -2492,7 +2580,7 @@ class String
   # "hello".gsub { |char| char + 1 } # => "ifmmp"
   # "hello".gsub { "hi" }            # => "hihihihihi"
   # ```
-  def gsub(&block : Char -> _)
+  def gsub(&block : Char -> _) : String
     String.build(bytesize) do |buffer|
       each_char do |my_char|
         buffer << yield my_char
@@ -2542,7 +2630,7 @@ class String
   # ```
   # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
-  def gsub(pattern : Regex)
+  def gsub(pattern : Regex) : String
     gsub_append(pattern) do |string, match, buffer|
       $~ = match
       buffer << yield string, match
@@ -2631,7 +2719,7 @@ class String
   # ```
   # "hello yellow".gsub("ll") { "dd" } # => "heddo yeddow"
   # ```
-  def gsub(string : String, &block)
+  def gsub(string : String, &block) : String
     byte_offset = 0
     index = self.byte_index(string, byte_offset)
     return self unless index
@@ -2723,7 +2811,7 @@ class String
   # ```
   # "aabbcc".count &.in?('a', 'b') # => 4
   # ```
-  def count
+  def count : Int32
     count = 0
     each_char do |char|
       count += 1 if yield char
@@ -2754,7 +2842,7 @@ class String
   # ```
   # "aabbcc".delete &.in?('a', 'b') # => "cc"
   # ```
-  def delete
+  def delete : String
     String.build(bytesize) do |buffer|
       each_char do |char|
         buffer << char unless yield char
@@ -2791,7 +2879,7 @@ class String
   # "aaabbbccc".squeeze &.in?('a', 'b') # => "abccc"
   # "aaabbbccc".squeeze &.in?('a', 'c') # => "abbbc"
   # ```
-  def squeeze
+  def squeeze : String
     previous = nil
     String.build(bytesize) do |buffer|
       each_char do |char|
@@ -2874,8 +2962,11 @@ class String
   end
 
   # Returns `true` if this string is equal to `*other*.
+  #
   # Comparison is done byte-per-byte: if a byte is different from the corresponding
-  # byte, `false` is returned and so on.
+  # byte, `false` is returned and so on. This means two strings containing invalid
+  # UTF-8 byte sequences may compare unequal, even when they both produce the
+  # Unicode replacement character at the same string indices.
   #
   # See `#compare` for more comparison options.
   def ==(other : self) : Bool
@@ -2889,8 +2980,10 @@ class String
   # Compares this string with *other*, returning `-1`, `0` or `1` depending on whether
   # this string is less, equal or greater than *other*.
   #
-  # Comparison is done byte-per-byte: if a byte is less then the other corresponding
-  # byte, `-1` is returned and so on.
+  # Comparison is done byte-per-byte: if a byte is less than the other corresponding
+  # byte, `-1` is returned and so on. This means two strings containing invalid
+  # UTF-8 byte sequences may compare unequal, even when they both produce the
+  # Unicode replacement character at the same string indices.
   #
   # If the strings are of different lengths, and the strings are equal when compared
   # up to the shortest length, then the longer string is considered greater than
@@ -2902,7 +2995,7 @@ class String
   # "abcdef" <=> "abcdefg" # => -1
   # "abcdef" <=> "ABCDEF"  # => 1
   # ```
-  def <=>(other : self)
+  def <=>(other : self) : Int32
     return 0 if same?(other)
     min_bytesize = Math.min(bytesize, other.bytesize)
 
@@ -2913,6 +3006,9 @@ class String
   # Compares this string with *other*, returning `-1`, `0` or `1` depending on whether
   # this string is less, equal or greater than *other*, optionally in a *case_insensitive*
   # manner.
+  #
+  # Case-sensitive comparisons (`case_insensitive == false`) are equivalent to
+  # `#<=>` and are always done byte-per-byte.
   #
   # ```
   # "abcdef".compare("abcde")   # => 1
@@ -2925,7 +3021,7 @@ class String
   #
   # "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic) # => 0
   # ```
-  def compare(other : String, case_insensitive = false, options = Unicode::CaseOptions::None)
+  def compare(other : String, case_insensitive = false, options = Unicode::CaseOptions::None) : Int32
     return self <=> other unless case_insensitive
 
     if single_byte_optimizable? && other.single_byte_optimizable?
@@ -2936,11 +3032,17 @@ class String
         byte2 = other.to_unsafe[position]
 
         # Lowercase both bytes
+        # Also reject any invalid code units
         if 65 <= byte1 <= 90
           byte1 += 32
+        elsif byte1 >= 0x80
+          return 1 if byte2 < 0x80
         end
+
         if 65 <= byte2 <= 90
           byte2 += 32
+        elsif byte2 >= 0x80
+          return byte1 < 0x80 ? -1 : 0
         end
 
         comparison = byte1 <=> byte2
@@ -3663,7 +3765,7 @@ class String
   # "foo,,bar,baz".split(',', remove_empty: true) # => ["foo", "bar", "baz"]
   # "foo,bar,baz".split(',', 2)                   # => ["foo", "bar,baz"]
   # ```
-  def split(separator : Char, limit = nil, *, remove_empty = false)
+  def split(separator : Char, limit = nil, *, remove_empty = false) : Array(String)
     ary = Array(String).new
     split(separator, limit, remove_empty: remove_empty) do |string|
       ary << string
@@ -3738,7 +3840,7 @@ class String
   # long_river_name.split("i", remove_empty: true) # => ["M", "ss", "ss", "pp"]
   # long_river_name.split("")                      # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : String, limit = nil, *, remove_empty = false)
+  def split(separator : String, limit = nil, *, remove_empty = false) : Array(String)
     ary = Array(String).new
     split(separator, limit, remove_empty: remove_empty) do |string|
       ary << string
@@ -3841,7 +3943,7 @@ class String
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false)
+  def split(separator : Regex, limit = nil, *, remove_empty = false) : Array(String)
     ary = Array(String).new
     split(separator, limit, remove_empty: remove_empty) do |string|
       ary << string
@@ -4364,7 +4466,7 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
-  def scan(pattern : Regex)
+  def scan(pattern : Regex) : self
     byte_offset = 0
 
     while match = pattern.match_at_byte_index(self, byte_offset)
@@ -4391,7 +4493,7 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding the matched string for each match.
-  def scan(pattern : String)
+  def scan(pattern : String) : self
     return self if pattern.empty?
     index = 0
     while index = byte_index(pattern, index)
@@ -4829,7 +4931,8 @@ class String
     return false unless bytesize > 0
 
     if char.ascii? || single_byte_optimizable?
-      return to_unsafe[bytesize - 1] == char.ord
+      byte = to_unsafe[bytesize - 1]
+      return byte < 0x80 ? byte == char.ord : char == Char::REPLACEMENT
     end
 
     bytes, count = String.char_bytes_and_bytesize(char)
@@ -4913,12 +5016,7 @@ class String
   # Returns `true` if this String is encoded correctly
   # according to the UTF-8 encoding.
   def valid_encoding? : Bool
-    reader = Char::Reader.new(self)
-    while reader.has_next?
-      return false if reader.error
-      reader.next_char
-    end
-    true
+    Unicode.valid?(to_slice)
   end
 
   # Returns a String where bytes that are invalid in the

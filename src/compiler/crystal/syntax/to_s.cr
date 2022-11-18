@@ -16,6 +16,14 @@ module Crystal
   class ToSVisitor < Visitor
     @str : IO
     @macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
+    @current_arg_type : DefArgType = :none
+
+    private enum DefArgType
+      NONE
+      SPLAT
+      DOUBLE_SPLAT
+      BLOCK_ARG
+    end
 
     def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false)
       @indent = 0
@@ -25,12 +33,12 @@ module Crystal
 
     def visit_any(node)
       if @emit_doc && (doc = node.doc) && !doc.empty?
-        doc.each_line(chomp: false) do |line|
-          append_indent
+        doc.each_line(chomp: true) do |line|
           @str << "# "
           @str << line
+          newline
+          append_indent
         end
-        @str.puts
       end
 
       if (macro_expansion_pragmas = @macro_expansion_pragmas) && (loc = node.location) && (filename = loc.filename).is_a?(String)
@@ -65,9 +73,7 @@ module Crystal
         # If there's no '.' nor 'e', for example in `1_f64`,
         # we need to include it (#3315)
         node.value.each_char do |char|
-          if char == '.' || char == 'e'
-            return false
-          end
+          return false if char.in?('.', 'e')
         end
 
         true
@@ -339,7 +345,7 @@ module Crystal
         node_obj = nil
       end
 
-      if node_obj && (node.name == "[]" || node.name == "[]?") && !block
+      if node_obj && node.name.in?("[]", "[]?") && !block
         in_parenthesis(need_parens, node_obj)
 
         @str << "["
@@ -585,6 +591,7 @@ module Crystal
 
     def visit(node : ProcPointer)
       @str << "->"
+      @str << "::" if node.global?
       if obj = node.obj
         obj.accept self
         @str << '.'
@@ -612,19 +619,19 @@ module Crystal
         printed_arg = false
         node.args.each_with_index do |arg, i|
           @str << ", " if printed_arg
-          @str << '*' if node.splat_index == i
+          @current_arg_type = :splat if node.splat_index == i
           arg.accept self
           printed_arg = true
         end
         if double_splat = node.double_splat
+          @current_arg_type = :double_splat
           @str << ", " if printed_arg
-          @str << "**"
           double_splat.accept self
           printed_arg = true
         end
         if block_arg = node.block_arg
+          @current_arg_type = :block_arg
           @str << ", " if printed_arg
-          @str << '&'
           block_arg.accept self
           printed_arg = true
         end
@@ -658,19 +665,19 @@ module Crystal
         printed_arg = false
         node.args.each_with_index do |arg, i|
           @str << ", " if printed_arg
-          @str << '*' if i == node.splat_index
+          @current_arg_type = :splat if i == node.splat_index
           arg.accept self
           printed_arg = true
         end
         if double_splat = node.double_splat
           @str << ", " if printed_arg
-          @str << "**"
+          @current_arg_type = :double_splat
           double_splat.accept self
           printed_arg = true
         end
         if block_arg = node.block_arg
           @str << ", " if printed_arg
-          @str << '&'
+          @current_arg_type = :block_arg
           block_arg.accept self
         end
         @str << ')'
@@ -770,6 +777,19 @@ module Crystal
     end
 
     def visit(node : Arg)
+      if parsed_annotations = node.parsed_annotations
+        parsed_annotations.each do |ann|
+          ann.accept self
+          @str << ' '
+        end
+      end
+
+      case @current_arg_type
+      when .splat?        then @str << '*'
+      when .double_splat? then @str << "**"
+      when .block_arg?    then @str << '&'
+      end
+
       if node.external_name != node.name
         visit_named_arg_name(node.external_name)
         @str << ' '
@@ -788,6 +808,8 @@ module Crystal
         default_value.accept self
       end
       false
+    ensure
+      @current_arg_type = :none
     end
 
     def visit(node : ProcNotation)
@@ -1108,7 +1130,7 @@ module Crystal
       if node.args.size > 0
         @str << '('
         node.args.join(@str, ", ") do |arg|
-          if arg_name = arg.name
+          if arg_name = arg.name.presence
             @str << arg_name << " : "
           end
           arg.restriction.not_nil!.accept self
@@ -1495,9 +1517,10 @@ module Crystal
 
     def accept_with_indent(node : Expressions)
       with_indent do
+        append_indent if node.keyword.begin?
         node.accept self
       end
-      newline if node.keyword.paren?
+      newline unless node.keyword.none?
     end
 
     def accept_with_indent(node : Nop)

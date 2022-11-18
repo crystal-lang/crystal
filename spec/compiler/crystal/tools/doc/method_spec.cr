@@ -157,6 +157,29 @@ describe Doc::Method do
       method.doc_copied_from.should be_nil
     end
 
+    it "trailing comment is not a doc comment" do
+      program = semantic(<<-CR, inject_primitives: false, wants_doc: true).program
+        nil # trailing comment
+        def foo
+        end
+        CR
+      generator = Doc::Generator.new program, [""]
+      method = generator.type(program).lookup_class_method("foo").not_nil!
+      method.doc.should be_nil
+    end
+
+    it "trailing comment is not part of a doc comment" do
+      program = semantic(<<-CR, inject_primitives: false, wants_doc: true).program
+        nil # trailing comment
+        # doc comment
+        def foo
+        end
+        CR
+      generator = Doc::Generator.new program, [""]
+      method = generator.type(program).lookup_class_method("foo").not_nil!
+      method.doc.should eq("doc comment")
+    end
+
     it "inherits doc from ancestor (no extra comment)" do
       program = semantic("
         class Foo

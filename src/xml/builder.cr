@@ -275,7 +275,7 @@ class XML::Builder
 
   # Sets the quote char to use, either `'` or `"`.
   def quote_char=(char : Char)
-    unless char == '\'' || char == '"'
+    unless char.in?('\'', '"')
       raise ArgumentError.new("Quote char must be ' or \", not #{char}")
     end
 
@@ -374,7 +374,7 @@ module XML
     xml.quote_char = quote_char if quote_char
     v = yield xml
 
-    # EndDocument is still necessary to ensure all all elements are closed, even
+    # EndDocument is still necessary to ensure all elements are closed, even
     # when StartDocument is omitted.
     xml.end_document
     xml.flush

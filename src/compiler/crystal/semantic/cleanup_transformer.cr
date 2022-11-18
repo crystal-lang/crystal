@@ -51,7 +51,7 @@ module Crystal
 
     def cleanup_files
       tempfiles.each do |tempfile|
-        File.delete(tempfile) rescue nil
+        File.delete?(tempfile)
       end
     end
   end
@@ -65,6 +65,9 @@ module Crystal
   # and for now the codegen only deals with typed nodes.
   class CleanupTransformer < Transformer
     @transformed : Set(Def)
+
+    # The current method we are processing
+    @current_def : Def?
 
     def initialize(@program : Program)
       @transformed = Set(Def).new.compare_by_identity
@@ -246,6 +249,54 @@ module Crystal
       nil
     end
 
+    def transform(node : StringInterpolation)
+      # See if we can solve all the pieces to string literals.
+      # If that's the case, we can replace the entire interpolation
+      # with a single string literal.
+      pieces = node.expressions.dup
+      solve_string_interpolation_expressions(pieces)
+
+      if pieces.all?(StringLiteral)
+        string = pieces.join(&.as(StringLiteral).value)
+        string_literal = StringLiteral.new(string).at(node)
+        string_literal.type = @program.string
+        return string_literal
+      end
+
+      if expanded = node.expanded
+        return expanded.transform(self)
+      end
+      node
+    end
+
+    private def solve_string_interpolation_expressions(pieces : Array(ASTNode))
+      pieces.each_with_index do |piece, i|
+        replacement = solve_string_interpolation_expression(piece)
+        next unless replacement
+
+        pieces[i] = replacement
+      end
+    end
+
+    private def solve_string_interpolation_expression(piece : ASTNode) : StringLiteral?
+      if piece.is_a?(ExpandableNode)
+        if expanded = piece.expanded
+          return solve_string_interpolation_expression(expanded)
+        end
+      end
+
+      case piece
+      when Path
+        if target_const = piece.target_const
+          return solve_string_interpolation_expression(target_const.value)
+        end
+      when StringLiteral
+        return piece
+      end
+
+      nil
+    end
+
     def transform(node : ExpandableNode)
       if expanded = node.expanded
         return expanded.transform(self)
@@ -367,27 +418,31 @@ module Crystal
     end
 
     def transform(node : Path)
-      # Some constants might not have been cleaned up at this point because
-      # they don't have an explicit `Assign` node. One example is regex
-      # literals: a constant is created for them, but there's no `Assign` node.
-      if (const = node.target_const) && const.used? && !const.cleaned_up?
-        const.value = const.value.transform self
-        const.cleaned_up = true
+      if const = node.target_const
+        @program.check_deprecated_constant(const, node)
+
+        # Some constants might not have been cleaned up at this point because
+        # they don't have an explicit `Assign` node. One example is regex
+        # literals: a constant is created for them, but there's no `Assign` node.
+        if const.used? && !const.cleaned_up?
+          const.value = const.value.transform self
+          const.cleaned_up = true
+        end
       end
 
       node
     end
 
     private def void_lib_call?(node)
-      return unless node.is_a?(Call)
+      return false unless node.is_a?(Call)
 
       obj = node.obj
-      return unless obj.is_a?(Path)
+      return false unless obj.is_a?(Path)
 
       type = obj.type?
-      return unless type.is_a?(LibType)
+      return false unless type.is_a?(LibType)
 
-      node.type?.try &.nil_type?
+      !!node.type?.try &.nil_type?
     end
 
     def transform(node : Global)
@@ -501,37 +556,42 @@ module Crystal
         return exps
       end
 
-      if target_defs = node.target_defs
-        changed = false
+      target_defs = node.target_defs
+      if target_defs.size == 1
+        if target_defs.first.is_a?(External)
+          check_args_are_not_closure node, "can't send closure to C function"
+        elsif obj_type && obj_type.extern? && node.name.ends_with?('=')
+          check_args_are_not_closure node, "can't set closure as C #{obj_type.type_desc} member"
+        end
+      end
 
-        if target_defs.size == 1
-          if target_defs[0].is_a?(External)
-            check_args_are_not_closure node, "can't send closure to C function"
-          elsif obj_type && obj_type.extern? && node.name.ends_with?('=')
-            check_args_are_not_closure node, "can't set closure as C #{obj_type.type_desc} member"
+      current_def = @current_def
+
+      target_defs.each do |target_def|
+        if @transformed.add?(target_def)
+          node.bubbling_exception do
+            @current_def = target_def
+            @def_nest_count += 1
+            target_def.body = target_def.body.transform(self)
+            @def_nest_count -= 1
+            @current_def = current_def
           end
         end
 
-        target_defs.each do |target_def|
-          if @transformed.add?(target_def)
-            node.bubbling_exception do
-              @def_nest_count += 1
-              target_def.body = target_def.body.transform(self)
-              @def_nest_count -= 1
-            end
-          end
-        end
+        # If the current call targets a method that raises, the method
+        # where the call happens also raises.
+        current_def.raises = true if current_def && target_def.raises?
+      end
 
-        if node.target_defs.not_nil!.empty?
-          exps = [] of ASTNode
-          if obj = node.obj
-            exps.push obj
-          end
-          node.args.each { |arg| exps.push arg }
-          call_exps = Expressions.from exps
-          call_exps.set_type(exps.last.type?) unless exps.empty?
-          return call_exps
+      if target_defs.empty?
+        exps = [] of ASTNode
+        if obj = node.obj
+          exps.push obj
         end
+        node.args.each { |arg| exps.push arg }
+        call_exps = Expressions.from exps
+        call_exps.set_type(exps.last.type?) unless exps.empty?
+        return call_exps
       end
 
       node.replace_splats
@@ -711,7 +771,7 @@ module Crystal
 
       # If the yield has a no-return expression, the yield never happens:
       # replace it with a series of expressions up to the one that no-returns.
-      no_return_index = node.exps.index &.no_returns?
+      no_return_index = node.exps.index { |exp| !exp.type? || exp.no_returns? }
       if no_return_index
         exps = Expressions.new(node.exps[0, no_return_index + 1])
         exps.bind_to(exps.expressions.last)
@@ -984,9 +1044,17 @@ module Crystal
     end
 
     def transform(node : Primitive)
-      if extra = node.extra
-        node.extra = extra.transform(self)
+      extra = node.extra
+      extra = extra.transform(self) if extra
+
+      # For `allocate` on a virtual abstract type we make `extra`
+      # be a call to `raise` at runtime. Here we just replace the
+      # "allocate" primitive with that raise call.
+      if node.name == "allocate" && extra
+        return extra
       end
+
+      node.extra = extra
       node
     end
 
@@ -994,10 +1062,7 @@ module Crystal
       node = super
 
       unless node.type?
-        if dependencies = node.dependencies?
-          node.unbind_from node.dependencies
-        end
-
+        node.unbind_from node.dependencies
         node.bind_to node.expressions
       end
 

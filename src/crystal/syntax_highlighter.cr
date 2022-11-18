@@ -69,35 +69,57 @@ abstract class Crystal::SyntaxHighlighter
     end
   end
 
+  private def slash_is_not_regex(last_token_type type, space_before)
+    return nil if type.nil?
+
+    type.number? || type.const? || type.instance_var? ||
+      type.class_var? || type.op_rparen? ||
+      type.op_rsquare? || type.op_rcurly? || !space_before
+  end
+
   private def highlight_normal_state(lexer, break_on_rcurly = false)
     last_is_def = false
     heredoc_stack = [] of Token
+    last_token_type = nil
+    space_before = false
 
     while true
       token = lexer.next_token
 
       case token.type
-      when :DELIMITER_START
-        if token.delimiter_state.kind.heredoc?
+      when .delimiter_start?
+        case
+        when last_is_def && token.raw == "`"
+          render :IDENT, token.raw # colorize 'def `'
+        when last_is_def && token.raw == "/"
+          render :IDENT, token.raw # colorize 'def /'
+
+          if lexer.current_char == '/'
+            render :IDENT, "/" # colorize 'def //'
+            lexer.reader.next_char if lexer.reader.has_next?
+          end
+        when token.raw == "/" && slash_is_not_regex(last_token_type, space_before)
+          render :OPERATOR, token.raw
+        when token.delimiter_state.kind.heredoc?
           heredoc_stack << token.dup
           highlight_token token, last_is_def
         else
           highlight_delimiter_state lexer, token
         end
-      when :STRING_ARRAY_START, :SYMBOL_ARRAY_START
+      when .string_array_start?, .symbol_array_start?
         highlight_string_array lexer, token
-      when :"}"
+      when .op_rcurly?
         break if break_on_rcurly
 
         highlight_token token, last_is_def
-      when :EOF
+      when .eof?
         break
       else
         highlight_token token, last_is_def
       end
 
       case token.type
-      when :NEWLINE
+      when .newline?
         heredoc_stack.each_with_index do |token, i|
           highlight_delimiter_state lexer, token, heredoc: true
           unless i == heredoc_stack.size - 1
@@ -105,7 +127,7 @@ abstract class Crystal::SyntaxHighlighter
             token = lexer.next_token
 
             case token.type
-            when :EOF
+            when .eof?
               raise "Unterminated heredoc"
             else
               highlight_token token, last_is_def
@@ -113,65 +135,75 @@ abstract class Crystal::SyntaxHighlighter
           end
         end
         heredoc_stack.clear
-      when :IDENT
+      when .ident?
         if last_is_def
           last_is_def = false
         end
       end
 
-      unless token.type == :SPACE
+      unless token.type.space?
+        last_token_type = token.type
         last_is_def = token.keyword? :def
       end
+      space_before = token.type.space?
     end
   end
 
   private def highlight_token(token : Token, last_is_def)
     case token.type
-    when :NEWLINE
+    when .newline?
       render :NEWLINE, "\n"
-    when :SPACE
+    when .space?
       render :SPACE, token.value.to_s
-    when :COMMENT
+    when .comment?
       render :COMMENT, token.value.to_s
-    when :NUMBER
+    when .number?
       render :NUMBER, token.raw
-    when :CHAR
+    when .char?
       render :CHAR, token.raw
-    when :SYMBOL
+    when .symbol?
       render :SYMBOL, token.raw
-    when :DELIMITER_START
+    when .delimiter_start?
       render :STRING, token.raw
-    when :CONST, :"::"
+    when .const?, .op_colon_colon?
       render :CONST, token.to_s
-    when :IDENT
+    when .ident?
       if last_is_def
         render :IDENT, token.to_s
       else
         case token.value
-        when :def, :if, :else, :elsif, :end,
-             :class, :module, :include, :extend,
-             :while, :until, :do, :yield, :return, :unless, :next, :break, :begin,
-             :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
-             :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
-             :alias, :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
-             :with, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
-             :annotation, :verbatim
-          render :KEYWORD, token.to_s
-        when :true, :false, :nil
+        when Keyword::TRUE, Keyword::FALSE, Keyword::NIL
           render :PRIMITIVE_LITERAL, token.to_s
-        when :self
+        when Keyword::SELF
           render :SELF, token.to_s
+        when Keyword
+          render :KEYWORD, token.to_s
         else
           render :UNKNOWN, token.to_s
         end
       end
-    when :+, :-, :*, :&+, :&-, :&*, :/, ://,
-         :"=", :==, :<, :<=, :>, :>=, :!, :!=, :=~, :!~,
-         :&, :|, :^, :~, :**, :>>, :<<, :%,
-         :[], :[]?, :[]=, :<=>, :===
+    when .op_lparen?, .op_rparen?, .op_lsquare?, .op_rsquare?, .op_lcurly?, .op_rcurly?, .op_at_lsquare?, # ( ) { } [ ] @[
+         .op_comma?, .op_period?, .op_period_period?, .op_period_period_period?,                          # , . .. ...
+         .op_colon?, .op_semicolon?, .op_question?, .op_dollar_question?, .op_dollar_tilde?               # : ; ? $? $~
+      # Operators that should not be colorized
+      render :UNKNOWN, token.to_s
+    when .op_lsquare_rsquare?, .op_lsquare_rsquare_question?, .op_lsquare_rsquare_eq?, .op_lt_eq_gt?,        # [] []? []= <=>
+         .op_plus?, .op_minus?, .op_star?, .op_slash?, .op_slash_slash?,                                     # + - * / //
+         .op_eq_eq?, .op_lt?, .op_lt_eq?, .op_gt?, .op_gt_eq?, .op_bang_eq?, .op_eq_tilde?, .op_bang_tilde?, # == < <= > >= != =~ !~
+         .op_amp?, .op_bar?, .op_caret?, .op_tilde?, .op_star_star?, .op_gt_gt?, .op_lt_lt?, .op_percent?    # & | ^ ~ ** >> << %
+      # Operators acceptable in def
+      if last_is_def
+        render :IDENT, token.to_s
+      else
+        render :OPERATOR, token.to_s
+      end
+    when .operator?
+      # Colorize any other operator
       render :OPERATOR, token.to_s
-    when :UNDERSCORE
+    when .underscore?
       render :UNDERSCORE, "_"
+    when .global_match_data_index?
+      render :UNKNOWN, "$" + token.value.to_s
     else
       render :UNKNOWN, token.to_s
     end
@@ -183,10 +215,10 @@ abstract class Crystal::SyntaxHighlighter
       while true
         token = lexer.next_string_token(token.delimiter_state)
         case token.type
-        when :DELIMITER_END
+        when .delimiter_end?
           render :DELIMITER_END, token.raw
           break
-        when :INTERPOLATION_START
+        when .interpolation_start?
           render_interpolation do
             highlight_normal_state lexer, break_on_rcurly: true
           end
@@ -204,15 +236,15 @@ abstract class Crystal::SyntaxHighlighter
         consume_space_or_newline(lexer)
         token = lexer.next_string_array_token
         case token.type
-        when :STRING
+        when .string?
           render :STRING_ARRAY_TOKEN, token.raw
-        when :STRING_ARRAY_END
+        when .string_array_end?
           render :STRING_ARRAY_END, token.raw
           break
-        when :EOF
+        when .eof?
           if token.delimiter_state.kind.string_array?
             raise "Unterminated string array literal"
-          else # == :symbol_array
+          else # .symbol_array?
             raise "Unterminated symbol array literal"
           end
         else

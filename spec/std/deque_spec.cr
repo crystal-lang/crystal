@@ -149,7 +149,7 @@ describe "Deque" do
 
     it "compares other types" do
       a = Deque{1, 2, 3}
-      b = Deque{:foo, :bar}
+      b = Deque{true, false}
       c = "other type"
       (a == b).should be_false
       (b == c).should be_false
@@ -637,7 +637,7 @@ describe "Deque" do
       a = Deque{1, 2, 3}
       count = 0
       it = a.each_index
-      a.each_index.each do
+      it.each do
         count += 1
         a.clear
       end

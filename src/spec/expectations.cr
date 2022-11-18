@@ -35,10 +35,10 @@ module Spec
             MSG
         end
 
-        return <<-MSG
-          Expected size: #{expected_value.size}
-               got size: #{actual_value.size}
-          MSG
+        <<-MSG
+        Expected size: #{expected_value.size}
+              got size: #{actual_value.size}
+        MSG
       else
         expected = expected_value.inspect
         got = actual_value.inspect
@@ -128,11 +128,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected #{actual_value.inspect} to be within #{@delta} of #{@expected_value}"
+      "Expected #{actual_value.inspect} to be within #{@delta.inspect} of #{@expected_value.inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected #{actual_value.inspect} not to be within #{@delta} of #{@expected_value}"
+      "Expected #{actual_value.inspect} not to be within #{@delta.inspect} of #{@expected_value.inspect}"
     end
   end
 
@@ -193,11 +193,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected #{actual_value.inspect} to be #{@op} #{@expected_value}"
+      "Expected #{actual_value.inspect} to be #{@op} #{@expected_value.inspect}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected #{actual_value.inspect} not to be #{@op} #{@expected_value}"
+      "Expected #{actual_value.inspect} not to be #{@op} #{@expected_value.inspect}"
     end
   end
 

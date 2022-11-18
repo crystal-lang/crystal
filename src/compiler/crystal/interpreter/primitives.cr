@@ -6,7 +6,7 @@ require "./compiler"
 # (for example `caller`, or doing a fiber context switch.)
 
 class Crystal::Repl::Compiler
-  private def visit_primitive(node, body, wants_struct_pointer = false)
+  private def visit_primitive(node, body, target_def)
     obj = node.obj
 
     case body.name
@@ -82,13 +82,19 @@ class Crystal::Repl::Compiler
       pointer_add(inner_sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
     when "class"
       obj = obj.not_nil!
-      type = obj.type
+      type = obj.type.remove_indirection
 
-      if type.is_a?(VirtualType)
+      case type
+      when VirtualType
         obj.accept self
         return unless @wants_value
 
-        put_metaclass aligned_sizeof_type(type), type.struct?, node: node
+        put_metaclass aligned_sizeof_type(type), false, node: node
+      when UnionType
+        obj.accept self
+        return unless @wants_value
+
+        put_metaclass aligned_sizeof_type(type), true, node: node
       else
         discard_value obj
         return unless @wants_value
@@ -96,17 +102,24 @@ class Crystal::Repl::Compiler
         put_type type, node: node
       end
     when "object_crystal_type_id"
-      type =
+      type = obj.try(&.type) || scope
+
+      unless @wants_value
+        discard_value obj if obj
+        return
+      end
+
+      if type.is_a?(VirtualMetaclassType)
+        # For a virtual metaclass type, the value is already an int
+        # that's exactly the crystal_type_id, so there's nothing else to do.
         if obj
-          discard_value(obj)
-          obj.type
+          obj.accept self
         else
-          scope
+          put_self node: node
         end
-
-      return unless @wants_value
-
-      put_i32 type_id(type), node: node
+      else
+        put_i32 type_id(type), node: node
+      end
     when "class_crystal_instance_type_id"
       type =
         if obj
@@ -241,7 +254,19 @@ class Crystal::Repl::Compiler
 
       pointer_address(node: node)
     when "proc_call"
-      node.args.each { |arg| request_value(arg) }
+      proc_type = (obj.try(&.type) || scope).as(ProcInstanceType)
+
+      node.args.each_with_index do |arg, arg_index|
+        request_value(arg)
+
+        # Cast call argument to proc's type
+        # (this same logic is done in codegen/primitives.cr)
+        proc_arg_type = proc_type.arg_types[arg_index]
+        target_def_arg_type = target_def.args[arg_index].type
+        if proc_arg_type != target_def_arg_type
+          upcast(arg, target_def_arg_type, proc_arg_type)
+        end
+      end
 
       obj ? request_value(obj) : put_self(node: node)
 
@@ -406,6 +431,9 @@ class Crystal::Repl::Compiler
     when "interpreter_intrinsics_popcount64"
       accept_call_args(node)
       interpreter_intrinsics_popcount64(node: node)
+    when "interpreter_intrinsics_popcount128"
+      accept_call_args(node)
+      interpreter_intrinsics_popcount128(node: node)
     when "interpreter_intrinsics_countleading8"
       accept_call_args(node)
       interpreter_intrinsics_countleading8(node: node)
@@ -418,6 +446,9 @@ class Crystal::Repl::Compiler
     when "interpreter_intrinsics_countleading64"
       accept_call_args(node)
       interpreter_intrinsics_countleading64(node: node)
+    when "interpreter_intrinsics_countleading128"
+      accept_call_args(node)
+      interpreter_intrinsics_countleading128(node: node)
     when "interpreter_intrinsics_counttrailing8"
       accept_call_args(node)
       interpreter_intrinsics_counttrailing8(node: node)
@@ -430,6 +461,48 @@ class Crystal::Repl::Compiler
     when "interpreter_intrinsics_counttrailing64"
       accept_call_args(node)
       interpreter_intrinsics_counttrailing64(node: node)
+    when "interpreter_intrinsics_counttrailing128"
+      accept_call_args(node)
+      interpreter_intrinsics_counttrailing128(node: node)
+    when "interpreter_intrinsics_bitreverse16"
+      accept_call_args(node)
+      interpreter_intrinsics_bitreverse16(node: node)
+    when "interpreter_intrinsics_bitreverse32"
+      accept_call_args(node)
+      interpreter_intrinsics_bitreverse32(node: node)
+    when "interpreter_intrinsics_bitreverse64"
+      accept_call_args(node)
+      interpreter_intrinsics_bitreverse64(node: node)
+    when "interpreter_intrinsics_fshl8"
+      accept_call_args(node)
+      interpreter_intrinsics_fshl8(node: node)
+    when "interpreter_intrinsics_fshl16"
+      accept_call_args(node)
+      interpreter_intrinsics_fshl16(node: node)
+    when "interpreter_intrinsics_fshl32"
+      accept_call_args(node)
+      interpreter_intrinsics_fshl32(node: node)
+    when "interpreter_intrinsics_fshl64"
+      accept_call_args(node)
+      interpreter_intrinsics_fshl64(node: node)
+    when "interpreter_intrinsics_fshl128"
+      accept_call_args(node)
+      interpreter_intrinsics_fshl128(node: node)
+    when "interpreter_intrinsics_fshr8"
+      accept_call_args(node)
+      interpreter_intrinsics_fshr8(node: node)
+    when "interpreter_intrinsics_fshr16"
+      accept_call_args(node)
+      interpreter_intrinsics_fshr16(node: node)
+    when "interpreter_intrinsics_fshr32"
+      accept_call_args(node)
+      interpreter_intrinsics_fshr32(node: node)
+    when "interpreter_intrinsics_fshr64"
+      accept_call_args(node)
+      interpreter_intrinsics_fshr64(node: node)
+    when "interpreter_intrinsics_fshr128"
+      accept_call_args(node)
+      interpreter_intrinsics_fshr128(node: node)
     when "interpreter_libm_ceil_f32"
       accept_call_args(node)
       libm_ceil_f32 node: node
@@ -573,7 +646,7 @@ class Crystal::Repl::Compiler
     to_kind = integer_or_float_kind(to_type)
 
     unless from_kind && to_kind
-      node.raise "BUG: missing handling of unchecked_convert for #{from_type} (#{node.name})"
+      node.raise "BUG: missing handling of unchecked_convert for #{from_type} (#{node})"
     end
 
     primitive_convert(node, from_kind, to_kind, checked: checked)
@@ -728,8 +801,8 @@ class Crystal::Repl::Compiler
     in {.f32?, .i128?}  then f32_to_f64(node: node); checked ? f64_to_i128(node: node) : f64_to_i128_bang(node: node)
     in {.f32?, .u8?}    then f32_to_f64(node: node); checked ? f64_to_u8(node: node) : f64_to_i64_bang(node: node)
     in {.f32?, .u16?}   then f32_to_f64(node: node); checked ? f64_to_u16(node: node) : f64_to_i64_bang(node: node)
-    in {.f32?, .u32?}   then f32_to_f64(node: node); checked ? f64_to_u32(node: node) : f64_to_i64_bang(node: node)
-    in {.f32?, .u64?}   then f32_to_f64(node: node); checked ? f64_to_u64(node: node) : f64_to_i64_bang(node: node)
+    in {.f32?, .u32?}   then checked ? (f32_to_f64(node: node); f64_to_u32(node: node)) : f32_to_u32_bang(node: node)
+    in {.f32?, .u64?}   then checked ? (f32_to_f64(node: node); f64_to_u64(node: node)) : f32_to_u64_bang(node: node)
     in {.f32?, .u128?}  then f32_to_f64(node: node); checked ? f64_to_u128(node: node) : f64_to_i128_bang(node: node)
     in {.f32?, .f32?}   then nop
     in {.f32?, .f64?}   then f32_to_f64(node: node)
@@ -740,8 +813,8 @@ class Crystal::Repl::Compiler
     in {.f64?, .i128?}  then checked ? f64_to_i128(node: node) : f64_to_i128_bang(node: node)
     in {.f64?, .u8?}    then checked ? f64_to_u8(node: node) : f64_to_i64_bang(node: node)
     in {.f64?, .u16?}   then checked ? f64_to_u16(node: node) : f64_to_i64_bang(node: node)
-    in {.f64?, .u32?}   then checked ? f64_to_u32(node: node) : f64_to_i64_bang(node: node)
-    in {.f64?, .u64?}   then checked ? f64_to_u64(node: node) : f64_to_i64_bang(node: node)
+    in {.f64?, .u32?}   then checked ? f64_to_u32(node: node) : f64_to_u32_bang(node: node)
+    in {.f64?, .u64?}   then checked ? f64_to_u64(node: node) : f64_to_u64_bang(node: node)
     in {.f64?, .u128?}  then checked ? f64_to_u128(node: node) : f64_to_i128_bang(node: node)
     in {.f64?, .f32?}   then checked ? f64_to_f32(node: node) : f64_to_f32_bang(node: node)
     in {.f64?, .f64?}   then nop

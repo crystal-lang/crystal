@@ -93,6 +93,26 @@ describe OpenSSL::SSL::Socket do
     )
   end
 
+  it "returns selected alpn protocol" do
+    tcp_server = TCPServer.new("127.0.0.1", 0)
+    server_context, client_context = ssl_context_pair
+
+    server_context.alpn_protocol = "h2"
+    client_context.alpn_protocol = "h2"
+
+    OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|
+      spawn do
+        Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
+          socket.alpn_protocol.should eq("h2")
+        end
+      end
+
+      client = server.accept
+      client.alpn_protocol.should eq("h2")
+      client.close
+    end
+  end
+
   it "accepts clients that only write then close the connection" do
     tcp_server = TCPServer.new("127.0.0.1", 0)
     server_context, client_context = ssl_context_pair

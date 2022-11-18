@@ -55,6 +55,23 @@ module LLVM
     {% end %}
   end
 
+  def self.init_webassembly : Nil
+    return if @@initialized_webassembly
+    @@initialized_webassembly = true
+
+    {% if LibLLVM::BUILT_TARGETS.includes?(:webassembly) %}
+      LibLLVM.initialize_webassembly_target_info
+      LibLLVM.initialize_webassembly_target
+      LibLLVM.initialize_webassembly_target_mc
+      LibLLVM.initialize_webassembly_asm_printer
+      LibLLVM.initialize_webassembly_asm_parser
+      # LibLLVM.link_in_jit
+      LibLLVM.link_in_mc_jit
+    {% else %}
+      raise "ERROR: LLVM was built without WebAssembly target"
+    {% end %}
+  end
+
   def self.start_multithreaded : Bool
     if multithreaded?
       true
@@ -112,6 +129,12 @@ module LLVM
     LibLLVM.dispose_message(chars)
     string
   end
+
+  {% unless LibLLVM::IS_LT_130 %}
+    def self.run_passes(module mod : Module, passes : String, target_machine : TargetMachine, options : PassBuilderOptions)
+      LibLLVM.run_passes(mod, passes, target_machine, options)
+    end
+  {% end %}
 
   DEBUG_METADATA_VERSION = 3
 end

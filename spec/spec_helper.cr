@@ -48,9 +48,10 @@ def assert_type(str, *, inject_primitives = false, flags = nil, file = __FILE__,
 end
 
 def semantic(code : String, wants_doc = false, inject_primitives = false, flags = nil, filename = nil)
-  node = parse(code, wants_doc: wants_doc, filename: filename)
+  warnings = WarningCollection.new
+  node = parse(code, wants_doc: wants_doc, filename: filename, warnings: warnings)
   node = inject_primitives(node) if inject_primitives
-  semantic node, wants_doc: wants_doc, flags: flags
+  semantic node, warnings: warnings, wants_doc: wants_doc, flags: flags
 end
 
 private def inject_primitives(node : ASTNode)
@@ -66,8 +67,9 @@ private def inject_primitives(node : ASTNode)
   end
 end
 
-def semantic(node : ASTNode, wants_doc = false, flags = nil)
+def semantic(node : ASTNode, *, warnings = nil, wants_doc = false, flags = nil)
   program = new_program
+  program.warnings = warnings if warnings
   program.flags.concat(flags.split) if flags
   program.wants_doc = wants_doc
   node = program.normalize node
@@ -78,7 +80,6 @@ end
 def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
   program = new_program
   program.flags.concat(flags.split) if flags
-  normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
   to_nodes = program.normalize(from_nodes)
   to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
@@ -106,6 +107,22 @@ def assert_expand_third(from : String, to, *, flags = nil, file = __FILE__, line
   assert_expand node, to, flags: flags, file: file, line: line
 end
 
+def assert_expand_named(from : String, to, *, generic = nil, flags = nil, file = __FILE__, line = __LINE__)
+  program = new_program
+  program.flags.concat(flags.split) if flags
+  from_nodes = Parser.parse(from)
+  generic_type = generic.path if generic
+  case from_nodes
+  when ArrayLiteral
+    to_nodes = LiteralExpander.new(program).expand_named(from_nodes, generic_type)
+  when HashLiteral
+    to_nodes = LiteralExpander.new(program).expand_named(from_nodes, generic_type)
+  else
+    fail "Expected: ArrayLiteral | HashLiteral, got: #{from_nodes.class}", file: file, line: line
+  end
+  to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
+end
+
 def assert_error(str, message = nil, *, inject_primitives = false, flags = nil, file = __FILE__, line = __LINE__)
   expect_raises TypeException, message, file, line do
     semantic str, inject_primitives: inject_primitives, flags: flags
@@ -116,25 +133,14 @@ def assert_no_errors(*args, **opts)
   semantic(*args, **opts)
 end
 
-def warnings_result(code, *, file = __FILE__)
-  compiler = create_spec_compiler
-  compiler.warnings = Warnings::All
-  compiler.error_on_warnings = false
-  compiler.prelude = "empty" # avoid issues in the current std lib
-  compiler.color = false
-  apply_program_flags(compiler.flags)
-
-  with_temp_executable("crystal-spec-output", file: file) do |output_filename|
-    result = compiler.compile Compiler::Source.new("code.cr", code), output_filename
-
-    return result.program.warning_failures
-  end
+def warnings_result(code)
+  semantic(code).program.warnings.infos
 end
 
 def assert_warning(code, message, *, file = __FILE__, line = __LINE__)
-  warning_failures = warnings_result(code, file: file)
+  warning_failures = warnings_result(code)
   warning_failures.size.should eq(1), file: file, line: line
-  warning_failures[0].should start_with(message), file: file, line: line
+  warning_failures[0].should contain(message), file: file, line: line
 end
 
 def assert_macro(macro_body, expected, args = nil, *, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)

@@ -112,7 +112,7 @@ class Log
         matches = yield entry
         if matches
           @entry = entry
-          return self
+          self
         else
           fail("No matching entries found, expected #{description}, but got #{entry.severity} with #{entry.message.inspect}", file, line)
         end

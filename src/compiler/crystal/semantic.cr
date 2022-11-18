@@ -19,7 +19,7 @@ class Crystal::Program
   # that's typed. In the process types and methods are defined in
   # this program.
   def semantic(node : ASTNode, cleanup = true, main_visitor : MainVisitor = MainVisitor.new(self)) : ASTNode
-    node, processor = top_level_semantic(node)
+    node, processor = top_level_semantic(node, main_visitor)
 
     @progress_tracker.stage("Semantic (ivars initializers)") do
       visitor = InstanceVarsInitializerVisitor.new(self)
@@ -56,9 +56,16 @@ class Crystal::Program
   #
   # This alone is useful for some tools like doc or hierarchy
   # where a full semantic of the program is not needed.
-  def top_level_semantic(node)
+  def top_level_semantic(node, main_visitor : MainVisitor = MainVisitor.new(self))
     new_expansions = @progress_tracker.stage("Semantic (top level)") do
       visitor = TopLevelVisitor.new(self)
+
+      # This is mainly for the interpreter so that vars are populated
+      # for macro calls.
+      # For compiled Crystal this should have no effect because we always
+      # use a new MainVisitor which will have no vars.
+      visitor.vars = main_visitor.vars.dup unless main_visitor.vars.empty?
+
       node.accept visitor
       visitor.process_finished_hooks
       visitor.new_expansions
@@ -72,6 +79,12 @@ class Crystal::Program
 
     @progress_tracker.stage("Semantic (abstract def check)") do
       AbstractDefChecker.new(self).run
+    end
+
+    unless @program.has_flag?("no_restrictions_augmenter")
+      @progress_tracker.stage("Semantic (restrictions augmenter)") do
+        node.accept RestrictionsAugmenter.new(self, new_expansions)
+      end
     end
 
     {node, processor}
