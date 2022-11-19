@@ -286,11 +286,7 @@ module HTTP
   end
 
   def self.serialize_headers(io, headers)
-    headers.each do |name, values|
-      values.each do |value|
-        io << name << ": " << value << "\r\n"
-      end
-    end
+    headers.serialize(io)
     io << "\r\n"
   end
 

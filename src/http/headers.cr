@@ -299,6 +299,32 @@ struct HTTP::Headers
     end
   end
 
+  # Serializes headers accroding to the HTTP protocol.
+  #
+  # Prints a list of HTTP header fields in the format desribed in [RFC 7230 §3.2](https://www.rfc-editor.org/rfc/rfc7230#section-3.2),
+  # with each field terminated by a CRLF sequence (`"\r\n"`).
+  #
+  # The serialization does *not* include a double CRLF sequence at the end.
+  #
+  # ```
+  # headers = HTTP::Headers{"foo" => "bar", "baz" => %w[qux qox]})
+  # headers.serialize # => "foo: bar\r\nbaz: qux\r\nbaz: qox\r\n"
+  # ```
+  def serialize : String
+    String.build do |io|
+      serialize(io)
+    end
+  end
+
+  # :ditto:
+  def serialize(io : IO) : Nil
+    each do |name, values|
+      values.each do |value|
+        io << name << ": " << value << "\r\n"
+      end
+    end
+  end
+
   def valid_value?(value) : Bool
     invalid_value_char(value).nil?
   end
