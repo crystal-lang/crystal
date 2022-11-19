@@ -933,22 +933,21 @@ describe "File" do
     end
   end
 
-  # TODO: implement flock on windows
   describe "flock" do
-    pending_win32 "exclusively locks a file" do
+    it "#flock_exclusive" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_exclusive do
             exc = expect_raises(IO::Error, "Error applying file lock: file is already locked") do
               file2.flock_exclusive(blocking: false) { }
             end
-            exc.os_error.should eq Errno::EWOULDBLOCK
+            exc.os_error.should eq {{ flag?(:win32) ? WinError::ERROR_IO_PENDING : Errno::EWOULDBLOCK }}
           end
         end
       end
     end
 
-    pending_win32 "shared locks a file" do
+    it "#flock_shared" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_shared do
@@ -958,7 +957,7 @@ describe "File" do
       end
     end
 
-    pending_win32 "#flock_shared soft blocking fiber" do
+    it "#flock_shared soft blocking fiber" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           done = Channel(Nil).new
@@ -975,7 +974,7 @@ describe "File" do
       end
     end
 
-    pending_win32 "#flock_exclusive soft blocking fiber" do
+    it "#flock_exclusive soft blocking fiber" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           done = Channel(Nil).new

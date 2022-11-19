@@ -258,15 +258,47 @@ module Crystal::System::File
   end
 
   private def system_flock_shared(blocking : Bool) : Nil
-    raise NotImplementedError.new("File#flock_shared")
+    lock_file(false, blocking)
   end
 
   private def system_flock_exclusive(blocking : Bool) : Nil
-    raise NotImplementedError.new("File#flock_exclusive")
+    lock_file(true, blocking)
   end
 
   private def system_flock_unlock : Nil
     raise NotImplementedError.new("File#flock_unlock")
+  end
+
+  private def flock(exclusive, retry)
+    flags = LibC::DWORD.new
+    flags |= LibC::LOCKFILE_EXCLUSIVE_LOCK if exclusive
+
+    flags |= LibC::LOCKFILE_FAIL_IMMEDIATELY
+
+    if retry
+      until lock_file(flags)
+        ::Fiber.yield
+      end
+    else
+      lock_file(flags) || raise IO::Error.from_winerror("Error applying file lock: file is already locked")
+    end
+  end
+
+  private def lock_file(flags)
+    overlapped = LibC::OVERLAPPED.new
+    overlapped.union.offset.offset = LibC::DWORD.new(0)
+    overlapped.union.offset.offsetHigh = LibC::DWORD.new(0)
+    size = self.size
+    if LibC::TRUE == LibC.LockFileEx(fd, flags, 0, size.to_u32!, (size << 32).to_u32!, pointerof(overlapped))
+      true
+    else
+      winerror = WinError.value
+      if winerror == WinError::ERROR_IO_PENDING
+        false
+      else
+        raise File::Error.from_winerror("LockFileEx", winerror)
+      end
+    end
   end
 
   private def system_fsync(flush_metadata = true) : Nil
