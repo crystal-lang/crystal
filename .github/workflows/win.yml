@@ -73,8 +73,8 @@ jobs:
       - name: Download libpcre
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
-          iwr https://cs.stanford.edu/pub/exim/pcre/pcre-8.43.zip -OutFile pcre.zip
-          (Get-FileHash -Algorithm SHA256 .\pcre.zip).hash -eq "ae236dc25d7e0e738a94e103218e0085eb02ff9bd98f637b6e061a48decdb433"
+          iwr https://cs.stanford.edu/pub/exim/pcre/pcre-8.45.zip -OutFile pcre.zip
+          (Get-FileHash -Algorithm SHA256 .\pcre.zip).hash -eq "5b709aa45ea3b8bb73052947200ad187f651a2049158fb5bbfed329e4322a977"
           7z x pcre.zip
           mv pcre-* pcre
       - name: Build libpcre
