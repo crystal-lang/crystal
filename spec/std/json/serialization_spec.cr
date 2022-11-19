@@ -443,7 +443,7 @@ describe "JSON serialization" do
     it "deserializes unions of the same kind and remains stable" do
       str = [Int32::MAX, Int64::MAX].to_json
       value = Array(Int32 | Int64).from_json(str)
-      value.all? { |x| x.should be_a(Int64) }
+      value.all?(&.should(be_a(Int64)))
     end
 
     it "deserializes Time" do

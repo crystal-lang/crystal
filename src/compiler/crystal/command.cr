@@ -353,7 +353,7 @@ class Crystal::Command
 
       unless no_codegen
         valid_emit_values = Compiler::EmitTarget.names
-        valid_emit_values.map! { |v| v.gsub('_', '-').downcase }
+        valid_emit_values.map!(&.gsub('_', '-').downcase)
 
         opts.on("--emit [#{valid_emit_values.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
           compiler.emit_targets |= validate_emit_values(emit_values.split(',').map(&.strip))
