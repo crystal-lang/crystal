@@ -268,8 +268,6 @@ module Float::Printer::Dragonbox
     # MAX_K = 46
     CACHE_BITS = 64
 
-    DIVISIBILITY_CHECK_BY_5_THRESHOLD                   =  39
-    CASE_FC_PM_HALF_LOWER_THRESHOLD                     =  -1
     SHORTER_INTERVAL_TIE_LOWER_THRESHOLD                = -35
     SHORTER_INTERVAL_TIE_UPPER_THRESHOLD                = -35
     CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_LOWER_THRESHOLD =   2
@@ -297,8 +295,6 @@ module Float::Printer::Dragonbox
     # MAX_K = 326
     CACHE_BITS = 128
 
-    DIVISIBILITY_CHECK_BY_5_THRESHOLD                   =  86
-    CASE_FC_PM_HALF_LOWER_THRESHOLD                     =  -2
     SHORTER_INTERVAL_TIE_LOWER_THRESHOLD                = -77
     SHORTER_INTERVAL_TIE_UPPER_THRESHOLD                = -77
     CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_LOWER_THRESHOLD =   2
