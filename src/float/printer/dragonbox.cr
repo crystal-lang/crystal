@@ -98,7 +98,7 @@ module Float::Printer::Dragonbox
       xyh &+ (xyl >> 32)
     end
 
-    # Get middle 64-bits of multiplication of a 64-bit unsigned integer and a 128-bit unsigned integer.
+    # Get lower 128-bits of multiplication of a 64-bit unsigned integer and a 128-bit unsigned integer.
     def self.umul192_lower128(x : UInt64, y : UInt128) : UInt128
       high = x &* y.high
       high_low = umul128(x, y.low)
@@ -350,6 +350,7 @@ module Float::Printer::Dragonbox
           return {significand, ret_exponent}
         end
       else
+        # r == deltai; compare fractional parts.
         two_fl = two_fc - 1
 
         if !is_closed || exponent < ImplInfo::CASE_FC_PM_HALF_LOWER_THRESHOLD || exponent > ImplInfo::DIVISIBILITY_CHECK_BY_5_THRESHOLD
@@ -380,13 +381,13 @@ module Float::Printer::Dragonbox
       approx_y_parity = ((dist ^ (small_divisor // 2)) & 1) != 0
 
       # Is dist divisible by 10^kappa?
-      dist, divisible_by_10_to_the_kappa = ImplInfo.check_divisibility_and_divide_by_pow10(dist)
+      dist, divisible_by_small_divisor = ImplInfo.check_divisibility_and_divide_by_pow10(dist)
 
       # Add dist / 10^kappa to the significand.
       significand += dist
 
-      if divisible_by_10_to_the_kappa
-        # Check z^(f) >= epsilon^(f)
+      if divisible_by_small_divisor
+        # Check z^(f) >= epsilon^(f).
         # We have either yi == zi - epsiloni or yi == (zi - epsiloni) - 1,
         # where yi == zi - epsiloni if and only if z^(f) >= epsilon^(f).
         # Since there are only 2 possibilities, we only need to care about the parity.
