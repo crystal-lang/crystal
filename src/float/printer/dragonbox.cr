@@ -356,25 +356,11 @@ module Float::Printer::Dragonbox
         end
       else
         # r == deltai; compare fractional parts.
-        two_fl = two_fc - 1
+        xi_parity, x_is_integer = compute_mul_parity(two_fc - 1, cache, beta)
 
-        if !is_closed || exponent < ImplInfo::CASE_FC_PM_HALF_LOWER_THRESHOLD || exponent > ImplInfo::DIVISIBILITY_CHECK_BY_5_THRESHOLD
-          # If the left endpoint is not included, the condition for
-          # success is z^(f) < delta^(f) (odd parity).
-          # Otherwise, the inequalities on exponent ensure that
-          # x is not an integer, so if z^(f) >= delta^(f) (even parity), we in fact
-          # have strict inequality.
-          parity, _ = compute_mul_parity(two_fl, cache, beta)
-          if parity
-            ret_exponent = minus_k + ImplInfo::KAPPA + 1
-            return {significand, ret_exponent}
-          end
-        else
-          xi_parity, is_x_integer = compute_mul_parity(two_fl, cache, beta)
-          unless !xi_parity && !is_x_integer
-            ret_exponent = minus_k + ImplInfo::KAPPA + 1
-            return {significand, ret_exponent}
-          end
+        if xi_parity || (x_is_integer && is_closed)
+          ret_exponent = minus_k + ImplInfo::KAPPA + 1
+          return {significand, ret_exponent}
         end
       end
 
