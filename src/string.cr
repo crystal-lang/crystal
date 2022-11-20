@@ -2832,7 +2832,7 @@ class String
   # described at `Char#in_set?`. Returns the number of characters
   # in this string that match the given set.
   def count(*sets) : Int32
-    count { |char| char.in_set?(*sets) }
+    count(&.in_set?(*sets))
   end
 
   # Yields each char in this string to the block.
@@ -2867,7 +2867,7 @@ class String
   # "aabbccdd".delete("a-c") # => "dd"
   # ```
   def delete(*sets) : String
-    delete { |char| char.in_set?(*sets) }
+    delete(&.in_set?(*sets))
   end
 
   # Yields each char in this string to the block.
@@ -2910,7 +2910,7 @@ class String
   # "a       bbb".squeeze         # => "a b"
   # ```
   def squeeze(*sets : String) : String
-    squeeze { |char| char.in_set?(*sets) }
+    squeeze(&.in_set?(*sets))
   end
 
   # Returns a new `String`, that has all characters removed,

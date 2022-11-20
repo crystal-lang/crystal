@@ -42,7 +42,7 @@ class Crystal::Iocp::EventLoop < Crystal::EventLoop
 
   # Runs the event loop.
   def run_once : Nil
-    next_event = @queue.min_by { |e| e.wake_at }
+    next_event = @queue.min_by(&.wake_at)
 
     if next_event
       now = Time.monotonic

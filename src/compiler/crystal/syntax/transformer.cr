@@ -598,7 +598,7 @@ module Crystal
     end
 
     def transform_many(exps)
-      exps.map! { |exp| exp.transform(self) } if exps
+      exps.map!(&.transform(self)) if exps
     end
   end
 end
