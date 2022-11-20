@@ -286,8 +286,8 @@ module Crystal::System::File
   private def lock_file(handle, flags)
     # lpOverlapped must be provided despite the synchronous use of this method.
     overlapped = LibC::OVERLAPPED.new
-    size = self.size
-    if 0 != LibC.LockFileEx(handle, flags, 0, size.to_u32!, (size << 32).to_u32!, pointerof(overlapped))
+    # lock the entire file with offset 0 in overlapped and number of bytes set to max value
+    if 0 != LibC.LockFileEx(handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, pointerof(overlapped))
       true
     else
       winerror = WinError.value
@@ -302,8 +302,8 @@ module Crystal::System::File
   private def unlock_file(handle)
     # lpOverlapped must be provided despite the synchronous use of this method.
     overlapped = LibC::OVERLAPPED.new
-    size = self.size
-    if 0 == LibC.UnlockFileEx(handle, 0, size.to_u32!, (size << 32).to_u32!, pointerof(overlapped))
+    # unlock the entire file with offset 0 in overlapped and number of bytes set to max value
+    if 0 == LibC.UnlockFileEx(handle, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, pointerof(overlapped))
       raise IO::Error.from_winerror("UnLockFileEx")
     end
   end
