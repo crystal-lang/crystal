@@ -19,7 +19,7 @@
 #   is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 #   KIND, either express or implied.
 module Float::Printer::Dragonbox
-  # Current revision: https://github.com/jk-jeon/dragonbox/tree/b5b4f65a83da14019bcec7ae31965216215a3e10
+  # Current revision: https://github.com/jk-jeon/dragonbox/tree/4150375bd2e1c5a6842ecf2d68fd8bb6f8353388
   #
   # Assumes the following policies:
   #
@@ -189,49 +189,43 @@ module Float::Printer::Dragonbox
     ]
 
     module CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32
-      MAGIC_NUMBER        = 0xcccd_u32
-      BITS_FOR_COMPARISON =         16
-      THRESHOLD           = 0x3333_u32
-      SHIFT_AMOUNT        =         19
+      MAGIC_NUMBER            = 0x199a_u32
+      MARGIN_BITS             =          8
+      DIVISIBILITY_CHECK_BITS =          8
     end
 
     module CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64
-      MAGIC_NUMBER        = 0x147c29_u32
-      BITS_FOR_COMPARISON =           12
-      THRESHOLD           =     0xa3_u32
-      SHIFT_AMOUNT        =           27
+      MAGIC_NUMBER            = 0xa3d71_u32
+      MARGIN_BITS             =          10
+      DIVISIBILITY_CHECK_BITS =          16
     end
 
     # N == 1
     def self.check_divisibility_and_divide_by_pow10_k1(n : UInt32)
       n &*= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::MAGIC_NUMBER
+      n >>= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::MARGIN_BITS
 
-      # Mask for the lowest (N + bits_for_comparison)-bits.
-      bits_for_comparison = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::BITS_FOR_COMPARISON
-      comparison_mask = ~(UInt32::MAX << (1 + bits_for_comparison))
+      # Mask for the lowest (divisibility_check_bits)-bits.
+      divisibility_check_bits = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::DIVISIBILITY_CHECK_BITS
+      comparison_mask = ~(UInt32::MAX << divisibility_check_bits)
 
-      # The lowest N bits of n must be zero, and
-      # (n & comparison_mask) >> N must be at most threshold.
-      c = (n & comparison_mask).rotate_right(1)
-
-      n >>= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::SHIFT_AMOUNT
-      {n, c <= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::THRESHOLD}
+      result = n & comparison_mask == 0
+      n >>= divisibility_check_bits
+      {n, result}
     end
 
     # N == 2
     def self.check_divisibility_and_divide_by_pow10_k2(n : UInt32)
       n &*= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::MAGIC_NUMBER
+      n >>= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::MARGIN_BITS
 
-      # Mask for the lowest (N + bits_for_comparison)-bits.
-      bits_for_comparison = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::BITS_FOR_COMPARISON
-      comparison_mask = ~(UInt32::MAX << (2 + bits_for_comparison))
+      # Mask for the lowest (divisibility_check_bits)-bits.
+      divisibility_check_bits = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::DIVISIBILITY_CHECK_BITS
+      comparison_mask = ~(UInt32::MAX << divisibility_check_bits)
 
-      # The lowest N bits of n must be zero, and
-      # (n & comparison_mask) >> N must be at most threshold.
-      c = (n & comparison_mask).rotate_right(2)
-
-      n >>= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::SHIFT_AMOUNT
-      {n, c <= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::THRESHOLD}
+      result = n & comparison_mask == 0
+      n >>= divisibility_check_bits
+      {n, result}
     end
   end
 
