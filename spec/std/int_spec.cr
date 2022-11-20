@@ -905,11 +905,11 @@ describe "Int" do
     end
 
     it "works for maximums" do
-      Int32::MAX.digits.should eq(Int32::MAX.to_s.chars.map(&.to_i).reverse)
-      Int64::MAX.digits.should eq(Int64::MAX.to_s.chars.map(&.to_i).reverse)
-      UInt64::MAX.digits.should eq(UInt64::MAX.to_s.chars.map(&.to_i).reverse)
-      Int128::MAX.digits.should eq(Int128::MAX.to_s.chars.map(&.to_i).reverse)
-      UInt128::MAX.digits.should eq(UInt128::MAX.to_s.chars.map(&.to_i).reverse)
+      Int32::MAX.digits.should eq(Int32::MAX.to_s.chars.map(&.to_i).reverse!)
+      Int64::MAX.digits.should eq(Int64::MAX.to_s.chars.map(&.to_i).reverse!)
+      UInt64::MAX.digits.should eq(UInt64::MAX.to_s.chars.map(&.to_i).reverse!)
+      Int128::MAX.digits.should eq(Int128::MAX.to_s.chars.map(&.to_i).reverse!)
+      UInt128::MAX.digits.should eq(UInt128::MAX.to_s.chars.map(&.to_i).reverse!)
     end
 
     it "works for non-Int32" do
