@@ -117,8 +117,8 @@ module Float::Printer::Dragonbox
   # Utilities for fast log computation.
   private module Log
     def self.floor_log10_pow2(e : Int)
-      # Precondition: `-1700 <= e <= 1700`
-      (e &* 1262611) >> 22
+      # Precondition: `-2620 <= e <= 2620`
+      (e &* 315653) >> 20
     end
 
     def self.floor_log2_pow10(e : Int)
@@ -127,8 +127,8 @@ module Float::Printer::Dragonbox
     end
 
     def self.floor_log10_pow2_minus_log10_4_over_3(e : Int)
-      # Precondition: `-1700 <= e <= 1700`
-      (e &* 1262611 &- 524031) >> 22
+      # Precondition: `-2985 <= e <= 2936`
+      (e &* 631305 &- 261663) >> 21
     end
   end
 
@@ -188,24 +188,24 @@ module Float::Printer::Dragonbox
       {0xdcd618596be30fe5_u64, 0x000000000000060b_u64},
     ]
 
-    module CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32
-      MAGIC_NUMBER            = 6554_u32
-      DIVISIBILITY_CHECK_BITS =       16
+    module DIVIDE_BY_POW10_INFO_F32
+      MAGIC_NUMBER = 6554_u32
+      SHIFT_AMOUNT =       16
     end
 
-    module CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64
-      MAGIC_NUMBER            = 656_u32
-      DIVISIBILITY_CHECK_BITS =      16
+    module DIVIDE_BY_POW10_INFO_F64
+      MAGIC_NUMBER = 656_u32
+      SHIFT_AMOUNT =      16
     end
 
     # N == 1
     def self.check_divisibility_and_divide_by_pow10_k1(n : UInt32)
-      n &*= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::MAGIC_NUMBER
+      n &*= DIVIDE_BY_POW10_INFO_F32::MAGIC_NUMBER
 
       # Mask for the lowest (divisibility_check_bits)-bits.
-      divisibility_check_bits = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::DIVISIBILITY_CHECK_BITS
+      divisibility_check_bits = DIVIDE_BY_POW10_INFO_F32::SHIFT_AMOUNT
       comparison_mask = ~(UInt32::MAX << divisibility_check_bits)
-      result = n & comparison_mask < CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::MAGIC_NUMBER
+      result = n & comparison_mask < DIVIDE_BY_POW10_INFO_F32::MAGIC_NUMBER
 
       n >>= divisibility_check_bits
       {n, result}
@@ -213,12 +213,12 @@ module Float::Printer::Dragonbox
 
     # N == 2
     def self.check_divisibility_and_divide_by_pow10_k2(n : UInt32)
-      n &*= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::MAGIC_NUMBER
+      n &*= DIVIDE_BY_POW10_INFO_F64::MAGIC_NUMBER
 
       # Mask for the lowest (divisibility_check_bits)-bits.
-      divisibility_check_bits = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::DIVISIBILITY_CHECK_BITS
+      divisibility_check_bits = DIVIDE_BY_POW10_INFO_F64::SHIFT_AMOUNT
       comparison_mask = ~(UInt32::MAX << divisibility_check_bits)
-      result = n & comparison_mask < CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::MAGIC_NUMBER
+      result = n & comparison_mask < DIVIDE_BY_POW10_INFO_F64::MAGIC_NUMBER
 
       n >>= divisibility_check_bits
       {n, result}
