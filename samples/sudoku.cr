@@ -151,7 +151,7 @@ def solve_all(sudoku)
   sudoku.split('\n').map do |line|
     if line.size >= 81
       ret = sd_solve(mr, mc, line)
-      ret.map { |s2| s2.join }
+      ret.map(&.join)
     end
   end.compact
 end

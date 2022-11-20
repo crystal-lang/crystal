@@ -93,7 +93,6 @@ module Crystal
     end
 
     def convert(type : GenericInstanceType)
-      generic_type = type.generic_type
       path = type_to_path(type.generic_type)
       type_vars = type.type_vars.map do |name, type_var|
         if type_var.is_a?(NumberLiteral)
@@ -108,14 +107,19 @@ module Crystal
     end
 
     def convert(type : UnionType)
-      Union.new(
+      converted_union_types =
         type.union_types.map do |union_type|
           restriction = convert(union_type)
           return unless restriction
 
           restriction.as(ASTNode)
         end
-      )
+
+      if type.union_types.any?(TypeSplat)
+        Generic.new(Path.global("Union"), converted_union_types)
+      else
+        Union.new(converted_union_types)
+      end
     end
 
     def convert(type : MetaclassType)

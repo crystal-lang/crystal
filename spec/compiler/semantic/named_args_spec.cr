@@ -65,7 +65,7 @@ describe "Semantic: named args" do
 
       foo x: 1.5
       ),
-      "no overload matches"
+      "expected argument 'x' to 'foo' to be Int32, not Float64"
   end
 
   it "errors if named arg already specified but in same position" do
@@ -189,7 +189,7 @@ describe "Semantic: named args" do
 
       foo(x: 2)
       ),
-      "no overload matches"
+      "missing argument: y"
   end
 
   it "gives correct error message for missing args after *" do

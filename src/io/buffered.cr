@@ -11,7 +11,7 @@ module IO::Buffered
   @sync = false
   @read_buffering = true
   @flush_on_newline = false
-  @buffer_size = 8192
+  @buffer_size = IO::DEFAULT_BUFFER_SIZE
 
   # Reads at most *slice.size* bytes from the wrapped `IO` into *slice*.
   # Returns the number of bytes read.

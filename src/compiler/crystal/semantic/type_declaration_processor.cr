@@ -406,7 +406,7 @@ struct Crystal::TypeDeclarationProcessor
     when NonGenericModuleType
       type = type_info.type
       if nilable_instance_var?(owner, name)
-        type = Type.merge!([type, @program.nil])
+        type = Type.merge!(type, @program.nil)
       end
 
       # Same as above, only Nil makes no sense
@@ -423,7 +423,7 @@ struct Crystal::TypeDeclarationProcessor
     when GenericClassType
       type = type_info.type
       if nilable_instance_var?(owner, name)
-        type = Type.merge!([type, @program.nil])
+        type = Type.merge!(type, @program.nil)
       end
 
       # Same as above, only Nil makes no sense
@@ -442,7 +442,7 @@ struct Crystal::TypeDeclarationProcessor
     when GenericModuleType
       type = type_info.type
       if nilable_instance_var?(owner, name)
-        type = Type.merge!([type, @program.nil])
+        type = Type.merge!(type, @program.nil)
       end
 
       declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true, annotations: type_info.annotations)
@@ -561,7 +561,6 @@ struct Crystal::TypeDeclarationProcessor
         next if info.def.calls_super? && ancestor_non_nilable.try(&.includes?(instance_var))
 
         unless info.try(&.instance_vars.try(&.includes?(instance_var)))
-          all_assigned = false
           # Remember that this variable wasn't initialized here, and later error
           # if it turns out to be non-nilable
           nilable_vars = @nilable_instance_vars[owner] ||= {} of String => InitializeInfo

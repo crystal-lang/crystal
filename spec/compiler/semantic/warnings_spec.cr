@@ -1,6 +1,36 @@
 require "../spec_helper"
 
 describe "Semantic: warnings" do
+  describe "deprecated annotations" do
+    it "detects deprecated annotations" do
+      assert_warning <<-CR,
+        @[Deprecated]
+        annotation Foo; end
+
+        @[Foo]
+        def bar; end
+
+        bar
+        CR
+        "warning in line 2\nWarning: Deprecated annotation Foo."
+    end
+
+    it "detects deprecated namespaced annotations" do
+      assert_warning <<-CR,
+        module MyNamespace
+          @[Deprecated]
+          annotation Foo; end
+        end
+
+        @[MyNamespace::Foo]
+        def bar; end
+
+        bar
+        CR
+        "warning in line 3\nWarning: Deprecated annotation MyNamespace::Foo."
+    end
+  end
+
   describe "deprecated methods" do
     it "detects top-level deprecated methods" do
       assert_warning <<-CR,
@@ -227,12 +257,12 @@ describe "Semantic: warnings" do
             CR
 
           compiler = create_spec_compiler
-          compiler.warnings = Warnings::All
-          compiler.warnings_exclude << Crystal.normalize_path "lib"
+          compiler.warnings.level = :all
+          compiler.warnings.exclude_lib_path = true
           compiler.prelude = "empty"
-          result = compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
+          compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
 
-          result.program.warning_failures.size.should eq(1)
+          compiler.warnings.infos.size.should eq(1)
         end
       end
     end
@@ -396,12 +426,12 @@ describe "Semantic: warnings" do
           )
 
           compiler = create_spec_compiler
-          compiler.warnings = Warnings::All
-          compiler.warnings_exclude << Crystal.normalize_path "lib"
+          compiler.warnings.level = :all
+          compiler.warnings.exclude_lib_path = true
           compiler.prelude = "empty"
-          result = compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
+          compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
 
-          result.program.warning_failures.size.should eq(1)
+          compiler.warnings.infos.size.should eq(1)
         end
       end
     end
@@ -728,5 +758,45 @@ describe "Semantic: warnings" do
           CR
       end
     end
+
+    it "doesn't warn if current type is abstract (#12266)" do
+      warnings_result(<<-CR).should be_empty
+        class Foo
+          def foo(x); end
+        end
+
+        abstract class Bar < Foo
+          abstract def foo(y)
+        end
+
+        abstract class Baz < Bar
+        end
+        CR
+    end
+
+    it "doesn't warn if current type is a module (#12266)" do
+      warnings_result(<<-CR).should be_empty
+        module Foo
+          def foo(x); end # Warning: positional parameter 'x' corresponds to parameter 'y' of the overridden method Bar#foo(y), which has a different name and may affect named argument passing
+        end
+
+        module Bar
+          include Foo
+          abstract def foo(y)
+        end
+
+        module Baz
+          include Bar
+        end
+        CR
+    end
+  end
+
+  it "exposes syntax warnings" do
+    assert_warning UInt64::MAX.to_s, "Warning: #{UInt64::MAX} doesn't fit in an Int64, try using the suffix u64 or i128"
+  end
+
+  it "exposes syntax warnings after macro interpolation" do
+    assert_warning "{% begin %}0x8000_0000_0000_000{{ 0 }}{% end %}", "Warning: 0x8000_0000_0000_0000 doesn't fit in an Int64, try using the suffix u64 or i128"
   end
 end

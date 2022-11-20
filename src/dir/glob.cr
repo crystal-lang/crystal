@@ -147,7 +147,7 @@ class Dir
 
     private def self.constant_entry?(file)
       file.each_char do |char|
-        return false if char == '*' || char == '?'
+        return false if char.in?('*', '?')
       end
 
       true
@@ -325,7 +325,7 @@ class Dir
     private def self.each_child(path)
       Dir.open(path || Dir.current) do |dir|
         while entry = read_entry(dir)
-          next if entry.name == "." || entry.name == ".."
+          next if entry.name.in?(".", "..")
           yield entry
         end
       end

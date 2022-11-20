@@ -45,6 +45,7 @@ class Crystal::Loader
   end
 
   getter search_paths : Array(String)
+  getter loaded_libraries = [] of String
 
   def initialize(@search_paths : Array(String))
     @handles = [] of Handle

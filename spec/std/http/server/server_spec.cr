@@ -56,7 +56,7 @@ describe HTTP::Server do
   it "closes the server" do
     server = HTTP::Server.new { }
     address = server.bind_unused_port
-    ch = Channel(Symbol).new
+    ch = Channel(SpecChannelStatus).new
 
     spawn do
       server.listen
@@ -78,7 +78,7 @@ describe HTTP::Server do
     sleep 0.1
     server.close
 
-    ch.receive.should eq(:end)
+    ch.receive.end?.should be_true
   end
 
   pending_win32 "reuses the TCP port (SO_REUSEPORT)" do

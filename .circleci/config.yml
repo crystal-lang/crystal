@@ -4,11 +4,11 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "26cd7ec1a7a6a71368e3299e3bffed9b5f79ea67"
+    default: "f567925d4d36be64b7e211d0c166af9bdd92c75f"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.4.1/crystal-1.4.1-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.6.2/crystal-1.6.2-1"
 
 defaults:
   environment: &env
@@ -73,7 +73,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: 12.4.0
+      xcode: 13.4.1
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
@@ -272,7 +272,7 @@ jobs:
 
   dist_darwin:
     macos:
-      xcode: 12.4.0
+      xcode: 13.4.1
     shell: /bin/bash --login -eo pipefail
     steps:
       - restore_cache:

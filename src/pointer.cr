@@ -215,8 +215,8 @@ struct Pointer(T)
     self
   end
 
-  # Copies *count* elements from `self` into *source*.
-  # *source* and `self` may overlap; the copy is always done in a non-destructive manner.
+  # Copies *count* elements from `self` into *target*.
+  # *target* and `self` may overlap; the copy is always done in a non-destructive manner.
   #
   # ```
   # ptr1 = Pointer.malloc(4) { |i| i + 1 } # ptr1 -> [1, 2, 3, 4]
@@ -347,6 +347,9 @@ struct Pointer(T)
   # ptr = ptr.realloc(8)
   # ptr # [1, 2, 3, 4, 0, 0, 0, 0]
   # ```
+  #
+  # WARNING: Memory allocated using `GC.malloc` or `GC.malloc_atomic` must be
+  # reallocated using `GC.realloc` instead.
   def realloc(size : Int)
     if size < 0
       raise ArgumentError.new("Negative size")

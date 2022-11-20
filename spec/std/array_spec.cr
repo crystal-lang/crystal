@@ -459,7 +459,7 @@ describe "Array" do
     end
 
     it "works with mixed types" do
-      [1, "a", 1.0, :a].values_at(0, 1, 2, 3).should eq({1, "a", 1.0, :a})
+      [1, "a", 1.0, 'a'].values_at(0, 1, 2, 3).should eq({1, "a", 1.0, 'a'})
     end
   end
 
@@ -1819,9 +1819,9 @@ describe "Array" do
 
   describe "transpose" do
     it "transposes elements" do
-      [[:a, :b], [:c, :d], [:e, :f]].transpose.should eq([[:a, :c, :e], [:b, :d, :f]])
-      [[:a, :c, :e], [:b, :d, :f]].transpose.should eq([[:a, :b], [:c, :d], [:e, :f]])
-      [[:a]].transpose.should eq([[:a]])
+      [['a', 'b'], ['c', 'd'], ['e', 'f']].transpose.should eq([['a', 'c', 'e'], ['b', 'd', 'f']])
+      [['a', 'c', 'e'], ['b', 'd', 'f']].transpose.should eq([['a', 'b'], ['c', 'd'], ['e', 'f']])
+      [['a']].transpose.should eq([['a']])
     end
 
     it "transposes union of arrays" do

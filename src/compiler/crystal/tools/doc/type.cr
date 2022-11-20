@@ -571,7 +571,7 @@ class Crystal::Doc::Type
     return false unless node.is_a?(Path)
 
     match = lookup_path(node)
-    match && match.type == @generator.program.nil_type
+    !!match.try &.type == @generator.program.nil_type
   end
 
   def node_to_html(node, io, html : HTMLOption = :all)
