@@ -284,6 +284,7 @@ module Crystal::System::File
   end
 
   private def lock_file(handle, flags)
+    # lpOverlapped must be provided despite the synchronous use of this method.
     overlapped = LibC::OVERLAPPED.new
     overlapped.union.offset.offset = LibC::DWORD.new(0)
     overlapped.union.offset.offsetHigh = LibC::DWORD.new(0)
@@ -301,6 +302,7 @@ module Crystal::System::File
   end
 
   private def unlock_file(handle)
+    # lpOverlapped must be provided despite the synchronous use of this method.
     overlapped = LibC::OVERLAPPED.new
     overlapped.union.offset.offset = LibC::DWORD.new(0)
     overlapped.union.offset.offsetHigh = LibC::DWORD.new(0)
