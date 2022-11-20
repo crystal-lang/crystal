@@ -189,27 +189,26 @@ module Float::Printer::Dragonbox
     ]
 
     module CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32
-      MAGIC_NUMBER            = 0x199a_u32
-      MARGIN_BITS             =          8
-      DIVISIBILITY_CHECK_BITS =          8
+      MAGIC_NUMBER            = 6554_u32
+      DIVISIBILITY_CHECK_BITS =       16
+      THRESHOLD               = 6553_u32
     end
 
     module CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64
-      MAGIC_NUMBER            = 0xa3d71_u32
-      MARGIN_BITS             =          10
-      DIVISIBILITY_CHECK_BITS =          16
+      MAGIC_NUMBER            = 656_u32
+      DIVISIBILITY_CHECK_BITS =      16
+      THRESHOLD               = 655_u32
     end
 
     # N == 1
     def self.check_divisibility_and_divide_by_pow10_k1(n : UInt32)
       n &*= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::MAGIC_NUMBER
-      n >>= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::MARGIN_BITS
 
       # Mask for the lowest (divisibility_check_bits)-bits.
       divisibility_check_bits = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::DIVISIBILITY_CHECK_BITS
       comparison_mask = ~(UInt32::MAX << divisibility_check_bits)
+      result = n & comparison_mask < CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F32::THRESHOLD
 
-      result = n & comparison_mask == 0
       n >>= divisibility_check_bits
       {n, result}
     end
@@ -217,13 +216,12 @@ module Float::Printer::Dragonbox
     # N == 2
     def self.check_divisibility_and_divide_by_pow10_k2(n : UInt32)
       n &*= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::MAGIC_NUMBER
-      n >>= CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::MARGIN_BITS
 
       # Mask for the lowest (divisibility_check_bits)-bits.
       divisibility_check_bits = CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::DIVISIBILITY_CHECK_BITS
       comparison_mask = ~(UInt32::MAX << divisibility_check_bits)
+      result = n & comparison_mask < CHECK_DIVISIBILITY_AND_DIVIDE_BY_POW10_INFO_F64::THRESHOLD
 
-      result = n & comparison_mask == 0
       n >>= divisibility_check_bits
       {n, result}
     end
