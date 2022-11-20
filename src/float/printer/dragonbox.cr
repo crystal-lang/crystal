@@ -19,7 +19,7 @@
 #   is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 #   KIND, either express or implied.
 module Float::Printer::Dragonbox
-  # Current revision: https://github.com/jk-jeon/dragonbox/tree/4150375bd2e1c5a6842ecf2d68fd8bb6f8353388
+  # Current revision: https://github.com/jk-jeon/dragonbox/tree/33a9e021290d529bcb41773be2c7c3c91726a9cb
   #
   # Assumes the following policies:
   #
