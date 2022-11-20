@@ -319,11 +319,11 @@ module Float::Printer::Dragonbox
       # Compute k and beta.
       minus_k = Log.floor_log10_pow2(exponent) - ImplInfo::KAPPA
       cache = ImplInfo.get_cache(-minus_k)
-      beta_minus_1 = exponent + Log.floor_log2_pow10(-minus_k)
+      beta = exponent + Log.floor_log2_pow10(-minus_k)
 
       # Compute zi and deltai.
       # 10^kappa <= deltai < 10^(kappa + 1)
-      deltai = compute_delta(cache, beta_minus_1)
+      deltai = compute_delta(cache, beta)
       # For the case of binary32, the result of integer check is not correct for
       # 29711844 * 2^-82
       # = 6.1442653300000000008655037797566933477355632930994033813476... * 10^-18
@@ -333,7 +333,7 @@ module Float::Printer::Dragonbox
       # this does not cause any problem for the endpoints calculations; it can only
       # cause a problem when we need to perform integer check for the center.
       # Fortunately, with these inputs, that branch is never executed, so we are fine.
-      zi, is_z_integer = compute_mul((two_fc | 1) << beta_minus_1, cache)
+      zi, is_z_integer = compute_mul((two_fc | 1) << beta, cache)
 
       # Step 2: Try larger divisor
       big_divisor = ImplInfo::BIG_DIVISOR
@@ -364,13 +364,13 @@ module Float::Printer::Dragonbox
           # Otherwise, the inequalities on exponent ensure that
           # x is not an integer, so if z^(f) >= delta^(f) (even parity), we in fact
           # have strict inequality.
-          parity, _ = compute_mul_parity(two_fl, cache, beta_minus_1)
+          parity, _ = compute_mul_parity(two_fl, cache, beta)
           if parity
             ret_exponent = minus_k + ImplInfo::KAPPA + 1
             return {significand, ret_exponent}
           end
         else
-          xi_parity, is_x_integer = compute_mul_parity(two_fl, cache, beta_minus_1)
+          xi_parity, is_x_integer = compute_mul_parity(two_fl, cache, beta)
           unless !xi_parity && !is_x_integer
             ret_exponent = minus_k + ImplInfo::KAPPA + 1
             return {significand, ret_exponent}
@@ -398,7 +398,7 @@ module Float::Printer::Dragonbox
         # Since there are only 2 possibilities, we only need to care about the parity.
         # Also, zi and r should have the same parity since the divisor
         # is an even number.
-        yi_parity, is_y_integer = compute_mul_parity(two_fc, cache, beta_minus_1)
+        yi_parity, is_y_integer = compute_mul_parity(two_fc, cache, beta)
         if yi_parity != approx_y_parity
           significand -= 1
         elsif prefer_round_down?(significand) && is_y_integer
@@ -415,13 +415,13 @@ module Float::Printer::Dragonbox
     def self.compute_nearest_shorter(exponent)
       # Compute k and beta.
       minus_k = Log.floor_log10_pow2_minus_log10_4_over_3(exponent)
-      beta_minus_1 = exponent + Log.floor_log2_pow10(-minus_k)
+      beta = exponent + Log.floor_log2_pow10(-minus_k)
 
       # Compute xi and zi.
       cache = ImplInfo.get_cache(-minus_k)
 
-      xi = compute_left_endpoint_for_shorter_interval_case(cache, beta_minus_1)
-      zi = compute_right_endpoint_for_shorter_interval_case(cache, beta_minus_1)
+      xi = compute_left_endpoint_for_shorter_interval_case(cache, beta)
+      zi = compute_right_endpoint_for_shorter_interval_case(cache, beta)
 
       # If we don't accept the left endpoint or
       # if the left endpoint is not an integer, increase it.
@@ -437,7 +437,7 @@ module Float::Printer::Dragonbox
       end
 
       # Otherwise, compute the round-up of y
-      significand = compute_round_up_for_shorter_interval_case(cache, beta_minus_1)
+      significand = compute_round_up_for_shorter_interval_case(cache, beta)
       ret_exponent = minus_k
 
       # When tie occurs, choose one of them according to the rule.
@@ -464,66 +464,66 @@ module Float::Printer::Dragonbox
       {% end %}
     end
 
-    def self.compute_delta(cache, beta_minus_1) : UInt32
+    def self.compute_delta(cache, beta) : UInt32
       {% if F == Float32 %}
-        (cache >> (ImplInfo::CACHE_BITS - 1 - beta_minus_1)).to_u32!
+        (cache >> (ImplInfo::CACHE_BITS - 1 - beta)).to_u32!
       {% else %}
         # F == Float64
-        (cache.high >> (ImplInfo::CARRIER_BITS - 1 - beta_minus_1)).to_u32!
+        (cache.high >> (ImplInfo::CARRIER_BITS - 1 - beta)).to_u32!
       {% end %}
     end
 
-    def self.compute_mul_parity(two_f, cache, beta_minus_1) # : {parity: Bool, is_integer: Bool}
+    def self.compute_mul_parity(two_f, cache, beta) # : {parity: Bool, is_integer: Bool}
       {% if F == Float32 %}
         r = WUInt.umul96_lower64(two_f, cache)
         {
-          ((r >> (64 - beta_minus_1)) & 1) != 0,
-          UInt32.new!(r >> (32 - beta_minus_1)) == 0,
+          ((r >> (64 - beta)) & 1) != 0,
+          UInt32.new!(r >> (32 - beta)) == 0,
         }
       {% else %}
         # F == Float64
         r = WUInt.umul192_lower128(two_f, cache)
         {
-          ((r.high >> (64 - beta_minus_1)) & 1) != 0,
-          (r.high << beta_minus_1) | (r.low >> (64 - beta_minus_1)) == 0,
+          ((r.high >> (64 - beta)) & 1) != 0,
+          (r.high << beta) | (r.low >> (64 - beta)) == 0,
         }
       {% end %}
     end
 
-    def self.compute_left_endpoint_for_shorter_interval_case(cache, beta_minus_1)
+    def self.compute_left_endpoint_for_shorter_interval_case(cache, beta)
       significand_bits = ImplInfo::SIGNIFICAND_BITS
 
       ImplInfo::CarrierUInt.new!(
         {% if F == Float32 %}
-          (cache - (cache >> (significand_bits + 2))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta_minus_1)
+          (cache - (cache >> (significand_bits + 2))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta)
         {% else %}
           # F == Float64
-          (cache.high - (cache.high >> (significand_bits + 2))) >> (ImplInfo::CARRIER_BITS - significand_bits - 1 - beta_minus_1)
+          (cache.high - (cache.high >> (significand_bits + 2))) >> (ImplInfo::CARRIER_BITS - significand_bits - 1 - beta)
         {% end %}
       )
     end
 
-    def self.compute_right_endpoint_for_shorter_interval_case(cache, beta_minus_1)
+    def self.compute_right_endpoint_for_shorter_interval_case(cache, beta)
       significand_bits = ImplInfo::SIGNIFICAND_BITS
 
       ImplInfo::CarrierUInt.new!(
         {% if F == Float32 %}
-          (cache + (cache >> (significand_bits + 1))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta_minus_1)
+          (cache + (cache >> (significand_bits + 1))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta)
         {% else %}
           # F == Float64
-          (cache.high + (cache.high >> (significand_bits + 1))) >> (ImplInfo::CARRIER_BITS - significand_bits - 1 - beta_minus_1)
+          (cache.high + (cache.high >> (significand_bits + 1))) >> (ImplInfo::CARRIER_BITS - significand_bits - 1 - beta)
         {% end %}
       )
     end
 
-    def self.compute_round_up_for_shorter_interval_case(cache, beta_minus_1)
+    def self.compute_round_up_for_shorter_interval_case(cache, beta)
       significand_bits = ImplInfo::SIGNIFICAND_BITS
 
       {% if F == Float32 %}
-        (ImplInfo::CarrierUInt.new!(cache >> (ImplInfo::CACHE_BITS - significand_bits - 2 - beta_minus_1)) + 1) // 2
+        (ImplInfo::CarrierUInt.new!(cache >> (ImplInfo::CACHE_BITS - significand_bits - 2 - beta)) + 1) // 2
       {% else %}
         # F == Float64
-        ((cache.high >> (ImplInfo::CARRIER_BITS - significand_bits - 2 - beta_minus_1)) + 1) // 2
+        ((cache.high >> (ImplInfo::CARRIER_BITS - significand_bits - 2 - beta)) + 1) // 2
       {% end %}
     end
 
