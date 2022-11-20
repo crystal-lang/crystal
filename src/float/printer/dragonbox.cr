@@ -328,6 +328,15 @@ module Float::Printer::Dragonbox
       # Compute zi and deltai.
       # 10^kappa <= deltai < 10^(kappa + 1)
       deltai = compute_delta(cache, beta_minus_1)
+      # For the case of binary32, the result of integer check is not correct for
+      # 29711844 * 2^-82
+      # = 6.1442653300000000008655037797566933477355632930994033813476... * 10^-18
+      # and 29711844 * 2^-81
+      # = 1.2288530660000000001731007559513386695471126586198806762695... * 10^-17,
+      # and they are the unique counterexamples. However, since 29711844 is even,
+      # this does not cause any problem for the endpoints calculations; it can only
+      # cause a problem when we need to perform integer check for the center.
+      # Fortunately, with these inputs, that branch is never executed, so we are fine.
       zi, is_z_integer = compute_mul((two_fc | 1) << beta_minus_1, cache)
 
       # Step 2: Try larger divisor
