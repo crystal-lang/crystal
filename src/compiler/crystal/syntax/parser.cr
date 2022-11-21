@@ -1971,9 +1971,8 @@ module Crystal
       when .ident?
         name = @token.value.to_s
         global_call = global
-        end_location = token_end_location
-        if equals_end_location = consume_def_equals_sign_skip_space
-          end_location = equals_end_location
+        equals_sign, end_location = consume_def_equals_sign_skip_space
+        if equals_sign
           name = "#{name}="
         elsif @token.type.op_period?
           raise "ProcPointer of local variable cannot be global", location if global
@@ -1983,43 +1982,31 @@ module Crystal
           obj = Var.new(name)
 
           name = consume_def_or_macro_name
-          end_location = token_end_location
-          if equals_end_location = consume_def_equals_sign_skip_space
-            end_location = equals_end_location
-            name = "#{name}="
-          end
+          equals_sign, end_location = consume_def_equals_sign_skip_space
+          name = "#{name}=" if equals_sign
         end
       when .const?
         obj = parse_generic global: global, location: location, expression: false
         check :OP_PERIOD
         name = consume_def_or_macro_name
-        end_location = token_end_location
-        if equals_end_location = consume_def_equals_sign_skip_space
-          end_location = equals_end_location
-          name = "#{name}="
-        end
+        equals_sign, end_location = consume_def_equals_sign_skip_space
+        name = "#{name}=" if equals_sign
       when .instance_var?
         raise "ProcPointer of instance variable cannot be global", location if global
         obj = InstanceVar.new(@token.value.to_s)
         next_token_skip_space
         check :OP_PERIOD
         name = consume_def_or_macro_name
-        end_location = token_end_location
-        if equals_end_location = consume_def_equals_sign_skip_space
-          end_location = equals_end_location
-          name = "#{name}="
-        end
+        equals_sign, end_location = consume_def_equals_sign_skip_space
+        name = "#{name}=" if equals_sign
       when .class_var?
         raise "ProcPointer of class variable cannot be global", location if global
         obj = ClassVar.new(@token.value.to_s)
         next_token_skip_space
         check :OP_PERIOD
         name = consume_def_or_macro_name
-        end_location = token_end_location
-        if equals_end_location = consume_def_equals_sign_skip_space
-          end_location = equals_end_location
-          name = "#{name}="
-        end
+        equals_sign, end_location = consume_def_equals_sign_skip_space
+        name = "#{name}=" if equals_sign
       else
         unexpected_token
       end
@@ -3099,7 +3086,8 @@ module Crystal
           raise "macro can't have a receiver"
         when .ident?
           check_valid_def_name
-          name = "#{name}=" if consume_def_equals_sign_skip_space
+          equals_sign, _ = consume_def_equals_sign_skip_space
+          name = "#{name}=" if equals_sign
         else
           check_valid_def_op_name
           next_token_skip_space
@@ -3540,7 +3528,8 @@ module Crystal
       elsif @token.type.ident?
         check_valid_def_name
         name = @token.value.to_s
-        name = "#{name}=" if consume_def_equals_sign_skip_space
+        equals_sign, _ = consume_def_equals_sign_skip_space
+        name = "#{name}=" if equals_sign
       else
         check_valid_def_op_name
         name = @token.type.to_s
@@ -3567,7 +3556,8 @@ module Crystal
           name = @token.value.to_s
 
           name_location = @token.location
-          name = "#{name}=" if consume_def_equals_sign_skip_space
+          equals_sign, _ = consume_def_equals_sign_skip_space
+          name = "#{name}=" if equals_sign
         else
           check DefOrMacroCheck2
           check_valid_def_op_name
@@ -6127,14 +6117,15 @@ module Crystal
     end
 
     def consume_def_equals_sign_skip_space
-      next_token
       end_location = token_end_location
+      next_token
       if @token.type.op_eq?
+        end_location = token_end_location
         next_token_skip_space
-        end_location
+        {true, end_location}
       else
         skip_space
-        nil
+        {false, end_location}
       end
     end
 
