@@ -1429,7 +1429,6 @@ module Crystal
       end
     end
 
-    SemicolonOrNewLine = [:OP_SEMICOLON, :NEWLINE] of Token::Kind
     ConstOrDoubleColon = [:CONST, :OP_COLON_COLON] of Token::Kind
 
     def parse_rescue
@@ -1457,9 +1456,8 @@ module Crystal
         # keep going
       end
 
-      check SemicolonOrNewLine
-
-      next_token_skip_space_or_newline
+      consume_semicolon_or_newline
+      skip_space_or_newline
 
       if @token.keyword?(:end)
         body = nil
@@ -3653,13 +3651,8 @@ module Crystal
         body = Nop.new
       else
         slash_is_regex!
-
-        case @token.type
-        when .op_semicolon?, .newline?
-          skip_statement_end
-        else
-          unexpected_token %(expected ";" or newline)
-        end
+        consume_semicolon_or_newline
+        skip_statement_end
 
         end_location = token_end_location
 
@@ -6258,6 +6251,15 @@ module Crystal
       arg_name = "__arg#{@temp_arg_count}"
       @temp_arg_count += 1
       arg_name
+    end
+
+    def consume_semicolon_or_newline
+      case @token.type
+      when .newline?, .op_semicolon?
+        next_token
+      else
+        unexpected_token %(expected ";" or newline)
+      end
     end
   end
 
