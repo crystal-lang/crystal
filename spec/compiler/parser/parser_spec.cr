@@ -1974,6 +1974,11 @@ module Crystal
         end
       end
       CR
+    assert_syntax_error <<-CR, %(unexpected token: "$buzz" (expected ";" or newline))
+      lib Foo
+        $fizz : Int32 $buzz : Int32
+      end
+      CR
 
     assert_syntax_error "fun foo\nclass", "can't define class inside fun"
     assert_syntax_error "fun foo\nFoo = 1", "dynamic constant assignment"

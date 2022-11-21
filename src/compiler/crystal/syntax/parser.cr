@@ -5595,6 +5595,7 @@ module Crystal
           raise "external variables must start with lowercase, use for example `$#{name.underscore} = #{name} : #{type}`", location
         end
 
+        consume_semicolon_or_newline
         skip_statement_end
         ExternalVar.new(name, type, real_name)
       when .op_lcurly_lcurly?
