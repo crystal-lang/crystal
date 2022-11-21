@@ -1,24 +1,5 @@
 require "./spec_helper"
 
-private def base
-  Dir.current
-end
-
-private def tmpdir
-  "/tmp"
-end
-
-private def rootdir
-  "/"
-end
-
-private def home
-  home = ENV["HOME"]
-  return home if home == "/"
-
-  home.chomp('/')
-end
-
 private def it_raises_on_null_byte(operation, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
   it "errors on #{operation}", file, line, end_line do
     expect_raises(ArgumentError, "String contains null byte") do
