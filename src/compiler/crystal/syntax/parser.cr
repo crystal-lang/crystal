@@ -2881,7 +2881,7 @@ module Crystal
           skip_statement_end
           return true
         else
-          unexpected_token "expecting ',', ';' or '\n'"
+          unexpected_token "expecting ',', ';' or '\\n'"
         end
       end
       false
@@ -3655,7 +3655,7 @@ module Crystal
         slash_is_regex!
 
         case @token.type
-        when :";", :NEWLINE
+        when .op_semicolon?, .newline?
           skip_statement_end
         else
           unexpected_token %(expected ";" or newline)
