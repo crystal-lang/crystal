@@ -1171,7 +1171,7 @@ class Crystal::Call
     arg_types.each_index do |index|
       arg = typed_def.args[index]
       type = arg_types[index]
-      var = MetaVar.new(arg.name, type).at(arg.location)
+      var = MetaVar.new(arg.name, type).at(arg)
       var.bind_to(var)
       args[arg.name] = var
 
@@ -1208,7 +1208,7 @@ class Crystal::Call
       else
         default_value.raise "BUG: unknown magic constant: #{default_value.name}"
       end
-      var = MetaVar.new(arg.name, type).at(arg.location)
+      var = MetaVar.new(arg.name, type).at(arg)
       var.bind_to(var)
       args[arg.name] = var
       arg.type = type

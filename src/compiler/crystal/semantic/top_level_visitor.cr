@@ -452,7 +452,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if !@method_added_running && has_hooks?(target_type.metaclass)
         @method_added_running = true
-        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", node).at(node.location)
+        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", node).at(node)
         @method_added_running = false
       end
     end

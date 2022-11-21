@@ -140,7 +140,7 @@ module Crystal
         end
       end
 
-      TypeOf.new(type_exps).at(node.location)
+      TypeOf.new(type_exps).at(node)
     end
 
     # Converts an array-like literal to creating a container and storing the values:
@@ -176,7 +176,7 @@ module Crystal
       elem_temp_vars, elem_temp_var_count = complex_elem_temp_vars(node.elements)
       if generic_type
         type_of = typeof_exp(node, elem_temp_vars)
-        node_name = Generic.new(generic_type, type_of).at(node.location)
+        node_name = Generic.new(generic_type, type_of).at(node)
       else
         node_name = node.name
       end

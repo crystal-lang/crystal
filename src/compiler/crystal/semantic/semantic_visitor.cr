@@ -426,7 +426,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       return expanded
     end
 
-    the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
+    the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node)
 
     skip_macro_exception = nil
 
