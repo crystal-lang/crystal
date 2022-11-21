@@ -24,10 +24,8 @@ end
 
 private def location_to_index(string, location)
   index = 0
-  line = 1
-  while line != location.line_number
-    index = string.index('\n', index).not_nil! + 1
-    line += 1
+  location.line_number.times do
+    index = string.index!('\n', index) + 1
   end
   index + location.column_number - 1
 end

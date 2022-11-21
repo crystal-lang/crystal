@@ -4841,8 +4841,7 @@ module Crystal
       else
         raise "expecting variable or instance variable after out"
       end
-      var.location = @token.location
-      var.end_location = token_end_location
+      var.at(@token.location).at_end(token_end_location)
       next_token
       Out.new(var).at(location).at_end(var)
     end
