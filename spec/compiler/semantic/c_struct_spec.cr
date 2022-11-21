@@ -379,7 +379,8 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = Foo.new
       ),
-      "no overload matches 'Int32#+' with type Char", inject_primitives: true
+      "expected argument #1 to 'Int32#+' to be Float32, Float64, Int128, Int16, Int32, Int64, Int8, UInt128, UInt16, UInt32, UInt64 or UInt8, not Char",
+      inject_primitives: true
   end
 
   it "errors if invoking to_unsafe and got different type" do

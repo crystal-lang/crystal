@@ -92,6 +92,12 @@ class URI
       end
     end
 
+    it "#inspect" do
+      URI::Params.new.inspect.should eq "URI::Params{}"
+
+      URI::Params{"foo" => ["bar", "baz"], "baz" => ["qux"]}.inspect.should eq %(URI::Params{"foo" => ["bar", "baz"], "baz" => ["qux"]})
+    end
+
     describe "#[](name)" do
       it "returns first value for provided param name" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")

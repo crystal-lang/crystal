@@ -4,11 +4,11 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "8328ae59292c05cf8c830a34b5b39ac46c43813e"
+    default: "f567925d4d36be64b7e211d0c166af9bdd92c75f"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.3.2/crystal-1.3.2-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.6.2/crystal-1.6.2-1"
 
 defaults:
   environment: &env
@@ -32,7 +32,8 @@ defaults:
 
 jobs:
   test_linux:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -60,7 +61,8 @@ jobs:
             - docs
 
   test_alpine:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -71,7 +73,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: 12.4.0
+      xcode: 13.4.1
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
@@ -102,7 +104,8 @@ jobs:
             - ~/Library/Caches/Homebrew/downloads
 
   test_preview_mt:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -247,7 +250,8 @@ jobs:
             - distribution-scripts
 
   dist_linux:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -268,7 +272,7 @@ jobs:
 
   dist_darwin:
     macos:
-      xcode: 12.4.0
+      xcode: 13.4.1
     shell: /bin/bash --login -eo pipefail
     steps:
       - restore_cache:
@@ -329,7 +333,8 @@ jobs:
                 /tmp/workspace/build/crystal-*-docs.tar.gz
 
   dist_docker:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -344,7 +349,8 @@ jobs:
             - build
 
   publish_docker:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -398,7 +404,8 @@ jobs:
             snapcraft push /tmp/workspace/build/*.snap --release=$SNAP_CHANNEL
 
   dist_docs:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -416,6 +423,22 @@ jobs:
           paths:
             - build
 
+  publish_nightly_artifacts:
+    docker:
+      - image: manastech/s3cmd:2.2-alpine
+    environment:
+      <<: *env
+      AWS_ACCESS_KEY_ID: AKIA2EEIIRCJCMOSW2XH
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          mkdir -p /tmp/upload
+          cd /tmp/workspace/build
+          cp crystal-*-darwin-universal.tar.gz /tmp/upload/crystal-nightly-darwin-universal.tar.gz
+          cp crystal-*-linux-x86_64.tar.gz /tmp/upload/crystal-nightly-linux-x86_64.tar.gz
+      - run: s3cmd put --recursive /tmp/upload/* s3://artifacts.crystal-lang.org/dist/
+
   dist_artifacts:
     docker:
       - image: buildpack-deps:xenial
@@ -427,7 +450,8 @@ jobs:
           destination: dist_packages
 
   test_dist_linux_on_docker:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
@@ -571,6 +595,10 @@ workflows:
       - dist_docs:
           requires:
             - dist_docker
+      - publish_nightly_artifacts:
+          requires:
+            - dist_linux
+            - dist_darwin
       - dist_artifacts:
           requires:
             - dist_linux

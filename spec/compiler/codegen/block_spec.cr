@@ -1571,4 +1571,37 @@ describe "Code gen: block" do
       end
     )).to_i.should eq(1)
   end
+
+  it "(bug) doesn't set needs_value to true on every yield (#12442)" do
+    run(%(
+      def foo
+        if true
+          yield
+        end
+
+        1
+      end
+
+      foo do
+        1
+      end
+      )).to_i.should eq(1)
+  end
+
+  it "doesn't crash if yield exp has no type (#12670)" do
+    codegen(%(
+      def foo : String?
+      end
+
+      def bar
+        while res = foo
+          yield res
+        end
+      end
+
+      bar do |res|
+        res
+      end
+      ))
+  end
 end

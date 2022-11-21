@@ -394,6 +394,11 @@ class URI
       end
     end
 
+    def inspect(io : IO)
+      io << "URI::Params"
+      @raw_params.inspect(io)
+    end
+
     # :nodoc:
     def self.decode_one_www_form_component(query, bytesize, i, byte, char, buffer)
       URI.decode_one query, bytesize, i, byte, char, buffer, true

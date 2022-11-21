@@ -18,7 +18,7 @@ module Crystal::System::Dir
       raise ::File::Error.from_os_error("Error opening directory", Errno::ENOENT, file: path)
     end
 
-    DirHandle.new(LibC::INVALID_HANDLE_VALUE, to_windows_path(path + "\\*"))
+    DirHandle.new(LibC::INVALID_HANDLE_VALUE, System.to_wstr(path + "\\*"))
   end
 
   def self.next_entry(dir : DirHandle, path : String) : Entry?
@@ -27,11 +27,11 @@ module Crystal::System::Dir
       handle = LibC.FindFirstFileW(dir.query, out data)
       if handle != LibC::INVALID_HANDLE_VALUE
         dir.handle = handle
-        return data_to_entry(data)
+        data_to_entry(data)
       else
         error = WinError.value
         if error == WinError::ERROR_FILE_NOT_FOUND
-          return nil
+          nil
         else
           raise ::File::Error.from_os_error("Error reading directory entries", error, file: path)
         end
@@ -39,11 +39,11 @@ module Crystal::System::Dir
     else
       # Use FindNextFile
       if LibC.FindNextFileW(dir.handle, out data_) != 0
-        return data_to_entry(data_)
+        data_to_entry(data_)
       else
         error = WinError.value
         if error == WinError::ERROR_NO_MORE_FILES
-          return nil
+          nil
         else
           raise ::File::Error.from_os_error("Error reading directory entries", error, file: path)
         end
@@ -61,14 +61,30 @@ module Crystal::System::Dir
     close(dir)
   end
 
-  def self.close(dir : DirHandle, path : String) : Nil
-    return if dir.handle == LibC::INVALID_HANDLE_VALUE
+  def self.info(dir : DirHandle, path) : ::File::Info
+    if dir.handle == LibC::INVALID_HANDLE_VALUE
+      handle = LibC.FindFirstFileW(dir.query, out data)
+      begin
+        Crystal::System::FileDescriptor.system_info handle, LibC::FILE_TYPE_DISK
+      ensure
+        close(handle, path) rescue nil
+      end
+    else
+      Crystal::System::FileDescriptor.system_info dir.handle, LibC::FILE_TYPE_DISK
+    end
+  end
 
-    if LibC.FindClose(dir.handle) == 0
+  def self.close(dir : DirHandle, path : String) : Nil
+    close(dir.handle, path)
+    dir.handle = LibC::INVALID_HANDLE_VALUE
+  end
+
+  def self.close(handle : LibC::HANDLE, path : String) : Nil
+    return if handle == LibC::INVALID_HANDLE_VALUE
+
+    if LibC.FindClose(handle) == 0
       raise ::File::Error.from_winerror("Error closing directory", file: path)
     end
-
-    dir.handle = LibC::INVALID_HANDLE_VALUE
   end
 
   def self.current : String
@@ -85,7 +101,7 @@ module Crystal::System::Dir
   end
 
   def self.current=(path : String) : String
-    if LibC.SetCurrentDirectoryW(to_windows_path(path)) == 0
+    if LibC.SetCurrentDirectoryW(System.to_wstr(path)) == 0
       raise ::File::Error.from_winerror("Error while changing directory", file: path)
     end
 
@@ -108,18 +124,18 @@ module Crystal::System::Dir
   end
 
   def self.create(path : String, mode : Int32) : Nil
-    if LibC._wmkdir(to_windows_path(path)) == -1
+    if LibC._wmkdir(System.to_wstr(path)) == -1
       raise ::File::Error.from_errno("Unable to create directory", file: path)
     end
   end
 
-  def self.delete(path : String) : Nil
-    if LibC._wrmdir(to_windows_path(path)) == -1
+  def self.delete(path : String, *, raise_on_missing : Bool) : Bool
+    return true if LibC._wrmdir(System.to_wstr(path)) == 0
+
+    if !raise_on_missing && Errno.value == Errno::ENOENT
+      false
+    else
       raise ::File::Error.from_errno("Unable to remove directory", file: path)
     end
-  end
-
-  private def self.to_windows_path(path : String) : LibC::LPWSTR
-    path.check_no_null_byte.to_utf16.to_unsafe
   end
 end

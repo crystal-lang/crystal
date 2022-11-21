@@ -68,7 +68,7 @@ module Crystal
     end
   end
 
-  class RechableVisitor < Visitor
+  class ReachableVisitor < Visitor
     @visited_typed_defs : Set(Def)
 
     def initialize(@context_visitor : Crystal::ContextVisitor)
@@ -77,13 +77,11 @@ module Crystal
 
     def visit(node : Call)
       return false if node.obj.nil? && node.name == "raise"
-      node.target_defs.try do |defs|
-        defs.each do |typed_def|
-          typed_def.accept(self)
-          next unless @context_visitor.def_with_yield.not_nil!.location == typed_def.location
-          @context_visitor.inside_typed_def do
-            typed_def.accept(@context_visitor)
-          end
+      node.target_defs.each do |typed_def|
+        typed_def.accept(self)
+        next unless @context_visitor.def_with_yield.not_nil!.location == typed_def.location
+        @context_visitor.inside_typed_def do
+          typed_def.accept(@context_visitor)
         end
       end
       true
@@ -154,7 +152,7 @@ module Crystal
 
         if @def_with_yield
           @context = Hash(String, Type).new
-          result.node.accept(RechableVisitor.new(self))
+          result.node.accept(ReachableVisitor.new(self))
         end
 
         # TODO should apply only if user is really in some of the nodes of the main expressions
@@ -163,14 +161,14 @@ module Crystal
 
       if @contexts.empty?
         if @found_untyped_def
-          return ContextResult.new("failed", "no context information found (methods which are never called don't have a context)")
+          ContextResult.new("failed", "no context information found (methods which are never called don't have a context)")
         else
-          return ContextResult.new("failed", "no context information found")
+          ContextResult.new("failed", "no context information found")
         end
       else
         res = ContextResult.new("ok", "#{@contexts.size} possible context#{@contexts.size > 1 ? "s" : ""} found")
         res.contexts = @contexts
-        return res
+        res
       end
     end
 

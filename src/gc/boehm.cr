@@ -28,7 +28,13 @@
 lib LibGC
   alias Int = LibC::Int
   alias SizeT = LibC::SizeT
-  alias Word = LibC::ULong
+  {% if flag?(:win32) && flag?(:bits64) %}
+    alias Word = LibC::ULongLong
+    alias SignedWord = LibC::LongLong
+  {% else %}
+    alias Word = LibC::ULong
+    alias SignedWord = LibC::Long
+  {% end %}
 
   struct StackBase
     mem_base : Void*
@@ -85,7 +91,7 @@ lib LibGC
 
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
-  {% if flag?(:preview_mt) %}
+  {% if flag?(:preview_mt) || flag?(:win32) %}
     fun get_my_stackbottom = GC_get_my_stackbottom(sb : StackBase*) : ThreadHandle
     fun set_stackbottom = GC_set_stackbottom(th : ThreadHandle, sb : StackBase*) : ThreadHandle
   {% else %}
@@ -94,14 +100,14 @@ lib LibGC
 
   fun set_on_collection_event = GC_set_on_collection_event(cb : ->)
 
-  $gc_no = GC_gc_no : LibC::ULong
-  $bytes_found = GC_bytes_found : LibC::Long
+  $gc_no = GC_gc_no : Word
+  $bytes_found = GC_bytes_found : SignedWord
   # GC_on_collection_event isn't exported.  Can't collect totals without it.
   # bytes_allocd, heap_size, unmapped_bytes are macros
 
   fun size = GC_size(addr : Void*) : LibC::SizeT
 
-  {% unless flag?(:win32) %}
+  {% unless flag?(:win32) || flag?(:wasm32) %}
     # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
     fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*) : LibC::Int
     fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
@@ -256,7 +262,7 @@ module GC
 
   # :nodoc:
   def self.current_thread_stack_bottom
-    {% if flag?(:preview_mt) %}
+    {% if flag?(:preview_mt) || flag?(:win32) %}
       th = LibGC.get_my_stackbottom(out sb)
       {th, sb.mem_base}
     {% else %}
@@ -270,6 +276,16 @@ module GC
       sb = LibGC::StackBase.new
       sb.mem_base = stack_bottom
       LibGC.set_stackbottom(thread_handle, pointerof(sb))
+    end
+  {% elsif flag?(:win32) %}
+    # this is necessary because Boehm GC does _not_ use `GC_stackbottom` on
+    # Windows when pushing all threads' stacks; instead `GC_set_stackbottom`
+    # must be used to associate the new bottom with the running thread
+    def self.set_stackbottom(stack_bottom : Void*)
+      sb = LibGC::StackBase.new
+      sb.mem_base = stack_bottom
+      # `nil` represents the current thread (i.e. the only one)
+      LibGC.set_stackbottom(nil, pointerof(sb))
     end
   {% else %}
     def self.set_stackbottom(stack_bottom : Void*)

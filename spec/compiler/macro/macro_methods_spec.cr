@@ -154,6 +154,45 @@ module Crystal
           assert_macro "{{ x.nil? }}", "true", {x: Nop.new}
         end
       end
+
+      describe "#is_a?" do
+        it "union argument" do
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral) }}), "true", {x: 1.int32}
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral) }}), "true", {x: "hello".string}
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral) }}), "false", {x: "hello".symbol}
+
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral | SymbolLiteral) }}), "true", {x: 1.int32}
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral | SymbolLiteral) }}), "true", {x: "hello".string}
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral | SymbolLiteral) }}), "true", {x: "hello".symbol}
+          assert_macro %({{ x.is_a?(NumberLiteral | StringLiteral | SymbolLiteral) }}), "false", {x: "hello".call}
+        end
+
+        it "union argument, mergeable" do
+          assert_macro %({{ x.is_a?(NumberLiteral | ASTNode) }}), "true", {x: 1.int32}
+          assert_macro %({{ x.is_a?(NumberLiteral | ASTNode) }}), "true", {x: "hello".string}
+        end
+
+        it "union argument, duplicate type" do
+          assert_macro %({{ x.is_a?(NumberLiteral | NumberLiteral) }}), "true", {x: 1.int32}
+          assert_macro %({{ x.is_a?(NumberLiteral | NumberLiteral) }}), "false", {x: "hello".string}
+        end
+
+        it "union argument, contains NoReturn" do
+          assert_macro %({{ x.is_a?(NumberLiteral | NoReturn) }}), "true", {x: 1.int32}
+          assert_macro %({{ x.is_a?(NumberLiteral | NoReturn) }}), "false", {x: "hello".string}
+        end
+
+        it "union argument, undefined types" do
+          assert_macro %({{ x.is_a?(NumberLiteral | String) }}), "true", {x: 1.int32}
+          assert_macro %({{ x.is_a?(NumberLiteral | String) }}), "false", {x: "hello".string}
+          assert_macro %({{ x.is_a?(Int32 | String) }}), "false", {x: 1.int32}
+        end
+
+        it "union argument, unimplemented types" do
+          assert_macro %({{ x.is_a?(ClassDef) }}), "true", {x: ClassDef.new("Foo".path)}
+          assert_macro %({{ x.is_a?(ModuleDef) }}), "false", {x: ClassDef.new("Foo".path)}
+        end
+      end
     end
 
     describe "number methods" do
@@ -826,8 +865,32 @@ module Crystal
         assert_macro %({{ [1, 2, 3].includes?(4) }}), %(false)
       end
 
-      it "executes +" do
-        assert_macro %({{ [1, 2] + [3, 4, 5] }}), %([1, 2, 3, 4, 5])
+      describe "#+" do
+        context "with TupleLiteral argument" do
+          it "concatenates the literals into an ArrayLiteral" do
+            assert_macro %({{ [1, 2] + {3, 4, 5} }}), %([1, 2, 3, 4, 5])
+          end
+        end
+
+        context "with ArrayLiteral argument" do
+          it "concatenates the literals into an ArrayLiteral" do
+            assert_macro %({{ [1, 2] + [3, 4, 5] }}), %([1, 2, 3, 4, 5])
+          end
+        end
+      end
+
+      describe "#-" do
+        context "with TupleLiteral argument" do
+          it "removes the elements in RHS from LHS into an ArrayLiteral" do
+            assert_macro %({{ [1, 2, 3, 4] - {1, 3, 5} }}), %([2, 4])
+          end
+        end
+
+        context "with ArrayLiteral argument" do
+          it "removes the elements in RHS from LHS into an ArrayLiteral" do
+            assert_macro %({{ [1, 2, 3, 4] - [1, 3, 5] }}), %([2, 4])
+          end
+        end
       end
 
       it "executes [] with range" do
@@ -856,7 +919,7 @@ module Crystal
       end
 
       it "executes of" do
-        assert_macro %({{ x.of }}), %(Int64), {x: ArrayLiteral.new([] of ASTNode, of: Path.new(["Int64"]))}
+        assert_macro %({{ x.of }}), %(Int64), {x: ArrayLiteral.new([] of ASTNode, of: Path.new("Int64"))}
       end
 
       it "executes of (nop)" do
@@ -864,7 +927,7 @@ module Crystal
       end
 
       it "executes type" do
-        assert_macro %({{ x.type }}), %(Deque), {x: ArrayLiteral.new([] of ASTNode, name: Path.new(["Deque"]))}
+        assert_macro %({{ x.type }}), %(Deque), {x: ArrayLiteral.new([] of ASTNode, name: Path.new("Deque"))}
       end
 
       it "executes type (nop)" do
@@ -924,7 +987,7 @@ module Crystal
       end
 
       it "executes of_key" do
-        of = HashLiteral::Entry.new(Path.new(["String"]), Path.new(["UInt8"]))
+        of = HashLiteral::Entry.new(Path.new("String"), Path.new("UInt8"))
         assert_macro %({{ x.of_key }}), %(String), {x: HashLiteral.new([] of HashLiteral::Entry, of: of)}
       end
 
@@ -933,7 +996,7 @@ module Crystal
       end
 
       it "executes of_value" do
-        of = HashLiteral::Entry.new(Path.new(["String"]), Path.new(["UInt8"]))
+        of = HashLiteral::Entry.new(Path.new("String"), Path.new("UInt8"))
         assert_macro %({{ x.of_value }}), %(UInt8), {x: HashLiteral.new([] of HashLiteral::Entry, of: of)}
       end
 
@@ -942,7 +1005,7 @@ module Crystal
       end
 
       it "executes type" do
-        assert_macro %({{ x.type }}), %(Headers), {x: HashLiteral.new([] of HashLiteral::Entry, name: Path.new(["Headers"]))}
+        assert_macro %({{ x.type }}), %(Headers), {x: HashLiteral.new([] of HashLiteral::Entry, name: Path.new("Headers"))}
       end
 
       it "executes type (nop)" do
@@ -1333,8 +1396,32 @@ module Crystal
         assert_macro %({{ {1, 2, 3}.includes?(4) }}), %(false)
       end
 
-      it "executes +" do
-        assert_macro %({{ {1, 2} + {3, 4, 5} }}), %({1, 2, 3, 4, 5})
+      describe "#+" do
+        context "with TupleLiteral argument" do
+          it "concatenates the literals into a TupleLiteral" do
+            assert_macro %({{ {1, 2} + {3, 4, 5} }}), %({1, 2, 3, 4, 5})
+          end
+        end
+
+        context "with ArrayLiteral argument" do
+          it "concatenates the literals into a TupleLiteral" do
+            assert_macro %({{ {1, 2} + [3, 4, 5] }}), %({1, 2, 3, 4, 5})
+          end
+        end
+      end
+
+      describe "#-" do
+        context "with TupleLiteral argument" do
+          it "removes the elements in RHS from LHS into a TupleLiteral" do
+            assert_macro %({{ {1, 2, 3, 4} - {1, 3, 5} }}), %({2, 4})
+          end
+        end
+
+        context "with ArrayLiteral argument" do
+          it "removes the elements in RHS from LHS into a TupleLiteral" do
+            assert_macro %({{ {1, 2, 3, 4} - [1, 3, 5] }}), %({2, 4})
+          end
+        end
       end
     end
 
@@ -1644,6 +1731,20 @@ module Crystal
       it "executes type_vars" do
         assert_macro("{{x.type_vars.map &.stringify}}", %(["A", "B"])) do |program|
           {x: TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))}
+        end
+        assert_macro("{{x.type_vars.map &.stringify}}", %(["Int32", "String"])) do |program|
+          generic_class = GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"])
+          {x: TypeNode.new(generic_class.instantiate([program.int32, program.string] of TypeVar))}
+        end
+        assert_macro("{{x.type_vars.map &.stringify}}", %(["Tuple(Int32, String)"])) do |program|
+          generic_class = GenericClassType.new(program, program, "SomeType", program.object, ["T"])
+          generic_class.splat_index = 0
+          {x: TypeNode.new(generic_class.instantiate([program.int32, program.string] of TypeVar))}
+        end
+        assert_macro("{{x.type_vars.map &.stringify}}", %(["Tuple()"])) do |program|
+          generic_class = GenericClassType.new(program, program, "SomeType", program.object, ["T"])
+          generic_class.splat_index = 0
+          {x: TypeNode.new(generic_class.instantiate([] of TypeVar))}
         end
       end
 
@@ -2017,17 +2118,61 @@ module Crystal
           end
         end
       end
+
       describe "#nilable?" do
         it false do
           assert_macro("{{x.nilable?}}", "false") do |program|
             {x: TypeNode.new(program.string)}
           end
+
+          assert_macro("{{x.nilable?}}", "false") do |program|
+            {x: TypeNode.new(program.union_of(program.string, program.int32))}
+          end
+
+          assert_macro("{{x.nilable?}}", "false") do |program|
+            {x: TypeNode.new(program.no_return)}
+          end
+
+          assert_macro("{{x.nilable?}}", "false") do |program|
+            {x: TypeNode.new(program.class_type)}
+          end
+
+          assert_macro("{{x.nilable?}}", "false") do |program|
+            {x: TypeNode.new(program.reference)}
+          end
         end
 
         it true do
           assert_macro("{{x.nilable?}}", "true") do |program|
+            {x: TypeNode.new(program.nil_type)}
+          end
+
+          assert_macro("{{x.nilable?}}", "true") do |program|
             {x: TypeNode.new(program.union_of(program.string, program.nil))}
           end
+
+          assert_macro("{{x.nilable?}}", "true") do |program|
+            {x: TypeNode.new(program.value)}
+          end
+
+          assert_macro("{{x.nilable?}}", "true") do |program|
+            {x: TypeNode.new(program.object)}
+          end
+
+          assert_macro("{{x.nilable?}}", "true") do |program|
+            mod = NonGenericModuleType.new(program, program, "SomeModule")
+            program.nil_type.include mod
+            {x: TypeNode.new(mod)}
+          end
+
+          assert_type(<<-CR) { int32 }
+            class Foo(T)
+            end
+
+            alias Bar = Foo(Bar)?
+
+            {{ Bar.nilable? ? 1 : 'a' }}
+            CR
         end
       end
 
@@ -2154,6 +2299,12 @@ module Crystal
 
       it "executes args when not empty" do
         assert_macro %({{x.args}}), "[SomeType, OtherType]", {x: ProcPointer.new(Var.new("some_object"), "method", [Path.new("SomeType"), Path.new("OtherType")] of ASTNode)}
+      end
+
+      it "executes global?" do
+        assert_macro %({{x.global?}}), "false", {x: ProcPointer.new(nil, "method")}
+        assert_macro %({{x.global?}}), "true", {x: ProcPointer.new(nil, "method", global: true)}
+        assert_macro %({{x.global?}}), "false", {x: ProcPointer.new(Path.global("Foo"), "method")}
       end
     end
 
@@ -2603,15 +2754,15 @@ module Crystal
       end
     end
 
-    describe "multiassign methods" do
-      multiassign_node = MultiAssign.new(["foo".var, "bar".var] of ASTNode, [2.int32, "a".string] of ASTNode)
+    describe "multi_assign methods" do
+      multi_assign_node = MultiAssign.new(["foo".var, "bar".var] of ASTNode, [2.int32, "a".string] of ASTNode)
 
       it "executes targets" do
-        assert_macro %({{x.targets}}), %([foo, bar]), {x: multiassign_node}
+        assert_macro %({{x.targets}}), %([foo, bar]), {x: multi_assign_node}
       end
 
       it "executes values" do
-        assert_macro %({{x.values}}), %([2, "a"]), {x: multiassign_node}
+        assert_macro %({{x.values}}), %([2, "a"]), {x: multi_assign_node}
       end
     end
 
@@ -2662,6 +2813,7 @@ module Crystal
 
       it "executes type_vars" do
         assert_macro %({{x.type_vars}}), "[T, U]", {x: Generic.new("Foo".path, ["T".path, "U".path] of ASTNode)}
+        assert_macro %({{x.type_vars}}), "[]", {x: Generic.new("Foo".path, [] of ASTNode)}
       end
 
       it "executes named_args" do
@@ -2735,7 +2887,7 @@ module Crystal
     describe "path methods" do
       it "executes names" do
         assert_macro %({{x.names}}), %([String]), {x: Path.new("String")}
-        assert_macro %({{x.names}}), %([Foo, Bar]), {x: Path.new(["Foo", "Bar"])}
+        assert_macro %({{x.names}}), %([Foo, Bar]), {x: Path.new("Foo", "Bar")}
       end
 
       it "executes global?" do
@@ -2768,7 +2920,7 @@ module Crystal
     describe "annotation methods" do
       it "executes name" do
         assert_macro %({{x.name}}), %(Foo), {x: Annotation.new(Path.new("Foo"))}
-        assert_macro %({{x.name}}), %(Foo::Bar), {x: Annotation.new(Path.new(["Foo", "Bar"]))}
+        assert_macro %({{x.name}}), %(Foo::Bar), {x: Annotation.new(Path.new("Foo", "Bar"))}
       end
 
       it "executes [] with NumberLiteral" do
@@ -2889,6 +3041,10 @@ module Crystal
           assert_macro %({{parse_type :Foo }}), %(nil)
         end
       end
+
+      it "exposes syntax warnings" do
+        assert_warning %({% parse_type "Foo(0x8000_0000_0000_0000)" %}), "Warning: 0x8000_0000_0000_0000 doesn't fit in an Int64, try using the suffix u64 or i128"
+      end
     end
 
     describe "printing" do
@@ -2944,13 +3100,13 @@ module Crystal
       it "returns true if file exists" do
         run(%q<
           {{file_exists?("#{__DIR__}/../data/build")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(10)
+          >, filename: __FILE__).to_i.should eq(10)
       end
 
       it "returns false if file doesn't exist" do
         run(%q<
           {{file_exists?("#{__DIR__}/../data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
 
@@ -2958,13 +3114,13 @@ module Crystal
       it "reads file (exists)" do
         run(%q<
           {{file_exists?("spec/compiler/data/build")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(10)
+          >, filename: __FILE__).to_i.should eq(10)
       end
 
       it "reads file (doesn't exist)" do
         run(%q<
           {{file_exists?("spec/compiler/data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
   end
@@ -2974,7 +3130,7 @@ module Crystal
       it "reads file (exists)" do
         run(%q<
           {{read_file("#{__DIR__}/../data/build")}}
-          >, filename = __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
+          >, filename: __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
       end
 
       it "reads file (doesn't exist)" do
@@ -2989,7 +3145,7 @@ module Crystal
       it "reads file (exists)" do
         run(%q<
           {{read_file("spec/compiler/data/build")}}
-          >, filename = __FILE__).to_string.should eq(File.read("spec/compiler/data/build"))
+          >, filename: __FILE__).to_string.should eq(File.read("spec/compiler/data/build"))
       end
 
       it "reads file (doesn't exist)" do
@@ -3006,7 +3162,7 @@ module Crystal
       it "reads file (doesn't exist)" do
         run(%q<
           {{read_file?("#{__DIR__}/../data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
 
@@ -3014,7 +3170,7 @@ module Crystal
       it "reads file (doesn't exist)" do
         run(%q<
           {{read_file?("spec/compiler/data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
   end

@@ -1,12 +1,16 @@
 require "../../support/syntax"
 
+private def t(kind : Crystal::Token::Kind)
+  kind
+end
+
 describe "Lexer doc" do
   it "lexes without doc enabled" do
     lexer = Lexer.new(%(1))
     lexer.doc_enabled = true
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    token.type.should eq(t :NUMBER)
     token.doc.should be_nil
   end
 
@@ -15,7 +19,7 @@ describe "Lexer doc" do
     lexer.doc_enabled = true
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    token.type.should eq(t :NUMBER)
     token.doc.should be_nil
   end
 
@@ -24,11 +28,11 @@ describe "Lexer doc" do
     lexer.doc_enabled = true
 
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
+    token.type.should eq(t :NEWLINE)
     token.doc.should eq("hello")
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    token.type.should eq(t :NUMBER)
     token.doc.should eq("hello")
   end
 
@@ -37,11 +41,11 @@ describe "Lexer doc" do
     lexer.doc_enabled = true
 
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
+    token.type.should eq(t :NEWLINE)
     token.doc.should eq("hello")
 
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
+    token.type.should eq(t :NEWLINE)
     token.doc.should eq("hello\nworld")
   end
 
@@ -50,19 +54,19 @@ describe "Lexer doc" do
     lexer.doc_enabled = true
 
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
+    token.type.should eq(t :NEWLINE)
     token.doc.should eq("hello")
 
     token = lexer.next_token
-    token.type.should eq(:SPACE)
+    token.type.should eq(t :SPACE)
     token.doc.should eq("hello")
 
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
+    token.type.should eq(t :NEWLINE)
     token.doc.should eq("hello\nworld")
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    token.type.should eq(t :NUMBER)
     token.doc.should eq("hello\nworld")
   end
 
@@ -71,19 +75,19 @@ describe "Lexer doc" do
     lexer.doc_enabled = true
 
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
+    token.type.should eq(t :NEWLINE)
     token.doc.should be_nil
 
     token = lexer.next_token
-    token.type.should eq(:SPACE)
+    token.type.should eq(t :SPACE)
     token.doc.should be_nil
 
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
+    token.type.should eq(t :NEWLINE)
     token.doc.should eq("world")
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    token.type.should eq(t :NUMBER)
     token.doc.should eq("world")
   end
 
@@ -92,19 +96,19 @@ describe "Lexer doc" do
     lexer.doc_enabled = true
 
     token = lexer.next_token
-    token.type.should eq(:NEWLINE)
+    token.type.should eq(t :NEWLINE)
     token.doc.should eq("hello")
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    token.type.should eq(t :NUMBER)
     token.doc.should eq("hello")
 
     token = lexer.next_token
-    token.type.should eq(:SPACE)
+    token.type.should eq(t :SPACE)
     token.doc.should be_nil
 
     token = lexer.next_token
-    token.type.should eq(:NUMBER)
+    token.type.should eq(t :NUMBER)
     token.doc.should be_nil
   end
 end

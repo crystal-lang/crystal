@@ -12,6 +12,8 @@ private LENGTH_UNITS = ->(magnitude : Int32, number : Float64) do
   end
 end
 
+private CUSTOM_PREFIXES = [['a'], ['b', 'c', 'd']]
+
 describe Number do
   describe "#format" do
     it { assert_prints 1.format, "1" }
@@ -28,6 +30,8 @@ describe Number do
     it { assert_prints 0.0.format(decimal_places: 1), "0.0" }
     it { assert_prints 0.0.format(decimal_places: 1, only_significant: true), "0.0" }
 
+    it { assert_prints 0.01.format(decimal_places: 1), "0.0" }
+
     it { assert_prints 123.45.format, "123.45" }
     it { assert_prints 123.45.format(separator: ','), "123,45" }
     it { assert_prints 123.45.format(decimal_places: 3), "123.450" }
@@ -43,6 +47,35 @@ describe Number do
     it { assert_prints 1e15.to_i64.format(decimal_places: 7), "1,000,000,000,000,000.0000000" }
     it { assert_prints 1e-5.format(decimal_places: 7), "0.0000100" }
     it { assert_prints 1e-4.format(decimal_places: 7), "0.0001000" }
+
+    it { assert_prints -1.format, "-1" }
+    it { assert_prints -12.format, "-12" }
+    it { assert_prints -123.format, "-123" }
+    it { assert_prints -1234.format, "-1,234" }
+
+    it { assert_prints -1.format(decimal_places: 1), "-1.0" }
+    it { assert_prints -1.format(decimal_places: 1, only_significant: true), "-1.0" }
+
+    it { assert_prints -0.0.format(decimal_places: 1), "-0.0" }
+    it { assert_prints -0.0.format(decimal_places: 1, only_significant: true), "-0.0" }
+
+    it { assert_prints -0.01.format(decimal_places: 1), "-0.0" }
+
+    it { assert_prints -123.45.format, "-123.45" }
+    it { assert_prints -123.45.format(separator: ','), "-123,45" }
+    it { assert_prints -123.45.format(decimal_places: 3), "-123.450" }
+    it { assert_prints -123.45.format(decimal_places: 3, only_significant: true), "-123.45" }
+    it { assert_prints -123.4567.format(decimal_places: 3), "-123.457" }
+
+    it { assert_prints -123_456.format, "-123,456" }
+    it { assert_prints -123_456.format(delimiter: '.'), "-123.456" }
+
+    it { assert_prints -123_456.789.format, "-123,456.789" }
+
+    it { assert_prints -1e15.format(decimal_places: 7), "-1,000,000,000,000,000.0000000" }
+    it { assert_prints -1e15.to_i64.format(decimal_places: 7), "-1,000,000,000,000,000.0000000" }
+    it { assert_prints -1e-5.format(decimal_places: 7), "-0.0000100" }
+    it { assert_prints -1e-4.format(decimal_places: 7), "-0.0001000" }
 
     it { assert_prints Float64::MAX.format, "179,769,313,486,231,570,814,527,423,731,704,356,798,070,567,525,844,996,598,917,476,803,157,260,780,028,538,760,589,558,632,766,878,171,540,458,953,514,382,464,234,321,326,889,464,182,768,467,546,703,537,516,986,049,910,576,551,282,076,245,490,090,389,328,944,075,868,508,455,133,942,304,583,236,903,222,948,165,808,559,332,123,348,274,797,826,204,144,723,168,738,177,180,919,299,881,250,404,026,184,124,858,368.0" }
     it { assert_prints Float64::MIN.format, "-179,769,313,486,231,570,814,527,423,731,704,356,798,070,567,525,844,996,598,917,476,803,157,260,780,028,538,760,589,558,632,766,878,171,540,458,953,514,382,464,234,321,326,889,464,182,768,467,546,703,537,516,986,049,910,576,551,282,076,245,490,090,389,328,944,075,868,508,455,133,942,304,583,236,903,222,948,165,808,559,332,123,348,274,797,826,204,144,723,168,738,177,180,919,299,881,250,404,026,184,124,858,368.0" }
@@ -86,6 +119,78 @@ describe Number do
     it { assert_prints 0.123_456_78.humanize, "123m" }
     it { assert_prints 0.123_456_78.humanize(5), "123.46m" }
 
+    it { assert_prints 1.0e-35.humanize, "0.00001q" }
+    it { assert_prints 1.0e-34.humanize, "0.0001q" }
+    it { assert_prints 1.0e-33.humanize, "0.001q" }
+    it { assert_prints 1.0e-32.humanize, "0.01q" }
+    it { assert_prints 1.0e-31.humanize, "0.1q" }
+    it { assert_prints 1.0e-30.humanize, "1.0q" }
+    it { assert_prints 1.0e-29.humanize, "10.0q" }
+    it { assert_prints 1.0e-28.humanize, "100q" }
+    it { assert_prints 1.0e-27.humanize, "1.0r" }
+    it { assert_prints 1.0e-26.humanize, "10.0r" }
+    it { assert_prints 1.0e-25.humanize, "100r" }
+    it { assert_prints 1.0e-24.humanize, "1.0y" }
+    it { assert_prints 1.0e-23.humanize, "10.0y" }
+    it { assert_prints 1.0e-22.humanize, "100y" }
+    it { assert_prints 1.0e-21.humanize, "1.0z" }
+    it { assert_prints 1.0e-20.humanize, "10.0z" }
+    it { assert_prints 1.0e-19.humanize, "100z" }
+    it { assert_prints 1.0e-18.humanize, "1.0a" }
+    it { assert_prints 1.0e-17.humanize, "10.0a" }
+    it { assert_prints 1.0e-16.humanize, "100a" }
+    it { assert_prints 1.0e-15.humanize, "1.0f" }
+    it { assert_prints 1.0e-14.humanize, "10.0f" }
+    it { assert_prints 1.0e-13.humanize, "100f" }
+    it { assert_prints 1.0e-12.humanize, "1.0p" }
+    it { assert_prints 1.0e-11.humanize, "10.0p" }
+    it { assert_prints 1.0e-10.humanize, "100p" }
+    it { assert_prints 1.0e-9.humanize, "1.0n" }
+    it { assert_prints 1.0e-8.humanize, "10.0n" }
+    it { assert_prints 1.0e-7.humanize, "100n" }
+    it { assert_prints 1.0e-6.humanize, "1.0µ" }
+    it { assert_prints 1.0e-5.humanize, "10.0µ" }
+    it { assert_prints 1.0e-4.humanize, "100µ" }
+    it { assert_prints 1.0e-3.humanize, "1.0m" }
+    it { assert_prints 1.0e-2.humanize, "10.0m" }
+    it { assert_prints 1.0e-1.humanize, "100m" }
+    it { assert_prints 1.0e+0.humanize, "1.0" }
+    it { assert_prints 1.0e+1.humanize, "10.0" }
+    it { assert_prints 1.0e+2.humanize, "100" }
+    it { assert_prints 1.0e+3.humanize, "1.0k" }
+    it { assert_prints 1.0e+4.humanize, "10.0k" }
+    it { assert_prints 1.0e+5.humanize, "100k" }
+    it { assert_prints 1.0e+6.humanize, "1.0M" }
+    it { assert_prints 1.0e+7.humanize, "10.0M" }
+    it { assert_prints 1.0e+8.humanize, "100M" }
+    it { assert_prints 1.0e+9.humanize, "1.0G" }
+    it { assert_prints 1.0e+10.humanize, "10.0G" }
+    it { assert_prints 1.0e+11.humanize, "100G" }
+    it { assert_prints 1.0e+12.humanize, "1.0T" }
+    it { assert_prints 1.0e+13.humanize, "10.0T" }
+    it { assert_prints 1.0e+14.humanize, "100T" }
+    it { assert_prints 1.0e+15.humanize, "1.0P" }
+    it { assert_prints 1.0e+16.humanize, "10.0P" }
+    it { assert_prints 1.0e+17.humanize, "100P" }
+    it { assert_prints 1.0e+18.humanize, "1.0E" }
+    it { assert_prints 1.0e+19.humanize, "10.0E" }
+    it { assert_prints 1.0e+20.humanize, "100E" }
+    it { assert_prints 1.0e+21.humanize, "1.0Z" }
+    it { assert_prints 1.0e+22.humanize, "10.0Z" }
+    it { assert_prints 1.0e+23.humanize, "100Z" }
+    it { assert_prints 1.0e+24.humanize, "1.0Y" }
+    it { assert_prints 1.0e+25.humanize, "10.0Y" }
+    it { assert_prints 1.0e+26.humanize, "100Y" }
+    it { assert_prints 1.0e+27.humanize, "1.0R" }
+    it { assert_prints 1.0e+28.humanize, "10.0R" }
+    it { assert_prints 1.0e+29.humanize, "100R" }
+    it { assert_prints 1.0e+30.humanize, "1.0Q" }
+    it { assert_prints 1.0e+31.humanize, "10.0Q" }
+    it { assert_prints 1.0e+32.humanize, "100Q" }
+    it { assert_prints 1.0e+33.humanize, "1,000Q" }
+    it { assert_prints 1.0e+34.humanize, "10,000Q" }
+    it { assert_prints 1.0e+35.humanize, "100,000Q" }
+
     it { assert_prints 1_234.567_890_123.humanize(precision: 2, significant: false), "1.23k" }
     it { assert_prints 123.456_789_012_3.humanize(precision: 2, significant: false), "123.46" }
     it { assert_prints 12.345_678_901_23.humanize(precision: 2, significant: false), "12.35" }
@@ -113,6 +218,25 @@ describe Number do
       it { assert_prints 0.001.humanize(prefixes: LENGTH_UNITS), "1.0 mm" }
       it { assert_prints 0.000_01.humanize(prefixes: LENGTH_UNITS), "10.0 µm" }
       it { assert_prints 0.000_000_001.humanize(prefixes: LENGTH_UNITS), "1.0 nm" }
+
+      it { assert_prints 1.0e-7.humanize(prefixes: CUSTOM_PREFIXES), "0.0001a" }
+      it { assert_prints 1.0e-6.humanize(prefixes: CUSTOM_PREFIXES), "0.001a" }
+      it { assert_prints 1.0e-5.humanize(prefixes: CUSTOM_PREFIXES), "0.01a" }
+      it { assert_prints 1.0e-4.humanize(prefixes: CUSTOM_PREFIXES), "0.1a" }
+      it { assert_prints 1.0e-3.humanize(prefixes: CUSTOM_PREFIXES), "1.0a" }
+      it { assert_prints 1.0e-2.humanize(prefixes: CUSTOM_PREFIXES), "10.0a" }
+      it { assert_prints 1.0e-1.humanize(prefixes: CUSTOM_PREFIXES), "100a" }
+      it { assert_prints 1.0e+0.humanize(prefixes: CUSTOM_PREFIXES), "1.0b" }
+      it { assert_prints 1.0e+1.humanize(prefixes: CUSTOM_PREFIXES), "10.0b" }
+      it { assert_prints 1.0e+2.humanize(prefixes: CUSTOM_PREFIXES), "100b" }
+      it { assert_prints 1.0e+3.humanize(prefixes: CUSTOM_PREFIXES), "1.0c" }
+      it { assert_prints 1.0e+4.humanize(prefixes: CUSTOM_PREFIXES), "10.0c" }
+      it { assert_prints 1.0e+5.humanize(prefixes: CUSTOM_PREFIXES), "100c" }
+      it { assert_prints 1.0e+6.humanize(prefixes: CUSTOM_PREFIXES), "1.0d" }
+      it { assert_prints 1.0e+7.humanize(prefixes: CUSTOM_PREFIXES), "10.0d" }
+      it { assert_prints 1.0e+8.humanize(prefixes: CUSTOM_PREFIXES), "100d" }
+      it { assert_prints 1.0e+9.humanize(prefixes: CUSTOM_PREFIXES), "1,000d" }
+      it { assert_prints 1.0e+10.humanize(prefixes: CUSTOM_PREFIXES), "10,000d" }
     end
   end
 end
