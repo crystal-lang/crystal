@@ -1297,10 +1297,11 @@ describe "File" do
       end
     end
 
-    # TODO: there is no file which is reliably nonwriteable on windows
-    pending_win32 "raises if file cannot be accessed" do
-      expect_raises(File::Error, "Error setting time on file: '/bin/ls'") do
-        File.touch("/bin/ls")
+    it "raises if file cannot be accessed" do
+      # This path is invalid because it represents a file path as a directory path
+      path = File.join(datapath("test_file.txt"), "doesnotexist")
+      expect_raises(File::Error, path.to_s) do
+        File.touch(path)
       end
     end
   end
