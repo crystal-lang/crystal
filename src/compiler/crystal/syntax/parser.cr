@@ -1456,7 +1456,7 @@ module Crystal
         # keep going
       end
 
-      consume_semicolon_or_newline
+      consume_terminator
       skip_space_or_newline
 
       if @token.keyword?(:end)
@@ -1670,7 +1670,7 @@ module Crystal
           superclass = parse_generic
         end
 
-        consume_semicolon_or_newline
+        consume_terminator
       end
       skip_statement_end
 
@@ -3651,7 +3651,7 @@ module Crystal
         body = Nop.new
       else
         slash_is_regex!
-        consume_semicolon_or_newline
+        consume_terminator
         skip_statement_end
 
         end_location = token_end_location
@@ -5595,7 +5595,7 @@ module Crystal
           raise "external variables must start with lowercase, use for example `$#{name.underscore} = #{name} : #{type}`", location
         end
 
-        consume_semicolon_or_newline
+        consume_terminator
         skip_statement_end
         ExternalVar.new(name, type, real_name)
       when .op_lcurly_lcurly?
@@ -5858,6 +5858,8 @@ module Crystal
       exps = [] of ASTNode
 
       while true
+        consume_terminator unless exps.empty?
+        skip_statement_end
         case @token.type
         when .ident?
           case @token.value
@@ -5879,8 +5881,6 @@ module Crystal
           exps << parse_percent_macro_expression
         when .op_lcurly_percent?
           exps << parse_percent_macro_control
-        when .newline?, .op_semicolon?
-          skip_statement_end
         else
           break
         end
@@ -5905,9 +5905,6 @@ module Crystal
 
       type = parse_bare_proc_type
 
-      consume_semicolon_or_newline
-      skip_statement_end
-
       vars.each do |var|
         exps << TypeDeclaration.new(var, type).at(var).at_end(type)
       end
@@ -5926,7 +5923,7 @@ module Crystal
       when .op_colon?
         next_token_skip_space_or_newline
         base_type = parse_bare_proc_type
-        consume_semicolon_or_newline
+        consume_terminator
         skip_statement_end
       when .op_semicolon?, .newline?
         skip_statement_end
@@ -6256,7 +6253,8 @@ module Crystal
       arg_name
     end
 
-    def consume_semicolon_or_newline
+    def consume_terminator
+      skip_space
       case @token.type
       when .newline?, .op_semicolon?
         next_token
