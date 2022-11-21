@@ -380,7 +380,7 @@ class Crystal::CodeGenVisitor
       Phi.open(self, to_type, @needs_value) do |phi|
         types_needing_cast.each_with_index do |type_needing_cast, i|
           # Find compatible type
-          compatible_type = to_type.union_types.find! { |ut| ut.implements?(type_needing_cast) }
+          compatible_type = to_type.union_types.find!(&.implements?(type_needing_cast))
 
           matches_label, doesnt_match_label = new_blocks "matches", "doesnt_match_label"
           cmp_result = equal?(from_type_id, type_id(type_needing_cast))

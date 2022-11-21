@@ -225,7 +225,7 @@ class Game
   def insert_tile
     value = rand > 0.8 ? 4 : 2
 
-    empty_cells = @grid.map(&.count &.nil?).sum
+    empty_cells = @grid.sum(&.count &.nil?)
 
     fill_cell = empty_cells > 1 ? rand(empty_cells - 1) + 1 : 1
 

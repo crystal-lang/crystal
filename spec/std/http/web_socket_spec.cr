@@ -588,7 +588,7 @@ describe "Websocket integration tests" do
   it "streams less than the buffer frame size" do
     integration_setup do |wsoc, bin_ch, _|
       bytes = "hello test world".to_slice
-      wsoc.stream(frame_size: 1024) { |io| io.write bytes }
+      wsoc.stream(frame_size: 1024, &.write(bytes))
       received = bin_ch.receive
       received.should eq bytes
     end
@@ -598,7 +598,7 @@ describe "Websocket integration tests" do
     integration_setup do |wsoc, bin_ch, _|
       bytes = ("hello test world" * 80).to_slice
       bytes.size.should be > 1024
-      wsoc.stream(frame_size: 1024) { |io| io.write bytes }
+      wsoc.stream(frame_size: 1024, &.write(bytes))
       received = bin_ch.receive
       received.should eq bytes
     end
