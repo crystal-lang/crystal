@@ -1967,6 +1967,13 @@ module Crystal
     assert_syntax_error "def foo : Int32 1 end", %(unexpected token: "1" (expected ";" or newline))
     assert_syntax_error "def foo(x : U) forall U end", %(unexpected token: "end" (expected ";" or newline))
     assert_syntax_error "class Foo < Bar end", %(unexpected token: "end" (expected ";" or newline))
+    assert_syntax_error <<-CR, %(unexpected token: "buzz" (expected ";" or newline))
+      lib Foo
+        struct Bar
+          fizz : Int32 buzz : Int32
+        end
+      end
+      CR
 
     assert_syntax_error "fun foo\nclass", "can't define class inside fun"
     assert_syntax_error "fun foo\nFoo = 1", "dynamic constant assignment"

@@ -5904,6 +5904,7 @@ module Crystal
 
       type = parse_bare_proc_type
 
+      consume_semicolon_or_newline
       skip_statement_end
 
       vars.each do |var|
