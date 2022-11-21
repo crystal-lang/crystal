@@ -1979,6 +1979,7 @@ module Crystal
         $fizz : Int32 $buzz : Int32
       end
       CR
+    assert_syntax_error "enum Foo : Int8 end", %(unexpected token: "end" (expected ";" or newline))
 
     assert_syntax_error "fun foo\nclass", "can't define class inside fun"
     assert_syntax_error "fun foo\nFoo = 1", "dynamic constant assignment"

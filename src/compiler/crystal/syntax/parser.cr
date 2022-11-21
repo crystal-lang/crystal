@@ -5926,6 +5926,7 @@ module Crystal
       when .op_colon?
         next_token_skip_space_or_newline
         base_type = parse_bare_proc_type
+        consume_semicolon_or_newline
         skip_statement_end
       when .op_semicolon?, .newline?
         skip_statement_end
