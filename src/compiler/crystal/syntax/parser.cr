@@ -1670,7 +1670,7 @@ module Crystal
           superclass = parse_generic
         end
 
-        unexpected_token unless @token.type.space? || is_statement_end?
+        consume_semicolon_or_newline
       end
       skip_statement_end
 
