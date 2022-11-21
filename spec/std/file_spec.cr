@@ -335,8 +335,8 @@ describe "File" do
 
   it "chown" do
     # changing owners requires special privileges, so we test that method calls do compile
-    typeof(File.chown("/tmp/test"))
-    typeof(File.chown("/tmp/test", uid: 1001, gid: 100, follow_symlinks: true))
+    typeof(File.chown("."))
+    typeof(File.chown(".", uid: 1001, gid: 100, follow_symlinks: true))
 
     File.open(File::NULL, "w") do |file|
       typeof(file.chown)
@@ -577,30 +577,27 @@ describe "File" do
     end
   end
 
-  describe "real_path" do
+  describe "#realpath" do
     it "expands paths for normal files" do
-      {% if flag?(:win32) %}
-        File.real_path("C:\\Windows").should eq(File.real_path("C:\\Windows"))
-        File.real_path("C:\\Windows\\..").should eq(File.real_path("C:\\"))
-      {% else %}
-        File.real_path("/usr/share").should eq(File.real_path("/usr/share"))
-        File.real_path("/usr/share/..").should eq(File.real_path("/usr"))
-      {% end %}
+      path = File.join(File.realpath("."), datapath("dir"))
+      File.realpath(path).should eq(path)
+      File.realpath(File.join(path, "..")).should eq(File.dirname(path))
     end
 
     it "raises if file doesn't exist" do
-      expect_raises(File::NotFoundError, "Error resolving real path: '/usr/share/foo/bar'") do
-        File.real_path("/usr/share/foo/bar")
+      path = datapath("doesnotexist")
+      expect_raises(File::NotFoundError, "Error resolving real path: '#{path}'") do
+        File.realpath(path)
       end
     end
 
-    # TODO: see Crystal::System::File.real_path TODO
+    # TODO: see Crystal::System::File.realpath TODO
     pending_win32 "expands paths of symlinks" do
       file_path = File.expand_path(datapath("test_file.txt"))
       with_tempfile("symlink.txt") do |symlink_path|
         File.symlink(file_path, symlink_path)
-        real_symlink_path = File.real_path(symlink_path)
-        real_file_path = File.real_path(file_path)
+        real_symlink_path = File.realpath(symlink_path)
+        real_file_path = File.realpath(file_path)
         real_symlink_path.should eq(real_file_path)
       end
     end
