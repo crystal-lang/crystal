@@ -50,7 +50,7 @@ module MIME::Multipart
     #
     # Can be called multiple times to append to the preamble multiple times.
     def preamble(data : Bytes) : Nil
-      preamble { |io| io.write data }
+      preamble(&.write(data))
     end
 
     # Appends *preamble_io* to the preamble segment of the multipart message.
@@ -82,7 +82,7 @@ module MIME::Multipart
     # and *data*. Throws if `#finish` or `#epilogue` is called before this
     # method.
     def body_part(headers : HTTP::Headers, data : Bytes) : Nil
-      body_part_impl(headers) { |io| io.write data }
+      body_part_impl(headers, &.write(data))
     end
 
     # Appends a body part to the multipart message with the given *headers*
@@ -141,7 +141,7 @@ module MIME::Multipart
     #
     # Can be called multiple times to append to the epilogue multiple times.
     def epilogue(data : Bytes) : Nil
-      epilogue { |io| io.write data }
+      epilogue(&.write(data))
     end
 
     # Appends *preamble_io* to the epilogue segment of the multipart message.

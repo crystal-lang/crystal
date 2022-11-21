@@ -7,7 +7,7 @@ class XML::Node
   end
 
   # :ditto:
-  def initialize(node : LibXML::Doc*)
+  def initialize(node : LibXML::Doc*, @errors = nil)
     initialize(node.as(LibXML::Node*))
   end
 
@@ -576,17 +576,9 @@ class XML::Node
     xpath(path, namespaces, variables).as(String)
   end
 
-  # :nodoc:
-  def errors=(errors)
-    @node.value._private = errors.as(Void*)
-  end
-
   # Returns the list of `XML::Error` found when parsing this document.
   # Returns `nil` if no errors were found.
-  def errors : Array(XML::Error)?
-    ptr = @node.value._private
-    ptr ? (ptr.as(Array(XML::Error))) : nil
-  end
+  getter errors : Array(XML::Error)?
 
   private def check_no_null_byte(string)
     if string.includes? Char::ZERO

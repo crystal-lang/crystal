@@ -246,6 +246,9 @@ describe "Lexer" do
   it_lexes_number :i32, ["0_i32", "0"]
   it_lexes_number :i8, ["0i8", "0"]
 
+  it_lexes_i32 [["0🔮", "0"], ["12341234🔮", "12341234"], ["0x3🔮", "3"]]
+  assert_syntax_error "0b🔮", "numeric literal without digits"
+
   it_lexes_char "'a'", 'a'
   it_lexes_char "'\\a'", '\a'
   it_lexes_char "'\\b'", '\b'
@@ -281,7 +284,9 @@ describe "Lexer" do
                     ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?", ":[]=", ":<=>", ":===",
                     ":&+", ":&-", ":&*", ":&**"]
 
-  it_lexes_global_match_data_index ["$1", "$10", "$1?", "$23?"]
+  it_lexes_global_match_data_index ["$1", "$10", "$1?", "$10?", "$23?"]
+  assert_syntax_error "$01", %(unexpected token: "1")
+  assert_syntax_error "$0?"
 
   it_lexes "$~", :OP_DOLLAR_TILDE
   it_lexes "$?", :OP_DOLLAR_QUESTION
@@ -659,4 +664,24 @@ describe "Lexer" do
   assert_syntax_error %("\\x1z"), "invalid hex escape"
 
   assert_syntax_error %("hi\\)
+
+  it "lexes regex after \\n" do
+    lexer = Lexer.new("\n/=/")
+    lexer.slash_is_regex = true
+    token = lexer.next_token
+    token.type.should eq(t :NEWLINE)
+    token = lexer.next_token
+    token.type.should eq(t :DELIMITER_START)
+    token.delimiter_state.kind.should eq(Token::DelimiterKind::REGEX)
+  end
+
+  it "lexes regex after \\r\\n" do
+    lexer = Lexer.new("\r\n/=/")
+    lexer.slash_is_regex = true
+    token = lexer.next_token
+    token.type.should eq(t :NEWLINE)
+    token = lexer.next_token
+    token.type.should eq(t :DELIMITER_START)
+    token.delimiter_state.kind.should eq(Token::DelimiterKind::REGEX)
+  end
 end

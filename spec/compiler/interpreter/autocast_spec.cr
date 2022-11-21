@@ -102,5 +102,38 @@ describe Crystal::Repl::Interpreter do
           foo.color.value
         CODE
     end
+
+    it "autocasts integer var to integer (#12560)" do
+      interpret(<<-CODE).should eq(1)
+        def foo(x : Int64)
+          x
+        end
+
+        x = 1_i32
+        foo(x)
+        CODE
+    end
+
+    it "autocasts integer var to float (#12560)" do
+      interpret(<<-CODE).should eq(1)
+        def foo(x : Float64)
+          x
+        end
+
+        x = 1_i32
+        foo(x)
+        CODE
+    end
+
+    it "autocasts float32 var to float64 (#12560)" do
+      interpret(<<-CODE).should eq(1)
+        def foo(x : Float64)
+          x
+        end
+
+        x = 1.0_f32
+        foo(x)
+        CODE
+    end
   end
 end

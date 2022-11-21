@@ -282,7 +282,7 @@ struct HTTP::Headers
   end
 
   def pretty_print(pp)
-    pp.list("HTTP::Headers{", @hash.keys.sort_by(&.name), "}") do |key|
+    pp.list("HTTP::Headers{", @hash.keys.sort_by!(&.name), "}") do |key|
       pp.group do
         key.name.pretty_print(pp)
         pp.text " =>"
@@ -300,7 +300,7 @@ struct HTTP::Headers
   end
 
   def valid_value?(value) : Bool
-    return invalid_value_char(value).nil?
+    invalid_value_char(value).nil?
   end
 
   forward_missing_to @hash

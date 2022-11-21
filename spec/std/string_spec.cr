@@ -824,7 +824,7 @@ describe "String" do
     it { "bcdaaa".strip('a').should eq("bcd") }
     it { "aaabcd".strip('a').should eq("bcd") }
 
-    it { "ababcdaba".strip { |c| c == 'a' || c == 'b' }.should eq("cd") }
+    it { "ababcdaba".strip(&.in?('a', 'b')).should eq("cd") }
   end
 
   describe "rstrip" do
@@ -845,7 +845,7 @@ describe "String" do
     it { "foobarrrr".rstrip('r').should eq("fooba") }
     it { "foobar".rstrip('x').should eq("foobar") }
 
-    it { "foobar".rstrip { |c| c == 'a' || c == 'r' }.should eq("foob") }
+    it { "foobar".rstrip(&.in?('a', 'r')).should eq("foob") }
 
     it "does not touch invalid code units in an otherwise ascii string" do
       " \xA0 ".rstrip.should eq(" \xA0")
@@ -869,7 +869,7 @@ describe "String" do
     it { "bbbbarfoo".lstrip('b').should eq("arfoo") }
     it { "barfoo".lstrip('x').should eq("barfoo") }
 
-    it { "barfoo".lstrip { |c| c == 'a' || c == 'b' }.should eq("rfoo") }
+    it { "barfoo".lstrip(&.in?('a', 'b')).should eq("rfoo") }
 
     it "does not touch invalid code units in an otherwise ascii string" do
       " \xA0 ".lstrip.should eq("\xA0 ")
@@ -967,6 +967,78 @@ describe "String" do
     end
   end
 
+  describe "#index!" do
+    describe "by char" do
+      it { "foo".index!('o').should eq(1) }
+      it do
+        expect_raises(Enumerable::NotFoundError) do
+          "foo".index!('g')
+        end
+      end
+
+      describe "with offset" do
+        it { "foobarbaz".index!('a', 5).should eq(7) }
+        it { "foobarbaz".index!('a', -4).should eq(7) }
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "foo".index!('f', 1)
+          end
+        end
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "foo".index!('g', -20)
+          end
+        end
+      end
+    end
+
+    describe "by string" do
+      it { "foo bar".index!("o b").should eq(2) }
+      it { "foo".index!("").should eq(0) }
+      it { "foo".index!("foo").should eq(0) }
+      it do
+        expect_raises(Enumerable::NotFoundError) do
+          "foo".index!("fg")
+        end
+      end
+
+      describe "with offset" do
+        it { "foobarbaz".index!("ba", 4).should eq(6) }
+        it { "foobarbaz".index!("ba", -5).should eq(6) }
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "foo".index!("ba", 1)
+          end
+        end
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "foo".index!("ba", -20)
+          end
+        end
+      end
+    end
+
+    describe "by regex" do
+      it { "string 12345".index!(/\d+/).should eq(7) }
+      it { "12345".index!(/\d/).should eq(0) }
+      it do
+        expect_raises(Enumerable::NotFoundError) do
+          "Hello, world!".index!(/\d/)
+        end
+      end
+
+      describe "with offset" do
+        it { "abcDef".index!(/[A-Z]/).should eq(3) }
+        it { "foobarbaz".index!(/ba/, -5).should eq(6) }
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "Foo".index!(/[A-Z]/, 1)
+          end
+        end
+      end
+    end
+  end
+
   describe "#rindex" do
     describe "by char" do
       it { "bbbb".rindex('b').should eq(3) }
@@ -1043,6 +1115,70 @@ describe "String" do
         it { "bbbb".rindex(/b/, -5).should be_nil }
         it { "bbbb".rindex(/b/, -4).should eq(0) }
         it { "日本語日本語".rindex(/日本/, 2).should eq(0) }
+      end
+    end
+  end
+
+  describe "#rindex!" do
+    describe "by char" do
+      it { "bbbb".rindex!('b').should eq(3) }
+      it { "foobar".rindex!('a').should eq(4) }
+      it do
+        expect_raises(Enumerable::NotFoundError) do
+          "foobar".rindex!('g')
+        end
+      end
+
+      describe "with offset" do
+        it { "bbbb".rindex!('b', 2).should eq(2) }
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "abbbb".rindex!('b', 0)
+          end
+        end
+      end
+    end
+
+    describe "by string" do
+      it { "bbbb".rindex!("b").should eq(3) }
+      it { "foo baro baz".rindex!("o b").should eq(7) }
+      it do
+        expect_raises(Enumerable::NotFoundError) do
+          "foo baro baz".rindex!("fg")
+        end
+      end
+
+      describe "with offset" do
+        it { "bbbb".rindex!("b", 2).should eq(2) }
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "abbbb".rindex!("b", 0)
+          end
+        end
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "bbbb".rindex!("b", -5)
+          end
+        end
+      end
+    end
+
+    describe "by regex" do
+      it { "bbbb".rindex!(/b/).should eq(3) }
+      it { "a43b53".rindex!(/\d+/).should eq(4) }
+      it do
+        expect_raises(Enumerable::NotFoundError) do
+          "bbbb".rindex!(/\d/)
+        end
+      end
+
+      describe "with offset" do
+        it { "bbbb".rindex!(/b/, 2).should eq(2) }
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "abbbb".rindex!(/b/, 0)
+          end
+        end
       end
     end
   end
@@ -1332,7 +1468,7 @@ describe "String" do
     end
 
     it "subs char with string" do
-      replaced = "foobar".sub do |char|
+      "foobar".sub do |char|
         char.should eq 'f'
         "some"
       end.should eq("someoobar")

@@ -1,6 +1,36 @@
 require "../spec_helper"
 
 describe "Semantic: warnings" do
+  describe "deprecated annotations" do
+    it "detects deprecated annotations" do
+      assert_warning <<-CR,
+        @[Deprecated]
+        annotation Foo; end
+
+        @[Foo]
+        def bar; end
+
+        bar
+        CR
+        "warning in line 2\nWarning: Deprecated annotation Foo."
+    end
+
+    it "detects deprecated namespaced annotations" do
+      assert_warning <<-CR,
+        module MyNamespace
+          @[Deprecated]
+          annotation Foo; end
+        end
+
+        @[MyNamespace::Foo]
+        def bar; end
+
+        bar
+        CR
+        "warning in line 3\nWarning: Deprecated annotation MyNamespace::Foo."
+    end
+  end
+
   describe "deprecated methods" do
     it "detects top-level deprecated methods" do
       assert_warning <<-CR,
@@ -230,7 +260,7 @@ describe "Semantic: warnings" do
           compiler.warnings.level = :all
           compiler.warnings.exclude_lib_path = true
           compiler.prelude = "empty"
-          result = compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
+          compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
 
           compiler.warnings.infos.size.should eq(1)
         end
@@ -399,7 +429,7 @@ describe "Semantic: warnings" do
           compiler.warnings.level = :all
           compiler.warnings.exclude_lib_path = true
           compiler.prelude = "empty"
-          result = compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
+          compiler.compile Compiler::Source.new(main_filename, File.read(main_filename)), output_filename
 
           compiler.warnings.infos.size.should eq(1)
         end

@@ -393,16 +393,25 @@ describe "URI" do
     it "registers port for scheme" do
       URI.set_default_port("ponzi", 9999)
       URI.default_port("ponzi").should eq(9999)
+    ensure
+      URI.set_default_port("ponzi", nil)
     end
 
     it "unregisters port for scheme" do
-      URI.set_default_port("ftp", nil)
-      URI.default_port("ftp").should eq(nil)
+      old_port = URI.default_port("ftp")
+      begin
+        URI.set_default_port("ftp", nil)
+        URI.default_port("ftp").should eq(nil)
+      ensure
+        URI.set_default_port("ftp", old_port)
+      end
     end
 
     it "treats scheme case insensitively" do
       URI.set_default_port("UNKNOWN", 1234)
       URI.default_port("unknown").should eq(1234)
+    ensure
+      URI.set_default_port("UNKNOWN", nil)
     end
   end
 

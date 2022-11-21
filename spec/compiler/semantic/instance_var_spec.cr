@@ -4367,7 +4367,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var of generic class" do
-    result = assert_type("
+    assert_type("
       class Foo(T)
         @x : T
 
@@ -4385,7 +4385,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var of generic class after reopen" do
-    result = assert_type("
+    assert_type("
       class Foo(T)
       end
 
@@ -5534,6 +5534,31 @@ describe "Semantic: instance var" do
 
       Test.new.@foo
       )) { int32 }
+  end
+
+  it "looks up self restriction in instantiated type, not defined type" do
+    assert_type(<<-CR) { types["Foo2"] }
+      class Foo1
+        def foo : self
+          self
+        end
+      end
+
+      class Foo2 < Foo1
+      end
+
+      class Bar
+        def initialize
+          @x = Foo2.new
+        end
+
+        def bar
+          @x = @x.foo
+        end
+      end
+
+      Bar.new.bar
+      CR
   end
 
   it "inferrs Proc(Void) to Proc(Nil)" do

@@ -64,7 +64,7 @@ module ENV
   # the *key* does not exist.
   def self.fetch(key : String, &block : String -> T) : String | T forall T
     if value = Crystal::System::Env.get(key)
-      return value
+      value
     else
       yield key
     end
@@ -128,7 +128,7 @@ module ENV
   end
 
   def self.pretty_print(pp)
-    pp.list("{", keys.sort, "}") do |key|
+    pp.list("{", keys.sort!, "}") do |key|
       pp.group do
         key.pretty_print(pp)
         pp.text " =>"

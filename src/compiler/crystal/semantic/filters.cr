@@ -142,9 +142,9 @@ module Crystal
 
       case other
       when NilType
-        return nil
+        nil
       when UnionType
-        return Type.merge(other.union_types.reject &.nil_type?)
+        Type.merge(other.union_types.reject &.nil_type?)
       else
         other
       end

@@ -412,7 +412,8 @@ class File < IO::FileDescriptor
   #   * `"c*"` matches all files beginning with `c`.
   #   * `"*c"` matches all files ending with `c`.
   #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
-  # * `**` matches an unlimited number of arbitrary characters including `/`.
+  # * `**` matches directories recursively if followed by `/`.
+  #   If this path segment contains any other characters, it is the same as the usual `*`.
   # * `?` matches any one character excluding `/`.
   # * character sets:
   #   * `[abc]` matches any one of these character.
@@ -610,8 +611,14 @@ class File < IO::FileDescriptor
   end
 
   # Resolves the real path of *path* by following symbolic links.
+  def self.realpath(path : Path | String) : String
+    Crystal::System::File.realpath(path.to_s)
+  end
+
+  # :ditto:
+  @[Deprecated("Use `.realpath` instead.")]
   def self.real_path(path : Path | String) : String
-    Crystal::System::File.real_path(path.to_s)
+    realpath(path)
   end
 
   # Creates a new link (also known as a hard link) at *new_path* to an existing file

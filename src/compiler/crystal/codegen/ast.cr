@@ -3,7 +3,7 @@ require "../syntax/ast"
 module Crystal
   class ASTNode
     def no_returns?
-      type?.try &.no_return?
+      !!type?.try &.no_return?
     end
   end
 

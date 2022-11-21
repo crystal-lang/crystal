@@ -275,6 +275,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : AnnotationDef)
     check_outside_exp node, "declare annotation"
 
+    annotations = read_annotations
+    process_annotations(annotations) do |annotation_type, ann|
+      node.add_annotation(annotation_type, ann)
+    end
+
     scope, name, type = lookup_type_def(node)
 
     if type
@@ -286,7 +291,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope.types[name] = type
     end
 
-    attach_doc type, node, annotations: nil
+    node.resolved_type = type
+
+    attach_doc type, node, annotations
 
     false
   end
@@ -501,6 +508,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     type.private = true if node.visibility.private?
 
+    wasm_import_module = nil
+
     process_annotations(annotations) do |annotation_type, ann|
       case annotation_type
       when @program.link_annotation
@@ -513,6 +522,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         if ann.args.size > 1
           @program.warnings.add_warning(ann, "using non-named arguments for Link annotations is deprecated")
         end
+
+        if wasm_import_module && link_annotation.wasm_import_module
+          ann.raise "multiple wasm import modules specified for lib #{node.name}"
+        end
+
+        wasm_import_module = link_annotation.wasm_import_module
 
         type.add_link_annotation(link_annotation)
       when @program.call_convention_annotation
@@ -849,7 +864,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.raise "can only use 'private' for types"
       end
     when Assign
-      if (target = exp.target).is_a?(Path)
+      if exp.target.is_a?(Path)
         if node.modifier.private?
           return false
         else
@@ -919,6 +934,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     scope = current_type
     if !call_convention && scope.is_a?(LibType)
       call_convention = scope.call_convention
+    end
+
+    if scope.is_a?(LibType)
+      external.wasm_import_module = scope.wasm_import_module
     end
 
     # We fill the arguments and return type in TypeDeclarationVisitor
@@ -1045,7 +1064,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def has_hooks?(type_with_hooks)
     hooks = type_with_hooks.as?(ModuleType).try &.hooks
-    hooks && !hooks.empty?
+    !hooks.nil? && !hooks.empty?
   end
 
   def run_hooks(type_with_hooks, current_type, kind : HookKind, node, call = nil)
