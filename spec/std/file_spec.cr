@@ -586,7 +586,7 @@ describe "File" do
 
     it "raises if file doesn't exist" do
       path = datapath("doesnotexist")
-      expect_raises(File::NotFoundError, "Error resolving real path: '#{path}'") do
+      expect_raises(File::NotFoundError, "Error resolving real path: '#{path.inspect_unquoted}'") do
         File.realpath(path)
       end
     end
@@ -1300,7 +1300,7 @@ describe "File" do
     it "raises if file cannot be accessed" do
       # This path is invalid because it represents a file path as a directory path
       path = File.join(datapath("test_file.txt"), "doesnotexist")
-      expect_raises(File::Error, path.to_s) do
+      expect_raises(File::Error, path.inspect_unquoted) do
         File.touch(path)
       end
     end
