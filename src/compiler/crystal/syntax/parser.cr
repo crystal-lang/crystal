@@ -525,20 +525,22 @@ module Crystal
     end
 
     def new_range(exp, location, exclusive)
+      end_location = token_end_location
       check_void_value exp, location
       next_token_skip_space
       check_void_expression_keyword
-      right = if end_token? ||
-                 @token.type.op_rparen? ||
-                 @token.type.op_comma? ||
-                 @token.type.op_semicolon? ||
-                 @token.type.op_eq_gt? ||
-                 @token.type.newline?
-                Nop.new
-              else
-                parse_or
-              end
-      RangeLiteral.new(exp, right, exclusive).at(location).at_end(right)
+      if end_token? ||
+         @token.type.op_rparen? ||
+         @token.type.op_comma? ||
+         @token.type.op_semicolon? ||
+         @token.type.op_eq_gt? ||
+         @token.type.newline?
+        right = Nop.new
+      else
+        right = parse_or
+        end_location = right.end_location
+      end
+      RangeLiteral.new(exp, right, exclusive).at(location).at_end(end_location)
     end
 
     macro parse_operator(name, next_operator, node, *operators, right_associative = false)
@@ -969,6 +971,7 @@ module Crystal
       location = @token.location
       atomic = parse_atomic_without_location
       atomic.location ||= location
+      atomic.end_location ||= token_end_location
       atomic
     end
 
