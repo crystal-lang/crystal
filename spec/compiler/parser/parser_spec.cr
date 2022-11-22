@@ -2220,6 +2220,7 @@ module Crystal
       assert_end_location "@@a = uninitialized Foo"
       assert_end_location "1 rescue 2"
       assert_end_location "1 ensure 2"
+      assert_end_location "foo.bar= *baz"
 
       assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
       assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"

@@ -869,9 +869,10 @@ module Crystal
 
     def parse_single_arg
       if @token.type.op_star?
+        location = @token.location
         next_token_skip_space
         arg = parse_op_assign_no_control
-        Splat.new(arg)
+        Splat.new(arg).at(location).at_end(arg)
       else
         parse_op_assign_no_control
       end
