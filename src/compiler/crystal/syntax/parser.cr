@@ -980,7 +980,6 @@ module Crystal
       location = @token.location
       atomic = parse_atomic_without_location
       atomic.location ||= location
-      atomic.end_location ||= token_end_location
       atomic
     end
 
