@@ -1374,10 +1374,10 @@ module Crystal
       next_token_skip_statement_end
       exps = parse_expressions
       node, end_location = parse_exception_handler exps, begin_location: begin_location
-      node.end_location = end_location
       if !node.is_a?(ExceptionHandler) && (!node.is_a?(Expressions) || !node.keyword.none?)
-        node = Expressions.new([node]).at(begin_location).at_end(end_location)
+        node = Expressions.new([node])
       end
+      node.at(begin_location).at_end(end_location)
       node.keyword = :begin if node.is_a?(Expressions)
       node
     end
@@ -1444,7 +1444,6 @@ module Crystal
         ex.ensure_location = ensure_location
         {ex, end_location}
       else
-        exp.at(begin_location)
         {exp, end_location}
       end
     end
