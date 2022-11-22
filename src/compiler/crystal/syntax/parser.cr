@@ -2336,6 +2336,10 @@ module Crystal
     end
 
     def parse_string_without_interpolation(context, want_skip_space = true)
+      parse_string_literal_without_interpolation(context, want_skip_space).value
+    end
+
+    def parse_string_literal_without_interpolation(context, want_skip_space = true)
       location = @token.location
 
       unless string_literal_start?
@@ -2344,7 +2348,7 @@ module Crystal
 
       string = parse_delimiter(want_skip_space)
       if string.is_a?(StringLiteral)
-        string.value
+        string
       else
         raise "interpolation not allowed in #{context}", location
       end
@@ -2701,11 +2705,11 @@ module Crystal
       raise "can't require inside type declarations", @token if @type_nest > 0
 
       next_token_skip_space
-      string = parse_string_without_interpolation("require")
+      string_literal = parse_string_literal_without_interpolation("require")
 
       skip_space
 
-      Require.new string
+      Require.new(string_literal.value).at_end(string_literal)
     end
 
     def parse_case
