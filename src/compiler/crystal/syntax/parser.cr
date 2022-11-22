@@ -921,16 +921,18 @@ module Crystal
         name = parse_responds_to_name
         next_token_skip_space_or_newline
         check :OP_RPAREN
+        end_location = token_end_location
         next_token_skip_space
       elsif @token.type.space?
         next_token
         name = parse_responds_to_name
+        end_location = token_end_location
         next_token_skip_space
       else
         unexpected_token "expected space or '('"
       end
 
-      RespondsTo.new(atomic, name)
+      RespondsTo.new(atomic, name).at_end(end_location)
     end
 
     def parse_responds_to_name
