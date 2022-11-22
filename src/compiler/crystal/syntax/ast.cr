@@ -575,6 +575,13 @@ module Crystal
       Var.new(@name)
     end
 
+    def end_location
+      return @end_location if @end_location
+      return unless loc = @location
+
+      Location.new(loc.filename, loc.line_number, loc.column_number + name_size - 1)
+    end
+
     def_equals name
     def_hash name
   end

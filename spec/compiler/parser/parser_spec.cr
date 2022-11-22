@@ -2485,6 +2485,12 @@ module Crystal
         source_between(source, node.location, node.end_location).should eq("1, 2")
       end
 
+      it "sets correct location of var in type declaration", focus: true do
+        source = "foo : Int32"
+        node = Parser.new(source).parse.as(TypeDeclaration).var
+        source_between(source, node.location, node.end_location).should eq("foo")
+      end
+
       it "doesn't override yield with macro yield" do
         parser = Parser.new("def foo; yield 1; {% begin %} yield 1 {% end %}; end")
         a_def = parser.parse.as(Def)
