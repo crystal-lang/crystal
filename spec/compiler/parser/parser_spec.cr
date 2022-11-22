@@ -2210,6 +2210,7 @@ module Crystal
       assert_end_location "x : Foo ->"
       assert_end_location "x : Foo -> Bar"
       assert_end_location %(require "foo")
+      assert_end_location "begin; 1; 2; 3; end"
 
       assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
       assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"
