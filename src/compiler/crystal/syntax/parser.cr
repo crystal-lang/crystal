@@ -313,18 +313,22 @@ module Crystal
             rescue_body = parse_op_assign
             rescues = [Rescue.new(rescue_body)] of Rescue
             if atomic.is_a?(Assign)
-              atomic.value = ExceptionHandler.new(atomic.value, rescues).at(location).tap { |e| e.suffix = true }
+              atomic.value = ex = ExceptionHandler.new(atomic.value, rescues)
             else
-              atomic = ExceptionHandler.new(atomic, rescues).at(location).tap { |e| e.suffix = true }
+              atomic = ex = ExceptionHandler.new(atomic, rescues)
             end
+            ex.at(location).at_end(rescue_body)
+            ex.suffix = true
           when Keyword::ENSURE
             next_token_skip_space
             ensure_body = parse_op_assign
             if atomic.is_a?(Assign)
-              atomic.value = ExceptionHandler.new(atomic.value, ensure: ensure_body).at(location).tap { |e| e.suffix = true }
+              atomic.value = ex = ExceptionHandler.new(atomic.value, ensure: ensure_body)
             else
-              atomic = ExceptionHandler.new(atomic, ensure: ensure_body).at(location).tap { |e| e.suffix = true }
+              atomic = ex = ExceptionHandler.new(atomic, ensure: ensure_body)
             end
+            ex.at(location).at_end(ensure_body)
+            ex.suffix = true
           else
             break
           end
