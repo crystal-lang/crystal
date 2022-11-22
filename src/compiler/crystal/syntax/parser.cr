@@ -944,15 +944,17 @@ module Crystal
     end
 
     def parse_nil?(atomic)
+      end_location = token_end_location
       next_token
 
       if @token.type.op_lparen?
         next_token_skip_space_or_newline
         check :OP_RPAREN
+        end_location = token_end_location
         next_token_skip_space
       end
 
-      IsA.new(atomic, Path.global("Nil"), nil_check: true)
+      IsA.new(atomic, Path.global("Nil"), nil_check: true).at_end(end_location)
     end
 
     def parse_negation_suffix(atomic)
