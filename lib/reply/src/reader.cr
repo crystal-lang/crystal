@@ -189,6 +189,8 @@ module Reply
 
       loop do
         read = @char_reader.read_char(from: io)
+
+        @editor.width, @editor.height = Term::Size.size
         case read
         in Char             then on_char(read)
         in String           then on_string(read)
