@@ -482,7 +482,7 @@ struct BigDecimal < Number
     end
 
     # remove trailing zeroes
-    while buffer.size > 1 && buffer.last == 48 # '0'
+    while buffer.size > 1 && buffer.last === '0'
       buffer = buffer[0..-2]
     end
 
