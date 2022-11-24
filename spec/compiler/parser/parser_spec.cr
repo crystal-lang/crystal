@@ -2514,6 +2514,37 @@ module Crystal
         source = "foo : Int32"
         node = Parser.new(source).parse.as(TypeDeclaration).var
         node_source(source, node).should eq("foo")
+
+        source = "begin : Int32"
+        node = Parser.new(source).parse.as(TypeDeclaration).var
+        node_source(source, node).should eq("begin")
+      end
+
+      it "sets correct location of var in proc pointer" do
+        source = "foo : Foo; ->foo.bar"
+        expressions = Parser.new(source).parse.as(Expressions).expressions
+        node = expressions[1].as(ProcPointer).obj.not_nil!
+        node_source(source, node).should eq("foo")
+      end
+
+      it "sets correct location of var in macro for loop" do
+        source = "{% for foo, bar in baz %} {% end %}"
+        node = Parser.new(source).parse.as(MacroFor)
+        node_source(source, node.vars[0]).should eq("foo")
+        node_source(source, node.vars[1]).should eq("bar")
+      end
+
+      it "sets correct location of receiver var in method def" do
+        source = "def foo.bar; end"
+        node = Parser.new(source).parse.as(Def).receiver.not_nil!
+        node_source(source, node).should eq("foo")
+      end
+
+      it "sets correct location of vars in C struct" do
+        source = "lib Foo; struct Bar; fizz, buzz : Int32; end; end"
+        expressions = Parser.new(source).parse.as(LibDef).body.as(CStructOrUnionDef).body.as(Expressions).expressions
+        node_source(source, expressions[0].as(TypeDeclaration).var).should eq("fizz")
+        node_source(source, expressions[1].as(TypeDeclaration).var).should eq("buzz")
       end
 
       it "doesn't override yield with macro yield" do

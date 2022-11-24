@@ -1227,7 +1227,7 @@ module Crystal
     def check_type_declaration
       if next_comes_colon_space?
         name = @token.value.to_s
-        var = Var.new(name).at(@token.location)
+        var = Var.new(name).at(@token.location).at_end(token_end_location)
         next_token_skip_space
         check :OP_COLON
         type_declaration = parse_type_declaration(var)
@@ -1984,6 +1984,8 @@ module Crystal
       case @token.type
       when .ident?
         name = @token.value.to_s
+        var_location = @token.location
+        var_end_location = token_end_location
         global_call = global
         equals_sign, end_location = consume_def_equals_sign_skip_space
         if equals_sign
@@ -1993,7 +1995,7 @@ module Crystal
           if name != "self" && !var_in_scope?(name)
             raise "undefined variable '#{name}'", location
           end
-          obj = Var.new(name)
+          obj = Var.new(name).at(var_location).at_end(var_end_location)
 
           name = consume_def_or_macro_name
           equals_sign, end_location = consume_def_equals_sign_skip_space
@@ -3357,7 +3359,7 @@ module Crystal
                 else
                   unexpected_token "expecting ident or underscore"
                 end
-          vars << Var.new(var).at(@token.location)
+          vars << Var.new(var).at(@token.location).at_end(token_end_location)
 
           next_token_skip_space
           if @token.type.op_comma?
@@ -3561,7 +3563,7 @@ module Crystal
       if @token.type.op_period?
         unless receiver
           if name
-            receiver = Var.new(name).at(receiver_location)
+            receiver = Var.new(name).at(receiver_location).at_end(end_location)
           else
             raise "shouldn't reach this line"
           end
@@ -4317,7 +4319,7 @@ module Crystal
             end
           else
             if @no_type_declaration == 0 && @token.type.op_colon?
-              declare_var = parse_type_declaration(Var.new(name).at(location))
+              declare_var = parse_type_declaration(Var.new(name).at(location).at_end(end_location))
               end_location = declare_var.end_location
 
               # Don't declare a local variable if it happens directly as an argument
@@ -5934,13 +5936,13 @@ module Crystal
     end
 
     def parse_c_struct_or_union_fields(exps)
-      vars = [Var.new(@token.value.to_s).at(@token.location)]
+      vars = [Var.new(@token.value.to_s).at(@token.location).at_end(token_end_location)]
 
       next_token_skip_space_or_newline
 
       while @token.type.op_comma?
         next_token_skip_space_or_newline
-        vars << Var.new(check_ident).at(@token.location)
+        vars << Var.new(check_ident).at(@token.location).at_end(token_end_location)
         next_token_skip_space_or_newline
       end
 
@@ -5952,7 +5954,7 @@ module Crystal
       skip_statement_end
 
       vars.each do |var|
-        exps << TypeDeclaration.new(var, type).at(var).at_end(type)
+        exps << TypeDeclaration.new(var, type)
       end
     end
 
