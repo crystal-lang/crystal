@@ -2381,7 +2381,7 @@ module Crystal
         next_string_array_token
         case @token.type
         when .string?
-          strings << klass.new(@token.value.to_s)
+          strings << klass.new(@token.value.to_s).at(@token.location).at_end(token_end_location)
         when .string_array_end?
           end_location = token_end_location
           next_token

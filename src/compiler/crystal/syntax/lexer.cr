@@ -2307,8 +2307,6 @@ module Crystal
     end
 
     def next_string_array_token
-      reset_token
-
       while true
         if current_char == '\n'
           next_char
@@ -2319,6 +2317,8 @@ module Crystal
           break
         end
       end
+
+      reset_token
 
       if current_char == @token.delimiter_state.end
         @token.raw = current_char.to_s if @wants_raw

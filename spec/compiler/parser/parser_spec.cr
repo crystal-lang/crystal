@@ -36,16 +36,19 @@ private def source_between(string, loc, end_loc)
   string[beginning..ending]
 end
 
+private def node_source(string, node)
+  source_between(string, node.location, node.end_location)
+end
+
 private def assert_end_location(source, line_number = 1, column_number = source.size, file = __FILE__, line = __LINE__)
   it "gets corrects end location for #{source.inspect}", file, line do
     string = "#{source}; 1"
     parser = Parser.new(string)
     node = parser.parse.as(Expressions).expressions[0]
-    loc = node.location.not_nil!
+    node_source(string, node).should eq(source)
     end_loc = node.end_location.not_nil!
     end_loc.line_number.should eq(line_number)
     end_loc.column_number.should eq(column_number)
-    source_between(string, loc, end_loc).should eq(source)
   end
 end
 
@@ -2479,16 +2482,23 @@ module Crystal
         source_between(source, node.name_location, node.name_end_location).should eq("foo")
       end
 
+      it "sets correct location of element in array literal" do
+        source = "%i(foo bar)"
+        elements = Parser.new(source).parse.as(ArrayLiteral).elements
+        node_source(source, elements[0]).should eq("foo")
+        node_source(source, elements[1]).should eq("bar")
+      end
+
       it "sets correct location of implicit tuple literal of multi-return" do
         source = "def foo; return 1, 2; end"
         node = Parser.new(source).parse.as(Def).body.as(Return).exp.not_nil!
-        source_between(source, node.location, node.end_location).should eq("1, 2")
+        node_source(source, node).should eq("1, 2")
       end
 
       it "sets correct location of var in type declaration" do
         source = "foo : Int32"
         node = Parser.new(source).parse.as(TypeDeclaration).var
-        source_between(source, node.location, node.end_location).should eq("foo")
+        node_source(source, node).should eq("foo")
       end
 
       it "doesn't override yield with macro yield" do
