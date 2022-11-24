@@ -2485,7 +2485,7 @@ module Crystal
         source_between(source, node.location, node.end_location).should eq("1, 2")
       end
 
-      it "sets correct location of var in type declaration", focus: true do
+      it "sets correct location of var in type declaration" do
         source = "foo : Int32"
         node = Parser.new(source).parse.as(TypeDeclaration).var
         source_between(source, node.location, node.end_location).should eq("foo")
