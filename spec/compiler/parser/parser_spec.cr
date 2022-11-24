@@ -2476,6 +2476,14 @@ module Crystal
         node.end_location.not_nil!.line_number.should eq(5)
       end
 
+      it "sets correct location of trailing ensure" do
+        parser = Parser.new("foo ensure bar")
+        node = parser.parse.as(ExceptionHandler)
+        ensure_location = node.ensure_location.not_nil!
+        ensure_location.line_number.should eq(1)
+        ensure_location.column_number.should eq(5)
+      end
+
       it "sets correct location of call name" do
         source = "foo(bar)"
         node = Parser.new(source).parse.as(Call)

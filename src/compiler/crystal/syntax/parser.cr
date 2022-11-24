@@ -320,6 +320,7 @@ module Crystal
             ex.at(location).at_end(rescue_body)
             ex.suffix = true
           when Keyword::ENSURE
+            ensure_location = @token.location
             next_token_skip_space
             ensure_body = parse_op_assign
             if atomic.is_a?(Assign)
@@ -328,6 +329,7 @@ module Crystal
               atomic = ex = ExceptionHandler.new(atomic, ensure: ensure_body)
             end
             ex.at(location).at_end(ensure_body)
+            ex.ensure_location = ensure_location
             ex.suffix = true
           else
             break
