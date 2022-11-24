@@ -2484,6 +2484,13 @@ module Crystal
         ensure_location.column_number.should eq(5)
       end
 
+      it "sets correct location of trailing rescue" do
+        source = "foo rescue bar"
+        parser = Parser.new(source)
+        node = parser.parse.as(ExceptionHandler).rescues.not_nil![0]
+        node_source(source, node).should eq("rescue bar")
+      end
+
       it "sets correct location of call name" do
         source = "foo(bar)"
         node = Parser.new(source).parse.as(Call)

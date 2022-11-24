@@ -309,9 +309,10 @@ module Crystal
           when Keyword::UNTIL
             raise "trailing `until` is not supported", @token
           when Keyword::RESCUE
+            rescue_location = @token.location
             next_token_skip_space
             rescue_body = parse_op_assign
-            rescues = [Rescue.new(rescue_body)] of Rescue
+            rescues = [Rescue.new(rescue_body).at(rescue_location).at_end(rescue_body)] of Rescue
             if atomic.is_a?(Assign)
               atomic.value = ex = ExceptionHandler.new(atomic.value, rescues)
             else
