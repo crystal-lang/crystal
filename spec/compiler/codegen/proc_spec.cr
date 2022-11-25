@@ -896,6 +896,76 @@ describe "Code gen: proc" do
       )).to_i.should eq(1)
   end
 
+  it "saves receiver value of proc pointer `->var.foo`" do
+    run(%(
+      class Foo
+        def initialize(@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      var = Foo.new(1)
+      proc = ->var.foo
+      var = Foo.new(2)
+      proc.call
+      )).to_i.should eq(1)
+  end
+
+  it "saves receiver value of proc pointer `->@ivar.foo`" do
+    run(%(
+      class Foo
+        def initialize(@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      class Test
+        @ivar = Foo.new(1)
+
+        def test
+          proc = ->@ivar.foo
+          @ivar = Foo.new(2)
+          proc.call
+        end
+      end
+
+      Test.new.test
+      )).to_i.should eq(1)
+  end
+
+  it "saves receiver value of proc pointer `->@@cvar.foo`" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def initialize(@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      class Test
+        @@cvar = Foo.new(1)
+
+        def self.test
+          proc = ->@@cvar.foo
+          @@cvar = Foo.new(2)
+          proc.call
+        end
+      end
+
+      Test.test
+      )).to_i.should eq(1)
+  end
+
   # FIXME: JIT compilation of this spec is broken, forcing normal compilation (#10961)
   it "doesn't crash when taking a proc pointer to a virtual type (#9823)" do
     run(%(

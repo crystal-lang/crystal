@@ -46,7 +46,7 @@ class Time::Location
 
     mtime = File.info(path).modification_time
     if (cache = @@location_cache[name]?) && cache[:time] == mtime
-      return cache[:location]
+      cache[:location]
     else
       File.open(path) do |file|
         location = yield file

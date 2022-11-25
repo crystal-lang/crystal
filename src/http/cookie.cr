@@ -58,7 +58,11 @@ module HTTP
         # valid characters for cookie-name per https://tools.ietf.org/html/rfc6265#section-4.1.1
         # and https://tools.ietf.org/html/rfc2616#section-2.2
         # "!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ^_`abcdefghijklmnopqrstuvwxyz|~"
-        unless (0x21...0x7f).includes?(byte) && byte != 0x22 && byte != 0x28 && byte != 0x29 && byte != 0x2c && byte != 0x2f && !(0x3a..0x40).includes?(byte) && !(0x5b..0x5d).includes?(byte) && byte != 0x7b && byte != 0x7d
+        if !byte.in?(0x21...0x7f) ||                 # Non-printable ASCII character
+           byte.in?(0x22, 0x28, 0x29, 0x2c, 0x2f) || # '"', '(', ')', ',', '/'
+           byte.in?(0x3a..0x40) ||                   # ':', ';', '<', '=', '>', '?', '@'
+           byte.in?(0x5b..0x5d) ||                   # '[', '\\', ']'
+           byte.in?(0x7b, 0x7d)                      # '{', '}'
           raise IO::Error.new("Invalid cookie name")
         end
       end
@@ -76,7 +80,7 @@ module HTTP
       value.each_byte do |byte|
         # valid characters for cookie-value per https://tools.ietf.org/html/rfc6265#section-4.1.1
         # all printable ASCII characters except ' ', ',', '"', ';' and '\\'
-        unless (0x21...0x7f).includes?(byte) && byte != 0x22 && byte != 0x2c && byte != 0x3b && byte != 0x5c
+        if !byte.in?(0x21...0x7f) || byte.in?(0x22, 0x2c, 0x3b, 0x5c)
           raise IO::Error.new("Invalid cookie value")
         end
       end
@@ -228,7 +232,7 @@ module HTTP
     # See `HTTP::Request#cookies` and `HTTP::Client::Response#cookies`.
     @[Deprecated("Use `.from_client_headers` or `.from_server_headers` instead.")]
     def self.from_headers(headers) : self
-      new.tap { |cookies| cookies.fill_from_headers(headers) }
+      new.tap(&.fill_from_headers(headers))
     end
 
     # Filling cookies by parsing the `Cookie` and `Set-Cookie`
@@ -244,7 +248,7 @@ module HTTP
     #
     # See `HTTP::Client::Response#cookies`.
     def self.from_client_headers(headers) : self
-      new.tap { |cookies| cookies.fill_from_client_headers(headers) }
+      new.tap(&.fill_from_client_headers(headers))
     end
 
     # Filling cookies by parsing the `Cookie` headers in the given `HTTP::Headers`.
@@ -261,7 +265,7 @@ module HTTP
     #
     # See `HTTP::Request#cookies`.
     def self.from_server_headers(headers) : self
-      new.tap { |cookies| cookies.fill_from_server_headers(headers) }
+      new.tap(&.fill_from_server_headers(headers))
     end
 
     # Filling cookies by parsing the `Set-Cookie` headers in the given `HTTP::Headers`.

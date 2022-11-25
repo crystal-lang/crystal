@@ -664,10 +664,10 @@ class HTTP::Client
   end
 
   private def handle_response(response)
-    value = yield
+    yield
+  ensure
     response.body_io?.try &.close
     close unless response.keep_alive?
-    value
   end
 
   private def send_request(request)

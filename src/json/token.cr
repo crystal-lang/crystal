@@ -19,19 +19,15 @@ class JSON::Token
   property string_value : String
 
   def int_value : Int64
-    begin
-      raw_value.to_i64
-    rescue exc : ArgumentError
-      raise ParseException.new(exc.message, line_number, column_number)
-    end
+    raw_value.to_i64
+  rescue exc : ArgumentError
+    raise ParseException.new(exc.message, line_number, column_number)
   end
 
   def float_value : Float64
-    begin
-      raw_value.to_f64
-    rescue exc : ArgumentError
-      raise ParseException.new(exc.message, line_number, column_number)
-    end
+    raw_value.to_f64
+  rescue exc : ArgumentError
+    raise ParseException.new(exc.message, line_number, column_number)
   end
 
   property line_number : Int32
