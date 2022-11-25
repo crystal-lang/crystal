@@ -2282,6 +2282,10 @@ module Crystal
         if value < 0
           raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{value} (N must be positive)"
         end
+
+        if value > 10000
+          raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{value} (N must be <= 10000)"
+        end
       end
 
       StaticArrayInstanceType.new program, generic_type, program.struct, type_vars

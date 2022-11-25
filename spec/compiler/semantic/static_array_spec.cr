@@ -155,4 +155,13 @@ describe "Semantic: static array" do
       ),
       "expected argument #1 to 'fn' to be StaticArray(Int32, 11), not StaticArray(Int32, 10)"
   end
+
+  it "disallows large static array" do
+    assert_error(<<-CR, "can't instantiate StaticArray(T, N) with N = 10001 (N must be <= 10000)")
+      n = uninitialized StaticArray(Int32, 10001)
+      CR
+    assert_type(<<-CR) { static_array_of(int32, 10000)}
+      n = uninitialized StaticArray(Int32, 10000)
+      CR
+  end
 end
