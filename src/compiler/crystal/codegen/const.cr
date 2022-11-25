@@ -49,7 +49,7 @@ class Crystal::CodeGenVisitor
     # TODO: there's an LLVM bug that prevents us from having internal globals of type i128 or u128:
     # https://bugs.llvm.org/show_bug.cgi?id=42932
     # so we just use global.
-    if @single_module && !(type.is_a?(IntegerType) && (type.kind == :i128 || type.kind == :u128))
+    if @single_module && !(type.is_a?(IntegerType) && (type.kind.i128? || type.kind.u128?))
       global.linkage = LLVM::Linkage::Internal if @single_module
     end
 
@@ -75,9 +75,7 @@ class Crystal::CodeGenVisitor
     set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
 
     global = declare_const(const)
-    request_value do
-      accept const.value
-    end
+    request_value(const.value)
 
     const_type = const.value.type
     if const_type.passed_by_value?
@@ -105,9 +103,7 @@ class Crystal::CodeGenVisitor
       set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
 
       alloca_vars const.fake_def.try(&.vars), const.fake_def
-      request_value do
-        accept const.value
-      end
+      request_value(const.value)
     end
 
     const_type = const.value.type
@@ -161,9 +157,7 @@ class Crystal::CodeGenVisitor
 
           alloca_vars const.fake_def.try(&.vars), const.fake_def
 
-          request_value do
-            accept const.value
-          end
+          request_value(const.value)
 
           if const.value.type.passed_by_value?
             @last = load @last
@@ -194,16 +188,18 @@ class Crystal::CodeGenVisitor
     # We inline constants. Otherwise we use an LLVM const global.
     @last =
       case value = const.compile_time_value
-      when Bool   then int1(value ? 1 : 0)
-      when Char   then int32(value.ord)
-      when Int8   then int8(value)
-      when Int16  then int16(value)
-      when Int32  then int32(value)
-      when Int64  then int64(value)
-      when UInt8  then int8(value)
-      when UInt16 then int16(value)
-      when UInt32 then int32(value)
-      when UInt64 then int64(value)
+      when Bool    then int1(value ? 1 : 0)
+      when Char    then int32(value.ord)
+      when Int8    then int8(value)
+      when Int16   then int16(value)
+      when Int32   then int32(value)
+      when Int64   then int64(value)
+      when Int128  then int128(value)
+      when UInt8   then int8(value)
+      when UInt16  then int16(value)
+      when UInt32  then int32(value)
+      when UInt64  then int64(value)
+      when UInt128 then int128(value)
       else
         set_current_debug_location node if @debug.line_numbers?
         last = read_const_pointer(const)

@@ -9,6 +9,8 @@ require "./syscall"
   end
 
   module Crystal::System::Syscall
+    GRND_NONBLOCK = 1u32
+
     # TODO: Implement syscall for interpreter
     def self.getrandom(buf : UInt8*, buflen : LibC::SizeT, flags : UInt32) : LibC::SSizeT
       LibC.getrandom(buf, buflen, flags)
@@ -24,7 +26,7 @@ module Crystal::System::Random
   private def self.init
     @@initialized = true
 
-    if sys_getrandom(Bytes.new(16)) >= 0
+    if has_sys_getrandom
       @@getrandom_available = true
     else
       urandom = ::File.open("/dev/urandom", "r")
@@ -34,6 +36,13 @@ module Crystal::System::Random
       urandom.sync = true # don't buffer bytes
       @@urandom = urandom
     end
+  end
+
+  private def self.has_sys_getrandom
+    sys_getrandom(Bytes.new(16))
+    true
+  rescue
+    false
   end
 
   # Reads n random bytes using the Linux `getrandom(2)` syscall.
@@ -94,7 +103,7 @@ module Crystal::System::Random
       read_bytes = Syscall.getrandom(buf.to_unsafe, LibC::SizeT.new(buf.size), Syscall::GRND_NONBLOCK)
       if read_bytes < 0
         err = Errno.new(-read_bytes.to_i)
-        if err == Errno::EINTR || err == Errno::EAGAIN
+        if err.in?(Errno::EINTR, Errno::EAGAIN)
           ::Fiber.yield
         else
           raise RuntimeError.from_os_error("getrandom", err)

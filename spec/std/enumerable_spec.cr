@@ -453,6 +453,18 @@ describe "Enumerable" do
     end
   end
 
+  describe "find!" do
+    it "finds" do
+      [1, 2, 3].find! { |x| x > 2 }.should eq(3)
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        [1, 2, 3].find! { false }
+      end
+    end
+  end
+
   describe "first" do
     it "calls block if empty" do
       (1...1).first { 10 }.should eq(10)
@@ -511,8 +523,8 @@ describe "Enumerable" do
     it { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
 
     it "groups can group by size (like the doc example)" do
-      %w(Alice Bob Ary).group_by { |e| e.size }.should eq({3 => ["Bob", "Ary"],
-                                                           5 => ["Alice"]})
+      %w(Alice Bob Ary).group_by(&.size).should eq({3 => ["Bob", "Ary"],
+                                                    5 => ["Alice"]})
     end
   end
 
@@ -587,14 +599,38 @@ describe "Enumerable" do
     end
   end
 
+  describe "index! with a block" do
+    it "returns the index of the first element where the block returns true" do
+      ["Alice", "Bob"].index! { |name| name.size < 4 }.should eq 1
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        ["Alice", "Bob"].index! { |name| name.size < 3 }
+      end
+    end
+  end
+
+  describe "index! with an object" do
+    it "returns the index of that object if found" do
+      ["Alice", "Bob"].index!("Alice").should eq 0
+    end
+
+    it "raises if not found" do
+      expect_raises Enumerable::NotFoundError do
+        ["Alice", "Bob"].index!("Mallory")
+      end
+    end
+  end
+
   describe "index_by" do
     it "creates a hash indexed by the value returned by the block" do
-      hash = ["Anna", "Ary", "Alice"].index_by { |e| e.size }
+      hash = ["Anna", "Ary", "Alice"].index_by(&.size)
       hash.should eq({4 => "Anna", 3 => "Ary", 5 => "Alice"})
     end
 
     it "overrides values if a value is returned twice" do
-      hash = ["Anna", "Ary", "Alice", "Bob"].index_by { |e| e.size }
+      hash = ["Anna", "Ary", "Alice", "Bob"].index_by(&.size)
       hash.should eq({4 => "Anna", 3 => "Bob", 5 => "Alice"})
     end
   end
@@ -968,7 +1004,7 @@ describe "Enumerable" do
         [1].sample.should eq(1)
 
         x = SpecEnumerable.new.sample
-        [1, 2, 3].includes?(x).should be_true
+        [1, 2, 3].should contain(x)
       end
 
       it "samples with random" do
@@ -999,7 +1035,7 @@ describe "Enumerable" do
         x = [1, 2, 3].sample(1)
         x.size.should eq(1)
         x = x.first
-        [1, 2, 3].includes?(x).should be_true
+        [1, 2, 3].should contain(x)
       end
 
       it "samples k elements out of n" do
@@ -1012,7 +1048,7 @@ describe "Enumerable" do
         set.size.should eq(3)
 
         set.each do |e|
-          a.includes?(e).should be_true
+          a.should contain(e)
         end
       end
 
@@ -1029,7 +1065,7 @@ describe "Enumerable" do
         set.size.should eq(3)
 
         set.each do |e|
-          a.includes?(e).should be_true
+          a.should contain(e)
         end
 
         SpecEmptyEnumerable.new.sample(1).should eq([] of Int32)
@@ -1183,11 +1219,65 @@ describe "Enumerable" do
     it "returns a hash with counts according to the value returned by the block" do
       %w[a A b B c C C].tally_by(&.downcase).should eq({"a" => 2, "b" => 2, "c" => 3})
     end
+
+    context "with hash" do
+      it "returns a hash with counts according to the value returned by the block" do
+        hash = {} of Char => Int32
+        words = ["Crystal", "Ruby"]
+        words.each { |word| word.chars.tally_by(hash, &.downcase) }
+
+        hash.should eq(
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+        )
+      end
+    end
   end
 
   describe "tally" do
     it "returns a hash with counts according to the value" do
       %w[1 2 3 3 3 2].tally.should eq({"1" => 1, "2" => 2, "3" => 3})
+    end
+
+    context "with hash" do
+      it "returns a hash with counts according to the value" do
+        hash = {} of Char => Int32
+        words = ["crystal", "ruby"]
+        words.each(&.chars.tally(hash))
+
+        hash.should eq(
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+        )
+      end
+
+      it "updates existing hash with counts according to the value" do
+        hash = {'a' => 1, 'b' => 1, 'c' => 1, 'd' => 1}
+        words = ["crystal", "ruby"]
+        words.each(&.chars.tally(hash))
+
+        hash.should eq(
+          {'a' => 2, 'b' => 2, 'c' => 2, 'd' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'l' => 1, 'u' => 1}
+        )
+      end
+
+      it "ignores the default value" do
+        hash = Hash(Char, Int32).new(100)
+        words = ["crystal", "ruby"]
+        words.each(&.chars.tally(hash))
+
+        hash.should eq(
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+        )
+      end
+
+      it "returns a hash with Int64 counts according to the value" do
+        hash = {} of Char => Int64
+        words = ["crystal", "ruby"]
+        words.each(&.chars.tally(hash))
+
+        hash.should eq(
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+        )
+      end
     end
   end
 
@@ -1199,9 +1289,9 @@ describe "Enumerable" do
 
   describe "to_h" do
     it "for tuples" do
-      hash = Tuple.new({:a, 1}, {:c, 2}).to_h
-      hash.should be_a(Hash(Symbol, Int32))
-      hash.should eq({:a => 1, :c => 2})
+      hash = Tuple.new({"a", 1}, {"c", 2}).to_h
+      hash.should be_a(Hash(String, Int32))
+      hash.should eq({"a" => 1, "c" => 2})
 
       hash = Tuple.new({1, 1.0}, {'a', "aaa"}).to_h
       hash.should be_a(Hash(Int32 | Char, Float64 | String))
@@ -1209,7 +1299,7 @@ describe "Enumerable" do
     end
 
     it "for array" do
-      [[:a, :b], [:c, :d]].to_h.should eq({:a => :b, :c => :d})
+      [['a', 'b'], ['c', 'd']].to_h.should eq({'a' => 'b', 'c' => 'd'})
     end
 
     it "with block" do

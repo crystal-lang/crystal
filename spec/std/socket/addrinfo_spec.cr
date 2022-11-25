@@ -74,8 +74,8 @@ describe Socket::Addrinfo, tags: "network" do
   end
 
   describe "Error" do
-    {% unless flag?(:win32) %}
-      # This method is not available on windows because windows support was introduced after deprecation.
+    {% unless flag?(:win32) || flag?(:wasm32) %}
+      # This method is not available on windows/wasm because windows/wasm support was introduced after deprecation.
       it ".new (deprecated)" do
         error = Socket::Addrinfo::Error.new(LibC::EAI_NONAME, "No address found", "foobar.com")
         error.os_error.should eq Errno.new(LibC::EAI_NONAME)

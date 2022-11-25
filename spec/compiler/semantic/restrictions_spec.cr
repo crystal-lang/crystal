@@ -217,6 +217,58 @@ describe "Restrictions" do
       end
     end
 
+    describe "Metaclass vs Path" do
+      {% for type in [Object, Value, Class] %}
+        it "inserts metaclass before {{ type }}" do
+          assert_type(%(
+            def foo(a : {{ type }})
+              1
+            end
+
+            def foo(a : Int32.class)
+              true
+            end
+
+            foo(Int32)
+            )) { bool }
+        end
+
+        it "keeps metaclass before {{ type }}" do
+          assert_type(%(
+            def foo(a : Int32.class)
+              true
+            end
+
+            def foo(a : {{ type }})
+              1
+            end
+
+            foo(Int32)
+            )) { bool }
+        end
+      {% end %}
+
+      it "doesn't error if path is undefined and method is not called (1) (#12516)" do
+        assert_no_errors <<-CR
+          def foo(a : Int32.class)
+          end
+
+          def foo(a : Foo)
+          end
+          CR
+      end
+
+      it "doesn't error if path is undefined and method is not called (2) (#12516)" do
+        assert_no_errors <<-CR
+          def foo(a : Foo)
+          end
+
+          def foo(a : Int32.class)
+          end
+          CR
+      end
+    end
+
     describe "Path vs Path" do
       it "inserts typed Path before untyped Path" do
         assert_type(%(
@@ -495,6 +547,131 @@ describe "Restrictions" do
           )) { tuple_of([int32, bool]) }
       end
     end
+
+    describe "free variables" do
+      it "inserts path before free variable with same name" do
+        assert_type(<<-CR) { tuple_of([char, bool]) }
+          def foo(x : Int32) forall Int32
+            true
+          end
+
+          def foo(x : Int32)
+            'a'
+          end
+
+          {foo(1), foo("")}
+          CR
+      end
+
+      it "keeps path before free variable with same name" do
+        assert_type(<<-CR) { tuple_of([char, bool]) }
+          def foo(x : Int32)
+            'a'
+          end
+
+          def foo(x : Int32) forall Int32
+            true
+          end
+
+          {foo(1), foo("")}
+          CR
+      end
+
+      it "inserts path before free variable even if free var resolves to a more specialized type" do
+        assert_type(<<-CR) { tuple_of([int32, int32, bool]) }
+          class Foo
+          end
+
+          class Bar < Foo
+          end
+
+          def foo(x : Bar) forall Bar
+            true
+          end
+
+          def foo(x : Foo)
+            1
+          end
+
+          {foo(Foo.new), foo(Bar.new), foo('a')}
+          CR
+      end
+
+      it "keeps path before free variable even if free var resolves to a more specialized type" do
+        assert_type(<<-CR) { tuple_of([int32, int32, bool]) }
+          class Foo
+          end
+
+          class Bar < Foo
+          end
+
+          def foo(x : Foo)
+            1
+          end
+
+          def foo(x : Bar) forall Bar
+            true
+          end
+
+          {foo(Foo.new), foo(Bar.new), foo('a')}
+          CR
+      end
+    end
+
+    describe "Union" do
+      it "handles redefinitions (1) (#12330)" do
+        assert_type(<<-CR) { bool }
+          def foo(x : Int32 | String)
+            'a'
+          end
+
+          def foo(x : ::Int32 | String)
+            true
+          end
+
+          foo(1)
+          CR
+      end
+
+      it "handles redefinitions (2) (#12330)" do
+        assert_type(<<-CR) { bool }
+          def foo(x : Int32 | String)
+            'a'
+          end
+
+          def foo(x : String | Int32)
+            true
+          end
+
+          foo(1)
+          CR
+      end
+
+      it "orders union before generic (#12330)" do
+        assert_type(<<-CR) { bool }
+          module Foo(T)
+          end
+
+          class Bar1
+            include Foo(Int32)
+          end
+
+          class Bar2
+            include Foo(Int32)
+          end
+
+          def foo(x : Foo(Int32))
+            'a'
+          end
+
+          def foo(x : Bar1 | Bar2)
+            true
+          end
+
+          foo(Bar1.new)
+          CR
+      end
+    end
   end
 
   it "self always matches instance type in restriction" do
@@ -573,7 +750,7 @@ describe "Restrictions" do
 
       bar(1 || "")
       ),
-      "no overload matches"
+      "expected argument #1 to 'bar' to be String, not (Int32 | String)"
   end
 
   it "errors on T::Type that's union when used from type restriction" do
@@ -716,7 +893,7 @@ describe "Restrictions" do
 
       foo GenericChild(Base).new
       ),
-      "no overload matches"
+      "expected argument #1 to 'foo' to be GenericBase(Child), not GenericChild(Base)"
   end
 
   it "allows passing recursive type to free var (#1076)" do
@@ -883,21 +1060,7 @@ describe "Restrictions" do
       y = uninitialized UInt8[11]
       foo(x, y)
       ),
-      "no overload matches"
-  end
-
-  it "gives precedence to T.class over Class (#7392)" do
-    assert_type(%(
-      def foo(x : Class)
-        'a'
-      end
-
-      def foo(x : Int32.class)
-        1
-      end
-
-      foo(Int32)
-      )) { int32 }
+      "expected argument #2 to 'foo' to be StaticArray(UInt8, 10), not StaticArray(UInt8, 11)"
   end
 
   it "restricts aliased typedef type (#9474)" do
@@ -915,5 +1078,51 @@ describe "Restrictions" do
       x = uninitialized C
       foo x
       )) { int32 }
+  end
+
+  it "errors if using Tuple with named args" do
+    assert_error <<-CR, "can only instantiate NamedTuple with named arguments"
+      def foo(x : Tuple(a: Int32))
+      end
+
+      foo({1})
+      CR
+  end
+
+  it "doesn't error if using Tuple with no args" do
+    assert_type(<<-CR) { tuple_of([] of Type) }
+      def foo(x : Tuple())
+        x
+      end
+
+      def bar(*args : *T) forall T
+        args
+      end
+
+      foo(bar)
+      CR
+  end
+
+  it "errors if using NamedTuple with positional args" do
+    assert_error <<-CR, "can only instantiate NamedTuple with named arguments"
+      def foo(x : NamedTuple(Int32))
+      end
+
+      foo({a: 1})
+      CR
+  end
+
+  it "doesn't error if using NamedTuple with no args" do
+    assert_type(<<-CR) { named_tuple_of({} of String => Type) }
+      def foo(x : NamedTuple())
+        x
+      end
+
+      def bar(**opts : **T) forall T
+        opts
+      end
+
+      foo(bar)
+      CR
   end
 end

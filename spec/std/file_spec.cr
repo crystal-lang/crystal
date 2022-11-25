@@ -55,7 +55,7 @@ describe "File" do
     it "reads entire file from proc virtual filesystem" do
       str1 = File.open "/proc/self/cmdline", &.gets_to_end
       str2 = File.read "/proc/self/cmdline"
-      str2.empty?.should be_false
+      str2.should_not be_empty
       str2.should eq(str1)
     end
   {% end %}
@@ -132,17 +132,16 @@ describe "File" do
     end
   end
 
-  # TODO: implement this for win32
   describe "executable?" do
-    pending_win32 "gives false" do
+    it "gives false" do
       File.executable?(datapath("test_file.txt")).should be_false
     end
 
-    pending_win32 "gives false when the file doesn't exist" do
+    it "gives false when the file doesn't exist" do
       File.executable?(datapath("non_existing_file.txt")).should be_false
     end
 
-    pending_win32 "gives false when a component of the path is a file" do
+    it "gives false when a component of the path is a file" do
       File.executable?(datapath("dir", "test_file.txt", "")).should be_false
     end
   end
@@ -314,7 +313,7 @@ describe "File" do
     File.extname("").should eq("")
   end
 
-  # There are more detailled specs for `Path#join` in path_spec.cr
+  # There are more detailed specs for `Path#join` in path_spec.cr
   it "constructs a path from parts" do
     {% if flag?(:win32) %}
       File.join(["///foo", "bar"]).should eq("///foo\\bar")
@@ -323,9 +322,9 @@ describe "File" do
       File.join(["foo", "bar", "baz"]).should eq("foo\\bar\\baz")
       File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
       File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
-      File.join(["", "foo"]).should eq("foo")
+      File.join(["", "foo"]).should eq("\\foo")
       File.join(["foo", ""]).should eq("foo\\")
-      File.join(["", "", "foo"]).should eq("foo")
+      File.join(["", "", "foo"]).should eq("\\foo")
       File.join(["foo", "", "bar"]).should eq("foo\\bar")
       File.join(["foo", "", "", "bar"]).should eq("foo\\bar")
       File.join(["foo", "/", "bar"]).should eq("foo/bar")
@@ -340,9 +339,9 @@ describe "File" do
       File.join(["foo", "bar", "baz"]).should eq("foo/bar/baz")
       File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
       File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
-      File.join(["", "foo"]).should eq("foo")
+      File.join(["", "foo"]).should eq("/foo")
       File.join(["foo", ""]).should eq("foo/")
-      File.join(["", "", "foo"]).should eq("foo")
+      File.join(["", "", "foo"]).should eq("/foo")
       File.join(["foo", "", "bar"]).should eq("foo/bar")
       File.join(["foo", "", "", "bar"]).should eq("foo/bar")
       File.join(["foo", "/", "bar"]).should eq("foo/bar")
@@ -357,6 +356,11 @@ describe "File" do
     # changing owners requires special privileges, so we test that method calls do compile
     typeof(File.chown("/tmp/test"))
     typeof(File.chown("/tmp/test", uid: 1001, gid: 100, follow_symlinks: true))
+
+    File.open(File::NULL, "w") do |file|
+      typeof(file.chown)
+      typeof(file.chown(uid: 1001, gid: 100))
+    end
   end
 
   describe "chmod" do
@@ -365,6 +369,18 @@ describe "File" do
       begin
         File.write(path, "")
         File.chmod(path, 0o775)
+        File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
+      ensure
+        File.delete?(path)
+      end
+    end
+
+    it "changes file permissions with fchmod" do
+      path = datapath("chmod.txt")
+      begin
+        File.open(path, "w") do |file|
+          file.chmod(0o775)
+        end
         File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
       ensure
         File.delete(path) if File.exists?(path)
@@ -378,7 +394,7 @@ describe "File" do
         File.chmod(path, 0o664)
         File.info(path).permissions.should eq(normalize_permissions(0o664, directory: true))
       ensure
-        Dir.delete(path) if Dir.exists?(path)
+        Dir.delete?(path)
       end
     end
 
@@ -389,7 +405,7 @@ describe "File" do
         File.chmod(path, File::Permissions.flags(OwnerAll, GroupAll, OtherExecute, OtherRead))
         File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
       ensure
-        File.delete(path) if File.exists?(path)
+        File.delete?(path)
       end
     end
 
@@ -517,6 +533,16 @@ describe "File" do
       end
     end
 
+    it "deletes? a file" do
+      with_tempfile("delete-file.txt") do |filename|
+        File.open(filename, "w") { }
+        File.exists?(filename).should be_true
+        File.delete?(filename).should be_true
+        File.exists?(filename).should be_false
+        File.delete?(filename).should be_false
+      end
+    end
+
     it "raises when file doesn't exist" do
       with_tempfile("nonexistent_file.txt") do |path|
         expect_raises(File::NotFoundError, "Error deleting file: '#{path.inspect_unquoted}'") do
@@ -558,7 +584,7 @@ describe "File" do
     end
   end
 
-  # There are more detailled specs for `Path#expand` in path_spec.cr
+  # There are more detailed specs for `Path#expand` in path_spec.cr
   describe ".expand_path" do
     it "converts a pathname to an absolute pathname" do
       File.expand_path("a/b").should eq(Path.new("a/b").expand(Dir.current).to_s)
@@ -683,6 +709,45 @@ describe "File" do
     end
   end
 
+  it "supports the `b` mode flag" do
+    with_tempfile("b-mode-flag.txt") do |path|
+      File.open(path, "wb") do |f|
+        f.write(Bytes[1, 3, 6, 10])
+      end
+      File.open(path, "rb") do |f|
+        bytes = Bytes.new(4)
+        f.read(bytes)
+        bytes.should eq(Bytes[1, 3, 6, 10])
+      end
+      File.open(path, "ab") do |f|
+        f.size.should eq(4)
+      end
+
+      File.open(path, "r+b") do |f|
+        bytes = Bytes.new(4)
+        f.read(bytes)
+        bytes.should eq(Bytes[1, 3, 6, 10])
+        f.seek(0)
+        f.write(Bytes[1, 3, 6, 10])
+      end
+      File.open(path, "a+b") do |f|
+        f.write(Bytes[13, 13, 10])
+        f.flush
+        f.seek(0)
+        bytes = Bytes.new(7)
+        f.read(bytes)
+        bytes.should eq(Bytes[1, 3, 6, 10, 13, 13, 10])
+      end
+      File.open(path, "w+b") do |f|
+        f.size.should eq(0)
+      end
+
+      File.open(path, "rb+") { }
+      File.open(path, "wb+") { }
+      File.open(path, "ab+") { }
+    end
+  end
+
   it "opens with perm (int)" do
     with_tempfile("write_with_perm-int.txt") do |path|
       perm = 0o600
@@ -730,6 +795,28 @@ describe "File" do
       file.tell.should eq(5)
       file.sync = true
       file.tell.should eq(5)
+    end
+  end
+
+  it "returns the current write position with tell" do
+    with_tempfile("delete-file.txt") do |filename|
+      File.open(filename, "w") do |file|
+        file.tell.should eq(0)
+        file.write "12345".to_slice
+        file.tell.should eq(5)
+        file.sync = true
+        file.tell.should eq(5)
+      end
+    end
+  end
+
+  it "returns the actual position with tell after append" do
+    with_tempfile("delete-file.txt") do |filename|
+      File.write(filename, "hello")
+      File.open(filename, "a") do |file|
+        file.write "12345".to_slice
+        file.tell.should eq(10)
+      end
     end
   end
 
@@ -848,14 +935,14 @@ describe "File" do
 
   # TODO: implement flock on windows
   describe "flock" do
-    pending_win32 "exlusively locks a file" do
+    pending_win32 "exclusively locks a file" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_exclusive do
-            # BUG: check for EWOULDBLOCK when exception filters are implemented
-            expect_raises(IO::Error, "Error applying or removing file lock") do
+            exc = expect_raises(IO::Error, "Error applying file lock: file is already locked") do
               file2.flock_exclusive(blocking: false) { }
             end
+            exc.os_error.should eq Errno::EWOULDBLOCK
           end
         end
       end
@@ -867,6 +954,40 @@ describe "File" do
           file1.flock_shared do
             file2.flock_shared(blocking: false) { }
           end
+        end
+      end
+    end
+
+    pending_win32 "#flock_shared soft blocking fiber" do
+      File.open(datapath("test_file.txt")) do |file1|
+        File.open(datapath("test_file.txt")) do |file2|
+          done = Channel(Nil).new
+          file1.flock_exclusive
+
+          spawn do
+            file1.flock_unlock
+            done.send nil
+          end
+
+          file2.flock_shared
+          done.receive
+        end
+      end
+    end
+
+    pending_win32 "#flock_exclusive soft blocking fiber" do
+      File.open(datapath("test_file.txt")) do |file1|
+        File.open(datapath("test_file.txt")) do |file2|
+          done = Channel(Nil).new
+          file1.flock_exclusive
+
+          spawn do
+            file1.flock_unlock
+            done.send nil
+          end
+
+          file2.flock_exclusive
+          done.receive
         end
       end
     end
@@ -1105,6 +1226,20 @@ describe "File" do
 
         info = File.info(path)
         info.modification_time.should eq(mtime)
+      end
+    end
+
+    it "sets times with futime" do
+      with_tempfile("utime-set.txt") do |path|
+        File.open(path, "w") do |file|
+          atime = Time.utc(2000, 1, 2)
+          mtime = Time.utc(2000, 3, 4)
+
+          file.utime(atime, mtime)
+
+          info = File.info(path)
+          info.modification_time.should eq(mtime)
+        end
       end
     end
 

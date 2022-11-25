@@ -4,8 +4,9 @@ module Crystal
     getter pkg_config : String?
     getter ldflags : String?
     getter framework : String?
+    getter wasm_import_module : String?
 
-    def initialize(@lib = nil, @pkg_config = @lib, @ldflags = nil, @static = false, @framework = nil)
+    def initialize(@lib = nil, @pkg_config = @lib, @ldflags = nil, @static = false, @framework = nil, @wasm_import_module = nil)
     end
 
     def static?
@@ -25,6 +26,7 @@ module Crystal
       lib_static = false
       lib_pkg_config = nil
       lib_framework = nil
+      lib_wasm_import_module = nil
       count = 0
 
       args.each do |arg|
@@ -71,12 +73,15 @@ module Crystal
         when "pkg_config"
           named_arg.raise "'pkg_config' link argument must be a String" unless value.is_a?(StringLiteral)
           lib_pkg_config = value.value
+        when "wasm_import_module"
+          named_arg.raise "'wasm_import_module' link argument must be a String" unless value.is_a?(StringLiteral)
+          lib_wasm_import_module = value.value
         else
-          named_arg.raise "unknown link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config' and 'framework')"
+          named_arg.raise "unknown link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config', 'framework', and 'wasm_import_module')"
         end
       end
 
-      new(lib_name, lib_pkg_config, lib_ldflags, lib_static, lib_framework)
+      new(lib_name, lib_pkg_config, lib_ldflags, lib_static, lib_framework, lib_wasm_import_module)
     end
   end
 
@@ -100,7 +105,11 @@ module Crystal
 
   class Program
     def object_extension
-      has_flag?("windows") ? ".obj" : ".o"
+      case
+      when has_flag?("windows") then ".obj"
+      when has_flag?("wasm32")  then ".wasm"
+      else                           ".o"
+      end
     end
 
     def lib_flags

@@ -29,7 +29,7 @@ class JSON::Builder
 
   # Starts a document.
   def start_document : Nil
-    case state = @state.last
+    case @state.last
     when StartState
       @state[-1] = DocumentStartState.new
     when DocumentEndState
@@ -41,7 +41,7 @@ class JSON::Builder
 
   # Signals the end of a JSON document.
   def end_document : Nil
-    case state = @state.last
+    case @state.last
     when StartState
       raise JSON::Error.new("Empty JSON")
     when DocumentStartState

@@ -35,7 +35,7 @@ describe "Semantic: class" do
   end
 
   it "types generic of generic type" do
-    result = assert_type("
+    assert_type("
       class Foo(T)
         def set
           @coco = 2
@@ -833,7 +833,7 @@ describe "Semantic: class" do
 
       Foo.new 'a'
       ),
-      "no overload matches"
+      "expected argument #1 to 'Foo.new' to be Int32, not Char"
   end
 
   it "correctly types #680" do

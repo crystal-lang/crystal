@@ -10,8 +10,8 @@ require "./enumerable"
 # (1..10_000_000).select(&.even?).map { |x| x * 3 }.first(3) # => [6, 12, 18]
 # ```
 #
-# The above works, but creates many intermediate arrays: one for the *select* call,
-# one for the *map* call and one for the *take* call. A more efficient way is to invoke
+# The above works, but creates many intermediate arrays: one for the `select` call,
+# one for the `map` call and one for the `first` call. A more efficient way is to invoke
 # `Range#each` without a block, which gives us an `Iterator` so we can process the operations
 # lazily:
 #
@@ -357,7 +357,7 @@ module Iterator(T)
         value = wrapped_next
         mapped_value = @func.call(value)
 
-        return mapped_value unless mapped_value.is_a?(Nil)
+        return mapped_value unless mapped_value.nil?
       end
     end
   end
@@ -456,7 +456,7 @@ module Iterator(T)
         self.next
       else
         value = {last_elem, elem}
-        @last_elem, elem = elem, @last_elem
+        @last_elem = elem
         value
       end
     end
@@ -1065,7 +1065,7 @@ module Iterator(T)
     def next
       while true
         value = wrapped_next
-        return value if @returned_false == true
+        return value if @returned_false
         unless @func.call(value)
           @returned_false = true
           return value
@@ -1209,7 +1209,7 @@ module Iterator(T)
     end
 
     def next
-      return stop if @returned_false == true
+      return stop if @returned_false
       value = wrapped_next
       if @func.call(value)
         value

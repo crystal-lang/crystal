@@ -13,7 +13,7 @@ describe "Semantic: if" do
     assert_type("if 1 == 1; 1; else; 'a'; end", inject_primitives: true) { union_of(int32, char) }
   end
 
-  it "types and if with and and assignment" do
+  it "types `if` with `&&` and assignment" do
     assert_type("
       struct Number
         def abs
@@ -233,6 +233,34 @@ describe "Semantic: if" do
       end
       foo(x)
       )) { int32 }
+  end
+
+  it "restricts and doesn't unify union types" do
+    assert_type(%(
+      class Foo
+      end
+
+      module M
+        def m
+          1
+        end
+      end
+
+      class Bar < Foo
+        include M
+      end
+
+      class Baz < Foo
+        include M
+      end
+
+      a = Bar.new.as(Foo)
+      if b = a.as?(M)
+        b.m
+      else
+        nil
+      end
+      )) { union_of(nil_type, int32) }
   end
 
   it "types variable after unreachable else of && (#3360)" do

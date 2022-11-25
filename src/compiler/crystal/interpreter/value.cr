@@ -2,7 +2,7 @@ require "./repl"
 
 # A value produced by the interpreter, essentially
 # a pointer to some data coupled with type information.
-# Based on the type we know how to interprter the data in `pointer`.
+# Based on the type we know how to interpreter the data in `pointer`.
 struct Crystal::Repl::Value
   getter pointer : Pointer(UInt8)
   getter type : Type
@@ -23,34 +23,34 @@ struct Crystal::Repl::Value
       @pointer.as(Char*).value
     when IntegerType
       case type.kind
-      when :i8
+      when .i8?
         @pointer.as(Int8*).value
-      when :u8
+      when .u8?
         @pointer.as(UInt8*).value
-      when :i16
+      when .i16?
         @pointer.as(Int16*).value
-      when :u16
+      when .u16?
         @pointer.as(UInt16*).value
-      when :i32
+      when .i32?
         @pointer.as(Int32*).value
-      when :u32
+      when .u32?
         @pointer.as(UInt32*).value
-      when :i64
+      when .i64?
         @pointer.as(Int64*).value
-      when :u64
+      when .u64?
         @pointer.as(UInt64*).value
-      when :i128
+      when .i128?
         @pointer.as(Int128*).value
-      when :u128
+      when .u128?
         @pointer.as(UInt128*).value
       else
         raise "BUG: missing handling of Repl value for #{type}"
       end
     when FloatType
       case type.kind
-      when :f32
+      when .f32?
         @pointer.as(Float32*).value
-      when :f64
+      when .f64?
         @pointer.as(Float64*).value
       else
         raise "BUG: missing handling of Repl value for #{type}"
@@ -108,34 +108,34 @@ struct Crystal::Repl::Value
       @pointer.as(Char*).value.inspect(io)
     when IntegerType
       case type.kind
-      when :i8
+      when .i8?
         io << @pointer.as(Int8*).value
-      when :u8
+      when .u8?
         io << @pointer.as(UInt8*).value
-      when :i16
+      when .i16?
         io << @pointer.as(Int16*).value
-      when :u16
+      when .u16?
         io << @pointer.as(UInt16*).value
-      when :i32
+      when .i32?
         io << @pointer.as(Int32*).value
-      when :u32
+      when .u32?
         io << @pointer.as(UInt32*).value
-      when :i64
+      when .i64?
         io << @pointer.as(Int64*).value
-      when :u64
+      when .u64?
         io << @pointer.as(UInt64*).value
-      when :i128
+      when .i128?
         io << @pointer.as(Int128*).value
-      when :u128
+      when .u128?
         io << @pointer.as(UInt128*).value
       else
         raise "BUG: missing handling of Repl::Value#to_s(io) for #{type}"
       end
     when FloatType
       case type.kind
-      when :f32
+      when .f32?
         io << @pointer.as(Float32*).value
-      when :f64
+      when .f64?
         io << @pointer.as(Float64*).value
       else
         raise "BUG: missing handling of Repl::Value#to_s(io) for #{type}"
