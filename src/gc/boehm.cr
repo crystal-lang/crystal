@@ -217,11 +217,11 @@ module GC
     Stats.new(
       # collections: collections,
       # bytes_found: bytes_found,
-      heap_size: heap_size,
-      free_bytes: free_bytes,
-      unmapped_bytes: unmapped_bytes,
-      bytes_since_gc: bytes_since_gc,
-      total_bytes: total_bytes
+      heap_size: heap_size.to_u64!,
+      free_bytes: free_bytes.to_u64!,
+      unmapped_bytes: unmapped_bytes.to_u64!,
+      bytes_since_gc: bytes_since_gc.to_u64!,
+      total_bytes: total_bytes.to_u64!
     )
   end
 
@@ -229,16 +229,16 @@ module GC
     LibGC.get_prof_stats(out stats, sizeof(LibGC::ProfStats))
 
     ProfStats.new(
-      heap_size: stats.heap_size,
-      free_bytes: stats.free_bytes,
-      unmapped_bytes: stats.unmapped_bytes,
-      bytes_since_gc: stats.bytes_since_gc,
-      bytes_before_gc: stats.bytes_before_gc,
-      non_gc_bytes: stats.non_gc_bytes,
-      gc_no: stats.gc_no,
-      markers_m1: stats.markers_m1,
-      bytes_reclaimed_since_gc: stats.bytes_reclaimed_since_gc,
-      reclaimed_bytes_before_gc: stats.reclaimed_bytes_before_gc)
+      heap_size: stats.heap_size.to_u64!,
+      free_bytes: stats.free_bytes.to_u64!,
+      unmapped_bytes: stats.unmapped_bytes.to_u64!,
+      bytes_since_gc: stats.bytes_since_gc.to_u64!,
+      bytes_before_gc: stats.bytes_before_gc.to_u64!,
+      non_gc_bytes: stats.non_gc_bytes.to_u64!,
+      gc_no: stats.gc_no.to_u64!,
+      markers_m1: stats.markers_m1.to_u64!,
+      bytes_reclaimed_since_gc: stats.bytes_reclaimed_since_gc.to_u64!,
+      reclaimed_bytes_before_gc: stats.reclaimed_bytes_before_gc.to_u64!)
   end
 
   {% unless flag?(:win32) %}
