@@ -8,7 +8,7 @@ module Regex::PCRE
     source = source.gsub('\u{0}', "\\0")
     @source = source
 
-    @re = LibPCRE.compile(@source, (options | ::Regex::Options::UTF_8 | ::Regex::Options::NO_UTF8_CHECK | ::Regex::Options::DUPNAMES | ::Regex::Options::UCP), out errptr, out erroffset, nil)
+    @re = LibPCRE.compile(@source, pcre_options(options) | LibPCRE::UTF8 | LibPCRE::NO_UTF8_CHECK | LibPCRE::DUPNAMES | LibPCRE::UCP, out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
     @extra = LibPCRE.study(@re, LibPCRE::STUDY_JIT_COMPILE, out studyerrptr)
     if @extra.null? && studyerrptr
@@ -20,6 +20,26 @@ module Regex::PCRE
     LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
   end
 
+  private def pcre_options(options)
+    flag = 0
+    options.each do |option|
+      flag |= case option
+              when .ignore_case?   then LibPCRE::CASELESS
+              when .multiline?     then LibPCRE::DOTALL | LibPCRE::MULTILINE
+              when .extended?      then LibPCRE::EXTENDED
+              when .anchored?      then LibPCRE::ANCHORED
+              when .utf_8?         then LibPCRE::UTF8
+              when .no_utf8_check? then LibPCRE::NO_UTF8_CHECK
+              when .dupnames?      then LibPCRE::DUPNAMES
+              when .ucp?           then LibPCRE::UCP
+              else
+                # Unnamed values are explicitly used PCRE options, just pass them through:
+                option.value
+              end
+    end
+    flag
+  end
+
   def finalize
     LibPCRE.free_study @extra
     {% unless flag?(:interpreted) %}
@@ -28,7 +48,7 @@ module Regex::PCRE
   end
 
   protected def self.error_impl(source)
-    re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
+    re = LibPCRE.compile(source, LibPCRE::UTF8 | LibPCRE::NO_UTF8_CHECK | LibPCRE::DUPNAMES, out errptr, out erroffset, nil)
     if re
       {% unless flag?(:interpreted) %}
         LibPCRE.free.call re.as(Void*)
@@ -81,7 +101,7 @@ module Regex::PCRE
 
   # Calls `pcre_exec` C function, and handles returning value.
   private def internal_matches?(str, byte_index, options, ovector, ovector_size)
-    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, (options | ::Regex::Options::NO_UTF8_CHECK), ovector, ovector_size)
+    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, pcre_options(options) | LibPCRE::NO_UTF8_CHECK, ovector, ovector_size)
     # TODO: when `ret < -1`, it means PCRE error. It should handle correctly.
     ret >= 0
   end
