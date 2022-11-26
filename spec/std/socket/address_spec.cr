@@ -127,6 +127,9 @@ describe Socket::IPAddress do
     Socket::IPAddress.new("::2", 0).loopback?.should be_false
     Socket::IPAddress.new(Socket::IPAddress::LOOPBACK, 0).loopback?.should be_true
     Socket::IPAddress.new(Socket::IPAddress::LOOPBACK6, 0).loopback?.should be_true
+    Socket::IPAddress.new("::ffff:127.0.0.1", 0).loopback?.should be_true
+    Socket::IPAddress.new("::ffff:127.0.1.1", 0).loopback?.should be_true
+    Socket::IPAddress.new("::ffff:1.0.0.1", 0).loopback?.should be_false
   end
 
   it "#unspecified?" do
