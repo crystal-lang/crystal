@@ -275,12 +275,20 @@ describe "Regex" do
 
   describe "#name_table" do
     it "is a map of capture group number to name" do
-      table = (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x).name_table
-      table[1].should eq("date")
-      table[2].should eq("year")
-      table[3]?.should be_nil
-      table[4].should eq("month")
-      table[5].should eq("day")
+      (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x).name_table.should eq({
+        1 => "date",
+        2 => "year",
+        4 => "month",
+        5 => "day",
+      })
+    end
+
+    it "alpanumeric" do
+      /(?<f1>)/.name_table.should eq({1 => "f1"})
+    end
+
+    it "duplicate name" do
+      /(?<foo>)(?<foo>)/.name_table.should eq({1 => "foo", 2 => "foo"})
     end
   end
 
