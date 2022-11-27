@@ -605,8 +605,54 @@ module Crystal
       false
     end
 
+    def restriction_of?(other : NumberLiteral, owner, self_free_vars = nil, other_free_vars = nil)
+      # this happens when `self` and `other` are generic arguments:
+      #
+      # ```
+      # X = 1
+      #
+      # def foo(param : StaticArray(Int32, X))
+      # end
+      #
+      # def foo(param : StaticArray(Int32, 1))
+      # end
+      # ```
+      case self_type = owner.lookup_path(self)
+      when Const
+        self_type.value == other
+      when NumberLiteral
+        self_type == other
+      else
+        false
+      end
+    end
+
     def restriction_of?(other, owner, self_free_vars = nil, other_free_vars = nil)
       false
+    end
+  end
+
+  class NumberLiteral
+    def restriction_of?(other : Path, owner, self_free_vars = nil, other_free_vars = nil)
+      # this happens when `self` and `other` are generic arguments:
+      #
+      # ```
+      # X = 1
+      #
+      # def foo(param : StaticArray(Int32, 1))
+      # end
+      #
+      # def foo(param : StaticArray(Int32, X))
+      # end
+      # ```
+      case other_type = owner.lookup_path(other)
+      when Const
+        other_type.value == self
+      when NumberLiteral
+        other_type == self
+      else
+        false
+      end
     end
   end
 
