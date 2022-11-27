@@ -119,137 +119,159 @@ describe "Regex::MatchData" do
   end
 
   describe "#[]" do
-    it "captures empty group" do
-      md = matchdata(/(?<g1>z?)foo/, "foo")
-      md[1].should eq("")
-      md["g1"].should eq("")
+    describe "String" do
+      it "capture named group" do
+        md = matchdata(/f(?<g1>o+)(?<g2>bar?)/, "fooba")
+        md["g1"].should eq("oo")
+        md["g2"].should eq("ba")
+      end
+
+      it "captures duplicated named group" do
+        re = /(?:(?<g1>foo)|(?<g1>bar))*/
+
+        matchdata(re, "foo")["g1"].should eq("foo")
+        matchdata(re, "bar")["g1"].should eq("bar")
+        matchdata(re, "foobar")["g1"].should eq("bar")
+        matchdata(re, "barfoo")["g1"].should eq("foo")
+      end
+
+      it "raises exception when named group doesn't exist" do
+        md = matchdata(/foo/, "foo")
+        expect_raises(KeyError, "Capture group 'group' does not exist") { md["group"] }
+      end
+
+      it "captures empty group" do
+        matchdata(/(?<g1>z?)foo/, "foo")["g1"].should eq("")
+      end
+
+      it "raises exception on optional empty group" do
+        md = matchdata(/(?<g1>z)?foo/, "foo")
+        expect_raises(KeyError, "Capture group 'g1' was not matched") { md["g1"] }
+      end
     end
 
-    it "capture named group" do
-      md = matchdata(/f(?<g1>o+)(?<g2>bar?)/, "fooba")
-      md["g1"].should eq("oo")
-      md["g2"].should eq("ba")
+    describe "Int" do
+      it "can use negative index" do
+        md = matchdata(/(f)(oo)/, "foo")
+        md[-1].should eq("oo")
+        md[-2].should eq("f")
+        md[-3].should eq("foo")
+        expect_raises(IndexError, "Invalid capture group index: -4") { md[-4] }
+      end
+
+      it "raises if outside match range with []" do
+        md = matchdata(/foo/, "foo")
+        expect_raises(IndexError, "Invalid capture group index: 1") { md[1] }
+      end
+
+      it "raises if special variable accessed on invalid capture group" do
+        md = matchdata(/spice(s)?/, "spice")
+        expect_raises(IndexError, "Capture group 1 was not matched") { md[1] }
+        expect_raises(IndexError, "Invalid capture group index: 3") { md[3] }
+      end
+
+      it "captures empty group" do
+        matchdata(/(?<g1>z?)foo/, "foo")[1].should eq("")
+      end
+
+      it "raises exception on optional empty group" do
+        md = matchdata(/(?<g1>z)?foo/, "foo")
+        expect_raises(IndexError, "Capture group 1 was not matched") { md[1] }
+      end
     end
 
-    it "captures duplicated named group" do
-      re = /(?:(?<g1>foo)|(?<g1>bar))*/
+    describe "Range" do
+      it "can use range" do
+        md = matchdata(/(a)(b)/, "ab")
+        md[1..2].should eq(["a", "b"])
+        md[1..].should eq(["a", "b"])
+        md[..].should eq(["ab", "a", "b"])
+        expect_raises(IndexError) { md[4..] }
+      end
 
-      matchdata(re, "foo")["g1"].should eq("foo")
-      matchdata(re, "bar")["g1"].should eq("bar")
-      matchdata(re, "foobar")["g1"].should eq("bar")
-      matchdata(re, "barfoo")["g1"].should eq("foo")
-    end
-
-    it "can use negative index" do
-      md = matchdata(/(f)(oo)/, "foo")
-      md[-1].should eq("oo")
-      md[-2].should eq("f")
-      md[-3].should eq("foo")
-      expect_raises(IndexError, "Invalid capture group index: -4") { md[-4] }
-    end
-
-    it "raises exception when named group doesn't exist" do
-      md = matchdata(/foo/, "foo")
-      expect_raises(KeyError, "Capture group 'group' does not exist") { md["group"] }
-    end
-
-    it "raises exception on optional empty group" do
-      md = matchdata(/(?<g1>z)?foo/, "foo")
-      expect_raises(IndexError, "Capture group 1 was not matched") { md[1] }
-      expect_raises(KeyError, "Capture group 'g1' was not matched") { md["g1"] }
-    end
-
-    it "raises if outside match range with []" do
-      md = matchdata(/foo/, "foo")
-      expect_raises(IndexError, "Invalid capture group index: 1") { md[1] }
-    end
-
-    it "raises if special variable accessed on invalid capture group" do
-      md = matchdata(/spice(s)?/, "spice")
-      expect_raises(IndexError, "Capture group 1 was not matched") { md[1] }
-      expect_raises(IndexError, "Invalid capture group index: 3") { md[3] }
-    end
-
-    it "can use range" do
-      md = matchdata(/(a)(b)/, "ab")
-      md[1..2].should eq(["a", "b"])
-      md[1..].should eq(["a", "b"])
-      md[..].should eq(["ab", "a", "b"])
-      expect_raises(IndexError) { md[4..] }
-    end
-
-    it "can use start and count" do
-      md = matchdata(/(a)(b)/, "ab")
-      md[1, 2].should eq(["a", "b"])
-      expect_raises(IndexError) { md[4, 1] }
+      it "can use start and count" do
+        md = matchdata(/(a)(b)/, "ab")
+        md[1, 2].should eq(["a", "b"])
+        expect_raises(IndexError) { md[4, 1] }
+      end
     end
   end
 
   describe "#[]?" do
-    it "capture empty group" do
-      md = matchdata(/(?<g1>z?)foo/, "foo")
-      md[1]?.should eq("")
-      md["g1"]?.should eq("")
+    describe "String" do
+      it "capture named group" do
+        md = matchdata(/f(?<g1>o+)(?<g2>bar?)/, "fooba")
+        md["g1"]?.should eq("oo")
+        md["g2"]?.should eq("ba")
+      end
+
+      it "captures duplicated named group" do
+        re = /(?:(?<g1>foo)|(?<g1>bar))*/
+
+        md = matchdata(re, "foo")
+        md["g1"]?.should eq("foo")
+
+        md = matchdata(re, "bar")
+        md["g1"]?.should eq("bar")
+
+        md = matchdata(re, "foobar")
+        md["g1"]?.should eq("bar")
+
+        md = matchdata(re, "barfoo")
+        md["g1"]?.should eq("foo")
+      end
+
+      it "returns nil exception when named group doesn't exist" do
+        md = matchdata(/foo/, "foo")
+        md["group"]?.should be_nil
+      end
+
+      it "capture empty group" do
+        matchdata(/(?<g1>z?)foo/, "foo")["g1"]?.should eq("")
+      end
+
+      it "capture optional empty group" do
+        matchdata(/(?<g1>z)?foo/, "foo")["g1"]?.should be_nil
+      end
     end
 
-    it "capture optional empty group" do
-      md = matchdata(/(?<g1>z)?foo/, "foo")
-      md[1]?.should be_nil
-      md["g1"]?.should be_nil
+    describe "Int" do
+      it "can use negative index" do
+        md = matchdata(/(b)?(f)(oo)/, "foo")
+        md[-1]?.should eq("oo")
+        md[-2]?.should eq("f")
+        md[-3]?.should be_nil
+        md[-4]?.should eq("foo")
+      end
+
+      it "returns nil if outside match range with []" do
+        md = matchdata(/foo/, "foo")
+        md[1]?.should be_nil
+      end
+
+      it "capture empty group" do
+        matchdata(/(?<g1>z?)foo/, "foo")[1]?.should eq("")
+      end
+
+      it "capture optional empty group" do
+        matchdata(/(?<g1>z)?foo/, "foo")[1]?.should be_nil
+      end
     end
 
-    it "capture named group" do
-      md = matchdata(/f(?<g1>o+)(?<g2>bar?)/, "fooba")
-      md["g1"]?.should eq("oo")
-      md["g2"]?.should eq("ba")
-    end
+    describe "Range" do
+      it "can use range" do
+        md = matchdata(/(a)(b)/, "ab")
+        md[1..2]?.should eq(["a", "b"])
+        md[1..]?.should eq(["a", "b"])
+        md[..]?.should eq(["ab", "a", "b"])
+        md[4..]?.should be_nil
+      end
 
-    it "captures duplicated named group" do
-      re = /(?:(?<g1>foo)|(?<g1>bar))*/
-
-      md = matchdata(re, "foo")
-      md["g1"]?.should eq("foo")
-
-      md = matchdata(re, "bar")
-      md["g1"]?.should eq("bar")
-
-      md = matchdata(re, "foobar")
-      md["g1"]?.should eq("bar")
-
-      md = matchdata(re, "barfoo")
-      md["g1"]?.should eq("foo")
-    end
-
-    it "can use negative index" do
-      md = matchdata(/(b)?(f)(oo)/, "foo")
-      md[-1]?.should eq("oo")
-      md[-2]?.should eq("f")
-      md[-3]?.should be_nil
-      md[-4]?.should eq("foo")
-    end
-
-    it "returns nil exception when named group doesn't exist" do
-      md = matchdata(/foo/, "foo")
-      md["group"]?.should be_nil
-    end
-
-    it "returns nil if outside match range with []" do
-      md = matchdata(/foo/, "foo")
-      md[1]?.should be_nil
-    end
-
-    it "can use range" do
-      md = matchdata(/(a)(b)/, "ab")
-      md[1..2]?.should eq(["a", "b"])
-      md[1..]?.should eq(["a", "b"])
-      md[..]?.should eq(["ab", "a", "b"])
-      md[4..]?.should be_nil
-    end
-
-    it "can use start and count" do
-      md = matchdata(/(a)(b)/, "ab")
-      md[1, 2]?.should eq(["a", "b"])
-      md[4, 1]?.should be_nil
+      it "can use start and count" do
+        md = matchdata(/(a)(b)/, "ab")
+        md[1, 2]?.should eq(["a", "b"])
+        md[4, 1]?.should be_nil
+      end
     end
   end
 
