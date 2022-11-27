@@ -302,11 +302,11 @@ describe "Regex" do
   describe "#inspect" do
     it "with options" do
       /foo/.inspect.should eq("/foo/")
-      /foo/.inspect.should eq("/foo/")
+      /foo/im.inspect.should eq("/foo/im")
       /foo/imx.inspect.should eq("/foo/imx")
     end
 
-    it "with slash" do
+    it "escapes" do
       %r(/).inspect.should eq("/\\//")
       %r(\/).inspect.should eq("/\\//")
     end
@@ -319,14 +319,15 @@ describe "Regex" do
       /foo/imx.to_s.should eq("(?imsx-:foo)")
     end
 
-    it "escapes" do
-      "Crystal".match(/(?<bar>C)#{/(?<foo>R)/i}/).should be_truthy
-      "Crystal".match(/(?<bar>C)#{/(?<foo>R)/}/i).should be_falsey
-    end
-
     it "with slash" do
       %r(/).to_s.should eq("(?-imsx:\\/)")
       %r(\/).to_s.should eq("(?-imsx:\\/)")
+    end
+
+    it "interpolation" do
+      regex = /(?<foo>R)/i
+      /(?<bar>C)#{regex}/.should eq /(?<bar>C)(?i-msx:(?<foo>R))/
+      /(?<bar>C)#{regex}/i.should eq /(?<bar>C)(?i-msx:(?<foo>R))/i
     end
   end
 
