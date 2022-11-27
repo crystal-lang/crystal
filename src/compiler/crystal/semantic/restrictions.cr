@@ -1194,15 +1194,17 @@ module Crystal
           end
         when Path
           if first_name = other_type_var.single_name?
-            # If the free variable is already set to another
-            # number, there's no match
-            existing = context.get_free_var(first_name)
-            if existing && existing != type_var
-              return nil
-            end
+            if context.has_def_free_var?(first_name)
+              # If the free variable is already set to another
+              # number, there's no match
+              existing = context.get_free_var(first_name)
+              if existing && existing != type_var
+                return nil
+              end
 
-            context.set_free_var(first_name, type_var)
-            return type_var
+              context.set_free_var(first_name, type_var)
+              return type_var
+            end
           end
         else
           # Restriction is not possible (maybe return nil here?)

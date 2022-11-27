@@ -1063,6 +1063,31 @@ describe "Restrictions" do
       "expected argument #2 to 'foo' to be StaticArray(UInt8, 10), not StaticArray(UInt8, 11)"
   end
 
+  it "does not treat single path as free variable when given number (1) (#11859)" do
+    assert_error <<-CR, "expected argument #1 to 'Foo(1)#foo' to be Foo(1), not Foo(2)"
+      class Foo(T)
+        def foo(x : Foo(T))
+        end
+      end
+
+      Foo(1).new.foo(Foo(2).new)
+      CR
+  end
+
+  it "does not treat single path as free variable when given number (2) (#11859)" do
+    assert_error <<-CR, "expected argument #1 to 'foo' to be Foo(1), not Foo(2)"
+      X = 1
+
+      class Foo(T)
+      end
+
+      def foo(x : Foo(X))
+      end
+
+      foo(Foo(2).new)
+      CR
+  end
+
   it "restricts aliased typedef type (#9474)" do
     assert_type(%(
       lib A
