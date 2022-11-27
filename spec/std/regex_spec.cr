@@ -25,8 +25,12 @@ describe "Regex" do
   end
 
   describe "#===" do
+    it "basic" do
+      (/f(o+)(bar?)/ === "fooba").should be_true
+      (/f(o+)(bar?)/ === "pooba").should be_false
+    end
+
     it "assigns captures" do
-      "foo" =~ /foo/
       (/f(o+)(bar?)/ === "fooba").should be_true
       $~.group_size.should eq(2)
       $1.should eq("oo")
@@ -40,17 +44,17 @@ describe "Regex" do
       $~.group_size.should eq(0)
     end
 
-    it "matches ignore case" do
+    it "ignore case" do
       ("HeLlO" =~ /hello/).should be_nil
       ("HeLlO" =~ /hello/i).should eq(0)
     end
 
-    it "matches lines beginnings on ^ in multiline mode" do
+    it "multiline anchor" do
       ("foo\nbar" =~ /^bar/).should be_nil
       ("foo\nbar" =~ /^bar/m).should eq(4)
     end
 
-    it "matches multiline" do
+    it "multiline span" do
       ("foo\n<bar\n>baz" =~ /<bar.*?>/).should be_nil
       ("foo\n<bar\n>baz" =~ /<bar.*?>/m).should eq(4)
     end
@@ -59,16 +63,15 @@ describe "Regex" do
       ("\n☃" =~ /[[:print:]]/).should eq(1)
     end
 
-    it "matches with =~ and captures" do
+    it "assigns captures" do
       ("fooba" =~ /f(o+)(bar?)/).should eq(0)
       $~.group_size.should eq(2)
       $1.should eq("oo")
       $2.should eq("ba")
     end
 
-    it "matches with =~ and gets utf-8 codepoint index" do
-      index = "こんに" =~ /ん/
-      index.should eq(1)
+    it "utf-8 support" do
+      ("こんに" =~ /ん/).should eq(1)
     end
 
     it "raises if outside match range with []" do
