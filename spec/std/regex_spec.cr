@@ -26,6 +26,13 @@ describe "Regex" do
     /cat/xi.options.multiline?.should be_false
   end
 
+  it "#source" do
+    /foo/.source.should eq "foo"
+    /(foo|bar)*/.source.should eq "(foo|bar)*"
+    /foo\x96/.source.should eq "foo\\x96"
+    Regex.new("").source.should eq ""
+  end
+
   describe "#match" do
     it "returns matchdata" do
       md = "Crystal".match(/(?<bar>.)#{/(?<foo>.)/}/).not_nil!
