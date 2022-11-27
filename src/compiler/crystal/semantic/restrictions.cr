@@ -636,8 +636,6 @@ module Crystal
 
   class NumberLiteral
     def restriction_of?(other : Path, owner, self_free_vars = nil, other_free_vars = nil)
-      return false if other_free_vars && other.single_name?.try { |name| other_free_vars.includes?(name) }
-
       # this happens when `self` and `other` are generic arguments:
       #
       # ```

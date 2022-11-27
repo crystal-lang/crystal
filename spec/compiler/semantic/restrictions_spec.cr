@@ -617,6 +617,43 @@ describe "Restrictions" do
           CR
       end
 
+      # TODO: enable in #12784
+      pending "inserts constant before free variable with same name" do
+        assert_type(<<-CR) { tuple_of([char, bool]) }
+          class Foo(T); end
+
+          X = 1
+
+          def foo(x : Foo(X)) forall X
+            true
+          end
+
+          def foo(x : Foo(X))
+            'a'
+          end
+
+          {foo(Foo(1).new), foo(Foo(2).new)}
+          CR
+      end
+
+      pending "keeps constant before free variable with same name" do
+        assert_type(<<-CR) { tuple_of([char, bool]) }
+          class Foo(T); end
+
+          X = 1
+
+          def foo(x : Foo(X))
+            'a'
+          end
+
+          def foo(x : Foo(X)) forall X
+            true
+          end
+
+          {foo(Foo(1).new), foo(Foo(2).new)}
+          CR
+      end
+
       it "inserts path before free variable even if free var resolves to a more specialized type" do
         assert_type(<<-CR) { tuple_of([int32, int32, bool]) }
           class Foo
