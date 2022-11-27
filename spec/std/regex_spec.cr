@@ -102,6 +102,9 @@ describe "Regex" do
     end
   end
 
+  describe "#matches_at_byte_index?" do
+  end
+
   describe "#name_table" do
     it "is a map of capture group number to name" do
       table = (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x).name_table
