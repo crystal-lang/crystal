@@ -384,7 +384,7 @@ describe "Regex::MatchData" do
     end
   end
 
-  it "can check equality" do
+  it "#==" do
     re = /((?<hello>he)llo)/
     m1 = re.match("hello")
     m2 = re.match("hello")
@@ -393,7 +393,7 @@ describe "Regex::MatchData" do
     m1.should eq(m2)
   end
 
-  it "hashes" do
+  it "#hash" do
     re = /(a|b)/
     hash = re.match("a").hash
     hash.should eq(re.match("a").hash)
