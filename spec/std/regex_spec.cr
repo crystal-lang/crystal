@@ -11,6 +11,21 @@ describe "Regex" do
     end
   end
 
+  it "#options" do
+    /cat/.options.ignore_case?.should be_false
+    /cat/i.options.ignore_case?.should be_true
+    /cat/.options.multiline?.should be_false
+    /cat/m.options.multiline?.should be_true
+    /cat/.options.extended?.should be_false
+    /cat/x.options.extended?.should be_true
+    /cat/mx.options.multiline?.should be_true
+    /cat/mx.options.extended?.should be_true
+    /cat/mx.options.ignore_case?.should be_false
+    /cat/xi.options.ignore_case?.should be_true
+    /cat/xi.options.extended?.should be_true
+    /cat/xi.options.multiline?.should be_false
+  end
+
   describe "#match" do
     it "returns matchdata" do
       md = "Crystal".match(/(?<bar>.)#{/(?<foo>.)/}/).not_nil!
