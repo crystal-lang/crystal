@@ -229,4 +229,9 @@ describe "Regex" do
   it "#+" do
     (/dogs/ + /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/
   end
+
+  it ".error?" do
+    Regex.error?("(foo|bar)").should be_nil
+    Regex.error?("(foo|bar").should eq "missing ) at 8"
+  end
 end
