@@ -1,20 +1,24 @@
 require "spec"
 
+private def matchdata(re, string)
+  re.match(string).should_not be_nil
+end
+
 describe "Regex::MatchData" do
-  it "does inspect" do
-    /f(o)(x)/.match("the fox").inspect.should eq(%(Regex::MatchData("fox" 1:"o" 2:"x")))
-    /f(o)(x)?/.match("the fort").inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
-    /fox/.match("the fox").inspect.should eq(%(Regex::MatchData("fox")))
+  it "#inspect" do
+    matchdata(/f(o)(x)/, "the fox").inspect.should eq(%(Regex::MatchData("fox" 1:"o" 2:"x")))
+    matchdata(/f(o)(x)?/, "the fort").inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
+    matchdata(/fox/, "the fox").inspect.should eq(%(Regex::MatchData("fox")))
   end
 
-  it "does to_s" do
-    /f(o)(x)/.match("the fox").to_s.should eq(%(Regex::MatchData("fox" 1:"o" 2:"x")))
-    /f(?<lettero>o)(?<letterx>x)/.match("the fox").to_s.should eq(%(Regex::MatchData("fox" lettero:"o" letterx:"x")))
-    /fox/.match("the fox").to_s.should eq(%(Regex::MatchData("fox")))
+  it "#to_s" do
+    matchdata(/f(o)(x)/, "the fox").to_s.should eq(%(Regex::MatchData("fox" 1:"o" 2:"x")))
+    matchdata(/f(?<lettero>o)(?<letterx>x)/, "the fox").to_s.should eq(%(Regex::MatchData("fox" lettero:"o" letterx:"x")))
+    matchdata(/fox/, "the fox").to_s.should eq(%(Regex::MatchData("fox")))
   end
 
-  it "does pretty_print" do
-    /f(o)(x)?/.match("the fo").pretty_inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
+  it "#pretty_print" do
+    matchdata(/f(o)(x)?/, "the fo").pretty_inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
 
     expected = <<-REGEX
       Regex::MatchData("foooo"
@@ -25,233 +29,226 @@ describe "Regex::MatchData" do
        fifth:"o")
       REGEX
 
-    /(?<first>f)(?<second>o(?<third>o(?<fourth>o(?<fifth>o))))/.match("fooooo").pretty_inspect.should eq(expected)
+    matchdata(/(?<first>f)(?<second>o(?<third>o(?<fourth>o(?<fifth>o))))/, "fooooo").pretty_inspect.should eq(expected)
   end
 
-  it "does size" do
-    "Crystal".match(/[p-s]/).not_nil!.size.should eq(1)
-    "Crystal".match(/r(ys)/).not_nil!.size.should eq(2)
-    "Crystal".match(/r(ys)(?<ok>ta)/).not_nil!.size.should eq(3)
+  it "#size" do
+    matchdata(/[p-s]/, "Crystal").size.should eq(1)
+    matchdata(/r(ys)/, "Crystal").size.should eq(2)
+    matchdata(/r(ys)(?<ok>ta)/, "Crystal").size.should eq(3)
   end
 
   describe "#[]" do
     it "captures empty group" do
-      ("foo" =~ /(?<g1>z?)foo/).should eq(0)
-      $~[1].should eq("")
-      $~["g1"].should eq("")
+      md = matchdata(/(?<g1>z?)foo/, "foo")
+      md[1].should eq("")
+      md["g1"].should eq("")
     end
 
     it "capture named group" do
-      ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
-      $~["g1"].should eq("oo")
-      $~["g2"].should eq("ba")
+      md = matchdata(/f(?<g1>o+)(?<g2>bar?)/, "fooba")
+      md["g1"].should eq("oo")
+      md["g2"].should eq("ba")
     end
 
     it "captures duplicated named group" do
       re = /(?:(?<g1>foo)|(?<g1>bar))*/
 
-      ("foo" =~ re).should eq(0)
-      $~["g1"].should eq("foo")
-
-      ("bar" =~ re).should eq(0)
-      $~["g1"].should eq("bar")
-
-      ("foobar" =~ re).should eq(0)
-      $~["g1"].should eq("bar")
-
-      ("barfoo" =~ re).should eq(0)
-      $~["g1"].should eq("foo")
+      matchdata(re, "foo")["g1"].should eq("foo")
+      matchdata(re, "bar")["g1"].should eq("bar")
+      matchdata(re, "foobar")["g1"].should eq("bar")
+      matchdata(re, "barfoo")["g1"].should eq("foo")
     end
 
     it "can use negative index" do
-      "foo" =~ /(f)(oo)/
-      $~[-1].should eq("oo")
-      $~[-2].should eq("f")
-      $~[-3].should eq("foo")
-      expect_raises(IndexError, "Invalid capture group index: -4") { $~[-4] }
+      md = matchdata(/(f)(oo)/, "foo")
+      md[-1].should eq("oo")
+      md[-2].should eq("f")
+      md[-3].should eq("foo")
+      expect_raises(IndexError, "Invalid capture group index: -4") { md[-4] }
     end
 
     it "raises exception when named group doesn't exist" do
-      ("foo" =~ /foo/).should eq(0)
-      expect_raises(KeyError, "Capture group 'group' does not exist") { $~["group"] }
+      md = matchdata(/foo/, "foo")
+      expect_raises(KeyError, "Capture group 'group' does not exist") { md["group"] }
     end
 
     it "raises exception on optional empty group" do
-      ("foo" =~ /(?<g1>z)?foo/).should eq(0)
-      expect_raises(IndexError, "Capture group 1 was not matched") { $~[1] }
-      expect_raises(KeyError, "Capture group 'g1' was not matched") { $~["g1"] }
+      md = matchdata(/(?<g1>z)?foo/, "foo")
+      expect_raises(IndexError, "Capture group 1 was not matched") { md[1] }
+      expect_raises(KeyError, "Capture group 'g1' was not matched") { md["g1"] }
     end
 
     it "raises if outside match range with []" do
-      "foo" =~ /foo/
-      expect_raises(IndexError, "Invalid capture group index: 1") { $~[1] }
+      md = matchdata(/foo/, "foo")
+      expect_raises(IndexError, "Invalid capture group index: 1") { md[1] }
     end
 
     it "raises if special variable accessed on invalid capture group" do
-      "spice" =~ /spice(s)?/
-      expect_raises(IndexError, "Capture group 1 was not matched") { $1 }
-      expect_raises(IndexError, "Invalid capture group index: 3") { $3 }
+      md = matchdata(/spice(s)?/, "spice")
+      expect_raises(IndexError, "Capture group 1 was not matched") { md[1] }
+      expect_raises(IndexError, "Invalid capture group index: 3") { md[3] }
     end
 
     it "can use range" do
-      "ab" =~ /(a)(b)/
-      $~[1..2].should eq(["a", "b"])
-      $~[1..].should eq(["a", "b"])
-      $~[..].should eq(["ab", "a", "b"])
-      expect_raises(IndexError) { $~[4..] }
+      md = matchdata(/(a)(b)/, "ab")
+      md[1..2].should eq(["a", "b"])
+      md[1..].should eq(["a", "b"])
+      md[..].should eq(["ab", "a", "b"])
+      expect_raises(IndexError) { md[4..] }
     end
 
     it "can use start and count" do
-      "ab" =~ /(a)(b)/
-      $~[1, 2].should eq(["a", "b"])
-      expect_raises(IndexError) { $~[4, 1] }
+      md = matchdata(/(a)(b)/, "ab")
+      md[1, 2].should eq(["a", "b"])
+      expect_raises(IndexError) { md[4, 1] }
     end
   end
 
   describe "#[]?" do
     it "capture empty group" do
-      ("foo" =~ /(?<g1>z?)foo/).should eq(0)
-      $~[1]?.should eq("")
-      $~["g1"]?.should eq("")
+      md = matchdata(/(?<g1>z?)foo/, "foo")
+      md[1]?.should eq("")
+      md["g1"]?.should eq("")
     end
 
     it "capture optional empty group" do
-      ("foo" =~ /(?<g1>z)?foo/).should eq(0)
-      $~[1]?.should be_nil
-      $~["g1"]?.should be_nil
+      md = matchdata(/(?<g1>z)?foo/, "foo")
+      md[1]?.should be_nil
+      md["g1"]?.should be_nil
     end
 
     it "capture named group" do
-      ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
-      $~["g1"]?.should eq("oo")
-      $~["g2"]?.should eq("ba")
+      md = matchdata(/f(?<g1>o+)(?<g2>bar?)/, "fooba")
+      md["g1"]?.should eq("oo")
+      md["g2"]?.should eq("ba")
     end
 
     it "captures duplicated named group" do
       re = /(?:(?<g1>foo)|(?<g1>bar))*/
 
-      ("foo" =~ re).should eq(0)
-      $~["g1"]?.should eq("foo")
+      md = matchdata(re, "foo")
+      md["g1"]?.should eq("foo")
 
-      ("bar" =~ re).should eq(0)
-      $~["g1"]?.should eq("bar")
+      md = matchdata(re, "bar")
+      md["g1"]?.should eq("bar")
 
-      ("foobar" =~ re).should eq(0)
-      $~["g1"]?.should eq("bar")
+      md = matchdata(re, "foobar")
+      md["g1"]?.should eq("bar")
 
-      ("barfoo" =~ re).should eq(0)
-      $~["g1"]?.should eq("foo")
+      md = matchdata(re, "barfoo")
+      md["g1"]?.should eq("foo")
     end
 
     it "can use negative index" do
-      "foo" =~ /(b)?(f)(oo)/
-      $~[-1]?.should eq("oo")
-      $~[-2]?.should eq("f")
-      $~[-3]?.should be_nil
-      $~[-4]?.should eq("foo")
+      md = matchdata(/(b)?(f)(oo)/, "foo")
+      md[-1]?.should eq("oo")
+      md[-2]?.should eq("f")
+      md[-3]?.should be_nil
+      md[-4]?.should eq("foo")
     end
 
     it "returns nil exception when named group doesn't exist" do
-      ("foo" =~ /foo/).should eq(0)
-      $~["group"]?.should be_nil
+      md = matchdata(/foo/, "foo")
+      md["group"]?.should be_nil
     end
 
     it "returns nil if outside match range with []" do
-      "foo" =~ /foo/
-      $~[1]?.should be_nil
+      md = matchdata(/foo/, "foo")
+      md[1]?.should be_nil
     end
 
     it "can use range" do
-      "ab" =~ /(a)(b)/
-      $~[1..2]?.should eq(["a", "b"])
-      $~[1..]?.should eq(["a", "b"])
-      $~[..]?.should eq(["ab", "a", "b"])
-      $~[4..]?.should be_nil
+      md = matchdata(/(a)(b)/, "ab")
+      md[1..2]?.should eq(["a", "b"])
+      md[1..]?.should eq(["a", "b"])
+      md[..]?.should eq(["ab", "a", "b"])
+      md[4..]?.should be_nil
     end
 
     it "can use start and count" do
-      "ab" =~ /(a)(b)/
-      $~[1, 2]?.should eq(["a", "b"])
-      $~[4, 1]?.should be_nil
+      md = matchdata(/(a)(b)/, "ab")
+      md[1, 2]?.should eq(["a", "b"])
+      md[4, 1]?.should be_nil
     end
   end
 
   describe "#post_match" do
     it "returns an empty string when there's nothing after" do
-      "Crystal".match(/ystal/).not_nil!.post_match.should eq ""
+      matchdata(/ystal/, "Crystal").post_match.should eq ""
     end
 
     it "returns the part of the string after the match" do
-      "Crystal".match(/yst/).not_nil!.post_match.should eq "al"
+      matchdata(/yst/, "Crystal").post_match.should eq "al"
     end
 
     it "works with unicode" do
-      "há日本語".match(/本/).not_nil!.post_match.should eq "語"
+      matchdata(/本/, "há日本語").post_match.should eq "語"
     end
   end
 
   describe "#pre_match" do
     it "returns an empty string when there's nothing before" do
-      "Crystal".match(/Cryst/).not_nil!.pre_match.should eq ""
+      matchdata(/Cryst/, "Crystal").pre_match.should eq ""
     end
 
     it "returns the part of the string before the match" do
-      "Crystal".match(/yst/).not_nil!.pre_match.should eq "Cr"
+      matchdata(/yst/, "Crystal").pre_match.should eq "Cr"
     end
 
     it "works with unicode" do
-      "há日本語".match(/本/).not_nil!.pre_match.should eq "há日"
+      matchdata(/本/, "há日本語").pre_match.should eq "há日"
     end
   end
 
   describe "#captures" do
     it "gets an array of unnamed captures" do
-      "Crystal".match(/(Cr)y/).not_nil!.captures.should eq(["Cr"])
-      "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!.captures.should eq(["Cr", "st"])
+      matchdata(/(Cr)y/, "Crystal").captures.should eq(["Cr"])
+      matchdata(/(Cr)(?<name1>y)(st)(?<name2>al)/, "Crystal").captures.should eq(["Cr", "st"])
     end
 
     it "gets an array of unnamed captures with optional" do
-      "Crystal".match(/(Cr)(s)?/).not_nil!.captures.should eq(["Cr", nil])
-      "Crystal".match(/(Cr)(?<name1>s)?(tal)?/).not_nil!.captures.should eq(["Cr", nil])
+      matchdata(/(Cr)(s)?/, "Crystal").captures.should eq(["Cr", nil])
+      matchdata(/(Cr)(?<name1>s)?(tal)?/, "Crystal").captures.should eq(["Cr", nil])
     end
   end
 
   describe "#named_captures" do
     it "gets a hash of named captures" do
-      "Crystal".match(/(?<name1>Cr)y/).not_nil!.named_captures.should eq({"name1" => "Cr"})
-      "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!.named_captures.should eq({"name1" => "y", "name2" => "al"})
+      matchdata(/(?<name1>Cr)y/, "Crystal").named_captures.should eq({"name1" => "Cr"})
+      matchdata(/(Cr)(?<name1>y)(st)(?<name2>al)/, "Crystal").named_captures.should eq({"name1" => "y", "name2" => "al"})
     end
 
     it "gets a hash of named captures with optional" do
-      "Crystal".match(/(?<name1>Cr)(?<name2>s)?/).not_nil!.named_captures.should eq({"name1" => "Cr", "name2" => nil})
-      "Crystal".match(/(Cr)(?<name1>s)?(t)?(?<name2>al)?/).not_nil!.named_captures.should eq({"name1" => nil, "name2" => nil})
+      matchdata(/(?<name1>Cr)(?<name2>s)?/, "Crystal").named_captures.should eq({"name1" => "Cr", "name2" => nil})
+      matchdata(/(Cr)(?<name1>s)?(t)?(?<name2>al)?/, "Crystal").named_captures.should eq({"name1" => nil, "name2" => nil})
     end
 
     it "gets a hash of named captures with duplicated name" do
-      "Crystal".match(/(?<name>Cr)y(?<name>s)/).not_nil!.named_captures.should eq({"name" => "s"})
+      matchdata(/(?<name>Cr)y(?<name>s)/, "Crystal").named_captures.should eq({"name" => "s"})
     end
   end
 
   describe "#to_a" do
     it "converts into an array" do
-      "Crystal".match(/(?<name1>Cr)(y)/).not_nil!.to_a.should eq(["Cry", "Cr", "y"])
-      "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!.to_a.should eq(["Crystal", "Cr", "y", "st", "al"])
+      matchdata(/(?<name1>Cr)(y)/, "Crystal").to_a.should eq(["Cry", "Cr", "y"])
+      matchdata(/(Cr)(?<name1>y)(st)(?<name2>al)/, "Crystal").to_a.should eq(["Crystal", "Cr", "y", "st", "al"])
     end
 
     it "converts into an array having nil" do
-      "Crystal".match(/(?<name1>Cr)(s)?/).not_nil!.to_a.should eq(["Cr", "Cr", nil])
-      "Crystal".match(/(Cr)(?<name1>s)?(yst)?(?<name2>al)?/).not_nil!.to_a.should eq(["Crystal", "Cr", nil, "yst", "al"])
+      matchdata(/(?<name1>Cr)(s)?/, "Crystal").to_a.should eq(["Cr", "Cr", nil])
+      matchdata(/(Cr)(?<name1>s)?(yst)?(?<name2>al)?/, "Crystal").to_a.should eq(["Crystal", "Cr", nil, "yst", "al"])
     end
   end
 
   describe "#to_h" do
     it "converts into a hash" do
-      "Crystal".match(/(?<name1>Cr)(y)/).not_nil!.to_h.should eq({
+      matchdata(/(?<name1>Cr)(y)/, "Crystal").to_h.should eq({
               0 => "Cry",
         "name1" => "Cr",
               2 => "y",
       })
-      "Crystal".match(/(Cr)(?<name1>y)(st)(?<name2>al)/).not_nil!.to_h.should eq({
+      matchdata(/(Cr)(?<name1>y)(st)(?<name2>al)/, "Crystal").to_h.should eq({
               0 => "Crystal",
               1 => "Cr",
         "name1" => "y",
@@ -261,12 +258,12 @@ describe "Regex::MatchData" do
     end
 
     it "converts into a hash having nil" do
-      "Crystal".match(/(?<name1>Cr)(s)?/).not_nil!.to_h.should eq({
+      matchdata(/(?<name1>Cr)(s)?/, "Crystal").to_h.should eq({
               0 => "Cr",
         "name1" => "Cr",
               2 => nil,
       })
-      "Crystal".match(/(Cr)(?<name1>s)?(yst)?(?<name2>al)?/).not_nil!.to_h.should eq({
+      matchdata(/(Cr)(?<name1>s)?(yst)?(?<name2>al)?/, "Crystal").to_h.should eq({
               0 => "Crystal",
               1 => "Cr",
         "name1" => nil,
@@ -276,7 +273,7 @@ describe "Regex::MatchData" do
     end
 
     it "converts into a hash with duplicated names" do
-      "Crystal".match(/(Cr)(?<name>s)?(yst)?(?<name>al)?/).not_nil!.to_h.should eq({
+      matchdata(/(Cr)(?<name>s)?(yst)?(?<name>al)?/, "Crystal").to_h.should eq({
              0 => "Crystal",
              1 => "Cr",
         "name" => "al",
