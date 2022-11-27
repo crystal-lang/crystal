@@ -5,6 +5,16 @@ private def matchdata(re, string)
 end
 
 describe "Regex::MatchData" do
+  it "#regex" do
+    regex = /foo/
+    matchdata(regex, "foo").regex.should be(regex)
+  end
+
+  it "#string" do
+    string = "foo"
+    matchdata(/foo/, string).string.should be(string)
+  end
+
   it "#inspect" do
     matchdata(/f(o)(x)/, "the fox").inspect.should eq(%(Regex::MatchData("fox" 1:"o" 2:"x")))
     matchdata(/f(o)(x)?/, "the fort").inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
