@@ -46,6 +46,76 @@ describe "Regex::MatchData" do
     matchdata(/[p-s]/, "Crystal").size.should eq(1)
     matchdata(/r(ys)/, "Crystal").size.should eq(2)
     matchdata(/r(ys)(?<ok>ta)/, "Crystal").size.should eq(3)
+    matchdata(/foo(bar)?/, "foo").size.should eq(2)
+    matchdata(/foo(bar)?/, "foobar").size.should eq(2)
+  end
+
+  describe "#begin" do
+    it "no captures" do
+      matchdata(/foo/, "foo").begin.should eq 0
+      matchdata(/foo/, "foo").begin(-1).should eq 0
+      matchdata(/foo/, ".foo.").begin.should eq 1
+      matchdata(/foo/, ".foo.").begin(-1).should eq 1
+    end
+
+    it "out of range" do
+      expect_raises(IndexError) do
+        matchdata(/foo/, "foo").begin(1)
+      end
+    end
+
+    it "with capture" do
+      matchdata(/f(o)o/, "foo").begin.should eq 0
+      matchdata(/f(o)o/, "foo").begin(1).should eq 1
+      matchdata(/f(o)o/, "foo").begin(-1).should eq 1
+      matchdata(/f(o)o/, ".foo.").begin.should eq 1
+      matchdata(/f(o)o/, ".foo.").begin(1).should eq 2
+      matchdata(/f(o)o/, ".foo.").begin(-1).should eq 2
+    end
+
+    it "char index" do
+      matchdata(/foo/, "öfoo").begin.should eq 1
+    end
+  end
+
+  describe "#byte_begin" do
+    it "char index" do
+      matchdata(/foo/, "öfoo").byte_begin.should eq 2
+    end
+  end
+
+  describe "#end" do
+    it "no captures" do
+      matchdata(/foo/, "foo").end.should eq 3
+      matchdata(/foo/, "foo").end(-1).should eq 3
+      matchdata(/foo/, ".foo.").end.should eq 4
+      matchdata(/foo/, ".foo.").end(-1).should eq 4
+    end
+
+    it "out of range" do
+      expect_raises(IndexError) do
+        matchdata(/foo/, "foo").end(1)
+      end
+    end
+
+    it "with capture" do
+      matchdata(/f(o)o/, "foo").end.should eq 3
+      matchdata(/f(o)o/, "foo").end(1).should eq 2
+      matchdata(/f(o)o/, "foo").end(-1).should eq 2
+      matchdata(/f(o)o/, ".foo.").end.should eq 4
+      matchdata(/f(o)o/, ".foo.").end(1).should eq 3
+      matchdata(/f(o)o/, ".foo.").end(-1).should eq 3
+    end
+
+    it "char index" do
+      matchdata(/foo/, "öfoo").end.should eq 4
+    end
+  end
+
+  describe "#byte_end" do
+    it "char index" do
+      matchdata(/foo/, "öfoo").byte_end.should eq 5
+    end
   end
 
   describe "#[]" do
