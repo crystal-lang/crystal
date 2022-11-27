@@ -225,4 +225,8 @@ describe "Regex" do
       Regex.union(/skiing/i, /sledding/).should eq(/skiing/i + /sledding/)
     end
   end
+
+  it "#+" do
+    (/dogs/ + /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/
+  end
 end
