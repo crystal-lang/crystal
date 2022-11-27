@@ -80,6 +80,9 @@ describe "Regex" do
     end
   end
 
+  describe "#match_at_byte_index" do
+  end
+
   describe "#matches?" do
     it "matches but create no MatchData" do
       /f(o+)(bar?)/.matches?("fooba").should be_true
