@@ -903,10 +903,11 @@ describe "buffered" do
 
   it "can send non blocking to buffered channel" do
     ch = Channel(Int32).new(1)
-    spawn(same_thread: true) do
+    spawn do
+      ch.send 0 # sync
       ch.receive.should eq 1
     end
-    Fiber.yield # required to let the receiving fiber start
+    ch.receive # let the receiving fiber start
     ch.try_send(1).should be_true
     ch.try_send(2).should be_true
     ch.try_send(3).should be_false
