@@ -150,7 +150,7 @@ require "./std/log/env_config_spec.cr"
 require "./std/log/main_spec.cr"
 # require "./std/log/metadata_spec.cr" (failed to run)
 # require "./std/log/spec_spec.cr" (failed to run)
-require "./std/match_data_spec.cr"
+require "./std/regex/match_data_spec.cr"
 # require "./std/math_spec.cr" (failed to run)
 # require "./std/mime/media_type_spec.cr" (failed linking)
 # require "./std/mime/multipart/builder_spec.cr" (failed linking)
