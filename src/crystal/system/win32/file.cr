@@ -258,15 +258,54 @@ module Crystal::System::File
   end
 
   private def system_flock_shared(blocking : Bool) : Nil
-    raise NotImplementedError.new("File#flock_shared")
+    flock(false, blocking)
   end
 
   private def system_flock_exclusive(blocking : Bool) : Nil
-    raise NotImplementedError.new("File#flock_exclusive")
+    flock(true, blocking)
   end
 
   private def system_flock_unlock : Nil
-    raise NotImplementedError.new("File#flock_unlock")
+    unlock_file(windows_handle)
+  end
+
+  private def flock(exclusive, retry)
+    flags = LibC::LOCKFILE_FAIL_IMMEDIATELY
+    flags |= LibC::LOCKFILE_EXCLUSIVE_LOCK if exclusive
+
+    handle = windows_handle
+    if retry
+      until lock_file(handle, flags)
+        ::Fiber.yield
+      end
+    else
+      lock_file(handle, flags) || raise IO::Error.from_winerror("Error applying file lock: file is already locked")
+    end
+  end
+
+  private def lock_file(handle, flags)
+    # lpOverlapped must be provided despite the synchronous use of this method.
+    overlapped = LibC::OVERLAPPED.new
+    # lock the entire file with offset 0 in overlapped and number of bytes set to max value
+    if 0 != LibC.LockFileEx(handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, pointerof(overlapped))
+      true
+    else
+      winerror = WinError.value
+      if winerror == WinError::ERROR_LOCK_VIOLATION
+        false
+      else
+        raise IO::Error.from_winerror("LockFileEx", winerror)
+      end
+    end
+  end
+
+  private def unlock_file(handle)
+    # lpOverlapped must be provided despite the synchronous use of this method.
+    overlapped = LibC::OVERLAPPED.new
+    # unlock the entire file with offset 0 in overlapped and number of bytes set to max value
+    if 0 == LibC.UnlockFileEx(handle, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, pointerof(overlapped))
+      raise IO::Error.from_winerror("UnLockFileEx")
+    end
   end
 
   private def system_fsync(flush_metadata = true) : Nil
