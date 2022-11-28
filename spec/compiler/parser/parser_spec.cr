@@ -1787,6 +1787,14 @@ module Crystal
       end
     ), ClassDef.new("Foo".path, Def.new("bar", body: Call.new(nil, "print", Cast.new(Var.new("self"), "Foo".path))))
 
+    it_parses %(
+      class ÁrvíztűrőTükörfúrógép
+        def árvíztűrő_tükörfúrógép
+          print as ÁrvíztűrőTükörfúrógép
+        end
+      end
+    ), ClassDef.new("ÁrvíztűrőTükörfúrógép".path, Def.new("árvíztűrő_tükörfúrógép", body: Call.new(nil, "print", Cast.new(Var.new("self"), "ÁrvíztűrőTükörfúrógép".path))))
+
     assert_syntax_error "a = a", "can't use variable name 'a' inside assignment to variable 'a'"
 
     assert_syntax_error "{{ {{ 1 }} }}", "can't nest macro expressions"

@@ -58,6 +58,24 @@ describe Crystal::Repl::Interpreter do
         Foo::X
       CODE
     end
+
+    it "does not allow value assignment to already initialized constant" do
+      expect_raises(Crystal::TypeException, "already initialized constant A") do
+        interpret(<<-CODE)
+          A = 1
+          A = 2
+        CODE
+      end
+    end
+
+    it "recognizes constant which starts with unicode uppercase letter" do
+      expect_raises(Crystal::TypeException, "already initialized constant Á") do
+        interpret(<<-CODE)
+          Á = 1
+          Á = 2
+        CODE
+      end
+    end
   end
 
   context "magic constants" do
