@@ -91,7 +91,7 @@ module Regex::PCRE
     ovector_size = (@captures + 1) * 3
     ovector = Pointer(Int32).malloc(ovector_size)
     if internal_matches?(str, byte_index, options, ovector, ovector_size)
-      MatchData.new(self, @re, str, byte_index, ovector, @captures)
+      Regex::MatchData.new(self, @re, str, byte_index, ovector, @captures)
     end
   end
 
@@ -104,5 +104,54 @@ module Regex::PCRE
     ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, pcre_options(options) | LibPCRE::NO_UTF8_CHECK, ovector, ovector_size)
     # TODO: when `ret < -1`, it means PCRE error. It should handle correctly.
     ret >= 0
+  end
+
+  module MatchData
+    # :nodoc:
+    def initialize(@regex : ::Regex, @code : LibPCRE::Pcre, @string : String, @pos : Int32, @ovector : Int32*, @group_size : Int32)
+    end
+
+    private def byte_range(n, &)
+      n += size if n < 0
+      range = Range.new(@ovector[n * 2], @ovector[n * 2 + 1], exclusive: true)
+      if range.begin < 0 || range.end < 0
+        yield n
+      else
+        range
+      end
+    end
+
+    private def fetch_impl(group_name : String)
+      max_start = -1
+      match = nil
+      exists = false
+      each_named_capture_number(group_name) do |n|
+        exists = true
+        start = byte_range(n) { nil }.try(&.begin) || next
+        if start > max_start
+          max_start = start
+          match = self[n]?
+        end
+      end
+      if match
+        match
+      else
+        yield exists
+      end
+    end
+
+    private def each_named_capture_number(group_name)
+      name_entry_size = LibPCRE.get_stringtable_entries(@code, group_name, out first, out last)
+      return if name_entry_size < 0
+
+      while first <= last
+        capture_number = (first[0].to_u16 << 8) | first[1].to_u16
+        yield capture_number
+
+        first += name_entry_size
+      end
+
+      nil
+    end
   end
 end

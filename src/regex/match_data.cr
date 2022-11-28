@@ -16,6 +16,8 @@ class Regex
   # starting from `1`, so that `0` can be used to refer to the entire regular
   # expression without needing to capture it explicitly.
   struct MatchData
+    include Engine::MatchData
+
     # Returns the original regular expression.
     #
     # ```
@@ -38,10 +40,6 @@ class Regex
     # "Crystal".match(/[p-s]/).not_nil!.string # => "Crystal"
     # ```
     getter string : String
-
-    # :nodoc:
-    def initialize(@regex : Regex, @code : LibPCRE::Pcre, @string : String, @pos : Int32, @ovector : Int32*, @group_size : Int32)
-    end
 
     # Returns the number of elements in this match object.
     #
@@ -132,16 +130,6 @@ class Regex
       byte_range(n) { |normalized_n| raise_capture_group_was_not_matched(normalized_n) }.end
     end
 
-    private def byte_range(n, &)
-      n += size if n < 0
-      range = Range.new(@ovector[n * 2], @ovector[n * 2 + 1], exclusive: true)
-      if range.begin < 0 || range.end < 0
-        yield n
-      else
-        range
-      end
-    end
-
     # Returns the match of the *n*th capture group, or `nil` if there isn't
     # an *n*th capture group.
     #
@@ -215,25 +203,6 @@ class Regex
       }
     end
 
-    private def fetch_impl(group_name : String)
-      max_start = -1
-      match = nil
-      exists = false
-      named_capture_number(group_name) do |n|
-        exists = true
-        start = byte_range(n) { nil }.try(&.begin) || next
-        if start > max_start
-          max_start = start
-          match = self[n]?
-        end
-      end
-      if match
-        match
-      else
-        yield exists
-      end
-    end
-
     # Returns all matches that are within the given range.
     def [](range : Range) : Array(String)
       self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
@@ -255,20 +224,6 @@ class Regex
       start, count = Indexable.normalize_start_and_count(start, count, size) { return nil }
 
       Array(String).new(count) { |i| self[start + i] }
-    end
-
-    private def named_capture_number(group_name)
-      name_entry_size = LibPCRE.get_stringtable_entries(@code, group_name, out first, out last)
-      return if name_entry_size < 0
-
-      while first <= last
-        capture_number = (first[0].to_u16 << 8) | first[1].to_u16
-        yield capture_number
-
-        first += name_entry_size
-      end
-
-      nil
     end
 
     # Returns the part of the original string before the match. If the match
