@@ -180,6 +180,26 @@ module HTTP
       end
     end
 
+    it "ensures closing the response when breaking out of block" do
+      server = HTTP::Server.new { }
+      address = server.bind_unused_port "127.0.0.1"
+
+      run_server(server) do
+        client = HTTP::Client.new(address.address, address.port)
+        response = nil
+
+        exc = Exception.new("")
+        expect_raises Exception do
+          client.get("/") do |r|
+            response = r
+            raise exc
+          end
+        end.should be exc
+
+        response.try(&.body_io?.try(&.closed?)).should be_true
+      end
+    end
+
     pending_win32 "will retry a broken socket" do
       server = HTTP::Server.new do |context|
         context.response.output.print "foo"

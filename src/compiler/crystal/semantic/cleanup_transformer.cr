@@ -126,6 +126,12 @@ module Crystal
       {@last_is_truthy, @last_is_falsey}
     end
 
+    def transform(node : AnnotationDef)
+      @program.check_call_to_deprecated_annotation node
+
+      node
+    end
+
     def transform(node : Def)
       node.hook_expansions.try &.map! &.transform self
       node
