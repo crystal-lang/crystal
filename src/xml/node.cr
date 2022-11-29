@@ -7,7 +7,7 @@ class XML::Node
   end
 
   # :ditto:
-  def initialize(node : LibXML::Doc*, @errors :  Array(XML::Error)? = nil)
+  def initialize(node : LibXML::Doc*, @errors : Array(XML::Error)? = nil)
     initialize(node.as(LibXML::Node*))
   end
 
