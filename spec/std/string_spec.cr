@@ -203,7 +203,7 @@ describe "String" do
     end
   end
 
-  describe "byte_slice" do
+  describe "#byte_slice" do
     it "gets byte_slice" do
       "hello".byte_slice(1, 3).should eq("ell")
     end
@@ -241,6 +241,36 @@ describe "String" do
       expect_raises(IndexError) do
         "hello".byte_slice(-10)
       end
+    end
+  end
+
+  describe "#byte_slice?" do
+    it "gets byte_slice" do
+      "hello".byte_slice?(1, 3).should eq("ell")
+    end
+
+    it "gets byte_slice with negative count" do
+      expect_raises(ArgumentError) do
+        "hello".byte_slice?(1, -10)
+      end
+    end
+
+    it "gets byte_slice with negative count at last" do
+      expect_raises(ArgumentError) do
+        "hello".byte_slice?(5, -1)
+      end
+    end
+
+    it "gets byte_slice with start out of bounds" do
+      "hello".byte_slice?(10, 3).should be_nil
+    end
+
+    it "gets byte_slice with large count" do
+      "hello".byte_slice?(1, 10).should eq("ello")
+    end
+
+    it "gets byte_slice with negative index" do
+      "hello".byte_slice?(-2, 3).should eq("lo")
     end
   end
 
