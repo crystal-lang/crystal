@@ -76,6 +76,7 @@ describe "Regex" do
 
     it "with options" do
       /foo/.match(".foo", options: Regex::Options::ANCHORED).should be_nil
+      /foo/.match("foo", options: Regex::Options::ANCHORED).should_not be_nil
     end
   end
 
@@ -126,6 +127,7 @@ describe "Regex" do
 
     it "with options" do
       /foo/.match_at_byte_index("..foo", 1, options: Regex::Options::ANCHORED).should be_nil
+      /foo/.match_at_byte_index(".foo", 1, options: Regex::Options::ANCHORED).should_not be_nil
     end
   end
 
@@ -195,6 +197,7 @@ describe "Regex" do
 
     it "with options" do
       /foo/.matches?(".foo", options: Regex::Options::ANCHORED).should be_false
+      /foo/.matches?("foo", options: Regex::Options::ANCHORED).should be_true
     end
 
     it "matches a large single line string" do
@@ -229,6 +232,7 @@ describe "Regex" do
 
     it "with options" do
       /foo/.matches_at_byte_index?("..foo", 1, options: Regex::Options::ANCHORED).should be_false
+      /foo/.matches_at_byte_index?(".foo", 1, options: Regex::Options::ANCHORED).should be_true
     end
   end
 
