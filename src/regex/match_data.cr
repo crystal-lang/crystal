@@ -109,10 +109,7 @@ class Regex
     # ```
     def byte_begin(n = 0) : Int32
       check_index_out_of_bounds n
-      n += size if n < 0
-      value = @ovector[n * 2]
-      raise_capture_group_was_not_matched(n) if value < 0
-      value
+      byte_range(n) { |normalized_n| raise_capture_group_was_not_matched(normalized_n) }.begin
     end
 
     # Returns the position of the next byte after the match.
@@ -132,10 +129,17 @@ class Regex
     # ```
     def byte_end(n = 0) : Int32
       check_index_out_of_bounds n
+      byte_range(n) { |normalized_n| raise_capture_group_was_not_matched(normalized_n) }.end
+    end
+
+    private def byte_range(n, &)
       n += size if n < 0
-      value = @ovector[n * 2 + 1]
-      raise_capture_group_was_not_matched(n) if value < 0
-      value
+      range = Range.new(@ovector[n * 2], @ovector[n * 2 + 1], exclusive: true)
+      if range.begin < 0 || range.end < 0
+        yield n
+      else
+        range
+      end
     end
 
     # Returns the match of the *n*th capture group, or `nil` if there isn't
@@ -151,11 +155,8 @@ class Regex
     def []?(n : Int) : String?
       return unless valid_group?(n)
 
-      n += size if n < 0
-      start = @ovector[n * 2]
-      finish = @ovector[n * 2 + 1]
-      return if start < 0
-      @string.byte_slice(start, finish - start)
+      range = byte_range(n) { return nil }
+      @string.byte_slice(range.begin, range.end - range.begin)
     end
 
     # Returns the match of the *n*th capture group, or raises an `IndexError`
@@ -167,11 +168,9 @@ class Regex
     # ```
     def [](n : Int) : String
       check_index_out_of_bounds n
-      n += size if n < 0
 
-      value = self[n]?
-      raise_capture_group_was_not_matched n if value.nil?
-      value
+      range = byte_range(n) { |normalized_n| raise_capture_group_was_not_matched(normalized_n) }
+      @string.byte_slice(range.begin, range.end - range.begin)
     end
 
     # Returns the match of the capture group named by *group_name*, or
