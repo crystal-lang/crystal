@@ -1236,6 +1236,33 @@ class String
     byte_slice start, count
   end
 
+  # Returns a substring starting from the *start* byte.
+  #
+  # *start* can be negative to start counting
+  # from the end of the string.
+  #
+  # This method should be avoided,
+  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # or the byte positions are known to be at character boundaries.
+  # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
+  #
+  # Returns `nil` if *start* index is out of bounds.
+  #
+  # ```
+  # "hello".byte_slice(0)  # => "hello"
+  # "hello".byte_slice(2)  # => "llo"
+  # "hello".byte_slice(-2) # => "lo"
+  # "¥hello".byte_slice(2) # => "hello"
+  # "¥hello".byte_slice(1) # => "�hello" (invalid UTF-8 character)
+  # "hello".byte_slice(6)  # => nil
+  # "hello".byte_slice(-6) # => nil
+  # ```
+  def byte_slice?(start : Int) : String?
+    count = bytesize - start
+    return nil if start > 0 && count < 0
+    byte_slice? start, count
+  end
+
   # Returns the codepoint of the character at the given *index*.
   #
   # Negative indices can be used to start counting from the end of the string.

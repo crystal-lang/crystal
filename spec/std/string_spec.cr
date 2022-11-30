@@ -272,6 +272,11 @@ describe "String" do
     it "gets byte_slice with negative index" do
       "hello".byte_slice?(-2, 3).should eq("lo")
     end
+
+    it "gets byte_slice(Int) with start out of bounds" do
+      "hello".byte_slice?(10).should be_nil
+      "hello".byte_slice?(-10).should be_nil
+    end
   end
 
   describe "to_i" do
