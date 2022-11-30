@@ -65,12 +65,15 @@ describe "Regex::MatchData" do
     end
 
     it "with capture" do
-      matchdata(/f(o)o/, "foo").begin.should eq 0
-      matchdata(/f(o)o/, "foo").begin(1).should eq 1
-      matchdata(/f(o)o/, "foo").begin(-1).should eq 1
-      matchdata(/f(o)o/, ".foo.").begin.should eq 1
-      matchdata(/f(o)o/, ".foo.").begin(1).should eq 2
-      matchdata(/f(o)o/, ".foo.").begin(-1).should eq 2
+      md = matchdata(/f(o)o/, "foo")
+      md.begin.should eq 0
+      md.begin(1).should eq 1
+      md.begin(-1).should eq 1
+
+      md = matchdata(/f(o)o/, ".foo.")
+      md.begin.should eq 1
+      md.begin(1).should eq 2
+      md.begin(-1).should eq 2
     end
 
     it "char index" do
@@ -99,12 +102,15 @@ describe "Regex::MatchData" do
     end
 
     it "with capture" do
-      matchdata(/f(o)o/, "foo").end.should eq 3
-      matchdata(/f(o)o/, "foo").end(1).should eq 2
-      matchdata(/f(o)o/, "foo").end(-1).should eq 2
-      matchdata(/f(o)o/, ".foo.").end.should eq 4
-      matchdata(/f(o)o/, ".foo.").end(1).should eq 3
-      matchdata(/f(o)o/, ".foo.").end(-1).should eq 3
+      md = matchdata(/f(o)o/, "foo")
+      md.end.should eq 3
+      md.end(1).should eq 2
+      md.end(-1).should eq 2
+
+      md = matchdata(/f(o)o/, ".foo.")
+      md.end.should eq 4
+      md.end(1).should eq 3
+      md.end(-1).should eq 3
     end
 
     it "char index" do
