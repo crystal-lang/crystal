@@ -188,16 +188,7 @@ class Regex
     # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"]? # => "al"
     # ```
     def []?(group_name : String) : String?
-      max_start = -1
-      match = nil
-      named_capture_number(group_name) do |n|
-        start = @ovector[n * 2]
-        if start > max_start
-          max_start = start
-          match = self[n]?
-        end
-      end
-      match
+      fetch_impl(group_name) { nil }
     end
 
     # Returns the match of the capture group named by *group_name*, or
@@ -215,14 +206,32 @@ class Regex
     # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"] # => "al"
     # ```
     def [](group_name : String) : String
-      match = self[group_name]?
-      unless match
-        named_capture_number(group_name) do
+      fetch_impl(group_name) { |exists|
+        if exists
           raise KeyError.new("Capture group '#{group_name}' was not matched")
+        else
+          raise KeyError.new("Capture group '#{group_name}' does not exist")
         end
-        raise KeyError.new("Capture group '#{group_name}' does not exist")
+      }
+    end
+
+    private def fetch_impl(group_name : String)
+      max_start = -1
+      match = nil
+      exists = false
+      named_capture_number(group_name) do |n|
+        exists = true
+        start = byte_range(n) { nil }.try(&.begin) || next
+        if start > max_start
+          max_start = start
+          match = self[n]?
+        end
       end
-      match
+      if match
+        match
+      else
+        yield exists
+      end
     end
 
     # Returns all matches that are within the given range.
