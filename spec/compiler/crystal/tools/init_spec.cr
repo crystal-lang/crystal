@@ -118,7 +118,7 @@ module Crystal
           readme.should contain("# example")
 
           readme.should contain(%{1. Add the dependency to your `shard.yml`:})
-          readme.should contain(<<-EOF
+          readme.should contain(<<-MARKDOWN
 
            ```yaml
            dependencies:
@@ -126,7 +126,7 @@ module Crystal
                github: jsmith/example
            ```
 
-        EOF
+        MARKDOWN
           )
           readme.should contain(%{2. Run `shards install`})
           readme.should contain(%{TODO: Write a description here})
@@ -142,7 +142,7 @@ module Crystal
           readme.should contain(%{TODO: Write a description here})
 
           readme.should_not contain(%{1. Add the dependency to your `shard.yml`:})
-          readme.should_not contain(<<-EOF
+          readme.should_not contain(<<-MARKDOWN
 
            ```yaml
            dependencies:
@@ -150,7 +150,7 @@ module Crystal
                github: jsmith/example
            ```
 
-        EOF
+        MARKDOWN
           )
           readme.should_not contain(%{2. Run `shards install`})
           readme.should contain(%{TODO: Write installation instructions here})
