@@ -2165,14 +2165,14 @@ module Crystal
             {x: TypeNode.new(mod)}
           end
 
-          assert_type(<<-CR) { int32 }
+          assert_type(<<-CRYSTAL) { int32 }
             class Foo(T)
             end
 
             alias Bar = Foo(Bar)?
 
             {{ Bar.nilable? ? 1 : 'a' }}
-            CR
+            CRYSTAL
         end
       end
 
@@ -3134,9 +3134,9 @@ module Crystal
       end
 
       it "reads file (doesn't exist)" do
-        assert_error <<-CR,
+        assert_error <<-CRYSTAL,
           {{read_file("#{__DIR__}/../data/build_foo")}}
-          CR
+          CRYSTAL
           "No such file or directory"
       end
     end
@@ -3149,9 +3149,9 @@ module Crystal
       end
 
       it "reads file (doesn't exist)" do
-        assert_error <<-CR,
+        assert_error <<-CRYSTAL,
           {{read_file("spec/compiler/data/build_foo")}}
-          CR
+          CRYSTAL
           "No such file or directory"
       end
     end
