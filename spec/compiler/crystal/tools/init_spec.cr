@@ -45,11 +45,11 @@ module Crystal
   describe Init::InitProject do
     it "correctly uses git config" do
       within_temporary_directory do
-        File.write(".gitconfig", <<-CONTENT)
+        File.write(".gitconfig", <<-INI)
         [user]
           email = dorian@dorianmarie.fr
           name = Dorian Marié
-        CONTENT
+        INI
 
         with_env("GIT_CONFIG": "#{FileUtils.pwd}/.gitconfig") do
           exec_init("example", "example", "app")
