@@ -4,16 +4,16 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "casts" do
     it "casts from reference to pointer and back" do
-      interpret(<<-CODE).should eq("hello")
+      interpret(<<-CRYSTAL).should eq("hello")
         x = "hello"
         p = x.as(UInt8*)
         y = p.as(String)
         y
-      CODE
+      CRYSTAL
     end
 
     it "casts from reference to nilable reference" do
-      interpret(<<-CODE).should eq("hello")
+      interpret(<<-CRYSTAL).should eq("hello")
         x = "hello"
         y = x.as(String | Nil)
         if y
@@ -21,22 +21,22 @@ describe Crystal::Repl::Interpreter do
         else
           "bye"
         end
-      CODE
+      CRYSTAL
     end
 
     it "casts from mixed union type to another mixed union type for caller" do
-      interpret(<<-CODE).should eq(true)
+      interpret(<<-CRYSTAL).should eq(true)
         a = 1 == 1 ? 1 : (1 == 1 ? 20_i16 : nil)
         if a
           a < 2
         else
           false
         end
-      CODE
+      CRYSTAL
     end
 
     it "casts from nilable type to mixed union type" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         ascii = true
         delimiter = 1 == 1 ? nil : "foo"
 
@@ -45,43 +45,43 @@ describe Crystal::Repl::Interpreter do
         else
           2
         end
-        CODE
+        CRYSTAL
     end
 
     it "casts from nilable type to mixed union type (2)" do
-      interpret(<<-CODE).should eq(true)
+      interpret(<<-CRYSTAL).should eq(true)
         y = 1 == 1 ? "a" : nil
         x = true
         x = y
         x.is_a?(String)
-      CODE
+      CRYSTAL
     end
 
     it "casts from mixed union type to primitive type" do
-      interpret(<<-CODE, prelude: "prelude").should eq("2")
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("2")
         x = 1 == 1 ? 2 : nil
         x.as(Int32)
-      CODE
+      CRYSTAL
     end
 
     it "casts nilable from mixed union type to primitive type (non-nil case)" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         x = 1 == 1 ? 2 : nil
         y = x.as?(Int32)
         y ? y : 20
-      CODE
+      CRYSTAL
     end
 
     it "casts nilable from mixed union type to primitive type (nil case)" do
-      interpret(<<-CODE).should eq(20)
+      interpret(<<-CRYSTAL).should eq(20)
         x = 1 == 1 ? nil : 2
         y = x.as?(Int32)
         y ? y : 20
-      CODE
+      CRYSTAL
     end
 
     it "upcasts between tuple types" do
-      interpret(<<-CODE, prelude: "prelude").should eq((1 + 'a'.ord).to_s)
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq((1 + 'a'.ord).to_s)
         a =
           if 1 == 1
             {1, 'a'}
@@ -90,11 +90,11 @@ describe Crystal::Repl::Interpreter do
           end
 
         a[0].as(Int32) + a[1].as(Char).ord
-      CODE
+      CRYSTAL
     end
 
     it "upcasts between named tuple types, same order" do
-      interpret(<<-CODE, prelude: "prelude").should eq((1 + 'a'.ord).to_s)
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq((1 + 'a'.ord).to_s)
         a =
           if 1 == 1
             {a: 1, b: 'a'}
@@ -103,11 +103,11 @@ describe Crystal::Repl::Interpreter do
           end
 
         a[:a].as(Int32) + a[:b].as(Char).ord
-      CODE
+      CRYSTAL
     end
 
     it "upcasts between named tuple types, different order" do
-      interpret(<<-CODE, prelude: "prelude").should eq((1 + 'a'.ord).to_s)
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq((1 + 'a'.ord).to_s)
         a =
           if 1 == 1
             {a: 1, b: 'a'}
@@ -116,11 +116,11 @@ describe Crystal::Repl::Interpreter do
           end
 
         a[:a].as(Int32) + a[:b].as(Char).ord
-      CODE
+      CRYSTAL
     end
 
     it "upcasts to module type" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         module Moo
         end
 
@@ -146,11 +146,11 @@ describe Crystal::Repl::Interpreter do
         else
           10
         end
-      CODE
+      CRYSTAL
     end
 
     it "upcasts virtual type to union" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         class Foo
           def foo
             1
@@ -170,11 +170,11 @@ describe Crystal::Repl::Interpreter do
         else
           20
         end
-      CODE
+      CRYSTAL
     end
 
     it "casts nil to Void*" do
-      interpret(<<-CODE).should eq(0)
+      interpret(<<-CRYSTAL).should eq(0)
         module Moo
           def self.moo(r)
             r.as(Void*)
@@ -182,11 +182,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Moo.moo(nil).address
-      CODE
+      CRYSTAL
     end
 
     it "does is_a? with virtual metaclass" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         class A
           def self.a
             2
@@ -210,19 +210,19 @@ describe Crystal::Repl::Interpreter do
         else
           0
         end
-        CODE
+        CRYSTAL
     end
 
     it "discards cast" do
-      interpret(<<-CODE, prelude: "prelude").should eq("10")
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("10")
         x = 1 || 'a'
         x.as(Int32)
         10
-      CODE
+      CRYSTAL
     end
 
     it "raises when as fails" do
-      interpret(<<-CODE, prelude: "prelude").to_s.should contain("cast from Int32 to Char failed")
+      interpret(<<-CRYSTAL, prelude: "prelude").to_s.should contain("cast from Int32 to Char failed")
         x = 1 || 'a'
         begin
           x.as(Char)
@@ -230,17 +230,17 @@ describe Crystal::Repl::Interpreter do
         rescue ex : TypeCastError
           ex.message.not_nil!
         end
-      CODE
+      CRYSTAL
     end
 
     it "casts to filtered type, not type in as(...)" do
-      interpret(<<-CODE, prelude: "prelude").should eq("1")
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("1")
         ({1} || 2).as(Tuple)[0]
-      CODE
+      CRYSTAL
     end
 
     it "does is_a? with virtual type (struct)" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         abstract struct Foo
         end
 
@@ -271,11 +271,11 @@ describe Crystal::Repl::Interpreter do
         else
           0
         end
-        CODE
+        CRYSTAL
     end
 
     it "puts virtual metaclass into union (#12162)" do
-      interpret(<<-CODE, prelude: "prelude").should eq(%("ActionA"))
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("ActionA"))
         class Action
         end
 
@@ -288,11 +288,11 @@ describe Crystal::Repl::Interpreter do
         x = ActionA || ActionB
         y = x || Nil
         y.to_s
-        CODE
+        CRYSTAL
     end
 
     it "puts tuple type inside union of different tuple type (#12243)" do
-      interpret(<<-CODE, prelude: "prelude").should eq(%("{180}"))
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("{180}"))
         class A
           def initialize(@x : {Char | Int32}?)
           end
@@ -304,11 +304,11 @@ describe Crystal::Repl::Interpreter do
 
         x = A.new({180}).x
         x.to_s
-      CODE
+      CRYSTAL
     end
 
     it "puts named tuple type inside union of different named tuple type (#12243)" do
-      interpret(<<-CODE, prelude: "prelude").should eq(%("{v: 180}"))
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("{v: 180}"))
         class A
           def initialize(@x : {v: Char | Int32}?)
           end
@@ -320,11 +320,11 @@ describe Crystal::Repl::Interpreter do
 
         x = A.new({v: 180}).x
         x.to_s
-      CODE
+      CRYSTAL
     end
 
     it "casts from mixed union type to nilable proc type (#12283)" do
-      interpret(<<-CODE).should eq("b")
+      interpret(<<-CRYSTAL).should eq("b")
         message = ->{ "b" }.as(String | Proc(String) | Nil)
         if message.is_a?(String)
           "a"
@@ -333,31 +333,31 @@ describe Crystal::Repl::Interpreter do
         else
           "c"
         end
-      CODE
+      CRYSTAL
     end
 
     it "does as? with no resulting type (#12327)" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         if nil.as?(Int32)
           0
         else
           42
         end
-        CODE
+        CRYSTAL
     end
 
     it "does as? with no resulting type, not from nil (#12327)" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         if 1.as?(String)
           0
         else
           42
         end
-        CODE
+        CRYSTAL
     end
 
     it "does as? with a type that can't match (#12346)" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         abstract class A
         end
 
@@ -369,11 +369,11 @@ describe Crystal::Repl::Interpreter do
 
         a = B.new || C.new
         a.as?(B | Int32) ? 1 : 2
-        CODE
+        CRYSTAL
     end
 
     it "upcasts mixed union with tuple to mixed union with compatible tuple (1) (#12331)" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         class Foo
           def initialize(@tuple : Tuple(Int32?) | Tuple(Int32, Int32))
           end
@@ -396,11 +396,11 @@ describe Crystal::Repl::Interpreter do
         else
           3
         end
-      CODE
+      CRYSTAL
     end
 
     it "upcasts mixed union with tuple to mixed union with compatible tuple (2) (#12331)" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         class Foo
           def initialize(@tuple : Tuple(Int32?) | Tuple(Int32, Int32))
           end
@@ -423,11 +423,11 @@ describe Crystal::Repl::Interpreter do
         else
           3
         end
-      CODE
+      CRYSTAL
     end
 
     it "upcasts mixed union with tuple to mixed union with compatible tuple (3) (#12331)" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         class Foo
           def initialize(@tuple : Tuple(Int32?) | Tuple(Int32, Int32))
           end
@@ -450,11 +450,11 @@ describe Crystal::Repl::Interpreter do
         else
           3
         end
-      CODE
+      CRYSTAL
     end
 
     it "upcasts in nilable cast (#12532)" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         struct Nil
           def foo
             0
@@ -480,11 +480,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         B.new.as?(A).foo
-        CODE
+        CRYSTAL
     end
 
     it "upcasts GenericClassInstanceMetaclassType to VirtualMetaclassType" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         class Foo
           def self.foo; 1; end
         end
@@ -494,7 +494,7 @@ describe Crystal::Repl::Interpreter do
         end
 
         Gen(Int32).as(Foo.class).foo
-        CODE
+        CRYSTAL
     end
   end
 end

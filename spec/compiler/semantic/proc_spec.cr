@@ -1318,11 +1318,11 @@ describe "Semantic: proc" do
 end
 
 private def proc_new
-  <<-CODE
+  <<-CRYSTAL
   struct Proc
     def self.new(&block : self)
       block
     end
   end
-  CODE
+  CRYSTAL
 end

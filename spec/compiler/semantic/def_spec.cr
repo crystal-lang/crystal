@@ -557,10 +557,10 @@ describe "Semantic: def" do
   end
 
   it "points error at name (#6937)" do
-    ex = assert_error <<-CODE,
+    ex = assert_error <<-CRYSTAL,
       1.
         foobar
-      CODE
+      CRYSTAL
       "undefined method"
     ex.line_number.should eq(2)
     ex.column_number.should eq(3)

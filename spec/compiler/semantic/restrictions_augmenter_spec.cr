@@ -195,7 +195,7 @@ describe "Semantic: restrictions augmenter" do
   end
 
   it "doesn't augment if assigned inside if" do
-    expect_no_augment <<-CODE
+    expect_no_augment <<-CRYSTAL
       class Foo
         @x : Int32
         def initialize(value)
@@ -204,11 +204,11 @@ describe "Semantic: restrictions augmenter" do
           end
         end
       end
-      CODE
+      CRYSTAL
   end
 
   it "doesn't augment if assigned inside while" do
-    expect_no_augment <<-CODE
+    expect_no_augment <<-CRYSTAL
       class Foo
         @x : Int32
         def initialize(value)
@@ -217,11 +217,11 @@ describe "Semantic: restrictions augmenter" do
           end
         end
       end
-      CODE
+      CRYSTAL
   end
 
   it "doesn't augment if assigned inside block" do
-    expect_no_augment <<-CODE
+    expect_no_augment <<-CRYSTAL
       def foo
         yield
       end
@@ -233,18 +233,18 @@ describe "Semantic: restrictions augmenter" do
           end
         end
       end
-      CODE
+      CRYSTAL
   end
 
   it "doesn't augment if the no_restrictions_augmenter flag is present" do
-    expect_no_augment <<-CODE, flags: "no_restrictions_augmenter"
+    expect_no_augment <<-CRYSTAL, flags: "no_restrictions_augmenter"
       class Foo
         @x : Int32
         def initialize(value)
           @x = value
         end
       end
-      CODE
+      CRYSTAL
   end
 
   it "augments recursive alias type (#12134)" do

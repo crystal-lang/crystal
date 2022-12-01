@@ -2406,7 +2406,7 @@ module Crystal
       end
 
       it "correctly computes line number after `\\{%\n` (#9857)" do
-        code = <<-CODE
+        code = <<-CRYSTAL
         macro foo
           \\{%
             1
@@ -2414,7 +2414,7 @@ module Crystal
         end
 
         1
-        CODE
+        CRYSTAL
 
         exps = Parser.parse(code).as(Expressions)
         exps.expressions[1].location.not_nil!.line_number.should eq(7)
