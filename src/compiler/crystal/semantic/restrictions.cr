@@ -705,7 +705,20 @@ module Crystal
     end
 
     def restriction_of?(other : Generic, owner, self_free_vars = nil, other_free_vars = nil)
-      return true if self == other
+      # The two `Foo(X)`s below are not equal because only one of them is bound
+      # and the other one is unbound, so we compare the free variables too:
+      # (`X` is an alias or a numeric constant)
+      #
+      # ```
+      # def foo(x : Foo(X)) forall X
+      # end
+      #
+      # def foo(x : Foo(X))
+      # end
+      # ```
+      #
+      # See also the todo in `Path#restriction_of?(Path)`
+      return true if self == other && self_free_vars == other_free_vars
       return false unless name == other.name && type_vars.size == other.type_vars.size
 
       # Special case: NamedTuple against NamedTuple

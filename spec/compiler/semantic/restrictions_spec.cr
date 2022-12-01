@@ -617,8 +617,7 @@ describe "Restrictions" do
           CR
       end
 
-      # TODO: enable in #12784
-      pending "inserts constant before free variable with same name" do
+      it "inserts constant before free variable with same name" do
         assert_type(<<-CR) { tuple_of([char, bool]) }
           class Foo(T); end
 
@@ -636,7 +635,7 @@ describe "Restrictions" do
           CR
       end
 
-      pending "keeps constant before free variable with same name" do
+      it "keeps constant before free variable with same name" do
         assert_type(<<-CR) { tuple_of([char, bool]) }
           class Foo(T); end
 
