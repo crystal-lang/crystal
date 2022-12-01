@@ -12,13 +12,13 @@ module Crystal::Doc
   def self.anchor_link(anchor : String)
     anchor = anchor.downcase.gsub(' ', '-')
 
-    <<-ANCHOR
+    <<-HTML
     <a id="#{anchor}" class="anchor" href="##{anchor}">
       <svg class="octicon-link" aria-hidden="true">
         <use href="#octicon-link"/>
       </svg>
     </a>
-    ANCHOR
+    HTML
   end
 
   record TypeTemplate, type : Type, types : Array(Type), project_info : ProjectInfo do
