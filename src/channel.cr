@@ -399,6 +399,7 @@ class Channel(T)
   end
 
   # :nodoc:
+  @[Deprecated("Use `Channel.select(Indexable(SelectAction)` instead.")]
   def self.select(*ops : SelectAction)
     self.select ops
   end
@@ -411,6 +412,7 @@ class Channel(T)
   end
 
   # :nodoc:
+  @[Deprecated("Use `Channel.non_blocking_select(Indexable(SelectAction)` instead.")]
   def self.non_blocking_select(*ops : SelectAction)
     self.non_blocking_select ops
   end
