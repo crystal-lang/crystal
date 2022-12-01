@@ -175,7 +175,7 @@ module Crystal
         end
 
         with_file "example/src/example.cr" do |example|
-          example.should eq(<<-EOF
+          example.should eq(<<-CRYSTAL
         # TODO: Write documentation for `Example`
         module Example
           VERSION = "0.1.0"
@@ -183,21 +183,21 @@ module Crystal
           # TODO: Put your code here
         end
 
-        EOF
+        CRYSTAL
           )
         end
 
         with_file "example/spec/spec_helper.cr" do |example|
-          example.should eq(<<-EOF
+          example.should eq(<<-CRYSTAL
         require "spec"
         require "../src/example"
 
-        EOF
+        CRYSTAL
           )
         end
 
         with_file "example/spec/example_spec.cr" do |example|
-          example.should eq(<<-EOF
+          example.should eq(<<-CRYSTAL
         require "./spec_helper"
 
         describe Example do
@@ -208,7 +208,7 @@ module Crystal
           end
         end
 
-        EOF
+        CRYSTAL
           )
         end
 
