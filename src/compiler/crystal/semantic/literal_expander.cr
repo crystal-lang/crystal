@@ -642,7 +642,7 @@ module Crystal
     #
     # To:
     #
-    #     %index, %value = ::Channel.select({foo_select_action, bar_select_action})
+    #     %index, %value = ::Channel.select(::StaticArray[foo_select_action, bar_select_action])
     #     case %index
     #     when 0
     #       body
@@ -665,7 +665,7 @@ module Crystal
     #
     # To:
     #
-    #     %index, %value = ::Channel.select({foo_select_action})
+    #     %index, %value = ::Channel.select(::StaticArray[foo_select_action])
     #     case %index
     #     when 0
     #       body
@@ -716,7 +716,7 @@ module Crystal
       call = Call.new(
         channel,
         node.else ? "non_blocking_select" : "select",
-        TupleLiteral.new(tuple_values).at(node),
+        Call.new(Path.global("StaticArray"), "[]", tuple_values).at(node)
       ).at(node)
       multi = MultiAssign.new(targets, [call] of ASTNode)
       case_cond = Var.new(index_name).at(node)
