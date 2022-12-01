@@ -37,7 +37,7 @@ describe HTTP::Server::RequestProcessor do
         context.response << "\r\n"
       end
 
-      input = IO::Memory.new(requestize(<<-REQUEST
+      input = IO::Memory.new(requestize(<<-HTTP
         POST / HTTP/1.1
         Content-Length: 7
 
@@ -46,7 +46,7 @@ describe HTTP::Server::RequestProcessor do
         Content-Length: 7
 
         hello
-        REQUEST
+        HTTP
       ))
       output = IO::Memory.new
       processor.process(input, output)
@@ -75,14 +75,14 @@ describe HTTP::Server::RequestProcessor do
         context.response.puts "Hello world\r"
       end
 
-      input = IO::Memory.new(requestize(<<-REQUEST
+      input = IO::Memory.new(requestize(<<-HTTP
         POST / HTTP/1.1
 
         POST / HTTP/1.1
         Content-Length: 7
 
         hello
-        REQUEST
+        HTTP
       ))
       output = IO::Memory.new
       processor.process(input, output)
@@ -111,7 +111,7 @@ describe HTTP::Server::RequestProcessor do
         context.response.puts "Hello world\r"
       end
 
-      input = IO::Memory.new(requestize(<<-REQUEST
+      input = IO::Memory.new(requestize(<<-HTTP
         POST / HTTP/1.1
 
         hello
@@ -119,7 +119,7 @@ describe HTTP::Server::RequestProcessor do
         Content-Length: 7
 
         hello
-        REQUEST
+        HTTP
       ))
       output = IO::Memory.new
       processor.process(input, output)
@@ -145,7 +145,7 @@ describe HTTP::Server::RequestProcessor do
         context.response.headers["Connection"] = "close"
       end
 
-      input = IO::Memory.new(requestize(<<-REQUEST
+      input = IO::Memory.new(requestize(<<-HTTP
         POST / HTTP/1.1
         Content-Length: 7
 
@@ -154,7 +154,7 @@ describe HTTP::Server::RequestProcessor do
         Content-Length: 7
 
         hello
-        REQUEST
+        HTTP
       ))
       output = IO::Memory.new
       processor.process(input, output)
@@ -173,7 +173,7 @@ describe HTTP::Server::RequestProcessor do
       processor = HTTP::Server::RequestProcessor.new do |context|
       end
 
-      input = IO::Memory.new(requestize(<<-REQUEST
+      input = IO::Memory.new(requestize(<<-HTTP
         POST / HTTP/1.1
         Content-Length: 4
 
@@ -182,7 +182,7 @@ describe HTTP::Server::RequestProcessor do
         Content-Length: 7
 
         hello
-        REQUEST
+        HTTP
       ))
       output = IO::Memory.new
       processor.process(input, output)
@@ -203,7 +203,7 @@ describe HTTP::Server::RequestProcessor do
         io.gets_to_end
       end
 
-      input = IO::Memory.new(requestize(<<-REQUEST
+      input = IO::Memory.new(requestize(<<-HTTP
         POST / HTTP/1.1
         Content-Length: 16387
 
@@ -212,7 +212,7 @@ describe HTTP::Server::RequestProcessor do
         Content-Length: 7
 
         hello
-        REQUEST
+        HTTP
       ))
       output = IO::Memory.new
       processor.process(input, output)
