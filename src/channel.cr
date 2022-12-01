@@ -425,7 +425,7 @@ class Channel(T)
     # This is to avoid deadlocks between concurrent `select` calls
     ops_locks = ops
       .to_a
-      .sort_by!(&.lock_object_id)
+      .unstable_sort_by!(&.lock_object_id)
 
     each_skip_duplicates(ops_locks, &.lock)
 
