@@ -548,6 +548,46 @@ describe "Restrictions" do
       end
     end
 
+    describe "Path vs NumberLiteral" do
+      it "inserts constant before number literal of same value with generic arguments" do
+        assert_type(<<-CR) { bool }
+          X = 1
+
+          class Foo(N)
+          end
+
+          def foo(a : Foo(1))
+            'a'
+          end
+
+          def foo(a : Foo(X))
+            true
+          end
+
+          foo(Foo(1).new)
+          CR
+      end
+
+      it "inserts number literal before constant of same value with generic arguments" do
+        assert_type(<<-CR) { bool }
+          X = 1
+
+          class Foo(N)
+          end
+
+          def foo(a : Foo(X))
+            'a'
+          end
+
+          def foo(a : Foo(1))
+            true
+          end
+
+          foo(Foo(1).new)
+          CR
+      end
+    end
+
     describe "free variables" do
       it "inserts path before free variable with same name" do
         assert_type(<<-CR) { tuple_of([char, bool]) }
@@ -574,6 +614,43 @@ describe "Restrictions" do
           end
 
           {foo(1), foo("")}
+          CR
+      end
+
+      # TODO: enable in #12784
+      pending "inserts constant before free variable with same name" do
+        assert_type(<<-CR) { tuple_of([char, bool]) }
+          class Foo(T); end
+
+          X = 1
+
+          def foo(x : Foo(X)) forall X
+            true
+          end
+
+          def foo(x : Foo(X))
+            'a'
+          end
+
+          {foo(Foo(1).new), foo(Foo(2).new)}
+          CR
+      end
+
+      pending "keeps constant before free variable with same name" do
+        assert_type(<<-CR) { tuple_of([char, bool]) }
+          class Foo(T); end
+
+          X = 1
+
+          def foo(x : Foo(X))
+            'a'
+          end
+
+          def foo(x : Foo(X)) forall X
+            true
+          end
+
+          {foo(Foo(1).new), foo(Foo(2).new)}
           CR
       end
 
