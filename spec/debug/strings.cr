@@ -1,6 +1,9 @@
-# NOTE: breakpoint on line 1 + next does not work
-a = "hello world" # break
-# lldb-command: n
-# lldb-command: print a
+a = "hello world"
+b = "abcσdeσf"
+# print: a
 # lldb-check: (String *) $0 = {{0x[0-9a-f]+}} "hello world"
-b = 0
+# gdb-check: $1 = "hello world"
+# print: b
+# lldb-check: (String *) $1 = {{0x[0-9a-f]+}} "abcσdeσf"
+# gdb-check: $2 = "abcσdeσf"
+debugger

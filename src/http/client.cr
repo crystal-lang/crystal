@@ -58,6 +58,8 @@
 # client.close
 # ```
 #
+# WARNING: A single `HTTP::Client` instance is not safe for concurrent use by multiple fibers.
+#
 # ### Compression
 #
 # If `compress` isn't set to `false`, and no `Accept-Encoding` header is explicitly specified,
@@ -259,7 +261,7 @@ class HTTP::Client
 
   # Configures this client to perform basic authentication in every
   # request.
-  def basic_auth(username, password)
+  def basic_auth(username, password) : Nil
     header = "Basic #{Base64.strict_encode("#{username}:#{password}")}"
     before_request do |request|
       request.headers["Authorization"] = header
@@ -398,7 +400,7 @@ class HTTP::Client
   # end
   # client.get "/"
   # ```
-  def before_request(&callback : HTTP::Request ->)
+  def before_request(&callback : HTTP::Request ->) : Nil
     before_request = @before_request ||= [] of (HTTP::Request ->)
     before_request << callback
   end
@@ -583,21 +585,27 @@ class HTTP::Client
   end
 
   private def exec_internal(request)
-    response = exec_internal_single(request)
+    implicit_compression = implicit_compression?(request)
+    begin
+      response = exec_internal_single(request, implicit_compression: implicit_compression)
+    rescue exc : IO::Error
+      raise exc if @io.nil? # do not retry if client was closed
+      response = nil
+    end
     return handle_response(response) if response
 
-    # Server probably closed the connection, so retry one
+    # Server probably closed the connection, so retry once
     close
     request.body.try &.rewind
-    response = exec_internal_single(request)
+    response = exec_internal_single(request, implicit_compression: implicit_compression)
     return handle_response(response) if response
 
-    raise "Unexpected end of http response"
+    raise IO::EOFError.new("Unexpected end of http response")
   end
 
-  private def exec_internal_single(request)
-    decompress = send_request(request)
-    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress)
+  private def exec_internal_single(request, implicit_compression = false)
+    send_request(request)
+    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: implicit_compression)
   end
 
   private def handle_response(response)
@@ -605,7 +613,7 @@ class HTTP::Client
     response
   end
 
-  # Executes a request request and yields an `HTTP::Client::Response` to the block.
+  # Executes a request and yields an `HTTP::Client::Response` to the block.
   # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
   #
   # ```
@@ -625,59 +633,64 @@ class HTTP::Client
   end
 
   private def exec_internal(request, &block : Response -> T) : T forall T
-    exec_internal_single(request) do |response|
+    implicit_compression = implicit_compression?(request)
+    exec_internal_single(request, ignore_io_error: true, implicit_compression: implicit_compression) do |response|
       if response
         return handle_response(response) { yield response }
       end
+    end
 
-      # Server probably closed the connection, so retry once
-      close
-      request.body.try &.rewind
-      exec_internal_single(request) do |response|
-        if response
-          return handle_response(response) do
-            yield response
-          end
-        end
+    # Server probably closed the connection, so retry once
+    close
+    request.body.try &.rewind
+    exec_internal_single(request, implicit_compression: implicit_compression) do |response|
+      if response
+        return handle_response(response) { yield response }
       end
     end
-    raise "Unexpected end of http response"
+    raise IO::EOFError.new("Unexpected end of http response")
   end
 
-  private def exec_internal_single(request)
-    decompress = send_request(request)
-    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
+  private def exec_internal_single(request, ignore_io_error = false, implicit_compression = false)
+    begin
+      send_request(request)
+    rescue ex : IO::Error
+      return yield nil if ignore_io_error && !@io.nil? # ignore_io_error only if client was not closed
+      raise ex
+    end
+    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: implicit_compression) do |response|
       yield response
     end
   end
 
   private def handle_response(response)
-    value = yield
+    yield
+  ensure
     response.body_io?.try &.close
     close unless response.keep_alive?
-    value
   end
 
   private def send_request(request)
-    decompress = set_defaults request
+    set_defaults request
     run_before_request_callbacks(request)
     request.to_io(io)
     io.flush
-    decompress
   end
 
   private def set_defaults(request)
     request.headers["Host"] ||= host_header
     request.headers["User-Agent"] ||= "Crystal"
+
+    if implicit_compression?(request)
+      request.headers["Accept-Encoding"] = "gzip, deflate"
+    end
+  end
+
+  private def implicit_compression?(request)
     {% if flag?(:without_zlib) %}
       false
     {% else %}
-      if compress? && !request.headers.has_key?("Accept-Encoding")
-        request.headers["Accept-Encoding"] = "gzip, deflate"
-        true
-      else
-        false
-      end
+      compress? && !request.headers.has_key?("Accept-Encoding")
     {% end %}
   end
 
@@ -759,8 +772,11 @@ class HTTP::Client
   end
 
   # Closes this client. If used again, a new connection will be opened.
-  def close
+  def close : Nil
     @io.try &.close
+  rescue IO::Error
+    nil
+  ensure
     @io = nil
   end
 
@@ -869,7 +885,7 @@ class HTTP::Client
 
   # This method is called when executing the request. Although it can be
   # redefined, it is recommended to use the `def_around_exec` macro to be
-  # able to add new behaviors without loosing prior existing ones.
+  # able to add new behaviors without losing prior existing ones.
   protected def around_exec(request)
     yield
   end
@@ -892,7 +908,7 @@ class HTTP::Client
     protected def around_exec(%request)
       previous_def do
         {% if block.args.size != 1 %}
-          {% raise "Wrong number of block arguments (given #{block.args.size}, expected: 1)" %}
+          {% raise "Wrong number of block parameters for macro 'def_around_exec' (given #{block.args.size}, expected 1)" %}
         {% end %}
 
         {{ block.args.first.id }} = %request

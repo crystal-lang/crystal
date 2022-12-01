@@ -1,5 +1,7 @@
 require "c/winnt"
 require "c/basetsd"
+require "c/wtypesbase"
+require "c/minwinbase"
 
 lib LibC
   fun GetFullPathNameW(lpFileName : LPWSTR, nBufferLength : DWORD, lpBuffer : LPWSTR, lpFilePart : LPWSTR*) : DWORD
@@ -11,6 +13,15 @@ lib LibC
   FILE_TYPE_UNKNOWN = DWORD.new(0x0)
 
   fun GetFileType(hFile : HANDLE) : DWORD
+
+  struct WIN32_FILE_ATTRIBUTE_DATA
+    dwFileAttributes : DWORD
+    ftCreationTime : FILETIME
+    ftLastAccessTime : FILETIME
+    ftLastWriteTime : FILETIME
+    nFileSizeHigh : DWORD
+    nFileSizeLow : DWORD
+  end
 
   struct BY_HANDLE_FILE_INFORMATION
     dwFileAttributes : DWORD
@@ -43,23 +54,6 @@ lib LibC
                   lpSecurityAttributes : SECURITY_ATTRIBUTES*, dwCreationDisposition : DWORD,
                   dwFlagsAndAttributes : DWORD, hTemplateFile : HANDLE) : HANDLE
 
-  struct OVERLAPPED_OFFSET
-    offset : DWORD
-    offsetHigh : DWORD
-  end
-
-  union OVERLAPPED_UNION
-    offset : OVERLAPPED_OFFSET
-    pointer : Void*
-  end
-
-  struct OVERLAPPED
-    internal : ULONG_PTR
-    internalHigh : ULONG_PTR
-    union : OVERLAPPED_UNION
-    hEvent : HANDLE
-  end
-
   fun ReadFile(hFile : HANDLE, lpBuffer : Void*, nNumberOfBytesToRead : DWORD, lpNumberOfBytesRead : DWORD*, lpOverlapped : OVERLAPPED*) : BOOL
 
   MAX_PATH = 260
@@ -81,6 +75,21 @@ lib LibC
   fun FindNextFileW(hFindFile : HANDLE, lpFindFileData : WIN32_FIND_DATAW*) : BOOL
   fun FindClose(hFindFile : HANDLE) : BOOL
 
+  fun LockFileEx(
+    hFile : HANDLE,
+    dwFlags : DWORD,
+    dwReserved : DWORD,
+    nNumberOfBytesToLockLow : DWORD,
+    nNumberOfBytesToLockHigh : DWORD,
+    lpOverlapped : OVERLAPPED*
+  ) : BOOL
+  fun UnlockFileEx(
+    hFile : HANDLE,
+    dwReserved : DWORD,
+    nNumberOfBytesToUnlockLow : DWORD,
+    nNumberOfBytesToUnlockHigh : DWORD,
+    lpOverlapped : OVERLAPPED*
+  ) : BOOL
   fun SetFileTime(hFile : HANDLE, lpCreationTime : FILETIME*,
                   lpLastAccessTime : FILETIME*, lpLastWriteTime : FILETIME*) : BOOL
 end

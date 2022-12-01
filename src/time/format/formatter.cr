@@ -11,143 +11,143 @@ struct Time::Format
     def initialize(@time : Time, @io : IO)
     end
 
-    def year
+    def year : Nil
       pad4(time.year, '0')
     end
 
-    def year_modulo_100
+    def year_modulo_100 : Nil
       pad2(time.year % 100, '0')
     end
 
-    def year_divided_by_100
+    def year_divided_by_100 : Nil
       io << time.year // 100
     end
 
-    def full_or_short_year
+    def full_or_short_year : Nil
       year
     end
 
-    def calendar_week_year
+    def calendar_week_year : Nil
       pad4(time.calendar_week[0], '0')
     end
 
-    def calendar_week_year_modulo100
+    def calendar_week_year_modulo100 : Nil
       pad2(time.calendar_week[0] % 100, '0')
     end
 
-    def month
+    def month : Nil
       io << time.month
     end
 
-    def month_zero_padded
+    def month_zero_padded : Nil
       pad2 time.month, '0'
     end
 
-    def month_blank_padded
+    def month_blank_padded : Nil
       pad2 time.month, ' '
     end
 
-    def month_name
+    def month_name : Nil
       io << get_month_name
     end
 
-    def month_name_upcase
+    def month_name_upcase : Nil
       io << get_month_name.upcase
     end
 
-    def short_month_name
+    def short_month_name : Nil
       io << get_short_month_name
     end
 
-    def short_month_name_upcase
+    def short_month_name_upcase : Nil
       io << get_short_month_name.upcase
     end
 
-    def calendar_week_week
+    def calendar_week_week : Nil
       pad2(time.calendar_week[1], '0')
     end
 
-    def day_of_month
+    def day_of_month : Nil
       io << time.day
     end
 
-    def day_of_month_zero_padded
+    def day_of_month_zero_padded : Nil
       pad2 time.day, '0'
     end
 
-    def day_of_month_blank_padded
+    def day_of_month_blank_padded : Nil
       pad2 time.day, ' '
     end
 
-    def day_name
+    def day_name : Nil
       io << get_day_name
     end
 
-    def day_name_upcase
+    def day_name_upcase : Nil
       io << get_day_name.upcase
     end
 
-    def short_day_name
+    def short_day_name : Nil
       io << get_short_day_name
     end
 
-    def short_day_name_upcase
+    def short_day_name_upcase : Nil
       io << get_short_day_name.upcase
     end
 
-    def short_day_name_with_comma?
+    def short_day_name_with_comma? : Nil
       short_day_name
       char ','
       whitespace
     end
 
-    def day_of_year_zero_padded
+    def day_of_year_zero_padded : Nil
       pad3 time.day_of_year, '0'
     end
 
-    def hour_24_zero_padded
+    def hour_24_zero_padded : Nil
       pad2 time.hour, '0'
     end
 
-    def hour_24_blank_padded
+    def hour_24_blank_padded : Nil
       pad2 time.hour, ' '
     end
 
-    def hour_12_zero_padded
+    def hour_12_zero_padded : Nil
       h = (time.hour % 12)
       pad2 (h == 0 ? 12 : h), '0'
     end
 
-    def hour_12_blank_padded
+    def hour_12_blank_padded : Nil
       h = (time.hour % 12)
       pad2 (h == 0 ? 12 : h), ' '
     end
 
-    def minute
+    def minute : Nil
       pad2 time.minute, '0'
     end
 
-    def second
+    def second : Nil
       pad2 time.second, '0'
     end
 
-    def milliseconds
+    def milliseconds : Nil
       pad3 time.millisecond, '0'
     end
 
-    def microseconds
+    def microseconds : Nil
       pad6 time.nanosecond // 1000, '0'
     end
 
-    def nanoseconds
+    def nanoseconds : Nil
       pad9 time.nanosecond, '0'
     end
 
-    def second_fraction
+    def second_fraction : Nil
       nanoseconds
     end
 
-    def second_fraction?(fraction_digits : Int = 9)
+    def second_fraction?(fraction_digits : Int = 9) : Nil
       case fraction_digits
       when 0
       when 3 then char '.'; milliseconds
@@ -158,31 +158,31 @@ struct Time::Format
       end
     end
 
-    def am_pm
+    def am_pm : Nil
       io << (time.hour < 12 ? "am" : "pm")
     end
 
-    def am_pm_upcase
+    def am_pm_upcase : Nil
       io << (time.hour < 12 ? "AM" : "PM")
     end
 
-    def day_of_week_monday_1_7
+    def day_of_week_monday_1_7 : Nil
       io << time.day_of_week.value
     end
 
-    def day_of_week_sunday_0_6
+    def day_of_week_sunday_0_6 : Nil
       io << time.day_of_week.value % 7
     end
 
-    def unix_seconds
+    def unix_seconds : Nil
       io << time.to_unix
     end
 
-    def time_zone(with_seconds = false)
+    def time_zone(with_seconds = false) : Nil
       time_zone_offset(format_seconds: with_seconds)
     end
 
-    def time_zone_z_or_offset(**options)
+    def time_zone_z_or_offset(**options) : Nil
       if time.utc?
         io << 'Z'
       else
@@ -194,31 +194,31 @@ struct Time::Format
       time.zone.format(io, with_colon: force_colon, with_seconds: format_seconds)
     end
 
-    def time_zone_colon(with_seconds = false)
+    def time_zone_colon(with_seconds = false) : Nil
       time_zone_offset(force_colon: true, format_seconds: with_seconds)
     end
 
-    def time_zone_colon_with_seconds
+    def time_zone_colon_with_seconds : Nil
       time_zone_colon(with_seconds: true)
     end
 
-    def time_zone_gmt
+    def time_zone_gmt : Nil
       io << "GMT"
     end
 
-    def time_zone_rfc2822
+    def time_zone_rfc2822 : Nil
       time_zone_offset(allow_colon: false)
     end
 
-    def time_zone_gmt_or_rfc2822(**options)
-      if time.utc? || time.location.name == "UT" || time.location.name == "GMT"
+    def time_zone_gmt_or_rfc2822(**options) : Nil
+      if time.utc? || time.location.name.in?("UT", "GMT")
         time_zone_gmt
       else
         time_zone_rfc2822
       end
     end
 
-    def time_zone_name(zone = false)
+    def time_zone_name(zone = false) : Nil
       if zone
         io << time.zone.name
       else
@@ -226,7 +226,7 @@ struct Time::Format
       end
     end
 
-    def char(char, *alternatives)
+    def char(char, *alternatives) : Nil
       io << char
     end
 
@@ -234,7 +234,7 @@ struct Time::Format
       char(char, *alternatives)
     end
 
-    def whitespace
+    def whitespace : Nil
       io << ' '
     end
 
@@ -254,31 +254,31 @@ struct Time::Format
       get_day_name[0, 3]
     end
 
-    def pad2(value, padding)
-      io.write_byte padding.ord.to_u8 if value < 10
+    def pad2(value, padding) : Nil
+      io << padding if value < 10
       io << value
     end
 
-    def pad3(value, padding)
-      io.write_byte padding.ord.to_u8 if value < 100
+    def pad3(value, padding) : Nil
+      io << padding if value < 100
       pad2 value, padding
     end
 
-    def pad4(value, padding)
-      io.write_byte padding.ord.to_u8 if value < 1000
+    def pad4(value, padding) : Nil
+      io << padding if value < 1000
       pad3 value, padding
     end
 
-    def pad6(value, padding)
-      io.write_byte padding.ord.to_u8 if value < 100000
-      io.write_byte padding.ord.to_u8 if value < 10000
+    def pad6(value, padding) : Nil
+      io << padding if value < 100000
+      io << padding if value < 10000
       pad4 value, padding
     end
 
-    def pad9(value, padding)
-      io.write_byte padding.ord.to_u8 if value < 100000000
-      io.write_byte padding.ord.to_u8 if value < 10000000
-      io.write_byte padding.ord.to_u8 if value < 1000000
+    def pad9(value, padding) : Nil
+      io << padding if value < 100000000
+      io << padding if value < 10000000
+      io << padding if value < 1000000
       pad6 value, padding
     end
   end

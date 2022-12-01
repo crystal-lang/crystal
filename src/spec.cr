@@ -110,7 +110,11 @@ def Spec.configure_formatter(formatter, output_path = nil)
   end
 end
 
-Spec.option_parser.parse(ARGV)
+begin
+  Spec.option_parser.parse(ARGV)
+rescue e : OptionParser::InvalidOption
+  abort("Error: #{e.message}")
+end
 
 unless ARGV.empty?
   STDERR.puts "Error: unknown argument '#{ARGV.first}'"
@@ -123,7 +127,7 @@ end
 
 Spec.add_split_filter ENV["SPEC_SPLIT"]?
 
-{% unless flag?(:win32) %}
+{% unless flag?(:win32) || flag?(:wasm32) %}
   # TODO(windows): re-enable this once Signal is ported
   Signal::INT.trap { Spec.abort! }
 {% end %}

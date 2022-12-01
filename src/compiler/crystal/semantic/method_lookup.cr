@@ -8,13 +8,13 @@ require "../types"
 # overloads because the exact match will prevent them from being considered.
 #
 # If no matches are found we try again but this time with autocasting enabled.
-# In `semantic/call.cr` this is when `with_literals` is `true`, and this is when
+# In `semantic/call.cr` this is when `with_autocast` is `true`, and this is when
 # `analyze_all` will be `true` here.
 #
 # 2. Lookup is done with autocasting enabled.
 #
 # In this mode the types for NumberLiteral and SymbolLiteral are not the usual
-# types but instead the special NumberLiteralType and SymbolLiteralType.
+# types but instead the special NumberAutocastType and SymbolAutocastType.
 #
 # In this mode we also need to stop as soon as we find an exact match
 # (which just means when the first overload matches with autocasting, which
@@ -52,9 +52,9 @@ require "../types"
 
 module Crystal
   record NamedArgumentType, name : String, type : Type do
-    def self.from_args(named_args : Array(NamedArgument)?, with_literals = false)
+    def self.from_args(named_args : Array(NamedArgument)?, with_autocast = false)
       named_args.try &.map do |named_arg|
-        new(named_arg.name, named_arg.value.type(with_literals: with_literals))
+        new(named_arg.name, named_arg.value.type(with_autocast: with_autocast))
       end
     end
   end
@@ -66,7 +66,7 @@ module Crystal
     named_args : Array(NamedArgumentType)?
 
   class Type
-    def lookup_matches(signature, owner = self, path_lookup = self, matches_array = nil, analyze_all = false)
+    def lookup_matches(signature, owner = self, path_lookup = self, matches_array = ZeroOneOrMany(Match).new, analyze_all = false)
       matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array, analyze_all: analyze_all)
       return matches if matches.cover_all?
 
@@ -105,7 +105,7 @@ module Crystal
       Matches.new(matches_array, cover, owner, false)
     end
 
-    def lookup_matches_without_parents(signature, owner = self, path_lookup = self, matches_array = nil, analyze_all = false)
+    def lookup_matches_without_parents(signature, owner = self, path_lookup = self, matches_array = ZeroOneOrMany(Match).new, analyze_all = false)
       if defs = self.defs.try &.[signature.name]?
         context = MatchContext.new(owner, path_lookup)
 
@@ -120,6 +120,7 @@ module Crystal
           # type lookup for arguments.
           macro_owner = item.def.macro_owner?
           context.defining_type = macro_owner if macro_owner
+          context.self_restriction_type = item.def.self_restriction_type
           context.def_free_vars = item.def.free_vars
           context.free_vars.try &.clear
 
@@ -128,8 +129,7 @@ module Crystal
           next if exact_match
 
           if match
-            matches_array ||= [] of Match
-            matches_array << match
+            matches_array.push match
 
             # If the argument types are compatible with the match's argument types,
             # we are done. We don't just compare types with ==, there is a special case:
@@ -143,6 +143,7 @@ module Crystal
             context = MatchContext.new(owner, path_lookup)
           else
             context.defining_type = path_lookup if macro_owner
+            context.self_restriction_type = nil
             context.def_free_vars = nil
             context.free_vars.try &.clear
           end
@@ -156,7 +157,7 @@ module Crystal
       Matches.new(matches_array, Cover.create(signature, matches_array), owner)
     end
 
-    def lookup_matches_with_modules(signature, owner = self, path_lookup = self, matches_array = nil, analyze_all = false)
+    def lookup_matches_with_modules(signature, owner = self, path_lookup = self, matches_array = ZeroOneOrMany(Match).new, analyze_all = false)
       matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array, analyze_all: analyze_all)
       return matches unless matches.empty?
 
@@ -249,6 +250,12 @@ module Crystal
 
         match_arg_type = arg_type.restrict(arg, context)
         if match_arg_type
+          if !named_args && !splat_arg_types && match_arg_type.same?(arg_type) && arg_types.size == 1
+            # Optimization: no need to create matched_arg_types if
+            # the call has a single argument and it exactly matches the restriction
+            break
+          end
+
           matched_arg_types ||= [] of Type
           matched_arg_types.push match_arg_type
           mandatory_args[arg_index] = true if mandatory_args
@@ -366,7 +373,7 @@ module Crystal
       Match.new(a_def, (matched_arg_types || arg_types), context, matched_named_arg_types)
     end
 
-    def matches_exactly?(match : Match, *, with_literals : Bool = false)
+    def matches_exactly?(match : Match, *, with_autocast : Bool = false)
       arg_types_equal = self.arg_types.equals?(match.arg_types) do |x, y|
         x.compatible_with?(y)
       end
@@ -432,7 +439,7 @@ module Crystal
         if is_new && subtype_matches.empty?
           other_initializers = subtype_lookup.instance_type.lookup_defs_with_modules("initialize")
           unless other_initializers.empty?
-            return Matches.new(nil, false)
+            return Matches.new(ZeroOneOrMany(Match).new, false)
           end
         end
 
@@ -440,10 +447,17 @@ module Crystal
         # def, we need to copy it to the subclass so that @name, @instance_vars and other
         # macro vars resolve correctly.
         if subtype_matches.empty?
-          new_subtype_matches = nil
+          new_subtype_matches = ZeroOneOrMany(Match).new
 
           base_type_matches.each do |base_type_match|
             if base_type_match.def.macro_def?
+              # We need to force any `self` restrictions in the base type match
+              # to refer to that base type, instead of whichever subtype is
+              # currently used to evaluate the copied def. We must do this even
+              # before any def is actually copied.
+              old_self = base_type_match.def.self_restriction_type
+              base_type_match.def.self_restriction_type = base_type
+
               # We need to copy each submatch if it's a macro def
               full_subtype_matches = subtype_lookup.lookup_matches(signature, subtype_virtual_lookup, subtype_virtual_lookup, analyze_all: analyze_all)
               full_subtype_matches.each do |full_subtype_match|
@@ -465,13 +479,15 @@ module Crystal
                   changes << Change.new(change_owner, cloned_def)
                 end
 
-                new_subtype_matches ||= [] of Match
                 new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
               end
+
+              # Reset the `self` restriction override
+              base_type_match.def.self_restriction_type = old_self
             end
           end
 
-          if new_subtype_matches
+          unless new_subtype_matches.empty?
             subtype_matches = Matches.new(new_subtype_matches, Cover.create(signature, new_subtype_matches))
           end
         end

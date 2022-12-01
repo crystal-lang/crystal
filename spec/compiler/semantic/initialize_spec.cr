@@ -127,7 +127,7 @@ describe "Semantic: initialize" do
       foo = Foo.new
       foo.x
       ),
-      "instance variable '@x' of Foo must be Int32, not Nil"
+      "instance variable '@x' of Foo must be Int32, not Nil", inject_primitives: true
   end
 
   it "types instance var as nilable if assigned in block" do
@@ -151,7 +151,7 @@ describe "Semantic: initialize" do
       foo = Foo.new
       foo.x
       ),
-      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
+      "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable", inject_primitives: true
   end
 
   it "types instance var as not-nilable if assigned in block but previously assigned" do
@@ -175,7 +175,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "types instance var as nilable if used before assignment" do
@@ -218,7 +218,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "types instance var as non-nilable if calls super and super defines it, with one level of indirection" do
@@ -245,7 +245,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "doesn't type instance var as nilable if out" do
@@ -267,7 +267,7 @@ describe "Semantic: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "types instance var as nilable if used after method call that reads var" do
@@ -640,7 +640,8 @@ describe "Semantic: initialize" do
       a = 1 > 0 ? nil : 1
       Foo.new(a)
       ",
-      "no overload matches"
+      "expected argument #1 to 'Foo.new' to be Int32, not (Int32 | Nil)",
+      inject_primitives: true
   end
 
   it "doesn't mark instance variable as nilable when using self.class" do
@@ -660,7 +661,7 @@ describe "Semantic: initialize" do
       end
 
       Foo.new.foo
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "doesn't mark instance variable as nilable when using self.class in method" do
@@ -684,7 +685,7 @@ describe "Semantic: initialize" do
       end
 
       Foo.new.foo
-      ") { int32 }
+      ", inject_primitives: true) { int32 }
   end
 
   it "types initializer of recursive generic type" do
@@ -700,7 +701,7 @@ describe "Semantic: initialize" do
       alias Rec = Foo(Rec)
 
       Foo(Rec).new.x + 1
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "types initializer of generic type after instantiated" do
@@ -719,7 +720,7 @@ describe "Semantic: initialize" do
       end
 
       Foo(Int32).new.x + 1
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "errors on default new when using named arguments (#2245)" do
@@ -729,7 +730,7 @@ describe "Semantic: initialize" do
 
       Foo.new(x: 1)
       ),
-      "no argument named 'x'"
+      "no parameter named 'x'"
   end
 
   it "doesn't type ivar as nilable if super call present and parent has already typed ivar (#4764)" do

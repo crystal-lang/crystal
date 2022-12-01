@@ -42,7 +42,7 @@ class IO::Delimited < IO
     @active_delimiter_buffer = Bytes.empty
   end
 
-  def read(slice : Bytes)
+  def read(slice : Bytes) : Int32
     check_open
     return 0 if @finished
 
@@ -111,7 +111,7 @@ class IO::Delimited < IO
     raise IO::Error.new "Can't write to IO::Delimited"
   end
 
-  def close
+  def close : Nil
     return if @closed
     @closed = true
 

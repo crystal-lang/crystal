@@ -29,7 +29,7 @@ class UNIXSocket < Socket
   end
 
   # Creates a UNIXSocket from an already configured raw file descriptor
-  def initialize(*, fd : Int32, type : Type = Type::STREAM, @path : String? = nil)
+  def initialize(*, fd : Handle, type : Type = Type::STREAM, @path : String? = nil)
     super fd, Family::UNIX, type, Protocol::IP
   end
 
@@ -62,19 +62,23 @@ class UNIXSocket < Socket
   # left.puts "message"
   # left.gets # => "message"
   # ```
-  def self.pair(type : Type = Type::STREAM)
-    fds = uninitialized Int32[2]
+  def self.pair(type : Type = Type::STREAM) : {UNIXSocket, UNIXSocket}
+    {% if flag?(:wasm32) %}
+      raise NotImplementedError.new "UNIXSocket.pair"
+    {% else %}
+      fds = uninitialized Int32[2]
 
-    socktype = type.value
-    {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
+      socktype = type.value
+      {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
       socktype |= LibC::SOCK_CLOEXEC
+      {% end %}
+
+      if LibC.socketpair(Family::UNIX, socktype, 0, fds) != 0
+        raise Socket::Error.new("socketpair:")
+      end
+
+      {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}
     {% end %}
-
-    if LibC.socketpair(Family::UNIX, socktype, 0, fds) != 0
-      raise Socket::Error.new("socketpair:")
-    end
-
-    {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}
   end
 
   # Creates a pair of unnamed UNIX sockets (see `pair`) and yields them to the
@@ -91,11 +95,11 @@ class UNIXSocket < Socket
     end
   end
 
-  def local_address
+  def local_address : Socket::UNIXAddress
     UNIXAddress.new(path.to_s)
   end
 
-  def remote_address
+  def remote_address : Socket::UNIXAddress
     UNIXAddress.new(path.to_s)
   end
 

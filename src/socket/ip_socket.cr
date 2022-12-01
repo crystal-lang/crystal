@@ -1,27 +1,28 @@
 class IPSocket < Socket
   # Returns the `IPAddress` for the local end of the IP socket.
-  def local_address
-    sockaddr6 = uninitialized LibC::SockaddrIn6
-    sockaddr = pointerof(sockaddr6).as(LibC::Sockaddr*)
-    addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
-
-    if LibC.getsockname(fd, sockaddr, pointerof(addrlen)) != 0
-      raise Socket::Error.from_errno("getsockname")
-    end
-
-    IPAddress.from(sockaddr, addrlen)
-  end
+  getter local_address : Socket::IPAddress { system_local_address }
 
   # Returns the `IPAddress` for the remote end of the IP socket.
-  def remote_address
-    sockaddr6 = uninitialized LibC::SockaddrIn6
-    sockaddr = pointerof(sockaddr6).as(LibC::Sockaddr*)
-    addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
+  getter remote_address : Socket::IPAddress { system_remote_address }
 
-    if LibC.getpeername(fd, sockaddr, pointerof(addrlen)) != 0
-      raise Socket::Error.from_errno("getpeername")
-    end
+  def close
+    super
+  ensure
+    @local_address = nil
+    @remote_address = nil
+  end
 
-    IPAddress.from(sockaddr, addrlen)
+  def connect(addr, timeout = nil, &)
+    super(addr, timeout) { |error| yield error }
+  ensure
+    @local_address = nil
+    @remote_address = nil
+  end
+
+  def bind(addr)
+    super(addr)
+  ensure
+    @local_address = nil
+    @remote_address = nil
   end
 end

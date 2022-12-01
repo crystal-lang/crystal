@@ -12,6 +12,8 @@ require "./regex/*"
 # /y/.match("haystack") # => Regex::MatchData("y")
 # ```
 #
+# See [`Regex` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/regex.html) in the language reference.
+#
 # Interpolation works in regular expression literals just as it does in string
 # literals. Be aware that using this feature will cause an exception to be
 # raised at runtime, if the resulting string would not be a valid regular
@@ -77,7 +79,8 @@ require "./regex/*"
 # have their own language for describing strings.
 #
 # Many programming languages and tools implement their own regular expression
-# language, but Crystal uses [PCRE](http://www.pcre.org/), a popular C library
+# language, but Crystal uses [PCRE](http://www.pcre.org/), a popular C library, with
+# [JIT complication](http://www.pcre.org/original/doc/html/pcrejit.html) enabled
 # for providing regular expressions. Here give a brief summary of the most
 # basic features of regular expressions - grouping, repetition, and
 # alternation - but the feature set of PCRE extends far beyond these, and we
@@ -223,6 +226,8 @@ class Regex
     NO_UTF8_CHECK = 0x00002000
     # :nodoc:
     DUPNAMES = 0x00080000
+    # :nodoc:
+    UCP = 0x20000000
   end
 
   # Returns a `Regex::Options` representing the optional flags applied to this `Regex`.
@@ -253,11 +258,23 @@ class Regex
     source = source.gsub('\u{0}', "\\0")
     @source = source
 
-    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
+    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES | Options::UCP), out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
-    @extra = LibPCRE.study(@re, 0, out studyerrptr)
-    raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.null? && studyerrptr
+    @extra = LibPCRE.study(@re, LibPCRE::STUDY_JIT_COMPILE, out studyerrptr)
+    if @extra.null? && studyerrptr
+      {% unless flag?(:interpreted) %}
+        LibPCRE.free.call @re.as(Void*)
+      {% end %}
+      raise ArgumentError.new("#{String.new(studyerrptr)}")
+    end
     LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
+  end
+
+  def finalize
+    LibPCRE.free_study @extra
+    {% unless flag?(:interpreted) %}
+      LibPCRE.free.call @re.as(Void*)
+    {% end %}
   end
 
   # Determines Regex's source validity. If it is, `nil` is returned.
@@ -267,9 +284,12 @@ class Regex
   # Regex.error?("(foo|bar)") # => nil
   # Regex.error?("(foo|bar")  # => "missing ) at 8"
   # ```
-  def self.error?(source)
+  def self.error?(source) : String?
     re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
     if re
+      {% unless flag?(:interpreted) %}
+        LibPCRE.free.call re.as(Void*)
+      {% end %}
       nil
     else
       "#{String.new(errptr)} at #{erroffset}"
@@ -368,7 +388,7 @@ class Regex
   # re.match("Skiing")   # => Regex::MatchData("Skiing")
   # re.match("sledding") # => Regex::MatchData("sledding")
   # ```
-  def +(other)
+  def +(other) : Regex
     Regex.union(self, other)
   end
 
@@ -421,7 +441,7 @@ class Regex
   # /at/ =~ "input data" # => 7
   # /ax/ =~ "input data" # => nil
   # ```
-  def =~(other : String)
+  def =~(other : String) : Int32?
     match = self.match(other)
     $~ = match
     match.try &.begin(0)
@@ -433,7 +453,7 @@ class Regex
   # /at/ =~ "input data" # => 7
   # /ax/ =~ "input data" # => nil
   # ```
-  def =~(other)
+  def =~(other) : Nil
     nil
   end
 
@@ -540,18 +560,18 @@ class Regex
   # /(?<foo>.)(?<bar>.)/.name_table          # => {2 => "bar", 1 => "foo"}
   # /(.)(?<foo>.)(.)(?<bar>.)(.)/.name_table # => {4 => "bar", 2 => "foo"}
   # ```
-  def name_table : Hash(UInt16, String)
+  def name_table : Hash(Int32, String)
     LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMECOUNT, out name_count)
     LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMEENTRYSIZE, out name_entry_size)
     table_pointer = Pointer(UInt8).null
     LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMETABLE, pointerof(table_pointer).as(Pointer(Int32)))
     name_table = table_pointer.to_slice(name_entry_size*name_count)
 
-    lookup = Hash(UInt16, String).new
+    lookup = Hash(Int32, String).new
 
     name_count.times do |i|
       capture_offset = i * name_entry_size
-      capture_number = (name_table[capture_offset].to_u16 << 8) | name_table[capture_offset + 1].to_u16
+      capture_number = ((name_table[capture_offset].to_u16 << 8)).to_i32 | name_table[capture_offset + 1]
 
       name_offset = capture_offset + 2
       checked = name_table[name_offset, name_entry_size - 3]

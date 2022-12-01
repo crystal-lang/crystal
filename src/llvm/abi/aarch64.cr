@@ -3,31 +3,31 @@ require "../abi"
 # Based on
 # https://github.com/rust-lang/rust/blob/master/src/librustc_trans/cabi_aarch64.rs
 class LLVM::ABI::AArch64 < LLVM::ABI
-  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
+  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context) : LLVM::ABI::FunctionType
     ret_ty = compute_return_type(rty, ret_def, context)
     arg_tys = atys.map { |aty| compute_arg_type(aty, context) }
     FunctionType.new(arg_tys, ret_ty)
   end
 
-  def align(type : Type)
+  def align(type : Type) : Int32
     align(type, 8)
   end
 
-  def size(type : Type)
+  def size(type : Type) : Int32
     size(type, 8)
   end
 
   def homogeneous_aggregate?(type)
-    homog_agg = case type
-                when Type::Kind::Float
-                  return {type, 1}
-                when Type::Kind::Double
-                  return {type, 1}
-                when Type::Kind::Array
-                  check_array(type)
-                when Type::Kind::Struct
-                  check_struct(type)
-                end
+    homog_agg : {Type, UInt64}? = case type.kind
+    when Type::Kind::Float
+      return {type, 1_u64}
+    when Type::Kind::Double
+      return {type, 1_u64}
+    when Type::Kind::Array
+      check_array(type)
+    when Type::Kind::Struct
+      check_struct(type)
+    end
 
     # Ensure we have at most four uniquely addressable members
     if homog_agg
@@ -54,7 +54,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
     return if elements.empty?
 
     base_type = nil
-    members = 0
+    members = 0_u64
 
     elements.each do |element|
       opt_homog_agg = homogeneous_aggregate?(element)
@@ -139,7 +139,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
     end
   end
 
-  def register?(type)
+  def register?(type) : Bool
     case type.kind
     when Type::Kind::Integer,
          Type::Kind::Float,
