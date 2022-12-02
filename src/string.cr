@@ -1290,13 +1290,13 @@ class String
   # Returns `nil` if *start* index is out of bounds.
   #
   # ```
-  # "hello".byte_slice(0)  # => "hello"
-  # "hello".byte_slice(2)  # => "llo"
-  # "hello".byte_slice(-2) # => "lo"
-  # "¥hello".byte_slice(2) # => "hello"
-  # "¥hello".byte_slice(1) # => "\xA5hello" (invalid UTF-8 character)
-  # "hello".byte_slice(6)  # => nil
-  # "hello".byte_slice(-6) # => nil
+  # "hello".byte_slice?(0)  # => "hello"
+  # "hello".byte_slice?(2)  # => "llo"
+  # "hello".byte_slice?(-2) # => "lo"
+  # "¥hello".byte_slice?(2) # => "hello"
+  # "¥hello".byte_slice?(1) # => "\xA5hello" (invalid UTF-8 character)
+  # "hello".byte_slice?(6)  # => nil
+  # "hello".byte_slice?(-6) # => nil
   # ```
   def byte_slice?(start : Int) : String?
     count = bytesize - start
