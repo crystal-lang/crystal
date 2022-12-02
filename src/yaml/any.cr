@@ -26,14 +26,14 @@
 # which return `nil` when the underlying value type won't match.
 struct YAML::Any
   # All valid YAML core schema types.
-  alias Type = Nil | Bool | Int64 | Float64 | String | Time | Bytes | Array(Any) | Hash(Any, Any) | Set(Any)
+  alias Type = Nil | Bool | Int64 | Float64 | String | Time | Bytes | Array(YAML::Any) | Hash(YAML::Any, YAML::Any) | Set(YAML::Any)
 
   def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     case node
     when YAML::Nodes::Scalar
       new YAML::Schema::Core.parse_scalar(node.value)
     when YAML::Nodes::Sequence
-      ary = [] of Any
+      ary = [] of YAML::Any
 
       node.each do |value|
         ary << new(ctx, value)
@@ -41,7 +41,7 @@ struct YAML::Any
 
       new ary
     when YAML::Nodes::Mapping
-      hash = {} of Any => Any
+      hash = {} of YAML::Any => YAML::Any
 
       node.each do |key, value|
         hash[new(ctx, key)] = new(ctx, value)
@@ -62,7 +62,7 @@ struct YAML::Any
   # Returns the raw underlying value, a `Type`.
   getter raw : Type
 
-  # Creates a `Any` that wraps the given `Type`.
+  # Creates a `YAML::Any` that wraps the given `Type`.
   def initialize(@raw : Type)
   end
 
@@ -236,25 +236,25 @@ struct YAML::Any
 
   # Checks that the underlying value is `Array`, and returns its value.
   # Raises otherwise.
-  def as_a : Array(Any)
+  def as_a : Array(YAML::Any)
     @raw.as(Array)
   end
 
   # Checks that the underlying value is `Array`, and returns its value.
   # Returns `nil` otherwise.
-  def as_a? : Array(Any)?
+  def as_a? : Array(YAML::Any)?
     @raw.as?(Array)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
   # Raises otherwise.
-  def as_h : Hash(Any, Any)
+  def as_h : Hash(YAML::Any, YAML::Any)
     @raw.as(Hash)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
   # Returns `nil` otherwise.
-  def as_h? : Hash(Any, Any)?
+  def as_h? : Hash(YAML::Any, YAML::Any)?
     @raw.as?(Hash)
   end
 
@@ -311,12 +311,12 @@ struct YAML::Any
 
   # Returns a new YAML::Any instance with the `raw` value `dup`ed.
   def dup
-    Any.new(raw.dup)
+    YAML::Any.new(raw.dup)
   end
 
   # Returns a new YAML::Any instance with the `raw` value `clone`ed.
   def clone
-    Any.new(raw.clone)
+    YAML::Any.new(raw.clone)
   end
 
   # Forwards `to_json_object_key` to `raw` if it responds to that method,
