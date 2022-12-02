@@ -65,12 +65,33 @@ describe "Regex::MatchData" do
     end
 
     it "with capture" do
-      matchdata(/f(o)o/, "foo").begin.should eq 0
-      matchdata(/f(o)o/, "foo").begin(1).should eq 1
-      matchdata(/f(o)o/, "foo").begin(-1).should eq 1
-      matchdata(/f(o)o/, ".foo.").begin.should eq 1
-      matchdata(/f(o)o/, ".foo.").begin(1).should eq 2
-      matchdata(/f(o)o/, ".foo.").begin(-1).should eq 2
+      md = matchdata(/f(o)o/, "foo")
+      md.begin.should eq 0
+      md.begin(1).should eq 1
+      md.begin(-1).should eq 1
+
+      md = matchdata(/f(o)o/, ".foo.")
+      md.begin.should eq 1
+      md.begin(1).should eq 2
+      md.begin(-1).should eq 2
+    end
+
+    it "with unmatched capture" do
+      md = matchdata(/f(x)?o/, "foo")
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.begin(1)
+      end
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.begin(-1)
+      end
+
+      md = matchdata(/f(x)?o/, ".foo.")
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.begin(1)
+      end
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.begin(-1)
+      end
     end
 
     it "char index" do
@@ -81,6 +102,24 @@ describe "Regex::MatchData" do
   describe "#byte_begin" do
     it "char index" do
       matchdata(/foo/, "öfoo").byte_begin.should eq 2
+    end
+
+    it "with unmatched capture" do
+      md = matchdata(/f(x)?o/, "foo")
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.byte_begin(1)
+      end
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.byte_begin(-1)
+      end
+
+      md = matchdata(/f(x)?o/, ".foo.")
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.byte_begin(1)
+      end
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.byte_begin(-1)
+      end
     end
   end
 
@@ -99,12 +138,33 @@ describe "Regex::MatchData" do
     end
 
     it "with capture" do
-      matchdata(/f(o)o/, "foo").end.should eq 3
-      matchdata(/f(o)o/, "foo").end(1).should eq 2
-      matchdata(/f(o)o/, "foo").end(-1).should eq 2
-      matchdata(/f(o)o/, ".foo.").end.should eq 4
-      matchdata(/f(o)o/, ".foo.").end(1).should eq 3
-      matchdata(/f(o)o/, ".foo.").end(-1).should eq 3
+      md = matchdata(/f(o)o/, "foo")
+      md.end.should eq 3
+      md.end(1).should eq 2
+      md.end(-1).should eq 2
+
+      md = matchdata(/f(o)o/, ".foo.")
+      md.end.should eq 4
+      md.end(1).should eq 3
+      md.end(-1).should eq 3
+    end
+
+    it "with unmatched capture" do
+      md = matchdata(/f(x)?o/, "foo")
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.end(1)
+      end
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.end(-1)
+      end
+
+      md = matchdata(/f(x)?o/, ".foo.")
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.end(1)
+      end
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.end(-1)
+      end
     end
 
     it "char index" do
@@ -115,6 +175,24 @@ describe "Regex::MatchData" do
   describe "#byte_end" do
     it "char index" do
       matchdata(/foo/, "öfoo").byte_end.should eq 5
+    end
+
+    it "with unmatched capture" do
+      md = matchdata(/f(x)?o/, "foo")
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.byte_end(1)
+      end
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.byte_end(-1)
+      end
+
+      md = matchdata(/f(x)?o/, ".foo.")
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.byte_end(1)
+      end
+      expect_raises(IndexError, "Capture group 1 was not matched") do
+        md.byte_end(-1)
+      end
     end
   end
 
