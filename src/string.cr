@@ -1173,7 +1173,7 @@ class String
   # "hello".byte_slice(-2, 5)  # => "he"
   # "¥hello".byte_slice(0, 2)  # => "¥"
   # "¥hello".byte_slice(2, 2)  # => "he"
-  # "¥hello".byte_slice(0, 1)  # => "\C2" (invalid UTF-8 character)
+  # "¥hello".byte_slice(0, 1)  # => "\xC2" (invalid UTF-8 character)
   # "¥hello".byte_slice(1, 1)  # => "\xA5" (invalid UTF-8 character)
   # "¥hello".byte_slice(1, 2)  # => "\xA5h" (invalid UTF-8 character)
   # "hello".byte_slice(6, 2)   # raises IndexError
@@ -1197,12 +1197,12 @@ class String
   # Raises `IndexError` if the *range* begin is out of bounds.
   #
   # ```
-  # "hello".byte_slice(0..2)   # => "he"
+  # "hello".byte_slice(0..2)   # => "hel"
   # "hello".byte_slice(0..100) # => "hello"
   # "hello".byte_slice(-2..3)  # => "l"
   # "hello".byte_slice(-2..5)  # => "lo"
-  # "¥hello".byte_slice(0..2)  # => "¥"
-  # "¥hello".byte_slice(2..4)  # => "he"
+  # "¥hello".byte_slice(0...2) # => "¥"
+  # "¥hello".byte_slice(2...4) # => "he"
   # "¥hello".byte_slice(0..0)  # => "\xC2" (invalid UTF-8 character)
   # "¥hello".byte_slice(1..1)  # => "\xA5" (invalid UTF-8 character)
   # "¥hello".byte_slice(1..2)  # => "\xA5h" (invalid UTF-8 character)
@@ -1241,7 +1241,7 @@ class String
   # Like `byte_slice(Range)` but returns `Nil` if *range* begin is out of bounds.
   #
   # ```
-  # "hello".byte_slice?(0..2)   # => "he"
+  # "hello".byte_slice?(0..2)   # => "hel"
   # "hello".byte_slice?(0..100) # => "hello"
   # "hello".byte_slice?(6..8)   # => nil
   # "hello".byte_slice?(-6..2)  # => nil
@@ -1267,7 +1267,7 @@ class String
   # "hello".byte_slice(2)  # => "llo"
   # "hello".byte_slice(-2) # => "lo"
   # "¥hello".byte_slice(2) # => "hello"
-  # "¥hello".byte_slice(1) # => "\xA52hello" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1) # => "\xA5hello" (invalid UTF-8 character)
   # "hello".byte_slice(6)  # raises IndexError
   # "hello".byte_slice(-6) # raises IndexError
   # ```
