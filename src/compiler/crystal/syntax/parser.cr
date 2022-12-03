@@ -3157,7 +3157,7 @@ module Crystal
       end
     end
 
-    def parse_macro_body(start_location, macro_state = Token::MacroState.default)
+    def parse_macro_body(start_location, macro_state = Token::MacroState.default, expect_eof = false)
       skip_whitespace = check_macro_skip_whitespace
       slash_is_regex!
 
@@ -3198,9 +3198,17 @@ module Crystal
           end
           pieces << MacroVar.new(macro_var_name, macro_var_exps)
         when .macro_end?
-          break
-        when .eof?
-          raise "unterminated macro", start_location
+          if expect_eof
+            pieces << MacroLiteral.new("end")
+          else
+            break
+          end
+        when .end?
+          if expect_eof
+            break
+          else
+            raise "unterminated macro", start_location
+          end
         else
           unexpected_token
         end

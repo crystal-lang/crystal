@@ -97,19 +97,26 @@ module Crystal
     end
 
     def visit(node : MacroExpression)
-      node.exp.accept self
+      exp = node.exp
 
-      if node.output?
-        is_yield = node.exp.is_a?(Yield) && !@last.is_a?(Nop)
-        if (loc = @last.location) && loc.filename.is_a?(String) || is_yield
-          macro_expansion_pragmas = @macro_expansion_pragmas ||= {} of Int32 => Array(Lexer::LocPragma)
-          (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPushPragma.new
-          @str << "begin " if is_yield
-          @last.to_s(@str, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: true)
-          @str << " end" if is_yield
-          (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPopPragma.new
-        else
-          @last.to_s(@str)
+      if exp.is_a?(Yield) && node.output?
+        @str << "\nbegin\n"
+        expand_yield(exp)
+        @str << "\nend\n"
+      else
+        node.exp.accept self
+
+        if node.output?
+          if (loc = @last.location) && loc.filename.is_a?(String)
+            macro_expansion_pragmas = @macro_expansion_pragmas ||= {} of Int32 => Array(Lexer::LocPragma)
+            (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPushPragma.new
+
+            @last.to_s(@str, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: true)
+
+            (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPopPragma.new
+          else
+            @last.to_s(@str)
+          end
         end
       end
 
@@ -117,6 +124,11 @@ module Crystal
     end
 
     def visit(node : MacroLiteral)
+      if (macro_expansion_pragmas = @macro_expansion_pragmas) && (loc = node.location) && (filename = loc.filename).is_a?(String)
+        pragmas = macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma
+        pragmas << Lexer::LocSetPragma.new(filename, loc.line_number, loc.column_number)
+      end
+
       @str << node.value
     end
 
@@ -376,25 +388,83 @@ module Crystal
     end
 
     def visit(node : Yield)
+      orig_str = @str
+      @str = IO::Memory.new
+      expand_yield(node)
+
+      @last = MacroId.new(@str.to_s)
+
+      @str = orig_str
+
+      false
+    end
+
+    def expand_yield(node : Yield)
       unless @in_macro
         node.raise "can't use `{{yield}}` outside a macro"
       end
 
       if block = @block
-        if node.exps.empty?
-          @last = block.body.clone
-        else
-          block_vars = {} of String => ASTNode
-          node.exps.each_with_index do |exp, i|
-            if block_arg = block.args[i]?
-              block_vars[block_arg.name] = accept exp.clone
-            end
+        orig_vars = @vars
+
+        # Create a new lookup table for block variables,
+        # we don't want variables from the outer scope to leak into the block.
+        block_vars = Hash(String, ASTNode).new(initial_capacity: node.exps.size)
+        node.exps.each_with_index do |exp, i|
+          if block_arg = block.args[i]?
+            value = exp.clone
+            value.accept(self)
+            block_vars[block_arg.name] = @last
           end
-          @last = replace_block_vars block.body.clone, block_vars
         end
+
+        orig_vars, @vars = @vars, block_vars
+
+        @last = Nop.new
+
+        # We need to re-parse the block as a macro body. The parser can't tell
+        # from the original code whether a call is a macro or method call.
+        # Thus the block is initially parsed as a method call. In order to
+        # implement macro `yield` properly, we need it to be parsed as a macro
+        # block which consists of `MacroLiteral`s and expressions.
+        block_macro = Macro.new("block_macro")
+
+        local_vars = Set(String).new(initial_capacity: @vars.size)
+        @vars.each_key { |name| local_vars << name }
+
+        loc = block.body.location
+        if loc.try(&.filename).is_a?(String)
+          macro_expansion_pragmas = @macro_expansion_pragmas ||= {} of Int32 => Array(Lexer::LocPragma)
+          (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPushPragma.new
+        end
+
+        block_source = String.build do |io|
+          block.body.to_s(io, emit_doc: true)
+
+          # Without a trailing newline, we can get an unterminated macro error
+          # when the last line contains string interpolation inside a regex literal.
+          # The macro token parser does not recognize regex literals.
+          io.puts
+        end
+
+        parsed_body = @program.parse_macro_source(block_source, macro_expansion_pragmas, block_macro, block.body, local_vars) do |parser|
+          body, _ = parser.parse_macro_body(block.body.location || Location.new(nil, 0, 0), expect_eof: true)
+          body
+        end
+
+        parsed_body.location = block.body.location
+
+        parsed_body.accept self
+
+        if loc && macro_expansion_pragmas
+          (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPopPragma.new
+        end
+
+        @vars = orig_vars
       else
         @last = Nop.new
       end
+
       false
     end
 
@@ -575,26 +645,6 @@ module Crystal
 
     def to_s : String
       @str.to_s
-    end
-
-    def replace_block_vars(body, vars)
-      transformer = ReplaceBlockVarsTransformer.new(vars)
-      body.transform transformer
-    end
-
-    class ReplaceBlockVarsTransformer < Transformer
-      @vars : Hash(String, ASTNode)
-
-      def initialize(@vars)
-      end
-
-      def transform(node : MacroExpression)
-        if (exp = node.exp).is_a?(Var)
-          replacement = @vars[exp.name]?
-          return replacement if replacement
-        end
-        node
-      end
     end
   end
 end
