@@ -3,6 +3,24 @@ require "spec/helpers/iterate"
 require "../support/string"
 
 describe "String" do
+  describe "ASCII_DOWNCASE" do
+    it "returns the lowercased letters a-z" do
+      String::ASCII_DOWNCASE.should eq "abcdefghijklmnopqrstuvwxyz"
+    end
+  end
+
+  describe "ASCII_UPCASE" do
+    it "returns the upcased letters A-Z" do
+      String::ASCII_UPCASE.should eq "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    end
+  end
+
+  describe "ASCII_LETTERS" do
+    it "returns the letters a-z and A-Z" do
+      String::ASCII_LETTERS.should eq "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    end
+  end
+
   describe "[]" do
     it "gets with positive index" do
       c = "hello!"[1]

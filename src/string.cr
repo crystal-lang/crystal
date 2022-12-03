@@ -141,6 +141,15 @@ class String
   # :nodoc:
   HEADER_SIZE = sizeof({Int32, Int32, Int32})
 
+  # The letters a-z.
+  ASCII_DOWNCASE = "abcdefghijklmnopqrstuvwxyz"
+
+  # The letters A-Z.
+  ASCII_UPCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+  # The letters a-zA-Z.
+  ASCII_LETTERS = ASCII_DOWNCASE + ASCII_UPCASE
+
   include Comparable(self)
 
   macro inherited
