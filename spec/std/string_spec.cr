@@ -3,15 +3,15 @@ require "spec/helpers/iterate"
 require "../support/string"
 
 describe "String" do
-  describe "ASCII_DOWNCASE" do
+  describe "ASCII_DOWNCASED" do
     it "returns the lowercased letters a-z" do
-      String::ASCII_DOWNCASE.should eq "abcdefghijklmnopqrstuvwxyz"
+      String::ASCII_DOWNCASED.should eq "abcdefghijklmnopqrstuvwxyz"
     end
   end
 
-  describe "ASCII_UPCASE" do
+  describe "ASCII_UPCASED" do
     it "returns the upcased letters A-Z" do
-      String::ASCII_UPCASE.should eq "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      String::ASCII_UPCASED.should eq "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     end
   end
 
