@@ -168,14 +168,14 @@ describe Process do
 
   {% if flag?(:unix) %}
     it "chroot raises when unprivileged" do
-      status, output, _ = compile_and_run_source <<-'CODE'
+      status, output, _ = compile_and_run_source <<-'CRYSTAL'
         begin
           Process.chroot(".")
           puts "FAIL"
         rescue ex
           puts ex.inspect
         end
-      CODE
+      CRYSTAL
 
       status.success?.should be_true
       output.should eq("#<RuntimeError:Failed to chroot: Operation not permitted>\n")

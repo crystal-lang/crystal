@@ -5,14 +5,14 @@
 # ```
 # require "yaml"
 #
-# data = YAML.parse <<-END
+# data = YAML.parse <<-YAML
 #          ---
 #          foo:
 #            bar:
 #              baz:
 #                - qux
 #                - fox
-#          END
+#          YAML
 # data["foo"]["bar"]["baz"][0].as_s # => "qux"
 # data["foo"]["bar"]["baz"].as_a    # => ["qux", "fox"]
 # ```
