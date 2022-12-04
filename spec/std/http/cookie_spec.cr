@@ -35,7 +35,6 @@ module HTTP
         expect_raises IO::Error, "Invalid cookie name" do
           HTTP::Cookie.new("", "")
         end
-
         expect_raises IO::Error, "Invalid cookie name" do
           HTTP::Cookie.new("\t", "")
         end

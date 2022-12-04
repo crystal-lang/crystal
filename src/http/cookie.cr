@@ -163,9 +163,11 @@ module HTTP
     end
 
     # Raises `ArgumentError` if `self` is not `#valid?`.
-    def validate!
+    def validate! : self
       raise ArgumentError.new "Invalid cookie name. Has '__Secure-' prefix, but is not secure." unless self.valid_secure_prefix?
       raise ArgumentError.new "Invalid cookie name. Does not meet '__Host-' prefix requirements." unless self.valid_host_prefix?
+
+      self
     end
 
     private def valid_secure_prefix? : Bool
