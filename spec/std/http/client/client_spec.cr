@@ -400,13 +400,13 @@ module HTTP
     end
 
     it "works with IO" do
-      io_response = IO::Memory.new <<-RESPONSE.gsub('\n', "\r\n")
+      io_response = IO::Memory.new <<-HTTP.gsub('\n', "\r\n")
       HTTP/1.1 200 OK
       Content-Type: text/plain
       Content-Length: 3
 
       Hi!
-      RESPONSE
+      HTTP
       io_request = IO::Memory.new
       io = IO::Stapled.new(io_response, io_request)
       client = Client.new(io)

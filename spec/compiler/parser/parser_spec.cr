@@ -339,13 +339,13 @@ module Crystal
     it_parses "def foo(@[Foo] &@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: "block".arg(annotations: ["Foo".ann]), yields: 0)
     it_parses "def foo(@[Foo] *args); end", Def.new("foo", args: ["args".arg(annotations: ["Foo".ann])], splat_index: 0)
     it_parses "def foo(@[Foo] **args); end", Def.new("foo", double_splat: "args".arg(annotations: ["Foo".ann]))
-    it_parses <<-CR, Def.new("foo", ["id".arg(restriction: "Int32".path, annotations: ["Foo".ann]), "name".arg(restriction: "String".path, annotations: ["Bar".ann])])
+    it_parses <<-CRYSTAL, Def.new("foo", ["id".arg(restriction: "Int32".path, annotations: ["Foo".ann]), "name".arg(restriction: "String".path, annotations: ["Bar".ann])])
       def foo(
         @[Foo]
         id : Int32,
         @[Bar] name : String
       ); end
-    CR
+    CRYSTAL
 
     it_parses "def foo(\n&block\n); end", Def.new("foo", block_arg: Arg.new("block"), yields: 0)
     it_parses "def foo(&block :\n Int ->); end", Def.new("foo", block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode)), yields: 1)
@@ -1052,13 +1052,13 @@ module Crystal
     it_parses "macro foo(a, @[Foo] &block);end", Macro.new("foo", ["a".arg], Expressions.new, block_arg: "block".arg(annotations: ["Foo".ann]))
     it_parses "macro foo(@[Foo] *args);end", Macro.new("foo", ["args".arg(annotations: ["Foo".ann])], Expressions.new, splat_index: 0)
     it_parses "macro foo(@[Foo] **args);end", Macro.new("foo", body: Expressions.new, double_splat: "args".arg(annotations: ["Foo".ann]))
-    it_parses <<-CR, Macro.new("foo", ["id".arg(annotations: ["Foo".ann]), "name".arg(annotations: ["Bar".ann])], Expressions.new)
+    it_parses <<-CRYSTAL, Macro.new("foo", ["id".arg(annotations: ["Foo".ann]), "name".arg(annotations: ["Bar".ann])], Expressions.new)
       macro foo(
         @[Foo]
         id,
         @[Bar] name
       );end
-    CR
+    CRYSTAL
 
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
@@ -2069,29 +2069,29 @@ module Crystal
     it_parses "{[] of Foo, ::foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(nil, "foo", global: true)] of ASTNode)
     it_parses "{[] of Foo, self.foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new("self".var, "foo")] of ASTNode)
 
-    it_parses <<-'CR', Macro.new("foo", body: Expressions.new([MacroLiteral.new("  <<-FOO\n    \#{ "), MacroVar.new("var"), MacroLiteral.new(" }\n  FOO\n")] of ASTNode))
+    it_parses <<-'CRYSTAL', Macro.new("foo", body: Expressions.new([MacroLiteral.new("  <<-FOO\n    \#{ "), MacroVar.new("var"), MacroLiteral.new(" }\n  FOO\n")] of ASTNode))
       macro foo
         <<-FOO
           #{ %var }
         FOO
       end
-      CR
+      CRYSTAL
 
-    it_parses <<-'CR', Macro.new("foo", body: MacroLiteral.new("  <<-FOO, <<-BAR + \"\"\n  FOO\n  BAR\n"))
+    it_parses <<-'CRYSTAL', Macro.new("foo", body: MacroLiteral.new("  <<-FOO, <<-BAR + \"\"\n  FOO\n  BAR\n"))
       macro foo
         <<-FOO, <<-BAR + ""
         FOO
         BAR
       end
-      CR
+      CRYSTAL
 
-    it_parses <<-'CR', Macro.new("foo", body: MacroLiteral.new("  <<-FOO\n    %foo\n  FOO\n"))
+    it_parses <<-'CRYSTAL', Macro.new("foo", body: MacroLiteral.new("  <<-FOO\n    %foo\n  FOO\n"))
       macro foo
         <<-FOO
           %foo
         FOO
       end
-      CR
+      CRYSTAL
 
     it_parses "macro foo; bar class: 1; end", Macro.new("foo", body: MacroLiteral.new(" bar class: 1; "))
 
@@ -2406,7 +2406,7 @@ module Crystal
       end
 
       it "correctly computes line number after `\\{%\n` (#9857)" do
-        code = <<-CODE
+        code = <<-CRYSTAL
         macro foo
           \\{%
             1
@@ -2414,7 +2414,7 @@ module Crystal
         end
 
         1
-        CODE
+        CRYSTAL
 
         exps = Parser.parse(code).as(Expressions)
         exps.expressions[1].location.not_nil!.line_number.should eq(7)

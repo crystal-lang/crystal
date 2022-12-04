@@ -249,23 +249,23 @@ describe "Restrictions" do
       {% end %}
 
       it "doesn't error if path is undefined and method is not called (1) (#12516)" do
-        assert_no_errors <<-CR
+        assert_no_errors <<-CRYSTAL
           def foo(a : Int32.class)
           end
 
           def foo(a : Foo)
           end
-          CR
+          CRYSTAL
       end
 
       it "doesn't error if path is undefined and method is not called (2) (#12516)" do
-        assert_no_errors <<-CR
+        assert_no_errors <<-CRYSTAL
           def foo(a : Foo)
           end
 
           def foo(a : Int32.class)
           end
-          CR
+          CRYSTAL
       end
     end
 
@@ -550,7 +550,7 @@ describe "Restrictions" do
 
     describe "Path vs NumberLiteral" do
       it "inserts constant before number literal of same value with generic arguments" do
-        assert_type(<<-CR) { bool }
+        assert_type(<<-CRYSTAL) { bool }
           X = 1
 
           class Foo(N)
@@ -565,11 +565,11 @@ describe "Restrictions" do
           end
 
           foo(Foo(1).new)
-          CR
+          CRYSTAL
       end
 
       it "inserts number literal before constant of same value with generic arguments" do
-        assert_type(<<-CR) { bool }
+        assert_type(<<-CRYSTAL) { bool }
           X = 1
 
           class Foo(N)
@@ -584,13 +584,13 @@ describe "Restrictions" do
           end
 
           foo(Foo(1).new)
-          CR
+          CRYSTAL
       end
     end
 
     describe "free variables" do
       it "inserts path before free variable with same name" do
-        assert_type(<<-CR) { tuple_of([char, bool]) }
+        assert_type(<<-CRYSTAL) { tuple_of([char, bool]) }
           def foo(x : Int32) forall Int32
             true
           end
@@ -600,11 +600,11 @@ describe "Restrictions" do
           end
 
           {foo(1), foo("")}
-          CR
+          CRYSTAL
       end
 
       it "keeps path before free variable with same name" do
-        assert_type(<<-CR) { tuple_of([char, bool]) }
+        assert_type(<<-CRYSTAL) { tuple_of([char, bool]) }
           def foo(x : Int32)
             'a'
           end
@@ -614,12 +614,12 @@ describe "Restrictions" do
           end
 
           {foo(1), foo("")}
-          CR
+          CRYSTAL
       end
 
       # TODO: enable in #12784
       pending "inserts constant before free variable with same name" do
-        assert_type(<<-CR) { tuple_of([char, bool]) }
+        assert_type(<<-CRYSTAL) { tuple_of([char, bool]) }
           class Foo(T); end
 
           X = 1
@@ -633,11 +633,11 @@ describe "Restrictions" do
           end
 
           {foo(Foo(1).new), foo(Foo(2).new)}
-          CR
+          CRYSTAL
       end
 
       pending "keeps constant before free variable with same name" do
-        assert_type(<<-CR) { tuple_of([char, bool]) }
+        assert_type(<<-CRYSTAL) { tuple_of([char, bool]) }
           class Foo(T); end
 
           X = 1
@@ -651,11 +651,11 @@ describe "Restrictions" do
           end
 
           {foo(Foo(1).new), foo(Foo(2).new)}
-          CR
+          CRYSTAL
       end
 
       it "inserts path before free variable even if free var resolves to a more specialized type" do
-        assert_type(<<-CR) { tuple_of([int32, int32, bool]) }
+        assert_type(<<-CRYSTAL) { tuple_of([int32, int32, bool]) }
           class Foo
           end
 
@@ -671,11 +671,11 @@ describe "Restrictions" do
           end
 
           {foo(Foo.new), foo(Bar.new), foo('a')}
-          CR
+          CRYSTAL
       end
 
       it "keeps path before free variable even if free var resolves to a more specialized type" do
-        assert_type(<<-CR) { tuple_of([int32, int32, bool]) }
+        assert_type(<<-CRYSTAL) { tuple_of([int32, int32, bool]) }
           class Foo
           end
 
@@ -691,13 +691,13 @@ describe "Restrictions" do
           end
 
           {foo(Foo.new), foo(Bar.new), foo('a')}
-          CR
+          CRYSTAL
       end
     end
 
     describe "Union" do
       it "handles redefinitions (1) (#12330)" do
-        assert_type(<<-CR) { bool }
+        assert_type(<<-CRYSTAL) { bool }
           def foo(x : Int32 | String)
             'a'
           end
@@ -707,11 +707,11 @@ describe "Restrictions" do
           end
 
           foo(1)
-          CR
+          CRYSTAL
       end
 
       it "handles redefinitions (2) (#12330)" do
-        assert_type(<<-CR) { bool }
+        assert_type(<<-CRYSTAL) { bool }
           def foo(x : Int32 | String)
             'a'
           end
@@ -721,11 +721,11 @@ describe "Restrictions" do
           end
 
           foo(1)
-          CR
+          CRYSTAL
       end
 
       it "orders union before generic (#12330)" do
-        assert_type(<<-CR) { bool }
+        assert_type(<<-CRYSTAL) { bool }
           module Foo(T)
           end
 
@@ -746,7 +746,7 @@ describe "Restrictions" do
           end
 
           foo(Bar1.new)
-          CR
+          CRYSTAL
       end
     end
   end
@@ -1158,16 +1158,16 @@ describe "Restrictions" do
   end
 
   it "errors if using Tuple with named args" do
-    assert_error <<-CR, "can only instantiate NamedTuple with named arguments"
+    assert_error <<-CRYSTAL, "can only instantiate NamedTuple with named arguments"
       def foo(x : Tuple(a: Int32))
       end
 
       foo({1})
-      CR
+      CRYSTAL
   end
 
   it "doesn't error if using Tuple with no args" do
-    assert_type(<<-CR) { tuple_of([] of Type) }
+    assert_type(<<-CRYSTAL) { tuple_of([] of Type) }
       def foo(x : Tuple())
         x
       end
@@ -1177,20 +1177,20 @@ describe "Restrictions" do
       end
 
       foo(bar)
-      CR
+      CRYSTAL
   end
 
   it "errors if using NamedTuple with positional args" do
-    assert_error <<-CR, "can only instantiate NamedTuple with named arguments"
+    assert_error <<-CRYSTAL, "can only instantiate NamedTuple with named arguments"
       def foo(x : NamedTuple(Int32))
       end
 
       foo({a: 1})
-      CR
+      CRYSTAL
   end
 
   it "doesn't error if using NamedTuple with no args" do
-    assert_type(<<-CR) { named_tuple_of({} of String => Type) }
+    assert_type(<<-CRYSTAL) { named_tuple_of({} of String => Type) }
       def foo(x : NamedTuple())
         x
       end
@@ -1200,6 +1200,6 @@ describe "Restrictions" do
       end
 
       foo(bar)
-      CR
+      CRYSTAL
   end
 end
