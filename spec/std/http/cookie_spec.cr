@@ -47,13 +47,26 @@ module HTTP
         end
       end
 
-      it "raises on invalid cookie with prefix" do
-        expect_raises ArgumentError, "Invalid cookie name. Has '__Secure-' prefix, but is not secure." do
-          HTTP::Cookie.new("__Secure-foo", "bar")
+      describe "with a security prefix" do
+        it "raises on invalid cookie with prefix" do
+          expect_raises ArgumentError, "Invalid cookie name. Has '__Secure-' prefix, but is not secure." do
+            HTTP::Cookie.new("__Secure-foo", "bar", secure: false)
+          end
+
+          expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements." do
+            HTTP::Cookie.new("__Host-foo", "bar", domain: "foo")
+          end
         end
 
-        expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements." do
-          HTTP::Cookie.new("__Host-foo", "bar")
+        it "automatically makes the cookie secure if it has the __Secure- prefix and no explicit *secure* value is provided" do
+          HTTP::Cookie.new("__Secure-foo", "bar").secure.should be_true
+        end
+
+        it "automatically configures the cookie if it has the __Host- prefix and no explicit values provided" do
+          cookie = HTTP::Cookie.new "__Host-foo", "bar"
+          cookie.secure.should be_true
+          cookie.domain.should be_nil
+          cookie.path.should eq "/"
         end
       end
     end

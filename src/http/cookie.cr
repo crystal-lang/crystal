@@ -33,9 +33,10 @@ module HTTP
     #
     # Raises `IO::Error` if *name* or *value* are invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
     # Raises `ArgumentError` if *name* has a security prefix but the requirements are not met as per [RFC 6265 bis §4.1.3](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-07#section-4.1.3).
+    # Alternatively, if *name* has a security prefix, and the related properties are `nil`, the prefix will automatically be applied to the cookie.
     def initialize(name : String, value : String, @path : String? = nil,
                    @expires : Time? = nil, @domain : String? = nil,
-                   @secure : Bool = false, @http_only : Bool = false,
+                   secure : Bool? = nil, @http_only : Bool = false,
                    @samesite : SameSite? = nil, @extension : String? = nil,
                    @max_age : Time::Span? = nil, @creation_time = Time.utc)
       validate_name(name)
@@ -43,6 +44,18 @@ module HTTP
       validate_value(value)
       @value = value
       raise IO::Error.new("Invalid max_age") if @max_age.try { |max_age| max_age < Time::Span.zero }
+
+      if @name.starts_with?("__Host-") && @path.nil? && @domain.nil? && secure.nil?
+        @path = "/"
+        secure = true
+      end
+
+      if @name.starts_with?("__Secure-") && secure.nil?
+        secure = true
+      end
+
+      @secure = secure || false
+
       self.validate!
     end
 
