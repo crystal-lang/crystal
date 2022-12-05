@@ -127,6 +127,23 @@ describe Compress::Zip do
     end
   end
 
+  it "writes comment" do
+    io = IO::Memory.new
+
+    Compress::Zip::Writer.open(io) do |zip|
+      0_u16.upto(UInt16::MAX - 1).each { |index|
+        zip.add Compress::Zip::Writer::Entry.new("foo_#{index}.txt", comment: "some comment"),
+          "contents of foo"
+      }
+    end
+
+    io.rewind
+
+    Compress::Zip::File.open(io) do |zip|
+      zip.entries.size.should eq(UInt16::MAX)
+    end
+  end
+
   typeof(Compress::Zip::File.new("file.zip"))
   typeof(Compress::Zip::File.open("file.zip") { })
 end
