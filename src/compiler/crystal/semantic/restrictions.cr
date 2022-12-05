@@ -705,7 +705,20 @@ module Crystal
     end
 
     def restriction_of?(other : Generic, owner, self_free_vars = nil, other_free_vars = nil)
-      return true if self == other
+      # The two `Foo(X)`s below are not equal because only one of them is bound
+      # and the other one is unbound, so we compare the free variables too:
+      # (`X` is an alias or a numeric constant)
+      #
+      # ```
+      # def foo(x : Foo(X)) forall X
+      # end
+      #
+      # def foo(x : Foo(X))
+      # end
+      # ```
+      #
+      # See also the todo in `Path#restriction_of?(Path)`
+      return true if self == other && self_free_vars == other_free_vars
       return false unless name == other.name && type_vars.size == other.type_vars.size
 
       # Special case: NamedTuple against NamedTuple
@@ -1242,15 +1255,17 @@ module Crystal
           end
         when Path
           if first_name = other_type_var.single_name?
-            # If the free variable is already set to another
-            # number, there's no match
-            existing = context.get_free_var(first_name)
-            if existing && existing != type_var
-              return nil
-            end
+            if context.has_def_free_var?(first_name)
+              # If the free variable is already set to another
+              # number, there's no match
+              existing = context.get_free_var(first_name)
+              if existing && existing != type_var
+                return nil
+              end
 
-            context.set_free_var(first_name, type_var)
-            return type_var
+              context.set_free_var(first_name, type_var)
+              return type_var
+            end
           end
         else
           # Restriction is not possible (maybe return nil here?)
