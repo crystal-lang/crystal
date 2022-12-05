@@ -127,7 +127,7 @@ describe Compress::Zip do
     end
   end
 
-  it "writes comment" do
+  it "writes over int16 files to make sure we can parse" do
     io = IO::Memory.new
 
     Compress::Zip::Writer.open(io) do |zip|
