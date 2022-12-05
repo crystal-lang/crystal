@@ -18,28 +18,28 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets class for virtual_type type" do
-      interpret(<<-CODE, prelude: "prelude").should eq(%("Bar"))
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("Bar"))
           class Foo; end
           class Bar < Foo; end
 
           bar = Bar.new || Foo.new
           bar.class.to_s
-        CODE
+        CRYSTAL
     end
 
     it "interprets class for virtual_type type (struct)" do
-      interpret(<<-CODE, prelude: "prelude").should eq(%("Baz"))
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("Baz"))
           abstract struct Foo; end
           struct Bar < Foo; end
           struct Baz < Foo; end
 
           baz = Baz.new || Bar.new
           baz.class.to_s
-        CODE
+        CRYSTAL
     end
 
     it "does class method on virtual metaclass casted to generic metaclass (#12302)" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         class A
           def self.foo
             1
@@ -54,22 +54,22 @@ describe Crystal::Repl::Interpreter do
 
         b = B(String).new.as(A)
         b.class.foo
-      CODE
+      CRYSTAL
     end
 
     it "discards class for virtual_type type" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
           class Foo; end
           class Bar < Foo; end
 
           bar = Bar.new || Foo.new
           bar.class
           2
-        CODE
+        CRYSTAL
     end
 
     it "interprets class for module type (#12203)" do
-      interpret(<<-CODE).should eq("A")
+      interpret(<<-CRYSTAL).should eq("A")
         class Class
           def name : String
             {{ @type.name.stringify }}
@@ -94,7 +94,7 @@ describe Crystal::Repl::Interpreter do
         e = E.new(A.new)
         base = e.@base
         base.class.name
-        CODE
+        CRYSTAL
     end
 
     it "interprets crystal_type_id for nil" do
@@ -107,7 +107,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets crystal_type_id for virtual metaclass type (#12228)" do
-      interpret(<<-CODE).should eq(true)
+      interpret(<<-CRYSTAL).should eq(true)
         class P
         end
 
@@ -116,16 +116,16 @@ describe Crystal::Repl::Interpreter do
 
         p = A.as(P.class)
         p.crystal_type_id == A.crystal_type_id
-        CODE
+        CRYSTAL
     end
 
     it "interprets class_crystal_instance_type_id" do
-      interpret(<<-CODE, prelude: "prelude").should eq("true")
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("true")
         class Foo
         end
 
         Foo.new.crystal_type_id == Foo.crystal_instance_type_id
-        CODE
+        CRYSTAL
     end
 
     it "discards Path" do

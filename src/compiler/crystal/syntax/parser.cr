@@ -5771,6 +5771,7 @@ module Crystal
     end
 
     def parse_sizeof(klass)
+      sizeof_location = @token.location
       next_token_skip_space
 
       check :OP_LPAREN
@@ -5785,10 +5786,11 @@ module Crystal
       check :OP_RPAREN
       next_token_skip_space
 
-      klass.new(exp).at_end(end_location)
+      klass.new(exp).at(sizeof_location).at_end(end_location)
     end
 
     def parse_offsetof
+      offsetof_location = @token.location
       next_token_skip_space
       check :OP_LPAREN
 
@@ -5817,7 +5819,7 @@ module Crystal
       check :OP_RPAREN
       next_token_skip_space
 
-      OffsetOf.new(type, offset).at_end(end_location)
+      OffsetOf.new(type, offset).at(offsetof_location).at_end(end_location)
     end
 
     def parse_type_def

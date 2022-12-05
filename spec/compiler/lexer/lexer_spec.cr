@@ -684,4 +684,13 @@ describe "Lexer" do
     token.type.should eq(t :DELIMITER_START)
     token.delimiter_state.kind.should eq(Token::DelimiterKind::REGEX)
   end
+
+  it "lexes heredoc start" do
+    lexer = Lexer.new("<<-EOS\n")
+    lexer.wants_raw = true
+    token = lexer.next_token
+    token.type.should eq(t :DELIMITER_START)
+    token.delimiter_state.kind.should eq(Token::DelimiterKind::HEREDOC)
+    token.raw.should eq "<<-EOS"
+  end
 end

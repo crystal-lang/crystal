@@ -1318,7 +1318,7 @@ describe "Block inference" do
   end
 
   it "auto-unpacks tuple, captured empty block" do
-    assert_no_errors <<-CR, inject_primitives: true
+    assert_no_errors <<-CRYSTAL, inject_primitives: true
       def foo(&block : {Int32, Char} -> _)
         tup = {1, 'a'}
         block.call tup
@@ -1326,7 +1326,7 @@ describe "Block inference" do
 
       foo do |x, y|
       end
-      CR
+      CRYSTAL
   end
 
   it "auto-unpacks tuple, captured block with multiple statements" do
@@ -1457,18 +1457,18 @@ describe "Block inference" do
   end
 
   it "reports mismatch with generic argument type in output type" do
-    assert_error(<<-CR, "expected block to return String, not Int32")
+    assert_error(<<-CRYSTAL, "expected block to return String, not Int32")
       class Foo(T)
         def foo(&block : -> T)
         end
       end
 
       Foo(String).new.foo { 1 }
-      CR
+      CRYSTAL
   end
 
   it "reports mismatch with generic argument type in input type" do
-    assert_error(<<-CR, "argument #1 of yield expected to be String, not Int32")
+    assert_error(<<-CRYSTAL, "argument #1 of yield expected to be String, not Int32")
       class Foo(T)
         def foo(&block : T -> )
           yield 1
@@ -1476,7 +1476,7 @@ describe "Block inference" do
       end
 
       Foo(String).new.foo {}
-      CR
+      CRYSTAL
   end
 
   it "correctly types unpacked tuple block arg after block (#3339)" do
@@ -1522,14 +1522,14 @@ describe "Block inference" do
   end
 
   it "doesn't crash on cleaning up typeof node without dependencies (#8669)" do
-    assert_no_errors <<-CR
+    assert_no_errors <<-CRYSTAL
       def foo(&)
       end
 
       foo do
         typeof(bar)
       end
-      CR
+      CRYSTAL
   end
 
   it "respects block arg restriction when block has a splat parameter (#6473)" do
@@ -1565,7 +1565,7 @@ describe "Block inference" do
   end
 
   it "allows underscore in block return type even if the return type can't be computed" do
-    assert_no_errors <<-CR
+    assert_no_errors <<-CRYSTAL
       def foo(& : -> _)
         yield
       end
@@ -1577,11 +1577,11 @@ describe "Block inference" do
       end
 
       recursive
-      CR
+      CRYSTAL
   end
 
   it "doesn't fail with 'already had enclosing call' (#11200)" do
-    assert_no_errors <<-CR
+    assert_no_errors <<-CRYSTAL
       def capture(&block)
         block
       end
@@ -1606,6 +1606,6 @@ describe "Block inference" do
 
       foo = Bar(Bool).new.as(Foo)
       foo.foo
-      CR
+      CRYSTAL
   end
 end

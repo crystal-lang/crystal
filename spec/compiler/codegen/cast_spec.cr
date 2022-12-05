@@ -425,7 +425,7 @@ describe "Code gen: cast" do
   end
 
   it "cast virtual metaclass type to nilable virtual instance type (#12628)" do
-    run(<<-CR).to_b.should be_true
+    run(<<-CRYSTAL).to_b.should be_true
       abstract struct Base
       end
 
@@ -433,6 +433,6 @@ describe "Code gen: cast" do
       end
 
       Base.as(Base | Base.class).as?(Base | Impl).nil?
-      CR
+      CRYSTAL
   end
 end

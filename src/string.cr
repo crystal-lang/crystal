@@ -2958,7 +2958,7 @@ class String
   #
   # See also: `Nil#presence`.
   def presence : self?
-    self if !blank?
+    self unless blank?
   end
 
   # Returns `true` if this string is equal to `*other*.
@@ -3947,6 +3947,28 @@ class String
     yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
   end
 
+  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
+  #
+  # If *limit* is present, the array will be limited to *limit* items and
+  # the final item will contain the remainder of the string.
+  #
+  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  #
+  # ```
+  # long_river_name = "Mississippi"
+  # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
+  # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # ```
+  def split(separator : Regex, limit = nil, *, remove_empty = false) : Array(String)
+    ary = Array(String).new
+    split(separator, limit, remove_empty: remove_empty) do |string|
+      ary << string
+    end
+    ary
+  end
+
   # Splits the string after each regex *separator* and yields each part to a block.
   #
   # If *limit* is present, the array will be limited to *limit* items and
@@ -3966,28 +3988,6 @@ class String
   #
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
-  # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false) : Array(String)
-    ary = Array(String).new
-    split(separator, limit, remove_empty: remove_empty) do |string|
-      ary << string
-    end
-    ary
-  end
-
-  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
-  #
-  # If *limit* is present, the array will be limited to *limit* items and
-  # the final item will contain the remainder of the string.
-  #
-  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
-  #
-  # If *remove_empty* is `true`, any empty strings are removed from the result.
-  #
-  # ```
-  # long_river_name = "Mississippi"
-  # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
-  # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
   def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _)
     if empty?

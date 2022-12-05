@@ -144,7 +144,7 @@ module Crystal
       when NilType
         nil
       when UnionType
-        Type.merge(other.union_types.reject &.nil_type?)
+        other.program.union_of(other.union_types.reject &.nil_type?)
       else
         other
       end
