@@ -804,14 +804,17 @@ module Crystal
 
           name_location = @token.location
           next_token_skip_space_or_newline
+
           call_args = preserve_stop_on_do do
             parse_call_args_space_consumed(
               check_plus_and_minus: false,
               allow_curly: true,
               end_token: :OP_RSQUARE,
               allow_beginless_range: true,
+              control: true,
             )
           end
+
           skip_space_or_newline
           check :OP_RSQUARE
           end_location = token_end_location
