@@ -138,7 +138,7 @@ module Crystal
 
       types["NoReturn"] = @no_return = NoReturnType.new self, self, "NoReturn"
       types["Void"] = @void = VoidType.new self, self, "Void"
-      types["Nil"] = nil_t = @nil = NilType.new self, self, "Nil", value, 1
+      types["Nil"] = @nil = NilType.new self, self, "Nil", value, 1
       types["Bool"] = @bool = BoolType.new self, self, "Bool", value, 1
       types["Char"] = @char = CharType.new self, self, "Char", value, 4
 

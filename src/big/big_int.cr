@@ -253,7 +253,7 @@ struct BigInt < Int
     check_division_by_zero other
 
     if other < 0
-      -(-self).unsafe_floored_mod(-other)
+      -(-self).unsafe_floored_mod(other.abs)
     else
       unsafe_floored_mod(other)
     end

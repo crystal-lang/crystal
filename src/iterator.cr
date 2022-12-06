@@ -357,7 +357,7 @@ module Iterator(T)
         value = wrapped_next
         mapped_value = @func.call(value)
 
-        return mapped_value unless mapped_value.is_a?(Nil)
+        return mapped_value unless mapped_value.nil?
       end
     end
   end
@@ -456,7 +456,7 @@ module Iterator(T)
         self.next
       else
         value = {last_elem, elem}
-        @last_elem, elem = elem, @last_elem
+        @last_elem = elem
         value
       end
     end

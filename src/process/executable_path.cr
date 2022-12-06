@@ -37,7 +37,7 @@ class Process
     end
   end
 
-  private def self.is_executable_file?(path)
+  private def self.file_executable?(path)
     unless File.info?(path, follow_symlinks: true).try &.file?
       return false
     end
@@ -55,9 +55,7 @@ class Process
   # in *path*.
   def self.find_executable(name : Path | String, path : String? = ENV["PATH"]?, pwd : Path | String = Dir.current) : String?
     find_executable_possibilities(Path.new(name), path, pwd) do |p|
-      if is_executable_file?(p)
-        return p.to_s
-      end
+      return p.to_s if file_executable?(p)
     end
     nil
   end

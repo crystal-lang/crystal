@@ -8,6 +8,7 @@ module Crystal
     @deprecated_constants_detected = Set(String).new
     @deprecated_methods_detected = Set(String).new
     @deprecated_macros_detected = Set(String).new
+    @deprecated_annotations_detected = Set(String).new
 
     def check_deprecated_constant(const : Const, node : Path)
       return unless @warnings.level.all?
@@ -28,6 +29,12 @@ module Crystal
       node.target_defs.each do |target_def|
         check_deprecation(target_def, node, @deprecated_methods_detected)
       end
+    end
+
+    def check_call_to_deprecated_annotation(node : AnnotationDef) : Nil
+      return unless @warnings.level.all?
+
+      check_deprecation(node, node.name, @deprecated_annotations_detected)
     end
 
     private def check_deprecation(object, use_site, detects)
@@ -56,6 +63,12 @@ module Crystal
     private def compiler_expanded_call(node : Call)
       # Compiler generates a `_.initialize` call in `new`
       node.obj.as?(Var).try { |v| v.name == "_" } && node.name == "initialize"
+    end
+  end
+
+  class AnnotationDef
+    def short_reference
+      "annotation #{resolved_type}"
     end
   end
 

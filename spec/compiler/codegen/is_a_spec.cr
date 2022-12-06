@@ -922,4 +922,16 @@ describe "Codegen: is_a?" do
       b.is_a?(B(Int32))
     )).to_b.should be_true
   end
+
+  it "virtual metaclass type is not virtual instance type (#12628)" do
+    run(<<-CRYSTAL).to_b.should be_false
+      abstract struct Base
+      end
+
+      struct Impl < Base
+      end
+
+      Base.as(Base | Base.class).is_a?(Base | Impl)
+      CRYSTAL
+  end
 end

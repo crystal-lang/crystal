@@ -115,7 +115,7 @@ module Benchmark
       end
 
       private def run_comparison
-        fastest = ran_items.max_by { |i| i.mean }
+        fastest = ran_items.max_by(&.mean)
         ran_items.each do |item|
           item.slower = (fastest.mean / item.mean).to_f
         end

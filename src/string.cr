@@ -736,7 +736,7 @@ class String
   end
 
   private def to_f_impl(whitespace : Bool = true, strict : Bool = true)
-    return unless whitespace || '0' <= self[0] <= '9' || self[0] == '-' || self[0] == '+'
+    return unless whitespace || '0' <= self[0] <= '9' || self[0].in?('-', '+')
 
     v, endptr = yield
 
@@ -987,8 +987,7 @@ class String
 
     byte_index = char_index_to_byte_index(index)
     if byte_index && byte_index < @bytesize
-      reader = Char::Reader.new(self, pos: byte_index)
-      return reader.current_char
+      Char::Reader.new(self, pos: byte_index).current_char
     else
       yield
     end
@@ -1088,9 +1087,9 @@ class String
 
     case count
     when 0
-      return self
+      self
     when size
-      return ""
+      ""
     else
       if single_byte_optimizable?
         byte_delete_at(start, count, count)
@@ -2833,7 +2832,7 @@ class String
   # described at `Char#in_set?`. Returns the number of characters
   # in this string that match the given set.
   def count(*sets) : Int32
-    count { |char| char.in_set?(*sets) }
+    count(&.in_set?(*sets))
   end
 
   # Yields each char in this string to the block.
@@ -2868,7 +2867,7 @@ class String
   # "aabbccdd".delete("a-c") # => "dd"
   # ```
   def delete(*sets) : String
-    delete { |char| char.in_set?(*sets) }
+    delete(&.in_set?(*sets))
   end
 
   # Yields each char in this string to the block.
@@ -2911,7 +2910,7 @@ class String
   # "a       bbb".squeeze         # => "a b"
   # ```
   def squeeze(*sets : String) : String
-    squeeze { |char| char.in_set?(*sets) }
+    squeeze(&.in_set?(*sets))
   end
 
   # Returns a new `String`, that has all characters removed,
@@ -2959,7 +2958,7 @@ class String
   #
   # See also: `Nil#presence`.
   def presence : self?
-    self if !blank?
+    self unless blank?
   end
 
   # Returns `true` if this string is equal to `*other*.
@@ -3282,6 +3281,13 @@ class String
     self.match(search, offset).try &.begin
   end
 
+  # :ditto:
+  #
+  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  def index!(search, offset = 0) : Int32
+    index(search, offset) || raise Enumerable::NotFoundError.new
+  end
+
   # Returns the index of the _last_ appearance of *search* in the string,
   # If *offset* is present, it defines the position to _end_ the search
   # (characters beyond this point are ignored).
@@ -3386,6 +3392,23 @@ class String
     end
 
     match_result.try &.begin
+  end
+
+  # :ditto:
+  #
+  # Raises `Enumerable::NotFoundError` if *search* does not occur in `self`.
+  def rindex!(search : Regex, offset = size) : Int32
+    rindex(search, offset) || raise Enumerable::NotFoundError.new
+  end
+
+  # :ditto:
+  def rindex!(search : String, offset = size - search.size) : Int32
+    rindex(search, offset) || raise Enumerable::NotFoundError.new
+  end
+
+  # :ditto:
+  def rindex!(search : Char, offset = size - 1) : Int32
+    rindex(search, offset) || raise Enumerable::NotFoundError.new
   end
 
   # Searches separator or pattern (`Regex`) in the string, and returns
@@ -3924,6 +3947,28 @@ class String
     yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
   end
 
+  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
+  #
+  # If *limit* is present, the array will be limited to *limit* items and
+  # the final item will contain the remainder of the string.
+  #
+  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  #
+  # ```
+  # long_river_name = "Mississippi"
+  # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
+  # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # ```
+  def split(separator : Regex, limit = nil, *, remove_empty = false) : Array(String)
+    ary = Array(String).new
+    split(separator, limit, remove_empty: remove_empty) do |string|
+      ary << string
+    end
+    ary
+  end
+
   # Splits the string after each regex *separator* and yields each part to a block.
   #
   # If *limit* is present, the array will be limited to *limit* items and
@@ -3943,28 +3988,6 @@ class String
   #
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
-  # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false) : Array(String)
-    ary = Array(String).new
-    split(separator, limit, remove_empty: remove_empty) do |string|
-      ary << string
-    end
-    ary
-  end
-
-  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
-  #
-  # If *limit* is present, the array will be limited to *limit* items and
-  # the final item will contain the remainder of the string.
-  #
-  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
-  #
-  # If *remove_empty* is `true`, any empty strings are removed from the result.
-  #
-  # ```
-  # long_river_name = "Mississippi"
-  # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
-  # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
   def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _)
     if empty?

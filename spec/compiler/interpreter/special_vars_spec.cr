@@ -4,7 +4,7 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "special vars" do
     it "does special var that's a reference" do
-      interpret(<<-CODE).should eq("hey")
+      interpret(<<-CRYSTAL).should eq("hey")
         class Object; def not_nil!; self; end; end
 
         def foo(x)
@@ -13,11 +13,11 @@ describe Crystal::Repl::Interpreter do
 
         foo(2)
         $? || "oops"
-      CODE
+      CRYSTAL
     end
 
     it "does special var that's a struct" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         class Object; def not_nil!; self; end; end
 
         def foo(x)
@@ -26,11 +26,11 @@ describe Crystal::Repl::Interpreter do
 
         foo(2)
         $? || 4
-      CODE
+      CRYSTAL
     end
 
     it "does special var that's a reference inside block" do
-      interpret(<<-CODE).should eq("hey")
+      interpret(<<-CRYSTAL).should eq("hey")
         class Object; def not_nil!; self; end; end
 
         def bar
@@ -45,11 +45,11 @@ describe Crystal::Repl::Interpreter do
 
         foo(2)
         $? || "oops"
-      CODE
+      CRYSTAL
     end
 
     it "does special var that's a reference when there are optional arguments" do
-      interpret(<<-CODE).should eq("hey")
+      interpret(<<-CRYSTAL).should eq("hey")
         class Object; def not_nil!; self; end; end
 
         def foo(x = 1)
@@ -58,11 +58,11 @@ describe Crystal::Repl::Interpreter do
 
         foo
         $? || "oops"
-      CODE
+      CRYSTAL
     end
 
     it "does special var that's a reference for multidispatch" do
-      interpret(<<-CODE).should eq("hey")
+      interpret(<<-CRYSTAL).should eq("hey")
         class Object; def not_nil!; self; end; end
 
         def foo(x : Int32)
@@ -76,11 +76,11 @@ describe Crystal::Repl::Interpreter do
         a = 1 || "a"
         foo(a)
         $? || "oops"
-      CODE
+      CRYSTAL
     end
 
     it "sets special var inside call inside block (#12250)" do
-      interpret(<<-CODE).should eq("hey")
+      interpret(<<-CRYSTAL).should eq("hey")
         class Object; def not_nil!; self; end; end
 
         def foo
@@ -93,7 +93,7 @@ describe Crystal::Repl::Interpreter do
 
         bar { foo }
         $? || "oops"
-      CODE
+      CRYSTAL
     end
   end
 end

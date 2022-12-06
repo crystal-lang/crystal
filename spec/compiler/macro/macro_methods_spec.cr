@@ -865,8 +865,32 @@ module Crystal
         assert_macro %({{ [1, 2, 3].includes?(4) }}), %(false)
       end
 
-      it "executes +" do
-        assert_macro %({{ [1, 2] + [3, 4, 5] }}), %([1, 2, 3, 4, 5])
+      describe "#+" do
+        context "with TupleLiteral argument" do
+          it "concatenates the literals into an ArrayLiteral" do
+            assert_macro %({{ [1, 2] + {3, 4, 5} }}), %([1, 2, 3, 4, 5])
+          end
+        end
+
+        context "with ArrayLiteral argument" do
+          it "concatenates the literals into an ArrayLiteral" do
+            assert_macro %({{ [1, 2] + [3, 4, 5] }}), %([1, 2, 3, 4, 5])
+          end
+        end
+      end
+
+      describe "#-" do
+        context "with TupleLiteral argument" do
+          it "removes the elements in RHS from LHS into an ArrayLiteral" do
+            assert_macro %({{ [1, 2, 3, 4] - {1, 3, 5} }}), %([2, 4])
+          end
+        end
+
+        context "with ArrayLiteral argument" do
+          it "removes the elements in RHS from LHS into an ArrayLiteral" do
+            assert_macro %({{ [1, 2, 3, 4] - [1, 3, 5] }}), %([2, 4])
+          end
+        end
       end
 
       it "executes [] with range" do
@@ -1372,8 +1396,32 @@ module Crystal
         assert_macro %({{ {1, 2, 3}.includes?(4) }}), %(false)
       end
 
-      it "executes +" do
-        assert_macro %({{ {1, 2} + {3, 4, 5} }}), %({1, 2, 3, 4, 5})
+      describe "#+" do
+        context "with TupleLiteral argument" do
+          it "concatenates the literals into a TupleLiteral" do
+            assert_macro %({{ {1, 2} + {3, 4, 5} }}), %({1, 2, 3, 4, 5})
+          end
+        end
+
+        context "with ArrayLiteral argument" do
+          it "concatenates the literals into a TupleLiteral" do
+            assert_macro %({{ {1, 2} + [3, 4, 5] }}), %({1, 2, 3, 4, 5})
+          end
+        end
+      end
+
+      describe "#-" do
+        context "with TupleLiteral argument" do
+          it "removes the elements in RHS from LHS into a TupleLiteral" do
+            assert_macro %({{ {1, 2, 3, 4} - {1, 3, 5} }}), %({2, 4})
+          end
+        end
+
+        context "with ArrayLiteral argument" do
+          it "removes the elements in RHS from LHS into a TupleLiteral" do
+            assert_macro %({{ {1, 2, 3, 4} - [1, 3, 5] }}), %({2, 4})
+          end
+        end
       end
     end
 
@@ -2117,14 +2165,14 @@ module Crystal
             {x: TypeNode.new(mod)}
           end
 
-          assert_type(<<-CR) { int32 }
+          assert_type(<<-CRYSTAL) { int32 }
             class Foo(T)
             end
 
             alias Bar = Foo(Bar)?
 
             {{ Bar.nilable? ? 1 : 'a' }}
-            CR
+            CRYSTAL
         end
       end
 
@@ -2706,15 +2754,15 @@ module Crystal
       end
     end
 
-    describe "multiassign methods" do
-      multiassign_node = MultiAssign.new(["foo".var, "bar".var] of ASTNode, [2.int32, "a".string] of ASTNode)
+    describe "multi_assign methods" do
+      multi_assign_node = MultiAssign.new(["foo".var, "bar".var] of ASTNode, [2.int32, "a".string] of ASTNode)
 
       it "executes targets" do
-        assert_macro %({{x.targets}}), %([foo, bar]), {x: multiassign_node}
+        assert_macro %({{x.targets}}), %([foo, bar]), {x: multi_assign_node}
       end
 
       it "executes values" do
-        assert_macro %({{x.values}}), %([2, "a"]), {x: multiassign_node}
+        assert_macro %({{x.values}}), %([2, "a"]), {x: multi_assign_node}
       end
     end
 
@@ -3052,13 +3100,13 @@ module Crystal
       it "returns true if file exists" do
         run(%q<
           {{file_exists?("#{__DIR__}/../data/build")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(10)
+          >, filename: __FILE__).to_i.should eq(10)
       end
 
       it "returns false if file doesn't exist" do
         run(%q<
           {{file_exists?("#{__DIR__}/../data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
 
@@ -3066,13 +3114,13 @@ module Crystal
       it "reads file (exists)" do
         run(%q<
           {{file_exists?("spec/compiler/data/build")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(10)
+          >, filename: __FILE__).to_i.should eq(10)
       end
 
       it "reads file (doesn't exist)" do
         run(%q<
           {{file_exists?("spec/compiler/data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
   end
@@ -3082,13 +3130,13 @@ module Crystal
       it "reads file (exists)" do
         run(%q<
           {{read_file("#{__DIR__}/../data/build")}}
-          >, filename = __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
+          >, filename: __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
       end
 
       it "reads file (doesn't exist)" do
-        assert_error <<-CR,
+        assert_error <<-CRYSTAL,
           {{read_file("#{__DIR__}/../data/build_foo")}}
-          CR
+          CRYSTAL
           "No such file or directory"
       end
     end
@@ -3097,13 +3145,13 @@ module Crystal
       it "reads file (exists)" do
         run(%q<
           {{read_file("spec/compiler/data/build")}}
-          >, filename = __FILE__).to_string.should eq(File.read("spec/compiler/data/build"))
+          >, filename: __FILE__).to_string.should eq(File.read("spec/compiler/data/build"))
       end
 
       it "reads file (doesn't exist)" do
-        assert_error <<-CR,
+        assert_error <<-CRYSTAL,
           {{read_file("spec/compiler/data/build_foo")}}
-          CR
+          CRYSTAL
           "No such file or directory"
       end
     end
@@ -3114,7 +3162,7 @@ module Crystal
       it "reads file (doesn't exist)" do
         run(%q<
           {{read_file?("#{__DIR__}/../data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
 
@@ -3122,7 +3170,7 @@ module Crystal
       it "reads file (doesn't exist)" do
         run(%q<
           {{read_file?("spec/compiler/data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+          >, filename: __FILE__).to_i.should eq(20)
       end
     end
   end

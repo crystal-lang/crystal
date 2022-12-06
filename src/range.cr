@@ -576,7 +576,7 @@ struct Range(B, E)
       begin_value = @range.begin
 
       return stop if !begin_value.nil? && @current <= begin_value
-      return @current = @current.pred
+      @current = @current.pred
     end
   end
 
