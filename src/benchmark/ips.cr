@@ -14,7 +14,7 @@ module Benchmark
   module IPS
     class Job
       # List of all entries in the benchmark.
-      # After #execute, these are populated with the resulting statistics.
+      # After `#execute`, these are populated with the resulting statistics.
       property items : Array(Entry)
 
       @warmup_time : Time::Span
@@ -129,7 +129,7 @@ module Benchmark
       # Code to be benchmarked
       property action : ->
 
-      # Number of cycles needed to run for approx 100ms
+      # Number of cycles needed to run `action` for approximately 100ms.
       # Calculated during the warmup stage
       property! cycles : Int32
 
