@@ -681,6 +681,15 @@ module Crystal
     it_parses "[] of {String, ->}", ArrayLiteral.new([] of ASTNode, Generic.new(Path.global("Tuple"), ["String".path, ProcNotation.new] of ASTNode))
     it_parses "x([] of Foo, Bar.new)", Call.new(nil, "x", ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new("Bar".path, "new"))
 
+    context "calls with blocks within index operator (#12818)" do
+      it_parses "foo[bar { 1 }]", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo.[bar { 1 }]", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo.[](bar { 1 })", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo[bar do; 1; end]", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo.[bar do; 1; end]", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo.[](bar do; 1; end)", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+    end
+
     it_parses "Foo(x: U)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path)])
     it_parses "Foo(x: U, y: V)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path), NamedArgument.new("y", "V".path)])
     it_parses "Foo(X: U, Y: V)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("X", "U".path), NamedArgument.new("Y", "V".path)])
