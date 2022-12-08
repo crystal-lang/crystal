@@ -339,13 +339,13 @@ module Crystal
     it_parses "def foo(@[Foo] &@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: "block".arg(annotations: ["Foo".ann]), yields: 0)
     it_parses "def foo(@[Foo] *args); end", Def.new("foo", args: ["args".arg(annotations: ["Foo".ann])], splat_index: 0)
     it_parses "def foo(@[Foo] **args); end", Def.new("foo", double_splat: "args".arg(annotations: ["Foo".ann]))
-    it_parses <<-CR, Def.new("foo", ["id".arg(restriction: "Int32".path, annotations: ["Foo".ann]), "name".arg(restriction: "String".path, annotations: ["Bar".ann])])
+    it_parses <<-CRYSTAL, Def.new("foo", ["id".arg(restriction: "Int32".path, annotations: ["Foo".ann]), "name".arg(restriction: "String".path, annotations: ["Bar".ann])])
       def foo(
         @[Foo]
         id : Int32,
         @[Bar] name : String
       ); end
-    CR
+    CRYSTAL
 
     it_parses "def foo(\n&block\n); end", Def.new("foo", block_arg: Arg.new("block"), yields: 0)
     it_parses "def foo(&block :\n Int ->); end", Def.new("foo", block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode)), yields: 1)
@@ -680,6 +680,15 @@ module Crystal
     it_parses "Foo({String, ->, ->})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["String".path, ProcNotation.new, ProcNotation.new] of ASTNode)] of ASTNode)
     it_parses "[] of {String, ->}", ArrayLiteral.new([] of ASTNode, Generic.new(Path.global("Tuple"), ["String".path, ProcNotation.new] of ASTNode))
     it_parses "x([] of Foo, Bar.new)", Call.new(nil, "x", ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new("Bar".path, "new"))
+
+    context "calls with blocks within index operator (#12818)" do
+      it_parses "foo[bar { 1 }]", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo.[bar { 1 }]", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo.[](bar { 1 })", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo[bar do; 1; end]", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo.[bar do; 1; end]", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo.[](bar do; 1; end)", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+    end
 
     it_parses "Foo(x: U)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path)])
     it_parses "Foo(x: U, y: V)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path), NamedArgument.new("y", "V".path)])
@@ -1052,13 +1061,13 @@ module Crystal
     it_parses "macro foo(a, @[Foo] &block);end", Macro.new("foo", ["a".arg], Expressions.new, block_arg: "block".arg(annotations: ["Foo".ann]))
     it_parses "macro foo(@[Foo] *args);end", Macro.new("foo", ["args".arg(annotations: ["Foo".ann])], Expressions.new, splat_index: 0)
     it_parses "macro foo(@[Foo] **args);end", Macro.new("foo", body: Expressions.new, double_splat: "args".arg(annotations: ["Foo".ann]))
-    it_parses <<-CR, Macro.new("foo", ["id".arg(annotations: ["Foo".ann]), "name".arg(annotations: ["Bar".ann])], Expressions.new)
+    it_parses <<-CRYSTAL, Macro.new("foo", ["id".arg(annotations: ["Foo".ann]), "name".arg(annotations: ["Bar".ann])], Expressions.new)
       macro foo(
         @[Foo]
         id,
         @[Bar] name
       );end
-    CR
+    CRYSTAL
 
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
@@ -1208,16 +1217,27 @@ module Crystal
     it_parses "1.=~(2)", Call.new(1.int32, "=~", 2.int32)
     it_parses "def =~; end", Def.new("=~", [] of Arg)
 
-    it_parses "$~", Global.new("$~")
-    it_parses "$~.foo", Call.new(Global.new("$~"), "foo")
-    it_parses "$0", Call.new(Global.new("$~"), "[]", 0.int32)
-    it_parses "$1", Call.new(Global.new("$~"), "[]", 1.int32)
-    it_parses "$1?", Call.new(Global.new("$~"), "[]?", 1.int32)
-    it_parses "foo $1", Call.new(nil, "foo", Call.new(Global.new("$~"), "[]", 1.int32))
-    it_parses "$~ = 1", Assign.new("$~".var, 1.int32)
+    describe "global regex match data" do
+      it_parses "$~", Global.new("$~")
+      it_parses "$~.foo", Call.new(Global.new("$~"), "foo")
+      it_parses "$0", Call.new(Global.new("$~"), "[]", 0.int32)
+      it_parses "$1", Call.new(Global.new("$~"), "[]", 1.int32)
+      it_parses "$1?", Call.new(Global.new("$~"), "[]?", 1.int32)
+      it_parses "foo $1", Call.new(nil, "foo", Call.new(Global.new("$~"), "[]", 1.int32))
+      it_parses "$~ = 1", Assign.new("$~".var, 1.int32)
 
-    assert_syntax_error "$2147483648"
-    assert_syntax_error "$99999999999999999999999?", "Index $99999999999999999999999 doesn't fit in an Int32"
+      assert_syntax_error "$0 = 1", "global match data cannot be assigned to"
+      assert_syntax_error "$0, $1 = [1, 2]", "global match data cannot be assigned to"
+      assert_syntax_error "$0, a = {1, 2}", "global match data cannot be assigned to"
+
+      assert_syntax_error "$2147483648"
+      assert_syntax_error "$99999999999999999999999?", "Index $99999999999999999999999 doesn't fit in an Int32"
+
+      it_parses "$?", Global.new("$?")
+      it_parses "$?.foo", Call.new(Global.new("$?"), "foo")
+      it_parses "foo $?", Call.new(nil, "foo", Global.new("$?"))
+      it_parses "$? = 1", Assign.new("$?".var, 1.int32)
+    end
 
     it_parses "foo /a/", Call.new(nil, "foo", regex("a"))
     it_parses "foo(/a/)", Call.new(nil, "foo", regex("a"))
@@ -1228,11 +1248,6 @@ module Crystal
     it_parses "foo(/ /, / /)", Call.new(nil, "foo", [regex(" "), regex(" ")] of ASTNode)
     it_parses "foo a, / /", Call.new(nil, "foo", ["a".call, regex(" ")] of ASTNode)
     it_parses "foo /;/", Call.new(nil, "foo", regex(";"))
-
-    it_parses "$?", Global.new("$?")
-    it_parses "$?.foo", Call.new(Global.new("$?"), "foo")
-    it_parses "foo $?", Call.new(nil, "foo", Global.new("$?"))
-    it_parses "$? = 1", Assign.new("$?".var, 1.int32)
 
     it_parses "foo out x; x", [Call.new(nil, "foo", Out.new("x".var)), "x".var]
     it_parses "foo(out x); x", [Call.new(nil, "foo", Out.new("x".var)), "x".var]
@@ -1930,6 +1945,16 @@ module Crystal
     assert_syntax_error "{1, ->do\n|x| x\end }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(x : Type) { ... }"
     assert_syntax_error "{1, ->{ |_| x } }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(param : Type) { ... }"
 
+    # #2874
+    assert_syntax_error "A = B = 1", "dynamic constant assignment"
+    assert_syntax_error "A = (B = 1)", "dynamic constant assignment"
+    assert_syntax_error "A = foo(B = 1)", "dynamic constant assignment"
+    assert_syntax_error "A = foo { B = 1 }", "dynamic constant assignment"
+    assert_syntax_error "A = begin; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; rescue; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; rescue; 1; else; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; ensure; B = 1; end", "dynamic constant assignment"
+
     assert_syntax_error "1 while 3", "trailing `while` is not supported"
     assert_syntax_error "1 until 3", "trailing `until` is not supported"
     assert_syntax_error "x++", "postfix increment is not supported, use `exp += 1`"
@@ -2053,29 +2078,29 @@ module Crystal
     it_parses "{[] of Foo, ::foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(nil, "foo", global: true)] of ASTNode)
     it_parses "{[] of Foo, self.foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new("self".var, "foo")] of ASTNode)
 
-    it_parses <<-'CR', Macro.new("foo", body: Expressions.new([MacroLiteral.new("  <<-FOO\n    \#{ "), MacroVar.new("var"), MacroLiteral.new(" }\n  FOO\n")] of ASTNode))
+    it_parses <<-'CRYSTAL', Macro.new("foo", body: Expressions.new([MacroLiteral.new("  <<-FOO\n    \#{ "), MacroVar.new("var"), MacroLiteral.new(" }\n  FOO\n")] of ASTNode))
       macro foo
         <<-FOO
           #{ %var }
         FOO
       end
-      CR
+      CRYSTAL
 
-    it_parses <<-'CR', Macro.new("foo", body: MacroLiteral.new("  <<-FOO, <<-BAR + \"\"\n  FOO\n  BAR\n"))
+    it_parses <<-'CRYSTAL', Macro.new("foo", body: MacroLiteral.new("  <<-FOO, <<-BAR + \"\"\n  FOO\n  BAR\n"))
       macro foo
         <<-FOO, <<-BAR + ""
         FOO
         BAR
       end
-      CR
+      CRYSTAL
 
-    it_parses <<-'CR', Macro.new("foo", body: MacroLiteral.new("  <<-FOO\n    %foo\n  FOO\n"))
+    it_parses <<-'CRYSTAL', Macro.new("foo", body: MacroLiteral.new("  <<-FOO\n    %foo\n  FOO\n"))
       macro foo
         <<-FOO
           %foo
         FOO
       end
-      CR
+      CRYSTAL
 
     it_parses "macro foo; bar class: 1; end", Macro.new("foo", body: MacroLiteral.new(" bar class: 1; "))
 
@@ -2390,7 +2415,7 @@ module Crystal
       end
 
       it "correctly computes line number after `\\{%\n` (#9857)" do
-        code = <<-CODE
+        code = <<-CRYSTAL
         macro foo
           \\{%
             1
@@ -2398,7 +2423,7 @@ module Crystal
         end
 
         1
-        CODE
+        CRYSTAL
 
         exps = Parser.parse(code).as(Expressions)
         exps.expressions[1].location.not_nil!.line_number.should eq(7)

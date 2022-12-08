@@ -625,7 +625,7 @@ struct Path
       end
 
       @reader = reader
-      return 0
+      0
     end
   end
 
@@ -1033,7 +1033,7 @@ struct Path
       end
     end
 
-    return path
+    path
   end
 
   # :ditto:

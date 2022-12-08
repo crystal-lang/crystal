@@ -30,15 +30,15 @@ module Crystal
       if filename.is_a? VirtualFile
         loc = filename.expanded_location
         if loc
-          return true_filename loc.filename
+          true_filename loc.filename
         else
-          return ""
+          ""
         end
       else
         if filename
-          return filename
+          filename
         else
-          return ""
+          ""
         end
       end
     end

@@ -75,6 +75,21 @@ lib LibC
   fun FindNextFileW(hFindFile : HANDLE, lpFindFileData : WIN32_FIND_DATAW*) : BOOL
   fun FindClose(hFindFile : HANDLE) : BOOL
 
+  fun LockFileEx(
+    hFile : HANDLE,
+    dwFlags : DWORD,
+    dwReserved : DWORD,
+    nNumberOfBytesToLockLow : DWORD,
+    nNumberOfBytesToLockHigh : DWORD,
+    lpOverlapped : OVERLAPPED*
+  ) : BOOL
+  fun UnlockFileEx(
+    hFile : HANDLE,
+    dwReserved : DWORD,
+    nNumberOfBytesToUnlockLow : DWORD,
+    nNumberOfBytesToUnlockHigh : DWORD,
+    lpOverlapped : OVERLAPPED*
+  ) : BOOL
   fun SetFileTime(hFile : HANDLE, lpCreationTime : FILETIME*,
                   lpLastAccessTime : FILETIME*, lpLastWriteTime : FILETIME*) : BOOL
 end

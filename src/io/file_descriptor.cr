@@ -175,7 +175,6 @@ class IO::FileDescriptor < IO
   end
 
   # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
-  # TODO: always use non-blocking locks, yield fiber until resource becomes available
 
   def flock_shared(blocking = true)
     flock_shared blocking

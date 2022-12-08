@@ -123,6 +123,7 @@ class Crystal::Call
     check_extra_named_arguments(call_errors, owner, defs, arg_types, inner_exception)
     check_arguments_already_specified(call_errors, owner, defs, arg_types, inner_exception)
     check_wrong_number_of_arguments(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
+    check_extra_types_arguments_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
     check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
 
     if args.size == 1 && args.first.type.includes_type?(program.nil)
@@ -215,7 +216,7 @@ class Crystal::Call
         # Show did you mean for the simplest case for now
         if names.size == 1 && call_errors.size == 1
           extra_name = names.first
-          name_index = call_errors.first.names.index(extra_name).not_nil!
+          name_index = call_errors.first.names.index!(extra_name)
           similar_name = call_errors.first.similar_names[name_index]
           if similar_name
             str.puts
@@ -259,6 +260,40 @@ class Crystal::Call
     raise_matches_not_found_named_args(owner, def_name, defs, arg_types, named_args_types, inner_exception)
   end
 
+  private def check_extra_types_arguments_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
+    call_errors = call_errors.select(ArgumentsTypeMismatch)
+    return if call_errors.empty?
+
+    call_errors = call_errors.map &.as(ArgumentsTypeMismatch)
+    argument_type_mismatches = call_errors.flat_map(&.errors)
+
+    argument_type_mismatches.select!(&.extra_types)
+    return if argument_type_mismatches.empty?
+
+    argument_type_mismatches.each do |target_error|
+      index_or_name = target_error.index_or_name
+
+      mismatches = argument_type_mismatches.select(&.index_or_name.==(index_or_name))
+      expected_types = mismatches.map(&.expected_type).uniq!
+      actual_type = mismatches.first.actual_type
+
+      actual_types =
+        if actual_type.is_a?(UnionType)
+          actual_type.union_types
+        else
+          [actual_type] of Type
+        end
+
+      # It could happen that a type that's missing in one overload is actually
+      # covered in another overload, and eventually all overloads are covered
+      if expected_types.to_set == actual_types.to_set
+        expected_types = [target_error.expected_type]
+      end
+
+      raise_argument_type_mismatch(index_or_name, actual_type, expected_types.sort_by!(&.to_s), owner, defs, def_name, arg_types, inner_exception)
+    end
+  end
+
   private def check_arguments_type_mismatch(call_errors, owner, defs, def_name, arg_types, named_args_types, inner_exception)
     call_errors = call_errors.select(ArgumentsTypeMismatch)
     return if call_errors.empty?
@@ -280,6 +315,10 @@ class Crystal::Call
     expected_types = mismatches.map(&.expected_type).uniq!.sort_by!(&.to_s)
     actual_type = mismatches.first.actual_type
 
+    raise_argument_type_mismatch(index_or_name, actual_type, expected_types, owner, defs, def_name, arg_types, inner_exception)
+  end
+
+  private def raise_argument_type_mismatch(index_or_name, actual_type, expected_types, owner, defs, def_name, arg_types, inner_exception)
     arg =
       case index_or_name
       in Int32
@@ -324,7 +363,7 @@ class Crystal::Call
       else
         str << "expected argument #{argument_description} to '#{full_name(owner, def_name)}' to be "
         to_sentence(str, expected_types, " or ")
-        str << ", not #{actual_type}"
+        str << ", not #{actual_type.devirtualize}"
       end
     end
   end
@@ -359,7 +398,11 @@ class Crystal::Call
   record ExtraNamedArguments, names : Array(String), similar_names : Array(String?)
   record ArgumentsAlreadySpecified, names : Array(String)
   record ArgumentsTypeMismatch, errors : Array(ArgumentTypeMismatch)
-  record ArgumentTypeMismatch, index_or_name : (Int32 | String), expected_type : Type | ASTNode, actual_type : Type
+  record ArgumentTypeMismatch,
+    index_or_name : (Int32 | String),
+    expected_type : Type | ASTNode,
+    actual_type : Type,
+    extra_types : Array(Type)?
 
   private def compute_call_error_reason(owner, a_def, arg_types, named_args_types)
     if (block && !a_def.yields) || (!block && a_def.yields)
@@ -461,23 +504,60 @@ class Crystal::Call
 
   private def check_argument_type_mismatch(def_arg, index_or_name, arg_type, match_context, arguments_type_mismatch)
     restricted = arg_type.restrict(def_arg, match_context)
-    unless restricted
-      expected_type = def_arg.type?
-      unless expected_type
-        restriction = def_arg.restriction
-        if restriction
-          expected_type = match_context.instantiated_type.lookup_type?(restriction, free_vars: match_context.free_vars)
-        end
-      end
-      expected_type ||= def_arg.restriction.not_nil!
-      expected_type = expected_type.devirtualize if expected_type.is_a?(Type)
 
-      arguments_type_mismatch << ArgumentTypeMismatch.new(
-        index_or_name: index_or_name,
-        expected_type: expected_type,
-        actual_type: arg_type.remove_literal,
-      )
+    arg_type = arg_type.remove_literal
+    return if restricted == arg_type
+
+    expected_type = compute_expected_type(def_arg, match_context)
+
+    extra_types =
+      if restricted
+        # This was a partial match
+        compute_extra_types(arg_type, expected_type)
+      else
+        # This wasn't a match
+        nil
+      end
+
+    arguments_type_mismatch << ArgumentTypeMismatch.new(
+      index_or_name: index_or_name,
+      expected_type: expected_type,
+      actual_type: arg_type.remove_literal,
+      extra_types: extra_types,
+    )
+  end
+
+  private def compute_expected_type(def_arg, match_context)
+    expected_type = def_arg.type?
+    unless expected_type
+      restriction = def_arg.restriction
+      if restriction
+        expected_type = match_context.instantiated_type.lookup_type?(restriction, free_vars: match_context.free_vars)
+      end
     end
+    expected_type ||= def_arg.restriction.not_nil!
+    expected_type = expected_type.devirtualize if expected_type.is_a?(Type)
+    expected_type
+  end
+
+  private def compute_extra_types(actual_type, expected_type)
+    expected_types =
+      if expected_type.is_a?(UnionType)
+        expected_type.union_types
+      elsif expected_type.is_a?(Type)
+        [expected_type] of Type
+      else
+        return
+      end
+
+    actual_types =
+      if actual_type.is_a?(UnionType)
+        actual_type.union_types
+      else
+        [actual_type] of Type
+      end
+
+    actual_types - expected_types
   end
 
   private def no_overload_matches_message(io, full_name, defs, args, arg_types, named_args_types)

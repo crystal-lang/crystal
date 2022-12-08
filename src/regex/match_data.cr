@@ -59,10 +59,15 @@ class Regex
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
     #
+    # Raises `IndexError` if the index is out of range or the respective
+    # subpattern is unused.
+    #
     # ```
     # "Crystal".match(/r/).not_nil!.begin(0)     # => 1
     # "Crystal".match(/r(ys)/).not_nil!.begin(1) # => 2
     # "クリスタル".match(/リ(ス)/).not_nil!.begin(0)    # => 1
+    # "Crystal".match(/r/).not_nil!.begin(1)     # IndexError: Invalid capture group index: 1
+    # "Crystal".match(/r(x)?/).not_nil!.begin(1) # IndexError: Capture group 1 was not matched
     # ```
     def begin(n = 0) : Int32
       @string.byte_index_to_char_index(byte_begin(n)).not_nil!
@@ -73,10 +78,15 @@ class Regex
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
     #
+    # Raises `IndexError` if the index is out of range or the respective
+    # subpattern is unused.
+    #
     # ```
     # "Crystal".match(/r/).not_nil!.end(0)     # => 2
     # "Crystal".match(/r(ys)/).not_nil!.end(1) # => 4
     # "クリスタル".match(/リ(ス)/).not_nil!.end(0)    # => 3
+    # "Crystal".match(/r/).not_nil!.end(1)     # IndexError: Invalid capture group index: 1
+    # "Crystal".match(/r(x)?/).not_nil!.end(1) # IndexError: Capture group 1 was not matched
     # ```
     def end(n = 0) : Int32
       @string.byte_index_to_char_index(byte_end(n)).not_nil!
@@ -87,15 +97,22 @@ class Regex
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
     #
+    # Raises `IndexError` if the index is out of range or the respective
+    # subpattern is unused.
+    #
     # ```
     # "Crystal".match(/r/).not_nil!.byte_begin(0)     # => 1
     # "Crystal".match(/r(ys)/).not_nil!.byte_begin(1) # => 2
     # "クリスタル".match(/リ(ス)/).not_nil!.byte_begin(0)    # => 3
+    # "Crystal".match(/r/).not_nil!.byte_begin(1)     # IndexError: Invalid capture group index: 1
+    # "Crystal".match(/r(x)?/).not_nil!.byte_begin(1) # IndexError: Capture group 1 was not matched
     # ```
     def byte_begin(n = 0) : Int32
       check_index_out_of_bounds n
       n += size if n < 0
-      @ovector[n * 2]
+      value = @ovector[n * 2]
+      raise_capture_group_was_not_matched(n) if value < 0
+      value
     end
 
     # Returns the position of the next byte after the match.
@@ -103,15 +120,22 @@ class Regex
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
     #
+    # Raises `IndexError` if the index is out of range or the respective
+    # subpattern is unused.
+    #
     # ```
     # "Crystal".match(/r/).not_nil!.byte_end(0)     # => 2
     # "Crystal".match(/r(ys)/).not_nil!.byte_end(1) # => 4
     # "クリスタル".match(/リ(ス)/).not_nil!.byte_end(0)    # => 9
+    # "Crystal".match(/r/).not_nil!.byte_end(1)     # IndexError: Invalid capture group index: 1
+    # "Crystal".match(/r(x)?/).not_nil!.byte_end(1) # IndexError: Capture group 1 was not matched
     # ```
     def byte_end(n = 0) : Int32
       check_index_out_of_bounds n
       n += size if n < 0
-      @ovector[n * 2 + 1]
+      value = @ovector[n * 2 + 1]
+      raise_capture_group_was_not_matched(n) if value < 0
+      value
     end
 
     # Returns the match of the *n*th capture group, or `nil` if there isn't
@@ -397,7 +421,7 @@ class Regex
       return false unless regex == other.regex
       return false unless string == other.string
 
-      return @ovector.memcmp(other.@ovector, size * 2) == 0
+      @ovector.memcmp(other.@ovector, size * 2) == 0
     end
 
     # See `Object#hash(hasher)`

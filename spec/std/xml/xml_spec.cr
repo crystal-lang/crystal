@@ -71,7 +71,7 @@ describe XML do
     person["id3"]?.should be_nil
     expect_raises(KeyError) { person["id3"] }
 
-    name = person.children.find { |node| node.name == "name" }.not_nil!
+    name = person.children.find! { |node| node.name == "name" }
     name.content.should eq("John")
 
     name.parent.should eq(person)
@@ -92,8 +92,8 @@ describe XML do
     doc.document.should eq(doc)
     doc.name.should eq("document")
 
-    people = doc.children.find { |node| node.name == "people" }.not_nil!
-    person = people.children.find { |node| node.name == "person" }.not_nil!
+    people = doc.children.find! { |node| node.name == "people" }
+    person = people.children.find! { |node| node.name == "person" }
     person["id"].should eq("1")
   end
 
@@ -158,15 +158,13 @@ describe XML do
     person2.previous_element.should eq(person)
   end
 
-  it "handles errors" do
+  it "#errors" do
     xml = XML.parse(%(<people></foo>))
     xml.root.not_nil!.name.should eq("people")
-    errors = xml.errors.not_nil!
-    errors.size.should eq(1)
+    xml.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
 
-    errors[0].message.should eq("Opening and ending tag mismatch: people line 1 and foo")
-    errors[0].line_number.should eq(1)
-    errors[0].to_s.should eq("Opening and ending tag mismatch: people line 1 and foo")
+    xml = XML.parse(%(<foo></foo>))
+    xml.errors.should be_nil
   end
 
   describe "#namespace" do

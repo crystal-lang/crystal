@@ -41,7 +41,7 @@ class Crystal::CodeGenVisitor
     match_fun_name = "~match<#{type}>"
     func = @main_mod.functions[match_fun_name]? || create_match_fun(match_fun_name, type)
     func = check_main_fun match_fun_name, func
-    return call func, [type_id] of LLVM::Value
+    call func, [type_id] of LLVM::Value
   end
 
   private def create_match_fun(name, type)

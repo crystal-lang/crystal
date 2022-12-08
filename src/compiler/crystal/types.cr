@@ -339,7 +339,7 @@ module Crystal
     # Returns true if `self` and *other* are in the same namespace.
     def same_namespace?(other)
       top_namespace(self) == top_namespace(other) ||
-        !!parents.try &.any? { |parent| parent.same_namespace?(other) }
+        !!parents.try &.any?(&.same_namespace?(other))
     end
 
     private def top_namespace(type)
@@ -2555,11 +2555,11 @@ module Crystal
     end
 
     def name_index(name)
-      @entries.index &.name.==(name)
+      @entries.index(&.name.==(name))
     end
 
     def name_type(name)
-      @entries.find(&.name.==(name)).not_nil!.type
+      @entries.find!(&.name.==(name)).type
     end
 
     def tuple_indexer(index)

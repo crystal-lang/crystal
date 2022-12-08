@@ -36,6 +36,7 @@ module Crystal
       @def_nest = 0
       @fun_nest = 0
       @type_nest = 0
+      @is_constant_assignment = false
 
       # Keeps track of current call args starting locations,
       # so if we parse a type declaration exactly at those points we
@@ -199,21 +200,21 @@ module Crystal
         unexpected_token
       end
 
-      targets = exps[0...assign_index].map { |exp| multiassign_left_hand(exp) }
+      targets = exps[0...assign_index].map { |exp| multi_assign_left_hand(exp) }
 
       assign = exps[assign_index]
       values = [] of ASTNode
 
       case assign
       when Assign
-        targets << multiassign_left_hand(assign.target)
+        targets << multi_assign_left_hand(assign.target)
         values << assign.value
       when Call
         assign.name = assign.name.byte_slice(0, assign.name.bytesize - 1)
         targets << assign
         values << assign.args.pop
       else
-        raise "BUG: multiassign index expression can only be Assign or Call"
+        raise "BUG: multi_assign index expression can only be Assign or Call"
       end
 
       if lhs_splat_index
@@ -259,14 +260,24 @@ module Crystal
       end
     end
 
-    def multiassign_left_hand(exp)
+    def multi_assign_left_hand(exp)
       if exp.is_a?(Path)
         raise "can't assign to constant in multiple assignment", exp.location.not_nil!
       end
 
-      if exp.is_a?(Call) && !exp.obj && exp.args.empty?
-        exp = Var.new(exp.name).at(exp)
+      if exp.is_a?(Call)
+        case obj = exp.obj
+        when Nil
+          if exp.args.empty?
+            exp = Var.new(exp.name).at(exp)
+          end
+        when Global
+          if obj.name == "$~" && exp.name == "[]"
+            raise "global match data cannot be assigned to", obj.location.not_nil!
+          end
+        end
       end
+
       if exp.is_a?(Var)
         if exp.name == "self"
           raise "can't change the value of self", exp.location.not_nil!
@@ -370,9 +381,11 @@ module Crystal
           else
             break unless can_be_assigned?(atomic)
 
-            if atomic.is_a?(Path) && (inside_def? || inside_fun?)
+            if atomic.is_a?(Path) && (inside_def? || inside_fun? || @is_constant_assignment)
               raise "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
             end
+
+            @is_constant_assignment = true if atomic.is_a?(Path)
 
             if atomic.is_a?(Var) && atomic.name == "self"
               raise "can't change the value of self", location
@@ -421,6 +434,8 @@ module Crystal
                 end
               end
             end
+
+            @is_constant_assignment = false if atomic.is_a?(Path)
 
             push_var atomic
 
@@ -789,14 +804,17 @@ module Crystal
 
           name_location = @token.location
           next_token_skip_space_or_newline
+
           call_args = preserve_stop_on_do do
             parse_call_args_space_consumed(
               check_plus_and_minus: false,
               allow_curly: true,
               end_token: :OP_RSQUARE,
               allow_beginless_range: true,
+              control: true,
             )
           end
+
           skip_space_or_newline
           check :OP_RSQUARE
           end_location = token_end_location
@@ -995,6 +1013,10 @@ module Crystal
           node_and_next_token Global.new(var.name).at(location)
         end
       when .global_match_data_index?
+        if peek_ahead { next_token_skip_space; @token.type.op_eq? }
+          raise "global match data cannot be assigned to"
+        end
+
         value = @token.value.to_s
         if value_prefix = value.rchop? '?'
           method = "[]?"
@@ -3432,7 +3454,7 @@ module Crystal
       end
 
       a_then, a_else = a_else, a_then if is_unless
-      return MacroIf.new(cond, a_then, a_else).at_end(token_end_location)
+      MacroIf.new(cond, a_then, a_else).at_end(token_end_location)
     end
 
     def parse_expression_inside_macro
@@ -4655,7 +4677,7 @@ module Crystal
       else
         skip_space
       end
-      return CallArgs.new args, nil, nil, named_args, false, end_location, has_parentheses: allow_newline
+      CallArgs.new args, nil, nil, named_args, false, end_location, has_parentheses: allow_newline
     end
 
     def parse_named_args(location, first_name = nil, allow_newline = false)
@@ -5752,6 +5774,7 @@ module Crystal
     end
 
     def parse_sizeof(klass)
+      sizeof_location = @token.location
       next_token_skip_space
 
       check :OP_LPAREN
@@ -5766,10 +5789,11 @@ module Crystal
       check :OP_RPAREN
       next_token_skip_space
 
-      klass.new(exp).at_end(end_location)
+      klass.new(exp).at(sizeof_location).at_end(end_location)
     end
 
     def parse_offsetof
+      offsetof_location = @token.location
       next_token_skip_space
       check :OP_LPAREN
 
@@ -5798,7 +5822,7 @@ module Crystal
       check :OP_RPAREN
       next_token_skip_space
 
-      OffsetOf.new(type, offset).at_end(end_location)
+      OffsetOf.new(type, offset).at(offsetof_location).at_end(end_location)
     end
 
     def parse_type_def

@@ -206,19 +206,21 @@ describe Process do
     end
   end
 
-  pending_win32 "chroot raises when unprivileged" do
-    status, output, _ = compile_and_run_source <<-'CODE'
-      begin
-        Process.chroot("/usr")
-        puts "FAIL"
-      rescue ex
-        puts ex.inspect
-      end
-    CODE
+  {% if flag?(:unix) %}
+    it "chroot raises when unprivileged" do
+      status, output, _ = compile_and_run_source <<-'CRYSTAL'
+        begin
+          Process.chroot(".")
+          puts "FAIL"
+        rescue ex
+          puts ex.inspect
+        end
+      CRYSTAL
 
-    status.success?.should be_true
-    output.should eq("#<RuntimeError:Failed to chroot: Operation not permitted>\n")
-  end
+      status.success?.should be_true
+      output.should eq("#<RuntimeError:Failed to chroot: Operation not permitted>\n")
+    end
+  {% end %}
 
   pending_win32 "allows passing huge argument lists to a shell" do
     proc = Process.new(%(echo "${@}"), {"a", "b"}, shell: true, output: Process::Redirect::Pipe)

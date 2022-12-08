@@ -22,7 +22,7 @@ module Crystal::Playground
       instrumented = Playground::AgentInstrumentorTransformer.transform(ast).to_s
       Log.info { "Code instrumentation (session=#{session_key}, tag=#{tag}).\n#{instrumented}" }
 
-      prelude = %(
+      prelude = <<-CRYSTAL
         require "compiler/crystal/tools/playground/agent"
 
         class Crystal::Playground::Agent
@@ -36,7 +36,7 @@ module Crystal::Playground
         def _p
           Crystal::Playground::Agent.instance
         end
-        )
+        CRYSTAL
 
       [
         Compiler::Source.new("playground_prelude", prelude),
@@ -390,7 +390,7 @@ module Crystal::Playground
   class EnvironmentHandler
     include HTTP::Handler
 
-    DEFAULT_SOURCE = <<-CR
+    DEFAULT_SOURCE = <<-CRYSTAL
       def find_string(text, word)
         (0..text.size-word.size).each do |i|
           { i, text[i..i+word.size-1] }
@@ -404,7 +404,7 @@ module Crystal::Playground
 
       find_string "Crystal is awesome!", "awesome"
       find_string "Crystal is awesome!", "not sure"
-      CR
+      CRYSTAL
 
     def initialize(@server : Playground::Server)
     end
@@ -449,7 +449,7 @@ module Crystal::Playground
     end
 
     def start
-      playground_dir = File.dirname(CrystalPath.new.find("compiler/crystal/tools/playground/server.cr").not_nil![0])
+      playground_dir = File.dirname(__FILE__)
       views_dir = File.join(playground_dir, "views")
       public_dir = File.join(playground_dir, "public")
 
