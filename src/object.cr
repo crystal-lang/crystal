@@ -104,7 +104,7 @@ class Object
   #
   # This method is called when an object is interpolated in a string literal:
   # ```
-  # "foo #{bar} baz" # calls bar.to_io(io)
+  # "foo #{bar} baz" # calls bar.to_io with the builder for this string
   # ```
   #
   # `IO#<<` calls this method to append an object to itself:
