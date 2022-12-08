@@ -1,5 +1,6 @@
 require "spec"
 require "oauth2"
+require "http/server"
 require "../http/spec_helper"
 
 describe OAuth2::Client do
@@ -39,7 +40,7 @@ describe OAuth2::Client do
     end
   end
 
-  describe "get_access_token_using_*" do
+  pending_win32 describe: "get_access_token_using_*" do
     describe "using HTTP Basic authentication to pass credentials" do
       it "#get_access_token_using_authorization_code" do
         handler = HTTP::Handler::HandlerProc.new do |context|

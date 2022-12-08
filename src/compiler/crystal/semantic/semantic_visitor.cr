@@ -12,6 +12,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   property! scope : Type
   setter scope
 
+  property vars : MetaVars
+
   @path_lookup : Type?
   @untyped_def : Def?
   @typed_def : Def?
@@ -49,7 +51,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       nodes = Array(ASTNode).new(filenames.size)
       filenames.each do |filename|
         if @program.requires.add?(filename)
-          parser = Parser.new File.read(filename), @program.string_pool
+          parser = @program.new_parser(File.read(filename))
           parser.filename = filename
           parser.wants_doc = @program.wants_doc?
           parsed_nodes = parser.parse

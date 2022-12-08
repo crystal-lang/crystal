@@ -167,7 +167,7 @@ describe "Semantic: splat" do
 
       foo
       ),
-      "no overload matches"
+      "wrong number of arguments for 'foo' (given 0, expected 1+)"
   end
 
   it "overloads with type restriction and splat (3)" do
@@ -339,7 +339,7 @@ describe "Semantic: splat" do
 
       bar 1, "a", 1.7
       ),
-      "no overload matches 'foo' with types Char, Int32, String, Float64"
+      "expected argument #1 to 'foo' to be Int, not Char"
   end
 
   it "doesn't crash on non-match (#2521)" do
@@ -545,7 +545,7 @@ describe "Semantic: splat" do
       foo = Foo(Int32, String).new
       method(foo)
       ),
-      "no overload matches"
+      "expected argument #1 to 'method' to be Foo(Tuple(Int32, String)), not Foo(Int32, String)"
   end
 
   it "matches partially instantiated generic with splat in generic type" do
@@ -746,35 +746,7 @@ describe "Semantic: splat" do
 
       foo(1)
       ),
-      "no overload matches"
-  end
-
-  it "matches typed before non-typed (1) (#3134)" do
-    assert_type(%(
-      def bar(*args)
-        "free"
-      end
-
-      def bar(*args : Int32)
-        1
-      end
-
-      {bar(1, 2), bar('a', 1)}
-      )) { tuple_of([int32, string]) }
-  end
-
-  it "matches typed before non-typed (1) (#3134)" do
-    assert_type(%(
-      def bar(*args : Int32)
-        1
-      end
-
-      def bar(*args)
-        "free"
-      end
-
-      {bar(1, 2), bar('a', 1)}
-      )) { tuple_of([int32, string]) }
+      "expected argument #1 to 'foo' to be Union(*T), not Int32"
   end
 
   describe Splat do
@@ -840,14 +812,14 @@ describe "Semantic: splat" do
   end
 
   it "doesn't shift a call's location" do
-    result = semantic <<-CR
+    result = semantic <<-CRYSTAL
       class Foo
         def bar(x)
           bar(*{"test"})
         end
       end
       Foo.new.bar("test")
-      CR
+      CRYSTAL
     program = result.program
     a_typ = program.types["Foo"].as(NonGenericClassType)
     a_def = a_typ.def_instances.values[0]

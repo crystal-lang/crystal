@@ -145,6 +145,6 @@ describe MIME::Multipart::Parser do
     end
 
     parser.@state.finished?.should be_true
-    ios.each { |io| io.closed?.should eq(true) }
+    ios.each(&.closed?.should(eq(true)))
   end
 end

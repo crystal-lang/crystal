@@ -125,7 +125,7 @@ class Crystal::CodeGenVisitor
 
       types_needing_cast.each_with_index do |type_needing_cast, i|
         # Find compatible type
-        compatible_type = target_type.union_types.find { |ut| type_needing_cast.implements?(ut) }.not_nil!
+        compatible_type = target_type.union_types.find! { |ut| type_needing_cast.implements?(ut) }
 
         matches_label, doesnt_match_label = new_blocks "matches", "doesnt_match_label"
         cmp_result = equal?(value_type_id, type_id(type_needing_cast))
@@ -184,7 +184,7 @@ class Crystal::CodeGenVisitor
       # It might happen that `value_type` is not of the union but it's compatible with one of them.
       # We need to first cast the value to the compatible type and then store it in the value.
       unless target_type.union_types.any? &.==(value_type)
-        compatible_type = target_type.union_types.find { |ut| value_type.implements?(ut) }.not_nil!
+        compatible_type = target_type.union_types.find! { |ut| value_type.implements?(ut) }
         value = upcast(value, compatible_type, value_type)
         return assign(target_pointer, target_type, compatible_type, value)
       end
@@ -301,14 +301,6 @@ class Crystal::CodeGenVisitor
     value
   end
 
-  def downcast_distinct(value, to_type : MixedUnionType, from_type : VirtualType)
-    # This happens if the restriction is a union:
-    # we keep each of the union types as the result, we don't fully merge
-    union_ptr = alloca llvm_type(to_type)
-    store_in_union to_type, union_ptr, from_type, value
-    union_ptr
-  end
-
   def downcast_distinct(value, to_type : ReferenceUnionType, from_type : VirtualType)
     # This happens if the restriction is a union:
     # we keep each of the union types as the result, we don't fully merge
@@ -388,7 +380,7 @@ class Crystal::CodeGenVisitor
       Phi.open(self, to_type, @needs_value) do |phi|
         types_needing_cast.each_with_index do |type_needing_cast, i|
           # Find compatible type
-          compatible_type = to_type.union_types.find { |ut| ut.implements?(type_needing_cast) }.not_nil!
+          compatible_type = to_type.union_types.find!(&.implements?(type_needing_cast))
 
           matches_label, doesnt_match_label = new_blocks "matches", "doesnt_match_label"
           cmp_result = equal?(from_type_id, type_id(type_needing_cast))
@@ -430,7 +422,7 @@ class Crystal::CodeGenVisitor
     case to_type
     when TupleInstanceType, NamedTupleInstanceType
       unless from_type.union_types.any? &.==(to_type)
-        compatible_type = from_type.union_types.find { |ut| to_type.implements?(ut) }.not_nil!
+        compatible_type = from_type.union_types.find! { |ut| to_type.implements?(ut) }
         value = downcast(value, compatible_type, from_type, true)
         value = downcast(value, to_type, compatible_type, true)
         return value
@@ -585,7 +577,7 @@ class Crystal::CodeGenVisitor
       Phi.open(self, to_type, @needs_value) do |phi|
         types_needing_cast.each_with_index do |type_needing_cast, i|
           # Find compatible type
-          compatible_type = to_type.union_types.find { |ut| type_needing_cast.implements?(ut) }.not_nil!
+          compatible_type = to_type.union_types.find! { |ut| type_needing_cast.implements?(ut) }
 
           matches_label, doesnt_match_label = new_blocks "matches", "doesnt_match_label"
           cmp_result = equal?(from_type_id, type_id(type_needing_cast))
@@ -633,7 +625,7 @@ class Crystal::CodeGenVisitor
     case from_type
     when TupleInstanceType, NamedTupleInstanceType
       unless to_type.union_types.any? &.==(from_type)
-        compatible_type = to_type.union_types.find { |ut| from_type.implements?(ut) }.not_nil!
+        compatible_type = to_type.union_types.find! { |ut| from_type.implements?(ut) }
         value = upcast(value, compatible_type, from_type)
         return upcast(value, to_type, compatible_type)
       end

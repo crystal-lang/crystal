@@ -4,7 +4,7 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "multidispatch" do
     it "does dispatch on one argument" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         def foo(x : Char)
           x.ord.to_i32
         end
@@ -15,11 +15,11 @@ describe Crystal::Repl::Interpreter do
 
         a = 42 || 'a'
         foo(a)
-      CODE
+      CRYSTAL
     end
 
     it "does dispatch on one argument inside module with implicit self" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         module Moo
           def self.foo(x : Char)
             x.ord.to_i32
@@ -36,11 +36,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Moo.bar
-      CODE
+      CRYSTAL
     end
 
     it "does dispatch on one argument inside module with explicit receiver" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         module Moo
           def self.foo(x : Char)
             x.ord.to_i32
@@ -56,11 +56,11 @@ describe Crystal::Repl::Interpreter do
 
         a = 42 || 'a'
         Moo.foo(a)
-      CODE
+      CRYSTAL
     end
 
     it "does dispatch on receiver type" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         struct Char
           def foo
             self.ord.to_i32
@@ -75,11 +75,11 @@ describe Crystal::Repl::Interpreter do
 
         a = 42 || 'a'
         a.foo
-      CODE
+      CRYSTAL
     end
 
     it "does dispatch on receiver type and argument type" do
-      interpret(<<-CODE).should eq(42 + 'b'.ord)
+      interpret(<<-CRYSTAL).should eq(42 + 'b'.ord)
         struct Char
           def foo(x : Int32)
             self.ord.to_i32 + x
@@ -103,11 +103,11 @@ describe Crystal::Repl::Interpreter do
         a = 42 || 'a'
         b = 'b' || 43
         a.foo(b)
-      CODE
+      CRYSTAL
     end
 
     it "does dispatch on receiver type and argument type, multiple times" do
-      interpret(<<-CODE).should eq(2 * (42 + 'b'.ord))
+      interpret(<<-CRYSTAL).should eq(2 * (42 + 'b'.ord))
         struct Char
           def foo(x : Int32)
             self.ord.to_i32 + x
@@ -133,11 +133,11 @@ describe Crystal::Repl::Interpreter do
         x = a.foo(b)
         y = a.foo(b)
         x + y
-      CODE
+      CRYSTAL
     end
 
     it "does dispatch on one argument with struct receiver, and modifies it" do
-      interpret(<<-CODE).should eq(32)
+      interpret(<<-CRYSTAL).should eq(32)
         struct Foo
           def initialize
             @x = 2_i64
@@ -165,11 +165,11 @@ describe Crystal::Repl::Interpreter do
         a = 20 || 'a'
         b = foo.foo(a)
         b + foo.x
-      CODE
+      CRYSTAL
     end
 
     it "downcasts self from union to struct (pass pointer to self)" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         class Foo
           def initialize
             @x = 1_i64
@@ -192,11 +192,11 @@ describe Crystal::Repl::Interpreter do
 
         obj = Point.new || Foo.new
         obj.x
-      CODE
+      CRYSTAL
     end
 
     it "does dispatch on virtual type" do
-      interpret(<<-CODE).should eq(4)
+      interpret(<<-CRYSTAL).should eq(4)
         abstract class Foo
           def foo
             1
@@ -222,11 +222,11 @@ describe Crystal::Repl::Interpreter do
         y = foo.foo
 
         x + y
-      CODE
+      CRYSTAL
     end
 
     it "does dispatch on one argument with block" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         def foo(x : Char)
           yield x.ord.to_i32
         end
@@ -239,11 +239,11 @@ describe Crystal::Repl::Interpreter do
         foo(a) do |x|
           x + 10
         end
-      CODE
+      CRYSTAL
     end
 
     it "doesn't compile block if it's not used (no yield)" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         class Object
           def try
             yield self
@@ -259,11 +259,11 @@ describe Crystal::Repl::Interpreter do
         a = 1 || nil
         b = a.try { |x| x + 1 }
         b || 10
-      CODE
+      CRYSTAL
     end
 
     it "does multidispatch on virtual metaclass type (1)" do
-      interpret(<<-CODE).should eq("BB")
+      interpret(<<-CRYSTAL).should eq("BB")
         class Class
           def lt(other : T.class) : String forall T
             {% @type %}
@@ -283,11 +283,11 @@ describe Crystal::Repl::Interpreter do
 
         t = B || A
         t.lt(t)
-      CODE
+      CRYSTAL
     end
 
     it "does multidispatch on virtual metaclass type (2)" do
-      interpret(<<-CODE).should eq("BB")
+      interpret(<<-CRYSTAL).should eq("BB")
         class Class
           def lt(other : T.class) : String forall T
             {% @type %}
@@ -310,11 +310,11 @@ describe Crystal::Repl::Interpreter do
 
         t = B || A
         t.lt(t)
-      CODE
+      CRYSTAL
     end
 
     it "passes self as pointer when doing multidispatch" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         struct Foo
           def initialize(@x : Int32)
           end
@@ -344,11 +344,11 @@ describe Crystal::Repl::Interpreter do
         foo = Foo.new(0) || Bar.new(1)
         foo.to_unsafe.value = 10
         foo.x
-      CODE
+      CRYSTAL
     end
 
     it "passes self as pointer when doing multidispatch (2)" do
-      interpret(<<-CODE).should be_true
+      interpret(<<-CRYSTAL).should be_true
         struct Tuple
           def ==(other)
             false
@@ -357,11 +357,11 @@ describe Crystal::Repl::Interpreter do
 
         a = 1.as(Int32 | Tuple(Int64, Int64))
         a == 1
-      CODE
+      CRYSTAL
     end
 
     it "initialize multidispatch" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         struct Foo
           def initialize(x : Int64)
             initialize(x, 1 || 'a')
@@ -379,11 +379,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Foo.new(1_i64).x
-      CODE
+      CRYSTAL
     end
 
     it "does multidispatch with mandatory named arguments" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         class Object
           def foo(obj, *, file = "")
             obj
@@ -391,7 +391,49 @@ describe Crystal::Repl::Interpreter do
         end
 
         ("" || nil).foo 1, file: ""
-      CODE
+      CRYSTAL
+    end
+
+    it "does multidispatch with captured block (#12217)" do
+      interpret(<<-CRYSTAL).should eq(42)
+        class A
+          def then(&callback : Int32 -> Int32)
+            callback.call(70)
+          end
+        end
+
+        class B < A
+          def then(&callback : Int32 -> Int32)
+            callback.call(30)
+          end
+        end
+
+        a = A.new
+        b = B.new
+
+        a_value = (a || b).then do |x|
+          x + 3
+        end
+
+        b_value = (b || a).then do |x|
+          x + 1
+        end
+
+        a_value - b_value
+      CRYSTAL
+    end
+
+    it "casts multidispatch argument to the def's arg type" do
+      interpret(<<-CRYSTAL)
+        def foo(a : String) forall T
+        end
+
+        def foo(a)
+          a
+        end
+
+        foo("b" || nil)
+      CRYSTAL
     end
   end
 end

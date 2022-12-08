@@ -266,9 +266,13 @@ end
 
 def NamedTuple.new(pull : JSON::PullParser)
   {% begin %}
-    {% for key in T.keys %}
-      %var{key.id} = nil
-      %found{key.id} = false
+    {% for key, type in T %}
+      {% if type.nilable? %}
+        %var{key.id} = nil
+      {% else %}
+        %var{key.id} = uninitialized typeof(element_type({{ key.symbolize }}))
+        %found{key.id} = false
+      {% end %}
     {% end %}
 
     location = pull.location
@@ -277,8 +281,10 @@ def NamedTuple.new(pull : JSON::PullParser)
       case key
         {% for key, type in T %}
           when {{key.stringify}}
-            %var{key.id} = {{type}}.new(pull)
-            %found{key.id} = true
+            %var{key.id} = self[{{ key.symbolize }}].new(pull)
+            {% unless type.nilable? %}
+              %found{key.id} = true
+            {% end %}
         {% end %}
       else
         pull.skip
@@ -286,14 +292,16 @@ def NamedTuple.new(pull : JSON::PullParser)
     end
 
     {% for key, type in T %}
-      if %var{key.id}.nil? && !%found{key.id} && !{{type.nilable?}}
-        raise JSON::ParseException.new("Missing json attribute: #{{{key.id.stringify}}}", *location)
-      end
+      {% unless type.nilable? %}
+        unless %found{key.id}
+          raise JSON::ParseException.new("Missing json attribute: #{ {{ key.id.stringify }} }", *location)
+        end
+      {% end %}
     {% end %}
 
     NamedTuple.new(
-      {% for key, type in T %}
-        {{key.id.stringify}}: (%var{key.id}).as({{type}}),
+      {% for key in T.keys %}
+        {{ key.id.stringify }}: %var{key.id},
       {% end %}
     )
   {% end %}
@@ -447,26 +455,38 @@ struct Time::Format
 end
 
 module JSON::ArrayConverter(Converter)
-  def self.from_json(pull : JSON::PullParser)
-    ary = Array(typeof(Converter.from_json(pull))).new
-    pull.read_array do
-      ary << Converter.from_json(pull)
+  private struct WithInstance(T)
+    def from_json(pull : JSON::PullParser)
+      ary = Array(typeof(@converter.from_json(pull))).new
+      pull.read_array do
+        ary << @converter.from_json(pull)
+      end
+      ary
     end
-    ary
+  end
+
+  def self.from_json(pull : JSON::PullParser)
+    WithInstance.new(Converter).from_json(pull)
   end
 end
 
 module JSON::HashValueConverter(Converter)
-  def self.from_json(pull : JSON::PullParser)
-    hash = Hash(String, typeof(Converter.from_json(pull))).new
-    pull.read_object do |key, key_location|
-      parsed_key = String.from_json_object_key?(key)
-      unless parsed_key
-        raise JSON::ParseException.new("Can't convert #{key.inspect} into String", *key_location)
+  private struct WithInstance(T)
+    def from_json(pull : JSON::PullParser)
+      hash = Hash(String, typeof(@converter.from_json(pull))).new
+      pull.read_object do |key, key_location|
+        parsed_key = String.from_json_object_key?(key)
+        unless parsed_key
+          raise JSON::ParseException.new("Can't convert #{key.inspect} into String", *key_location)
+        end
+        hash[parsed_key] = @converter.from_json(pull)
       end
-      hash[parsed_key] = Converter.from_json(pull)
+      hash
     end
-    hash
+  end
+
+  def self.from_json(pull : JSON::PullParser)
+    WithInstance.new(Converter).from_json(pull)
   end
 end
 

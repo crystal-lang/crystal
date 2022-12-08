@@ -33,8 +33,6 @@ require "./benchmark/**"
 # end
 # ```
 #
-# Make sure to always benchmark code by compiling with the `--release` flag.
-#
 # ### Measure the time to construct the string given by the expression: `"a"*1_000_000_000`
 #
 # ```
@@ -81,7 +79,7 @@ require "./benchmark/**"
 # upto:    0.010000   0.000000   0.010000 (  0.010466)
 # ```
 #
-# Make sure to always benchmark code by compiling with the `--release` flag.
+# NOTE: Make sure to always benchmark code by compiling with the `--release` flag.
 module Benchmark
   extend self
 
@@ -104,7 +102,7 @@ module Benchmark
   # The optional parameters *calculation* and *warmup* set the duration of
   # those stages in seconds. For more detail on these stages see
   # `Benchmark::IPS`. When the *interactive* parameter is `true`, results are
-  # displayed and updated as they are calculated, otherwise all at once.
+  # displayed and updated as they are calculated, otherwise all at once after they finished.
   def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
     {% if !flag?(:release) %}
       puts "Warning: benchmarking without the `--release` flag won't yield useful results"

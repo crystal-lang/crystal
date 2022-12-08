@@ -345,7 +345,7 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config' and 'framework')"
+      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config', 'framework', and 'wasm_import_module')"
   end
 
   it "errors if lib already specified with positional argument" do
@@ -377,20 +377,20 @@ describe "Semantic: lib" do
   end
 
   it "warns if @[Link(static: true)] is specified" do
-    assert_warning <<-CR,
+    assert_warning <<-CRYSTAL,
       @[Link("foo", static: true)]
       lib Foo
       end
-      CR
+      CRYSTAL
       "warning in line 1\nWarning: specifying static linking for individual libraries is deprecated"
   end
 
   it "warns if Link annotations use positional arguments" do
-    assert_warning <<-CR,
+    assert_warning <<-CRYSTAL,
       @[Link("foo", "bar")]
       lib Foo
       end
-      CR
+      CRYSTAL
       "warning in line 1\nWarning: using non-named arguments for Link annotations is deprecated"
   end
 

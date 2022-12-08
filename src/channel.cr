@@ -384,7 +384,7 @@ class Channel(T)
     receive_first channels
   end
 
-  def self.receive_first(channels : Tuple | Array)
+  def self.receive_first(channels : Enumerable(Channel))
     _, value = self.select(channels.map(&.receive_select_action))
     value
   end
@@ -393,7 +393,7 @@ class Channel(T)
     send_first value, channels
   end
 
-  def self.send_first(value, channels : Tuple | Array) : Nil
+  def self.send_first(value, channels : Enumerable(Channel)) : Nil
     self.select(channels.map(&.send_select_action(value)))
     nil
   end
@@ -425,8 +425,8 @@ class Channel(T)
     # This is to avoid deadlocks between concurrent `select` calls
     ops_locks = ops
       .to_a
-      .uniq(&.lock_object_id)
-      .sort_by(&.lock_object_id)
+      .uniq!(&.lock_object_id)
+      .sort_by!(&.lock_object_id)
 
     ops_locks.each &.lock
 

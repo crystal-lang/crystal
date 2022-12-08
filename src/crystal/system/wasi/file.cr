@@ -10,8 +10,8 @@ module Crystal::System::File
     raise NotImplementedError.new "Crystal::System::File.chown"
   end
 
-  def self.real_path(path)
-    raise NotImplementedError.new "Crystal::System::File.real_path"
+  def self.realpath(path)
+    raise NotImplementedError.new "Crystal::System::File.realpath"
   end
 
   def self.utime(atime : ::Time, mtime : ::Time, filename : String) : Nil

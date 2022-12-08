@@ -357,7 +357,7 @@ module Iterator(T)
         value = wrapped_next
         mapped_value = @func.call(value)
 
-        return mapped_value unless mapped_value.is_a?(Nil)
+        return mapped_value unless mapped_value.nil?
       end
     end
   end
@@ -456,7 +456,7 @@ module Iterator(T)
         self.next
       else
         value = {last_elem, elem}
-        @last_elem, elem = elem, @last_elem
+        @last_elem = elem
         value
       end
     end
@@ -1065,7 +1065,7 @@ module Iterator(T)
     def next
       while true
         value = wrapped_next
-        return value if @returned_false == true
+        return value if @returned_false
         unless @func.call(value)
           @returned_false = true
           return value
@@ -1209,7 +1209,7 @@ module Iterator(T)
     end
 
     def next
-      return stop if @returned_false == true
+      return stop if @returned_false
       value = wrapped_next
       if @func.call(value)
         value

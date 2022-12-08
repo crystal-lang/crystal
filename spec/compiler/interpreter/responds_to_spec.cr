@@ -4,7 +4,7 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "responds_to?" do
     it "does responds_to?" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         class Foo
           def initialize
             @x = 1
@@ -38,7 +38,38 @@ describe Crystal::Repl::Interpreter do
         end
 
         a
-        CODE
+        CRYSTAL
+    end
+
+    it "doesn't crash if def body ends up with no type (#12219)" do
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("1")
+        class Base
+          def foo
+            raise "OH NO"
+          end
+        end
+
+        module Moo
+          def foo
+            if self.responds_to?(:bar)
+              self.bar
+            else
+              super &- 0_i64
+            end
+          end
+        end
+
+        class Child < Base
+          include Moo
+        end
+
+        begin
+          Child.new.foo
+          0
+        rescue
+          1
+        end
+        CRYSTAL
     end
   end
 end

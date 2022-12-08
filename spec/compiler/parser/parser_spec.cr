@@ -4,8 +4,8 @@ private def regex(string, options = Regex::Options::None)
   RegexLiteral.new(StringLiteral.new(string), options)
 end
 
-private def it_parses(string, expected_node, file = __FILE__, line = __LINE__)
-  it "parses #{string.dump}", file, line do
+private def it_parses(string, expected_node, file = __FILE__, line = __LINE__, *, focus : Bool = false)
+  it "parses #{string.dump}", file, line, focus: focus do
     parser = Parser.new(string)
     parser.filename = "/foo/bar/baz.cr"
     node = parser.parse
@@ -249,8 +249,19 @@ module Crystal
       it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
       it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
 
-      assert_syntax_error "foo { |#{kw})| }", "cannot use '#{kw}' as a block parameter name", 1, 8
-      assert_syntax_error "foo { |(#{kw}))| }", "cannot use '#{kw}' as a block parameter name", 1, 9
+      assert_syntax_error "foo { |#{kw}| }", "cannot use '#{kw}' as a block parameter name", 1, 8
+      assert_syntax_error "foo { |(#{kw})| }", "cannot use '#{kw}' as a block parameter name", 1, 9
+    end
+
+    describe "literals in class definitions" do
+      # #11209
+      %w("a" 'a' [1] {1} {|a|a} ->{} ->(x : Bar){} :Bar :bar %x() %w() %()).each do |invalid|
+        assert_syntax_error "class Foo#{invalid}; end"
+        assert_syntax_error "class Foo#{invalid} < Baz; end"
+        assert_syntax_error "class Foo#{invalid} < self; end"
+        assert_syntax_error "class Foo < Baz#{invalid}; end"
+        assert_syntax_error "class Foo < self#{invalid}; end"
+      end
     end
 
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
@@ -316,6 +327,26 @@ module Crystal
     it_parses "def foo(@@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
     it_parses "def foo(&@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: Arg.new("block"), yields: 0)
 
+    # Defs with annotated parameters
+    it_parses "def foo(@[Foo] var); end", Def.new("foo", ["var".arg(annotations: ["Foo".ann])])
+    it_parses "def foo(@[Foo] outer inner); end", Def.new("foo", ["inner".arg(annotations: ["Foo".ann], external_name: "outer")])
+    it_parses "def foo(@[Foo]  var); end", Def.new("foo", ["var".arg(annotations: ["Foo".ann])])
+    it_parses "def foo(a, @[Foo] var); end", Def.new("foo", ["a".arg, "var".arg(annotations: ["Foo".ann])])
+    it_parses "def foo(a, @[Foo] &block); end", Def.new("foo", ["a".arg], block_arg: "block".arg(annotations: ["Foo".ann]), yields: 0)
+    it_parses "def foo(@[Foo] @var); end", Def.new("foo", ["var".arg(annotations: ["Foo".ann])], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
+    it_parses "def foo(@[Foo] var : Int32); end", Def.new("foo", ["var".arg(restriction: "Int32".path, annotations: ["Foo".ann])])
+    it_parses "def foo(@[Foo] @[Bar] var : Int32); end", Def.new("foo", ["var".arg(restriction: "Int32".path, annotations: ["Foo".ann, "Bar".ann])])
+    it_parses "def foo(@[Foo] &@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: "block".arg(annotations: ["Foo".ann]), yields: 0)
+    it_parses "def foo(@[Foo] *args); end", Def.new("foo", args: ["args".arg(annotations: ["Foo".ann])], splat_index: 0)
+    it_parses "def foo(@[Foo] **args); end", Def.new("foo", double_splat: "args".arg(annotations: ["Foo".ann]))
+    it_parses <<-CRYSTAL, Def.new("foo", ["id".arg(restriction: "Int32".path, annotations: ["Foo".ann]), "name".arg(restriction: "String".path, annotations: ["Bar".ann])])
+      def foo(
+        @[Foo]
+        id : Int32,
+        @[Bar] name : String
+      ); end
+    CRYSTAL
+
     it_parses "def foo(\n&block\n); end", Def.new("foo", block_arg: Arg.new("block"), yields: 0)
     it_parses "def foo(&block :\n Int ->); end", Def.new("foo", block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode)), yields: 1)
     it_parses "def foo(&block : Int ->\n); end", Def.new("foo", block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode)), yields: 1)
@@ -328,8 +359,8 @@ module Crystal
     assert_syntax_error "def foo(x, *); 1; end", "named parameters must follow bare *"
     it_parses "def foo(x, *, y, &); 1; end", Def.new("foo", args: ["x".arg, "".arg, "y".arg], body: 1.int32, splat_index: 1, block_arg: Arg.new(""), yields: 0)
 
-    assert_syntax_error "def foo(var = 1 : Int32); end", "the syntax for a parameter with a default value V and type T is `arg : T = V`"
-    assert_syntax_error "def foo(var = x : Int); end", "the syntax for a parameter with a default value V and type T is `arg : T = V`"
+    assert_syntax_error "def foo(var = 1 : Int32); end", "the syntax for a parameter with a default value V and type T is `param : T = V`"
+    assert_syntax_error "def foo(var = x : Int); end", "the syntax for a parameter with a default value V and type T is `param : T = V`"
 
     it_parses "def foo(**args)\n1\nend", Def.new("foo", body: 1.int32, double_splat: "args".arg)
     it_parses "def foo(x, **args)\n1\nend", Def.new("foo", body: 1.int32, args: ["x".arg], double_splat: "args".arg)
@@ -597,6 +628,36 @@ module Crystal
     it_parses "x : *T -> R", TypeDeclaration.new("x".var, ProcNotation.new(["T".path.splat] of ASTNode, "R".path))
     it_parses "def foo(x : *T -> R); end", Def.new("foo", args: [Arg.new("x", restriction: ProcNotation.new(["T".path.splat] of ASTNode, "R".path))])
 
+    it_parses "foo result : Int32; result", Expressions.new([
+      Call.new(nil, "foo", TypeDeclaration.new("result".var, "Int32".path)),
+      Call.new(nil, "result"),
+    ] of ASTNode)
+
+    it_parses "foo(x: result : Int32); result", Expressions.new([
+      Call.new(nil, "foo", named_args: [NamedArgument.new("x", TypeDeclaration.new("result".var, "Int32".path))]),
+      Call.new(nil, "result"),
+    ] of ASTNode)
+
+    it_parses "foo(
+        begin
+          result : Int32 = 1
+          result
+        end
+      )", Call.new(nil, "foo", Expressions.new([
+      TypeDeclaration.new("result".var, "Int32".path, 1.int32),
+      "result".var,
+    ] of ASTNode))
+
+    it_parses "foo(x:
+        begin
+          result : Int32 = 1
+          result
+        end
+      )", Call.new(nil, "foo", named_args: [NamedArgument.new("x", Expressions.new([
+      TypeDeclaration.new("result".var, "Int32".path, 1.int32),
+      "result".var,
+    ] of ASTNode))])
+
     it_parses "struct Foo; end", ClassDef.new("Foo".path, struct: true)
 
     it_parses "Foo()", Generic.new("Foo".path, [] of ASTNode)
@@ -619,6 +680,15 @@ module Crystal
     it_parses "Foo({String, ->, ->})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["String".path, ProcNotation.new, ProcNotation.new] of ASTNode)] of ASTNode)
     it_parses "[] of {String, ->}", ArrayLiteral.new([] of ASTNode, Generic.new(Path.global("Tuple"), ["String".path, ProcNotation.new] of ASTNode))
     it_parses "x([] of Foo, Bar.new)", Call.new(nil, "x", ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new("Bar".path, "new"))
+
+    context "calls with blocks within index operator (#12818)" do
+      it_parses "foo[bar { 1 }]", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo.[bar { 1 }]", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo.[](bar { 1 })", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo[bar do; 1; end]", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo.[bar do; 1; end]", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+      it_parses "foo.[](bar do; 1; end)", Call.new("foo".call, "[]", Call.new(nil, "bar", block: Block.new(body: 1.int32)))
+    end
 
     it_parses "Foo(x: U)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path)])
     it_parses "Foo(x: U, y: V)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path), NamedArgument.new("y", "V".path)])
@@ -983,6 +1053,22 @@ module Crystal
     it_parses "macro foo;bar(end: 1);end", Macro.new("foo", body: Expressions.from(["bar(".macro_literal, "end: 1);".macro_literal] of ASTNode))
     it_parses "def foo;bar(end: 1);end", Def.new("foo", body: Expressions.from([Call.new(nil, "bar", named_args: [NamedArgument.new("end", 1.int32)])] of ASTNode))
 
+    # Macros with annotated parameters
+    it_parses "macro foo(@[Foo] var);end", Macro.new("foo", ["var".arg(annotations: ["Foo".ann])], Expressions.new)
+    it_parses "macro foo(@[Foo] outer inner);end", Macro.new("foo", ["inner".arg(annotations: ["Foo".ann], external_name: "outer")], Expressions.new)
+    it_parses "macro foo(@[Foo]  var);end", Macro.new("foo", ["var".arg(annotations: ["Foo".ann])], Expressions.new)
+    it_parses "macro foo(a, @[Foo] var);end", Macro.new("foo", ["a".arg, "var".arg(annotations: ["Foo".ann])], Expressions.new)
+    it_parses "macro foo(a, @[Foo] &block);end", Macro.new("foo", ["a".arg], Expressions.new, block_arg: "block".arg(annotations: ["Foo".ann]))
+    it_parses "macro foo(@[Foo] *args);end", Macro.new("foo", ["args".arg(annotations: ["Foo".ann])], Expressions.new, splat_index: 0)
+    it_parses "macro foo(@[Foo] **args);end", Macro.new("foo", body: Expressions.new, double_splat: "args".arg(annotations: ["Foo".ann]))
+    it_parses <<-CRYSTAL, Macro.new("foo", ["id".arg(annotations: ["Foo".ann]), "name".arg(annotations: ["Bar".ann])], Expressions.new)
+      macro foo(
+        @[Foo]
+        id,
+        @[Bar] name
+      );end
+    CRYSTAL
+
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
 
@@ -1131,16 +1217,27 @@ module Crystal
     it_parses "1.=~(2)", Call.new(1.int32, "=~", 2.int32)
     it_parses "def =~; end", Def.new("=~", [] of Arg)
 
-    it_parses "$~", Global.new("$~")
-    it_parses "$~.foo", Call.new(Global.new("$~"), "foo")
-    it_parses "$0", Call.new(Global.new("$~"), "[]", 0.int32)
-    it_parses "$1", Call.new(Global.new("$~"), "[]", 1.int32)
-    it_parses "$1?", Call.new(Global.new("$~"), "[]?", 1.int32)
-    it_parses "foo $1", Call.new(nil, "foo", Call.new(Global.new("$~"), "[]", 1.int32))
-    it_parses "$~ = 1", Assign.new("$~".var, 1.int32)
+    describe "global regex match data" do
+      it_parses "$~", Global.new("$~")
+      it_parses "$~.foo", Call.new(Global.new("$~"), "foo")
+      it_parses "$0", Call.new(Global.new("$~"), "[]", 0.int32)
+      it_parses "$1", Call.new(Global.new("$~"), "[]", 1.int32)
+      it_parses "$1?", Call.new(Global.new("$~"), "[]?", 1.int32)
+      it_parses "foo $1", Call.new(nil, "foo", Call.new(Global.new("$~"), "[]", 1.int32))
+      it_parses "$~ = 1", Assign.new("$~".var, 1.int32)
 
-    assert_syntax_error "$2147483648"
-    assert_syntax_error "$99999999999999999999999?", "Index $99999999999999999999999 doesn't fit in an Int32"
+      assert_syntax_error "$0 = 1", "global match data cannot be assigned to"
+      assert_syntax_error "$0, $1 = [1, 2]", "global match data cannot be assigned to"
+      assert_syntax_error "$0, a = {1, 2}", "global match data cannot be assigned to"
+
+      assert_syntax_error "$2147483648"
+      assert_syntax_error "$99999999999999999999999?", "Index $99999999999999999999999 doesn't fit in an Int32"
+
+      it_parses "$?", Global.new("$?")
+      it_parses "$?.foo", Call.new(Global.new("$?"), "foo")
+      it_parses "foo $?", Call.new(nil, "foo", Global.new("$?"))
+      it_parses "$? = 1", Assign.new("$?".var, 1.int32)
+    end
 
     it_parses "foo /a/", Call.new(nil, "foo", regex("a"))
     it_parses "foo(/a/)", Call.new(nil, "foo", regex("a"))
@@ -1152,11 +1249,6 @@ module Crystal
     it_parses "foo a, / /", Call.new(nil, "foo", ["a".call, regex(" ")] of ASTNode)
     it_parses "foo /;/", Call.new(nil, "foo", regex(";"))
 
-    it_parses "$?", Global.new("$?")
-    it_parses "$?.foo", Call.new(Global.new("$?"), "foo")
-    it_parses "foo $?", Call.new(nil, "foo", Global.new("$?"))
-    it_parses "$? = 1", Assign.new("$?".var, 1.int32)
-
     it_parses "foo out x; x", [Call.new(nil, "foo", Out.new("x".var)), "x".var]
     it_parses "foo(out x); x", [Call.new(nil, "foo", Out.new("x".var)), "x".var]
     it_parses "foo out @x; @x", [Call.new(nil, "foo", Out.new("@x".instance_var)), "@x".instance_var]
@@ -1165,7 +1257,7 @@ module Crystal
     it_parses "foo z: out x; x", [Call.new(nil, "foo", named_args: [NamedArgument.new("z", Out.new("x".var))]), "x".var]
 
     it_parses "{1 => 2, 3 => 4}", HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32), HashLiteral::Entry.new(3.int32, 4.int32)])
-    it_parses %({A::B => 1, C::D => 2}), HashLiteral.new([HashLiteral::Entry.new(Path.new(["A", "B"]), 1.int32), HashLiteral::Entry.new(Path.new(["C", "D"]), 2.int32)])
+    it_parses %({A::B => 1, C::D => 2}), HashLiteral.new([HashLiteral::Entry.new(Path.new("A", "B"), 1.int32), HashLiteral::Entry.new(Path.new("C", "D"), 2.int32)])
     assert_syntax_error %({"foo" => 1, "bar": 2}), "can't use 'key: value' syntax in a hash literal"
 
     it_parses "{a: 1}", NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("a", 1.int32)])
@@ -1380,7 +1472,7 @@ module Crystal
     it_parses "foo.bar = {} of Int32 => Int32", Call.new("foo".call, "bar=", HashLiteral.new(of: HashLiteral::Entry.new("Int32".path, "Int32".path)))
 
     it_parses "alias Foo = Bar", Alias.new("Foo".path, "Bar".path)
-    it_parses "alias Foo::Bar = Baz", Alias.new(Path.new(["Foo", "Bar"]), "Baz".path)
+    it_parses "alias Foo::Bar = Baz", Alias.new(Path.new("Foo", "Bar"), "Baz".path)
     assert_syntax_error "alias Foo?"
 
     it_parses "def foo\n1\nend\nif 1\nend", [Def.new("foo", body: 1.int32), If.new(1.int32)] of ASTNode
@@ -1414,7 +1506,7 @@ module Crystal
 
     it_parses "{1}", TupleLiteral.new([1.int32] of ASTNode)
     it_parses "{1, 2, 3}", TupleLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode)
-    it_parses "{A::B}", TupleLiteral.new([Path.new(["A", "B"])] of ASTNode)
+    it_parses "{A::B}", TupleLiteral.new([Path.new("A", "B")] of ASTNode)
     it_parses "{\n1,\n2\n}", TupleLiteral.new([1.int32, 2.int32] of ASTNode)
     it_parses "{\n1\n}", TupleLiteral.new([1.int32] of ASTNode)
     it_parses "{\n{1}\n}", TupleLiteral.new([TupleLiteral.new([1.int32] of ASTNode)] of ASTNode)
@@ -1436,7 +1528,7 @@ module Crystal
     it_parses "@[Foo(1, foo: 2)]", Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
     it_parses "@[Foo(1, foo: 2\n)]", Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
     it_parses "@[Foo(\n1, foo: 2\n)]", Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
-    it_parses "@[Foo::Bar]", Annotation.new(Path.new(["Foo", "Bar"]))
+    it_parses "@[Foo::Bar]", Annotation.new(Path.new("Foo", "Bar"))
 
     assert_syntax_error "@[Foo(\"\": 1)]"
 
@@ -1614,7 +1706,7 @@ module Crystal
     it_parses "enum Foo; A = 1\ndef foo; 1; end; end", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Def.new("foo", body: 1.int32)] of ASTNode)
     it_parses "enum Foo; A = 1\ndef foo; 1; end\ndef bar; 2; end\nend", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Def.new("foo", body: 1.int32), Def.new("bar", body: 2.int32)] of ASTNode)
     it_parses "enum Foo; A = 1\ndef self.foo; 1; end\nend", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Def.new("foo", receiver: "self".var, body: 1.int32)] of ASTNode)
-    it_parses "enum Foo::Bar; A = 1; end", EnumDef.new(Path.new(["Foo", "Bar"]), [Arg.new("A", 1.int32)] of ASTNode)
+    it_parses "enum Foo::Bar; A = 1; end", EnumDef.new(Path.new("Foo", "Bar"), [Arg.new("A", 1.int32)] of ASTNode)
 
     it_parses "enum Foo; @@foo = 1\n A \n end", EnumDef.new("Foo".path, [Assign.new("@@foo".class_var, 1.int32), Arg.new("A")] of ASTNode)
 
@@ -1849,8 +1941,19 @@ module Crystal
     assert_syntax_error "/foo)/", "invalid regex"
     assert_syntax_error "def =\nend"
     assert_syntax_error "def foo; A = 1; end", "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
-    assert_syntax_error "{1, ->{ |x| x } }", %(unexpected token: "|")
-    assert_syntax_error "{1, ->do\n|x| x\end }", %(unexpected token: "|")
+    assert_syntax_error "{1, ->{ |x| x } }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(x : Type) { ... }"
+    assert_syntax_error "{1, ->do\n|x| x\end }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(x : Type) { ... }"
+    assert_syntax_error "{1, ->{ |_| x } }", "unexpected token: \"|\", proc literals specify their parameters like this: ->(param : Type) { ... }"
+
+    # #2874
+    assert_syntax_error "A = B = 1", "dynamic constant assignment"
+    assert_syntax_error "A = (B = 1)", "dynamic constant assignment"
+    assert_syntax_error "A = foo(B = 1)", "dynamic constant assignment"
+    assert_syntax_error "A = foo { B = 1 }", "dynamic constant assignment"
+    assert_syntax_error "A = begin; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; rescue; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; rescue; 1; else; B = 1; end", "dynamic constant assignment"
+    assert_syntax_error "A = begin; 1; ensure; B = 1; end", "dynamic constant assignment"
 
     assert_syntax_error "1 while 3", "trailing `while` is not supported"
     assert_syntax_error "1 until 3", "trailing `until` is not supported"
@@ -1975,29 +2078,29 @@ module Crystal
     it_parses "{[] of Foo, ::foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(nil, "foo", global: true)] of ASTNode)
     it_parses "{[] of Foo, self.foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new("self".var, "foo")] of ASTNode)
 
-    it_parses <<-'CR', Macro.new("foo", body: Expressions.new([MacroLiteral.new("  <<-FOO\n    \#{ "), MacroVar.new("var"), MacroLiteral.new(" }\n  FOO\n")] of ASTNode))
+    it_parses <<-'CRYSTAL', Macro.new("foo", body: Expressions.new([MacroLiteral.new("  <<-FOO\n    \#{ "), MacroVar.new("var"), MacroLiteral.new(" }\n  FOO\n")] of ASTNode))
       macro foo
         <<-FOO
           #{ %var }
         FOO
       end
-      CR
+      CRYSTAL
 
-    it_parses <<-'CR', Macro.new("foo", body: MacroLiteral.new("  <<-FOO, <<-BAR + \"\"\n  FOO\n  BAR\n"))
+    it_parses <<-'CRYSTAL', Macro.new("foo", body: MacroLiteral.new("  <<-FOO, <<-BAR + \"\"\n  FOO\n  BAR\n"))
       macro foo
         <<-FOO, <<-BAR + ""
         FOO
         BAR
       end
-      CR
+      CRYSTAL
 
-    it_parses <<-'CR', Macro.new("foo", body: MacroLiteral.new("  <<-FOO\n    %foo\n  FOO\n"))
+    it_parses <<-'CRYSTAL', Macro.new("foo", body: MacroLiteral.new("  <<-FOO\n    %foo\n  FOO\n"))
       macro foo
         <<-FOO
           %foo
         FOO
       end
-      CR
+      CRYSTAL
 
     it_parses "macro foo; bar class: 1; end", Macro.new("foo", body: MacroLiteral.new(" bar class: 1; "))
 
@@ -2119,7 +2222,7 @@ module Crystal
 
       it_parses "annotation Foo; end", AnnotationDef.new("Foo".path)
       it_parses "annotation Foo\n\nend", AnnotationDef.new("Foo".path)
-      it_parses "annotation Foo::Bar\n\nend", AnnotationDef.new(Path.new(["Foo", "Bar"]))
+      it_parses "annotation Foo::Bar\n\nend", AnnotationDef.new(Path.new("Foo", "Bar"))
 
       it_parses %(annotation Foo\nend\nrequire "bar"), [AnnotationDef.new("Foo".path), Require.new("bar")]
 
@@ -2312,7 +2415,7 @@ module Crystal
       end
 
       it "correctly computes line number after `\\{%\n` (#9857)" do
-        code = <<-CODE
+        code = <<-CRYSTAL
         macro foo
           \\{%
             1
@@ -2320,7 +2423,7 @@ module Crystal
         end
 
         1
-        CODE
+        CRYSTAL
 
         exps = Parser.parse(code).as(Expressions)
         exps.expressions[1].location.not_nil!.line_number.should eq(7)

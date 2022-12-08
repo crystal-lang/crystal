@@ -204,6 +204,12 @@ describe Time::Format do
     Time.parse!("2017-12-01 20:15:13 +01:00", "%F %T %:z").to_s("%F %T %:z").should eq "2017-12-01 20:15:13 +01:00"
   end
 
+  it "gives nice error message when end of input is reached (#12047)" do
+    expect_raises(Time::Format::Error, "Expected '-' but the end of the input was reached") do
+      Time.parse!("2021-01", "%F")
+    end
+  end
+
   it "parses" do
     parse_time("2014", "%Y").year.should eq(2014)
     parse_time("19", "%C").year.should eq(1900)

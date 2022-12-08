@@ -19,7 +19,7 @@ describe "Random::Secure" do
   end
 
   it "returns a random integer in range (#8219)" do
-    {% for type in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64).map(&.id) %}
+    {% for type in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64 Int128 UInt128).map(&.id) %}
       value = Random::Secure.rand({{type}}::MIN..{{type}}::MAX)
       typeof(value).should eq({{type}})
     {% end %}
