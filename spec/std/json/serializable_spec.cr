@@ -1,10 +1,8 @@
 require "../spec_helper"
 require "json"
 require "yaml"
-{% unless flag?(:win32) %}
-  require "big"
-  require "big/json"
-{% end %}
+require "big"
+require "big/json"
 require "uuid"
 require "uuid/json"
 
@@ -96,13 +94,11 @@ class JSONAttrWithUUID
   property value : UUID
 end
 
-{% unless flag?(:win32) %}
-  class JSONAttrWithBigDecimal
-    include JSON::Serializable
+class JSONAttrWithBigDecimal
+  include JSON::Serializable
 
-    property value : BigDecimal
-  end
-{% end %}
+  property value : BigDecimal
+end
 
 class JSONAttrWithTime
   include JSON::Serializable
@@ -129,6 +125,48 @@ class JSONAttrWithNilableTimeEmittingNull
 
   def initialize
   end
+end
+
+class JSONAttrWithTimeArray1
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::ArrayConverter(Time::EpochConverter))]
+  property value : Array(Time)
+end
+
+class JSONAttrWithTimeArray2
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::ArrayConverter.new(Time::EpochConverter))]
+  property value : Array(Time)
+end
+
+class JSONAttrWithTimeArray3
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::ArrayConverter.new(Time::Format.new("%F %T")))]
+  property value : Array(Time)
+end
+
+class JSONAttrWithTimeHash1
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::HashValueConverter(Time::EpochConverter))]
+  property value : Hash(String, Time)
+end
+
+class JSONAttrWithTimeHash2
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::HashValueConverter.new(Time::EpochConverter))]
+  property value : Hash(String, Time)
+end
+
+class JSONAttrWithTimeHash3
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::HashValueConverter.new(Time::Format.new("%F %T")))]
+  property value : Hash(String, Time)
 end
 
 class JSONAttrWithPropertiesKey
@@ -261,6 +299,29 @@ class JSONAttrWithPresence
   getter? last_name_present : Bool
 end
 
+class JSONAttrWithPresenceAndIgnoreSerialize
+  include JSON::Serializable
+
+  @[JSON::Field(presence: true, ignore_serialize: ignore_first_name?)]
+  property first_name : String?
+
+  @[JSON::Field(presence: true, ignore_serialize: last_name.nil? && !last_name_present?, emit_null: true)]
+  property last_name : String?
+
+  @[JSON::Field(ignore: true)]
+  getter? first_name_present : Bool = false
+
+  @[JSON::Field(ignore: true)]
+  getter? last_name_present : Bool = false
+
+  def initialize(@first_name : String? = nil, @last_name : String? = nil)
+  end
+
+  def ignore_first_name?
+    first_name.nil? || first_name == ""
+  end
+end
+
 class JSONAttrWithQueryAttributes
   include JSON::Serializable
 
@@ -370,14 +431,19 @@ enum JSONVariableDiscriminatorEnumFoo
   Foo = 4
 end
 
+enum JSONVariableDiscriminatorEnumFoo8 : UInt8
+  Foo = 1_8
+end
+
 class JSONVariableDiscriminatorValueType
   include JSON::Serializable
 
   use_json_discriminator "type", {
-                                        0 => JSONVariableDiscriminatorNumber,
-    "1"                                   => JSONVariableDiscriminatorString,
-    true                                  => JSONVariableDiscriminatorBool,
-    JSONVariableDiscriminatorEnumFoo::Foo => JSONVariableDiscriminatorEnum,
+                                         0 => JSONVariableDiscriminatorNumber,
+    "1"                                    => JSONVariableDiscriminatorString,
+    true                                   => JSONVariableDiscriminatorBool,
+    JSONVariableDiscriminatorEnumFoo::Foo  => JSONVariableDiscriminatorEnum,
+    JSONVariableDiscriminatorEnumFoo8::Foo => JSONVariableDiscriminatorEnum8,
   }
 end
 
@@ -391,6 +457,9 @@ class JSONVariableDiscriminatorBool < JSONVariableDiscriminatorValueType
 end
 
 class JSONVariableDiscriminatorEnum < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorEnum8 < JSONVariableDiscriminatorValueType
 end
 
 module JSONNamespace
@@ -544,12 +613,12 @@ describe "JSON mapping" do
 
   it "doesn't emit null by default when doing to_json" do
     person = JSONAttrPerson.from_json(%({"name": "John"}))
-    (person.to_json =~ /age/).should be_falsey
+    person.to_json.should_not match /age/
   end
 
   it "emits null on request when doing to_json" do
     person = JSONAttrPersonEmittingNull.from_json(%({"name": "John"}))
-    (person.to_json =~ /age/).should be_truthy
+    person.to_json.should match /age/
   end
 
   it "emit_nulls option" do
@@ -726,6 +795,58 @@ describe "JSON mapping" do
     json.to_json.should eq(string)
   end
 
+  describe JSON::ArrayConverter do
+    it "uses converter metaclass" do
+      string = %({"value":[1459859781]})
+      json = JSONAttrWithTimeArray1.from_json(string)
+      json.value.should be_a(Array(Time))
+      json.value.should eq([Time.unix(1459859781)])
+      json.to_json.should eq(string)
+    end
+
+    it "uses converter instance with nested converter metaclass" do
+      string = %({"value":[1459859781]})
+      json = JSONAttrWithTimeArray2.from_json(string)
+      json.value.should be_a(Array(Time))
+      json.value.should eq([Time.unix(1459859781)])
+      json.to_json.should eq(string)
+    end
+
+    it "uses converter instance with nested converter instance" do
+      string = %({"value":["2014-10-31 23:37:16"]})
+      json = JSONAttrWithTimeArray3.from_json(string)
+      json.value.should be_a(Array(Time))
+      json.value.map(&.to_s).should eq(["2014-10-31 23:37:16 UTC"])
+      json.to_json.should eq(string)
+    end
+  end
+
+  describe JSON::HashValueConverter do
+    it "uses converter metaclass" do
+      string = %({"value":{"foo":1459859781}})
+      json = JSONAttrWithTimeHash1.from_json(string)
+      json.value.should be_a(Hash(String, Time))
+      json.value.should eq({"foo" => Time.unix(1459859781)})
+      json.to_json.should eq(string)
+    end
+
+    it "uses converter instance with nested converter metaclass" do
+      string = %({"value":{"foo":1459859781}})
+      json = JSONAttrWithTimeHash2.from_json(string)
+      json.value.should be_a(Hash(String, Time))
+      json.value.should eq({"foo" => Time.unix(1459859781)})
+      json.to_json.should eq(string)
+    end
+
+    it "uses converter instance with nested converter instance" do
+      string = %({"value":{"foo":"2014-10-31 23:37:16"}})
+      json = JSONAttrWithTimeHash3.from_json(string)
+      json.value.should be_a(Hash(String, Time))
+      json.value.transform_values(&.to_s).should eq({"foo" => "2014-10-31 23:37:16 UTC"})
+      json.to_json.should eq(string)
+    end
+  end
+
   it "parses raw value from int" do
     string = %({"value":123456789123456789123456789123456789})
     json = JSONAttrWithRaw.from_json(string)
@@ -807,6 +928,48 @@ describe "JSON mapping" do
     end
   end
 
+  describe "serializes JSON with presence markers and ignore_serialize" do
+    context "ignore_serialize is set to a method which returns true when value is nil or empty string" do
+      it "ignores field when value is empty string" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({"first_name": ""}))
+        json.first_name_present?.should be_true
+        json.to_json.should eq(%({}))
+      end
+
+      it "ignores field when value is nil" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({"first_name": null}))
+        json.first_name_present?.should be_true
+        json.to_json.should eq(%({}))
+      end
+    end
+
+    context "ignore_serialize is set to conditional expressions 'last_name.nil? && !last_name_present?'" do
+      it "emits null when value is null and @last_name_present is true" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({"last_name": null}))
+        json.last_name_present?.should be_true
+        json.to_json.should eq(%({"last_name":null}))
+      end
+
+      it "does not emit null when value is null and @last_name_present is false" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({}))
+        json.last_name_present?.should be_false
+        json.to_json.should eq(%({}))
+      end
+
+      it "emits field when value is not nil and @last_name_present is false" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.new(last_name: "something")
+        json.last_name_present?.should be_false
+        json.to_json.should eq(%({"last_name":"something"}))
+      end
+
+      it "emits field when value is not nil and @last_name_present is true" do
+        json = JSONAttrWithPresenceAndIgnoreSerialize.from_json(%({"last_name":"something"}))
+        json.last_name_present?.should be_true
+        json.to_json.should eq(%({"last_name":"something"}))
+      end
+    end
+  end
+
   describe "with query attributes" do
     it "defines query getter" do
       json = JSONAttrWithQueryAttributes.from_json(%({"foo": true}))
@@ -849,7 +1012,7 @@ describe "JSON mapping" do
     end
   end
 
-  pending_win32 describe: "BigDecimal" do
+  describe "BigDecimal" do
     it "parses json string with BigDecimal" do
       json = JSONAttrWithBigDecimal.from_json(%({"value": "10.05"}))
       json.value.should eq(BigDecimal.new("10.05"))
@@ -944,6 +1107,9 @@ describe "JSON mapping" do
 
       object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 4}))
       object_enum.should be_a(JSONVariableDiscriminatorEnum)
+
+      object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 18}))
+      object_enum.should be_a(JSONVariableDiscriminatorEnum8)
     end
   end
 

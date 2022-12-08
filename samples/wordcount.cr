@@ -50,4 +50,4 @@ end
 
 in_filenames = ARGV
 
-do_work ARGV, output_filename, ignore_case
+do_work in_filenames, output_filename, ignore_case

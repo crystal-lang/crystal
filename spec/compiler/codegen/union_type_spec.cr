@@ -130,7 +130,7 @@ describe "Code gen: union type" do
       a = b
       a.to_s
     ").to_string
-    value.includes?("Reference").should be_true
+    value.should contain("Reference")
   end
 
   it "assigns union to larger union when source is nilable 2" do
@@ -202,7 +202,7 @@ describe "Code gen: union type" do
       a = 1 || 1.5
       foo(a)
       )).to_string
-    (str == "(Int32 | Float64)" || str == "(Float64 | Int32)").should be_true
+    str.in?("(Int32 | Float64)", "(Float64 | Int32)").should be_true
   end
 
   it "provides T as a tuple literal" do

@@ -1,5 +1,6 @@
 require "spec"
 require "set"
+require "spec/helpers/iterate"
 
 describe "Set" do
   describe "an empty set" do
@@ -20,9 +21,9 @@ describe "Set" do
 
       set_from_tuple = Set.new({1, "hello", 'x'})
       set_from_tuple.size.should eq(3)
-      set_from_tuple.to_a.includes?(1).should be_true
-      set_from_tuple.to_a.includes?("hello").should be_true
-      set_from_tuple.to_a.includes?('x').should be_true
+      set_from_tuple.to_a.should contain(1)
+      set_from_tuple.to_a.should contain("hello")
+      set_from_tuple.to_a.should contain('x')
     end
   end
 
@@ -49,7 +50,7 @@ describe "Set" do
     it "returns false when object is in the set" do
       set = Set(Int32).new
       set.add?(1).should be_true
-      set.includes?(1).should be_true
+      set.should contain(1)
       set.add?(1).should be_false
     end
   end
@@ -59,8 +60,8 @@ describe "Set" do
       set = Set{1, 2, 3}
       set.delete 2
       set.size.should eq(2)
-      set.includes?(1).should be_true
-      set.includes?(3).should be_true
+      set.should contain(1)
+      set.should contain(3)
     end
 
     it "returns true when the object was present" do
@@ -332,13 +333,7 @@ describe "Set" do
     i.should eq(4)
   end
 
-  it "gets each iterator" do
-    iter = Set{1, 2, 3}.each
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should eq(3)
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [1, 2, 3], Set{1, 2, 3}.each
 
   it "#subset_of?" do
     set = Set{1, 2, 3}
@@ -407,13 +402,13 @@ describe "Set" do
       string = "foo"
       set = Set{string, "bar", "baz"}
       set.compare_by_identity?.should be_false
-      set.includes?(string).should be_true
+      set.should contain(string)
 
       set.compare_by_identity
       set.compare_by_identity?.should be_true
 
-      set.includes?("fo" + "o").should be_false
-      set.includes?(string).should be_true
+      set.should_not contain("fo" + "o")
+      set.should contain(string)
     end
 
     it "retains compare_by_identity on dup" do

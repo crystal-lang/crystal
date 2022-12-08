@@ -66,7 +66,7 @@ describe "Semantic: closure" do
       f = -> { a }
       a = 2.5
       f.call
-      ") { union_of(int32, float64) }
+      ", inject_primitives: true) { union_of(int32, float64) }
   end
 
   it "marks variable as closured inside block in fun" do
@@ -111,7 +111,7 @@ describe "Semantic: closure" do
           x
         end
       end
-      ", inject_primitives: false) { int32 }
+      ") { int32 }
     node = result.node.as(Expressions)
     call = node[1].as(Call)
     block = call.block.not_nil!
@@ -329,7 +329,7 @@ describe "Semantic: closure" do
       foo do |x|
         x.to_f
       end
-      ") { float64 }
+      ", inject_primitives: true) { float64 }
   end
 
   it "transforms block to proc literal with void type" do
@@ -341,7 +341,7 @@ describe "Semantic: closure" do
       foo do |x|
         x.to_f
       end
-      ") { nil_type }
+      ", inject_primitives: true) { nil_type }
   end
 
   it "errors when transforming block to proc literal if type mismatch" do
@@ -354,7 +354,7 @@ describe "Semantic: closure" do
         x.to_f
       end
       ",
-      "expected block to return Int32, not Float64"
+      "expected block to return Int32, not Float64", inject_primitives: true
   end
 
   it "transforms block to proc literal with free var" do
@@ -366,10 +366,10 @@ describe "Semantic: closure" do
       foo do |x|
         x.to_f
       end
-      ") { float64 }
+      ", inject_primitives: true) { float64 }
   end
 
-  it "transforms block to proc literal without arguments" do
+  it "transforms block to proc literal without parameters" do
     assert_type("
       def foo(&block : -> U) forall U
         block.call
@@ -378,7 +378,7 @@ describe "Semantic: closure" do
       foo do
         1.5
       end
-      ") { float64 }
+      ", inject_primitives: true) { float64 }
   end
 
   it "errors if giving more block args when transforming block to proc literal" do
@@ -391,7 +391,7 @@ describe "Semantic: closure" do
         x.to_f
       end
       ",
-      "wrong number of block arguments (given 1, expected 0)"
+      "wrong number of block parameters (given 1, expected 0)"
   end
 
   it "allows giving less block args when transforming block to proc literal" do
@@ -403,7 +403,7 @@ describe "Semantic: closure" do
       foo do
         1.5
       end
-      ") { float64 }
+      ", inject_primitives: true) { float64 }
   end
 
   it "allows passing block as proc literal to new and to initialize" do
@@ -420,10 +420,10 @@ describe "Semantic: closure" do
 
       foo = Foo.new { |x| x.to_f }
       foo.block
-      ") { proc_of(int32, float64) }
+      ", inject_primitives: true) { proc_of(int32, float64) }
   end
 
-  it "errors if forwarding block arg doesn't match input type" do
+  it "errors if forwarding block param doesn't match input type" do
     assert_error "
       def foo(&block : Int32 -> U)
         block
@@ -432,10 +432,10 @@ describe "Semantic: closure" do
       f = ->(x : Int64) { x + 1 }
       foo &f
       ",
-      "expected block argument's argument #1 to be Int32, not Int64"
+      "expected block argument's parameter #1 to be Int32, not Int64", inject_primitives: true
   end
 
-  it "errors if forwarding block arg doesn't match input type size" do
+  it "errors if forwarding block param doesn't match input type size" do
     assert_error "
       def foo(&block : Int32, Int32 -> U)
         block
@@ -444,7 +444,7 @@ describe "Semantic: closure" do
       f = ->(x : Int32) { x + 1 }
       foo &f
       ",
-      "wrong number of block argument's arguments (given 1, expected 2)"
+      "wrong number of block argument's parameters (given 1, expected 2)", inject_primitives: true
   end
 
   it "lookups return type in correct scope" do
@@ -460,13 +460,13 @@ describe "Semantic: closure" do
       end
 
       Foo(Int32).new.foo { |x| x.to_f }
-      ") { proc_of(int32, float64) }
+      ", inject_primitives: true) { proc_of(int32, float64) }
   end
 
   it "passes #227" do
     result = assert_type(%(
       ->{ a = 1; ->{ a } }
-      ), inject_primitives: false) { proc_of(proc_of(int32)) }
+      )) { proc_of(proc_of(int32)) }
     fn = result.node.as(ProcLiteral)
     fn.def.closure?.should be_false
   end
@@ -512,7 +512,7 @@ describe "Semantic: closure" do
       end
 
       foo { |x| x + 1 }
-      )) { proc_of(int32, int32) }
+      ), inject_primitives: true) { proc_of(int32, int32) }
   end
 
   it "says can't send closure to C with new notation" do
@@ -613,11 +613,11 @@ describe "Semantic: closure" do
         end
       end
       ),
-      "undefined method '&+' for String"
+      "undefined method '&+' for String", inject_primitives: true
   end
 
   it "doesn't assign all types to metavar if closured but only assigned to once" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL, inject_primitives: true
       def capture(&block)
         block
       end
@@ -627,7 +627,7 @@ describe "Semantic: closure" do
           x &+ 1
         end
       end
-      ))
+      CRYSTAL
   end
 
   it "does assign all types to metavar if closured but only assigned to once in a loop" do
@@ -644,7 +644,7 @@ describe "Semantic: closure" do
         end
       end
       ),
-      "undefined method '&+'"
+      "undefined method '&+'", inject_primitives: true
   end
 
   it "does assign all types to metavar if closured but only assigned to once in a loop through block" do
@@ -669,7 +669,7 @@ describe "Semantic: closure" do
         end
       end
       ),
-      "undefined method '&+'"
+      "undefined method '&+'", inject_primitives: true
   end
 
   it "does assign all types to metavar if closured but only assigned to once in a loop through captured block" do
@@ -694,7 +694,7 @@ describe "Semantic: closure" do
         end
       end
       ),
-      "undefined method '&+'"
+      "undefined method '&+'", inject_primitives: true
   end
 
   it "doesn't assign all types to metavar if closured but declared inside block and never re-assigned" do
@@ -715,7 +715,7 @@ describe "Semantic: closure" do
           end
         end
       end
-      )
+      ), inject_primitives: true
   end
 
   it "doesn't assign all types to metavar if closured but declared inside block and re-assigned inside the same context before the closure" do
@@ -737,7 +737,7 @@ describe "Semantic: closure" do
           end
         end
       end
-      )
+      ), inject_primitives: true
   end
 
   it "is considered as closure if assigned once but comes from a method arg" do
@@ -768,7 +768,7 @@ describe "Semantic: closure" do
       capture do
         x &+ 1
       end
-      ))
+      ), inject_primitives: true)
   end
 
   it "correctly captures type of closured block arg" do
@@ -787,6 +787,6 @@ describe "Semantic: closure" do
         z = x
       end
       z
-      )) { nilable int32 }
+      ), inject_primitives: true) { nilable int32 }
   end
 end

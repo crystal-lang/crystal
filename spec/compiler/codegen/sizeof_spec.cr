@@ -185,9 +185,8 @@ describe "Code gen: sizeof" do
       )).to_i.should eq(12)
   end
 
-  {% if flag?(:x86_64) %}
-    it "returns correct sizeof for abstract struct (#4319)" do
-      size = run(%(
+  it "returns correct sizeof for abstract struct (#4319)" do
+    size = run(%(
         abstract struct Entry
         end
 
@@ -206,9 +205,8 @@ describe "Code gen: sizeof" do
         sizeof(Entry)
         )).to_i
 
-      size.should eq(16)
-    end
-  {% end %}
+    size.should eq(16)
+  end
 
   it "doesn't precompute sizeof of abstract struct (#7741)" do
     run(%(

@@ -15,7 +15,7 @@ class XML::Builder
     @box = Box.box(io)
     buffer = LibXML.xmlOutputBufferCreateIO(
       ->(ctx, buffer, len) {
-        Box(IO).unbox(ctx).write(Slice.new(buffer, len))
+        Box(IO).unbox(ctx).write_string(Slice.new(buffer, len))
         len
       },
       ->(ctx) {
@@ -89,7 +89,7 @@ class XML::Builder
   end
 
   # :ditto:
-  def element(name : String, attributes : Hash | NamedTuple)
+  def element(name : String, attributes : Hash | NamedTuple) : Nil
     element(name, attributes) { }
   end
 
@@ -109,12 +109,12 @@ class XML::Builder
   end
 
   # Emits an element with namespace info with the given *attributes*.
-  def element(prefix : String?, name : String, namespace_uri : String?, **attributes)
+  def element(prefix : String?, name : String, namespace_uri : String?, **attributes) : Nil
     element(prefix, name, namespace_uri, attributes)
   end
 
   # :ditto:
-  def element(prefix : String?, name : String, namespace_uri : String?, attributes : Hash | NamedTuple)
+  def element(prefix : String?, name : String, namespace_uri : String?, attributes : Hash | NamedTuple) : Nil
     start_element(prefix, name, namespace_uri)
     attributes(attributes)
     end_element
@@ -158,7 +158,7 @@ class XML::Builder
   end
 
   # :ditto:
-  def attributes(attributes : Hash | NamedTuple)
+  def attributes(attributes : Hash | NamedTuple) : Nil
     attributes.each do |key, value|
       attribute key.to_s, value
     end
@@ -241,13 +241,13 @@ class XML::Builder
   end
 
   # Emits a namespace.
-  def namespace(prefix, uri)
+  def namespace(prefix, uri) : Nil
     attribute "xmlns", prefix, nil, uri
   end
 
   # Forces content written to this writer to be flushed to
   # this writer's `IO`.
-  def flush
+  def flush : Nil
     call Flush
 
     @io.flush
@@ -275,7 +275,7 @@ class XML::Builder
 
   # Sets the quote char to use, either `'` or `"`.
   def quote_char=(char : Char)
-    unless char == '\'' || char == '"'
+    unless char.in?('\'', '"')
       raise ArgumentError.new("Quote char must be ' or \", not #{char}")
     end
 
@@ -374,7 +374,7 @@ module XML
     xml.quote_char = quote_char if quote_char
     v = yield xml
 
-    # EndDocument is still necessary to ensure all all elements are closed, even
+    # EndDocument is still necessary to ensure all elements are closed, even
     # when StartDocument is omitted.
     xml.end_document
     xml.flush

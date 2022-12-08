@@ -102,15 +102,14 @@ describe "Semantic: did you mean" do
   end
 
   it "doesn't suggest for operator" do
-    error = assert_error <<-CR,
+    error = assert_error <<-CRYSTAL
       class Foo
         def +
         end
       end
 
       Foo.new.a
-      CR
-      inject_primitives: false
+      CRYSTAL
 
     error.to_s.should_not contain("Did you mean")
   end

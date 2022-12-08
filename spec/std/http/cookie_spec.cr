@@ -38,34 +38,33 @@ module HTTP
         expect_raises IO::Error, "Invalid cookie name" do
           HTTP::Cookie.new("\t", "")
         end
-        # more extensive specs on #name=
       end
 
       it "raises on invalid value" do
         expect_raises IO::Error, "Invalid cookie value" do
           HTTP::Cookie.new("x", %(foo\rbar))
         end
-        # more extensive specs on #value=
       end
     end
 
     describe "#name=" do
       it "raises on invalid name" do
         cookie = HTTP::Cookie.new("x", "")
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = ""
-        end
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = "\t"
-        end
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = "\r"
-        end
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = "a\nb"
-        end
-        expect_raises IO::Error, "Invalid cookie name" do
-          cookie.name = "a\rb"
+        invalid_names = [
+          '"', '(', ')', ',', '/',
+          ' ', '\r', '\t', '\n',
+          '{', '}',
+          (':'..'@').each,
+          ('['..']').each,
+        ].flat_map { |c| "a#{c}b" }
+
+        # name cannot be empty
+        invalid_names << ""
+
+        invalid_names.each do |invalid_name|
+          expect_raises IO::Error, "Invalid cookie name" do
+            cookie.name = invalid_name
+          end
         end
       end
     end
@@ -73,26 +72,15 @@ module HTTP
     describe "#value=" do
       it "raises on invalid value" do
         cookie = HTTP::Cookie.new("x", "")
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = %(foo\rbar)
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = %(foo"bar)
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo;bar"
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo\\bar"
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo\\bar"
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo bar"
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo,bar"
+        invalid_values = {
+          '"', ',', ';', '\\',   # invalid printable ascii characters
+          ' ', '\r', '\t', '\n', # non-printable ascii characters
+        }.map { |c| "foo#{c}bar" }
+
+        invalid_values.each do |invalid_value|
+          expect_raises IO::Error, "Invalid cookie value" do
+            cookie.value = invalid_value
+          end
         end
       end
     end
@@ -160,6 +148,13 @@ module HTTP
         cookie.name.should eq("key%3Dvalue")
         cookie.value.should eq("value")
         cookie.to_set_cookie_header.should eq("key%3Dvalue=value")
+      end
+
+      it %(parses key="value") do
+        cookie = parse_first_cookie(%(key="value"))
+        cookie.name.should eq("key")
+        cookie.value.should eq("value")
+        cookie.to_set_cookie_header.should eq("key=value")
       end
 
       it "parses multiple cookies" do
@@ -238,6 +233,14 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=value; domain=www.example.com")
       end
 
+      it "leading dots in domain names are ignored" do
+        cookie = parse_set_cookie("key=value; domain=.example.com")
+        cookie.name.should eq("key")
+        cookie.value.should eq("value")
+        cookie.domain.should eq("example.com")
+        cookie.to_set_cookie_header.should eq("key=value; domain=example.com")
+      end
+
       it "parses expires iis" do
         cookie = parse_set_cookie("key=value; expires=Sun, 06-Nov-1994 08:49:37 GMT")
         time = Time.utc(1994, 11, 6, 8, 49, 37)
@@ -297,42 +300,75 @@ module HTTP
         parse_set_cookie("a=1; domain=127.0.0.1; HttpOnly").domain.should eq "127.0.0.1"
       end
 
-      it "parse max-age as seconds from current time" do
+      it "parse max-age as Time::Span" do
         cookie = parse_set_cookie("a=1; max-age=10")
-        delta = cookie.expires.not_nil! - Time.utc
-        delta.should be_close(10.seconds, 1.second)
+        cookie.max_age.should eq 10.seconds
 
         cookie = parse_set_cookie("a=1; max-age=0")
-        delta = Time.utc - cookie.expires.not_nil!
-        delta.should be_close(0.seconds, 1.second)
+        cookie.max_age.should eq 0.seconds
+      end
+    end
+
+    describe "expiration_time" do
+      it "sets expiration_time to be current when max-age=0" do
+        cookie = parse_set_cookie("bla=1; max-age=0")
+        expiration_time = cookie.expiration_time.should_not be_nil
+        expiration_time.should be_close(Time.utc, 1.seconds)
       end
 
-      it "parses large max-age (#8744)" do
-        cookie = parse_set_cookie("a=1; max-age=3153600000")
-        delta = cookie.expires.not_nil! - Time.utc
-        delta.should be_close(3153600000.seconds, 1.second)
+      it "sets expiration_time with old date" do
+        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan 1970 00:00:00 -0000")
+        cookie.expiration_time.should eq Time.utc(1970, 1, 1, 0, 0, 0)
+      end
+
+      it "sets future expiration_time with max-age" do
+        cookie = parse_set_cookie("bla=1; max-age=1")
+        cookie.expiration_time.not_nil!.should be > Time.utc
+      end
+
+      it "sets future expiration_time with max-age and future cookie creation time" do
+        cookie = parse_set_cookie("bla=1; max-age=1")
+        cookie_expiration = cookie.expiration_time.should_not be_nil
+        cookie_expiration.should be_close(Time.utc, 1.seconds)
+
+        cookie.expired?(time_reference: cookie.creation_time + 1.second).should be_true
+      end
+
+      it "sets future expiration_time with expires" do
+        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan 2020 00:00:00 -0000")
+        cookie.expiration_time.should eq Time.utc(2020, 1, 1, 0, 0, 0)
+      end
+
+      it "returns nil expiration_time when expires and max-age are not set" do
+        cookie = parse_set_cookie("bla=1")
+        cookie.expiration_time.should be_nil
       end
     end
 
     describe "expired?" do
-      it "by max-age=0" do
-        parse_set_cookie("bla=1; max-age=0").expired?.should eq true
+      it "expired when max-age=0" do
+        cookie = parse_set_cookie("bla=1; max-age=0")
+        cookie.expired?.should be_true
       end
 
-      it "by old date" do
-        parse_set_cookie("bla=1; expires=Thu, 01 Jan 1970 00:00:00 -0000").expired?.should eq true
+      it "expired with old expires date" do
+        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan 1970 00:00:00 -0000")
+        cookie.expired?.should be_true
       end
 
-      it "not expired" do
-        parse_set_cookie("bla=1; max-age=1").expired?.should eq false
+      it "not expired with future max-age" do
+        cookie = parse_set_cookie("bla=1; max-age=1")
+        cookie.expired?.should be_false
       end
 
-      it "not expired" do
-        parse_set_cookie("bla=1; expires=Thu, 01 Jan #{Time.utc.year + 2} 00:00:00 -0000").expired?.should eq false
+      it "not expired with future expires" do
+        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan #{Time.utc.year + 2} 00:00:00 -0000")
+        cookie.expired?.should be_false
       end
 
-      it "not expired" do
-        parse_set_cookie("bla=1").expired?.should eq false
+      it "not expired when max-age and expires are not provided" do
+        cookie = parse_set_cookie("bla=1")
+        cookie.expired?.should be_false
       end
     end
   end
@@ -460,8 +496,8 @@ module HTTP
         cookies << Cookie.new("x", "y")
 
         headers.get("Set-Cookie").size.should eq 2
-        headers.get("Set-Cookie").includes?("a=b").should be_true
-        headers.get("Set-Cookie").includes?("c=d").should be_true
+        headers.get("Set-Cookie").should contain("a=b")
+        headers.get("Set-Cookie").should contain("c=d")
 
         cookies.add_response_headers(headers)
 
@@ -479,8 +515,8 @@ module HTTP
         cookies.add_response_headers(headers)
         headers.get?("Set-Cookie").should_not be_nil
 
-        headers.get("Set-Cookie").includes?("a=b").should be_true
-        headers.get("Set-Cookie").includes?("c=d").should be_true
+        headers.get("Set-Cookie").should contain("a=b")
+        headers.get("Set-Cookie").should contain("c=d")
       end
 
       it "uses encode_www_form on Set-Cookie value" do
@@ -488,7 +524,7 @@ module HTTP
         cookies = Cookies.new
         cookies << Cookie.new("a", "b+c")
         cookies.add_response_headers(headers)
-        headers.get("Set-Cookie").includes?("a=b+c").should be_true
+        headers.get("Set-Cookie").should contain("a=b+c")
       end
 
       describe "when no cookies are set" do

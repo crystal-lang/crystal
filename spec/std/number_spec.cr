@@ -2,7 +2,6 @@ require "spec"
 require "big"
 require "complex"
 require "../support/number"
-require "../support/iterate"
 
 describe "Number" do
   {% for number_type in BUILTIN_NUMBER_TYPES %}
@@ -21,6 +20,11 @@ describe "Number" do
       1234.567.significant(5).should be_close(1234.6, 1e-7)
       1234.567.significant(6).should eq(1234.57)
       1234.567.significant(7).should eq(1234.567)
+
+      123.456789.significant(5).should eq(123.46)
+      0.000123456789.significant(3).should eq 0.000123
+      0.123456789.significant(4).should eq 0.1235
+      1.23456789.significant(2).should eq 1.2
     end
 
     it "2 base" do
@@ -38,6 +42,7 @@ describe "Number" do
     it "preserves type" do
       123.significant(2).should eq(120)
       123.significant(2).should be_a(Int32)
+      0.significant(1).should be_a(Int32)
     end
   end
 
@@ -414,13 +419,31 @@ describe "Number" do
     ary[2].should eq(300.to_u8!)
   end
 
-  it "test zero?" do
-    0.zero?.should eq true
-    0.0.zero?.should eq true
-    0f32.zero?.should eq true
-    1.zero?.should eq false
-    1.0.zero?.should eq false
-    1f32.zero?.should eq false
+  it "#zero?" do
+    0.zero?.should be_true
+    0.0.zero?.should be_true
+    0_f32.zero?.should be_true
+    1.zero?.should be_false
+    1.0.zero?.should be_false
+    1f32.zero?.should be_false
+  end
+
+  it "#positive?" do
+    1.positive?.should be_true
+    1.0.positive?.should be_true
+    0.positive?.should be_false
+    0.0.positive?.should be_false
+    -1.positive?.should be_false
+    -1.1.positive?.should be_false
+  end
+
+  it "#negative?" do
+    1.negative?.should be_false
+    1.0.negative?.should be_false
+    0.negative?.should be_false
+    0.0.negative?.should be_false
+    -1.negative?.should be_true
+    -1.1.negative?.should be_true
   end
 
   describe "#step" do
@@ -551,15 +574,15 @@ describe "Number" do
     describe "whole range" do
       it { (UInt8::MIN..UInt8::MAX).each.count { true }.should eq(256) }
       it_iterates "UInt8 upwards", (UInt8::MIN.to_i..UInt8::MAX.to_i).map(&.to_u8), (UInt8::MIN..UInt8::MAX).step(by: 1)
-      it_iterates "UInt8 downwards", (UInt8::MIN.to_i..UInt8::MAX.to_i).map(&.to_u8).reverse, (UInt8::MAX..UInt8::MIN).step(by: -1)
+      it_iterates "UInt8 downwards", (UInt8::MIN.to_i..UInt8::MAX.to_i).map(&.to_u8).reverse!, (UInt8::MAX..UInt8::MIN).step(by: -1)
 
       it { (Int8::MIN..Int8::MAX).each.count { true }.should eq(256) }
       it_iterates "Int8 upwards", (Int8::MIN.to_i..Int8::MAX.to_i).map(&.to_i8), (Int8::MIN..Int8::MAX).step(by: 1)
-      it_iterates "Int8 downwards", (Int8::MIN.to_i..Int8::MAX.to_i).map(&.to_i8).reverse, (Int8::MAX..Int8::MIN).step(by: -1)
+      it_iterates "Int8 downwards", (Int8::MIN.to_i..Int8::MAX.to_i).map(&.to_i8).reverse!, (Int8::MAX..Int8::MIN).step(by: -1)
 
       it { (Int16::MIN..Int16::MAX).each.count { true }.should eq(65536) }
       it_iterates "Int16 upwards", (Int16::MIN.to_i..Int16::MAX.to_i).map(&.to_i16), (Int16::MIN..Int16::MAX).step(by: 1)
-      it_iterates "Int16 downwards", (Int16::MIN.to_i..Int16::MAX.to_i).map(&.to_i16).reverse, (Int16::MAX..Int16::MIN).step(by: -1)
+      it_iterates "Int16 downwards", (Int16::MIN.to_i..Int16::MAX.to_i).map(&.to_i16).reverse!, (Int16::MAX..Int16::MIN).step(by: -1)
     end
 
     it_iterates "towards limit [max-4, max-2, max]", [Int32::MAX - 4, Int32::MAX - 2, Int32::MAX], (Int32::MAX - 4).step(to: Int32::MAX, by: 2)

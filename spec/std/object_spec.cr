@@ -133,13 +133,7 @@ private class DelegatedTestObject
 end
 
 private class TestObjectWithFinalize
-  property key : Symbol?
-
-  def finalize
-    if key = self.key
-      State.inc(key)
-    end
-  end
+  include FinalizeCounter
 
   def_clone
 end
@@ -470,14 +464,14 @@ describe Object do
 
   describe "#in?" do
     it "works with Enumerable-s" do
-      :foo.in?([:foo, :bar]).should be_true
-      :bar.in?({:foo, :baz}).should be_false
+      "foo".in?(["foo", "bar"]).should be_true
+      "bar".in?({"foo", "baz"}).should be_false
       42.in?(0..100).should be_true
       4242.in?(0..100).should be_false
     end
 
     it "works with splatted arguments" do
-      :baz.in?(:foo, :bar).should be_false
+      "baz".in?("foo", "bar").should be_false
       1.in?(1, 10, 100).should be_true
     end
 
@@ -494,7 +488,7 @@ describe Object do
 
   it "calls #finalize on #clone'd objects" do
     obj = TestObjectWithFinalize.new
-    assert_finalizes(:clone) { obj.clone }
+    assert_finalizes("clone") { obj.clone }
   end
 
   describe "def_hash" do

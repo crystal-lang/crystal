@@ -20,7 +20,7 @@ describe HTTP::Headers do
 
   it "raises an error if header value contains invalid character" do
     expect_raises ArgumentError do
-      headers = HTTP::Headers{"invalid-header" => "\r\nLocation: http://example.com"}
+      HTTP::Headers{"invalid-header" => "\r\nLocation: http://example.com"}
     end
   end
 
@@ -68,7 +68,7 @@ describe HTTP::Headers do
   it "deletes" do
     headers = HTTP::Headers{"Foo" => "bar"}
     headers.delete("foo").should eq("bar")
-    headers.empty?.should be_true
+    headers.should be_empty
   end
 
   describe "#==" do
