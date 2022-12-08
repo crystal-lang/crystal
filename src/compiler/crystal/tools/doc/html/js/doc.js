@@ -44,15 +44,23 @@ document.addEventListener('DOMContentLoaded', function() {
     _parent.addEventListener('click', function(e) {
       e.stopPropagation();
 
-      if(e.target.tagName.toLowerCase() == 'li') {
-        if(e.target.className.match(/open/)) {
-          sessionStorage.removeItem(e.target.getAttribute('data-id'));
-          e.target.className = e.target.className.replace(/ +open/g, '');
-        } else {
-          sessionStorage.setItem(e.target.getAttribute('data-id'), '1');
-          if(e.target.className.indexOf('open') == -1) {
-            e.target.className += ' open';
-          }
+      var li;
+      var tagName = e.target.tagName.toLowerCase();
+      if (tagName === 'li' /* toggle arrow */) {
+        li = e.target;
+      } else if (tagName === 'h3' /* subsection header */) {
+        li = e.target.parentNode;
+      } else {
+        return;
+      }
+
+      if(li.className.match(/open/)) {
+        sessionStorage.removeItem(li.getAttribute('data-id'));
+        li.className = li.className.replace(/ +open/g, '');
+      } else {
+        sessionStorage.setItem(li.getAttribute('data-id'), '1');
+        if(li.className.indexOf('open') == -1) {
+          li.className += ' open';
         }
       }
     });

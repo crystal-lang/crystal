@@ -205,19 +205,19 @@ class Crystal::Doc::Method
     args_to_s io
   end
 
-  def args_to_s
-    String.build { |io| args_to_s io }
+  def args_to_s(abbr = false)
+    String.build { |io| args_to_s io, abbr }
   end
 
-  def args_to_s(io : IO) : Nil
-    args_to_html(io, html: :none)
+  def args_to_s(io : IO, abbr = false) : Nil
+    args_to_html(io, html: :none, abbr: abbr)
   end
 
-  def args_to_html(html : HTMLOption = :all)
-    String.build { |io| args_to_html io, html }
+  def args_to_html(html : HTMLOption = :all, abbr = false)
+    String.build { |io| args_to_html io, html, abbr }
   end
 
-  def args_to_html(io : IO, html : HTMLOption = :all) : Nil
+  def args_to_html(io : IO, html : HTMLOption = :all, abbr = false) : Nil
     return_type = self.return_type
 
     return unless has_args? || return_type
@@ -228,7 +228,7 @@ class Crystal::Doc::Method
       @def.args.each_with_index do |arg, i|
         io << ", " if printed
         io << '*' if @def.splat_index == i
-        arg_to_html arg, io, html: html
+        arg_to_html arg, io, html: html, abbr: abbr
         printed = true
       end
       if double_splat = @def.double_splat
@@ -240,13 +240,15 @@ class Crystal::Doc::Method
       if block_arg = @def.block_arg
         io << ", " if printed
         io << '&'
-        arg_to_html block_arg, io, html: html
+        arg_to_html block_arg, io, html: html, abbr: abbr
       elsif @def.yields
         io << ", " if printed
         io << '&'
       end
       io << ')'
     end
+
+    return if abbr
 
     case return_type
     when Nil
@@ -267,7 +269,7 @@ class Crystal::Doc::Method
     io
   end
 
-  def arg_to_html(arg : Arg, io, html : HTMLOption = :all)
+  def arg_to_html(arg : Arg, io, html : HTMLOption = :all, abbr = false)
     if arg.external_name != arg.name
       if name = arg.external_name.presence
         if Symbol.needs_quotes_for_named_argument? name
@@ -286,6 +288,8 @@ class Crystal::Doc::Method
     end
 
     io << arg.name
+
+    return if abbr
 
     if restriction = arg.restriction
       io << " : "
