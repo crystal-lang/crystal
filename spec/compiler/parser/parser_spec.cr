@@ -2421,18 +2421,29 @@ module Crystal
     end
   end
 
-  it "warns on missing space before colon in type restriction" do
-    parser_warnings("def foo(&block: Foo)\nend").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in type restriction"]
-    parser_warnings("def foo(&: Foo)\nend").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in type restriction"]
-  end
+  describe "warn on missing space before colon" do
+    it "in block param type restriction" do
+      parser_warnings("def foo(&block: Foo)\nend").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in type restriction (run `crystal tool format` to fix this)"]
+      parser_warnings("def foo(&block : Foo)\nend").infos.should eq [] of String
+    end
 
-  it "warns on missing space before colon in type declaration" do
-    parser_warnings("x: Int32").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in type declaration"]
-    parser_warnings("class Foo\n@x: Int32\nend").infos.should eq ["warning in test.cr:2\nWarning: space required before colon in type declaration"]
-    parser_warnings("class Foo\n@@x: Int32\nend").infos.should eq ["warning in test.cr:2\nWarning: space required before colon in type declaration"]
-  end
+    it "in anonymous block param type restriction" do
+      parser_warnings("def foo(&: Foo)\nend").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in type restriction (run `crystal tool format` to fix this)"]
+      parser_warnings("def foo(& : Foo)\nend").infos.should eq [] of String
+    end
 
-  it "warns on missing space before colon in return type restriction" do
-    parser_warnings("def foo: Foo\nend").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in return type restriction"]
+    it "in type declaration" do
+      parser_warnings("x: Int32").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in type declaration (run `crystal tool format` to fix this)"]
+      parser_warnings("x : Int32").infos.should eq [] of String
+      parser_warnings("class Foo\n@x: Int32\nend").infos.should eq ["warning in test.cr:2\nWarning: space required before colon in type declaration (run `crystal tool format` to fix this)"]
+      parser_warnings("class Foo\n@x : Int32\nend").infos.should eq [] of String
+      parser_warnings("class Foo\n@@x: Int32\nend").infos.should eq ["warning in test.cr:2\nWarning: space required before colon in type declaration (run `crystal tool format` to fix this)"]
+      parser_warnings("class Foo\n@@x : Int32\nend").infos.should eq [] of String
+    end
+
+    it "in return type restriction" do
+      parser_warnings("def foo: Foo\nend").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in return type restriction (run `crystal tool format` to fix this)"]
+      parser_warnings("def foo : Foo\nend").infos.should eq [] of String
+    end
   end
 end
