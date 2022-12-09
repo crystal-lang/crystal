@@ -307,7 +307,7 @@ struct HTTP::Headers
   # The serialization does *not* include a double CRLF sequence at the end.
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "bar", "baz" => %w[qux qox]})
+  # headers = HTTP::Headers{"foo" => "bar", "baz" => %w[qux qox]}
   # headers.serialize # => "foo: bar\r\nbaz: qux\r\nbaz: qox\r\n"
   # ```
   def serialize : String

@@ -40,7 +40,7 @@
 #
 # ```
 # module DB
-#   Log = ::Log.for("db") # => Log for db source
+#   Log = ::Log.for("db") # Log for db source
 #
 #   def do_something
 #     Log.info { "this is logged in db source" }
@@ -58,7 +58,7 @@
 #
 # ```
 # class DB::Pool
-#   Log = DB::Log.for("pool") # => Log for db.pool source
+#   Log = DB::Log.for("pool") # Log for db.pool source
 # end
 # ```
 #
@@ -70,7 +70,7 @@
 #
 # ```
 # module DB
-#   Log = ::Log.for(self) # => Log for db source
+#   Log = ::Log.for(self) # Log for db source
 # end
 # ```
 #

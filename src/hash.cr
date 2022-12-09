@@ -1102,8 +1102,8 @@ class Hash(K, V)
   #
   # ```
   # h = {"a" => {"b" => [10, 20, 30]}}
-  # h.dig? "a", "b"                # => [10, 20, 30]
-  # h.dig? "a", "b", "c", "d", "e" # => nil
+  # h.dig? "a", "b" # => [10, 20, 30]
+  # h.dig? "x", "a" # => nil
   # ```
   def dig?(key : K, *subkeys)
     if (value = self[key]?) && value.responds_to?(:dig?)
@@ -1121,8 +1121,8 @@ class Hash(K, V)
   #
   # ```
   # h = {"a" => {"b" => [10, 20, 30]}}
-  # h.dig "a", "b"                # => [10, 20, 30]
-  # h.dig "a", "b", "c", "d", "e" # raises KeyError
+  # h.dig "a", "b" # => [10, 20, 30]
+  # h.dig "a", "x" # raises KeyError
   # ```
   def dig(key : K, *subkeys)
     if (value = self[key]) && value.responds_to?(:dig)
