@@ -92,7 +92,7 @@ module HTTP
       end
 
       it "doesn't raise on invalid cookie with __Secure- prefix" do
-        cookie = HTTP::Cookie.new "x", ""
+        cookie = HTTP::Cookie.new "x", "", secure: false
 
         cookie.name = "__Secure-x"
         cookie.name.should eq "__Secure-x"
@@ -105,6 +105,24 @@ module HTTP
         cookie.name = "__Host-x"
         cookie.name.should eq "__Host-x"
         cookie.secure.should be_false
+      end
+
+      it "automatically configures the cookie __Secure- prefix and related properties are unset" do
+        cookie = HTTP::Cookie.new "x", ""
+
+        cookie.name = "__Secure-x"
+        cookie.name.should eq "__Secure-x"
+        cookie.secure.should be_true
+      end
+
+      it "automatically configures the cookie __Host- prefix and related properties are unset" do
+        cookie = HTTP::Cookie.new "x", ""
+
+        cookie.name = "__Host-x"
+        cookie.name.should eq "__Host-x"
+        cookie.secure.should be_true
+        cookie.path.should eq "/"
+        cookie.domain.should be_nil
       end
     end
 
@@ -147,7 +165,7 @@ module HTTP
 
     describe "#valid? & #validate!" do
       it "raises on invalid cookie with __Secure- prefix" do
-        cookie = HTTP::Cookie.new "x", ""
+        cookie = HTTP::Cookie.new "x", "", secure: false
         cookie.name = "__Secure-x"
 
         cookie.valid?.should be_false
@@ -164,7 +182,7 @@ module HTTP
       end
 
       it "raises on invalid cookie with __Host- prefix" do
-        cookie = HTTP::Cookie.new "x", "", domain: "example.com"
+        cookie = HTTP::Cookie.new "x", "", domain: "example.com", secure: false
         cookie.name = "__Host-x"
 
         cookie.valid?.should be_false

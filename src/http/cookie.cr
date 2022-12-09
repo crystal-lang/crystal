@@ -20,12 +20,13 @@ module HTTP
     property path : String?
     property expires : Time?
     property domain : String?
-    property secure : Bool
     property http_only : Bool
     property samesite : SameSite?
     property extension : String?
     property max_age : Time::Span?
     getter creation_time : Time
+
+    @secure : Bool?
 
     def_equals_and_hash name, value, path, expires, domain, secure, http_only, samesite, extension
 
@@ -36,7 +37,7 @@ module HTTP
     # Alternatively, if *name* has a security prefix, and the related properties are `nil`, the prefix will automatically be applied to the cookie.
     def initialize(name : String, value : String, @path : String? = nil,
                    @expires : Time? = nil, @domain : String? = nil,
-                   secure : Bool? = nil, @http_only : Bool = false,
+                   @secure : Bool? = nil, @http_only : Bool = false,
                    @samesite : SameSite? = nil, @extension : String? = nil,
                    @max_age : Time::Span? = nil, @creation_time = Time.utc)
       validate_name(name)
@@ -45,18 +46,15 @@ module HTTP
       @value = value
       raise IO::Error.new("Invalid max_age") if @max_age.try { |max_age| max_age < Time::Span.zero }
 
-      if @name.starts_with?("__Host-") && @path.nil? && @domain.nil? && secure.nil?
-        @path = "/"
-        secure = true
-      end
-
-      if @name.starts_with?("__Secure-") && secure.nil?
-        secure = true
-      end
-
-      @secure = secure || false
-
+      self.check_prefix
       self.validate!
+    end
+
+    def secure : Bool
+      !!@secure
+    end
+
+    def secure=(@secure : Bool) : Bool
     end
 
     # Sets the name of this cookie.
@@ -65,6 +63,8 @@ module HTTP
     def name=(name : String)
       validate_name(name)
       @name = name
+
+      self.check_prefix
     end
 
     private def validate_name(name)
@@ -173,13 +173,24 @@ module HTTP
     private def valid_secure_prefix? : Bool
       has_secure_prefix = @name.starts_with?("__Secure-")
 
-      !has_secure_prefix || (has_secure_prefix && @secure)
+      !has_secure_prefix || (has_secure_prefix && self.secure)
     end
 
     private def valid_host_prefix? : Bool
       has_host_prefix = @name.starts_with?("__Host-")
 
-      !has_host_prefix || (has_host_prefix && @secure && "/" == @path && @domain.nil?)
+      !has_host_prefix || (has_host_prefix && self.secure && "/" == @path && @domain.nil?)
+    end
+
+    private def check_prefix : Nil
+      if @name.starts_with?("__Host-") && @path.nil? && @domain.nil? && @secure.nil?
+        @path = "/"
+        @secure = true
+      end
+
+      if @name.starts_with?("__Secure-") && @secure.nil?
+        @secure = true
+      end
     end
 
     # :nodoc:
