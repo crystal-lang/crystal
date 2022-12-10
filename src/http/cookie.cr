@@ -50,6 +50,7 @@ module HTTP
       self.validate!
     end
 
+    # Returns `true` if this cookie has the *Secure* flag.
     def secure : Bool
       !!@secure
     end
@@ -165,31 +166,27 @@ module HTTP
     # Raises `ArgumentError` if `self` is not `#valid?`.
     def validate! : self
       raise ArgumentError.new "Invalid cookie name. Has '__Secure-' prefix, but is not secure." unless self.valid_secure_prefix?
-      raise ArgumentError.new "Invalid cookie name. Does not meet '__Host-' prefix requirements." unless self.valid_host_prefix?
+      raise ArgumentError.new "Invalid cookie name. Does not meet '__Host-' prefix requirements of: secure: true, path: \"/\", domain: nil." unless self.valid_host_prefix?
 
       self
     end
 
     private def valid_secure_prefix? : Bool
-      has_secure_prefix = @name.starts_with?("__Secure-")
-
-      !has_secure_prefix || (has_secure_prefix && self.secure)
+      self.secure || !@name.starts_with?("__Secure-")
     end
 
     private def valid_host_prefix? : Bool
-      has_host_prefix = @name.starts_with?("__Host-")
-
-      !has_host_prefix || (has_host_prefix && self.secure && "/" == @path && @domain.nil?)
+      !@name.starts_with?("__Host-") || (self.secure && "/" == @path && @domain.nil?)
     end
 
     private def check_prefix : Nil
-      if @name.starts_with?("__Host-") && @path.nil? && @domain.nil? && @secure.nil?
-        @path = "/"
-        @secure = true
+      if @name.starts_with?("__Host-")
+        @path = "/" if @path.nil?
+        @secure = true if @secure.nil?
       end
 
-      if @name.starts_with?("__Secure-") && @secure.nil?
-        @secure = true
+      if @name.starts_with?("__Secure-")
+        @secure = true if @secure.nil?
       end
     end
 

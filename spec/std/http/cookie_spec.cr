@@ -52,7 +52,7 @@ module HTTP
             HTTP::Cookie.new("__Secure-foo", "bar", secure: false)
           end
 
-          expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements." do
+          expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements of: secure: true, path: \"/\", domain: nil." do
             HTTP::Cookie.new("__Host-foo", "bar", domain: "foo")
           end
         end
@@ -100,11 +100,13 @@ module HTTP
       end
 
       it "doesn't raise on invalid cookie with __Host- prefix" do
-        cookie = HTTP::Cookie.new "x", "", domain: "example.com"
+        cookie = HTTP::Cookie.new "x", "", path: "/foo"
 
         cookie.name = "__Host-x"
         cookie.name.should eq "__Host-x"
-        cookie.secure.should be_false
+        cookie.secure.should be_true
+        cookie.path.should eq "/foo"
+        cookie.valid?.should be_false
       end
 
       it "automatically configures the cookie __Secure- prefix and related properties are unset" do
@@ -115,7 +117,7 @@ module HTTP
         cookie.secure.should be_true
       end
 
-      it "automatically configures the cookie __Host- prefix and related properties are unset" do
+      it "automatically configures the cookie __Host- prefix and related unset properties" do
         cookie = HTTP::Cookie.new "x", ""
 
         cookie.name = "__Host-x"
@@ -175,9 +177,6 @@ module HTTP
         end
 
         cookie.secure = true
-
-        cookie.name = "__Secure-x"
-        cookie.name.should eq "__Secure-x"
         cookie.valid?.should be_true
       end
 
@@ -188,7 +187,7 @@ module HTTP
         cookie.valid?.should be_false
 
         # Not secure
-        expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements." do
+        expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements of: secure: true, path: \"/\", domain: nil." do
           cookie.validate!
         end
 
@@ -196,7 +195,7 @@ module HTTP
         cookie.valid?.should be_false
 
         # Invalid path
-        expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements." do
+        expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements of: secure: true, path: \"/\", domain: nil." do
           cookie.validate!
         end
 
@@ -204,7 +203,7 @@ module HTTP
         cookie.valid?.should be_false
 
         # Has domain
-        expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements." do
+        expect_raises ArgumentError, "Invalid cookie name. Does not meet '__Host-' prefix requirements of: secure: true, path: \"/\", domain: nil." do
           cookie.validate!
         end
 
