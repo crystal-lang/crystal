@@ -370,8 +370,7 @@ module Crystal
       when '(' then next_char :OP_LPAREN
       when ')' then next_char :OP_RPAREN
       when '{'
-        char = next_char
-        case char
+        case next_char
         when '%'
           next_char :OP_LCURLY_PERCENT
         when '{'
@@ -556,24 +555,19 @@ module Crystal
         case next_char
         when '['
           next_char :OP_AT_LSQUARE
+        when '@'
+          next_char
+          consume_variable :CLASS_VAR, start
         else
-          if current_char == '@'
-            next_char
-            consume_variable :CLASS_VAR, start
-          else
-            consume_variable :INSTANCE_VAR, start
-          end
+          consume_variable :INSTANCE_VAR, start
         end
       when '$'
         start = current_pos
-        next_char
-        case current_char
+        case next_char
         when '~'
-          next_char
-          @token.type = :OP_DOLLAR_TILDE
+          next_char :OP_DOLLAR_TILDE
         when '?'
-          next_char
-          @token.type = :OP_DOLLAR_QUESTION
+          next_char :OP_DOLLAR_QUESTION
         when .ascii_number?
           start = current_pos
           if current_char == '0'
@@ -600,8 +594,7 @@ module Crystal
             return check_ident_or_keyword(:alias, start)
           end
         when 's'
-          peek = peek_next_char
-          case peek
+          case peek_next_char
           when 'm'
             next_char
             return check_ident_or_keyword(:asm, start)
@@ -1085,14 +1078,10 @@ module Crystal
     end
 
     def consume_doc
-      char = current_char
-      start_pos = current_pos
-
       # Ignore first whitespace after comment, like in `# some doc`
-      if char == ' '
-        char = next_char
-        start_pos = current_pos
-      end
+      next_char if current_char == ' '
+
+      start_pos = current_pos
 
       skip_comment
 
@@ -2134,17 +2123,14 @@ module Crystal
       has_single_quote = false
       found_closing_single_quote = false
 
-      char = next_char
-      start_here = current_pos
-
-      if char == '\''
+      if next_char == '\''
         has_single_quote = true
-        char = next_char
-        start_here = current_pos
+        next_char
       end
 
-      return nil unless ident_part?(char)
+      return nil unless ident_part?(current_char)
 
+      start_here = current_pos
       end_here = 0
 
       while true
@@ -2505,19 +2491,16 @@ module Crystal
       has_single_quote = false
       found_closing_single_quote = false
 
-      char = next_char
-      start_here = current_pos
-
-      if char == '\''
+      if next_char == '\''
         has_single_quote = true
-        char = next_char
-        start_here = current_pos
+        next_char
       end
 
-      unless ident_part?(char)
+      unless ident_part?(current_char)
         raise "heredoc identifier starts with invalid character"
       end
 
+      start_here = current_pos
       end_here = 0
 
       while true
@@ -2538,18 +2521,18 @@ module Crystal
           # ok
         when char == '\0'
           raise "Unexpected EOF on heredoc identifier"
-        else
-          if char == '\'' && has_single_quote
+        when has_single_quote
+          if char == '\''
             found_closing_single_quote = true
             end_here = current_pos
             next_char
             break
-          elsif has_single_quote
-            # wait until another quote
           else
-            end_here = current_pos
-            break
+            # wait until another quote
           end
+        else
+          end_here = current_pos
+          break
         end
       end
 
