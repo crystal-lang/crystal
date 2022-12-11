@@ -175,7 +175,7 @@ module Crystal
     def visit(node : Def)
       return false unless contains_target(node)
 
-      if @def_with_yield.nil? && !node.yields.nil?
+      if @def_with_yield.nil? && !node.block_arity.nil?
         @def_with_yield = node
         return false
       end
