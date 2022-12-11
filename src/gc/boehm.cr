@@ -107,8 +107,11 @@ lib LibGC
 
   fun size = GC_size(addr : Void*) : LibC::SizeT
 
-  {% unless flag?(:win32) || flag?(:wasm32) %}
-    # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
+  # Boehm GC requires to use its own thread manipulation routines instead of pthread's or Win32's
+  {% if flag?(:win32) %}
+    fun beginthreadex = GC_beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt,
+                                         arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : Void*
+  {% elsif !flag?(:wasm32) %}
     fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*) : LibC::Int
     fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
     fun pthread_detach = GC_pthread_detach(thread : LibC::PthreadT) : LibC::Int
@@ -241,7 +244,14 @@ module GC
       reclaimed_bytes_before_gc: stats.reclaimed_bytes_before_gc.to_u64!)
   end
 
-  {% unless flag?(:win32) %}
+  {% if flag?(:win32) %}
+    # :nodoc:
+    def self.beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt, arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::HANDLE
+      ret = LibGC.beginthreadex(security, stack_size, start_address, arglist, initflag, thrdaddr)
+      raise RuntimeError.from_errno("GC_beginthreadex") if ret.null?
+      ret.as(LibC::HANDLE)
+    end
+  {% else %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
       LibGC.pthread_create(thread, attr, start, arg)
