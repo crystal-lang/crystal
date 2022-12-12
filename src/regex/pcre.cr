@@ -2,8 +2,7 @@ require "./lib_pcre"
 
 # :nodoc:
 module Regex::PCRE
-  # :nodoc:
-  def initialize(*, _source source, _options @options)
+  private def initialize(*, _source source, _options @options)
     # PCRE's pattern must have their null characters escaped
     source = source.gsub('\u{0}', "\\0")
     @source = source
