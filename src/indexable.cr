@@ -699,7 +699,7 @@ module Indexable(T)
   end
 
   # Optimized version of `equals?` used when `other` is also an `Indexable`.
-  def equals?(other : Indexable, &) : Bool
+  def equals?(other : Indexable(U), & : (T, U) -> _) : Bool forall U
     return false if size != other.size
     each_with_index do |item, i|
       return false unless yield(item, other.unsafe_fetch(i))
@@ -809,7 +809,7 @@ module Indexable(T)
   # ([1, 2, 3]).last { 4 }   # => 3
   # ([] of Int32).last { 4 } # => 4
   # ```
-  def last(&block : -> U) : T | U forall U
+  def last(& : -> U) : T | U forall U
     size == 0 ? yield : unsafe_fetch(size - 1)
   end
 

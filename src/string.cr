@@ -277,7 +277,7 @@ class String
   # end
   # str # => "hello 1"
   # ```
-  def self.build(capacity = 64, & : String::Builder ->) : self
+  def self.build(capacity : Int = 64, & : String::Builder ->) : self
     String::Builder.build(capacity) do |builder|
       yield builder
     end
@@ -2640,7 +2640,7 @@ class String
   # ```
   # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
-  def gsub(pattern : Regex, &block : (String, Regex::MatchData) -> String | Char) : String
+  def gsub(pattern : Regex, &block : (String, Regex::MatchData) -> _) : String
     gsub_append(pattern) do |string, match, buffer|
       $~ = match
       buffer << yield string, match
