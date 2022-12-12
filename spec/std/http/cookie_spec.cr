@@ -180,6 +180,16 @@ module HTTP
         cookie.valid?.should be_true
       end
 
+      it "with a __Secure- prefix, but @secure is somehow `nil`" do
+        cookie = HTTP::Cookie.new "__Secure-x", ""
+
+        cookie.valid?.should be_true
+
+        pointerof(cookie.@secure).value = nil
+
+        cookie.valid?.should be_true
+      end
+
       it "raises on invalid cookie with __Host- prefix" do
         cookie = HTTP::Cookie.new "x", "", domain: "example.com", secure: false
         cookie.name = "__Host-x"
