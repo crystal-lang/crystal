@@ -290,7 +290,7 @@ class Object
   # shallow_copy["foo"] # => [1, 2, 3, 4]
   # deep_copy["foo"]    # => [1, 2, 3]
   # ```
-  abstract def dup : self
+  abstract def dup
 
   # Unsafely reinterprets the bytes of an object as being of another `type`.
   #
