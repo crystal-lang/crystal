@@ -85,7 +85,6 @@ describe YAML::Any do
       value.should be_a(Float32)
     end
 
-
     it "gets float64" do
       value = YAML.parse("1.2").as_f
       value.should eq(1.2)
