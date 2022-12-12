@@ -131,25 +131,19 @@ class Object
     end
   end
 
-  # Prints an unambiguous and information-rich string representation of this
-  # object, typically intended for developers, to *io*.
+  # Prints to *io* an unambiguous and information-rich string representation of this
+  # object, typically intended for developers.
   #
-  # The representation should be clearly delimited.
-  # A Crystal expression that recreates an object with the same value (given an
-  # identical environment) is an ideal representation. It doesn't need to be
-  # actual code that compiles, but a resemblance is recommended.
-  # When this is not possible (for example for non-printable internal state)
-  # another useful description will do.
+  # It is similar to `#to_s(IO)`, but often provides more information. Ideally, it should
+  # contain sufficient information to be able to recreate an object with the same value
+  # (given an identical environment).
   #
-  # It is advisable to have an appropriate `#inspect` implementation on every
-  # type. Default implementations are provided by `Struct#inspect` and
-  # `Reference#inspect`.
-  #
-  # It is similar to `#to_s(IO)`, but often provides more information.
   # For types that don't provide a custom implementation of this method,
-  # default implementation delegates to `#to_s(IO)`.
+  # default implementation delegates to `#to_s(IO)`. This said, it is advisable to
+  # have an appropriate `#inspect` implementation on every type. Default
+  # implementations are provided by `Struct#inspect` and `Reference#inspect`.
   #
-  # `::p` and `::p!` use this method to present an object.
+  # `::p` and `::p!` use this method to print an object in `STDOUT`.
   def inspect(io : IO) : Nil
     to_s io
   end
