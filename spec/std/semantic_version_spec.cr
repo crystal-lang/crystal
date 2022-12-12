@@ -99,20 +99,12 @@ describe SemanticVersion do
   end
 
   it "bumps to the correct version" do
-    sversions = %w(
-      1.1.1
-      1.2.0
-      1.2.1
-      2.0.0
-      2.0.1
-      2.1.0
-      3.0.0
-    )
-    versions = sversions.map { |s| SemanticVersion.parse(s) }.to_a
-
-    {% for bump, i in %w(minor patch major patch minor major) %}
-    versions[{{i}}].bump_{{bump.id}}.should eq versions[{{i + 1}}]
-    {% end %}
+    SemanticVersion.new(1, 1, 1).bump_minor.should eq SemanticVersion.new(1, 2, 0)
+    SemanticVersion.new(1, 2, 0).bump_patch.should eq SemanticVersion.new(1, 2, 1)
+    SemanticVersion.new(1, 2, 1).bump_major.should eq SemanticVersion.new(2, 0, 0)
+    SemanticVersion.new(2, 0, 0).bump_patch.should eq SemanticVersion.new(2, 0, 1)
+    SemanticVersion.new(2, 0, 1).bump_minor.should eq SemanticVersion.new(2, 1, 0)
+    SemanticVersion.new(2, 1, 0).bump_major.should eq SemanticVersion.new(3, 0, 0)
 
     version_with_prerelease = SemanticVersion.new(1, 2, 3, "rc", "0001")
     version_with_prerelease.bump_major.should eq SemanticVersion.new(2, 0, 0)

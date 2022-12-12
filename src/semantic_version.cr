@@ -127,8 +127,11 @@ struct SemanticVersion
   # next_patch = current_version.bump_patch # => SemanticVersion(@build=nil, @major=1, @minor=1, @patch=1, @prerelease=SemanticVersion::Prerelease(@identifiers=[]))
   # next_patch.bump_patch # => SemanticVersion(@build=nil, @major=1, @minor=1, @patch=2, @prerelease=SemanticVersion::Prerelease(@identifiers=[]))
   def bump_patch
-    return copy_with(prerelease: nil, build: nil) unless prerelease.identifiers.empty?
-    copy_with(patch: patch + 1, prerelease: nil, build: nil)
+    if prerelease.identifiers.empty?
+      copy_with(patch: patch + 1, prerelease: nil, build: nil)
+    else
+      copy_with(prerelease: nil, build: nil)
+    end
   end
 
   # The comparison operator.
