@@ -1,4 +1,5 @@
 require "c/grp"
+require "../unix"
 
 module Crystal::System::Group
   private GETGR_R_SIZE_MAX = 1024 * 16
@@ -12,16 +13,9 @@ module Crystal::System::Group
 
     grp = uninitialized LibC::Group
     grp_pointer = pointerof(grp)
-    initial_buf = uninitialized UInt8[1024]
-    buf = initial_buf.to_slice
-
-    ret = LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))
-    while ret == LibC::ERANGE && buf.size < GETGR_R_SIZE_MAX
-      buf = Bytes.new(buf.size * 2)
-      ret = LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))
+    System.retry_with_buffer("getgrnam_r", GETGR_R_SIZE_MAX) do |buf|
+      LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))
     end
-
-    raise RuntimeError.from_errno("getgrnam_r") if ret != 0
 
     from_struct(grp) if grp_pointer
   end
@@ -32,17 +26,9 @@ module Crystal::System::Group
 
     grp = uninitialized LibC::Group
     grp_pointer = pointerof(grp)
-    initial_buf = uninitialized UInt8[1024]
-    buf = initial_buf.to_slice
-
-    ret = LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))
-    while ret == LibC::ERANGE && buf.size < GETGR_R_SIZE_MAX
-      buf = Bytes.new(buf.size * 2)
-      ret = LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))
+    System.retry_with_buffer("getgrgid_r", GETGR_R_SIZE_MAX) do |buf|
+      LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))
     end
-
-    raise RuntimeError.from_errno("getgrgid_r") if ret != 0
-
     from_struct(grp) if grp_pointer
   end
 end

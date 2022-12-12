@@ -1,5 +1,6 @@
 require "spec"
 require "big"
+require "../../support/string"
 
 describe BigDecimal do
   it "initializes from valid input" do
@@ -109,6 +110,74 @@ describe BigDecimal do
     expect_raises(InvalidBigDecimalException) do
       BigDecimal.new("1.2a")
     end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1ee1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("e+e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1e1e")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1 e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("..e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("-..e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("e+5")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new(".e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new(".e+1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("-.e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1e.")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1e0.1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1e+")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1.1e-")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("-")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1.0e")
+    end
   end
 
   it "performs arithmetic with bigdecimals" do
@@ -171,6 +240,7 @@ describe BigDecimal do
     BigDecimal.new(500.to_big_i, 0).should eq(BigDecimal.new(-1000) / BigDecimal.new(-2))
     BigDecimal.new(0).should eq(BigDecimal.new(0) / BigDecimal.new(1))
     BigDecimal.new("3333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333".to_big_i, 100_u64).should eq(BigDecimal.new(1) / BigDecimal.new(3))
+    BigDecimal.new(-2000).should eq(BigDecimal.new(-0.02) / (BigDecimal.new(0.00001)))
 
     BigDecimal.new(0).should eq(BigDecimal.new(1) // BigDecimal.new(2))
     BigDecimal.new(-1).should eq(BigDecimal.new(1) // BigDecimal.new(-2))
@@ -183,6 +253,7 @@ describe BigDecimal do
     BigDecimal.new(500).should eq(BigDecimal.new(-1000) // BigDecimal.new(-2))
     BigDecimal.new(0).should eq(BigDecimal.new(0) // BigDecimal.new(1))
     BigDecimal.new(0).should eq(BigDecimal.new(1) // BigDecimal.new(3))
+    BigDecimal.new(-2000).should eq(BigDecimal.new(-0.02) // (BigDecimal.new(0.00001)))
 
     BigDecimal.new(33333.to_big_i, 5_u64).should eq(BigDecimal.new(1).div(BigDecimal.new(3), 5))
     BigDecimal.new(33.to_big_i, 5_u64).should eq(BigDecimal.new(1).div(BigDecimal.new(3000), 5))
@@ -210,33 +281,39 @@ describe BigDecimal do
     result.to_s.should eq("286138.1721051424")
   end
 
+  it "exponentiates with negative powers" do
+    result = "2.0".to_big_d ** -1
+    result.should be_a(BigDecimal)
+    result.to_s.should eq("0.5")
+  end
+
   it "can be converted from other types" do
-    1.to_big_d.should eq (BigDecimal.new(1))
-    "1.5".to_big_d.should eq (BigDecimal.new(15, 1))
-    "+1.5".to_big_d.should eq (BigDecimal.new(15, 1))
-    BigInt.new(15).to_big_d.should eq (BigDecimal.new(15, 0))
-    1.5.to_big_d.should eq (BigDecimal.new(15, 1))
-    1.5.to_big_f.to_big_d.should eq (BigDecimal.new(15, 1))
+    1.to_big_d.should eq(BigDecimal.new(1))
+    "1.5".to_big_d.should eq(BigDecimal.new(15, 1))
+    "+1.5".to_big_d.should eq(BigDecimal.new(15, 1))
+    BigInt.new(15).to_big_d.should eq(BigDecimal.new(15, 0))
+    1.5.to_big_d.should eq(BigDecimal.new(15, 1))
+    1.5.to_big_f.to_big_d.should eq(BigDecimal.new(15, 1))
     1.5.to_big_r.to_big_d.should eq(BigDecimal.new(15, 1))
   end
 
   it "can be converted from scientific notation" do
-    "10.01e1".to_big_d.should eq (BigDecimal.new("100.1"))
-    "10.01e-1".to_big_d.should eq (BigDecimal.new("1.001"))
-    "6.033e2".to_big_d.should eq (BigDecimal.new("603.3"))
-    "603.3e-2".to_big_d.should eq (BigDecimal.new("6.033"))
-    "-0.123e12".to_big_d.should eq (BigDecimal.new("-123000000000"))
-    "0.123e12".to_big_d.should eq (BigDecimal.new("123000000000"))
-    "0.123e+12".to_big_d.should eq (BigDecimal.new("123000000000"))
-    "-0.123e-7".to_big_d.should eq (BigDecimal.new("-0.0000000123"))
-    "-0.1e-7".to_big_d.should eq (BigDecimal.new("-0.00000001"))
-    "0.1e-7".to_big_d.should eq (BigDecimal.new("0.00000001"))
-    "1.0e-8".to_big_d.should eq (BigDecimal.new("0.00000001"))
-    "10e-8".to_big_d.should eq (BigDecimal.new("0.0000001"))
-    "1.0e+8".to_big_d.should eq (BigDecimal.new("100000000"))
-    "10e+8".to_big_d.should eq (BigDecimal.new("1000000000"))
-    "10E+8".to_big_d.should eq (BigDecimal.new("1000000000"))
-    "10E8".to_big_d.should eq (BigDecimal.new("1000000000"))
+    "10.01e1".to_big_d.should eq(BigDecimal.new("100.1"))
+    "10.01e-1".to_big_d.should eq(BigDecimal.new("1.001"))
+    "6.033e2".to_big_d.should eq(BigDecimal.new("603.3"))
+    "603.3e-2".to_big_d.should eq(BigDecimal.new("6.033"))
+    "-0.123e12".to_big_d.should eq(BigDecimal.new("-123000000000"))
+    "0.123e12".to_big_d.should eq(BigDecimal.new("123000000000"))
+    "0.123e+12".to_big_d.should eq(BigDecimal.new("123000000000"))
+    "-0.123e-7".to_big_d.should eq(BigDecimal.new("-0.0000000123"))
+    "-0.1e-7".to_big_d.should eq(BigDecimal.new("-0.00000001"))
+    "0.1e-7".to_big_d.should eq(BigDecimal.new("0.00000001"))
+    "1.0e-8".to_big_d.should eq(BigDecimal.new("0.00000001"))
+    "10e-8".to_big_d.should eq(BigDecimal.new("0.0000001"))
+    "1.0e+8".to_big_d.should eq(BigDecimal.new("100000000"))
+    "10e+8".to_big_d.should eq(BigDecimal.new("1000000000"))
+    "10E+8".to_big_d.should eq(BigDecimal.new("1000000000"))
+    "10E8".to_big_d.should eq(BigDecimal.new("1000000000"))
   end
 
   it "is comparable with other types" do
@@ -306,32 +383,45 @@ describe BigDecimal do
   end
 
   it "converts to string" do
-    BigDecimal.new.to_s.should eq "0"
-    BigDecimal.new(0).to_s.should eq "0"
-    BigDecimal.new(1).to_s.should eq "1"
-    BigDecimal.new(-1).to_s.should eq "-1"
-    BigDecimal.new("-0.35").to_s.should eq "-0.35"
-    BigDecimal.new("-.35").to_s.should eq "-0.35"
-    BigDecimal.new("0.01").to_s.should eq "0.01"
-    BigDecimal.new("-0.01").to_s.should eq "-0.01"
-    BigDecimal.new("0.00123").to_s.should eq "0.00123"
-    BigDecimal.new("-0.00123").to_s.should eq "-0.00123"
-    BigDecimal.new("1.0").to_s.should eq "1"
-    BigDecimal.new("-1.0").to_s.should eq "-1"
-    BigDecimal.new("1.000").to_s.should eq "1"
-    BigDecimal.new("-1.000").to_s.should eq "-1"
-    BigDecimal.new("1.0001").to_s.should eq "1.0001"
-    BigDecimal.new("-1.0001").to_s.should eq "-1.0001"
+    assert_prints BigDecimal.new.to_s, "0.0"
+    assert_prints BigDecimal.new(0).to_s, "0.0"
+    assert_prints BigDecimal.new(1).to_s, "1.0"
+    assert_prints BigDecimal.new(-1).to_s, "-1.0"
+    assert_prints BigDecimal.new("8.5").to_s, "8.5"
+    assert_prints BigDecimal.new("-0.35").to_s, "-0.35"
+    assert_prints BigDecimal.new("-.35").to_s, "-0.35"
+    assert_prints BigDecimal.new("0.01").to_s, "0.01"
+    assert_prints BigDecimal.new("-0.01").to_s, "-0.01"
+    assert_prints BigDecimal.new("0.00123").to_s, "0.00123"
+    assert_prints BigDecimal.new("-0.00123").to_s, "-0.00123"
+    assert_prints BigDecimal.new("1.0").to_s, "1.0"
+    assert_prints BigDecimal.new("-1.0").to_s, "-1.0"
+    assert_prints BigDecimal.new("1.000").to_s, "1.0"
+    assert_prints BigDecimal.new("-1.000").to_s, "-1.0"
+    assert_prints BigDecimal.new("1.0001").to_s, "1.0001"
+    assert_prints BigDecimal.new("-1.0001").to_s, "-1.0001"
 
-    (BigDecimal.new(1).div(BigDecimal.new(3), 9)).to_s.should eq "0.333333333"
-    (BigDecimal.new(1000).div(BigDecimal.new(3000), 9)).to_s.should eq "0.333333333"
-    (BigDecimal.new(1).div(BigDecimal.new(3000), 9)).to_s.should eq "0.000333333"
+    assert_prints BigDecimal.new(1).div(BigDecimal.new(3), 9).to_s, "0.333333333"
+    assert_prints BigDecimal.new(1000).div(BigDecimal.new(3000), 9).to_s, "0.333333333"
+    assert_prints BigDecimal.new(1).div(BigDecimal.new(3000), 9).to_s, "0.000333333"
 
-    (BigDecimal.new("112839719283").div(BigDecimal.new("3123779"), 9)).to_s.should eq "36122.824080384"
-    (BigDecimal.new("112839719283").div(BigDecimal.new("3123779"), 14)).to_s.should eq "36122.8240803846879"
+    assert_prints BigDecimal.new("112839719283").div(BigDecimal.new("3123779"), 9).to_s, "36122.824080384"
+    assert_prints BigDecimal.new("112839719283").div(BigDecimal.new("3123779"), 14).to_s, "36122.8240803846879"
+    assert_prints BigDecimal.new("-0.4098").div(BigDecimal.new("0.2229011193"), 20).to_s, "-1.83848336557007141059"
 
-    BigDecimal.new(1, 2).to_s.should eq "0.01"
-    BigDecimal.new(100, 4).to_s.should eq "0.01"
+    assert_prints BigDecimal.new(1, 2).to_s, "0.01"
+    assert_prints BigDecimal.new(100, 4).to_s, "0.01"
+
+    assert_prints "12345678901234567".to_big_d.to_s, "1.2345678901234567e+16"
+    assert_prints "1234567890123456789".to_big_d.to_s, "1.234567890123456789e+18"
+
+    assert_prints BigDecimal.new(1_000_000_000_000_000_i64, 0).to_s, "1.0e+15"
+    assert_prints BigDecimal.new(100_000_000_000_000_i64, 0).to_s, "100000000000000.0"
+    assert_prints BigDecimal.new(1, 4).to_s, "0.0001"
+    assert_prints BigDecimal.new(1, 5).to_s, "1.0e-5"
+
+    assert_prints "1.23e45".to_big_d.to_s, "1.23e+45"
+    assert_prints "1e-234".to_big_d.to_s, "1.0e-234"
   end
 
   it "converts to other number types" do
@@ -389,7 +479,7 @@ describe BigDecimal do
     bd1 = BigDecimal.new("123.456")
     bd2 = BigDecimal.new("0.12345")
     bd3 = BigDecimal.new("1.23456")
-    bd4 = BigDecimal.new("123456")
+    bd4 = BigDecimal.new("-123456")
     bd5 = BigDecimal.new("0")
 
     hash = {} of BigDecimal => String
@@ -403,7 +493,7 @@ describe BigDecimal do
     hash[BigDecimal.new("123.456")].should eq "bd1"
     hash[BigDecimal.new("0.12345")].should eq "bd2"
     hash[BigDecimal.new("1.23456")].should eq "bd3"
-    hash[BigDecimal.new("123456")].should eq "bd4"
+    hash[BigDecimal.new("-123456")].should eq "bd4"
     hash[BigDecimal.new("0")].should eq "bd5"
 
     # not found
@@ -479,7 +569,230 @@ describe BigDecimal do
     it { -2.91.to_big_d.trunc.should eq(-2) }
   end
 
+  describe "#round" do
+    describe "rounding modes" do
+      it "to_zero" do
+        "-1.5".to_big_d.round(:to_zero).should eq "-1".to_big_d
+        "-1.0".to_big_d.round(:to_zero).should eq "-1".to_big_d
+        "-0.9".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "-0.5".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "-0.1".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "0.0".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "0.1".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "0.5".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "0.9".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "1.0".to_big_d.round(:to_zero).should eq "1".to_big_d
+        "1.5".to_big_d.round(:to_zero).should eq "1".to_big_d
+
+        "123456789123456789123.0".to_big_d.round(:to_zero).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.1".to_big_d.round(:to_zero).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.5".to_big_d.round(:to_zero).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.9".to_big_d.round(:to_zero).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789124.0".to_big_d.round(:to_zero).should eq "123456789123456789124.0".to_big_d
+        "-123456789123456789123.0".to_big_d.round(:to_zero).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.1".to_big_d.round(:to_zero).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.5".to_big_d.round(:to_zero).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.9".to_big_d.round(:to_zero).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789124.0".to_big_d.round(:to_zero).should eq "-123456789123456789124.0".to_big_d
+      end
+
+      it "to_positive" do
+        "-1.5".to_big_d.round(:to_positive).should eq "-1".to_big_d
+        "-1.0".to_big_d.round(:to_positive).should eq "-1".to_big_d
+        "-0.9".to_big_d.round(:to_positive).should eq "0".to_big_d
+        "-0.5".to_big_d.round(:to_positive).should eq "0".to_big_d
+        "-0.1".to_big_d.round(:to_positive).should eq "0".to_big_d
+        "0.0".to_big_d.round(:to_positive).should eq "0".to_big_d
+        "0.1".to_big_d.round(:to_positive).should eq "1".to_big_d
+        "0.5".to_big_d.round(:to_positive).should eq "1".to_big_d
+        "0.9".to_big_d.round(:to_positive).should eq "1".to_big_d
+        "1.0".to_big_d.round(:to_positive).should eq "1".to_big_d
+        "1.5".to_big_d.round(:to_positive).should eq "2".to_big_d
+
+        "123456789123456789123.0".to_big_d.round(:to_positive).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.1".to_big_d.round(:to_positive).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789123.5".to_big_d.round(:to_positive).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789123.9".to_big_d.round(:to_positive).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.0".to_big_d.round(:to_positive).should eq "123456789123456789124.0".to_big_d
+        "-123456789123456789123.0".to_big_d.round(:to_positive).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.1".to_big_d.round(:to_positive).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.5".to_big_d.round(:to_positive).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.9".to_big_d.round(:to_positive).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789124.0".to_big_d.round(:to_positive).should eq "-123456789123456789124.0".to_big_d
+      end
+
+      it "to_negative" do
+        "-1.5".to_big_d.round(:to_negative).should eq "-2.0".to_big_d
+        "-1.0".to_big_d.round(:to_negative).should eq "-1.0".to_big_d
+        "-0.9".to_big_d.round(:to_negative).should eq "-1.0".to_big_d
+        "-0.5".to_big_d.round(:to_negative).should eq "-1.0".to_big_d
+        "-0.1".to_big_d.round(:to_negative).should eq "-1.0".to_big_d
+        "0.0".to_big_d.round(:to_negative).should eq "0.0".to_big_d
+        "0.1".to_big_d.round(:to_negative).should eq "0.0".to_big_d
+        "0.5".to_big_d.round(:to_negative).should eq "0.0".to_big_d
+        "0.9".to_big_d.round(:to_negative).should eq "0.0".to_big_d
+        "1.0".to_big_d.round(:to_negative).should eq "1.0".to_big_d
+        "1.5".to_big_d.round(:to_negative).should eq "1.0".to_big_d
+
+        "123456789123456789123.0".to_big_d.round(:to_negative).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.1".to_big_d.round(:to_negative).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.5".to_big_d.round(:to_negative).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.9".to_big_d.round(:to_negative).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789124.0".to_big_d.round(:to_negative).should eq "123456789123456789124.0".to_big_d
+        "-123456789123456789123.0".to_big_d.round(:to_negative).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.1".to_big_d.round(:to_negative).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789123.5".to_big_d.round(:to_negative).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789123.9".to_big_d.round(:to_negative).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.0".to_big_d.round(:to_negative).should eq "-123456789123456789124.0".to_big_d
+      end
+
+      it "ties_even" do
+        "-2.5".to_big_d.round(:ties_even).should eq "-2.0".to_big_d
+        "-1.5".to_big_d.round(:ties_even).should eq "-2.0".to_big_d
+        "-1.0".to_big_d.round(:ties_even).should eq "-1.0".to_big_d
+        "-0.9".to_big_d.round(:ties_even).should eq "-1.0".to_big_d
+        "-0.5".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "-0.1".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "0.0".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "0.1".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "0.5".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "0.9".to_big_d.round(:ties_even).should eq "1.0".to_big_d
+        "1.0".to_big_d.round(:ties_even).should eq "1.0".to_big_d
+        "1.5".to_big_d.round(:ties_even).should eq "2.0".to_big_d
+        "2.5".to_big_d.round(:ties_even).should eq "2.0".to_big_d
+
+        "123456789123456789123.0".to_big_d.round(:ties_even).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.1".to_big_d.round(:ties_even).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.5".to_big_d.round(:ties_even).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789123.9".to_big_d.round(:ties_even).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.0".to_big_d.round(:ties_even).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.5".to_big_d.round(:ties_even).should eq "123456789123456789124.0".to_big_d
+        "-123456789123456789123.0".to_big_d.round(:ties_even).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.1".to_big_d.round(:ties_even).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.5".to_big_d.round(:ties_even).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789123.9".to_big_d.round(:ties_even).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.0".to_big_d.round(:ties_even).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.5".to_big_d.round(:ties_even).should eq "-123456789123456789124.0".to_big_d
+      end
+
+      it "ties_away" do
+        "-2.5".to_big_d.round(:ties_away).should eq "-3.0".to_big_d
+        "-1.5".to_big_d.round(:ties_away).should eq "-2.0".to_big_d
+        "-1.0".to_big_d.round(:ties_away).should eq "-1.0".to_big_d
+        "-0.9".to_big_d.round(:ties_away).should eq "-1.0".to_big_d
+        "-0.5".to_big_d.round(:ties_away).should eq "-1.0".to_big_d
+        "-0.1".to_big_d.round(:ties_away).should eq "0.0".to_big_d
+        "0.0".to_big_d.round(:ties_away).should eq "0.0".to_big_d
+        "0.1".to_big_d.round(:ties_away).should eq "0.0".to_big_d
+        "0.5".to_big_d.round(:ties_away).should eq "1.0".to_big_d
+        "0.9".to_big_d.round(:ties_away).should eq "1.0".to_big_d
+        "1.0".to_big_d.round(:ties_away).should eq "1.0".to_big_d
+        "1.5".to_big_d.round(:ties_away).should eq "2.0".to_big_d
+        "2.5".to_big_d.round(:ties_away).should eq "3.0".to_big_d
+
+        "123456789123456789123.0".to_big_d.round(:ties_away).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.1".to_big_d.round(:ties_away).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.5".to_big_d.round(:ties_away).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789123.9".to_big_d.round(:ties_away).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.0".to_big_d.round(:ties_away).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.5".to_big_d.round(:ties_away).should eq "123456789123456789125.0".to_big_d
+        "-123456789123456789123.0".to_big_d.round(:ties_away).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.1".to_big_d.round(:ties_away).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.5".to_big_d.round(:ties_away).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789123.9".to_big_d.round(:ties_away).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.0".to_big_d.round(:ties_away).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.5".to_big_d.round(:ties_away).should eq "-123456789123456789125.0".to_big_d
+      end
+
+      it "default (=ties_even)" do
+        "-2.5".to_big_d.round.should eq "-2.0".to_big_d
+        "-1.5".to_big_d.round.should eq "-2.0".to_big_d
+        "-1.0".to_big_d.round.should eq "-1.0".to_big_d
+        "-0.9".to_big_d.round.should eq "-1.0".to_big_d
+        "-0.5".to_big_d.round.should eq "0.0".to_big_d
+        "-0.1".to_big_d.round.should eq "0.0".to_big_d
+        "0.0".to_big_d.round.should eq "0.0".to_big_d
+        "0.1".to_big_d.round.should eq "0.0".to_big_d
+        "0.5".to_big_d.round.should eq "0.0".to_big_d
+        "0.9".to_big_d.round.should eq "1.0".to_big_d
+        "1.0".to_big_d.round.should eq "1.0".to_big_d
+        "1.5".to_big_d.round.should eq "2.0".to_big_d
+        "2.5".to_big_d.round.should eq "2.0".to_big_d
+
+        "123456789123456789123.0".to_big_d.round.should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.1".to_big_d.round.should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.5".to_big_d.round.should eq "123456789123456789124.0".to_big_d
+        "123456789123456789123.9".to_big_d.round.should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.0".to_big_d.round.should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.5".to_big_d.round.should eq "123456789123456789124.0".to_big_d
+        "-123456789123456789123.0".to_big_d.round.should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.1".to_big_d.round.should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.5".to_big_d.round.should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789123.9".to_big_d.round.should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.0".to_big_d.round.should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.5".to_big_d.round.should eq "-123456789123456789124.0".to_big_d
+      end
+    end
+
+    describe "with digits" do
+      it "to_zero" do
+        "12.345".to_big_d.round(-1, mode: :to_zero).should eq "10".to_big_d
+        "12.345".to_big_d.round(0, mode: :to_zero).should eq "12".to_big_d
+        "12.345".to_big_d.round(1, mode: :to_zero).should eq "12.3".to_big_d
+        "12.345".to_big_d.round(2, mode: :to_zero).should eq "12.34".to_big_d
+        "-12.345".to_big_d.round(-1, mode: :to_zero).should eq "-10".to_big_d
+        "-12.345".to_big_d.round(0, mode: :to_zero).should eq "-12".to_big_d
+        "-12.345".to_big_d.round(1, mode: :to_zero).should eq "-12.3".to_big_d
+        "-12.345".to_big_d.round(2, mode: :to_zero).should eq "-12.34".to_big_d
+      end
+
+      it "to_positive" do
+        "12.345".to_big_d.round(-1, mode: :to_positive).should eq "20".to_big_d
+        "12.345".to_big_d.round(0, mode: :to_positive).should eq "13".to_big_d
+        "12.345".to_big_d.round(1, mode: :to_positive).should eq "12.4".to_big_d
+        "12.345".to_big_d.round(2, mode: :to_positive).should eq "12.35".to_big_d
+        "-12.345".to_big_d.round(-1, mode: :to_positive).should eq "-10".to_big_d
+        "-12.345".to_big_d.round(0, mode: :to_positive).should eq "-12".to_big_d
+        "-12.345".to_big_d.round(1, mode: :to_positive).should eq "-12.3".to_big_d
+        "-12.345".to_big_d.round(2, mode: :to_positive).should eq "-12.34".to_big_d
+      end
+
+      it "to_negative" do
+        "12.345".to_big_d.round(-1, mode: :to_negative).should eq "10".to_big_d
+        "12.345".to_big_d.round(0, mode: :to_negative).should eq "12".to_big_d
+        "12.345".to_big_d.round(1, mode: :to_negative).should eq "12.3".to_big_d
+        "12.345".to_big_d.round(2, mode: :to_negative).should eq "12.34".to_big_d
+        "-12.345".to_big_d.round(-1, mode: :to_negative).should eq "-20".to_big_d
+        "-12.345".to_big_d.round(0, mode: :to_negative).should eq "-13".to_big_d
+        "-12.345".to_big_d.round(1, mode: :to_negative).should eq "-12.4".to_big_d
+        "-12.345".to_big_d.round(2, mode: :to_negative).should eq "-12.35".to_big_d
+      end
+
+      it "ties_away" do
+        "13.825".to_big_d.round(-1, mode: :ties_away).should eq "10".to_big_d
+        "13.825".to_big_d.round(0, mode: :ties_away).should eq "14".to_big_d
+        "13.825".to_big_d.round(1, mode: :ties_away).should eq "13.8".to_big_d
+        "13.825".to_big_d.round(2, mode: :ties_away).should eq "13.83".to_big_d
+        "-13.825".to_big_d.round(-1, mode: :ties_away).should eq "-10".to_big_d
+        "-13.825".to_big_d.round(0, mode: :ties_away).should eq "-14".to_big_d
+        "-13.825".to_big_d.round(1, mode: :ties_away).should eq "-13.8".to_big_d
+        "-13.825".to_big_d.round(2, mode: :ties_away).should eq "-13.83".to_big_d
+      end
+
+      it "ties_even" do
+        "15.255".to_big_d.round(-1, mode: :ties_even).should eq "20".to_big_d
+        "15.255".to_big_d.round(0, mode: :ties_even).should eq "15".to_big_d
+        "15.255".to_big_d.round(1, mode: :ties_even).should eq "15.3".to_big_d
+        "15.255".to_big_d.round(2, mode: :ties_even).should eq "15.26".to_big_d
+        "-15.255".to_big_d.round(-1, mode: :ties_even).should eq "-20".to_big_d
+        "-15.255".to_big_d.round(0, mode: :ties_even).should eq "-15".to_big_d
+        "-15.255".to_big_d.round(1, mode: :ties_even).should eq "-15.3".to_big_d
+        "-15.255".to_big_d.round(2, mode: :ties_even).should eq "-15.26".to_big_d
+      end
+    end
+  end
+
   describe "#inspect" do
-    it { "123".to_big_d.inspect.should eq("123") }
+    it { "123".to_big_d.inspect.should eq("123.0") }
   end
 end

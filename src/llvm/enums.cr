@@ -60,6 +60,7 @@ module LLVM
       ZExt
 
       @@kind_ids = load_llvm_kinds_from_names.as(Hash(Attribute, UInt32))
+      @@typed_attrs = load_llvm_typed_attributes.as(Array(Attribute))
 
       def each_kind(&block)
         return if value == 0
@@ -137,12 +138,34 @@ module LLVM
         kinds
       end
 
+      private def self.load_llvm_typed_attributes
+        typed_attrs = [] of Attribute
+
+        unless LibLLVM::IS_LT_120
+          # LLVM 12 introduced mandatory type parameters for byval and sret
+          typed_attrs << ByVal
+          typed_attrs << StructRet
+        end
+
+        unless LibLLVM::IS_LT_130
+          # LLVM 13 manadates type params for inalloca
+          typed_attrs << InAlloca
+        end
+
+        typed_attrs
+      end
+
       def self.kind_for(member)
         @@kind_ids[member]
       end
 
       def self.from_kind(kind)
         @@kind_ids.key_for(kind)
+      end
+
+      def self.requires_type?(kind)
+        member = from_kind(kind)
+        @@typed_attrs.includes?(member)
       end
     end
   {% else %}
@@ -197,13 +220,23 @@ module LLVM
     Appending
     Internal
     Private
-    DLLImport
-    DLLExport
+    DLLImport # obsolete
+    DLLExport # obsolete
     ExternalWeak
     Ghost
     Common
     LinkerPrivate
     LinkerPrivateWeak
+  end
+
+  enum DLLStorageClass
+    Default
+
+    # Function to be imported from DLL.
+    DLLImport
+
+    # Function to be accessible from DLL.
+    DLLExport
   end
 
   enum IntPredicate
@@ -328,30 +361,6 @@ module LLVM
     HiUser         = 0xff
   end
 
-  enum AtomicOrdering
-    NotAtomic              = 0
-    Unordered              = 1
-    Monotonic              = 2
-    Acquire                = 4
-    Release                = 5
-    AcquireRelease         = 6
-    SequentiallyConsistent = 7
-  end
-
-  enum AtomicRMWBinOp
-    Xchg
-    Add
-    Sub
-    And
-    Nand
-    Or
-    Xor
-    Max
-    Min
-    UMax
-    UMin
-  end
-
   enum DIFlags : UInt32
     Zero                = 0
     Private             = 1
@@ -421,10 +430,6 @@ module LLVM
     end
   end
 
-  enum ModuleFlag : Int32
-    Warning = 2
-  end
-
   struct Metadata
     enum Type : UInt32
       Dbg                   =  0 # "dbg"
@@ -458,3 +463,5 @@ module LLVM
     end
   end
 end
+
+require "./enums/*"

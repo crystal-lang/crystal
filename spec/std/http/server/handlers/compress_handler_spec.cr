@@ -127,7 +127,7 @@ describe HTTP::CompressHandler do
     response.close
 
     io.rewind
-    io.to_s.should eq("HTTP/1.1 304 Not Modified\r\nContent-Length: 0\r\n\r\n")
+    io.to_s.should eq("HTTP/1.1 304 Not Modified\r\n\r\n")
   end
 
   it "don't try to compress upgraded response" do

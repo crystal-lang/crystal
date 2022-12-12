@@ -80,6 +80,23 @@ describe "Semantic: recursive struct check" do
     ex.to_s.should contain "`@moo : Moo` -> `Moo` -> `Foo`"
   end
 
+  pending "errors on recursive abstract struct through module (#11384)" do
+    ex = assert_error %(
+      module Moo
+      end
+
+      abstract struct Foo
+        include Moo
+
+        def initialize(@moo : Moo)
+        end
+      end
+      ),
+      "recursive struct Foo detected"
+
+    ex.to_s.should contain "`@moo : Moo` -> `Moo` -> `Foo`"
+  end
+
   it "detects recursive generic struct through module (#4720)" do
     ex = assert_error %(
       module Bar
@@ -166,5 +183,16 @@ describe "Semantic: recursive struct check" do
       "recursive struct Foo detected (recursive aliases are structs)"
 
     ex.to_s.should contain "`(Bar(Foo) | Int32)` -> `Bar(Foo)` -> `@x : Foo`"
+  end
+
+  it "errors on private recursive type" do
+    assert_error <<-CRYSTAL, "recursive struct Test detected"
+      private struct Test
+        def initialize(@test : Test?)
+        end
+      end
+
+      Test.new(Test.new(nil))
+      CRYSTAL
   end
 end

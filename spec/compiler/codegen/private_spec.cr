@@ -42,6 +42,46 @@ describe "Codegen: private" do
     end
   end
 
+  it "codegens class var of private type with same name as public type (#11620)" do
+    src1 = Compiler::Source.new("foo.cr", <<-CRYSTAL)
+      module Foo
+        @@x = true
+      end
+      CRYSTAL
+
+    src2 = Compiler::Source.new("foo_private.cr", <<-CRYSTAL)
+      private module Foo
+        @@x = 1
+      end
+      CRYSTAL
+
+    compiler = create_spec_compiler
+    compiler.prelude = "empty"
+    with_temp_executable "crystal-spec-output" do |output_filename|
+      compiler.compile [src1, src2], output_filename
+    end
+  end
+
+  it "codegens class vars of private types with same name (#11620)" do
+    src1 = Compiler::Source.new("foo1.cr", <<-CRYSTAL)
+      private module Foo
+        @@x = true
+      end
+      CRYSTAL
+
+    src2 = Compiler::Source.new("foo2.cr", <<-CRYSTAL)
+      private module Foo
+        @@x = 1
+      end
+      CRYSTAL
+
+    compiler = create_spec_compiler
+    compiler.prelude = "empty"
+    with_temp_executable "crystal-spec-output" do |output_filename|
+      compiler.compile [src1, src2], output_filename
+    end
+  end
+
   it "doesn't include filename for private types" do
     run(%(
       private class Foo

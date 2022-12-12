@@ -38,6 +38,32 @@ describe "Semantic: sizeof" do
       "instance_sizeof can only be used with a class, but Foo is a struct"
   end
 
+  it "gives error if using instance_sizeof on an abstract struct (#11855)" do
+    assert_error %(
+      abstract struct Foo
+      end
+
+      instance_sizeof(Foo)
+      ),
+      "instance_sizeof can only be used with a class, but Foo is a struct"
+  end
+
+  it "gives error if using instance_sizeof on an abstract struct with multiple subtypes (#11855)" do
+    assert_error %(
+      abstract struct Foo
+      end
+
+      struct Child1 < Foo
+      end
+
+      struct Child2 < Foo
+      end
+
+      instance_sizeof(Foo)
+      ),
+      "instance_sizeof can only be used with a class, but Foo is a struct"
+  end
+
   it "gives error if using instance_sizeof on a module" do
     assert_error %(
       module Moo
@@ -46,6 +72,15 @@ describe "Semantic: sizeof" do
       instance_sizeof(Moo)
       ),
       "instance_sizeof can only be used with a class, but Moo is a module"
+  end
+
+  it "gives error if using instance_sizeof on a metaclass" do
+    assert_error <<-CRYSTAL, "instance_sizeof can only be used with a class, but Foo.class is a metaclass"
+      class Foo
+      end
+
+      instance_sizeof(Foo.class)
+      CRYSTAL
   end
 
   it "gives error if using instance_sizeof on a generic type without type vars" do

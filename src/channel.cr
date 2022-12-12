@@ -101,7 +101,7 @@ class Channel(T)
     def initialize(@state, @action : SelectAction(S))
     end
 
-    def activated?
+    def activated? : Bool
       @activated
     end
 
@@ -205,7 +205,7 @@ class Channel(T)
     true
   end
 
-  def closed?
+  def closed? : Bool
     @closed
   end
 
@@ -214,7 +214,7 @@ class Channel(T)
   # Otherwise, this method blocks the calling fiber until another fiber calls `#receive` on the channel.
   #
   # Raises `ClosedError` if the channel is closed or closes while waiting on a full channel.
-  def send(value : T)
+  def send(value : T) : self
     sender = Sender(T).new
 
     @lock.lock
@@ -384,16 +384,16 @@ class Channel(T)
     receive_first channels
   end
 
-  def self.receive_first(channels : Tuple | Array)
+  def self.receive_first(channels : Enumerable(Channel))
     _, value = self.select(channels.map(&.receive_select_action))
     value
   end
 
-  def self.send_first(value, *channels)
+  def self.send_first(value, *channels) : Nil
     send_first value, channels
   end
 
-  def self.send_first(value, channels : Tuple | Array)
+  def self.send_first(value, channels : Enumerable(Channel)) : Nil
     self.select(channels.map(&.send_select_action(value)))
     nil
   end
@@ -425,20 +425,19 @@ class Channel(T)
     # This is to avoid deadlocks between concurrent `select` calls
     ops_locks = ops
       .to_a
-      .uniq(&.lock_object_id)
-      .sort_by(&.lock_object_id)
+      .unstable_sort_by!(&.lock_object_id)
 
-    ops_locks.each &.lock
+    each_skip_duplicates(ops_locks, &.lock)
 
     ops.each_with_index do |op, index|
       state = op.execute
 
       case state
       in .delivered?
-        ops_locks.each &.unlock
+        each_skip_duplicates(ops_locks, &.unlock)
         return index, op.result
       in .closed?
-        ops_locks.each &.unlock
+        each_skip_duplicates(ops_locks, &.unlock)
         return index, op.default_result
       in .none?
         # do nothing
@@ -446,7 +445,7 @@ class Channel(T)
     end
 
     if non_blocking
-      ops_locks.each &.unlock
+      each_skip_duplicates(ops_locks, &.unlock)
       return ops.size, NotReady.new
     end
 
@@ -456,7 +455,7 @@ class Channel(T)
     shared_state = SelectContextSharedState.new(SelectState::Active)
     contexts = ops.map &.create_context_and_wait(shared_state)
 
-    ops_locks.each &.unlock
+    each_skip_duplicates(ops_locks, &.unlock)
     Crystal::Scheduler.reschedule
 
     contexts.each_with_index do |context, index|
@@ -473,6 +472,19 @@ class Channel(T)
     end
 
     raise "BUG: Fiber was awaken from select but no action was activated"
+  end
+
+  private def self.each_skip_duplicates(ops_locks)
+    # Avoid deadlocks from trying to lock the same lock twice.
+    # `ops_lock` is sorted by `lock_object_id`, so identical onces will be in
+    # a row and we skip repeats while iterating.
+    last_lock_id = nil
+    ops_locks.each do |op|
+      if op.lock_object_id != last_lock_id
+        last_lock_id = op.lock_object_id
+        yield op
+      end
+    end
   end
 
   # :nodoc:
@@ -512,7 +524,7 @@ class Channel(T)
       @receiver.data
     end
 
-    def wait(context : SelectContext(T))
+    def wait(context : SelectContext(T)) : Nil
       @receiver.fiber = Fiber.current
       @receiver.select_context = context
       @channel.@receivers.push pointerof(@receiver)
@@ -535,15 +547,15 @@ class Channel(T)
       end
     end
 
-    def lock_object_id
+    def lock_object_id : UInt64
       @channel.object_id
     end
 
-    def lock
+    def lock : Nil
       @channel.@lock.lock
     end
 
-    def unlock
+    def unlock : Nil
       @channel.@lock.unlock
     end
 
@@ -574,7 +586,7 @@ class Channel(T)
       @receiver.data
     end
 
-    def wait(context : SelectContext(T))
+    def wait(context : SelectContext(T)) : Nil
       @receiver.fiber = Fiber.current
       @receiver.select_context = context
       @channel.@receivers.push pointerof(@receiver)
@@ -597,15 +609,15 @@ class Channel(T)
       end
     end
 
-    def lock_object_id
+    def lock_object_id : UInt64
       @channel.object_id
     end
 
-    def lock
+    def lock : Nil
       @channel.@lock.lock
     end
 
-    def unlock
+    def unlock : Nil
       @channel.@lock.unlock
     end
 
@@ -631,7 +643,7 @@ class Channel(T)
       nil
     end
 
-    def wait(context : SelectContext(Nil))
+    def wait(context : SelectContext(Nil)) : Nil
       @sender.fiber = Fiber.current
       @sender.select_context = context
       @channel.@senders.push pointerof(@sender)
@@ -654,15 +666,15 @@ class Channel(T)
       end
     end
 
-    def lock_object_id
+    def lock_object_id : UInt64
       @channel.object_id
     end
 
-    def lock
+    def lock : Nil
       @channel.@lock.lock
     end
 
-    def unlock
+    def unlock : Nil
       @channel.@lock.unlock
     end
 
@@ -690,7 +702,7 @@ class Channel(T)
       nil
     end
 
-    def wait(context : SelectContext(Nil))
+    def wait(context : SelectContext(Nil)) : Nil
       @select_context = context
       Fiber.timeout(@timeout, self)
     end
@@ -703,7 +715,7 @@ class Channel(T)
       Fiber.cancel_timeout
     end
 
-    def lock_object_id
+    def lock_object_id : UInt64
       self.object_id
     end
 
@@ -733,9 +745,6 @@ end
 # ```
 #
 # NOTE: It won't trigger if the `select` has an `else` case (i.e.: a non-blocking select).
-#
-# NOTE: Using negative amounts will cause the timeout to not trigger.
-#
-def timeout_select_action(timeout : Time::Span)
+def timeout_select_action(timeout : Time::Span) : Channel::TimeoutAction
   Channel::TimeoutAction.new(timeout)
 end

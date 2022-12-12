@@ -14,10 +14,11 @@
 # `Int32`, etc., use the `as_` methods, such as `#as_s`, `#as_i`, which perform
 # a type check against the raw underlying value. This means that invoking `#as_s`
 # when the underlying value is not a String will raise: the value won't automatically
-# be converted (parsed) to a `String`.
+# be converted (parsed) to a `String`. There are also nil-able variants (`#as_i?`, `#as_s?`, ...),
+# which return `nil` when the underlying value type won't match.
 struct JSON::Any
   # All possible JSON types.
-  alias Type = Nil | Bool | Int64 | Float64 | String | Array(Any) | Hash(String, Any)
+  alias Type = Nil | Bool | Int64 | Float64 | String | Array(JSON::Any) | Hash(String, JSON::Any)
 
   # Reads a `JSON::Any` value from the given pull parser.
   def self.new(pull : JSON::PullParser)
@@ -223,34 +224,32 @@ struct JSON::Any
 
   # Checks that the underlying value is `Array`, and returns its value.
   # Raises otherwise.
-  def as_a : Array(Any)
+  def as_a : Array(JSON::Any)
     @raw.as(Array)
   end
 
   # Checks that the underlying value is `Array`, and returns its value.
   # Returns `nil` otherwise.
-  def as_a? : Array(Any)?
+  def as_a? : Array(JSON::Any)?
     as_a if @raw.is_a?(Array)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
   # Raises otherwise.
-  def as_h : Hash(String, Any)
+  def as_h : Hash(String, JSON::Any)
     @raw.as(Hash)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
   # Returns `nil` otherwise.
-  def as_h? : Hash(String, Any)?
+  def as_h? : Hash(String, JSON::Any)?
     as_h if @raw.is_a?(Hash)
   end
 
-  # :nodoc:
   def inspect(io : IO) : Nil
     @raw.inspect(io)
   end
 
-  # :nodoc:
   def to_s(io : IO) : Nil
     @raw.to_s(io)
   end
@@ -278,18 +277,18 @@ struct JSON::Any
     raw.to_json(json)
   end
 
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     raw.to_yaml(yaml)
   end
 
   # Returns a new JSON::Any instance with the `raw` value `dup`ed.
   def dup
-    Any.new(raw.dup)
+    JSON::Any.new(raw.dup)
   end
 
   # Returns a new JSON::Any instance with the `raw` value `clone`ed.
   def clone
-    Any.new(raw.clone)
+    JSON::Any.new(raw.clone)
   end
 end
 

@@ -12,21 +12,21 @@ class Time::Location
   end
 
   # :nodoc:
-  def self.load?(name : String, sources : Enumerable(String))
+  def self.load?(name : String, sources : Enumerable(String)) : Time::Location?
     if source = find_zoneinfo_file(name, sources)
       load_from_dir_or_zip(name, source)
     end
   end
 
   # :nodoc:
-  def self.load(name : String, sources : Enumerable(String))
+  def self.load(name : String, sources : Enumerable(String)) : Time::Location?
     if source = find_zoneinfo_file(name, sources)
       load_from_dir_or_zip(name, source) || raise InvalidLocationNameError.new(name, source)
     end
   end
 
   # :nodoc:
-  def self.load_from_dir_or_zip(name : String, source : String)
+  def self.load_from_dir_or_zip(name : String, source : String) : Time::Location?
     if source.ends_with?(".zip")
       open_file_cached(name, source) do |file|
         read_zip_file(name, file) do |io|
@@ -46,7 +46,7 @@ class Time::Location
 
     mtime = File.info(path).modification_time
     if (cache = @@location_cache[name]?) && cache[:time] == mtime
-      return cache[:location]
+      cache[:location]
     else
       File.open(path) do |file|
         location = yield file
@@ -60,14 +60,15 @@ class Time::Location
   end
 
   # :nodoc:
-  def self.find_zoneinfo_file(name : String, sources : Enumerable(String))
+  def self.find_zoneinfo_file(name : String, sources : Enumerable(String)) : String?
     sources.each do |source|
       if source.ends_with?(".zip")
-        return source if File.exists?(source)
+        path = source
       else
         path = File.join(source, name)
-        return source if File.exists?(path)
       end
+
+      return source if File.exists?(path) && File.file?(path) && File.readable?(path)
     end
   end
 
@@ -76,7 +77,7 @@ class Time::Location
   # See https://data.iana.org/time-zones/tz-link.html, https://github.com/eggert/tz, tzfile(5)
 
   # :nodoc:
-  def self.read_zoneinfo(location_name : String, io : IO)
+  def self.read_zoneinfo(location_name : String, io : IO) : Time::Location
     raise InvalidTZDataError.new unless io.read_string(4) == "TZif"
 
     # 1-byte version, then 15 bytes of padding
@@ -145,6 +146,8 @@ class Time::Location
     end
 
     new(location_name, zones, transitions)
+  rescue exc : IO::Error
+    raise InvalidTZDataError.new(cause: exc)
   end
 
   private def self.read_int32(io : IO)

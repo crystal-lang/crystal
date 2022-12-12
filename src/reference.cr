@@ -25,7 +25,7 @@ class Reference
 
   # Returns `true` if this reference is the same as *other*. This is only
   # `true` if this reference's `object_id` is the same as *other*'s.
-  def same?(other : Reference)
+  def same?(other : Reference) : Bool
     object_id == other.object_id
   end
 
@@ -38,7 +38,7 @@ class Reference
   #
   # This allocates a new object and copies the contents of
   # `self` into it.
-  def dup : self
+  def dup
     {% if @type.abstract? %}
       # This shouldn't happen, as the type is abstract,
       # but we need to avoid the allocate invocation below

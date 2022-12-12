@@ -269,7 +269,7 @@ describe "Semantic: private" do
       end
 
       Foo.new(10).foo
-      )) { int32 }
+      ), inject_primitives: true) { int32 }
   end
 
   it "can use class var initializer in private type" do
@@ -283,7 +283,7 @@ describe "Semantic: private" do
       end
 
       Foo.x
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 
   it "can use instance var initializer in private type" do
@@ -297,7 +297,7 @@ describe "Semantic: private" do
       end
 
       Foo.new.x
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 
   it "finds private class in macro expansion" do
@@ -315,7 +315,7 @@ describe "Semantic: private" do
       end
 
       foo
-      ), inject_primitives: false) { int32 }
+      )) { int32 }
   end
 
   it "doesn't find private class from outside namespace" do
@@ -461,8 +461,7 @@ describe "Semantic: private" do
 
       Foo::Bar
       ),
-      "private constant Foo::Bar referenced",
-      inject_primitives: false
+      "private constant Foo::Bar referenced"
   end
 
   it "doesn't find private module defined through macro (#8715)" do
@@ -478,8 +477,7 @@ describe "Semantic: private" do
 
       Foo::Bar
       ),
-      "private constant Foo::Bar referenced",
-      inject_primitives: false
+      "private constant Foo::Bar referenced"
   end
 
   it "doesn't find private macro defined through macro (#8715)" do
@@ -495,8 +493,7 @@ describe "Semantic: private" do
 
       Foo.bar
       ),
-      "private macro 'bar' called for Foo",
-      inject_primitives: false
+      "private macro 'bar' called for Foo"
   end
 
   it "doesn't find private thing defined through recursive macro (#8715)" do
@@ -516,12 +513,11 @@ describe "Semantic: private" do
 
       Foo::Bar
       ),
-      "private constant Foo::Bar referenced",
-      inject_primitives: false
+      "private constant Foo::Bar referenced"
   end
 
   it "doesn't inherit visibility from class node in macro hook (#8794)" do
-    semantic(%(
+    assert_no_errors <<-CRYSTAL
       module M1
         macro included
           include M2
@@ -563,6 +559,6 @@ describe "Semantic: private" do
       end
 
       Foo.new(1)
-      ), inject_primitives: false)
+      CRYSTAL
   end
 end
