@@ -187,7 +187,7 @@ module HTTP
 
         pointerof(cookie.@secure).value = nil
 
-        cookie.valid?.should be_true
+        cookie.valid?.should be_false
       end
 
       it "raises on invalid cookie with __Host- prefix" do

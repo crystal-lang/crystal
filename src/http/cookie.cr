@@ -172,7 +172,7 @@ module HTTP
     end
 
     private def valid_secure_prefix? : Bool
-      @secure != false || !@name.starts_with?("__Secure-")
+      self.secure || !@name.starts_with?("__Secure-")
     end
 
     private def valid_host_prefix? : Bool
