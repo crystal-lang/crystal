@@ -4,8 +4,6 @@ require "c/string"
   require "crystal/iconv"
 {% end %}
 
-require "regex/match_data"
-
 # A `String` represents an immutable sequence of UTF-8 characters.
 #
 # A `String` is typically created with a string literal, enclosing UTF-8 characters
