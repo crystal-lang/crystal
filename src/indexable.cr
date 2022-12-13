@@ -572,7 +572,7 @@ module Indexable(T)
   #
   # The returned iterator keeps a reference to `self`. If the array
   # changes, the returned values of the iterator will change as well.
-  def each_index : Iterator(Int32)
+  def each_index : Iterator
     IndexIterator.new(self)
   end
 
