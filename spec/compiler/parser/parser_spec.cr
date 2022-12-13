@@ -32,15 +32,6 @@ private def assert_end_location(source, line_number = 1, column_number = source.
   end
 end
 
-private def parser_warnings(code)
-  warnings = WarningCollection.new
-  parser = Parser.new(code, warnings: warnings)
-  parser.filename = "test.cr"
-  node = parser.parse
-
-  warnings
-end
-
 module Crystal
   describe "Parser" do
     it_parses "nil", NilLiteral.new
@@ -2418,32 +2409,6 @@ module Crystal
         exps = Parser.parse(code).as(Expressions)
         exps.expressions[1].location.not_nil!.line_number.should eq(7)
       end
-    end
-  end
-
-  describe "warn on missing space before colon" do
-    it "in block param type restriction" do
-      parser_warnings("def foo(&block: Foo)\nend").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in type restriction (run `crystal tool format` to fix this)"]
-      parser_warnings("def foo(&block : Foo)\nend").infos.should eq [] of String
-    end
-
-    it "in anonymous block param type restriction" do
-      parser_warnings("def foo(&: Foo)\nend").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in type restriction (run `crystal tool format` to fix this)"]
-      parser_warnings("def foo(& : Foo)\nend").infos.should eq [] of String
-    end
-
-    it "in type declaration" do
-      parser_warnings("x: Int32").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in type declaration (run `crystal tool format` to fix this)"]
-      parser_warnings("x : Int32").infos.should eq [] of String
-      parser_warnings("class Foo\n@x: Int32\nend").infos.should eq ["warning in test.cr:2\nWarning: space required before colon in type declaration (run `crystal tool format` to fix this)"]
-      parser_warnings("class Foo\n@x : Int32\nend").infos.should eq [] of String
-      parser_warnings("class Foo\n@@x: Int32\nend").infos.should eq ["warning in test.cr:2\nWarning: space required before colon in type declaration (run `crystal tool format` to fix this)"]
-      parser_warnings("class Foo\n@@x : Int32\nend").infos.should eq [] of String
-    end
-
-    it "in return type restriction" do
-      parser_warnings("def foo: Foo\nend").infos.should eq ["warning in test.cr:1\nWarning: space required before colon in return type restriction (run `crystal tool format` to fix this)"]
-      parser_warnings("def foo : Foo\nend").infos.should eq [] of String
     end
   end
 end
