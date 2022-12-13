@@ -252,7 +252,7 @@ module Base64
     bytes_begin = bytes
 
     # Get the position of the last valid base64 character (rstrip '\n', '\r' and '=')
-    while (size > 0) && (sym = bytes[size - 1]) && (sym == NL || sym == NR || sym == PAD)
+    while (size > 0) && (sym = bytes[size - 1]) && sym.in?(NL, NR, PAD)
       size -= 1
     end
 
@@ -262,7 +262,7 @@ module Base64
       break if bytes > fin
 
       # Move the pointer by one byte until there is a valid base64 character
-      while bytes.value == NL || bytes.value == NR
+      while bytes.value.in?(NL, NR)
         bytes += 1
       end
       break if bytes > fin
@@ -272,7 +272,7 @@ module Base64
     end
 
     # Move the pointer by one byte until there is a valid base64 character or the end of `bytes` was reached
-    while (bytes < fin + 4) && (bytes.value == NL || bytes.value == NR)
+    while (bytes < fin + 4) && bytes.value.in?(NL, NR)
       bytes += 1
     end
 

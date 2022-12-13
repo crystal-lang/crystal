@@ -75,12 +75,12 @@ describe "Semantic: sizeof" do
   end
 
   it "gives error if using instance_sizeof on a metaclass" do
-    assert_error <<-CR, "instance_sizeof can only be used with a class, but Foo.class is a metaclass"
+    assert_error <<-CRYSTAL, "instance_sizeof can only be used with a class, but Foo.class is a metaclass"
       class Foo
       end
 
       instance_sizeof(Foo.class)
-      CR
+      CRYSTAL
   end
 
   it "gives error if using instance_sizeof on a generic type without type vars" do

@@ -4,16 +4,16 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "closures" do
     it "does closure without args that captures and modifies one local variable" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
           a = 0
           proc = -> { a = 42 }
           proc.call
           a
-        CODE
+        CRYSTAL
     end
 
     it "does closure without args that captures and modifies two local variables" do
-      interpret(<<-CODE).should eq(7)
+      interpret(<<-CRYSTAL).should eq(7)
           a = 0
           b = 0
           proc = ->{
@@ -22,11 +22,11 @@ describe Crystal::Repl::Interpreter do
           }
           proc.call
           a - b
-        CODE
+        CRYSTAL
     end
 
     it "does closure with two args that captures and modifies two local variables" do
-      interpret(<<-CODE).should eq(7)
+      interpret(<<-CRYSTAL).should eq(7)
           a = 0
           b = 0
           proc = ->(x : Int32, y : Int32) {
@@ -35,11 +35,11 @@ describe Crystal::Repl::Interpreter do
           }
           proc.call(10, 3)
           a - b
-        CODE
+        CRYSTAL
     end
 
     it "does closure and accesses it inside block" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
           def foo
             yield
           end
@@ -53,11 +53,11 @@ describe Crystal::Repl::Interpreter do
           end
 
           x
-        CODE
+        CRYSTAL
     end
 
     it "does closure inside def" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
           def foo
             a = 0
             proc = -> { a = 42 }
@@ -66,11 +66,11 @@ describe Crystal::Repl::Interpreter do
           end
 
           foo
-        CODE
+        CRYSTAL
     end
 
     it "closures def arguments" do
-      interpret(<<-CODE).should eq((41 + 1) - (10 + 2))
+      interpret(<<-CRYSTAL).should eq((41 + 1) - (10 + 2))
           def foo(a, b)
             proc = -> { a += 1; b += 2 }
             proc.call
@@ -78,11 +78,11 @@ describe Crystal::Repl::Interpreter do
           end
 
           foo(41, 10)
-        CODE
+        CRYSTAL
     end
 
     it "does closure inside proc" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
           proc = ->{
             a = 0
             proc2 = -> { a = 42 }
@@ -91,11 +91,11 @@ describe Crystal::Repl::Interpreter do
           }
 
           proc.call
-        CODE
+        CRYSTAL
     end
 
     it "does closure inside proc, capture proc argument" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
           proc = ->(a : Int32) {
             proc2 = -> { a += 1 }
             proc2.call
@@ -103,11 +103,11 @@ describe Crystal::Repl::Interpreter do
           }
 
           proc.call(41)
-        CODE
+        CRYSTAL
     end
 
     it "does closure inside const" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
           FOO =
             begin
               a = 0
@@ -117,11 +117,11 @@ describe Crystal::Repl::Interpreter do
             end
 
           FOO
-        CODE
+        CRYSTAL
     end
 
     it "does closure inside class variable initializer" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
           class Foo
             @@foo : Int32 =
               begin
@@ -137,11 +137,11 @@ describe Crystal::Repl::Interpreter do
           end
 
           Foo.foo
-        CODE
+        CRYSTAL
     end
 
     it "does closure inside block" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
           def foo
             yield
           end
@@ -152,11 +152,11 @@ describe Crystal::Repl::Interpreter do
             proc.call
             a
           end
-        CODE
+        CRYSTAL
     end
 
     it "does closure inside block, capture block arg" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
           def foo
             yield 21
           end
@@ -166,11 +166,11 @@ describe Crystal::Repl::Interpreter do
             proc.call
             a
           end
-        CODE
+        CRYSTAL
     end
 
     it "does nested closure inside proc" do
-      interpret(<<-CODE).should eq(21)
+      interpret(<<-CRYSTAL).should eq(21)
           a = 0
 
           proc1 = ->{
@@ -191,11 +191,11 @@ describe Crystal::Repl::Interpreter do
           y = a
 
           y - x
-        CODE
+        CRYSTAL
     end
 
     it "does nested closure inside captured blocks" do
-      interpret(<<-CODE).should eq(21)
+      interpret(<<-CRYSTAL).should eq(21)
           def capture(&block : -> _)
             block
           end
@@ -220,11 +220,11 @@ describe Crystal::Repl::Interpreter do
           y = a
 
           y - x
-        CODE
+        CRYSTAL
     end
 
     it "does nested closure inside methods and blocks" do
-      interpret(<<-CODE).should eq(12)
+      interpret(<<-CRYSTAL).should eq(12)
           def foo
             yield
           end
@@ -241,11 +241,11 @@ describe Crystal::Repl::Interpreter do
 
             b
           end
-        CODE
+        CRYSTAL
     end
 
     it "does closure with pointerof local var" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
           a = 0
           proc = ->do
             ptr = pointerof(a)
@@ -253,11 +253,11 @@ describe Crystal::Repl::Interpreter do
           end
           proc.call
           a
-        CODE
+        CRYSTAL
     end
 
     it "closures self in proc literal" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         class Foo
           def initialize
             @x = 1
@@ -281,11 +281,11 @@ describe Crystal::Repl::Interpreter do
         proc.call
         proc.call
         foo.x
-        CODE
+        CRYSTAL
     end
 
     it "closures self in proc literal (implicit self)" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         class Foo
           def initialize
             @x = 1
@@ -309,11 +309,11 @@ describe Crystal::Repl::Interpreter do
         proc.call
         proc.call
         foo.x
-        CODE
+        CRYSTAL
     end
 
     it "closures self and modifies instance var" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         class Foo
           def initialize
             @x = 1
@@ -333,11 +333,11 @@ describe Crystal::Repl::Interpreter do
         proc.call
         proc.call
         foo.x
-        CODE
+        CRYSTAL
     end
 
     it "closures struct and calls method on it" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         struct Foo
           def initialize
             @x = 1
@@ -356,11 +356,11 @@ describe Crystal::Repl::Interpreter do
         proc = ->{ foo.inc }
         proc.call
         foo.x
-      CODE
+      CRYSTAL
     end
 
     it "doesn't mix local vars with closured vars" do
-      interpret(<<-CODE).should eq(20)
+      interpret(<<-CRYSTAL).should eq(20)
         def foo(x)
           yield x
         end
@@ -373,11 +373,11 @@ describe Crystal::Repl::Interpreter do
             end
           }.call
         end
-      CODE
+      CRYSTAL
     end
 
     it "closures closured block arg" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         def foo(&block : -> Int32)
           ->{ block.call }.call
         end
@@ -385,11 +385,11 @@ describe Crystal::Repl::Interpreter do
         foo do
           1
         end
-      CODE
+      CRYSTAL
     end
 
     it "closures block args after 8 bytes (the closure var)" do
-      interpret(<<-CODE).should eq(6)
+      interpret(<<-CRYSTAL).should eq(6)
         def foo
           yield({1, 2, 3})
         end
@@ -397,11 +397,11 @@ describe Crystal::Repl::Interpreter do
         foo do |x, y, z|
           ->{ x + y + z }.call
         end
-      CODE
+      CRYSTAL
     end
 
     it "passes closured struct instance var as self" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         struct Bar
           def bar
             10
@@ -419,11 +419,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Foo.new.foo
-      CODE
+      CRYSTAL
     end
 
     it "does next inside captured block (#12226)" do
-      interpret(<<-CODE).should eq(1)
+      interpret(<<-CRYSTAL).should eq(1)
         def foo(&block : -> _)
           block.call
         end
@@ -432,11 +432,11 @@ describe Crystal::Repl::Interpreter do
           next 1
           2
         end
-      CODE
+      CRYSTAL
     end
 
     it "gets ivar of self closured struct (#12341)" do
-      interpret(<<-CODE).should eq(860)
+      interpret(<<-CRYSTAL).should eq(860)
         def closure(&block : -> Int32)
           block
         end
@@ -457,11 +457,11 @@ describe Crystal::Repl::Interpreter do
 
         foo = Foo.new
         foo.foo
-      CODE
+      CRYSTAL
     end
 
     it "sets ivar of self closured struct (#12341)" do
-      interpret(<<-CODE).should eq(1) # Yes, not 2. A closured struct's value can't change.
+      interpret(<<-CRYSTAL).should eq(1) # Yes, not 2. A closured struct's value can't change.
         def closure(&block)
           block
         end
@@ -483,11 +483,11 @@ describe Crystal::Repl::Interpreter do
         foo = Foo.new
         foo.foo
         foo.count
-      CODE
+      CRYSTAL
     end
 
     it "reads self closured struct (#12341)" do
-      interpret(<<-CODE).should eq(860)
+      interpret(<<-CRYSTAL).should eq(860)
         def closure(&block : -> _)
           block
         end
@@ -512,7 +512,7 @@ describe Crystal::Repl::Interpreter do
         foo = Foo.new
         bar = foo.foo
         bar.value
-      CODE
+      CRYSTAL
     end
   end
 end

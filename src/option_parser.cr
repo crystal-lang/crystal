@@ -439,7 +439,7 @@ class OptionParser
           # subcommands since they are no longer valid.
           unless flag.starts_with?('-')
             @handlers.select! { |k, _| k.starts_with?('-') }
-            @flags.select! { |flag| flag.starts_with?("    -") }
+            @flags.select!(&.starts_with?("    -"))
           end
 
           handler.block.call(value || "")

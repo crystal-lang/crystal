@@ -21,7 +21,7 @@ struct Crystal::System::Process
   end
 
   def wait
-    if LibC.WaitForSingleObject(@process_handle, LibC::INFINITE) != 0
+    if LibC.WaitForSingleObject(@process_handle, LibC::INFINITE) != LibC::WAIT_OBJECT_0
       raise RuntimeError.from_winerror("WaitForSingleObject")
     end
 
@@ -125,8 +125,8 @@ struct Crystal::System::Process
     process_info = LibC::PROCESS_INFORMATION.new
 
     if LibC.CreateProcessW(
-         nil, command_args.check_no_null_byte.to_utf16, nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
-         make_env_block(env, clear_env), chdir.try &.check_no_null_byte.to_utf16,
+         nil, System.to_wstr(command_args), nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
+         make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) },
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value

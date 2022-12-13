@@ -180,6 +180,26 @@ module HTTP
       end
     end
 
+    it "ensures closing the response when breaking out of block" do
+      server = HTTP::Server.new { }
+      address = server.bind_unused_port "127.0.0.1"
+
+      run_server(server) do
+        client = HTTP::Client.new(address.address, address.port)
+        response = nil
+
+        exc = Exception.new("")
+        expect_raises Exception do
+          client.get("/") do |r|
+            response = r
+            raise exc
+          end
+        end.should be exc
+
+        response.try(&.body_io?.try(&.closed?)).should be_true
+      end
+    end
+
     pending_win32 "will retry a broken socket" do
       server = HTTP::Server.new do |context|
         context.response.output.print "foo"
@@ -240,7 +260,6 @@ module HTTP
 
     it "will not retry when closed (non-block) (#12464)" do
       requests = 0
-      server_channel = Channel(Nil).new
 
       client = HTTP::Client.new("127.0.0.1", 0)
       client.before_request do
@@ -256,7 +275,6 @@ module HTTP
 
     it "will not retry when closed (block) (#12464)" do
       requests = 0
-      server_channel = Channel(Nil).new
 
       client = HTTP::Client.new("127.0.0.1", 0)
       client.before_request do
@@ -382,13 +400,13 @@ module HTTP
     end
 
     it "works with IO" do
-      io_response = IO::Memory.new <<-RESPONSE.gsub('\n', "\r\n")
+      io_response = IO::Memory.new <<-HTTP.gsub('\n', "\r\n")
       HTTP/1.1 200 OK
       Content-Type: text/plain
       Content-Length: 3
 
       Hi!
-      RESPONSE
+      HTTP
       io_request = IO::Memory.new
       io = IO::Stapled.new(io_response, io_request)
       client = Client.new(io)

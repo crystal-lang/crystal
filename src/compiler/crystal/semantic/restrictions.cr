@@ -605,8 +605,56 @@ module Crystal
       false
     end
 
+    def restriction_of?(other : NumberLiteral, owner, self_free_vars = nil, other_free_vars = nil)
+      return false if self_free_vars && self.single_name?.try { |name| self_free_vars.includes?(name) }
+
+      # this happens when `self` and `other` are generic arguments:
+      #
+      # ```
+      # X = 1
+      #
+      # def foo(param : StaticArray(Int32, X))
+      # end
+      #
+      # def foo(param : StaticArray(Int32, 1))
+      # end
+      # ```
+      case self_type = owner.lookup_path(self)
+      when Const
+        self_type.value == other
+      when NumberLiteral
+        self_type == other
+      else
+        false
+      end
+    end
+
     def restriction_of?(other, owner, self_free_vars = nil, other_free_vars = nil)
       false
+    end
+  end
+
+  class NumberLiteral
+    def restriction_of?(other : Path, owner, self_free_vars = nil, other_free_vars = nil)
+      # this happens when `self` and `other` are generic arguments:
+      #
+      # ```
+      # X = 1
+      #
+      # def foo(param : StaticArray(Int32, 1))
+      # end
+      #
+      # def foo(param : StaticArray(Int32, X))
+      # end
+      # ```
+      case other_type = owner.lookup_path(other)
+      when Const
+        other_type.value == self
+      when NumberLiteral
+        other_type == self
+      else
+        false
+      end
     end
   end
 
@@ -657,7 +705,20 @@ module Crystal
     end
 
     def restriction_of?(other : Generic, owner, self_free_vars = nil, other_free_vars = nil)
-      return true if self == other
+      # The two `Foo(X)`s below are not equal because only one of them is bound
+      # and the other one is unbound, so we compare the free variables too:
+      # (`X` is an alias or a numeric constant)
+      #
+      # ```
+      # def foo(x : Foo(X)) forall X
+      # end
+      #
+      # def foo(x : Foo(X))
+      # end
+      # ```
+      #
+      # See also the todo in `Path#restriction_of?(Path)`
+      return true if self == other && self_free_vars == other_free_vars
       return false unless name == other.name && type_vars.size == other.type_vars.size
 
       # Special case: NamedTuple against NamedTuple
@@ -945,7 +1006,7 @@ module Crystal
         return true
       end
 
-      parents.try &.any? &.restriction_of?(other, owner, self_free_vars, other_free_vars)
+      !!parents.try &.any? &.restriction_of?(other, owner, self_free_vars, other_free_vars)
     end
 
     def restriction_of?(other : AliasType, owner, self_free_vars = nil, other_free_vars = nil)
@@ -1055,9 +1116,9 @@ module Crystal
           # to e.g. AbstractDefChecker; generic instances shall behave like AST
           # nodes when def restrictions are considered, i.e. all generic type
           # variables are covariant.
-          return nil unless type_var.type.implements?(other_type_var.type)
+          return false unless type_var.type.implements?(other_type_var.type)
         else
-          return nil unless type_var == other_type_var
+          return false unless type_var == other_type_var
         end
       end
 
@@ -1194,15 +1255,17 @@ module Crystal
           end
         when Path
           if first_name = other_type_var.single_name?
-            # If the free variable is already set to another
-            # number, there's no match
-            existing = context.get_free_var(first_name)
-            if existing && existing != type_var
-              return nil
-            end
+            if context.has_def_free_var?(first_name)
+              # If the free variable is already set to another
+              # number, there's no match
+              existing = context.get_free_var(first_name)
+              if existing && existing != type_var
+                return nil
+              end
 
-            context.set_free_var(first_name, type_var)
-            return type_var
+              context.set_free_var(first_name, type_var)
+              return type_var
+            end
           end
         else
           # Restriction is not possible (maybe return nil here?)
@@ -1474,7 +1537,7 @@ module Crystal
 
       restricted = typedef.restrict(other, context)
       if restricted == typedef
-        return self
+        self
       elsif restricted.is_a?(UnionType)
         program.type_merge(restricted.union_types.map { |t| t == typedef ? self : t })
       else
@@ -1537,7 +1600,7 @@ module Crystal
       output = other.output
 
       # Consider the case of a splat in the type vars
-      if inputs && (splat_given = inputs.any?(Splat))
+      if inputs && inputs.any?(Splat)
         i = 0
         inputs.each do |input|
           if input.is_a?(Splat)
@@ -1669,7 +1732,7 @@ module Crystal
       end
 
       # Disallow casting a function to another one accepting different argument count
-      return nil if arg_types.size != other.arg_types.size
+      return false if arg_types.size != other.arg_types.size
 
       arg_types.zip(other.arg_types) do |arg_type, other_arg_type|
         return false unless arg_type == other_arg_type

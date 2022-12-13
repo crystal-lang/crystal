@@ -295,7 +295,7 @@ module Crystal
     end
 
     def has_sign?
-      @value[0] == '+' || @value[0] == '-'
+      @value[0].in?('+', '-')
     end
 
     def integer_value
@@ -1056,7 +1056,9 @@ module Crystal
     property body : ASTNode
     property block_arg : Arg?
     property return_type : ASTNode?
-    property yields : Int32?
+    # Number of block arguments accepted by this method.
+    # `nil` if it does not receive a block.
+    property block_arity : Int32?
     property name_location : Location?
     property splat_index : Int32?
     property doc : String?
@@ -1070,7 +1072,7 @@ module Crystal
     property? assigns_special_var = false
     property? abstract : Bool
 
-    def initialize(@name, @args = [] of Arg, body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @macro_def = false, @yields = nil, @abstract = false, @splat_index = nil, @double_splat = nil, @free_vars = nil)
+    def initialize(@name, @args = [] of Arg, body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @macro_def = false, @block_arity = nil, @abstract = false, @splat_index = nil, @double_splat = nil, @free_vars = nil)
       @body = Expressions.from body
     end
 
@@ -1088,7 +1090,7 @@ module Crystal
     end
 
     def clone_without_location
-      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @yields, @abstract, @splat_index, @double_splat.clone, @free_vars)
+      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @block_arity, @abstract, @splat_index, @double_splat.clone, @free_vars)
       a_def.calls_super = calls_super?
       a_def.calls_initialize = calls_initialize?
       a_def.calls_previous_def = calls_previous_def?
@@ -1099,7 +1101,7 @@ module Crystal
       a_def
     end
 
-    def_equals_and_hash @name, @args, @body, @receiver, @block_arg, @return_type, @macro_def, @yields, @abstract, @splat_index, @double_splat
+    def_equals_and_hash @name, @args, @body, @receiver, @block_arg, @return_type, @macro_def, @block_arity, @abstract, @splat_index, @double_splat
   end
 
   class Macro < ASTNode

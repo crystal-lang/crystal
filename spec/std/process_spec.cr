@@ -166,19 +166,21 @@ describe Process do
     $?.exit_code.should eq(0)
   end
 
-  pending_win32 "chroot raises when unprivileged" do
-    status, output, _ = compile_and_run_source <<-'CODE'
-      begin
-        Process.chroot("/usr")
-        puts "FAIL"
-      rescue ex
-        puts ex.inspect
-      end
-    CODE
+  {% if flag?(:unix) %}
+    it "chroot raises when unprivileged" do
+      status, output, _ = compile_and_run_source <<-'CRYSTAL'
+        begin
+          Process.chroot(".")
+          puts "FAIL"
+        rescue ex
+          puts ex.inspect
+        end
+      CRYSTAL
 
-    status.success?.should be_true
-    output.should eq("#<RuntimeError:Failed to chroot: Operation not permitted>\n")
-  end
+      status.success?.should be_true
+      output.should eq("#<RuntimeError:Failed to chroot: Operation not permitted>\n")
+    end
+  {% end %}
 
   it "sets working directory" do
     parent = File.dirname(Dir.current)

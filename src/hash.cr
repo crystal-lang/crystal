@@ -1466,11 +1466,8 @@ class Hash(K, V)
     {% end %}
 
     each do |k, v|
-      if other.has_key?(k)
-        other[k] = yield k, other[k], v
-      else
-        other[k] = v
-      end
+      entry = other.find_entry(k)
+      other[k] = entry ? yield(k, entry.value, v) : v
     end
   end
 
@@ -1551,9 +1548,10 @@ class Hash(K, V)
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(Set{"a", "c"}) # => {"a" => 1, "c" => 3}
   # ```
   def select(keys : Enumerable) : Hash(K, V)
-    hash = {} of K => V
-    keys.each { |k| hash[k] = self[k] if has_key?(k) }
-    hash
+    keys.each_with_object({} of K => V) do |k, memo|
+      entry = find_entry(k)
+      memo[k] = entry.value if entry
+    end
   end
 
   # :ditto:
@@ -1571,8 +1569,16 @@ class Hash(K, V)
   # h1 == h2 == h3 == h4 # => true
   # h1                   # => {"a" => 1, "c" => 3}
   # ```
+  def select!(keys : Indexable) : self
+    each_key { |k| delete(k) unless k.in?(keys) }
+    self
+  end
+
+  # :ditto:
   def select!(keys : Enumerable) : self
-    each { |k, v| delete(k) unless keys.includes?(k) }
+    # Convert enumerable to a set to prevent exhaustion of elements
+    key_set = keys.to_set
+    each_key { |k| delete(k) unless k.in?(key_set) }
     self
   end
 

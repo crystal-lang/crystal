@@ -130,7 +130,7 @@ module Crystal
       when !name[0].ascii_letter?            then raise Error.new("NAME must start with a letter")
       when name.index("--")                  then raise Error.new("NAME must not have consecutive dashes")
       when name.index("__")                  then raise Error.new("NAME must not have consecutive underscores")
-      when !name.each_char.all? { |c| c.alphanumeric? || c == '-' || c == '_' }
+      when !name.each_char.all? { |c| c.alphanumeric? || c.in?('-', '_') }
         raise Error.new("NAME must only contain alphanumerical characters, underscores or dashes")
       else
         # name is valid

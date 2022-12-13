@@ -73,7 +73,7 @@ module Crystal
           inherits_from_generic = type.ancestors.any?(GenericClassInstanceType)
           if is_generic || inherits_from_generic
             has_default_self_new = self_new_methods.any? do |a_def|
-              a_def.args.empty? && !a_def.yields
+              a_def.args.empty? && !a_def.block_arity
             end
 
             # For a generic class type we need to define `new` even
@@ -92,7 +92,7 @@ module Crystal
 
               initialize_methods.each do |initialize|
                 # If the type has `self.new()`, don't override it
-                if initialize.args.empty? && !initialize.yields && has_default_self_new
+                if initialize.args.empty? && !initialize.block_arity && has_default_self_new
                   next
                 end
 
@@ -137,7 +137,7 @@ module Crystal
       new_def = Def.new("new", def_args, Nop.new).at(self)
       new_def.splat_index = splat_index
       new_def.double_splat = double_splat.clone
-      new_def.yields = yields
+      new_def.block_arity = block_arity
       new_def.visibility = visibility
       new_def.new = true
       new_def.doc = doc
@@ -204,7 +204,7 @@ module Crystal
 
       # If the initialize yields, call it with a block
       # that yields those arguments.
-      if block_args_count = self.yields
+      if block_args_count = self.block_arity
         block_args = Array.new(block_args_count) { |i| Var.new("_arg#{i}") }
         vars = Array.new(block_args_count) { |i| Var.new("_arg#{i}").at(self).as(ASTNode) }
         init.block = Block.new(block_args, Yield.new(vars).at(self)).at(self)
@@ -289,7 +289,7 @@ module Crystal
       end
 
       expansion = Def.new(name, def_args, Nop.new, splat_index: splat_index).at(self)
-      expansion.yields = yields
+      expansion.block_arity = block_arity
       expansion.visibility = visibility
       expansion.annotations = annotations
 

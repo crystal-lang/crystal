@@ -190,7 +190,7 @@ module Enumerable(T)
 
       def same_as?(key) : Bool
         return false unless @initialized
-        return false if key == Alone || key == Drop
+        return false if key.in?(Alone, Drop)
         @key == key
       end
 
@@ -231,7 +231,7 @@ module Enumerable(T)
     ary = [] of typeof((yield Enumerable.element_type(self)).not_nil!)
     each do |e|
       v = yield e
-      unless v.is_a?(Nil)
+      unless v.nil?
         ary << v
       end
     end

@@ -73,9 +73,7 @@ module Crystal
         # If there's no '.' nor 'e', for example in `1_f64`,
         # we need to include it (#3315)
         node.value.each_char do |char|
-          if char == '.' || char == 'e'
-            return false
-          end
+          return false if char.in?('.', 'e')
         end
 
         true
@@ -347,7 +345,7 @@ module Crystal
         node_obj = nil
       end
 
-      if node_obj && (node.name == "[]" || node.name == "[]?") && !block
+      if node_obj && node.name.in?("[]", "[]?") && !block
         in_parenthesis(need_parens, node_obj)
 
         @str << "["
