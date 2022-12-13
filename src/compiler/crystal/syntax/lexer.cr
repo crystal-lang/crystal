@@ -2078,7 +2078,7 @@ module Crystal
       when 'f'
         char_sequence?('u', 'n') && peek_not_ident_part_or_end_next_char && :fun
       when 'i'
-        beginning_of_line && next_char == 'f' && (char = next_char) && (!ident_part_or_end?(char) && :if)
+        beginning_of_line && next_char == 'f' && peek_not_ident_part_or_end_next_char && :if
       when 'l'
         char_sequence?('i', 'b') && peek_not_ident_part_or_end_next_char && :lib
       when 'm'
