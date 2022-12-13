@@ -72,7 +72,7 @@ describe Doc::Method do
       generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
-      a_def = Def.new "foo", yields: 1
+      a_def = Def.new "foo", block_arity: 1
       doc_method = Doc::Method.new generator, doc_type, a_def, false
       assert_args_to_s(doc_method, "(&)")
     end

@@ -405,7 +405,7 @@ class Crystal::Call
     extra_types : Array(Type)?
 
   private def compute_call_error_reason(owner, a_def, arg_types, named_args_types)
-    if (block && !a_def.yields) || (!block && a_def.yields)
+    if (block && !a_def.block_arity) || (!block && a_def.block_arity)
       return BlockMismatch.new
     end
 
@@ -660,7 +660,7 @@ class Crystal::Call
     all_arguments_sizes = [] of Int32
     min_splat = Int32::MAX
     defs.each do |a_def|
-      next if (block && !a_def.yields) || (!block && a_def.yields)
+      next if (block && !a_def.block_arity) || (!block && a_def.block_arity)
 
       min_size, max_size = a_def.min_max_args_sizes
       if max_size == Int32::MAX
@@ -869,7 +869,7 @@ class Crystal::Call
       printed = true
     end
 
-    if a_def.yields
+    if a_def.block_arity
       str << ", " if printed
       str << '&'
       if block_arg = a_def.block_arg
