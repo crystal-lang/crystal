@@ -852,7 +852,7 @@ module Indexable(T)
   # :ditto:
   #
   # Raises `Enumerable::NotFoundError` if *value* is not in `self`.
-  def rindex!(value, offset : Int = 0)
+  def rindex!(value, offset = size - 1)
     rindex(value, offset) || raise Enumerable::NotFoundError.new
   end
 
@@ -883,7 +883,7 @@ module Indexable(T)
   #
   # Raises `Enumerable::NotFoundError` if no match is found.
   def rindex!(offset = size - 1, & : T ->)
-    rindex(offset) { |i| yield i } || raise Enumerable::NotFoundError.new
+    rindex(offset) { |e| yield e } || raise Enumerable::NotFoundError.new
   end
 
   # Optimized version of `Enumerable#sample` that runs in O(1) time.
