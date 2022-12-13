@@ -353,7 +353,7 @@ class String
   # "12345".to_i { 0 } # => 12345
   # "hello".to_i { 0 } # => 0
   # ```
-  def to_i(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_i(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     to_i32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { yield }
   end
 
@@ -368,7 +368,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `Int8` or the block's value.
-  def to_i8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_i8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ Int8, UInt8, 127, 128
   end
 
@@ -383,7 +383,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `UInt8` or the block's value.
-  def to_u8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_u8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ UInt8, UInt8
   end
 
@@ -398,7 +398,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `Int16` or the block's value.
-  def to_i16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_i16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ Int16, UInt16, 32767, 32768
   end
 
@@ -413,7 +413,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `UInt16` or the block's value.
-  def to_u16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_u16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ UInt16, UInt16
   end
 
@@ -428,7 +428,7 @@ class String
   end
 
   # Same as `#to_i`.
-  def to_i32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_i32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ Int32, UInt32, 2147483647, 2147483648
   end
 
@@ -443,7 +443,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `UInt32` or the block's value.
-  def to_u32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_u32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ UInt32, UInt32
   end
 
@@ -458,7 +458,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `Int64` or the block's value.
-  def to_i64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_i64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ Int64, UInt64, 9223372036854775807, 9223372036854775808u64
   end
 
@@ -473,7 +473,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `UInt64` or the block's value.
-  def to_u64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_u64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ UInt64, UInt64
   end
 
@@ -488,7 +488,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `Int128` or the block's value.
-  def to_i128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_i128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ Int128, UInt128, Int128::MAX, (UInt128.new(Int128::MAX) + 1)
   end
 
@@ -503,7 +503,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `UInt128` or the block's value.
-  def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ UInt128, UInt128
   end
 
@@ -1951,7 +1951,7 @@ class String
   # ```
   # "bcadefcba".strip { |c| 'a' <= c <= 'c' } # => "def"
   # ```
-  def strip(&block : Char -> _) : String
+  def strip(& : Char -> _) : String
     return self if empty?
 
     excess_left = calc_excess_left { |c| yield c }
@@ -2010,7 +2010,7 @@ class String
   # ```
   # "bcadefcba".rstrip { |c| 'a' <= c <= 'c' } # => "bcadef"
   # ```
-  def rstrip(&block : Char -> _) : String
+  def rstrip(& : Char -> _) : String
     return self if empty?
 
     excess_right = calc_excess_right { |c| yield c }
@@ -2064,7 +2064,7 @@ class String
   # ```
   # "bcadefcba".lstrip { |c| 'a' <= c <= 'c' } # => "defcba"
   # ```
-  def lstrip(&block : Char -> _) : String
+  def lstrip(& : Char -> _) : String
     return self if empty?
 
     excess_left = calc_excess_left { |c| yield c }
@@ -2095,7 +2095,7 @@ class String
     end
   end
 
-  private def calc_excess_right(&block)
+  private def calc_excess_right(&)
     byte_index = bytesize
     reader = Char::Reader.new(at_end: self)
     while (yield reader.current_char)
@@ -2135,7 +2135,7 @@ class String
     end
   end
 
-  private def calc_excess_left(&block)
+  private def calc_excess_left(&)
     reader = Char::Reader.new(self)
     while (yield reader.current_char)
       reader.next_char
@@ -2235,7 +2235,7 @@ class String
   # "hello".sub { |char| char + 1 } # => "iello"
   # "hello".sub { "hi" }            # => "hiello"
   # ```
-  def sub(&block : Char -> _) : String
+  def sub(& : Char -> _) : String
     return self if empty?
 
     String.build(bytesize) do |buffer|
@@ -2367,7 +2367,7 @@ class String
   # ```
   # "hello yellow".sub("ll") { "dd" } # => "heddo yellow"
   # ```
-  def sub(string : String, &block) : String
+  def sub(string : String, &) : String
     index = self.byte_index(string)
     return self unless index
 
@@ -2588,7 +2588,7 @@ class String
   # "hello".gsub { |char| char + 1 } # => "ifmmp"
   # "hello".gsub { "hi" }            # => "hihihihihi"
   # ```
-  def gsub(&block : Char -> _) : String
+  def gsub(& : Char -> _) : String
     String.build(bytesize) do |buffer|
       each_char do |my_char|
         buffer << yield my_char
@@ -2638,7 +2638,7 @@ class String
   # ```
   # "hello".gsub(/./) { |(match, _match_data)| match.ord.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
-  def gsub(pattern : Regex, &block) : String
+  def gsub(pattern : Regex, &) : String
     gsub_append(pattern) do |string, match, buffer|
       $~ = match
       buffer << yield string, match
@@ -2727,7 +2727,7 @@ class String
   # ```
   # "hello yellow".gsub("ll") { "dd" } # => "heddo yeddow"
   # ```
-  def gsub(string : String, &block) : String
+  def gsub(string : String, &) : String
     byte_offset = 0
     index = self.byte_index(string, byte_offset)
     return self unless index
@@ -3840,7 +3840,7 @@ class String
   # "foo,bar,baz".split(',', 2) { |string| ary << string }
   # ary # => ["foo", "bar,baz"]
   # ```
-  def split(separator : Char, limit = nil, *, remove_empty = false, &block : String -> _) : Nil
+  def split(separator : Char, limit = nil, *, remove_empty = false, & : String -> _) : Nil
     if empty?
       yield "" unless remove_empty
       return
@@ -3922,7 +3922,7 @@ class String
   # long_river_name.split("") { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : String, limit = nil, *, remove_empty = false, &block : String -> _) : Nil
+  def split(separator : String, limit = nil, *, remove_empty = false, & : String -> _) : Nil
     if empty?
       yield "" unless remove_empty
       return
@@ -4011,7 +4011,7 @@ class String
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _) : Nil
+  def split(separator : Regex, limit = nil, *, remove_empty = false, & : String -> _) : Nil
     if empty?
       yield "" unless remove_empty
       return
