@@ -4611,7 +4611,7 @@ class String
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def each_char_with_index(offset = 0, & : (Char, Int32) ->) : Nil
+  def each_char_with_index(offset = 0, & : Char, Int32 ->) : Nil
     each_char do |char|
       yield char, offset
       offset += 1
