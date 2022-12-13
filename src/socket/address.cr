@@ -228,8 +228,8 @@ class Socket
         addr.s_addr & 0x000000ff_u32 == 0x0000007f_u32
       in LibC::In6Addr
         addr8 = ipv6_addr8(addr)
-        addr8 == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8] || # "::1"
-          addr8.to_slice[0, 13] == Bytes[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 255_u8, 255_u8, 127_u8] # "::ffff:127.0.0.1/104"
+        addr8 == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8] ||             # "::1"
+          addr8.to_slice[0, 13] == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 255_u8, 255_u8, 127_u8].to_slice # "::ffff:127.0.0.1/104"
       end
     end
 
