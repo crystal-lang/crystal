@@ -804,14 +804,17 @@ module Crystal
 
           name_location = @token.location
           next_token_skip_space_or_newline
+
           call_args = preserve_stop_on_do do
             parse_call_args_space_consumed(
               check_plus_and_minus: false,
               allow_curly: true,
               end_token: :OP_RSQUARE,
               allow_beginless_range: true,
+              control: true,
             )
           end
+
           skip_space_or_newline
           check :OP_RSQUARE
           end_location = token_end_location
@@ -3167,7 +3170,7 @@ module Crystal
         next_macro_token macro_state, skip_whitespace
         macro_state = @token.macro_state
         if macro_state.yields
-          @yields ||= 0
+          @block_arity ||= 0
         end
 
         skip_whitespace = false
@@ -3498,7 +3501,7 @@ module Crystal
       consume_def_or_macro_name
 
       receiver = nil
-      @yields = nil
+      @block_arity = nil
       name_location = @token.location
       receiver_location = @token.location
       end_location = token_end_location
@@ -3679,7 +3682,7 @@ module Crystal
       @def_nest -= 1
       @doc_enabled = !!@wants_doc
 
-      node = Def.new name, params, body, receiver, block_param, return_type, @is_macro_def, @yields, is_abstract, splat_index, double_splat: double_splat, free_vars: free_vars
+      node = Def.new name, params, body, receiver, block_param, return_type, @is_macro_def, @block_arity, is_abstract, splat_index, double_splat: double_splat, free_vars: free_vars
       node.name_location = name_location
       set_visibility node
       node.end_location = end_location
@@ -3720,9 +3723,9 @@ module Crystal
     def compute_block_arg_yields(block_arg)
       block_arg_restriction = block_arg.restriction
       if block_arg_restriction.is_a?(ProcNotation)
-        @yields = block_arg_restriction.inputs.try(&.size) || 0
+        @block_arity = block_arg_restriction.inputs.try(&.size) || 0
       else
-        @yields = 0
+        @block_arity = 0
       end
     end
 
@@ -5447,7 +5450,7 @@ module Crystal
       location = @token.location
       next_token_skip_space
       @stop_on_yield += 1
-      @yields ||= 1
+      @block_arity ||= 1
       scope = parse_op_assign
       @stop_on_yield -= 1
       skip_space
@@ -5466,9 +5469,9 @@ module Crystal
         end_location = nil
       end
 
-      yields = (@yields ||= 0)
-      if args && args.size > yields
-        @yields = args.size
+      block_arity = (@block_arity ||= 0)
+      if args && args.size > block_arity
+        @block_arity = args.size
       end
 
       Yield.new(args || [] of ASTNode, scope, !!call_args.try(&.has_parentheses)).at(location).at_end(end_location)

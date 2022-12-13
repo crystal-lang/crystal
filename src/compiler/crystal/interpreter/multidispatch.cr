@@ -133,7 +133,7 @@ module Crystal::Repl::Multidispatch
         a_def.uses_block_arg = true
       else
         a_def.block_arg = Arg.new("")
-        a_def.yields = block.args.size
+        a_def.block_arity = block.args.size
       end
     end
 

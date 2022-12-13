@@ -2337,7 +2337,7 @@ module Crystal
       end
 
       it "executes accepts_block?" do
-        assert_macro %({{x.accepts_block?}}), "true", {x: Def.new("some_def", ["x".arg, "y".arg], yields: 1)}
+        assert_macro %({{x.accepts_block?}}), "true", {x: Def.new("some_def", ["x".arg, "y".arg], block_arity: 1)}
         assert_macro %({{x.accepts_block?}}), "false", {x: Def.new("some_def")}
       end
 
