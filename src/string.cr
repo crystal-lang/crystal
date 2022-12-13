@@ -2638,9 +2638,9 @@ class String
   # by the block value's value.
   #
   # ```
-  # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
+  # "hello".gsub(/./) { |(match, _match_data)| match.ord.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
-  def gsub(pattern : Regex, &block : (String, Regex::MatchData) -> _) : String
+  def gsub(pattern : Regex, &block) : String
     gsub_append(pattern) do |string, match, buffer|
       $~ = match
       buffer << yield string, match
@@ -4514,7 +4514,14 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
-  def scan(pattern : Regex, & : Regex::MatchData ->) : self
+  #
+  # ```
+  # "foo".scan(/([a-z])([a-z])/) do |match|
+  #   match[1] # => "f"
+  #   match[2] # => "o"
+  # end
+  # ```
+  def scan(pattern : Regex, &) : self
     byte_offset = 0
 
     while match = pattern.match_at_byte_index(self, byte_offset)
