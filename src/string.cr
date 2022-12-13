@@ -4,6 +4,8 @@ require "c/string"
   require "crystal/iconv"
 {% end %}
 
+require "regex/match_data"
+
 # A `String` represents an immutable sequence of UTF-8 characters.
 #
 # A `String` is typically created with a string literal, enclosing UTF-8 characters
@@ -275,7 +277,7 @@ class String
   # end
   # str # => "hello 1"
   # ```
-  def self.build(capacity = 64) : self
+  def self.build(capacity : Int = 64, & : String::Builder ->) : self
     String::Builder.build(capacity) do |builder|
       yield builder
     end
@@ -914,7 +916,7 @@ class String
   # "crystal"["cry"]?  # => "cry"
   # "crystal"["ruby"]? # => nil
   # ```
-  def []?(str : String | Char)
+  def []?(str : String | Char) : (String | Char)?
     includes?(str) ? str : nil
   end
 
@@ -922,7 +924,9 @@ class String
     self[regex, 0]?
   end
 
-  def []?(regex : Regex, group) : String?
+  # Returns the substring of *group* name or index into match by *regex*.
+  # Returns `nil` if there is no match.
+  def []?(regex : Regex, group : Int | String) : String?
     match = match(regex)
     match[group]? if match
   end
@@ -933,7 +937,7 @@ class String
   # "crystal"["cry"]  # => "cry"
   # "crystal"["ruby"] # raises NilAssertionError
   # ```
-  def [](str : String | Char)
+  def [](str : String | Char) : String | Char
     self[str]?.not_nil!
   end
 
@@ -941,7 +945,13 @@ class String
     self[regex]?.not_nil!
   end
 
-  def [](regex : Regex, group) : String
+  # Returns the substring of *group* name or index into match by *regex*.
+  #
+  # ```
+  # "hello world"[/(\w+) (\w+)/, 1]                             # => "hello"
+  # "hello world"[/(?<greeting>\w+) (?<place>\w+)/, "greeting"] # => "hello"
+  # ```
+  def [](regex : Regex, group : Int | String) : String
     self[regex, group]?.not_nil!
   end
 
@@ -973,7 +983,7 @@ class String
   # "hello".char_at(-5) { 'x' } # => 'h'
   # "hello".char_at(-6) { 'x' } # => 'x'
   # ```
-  def char_at(index : Int, &)
+  def char_at(index : Int, & : -> U) : Char | U forall U
     if single_byte_optimizable?
       byte = byte_at?(index)
       if byte
@@ -1195,7 +1205,7 @@ class String
   # "hello".byte_slice?(-6, 2)  # => nil
   # "hello".byte_slice?(0, -2)  # raises ArgumentError
   # ```
-  def byte_slice?(start : Int, count : Int) : String | Nil
+  def byte_slice?(start : Int, count : Int) : String?
     start, count = Indexable.normalize_start_and_count(start, count, bytesize) { return nil }
     return "" if count == 0
     return self if count == bytesize
@@ -1249,7 +1259,7 @@ class String
   # "hello".codepoint_at(-1) # => 111
   # "hello".codepoint_at(5)  # raises IndexError
   # ```
-  def codepoint_at(index) : Int32
+  def codepoint_at(index : Int) : Int32
     char_at(index).ord
   end
 
@@ -1265,7 +1275,7 @@ class String
   # "¥hello".byte_at(6)  # => 111
   # "¥hello".byte_at(7)  # raises IndexError
   # ```
-  def byte_at(index) : UInt8
+  def byte_at(index : Int) : UInt8
     byte_at(index) { raise IndexError.new }
   end
 
@@ -1279,7 +1289,7 @@ class String
   # "¥hello".byte_at?(6)  # => 111
   # "¥hello".byte_at?(7)  # => nil
   # ```
-  def byte_at?(index) : UInt8 | Nil
+  def byte_at?(index : Int) : UInt8?
     byte_at(index) { nil }
   end
 
@@ -1289,7 +1299,7 @@ class String
   # "¥hello".byte_at(6) { "OUT OF BOUNDS" } # => 111
   # "¥hello".byte_at(7) { "OUT OF BOUNDS" } # => "OUT OF BOUNDS"
   # ```
-  def byte_at(index, &)
+  def byte_at(index : Int, &)
     index += bytesize if index < 0
     if 0 <= index < bytesize
       to_unsafe[index]
@@ -1735,7 +1745,7 @@ class String
   end
 
   # :nodoc:
-  def self.encode(slice, from, to, io, invalid)
+  def self.encode(slice, from, to, io, invalid) : Nil
     IO::EncodingOptions.check_invalid(invalid)
 
     inbuf_ptr = slice.to_unsafe
@@ -1867,7 +1877,7 @@ class String
     insert_impl(byte_index, other.to_unsafe, other.bytesize, new_bytesize, new_size)
   end
 
-  private def insert_impl(byte_index, other, other_bytesize, new_bytesize, new_size)
+  private def insert_impl(byte_index, other, other_bytesize, new_bytesize, new_size) : String
     String.new(new_bytesize) do |buffer|
       buffer.copy_from(to_unsafe, byte_index)
       buffer += byte_index
@@ -2400,7 +2410,7 @@ class String
     end
   end
 
-  private def sub_append(pattern : Regex)
+  private def sub_append(pattern : Regex) : String
     match = pattern.match(self)
     return self unless match
 
@@ -2524,7 +2534,7 @@ class String
     to_slice.index('\\'.ord.to_u8)
   end
 
-  private def scan_backreferences(replacement, match_data, buffer)
+  private def scan_backreferences(replacement, match_data, buffer) : Nil
     # We only append to the buffer in chunks, so if we have "foo\\1", we remember that
     # the chunk starts at index 0 (first_index) and when we find a "\\" we append
     # from 0 to 3 in a single write. When we find a "\\0" or "\\k<...>", we append
@@ -2630,7 +2640,7 @@ class String
   # ```
   # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
-  def gsub(pattern : Regex) : String
+  def gsub(pattern : Regex, &block : (String, Regex::MatchData) -> _) : String
     gsub_append(pattern) do |string, match, buffer|
       $~ = match
       buffer << yield string, match
@@ -2772,7 +2782,7 @@ class String
     end
   end
 
-  private def gsub_append(pattern : Regex)
+  private def gsub_append(pattern : Regex, &)
     byte_offset = 0
     match = pattern.match_at_byte_index(self, byte_offset)
     return self unless match
@@ -2811,7 +2821,7 @@ class String
   # ```
   # "aabbcc".count &.in?('a', 'b') # => 4
   # ```
-  def count : Int32
+  def count(& : Char -> _) : Int32
     count = 0
     each_char do |char|
       count += 1 if yield char
@@ -2842,7 +2852,7 @@ class String
   # ```
   # "aabbcc".delete &.in?('a', 'b') # => "cc"
   # ```
-  def delete : String
+  def delete(& : Char -> _) : String
     String.build(bytesize) do |buffer|
       each_char do |char|
         buffer << char unless yield char
@@ -2879,7 +2889,7 @@ class String
   # "aaabbbccc".squeeze &.in?('a', 'b') # => "abccc"
   # "aaabbbccc".squeeze &.in?('a', 'c') # => "abbbc"
   # ```
-  def squeeze : String
+  def squeeze(& : Char -> _) : String
     previous = nil
     String.build(bytesize) do |buffer|
       each_char do |char|
@@ -3700,7 +3710,7 @@ class String
   # old_pond.split(3) { |s| ary << s }
   # ary # => ["Old", "pond", "a frog leaps in\n  water's sound\n"]
   # ```
-  def split(limit : Int32? = nil, &block : String -> _)
+  def split(limit : Int32? = nil, & : String -> _) : Nil
     if limit && limit <= 1
       yield self
       return
@@ -3832,7 +3842,7 @@ class String
   # "foo,bar,baz".split(',', 2) { |string| ary << string }
   # ary # => ["foo", "bar,baz"]
   # ```
-  def split(separator : Char, limit = nil, *, remove_empty = false, &block : String -> _)
+  def split(separator : Char, limit = nil, *, remove_empty = false, &block : String -> _) : Nil
     if empty?
       yield "" unless remove_empty
       return
@@ -3914,7 +3924,7 @@ class String
   # long_river_name.split("") { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : String, limit = nil, *, remove_empty = false, &block : String -> _)
+  def split(separator : String, limit = nil, *, remove_empty = false, &block : String -> _) : Nil
     if empty?
       yield "" unless remove_empty
       return
@@ -4003,7 +4013,7 @@ class String
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _)
+  def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _) : Nil
     if empty?
       yield "" unless remove_empty
       return
@@ -4053,7 +4063,7 @@ class String
     yield byte_slice(slice_offset) unless remove_empty && slice_offset == bytesize
   end
 
-  private def split_by_empty_separator(limit, &block : String -> _)
+  private def split_by_empty_separator(limit, & : String -> _) : Nil
     yielded = 0
 
     each_char do |c|
@@ -4090,7 +4100,7 @@ class String
   # # even the monkey seems to want
   # # a little coat of straw
   # ```
-  def each_line(chomp = true, &block : String ->) : Nil
+  def each_line(chomp = true, & : String ->) : Nil
     return if empty?
 
     offset = 0
@@ -4114,7 +4124,7 @@ class String
   end
 
   # Returns an `Iterator` which yields each line of this string (see `String#each_line`).
-  def each_line(chomp = true)
+  def each_line(chomp = true) : Iterator(String)
     LineIterator.new(self, chomp)
   end
 
@@ -4504,7 +4514,7 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
-  def scan(pattern : Regex) : self
+  def scan(pattern : Regex, & : Regex::MatchData ->) : self
     byte_offset = 0
 
     while match = pattern.match_at_byte_index(self, byte_offset)
@@ -4531,7 +4541,7 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding the matched string for each match.
-  def scan(pattern : String) : self
+  def scan(pattern : String, & : String ->) : self
     return self if pattern.empty?
     index = 0
     while index = byte_index(pattern, index)
@@ -4560,7 +4570,7 @@ class String
   # end
   # array # => ['a', 'b', '☃']
   # ```
-  def each_char : Nil
+  def each_char(& : Char ->) : Nil
     if single_byte_optimizable?
       each_byte do |byte|
         yield (byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT)
@@ -4580,7 +4590,7 @@ class String
   # chars.next # => 'b'
   # chars.next # => '☃'
   # ```
-  def each_char
+  def each_char : Iterator(Char)
     CharIterator.new(Char::Reader.new(self))
   end
 
@@ -4596,7 +4606,7 @@ class String
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def each_char_with_index(offset = 0)
+  def each_char_with_index(offset = 0, & : (Char, Int32) ->) : Nil
     each_char do |char|
       yield char, offset
       offset += 1
@@ -4627,7 +4637,7 @@ class String
   # ```
   #
   # See also: `Char#ord`.
-  def each_codepoint
+  def each_codepoint(& : Int32 ->)
     each_char do |char|
       yield char.ord
     end
@@ -4671,7 +4681,7 @@ class String
   # end
   # array # => [97, 98, 226, 152, 131]
   # ```
-  def each_byte
+  def each_byte(& : UInt8 ->)
     to_slice.each do |byte|
       yield byte
     end
@@ -4688,7 +4698,7 @@ class String
   # bytes.next # => 152
   # bytes.next # => 131
   # ```
-  def each_byte
+  def each_byte : Iterator(UInt8)
     to_slice.each
   end
 
