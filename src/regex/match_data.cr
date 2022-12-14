@@ -16,6 +16,8 @@ class Regex
   # starting from `1`, so that `0` can be used to refer to the entire regular
   # expression without needing to capture it explicitly.
   struct MatchData
+    include Engine::MatchData
+
     # Returns the original regular expression.
     #
     # ```
@@ -38,10 +40,6 @@ class Regex
     # "Crystal".match(/[p-s]/).not_nil!.string # => "Crystal"
     # ```
     getter string : String
-
-    # :nodoc:
-    def initialize(@regex : Regex, @code : LibPCRE::Pcre, @string : String, @pos : Int32, @ovector : Int32*, @group_size : Int32)
-    end
 
     # Returns the number of elements in this match object.
     #
@@ -109,10 +107,7 @@ class Regex
     # ```
     def byte_begin(n = 0) : Int32
       check_index_out_of_bounds n
-      n += size if n < 0
-      value = @ovector[n * 2]
-      raise_capture_group_was_not_matched(n) if value < 0
-      value
+      byte_range(n) { |normalized_n| raise_capture_group_was_not_matched(normalized_n) }.begin
     end
 
     # Returns the position of the next byte after the match.
@@ -132,10 +127,7 @@ class Regex
     # ```
     def byte_end(n = 0) : Int32
       check_index_out_of_bounds n
-      n += size if n < 0
-      value = @ovector[n * 2 + 1]
-      raise_capture_group_was_not_matched(n) if value < 0
-      value
+      byte_range(n) { |normalized_n| raise_capture_group_was_not_matched(normalized_n) }.end
     end
 
     # Returns the match of the *n*th capture group, or `nil` if there isn't
@@ -151,11 +143,8 @@ class Regex
     def []?(n : Int) : String?
       return unless valid_group?(n)
 
-      n += size if n < 0
-      start = @ovector[n * 2]
-      finish = @ovector[n * 2 + 1]
-      return if start < 0
-      @string.byte_slice(start, finish - start)
+      range = byte_range(n) { return nil }
+      @string.byte_slice(range.begin, range.end - range.begin)
     end
 
     # Returns the match of the *n*th capture group, or raises an `IndexError`
@@ -167,11 +156,9 @@ class Regex
     # ```
     def [](n : Int) : String
       check_index_out_of_bounds n
-      n += size if n < 0
 
-      value = self[n]?
-      raise_capture_group_was_not_matched n if value.nil?
-      value
+      range = byte_range(n) { |normalized_n| raise_capture_group_was_not_matched(normalized_n) }
+      @string.byte_slice(range.begin, range.end - range.begin)
     end
 
     # Returns the match of the capture group named by *group_name*, or
@@ -189,16 +176,7 @@ class Regex
     # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"]? # => "al"
     # ```
     def []?(group_name : String) : String?
-      max_start = -1
-      match = nil
-      named_capture_number(group_name) do |n|
-        start = @ovector[n * 2]
-        if start > max_start
-          max_start = start
-          match = self[n]?
-        end
-      end
-      match
+      fetch_impl(group_name) { nil }
     end
 
     # Returns the match of the capture group named by *group_name*, or
@@ -216,14 +194,13 @@ class Regex
     # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"] # => "al"
     # ```
     def [](group_name : String) : String
-      match = self[group_name]?
-      unless match
-        named_capture_number(group_name) do
+      fetch_impl(group_name) { |exists|
+        if exists
           raise KeyError.new("Capture group '#{group_name}' was not matched")
+        else
+          raise KeyError.new("Capture group '#{group_name}' does not exist")
         end
-        raise KeyError.new("Capture group '#{group_name}' does not exist")
-      end
-      match
+      }
     end
 
     # Returns all matches that are within the given range.
@@ -247,20 +224,6 @@ class Regex
       start, count = Indexable.normalize_start_and_count(start, count, size) { return nil }
 
       Array(String).new(count) { |i| self[start + i] }
-    end
-
-    private def named_capture_number(group_name)
-      name_entry_size = LibPCRE.get_stringtable_entries(@code, group_name, out first, out last)
-      return if name_entry_size < 0
-
-      while first <= last
-        capture_number = (first[0].to_u16 << 8) | first[1].to_u16
-        yield capture_number
-
-        first += name_entry_size
-      end
-
-      nil
     end
 
     # Returns the part of the original string before the match. If the match
