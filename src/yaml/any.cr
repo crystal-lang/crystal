@@ -198,28 +198,50 @@ struct YAML::Any
     as_i if @raw.is_a?(Int)
   end
 
-  # Checks that the underlying value is `Float64`, and returns its value.
+  # Checks that the underlying value is `Float` (or `Int`), and returns its value.
   # Raises otherwise.
   def as_f : Float64
-    @raw.as(Float64)
+    case raw = @raw
+    when Int
+      raw.to_f
+    else
+      raw.as(Float64)
+    end
   end
 
-  # Checks that the underlying value is `Float64`, and returns its value.
+  # Checks that the underlying value is `Float` (or `Int`), and returns its value.
   # Returns `nil` otherwise.
   def as_f? : Float64?
-    @raw.as?(Float64)
+    case raw = @raw
+    when Int
+      raw.to_f
+    else
+      raw.as?(Float64)
+    end
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
+  # Checks that the underlying value is `Float` (or `Int`), and returns its value as an `Float32`.
   # Raises otherwise.
   def as_f32 : Float32
-    @raw.as(Float).to_f32
+    case raw = @raw
+    when Int
+      raw.to_f32
+    else
+      raw.as(Float).to_f32
+    end
   end
 
-  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
+  # Checks that the underlying value is `Float` (or `Int`), and returns its value as an `Float32`.
   # Returns `nil` otherwise.
   def as_f32? : Float32?
-    as_f32 if @raw.is_a?(Float)
+    case raw = @raw
+    when Int
+      raw.to_f32
+    when Float
+      raw.to_f32
+    else
+      nil
+    end
   end
 
   # Checks that the underlying value is `Time`, and returns its value.
