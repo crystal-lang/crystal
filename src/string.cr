@@ -2636,7 +2636,7 @@ class String
   # by the block value's value.
   #
   # ```
-  # "hello".gsub(/./) { |(match, _match_data)| match.ord.to_s + ' ' } # => "104 101 108 108 111 "
+  # "hello".gsub(/./) { |(match, _match_data)| match.char_at(0).ord.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
   def gsub(pattern : Regex, &) : String
     gsub_append(pattern) do |string, match, buffer|
