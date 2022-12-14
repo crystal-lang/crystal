@@ -698,14 +698,20 @@ module Indexable(T)
     size == 0
   end
 
+  {% begin %}
   # Optimized version of `equals?` used when `other` is also an `Indexable`.
+  {% if compare_versions(Crystal::VERSION, "1.2.2") > 0 %}
   def equals?(other : Indexable(U), & : T, U -> _) : Bool forall U
+  {% else %}
+  def equals?(other : Indexable, &) : Bool
+  {% end %}
     return false if size != other.size
     each_with_index do |item, i|
       return false unless yield(item, other.unsafe_fetch(i))
     end
     true
   end
+  {% end %}
 
   # Determines if `self` equals *other* according to a comparison
   # done by the given block.
