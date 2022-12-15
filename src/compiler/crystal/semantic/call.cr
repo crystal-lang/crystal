@@ -1041,7 +1041,7 @@ class Crystal::Call
                             when Self
                               match.context.instantiated_type
                             when Crystal::Path
-                              match.context.defining_type.lookup_path(output)
+                              match.context.defining_type.lookup_type_var(output, match.context.free_vars)
                             else
                               output
                             end
