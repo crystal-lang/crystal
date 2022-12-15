@@ -200,7 +200,7 @@ describe "Regex" do
       /foo/.matches?("foo", options: Regex::Options::ANCHORED).should be_true
     end
 
-    it "matches a large single line string" do
+    it "doesn't crash with a large single line string" do
       {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
         LibPCRE.config LibPCRE::CONFIG_JIT, out jit_enabled
         pending! "PCRE JIT mode not available." unless 1 == jit_enabled
