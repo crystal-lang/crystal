@@ -676,6 +676,16 @@ describe "Block inference" do
       "expected block type to be a function type, not Int32"
   end
 
+  it "errors if proc is not instantiated" do
+    assert_error <<-CR, "can't create an instance of generic class Proc(*T, R) without specifying its type vars"
+      def capture(&block : Proc)
+        block
+      end
+
+      capture { }
+      CR
+  end
+
   it "passes #262" do
     assert_type(%(
       require "prelude"
