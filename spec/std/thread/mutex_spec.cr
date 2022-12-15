@@ -1,5 +1,3 @@
-{% skip_file if flag?(:win32) %} # FIXME: enable after #11647
-
 {% if flag?(:musl) %}
   # FIXME: These thread specs occasionally fail on musl/alpine based ci, so
   # they're disabled for now to reduce noise.
