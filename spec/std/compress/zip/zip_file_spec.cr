@@ -131,10 +131,10 @@ describe Compress::Zip do
     io = IO::Memory.new
 
     Compress::Zip::Writer.open(io) do |zip|
-      0_u16.upto(UInt16::MAX - 1).each { |index|
+      0_u16.upto(UInt16::MAX - 1).each do |index|
         zip.add Compress::Zip::Writer::Entry.new("foo_#{index}.txt", comment: "some comment"),
           "contents of foo"
-      }
+      end
     end
 
     io.rewind
