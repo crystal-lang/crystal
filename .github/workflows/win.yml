@@ -243,7 +243,7 @@ jobs:
         run: |
           mkdir libs
           mv pcre/Release/pcre.lib libs/
-          mv pcre/Release/pcre2-8-static.lib libs/pcre2-8.lib
+          mv pcre2/Release/pcre2-8-static.lib libs/pcre2-8.lib
           mv libiconv/output/x64/ReleaseStatic/libiconvStatic.lib libs/iconv.lib
           mv bdwgc/Release/gc.lib libs/
           mv libffi/win32/vs16_x64/x64/Release/libffi.lib libs/ffi.lib
