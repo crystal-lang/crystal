@@ -1,4 +1,4 @@
-{% if flag?(:use_pcre2) || (!flag?(:use_pcre) && !flag?(:win32) && `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libpcre2-8 || printf %s false` != "false") %}
+{% if flag?(:use_pcre2) || (!flag?(:use_pcre) && (flag?(:win32) || `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libpcre2-8 || printf %s false` != "false")) %}
   require "./pcre2"
 
   # :nodoc:
