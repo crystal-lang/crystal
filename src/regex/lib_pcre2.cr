@@ -70,6 +70,7 @@ lib LibPCRE2
   type Code = Void*
   type CompileContext = Void*
   type MatchData = Void*
+  type GeneralContext = Void*
 
   fun get_error_message = pcre2_get_error_message_8(errorcode : Int, buffer : UInt8*, bufflen : LibC::SizeT) : Int
 
@@ -79,11 +80,15 @@ lib LibPCRE2
   fun pattern_info = pcre2_pattern_info_8(code : Code*, what : UInt32, where : Void*) : Int
 
   fun match = pcre2_match_8(code : Code*, subject : UInt8*, length : LibC::SizeT, startoffset : LibC::SizeT, options : UInt32, match_data : MatchData*, mcontext : Void*) : Int
-  fun match_data_create_from_pattern = pcre2_match_data_create_from_pattern_8(code : Code*, gcontext : Void*) : MatchData*
+  fun match_data_create_from_pattern = pcre2_match_data_create_from_pattern_8(code : Code*, gcontext : GeneralContext) : MatchData*
   fun match_data_free = pcre2_match_data_free_8(match_data : MatchData*) : Void
 
   fun substring_nametable_scan = pcre2_substring_nametable_scan_8(code : Code*, name : UInt8*, first : UInt8*, last : UInt8*) : Int
 
   fun get_ovector_pointer = pcre2_get_ovector_pointer_8(match_data : MatchData*) : LibC::SizeT*
   fun get_ovector_count = pcre2_get_ovector_count_8(match_data : MatchData*) : UInt32
+
+  # void *private_malloc(Int, void *);
+  # void  private_free(void *, void *);
+  fun general_context_create = pcre2_general_context_create_8(private_malloc : Void*, private_free : Void*, memory_data : Void*) : GeneralContext
 end

@@ -107,26 +107,27 @@ module Regex::PCRE2
 
     ovector = LibPCRE2.get_ovector_pointer(match_data)
     ovector_count = LibPCRE2.get_ovector_count(match_data)
-    LibPCRE2.match_data_free(match_data)
 
     ::Regex::MatchData.new(self, @re, str, byte_index, ovector, ovector_count.to_i32 - 1)
   end
 
   private def matches_impl(str, byte_index, options)
     if match_data = match_data(str, byte_index, options)
-      LibPCRE2.match_data_free(match_data)
       true
     else
       false
     end
   end
 
+  class_getter general_context do
+    LibPCRE2.general_context_create(->(size : LibC::Int, data : Void*) { GC.malloc(size) }.pointer, ->(pointer : Void*, data : Void*) { GC.free(pointer) }.pointer, nil)
+  end
+
   private def match_data(str, byte_index, options)
-    match_data = LibPCRE2.match_data_create_from_pattern(@re, nil)
+    match_data = LibPCRE2.match_data_create_from_pattern(@re, Regex::PCRE2.general_context)
     match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, nil)
 
     if match_count < 0
-      LibPCRE2.match_data_free(match_data)
       case match_count
       when LibPCRE2::ERROR_NOMATCH
         return
