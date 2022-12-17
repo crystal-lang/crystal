@@ -152,6 +152,26 @@ lib LibPCRE2
   INFO_HEAPLIMIT      = 25
   INFO_EXTRAOPTIONS   = 26
 
+  # Request types for pcre2_config().
+
+  CONFIG_BSR               =  0
+  CONFIG_JIT               =  1
+  CONFIG_JITTARGET         =  2
+  CONFIG_LINKSIZE          =  3
+  CONFIG_MATCHLIMIT        =  4
+  CONFIG_NEWLINE           =  5
+  CONFIG_PARENSLIMIT       =  6
+  CONFIG_DEPTHLIMIT        =  7
+  CONFIG_RECURSIONLIMIT    =  7 # Obsolete synonym
+  CONFIG_STACKRECURSE      =  8 # Obsolete
+  CONFIG_UNICODE           =  9
+  CONFIG_UNICODE_VERSION   = 10
+  CONFIG_VERSION           = 11
+  CONFIG_HEAPLIMIT         = 12
+  CONFIG_NEVER_BACKSLASH_C = 13
+  CONFIG_COMPILED_WIDTHS   = 14
+  CONFIG_TABLES_LENGTH     = 15
+
   type Code = Void*
   type CompileContext = Void*
   type MatchData = Void*
@@ -176,4 +196,5 @@ lib LibPCRE2
   # void *private_malloc(Int, void *);
   # void  private_free(void *, void *);
   fun general_context_create = pcre2_general_context_create_8(private_malloc : Void*, private_free : Void*, memory_data : Void*) : GeneralContext
+  fun config = pcre2_config_8(what : UInt32, where : Void*) : Int
 end

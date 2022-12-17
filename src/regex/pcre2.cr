@@ -139,6 +139,12 @@ module Regex::PCRE2
     match_data
   end
 
+  def self.config(what, type : T.class) : T forall T
+    value = uninitialized T
+    LibPCRE2.config(what, pointerof(value))
+    value
+  end
+
   module MatchData
     # :nodoc:
     def initialize(@regex : Regex, @code : LibPCRE2::Code*, @string : String, @pos : Int32, @ovector : UInt64*, @group_size : Int32)
