@@ -962,4 +962,18 @@ describe "Semantic: lib" do
       ),
       "passing Void return value of lib fun call has no effect"
   end
+
+  it "can list lib functions at the top level (#12395)" do
+    assert_type(%(
+      lib LibFoo
+        fun foo
+      end
+
+      {% if LibFoo.methods.size == 1 %}
+        true
+      {% else %}
+        1
+      {% end %}
+      )) { bool }
+  end
 end
