@@ -128,11 +128,11 @@ module Regex::PCRE2
     match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, nil)
 
     if match_count < 0
-      case match_count
-      when LibPCRE2::ERROR_NOMATCH
+      case error = LibPCRE2::Error.new(match_count)
+      when .nomatch?
         return
       else
-        raise "error!"
+        raise Exception.new("Regex match error: #{error}")
       end
     end
 

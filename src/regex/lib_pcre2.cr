@@ -36,7 +36,92 @@ lib LibPCRE2
   LITERAL             = 0x02000000
   MATCH_INVALID_UTF   = 0x04000000
 
-  ERROR_NOMATCH = -1
+  enum Error
+    #  "Expected" matching error codes: no match and partial match.
+
+    NOMATCH = -1
+    PARTIAL = -2
+
+    #  Error codes for UTF-8 validity checks
+
+    UTF8_ERR1  =  -3
+    UTF8_ERR2  =  -4
+    UTF8_ERR3  =  -5
+    UTF8_ERR4  =  -6
+    UTF8_ERR5  =  -7
+    UTF8_ERR6  =  -8
+    UTF8_ERR7  =  -9
+    UTF8_ERR8  = -10
+    UTF8_ERR9  = -11
+    UTF8_ERR10 = -12
+    UTF8_ERR11 = -13
+    UTF8_ERR12 = -14
+    UTF8_ERR13 = -15
+    UTF8_ERR14 = -16
+    UTF8_ERR15 = -17
+    UTF8_ERR16 = -18
+    UTF8_ERR17 = -19
+    UTF8_ERR18 = -20
+    UTF8_ERR19 = -21
+    UTF8_ERR20 = -22
+    UTF8_ERR21 = -23
+
+    #  Error codes for UTF-16 validity checks
+
+    UTF16_ERR1 = -24
+    UTF16_ERR2 = -25
+    UTF16_ERR3 = -26
+
+    #  Error codes for UTF-32 validity checks
+
+    UTF32_ERR1 = -27
+    UTF32_ERR2 = -28
+
+    # Miscellaneous error codes for pcre2[_dfa]_match(), substring extraction
+    # functions, context functions, and serializing functions. They are in numerical
+    # order. Originally they were in alphabetical order too, but now that PCRE2 is
+    # released, the numbers must not be changed.
+
+    BADDATA           = -29
+    MIXEDTABLES       = -30 # Name was changed
+    BADMAGIC          = -31
+    BADMODE           = -32
+    BADOFFSET         = -33
+    BADOPTION         = -34
+    BADREPLACEMENT    = -35
+    BADUTFOFFSET      = -36
+    CALLOUT           = -37 # Never used by PCRE2 itself
+    DFA_BADRESTART    = -38
+    DFA_RECURSE       = -39
+    DFA_UCOND         = -40
+    DFA_UFUNC         = -41
+    DFA_UITEM         = -42
+    DFA_WSSIZE        = -43
+    INTERNAL          = -44
+    JIT_BADOPTION     = -45
+    JIT_STACKLIMIT    = -46
+    MATCHLIMIT        = -47
+    NOMEMORY          = -48
+    NOSUBSTRING       = -49
+    NOUNIQUESUBSTRING = -50
+    NULL              = -51
+    RECURSELOOP       = -52
+    DEPTHLIMIT        = -53
+    RECURSIONLIMIT    = -53 # Obsolete synonym
+    UNAVAILABLE       = -54
+    UNSET             = -55
+    BADOFFSETLIMIT    = -56
+    BADREPESCAPE      = -57
+    REPMISSINGBRACE   = -58
+    BADSUBSTITUTION   = -59
+    BADSUBSPATTERN    = -60
+    TOOMANYREPLACE    = -61
+    BADSERIALIZEDDATA = -62
+    HEAPLIMIT         = -63
+    CONVERT_SYNTAX    = -64
+    INTERNAL_DUPMATCH = -65
+    DFA_UINVALID_UTF  = -66
+  end
 
   INFO_ALLOPTIONS     =  0
   INFO_ARGOPTIONS     =  1
