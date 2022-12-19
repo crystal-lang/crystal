@@ -2309,6 +2309,14 @@ describe "String" do
     it { "aabbcc".count(&.in?('a', 'b')).should eq(4) }
   end
 
+  describe "has_back_references" do
+    it { "works here \\ ".has_back_references?.should be_true }
+    it { "\\works too ".has_back_references?.should be_true }
+    it { "doesn't apply here".has_back_references?.should be_false }
+    it { "".has_back_references?.should be_false }
+    it { "\n\t nope".has_back_references?.should be_false }
+  end
+
   describe "squeeze" do
     it { "aaabbbccc".squeeze(&.in?('a', 'b')).should eq("abccc") }
     it { "aaabbbccc".squeeze(&.in?('a', 'c')).should eq("abbbc") }

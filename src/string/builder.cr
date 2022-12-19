@@ -22,13 +22,13 @@ class String::Builder < IO
     @finished = false
   end
 
-  def self.build(capacity : Int = 64) : String
+  def self.build(capacity : Int = 64, &block : Builder ->) : String
     builder = new(capacity)
     yield builder
     builder.to_s
   end
 
-  def self.new(string : String)
+  def self.new(string : String) : self
     io = new(string.bytesize)
     io << string
     io
