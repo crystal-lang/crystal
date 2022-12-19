@@ -43,17 +43,17 @@ describe "Codegen: private" do
   end
 
   it "codegens class var of private type with same name as public type (#11620)" do
-    src1 = Compiler::Source.new("foo.cr", <<-CR)
+    src1 = Compiler::Source.new("foo.cr", <<-CRYSTAL)
       module Foo
         @@x = true
       end
-      CR
+      CRYSTAL
 
-    src2 = Compiler::Source.new("foo_private.cr", <<-CR)
+    src2 = Compiler::Source.new("foo_private.cr", <<-CRYSTAL)
       private module Foo
         @@x = 1
       end
-      CR
+      CRYSTAL
 
     compiler = create_spec_compiler
     compiler.prelude = "empty"
@@ -63,17 +63,17 @@ describe "Codegen: private" do
   end
 
   it "codegens class vars of private types with same name (#11620)" do
-    src1 = Compiler::Source.new("foo1.cr", <<-CR)
+    src1 = Compiler::Source.new("foo1.cr", <<-CRYSTAL)
       private module Foo
         @@x = true
       end
-      CR
+      CRYSTAL
 
-    src2 = Compiler::Source.new("foo2.cr", <<-CR)
+    src2 = Compiler::Source.new("foo2.cr", <<-CRYSTAL)
       private module Foo
         @@x = 1
       end
-      CR
+      CRYSTAL
 
     compiler = create_spec_compiler
     compiler.prelude = "empty"

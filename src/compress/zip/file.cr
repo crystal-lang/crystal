@@ -121,10 +121,10 @@ class Compress::Zip::File
       raise Error.new("Expected end of central directory header signature, not 0x#{signature.to_s(16)}")
     end
 
-    read Int16                     # number of this disk
-    read Int16                     # disk start
-    read Int16                     # number of entries in disk
-    entries_size = read Int16      # number of total entries
+    read UInt16                    # number of this disk
+    read UInt16                    # disk start
+    read UInt16                    # number of entries in disk
+    entries_size = read UInt16     # number of total entries
     read UInt32                    # size of the central directory
     directory_offset = read UInt32 # offset of central directory
     comment_length = read UInt16   # comment length

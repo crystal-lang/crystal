@@ -4,9 +4,9 @@ require "../types"
 module Crystal
   struct Cover
     getter signature : CallSignature
-    getter matches : ZeroOneOrMany(Match)
+    getter matches : Array(Match)
 
-    def self.create(signature : CallSignature, matches : ZeroOneOrMany(Match))
+    def self.create(signature, matches)
       if matches
         matches.empty? ? false : Cover.new(signature, matches)
       else
@@ -14,7 +14,7 @@ module Crystal
       end
     end
 
-    def initialize(@signature : CallSignature, @matches : ZeroOneOrMany(Match))
+    def initialize(@signature, @matches)
     end
 
     def all?

@@ -2958,17 +2958,27 @@ class String
   #
   # See also: `Nil#presence`.
   def presence : self?
-    self if !blank?
+    self unless blank?
   end
 
   # Returns `true` if this string is equal to `*other*.
   #
-  # Comparison is done byte-per-byte: if a byte is different from the corresponding
-  # byte, `false` is returned and so on. This means two strings containing invalid
+  # Equality is checked byte-per-byte: if any byte is different from the corresponding
+  # byte, it returns `false`. This means two strings containing invalid
   # UTF-8 byte sequences may compare unequal, even when they both produce the
   # Unicode replacement character at the same string indices.
   #
-  # See `#compare` for more comparison options.
+  # Thus equality is case-sensitive, as it is with the comparison operator (`#<=>`).
+  # `#compare` offers a case-insensitive alternative.
+  #
+  # ```
+  # "abcdef" == "abcde"   # => false
+  # "abcdef" == "abcdef"  # => true
+  # "abcdef" == "abcdefg" # => false
+  # "abcdef" == "ABCDEF"  # => false
+  #
+  # "abcdef".compare("ABCDEF", case_sensitive: false) == 0 # => true
+  # ```
   def ==(other : self) : Bool
     return true if same?(other)
     return false unless bytesize == other.bytesize
@@ -2995,6 +3005,8 @@ class String
   # "abcdef" <=> "abcdefg" # => -1
   # "abcdef" <=> "ABCDEF"  # => 1
   # ```
+  #
+  # The comparison is case-sensitive. `#compare` is a case-insensitive alternative.
   def <=>(other : self) : Int32
     return 0 if same?(other)
     min_bytesize = Math.min(bytesize, other.bytesize)
@@ -3021,6 +3033,8 @@ class String
   #
   # "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic) # => 0
   # ```
+  #
+  # Case-sensitive only comparison is provided by the comparison operator `#<=>`.
   def compare(other : String, case_insensitive = false, options = Unicode::CaseOptions::None) : Int32
     return self <=> other unless case_insensitive
 
@@ -3947,6 +3961,28 @@ class String
     yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
   end
 
+  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
+  #
+  # If *limit* is present, the array will be limited to *limit* items and
+  # the final item will contain the remainder of the string.
+  #
+  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  #
+  # ```
+  # long_river_name = "Mississippi"
+  # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
+  # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # ```
+  def split(separator : Regex, limit = nil, *, remove_empty = false) : Array(String)
+    ary = Array(String).new
+    split(separator, limit, remove_empty: remove_empty) do |string|
+      ary << string
+    end
+    ary
+  end
+
   # Splits the string after each regex *separator* and yields each part to a block.
   #
   # If *limit* is present, the array will be limited to *limit* items and
@@ -3966,28 +4002,6 @@ class String
   #
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
-  # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false) : Array(String)
-    ary = Array(String).new
-    split(separator, limit, remove_empty: remove_empty) do |string|
-      ary << string
-    end
-    ary
-  end
-
-  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
-  #
-  # If *limit* is present, the array will be limited to *limit* items and
-  # the final item will contain the remainder of the string.
-  #
-  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
-  #
-  # If *remove_empty* is `true`, any empty strings are removed from the result.
-  #
-  # ```
-  # long_river_name = "Mississippi"
-  # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
-  # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
   def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _)
     if empty?

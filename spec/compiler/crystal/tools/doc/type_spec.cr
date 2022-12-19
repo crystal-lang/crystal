@@ -47,12 +47,12 @@ describe Doc::Type do
 
   describe "#node_to_html" do
     it "shows relative path" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
           class Bar
           end
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       foo = generator.type(program.types["Foo"])
@@ -60,12 +60,12 @@ describe Doc::Type do
     end
 
     it "shows relative generic" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
           class Bar(T)
           end
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       foo = generator.type(program.types["Foo"])
@@ -73,12 +73,12 @@ describe Doc::Type do
     end
 
     it "shows generic path with necessary colons" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
           class Foo
           end
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       foo = generator.type(program.types["Foo"])
@@ -86,12 +86,12 @@ describe Doc::Type do
     end
 
     it "shows generic path with unnecessary colons" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
           class Bar
           end
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       foo = generator.type(program.types["Foo"])
@@ -99,13 +99,13 @@ describe Doc::Type do
     end
 
     it "shows tuples" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
         end
 
         class Bar
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       foo = generator.type(program.types["Foo"])
@@ -114,13 +114,13 @@ describe Doc::Type do
     end
 
     it "shows named tuples" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
         end
 
         class Bar
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       foo = generator.type(program.types["Foo"])
@@ -130,7 +130,7 @@ describe Doc::Type do
   end
 
   it "ASTNode has no superclass" do
-    program = semantic(<<-CODE).program
+    program = semantic(<<-CRYSTAL).program
       module Crystal
         module Macros
           class ASTNode
@@ -139,7 +139,7 @@ describe Doc::Type do
           end
         end
       end
-      CODE
+      CRYSTAL
 
     generator = Doc::Generator.new program, [""]
     macros_module = program.types["Crystal"].types["Macros"]
@@ -150,7 +150,7 @@ describe Doc::Type do
   end
 
   it "ASTNode has no ancestors" do
-    program = semantic(<<-CODE).program
+    program = semantic(<<-CRYSTAL).program
       module Crystal
         module Macros
           class ASTNode
@@ -159,7 +159,7 @@ describe Doc::Type do
           end
         end
       end
-      CODE
+      CRYSTAL
 
     generator = Doc::Generator.new program, [""]
     macros_module = program.types["Crystal"].types["Macros"]
@@ -171,13 +171,13 @@ describe Doc::Type do
 
   describe "#instance_methods" do
     it "sorts operators first" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
           def foo; end
           def ~; end
           def +; end
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       type = generator.type(program.types["Foo"])
@@ -187,13 +187,13 @@ describe Doc::Type do
 
   describe "#class_methods" do
     it "sorts operators first" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
           def self.foo; end
           def self.~; end
           def self.+; end
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       type = generator.type(program.types["Foo"])
@@ -203,13 +203,13 @@ describe Doc::Type do
 
   describe "#macros" do
     it "sorts operators first" do
-      program = semantic(<<-CODE).program
+      program = semantic(<<-CRYSTAL).program
         class Foo
           macro foo; end
           macro ~; end
           macro +; end
         end
-        CODE
+        CRYSTAL
 
       generator = Doc::Generator.new program, [""]
       type = generator.type(program.types["Foo"])

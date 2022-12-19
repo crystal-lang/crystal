@@ -4,7 +4,7 @@ require "./spec_helper"
 describe Crystal::Repl::Interpreter do
   context "class vars" do
     it "interprets class var without initializer" do
-      interpret(<<-CODE).should eq(41)
+      interpret(<<-CRYSTAL).should eq(41)
         class Foo
           @@x : Int32?
 
@@ -30,11 +30,11 @@ describe Crystal::Repl::Interpreter do
         a += x if x
 
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets class var with initializer" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         class Foo
           @@x = 10
 
@@ -60,11 +60,11 @@ describe Crystal::Repl::Interpreter do
         a += x if x
 
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets class var for virtual type" do
-      interpret(<<-CODE).should eq(30)
+      interpret(<<-CRYSTAL).should eq(30)
         class Foo
           @@x = 1
 
@@ -92,11 +92,11 @@ describe Crystal::Repl::Interpreter do
         a += foobar.get
         a += barfoo.get
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets class var for virtual metaclass type" do
-      interpret(<<-CODE).should eq(30)
+      interpret(<<-CRYSTAL).should eq(30)
         class Foo
           @@x = 1
 
@@ -124,11 +124,11 @@ describe Crystal::Repl::Interpreter do
         a += foobar.get
         a += barfoo.get
         a
-      CODE
+      CRYSTAL
     end
 
     it "finds self in class var initializer (#12439)" do
-      interpret(<<-CODE).should eq(42)
+      interpret(<<-CRYSTAL).should eq(42)
         class Foo
           @@value : Int32 = self.int
 
@@ -142,11 +142,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         Foo.value
-      CODE
+      CRYSTAL
     end
 
     it "does class var initializer with union (#12633)" do
-      interpret(<<-CODE).should eq("hello")
+      interpret(<<-CRYSTAL).should eq("hello")
         class MyClass
           @@a : String | Int32 = "hello"
 
@@ -162,11 +162,11 @@ describe Crystal::Repl::Interpreter do
         in Int32
           "bye"
         end
-        CODE
+        CRYSTAL
     end
 
     it "reads class var initializer with union (#12633)" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         class MyClass
           @@a : Char | Int32 = 1
 
@@ -183,7 +183,7 @@ describe Crystal::Repl::Interpreter do
         end
 
         MyClass.foo(2)
-        CODE
+        CRYSTAL
     end
   end
 end
