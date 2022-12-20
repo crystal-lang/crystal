@@ -629,6 +629,10 @@ module Crystal
       end
     end
 
+    def restriction_of?(other : Underscore, owner, self_free_vars = nil, other_free_vars = nil)
+      true
+    end
+
     def restriction_of?(other, owner, self_free_vars = nil, other_free_vars = nil)
       false
     end
@@ -659,6 +663,10 @@ module Crystal
   end
 
   class Union
+    def restriction_of?(other : Underscore, owner, self_free_vars = nil, other_free_vars = nil)
+      true
+    end
+
     def restriction_of?(other, owner, self_free_vars = nil, other_free_vars = nil)
       # For a union to be considered before another restriction,
       # all types in the union must be considered before
@@ -1473,6 +1481,10 @@ module Crystal
   end
 
   class AliasType
+    def restriction_of?(other : Underscore, owner, self_free_vars = nil, other_free_vars = nil)
+      true
+    end
+
     def restriction_of?(other, owner, self_free_vars = nil, other_free_vars = nil)
       return true if self == other
 
