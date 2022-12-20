@@ -1,24 +1,5 @@
 require "./spec_helper"
 
-private def base
-  Dir.current
-end
-
-private def tmpdir
-  "/tmp"
-end
-
-private def rootdir
-  "/"
-end
-
-private def home
-  home = ENV["HOME"]
-  return home if home == "/"
-
-  home.chomp('/')
-end
-
 private def it_raises_on_null_byte(operation, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
   it "errors on #{operation}", file, line, end_line do
     expect_raises(ArgumentError, "String contains null byte") do
@@ -354,8 +335,8 @@ describe "File" do
 
   it "chown" do
     # changing owners requires special privileges, so we test that method calls do compile
-    typeof(File.chown("/tmp/test"))
-    typeof(File.chown("/tmp/test", uid: 1001, gid: 100, follow_symlinks: true))
+    typeof(File.chown("."))
+    typeof(File.chown(".", uid: 1001, gid: 100, follow_symlinks: true))
 
     File.open(File::NULL, "w") do |file|
       typeof(file.chown)
@@ -596,30 +577,27 @@ describe "File" do
     end
   end
 
-  describe "real_path" do
+  describe "#realpath" do
     it "expands paths for normal files" do
-      {% if flag?(:win32) %}
-        File.real_path("C:\\Windows").should eq(File.real_path("C:\\Windows"))
-        File.real_path("C:\\Windows\\..").should eq(File.real_path("C:\\"))
-      {% else %}
-        File.real_path("/usr/share").should eq(File.real_path("/usr/share"))
-        File.real_path("/usr/share/..").should eq(File.real_path("/usr"))
-      {% end %}
+      path = File.join(File.realpath("."), datapath("dir"))
+      File.realpath(path).should eq(path)
+      File.realpath(File.join(path, "..")).should eq(File.dirname(path))
     end
 
     it "raises if file doesn't exist" do
-      expect_raises(File::NotFoundError, "Error resolving real path: '/usr/share/foo/bar'") do
-        File.real_path("/usr/share/foo/bar")
+      path = datapath("doesnotexist")
+      expect_raises(File::NotFoundError, "Error resolving real path: '#{path.inspect_unquoted}'") do
+        File.realpath(path)
       end
     end
 
-    # TODO: see Crystal::System::File.real_path TODO
+    # TODO: see Crystal::System::File.realpath TODO
     pending_win32 "expands paths of symlinks" do
       file_path = File.expand_path(datapath("test_file.txt"))
       with_tempfile("symlink.txt") do |symlink_path|
         File.symlink(file_path, symlink_path)
-        real_symlink_path = File.real_path(symlink_path)
-        real_file_path = File.real_path(file_path)
+        real_symlink_path = File.realpath(symlink_path)
+        real_file_path = File.realpath(file_path)
         real_symlink_path.should eq(real_file_path)
       end
     end
@@ -933,22 +911,21 @@ describe "File" do
     end
   end
 
-  # TODO: implement flock on windows
   describe "flock" do
-    pending_win32 "exclusively locks a file" do
+    it "#flock_exclusive" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_exclusive do
             exc = expect_raises(IO::Error, "Error applying file lock: file is already locked") do
               file2.flock_exclusive(blocking: false) { }
             end
-            exc.os_error.should eq Errno::EWOULDBLOCK
+            exc.os_error.should eq({% if flag?(:win32) %}WinError::ERROR_LOCK_VIOLATION{% else %}Errno::EWOULDBLOCK{% end %})
           end
         end
       end
     end
 
-    pending_win32 "shared locks a file" do
+    it "#flock_shared" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_shared do
@@ -958,7 +935,7 @@ describe "File" do
       end
     end
 
-    pending_win32 "#flock_shared soft blocking fiber" do
+    it "#flock_shared soft blocking fiber" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           done = Channel(Nil).new
@@ -975,7 +952,7 @@ describe "File" do
       end
     end
 
-    pending_win32 "#flock_exclusive soft blocking fiber" do
+    it "#flock_exclusive soft blocking fiber" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           done = Channel(Nil).new
@@ -1319,10 +1296,11 @@ describe "File" do
       end
     end
 
-    # TODO: there is no file which is reliably nonwriteable on windows
-    pending_win32 "raises if file cannot be accessed" do
-      expect_raises(File::Error, "Error setting time on file: '/bin/ls'") do
-        File.touch("/bin/ls")
+    it "raises if file cannot be accessed" do
+      # This path is invalid because it represents a file path as a directory path
+      path = File.join(datapath("test_file.txt"), "doesnotexist")
+      expect_raises(File::Error, path.inspect_unquoted) do
+        File.touch(path)
       end
     end
   end

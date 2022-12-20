@@ -1284,6 +1284,13 @@ module Crystal
           raise("unexpected '_' in number", @token, (current_pos - start)) if peek_next_char == '_'
           break unless peek_next_char.in?('0'..'9')
         when 'i', 'u', 'f'
+          if current_char == 'f' && base != 10
+            case base
+            when 2 then raise("binary float literal is not supported", @token, (current_pos - start))
+            when 8 then raise("octal float literal is not supported", @token, (current_pos - start))
+            end
+            break
+          end
           before_suffix_pos = current_pos
           @token.number_kind = consume_number_suffix
           next_char

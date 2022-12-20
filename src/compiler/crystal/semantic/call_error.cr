@@ -405,7 +405,7 @@ class Crystal::Call
     extra_types : Array(Type)?
 
   private def compute_call_error_reason(owner, a_def, arg_types, named_args_types)
-    if (block && !a_def.yields) || (!block && a_def.yields)
+    if (block && !a_def.block_arity) || (!block && a_def.block_arity)
       return BlockMismatch.new
     end
 
@@ -643,7 +643,8 @@ class Crystal::Call
       if obj.is_a?(InstanceVar)
         scope = self.scope
         ivar = scope.lookup_instance_var(obj.name)
-        if ivar.dependencies.size == 1 && ivar.dependencies.first.same?(program.nil_var)
+        deps = ivar.dependencies?
+        if deps && deps.size == 1 && deps.first.same?(program.nil_var)
           similar_name = scope.lookup_similar_instance_var_name(ivar.name)
           if similar_name
             msg << colorize(" (#{ivar.name} was never assigned a value, did you mean #{similar_name}?)").yellow.bold
@@ -660,7 +661,7 @@ class Crystal::Call
     all_arguments_sizes = [] of Int32
     min_splat = Int32::MAX
     defs.each do |a_def|
-      next if (block && !a_def.yields) || (!block && a_def.yields)
+      next if (block && !a_def.block_arity) || (!block && a_def.block_arity)
 
       min_size, max_size = a_def.min_max_args_sizes
       if max_size == Int32::MAX
@@ -869,7 +870,7 @@ class Crystal::Call
       printed = true
     end
 
-    if a_def.yields
+    if a_def.block_arity
       str << ", " if printed
       str << '&'
       if block_arg = a_def.block_arg

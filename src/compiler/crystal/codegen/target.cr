@@ -32,6 +32,17 @@ class Crystal::Codegen::Target
     else
       # no need to tweak the architecture
     end
+
+    if linux? && environment_parts.size == 1
+      case @vendor
+      when "suse", "redhat", "slackware", "amazon", "unknown", "montavista", "mti"
+        # Build string instead of setting it as "linux-gnu"
+        # since "linux6E" & "linuxspe" are available.
+        @environment = "#{@environment}-gnu"
+      else
+        # no need to tweak the environment
+      end
+    end
   end
 
   def environment_parts

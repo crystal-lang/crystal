@@ -513,4 +513,35 @@ describe Object do
       (x == y).should be_false
     end
   end
+
+  describe "#not_nil!" do
+    it "basic" do
+      1.not_nil!
+      expect_raises(NilAssertionError, "Nil assertion failed") do
+        nil.not_nil!
+      end
+    end
+
+    it "removes Nil type" do
+      x = TestObject.new.as(TestObject?)
+      typeof(x.not_nil!).should eq TestObject
+      x.not_nil!.should be x
+    end
+
+    it "raises NilAssertionError" do
+      x = nil.as(TestObject?)
+      typeof(x.not_nil!).should eq TestObject
+      expect_raises(NilAssertionError, "Nil assertion failed") do
+        x.not_nil!
+      end
+    end
+
+    it "with message" do
+      x = TestObject.new
+      x.not_nil!("custom message").should be x
+      expect_raises(NilAssertionError, "custom message") do
+        nil.not_nil!("custom message")
+      end
+    end
+  end
 end

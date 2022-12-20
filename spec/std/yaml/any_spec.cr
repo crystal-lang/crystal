@@ -65,6 +65,8 @@ describe YAML::Any do
       value.should eq(1.2_f32)
       value.should be_a(Float32)
 
+      expect_raises(TypeCastError) { YAML.parse("true").as_f32 }
+
       value = YAML.parse("1.2").as_f32?
       value.should eq(1.2_f32)
       value.should be_a(Float32)
@@ -73,10 +75,22 @@ describe YAML::Any do
       value.should be_nil
     end
 
+    it "gets float32 from JSON integer (#8618)" do
+      value = YAML.parse("123").as_f32
+      value.should eq(123.0)
+      value.should be_a(Float32)
+
+      value = YAML.parse("123").as_f32?
+      value.should eq(123.0)
+      value.should be_a(Float32)
+    end
+
     it "gets float64" do
       value = YAML.parse("1.2").as_f
       value.should eq(1.2)
       value.should be_a(Float64)
+
+      expect_raises(TypeCastError) { YAML.parse("true").as_f }
 
       value = YAML.parse("1.2").as_f?
       value.should eq(1.2)
@@ -84,6 +98,16 @@ describe YAML::Any do
 
       value = YAML.parse("true").as_f?
       value.should be_nil
+    end
+
+    it "gets float64 from JSON integer (#8618)" do
+      value = YAML.parse("123").as_f
+      value.should eq(123.0)
+      value.should be_a(Float64)
+
+      value = YAML.parse("123").as_f?
+      value.should eq(123.0)
+      value.should be_a(Float64)
     end
 
     it "gets time" do

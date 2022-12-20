@@ -74,7 +74,7 @@ class Crystal::FixMissingTypes < Crystal::Visitor
       block.type = @program.no_return
     end
 
-    node.target_defs.each do |target_def|
+    node.target_defs.try &.each do |target_def|
       if @fixed.add?(target_def)
         target_def.type = @program.no_return unless target_def.type?
         target_def.accept_children self

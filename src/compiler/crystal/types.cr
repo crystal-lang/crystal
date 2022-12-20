@@ -843,7 +843,7 @@ module Crystal
     def : Def do
     def self.new(a_def : Def)
       min_size, max_size = a_def.min_max_args_sizes
-      new min_size, max_size, !!a_def.yields, a_def
+      new min_size, max_size, !!a_def.block_arity, a_def
     end
   end
 
