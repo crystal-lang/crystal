@@ -312,7 +312,7 @@ describe "Code gen: primitives" do
 
   describe "atomicrmw" do
     it "codegens atomicrmw with enums" do
-      run(<<-CR).to_i.should eq(3)
+      run(<<-CRYSTAL).to_i.should eq(3)
         enum RMWBinOp
           Add = 1
         end
@@ -328,11 +328,11 @@ describe "Code gen: primitives" do
         x = 1
         atomicrmw(:add, pointerof(x), 2, :sequentially_consistent, false)
         x
-        CR
+        CRYSTAL
     end
 
     it "codegens atomicrmw with enums" do
-      run(<<-CR).to_i.should eq(3)
+      run(<<-CRYSTAL).to_i.should eq(3)
         enum RMWBinOp
           Add = 1
         end
@@ -348,12 +348,12 @@ describe "Code gen: primitives" do
         x = 1
         atomicrmw(RMWBinOp::Add, pointerof(x), 2, Ordering::SequentiallyConsistent, false)
         x
-        CR
+        CRYSTAL
     end
 
     # TODO: remove once support for 1.4 is dropped
     it "codegens atomicrmw with symbols" do
-      run(<<-CR).to_i.should eq(3)
+      run(<<-CRYSTAL).to_i.should eq(3)
         @[Primitive(:atomicrmw)]
         def atomicrmw(op : Symbol, ptr : Int32*, val : Int32, ordering : Symbol, singlethread : Bool) : Int32
         end
@@ -361,7 +361,7 @@ describe "Code gen: primitives" do
         x = 1
         atomicrmw(:add, pointerof(x), 2, :sequentially_consistent, false)
         x
-        CR
+        CRYSTAL
     end
   end
 

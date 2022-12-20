@@ -834,25 +834,25 @@ describe "Semantic: proc" do
   end
 
   it "allows metaclass in procs" do
-    assert_type(<<-CR) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass, types["Foo"]) }
       class Foo
       end
 
       ->(x : Foo.class) { x.new }
-      CR
+      CRYSTAL
   end
 
   it "allows metaclass in proc return types" do
-    assert_type(<<-CR) { proc_of(types["Foo"].metaclass) }
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass) }
       class Foo
       end
 
       -> : Foo.class { Foo }
-      CR
+      CRYSTAL
   end
 
   it "allows metaclass in captured block" do
-    assert_type(<<-CR) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass, types["Foo"]) }
       class Foo
       end
 
@@ -861,11 +861,11 @@ describe "Semantic: proc" do
       end
 
       foo { |x| x.new }
-      CR
+      CRYSTAL
   end
 
   it "allows metaclass in proc pointer" do
-    assert_type(<<-CR) { proc_of(types["Foo"].metaclass, types["Foo"]) }
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass, types["Foo"]) }
       class Foo
       end
 
@@ -874,11 +874,11 @@ describe "Semantic: proc" do
       end
 
       ->foo(Foo.class)
-      CR
+      CRYSTAL
   end
 
   it "allows metaclass in proc notation parameter type" do
-    assert_type(<<-CR) { proc_of(types["Foo"].metaclass, nil_type) }
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass, nil_type) }
       class Foo
       end
 
@@ -886,16 +886,16 @@ describe "Semantic: proc" do
 
       x : Foo.class -> = Proc(Foo.class, Nil).new { }
       x
-      CR
+      CRYSTAL
   end
 
   it "allows metaclass in proc notation return type" do
-    assert_type(<<-CR) { proc_of(types["Foo"].metaclass) }
+    assert_type(<<-CRYSTAL) { proc_of(types["Foo"].metaclass) }
       class Foo
       end
       x : -> Foo.class = ->{ Foo }
       x
-      CR
+      CRYSTAL
   end
 
   it "..." do
@@ -1318,11 +1318,11 @@ describe "Semantic: proc" do
 end
 
 private def proc_new
-  <<-CODE
+  <<-CRYSTAL
   struct Proc
     def self.new(&block : self)
       block
     end
   end
-  CODE
+  CRYSTAL
 end

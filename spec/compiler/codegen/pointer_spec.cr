@@ -439,7 +439,7 @@ describe "Code gen: pointer" do
   end
 
   it "passes arguments correctly for typedef metaclass (#8544)" do
-    run <<-CR
+    run <<-CRYSTAL
       lib LibFoo
         type Foo = Void*
       end
@@ -453,7 +453,7 @@ describe "Code gen: pointer" do
       x = 1
       LibFoo::Foo.foo(x)
       Pointer(Void).foo(x)
-      CR
+      CRYSTAL
   end
 
   it "generates correct code for Pointer.malloc(0) (#2905)" do

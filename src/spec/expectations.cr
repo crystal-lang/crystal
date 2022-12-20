@@ -382,45 +382,51 @@ module Spec
     # If *message* is a regular expression, it is used to match the error message.
     #
     # It returns the rescued exception.
-    def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__) forall T
-      yield
-    rescue ex : T
-      # We usually bubble Spec::AssertionFailed, unless this is the expected exception
-      if ex.is_a?(Spec::AssertionFailed) && klass != Spec::AssertionFailed
-        raise ex
+    {% if flag?(:wasm32) %}
+      def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__, &) forall T
+        # TODO: Enable "expect_raises" for wasm32 after exceptions are working.
       end
-
-      # `NestingSpecError` is treated as the same above.
-      if ex.is_a?(Spec::NestingSpecError) && klass != Spec::NestingSpecError
-        raise ex
-      end
-
-      ex_to_s = ex.to_s
-      case message
-      when Regex
-        unless (ex_to_s =~ message)
-          backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-          fail "Expected #{klass} with message matching #{message.pretty_inspect}, " \
-               "got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+    {% else %}
+      def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__) forall T
+        yield
+      rescue ex : T
+        # We usually bubble Spec::AssertionFailed, unless this is the expected exception
+        if ex.is_a?(Spec::AssertionFailed) && klass != Spec::AssertionFailed
+          raise ex
         end
-      when String
-        unless ex_to_s.includes?(message)
-          backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-          fail "Expected #{klass} with #{message.pretty_inspect}, got #<#{ex.class}: " \
-               "#{ex_to_s}> with backtrace:\n#{backtrace}", file, line
-        end
-      when Nil
-        # No need to check the message
-      end
 
-      ex
-    rescue ex
-      backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-      fail "Expected #{klass}, got #<#{ex.class}: #{ex}> with backtrace:\n" \
-           "#{backtrace}", file, line
-    else
-      fail "Expected #{klass} but nothing was raised", file, line
-    end
+        # `NestingSpecError` is treated as the same above.
+        if ex.is_a?(Spec::NestingSpecError) && klass != Spec::NestingSpecError
+          raise ex
+        end
+
+        ex_to_s = ex.to_s
+        case message
+        when Regex
+          unless (ex_to_s =~ message)
+            backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
+            fail "Expected #{klass} with message matching #{message.pretty_inspect}, " \
+                 "got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+          end
+        when String
+          unless ex_to_s.includes?(message)
+            backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
+            fail "Expected #{klass} with #{message.pretty_inspect}, got #<#{ex.class}: " \
+                 "#{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+          end
+        when Nil
+          # No need to check the message
+        end
+
+        ex
+      rescue ex
+        backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
+        fail "Expected #{klass}, got #<#{ex.class}: #{ex}> with backtrace:\n" \
+             "#{backtrace}", file, line
+      else
+        fail "Expected #{klass} but nothing was raised", file, line
+      end
+    {% end %}
   end
 
   module ObjectExtensions

@@ -68,6 +68,10 @@ describe "URI" do
     assert_uri("http://[::1]:81/", scheme: "http", host: "[::1]", port: 81, path: "/")
     assert_uri("http://192.0.2.16:81/", scheme: "http", host: "192.0.2.16", port: 81, path: "/")
 
+    # preserves fully-qualified host with trailing dot
+    assert_uri("https://example.com./", scheme: "https", host: "example.com.", path: "/")
+    assert_uri("https://example.com.:8443/", scheme: "https", host: "example.com.", port: 8443, path: "/")
+
     # port
     it { URI.parse("http://192.168.0.2:/foo").should eq URI.new(scheme: "http", host: "192.168.0.2", path: "/foo") }
 
