@@ -860,7 +860,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4, 5].join(", ") { |i| -i } # => "-1, -2, -3, -4, -5"
   # ```
-  def join(separator = "", & : T ->)
+  def join(separator = "", & : T ->) : String
     String.build do |io|
       join(io, separator) do |elem|
         io << yield elem
