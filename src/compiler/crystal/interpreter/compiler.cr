@@ -346,7 +346,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     in .i128?
       put_i128 value.to_i128, node: node
     in .u128?
-      put_u128 value..to_u128, node: node
+      put_u128 value.to_u128, node: node
     in .f32?
       put_i32 value.to_f32.unsafe_as(Int32), node: node
     in .f64?
