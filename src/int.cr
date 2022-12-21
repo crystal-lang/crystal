@@ -878,6 +878,17 @@ struct Int8
     Intrinsics.popcount8(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse8(self).to_i8!
+  end
+
   # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
   # and vice-versa. The bit order within each byte is unchanged.
   #
@@ -966,6 +977,17 @@ struct Int16
 
   def popcount : Int16
     Intrinsics.popcount16(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse16(self).to_i16!
   end
 
   # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
@@ -1058,6 +1080,17 @@ struct Int32
     Intrinsics.popcount32(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse32(self).to_i32!
+  end
+
   # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
   # and vice-versa. The bit order within each byte is unchanged.
   #
@@ -1146,6 +1179,17 @@ struct Int64
 
   def popcount : Int64
     Intrinsics.popcount64(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse64(self).to_i64!
   end
 
   # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
@@ -1238,6 +1282,17 @@ struct Int128
 
   def popcount
     Intrinsics.popcount128(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse128(self).to_i128!
   end
 
   # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
@@ -1334,6 +1389,17 @@ struct UInt8
     Intrinsics.popcount8(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse8(self)
+  end
+
   # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
   # and vice-versa. The bit order within each byte is unchanged.
   #
@@ -1426,6 +1492,17 @@ struct UInt16
 
   def popcount : Int16
     Intrinsics.popcount16(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse16(self)
   end
 
   # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
@@ -1522,6 +1599,17 @@ struct UInt32
     Intrinsics.popcount32(self)
   end
 
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse32(self)
+  end
+
   # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
   # and vice-versa. The bit order within each byte is unchanged.
   #
@@ -1614,6 +1702,17 @@ struct UInt64
 
   def popcount : Int64
     Intrinsics.popcount64(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse64(self)
   end
 
   # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
@@ -1710,6 +1809,17 @@ struct UInt128
 
   def popcount
     Intrinsics.popcount128(self)
+  end
+
+  # Reverses the bits of `self`; the least significant bit becomes the most
+  # significant, and vice-versa.
+  #
+  # ```
+  # 0b01001011_u8.bit_reverse          # => 0b11010010
+  # 0b1100100001100111_u16.bit_reverse # => 0b1110011000010011
+  # ```
+  def bit_reverse : self
+    Intrinsics.bitreverse128(self)
   end
 
   # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,

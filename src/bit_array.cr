@@ -484,10 +484,10 @@ struct BitArray
     return self if size <= 1
 
     if size <= 32
-      @bits.value = Intrinsics.bitreverse32(@bits.value) >> (32 - size)
+      @bits.value = @bits.value.bit_reverse >> (32 - size)
     elsif size <= 64
       more_bits = @bits.as(UInt64*)
-      more_bits.value = Intrinsics.bitreverse64(more_bits.value) >> (64 - size)
+      more_bits.value = more_bits.value.bit_reverse >> (64 - size)
     else
       # 3 or more groups of bits
       offset = (-size) % 32
@@ -502,17 +502,17 @@ struct BitArray
         #     hgfedcba fghijklm nopqrstu
         (malloc_size - 1).downto(1) do |i|
           # fshl(a, b, count) = (a << count) | (b >> (N - count))
-          @bits[i] = Intrinsics.bitreverse32(Intrinsics.fshl32(@bits[i], @bits[i - 1], offset))
+          @bits[i] = Intrinsics.fshl32(@bits[i], @bits[i - 1], offset).bit_reverse
         end
 
         # last group:
         #
         #     edcba000 fghijklm nopqrstu
         #     000abcde fghijklm nopqrstu
-        @bits[0] = Intrinsics.bitreverse32(@bits[0] << offset)
+        @bits[0] = (@bits[0] << offset).bit_reverse
       else
         # no padding; do only the bit reverses
-        Slice.new(@bits, malloc_size).map! { |x| Intrinsics.bitreverse32(x) }
+        Slice.new(@bits, malloc_size).map! &.bit_reverse
       end
 
       # reversing all groups themselves:
