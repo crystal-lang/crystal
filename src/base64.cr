@@ -208,7 +208,7 @@ module Base64
 
     # process bunch of full triples
     while cstr < endcstr
-      n = cstr.as(UInt32*).value.byteswap
+      n = cstr.as(UInt32*).value.byte_swap
       yield bytes[(n >> 26) & 63]
       yield bytes[(n >> 20) & 63]
       yield bytes[(n >> 14) & 63]
