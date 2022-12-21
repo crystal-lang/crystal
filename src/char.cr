@@ -400,7 +400,7 @@ struct Char
   # 'x'.downcase # => 'x'
   # '.'.downcase # => '.'
   # ```
-  def downcase(options = Unicode::CaseOptions::None) : Char
+  def downcase(options : Unicode::CaseOptions = :none) : Char
     Unicode.downcase(self, options)
   end
 
@@ -409,7 +409,7 @@ struct Char
   # This method takes into account the possibility that an downcase
   # version of a char might result in multiple chars, like for
   # 'İ', which results in 'i' and a dot mark.
-  def downcase(options = Unicode::CaseOptions::None)
+  def downcase(options : Unicode::CaseOptions = :none)
     Unicode.downcase(self, options) { |char| yield char }
   end
 
@@ -427,7 +427,7 @@ struct Char
   # 'X'.upcase # => 'X'
   # '.'.upcase # => '.'
   # ```
-  def upcase(options = Unicode::CaseOptions::None) : Char
+  def upcase(options : Unicode::CaseOptions = :none) : Char
     Unicode.upcase(self, options)
   end
 
@@ -441,7 +441,7 @@ struct Char
   # 'z'.upcase { |v| puts v } # prints 'Z'
   # 'ﬄ'.upcase { |v| puts v } # prints 'F', 'F', 'L'
   # ```
-  def upcase(options = Unicode::CaseOptions::None)
+  def upcase(options : Unicode::CaseOptions = :none)
     Unicode.upcase(self, options) { |char| yield char }
   end
 
