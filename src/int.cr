@@ -878,6 +878,19 @@ struct Int8
     Intrinsics.popcount8(self)
   end
 
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    self
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading8(self, false)
@@ -953,6 +966,19 @@ struct Int16
 
   def popcount : Int16
     Intrinsics.popcount16(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap16(self).to_i16!
   end
 
   # Returns the number of leading `0`-bits.
@@ -1032,6 +1058,19 @@ struct Int32
     Intrinsics.popcount32(self)
   end
 
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap32(self).to_i32!
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading32(self, false)
@@ -1107,6 +1146,19 @@ struct Int64
 
   def popcount : Int64
     Intrinsics.popcount64(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap64(self).to_i64!
   end
 
   # Returns the number of leading `0`-bits.
@@ -1186,6 +1238,19 @@ struct Int128
 
   def popcount
     Intrinsics.popcount128(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap128(self).to_i128!
   end
 
   # Returns the number of leading `0`-bits.
@@ -1269,6 +1334,19 @@ struct UInt8
     Intrinsics.popcount8(self)
   end
 
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    self
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading8(self, false)
@@ -1348,6 +1426,19 @@ struct UInt16
 
   def popcount : Int16
     Intrinsics.popcount16(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap16(self)
   end
 
   # Returns the number of leading `0`-bits.
@@ -1431,6 +1522,19 @@ struct UInt32
     Intrinsics.popcount32(self)
   end
 
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap32(self)
+  end
+
   # Returns the number of leading `0`-bits.
   def leading_zeros_count
     Intrinsics.countleading32(self, false)
@@ -1510,6 +1614,19 @@ struct UInt64
 
   def popcount : Int64
     Intrinsics.popcount64(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap64(self)
   end
 
   # Returns the number of leading `0`-bits.
@@ -1593,6 +1710,19 @@ struct UInt128
 
   def popcount
     Intrinsics.popcount128(self)
+  end
+
+  # Swaps the bytes of `self`; a little-endian value becomes a big-endian value,
+  # and vice-versa. The bit order within each byte is unchanged.
+  #
+  # Has no effect on 8-bit integers.
+  #
+  # ```
+  # 0x1234_u16.byte_swap     # => 0x3412
+  # 0x5678ABCD_u32.byte_swap # => 0xCDAB7856
+  # ```
+  def byte_swap : self
+    Intrinsics.bswap128(self)
   end
 
   # Returns the number of leading `0`-bits.

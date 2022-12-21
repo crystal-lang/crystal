@@ -58,11 +58,17 @@ lib LibIntrinsics
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bitreverse16)] {% end %}
   fun bitreverse16 = "llvm.bitreverse.i16"(id : UInt16) : UInt16
 
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap16)] {% end %}
+  fun bswap16 = "llvm.bswap.i16"(id : UInt16) : UInt16
+
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap32)] {% end %}
   fun bswap32 = "llvm.bswap.i32"(id : UInt32) : UInt32
 
-  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap16)] {% end %}
-  fun bswap16 = "llvm.bswap.i16"(id : UInt16) : UInt16
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap64)] {% end %}
+  fun bswap64 = "llvm.bswap.i64"(id : UInt64) : UInt64
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap128)] {% end %}
+  fun bswap128 = "llvm.bswap.i128"(id : UInt128) : UInt128
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_popcount8)] {% end %}
   fun popcount8 = "llvm.ctpop.i8"(src : Int8) : Int8
@@ -208,12 +214,20 @@ module Intrinsics
     LibIntrinsics.bitreverse16(id)
   end
 
+  def self.bswap16(id) : UInt16
+    LibIntrinsics.bswap16(id)
+  end
+
   def self.bswap32(id) : UInt32
     LibIntrinsics.bswap32(id)
   end
 
-  def self.bswap16(id)
-    LibIntrinsics.bswap16(id)
+  def self.bswap64(id) : UInt64
+    LibIntrinsics.bswap64(id)
+  end
+
+  def self.bswap128(id) : UInt128
+    LibIntrinsics.bswap128(id)
   end
 
   def self.popcount8(src) : Int8
