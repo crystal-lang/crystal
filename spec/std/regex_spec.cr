@@ -204,6 +204,10 @@ describe "Regex" do
       {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
         LibPCRE.config LibPCRE::CONFIG_JIT, out jit_enabled
         pending! "PCRE JIT mode not available." unless 1 == jit_enabled
+      {% else %}
+        # This spec requires a fairly large depth limit. Some package builds
+        # have a more restrictive value which would make this test fail.
+        pending! "PCRE2 depth limit too low" unless Regex::PCRE2.config(LibPCRE2::CONFIG_DEPTHLIMIT, UInt32) > 8192
       {% end %}
 
       str = File.read(datapath("large_single_line_string.txt"))
