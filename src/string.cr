@@ -3035,7 +3035,7 @@ class String
   # ```
   #
   # Case-sensitive only comparison is provided by the comparison operator `#<=>`.
-  def compare(other : String, case_insensitive = false, options = Unicode::CaseOptions::None) : Int32
+  def compare(other : String, case_insensitive = false, options : Unicode::CaseOptions = :none) : Int32
     return self <=> other unless case_insensitive
 
     if single_byte_optimizable? && other.single_byte_optimizable?

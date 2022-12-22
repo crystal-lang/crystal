@@ -257,7 +257,7 @@ module Crystal::System::File
 
     if retry
       until flock(op)
-        ::Fiber.yield
+        sleep 0.1
       end
     else
       flock(op) || raise IO::Error.from_errno("Error applying file lock: file is already locked")

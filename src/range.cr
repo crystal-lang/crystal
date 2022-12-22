@@ -362,7 +362,7 @@ struct Range(B, E)
   # the method simply calls `random.rand(self)`.
   #
   # Raises `ArgumentError` if `self` is an open range.
-  def sample(random = Random::DEFAULT)
+  def sample(random : Random = Random::DEFAULT)
     {% if B == Nil || E == Nil %}
       {% raise "Can't sample an open range" %}
     {% end %}

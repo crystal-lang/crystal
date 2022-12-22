@@ -1542,7 +1542,7 @@ class Array(T)
 
   # Returns an array with all the elements in the collection randomized
   # using the given *random* number generator.
-  def shuffle(random = Random::DEFAULT) : Array(T)
+  def shuffle(random : Random = Random::DEFAULT) : Array(T)
     dup.shuffle!(random)
   end
 

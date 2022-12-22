@@ -22,10 +22,30 @@ private def it_parses(string, expected_node, file = __FILE__, line = __LINE__, *
   end
 end
 
+private def location_to_index(string, location)
+  index = 0
+  (location.line_number - 1).times do
+    index = string.index!('\n', index) + 1
+  end
+  index + location.column_number - 1
+end
+
+private def source_between(string, loc, end_loc)
+  beginning = location_to_index(string, loc.not_nil!)
+  ending = location_to_index(string, end_loc.not_nil!)
+  string[beginning..ending]
+end
+
+private def node_source(string, node)
+  source_between(string, node.location, node.end_location)
+end
+
 private def assert_end_location(source, line_number = 1, column_number = source.size, file = __FILE__, line = __LINE__)
   it "gets corrects end location for #{source.inspect}", file, line do
-    parser = Parser.new("#{source}; 1")
+    string = "#{source}; 1"
+    parser = Parser.new(string)
     node = parser.parse.as(Expressions).expressions[0]
+    node_source(string, node).should eq(source)
     end_loc = node.end_location.not_nil!
     end_loc.line_number.should eq(line_number)
     end_loc.column_number.should eq(column_number)
@@ -2162,6 +2182,57 @@ module Crystal
       assert_end_location "extend Foo"
       assert_end_location "1.as(Int32)"
       assert_end_location "puts obj.foo"
+      assert_end_location "a, b = 1, 2 if 3"
+      assert_end_location "abstract def foo(x)"
+      assert_end_location "::foo"
+      assert_end_location "foo.[0] = 1"
+      assert_end_location "x : Foo(A, *B, C)"
+      assert_end_location "Int[8]?"
+      assert_end_location "[1, 2,]"
+      assert_end_location "foo(\n  &.block\n)", line_number: 3, column_number: 1
+      assert_end_location "foo.bar(x) do; end"
+      assert_end_location "%w(one two)"
+      assert_end_location "{%\nif foo\n  bar\n end\n%}", line_number: 5, column_number: 2
+      assert_end_location "foo bar, out baz"
+      assert_end_location "Foo?"
+      assert_end_location "foo : Foo.class"
+      assert_end_location "foo : Foo?"
+      assert_end_location "foo : Foo*"
+      assert_end_location "foo : Foo**"
+      assert_end_location "foo : Foo[42]"
+      assert_end_location "foo ->bar"
+      assert_end_location "foo ->bar="
+      assert_end_location "foo ->self.bar"
+      assert_end_location "foo ->self.bar="
+      assert_end_location "foo ->Bar.baz"
+      assert_end_location "foo ->Bar.baz="
+      assert_end_location "foo ->@bar.baz"
+      assert_end_location "foo ->@bar.baz="
+      assert_end_location "foo ->@@bar.baz"
+      assert_end_location "foo ->@@bar.baz="
+      assert_end_location "foo ->bar(Baz)"
+      assert_end_location "foo *bar"
+      assert_end_location "foo **bar"
+      assert_end_location "Foo { 1 }"
+      assert_end_location "foo.!"
+      assert_end_location "foo.!()"
+      assert_end_location "f.x = foo"
+      assert_end_location "f.x=(*foo)"
+      assert_end_location "f.x=(foo).bar"
+      assert_end_location "x : Foo ->"
+      assert_end_location "x : Foo -> Bar"
+      assert_end_location %(require "foo")
+      assert_end_location "begin; 1; 2; 3; end"
+      assert_end_location "1.."
+      assert_end_location "foo.responds_to?(:foo)"
+      assert_end_location "foo.responds_to? :foo"
+      assert_end_location "foo.nil?"
+      assert_end_location "foo.nil?(  )"
+      assert_end_location "@a = uninitialized Foo"
+      assert_end_location "@@a = uninitialized Foo"
+      assert_end_location "1 rescue 2"
+      assert_end_location "1 ensure 2"
+      assert_end_location "foo.bar= *baz"
 
       assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
       assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"
@@ -2359,6 +2430,12 @@ module Crystal
         node.location.not_nil!.line_number.should eq(1)
         node.else_location.not_nil!.line_number.should eq(2)
         node.end_location.not_nil!.line_number.should eq(3)
+
+        parser = Parser.new("if foo\nend")
+        node = parser.parse.as(If)
+        node.location.not_nil!.line_number.should eq(1)
+        node.else_location.should be_nil
+        node.end_location.not_nil!.line_number.should eq(2)
       end
 
       it "sets correct location of `elsif` of if statement" do
@@ -2406,6 +2483,77 @@ module Crystal
         node.else_location.not_nil!.line_number.should eq(3)
         node.ensure_location.not_nil!.line_number.should eq(4)
         node.end_location.not_nil!.line_number.should eq(5)
+      end
+
+      it "sets correct location of trailing ensure" do
+        parser = Parser.new("foo ensure bar")
+        node = parser.parse.as(ExceptionHandler)
+        ensure_location = node.ensure_location.not_nil!
+        ensure_location.line_number.should eq(1)
+        ensure_location.column_number.should eq(5)
+      end
+
+      it "sets correct location of trailing rescue" do
+        source = "foo rescue bar"
+        parser = Parser.new(source)
+        node = parser.parse.as(ExceptionHandler).rescues.not_nil![0]
+        node_source(source, node).should eq("rescue bar")
+      end
+
+      it "sets correct location of call name" do
+        source = "foo(bar)"
+        node = Parser.new(source).parse.as(Call)
+        source_between(source, node.name_location, node.name_end_location).should eq("foo")
+      end
+
+      it "sets correct location of element in array literal" do
+        source = "%i(foo bar)"
+        elements = Parser.new(source).parse.as(ArrayLiteral).elements
+        node_source(source, elements[0]).should eq("foo")
+        node_source(source, elements[1]).should eq("bar")
+      end
+
+      it "sets correct location of implicit tuple literal of multi-return" do
+        source = "def foo; return 1, 2; end"
+        node = Parser.new(source).parse.as(Def).body.as(Return).exp.not_nil!
+        node_source(source, node).should eq("1, 2")
+      end
+
+      it "sets correct location of var in type declaration" do
+        source = "foo : Int32"
+        node = Parser.new(source).parse.as(TypeDeclaration).var
+        node_source(source, node).should eq("foo")
+
+        source = "begin : Int32"
+        node = Parser.new(source).parse.as(TypeDeclaration).var
+        node_source(source, node).should eq("begin")
+      end
+
+      it "sets correct location of var in proc pointer" do
+        source = "foo : Foo; ->foo.bar"
+        expressions = Parser.new(source).parse.as(Expressions).expressions
+        node = expressions[1].as(ProcPointer).obj.not_nil!
+        node_source(source, node).should eq("foo")
+      end
+
+      it "sets correct location of var in macro for loop" do
+        source = "{% for foo, bar in baz %} {% end %}"
+        node = Parser.new(source).parse.as(MacroFor)
+        node_source(source, node.vars[0]).should eq("foo")
+        node_source(source, node.vars[1]).should eq("bar")
+      end
+
+      it "sets correct location of receiver var in method def" do
+        source = "def foo.bar; end"
+        node = Parser.new(source).parse.as(Def).receiver.not_nil!
+        node_source(source, node).should eq("foo")
+      end
+
+      it "sets correct location of vars in C struct" do
+        source = "lib Foo; struct Bar; fizz, buzz : Int32; end; end"
+        expressions = Parser.new(source).parse.as(LibDef).body.as(CStructOrUnionDef).body.as(Expressions).expressions
+        node_source(source, expressions[0].as(TypeDeclaration).var).should eq("fizz")
+        node_source(source, expressions[1].as(TypeDeclaration).var).should eq("buzz")
       end
 
       it "doesn't override yield with macro yield" do
