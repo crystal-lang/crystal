@@ -276,7 +276,7 @@ module Crystal::System::File
     handle = windows_handle
     if retry
       until lock_file(handle, flags)
-        ::Fiber.yield
+        sleep 0.1
       end
     else
       lock_file(handle, flags) || raise IO::Error.from_winerror("Error applying file lock: file is already locked")
