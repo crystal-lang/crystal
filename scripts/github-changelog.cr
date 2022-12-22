@@ -65,6 +65,9 @@ response = HTTP::Client.post("https://api.github.com/graphql",
     "Authorization" => "bearer #{api_token}",
   }
 )
+unless response.success?
+  abort "GitHub API response: #{response.status}\n#{response.body}"
+end
 
 module LabelNameConverter
   def self.from_json(pull : JSON::PullParser)
