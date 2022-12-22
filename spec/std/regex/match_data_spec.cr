@@ -216,6 +216,8 @@ describe "Regex::MatchData" do
       it "raises exception when named group doesn't exist" do
         md = matchdata(/foo/, "foo")
         expect_raises(KeyError, "Capture group 'group' does not exist") { md["group"] }
+
+        expect_raises(KeyError, "Capture group 'groupwithlongname' does not exist") { md["groupwithlongname"] }
       end
 
       it "captures empty group" do
@@ -302,6 +304,7 @@ describe "Regex::MatchData" do
       it "returns nil exception when named group doesn't exist" do
         md = matchdata(/foo/, "foo")
         md["group"]?.should be_nil
+        md["groupwithlongname"]?.should be_nil
       end
 
       it "capture empty group" do
