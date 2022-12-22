@@ -126,6 +126,12 @@ module Crystal
       {@last_is_truthy, @last_is_falsey}
     end
 
+    def transform(node : AnnotationDef)
+      @program.check_call_to_deprecated_annotation node
+
+      node
+    end
+
     def transform(node : Def)
       node.hook_expansions.try &.map! &.transform self
       node
@@ -556,42 +562,43 @@ module Crystal
         return exps
       end
 
-      target_defs = node.target_defs
-      if target_defs.size == 1
-        if target_defs.first.is_a?(External)
-          check_args_are_not_closure node, "can't send closure to C function"
-        elsif obj_type && obj_type.extern? && node.name.ends_with?('=')
-          check_args_are_not_closure node, "can't set closure as C #{obj_type.type_desc} member"
-        end
-      end
-
-      current_def = @current_def
-
-      target_defs.each do |target_def|
-        if @transformed.add?(target_def)
-          node.bubbling_exception do
-            @current_def = target_def
-            @def_nest_count += 1
-            target_def.body = target_def.body.transform(self)
-            @def_nest_count -= 1
-            @current_def = current_def
+      if target_defs = node.target_defs
+        if target_defs.size == 1
+          if target_defs[0].is_a?(External)
+            check_args_are_not_closure node, "can't send closure to C function"
+          elsif obj_type && obj_type.extern? && node.name.ends_with?('=')
+            check_args_are_not_closure node, "can't set closure as C #{obj_type.type_desc} member"
           end
         end
 
-        # If the current call targets a method that raises, the method
-        # where the call happens also raises.
-        current_def.raises = true if current_def && target_def.raises?
-      end
+        current_def = @current_def
 
-      if target_defs.empty?
-        exps = [] of ASTNode
-        if obj = node.obj
-          exps.push obj
+        target_defs.each do |target_def|
+          if @transformed.add?(target_def)
+            node.bubbling_exception do
+              @current_def = target_def
+              @def_nest_count += 1
+              target_def.body = target_def.body.transform(self)
+              @def_nest_count -= 1
+              @current_def = current_def
+            end
+          end
+
+          # If the current call targets a method that raises, the method
+          # where the call happens also raises.
+          current_def.raises = true if current_def && target_def.raises?
         end
-        node.args.each { |arg| exps.push arg }
-        call_exps = Expressions.from exps
-        call_exps.set_type(exps.last.type?) unless exps.empty?
-        return call_exps
+
+        if node.target_defs.not_nil!.empty?
+          exps = [] of ASTNode
+          if obj = node.obj
+            exps.push obj
+          end
+          node.args.each { |arg| exps.push arg }
+          call_exps = Expressions.from exps
+          call_exps.set_type(exps.last.type?) unless exps.empty?
+          return call_exps
+        end
       end
 
       node.replace_splats
@@ -1062,7 +1069,10 @@ module Crystal
       node = super
 
       unless node.type?
-        node.unbind_from node.dependencies
+        if dependencies = node.dependencies?
+          node.unbind_from node.dependencies
+        end
+
         node.bind_to node.expressions
       end
 

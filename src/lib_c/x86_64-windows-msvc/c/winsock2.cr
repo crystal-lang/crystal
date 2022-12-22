@@ -1,6 +1,7 @@
 require "./ws2def"
 require "./basetsd"
 require "./guiddef"
+require "./winbase"
 
 @[Link("WS2_32")]
 lib LibC
@@ -65,13 +66,8 @@ lib LibC
   WSA_INVALID_EVENT       = Pointer(WSAEVENT).null
   WSA_MAXIMUM_WAIT_EVENTS = MAXIMUM_WAIT_OBJECTS
   WSA_WAIT_FAILED         = WAIT_FAILED
-  STATUS_WAIT_0           = 0_i64
-  WAIT_OBJECT_0           = ((STATUS_WAIT_0) + 0)
   WSA_WAIT_EVENT_0        = WAIT_OBJECT_0
-  STATUS_USER_APC         = 0xc0
-  WAIT_IO_COMPLETION      = STATUS_USER_APC
   WSA_WAIT_IO_COMPLETION  = WAIT_IO_COMPLETION
-  WAIT_TIMEOUT            = 258_i64
   WSA_WAIT_TIMEOUT        = WAIT_TIMEOUT
   WSA_INFINITE            = INFINITE
 

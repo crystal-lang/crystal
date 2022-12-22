@@ -1374,7 +1374,7 @@ module Crystal
       when "block_arg"
         interpret_check_args { @block_arg || Nop.new }
       when "accepts_block?"
-        interpret_check_args { BoolLiteral.new(@yields != nil) }
+        interpret_check_args { BoolLiteral.new(@block_arity != nil) }
       when "return_type"
         interpret_check_args { @return_type || Nop.new }
       when "free_vars"

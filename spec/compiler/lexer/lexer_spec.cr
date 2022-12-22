@@ -362,6 +362,9 @@ describe "Lexer" do
   assert_syntax_error "0o200_i8", "0o200 doesn't fit in an Int8"
   assert_syntax_error "0b10000000_i8", "0b10000000 doesn't fit in an Int8"
 
+  assert_syntax_error "0b11_f32", "binary float literal is not supported"
+  assert_syntax_error "0o73_f64", "octal float literal is not supported"
+
   # 2**31 - 1
   it_lexes_i32 [["0x7fffffff", "2147483647"], ["0o17777777777", "2147483647"], ["0b1111111111111111111111111111111", "2147483647"]]
   it_lexes_i32 [["0x7fffffff_i32", "2147483647"], ["0o17777777777_i32", "2147483647"], ["0b1111111111111111111111111111111_i32", "2147483647"]]
@@ -683,5 +686,14 @@ describe "Lexer" do
     token = lexer.next_token
     token.type.should eq(t :DELIMITER_START)
     token.delimiter_state.kind.should eq(Token::DelimiterKind::REGEX)
+  end
+
+  it "lexes heredoc start" do
+    lexer = Lexer.new("<<-EOS\n")
+    lexer.wants_raw = true
+    token = lexer.next_token
+    token.type.should eq(t :DELIMITER_START)
+    token.delimiter_state.kind.should eq(Token::DelimiterKind::HEREDOC)
+    token.raw.should eq "<<-EOS"
   end
 end

@@ -664,10 +664,10 @@ class HTTP::Client
   end
 
   private def handle_response(response)
-    value = yield
+    yield
+  ensure
     response.body_io?.try &.close
     close unless response.keep_alive?
-    value
   end
 
   private def send_request(request)
@@ -801,7 +801,7 @@ class HTTP::Client
       if tls = @tls
         tcp_socket = io
         begin
-          io = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host)
+          io = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host.rchop('.'))
         rescue exc
           # don't leak the TCP socket when the SSL connection failed
           tcp_socket.close

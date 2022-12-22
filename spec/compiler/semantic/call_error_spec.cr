@@ -254,4 +254,43 @@ describe "Call errors" do
       ),
       "expected argument 'x' to 'foo' to match a member of enum Color.\n\nDid you mean :red?"
   end
+
+  it "errors on argument if more types are given than expected" do
+    assert_error %(
+      def foo(x : Int32)
+      end
+
+      def foo(x : Char)
+      end
+
+      foo(1 || nil)
+      ),
+      "expected argument #1 to 'foo' to be Int32, not (Int32 | Nil)"
+  end
+
+  it "errors on argument if more types are given than expected, shows all expected types" do
+    assert_error %(
+      def foo(x : Int32)
+      end
+
+      def foo(x : Char)
+      end
+
+      foo(1 ? nil : (1 || 'a'))
+      ),
+      "expected argument #1 to 'foo' to be Char or Int32, not (Char | Int32 | Nil)"
+  end
+
+  it "errors on argument if argument matches in all overloads but with different types in other arguments" do
+    assert_error %(
+      def foo(x : String, y : Int32, w : Int32)
+      end
+
+      def foo(x : String, y : Nil, w : Char)
+      end
+
+      foo("a", 1 || nil, 1)
+      ),
+      "expected argument #2 to 'foo' to be Int32, not (Int32 | Nil)"
+  end
 end

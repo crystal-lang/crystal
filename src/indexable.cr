@@ -849,6 +849,13 @@ module Indexable(T)
     rindex(offset) { |elem| elem == value }
   end
 
+  # :ditto:
+  #
+  # Raises `Enumerable::NotFoundError` if *value* is not in `self`.
+  def rindex!(value, offset = size - 1)
+    rindex(value, offset) || raise Enumerable::NotFoundError.new
+  end
+
   # Returns the index of the first object in `self` for which the block
   # is truthy, starting from the last object, or `nil` if no match
   # is found.
@@ -872,6 +879,13 @@ module Indexable(T)
     nil
   end
 
+  # :ditto:
+  #
+  # Raises `Enumerable::NotFoundError` if no match is found.
+  def rindex!(offset = size - 1, & : T ->)
+    rindex(offset) { |e| yield e } || raise Enumerable::NotFoundError.new
+  end
+
   # Optimized version of `Enumerable#sample` that runs in O(1) time.
   #
   # ```
@@ -880,7 +894,7 @@ module Indexable(T)
   # a.sample                # => 1
   # a.sample(Random.new(1)) # => 2
   # ```
-  def sample(random = Random::DEFAULT)
+  def sample(random : Random = Random::DEFAULT)
     raise IndexError.new("Can't sample empty collection") if size == 0
     unsafe_fetch(random.rand(size))
   end
@@ -890,7 +904,7 @@ module Indexable(T)
   # If `self` is not empty and `n` is equal to 1, calls `sample(random)` exactly
   # once. Thus, *random* will be left in a different state compared to the
   # implementation in `Enumerable`.
-  def sample(n : Int, random = Random::DEFAULT) : Array(T)
+  def sample(n : Int, random : Random = Random::DEFAULT) : Array(T)
     return super unless n == 1
 
     if empty?
