@@ -1820,22 +1820,24 @@ require "./repl"
         },
       {% end %}
 
-      interpreter_intrinsics_bswap32: {
-        pop_values: [id : UInt32],
-        push:       true,
-        code:       LibIntrinsics.bswap32(id),
-      },
-      interpreter_intrinsics_bswap16: {
-        pop_values: [id : UInt16],
-        push:       true,
-        code:       LibIntrinsics.bswap16(id),
-      },
       interpreter_intrinsics_read_cycle_counter: {
         push:       true,
         code:       LibIntrinsics.read_cycle_counter,
       },
 
       {% for n in [8, 16, 32, 64, 128] %}
+        interpreter_intrinsics_bitreverse{{n}}: {
+          pop_values: [value : UInt{{n}}],
+          push:       true,
+          code:       LibIntrinsics.bitreverse{{n}}(value),
+        },
+        {% unless n == 8 %}
+          interpreter_intrinsics_bswap{{n}}: {
+            pop_values: [value : UInt{{n}}],
+            push:       true,
+            code:       LibIntrinsics.bswap{{n}}(value),
+          },
+        {% end %}
         interpreter_intrinsics_popcount{{n}}: {
           pop_values: [value : Int{{n}}],
           push:       true,
@@ -1872,14 +1874,6 @@ require "./repl"
           pop_values: [a : UInt{{n}}, b : UInt{{n}}, count : UInt{{n}}],
           push:       true,
           code:       LibIntrinsics.fshr{{n}}(a, b, count),
-        },
-      {% end %}
-
-      {% for n in [16, 32, 64] %}
-        interpreter_intrinsics_bitreverse{{n}}: {
-          pop_values: [value : UInt{{n}}],
-          push:       true,
-          code:       LibIntrinsics.bitreverse{{n}}(value),
         },
       {% end %}
 
