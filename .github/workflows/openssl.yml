@@ -6,7 +6,7 @@ jobs:
   openssl3:
     runs-on: ubuntu-latest
     name: "OpenSSL 3.0"
-    container: crystallang/crystal:1.6.1-alpine
+    container: crystallang/crystal:1.6.2-alpine
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v3
@@ -19,11 +19,11 @@ jobs:
       - name: Check LibSSL version
         run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
       - name: Run OpenSSL specs
-        run: bin/crystal spec spec/std/openssl/
+        run: bin/crystal spec --order=random spec/std/openssl/
   openssl111:
     runs-on: ubuntu-latest
     name: "OpenSSL 1.1.1"
-    container: crystallang/crystal:1.6.1-alpine
+    container: crystallang/crystal:1.6.2-alpine
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v3
@@ -32,11 +32,11 @@ jobs:
       - name: Check LibSSL version
         run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
       - name: Run OpenSSL specs
-        run: bin/crystal spec spec/std/openssl/
+        run: bin/crystal spec --order=random spec/std/openssl/
   libressl34:
     runs-on: ubuntu-latest
     name: "LibreSSL 3.4"
-    container: crystallang/crystal:1.6.1-alpine
+    container: crystallang/crystal:1.6.2-alpine
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v3
@@ -52,4 +52,4 @@ jobs:
       - name: Check LibSSL version
         run: bin/crystal eval 'require "openssl"; p! LibSSL::OPENSSL_VERSION, LibSSL::LIBRESSL_VERSION'
       - name: Run OpenSSL specs
-        run: bin/crystal spec spec/std/openssl/
+        run: bin/crystal spec --order=random spec/std/openssl/

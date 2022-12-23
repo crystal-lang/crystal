@@ -228,6 +228,7 @@ describe "BigInt" do
   it "does modulo" do
     (10.to_big_i % 3.to_big_i).should eq(1.to_big_i)
     (10.to_big_i % 3).should eq(1.to_big_i)
+    (10.to_big_i % 3u8).should eq(1.to_big_i)
     (10 % 3.to_big_i).should eq(1.to_big_i)
   end
 

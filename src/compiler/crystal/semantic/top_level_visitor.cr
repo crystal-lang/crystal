@@ -275,6 +275,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : AnnotationDef)
     check_outside_exp node, "declare annotation"
 
+    annotations = read_annotations
+    process_annotations(annotations) do |annotation_type, ann|
+      node.add_annotation(annotation_type, ann)
+    end
+
     scope, name, type = lookup_type_def(node)
 
     if type
@@ -286,7 +291,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope.types[name] = type
     end
 
-    attach_doc type, node, annotations: nil
+    node.resolved_type = type
+
+    attach_doc type, node, annotations
 
     false
   end
@@ -907,7 +914,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     annotations = read_annotations
 
-    external = External.new(node.name, ([] of Arg), node.body, node.real_name).at(node)
+    # We'll resolve the external args types later, in TypeDeclarationVisitor
+    external_args = node.args.map do |arg|
+      Arg.new(arg.name).at(arg.location)
+    end
+
+    external = External.new(node.name, external_args, node.body, node.real_name).at(node)
 
     call_convention = nil
     process_def_annotations(external, annotations) do |annotation_type, ann|
@@ -939,6 +951,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     external.varargs = node.varargs?
     external.fun_def = node
     node.external = external
+
+    current_type.add_def(external)
 
     false
   end

@@ -308,15 +308,15 @@ describe Crystal::Formatter do
   ); end
   CRYSTAL
 
-  assert_format <<-BEFORE, <<-AFTER
+  assert_format <<-CRYSTAL, <<-CRYSTAL
   def foo(
      @[MyAnn]   bar
   ); end
-  BEFORE
+  CRYSTAL
   def foo(
     @[MyAnn] bar
   ); end
-  AFTER
+  CRYSTAL
 
   assert_format <<-CRYSTAL
   def foo(
@@ -352,31 +352,31 @@ describe Crystal::Formatter do
   ); end
   CRYSTAL
 
-  assert_format <<-BEFORE, <<-AFTER
+  assert_format <<-CRYSTAL, <<-CRYSTAL
   def foo(
      @[MyAnn]
    bar
   ); end
-  BEFORE
+  CRYSTAL
   def foo(
     @[MyAnn]
     bar
   ); end
-  AFTER
+  CRYSTAL
 
-  assert_format <<-BEFORE, <<-AFTER
+  assert_format <<-CRYSTAL, <<-CRYSTAL
   def foo(
-     @[MyAnn]    
+     @[MyAnn]
    bar
   ); end
-  BEFORE
+  CRYSTAL
   def foo(
     @[MyAnn]
     bar
   ); end
-  AFTER
+  CRYSTAL
 
-  assert_format <<-BEFORE
+  assert_format <<-CRYSTAL
   def foo(
     @[MyAnn]
     @[MyAnn]
@@ -386,9 +386,9 @@ describe Crystal::Formatter do
     @[MyAnn]
     biz
   ); end
-  BEFORE
+  CRYSTAL
 
-  assert_format <<-BEFORE
+  assert_format <<-CRYSTAL
   def foo(
     @[MyAnn]
     @[MyAnn]
@@ -400,12 +400,12 @@ describe Crystal::Formatter do
     @[MyAnn]
     biz
   ); end
-  BEFORE
+  CRYSTAL
 
-  assert_format <<-BEFORE, <<-AFTER
+  assert_format <<-CRYSTAL, <<-CRYSTAL
   def foo(
-    @[MyAnn]  
-    @[MyAnn]  
+    @[MyAnn]
+    @[MyAnn]
     bar,
 
     @[MyAnn]  @[MyAnn]  baz,
@@ -416,7 +416,7 @@ describe Crystal::Formatter do
 
     biz
   ); end
-  BEFORE
+  CRYSTAL
   def foo(
     @[MyAnn]
     @[MyAnn]
@@ -428,7 +428,7 @@ describe Crystal::Formatter do
     @[MyAnn]
     biz
   ); end
-  AFTER
+  CRYSTAL
 
   assert_format "loop do\n  1\nrescue\n  2\nend"
   assert_format "loop do\n  1\n  loop do\n    2\n  rescue\n    3\n  end\n  4\nend"
@@ -770,12 +770,12 @@ describe Crystal::Formatter do
 
   assert_format "case  1 \n in Int32 \n 3 \n end", "case 1\nin Int32\n  3\nend"
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     case 0
     when 0 then 1; 2
     # Comments
     end
-    CODE
+    CRYSTAL
 
   assert_format "select   \n when  foo \n 2 \n end", "select\nwhen foo\n  2\nend"
   assert_format "select   \n when  foo \n 2 \n when bar \n 3 \n end", "select\nwhen foo\n  2\nwhen bar\n  3\nend"
@@ -916,12 +916,12 @@ describe Crystal::Formatter do
   assert_format "alias Foo::Bar=Baz", "alias Foo::Bar = Baz"
   assert_format "alias Foo::Bar= Baz", "alias Foo::Bar = Baz"
   assert_format "alias Foo::Bar =Baz", "alias Foo::Bar = Baz"
-  assert_format <<-BEFORE, <<-AFTER
+  assert_format <<-CRYSTAL, <<-CRYSTAL
     alias Foo=
     Bar
-    BEFORE
+    CRYSTAL
     alias Foo = Bar
-    AFTER
+    CRYSTAL
   assert_format "lib Foo\nend"
   assert_format "lib Foo\ntype  Foo  =   Bar\nend", "lib Foo\n  type Foo = Bar\nend"
   assert_format "lib Foo\nfun foo\nend", "lib Foo\n  fun foo\nend"
@@ -938,81 +938,81 @@ describe Crystal::Formatter do
   assert_format "lib Foo\n  fun foo(Int32) : Int32\nend"
   assert_format "fun foo(x : Int32) : Int32\n  1\nend"
   assert_format "fun foo(\n  x : Int32,\n  ...\n) : Int32\n  1\nend"
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     lib Foo
       fun foo = bar(Int32) : Int32
     end
-    CODE
-  assert_format <<-CODE
+    CRYSTAL
+  assert_format <<-CRYSTAL
     lib Foo
       fun foo =
         bar : Void
     end
-    CODE
-  assert_format <<-BEFORE, <<-AFTER
+    CRYSTAL
+  assert_format <<-CRYSTAL, <<-CRYSTAL
     lib Foo
       fun foo =
 
 
         bar : Void
     end
-    BEFORE
+    CRYSTAL
     lib Foo
       fun foo =
         bar : Void
     end
-    AFTER
-  assert_format <<-CODE
+    CRYSTAL
+  assert_format <<-CRYSTAL
     lib Foo
       fun foo =
         bar(Int32) : Int32
     end
-    CODE
-  assert_format <<-BEFORE, <<-AFTER
+    CRYSTAL
+  assert_format <<-CRYSTAL, <<-CRYSTAL
     lib Foo
       fun foo =
 
 
         bar(Int32) : Int32
     end
-    BEFORE
+    CRYSTAL
     lib Foo
       fun foo =
         bar(Int32) : Int32
     end
-    AFTER
-  assert_format <<-BEFORE, <<-AFTER
+    CRYSTAL
+  assert_format <<-CRYSTAL, <<-CRYSTAL
     lib Foo
       fun foo =
         bar(Int32,
         Int32) : Int32
     end
-    BEFORE
+    CRYSTAL
     lib Foo
       fun foo =
         bar(Int32,
             Int32) : Int32
     end
-    AFTER
+    CRYSTAL
   assert_format "lib Foo\n  fun foo = bar(Int32) : Int32\nend"
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     lib Foo
       fun foo = "bar"(Int32) : Int32
     end
-    CODE
-  assert_format <<-CODE
+    CRYSTAL
+  assert_format <<-CRYSTAL
     lib Foo
       fun foo =
         "bar"(Int32) : Int32
     end
-    CODE
-  assert_format <<-CODE
+    CRYSTAL
+  assert_format <<-CRYSTAL
     lib Foo
       fun foo =
         "bar"(Int32) : Int32
       # comment
     end
-    CODE
+    CRYSTAL
   assert_format "lib Foo\n  $foo  :  Int32 \nend", "lib Foo\n  $foo : Int32\nend"
   assert_format "lib Foo\n  $foo = hello  :  Int32 \nend", "lib Foo\n  $foo = hello : Int32\nend"
   assert_format "lib Foo\nalias  Foo  =  Bar -> \n$a : Int32\nend", "lib Foo\n  alias Foo = Bar ->\n  $a : Int32\nend"
@@ -1642,13 +1642,13 @@ describe Crystal::Formatter do
 
   assert_format "{%\n  if 1\n    2\n  end\n%}"
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     # ```text
     #  1  +  2
     # ```
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     # ```text
     # 1 + 2
     # ```
@@ -1656,19 +1656,19 @@ describe Crystal::Formatter do
     # ```
     # 3 + 4
     # ```
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     X(typeof(begin
       e.is_a?(Y) ? 1 : 2
     end))
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     X(typeof(begin
       e.is_a?(Y)
     end))
-    CODE
+    CRYSTAL
 
   # Keep trailing spaces in macros.
   assert_format(
@@ -1762,7 +1762,7 @@ describe Crystal::Formatter do
   assert_format "foo\n  .bar\n  .baz(\n    1\n  )"
   assert_format "foo.bar\n  .baz(\n    1\n  )"
 
-  assert_format <<-BEFORE,
+  assert_format <<-CRYSTAL,
     def foo
       {% if flag?(:foo) %}
         foo  +  bar
@@ -1770,8 +1770,8 @@ describe Crystal::Formatter do
         baz  +  qux
       {% end %}
     end
-    BEFORE
-    <<-AFTER
+    CRYSTAL
+    <<-CRYSTAL
     def foo
       {% if flag?(:foo) %}
         foo + bar
@@ -1779,39 +1779,39 @@ describe Crystal::Formatter do
         baz + qux
       {% end %}
     end
-    AFTER
+    CRYSTAL
 
-  assert_format <<-BEFORE,
+  assert_format <<-CRYSTAL,
     def foo
       {% for x in y %}
         foo  +  bar
       {% end %}
     end
-    BEFORE
-    <<-AFTER
+    CRYSTAL
+    <<-CRYSTAL
     def foo
       {% for x in y %}
         foo + bar
       {% end %}
     end
-    AFTER
+    CRYSTAL
 
-  assert_format <<-BEFORE,
+  assert_format <<-CRYSTAL,
     x = {% if flag?(:foo) %}
           foo  +  bar
         {% else %}
           baz  +  qux
         {% end %}
-    BEFORE
-    <<-AFTER
+    CRYSTAL
+    <<-CRYSTAL
     x = {% if flag?(:foo) %}
           foo + bar
         {% else %}
           baz + qux
         {% end %}
-    AFTER
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     {% if flag?(:freebsd) %}
       1 + 2
     {% end %}
@@ -1820,9 +1820,9 @@ describe Crystal::Formatter do
     when 1234 then 1
     else           x
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     {% if z %}
       1
     {% end %}
@@ -1834,17 +1834,17 @@ describe Crystal::Formatter do
 
       1
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     lib LibFoo
       {% begin %}
         fun foo : Int32
       {% end %}
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     lib LibFoo
       struct Bar
         {% begin %}
@@ -1852,9 +1852,9 @@ describe Crystal::Formatter do
         {% end %}
       end
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     enum Foo
       {% begin %}
         A
@@ -1862,9 +1862,9 @@ describe Crystal::Formatter do
         C
       {% end %}
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     a = 1
     b, c = 2, 3
     {% begin %}
@@ -1872,50 +1872,50 @@ describe Crystal::Formatter do
       b |= 2
       c |= 3
     {% end %}
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     lib LibFoo
       {% begin %}
         fun x = y(Int32)
       {% end %}
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     {% begin %}
       "
         foo"
     {% end %}
-    CODE
+    CRYSTAL
 
-  assert_format <<-BEFORE,
+  assert_format <<-CRYSTAL,
     {% if z %}
       class   Foo
       end
     {% end %}
-    BEFORE
-    <<-AFTER
+    CRYSTAL
+    <<-CRYSTAL
     {% if z %}
       class Foo
       end
     {% end %}
-    AFTER
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     {% if true %}
       # x
     {% end %}
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     {% if true %}
       # x
       # y
     {% end %}
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     {% if true %}
       # x
       #
@@ -1924,17 +1924,17 @@ describe Crystal::Formatter do
     # ```
     # x
     # ```
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     def foo(x)
       {% if true %}
         x = x + 2
       {% end %}
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     def foo(x)
       {% if true %}
         # comment
@@ -1942,9 +1942,9 @@ describe Crystal::Formatter do
         B   = 2
       {% end %}
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     def foo(x)
       {% if true %}
         \\{% if true %}
@@ -1959,17 +1959,17 @@ describe Crystal::Formatter do
         \\{% x %}
       {% end %}
     end
-    CODE
+    CRYSTAL
 
   it "gives proper line number in syntax error inside macro" do
-    source = <<-CODE
+    source = <<-CRYSTAL
       a = 1
       b = 2
 
       {% begin %}
         c |= 3
       {% end %}
-    CODE
+    CRYSTAL
 
     ex = expect_raises(Crystal::SyntaxException) do
       Crystal.format(source)
@@ -1978,52 +1978,52 @@ describe Crystal::Formatter do
   end
 
   # #8197
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     foo
       .foo1(bar
         .bar1
         .bar2)
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     foo.foo1(
       bar
         .bar1
         .bar2)
-    CODE
+    CRYSTAL
 
   assert_format "[] of (Array(T))"
   assert_format "[] of (((Array(T))))"
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     macro foo # bar
       baz
     end
-    CODE
+    CRYSTAL
 
   assert_format "a.!"
   assert_format "a &.!"
   assert_format "a &.a.!"
   assert_format "a &.!.!"
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     ->{
       # first comment
       puts "hi"
       # second comment
     }
-    CODE
+    CRYSTAL
 
   # #9014
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     {%
       unless true
         1
       end
     %}
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     {%
       unless true
         1
@@ -2031,9 +2031,9 @@ describe Crystal::Formatter do
         2
       end
     %}
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     {%
       if true
         1
@@ -2041,48 +2041,48 @@ describe Crystal::Formatter do
         2
       end
     %}
-    CODE
+    CRYSTAL
 
   # #4626
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     1 # foo
     / 1 /
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     1 # foo
     / #{1} /
-    CODE
+    CRYSTAL
 
-  assert_format <<-BEFORE,
+  assert_format <<-CRYSTAL,
     def foo
       # Comment
 
 
     end
-    BEFORE
-    <<-AFTER
+    CRYSTAL
+    <<-CRYSTAL
     def foo
       # Comment
     end
-    AFTER
+    CRYSTAL
 
-  assert_format <<-BEFORE,
-    def foo
-      1
-      # Comment
-
-
-    end
-    BEFORE
-    <<-AFTER
+  assert_format <<-CRYSTAL,
     def foo
       1
       # Comment
-    end
-    AFTER
 
-  assert_format <<-CODE
+
+    end
+    CRYSTAL
+    <<-CRYSTAL
+    def foo
+      1
+      # Comment
+    end
+    CRYSTAL
+
+  assert_format <<-CRYSTAL
     def foo
       1
     end
@@ -2092,142 +2092,142 @@ describe Crystal::Formatter do
     def bar
       2
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     require "foo"
 
     @x : Int32
 
     class Bar
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     x = <<-FOO
       hello
       FOO
 
     def bar
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-BEFORE, <<-AFTER
+  assert_format <<-CRYSTAL, <<-CRYSTAL
     begin
       1
       # Comment
 
 
     end
-    BEFORE
+    CRYSTAL
     begin
       1
       # Comment
     end
-    AFTER
+    CRYSTAL
 
-  assert_format <<-BEFORE, <<-AFTER
+  assert_format <<-CRYSTAL, <<-CRYSTAL
     begin
       # Comment
 
 
     end
-    BEFORE
+    CRYSTAL
     begin
       # Comment
     end
-    AFTER
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     foo 1, # comment
       do
       end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     foo 1, # comment
       # bar
       do
       end
-    CODE
+    CRYSTAL
 
   # #10190
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     foo(
       1,
     ) do
       2
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     foo(
       1,
     ) {
       2
     }
-    CODE
+    CRYSTAL
 
   # #11079
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     foo = [1, [2,
                3],
            4]
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     foo = {1, {2,
                3},
            4}
-    CODE
+    CRYSTAL
 
   # #10817
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     def func # comment
       (1 + 2) / 3
     end
-    CODE
+    CRYSTAL
 
   # #10943
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     foo do # a
       # b
       bar
     end
-    CODE
+    CRYSTAL
 
   # #10499
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     case nil
     else nil; nil # comment
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     case nil
     else nil; nil
     # comment
     end
-    CODE
+    CRYSTAL
 
   # #12493
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     select
     # when foo
     when bar
       break
     end
-    CODE
+    CRYSTAL
 
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     select # some comment
     when bar
       break
     end
-    CODE
+    CRYSTAL
 
   # #12378
-  assert_format <<-CODE
+  assert_format <<-CRYSTAL
     macro foo
       macro bar
         \\{% begin %}
@@ -2235,5 +2235,5 @@ describe Crystal::Formatter do
         \\{% end %}
       end
     end
-    CODE
+    CRYSTAL
 end
