@@ -88,6 +88,12 @@ class JSONAttrWithBool
   property value : Bool
 end
 
+class JSONAttrWithFloat
+  include JSON::Serializable
+
+  property value : Float64
+end
+
 class JSONAttrWithUUID
   include JSON::Serializable
 
@@ -629,6 +635,11 @@ describe "JSON mapping" do
   it "doesn't raises on false value when not-nil" do
     json = JSONAttrWithBool.from_json(%({"value": false}))
     json.value.should be_false
+  end
+
+  it "parses JSON integer into a float property (#8618)" do
+    json = JSONAttrWithFloat.from_json(%({"value": 123}))
+    json.value.should eq(123.0)
   end
 
   it "parses UUID" do

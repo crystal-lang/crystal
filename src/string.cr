@@ -1173,15 +1173,44 @@ class String
   # "hello".byte_slice(-2, 5)  # => "he"
   # "¥hello".byte_slice(0, 2)  # => "¥"
   # "¥hello".byte_slice(2, 2)  # => "he"
-  # "¥hello".byte_slice(0, 1)  # => "�" (invalid UTF-8 character)
-  # "¥hello".byte_slice(1, 1)  # => "�" (invalid UTF-8 character)
-  # "¥hello".byte_slice(1, 2)  # => "�h" (invalid UTF-8 character)
+  # "¥hello".byte_slice(0, 1)  # => "\xC2" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1, 1)  # => "\xA5" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1, 2)  # => "\xA5h" (invalid UTF-8 character)
   # "hello".byte_slice(6, 2)   # raises IndexError
   # "hello".byte_slice(-6, 2)  # raises IndexError
   # "hello".byte_slice(0, -2)  # raises ArgumentError
   # ```
   def byte_slice(start : Int, count : Int) : String
     byte_slice?(start, count) || raise IndexError.new
+  end
+
+  # Returns a new string built from byte in *range*.
+  #
+  # Byte indices can be negative to start counting from the end of the string.
+  # If the end index is bigger than `#bytesize`, only remaining bytes are returned.
+  #
+  # This method should be avoided,
+  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # or the byte positions are known to be at character boundaries.
+  # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
+  #
+  # Raises `IndexError` if the *range* begin is out of bounds.
+  #
+  # ```
+  # "hello".byte_slice(0..2)   # => "hel"
+  # "hello".byte_slice(0..100) # => "hello"
+  # "hello".byte_slice(-2..3)  # => "l"
+  # "hello".byte_slice(-2..5)  # => "lo"
+  # "¥hello".byte_slice(0...2) # => "¥"
+  # "¥hello".byte_slice(2...4) # => "he"
+  # "¥hello".byte_slice(0..0)  # => "\xC2" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1..1)  # => "\xA5" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1..2)  # => "\xA5h" (invalid UTF-8 character)
+  # "hello".byte_slice(6..2)   # raises IndexError
+  # "hello".byte_slice(-6..2)  # raises IndexError
+  # ```
+  def byte_slice(range : Range) : String
+    byte_slice(*Indexable.range_to_index_and_count(range, bytesize) || raise IndexError.new)
   end
 
   # Like `byte_slice(Int, Int)` but returns `Nil` if the *start* index is out of bounds.
@@ -1209,6 +1238,18 @@ class String
     end
   end
 
+  # Like `byte_slice(Range)` but returns `Nil` if *range* begin is out of bounds.
+  #
+  # ```
+  # "hello".byte_slice?(0..2)   # => "hel"
+  # "hello".byte_slice?(0..100) # => "hello"
+  # "hello".byte_slice?(6..8)   # => nil
+  # "hello".byte_slice?(-6..2)  # => nil
+  # ```
+  def byte_slice?(range : Range) : String?
+    byte_slice?(*Indexable.range_to_index_and_count(range, bytesize) || return nil)
+  end
+
   # Returns a substring starting from the *start* byte.
   #
   # *start* can be negative to start counting
@@ -1226,7 +1267,7 @@ class String
   # "hello".byte_slice(2)  # => "llo"
   # "hello".byte_slice(-2) # => "lo"
   # "¥hello".byte_slice(2) # => "hello"
-  # "¥hello".byte_slice(1) # => "�hello" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1) # => "\xA5hello" (invalid UTF-8 character)
   # "hello".byte_slice(6)  # raises IndexError
   # "hello".byte_slice(-6) # raises IndexError
   # ```
@@ -1234,6 +1275,33 @@ class String
     count = bytesize - start
     raise IndexError.new if start > 0 && count < 0
     byte_slice start, count
+  end
+
+  # Returns a substring starting from the *start* byte.
+  #
+  # *start* can be negative to start counting
+  # from the end of the string.
+  #
+  # This method should be avoided,
+  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # or the byte positions are known to be at character boundaries.
+  # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
+  #
+  # Returns `nil` if *start* index is out of bounds.
+  #
+  # ```
+  # "hello".byte_slice?(0)  # => "hello"
+  # "hello".byte_slice?(2)  # => "llo"
+  # "hello".byte_slice?(-2) # => "lo"
+  # "¥hello".byte_slice?(2) # => "hello"
+  # "¥hello".byte_slice?(1) # => "\xA5hello" (invalid UTF-8 character)
+  # "hello".byte_slice?(6)  # => nil
+  # "hello".byte_slice?(-6) # => nil
+  # ```
+  def byte_slice?(start : Int) : String?
+    count = bytesize - start
+    return nil if start > 0 && count < 0
+    byte_slice? start, count
   end
 
   # Returns the codepoint of the character at the given *index*.
@@ -2958,17 +3026,27 @@ class String
   #
   # See also: `Nil#presence`.
   def presence : self?
-    self if !blank?
+    self unless blank?
   end
 
   # Returns `true` if this string is equal to `*other*.
   #
-  # Comparison is done byte-per-byte: if a byte is different from the corresponding
-  # byte, `false` is returned and so on. This means two strings containing invalid
+  # Equality is checked byte-per-byte: if any byte is different from the corresponding
+  # byte, it returns `false`. This means two strings containing invalid
   # UTF-8 byte sequences may compare unequal, even when they both produce the
   # Unicode replacement character at the same string indices.
   #
-  # See `#compare` for more comparison options.
+  # Thus equality is case-sensitive, as it is with the comparison operator (`#<=>`).
+  # `#compare` offers a case-insensitive alternative.
+  #
+  # ```
+  # "abcdef" == "abcde"   # => false
+  # "abcdef" == "abcdef"  # => true
+  # "abcdef" == "abcdefg" # => false
+  # "abcdef" == "ABCDEF"  # => false
+  #
+  # "abcdef".compare("ABCDEF", case_sensitive: false) == 0 # => true
+  # ```
   def ==(other : self) : Bool
     return true if same?(other)
     return false unless bytesize == other.bytesize
@@ -2995,6 +3073,8 @@ class String
   # "abcdef" <=> "abcdefg" # => -1
   # "abcdef" <=> "ABCDEF"  # => 1
   # ```
+  #
+  # The comparison is case-sensitive. `#compare` is a case-insensitive alternative.
   def <=>(other : self) : Int32
     return 0 if same?(other)
     min_bytesize = Math.min(bytesize, other.bytesize)
@@ -3021,7 +3101,9 @@ class String
   #
   # "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic) # => 0
   # ```
-  def compare(other : String, case_insensitive = false, options = Unicode::CaseOptions::None) : Int32
+  #
+  # Case-sensitive only comparison is provided by the comparison operator `#<=>`.
+  def compare(other : String, case_insensitive = false, options : Unicode::CaseOptions = :none) : Int32
     return self <=> other unless case_insensitive
 
     if single_byte_optimizable? && other.single_byte_optimizable?
@@ -3947,6 +4029,28 @@ class String
     yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
   end
 
+  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
+  #
+  # If *limit* is present, the array will be limited to *limit* items and
+  # the final item will contain the remainder of the string.
+  #
+  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  #
+  # ```
+  # long_river_name = "Mississippi"
+  # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
+  # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # ```
+  def split(separator : Regex, limit = nil, *, remove_empty = false) : Array(String)
+    ary = Array(String).new
+    split(separator, limit, remove_empty: remove_empty) do |string|
+      ary << string
+    end
+    ary
+  end
+
   # Splits the string after each regex *separator* and yields each part to a block.
   #
   # If *limit* is present, the array will be limited to *limit* items and
@@ -3966,28 +4070,6 @@ class String
   #
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
-  # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false) : Array(String)
-    ary = Array(String).new
-    split(separator, limit, remove_empty: remove_empty) do |string|
-      ary << string
-    end
-    ary
-  end
-
-  # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
-  #
-  # If *limit* is present, the array will be limited to *limit* items and
-  # the final item will contain the remainder of the string.
-  #
-  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
-  #
-  # If *remove_empty* is `true`, any empty strings are removed from the result.
-  #
-  # ```
-  # long_river_name = "Mississippi"
-  # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
-  # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
   def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _)
     if empty?

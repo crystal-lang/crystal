@@ -88,6 +88,30 @@ describe SemanticVersion do
     end
   end
 
+  it "copies with specified modifications" do
+    base_version = SemanticVersion.new(1, 2, 3, "rc", "0000")
+    base_version.copy_with(major: 0).should eq SemanticVersion.new(0, 2, 3, "rc", "0000")
+    base_version.copy_with(minor: 0).should eq SemanticVersion.new(1, 0, 3, "rc", "0000")
+    base_version.copy_with(patch: 0).should eq SemanticVersion.new(1, 2, 0, "rc", "0000")
+    base_version.copy_with(prerelease: "alpha").should eq SemanticVersion.new(1, 2, 3, "alpha", "0000")
+    base_version.copy_with(build: "0001").should eq SemanticVersion.new(1, 2, 3, "rc", "0001")
+    base_version.copy_with(prerelease: nil, build: nil).should eq SemanticVersion.new(1, 2, 3)
+  end
+
+  it "bumps to the correct version" do
+    SemanticVersion.new(1, 1, 1).bump_minor.should eq SemanticVersion.new(1, 2, 0)
+    SemanticVersion.new(1, 2, 0).bump_patch.should eq SemanticVersion.new(1, 2, 1)
+    SemanticVersion.new(1, 2, 1).bump_major.should eq SemanticVersion.new(2, 0, 0)
+    SemanticVersion.new(2, 0, 0).bump_patch.should eq SemanticVersion.new(2, 0, 1)
+    SemanticVersion.new(2, 0, 1).bump_minor.should eq SemanticVersion.new(2, 1, 0)
+    SemanticVersion.new(2, 1, 0).bump_major.should eq SemanticVersion.new(3, 0, 0)
+
+    version_with_prerelease = SemanticVersion.new(1, 2, 3, "rc", "0001")
+    version_with_prerelease.bump_major.should eq SemanticVersion.new(2, 0, 0)
+    version_with_prerelease.bump_minor.should eq SemanticVersion.new(1, 3, 0)
+    version_with_prerelease.bump_patch.should eq SemanticVersion.new(1, 2, 3)
+  end
+
   describe SemanticVersion::Prerelease do
     it "compares <" do
       sprereleases = %w(

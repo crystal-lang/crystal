@@ -19,14 +19,14 @@ require "base64"
 # ```
 # require "yaml"
 #
-# data = YAML.parse <<-END
+# data = YAML.parse <<-YAML
 #          ---
 #          foo:
 #            bar:
 #              baz:
 #                - qux
 #                - fox
-#          END
+#          YAML
 # data["foo"]["bar"]["baz"][1].as_s # => "fox"
 # ```
 #

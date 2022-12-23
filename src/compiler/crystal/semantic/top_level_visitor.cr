@@ -915,7 +915,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     annotations = read_annotations
 
-    external = External.new(node.name, ([] of Arg), node.body, node.real_name).at(node)
+    # We'll resolve the external args types later, in TypeDeclarationVisitor
+    external_args = node.args.map do |arg|
+      Arg.new(arg.name).at(arg.location)
+    end
+
+    external = External.new(node.name, external_args, node.body, node.real_name).at(node)
 
     call_convention = nil
     process_def_annotations(external, annotations) do |annotation_type, ann|
@@ -947,6 +952,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     external.varargs = node.varargs?
     external.fun_def = node
     node.external = external
+
+    # C funs cannot overload, so overload order shouldn't matter here
+    # TODO: top-level funs can still overload with top-level defs (#4761),
+    # they should be disallowed
+    current_type.add_def(external)
 
     false
   end

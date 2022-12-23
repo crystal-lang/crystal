@@ -152,7 +152,7 @@ describe "Semantic: virtual metaclass" do
   end
 
   it "restricts virtual metaclass to Class (#11376)" do
-    assert_type(<<-CR) { nilable types["Foo"].virtual_type.metaclass }
+    assert_type(<<-CRYSTAL) { nilable types["Foo"].virtual_type.metaclass }
       class Foo
       end
 
@@ -161,6 +161,6 @@ describe "Semantic: virtual metaclass" do
 
       x = Foo || Bar
       x if x.is_a?(Class)
-      CR
+      CRYSTAL
   end
 end
