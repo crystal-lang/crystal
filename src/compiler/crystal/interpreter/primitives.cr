@@ -274,7 +274,7 @@ class Crystal::Repl::Compiler
 
       pop(aligned_sizeof_type(node.type), node: nil) unless @wants_value
     when "load_atomic"
-      node.args.each { |arg| request_value(arg) }
+      accept_call_args(node)
 
       pointer_instance_type = node.args.first.type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
@@ -282,7 +282,7 @@ class Crystal::Repl::Compiler
 
       load_atomic(element_size, node: node)
     when "store_atomic"
-      node.args.each { |arg| request_value(arg) }
+      accept_call_args(node)
 
       pointer_instance_type = node.args.first.type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
@@ -290,7 +290,7 @@ class Crystal::Repl::Compiler
 
       store_atomic(element_size, node: node)
     when "atomicrmw"
-      node.args.each { |arg| request_value(arg) }
+      accept_call_args(node)
 
       pointer_instance_type = node.args[1].type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
@@ -298,7 +298,7 @@ class Crystal::Repl::Compiler
 
       atomicrmw(element_size, node: node)
     when "cmpxchg"
-      node.args.each { |arg| request_value(arg) }
+      accept_call_args(node)
 
       pointer_instance_type = node.args[0].type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
@@ -413,10 +413,18 @@ class Crystal::Repl::Compiler
       {% if flag?(:i386) || flag?(:x86_64) %}
         interpreter_intrinsics_pause(node: node)
       {% end %}
-    when "interpreter_intrinsics_bswap32"
-      interpreter_intrinsics_bswap32(node: node)
     when "interpreter_intrinsics_bswap16"
+      accept_call_args(node)
       interpreter_intrinsics_bswap16(node: node)
+    when "interpreter_intrinsics_bswap32"
+      accept_call_args(node)
+      interpreter_intrinsics_bswap32(node: node)
+    when "interpreter_intrinsics_bswap64"
+      accept_call_args(node)
+      interpreter_intrinsics_bswap64(node: node)
+    when "interpreter_intrinsics_bswap128"
+      accept_call_args(node)
+      interpreter_intrinsics_bswap128(node: node)
     when "interpreter_intrinsics_read_cycle_counter"
       interpreter_intrinsics_read_cycle_counter(node: node)
     when "interpreter_intrinsics_popcount8"
@@ -464,6 +472,9 @@ class Crystal::Repl::Compiler
     when "interpreter_intrinsics_counttrailing128"
       accept_call_args(node)
       interpreter_intrinsics_counttrailing128(node: node)
+    when "interpreter_intrinsics_bitreverse8"
+      accept_call_args(node)
+      interpreter_intrinsics_bitreverse8(node: node)
     when "interpreter_intrinsics_bitreverse16"
       accept_call_args(node)
       interpreter_intrinsics_bitreverse16(node: node)
@@ -473,6 +484,9 @@ class Crystal::Repl::Compiler
     when "interpreter_intrinsics_bitreverse64"
       accept_call_args(node)
       interpreter_intrinsics_bitreverse64(node: node)
+    when "interpreter_intrinsics_bitreverse128"
+      accept_call_args(node)
+      interpreter_intrinsics_bitreverse128(node: node)
     when "interpreter_intrinsics_fshl8"
       accept_call_args(node)
       interpreter_intrinsics_fshl8(node: node)

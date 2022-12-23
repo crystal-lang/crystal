@@ -1173,15 +1173,44 @@ class String
   # "hello".byte_slice(-2, 5)  # => "he"
   # "¥hello".byte_slice(0, 2)  # => "¥"
   # "¥hello".byte_slice(2, 2)  # => "he"
-  # "¥hello".byte_slice(0, 1)  # => "�" (invalid UTF-8 character)
-  # "¥hello".byte_slice(1, 1)  # => "�" (invalid UTF-8 character)
-  # "¥hello".byte_slice(1, 2)  # => "�h" (invalid UTF-8 character)
+  # "¥hello".byte_slice(0, 1)  # => "\xC2" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1, 1)  # => "\xA5" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1, 2)  # => "\xA5h" (invalid UTF-8 character)
   # "hello".byte_slice(6, 2)   # raises IndexError
   # "hello".byte_slice(-6, 2)  # raises IndexError
   # "hello".byte_slice(0, -2)  # raises ArgumentError
   # ```
   def byte_slice(start : Int, count : Int) : String
     byte_slice?(start, count) || raise IndexError.new
+  end
+
+  # Returns a new string built from byte in *range*.
+  #
+  # Byte indices can be negative to start counting from the end of the string.
+  # If the end index is bigger than `#bytesize`, only remaining bytes are returned.
+  #
+  # This method should be avoided,
+  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # or the byte positions are known to be at character boundaries.
+  # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
+  #
+  # Raises `IndexError` if the *range* begin is out of bounds.
+  #
+  # ```
+  # "hello".byte_slice(0..2)   # => "hel"
+  # "hello".byte_slice(0..100) # => "hello"
+  # "hello".byte_slice(-2..3)  # => "l"
+  # "hello".byte_slice(-2..5)  # => "lo"
+  # "¥hello".byte_slice(0...2) # => "¥"
+  # "¥hello".byte_slice(2...4) # => "he"
+  # "¥hello".byte_slice(0..0)  # => "\xC2" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1..1)  # => "\xA5" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1..2)  # => "\xA5h" (invalid UTF-8 character)
+  # "hello".byte_slice(6..2)   # raises IndexError
+  # "hello".byte_slice(-6..2)  # raises IndexError
+  # ```
+  def byte_slice(range : Range) : String
+    byte_slice(*Indexable.range_to_index_and_count(range, bytesize) || raise IndexError.new)
   end
 
   # Like `byte_slice(Int, Int)` but returns `Nil` if the *start* index is out of bounds.
@@ -1209,6 +1238,18 @@ class String
     end
   end
 
+  # Like `byte_slice(Range)` but returns `Nil` if *range* begin is out of bounds.
+  #
+  # ```
+  # "hello".byte_slice?(0..2)   # => "hel"
+  # "hello".byte_slice?(0..100) # => "hello"
+  # "hello".byte_slice?(6..8)   # => nil
+  # "hello".byte_slice?(-6..2)  # => nil
+  # ```
+  def byte_slice?(range : Range) : String?
+    byte_slice?(*Indexable.range_to_index_and_count(range, bytesize) || return nil)
+  end
+
   # Returns a substring starting from the *start* byte.
   #
   # *start* can be negative to start counting
@@ -1226,7 +1267,7 @@ class String
   # "hello".byte_slice(2)  # => "llo"
   # "hello".byte_slice(-2) # => "lo"
   # "¥hello".byte_slice(2) # => "hello"
-  # "¥hello".byte_slice(1) # => "�hello" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1) # => "\xA5hello" (invalid UTF-8 character)
   # "hello".byte_slice(6)  # raises IndexError
   # "hello".byte_slice(-6) # raises IndexError
   # ```
@@ -1234,6 +1275,33 @@ class String
     count = bytesize - start
     raise IndexError.new if start > 0 && count < 0
     byte_slice start, count
+  end
+
+  # Returns a substring starting from the *start* byte.
+  #
+  # *start* can be negative to start counting
+  # from the end of the string.
+  #
+  # This method should be avoided,
+  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # or the byte positions are known to be at character boundaries.
+  # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
+  #
+  # Returns `nil` if *start* index is out of bounds.
+  #
+  # ```
+  # "hello".byte_slice?(0)  # => "hello"
+  # "hello".byte_slice?(2)  # => "llo"
+  # "hello".byte_slice?(-2) # => "lo"
+  # "¥hello".byte_slice?(2) # => "hello"
+  # "¥hello".byte_slice?(1) # => "\xA5hello" (invalid UTF-8 character)
+  # "hello".byte_slice?(6)  # => nil
+  # "hello".byte_slice?(-6) # => nil
+  # ```
+  def byte_slice?(start : Int) : String?
+    count = bytesize - start
+    return nil if start > 0 && count < 0
+    byte_slice? start, count
   end
 
   # Returns the codepoint of the character at the given *index*.
@@ -3035,7 +3103,7 @@ class String
   # ```
   #
   # Case-sensitive only comparison is provided by the comparison operator `#<=>`.
-  def compare(other : String, case_insensitive = false, options = Unicode::CaseOptions::None) : Int32
+  def compare(other : String, case_insensitive = false, options : Unicode::CaseOptions = :none) : Int32
     return self <=> other unless case_insensitive
 
     if single_byte_optimizable? && other.single_byte_optimizable?
