@@ -3810,10 +3810,12 @@ module Crystal
 
       if @token.type.op_amp?
         next_token
-        unless @token.type.ident? || @token.type.space?
+        space_after_amp = @token.type.space?
+        skip_space_or_newline
+
+        if @token.type.op_colon? && !space_after_amp # anonymous block arg without space
           warnings.add_warning_at @token.location, "space required before colon in type restriction (run `crystal tool format` to fix this)"
         end
-        skip_space_or_newline
 
         block_param = parse_block_param(extra_assigns, annotations)
         skip_space_or_newline
