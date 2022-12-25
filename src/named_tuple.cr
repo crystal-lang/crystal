@@ -245,7 +245,7 @@ struct NamedTuple
   # ```
   # h = {a: {b: {c: [10, 20]}}, x: {a: "b"}}
   # h.dig? :a, :b, :c # => [10, 20]
-  # h.dig? "x", "z"   # => nil
+  # h.dig? "a", "x"   # => nil
   # ```
   def dig?(key : Symbol | String, *subkeys)
     if (value = self[key]?) && value.responds_to?(:dig?)
