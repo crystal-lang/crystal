@@ -1103,7 +1103,7 @@ class Hash(K, V)
   # ```
   # h = {"a" => {"b" => [10, 20, 30]}}
   # h.dig? "a", "b" # => [10, 20, 30]
-  # h.dig? "x", "a" # => nil
+  # h.dig? "a", "x" # => nil
   # ```
   def dig?(key : K, *subkeys)
     if (value = self[key]?) && value.responds_to?(:dig?)
