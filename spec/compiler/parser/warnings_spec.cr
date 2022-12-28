@@ -41,11 +41,13 @@ describe "Parser warnings" do
     it "in block param type restriction" do
       assert_parser_warning("def foo(&block: Foo)\nend", "warning in test.cr:1\nWarning: space required before colon in type restriction (run `crystal tool format` to fix this)")
       assert_no_parser_warning("def foo(&block : Foo)\nend")
+      assert_no_parser_warning("def foo(&@foo)\nend")
     end
 
     it "in anonymous block param type restriction" do
       assert_parser_warning("def foo(&: Foo)\nend", "warning in test.cr:1\nWarning: space required before colon in type restriction (run `crystal tool format` to fix this)")
       assert_no_parser_warning("def foo(& : Foo)\nend")
+      assert_no_parser_warning("def foo(&)\nend")
     end
 
     it "in type declaration" do
