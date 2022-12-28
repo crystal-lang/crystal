@@ -351,7 +351,7 @@ module FileUtils
     Dir.current
   end
 
-  # Deletes the *path* file given, raised if path is a directory or not exists.
+  # Deletes the *path* file given, raised if path is not exists.
   #
   # ```
   # require "file_utils"
@@ -364,7 +364,7 @@ module FileUtils
     File.delete(path)
   end
 
-  # Deletes all *paths* file given, raised if one path is a directory or not exists.
+  # Deletes all *paths* file given, raised if one path is not exists.
   #
   # ```
   # require "file_utils"
@@ -377,7 +377,7 @@ module FileUtils
     end
   end
 
-  # Deletes the *path* file given, ignored if path is a directory or not exists.
+  # Deletes the *path* file given, ignored if path is not exists.
   #
   # ```
   # require "file_utils"
@@ -385,15 +385,12 @@ module FileUtils
   # FileUtils.rm_f("afile.cr")
   # ```
   #
+  # NOTE: Alias of `File.delete?`
   def rm_f(path : Path | String) : Nil
-    Crystal::System::File.delete(
-      path.to_s,
-      raise_on_missing: false,
-      raise_on_directory: false
-    )
+    File.delete?(path)
   end
 
-  # Deletes all *paths* file given, ignored if one path is a directory or not exists.
+  # Deletes all *paths* file given, ignored if one path is not exists.
   #
   # ```
   # require "file_utils"
@@ -402,7 +399,7 @@ module FileUtils
   # ```
   def rm_f(paths : Enumerable(Path | String)) : Nil
     paths.each do |path|
-      rm_f(path)
+      File.delete?(path)
     end
   end
 
