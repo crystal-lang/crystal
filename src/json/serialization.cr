@@ -98,8 +98,9 @@ module JSON
   #   @a : Int32
   # end
   #
-  # a = A.from_json(%({"a":1,"b":2})) # => A(@json_unmapped={"b" => 2_i64}, @a=1)
-  # a.to_json                         # => {"a":1,"b":2}
+  # a = A.from_json(%({"a":1,"b":2})) # => A(@json_unmapped={"b" => 2}, @a=1)
+  # a.json_unmapped["b"].raw.class    # => Int64
+  # a.to_json                         # => %({"a":1,"b":2})
   # ```
   #
   #

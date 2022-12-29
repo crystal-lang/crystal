@@ -74,8 +74,8 @@ enum HTTP::Status
   # ```
   # require "http/status"
   #
-  # HTTP::Status.new(100)  # => CONTINUE
-  # HTTP::Status.new(202)  # => ACCEPTED
+  # HTTP::Status.new(100)  # => HTTP::Status::CONTINUE
+  # HTTP::Status.new(202)  # => HTTP::Status::ACCEPTED
   # HTTP::Status.new(123)  # => 123
   # HTTP::Status.new(1000) # raises ArgumentError
   # ```
