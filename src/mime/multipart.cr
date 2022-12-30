@@ -69,11 +69,29 @@ module MIME::Multipart
   #
   # See: `Multipart::Parser`
   def self.parse(request : HTTP::Request)
-    boundary = parse_boundary(request.headers["Content-Type"])
+    if content_type = request.headers["Content-Type"]?
+      boundary = parse_boundary(content_type)
+    end
     return nil unless boundary
 
     body = request.body
     return nil unless body
+    parse(body, boundary) { |headers, io| yield headers, io }
+  end
+
+  def self.parse(response : HTTP::Client::Response)
+    if content_type = response.headers["Content-Type"]?
+      boundary = parse_boundary(content_type)
+    end
+    return nil unless boundary
+
+    if body = response.body.presence
+      body = IO::Memory.new(body)
+    else
+      body = response.body_io?
+    end
+    return nil unless body
+
     parse(body, boundary) { |headers, io| yield headers, io }
   end
 

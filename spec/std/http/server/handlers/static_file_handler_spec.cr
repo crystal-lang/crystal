@@ -175,6 +175,65 @@ describe HTTP::StaticFileHandler do
     end
   end
 
+  context "when a Range header is provided" do
+    it "serves the given byte range" do
+      headers = HTTP::Headers{"Range" => "bytes=0-2"}
+
+      response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+      response.status_code.should eq(206)
+      count = 0
+      MIME::Multipart.parse(response) do |headers, part|
+        part.gets_to_end.should eq "Hel"
+        count += 1
+      end
+      count.should eq 1
+    end
+    it "serves the given open-ended byte range" do
+      headers = HTTP::Headers{"Range" => "bytes=6-"}
+
+      response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+      response.status_code.should eq(206)
+      count = 0
+      MIME::Multipart.parse(response) do |headers, part|
+        part.gets_to_end.should eq "world\n"
+        count += 1
+      end
+      count.should eq 1
+    end
+
+    it "serves multiple byte ranges" do
+      headers = HTTP::Headers{"Range" => "bytes=0-1,6-7"}
+
+      response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+      response.status_code.should eq(206)
+      count = 0
+      MIME::Multipart.parse(response) do |headers, part|
+        chunk = part.gets_to_end
+        case range = headers["Content-Range"]
+        when "bytes 0-1/12"
+          chunk.should eq "He"
+        when "bytes 6-7/12"
+          chunk.should eq "wo"
+        else
+          raise "Unknown range: #{range.inspect}"
+        end
+        count += 1
+      end
+      count.should eq 2
+    end
+
+    it "returns a 416 when the start of the range is larger than the file" do
+      headers = HTTP::Headers{"Range" => "bytes=13-14"}
+
+      response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+      response.status_code.should eq 416
+    end
+  end
+
   it "lists directory's entries" do
     response = handle HTTP::Request.new("GET", "/")
     response.status_code.should eq(200)

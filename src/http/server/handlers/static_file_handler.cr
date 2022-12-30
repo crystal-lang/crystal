@@ -99,9 +99,46 @@ class HTTP::StaticFileHandler
         end
       end
 
-      context.response.content_length = file_info.size
       File.open(file_path) do |file|
-        IO.copy(file, context.response)
+        if (range = context.request.headers["Range"]?) && (match = range.match(/bytes=([0-9\-,]+)/))
+          ranges = match[1].split(',').map do |range|
+            start, finish = range.strip.split('-', 2)
+            start = start.to_i64 { 0 }
+            finish = finish.to_i64 { file_info.size }
+
+            {start, finish}
+          end
+
+          # If any of the ranges start beyond the end of the file, we return an
+          # HTTP 416 Range Not Satisfiable.
+          # See https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests#partial_request_responses
+          if ranges.any? { |(start, _)| start > file_info.size }
+            context.response.status = :range_not_satisfiable
+            return
+          end
+
+          context.response.status = :partial_content
+          content_type = context.response.headers["Content-Type"]?
+
+
+          MIME::Multipart.build context.response do |builder|
+            context.response.headers["Content-Type"] = builder.content_type("byterange")
+
+            ranges.each do |(start, finish)|
+              file.seek start
+              headers = HTTP::Headers{
+                "Content-Range" => "bytes #{start}-#{finish}/#{file_info.size}",
+              }
+              headers["Content-Type"] = content_type if content_type
+              chunk_io = IO::Sized.new(file, finish - start + 1)
+              builder.body_part headers, chunk_io
+            end
+          end
+        else
+          context.response.status = :ok
+          context.response.content_length = file_info.size
+          IO.copy(file, context.response)
+        end
       end
     else # Not a normal file (FIFO/device/socket)
       call_next(context)
