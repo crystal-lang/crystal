@@ -54,11 +54,17 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
           parser = @program.new_parser(File.read(filename))
           parser.filename = filename
           parser.wants_doc = @program.wants_doc?
-          parsed_nodes = parser.parse
-          parsed_nodes = @program.normalize(parsed_nodes, inside_exp: inside_exp?)
-          # We must type the node immediately, in case a file requires another
-          # *before* one of the files in `filenames`
-          parsed_nodes.accept self
+          begin
+            parsed_nodes = parser.parse
+            parsed_nodes = @program.normalize(parsed_nodes, inside_exp: inside_exp?)
+            # We must type the node immediately, in case a file requires another
+            # *before* one of the files in `filenames`
+            parsed_nodes.accept self
+          rescue ex : CodeError
+            node.raise "while requiring \"#{node.string}\"", ex
+          rescue ex
+            raise Error.new "while requiring \"#{node.string}\"", ex
+          end
           nodes << FileNode.new(parsed_nodes, filename)
         end
       end
@@ -87,10 +93,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
 
     node.raise "#{message}\n\n#{notes.join("\n")}"
-  rescue ex : Crystal::CodeError
-    node.raise "while requiring \"#{node.string}\"", ex
-  rescue ex
-    raise Error.new("while requiring \"#{node.string}\"", ex)
   end
 
   def visit(node : ClassDef)
