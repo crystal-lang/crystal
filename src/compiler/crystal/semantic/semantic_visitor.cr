@@ -46,7 +46,27 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     # Remember that the program depends on this require
     @program.record_require(filename, relative_to)
 
-    filenames = @program.find_in_path(filename, relative_to)
+    filenames = begin
+      @program.find_in_path(filename, relative_to)
+    rescue ex : CrystalPath::NotFoundError
+      message = "can't find file '#{ex.filename}'"
+      notes = [] of String
+
+      if ex.filename.starts_with? '.'
+        if relative_to
+          message += " relative to '#{relative_to}'"
+        end
+      else
+        notes << <<-NOTE
+          If you're trying to require a shard:
+          - Did you remember to run `shards install`?
+          - Did you make sure you're running the compiler in the same directory as your shard.yml?
+          NOTE
+      end
+
+      node.raise "#{message}\n\n#{notes.join("\n")}"
+    end
+
     if filenames
       nodes = Array(ASTNode).new(filenames.size)
       filenames.each do |filename|
@@ -76,23 +96,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     node.expanded = expanded
     node.bind_to(expanded)
     false
-  rescue ex : CrystalPath::NotFoundError
-    message = "can't find file '#{ex.filename}'"
-    notes = [] of String
-
-    if ex.filename.starts_with? '.'
-      if relative_to
-        message += " relative to '#{relative_to}'"
-      end
-    else
-      notes << <<-NOTE
-          If you're trying to require a shard:
-          - Did you remember to run `shards install`?
-          - Did you make sure you're running the compiler in the same directory as your shard.yml?
-          NOTE
-    end
-
-    node.raise "#{message}\n\n#{notes.join("\n")}"
   end
 
   def visit(node : ClassDef)
