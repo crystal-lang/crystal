@@ -416,21 +416,7 @@ module Crystal
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
-          linker_command = linker_command(program, object_names, output_filename, output_dir, expand: true)
-
-          process_wrapper(*linker_command) do |command, args|
-            Process.run(command, args, shell: true,
-              input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
-              process.error.each_line(chomp: false) do |line|
-                hint_string = colorize("(this usually means you need to install the development package for lib\\1)").yellow.bold
-                line = line.gsub(/cannot find -l(\S+)\b/, "cannot find -l\\1 #{hint_string}")
-                line = line.gsub(/unable to find library -l(\S+)\b/, "unable to find library -l\\1 #{hint_string}")
-                line = line.gsub(/library not found for -l(\S+)\b/, "library not found for -l\\1 #{hint_string}")
-                STDERR << line
-              end
-            end
-            $?
-          end
+          run_linker *linker_command(program, object_names, output_filename, output_dir, expand: true)
         end
       end
 
@@ -601,6 +587,22 @@ module Crystal
         builder.size_level = 0
         builder.use_inliner_with_threshold = 275
         builder
+      end
+    end
+
+    private def run_linker(command, args)
+      process_wrapper(command, args) do |command, args|
+        Process.run(command, args, shell: true,
+          input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
+          process.error.each_line(chomp: false) do |line|
+            hint_string = colorize("(this usually means you need to install the development package for lib\\1)").yellow.bold
+            line = line.gsub(/cannot find -l(\S+)\b/, "cannot find -l\\1 #{hint_string}")
+            line = line.gsub(/unable to find library -l(\S+)\b/, "unable to find library -l\\1 #{hint_string}")
+            line = line.gsub(/library not found for -l(\S+)\b/, "library not found for -l\\1 #{hint_string}")
+            STDERR << line
+          end
+        end
+        $?
       end
     end
 
