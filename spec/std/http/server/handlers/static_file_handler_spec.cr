@@ -182,25 +182,16 @@ describe HTTP::StaticFileHandler do
       response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
       response.status_code.should eq(206)
-      count = 0
-      MIME::Multipart.parse(response) do |headers, part|
-        part.gets_to_end.should eq "Hel"
-        count += 1
-      end
-      count.should eq 1
+      response.body.should eq "Hel"
     end
+
     it "serves the given open-ended byte range" do
       headers = HTTP::Headers{"Range" => "bytes=6-"}
 
       response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
       response.status_code.should eq(206)
-      count = 0
-      MIME::Multipart.parse(response) do |headers, part|
-        part.gets_to_end.should eq "world\n"
-        count += 1
-      end
-      count.should eq 1
+      response.body.should eq "world\n"
     end
 
     it "serves multiple byte ranges" do

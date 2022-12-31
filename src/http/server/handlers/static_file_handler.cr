@@ -70,6 +70,8 @@ class HTTP::StaticFileHandler
 
     return call_next(context) unless file_info
 
+    context.response.headers["Accept-Ranges"] = "bytes"
+
     if @directory_listing && is_dir
       context.response.content_type = "text/html"
       directory_listing(context.response, request_path, file_path)
@@ -118,20 +120,29 @@ class HTTP::StaticFileHandler
           end
 
           context.response.status = :partial_content
-          content_type = context.response.headers["Content-Type"]?
 
+          if ranges.size == 1
+            start, finish = ranges.first
+            bytesize = finish - start + 1
+            file.seek start
+            context.response.headers["Content-Range"] = "bytes #{start}-#{finish}/#{file_info.size}"
+            IO.copy IO::Sized.new(file, bytesize), context.response
+          else
+            MIME::Multipart.build context.response do |builder|
+              content_type = context.response.headers["Content-Type"]?
+              context.response.headers["Content-Type"] = builder.content_type("byterange")
 
-          MIME::Multipart.build context.response do |builder|
-            context.response.headers["Content-Type"] = builder.content_type("byterange")
-
-            ranges.each do |(start, finish)|
-              file.seek start
-              headers = HTTP::Headers{
-                "Content-Range" => "bytes #{start}-#{finish}/#{file_info.size}",
-              }
-              headers["Content-Type"] = content_type if content_type
-              chunk_io = IO::Sized.new(file, finish - start + 1)
-              builder.body_part headers, chunk_io
+              ranges.each do |(start, finish)|
+                bytesize = finish - start + 1
+                file.seek start
+                headers = HTTP::Headers{
+                  "Content-Range"  => "bytes #{start}-#{finish}/#{file_info.size}",
+                  "Content-Length" => bytesize.to_s,
+                }
+                headers["Content-Type"] = content_type if content_type
+                chunk_io = IO::Sized.new(file, bytesize)
+                builder.body_part headers, chunk_io
+              end
             end
           end
         else
