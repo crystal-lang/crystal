@@ -101,7 +101,7 @@ describe Process do
   end
 
   describe ".run" do
-    it "run waits for the process" do
+    it "waits for the process" do
       Process.run(*exit_code_command(0)).exit_code.should eq(0)
     end
 
