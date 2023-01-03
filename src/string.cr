@@ -3045,7 +3045,7 @@ class String
   # "abcdef" == "abcdefg" # => false
   # "abcdef" == "ABCDEF"  # => false
   #
-  # "abcdef".compare("ABCDEF", case_sensitive: false) == 0 # => true
+  # "abcdef".compare("ABCDEF", case_insensitive: true) == 0 # => true
   # ```
   def ==(other : self) : Bool
     return true if same?(other)

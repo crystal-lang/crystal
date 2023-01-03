@@ -1231,7 +1231,11 @@ module Crystal
       if next_comes_colon_space?
         name = @token.value.to_s
         var = Var.new(name).at(@token.location).at_end(token_end_location)
-        next_token_skip_space
+        next_token
+        unless @token.type.space?
+          warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
+        end
+        skip_space
         check :OP_COLON
         type_declaration = parse_type_declaration(var)
         set_visibility type_declaration
@@ -1268,18 +1272,18 @@ module Crystal
     end
 
     def new_node_check_type_declaration(klass)
-      new_node_check_type_declaration(klass) { }
-    end
-
-    def new_node_check_type_declaration(klass)
       name = @token.value.to_s
-      yield name
       var = klass.new(name).at(@token.location)
       var.end_location = token_end_location
       @wants_regex = false
-      next_token_skip_space
+      next_token
+      space_after_name = @token.type.space?
+      skip_space
 
       if @no_type_declaration == 0 && @token.type.op_colon?
+        unless space_after_name
+          warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
+        end
         parse_type_declaration(var)
       else
         var
@@ -3548,16 +3552,22 @@ module Crystal
 
       if @token.type.const?
         receiver = parse_path
+        last_was_space = false
       elsif @token.type.ident?
         check_valid_def_name
         name = @token.value.to_s
-        equals_sign, _ = consume_def_equals_sign_skip_space
+
+        equals_sign, _ = consume_def_equals_sign
         name = "#{name}=" if equals_sign
+        last_was_space = @token.type.space?
+        skip_space
       else
         check_valid_def_op_name
         name = @token.type.to_s
 
-        next_token_skip_space
+        next_token
+        last_was_space = @token.type.space?
+        skip_space
       end
 
       params = [] of Arg
@@ -3579,15 +3589,19 @@ module Crystal
           name = @token.value.to_s
 
           name_location = @token.location
-          equals_sign, _ = consume_def_equals_sign_skip_space
+          equals_sign, _ = consume_def_equals_sign
           name = "#{name}=" if equals_sign
+          last_was_space = @token.type.space?
+          skip_space
         else
           check DefOrMacroCheck2
           check_valid_def_op_name
           name = @token.type.to_s
 
           name_location = @token.location
-          next_token_skip_space
+          next_token
+          last_was_space = @token.type.space?
+          skip_space
         end
       else
         if receiver
@@ -3658,7 +3672,9 @@ module Crystal
           raise "named parameters must follow bare *", params.last.location.not_nil!
         end
 
-        next_token_skip_space
+        next_token
+        last_was_space = @token.type.space?
+        skip_space
         if @token.type.symbol?
           raise "a space is mandatory between ':' and return type", @token
         end
@@ -3685,6 +3701,9 @@ module Crystal
       end
 
       if @token.type.op_colon?
+        unless last_was_space
+          warnings.add_warning_at @token.location, "space required before colon in return type restriction (run `crystal tool format` to fix this)"
+        end
         next_token_skip_space
         return_type = parse_bare_proc_type
         end_location = return_type.end_location
@@ -3790,7 +3809,14 @@ module Crystal
       end
 
       if @token.type.op_amp?
-        next_token_skip_space_or_newline
+        next_token
+        space_after_amp = @token.type.space?
+        skip_space_or_newline
+
+        if @token.type.op_colon? && !space_after_amp # anonymous block arg without space
+          warnings.add_warning_at @token.location, "space required before colon in type restriction (run `crystal tool format` to fix this)"
+        end
+
         block_param = parse_block_param(extra_assigns, annotations)
         skip_space_or_newline
         # When block_param.name is empty, this is an anonymous parameter.
@@ -3939,6 +3965,9 @@ module Crystal
       end
 
       if @token.type.op_colon?
+        unless param_name.empty? || found_space
+          warnings.add_warning_at @token.location, "space required before colon in type restriction (run `crystal tool format` to fix this)"
+        end
         next_token_skip_space_or_newline
 
         location = @token.location
@@ -4241,7 +4270,8 @@ module Crystal
       @wants_regex = false
       next_token
 
-      if @token.type.space?
+      name_followed_by_space = @token.type.space?
+      if name_followed_by_space
         # We don't want the next token to be a regex literal if the call's name is
         # a variable in the current scope (it's unlikely that there will be a method
         # with that name that accepts a regex as a first argument).
@@ -4322,6 +4352,9 @@ module Crystal
             end
           else
             if @no_type_declaration == 0 && @token.type.op_colon?
+              unless name_followed_by_space
+                warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
+              end
               declare_var = parse_type_declaration(Var.new(name).at(location).at_end(end_location))
               end_location = declare_var.end_location
 
@@ -6142,14 +6175,19 @@ module Crystal
     end
 
     def consume_def_equals_sign_skip_space
+      result = consume_def_equals_sign
+      skip_space
+      result
+    end
+
+    def consume_def_equals_sign
       end_location = token_end_location
       next_token
       if @token.type.op_eq?
         end_location = token_end_location
-        next_token_skip_space
+        next_token
         {true, end_location}
       else
-        skip_space
         {false, end_location}
       end
     end

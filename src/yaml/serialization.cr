@@ -97,7 +97,8 @@ module YAML
   #   @a : Int32
   # end
   #
-  # a = A.from_yaml("---\na: 1\nb: 2\n") # => A(@yaml_unmapped={"b" => 2_i64}, @a=1)
+  # a = A.from_yaml("---\na: 1\nb: 2\n") # => A(@yaml_unmapped={"b" => 2}, @a=1)
+  # a.yaml_unmapped["b"].raw.class       # => Int64
   # a.to_yaml                            # => "---\na: 1\nb: 2\n"
   # ```
   #

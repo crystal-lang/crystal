@@ -31,8 +31,8 @@
 #
 # ```
 # language = {name: "Crystal", year: 2011}
-# language[:name]?         # => 1
-# typeof(language[:name]?) # => Int32
+# language[:name]?         # => "Crystal"
+# typeof(language[:name]?) # => String
 # ```
 #
 # `NamedTuple`'s own instance classes may also be indexed in a similar manner,
@@ -243,9 +243,9 @@ struct NamedTuple
   # Returns `nil` if not found.
   #
   # ```
-  # h = {a: {b: [10, 20, 30]}}
-  # h.dig? "a", "b"                # => [10, 20, 30]
-  # h.dig? "a", "b", "c", "d", "e" # => nil
+  # h = {a: {b: {c: [10, 20]}}, x: {a: "b"}}
+  # h.dig? :a, :b, :c # => [10, 20]
+  # h.dig? "a", "x"   # => nil
   # ```
   def dig?(key : Symbol | String, *subkeys)
     if (value = self[key]?) && value.responds_to?(:dig?)
@@ -262,9 +262,9 @@ struct NamedTuple
   # raises `KeyError`.
   #
   # ```
-  # h = {a: {b: [10, 20, 30]}}
-  # h.dig "a", "b"                # => [10, 20, 30]
-  # h.dig "a", "b", "c", "d", "e" # raises KeyError
+  # h = {a: {b: {c: [10, 20]}}, x: {a: "b"}}
+  # h.dig :a, :b, :c # => [10, 20]
+  # h.dig "a", "x"   # raises KeyError
   # ```
   def dig(key : Symbol | String, *subkeys)
     if (value = self[key]) && value.responds_to?(:dig)
