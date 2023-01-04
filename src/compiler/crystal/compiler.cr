@@ -605,14 +605,32 @@ module Crystal
             STDERR << line
           end
         end
-        $?
+      rescue exc : File::AccessDeniedError | File::NotFoundError
+        linker_not_found exc.class, linker_name
       end
 
       status = $?
       unless status.success?
+        if status.normal_exit?
+          case status.exit_code
+          when 126
+            linker_not_found File::AccessDeniedError, linker_name
+          when 127
+            linker_not_found File::NotFoundError, linker_name
+          end
+        end
         msg = status.normal_exit? ? "code: #{status.exit_code}" : "signal: #{status.exit_signal} (#{status.exit_signal.value})"
         code = status.normal_exit? ? status.exit_code : 1
         error "execution of command failed with #{msg}: `#{command}`", exit_code: code
+      end
+    end
+
+    private def linker_not_found(exc_class, linker_name)
+      case exc_class
+      when File::AccessDeniedError
+        error "Could not execute linker: `#{linker_name}`: Permission denied\nRun with `--verbose` to print the full linker command."
+      else
+        error "Could not execute linker: `#{linker_name}`: File not found\nRun with `--verbose` to print the full linker command."
       end
     end
 
