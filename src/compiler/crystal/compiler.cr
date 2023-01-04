@@ -591,7 +591,9 @@ module Crystal
     end
 
     private def run_linker(command, args)
-      process_wrapper(command, args) do |command, args|
+      print_command(command, args) if verbose?
+
+      begin
         Process.run(command, args, shell: true,
           input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
           process.error.each_line(chomp: false) do |line|
@@ -604,13 +606,8 @@ module Crystal
         end
         $?
       end
-    end
 
-    private def process_wrapper(command, args = nil)
-      print_command(command, args) if verbose?
-
-      status = yield command, args
-
+      status = $?
       unless status.success?
         msg = status.normal_exit? ? "code: #{status.exit_code}" : "signal: #{status.exit_signal} (#{status.exit_signal.value})"
         code = status.normal_exit? ? status.exit_code : 1
