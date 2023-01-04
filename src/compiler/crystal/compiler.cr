@@ -315,7 +315,8 @@ module Crystal
         target_machine.emit_obj_to_file llvm_mod, object_name
       end
 
-      print_command(*linker_command(program, [object_name], output_filename, nil))
+      _, command, args = linker_command(program, [object_name], output_filename, nil)
+      print_command(command, args)
     end
 
     private def print_command(command, args)
@@ -376,15 +377,15 @@ module Crystal
           cmd = "#{cl} #{Process.quote_windows("@" + args_filename)}"
         end
 
-        {cmd, nil}
+        {cl, cmd, nil}
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
-        { %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names }
+        {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names}
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
 
-        { %(#{CC} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names }
+        {CC, %(#{CC} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
       end
     end
 
@@ -590,7 +591,7 @@ module Crystal
       end
     end
 
-    private def run_linker(command, args)
+    private def run_linker(linker_name, command, args)
       print_command(command, args) if verbose?
 
       begin
