@@ -1,4 +1,5 @@
 require "spec"
+require "../support/string"
 
 enum SpecEnum : Int8
   One
@@ -49,26 +50,31 @@ private enum SpecEnumWithCaseSensitiveMembers
 end
 
 describe Enum do
-  describe "to_s" do
+  describe "#to_s" do
     it "for simple enum" do
-      SpecEnum::One.to_s.should eq("One")
-      SpecEnum::Two.to_s.should eq("Two")
-      SpecEnum::Three.to_s.should eq("Three")
+      assert_prints SpecEnum::One.to_s, "One"
+      assert_prints SpecEnum::Two.to_s, "Two"
+      assert_prints SpecEnum::Three.to_s, "Three"
+      assert_prints SpecEnum.new(127).to_s, "127"
     end
 
     it "for flags enum" do
-      SpecEnumFlags::None.to_s.should eq("None")
-      SpecEnumFlags::All.to_s.should eq("One | Two | Three")
-      (SpecEnumFlags::One | SpecEnumFlags::Two).to_s.should eq("One | Two")
+      assert_prints SpecEnumFlags::None.to_s, "None"
+      assert_prints SpecEnumFlags::All.to_s, "One | Two | Three"
+      assert_prints (SpecEnumFlags::One | SpecEnumFlags::Two).to_s, "One | Two"
+      assert_prints SpecEnumFlags.new(128).to_s, "128"
+      # FIXME: This should probably be something like `One | 128`
+      assert_prints (SpecEnumFlags::One | SpecEnumFlags.new(128)).to_s, "One"
     end
 
     it "for private enum" do
-      PrivateEnum::FOO.to_s.should eq "FOO"
-      PrivateFlagsEnum::FOO.to_s.should eq "FOO"
-      PrivateEnum::QUX.to_s.should eq "FOO"
-      String.build { |io| PrivateEnum::FOO.to_s(io) }.should eq "FOO"
-      String.build { |io| PrivateFlagsEnum::FOO.to_s(io) }.should eq "FOO"
-      String.build { |io| (PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAZ).to_s(io) }.should eq "FOO | BAZ"
+      assert_prints PrivateEnum::FOO.to_s, "FOO"
+      assert_prints PrivateFlagsEnum::FOO.to_s, "FOO"
+      assert_prints PrivateEnum::QUX.to_s, "FOO"
+      assert_prints (PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAZ).to_s, "FOO | BAZ"
+      assert_prints PrivateFlagsEnum.new(128).to_s, "128"
+      # FIXME: This should probably be something like `FOO | 128`
+      assert_prints (PrivateFlagsEnum::FOO | PrivateFlagsEnum.new(128)).to_s, "FOO"
     end
   end
 
