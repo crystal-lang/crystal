@@ -1,4 +1,5 @@
 require "spec"
+require "../../support/string"
 
 private def exit_status(status)
   {% if flag?(:unix) %}
@@ -79,4 +80,40 @@ describe Process::Status do
       Process::Status.new(0x7e).signal_exit?.should be_true
     end
   {% end %}
+
+  describe "#to_s" do
+    it "with exit status" do
+      assert_prints Process::Status.new(exit_status(0)).to_s, "0"
+      assert_prints Process::Status.new(exit_status(1)).to_s, "1"
+      assert_prints Process::Status.new(exit_status(127)).to_s, "127"
+      assert_prints Process::Status.new(exit_status(128)).to_s, "128"
+      assert_prints Process::Status.new(exit_status(255)).to_s, "255"
+    end
+
+    {% if flag?(:unix) && !flag?(:wasi) %}
+      it "with exit signal" do
+        assert_prints Process::Status.new(Signal::HUP.value).to_s, "HUP"
+        last_signal = Signal.values[-1]
+        assert_prints Process::Status.new(last_signal.value).to_s, last_signal.to_s
+      end
+    {% end %}
+  end
+
+  describe "#inspect" do
+    it "with exit status" do
+      assert_prints Process::Status.new(exit_status(0)).inspect, "Process::Status[0]"
+      assert_prints Process::Status.new(exit_status(1)).inspect, "Process::Status[1]"
+      assert_prints Process::Status.new(exit_status(127)).inspect, "Process::Status[127]"
+      assert_prints Process::Status.new(exit_status(128)).inspect, "Process::Status[128]"
+      assert_prints Process::Status.new(exit_status(255)).inspect, "Process::Status[255]"
+    end
+
+    {% if flag?(:unix) && !flag?(:wasi) %}
+      it "with exit signal" do
+        assert_prints Process::Status.new(Signal::HUP.value).inspect, "Process::Status[Signal::HUP]"
+        last_signal = Signal.values[-1]
+        assert_prints Process::Status.new(last_signal.value).inspect, "Process::Status[#{last_signal.inspect}]"
+      end
+    {% end %}
+  end
 end

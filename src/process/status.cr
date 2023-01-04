@@ -76,4 +76,43 @@ class Process::Status
   end
 
   def_equals_and_hash @exit_status
+
+  # Prints a textual representation of the process status to *io*.
+  #
+  # The result is equivalent to `#to_s`, but prefixed by the type name and
+  # delimited by square brackets: `Process::Status[0]`, `Process::Status[1]`,
+  # `Process::Status[Signal::HUP]`.
+  def inspect(io : IO) : Nil
+    io << "Process::Status["
+    if normal_exit?
+      exit_code.inspect(io)
+    else
+      exit_signal.inspect(io)
+    end
+    io << "]"
+  end
+
+  # Prints a textual representation of the process status to *io*.
+  #
+  # A normal exit status prints the numerical value (`0`, `1` etc).
+  # A signal exit status prints the name of the `Signal` member (`HUP`, `INT`, etc.).
+  def to_s(io : IO) : Nil
+    if normal_exit?
+      io << exit_code
+    else
+      io << exit_signal
+    end
+  end
+
+  # Returns a textual representation of the process status.
+  #
+  # A normal exit status prints the numerical value (`0`, `1` etc).
+  # A signal exit status prints the name of the `Signal` member (`HUP`, `INT`, etc.).
+  def to_s : String
+    if normal_exit?
+      exit_code.to_s
+    else
+      exit_signal.to_s
+    end
+  end
 end
