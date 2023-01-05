@@ -101,11 +101,7 @@ module LLVM
   end
 
   def self.host_cpu_name : String
-    {% unless LibLLVM::IS_LT_70 %}
-      String.new LibLLVM.get_host_cpu_name
-    {% else %}
-      raise "LibLLVM.host_cpu_name requires LLVM 7.0 or newer"
-    {% end %}
+    String.new LibLLVM.get_host_cpu_name
   end
 
   def self.normalize_triple(triple : String) : String

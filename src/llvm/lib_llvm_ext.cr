@@ -14,7 +14,7 @@ lib LibLLVMExt
   type OperandBundleDefRef = Void*
 
   fun create_di_builder = LLVMExtNewDIBuilder(LibLLVM::ModuleRef) : DIBuilder
-  fun di_builder_finalize = LLVMExtDIBuilderFinalize(DIBuilder)
+  fun di_builder_finalize = LLVMDIBuilderFinalize(DIBuilder)
 
   fun di_builder_create_function = LLVMExtDIBuilderCreateFunction(
     builder : DIBuilder, scope : LibLLVM::MetadataRef, name : Char*,
@@ -104,14 +104,14 @@ lib LibLLVMExt
                                                                                                     file : LibLLVM::MetadataRef,
                                                                                                     line : UInt) : LibLLVM::MetadataRef
 
-  fun di_builder_create_unspecified_type = LLVMExtDIBuilderCreateUnspecifiedType(builder : LibLLVMExt::DIBuilder,
-                                                                                 name : Void*,
-                                                                                 size : LibC::SizeT) : LibLLVM::MetadataRef
+  fun di_builder_create_unspecified_type = LLVMDIBuilderCreateUnspecifiedType(builder : LibLLVMExt::DIBuilder,
+                                                                              name : Void*,
+                                                                              size : LibC::SizeT) : LibLLVM::MetadataRef
 
-  fun di_builder_create_lexical_block_file = LLVMExtDIBuilderCreateLexicalBlockFile(builder : LibLLVMExt::DIBuilder,
-                                                                                    scope : LibLLVM::MetadataRef,
-                                                                                    file_scope : LibLLVM::MetadataRef,
-                                                                                    discriminator : UInt32) : LibLLVM::MetadataRef
+  fun di_builder_create_lexical_block_file = LLVMDIBuilderCreateLexicalBlockFile(builder : LibLLVMExt::DIBuilder,
+                                                                                 scope : LibLLVM::MetadataRef,
+                                                                                 file_scope : LibLLVM::MetadataRef,
+                                                                                 discriminator : UInt32) : LibLLVM::MetadataRef
 
   fun di_builder_replace_temporary = LLVMExtDIBuilderReplaceTemporary(builder : DIBuilder, from : LibLLVM::MetadataRef, to : LibLLVM::MetadataRef)
 
@@ -164,5 +164,9 @@ lib LibLLVMExt
   fun create_mc_jit_compiler_for_module = LLVMExtCreateMCJITCompilerForModule(jit : LibLLVM::ExecutionEngineRef*, m : LibLLVM::ModuleRef, options : LibLLVM::JITCompilerOptions*, options_length : UInt32, enable_global_isel : Bool, error : UInt8**) : Int32
 
   # LLVMCreateTypeAttribute is implemented in LLVM 13, but needed in 12
-  fun create_type_attribute = LLVMExtCreateTypeAttribute(ctx : LibLLVM::ContextRef, kind_id : LibC::UInt, ty : LibLLVM::TypeRef) : LibLLVM::AttributeRef
+  {% if LibLLVM::IS_LT_130 %}
+    fun create_type_attribute = LLVMExtCreateTypeAttribute(ctx : LibLLVM::ContextRef, kind_id : LibC::UInt, ty : LibLLVM::TypeRef) : LibLLVM::AttributeRef
+  {% else %}
+    fun create_type_attribute = LLVMCreateTypeAttribute(ctx : LibLLVM::ContextRef, kind_id : LibC::UInt, ty : LibLLVM::TypeRef) : LibLLVM::AttributeRef
+  {% end %}
 end
