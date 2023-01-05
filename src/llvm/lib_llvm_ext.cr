@@ -154,9 +154,7 @@ lib LibLLVMExt
                                           bundle : LibLLVMExt::OperandBundleDefRef,
                                           name : LibC::Char*) : LibLLVM::ValueRef
 
-  {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-    fun write_bitcode_with_summary_to_file = LLVMExtWriteBitcodeWithSummaryToFile(module : LibLLVM::ModuleRef, path : UInt8*) : Void
-  {% end %}
+  fun write_bitcode_with_summary_to_file = LLVMExtWriteBitcodeWithSummaryToFile(module : LibLLVM::ModuleRef, path : UInt8*) : Void
 
   fun normalize_target_triple = LLVMExtNormalizeTargetTriple(triple : Char*) : Char*
   fun basic_block_name = LLVMExtBasicBlockName(basic_block : LibLLVM::BasicBlockRef) : Char*
@@ -165,8 +163,6 @@ lib LibLLVMExt
   fun target_machine_enable_global_isel = LLVMExtTargetMachineEnableGlobalIsel(machine : LibLLVM::TargetMachineRef, enable : Bool)
   fun create_mc_jit_compiler_for_module = LLVMExtCreateMCJITCompilerForModule(jit : LibLLVM::ExecutionEngineRef*, m : LibLLVM::ModuleRef, options : LibLLVM::JITCompilerOptions*, options_length : UInt32, enable_global_isel : Bool, error : UInt8**) : Int32
 
-  {% unless LibLLVM::IS_38 %}
-    # LLVMCreateTypeAttribute is implemented in LLVM 13, but needed in 12
-    fun create_type_attribute = LLVMExtCreateTypeAttribute(ctx : LibLLVM::ContextRef, kind_id : LibC::UInt, ty : LibLLVM::TypeRef) : LibLLVM::AttributeRef
-  {% end %}
+  # LLVMCreateTypeAttribute is implemented in LLVM 13, but needed in 12
+  fun create_type_attribute = LLVMExtCreateTypeAttribute(ctx : LibLLVM::ContextRef, kind_id : LibC::UInt, ty : LibLLVM::TypeRef) : LibLLVM::AttributeRef
 end
