@@ -3562,9 +3562,7 @@ module Crystal
 
       write_keyword :lib, " "
 
-      check :CONST
-      write node.name
-      next_token
+      accept node.name
 
       format_nested_with_end node.body
 
