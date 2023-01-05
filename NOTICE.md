@@ -69,6 +69,6 @@ Crystal playground includes the following libraries, which have their own licens
 [Materialize]: http://materializecss.com/
 [Octicons]: https://octicons.github.com/
 [OpenSSL]: https://www.openssl.org/
-[PCRE]: http://pcre.org/
+[PCRE or PCRE2]: http://pcre.org/
 [readline]: https://tiswww.case.edu/php/chet/readline/rltop.html
 [Zlib]: http://www.zlib.net/
