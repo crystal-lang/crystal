@@ -63,8 +63,9 @@ describe Enum do
       assert_prints SpecEnumFlags::All.to_s, "One | Two | Three"
       assert_prints (SpecEnumFlags::One | SpecEnumFlags::Two).to_s, "One | Two"
       assert_prints SpecEnumFlags.new(128).to_s, "128"
-      # FIXME: This should probably be something like `One | 128`
-      assert_prints (SpecEnumFlags::One | SpecEnumFlags.new(128)).to_s, "One"
+      assert_prints (SpecEnumFlags::One | SpecEnumFlags.new(128)).to_s, "One | 128"
+      assert_prints (SpecEnumFlags::One | SpecEnumFlags.new(8) | SpecEnumFlags.new(16)).to_s, "One | 24"
+      assert_prints (SpecEnumFlags::One | SpecEnumFlags::Two | SpecEnumFlags.new(16)).to_s, "One | Two | 16"
     end
 
     it "for private enum" do
@@ -73,8 +74,7 @@ describe Enum do
       assert_prints PrivateEnum::QUX.to_s, "FOO"
       assert_prints (PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAZ).to_s, "FOO | BAZ"
       assert_prints PrivateFlagsEnum.new(128).to_s, "128"
-      # FIXME: This should probably be something like `FOO | 128`
-      assert_prints (PrivateFlagsEnum::FOO | PrivateFlagsEnum.new(128)).to_s, "FOO"
+      assert_prints (PrivateFlagsEnum::FOO | PrivateFlagsEnum.new(128)).to_s, "FOO | 128"
     end
   end
 
