@@ -229,8 +229,8 @@ class Socket
       in LibC::In6Addr
         addr8 = ipv6_addr8(addr)
         num = addr8.unsafe_as(UInt128)
-          # TODO: Use UInt128 literals
-          num == (1_u128 << 120) ||                       # "::1"
+        # TODO: Use UInt128 literals
+        num == (1_u128 << 120) ||                         # "::1"
           num & UInt128::MAX >> 24 == 0x7fffff_u128 << 80 # "::ffff:127.0.0.1/104"
       end
     end
