@@ -1,6 +1,6 @@
 # Crystal Programming Language
 
-Copyright 2012-2022 Manas Technology Solutions.
+Copyright 2012-2023 Manas Technology Solutions.
 
 This product includes software developed at Manas Technology Solutions (<https://manas.tech/>).
 
@@ -13,7 +13,7 @@ Please see [LICENSE](/LICENSE) for additional copyright and licensing informatio
 Crystal compiler links the following libraries, which have their own license:
 
   * [LLVM][] - [BSD-3, effectively][]
-  * [PCRE][] - [BSD-3][]
+  * [PCRE or PCRE2][] - [BSD-3][]
   * [libevent2][] - [BSD-3][]
   * [libiconv][] - [LGPLv3][]
   * [bdwgc][] - [MIT][]
@@ -25,7 +25,7 @@ Crystal compiler calls the following tools as external process on compiling, whi
 Crystal standard library uses the following libraries, which have their own licenses:
 
   * [LLVM][] - [BSD-3, effectively][]
-  * [PCRE][] - [BSD-3][]
+  * [PCRE or PCRE2][] - [BSD-3][]
   * [libevent2][] - [BSD-3][]
   * [libiconv][] - [LGPLv3][]
   * [bdwgc][] - [MIT][]
