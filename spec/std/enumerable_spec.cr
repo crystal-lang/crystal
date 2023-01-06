@@ -91,23 +91,23 @@ describe "Enumerable" do
 
   describe "compact" do
     it "can be applied to an Array" do
-      coll = [nil, 1, nil, 2, nil, 3, nil].compact
-      coll.to_a.should eq([1, 2, 3])
+      [nil, 1, nil, 2, nil, 3, nil].compact.should eq([1, 2, 3])
     end
 
     it "can be applied to a Set" do
-      coll = Set{1, nil, 2, nil, 3}.compact
-      coll.to_a.should eq([1, 2, 3])
+      Set{1, nil, 2, nil, 3}.compact.should eq([1, 2, 3])
     end
 
     it "can be applied to a Deque" do
-      coll = Deque.new([1, nil, 2, 3, nil]).compact
-      coll.to_a.should eq([1, 2, 3])
+      Deque.new([1, nil, 2, 3, nil]).compact.should eq([1, 2, 3])
     end
 
     it "can be applied to a Range" do
-      coll = (1..3).compact
-      coll.to_a.should eq([1, 2, 3])
+      (1..3).compact.should eq([1, 2, 3])
+    end
+
+    it "can be applied to a Slice" do
+      Slice[1, "a", nil, :b, nil].compact.should eq([1, "a", :b])
     end
   end
 
