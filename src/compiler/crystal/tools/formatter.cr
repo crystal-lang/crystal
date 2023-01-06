@@ -2766,7 +2766,7 @@ module Crystal
         if @token.type.newline?
           ends_with_newline = true
         end
-        skip_space_or_newline
+        indent(base_indent + 2) { skip_space_or_newline(last: true, at_least_one: ends_with_newline) }
       elsif has_args || node.block_arg
         write " " unless passed_backslash_newline
         skip_space
@@ -2958,8 +2958,9 @@ module Crystal
           if @token.type.newline? && has_newlines
             write ","
             write_line
-            write_indent(column)
             skip_space_or_newline(column + 2)
+            write_indent(column)
+            skip_space_or_newline(column)
           else
             found_comment |= skip_space_or_newline(column + 2)
             if has_newlines
