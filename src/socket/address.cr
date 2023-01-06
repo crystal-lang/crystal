@@ -227,7 +227,11 @@ class Socket
       in LibC::InAddr
         addr.s_addr & 0x000000ff_u32 == 0x0000007f_u32
       in LibC::In6Addr
-        ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
+        addr8 = ipv6_addr8(addr)
+        num = addr8.unsafe_as(UInt128)
+        # TODO: Use UInt128 literals
+        num == (1_u128 << 120) ||                         # "::1"
+          num & UInt128::MAX >> 24 == 0x7fffff_u128 << 80 # "::ffff:127.0.0.1/104"
       end
     end
 
