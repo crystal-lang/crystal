@@ -25,5 +25,20 @@ module Spec
     private def initialize_tags(tags)
       @tags = tags.is_a?(String) ? Set{tags} : tags.try(&.to_set)
     end
+
+    # All tags, including tags inherited from ancestor example groups
+    def all_tags : Set(String)
+      result = tags.nil? ? Set(String).new : tags.not_nil!.dup
+      return result if parent.is_a?(RootContext)
+
+      ancestor = parent.as(ExampleGroup)
+      loop do
+        result.concat(ancestor.tags.not_nil!) unless ancestor.tags.nil?
+
+        return result if ancestor.parent.is_a?(RootContext)
+        ancestor = ancestor.parent.as(ExampleGroup)
+      end
+      result
+    end
   end
 end
