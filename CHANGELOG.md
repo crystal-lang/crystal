@@ -25,6 +25,7 @@
 - **(performance)** Optimize `Hash#select(Enumerable)` and `#merge!(Hash, &)` ([#12737](https://github.com/crystal-lang/crystal/pull/12737), thanks @HertzDevil)
 - Add `Indexable#rindex!` method variant ([#12759](https://github.com/crystal-lang/crystal/pull/12759), thanks @Sija)
 - **(performance)** Use mutating collection methods ([#12644](https://github.com/crystal-lang/crystal/pull/12644), thanks @caspiano)
+- Fix `Enum#to_s` for flag enum containing named and unnamed members ([#12895](https://github.com/crystal-lang/crystal/pull/12895), thanks @straight-shoota)
 
 ### Concurrency
 
@@ -58,6 +59,7 @@
 - Add `HTTP::Server::Response#redirect` ([#12526](https://github.com/crystal-lang/crystal/pull/12526), thanks @straight-shoota)
 - **(performance)** Websocket: write masked data to temporary buffer before sending it ([#12613](https://github.com/crystal-lang/crystal/pull/12613), thanks @asterite)
 - Validate cookie name prefixes ([#10648](https://github.com/crystal-lang/crystal/pull/10648), thanks @Blacksmoke16)
+- `IPAddress#loopback?` should consider `::ffff:127.0.0.1/104` loopback too ([#12783](https://github.com/crystal-lang/crystal/pull/12783), thanks @carlhoerberg)
 
 ### Numeric
 
@@ -112,7 +114,7 @@
 - Replace `if !blank?` with `unless blank?` ([#12800](https://github.com/crystal-lang/crystal/pull/12800), thanks @vlazar)
 - Add references between String equality, comparison methods ([#10531](https://github.com/crystal-lang/crystal/pull/10531), thanks @straight-shoota)
 - Extract internal Regex API for PCRE backend ([#12802](https://github.com/crystal-lang/crystal/pull/12802), thanks @straight-shoota)
-- Implement `Regex` engine on PCRE2 ([#12856](https://github.com/crystal-lang/crystal/pull/12856), [#12847](https://github.com/crystal-lang/crystal/pull/12847), thanks @straight-shoota, thanks @HertzDevil)
+- Implement `Regex` engine on PCRE2 ([#12856](https://github.com/crystal-lang/crystal/pull/12856), [#12866](https://github.com/crystal-lang/crystal/pull/12866), [#12847](https://github.com/crystal-lang/crystal/pull/12847), thanks @straight-shoota, thanks @HertzDevil)
 - Add missing overloads for `String#byte_slice` ([#12809](https://github.com/crystal-lang/crystal/pull/12809), thanks @straight-shoota)
 
 ## Compiler
@@ -200,6 +202,8 @@
 - [CI] Update mwilliamson/setup-wasmtime-action action to v2 ([#12864](https://github.com/crystal-lang/crystal/pull/12864), thanks @renovate)
 - [CI] Update distribution-scripts ([#12891](https://github.com/crystal-lang/crystal/pull/12891), thanks @straight-shoota)
 - [CI] Update shards 0.17.2 ([#12875](https://github.com/crystal-lang/crystal/pull/12875), thanks @straight-shoota)
+- Rotate breached credentials in CircleCI ([#12902](https://github.com/crystal-lang/crystal/pull/12902), thanks @matiasgarciaisaia)
+- Update NOTICE.md ([#12901](https://github.com/crystal-lang/crystal/pull/12901), thanks @HertzDevil)
 
 ### Code Improvements
 
