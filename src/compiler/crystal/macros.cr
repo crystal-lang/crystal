@@ -707,6 +707,10 @@ module Crystal::Macros
     def +(other : ArrayLiteral) : ArrayLiteral
     end
 
+    # Similar to `Array#-`.
+    def -(other : ArrayLiteral) : ArrayLiteral
+    end
+
     # Returns the type specified at the end of the array literal, if any.
     #
     # This refers to the part after brackets in `[] of String`.
@@ -883,6 +887,9 @@ module Crystal::Macros
   #
   # Its macro methods are nearly the same as `ArrayLiteral`.
   class TupleLiteral < ASTNode
+    # Similar to `Array#-`.
+    def -(other : ArrayLiteral) : ArrayLiteral
+    end
   end
 
   # A fictitious node representing a variable or instance
