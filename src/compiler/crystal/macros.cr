@@ -887,9 +887,6 @@ module Crystal::Macros
   #
   # Its macro methods are nearly the same as `ArrayLiteral`.
   class TupleLiteral < ASTNode
-    # Similar to `Array#-`.
-    def -(other : ArrayLiteral) : ArrayLiteral
-    end
   end
 
   # A fictitious node representing a variable or instance
