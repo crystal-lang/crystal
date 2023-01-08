@@ -142,7 +142,7 @@ module Crystal
       last = parse_expression
       skip_space
 
-      last_is_target = multi_assign_target?(last)
+      last_is_target = multi_assign_target?(last) || multi_assign_middle?(last)
 
       case @token.type
       when .op_comma?
@@ -184,7 +184,7 @@ module Crystal
         end
 
         last = parse_op_assign(allow_ops: false)
-        if assign_index == -1 && !multi_assign_target?(last)
+        if assign_index == -1 && !multi_assign_target?(last) && !multi_assign_middle?(last)
           unexpected_token
         end
 
@@ -236,14 +236,10 @@ module Crystal
 
     def multi_assign_target?(exp)
       case exp
-      when Underscore, Var, InstanceVar, ClassVar, Global, Assign
+      when Underscore, Var, InstanceVar, ClassVar, Global
         true
       when Call
-        !exp.has_parentheses? && (
-          (exp.args.empty? && !exp.named_args) ||
-            Lexer.setter?(exp.name) ||
-            exp.name.in?("[]", "[]=")
-        )
+        !exp.has_parentheses? && ((exp.args.empty? && !exp.named_args) || exp.name == "[]")
       else
         false
       end
@@ -254,7 +250,7 @@ module Crystal
       when Assign
         true
       when Call
-        exp.name.ends_with? '='
+        Lexer.setter?(exp.name) || exp.name == "[]="
       else
         false
       end
