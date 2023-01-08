@@ -812,5 +812,37 @@ describe Crystal::Repl::Interpreter do
         !a
         CRYSTAL
     end
+
+    it "interprets not for module (#12918)" do
+      interpret(<<-CRYSTAL).should eq(false)
+        module MyModule; end
+
+        class One
+          include MyModule
+        end
+
+        !One.new.as(MyModule)
+        CRYSTAL
+    end
+
+    it "interprets not for generic module" do
+      interpret(<<-CRYSTAL).should eq(false)
+        module MyModule(T); end
+
+        class One
+          include MyModule(Int32)
+        end
+
+        !One.new.as(MyModule(Int32))
+        CRYSTAL
+    end
+
+    it "interprets not for generic module metaclass" do
+      interpret(<<-CRYSTAL).should eq(false)
+        module MyModule(T); end
+
+        !MyModule(Int32)
+        CRYSTAL
+    end
   end
 end
