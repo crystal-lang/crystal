@@ -28,16 +28,14 @@ module Spec
 
     # All tags, including tags inherited from ancestor example groups
     def all_tags : Set(String)
-      result = tags.nil? ? Set(String).new : tags.not_nil!.dup
-      return result if parent.is_a?(RootContext)
-
-      ancestor = parent.as(ExampleGroup)
-      loop do
-        result.concat(ancestor.tags.not_nil!) unless ancestor.tags.nil?
-
-        return result if ancestor.parent.is_a?(RootContext)
-        ancestor = ancestor.parent.as(ExampleGroup)
+      result = tags.try(&.dup) || Set(String).new
+      ancestor = self
+      while ancestor = ancestor.parent.as?(ExampleGroup)
+        if tags = ancestor.tags
+          result.concat(tags)
+        end
       end
+      result
       result
     end
   end
