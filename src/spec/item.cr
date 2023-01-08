@@ -36,7 +36,6 @@ module Spec
         end
       end
       result
-      result
     end
   end
 end
