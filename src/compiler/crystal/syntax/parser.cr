@@ -779,8 +779,10 @@ module Crystal
                 block = call_args.block
                 block_arg = call_args.block_arg
                 named_args = call_args.named_args
+                has_parentheses = call_args.has_parentheses
               else
                 args = block = block_arg = named_args = nil
+                has_parentheses = false
               end
             end
 
@@ -792,6 +794,7 @@ module Crystal
             end
 
             atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args
+            atomic.has_parentheses = has_parentheses
             atomic.name_location = name_location
             atomic.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
             atomic.at(location)
