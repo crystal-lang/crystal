@@ -113,13 +113,13 @@ class OAuth2::Client
     end
 
     uri.query = URI::Params.build do |form|
-      form.add "client_id", @client_id
-      form.add "redirect_uri", @redirect_uri
-      form.add "response_type", "code"
-      form.add "scope", scope unless scope.nil?
-      form.add "state", state unless state.nil?
+      form.add("client_id", @client_id)
+      form.add("redirect_uri", @redirect_uri)
+      form.add("response_type", "code")
+      form.add("scope", scope) unless scope.nil?
+      form.add("state", state) unless state.nil?
       uri.query_params.each do |key, value|
-        form.add key, value
+        form.add(key, value)
       end
       yield form
     end
@@ -163,7 +163,7 @@ class OAuth2::Client
     get_access_token do |form|
       form.add("grant_type", "refresh_token")
       form.add("refresh_token", refresh_token)
-      form.add "scope", scope unless scope.nil?
+      form.add("scope", scope) unless scope.nil?
     end
   end
 
