@@ -54,8 +54,16 @@
 # You can also use an `OAuth2::Session` to automatically refresh expired
 # tokens before each request.
 class OAuth2::Client
+  DEFAULT_HEADERS = HTTP::Headers{
+    "Accept"       => "application/json",
+    "Content-Type" => "application/x-www-form-urlencoded",
+  }
+
   # Sets the `HTTP::Client` to use with this client.
   setter http_client : HTTP::Client?
+
+  # Gets the redirect_uri
+  getter redirect_uri : String?
 
   # Returns the `HTTP::Client` to use with this client.
   #
@@ -159,12 +167,9 @@ class OAuth2::Client
     end
   end
 
-  private def get_access_token : AccessToken
-    headers = HTTP::Headers{
-      "Accept"       => "application/json",
-      "Content-Type" => "application/x-www-form-urlencoded",
-    }
-
+  # Gets an access token with custom headers and form fields
+  def get_access_token(headers : HTTP::Headers = HTTP::Headers.new, &block : URI::Params::Builder ->) : AccessToken
+    headers.merge!(DEFAULT_HEADERS)
     body = URI::Params.build do |form|
       case @auth_scheme
       when .request_body?
