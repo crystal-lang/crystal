@@ -844,5 +844,13 @@ describe Crystal::Repl::Interpreter do
         !MyModule(Int32)
         CRYSTAL
     end
+
+    it "interprets not for generic class instance metaclass" do
+      interpret(<<-CRYSTAL).should eq(false)
+        class MyClass(T); end
+
+        !MyClass(Int32)
+        CRYSTAL
+    end
   end
 end
