@@ -203,7 +203,7 @@
 - [CI] Update distribution-scripts ([#12891](https://github.com/crystal-lang/crystal/pull/12891), thanks @straight-shoota)
 - [CI] Update shards 0.17.2 ([#12875](https://github.com/crystal-lang/crystal/pull/12875), thanks @straight-shoota)
 - Rotate breached credentials in CircleCI ([#12902](https://github.com/crystal-lang/crystal/pull/12902), thanks @matiasgarciaisaia)
-- Update NOTICE.md ([#12901](https://github.com/crystal-lang/crystal/pull/12901), thanks @HertzDevil)
+- Update `NOTICE.md` ([#12901](https://github.com/crystal-lang/crystal/pull/12901), thanks @HertzDevil)
 
 ### Code Improvements
 
