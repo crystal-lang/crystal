@@ -50,7 +50,7 @@
 - Fix `TypeNode#nilable?` for root types ([#12354](https://github.com/crystal-lang/crystal/pull/12354), thanks @HertzDevil)
 - Add argless `#annotations` overload ([#9326](https://github.com/crystal-lang/crystal/pull/9326), thanks @Blacksmoke16)
 - Add specs for addition between `ArrayLiteral` and `TupleLiteral` ([#12639](https://github.com/crystal-lang/crystal/pull/12639), thanks @caspiano)
-- Add `ArrayLiteral#-(other)` and `TupleLiteral#-(other)` ([#12646](https://github.com/crystal-lang/crystal/pull/12646), thanks @caspiano)
+- Add `ArrayLiteral#-(other)` and `TupleLiteral#-(other)` ([#12646](https://github.com/crystal-lang/crystal/pull/12646), [#12916](https://github.com/crystal-lang/crystal/pull/12916) thanks @caspiano, @straight-shoota)
 
 ### Networking
 
@@ -204,6 +204,7 @@
 - [CI] Update shards 0.17.2 ([#12875](https://github.com/crystal-lang/crystal/pull/12875), thanks @straight-shoota)
 - Rotate breached credentials in CircleCI ([#12902](https://github.com/crystal-lang/crystal/pull/12902), thanks @matiasgarciaisaia)
 - Update `NOTICE.md` ([#12901](https://github.com/crystal-lang/crystal/pull/12901), thanks @HertzDevil)
+- Split pre-1.0 changelog ([#12898](https://github.com/crystal-lang/crystal/pull/12898), thanks @straight-shoota)
 
 ### Code Improvements
 
