@@ -39,7 +39,7 @@ describe "Parser warnings" do
     # TODO: `SyntaxException#default_message` does not expose the column number yet
     pending "reports multiple warnings at correct positions" do
       parser = Parser.new(%("foo\u{202A}bar   \u{202B}baz"))
-      parser.filename = TEST_FILENAME
+      parser.filename = "/test.cr"
       parser.parse
 
       warnings = parser.warnings.infos
