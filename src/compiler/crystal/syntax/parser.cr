@@ -4041,8 +4041,12 @@ module Crystal
         # def method(select __arg0)
         #   @select = __arg0
         # end
-        if !external_name && invalid_internal_name?(param_name)
-          param_name, external_name = temp_arg_name, param_name
+        #
+        # The external name defaults to the internal one unless otherwise
+        # specified (i.e. `def method(foo @select)`).
+        if invalid_internal_name?(param_name)
+          external_name ||= param_name
+          param_name = temp_arg_name
         end
 
         ivar = InstanceVar.new(@token.value.to_s).at(location)
@@ -4062,8 +4066,9 @@ module Crystal
         end
 
         # Same case as :INSTANCE_VAR for things like @select
-        if !external_name && invalid_internal_name?(param_name)
-          param_name, external_name = temp_arg_name, param_name
+        if invalid_internal_name?(param_name)
+          external_name ||= param_name
+          param_name = temp_arg_name
         end
 
         cvar = ClassVar.new(@token.value.to_s).at(location)

@@ -268,6 +268,8 @@ module Crystal
       it_parses "def foo(#{kw} foo); end", Def.new("foo", [Arg.new("foo", external_name: kw.to_s)])
       it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
       it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
+      it_parses "def foo(x @#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
+      it_parses "def foo(x @@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
 
       assert_syntax_error "foo { |#{kw}| }", "cannot use '#{kw}' as a block parameter name", 1, 8
       assert_syntax_error "foo { |(#{kw})| }", "cannot use '#{kw}' as a block parameter name", 1, 9
