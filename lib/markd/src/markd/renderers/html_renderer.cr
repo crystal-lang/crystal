@@ -235,13 +235,8 @@ module Markd
     private def toc(node : Node)
       return unless node.type.heading?
 
-      {% if Crystal::VERSION < "1.2.0" %}
-        title = URI.encode(node.first_child.text)
-        @output_io << %(<a id="anchor-) << title << %(" class="anchor" href="#anchor-) << title << %("></a>)
-      {% else %}
-        title = URI.encode_path(node.first_child.text)
-        @output_io << %(<a id="anchor-) << title << %(" class="anchor" href="#anchor-) << title << %("></a>)
-      {% end %}
+      title = URI.encode_path(node.first_child.text)
+      @output_io << %(<a id="anchor-) << title << %(" class="anchor" href="#anchor-) << title << %("></a>)
       @last_output = ">"
     end
 

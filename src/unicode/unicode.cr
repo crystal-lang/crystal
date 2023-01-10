@@ -134,19 +134,11 @@ module Unicode
 
   # TODO: remove the workaround for 1.0.0 eventually (needed until #10713)
   private macro dfa_state(*transitions)
-    {% if compare_versions(Crystal::VERSION, "1.1.0") >= 0 %}
       {% x = 0_u64 %}
       {% for tr, i in transitions %}
         {% x |= (1_u64 << (i * 6)) * tr * 6 %}
       {% end %}
       {{ x }}
-    {% else %}
-      {% x = [] of Nil %}
-      {% for tr, i in transitions %}
-        {% x << "(#{tr * 6}_u64 << #{i * 6})" %}
-      {% end %}
-      {{ x.join(" | ").id }}
-    {% end %}
   end
 
   # :nodoc:
