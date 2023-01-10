@@ -654,7 +654,7 @@ module Crystal
     #     end
     #
     #
-    # If there's a `else` branch, use `Channel.non_blocking_select`.
+    # If there's an `else` branch, use `Channel.non_blocking_select`.
     #
     # From:
     #
@@ -665,7 +665,7 @@ module Crystal
     #
     # To:
     #
-    #     %index, %value = ::Channel.select({foo_select_action})
+    #     %index, %value = ::Channel.non_blocking_select({foo_select_action})
     #     case %index
     #     when 0
     #       body
