@@ -905,7 +905,7 @@ module Crystal::Macros
     def splat(trailing_string : StringLiteral = nil) : MacroId
     end
 
-    # Similar to `Array#empty?`
+    # Similar to `Tuple#empty?`
     def empty? : BoolLiteral
     end
 
@@ -913,7 +913,7 @@ module Crystal::Macros
     def find(&) : ASTNode | NilLiteral
     end
 
-    # Similar to `Array#first`, but returns a `NilLiteral` if the array is empty.
+    # Similar to `Tuple#first`, but returns a `NilLiteral` if the tuple is empty.
     def first : ASTNode | NilLiteral
     end
 
@@ -925,23 +925,23 @@ module Crystal::Macros
     def join(separator) : StringLiteral
     end
 
-    # Similar to `Array#last`, but returns a `NilLiteral` if the array is empty.
+    # Similar to `Tuple#last`, but returns a `NilLiteral` if the tuple is empty.
     def last : ASTNode | NilLiteral
     end
 
-    # Similar to `Array#size`
+    # Similar to `Tuple#size`
     def size : NumberLiteral
     end
 
     # Similar to `Enumerable#map`
-    def map(&) : ArrayLiteral
+    def map(&) : TupleLiteral
     end
 
     # Similar to `Enumerable#map_with_index`
-    def map_with_index(&) : ArrayLiteral
+    def map_with_index(&) : TupleLiteral
     end
 
-    # Similar to `Array#each`
+    # Similar to `Tuple#each`
     def each(&) : Nil
     end
 
@@ -981,11 +981,11 @@ module Crystal::Macros
     def uniq : TupleLiteral
     end
 
-    # Similar to `Array#[]`, but returns `NilLiteral` on out of bounds.
+    # Similar to `Tuple#[]`, but returns `NilLiteral` on out of bounds.
     def [](index : NumberLiteral) : ASTNode
     end
 
-    # Similar to `Array#[]`.
+    # Similar to `Tuple#[]`.
     def [](index : RangeLiteral) : TupleLiteral(ASTNode)
     end
 
@@ -1005,12 +1005,12 @@ module Crystal::Macros
     def <<(value : ASTNode) : TupleLiteral
     end
 
-    # Similar to `Array#+`.
-    def +(other : ArrayLiteral) : TupleLiteral
+    # Similar to `Tuple#+`.
+    def +(other : TupleLiteral) : TupleLiteral
     end
 
     # Similar to `Array#-`.
-    def -(other : ArrayLiteral) : TupleLiteral
+    def -(other : TupleLiteral) : TupleLiteral
     end
   end
 
