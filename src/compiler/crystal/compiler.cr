@@ -286,16 +286,11 @@ module Crystal
     end
 
     private def with_file_lock(output_dir)
-      {% if flag?(:win32) %}
-        # TODO: use flock when it's supported in Windows
-        yield
-      {% else %}
-        File.open(File.join(output_dir, "compiler.lock"), "w") do |file|
-          file.flock_exclusive do
-            yield
-          end
+      File.open(File.join(output_dir, "compiler.lock"), "w") do |file|
+        file.flock_exclusive do
+          yield
         end
-      {% end %}
+      end
     end
 
     private def run_dsymutil(filename)

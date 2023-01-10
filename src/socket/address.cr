@@ -147,7 +147,7 @@ class Socket
       @addr = sockaddr.value.sin6_addr
       @port =
         {% if flag?(:dragonfly) %}
-          Intrinsics.bswap16(sockaddr.value.sin6_port).to_i
+          sockaddr.value.sin6_port.byte_swap.to_i
         {% else %}
           LibC.ntohs(sockaddr.value.sin6_port).to_i
         {% end %}
@@ -158,7 +158,7 @@ class Socket
       @addr = sockaddr.value.sin_addr
       @port =
         {% if flag?(:dragonfly) %}
-          Intrinsics.bswap16(sockaddr.value.sin_port).to_i
+          sockaddr.value.sin_port.byte_swap.to_i
         {% else %}
           LibC.ntohs(sockaddr.value.sin_port).to_i
         {% end %}
@@ -227,7 +227,11 @@ class Socket
       in LibC::InAddr
         addr.s_addr & 0x000000ff_u32 == 0x0000007f_u32
       in LibC::In6Addr
-        ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
+        addr8 = ipv6_addr8(addr)
+        num = addr8.unsafe_as(UInt128)
+        # TODO: Use UInt128 literals
+        num == (1_u128 << 120) ||                         # "::1"
+          num & UInt128::MAX >> 24 == 0x7fffff_u128 << 80 # "::ffff:127.0.0.1/104"
       end
     end
 
@@ -305,7 +309,7 @@ class Socket
       sockaddr = Pointer(LibC::SockaddrIn6).malloc
       sockaddr.value.sin6_family = family
       {% if flag?(:dragonfly) %}
-        sockaddr.value.sin6_port = Intrinsics.bswap16(port)
+        sockaddr.value.sin6_port = port.byte_swap
       {% else %}
         sockaddr.value.sin6_port = LibC.htons(port)
       {% end %}
@@ -317,7 +321,7 @@ class Socket
       sockaddr = Pointer(LibC::SockaddrIn).malloc
       sockaddr.value.sin_family = family
       {% if flag?(:dragonfly) %}
-        sockaddr.value.sin_port = Intrinsics.bswap16(port)
+        sockaddr.value.sin_port = port.byte_swap
       {% else %}
         sockaddr.value.sin_port = LibC.htons(port)
       {% end %}

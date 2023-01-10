@@ -748,6 +748,63 @@ describe "Restrictions" do
           CRYSTAL
       end
     end
+
+    describe "Underscore vs Path" do
+      it "inserts Path before underscore (#12854)" do
+        assert_type(<<-CRYSTAL) { bool }
+          class Foo
+          end
+
+          def foo(x : _)
+            'a'
+          end
+
+          def foo(x : Foo)
+            true
+          end
+
+          foo(Foo.new)
+          CRYSTAL
+      end
+
+      it "keeps underscore after Path (#12854)" do
+        assert_type(<<-CRYSTAL) { bool }
+          class Foo
+          end
+
+          def foo(x : Foo)
+            true
+          end
+
+          def foo(x : _)
+            'a'
+          end
+
+          foo(Foo.new)
+          CRYSTAL
+      end
+
+      it "works with splats and modules, under -Dpreview_overload_order (#12854)" do
+        assert_type(<<-CRYSTAL, flags: "preview_overload_order") { bool }
+          module Foo
+          end
+
+          class Bar
+            include Foo
+          end
+
+          def foo(*x : _)
+            'a'
+          end
+
+          def foo(x : Foo)
+            true
+          end
+
+          foo(Bar.new)
+          CRYSTAL
+      end
+    end
   end
 
   it "self always matches instance type in restriction" do

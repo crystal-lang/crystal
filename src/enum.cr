@@ -133,17 +133,20 @@ struct Enum
       if value == 0
         io << "None"
       else
-        found = false
+        remaining_value = self.value
         {% for member in @type.constants %}
           {% if member.stringify != "All" %}
             if {{@type.constant(member)}} != 0 && value.bits_set? {{@type.constant(member)}}
-              io << " | " if found
+              io << " | " unless remaining_value == self.value
               io << {{member.stringify}}
-              found = true
+              remaining_value &= ~{{@type.constant(member)}}
             end
           {% end %}
         {% end %}
-        io << value unless found
+        unless remaining_value.zero?
+          io << " | " unless remaining_value == self.value
+          io << remaining_value
+        end
       end
     {% else %}
       io << to_s

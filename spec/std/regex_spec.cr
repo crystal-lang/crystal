@@ -200,12 +200,21 @@ describe "Regex" do
       /foo/.matches?("foo", options: Regex::Options::ANCHORED).should be_true
     end
 
-    it "matches a large single line string" do
-      LibPCRE.config LibPCRE::CONFIG_JIT, out jit_enabled
-      pending! "PCRE JIT mode not available." unless 1 == jit_enabled
-
+    it "doesn't crash with a large single line string" do
       str = File.read(datapath("large_single_line_string.txt"))
-      str.matches?(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/).should be_false
+
+      {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
+        LibPCRE.config LibPCRE::CONFIG_JIT, out jit_enabled
+        pending! "PCRE JIT mode not available." unless 1 == jit_enabled
+
+        str.matches?(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/)
+      {% else %}
+        # Can't use regex literal because the *LIMIT_DEPTH verb is not supported in libpcre (only libpcre2)
+        # and thus the compiler doesn't recognize it.
+        str.matches?(Regex.new("(*LIMIT_DEPTH=8192)^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"))
+      {% end %}
+      # We don't care whether this actually matches or not, it's just to make
+      # sure the engine does not stack overflow with a large string.
     end
   end
 
@@ -422,6 +431,12 @@ describe "Regex" do
 
   it ".error?" do
     Regex.error?("(foo|bar)").should be_nil
-    Regex.error?("(foo|bar").should eq "missing ) at 8"
+    Regex.error?("(foo|bar").should eq(
+      if Regex::Engine.to_s == "Regex::PCRE2"
+        "missing closing parenthesis at 8"
+      else
+        "missing ) at 8"
+      end
+    )
   end
 end
