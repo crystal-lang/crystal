@@ -395,11 +395,6 @@ char *LLVMExtNormalizeTargetTriple(const char* triple) {
   return strdup(Triple::normalize(StringRef(triple)).c_str());
 }
 
-char *LLVMExtBasicBlockName(LLVMBasicBlockRef BB) {
-  // It seems to work since llvm-4.0 https://stackoverflow.com/a/46045548/30948
-  return strdup(unwrap(BB)->getName().data());
-}
-
 static TargetMachine *unwrap(LLVMTargetMachineRef P) {
   return reinterpret_cast<TargetMachine *>(P);
 }
