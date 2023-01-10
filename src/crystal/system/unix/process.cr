@@ -120,21 +120,21 @@ struct Crystal::System::Process
   # Returns a `Process` representing the new child process in the current process
   # and `nil` inside the new child process.
   def self.fork(&)
-    {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
+    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
 
     if pid = fork
-      pid
-    else
-      begin
-        yield
-        LibC._exit 0
-      rescue ex
-        ex.inspect_with_backtrace STDERR
-        STDERR.flush
-        LibC._exit 1
-      ensure
-        LibC._exit 254 # not reached
-      end
+      return pid
+    end
+
+    begin
+      yield
+      LibC._exit 0
+    rescue ex
+      ex.inspect_with_backtrace STDERR
+      STDERR.flush
+      LibC._exit 1
+    ensure
+      LibC._exit 254 # not reached
     end
   end
 
