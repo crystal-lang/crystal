@@ -65,21 +65,8 @@ class Process
   # returns a `Process` representing the new child process.
   #
   # Available only on Unix-like operating systems.
-  def self.fork : Process
-    if process = fork
-      process
-    else
-      begin
-        yield
-        LibC._exit 0
-      rescue ex
-        ex.inspect_with_backtrace STDERR
-        STDERR.flush
-        LibC._exit 1
-      ensure
-        LibC._exit 254 # not reached
-      end
-    end
+  def self.fork(&) : Process
+    new Crystal::System::Process.fork { yield }
   end
 
   # :nodoc:

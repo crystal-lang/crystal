@@ -50,6 +50,7 @@ struct Crystal::System::Process
 
   # Duplicates the current process.
   # def self.fork : ProcessInformation
+  # def self.fork(&)
 
   # Launches a child process with the command + args.
   # def self.spawn(command_args : Args, env : Env?, clear_env : Bool, input : Stdio, output : Stdio, error : Stdio, chdir : Path | String?) : ProcessInformation
