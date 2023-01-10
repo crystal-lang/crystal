@@ -87,9 +87,9 @@ class Crystal::Command
 
     source_filename = File.expand_path("spec")
 
-    source = target_filenames.map { |filename|
-      %(require "./#{::Path[filename].relative_to(Dir.current).to_posix}")
-    }.join('\n')
+    source = target_filenames.join('\n') do |filename|
+      %(require "./#{::Path[filename].relative_to(Dir.current).to_posix.to_s.inspect_unquoted}")
+    end
     sources = [Compiler::Source.new(source_filename, source)]
 
     output_filename = Crystal.temp_executable "spec"
