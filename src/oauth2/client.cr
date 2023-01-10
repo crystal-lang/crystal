@@ -167,9 +167,10 @@ class OAuth2::Client
     end
   end
 
-  # Gets an access token with custom headers and form fields
-  def get_access_token(headers : HTTP::Headers = HTTP::Headers.new, &block : URI::Params::Builder ->) : AccessToken
-    headers.merge!(DEFAULT_HEADERS)
+  # Makes a token exchange request with custom headers and form fields
+  # Returns a HTTP::Client::Response
+  def make_token_request(&block : URI::Params::Builder, HTTP::Headers -> _) : HTTP::Client::Response
+    headers = DEFAULT_HEADERS.dup
     body = URI::Params.build do |form|
       case @auth_scheme
       when .request_body?
@@ -181,10 +182,16 @@ class OAuth2::Client
           "Basic #{Base64.strict_encode("#{@client_id}:#{@client_secret}")}"
         )
       end
-      yield form
+      yield form, headers
     end
 
-    response = http_client.post token_uri.request_target, form: body, headers: headers
+    http_client.post token_uri.request_target, form: body, headers: headers
+  end
+
+  private def get_access_token : AccessToken
+    response = make_token_request do |form, _headers|
+      yield form
+    end
     case response.status
     when .ok?, .created?
       OAuth2::AccessToken.from_json(response.body)
