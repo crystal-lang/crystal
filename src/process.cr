@@ -65,6 +65,7 @@ class Process
   # returns a `Process` representing the new child process.
   #
   # Available only on Unix-like operating systems.
+  @[Deprecated("Fork is no longer supported.")]
   def self.fork(&) : Process
     new Crystal::System::Process.fork { yield }
   end
@@ -76,6 +77,7 @@ class Process
   # and `nil` inside the new child process.
   #
   # Available only on Unix-like operating systems.
+  @[Deprecated("Fork is no longer supported.")]
   def self.fork : Process?
     {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
 
