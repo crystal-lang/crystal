@@ -5593,8 +5593,8 @@ module Crystal
       location = @token.location
       next_token_skip_space_or_newline
 
-      name = check_const
       name_location = @token.location
+      name = parse_path
       next_token_skip_statement_end
 
       body = push_visibility { parse_lib_body_expressions }

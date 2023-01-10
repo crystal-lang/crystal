@@ -1039,6 +1039,8 @@ describe Crystal::Formatter do
   assert_format "lib Bar\n  enum Foo\n    A\n  end\nend"
   assert_format "lib Bar\n  enum Foo\n    A = 1\n  end\nend"
 
+  assert_format "lib Foo::Bar\nend"
+
   %w(foo foo= foo? foo!).each do |method|
     assert_format "->#{method}"
     assert_format "foo = 1\n->foo.#{method}"
