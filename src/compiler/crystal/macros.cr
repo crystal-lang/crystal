@@ -895,12 +895,12 @@ module Crystal::Macros
     def all?(&) : BoolLiteral
     end
 
-    # Returns a `MacroId` with all of this array's elements joined
+    # Returns a `MacroId` with all of this tuple's elements joined
     # by commas.
     #
     # If *trailing_string* is given, it will be appended to
-    # the result unless this array is empty. This lets you
-    # splat an array and optionally write a trailing comma
+    # the result unless this tuple is empty. This lets you
+    # splat a tuple and optionally write a trailing comma
     # if needed.
     def splat(trailing_string : StringLiteral = nil) : MacroId
     end
