@@ -140,7 +140,7 @@ class Compress::Zip::File
     entries_size.times do
       signature = read UInt32
       if signature != Zip::CENTRAL_DIRECTORY_HEADER_SIGNATURE
-        raise Error.new("Expected directory header signature, not 0x#{signature.to_s(16)}")
+        raise Error.new("Expected directory header signature, not 0x#{signature.to_s(16)} at pos=#{directory_offset}")
       end
 
       entry = Entry.new(@io)
