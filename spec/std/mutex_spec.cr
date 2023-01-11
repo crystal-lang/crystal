@@ -2,10 +2,10 @@ require "spec"
 require "../support/fibers"
 
 describe Mutex do
-  it "locks and unlocks" do
+  it "locks, unlocks and relocks" do
     mutex = Mutex.new
     mutex.lock
-    mutex.unlock
+    mutex.unlock { }
   end
 
   it "works with multiple threads" do
