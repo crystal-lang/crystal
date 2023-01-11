@@ -1232,6 +1232,7 @@ module Crystal
       has_underscores = false
       last_is_underscore = false
       pos_after_prefix = start
+      pos_before_exponent = nil
 
       # Consume prefix
       if current_char == '0'
@@ -1268,6 +1269,10 @@ module Crystal
           last_is_underscore = false
         end
 
+        if pos_before_exponent
+          raise("invalid decimal number exponent", @token, (current_pos - start)) unless current_pos > pos_before_exponent
+        end
+
         case current_char
         when '_'
           raise("consecutive underscores in numbers aren't allowed", @token, (current_pos - start)) if last_is_underscore
@@ -1282,7 +1287,7 @@ module Crystal
           is_e_notation = is_decimal = true
           next_char if peek_next_char.in?('+', '-')
           raise("unexpected '_' in number", @token, (current_pos - start)) if peek_next_char == '_'
-          break unless peek_next_char.in?('0'..'9')
+          pos_before_exponent = current_pos + 1
         when 'i', 'u', 'f'
           if current_char == 'f' && base != 10
             case base
