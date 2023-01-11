@@ -1,5 +1,6 @@
 require "spec"
 require "./spec_helper"
+require "../support/env"
 
 describe "ENV" do
   it "gets non existent key raises" do
@@ -172,5 +173,85 @@ describe "ENV" do
     ENV.to_h["FOO"].should eq "foo"
   ensure
     ENV.delete("FOO")
+  end
+
+  it "does .clear" do
+    tempenv = {"TEST_VAR1" => "/foo/bar:/baz/buz", "TEST_VAR2" => "dummy_value"}
+    with_env(tempenv) do
+      ENV.should_not be_empty
+      ENV.clear
+      ENV.should be_empty
+    end
+  end
+
+  it "replaces the env with a hash" do
+    tempenv = {"TEST_VAR_1" => "/foo/bar:/baz/buz", "TEST_VAR_ONE" => "dummy_value"}
+    newenv = {"TEST_VAR_2" => "/oof/rab:/zab/zub", "TEST_VAR_TWO" => "another_value"}
+    with_env(tempenv) do
+      ENV.has_key?("TEST_VAR_1").should be_true
+      ENV.has_key?("TEST_VAR_ONE").should be_true
+      ENV.replace(newenv)
+      ENV.has_key?("TEST_VAR_1").should be_false
+      ENV.has_key?("TEST_VAR_ONE").should be_false
+      ENV.has_key?("TEST_VAR_2").should be_true
+      ENV.has_key?("TEST_VAR_TWO").should be_true
+    end
+  end
+
+  describe ".merge!" do
+    it "merges without a block (overwrite)" do
+      ENV["TEST_MERGE_1"] = "1"
+      ENV["TEST_MERGE_2"] = "2"
+      merge_hash = {
+        "TEST_MERGE_1" => "one",
+        "TEST_MERGE_3" => "three",
+      }
+      ENV.merge! merge_hash
+      ENV.fetch("TEST_MERGE_1").should eq "one"
+      ENV.fetch("TEST_MERGE_2").should eq "2"
+      ENV.fetch("TEST_MERGE_3").should eq "three"
+    ensure
+      ENV.delete("TEST_MERGE_1")
+      ENV.delete("TEST_MERGE_2")
+      ENV.delete("TEST_MERGE_3")
+    end
+
+    it "merges with a block" do
+      temp_env = {
+        "TEST_MERGE_AAA" => "1",
+        "TEST_MERGE_BBB" => "2",
+        "TEST_MERGE_CCC" => "3",
+        "TEST_MERGE_DDD" => "4",
+        "TEST_MERGE_FFF" => "6",
+      }
+
+      merge_hash = {
+        "TEST_MERGE_AAA" => "aa",
+        "TEST_MERGE_BBB" => "bb",
+        "TEST_MERGE_CCC" => "cc",
+        "TEST_MERGE_EEE" => "ee",
+        "TEST_MERGE_FFF" => "ffff",
+        "TEST_MERGE_GGG" => "keep",
+      }
+
+      with_env(temp_env) do
+        ENV.merge!(merge_hash) do |name, old, new|
+          case name
+          when /AAA/ then old
+          when /BBB/ then new
+          when /CCC/ then nil
+          when /FFF/ then "#{old}#{new}"
+          else            name
+          end
+        end
+        ENV.fetch("TEST_MERGE_AAA").should eq "1"      # old
+        ENV.fetch("TEST_MERGE_BBB").should eq "bb"     # new
+        ENV.has_key?("TEST_MERGE_CCC").should be_false # removal (nil) case
+        ENV.fetch("TEST_MERGE_DDD").should eq "4"      # not a collision, value from original env
+        ENV.fetch("TEST_MERGE_EEE").should eq "ee"
+        ENV.fetch("TEST_MERGE_FFF").should eq "6ffff" # old + new
+        ENV.fetch("TEST_MERGE_GGG").should eq "keep"  # not a collision, value from new hash
+      end
+    end
   end
 end
