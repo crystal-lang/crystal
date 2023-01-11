@@ -235,7 +235,7 @@ end
 def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   {% if @type.annotation(Flags) %}
     if node.is_a?(YAML::Nodes::Sequence)
-      value = {{ @type }}::None
+      value = {{ @type }}.new(0)
       node.each do |element|
         string = parse_scalar(ctx, element, String)
 

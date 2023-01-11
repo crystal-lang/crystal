@@ -153,6 +153,10 @@ describe Enum do
     end
   end
 
+  it ".all_flags" do
+    PrivateFlagsEnum.all_flags.value.should eq 7
+  end
+
   describe "names" do
     it "for simple enum" do
       SpecEnum.names.should eq(%w(One Two Three))

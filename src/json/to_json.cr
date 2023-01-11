@@ -199,7 +199,7 @@ struct Enum
   #
   # Sides::LEFT.to_json                  # => %(["left"])
   # (Sides::LEFT | Sides::RIGHT).to_json # => %(["left","right"])
-  # Sides::All.to_json                   # => %(["left","right"])
+  # Sides.all_flags.to_json              # => %(["left","right"])
   # Sides::None.to_json                  # => %([])
   # ```
   #

@@ -199,24 +199,26 @@ describe "Semantic: enum" do
     enum_type.types["Baz"].as(Const).value.should eq(NumberLiteral.new("2", :i32))
   end
 
-  it "disallows redefining None to non-0 for @[Flags] enum" do
-    assert_error %(
+  it "allows redefining None to non-0 for @[Flags] enum" do
+    assert_type(%(
       @[Flags]
       enum Foo
         None = 42
         Dummy
       end
-      ),
-      "flags enum can't redefine None member to non-0"
 
-    assert_error %(
+      Foo::None.value
+      )) { int32 }
+
+    assert_type(%(
       @[Flags]
       enum Foo
         None    # 1
         Dummy
       end
-      ),
-      "flags enum can't redefine None member to non-0"
+
+      Foo::None.value
+      )) { int32 }
   end
 
   it "allows redefining None to 0 for @[Flags] enum" do
@@ -231,14 +233,16 @@ describe "Semantic: enum" do
       )) { int32 }
   end
 
-  it "disallows All value for @[Flags] enum" do
-    assert_error %(
+  it "allows redefining All value for @[Flags] enum" do
+    assert_type <<-CR { int32 }
       @[Flags]
       enum Foo
+        Dummy
         All = 50
       end
-      ),
-      "flags enum can't redefine All member"
+
+      Foo::All.value
+      CR
   end
 
   it "doesn't error when defining a non-flags enum with None or All" do

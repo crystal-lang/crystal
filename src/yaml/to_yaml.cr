@@ -163,7 +163,7 @@ struct Enum
   #
   # Sides::LEFT.to_yaml                  # => %(--- [left]\n)
   # (Sides::LEFT | Sides::RIGHT).to_yaml # => %(--- [left, right]\n)
-  # Sides::All.to_yaml                   # => %(--- [left, right]\n)
+  # Sides.all_flags.to_yaml              # => %(--- [left, right]\n)
   # Sides::None.to_yaml                  # => %(--- []\n)
   # ```
   #

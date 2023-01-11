@@ -520,4 +520,18 @@ struct Enum
       {% end %}
     {% end %}
   end
+
+  def self.all_flags : self
+    {% if @type.annotation(Flags) %}
+      {% value = 0 %}
+      {% for member in @type.constants %}
+        {% if member.stringify != "All" %}
+          {% value |= @type.constant(member) %}
+        {% end %}
+      {% end %}
+      new({{ value }})
+    {% else %}
+      {% raise "#{@type}.all_flags is only available on Flags Enum" %}
+    {% end %}
+  end
 end
