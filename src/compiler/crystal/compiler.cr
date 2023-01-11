@@ -565,7 +565,6 @@ module Crystal
         puts("Top 10 slowest modules:")
         units.sort_by! { |u| u.compilation_time * -1 }
         units.first(10).each do |unit|
-          time_str = unit.compilation_time.to_s.ljust(18, ' ')
           puts " - #{unit.compilation_time} #{unit.original_name} (#{unit.name}.bc)"
         end
       end
