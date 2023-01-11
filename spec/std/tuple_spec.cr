@@ -351,5 +351,9 @@ describe "Tuple" do
     ary = Tuple.new.to_static_array
     ary.should be_a(StaticArray(NoReturn, 0))
     ary.size.should eq(0)
+
+    ary = Tuple(String | Int32).new(1).to_static_array
+    ary.should be_a(StaticArray(String | Int32, 1))
+    ary.should eq StaticArray[1.as(String | Int32)]
   end
 end
