@@ -29,20 +29,31 @@ private def it_raises_on_parse_all(string, message, file = __FILE__, line = __LI
   end
 end
 
+private def yaml(value)
+  YAML::Any.new(value)
+end
+
 describe YAML::Schema::FailSafe do
   # parse
   it_parses "123", "123"
   it_parses %(
     context:
         replace_me: "Yes please!"
-  ), {"context" => {"replace_me" => "Yes please!"}}
+  ), {yaml("context") => {yaml("replace_me") => "Yes please!"}}
   it_parses %(
     first:
       document:
 
     second:
       document:
-  ), {"first" => {"document" => ""}, "second" => {"document" => ""}}
+  ), {
+    yaml("first") => {
+      yaml("document") => "",
+    },
+    yaml("second") => {
+      yaml("document") => "",
+    },
+  }
   it_raises_on_parse %(
     this: "gives"
       an: "error"
@@ -54,14 +65,14 @@ describe YAML::Schema::FailSafe do
   it_parses_all %(
     context:
         replace_me: "Yes please!"
-  ), [{"context" => {"replace_me" => "Yes please!"}}]
+  ), [{yaml("context") => {yaml("replace_me") => "Yes please!"}}]
   it_parses_all %(
     foo:
       bar: 123
 
     bar:
       foo: 321
-  ), [{"foo" => {"bar" => "123"}, "bar" => {"foo" => "321"}}]
+  ), [{yaml("foo") => {yaml("bar") => "123"}, yaml("bar") => {yaml("foo") => "321"}}]
   it_raises_on_parse_all %(
     this: "raises"
       an: "yaml"

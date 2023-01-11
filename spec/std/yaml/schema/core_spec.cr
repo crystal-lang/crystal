@@ -43,6 +43,10 @@ private def it_parses_scalar_from_pull(string, file = __FILE__, line = __LINE__,
   end
 end
 
+private def yaml(value) : YAML::Any
+  YAML::Any.new(value)
+end
+
 private def parse_first_node(content)
   parser = YAML::Nodes::Parser.new(%(value: #{content}))
   parser.parse.nodes.first.as(YAML::Nodes::Mapping).nodes[1]
@@ -168,20 +172,20 @@ describe YAML::Schema::Core do
   it_parses_scalar "N", "N"
 
   # !!map
-  it_parses "!!map {1: 2}", {1 => 2}
+  it_parses "!!map {1: 2}", {yaml(1i64) => 2}
   it_raises_on_parse "!!map 1", "Expected MAPPING_START"
 
   # !!omap
-  it_parses "!!omap {1: 2}", {1 => 2}
+  it_parses "!!omap {1: 2}", {yaml(1i64) => 2}
   it_raises_on_parse "!!omap 1", "Expected MAPPING_START"
 
   # !!pairs
-  it_parses "!!pairs [{1: 2}, {3: 4}]", [{1 => 2}, {3 => 4}]
+  it_parses "!!pairs [{1: 2}, {3: 4}]", [{yaml(1i64) => 2}, {yaml(3i64) => 4}]
   it_raises_on_parse "!!pairs 1", "Expected SEQUENCE_START"
   it_raises_on_parse "!!pairs [{1: 2, 3: 4}]", "Expected MAPPING_END"
 
   # !!set
-  it_parses "!!set { 1, 2, 3 }", Set{1, 2, 3}
+  it_parses "!!set { 1, 2, 3 }", Set{yaml(1i64), yaml(2i64), yaml(3i64)}
   it_raises_on_parse "!!set 1", "Expected MAPPING_START"
 
   # !!seq

@@ -603,11 +603,11 @@ module Crystal
       file_module?(filename).try &.lookup_matches(signature, analyze_all: analyze_all)
     end
 
-    def file_module?(filename)
+    def file_module?(filename : String)
       file_modules[filename]?
     end
 
-    def file_module(filename)
+    def file_module(filename : String)
       file_modules[filename] ||= FileModule.new(self, self, filename)
     end
 

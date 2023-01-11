@@ -93,7 +93,16 @@ struct YAML::Any
         raise "Expected int key for Array#[], not #{object.class}"
       end
     when Hash
-      object[index_or_key]
+      case index_or_key
+      when String
+        object[Any.new(index_or_key)]
+      when Any
+        object[index_or_key]
+      when Int
+        object[Any.new(index_or_key.to_i64)]
+      else
+        raise "Expected YAML::Any | String | Int, not #{index_or_key.inspect}"
+      end
     else
       raise "Expected Array or Hash, not #{object.class}"
     end
@@ -112,7 +121,16 @@ struct YAML::Any
         nil
       end
     when Hash
-      object[index_or_key]?
+      case index_or_key
+      when String
+        object[Any.new(index_or_key)]?
+      when Any
+        object[index_or_key]?
+      when Int
+        object[Any.new(index_or_key.to_i64)]?
+      else
+        nil
+      end
     else
       raise "Expected Array or Hash, not #{object.class}"
     end
@@ -305,14 +323,14 @@ struct YAML::Any
     @raw.pretty_print(pp)
   end
 
-  # Returns `true` if both `self` and *other*'s raw object are equal.
-  def ==(other : YAML::Any)
-    raw == other.raw
-  end
-
   # Returns `true` if the raw object is equal to *other*.
   def ==(other)
     raw == other
+  end
+
+  # Returns `true` if both `self` and *other*'s raw object are equal.
+  def ==(other : YAML::Any)
+    raw == other.raw
   end
 
   # See `Object#hash(hasher)`

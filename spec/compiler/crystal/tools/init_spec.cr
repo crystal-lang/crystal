@@ -41,6 +41,10 @@ private def run_init_project(skeleton_type, name, author, email, github_name, di
   ).run
 end
 
+private def yaml(value)
+  YAML::Any.new(value)
+end
+
 module Crystal
   describe Init::InitProject do
     it "correctly uses git config" do
@@ -171,7 +175,11 @@ module Crystal
 
         with_file "example_app/shard.yml" do |shard_yml|
           parsed = YAML.parse(shard_yml)
-          parsed["targets"].should eq({"example_app" => {"main" => "src/example_app.cr"}})
+          parsed["targets"].should eq({
+            yaml("example_app") => {
+              yaml("main") => "src/example_app.cr",
+            },
+          })
         end
 
         with_file "example/src/example.cr" do |example|

@@ -329,7 +329,7 @@ class Hash(K, V)
 
   # Inserts or updates a key-value pair.
   # Returns an `Entry` if it was updated, otherwise `nil`.
-  private def upsert(key, value) : Entry(K, V)?
+  private def upsert(key : K, value : V) : Entry(K, V)?
     # Empty hash table so only initialize entries for now
     if @entries.null?
       @indices_size_pow2 = 3
@@ -416,7 +416,7 @@ class Hash(K, V)
 
   # Implementation of deleting a key.
   # Returns the deleted Entry, if it existed, `nil` otherwise.
-  private def delete_impl(key) : Entry(K, V)?
+  private def delete_impl(key : K) : Entry(K, V)?
     # Empty hash table, nothing to do
     if @indices_size_pow2 == 0
       return nil
@@ -465,14 +465,14 @@ class Hash(K, V)
   end
 
   # Finds an entry with the given key.
-  protected def find_entry(key) : Entry(K, V)?
+  protected def find_entry(key : K) : Entry(K, V)?
     if entry_index = find_entry_with_index(key)
       return entry_index[0]
     end
   end
 
   # Finds an entry (and its index) with the given key.
-  protected def find_entry_with_index(key) : {Entry(K, V), Int32}?
+  protected def find_entry_with_index(key : K) : {Entry(K, V), Int32}?
     # Empty hash table so there's no way it's there
     if @indices_size_pow2 == 0
       return nil
@@ -508,7 +508,7 @@ class Hash(K, V)
   end
 
   # Finds an Entry with the given key by doing a linear scan.
-  private def find_entry_with_index_linear_scan(key) : {Entry(K, V), Int32}?
+  private def find_entry_with_index_linear_scan(key : K) : {Entry(K, V), Int32}?
     # If we have less than 8 elements we avoid computing the hash
     # code and directly compare the keys (might be cheaper than
     # computing a hash code of a complex structure).
@@ -914,7 +914,7 @@ class Hash(K, V)
   end
 
   # Computes the hash of a key.
-  private def key_hash(key)
+  private def key_hash(key : K)
     if @compare_by_identity && key.responds_to?(:object_id)
       hash = key.object_id.hash.to_u32!
     else
@@ -923,7 +923,7 @@ class Hash(K, V)
     hash == 0 ? UInt32::MAX : hash
   end
 
-  private def entry_matches?(entry, hash, key)
+  private def entry_matches?(entry, hash, key : K)
     # Tiny optimization: for these primitive types it's faster to just
     # compare the key instead of comparing the hash and the key.
     # We still have to skip hashes with value 0 (means deleted).
@@ -938,7 +938,7 @@ class Hash(K, V)
     {% end %}
   end
 
-  private def entry_matches?(entry, key)
+  private def entry_matches?(entry : Entry(K, V), key : K)
     entry_key = entry.key
 
     if @compare_by_identity
@@ -1072,10 +1072,10 @@ class Hash(K, V)
   # h = Hash(String, String).new
   # h["foo"] # raises KeyError
   # ```
-  def [](key)
+  def [](key : K)
     fetch(key) do
-      if (block = @block) && key.is_a?(K)
-        block.call(self, key.as(K))
+      if block = @block
+        block.call(self, key)
       else
         raise KeyError.new "Missing hash key: #{key.inspect}"
       end
@@ -1093,7 +1093,7 @@ class Hash(K, V)
   # h = Hash(String, String).new("bar")
   # h["foo"]? # => nil
   # ```
-  def []?(key)
+  def []?(key : K)
     fetch(key, nil)
   end
 
@@ -1143,7 +1143,7 @@ class Hash(K, V)
   # h.has_key?("foo") # => true
   # h.has_key?("bar") # => false
   # ```
-  def has_key?(key) : Bool
+  def has_key?(key : K) : Bool
     !!find_entry(key)
   end
 
@@ -1154,7 +1154,7 @@ class Hash(K, V)
   # h.has_value?("foo") # => false
   # h.has_value?("bar") # => true
   # ```
-  def has_value?(val) : Bool
+  def has_value?(val : K) : Bool
     each_value do |value|
       return true if value == val
     end
@@ -1169,7 +1169,7 @@ class Hash(K, V)
   # h.fetch("foo", "foo") # => "bar"
   # h.fetch("bar", "foo") # => "foo"
   # ```
-  def fetch(key, default)
+  def fetch(key : K, default)
     fetch(key) { default }
   end
 
@@ -1181,7 +1181,7 @@ class Hash(K, V)
   # h.fetch("bar") { "default value" }  # => "default value"
   # h.fetch("bar") { |key| key.upcase } # => "BAR"
   # ```
-  def fetch(key)
+  def fetch(key : K)
     entry = find_entry(key)
     entry ? entry.value : yield key
   end
@@ -1801,30 +1801,49 @@ class Hash(K, V)
   end
 
   # Compares with *other*. Returns `true` if all key-value pairs are the same.
-  def ==(other : Hash) : Bool
-    return false unless size == other.size
-    each do |key, value|
-      entry = other.find_entry(key)
-      return false unless entry && entry.value == value
-    end
-    true
+  def ==(other : Hash(K2, V2)) : Bool forall K2, V2
+    {% if K <= K2 %}
+      return false unless size == other.size
+      each do |key, value|
+        entry = other.find_entry(key.as(K))
+        return false unless entry && entry.value == value
+      end
+      true
+    {% elsif K2 < K %}
+      return false unless size == other.size
+      each do |key, value|
+        entry = other.find_entry(key.as(K2))
+        return false unless entry && entry.value == value
+      end
+      true
+    {% else %}
+      false
+    {% end %}
   end
 
   # Returns `true` if `self` is a subset of *other*.
-  def proper_subset_of?(other : Hash) : Bool
+  def proper_subset_of?(other : Hash(K2, V2)) : Bool forall K2, V2
     return false if other.size <= size
     all? do |key, value|
-      other_value = other.fetch(key) { return false }
-      other_value == value
+      if key.is_a?(K2)
+        other_value = other.fetch(key) { return false }
+        other_value == value
+      else
+        false
+      end
     end
   end
 
   # Returns `true` if `self` is a subset of *other* or equals to *other*.
-  def subset_of?(other : Hash) : Bool
+  def subset_of?(other : Hash(K2, V2)) : Bool forall K2, V2
     return false if other.size < size
     all? do |key, value|
-      other_value = other.fetch(key) { return false }
-      other_value == value
+      if key.is_a?(K2)
+        other_value = other.fetch(key) { return false }
+        other_value == value
+      else
+        false
+      end
     end
   end
 

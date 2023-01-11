@@ -264,7 +264,7 @@ class Regex
 
       caps = [] of String?
       (1...size).each do |i|
-        caps << self[i]? unless name_table.has_key? i
+        caps << self[i]? unless name_table.has_key? i.to_u16
       end
 
       caps
@@ -286,7 +286,7 @@ class Regex
 
       caps = {} of String => String?
       (1...size).each do |i|
-        if (name = name_table[i]?) && !caps.has_key?(name)
+        if (name = name_table[i.to_u16]?) && !caps.has_key?(name)
           caps[name] = self[name]?
         end
       end
@@ -325,7 +325,7 @@ class Regex
 
       hash = {} of (String | Int32) => String?
       (0...size).each do |i|
-        if name = name_table[i]?
+        if name = name_table[i.to_u16]?
           hash[name] = self[name]? unless hash.has_key?(name)
         else
           hash[i] = self[i]?
@@ -344,7 +344,7 @@ class Regex
 
       io << "Regex::MatchData("
       size.times do |i|
-        io << ' ' << name_table.fetch(i, i) << ':' if i > 0
+        io << ' ' << name_table.fetch(i.to_u16, i) << ':' if i > 0
         self[i]?.inspect(io)
       end
       io << ')'
@@ -360,7 +360,7 @@ class Regex
             if i == 0
               self[i].pretty_print pp
             else
-              pp.text "#{name_table.fetch(i, i)}:"
+              pp.text "#{name_table.fetch(i.to_u16, i)}:"
               pp.nest do
                 pp.breakable ""
                 self[i]?.pretty_print pp

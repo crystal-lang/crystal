@@ -1,12 +1,16 @@
 require "spec"
 require "yaml"
 
+private def yaml(value)
+  YAML::Any.new(value)
+end
+
 describe "YAML" do
   describe "parser" do
     it { YAML.parse("foo").should eq("foo") }
     it { YAML.parse("- foo\n- bar").should eq(["foo", "bar"]) }
     it { YAML.parse_all("---\nfoo\n---\nbar\n").should eq(["foo", "bar"]) }
-    it { YAML.parse("foo: bar").should eq({"foo" => "bar"}) }
+    it { YAML.parse("foo: bar").should eq({yaml("foo") => "bar"}) }
     it { YAML.parse("--- []\n").should eq([] of YAML::Any) }
     it { YAML.parse("---\n...").should eq nil }
 
@@ -56,7 +60,7 @@ describe "YAML" do
           bar:
             <<: *x
           ))
-        doc["bar"].should eq({"bar" => 1, "baz" => 2})
+        doc["bar"].should eq({yaml("bar") => 1, yaml("baz") => 2})
       end
 
       it "merges other mapping with array of alias" do
@@ -68,7 +72,7 @@ describe "YAML" do
           bar:
             <<: [*x, *y]
           ))
-        doc["bar"].should eq({"bar" => 1, "baz" => 2})
+        doc["bar"].should eq({yaml("bar") => 1, yaml("baz") => 2})
       end
 
       it "doesn't merge explicit string key <<" do
@@ -78,7 +82,16 @@ describe "YAML" do
           bar:
             !!str '<<': *foo
         ))
-        doc.should eq({"foo" => {"hello" => "world"}, "bar" => {"<<" => {"hello" => "world"}}})
+        doc.should eq({
+          yaml("foo") => {
+            yaml("hello") => "world",
+          },
+          yaml("bar") => {
+            yaml("<<") => {
+              yaml("hello") => "world",
+            },
+          },
+        })
       end
 
       it "doesn't merge empty mapping" do
@@ -87,7 +100,7 @@ describe "YAML" do
           bar:
             <<: *foo
         ))
-        doc["bar"].should eq({"<<" => nil})
+        doc["bar"].should eq({yaml("<<") => nil})
       end
 
       it "doesn't merge arrays" do
@@ -97,7 +110,7 @@ describe "YAML" do
           bar:
             <<: *foo
         ))
-        doc["bar"].should eq({"<<" => [1]})
+        doc["bar"].should eq({yaml("<<") => [1]})
       end
 
       it "has correct line/number info (#2585)" do
