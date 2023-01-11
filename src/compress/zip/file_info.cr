@@ -10,12 +10,12 @@ module Compress::Zip::FileInfo
   property compression_method = CompressionMethod::DEFLATED
   property time : Time
   property crc32 = 0_u32
-  property compressed_size = 0_u32
-  property uncompressed_size = 0_u32
+  property compressed_size = 0_u64
+  property uncompressed_size = 0_u64
   property filename = ""
   property extra = Bytes.empty
   property comment = ""
-  property offset = 0_u32
+  property offset = 0_u64
 
   # :nodoc:
   def initialize(*, at_file_header io : IO)
@@ -39,7 +39,7 @@ module Compress::Zip::FileInfo
     read(io, UInt16)                       # disk number start
     read(io, UInt16)                       # internal file attribute
     read(io, UInt32)                       # external file attribute
-    @offset = read(io, UInt32)             # relative offset of local header
+    @offset = read(io, UInt32).to_u64      # relative offset of local header
     @filename = io.read_string(file_name_length)
     if extra_field_length != 0
       @extra = Bytes.new(extra_field_length)
@@ -58,8 +58,8 @@ module Compress::Zip::FileInfo
     date = read(io, UInt16)
     time = from_dos(date, time)
     @crc32 = read(io, UInt32)
-    @compressed_size = read(io, UInt32)
-    @uncompressed_size = read(io, UInt32)
+    @compressed_size = read(io, UInt32).to_u64
+    @uncompressed_size = read(io, UInt32).to_u64
     file_name_length = read(io, UInt16)
     extra_field_length = read(io, UInt16)
     {file_name_length, extra_field_length, time}

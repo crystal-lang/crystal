@@ -127,8 +127,8 @@ class Compress::Zip::Reader
 
   private def read_data_descriptor(entry, crc32 = nil)
     entry.crc32 = crc32 || (read UInt32)
-    entry.compressed_size = read UInt32
-    entry.uncompressed_size = read UInt32
+    entry.compressed_size = read(UInt32).to_u64
+    entry.uncompressed_size = read(UInt32).to_u64
     verify_checksum(entry)
   end
 
