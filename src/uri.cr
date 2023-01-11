@@ -187,7 +187,7 @@ class URI
   private def validate_path
     if has_authority?
       unless path.empty? || path.starts_with?("/")
-        raise ArgumentError.new("Invalid URI component: when there is an authority component, path must not start with a slash (`/`)")
+        raise ArgumentError.new("Invalid URI component: when there is an authority component, path must start with a slash (`/`) or be empty")
       end
     else
       if path.starts_with?("//")
