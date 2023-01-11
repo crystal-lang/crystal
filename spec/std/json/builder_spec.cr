@@ -256,23 +256,65 @@ describe JSON::Builder do
     end
   end
 
-  it "writes field with scalar in object" do
-    assert_built(%<{"int":42,"float":0.815,"null":null,"bool":true,"string":"string"}>) do
-      object do
-        field "int", 42
-        field "float", 0.815
-        field "null", nil
-        field "bool", true
-        field "string", "string"
+  describe "#field" do
+    it "writes field with scalar in object" do
+      assert_built(%<{"int":42,"float":0.815,"null":null,"bool":true,"string":"string"}>) do
+        object do
+          field "int", 42
+          field "float", 0.815
+          field "null", nil
+          field "bool", true
+          field "string", "string"
+        end
+      end
+    end
+
+    it "writes field with arbitrary value in object" do
+      assert_built(%<{"hash":{"hash":"value"},"object":{"int":12}}>) do
+        object do
+          field "hash", {"hash" => "value"}
+          field "object", TestObject.new
+        end
       end
     end
   end
 
-  it "writes field with arbitrary value in object" do
-    assert_built(%<{"hash":{"hash":"value"},"object":{"int":12}}>) do
-      object do
-        field "hash", {"hash" => "value"}
-        field "object", TestObject.new
+  describe "#field(name, &)" do
+    it "writes field with scalar in object" do
+      assert_built(%<{"int":42,"float":0.815,"null":null,"bool":true,"string":"string"}>) do
+        object do
+          field "int" { scalar 42 }
+          field "float" { scalar 0.815 }
+          field "null" { scalar nil }
+          field "bool" { scalar true }
+          field "string" { scalar "string" }
+        end
+      end
+    end
+
+    it "writes field with arbitrary value in object" do
+      assert_built(%<{"hash":{"hash":"value"},"object":{"int":12}}>) do |builder|
+        object do
+          field "hash" { {"hash" => "value"}.to_json(builder) }
+          field "object" { TestObject.new.to_json(builder) }
+        end
+      end
+    end
+
+    it "defaults to null" do
+      assert_built(%<{"foo":null}>) do
+        object do
+          field "foo" { }
+        end
+      end
+    end
+
+    it "detects invalid state" do
+      builder = JSON::Builder.new(IO::Memory.new)
+      builder.start_document
+      builder.start_object
+      expect_raises(JSON::Error, "Invalid builder state, not inside an object") do
+        builder.field "foo" { builder.start_array }
       end
     end
   end

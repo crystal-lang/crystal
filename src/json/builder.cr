@@ -255,9 +255,21 @@ class JSON::Builder
   # Writes an object's field and then invokes the block.
   # This is equivalent of invoking `string(value)` and then
   # invoking the block.
+  #
+  # If the block does not write a value, the default is `null`.
   def field(name)
     string(name)
+
     yield
+
+    case state = @state.last
+    when ObjectState
+      unless state.name
+        null
+      end
+    else
+      raise JSON::Error.new("Invalid builder state, not inside an object.")
+    end
   end
 
   # Flushes the underlying `IO`.
