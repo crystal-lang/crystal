@@ -209,6 +209,8 @@ describe Crystal::Formatter do
   assert_format "def   foo (  &@block)  \n  end", "def foo(&@block)\nend"
   assert_format "def   foo (  @select)  \n  end", "def foo(@select)\nend"
   assert_format "def   foo (  @@select)  \n  end", "def foo(@@select)\nend"
+  assert_format "def   foo (  bar  @select)  \n  end", "def foo(bar @select)\nend"
+  assert_format "def   foo (  bar  @@select)  \n  end", "def foo(bar @@select)\nend"
   assert_format "def foo(a, &@b)\nend"
   assert_format "def   foo (  x  =   1 )  \n  end", "def foo(x = 1)\nend"
   assert_format "def   foo (  x  :  Int32 )  \n  end", "def foo(x : Int32)\nend"
@@ -1038,6 +1040,8 @@ describe Crystal::Formatter do
   assert_format "lib Bar\n  enum Foo\n  end\nend"
   assert_format "lib Bar\n  enum Foo\n    A\n  end\nend"
   assert_format "lib Bar\n  enum Foo\n    A = 1\n  end\nend"
+
+  assert_format "lib Foo::Bar\nend"
 
   %w(foo foo= foo? foo!).each do |method|
     assert_format "->#{method}"

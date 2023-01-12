@@ -1104,7 +1104,7 @@ module Crystal
 
     def visit(node : LibDef)
       @str << "lib "
-      @str << node.name
+      node.name.accept self
       newline
       @inside_lib = true
       accept_with_indent(node.body)

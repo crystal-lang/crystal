@@ -495,15 +495,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     annotations = read_annotations
 
-    scope = current_type_scope(node)
+    scope, name, type = lookup_type_def(node)
 
-    type = scope.types[node.name]?
     if type
-      node.raise "#{node.name} is not a lib" unless type.is_a?(LibType)
+      unless type.is_a?(LibType)
+        node.raise "#{type} is not a lib, it's a #{type.type_desc}"
+      end
     else
-      type = LibType.new @program, scope, node.name
-      scope.types[node.name] = type
+      type = LibType.new @program, scope, name
+      scope.types[name] = type
     end
+
     node.resolved_type = type
 
     type.private = true if node.visibility.private?
@@ -524,7 +526,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         end
 
         if wasm_import_module && link_annotation.wasm_import_module
-          ann.raise "multiple wasm import modules specified for lib #{node.name}"
+          ann.raise "multiple wasm import modules specified for lib #{type}"
         end
 
         wasm_import_module = link_annotation.wasm_import_module

@@ -1882,7 +1882,7 @@ module Crystal
   end
 
   class LibDef < ASTNode
-    property name : String
+    property name : Path
     property body : ASTNode
     property name_location : Location?
     property visibility = Visibility::Public
