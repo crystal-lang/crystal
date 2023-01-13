@@ -2,7 +2,7 @@ require "spec"
 require "../spec_helper"
 require "../../support/fibers"
 
-private def wait_for
+private def wait_for(&)
   timeout = {% if flag?(:interpreted) %}
               # TODO: it's not clear why some interpreter specs
               # take more than 5 seconds to bind to a server.
@@ -31,7 +31,7 @@ end
 #    shut down before continuing execution in the current fiber.
 # 6. If the listening fiber raises an exception, it is rescued and re-raised
 #    in the current fiber.
-def run_server(server)
+def run_server(server, &)
   server_done = Channel(Exception?).new
 
   f = spawn do
@@ -58,7 +58,7 @@ end
 
 # Helper method which runs a *handler*
 # Similar to `run_server` but doesn't go through the network stack.
-def run_handler(handler)
+def run_handler(handler, &)
   done = Channel(Exception?).new
 
   begin

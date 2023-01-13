@@ -257,7 +257,7 @@ class Deque(T)
 
   # `reject!` and `delete` implementation:
   # returns the last matching element, or nil
-  private def internal_delete
+  private def internal_delete(&)
     match = nil
     i = 0
     while i < @size
@@ -439,7 +439,7 @@ class Deque(T)
 
   # Removes and returns the last item, if not empty, otherwise executes
   # the given block and returns its value.
-  def pop
+  def pop(&)
     if @size == 0
       yield
     else
@@ -517,7 +517,7 @@ class Deque(T)
 
   # Removes and returns the first item, if not empty, otherwise executes
   # the given block and returns its value.
-  def shift
+  def shift(&)
     if @size == 0
       yield
     else
@@ -564,7 +564,7 @@ class Deque(T)
     self
   end
 
-  private def halfs
+  private def halfs(&)
     # For [----] yields nothing
     # For contiguous [-012] yields 1...4
     # For separated [234---01] yields 6...8, 0...3

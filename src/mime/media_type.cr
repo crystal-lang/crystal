@@ -354,7 +354,7 @@ module MIME
       MediaType.new mediatype, params
     end
 
-    private def self.parse_parameter_value(reader)
+    private def self.parse_parameter_value(reader, &)
       reader = consume_whitespace(reader)
 
       # Quoted value.

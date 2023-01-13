@@ -96,7 +96,7 @@ module YAML::Nodes
       @nodes << node
     end
 
-    def each
+    def each(&)
       @nodes.each do |node|
         yield node
       end
@@ -132,7 +132,7 @@ module YAML::Nodes
     end
 
     # Yields each key-value pair in this mapping.
-    def each
+    def each(&)
       0.step(by: 2, to: @nodes.size - 1) do |i|
         yield({@nodes[i], @nodes[i + 1]})
       end

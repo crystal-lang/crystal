@@ -53,7 +53,7 @@ class CSV::Builder
 
   # Yields a `CSV::Row` to append a row. A newline is appended
   # to `IO` after the block exits.
-  def row
+  def row(&)
     yield Row.new(self, @separator, @quote_char, @quoting)
     @io << '\n'
     @first_cell_in_row = true
@@ -74,7 +74,7 @@ class CSV::Builder
   end
 
   # :nodoc:
-  def cell
+  def cell(&)
     append_cell do
       yield @io
     end
@@ -96,7 +96,7 @@ class CSV::Builder
     end
   end
 
-  private def append_cell
+  private def append_cell(&)
     @io << @separator unless @first_cell_in_row
     yield
     @first_cell_in_row = false

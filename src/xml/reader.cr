@@ -195,7 +195,7 @@ class XML::Reader
     @reader
   end
 
-  private def collect_errors
+  private def collect_errors(&)
     Error.collect(@errors) { yield }.tap do
       Error.add_errors(@errors)
     end

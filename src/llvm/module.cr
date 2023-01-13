@@ -128,7 +128,7 @@ class LLVM::Module
     @unwrap
   end
 
-  def take_ownership
+  def take_ownership(&)
     if @owned
       yield
     else

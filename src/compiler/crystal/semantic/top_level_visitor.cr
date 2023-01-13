@@ -1164,7 +1164,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     annotations.try(&.first?).try &.doc
   end
 
-  def process_def_annotations(node, annotations)
+  def process_def_annotations(node, annotations, &)
     process_annotations(annotations) do |annotation_type, ann|
       case annotation_type
       when @program.no_inline_annotation

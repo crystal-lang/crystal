@@ -1628,7 +1628,7 @@ module Crystal
       end
     end
 
-    def format_def_arg(wrote_newline, has_more)
+    def format_def_arg(wrote_newline, has_more, &)
       write_indent if wrote_newline
 
       yield
@@ -4457,7 +4457,7 @@ module Crystal
       false
     end
 
-    def visit_asm_parts(parts, colon_column) : Nil
+    def visit_asm_parts(parts, colon_column, &) : Nil
       write " "
       column = @column
 
@@ -4776,7 +4776,7 @@ module Crystal
       end
     end
 
-    def indent
+    def indent(&)
       @indent += 2
       value = yield
       @indent -= 2
@@ -4787,7 +4787,7 @@ module Crystal
       indent { accept node }
     end
 
-    def indent(indent : Int)
+    def indent(indent : Int, &)
       old_indent = @indent
       @indent = indent
       value = yield
@@ -4804,7 +4804,7 @@ module Crystal
       no_indent { accept node }
     end
 
-    def no_indent
+    def no_indent(&)
       old_indent = @indent
       @indent = 0
       yield
@@ -4824,7 +4824,7 @@ module Crystal
       indent(indent, node)
     end
 
-    def write_indent(indent = @indent)
+    def write_indent(indent = @indent, &)
       write_indent(indent)
       indent(indent) { yield }
     end
@@ -5161,13 +5161,13 @@ module Crystal
       index == collection.size - 1
     end
 
-    def inside_macro
+    def inside_macro(&)
       @inside_macro += 1
       yield
       @inside_macro -= 1
     end
 
-    def outside_macro
+    def outside_macro(&)
       old_inside_macro = @inside_macro
       @inside_macro = 0
       yield
@@ -5191,13 +5191,13 @@ module Crystal
       end
     end
 
-    def inside_cond
+    def inside_cond(&)
       @inside_cond += 1
       yield
       @inside_cond -= 1
     end
 
-    def inside_call_or_assign
+    def inside_call_or_assign(&)
       @inside_call_or_assign += 1
       yield
       @inside_call_or_assign -= 1

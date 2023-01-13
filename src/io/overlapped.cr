@@ -38,19 +38,19 @@ module IO::Overlapped
     write_timeout
   end
 
-  def overlapped_write(socket, method)
+  def overlapped_write(socket, method, &)
     overlapped_operation(socket, method, write_timeout) do |operation|
       yield operation
     end
   end
 
-  def overlapped_read(socket, method)
+  def overlapped_read(socket, method, &)
     overlapped_operation(socket, method, read_timeout) do |operation|
       yield operation
     end
   end
 
-  def self.wait_queued_completions(timeout)
+  def self.wait_queued_completions(timeout, &)
     overlapped_entries = uninitialized LibC::OVERLAPPED_ENTRY[1]
 
     if timeout > UInt64::MAX
@@ -94,7 +94,7 @@ module IO::Overlapped
     property previous : OverlappedOperation?
     @@canceled = Thread::LinkedList(OverlappedOperation).new
 
-    def self.run(socket)
+    def self.run(socket, &)
       operation = OverlappedOperation.new
       begin
         yield operation
@@ -103,7 +103,7 @@ module IO::Overlapped
       end
     end
 
-    def self.schedule(overlapped : LibC::WSAOVERLAPPED*)
+    def self.schedule(overlapped : LibC::WSAOVERLAPPED*, &)
       start = overlapped.as(Pointer(UInt8)) - offsetof(OverlappedOperation, @overlapped)
       operation = Box(OverlappedOperation).unbox(start.as(Pointer(Void)))
       operation.schedule { |fiber| yield fiber }
@@ -116,7 +116,7 @@ module IO::Overlapped
       pointerof(@overlapped)
     end
 
-    def result(socket)
+    def result(socket, &)
       raise Exception.new("Invalid state #{@state}") unless @state.done? || @state.started?
       flags = 0_u32
       result = LibC.WSAGetOverlappedResult(socket, pointerof(@overlapped), out bytes, false, pointerof(flags))
@@ -130,7 +130,7 @@ module IO::Overlapped
       bytes
     end
 
-    protected def schedule
+    protected def schedule(&)
       case @state
       when .started?
         yield @fiber.not_nil!
@@ -170,7 +170,7 @@ module IO::Overlapped
     Crystal::Scheduler.event_loop.dequeue(timeout_event)
   end
 
-  def overlapped_operation(socket, method, timeout, connreset_is_error = true)
+  def overlapped_operation(socket, method, timeout, connreset_is_error = true, &)
     OverlappedOperation.run(socket) do |operation|
       result = yield operation.start
 
@@ -195,7 +195,7 @@ module IO::Overlapped
     end
   end
 
-  def overlapped_connect(socket, method)
+  def overlapped_connect(socket, method, &)
     OverlappedOperation.run(socket) do |operation|
       yield operation.start
 
@@ -215,7 +215,7 @@ module IO::Overlapped
     end
   end
 
-  def overlapped_accept(socket, method)
+  def overlapped_accept(socket, method, &)
     OverlappedOperation.run(socket) do |operation|
       yield operation.start
 

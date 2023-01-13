@@ -146,7 +146,7 @@ abstract class JSON::Lexer
     consume_string_with_buffer { }
   end
 
-  private def consume_string_with_buffer
+  private def consume_string_with_buffer(&)
     @buffer.clear
     yield
     while true

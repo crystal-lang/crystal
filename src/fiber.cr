@@ -76,7 +76,7 @@ class Fiber
   end
 
   # :nodoc:
-  def self.unsafe_each
+  def self.unsafe_each(&)
     fibers.unsafe_each { |fiber| yield fiber }
   end
 

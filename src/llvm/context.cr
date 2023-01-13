@@ -68,7 +68,7 @@ class LLVM::Context
     int8.pointer
   end
 
-  def struct(name : String, packed = false) : Type
+  def struct(name : String, packed = false, &) : Type
     llvm_struct = LibLLVM.struct_create_named(self, name)
     the_struct = Type.new llvm_struct
     element_types = (yield the_struct).as(Array(LLVM::Type))

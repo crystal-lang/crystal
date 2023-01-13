@@ -488,7 +488,7 @@ class Crystal::Call
     end
   end
 
-  def tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
+  def tuple_indexer_helper(args, arg_types, owner, instance_type, nilable, &)
     index = tuple_indexer_helper_index(args.first, owner, instance_type, nilable)
     return unless index
 
@@ -559,7 +559,7 @@ class Crystal::Call
     index
   end
 
-  def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
+  def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable, &)
     arg = args.first
 
     # Make it work with constants too
@@ -754,7 +754,7 @@ class Crystal::Call
     end
   end
 
-  def in_macro_target
+  def in_macro_target(&)
     if with_scope = @with_scope
       macros = yield with_scope
       return macros if macros
@@ -1099,7 +1099,7 @@ class Crystal::Call
     context.defining_type.lookup_type?(node, self_type: context.instantiated_type.instance_type, free_vars: context.free_vars, allow_typeof: false)
   end
 
-  def bubbling_exception
+  def bubbling_exception(&)
     yield
   rescue ex : Crystal::CodeError
     if obj = @obj

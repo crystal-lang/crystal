@@ -43,7 +43,7 @@ class Thread
       LibC.LeaveCriticalSection(self)
     end
 
-    def synchronize
+    def synchronize(&)
       lock
       yield self
     ensure

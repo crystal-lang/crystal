@@ -98,7 +98,7 @@ ARGF = IO::ARGF.new(ARGV, STDIN)
 #   # ...
 # end
 # ```
-def loop
+def loop(&)
   while true
     yield
   end

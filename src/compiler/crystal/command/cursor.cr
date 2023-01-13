@@ -23,7 +23,7 @@ class Crystal::Command
     end
   end
 
-  private def cursor_command(command, no_cleanup = false, wants_doc = false)
+  private def cursor_command(command, no_cleanup = false, wants_doc = false, &)
     config, result = compile_no_codegen command,
       cursor_command: true,
       no_cleanup: no_cleanup,

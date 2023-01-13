@@ -528,7 +528,7 @@ struct Path
     PartIterator.new(self)
   end
 
-  private def each_part_separator_index
+  private def each_part_separator_index(&)
     reader = Char::Reader.new(@name)
     start_pos = reader.pos
 

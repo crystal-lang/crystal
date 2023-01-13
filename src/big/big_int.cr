@@ -93,7 +93,7 @@ struct BigInt < Int
   end
 
   # :nodoc:
-  def self.new
+  def self.new(&)
     LibGMP.init(out mpz)
     yield pointerof(mpz)
     new(mpz)

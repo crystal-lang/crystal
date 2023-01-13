@@ -12,7 +12,7 @@ private class BufferedWrapper < IO
     @called_unbuffered_read = false
   end
 
-  def self.new(io)
+  def self.new(io, &)
     buffered_io = new(io)
     yield buffered_io
     buffered_io.flush

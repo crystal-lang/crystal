@@ -1674,7 +1674,7 @@ describe "Semantic: def overload" do
   end
 end
 
-private def each_union_variant(t1, t2)
+private def each_union_variant(t1, t2, &)
   yield "#{t1} | #{t2}"
   yield "#{t2} | #{t1}"
   # yield "Union(#{t1}, #{t2})"
