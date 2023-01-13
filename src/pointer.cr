@@ -8,7 +8,7 @@ require "c/string"
 # to implement efficient data structures. For example, both `Array` and `Hash` are
 # implemented using pointers.
 #
-# You can obtain pointers in four ways: `#new`, `#malloc`, `pointerof` and by calling a C
+# You can obtain pointers in four ways: `#new`, `#malloc`, `pointerof`, or by calling a C
 # function that returns a pointer.
 #
 # `pointerof(x)`, where *x* is a variable or an instance variable, returns a pointer to
@@ -20,6 +20,8 @@ require "c/string"
 # ptr.value = 2
 # x # => 2
 # ```
+#
+# Use `#value` to dereference the pointer.
 #
 # Note that a pointer is *falsey* if it's null (if its address is zero).
 #
@@ -213,8 +215,8 @@ struct Pointer(T)
     self
   end
 
-  # Copies *count* elements from `self` into *source*.
-  # *source* and `self` may overlap; the copy is always done in a non-destructive manner.
+  # Copies *count* elements from `self` into *target*.
+  # *target* and `self` may overlap; the copy is always done in a non-destructive manner.
   #
   # ```
   # ptr1 = Pointer.malloc(4) { |i| i + 1 } # ptr1 -> [1, 2, 3, 4]
@@ -345,6 +347,9 @@ struct Pointer(T)
   # ptr = ptr.realloc(8)
   # ptr # [1, 2, 3, 4, 0, 0, 0, 0]
   # ```
+  #
+  # WARNING: Memory allocated using `GC.malloc` or `GC.malloc_atomic` must be
+  # reallocated using `GC.realloc` instead.
   def realloc(size : Int)
     if size < 0
       raise ArgumentError.new("Negative size")

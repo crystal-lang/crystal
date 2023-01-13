@@ -33,6 +33,7 @@ lib LibC
   end
 
   fun GetCurrentThread : HANDLE
+  fun GetCurrentThreadId : DWORD
   fun GetCurrentThreadStackLimits(lowLimit : ULONG_PTR*, highLimit : ULONG_PTR*) : Void
   fun GetCurrentProcess : HANDLE
   fun GetCurrentProcessId : DWORD
@@ -46,6 +47,7 @@ lib LibC
   fun SetThreadStackGuarantee(stackSizeInBytes : DWORD*) : BOOL
   fun GetProcessTimes(hProcess : HANDLE, lpCreationTime : FILETIME*, lpExitTime : FILETIME*,
                       lpKernelTime : FILETIME*, lpUserTime : FILETIME*) : BOOL
+  fun SwitchToThread : BOOL
 
   PROCESS_QUERY_INFORMATION = 0x0400
 end

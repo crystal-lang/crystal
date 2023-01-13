@@ -47,7 +47,6 @@ jobs:
           - arm-linux-gnueabihf
           - i386-linux-gnu
           - i386-linux-musl
-          - wasm32-unknown-wasi
           - x86_64-dragonfly
           - x86_64-freebsd
           - x86_64-netbsd
@@ -55,10 +54,9 @@ jobs:
 
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Make compiler (special case only for wasm32, until next release).
-        if: ${{ matrix.target == 'wasm32-unknown-wasi' }}
+      - name: Build fresh compiler
         run: bin/ci with_build_env make
 
       - name: Run smoke test

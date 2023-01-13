@@ -60,47 +60,47 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets while" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         a = 0
         while a < 10
           a = a + 1
         end
         a
-        CODE
+        CRYSTAL
     end
 
     it "interprets while, returns nil" do
-      interpret(<<-CODE).should eq(nil)
+      interpret(<<-CRYSTAL).should eq(nil)
         a = 0
         while a < 10
           a = a + 1
         end
-        CODE
+        CRYSTAL
     end
 
     it "interprets until" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         a = 0
         until a == 10
           a = a + 1
         end
         a
-      CODE
+      CRYSTAL
     end
 
     it "interprets break inside while" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         a = 0
         while a < 10
           a += 1
           break if a == 3
         end
         a
-        CODE
+        CRYSTAL
     end
 
     it "interprets break inside nested while" do
-      interpret(<<-CODE).should eq(6)
+      interpret(<<-CRYSTAL).should eq(6)
         a = 0
         b = 0
         c = 0
@@ -118,11 +118,11 @@ describe Crystal::Repl::Interpreter do
         end
 
         c
-        CODE
+        CRYSTAL
     end
 
     it "interprets break inside while inside block" do
-      interpret(<<-CODE).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
         def foo
           yield
           20
@@ -136,33 +136,33 @@ describe Crystal::Repl::Interpreter do
           end
         end
         a
-        CODE
+        CRYSTAL
     end
 
     it "interprets break with value inside while (through break)" do
-      interpret(<<-CODE).should eq(8)
+      interpret(<<-CRYSTAL).should eq(8)
         a = 0
         x = while a < 10
           a += 1
           break 8 if a == 3
         end
         x || 10
-        CODE
+        CRYSTAL
     end
 
     it "interprets break with value inside while (through normal flow)" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         a = 0
         x = while a < 10
           a += 1
           break 8 if a == 20
         end
         x || 10
-        CODE
+        CRYSTAL
     end
 
     it "interprets next inside while" do
-      interpret(<<-CODE).should eq(1 + 2 + 8 + 9 + 10)
+      interpret(<<-CRYSTAL).should eq(1 + 2 + 8 + 9 + 10)
         a = 0
         x = 0
         while a < 10
@@ -173,11 +173,11 @@ describe Crystal::Repl::Interpreter do
           x += a
         end
         x
-        CODE
+        CRYSTAL
     end
 
     it "interprets next inside while inside block" do
-      interpret(<<-CODE).should eq(1 + 2 + 8 + 9 + 10)
+      interpret(<<-CRYSTAL).should eq(1 + 2 + 8 + 9 + 10)
         def foo
           yield
           10
@@ -195,7 +195,7 @@ describe Crystal::Repl::Interpreter do
           end
         end
         x
-        CODE
+        CRYSTAL
     end
 
     it "discards while" do
@@ -203,7 +203,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets return" do
-      interpret(<<-CODE).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
         def foo(x)
           if x == 1
             return 2
@@ -213,21 +213,31 @@ describe Crystal::Repl::Interpreter do
         end
 
         foo(1)
-      CODE
+      CRYSTAL
     end
 
     it "interprets return Nil" do
-      interpret(<<-CODE).should be_nil
+      interpret(<<-CRYSTAL).should be_nil
         def foo : Nil
           1
         end
 
         foo
-      CODE
+      CRYSTAL
+    end
+
+    it "interprets return Nil with explicit return (#12178)" do
+      interpret(<<-CRYSTAL).should be_nil
+        def foo : Nil
+          return 1
+        end
+
+        foo
+      CRYSTAL
     end
 
     it "interprets return implicit nil and Int32" do
-      interpret(<<-CODE).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
         def foo(x)
           if x == 1
             return
@@ -242,7 +252,7 @@ describe Crystal::Repl::Interpreter do
         else
           10
         end
-      CODE
+      CRYSTAL
     end
   end
 end

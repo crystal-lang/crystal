@@ -265,6 +265,29 @@ describe "Semantic: exception" do
     a_def.not_nil!.raises?.should be_true
   end
 
+  it "marks method that calls another method that raises as raises, recursively" do
+    result = assert_type(%(
+      @[Raises]
+      def foo
+        1
+      end
+
+      def bar
+        foo
+      end
+
+      def baz
+        bar
+      end
+
+      foo
+      bar
+      baz
+      )) { int32 }
+    call = result.node.as(Expressions).expressions.last.as(Call)
+    call.target_defs.not_nil!.first.raises?.should be_true
+  end
+
   it "marks proc literal as raises" do
     result = assert_type("->{ 1 }.call", inject_primitives: true) { int32 }
     call = result.node.as(Expressions).last.as(Call)
@@ -672,7 +695,7 @@ describe "Semantic: exception" do
   end
 
   it "gets a non-nilable type if all rescue are unreachable (#8751)" do
-    assert_no_errors <<-CR, inject_primitives: true
+    assert_no_errors <<-CRYSTAL, inject_primitives: true
       while true
         begin
           foo = 1
@@ -684,7 +707,7 @@ describe "Semantic: exception" do
 
         foo &+ 2
       end
-      CR
+      CRYSTAL
   end
 
   it "correctly types variable assigned inside nested exception handler (#9769)" do

@@ -98,8 +98,9 @@ module JSON
   #   @a : Int32
   # end
   #
-  # a = A.from_json(%({"a":1,"b":2})) # => A(@json_unmapped={"b" => 2_i64}, @a=1)
-  # a.to_json                         # => {"a":1,"b":2}
+  # a = A.from_json(%({"a":1,"b":2})) # => A(@json_unmapped={"b" => 2}, @a=1)
+  # a.json_unmapped["b"].raw.class    # => Int64
+  # a.to_json                         # => %({"a":1,"b":2})
   # ```
   #
   #
@@ -126,6 +127,28 @@ module JSON
   # field, and the rest of the fields, and their meaning, depend on its value.
   #
   # You can use `JSON::Serializable.use_json_discriminator` for this use case.
+  #
+  # ### `after_initialize` method
+  #
+  # `#after_initialize` is a method that runs after an instance is deserialized
+  # from JSON. It can be used as a hook to post-process the initialized object.
+  #
+  # Example:
+  # ```
+  # require "json"
+  #
+  # class Person
+  #   include JSON::Serializable
+  #   getter name : String
+  #
+  #   def after_initialize
+  #     @name = @name.upcase
+  #   end
+  # end
+  #
+  # person = Person.from_json %({"name": "Jane"})
+  # person.name # => "JANE"
+  # ```
   module Serializable
     annotation Options
     end

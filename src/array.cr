@@ -1533,7 +1533,7 @@ class Array(T)
 
   # Returns an array with all the elements in the collection randomized
   # using the given *random* number generator.
-  def shuffle(random = Random::DEFAULT) : Array(T)
+  def shuffle(random : Random = Random::DEFAULT) : Array(T)
     dup.shuffle!(random)
   end
 
@@ -1708,6 +1708,12 @@ class Array(T)
     self
   end
 
+  # Prints a nicely readable and concise string representation of this array
+  # to *io*.
+  #
+  # The result resembles an array literal but it does not necessarily compile.
+  #
+  # Each element is presented using its `#inspect(io)` result to avoid ambiguity.
   def to_s(io : IO) : Nil
     executed = exec_recursive(:to_s) do
       io << '['

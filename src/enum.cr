@@ -86,12 +86,43 @@
 #   puts "Got blue"
 # end
 # ```
+#
+# ### Changing the Base Type
+#
+# The type of the underlying enum value is `Int32` by default, but it can be changed to any type in `Int::Primitive`.
+#
+# ```
+# enum Color : UInt8
+#   Red
+#   Green
+#   Blue
+# end
+#
+# Color::Red.value # : UInt8
+# ```
 struct Enum
   include Comparable(self)
 
   # Returns *value*.
   def self.new(value : self)
     value
+  end
+
+  # Returns the underlying value held by the enum instance.
+  #
+  # ```
+  # enum Color
+  #   Red
+  #   Green
+  #   Blue
+  # end
+  #
+  # Color::Red.value   # => 0
+  # Color::Green.value # => 1
+  # Color::Blue.value  # => 2
+  # ```
+  def value : Int
+    previous_def
   end
 
   # Appends a `String` representation of this enum member to the given *io*.
@@ -102,17 +133,20 @@ struct Enum
       if value == 0
         io << "None"
       else
-        found = false
+        remaining_value = self.value
         {% for member in @type.constants %}
           {% if member.stringify != "All" %}
             if {{@type.constant(member)}} != 0 && value.bits_set? {{@type.constant(member)}}
-              io << " | " if found
+              io << " | " unless remaining_value == self.value
               io << {{member.stringify}}
-              found = true
+              remaining_value &= ~{{@type.constant(member)}}
             end
           {% end %}
         {% end %}
-        io << value unless found
+        unless remaining_value.zero?
+          io << " | " unless remaining_value == self.value
+          io << remaining_value
+        end
       end
     {% else %}
       io << to_s

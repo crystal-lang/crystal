@@ -91,7 +91,7 @@ lib LibGC
 
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
-  {% if flag?(:preview_mt) %}
+  {% if flag?(:preview_mt) || flag?(:win32) %}
     fun get_my_stackbottom = GC_get_my_stackbottom(sb : StackBase*) : ThreadHandle
     fun set_stackbottom = GC_set_stackbottom(th : ThreadHandle, sb : StackBase*) : ThreadHandle
   {% else %}
@@ -107,8 +107,11 @@ lib LibGC
 
   fun size = GC_size(addr : Void*) : LibC::SizeT
 
-  {% unless flag?(:win32) || flag?(:wasm32) %}
-    # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
+  # Boehm GC requires to use its own thread manipulation routines instead of pthread's or Win32's
+  {% if flag?(:win32) %}
+    fun beginthreadex = GC_beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt,
+                                         arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : Void*
+  {% elsif !flag?(:wasm32) %}
     fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*) : LibC::Int
     fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
     fun pthread_detach = GC_pthread_detach(thread : LibC::PthreadT) : LibC::Int
@@ -217,11 +220,11 @@ module GC
     Stats.new(
       # collections: collections,
       # bytes_found: bytes_found,
-      heap_size: heap_size,
-      free_bytes: free_bytes,
-      unmapped_bytes: unmapped_bytes,
-      bytes_since_gc: bytes_since_gc,
-      total_bytes: total_bytes
+      heap_size: heap_size.to_u64!,
+      free_bytes: free_bytes.to_u64!,
+      unmapped_bytes: unmapped_bytes.to_u64!,
+      bytes_since_gc: bytes_since_gc.to_u64!,
+      total_bytes: total_bytes.to_u64!
     )
   end
 
@@ -229,19 +232,26 @@ module GC
     LibGC.get_prof_stats(out stats, sizeof(LibGC::ProfStats))
 
     ProfStats.new(
-      heap_size: stats.heap_size,
-      free_bytes: stats.free_bytes,
-      unmapped_bytes: stats.unmapped_bytes,
-      bytes_since_gc: stats.bytes_since_gc,
-      bytes_before_gc: stats.bytes_before_gc,
-      non_gc_bytes: stats.non_gc_bytes,
-      gc_no: stats.gc_no,
-      markers_m1: stats.markers_m1,
-      bytes_reclaimed_since_gc: stats.bytes_reclaimed_since_gc,
-      reclaimed_bytes_before_gc: stats.reclaimed_bytes_before_gc)
+      heap_size: stats.heap_size.to_u64!,
+      free_bytes: stats.free_bytes.to_u64!,
+      unmapped_bytes: stats.unmapped_bytes.to_u64!,
+      bytes_since_gc: stats.bytes_since_gc.to_u64!,
+      bytes_before_gc: stats.bytes_before_gc.to_u64!,
+      non_gc_bytes: stats.non_gc_bytes.to_u64!,
+      gc_no: stats.gc_no.to_u64!,
+      markers_m1: stats.markers_m1.to_u64!,
+      bytes_reclaimed_since_gc: stats.bytes_reclaimed_since_gc.to_u64!,
+      reclaimed_bytes_before_gc: stats.reclaimed_bytes_before_gc.to_u64!)
   end
 
-  {% unless flag?(:win32) %}
+  {% if flag?(:win32) %}
+    # :nodoc:
+    def self.beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt, arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::HANDLE
+      ret = LibGC.beginthreadex(security, stack_size, start_address, arglist, initflag, thrdaddr)
+      raise RuntimeError.from_errno("GC_beginthreadex") if ret.null?
+      ret.as(LibC::HANDLE)
+    end
+  {% else %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
       LibGC.pthread_create(thread, attr, start, arg)
@@ -262,7 +272,7 @@ module GC
 
   # :nodoc:
   def self.current_thread_stack_bottom
-    {% if flag?(:preview_mt) %}
+    {% if flag?(:preview_mt) || flag?(:win32) %}
       th = LibGC.get_my_stackbottom(out sb)
       {th, sb.mem_base}
     {% else %}
@@ -276,6 +286,16 @@ module GC
       sb = LibGC::StackBase.new
       sb.mem_base = stack_bottom
       LibGC.set_stackbottom(thread_handle, pointerof(sb))
+    end
+  {% elsif flag?(:win32) %}
+    # this is necessary because Boehm GC does _not_ use `GC_stackbottom` on
+    # Windows when pushing all threads' stacks; instead `GC_set_stackbottom`
+    # must be used to associate the new bottom with the running thread
+    def self.set_stackbottom(stack_bottom : Void*)
+      sb = LibGC::StackBase.new
+      sb.mem_base = stack_bottom
+      # `nil` represents the current thread (i.e. the only one)
+      LibGC.set_stackbottom(nil, pointerof(sb))
     end
   {% else %}
     def self.set_stackbottom(stack_bottom : Void*)

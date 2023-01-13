@@ -25,7 +25,7 @@ struct Exception::CallStack
     # `at_exit` because unhandled exceptions in `main_user_code` are printed
     # after those handlers)
     executable_path = Process.executable_path
-    executable_path_ptr = executable_path ? File.dirname(executable_path).to_utf16.to_unsafe : Pointer(LibC::WCHAR).null
+    executable_path_ptr = executable_path ? Crystal::System.to_wstr(File.dirname(executable_path)) : Pointer(LibC::WCHAR).null
     if LibC.SymInitializeW(LibC.GetCurrentProcess, executable_path_ptr, 1) == 0
       raise RuntimeError.from_winerror("SymInitializeW")
     end
@@ -34,7 +34,7 @@ struct Exception::CallStack
 
   def self.setup_crash_handler
     LibC.AddVectoredExceptionHandler(1, ->(exception_info) do
-      case status = exception_info.value.exceptionRecord.value.exceptionCode
+      case exception_info.value.exceptionRecord.value.exceptionCode
       when LibC::EXCEPTION_ACCESS_VIOLATION
         addr = exception_info.value.exceptionRecord.value.exceptionInformation[1]
         Crystal::System.print_error "Invalid memory access (C0000005) at address 0x%llx\n", addr

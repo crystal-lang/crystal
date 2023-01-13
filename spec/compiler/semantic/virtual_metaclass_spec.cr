@@ -34,7 +34,9 @@ describe "Semantic: virtual metaclass" do
   end
 
   it "allows allocating virtual type when base class is abstract" do
-    assert_type("
+    assert_type(%(
+      require "prelude"
+
       abstract class Foo
       end
 
@@ -46,7 +48,7 @@ describe "Semantic: virtual metaclass" do
 
       bar = Bar.new || Baz.new
       baz = bar.class.allocate
-      ", inject_primitives: true) { types["Foo"].virtual_type }
+      )) { types["Foo"].virtual_type }
   end
 
   it "yields virtual type in block arg if class is abstract" do
@@ -150,7 +152,7 @@ describe "Semantic: virtual metaclass" do
   end
 
   it "restricts virtual metaclass to Class (#11376)" do
-    assert_type(<<-CR) { nilable types["Foo"].virtual_type.metaclass }
+    assert_type(<<-CRYSTAL) { nilable types["Foo"].virtual_type.metaclass }
       class Foo
       end
 
@@ -159,6 +161,6 @@ describe "Semantic: virtual metaclass" do
 
       x = Foo || Bar
       x if x.is_a?(Class)
-      CR
+      CRYSTAL
   end
 end

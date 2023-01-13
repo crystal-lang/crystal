@@ -71,6 +71,37 @@ module Crystal::Repl::Multidispatch
   end
 
   private def self.create_def_uncached(context : Context, node : Call, target_defs : Array(Def))
+    autocast_types = nil
+
+    # The generated multidispatch method should handle autocasted
+    # values. For example if an argument is a symbol but the target
+    # type is an enum, the multidispatch should handle enum values,
+    # not symbols. Autocasting will naturally happen right before
+    # the multidispatch is called.
+
+    # Here we track which args perform autocasting.
+    node.args.each_with_index do |arg, i|
+      # Autocasting only happens from SymbolLiteral or NumberLiteral
+      next unless arg.is_a?(SymbolLiteral) || arg.is_a?(NumberLiteral)
+
+      non_matching_type = nil
+
+      # Check if the call arg type is passed to a method arg type
+      # where the types don't match. That's when autocasting happens.
+      target_defs.each do |target_def|
+        arg_type = target_def.args[i].type
+        if arg_type != arg.type
+          non_matching_type = arg_type
+          break
+        end
+      end
+
+      if non_matching_type
+        autocast_types ||= {} of Int32 => Type
+        autocast_types[i] = non_matching_type
+      end
+    end
+
     obj = node.obj
     obj_type = obj.try(&.type) || node.scope
 
@@ -86,17 +117,24 @@ module Crystal::Repl::Multidispatch
 
     i = 0
 
-    node.args.each do |arg|
+    node.args.each_with_index do |arg, arg_index|
       def_arg = Arg.new("arg#{i}").at(node)
-      def_arg.type = arg.type
+      def_arg.type = autocast_types.try &.[arg_index]? || arg.type
       a_def.args << def_arg
       i += 1
     end
 
     block = node.block
+    block_fun_literal = block.try(&.fun_literal)
+
     if block
-      a_def.block_arg = Arg.new("")
-      a_def.yields = block.args.size
+      if block_fun_literal
+        a_def.block_arg = Arg.new("block_arg")
+        a_def.uses_block_arg = true
+      else
+        a_def.block_arg = Arg.new("")
+        a_def.block_arity = block.args.size
+      end
     end
 
     main_if = nil
@@ -104,7 +142,7 @@ module Crystal::Repl::Multidispatch
 
     blocks = [] of Block
 
-    target_defs.each do |target_def|
+    target_defs.each_with_index do |target_def, target_def_index|
       i = 0
 
       condition = nil
@@ -115,7 +153,10 @@ module Crystal::Repl::Multidispatch
         end
       end
 
-      node.args.each do |arg|
+      node.args.each_with_index do |arg, arg_index|
+        # If the argument was autocasted it will always match in a multidispatch
+        next if autocast_types.try &.[arg_index]?
+
         target_def_arg = target_def.args[i]
         condition = add_arg_condition(arg, target_def_arg, i, condition)
 
@@ -127,8 +168,27 @@ module Crystal::Repl::Multidispatch
       call_args = [] of ASTNode
 
       i = 0
-      node.args.each do
-        call_args << Var.new("arg#{i}")
+      node.args.each_with_index do |arg, arg_index|
+        var = Var.new("arg#{i}")
+
+        # If the argument was autocasted it will always match in a multidispatch
+        if autocast_types.try &.[arg_index]?
+          call_args << var
+          i += 1
+          next
+        end
+
+        # Make sure to cast the argument to the target def arg's type
+        # in the last case, where the argument's type is not restricted by an if is_a?
+        if target_def_index == target_defs.size - 1
+          target_def_arg = target_def.args[i]
+
+          cast = Cast.new(var, TypeNode.new(target_def_arg.type))
+          call_args << cast
+        else
+          call_args << var
+        end
+
         i += 1
       end
 
@@ -144,14 +204,25 @@ module Crystal::Repl::Multidispatch
       call.type = target_def.type
 
       if block
-        block_args = block.args.map_with_index { |arg, i| Var.new("barg#{i}", arg.type) }
-        yield_args = Array(ASTNode).new(block_args.size)
-        block.args.each_index { |i| yield_args << Var.new("barg#{i}", block.args[i].type) }
+        if block_fun_literal
+          # We aren't going to recaluclate calls, so we prepare the call
+          # in a way that the interpreter is going to call it by passing
+          # the block_arg as an extra argument.
+          inner_block = Block.new
+          inner_block_fun_literal = Var.new("block_arg")
+          inner_block_fun_literal.type = block_fun_literal.type
+          inner_block.fun_literal = inner_block_fun_literal
+          call.block = inner_block
+        else
+          block_args = block.args.map_with_index { |arg, i| Var.new("barg#{i}", arg.type) }
+          yield_args = Array(ASTNode).new(block_args.size)
+          block.args.each_index { |i| yield_args << Var.new("barg#{i}", block.args[i].type) }
 
-        inner_block = Block.new(block_args, body: Yield.new(yield_args))
-        blocks << inner_block
+          inner_block = Block.new(block_args, body: Yield.new(yield_args))
+          blocks << inner_block
 
-        call.block = inner_block
+          call.block = inner_block
+        end
       end
 
       exps = call
@@ -206,9 +277,16 @@ module Crystal::Repl::Multidispatch
 
     i = 0
 
-    node.args.each do |arg|
-      def_args["arg#{i}"] = MetaVar.new("arg#{i}", arg.type)
+    node.args.each_with_index do |arg, arg_index|
+      def_args["arg#{i}"] = MetaVar.new(
+        "arg#{i}",
+        autocast_types.try &.[arg_index]? || arg.type
+      )
       i += 1
+    end
+
+    if block_fun_literal
+      def_args["block_arg"] = MetaVar.new("block_arg", block_fun_literal.type)
     end
 
     visitor = MultidispatchMainVisitor.new(context.program, def_args, a_def)

@@ -1102,8 +1102,8 @@ class Hash(K, V)
   #
   # ```
   # h = {"a" => {"b" => [10, 20, 30]}}
-  # h.dig? "a", "b"                # => [10, 20, 30]
-  # h.dig? "a", "b", "c", "d", "e" # => nil
+  # h.dig? "a", "b" # => [10, 20, 30]
+  # h.dig? "a", "x" # => nil
   # ```
   def dig?(key : K, *subkeys)
     if (value = self[key]?) && value.responds_to?(:dig?)
@@ -1121,8 +1121,8 @@ class Hash(K, V)
   #
   # ```
   # h = {"a" => {"b" => [10, 20, 30]}}
-  # h.dig "a", "b"                # => [10, 20, 30]
-  # h.dig "a", "b", "c", "d", "e" # raises KeyError
+  # h.dig "a", "b" # => [10, 20, 30]
+  # h.dig "a", "x" # raises KeyError
   # ```
   def dig(key : K, *subkeys)
     if (value = self[key]) && value.responds_to?(:dig)
@@ -1466,11 +1466,8 @@ class Hash(K, V)
     {% end %}
 
     each do |k, v|
-      if other.has_key?(k)
-        other[k] = yield k, other[k], v
-      else
-        other[k] = v
-      end
+      entry = other.find_entry(k)
+      other[k] = entry ? yield(k, entry.value, v) : v
     end
   end
 
@@ -1502,9 +1499,9 @@ class Hash(K, V)
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather than returning a new one. Returns `self`.
-  def reject!(& : K, V ->) : self
-    each do |key, value|
-      delete(key) if yield(key, value)
+  def reject!(& : K, V -> _)
+    each_entry_with_index do |entry, index|
+      delete_entry_and_update_counts(index) if yield(entry.key, entry.value)
     end
     self
   end
@@ -1551,9 +1548,10 @@ class Hash(K, V)
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(Set{"a", "c"}) # => {"a" => 1, "c" => 3}
   # ```
   def select(keys : Enumerable) : Hash(K, V)
-    hash = {} of K => V
-    keys.each { |k| hash[k] = self[k] if has_key?(k) }
-    hash
+    keys.each_with_object({} of K => V) do |k, memo|
+      entry = find_entry(k)
+      memo[k] = entry.value if entry
+    end
   end
 
   # :ditto:
@@ -1571,8 +1569,16 @@ class Hash(K, V)
   # h1 == h2 == h3 == h4 # => true
   # h1                   # => {"a" => 1, "c" => 3}
   # ```
+  def select!(keys : Indexable) : self
+    each_key { |k| delete(k) unless k.in?(keys) }
+    self
+  end
+
+  # :ditto:
   def select!(keys : Enumerable) : self
-    each { |k, v| delete(k) unless keys.includes?(k) }
+    # Convert enumerable to a set to prevent exhaustion of elements
+    key_set = keys.to_set
+    each_key { |k| delete(k) unless k.in?(key_set) }
     self
   end
 

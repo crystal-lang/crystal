@@ -88,6 +88,12 @@ class JSONAttrWithBool
   property value : Bool
 end
 
+class JSONAttrWithFloat
+  include JSON::Serializable
+
+  property value : Float64
+end
+
 class JSONAttrWithUUID
   include JSON::Serializable
 
@@ -125,6 +131,48 @@ class JSONAttrWithNilableTimeEmittingNull
 
   def initialize
   end
+end
+
+class JSONAttrWithTimeArray1
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::ArrayConverter(Time::EpochConverter))]
+  property value : Array(Time)
+end
+
+class JSONAttrWithTimeArray2
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::ArrayConverter.new(Time::EpochConverter))]
+  property value : Array(Time)
+end
+
+class JSONAttrWithTimeArray3
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::ArrayConverter.new(Time::Format.new("%F %T")))]
+  property value : Array(Time)
+end
+
+class JSONAttrWithTimeHash1
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::HashValueConverter(Time::EpochConverter))]
+  property value : Hash(String, Time)
+end
+
+class JSONAttrWithTimeHash2
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::HashValueConverter.new(Time::EpochConverter))]
+  property value : Hash(String, Time)
+end
+
+class JSONAttrWithTimeHash3
+  include JSON::Serializable
+
+  @[JSON::Field(converter: JSON::HashValueConverter.new(Time::Format.new("%F %T")))]
+  property value : Hash(String, Time)
 end
 
 class JSONAttrWithPropertiesKey
@@ -589,6 +637,11 @@ describe "JSON mapping" do
     json.value.should be_false
   end
 
+  it "parses JSON integer into a float property (#8618)" do
+    json = JSONAttrWithFloat.from_json(%({"value": 123}))
+    json.value.should eq(123.0)
+  end
+
   it "parses UUID" do
     uuid = JSONAttrWithUUID.from_json(%({"value": "ba714f86-cac6-42c7-8956-bcf5105e1b81"}))
     uuid.should be_a(JSONAttrWithUUID)
@@ -751,6 +804,58 @@ describe "JSON mapping" do
     json.value.should be_a(Time)
     json.value.should eq(Time.unix_ms(1459860483856))
     json.to_json.should eq(string)
+  end
+
+  describe JSON::ArrayConverter do
+    it "uses converter metaclass" do
+      string = %({"value":[1459859781]})
+      json = JSONAttrWithTimeArray1.from_json(string)
+      json.value.should be_a(Array(Time))
+      json.value.should eq([Time.unix(1459859781)])
+      json.to_json.should eq(string)
+    end
+
+    it "uses converter instance with nested converter metaclass" do
+      string = %({"value":[1459859781]})
+      json = JSONAttrWithTimeArray2.from_json(string)
+      json.value.should be_a(Array(Time))
+      json.value.should eq([Time.unix(1459859781)])
+      json.to_json.should eq(string)
+    end
+
+    it "uses converter instance with nested converter instance" do
+      string = %({"value":["2014-10-31 23:37:16"]})
+      json = JSONAttrWithTimeArray3.from_json(string)
+      json.value.should be_a(Array(Time))
+      json.value.map(&.to_s).should eq(["2014-10-31 23:37:16 UTC"])
+      json.to_json.should eq(string)
+    end
+  end
+
+  describe JSON::HashValueConverter do
+    it "uses converter metaclass" do
+      string = %({"value":{"foo":1459859781}})
+      json = JSONAttrWithTimeHash1.from_json(string)
+      json.value.should be_a(Hash(String, Time))
+      json.value.should eq({"foo" => Time.unix(1459859781)})
+      json.to_json.should eq(string)
+    end
+
+    it "uses converter instance with nested converter metaclass" do
+      string = %({"value":{"foo":1459859781}})
+      json = JSONAttrWithTimeHash2.from_json(string)
+      json.value.should be_a(Hash(String, Time))
+      json.value.should eq({"foo" => Time.unix(1459859781)})
+      json.to_json.should eq(string)
+    end
+
+    it "uses converter instance with nested converter instance" do
+      string = %({"value":{"foo":"2014-10-31 23:37:16"}})
+      json = JSONAttrWithTimeHash3.from_json(string)
+      json.value.should be_a(Hash(String, Time))
+      json.value.transform_values(&.to_s).should eq({"foo" => "2014-10-31 23:37:16 UTC"})
+      json.to_json.should eq(string)
+    end
   end
 
   it "parses raw value from int" do

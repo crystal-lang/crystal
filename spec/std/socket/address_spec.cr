@@ -99,6 +99,24 @@ describe Socket::IPAddress do
     end
   end
 
+  it ".valid_v6?" do
+    Socket::IPAddress.valid_v6?("::1").should be_true
+    Socket::IPAddress.valid_v6?("x").should be_false
+    Socket::IPAddress.valid_v6?("127.0.0.1").should be_false
+  end
+
+  it ".valid_v4?" do
+    Socket::IPAddress.valid_v4?("127.0.0.1").should be_true
+    Socket::IPAddress.valid_v4?("::1").should be_false
+    Socket::IPAddress.valid_v4?("x").should be_false
+  end
+
+  it ".valid?" do
+    Socket::IPAddress.valid?("127.0.0.1").should be_true
+    Socket::IPAddress.valid?("::1").should be_true
+    Socket::IPAddress.valid?("x").should be_false
+  end
+
   it "#loopback?" do
     Socket::IPAddress.new("127.0.0.1", 0).loopback?.should be_true
     Socket::IPAddress.new("127.255.255.254", 0).loopback?.should be_true
@@ -109,6 +127,9 @@ describe Socket::IPAddress do
     Socket::IPAddress.new("::2", 0).loopback?.should be_false
     Socket::IPAddress.new(Socket::IPAddress::LOOPBACK, 0).loopback?.should be_true
     Socket::IPAddress.new(Socket::IPAddress::LOOPBACK6, 0).loopback?.should be_true
+    Socket::IPAddress.new("::ffff:127.0.0.1", 0).loopback?.should be_true
+    Socket::IPAddress.new("::ffff:127.0.1.1", 0).loopback?.should be_true
+    Socket::IPAddress.new("::ffff:1.0.0.1", 0).loopback?.should be_false
   end
 
   it "#unspecified?" do

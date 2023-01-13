@@ -68,6 +68,10 @@ describe "URI" do
     assert_uri("http://[::1]:81/", scheme: "http", host: "[::1]", port: 81, path: "/")
     assert_uri("http://192.0.2.16:81/", scheme: "http", host: "192.0.2.16", port: 81, path: "/")
 
+    # preserves fully-qualified host with trailing dot
+    assert_uri("https://example.com./", scheme: "https", host: "example.com.", path: "/")
+    assert_uri("https://example.com.:8443/", scheme: "https", host: "example.com.", port: 8443, path: "/")
+
     # port
     it { URI.parse("http://192.168.0.2:/foo").should eq URI.new(scheme: "http", host: "192.168.0.2", path: "/foo") }
 
@@ -393,16 +397,25 @@ describe "URI" do
     it "registers port for scheme" do
       URI.set_default_port("ponzi", 9999)
       URI.default_port("ponzi").should eq(9999)
+    ensure
+      URI.set_default_port("ponzi", nil)
     end
 
     it "unregisters port for scheme" do
-      URI.set_default_port("ftp", nil)
-      URI.default_port("ftp").should eq(nil)
+      old_port = URI.default_port("ftp")
+      begin
+        URI.set_default_port("ftp", nil)
+        URI.default_port("ftp").should eq(nil)
+      ensure
+        URI.set_default_port("ftp", old_port)
+      end
     end
 
     it "treats scheme case insensitively" do
       URI.set_default_port("UNKNOWN", 1234)
       URI.default_port("unknown").should eq(1234)
+    ensure
+      URI.set_default_port("UNKNOWN", nil)
     end
   end
 

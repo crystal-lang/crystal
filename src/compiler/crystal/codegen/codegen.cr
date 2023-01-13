@@ -18,7 +18,7 @@ module Crystal
 
   class Program
     def run(code, filename = nil, debug = Debug::Default)
-      parser = Parser.new(code)
+      parser = new_parser(code)
       parser.filename = filename
       node = parser.parse
       node = normalize node
@@ -859,9 +859,7 @@ module Crystal
 
             position_at_end while_block
 
-            request_value(false) do
-              accept node.body
-            end
+            discard_value(node.body)
             br while_block
           end
         else
@@ -883,9 +881,7 @@ module Crystal
 
             position_at_end body_block
 
-            request_value(false) do
-              accept node.body
-            end
+            discard_value(node.body)
             br while_block
 
             position_at_end fail_block
@@ -910,9 +906,7 @@ module Crystal
     end
 
     def visit(node : Not)
-      request_value do
-        accept node.exp
-      end
+      request_value(node.exp)
       @last = codegen_cond node.exp.type.remove_indirection
       @last = not @last
       false
@@ -978,9 +972,7 @@ module Crystal
 
     def accept_control_expression(node)
       if exp = node.exp
-        request_value do
-          accept exp
-        end
+        request_value(exp)
         exp.type? || @program.nil
       else
         @last = llvm_nil
@@ -1027,9 +1019,7 @@ module Crystal
         return false
       end
 
-      request_value do
-        accept value
-      end
+      request_value(value)
 
       return if value.no_returns?
 
@@ -1280,9 +1270,7 @@ module Crystal
     end
 
     def visit(node : Cast)
-      request_value do
-        accept node.obj
-      end
+      request_value(node.obj)
 
       last_value = @last
 
@@ -1329,9 +1317,7 @@ module Crystal
     end
 
     def visit(node : NilableCast)
-      request_value do
-        accept node.obj
-      end
+      request_value(node.obj)
 
       last_value = @last
 
@@ -1508,14 +1494,11 @@ module Crystal
       old_scope = block_context.vars["%scope"]?
 
       if node_scope = node.scope
-        request_value do
-          accept node_scope
-        end
+        request_value(node_scope)
         block_context.vars["%scope"] = LLVMVar.new(@last, node_scope.type)
       end
 
       # First accept all yield expressions and assign them to block vars
-      i = 0
       unless node.exps.empty?
         exp_values = Array({LLVM::Value, Type}).new(node.exps.size)
 
@@ -1523,9 +1506,7 @@ module Crystal
         # assigning them to the block vars yet because we might have
         # a nested yield that would override a block argument's value
         node.exps.each_with_index do |exp, i|
-          request_value do
-            accept exp
-          end
+          request_value(exp)
 
           if exp.is_a?(Splat)
             tuple_type = exp.type.as(TupleInstanceType)
@@ -1590,10 +1571,9 @@ module Crystal
           context.next_phi = phi
           context.closure_parent_context = block_context.closure_parent_context
 
-          @needs_value = true
           set_ensure_exception_handler(block)
 
-          accept block.body
+          request_value(block.body)
         end
 
         phi.add @last, block.body.type?, last: true
@@ -2265,13 +2245,25 @@ module Crystal
       end
     end
 
-    def request_value(request = true)
+    def request_value(request : Bool = true)
       old_needs_value = @needs_value
       @needs_value = request
       begin
         yield
       ensure
         @needs_value = old_needs_value
+      end
+    end
+
+    def request_value(node : ASTNode)
+      request_value do
+        accept node
+      end
+    end
+
+    def discard_value(node : ASTNode)
+      request_value(false) do
+        accept node
       end
     end
 

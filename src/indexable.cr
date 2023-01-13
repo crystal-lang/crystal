@@ -742,8 +742,8 @@ module Indexable(T)
     hasher
   end
 
-  # Returns the index of the first appearance of *value* in `self`
-  # starting from the given *offset*, or `nil` if the value is not in `self`.
+  # Returns the index of the first appearance of *object* in `self`
+  # starting from the given *offset*, or `nil` if *object* is not in `self`.
   #
   # ```
   # [1, 2, 3, 1, 2, 3].index(2, offset: 2) # => 4
@@ -769,6 +769,28 @@ module Indexable(T)
       end
     end
     nil
+  end
+
+  # Returns the index of the first appearance of *obj* in `self`
+  # starting from the given *offset*. Raises `Enumerable::NotFoundError` if
+  # *obj* is not in `self`.
+  #
+  # ```
+  # [1, 2, 3, 1, 2, 3].index!(2, offset: 2) # => 4
+  # ```
+  def index!(obj, offset : Int = 0)
+    index(obj, offset) || raise Enumerable::NotFoundError.new
+  end
+
+  # Returns the index of the first object in `self` for which the block
+  # is truthy, starting from the given *offset*. Raises
+  # `Enumerable::NotFoundError` if no match is found.
+  #
+  # ```
+  # [1, 2, 3, 1, 2, 3].index!(offset: 2) { |x| x < 2 } # => 3
+  # ```
+  def index!(offset : Int = 0, & : T ->)
+    index(offset) { |e| yield e } || raise Enumerable::NotFoundError.new
   end
 
   # Returns the last element of `self` if it's not empty, or raises `IndexError`.
@@ -827,6 +849,13 @@ module Indexable(T)
     rindex(offset) { |elem| elem == value }
   end
 
+  # :ditto:
+  #
+  # Raises `Enumerable::NotFoundError` if *value* is not in `self`.
+  def rindex!(value, offset = size - 1)
+    rindex(value, offset) || raise Enumerable::NotFoundError.new
+  end
+
   # Returns the index of the first object in `self` for which the block
   # is truthy, starting from the last object, or `nil` if no match
   # is found.
@@ -850,6 +879,13 @@ module Indexable(T)
     nil
   end
 
+  # :ditto:
+  #
+  # Raises `Enumerable::NotFoundError` if no match is found.
+  def rindex!(offset = size - 1, & : T ->)
+    rindex(offset) { |e| yield e } || raise Enumerable::NotFoundError.new
+  end
+
   # Optimized version of `Enumerable#sample` that runs in O(1) time.
   #
   # ```
@@ -858,7 +894,7 @@ module Indexable(T)
   # a.sample                # => 1
   # a.sample(Random.new(1)) # => 2
   # ```
-  def sample(random = Random::DEFAULT)
+  def sample(random : Random = Random::DEFAULT)
     raise IndexError.new("Can't sample empty collection") if size == 0
     unsafe_fetch(random.rand(size))
   end
@@ -868,7 +904,7 @@ module Indexable(T)
   # If `self` is not empty and `n` is equal to 1, calls `sample(random)` exactly
   # once. Thus, *random* will be left in a different state compared to the
   # implementation in `Enumerable`.
-  def sample(n : Int, random = Random::DEFAULT) : Array(T)
+  def sample(n : Int, random : Random = Random::DEFAULT) : Array(T)
     return super unless n == 1
 
     if empty?
@@ -951,7 +987,7 @@ module Indexable(T)
     {start_index, count}
   end
 
-  # Returns an `Array` with all possible permutations of *size*.
+  # Returns an `Array` with all possible permutations of *size* of `self`.
   #
   # ```
   # a = [1, 2, 3]
@@ -1044,6 +1080,17 @@ module Indexable(T)
     PermutationIterator(self, T).new(self, size.to_i, Indexable(T).check_reuse(reuse, size))
   end
 
+  # Returns an `Array` with all possible combinations of *size* of `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.combinations    # => [[1, 2, 3]]
+  # a.combinations(1) # => [[1], [2], [3]]
+  # a.combinations(2) # => [[1, 2], [1, 3], [2, 3]]
+  # a.combinations(3) # => [[1, 2, 3]]
+  # a.combinations(0) # => [[]]
+  # a.combinations(4) # => []
+  # ```
   def combinations(size : Int = self.size)
     ary = [] of Array(T)
     each_combination(size) do |a|
@@ -1052,6 +1099,21 @@ module Indexable(T)
     ary
   end
 
+  # Yields each possible combination of *size* of `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # sums = [] of Int32
+  # a.each_combination(2) { |p| sums << p.sum } # => nil
+  # sums                                        # => [3, 4, 5]
+  # ```
+  #
+  # By default, a new array is created and yielded for each combination.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
   def each_combination(size : Int = self.size, reuse = false) : Nil
     n = self.size
     return if size > n
@@ -1090,22 +1152,54 @@ module Indexable(T)
     end
   end
 
-  private def each_combination_piece(pool, size, reuse)
-    if reuse
-      reuse.clear
-      size.times { |i| reuse << pool[i] }
-      reuse
-    else
-      pool[0, size]
-    end
-  end
-
+  # Returns an `Iterator` over each possible combination of *size* of `self`.
+  #
+  # ```
+  # iter = [1, 2, 3, 4].each_combination(3)
+  # iter.next # => [1, 2, 3]
+  # iter.next # => [1, 2, 4]
+  # iter.next # => [1, 3, 4]
+  # iter.next # => [2, 3, 4]
+  # iter.next # => #<Iterator::Stop>
+  # ```
+  #
+  # By default, a new array is created and returned for each combination.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
   def each_combination(size : Int = self.size, reuse = false)
     raise ArgumentError.new("Size must be positive") if size < 0
 
     CombinationIterator(self, T).new(self, size.to_i, Indexable(T).check_reuse(reuse, size))
   end
 
+  # Returns an `Array` with all possible combinations with repeated elements of
+  # *size* of `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  #
+  # pp a.repeated_combinations
+  # pp a.repeated_combinations(2)
+  # ```
+  #
+  # produces:
+  #
+  # ```text
+  # [[1, 1, 1],
+  #  [1, 1, 2],
+  #  [1, 1, 3],
+  #  [1, 2, 2],
+  #  [1, 2, 3],
+  #  [1, 3, 3],
+  #  [2, 2, 2],
+  #  [2, 2, 3],
+  #  [2, 3, 3],
+  #  [3, 3, 3]]
+  # [[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]
+  # ```
   def repeated_combinations(size : Int = self.size) : Array(Array(T))
     ary = [] of Array(T)
     each_repeated_combination(size) do |a|
@@ -1114,6 +1208,22 @@ module Indexable(T)
     ary
   end
 
+  # Yields each possible combination with repeated elements of *size* of
+  # `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # sums = [] of Int32
+  # a.each_repeated_combination(2) { |p| sums << p.sum } # => nil
+  # sums                                                 # => [2, 3, 4, 4, 5, 6]
+  # ```
+  #
+  # By default, a new array is created and yielded for each combination.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
   def each_repeated_combination(size : Int = self.size, reuse = false) : Nil
     n = self.size
     return if size > n && n == 0
@@ -1148,6 +1258,26 @@ module Indexable(T)
     end
   end
 
+  # Returns an `Iterator` over each possible combination with repeated elements
+  # of *size* of `self`.
+  #
+  # ```
+  # iter = [1, 2, 3].each_repeated_combination(2)
+  # iter.next # => [1, 1]
+  # iter.next # => [1, 2]
+  # iter.next # => [1, 3]
+  # iter.next # => [2, 2]
+  # iter.next # => [2, 3]
+  # iter.next # => [3, 3]
+  # iter.next # => #<Iterator::Stop>
+  # ```
+  #
+  # By default, a new array is created and returned for each combination.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
   def each_repeated_combination(size : Int = self.size, reuse = false)
     raise ArgumentError.new("Size must be positive") if size < 0
 

@@ -126,7 +126,7 @@ module Crystal::System::Socket
     end
 
     if Errno.value == Errno::ENOPROTOOPT
-      return false
+      false
     else
       raise ::Socket::Error.from_errno("getsockopt")
     end

@@ -608,7 +608,7 @@ describe "unbuffered" do
     spawn { ch.send 2; ch.send 5 }
     spawn { ch.send 3; ch.send 6 }
 
-    (1..6).map { ch.receive }.sort.should eq([1, 2, 3, 4, 5, 6])
+    (1..6).map { ch.receive }.sort!.should eq([1, 2, 3, 4, 5, 6])
   end
 
   it "works with select" do

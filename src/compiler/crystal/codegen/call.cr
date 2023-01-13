@@ -18,7 +18,7 @@ class Crystal::CodeGenVisitor
 
     owner = node.super? ? node.scope : node.target_def.owner
 
-    call_args, has_out = prepare_call_args node, owner
+    call_args = prepare_call_args node, owner
 
     # It can happen that one of the arguments caused an unreachable
     # to happen, so we must stop here
@@ -33,17 +33,6 @@ class Crystal::CodeGenVisitor
       end
     else
       codegen_call(node, node.target_def, owner, call_args)
-    end
-
-    # Now we move out values to the variables. This can be done automatically
-    # because if declared inside a while, for example, the variable is nilable.
-    if has_out
-      node.args.zip(call_args) do |node_arg, call_arg|
-        if node_arg.is_a?(Out) && (exp = node_arg.exp).is_a?(Var)
-          node_var = context.vars[exp.name]
-          assign node_var.pointer, node_var.type, node_arg.type, to_lhs(call_arg, node_arg.type)
-        end
-      end
     end
 
     false
@@ -69,8 +58,7 @@ class Crystal::CodeGenVisitor
     # Always accept obj: even if it's not passed as self this might
     # involve intermediate calls with side effects.
     if obj
-      @needs_value = true
-      accept obj
+      request_value(obj)
     end
 
     # First self.
@@ -94,8 +82,7 @@ class Crystal::CodeGenVisitor
 
     # Then the arguments.
     node.args.zip(target_def.args) do |arg, def_arg|
-      @needs_value = true
-      accept arg
+      request_value(arg)
 
       if arg.type.void?
         call_arg = int8(0)
@@ -141,7 +128,7 @@ class Crystal::CodeGenVisitor
 
     @needs_value = old_needs_value
 
-    {call_args, false}
+    call_args
   end
 
   def call_abi_info(target_def, node)
@@ -155,7 +142,6 @@ class Crystal::CodeGenVisitor
   end
 
   def prepare_call_args_external(node, target_def, owner)
-    has_out = false
     abi_info = call_abi_info(target_def, node)
 
     call_args = Array(LLVM::Value).new(node.args.size + 1)
@@ -170,20 +156,21 @@ class Crystal::CodeGenVisitor
 
     node.args.each_with_index do |arg, i|
       if arg.is_a?(Out)
-        has_out = true
         case exp = arg.exp
-        when Var, Underscore
-          # For out arguments we reserve the space. After the call
-          # we move the value to the variable.
-          call_arg = alloca(llvm_type(arg.type))
+        when Var
+          # Just get a pointer to the variable
+          call_arg = context.vars[exp.name].pointer
         when InstanceVar
+          # Just get a pointer to the instance variable
           call_arg = instance_var_ptr(type, exp.name, llvm_self_ptr)
+        when Underscore
+          # Allocate stack memory, but discard the value
+          call_arg = alloca(llvm_type(arg.type))
         else
           arg.raise "BUG: out argument was #{exp}"
         end
       else
-        @needs_value = true
-        accept arg
+        request_value(arg)
 
         if arg.type.void?
           call_arg = int8(0)
@@ -243,7 +230,7 @@ class Crystal::CodeGenVisitor
 
     @needs_value = old_needs_value
 
-    {call_args, has_out}
+    call_args
   end
 
   def codegen_direct_abi_call(call_arg, abi_arg_type)
@@ -317,9 +304,7 @@ class Crystal::CodeGenVisitor
           # Reset vars that are declared inside the def and are nilable
           reset_nilable_vars(target_def)
 
-          request_value do
-            accept target_def.body
-          end
+          request_value(target_def.body)
 
           phi.add @last, target_def.body.type?, last: true
         end
@@ -344,8 +329,7 @@ class Crystal::CodeGenVisitor
     # Get type_id of obj or owner
     if node_obj = node.obj
       owner = node_obj.type
-      @needs_value = true
-      accept node_obj
+      request_value(node_obj)
       obj_type_id = @last
     elsif node.uses_with_scope? && (with_scope = node.with_scope)
       owner = with_scope
@@ -363,8 +347,7 @@ class Crystal::CodeGenVisitor
 
     # Get type if of args and create arg vars
     arg_type_ids = node.args.map_with_index do |arg, i|
-      @needs_value = true
-      accept arg
+      request_value(arg)
       new_vars["%arg#{i}"] = LLVMVar.new(@last, arg.type, true)
       type_id(@last, arg.type)
     end
@@ -479,7 +462,7 @@ class Crystal::CodeGenVisitor
 
         @last = self_type.passed_as_self? ? call_args.first : type_id(self_type)
         inline_call_return_value target_def, body
-        return true
+        true
       else
         false
       end

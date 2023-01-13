@@ -40,7 +40,7 @@ private def it_lexes_many(values, type : Token::Kind)
   end
 end
 
-private def it_lexes_keywords(keywords)
+private def it_lexes_keywords(*keywords : Keyword)
   keywords.each do |keyword|
     it_lexes keyword.to_s, :IDENT, keyword
   end
@@ -153,13 +153,13 @@ describe "Lexer" do
   it_lexes "\n", :NEWLINE
   it_lexes "\n\n\n", :NEWLINE
   it_lexes "_", :UNDERSCORE
-  it_lexes_keywords [:def, :if, :else, :elsif, :end, :true, :false, :class, :module, :include,
-                     :extend, :while, :until, :nil, :do, :yield, :return, :unless, :next, :break,
-                     :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
-                     :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
-                     :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
-                     :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?,
-                     :annotation, :verbatim]
+  it_lexes_keywords :def, :if, :else, :elsif, :end, :true, :false, :class, :module, :include,
+    :extend, :while, :until, :nil, :do, :yield, :return, :unless, :next, :break,
+    :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
+    :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :alias,
+    :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :typeof, :for, :in,
+    :with, :self, :super, :private, :protected, :asm, :uninitialized,
+    :annotation, :verbatim, :is_a_question, :as_question, :nil_question, :responds_to_question
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
                    "❨╯°□°❩╯︵┻━┻"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?",
@@ -246,6 +246,9 @@ describe "Lexer" do
   it_lexes_number :i32, ["0_i32", "0"]
   it_lexes_number :i8, ["0i8", "0"]
 
+  it_lexes_i32 [["0🔮", "0"], ["12341234🔮", "12341234"], ["0x3🔮", "3"]]
+  assert_syntax_error "0b🔮", "numeric literal without digits"
+
   it_lexes_char "'a'", 'a'
   it_lexes_char "'\\a'", '\a'
   it_lexes_char "'\\b'", '\b'
@@ -281,7 +284,9 @@ describe "Lexer" do
                     ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?", ":[]=", ":<=>", ":===",
                     ":&+", ":&-", ":&*", ":&**"]
 
-  it_lexes_global_match_data_index ["$1", "$10", "$1?", "$23?"]
+  it_lexes_global_match_data_index ["$1", "$10", "$1?", "$10?", "$23?"]
+  assert_syntax_error "$01", %(unexpected token: "1")
+  assert_syntax_error "$0?"
 
   it_lexes "$~", :OP_DOLLAR_TILDE
   it_lexes "$?", :OP_DOLLAR_QUESTION
@@ -357,6 +362,9 @@ describe "Lexer" do
   assert_syntax_error "0o200_i8", "0o200 doesn't fit in an Int8"
   assert_syntax_error "0b10000000_i8", "0b10000000 doesn't fit in an Int8"
 
+  assert_syntax_error "0b11_f32", "binary float literal is not supported"
+  assert_syntax_error "0o73_f64", "octal float literal is not supported"
+
   # 2**31 - 1
   it_lexes_i32 [["0x7fffffff", "2147483647"], ["0o17777777777", "2147483647"], ["0b1111111111111111111111111111111", "2147483647"]]
   it_lexes_i32 [["0x7fffffff_i32", "2147483647"], ["0o17777777777_i32", "2147483647"], ["0b1111111111111111111111111111111_i32", "2147483647"]]
@@ -423,8 +431,13 @@ describe "Lexer" do
   assert_syntax_error ".42", ".1 style number literal is not supported, put 0 before dot"
   assert_syntax_error "-.42", ".1 style number literal is not supported, put 0 before dot"
 
-  assert_syntax_error "2e", "unexpected token: \"e\""
-  assert_syntax_error "2ef32", "unexpected token: \"ef32\""
+  assert_syntax_error "2e", "invalid decimal number exponent"
+  assert_syntax_error "2e+", "invalid decimal number exponent"
+  assert_syntax_error "2ef32", "invalid decimal number exponent"
+  assert_syntax_error "2e+@foo", "invalid decimal number exponent"
+  assert_syntax_error "2e+e", "invalid decimal number exponent"
+  assert_syntax_error "2e+f32", "invalid decimal number exponent"
+  assert_syntax_error "2e+-2", "invalid decimal number exponent"
   assert_syntax_error "2e+_2", "unexpected '_' in number"
 
   # Test for #11671
@@ -443,7 +456,7 @@ describe "Lexer" do
     lexer = Lexer.new "end 1"
     token = lexer.next_token
     token.type.should eq(t :IDENT)
-    token.value.should eq(:end)
+    token.value.should eq(Keyword::END)
     token = lexer.next_token
     token.type.should eq(t :SPACE)
   end
@@ -659,4 +672,33 @@ describe "Lexer" do
   assert_syntax_error %("\\x1z"), "invalid hex escape"
 
   assert_syntax_error %("hi\\)
+
+  it "lexes regex after \\n" do
+    lexer = Lexer.new("\n/=/")
+    lexer.slash_is_regex = true
+    token = lexer.next_token
+    token.type.should eq(t :NEWLINE)
+    token = lexer.next_token
+    token.type.should eq(t :DELIMITER_START)
+    token.delimiter_state.kind.should eq(Token::DelimiterKind::REGEX)
+  end
+
+  it "lexes regex after \\r\\n" do
+    lexer = Lexer.new("\r\n/=/")
+    lexer.slash_is_regex = true
+    token = lexer.next_token
+    token.type.should eq(t :NEWLINE)
+    token = lexer.next_token
+    token.type.should eq(t :DELIMITER_START)
+    token.delimiter_state.kind.should eq(Token::DelimiterKind::REGEX)
+  end
+
+  it "lexes heredoc start" do
+    lexer = Lexer.new("<<-EOS\n")
+    lexer.wants_raw = true
+    token = lexer.next_token
+    token.type.should eq(t :DELIMITER_START)
+    token.delimiter_state.kind.should eq(Token::DelimiterKind::HEREDOC)
+    token.raw.should eq "<<-EOS"
+  end
 end

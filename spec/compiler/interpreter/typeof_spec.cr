@@ -14,7 +14,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets typeof virtual type" do
-      interpret(<<-CODE, prelude: "prelude").should eq(%("Foo"))
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("Foo"))
         abstract class Foo
         end
 
@@ -26,7 +26,7 @@ describe Crystal::Repl::Interpreter do
 
         foo = Baz.new.as(Foo)
         typeof(foo).to_s
-      CODE
+      CRYSTAL
     end
   end
 end

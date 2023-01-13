@@ -419,7 +419,7 @@ module Crystal
         info.add_annotations(annotations) if annotations
         vars[name] = info
       else
-        info.type = Type.merge!([info.type, type])
+        info.type = Type.merge!(info.type, type)
         info.outside_def = true if @outside_def
         info.add_annotations(annotations) if annotations
         vars[name] = info
@@ -667,7 +667,7 @@ module Crystal
       # If it's Pointer(T).malloc or Pointer(T).null, guess it to Pointer(T)
       if obj.is_a?(Generic) &&
          (name = obj.name).is_a?(Path) && name.single?("Pointer") &&
-         (node.name == "malloc" || node.name == "null")
+         node.name.in?("malloc", "null")
         type = lookup_type?(obj)
         return type if type.is_a?(PointerInstanceType)
       end
@@ -769,7 +769,7 @@ module Crystal
 
       defs = metaclass.lookup_defs(node.name)
       defs = defs.select do |a_def|
-        a_def_has_block = !!a_def.yields
+        a_def_has_block = !!a_def.block_arity
         call_has_block = !!(node.block || node.block_arg)
         next unless a_def_has_block == call_has_block
 
@@ -813,7 +813,6 @@ module Crystal
 
       # Try to guess from the method's body, but now
       # the current lookup type is obj_type
-      type = nil
       old_type_override = @type_override
       @type_override = obj_type
 
@@ -868,7 +867,7 @@ module Crystal
         return_type = match.def.return_type
         next unless return_type
 
-        lookup_type?(return_type, match.context.defining_type)
+        lookup_type?(return_type, match.context.defining_type, match.context.instantiated_type.instance_type)
       end
 
       return nil if return_types.empty?
@@ -1116,7 +1115,7 @@ module Crystal
       @found_self = true if node.name == "self"
     end
 
-    def lookup_type?(node, root = nil)
+    def lookup_type?(node, root = nil, self_type = nil)
       find_root_generic_type_parameters =
         @dont_find_root_generic_type_parameters == 0
 
@@ -1158,6 +1157,7 @@ module Crystal
 
       type = root.lookup_type?(
         node,
+        self_type: self_type || root.instance_type,
         allow_typeof: false,
         find_root_generic_type_parameters: find_root_generic_type_parameters
       )

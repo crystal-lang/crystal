@@ -229,9 +229,9 @@ class Process
     pid = Crystal::System::Process.spawn(command_args, env, clear_env, fork_input, fork_output, fork_error, chdir)
     @process_info = Crystal::System::Process.new(pid)
 
-    fork_input.close unless fork_input == input || fork_input == STDIN
-    fork_output.close unless fork_output == output || fork_output == STDOUT
-    fork_error.close unless fork_error == error || fork_error == STDERR
+    fork_input.close unless fork_input.in?(input, STDIN)
+    fork_output.close unless fork_output.in?(output, STDOUT)
+    fork_error.close unless fork_error.in?(error, STDERR)
   end
 
   def finalize

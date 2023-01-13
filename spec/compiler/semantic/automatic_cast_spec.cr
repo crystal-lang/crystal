@@ -39,7 +39,7 @@ describe "Semantic: automatic cast" do
 
       foo(2147483648_i64)
       ),
-      "no overload matches"
+      "expected argument #1 to 'foo' to be Int32, not Int64"
   end
 
   it "casts literal integer (Int32 -> Float32)" do
@@ -208,7 +208,7 @@ describe "Semantic: automatic cast" do
 
       foo(:four)
       ),
-      "no overload matches"
+      "expected argument #1 to 'foo' to match a member of enum Foo"
   end
 
   it "says ambiguous call for symbol" do
@@ -419,7 +419,8 @@ describe "Semantic: automatic cast" do
       a = 1 || Zed.new
       a + 2
       ),
-      "no overload matches", inject_primitives: true
+      "expected argument #1 to 'Zed#+' to be Char, not Int32",
+      inject_primitives: true
   end
 
   it "doesn't say 'ambiguous call' when there's an exact match for symbol (#6601)" do
@@ -448,7 +449,7 @@ describe "Semantic: automatic cast" do
       a = 1 || Zed.new
       a + :red
       ),
-      "no overload matches"
+      "expected argument #1 to 'Zed#+' to be Char, not Symbol"
   end
 
   it "can use automatic cast with `with ... yield` (#7736)" do
@@ -649,7 +650,7 @@ describe "Semantic: automatic cast" do
       x = 1_i64
       foo(x)
       ),
-      "no overload matches 'foo' with type Int64"
+      "expected argument #1 to 'foo' to be Int32, not Int64"
   end
 
   it "doesn't cast integer variable to larger type (not #9565)" do
@@ -661,7 +662,7 @@ describe "Semantic: automatic cast" do
       x = 1_i32
       foo(x)
       ),
-      "no overload matches 'foo' with type Int32",
+      "expected argument #1 to 'foo' to be Int64, not Int32",
       flags: "no_number_autocast"
   end
 
@@ -729,7 +730,7 @@ describe "Semantic: automatic cast" do
   end
 
   it "errors when autocast default value doesn't match enum member" do
-    assert_error <<-CR,
+    assert_error <<-CRYSTAL,
       enum Foo
         FOO
       end
@@ -738,7 +739,7 @@ describe "Semantic: automatic cast" do
       end
 
       foo
-      CR
+      CRYSTAL
       "can't autocast :bar to Foo: no matching enum member"
   end
 end

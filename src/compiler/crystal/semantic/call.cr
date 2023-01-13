@@ -11,7 +11,6 @@ class Crystal::Call
   property expanded : ASTNode?
   property expanded_macro : Macro?
   property? uses_with_scope = false
-  getter? raises = false
 
   class RetryLookupWithLiterals < ::Exception
   end
@@ -101,11 +100,6 @@ class Crystal::Call
     bind_to block.break if block
 
     if (parent_visitor = @parent_visitor) && matches
-      if parent_visitor.typed_def? && matches.any?(&.raises?)
-        @raises = true
-        parent_visitor.typed_def.raises = true
-      end
-
       matches.each do |match|
         match.special_vars.try &.each do |special_var_name|
           special_var = match.vars.not_nil![special_var_name]
@@ -402,8 +396,8 @@ class Crystal::Call
           check_return_type(typed_def, typed_def_return_type, match, match_owner)
         end
 
-        check_recursive_splat_call match.def, typed_def_args do
-          bubbling_exception do
+        bubbling_exception do
+          check_recursive_splat_call match.def, typed_def_args do
             visitor = MainVisitor.new(program, typed_def_args, typed_def)
             visitor.yield_vars = yield_vars
             visitor.match_context = match.context
@@ -580,7 +574,7 @@ class Crystal::Call
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-        return Matches.new([indexer_match] of Match, true)
+        Matches.new([indexer_match] of Match, true)
       else
         raise "missing key '#{name}' for named tuple #{owner}"
       end
@@ -666,11 +660,11 @@ class Crystal::Call
       parents = lookup.base_type.ancestors
     when NonGenericModuleType
       ancestors = parent_visitor.scope.ancestors
-      index_of_ancestor = ancestors.index(lookup).not_nil!
+      index_of_ancestor = ancestors.index!(lookup)
       parents = ancestors[index_of_ancestor + 1..-1]
     when GenericModuleType
       ancestors = parent_visitor.scope.ancestors
-      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(GenericModuleInstanceType) && ancestor.generic_type == lookup }.not_nil!
+      index_of_ancestor = ancestors.index! { |ancestor| ancestor.is_a?(GenericModuleInstanceType) && ancestor.generic_type == lookup }
       parents = ancestors[index_of_ancestor + 1..-1]
     when GenericType
       ancestors = parent_visitor.scope.ancestors
@@ -790,7 +784,7 @@ class Crystal::Call
   def match_block_arg(match)
     block_arg = match.def.block_arg
     return nil, nil unless block_arg
-    return nil, nil unless match.def.yields || match.def.uses_block_arg?
+    return nil, nil unless match.def.block_arity || match.def.uses_block_arg?
 
     yield_vars = nil
     block_arg_type = nil
@@ -837,7 +831,11 @@ class Crystal::Call
       # is valid too only if Foo is an alias/typedef that refers to a FunctionType
       block_arg_restriction_type = lookup_node_type(match.context, block_arg_restriction).remove_typedef
       unless block_arg_restriction_type.is_a?(ProcInstanceType)
-        block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_restriction_type}"
+        if block_arg_restriction_type.is_a?(ProcType)
+          block_arg_restriction.raise "can't create an instance of generic class #{block_arg_restriction_type} without specifying its type vars"
+        else
+          block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_restriction_type}"
+        end
         return nil, nil
       end
 
@@ -1042,7 +1040,7 @@ class Crystal::Call
                             when Self
                               match.context.instantiated_type
                             when Crystal::Path
-                              match.context.defining_type.lookup_path(output)
+                              match.context.defining_type.lookup_type_var(output, match.context.free_vars)
                             else
                               output
                             end
@@ -1102,21 +1100,19 @@ class Crystal::Call
   end
 
   def bubbling_exception
-    begin
-      yield
-    rescue ex : Crystal::CodeError
-      if obj = @obj
-        if name == "initialize"
-          # Avoid putting 'initialize' in the error trace
-          # because it's most likely that this is happening
-          # inside a generated 'new' method
-          ::raise ex
-        else
-          raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
-        end
+    yield
+  rescue ex : Crystal::CodeError
+    if obj = @obj
+      if name == "initialize"
+        # Avoid putting 'initialize' in the error trace
+        # because it's most likely that this is happening
+        # inside a generated 'new' method
+        ::raise ex
       else
-        raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
+        raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
       end
+    else
+      raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
     end
   end
 
@@ -1170,7 +1166,7 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    strict_check = body.is_a?(Primitive) && (body.name == "proc_call" || body.name == "pointer_set")
+    strict_check = body.is_a?(Primitive) && body.name.in?("proc_call", "pointer_set")
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]
@@ -1219,7 +1215,7 @@ class Crystal::Call
     end
 
     named_args_types.try &.each do |named_arg|
-      arg = typed_def.args.find { |arg| arg.external_name == named_arg.name }.not_nil!
+      arg = typed_def.args.find! { |arg| arg.external_name == named_arg.name }
 
       type = named_arg.type
       var = MetaVar.new(arg.name, type)
@@ -1248,16 +1244,6 @@ class Crystal::Call
 
     type.as(SubclassObservable).add_subclass_observer(self)
     @subclass_notifier = type
-  end
-
-  def raises=(value)
-    if @raises != value
-      @raises = value
-      typed_def = parent_visitor.typed_def?
-      if typed_def
-        typed_def.raises = value
-      end
-    end
   end
 
   def super?
