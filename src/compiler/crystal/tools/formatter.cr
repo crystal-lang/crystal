@@ -1504,12 +1504,15 @@ module Crystal
     end
 
     def format_def_args(node : Def | Macro)
-      format_def_args node.args, node.block_arg, node.splat_index, false, node.double_splat
+      block_arg = node.block_arg
+      yields = node.is_a?(Def) && !node.block_arity.nil?
+      format_def_args node.args, node.block_arg, node.splat_index, false, node.double_splat, yields
     end
 
-    def format_def_args(args : Array, block_arg, splat_index, variadic, double_splat)
+    def format_def_args(args : Array, block_arg, splat_index, variadic, double_splat, yields)
       # If there are no args, remove extra "()"
       if args.empty? && !block_arg && !double_splat && !variadic
+        write "(&)" if yields
         if @token.type.op_lparen?
           next_token_skip_space_or_newline
           check :OP_RPAREN
@@ -1541,7 +1544,7 @@ module Crystal
       end
 
       args.each_with_index do |arg, i|
-        has_more = !last?(i, args) || double_splat || block_arg || variadic
+        has_more = !last?(i, args) || double_splat || block_arg || yields || variadic
         wrote_newline = format_def_arg(wrote_newline, has_more) do
           if i == splat_index
             write_token :OP_STAR
@@ -1557,7 +1560,7 @@ module Crystal
       end
 
       if double_splat
-        wrote_newline = format_def_arg(wrote_newline, block_arg) do
+        wrote_newline = format_def_arg(wrote_newline, block_arg || yields) do
           write_token :OP_STAR_STAR
           skip_space_or_newline
 
@@ -1574,6 +1577,11 @@ module Crystal
 
           to_skip += 1 if at_skip?
           block_arg.accept self
+        end
+      elsif yields
+        wrote_newline = format_def_arg(wrote_newline, false) do
+          write "&"
+          skip_space_or_newline
         end
       end
 
@@ -1653,6 +1661,10 @@ module Crystal
         else
           write " " if has_more && !just_wrote_newline
         end
+      elsif @token.type.op_rparen? && has_more && !just_wrote_newline
+        # if we found a `)` and there are still more parameters to write, it
+        # must have been a missing `&` for a def that yields
+        write " "
       end
 
       just_wrote_newline
@@ -1689,7 +1701,7 @@ module Crystal
         end
       end
 
-      format_def_args node.args, nil, nil, node.varargs?, nil
+      format_def_args node.args, nil, nil, node.varargs?, nil, false
 
       if return_type = node.return_type
         skip_space
