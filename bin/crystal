@@ -101,7 +101,7 @@ remove_path_item() {
   path="$1"
   item="$2"
 
-  printf "%s" "$path" | awk -v RS=: -v ORS=: '$0 != "'$item'"' | sed 's/:$//'
+  printf "%s" "$path" | awk -v RS=: -v ORS=: '$0 != "'"$item"'"' | sed 's/:$//'
 }
 
 ##############################################################################
