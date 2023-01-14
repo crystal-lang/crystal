@@ -54,8 +54,11 @@ struct Crystal::Hasher
   # If the result of the reduction is infinity (this is impossible for
   # integers, floats and Decimals) then use the predefined hash value
   # HASH_INF_PLUS for x >= 0, or HASH_INF_MINUS for x < 0, instead.
-  # HASH_INF_PLUS, HASH_INF_MINUS and HASH_NAN are also used for the
-  # hashes of float and Decimal infinities and nans.
+  # HASH_INF_PLUS and HASH_INF_MINUS are also used for the
+  # hashes of float and Decimal infinities.
+  # Since `NaN != NaN`, it should be likely that `hash(NaN) != hash(NaN)`.
+  # Else would introduce bad performance on hash tables. Thus the hashing
+  # algorithm uses a random value for float NaN (see https://research.swtch.com/randhash).
   # A selling point for the above strategy is that it makes it possible
   # to compute hashes of decimal and binary floating-point numbers
   # efficiently, even if the exponent of the binary or decimal number
@@ -75,7 +78,6 @@ struct Crystal::Hasher
   private HASH_BITS    = 61
   private HASH_MODULUS = (1_i64 << HASH_BITS) - 1
 
-  private HASH_NAN       =      0_u64
   private HASH_INF_PLUS  = 314159_u64
   private HASH_INF_MINUS = (-314159_i64).unsafe_as(UInt64)
 
@@ -156,7 +158,7 @@ struct Crystal::Hasher
   end
 
   private def float_normalize_wrap(value)
-    return HASH_NAN if value.nan?
+    return rand(UInt64) if value.nan?
     if value.infinite?
       return value > 0 ? HASH_INF_PLUS : HASH_INF_MINUS
     end

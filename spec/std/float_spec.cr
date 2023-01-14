@@ -278,6 +278,11 @@ describe "Float" do
     it "does for Float64" do
       1.2.hash.should eq(1.2.hash)
     end
+
+    it "random hash for NaN" do
+      Float64::NAN.hash.should_not eq Float64::NAN.hash
+      Float32::NAN.hash.should_not eq Float32::NAN.hash
+    end
   end
 
   describe ".new" do
