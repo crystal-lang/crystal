@@ -321,6 +321,8 @@ describe Process do
     pending_win32 "kills a process" do
       process = Process.new(*standing_command)
       process.signal(Signal::KILL).should be_nil
+    ensure
+      process.try &.wait
     end
 
     pending_win32 "kills many process" do
@@ -328,6 +330,9 @@ describe Process do
       process2 = Process.new(*standing_command)
       process1.signal(Signal::KILL).should be_nil
       process2.signal(Signal::KILL).should be_nil
+    ensure
+      process1.try &.wait
+      process2.try &.wait
     end
   end
 
@@ -337,7 +342,8 @@ describe Process do
     process.terminated?.should be_false
 
     process.terminate
-    process.wait
+  ensure
+    process.try(&.wait)
   end
 
   pending_win32 ".exists?" do
@@ -367,6 +373,8 @@ describe Process do
     Process.pgid(process.pid).should be_a(Int64)
     process.signal(Signal::KILL)
     Process.pgid.should eq(Process.pgid(Process.pid))
+  ensure
+    process.try(&.wait)
   end
 
   {% unless flag?(:preview_mt) || flag?(:win32) %}
