@@ -22,4 +22,14 @@ module System
   def self.cpu_count : Int
     Crystal::System.cpu_count
   end
+
+  # Returns the current user name of the user running this process according
+  # to the operating system
+  #
+  # ```
+  # System.username # => "crystaler"
+  # ```
+  def self.username : String
+    Crystal::System.username
+  end
 end

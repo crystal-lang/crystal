@@ -6,6 +6,10 @@ module Crystal::System
   # Returns the number of logical processors available to the system.
   #
   # def self.cpu_count
+
+  def self.username
+    raise "No Crystal::System.username implementation available"
+  end
 end
 
 {% if flag?(:wasi) %}
@@ -13,6 +17,7 @@ end
   require "./system/wasi/cpucount"
 {% elsif flag?(:unix) %}
   require "./system/unix/hostname"
+  require "./system/unix/username"
 
   {% if flag?(:bsd) %}
     require "./system/unix/sysctl_cpucount"
