@@ -1504,7 +1504,6 @@ module Crystal
     end
 
     def format_def_args(node : Def | Macro)
-      block_arg = node.block_arg
       yields = node.is_a?(Def) && !node.block_arity.nil?
       format_def_args node.args, node.block_arg, node.splat_index, false, node.double_splat, yields
     end
