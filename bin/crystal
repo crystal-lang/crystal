@@ -138,7 +138,7 @@ CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
 CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
 
 export CRYSTAL_PATH="${CRYSTAL_PATH:-lib:$CRYSTAL_ROOT/src}"
-if [ -n "${CRYSTAL_PATH##*$CRYSTAL_ROOT/src*}" ]; then
+if [ -n "${CRYSTAL_PATH##*"$CRYSTAL_ROOT"/src*}" ]; then
   __warning_msg "CRYSTAL_PATH env variable does not contain $CRYSTAL_ROOT/src"
 fi
 
@@ -158,10 +158,10 @@ fi
 if [ -x "$CRYSTAL_DIR/crystal" ]; then
   __warning_msg "Using compiled compiler at ${CRYSTAL_DIR#"$PWD/"}/crystal"
   exec "$CRYSTAL_DIR/crystal" "$@"
-elif ! command -v $CRYSTAL > /dev/null; then
+elif ! command -v "$CRYSTAL" > /dev/null; then
   __error_msg 'You need to have a crystal executable in your path! or set CRYSTAL env variable'
   exit 1
-elif [ "$(command -v $CRYSTAL)" = "$SCRIPT_PATH" ] || [ "$(command -v $CRYSTAL)" = "bin/crystal" ]; then
+elif [ "$(command -v "$CRYSTAL")" = "$SCRIPT_PATH" ] || [ "$(command -v "$CRYSTAL")" = "bin/crystal" ]; then
   export PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")"
   exec "$SCRIPT_PATH" "$@"
 else
