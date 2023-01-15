@@ -449,7 +449,7 @@ module Crystal::Playground
     end
 
     def start
-      playground_dir = File.dirname(__FILE__)
+      playground_dir = File.dirname(CrystalPath.new.find("compiler/crystal/tools/playground/server.cr").not_nil![0])
       views_dir = File.join(playground_dir, "views")
       public_dir = File.join(playground_dir, "public")
 
