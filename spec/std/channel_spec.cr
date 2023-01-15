@@ -570,7 +570,7 @@ describe Channel do
       end
     end
 
-    it "returns correct index for array argument", focus: true do
+    it "returns correct index for array argument" do
       ch = [Channel(String).new, Channel(String).new, Channel(String).new]
       channels = [ch[0], ch[2], ch[1]] # shuffle around to get non-sequential lock_object_ids
       spawn_and_wait(->{ channels[0].send "foo" }) do
