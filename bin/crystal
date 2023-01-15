@@ -117,7 +117,7 @@ __has_colors() {
 __error_msg() {
   if __has_colors; then
     # bold red coloring
-    printf '%b\n' "\033[31;1m$@\033[0m" 1>&2
+    printf '%b\n' "\033[31;1m$*\033[0m" 1>&2
   else
     printf '%b\n' "$@" 1>&2
   fi
@@ -125,7 +125,7 @@ __error_msg() {
 __warning_msg() {
   if __has_colors; then
     # brown coloring
-    printf '%b\n' "\033[33m$@\033[0m" 1>&2
+    printf '%b\n' "\033[33m$*\033[0m" 1>&2
   else
     printf '%b\n' "$@" 1>&2
   fi
