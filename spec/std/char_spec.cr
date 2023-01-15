@@ -243,6 +243,7 @@ describe "Char" do
     expect_raises(ArgumentError) { 'a'.to_i16 }
     expect_raises(ArgumentError) { 'a'.to_i32 }
     expect_raises(ArgumentError) { 'a'.to_i64 }
+    expect_raises(ArgumentError) { 'a'.to_i128 }
 
     'a'.to_i8?.should be_nil
     'a'.to_i16?.should be_nil
