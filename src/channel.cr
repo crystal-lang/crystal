@@ -421,11 +421,23 @@ class Channel(T)
   end
 
   private def self.select_impl(ops : Indexable(SelectAction), non_blocking)
+    # ops_locks is a duplicate of ops that can be sorted without disturbing the
+    # index positions of ops
+    if ops.responds_to?(:unstable_sort_by!)
+      # If the collection type implements `unstable_sort_by!` we can dup it.
+      # This applies to two types:
+      # * `Array`: `Array#to_a` does not dup and would return the same instance,
+      #   thus we'd be sorting ops and messing up the index positions.
+      # * `StaticArray`: This avoids a heap allocation because we can dup a
+      #   static array on the stack.
+      ops_locks = ops.dup
+    else
+      ops_locks = ops.to_a
+    end
+
     # Sort the operations by the channel they contain
     # This is to avoid deadlocks between concurrent `select` calls
-    ops_locks = ops
-      .to_a
-      .unstable_sort_by!(&.lock_object_id)
+    ops_locks.unstable_sort_by!(&.lock_object_id)
 
     each_skip_duplicates(ops_locks, &.lock)
 

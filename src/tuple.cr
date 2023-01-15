@@ -548,6 +548,24 @@ struct Tuple
     end
   end
 
+  # Returns a `StaticArray` with the same elements.
+  #
+  # The element type is `Union(*T)`.
+  #
+  # ```
+  # {1, 'a', true}.to_static_array # => StaticArray[1, 'a', true]
+  # ```
+  @[AlwaysInline]
+  def to_static_array : StaticArray
+    {% begin %}
+      ary = uninitialized StaticArray(Union(*T), {{ T.size }})
+      each_with_index do |value, i|
+        ary.to_unsafe[i] = value
+      end
+      ary
+    {% end %}
+  end
+
   # Appends a string representation of this tuple to the given `IO`.
   #
   # ```
