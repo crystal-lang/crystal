@@ -2829,8 +2829,10 @@ module Crystal
       @parents ||= [program.enum] of Type
     end
 
-    def add_constant(constant)
-      types[constant.name] = const = Const.new(program, self, constant.name, constant.default_value.not_nil!)
+    def add_constant(name, value)
+      const_exp = NumberLiteral.new(value.to_s, base_type.kind)
+      const_exp.type = self
+      types[name] = const = Const.new(program, self, name, const_exp)
       program.const_initializers << const
       const
     end
