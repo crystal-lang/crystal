@@ -821,6 +821,8 @@ describe "Hash" do
     h2 = h1.compact
     h2.should be_a(Hash(String, Int32))
     h2.should eq({"a" => 1, "b" => 2})
+
+    {"a" => 1}.compact.should eq({"a" => 1})
   end
 
   it "compacts!" do
