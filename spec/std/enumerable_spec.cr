@@ -94,10 +94,6 @@ describe "Enumerable" do
       [nil, 1, nil, 2, nil, 3, nil].compact.should eq([1, 2, 3])
       [1, 2, 3].compact.should eq([1, 2, 3])
     end
-
-    it "can be applied to a Range" do
-      (1..3).compact.should eq [1, 2, 3]
-    end
   end
 
   describe "compact map" do

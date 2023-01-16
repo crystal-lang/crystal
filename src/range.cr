@@ -497,6 +497,12 @@ struct Range(B, E)
     end
   end
 
+  # Returns `self`.
+  # A `Range` does not contain any `Nil` elements by definition.
+  def compact : self
+    self
+  end
+
   # Returns the number of values in this range.
   #
   # If both the beginning and the end of this range are `Int`s, runs in constant
