@@ -1401,7 +1401,7 @@ module Crystal
       codegen_type_filter node, &.filter_by_responds_to(node.name)
     end
 
-    def codegen_type_filter(node)
+    def codegen_type_filter(node, &)
       accept node.obj
       obj_type = node.obj.type
 
@@ -1635,7 +1635,7 @@ module Crystal
       make_fun type, null, null
     end
 
-    def in_main
+    def in_main(&)
       old_builder = self.builder
       old_position = old_builder.insert_block
       old_llvm_mod = @llvm_mod
@@ -1681,7 +1681,7 @@ module Crystal
       block_value
     end
 
-    def define_main_function(name, arg_types, return_type, needs_alloca = false)
+    def define_main_function(name, arg_types, return_type, needs_alloca = false, &)
       if @llvm_mod != @main_mod
         raise "wrong usage of define_main_function: you must put it inside an `in_main` block"
       end
@@ -1920,7 +1920,7 @@ module Crystal
       in_alloca_block { builder.alloca type, name }
     end
 
-    def in_alloca_block
+    def in_alloca_block(&)
       old_block = insert_block
       position_at_end alloca_block
       value = yield
@@ -1949,7 +1949,7 @@ module Crystal
     # debug_codegen_log { {"Lorem %d", [an_int_llvm_value] of LLVM::Value} }
     # ```
     #
-    def debug_codegen_log(file = __FILE__, line = __LINE__)
+    def debug_codegen_log(file = __FILE__, line = __LINE__, &)
       return unless ENV["CRYSTAL_DEBUG_CODEGEN"]?
       printf_args = yield || ""
       printf_args = {printf_args, [] of LLVM::Value} if printf_args.is_a?(String)
@@ -1986,7 +1986,7 @@ module Crystal
       @last = type_ptr
     end
 
-    def allocate_tuple(type)
+    def allocate_tuple(type, &)
       struct_type = alloca llvm_type(type)
       type.tuple_types.each_with_index do |tuple_type, i|
         exp_type, value = yield tuple_type, i
@@ -2037,7 +2037,7 @@ module Crystal
       generic_malloc(type) { crystal_malloc_atomic_fun }
     end
 
-    def generic_malloc(type)
+    def generic_malloc(type, &)
       size = type.size
 
       if malloc_fun = yield
@@ -2057,7 +2057,7 @@ module Crystal
       generic_array_malloc(type, count) { crystal_malloc_atomic_fun }
     end
 
-    def generic_array_malloc(type, count)
+    def generic_array_malloc(type, count, &)
       size = builder.mul type.size, count
 
       if malloc_fun = yield
@@ -2245,7 +2245,7 @@ module Crystal
       end
     end
 
-    def request_value(request : Bool = true)
+    def request_value(request : Bool = true, &)
       old_needs_value = @needs_value
       @needs_value = request
       begin

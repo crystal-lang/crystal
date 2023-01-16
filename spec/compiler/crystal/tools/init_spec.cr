@@ -22,7 +22,7 @@ end
 
 # Creates a temporary directory, cd to it and run the block inside it.
 # The directory and its content is deleted when the block return.
-private def within_temporary_directory
+private def within_temporary_directory(&)
   with_tempfile "init_spec_tmp" do |tmp_path|
     Dir.mkdir_p(tmp_path)
     Dir.cd(tmp_path) do
@@ -31,7 +31,7 @@ private def within_temporary_directory
   end
 end
 
-private def with_file(name)
+private def with_file(name, &)
   yield File.read(name)
 end
 

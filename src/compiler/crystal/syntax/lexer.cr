@@ -2008,7 +2008,7 @@ module Crystal
       @token
     end
 
-    def lookahead(preserve_token_on_fail = false)
+    def lookahead(preserve_token_on_fail = false, &)
       old_pos, old_line, old_column = current_pos, @line_number, @column_number
       @temp_token.copy_from(@token) if preserve_token_on_fail
 
@@ -2020,7 +2020,7 @@ module Crystal
       result
     end
 
-    def peek_ahead
+    def peek_ahead(&)
       result = uninitialized typeof(yield)
       lookahead(preserve_token_on_fail: true) do
         result = yield
@@ -2391,7 +2391,7 @@ module Crystal
       @token
     end
 
-    def char_to_hex(char)
+    def char_to_hex(char, &)
       if '0' <= char <= '9'
         char - '0'
       elsif 'a' <= char <= 'f'

@@ -346,7 +346,7 @@ module Crystal
       new_filters
     end
 
-    def each
+    def each(&)
       pos.each do |key, value|
         yield key, value
       end

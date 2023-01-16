@@ -425,11 +425,11 @@ module Crystal
     def initialize(@elements = [] of ASTNode, @of = nil, @name = nil)
     end
 
-    def self.map(values, of = nil)
+    def self.map(values, of = nil, &)
       new(values.map { |value| (yield value).as(ASTNode) }, of: of)
     end
 
-    def self.map_with_index(values)
+    def self.map_with_index(values, &)
       new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) }, of: nil)
     end
 
@@ -540,11 +540,11 @@ module Crystal
     def initialize(@elements)
     end
 
-    def self.map(values)
+    def self.map(values, &)
       new(values.map { |value| (yield value).as(ASTNode) })
     end
 
-    def self.map_with_index(values)
+    def self.map_with_index(values, &)
       new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) })
     end
 

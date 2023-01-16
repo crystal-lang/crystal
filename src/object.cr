@@ -175,7 +175,7 @@ class Object
   #   .select { |x| x % 2 == 0 }.tap { |x| puts "evens: #{x.inspect}" }
   #   .map { |x| x*x }.tap { |x| puts "squares: #{x.inspect}" }
   # ```
-  def tap
+  def tap(&)
     yield self
     self
   end
@@ -189,7 +189,7 @@ class Object
   # # First program argument in downcase, or nil
   # ARGV[0]?.try &.downcase
   # ```
-  def try
+  def try(&)
     yield self
   end
 

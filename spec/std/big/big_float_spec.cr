@@ -9,7 +9,7 @@ private def it_converts_to_s(value : BigFloat, str, *, file = __FILE__, line = _
   end
 end
 
-private def with_precision(precision)
+private def with_precision(precision, &)
   old_precision = BigFloat.default_precision
   BigFloat.default_precision = precision
 

@@ -285,7 +285,7 @@ module Crystal
       result
     end
 
-    private def with_file_lock(output_dir)
+    private def with_file_lock(output_dir, &)
       File.open(File.join(output_dir, "compiler.lock"), "w") do |file|
         file.flock_exclusive do
           yield
@@ -604,7 +604,7 @@ module Crystal
       end
     end
 
-    private def process_wrapper(command, args = nil)
+    private def process_wrapper(command, args = nil, &)
       print_command(command, args) if verbose?
 
       status = yield command, args

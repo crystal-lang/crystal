@@ -39,7 +39,7 @@ abstract class OpenSSL::SSL::Socket < IO
       end
     end
 
-    def self.open(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
+    def self.open(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil, &)
       socket = new(io, context, sync_close, hostname)
 
       begin
@@ -78,7 +78,7 @@ abstract class OpenSSL::SSL::Socket < IO
       end
     end
 
-    def self.open(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
+    def self.open(io, context : Context::Server = Context::Server.new, sync_close : Bool = false, &)
       socket = new(io, context, sync_close)
 
       begin

@@ -288,7 +288,7 @@ class Channel(T)
     receive_impl { return nil }
   end
 
-  private def receive_impl
+  private def receive_impl(&)
     receiver = Receiver(T).new
 
     @lock.lock
@@ -486,7 +486,7 @@ class Channel(T)
     raise "BUG: Fiber was awaken from select but no action was activated"
   end
 
-  private def self.each_skip_duplicates(ops_locks)
+  private def self.each_skip_duplicates(ops_locks, &)
     # Avoid deadlocks from trying to lock the same lock twice.
     # `ops_lock` is sorted by `lock_object_id`, so identical onces will be in
     # a row and we skip repeats while iterating.

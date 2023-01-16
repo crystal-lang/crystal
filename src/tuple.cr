@@ -339,7 +339,7 @@ struct Tuple
   # tuple.at(0) { 10 } # => 1
   # tuple.at(3) { 10 } # => 10
   # ```
-  def at(index : Int)
+  def at(index : Int, &)
     index += size if index < 0
     {% for i in 0...T.size %}
       return self[{{i}}] if {{i}} == index
@@ -607,7 +607,7 @@ struct Tuple
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0)
+  def map_with_index(offset = 0, &)
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
@@ -657,7 +657,7 @@ struct Tuple
   end
 
   # :inherit:
-  def reduce
+  def reduce(&)
     {% if T.empty? %}
       raise Enumerable::EmptyError.new
     {% else %}
@@ -670,7 +670,7 @@ struct Tuple
   end
 
   # :inherit:
-  def reduce(memo)
+  def reduce(memo, &)
     {% for i in 0...T.size %}
       memo = yield memo, self[{{ i }}]
     {% end %}
@@ -678,7 +678,7 @@ struct Tuple
   end
 
   # :inherit:
-  def reduce?
+  def reduce?(&)
     {% unless T.empty? %}
       reduce { |memo, elem| yield memo, elem }
     {% end %}

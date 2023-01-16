@@ -37,7 +37,7 @@ private struct LEBReader
   end
 end
 
-private def traverse_eh_table(leb, start, ip, actions)
+private def traverse_eh_table(leb, start, ip, actions, &)
   # Ref: https://chromium.googlesource.com/native_client/pnacl-libcxxabi/+/master/src/cxa_personality.cpp
 
   throw_offset = ip - 1 - start

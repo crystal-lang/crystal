@@ -90,7 +90,7 @@ module Crystal
     @stabs : Array(StabEntry)?
     @symbols : Array(Nlist64)?
 
-    def self.open(path)
+    def self.open(path, &)
       File.open(path, "r") do |file|
         yield new(file)
       end
@@ -366,14 +366,14 @@ module Crystal
 
     # Seek to the first matching load command, yields, then returns the value of
     # the block.
-    private def seek_to(load_command : LoadCommand)
+    private def seek_to(load_command : LoadCommand, &)
       seek_to_each(load_command) do |cmd, cmdsize|
         return yield cmdsize
       end
     end
 
     # Seek to each matching load command, yielding each of them.
-    private def seek_to_each(load_command : LoadCommand) : Nil
+    private def seek_to_each(load_command : LoadCommand, &) : Nil
       @io.seek(@ldoff)
 
       ncmds.times do
@@ -498,7 +498,7 @@ module Crystal
       String.new(bytes.to_unsafe, len)
     end
 
-    def read_section?(name)
+    def read_section?(name, &)
       if sh = sections.find { |s| s.sectname == name }
         @io.seek(sh.offset) do
           yield sh, @io

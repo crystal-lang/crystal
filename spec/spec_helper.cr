@@ -35,7 +35,7 @@ record SemanticResult,
   program : Program,
   node : ASTNode
 
-def assert_type(str, *, inject_primitives = false, flags = nil, file = __FILE__, line = __LINE__)
+def assert_type(str, *, inject_primitives = false, flags = nil, file = __FILE__, line = __LINE__, &)
   result = semantic(str, flags: flags, inject_primitives: inject_primitives)
   program = result.program
   expected_type = with program yield program
@@ -166,7 +166,7 @@ def assert_macro_error(macro_body, message = nil, *, flags = nil, file = __FILE_
   end
 end
 
-def prepare_macro_call(macro_body, flags = nil)
+def prepare_macro_call(macro_body, flags = nil, &)
   program = new_program
   program.flags.concat(flags.split) if flags
   args = yield program
@@ -280,7 +280,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
   end
 end
 
-def test_c(c_code, crystal_code, *, file = __FILE__)
+def test_c(c_code, crystal_code, *, file = __FILE__, &)
   with_temp_c_object_file(c_code, file: file) do |o_filename|
     yield run(%(
     require "prelude"

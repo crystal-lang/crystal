@@ -168,7 +168,7 @@ describe "JUnit Formatter" do
   end
 end
 
-private def build_report(timestamp = nil)
+private def build_report(timestamp = nil, &)
   output = String::Builder.new
   formatter = Spec::JUnitFormatter.new(output)
   formatter.started_at = timestamp if timestamp
@@ -177,7 +177,7 @@ private def build_report(timestamp = nil)
   output.to_s.chomp
 end
 
-private def build_report_with_no_timestamp
+private def build_report_with_no_timestamp(&)
   output = build_report do |formatter|
     yield formatter
   end

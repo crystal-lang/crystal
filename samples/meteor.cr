@@ -9,7 +9,7 @@ class MyIterator(T)
   def initialize(@data : T, &@block : T -> T)
   end
 
-  def each
+  def each(&)
     while true
       yield @data
       @data = @block.call(@data)
@@ -145,7 +145,7 @@ class SolutionNode
   getter :x
   getter :prev
 
-  def each
+  def each(&)
     yield @x
     p = prev
     while y = p

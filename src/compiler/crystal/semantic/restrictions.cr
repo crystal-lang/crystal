@@ -288,7 +288,7 @@ module Crystal
     end
 
     # Yields each pair of corresponding parameters between `self` and *other*.
-    def each_corresponding_param(other : DefWithMetadata, self_named_args, other_named_args)
+    def each_corresponding_param(other : DefWithMetadata, self_named_args, other_named_args, &)
       self_arg_index = 0
       other_arg_index = 0
 

@@ -322,7 +322,7 @@ class Dir
       File.join(path, entry)
     end
 
-    private def self.each_child(path)
+    private def self.each_child(path, &)
       Dir.open(path || Dir.current) do |dir|
         while entry = read_entry(dir)
           next if entry.name.in?(".", "..")

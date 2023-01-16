@@ -344,7 +344,7 @@ module Crystal
       atomic
     end
 
-    def parse_expression_suffix(location)
+    def parse_expression_suffix(location, &)
       slash_is_regex!
       next_token_skip_statement_end
       exp = parse_op_assign_no_control
@@ -1226,7 +1226,7 @@ module Crystal
       end
     end
 
-    def check_type_declaration
+    def check_type_declaration(&)
       if next_comes_colon_space?
         name = @token.value.to_s
         var = Var.new(name).at(@token.location).at_end(token_end_location)
@@ -1321,7 +1321,7 @@ module Crystal
       type
     end
 
-    def check_not_inside_def(message)
+    def check_not_inside_def(message, &)
       if @def_nest == 0 && @fun_nest == 0
         yield
       else
@@ -4400,7 +4400,7 @@ module Crystal
       comes_plus_or_minus
     end
 
-    def preserve_stop_on_do(new_value = false)
+    def preserve_stop_on_do(new_value = false, &)
       old_stop_on_do = @stop_on_do
       @stop_on_do = new_value
       value = yield
@@ -4436,7 +4436,7 @@ module Crystal
       end
     end
 
-    def parse_block2
+    def parse_block2(&)
       location = @token.location
 
       block_params = [] of Var
@@ -5177,7 +5177,7 @@ module Crystal
       named_args
     end
 
-    def parse_type_splat
+    def parse_type_splat(&)
       location = @token.location
 
       splat = false
@@ -6199,7 +6199,7 @@ module Crystal
     # If *create_scope* is true, creates an isolated variable scope and returns
     # the yield result, resetting the scope afterwards. Otherwise simply returns
     # the yield result without touching the scopes.
-    def with_isolated_var_scope(create_scope = true)
+    def with_isolated_var_scope(create_scope = true, &)
       return yield unless create_scope
 
       begin
@@ -6212,7 +6212,7 @@ module Crystal
 
     # Creates a new variable scope with the same variables as the current scope,
     # and then returns the yield result, resetting the scope afterwards.
-    def with_lexical_var_scope
+    def with_lexical_var_scope(&)
       current_scope = @var_scopes.last.dup
       @var_scopes.push current_scope
       yield
@@ -6254,7 +6254,7 @@ module Crystal
       @var_scopes.last.includes? name
     end
 
-    def open(symbol, location = @token.location)
+    def open(symbol, location = @token.location, &)
       @unclosed_stack.push Unclosed.new(symbol, location)
       begin
         value = yield
@@ -6325,7 +6325,7 @@ module Crystal
       name == "self" || var_in_scope?(name)
     end
 
-    def push_visibility
+    def push_visibility(&)
       old_visibility = @visibility
       @visibility = nil
       value = yield
