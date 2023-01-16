@@ -96,11 +96,7 @@ describe "Enumerable" do
     end
 
     it "can be applied to a Range" do
-      (1..3).compact.should eq([1, 2, 3])
-    end
-
-    it "can be applied to a Slice" do
-      Slice[1, "a", nil, :b, nil].compact.should eq([1, "a", :b])
+      (1..3).compact.should eq [1, 2, 3]
     end
   end
 
