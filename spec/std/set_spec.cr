@@ -75,6 +75,11 @@ describe "Set" do
     end
   end
 
+  it "#compact" do
+    Set{1, nil, 2, nil, 3}.compact.should eq Set{1, 2, 3}
+    Set{1, nil, 2, nil, 3}.compact.should be_a(Set(Int32))
+  end
+
   describe "dup" do
     it "creates a dup" do
       set1 = Set{[1, 2]}
