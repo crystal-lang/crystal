@@ -89,7 +89,7 @@ describe "Enumerable" do
     end
   end
 
-  describe "compact" do
+  describe "#compact" do
     it "can be applied to an Array" do
       [nil, 1, nil, 2, nil, 3, nil].compact.should eq([1, 2, 3])
       [1, 2, 3].compact.should eq([1, 2, 3])
