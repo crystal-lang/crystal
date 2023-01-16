@@ -106,26 +106,72 @@ class LLVM::Builder
   end
 
   {% for method_name in %w(gep inbounds_gep) %}
-    def {{method_name.id}}(value, indices : Array(LLVM::ValueRef), name = "")
+    def {{method_name.id}}(value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
       # check_value(value)
 
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
+      \{% if LibLLVM::IS_LT_80 %}
+        Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
+      \{% else %}
+        Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
+      \{% end %}
     end
 
-    def {{method_name.id}}(value, index : LLVM::Value, name = "")
+    def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
+      # check_value(value)
+
+      \{% if LibLLVM::IS_LT_80 %}
+        Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
+      \{% else %}
+        Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
+      \{% end %}
+    end
+
+    def {{method_name.id}}(value : LLVM::Value, index : LLVM::Value, name = "")
       # check_value(value)
 
       indices = pointerof(index).as(LibLLVM::ValueRef*)
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices, 1, name)
+      \{% if LibLLVM::IS_LT_80 %}
+        Value.new LibLLVM.build_{{method_name.id}}(self, value, indices, 1, name)
+      \{% else %}
+        Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices, 1, name)
+      \{% end %}
     end
 
-    def {{method_name.id}}(value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
+    def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, index : LLVM::Value, name = "")
+      # check_value(value)
+
+      indices = pointerof(index).as(LibLLVM::ValueRef*)
+      \{% if LibLLVM::IS_LT_80 %}
+        Value.new LibLLVM.build_{{method_name.id}}(self, value, indices, 1, name)
+      \{% else %}
+        Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices, 1, name)
+      \{% end %}
+    end
+
+    def {{method_name.id}}(value : LLVM::Value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
       # check_value(value)
 
       indices = uninitialized LLVM::Value[2]
       indices[0] = index1
       indices[1] = index2
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
+      \{% if LibLLVM::IS_LT_80 %}
+        Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
+      \{% else %}
+        Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
+      \{% end %}
+    end
+
+    def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
+      # check_value(value)
+
+      indices = uninitialized LLVM::Value[2]
+      indices[0] = index1
+      indices[1] = index2
+      \{% if LibLLVM::IS_LT_80 %}
+        Value.new LibLLVM.build_{{method_name.id}}(self, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
+      \{% else %}
+        Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
+      \{% end %}
     end
   {% end %}
 

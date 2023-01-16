@@ -167,7 +167,7 @@ class Crystal::CodeGenVisitor
   end
 
   def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : VoidType, value)
-    store_void_in_union target_pointer, target_type
+    store_void_in_union target_type, target_pointer
   end
 
   def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : BoolType, value)
@@ -175,7 +175,7 @@ class Crystal::CodeGenVisitor
   end
 
   def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : NilType, value)
-    store_nil_in_union target_pointer, target_type
+    store_nil_in_union target_type, target_pointer
   end
 
   def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : Type, value)
@@ -229,10 +229,13 @@ class Crystal::CodeGenVisitor
   end
 
   def assign_distinct(target_pointer, target_type : TupleInstanceType, value_type : TupleInstanceType, value)
+    target_struct_type = llvm_type(target_type)
+    value_struct_type = llvm_type(value_type)
+
     index = 0
     target_type.tuple_types.zip(value_type.tuple_types) do |target_tuple_type, value_tuple_type|
-      target_ptr = gep target_pointer, 0, index
-      value_ptr = gep value, 0, index
+      target_ptr = aggregate_index(target_struct_type, target_pointer, index)
+      value_ptr = aggregate_index(value_struct_type, value, index)
       loaded_value = to_lhs(value_ptr, value_tuple_type)
       assign(target_ptr, target_tuple_type, value_tuple_type, loaded_value)
       index += 1
@@ -241,12 +244,16 @@ class Crystal::CodeGenVisitor
   end
 
   def assign_distinct(target_pointer, target_type : NamedTupleInstanceType, value_type : NamedTupleInstanceType, value)
+    target_struct_type = llvm_type(target_type)
+    value_struct_type = llvm_type(value_type)
+
     value_type.entries.each_with_index do |entry, index|
-      value_ptr = aggregate_index(value, index)
+      value_ptr = aggregate_index(value_struct_type, value, index)
       value_at_index = to_lhs(value_ptr, entry.type)
       target_index = target_type.name_index(entry.name).not_nil!
       target_index_type = target_type.name_type(entry.name)
-      assign aggregate_index(target_pointer, target_index), target_index_type, entry.type, value_at_index
+      target_ptr = aggregate_index(target_struct_type, target_pointer, target_index)
+      assign target_ptr, target_index_type, entry.type, value_at_index
     end
   end
 
@@ -440,11 +447,14 @@ class Crystal::CodeGenVisitor
   end
 
   def downcast_distinct(value, to_type : TupleInstanceType, from_type : TupleInstanceType)
-    target_pointer = alloca(llvm_type(to_type))
+    target_struct_type = llvm_type(to_type)
+    value_struct_type = llvm_type(from_type)
+    target_pointer = alloca(target_struct_type)
+
     index = 0
     to_type.tuple_types.zip(from_type.tuple_types) do |target_tuple_type, value_tuple_type|
-      target_ptr = gep target_pointer, 0, index
-      value_ptr = gep value, 0, index
+      target_ptr = aggregate_index(target_struct_type, target_pointer, index)
+      value_ptr = aggregate_index(value_struct_type, value, index)
       loaded_value = to_lhs(value_ptr, value_tuple_type)
       downcasted_value = downcast(loaded_value, target_tuple_type, value_tuple_type, true)
       downcasted_value = to_rhs(downcasted_value, target_tuple_type)
@@ -455,15 +465,18 @@ class Crystal::CodeGenVisitor
   end
 
   def downcast_distinct(value, to_type : NamedTupleInstanceType, from_type : NamedTupleInstanceType)
-    target_pointer = alloca(llvm_type(to_type))
+    target_struct_type = llvm_type(to_type)
+    value_struct_type = llvm_type(from_type)
+    target_pointer = alloca(target_struct_type)
+
     from_type.entries.each_with_index do |entry, index|
-      value_ptr = aggregate_index(value, index)
+      value_ptr = aggregate_index(value_struct_type, value, index)
       value_at_index = to_lhs(value_ptr, entry.type)
       target_index = to_type.name_index(entry.name).not_nil!
       target_index_type = to_type.name_type(entry.name)
       downcasted_value = downcast(value_at_index, target_index_type, entry.type, true)
       downcasted_value = to_rhs(downcasted_value, target_index_type)
-      store downcasted_value, aggregate_index(target_pointer, target_index)
+      store downcasted_value, aggregate_index(target_struct_type, target_pointer, target_index)
     end
     target_pointer
   end
@@ -603,7 +616,7 @@ class Crystal::CodeGenVisitor
 
   def upcast_distinct(value, to_type : MixedUnionType, from_type : VoidType)
     union_ptr = alloca(llvm_type(to_type))
-    store_void_in_union union_ptr, to_type
+    store_void_in_union to_type, union_ptr
     union_ptr
   end
 
@@ -615,7 +628,7 @@ class Crystal::CodeGenVisitor
 
   def upcast_distinct(value, to_type : MixedUnionType, from_type : NilType)
     union_ptr = alloca(llvm_type(to_type))
-    store_nil_in_union union_ptr, to_type
+    store_nil_in_union to_type, union_ptr
     union_ptr
   end
 

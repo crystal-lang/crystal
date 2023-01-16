@@ -18,10 +18,10 @@ class Increment < Instruction
     builder.position_at_end bb
 
     cell_index = builder.load program.cell_index_ptr, "cell_index"
-    current_cell_ptr = builder.gep program.cells_ptr, cell_index, "current_cell_ptr"
+    current_cell_ptr = builder.gep program.cell_type, program.cells_ptr, cell_index, "current_cell_ptr"
 
     cell_val = builder.load current_cell_ptr, "cell_value"
-    increment_amount = program.ctx.int(CELL_SIZE_IN_BYTES * 8).const_int(@amount)
+    increment_amount = program.cell_type.const_int(@amount)
     new_cell_val = builder.add cell_val, increment_amount, "cell_value"
     builder.store new_cell_val, current_cell_ptr
 
@@ -53,7 +53,7 @@ class Read < Instruction
     builder.position_at_end bb
 
     cell_index = builder.load program.cell_index_ptr, "cell_index"
-    current_cell_ptr = builder.gep program.cells_ptr, cell_index, "current_cell_ptr"
+    current_cell_ptr = builder.gep program.cell_type, program.cells_ptr, cell_index, "current_cell_ptr"
 
     getchar = program.mod.functions["getchar"]
     input_char = builder.call getchar, "input_char"
@@ -70,7 +70,7 @@ class Write < Instruction
     builder.position_at_end bb
 
     cell_index = builder.load program.cell_index_ptr, "cell_index"
-    current_cell_ptr = builder.gep program.cells_ptr, cell_index, "current_cell_ptr"
+    current_cell_ptr = builder.gep program.cell_type, program.cells_ptr, cell_index, "current_cell_ptr"
 
     cell_val = builder.load current_cell_ptr, "cell_value"
     cell_val_as_char = builder.sext cell_val, program.ctx.int32, "cell_val_as_char"
@@ -100,9 +100,9 @@ class Loop < Instruction
 
     builder.position_at_end loop_header
     cell_index = builder.load program.cell_index_ptr, "cell_index"
-    current_cell_ptr = builder.gep program.cells_ptr, cell_index, "current_cell_ptr"
+    current_cell_ptr = builder.gep program.cell_type, program.cells_ptr, cell_index, "current_cell_ptr"
     cell_val = builder.load current_cell_ptr, "cell_value"
-    zero = program.ctx.int(CELL_SIZE_IN_BYTES * 8).const_int(0)
+    zero = program.cell_type.const_int(0)
     cell_val_is_zero = builder.icmp LLVM::IntPredicate::EQ, cell_val, zero
 
     builder.cond cell_val_is_zero, loop_after, loop_body_block
@@ -123,6 +123,7 @@ class Program
   getter ctx : LLVM::Context
   getter builder : LLVM::Builder
   getter instructions
+  getter cell_type : LLVM::Type
   getter! cells_ptr : LLVM::Value
   getter! cell_index_ptr : LLVM::Value
   getter! func : LLVM::Function
@@ -131,6 +132,8 @@ class Program
     @ctx = LLVM::Context.new
     @mod = @ctx.new_module("brainfuck")
     @builder = @ctx.new_builder
+
+    @cell_type = @ctx.int(CELL_SIZE_IN_BYTES * 8)
   end
 
   def self.new(source : String)
