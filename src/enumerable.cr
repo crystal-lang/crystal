@@ -221,6 +221,9 @@ module Enumerable(T)
   end
 
   # Returns an `Enumerable` with all `nil` elements removed.
+  #
+  # Returns `self` if `T` is not nilable.
+  #
   # If needed, the returned value can be converted to an `Array`
   # using `Enumerable#to_a`.
   #
@@ -229,7 +232,11 @@ module Enumerable(T)
   # coll.to_a # => ["a", "b", "c"]
   # ```
   def compact : Enumerable
-    compact_map &.itself
+    {% if T >= Nil %}
+      compact_map &.itself
+    {% else %}
+      dup
+    {% end %}
   end
 
   # Returns an `Array` with the results of running the block against each element
