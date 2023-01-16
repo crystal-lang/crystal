@@ -279,6 +279,11 @@ describe "Deque" do
     end
   end
 
+  it "#compact" do
+    Deque.new([1, nil, 2, 3, nil]).compact.should eq Deque{1, 2, 3}
+    Deque.new([1, nil, 2, 3, nil]).compact.should be_a(Deque(Int32))
+  end
+
   it "does dup" do
     x = {1 => 2}
     a = Deque{x}

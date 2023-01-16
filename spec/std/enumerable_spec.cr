@@ -95,10 +95,6 @@ describe "Enumerable" do
       [1, 2, 3].compact.should eq([1, 2, 3])
     end
 
-    it "can be applied to a Deque" do
-      Deque.new([1, nil, 2, 3, nil]).compact.should eq([1, 2, 3])
-    end
-
     it "can be applied to a Range" do
       (1..3).compact.should eq([1, 2, 3])
     end
