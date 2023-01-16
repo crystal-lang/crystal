@@ -64,7 +64,7 @@ describe TCPSocket, tags: "network" do
       end
 
       it "raises when host doesn't exist" do
-        error = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
+        err = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPSocket.new("doesnotexist.example.org.", 12345)
         end
         # FIXME: Resolve special handling for win32. The error code handling should be identical.
@@ -76,7 +76,7 @@ describe TCPSocket, tags: "network" do
       end
 
       it "raises (rather than segfault on darwin) when host doesn't exist and port is 0" do
-        error = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
+        err = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPSocket.new("doesnotexist.example.org.", 0)
         end
         # FIXME: Resolve special handling for win32. The error code handling should be identical.
