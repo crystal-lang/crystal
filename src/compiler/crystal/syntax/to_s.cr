@@ -614,7 +614,7 @@ module Crystal
         @str << '.'
       end
       @str << node.name
-      if node.args.size > 0 || node.block_arg || node.double_splat
+      if node.args.size > 0 || node.block_arity || node.double_splat
         @str << '('
         printed_arg = false
         node.args.each_with_index do |arg, i|
@@ -633,7 +633,9 @@ module Crystal
           @current_arg_type = :block_arg
           @str << ", " if printed_arg
           block_arg.accept self
-          printed_arg = true
+        elsif node.block_arity
+          @str << ", " if printed_arg
+          @str << '&'
         end
         @str << ')'
       end

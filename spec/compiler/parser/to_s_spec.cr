@@ -219,4 +219,8 @@ describe "ASTNode#to_s" do
   expect_to_s "->::foo(Int32, String)"
   expect_to_s "->::Foo::Bar.foo"
   expect_to_s "yield(1)"
+  expect_to_s "def foo\n  yield\nend", "def foo(&)\n  yield\nend"
+  expect_to_s "def foo(x)\n  yield\nend", "def foo(x, &)\n  yield\nend"
+  expect_to_s "def foo(**x)\n  yield\nend", "def foo(**x, &)\n  yield\nend"
+  expect_to_s "macro foo(x)\n  yield\nend"
 end
