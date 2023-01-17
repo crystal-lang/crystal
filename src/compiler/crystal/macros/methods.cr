@@ -1905,7 +1905,13 @@ module Crystal
     end
 
     def self.has_constant?(type, name)
-      BoolLiteral.new(type.types.has_key?(name))
+      return BoolLiteral.new(true) if type.types.has_key?(name)
+
+      name.split "::" do |part|
+        return BoolLiteral.new(false) unless (type = type.types[part]?)
+      end
+
+      BoolLiteral.new true
     end
 
     def self.constant(type, name)

@@ -1975,9 +1975,28 @@ module Crystal::Macros
     def constant(name : StringLiteral | SymbolLiteral | MacroId) : ASTNode
     end
 
-    # Returns `true` if this type has a constant. For example `DEFAULT_OPTIONS`
-    # (the name you pass to this method is `"DEFAULT_OPTIONS"` or `:DEFAULT_OPTIONS`
-    # in this cases).
+    # Returns `true` if this type has a constant/type with the provided *name*.
+    #
+    # ```
+    # module Foo
+    #   ID = 1
+    #
+    #   module Bar
+    #     module Baz
+    #     end
+    #   end
+    # end
+    #
+    # {{ Foo.has_constant? "ID" }}  # => true
+    # {{ Foo.has_constant? :Bar }}  # => true
+    # {{ Foo.has_constant? "Bar" }} # => true
+    #
+    # {{ @top_level.has_constant? "Foo" }}      # => true
+    # {{ @type.has_constant? "Foo" }}           # => true
+    # {{ @type.has_constant? "Foo::Bar::Baz" }} # => true
+    # {{ @type.has_constant? "Bar" }}           # => false
+    # {{ @type.has_constant? "Foo::Bar::Biz" }} # => false
+    # ```
     def has_constant?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 

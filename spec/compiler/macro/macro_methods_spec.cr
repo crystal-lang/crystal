@@ -1866,6 +1866,61 @@ module Crystal
         end
       end
 
+      describe "#has_constant?" do
+        it "type on the top level" do
+          assert_type(%(
+            class A
+            end
+
+            {{ @type.has_constant?("A") ? 1 : 'f' }}
+          )) { int32 }
+        end
+
+        it "constant within a type from that type" do
+          assert_type(%(
+            class A
+              ID = 10
+            end
+
+            {{ A.has_constant?("ID") ? 1 : 'f' }}
+          )) { int32 }
+        end
+
+        it "type within another type" do
+          assert_type(%(
+            class A
+              class B
+              end
+            end
+
+            {{ A.has_constant?("B") ? 1 : 'f' }}
+          )) { int32 }
+        end
+
+        it "type within another type from the top level" do
+          assert_type(%(
+            class A
+              class B
+              end
+            end
+
+            {{ @type.has_constant?("A::B") ? 1 : 'f' }}
+          )) { int32 }
+        end
+
+        it "constant within a nested type from the top level" do
+          assert_type(%(
+            class A
+              class B
+                ID = 20
+              end
+            end
+
+            {{ @type.has_constant?("A::B::ID") ? 1 : 'f' }}
+          )) { int32 }
+        end
+      end
+
       describe "#abstract?" do
         it NonGenericModuleType do
           assert_macro("{{type.abstract?}}", "false") do |program|
