@@ -1,0 +1,36 @@
+name: BSD CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os.host }}
+    strategy:
+      matrix:
+        os:
+          - name: freebsd
+            architecture: x86-64
+            version: '13.1'
+            host: macos-12
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Test on ${{ matrix.os.name }}
+        uses: cross-platform-actions/action@4dba297f8725789927aedb089a2e7716d4333804 # v0.9.0+
+        env:
+          SPEC_SPLIT_DOTS: 160
+        with:
+          environment_variables: SPEC_SPLIT_DOTS
+          operating_system: ${{ matrix.os.name }}
+          architecture: ${{ matrix.os.architecture }}
+          version: ${{ matrix.os.version }}
+          shell: bash
+          run: |
+            sudo mkdir -p /usr/local/etc/pkg/repos
+            printf 'FreeBSD: {\n  url: "pkg+http://pkg.FreeBSD.org/${ABI}/latest"\n}\n' | sudo tee /usr/local/etc/pkg/repos/FreeBSD13.1-STABLE.conf
+            sudo pkg install -y crystal gmake openssl git
+            crystal --version
+            gmake std_spec clean threads=1 stats=1 junit_output=.junit/std_spec.xml
+            gmake crystal primitives_spec std_spec compiler_spec threads=1 junit_output=.junit/spec.xml
+            gmake samples
