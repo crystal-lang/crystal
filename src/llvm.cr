@@ -108,10 +108,6 @@ module LLVM
     normalized = LibLLVMExt.normalize_target_triple(triple)
     normalized = LLVM.string_and_dispose(normalized)
 
-    # Fix LLVM not replacing empty triple parts with "unknown"
-    # This was fixed in LLVM 8
-    normalized = normalized.split('-').map { |c| c.presence || "unknown" }.join('-')
-
     normalized
   end
 
