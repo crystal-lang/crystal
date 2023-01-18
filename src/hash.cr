@@ -2043,7 +2043,7 @@ class Hash(K, V)
     end
   end
 
-  private class EntryIterator(K, V)
+  private struct EntryIterator(K, V)
     include BaseIterator
     include Iterator({K, V})
 
@@ -2055,7 +2055,7 @@ class Hash(K, V)
     end
   end
 
-  private class KeyIterator(K, V)
+  private struct KeyIterator(K, V)
     include BaseIterator
     include Iterator(K)
 
@@ -2067,7 +2067,7 @@ class Hash(K, V)
     end
   end
 
-  private class ValueIterator(K, V)
+  private struct ValueIterator(K, V)
     include BaseIterator
     include Iterator(V)
 
