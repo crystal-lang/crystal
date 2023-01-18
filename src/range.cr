@@ -527,7 +527,7 @@ struct Range(B, E)
     end
   end
 
-  private class ItemIterator(B, E)
+  private struct ItemIterator(B, E)
     include Iterator(B)
 
     @range : Range(B, E)
@@ -558,7 +558,7 @@ struct Range(B, E)
     end
   end
 
-  private class ReverseIterator(B, E)
+  private struct ReverseIterator(B, E)
     include Iterator(E)
 
     @range : Range(B, E)
@@ -580,7 +580,7 @@ struct Range(B, E)
     end
   end
 
-  private class StepIterator(R, B, N)
+  private struct StepIterator(R, B, N)
     include Iterator(B)
 
     @range : R
