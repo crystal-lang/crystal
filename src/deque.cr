@@ -334,9 +334,7 @@ class Deque(T)
     {% if T >= Nil %}
       deque = Deque(typeof(Enumerable.element_type(self).not_nil!)).new
       each do |e|
-        unless e.nil?
-          deque << e
-        end
+        deque << e unless e.nil?
       end
       deque
     {% else %}

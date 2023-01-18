@@ -378,9 +378,7 @@ struct Set(T)
     {% if T >= Nil %}
       set = Set(typeof(Enumerable.element_type(self).not_nil!)).new
       each do |e|
-        unless e.nil?
-          set << e
-        end
+        set << e unless e.nil?
       end
       set
     {% else %}
