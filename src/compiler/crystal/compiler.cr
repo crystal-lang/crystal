@@ -489,7 +489,7 @@ module Crystal
                 end
               end
             end
-            codegen_process.wait
+            Process.new(codegen_process).wait
 
             if pipe_w = pw
               pipe_w.close
