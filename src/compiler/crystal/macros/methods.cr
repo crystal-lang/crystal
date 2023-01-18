@@ -1905,18 +1905,15 @@ module Crystal
     end
 
     def self.has_constant?(type, name)
-      return BoolLiteral.new(true) if type.types.has_key?(name)
+      path = Path.new name.split("::", remove_empty: true), name.starts_with?("::")
 
-      name.split "::" do |part|
-        return BoolLiteral.new(false) unless (type = type.types[part]?)
-      end
-
-      BoolLiteral.new true
+      BoolLiteral.new !!type.lookup_path path
     end
 
     def self.constant(type, name)
-      type = type.types[name]?
-      case type
+      path = Path.new name.split("::", remove_empty: true), name.starts_with?("::")
+
+      case type = type.lookup_path path
       when Const
         type.value
       when Type

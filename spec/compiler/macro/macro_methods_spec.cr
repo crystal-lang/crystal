@@ -1866,7 +1866,56 @@ module Crystal
         end
       end
 
+      describe "#constant" do
+        it "global path" do
+          assert_type(%(
+            ID = 10
+
+            class A
+              class B
+              end
+            end
+
+            {{ A::B.constant("::ID") == 10 ? 1 : 'f' }}
+          )) { int32 }
+        end
+
+        it "const within another type from the top level" do
+          assert_type(%(
+            class A
+              class B
+                ID = 10
+              end
+            end
+
+            {{ @type.constant("A::B::ID") == 10 ? 1 : 'f' }}
+          )) { int32 }
+        end
+
+        it "type within another type from the top level" do
+          assert_type(%(
+            class A
+              class B
+              end
+            end
+
+            {{ @type.constant("A::B").class? ? 1 : 'f' }}
+          )) { int32 }
+        end
+      end
+
       describe "#has_constant?" do
+        it "global path" do
+          assert_type(%(
+            class A
+              class B
+              end
+            end
+
+            {{ A::B.has_constant?("::A") ? 1 : 'f' }}
+          )) { int32 }
+        end
+
         it "type on the top level" do
           assert_type(%(
             class A
