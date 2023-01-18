@@ -74,7 +74,7 @@ struct BigRational < Number
   end
 
   # :nodoc:
-  def self.new
+  def self.new(&)
     LibGMP.mpq_init(out mpq)
     yield pointerof(mpq)
     new(mpq)

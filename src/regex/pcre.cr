@@ -120,7 +120,7 @@ module Regex::PCRE
       end
     end
 
-    private def fetch_impl(group_name : String)
+    private def fetch_impl(group_name : String, &)
       max_start = -1
       match = nil
       exists = false
@@ -139,7 +139,7 @@ module Regex::PCRE
       end
     end
 
-    private def each_named_capture_number(group_name)
+    private def each_named_capture_number(group_name, &)
       name_entry_size = LibPCRE.get_stringtable_entries(@code, group_name, out first, out last)
       return if name_entry_size < 0
 

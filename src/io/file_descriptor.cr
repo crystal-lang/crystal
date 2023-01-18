@@ -118,7 +118,7 @@ class IO::FileDescriptor < IO
 
   # Same as `seek` but yields to the block after seeking and eventually seeks
   # back to the original position when the block returns.
-  def seek(offset, whence : Seek = Seek::Set)
+  def seek(offset, whence : Seek = Seek::Set, &)
     original_pos = tell
     begin
       seek(offset, whence)
@@ -176,7 +176,7 @@ class IO::FileDescriptor < IO
 
   # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
 
-  def flock_shared(blocking = true)
+  def flock_shared(blocking = true, &)
     flock_shared blocking
     begin
       yield
@@ -191,7 +191,7 @@ class IO::FileDescriptor < IO
     system_flock_shared(blocking)
   end
 
-  def flock_exclusive(blocking = true)
+  def flock_exclusive(blocking = true, &)
     flock_exclusive blocking
     begin
       yield

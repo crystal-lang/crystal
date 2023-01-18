@@ -124,7 +124,7 @@ module Crystal::Playground
       Log.warn { "Unable to send message (session=#{@session_key})." }
     end
 
-    def send_with_json_builder
+    def send_with_json_builder(&)
       send(JSON.build do |json|
         json.object do
           yield json

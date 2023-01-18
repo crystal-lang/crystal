@@ -260,7 +260,7 @@ struct Number
   end
 
   # :ditto:
-  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true) : String
+  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, &) : String
     String.build do |io|
       humanize(io, precision, separator, delimiter, base: base, significant: significant) do |magnitude, number|
         yield magnitude, number

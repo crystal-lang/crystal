@@ -108,7 +108,7 @@ struct Range(B, E)
   # (10..15).each { |n| print n, ' ' }
   # # prints: 10 11 12 13 14 15
   # ```
-  def each : Nil
+  def each(&) : Nil
     {% if B == Nil %}
       {% raise "Can't each beginless range" %}
     {% end %}
@@ -160,7 +160,7 @@ struct Range(B, E)
   # (10...15).reverse_each { |n| print n, ' ' }
   # # prints: 14 13 12 11 10
   # ```
-  def reverse_each : Nil
+  def reverse_each(&) : Nil
     {% if E == Nil %}
       {% raise "Can't reverse_each endless range" %}
     {% end %}

@@ -122,7 +122,7 @@ module Crystal
       end
     end
 
-    def bind(from = nil)
+    def bind(from = nil, &)
       # Quick check to provide a better error message when assigning a type
       # to a variable whose type is frozen
       if self.is_a?(MetaTypeVar) && (freeze_type = self.freeze_type) && from &&

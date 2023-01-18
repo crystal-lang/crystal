@@ -1,6 +1,6 @@
 require "spec"
 
-private def build_report
+private def build_report(&)
   String.build do |io|
     formatter = Spec::TAPFormatter.new(io)
     yield formatter

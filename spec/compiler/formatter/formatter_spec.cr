@@ -209,6 +209,8 @@ describe Crystal::Formatter do
   assert_format "def   foo (  &@block)  \n  end", "def foo(&@block)\nend"
   assert_format "def   foo (  @select)  \n  end", "def foo(@select)\nend"
   assert_format "def   foo (  @@select)  \n  end", "def foo(@@select)\nend"
+  assert_format "def   foo (  bar  @select)  \n  end", "def foo(bar @select)\nend"
+  assert_format "def   foo (  bar  @@select)  \n  end", "def foo(bar @@select)\nend"
   assert_format "def foo(a, &@b)\nend"
   assert_format "def   foo (  x  =   1 )  \n  end", "def foo(x = 1)\nend"
   assert_format "def   foo (  x  :  Int32 )  \n  end", "def foo(x : Int32)\nend"
@@ -545,6 +547,178 @@ describe Crystal::Formatter do
   assert_format "yield(\n1 , \n2)", "yield(\n  1,\n  2)"
 
   assert_format "with foo yield bar"
+
+  context "adds `&` to yielding methods that don't have a block parameter (#8764)" do
+    assert_format <<-CRYSTAL,
+      def foo
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(&)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL,
+      def foo()
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(&)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL,
+      def foo(
+      )
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(&)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL,
+      def foo(x)
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(x, &)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL,
+      def foo(x ,)
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(x, &)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL,
+      def foo(x,
+      y)
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(x,
+              y, &)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL,
+      def foo(x,
+      y,)
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(x,
+              y, &)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL,
+      def foo(x
+      )
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(x,
+              &)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL,
+      def foo(x,
+      )
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(x,
+              &)
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL,
+      def foo(
+      x)
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(
+        x, &
+      )
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL,
+      def foo(
+      x, y)
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(
+        x, y, &
+      )
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL,
+      def foo(
+      x,
+      y)
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(
+        x,
+        y, &
+      )
+        yield
+      end
+      CRYSTAL
+
+    assert_format <<-CRYSTAL,
+      def foo(
+      x,
+      )
+        yield
+      end
+      CRYSTAL
+      <<-CRYSTAL
+      def foo(
+        x,
+        &
+      )
+        yield
+      end
+      CRYSTAL
+
+    assert_format "macro f\n  yield\n  {{ yield }}\nend"
+  end
 
   assert_format "1   +   2", "1 + 2"
   assert_format "1   &+   2", "1 &+ 2"

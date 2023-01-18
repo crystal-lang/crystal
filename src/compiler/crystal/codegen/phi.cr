@@ -6,7 +6,7 @@ class Crystal::CodeGenVisitor
 
     property? force_exit_block = false
 
-    def self.open(codegen, node, needs_value = true)
+    def self.open(codegen, node, needs_value = true, &)
       block = new codegen, node, needs_value
       yield block
       block.close

@@ -140,7 +140,7 @@ class Socket < IO
 
   # Tries to listen for connections on the previously bound socket.
   # Yields an `Socket::Error` on failure.
-  def listen(backlog : Int = SOMAXCONN)
+  def listen(backlog : Int = SOMAXCONN, &)
     system_listen(backlog) { |err| yield err }
   end
 
@@ -387,7 +387,7 @@ class Socket < IO
     raise Socket::Error.from_errno("getsockopt")
   end
 
-  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     system_getsockopt(fd, optname, optval, level) { |value| yield value }
   end
 

@@ -409,7 +409,7 @@ struct Char
   # This method takes into account the possibility that an downcase
   # version of a char might result in multiple chars, like for
   # 'İ', which results in 'i' and a dot mark.
-  def downcase(options : Unicode::CaseOptions = :none)
+  def downcase(options : Unicode::CaseOptions = :none, &)
     Unicode.downcase(self, options) { |char| yield char }
   end
 
@@ -441,7 +441,7 @@ struct Char
   # 'z'.upcase { |v| puts v } # prints 'Z'
   # 'ﬄ'.upcase { |v| puts v } # prints 'F', 'F', 'L'
   # ```
-  def upcase(options : Unicode::CaseOptions = :none)
+  def upcase(options : Unicode::CaseOptions = :none, &)
     Unicode.upcase(self, options) { |char| yield char }
   end
 
@@ -615,7 +615,7 @@ struct Char
     io << dump
   end
 
-  private def dump_or_inspect
+  private def dump_or_inspect(&)
     case self
     when '\'' then "'\\''"
     when '\\' then "'\\\\'"
@@ -804,7 +804,7 @@ struct Char
   # 129
   # 130
   # ```
-  def each_byte : Nil
+  def each_byte(&) : Nil
     # See http://en.wikipedia.org/wiki/UTF-8#Sample_code
 
     c = ord

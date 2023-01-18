@@ -125,7 +125,7 @@ class Process
   #
   # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil)
+               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil, &)
     process = new(command, args, env, clear_env, shell, input, output, error, chdir)
     begin
       value = yield process

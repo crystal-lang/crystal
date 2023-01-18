@@ -1232,6 +1232,7 @@ module Crystal
       has_underscores = false
       last_is_underscore = false
       pos_after_prefix = start
+      pos_before_exponent = nil
 
       # Consume prefix
       if current_char == '0'
@@ -1268,6 +1269,10 @@ module Crystal
           last_is_underscore = false
         end
 
+        if pos_before_exponent
+          raise("invalid decimal number exponent", @token, (current_pos - start)) unless current_pos > pos_before_exponent
+        end
+
         case current_char
         when '_'
           raise("consecutive underscores in numbers aren't allowed", @token, (current_pos - start)) if last_is_underscore
@@ -1282,7 +1287,7 @@ module Crystal
           is_e_notation = is_decimal = true
           next_char if peek_next_char.in?('+', '-')
           raise("unexpected '_' in number", @token, (current_pos - start)) if peek_next_char == '_'
-          break unless peek_next_char.in?('0'..'9')
+          pos_before_exponent = current_pos + 1
         when 'i', 'u', 'f'
           if current_char == 'f' && base != 10
             case base
@@ -2003,7 +2008,7 @@ module Crystal
       @token
     end
 
-    def lookahead(preserve_token_on_fail = false)
+    def lookahead(preserve_token_on_fail = false, &)
       old_pos, old_line, old_column = current_pos, @line_number, @column_number
       @temp_token.copy_from(@token) if preserve_token_on_fail
 
@@ -2015,7 +2020,7 @@ module Crystal
       result
     end
 
-    def peek_ahead
+    def peek_ahead(&)
       result = uninitialized typeof(yield)
       lookahead(preserve_token_on_fail: true) do
         result = yield
@@ -2386,7 +2391,7 @@ module Crystal
       @token
     end
 
-    def char_to_hex(char)
+    def char_to_hex(char, &)
       if '0' <= char <= '9'
         char - '0'
       elsif 'a' <= char <= 'f'

@@ -1,7 +1,7 @@
 require "spec"
 require "spec/helpers/iterate"
 
-private def expect_overflow
+private def expect_overflow(&)
   expect_raises ArgumentError, "Time::Span too big or too small" do
     yield
   end

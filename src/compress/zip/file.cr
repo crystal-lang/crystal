@@ -50,14 +50,14 @@ class Compress::Zip::File
 
   # Opens a `Zip::File` for reading from the given *io*, yields
   # it to the given block, and closes it at the end.
-  def self.open(io : IO, sync_close = false)
+  def self.open(io : IO, sync_close = false, &)
     zip = new io, sync_close
     yield zip ensure zip.close
   end
 
   # Opens a `Zip::File` for reading from the given *filename*, yields
   # it to the given block, and closes it at the end.
-  def self.open(filename : Path | String)
+  def self.open(filename : Path | String, &)
     zip = new filename
     yield zip ensure zip.close
   end
@@ -166,7 +166,7 @@ class Compress::Zip::File
 
     # Yields an `IO` to read this entry's contents.
     # Multiple entries can be opened and read concurrently.
-    def open
+    def open(&)
       @io.read_at(data_offset.to_i32, compressed_size.to_i32) do |io|
         io = decompressor_for(io, is_sized: true)
         checksum_reader = ChecksumReader.new(io, filename, verify: crc32)

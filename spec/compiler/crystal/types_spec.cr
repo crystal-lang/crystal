@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-private def assert_type_to_s(expected)
+private def assert_type_to_s(expected, &)
   p = Program.new
   t = with p yield p
   t.to_s.should eq(expected)

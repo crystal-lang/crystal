@@ -110,7 +110,7 @@ module Crystal
       false
     end
 
-    def visit_interpolation(node)
+    def visit_interpolation(node, &)
       node.expressions.each do |exp|
         if exp.is_a?(StringLiteral)
           @str << yield exp.value
@@ -476,7 +476,7 @@ module Crystal
       end
     end
 
-    def in_parenthesis(need_parens)
+    def in_parenthesis(need_parens, &)
       if need_parens
         @str << '('
         yield
@@ -1509,7 +1509,7 @@ module Crystal
       end
     end
 
-    def with_indent
+    def with_indent(&)
       @indent += 1
       yield
       @indent -= 1
@@ -1534,13 +1534,13 @@ module Crystal
       newline
     end
 
-    def inside_macro
+    def inside_macro(&)
       @inside_macro += 1
       yield
       @inside_macro -= 1
     end
 
-    def outside_macro
+    def outside_macro(&)
       old_inside_macro = @inside_macro
       @inside_macro = 0
       yield

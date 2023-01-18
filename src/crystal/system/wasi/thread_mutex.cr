@@ -10,7 +10,7 @@ class Thread
     def unlock
     end
 
-    def synchronize
+    def synchronize(&)
       yield
     end
   end

@@ -569,6 +569,17 @@ describe Channel do
         end
       end
     end
+
+    it "returns correct index for array argument" do
+      ch = [Channel(String).new, Channel(String).new, Channel(String).new]
+      channels = [ch[0], ch[2], ch[1]] # shuffle around to get non-sequential lock_object_ids
+      spawn_and_wait(->{ channels[0].send "foo" }) do
+        i, m = Channel.non_blocking_select(channels.map(&.receive_select_action))
+
+        i.should eq(0)
+        m.should eq("foo")
+      end
+    end
   end
 end
 

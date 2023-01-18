@@ -9,7 +9,7 @@ private class DequeTester
   @i : Int32
   @c : Array(Int32) | Deque(Int32) | Nil
 
-  def step
+  def step(&)
     @c = @deque
     yield
     @c = @array
@@ -30,7 +30,7 @@ private class DequeTester
     @c.not_nil!
   end
 
-  def test
+  def test(&)
     with self yield
   end
 end

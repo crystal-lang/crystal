@@ -1,6 +1,6 @@
 class Log
   # Setups logging bindings discarding all previous configurations.
-  def self.setup(*, builder : Log::Builder = Log.builder)
+  def self.setup(*, builder : Log::Builder = Log.builder, &)
     builder.clear
     yield builder.as(Configuration)
   end

@@ -1314,7 +1314,7 @@ module Iterator(T)
   end
 
   # Yields each element in this iterator together with its index.
-  def with_index(offset : Int = 0)
+  def with_index(offset : Int = 0, &)
     index = offset
     each do |value|
       yield value, index

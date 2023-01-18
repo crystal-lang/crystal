@@ -86,7 +86,7 @@ class YAML::Schema::Core::Parser < YAML::Parser
     mapping
   end
 
-  def process_tag(tag)
+  def process_tag(tag, &)
     if value = process_collection_tag(@pull_parser, tag)
       yield value
     end

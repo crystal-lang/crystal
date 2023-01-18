@@ -50,7 +50,7 @@ end
 # ```
 #
 # To parse and get an `Array`, use the block-less overload.
-def Array.from_json(string_or_io) : Nil
+def Array.from_json(string_or_io, &) : Nil
   parser = JSON::PullParser.new(string_or_io)
   new(parser) do |element|
     yield element
@@ -58,7 +58,7 @@ def Array.from_json(string_or_io) : Nil
   nil
 end
 
-def Deque.from_json(string_or_io) : Nil
+def Deque.from_json(string_or_io, &) : Nil
   parser = JSON::PullParser.new(string_or_io)
   new(parser) do |element|
     yield element
@@ -204,7 +204,7 @@ def Array.new(pull : JSON::PullParser)
   ary
 end
 
-def Array.new(pull : JSON::PullParser)
+def Array.new(pull : JSON::PullParser, &)
   pull.read_array do
     yield T.new(pull)
   end
@@ -218,7 +218,7 @@ def Deque.new(pull : JSON::PullParser)
   ary
 end
 
-def Deque.new(pull : JSON::PullParser)
+def Deque.new(pull : JSON::PullParser, &)
   pull.read_array do
     yield T.new(pull)
   end

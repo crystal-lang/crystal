@@ -25,7 +25,7 @@ module Regex::PCRE2
     end
   end
 
-  protected def self.compile(source, options)
+  protected def self.compile(source, options, &)
     if res = LibPCRE2.compile(source, source.bytesize, options, out errorcode, out erroroffset, nil)
       res
     else
@@ -96,7 +96,7 @@ module Regex::PCRE2
   end
 
   # :nodoc:
-  def each_capture_group
+  def each_capture_group(&)
     name_table = uninitialized UInt8*
     pattern_info(LibPCRE2::INFO_NAMETABLE, pointerof(name_table))
 
@@ -189,7 +189,7 @@ module Regex::PCRE2
       end
     end
 
-    private def fetch_impl(group_name : String)
+    private def fetch_impl(group_name : String, &)
       selected_range = nil
       exists = false
       @regex.each_capture_group do |number, name_entry|

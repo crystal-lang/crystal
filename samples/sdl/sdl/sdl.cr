@@ -35,7 +35,7 @@ module SDL
     LibSDL.quit
   end
 
-  def self.poll_events
+  def self.poll_events(&)
     while LibSDL.poll_event(out event) == 1
       yield event
     end
