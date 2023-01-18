@@ -373,8 +373,6 @@ describe "Code gen: pointer" do
 
   it "can assign nil to void pointer" do
     codegen(%(
-      require "prelude"
-
       ptr = Pointer(Void).malloc(1_u64)
       ptr.value = ptr.value
       ))

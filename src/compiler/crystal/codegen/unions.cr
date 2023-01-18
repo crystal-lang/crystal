@@ -59,7 +59,10 @@ module Crystal
 
     def union_type_and_value_pointer(union_pointer, type : MixedUnionType)
       struct_type = llvm_type(type)
-      {load(union_type_id(struct_type, union_pointer)), union_value(struct_type, union_pointer)}
+      {
+        load(llvm_context.int32, union_type_id(struct_type, union_pointer)),
+        union_value(struct_type, union_pointer),
+      }
     end
 
     def union_type_id(struct_type, union_pointer)
@@ -118,7 +121,7 @@ module Crystal
       # - cast the target pointer to Pointer(A | B)
       # - store the A | B from the first pointer into the casted target pointer
       casted_target_pointer = cast_to_pointer target_pointer, value_type
-      store load(value), casted_target_pointer
+      store load(llvm_type(value_type), value), casted_target_pointer
     end
 
     def downcast_distinct_union_types(value, to_type : MixedUnionType, from_type : MixedUnionType)

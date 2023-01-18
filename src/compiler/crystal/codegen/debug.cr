@@ -492,7 +492,7 @@ module Crystal
       debug_alloca = alloca alloca.type, "dbg.#{arg_name}"
       store alloca, debug_alloca
       declare_parameter(arg_name, arg_type, arg_no, debug_alloca, location)
-      alloca = load debug_alloca
+      alloca = load alloca.type, debug_alloca
       set_current_debug_location old_debug_location
       alloca
     end

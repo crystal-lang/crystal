@@ -122,7 +122,9 @@ class Crystal::CodeGenVisitor
         position_at_end catch_body
 
         # Allocate space for the caught exception
-        caught_exception_ptr = alloca llvm_type(@program.exception.virtual_type)
+        exception_type = @program.exception.virtual_type
+        exception_llvm_type = llvm_type(exception_type)
+        caught_exception_ptr = alloca exception_llvm_type
 
         # The catchpad instruction dictates which types of exceptions this block handles,
         # we want all of them, so we rescue all void* by passing the void_ptr_type_descriptor.
@@ -133,8 +135,8 @@ class Crystal::CodeGenVisitor
 
         # builder.printf("catchpad entered #{node.location}\n", catch_pad: @catch_pad)
 
-        caught_exception = load caught_exception_ptr
-        exception_type_id = type_id(caught_exception, @program.exception.virtual_type)
+        caught_exception = load exception_llvm_type, caught_exception_ptr
+        exception_type_id = type_id(caught_exception, exception_type)
       else
         # Unwind exception handling code - used on non-windows platforms - is a lot simpler.
         # First we generate the landing pad instruction, this returns a tuple of the libunwind

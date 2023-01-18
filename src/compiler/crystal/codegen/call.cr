@@ -95,7 +95,7 @@ class Crystal::CodeGenVisitor
       # - C calling convention passing needs a separate handling of pass-by-value
       # - Primitives might need a separate handling (for example invoking a Proc)
       if arg.type.passed_by_value? && !c_calling_convention && !is_primitive
-        call_arg = load(call_arg)
+        call_arg = load(llvm_type(arg.type), call_arg)
       end
 
       call_args << call_arg
@@ -242,7 +242,7 @@ class Crystal::CodeGenVisitor
       size = @program.bits64? ? int64(size) : int32(size)
       align = @abi.align(abi_arg_type.type)
       memcpy(final_value_casted, gep_call_arg, size, align, int1(0))
-      call_arg = load final_value
+      call_arg = load cast, final_value
     else
       # Keep same call arg
     end

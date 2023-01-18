@@ -91,18 +91,37 @@ class LLVM::Builder
     Value.new LibLLVM.build_store(self, value, ptr)
   end
 
-  def load(ptr, name = "")
+  def load(ptr : LLVM::Value, name = "")
     # check_value(ptr)
 
-    Value.new LibLLVM.build_load(self, ptr, name)
+    {% if LibLLVM::IS_LT_80 %}
+      Value.new LibLLVM.build_load(self, ptr, name)
+    {% else %}
+      Value.new LibLLVM.build_load2(self, ptr.type.element_type, ptr, name)
+    {% end %}
+  end
+
+  def load(type : LLVM::Type, ptr : LLVM::Value, name = "")
+    # check_type("load", type)
+    # check_value(ptr)
+
+    {% if LibLLVM::IS_LT_80 %}
+      Value.new LibLLVM.build_load(self, ptr, name)
+    {% else %}
+      Value.new LibLLVM.build_load2(self, type, ptr, name)
+    {% end %}
   end
 
   def store_volatile(value, ptr)
     store(value, ptr).tap { |v| v.volatile = true }
   end
 
-  def load_volatile(ptr, name = "")
+  def load_volatile(ptr : LLVM::Value, name = "")
     load(ptr, name).tap { |v| v.volatile = true }
+  end
+
+  def load_volatile(type : LLVM::Type, ptr : LLVM::Value, name = "")
+    load(type, ptr, name).tap { |v| v.volatile = true }
   end
 
   {% for method_name in %w(gep inbounds_gep) %}

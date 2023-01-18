@@ -79,7 +79,7 @@ class Crystal::CodeGenVisitor
 
     const_type = const.value.type
     if const_type.passed_by_value?
-      @last = load @last
+      @last = load llvm_type(const_type), @last
     end
 
     global.initializer = @last
@@ -108,7 +108,7 @@ class Crystal::CodeGenVisitor
 
     const_type = const.value.type
     if const_type.passed_by_value?
-      @last = load @last
+      @last = load llvm_type(const_type), @last
     end
 
     store @last, global
@@ -159,21 +159,21 @@ class Crystal::CodeGenVisitor
 
           request_value(const.value)
 
-          if const.value.type.passed_by_value?
-            @last = load @last
+          const_type = const.value.type
+          if const_type.passed_by_value?
+            @last = load llvm_type(const_type), @last
           end
 
           if @last.constant?
             global.initializer = @last
             global.global_constant = true
 
-            const_type = const.value.type
             if const_type.is_a?(PrimitiveType) || const_type.is_a?(EnumType)
               const.initializer = @last
             end
           else
-            global.initializer = llvm_type(const.value.type).null
-            unless const.value.type.nil_type? || const.value.type.void?
+            global.initializer = llvm_type(const_type).null
+            unless const_type.nil_type? || const_type.void?
               store @last, global
             end
           end
