@@ -1880,6 +1880,19 @@ module Crystal
           )) { int32 }
         end
 
+        it "global path with extra ::" do
+          assert_type(%(
+            ID = 10
+
+            class A
+              class B
+              end
+            end
+
+            {{ A::B.constant("::::ID") == 10 ? 1 : 'f' }}
+          )) { char }
+        end
+
         it "const within another type from the top level" do
           assert_type(%(
             class A
@@ -1890,6 +1903,18 @@ module Crystal
 
             {{ @type.constant("A::B::ID") == 10 ? 1 : 'f' }}
           )) { int32 }
+        end
+
+        it "const within another type from the top level with extra ::" do
+          assert_type(%(
+            class A
+              class B
+                ID = 10
+              end
+            end
+
+            {{ @type.constant("A::::::B::::ID") == 10 ? 1 : 'f' }}
+          )) { char }
         end
 
         it "type within another type from the top level" do
@@ -1905,6 +1930,17 @@ module Crystal
       end
 
       describe "#has_constant?" do
+        it "global path with extra ::" do
+          assert_type(%(
+            class A
+              class B
+              end
+            end
+
+            {{ A::B.has_constant?("::::A") ? 1 : 'f' }}
+          )) { char }
+        end
+
         it "global path" do
           assert_type(%(
             class A
@@ -1955,6 +1991,17 @@ module Crystal
 
             {{ @type.has_constant?("A::B") ? 1 : 'f' }}
           )) { int32 }
+        end
+
+        it "type within another type from the top level with extra ::" do
+          assert_type(%(
+            class A
+              class B
+              end
+            end
+
+            {{ @type.has_constant?("A::::::B") ? 1 : 'f' }}
+          )) { char }
         end
 
         it "constant within a nested type from the top level" do
