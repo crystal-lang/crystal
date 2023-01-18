@@ -34,7 +34,7 @@ class String
   end
 
   # :nodoc:
-  class GraphemeIterator
+  struct GraphemeIterator
     include Iterator(Grapheme)
 
     @last_char : Char

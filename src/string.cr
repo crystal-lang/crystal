@@ -5319,7 +5319,7 @@ class String
     end
   end
 
-  private class CharIterator
+  private struct CharIterator
     include Iterator(Char)
 
     @reader : Char::Reader
@@ -5344,7 +5344,7 @@ class String
     end
   end
 
-  private class LineIterator
+  private struct LineIterator
     include Iterator(String)
 
     def initialize(@string : String, @chomp : Bool)
