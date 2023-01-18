@@ -1593,7 +1593,7 @@ class Hash(K, V)
   # hash = {"hello" => "world", "foo" => nil}
   # hash.compact # => {"hello" => "world"}
   # ```
-  def compact
+  def compact : Hash
     {% if V >= Nil %}
       each_with_object({} of K => typeof(self.first_value.not_nil!)) do |(key, value), memo|
         memo[key] = value unless value.nil?
