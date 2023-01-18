@@ -218,7 +218,7 @@ module Iterator(T)
     AccumulateInit(typeof(self), T, U).new(self, initial, block)
   end
 
-  private class AccumulateInit(I, T, U)
+  private struct AccumulateInit(I, T, U)
     include Iterator(U)
 
     @acc : U | Iterator::Stop
@@ -235,7 +235,7 @@ module Iterator(T)
     end
   end
 
-  private class Accumulate(I, T)
+  private struct Accumulate(I, T)
     include Iterator(T)
     include IteratorWrapper
 
@@ -269,7 +269,7 @@ module Iterator(T)
     Chain(typeof(self), typeof(other), T, U).new(self, other)
   end
 
-  private class Chain(I1, I2, T1, T2)
+  private struct Chain(I1, I2, T1, T2)
     include Iterator(T1 | T2)
 
     def initialize(@iterator1 : I1, @iterator2 : I2)
@@ -310,7 +310,7 @@ module Iterator(T)
     chain iters.each
   end
 
-  private class ChainsAll(Iter, T)
+  private struct ChainsAll(Iter, T)
     include Iterator(T)
     @iterators : Iterator(Iter)
     @current : Iter | Stop
@@ -536,7 +536,7 @@ module Iterator(T)
     CycleN(typeof(self), T, typeof(n)).new(self, n)
   end
 
-  private class CycleN(I, T, N)
+  private struct CycleN(I, T, N)
     include Iterator(T)
     include IteratorWrapper
 
@@ -718,7 +718,7 @@ module Iterator(T)
     FlatMap(typeof(self), typeof(FlatMap.element_type(self, func)), typeof(FlatMap.iterator_type(self, func)), typeof(func)).new self, func
   end
 
-  private class FlatMap(I0, T, I, F)
+  private struct FlatMap(I0, T, I, F)
     include Iterator(T)
     include IteratorWrapper
 
@@ -1023,7 +1023,7 @@ module Iterator(T)
     Skip(typeof(self), T, typeof(n)).new(self, n)
   end
 
-  private class Skip(I, T, N)
+  private struct Skip(I, T, N)
     include Iterator(T)
     include IteratorWrapper
 
@@ -1054,7 +1054,7 @@ module Iterator(T)
     SkipWhile(typeof(self), T, U).new(self, func)
   end
 
-  private class SkipWhile(I, T, U)
+  private struct SkipWhile(I, T, U)
     include Iterator(T)
     include IteratorWrapper
 
@@ -1169,7 +1169,7 @@ module Iterator(T)
     First(typeof(self), T, typeof(n)).new(self, n)
   end
 
-  private class First(I, T, N)
+  private struct First(I, T, N)
     include Iterator(T)
     include IteratorWrapper
 
@@ -1200,7 +1200,7 @@ module Iterator(T)
     TakeWhile(typeof(self), T, U).new(self, func)
   end
 
-  private class TakeWhile(I, T, U)
+  private struct TakeWhile(I, T, U)
     include Iterator(T)
     include IteratorWrapper
 
@@ -1322,7 +1322,7 @@ module Iterator(T)
     end
   end
 
-  private class WithIndex(I, T, O)
+  private struct WithIndex(I, T, O)
     include Iterator({T, Int32})
     include IteratorWrapper
 
@@ -1460,7 +1460,7 @@ module Iterator(T)
   end
 
   # :nodoc:
-  class Chunk(I, T, U)
+  struct Chunk(I, T, U)
     include Iterator(Tuple(U, Array(T)))
     @iterator : I
     @init : {U, T}?
@@ -1560,7 +1560,7 @@ module Iterator(T)
   end
 
   # :nodoc:
-  class SliceAfter(I, T, B)
+  struct SliceAfter(I, T, B)
     include Iterator(Array(T))
 
     def initialize(@iterator : I, @block : T -> B, reuse)
@@ -1666,7 +1666,7 @@ module Iterator(T)
   end
 
   # :nodoc:
-  class SliceBefore(I, T, B)
+  struct SliceBefore(I, T, B)
     include Iterator(Array(T))
 
     @has_value_to_add = false
@@ -1782,7 +1782,7 @@ module Iterator(T)
   end
 
   # :nodoc:
-  class SliceWhen(I, T, B)
+  struct SliceWhen(I, T, B)
     include Iterator(Array(T))
 
     @has_previous_value = false
