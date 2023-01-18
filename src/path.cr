@@ -578,7 +578,7 @@ struct Path
   end
 
   # :nodoc:
-  class PartIterator
+  struct PartIterator
     include Iterator(String)
 
     def initialize(@path : Path)
