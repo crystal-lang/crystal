@@ -10,6 +10,10 @@
 ##   $ make -f Makefile.win clean crystal
 ## Build the compiler in release mode
 ##   $ make -f Makefile.win crystal release=1
+## Run stdlib tests
+##   $ make -f Makefile.win std_spec
+## Run compiler tests
+##   $ make -f Makefile.win compiler_spec
 
 CRYSTAL ?= crystal ## which previous crystal compiler use
 LLVM_CONFIG ?=     ## llvm-config command path to use

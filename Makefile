@@ -10,6 +10,10 @@
 ##   $ make clean crystal
 ## Build the compiler in release mode
 ##   $ make crystal release=1
+## Run stdlib tests
+##   $ make std_spec
+## Run compiler tests
+##   $ make compiler_spec
 
 CRYSTAL ?= crystal ## which previous crystal compiler use
 LLVM_CONFIG ?=     ## llvm-config command path to use
