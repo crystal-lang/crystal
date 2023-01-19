@@ -100,6 +100,10 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.fork")
   end
 
+  def self.fork(&)
+    raise NotImplementedError.new("Process.fork")
+  end
+
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
     ret = LibC._get_osfhandle(io.fd)
     raise RuntimeError.from_winerror("_get_osfhandle") if ret == -1
