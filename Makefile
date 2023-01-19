@@ -10,8 +10,6 @@
 ##   $ make clean crystal
 ## Build the compiler in release mode
 ##   $ make crystal release=1
-## Run all specs in verbose mode
-##   $ make spec verbose=1
 
 CRYSTAL ?= crystal ## which previous crystal compiler use
 LLVM_CONFIG ?=     ## llvm-config command path to use
@@ -80,10 +78,6 @@ check_llvm_config = $(eval \
 .PHONY: all
 all: crystal ## Build all files (currently crystal only) [default]
 
-.PHONY: spec
-spec: $(O)/all_spec ## Run all specs
-	$(O)/all_spec $(SPEC_FLAGS)
-
 .PHONY: std_spec
 std_spec: $(O)/std_spec ## Run standard library specs
 	$(O)/std_spec $(SPEC_FLAGS)
@@ -99,6 +93,10 @@ primitives_spec: $(O)/primitives_spec ## Run primitives specs
 .PHONY: smoke_test
 smoke_test: ## Build specs as a smoke test
 smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal
+
+.PHONY: all_spec
+all_spec: $(O)/all_spec ## Run all specs (note: this builds a huge program; use `std_spec` and `compiler_spec` independently for less resource usage)
+	$(O)/all_spec $(SPEC_FLAGS)
 
 .PHONY: samples
 samples: ## Build example programs
