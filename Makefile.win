@@ -5,7 +5,7 @@
 ## Build the compiler
 ##   $ make -f Makefile.win
 ## Build the compiler with progress output
-##   $ make -f Makefile.win progress=true
+##   $ make -f Makefile.win progress=1
 ## Clean up built files then build the compiler
 ##   $ make -f Makefile.win clean crystal
 ## Build the compiler in release mode

@@ -5,7 +5,7 @@
 ## Build the compiler
 ##   $ make
 ## Build the compiler with progress output
-##   $ make progress=true
+##   $ make progress=1
 ## Clean up built files then build the compiler
 ##   $ make clean crystal
 ## Build the compiler in release mode
