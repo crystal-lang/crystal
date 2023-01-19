@@ -86,8 +86,11 @@ check_llvm_config = $(eval \
 .PHONY: all
 all: crystal ## Build all files (currently crystal only) [default]
 
-.PHONY: test ## Run tests
-test: std_spec primitives_spec compiler_spec
+.PHONY: test
+test: spec ## Run tests
+
+.PHONY: spec
+spec: std_spec primitives_spec compiler_spec
 
 .PHONY: std_spec
 std_spec: $(O)\std_spec.exe ## Run standard library specs

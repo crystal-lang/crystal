@@ -84,7 +84,10 @@ check_llvm_config = $(eval \
 .PHONY: all
 all: crystal ## Build all files (currently crystal only) [default]
 
-.PHONY: test ## Run tests
+.PHONY: test
+test: spec ## Run tests
+
+.PHONY: spec
 test: std_spec primitives_spec compiler_spec
 
 .PHONY: std_spec
