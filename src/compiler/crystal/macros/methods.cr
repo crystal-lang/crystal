@@ -158,6 +158,31 @@ module Crystal
       end
     end
 
+    def interpret_constant(arg, type, name)
+      case type = type.lookup_path self.parse_path(arg, name)
+      when Const
+        type.value
+      when Type
+        TypeNode.new(type)
+      else
+        NilLiteral.new
+      end
+    end
+
+    def interpret_has_constant?(arg, type, name)
+      BoolLiteral.new !!type.lookup_path self.parse_path(arg, name)
+    end
+
+    private def parse_path(arg, name) : Path
+      parser = @program.new_parser name
+      parser.next_token
+      path = parser.parse_path
+      parser.check :EOF
+      @last = path
+    rescue ex : Crystal::SyntaxException
+      arg.raise "Invalid constant name: #{name.inspect}"
+    end
+
     def interpret_parse_type(node)
       interpret_check_args_toplevel do |arg|
         arg.accept self
@@ -1639,12 +1664,13 @@ module Crystal
       when "constant"
         interpret_check_args do |arg|
           value = arg.to_string("argument to 'TypeNode#constant'")
-          TypeNode.constant(type, value)
+          interpreter.interpret_constant arg, type, value
         end
       when "has_constant?"
         interpret_check_args do |arg|
           value = arg.to_string("argument to 'TypeNode#has_constant?'")
-          TypeNode.has_constant?(type, value)
+
+          interpreter.interpret_has_constant? arg, type, value
         end
       when "methods"
         interpret_check_args { TypeNode.methods(type) }
@@ -1901,25 +1927,6 @@ module Crystal
       else
         names = type.types.map { |name, member_type| MacroId.new(name).as(ASTNode) }
         ArrayLiteral.new names
-      end
-    end
-
-    def self.has_constant?(type, name)
-      path = Path.new name.lchop("::").split("::"), name.starts_with?("::")
-
-      BoolLiteral.new !!type.lookup_path path
-    end
-
-    def self.constant(type, name)
-      path = Path.new name.lchop("::").split("::"), name.starts_with?("::")
-
-      case type = type.lookup_path path
-      when Const
-        type.value
-      when Type
-        TypeNode.new(type)
-      else
-        NilLiteral.new
       end
     end
 

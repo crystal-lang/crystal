@@ -1881,16 +1881,9 @@ module Crystal
         end
 
         it "global path with extra ::" do
-          assert_type(%(
-            ID = 10
-
-            class A
-              class B
-              end
-            end
-
-            {{ A::B.constant("::::ID") == 10 ? 1 : 'f' }}
-          )) { char }
+          expect_raises(Crystal::TypeException, %(Invalid constant name: "::::ID")) do
+            assert_macro %(ID = 10; {{@type.has_constant? "::::ID" }}), %(nil)
+          end
         end
 
         it "const within another type from the top level" do
@@ -1906,15 +1899,9 @@ module Crystal
         end
 
         it "const within another type from the top level with extra ::" do
-          assert_type(%(
-            class A
-              class B
-                ID = 10
-              end
-            end
-
-            {{ @type.constant("A::::::B::::ID") == 10 ? 1 : 'f' }}
-          )) { char }
+          expect_raises(Crystal::TypeException, %(Invalid constant name: "A::::::B::::ID")) do
+            assert_macro %(class A; class B; ID = 10; end; end; {{@type.has_constant? "A::::::B::::ID" }}), %(nil)
+          end
         end
 
         it "type within another type from the top level" do
@@ -1931,14 +1918,9 @@ module Crystal
 
       describe "#has_constant?" do
         it "global path with extra ::" do
-          assert_type(%(
-            class A
-              class B
-              end
-            end
-
-            {{ A::B.has_constant?("::::A") ? 1 : 'f' }}
-          )) { char }
+          expect_raises(Crystal::TypeException, %(Invalid constant name: "::::ID")) do
+            assert_macro %(ID = 10; {{@type.has_constant? "::::ID" }}), %(nil)
+          end
         end
 
         it "global path" do
@@ -1994,14 +1976,9 @@ module Crystal
         end
 
         it "type within another type from the top level with extra ::" do
-          assert_type(%(
-            class A
-              class B
-              end
-            end
-
-            {{ @type.has_constant?("A::::::B") ? 1 : 'f' }}
-          )) { char }
+          expect_raises(Crystal::TypeException, %(Invalid constant name: "A::::::B")) do
+            assert_macro %(class A; class B; end; end; {{@type.has_constant? "A::::::B" }}), %(nil)
+          end
         end
 
         it "constant within a nested type from the top level" do
