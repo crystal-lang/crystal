@@ -9,7 +9,7 @@
 ## Clean up built files then build the compiler
 ##   $ make clean crystal
 ## Build the compiler in release mode
-##   $ make crystal release=1
+##   $ make crystal release=1 interpreter=1
 ## Run tests
 ##   $ make test
 ## Run stdlib tests

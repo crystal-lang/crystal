@@ -9,7 +9,7 @@
 ## Clean up built files then build the compiler
 ##   $ make -f Makefile.win clean crystal
 ## Build the compiler in release mode
-##   $ make -f Makefile.win crystal release=1
+##   $ make -f Makefile.win crystal release=1 interpreter=1
 ## Run tests
 ##   $ make -f Makefile.win test
 ## Run stdlib tests
