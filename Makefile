@@ -88,7 +88,7 @@ all: crystal ## Build all files (currently crystal only) [default]
 test: spec ## Run tests
 
 .PHONY: spec
-test: std_spec primitives_spec compiler_spec
+spec: std_spec primitives_spec compiler_spec
 
 .PHONY: std_spec
 std_spec: $(O)/std_spec ## Run standard library specs
