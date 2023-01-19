@@ -5,9 +5,6 @@ require "option_parser"
 
 module Spec
   # :nodoc:
-  class_property? use_colors = true
-
-  # :nodoc:
   class_property pattern : Regex?
 
   # :nodoc:
@@ -109,8 +106,11 @@ module Spec
       opts.on("--tap", "Generate TAP output (Test Anything Protocol)") do
         configure_formatter("tap")
       end
-      opts.on("--no-color", "Disable colored output") do
-        Spec.use_colors = false
+      opts.on("--color", "Enabled ANSI colored output") do
+        Colorize.enabled = true
+      end
+      opts.on("--no-color", "Disable ANSI colored output") do
+        Colorize.enabled = false
       end
       opts.unknown_args do |args|
       end
