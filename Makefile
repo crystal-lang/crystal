@@ -10,6 +10,8 @@
 ##   $ make clean crystal
 ## Build the compiler in release mode
 ##   $ make crystal release=1
+## Run tests
+##   $ make test
 ## Run stdlib tests
 ##   $ make std_spec
 ## Run compiler tests
@@ -82,6 +84,9 @@ check_llvm_config = $(eval \
 .PHONY: all
 all: crystal ## Build all files (currently crystal only) [default]
 
+.PHONY: test ## Run tests
+test: std_spec primitives_spec compiler_spec
+
 .PHONY: std_spec
 std_spec: $(O)/std_spec ## Run standard library specs
 	$(O)/std_spec $(SPEC_FLAGS)
@@ -99,7 +104,7 @@ smoke_test: ## Build specs as a smoke test
 smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal
 
 .PHONY: all_spec
-all_spec: $(O)/all_spec ## Run all specs (note: this builds a huge program; use `std_spec` and `compiler_spec` independently for less resource usage)
+all_spec: $(O)/all_spec ## Run all specs (note: this builds a huge program; `test` recipe builds individual binaries and is recommended for reduced resource usage)
 	$(O)/all_spec $(SPEC_FLAGS)
 
 .PHONY: samples
