@@ -1077,10 +1077,10 @@ module Iterator(T)
   # Alias of `each_slice`.
   def slice(n : Int, reuse = false)
     raise ArgumentError.new "Invalid slice size: #{n}" if n <= 0
-    Slice(typeof(self), T, typeof(n)).new(self, n, reuse)
+    SliceIterator(typeof(self), T, typeof(n)).new(self, n, reuse)
   end
 
-  private struct Slice(I, T, N)
+  private struct SliceIterator(I, T, N)
     include Iterator(Array(T))
     include IteratorWrapper
 
