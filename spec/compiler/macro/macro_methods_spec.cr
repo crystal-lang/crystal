@@ -1881,9 +1881,7 @@ module Crystal
         end
 
         it "global path with extra ::" do
-          expect_raises(Crystal::TypeException, %(Invalid constant name: "::::ID")) do
-            assert_macro %(ID = 10; {{@type.has_constant? "::::ID" }}), %(nil)
-          end
+          assert_macro_error %({{@type.constant "::::ID" }}), %(Invalid constant name: "::::ID")
         end
 
         it "const within another type from the top level" do
@@ -1899,9 +1897,7 @@ module Crystal
         end
 
         it "const within another type from the top level with extra ::" do
-          expect_raises(Crystal::TypeException, %(Invalid constant name: "A::::::B::::ID")) do
-            assert_macro %(class A; class B; ID = 10; end; end; {{@type.has_constant? "A::::::B::::ID" }}), %(nil)
-          end
+          assert_macro_error %({{@type.constant "A::::::B::::ID" }}), %(Invalid constant name: "A::::::B::::ID")
         end
 
         it "type within another type from the top level" do
@@ -1918,9 +1914,7 @@ module Crystal
 
       describe "#has_constant?" do
         it "global path with extra ::" do
-          expect_raises(Crystal::TypeException, %(Invalid constant name: "::::ID")) do
-            assert_macro %(ID = 10; {{@type.has_constant? "::::ID" }}), %(nil)
-          end
+          assert_macro_error %({{@type.has_constant? "::::ID" }}), %(Invalid constant name: "::::ID")
         end
 
         it "global path" do
@@ -1976,9 +1970,7 @@ module Crystal
         end
 
         it "type within another type from the top level with extra ::" do
-          expect_raises(Crystal::TypeException, %(Invalid constant name: "A::::::B")) do
-            assert_macro %(class A; class B; end; end; {{@type.has_constant? "A::::::B" }}), %(nil)
-          end
+          assert_macro_error %(class A; class B; end; end; {{@type.has_constant? "A::::::B" }}), %(Invalid constant name: "A::::::B")
         end
 
         it "constant within a nested type from the top level" do
