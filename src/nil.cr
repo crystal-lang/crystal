@@ -103,9 +103,15 @@ struct Nil
 
   # Raises `NilAssertionError`.
   #
+  # If *message* is given, it is forwarded as error message of `NilAssertionError`.
+  #
   # See also: `Object#not_nil!`.
-  def not_nil! : NoReturn
-    raise NilAssertionError.new
+  def not_nil!(message = nil) : NoReturn
+    if message
+      raise NilAssertionError.new(message)
+    else
+      raise NilAssertionError.new
+    end
   end
 
   # Returns `self`.

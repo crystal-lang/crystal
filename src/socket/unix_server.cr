@@ -55,7 +55,7 @@ class UNIXServer < UNIXSocket
   # server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM, backlog = 128)
+  def self.open(path, type : Type = Type::STREAM, backlog = 128, &)
     server = new(path, type, backlog)
     begin
       yield server
@@ -81,7 +81,7 @@ class UNIXServer < UNIXSocket
     super()
   ensure
     if delete && (path = @path)
-      File.delete(path) if File.exists?(path)
+      File.delete?(path)
       @path = nil
     end
   end

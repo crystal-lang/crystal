@@ -5,9 +5,6 @@ require "option_parser"
 
 module Spec
   # :nodoc:
-  class_property? use_colors = true
-
-  # :nodoc:
   class_property pattern : Regex?
 
   # :nodoc:
@@ -88,7 +85,7 @@ module Spec
         Spec.add_tag tag
       end
       opts.on("--order MODE", "run examples in random order by passing MODE as 'random' or to a specific seed by passing MODE as the seed value") do |mode|
-        if mode == "default" || mode == "random"
+        if mode.in?("default", "random")
           Spec.order = mode
         elsif seed = mode.to_u64?
           Spec.order = seed
@@ -109,8 +106,11 @@ module Spec
       opts.on("--tap", "Generate TAP output (Test Anything Protocol)") do
         configure_formatter("tap")
       end
-      opts.on("--no-color", "Disable colored output") do
-        Spec.use_colors = false
+      opts.on("--color", "Enabled ANSI colored output") do
+        Colorize.enabled = true
+      end
+      opts.on("--no-color", "Disable ANSI colored output") do
+        Colorize.enabled = false
       end
       opts.unknown_args do |args|
       end

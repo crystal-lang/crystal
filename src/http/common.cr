@@ -26,7 +26,7 @@ module HTTP
   record HeaderLine, name : String, value : String, bytesize : Int32
 
   # :nodoc:
-  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true, *, max_headers_size : Int32 = MAX_HEADERS_SIZE) : HTTP::Status?
+  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true, *, max_headers_size : Int32 = MAX_HEADERS_SIZE, &) : HTTP::Status?
     headers = Headers.new
 
     max_size = max_headers_size
@@ -128,7 +128,7 @@ module HTTP
     end
 
     name, value = parse_header(line)
-    return HeaderLine.new name: name, value: value, bytesize: line.bytesize
+    HeaderLine.new name: name, value: value, bytesize: line.bytesize
   end
 
   private def self.check_content_type_charset(body, headers)
@@ -261,36 +261,37 @@ module HTTP
     elsif body_io
       content_length = content_length(headers)
       if content_length
-        serialize_headers(io, headers)
+        headers.serialize(io)
+        io << "\r\n"
         copied = IO.copy(body_io, io)
         if copied != content_length
           raise ArgumentError.new("Content-Length header is #{content_length} but body had #{copied} bytes")
         end
       elsif Client::Response.supports_chunked?(version)
         headers["Transfer-Encoding"] = "chunked"
-        serialize_headers(io, headers)
+        headers.serialize(io)
+        io << "\r\n"
         serialize_chunked_body(io, body_io)
       else
         body = body_io.gets_to_end
         serialize_headers_and_string_body(io, headers, body)
       end
     else
-      serialize_headers(io, headers)
+      headers.serialize(io)
+      io << "\r\n"
     end
   end
 
   def self.serialize_headers_and_string_body(io, headers, body)
     headers["Content-Length"] = body.bytesize.to_s
-    serialize_headers(io, headers)
+    headers.serialize(io)
+    io << "\r\n"
     io << body
   end
 
+  @[Deprecated("Use `HTTP::Headers#serialize` instead.")]
   def self.serialize_headers(io, headers)
-    headers.each do |name, values|
-      values.each do |value|
-        io << name << ": " << value << "\r\n"
-      end
-    end
+    headers.serialize(io)
     io << "\r\n"
   end
 

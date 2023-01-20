@@ -16,6 +16,8 @@ class Regex
   # starting from `1`, so that `0` can be used to refer to the entire regular
   # expression without needing to capture it explicitly.
   struct MatchData
+    include Engine::MatchData
+
     # Returns the original regular expression.
     #
     # ```
@@ -39,10 +41,6 @@ class Regex
     # ```
     getter string : String
 
-    # :nodoc:
-    def initialize(@regex : Regex, @code : LibPCRE::Pcre, @string : String, @pos : Int32, @ovector : Int32*, @group_size : Int32)
-    end
-
     # Returns the number of elements in this match object.
     #
     # ```
@@ -59,10 +57,15 @@ class Regex
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
     #
+    # Raises `IndexError` if the index is out of range or the respective
+    # subpattern is unused.
+    #
     # ```
     # "Crystal".match(/r/).not_nil!.begin(0)     # => 1
     # "Crystal".match(/r(ys)/).not_nil!.begin(1) # => 2
     # "クリスタル".match(/リ(ス)/).not_nil!.begin(0)    # => 1
+    # "Crystal".match(/r/).not_nil!.begin(1)     # IndexError: Invalid capture group index: 1
+    # "Crystal".match(/r(x)?/).not_nil!.begin(1) # IndexError: Capture group 1 was not matched
     # ```
     def begin(n = 0) : Int32
       @string.byte_index_to_char_index(byte_begin(n)).not_nil!
@@ -73,10 +76,15 @@ class Regex
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
     #
+    # Raises `IndexError` if the index is out of range or the respective
+    # subpattern is unused.
+    #
     # ```
     # "Crystal".match(/r/).not_nil!.end(0)     # => 2
     # "Crystal".match(/r(ys)/).not_nil!.end(1) # => 4
     # "クリスタル".match(/リ(ス)/).not_nil!.end(0)    # => 3
+    # "Crystal".match(/r/).not_nil!.end(1)     # IndexError: Invalid capture group index: 1
+    # "Crystal".match(/r(x)?/).not_nil!.end(1) # IndexError: Capture group 1 was not matched
     # ```
     def end(n = 0) : Int32
       @string.byte_index_to_char_index(byte_end(n)).not_nil!
@@ -87,15 +95,19 @@ class Regex
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
     #
+    # Raises `IndexError` if the index is out of range or the respective
+    # subpattern is unused.
+    #
     # ```
     # "Crystal".match(/r/).not_nil!.byte_begin(0)     # => 1
     # "Crystal".match(/r(ys)/).not_nil!.byte_begin(1) # => 2
     # "クリスタル".match(/リ(ス)/).not_nil!.byte_begin(0)    # => 3
+    # "Crystal".match(/r/).not_nil!.byte_begin(1)     # IndexError: Invalid capture group index: 1
+    # "Crystal".match(/r(x)?/).not_nil!.byte_begin(1) # IndexError: Capture group 1 was not matched
     # ```
     def byte_begin(n = 0) : Int32
       check_index_out_of_bounds n
-      n += size if n < 0
-      @ovector[n * 2]
+      byte_range(n) { |normalized_n| raise_capture_group_was_not_matched(normalized_n) }.begin
     end
 
     # Returns the position of the next byte after the match.
@@ -103,15 +115,19 @@ class Regex
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
     #
+    # Raises `IndexError` if the index is out of range or the respective
+    # subpattern is unused.
+    #
     # ```
     # "Crystal".match(/r/).not_nil!.byte_end(0)     # => 2
     # "Crystal".match(/r(ys)/).not_nil!.byte_end(1) # => 4
     # "クリスタル".match(/リ(ス)/).not_nil!.byte_end(0)    # => 9
+    # "Crystal".match(/r/).not_nil!.byte_end(1)     # IndexError: Invalid capture group index: 1
+    # "Crystal".match(/r(x)?/).not_nil!.byte_end(1) # IndexError: Capture group 1 was not matched
     # ```
     def byte_end(n = 0) : Int32
       check_index_out_of_bounds n
-      n += size if n < 0
-      @ovector[n * 2 + 1]
+      byte_range(n) { |normalized_n| raise_capture_group_was_not_matched(normalized_n) }.end
     end
 
     # Returns the match of the *n*th capture group, or `nil` if there isn't
@@ -127,11 +143,8 @@ class Regex
     def []?(n : Int) : String?
       return unless valid_group?(n)
 
-      n += size if n < 0
-      start = @ovector[n * 2]
-      finish = @ovector[n * 2 + 1]
-      return if start < 0
-      @string.byte_slice(start, finish - start)
+      range = byte_range(n) { return nil }
+      @string.byte_slice(range.begin, range.end - range.begin)
     end
 
     # Returns the match of the *n*th capture group, or raises an `IndexError`
@@ -143,11 +156,9 @@ class Regex
     # ```
     def [](n : Int) : String
       check_index_out_of_bounds n
-      n += size if n < 0
 
-      value = self[n]?
-      raise_capture_group_was_not_matched n if value.nil?
-      value
+      range = byte_range(n) { |normalized_n| raise_capture_group_was_not_matched(normalized_n) }
+      @string.byte_slice(range.begin, range.end - range.begin)
     end
 
     # Returns the match of the capture group named by *group_name*, or
@@ -165,16 +176,7 @@ class Regex
     # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"]? # => "al"
     # ```
     def []?(group_name : String) : String?
-      max_start = -1
-      match = nil
-      named_capture_number(group_name) do |n|
-        start = @ovector[n * 2]
-        if start > max_start
-          max_start = start
-          match = self[n]?
-        end
-      end
-      match
+      fetch_impl(group_name) { nil }
     end
 
     # Returns the match of the capture group named by *group_name*, or
@@ -192,14 +194,13 @@ class Regex
     # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"] # => "al"
     # ```
     def [](group_name : String) : String
-      match = self[group_name]?
-      unless match
-        named_capture_number(group_name) do
+      fetch_impl(group_name) { |exists|
+        if exists
           raise KeyError.new("Capture group '#{group_name}' was not matched")
+        else
+          raise KeyError.new("Capture group '#{group_name}' does not exist")
         end
-        raise KeyError.new("Capture group '#{group_name}' does not exist")
-      end
-      match
+      }
     end
 
     # Returns all matches that are within the given range.
@@ -223,20 +224,6 @@ class Regex
       start, count = Indexable.normalize_start_and_count(start, count, size) { return nil }
 
       Array(String).new(count) { |i| self[start + i] }
-    end
-
-    private def named_capture_number(group_name)
-      name_entry_size = LibPCRE.get_stringtable_entries(@code, group_name, out first, out last)
-      return if name_entry_size < 0
-
-      while first <= last
-        capture_number = (first[0].to_u16 << 8) | first[1].to_u16
-        yield capture_number
-
-        first += name_entry_size
-      end
-
-      nil
     end
 
     # Returns the part of the original string before the match. If the match
@@ -397,7 +384,7 @@ class Regex
       return false unless regex == other.regex
       return false unless string == other.string
 
-      return @ovector.memcmp(other.@ovector, size * 2) == 0
+      @ovector.memcmp(other.@ovector, size * 2) == 0
     end
 
     # See `Object#hash(hasher)`

@@ -52,7 +52,7 @@ class Log
   #
   # Invocations can be nested in order to capture each source in their own `EntriesChecker`.
   #
-  def self.capture(source : String = "*", level : Severity = Log::Severity::Trace, *, builder = Log.builder)
+  def self.capture(source : String = "*", level : Severity = Log::Severity::Trace, *, builder = Log.builder, &)
     mem_backend = Log::MemoryBackend.new
     builder.bind(source, level, mem_backend)
     begin
@@ -66,7 +66,7 @@ class Log
 
   # :ditto:
   def self.capture(level : Log::Severity = Log::Severity::Trace,
-                   *, builder : Log::Builder = Log.builder)
+                   *, builder : Log::Builder = Log.builder, &)
     capture("*", level, builder: builder) do |dsl|
       yield dsl
     end
@@ -112,7 +112,7 @@ class Log
         matches = yield entry
         if matches
           @entry = entry
-          return self
+          self
         else
           fail("No matching entries found, expected #{description}, but got #{entry.severity} with #{entry.message.inspect}", file, line)
         end

@@ -654,15 +654,15 @@ describe "Semantic: generic class" do
       )) { nilable int32 }
   end
 
-  it "doesn't duplicate overload on generic class class method (#2385)" do
-    error = assert_error <<-CR
+  it "doesn't duplicate overload on generic class with class method (#2385)" do
+    error = assert_error <<-CRYSTAL
       class Foo(T)
         def self.foo(x : Int32)
         end
       end
 
       Foo(String).foo(35.7)
-      CR
+      CRYSTAL
 
     error.to_s.lines.count(" - Foo(T).foo(x : Int32)").should eq(1)
   end
@@ -963,7 +963,7 @@ describe "Semantic: generic class" do
 
       Gen(3).new("a")
       ),
-      "no overload matches"
+      "expected argument #1 to 'Gen(3).new' to be T, not String"
   end
 
   it "doesn't crash when matching restriction against number literal (2) (#3157)" do
@@ -1146,6 +1146,19 @@ describe "Semantic: generic class" do
       f = Foo(1).new
       f.foo
       )) { generic_class "Foo", 1.int32 }
+  end
+
+  it "can use type var that resolves to number in restriction using Int128" do
+    assert_type(%(
+      class Foo(N)
+        def foo : Foo(N)
+          self
+        end
+      end
+
+      f = Foo(1_i128).new
+      f.foo
+      )) { generic_class "Foo", 1.int128 }
   end
 
   it "doesn't consider unbound generic instantiations as concrete (#7200)" do

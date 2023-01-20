@@ -3,32 +3,32 @@ name: AArch64 CI
 on: [push, pull_request]
 
 jobs:
-  musl-build:
+  aarch64-musl-build:
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Build Crystal
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
           args: make crystal
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: crystal-aarch64-musl
           path: |
             .build/crystal
             src/llvm/ext/llvm_ext.o
-  musl-test-stdlib:
-    needs: musl-build
+  aarch64-musl-test-stdlib:
+    needs: aarch64-musl-build
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Download Crystal executable
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -37,15 +37,15 @@ jobs:
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
           args: make std_spec
-  musl-test-compiler:
-    needs: musl-build
+  aarch64-musl-test-compiler:
+    needs: aarch64-musl-build
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Download Crystal executable
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: crystal-aarch64-musl
       - name: Mark downloaded compiler as executable
@@ -54,32 +54,32 @@ jobs:
         uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
           args: make primitives_spec compiler_spec FLAGS=-Dwithout_ffi
-  gnu-build:
+  aarch64-gnu-build:
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Build Crystal
         uses: docker://jhass/crystal:1.0.0-build
         with:
           args: make crystal
       - name: Upload Crystal executable
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: crystal-aarch64-gnu
           path: |
             .build/crystal
             src/llvm/ext/llvm_ext.o
-  gnu-test-stdlib:
-    needs: gnu-build
+  aarch64-gnu-test-stdlib:
+    needs: aarch64-gnu-build
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Download Crystal executable
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable
@@ -88,15 +88,15 @@ jobs:
         uses: docker://jhass/crystal:1.0.0-build
         with:
           args: make std_spec
-  gnu-test-compiler:
-    needs: gnu-build
+  aarch64-gnu-test-compiler:
+    needs: aarch64-gnu-build
     runs-on: [linux, ARM64]
     if: github.repository == 'crystal-lang/crystal'
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Download Crystal executable
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: crystal-aarch64-gnu
       - name: Mark downloaded compiler as executable

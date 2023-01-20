@@ -71,10 +71,13 @@ lib LibCrypto
   EVP_MAX_KEY_LENGTH = 32
   EVP_MAX_IV_LENGTH  = 16
 
-  CTRL_EOF   =  2
-  CTRL_PUSH  =  6
-  CTRL_POP   =  7
-  CTRL_FLUSH = 11
+  CTRL_EOF           =  2
+  CTRL_PUSH          =  6
+  CTRL_POP           =  7
+  CTRL_FLUSH         = 11
+  CTRL_SET_KTLS_SEND = 72
+  CTRL_GET_KTLS_SEND = 73
+  CTRL_GET_KTLS_RECV = 76
 
   alias BioMethodWrite = (Bio*, Char*, SizeT, SizeT*) -> Int
   alias BioMethodWriteOld = (Bio*, Char*, Int) -> Int
@@ -106,12 +109,13 @@ lib LibCrypto
 
   fun BIO_new(BioMethod*) : Bio*
   fun BIO_free(Bio*) : Int
-  fun BIO_set_data(Bio*, Void*)
-  fun BIO_get_data(Bio*) : Void*
-  fun BIO_set_init(Bio*, Int)
-  fun BIO_set_shutdown(Bio*, Int)
 
   {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    fun BIO_set_data(Bio*, Void*)
+    fun BIO_get_data(Bio*) : Void*
+    fun BIO_set_init(Bio*, Int)
+    fun BIO_set_shutdown(Bio*, Int)
+
     fun BIO_meth_new(Int, Char*) : BioMethod*
     fun BIO_meth_set_read(BioMethod*, BioMethodReadOld)
     fun BIO_meth_set_write(BioMethod*, BioMethodWriteOld)
@@ -274,7 +278,7 @@ lib LibCrypto
   fun md5_update = MD5_Update(c : MD5Context*, data : Void*, len : LibC::SizeT) : Int
   fun md5_final = MD5_Final(md : UInt8*, c : MD5Context*) : Int
   fun md5_transform = MD5_Transform(c : MD5Context*, b : UInt8*)
-  fun md5 = MD5(data : UInt8*, lengh : LibC::SizeT, md : UInt8*) : UInt8*
+  fun md5 = MD5(data : UInt8*, length : LibC::SizeT, md : UInt8*) : UInt8*
 
   fun pkcs5_pbkdf2_hmac_sha1 = PKCS5_PBKDF2_HMAC_SHA1(pass : LibC::Char*, passlen : LibC::Int, salt : UInt8*, saltlen : LibC::Int, iter : LibC::Int, keylen : LibC::Int, out : UInt8*) : LibC::Int
   {% if compare_versions(OPENSSL_VERSION, "1.0.0") >= 0 %}

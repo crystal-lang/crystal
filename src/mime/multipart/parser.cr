@@ -23,7 +23,7 @@ module MIME::Multipart
     # Creates a new `Multipart::Parser` which parses *io* with multipart
     # boundary *boundary*.
     def initialize(@io : IO, @boundary : String)
-      @state = :PREAMBLE
+      @state = State::PREAMBLE
       @dash_boundary = "--#{@boundary}"
       @delimiter = "\r\n#{@dash_boundary}"
     end
@@ -47,20 +47,20 @@ module MIME::Multipart
     #   io.gets_to_end          # => "body"
     # end
     # ```
-    def next
-      raise Multipart::Error.new "Multipart parser already finished parsing" if @state == :FINISHED
-      raise Multipart::Error.new "Multipart parser is in an errored state" if @state == :ERRORED
+    def next(&)
+      raise Multipart::Error.new "Multipart parser already finished parsing" if @state.finished?
+      raise Multipart::Error.new "Multipart parser is in an errored state" if @state.errored?
 
-      if @state == :PREAMBLE
+      if @state.preamble?
         # Discard preamble
         preamble_io = IO::Delimited.new(@io, read_delimiter: @dash_boundary)
         preamble_io.skip_to_end
 
         fail("no parts") if close_delimiter?
-        @state = :PART_START
+        @state = State::BODY_PART
       end
 
-      if @state == :PART_START
+      if @state.body_part?
         body_io = IO::Delimited.new(@io, read_delimiter: @delimiter)
         headers = parse_headers(body_io)
 
@@ -70,17 +70,17 @@ module MIME::Multipart
           body_io.skip_to_end
           body_io.close
 
-          @state = :FINISHED if close_delimiter?
+          @state = State::FINISHED if close_delimiter?
         end
       end
     rescue ex
-      @state = :ERRORED
+      @state = State::ERRORED
       raise ex
     end
 
     # True if `#next` can be called legally.
     def has_next? : Bool
-      @state != :FINISHED && @state != :ERRORED
+      !@state.finished? && !@state.errored?
     end
 
     private def parse_headers(io)
@@ -115,7 +115,7 @@ module MIME::Multipart
 
         0.upto(transport_padding_crlf.bytesize - 3) do |i| # 3 constant to ignore "\r\n" at end
           byte = transport_padding_crlf.to_unsafe[i]
-          fail("padding contained non-whitespace character") unless byte == ' '.ord || byte == '\t'.ord
+          fail("padding contained non-whitespace character") unless byte.in?(' '.ord, '\t'.ord)
         end
       end
 

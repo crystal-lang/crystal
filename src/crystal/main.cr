@@ -61,7 +61,7 @@ module Crystal
   end
 
   # :nodoc:
-  def self.ignore_stdio_errors
+  def self.ignore_stdio_errors(&)
     yield
   rescue IO::Error
   end
@@ -129,4 +129,8 @@ end
 
 {% if flag?(:win32) %}
   require "./system/win32/wmain"
+{% end %}
+
+{% if flag?(:wasi) %}
+  require "./system/wasi/main"
 {% end %}

@@ -265,7 +265,7 @@ class URI
   # require "uri"
   #
   # uri = URI.parse "http://foo.com?id=30&limit=5#time=1305298413"
-  # uri.query_params # => URI::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
+  # uri.query_params # => URI::Params{"id" => ["30"], "limit" => ["5"]}
   # ```
   def query_params : URI::Params
     URI::Params.parse(@query || "")
@@ -316,7 +316,7 @@ class URI
       #
       # host        = IP-literal / IPv4address / reg-name
       #
-      # The valid characters include unreserved, sub-delims, ':', '[', ']' (IPv6-Adress)
+      # The valid characters include unreserved, sub-delims, ':', '[', ']' (IPv6-Address)
       URI.encode(host, io) { |byte| URI.unreserved?(byte) || URI.sub_delim?(byte) || byte.unsafe_chr.in?(':', '[', ']') }
     end
 
@@ -477,7 +477,6 @@ class URI
 
     query = uri.query
     query = nil if query == @query
-    fragment = uri.fragment
 
     path = relativize_path(@path, uri.path)
 
@@ -609,7 +608,7 @@ class URI
         result.pop if result.size > 0
         # D.  if the input buffer consists only of "." or "..", then remove
         #     that from the input buffer; otherwise,
-      elsif path == ".." || path == "."
+      elsif path.in?("..", ".")
         path = ""
         # E.  move the first path segment in the input buffer to the end of
         #     the output buffer, including the initial "/" character (if
@@ -719,6 +718,10 @@ class URI
   # Returns `true` if this URI's *port* is the default port for
   # its *scheme*.
   private def default_port?
-    (scheme = @scheme) && (port = @port) && port == URI.default_port(scheme)
+    if (scheme = @scheme) && (port = @port)
+      port == URI.default_port(scheme)
+    else
+      false
+    end
   end
 end

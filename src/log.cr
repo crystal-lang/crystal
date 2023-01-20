@@ -3,8 +3,9 @@
 # The messages, or `Log::Entry` have associated levels, such as `Info` or `Error`
 # that indicate their importance. See `Log::Severity`.
 #
-# To log a message `trace`, `debug`, `info`, `notice`, `warn`, `error`, and `fatal` methods
-# can be used. They expect a block that will evaluate to the message of the entry.
+# To log a message use the `#trace`, `#debug`, `#info`, `#notice`, `#warn`,
+# `#error`, and `#fatal` methods. They expect a block that will evaluate to the
+# message of the entry:
 #
 # ```
 # require "log"
@@ -39,7 +40,7 @@
 #
 # ```
 # module DB
-#   Log = ::Log.for("db") # => Log for db source
+#   Log = ::Log.for("db") # Log for db source
 #
 #   def do_something
 #     Log.info { "this is logged in db source" }
@@ -57,7 +58,7 @@
 #
 # ```
 # class DB::Pool
-#   Log = DB::Log.for("pool") # => Log for db.pool source
+#   Log = DB::Log.for("pool") # Log for db.pool source
 # end
 # ```
 #
@@ -69,7 +70,7 @@
 #
 # ```
 # module DB
-#   Log = ::Log.for(self) # => Log for db source
+#   Log = ::Log.for(self) # Log for db source
 # end
 # ```
 #

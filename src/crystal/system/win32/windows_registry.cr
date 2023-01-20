@@ -22,7 +22,7 @@ module Crystal::System::WindowsRegistry
     end
   end
 
-  def self.open?(handle : LibC::HKEY, name : Slice(UInt16), sam = LibC::REGSAM::READ)
+  def self.open?(handle : LibC::HKEY, name : Slice(UInt16), sam = LibC::REGSAM::READ, &)
     key_handle = open?(handle, name, sam)
 
     return unless key_handle
@@ -72,7 +72,7 @@ module Crystal::System::WindowsRegistry
   # Reads a raw value into a buffer and creates a string from it.
   def self.get_string(handle : LibC::HKEY, name : Slice(UInt16))
     Crystal::System.retry_wstr_buffer do |buffer, small_buf|
-      raw = get_raw(handle, name, Bytes.new(buffer.to_unsafe.as(UInt8*), buffer.bytesize)) || return
+      raw = get_raw(handle, name, buffer.to_unsafe_bytes) || return
       _, length = raw
 
       if 0 <= length <= buffer.size

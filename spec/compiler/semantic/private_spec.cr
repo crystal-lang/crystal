@@ -517,7 +517,7 @@ describe "Semantic: private" do
   end
 
   it "doesn't inherit visibility from class node in macro hook (#8794)" do
-    assert_no_errors <<-CR
+    assert_no_errors <<-CRYSTAL
       module M1
         macro included
           include M2
@@ -559,6 +559,6 @@ describe "Semantic: private" do
       end
 
       Foo.new(1)
-      CR
+      CRYSTAL
   end
 end

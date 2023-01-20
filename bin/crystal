@@ -99,9 +99,8 @@ remove_path_item() {
   local path item
 
   path="$1"
-  item="$2"
 
-  echo -n $path | awk -v RS=: -v ORS=: '$0 != "'$item'"' | sed 's/:$//'
+  printf "%s" "$path" | awk -v item="$2" -v RS=: -v ORS=: '$0 != item' | sed 's/:$//'
 }
 
 ##############################################################################

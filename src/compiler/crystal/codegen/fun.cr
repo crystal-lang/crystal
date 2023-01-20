@@ -38,8 +38,6 @@ class Crystal::CodeGenVisitor
       func.varargs?
     )
 
-    p2 = new_fun.params.to_a
-
     func.params.to_a.each_with_index do |p1, index|
       attrs = new_fun.attributes(index + 1)
       new_fun.add_attribute(attrs, index + 1) unless attrs.value == 0
@@ -89,12 +87,7 @@ class Crystal::CodeGenVisitor
         context.fun.add_attribute LLVM::Attribute::UWTable
         if @program.has_flag?("darwin")
           # Disable frame pointer elimination in Darwin, as it causes issues during stack unwind
-          {% if compare_versions(Crystal::LLVM_VERSION, "8.0.0") < 0 %}
-            context.fun.add_target_dependent_attribute "no-frame-pointer-elim", "true"
-            context.fun.add_target_dependent_attribute "no-frame-pointer-elim-non-leaf", "true"
-          {% else %}
-            context.fun.add_target_dependent_attribute "frame-pointer", "all"
-          {% end %}
+          context.fun.add_target_dependent_attribute "frame-pointer", "all"
         end
 
         new_entry_block
@@ -125,7 +118,6 @@ class Crystal::CodeGenVisitor
 
         if @debug.variables? && !target_def.naked?
           in_alloca_block do
-            args_offset = !is_fun_literal && self_type.passed_as_self? ? 2 : 1
             location = target_def.location
             context.vars.each do |name, var|
               next if var.debug_variable_created
@@ -199,6 +191,17 @@ class Crystal::CodeGenVisitor
           context.fun = new_fun
         else
           clear_current_debug_location
+        end
+      end
+
+      if @program.has_flag?("wasm32")
+        if target_def.is_a?(External) && (wasm_import_module = target_def.wasm_import_module)
+          context.fun.add_target_dependent_attribute("wasm-import-name", target_def.real_name)
+          context.fun.add_target_dependent_attribute("wasm-import-module", wasm_import_module)
+        end
+
+        if is_exported_fun
+          context.fun.add_target_dependent_attribute("wasm-export-name", mangled_name)
         end
       end
 

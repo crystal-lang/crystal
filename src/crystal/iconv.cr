@@ -1,4 +1,4 @@
-{% if flag?(:win32) %}
+{% if flag?(:use_libiconv) || flag?(:win32) %}
   require "./lib_iconv"
   private USE_LIBICONV = true
 {% else %}
@@ -46,7 +46,7 @@ struct Crystal::Iconv
     end
   end
 
-  def self.new(from : String, to : String, invalid : Symbol? = nil)
+  def self.new(from : String, to : String, invalid : Symbol? = nil, &)
     iconv = new(from, to, invalid)
     begin
       yield iconv

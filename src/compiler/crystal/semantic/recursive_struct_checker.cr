@@ -22,6 +22,9 @@ class Crystal::RecursiveStructChecker
 
   def run
     check_types(@program)
+    @program.file_modules.each_value do |file_module|
+      check_types(file_module)
+    end
   end
 
   def check_types(type)
@@ -180,7 +183,7 @@ class Crystal::RecursiveStructChecker
     type.struct? && type.is_a?(InstanceVarContainer) && !type.is_a?(PrimitiveType) && !type.is_a?(ProcInstanceType) && !type.abstract?
   end
 
-  def push(path, type)
+  def push(path, type, &)
     if path.last? == type
       yield
     else

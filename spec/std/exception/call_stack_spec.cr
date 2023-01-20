@@ -33,13 +33,13 @@ describe "Backtrace" do
       source_path = Path.new(source_file)
       source_path.absolute?.should be_true
 
-      File.write source_file, <<-EOF
+      File.write source_file, <<-CRYSTAL
         def callee1
           puts caller.join('\n')
         end
 
         callee1
-        EOF
+        CRYSTAL
       _, output, _ = compile_and_run_file(source_file)
 
       output.should match /\A(#{Regex.escape(source_path.to_s)}):/
@@ -51,16 +51,16 @@ describe "Backtrace" do
 
     _, output, error = compile_and_run_file(sample)
 
-    output.to_s.empty?.should be_true
+    output.to_s.should be_empty
     error.to_s.should contain("IndexError")
   end
 
-  pending_win32 "prints crash backtrace to stderr" do
+  it "prints crash backtrace to stderr" do
     sample = datapath("crash_backtrace_sample")
 
     _, output, error = compile_and_run_file(sample)
 
-    output.to_s.empty?.should be_true
+    output.to_s.should be_empty
     error.to_s.should contain("Invalid memory access")
   end
 

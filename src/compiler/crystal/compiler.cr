@@ -15,11 +15,6 @@ module Crystal
     Default     = LineNumbers
   end
 
-  enum Warnings
-    All
-    None
-  end
-
   # Main interface to the compiler.
   #
   # A Compiler parses source code, type checks it and
@@ -109,14 +104,8 @@ module Crystal
     # and can later be used to generate API docs.
     property? wants_doc = false
 
-    # Which kind of warnings wants to be detected.
-    property warnings : Warnings = Warnings::All
-
-    # Paths to ignore for warnings detection.
-    property warnings_exclude : Array(String) = [] of String
-
-    # If `true` compiler will error if warnings are found.
-    property error_on_warnings : Bool = false
+    # Warning settings and all detected warnings.
+    property warnings = WarningCollection.new
 
     @[Flags]
     enum EmitTarget
@@ -205,7 +194,6 @@ module Crystal
       @program = program = Program.new
       program.compiler = self
       program.filename = sources.first.filename
-      program.cache_dir = CacheDir.instance.directory_for(sources)
       program.codegen_target = codegen_target
       program.target_machine = target_machine
       program.flags << "release" if release?
@@ -218,8 +206,6 @@ module Crystal
       program.show_error_trace = show_error_trace?
       program.progress_tracker = @progress_tracker
       program.warnings = @warnings
-      program.warnings_exclude = @warnings_exclude.map { |p| File.expand_path p }
-      program.error_on_warnings = @error_on_warnings
       program
     end
 
@@ -243,7 +229,7 @@ module Crystal
     end
 
     private def parse(program, source : Source)
-      parser = Parser.new(source.code, program.string_pool)
+      parser = program.new_parser(source.code)
       parser.filename = source.filename
       parser.wants_doc = wants_doc?
       parser.parse
@@ -299,17 +285,12 @@ module Crystal
       result
     end
 
-    private def with_file_lock(output_dir)
-      {% if flag?(:win32) %}
-        # TODO: use flock when it's supported in Windows
-        yield
-      {% else %}
-        File.open(File.join(output_dir, "compiler.lock"), "w") do |file|
-          file.flock_exclusive do
-            yield
-          end
+    private def with_file_lock(output_dir, &)
+      File.open(File.join(output_dir, "compiler.lock"), "w") do |file|
+        file.flock_exclusive do
+          yield
         end
-      {% end %}
+      end
     end
 
     private def run_dsymutil(filename)
@@ -326,11 +307,13 @@ module Crystal
       llvm_mod = unit.llvm_mod
       object_name = output_filename + program.object_extension
 
-      optimize llvm_mod if @release
+      @progress_tracker.stage("Codegen (bc+obj)") do
+        optimize llvm_mod if @release
 
-      unit.emit(@emit_targets, emit_base_filename || output_filename)
+        unit.emit(@emit_targets, emit_base_filename || output_filename)
 
-      target_machine.emit_obj_to_file llvm_mod, object_name
+        target_machine.emit_obj_to_file llvm_mod, object_name
+      end
 
       print_command(*linker_command(program, [object_name], output_filename, nil))
     end
@@ -386,7 +369,7 @@ module Crystal
           # TODO: Use a proper way to write encoded text to a file when that's supported.
           # The first character is the BOM; it will be converted in the same endianness as the rest.
           args_16 = "\ufeff#{args}".to_utf16
-          args_bytes = args_16.to_unsafe.as(UInt8*).to_slice(args_16.bytesize)
+          args_bytes = args_16.to_unsafe_bytes
 
           args_filename = "#{output_dir}/linker_args.txt"
           File.write(args_filename, args_bytes)
@@ -394,6 +377,9 @@ module Crystal
         end
 
         {cmd, nil}
+      elsif program.has_flag? "wasm32"
+        link_flags = @link_flags || ""
+        { %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names }
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
@@ -467,7 +453,9 @@ module Crystal
         return all_reused
       end
 
-      {% if flag?(:preview_mt) %}
+      {% if !Crystal::System::Process.class.has_method?("fork") %}
+        raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
+      {% elsif flag?(:preview_mt) %}
         raise "Cannot fork compiler in multithread mode"
       {% else %}
         jobs_count = 0
@@ -491,7 +479,7 @@ module Crystal
               end
             end
 
-            codegen_process = Process.fork do
+            codegen_process = Crystal::System::Process.fork do
               pipe_w = pw
               slice.each do |unit|
                 unit.compile
@@ -501,7 +489,7 @@ module Crystal
                 end
               end
             end
-            codegen_process.wait
+            Process.new(codegen_process).wait
 
             if pipe_w = pw
               pipe_w.close
@@ -573,10 +561,24 @@ module Crystal
     end
 
     protected def optimize(llvm_mod)
+      {% if LibLLVM::IS_LT_130 %}
+        optimize_with_old_pass_manager(llvm_mod)
+      {% else %}
+        optimize_with_new_pass_manager(llvm_mod)
+      {% end %}
+    end
+
+    private def optimize_with_old_pass_manager(llvm_mod)
       fun_pass_manager = llvm_mod.new_function_pass_manager
       pass_manager_builder.populate fun_pass_manager
       fun_pass_manager.run llvm_mod
       module_pass_manager.run llvm_mod
+    end
+
+    private def optimize_with_new_pass_manager(llvm_mod)
+      LLVM::PassBuilderOptions.new do |options|
+        LLVM.run_passes(llvm_mod, "default<O3>", target_machine, options)
+      end
     end
 
     @module_pass_manager : LLVM::ModulePassManager?
@@ -604,7 +606,7 @@ module Crystal
       end
     end
 
-    private def process_wrapper(command, args = nil)
+    private def process_wrapper(command, args = nil, &)
       print_command(command, args) if verbose?
 
       status = yield command, args
@@ -712,7 +714,7 @@ module Crystal
         # If there's a memory buffer, it means we must create a .o from it
         if memory_buffer
           # Delete existing .o file. It cannot be used anymore.
-          File.delete(object_name) if File.exists?(object_name)
+          File.delete?(object_name)
           # Create the .bc file (for next compilations)
           File.write(bc_name, memory_buffer.to_slice)
           memory_buffer.dispose

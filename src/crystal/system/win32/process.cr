@@ -1,5 +1,6 @@
 require "c/processthreadsapi"
 require "c/handleapi"
+require "c/synchapi"
 require "process/shell"
 
 struct Crystal::System::Process
@@ -20,7 +21,7 @@ struct Crystal::System::Process
   end
 
   def wait
-    if LibC.WaitForSingleObject(@process_handle, LibC::INFINITE) != 0
+    if LibC.WaitForSingleObject(@process_handle, LibC::INFINITE) != LibC::WAIT_OBJECT_0
       raise RuntimeError.from_winerror("WaitForSingleObject")
     end
 
@@ -99,6 +100,10 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.fork")
   end
 
+  def self.fork(&)
+    raise NotImplementedError.new("Process.fork")
+  end
+
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
     ret = LibC._get_osfhandle(io.fd)
     raise RuntimeError.from_winerror("_get_osfhandle") if ret == -1
@@ -124,8 +129,8 @@ struct Crystal::System::Process
     process_info = LibC::PROCESS_INFORMATION.new
 
     if LibC.CreateProcessW(
-         nil, command_args.check_no_null_byte.to_utf16, nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
-         make_env_block(env, clear_env), chdir.try &.check_no_null_byte.to_utf16,
+         nil, System.to_wstr(command_args), nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
+         make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) },
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value

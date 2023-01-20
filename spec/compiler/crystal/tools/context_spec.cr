@@ -11,7 +11,7 @@ private def processed_context_visitor(code, cursor_location)
   {visitor, process_result}
 end
 
-private def run_context_tool(code)
+private def run_context_tool(code, &)
   cursor_location = nil
 
   code.lines.each_with_index do |line, line_number_0|
@@ -43,7 +43,7 @@ end
 private def assert_context_includes(code, variable, var_types)
   run_context_tool(code) do |result|
     result.contexts.should_not be_nil
-    result.contexts.not_nil!.map { |h| h[variable].to_s }.should eq(var_types)
+    result.contexts.not_nil!.map(&.[variable].to_s).should eq(var_types)
   end
 end
 

@@ -167,7 +167,7 @@ class RedBlackTree
     y
   end
 
-  def inorder_walk(x = root)
+  def inorder_walk(x = root, &)
     x = self.minimum
     while !x.nil_node?
       yield x.key
@@ -175,11 +175,11 @@ class RedBlackTree
     end
   end
 
-  def each(x = root)
+  def each(x = root, &)
     inorder_walk(x) { |k| yield k }
   end
 
-  def reverse_inorder_walk(x = root)
+  def reverse_inorder_walk(x = root, &)
     x = self.maximum
     while !x.nil_node?
       yield x.key
@@ -187,7 +187,7 @@ class RedBlackTree
     end
   end
 
-  def reverse_each(x = root)
+  def reverse_each(x = root, &)
     reverse_inorder_walk(x) { |k| yield k }
   end
 
@@ -328,10 +328,10 @@ class RedBlackTreeRunner
     @n = n
 
     random = Random.new(1234) # repeatable random seq
-    @a1 = Array(Int32).new(n) { rand(99_999) }
+    @a1 = Array(Int32).new(n) { random.rand(99_999) }
 
     random = Random.new(4321) # repeatable random seq
-    @a2 = Array(Int32).new(n) { rand(99_999) }
+    @a2 = Array(Int32).new(n) { random.rand(99_999) }
 
     @tree = RedBlackTree.new
   end
@@ -382,7 +382,7 @@ class RedBlackTreeRunner
   end
 end
 
-def bench(name, n = 1)
+def bench(name, n = 1, &)
   start = Time.monotonic
   print "#{name}: "
   res = nil

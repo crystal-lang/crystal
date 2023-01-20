@@ -39,7 +39,7 @@ struct Number
     new(1)
   end
 
-  # Returns self.
+  # Returns `self`.
   def +
     self
   end
@@ -195,8 +195,8 @@ struct Number
   # Returns:
   # - `-1` if `self` is less than *other*
   # - `0` if `self` is equal to *other*
-  # - `-1` if `self` is greater than *other*
-  # - `nil` if self is `NaN` or *other* is `NaN`, because `NaN` values are not comparable
+  # - `1` if `self` is greater than *other*
+  # - `nil` if `self` is `NaN` or *other* is `NaN`, because `NaN` values are not comparable
   def <=>(other) : Int32?
     # NaN can't be compared to other numbers
     return nil if self.is_a?(Float) && self.nan?

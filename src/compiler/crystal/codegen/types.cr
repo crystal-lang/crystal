@@ -29,9 +29,9 @@ module Crystal
       when VirtualType
         self.struct?
       when NonGenericModuleType
-        self.including_types.try &.passed_by_value?
+        !!self.including_types.try &.passed_by_value?
       when GenericModuleInstanceType
-        self.including_types.try &.passed_by_value?
+        !!self.including_types.try &.passed_by_value?
       when GenericClassInstanceType
         self.generic_type.passed_by_value?
       when TypeDefType
@@ -202,7 +202,7 @@ module Crystal
       !(initializer || no_init_flag? || simple?)
     end
 
-    @compile_time_value : (Int16 | Int32 | Int64 | Int8 | UInt16 | UInt32 | UInt64 | UInt8 | Bool | Char | Nil)
+    @compile_time_value : (Int128 | Int16 | Int32 | Int64 | Int8 | UInt128 | UInt16 | UInt32 | UInt64 | UInt8 | Bool | Char | Nil)
     @computed_compile_time_value = false
 
     # Returns a value if this constant's value can be evaluated at

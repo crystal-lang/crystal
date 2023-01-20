@@ -127,6 +127,27 @@ class YAMLAttrWithNilableTimeEmittingNull
   end
 end
 
+class YAMLAttrWithTimeArray1
+  include YAML::Serializable
+
+  @[YAML::Field(converter: YAML::ArrayConverter(Time::EpochConverter))]
+  property value : Array(Time)
+end
+
+class YAMLAttrWithTimeArray2
+  include YAML::Serializable
+
+  @[YAML::Field(converter: YAML::ArrayConverter.new(Time::EpochConverter))]
+  property value : Array(Time)
+end
+
+class YAMLAttrWithTimeArray3
+  include YAML::Serializable
+
+  @[YAML::Field(converter: YAML::ArrayConverter.new(Time::Format.new("%F %T")))]
+  property value : Array(Time)
+end
+
 class YAMLAttrWithPropertiesKey
   include YAML::Serializable
 
@@ -293,6 +314,17 @@ class YAMLAttrModuleTest2 < YAMLAttrModuleTest
 
   def to_tuple
     {@moo, @foo, @bar}
+  end
+end
+
+module YAMLAttrModuleWithSameNameClass
+  class YAMLAttrModuleWithSameNameClass
+  end
+
+  class Test
+    include YAML::Serializable
+
+    property foo = 42
   end
 end
 
@@ -496,7 +528,7 @@ describe "YAML::Serializable" do
 
   it "doesn't emit null when doing to_yaml" do
     person = YAMLAttrPerson.from_yaml("---\nname: John\n")
-    (person.to_yaml =~ /age/).should be_falsey
+    person.to_yaml.should_not match /age/
   end
 
   it "raises if non-nilable attribute is nil" do
@@ -576,7 +608,7 @@ describe "YAML::Serializable" do
 
   it "emits null on request when doing to_yaml" do
     person = YAMLAttrPersonEmittingNull.from_yaml("---\nname: John\n")
-    (person.to_yaml =~ /age/).should be_truthy
+    person.to_yaml.should match /age/
   end
 
   it "emit_nulls option" do
@@ -818,6 +850,32 @@ describe "YAML::Serializable" do
     yaml.to_yaml.should eq("---\nvalue: 1459860483856\n")
   end
 
+  describe YAML::ArrayConverter do
+    it "uses converter metaclass" do
+      string = %(---\nvalue:\n- 1459859781\n)
+      yaml = YAMLAttrWithTimeArray1.from_yaml(string)
+      yaml.value.should be_a(Array(Time))
+      yaml.value.should eq([Time.unix(1459859781)])
+      yaml.to_yaml.should eq(string)
+    end
+
+    it "uses converter instance with nested converter metaclass" do
+      string = %(---\nvalue:\n- 1459859781\n)
+      yaml = YAMLAttrWithTimeArray2.from_yaml(string)
+      yaml.value.should be_a(Array(Time))
+      yaml.value.should eq([Time.unix(1459859781)])
+      yaml.to_yaml.should eq(string)
+    end
+
+    it "uses converter instance with nested converter instance" do
+      string = %(---\nvalue:\n- 2014-10-31 23:37:16\n)
+      yaml = YAMLAttrWithTimeArray3.from_yaml(string)
+      yaml.value.should be_a(Array(Time))
+      yaml.value.map(&.to_s).should eq(["2014-10-31 23:37:16 UTC"])
+      yaml.to_yaml.should eq(string)
+    end
+  end
+
   it "parses nilable union" do
     obj = YAMLAttrWithNilableUnion.from_yaml(%({"value": 1}))
     obj.value.should eq(1)
@@ -904,6 +962,10 @@ describe "YAML::Serializable" do
     it { YAMLAttrModuleTest.from_yaml(%({"phoo": 20})).to_tuple.should eq({10, 20}) }
     it { YAMLAttrModuleTest2.from_yaml(%({"phoo": 20, "bar": 30})).to_tuple.should eq({10, 20, 30}) }
     it { YAMLAttrModuleTest2.from_yaml(%({"bar": 30, "moo": 40})).to_tuple.should eq({40, 15, 30}) }
+  end
+
+  describe "work with inned class using same module name" do
+    it { YAMLAttrModuleWithSameNameClass::Test.from_yaml(%({"foo": 42})).foo.should eq(42) }
   end
 
   describe "use_yaml_discriminator" do
