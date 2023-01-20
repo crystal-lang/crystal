@@ -626,11 +626,12 @@ module Crystal
     end
 
     private def linker_not_found(exc_class, linker_name)
+      verbose_info = "\nRun with `--verbose` to print the full linker command." unless verbose?
       case exc_class
       when File::AccessDeniedError
-        error "Could not execute linker: `#{linker_name}`: Permission denied\nRun with `--verbose` to print the full linker command."
+        error "Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}"
       else
-        error "Could not execute linker: `#{linker_name}`: File not found\nRun with `--verbose` to print the full linker command."
+        error "Could not execute linker: `#{linker_name}`: File not found#{verbose_info}"
       end
     end
 
