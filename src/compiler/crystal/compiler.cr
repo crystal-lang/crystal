@@ -597,12 +597,7 @@ module Crystal
       begin
         Process.run(command, args, shell: true,
           input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
-          first_line = true
           process.error.each_line(chomp: false) do |line|
-            # Skip error output from shell if linker command was not found
-            next if first_line && !verbose? && line.matches?(/^--: 1: .*: not found$/)
-            first_line = false
-
             hint_string = colorize("(this usually means you need to install the development package for lib\\1)").yellow.bold
             line = line.gsub(/cannot find -l(\S+)\b/, "cannot find -l\\1 #{hint_string}")
             line = line.gsub(/unable to find library -l(\S+)\b/, "unable to find library -l\\1 #{hint_string}")
