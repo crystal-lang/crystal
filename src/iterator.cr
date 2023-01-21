@@ -1132,10 +1132,10 @@ module Iterator(T)
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
   def step(n : Int)
-    StepIterator(self, T, typeof(n)).new(self, n)
+    StepByIterator(self, T, typeof(n)).new(self, n)
   end
 
-  private struct StepIterator(I, T, N)
+  private struct StepByIterator(I, T, N)
     include Iterator(T)
     include IteratorWrapper
 
