@@ -4,10 +4,9 @@ require "system"
 describe System do
   describe "hostname" do
     pending_win32 "returns current hostname" do
-      pending! "The `hostname` command is not available." if Process.find_executable("hostname").nil?
-
       shell_hostname = `hostname`.strip
-      $?.success?.should be_true
+      pending! "`hostname` command was unsuccessful" unless $?.success?
+
       hostname = System.hostname
       hostname.should eq(shell_hostname)
     end
