@@ -80,7 +80,7 @@ class JSON::PullParser
   getter kind : Kind
   getter bool_value : Bool
 
-  def int_value : Int64
+  def int_value : Int128
     token.int_value
   end
 
@@ -209,7 +209,7 @@ class JSON::PullParser
   end
 
   # Reads an integer value.
-  def read_int : Int64
+  def read_int : Int128
     expect_kind :int
     int_value.tap { read_next }
   end
@@ -317,7 +317,7 @@ class JSON::PullParser
   end
 
   # Reads an integer or a null value, and returns it.
-  def read_int_or_null : Int64?
+  def read_int_or_null : Int128?
     read_null_or { read_int }
   end
 
@@ -409,7 +409,7 @@ class JSON::PullParser
     read_bool if kind.bool?
   end
 
-  {% for type in [Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32] %}
+  {% for type in [Int8, Int16, Int32, Int64, Int128, UInt8, UInt16, UInt32] %}
     # Reads an {{type}} value and returns it.
     #
     # If the value is not an integer or does not fit in a {{type}} variable, it returns `nil`.
