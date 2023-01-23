@@ -156,7 +156,7 @@ if [ "$(realpath "$(command -v "$CRYSTAL")")" = "$SCRIPT_PATH" ]; then
     exit 1
   fi
   # re-execute this script with the cleaned up PATH
-  export PATH="$(NEW_PATH)"
+  export PATH="$NEW_PATH"
   exec "$SCRIPT_PATH" "$@"
 fi
 
