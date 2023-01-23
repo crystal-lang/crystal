@@ -494,7 +494,6 @@ struct Enum
   # ```
   # IOMode.flags(Read, Write) # => IOMode::Read | IOMode::Write
   # ```
-  @[Deprecated("Use `.[]` instead")]
   macro flags(*values)
     {% for value, i in values %}\
       {% if i != 0 %} | {% end %}\
