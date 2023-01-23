@@ -319,7 +319,13 @@ module Crystal
       @indent = old_indent
 
       if has_newline && !last_found_comment && (!@wrote_newline || empty_expressions)
+        # Right after the last expression but we didn't insert a newline yet
+        # so we are still missing a newline following by an indent and the "end" keyword
         write_line
+        write_indent
+      elsif has_newline && last_found_comment && @wrote_newline
+        # Right after the last expression and we did insert a newline (because of a comment)
+        # so we are still missing an indent and the "end" keyword
         write_indent
       end
 
