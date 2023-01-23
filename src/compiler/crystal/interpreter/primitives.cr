@@ -7,7 +7,9 @@ require "./compiler"
 
 class Crystal::Repl::Compiler
   private def visit_primitive(node, body, target_def)
+    owner = node.super? ? node.scope : node.target_def.owner
     obj = node.obj
+    obj_type = obj.try &.type?.try &.remove_indirection
 
     case body.name
     when "unchecked_convert"
@@ -254,7 +256,7 @@ class Crystal::Repl::Compiler
 
       pointer_address(node: node)
     when "proc_call"
-      proc_type = (obj.try(&.type) || scope).as(ProcInstanceType)
+      proc_type = owner.as(ProcInstanceType)
 
       node.args.each_with_index do |arg, arg_index|
         request_value(arg)
@@ -268,7 +270,14 @@ class Crystal::Repl::Compiler
         end
       end
 
-      obj ? request_value(obj) : put_self(node: node)
+      if obj
+        request_value(obj)
+        if obj_type && obj_type != proc_type
+          downcast(node, obj_type, proc_type)
+        end
+      else
+        put_self(node: node)
+      end
 
       proc_call(node: node)
 
