@@ -1,3 +1,24 @@
+# 1.7.2 (2023-01-23)
+## Standard Library
+
+### Runtime
+
+- Fix: Add `Nil` return type restrictions to `load_debug_info` ([#12992](https://github.com/crystal-lang/crystal/pull/12992), thanks @straight-shoota)
+
+## Compiler
+
+### Codegen
+
+- Add error handling to compiler when linker is unavailable ([#12899](https://github.com/crystal-lang/crystal/pull/12899), thanks @straight-shoota)
+
+### Parser
+
+- Revert "Parser: Fix restrict grammar for name and supertype in type def (#12622)" ([#12977](https://github.com/crystal-lang/crystal/pull/12977), thanks @straight-shoota)
+
+## Other
+
+- Update `VERSION` to `1.7.2-dev` ([#12993](https://github.com/crystal-lang/crystal/pull/12993), thanks @straight-shoota)
+
 # 1.7.1 (2023-01-17)
 
 ## Tools
