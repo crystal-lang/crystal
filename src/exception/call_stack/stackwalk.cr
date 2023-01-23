@@ -7,7 +7,7 @@ struct Exception::CallStack
 
   @@sym_loaded = false
 
-  def self.load_debug_info
+  def self.load_debug_info : Nil
     return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
 
     unless @@sym_loaded
@@ -20,7 +20,7 @@ struct Exception::CallStack
     end
   end
 
-  private def self.load_debug_info_impl
+  private def self.load_debug_info_impl : Nil
     # TODO: figure out if and when to call SymCleanup (it cannot be done in
     # `at_exit` because unhandled exceptions in `main_user_code` are printed
     # after those handlers)
