@@ -9,12 +9,7 @@ class LLVM::Context
   end
 
   def new_module(name : String) : Module
-    {% if LibLLVM::IS_38 %}
-      Module.new(LibLLVM.module_create_with_name_in_context(name, self), name, self)
-    {% else %}
-      # LLVM >= 3.9
-      Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
-    {% end %}
+    Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
   end
 
   def new_builder : Builder
@@ -68,7 +63,7 @@ class LLVM::Context
     int8.pointer
   end
 
-  def struct(name : String, packed = false) : Type
+  def struct(name : String, packed = false, &) : Type
     llvm_struct = LibLLVM.struct_create_named(self, name)
     the_struct = Type.new llvm_struct
     element_types = (yield the_struct).as(Array(LLVM::Type))
@@ -105,12 +100,7 @@ class LLVM::Context
     if ret != 0 && msg
       raise LLVM.string_and_dispose(msg)
     end
-    {% if LibLLVM::IS_38 %}
-      Module.new(mod, "unknown", self)
-    {% else %}
-      # LLVM >= 3.9
-      Module.new(mod, self)
-    {% end %}
+    Module.new(mod, self)
   end
 
   def ==(other : self)

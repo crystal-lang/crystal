@@ -1,6 +1,6 @@
 # :nodoc:
 module Crystal::System
-  def self.retry_with_buffer(function_name, max_buffer)
+  def self.retry_with_buffer(function_name, max_buffer, &)
     initial_buf = uninitialized UInt8[1024]
     buf = initial_buf
 

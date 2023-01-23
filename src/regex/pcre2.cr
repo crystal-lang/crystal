@@ -9,9 +9,23 @@ module Regex::PCRE2
     @re = PCRE2.compile(source, pcre2_options(options) | LibPCRE2::UTF | LibPCRE2::NO_UTF_CHECK | LibPCRE2::DUPNAMES | LibPCRE2::UCP) do |error_message|
       raise ArgumentError.new(error_message)
     end
+
+    jit_compile
   end
 
-  protected def self.compile(source, options)
+  private def jit_compile : Nil
+    ret = LibPCRE2.jit_compile(@re, LibPCRE2::JIT_COMPLETE)
+    if ret < 0
+      case error = LibPCRE2::Error.new(ret)
+      when .jit_badoption?
+        # okay
+      else
+        raise ArgumentError.new("Regex JIT compile error: #{error}")
+      end
+    end
+  end
+
+  protected def self.compile(source, options, &)
     if res = LibPCRE2.compile(source, source.bytesize, options, out errorcode, out erroroffset, nil)
       res
     else
@@ -82,7 +96,7 @@ module Regex::PCRE2
   end
 
   # :nodoc:
-  def each_capture_group
+  def each_capture_group(&)
     name_table = uninitialized UInt8*
     pattern_info(LibPCRE2::INFO_NAMETABLE, pointerof(name_table))
 
@@ -123,9 +137,24 @@ module Regex::PCRE2
     LibPCRE2.general_context_create(->(size : LibC::Int, data : Void*) { GC.malloc(size) }.pointer, ->(pointer : Void*, data : Void*) { GC.free(pointer) }.pointer, nil)
   end
 
+  # Returns a JIT stack that's shared in the current thread.
+  #
+  # Only a single `match` function can run per thread at any given time, so there
+  # can't be any concurrent access to the JIT stack.
+  @[ThreadLocal]
+  class_getter jit_stack : LibPCRE2::JITStack do
+    jit_stack = LibPCRE2.jit_stack_create(32_768, 1_048_576, Regex::PCRE2.general_context)
+    if jit_stack.null?
+      raise "Error allocating JIT stack"
+    end
+    jit_stack
+  end
+
   private def match_data(str, byte_index, options)
     match_data = LibPCRE2.match_data_create_from_pattern(@re, Regex::PCRE2.general_context)
-    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, nil)
+    match_context = LibPCRE2.match_context_create(nil)
+    LibPCRE2.jit_stack_assign(match_context, nil, Regex::PCRE2.jit_stack.as(Void*))
+    match_count = LibPCRE2.match(@re, str, str.bytesize, byte_index, pcre2_options(options) | LibPCRE2::NO_UTF_CHECK, match_data, match_context)
 
     if match_count < 0
       case error = LibPCRE2::Error.new(match_count)
@@ -160,7 +189,7 @@ module Regex::PCRE2
       end
     end
 
-    private def fetch_impl(group_name : String)
+    private def fetch_impl(group_name : String, &)
       selected_range = nil
       exists = false
       @regex.each_capture_group do |number, name_entry|

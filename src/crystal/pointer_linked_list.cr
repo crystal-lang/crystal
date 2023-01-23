@@ -55,7 +55,7 @@ struct Crystal::PointerLinkedList(T)
   end
 
   # Removes and returns head from the list, yields if empty
-  def shift
+  def shift(&)
     unless empty?
       @head.tap { |t| delete(t) }
     else
@@ -69,7 +69,7 @@ struct Crystal::PointerLinkedList(T)
   end
 
   # Iterates the list.
-  def each : Nil
+  def each(&) : Nil
     return if empty?
 
     node = @head

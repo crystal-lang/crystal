@@ -112,7 +112,7 @@ module Crystal
       @found_untyped_def = false
     end
 
-    def inside_typed_def
+    def inside_typed_def(&)
       @inside_typed_def = true
       yield.tap { @inside_typed_def = false }
     end

@@ -239,7 +239,7 @@ module Crystal
       end
     end
 
-    def with_indent
+    def with_indent(&)
       @indents.push true
       yield
       @indents.pop

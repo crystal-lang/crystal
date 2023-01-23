@@ -24,7 +24,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.cd` with block
-  def cd(path : Path | String)
+  def cd(path : Path | String, &)
     Dir.cd(path) { yield }
   end
 

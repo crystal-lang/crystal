@@ -98,9 +98,9 @@ module Crystal
     end
 
     it "expands with named argument and yield" do
-      a_def = parse("def foo(x = 1, y = 2); yield x + y; end").as(Def)
+      a_def = parse("def foo(x = 1, y = 2, &); yield x + y; end").as(Def)
       actual = a_def.expand_default_arguments(Program.new, 0, ["y"])
-      actual.to_s.should eq("def foo:y(y)\n  x = 1\n  yield x + y\nend")
+      actual.to_s.should eq("def foo:y(y, &)\n  x = 1\n  yield x + y\nend")
     end
 
     # Small optimizations: no need to create a separate def in these cases
@@ -147,9 +147,9 @@ module Crystal
     end
 
     it "expands with magic constant with named arg with yield" do
-      a_def = parse("def foo(x, file = __FILE__, line = __LINE__); yield x, file, line; end").as(Def)
+      a_def = parse("def foo(x, file = __FILE__, line = __LINE__, &); yield x, file, line; end").as(Def)
       other_def = a_def.expand_default_arguments(Program.new, 1, ["line"])
-      other_def.to_s.should eq("def foo:line(x, line, file = __FILE__)\n  yield x, file, line\nend")
+      other_def.to_s.should eq("def foo:line(x, line, file = __FILE__, &)\n  yield x, file, line\nend")
     end
 
     it "expands a def with double splat and no args" do

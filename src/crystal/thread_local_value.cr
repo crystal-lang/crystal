@@ -24,7 +24,7 @@ struct Crystal::ThreadLocalValue(T)
     end
   end
 
-  def consume_each
+  def consume_each(&)
     @mutex.sync do
       @values.each_value { |t| yield t }
       @values.clear

@@ -340,7 +340,7 @@ module Crystal
       end
     end
 
-    private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil)
+    private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil, &)
       location = location.try &.expanded_location
       return false unless location
 

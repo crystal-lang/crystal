@@ -1,5 +1,5 @@
 struct LLVM::Target
-  def self.each
+  def self.each(&)
     target = LibLLVM.get_first_target
     while target
       yield Target.new target

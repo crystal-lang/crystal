@@ -47,7 +47,7 @@ module MIME::Multipart
     #   io.gets_to_end          # => "body"
     # end
     # ```
-    def next
+    def next(&)
       raise Multipart::Error.new "Multipart parser already finished parsing" if @state.finished?
       raise Multipart::Error.new "Multipart parser is in an errored state" if @state.errored?
 

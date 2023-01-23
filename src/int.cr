@@ -728,7 +728,7 @@ struct Int
     end
   end
 
-  private def internal_to_s(base, precision, upcase = false)
+  private def internal_to_s(base, precision, upcase = false, &)
     # Given sizeof(self) <= 128 bits, we need at most 128 bytes for a base 2
     # representation, plus one byte for the negative sign (possibly used by the
     # string-returning overload).

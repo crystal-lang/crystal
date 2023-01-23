@@ -133,19 +133,3 @@ describe "Spec matchers" do
     end
   end
 end
-
-describe "Spec" do
-  describe "use_colors?" do
-    it "returns if output is colored or not" do
-      saved = Spec.use_colors?
-      begin
-        Spec.use_colors = false
-        Spec.use_colors?.should be_false
-        Spec.use_colors = true
-        Spec.use_colors?.should be_true
-      ensure
-        Spec.use_colors = saved
-      end
-    end
-  end
-end

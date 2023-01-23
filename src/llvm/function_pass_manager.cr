@@ -12,7 +12,7 @@ class LLVM::FunctionPassManager
     changed
   end
 
-  def run
+  def run(&)
     LibLLVM.initialize_function_pass_manager(self)
 
     runner = Runner.new(self)

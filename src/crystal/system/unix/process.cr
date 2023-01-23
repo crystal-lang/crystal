@@ -116,6 +116,28 @@ struct Crystal::System::Process
     pid
   end
 
+  # Duplicates the current process.
+  # Returns a `Process` representing the new child process in the current process
+  # and `nil` inside the new child process.
+  def self.fork(&)
+    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
+
+    if pid = fork
+      return pid
+    end
+
+    begin
+      yield
+      LibC._exit 0
+    rescue ex
+      ex.inspect_with_backtrace STDERR
+      STDERR.flush
+      LibC._exit 1
+    ensure
+      LibC._exit 254 # not reached
+    end
+  end
+
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
     reader_pipe, writer_pipe = IO.pipe
 

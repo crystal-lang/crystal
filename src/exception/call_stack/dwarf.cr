@@ -45,7 +45,7 @@ struct Exception::CallStack
     end
   end
 
-  protected def self.parse_function_names_from_dwarf(info, strings, line_strings)
+  protected def self.parse_function_names_from_dwarf(info, strings, line_strings, &)
     info.each do |code, abbrev, attributes|
       next unless abbrev && abbrev.tag.subprogram?
       name = low_pc = high_pc = nil

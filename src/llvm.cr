@@ -101,20 +101,12 @@ module LLVM
   end
 
   def self.host_cpu_name : String
-    {% unless LibLLVM::IS_LT_70 %}
-      String.new LibLLVM.get_host_cpu_name
-    {% else %}
-      raise "LibLLVM.host_cpu_name requires LLVM 7.0 or newer"
-    {% end %}
+    String.new LibLLVM.get_host_cpu_name
   end
 
   def self.normalize_triple(triple : String) : String
     normalized = LibLLVMExt.normalize_target_triple(triple)
     normalized = LLVM.string_and_dispose(normalized)
-
-    # Fix LLVM not replacing empty triple parts with "unknown"
-    # This was fixed in LLVM 8
-    normalized = normalized.split('-').map { |c| c.presence || "unknown" }.join('-')
 
     normalized
   end

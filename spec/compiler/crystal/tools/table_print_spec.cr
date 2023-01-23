@@ -1,7 +1,7 @@
 require "spec"
 require "compiler/crystal/tools/table_print"
 
-private def assert_table(expected)
+private def assert_table(expected, &)
   actual = String::Builder.build do |builder|
     Crystal::TablePrint.new(builder).build do |tp|
       with tp yield

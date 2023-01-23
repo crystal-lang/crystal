@@ -26,7 +26,7 @@ module HTTP
   record HeaderLine, name : String, value : String, bytesize : Int32
 
   # :nodoc:
-  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true, *, max_headers_size : Int32 = MAX_HEADERS_SIZE) : HTTP::Status?
+  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true, *, max_headers_size : Int32 = MAX_HEADERS_SIZE, &) : HTTP::Status?
     headers = Headers.new
 
     max_size = max_headers_size

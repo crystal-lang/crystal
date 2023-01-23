@@ -141,6 +141,14 @@ class Crystal::Command
   rescue ex : Crystal::Error
     report_warnings
 
+    # This unwraps nested errors which could be caused by `require` which wraps
+    # errors in order to trace the require path. The causes are listed similarly
+    # to `#inspect_with_backtrace` but without the backtrace.
+    while cause = ex.cause
+      error ex.message, exit_code: nil
+      ex = cause
+    end
+
     error ex.message
   rescue ex : OptionParser::Exception
     error ex.message

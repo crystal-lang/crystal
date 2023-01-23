@@ -341,4 +341,19 @@ describe "Tuple" do
     ary = Tuple.new.to_a
     ary.size.should eq(0)
   end
+
+  it "#to_static_array" do
+    ary = {1, 'a', true}.to_static_array
+    ary.should be_a(StaticArray(Int32 | Char | Bool, 3))
+    ary.should eq(StaticArray[1, 'a', true])
+    ary.size.should eq(3)
+
+    ary = Tuple.new.to_static_array
+    ary.should be_a(StaticArray(NoReturn, 0))
+    ary.size.should eq(0)
+
+    ary = Tuple(String | Int32).new(1).to_static_array
+    ary.should be_a(StaticArray(String | Int32, 1))
+    ary.should eq StaticArray[1.as(String | Int32)]
+  end
 end

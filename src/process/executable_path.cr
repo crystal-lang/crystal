@@ -60,7 +60,7 @@ class Process
     nil
   end
 
-  private def self.find_executable_possibilities(name, path, pwd)
+  private def self.find_executable_possibilities(name, path, pwd, &)
     return if name.to_s.empty?
 
     {% if flag?(:win32) %}

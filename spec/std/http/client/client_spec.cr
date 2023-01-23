@@ -6,7 +6,7 @@ require "http/server"
 require "http/log"
 require "log/spec"
 
-private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true)
+private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true, &)
   server = TCPServer.new(host, port)
   begin
     spawn do
@@ -475,7 +475,7 @@ module HTTP
   end
 
   class SubClient < HTTP::Client
-    def around_exec(request)
+    def around_exec(request, &)
       raise "from subclass"
       yield
     end

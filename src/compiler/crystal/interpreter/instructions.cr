@@ -1651,163 +1651,73 @@ require "./repl"
       },
 
       {% if flag?(:bits64) %}
-        {% if compare_versions(Crystal::LLVM_VERSION, "7.0.0") < 0 %}
-          interpreter_intrinsics_memcpy: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, align : UInt32, is_volatile : Bool],
-            code:       begin
-              # In the std, align is always set to 0. Let's worry about this if really needed.
-              raise "BUG: memcpy with align != 0 is not supported" if align != 0
-
-              # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memcpy(dest, src, len, 0, true)
-              else
-                LibIntrinsics.memcpy(dest, src, len, 0, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memmove: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, align : UInt32, is_volatile : Bool],
-            code:       begin
-              # In the std, align is always set to 0. Let's worry about this if really needed.
-              raise "BUG: memcpy with align != 0 is not supported" if align != 0
-
-              # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memmove(dest, src, len, 0, true)
-              else
-                LibIntrinsics.memmove(dest, src, len, 0, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memset: {
-            pop_values: [dest : Pointer(Void), val : UInt8, len : UInt64, align : UInt32, is_volatile : Bool],
-            code:       begin
-              # In the std, align is always set to 0. Let's worry about this if really needed.
-              raise "BUG: memcpy with align != 0 is not supported" if align != 0
-
-              # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memset(dest, val, len, 0, true)
-              else
-                LibIntrinsics.memset(dest, val, len, 0, false)
-              end
-            end,
-          },
-        {% else %}
-          interpreter_intrinsics_memcpy: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool],
-            code:       begin
-              # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memcpy(dest, src, len, true)
-              else
-                LibIntrinsics.memcpy(dest, src, len, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memmove: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool],
-            code:       begin
-              # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memmove(dest, src, len, true)
-              else
-                LibIntrinsics.memmove(dest, src, len, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memset: {
-            pop_values: [dest : Pointer(Void), val : UInt8, len : UInt64, is_volatile : Bool],
-            code:       begin
-              # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memset(dest, val, len, true)
-              else
-                LibIntrinsics.memset(dest, val, len, false)
-              end
-            end,
-          },
-        {% end %}
+        interpreter_intrinsics_memcpy: {
+          pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool],
+          code:       begin
+            # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
+            if is_volatile
+              LibIntrinsics.memcpy(dest, src, len, true)
+            else
+              LibIntrinsics.memcpy(dest, src, len, false)
+            end
+          end,
+        },
+        interpreter_intrinsics_memmove: {
+          pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool],
+          code:       begin
+            # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
+            if is_volatile
+              LibIntrinsics.memmove(dest, src, len, true)
+            else
+              LibIntrinsics.memmove(dest, src, len, false)
+            end
+          end,
+        },
+        interpreter_intrinsics_memset: {
+          pop_values: [dest : Pointer(Void), val : UInt8, len : UInt64, is_volatile : Bool],
+          code:       begin
+            # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
+            if is_volatile
+              LibIntrinsics.memset(dest, val, len, true)
+            else
+              LibIntrinsics.memset(dest, val, len, false)
+            end
+          end,
+        },
       {% else %}
-        {% if compare_versions(Crystal::LLVM_VERSION, "7.0.0") < 0 %}
-          interpreter_intrinsics_memcpy: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, align : UInt32, is_volatile : Bool],
-            code:       begin
-              # In the std, align is always set to 0. Let's worry about this if really needed.
-              raise "BUG: memcpy with align != 0 is not supported" if align != 0
-
-              # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memcpy(dest, src, len, 0, true)
-              else
-                LibIntrinsics.memcpy(dest, src, len, 0, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memmove: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, align : UInt32, is_volatile : Bool],
-            code:       begin
-              # In the std, align is always set to 0. Let's worry about this if really needed.
-              raise "BUG: memcpy with align != 0 is not supported" if align != 0
-
-              # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memmove(dest, src, len, 0, true)
-              else
-                LibIntrinsics.memmove(dest, src, len, 0, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memset: {
-            pop_values: [dest : Pointer(Void), val : UInt8, len : UInt32, align : UInt32, is_volatile : Bool],
-            code:       begin
-              # In the std, align is always set to 0. Let's worry about this if really needed.
-              raise "BUG: memcpy with align != 0 is not supported" if align != 0
-
-              # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memset(dest, val, len, 0, true)
-              else
-                LibIntrinsics.memset(dest, val, len, 0, false)
-              end
-            end,
-          },
-        {% else %}
-          interpreter_intrinsics_memcpy: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, is_volatile : Bool],
-            code:       begin
-              # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memcpy(dest, src, len, true)
-              else
-                LibIntrinsics.memcpy(dest, src, len, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memmove: {
-            pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, is_volatile : Bool],
-            code:       begin
-              # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memmove(dest, src, len, true)
-              else
-                LibIntrinsics.memmove(dest, src, len, false)
-              end
-            end,
-          },
-          interpreter_intrinsics_memset: {
-            pop_values: [dest : Pointer(Void), val : UInt8, len : UInt32, is_volatile : Bool],
-            code:       begin
-              # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
-              if is_volatile
-                LibIntrinsics.memset(dest, val, len, true)
-              else
-                LibIntrinsics.memset(dest, val, len, false)
-              end
-            end,
-          },
-        {% end %}
+        interpreter_intrinsics_memcpy: {
+          pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, is_volatile : Bool],
+          code:       begin
+            # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
+            if is_volatile
+              LibIntrinsics.memcpy(dest, src, len, true)
+            else
+              LibIntrinsics.memcpy(dest, src, len, false)
+            end
+          end,
+        },
+        interpreter_intrinsics_memmove: {
+          pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, is_volatile : Bool],
+          code:       begin
+            # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
+            if is_volatile
+              LibIntrinsics.memmove(dest, src, len, true)
+            else
+              LibIntrinsics.memmove(dest, src, len, false)
+            end
+          end,
+        },
+        interpreter_intrinsics_memset: {
+          pop_values: [dest : Pointer(Void), val : UInt8, len : UInt32, is_volatile : Bool],
+          code:       begin
+            # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
+            if is_volatile
+              LibIntrinsics.memset(dest, val, len, true)
+            else
+              LibIntrinsics.memset(dest, val, len, false)
+            end
+          end,
+        },
       {% end %}
 
       interpreter_intrinsics_debugtrap: {
