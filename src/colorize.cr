@@ -333,6 +333,7 @@ end
 # A colorized object. Colors and text decorations can be modified.
 struct Colorize::Object(T)
   private COLORS = %w(default black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white)
+  private MODES = %w(bold bright dim underline blink reverse hidden)
 
   @fore : Color
   @back : Color
@@ -419,6 +420,18 @@ struct Colorize::Object(T)
   def mode(mode : Mode) : self
     @mode |= mode
     self
+  end
+
+  def mode(mode : Symbol) : self
+    {% begin %}
+      case mode
+      {% for name in MODES %}
+      when :{{name.id}}
+        mode(Mode::{{name.capitalize.id}})
+      {% end %}
+      end
+    {% end %}
+    return self
   end
 
   def on(color : Symbol)

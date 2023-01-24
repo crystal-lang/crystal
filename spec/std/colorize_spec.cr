@@ -189,4 +189,13 @@ describe "colorize" do
   it "toggles off and on" do
     colorize("hello").toggle(false).black.toggle(true).to_s.should eq("\e[30mhello\e[0m")
   end
+
+  it "forwards missing method calls to the underlying object" do
+    color_str = "Hello, World!".colorize.red
+    color_str.size.should eq 13
+    color_str.to_s.size.should eq 22
+    just_a_string = color_str + " I am just a String."
+    just_a_string.should eq "Hello, World! I am just a String."
+    color_str.to_s.should match(/\e\[31m/)
+  end
 end
