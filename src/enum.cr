@@ -494,6 +494,8 @@ struct Enum
   # ```
   # IOMode.flags(Read, Write) # => IOMode::Read | IOMode::Write
   # ```
+  #
+  # * `Enum.[]` is a more advanced alternative which also allows int and symbol parameters.
   macro flags(*values)
     {% for value, i in values %}\
       {% if i != 0 %} | {% end %}\
