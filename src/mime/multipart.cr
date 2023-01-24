@@ -104,7 +104,7 @@ module MIME::Multipart
   # ```
   #
   # See: `Multipart::Parser`
-  def self.parse(response : HTTP::Client::Response)
+  def self.parse(response : HTTP::Client::Response, &)
     if content_type = response.headers["Content-Type"]?
       boundary = parse_boundary(content_type)
     end
