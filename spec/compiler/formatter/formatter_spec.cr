@@ -2416,4 +2416,14 @@ describe Crystal::Formatter do
       end
     end
     CRYSTAL
+
+  # #12964
+  assert_format <<-CRYSTAL
+    begin
+      begin
+        a
+        # b
+      end
+    end
+    CRYSTAL
 end
