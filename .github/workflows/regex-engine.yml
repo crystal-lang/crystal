@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v3
+      - name: Install PCRE2
+        run: apk delete pcre2-dev
       - name: Assert using PCRE
         run: bin/crystal eval 'abort unless Regex::Engine == Regex::PCRE'
       - name: Run Regex specs
