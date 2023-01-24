@@ -114,6 +114,33 @@
 # ```
 #
 # See `Colorize::Mode` for available text decorations.
+#
+# ### Method Forwarding
+#
+# In order to allow a colorized object, such as a String, to continue to generally
+# be used as its original object, `Colorize::Object(T)` uses `forward_missing_to`
+# in order to forward all method calls that aren't applicable to Colorize on to the
+# original object. This means that, for example, a method like this:
+#
+# ```
+# def initialize(label : String, action : ->)
+#   @label = label
+#   @action = action
+# end
+# ```
+#
+# Can become this:
+#
+# ```
+# def initialize(label : String | Colorize::Object(String), action : ->)
+#   @label = label
+#   @action = action
+# end
+# ```
+#
+# Whatever is consequently done with `@label`, which is expected to be a `String`, will
+# likely work with the colorized string, with no other changes required.
+#
 module Colorize
   # Objects will only be colored if this is `true`.
   #
@@ -309,6 +336,8 @@ struct Colorize::Object(T)
 
   @fore : Color
   @back : Color
+
+  forward_missing_to @object
 
   def initialize(@object : T)
     @fore = ColorANSI::Default
