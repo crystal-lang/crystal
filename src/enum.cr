@@ -173,15 +173,17 @@ struct Enum
     {% if @type.annotation(Flags) %}
       String.build { |io| to_s(io) }
     {% else %}
-      # Can't use `case` here because case with duplicate values do
-      # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
-      {% for member, i in @type.constants %}
-        if value == {{@type.constant(member)}}
-          return {{member.stringify}}
-        end
-      {% end %}
+      member_name || value.to_s
+    {% end %}
+  end
 
-      value.to_s
+  private def member_name
+    # Can't use `case` here because case with duplicate values do
+    # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
+    {% for member in @type.constants %}
+      if value == {{@type.constant(member)}}
+        return {{member.stringify}}
+      end
     {% end %}
   end
 
