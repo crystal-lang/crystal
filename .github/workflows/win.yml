@@ -251,6 +251,7 @@ jobs:
           mv mpir/lib/x64/Release/mpir.lib libs/
           mv libyaml/Release/yaml.lib libs/
           mv libxml2/Release/libxml2s.lib libs/xml2.lib
+          dir libs
 
       - name: Cache OpenSSL
         id: cache-openssl
