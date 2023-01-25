@@ -165,6 +165,38 @@ struct Enum
     {% end %}
   end
 
+  # Returns an unambiguous `String` representation of this enum member.
+  # In the case of a single member value, this is the fully qualified name of
+  # the member (equvalent to `#to_s` with the enum name as prefix).
+  # In the case of multiple members (for a flags enum), it's a call to `Enum.[]`
+  # for recreating the same value.
+  #
+  # If the value can't be represented fully by named members, the remainig value
+  # is appended.
+  #
+  # ```
+  # Color::Red                     # => Color:Red
+  # IOMode::None                   # => IOMode::None
+  # (IOMode::Read | IOMode::Write) # => IOMode[Read, Write]
+  #
+  # Color.new(10) # => Color[10]
+  # ```
+  def inspect(io : IO) : Nil
+    {% if @type.annotation(Flags) %}
+      if value == 0
+        io << {{ "#{@type}::None" }}
+      elsif name = member_name
+        io << {{ "#{@type}::" }} << name
+      else
+        io << {{ "#{@type}[" }}
+        stringify_names(io, ", ")
+        io << "]"
+      end
+    {% else %}
+      inspect_single(io)
+    {% end %}
+  end
+
   private def stringify_names(io, separator) : Nil
     remaining_value = self.value
     {% for member in @type.constants %}
@@ -182,6 +214,14 @@ struct Enum
     unless remaining_value.zero?
       io << separator unless remaining_value == self.value
       io << remaining_value
+    end
+  end
+
+  private def inspect_single(io) : Nil
+    if name = member_name
+      io << {{ "#{@type}::" }} << name
+    else
+      io << {{ "#{@type}[" }} << value << "]"
     end
   end
 
@@ -505,7 +545,7 @@ struct Enum
   # Convenience macro to create a combined enum (combines given members using `|` (or) logical operator)
   #
   # ```
-  # IOMode.flags(Read, Write) # => IOMode::Read | IOMode::Write
+  # IOMode.flags(Read, Write) # => IOMode[Read, Write]
   # ```
   #
   # * `Enum.[]` is a more advanced alternative which also allows int and symbol parameters.
