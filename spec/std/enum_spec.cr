@@ -60,7 +60,7 @@ describe Enum do
 
     it "for flags enum" do
       assert_prints SpecEnumFlags::None.to_s, "None"
-      assert_prints SpecEnumFlags::All.to_s, "One | Two | Three"
+      assert_prints SpecEnumFlags::All.to_s, "All"
       assert_prints (SpecEnumFlags::One | SpecEnumFlags::Two).to_s, "One | Two"
       assert_prints SpecEnumFlags.new(128).to_s, "128"
       assert_prints (SpecEnumFlags::One | SpecEnumFlags.new(128)).to_s, "One | 128"

@@ -132,6 +132,8 @@ struct Enum
     {% if @type.annotation(Flags) %}
       if value == 0
         io << "None"
+      elsif name = member_name
+        io << name
       else
         remaining_value = self.value
         {% for member in @type.constants %}
