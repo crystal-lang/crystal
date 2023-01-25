@@ -135,20 +135,7 @@ struct Enum
       elsif name = member_name
         io << name
       else
-        remaining_value = self.value
-        {% for member in @type.constants %}
-          {% if member.stringify != "All" %}
-            if {{@type.constant(member)}} != 0 && value.bits_set? {{@type.constant(member)}}
-              io << " | " unless remaining_value == self.value
-              io << {{member.stringify}}
-              remaining_value &= ~{{@type.constant(member)}}
-            end
-          {% end %}
-        {% end %}
-        unless remaining_value.zero?
-          io << " | " unless remaining_value == self.value
-          io << remaining_value
-        end
+        stringify_names(io, " | ")
       end
     {% else %}
       io << to_s
@@ -176,6 +163,26 @@ struct Enum
     {% else %}
       member_name || value.to_s
     {% end %}
+  end
+
+  private def stringify_names(io, separator) : Nil
+    remaining_value = self.value
+    {% for member in @type.constants %}
+      {% if member.stringify != "All" %}
+        if {{@type.constant(member)}} != 0 && remaining_value.bits_set? {{@type.constant(member)}}
+          unless remaining_value == self.value
+            io << separator
+          end
+          io << {{member.stringify}}
+          remaining_value &= ~{{@type.constant(member)}}
+        end
+      {% end %}
+    {% end %}
+
+    unless remaining_value.zero?
+      io << separator unless remaining_value == self.value
+      io << remaining_value
+    end
   end
 
   private def member_name
