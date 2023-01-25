@@ -151,7 +151,6 @@ struct Enum
     {% else %}
       io << to_s
     {% end %}
-    nil
   end
 
   # Returns a `String` representation of this enum member.
