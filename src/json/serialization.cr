@@ -490,7 +490,7 @@ module JSON
     getter klass : String
     getter attribute : String?
 
-    def initialize(message : String?, @klass : String, @attribute : String?, line_number : Int32, column_number : Int32, cause)
+    def initialize(message : String?, @klass : String, @attribute : String?, line_number : Int32, column_number : UInt64, cause)
       message = String.build do |io|
         io << message
         io << "\n  parsing "

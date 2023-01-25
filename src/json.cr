@@ -119,13 +119,13 @@ module JSON
   # Exception thrown on a JSON parse error.
   class ParseException < Error
     getter line_number : Int32
-    getter column_number : Int32
+    getter column_number : UInt64
 
     def initialize(message, @line_number, @column_number, cause = nil)
       super "#{message} at line #{@line_number}, column #{@column_number}", cause
     end
 
-    def location : {Int32, Int32}
+    def location : {Int32, UInt64}
       {line_number, column_number}
     end
   end

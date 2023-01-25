@@ -104,7 +104,7 @@ class JSON::PullParser
     @raw_value = ""
     @object_stack = [] of ObjectStackKind
     @skip_count = 0
-    @location = {0, 0}
+    @location = {0, 0_u64}
 
     next_token
     case token.kind
@@ -580,7 +580,7 @@ class JSON::PullParser
   # Returns the current location.
   #
   # The location is a tuple `{line number, column number}`.
-  def location : Tuple(Int32, Int32)
+  def location : Tuple(Int32, UInt64)
     @location
   end
 

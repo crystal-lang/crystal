@@ -15,7 +15,7 @@ abstract class JSON::Lexer
   def initialize
     @token = Token.new
     @line_number = 1
-    @column_number = 1
+    @column_number = 1_u64
     @buffer = IO::Memory.new
     @string_pool = StringPool.new
     @skip = false
@@ -80,7 +80,7 @@ abstract class JSON::Lexer
     while whitespace?(current_char)
       if current_char == '\n'
         @line_number += 1
-        @column_number = 0
+        @column_number = 0_u64
       end
       next_char
     end

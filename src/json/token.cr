@@ -31,13 +31,13 @@ class JSON::Token
   end
 
   property line_number : Int32
-  property column_number : Int32
+  property column_number : UInt64
   property raw_value : String
 
   def initialize
     @kind = :EOF
     @line_number = 0
-    @column_number = 0
+    @column_number = 0_u64
     @string_value = ""
     @raw_value = ""
   end
