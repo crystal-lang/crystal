@@ -431,6 +431,11 @@ class Channel(T)
       # * `StaticArray`: This avoids a heap allocation because we can dup a
       #   static array on the stack.
       ops_locks = ops.dup
+    elsif ops.responds_to?(:to_static_array)
+      # If the collection type implements `to_static_array` we can create a
+      # copy without allocating an array. This applies to `Tuple` types, which
+      # the compiler generates for `select` expressions.
+      ops_locks = ops.to_static_array
     else
       ops_locks = ops.to_a
     end

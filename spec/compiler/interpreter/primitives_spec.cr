@@ -852,5 +852,23 @@ describe Crystal::Repl::Interpreter do
         !MyClass(Int32)
         CRYSTAL
     end
+
+    it "does math primitive on union" do
+      interpret(<<-CRYSTAL).should eq(3)
+        module Test; end
+
+        a = 1
+        a.as(Int32 | Test) &+ 2
+        CRYSTAL
+    end
+
+    it "does math convert on union" do
+      interpret(<<-CRYSTAL).should eq(1)
+        module Test; end
+
+        a = 1
+        a.as(Int32 | Test).to_i64!
+        CRYSTAL
+    end
   end
 end
