@@ -10,7 +10,9 @@ module Regex::PCRE2
       raise ArgumentError.new(error_message)
     end
 
-    jit_compile
+    {% unless flag?(:win32) %}
+      jit_compile
+    {% end %}
   end
 
   private def jit_compile : Nil
