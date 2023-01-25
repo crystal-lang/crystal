@@ -128,6 +128,15 @@ describe Crystal::Repl::Interpreter do
         1 + ({1, 2, 3, 4}; 2)
       CRYSTAL
     end
+
+    it "does tuple indexer on union" do
+      interpret(<<-CRYSTAL).should eq(1)
+        module Test; end
+
+        a = {1}
+        a.as(Tuple(Int32) | Test)[0]
+        CRYSTAL
+    end
   end
 end
 
