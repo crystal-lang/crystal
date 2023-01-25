@@ -275,6 +275,32 @@ describe Enum do
     SpecEnum::One.clone.should eq(SpecEnum::One)
   end
 
+  describe ".[]" do
+    it "non-flags enum" do
+      SpecEnum[].should be_nil
+      SpecEnum[One].should eq SpecEnum::One
+      SpecEnum[1].should eq SpecEnum::Two
+      SpecEnum[One, Two].should eq SpecEnum::One | SpecEnum::Two
+      SpecEnum[One, :two].should eq SpecEnum::One | SpecEnum::Two
+      SpecEnum[One, 1].should eq SpecEnum::One | SpecEnum::Two
+    end
+
+    it "flags enum" do
+      SpecEnumFlags.flags.should be_nil
+      SpecEnumFlags[One].should eq SpecEnumFlags::One
+      SpecEnumFlags[2].should eq SpecEnumFlags::Two
+      SpecEnumFlags[One, Two].should eq SpecEnumFlags::One | SpecEnumFlags::Two
+      SpecEnumFlags[One, :two].should eq SpecEnumFlags::One | SpecEnumFlags::Two
+      SpecEnumFlags[One, 2].should eq SpecEnumFlags::One | SpecEnumFlags::Two
+    end
+
+    it "private flags enum" do
+      PrivateFlagsEnum.flags.should be_nil
+      PrivateFlagsEnum[FOO].should eq PrivateFlagsEnum::FOO
+      PrivateFlagsEnum[FOO, BAR].should eq PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAR
+    end
+  end
+
   describe ".flags" do
     it "non-flags enum" do
       SpecEnum.flags.should be_nil
