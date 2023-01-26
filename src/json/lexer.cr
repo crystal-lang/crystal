@@ -253,7 +253,7 @@ abstract class JSON::Lexer
       when 'e', 'E'
         consume_exponent
       else
-        if !number_string.to_i?
+        if !number_string.to_i64?
           @token.kind = :int_as_string
         else
           @token.kind = :int
