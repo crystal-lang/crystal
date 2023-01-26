@@ -247,14 +247,17 @@ abstract class JSON::Lexer
         append_number_char
         char = next_char
       end
-
       case char
       when '.'
         consume_float
       when 'e', 'E'
         consume_exponent
       else
-        @token.kind = :int
+        if !number_string.to_i?
+          @token.kind = :int_as_string
+        else
+          @token.kind = :int
+        end
         number_end
       end
     else

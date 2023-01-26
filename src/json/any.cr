@@ -18,7 +18,7 @@
 # which return `nil` when the underlying value type won't match.
 struct JSON::Any
   # All possible JSON types.
-  alias Type = Nil | Bool | Int64 | Float64 | String | Array(JSON::Any) | Hash(String, JSON::Any)
+  alias Type = Nil | Bool | Int64 | Float64 | String | Array(JSON::Any) | Hash(String, JSON::Any) | Int128
 
   # Reads a `JSON::Any` value from the given pull parser.
   def self.new(pull : JSON::PullParser)
@@ -184,6 +184,18 @@ struct JSON::Any
   # Returns `nil` otherwise.
   def as_i64? : Int64?
     as_i64 if @raw.is_a?(Int64)
+  end
+
+  # Checks that the underlying value is `Int`, and returns its value as an `Int128`.
+  # Raises otherwise.
+  def as_i128 : Int128
+    @raw.as(Int128).to_i128
+  end
+
+  # Checks that the underlying value is `Int`, and returns its value as an `Int128`.
+  # Returns `nil` otherwise.
+  def as_i128? : Int128?
+    as_i128 if @raw.is_a?(Int128)
   end
 
   # Checks that the underlying value is `Float` (or `Int`), and returns its value as an `Float64`.
