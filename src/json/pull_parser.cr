@@ -471,7 +471,6 @@ class JSON::PullParser
   # If the value is not a `String`, returns `nil`.
   def read?(klass : String.class) : String?
     read_string if kind.string?
-    read_int_as_string if kind.int_as_string?
   end
 
   private def read_next_internal
