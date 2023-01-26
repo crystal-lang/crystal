@@ -118,10 +118,10 @@ class Socket < IO
   def bind(port : Int)
     if family.inet?
       address = "0.0.0.0"
-      address_and_port = "0.0.0.0#{port}"
+      address_and_port = "0.0.0.0:#{port}"
     else
       address = "::"
-      address_and_port = "::#{port}"
+      address_and_port = "[::]:#{port}"
     end
 
     Addrinfo.resolve(address, port, @family, @type, @protocol) do |addrinfo|
