@@ -14,7 +14,7 @@ describe Socket, tags: "network" do
       sock.type.should eq(Socket::Type::DGRAM)
 
       expect_raises Socket::Error, "Protocol not supported" do
-        socket = TCPSocket.new(family: :unix)
+        TCPSocket.new(family: :unix)
       end
     end
   end
