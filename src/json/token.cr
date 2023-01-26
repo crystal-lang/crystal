@@ -25,8 +25,8 @@ class JSON::Token
     raise ParseException.new(exc.message, line_number, column_number)
   end
 
-  def int_as_string_value : Int128
-    raw_value.to_i128
+  def int_as_string_value : String
+    raw_value.to_s
   rescue exc : ArgumentError
     raise ParseException.new(exc.message, line_number, column_number)
   end

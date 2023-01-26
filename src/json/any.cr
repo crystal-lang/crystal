@@ -31,6 +31,8 @@ struct JSON::Any
       new pull.read_int
     when .float?
       new pull.read_float
+    when .int_as_string?
+      new pull.read_int_as_string
     when .string?
       new pull.read_string
     when .begin_array?
@@ -189,7 +191,7 @@ struct JSON::Any
   # Checks that the underlying value is `Int`, and returns its value as an `Int128`.
   # Raises otherwise.
   def as_i128 : Int128
-    @raw.as(Int128).to_i128
+    @raw.as(String).to_i128
   end
 
   # Checks that the underlying value is `Int`, and returns its value as an `Int128`.

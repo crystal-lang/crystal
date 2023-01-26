@@ -85,7 +85,7 @@ class JSON::PullParser
     token.int_value
   end
 
-  def int_as_string_value : Int128
+  def int_as_string_value : String
     token.int_as_string_value
   end
 
@@ -313,6 +313,12 @@ class JSON::PullParser
     end
   end
 
+  # Reads a int_as_string and returns it.
+  def read_int_as_string : String
+    expect_kind :int_as_string
+    @string_value.tap { read_next }
+  end
+
   # Reads a string and returns it.
   def read_string : String
     expect_kind :string
@@ -465,6 +471,7 @@ class JSON::PullParser
   # If the value is not a `String`, returns `nil`.
   def read?(klass : String.class) : String?
     read_string if kind.string?
+    read_int_as_string if kind.int_as_string?
   end
 
   private def read_next_internal
