@@ -116,8 +116,11 @@ class Socket < IO
   # sock.bind 1234
   # ```
   def bind(port : Int)
-    Addrinfo.resolve("::", port, @family, @type, @protocol) do |addrinfo|
-      system_bind(addrinfo, "::#{port}") { |errno| errno }
+    domain = @family.inet? ? "0.0.0.0" : "::"
+    domain_and_port = @family.inet? ? "0.0.0.0:#{port}" : "::#{port}"
+
+    Addrinfo.resolve(domain, port, @family, @type, @protocol) do |addrinfo|
+      system_bind(addrinfo, domain_and_port) { |errno| errno }
     end
   end
 
