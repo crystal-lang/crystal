@@ -47,7 +47,8 @@ struct StaticArray(T, N)
   # ary.class # => StaticArray(Char | Int32, 2)
   # ```
   #
-  # See also: `Number.static_array`.
+  # * `Number.static_array` is a convenient alternative for designating a
+  #   specific numerical item type.
   macro [](*args)
     %array = uninitialized StaticArray(typeof({{*args}}), {{args.size}})
     {% for arg, i in args %}

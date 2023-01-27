@@ -29,7 +29,8 @@ struct Slice(T)
   # If `T` is a `Number` then this is equivalent to
   # `Number.slice` (numbers will be coerced to the type `T`)
   #
-  # See also: `Number.slice`.
+  # * `Number.slice` is a convenient alternative for designating a
+  #   specific numerical item type.
   macro [](*args, read_only = false)
     # TODO: there should be a better way to check this, probably
     # asking if @type was instantiated or if T is defined
