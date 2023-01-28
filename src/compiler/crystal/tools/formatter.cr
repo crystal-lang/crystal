@@ -449,7 +449,7 @@ module Crystal
 
     def visit(node : SymbolLiteral)
       check :SYMBOL
-      write @token.raw
+      write @token.raw.inspect.gsub(/["\\]/, "")
       next_token
 
       false
