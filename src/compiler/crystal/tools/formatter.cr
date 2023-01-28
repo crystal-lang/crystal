@@ -449,10 +449,18 @@ module Crystal
 
     def visit(node : SymbolLiteral)
       check :SYMBOL
-      write @token.raw.inspect.gsub(/["\\]/, "")
+      write normalize_symbols()
       next_token
 
       false
+    end
+
+    def normalize_symbols
+      unless Symbol.needs_quotes?(@token.to_s)
+        @token.raw.inspect.gsub(/["\\]/, "")
+      else
+        @token.raw
+      end
     end
 
     def visit(node : NumberLiteral)
@@ -3637,7 +3645,7 @@ module Crystal
       skip_space_or_newline
       write_token " ", :OP_EQ, " "
       skip_space_or_newline
-      write_keyword :"uninitialized", " "
+      write_keyword :uninitialized, " "
       skip_space_or_newline
       accept node.declared_type
       false
