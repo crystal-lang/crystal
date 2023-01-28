@@ -1155,6 +1155,7 @@ module Crystal
 
         if value = node.value
           codegen_assign(var, value, node)
+          return false
         end
       when Global
         node.raise "BUG: there should be no use of global variables other than $~ and $?"

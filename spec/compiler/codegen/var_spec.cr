@@ -5,6 +5,10 @@ describe "Code gen: var" do
     run("a = 1; 1.5; a").to_i.should eq(1)
   end
 
+  it "codegens var with type declaration" do
+    run("a = (b : Int32 = 1); a").to_i.should eq(1)
+  end
+
   it "codegens ivar assignment when not-nil type filter applies" do
     run("
       class Foo
