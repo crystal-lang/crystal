@@ -20,4 +20,6 @@ class OAuth::RequestToken
 
     new token.not_nil!, secret.not_nil!
   end
+
+  def_equals_and_hash @token, @secret
 end
