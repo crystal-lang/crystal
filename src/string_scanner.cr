@@ -1,5 +1,7 @@
 # `StringScanner` provides for lexical scanning operations on a `String`.
 #
+# NOTE: To use `StringScanner`, you must explicitly import it with `require "string_scanner"`
+#
 # ### Example
 #
 # ```

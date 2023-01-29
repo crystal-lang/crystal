@@ -7,6 +7,8 @@
 # `#error`, and `#fatal` methods. They expect a block that will evaluate to the
 # message of the entry:
 #
+# NOTE: To use `Log`, you must explicitly import it with `require "log"`
+#
 # ```
 # require "log"
 #
@@ -18,7 +20,7 @@
 # ```
 # Log.info &.emit("User logged in", user_id: 42)
 # ```
-#
+# 
 # If you want to log an exception, you can indicate it in the `exception:` named argument.
 #
 # ```

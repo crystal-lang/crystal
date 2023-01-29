@@ -2,6 +2,8 @@ require "./tcp_socket"
 
 # A Transmission Control Protocol (TCP/IP) server.
 #
+# NOTE: To use `TCPServer`, you must explicitly import it with `require "socket"`
+#
 # Usage example:
 # ```
 # require "socket"

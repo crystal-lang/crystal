@@ -2,6 +2,8 @@ require "crystal/system/mime"
 
 # This module implements a global MIME registry.
 #
+# NOTE: To use `MIME`, you must explicitly import it with `require "mime"`
+#
 # ```
 # require "mime"
 #

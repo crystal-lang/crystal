@@ -18,6 +18,8 @@
 #
 # Quick Example:
 #
+# NOTE: To use `ECR`, you must explicitly import it with `require "ecr"`
+#
 # Create a simple ECR file named `greeter.ecr`:
 #
 # ```

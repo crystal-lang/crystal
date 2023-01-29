@@ -5,6 +5,8 @@ require "random"
 # A `BigInt` can represent arbitrarily large integers.
 #
 # It is implemented under the hood with [GMP](https://gmplib.org/).
+#
+# NOTE: To use `BigInt`, you must explicitly import it with `require "big"`
 struct BigInt < Int
   include Comparable(Int::Signed)
   include Comparable(Int::Unsigned)

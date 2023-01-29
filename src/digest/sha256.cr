@@ -2,6 +2,9 @@ require "./digest"
 require "openssl"
 
 # Implements the SHA256 digest algorithm.
+#
+# NOTE: To use `SHA256`, you must explicitly import it with `require "digest/sha256"`
+#
 class Digest::SHA256 < ::OpenSSL::Digest
   extend ClassMethods
 

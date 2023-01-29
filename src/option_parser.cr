@@ -7,6 +7,8 @@
 #
 # Run `crystal` for an example of a CLI built with `OptionParser`.
 #
+# NOTE: To use `OptionParser`, you must explicitly import it with `require "option_parser"`
+#
 # Short example:
 #
 # ```

@@ -4,6 +4,8 @@
 # `UInt32`s. The total number of bits stored is set at creation and is
 # immutable.
 #
+# NOTE: To use `BitArray`, you must explicitly import it with `require "bit_array"`
+#
 # ### Example
 #
 # ```

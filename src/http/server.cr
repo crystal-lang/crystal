@@ -15,6 +15,8 @@ require "log"
 # A server is initialized with a handler chain responsible for processing each
 # incoming request.
 #
+# NOTE: To use `Server`, you must explicitly import it with `require "http/server"`
+#
 # ```
 # require "http/server"
 #

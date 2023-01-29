@@ -3,6 +3,8 @@ require "../subtle"
 
 # Generate, read and verify `Crypto::Bcrypt` hashes.
 #
+# NOTE: To use `Password`, you must explicitly import it with `require "crypto/bcrypt/password"`
+#
 # ```
 # require "crypto/bcrypt/password"
 #

@@ -2,6 +2,8 @@
 # It allows a runtime to save memory by preserving strings in a pool, allowing to
 # reuse an instance of a common string instead of creating a new one.
 #
+# NOTE: To use `StringPool`, you must explicitly import it with `require "string_pool"`
+#
 # ```
 # require "string_pool"
 #

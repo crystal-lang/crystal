@@ -1,4 +1,6 @@
 # Represents a UUID (Universally Unique IDentifier).
+#
+# NOTE: To use `UUID`, you must explicitly import it with `require "uuid"`
 struct UUID
   include Comparable(UUID)
 

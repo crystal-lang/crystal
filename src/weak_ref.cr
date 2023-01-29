@@ -1,6 +1,7 @@
 # Weak Reference class that allows a referenced object to be garbage-collected.
 #
 # WARNING: The referenced object cannot be a module.
+# NOTE: To use `WeakRef`, you must explicitly import it with `require "weak_ref"`
 #
 # ```
 # require "weak_ref"

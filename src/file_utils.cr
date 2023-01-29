@@ -1,3 +1,6 @@
+#
+# NOTE: To use `FileUtils`, you must explicitly import it with `require "file_utils"`
+#
 module FileUtils
   extend self
 

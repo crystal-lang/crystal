@@ -12,6 +12,8 @@ end
 # Value contains the actual value, and scale tells the decimal point place.
 # E.g. when value is `1234` and scale `2`, the result is `12.34`.
 #
+# NOTE: To use `BigDecimal`, you must explicitly import it with `require "big"`
+#
 # The general idea and some of the arithmetic algorithms were adapted from
 # the MIT/APACHE-licensed [bigdecimal-rs](https://github.com/akubera/bigdecimal-rs).
 struct BigDecimal < Number

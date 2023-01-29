@@ -1,6 +1,8 @@
 # The OAuth module provides an `OAuth::Consumer` as specified by
 # [RFC 5849](https://tools.ietf.org/html/rfc5849).
 #
+# NOTE: To use `OAuth`, you must explicitly import it with `require "oauth"`
+#
 # ### Performing HTTP client requests with OAuth authentication
 #
 # Assuming you have an access token, its secret, the consumer key and the consumer secret,

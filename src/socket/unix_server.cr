@@ -4,6 +4,8 @@ require "./unix_socket"
 #
 # Only available on UNIX and UNIX-like operating systems.
 #
+# NOTE: To use `UNIXServer`, you must explicitly import it with `require "socket"`
+#
 # Example usage:
 # ```
 # require "socket"
