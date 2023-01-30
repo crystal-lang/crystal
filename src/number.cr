@@ -3,8 +3,6 @@ struct Number
   include Comparable(Number)
   include Steppable
 
-  alias Primitive = Int::Primitive | Float::Primitive
-
   # Returns the value zero in the respective type.
   #
   # ```
@@ -351,4 +349,11 @@ struct Number
   def negative? : Bool
     self < 0
   end
+end
+
+require "float"
+require "int"
+
+struct Number
+  alias Primitive = Int::Primitive | Float::Primitive
 end

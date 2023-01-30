@@ -124,20 +124,15 @@ def Bool.new(pull : JSON::PullParser)
   pull.read_bool
 end
 
-{% for type, method in {
-                         "Int8"   => "i8",
-                         "Int16"  => "i16",
-                         "Int32"  => "i32",
-                         "Int64"  => "i64",
-                         "UInt8"  => "u8",
-                         "UInt16" => "u16",
-                         "UInt32" => "u32",
-                         "UInt64" => "u64",
-                       } %}
+{% for type in Int::Primitive.union_types %}
+  {% signedness_char = type.stringify.downcase.chars.first %}
+  {% size = type.stringify.gsub(/\D+/, "") %}
+  {% method = "#{signedness_char.id}#{size.id}" %}
+
   def {{type.id}}.new(pull : JSON::PullParser)
     location = pull.location
     value =
-      {% if type == "UInt64" %}
+      {% if type == UInt64 %}
         pull.read_raw
       {% else %}
         pull.read_int

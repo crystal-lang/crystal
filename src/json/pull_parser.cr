@@ -409,7 +409,7 @@ class JSON::PullParser
     read_bool if kind.bool?
   end
 
-  {% for type in [Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32] %}
+  {% for type in Int::Primitive.union_types - [UInt128, Int128] %}
     # Reads an {{type}} value and returns it.
     #
     # If the value is not an integer or does not fit in a {{type}} variable, it returns `nil`.

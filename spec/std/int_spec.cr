@@ -566,7 +566,7 @@ describe "Int" do
 
   describe "floor division //" do
     it "preserves type of lhs" do
-      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
+      {% for type in Int::Primitive.union_types %}
         ({{type}}.new(7) // 2).should be_a({{type}})
         ({{type}}.new(7) // 2.0).should be_a({{type}})
         ({{type}}.new(7) // 2.0_f32).should be_a({{type}})
