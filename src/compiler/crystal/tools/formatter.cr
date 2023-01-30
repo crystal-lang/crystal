@@ -456,10 +456,30 @@ module Crystal
     end
 
     def normalize_symbols
+      valid_escape_sequences = ['\\', '"', '\'', '#', 'b', 'f', 'n', 'r', 't', 'v', '0']
+      str = @token.raw
+      escape = false
+      index = 0
+      while index < str.size
+        p str.char_at(index)
+        if escape && !valid_escape_sequences.includes?(str.char_at(index))
+          str = str.delete_at(index - 1)
+          escape = false
+        elsif escape
+          escape = false
+          index += 1
+        elsif str.char_at(index) == '\\'
+          escape = true
+          index += 1
+        else
+          index += 1
+        end
+      end
+
       unless Symbol.needs_quotes?(@token.to_s)
-        @token.raw.inspect.gsub(/["\\]/, "")
+        str.inspect.gsub(/["\\]/, "")
       else
-        @token.raw
+        str
       end
     end
 
