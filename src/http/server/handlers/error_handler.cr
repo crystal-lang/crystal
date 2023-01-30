@@ -8,7 +8,6 @@
 # the logger for the source "http.server" by default.
 #
 # NOTE: To use `ErrorHandler`, you must explicitly import it with `require "http"`
-#
 class HTTP::ErrorHandler
   include HTTP::Handler
 

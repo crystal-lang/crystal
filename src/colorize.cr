@@ -5,7 +5,6 @@
 #
 # NOTE: To use `Colorize`, you must explicitly import it with `require "colorize"`
 #
-#
 # Its first argument changes the foreground color:
 #
 # ```

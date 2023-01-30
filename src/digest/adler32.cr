@@ -4,7 +4,6 @@ require "./digest"
 # Implements the Adler32 checksum algorithm.
 #
 # NOTE: To use `Adler32`, you must explicitly import it with `require "digest/adler32"`
-#
 class Digest::Adler32 < ::Digest
   extend ClassMethods
 

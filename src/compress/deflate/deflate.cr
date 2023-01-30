@@ -8,7 +8,6 @@ require "./*"
 # to DEFLATE-based file formats.
 #
 # NOTE: To use `Deflate` or its children, you must explicitly import it with `require "compress/deflate"`
-#
 module Compress::Deflate
   NO_COMPRESSION      =  0
   BEST_SPEED          =  1

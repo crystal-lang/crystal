@@ -6,7 +6,6 @@ require "big"
 # It is implemented under the hood with [GMP](https://gmplib.org/).
 #
 # NOTE: To use `BigFloat`, you must explicitly import it with `require "big"`
-#
 struct BigFloat < Float
   include Comparable(Int)
   include Comparable(BigFloat)

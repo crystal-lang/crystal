@@ -4,7 +4,6 @@ require "log"
 # the time used to execute the next handler
 #
 # NOTE: To use `LogHandler`, you must explicitly import it with `require "http"`
-#
 class HTTP::LogHandler
   include HTTP::Handler
 

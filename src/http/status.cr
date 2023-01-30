@@ -6,7 +6,6 @@
 # methods to easily identify the type of response.
 #
 # NOTE: To use `Status`, you must explicitly import it with `require "http/status"`
-#
 enum HTTP::Status
   CONTINUE                        = 100
   SWITCHING_PROTOCOLS             = 101

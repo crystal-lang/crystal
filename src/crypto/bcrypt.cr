@@ -31,7 +31,6 @@ require "./subtle"
 # endpoints that verifies bcrypt hashes will be an easy target.
 #
 # NOTE: To use `Bcrypt`, you must explicitly import it with `require "crypto/bcrypt"`
-#
 class Crypto::Bcrypt
   class Error < Exception
   end

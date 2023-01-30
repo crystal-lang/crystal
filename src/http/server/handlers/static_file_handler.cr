@@ -10,7 +10,6 @@ require "mime"
 # Precompressed files are only served if they are newer than the original file.
 #
 # NOTE: To use `StaticFileHandler`, you must explicitly import it with `require "http"`
-#
 class HTTP::StaticFileHandler
   include HTTP::Handler
 

@@ -14,7 +14,6 @@ require "socket"
 # header will be set appropriately.
 #
 # NOTE: To use `Request`, you must explicitly import it with `require "http/request"`
-#
 class HTTP::Request
   property method : String
   property headers : Headers
