@@ -2426,4 +2426,19 @@ describe Crystal::Formatter do
       end
     end
     CRYSTAL
+
+  it do
+    expect_raises(Crystal::SyntaxException) do
+      Crystal.format <<-CRYSTAL
+        lib A
+          struct B
+            {% begin %}
+              x : Int32
+              else
+            {% end %}
+          end
+        end
+        CRYSTAL
+    end
+  end
 end

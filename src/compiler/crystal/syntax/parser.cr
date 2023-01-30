@@ -5946,8 +5946,6 @@ module Crystal
             else
               parse_c_struct_or_union_fields exps
             end
-          when Keyword::ELSE
-            break
           when Keyword::END
             break
           else
