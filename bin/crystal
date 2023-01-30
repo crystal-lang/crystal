@@ -144,6 +144,12 @@ fi
 
 export CRYSTAL_HAS_WRAPPER=true
 
+# In case the CRYSTAL variable is set to point to this wrapper script unset it to
+# use the default.
+if [ "$(realpath $CRYSTAL)" = "$SCRIPT_PATH" ]; then
+  unset CRYSTAL
+fi
+
 export CRYSTAL="${CRYSTAL:-"crystal"}"
 
 # check if the crystal command refers to this script
