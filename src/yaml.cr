@@ -10,7 +10,7 @@ require "base64"
 # version 1.1 to/from native Crystal data structures, with the additional
 # independent types specified in http://yaml.org/type/
 #
-# NOTE: To use `YML`, you must explicitly import it with `require "yml"`
+# NOTE: To use `YAML`, you must explicitly import it with `require "yaml"`
 #
 # ### Parsing with `#parse` and `#parse_all`
 #

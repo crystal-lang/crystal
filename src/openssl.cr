@@ -2,6 +2,7 @@ require "./openssl/lib_ssl"
 require "./openssl/error"
 
 # NOTE: To use `OpenSSL`, you must explicitly import it with `require "openssl"`
+#
 # ## OpenSSL Integration
 #
 # - TLS sockets need a context, potentially with keys (required for servers) and configuration.

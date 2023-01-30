@@ -20,7 +20,7 @@
 # ```
 # Log.info &.emit("User logged in", user_id: 42)
 # ```
-# 
+#
 # If you want to log an exception, you can indicate it in the `exception:` named argument.
 #
 # ```
