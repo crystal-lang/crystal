@@ -460,6 +460,7 @@ module Crystal
       str = @token.raw
       escape = false
       index = 0
+
       while index < str.size
         p str.char_at(index)
         if escape && !valid_escape_sequences.includes?(str.char_at(index))
