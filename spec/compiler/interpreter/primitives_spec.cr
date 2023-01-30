@@ -114,6 +114,12 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "interprets variable set with type restriction (#13023)" do
+      interpret(<<-CRYSTAL).should eq(1)
+      a : Int32 = 1
+      CRYSTAL
+    end
+
     it "interprets variable set and get" do
       interpret(<<-CRYSTAL).should eq(1)
       a = 1
