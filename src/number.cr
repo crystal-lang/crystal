@@ -72,7 +72,7 @@ struct Number
   # ints.class # => Array(Int64)
   # ```
   #
-  # This is equivalent to an array literal of the same item type:
+  # This is similar to an array literal of the same item type:
   #
   # ```
   # Int64[1, 2, 3, 4]     # : Array(Int64)
