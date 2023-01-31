@@ -146,8 +146,10 @@ export CRYSTAL_HAS_WRAPPER=true
 
 export CRYSTAL="${CRYSTAL:-"crystal"}"
 
+PARENT_CRYSTAL="$CRYSTAL"
+
 # check if the crystal command refers to this script
-if [ "$(realpath "$(command -v "$CRYSTAL")")" = "$SCRIPT_PATH" ]; then
+if [ "$(realpath "$(command -v "$PARENT_CRYSTAL")")" = "$SCRIPT_PATH" ]; then
   # remove the path to this script from PATH
   NEW_PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")"
   # if the PATH did not change it will lead to an infinite recursion => display error
@@ -161,7 +163,7 @@ if [ "$(realpath "$(command -v "$CRYSTAL")")" = "$SCRIPT_PATH" ]; then
 fi
 
 if [ -z "$CRYSTAL_CONFIG_LIBRARY_PATH" ] || [ -z "$CRYSTAL_LIBRARY_PATH" ]; then
-  CRYSTAL_INSTALLED_LIBRARY_PATH="$($CRYSTAL env CRYSTAL_LIBRARY_PATH || echo "")"
+  CRYSTAL_INSTALLED_LIBRARY_PATH="$($PARENT_CRYSTAL env CRYSTAL_LIBRARY_PATH || echo "")"
   export CRYSTAL_LIBRARY_PATH=${CRYSTAL_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}
   export CRYSTAL_CONFIG_LIBRARY_PATH=${CRYSTAL_CONFIG_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}
 fi
@@ -169,9 +171,9 @@ fi
 if [ -x "$CRYSTAL_DIR/crystal" ]; then
   __warning_msg "Using compiled compiler at ${CRYSTAL_DIR#"$PWD/"}/crystal"
   exec "$CRYSTAL_DIR/crystal" "$@"
-elif ! command -v $CRYSTAL > /dev/null; then
+elif ! command -v $PARENT_CRYSTAL > /dev/null; then
   __error_msg 'You need to have a crystal executable in your path! or set CRYSTAL env variable'
   exit 1
 else
-  exec $CRYSTAL "$@"
+  exec $PARENT_CRYSTAL "$@"
 fi
