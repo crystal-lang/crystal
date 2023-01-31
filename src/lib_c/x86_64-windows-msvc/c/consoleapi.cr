@@ -13,4 +13,11 @@ lib LibC
 
   fun GetConsoleCP : DWORD
   fun GetConsoleOutputCP : DWORD
+
+  CTRL_C_EVENT     = 0
+  CTRL_BREAK_EVENT = 1
+
+  alias PHANDLER_ROUTINE = DWORD -> BOOL
+
+  fun SetConsoleCtrlHandler(handlerRoutine : PHANDLER_ROUTINE, add : BOOL) : BOOL
 end

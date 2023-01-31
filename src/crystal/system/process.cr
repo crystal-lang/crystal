@@ -42,6 +42,19 @@ struct Crystal::System::Process
   # Sends a *signal* to the processes identified by the given *pids*.
   # def self.signal(pid : Int, signal : Int)
 
+  # Installs *handler* as the new handler for interrupt requests. Removes any
+  # previously set interrupt handler.
+  # def self.on_interrupt(&handler : ->)
+
+  # Ignores all interrupt signals if *ignore* is true, or restores the default
+  # interrupt handler if *ignore* is false. Removes any custom interrupt
+  # handler set with `on_interrupt(&handler)`.
+  # def self.on_interrupt(*, ignore : Bool)
+
+  # Spawns a fiber responsible for executing interrupt handlers on the main
+  # thread.
+  # def self.start_interrupt_loop
+
   # Whether the process identified by *pid* is still registered in the system.
   # def self.exists?(pid : Int) : Bool
 

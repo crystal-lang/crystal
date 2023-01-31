@@ -48,6 +48,17 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.signal")
   end
 
+  def self.on_interrupt(&handler : ->) : Nil
+    raise NotImplementedError.new("Process.on_interrupt")
+  end
+
+  def self.on_interrupt(*, ignore : Bool) : Nil
+    raise NotImplementedError.new("Process.on_interrupt")
+  end
+
+  def self.start_interrupt_loop : Nil
+  end
+
   def self.exists?(pid)
     raise NotImplementedError.new("Process.exists?")
   end

@@ -2,11 +2,17 @@ require "c/processthreadsapi"
 require "c/handleapi"
 require "c/synchapi"
 require "process/shell"
+require "crystal/atomic_semaphore"
 
 struct Crystal::System::Process
   getter pid : LibC::DWORD
   @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE
+
+  @@interrupt_handler = Proc(Nil).new { }
+  @@interrupt_count = Crystal::AtomicSemaphore.new
+  @@win32_interrupt_handler : LibC::PHANDLER_ROUTINE?
+  @@setup_interrupt_handler = Atomic::Flag.new
 
   def initialize(process_info)
     @pid = process_info.dwProcessId
@@ -70,6 +76,44 @@ struct Crystal::System::Process
 
   def self.signal(pid, signal)
     raise NotImplementedError.new("Process.signal")
+  end
+
+  def self.on_interrupt(&@@interrupt_handler : ->) : Nil
+    @@win32_interrupt_handler.try { |old| LibC.SetConsoleCtrlHandler(old, 0) }
+    @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
+      next 0 unless event_type.in?(LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT)
+      @@interrupt_count.signal
+      1
+    end
+    LibC.SetConsoleCtrlHandler(nil, 0)
+    LibC.SetConsoleCtrlHandler(handler, 1)
+  end
+
+  def self.on_interrupt(*, ignore : Bool) : Nil
+    @@win32_interrupt_handler.try { |old| LibC.SetConsoleCtrlHandler(old, 0) }
+    LibC.SetConsoleCtrlHandler(nil, ignore ? 1 : 0)
+  end
+
+  def self.start_interrupt_loop : Nil
+    return unless @@setup_interrupt_handler.test_and_set
+
+    spawn(name: "Interrupt signal loop") do
+      while true
+        @@interrupt_count.wait { sleep 50.milliseconds }
+
+        if handler = @@interrupt_handler
+          non_nil_handler = handler # if handler is closured it will also have the Nil type
+          spawn do
+            non_nil_handler.call
+          rescue ex
+            ex.inspect_with_backtrace(STDERR)
+            STDERR.puts("FATAL: uncaught exception while processing interrupt handler, exiting")
+            STDERR.flush
+            LibC._exit(1)
+          end
+        end
+      end
+    end
   end
 
   def self.exists?(pid)
