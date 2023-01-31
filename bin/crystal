@@ -148,7 +148,13 @@ export CRYSTAL="${CRYSTAL:-"crystal"}"
 
 PARENT_CRYSTAL="$CRYSTAL"
 
-# check if the crystal command refers to this script
+# check if the parent crystal command is a path that refers to this script
+if [ -z "${PARENT_CRYSTAL##*/*}" -a "$(realpath "$PARENT_CRYSTAL")" = "$SCRIPT_PATH" ]; then
+  # ignore it and use `crystal` as parent compiler command
+  PARENT_CRYSTAL="crystal"
+fi
+
+# check if the parent crystal command refers to this script
 if [ "$(realpath "$(command -v "$PARENT_CRYSTAL")")" = "$SCRIPT_PATH" ]; then
   # remove the path to this script from PATH
   NEW_PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")"
