@@ -100,7 +100,7 @@ struct Number
   # ints.class # => Slice(Int64)
   # ```
   #
-  # This is a convenvenient alternative to `Slice.[]` for designating a
+  # This is a convenient alternative to `Slice.[]` for designating a
   # specific item type which also considers autocasting.
   #
   # ```
