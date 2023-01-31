@@ -250,10 +250,10 @@ class Crystal::Command
       begin
         elapsed = Time.measure do
           Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
-            {% unless flag?(:win32) || flag?(:wasm32) %}
+            {% unless flag?(:wasm32) %}
               # Ignore the signal so we don't exit the running process
               # (the running process can still handle this signal)
-              ::Signal::INT.ignore # do
+              Process.on_interrupt(ignore: true)
             {% end %}
           end
         end
