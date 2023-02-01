@@ -124,7 +124,7 @@ class HTTP::StaticFileHandler
             context.response.headers["Content-Range"] = "bytes #{range.begin}-#{range.end}/#{file_info.size}"
             IO.copy file, context.response, range.size
           else
-            MIME::Multipart.build context.response do |builder|
+            MIME::Multipart.build(context.response) do |builder|
               content_type = context.response.headers["Content-Type"]?
               context.response.headers["Content-Type"] = builder.content_type("byterange")
 
