@@ -108,13 +108,13 @@ class HTTP::StaticFileHandler
             start = start.to_i64 { 0 }
             finish = finish.to_i64 { file_info.size }
 
-            {start, finish}
+            start..finish
           end
 
           # If any of the ranges start beyond the end of the file, we return an
           # HTTP 416 Range Not Satisfiable.
           # See https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests#partial_request_responses
-          if ranges.any? { |(start, _)| start > file_info.size }
+          if ranges.any? { |range| range.begin > file_info.size }
             context.response.status = :range_not_satisfiable
             return
           end
@@ -122,25 +122,23 @@ class HTTP::StaticFileHandler
           context.response.status = :partial_content
 
           if ranges.size == 1
-            start, finish = ranges.first
-            bytesize = finish - start + 1
-            file.seek start
-            context.response.headers["Content-Range"] = "bytes #{start}-#{finish}/#{file_info.size}"
-            IO.copy IO::Sized.new(file, bytesize), context.response
+            range = ranges.first
+            file.seek range.begin
+            context.response.headers["Content-Range"] = "bytes #{range.begin}-#{range.end}/#{file_info.size}"
+            IO.copy IO::Sized.new(file, range.size), context.response
           else
             MIME::Multipart.build context.response do |builder|
               content_type = context.response.headers["Content-Type"]?
               context.response.headers["Content-Type"] = builder.content_type("byterange")
 
-              ranges.each do |(start, finish)|
-                bytesize = finish - start + 1
-                file.seek start
+              ranges.each do |range|
+                file.seek range.begin
                 headers = HTTP::Headers{
-                  "Content-Range"  => "bytes #{start}-#{finish}/#{file_info.size}",
-                  "Content-Length" => bytesize.to_s,
+                  "Content-Range"  => "bytes #{range.begin}-#{range.end}/#{file_info.size}",
+                  "Content-Length" => range.size.to_s,
                 }
                 headers["Content-Type"] = content_type if content_type
-                chunk_io = IO::Sized.new(file, bytesize)
+                chunk_io = IO::Sized.new(file, range.size)
                 builder.body_part headers, chunk_io
               end
             end
