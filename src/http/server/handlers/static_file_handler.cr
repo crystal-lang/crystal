@@ -154,16 +154,24 @@ class HTTP::StaticFileHandler
   # TODO: Optimize without lots of intermediary strings
   private def parse_ranges(header, file_size)
     ranges = [] of Range(Int64, Int64)
-    header.split(", ") do |range|
-      start, dash, finish = range.partition("-")
-      return if dash.empty? || start.empty?
-      start = start.to_i64? || return
-      if finish.empty?
+    header.split(",") do |range|
+      start_string, dash, finish_string = range.lchop(' ').partition("-")
+      return if dash.empty?
+      start = start_string.to_i64?
+      return if start.nil? && !start_string.empty?
+      if finish_string.empty?
         finish = file_size
       else
-        finish = finish.to_i64? || return
+        finish = finish_string.to_i64? || return
       end
-      ranges << (start..finish)
+      unless start
+        start = file_size - finish
+        finish = file_size
+      end
+
+      range = (start..finish)
+      return unless 0 <= range.begin <= range.end
+      ranges << range
     end
     ranges unless ranges.empty?
   end

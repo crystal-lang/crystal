@@ -178,85 +178,152 @@ describe HTTP::StaticFileHandler do
   end
 
   context "when a Range header is provided" do
-    it "serves the given byte range" do
-      headers = HTTP::Headers{"Range" => "bytes=0-2"}
+    describe "valid Range header" do
+      it "serves a byte range" do
+        headers = HTTP::Headers{"Range" => "bytes=0-2"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
-      response = handle HTTP::Request.new("GET", "/range.txt", headers)
-
-      response.status_code.should eq(206)
-      response.body.should eq "Hel"
-    end
-
-    it "serves the given open-ended byte range" do
-      headers = HTTP::Headers{"Range" => "bytes=6-"}
-
-      response = handle HTTP::Request.new("GET", "/range.txt", headers)
-
-      response.status_code.should eq(206)
-      response.body.should eq "world\n"
-    end
-
-    it "invalid range headers" do
-      headers = HTTP::Headers{"Range" => "bytes=1"}
-
-      response = handle HTTP::Request.new("GET", "/range.txt", headers)
-
-      response.status_code.should eq(400)
-    end
-
-    it "invalid range headers" do
-      headers = HTTP::Headers{"Range" => "chars=1-2"}
-
-      response = handle HTTP::Request.new("GET", "/range.txt", headers)
-
-      response.status_code.should eq(400)
-    end
-
-    it "handles invalid range headers" do
-      headers = HTTP::Headers{"Range" => "bytes=1-2-3"}
-
-      response = handle HTTP::Request.new("GET", "/range.txt", headers)
-
-      response.status_code.should eq(400)
-    end
-
-    it "serves multiple byte ranges" do
-      headers = HTTP::Headers{"Range" => "bytes=0-1,6-7"}
-
-      response = handle HTTP::Request.new("GET", "/range.txt", headers)
-
-      response.status_code.should eq(400)
-    end
-
-    it "serves multiple byte ranges" do
-      headers = HTTP::Headers{"Range" => "bytes=0-1, 6-7"}
-
-      response = handle HTTP::Request.new("GET", "/range.txt", headers)
-
-      response.status_code.should eq(206)
-      count = 0
-      MIME::Multipart.parse(response) do |headers, part|
-        chunk = part.gets_to_end
-        case range = headers["Content-Range"]
-        when "bytes 0-1/12"
-          chunk.should eq "He"
-        when "bytes 6-7/12"
-          chunk.should eq "wo"
-        else
-          raise "Unknown range: #{range.inspect}"
-        end
-        count += 1
+        response.status_code.should eq(206)
+        response.body.should eq "Hel"
       end
-      count.should eq 2
+
+      it "serves a single byte" do
+        headers = HTTP::Headers{"Range" => "bytes=0-0"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        response.body.should eq "H"
+      end
+
+      it "serves an open-ended byte range" do
+        headers = HTTP::Headers{"Range" => "bytes=6-"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        response.body.should eq "world\n"
+      end
+
+      it "serves an open-start byte range" do
+        headers = HTTP::Headers{"Range" => "bytes=-6"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        response.body.should eq "world\n"
+      end
+
+      it "serves multiple byte ranges (separator without whitespace)" do
+        headers = HTTP::Headers{"Range" => "bytes=0-1,6-7"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        count = 0
+        MIME::Multipart.parse(response) do |headers, part|
+          chunk = part.gets_to_end
+          case range = headers["Content-Range"]
+          when "bytes 0-1/12"
+            chunk.should eq "He"
+          when "bytes 6-7/12"
+            chunk.should eq "wo"
+          else
+            raise "Unknown range: #{range.inspect}"
+          end
+          count += 1
+        end
+        count.should eq 2
+      end
+
+      it "serves multiple byte ranges (separator with whitespace)" do
+        headers = HTTP::Headers{"Range" => "bytes=0-1, 6-7"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(206)
+        count = 0
+        MIME::Multipart.parse(response) do |headers, part|
+          chunk = part.gets_to_end
+          case range = headers["Content-Range"]
+          when "bytes 0-1/12"
+            chunk.should eq "He"
+          when "bytes 6-7/12"
+            chunk.should eq "wo"
+          else
+            raise "Unknown range: #{range.inspect}"
+          end
+          count += 1
+        end
+        count.should eq 2
+      end
+
+      it "end of the range is larger than the file size" do
+        headers = HTTP::Headers{"Range" => "bytes=6-14"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq 206
+        response.body.should eq "world\n"
+      end
+
+      it "start of the range is larger than the file size" do
+        headers = HTTP::Headers{"Range" => "bytes=14-15"}
+
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq 416
+        response.headers["Content-Range"]?.should eq "bytes */12"
+      end
     end
 
-    it "returns a 416 when the start of the range is larger than the file" do
-      headers = HTTP::Headers{"Range" => "bytes=13-14"}
+    describe "invalid Range header" do
+      it "byte number without dash" do
+        headers = HTTP::Headers{"Range" => "bytes=1"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
-      response = handle HTTP::Request.new("GET", "/range.txt", headers)
+        response.status_code.should eq(400)
+      end
 
-      response.status_code.should eq 416
-      response.headers["Content-Range"]?.should eq "bytes */12"
+      it "start > end" do
+        headers = HTTP::Headers{"Range" => "bytes=2-1"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
+
+      it "negative end" do
+        headers = HTTP::Headers{"Range" => "bytes=1--2"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
+
+      it "open range with negative end" do
+        headers = HTTP::Headers{"Range" => "bytes=--2"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
+
+      it "unsupported unit" do
+        headers = HTTP::Headers{"Range" => "chars=1-2"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(416)
+      end
+
+      it "multiple dashes" do
+        headers = HTTP::Headers{"Range" => "bytes=1-2-3"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
+
+      it "not a number" do
+        headers = HTTP::Headers{"Range" => "bytes=a-b"}
+        response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+        response.status_code.should eq(400)
+      end
     end
   end
 
