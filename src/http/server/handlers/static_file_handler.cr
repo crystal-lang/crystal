@@ -102,14 +102,9 @@ class HTTP::StaticFileHandler
       end
 
       File.open(file_path) do |file|
-        if (range = context.request.headers["Range"]?) && (match = range.match(/bytes=([0-9\-,]+)/))
-          ranges = match[1].split(',').map do |range|
-            start, finish = range.strip.split('-', 2)
-            start = start.to_i64 { 0 }
-            finish = finish.to_i64 { file_info.size }
-
-            start..finish
-          end
+        if range_header = context.request.headers["Range"]?
+          range_header = range_header.lchop?("bytes=") || return context.response.respond_with_status :bad_request
+          ranges = parse_ranges(range_header, file_info.size) || return context.response.respond_with_status :bad_request
 
           # If any of the ranges start beyond the end of the file, we return an
           # HTTP 416 Range Not Satisfiable.
@@ -154,6 +149,23 @@ class HTTP::StaticFileHandler
     else # Not a normal file (FIFO/device/socket)
       call_next(context)
     end
+  end
+
+  # TODO: Optimize without lots of intermediary strings
+  private def parse_ranges(header, file_size)
+    ranges = [] of Range(Int64, Int64)
+    header.split(", ") do |range|
+      start, dash, finish = range.partition("-")
+      return if dash.empty? || start.empty?
+      start = start.to_i64? || return
+      if finish.empty?
+        finish = file_size
+      else
+        finish = finish.to_i64? || return
+      end
+      ranges << (start..finish)
+    end
+    ranges unless ranges.empty?
   end
 
   # given a full path of the request, returns the path

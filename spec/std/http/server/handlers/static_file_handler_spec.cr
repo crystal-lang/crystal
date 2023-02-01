@@ -196,8 +196,40 @@ describe HTTP::StaticFileHandler do
       response.body.should eq "world\n"
     end
 
+    it "invalid range headers" do
+      headers = HTTP::Headers{"Range" => "bytes=1"}
+
+      response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+      response.status_code.should eq(400)
+    end
+
+    it "invalid range headers" do
+      headers = HTTP::Headers{"Range" => "chars=1-2"}
+
+      response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+      response.status_code.should eq(400)
+    end
+
+    it "serves the given open-ended byte range" do
+      headers = HTTP::Headers{"Range" => "bytes=1-2-3"}
+
+      response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+      response.status_code.should eq(400)
+    end
+
     it "serves multiple byte ranges" do
       headers = HTTP::Headers{"Range" => "bytes=0-1,6-7"}
+
+      response = handle HTTP::Request.new("GET", "/range.txt", headers)
+
+      response.status_code.should eq(400)
+    end
+
+    it "serves multiple byte ranges" do
+      headers = HTTP::Headers{"Range" => "bytes=0-1, 6-7"}
 
       response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
@@ -224,6 +256,7 @@ describe HTTP::StaticFileHandler do
       response = handle HTTP::Request.new("GET", "/range.txt", headers)
 
       response.status_code.should eq 416
+      response.headers["Content-Range"]?.should eq "bytes */12"
     end
   end
 
