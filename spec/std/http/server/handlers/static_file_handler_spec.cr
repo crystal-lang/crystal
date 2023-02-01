@@ -212,7 +212,7 @@ describe HTTP::StaticFileHandler do
       response.status_code.should eq(400)
     end
 
-    it "serves the given open-ended byte range" do
+    it "handles invalid range headers" do
       headers = HTTP::Headers{"Range" => "bytes=1-2-3"}
 
       response = handle HTTP::Request.new("GET", "/range.txt", headers)
