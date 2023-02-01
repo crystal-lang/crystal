@@ -24,7 +24,7 @@ module MIME::Multipart
   # ```
   #
   # See: `Multipart::Parser`
-  def self.parse(io, boundary)
+  def self.parse(io, boundary, &)
     parser = Parser.new(io, boundary)
     while parser.has_next?
       parser.next { |headers, io| yield headers, io }
@@ -68,7 +68,7 @@ module MIME::Multipart
   # ```
   #
   # See: `Multipart::Parser`
-  def self.parse(request : HTTP::Request)
+  def self.parse(request : HTTP::Request, &)
     if content_type = request.headers["Content-Type"]?
       boundary = parse_boundary(content_type)
     end
@@ -104,7 +104,7 @@ module MIME::Multipart
   # ```
   #
   # See: `Multipart::Parser`
-  def self.parse(response : HTTP::Client::Response)
+  def self.parse(response : HTTP::Client::Response, &)
     if content_type = response.headers["Content-Type"]?
       boundary = parse_boundary(content_type)
     end
@@ -122,7 +122,7 @@ module MIME::Multipart
 
   # Yields a `Multipart::Builder` to the given block, writing to *io* and
   # using *boundary*. `#finish` is automatically called on the builder.
-  def self.build(io : IO, boundary : String = Multipart.generate_boundary)
+  def self.build(io : IO, boundary : String = Multipart.generate_boundary, &)
     builder = Builder.new(io, boundary)
     yield builder
     builder.finish
@@ -130,7 +130,7 @@ module MIME::Multipart
 
   # Yields a `Multipart::Builder` to the given block, returning the generated
   # message as a `String`.
-  def self.build(boundary : String = Multipart.generate_boundary)
+  def self.build(boundary : String = Multipart.generate_boundary, &)
     String.build do |io|
       build(io, boundary) { |g| yield g }
     end

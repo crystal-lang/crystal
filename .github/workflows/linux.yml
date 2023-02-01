@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        crystal_bootstrap_version: [1.2.2, 1.3.2, 1.4.1, 1.5.1, 1.6.2]
+        crystal_bootstrap_version: [1.2.2, 1.3.2, 1.4.1, 1.5.1, 1.6.2, 1.7.2]
         include:
           # libffi is only available starting from the 1.2.2 build images
           - crystal_bootstrap_version: 1.0.0
@@ -83,7 +83,7 @@ jobs:
         run: mkdir -p llvm && curl -L ${{ matrix.llvm_url }} > llvm.tar.xz && tar x --xz -C llvm --strip-components=1 -f llvm.tar.xz
 
       - name: Test
-        run: bin/ci with_build_env "make clean deps compiler_spec crystal std_spec LLVM_CONFIG=\$(pwd)/llvm/bin/llvm-config threads=1 verbose=1 junit_output=.junit/spec.xml"
+        run: bin/ci with_build_env "make clean deps compiler_spec crystal std_spec LLVM_CONFIG=\$(pwd)/llvm/bin/llvm-config threads=1 junit_output=.junit/spec.xml"
 
   x86_64-gnu-test-preview_mt:
     env:

@@ -37,7 +37,7 @@ class UNIXSocket < Socket
   # eventually closes the socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM)
+  def self.open(path, type : Type = Type::STREAM, &)
     sock = new(path, type)
     begin
       yield sock
@@ -85,7 +85,7 @@ class UNIXSocket < Socket
   # block. Eventually closes both sockets when the block returns.
   #
   # Returns the value of the block.
-  def self.pair(type : Type = Type::STREAM)
+  def self.pair(type : Type = Type::STREAM, &)
     left, right = pair(type)
     begin
       yield left, right

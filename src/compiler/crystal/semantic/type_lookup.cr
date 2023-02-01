@@ -426,7 +426,7 @@ class Crystal::Type
       Crystal.check_type_can_be_stored(ident, type, message)
     end
 
-    def in_generic_args
+    def in_generic_args(&)
       @in_generic_args += 1
       value = yield
       @in_generic_args -= 1

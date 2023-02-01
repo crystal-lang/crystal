@@ -1,4 +1,5 @@
 require "spec"
+require "../support/string"
 
 enum SpecEnum : Int8
   One
@@ -49,26 +50,31 @@ private enum SpecEnumWithCaseSensitiveMembers
 end
 
 describe Enum do
-  describe "to_s" do
+  describe "#to_s" do
     it "for simple enum" do
-      SpecEnum::One.to_s.should eq("One")
-      SpecEnum::Two.to_s.should eq("Two")
-      SpecEnum::Three.to_s.should eq("Three")
+      assert_prints SpecEnum::One.to_s, "One"
+      assert_prints SpecEnum::Two.to_s, "Two"
+      assert_prints SpecEnum::Three.to_s, "Three"
+      assert_prints SpecEnum.new(127).to_s, "127"
     end
 
     it "for flags enum" do
-      SpecEnumFlags::None.to_s.should eq("None")
-      SpecEnumFlags::All.to_s.should eq("One | Two | Three")
-      (SpecEnumFlags::One | SpecEnumFlags::Two).to_s.should eq("One | Two")
+      assert_prints SpecEnumFlags::None.to_s, "None"
+      assert_prints SpecEnumFlags::All.to_s, "One | Two | Three"
+      assert_prints (SpecEnumFlags::One | SpecEnumFlags::Two).to_s, "One | Two"
+      assert_prints SpecEnumFlags.new(128).to_s, "128"
+      assert_prints (SpecEnumFlags::One | SpecEnumFlags.new(128)).to_s, "One | 128"
+      assert_prints (SpecEnumFlags::One | SpecEnumFlags.new(8) | SpecEnumFlags.new(16)).to_s, "One | 24"
+      assert_prints (SpecEnumFlags::One | SpecEnumFlags::Two | SpecEnumFlags.new(16)).to_s, "One | Two | 16"
     end
 
     it "for private enum" do
-      PrivateEnum::FOO.to_s.should eq "FOO"
-      PrivateFlagsEnum::FOO.to_s.should eq "FOO"
-      PrivateEnum::QUX.to_s.should eq "FOO"
-      String.build { |io| PrivateEnum::FOO.to_s(io) }.should eq "FOO"
-      String.build { |io| PrivateFlagsEnum::FOO.to_s(io) }.should eq "FOO"
-      String.build { |io| (PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAZ).to_s(io) }.should eq "FOO | BAZ"
+      assert_prints PrivateEnum::FOO.to_s, "FOO"
+      assert_prints PrivateFlagsEnum::FOO.to_s, "FOO"
+      assert_prints PrivateEnum::QUX.to_s, "FOO"
+      assert_prints (PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAZ).to_s, "FOO | BAZ"
+      assert_prints PrivateFlagsEnum.new(128).to_s, "128"
+      assert_prints (PrivateFlagsEnum::FOO | PrivateFlagsEnum.new(128)).to_s, "FOO | 128"
     end
   end
 
@@ -267,6 +273,32 @@ describe Enum do
 
   it "clones" do
     SpecEnum::One.clone.should eq(SpecEnum::One)
+  end
+
+  describe ".[]" do
+    it "non-flags enum" do
+      SpecEnum[].should be_nil
+      SpecEnum[One].should eq SpecEnum::One
+      SpecEnum[1].should eq SpecEnum::Two
+      SpecEnum[One, Two].should eq SpecEnum::One | SpecEnum::Two
+      SpecEnum[One, :two].should eq SpecEnum::One | SpecEnum::Two
+      SpecEnum[One, 1].should eq SpecEnum::One | SpecEnum::Two
+    end
+
+    it "flags enum" do
+      SpecEnumFlags.flags.should be_nil
+      SpecEnumFlags[One].should eq SpecEnumFlags::One
+      SpecEnumFlags[2].should eq SpecEnumFlags::Two
+      SpecEnumFlags[One, Two].should eq SpecEnumFlags::One | SpecEnumFlags::Two
+      SpecEnumFlags[One, :two].should eq SpecEnumFlags::One | SpecEnumFlags::Two
+      SpecEnumFlags[One, 2].should eq SpecEnumFlags::One | SpecEnumFlags::Two
+    end
+
+    it "private flags enum" do
+      PrivateFlagsEnum.flags.should be_nil
+      PrivateFlagsEnum[FOO].should eq PrivateFlagsEnum::FOO
+      PrivateFlagsEnum[FOO, BAR].should eq PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAR
+    end
   end
 
   describe ".flags" do

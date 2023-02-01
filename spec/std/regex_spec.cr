@@ -201,17 +201,18 @@ describe "Regex" do
     end
 
     it "doesn't crash with a large single line string" do
+      str = File.read(datapath("large_single_line_string.txt"))
+
       {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
         LibPCRE.config LibPCRE::CONFIG_JIT, out jit_enabled
         pending! "PCRE JIT mode not available." unless 1 == jit_enabled
-      {% else %}
-        # This spec requires a fairly large depth limit. Some package builds
-        # have a more restrictive value which would make this test fail.
-        pending! "PCRE2 depth limit too low" unless Regex::PCRE2.config(LibPCRE2::CONFIG_DEPTHLIMIT, UInt32) > 8192
-      {% end %}
 
-      str = File.read(datapath("large_single_line_string.txt"))
-      str.matches?(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/)
+        str.matches?(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/)
+      {% else %}
+        # Can't use regex literal because the *LIMIT_DEPTH verb is not supported in libpcre (only libpcre2)
+        # and thus the compiler doesn't recognize it.
+        str.matches?(Regex.new("(*LIMIT_DEPTH=8192)^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"))
+      {% end %}
       # We don't care whether this actually matches or not, it's just to make
       # sure the engine does not stack overflow with a large string.
     end

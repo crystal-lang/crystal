@@ -3,7 +3,7 @@ require "spec"
 private class SpecEnumerable
   include Enumerable(Int32)
 
-  def each
+  def each(&)
     yield 1
     yield 2
     yield 3

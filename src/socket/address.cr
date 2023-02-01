@@ -82,6 +82,8 @@ class Socket
     @addr : LibC::In6Addr | LibC::InAddr
 
     def initialize(@address : String, @port : Int32)
+      raise Error.new("Invalid port number: #{port}") unless 0 <= port <= UInt16::MAX
+
       if addr = IPAddress.address_v6?(address)
         @addr = addr
         @family = Family::INET6
@@ -145,23 +147,13 @@ class Socket
     protected def initialize(sockaddr : LibC::SockaddrIn6*, @size)
       @family = Family::INET6
       @addr = sockaddr.value.sin6_addr
-      @port =
-        {% if flag?(:dragonfly) %}
-          sockaddr.value.sin6_port.byte_swap.to_i
-        {% else %}
-          LibC.ntohs(sockaddr.value.sin6_port).to_i
-        {% end %}
+      @port = endian_swap(sockaddr.value.sin6_port).to_i
     end
 
     protected def initialize(sockaddr : LibC::SockaddrIn*, @size)
       @family = Family::INET
       @addr = sockaddr.value.sin_addr
-      @port =
-        {% if flag?(:dragonfly) %}
-          sockaddr.value.sin_port.byte_swap.to_i
-        {% else %}
-          LibC.ntohs(sockaddr.value.sin_port).to_i
-        {% end %}
+      @port = endian_swap(sockaddr.value.sin_port).to_i
     end
 
     # Returns `true` if *address* is a valid IPv4 or IPv6 address.
@@ -227,7 +219,11 @@ class Socket
       in LibC::InAddr
         addr.s_addr & 0x000000ff_u32 == 0x0000007f_u32
       in LibC::In6Addr
-        ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
+        addr8 = ipv6_addr8(addr)
+        num = addr8.unsafe_as(UInt128)
+        # TODO: Use UInt128 literals
+        num == (1_u128 << 120) ||                         # "::1"
+          num & UInt128::MAX >> 24 == 0x7fffff_u128 << 80 # "::ffff:127.0.0.1/104"
       end
     end
 
@@ -304,11 +300,7 @@ class Socket
     private def to_sockaddr_in6(addr)
       sockaddr = Pointer(LibC::SockaddrIn6).malloc
       sockaddr.value.sin6_family = family
-      {% if flag?(:dragonfly) %}
-        sockaddr.value.sin6_port = port.byte_swap
-      {% else %}
-        sockaddr.value.sin6_port = LibC.htons(port)
-      {% end %}
+      sockaddr.value.sin6_port = endian_swap(port.to_u16!)
       sockaddr.value.sin6_addr = addr
       sockaddr.as(LibC::Sockaddr*)
     end
@@ -316,13 +308,17 @@ class Socket
     private def to_sockaddr_in(addr)
       sockaddr = Pointer(LibC::SockaddrIn).malloc
       sockaddr.value.sin_family = family
-      {% if flag?(:dragonfly) %}
-        sockaddr.value.sin_port = port.byte_swap
-      {% else %}
-        sockaddr.value.sin_port = LibC.htons(port)
-      {% end %}
+      sockaddr.value.sin_port = endian_swap(port.to_u16!)
       sockaddr.value.sin_addr = addr
       sockaddr.as(LibC::Sockaddr*)
+    end
+
+    private def endian_swap(x : UInt16) : UInt16
+      {% if IO::ByteFormat::NetworkEndian != IO::ByteFormat::SystemEndian %}
+        x.byte_swap
+      {% else %}
+        x
+      {% end %}
     end
 
     # Returns `true` if *port* is a valid port number.

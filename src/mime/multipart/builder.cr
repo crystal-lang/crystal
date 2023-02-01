@@ -65,7 +65,7 @@ module MIME::Multipart
     # message. Throws if `#body_part` is called before this method.
     #
     # Can be called multiple times to append to the preamble multiple times.
-    def preamble
+    def preamble(&)
       fail "Cannot generate preamble: body already started" unless @state.start? || @state.preamble?
       yield @io
       @state = State::PREAMBLE
@@ -95,7 +95,7 @@ module MIME::Multipart
     # Yields an IO that can be used to write to a body part which is appended
     # to the multipart message with the given *headers*. Throws if `#finish` or
     # `#epilogue` is called before this method.
-    def body_part(headers : HTTP::Headers)
+    def body_part(headers : HTTP::Headers, &)
       body_part_impl(headers) { |io| yield io }
     end
 
@@ -106,7 +106,7 @@ module MIME::Multipart
       body_part_impl(headers, empty: true) { }
     end
 
-    private def body_part_impl(headers, empty = false)
+    private def body_part_impl(headers, empty = false, &)
       fail "Cannot generate body part: already finished" if @state.finished?
       fail "Cannot generate body part: after epilogue" if @state.epilogue?
 
@@ -158,7 +158,7 @@ module MIME::Multipart
     # parts have been appended.
     #
     # Can be called multiple times to append to the preamble multiple times.
-    def epilogue
+    def epilogue(&)
       case @state
       in .start?, .preamble?
         fail "Cannot generate epilogue: no body parts"

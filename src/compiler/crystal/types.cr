@@ -751,7 +751,7 @@ module Crystal
     # Yields self and returns true if the block returns a truthy value.
     # UnionType overrides it and yields all types in turn and returns
     # true if for each of them the block returns true.
-    def all?
+    def all?(&)
       (yield self) ? true : false
     end
 
@@ -1569,7 +1569,7 @@ module Crystal
       generic_types.values
     end
 
-    def each_instantiated_type
+    def each_instantiated_type(&)
       if types = @generic_types
         types.each_value { |type| yield type }
       end
@@ -2521,7 +2521,7 @@ module Crystal
       @instantiations.values
     end
 
-    def each_instantiated_type
+    def each_instantiated_type(&)
       @instantiations.each_value { |type| yield type }
     end
 
@@ -2829,8 +2829,10 @@ module Crystal
       @parents ||= [program.enum] of Type
     end
 
-    def add_constant(constant)
-      types[constant.name] = const = Const.new(program, self, constant.name, constant.default_value.not_nil!)
+    def add_constant(name, value)
+      const_exp = NumberLiteral.new(value.to_s, base_type.kind)
+      const_exp.type = self
+      types[name] = const = Const.new(program, self, name, const_exp)
       program.const_initializers << const
       const
     end
@@ -3143,7 +3145,7 @@ module Crystal
       program.type_merge_union_of filtered_types
     end
 
-    def each_concrete_type
+    def each_concrete_type(&)
       union_types.each do |type|
         if type.is_a?(VirtualType) || type.is_a?(VirtualMetaclassType)
           type.each_concrete_type do |concrete_type|
@@ -3209,7 +3211,7 @@ module Crystal
       union_types.any? &.unbound?
     end
 
-    def all?
+    def all?(&)
       union_types.all? { |union_type| yield union_type }
     end
 
@@ -3389,7 +3391,7 @@ module Crystal
       @metaclass ||= VirtualMetaclassType.new(program, self)
     end
 
-    def each_concrete_type
+    def each_concrete_type(&)
       subtypes.each do |subtype|
         yield subtype unless subtype.abstract?
       end
@@ -3488,7 +3490,7 @@ module Crystal
       base_type.replace_type_parameters(instance).virtual_type.metaclass
     end
 
-    def each_concrete_type
+    def each_concrete_type(&)
       instance_type.subtypes.each do |type|
         yield type.metaclass
       end

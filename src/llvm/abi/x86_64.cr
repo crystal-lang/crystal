@@ -44,7 +44,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
 
   # returns the LLVM type (with attributes) and the number of integer and SSE
   # registers needed to pass this value directly (ie. not using the stack)
-  def x86_64_type(type, ind_attr, context) : Tuple(ArgType, Int32, Int32)
+  def x86_64_type(type, ind_attr, context, &) : Tuple(ArgType, Int32, Int32)
     if int_register?(type)
       attr = type == context.int1 ? Attribute::ZExt : nil
       {ArgType.direct(type, attr: attr), 1, 0}

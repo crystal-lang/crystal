@@ -8,7 +8,7 @@ struct VaList
   def initialize(@to_unsafe : LibC::VaList)
   end
 
-  def self.open
+  def self.open(&)
     ap = uninitialized LibC::VaList
     Intrinsics.va_start pointerof(ap)
     begin

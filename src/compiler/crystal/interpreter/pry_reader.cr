@@ -20,15 +20,15 @@ class Crystal::PryReader < Crystal::ReplReader
     end
   end
 
-  def on_ctrl_down
+  def on_ctrl_down(&)
     yield "next"
   end
 
-  def on_ctrl_left
+  def on_ctrl_left(&)
     yield "finish"
   end
 
-  def on_ctrl_right
+  def on_ctrl_right(&)
     yield "step"
   end
 end

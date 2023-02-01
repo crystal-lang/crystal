@@ -60,6 +60,10 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.fork")
   end
 
+  def self.fork(&)
+    raise NotImplementedError.new("Process.fork")
+  end
+
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
     raise NotImplementedError.new("Process.spawn")
   end

@@ -128,7 +128,7 @@ class Mutex
     nil
   end
 
-  def synchronize
+  def synchronize(&)
     lock
     begin
       yield

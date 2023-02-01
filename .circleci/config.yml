@@ -4,11 +4,11 @@ parameters:
   distribution-scripts-version:
     description: "Git ref for version of https://github.com/crystal-lang/distribution-scripts/"
     type: string
-    default: "f567925d4d36be64b7e211d0c166af9bdd92c75f"
+    default: "d8c44c0a2c977bfb90363923047f2c64cef3bf8e"
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.6.2/crystal-1.6.2-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.7.2/crystal-1.7.2-1"
 
 defaults:
   environment: &env
@@ -428,7 +428,7 @@ jobs:
       - image: manastech/s3cmd:2.2-alpine
     environment:
       <<: *env
-      AWS_ACCESS_KEY_ID: AKIA2EEIIRCJCMOSW2XH
+      AWS_ACCESS_KEY_ID: AKIA2EEIIRCJDEDGK6MQ
     steps:
       - attach_workspace:
           at: /tmp/workspace

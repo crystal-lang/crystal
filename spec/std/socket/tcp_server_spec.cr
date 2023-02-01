@@ -88,14 +88,24 @@ describe TCPServer, tags: "network" do
         err = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPServer.new("doesnotexist.example.org.", 12345)
         end
-        err.os_error.should eq({% if flag?(:win32) %}WinError::WSAHOST_NOT_FOUND{% else %}Errno.new(LibC::EAI_NONAME){% end %})
+        # FIXME: Resolve special handling for win32. The error code handling should be identical.
+        {% if flag?(:win32) %}
+          [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
+        {% else %}
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+        {% end %}
       end
 
       it "raises (rather than segfault on darwin) when host doesn't exist and port is 0" do
         err = expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed") do
           TCPServer.new("doesnotexist.example.org.", 0)
         end
-        err.os_error.should eq({% if flag?(:win32) %}WinError::WSAHOST_NOT_FOUND{% else %}Errno.new(LibC::EAI_NONAME){% end %})
+        # FIXME: Resolve special handling for win32. The error code handling should be identical.
+        {% if flag?(:win32) %}
+          [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
+        {% else %}
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+        {% end %}
       end
     end
 

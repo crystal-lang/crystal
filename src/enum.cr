@@ -133,17 +133,20 @@ struct Enum
       if value == 0
         io << "None"
       else
-        found = false
+        remaining_value = self.value
         {% for member in @type.constants %}
           {% if member.stringify != "All" %}
             if {{@type.constant(member)}} != 0 && value.bits_set? {{@type.constant(member)}}
-              io << " | " if found
+              io << " | " unless remaining_value == self.value
               io << {{member.stringify}}
-              found = true
+              remaining_value &= ~{{@type.constant(member)}}
             end
           {% end %}
         {% end %}
-        io << value unless found
+        unless remaining_value.zero?
+          io << " | " unless remaining_value == self.value
+          io << remaining_value
+        end
       end
     {% else %}
       io << to_s
@@ -494,10 +497,34 @@ struct Enum
   # ```
   # IOMode.flags(Read, Write) # => IOMode::Read | IOMode::Write
   # ```
+  #
+  # * `Enum.[]` is a more advanced alternative which also allows int and symbol parameters.
   macro flags(*values)
     {% for value, i in values %}\
       {% if i != 0 %} | {% end %}\
       {{ @type }}::{{ value }}{% end %}\
+  end
+
+  # Convenience macro to create a combined enum (combines given members using `|` (or) logical operator).
+  #
+  # Arguments can be the name of a member, a symbol representing a member name or a numerical value.
+  #
+  # ```
+  # IOMode[Read]             # => IOMode[Read]
+  # IOMode[1]                # => IOMode[Read]
+  # IOMode[Read, Write]      # => IOMode[Read, Write]
+  # IOMode[Read, 64]         # => IOMode[Read, 64]
+  # IOMode[Read, :write, 64] # => IOMode[Read, Write, 64]
+  # ```
+  macro [](*values)
+    {% for value, i in values %}\
+      {% if i != 0 %} | {% end %}\
+      {% if value.is_a?(Path) %} \
+        {{ @type }}::{{ value }} \
+      {% else %} \
+        {{ @type }}.new({{value}}) \
+      {% end %} \
+    {% end %}\
   end
 
   # Iterates each member of the enum.

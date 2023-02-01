@@ -114,6 +114,12 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "interprets variable set with type restriction (#13023)" do
+      interpret(<<-CRYSTAL).should eq(1)
+      a : Int32 = 1
+      CRYSTAL
+    end
+
     it "interprets variable set and get" do
       interpret(<<-CRYSTAL).should eq(1)
       a = 1
@@ -810,6 +816,64 @@ describe Crystal::Repl::Interpreter do
             "a"
           end
         !a
+        CRYSTAL
+    end
+
+    it "interprets not for module (#12918)" do
+      interpret(<<-CRYSTAL).should eq(false)
+        module MyModule; end
+
+        class One
+          include MyModule
+        end
+
+        !One.new.as(MyModule)
+        CRYSTAL
+    end
+
+    it "interprets not for generic module" do
+      interpret(<<-CRYSTAL).should eq(false)
+        module MyModule(T); end
+
+        class One
+          include MyModule(Int32)
+        end
+
+        !One.new.as(MyModule(Int32))
+        CRYSTAL
+    end
+
+    it "interprets not for generic module metaclass" do
+      interpret(<<-CRYSTAL).should eq(false)
+        module MyModule(T); end
+
+        !MyModule(Int32)
+        CRYSTAL
+    end
+
+    it "interprets not for generic class instance metaclass" do
+      interpret(<<-CRYSTAL).should eq(false)
+        class MyClass(T); end
+
+        !MyClass(Int32)
+        CRYSTAL
+    end
+
+    it "does math primitive on union" do
+      interpret(<<-CRYSTAL).should eq(3)
+        module Test; end
+
+        a = 1
+        a.as(Int32 | Test) &+ 2
+        CRYSTAL
+    end
+
+    it "does math convert on union" do
+      interpret(<<-CRYSTAL).should eq(1)
+        module Test; end
+
+        a = 1
+        a.as(Int32 | Test).to_i64!
         CRYSTAL
     end
   end

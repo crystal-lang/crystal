@@ -10,6 +10,37 @@ private def declare_class_var(container : ClassVarContainer, name, var_type : Ty
   container.class_vars[name] = var
 end
 
+private def exit_code_command(code)
+  {% if flag?(:win32) %}
+    %(cmd.exe /c "exit #{code}")
+  {% else %}
+    case code
+    when 0
+      "true"
+    when 1
+      "false"
+    else
+      "/bin/sh -c 'exit #{code}'"
+    end
+  {% end %}
+end
+
+private def shell_command(command)
+  {% if flag?(:win32) %}
+    "cmd.exe /c #{Process.quote(command)}"
+  {% else %}
+    "/bin/sh -c #{Process.quote(command)}"
+  {% end %}
+end
+
+private def newline
+  {% if flag?(:win32) %}
+    "\r\n"
+  {% else %}
+    "\n"
+  {% end %}
+end
+
 module Crystal
   describe Macro do
     describe "node methods" do
@@ -3172,6 +3203,26 @@ module Crystal
           {{read_file?("spec/compiler/data/build_foo")}} ? 10 : 20
           >, filename: __FILE__).to_i.should eq(20)
       end
+    end
+  end
+
+  describe ".system" do
+    it "command does not exist" do
+      assert_error %({{ `commanddoesnotexist` }}), "error executing command: commanddoesnotexist"
+    end
+
+    it "successful command" do
+      assert_macro %({{ `#{exit_code_command(0)}` }}), ""
+    end
+
+    it "successful command with output" do
+      assert_macro %({{ `#{shell_command("echo foobar")}` }}), "foobar#{newline}"
+    end
+
+    it "failing command" do
+      assert_error %({{ `#{exit_code_command(1)}` }}), "error executing command: #{exit_code_command(1)}, got exit status 1"
+      assert_error %({{ `#{exit_code_command(2)}` }}), "error executing command: #{exit_code_command(2)}, got exit status 2"
+      assert_error %({{ `#{exit_code_command(127)}` }}), "error executing command: #{exit_code_command(127)}, got exit status 127"
     end
   end
 

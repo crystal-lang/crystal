@@ -159,7 +159,7 @@ class OAuth2::Client
     end
   end
 
-  private def get_access_token : AccessToken
+  private def get_access_token(&) : AccessToken
     headers = HTTP::Headers{
       "Accept"       => "application/json",
       "Content-Type" => "application/x-www-form-urlencoded",

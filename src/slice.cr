@@ -102,7 +102,7 @@ struct Slice(T)
   # slice = Slice.new(3) { |i| i + 10 }
   # slice # => Slice[10, 11, 12]
   # ```
-  def self.new(size : Int, *, read_only = false)
+  def self.new(size : Int, *, read_only = false, &)
     pointer = Pointer.malloc(size) { |i| yield i }
     new(pointer, size, read_only: read_only)
   end
