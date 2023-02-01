@@ -103,7 +103,7 @@ class HTTP::StaticFileHandler
 
       File.open(file_path) do |file|
         if range_header = context.request.headers["Range"]?
-          range_header = range_header.lchop?("bytes=") || return context.response.respond_with_status :bad_request
+          range_header = range_header.lchop?("bytes=") || return context.response.respond_with_status :range_not_satisfiable
           ranges = parse_ranges(range_header, file_info.size) || return context.response.respond_with_status :bad_request
 
           # If any of the ranges start beyond the end of the file, we return an
