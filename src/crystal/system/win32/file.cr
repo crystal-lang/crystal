@@ -294,7 +294,7 @@ module Crystal::System::File
       if winerror == WinError::ERROR_LOCK_VIOLATION
         false
       else
-        raise IO::Error.from_winerror("LockFileEx", winerror)
+        raise IO::Error.from_os_error("LockFileEx", winerror)
       end
     end
   end
