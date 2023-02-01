@@ -28,6 +28,12 @@ describe JSON::Any do
       JSON.parse("true").as_i64?.should be_nil
     end
 
+    it "gets int128" do
+      JSON.parse("1701411834604692317").as_i128.should eq(1701411834604692317_i128)
+      JSON.parse("1701411834604692317").as_i128?.should eq(1701411834604692317_i128)
+      JSON.parse("true").as_i128?.should be_nil
+    end
+
     it "gets float32" do
       JSON.parse("123.45").as_f32.should eq(123.45_f32)
       expect_raises(TypeCastError) { JSON.parse("true").as_f32 }

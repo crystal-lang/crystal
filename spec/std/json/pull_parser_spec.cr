@@ -348,6 +348,7 @@ describe JSON::PullParser do
                     [Int16, 1_i16],
                     [Int32, 1_i32],
                     [Int64, 1_i64],
+                    [Int128, 1_i128],
                     [UInt8, 1_u8],
                     [UInt16, 1_u16],
                     [UInt32, 1_u32],
@@ -387,6 +388,22 @@ describe JSON::PullParser do
     it_reads 0_i64
     it_reads 10_i64
     it_reads Int64::MAX
+
+    it_reads Int128::MIN
+    it_reads -10_i128
+    it_reads 0_i128
+    it_reads 10_i128
+    it_reads Int128::MAX
+
+    it "reads > Int128::MAX" do
+      pull = JSON::PullParser.new(Int128::MAX.to_s + "0")
+      pull.read?(Int128).should be_nil
+    end
+
+    it "reads < Int128::MIN" do
+      pull = JSON::PullParser.new(Int128::MIN.to_s + "0")
+      pull.read?(Int128).should be_nil
+    end
 
     it "reads > Int64::MAX" do
       pull = JSON::PullParser.new(Int64::MAX.to_s + "0")

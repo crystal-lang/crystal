@@ -18,8 +18,8 @@ class JSON::Token
   property kind : Kind
   property string_value : String
 
-  def int_value : Int64
-    raw_value.to_i64
+  def int_value : Int128
+    raw_value.to_i128
   rescue exc : ArgumentError
     raise ParseException.new(exc.message, line_number, column_number)
   end

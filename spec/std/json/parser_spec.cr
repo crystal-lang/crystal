@@ -77,6 +77,6 @@ describe JSON::Parser do
   it "returns raw" do
     value = JSON.parse("1").raw
     value.should eq(1)
-    value.should be_a(Int64)
+    value.should be_a(Int128)
   end
 end

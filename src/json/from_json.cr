@@ -129,6 +129,7 @@ end
                          "Int16"  => "i16",
                          "Int32"  => "i32",
                          "Int64"  => "i64",
+                         "Int128" => "i128",
                          "UInt8"  => "u8",
                          "UInt16" => "u16",
                          "UInt32" => "u32",
@@ -397,7 +398,7 @@ def Union.new(pull : JSON::PullParser)
       return pull.read_string
     {% end %}
     when .int?
-    {% type_order = [Int64, UInt64, Int32, UInt32, Int16, UInt16, Int8, UInt8, Float64, Float32] %}
+    {% type_order = [Int128, Int64, UInt64, Int32, UInt32, Int16, UInt16, Int8, UInt8, Float64, Float32] %}
     {% for type in type_order.select { |t| T.includes? t } %}
       value = pull.read?({{type}})
       return value unless value.nil?
