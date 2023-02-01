@@ -115,7 +115,9 @@ class HTTP::StaticFileHandler
           # HTTP 416 Range Not Satisfiable.
           # See https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests#partial_request_responses
           if ranges.any? { |range| range.begin > file_info.size }
+            context.response.headers["Content-Range"] = "bytes */#{file_info.size}"
             context.response.status = :range_not_satisfiable
+            context.response.close
             return
           end
 
