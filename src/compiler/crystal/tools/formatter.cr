@@ -4778,7 +4778,7 @@ module Crystal
           @wrote_double_newlines = true
         end
 
-        skip_space_or_newline
+        skip_space_or_newline(last: next_comes_end, at_least_one: true)
       end
     end
 
