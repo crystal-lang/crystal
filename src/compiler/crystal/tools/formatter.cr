@@ -827,7 +827,7 @@ module Crystal
         start_column = @indent + 2
 
         if elements.empty?
-          skip_space_or_newline
+          skip_space_or_newline(offset, last: true, at_least_one: true)
           write_token suffix
           return false
         end

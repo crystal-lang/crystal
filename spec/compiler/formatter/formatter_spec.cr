@@ -102,6 +102,8 @@ describe Crystal::Formatter do
   assert_format "Set{ # foo\n  1,\n}"
   assert_format "begin\n  array[\n    0 # Zero\n  ]\nend"
   assert_format "begin\n  array[\n    0, # Zero\n  ]\nend"
+  assert_format "[\n  # foo\n] of String"
+  assert_format "[\n# foo\n] of String", "[\n  # foo\n] of String"
 
   assert_format "{1, 2, 3}"
   assert_format "{ {1, 2, 3} }"
