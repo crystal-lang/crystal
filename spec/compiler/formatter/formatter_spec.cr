@@ -509,6 +509,8 @@ describe Crystal::Formatter do
   assert_format "foo.% bar"
   assert_format "foo.bar(&.%(baz))"
   assert_format "foo.bar(&.% baz)"
+  assert_format "if 1\n  foo(\n    bar\n    # comment\n  )\nend"
+  assert_format "if 1\n  foo(\n    bar,\n    # comment\n  )\nend"
 
   assert_format "foo.bar\n.baz", "foo.bar\n  .baz"
   assert_format "foo.bar.baz\n.qux", "foo.bar.baz\n  .qux"
