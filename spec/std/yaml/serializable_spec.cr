@@ -245,12 +245,6 @@ class YAMLAttrWithNilableUnion
   property value : Int32?
 end
 
-class YAMLAttrWithNilableUnion2
-  include YAML::Serializable
-
-  property value : Int32 | Nil
-end
-
 class YAMLAttrWithPresence
   include YAML::Serializable
 
@@ -886,20 +880,6 @@ describe "YAML::Serializable" do
     obj.to_yaml.should eq("--- {}\n")
 
     obj = YAMLAttrWithNilableUnion.from_yaml(%({}))
-    obj.value.should be_nil
-    obj.to_yaml.should eq("--- {}\n")
-  end
-
-  it "parses nilable union2" do
-    obj = YAMLAttrWithNilableUnion2.from_yaml(%({"value": 1}))
-    obj.value.should eq(1)
-    obj.to_yaml.should eq("---\nvalue: 1\n")
-
-    obj = YAMLAttrWithNilableUnion2.from_yaml(%({"value": null}))
-    obj.value.should be_nil
-    obj.to_yaml.should eq("--- {}\n")
-
-    obj = YAMLAttrWithNilableUnion2.from_yaml(%({}))
     obj.value.should be_nil
     obj.to_yaml.should eq("--- {}\n")
   end

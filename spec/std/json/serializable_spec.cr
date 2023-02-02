@@ -283,12 +283,6 @@ class JSONAttrWithNilableUnion
   property value : Int32?
 end
 
-class JSONAttrWithNilableUnion2
-  include JSON::Serializable
-
-  property value : Int32 | Nil
-end
-
 class JSONAttrWithPresence
   include JSON::Serializable
 
@@ -911,20 +905,6 @@ describe "JSON mapping" do
     obj.to_json.should eq(%({}))
 
     obj = JSONAttrWithNilableUnion.from_json(%({}))
-    obj.value.should be_nil
-    obj.to_json.should eq(%({}))
-  end
-
-  it "parses nilable union2" do
-    obj = JSONAttrWithNilableUnion2.from_json(%({"value": 1}))
-    obj.value.should eq(1)
-    obj.to_json.should eq(%({"value":1}))
-
-    obj = JSONAttrWithNilableUnion2.from_json(%({"value": null}))
-    obj.value.should be_nil
-    obj.to_json.should eq(%({}))
-
-    obj = JSONAttrWithNilableUnion2.from_json(%({}))
     obj.value.should be_nil
     obj.to_json.should eq(%({}))
   end
