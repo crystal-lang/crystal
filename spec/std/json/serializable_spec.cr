@@ -1052,8 +1052,8 @@ describe "JSON mapping" do
   end
 
   it "parses 128-bit integer" do
-    json = JSONAttrWithInt128.from_json(%({"value": 186709961001538790100634132976990}))
-    json.value.should eq 186709961001538790100634132976990_i128
+    json = JSONAttrWithInt128.from_json(%({"value": #{Int128::MAX}}))
+    json.value.should eq Int128::MAX
   end
 
   describe "work with module and inheritance" do
