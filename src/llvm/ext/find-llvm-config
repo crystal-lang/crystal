@@ -19,6 +19,6 @@ if [ "$LLVM_CONFIG" ]; then
   printf "$LLVM_CONFIG"
 else
   printf "Error: Could not find location of llvm-config. Please specify path in environment variable LLVM_CONFIG.\n" >&2
-  printf "Supported versions: $(cat "$(dirname $0)/llvm-versions.txt" | sed 's/\.0//g')\n" >&2
+  printf "Supported LLVM versions: $(cat "$(dirname $0)/llvm-versions.txt" | sed 's/\.0//g')\n" >&2
   exit 1
 fi
