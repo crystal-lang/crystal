@@ -315,7 +315,8 @@ module Crystal
         target_machine.emit_obj_to_file llvm_mod, object_name
       end
 
-      print_command(*linker_command(program, [object_name], output_filename, nil))
+      _, command, args = linker_command(program, [object_name], output_filename, nil)
+      print_command(command, args)
     end
 
     private def print_command(command, args)
@@ -376,15 +377,15 @@ module Crystal
           cmd = "#{cl} #{Process.quote_windows("@" + args_filename)}"
         end
 
-        {cmd, nil}
+        {cl, cmd, nil}
       elsif program.has_flag? "wasm32"
         link_flags = @link_flags || ""
-        { %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names }
+        {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags}), object_names}
       else
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
 
-        { %(#{CC} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names }
+        {CC, %(#{CC} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names}
       end
     end
 
@@ -416,21 +417,7 @@ module Crystal
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
-          linker_command = linker_command(program, object_names, output_filename, output_dir, expand: true)
-
-          process_wrapper(*linker_command) do |command, args|
-            Process.run(command, args, shell: true,
-              input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
-              process.error.each_line(chomp: false) do |line|
-                hint_string = colorize("(this usually means you need to install the development package for lib\\1)").yellow.bold
-                line = line.gsub(/cannot find -l(\S+)\b/, "cannot find -l\\1 #{hint_string}")
-                line = line.gsub(/unable to find library -l(\S+)\b/, "unable to find library -l\\1 #{hint_string}")
-                line = line.gsub(/library not found for -l(\S+)\b/, "library not found for -l\\1 #{hint_string}")
-                STDERR << line
-              end
-            end
-            $?
-          end
+          run_linker *linker_command(program, object_names, output_filename, output_dir, expand: true)
         end
       end
 
@@ -453,7 +440,9 @@ module Crystal
         return all_reused
       end
 
-      {% if flag?(:preview_mt) %}
+      {% if !Crystal::System::Process.class.has_method?("fork") %}
+        raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
+      {% elsif flag?(:preview_mt) %}
         raise "Cannot fork compiler in multithread mode"
       {% else %}
         jobs_count = 0
@@ -477,7 +466,7 @@ module Crystal
               end
             end
 
-            codegen_process = Process.fork do
+            codegen_process = Crystal::System::Process.fork do
               pipe_w = pw
               slice.each do |unit|
                 unit.compile
@@ -487,7 +476,7 @@ module Crystal
                 end
               end
             end
-            codegen_process.wait
+            Process.new(codegen_process).wait
 
             if pipe_w = pw
               pipe_w.close
@@ -604,15 +593,47 @@ module Crystal
       end
     end
 
-    private def process_wrapper(command, args = nil, &)
+    private def run_linker(linker_name, command, args)
       print_command(command, args) if verbose?
 
-      status = yield command, args
+      begin
+        Process.run(command, args, shell: true,
+          input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
+          process.error.each_line(chomp: false) do |line|
+            hint_string = colorize("(this usually means you need to install the development package for lib\\1)").yellow.bold
+            line = line.gsub(/cannot find -l(\S+)\b/, "cannot find -l\\1 #{hint_string}")
+            line = line.gsub(/unable to find library -l(\S+)\b/, "unable to find library -l\\1 #{hint_string}")
+            line = line.gsub(/library not found for -l(\S+)\b/, "library not found for -l\\1 #{hint_string}")
+            STDERR << line
+          end
+        end
+      rescue exc : File::AccessDeniedError | File::NotFoundError
+        linker_not_found exc.class, linker_name
+      end
 
+      status = $?
       unless status.success?
+        if status.normal_exit?
+          case status.exit_code
+          when 126
+            linker_not_found File::AccessDeniedError, linker_name
+          when 127
+            linker_not_found File::NotFoundError, linker_name
+          end
+        end
         msg = status.normal_exit? ? "code: #{status.exit_code}" : "signal: #{status.exit_signal} (#{status.exit_signal.value})"
         code = status.normal_exit? ? status.exit_code : 1
         error "execution of command failed with #{msg}: `#{command}`", exit_code: code
+      end
+    end
+
+    private def linker_not_found(exc_class, linker_name)
+      verbose_info = "\nRun with `--verbose` to print the full linker command." unless verbose?
+      case exc_class
+      when File::AccessDeniedError
+        error "Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}"
+      else
+        error "Could not execute linker: `#{linker_name}`: File not found#{verbose_info}"
       end
     end
 

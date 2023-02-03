@@ -5,13 +5,17 @@
 ## Build the compiler
 ##   $ make
 ## Build the compiler with progress output
-##   $ make progress=true
+##   $ make progress=1
 ## Clean up built files then build the compiler
 ##   $ make clean crystal
 ## Build the compiler in release mode
-##   $ make crystal release=1
-## Run all specs in verbose mode
-##   $ make spec verbose=1
+##   $ make crystal release=1 interpreter=1
+## Run tests
+##   $ make test
+## Run stdlib tests
+##   $ make std_spec
+## Run compiler tests
+##   $ make compiler_spec
 
 CRYSTAL ?= crystal ## which previous crystal compiler use
 LLVM_CONFIG ?=     ## llvm-config command path to use
@@ -80,9 +84,11 @@ check_llvm_config = $(eval \
 .PHONY: all
 all: crystal ## Build all files (currently crystal only) [default]
 
+.PHONY: test
+test: spec ## Run tests
+
 .PHONY: spec
-spec: $(O)/all_spec ## Run all specs
-	$(O)/all_spec $(SPEC_FLAGS)
+spec: std_spec primitives_spec compiler_spec
 
 .PHONY: std_spec
 std_spec: $(O)/std_spec ## Run standard library specs
@@ -99,6 +105,10 @@ primitives_spec: $(O)/primitives_spec ## Run primitives specs
 .PHONY: smoke_test
 smoke_test: ## Build specs as a smoke test
 smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal
+
+.PHONY: all_spec
+all_spec: $(O)/all_spec ## Run all specs (note: this builds a huge program; `test` recipe builds individual binaries and is recommended for reduced resource usage)
+	$(O)/all_spec $(SPEC_FLAGS)
 
 .PHONY: samples
 samples: ## Build example programs

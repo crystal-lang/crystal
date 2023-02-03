@@ -11,7 +11,7 @@ struct Exception::CallStack
   @@dwarf_function_names : Array(Tuple(LibC::SizeT, LibC::SizeT, String))?
 
   # :nodoc:
-  def self.load_debug_info
+  def self.load_debug_info : Nil
     return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
 
     unless @@dwarf_loaded

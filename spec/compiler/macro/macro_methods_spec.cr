@@ -3208,13 +3208,7 @@ module Crystal
 
   describe ".system" do
     it "command does not exist" do
-      # FIXME: This inconsistency between Windows and POSIX is tracked in #12873
-      expect_raises(
-        {{ flag?(:win32) ? File::NotFoundError : Crystal::TypeException }},
-        {{ flag?(:win32) ? "Error executing process: 'commanddoesnotexist'" : "error executing command: commanddoesnotexist" }}
-      ) do
-        semantic %({{ `commanddoesnotexist` }})
-      end
+      assert_error %({{ `commanddoesnotexist` }}), "error executing command: commanddoesnotexist"
     end
 
     it "successful command" do

@@ -319,7 +319,13 @@ module Crystal
       @indent = old_indent
 
       if has_newline && !last_found_comment && (!@wrote_newline || empty_expressions)
+        # Right after the last expression but we didn't insert a newline yet
+        # so we are still missing a newline following by an indent and the "end" keyword
         write_line
+        write_indent
+      elsif has_newline && last_found_comment && @wrote_newline
+        # Right after the last expression and we did insert a newline (because of a comment)
+        # so we are still missing an indent and the "end" keyword
         write_indent
       end
 
@@ -821,7 +827,7 @@ module Crystal
         start_column = @indent + 2
 
         if elements.empty?
-          skip_space_or_newline
+          skip_space_or_newline(offset, last: true, at_least_one: true)
           write_token suffix
           return false
         end
@@ -2777,7 +2783,7 @@ module Crystal
         if @token.type.newline?
           ends_with_newline = true
         end
-        skip_space_or_newline
+        indent(base_indent + 2) { skip_space_or_newline(last: true, at_least_one: ends_with_newline) }
       elsif has_args || node.block_arg
         write " " unless passed_backslash_newline
         skip_space
@@ -2969,8 +2975,9 @@ module Crystal
           if @token.type.newline? && has_newlines
             write ","
             write_line
-            write_indent(column)
             skip_space_or_newline(column + 2)
+            write_indent(column)
+            skip_space_or_newline(column)
           else
             found_comment |= skip_space_or_newline(column + 2)
             if has_newlines
@@ -4771,7 +4778,7 @@ module Crystal
           @wrote_double_newlines = true
         end
 
-        skip_space_or_newline
+        skip_space_or_newline(last: next_comes_end, at_least_one: true)
       end
     end
 

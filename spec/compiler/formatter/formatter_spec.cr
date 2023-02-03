@@ -102,6 +102,8 @@ describe Crystal::Formatter do
   assert_format "Set{ # foo\n  1,\n}"
   assert_format "begin\n  array[\n    0 # Zero\n  ]\nend"
   assert_format "begin\n  array[\n    0, # Zero\n  ]\nend"
+  assert_format "[\n  # foo\n] of String"
+  assert_format "[\n# foo\n] of String", "[\n  # foo\n] of String"
 
   assert_format "{1, 2, 3}"
   assert_format "{ {1, 2, 3} }"
@@ -507,6 +509,8 @@ describe Crystal::Formatter do
   assert_format "foo.% bar"
   assert_format "foo.bar(&.%(baz))"
   assert_format "foo.bar(&.% baz)"
+  assert_format "if 1\n  foo(\n    bar\n    # comment\n  )\nend"
+  assert_format "if 1\n  foo(\n    bar,\n    # comment\n  )\nend"
 
   assert_format "foo.bar\n.baz", "foo.bar\n  .baz"
   assert_format "foo.bar.baz\n.qux", "foo.bar.baz\n  .qux"
@@ -1305,6 +1309,7 @@ describe Crystal::Formatter do
   assert_format "# foo\na = 1 # bar"
   assert_format "#### ###"
   assert_format "#######"
+  assert_format "x\n# foo\n\n# bar"
 
   assert_format "A = 1\nFOO = 2\n\nEX = 3", "A   = 1\nFOO = 2\n\nEX = 3"
   assert_format "FOO = 2\nA = 1", "FOO = 2\nA   = 1"
@@ -2416,4 +2421,29 @@ describe Crystal::Formatter do
       end
     end
     CRYSTAL
+
+  # #12964
+  assert_format <<-CRYSTAL
+    begin
+      begin
+        a
+        # b
+      end
+    end
+    CRYSTAL
+
+  it do
+    expect_raises(Crystal::SyntaxException) do
+      Crystal.format <<-CRYSTAL
+        lib A
+          struct B
+            {% begin %}
+              x : Int32
+              else
+            {% end %}
+          end
+        end
+        CRYSTAL
+    end
+  end
 end

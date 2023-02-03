@@ -722,7 +722,7 @@ struct Char
     to_i?(base)
   end
 
-  {% for type in %w(i8 i16 i64 u8 u16 u32 u64) %}
+  {% for type in %w(i8 i16 i64 i128 u8 u16 u32 u64 u128) %}
     # See also: `to_i`.
     def to_{{type.id}}(base : Int = 10)
       to_i(base).to_{{type.id}}
