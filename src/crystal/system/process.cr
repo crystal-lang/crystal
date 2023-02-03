@@ -46,10 +46,11 @@ struct Crystal::System::Process
   # previously set interrupt handler.
   # def self.on_interrupt(&handler : ->)
 
-  # Ignores all interrupt signals if *ignore* is true, or restores the default
-  # interrupt handler if *ignore* is false. Removes any custom interrupt
-  # handler set with `on_interrupt(&handler)`.
-  # def self.on_interrupt(*, ignore : Bool)
+  # Ignores all interrupt requests. Removes any custom interrupt handler set
+  # def self.ignore_interrupts!
+
+  # Restores default handling of interrupt requests.
+  # def self.restore_interrupts!
 
   # Spawns a fiber responsible for executing interrupt handlers on the main
   # thread.

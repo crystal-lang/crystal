@@ -79,19 +79,30 @@ struct Crystal::System::Process
   end
 
   def self.on_interrupt(&@@interrupt_handler : ->) : Nil
-    @@win32_interrupt_handler.try { |old| LibC.SetConsoleCtrlHandler(old, 0) }
+    restore_interrupts!
     @@win32_interrupt_handler = handler = LibC::PHANDLER_ROUTINE.new do |event_type|
       next 0 unless event_type.in?(LibC::CTRL_C_EVENT, LibC::CTRL_BREAK_EVENT)
       @@interrupt_count.signal
       1
     end
-    LibC.SetConsoleCtrlHandler(nil, 0)
     LibC.SetConsoleCtrlHandler(handler, 1)
   end
 
-  def self.on_interrupt(*, ignore : Bool) : Nil
-    @@win32_interrupt_handler.try { |old| LibC.SetConsoleCtrlHandler(old, 0) }
-    LibC.SetConsoleCtrlHandler(nil, ignore ? 1 : 0)
+  def self.ignore_interrupts! : Nil
+    remove_interrupt_handler
+    LibC.SetConsoleCtrlHandler(nil, 1)
+  end
+
+  def self.restore_interrupts! : Nil
+    remove_interrupt_handler
+    LibC.SetConsoleCtrlHandler(nil, 0)
+  end
+
+  private def self.remove_interrupt_handler
+    if old = @@win32_interrupt_handler
+      LibC.SetConsoleCtrlHandler(old, 0)
+      @@win32_interrupt_handler = nil
+    end
   end
 
   def self.start_interrupt_loop : Nil

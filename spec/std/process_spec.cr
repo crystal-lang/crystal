@@ -320,8 +320,8 @@ describe Process do
   describe ".on_interrupt" do
     it "compiles" do
       typeof(Process.on_interrupt { })
-      typeof(Process.on_interrupt(ignore: true))
-      typeof(Process.on_interrupt(ignore: false))
+      typeof(Process.ignore_interrupts!)
+      typeof(Process.restore_interrupts!)
     end
   end
 

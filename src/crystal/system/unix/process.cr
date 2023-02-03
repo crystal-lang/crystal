@@ -62,12 +62,12 @@ struct Crystal::System::Process
     ::Signal::INT.trap { |_signal| handler.call }
   end
 
-  def self.on_interrupt(*, ignore : Bool) : Nil
-    if ignore
-      ::Signal::INT.ignore
-    else
-      ::Signal::INT.reset
-    end
+  def self.ignore_interrupts! : Nil
+    ::Signal::INT.ignore
+  end
+
+  def self.restore_interrupts! : Nil
+    ::Signal::INT.reset
   end
 
   def self.start_interrupt_loop : Nil

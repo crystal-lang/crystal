@@ -52,8 +52,12 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.on_interrupt")
   end
 
-  def self.on_interrupt(*, ignore : Bool) : Nil
-    raise NotImplementedError.new("Process.on_interrupt")
+  def self.ignore_interrupts! : Nil
+    raise NotImplementedError.new("Process.ignore_interrupts!")
+  end
+
+  def self.restore_interrupts! : Nil
+    raise NotImplementedError.new("Process.restore_interrupts!")
   end
 
   def self.start_interrupt_loop : Nil

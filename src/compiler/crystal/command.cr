@@ -253,7 +253,7 @@ class Crystal::Command
             {% unless flag?(:wasm32) %}
               # Ignore the signal so we don't exit the running process
               # (the running process can still handle this signal)
-              Process.on_interrupt(ignore: true)
+              Process.ignore_interrupts!
             {% end %}
           end
         end
