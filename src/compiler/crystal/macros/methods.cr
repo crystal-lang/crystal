@@ -159,7 +159,7 @@ module Crystal
     end
 
     def interpret_constant(arg, type, name)
-      case type = type.lookup_path self.parse_path(arg, name)
+      case type = type.lookup_path parse_path(arg, name)
       when Const
         type.value
       when Type
@@ -170,7 +170,7 @@ module Crystal
     end
 
     def interpret_has_constant?(arg, type, name)
-      BoolLiteral.new !!type.lookup_path self.parse_path(arg, name)
+      BoolLiteral.new !!type.lookup_path parse_path(arg, name)
     end
 
     private def parse_path(arg, name) : Path

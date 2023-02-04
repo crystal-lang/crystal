@@ -1881,7 +1881,7 @@ module Crystal
         end
 
         it "global path with extra ::" do
-          assert_macro_error %({{@type.constant "::::ID" }}), %(Invalid constant name: "::::ID")
+          assert_macro_error %({{ @type.constant "::::ID" }}), %(Invalid constant name: "::::ID")
         end
 
         it "const within another type from the top level" do
@@ -1897,7 +1897,7 @@ module Crystal
         end
 
         it "const within another type from the top level with extra ::" do
-          assert_macro_error %({{@type.constant "A::::::B::::ID" }}), %(Invalid constant name: "A::::::B::::ID")
+          assert_macro_error %({{ @type.constant "A::::::B::::ID" }}), %(Invalid constant name: "A::::::B::::ID")
         end
 
         it "type within another type from the top level" do
@@ -1914,7 +1914,7 @@ module Crystal
 
       describe "#has_constant?" do
         it "global path with extra ::" do
-          assert_macro_error %({{@type.has_constant? "::::ID" }}), %(Invalid constant name: "::::ID")
+          assert_macro_error %({{ @type.has_constant? "::::ID" }}), %(Invalid constant name: "::::ID")
         end
 
         it "global path" do
@@ -1970,7 +1970,7 @@ module Crystal
         end
 
         it "type within another type from the top level with extra ::" do
-          assert_macro_error %(class A; class B; end; end; {{@type.has_constant? "A::::::B" }}), %(Invalid constant name: "A::::::B")
+          assert_macro_error %(class A; class B; end; end; {{ @type.has_constant? "A::::::B" }}), %(Invalid constant name: "A::::::B")
         end
 
         it "constant within a nested type from the top level" do
