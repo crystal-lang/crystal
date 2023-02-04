@@ -11,7 +11,7 @@ private def processed_context_visitor(code, cursor_location)
   {visitor, process_result}
 end
 
-private def run_context_tool(code)
+private def run_context_tool(code, &)
   cursor_location = nil
 
   code.lines.each_with_index do |line, line_number_0|

@@ -176,7 +176,7 @@ struct Char
     # B
     # C
     # ```
-    def each : Nil
+    def each(&) : Nil
       while has_next?
         yield current_char
         @pos += @current_char_width

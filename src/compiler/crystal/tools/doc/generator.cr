@@ -1,4 +1,4 @@
-require "../../../../../lib/markd/src/markd"
+require "markd"
 require "crystal/syntax_highlighter/html"
 
 class Crystal::Doc::Generator

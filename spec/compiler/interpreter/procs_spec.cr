@@ -114,4 +114,14 @@ describe Crystal::Repl::Interpreter do
       ->{ 42 }.foo.call
     CRYSTAL
   end
+
+  it "calls proc primitive on union of module that has no subtypes (#12954)" do
+    interpret(<<-CRYSTAL).should eq(42)
+      module Test
+      end
+
+      proc = ->{ 42 }
+      proc.as(Proc(Int32) | Test).call
+    CRYSTAL
+  end
 end

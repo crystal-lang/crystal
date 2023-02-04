@@ -659,7 +659,7 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, &)
     file = new filename, mode, perm, encoding, invalid
     begin
       yield file
@@ -703,7 +703,7 @@ class File < IO::FileDescriptor
   # end
   # array # => ["foo", "bar"]
   # ```
-  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true)
+  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, &)
     open(filename, "r", encoding: encoding, invalid: invalid) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line

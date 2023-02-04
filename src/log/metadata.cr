@@ -136,7 +136,7 @@ class Log::Metadata
     fetch(key) { nil }
   end
 
-  def fetch(key)
+  def fetch(key, &)
     entry = find_entry(key)
     entry ? entry[:value] : yield key
   end

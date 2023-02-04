@@ -87,12 +87,7 @@ class Crystal::CodeGenVisitor
         context.fun.add_attribute LLVM::Attribute::UWTable
         if @program.has_flag?("darwin")
           # Disable frame pointer elimination in Darwin, as it causes issues during stack unwind
-          {% if compare_versions(Crystal::LLVM_VERSION, "8.0.0") < 0 %}
-            context.fun.add_target_dependent_attribute "no-frame-pointer-elim", "true"
-            context.fun.add_target_dependent_attribute "no-frame-pointer-elim-non-leaf", "true"
-          {% else %}
-            context.fun.add_target_dependent_attribute "frame-pointer", "all"
-          {% end %}
+          context.fun.add_target_dependent_attribute "frame-pointer", "all"
         end
 
         new_entry_block

@@ -225,7 +225,7 @@ module HTTP
       CookieString    = /(?:^|; )#{Regex::CookiePair}/
       SetCookieString = /^#{Regex::CookiePair}(?:;\s*#{Regex::CookieAV})*$/
 
-      def parse_cookies(header)
+      def parse_cookies(header, &)
         header.scan(CookieString).each do |pair|
           value = pair["value"]
           if value.starts_with?('"')

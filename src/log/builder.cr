@@ -84,7 +84,7 @@ class Log::Builder
   end
 
   # :nodoc:
-  private def each_log
+  private def each_log(&)
     @logs.reject! { |_, log_ref| log_ref.value.nil? }
 
     @logs.each_value do |log_ref|

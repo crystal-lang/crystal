@@ -5,7 +5,8 @@ describe System do
   describe "hostname" do
     pending_win32 "returns current hostname" do
       shell_hostname = `hostname`.strip
-      $?.success?.should be_true # The hostname command has to be available
+      pending! "`hostname` command was unsuccessful" unless $?.success?
+
       hostname = System.hostname
       hostname.should eq(shell_hostname)
     end

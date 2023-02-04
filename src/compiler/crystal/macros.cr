@@ -887,6 +887,131 @@ module Crystal::Macros
   #
   # Its macro methods are nearly the same as `ArrayLiteral`.
   class TupleLiteral < ASTNode
+    # Similar to `Enumerable#any?`
+    def any?(&) : BoolLiteral
+    end
+
+    # Similar to `Enumerable#all?`
+    def all?(&) : BoolLiteral
+    end
+
+    # Returns a `MacroId` with all of this tuple's elements joined
+    # by commas.
+    #
+    # If *trailing_string* is given, it will be appended to
+    # the result unless this tuple is empty. This lets you
+    # splat a tuple and optionally write a trailing comma
+    # if needed.
+    def splat(trailing_string : StringLiteral = nil) : MacroId
+    end
+
+    # Similar to `Tuple#empty?`
+    def empty? : BoolLiteral
+    end
+
+    # Similar to `Enumerable#find`
+    def find(&) : ASTNode | NilLiteral
+    end
+
+    # Similar to `Tuple#first`, but returns a `NilLiteral` if the tuple is empty.
+    def first : ASTNode | NilLiteral
+    end
+
+    # Similar to `Enumerable#includes?(obj)`.
+    def includes?(node : ASTNode) : BoolLiteral
+    end
+
+    # Similar to `Enumerable#join`
+    def join(separator) : StringLiteral
+    end
+
+    # Similar to `Tuple#last`, but returns a `NilLiteral` if the tuple is empty.
+    def last : ASTNode | NilLiteral
+    end
+
+    # Similar to `Tuple#size`
+    def size : NumberLiteral
+    end
+
+    # Similar to `Enumerable#map`
+    def map(&) : TupleLiteral
+    end
+
+    # Similar to `Enumerable#map_with_index`
+    def map_with_index(&) : TupleLiteral
+    end
+
+    # Similar to `Tuple#each`
+    def each(&) : Nil
+    end
+
+    # Similar to `Enumerable#each_with_index`
+    def each_with_index(&) : Nil
+    end
+
+    # Similar to `Enumerable#select`
+    def select(&) : TupleLiteral
+    end
+
+    # Similar to `Enumerable#reject`
+    def reject(&) : TupleLiteral
+    end
+
+    # Similar to `Enumerable#reduce`
+    def reduce(&) : ASTNode
+    end
+
+    # Similar to `Enumerable#reduce`
+    def reduce(memo : ASTNode, &) : ASTNode
+    end
+
+    # Similar to `Array#shuffle`
+    def shuffle : TupleLiteral
+    end
+
+    # Similar to `Array#sort`
+    def sort : TupleLiteral
+    end
+
+    # Similar to `Array#sort_by`
+    def sort_by(&) : TupleLiteral
+    end
+
+    # Similar to `Array#uniq`
+    def uniq : TupleLiteral
+    end
+
+    # Similar to `Tuple#[]`, but returns `NilLiteral` on out of bounds.
+    def [](index : NumberLiteral) : ASTNode
+    end
+
+    # Similar to `Tuple#[]`.
+    def [](index : RangeLiteral) : TupleLiteral(ASTNode)
+    end
+
+    # Similar to `Array#[]=`.
+    def []=(index : NumberLiteral, value : ASTNode) : ASTNode
+    end
+
+    # Similar to `Array#unshift`.
+    def unshift(value : ASTNode) : TupleLiteral
+    end
+
+    # Similar to `Array#push`.
+    def push(value : ASTNode) : TupleLiteral
+    end
+
+    # Similar to `Array#<<`.
+    def <<(value : ASTNode) : TupleLiteral
+    end
+
+    # Similar to `Tuple#+`.
+    def +(other : TupleLiteral) : TupleLiteral
+    end
+
+    # Similar to `Array#-`.
+    def -(other : TupleLiteral) : TupleLiteral
+    end
   end
 
   # A fictitious node representing a variable or instance

@@ -20,7 +20,7 @@ class Crystal::SpinLock
     {% end %}
   end
 
-  def sync
+  def sync(&)
     lock
     begin
       yield
@@ -29,7 +29,7 @@ class Crystal::SpinLock
     end
   end
 
-  def unsync
+  def unsync(&)
     unlock
     begin
       yield

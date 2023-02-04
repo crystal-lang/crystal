@@ -222,7 +222,7 @@ describe "Semantic: restrictions augmenter" do
 
   it "doesn't augment if assigned inside block" do
     expect_no_augment <<-CRYSTAL
-      def foo
+      def foo(&)
         yield
       end
       class Foo

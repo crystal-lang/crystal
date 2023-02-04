@@ -241,7 +241,7 @@ class Crystal::Call
     end
   end
 
-  private def gather_names_in_all_overloads(call_errors, error_type : T.class) forall T
+  private def gather_names_in_all_overloads(call_errors, error_type : T.class, &) forall T
     return unless call_errors.all?(T)
 
     call_errors = call_errors.map &.as(T)
@@ -379,7 +379,7 @@ class Crystal::Call
     end
   end
 
-  private def raise_no_overload_matches(node, defs, arg_types, inner_exception)
+  private def raise_no_overload_matches(node, defs, arg_types, inner_exception, &)
     error_message = String.build do |str|
       yield str
 
@@ -977,7 +977,7 @@ class Crystal::Call
     end
   end
 
-  def check_recursive_splat_call(a_def, args)
+  def check_recursive_splat_call(a_def, args, &)
     if a_def.splat_index
       previous_splat_types = program.splat_expansions[a_def] ||= [] of Type
       previous_splat_types.push(args.values.last.type)
