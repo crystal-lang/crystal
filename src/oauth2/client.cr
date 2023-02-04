@@ -187,7 +187,7 @@ class OAuth2::Client
     http_client.post token_uri.request_target, form: body, headers: headers
   end
 
-  private def get_access_token : AccessToken
+  private def get_access_token(&) : AccessToken
     response = make_token_request do |form, _headers|
       yield form
     end
