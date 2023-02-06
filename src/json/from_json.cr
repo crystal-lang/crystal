@@ -94,7 +94,7 @@ module Iterator(T)
     FromJson(T).new(pull)
   end
 
-  private class FromJson(T)
+  private struct FromJson(T)
     include Iterator(T)
 
     def initialize(@pull : JSON::PullParser)

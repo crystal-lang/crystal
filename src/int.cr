@@ -776,7 +776,7 @@ struct Int
   # Returns the number of trailing `0`-bits.
   abstract def trailing_zeros_count
 
-  private class TimesIterator(T)
+  private struct TimesIterator(T)
     include Iterator(T)
 
     @n : T
@@ -796,7 +796,7 @@ struct Int
     end
   end
 
-  private class UptoIterator(T, N)
+  private struct UptoIterator(T, N)
     include Iterator(T)
 
     @from : T
@@ -818,7 +818,7 @@ struct Int
     end
   end
 
-  private class DowntoIterator(T, N)
+  private struct DowntoIterator(T, N)
     include Iterator(T)
 
     @from : T

@@ -76,7 +76,7 @@ module Steppable
     StepIterator.new(self + (step - step), limit, step, exclusive: exclusive)
   end
 
-  class StepIterator(T, L, B)
+  struct StepIterator(T, L, B)
     include Iterator(T)
 
     @current : T

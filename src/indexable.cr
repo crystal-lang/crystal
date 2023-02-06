@@ -385,7 +385,7 @@ module Indexable(T)
     CartesianProductIteratorN(typeof(indexables), typeof(Enumerable.element_type Enumerable.element_type indexables)).new(indexables, reuse)
   end
 
-  private class CartesianProductIteratorT(Is, Ts)
+  private struct CartesianProductIteratorT(Is, Ts)
     include Iterator(Ts)
 
     @indices : Array(Int32)
@@ -416,7 +416,7 @@ module Indexable(T)
     end
   end
 
-  private class CartesianProductIteratorN(Is, T)
+  private struct CartesianProductIteratorN(Is, T)
     include Iterator(Array(T))
 
     @indices : Array(Int32)
@@ -1295,7 +1295,7 @@ module Indexable(T)
     reuse
   end
 
-  private class ItemIterator(A, T)
+  private struct ItemIterator(A, T)
     include Iterator(T)
 
     def initialize(@array : A, @index = 0)
@@ -1312,7 +1312,7 @@ module Indexable(T)
     end
   end
 
-  private class ReverseItemIterator(A, T)
+  private struct ReverseItemIterator(A, T)
     include Iterator(T)
 
     def initialize(@array : A, @index : Int32 = array.size - 1)
@@ -1329,7 +1329,7 @@ module Indexable(T)
     end
   end
 
-  private class IndexIterator(A)
+  private struct IndexIterator(A)
     include Iterator(Int32)
 
     def initialize(@array : A, @index = 0)
@@ -1346,7 +1346,7 @@ module Indexable(T)
     end
   end
 
-  private class PermutationIterator(A, T)
+  private struct PermutationIterator(A, T)
     include Iterator(Array(T))
 
     @size : Int32
@@ -1396,7 +1396,7 @@ module Indexable(T)
     end
   end
 
-  private class CombinationIterator(A, T)
+  private struct CombinationIterator(A, T)
     include Iterator(Array(T))
 
     @size : Int32
@@ -1449,7 +1449,7 @@ module Indexable(T)
     end
   end
 
-  private class RepeatedCombinationIterator(A, T)
+  private struct RepeatedCombinationIterator(A, T)
     include Iterator(Array(T))
 
     @size : Int32
