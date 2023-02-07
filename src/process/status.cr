@@ -1,3 +1,86 @@
+{% if flag?(:win32) %}
+  require "c/ntstatus"
+{% end %}
+
+# The reason a process terminates.
+#
+# This enum provides a platform-independent way to query any exceptions that
+# occurred upon a process's termination, via `Process::Status#exit_reason`.
+enum Process::ExitReason
+  # The process exited normally.
+  #
+  # * On Unix-like systems, this implies `Process::Status#normal_exit?` is true.
+  # * On Windows, only exit statuses less than `0x40000000` are assumed to be
+  #   reserved for normal exits.
+  Normal
+
+  # The process terminated abnormally.
+  #
+  # * On Unix-like systems, this corresponds to `Signal::ABRT`, `Signal::HUP`,
+  #   `Signal::KILL`, `Signal::QUIT`, and `Signal::TERM`.
+  # * On Windows, this corresponds to the `NTSTATUS` value
+  #   `STATUS_FATAL_APP_EXIT`.
+  Aborted
+
+  # The process exited due to an interrupt request.
+  #
+  # * On Unix-like systems, this corresponds to `Signal::INT`.
+  # * On Windows, this corresponds to the <kbd>Ctrl</kbd> + <kbd>C</kbd> and
+  #   <kbd>Ctrl</kbd> + <kbd>Break</kbd> signals for console applications.
+  Interrupted
+
+  # The process reached a debugger breakpoint, but no debugger was attached.
+  #
+  # * On Unix-like systems, this corresponds to `Signal::TRAP`.
+  # * On Windows, this corresponds to the `NTSTATUS` value
+  #   `STATUS_BREAKPOINT`.
+  Breakpoint
+
+  # The process tried to access a memory address where a read or write was not
+  # allowed.
+  #
+  # * On Unix-like systems, this corresponds to `Signal::SEGV`.
+  # * On Windows, this corresponds to the `NTSTATUS` values
+  #   `STATUS_ACCESS_VIOLATION` and `STATUS_STACK_OVERFLOW`.
+  AccessViolation
+
+  # The process tried to access an invalid memory address.
+  #
+  # * On Unix-like systems, this corresponds to `Signal::BUS`.
+  # * On Windows, this corresponds to the `NTSTATUS` value
+  #   `STATUS_DATATYPE_MISALIGNMENT`.
+  BadMemoryAccess
+
+  # The process tried to execute an invalid instruction.
+  #
+  # * On Unix-like systems, this corresponds to `Signal::ILL`.
+  # * On Windows, this corresponds to the `NTSTATUS` values
+  #   `STATUS_ILLEGAL_INSTRUCTION` and `STATUS_PRIVILEGED_INSTRUCTION`.
+  BadInstruction
+
+  # A hardware floating-point exception occurred.
+  #
+  # * On Unix-like systems, this corresponds to `Signal::FPE`.
+  # * On Windows, this corresponds to the `NTSTATUS` values
+  #   `STATUS_FLOAT_DIVIDE_BY_ZERO`, `STATUS_FLOAT_INEXACT_RESULT`,
+  #   `STATUS_FLOAT_INVALID_OPERATION`, `STATUS_FLOAT_OVERFLOW`, and
+  #   `STATUS_FLOAT_UNDERFLOW`.
+  FloatException
+
+  # The process exited due to a POSIX signal.
+  #
+  # Only applies to signals without a more specific exit reason. Unused on
+  # Windows.
+  Signal
+
+  # The process exited in a way that cannot be represented by any other
+  # `ExitReason`s.
+  #
+  # A `Process::Status` that maps to `Unknown` may map to a different value if
+  # new enum members are added to `ExitReason`.
+  Unknown
+end
+
 # The status of a terminated process. Returned by `Process#wait`.
 class Process::Status
   # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
@@ -16,11 +99,66 @@ class Process::Status
     end
   {% end %}
 
+  # Returns a platform-independent reason that the process terminated.
+  def exit_reason : ExitReason
+    {% if flag?(:win32) %}
+      # TODO: perhaps this should cover everything that SEH can handle?
+      # https://learn.microsoft.com/en-us/windows/win32/debug/getexceptioncode
+      case @exit_status
+      when LibC::STATUS_FATAL_APP_EXIT
+        ExitReason::Aborted
+      when LibC::STATUS_CONTROL_C_EXIT
+        ExitReason::Interrupted
+      when LibC::STATUS_BREAKPOINT
+        ExitReason::Breakpoint
+      when LibC::STATUS_ACCESS_VIOLATION, LibC::STATUS_STACK_OVERFLOW
+        ExitReason::AccessViolation
+      when LibC::STATUS_DATATYPE_MISALIGNMENT
+        ExitReason::BadMemoryAccess
+      when LibC::STATUS_ILLEGAL_INSTRUCTION, LibC::STATUS_PRIVILEGED_INSTRUCTION
+        ExitReason::BadInstruction
+      when LibC::STATUS_FLOAT_DIVIDE_BY_ZERO, LibC::STATUS_FLOAT_INEXACT_RESULT, LibC::STATUS_FLOAT_INVALID_OPERATION, LibC::STATUS_FLOAT_OVERFLOW, LibC::STATUS_FLOAT_UNDERFLOW
+        ExitReason::FloatException
+      else
+        @exit_status & 0xC0000000_u32 == 0 ? ExitReason::Normal : ExitReason::Unknown
+      end
+    {% elsif flag?(:unix) && !flag?(:wasm32) %}
+      if normal_exit?
+        ExitReason::Normal
+      elsif signal_exit?
+        case Signal.from_value?(signal_code)
+        when Nil
+          ExitReason::Signal
+        when .abrt?, .hup?, .kill?, .quit?, .term?
+          ExitReason::Aborted
+        when .int?
+          ExitReason::Interrupted
+        when .trap?
+          ExitReason::Breakpoint
+        when .segv?
+          ExitReason::AccessViolation
+        when .bus?
+          ExitReason::BadMemoryAccess
+        when .ill?
+          ExitReason::BadInstruction
+        when .fpe?
+          ExitReason::FloatException
+        else
+          ExitReason::Signal
+        end
+      else
+        # TODO: stop / continue
+        ExitReason::Unknown
+      end
+    {% else %}
+      ExitReason::Normal
+    {% end %}
+  end
+
   # Returns `true` if the process was terminated by a signal.
   def signal_exit? : Bool
     {% if flag?(:unix) %}
-      # define __WIFSIGNALED(status) (((signed char) (((status) & 0x7f) + 1) >> 1) > 0)
-      ((LibC::SChar.new(@exit_status & 0x7f) + 1) >> 1) > 0
+      0x01 <= (@exit_status & 0x7F) <= 0x7E
     {% else %}
       false
     {% end %}
@@ -41,19 +179,12 @@ class Process::Status
   #
   # Available only on Unix-like operating systems.
   def exit_signal : Signal
-    {% if flag?(:unix) %}
+    {% if flag?(:unix) && !flag?(:wasm32) %}
       Signal.from_value(signal_code)
     {% else %}
       raise NotImplementedError.new("Process::Status#exit_signal")
     {% end %}
   end
-
-  {% if flag?(:wasm32) %}
-    # wasm32 does not define `Signal`
-    def exit_signal
-      raise NotImplementedError.new("Process::Status#exit_signal")
-    end
-  {% end %}
 
   # If `normal_exit?` is `true`, returns the exit code of the process.
   def exit_code : Int32
