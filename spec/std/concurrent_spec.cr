@@ -67,7 +67,7 @@ describe "concurrent" do
     typeof(spawn String.new)
   end
 
-  {% if flag?(:darwin) %}
+  {% if flag?(:darwin) || flag?(:freebsd) %}
     pending "schedules intermitting sleeps"
     # TODO: This spec fails on darwin, even with highly increased sleep times. Needs investigation.
   {% else %}

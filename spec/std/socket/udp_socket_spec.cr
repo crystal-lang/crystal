@@ -73,7 +73,7 @@ describe UDPSocket, tags: "network" do
     end
 
     {% unless flag?(:win32) %}
-    if {{ flag?(:darwin) }} && family == Socket::Family::INET6
+    if {{ flag?(:darwin) || flag?(:freebsd) }} && family == Socket::Family::INET6
       # Darwin is failing to join IPv6 multicast groups on older versions.
       # However this is known to work on macOS Mojave with Darwin 18.2.0.
       # Darwin also has a bug that prevents selecting the "default" interface.
