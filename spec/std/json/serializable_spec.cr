@@ -989,6 +989,11 @@ describe "JSON mapping" do
     end
   end
 
+  it "parses 128-bit integer" do
+    json = JSONAttrValue(Int128).from_json(%({"value": #{Int128::MAX}}))
+    json.value.should eq Int128::MAX
+  end
+
   describe "work with module and inheritance" do
     it { JSONAttrModuleTest.from_json(%({"phoo": 20})).to_tuple.should eq({10, 20}) }
     it { JSONAttrModuleTest.from_json(%({"phoo": 20})).to_tuple.should eq({10, 20}) }

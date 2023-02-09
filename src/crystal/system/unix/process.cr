@@ -58,6 +58,22 @@ struct Crystal::System::Process
     raise RuntimeError.from_errno("kill") if ret < 0
   end
 
+  def self.on_interrupt(&handler : ->) : Nil
+    ::Signal::INT.trap { |_signal| handler.call }
+  end
+
+  def self.ignore_interrupts! : Nil
+    ::Signal::INT.ignore
+  end
+
+  def self.restore_interrupts! : Nil
+    ::Signal::INT.reset
+  end
+
+  def self.start_interrupt_loop : Nil
+    # do nothing; `Crystal::Signal.start_loop` takes care of this
+  end
+
   def self.exists?(pid)
     ret = LibC.kill(pid, 0)
     if ret == 0

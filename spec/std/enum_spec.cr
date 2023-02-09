@@ -60,7 +60,7 @@ describe Enum do
 
     it "for flags enum" do
       assert_prints SpecEnumFlags::None.to_s, "None"
-      assert_prints SpecEnumFlags::All.to_s, "One | Two | Three"
+      assert_prints SpecEnumFlags::All.to_s, "All"
       assert_prints (SpecEnumFlags::One | SpecEnumFlags::Two).to_s, "One | Two"
       assert_prints SpecEnumFlags.new(128).to_s, "128"
       assert_prints (SpecEnumFlags::One | SpecEnumFlags.new(128)).to_s, "One | 128"
@@ -75,6 +75,35 @@ describe Enum do
       assert_prints (PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAZ).to_s, "FOO | BAZ"
       assert_prints PrivateFlagsEnum.new(128).to_s, "128"
       assert_prints (PrivateFlagsEnum::FOO | PrivateFlagsEnum.new(128)).to_s, "FOO | 128"
+    end
+  end
+
+  describe "#inspect" do
+    it "for simple enum" do
+      assert_prints SpecEnum::One.inspect, "SpecEnum::One"
+      assert_prints SpecEnum::Two.inspect, "SpecEnum::Two"
+      assert_prints SpecEnum::Three.inspect, "SpecEnum::Three"
+      assert_prints SpecEnum.new(127).inspect, "SpecEnum[127]"
+    end
+
+    it "for flags enum" do
+      assert_prints SpecEnumFlags::None.inspect, "SpecEnumFlags::None"
+      assert_prints SpecEnumFlags::All.inspect, "SpecEnumFlags::All"
+      assert_prints (SpecEnumFlags::One).inspect, "SpecEnumFlags::One"
+      assert_prints (SpecEnumFlags::One | SpecEnumFlags::Two).inspect, "SpecEnumFlags[One, Two]"
+      assert_prints SpecEnumFlags.new(128).inspect, "SpecEnumFlags[128]"
+      assert_prints (SpecEnumFlags::One | SpecEnumFlags.new(128)).inspect, "SpecEnumFlags[One, 128]"
+      assert_prints (SpecEnumFlags::One | SpecEnumFlags.new(8) | SpecEnumFlags.new(16)).inspect, "SpecEnumFlags[One, 24]"
+      assert_prints (SpecEnumFlags::One | SpecEnumFlags::Two | SpecEnumFlags.new(16)).inspect, "SpecEnumFlags[One, Two, 16]"
+    end
+
+    it "for private enum" do
+      assert_prints PrivateEnum::FOO.inspect, "PrivateEnum::FOO"
+      assert_prints PrivateFlagsEnum::FOO.inspect, "PrivateFlagsEnum::FOO"
+      assert_prints PrivateEnum::QUX.inspect, "PrivateEnum::FOO"
+      assert_prints (PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAZ).inspect, "PrivateFlagsEnum[FOO, BAZ]"
+      assert_prints PrivateFlagsEnum.new(128).inspect, "PrivateFlagsEnum[128]"
+      assert_prints (PrivateFlagsEnum::FOO | PrivateFlagsEnum.new(128)).inspect, "PrivateFlagsEnum[FOO, 128]"
     end
   end
 
