@@ -1,4 +1,5 @@
 require "./lib_pcre2"
+require "crystal/thread_local_value"
 
 # :nodoc:
 module Regex::PCRE2
