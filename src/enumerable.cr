@@ -1013,15 +1013,6 @@ module Enumerable(T)
     max_by? &.itself
   end
 
-  private def max_internal(k : Int) : Array(T)
-    data = self.is_a?(Array) ? self.dup : self.to_a
-    n = data.size
-    k = n if k > n
-    (0..k-1).map do |i|
-      qselect_internal(data, 0, n-1, n-1-i)
-    end
-  end
-
   # Returns an array of the maximum `k` elements, sorted descending.
   #
   # It compares using `<=>` so it will work for any type that supports that method.
@@ -1038,13 +1029,12 @@ module Enumerable(T)
   # not comparable.
   def max(k : Int) : Array(T)
     raise ArgumentError.new("negative size #{k}") if k < 0
-    max_internal(k)
-  end
-
-  # Like `max(k)` but returns `nil` if `k` is negative.
-  def max?(k : Int)
-    return nil if k < 0
-    max_internal(k)
+    data = self.is_a?(Array) ? self.dup : self.to_a
+    n = data.size
+    k = n if k > n
+    (0..k-1).map do |i|
+      qselect_internal(data, 0, n-1, n-1-i)
+    end
   end
 
   # Returns the element for which the passed block returns with the maximum value.
@@ -1136,15 +1126,6 @@ module Enumerable(T)
     min_by? &.itself
   end
 
-  private def min_internal(k : Int) : Array(T)
-    data = self.is_a?(Array) ? self.dup : self.to_a
-    n = data.size
-    k = n if k > n
-    (0..k-1).map do |i|
-      qselect_internal(data, 0, n-1, i)
-    end
-  end
-
   # Returns an array of the minimum `k` elements, sorted ascending.
   #
   # It compares using `<=>` so it will work for any type that supports that method.
@@ -1161,13 +1142,12 @@ module Enumerable(T)
   # not comparable.
   def min(k : Int) : Array(T)
     raise ArgumentError.new("negative size #{k}") if k < 0
-    min_internal(k)
-  end
-
-  # Like `min(k)` but returns `nil` if `k` is negative.
-  def min?(k : Int)
-    return nil if k < 0
-    min_internal(k)
+    data = self.is_a?(Array) ? self.dup : self.to_a
+    n = data.size
+    k = n if k > n
+    (0..k-1).map do |i|
+      qselect_internal(data, 0, n-1, i)
+    end
   end
 
   # Returns the element for which the passed block returns with the minimum value.

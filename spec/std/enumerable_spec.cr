@@ -854,16 +854,6 @@ describe "Enumerable" do
     it "returns nil if empty" do
       ([] of Int32).max?.should be_nil
     end
-
-    it "returns nil if n is negative in max?(n)" do
-      ([1,2,3] of Int32).max?(-1).should be_nil
-    end
-
-    it "raises if not comparable in max?(n)" do
-      expect_raises ArgumentError do
-        [Float64::NAN, 1.0, 2.0, Float64::NAN].max?(2)
-      end
-    end
   end
 
   describe "max_by" do
@@ -944,16 +934,6 @@ describe "Enumerable" do
   describe "min?" do
     it "returns nil if empty" do
       ([] of Int32).min?.should be_nil
-    end
-
-    it "returns nil if n is negative in min(n)" do
-      ([1,2,3] of Int32).min?(-1).should be_nil
-    end
-
-    it "raises if not comparable in min?(n)" do
-      expect_raises ArgumentError do
-        [Float64::NAN, 1.0, 2.0, Float64::NAN].min?(2)
-      end
     end
   end
 
