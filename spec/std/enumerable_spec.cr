@@ -805,14 +805,14 @@ describe "Enumerable" do
     it { [1, 2, 3].max.should eq(3) }
     it { [1, 2, 3].max(0).should eq([] of Int32) }
     it { [1, 2, 3].max(1).should eq([3]) }
-    it { [1, 2, 3].max(2).should eq([3,2]) }
-    it { [1, 2, 3].max(3).should eq([3,2,1]) }
-    it { [1, 2, 3].max(4).should eq([3,2,1]) }
+    it { [1, 2, 3].max(2).should eq([3, 2]) }
+    it { [1, 2, 3].max(3).should eq([3, 2, 1]) }
+    it { [1, 2, 3].max(4).should eq([3, 2, 1]) }
     it { ([] of Int32).max(0).should eq([] of Int32) }
     it { ([] of Int32).max(5).should eq([] of Int32) }
     it {
-      (0..1000).map { |x| (x*137+x*x*139)%5000 }.max(10).should eq([
-        4992, 4990, 4980, 4972, 4962, 4962, 4960, 4960, 4952, 4952
+      (0..1000).map { |x| (x*137 + x*x*139) % 5000 }.max(10).should eq([
+        4992, 4990, 4980, 4972, 4962, 4962, 4960, 4960, 4952, 4952,
       ])
     }
 
@@ -830,10 +830,7 @@ describe "Enumerable" do
 
     it "raises if n is negative" do
       expect_raises ArgumentError do
-        ([1,2,3] of Int32).max(-1)
-      end
-      expect_raises ArgumentError do
-        ([1,2,3] of Int32).max(-2)
+        ([1, 2, 3] of Int32).max(-1)
       end
     end
 
@@ -886,14 +883,14 @@ describe "Enumerable" do
     it { [1, 2, 3].min.should eq(1) }
     it { [1, 2, 3].min(0).should eq([] of Int32) }
     it { [1, 2, 3].min(1).should eq([1]) }
-    it { [1, 2, 3].min(2).should eq([1,2]) }
-    it { [1, 2, 3].min(3).should eq([1,2,3]) }
-    it { [1,2,3].min(4).should eq([1,2,3]) }
+    it { [1, 2, 3].min(2).should eq([1, 2]) }
+    it { [1, 2, 3].min(3).should eq([1, 2, 3]) }
+    it { [1, 2, 3].min(4).should eq([1, 2, 3]) }
     it { ([] of Int32).min(0).should eq([] of Int32) }
     it { ([] of Int32).min(1).should eq([] of Int32) }
     it {
-      (0..1000).map { |x| (x*137+x*x*139)%5000 }.min(10).should eq([
-        0, 10, 20, 26, 26, 26, 26, 30, 32, 32
+      (0..1000).map { |x| (x*137 + x*x*139) % 5000 }.min(10).should eq([
+        0, 10, 20, 26, 26, 26, 26, 30, 32, 32,
       ])
     }
 
@@ -911,10 +908,7 @@ describe "Enumerable" do
 
     it "raises if n is negative" do
       expect_raises ArgumentError do
-        ([1,2,3] of Int32).min(-1)
-      end
-      expect_raises ArgumentError do
-        ([1,2,3] of Int32).min(-2)
+        ([1, 2, 3] of Int32).min(-1)
       end
     end
 

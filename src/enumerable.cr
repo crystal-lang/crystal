@@ -965,11 +965,11 @@ module Enumerable(T)
     ary
   end
 
-  private def qselect_internal(data : Array(T), left : Int, right : Int, k : Int) : T
+  private def quickselect_internal(data : Array(T), left : Int, right : Int, k : Int) : T
     loop do
       return data[left] if left == right
-      pivot_index = left + (right-left)//2
-      pivot_index = qselect_partition_internal(data, left, right, pivot_index)
+      pivot_index = left + (right - left)//2
+      pivot_index = quickselect_partition_internal(data, left, right, pivot_index)
       if k == pivot_index
         return data[k]
       elsif k < pivot_index
@@ -980,11 +980,11 @@ module Enumerable(T)
     end
   end
 
-  private def qselect_partition_internal(data : Array(T), left : Int, right : Int, pivot_index : Int) : Int
+  private def quickselect_partition_internal(data : Array(T), left : Int, right : Int, pivot_index : Int) : Int
     pivot_value = data[pivot_index]
     data.swap(pivot_index, right)
     store_index = left
-    (left..right).each do |i|
+    (left..(right - 1)).each do |i|
       if compare_or_raise(data[i], pivot_value) < 0
         data.swap(store_index, i)
         store_index += 1
@@ -1013,27 +1013,27 @@ module Enumerable(T)
     max_by? &.itself
   end
 
-  # Returns an array of the maximum `k` elements, sorted descending.
+  # Returns an array of the maximum *count* elements, sorted descending.
   #
   # It compares using `<=>` so it will work for any type that supports that method.
   #
   # ```
-  # [7, 5, 2, 4, 9].max(3) # => [9, 7, 5]
+  # [7, 5, 2, 4, 9].max(3)                             # => [9, 7, 5]
   # ["Eve", "Alice", "Bob", "Mallory", "Carol"].max(2) # => ["Mallory", "Eve"]
   # ```
   #
-  # Returns all elements sorted descending if `k` is greater than the number of
-  # elements in the source.
+  # Returns all elements sorted descending if *count* is greater than the number
+  # of elements in the source.
   #
-  # Raises `Enumerable::ArgumentError` if `k` is negative or if any elements are
-  # not comparable.
-  def max(k : Int) : Array(T)
-    raise ArgumentError.new("negative size #{k}") if k < 0
+  # Raises `Enumerable::ArgumentError` if *count* is negative or if any elements
+  # are not comparable.
+  def max(count : Int) : Array(T)
+    raise ArgumentError.new("Count must be positive") if count < 0
     data = self.is_a?(Array) ? self.dup : self.to_a
     n = data.size
-    k = n if k > n
-    (0..k-1).map do |i|
-      qselect_internal(data, 0, n-1, n-1-i)
+    count = n if count > n
+    (0..count - 1).map do |i|
+      quickselect_internal(data, 0, n - 1, n - 1 - i)
     end
   end
 
@@ -1126,27 +1126,27 @@ module Enumerable(T)
     min_by? &.itself
   end
 
-  # Returns an array of the minimum `k` elements, sorted ascending.
+  # Returns an array of the minimum *count* elements, sorted ascending.
   #
   # It compares using `<=>` so it will work for any type that supports that method.
   #
   # ```
-  # [7, 5, 2, 4, 9].min(3) # => [2, 4, 5]
+  # [7, 5, 2, 4, 9].min(3)                             # => [2, 4, 5]
   # ["Eve", "Alice", "Bob", "Mallory", "Carol"].min(2) # => ["Alice", "Bob"]
   # ```
   #
-  # Returns all elements sorted ascending if `k` is greater than the number of
-  # elements in the source.
+  # Returns all elements sorted ascending if *count* is greater than the number
+  # of elements in the source.
   #
-  # Raises `Enumerable::ArgumentError` if `k` is negative or if any elements are
-  # not comparable.
-  def min(k : Int) : Array(T)
-    raise ArgumentError.new("negative size #{k}") if k < 0
+  # Raises `Enumerable::ArgumentError` if *count* is negative or if any elements
+  # are not comparable.
+  def min(count : Int) : Array(T)
+    raise ArgumentError.new("Count must be positive") if count < 0
     data = self.is_a?(Array) ? self.dup : self.to_a
     n = data.size
-    k = n if k > n
-    (0..k-1).map do |i|
-      qselect_internal(data, 0, n-1, i)
+    count = n if count > n
+    (0..count - 1).map do |i|
+      quickselect_internal(data, 0, n - 1, i)
     end
   end
 
