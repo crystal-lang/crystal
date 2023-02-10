@@ -200,8 +200,7 @@ describe "Regex" do
       /foo/.matches?("foo", options: Regex::Options::ANCHORED).should be_true
     end
 
-    # FIXME: PCRE2 JIT match on windows fails with invalid memory access.
-    pending_win32 "doesn't crash with a large single line string" do
+    it "doesn't crash with a large single line string" do
       str = File.read(datapath("large_single_line_string.txt"))
 
       {% if Regex::Engine.resolve.name == "Regex::PCRE" %}
