@@ -795,7 +795,12 @@ class HTTP::Client
     proxy_port = proxy_uri.port || (tls ? 443 : 80)
     host = HTTP::Client.validate_host(proxy_uri)
 
-    create_io(host, proxy_port, tls)
+    io = create_io(host, proxy_port, tls)
+
+    return io unless @tls
+
+    send_connect_request(io)
+    create_tls(io, @host, @tls)
   end
 
   private def create_tls(io, host, tls)
@@ -815,9 +820,24 @@ class HTTP::Client
   end
 
   private def find_proxy
-    return unless ENV.has_key?("http_proxy")
+    type = @tls ? "https_proxy" : "http_proxy"
+    return unless ENV.has_key?(type)
 
-    ENV["http_proxy"]
+    ENV[type]
+  end
+
+  private def send_connect_request(io)
+    io << "CONNECT #{@host}:#{@port} HTTP/1.1\r\n"
+    io << "Host: #{@host}:#{@port}\r\n"
+    io << "\r\n"
+    io.flush
+
+    resp = HTTP::Client::Response.from_io(io, ignore_body: true)
+
+    unless resp.success?
+      io.close
+      raise IO::Error.new("Unable to connect to https proxy")
+    end
   end
 
   private def host_header
