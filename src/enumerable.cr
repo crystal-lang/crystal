@@ -965,14 +965,12 @@ module Enumerable(T)
     ary
   end
 
-  private def qselect_internal(data : Array(T), left : Int, right : Int, k : Int)
+  private def qselect_internal(data : Array(T), left : Int, right : Int, k : Int) : T
     loop do
       return data[left] if left == right
       pivot_index = left + (right-left)//2
       pivot_index = qselect_partition_internal(data, left, right, pivot_index)
-      if pivot_index < 0
-        return nil
-      elsif k == pivot_index
+      if k == pivot_index
         return data[k]
       elsif k < pivot_index
         right = pivot_index - 1
@@ -987,13 +985,9 @@ module Enumerable(T)
     data.swap(pivot_index, right)
     store_index = left
     (left..right).each do |i|
-      # if data[i] < pivot_value
-      cmp = data[i] <=> pivot_value
-      if cmp == -1
+      if compare_or_raise(data[i], pivot_value) < 0
         data.swap(store_index, i)
         store_index += 1
-      elsif cmp.nil?
-        return -1
       end
     end
     data.swap(right, store_index)
@@ -1019,6 +1013,15 @@ module Enumerable(T)
     max_by? &.itself
   end
 
+  private def max_internal(k : Int) : Array(T)
+    data = self.is_a?(Array) ? self.dup : self.to_a
+    n = data.size
+    k = n if k > n
+    (0..k-1).map do |i|
+      qselect_internal(data, 0, n-1, n-1-i)
+    end
+  end
+
   # Returns an array of the maximum `k` elements, sorted descending.
   #
   # It compares using `<=>` so it will work for any type that supports that method.
@@ -1028,32 +1031,20 @@ module Enumerable(T)
   # ["Eve", "Alice", "Bob", "Mallory", "Carol"].max(2) # => ["Mallory", "Eve"]
   # ```
   #
+  # Returns all elements sorted descending if `k` is greater than the number of
+  # elements in the source.
+  #
   # Raises `Enumerable::ArgumentError` if `k` is negative or if any elements are
   # not comparable.
   def max(k : Int) : Array(T)
     raise ArgumentError.new("negative size #{k}") if k < 0
-    data = to_a
-    n = data.size
-    k = n if k > n
-    (0..k-1).map do |i|
-      r = qselect_internal(data, 0, n-1, n-1-i)
-      raise ArgumentError.new("comparison failed") if r.nil?
-      r
-    end
+    max_internal(k)
   end
 
-  # Like `max(k)` but returns `nil` if `k` is negative or if any elements are not
-  # comparable.
+  # Like `max(k)` but returns `nil` if `k` is negative.
   def max?(k : Int)
     return nil if k < 0
-    data = to_a
-    n = data.size
-    k = n if k > n
-    (0..k-1).map do |i|
-      r = qselect_internal(data, 0, n-1, n-1-i)
-      return nil if r.nil?
-      r
-    end
+    max_internal(k)
   end
 
   # Returns the element for which the passed block returns with the maximum value.
@@ -1145,6 +1136,15 @@ module Enumerable(T)
     min_by? &.itself
   end
 
+  private def min_internal(k : Int) : Array(T)
+    data = self.is_a?(Array) ? self.dup : self.to_a
+    n = data.size
+    k = n if k > n
+    (0..k-1).map do |i|
+      qselect_internal(data, 0, n-1, i)
+    end
+  end
+
   # Returns an array of the minimum `k` elements, sorted ascending.
   #
   # It compares using `<=>` so it will work for any type that supports that method.
@@ -1154,32 +1154,20 @@ module Enumerable(T)
   # ["Eve", "Alice", "Bob", "Mallory", "Carol"].min(2) # => ["Alice", "Bob"]
   # ```
   #
+  # Returns all elements sorted ascending if `k` is greater than the number of
+  # elements in the source.
+  #
   # Raises `Enumerable::ArgumentError` if `k` is negative or if any elements are
   # not comparable.
   def min(k : Int) : Array(T)
     raise ArgumentError.new("negative size #{k}") if k < 0
-    data = self.to_a
-    n = data.size
-    k = n if k > n
-    (0..k-1).map do |i|
-      r = self.qselect_internal(data, 0, n-1, i)
-      raise ArgumentError.new("comparison failed") if r.nil?
-      r
-    end
+    min_internal(k)
   end
 
-  # Like `min(k)` but returns `nil` if `k` is negative or if any elements are not
-  # comparable.
+  # Like `min(k)` but returns `nil` if `k` is negative.
   def min?(k : Int)
     return nil if k < 0
-    data = self.to_a
-    n = data.size
-    k = n if k > n
-    (0..k-1).map do |i|
-      r = self.qselect_internal(data, 0, n-1, i)
-      return nil if r.nil?
-      r
-    end
+    min_internal(k)
   end
 
   # Returns the element for which the passed block returns with the minimum value.

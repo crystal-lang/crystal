@@ -816,6 +816,12 @@ describe "Enumerable" do
       ])
     }
 
+    it "does not modify the array" do
+      xs = [7, 5, 2, 4, 9]
+      xs.max(2).should eq([9, 7])
+      xs.should eq([7, 5, 2, 4, 9])
+    end
+
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
         ([] of Int32).max
@@ -849,12 +855,14 @@ describe "Enumerable" do
       ([] of Int32).max?.should be_nil
     end
 
-    it "returns nil if n is negative in max(n)" do
+    it "returns nil if n is negative in max?(n)" do
       ([1,2,3] of Int32).max?(-1).should be_nil
     end
 
-    it "returns nil if not comparable in max(n)" do
-      [Float64::NAN, 1.0, 2.0, Float64::NAN].max?(2).should be_nil
+    it "raises if not comparable in max?(n)" do
+      expect_raises ArgumentError do
+        [Float64::NAN, 1.0, 2.0, Float64::NAN].max?(2)
+      end
     end
   end
 
@@ -899,6 +907,12 @@ describe "Enumerable" do
       ])
     }
 
+    it "does not modify the array" do
+      xs = [7, 5, 2, 4, 9]
+      xs.min(2).should eq([2, 4])
+      xs.should eq([7, 5, 2, 4, 9])
+    end
+
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
         ([] of Int32).min
@@ -936,8 +950,10 @@ describe "Enumerable" do
       ([1,2,3] of Int32).min?(-1).should be_nil
     end
 
-    it "returns nil if not comparable in min(n)" do
-      [Float64::NAN, 1.0, 2.0, Float64::NAN].min?(2).should be_nil
+    it "raises if not comparable in min?(n)" do
+      expect_raises ArgumentError do
+        [Float64::NAN, 1.0, 2.0, Float64::NAN].min?(2)
+      end
     end
   end
 
