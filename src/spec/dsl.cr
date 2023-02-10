@@ -31,20 +31,12 @@ module Spec
 
   # :nodoc:
   def self.color(str, status : Status)
-    if use_colors?
-      str.colorize(STATUS_COLORS[status])
-    else
-      str
-    end
+    str.colorize(STATUS_COLORS[status])
   end
 
   # :nodoc:
   def self.color(str, kind : InfoKind)
-    if use_colors?
-      str.colorize(INFO_COLORS[kind])
-    else
-      str
-    end
+    str.colorize(INFO_COLORS[kind])
   end
 
   # :nodoc:

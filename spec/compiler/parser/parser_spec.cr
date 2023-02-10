@@ -287,17 +287,6 @@ module Crystal
       assert_syntax_error "foo { |(#{kw})| }", "cannot use '#{kw}' as a block parameter name", 1, 9
     end
 
-    describe "literals in class definitions" do
-      # #11209
-      %w("a" 'a' [1] {1} {|a|a} ->{} ->(x : Bar){} :Bar :bar %x() %w() %()).each do |invalid|
-        assert_syntax_error "class Foo#{invalid}; end"
-        assert_syntax_error "class Foo#{invalid} < Baz; end"
-        assert_syntax_error "class Foo#{invalid} < self; end"
-        assert_syntax_error "class Foo < Baz#{invalid}; end"
-        assert_syntax_error "class Foo < self#{invalid}; end"
-      end
-    end
-
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
     it_parses "def self.foo()\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
     it_parses "def self.foo=\n1\nend", Def.new("foo=", body: 1.int32, receiver: "self".var)

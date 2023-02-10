@@ -1155,6 +1155,7 @@ module Crystal
 
         if value = node.value
           codegen_assign(var, value, node)
+          return false
         end
       when Global
         node.raise "BUG: there should be no use of global variables other than $~ and $?"
@@ -2142,32 +2143,18 @@ module Crystal
       len_arg = @program.bits64? ? size : trunc(size, llvm_context.int32)
 
       pointer = cast_to_void_pointer pointer
-      res = call @program.memset(@llvm_mod, llvm_context),
-        if LibLLVM::IS_LT_70
-          [pointer, value, len_arg, int32(4), int1(0)]
-        else
-          [pointer, value, len_arg, int1(0)]
-        end
+      res = call @program.memset(@llvm_mod, llvm_context), [pointer, value, len_arg, int1(0)]
 
-      unless LibLLVM::IS_LT_70
-        LibLLVM.set_instr_param_alignment(res, 1, 4)
-      end
+      LibLLVM.set_instr_param_alignment(res, 1, 4)
 
       res
     end
 
     def memcpy(dest, src, len, align, volatile)
-      res = call @program.memcpy(@llvm_mod, llvm_context),
-        if LibLLVM::IS_LT_70
-          [dest, src, len, int32(align), volatile]
-        else
-          [dest, src, len, volatile]
-        end
+      res = call @program.memcpy(@llvm_mod, llvm_context), [dest, src, len, volatile]
 
-      unless LibLLVM::IS_LT_70
-        LibLLVM.set_instr_param_alignment(res, 1, align)
-        LibLLVM.set_instr_param_alignment(res, 2, align)
-      end
+      LibLLVM.set_instr_param_alignment(res, 1, align)
+      LibLLVM.set_instr_param_alignment(res, 2, align)
 
       res
     end
@@ -2312,12 +2299,7 @@ module Crystal
       len_type = bits64? ? llvm_context.int64 : llvm_context.int32
 
       llvm_mod.functions[name]? || begin
-        arg_types =
-          if LibLLVM::IS_LT_70
-            [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int32, llvm_context.int1]
-          else
-            [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int1]
-          end
+        arg_types = [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int1]
 
         llvm_mod.functions.add(name, arg_types, llvm_context.void)
       end
@@ -2328,12 +2310,7 @@ module Crystal
       len_type = bits64? ? llvm_context.int64 : llvm_context.int32
 
       llvm_mod.functions[name]? || begin
-        arg_types =
-          if LibLLVM::IS_LT_70
-            [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int32, llvm_context.int1]
-          else
-            [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int1]
-          end
+        arg_types = [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int1]
 
         llvm_mod.functions.add(name, arg_types, llvm_context.void)
       end

@@ -1478,8 +1478,8 @@ describe "File" do
     it "does to_s" do
       perm = File::Permissions.flags(OwnerAll, GroupRead, GroupWrite, OtherRead)
       perm.to_s.should eq("rwxrw-r-- (0o764)")
-      perm.inspect.should eq("rwxrw-r-- (0o764)")
-      perm.pretty_inspect.should eq("rwxrw-r-- (0o764)")
+      perm.inspect.should eq("File::Permissions[OtherRead, GroupWrite, GroupRead, OwnerExecute, OwnerWrite, OwnerRead]")
+      perm.pretty_inspect.should eq("File::Permissions[OtherRead, GroupWrite, GroupRead, OwnerExecute, OwnerWrite, OwnerRead]")
     end
   end
 end

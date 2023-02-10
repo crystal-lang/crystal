@@ -11,11 +11,17 @@ class Crystal::SpinLock
           Intrinsics.pause
         end
       end
+      {% if flag?(:aarch64) %}
+        Atomic::Ops.fence :sequentially_consistent, false 
+      {% end %}      
     {% end %}
   end
 
   def unlock
     {% if flag?(:preview_mt) %}
+      {% if flag?(:aarch64) %}
+        Atomic::Ops.fence :sequentially_consistent, false 
+      {% end %}
       @m.lazy_set(0)
     {% end %}
   end
