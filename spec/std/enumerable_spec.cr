@@ -803,10 +803,31 @@ describe "Enumerable" do
 
   describe "max" do
     it { [1, 2, 3].max.should eq(3) }
+    it { [1, 2, 3].max(0).should eq([] of Int32) }
+    it { [1, 2, 3].max(1).should eq([3]) }
+    it { [1, 2, 3].max(2).should eq([3,2]) }
+    it { [1, 2, 3].max(3).should eq([3,2,1]) }
+    it { [1, 2, 3].max(4).should eq([3,2,1]) }
+    it { ([] of Int32).max(0).should eq([] of Int32) }
+    it { ([] of Int32).max(5).should eq([] of Int32) }
+    it {
+      (0..1000).map { |x| (x*137+x*x*139)%5000 }.max(10).should eq([
+        4992, 4990, 4980, 4972, 4962, 4962, 4960, 4960, 4952, 4952
+      ])
+    }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
         ([] of Int32).max
+      end
+    end
+
+    it "raises if n is negative" do
+      expect_raises ArgumentError do
+        ([1,2,3] of Int32).max(-1)
+      end
+      expect_raises ArgumentError do
+        ([1,2,3] of Int32).max(-2)
       end
     end
 
@@ -815,11 +836,25 @@ describe "Enumerable" do
         [Float64::NAN, 1.0, 2.0, Float64::NAN].max
       end
     end
+
+    it "raises if not comparable in max(n)" do
+      expect_raises ArgumentError do
+        [Float64::NAN, 1.0, 2.0, Float64::NAN].max(2)
+      end
+    end
   end
 
   describe "max?" do
     it "returns nil if empty" do
       ([] of Int32).max?.should be_nil
+    end
+
+    it "returns nil if n is negative in max(n)" do
+      ([1,2,3] of Int32).max?(-1).should be_nil
+    end
+
+    it "returns nil if not comparable in max(n)" do
+      [Float64::NAN, 1.0, 2.0, Float64::NAN].max?(2).should be_nil
     end
   end
 
@@ -851,10 +886,31 @@ describe "Enumerable" do
 
   describe "min" do
     it { [1, 2, 3].min.should eq(1) }
+    it { [1, 2, 3].min(0).should eq([] of Int32) }
+    it { [1, 2, 3].min(1).should eq([1]) }
+    it { [1, 2, 3].min(2).should eq([1,2]) }
+    it { [1, 2, 3].min(3).should eq([1,2,3]) }
+    it { [1,2,3].min(4).should eq([1,2,3]) }
+    it { ([] of Int32).min(0).should eq([] of Int32) }
+    it { ([] of Int32).min(1).should eq([] of Int32) }
+    it {
+      (0..1000).map { |x| (x*137+x*x*139)%5000 }.min(10).should eq([
+        0, 10, 20, 26, 26, 26, 26, 30, 32, 32
+      ])
+    }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
         ([] of Int32).min
+      end
+    end
+
+    it "raises if n is negative" do
+      expect_raises ArgumentError do
+        ([1,2,3] of Int32).min(-1)
+      end
+      expect_raises ArgumentError do
+        ([1,2,3] of Int32).min(-2)
       end
     end
 
@@ -863,11 +919,25 @@ describe "Enumerable" do
         [-1.0, Float64::NAN, -3.0].min
       end
     end
+
+    it "raises if not comparable in min(n)" do
+      expect_raises ArgumentError do
+        [Float64::NAN, 1.0, 2.0, Float64::NAN].min(2)
+      end
+    end
   end
 
   describe "min?" do
     it "returns nil if empty" do
       ([] of Int32).min?.should be_nil
+    end
+
+    it "returns nil if n is negative in min(n)" do
+      ([1,2,3] of Int32).min?(-1).should be_nil
+    end
+
+    it "returns nil if not comparable in min(n)" do
+      [Float64::NAN, 1.0, 2.0, Float64::NAN].min?(2).should be_nil
     end
   end
 

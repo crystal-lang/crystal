@@ -965,6 +965,41 @@ module Enumerable(T)
     ary
   end
 
+  private def qselect_internal(data : Array(T), left : Int, right : Int, k : Int)
+    loop do
+      return data[left] if left == right
+      pivot_index = left + (right-left)//2
+      pivot_index = qselect_partition_internal(data, left, right, pivot_index)
+      if pivot_index < 0
+        return nil
+      elsif k == pivot_index
+        return data[k]
+      elsif k < pivot_index
+        right = pivot_index - 1
+      else
+        left = pivot_index + 1
+      end
+    end
+  end
+
+  private def qselect_partition_internal(data : Array(T), left : Int, right : Int, pivot_index : Int) : Int
+    pivot_value = data[pivot_index]
+    data.swap(pivot_index, right)
+    store_index = left
+    (left..right).each do |i|
+      # if data[i] < pivot_value
+      cmp = data[i] <=> pivot_value
+      if cmp == -1
+        data.swap(store_index, i)
+        store_index += 1
+      elsif cmp.nil?
+        return -1
+      end
+    end
+    data.swap(right, store_index)
+    store_index
+  end
+
   # Returns the element with the maximum value in the collection.
   #
   # It compares using `>` so it will work for any type that supports that method.
@@ -982,6 +1017,43 @@ module Enumerable(T)
   # Like `max` but returns `nil` if the collection is empty.
   def max? : T?
     max_by? &.itself
+  end
+
+  # Returns an array of the maximum `k` elements, sorted descending.
+  #
+  # It compares using `<=>` so it will work for any type that supports that method.
+  #
+  # ```
+  # [7, 5, 2, 4, 9].max(3) # => [9, 7, 5]
+  # ["Eve", "Alice", "Bob", "Mallory", "Carol"].max(2) # => ["Mallory", "Eve"]
+  # ```
+  #
+  # Raises `Enumerable::ArgumentError` if `k` is negative or if any elements are
+  # not comparable.
+  def max(k : Int) : Array(T)
+    raise ArgumentError.new("negative size #{k}") if k < 0
+    data = to_a
+    n = data.size
+    k = n if k > n
+    (0..k-1).map do |i|
+      r = qselect_internal(data, 0, n-1, n-1-i)
+      raise ArgumentError.new("comparison failed") if r.nil?
+      r
+    end
+  end
+
+  # Like `max(k)` but returns `nil` if `k` is negative or if any elements are not
+  # comparable.
+  def max?(k : Int)
+    return nil if k < 0
+    data = to_a
+    n = data.size
+    k = n if k > n
+    (0..k-1).map do |i|
+      r = qselect_internal(data, 0, n-1, n-1-i)
+      return nil if r.nil?
+      r
+    end
   end
 
   # Returns the element for which the passed block returns with the maximum value.
@@ -1071,6 +1143,43 @@ module Enumerable(T)
   # Like `min` but returns `nil` if the collection is empty.
   def min? : T?
     min_by? &.itself
+  end
+
+  # Returns an array of the minimum `k` elements, sorted ascending.
+  #
+  # It compares using `<=>` so it will work for any type that supports that method.
+  #
+  # ```
+  # [7, 5, 2, 4, 9].min(3) # => [2, 4, 5]
+  # ["Eve", "Alice", "Bob", "Mallory", "Carol"].min(2) # => ["Alice", "Bob"]
+  # ```
+  #
+  # Raises `Enumerable::ArgumentError` if `k` is negative or if any elements are
+  # not comparable.
+  def min(k : Int) : Array(T)
+    raise ArgumentError.new("negative size #{k}") if k < 0
+    data = self.to_a
+    n = data.size
+    k = n if k > n
+    (0..k-1).map do |i|
+      r = self.qselect_internal(data, 0, n-1, i)
+      raise ArgumentError.new("comparison failed") if r.nil?
+      r
+    end
+  end
+
+  # Like `min(k)` but returns `nil` if `k` is negative or if any elements are not
+  # comparable.
+  def min?(k : Int)
+    return nil if k < 0
+    data = self.to_a
+    n = data.size
+    k = n if k > n
+    (0..k-1).map do |i|
+      r = self.qselect_internal(data, 0, n-1, i)
+      return nil if r.nil?
+      r
+    end
   end
 
   # Returns the element for which the passed block returns with the minimum value.
