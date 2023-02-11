@@ -842,13 +842,13 @@ class HTTP::Client
       return proxy.as(URI)
     end
 
-    case HTTP::Client.proxy
+    case self.class.proxy
     when ""
       return nil
     when String
-      return URI.parse(HTTP::Client.proxy.as(String))
+      return URI.parse(self.class.proxy.as(String))
     when URI
-      return HTTP::Client.proxy.as(URI)
+      return self.class.proxy.as(URI)
     end
 
     type = @tls ? "https_proxy" : "http_proxy"
