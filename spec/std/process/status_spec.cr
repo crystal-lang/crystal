@@ -41,6 +41,23 @@ describe Process::Status do
     Process::Status.new(exit_status(255)).signal_exit?.should be_false
   end
 
+  it "equality" do
+    ok1 = Process::Status.new(exit_status(0))
+    ok2 = Process::Status.new(exit_status(0))
+    err1 = Process::Status.new(exit_status(1))
+    err2 = Process::Status.new(exit_status(1))
+
+    ok1.should eq(ok2)
+    ok1.should_not eq(err2)
+    err1.should_not eq(ok2)
+    err1.should eq(err2)
+
+    ok1.hash.should eq(ok2.hash)
+    ok1.hash.should_not eq(err2.hash)
+    err1.hash.should_not eq(ok2.hash)
+    err1.hash.should eq(err2.hash)
+  end
+
   {% if flag?(:unix) && !flag?(:wasi) %}
     it "#exit_signal" do
       Process::Status.new(Signal::HUP.value).exit_signal.should eq Signal::HUP

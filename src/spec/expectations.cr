@@ -387,7 +387,7 @@ module Spec
         # TODO: Enable "expect_raises" for wasm32 after exceptions are working.
       end
     {% else %}
-      def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__) forall T
+      def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__, &) forall T
         yield
       rescue ex : T
         # We usually bubble Spec::AssertionFailed, unless this is the expected exception

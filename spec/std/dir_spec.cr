@@ -1,7 +1,7 @@
 require "./spec_helper"
 require "../support/env"
 
-private def unset_tempdir
+private def unset_tempdir(&)
   {% if flag?(:windows) %}
     old_tempdirs = {ENV["TMP"]?, ENV["TEMP"]?, ENV["USERPROFILE"]?}
     begin

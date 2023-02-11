@@ -125,7 +125,7 @@ class JSON::Parser
     raise ParseException.new(msg, token.line_number, token.column_number)
   end
 
-  private def nest
+  private def nest(&)
     @nest += 1
     if @nest > @max_nesting
       parse_exception "Nesting of #{@nest} is too deep"

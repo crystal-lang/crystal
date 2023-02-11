@@ -92,7 +92,7 @@ module HTTP::FormData
   # ```
   #
   # See: `FormData::Parser`
-  def self.parse(io, boundary)
+  def self.parse(io, boundary, &)
     parser = Parser.new(io, boundary)
     while parser.has_next?
       parser.next { |part| yield part }
@@ -115,7 +115,7 @@ module HTTP::FormData
   # ```
   #
   # See: `FormData::Parser`
-  def self.parse(request : HTTP::Request)
+  def self.parse(request : HTTP::Request, &)
     body = request.body
     raise Error.new "Cannot extract form-data from HTTP request: body is empty" unless body
 
@@ -188,7 +188,7 @@ module HTTP::FormData
   # ```
   #
   # See: `FormData::Builder`
-  def self.build(io, boundary = MIME::Multipart.generate_boundary)
+  def self.build(io, boundary = MIME::Multipart.generate_boundary, &)
     builder = Builder.new(io, boundary)
     yield builder
     builder.finish
@@ -214,7 +214,7 @@ module HTTP::FormData
   # ```
   #
   # See: `FormData::Builder`
-  def self.build(response : HTTP::Server::Response, boundary = MIME::Multipart.generate_boundary)
+  def self.build(response : HTTP::Server::Response, boundary = MIME::Multipart.generate_boundary, &)
     builder = Builder.new(response, boundary)
     yield builder
     builder.finish

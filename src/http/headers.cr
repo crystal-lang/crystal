@@ -148,7 +148,7 @@ struct HTTP::Headers
     fetch(wrap(key)) { default }
   end
 
-  def fetch(key)
+  def fetch(key, &)
     values = @hash[wrap(key)]?
     values ? concat(values) : yield key
   end
@@ -229,7 +229,7 @@ struct HTTP::Headers
     result.hash(hasher)
   end
 
-  def each
+  def each(&)
     @hash.each do |key, value|
       yield({key.name, cast(value)})
     end

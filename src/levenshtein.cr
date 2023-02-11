@@ -110,7 +110,7 @@ module Levenshtein
       @best_entry.try &.value
     end
 
-    def self.find(name, tolerance = nil)
+    def self.find(name, tolerance = nil, &)
       sn = new name, tolerance
       yield sn
       sn.best_match
@@ -139,7 +139,7 @@ module Levenshtein
   # end
   # best_match # => "ello"
   # ```
-  def self.find(name, tolerance = nil)
+  def self.find(name, tolerance = nil, &)
     Finder.find(name, tolerance) do |sn|
       yield sn
     end

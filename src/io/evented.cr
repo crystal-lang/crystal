@@ -47,7 +47,7 @@ module IO::Evented
     write_timeout
   end
 
-  def evented_read(slice : Bytes, errno_msg : String) : Int32
+  def evented_read(slice : Bytes, errno_msg : String, &) : Int32
     loop do
       bytes_read = yield slice
       if bytes_read != -1
@@ -65,7 +65,7 @@ module IO::Evented
     resume_pending_readers
   end
 
-  def evented_write(slice : Bytes, errno_msg : String) : Nil
+  def evented_write(slice : Bytes, errno_msg : String, &) : Nil
     return if slice.empty?
 
     begin
@@ -88,7 +88,7 @@ module IO::Evented
     end
   end
 
-  def evented_send(slice : Bytes, errno_msg : String) : Int32
+  def evented_send(slice : Bytes, errno_msg : String, &) : Int32
     bytes_written = yield slice
     raise Socket::Error.from_errno(errno_msg) if bytes_written == -1
     # `to_i32` is acceptable because `Slice#size` is an Int32
@@ -121,7 +121,7 @@ module IO::Evented
   end
 
   # :nodoc:
-  def wait_readable(timeout = @read_timeout, *, raise_if_closed = true) : Nil
+  def wait_readable(timeout = @read_timeout, *, raise_if_closed = true, &) : Nil
     readers = @readers.get { Deque(Fiber).new }
     readers << Fiber.current
     add_read_event(timeout)
@@ -146,7 +146,7 @@ module IO::Evented
   end
 
   # :nodoc:
-  def wait_writable(timeout = @write_timeout) : Nil
+  def wait_writable(timeout = @write_timeout, &) : Nil
     writers = @writers.get { Deque(Fiber).new }
     writers << Fiber.current
     add_write_event(timeout)

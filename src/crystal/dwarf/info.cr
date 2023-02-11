@@ -54,7 +54,7 @@ module Crystal
         @abbreviations = Abbrev.read(io, debug_abbrev_offset)
       end
 
-      def each
+      def each(&)
         end_offset = @offset + @unit_length
         attributes = [] of {AT, FORM, Value}
 

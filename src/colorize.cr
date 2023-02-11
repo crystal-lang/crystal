@@ -296,7 +296,7 @@ module Colorize
   end
 end
 
-private def each_code(mode : Colorize::Mode)
+private def each_code(mode : Colorize::Mode, &)
   yield '1' if mode.bold?
   yield '2' if mode.dim?
   yield '4' if mode.underline?
@@ -438,7 +438,7 @@ struct Colorize::Object(T)
   #
   # io.to_s # returns a colorful string where "colorful" is red, "hello" green, "world" blue and " string" red again
   # ```
-  def surround(io = STDOUT)
+  def surround(io = STDOUT, &)
     return yield io unless @enabled
 
     Object.surround(io, to_named_tuple) do |io|
@@ -460,7 +460,7 @@ struct Colorize::Object(T)
     mode: Mode::None,
   }
 
-  protected def self.surround(io, color)
+  protected def self.surround(io, color, &)
     last_color = @@last_color
     must_append_end = append_start(io, color)
     @@last_color = color

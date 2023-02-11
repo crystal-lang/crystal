@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        crystal_bootstrap_version: [1.2.2, 1.3.2, 1.4.1, 1.5.1, 1.6.2, 1.7.0]
+        crystal_bootstrap_version: [1.2.2, 1.3.2, 1.4.1, 1.5.1, 1.6.2, 1.7.2]
         include:
           # libffi is only available starting from the 1.2.2 build images
           - crystal_bootstrap_version: 1.0.0
@@ -63,10 +63,10 @@ jobs:
         include:
         - llvm_version: 13.0.0
           llvm_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-13.0.0/clang+llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz
-          base_image: ubuntu-20.04
+          base_image: ubuntu-22.04
         - llvm_version: 14.0.0
           llvm_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
-          base_image: ubuntu-18.04
+          base_image: ubuntu-22.04
     runs-on: ${{ matrix.base_image }}
     name: "Test LLVM ${{ matrix.llvm_version }} (${{ matrix.base_image }})"
     steps:

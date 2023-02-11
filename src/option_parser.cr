@@ -112,7 +112,7 @@ class OptionParser
   # and uses it to parse the passed *args* (defaults to `ARGV`).
   #
   # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
-  def self.parse(args = ARGV, *, gnu_optional_args : Bool = false) : self
+  def self.parse(args = ARGV, *, gnu_optional_args : Bool = false, &) : self
     parser = OptionParser.new(gnu_optional_args: gnu_optional_args)
     yield parser
     parser.parse(args)
@@ -133,7 +133,7 @@ class OptionParser
   # Creates a new parser, with its configuration specified in the block.
   #
   # Refer to `#gnu_optional_args?` for the behaviour of the named parameter.
-  def self.new(*, gnu_optional_args : Bool = false)
+  def self.new(*, gnu_optional_args : Bool = false, &)
     new(gnu_optional_args: gnu_optional_args).tap { |parser| yield parser }
   end
 
@@ -334,7 +334,7 @@ class OptionParser
     end
   end
 
-  private def with_preserved_state
+  private def with_preserved_state(&)
     old_flags = @flags.clone
     old_handlers = @handlers.clone
     old_banner = @banner

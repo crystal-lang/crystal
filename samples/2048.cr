@@ -32,7 +32,7 @@ module Screen
     65536 => {Colorize::ColorANSI::White, Colorize::ColorANSI::Black},
   }
 
-  def self.colorize_for(tile)
+  def self.colorize_for(tile, &)
     fg_color, bg_color = TILES[tile]
     color = Colorize.with.fore(fg_color)
     color = color.back(bg_color) if bg_color
@@ -241,7 +241,7 @@ class Game
     end
   end
 
-  def each_cell_with_index
+  def each_cell_with_index(&)
     0.upto(@grid.size - 1) do |row|
       0.upto(@grid.size - 1) do |col|
         yield @grid[row][col], row, col
@@ -295,7 +295,7 @@ class Game
     end
   end
 
-  def movable_tiles(direction, drow, dcol)
+  def movable_tiles(direction, drow, dcol, &)
     max = @grid.size - 1
     from_row, to_row, from_column, to_column =
       case direction

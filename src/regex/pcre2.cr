@@ -1,4 +1,5 @@
 require "./lib_pcre2"
+require "crystal/thread_local_value"
 
 # :nodoc:
 module Regex::PCRE2
@@ -25,7 +26,7 @@ module Regex::PCRE2
     end
   end
 
-  protected def self.compile(source, options)
+  protected def self.compile(source, options, &)
     if res = LibPCRE2.compile(source, source.bytesize, options, out errorcode, out erroroffset, nil)
       res
     else
@@ -96,7 +97,7 @@ module Regex::PCRE2
   end
 
   # :nodoc:
-  def each_capture_group
+  def each_capture_group(&)
     name_table = uninitialized UInt8*
     pattern_info(LibPCRE2::INFO_NAMETABLE, pointerof(name_table))
 
@@ -141,13 +142,12 @@ module Regex::PCRE2
   #
   # Only a single `match` function can run per thread at any given time, so there
   # can't be any concurrent access to the JIT stack.
-  @[ThreadLocal]
-  class_getter jit_stack : LibPCRE2::JITStack do
-    jit_stack = LibPCRE2.jit_stack_create(32_768, 1_048_576, Regex::PCRE2.general_context)
-    if jit_stack.null?
-      raise "Error allocating JIT stack"
+  @@jit_stack = Crystal::ThreadLocalValue(LibPCRE2::JITStack).new
+
+  def self.jit_stack
+    @@jit_stack.get do
+      LibPCRE2.jit_stack_create(32_768, 1_048_576, general_context) || raise "Error allocating JIT stack"
     end
-    jit_stack
   end
 
   private def match_data(str, byte_index, options)
@@ -189,7 +189,7 @@ module Regex::PCRE2
       end
     end
 
-    private def fetch_impl(group_name : String)
+    private def fetch_impl(group_name : String, &)
       selected_range = nil
       exists = false
       @regex.each_capture_group do |number, name_entry|

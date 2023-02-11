@@ -78,7 +78,7 @@ struct BigFloat < Float
   def initialize(@mpf : LibGMP::MPF)
   end
 
-  def self.new
+  def self.new(&)
     LibGMP.mpf_init(out mpf)
     yield pointerof(mpf)
     new(mpf)

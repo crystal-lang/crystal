@@ -400,7 +400,7 @@ struct BigDecimal < Number
     round_impl { |rem, rem_range| rem.abs >= rem_range // 2 }
   end
 
-  private def round_impl
+  private def round_impl(&)
     return self if @scale <= 0 || zero?
 
     # `self == @value / 10 ** @scale == mantissa + (rem / 10 ** @scale)`

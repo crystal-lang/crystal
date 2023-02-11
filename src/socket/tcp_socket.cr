@@ -53,7 +53,7 @@ class TCPSocket < IPSocket
   # eventually closes the socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(host, port)
+  def self.open(host, port, &)
     sock = new(host, port)
     begin
       yield sock

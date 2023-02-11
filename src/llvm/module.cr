@@ -6,41 +6,25 @@ class LLVM::Module
 
   getter context : Context
 
-  {% if LibLLVM::IS_38 %}
-    def initialize(@unwrap : LibLLVM::ModuleRef, @name : String, @context : Context)
-      @owned = false
-    end
+  def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
+    @owned = false
+  end
 
-    def name : String
-      @name
-    end
-  {% else %}
-    # LLVM >= 3.9
-    def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
-      @owned = false
-    end
+  def name : String
+    bytes = LibLLVM.get_module_identifier(self, out bytesize)
+    String.new(Slice.new(bytes, bytesize))
+  end
 
-    def name : String
-      bytes = LibLLVM.get_module_identifier(self, out bytesize)
-      String.new(Slice.new(bytes, bytesize))
-    end
-
-    def name=(name : String)
-      LibLLVM.set_module_identifier(self, name, name.bytesize)
-    end
-  {% end %}
+  def name=(name : String)
+    LibLLVM.set_module_identifier(self, name, name.bytesize)
+  end
 
   def target=(target)
     LibLLVM.set_target(self, target)
   end
 
   def data_layout=(data : TargetData)
-    {% if LibLLVM::IS_38 %}
-      LibLLVM.set_data_layout(self, data.to_data_layout_string)
-    {% else %}
-      # LLVM >= 3.9
-      LibLLVM.set_module_data_layout(self, data)
-    {% end %}
+    LibLLVM.set_module_data_layout(self, data)
   end
 
   def dump
@@ -56,34 +40,22 @@ class LLVM::Module
   end
 
   def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Value)
-    {% if LibLLVM::IS_LT_70 %}
-      values = [
-        context.int32.const_int(module_flag.value),
-        context.md_string(key.to_s),
-        val,
-      ]
-      md_node = context.md_node(values)
-      LibLLVM.add_named_metadata_operand(self, "llvm.module.flags", md_node)
-    {% else %}
-      LibLLVM.add_module_flag(
-        self,
-        module_flag,
-        key,
-        key.bytesize,
-        LibLLVM.value_as_metadata(val.to_unsafe)
-      )
-    {% end %}
+    LibLLVM.add_module_flag(
+      self,
+      module_flag,
+      key,
+      key.bytesize,
+      LibLLVM.value_as_metadata(val.to_unsafe)
+    )
   end
 
   def write_bitcode_to_file(filename : String)
     LibLLVM.write_bitcode_to_file self, filename
   end
 
-  {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-    def write_bitcode_with_summary_to_file(filename : String)
-      LibLLVMExt.write_bitcode_with_summary_to_file self, filename
-    end
-  {% end %}
+  def write_bitcode_with_summary_to_file(filename : String)
+    LibLLVMExt.write_bitcode_with_summary_to_file self, filename
+  end
 
   def write_bitcode_to_memory_buffer
     MemoryBuffer.new(LibLLVM.write_bitcode_to_memory_buffer self)
@@ -128,7 +100,7 @@ class LLVM::Module
     @unwrap
   end
 
-  def take_ownership
+  def take_ownership(&)
     if @owned
       yield
     else

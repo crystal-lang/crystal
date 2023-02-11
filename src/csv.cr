@@ -96,7 +96,7 @@ class CSV
   # ["one", "two"]
   # ["three"]
   # ```
-  def self.each_row(string_or_io : String | IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
+  def self.each_row(string_or_io : String | IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, &)
     Parser.new(string_or_io, separator, quote_char).each_row do |row|
       yield row
     end
@@ -137,7 +137,7 @@ class CSV
   # ```
   #
   # See: `CSV::Builder::Quoting`
-  def self.build(separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC) : String
+  def self.build(separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC, &) : String
     String.build do |io|
       build(io, separator, quote_char, quoting) { |builder| yield builder }
     end
@@ -157,7 +157,7 @@ class CSV
   # end
   # io.to_s # => "HEADER\none,two\nthree\n"
   # ```
-  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC) : Nil
+  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC, &) : Nil
     builder = Builder.new(io, separator, quote_char, quoting)
     yield builder
     io.flush
@@ -196,7 +196,7 @@ class CSV
   # Headers are always stripped.
   #
   # See `CSV.parse` about the *separator* and *quote_char* arguments.
-  def self.new(string_or_io : String | IO, headers = false, strip = false, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
+  def self.new(string_or_io : String | IO, headers = false, strip = false, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, &)
     csv = new(string_or_io, headers, strip, separator, quote_char)
     csv.each do
       yield csv
@@ -211,7 +211,7 @@ class CSV
   end
 
   # Invokes the block once for each row in this CSV, yielding `self`.
-  def each : Nil
+  def each(&) : Nil
     while self.next
       yield self
     end
