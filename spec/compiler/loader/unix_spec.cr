@@ -28,11 +28,11 @@ describe Crystal::Loader do
     end
 
     it "parses file paths" do
-      exc = expect_raises(Crystal::Loader::LoadError, /no such file|image not found|cannot open/i) do
+      exc = expect_raises(Crystal::Loader::LoadError, /no such file|not found|cannot open/i) do
         Crystal::Loader.parse(["foobar.o"], search_paths: [] of String)
       end
       exc.message.should contain File.join(Dir.current, "foobar.o")
-      exc = expect_raises(Crystal::Loader::LoadError, /no such file|image not found|cannot open/i) do
+      exc = expect_raises(Crystal::Loader::LoadError, /no such file|not found|cannot open/i) do
         Crystal::Loader.parse(["-l", "foo/bar.o"], search_paths: [] of String)
       end
       exc.message.should contain File.join(Dir.current, "foo", "bar.o")

@@ -411,7 +411,7 @@ describe Process do
   {% end %}
 
   describe ".chroot" do
-    {% if flag?(:unix) %}
+    {% if flag?(:unix) && !flag?(:android) %}
       it "raises when unprivileged" do
         status, output, _ = compile_and_run_source <<-'CRYSTAL'
           begin

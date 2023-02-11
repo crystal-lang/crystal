@@ -42,7 +42,13 @@ describe TCPServer, tags: "network" do
         error = expect_raises(Socket::Addrinfo::Error) do
           TCPServer.new(address, -12)
         end
-        error.os_error.should eq({% if flag?(:linux) %}Errno.new(LibC::EAI_SERVICE){% elsif flag?(:win32) %}WinError::WSATYPE_NOT_FOUND{% else %}Errno.new(LibC::EAI_NONAME){% end %})
+        error.os_error.should eq({% if flag?(:win32) %}
+          WinError::WSATYPE_NOT_FOUND
+        {% elsif flag?(:linux) && !flag?(:android) %}
+          Errno.new(LibC::EAI_SERVICE)
+        {% else %}
+          Errno.new(LibC::EAI_NONAME)
+        {% end %})
       end
 
       describe "reuse_port" do
@@ -92,7 +98,7 @@ describe TCPServer, tags: "network" do
         {% if flag?(:win32) %}
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
         {% else %}
-          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN), Errno.new(LibC::EAI_NODATA)].should contain err.os_error
         {% end %}
       end
 
@@ -104,7 +110,7 @@ describe TCPServer, tags: "network" do
         {% if flag?(:win32) %}
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
         {% else %}
-          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
+          [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_AGAIN), Errno.new(LibC::EAI_NODATA)].should contain err.os_error
         {% end %}
       end
     end

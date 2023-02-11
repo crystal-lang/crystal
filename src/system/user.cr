@@ -26,7 +26,7 @@ class System::User
   # The user's primary group identifier.
   getter group_id : String
 
-  # The user's real or full name.
+  # The user's real or full name. Defaults to `username` if unavailable.
   getter name : String
 
   # The user's home directory.
