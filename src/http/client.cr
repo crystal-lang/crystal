@@ -74,6 +74,17 @@
 class HTTP::Client
   # The set of possible valid body types.
   alias BodyType = String | Bytes | IO | Nil
+  alias ProxyURL = String | URI | Nil
+
+  # HTTP Proxy URL. Empty string equates to no proxy.
+  #
+  # Order of usage is instance -> class -> proxy environment variables
+  class_property proxy : ProxyURL
+
+  # HTTP Proxy URL. Emoty string equates to no proxy.
+  #
+  # Order of usage is instance -> class -> proxy environment variables
+  property proxy : ProxyURL
 
   # Returns the target host.
   #
@@ -790,10 +801,9 @@ class HTTP::Client
   private def create_proxy_io
     return unless proxy = find_proxy
 
-    proxy_uri = URI.parse(proxy)
-    tls = HTTP::Client.tls_flag(proxy_uri, nil)
-    proxy_port = proxy_uri.port || (tls ? 443 : 80)
-    host = HTTP::Client.validate_host(proxy_uri)
+    tls = HTTP::Client.tls_flag(proxy, nil)
+    proxy_port = proxy.port || (tls ? 443 : 80)
+    host = HTTP::Client.validate_host(proxy)
 
     io = create_io(host, proxy_port, tls)
 
@@ -819,11 +829,32 @@ class HTTP::Client
     {% end %}
   end
 
-  private def find_proxy
-    type = @tls ? "https_proxy" : "http_proxy"
-    return unless ENV.has_key?(type)
+  private def find_proxy : URI | Nil
+    # Order of lookup is class -> instance -> environment
+    # Both class and instance properties will stop on empty strings.
 
-    ENV[type]
+    case proxy
+    when ""
+      return nil
+    when String
+      return URI.parse(proxy.as(String))
+    when URI
+      return proxy.as(URI)
+    end
+
+    case HTTP::Client.proxy
+    when ""
+      return nil
+    when String
+      return URI.parse(HTTP::Client.proxy.as(String))
+    when URI
+      return HTTP::Client.proxy.as(URI)
+    end
+
+    type = @tls ? "https_proxy" : "http_proxy"
+    return nil unless ENV.has_key?(type)
+
+    URI.parse(ENV[type])
   end
 
   private def send_connect_request(io)
