@@ -851,10 +851,18 @@ class HTTP::Client
       return self.class.proxy.as(URI)
     end
 
+    # Find an appropriate environment variable
     type = @tls ? "https_proxy" : "http_proxy"
-    return nil unless ENV.has_key?(type)
-
-    URI.parse(ENV[type])
+    key = if ENV.has_key?(type)
+            type
+          elsif @tls && ENV.has_key?("HTTPS_PROXY")
+            "HTTPS_PROXY"
+          elsif ENV.has_key?("all_proxy")
+            "all_proxy"
+          elsif ENV.has_key?("ALL_PROXY")
+            "ALL_PROXY"
+          end
+    return URI.parse(ENV[key]) if key
   end
 
   private def send_connect_request(io)
