@@ -47,7 +47,11 @@ describe Crystal::Loader do
           search_paths.should eq ["/usr/lib", "/usr/local/lib"]
         {% else %}
           search_paths[0, 2].should eq ["ld1", "ld2"]
-          search_paths[-2..].should eq ["/lib", "/usr/lib"]
+          {% if flag?(:android) %}
+            search_paths[-2..].should eq ["/vendor/lib", "/system/lib"]
+          {% else %}
+            search_paths[-2..].should eq ["/lib", "/usr/lib"]
+          {% end %}
         {% end %}
       end
     end
@@ -58,6 +62,8 @@ describe Crystal::Loader do
         {% if flag?(:darwin) %}
           search_paths[0, 2].should eq ["ld1", "ld2"]
           search_paths[-2..].should eq ["/usr/lib", "/usr/local/lib"]
+        {% elsif flag?(:android) %}
+          search_paths[-2..].should eq ["/vendor/lib", "/system/lib"]
         {% else %}
           search_paths[-2..].should eq ["/lib", "/usr/lib"]
         {% end %}

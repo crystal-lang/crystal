@@ -126,13 +126,18 @@ class Crystal::Loader
       default_search_paths.concat env_library_path.split(Process::PATH_DELIMITER, remove_empty: true)
     end
 
-    {% if flag?(:linux) || flag?(:bsd) %}
+    {% if (flag?(:linux) && !flag?(:android)) || flag?(:bsd) %}
       read_ld_conf(default_search_paths)
     {% end %}
 
     {% if flag?(:darwin) %}
       default_search_paths << "/usr/lib"
       default_search_paths << "/usr/local/lib"
+    {% elsif flag?(:android) %}
+      default_search_paths << "/vendor/lib64" if File.directory?("/vendor/lib64")
+      default_search_paths << "/system/lib64" if File.directory?("/system/lib64")
+      default_search_paths << "/vendor/lib"
+      default_search_paths << "/system/lib"
     {% else %}
       {% if flag?(:linux) %}
         default_search_paths << "/lib64" if File.directory?("/lib64")
