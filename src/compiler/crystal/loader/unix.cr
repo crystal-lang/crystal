@@ -40,10 +40,24 @@ class Crystal::Loader
     libnames = [] of String
     file_paths = [] of String
 
+    # `man id(1)` on Linux:
+    #
+    # > -L searchdir
+    # > ... The directories are searched in the order in which they are
+    # specified on the command line. Directories specified on the command line
+    # are searched before the default directories.
+    #
+    # `man ld(1)` on macOS:
+    #
+    # > -Ldir
+    # > ... Directories specified with -L are searched in the order they appear
+    # > on the command line and before the default search path...
+    extra_search_paths = [] of String
+
     # OptionParser removes items from the args array, so we dup it here in order to produce a meaningful error message.
     OptionParser.parse(args.dup) do |parser|
       parser.on("-L DIRECTORY", "--library-path DIRECTORY", "Add DIRECTORY to library search path") do |directory|
-        search_paths << directory
+        extra_search_paths << directory
       end
       parser.on("-l LIBNAME", "--library LIBNAME", "Search for library LIBNAME") do |libname|
         libnames << libname
@@ -55,6 +69,8 @@ class Crystal::Loader
         file_paths.concat args
       end
     end
+
+    search_paths = extra_search_paths + search_paths
 
     begin
       self.new(search_paths, libnames, file_paths)
