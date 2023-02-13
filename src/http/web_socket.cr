@@ -1,7 +1,6 @@
 require "./client"
 require "./headers"
 
-
 # NOTE: To use `WebSocket`, you must explicitly import it with `require "http/web_socket"`
 class HTTP::WebSocket
   getter? closed = false
