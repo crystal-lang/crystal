@@ -354,6 +354,8 @@ describe Process do
     process.try(&.wait)
   end
 
+  typeof(Process.new(*standing_command).terminate(graceful: false))
+
   pending_win32 ".exists?" do
     # We can't reliably check whether it ever returns false, since we can't predict
     # how PIDs are used by the system, a new process might be spawned in between

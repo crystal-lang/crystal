@@ -22,8 +22,8 @@ struct Crystal::System::Process
     !@channel.closed? && Crystal::System::Process.exists?(@pid)
   end
 
-  def terminate
-    Crystal::System::Process.signal(@pid, LibC::SIGTERM)
+  def terminate(*, graceful)
+    Crystal::System::Process.signal(@pid, graceful ? LibC::SIGTERM : LibC::SIGKILL)
   end
 
   def self.exit(status)
