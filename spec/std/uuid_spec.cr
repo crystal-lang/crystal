@@ -28,7 +28,7 @@ describe "UUID" do
     end
 
     it "#inspect" do
-      UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").inspect.should eq %(UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93"))
+      UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").inspect.should eq %(UUID["50a11da6-377b-4bdf-b9f0-076f9db61c93"])
     end
 
     it "works with variant" do

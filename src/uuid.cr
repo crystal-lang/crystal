@@ -203,9 +203,9 @@ struct UUID
 
   # Convert to `String` in literal format.
   def inspect(io : IO) : Nil
-    io << %<UUID.new(">
+    io << %(UUID[")
     to_s(io)
-    io << %<")>
+    io << %("])
   end
 
   def to_s(io : IO) : Nil
