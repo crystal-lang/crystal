@@ -558,7 +558,9 @@ end
     end
   end
 
-  {% unless flag?(:win32) %}
+  {% if flag?(:win32) %}
+    Crystal::System::Process.start_interrupt_loop
+  {% else %}
     Signal.setup_default_handlers
   {% end %}
 

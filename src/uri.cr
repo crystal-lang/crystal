@@ -9,6 +9,8 @@ require "./uri/params"
 # their components or by parsing their string forms and methods for accessing the various
 # components of an instance.
 #
+# NOTE: To use `URI`, you must explicitly import it with `require "uri"`
+#
 # Basic example:
 #
 # ```

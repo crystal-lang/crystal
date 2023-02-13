@@ -317,6 +317,14 @@ describe Process do
     end
   end
 
+  describe ".on_interrupt" do
+    it "compiles" do
+      typeof(Process.on_interrupt { })
+      typeof(Process.ignore_interrupts!)
+      typeof(Process.restore_interrupts!)
+    end
+  end
+
   describe "#signal" do
     pending_win32 "kills a process" do
       process = Process.new(*standing_command)

@@ -24,8 +24,10 @@ require "c/unistd"
 # sleep 3
 # ```
 #
-# Note:
-# - An uncaught exception in a signal handler is a fatal error.
+# NOTE: `Process.on_interrupt` is preferred over `Signal::INT.trap`, as the
+# former also works on Windows.
+#
+# WARNING: An uncaught exception in a signal handler is a fatal error.
 enum Signal : Int32
   HUP    = LibC::SIGHUP
   INT    = LibC::SIGINT

@@ -2,6 +2,8 @@ require "lib_z"
 require "./digest"
 
 # Implements the CRC32 checksum algorithm.
+#
+# NOTE: To use `CRC32`, you must explicitly import it with `require "digest/crc32"`
 class Digest::CRC32 < ::Digest
   extend ClassMethods
 

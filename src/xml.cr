@@ -1,5 +1,7 @@
 # The XML module allows parsing and generating [XML](https://www.w3.org/XML/) documents.
 #
+# NOTE: To use `XML`, you must explicitly import it with `require "xml"`
+#
 # ### Parsing
 #
 # `XML#parse` will parse xml from `String` or `IO` and return xml document as an `XML::Node` which represents all kinds of xml nodes.
