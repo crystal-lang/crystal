@@ -40,7 +40,7 @@ class Crystal::Loader
     libnames = [] of String
     file_paths = [] of String
 
-    # `man id(1)` on Linux:
+    # `man ld(1)` on Linux:
     #
     # > -L searchdir
     # > ... The directories are searched in the order in which they are
