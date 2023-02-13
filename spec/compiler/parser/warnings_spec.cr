@@ -23,17 +23,26 @@ describe "Parser warnings" do
   # CVE-2021-42574
   describe "Unicode bi-directional control characters" do
     ['\u202A', '\u202B', '\u202C', '\u202D', '\u202E', '\u2066', '\u2067', '\u2068', '\u2069'].each do |char|
-      assert_parser_warning %(f#{char}), "Unescaped Unicode bi-directional control character: #{char.dump}"
-      assert_parser_warning %("#{char}"), "Unescaped Unicode bi-directional control character: #{char.dump}"
-      assert_parser_warning %(%w(#{char})), "Unescaped Unicode bi-directional control character: #{char.dump}"
-      assert_parser_warning %(:#{char}), "Unescaped Unicode bi-directional control character: #{char.dump}"
-      assert_parser_warning %(:"#{char}"), "Unescaped Unicode bi-directional control character: #{char.dump}"
-      assert_parser_warning %(%i(#{char})), "Unescaped Unicode bi-directional control character: #{char.dump}"
-      assert_parser_warning %(##{char}), "Unescaped Unicode bi-directional control character: #{char.dump}"
-      assert_parser_warning %(macro foo\n##{char}\nend), "Unescaped Unicode bi-directional control character: #{char.dump}"
+      it { assert_parser_warning %(f#{char}), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+      it { assert_parser_warning %("#{char}"), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+      it { assert_parser_warning %(\#{}#{char}), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+      it { assert_parser_warning %({{ "#{char}" }}), "Unescaped Unicode bi-directional control character: #{char.dump}" }
 
-      assert_no_parser_warning char.to_s.dump
-      assert_no_parser_warning char.dump
+      it { assert_parser_warning %(:#{char}), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+      it { assert_parser_warning %(:"#{char}"), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+      it { assert_parser_warning %(def foo("#{char}" x); end), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+      it { assert_parser_warning %(foo("#{char}": 1)), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+      it { assert_parser_warning %({"#{char}": 1}), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+      it { assert_parser_warning %(NamedTuple("#{char}": Int32)), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+
+      it { assert_parser_warning %(%q(#{char})), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+      it { assert_parser_warning %(%w(#{char})), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+      it { assert_parser_warning %(%i(#{char})), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+      it { assert_parser_warning %(%r(#{char})), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+      it { assert_parser_warning %(macro foo\n  #{char}\nend), "Unescaped Unicode bi-directional control character: #{char.dump}" }
+
+      it { assert_no_parser_warning char.to_s.dump }
+      it { assert_no_parser_warning char.dump }
     end
 
     # TODO: `SyntaxException#default_message` does not expose the column number yet
