@@ -984,7 +984,7 @@ module Enumerable(T)
     pivot_value = data[pivot_index]
     data.swap(pivot_index, right)
     store_index = left
-    (left..(right - 1)).each do |i|
+    (left...right).each do |i|
       if compare_or_raise(data[i], pivot_value) < 0
         data.swap(store_index, i)
         store_index += 1
@@ -1018,8 +1018,8 @@ module Enumerable(T)
   # It compares using `<=>` so it will work for any type that supports that method.
   #
   # ```
-  # [7, 5, 2, 4, 9].max(3)                             # => [9, 7, 5]
-  # ["Eve", "Alice", "Bob", "Mallory", "Carol"].max(2) # => ["Mallory", "Eve"]
+  # [7, 5, 2, 4, 9].max(3)                 # => [9, 7, 5]
+  # %w[Eve Alice Bob Mallory Carol].max(2) # => ["Mallory", "Eve"]
   # ```
   #
   # Returns all elements sorted descending if *count* is greater than the number
@@ -1032,7 +1032,7 @@ module Enumerable(T)
     data = self.is_a?(Array) ? self.dup : self.to_a
     n = data.size
     count = n if count > n
-    (0..count - 1).map do |i|
+    (0...count).map do |i|
       quickselect_internal(data, 0, n - 1, n - 1 - i)
     end
   end
@@ -1131,8 +1131,8 @@ module Enumerable(T)
   # It compares using `<=>` so it will work for any type that supports that method.
   #
   # ```
-  # [7, 5, 2, 4, 9].min(3)                             # => [2, 4, 5]
-  # ["Eve", "Alice", "Bob", "Mallory", "Carol"].min(2) # => ["Alice", "Bob"]
+  # [7, 5, 2, 4, 9].min(3)                 # => [2, 4, 5]
+  # %w[Eve Alice Bob Mallory Carol].min(2) # => ["Alice", "Bob"]
   # ```
   #
   # Returns all elements sorted ascending if *count* is greater than the number
@@ -1145,7 +1145,7 @@ module Enumerable(T)
     data = self.is_a?(Array) ? self.dup : self.to_a
     n = data.size
     count = n if count > n
-    (0..count - 1).map do |i|
+    (0...count).map do |i|
       quickselect_internal(data, 0, n - 1, i)
     end
   end
